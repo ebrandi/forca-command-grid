@@ -1,0 +1,75 @@
+# Build context hygiene: keep secrets, local state and dev-only artifacts out of the
+# image. `COPY . .` in the Dockerfile means anything not excluded here is baked into
+# every layer and shipped to whoever pulls the image.
+
+# VCS
+.git
+.gitignore
+.github
+
+# Docs / research (not needed at runtime)
+docs
+research
+deploy
+handbooks
+*.md
+
+# Secrets and local environment — never bake these into an image
+.env
+.env.*
+!.env.example
+secrets.json
+*.pem
+*.key
+*.crt
+certs
+
+# Local AI/agent tooling state (can contain prompts, transcripts, tokens)
+.omc
+.claude
+
+# Operational artifacts
+backups
+eveimg
+data/sde
+*.sqlite
+*.sqlite3
+db.sqlite3
+*.db.gz
+*.log
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.ruff_cache
+.mypy_cache
+htmlcov
+.coverage
+.coverage.*
+.tox
+.hypothesis
+*.egg-info
+build
+dist
+
+# Virtualenvs
+.venv
+venv
+env
+ENV
+
+# Frontend
+node_modules
+.parcel-cache
+
+# Collected/served at runtime from volumes, not from the image
+staticfiles
+media
+
+# OS noise
+.DS_Store
+Thumbs.db
+*.swp
+*~

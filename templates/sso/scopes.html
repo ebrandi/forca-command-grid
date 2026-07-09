@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}ESI Scopes · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-6 flex flex-wrap items-start justify-between gap-3">
+  <div>
+    <p class="eyebrow">Access</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">ESI scopes</h1>
+    <p class="mt-2 max-w-2xl text-sm text-muted">Each feature below needs you to grant an ESI scope on the character that holds the access. Grant the ones you want — you can disconnect a character at any time. Director features only return data when the character actually holds the matching in-game role.</p>
+  </div>
+  {% if cards %}
+  <form method="post" action="{% url 'sso:reconcile' %}" data-confirm="Re-check your granted access against CCP now?">{% csrf_token %}
+    <button class="btn-ghost text-sm" title="Verify what you've granted against CCP and mark anything you've since revoked as inactive.">Re-check with CCP</button>
+  </form>
+  {% endif %}
+</header>
+
+{% for card in cards %}
+  {% with c=card.character %}
+  <section class="panel mb-4 p-5">
+    <div class="flex items-center gap-3">
+      <img src="{% eve_portrait c.character_id 64 %}" alt="" class="h-10 w-10 rounded-lg ring-1 ring-line">
+      <div class="flex-1">
+        <h2 class="font-display font-semibold text-ink">{{ c.name }}</h2>
+        <p class="text-xs text-faint">{% if c.corporation_id %}{% eve_name c.corporation_id %}{% endif %}{% if card.verified_at %} · <span title="Last reconciled against CCP">verified with CCP {{ card.verified_at|timesince }} ago</span>{% endif %}</p>
+      </div>
+      <form method="post" action="{% url 'sso:disconnect' c.character_id %}" data-confirm="Disconnect {{ c.name }}? This revokes all its granted ESI access.">{% csrf_token %}
+        <button class="btn-ghost !text-loss hover:!border-loss/40">Disconnect</button>
+      </form>
+    </div>
+
+    <!-- Personal access: any pilot can grant these for their own character. -->
+    <div class="mt-4">
+      <p class="eyebrow mb-2">Your access</p>
+      <div class="space-y-2">
+        {% for s in card.pilot_features %}
+          {% include "sso/_feature_row.html" with f=s.feature granted=s.granted %}
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Corporation access: only meaningful for a home-corp member with the role. -->
+    {% if c.is_corp_member %}
+      <div class="mt-4 border-t border-line/60 pt-4">
+        <p class="eyebrow mb-2">Corporation access <span class="text-faint">· needs an in-game role</span></p>
+        <div class="space-y-2">
+          {% for s in card.director_features %}
+            {% include "sso/_feature_row.html" with f=s.feature granted=s.granted %}
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- Raw granted scopes, for transparency / debugging. -->
+    {% if card.granted_scopes %}
+      <details class="mt-4 border-t border-line/60 pt-3">
+        <summary class="cursor-pointer text-xs text-faint hover:text-muted">Granted ESI scopes ({{ card.granted_scopes|length }})</summary>
+        <div class="mt-2 flex flex-wrap gap-1.5">
+          {% for scope in card.granted_scopes %}<span class="chip">{{ scope }}</span>{% endfor %}
+        </div>
+      </details>
+    {% endif %}
+  </section>
+  {% endwith %}
+{% empty %}
+  <div class="panel p-8 text-center text-sm text-faint">No characters linked.</div>
+{% endfor %}
+{% endblock %}

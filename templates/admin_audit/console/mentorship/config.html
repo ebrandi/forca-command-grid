@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% load static eve %}
+{% block title %}Programme settings · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<a href="{% url 'admin_audit:mentorship_hub' %}" class="text-xs text-faint hover:text-gold">&larr; Mentorship</a>
+<header class="mt-2 mb-6">
+  <p class="eyebrow text-gold">Mentorship</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">Programme settings</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">Set who can mentor, how cadets and pairs are approved, what earns a reward, and how the programme shows up for your pilots.</p>
+</header>
+
+{% if form.non_field_errors %}
+<div class="panel mb-5 border-loss/40 bg-loss/5 p-4 text-sm text-loss">{{ form.non_field_errors|join:" " }}</div>
+{% endif %}
+
+{% comment %}Fields are rendered explicitly so they can be grouped into labelled
+fieldsets. Booleans are inline checkboxes; every other field is a stacked label +
+widget + help + errors. No inline handlers — CSP-safe. Widgets carry their own
+.input-field styling from the form.{% endcomment %}
+
+<form method="post" action="{% url 'admin_audit:mentorship_config' %}" class="space-y-5">
+  {% csrf_token %}
+
+  <!-- Eligibility -->
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-4 text-gold">Eligibility</h2>
+    <p class="mb-4 text-xs text-faint">Who qualifies to mentor, and which pilots still count as cadets.</p>
+    <div class="grid gap-x-5 gap-y-4 sm:grid-cols-2">
+      <div>
+        <label class="label" for="{{ form.mentor_min_character_age_days.id_for_label }}">{{ form.mentor_min_character_age_days.label }}</label>
+        {{ form.mentor_min_character_age_days }}
+        {% if form.mentor_min_character_age_days.help_text %}<p class="mt-1 text-[11px] text-faint">{{ form.mentor_min_character_age_days.help_text }}</p>{% endif %}
+        {% if form.mentor_min_character_age_days.errors %}<p class="mt-1 text-xs text-loss">{{ form.mentor_min_character_age_days.errors|join:" " }}</p>{% endif %}
+      </div>
+      <div>
+        <label class="label" for="{{ form.mentor_min_corp_tenure_days.id_for_label }}">{{ form.mentor_min_corp_tenure_days.label }}</label>
+        {{ form.mentor_min_corp_tenure_days }}
+        {% if form.mentor_min_corp_tenure_days.help_text %}<p class="mt-1 text-[11px] text-faint">{{ form.mentor_min_corp_tenure_days.help_text }}</p>{% endif %}
+        {% if form.mentor_min_corp_tenure_days.errors %}<p class="mt-1 text-xs text-loss">{{ form.mentor_min_corp_tenure_days.errors|join:" " }}</p>{% endif %}
+      </div>
+      <div>
+        <label class="label" for="{{ form.mentor_eligibility_logic.id_for_label }}">{{ form.mentor_eligibility_logic.label }}</label>
+        {{ form.mentor_eligibility_logic }}
+        {% if form.mentor_eligibility_logic.help_text %}<p class="mt-1 text-[11px] text-faint">{{ form.mentor_eligibility_logic.help_text }}</p>{% endif %}
+        {% if form.mentor_eligibility_logic.errors %}<p class="mt-1 text-xs text-loss">{{ form.mentor_eligibility_logic.errors|join:" " }}</p>{% endif %}
+      </div>
+      <div>
+        <label class="label" for="{{ form.mentee_max_corp_tenure_days.id_for_label }}">{{ form.mentee_max_corp_tenure_days.label }}</label>
+        {{ form.mentee_max_corp_tenure_days }}
+        {% if form.mentee_max_corp_tenure_days.help_text %}<p class="mt-1 text-[11px] text-faint">{{ form.mentee_max_corp_tenure_days.help_text }}</p>{% endif %}
+        {% if form.mentee_max_corp_tenure_days.errors %}<p class="mt-1 text-xs text-loss">{{ form.mentee_max_corp_tenure_days.errors|join:" " }}</p>{% endif %}
+      </div>
+      <div class="sm:col-span-2">
+        <label class="flex items-center gap-2 text-sm text-ink">{{ form.enforce_mentee_eligibility }} <span>{{ form.enforce_mentee_eligibility.label }}</span></label>
+        {% if form.enforce_mentee_eligibility.help_text %}<p class="mt-1 text-[11px] text-faint">{{ form.enforce_mentee_eligibility.help_text }}</p>{% endif %}
+        {% if form.enforce_mentee_eligibility.errors %}<p class="mt-1 text-xs text-loss">{{ form.enforce_mentee_eligibility.errors|join:" " }}</p>{% endif %}
+      </div>
+    </div>
+  </section>
+
+  <!-- Approvals & pairing -->
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-4 text-gold">Approvals &amp; pairing</h2>
+    <p class="mb-4 text-xs text-faint">Who signs off applications and pairings, and how long a pairing stays live.</p>
+    <div class="grid gap-x-5 gap-y-4 sm:grid-cols-2">
+      <div>
+        <label class="flex items-center gap-2 text-sm text-ink">{{ form.mentor_requires_approval }} <span>{{ form.mentor_requires_approval.label }}</span></label>
+        {% if form.mentor_requires_approval.help_text %}<p class="mt-1 text-[11px] text-faint">{{ form.mentor_requires_approval.help_text }}</p>{% endif %}
+        {% if form.mentor_requires_approval.errors %}<p class="mt-1 text-xs text-loss">{{ form.mentor_requires_approval.errors|join:" " }}</p>{% endif %}
+      </div>
+      <div>
+        <label class="flex items-center gap-2 text-sm text-ink">{{ form.mentee_requires_approval }} <span>{{ form.mentee_requires_approval.label }}</span></label>
+        {% if form.mentee_requires_approval.help_text %}<p class="mt-1 text-[11px] text-faint">{{ form.mentee_requires_approval.help_text }}</p>{% endif %}
+        {% if form.mentee_requires_approval.errors %}<p class="mt-1 text-xs text-loss">{{ form.mentee_requires_approval.errors|join:" " }}</p>{% endif %}
+      </div>
+      <div>
+        <label class="label" for="{{ form.max_active_mentees_per_mentor.id_for_label }}">{{ form.max_active_mentees_per_mentor.label }}</label>
+        {{ form.max_active_mentees_per_mentor }}
+        {% if form.max_active_mentees_per_mentor.help_text %}<p class="mt-1 text-[11px] text-faint">{{ form.max_active_mentees_per_mentor.help_text }}</p>{% endif %}
+        {% if form.max_active_mentees_per_mentor.errors %}<p class="mt-1 text-xs text-loss">{{ form.max_active_mentees_per_mentor.errors|join:" " }}</p>{% endif %}
+      </div>
+      <div>
+        <label class="flex items-center gap-2 text-sm text-ink">{{ form.pairing_requires_approval }} <span>{{ form.pairing_requires_approval.label }}</span></label>
+        {% if form.pairing_requires_approval.help_text %}<p class="mt-1 text-[11px] text-faint">{{ form.pairing_requires_approval.help_text }}</p>{% endif %}
+        {% if form.pairing_requires_approval.errors %}<p class="mt-1 text-xs text-loss">{{ form.pairing_requires_approval.errors|join:" " }}</p>{% endif %}
+      </div>
+      <div>
+        <label class="flex items-center gap-2 text-sm text-ink">{{ form.allow_mentor_initiated }} <span>{{ form.allow_mentor_initiated.label }}</span></label>
+        {% if form.allow_mentor_initiated.help_text %}<p class="mt-1 text-[11px] text-faint">{{ form.allow_mentor_initiated.help_text }}</p>{% endif %}
+        {% if form.allow_mentor_initiated.errors %}<p class="mt-1 text-xs text-loss">{{ form.allow_mentor_initiated.errors|join:" " }}</p>{% endif %}
+      </div>
+      <div>
+        <label class="flex items-center gap-2 text-sm text-ink">{{ form.allow_mentee_initiated }} <span>{{ form.allow_mentee_initiated.label }}</span></label>
+        {% if form.allow_mentee_initiated.help_text %}<p class="mt-1 text-[11px] text-faint">{{ form.allow_mentee_initiated.help_text }}</p>{% endif %}
+        {% if form.allow_mentee_initiated.errors %}<p class="mt-1 text-xs text-loss">{{ form.allow_mentee_initiated.errors|join:" " }}</p>{% endif %}
+      </div>
+      <div>
+        <label class="label" for="{{ form.pairing_ttl_days.id_for_label }}">{{ form.pairing_ttl_days.label }}</label>
+        {{ form.pairing_ttl_days }}
+        {% if form.pairing_ttl_days.help_text %}<p class="mt-1 text-[11px] text-faint">{{ form.pairing_ttl_days.help_text }}</p>{% endif %}
+        {% if form.pairing_ttl_days.errors %}<p class="mt-1 text-xs text-loss">{{ form.pairing_ttl_days.errors|join:" " }}</p>{% endif %}
+      </div>
+      <div>
+        <label class="label" for="{{ form.stale_pair_days.id_for_label }}">{{ form.stale_pair_days.label }}</label>
+        {{ form.stale_pair_days }}
+        {% if form.stale_pair_days.help_text %}<p class="mt-1 text-[11px] text-faint">{{ form.stale_pair_days.help_text }}</p>{% endif %}
+        {% if form.stale_pair_days.errors %}<p class="mt-1 text-xs text-loss">{{ form.stale_pair_days.errors|join:" " }}</p>{% endif %}
+      </div>
+    </div>
+  </section>
+
+  <!-- Rewards -->
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-4 text-gold">Rewards</h2>
+    <p class="mb-4 text-xs text-faint">Whether mentorship pays out, how it's validated, and the ISK ceilings on each side.</p>
+    <div class="grid gap-x-5 gap-y-4 sm:grid-cols-2">
+      <div>
+        <label class="flex items-center gap-2 text-sm text-ink">{{ form.rewards_enabled }} <span>{{ form.rewards_enabled.label }}</span></label>
+        {% if form.rewards_enabled.help_text %}<p class="mt-1 text-[11px] text-faint">{{ form.rewards_enabled.help_text }}</p>{% endif %}
+        {% if form.rewards_enabled.errors %}<p class="mt-1 text-xs text-loss">{{ form.rewards_enabled.errors|join:" " }}</p>{% endif %}
+      </div>
+      <div>
+        <label class="label" for="{{ form.reward_mode.id_for_label }}">{{ form.reward_mode.label }}</label>
+        {{ form.reward_mode }}
+        {% if form.reward_mode.help_text %}<p class="mt-1 text-[11px] text-faint">{{ form.reward_mode.help_text }}</p>{% endif %}
+        {% if form.reward_mode.errors %}<p class="mt-1 text-xs text-loss">{{ form.reward_mode.errors|join:" " }}</p>{% endif %}
+      </div>
+      <div>
+        <label class="flex items-center gap-2 text-sm text-ink">{{ form.esi_validation_required }} <span>{{ form.esi_validation_required.label }}</span></label>
+        {% if form.esi_validation_required.help_text %}<p class="mt-1 text-[11px] text-faint">{{ form.esi_validation_required.help_text }}</p>{% endif %}
+        {% if form.esi_validation_required.errors %}<p class="mt-1 text-xs text-loss">{{ form.esi_validation_required.errors|join:" " }}</p>{% endif %}
+      </div>
+      <div>
+        <label class="flex items-center gap-2 text-sm text-ink">{{ form.allow_unverified_rewards }} <span>{{ form.allow_unverified_rewards.label }}</span></label>
+        {% if form.allow_unverified_rewards.help_text %}<p class="mt-1 text-[11px] text-faint">{{ form.allow_unverified_rewards.help_text }}</p>{% endif %}
+        {% if form.allow_unverified_rewards.errors %}<p class="mt-1 text-xs text-loss">{{ form.allow_unverified_rewards.errors|join:" " }}</p>{% endif %}
+      </div>
+      <div>
+        <label class="label" for="{{ form.default_task_cooldown_hours.id_for_label }}">{{ form.default_task_cooldown_hours.label }}</label>
+        {{ form.default_task_cooldown_hours }}
+        {% if form.default_task_cooldown_hours.help_text %}<p class="mt-1 text-[11px] text-faint">{{ form.default_task_cooldown_hours.help_text }}</p>{% endif %}
+        {% if form.default_task_cooldown_hours.errors %}<p class="mt-1 text-xs text-loss">{{ form.default_task_cooldown_hours.errors|join:" " }}</p>{% endif %}
+      </div>
+      <div>
+        <label class="label" for="{{ form.mentee_reward_cap_isk.id_for_label }}">{{ form.mentee_reward_cap_isk.label }}</label>
+        {{ form.mentee_reward_cap_isk }}
+        {% if form.mentee_reward_cap_isk.help_text %}<p class="mt-1 text-[11px] text-faint">{{ form.mentee_reward_cap_isk.help_text }}</p>{% endif %}
+        {% if form.mentee_reward_cap_isk.errors %}<p class="mt-1 text-xs text-loss">{{ form.mentee_reward_cap_isk.errors|join:" " }}</p>{% endif %}
+      </div>
+      <div>
+        <label class="label" for="{{ form.mentor_reward_cap_isk.id_for_label }}">{{ form.mentor_reward_cap_isk.label }}</label>
+        {{ form.mentor_reward_cap_isk }}
+        {% if form.mentor_reward_cap_isk.help_text %}<p class="mt-1 text-[11px] text-faint">{{ form.mentor_reward_cap_isk.help_text }}</p>{% endif %}
+        {% if form.mentor_reward_cap_isk.errors %}<p class="mt-1 text-xs text-loss">{{ form.mentor_reward_cap_isk.errors|join:" " }}</p>{% endif %}
+      </div>
+    </div>
+  </section>
+
+  <!-- Visibility & notifications -->
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-4 text-gold">Visibility &amp; notifications</h2>
+    <p class="mb-4 text-xs text-faint">How the programme appears to pilots, who sees profiles, and where updates are announced.</p>
+    <div class="grid gap-x-5 gap-y-4 sm:grid-cols-2">
+      <div>
+        <label class="flex items-center gap-2 text-sm text-ink">{{ form.mentor_directory_visible }} <span>{{ form.mentor_directory_visible.label }}</span></label>
+        {% if form.mentor_directory_visible.help_text %}<p class="mt-1 text-[11px] text-faint">{{ form.mentor_directory_visible.help_text }}</p>{% endif %}
+        {% if form.mentor_directory_visible.errors %}<p class="mt-1 text-xs text-loss">{{ form.mentor_directory_visible.errors|join:" " }}</p>{% endif %}
+      </div>
+      <div>
+        <label class="flex items-center gap-2 text-sm text-ink">{{ form.notify_discord }} <span>{{ form.notify_discord.label }}</span></label>
+        {% if form.notify_discord.help_text %}<p class="mt-1 text-[11px] text-faint">{{ form.notify_discord.help_text }}</p>{% endif %}
+        {% if form.notify_discord.errors %}<p class="mt-1 text-xs text-loss">{{ form.notify_discord.errors|join:" " }}</p>{% endif %}
+      </div>
+      <div>
+        <label class="label" for="{{ form.profile_visibility.id_for_label }}">{{ form.profile_visibility.label }}</label>
+        {{ form.profile_visibility }}
+        {% if form.profile_visibility.help_text %}<p class="mt-1 text-[11px] text-faint">{{ form.profile_visibility.help_text }}</p>{% endif %}
+        {% if form.profile_visibility.errors %}<p class="mt-1 text-xs text-loss">{{ form.profile_visibility.errors|join:" " }}</p>{% endif %}
+      </div>
+      <div>
+        <label class="label" for="{{ form.active_cohort.id_for_label }}">{{ form.active_cohort.label }}</label>
+        {{ form.active_cohort }}
+        {% if form.active_cohort.help_text %}<p class="mt-1 text-[11px] text-faint">{{ form.active_cohort.help_text }}</p>{% endif %}
+        {% if form.active_cohort.errors %}<p class="mt-1 text-xs text-loss">{{ form.active_cohort.errors|join:" " }}</p>{% endif %}
+      </div>
+      <div class="sm:col-span-2">
+        <label class="label" for="{{ form.intro_text.id_for_label }}">{{ form.intro_text.label }}</label>
+        {{ form.intro_text }}
+        {% if form.intro_text.help_text %}<p class="mt-1 text-[11px] text-faint">{{ form.intro_text.help_text }}</p>{% endif %}
+        {% if form.intro_text.errors %}<p class="mt-1 text-xs text-loss">{{ form.intro_text.errors|join:" " }}</p>{% endif %}
+      </div>
+    </div>
+  </section>
+
+  <div class="flex items-center gap-3">
+    <button class="btn-gold">Save settings</button>
+    <a href="{% url 'admin_audit:mentorship_hub' %}" class="btn-ghost text-sm">Cancel</a>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Readiness · Doctrine classification · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
+<header class="mt-2 mb-6">
+  <p class="eyebrow">Readiness configuration</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">Doctrine classification</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">Mark which doctrines are <span class="text-ink">primary</span>, <span class="text-ink">mandatory</span> or <span class="text-ink">alliance</span>, set a retirement date, and a minimum pilot count. A <span class="text-cyan">mandatory</span> doctrine that's under-crewed raises a high-severity finding; a doctrine past its <span class="text-cyan">retirement date</span> raises a replace-it finding. Leaving a doctrine unclassified has no effect on the index.</p>
+</header>
+
+
+<form method="post" action="{% url 'admin_audit:readiness_doctrines' %}">
+  {% csrf_token %}
+  <section class="panel overflow-hidden">
+    <div class="hidden border-b border-line px-4 py-2.5 text-[11px] uppercase tracking-wide text-faint sm:grid sm:grid-cols-[1fr_4rem_5rem_5rem_5rem_8rem_5rem] sm:gap-3">
+      <span>Doctrine</span><span class="text-center">Primary</span><span class="text-center">Mandatory</span><span class="text-center">Alliance</span><span class="text-center">Upcoming</span><span class="text-right">Retires</span><span class="text-right">Min pilots</span>
+    </div>
+    <div class="divide-y divide-line/40">
+      {% for r in rows %}
+      <div class="grid grid-cols-2 items-center gap-3 px-4 py-3 hover:bg-panel2/40 sm:grid-cols-[1fr_4rem_5rem_5rem_5rem_8rem_5rem]">
+        <div class="col-span-2 sm:col-span-1">
+          <span class="block text-sm font-medium text-ink">{{ r.name }}</span>
+          <span class="block font-mono text-[11px] text-faint">priority {{ r.priority }}</span>
+        </div>
+        <label class="flex items-center gap-2 sm:justify-center"><span class="text-xs text-faint sm:hidden">Primary</span><input type="checkbox" name="doc_{{ r.id }}_primary" {% if r.is_primary %}checked{% endif %}></label>
+        <label class="flex items-center gap-2 sm:justify-center"><span class="text-xs text-faint sm:hidden">Mandatory</span><input type="checkbox" name="doc_{{ r.id }}_mandatory" {% if r.is_mandatory %}checked{% endif %}></label>
+        <label class="flex items-center gap-2 sm:justify-center"><span class="text-xs text-faint sm:hidden">Alliance</span><input type="checkbox" name="doc_{{ r.id }}_alliance" {% if r.is_alliance %}checked{% endif %}></label>
+        <label class="flex items-center gap-2 sm:justify-center"><span class="text-xs text-faint sm:hidden">Upcoming</span><input type="checkbox" name="doc_{{ r.id }}_upcoming" {% if r.is_upcoming %}checked{% endif %}></label>
+        <label class="flex items-center gap-2 sm:block"><span class="text-xs text-faint sm:hidden">Retires</span><input type="date" name="doc_{{ r.id }}_retire" value="{{ r.retirement_date }}" class="input-field w-full text-right"></label>
+        <label class="flex items-center gap-2 sm:block"><span class="text-xs text-faint sm:hidden">Min pilots</span><input type="number" min="0" name="doc_{{ r.id }}_min" value="{{ r.min_pilots }}" class="input-field w-full text-right" inputmode="numeric"></label>
+      </div>
+      {% empty %}
+      <p class="px-4 py-10 text-center text-sm text-faint">No doctrines defined yet — add them on the <a href="{% url 'admin_audit:doctrines' %}" class="text-cyan hover:underline">Doctrines page</a> first.</p>
+      {% endfor %}
+    </div>
+    {% if rows %}
+    <div class="flex items-center justify-end border-t border-line px-4 py-3">
+      <button class="btn-gold">Save changes</button>
+    </div>
+    {% endif %}
+  </section>
+</form>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}Planetary Industry · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow">Industry &amp; Economy</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">Planetary Industry</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">Your guided PI assistant — understand the chains, plan a colony network, and see the profit before you commit a single Command Center.</p>
+  </div>
+  {% if enabled %}
+  <a href="{% url 'planetary:create' %}" class="btn-gold"><svg class="h-4 w-4"><use href="#i-bolt"/></svg> New PI plan</a>
+  {% endif %}
+</header>
+
+{% if not enabled %}
+<div class="panel mb-6 border-gold/30 p-4">
+  <p class="text-sm text-gold">The Planetary Industry planner is currently switched off by leadership. You can still read the guide below.</p>
+</div>
+{% endif %}
+
+{# Entry points #}
+<div class="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+  <a href="{% url 'planetary:explore' %}" class="panel group flex items-start gap-3 p-4 hover:border-gold/40">
+    <svg class="h-6 w-6 text-gold"><use href="#i-route"/></svg>
+    <div><p class="font-medium text-ink group-hover:text-gold">Explore chains</p><p class="mt-0.5 text-xs text-faint">P0→P4, what a planet yields, what a product needs.</p></div>
+  </a>
+  <a href="{% url 'planetary:recommend' %}" class="panel group flex items-start gap-3 p-4 hover:border-gold/40">
+    <svg class="h-6 w-6 text-gold"><use href="#i-target"/></svg>
+    <div><p class="font-medium text-ink group-hover:text-gold">What should I make?</p><p class="mt-0.5 text-xs text-faint">Ranked, profitable setups for your goal.</p></div>
+  </a>
+  <a href="{% url 'planetary:colonies' %}" class="panel group flex items-start gap-3 p-4 hover:border-gold/40">
+    <svg class="h-6 w-6 text-gold"><use href="#i-box"/></svg>
+    <div><p class="font-medium text-ink group-hover:text-gold">My colonies</p><p class="mt-0.5 text-xs text-faint">Import live colonies from EVE and spot issues.</p></div>
+  </a>
+  <a href="{% url 'planetary:learn' %}" class="panel group flex items-start gap-3 p-4 hover:border-gold/40">
+    <svg class="h-6 w-6 text-gold"><use href="#i-rookie"/></svg>
+    <div><p class="font-medium text-ink group-hover:text-gold">Learn PI</p><p class="mt-0.5 text-xs text-faint">New to Planetary Industry? Start here.</p></div>
+  </a>
+</div>
+
+{# My plans #}
+<section class="mb-6">
+  <div class="mb-3 flex items-center justify-between">
+    <h2 class="text-lg font-semibold text-ink">My plans</h2>
+    {% if archived_count %}<span class="text-xs text-faint">{{ archived_count }} archived</span>{% endif %}
+  </div>
+
+  {% if has_plans %}
+  <div class="grid gap-3 lg:grid-cols-2">
+    {% for card in cards %}
+    <a href="{% url 'planetary:detail' card.plan.pk %}" class="panel group block p-4 hover:border-gold/40">
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <p class="truncate font-medium text-ink group-hover:text-gold">{{ card.plan.name }}</p>
+          <p class="mt-0.5 truncate text-xs text-faint">{{ card.plan.get_goal_display }}{% if card.plan.character_name %} · {{ card.plan.character_name }}{% endif %}</p>
+        </div>
+        <span class="shrink-0">{% include "planetary/_chip.html" with label=card.health.0 color=card.health.1 %}</span>
+      </div>
+      <div class="mt-3 grid grid-cols-3 gap-2 text-sm">
+        <div><p class="eyebrow text-faint">Net / day</p><p class="data {% if card.net_day and card.net_day > 0 %}text-kill{% elif card.net_day %}text-loss{% else %}text-faint{% endif %}">{% if card.net_day is not None %}{{ card.net_day|isk }}{% else %}—{% endif %}</p></div>
+        <div><p class="eyebrow text-faint">Net / month</p><p class="data text-ink">{% if card.net_month is not None %}{{ card.net_month|isk }}{% else %}—{% endif %}</p></div>
+        <div><p class="eyebrow text-faint">Planets</p><p class="data text-ink">{{ card.planet_count }}</p></div>
+      </div>
+      <div class="mt-3 flex flex-wrap items-center gap-1.5">
+        {% for t in card.tiers %}<span class="chip">{{ t }}</span>{% endfor %}
+        {% for prod in card.products %}<span class="chip !text-muted">{{ prod }}</span>{% endfor %}
+        <span class="ml-auto text-[11px] text-faint">Complexity {{ card.complexity }} · Confidence {{ card.confidence }}</span>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="panel px-4 py-12 text-center">
+    <svg class="mx-auto h-8 w-8 text-faint"><use href="#i-bolt"/></svg>
+    <p class="mt-3 text-sm text-faint">Create your first PI plan and Command Grid will guide you from planet selection to profit estimate.</p>
+    {% if enabled %}<a href="{% url 'planetary:create' %}" class="btn-gold mt-4 inline-flex">Start the wizard →</a>{% endif %}
+  </div>
+  {% endif %}
+</section>
+
+{% include "planetary/_onboarding.html" %}
+{% endblock %}

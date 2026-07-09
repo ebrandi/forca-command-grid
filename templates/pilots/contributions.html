@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}My contribution · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<a href="{% url 'identity:dashboard' %}" class="text-xs text-faint hover:text-gold">← Command Center</a>
+
+<header class="mt-2 mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow">Pilot</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">My contribution</h1>
+    <p class="mt-1 text-sm text-faint">What you've done for the corp — tracked in native units, no scoreboard.</p>
+  </div>
+  <form method="post" action="{% url 'pilots:toggle_recognition' %}">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.path }}">
+    <button class="chip {% if prefs.public_recognition %}!border-kill/40 !text-kill{% else %}!border-line !text-faint{% endif %}">
+      Corp recognition: {% if prefs.public_recognition %}on{% else %}off{% endif %} · toggle
+    </button>
+  </form>
+</header>
+
+{% if nudge %}
+<div class="mb-6 rounded-lg border border-gold/40 bg-gold/5 p-4">
+  <p class="text-sm text-ink"><span class="font-display font-semibold text-gold">Where you'd help most right now:</span>
+    the corp has a binding constraint in <strong>{{ nudge.constraint_label }}</strong> — and {{ nudge.kind_label|lower }} is your usual contribution
+    (<strong>{{ nudge.count_90d }}</strong> in the last 90 days). A little more {{ nudge.kind_label|lower }} this month goes a long way.</p>
+</div>
+{% endif %}
+
+<!-- Points headline -->
+{% if points_total %}
+<section class="panel mb-4 flex items-center justify-between px-5 py-4">
+  <div>
+    <p class="eyebrow text-faint">Contribution points · this month</p>
+    <p class="mt-0.5 text-xs text-faint">Weighted by leadership across everything you've done for the corp.</p>
+  </div>
+  <p class="font-display text-4xl font-bold text-gold">{{ points_total }}</p>
+</section>
+{% endif %}
+
+<!-- This-month totals -->
+<section class="mb-6">
+  <h2 class="eyebrow mb-2">This month</h2>
+  {% if summary %}
+    <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+      {% for s in summary %}
+        <div class="panel p-4">
+          <p class="eyebrow">{{ s.label }}</p>
+          <p class="mt-1 font-display text-2xl font-bold text-gold">{% if s.unit == 'isk' %}{{ s.total|isk }}{% else %}{{ s.total|floatformat:"-2" }}{% endif %}</p>
+          <p class="mt-0.5 text-xs text-faint">{{ s.unit }} · {{ s.count }} event{{ s.count|pluralize }}{% if s.points %} · <span class="text-gold">{{ s.points }} pts</span>{% endif %}</p>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="panel p-6 text-center text-sm text-faint">
+      Nothing this month yet. Claim a task, build a hull, or run a haul — it'll show up here.
+    </div>
+  {% endif %}
+</section>
+
+<!-- Personal trajectory (private, non-competitive) -->
+{% if trend.kinds %}
+<section class="mb-6">
+  <div class="mb-2 flex flex-wrap items-end justify-between gap-2">
+    <h2 class="eyebrow">Your trajectory · last {{ trend.months }} months</h2>
+    <p class="text-xs text-faint">Active-week streak:
+      <span class="font-semibold text-gold">{{ trend.current_streak }}</span> now ·
+      best <span class="font-semibold text-ink">{{ trend.longest_streak }}</span></p>
+  </div>
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    {% for k in trend.kinds %}
+    <div class="panel p-4">
+      <div class="flex items-baseline justify-between gap-2">
+        <p class="eyebrow">{{ k.label }}</p>
+        <p class="text-xs text-faint">best {% if k.unit == 'isk' %}{{ k.peak|isk }}{% else %}{{ k.peak|floatformat:"-2" }} {{ k.unit }}{% endif %}</p>
+      </div>
+      <div class="mt-3 flex h-12 items-end gap-1">
+        {% for b in k.bars %}
+        <div class="flex-1 rounded-t bg-gold/70" style="height:{% if b %}{{ b }}{% else %}2{% endif %}%"></div>
+        {% endfor %}
+      </div>
+      <div class="mt-1 flex justify-between text-[10px] text-faint">
+        <span>{{ trend.month_labels|first }}</span><span>{{ trend.month_labels|last }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <p class="mt-2 text-[11px] text-faint">Private to you — each sparkline is scaled to your own best month, never compared to anyone else.</p>
+</section>
+{% endif %}
+
+<!-- History -->
+<section class="panel overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Recent history</h2></div>
+  <div class="divide-y divide-line/40">
+    {% for ev in events %}
+      <div class="flex items-center gap-3 px-4 py-2.5 text-sm">
+        <span class="chip">{{ ev.get_kind_display }}</span>
+        <span class="min-w-0 flex-1 truncate text-ink">{{ ev.description|default:ev.get_kind_display }}{% if ev.gap_ref %} <span class="text-faint">· {{ ev.gap_ref }}</span>{% endif %}</span>
+        <span class="data text-gold">{% if ev.unit == 'isk' %}{{ ev.magnitude|isk }} ISK{% else %}{{ ev.magnitude|floatformat:"-2" }} {{ ev.unit }}{% endif %}</span>
+        <span class="hidden w-24 text-right text-xs text-faint sm:block">{{ ev.occurred_at|timesince }} ago</span>
+      </div>
+    {% empty %}
+      <p class="px-4 py-6 text-center text-sm text-faint">No contributions recorded yet.</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

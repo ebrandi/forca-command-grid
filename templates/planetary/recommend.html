@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}What should I make? · Planetary Industry{% endblock %}
+{% block content %}
+<header class="mb-5">
+  <a href="{% url 'planetary:landing' %}" class="text-xs text-faint hover:text-gold">← Planetary Industry</a>
+  <h1 class="mt-1 text-3xl font-bold text-ink">What should I make?</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">Ranked by estimated ISK/day per planet against {{ region_name }}. Tell us your goal and which planets you have, and we'll narrow it down. Estimates use the corp default assumptions — your plan can refine them.</p>
+</header>
+
+<form method="get" class="panel mb-4 p-4">
+  <div class="grid gap-4 lg:grid-cols-3">
+    <div>
+      <label class="label" for="goal">Your goal</label>
+      <select name="goal" id="goal" class="input-field">
+        {% for val, label in goals %}<option value="{{ val }}" {% if goal == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="lg:col-span-2">
+      <p class="label">Planets you have (optional)</p>
+      <div class="flex flex-wrap gap-x-4 gap-y-1.5">
+        {% for p in planet_types %}
+        <label class="flex items-center gap-1.5 text-sm text-faint">
+          <input type="checkbox" name="planet" value="{{ p.slug }}" class="h-4 w-4" {% if p.slug in selected_planets %}checked{% endif %}> {{ p.name }}
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <button type="submit" class="btn-gold mt-3 !text-xs">Update recommendations</button>
+</form>
+
+<div class="grid gap-3 lg:grid-cols-2">
+  {% for item in items %}
+  <div class="panel p-4">
+    <div class="flex items-start gap-3">
+      <img src="{% eve_type_render item.type_id 48 %}" alt="" loading="lazy" class="h-11 w-11 rounded bg-space ring-1 ring-line">
+      <div class="min-w-0 flex-1">
+        <div class="flex items-center gap-2">
+          <p class="truncate font-medium text-ink">{{ item.name }}</p>
+          <span class="chip">{{ item.tier }}</span>
+        </div>
+        <div class="mt-1 flex flex-wrap gap-1">
+          {% for label, color in item.badges %}{% include "planetary/_chip.html" with label=label color=color %}{% endfor %}
+          {% if not item.priced %}<span class="chip !text-faint">prices missing</span>{% endif %}
+        </div>
+      </div>
+      <div class="text-right">
+        <p class="data text-lg font-bold {% if item.net_day > 0 %}text-kill{% else %}text-loss{% endif %}">{{ item.net_day|isk }}</p>
+        <p class="text-[11px] text-faint">net / day / planet</p>
+      </div>
+    </div>
+    <p class="mt-2 text-xs text-faint">{{ item.explanation }}</p>
+    <div class="mt-3 grid grid-cols-4 gap-2 text-center text-xs">
+      <div><p class="data text-ink">{{ item.net_month|isk }}</p><p class="text-[10px] text-faint">/ month</p></div>
+      <div><p class="data text-ink">{{ item.isk_per_m3|isk }}</p><p class="text-[10px] text-faint">ISK / m³</p></div>
+      <div><p class="text-ink">{{ item.complexity }}</p><p class="text-[10px] text-faint">complexity</p></div>
+      <div><p class="text-ink capitalize">{{ item.role }}</p><p class="text-[10px] text-faint">planet</p></div>
+    </div>
+    <div class="mt-3 flex items-center justify-between">
+      <p class="text-[11px] text-faint">Needs: {{ item.needs_planets|join:", "|default:"—" }}</p>
+      <a href="{% url 'planetary:explore' %}?material={{ item.type_id }}" class="text-xs text-gold hover:underline">See chain →</a>
+    </div>
+  </div>
+  {% empty %}
+  <div class="panel px-4 py-12 text-center lg:col-span-2"><p class="text-sm text-faint">No priced products for this goal yet. Prices fill in on the daily market sync — check back, or pick a different goal.</p></div>
+  {% endfor %}
+</div>
+{% endblock %}

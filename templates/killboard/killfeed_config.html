@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Kill feed · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
+<header class="mt-2 mb-6">
+  <p class="eyebrow">Alerts</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">Discord kill feed</h1>
+  <p class="mt-1 text-sm text-faint">Post sizeable corp kills and losses to Discord. Set a threshold to 0 to mute that direction. Needs a Discord webhook channel configured under In-game Alerts.</p>
+</header>
+
+
+<form method="post" class="panel max-w-lg space-y-4 p-5">
+  {% csrf_token %}
+  <label class="flex items-center gap-2 text-sm">
+    <input type="checkbox" name="enabled" value="1" {% if cfg.enabled %}checked{% endif %}>
+    <span class="text-ink">Enable the kill feed</span>
+  </label>
+  <div>
+    <label class="eyebrow mb-1 block text-faint">Minimum loss value (ISK)</label>
+    <input name="min_loss_value" type="number" min="0" step="1000000" value="{{ cfg.min_loss_value|floatformat:0 }}" class="input-field">
+    <p class="mt-1 text-xs text-faint">Post a corp loss at or above this value. 0 = off.</p>
+  </div>
+  <div>
+    <label class="eyebrow mb-1 block text-faint">Minimum kill value (ISK)</label>
+    <input name="min_kill_value" type="number" min="0" step="1000000" value="{{ cfg.min_kill_value|floatformat:0 }}" class="input-field">
+    <p class="mt-1 text-xs text-faint">Post a corp kill at or above this value. 0 = off.</p>
+  </div>
+  <button class="btn-gold">Save settings</button>
+</form>
+{% endblock %}

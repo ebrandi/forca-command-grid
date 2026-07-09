@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}Guaranteed buyback queue · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-5 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-gold">Buyback · Leadership</p>
+    <h1 class="mt-1 text-2xl font-bold text-ink">Guaranteed buyback</h1>
+    <p class="mt-1 text-sm text-faint">Approve corp buyouts, then pay the seller in-game. <span class="text-loss">No ISK moves through this app</span> — it only tracks and reconciles.</p>
+  </div>
+  <a href="{% url 'buyback:config' %}" class="btn-ghost text-sm">Settings</a>
+</header>
+
+{% if not config.enabled or config.audience == 'disabled' %}
+<div class="panel mb-4 border border-loss/30 px-4 py-2 text-sm text-loss">Guaranteed buyback is turned off — arm it in Settings.</div>
+{% endif %}
+<div class="panel mb-4 px-4 py-2 text-xs text-faint">Committed in the last 24h: <span class="data text-ink">{{ committed_24h|isk }}</span> · Budget {{ config.daily_budget|isk }} · Per-lot cap {{ config.per_lot_cap|isk }}</div>
+
+<!-- Pending approval -->
+<section class="panel overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Requested · {{ pending|length }}</h2></div>
+  <div class="divide-y divide-line/40">
+    {% for b in pending %}
+      <div class="px-4 py-3">
+        <div class="flex flex-wrap items-center gap-3 text-sm">
+          <span class="min-w-0 flex-1">
+            <span class="text-ink">{{ b.quoted_value|isk }}</span>
+            <span class="text-xs text-faint">· {{ b.seller.display_name|default:"—" }} · {{ b.item_count }} items · {{ b.volume_m3|floatformat:0 }} m³{% if b.location_name %} · {{ b.location_name }}{% endif %} · Jita {{ b.jita_value|isk }}</span>
+            {% if b.notes %}<span class="block text-[11px] text-faint">“{{ b.notes }}”</span>{% endif %}
+          </span>
+          {% if b.blocker %}
+            <span class="text-[11px] text-loss" title="{{ b.blocker }}">{{ b.blocker }}</span>
+          {% else %}
+            <form method="post" action="{% url 'buyback:guaranteed_decide' b.pk %}" class="flex items-center gap-1">
+              {% csrf_token %}
+              <input name="reason" placeholder="note (optional)" class="input-field !py-1 !text-xs w-36">
+              <button name="decision" value="approve" class="btn-cyan !py-1 !text-xs">Approve</button>
+              <button name="decision" value="reject" class="btn-ghost !py-1 !text-xs !text-loss">Reject</button>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    {% empty %}
+      <p class="px-4 py-6 text-center text-sm text-faint">Nothing awaiting approval.</p>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- Approved, awaiting payment -->
+{% if approved %}
+<section class="panel mt-5 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Awaiting corp payment · {{ approved|length }}</h2></div>
+  <div class="divide-y divide-line/40">
+    {% for b in approved %}
+      <div class="flex flex-wrap items-center gap-3 px-4 py-2.5 text-sm">
+        <span class="min-w-0 flex-1">
+          <span class="text-ink">{{ b.quoted_value|isk }}</span> to <span class="text-cyan">{{ b.seller.display_name|default:"—" }}</span>
+          <span class="text-xs text-faint">· pay in-game, put <span class="data text-gold">{{ b.payment_token }}</span> in the reason</span>
+        </span>
+        {% if config.require_esi_reconcile %}
+          <span class="text-[11px] text-faint">auto-settles from the corp wallet</span>
+        {% else %}
+          <form method="post" action="{% url 'buyback:guaranteed_settle' b.pk %}" class="flex items-center gap-1">
+            {% csrf_token %}
+            <input name="reference" placeholder="wallet ref" class="input-field !py-1 !text-xs w-32">
+            <button class="btn-ghost !py-1 !text-xs">Mark settled</button>
+          </form>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<!-- Recent -->
+{% if recent %}
+<section class="panel mt-5 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Recent</h2></div>
+  <div class="divide-y divide-line/40">
+    {% for b in recent %}
+      <div class="flex items-center gap-3 px-4 py-2 text-sm">
+        <span class="min-w-0 flex-1 truncate text-muted">{{ b.quoted_value|isk }} · {{ b.seller.display_name|default:"—" }}{% if b.settlement_kind %} · {{ b.get_settlement_kind_display }}{% endif %}</span>
+        <span class="chip {% if b.status == 'settled' %}!border-kill/40 !text-kill{% else %}!text-faint{% endif %}">{{ b.get_status_display }}</span>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}

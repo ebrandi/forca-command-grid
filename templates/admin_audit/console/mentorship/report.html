@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% load static eve %}
+{% block title %}Reporting · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<a href="{% url 'admin_audit:mentorship_hub' %}" class="text-xs text-faint hover:text-gold">&larr; Mentorship</a>
+<header class="mt-2 mb-6">
+  <p class="eyebrow text-gold">Mentorship</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">Reporting</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">How the programme is flying — completion rates, your most active mentors, cadets who need a nudge, and anything the system has flagged for a second look.</p>
+</header>
+
+{% comment %}Stat tiles from summary, then track completion bars, mentor activity
+table, cadets needing attention, commonly sent-back exercises, and the abuse /
+anomaly flag queue with a resolve action.{% endcomment %}
+
+<!-- Stat tiles -->
+<section class="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+  <div class="panel p-4">
+    <p class="data text-2xl font-bold text-ink">{{ summary.active_mentors }}</p>
+    <p class="eyebrow mt-1 text-faint">Active mentors</p>
+  </div>
+  <div class="panel p-4">
+    <p class="data text-2xl font-bold text-ink">{{ summary.active_mentees }}</p>
+    <p class="eyebrow mt-1 text-faint">Active cadets</p>
+  </div>
+  <div class="panel p-4">
+    <p class="data text-2xl font-bold text-ink">{{ summary.active_pairs }}</p>
+    <p class="eyebrow mt-1 text-faint">Active pairs</p>
+  </div>
+  <div class="panel p-4">
+    <p class="data text-2xl font-bold {% if summary.stalled_pairs %}text-loss{% else %}text-ink{% endif %}">{{ summary.stalled_pairs }}</p>
+    <p class="eyebrow mt-1 text-faint">Stalled pairs</p>
+  </div>
+  <div class="panel p-4">
+    <p class="data text-2xl font-bold text-kill">{{ summary.completed_pairs }}</p>
+    <p class="eyebrow mt-1 text-faint">Completed pairs</p>
+  </div>
+  <div class="panel p-4">
+    <p class="data text-2xl font-bold text-gold">{{ summary.reward_liability|floatformat:0 }}</p>
+    <p class="eyebrow mt-1 text-faint">Reward liability ISK</p>
+  </div>
+  <div class="panel p-4">
+    <p class="data text-2xl font-bold text-kill">{{ summary.rewards_paid|floatformat:0 }}</p>
+    <p class="eyebrow mt-1 text-faint">Rewards paid ISK</p>
+  </div>
+  <div class="panel p-4">
+    <p class="data text-2xl font-bold {% if summary.open_flags %}text-loss{% else %}text-ink{% endif %}">{{ summary.open_flags }}</p>
+    <p class="eyebrow mt-1 text-faint">Open flags</p>
+  </div>
+</section>
+
+<!-- Track completion -->
+<section class="mb-8">
+  <h2 class="eyebrow mb-3 text-gold">Track completion</h2>
+  <div class="panel overflow-hidden">
+    <div class="divide-y divide-line/40">
+      {% for t in track_rates %}
+      <div class="px-4 py-3">
+        <div class="mb-1.5 flex items-center justify-between gap-3">
+          <span class="text-sm font-medium text-ink">{{ t.track.title }}</span>
+          <span class="data text-xs text-faint">{{ t.completed }}/{{ t.enrolled }} &middot; {{ t.pct }}%</span>
+        </div>
+        <div class="h-2 overflow-hidden rounded-full bg-space" role="progressbar" aria-valuenow="{{ t.pct }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ t.track.title }} completion">
+          <div class="h-full rounded-full {% if t.pct == 100 %}bg-kill{% else %}bg-gold{% endif %}" style="width:{{ t.pct }}%"></div>
+        </div>
+      </div>
+      {% empty %}
+      <p class="px-4 py-6 text-center text-sm text-faint">No tracks with enrolled cadets yet. Once cadets start flying a track, its completion rate lands here.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Most active mentors -->
+<section class="mb-8">
+  <h2 class="eyebrow mb-3 text-gold">Most active mentors</h2>
+  <div class="panel overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full min-w-[36rem] text-sm">
+        <thead>
+          <tr class="border-b border-line text-left text-[11px] uppercase tracking-wide text-faint">
+            <th class="px-4 py-3 font-medium">Mentor</th>
+            <th class="px-4 py-3 font-medium text-right">Active cadets</th>
+            <th class="px-4 py-3 font-medium text-right">Completed</th>
+            <th class="px-4 py-3 font-medium text-right">Sign-offs</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-line/40">
+          {% for a in mentor_activity %}
+          <tr class="hover:bg-panel2/40">
+            <td class="px-4 py-3 font-medium text-ink">{{ a.mentor.user.display_name }}</td>
+            <td class="px-4 py-3 text-right data text-muted">{{ a.active_mentees }}</td>
+            <td class="px-4 py-3 text-right data text-kill">{{ a.completed }}</td>
+            <td class="px-4 py-3 text-right data text-muted">{{ a.signoffs }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="px-4 py-6 text-center text-sm text-faint">No mentor activity yet. As your Veteran Mentors sign off exercises, they'll climb this board.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Cadets needing attention -->
+<section class="mb-8">
+  <h2 class="eyebrow mb-3 text-gold">Cadets needing attention</h2>
+  <div class="panel overflow-hidden">
+    <div class="divide-y divide-line/40">
+      {% for n in needs_attention %}
+      <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+        <div class="min-w-0">
+          <p class="text-sm font-medium text-ink">{{ n.mentee.user.display_name }}</p>
+          <p class="text-[11px] text-faint">{{ n.why }}</p>
+        </div>
+        {% if n.pairing %}
+        <a href="{% url 'admin_audit:mentorship_approvals' %}#pair-{{ n.pairing.id }}" class="btn-ghost !px-3 !py-1.5 text-xs">View pairing</a>
+        {% endif %}
+      </div>
+      {% empty %}
+      <p class="px-4 py-6 text-center text-sm text-faint">Every cadet is on track — nothing needs a nudge right now. Nice flying.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Commonly sent-back exercises -->
+<section class="mb-8">
+  <h2 class="eyebrow mb-3 text-gold">Commonly sent-back exercises</h2>
+  <div class="panel overflow-hidden">
+    <div class="divide-y divide-line/40">
+      {% for ex in rejected %}
+      <div class="flex items-center justify-between gap-3 px-4 py-3">
+        <span class="min-w-0 truncate text-sm text-ink">{{ ex.title }}</span>
+        <span class="chip text-gold">{{ ex.count }} sent back</span>
+      </div>
+      {% empty %}
+      <p class="px-4 py-6 text-center text-sm text-faint">No exercises are being sent back — your Field Exercises are landing cleanly.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Abuse / anomaly flags -->
+<section class="mb-4">
+  <h2 class="eyebrow mb-3 text-gold">Abuse &amp; anomaly flags</h2>
+  <div class="space-y-3">
+    {% for f in flags %}
+    <div class="panel p-5">
+      <div class="flex flex-wrap items-start justify-between gap-4">
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="chip {% if f.severity >= 60 %}text-loss{% else %}text-gold{% endif %}">Severity {{ f.severity }}</span>
+            <h3 class="font-display text-sm font-semibold text-ink">{{ f.get_kind_display }}</h3>
+          </div>
+          <p class="mt-1.5 text-sm text-muted">{{ f.detail }}</p>
+          <p class="mt-1 text-[11px] text-faint">
+            {% if f.pairing %}
+            <a href="{% url 'admin_audit:mentorship_approvals' %}#pair-{{ f.pairing.id }}" class="text-cyan hover:underline">{{ f.pairing.mentor.user.display_name }} &rarr; {{ f.pairing.mentee.user.display_name }}</a>
+            {% elif f.user %}{{ f.user.display_name }}{% endif %}
+            &middot; {{ f.created_at|date:"j M Y H:i" }}
+          </p>
+        </div>
+        <form method="post" action="{% url 'admin_audit:mentorship_flag_resolve' f.id %}" class="shrink-0">
+          {% csrf_token %}
+          <button class="btn-ghost !px-3 !py-1.5 text-xs">Resolve</button>
+        </form>
+      </div>
+    </div>
+    {% empty %}
+    <div class="panel p-8 text-center">
+      <svg class="mx-auto h-8 w-8 text-kill"><use href="#i-shield"/></svg>
+      <p class="mt-3 text-sm text-faint">No open flags — the programme is running clean. Anything the system spots will surface here for review.</p>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

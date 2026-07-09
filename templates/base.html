@@ -1,0 +1,172 @@
+{% load static eve %}<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}[FORCA] Command Grid{% endblock %}</title>
+  <meta name="description" content="Free EVE Online tools for capsuleers, fleets, and industry planners.">
+  {# Non-canonical (filtered/drill-down) pages set robots_noindex to opt out of indexing. #}
+  {% if robots_noindex %}<meta name="robots" content="noindex, nofollow">{% endif %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <!-- First-party scripts only (CSP: no third-party origins, no 'unsafe-inline').
+       app.js defines the shared Alpine factories and must load before Alpine; the
+       `defer` attributes preserve this document order. -->
+  <script defer src="{% static 'js/app.js' %}"></script>
+  <script defer src="{% static 'js/vendor/alpine.min.js' %}"></script>
+  <script defer src="{% static 'js/vendor/htmx.min.js' %}"></script>
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-full font-sans text-ink antialiased" x-data="{open:false}">
+  <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 btn-gold">Skip to content</a>
+
+  {# Director "view-as": full-width banner + top-right Exit control while impersonating. #}
+  {% include "_impersonation_banner.html" %}
+
+  <!-- icon sprite -->
+  <svg width="0" height="0" class="hidden">
+    <defs>
+      <symbol id="i-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+      <symbol id="i-cross" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></symbol>
+      <symbol id="i-ship" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 14l9-10 9 10-9 6z"/><path d="M12 4v16"/></symbol>
+      <symbol id="i-rookie" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-6 8-6s8 2 8 6"/></symbol>
+      <symbol id="i-cube" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l9 5v10l-9 5-9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></symbol>
+      <symbol id="i-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="18" height="13" rx="1"/><path d="M3 7l3-4h12l3 4M12 7v13"/></symbol>
+      <symbol id="i-coin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/></symbol>
+      <symbol id="i-truck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="6" width="13" height="10" rx="1"/><path d="M14 9h4l3 3v4h-7z"/><circle cx="6" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></symbol>
+      <symbol id="i-bolt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></symbol>
+      <symbol id="i-target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></symbol>
+      <symbol id="i-command" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4a2 2 0 110 4H4M18 4a2 2 0 100 4h2M6 20a2 2 0 110-4H4M18 20a2 2 0 100-4h2"/><rect x="8" y="8" width="8" height="8" rx="1"/></symbol>
+      <symbol id="i-trophy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 4h8v5a4 4 0 01-8 0V4zM8 6H5v1a3 3 0 003 3M16 6h3v1a3 3 0 01-3 3M10 14v3M14 14v3M8 21h8M9 17h6"/></symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></symbol>
+      <symbol id="i-key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="4"/><path d="M11 11l9 9M17 17l2-2M14 14l2-2"/></symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="11" width="14" height="9" rx="1"/><path d="M8 11V8a4 4 0 018 0v3"/></symbol>
+      <symbol id="i-route" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h6a3 3 0 003-3V8M16 5h-6a3 3 0 00-3 3v8"/></symbol>
+      <symbol id="i-jump" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></symbol>
+      <symbol id="i-map" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2z"/><path d="M9 3v16M15 5v16"/></symbol>
+      <symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></symbol>
+      <symbol id="i-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+    </defs>
+  </svg>
+
+  <!-- Command rail (desktop) -->
+  <aside class="hidden lg:flex fixed inset-y-0 left-0 z-30 w-60 flex-col border-r border-line bg-panel/70 backdrop-blur">
+    <a href="/" class="flex items-center gap-2 border-b border-line px-5 h-16">
+      {% if home_corp_id %}
+        <img src="{% eve_corp_logo home_corp_id 64 %}" alt="Corporation logo" class="h-9 w-9 rounded">
+      {% else %}
+        <span class="grid h-8 w-8 place-items-center rounded bg-gold text-space"><svg class="h-5 w-5"><use href="#i-grid"/></svg></span>
+      {% endif %}
+      <span class="leading-tight">
+        <span class="block font-display text-sm font-bold tracking-wider text-gold">[FORCA]</span>
+        <span class="block text-[10px] uppercase tracking-[0.2em] text-faint">Command Grid</span>
+      </span>
+    </a>
+    <button @click="$dispatch('cmdk')" type="button" aria-label="Open command palette"
+            class="mx-3 mt-3 mb-1 flex items-center gap-2 rounded-md border border-line bg-space/40 px-3 py-2 text-xs text-faint transition hover:border-gold/40 hover:text-ink">
+      <svg class="h-4 w-4"><use href="#i-command"/></svg>
+      <span class="flex-1 text-left">Jump to…</span>
+      <kbd class="rounded border border-line px-1.5 py-0.5 text-[10px]">⌘K</kbd>
+    </button>
+    {% include "_nav.html" %}
+    {% include "_user_block.html" %}
+  </aside>
+
+  <!-- Mobile top bar -->
+  <header class="lg:hidden sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-line bg-panel/90 px-4 backdrop-blur">
+    <button @click="open=true" class="text-muted hover:text-ink" aria-label="Open menu">
+      <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </button>
+    <a href="/" class="flex items-center gap-2 font-display text-sm font-bold tracking-wider text-gold">
+      {% if home_corp_id %}<img src="{% eve_corp_logo home_corp_id 64 %}" alt="" class="h-7 w-7 rounded">{% endif %}[FORCA] Command Grid
+    </a>
+    <div class="ml-auto flex items-center gap-3">
+      <button @click="$dispatch('cmdk')" type="button" aria-label="Open command palette" class="text-muted hover:text-ink"><svg class="h-5 w-5"><use href="#i-command"/></svg></button>
+      {% if main_character %}<img src="{% eve_portrait main_character.character_id 32 %}" alt="" class="h-8 w-8 rounded-full ring-1 ring-line">
+      {% else %}<a href="{% url 'sso:login' %}" class="btn-gold !px-3 !py-1.5 text-xs">Log in</a>{% endif %}
+    </div>
+  </header>
+
+  <!-- Mobile drawer -->
+  <div x-show="open" x-cloak class="lg:hidden fixed inset-0 z-40" x-transition.opacity>
+    <div class="absolute inset-0 bg-black/60" @click="open=false"></div>
+    <aside class="absolute inset-y-0 left-0 flex w-72 flex-col border-r border-line bg-panel">
+      <div class="flex items-center justify-between border-b border-line px-5 h-16">
+        <span class="flex items-center gap-2">
+          {% if home_corp_id %}<img src="{% eve_corp_logo home_corp_id 64 %}" alt="" class="h-8 w-8 rounded">{% endif %}
+          <span class="font-display font-bold tracking-wider text-gold">[FORCA]</span>
+        </span>
+        <button @click="open=false" type="button" aria-label="Close menu" class="text-muted hover:text-ink"><svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+      {% include "_nav.html" %}
+      {% include "_user_block.html" %}
+    </aside>
+  </div>
+
+  <!-- Content -->
+  <div class="lg:pl-60">
+    <main id="main" class="mx-auto w-full max-w-6xl px-4 sm:px-6 py-8">
+      {% block messages %}
+      {% if messages %}
+        <div class="mb-4 space-y-2" aria-live="polite">
+          {% for message in messages %}
+            <div role="{% if 'error' in message.tags %}alert{% else %}status{% endif %}"
+                 class="rounded-lg border-l-2 px-4 py-2.5 text-sm {% if 'error' in message.tags %}border-loss bg-loss/10 text-ink{% elif 'warning' in message.tags %}border-gold bg-gold/10 text-ink{% elif 'success' in message.tags %}border-kill bg-kill/10 text-ink{% else %}border-line bg-panel2 text-muted{% endif %}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+      {% endblock %}
+      {% block content %}{% endblock %}
+    </main>
+    <footer class="border-t border-line/60">
+      <div class="mx-auto max-w-6xl px-4 sm:px-6 py-5 text-[11px] leading-relaxed text-faint">
+        {% if not user.is_authenticated %}<p class="mb-1"><a href="{% url 'showcase' %}" class="text-muted hover:text-gold">Features</a></p>{% endif %}
+        <p>Created by <span class="text-muted">Stromgren</span>.{% if app_commit %}
+          <span class="text-faint/70">·</span>
+          <span title="Deployed source revision">build <span class="font-mono text-muted">{{ app_commit }}</span></span>{% endif %}</p>
+        <p class="mt-1">EVE Online and the EVE logo are the registered trademarks of CCP hf. All rights reserved.
+        This is a fan site, not affiliated with or endorsed by CCP hf.</p>
+      </div>
+    </footer>
+  </div>
+
+  {% comment %}D8: command palette — Cmd/Ctrl-K (or the topbar trigger) to jump to any page.
+     Pure Alpine + DOM scrape of the gated nav, so it inherits role/feature gating;
+     CSP-clean (no inline script). Its own x-data root, above the z-40 drawer.{% endcomment %}
+  <div x-data="commandPalette()" x-cloak
+       @cmdk.window="show()"
+       @keydown.window.meta.k.prevent="show()"
+       @keydown.window.ctrl.k.prevent="show()"
+       @keydown.window.escape="hide()">
+    <div x-show="open" x-transition.opacity class="fixed inset-0 z-50 flex items-start justify-center bg-space/75 px-4 pt-[14vh] backdrop-blur-sm" @click.self="hide()">
+      <div class="w-full max-w-xl overflow-hidden rounded-xl border border-line bg-panel shadow-2xl"
+           @keydown.down.prevent="move(1)" @keydown.up.prevent="move(-1)" @keydown.enter.prevent="go()">
+        <div class="flex items-center gap-2 border-b border-line px-4 py-3">
+          <svg class="h-4 w-4 text-faint"><use href="#i-command"/></svg>
+          <input x-ref="q" x-model="q" type="text" placeholder="Jump to a page…" autocomplete="off" spellcheck="false"
+                 class="w-full bg-transparent text-sm text-ink placeholder:text-faint focus:outline-none" @input="sel = 0">
+          <kbd class="rounded border border-line px-1.5 py-0.5 text-[10px] text-faint">esc</kbd>
+        </div>
+        <ul class="max-h-80 overflow-auto py-1">
+          <template x-for="(it, i) in filtered" :key="it.url">
+            <li>
+              <a :href="it.url" @mouseenter="sel = i"
+                 class="flex items-center gap-3 px-4 py-2 text-sm"
+                 :class="i === sel ? 'bg-panel2 text-gold' : 'text-muted hover:bg-panel2 hover:text-ink'">
+                <svg class="navicon"><use :href="it.icon"/></svg>
+                <span class="flex-1 truncate" x-text="it.label"></span>
+                <span class="shrink-0 text-[11px] text-faint" x-text="it.group"></span>
+              </a>
+            </li>
+          </template>
+          <li x-show="!filtered.length" class="px-4 py-8 text-center text-xs text-faint">No matches.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

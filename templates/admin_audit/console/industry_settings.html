@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Industry &amp; Economy settings · Admin{% endblock %}
+{% block content %}
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
+<header class="mt-3 mb-6">
+  <p class="eyebrow">Operations</p>
+  <h1 class="mt-1 text-2xl font-bold text-ink">Industry &amp; Economy settings</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">Defaults for the <a href="{% url 'industry:home' %}" class="text-cyan hover:underline">Industry Center</a> — the calculator, profit estimates and production plans inherit these unless a plan overrides them.</p>
+</header>
+
+<form method="post" class="max-w-2xl space-y-5">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="panel border-loss/40 bg-loss/10 px-4 py-2 text-sm text-loss">{{ form.non_field_errors }}</div>{% endif %}
+
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">Market &amp; taxes</h2>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div><label class="label" for="{{ form.default_market_hub_system_id.id_for_label }}">Default market hub (system id)</label>{{ form.default_market_hub_system_id }}<p class="mt-1 text-[11px] text-faint">30000142 = Jita. Used for price estimates.</p></div>
+      <div><label class="label" for="{{ form.default_system_cost_index.id_for_label }}">System cost index</label>{{ form.default_system_cost_index }}<p class="mt-1 text-[11px] text-faint">Fraction, e.g. 0.05 = 5%. Scales the job install fee.</p></div>
+      <div><label class="label" for="{{ form.default_facility_tax.id_for_label }}">Facility tax</label>{{ form.default_facility_tax }}<p class="mt-1 text-[11px] text-faint">Fraction, e.g. 0.0025 = 0.25%.</p></div>
+      <div><label class="label" for="{{ form.default_sales_tax.id_for_label }}">Sales tax</label>{{ form.default_sales_tax }}<p class="mt-1 text-[11px] text-faint">Taken when selling on the market.</p></div>
+      <div><label class="label" for="{{ form.default_broker_fee.id_for_label }}">Broker fee</label>{{ form.default_broker_fee }}</div>
+      <div><label class="label" for="{{ form.stale_price_hours.id_for_label }}">Stale price after (hours)</label>{{ form.stale_price_hours }}</div>
+    </div>
+  </section>
+
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">Corp economics</h2>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div><label class="label" for="{{ form.corp_buyback_modifier.id_for_label }}">Corp buyback modifier</label>{{ form.corp_buyback_modifier }}<p class="mt-1 text-[11px] text-faint">e.g. 0.9 = pay 90% of Jita.</p></div>
+      <div><label class="label" for="{{ form.hauling_cost_per_m3.id_for_label }}">Hauling cost per m³ (ISK)</label>{{ form.hauling_cost_per_m3 }}</div>
+    </div>
+  </section>
+
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">Governance</h2>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div><label class="label" for="{{ form.default_visibility.id_for_label }}">Default plan visibility</label>{{ form.default_visibility }}</div>
+      <label class="flex items-center gap-2 pt-6 text-sm text-muted">{{ form.allow_pilot_plans }} Let pilots create their own plans</label>
+      <label class="flex items-center gap-2 text-sm text-muted sm:col-span-2">{{ form.erp_redirects }} Redirect the old <code class="text-faint">/erp/</code> Production page into the Job Tracker</label>
+      <label class="flex items-center gap-2 text-sm text-muted sm:col-span-2">{{ form.consume_materials_on_delivery }} Decrement input materials from corp stock when a build delivers <span class="text-faint">(keeps stock honest; enable after verifying against a known build)</span></label>
+    </div>
+  </section>
+
+  <div><button type="submit" class="btn-gold">Save settings</button></div>
+</form>
+{% endblock %}

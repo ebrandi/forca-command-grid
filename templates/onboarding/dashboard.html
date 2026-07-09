@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+{% load eve %}
+{% comment %}
+The New Player page. Members get a personalised journey: progress hero →
+next steps → the path (milestones by phase, leaders edit them at Admin
+Console → New Player content) → the veteran survival guide → glossary.
+Non-members get the recruitment pitch, then the same guide + glossary —
+both are public-safe and genuinely useful before joining.
+{% endcomment %}
+{% block title %}{% if is_member %}New Player{% else %}Join Forças Armadas{% endif %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+
+{% if is_member %}
+  <!-- ===== Members: personalised onboarding ===== -->
+  <header class="mb-6 flex flex-wrap items-center gap-4">
+    {% if character %}<img src="{% eve_portrait character.character_id 128 %}" alt="" class="h-14 w-14 rounded-xl ring-1 ring-line">{% endif %}
+    <div class="min-w-0 flex-1">
+      <p class="eyebrow text-gold">New player · your first weeks</p>
+      <h1 class="mt-0.5 text-3xl font-bold text-ink">Welcome to nullsec{% if character %}, {{ character.name }}{% endif %}.</h1>
+      <p class="mt-1 text-sm text-muted">Work down the path below — some steps tick themselves off as the Grid sees your data, the rest you check off yourself. Lost on a word? The <a href="#glossary" class="text-cyan hover:underline">glossary</a> is at the bottom.</p>
+    </div>
+    {% if total_count %}
+    <div class="w-full sm:w-64">
+      <div class="flex items-baseline justify-between text-xs text-muted">
+        <span>Your journey</span>
+        <span class="data text-ink">{{ done_count }}/{{ total_count }} · {{ pct_done }}%</span>
+      </div>
+      <div class="mt-1 h-2 overflow-hidden rounded-full bg-space" aria-label="{{ done_count }} of {{ total_count }} milestones complete">
+        <div class="h-full rounded-full {% if pct_done == 100 %}bg-kill{% else %}bg-gold{% endif %}" style="width:{{ pct_done }}%"></div>
+      </div>
+    </div>
+    {% endif %}
+  </header>
+
+  {% if actions %}
+  <h2 class="eyebrow mb-3">Start here — your next steps</h2>
+  <div class="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    {% for a in actions %}
+      <div class="panel flex flex-col p-4">
+        <div class="flex items-start gap-3">
+          <span class="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-gold/15 font-display text-lg font-bold text-gold">{{ forloop.counter }}</span>
+          <div class="min-w-0"><p class="font-medium text-ink">{{ a.title }}</p>
+          <p class="mt-0.5 text-sm text-faint">{{ a.description }}</p></div>
+        </div>
+        <div class="mt-3 flex flex-wrap items-center gap-2 pl-11">
+          {% if a.url %}<a href="{{ a.url }}" class="btn-cyan !py-1 text-xs">Do it →</a>{% endif %}
+          {% if a.manual %}
+          <form method="post" action="{% url 'onboarding:milestone_action' a.id %}">{% csrf_token %}<button class="btn-ghost !py-1 text-xs">Mark done</button></form>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  {% elif total_count %}
+  <div class="panel mb-8 flex items-center gap-3 p-5">
+    <span class="grid h-10 w-10 place-items-center rounded-md bg-panel2 text-kill"><svg class="h-5 w-5"><use href="#i-check"/></svg></span>
+    <p class="text-sm text-kill">All starter milestones complete — you're one of us now. Fly safe (or don't, that's what SRP is for).</p>
+  </div>
+  {% endif %}
+
+  {% if phases %}
+  <h2 class="eyebrow mb-3">The path</h2>
+  <div class="mb-10 grid gap-4 lg:grid-cols-2">
+    {% for ph in phases %}
+    <section class="panel overflow-hidden">
+      <div class="flex items-center gap-3 border-b border-line px-4 py-3">
+        <span class="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-space {% if ph.done == ph.rows|length %}text-kill{% else %}text-gold{% endif %}"><svg class="h-5 w-5"><use href="{{ ph.icon }}"/></svg></span>
+        <div class="min-w-0 flex-1">
+          <h3 class="font-display text-sm font-semibold uppercase tracking-wide text-ink">{{ forloop.counter }} · {{ ph.label }}</h3>
+          <p class="text-xs text-faint">{{ ph.blurb }}</p>
+        </div>
+        <span class="data shrink-0 text-xs {% if ph.done == ph.rows|length %}text-kill{% else %}text-muted{% endif %}">{{ ph.done }}/{{ ph.rows|length }}</span>
+      </div>
+      <div class="divide-y divide-line/40">
+        {% for r in ph.rows %}
+        <div class="flex items-start gap-3 px-4 py-2.5 text-sm">
+          {% if r.done %}
+          <span class="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-kill/15 text-kill" title="{% if r.auto_detected %}detected automatically{% else %}checked off by you{% endif %}"><svg class="h-3 w-3"><use href="#i-check"/></svg></span>
+          {% else %}
+          <span class="mt-0.5 h-5 w-5 shrink-0 rounded-full border border-dashed border-line" title="not done yet"></span>
+          {% endif %}
+          <div class="min-w-0 flex-1">
+            <p class="{% if r.done %}text-faint line-through decoration-line{% else %}text-ink{% endif %}">{{ r.title }}</p>
+            {% if r.description and not r.done %}<p class="mt-0.5 text-xs text-faint">{{ r.description }}</p>{% endif %}
+          </div>
+          <span class="flex shrink-0 items-center gap-2">
+            {% if r.url and not r.done %}<a href="{{ r.url }}" class="text-xs text-cyan hover:underline">Go →</a>{% endif %}
+            {% if r.manual %}
+            <form method="post" action="{% url 'onboarding:milestone_action' r.id %}">{% csrf_token %}
+              {% if r.done %}<input type="hidden" name="action" value="undo"><button class="text-[11px] text-faint hover:text-ink">undo</button>
+              {% else %}<button class="btn-ghost !px-2 !py-0.5 text-[11px]">Mark done</button>{% endif %}
+            </form>
+            {% elif not r.done %}<span class="chip !text-[10px]" title="completes automatically once the Grid sees it">auto</span>{% endif %}
+          </span>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+{% else %}
+  <!-- ===== Public: recruitment ===== -->
+  <section class="relative overflow-hidden rounded-2xl border border-line bg-panel/60 px-6 py-12 sm:px-10 sm:py-16">
+    <div class="absolute -right-16 -top-10 h-72 w-72 rounded-full bg-gold/10 blur-3xl"></div>
+    <div class="relative max-w-2xl">
+      <p class="eyebrow text-gold">Forças Armadas · now recruiting</p>
+      <h1 class="mt-3 text-4xl font-bold leading-[1.1] text-ink sm:text-5xl">Fly with a corp that <span class="text-gold">turns data into action</span>.</h1>
+      <p class="mt-5 text-lg text-muted">
+        Whether you're a day-old capsuleer or a veteran looking for a sharper home, Forças Armadas
+        runs fleets, builds capitals, and backs every pilot with tooling that tells you exactly what
+        to fly, train, and build next. No spreadsheets. No guesswork.
+      </p>
+      <div class="mt-8 flex flex-wrap items-center gap-3">
+        {% if user.is_authenticated %}
+          <span class="btn-gold text-base !px-6 !py-3 cursor-default">You're signed in — ping a recruiter in-game</span>
+        {% else %}
+          <a href="{% url 'sso:login' %}" class="btn-gold text-base !px-6 !py-3">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M7 12h11m0 0l-3-3m3 3l-3 3"/></svg>
+            Log in with EVE to apply
+          </a>
+        {% endif %}
+        <a href="{% url 'killboard:list' %}" class="btn-ghost !px-4 !py-3">See our killboard</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- What we offer -->
+  <h2 class="eyebrow mt-8 mb-3">What you get as a member</h2>
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="panel p-5"><svg class="h-6 w-6 text-cyan"><use href="#i-ship"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink">Fleet PvP</h3>
+      <p class="mt-1 text-sm text-faint">Doctrine fleets with ships and SRP support — show up, undock, get on killmails.</p></div>
+    <div class="panel p-5"><svg class="h-6 w-6 text-cyan"><use href="#i-cube"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink">Industry &amp; building</h3>
+      <p class="mt-1 text-sm text-faint">From frigates to capitals — full bills of materials, build-vs-buy, and shared projects.</p></div>
+    <div class="panel p-5"><svg class="h-6 w-6 text-cyan"><use href="#i-rookie"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink">New-pilot friendly</h3>
+      <p class="mt-1 text-sm text-faint">A guided skill path, starter doctrines, and patient people. Alpha clones welcome.</p></div>
+    <div class="panel p-5"><svg class="h-6 w-6 text-cyan"><use href="#i-bolt"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink">Tools that help</h3>
+      <p class="mt-1 text-sm text-faint">This very platform: "can I fly this?", what to train, and where the corp needs you.</p></div>
+  </div>
+
+  <!-- How to join -->
+  <div class="mt-8 grid gap-5 lg:grid-cols-2">
+    <section class="panel p-6">
+      <h2 class="eyebrow mb-3 text-gold">How to join</h2>
+      <ol class="space-y-3 text-sm">
+        <li class="flex gap-3"><span class="data text-gold">1.</span><span class="text-muted"><span class="text-ink">Log in with EVE SSO.</span> We only ever read public data to start — no password is stored.</span></li>
+        <li class="flex gap-3"><span class="data text-gold">2.</span><span class="text-muted"><span class="text-ink">Get a personalised plan.</span> The app shows your readiness and a starter skill path the moment you connect.</span></li>
+        <li class="flex gap-3"><span class="data text-gold">3.</span><span class="text-muted"><span class="text-ink">Talk to a recruiter in-game</span> and apply to the corp. Once you're verified, every member tool unlocks.</span></li>
+      </ol>
+    </section>
+    <section class="panel p-6">
+      <h2 class="eyebrow mb-3">Who we're looking for</h2>
+      <ul class="space-y-2 text-sm text-muted">
+        <li class="flex items-center gap-2"><span class="text-kill">✓</span> Pilots who want to improve — kills, skills, or ISK.</li>
+        <li class="flex items-center gap-2"><span class="text-kill">✓</span> Brand-new players willing to learn (we'll teach).</li>
+        <li class="flex items-center gap-2"><span class="text-kill">✓</span> Builders and logistics pilots who keep fleets supplied.</li>
+        <li class="flex items-center gap-2"><span class="text-kill">✓</span> People who show up and communicate. Drama-free.</li>
+      </ul>
+    </section>
+  </div>
+{% endif %}
+
+<!-- ===== The veteran's survival guide (public-safe, useful to everyone) ===== -->
+<div class="mt-10 flex items-center gap-3">
+  <h2 class="eyebrow text-gold">The veteran's survival guide</h2>
+  <div class="h-px flex-1 bg-line"></div>
+</div>
+<p class="mt-1 max-w-2xl text-sm text-muted">The things we all wish someone had told us on day one. Nullsec is the best part of EVE — it just doesn't forgive not knowing the rules.</p>
+
+<div class="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+  <section class="panel p-5">
+    <div class="flex items-center gap-2"><svg class="h-5 w-5 text-gold"><use href="#i-ship"/></svg><h3 class="font-display font-semibold text-ink">Ships are ammo</h3></div>
+    <ul class="mt-3 space-y-2.5 text-sm">
+      <li><span class="font-medium text-ink">Fly only what you can lose.</span> <span class="text-faint">If losing the ship would ruin your night, don't undock it. Every hull you fly in null should be one you could replace tomorrow without pain.</span></li>
+      <li><span class="font-medium text-ink">Losses are tuition, not failure.</span> <span class="text-faint">Every veteran has a killboard full of embarrassing losses; that's how we all learned. Read your loss, pick one thing you'd do differently, and move on.</span></li>
+      <li><span class="font-medium text-ink">Insurance and SRP soften losses.</span> <span class="text-faint">Buy platinum insurance <em>before</em> you undock (right-click your ship → Insurance) — it pays back a chunk of the hull, never the modules. Fly the corp's doctrine fit (our standard, pre-approved fittings) on an official fleet and the Ship Replacement Program pays you back too — just file your claim after.</span></li>
+      <li><span class="font-medium text-ink">Keep your combat clone cheap.</span> <span class="text-faint">When your pod dies, the implants in your head die with it. Save the shiny sets for a jump clone — a spare body you can swap into; ask a vet to help you set one up.</span></li>
+    </ul>
+  </section>
+
+  <section class="panel p-5">
+    <div class="flex items-center gap-2"><svg class="h-5 w-5 text-gold"><use href="#i-shield"/></svg><h3 class="font-display font-semibold text-ink">Local and d-scan are your radar</h3></div>
+    <ul class="mt-3 space-y-2.5 text-sm">
+      <li><span class="font-medium text-ink">Watch local chat always.</span> <span class="text-faint">In nullsec everyone in the system shows in local's pilot list the moment they arrive. Keep it visible, and treat any name you don't recognise as a hunter until proven otherwise.</span></li>
+      <li><span class="font-medium text-ink">Make d-scan a reflex.</span> <span class="text-faint">The directional scanner (default V) shows most ships and probes within ~14 AU — but not cloaked ships or Combat Recon cruisers, so a clear scan is never a promise. Hit it every few seconds while running sites or mining; combat probes on scan means align out and leave now.</span></li>
+      <li><span class="font-medium text-ink">Watch the intel channels.</span> <span class="text-faint">Pilots report hostiles by system name. Learn the systems around home, so a report three jumps out buys you a full minute of warning instead of none.</span></li>
+      <li><span class="font-medium text-ink">When in doubt, dock up.</span> <span class="text-faint">Docked, you are truly safe — nobody has ever died docked. Tethered at a friendly structure you're repaired and protected, but you can be bumped off tether and killed, so never go AFK on tether. Stepping away in space? Use safe-logoff, not hope.</span></li>
+    </ul>
+  </section>
+
+  <section class="panel p-5">
+    <div class="flex items-center gap-2"><svg class="h-5 w-5 text-gold"><use href="#i-map"/></svg><h3 class="font-display font-semibold text-ink">Getting around without dying</h3></div>
+    <ul class="mt-3 space-y-2.5 text-sm">
+      <li><span class="font-medium text-ink">Bubbles catch you in null.</span> <span class="text-faint">Warp disruption bubbles stop your warp early or drag you past a gate into a trap — no warning, no countdown. Inside one <em>you cannot warp at all</em>: turn on your prop mod, burn for the edge (double-click in space away from the wrecks), and warp somewhere else the moment you're clear.</span></li>
+      <li><span class="font-medium text-ink">Never autopilot in null.</span> <span class="text-faint">Autopilot delivers you to a gate camp like room service. Fly every jump by hand, and check the corp killboard and Gate Camp Watch for recent kills on your route before you commit.</span></li>
+      <li><span class="font-medium text-ink">Bookmark safes and tacticals.</span> <span class="text-faint">A safe spot (a bookmark made mid-warp, away from anything warpable) gives you somewhere to hide and d-scan from. A tactical is the same idea a few hundred km off a busy gate, so you can look before you leap. Make a few of each in home systems on day one.</span></li>
+      <li><span class="font-medium text-ink">Your gate cloak buys time.</span> <span class="text-faint">After a jump you stay cloaked up to a minute while you don't move. Never panic-warp — take a breath, read the grid; burning back to the gate is often the right call.</span></li>
+    </ul>
+  </section>
+
+  <section class="panel p-5">
+    <div class="flex items-center gap-2"><svg class="h-5 w-5 text-gold"><use href="#i-target"/></svg><h3 class="font-display font-semibold text-ink">Fleet up: comms and discipline</h3></div>
+    <ul class="mt-3 space-y-2.5 text-sm">
+      <li><span class="font-medium text-ink">Listen first, talk less.</span> <span class="text-faint">When a fight starts, voice comms belong to the FC and scouts. Your question can wait; a talked-over FC gets people killed.</span></li>
+      <li><span class="font-medium text-ink">The FC's word is final.</span> <span class="text-faint">A fleet doing one imperfect thing together beats thirty pilots doing their own clever thing separately. Odd order? Follow it, ask why after.</span></li>
+      <li><span class="font-medium text-ink">Broadcast for reps early.</span> <span class="text-faint">Taking damage? Hit the broadcast in the fleet window — that's how logi (the fleet's healers) know to repair you. Broadcast the type your doctrine tanks: shield fleet, shield button; armor fleet, armor button — the FC will say which. And do it when the shooting starts, not at 10% structure.</span></li>
+      <li><span class="font-medium text-ink">"X up" means volunteer.</span> <span class="text-faint">When a ping says x up, type an x in the channel the ping names (usually corp chat or the ops channel), ideally with the ship you can bring — you'll get a fleet invite. Never be shy about x-ing up in a newbro doctrine ship; that's exactly what they're for.</span></li>
+      <li><span class="font-medium text-ink">Never AFK on a gate.</span> <span class="text-faint">The order to jump comes with zero warning; miss it and you're alone in hostile space. Need to step away? Say so on comms first.</span></li>
+    </ul>
+  </section>
+
+  <section class="panel p-5">
+    <div class="flex items-center gap-2"><svg class="h-5 w-5 text-gold"><use href="#i-coin"/></svg><h3 class="font-display font-semibold text-ink">Earning ISK where you live</h3></div>
+    <ul class="mt-3 space-y-2.5 text-sm">
+      <li><span class="font-medium text-ink">Ratting pays in ticks.</span> <span class="text-faint">Bounties from shooting NPC pirates pay out every twenty minutes — a "tick". Part of every bounty is skimmed into the system's ESS bank, and hostiles love raiding it — an ESS warning in intel means get safe like any other hostile report. Start with sites your ship comfortably handles and your ticks grow with your skills.</span></li>
+      <li><span class="font-medium text-ink">Mine with the fleet.</span> <span class="text-faint">Corp mining fleets come with boosts and many extra eyes on intel — you earn more and die less. A solo miner in null is bait; a fleet miner is an income.</span></li>
+      <li><span class="font-medium text-ink">PI is easy passive money.</span> <span class="text-faint">Planetary Industry takes minutes of clicking per day once set up and quietly pays millions. Ask in corp chat which planets in our space are good.</span></li>
+      <li><span class="font-medium text-ink">Use the corp buyback.</span> <span class="text-faint">Hauling loot to Jita through hostile space is how newbros die rich. Sell to the buyback instead: slightly less on paper, zero risk, ISK today.</span></li>
+    </ul>
+  </section>
+
+  <section class="panel p-5">
+    <div class="flex items-center gap-2"><svg class="h-5 w-5 text-gold"><use href="#i-rookie"/></svg><h3 class="font-display font-semibold text-ink">Ask loud, die less</h3></div>
+    <ul class="mt-3 space-y-2.5 text-sm">
+      <li><span class="font-medium text-ink">There are no stupid questions.</span> <span class="text-faint">Only silent deaths. Every veteran here asked the exact same questions once — answering them is what the help channels are for.</span></li>
+      <li><span class="font-medium text-ink">The corp wants you undocked.</span> <span class="text-faint">Nobody is annoyed when a newbro loses a ship on fleet — we're glad you came. Join the next newbro-friendly fleet on the ops board this week; showing up in a cheap doctrine ship is the whole job.</span></li>
+      <li><span class="font-medium text-ink">Grab a mentor early.</span> <span class="text-faint">Ask in corp chat for a buddy for your first fits, first fleet, first ratting site. One hour with a veteran saves a month of trial and error.</span></li>
+      <li><span class="font-medium text-ink">Speak up when things break.</span> <span class="text-faint">Tackled (held down by enemy warp jammers so you can't warp off), lost, or confused mid-op? Say so on comms immediately. An FC can often save a pilot who speaks up; nobody can save the one who stays quiet.</span></li>
+    </ul>
+  </section>
+</div>
+
+<!-- ===== Glossary (public — searchable) ===== -->
+<div class="mt-10 flex items-center gap-3" id="glossary">
+  <h2 class="eyebrow">Glossary — how pilots actually talk</h2>
+  <div class="h-px flex-1 bg-line"></div>
+</div>
+<div x-data="{ q: '' }" class="mt-3">
+  <input type="search" x-model="q" placeholder="Search {{ glossary|length }} terms — try 'cyno' or 'x up'…" class="input-field w-full sm:max-w-sm" aria-label="Search glossary">
+  <div class="mt-3 grid gap-x-6 sm:grid-cols-2">
+    {% for g in glossary %}
+      <div x-data="{ t: '{{ g.term|lower|escapejs }} {{ g.definition|lower|escapejs }}' }" x-show="!q || t.includes(q.toLowerCase())" class="border-b border-line/40 py-2.5">
+        <dt class="font-medium text-ink">{{ g.term }}</dt>
+        <dd class="mt-0.5 text-sm text-faint">{{ g.definition }}</dd>
+      </div>
+    {% empty %}<p class="p-4 text-sm text-faint">No glossary terms have been added yet.</p>{% endfor %}
+  </div>
+</div>
+{% endblock %}

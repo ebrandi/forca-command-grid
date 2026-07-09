@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% load static eve %}
+{% block title %}{{ track.title }} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<a href="{% url 'mentorship:tracks' %}" class="text-xs text-faint hover:text-gold">&larr; Learning Tracks</a>
+
+<header class="mb-6 mt-2">
+  <div class="flex items-start gap-3">
+    <span class="grid h-11 w-11 shrink-0 place-items-center rounded-md bg-gold/15 text-gold">
+      <svg class="h-6 w-6"><use href="#i-{{ track.icon|default:'map' }}"/></svg>
+    </span>
+    <div class="min-w-0">
+      <p class="eyebrow text-gold">Mentorship</p>
+      <h1 class="mt-0.5 text-3xl font-bold text-ink">{{ track.title }}</h1>
+      <div class="mt-2 flex flex-wrap items-center gap-1.5">
+        {% if track.is_core %}<span class="chip text-gold">Core</span>{% endif %}
+        <span class="chip text-muted">{{ track.get_category_display }}</span>
+        <span class="chip text-cyan">~{{ track.estimated_sessions }} session{{ track.estimated_sessions|pluralize }}</span>
+      </div>
+    </div>
+  </div>
+  {% if track.summary %}<p class="mt-3 max-w-2xl text-sm text-muted">{{ track.summary }}</p>{% endif %}
+</header>
+
+<h2 class="eyebrow mb-3 text-faint">Field exercises</h2>
+<ol class="space-y-4">
+  {% for task in tasks %}
+    <li class="panel p-5">
+      <div class="flex items-start gap-4">
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-space font-display text-lg font-bold text-gold">{{ forloop.counter }}</span>
+        <div class="min-w-0 flex-1">
+          <div class="flex flex-wrap items-start justify-between gap-2">
+            <h3 class="font-display font-semibold text-ink">{{ task.title }}</h3>
+            <div class="flex flex-wrap items-center gap-1.5">
+              <span class="chip {% if task.difficulty == 'hard' %}text-loss{% elif task.difficulty == 'medium' %}text-gold{% else %}text-kill{% endif %}">{{ task.get_difficulty_display }}</span>
+              {% if task.mandatory %}<span class="chip text-cyan">Mandatory</span>{% endif %}
+              {% if task.reward_eligible %}<span class="chip text-gold">Rewarded</span>{% endif %}
+            </div>
+          </div>
+
+          <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-faint">
+            <span class="flex items-center gap-1.5"><svg class="h-4 w-4"><use href="#i-rookie"/></svg>{{ task.get_participants_display }}</span>
+            <span class="flex items-center gap-1.5"><svg class="h-4 w-4"><use href="#i-bolt"/></svg>~<span class="data text-muted">{{ task.estimated_minutes }}</span> min</span>
+            <span class="flex items-center gap-1.5"><svg class="h-4 w-4"><use href="#i-check"/></svg>Validated by: <span class="text-muted">{{ task.get_validation_method_display }}</span></span>
+          </div>
+
+          {% if task.description %}<p class="mt-3 text-sm text-muted">{{ task.description }}</p>{% endif %}
+
+          {% if task.mentee_instructions %}
+            <div class="mt-3 rounded-md border-l-2 border-cyan/40 bg-panel2/50 px-3 py-2">
+              <p class="eyebrow mb-1 text-cyan">Cadet brief</p>
+              <p class="text-sm text-faint">{{ task.mentee_instructions }}</p>
+            </div>
+          {% endif %}
+
+          {% with prereqs=task.prerequisites.all %}
+            {% if prereqs %}
+              <p class="mt-3 flex flex-wrap items-center gap-1.5 text-xs text-faint">
+                <svg class="h-4 w-4 text-gold"><use href="#i-lock"/></svg>
+                <span class="text-muted">Requires:</span>
+                {% for p in prereqs %}<span class="chip text-muted">{{ p.requires.title }}</span>{% endfor %}
+              </p>
+            {% endif %}
+          {% endwith %}
+        </div>
+      </div>
+    </li>
+  {% empty %}
+    <li class="panel flex flex-col items-center gap-3 p-10 text-center">
+      <span class="grid h-12 w-12 place-items-center rounded-md bg-panel2 text-gold"><svg class="h-6 w-6"><use href="#i-target"/></svg></span>
+      <p class="text-sm text-muted">This track has no field exercises published yet. It is still being written — check back soon.</p>
+    </li>
+  {% endfor %}
+</ol>
+{% endblock %}

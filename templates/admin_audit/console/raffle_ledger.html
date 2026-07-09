@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}Ticket ledger · {{ contest.name }} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-gold">Raffle · {{ contest.name }}</p>
+    <h1 class="mt-1 text-2xl font-bold text-ink">Ticket ledger</h1>
+    <p class="mt-1 text-sm text-faint">The append-only record of every ticket awarded, reversed or excluded. Corrections add a new row — nothing is ever edited in place.</p>
+  </div>
+  <a href="{% url 'admin_audit:raffle_detail' contest.pk %}" class="btn-ghost text-sm">← Back</a>
+</header>
+
+{% comment %}Filter bar (GET) — preserves the current selection; the export link carries the same filters.{% endcomment %}
+<section class="panel mb-4 p-4">
+  <form method="get" action="{% url 'admin_audit:raffle_ledger' contest.pk %}" class="flex flex-wrap items-end gap-3">
+    <div>
+      <label class="label">Source</label>
+      <select name="source" class="input-field w-48">
+        <option value="">All sources</option>
+        {% for s in sources %}
+          <option value="{{ s.key }}"{% if cur.source == s.key %} selected{% endif %}>{{ s.label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="label">Status</label>
+      <select name="status" class="input-field w-44">
+        <option value="">Any status</option>
+        {% for value, label in statuses %}
+          <option value="{{ value }}"{% if cur.status == value %} selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="min-w-[12rem] flex-1">
+      <label class="label">Search</label>
+      <input name="q" value="{{ cur.q }}" placeholder="Pilot name or event ref" class="input-field w-full">
+    </div>
+    <button class="btn-gold text-sm">Filter</button>
+    <a href="{% url 'admin_audit:raffle_ledger' contest.pk %}" class="btn-ghost text-sm">Reset</a>
+    <a href="?export=csv&amp;source={{ cur.source|urlencode }}&amp;status={{ cur.status|urlencode }}&amp;q={{ cur.q|urlencode }}" class="btn-cyan text-sm">Export CSV</a>
+  </form>
+</section>
+
+<p class="mb-2 text-xs text-faint">Showing {{ entries|length }} of {{ total }} entr{{ total|pluralize:"y,ies" }}{% if total > entries|length %} · export the CSV for the full set{% endif %}.</p>
+
+<section class="panel overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-line/60 text-left text-[11px] uppercase tracking-wide text-faint">
+          <th class="px-4 py-2 font-medium">When</th>
+          <th class="px-4 py-2 font-medium">Pilot</th>
+          <th class="px-4 py-2 font-medium">Source</th>
+          <th class="px-4 py-2 font-medium">Event ref</th>
+          <th class="px-4 py-2 text-right font-medium">Tickets</th>
+          <th class="px-4 py-2 font-medium">Status</th>
+          <th class="px-4 py-2 font-medium">ESI</th>
+          <th class="px-4 py-2 font-medium">Reason</th>
+          <th class="px-4 py-2 font-medium">Action</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-line/40">
+        {% for e in entries %}
+          <tr class="align-top">
+            <td class="whitespace-nowrap px-4 py-2.5"><span class="data text-[11px] text-faint">{{ e.created_at|date:"M j H:i" }}</span></td>
+            <td class="px-4 py-2.5">
+              <span class="block truncate text-ink">{{ e.character_name|default:e.character_id }}</span>
+              <span class="data block text-[11px] text-faint">{{ e.character_id }}</span>
+            </td>
+            <td class="px-4 py-2.5 text-muted">{{ e.source_key }}</td>
+            <td class="px-4 py-2.5"><span class="data text-[11px] text-faint">{{ e.source_ref|default:"—" }}</span></td>
+            <td class="px-4 py-2.5 text-right"><span class="data font-semibold {% if e.amount > 0 %}text-gold{% elif e.amount < 0 %}text-loss{% else %}text-faint{% endif %}">{{ e.amount }}</span></td>
+            <td class="px-4 py-2.5">
+              <span class="chip {% if e.status == 'approved' %}!border-kill/40 !text-kill{% elif e.status == 'pending' %}!border-gold/40 !text-gold{% elif e.status == 'excluded' or e.status == 'disqualified' or e.status == 'reversed' %}!border-loss/40 !text-loss{% endif %}">{{ e.get_status_display }}</span>
+            </td>
+            <td class="px-4 py-2.5">
+              <span class="chip {% if e.esi_status == 'valid' %}!border-kill/40 !text-kill{% elif e.esi_status == 'none' %}!text-faint{% else %}!border-loss/40 !text-loss{% endif %}">{{ e.get_esi_status_display }}</span>
+            </td>
+            <td class="px-4 py-2.5"><span class="text-[11px] text-faint">{{ e.reason|default:"—" }}</span></td>
+            <td class="px-4 py-2.5">
+              <form method="post" action="{% url 'admin_audit:raffle_ledger_action' contest.pk e.pk %}" class="flex flex-wrap items-center gap-1.5" data-confirm="Apply this change to the ticket entry? Reversals and disqualifications are audited and can't be silently undone.">
+                {% csrf_token %}
+                <select name="action" class="input-field !py-1 !text-xs w-32">
+                  <option value="approved">Mark approved</option>
+                  <option value="excluded">Exclude</option>
+                  <option value="disqualified">Disqualify</option>
+                  <option value="reverse">Reverse</option>
+                </select>
+                <input name="reason" placeholder="Reason" class="input-field !py-1 !text-xs w-28">
+                <button class="btn-ghost !py-1 !text-xs">Apply</button>
+              </form>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="9" class="px-4 py-10 text-center text-sm text-faint">No ledger entries match these filters.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

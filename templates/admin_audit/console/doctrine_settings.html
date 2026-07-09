@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Doctrine display settings · Admin{% endblock %}
+{% block content %}
+<a href="{% url 'admin_audit:doctrines' %}" class="text-xs text-faint hover:text-gold">← Manage doctrines</a>
+<header class="mt-3 mb-6">
+  <p class="eyebrow">Operations</p>
+  <h1 class="mt-1 text-2xl font-bold text-ink">Doctrine display settings</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">Control how the pilot-facing <a href="{% url 'doctrines:list' %}" class="text-cyan hover:underline">Doctrines</a> and <a href="{% url 'doctrines:ships' %}" class="text-cyan hover:underline">Shipyard</a> pages present the library.</p>
+</header>
+
+<form method="post" class="max-w-xl">
+  {% csrf_token %}
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">Pagination</h2>
+    <label class="label" for="per_page">Doctrines / ships per page</label>
+    <div class="mt-1 flex items-center gap-2">
+      <input id="per_page" name="per_page" type="number" min="{{ min_per_page }}" max="{{ max_per_page }}"
+             value="{{ config.per_page }}" class="input-field w-40">
+      <span class="text-xs text-faint">{{ min_per_page }}–{{ max_per_page }}</span>
+    </div>
+    <p class="mt-2 text-[11px] text-faint">How many cards each page shows on the Doctrines and Shipyard pages. Pilots see the ones they can fly first, then the ones they're closest to flying. Smaller pages load faster when the library is large.</p>
+    <div class="mt-4">
+      <button type="submit" class="btn-gold">Save</button>
+    </div>
+  </section>
+</form>
+{% endblock %}

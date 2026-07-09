@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}Killboard · [FORCA] Command Grid{% endblock %}
+{% block content %}
+
+<header class="mb-4 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <p class="eyebrow">Combat record · {{ home_corp_name }}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">Killboard</h1>
+  </div>
+  <div class="flex items-center gap-2">
+    <a href="{% url 'killboard:stats' %}" class="btn-ghost text-xs"><svg class="h-4 w-4"><use href="#i-grid"/></svg> Stats</a>
+    <a href="{% url 'killboard:rankings' %}" class="btn-gold text-xs"><svg class="h-4 w-4"><use href="#i-target"/></svg> Rankings</a>
+  </div>
+</header>
+
+<!-- Hero: headline combat record + 14-day kill spark -->
+{% with s=overview.summary %}
+<section class="panel mb-4 flex flex-wrap items-stretch gap-x-6 gap-y-4 p-4">
+  <div class="flex flex-1 flex-wrap gap-x-6 gap-y-3">
+    <div>
+      <p class="eyebrow text-faint">Kills</p>
+      <p class="data text-2xl font-bold text-kill">{{ s.kills }}</p>
+      <p class="text-[11px] text-faint">{{ s.isk_destroyed|isk }}</p>
+    </div>
+    <div>
+      <p class="eyebrow text-faint">Losses</p>
+      <p class="data text-2xl font-bold text-loss">{{ s.losses }}</p>
+      <p class="text-[11px] text-faint">{{ s.isk_lost|isk }}</p>
+    </div>
+    <div>
+      <p class="eyebrow text-faint">Efficiency</p>
+      <p class="data text-2xl font-bold text-gold">{{ s.efficiency|effpct }}%</p>
+      <div class="mt-1.5 h-1.5 w-20 overflow-hidden rounded-full bg-loss/40">
+        <div class="h-full rounded-full bg-kill" style="width: {{ s.efficiency|effpct }}%"></div>
+      </div>
+    </div>
+    <div>
+      <p class="eyebrow text-faint">Threat</p>
+      <p class="data text-2xl font-bold {{ s.danger.color }}">{{ s.danger.label }}</p>
+      <p class="text-[11px] text-faint">{{ s.solo_kills }} solo</p>
+    </div>
+  </div>
+  {% if overview.spark|length > 1 %}
+  <div class="flex flex-col justify-center border-l border-line/60 pl-6">
+    <p class="eyebrow mb-1 text-faint">Kills · last 14 days</p>
+    {% include "components/_sparkline.html" with values=overview.spark unit="kills" %}
+  </div>
+  {% endif %}
+</section>
+{% endwith %}
+
+<!-- Biggest recent kills -->
+{% if overview.biggest %}
+<section class="panel mb-4 overflow-hidden">
+  <div class="flex items-center gap-2 border-b border-line px-4 py-2.5">
+    <svg class="h-4 w-4 text-gold"><use href="#i-target"/></svg>
+    <h2 class="eyebrow text-gold">Biggest kills</h2>
+    <span class="ml-auto text-[11px] text-faint">last 7 days</span>
+  </div>
+  <div class="flex gap-3 overflow-x-auto p-3">
+    {% for k in overview.biggest %}
+    <a href="{% url 'killboard:detail' k.killmail_id %}" class="group relative w-36 shrink-0 overflow-hidden rounded-lg border border-line bg-space/60 hover:border-gold/40 transition">
+      <img src="{% eve_type_render k.victim_ship_type_id 256 %}" alt="" loading="lazy" class="h-24 w-full object-cover opacity-90 group-hover:opacity-100 transition">
+      <div class="p-2">
+        <p class="data text-sm font-bold text-gold">{{ k.value|isk }}</p>
+        <p class="truncate text-[11px] text-ink">{% type_name k.victim_ship_type_id %}</p>
+        <p class="truncate text-[10px] text-faint">{% system_name k.solar_system_id %} · {{ k.killmail_time|date:"M j" }}</p>
+      </div>
+      {% if k.character_id %}
+      <div class="flex items-center gap-1.5 border-t border-line/60 px-2 py-1.5">
+        <img src="{% eve_portrait k.character_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-full ring-1 ring-line">
+        <span class="truncate text-[10px] text-muted">{% eve_name k.character_id %}</span>
+      </div>
+      {% endif %}
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<div class="grid gap-4 lg:grid-cols-3">
+  <!-- Feed -->
+  <div class="lg:col-span-2">
+    {% include 'killboard/_feed.html' %}
+  </div>
+
+  <!-- Side rail -->
+  <aside class="space-y-4 lg:sticky lg:top-4 lg:self-start">
+    <section class="panel overflow-hidden">
+      <div class="flex items-center gap-2 border-b border-line px-4 py-2.5">
+        <svg class="h-4 w-4 text-gold"><use href="#i-cross"/></svg>
+        <h2 class="font-display text-sm font-semibold text-ink">Top killers</h2>
+        <span class="ml-auto text-[11px] text-faint">7d</span>
+      </div>
+      {% if overview.top_killers %}
+      <ol class="divide-y divide-line/40">
+        {% for row in overview.top_killers %}
+        <li class="flex items-center gap-2.5 px-4 py-2">
+          <span class="data w-4 text-center text-xs font-bold {% if row.place == 1 %}text-gold{% else %}text-faint{% endif %}">{{ row.place }}</span>
+          <a rel="nofollow" href="{% url 'killboard:list' %}?character_id={{ row.character_id }}" class="flex min-w-0 flex-1 items-center gap-2 group">
+            <img src="{% eve_portrait row.character_id 32 %}" alt="" loading="lazy" class="h-6 w-6 shrink-0 rounded-full ring-1 ring-line">
+            <span class="min-w-0 flex-1 truncate text-sm text-muted group-hover:text-gold transition">{% eve_name row.character_id %}</span>
+          </a>
+          <span class="data shrink-0 text-sm font-semibold text-ink">{{ row.value }}</span>
+        </li>
+        {% endfor %}
+      </ol>
+      {% else %}
+      <p class="px-4 py-8 text-center text-xs text-faint">No kills in the last 7 days.</p>
+      {% endif %}
+      <a href="{% url 'killboard:rankings' %}" class="block border-t border-line px-4 py-2 text-center text-[11px] text-faint hover:text-gold">Full rankings →</a>
+    </section>
+
+    <section class="panel overflow-hidden">
+      <div class="flex items-center gap-2 border-b border-line px-4 py-2.5">
+        <svg class="h-4 w-4 text-cyan"><use href="#i-target"/></svg>
+        <h2 class="font-display text-sm font-semibold text-ink">Most active</h2>
+        <span class="ml-auto text-[11px] text-faint">7d · systems</span>
+      </div>
+      {% if overview.active_systems %}
+      <ol class="divide-y divide-line/40">
+        {% with max=overview.active_systems.0.count %}
+        {% for sysrow in overview.active_systems %}
+        <li class="px-4 py-2">
+          <div class="mb-1 flex items-center gap-2 text-sm">
+            <a rel="nofollow" href="{% url 'killboard:list' %}?system_id={{ sysrow.system_id }}" class="min-w-0 flex-1 truncate text-muted hover:text-gold transition">{{ sysrow.name }}</a>
+            <span class="data shrink-0 text-xs font-semibold text-ink">{{ sysrow.count }}</span>
+          </div>
+          <div class="h-1 w-full overflow-hidden rounded-full bg-panel2">
+            <div class="h-full rounded-full bg-cyan/60" style="width: {% widthratio sysrow.count max 100 %}%"></div>
+          </div>
+        </li>
+        {% endfor %}
+        {% endwith %}
+      </ol>
+      {% else %}
+      <p class="px-4 py-8 text-center text-xs text-faint">No activity in the last 7 days.</p>
+      {% endif %}
+    </section>
+  </aside>
+</div>
+{% endblock %}

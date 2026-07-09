@@ -1,0 +1,10 @@
+{% comment %}Params: url (name), icon (symbol id), title, desc.{% endcomment %}
+<a href="{% url url %}" class="panel group flex gap-3 p-4 transition hover:border-gold/40">
+  <span class="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-panel2 text-gold ring-1 ring-line">
+    <svg class="h-4 w-4"><use href="#{{ icon }}"/></svg>
+  </span>
+  <span class="min-w-0">
+    <span class="block font-display text-sm font-semibold text-ink group-hover:text-gold">{{ title }}</span>
+    <span class="mt-0.5 block text-xs text-faint">{{ desc }}</span>
+  </span>
+</a>

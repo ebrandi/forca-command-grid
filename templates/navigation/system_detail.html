@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}{% if facts %}{{ facts.system.name }}{% else %}System{% endif %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+
+{% if missing %}
+  <div class="panel px-4 py-16 text-center">
+    <p class="font-display text-lg text-muted">System “{{ missing }}” not found</p>
+    <a href="{% url 'navigation:map_index' %}" class="btn-ghost mt-4 text-sm">← Maps</a>
+  </div>
+{% else %}
+{% with s=facts.system %}
+<header class="mb-5 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <p class="eyebrow">Solar system</p>
+    <div class="mt-1 flex items-center gap-3">
+      <h1 class="text-3xl font-bold text-ink">{{ s.name }}</h1>
+      <span class="rounded px-2 py-0.5 font-mono text-sm font-semibold" style="background:{{ s.colour }}22;color:{{ s.colour }};border:1px solid {{ s.colour }}55;">{{ s.security }}</span>
+    </div>
+    <p class="mt-1 text-sm text-faint">
+      <a href="{% url 'navigation:map_region' s.region_id %}?hl={{ s.id }}" class="hover:text-gold">{{ s.region }}</a>
+      {% if s.constellation %}· {{ s.constellation }}{% endif %}
+      · <span class="capitalize">{{ s.band }}</span>
+    </p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <a href="{% url 'navigation:route_planner' %}?to={{ s.id }}&to_q={{ s.name|urlencode }}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-route"/></svg> Route here</a>
+    <a href="{% url 'navigation:jump_planner' %}?to={{ s.id }}&to_q={{ s.name|urlencode }}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-jump"/></svg> Jump here</a>
+    <a href="{% url 'navigation:map_region' s.region_id %}?hl={{ s.id }}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-map"/></svg> On map</a>
+    <a href="{% url 'killboard:list' %}?system_id={{ s.id }}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-cross"/></svg> Killboard</a>
+  </div>
+</header>
+
+{% if live.incursion %}
+<div class="panel mb-4 border-l-2 border-l-[#f0533f] px-4 py-3 text-sm text-muted"><span class="font-semibold text-[#f0533f]">Incursion active</span> — a Sansha incursion is currently affecting this system.</div>
+{% endif %}
+{% if live.fw %}
+<div class="panel mb-4 border-l-2 px-4 py-3 text-sm text-muted {% if live.fw.contested == 'contested' or live.fw.contested == 'vulnerable' %}border-l-[#f0533f]{% else %}border-l-[#4a7ab5]{% endif %}"><span class="font-semibold text-ink">Faction warfare</span> — held by {{ live.fw.faction }} · {{ live.fw.contested }}{% if live.fw.pct %} ({{ live.fw.pct }}% contested){% endif %}.</div>
+{% endif %}
+
+<!-- Stat cards -->
+<div class="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-4">
+  <div class="panel px-4 py-3"><p class="eyebrow text-faint">Planets</p><p class="mt-1 text-2xl font-bold text-ink">{% if facts.celestials %}{{ facts.celestials.planet_count }}{% else %}{{ topo.planets }}{% endif %}</p></div>
+  <div class="panel px-4 py-3"><p class="eyebrow text-faint">Moons</p><p class="mt-1 text-2xl font-bold text-ink">{% if facts.celestials %}{{ facts.celestials.moon_count }}{% else %}{{ topo.moons }}{% endif %}</p></div>
+  <div class="panel px-4 py-3"><p class="eyebrow text-faint">Asteroid belts</p><p class="mt-1 text-2xl font-bold text-ink">{% if facts.celestials %}{{ facts.celestials.belt_count }}{% else %}{{ topo.belts }}{% endif %}</p></div>
+  <div class="panel px-4 py-3"><p class="eyebrow text-faint">NPC stations</p><p class="mt-1 text-2xl font-bold text-ink">{{ facts.stations|length }}</p></div>
+  <div class="panel px-4 py-3"><p class="eyebrow text-faint">Traffic · 1h</p><p class="mt-1 text-2xl font-bold text-ink">{{ live.traffic }}</p><p class="text-[11px] text-faint">ship jumps</p></div>
+  <div class="panel px-4 py-3"><p class="eyebrow text-faint">Ship kills · 1h</p><p class="mt-1 text-2xl font-bold text-ink">{{ live.ship_kills }}</p><p class="text-[11px] text-faint">{{ live.pod_kills }} pods</p></div>
+  <div class="panel px-4 py-3"><p class="eyebrow text-faint">NPC kills · 1h</p><p class="mt-1 text-2xl font-bold text-ink">{{ live.npc_kills }}</p><p class="text-[11px] text-faint">ratting proxy</p></div>
+  <div class="panel px-4 py-3"><p class="eyebrow text-faint">Sovereignty</p><p class="mt-1 truncate text-base font-semibold text-ink" title="{{ live.sov|default:'—' }}">{{ live.sov|default:"—" }}</p></div>
+</div>
+
+<div class="grid gap-6 lg:grid-cols-2">
+  <!-- Exits / gateways -->
+  <section>
+    <h2 class="eyebrow mb-2 text-faint">Stargate connections{% if facts.gateways %} · exits to {{ facts.gateways|join:", " }}{% endif %}</h2>
+    {% if facts.neighbours %}
+    <div class="flex flex-wrap gap-1.5">
+      {% for n in facts.neighbours %}
+      <a href="{% url 'navigation:system_detail' n.system_id %}" class="chip hover:!border-gold/40"
+         title="{{ n.name }} · {{ n.security }} · {{ n.region }}">
+        <span class="inline-block h-2 w-2 rounded-full" style="background:{{ n.colour }}"></span>
+        {{ n.name }}{% if n.external %} <span class="text-gold">→ {{ n.region }}</span>{% endif %}
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}<p class="text-sm text-faint">No stargate connections (isolated / special space).</p>{% endif %}
+  </section>
+
+  <!-- Stations -->
+  <section>
+    <h2 class="eyebrow mb-2 text-faint">NPC stations</h2>
+    {% if facts.stations %}
+    <ul class="space-y-1 text-sm text-muted">
+      {% for st in facts.stations %}<li class="panel px-3 py-1.5">{{ st.name }}</li>{% endfor %}
+    </ul>
+    {% else %}<p class="text-sm text-faint">No NPC stations. {% if topo.station_ids %}Player structures may be present.{% endif %}</p>{% endif %}
+  </section>
+
+  <!-- Belt ore reference -->
+  <section>
+    <h2 class="eyebrow mb-2 text-faint">Asteroid ore · typical for {{ s.band }}</h2>
+    {% if facts.ores %}
+    <div class="flex flex-wrap gap-1.5">
+      {% for ore in facts.ores %}<span class="chip">{{ ore }}</span>{% endfor %}
+    </div>
+    <p class="mt-2 text-[11px] text-faint">Standard belt composition for this security band. Moon-mining yields are dynamic in the Refinery era and aren't published per moon.</p>
+    {% endif %}
+  </section>
+
+  <!-- Celestials (named planets, moons, belts) -->
+  {% if facts.celestials %}
+  <section>
+    <h2 class="eyebrow mb-2 text-faint">Planets &amp; moons</h2>
+    <div x-data="{ open: null }" class="space-y-1">
+      {% for p in facts.celestials.planets %}
+      <div class="panel px-3 py-2">
+        <button type="button" @click="open = open === {{ forloop.counter }} ? null : {{ forloop.counter }}" class="flex w-full items-center justify-between gap-2 text-sm">
+          <span class="text-ink">{{ p.name }}</span>
+          <span class="text-[11px] text-faint">{{ p.moons|length }} moon{{ p.moons|length|pluralize }}{% if p.belts %} · {{ p.belts|length }} belt{{ p.belts|length|pluralize }}{% endif %}</span>
+        </button>
+        {% if p.moons or p.belts %}
+        <div x-show="open === {{ forloop.counter }}" x-cloak class="mt-2 flex flex-wrap gap-1 border-t border-line/40 pt-2">
+          {% for m in p.moons %}<span class="chip !text-[10px]">{{ m }}</span>{% endfor %}
+          {% for b in p.belts %}<span class="chip !border-gold/20 !text-[10px] !text-gold">{{ b }}</span>{% endfor %}
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Recent kills -->
+  <section>
+    <h2 class="eyebrow mb-2 text-faint">Recent kills here</h2>
+    {% if facts.recent_kills %}
+    <div class="panel divide-y divide-line/40">
+      {% for k in facts.recent_kills %}
+      <a href="{% url 'killboard:detail' k.killmail_id %}" class="flex items-center justify-between gap-3 px-3 py-2 text-sm hover:bg-panel2">
+        <span class="min-w-0"><span class="text-ink">{{ k.ship }}</span> <span class="text-faint">· {{ k.victim }}</span></span>
+        <span class="shrink-0 text-right text-xs text-faint">{{ k.time|date:"M j H:i" }}</span>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}<p class="text-sm text-faint">No kills recorded here yet.</p>{% endif %}
+  </section>
+</div>
+{% endwith %}
+{% endif %}
+{% endblock %}

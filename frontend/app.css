@@ -1,0 +1,71 @@
+/*
+ * [FORCA] Command Grid — Tailwind source stylesheet.
+ *
+ * Compiled to ../static/css/app.css by `npm run build:css`. Everything here was
+ * previously injected at runtime by the Tailwind Play CDN and two inline <style>
+ * blocks in base.html; it now ships as one self-hosted, pre-built file so the
+ * page needs no third-party stylesheet or 'unsafe-inline'/'unsafe-eval' scripts.
+ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  h1, h2, h3 { @apply font-display tracking-wide; }
+}
+
+@layer components {
+  .panel       { @apply rounded-xl border border-line bg-panel/80; }
+  .eyebrow     { @apply font-display text-[11px] font-semibold uppercase tracking-[0.22em] text-faint; }
+  .data        { @apply font-mono tabular-nums; }
+  .btn-gold    { @apply inline-flex items-center justify-center gap-2 rounded-md bg-gold px-4 py-2 font-display text-sm font-semibold uppercase tracking-wider text-space hover:bg-goldb transition; }
+  .btn-ghost   { @apply inline-flex items-center gap-2 rounded-md border border-line px-3 py-1.5 text-sm text-muted hover:text-ink hover:border-gold/40 transition; }
+  .btn-cyan    { @apply inline-flex items-center justify-center gap-2 rounded-md bg-cyan px-4 py-2 font-display text-sm font-semibold uppercase tracking-wider text-space hover:brightness-110 transition; }
+  .btn-danger  { @apply inline-flex items-center gap-2 rounded-md border border-loss/40 px-3 py-1.5 text-sm text-loss/90 hover:bg-loss/10 transition; }
+  .label       { @apply mb-1 block font-display text-[11px] font-semibold uppercase tracking-[0.18em] text-faint; }
+  .input-field { @apply w-full rounded-md border border-line bg-space/60 px-3 py-2 text-sm text-ink placeholder:text-faint focus:border-gold/50 focus:outline-none focus:ring-1 focus:ring-gold/30; }
+  .chip        { @apply inline-flex items-center gap-1 rounded border border-line bg-panel2 px-2 py-0.5 text-[11px] text-muted; }
+  .navlink     { @apply flex items-center gap-3 rounded-md px-3 py-2 text-sm text-muted hover:bg-panel2 hover:text-ink transition; }
+  .navicon     { @apply h-[18px] w-[18px] shrink-0 text-faint; }
+  .navgroup    { @apply flex w-full items-center justify-between gap-2 rounded-md px-3 pb-1 pt-0.5 text-left hover:text-ink; }
+  .acc-chevron { @apply h-3 w-3 shrink-0 text-faint transition-transform duration-150; }
+  /* Sidebar accordion: app.js sets data-open on each group. Without JS no group
+     has the attribute, so every section stays expanded (graceful degradation). */
+  [data-acc][data-open="1"] .acc-chevron { @apply rotate-90; }
+  /* Native <details> disclosure affordance (e.g. the Trained-skills groups on the
+     character page): a right-pointing chevron that rotates down and lights up gold
+     when its group is open — so a collapsed group visibly reads as expandable and
+     an open one as collapsible. Opt-in via the class, so the app's other <details>
+     (Show EFT, ESI scopes) keep their default browser marker untouched. Driven by
+     the native [open] attribute, so it needs no JS and degrades gracefully. */
+  .disclosure-chevron { @apply h-3.5 w-3.5 shrink-0 text-faint transition-transform duration-150; }
+  details[open] > summary .disclosure-chevron { @apply rotate-90 text-gold; }
+  /* D7: pulsing placeholder for content that renders client-side (chart canvases,
+     async result panels). JS removes the class once content is ready — see
+     window.forcaChart.clearSkeleton. Without JS it simply never appears. */
+  .skeleton { @apply animate-pulse rounded-md bg-panel2; }
+}
+
+/* Plain CSS that used to live in the second inline <style> block in base.html. */
+[x-cloak] { display: none !important; }
+[data-acc][data-open="0"] [data-acc-body] { display: none; }
+
+/* Render native form controls (selects + their option pop-ups, date pickers,
+   scrollbars) in dark mode. Without this the native <option> list can be
+   dark-on-dark / poor-contrast in some browsers on our dark <select> styling. */
+:root { color-scheme: dark; }
+.input-field option { background-color: #10151f; color: #e8eef6; }
+
+body {
+  background-color: #0a0e16;
+  background-image:
+    radial-gradient(900px circle at 50% -10%, rgba(70, 207, 224, .07), transparent 60%),
+    radial-gradient(700px circle at 100% 0%, rgba(244, 165, 43, .05), transparent 55%),
+    linear-gradient(rgba(34, 45, 62, .18) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34, 45, 62, .18) 1px, transparent 1px);
+  background-size: auto, auto, 44px 44px, 44px 44px;
+  background-attachment: fixed;
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: #222d3e; border-radius: 6px; }

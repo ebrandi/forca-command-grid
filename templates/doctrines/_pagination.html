@@ -1,0 +1,23 @@
+{% comment %}Pagination nav. Params: page_obj, base_qs (current query minus page),
+   htmx (bool). When htmx, links swap only the #dc-results fragment and push the URL;
+   otherwise they are plain full-page links. Query is built page-first so an empty
+   base_qs is still valid.{% endcomment %}
+{% if page_obj.paginator.num_pages > 1 %}
+<nav class="mt-6 flex flex-wrap items-center justify-center gap-3 text-sm" aria-label="Pagination">
+  {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}{% if base_qs %}&{{ base_qs }}{% endif %}"
+       {% if htmx %}hx-get="?page={{ page_obj.previous_page_number }}{% if base_qs %}&{{ base_qs }}{% endif %}" hx-target="#dc-results" hx-swap="outerHTML" hx-push-url="true"{% endif %}
+       class="btn-ghost text-sm" rel="prev">← Prev</a>
+  {% else %}
+    <span class="btn-ghost text-sm !opacity-40 pointer-events-none">← Prev</span>
+  {% endif %}
+  <span class="text-faint">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} · {{ page_obj.paginator.count }} total</span>
+  {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}{% if base_qs %}&{{ base_qs }}{% endif %}"
+       {% if htmx %}hx-get="?page={{ page_obj.next_page_number }}{% if base_qs %}&{{ base_qs }}{% endif %}" hx-target="#dc-results" hx-swap="outerHTML" hx-push-url="true"{% endif %}
+       class="btn-ghost text-sm" rel="next">Next →</a>
+  {% else %}
+    <span class="btn-ghost text-sm !opacity-40 pointer-events-none">Next →</span>
+  {% endif %}
+</nav>
+{% endif %}

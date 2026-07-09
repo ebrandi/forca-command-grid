@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Industry guide · [FORCA] Command Grid{% endblock %}
+{% block content %}
+
+<a href="{% url 'industry:home' %}" class="text-xs text-faint hover:text-gold">← Industry Center</a>
+<header class="mt-3 mb-6">
+  <p class="eyebrow">Industry &amp; Economy</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">How EVE industry works</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">A plain-English tour from blueprint to profit. Read top to bottom the first time; after that, jump to what you need.</p>
+</header>
+
+<div class="grid gap-5 lg:grid-cols-3">
+<div class="space-y-5 lg:col-span-2">
+
+  <section class="panel p-5">
+    <h2 class="font-display text-lg font-semibold text-gold">1 · Blueprints: BPO vs BPC</h2>
+    <p class="mt-2 text-sm text-muted">A <strong>blueprint</strong> is the recipe for building something. There are two kinds:</p>
+    <ul class="mt-2 space-y-1.5 text-sm text-muted">
+      <li><strong class="text-ink">BPO — Blueprint Original.</strong> Reusable forever. You buy it once (from CCP-seeded market orders for T1) and can build from it endlessly, and <em>research</em> it to make it more efficient.</li>
+      <li><strong class="text-ink">BPC — Blueprint Copy.</strong> A copy with a limited number of runs. Made by <em>copying</em> a BPO, or produced by <em>invention</em> (that's how you get T2/T3 blueprints — there are no T2 BPOs).</li>
+    </ul>
+  </section>
+
+  <section class="panel p-5">
+    <h2 class="font-display text-lg font-semibold text-gold">2 · Manufacturing, ME and TE</h2>
+    <p class="mt-2 text-sm text-muted"><strong>Manufacturing</strong> turns materials into the product using a blueprint, in an industry job that takes time and costs a job fee. Two blueprint attributes matter:</p>
+    <ul class="mt-2 space-y-1.5 text-sm text-muted">
+      <li><strong class="text-ink">ME — Material Efficiency (0–10).</strong> Each level cuts the materials a job consumes by 1%, up to 10% at ME 10. Higher ME = cheaper builds. Research it on a BPO before mass production.</li>
+      <li><strong class="text-ink">TE — Time Efficiency (0–20).</strong> Each level cuts the job <em>time</em> by 1%, up to 20%. It doesn't change materials or cost, only how long the job runs.</li>
+    </ul>
+    <p class="mt-2 text-xs text-faint">The <a href="{% url 'industry:calculator' %}" class="text-cyan hover:underline">Manufacturing calculator</a> applies ME for you and shows the material bill after efficiency.</p>
+  </section>
+
+  <section class="panel p-5">
+    <h2 class="font-display text-lg font-semibold text-gold">3 · Copying and research</h2>
+    <p class="mt-2 text-sm text-muted">Three more blueprint jobs, all run on a BPO:</p>
+    <ul class="mt-2 space-y-1.5 text-sm text-muted">
+      <li><strong class="text-ink">Copying</strong> makes BPCs from a BPO (needed as the input to invention).</li>
+      <li><strong class="text-ink">ME research</strong> raises Material Efficiency; <strong class="text-ink">TE research</strong> raises Time Efficiency.</li>
+    </ul>
+  </section>
+
+  <section class="panel p-5">
+    <h2 class="font-display text-lg font-semibold text-gold">4 · T2 invention</h2>
+    <p class="mt-2 text-sm text-muted"><strong>Invention</strong> is how you make Tech II. You take a <strong>T1 BPC</strong>, add <strong>datacores</strong> (and optionally a <strong>decryptor</strong>), and run an invention job that <em>might</em> succeed. On success you get a T2 BPC with a few runs.</p>
+    <ul class="mt-2 space-y-1.5 text-sm text-muted">
+      <li><strong class="text-ink">Datacores</strong> — consumable science items, spent whether the job succeeds or fails.</li>
+      <li><strong class="text-ink">Decryptor</strong> — an optional modifier that trades success chance for more runs / better ME / TE on the resulting BPC.</li>
+      <li><strong class="text-ink">Probability</strong> — the chance a single job succeeds. It rises with your science + encryption skills and the decryptor. If a job has a 34% chance, you'll average about 3 attempts per success — so the <em>real</em> cost per T2 BPC includes the datacores you burned on the failures.</li>
+    </ul>
+    <p class="mt-2 text-xs text-faint">The <a href="{% url 'industry:invention' %}" class="text-cyan hover:underline">T2 invention planner</a> does this maths — probability, expected attempts, and cost per successful BPC — and tells you whether it's cheaper to invent, buy the BPC, or just buy the finished T2 item.</p>
+  </section>
+
+  <section class="panel p-5">
+    <h2 class="font-display text-lg font-semibold text-gold">5 · What a job costs</h2>
+    <p class="mt-2 text-sm text-muted">Building isn't just materials. A manufacturing job also charges an <strong>installation fee</strong> based on:</p>
+    <ul class="mt-2 space-y-1.5 text-sm text-muted">
+      <li><strong class="text-ink">Estimated Item Value (EIV)</strong> — CCP's reference value of the materials.</li>
+      <li><strong class="text-ink">System cost index</strong> — how busy that solar system's industry is (busier = pricier).</li>
+      <li><strong class="text-ink">Facility tax</strong> — set by whoever owns the structure you build in.</li>
+    </ul>
+    <p class="mt-2 text-xs text-faint">Our calculator estimates the fee from CCP adjusted prices × the cost index + facility tax. Structure and rig bonuses aren't modelled, so treat it as a close guide.</p>
+  </section>
+
+  <section class="panel p-5">
+    <h2 class="font-display text-lg font-semibold text-gold">6 · Profit, honestly</h2>
+    <p class="mt-2 text-sm text-muted">Your profit is what you sell for, minus everything it took to make and move it:</p>
+    <p class="mt-2 rounded-md bg-panel2 px-3 py-2 text-center font-mono text-sm text-ink">net profit = sale price − sales tax − broker fee − materials − job fee − invention − hauling</p>
+    <ul class="mt-3 space-y-1.5 text-sm text-muted">
+      <li><strong class="text-ink">Sales tax</strong> and <strong class="text-ink">broker fee</strong> are taken when you sell on the market.</li>
+      <li><strong class="text-ink">Margin</strong> is profit as a % of the sale price; <strong class="text-ink">break-even</strong> is the lowest price you can sell at without losing ISK.</li>
+    </ul>
+    <p class="mt-3 rounded-md border border-gold/30 bg-gold/5 px-3 py-2 text-xs text-goldb">Every number this tool shows is an <strong>estimate</strong> from current Jita prices and your assumptions — not guaranteed profit. Prices move. Always sanity-check before committing ISK.</p>
+  </section>
+
+  <section class="panel p-5">
+    <h2 class="font-display text-lg font-semibold text-gold">7 · Working with the corp</h2>
+    <p class="mt-2 text-sm text-muted">Industry keeps the fleet flying. The corp needs a steady supply of doctrine hulls and modules; the <a href="{% url 'industry:board' %}" class="text-cyan hover:underline">production plans</a> board and the Corp Store demand let leadership say "we need N of X", and members can claim those builds. When you import your <a href="{% url 'industry:jobs' %}" class="text-cyan hover:underline">ESI jobs</a>, leadership can see what's already in production so nobody double-builds.</p>
+  </section>
+
+</div>
+
+<aside class="space-y-4">
+  <div class="panel p-5">
+    <h2 class="eyebrow text-gold">Jargon, fast</h2>
+    <dl class="mt-2 space-y-2 text-sm">
+      <div><dt class="font-semibold text-ink">BPO / BPC</dt><dd class="text-faint">Blueprint Original (reusable) / Copy (limited runs).</dd></div>
+      <div><dt class="font-semibold text-ink">ME / TE</dt><dd class="text-faint">Material / Time Efficiency of a blueprint.</dd></div>
+      <div><dt class="font-semibold text-ink">Datacore</dt><dd class="text-faint">Consumable science item for invention.</dd></div>
+      <div><dt class="font-semibold text-ink">Decryptor</dt><dd class="text-faint">Optional invention modifier (chance ↔ runs/ME/TE).</dd></div>
+      <div><dt class="font-semibold text-ink">EIV</dt><dd class="text-faint">Estimated Item Value — the job-fee base.</dd></div>
+      <div><dt class="font-semibold text-ink">Cost index</dt><dd class="text-faint">Per-system industry busyness that scales job fees.</dd></div>
+      <div><dt class="font-semibold text-ink">Reaction</dt><dd class="text-faint">A job that combines materials into intermediate goods (e.g. alloys, fuel).</dd></div>
+      <div><dt class="font-semibold text-ink">Margin</dt><dd class="text-faint">Profit as a percentage of the sale price.</dd></div>
+    </dl>
+  </div>
+  <div class="panel p-5">
+    <h2 class="eyebrow text-gold">Try it now</h2>
+    <div class="mt-2 space-y-2 text-sm">
+      <a href="{% url 'industry:calculator' %}" class="btn-ghost w-full justify-start"><svg class="h-4 w-4"><use href="#i-cube"/></svg> Cost a build</a>
+      <a href="{% url 'industry:invention' %}" class="btn-ghost w-full justify-start"><svg class="h-4 w-4"><use href="#i-bolt"/></svg> Plan T2 invention</a>
+      <a href="{% url 'industry:chain' %}" class="btn-ghost w-full justify-start"><svg class="h-4 w-4"><use href="#i-route"/></svg> Explore a chain</a>
+    </div>
+  </div>
+</aside>
+</div>
+{% endblock %}

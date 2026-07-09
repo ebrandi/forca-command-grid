@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}Mining Payouts · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-5 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-gold">Industry · Leadership</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">Mining payouts</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">Split an operation's proceeds among the pilots who mined, by their share — net of the mining tax.</p>
+  </div>
+  <a href="{% url 'mining:ledger' %}" class="btn-ghost text-sm">← Ledger</a>
+</header>
+
+
+<div class="grid gap-3 sm:grid-cols-2">
+  {% for p in payouts %}
+  <a href="{% url 'mining:payout' p.pk %}" class="panel p-4 hover:border-gold/40 transition">
+    <div class="flex items-start justify-between gap-3">
+      <div><h2 class="font-display font-semibold text-ink">{{ p.name }}</h2>
+        <p class="mt-0.5 text-xs text-faint">{{ p.period_start|date:"j M" }} – {{ p.period_end|date:"j M" }} · {{ p.get_method_display }}</p></div>
+      <div class="text-right"><p class="font-display text-lg font-bold text-gold">{{ p.pool_isk|isk }}</p>
+        <p class="text-[10px] uppercase tracking-wide {% if p.status == 'final' %}text-kill{% else %}text-faint{% endif %}">{{ p.get_status_display }}</p></div>
+    </div>
+  </a>
+  {% empty %}<p class="panel p-6 text-center text-sm text-faint sm:col-span-2">No payouts yet.</p>{% endfor %}
+</div>
+
+<section class="panel mt-6 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Create a payout</h2></div>
+  <form method="post" action="{% url 'mining:payout_create' %}" class="grid gap-3 p-4 sm:grid-cols-2">
+    {% csrf_token %}
+    <div><label class="label" for="lf_name_1">Name</label><input id="lf_name_1" name="name" required class="input-field" placeholder="e.g. Saturday moon pop"></div>
+    <div><label class="label" for="lf_pool_isk_2">Pool to split (ISK)</label><input id="lf_pool_isk_2" name="pool_isk" type="number" min="0" step="1000000" class="input-field" placeholder="sale proceeds"></div>
+    <div><label class="label" for="lf_period_start_3">From</label><input id="lf_period_start_3" name="period_start" type="date" required value="{{ today }}" class="input-field"></div>
+    <div><label class="label" for="lf_period_end_4">To</label><input id="lf_period_end_4" name="period_end" type="date" required value="{{ today }}" class="input-field"></div>
+    <div class="sm:col-span-2"><label class="label" for="lf_method_5">Split method</label><select id="lf_method_5" name="method" class="input-field">{% for v, l in methods %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
+    <div class="sm:col-span-2"><button class="btn-gold">Create &amp; compute</button></div>
+  </form>
+</section>
+{% endblock %}

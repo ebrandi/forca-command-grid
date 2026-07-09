@@ -1,0 +1,73 @@
+# [FORCA] Command Grid — development runtime
+# Keeps the host clean: app, Postgres, Redis all run in containers.
+x-app: &app
+  build:
+    context: .
+    dockerfile: Dockerfile
+    args:
+      INSTALL_DEV: "true"
+  image: forca-command-grid:dev
+  environment:
+    DJANGO_SETTINGS_MODULE: config.settings.dev
+    DJANGO_DEBUG: "1"
+    DATABASE_URL: postgres://forca:forca@postgres:5432/forca
+    REDIS_URL: redis://redis:6379/0
+    CELERY_BROKER_URL: redis://redis:6379/1
+    DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1,web"
+    FORCA_HOME_CORP_ID: "98000001"
+    PYTHONPATH: /app
+  volumes:
+    - .:/app
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+
+services:
+  web:
+    <<: *app
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py runserver 0.0.0.0:8000"
+    # Bind only to loopback on the host (matching postgres/redis) so the DEBUG
+    # app is never exposed on a routable interface.
+    ports:
+      - "127.0.0.1:8000:8000"
+
+  worker:
+    <<: *app
+    command: celery -A config worker -l info --concurrency 2
+
+  beat:
+    <<: *app
+    command: celery -A config beat -l info --schedule /tmp/celerybeat-schedule
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: forca
+      POSTGRES_USER: forca
+      POSTGRES_PASSWORD: forca
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U forca -d forca"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pg_data:

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Saved jump routes &middot; [FORCA] Command Grid{% endblock %}
+{% block content %}
+
+<header class="mb-5 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <p class="eyebrow">Navigation</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">Saved jump routes</h1>
+    <p class="mt-1 text-sm text-faint">Reopen a saved plan &mdash; it re-plans against current fuel prices and avoid-lists.</p>
+  </div>
+  <a href="{% url 'navigation:jump_planner' %}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-jump"/></svg> Jump planner</a>
+</header>
+
+<section class="panel mb-5 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="font-display text-sm font-semibold text-ink">My routes</h2></div>
+  {% if mine %}
+  <ul class="divide-y divide-line/40">
+    {% for r in mine %}
+    <li class="flex flex-wrap items-center gap-3 px-4 py-3 text-sm">
+      <div class="min-w-0 grow">
+        <p class="font-medium text-ink">{{ r.name }}</p>
+        <p class="text-[11px] text-faint">{{ r.origin_name }} &rarr; {{ r.dest_name }} &middot; {{ r.ship_key }} &middot; JDC {{ r.jdc }}/JFC {{ r.jfc }}{% if r.visibility == 'leadership' %} &middot; <span class="text-cyan">shared with leadership</span>{% endif %}{% if r.note %} &middot; {{ r.note }}{% endif %}</p>
+      </div>
+      <a href="{% url 'navigation:jump_route_open' r.pk %}" class="btn-ghost text-xs">Open</a>
+      <form method="post" action="{% url 'navigation:jump_route_watch' r.pk %}" title="DM me if a camp or incursion appears on this route (a risk indicator, not a guarantee)">{% csrf_token %}
+        <button class="btn-ghost text-xs {% if r.watch_enabled %}!border-cyan/50 !text-cyan{% else %}text-faint{% endif %}">{% if r.watch_enabled %}◉ Watching{% else %}○ Watch{% endif %}</button>
+      </form>
+      <form method="post" action="{% url 'navigation:jump_route_delete' r.pk %}">{% csrf_token %}
+        <button class="btn-ghost text-xs text-loss">Delete</button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="px-4 py-10 text-center text-sm text-faint">No saved routes yet. Plan a route and hit &ldquo;Save&rdquo;.</p>
+  {% endif %}
+</section>
+
+{% if shared is not None %}
+<section class="panel overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="font-display text-sm font-semibold text-ink">Shared with leadership</h2></div>
+  {% if shared %}
+  <ul class="divide-y divide-line/40">
+    {% for r in shared %}
+    <li class="flex flex-wrap items-center gap-3 px-4 py-3 text-sm">
+      <div class="min-w-0 grow">
+        <p class="font-medium text-ink">{{ r.name }}</p>
+        <p class="text-[11px] text-faint">{{ r.owner.username }} &middot; {{ r.origin_name }} &rarr; {{ r.dest_name }} &middot; {{ r.ship_key }}{% if r.note %} &middot; {{ r.note }}{% endif %}</p>
+      </div>
+      <a href="{% url 'navigation:jump_route_open' r.pk %}" class="btn-ghost text-xs">Open</a>
+      <form method="post" action="{% url 'navigation:jump_route_delete' r.pk %}">{% csrf_token %}
+        <button class="btn-ghost text-xs text-loss">Remove</button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="px-4 py-10 text-center text-sm text-faint">No routes shared with leadership yet.</p>
+  {% endif %}
+</section>
+{% endif %}
+
+{% endblock %}

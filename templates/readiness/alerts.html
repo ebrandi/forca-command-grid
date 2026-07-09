@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Readiness · Alerts &amp; reports · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<a href="{% url 'readiness:dashboard' %}" class="text-xs text-faint hover:text-gold">← Readiness</a>
+<header class="mt-2 mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-gold">Readiness</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">Alerts &amp; executive reports</h1>
+    <p class="mt-1 text-sm text-faint">Fired alerts (with escalation and resolution), and the weekly executive report archive. Alerts stay silent until you configure rules in the readiness config.</p>
+  </div>
+  <a href="{% url 'readiness:findings' %}" class="btn-ghost text-sm">Risk register →</a>
+</header>
+
+<section class="panel mb-6 overflow-hidden">
+  <div class="flex items-center justify-between border-b border-line px-4 py-3">
+    <h2 class="eyebrow text-gold">Fired alerts</h2>
+    <span class="chip text-faint">{{ open_count }} open</span>
+  </div>
+  {% if not alerts %}
+    <p class="px-4 py-10 text-center text-sm text-faint">No alerts fired. Configure alert rules (severity, channels, cooldown) in the readiness config to start notifying on blocking findings.</p>
+  {% else %}
+  <div class="overflow-x-auto"><table class="w-full text-sm">
+    <thead class="border-b border-line text-left text-[11px] uppercase tracking-wide text-faint">
+      <tr>
+        <th class="px-4 py-2.5 font-medium">Rule</th>
+        <th class="hidden px-3 py-2.5 font-medium sm:table-cell">Dimension</th>
+        <th class="px-3 py-2.5 text-center font-medium">Severity</th>
+        <th class="hidden px-3 py-2.5 font-medium md:table-cell">Channels</th>
+        <th class="px-3 py-2.5 text-right font-medium">State</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-line/50">
+      {% for a in alerts %}
+      <tr class="hover:bg-panel2/40">
+        <td class="px-4 py-2.5">
+          <span class="block font-medium text-ink">{{ a.rule_key }}</span>
+          <span class="block text-[11px] text-faint">{{ a.summary }}</span>
+        </td>
+        <td class="hidden px-3 py-2.5 text-muted sm:table-cell">{{ a.dimension_key }}{% if a.kpi_key %}/{{ a.kpi_key }}{% endif %}</td>
+        <td class="px-3 py-2.5 text-center"><span class="chip {% if a.severity == 'critical' %}text-loss{% elif a.severity == 'high' %}text-gold{% elif a.severity == 'warn' %}text-cyan{% else %}text-faint{% endif %}">{{ a.severity }}</span></td>
+        <td class="hidden px-3 py-2.5 text-faint md:table-cell">{{ a.channels|join:", "|default:"—" }}</td>
+        <td class="px-3 py-2.5 text-right">
+          {% if a.resolved_at %}<span class="chip text-kill">resolved</span>
+          {% elif a.escalated_at %}<span class="chip text-loss">escalated</span>
+          {% else %}<span class="chip text-gold">open</span>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  {% endif %}
+</section>
+
+<section class="panel overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">Weekly executive reports</h2></div>
+  {% if not reports %}
+    <p class="px-4 py-8 text-center text-sm text-faint">No reports yet — the first lands Monday after a full week of snapshots.</p>
+  {% else %}
+  <div class="divide-y divide-line/50">
+    {% for r in reports %}
+    <div class="flex items-center justify-between px-4 py-2.5 text-sm">
+      <span class="text-muted">{{ r.period_start|date:"j M" }} – {{ r.period_end|date:"j M Y" }}</span>
+      <span class="flex items-center gap-3">
+        <span class="data {% if r.index >= 75 %}text-kill{% elif r.index >= 50 %}text-gold{% else %}text-loss{% endif %}">{{ r.index }}%</span>
+        <span class="text-[11px] text-faint">{{ r.delivered_channels.discord|default:0 }} discord · {{ r.delivered_channels.email|default:0 }} email</span>
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,21 @@
+{
+  "name": "forca-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Build tooling for [FORCA] Command Grid: compiles Tailwind to a static stylesheet and vendors the runtime JS libraries so the app serves no third-party scripts (CSP hardening).",
+  "scripts": {
+    "build:css": "tailwindcss -i ./app.css -o ../static/css/app.css --minify",
+    "watch:css": "tailwindcss -i ./app.css -o ../static/css/app.css --watch",
+    "vendor": "node vendor.js",
+    "build": "npm run vendor && npm run build:css"
+  },
+  "devDependencies": {
+    "tailwindcss": "3.4.17"
+  },
+  "dependencies": {
+    "alpinejs": "3.14.1",
+    "chart.js": "4.4.1",
+    "htmx.org": "2.0.3",
+    "svg-pan-zoom": "3.6.1"
+  }
+}

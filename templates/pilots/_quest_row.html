@@ -1,0 +1,31 @@
+{% comment %}
+One quest-queue row (ranks 2..N, collapsed drill-down). BOTH engines render
+through this include so they cannot visually drift: q is a normalized dict from
+apps/pilots/briefing.py unified_quest_queue(); the only per-engine difference is
+q.form_url_name (command_intel:directive_action vs readiness:reco_action).
+Pass rank=forloop.counter from the caller.
+{% endcomment %}
+<div class="border-b border-line/40 px-4 py-3 last:border-b-0" x-data="{ open: false }">
+  <button type="button" @click="open = !open" :aria-expanded="open" class="flex w-full flex-wrap items-center justify-between gap-2 text-left">
+    <span class="flex min-w-0 items-start gap-3">
+      <span class="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-md bg-panel2 {% if q.corp_order %}text-gold{% else %}text-faint{% endif %}"><svg class="h-4 w-4"><use href="{{ q.icon }}"/></svg></span>
+      <span class="min-w-0">
+        <span class="eyebrow block text-faint">{{ rank }} · {% if q.corp_order %}Corp order · {% endif %}{{ q.category_label }}{% if q.corp_order %} <span class="text-loss">▼ high leverage</span>{% endif %}</span>
+        <span class="mt-0.5 block font-medium text-ink">{{ q.title }}{% if q.is_new %} <span class="chip ml-1 !border-cyan/40 !text-cyan">new</span>{% endif %}</span>
+      </span>
+    </span>
+    <span class="flex shrink-0 items-center gap-2">
+      <span class="chip text-gold">+{{ q.points }} pts</span>
+      <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" class="h-3 w-3 text-faint transition-transform" :class="open && 'rotate-90'"><path d="M4 2.5l4 3.5-4 3.5"/></svg>
+    </span>
+  </button>
+  <div x-show="open" x-cloak x-transition.opacity>
+    <p class="mt-1.5 max-w-2xl text-sm text-muted">{{ q.detail }}</p>
+    <div class="mt-2 flex flex-wrap items-center gap-2">
+      {% if q.action_available %}<a href="{{ q.action_url }}" class="btn-cyan !py-1 text-xs">{{ q.category_label }} →</a>{% endif %}
+      <form method="post" action="{% url q.form_url_name q.id %}" class="inline">{% csrf_token %}<input type="hidden" name="action" value="done"><button class="btn-ghost !py-1 text-xs">Mark done</button></form>
+      <form method="post" action="{% url q.form_url_name q.id %}" class="inline">{% csrf_token %}<input type="hidden" name="action" value="snooze"><button class="btn-ghost !py-1 text-xs">Snooze 7d</button></form>
+      <form method="post" action="{% url q.form_url_name q.id %}" class="inline">{% csrf_token %}<input type="hidden" name="action" value="dismiss"><button class="btn-ghost !py-1 text-xs text-faint">Not for me</button></form>
+    </div>
+  </div>
+</div>

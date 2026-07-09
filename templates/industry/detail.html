@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}{{ project.name }} · Industry{% endblock %}
+{% block content %}
+<a href="{% url 'industry:board' %}" class="text-xs text-faint hover:text-gold">← Industry projects</a>
+<header class="mt-3 flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold text-ink">{{ project.name }}</h1>
+    <p class="mt-1 flex flex-wrap items-center gap-2 text-sm text-faint">
+      <span class="chip">{{ project.get_objective_type_display }}</span>
+      <span class="chip">{{ project.get_status_display }}</span>
+      <span>est. cost <span class="data text-gold">{{ project.estimated_cost|default:0|isk }}</span> ISK</span>
+      {% if project.assigned_to %}<span>· led by <span class="text-muted">{{ project.assigned_to.first_name|default:project.assigned_to.username }}</span></span>{% endif %}
+    </p>
+    {% if project.description %}<p class="mt-2 max-w-2xl text-sm text-muted">{{ project.description }}</p>{% endif %}
+  </div>
+  <div class="grid grid-cols-3 gap-3 text-center">
+    <div class="panel px-4 py-2">
+      <p class="eyebrow">Build cost</p>
+      <p class="data mt-0.5 text-lg font-bold text-gold">{{ economics.cost|isk }}</p>
+    </div>
+    <div class="panel px-4 py-2">
+      <p class="eyebrow">Sell value</p>
+      <p class="data mt-0.5 text-lg font-bold text-cyan">{{ economics.value|isk }}</p>
+    </div>
+    <div class="panel px-4 py-2">
+      <p class="eyebrow">Est. profit</p>
+      <p class="data mt-0.5 text-lg font-bold {% if economics.profit > 0 %}text-kill{% else %}text-loss{% endif %}">{{ economics.profit|isk }}</p>
+      <p class="text-[10px] text-faint">{{ economics.margin|floatformat:1 }}% margin</p>
+    </div>
+  </div>
+  <div class="flex flex-wrap items-center gap-2">
+    {% if not is_mine %}
+      <form method="post" action="{% url 'industry:claim' project.pk %}">{% csrf_token %}<button class="btn-gold">Lead this project</button></form>
+    {% endif %}
+    <form method="post" action="{% url 'industry:duplicate' project.pk %}">{% csrf_token %}<button class="btn-ghost" title="Clone this plan into a new draft">Duplicate</button></form>
+    {% if can_manage %}
+      <form method="post" action="{% url 'industry:push_jobs' project.pk %}">{% csrf_token %}<button class="btn-gold" title="Create claimable build jobs for each buildable line; delivery flows back to this plan">Push to job board</button></form>
+      <form method="post" action="{% url 'industry:recompute' project.pk %}">{% csrf_token %}<button class="btn-ghost">Recompute</button></form>
+      <form method="post" action="{% url 'industry:shopping_list' project.pk %}">{% csrf_token %}<button class="btn-ghost">Shopping list</button></form>
+      {% if project.is_archived %}
+        <form method="post" action="{% url 'industry:archive' project.pk %}">{% csrf_token %}<input type="hidden" name="unarchive" value="1"><button class="btn-ghost">Restore</button></form>
+      {% else %}
+        <form method="post" action="{% url 'industry:archive' project.pk %}" data-confirm="Archive “{{ project.name }}”? It's recoverable from the archived view.">{% csrf_token %}<button class="btn-ghost !text-loss hover:!border-loss/40">Archive</button></form>
+      {% endif %}
+      {% if reservation.count %}
+        <form method="post" action="{% url 'industry:release_stock' project.pk %}">{% csrf_token %}<button class="btn-ghost" title="Release {{ reservation.units }} reserved units">Release stock ({{ reservation.units }})</button></form>
+      {% else %}
+        <form method="post" action="{% url 'industry:reserve_stock' project.pk %}">{% csrf_token %}<button class="btn-ghost" title="Earmark available corp stock for this project">Reserve stock</button></form>
+      {% endif %}
+      <form method="post" action="{% url 'industry:status' project.pk %}" class="flex items-center gap-1">
+        {% csrf_token %}
+        <select name="status" class="input-field !py-1.5 !text-xs" data-autosubmit>
+          {% for value, label in statuses %}<option value="{{ value }}" {% if value == project.status %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </form>
+    {% endif %}
+  </div>
+</header>
+{% if reservation.count %}
+  <p class="mt-3 inline-flex items-center gap-2 rounded-md border border-cyan/30 bg-cyan/5 px-3 py-1.5 text-xs text-cyan">
+    <svg class="h-3.5 w-3.5"><use href="#i-box"/></svg>
+    {{ reservation.units }} units reserved from corp stock for this project ({{ reservation.count }} reservation{{ reservation.count|pluralize }})
+  </p>
+{% endif %}
+
+{% for item in project.items.all %}
+  <section class="panel mt-5 overflow-hidden">
+    <div class="flex items-center gap-3 border-b border-line p-4">
+      <img src="{% eve_type_render item.type_id 64 %}" alt="" loading="lazy" class="h-11 w-11 rounded-md bg-space object-cover ring-1 ring-line">
+      <div class="flex-1">
+        <h2 class="font-display font-semibold text-ink">{% type_name item.type_id %}</h2>
+        <p class="text-xs text-faint">×{{ item.quantity }} · {{ item.get_build_or_buy_display }} · {{ item.get_strategy_display }}</p>
+      </div>
+      {% if can_manage %}
+        <form method="post" action="{% url 'industry:remove_item' project.pk item.id %}" data-confirm="Remove this item?">{% csrf_token %}<button class="btn-danger !py-1 !text-xs">Remove</button></form>
+      {% endif %}
+    </div>
+
+    {% if item.production_steps.all %}
+    <div class="border-b border-line/60 bg-panel2/40 px-4 py-3">
+      <p class="eyebrow mb-2">Build order ({{ item.production_steps.all|length }} job{{ item.production_steps.all|length|pluralize }})</p>
+      <ol class="space-y-1">
+        {% for s in item.production_steps.all %}
+          <li class="flex items-center gap-2 text-xs">
+            <span class="data w-6 text-faint">{{ forloop.counter }}.</span>
+            <img src="{% eve_type_icon s.type_id 32 %}" alt="" loading="lazy" class="h-4 w-4 rounded-sm">
+            <span class="text-muted">{% type_name s.type_id %}</span>
+            <span class="chip">{{ s.activity }}</span>
+            <span class="data text-faint">{{ s.runs }} run{{ s.runs|pluralize }} → {{ s.produced_quantity }} (need {{ s.required_quantity }})</span>
+          </li>
+        {% endfor %}
+      </ol>
+    </div>
+    {% endif %}
+
+    <div class="overflow-x-auto"><table class="w-full text-sm">
+      <thead class="text-faint text-left"><tr class="border-b border-line/60">
+        <th class="px-4 py-2 font-medium">Material to acquire</th><th class="px-4 py-2 text-right font-medium">Required</th>
+        <th class="px-4 py-2 text-right font-medium">In stock</th><th class="px-4 py-2 text-right font-medium">To acquire</th>
+        <th class="px-4 py-2 font-medium">Method</th></tr></thead>
+      <tbody>
+        {% for r in item.material_requirements.all %}
+          <tr class="border-t border-line/40">
+            <td class="px-4 py-2"><span class="flex items-center gap-2"><img src="{% eve_type_icon r.type_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">{% type_name r.type_id %}</span></td>
+            <td class="px-4 py-2 text-right data text-muted">{{ r.quantity_required }}</td>
+            <td class="px-4 py-2 text-right data text-faint">{{ r.quantity_available }}</td>
+            <td class="px-4 py-2 text-right data {% if r.quantity_to_acquire %}text-gold{% else %}text-kill{% endif %}">{{ r.quantity_to_acquire }}</td>
+            <td class="px-4 py-2"><span class="chip">{{ r.get_acquire_method_display }}</span></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5" class="px-4 py-3 text-faint">No BOM computed yet — use “Recompute”.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+
+    {% if item.invention_inputs %}
+    <div class="border-t border-line/60 px-4 py-3">
+      <p class="eyebrow mb-2 text-cyan">Requires invention</p>
+      <p class="mb-2 text-xs text-faint">This is a T2/T3 item — you also need a blueprint copy invented from these datacores:</p>
+      <div class="flex flex-wrap gap-2">
+        {% for inv in item.invention_inputs %}
+          <span class="chip"><img src="{% eve_type_icon inv.material_type_id 32 %}" alt="" class="h-4 w-4 rounded-sm"> {% type_name inv.material_type_id %} ×{{ inv.quantity }}</span>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </section>
+{% endfor %}
+
+{% if can_manage %}
+<section class="panel mt-5 p-5">
+  <h2 class="eyebrow mb-3 text-gold">Add another item</h2>
+  <form method="post" action="{% url 'industry:add_item' project.pk %}" class="grid items-end gap-3 sm:grid-cols-[1fr_auto_auto_auto]">
+    {% csrf_token %}
+    <div>{% include "components/_type_picker.html" with field="type_id" endpoint="/industry/type-search/?buildable=1" placeholder="Search an item…" required=1 %}</div>
+    <div><label class="label">Qty</label>{{ item_form.quantity }}</div>
+    <div><label class="label">Strategy</label>{{ item_form.strategy }}</div>
+    <input type="hidden" name="build_or_buy" value="build">
+    <button class="btn-gold">Add</button>
+  </form>
+</section>
+{% endif %}
+
+{% if bottlenecks %}
+<section class="panel mt-5 p-5">
+  <h2 class="eyebrow mb-3">Bottlenecks</h2>
+  <div class="space-y-1.5">
+    {% for b in bottlenecks %}
+      <div class="flex items-center gap-2.5 text-sm">
+        <img src="{% eve_type_icon b.type_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">
+        <span class="flex-1 text-muted">{% type_name b.type_id %}</span>
+        <span class="data text-faint">acquire {{ b.to_acquire }}</span>
+        <span class="data text-gold">≈{{ b.cost|isk }}</span>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}

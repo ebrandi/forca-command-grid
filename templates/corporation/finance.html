@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% load eve static %}
+{% block title %}Corp Finance · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<script defer src="{% static 'js/vendor/chart.umd.js' %}"></script>
+<header class="mb-5">
+  <p class="eyebrow text-gold">Director</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">Corp finance</h1>
+  <p class="mt-1 text-sm text-faint">The corporation's financial life — balances, income, expenses, who's earning, and where it's heading.</p>
+</header>
+
+<!-- Controls -->
+<div class="mb-5 flex flex-wrap items-center gap-2">
+  <div class="flex flex-wrap gap-1">
+    {% for key, meta in d.windows.items %}
+      <a href="?window={{ key }}&division={{ d.division|default:'' }}&horizon={{ d.horizon }}"
+         class="chip {% if d.window == key %}!border-gold/50 !text-gold{% endif %}">{{ meta.0 }}</a>
+    {% endfor %}
+  </div>
+  <form method="get" class="ml-auto flex flex-wrap items-center gap-2 text-sm">
+    <input type="hidden" name="window" value="{{ d.window }}">
+    {% if d.divisions|length > 1 %}
+    <select name="division" class="input-field !w-auto !py-1">
+      <option value="">All divisions</option>
+      {% for div in d.divisions %}<option value="{{ div.division }}" {% if d.division == div.division %}selected{% endif %}>{{ div.name|default:div }}</option>{% endfor %}
+    </select>
+    {% endif %}
+    <label class="text-faint">Forecast</label>
+    <select name="horizon" class="input-field !w-auto !py-1">
+      {% for key, label in d.horizons.items %}<option value="{{ key }}" {% if d.horizon == key %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+    <button class="btn-ghost !py-1 !text-xs">Apply</button>
+  </form>
+</div>
+
+<!-- KPI strip -->
+<div class="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+  <div class="panel p-4"><p class="eyebrow text-faint">Balance</p><p class="mt-1 data text-xl font-bold text-gold">{{ d.current_balance|isk }}</p></div>
+  <div class="panel p-4"><p class="eyebrow text-faint">Net · {{ d.window_label }}</p><p class="mt-1 data text-xl font-bold {% if d.net_total >= 0 %}text-kill{% else %}text-loss{% endif %}">{{ d.net_total|isk }}</p></div>
+  <div class="panel p-4"><p class="eyebrow text-faint">Income</p><p class="mt-1 data text-xl font-bold text-kill">{{ d.income_total|isk }}</p></div>
+  <div class="panel p-4"><p class="eyebrow text-faint">Expenses</p><p class="mt-1 data text-xl font-bold text-loss">{{ d.expense_total|isk }}</p></div>
+  <div class="panel p-4"><p class="eyebrow text-faint">Tax collected</p><p class="mt-1 data text-xl font-bold text-ink">{{ d.tax_total|isk }}</p></div>
+</div>
+
+<!-- Charts: balance + income mix -->
+<div class="mb-5 grid gap-4 lg:grid-cols-3">
+  <section class="panel overflow-hidden lg:col-span-2">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Wallet balance &amp; forecast</h2></div>
+    <div class="p-4"><div class="h-64 skeleton"><canvas id="fin-balance"></canvas></div></div>
+  </section>
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Income mix</h2></div>
+    <div class="p-4"><div class="h-64 skeleton"><canvas id="fin-income-mix"></canvas></div></div>
+  </section>
+</div>
+
+<!-- Income vs expense bars -->
+<section class="panel mb-5 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Income vs expense <span class="text-faint">· by {{ d.granularity }}</span></h2></div>
+  <div class="p-4"><div class="h-64 skeleton"><canvas id="fin-flow"></canvas></div></div>
+</section>
+
+<!-- Forecast callout -->
+<section class="panel mb-5 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Forecast <span class="text-faint">· {{ d.horizon_label }}</span></h2></div>
+  <div class="p-4">
+    {% if d.forecast.enough %}
+      <div class="grid gap-3 sm:grid-cols-3">
+        <div><p class="eyebrow text-faint">Projected net</p><p class="data text-lg font-bold {% if d.forecast.projected_net >= 0 %}text-kill{% else %}text-loss{% endif %}">{{ d.forecast.projected_net|isk }}</p><p class="text-[11px] text-faint">range {{ d.forecast.projected_net_low|isk }} … {{ d.forecast.projected_net_high|isk }}</p></div>
+        <div><p class="eyebrow text-faint">Projected balance</p><p class="data text-lg font-bold text-gold">{{ d.forecast.projected_balance|isk }}</p><p class="text-[11px] text-faint">in {{ d.forecast.horizon_days }} day{{ d.forecast.horizon_days|pluralize }}</p></div>
+        <div><p class="eyebrow text-faint">Trend</p>
+          {% if d.forecast.runway_days %}<p class="data text-lg font-bold text-loss">≈ {{ d.forecast.runway_days }}d runway</p><p class="text-[11px] text-faint">at the current burn rate</p>
+          {% else %}<p class="data text-lg font-bold text-kill">cash-positive</p><p class="text-[11px] text-faint">{{ d.forecast.avg_daily|isk }}/day average</p>{% endif %}
+        </div>
+      </div>
+      <p class="mt-3 text-[11px] text-faint">Estimate from {{ d.forecast.trained_days }} days of history (trailing average + variability band). Ratting income is volatile — treat as a guide.</p>
+    {% else %}
+      <p class="text-sm text-faint">Not enough wallet history yet to forecast ({{ d.forecast.horizon_days }}-day horizon needs at least two weeks of data). Keep the wallet sync running and check back.</p>
+    {% endif %}
+  </div>
+</section>
+
+<div class="grid gap-5 lg:grid-cols-2">
+  <!-- Top earners -->
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Top earners <span class="text-faint">· {{ d.window_label }}</span></h2></div>
+    <table class="w-full text-sm">
+      <tbody class="divide-y divide-line/40">
+        {% for e in d.top_earners %}
+          <tr><td class="px-4 py-2 text-ink">{{ e.name }}</td><td class="px-4 py-2 text-right data text-kill">{{ e.total|isk }}</td></tr>
+        {% empty %}
+          <tr><td class="px-4 py-10 text-center text-sm text-faint">No member income in this window.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+  <!-- Biggest movements -->
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Biggest movements</h2></div>
+    <table class="w-full text-sm">
+      <tbody class="divide-y divide-line/40">
+        {% for m in d.movements %}
+          <tr>
+            <td class="px-4 py-2"><span class="text-ink">{{ m.category }}</span><span class="block text-[11px] text-faint">{{ m.party|default:m.ref_type }} · {{ m.date|date:"j M" }}</span></td>
+            <td class="px-4 py-2 text-right data {% if m.amount >= 0 %}text-kill{% else %}text-loss{% endif %}">{{ m.amount|isk }}</td>
+          </tr>
+        {% empty %}
+          <tr><td class="px-4 py-10 text-center text-sm text-faint">No movements in this window.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</div>
+
+<!-- Journal -->
+<section class="panel mt-5 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Recent journal</h2></div>
+  <div class="overflow-x-auto">
+    <table class="w-full min-w-[640px] text-sm">
+      <thead><tr class="eyebrow border-b border-line text-left text-faint">
+        <th class="px-4 py-2">When</th><th class="px-4 py-2">Category</th>
+        <th class="px-4 py-2">From → to</th><th class="px-4 py-2 text-right">Amount</th>
+      </tr></thead>
+      <tbody class="divide-y divide-line/40">
+        {% for e in d.journal %}
+          <tr>
+            <td class="px-4 py-2 text-faint">{{ e.date|date:"j M H:i" }}</td>
+            <td class="px-4 py-2 text-ink">{{ e.category }}</td>
+            <td class="px-4 py-2 text-xs text-faint">{{ e.from|default:"—" }} → {{ e.to|default:"—" }}</td>
+            <td class="px-4 py-2 text-right data {% if e.amount >= 0 %}text-kill{% else %}text-loss{% endif %}">{{ e.amount|isk }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4" class="px-4 py-12 text-center text-sm text-faint">No journal yet — a director needs to grant the corp-wallet scope, then sync.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{{ d.chart|json_script:"fin-data" }}
+{% endblock %}
+
+{% block scripts %}
+<script nonce="{{ csp_nonce }}">
+  document.addEventListener('DOMContentLoaded', function () {
+    if (!window.forcaChart.applyDefaults()) return;
+    var C = forcaChart.colors;
+    var palette = ['#46cfe0', '#f4a52b', '#3fb950', '#f0533f', '#9d7bd8', '#e0a946', '#5aa9e6', '#7ddc8b', '#e87fa5', '#8a98ab'];
+    var D = forcaChart.read('fin-data');
+    if (!D) return;
+    var fmt = function (v) {
+      var a = Math.abs(v);
+      if (a >= 1e9) return (v / 1e9).toFixed(1) + 'B';
+      if (a >= 1e6) return (v / 1e6).toFixed(0) + 'M';
+      if (a >= 1e3) return (v / 1e3).toFixed(0) + 'k';
+      return v.toFixed(0);
+    };
+    var labels = D.series.map(function (p) { return p.label; });
+
+    // Balance line + dashed forecast continuation.
+    var balEl = document.getElementById('fin-balance');
+    if (balEl && D.series.length) {
+      var bal = D.series.map(function (p) { return p.balance; });
+      var fc = D.forecast || {};
+      var fLabels = labels.slice();
+      var fData = bal.map(function () { return null; });
+      if (fc.enough) {
+        fLabels.push('+' + fc.horizon_days + 'd');
+        fData[fData.length - 1] = bal[bal.length - 1];
+        fData.push(fc.projected_balance);
+      }
+      new Chart(balEl, {
+        type: 'line',
+        data: {
+          labels: fLabels,
+          datasets: [
+            { label: 'Balance', data: bal, borderColor: C.gold, backgroundColor: 'rgba(244,165,43,.08)', fill: true, tension: 0.25, pointRadius: 0, borderWidth: 2 },
+            { label: 'Forecast', data: fData, borderColor: C.cyan, borderDash: [5, 4], pointRadius: 0, borderWidth: 2, fill: false },
+          ],
+        },
+        options: { responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: function (c) { return fmt(c.parsed.y) + ' ISK'; } } } },
+          scales: { x: { grid: { color: C.line }, ticks: { maxTicksLimit: 8 } }, y: { grid: { color: C.line }, ticks: { callback: fmt } } } },
+      });
+    }
+
+    // Income vs expense bars + net line.
+    var flowEl = document.getElementById('fin-flow');
+    if (flowEl && D.series.length) {
+      new Chart(flowEl, {
+        data: {
+          labels: labels,
+          datasets: [
+            { type: 'bar', label: 'Income', data: D.series.map(function (p) { return p.income; }), backgroundColor: 'rgba(63,185,80,.7)' },
+            { type: 'bar', label: 'Expense', data: D.series.map(function (p) { return -p.expense; }), backgroundColor: 'rgba(240,83,63,.7)' },
+            { type: 'line', label: 'Net', data: D.series.map(function (p) { return p.net; }), borderColor: C.cyan, pointRadius: 0, borderWidth: 2, tension: 0.25 },
+          ],
+        },
+        options: { responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: function (c) { return c.dataset.label + ': ' + fmt(c.parsed.y) + ' ISK'; } } } },
+          scales: { x: { grid: { color: C.line }, ticks: { maxTicksLimit: 10 } }, y: { grid: { color: C.line }, ticks: { callback: fmt } } } },
+      });
+    }
+
+    // Income mix doughnut.
+    var mixEl = document.getElementById('fin-income-mix');
+    if (mixEl && D.income_cat && D.income_cat.length) {
+      new Chart(mixEl, {
+        type: 'doughnut',
+        data: {
+          labels: D.income_cat.map(function (r) { return r.label; }),
+          datasets: [{ data: D.income_cat.map(function (r) { return r.value; }), backgroundColor: D.income_cat.map(function (_, i) { return palette[i % palette.length]; }), borderColor: '#10151f', borderWidth: 2 }],
+        },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '58%',
+          plugins: { legend: { position: 'bottom', labels: { padding: 8 } }, tooltip: { callbacks: { label: function (c) { return c.label + ': ' + fmt(c.parsed) + ' ISK'; } } } } },
+      });
+    }
+  });
+</script>
+{% endblock %}

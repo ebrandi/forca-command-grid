@@ -1,0 +1,52 @@
+{% comment %}
+Freight location autocomplete (station / structure / system). Params:
+  prefix       hidden-field prefix; emits <prefix>_name/_kind/_id/_system_id (required)
+  endpoint     JSON search URL (defaults to /freight/locations/)
+  placeholder
+Selecting a result fills the hidden fields; a "structure not listed" toggle
+reveals a manual name + system entry for a structure the pilot can't search.
+{% endcomment %}
+<div x-data="locationPicker('{{ endpoint|default:'/freight/locations/' }}', '{{ prefix }}')" class="relative">
+  <input type="hidden" name="{{ prefix }}_name" :value="outName()">
+  <input type="hidden" name="{{ prefix }}_kind" :value="outKind()">
+  <input type="hidden" name="{{ prefix }}_id" :value="outId()">
+  <input type="hidden" name="{{ prefix }}_system_id" :value="outSystem()">
+
+  <!-- Search mode -->
+  <div x-show="mode === 'search'" class="relative" @click.outside="open=false">
+    <input type="text" x-model="q" @input.debounce.250ms="lookup()" @focus="open = results.length>0"
+      class="input-field" autocomplete="off"
+      placeholder="{{ placeholder|default:'Station, structure, or system…' }}">
+    <div x-show="open" x-cloak class="absolute z-30 mt-1 max-h-64 w-full overflow-auto rounded-md border border-line bg-panel shadow-xl">
+      <template x-for="r in results" :key="r.kind + ':' + r.id">
+        <button type="button" @click="choose(r)" class="flex w-full items-start gap-2 px-3 py-1.5 text-left text-sm hover:bg-panel2">
+          <span class="mt-0.5 shrink-0 rounded px-1 text-[9px] font-semibold uppercase tracking-wide"
+            :class="r.kind==='structure' ? 'bg-cyan/15 text-cyan' : (r.kind==='station' ? 'bg-gold/15 text-gold' : 'bg-line/50 text-faint')"
+            x-text="r.kind"></span>
+          <span class="min-w-0">
+            <span class="block truncate text-ink" x-text="r.name"></span>
+            <span class="block truncate text-[11px] text-faint" x-text="r.system_name"></span>
+          </span>
+        </button>
+      </template>
+      <p x-show="!results.length" class="px-3 py-2 text-xs text-faint">No matches — try a station or system, or enter a structure below.</p>
+    </div>
+    <button type="button" @click="mode='manual'; clearSel()" class="mt-1 text-[11px] text-faint hover:text-cyan">Structure not listed? Enter it manually →</button>
+  </div>
+
+  <!-- Manual structure mode (name + system) -->
+  <div x-show="mode === 'manual'" x-cloak class="space-y-1.5">
+    <input type="text" x-model="mName" class="input-field" autocomplete="off" placeholder="Exact structure name (e.g. 1DQ1-A - The Keepstar)">
+    <div class="relative" @click.outside="sysOpen=false">
+      <input type="text" x-model="sysQ" @input.debounce.250ms="sysLookup()" @focus="sysOpen = sysResults.length>0"
+        class="input-field" autocomplete="off" placeholder="System the structure is in…">
+      <div x-show="sysOpen" x-cloak class="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-md border border-line bg-panel shadow-xl">
+        <template x-for="r in sysResults" :key="'sys:' + r.id">
+          <button type="button" @click="chooseSys(r)" class="block w-full truncate px-3 py-1.5 text-left text-sm text-muted hover:bg-panel2 hover:text-ink" x-text="r.name"></button>
+        </template>
+        <p x-show="!sysResults.length" class="px-3 py-2 text-xs text-faint">No matching system.</p>
+      </div>
+    </div>
+    <button type="button" @click="mode='search'" class="text-[11px] text-faint hover:text-cyan">← Back to search</button>
+  </div>
+</div>

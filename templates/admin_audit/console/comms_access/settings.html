@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Comms access sync · Admin{% endblock %}
+{% block content %}
+<a href="{% url 'admin_audit:console' %}" class="text-sm text-faint hover:text-gold">← Admin console</a>
+<header class="mb-6 mt-2"><p class="eyebrow text-gold">External comms access</p>
+  <h1 class="text-3xl font-bold text-ink">Access sync settings</h1></header>
+
+<nav class="mb-6 flex flex-wrap gap-2 text-sm">
+  <a href="{% url 'admin_audit:comms_access_mappings' %}" class="btn-ghost">Role mappings</a>
+  <a href="{% url 'admin_audit:comms_access_status' %}" class="btn-ghost">Linked accounts &amp; ledger</a>
+</nav>
+
+<section class="panel p-5 mb-5 border-l-2 border-gold/50">
+  <p class="text-sm text-faint">This subsystem drives external-platform roles from corp membership + RBAC.
+  It ships <strong class="text-ink">inert</strong> and is configured entirely here — no server
+  access needed. To go live: <strong class="text-ink">(1)</strong> enter the Discord credentials,
+  <strong class="text-ink">(2)</strong> enable the feature, <strong class="text-ink">(3)</strong> arm
+  the platform, and <strong class="text-ink">(4)</strong> take its
+  <a href="{% url 'admin_audit:comms_access_mappings' %}" class="text-gold hover:underline">role mappings</a>
+  out of dry-run. The sync only ever touches roles that appear on the Role mappings page.</p>
+</section>
+
+<section class="panel p-5 mb-5">
+  <h2 class="eyebrow text-gold mb-3">Discord credentials</h2>
+  <p class="text-sm text-faint mb-3">Create an application at the Discord Developer Portal. Add a bot with the
+    <code>Manage Roles</code> permission and place its role <strong class="text-ink">above</strong> every managed
+    role. Secrets are encrypted at rest and never shown again — leave a secret field blank to keep the current value.</p>
+  <form method="post" class="grid gap-3 sm:grid-cols-2">
+    {% csrf_token %}<input type="hidden" name="domain" value="credentials">
+
+    <label class="label sm:col-span-2">Bot token
+      <input type="password" name="discord_bot_token" autocomplete="off" class="input-field mt-1"
+             placeholder="{% if discord_credentials.has_bot_token %}•••••••• configured — leave blank to keep{% else %}paste bot token{% endif %}">
+    </label>
+    <label class="chip cursor-pointer text-xs {% if not discord_credentials.has_bot_token %}opacity-50{% endif %}">
+      <input type="checkbox" name="clear_bot_token" class="mr-1 align-middle" {% if not discord_credentials.has_bot_token %}disabled{% endif %}>Clear bot token</label>
+    <span class="text-xs {% if discord_credentials.has_bot_token %}text-emerald-400{% else %}text-faint{% endif %} self-center">
+      {% if discord_credentials.has_bot_token %}Bot token configured{% if discord_credentials.bot_token_from_env %} (from env){% endif %}{% else %}No bot token set{% endif %}</span>
+
+    <label class="label">OAuth client ID
+      <input name="discord_client_id" value="{{ discord_credentials.oauth_client_id }}" autocomplete="off" class="input-field mt-1" placeholder="application client id">
+    </label>
+    <label class="label">OAuth callback URL
+      <input name="discord_callback_url" value="{{ discord_credentials.oauth_callback_url }}" autocomplete="off" class="input-field mt-1" placeholder="{{ discord_credentials.suggested_callback }}">
+    </label>
+
+    <label class="label sm:col-span-2">OAuth client secret
+      <input type="password" name="discord_client_secret" autocomplete="off" class="input-field mt-1"
+             placeholder="{% if discord_credentials.has_client_secret %}•••••••• configured — leave blank to keep{% else %}paste client secret{% endif %}">
+    </label>
+    <label class="chip cursor-pointer text-xs {% if not discord_credentials.has_client_secret %}opacity-50{% endif %}">
+      <input type="checkbox" name="clear_client_secret" class="mr-1 align-middle" {% if not discord_credentials.has_client_secret %}disabled{% endif %}>Clear client secret</label>
+    <span class="text-xs {% if discord_credentials.oauth_enabled %}text-emerald-400{% else %}text-faint{% endif %} self-center">
+      {% if discord_credentials.oauth_enabled %}Account linking ready{% else %}OAuth not yet configured{% endif %}</span>
+
+    <div class="sm:col-span-2"><button class="btn-gold">Save credentials</button>
+      <span class="ml-2 text-xs text-faint">Set the callback URL to <code>{{ discord_credentials.suggested_callback }}</code> in the Discord app.</span></div>
+  </form>
+</section>
+
+<section class="panel p-5 mb-5">
+  <h2 class="eyebrow text-gold mb-3">General</h2>
+  <form method="post" class="grid gap-3 sm:grid-cols-2">
+    {% csrf_token %}<input type="hidden" name="domain" value="general">
+    <label class="chip cursor-pointer"><input type="checkbox" name="enabled" class="mr-1 align-middle" {% if general.enabled %}checked{% endif %}>Feature enabled</label>
+    <label class="chip cursor-pointer"><input type="checkbox" name="global_dry_run" class="mr-1 align-middle" {% if general.global_dry_run %}checked{% endif %}>Global dry-run (preview only)</label>
+    <label class="label">Revoke grace (minutes)<input type="number" min="0" name="revoke_grace_minutes" value="{{ general.revoke_grace_minutes }}" class="input-field mt-1"></label>
+    <div class="sm:col-span-2"><button class="btn-gold">Save general</button></div>
+  </form>
+</section>
+
+<section class="panel p-5 mb-5">
+  <h2 class="eyebrow text-gold mb-3">Platforms</h2>
+  <form method="post" class="grid gap-4">
+    {% csrf_token %}<input type="hidden" name="domain" value="platforms">
+    {% for row in platform_rows %}
+    <div class="rounded border border-faint/20 p-3">
+      <div class="flex items-center justify-between">
+        <span class="font-semibold text-ink capitalize">{{ row.name }}</span>
+        <span class="flex gap-3">
+          <label class="chip cursor-pointer text-xs"><input type="checkbox" name="{{ row.name }}_armed" class="mr-1 align-middle" {% if row.armed %}checked{% endif %}>Armed</label>
+          <label class="chip cursor-pointer text-xs"><input type="checkbox" name="{{ row.name }}_kick" class="mr-1 align-middle" {% if row.kick_enabled %}checked{% endif %}>Kick on total loss</label>
+        </span>
+      </div>
+      <label class="label mt-2 block">{{ row.id_label }}
+        <input name="{{ row.name }}_id" value="{{ row.id_value }}" class="input-field mt-1" placeholder="platform id">
+      </label>
+    </div>
+    {% endfor %}
+    <div><button class="btn-gold">Save platforms</button></div>
+  </form>
+  <p class="mt-3 text-xs text-faint">Discord is the first supported platform (5.1). Slack &amp; Mumble are
+  designed and reserved — arming them has no effect until their providers ship.</p>
+</section>
+
+{% if meta.at %}<p class="text-xs text-faint">Config v{{ meta.version }}{% if meta.by %} · last changed by {{ meta.by }}{% endif %} · {{ meta.at }}</p>{% endif %}
+{% endblock %}

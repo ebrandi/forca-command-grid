@@ -1,0 +1,562 @@
+{% extends "base.html" %}
+{% block title %}Admin · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-6">
+  <p class="eyebrow">Leadership</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">Admin console</h1>
+  <p class="mt-1 text-sm text-faint">Every corp-management task in one place — no Django admin required.
+    {% if not is_director %}Some areas are director-only and are hidden here.{% endif %}</p>
+</header>
+
+{% comment %}One scannable hub: cards grouped by what you're managing. Officer-safe
+cards always show; director-only cards/groups are guarded by is_director. Each
+destination view still enforces its own role server-side.{% endcomment %}
+
+<!-- Services & features: the one-stop visibility control, surfaced first (director) -->
+{% if is_director %}
+<section class="mb-7">
+  <a href="{% url 'admin_audit:features' %}"
+     class="panel group flex items-start gap-4 border-gold/30 p-5 transition hover:border-gold/60">
+    <svg class="h-7 w-7 shrink-0 text-gold"><use href="#i-grid"/></svg>
+    <div>
+      <h2 class="font-display text-lg font-semibold text-ink group-hover:text-gold">Services &amp; features</h2>
+      <p class="mt-1 text-sm text-faint">Turn member features on or off, and set who can see each service —
+        corp only, corp &amp; alliance, public, or off. Everything is on by default.</p>
+    </div>
+  </a>
+</section>
+{% endif %}
+
+<!-- People & roles (director) -->
+{% if is_director %}
+<section class="mb-7">
+  <h2 class="eyebrow mb-3 text-faint">People &amp; roles</h2>
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <a href="{% url 'admin_audit:members' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-rookie"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Members &amp; roles</h3>
+      <p class="mt-1 text-sm text-faint">Promote officers and directors, see who's linked. Use “View as” to open the site as a pilot for support.</p>
+      <p class="mt-2 data text-xs text-faint">{{ members }} account{{ members|pluralize }}</p>
+    </a>
+    <a href="{% url 'impersonation:log' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-key"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">View-as sessions</h3>
+      <p class="mt-1 text-sm text-faint">The audit trail of every read-only “view as this pilot” support session — active now and recent.</p>
+    </a>
+    <a href="{% url 'admin_audit:compliance' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-shield"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Compliance</h3>
+      <p class="mt-1 text-sm text-faint">Unlinked characters, missing scopes and inactive members.</p>
+    </a>
+    <a href="{% url 'admin_audit:access_governance' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-grid"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Access governance</h3>
+      <p class="mt-1 text-sm text-faint">Partner alliances and friendly corporations that get logistics / buyback / store access.</p>
+    </a>
+    <a href="{% url 'admin_audit:character_recovery' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-key"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Account recovery</h3>
+      <p class="mt-1 text-sm text-faint">Detach a sold or legacy character so its true owner can re-link it at next login.</p>
+    </a>
+    <a href="{% url 'admin_audit:retention_settings' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-shield"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Data retention</h3>
+      <p class="mt-1 text-sm text-faint">How long we keep skills, market, audit and token data — and what happens when a member leaves.</p>
+    </a>
+  </div>
+</section>
+{% endif %}
+
+<!-- Doctrines & content (officer) -->
+<section class="mb-7">
+  <h2 class="eyebrow mb-3 text-faint">Doctrines &amp; content</h2>
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <a href="{% url 'admin_audit:doctrines' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-ship"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Doctrines</h3>
+      <p class="mt-1 text-sm text-faint">Create doctrines and paste fits — skills derive automatically.</p>
+      <p class="mt-2 data text-xs text-faint">{{ doctrines }} doctrine{{ doctrines|pluralize }}</p>
+    </a>
+    <a href="{% url 'doctrines:coverage' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-grid"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Doctrine coverage</h3>
+      <p class="mt-1 text-sm text-faint">How many pilots can fly each priority doctrine — fleet-composition capacity at a glance.</p>
+    </a>
+    <a href="{% url 'admin_audit:content' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-rookie"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">New Player content</h3>
+      <p class="mt-1 text-sm text-faint">The onboarding milestones you ask of new pilots, plus the glossary.</p>
+      <p class="mt-2 data text-xs text-faint">{{ glossary }} term{{ glossary|pluralize }}</p>
+    </a>
+    {% if features.knowledge_base %}
+    <a href="{% url 'kb:list' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-rookie"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Knowledge base</h3>
+      <p class="mt-1 text-sm text-faint">Write and publish corp wiki pages.</p>
+    </a>
+    {% endif %}
+  </div>
+</section>
+
+{% if features.planetary %}
+<!-- Planetary Industry -->
+<section class="mb-7">
+  <h2 class="eyebrow mb-3 text-faint">Planetary Industry</h2>
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <a href="{% url 'admin_audit:planetary_hub' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-bolt"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Overview &amp; settings</h3>
+      <p class="mt-1 text-sm text-faint">Corp PI defaults — market hub, taxes, buyback, priority products — and shared pilot plans.</p>
+    </a>
+  </div>
+</section>
+{% endif %}
+
+{% if features.industry %}
+<!-- Industry & Economy -->
+<section class="mb-7">
+  <h2 class="eyebrow mb-3 text-faint">Industry &amp; Economy</h2>
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <a href="{% url 'admin_audit:industry_settings' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-cube"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Industry settings</h3>
+      <p class="mt-1 text-sm text-faint">Market hub, cost index, taxes, broker/buyback, hauling, plan visibility, and the /erp/ redirect.</p>
+    </a>
+  </div>
+</section>
+{% endif %}
+
+{% if is_director %}
+<section class="mb-7">
+  <h2 class="eyebrow mb-3 text-faint">Pingboard</h2>
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <a href="{% url 'admin_audit:notifications' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-bell"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Notifications</h3>
+      <p class="mt-1 text-sm text-faint">Every automated notification in one place — enable/disable each, set its audience,
+        and keep leadership reports off mass channels. Set who counts as corp leadership.</p>
+    </a>
+    <a href="{% url 'admin_audit:pingboard_settings' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-bell"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Pingboard settings</h3>
+      <p class="mt-1 text-sm text-faint">General switches, anti-abuse limits, calendar sync, and reminder policy.</p>
+    </a>
+    <a href="{% url 'admin_audit:pingboard_channels' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-bolt"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Channels &amp; providers</h3>
+      <p class="mt-1 text-sm text-faint">Configure EVE-mail / Discord / Slack / Telegram / WhatsApp and send test messages.</p>
+    </a>
+    <a href="{% url 'admin_audit:pingboard_automation' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-command"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Automation rules</h3>
+      <p class="mt-1 text-sm text-faint">Trigger→alert rules that fire alerts from other services.</p>
+    </a>
+    <a href="{% url 'admin_audit:pingboard_templates' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-grid"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Message templates</h3>
+      <p class="mt-1 text-sm text-faint">Reusable titles and bodies for alerts, with variable substitution.</p>
+    </a>
+  </div>
+</section>
+{% endif %}
+
+{% if is_director %}
+<section class="mb-7">
+  <h2 class="eyebrow mb-3 text-faint">External comms access</h2>
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <a href="{% url 'admin_audit:comms_access_settings' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-bolt"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Access sync settings</h3>
+      <p class="mt-1 text-sm text-faint">Arm Discord / Slack / Mumble, set the global dry-run and revoke-grace. Ships inert.</p>
+    </a>
+    <a href="{% url 'admin_audit:comms_access_mappings' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-grid"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Role mappings</h3>
+      <p class="mt-1 text-sm text-faint">Map a corp entitlement (member / officer / FC …) to a platform role. The sync only ever touches roles mapped here.</p>
+    </a>
+    <a href="{% url 'admin_audit:comms_access_status' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-command"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Linked accounts &amp; ledger</h3>
+      <p class="mt-1 text-sm text-faint">Who's linked, and the append-only record of every access change (applied + dry-run previews).</p>
+    </a>
+  </div>
+</section>
+{% endif %}
+
+<!-- Navigation -->
+<section class="mb-7">
+  <h2 class="eyebrow mb-3 text-faint">Navigation</h2>
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <a href="{% url 'admin_audit:jump_planner_settings' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-jump"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Jump Planner settings</h3>
+      <p class="mt-1 text-sm text-faint">Default skill assumptions, high-sec exit strategy, corp avoid-lists, fuel safety margin and saved-route access.</p>
+    </a>
+  </div>
+</section>
+
+{% if features.mentorship %}
+<!-- Mentorship Program -->
+<section class="mb-7">
+  <h2 class="eyebrow mb-3 text-faint">Mentorship Program</h2>
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <a href="{% url 'admin_audit:mentorship_hub' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-shield"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Overview</h3>
+      <p class="mt-1 text-sm text-faint">Cadets, mentors, pairings and reward liability at a glance.</p>
+    </a>
+    <a href="{% url 'admin_audit:mentorship_approvals' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-check"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Approvals</h3>
+      <p class="mt-1 text-sm text-faint">Mentor &amp; cadet applications and pairings awaiting sign-off.</p>
+    </a>
+    <a href="{% url 'admin_audit:mentorship_matching' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-target"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Matching</h3>
+      <p class="mt-1 text-sm text-faint">Pair unpaired cadets with the best-fit mentor.</p>
+    </a>
+    <a href="{% url 'admin_audit:mentorship_tracks' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-map"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Tracks &amp; exercises</h3>
+      <p class="mt-1 text-sm text-faint">Build the learning tracks and field exercises.</p>
+    </a>
+    <a href="{% url 'admin_audit:mentorship_rewards' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-coin"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Reward queue</h3>
+      <p class="mt-1 text-sm text-faint">Approve and record mentorship reward payouts.</p>
+    </a>
+    <a href="{% url 'admin_audit:mentorship_report' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-grid"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Reporting &amp; flags</h3>
+      <p class="mt-1 text-sm text-faint">Completion rates, active mentors and abuse flags.</p>
+    </a>
+    {% if is_director %}
+    <a href="{% url 'admin_audit:mentorship_config' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-bolt"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Programme settings</h3>
+      <p class="mt-1 text-sm text-faint">Eligibility, approvals, rewards policy and visibility.</p>
+    </a>
+    <a href="{% url 'admin_audit:mentorship_reward_rules' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-trophy"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Reward rules &amp; badges</h3>
+      <p class="mt-1 text-sm text-faint">Configure what earns ISK, points and recognition.</p>
+    </a>
+    <a href="{% url 'admin_audit:mentorship_cohorts' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-command"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Cohorts</h3>
+      <p class="mt-1 text-sm text-faint">Seasons / intakes, e.g. “Q3 2026 Rookie Intake”.</p>
+    </a>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
+
+{% if is_director %}
+<!-- Readiness configuration (director) -->
+<section class="mb-7">
+  <h2 class="eyebrow mb-3 text-faint">Readiness configuration</h2>
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <a href="{% url 'admin_audit:readiness_wizard' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-bolt"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Activate dimensions</h3>
+      <p class="mt-1 text-sm text-faint">Preview each disabled dimension's would-be score and enable it in one click.</p>
+    </a>
+    <a href="{% url 'admin_audit:readiness_dimensions' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-grid"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Dimensions &amp; weights</h3>
+      <p class="mt-1 text-sm text-faint">Tune which readiness dimensions score, their weight in the index, and amber/red bands.</p>
+    </a>
+    <a href="{% url 'admin_audit:readiness_kpis' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-target"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">KPIs</h3>
+      <p class="mt-1 text-sm text-faint">Enable, weight and re-band the individual KPIs inside each dimension.</p>
+    </a>
+    <a href="{% url 'admin_audit:readiness_mandatory_ships' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-ship"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Mandatory ships</h3>
+      <p class="mt-1 text-sm text-faint">The ships every pilot should own — feeds the Strategic Assets dimension.</p>
+    </a>
+    <a href="{% url 'admin_audit:readiness_strategic_roles' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-target"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Strategic roles</h3>
+      <p class="mt-1 text-sm text-faint">Desired headcount per role — feeds fleet composition, strategic and leadership scoring.</p>
+    </a>
+    <a href="{% url 'admin_audit:readiness_support' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-bolt"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Fleet support skills</h3>
+      <p class="mt-1 text-sm text-faint">Booster / links / logi-support skills and their levels — feeds the Fleet Support dimension (disabled until set).</p>
+    </a>
+    <a href="{% url 'admin_audit:readiness_staging' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-box"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Staging system</h3>
+      <p class="mt-1 text-sm text-faint">Set the system your fleet stages from — feeds the Asset Staging dimension (disabled until set).</p>
+    </a>
+    <a href="{% url 'admin_audit:readiness_finance' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-coin"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Financial configuration</h3>
+      <p class="mt-1 text-sm text-faint">Wallet floor, runway, burn and reserve targets — feeds Financial Health.</p>
+    </a>
+    <a href="{% url 'admin_audit:readiness_srp' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-shield"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">SRP thresholds</h3>
+      <p class="mt-1 text-sm text-faint">Backlog, wait-time and oldest-claim bounds — feeds SRP Health.</p>
+    </a>
+    <a href="{% url 'admin_audit:readiness_responsibilities' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-command"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Officer responsibilities</h3>
+      <p class="mt-1 text-sm text-faint">Map each dimension to an owner desk so gaps auto-route to the right officer.</p>
+    </a>
+    <a href="{% url 'admin_audit:readiness_alerts' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-bolt"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Alert rules</h3>
+      <p class="mt-1 text-sm text-faint">Author the rules that turn findings into Discord / EVE-mail notifications.</p>
+    </a>
+    <a href="{% url 'admin_audit:readiness_doctrines' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-command"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Doctrine classification</h3>
+      <p class="mt-1 text-sm text-faint">Mark primary / mandatory / alliance doctrines and retirement dates — feeds Doctrine findings.</p>
+    </a>
+  </div>
+</section>
+
+<!-- Command Intelligence configuration (director) -->
+<section class="mb-7">
+  <h2 class="eyebrow mb-3 text-faint">Command Intelligence configuration</h2>
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <a href="{% url 'admin_audit:command_intel_provider' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-command"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Provider &amp; model</h3>
+      <p class="mt-1 text-sm text-faint">Pick the runtime model, output sizing, budgets and call discipline. The API key stays in the environment.</p>
+    </a>
+    <a href="{% url 'admin_audit:command_intel_constraints' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-target"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Constraints &amp; thresholds</h3>
+      <p class="mt-1 text-sm text-faint">Tune global severity ratios, demand targets and which constraint providers run.</p>
+    </a>
+    <a href="{% url 'admin_audit:command_intel_classification' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-shield"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Classification</h3>
+      <p class="mt-1 text-sm text-faint">Set the default report classification and the tier → minimum-role map (floor-guarded).</p>
+    </a>
+    <a href="{% url 'admin_audit:command_intel_auto_aar' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-cross"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Auto-AAR</h3>
+      <p class="mt-1 text-sm text-faint">Auto-queue a battle AAR when a fight crosses a notability threshold (ships off).</p>
+    </a>
+    <a href="{% url 'admin_audit:command_intel_notifications' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-bolt"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Scheduled reports &amp; delivery</h3>
+      <p class="mt-1 text-sm text-faint">Arm the weekly briefing and route it to Discord / EVE-mail — classification-safe, disarmed by default.</p>
+    </a>
+    <a href="{% url 'admin_audit:command_intel_autonomous' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-command"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Autonomous proposals</h3>
+      <p class="mt-1 text-sm text-faint">The kill switch for unattended COA proposals — calibration-gated, audited, human-accepted. Off by default.</p>
+    </a>
+  </div>
+</section>
+{% endif %}
+
+<!-- Recognition & rewards (officer) -->
+<section class="mb-7">
+  <h2 class="eyebrow mb-3 text-faint">Recognition &amp; rewards</h2>
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <a href="{% url 'admin_audit:contribution_weights' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-coin"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Contribution weights</h3>
+      <p class="mt-1 text-sm text-faint">Tune how each contribution kind scores points.</p>
+    </a>
+    {% if features.srp %}
+    <a href="{% url 'srp:settings' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-shield"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">SRP programme</h3>
+      <p class="mt-1 text-sm text-faint">Payout mode, valuation and eligibility for ship replacement.</p>
+    </a>
+    <a href="{% url 'srp:budget' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-coin"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">SRP budget</h3>
+      <p class="mt-1 text-sm text-faint">The monthly ISK spend cap and loss-impact view for ship replacement.</p>
+    </a>
+    {% endif %}
+    {% if features.raffle %}
+    <a href="{% url 'admin_audit:raffle_hub' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-trophy"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Raffle contests</h3>
+      <p class="mt-1 text-sm text-faint">Create engagement raffles, grant tickets, run fair draws and drive ESI enrolment.</p>
+    </a>
+    {% if is_director %}
+    <a href="{% url 'admin_audit:raffle_config' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-shield"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Raffle settings</h3>
+      <p class="mt-1 text-sm text-faint">The raffle intro text and the off-by-default emergency grant override.</p>
+    </a>
+    {% endif %}
+    {% endif %}
+    {% if features.killboard %}
+    <a href="{% url 'admin_audit:combat_rewards' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-trophy"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Combat rank rewards</h3>
+      <p class="mt-1 text-sm text-faint">Review, approve and mark paid the rewards pilots earn for reaching new combat ranks.</p>
+    </a>
+    {% if is_director %}
+    <a href="{% url 'admin_audit:combat_ranks' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-target"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Combat rank titles</h3>
+      <p class="mt-1 text-sm text-faint">Configure the rank ladder, thresholds, reward eligibility and the income-based reward suggestions.</p>
+    </a>
+    {% endif %}
+    {% endif %}
+  </div>
+</section>
+
+<!-- Member services config (officer) -->
+<section class="mb-7">
+  <h2 class="eyebrow mb-3 text-faint">Member services</h2>
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    {% if freight_enabled %}
+    <a href="{% url 'logistics:rates' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-truck"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Freight rates</h3>
+      <p class="mt-1 text-sm text-faint">Set the courier rate card and reward per jump.</p>
+    </a>
+    {% endif %}
+    {% if buyback_enabled %}
+    <a href="{% url 'buyback:config' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-coin"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Buyback settings</h3>
+      <p class="mt-1 text-sm text-faint">Pricing haircuts and who can use the buyback board.</p>
+    </a>
+    {% endif %}
+    {% if store_enabled %}
+    <a href="{% url 'store:config' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-ship"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Corp Store settings</h3>
+      <p class="mt-1 text-sm text-faint">Markup, build deposit and store audience.</p>
+    </a>
+    {% endif %}
+    {% if features.mining %}
+    <a href="{% url 'mining:set_tax' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-coin"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Mining tax</h3>
+      <p class="mt-1 text-sm text-faint">Set the corp mining tax used for payout splits.</p>
+    </a>
+    {% endif %}
+  </div>
+</section>
+
+<!-- Alerts & finance -->
+<section class="mb-7">
+  <h2 class="eyebrow mb-3 text-faint">Alerts &amp; finance</h2>
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    {% if features.recommendations %}
+    <a href="{% url 'recommendations:notifications' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-bolt"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">In-game alerts</h3>
+      <p class="mt-1 text-sm text-faint">Discord webhooks and the relayed structure/war feed.</p>
+    </a>
+    {% endif %}
+    {% if is_director %}
+    <a href="{% url 'admin_audit:relay_settings' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-cross"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Relay character</h3>
+      <p class="mt-1 text-sm text-faint">Designate the character whose in-game notifications &amp; mail the corp relays — authoritative and predictable.</p>
+    </a>
+    <a href="{% url 'admin_audit:recommendations_tuning' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-target"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Recommendation tuning</h3>
+      <p class="mt-1 text-sm text-faint">Mute noisy evaluators, tune the combat-loss window/threshold, and set a severity floor.</p>
+    </a>
+    {% endif %}
+    {% if features.killboard %}
+    <a href="{% url 'killboard:killfeed_config' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-cross"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Kill feed</h3>
+      <p class="mt-1 text-sm text-faint">Post sizeable corp kills and losses to Discord.</p>
+    </a>
+    {% endif %}
+    {% if is_director and features.finance %}
+    <a href="{% url 'corporation:finance' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-coin"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Corp finance</h3>
+      <p class="mt-1 text-sm text-faint">Balances, income/expense charts, forecast, top earners and the journal.</p>
+    </a>
+    {% endif %}
+  </div>
+</section>
+
+<!-- Structures & assets (officer) -->
+<section class="mb-7">
+  <h2 class="eyebrow mb-3 text-faint">Structures &amp; assets</h2>
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    {% if features.structures %}
+    <a href="{% url 'corporation:structures' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-box"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Structures</h3>
+      <p class="mt-1 text-sm text-faint">Fuel, state and reinforcement timers for every corp structure.</p>
+    </a>
+    {% endif %}
+    <a href="{% url 'corporation:infrastructure' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-grid"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Infrastructure board</h3>
+      <p class="mt-1 text-sm text-faint">Structure fuel, sov ADM and reinforcement timers in one place, ranked by urgency.</p>
+    </a>
+    <a href="{% url 'admin_audit:structure_alert_settings' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-bolt"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Structure-alert thresholds</h3>
+      <p class="mt-1 text-sm text-faint">Fuel-days and sov-ADM thresholds that drive the board flags and the deduped officer alert.</p>
+    </a>
+    {% if features.stockpile %}
+    <a href="{% url 'stockpile:asset_search' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-box"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Asset search</h3>
+      <p class="mt-1 text-sm text-faint">Find where a ship, module or commodity sits across corp and member assets.</p>
+    </a>
+    {% endif %}
+    {% if features.corp_contracts %}
+    <a href="{% url 'logistics:corp_contracts' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-truck"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Corp contracts</h3>
+      <p class="mt-1 text-sm text-faint">Every corp contract — item exchange, courier, auction — with status.</p>
+    </a>
+    {% endif %}
+    {% if features.operations %}
+    <a href="{% url 'operations:sov' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-target"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Sovereignty</h3>
+      <p class="mt-1 text-sm text-faint">Held systems, ADM and vulnerability windows (if your alliance holds sov).</p>
+    </a>
+    {% endif %}
+    {% if features.navigation %}
+    <a href="{% url 'navigation:beacons' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-jump"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Jump bridges</h3>
+      <p class="mt-1 text-sm text-faint">The corp/alliance jump-bridge network used by the route and jump planners.</p>
+    </a>
+    {% endif %}
+  </div>
+</section>
+
+<!-- System (director) -->
+{% if is_director %}
+<section class="mb-7">
+  <h2 class="eyebrow mb-3 text-faint">System</h2>
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <a href="{% url 'admin_audit:settings' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-command"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Settings &amp; maintenance</h3>
+      <p class="mt-1 text-sm text-faint">Corp config and one-click data refresh jobs.</p>
+    </a>
+    <a href="{% url 'admin_audit:health' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-grid"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Integrations health</h3>
+      <p class="mt-1 text-sm text-faint">ESI token status and data freshness.</p>
+    </a>
+    <a href="{% url 'admin_audit:audit' %}" class="panel group p-5 hover:border-gold/40 transition">
+      <svg class="h-6 w-6 text-gold"><use href="#i-shield"/></svg>
+      <h3 class="mt-3 font-display font-semibold text-ink group-hover:text-gold">Audit log</h3>
+      <p class="mt-1 text-sm text-faint">Every sensitive action, append-only.</p>
+    </a>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

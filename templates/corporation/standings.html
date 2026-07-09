@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Standings · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-gold">Diplomacy</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">Standings</h1>
+    <p class="mt-1 text-sm text-faint">The corp's blue and red lists, synced from in-game contacts. Blue = friendly, red = shoot.</p>
+  </div>
+  {% if is_officer %}<form method="post" action="{% url 'corporation:standings_sync' %}">{% csrf_token %}<button class="btn-ghost text-sm">Sync now</button></form>{% endif %}
+</header>
+
+
+{% if total %}
+<div class="grid gap-6 lg:grid-cols-2">
+  <section>
+    <h2 class="eyebrow mb-2 text-win">Blue · {{ blue|length }}</h2>
+    <div class="panel divide-y divide-line/40">
+      {% for c in blue %}
+      <div class="flex items-center justify-between gap-3 px-3 py-2 text-sm">
+        <span class="min-w-0 truncate text-ink">{{ c.name|default:c.contact_id }} <span class="text-[10px] text-faint">{{ c.get_contact_type_display }}</span></span>
+        <span class="data shrink-0 text-xs text-win">{{ c.standing|floatformat:1 }}</span>
+      </div>
+      {% empty %}<p class="px-3 py-8 text-center text-sm text-faint">No blue contacts.</p>{% endfor %}
+    </div>
+  </section>
+  <section>
+    <h2 class="eyebrow mb-2 text-loss">Red · {{ red|length }}</h2>
+    <div class="panel divide-y divide-line/40">
+      {% for c in red %}
+      <div class="flex items-center justify-between gap-3 px-3 py-2 text-sm">
+        <span class="min-w-0 truncate text-ink">{{ c.name|default:c.contact_id }} <span class="text-[10px] text-faint">{{ c.get_contact_type_display }}</span></span>
+        <span class="data shrink-0 text-xs text-loss">{{ c.standing|floatformat:1 }}</span>
+      </div>
+      {% empty %}<p class="px-3 py-8 text-center text-sm text-faint">No red contacts.</p>{% endfor %}
+    </div>
+  </section>
+</div>
+{% else %}
+<div class="panel px-4 py-12 text-center"><p class="text-sm text-faint">No standings yet. A role-holder needs to grant the corp-contacts scope on the ESI Scopes page, then sync.</p></div>
+{% endif %}
+{% endblock %}

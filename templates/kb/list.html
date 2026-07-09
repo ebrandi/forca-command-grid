@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Knowledge base · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-gold">How we do things</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">Knowledge base</h1>
+    <p class="mt-1 text-sm text-faint">Corp procedures and guides — some show your own live status.</p>
+  </div>
+  {% if can_author %}<a href="{% url 'kb:new' %}" class="btn-gold">New page</a>{% endif %}
+</header>
+
+
+<div class="space-y-5">
+  {% for category, pages in categories %}
+    <section class="panel overflow-hidden">
+      <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">{{ category }}</h2></div>
+      <div class="divide-y divide-line/40">
+        {% for p in pages %}
+          <a href="{% url 'kb:detail' p.slug %}" class="flex items-center gap-3 px-4 py-2.5 hover:bg-panel2">
+            <span class="min-w-0 flex-1 truncate text-sm text-ink">{{ p.title }}</span>
+            {% if p.visibility == 'public' %}<span class="chip">public</span>{% elif p.visibility == 'officer' %}<span class="chip !text-gold">officers</span>{% endif %}
+          </a>
+        {% endfor %}
+      </div>
+    </section>
+  {% empty %}
+    <div class="panel p-8 text-center text-sm text-faint">No pages yet.{% if can_author %} <a href="{% url 'kb:new' %}" class="text-gold hover:underline">Write the first →</a>{% endif %}</div>
+  {% endfor %}
+</div>
+{% endblock %}

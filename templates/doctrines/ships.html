@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}Shipyard · [FORCA] Command Grid{% endblock %}
+{% block content %}
+
+<header class="mb-5 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow">Doctrines</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">Shipyard</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">Every sanctioned fit in one place. Filter by hull size, role, and whether you can fly it{% if store_priced %}, see the price, copy the EFT, or order it built{% else %} — or sort by what you're closest to unlocking{% endif %}.</p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    {% if is_member %}<a href="{% url 'doctrines:list' %}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-ship"/></svg> By doctrine</a>
+    <a href="{% url 'doctrines:my_readiness' %}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-bolt"/></svg> Best next to unlock</a>{% endif %}
+    {% if store_priced %}<a href="{% url 'store:storefront' %}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-cube"/></svg> Made to order</a>{% endif %}
+  </div>
+</header>
+
+<form method="get" class="panel mb-5 flex flex-wrap items-end gap-3 px-4 py-3" id="filters">
+  {% if characters|length > 1 %}
+  <label class="block">
+    <span class="eyebrow text-faint">Pilot</span>
+    <select name="character_id" class="input-field mt-1" data-autosubmit>
+      {% for c in characters %}<option value="{{ c.character_id }}" {% if character and c.character_id == character.character_id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+    </select>
+  </label>
+  {% endif %}
+  <label class="block">
+    <span class="eyebrow text-faint">Hull</span>
+    <select name="hull" class="input-field mt-1" data-autosubmit>
+      <option value="">Any hull</option>
+      {% for c in hull_classes %}<option value="{{ c }}" {% if hull == c %}selected{% endif %}>{{ c }}</option>{% endfor %}
+    </select>
+  </label>
+  <label class="block">
+    <span class="eyebrow text-faint">Role</span>
+    <select name="role" class="input-field mt-1" data-autosubmit>
+      <option value="">Any role</option>
+      {% for r in roles %}<option value="{{ r }}" {% if role == r %}selected{% endif %}>{{ r }}</option>{% endfor %}
+    </select>
+  </label>
+  <label class="block">
+    <span class="eyebrow text-faint">Flyable</span>
+    <select name="fly" class="input-field mt-1" data-autosubmit>
+      <option value="">All</option>
+      <option value="yes" {% if fly == 'yes' %}selected{% endif %}>Can fly now</option>
+      <option value="close" {% if fly == 'close' %}selected{% endif %}>Close (≤3 skills)</option>
+      <option value="no" {% if fly == 'no' %}selected{% endif %}>Can't fly yet</option>
+    </select>
+  </label>
+  <label class="block">
+    <span class="eyebrow text-faint">Sort</span>
+    <select name="sort" class="input-field mt-1" data-autosubmit>
+      <option value="closest" {% if sort == 'closest' %}selected{% endif %}>Closest to fly</option>
+      <option value="ready" {% if sort == 'ready' %}selected{% endif %}>Most ready</option>
+      <option value="class" {% if sort == 'class' %}selected{% endif %}>Hull class</option>
+      <option value="name" {% if sort == 'name' %}selected{% endif %}>Doctrine</option>
+    </select>
+  </label>
+  <button type="submit" class="btn-ghost text-sm">Apply</button>
+</form>
+
+<p class="mb-3 text-sm text-faint">{{ count }} fit{{ count|pluralize }}{% if character %} · readiness for <span class="text-muted">{{ character.name }}</span>{% endif %}</p>
+
+<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+  {% for r in rows %}
+  <div class="panel flex flex-col gap-3 p-4">
+    <div class="flex items-start gap-3">
+      <img src="{% eve_type_render r.ship_type_id 64 %}" alt="" loading="lazy" class="h-14 w-14 shrink-0 rounded-md bg-space object-cover ring-1 ring-line">
+      <div class="min-w-0 flex-1">
+        <h2 class="truncate font-display font-semibold text-ink">{{ r.fit_name }}</h2>
+        <p class="truncate text-xs text-faint">{{ r.doctrine }}</p>
+        <div class="mt-1 flex flex-wrap items-center gap-1">
+          <span class="chip">{{ r.hull_class }}</span>
+          {% if r.role %}<span class="chip !border-gold/30 !text-gold">{{ r.role }}</span>{% endif %}
+          {% if r.is_cheap_alt %}<span class="chip">budget alt</span>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="text-sm">
+      {% if r.status == 'optimal' %}
+        <span class="inline-flex items-center gap-1 font-medium text-win"><span class="h-2 w-2 rounded-full bg-win"></span> Can fly · optimal</span>
+      {% elif r.status == 'viable' %}
+        <span class="inline-flex items-center gap-1 font-medium text-win"><span class="h-2 w-2 rounded-full bg-win"></span> Can fly</span>
+      {% elif r.status == 'not_ready' %}
+        <span class="inline-flex items-center gap-1 font-medium text-[#f4a52b]" title="{{ r.missing_skills|join:', ' }}"><span class="h-2 w-2 rounded-full bg-[#f4a52b]"></span> {{ r.missing_count }} skill{{ r.missing_count|pluralize }} away</span>
+      {% else %}
+        <span class="inline-flex items-center gap-1 text-faint"><span class="h-2 w-2 rounded-full bg-faint"></span> No skill data</span>
+      {% endif %}
+    </div>
+
+    {% if store_priced and r.unit_price %}
+    <div class="flex items-end justify-between border-t border-line/50 pt-2">
+      <div>
+        <p class="data text-base font-bold text-gold">{{ r.unit_price|isk }}</p>
+        <p class="text-[10px] text-faint">Jita {{ r.unit_jita|isk }} · +{{ doctrine_markup_pct }}%</p>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="mt-auto flex flex-wrap items-center gap-2 pt-1">
+      {% if is_member %}<a href="{% url 'doctrines:detail' r.doctrine_id %}" class="btn-ghost text-xs">View</a>{% endif %}
+      <a href="{% url 'doctrines:fit_export' r.fit_id %}" class="btn-ghost text-xs" target="_blank" rel="noopener">Copy EFT</a>
+      {% if store_enabled %}
+      <div x-data="{ open: false }" class="relative ml-auto">
+        <button type="button" @click="open = !open" class="btn-gold text-xs"><svg class="h-3.5 w-3.5"><use href="#i-cube"/></svg> Order</button>
+        <div x-show="open" x-cloak @click.outside="open = false" class="absolute right-0 z-20 mt-1 w-56 rounded-lg border border-line bg-panel2 p-3 shadow-xl">
+          <form method="post" action="{% url 'store:order_fit' %}">
+            {% csrf_token %}
+            <input type="hidden" name="fit_id" value="{{ r.fit_id }}">
+            <label class="eyebrow text-faint">How many?</label>
+            <div class="mt-1 flex items-center gap-2">
+              <input type="number" name="quantity" value="1" min="1" max="1000" class="input-field w-20" required>
+              <button type="submit" class="btn-gold flex-1 text-xs">Place order</button>
+            </div>
+            <p class="mt-2 text-[10px] text-faint">Priced at Jita sell + corp markup. Lands on the build board.</p>
+          </form>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% empty %}
+  <div class="panel col-span-full px-4 py-16 text-center">
+    <p class="text-sm text-faint">No fits match these filters. {% if fly %}<a href="?{% if character %}character_id={{ character.character_id }}{% endif %}" class="text-gold hover:underline">Clear filters</a>{% endif %}</p>
+  </div>
+  {% endfor %}
+</div>
+
+{% include "doctrines/_pagination.html" %}
+{% endblock %}

@@ -1,0 +1,409 @@
+{% extends "base.html" %}
+{% load eve static %}
+{% block title %}Combat Stats · [FORCA] Command Grid{% endblock %}
+
+{% block extra_head %}
+{% if not denied %}
+<script defer src="{% static 'js/vendor/chart.umd.js' %}"></script>
+<style>
+  .hm-cell { width: 100%; aspect-ratio: 1 / 1; border-radius: 2px; }
+  .hm-0 { background: rgba(34,45,62,.35); }
+  .hm-1 { background: rgba(70,207,224,.22); }
+  .hm-2 { background: rgba(70,207,224,.42); }
+  .hm-3 { background: rgba(70,207,224,.70); }
+  .hm-4 { background: rgba(70,207,224,1); }
+</style>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+
+{% if denied %}
+  <div class="panel px-4 py-16 text-center">
+    <svg class="mx-auto h-8 w-8 text-faint"><use href="#i-lock"/></svg>
+    <p class="mt-3 font-display text-lg text-muted">Combat stats are corp &amp; alliance only</p>
+    <p class="mt-1 text-sm text-faint">This dashboard is available to corporation members and registered alliance pilots.</p>
+    <a href="{% url 'killboard:list' %}" class="btn-ghost mt-4 text-sm">← Back to the killfeed</a>
+  </div>
+{% else %}
+
+<header class="mb-5 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <p class="eyebrow">Killboard · {{ home_corp_name }}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">Combat statistics</h1>
+    <p class="mt-1 text-sm text-faint">All-time PvP performance, trends, and where we fight. Ratting and structure kills excluded.</p>
+  </div>
+  <div class="flex flex-wrap items-center gap-2">
+    <a href="{% url 'killboard:compare' %}" class="btn-ghost text-sm">Compare pilots</a>
+    <a href="{% url 'killboard:rankings' %}" class="btn-ghost text-sm">Rankings</a>
+    <a href="{% url 'killboard:list' %}" class="btn-ghost text-sm">← Killfeed</a>
+  </div>
+</header>
+
+<!-- Export bar -->
+<div class="mb-4 flex flex-wrap items-center gap-2 text-xs">
+  <span class="text-faint">Export:</span>
+  <button id="exp-monthly-csv" type="button" class="chip hover:!border-gold/40 hover:!text-gold">Monthly CSV</button>
+  <button id="exp-ships-csv" type="button" class="chip hover:!border-gold/40 hover:!text-gold">Ship data CSV</button>
+  <button id="exp-png" type="button" class="chip hover:!border-cyan/40 hover:!text-cyan">Chart images (PNG)</button>
+</div>
+
+<!-- Summary cards -->
+<section class="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">Kills</p>
+    <p class="data mt-1 text-2xl font-bold text-kill">{{ summary.kills }}</p>
+    <p class="mt-0.5 text-[11px] text-faint">{{ summary.isk_destroyed|isk }} destroyed</p>
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">Losses</p>
+    <p class="data mt-1 text-2xl font-bold text-loss">{{ summary.losses }}</p>
+    <p class="mt-0.5 text-[11px] text-faint">{{ summary.isk_lost|isk }} lost</p>
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">ISK Efficiency</p>
+    <p class="data mt-1 text-2xl font-bold text-gold">{{ summary.efficiency|effpct }}%</p>
+    <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-loss/40">
+      <div class="h-full rounded-full bg-kill" style="width: {{ summary.efficiency|effpct }}%"></div>
+    </div>
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">Threat</p>
+    <p class="data mt-1 text-2xl font-bold {{ summary.danger.color }}">{{ summary.danger.label }}</p>
+    <p class="mt-0.5 text-[11px] text-faint">{{ summary.solo_kills }} solo kills</p>
+  </div>
+</section>
+
+<!-- Monthly trend -->
+<section class="panel mb-6 overflow-hidden">
+  <div class="flex items-center gap-2 border-b border-line px-4 py-3">
+    <svg class="h-4 w-4 text-gold"><use href="#i-bolt"/></svg>
+    <h2 class="font-display text-sm font-semibold text-ink">Kills &amp; losses per month</h2>
+    <span class="ml-auto text-[11px] text-faint">last {{ months_back }} months · bars = count, lines = ISK</span>
+  </div>
+  <div class="p-4">
+    {% if summary.kills or summary.losses %}
+      <div class="relative h-72 skeleton"><canvas id="kb-monthly-chart"></canvas></div>
+    {% else %}
+      <p class="py-12 text-center text-sm text-faint">No PvP killmails recorded yet.</p>
+    {% endif %}
+  </div>
+</section>
+
+<!-- Ships destroyed / lost -->
+<div class="mb-6 grid gap-4 lg:grid-cols-2">
+  {% for board in ship_boards %}
+  <section class="panel overflow-hidden">
+    <div class="flex items-center gap-2 border-b border-line px-4 py-3">
+      <svg class="h-4 w-4 {{ board.color }}"><use href="#i-ship"/></svg>
+      <h2 class="font-display text-sm font-semibold text-ink">{{ board.title }}</h2>
+      <span class="ml-auto text-[11px] text-faint">top {{ board.rows|length }}</span>
+    </div>
+    {% if board.rows %}
+    <div class="grid items-center gap-3 p-4 sm:grid-cols-[160px_1fr]">
+      <div class="relative mx-auto h-40 w-40 skeleton"><canvas id="{{ board.canvas }}"></canvas></div>
+      <ol class="min-w-0 space-y-1.5">
+        {% for r in board.rows %}
+        <li class="flex items-center gap-2.5 text-sm">
+          <img src="{% eve_type_icon r.ship_type_id 32 %}" alt="" loading="lazy" class="h-6 w-6 shrink-0 rounded bg-space ring-1 ring-line">
+          <a href="{% url 'killboard:list' %}?kind={{ board.kind }}&ship_type_id={{ r.ship_type_id }}" class="min-w-0 flex-1 truncate text-muted hover:text-gold transition">{{ r.name }}</a>
+          <span class="data shrink-0 text-xs font-semibold text-ink">{{ r.count }}</span>
+          <span class="data hidden w-16 shrink-0 text-right text-[11px] text-faint sm:inline">{{ r.isk|isk }}</span>
+        </li>
+        {% endfor %}
+      </ol>
+    </div>
+    {% else %}
+    <p class="px-4 py-10 text-center text-xs text-faint">Nothing here yet.</p>
+    {% endif %}
+  </section>
+  {% endfor %}
+</div>
+
+<!-- Ship-class composition + doctrine compliance -->
+<div class="mb-6 grid gap-4 lg:grid-cols-3">
+  <section class="panel overflow-hidden lg:col-span-2">
+    <div class="flex items-center gap-2 border-b border-line px-4 py-3">
+      <svg class="h-4 w-4 text-muted"><use href="#i-ship"/></svg>
+      <h2 class="font-display text-sm font-semibold text-ink">Ship-class composition</h2>
+    </div>
+    {% if ship_classes.killed or ship_classes.lost %}
+    <div class="grid gap-4 p-4 sm:grid-cols-2">
+      <div>
+        <p class="eyebrow mb-2 text-center text-faint">Enemy destroyed</p>
+        <div class="relative mx-auto h-44 w-44 skeleton"><canvas id="kb-class-killed"></canvas></div>
+      </div>
+      <div>
+        <p class="eyebrow mb-2 text-center text-faint">Ours lost</p>
+        <div class="relative mx-auto h-44 w-44 skeleton"><canvas id="kb-class-lost"></canvas></div>
+      </div>
+    </div>
+    {% else %}
+    <p class="px-4 py-10 text-center text-xs text-faint">No PvP killmails yet.</p>
+    {% endif %}
+  </section>
+
+  <section class="panel overflow-hidden">
+    <div class="flex items-center gap-2 border-b border-line px-4 py-3">
+      <svg class="h-4 w-4 text-gold"><use href="#i-shield"/></svg>
+      <h2 class="font-display text-sm font-semibold text-ink">Doctrine compliance</h2>
+    </div>
+    {% if doctrine.configured and doctrine.total %}
+    <div class="p-4 text-center">
+      <div class="relative mx-auto h-36 w-36 skeleton">
+        <canvas id="kb-doctrine"></canvas>
+        <div class="absolute inset-0 flex flex-col items-center justify-center">
+          <span class="data text-2xl font-bold text-gold">{{ doctrine.on_pct|floatformat:0 }}%</span>
+          <span class="text-[10px] text-faint">on doctrine</span>
+        </div>
+      </div>
+      <p class="mt-3 text-xs text-muted">{{ doctrine.on }} of {{ doctrine.total }} ships fielded on kills were active-doctrine hulls.</p>
+      <p class="mt-1 text-[11px] text-faint">Capsules excluded.</p>
+    </div>
+    {% elif doctrine.configured %}
+    <p class="px-4 py-10 text-center text-xs text-faint">No ships fielded on kills yet.</p>
+    {% else %}
+    <p class="px-4 py-10 text-center text-xs text-faint">No active doctrines configured — set one up under Doctrines to track compliance.</p>
+    {% endif %}
+  </section>
+</div>
+
+<!-- Where in space (security band) -->
+<section class="panel mb-6 overflow-hidden">
+  <div class="flex items-center gap-2 border-b border-line px-4 py-3">
+    <svg class="h-4 w-4 text-cyan"><use href="#i-shield"/></svg>
+    <h2 class="font-display text-sm font-semibold text-ink">Where in space</h2>
+    <span class="ml-auto text-[11px] text-faint">by security band</span>
+  </div>
+  {% if space.killed or space.lost %}
+  <div class="grid gap-4 p-4 sm:grid-cols-2">
+    <div>
+      <p class="eyebrow mb-2 text-center text-faint">Kills</p>
+      <div class="relative mx-auto h-40 w-40 skeleton"><canvas id="kb-space-killed"></canvas></div>
+    </div>
+    <div>
+      <p class="eyebrow mb-2 text-center text-faint">Losses</p>
+      <div class="relative mx-auto h-40 w-40 skeleton"><canvas id="kb-space-lost"></canvas></div>
+    </div>
+  </div>
+  {% else %}
+  <p class="px-4 py-10 text-center text-xs text-faint">No PvP killmails yet.</p>
+  {% endif %}
+</section>
+
+<!-- Activity heatmap -->
+<section class="panel mb-6 overflow-hidden">
+  <div class="flex items-center gap-2 border-b border-line px-4 py-3">
+    <svg class="h-4 w-4 text-cyan"><use href="#i-grid"/></svg>
+    <h2 class="font-display text-sm font-semibold text-ink">When we fight</h2>
+    <span class="ml-auto text-[11px] text-faint">last {{ heatmap_days }} days · EVE time (UTC)</span>
+  </div>
+  {% if heatmap.total %}
+  <div class="overflow-x-auto p-4">
+    <div class="min-w-[640px]">
+      <!-- hour axis -->
+      <div class="mb-1 grid grid-cols-[34px_repeat(24,1fr)] gap-0.5">
+        <span></span>
+        {% for h in heatmap.rows.0 %}
+          <span class="text-center text-[9px] text-faint">{% if forloop.counter0|divisibleby:3 %}{{ forloop.counter0 }}{% endif %}</span>
+        {% endfor %}
+      </div>
+      {% for row in heatmap.cells %}
+      <div class="mb-0.5 grid grid-cols-[34px_repeat(24,1fr)] items-center gap-0.5">
+        <span class="text-[10px] font-medium text-faint">{{ row.label }}</span>
+        {% for c in row.hours %}
+          <div class="hm-cell hm-{{ c.level }}" title="{{ row.label }} {{ c.hour }}:00 — {{ c.n }} fight{{ c.n|pluralize }}"></div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+      <div class="mt-3 flex items-center justify-end gap-1.5 text-[10px] text-faint">
+        <span>less</span>
+        <span class="hm-cell hm-0 !h-3 !w-3"></span>
+        <span class="hm-cell hm-1 !h-3 !w-3"></span>
+        <span class="hm-cell hm-2 !h-3 !w-3"></span>
+        <span class="hm-cell hm-3 !h-3 !w-3"></span>
+        <span class="hm-cell hm-4 !h-3 !w-3"></span>
+        <span>more</span>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <p class="px-4 py-10 text-center text-xs text-faint">No activity in the last {{ heatmap_days }} days.</p>
+  {% endif %}
+</section>
+
+<!-- Where we fight -->
+<div class="grid gap-4 lg:grid-cols-2">
+  {% for board in location_boards %}
+  <section class="panel overflow-hidden">
+    <div class="flex items-center gap-2 border-b border-line px-4 py-3">
+      <svg class="h-4 w-4 text-muted"><use href="#i-target"/></svg>
+      <h2 class="font-display text-sm font-semibold text-ink">{{ board.title }}</h2>
+    </div>
+    {% if board.rows %}
+    <ol class="divide-y divide-line/40">
+      {% with max=board.rows.0.count %}
+      {% for r in board.rows %}
+      <li class="px-4 py-2">
+        <div class="mb-1 flex items-center gap-2 text-sm">
+          <a href="{% if board.param %}{% url 'killboard:list' %}?{{ board.param }}={{ r.id }}{% else %}#{% endif %}" class="min-w-0 flex-1 truncate text-muted hover:text-gold transition">{{ r.name }}</a>
+          <span class="data shrink-0 text-xs font-semibold text-ink">{{ r.count }}</span>
+        </div>
+        <div class="h-1 w-full overflow-hidden rounded-full bg-panel2">
+          <div class="h-full rounded-full bg-cyan/60" style="width: {% widthratio r.count max 100 %}%"></div>
+        </div>
+      </li>
+      {% endfor %}
+      {% endwith %}
+    </ol>
+    {% else %}
+    <p class="px-4 py-10 text-center text-xs text-faint">No fights recorded yet.</p>
+    {% endif %}
+  </section>
+  {% endfor %}
+</div>
+
+<p class="mt-6 text-center text-[11px] text-faint">PvP only — kills and deaths involving no player don't count. Figures refresh every few minutes.</p>
+
+{{ monthly|json_script:"kb-monthly-data" }}
+{{ ships|json_script:"kb-ships-data" }}
+{{ ship_classes|json_script:"kb-classes-data" }}
+{{ space|json_script:"kb-space-data" }}
+{{ doctrine|json_script:"kb-doctrine-data" }}
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if not denied %}
+<script nonce="{{ csp_nonce }}">
+  document.addEventListener('DOMContentLoaded', function () {
+    if (!window.forcaChart.applyDefaults({legendBox:true})) return;
+
+    // --- Monthly trend (bars = count, lines = ISK on right axis) ---
+    var m = forcaChart.read('kb-monthly-data');
+    var mc = document.getElementById('kb-monthly-chart');
+    if (m && mc) {
+      new Chart(mc, {
+        data: {
+          labels: m.labels,
+          datasets: [
+            { type: 'bar', label: 'Kills', data: m.kills, backgroundColor: forcaChart.colors.kill, yAxisID: 'y', order: 2 },
+            { type: 'bar', label: 'Losses', data: m.losses, backgroundColor: forcaChart.colors.loss, yAxisID: 'y', order: 2 },
+            { type: 'line', label: 'ISK destroyed', data: m.isk_destroyed, borderColor: forcaChart.colors.gold,
+              backgroundColor: forcaChart.colors.gold, yAxisID: 'y1', tension: .3, borderWidth: 2, pointRadius: 2, order: 1 },
+            { type: 'line', label: 'ISK lost', data: m.isk_lost, borderColor: forcaChart.colors.goldFaint,
+              backgroundColor: forcaChart.colors.goldFaint, borderDash: [4, 3], yAxisID: 'y1', tension: .3,
+              borderWidth: 2, pointRadius: 0, order: 1 },
+          ],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+          scales: {
+            x: { grid: { color: forcaChart.colors.line }, ticks: { maxRotation: 0 } },
+            y: { position: 'left', beginAtZero: true, grid: { color: forcaChart.colors.line },
+                 title: { display: true, text: 'count', color: forcaChart.colors.faint } },
+            y1: { position: 'right', beginAtZero: true, grid: { drawOnChartArea: false },
+                  ticks: { callback: forcaChart.isk }, title: { display: true, text: 'ISK', color: forcaChart.colors.faint } },
+          },
+          plugins: {
+            legend: { labels: { color: forcaChart.colors.faint } },
+            tooltip: {
+              callbacks: {
+                label: function (ctx) {
+                  var v = ctx.parsed.y;
+                  if (ctx.dataset.yAxisID === 'y1') return ctx.dataset.label + ': ' + forcaChart.isk(v) + ' ISK';
+                  return ctx.dataset.label + ': ' + v;
+                },
+              },
+            },
+          },
+        },
+      });
+    }
+
+    // --- Ship doughnuts ---
+    var ships = forcaChart.read('kb-ships-data');
+    if (ships) {
+      forcaChart.doughnut('kb-ships-killed', ships.killed);
+      forcaChart.doughnut('kb-ships-lost', ships.lost);
+    }
+
+    // --- Ship-class doughnuts ---
+    var classes = forcaChart.read('kb-classes-data');
+    if (classes) {
+      forcaChart.doughnut('kb-class-killed', classes.killed);
+      forcaChart.doughnut('kb-class-lost', classes.lost);
+    }
+
+    // --- Security-band doughnuts ---
+    var space = forcaChart.read('kb-space-data');
+    if (space) {
+      forcaChart.doughnut('kb-space-killed', space.killed);
+      forcaChart.doughnut('kb-space-lost', space.lost);
+    }
+
+    // --- Exports (CSV + PNG) ---
+    var dl = function (url, name) {
+      var a = document.createElement('a');
+      a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    };
+    var toCsv = function (rows) {
+      return rows.map(function (r) {
+        return r.map(function (c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(',');
+      }).join('\n');
+    };
+    var dlCsv = function (rows, name) {
+      dl(URL.createObjectURL(new Blob([toCsv(rows)], { type: 'text/csv' })), name);
+    };
+    var dlPng = function (id, name) {
+      var el = document.getElementById(id);
+      if (el) dl(el.toDataURL('image/png'), name);
+    };
+    var bind = function (id, fn) { var b = document.getElementById(id); if (b) b.onclick = fn; };
+
+    bind('exp-monthly-csv', function () {
+      if (!m) return;
+      var rows = [['Month', 'Kills', 'Losses', 'ISK destroyed', 'ISK lost']];
+      for (var i = 0; i < m.labels.length; i++)
+        rows.push([m.labels[i], m.kills[i], m.losses[i], m.isk_destroyed[i], m.isk_lost[i]]);
+      dlCsv(rows, 'forca-monthly.csv');
+    });
+    bind('exp-ships-csv', function () {
+      if (!ships) return;
+      var rows = [['Category', 'Ship', 'Count', 'ISK']];
+      (ships.killed || []).forEach(function (r) { rows.push(['killed', r.name, r.count, r.isk]); });
+      (ships.lost || []).forEach(function (r) { rows.push(['lost', r.name, r.count, r.isk]); });
+      dlCsv(rows, 'forca-ships.csv');
+    });
+    bind('exp-png', function () {
+      ['kb-monthly-chart', 'kb-ships-killed', 'kb-ships-lost', 'kb-class-killed',
+       'kb-class-lost', 'kb-space-killed', 'kb-space-lost', 'kb-doctrine'].forEach(function (id) {
+        dlPng(id, 'forca-' + id.replace('kb-', '') + '.png');
+      });
+    });
+
+    // --- Doctrine compliance (bespoke 2-slice, cutout 70%) ---
+    var doc = forcaChart.read('kb-doctrine-data');
+    var docEl = document.getElementById('kb-doctrine');
+    if (doc && doc.configured && doc.total && docEl) {
+      new Chart(docEl, {
+        type: 'doughnut',
+        data: {
+          labels: ['On doctrine', 'Off doctrine'],
+          datasets: [{
+            data: [doc.on, doc.off],
+            backgroundColor: [forcaChart.colors.kill, 'rgba(90,102,120,.45)'],
+            borderColor: '#10151f', borderWidth: 2,
+          }],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, cutout: '70%',
+          plugins: { legend: { display: false },
+            tooltip: { callbacks: { label: function (ctx) { return ctx.label + ': ' + ctx.parsed; } } } },
+        },
+      });
+    }
+  });
+</script>
+{% endif %}
+{% endblock %}

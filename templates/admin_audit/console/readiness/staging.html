@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Readiness · Staging system · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
+<header class="mt-2 mb-6">
+  <p class="eyebrow">Readiness configuration</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">Staging system</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">The system your fleet stages out of. The <span class="text-cyan">Asset Staging</span>
+    dimension scores the share of member-owned doctrine hulls actually sitting here (resolved from each pilot's asset list).
+    <span class="text-ink">Until you set a staging system the dimension is unavailable</span> — it stays disabled until one is chosen.</p>
+</header>
+
+
+<section class="panel mb-6 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Current staging</h2></div>
+  {% if current %}
+    <div class="flex items-center justify-between gap-4 px-4 py-4">
+      <div>
+        <p class="font-display text-lg text-ink">{{ current.system_name|default:current.system_id }}</p>
+        <p class="mt-0.5 text-xs text-faint">
+          {% if dimension_enabled %}Asset Staging is <span class="text-cyan">enabled</span> in the index — adjust on <a href="{% url 'admin_audit:readiness_dimensions' %}" class="text-gold hover:underline">Dimensions &amp; weights</a>.
+          {% else %}Scoring now, but <span class="text-ink">not yet in the index</span> — enable it on <a href="{% url 'admin_audit:readiness_dimensions' %}" class="text-gold hover:underline">Dimensions &amp; weights</a>.{% endif %}
+        </p>
+      </div>
+      <form method="post" action="{% url 'admin_audit:readiness_staging_clear' %}">{% csrf_token %}<button class="btn-ghost !py-1 text-xs text-faint hover:text-loss">Clear</button></form>
+    </div>
+  {% else %}
+    <p class="px-4 py-8 text-center text-sm text-faint">No staging system set — choose one below. Until you do, the Asset Staging dimension stays unavailable.</p>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">{% if current %}Change staging system{% else %}Set staging system{% endif %}</h2></div>
+  <form method="post" action="{% url 'admin_audit:readiness_staging' %}" class="flex flex-col gap-3 p-4 sm:flex-row sm:items-end">
+    {% csrf_token %}
+    <div class="flex-1">
+      <p class="mb-1 text-xs text-faint">Solar system</p>
+      {% include 'navigation/_system_picker.html' with prefix='system_id' placeholder='Search for a system, e.g. Jita…' %}
+    </div>
+    <button class="btn-gold !py-1 text-sm">Save staging system</button>
+  </form>
+</section>
+{% endblock %}

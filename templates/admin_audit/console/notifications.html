@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Notifications · Admin{% endblock %}
+{% block content %}
+<a href="{% url 'admin_audit:console' %}" class="text-sm text-faint hover:text-gold">← Admin console</a>
+<header class="mb-6 mt-2"><p class="eyebrow text-gold">Pingboard</p>
+  <h1 class="text-3xl font-bold text-ink">Notifications</h1>
+  <p class="mt-1 text-sm text-faint">Every automated notification the app sends, in one place — what fires it,
+    who it's for, and whether it may reach a mass chat channel. Leadership-only reports are kept off corp-wide
+    channels: they reach leadership-cleared channels and the addressed pilots (in-app / EVE-mail) only.</p>
+</header>
+
+<nav class="mb-6 flex flex-wrap gap-2 text-sm">
+  <a href="{% url 'admin_audit:pingboard_settings' %}" class="btn-ghost">Settings</a>
+  <a href="{% url 'admin_audit:pingboard_channels' %}" class="btn-ghost">Channels</a>
+  <a href="{% url 'admin_audit:pingboard_automation' %}" class="btn-ghost">Automation rules</a>
+  <a href="{% url 'admin_audit:pingboard_templates' %}" class="btn-ghost">Templates</a>
+</nav>
+
+{# --- who is "leadership" ---------------------------------------------------- #}
+<section class="panel p-5 mb-5">
+  <h2 class="eyebrow text-gold mb-1">Corp leadership</h2>
+  <p class="mb-3 text-sm text-faint">Who receives leadership-restricted notifications by EVE-mail / in-app, and
+    the audience floor for sensitive events. Everyone at or above the role, plus any pilots you name explicitly.</p>
+  <form method="post" class="grid gap-4 sm:grid-cols-2">
+    {% csrf_token %}<input type="hidden" name="form" value="leadership">
+    <label class="label">Leadership role
+      <select name="leadership_role" class="input-field mt-1">
+        {% for r in role_choices %}
+        <option value="{{ r }}" {% if r == leadership_role %}selected{% endif %}>{{ r|capfirst }}</option>
+        {% endfor %}
+      </select>
+      <span class="mt-1 block text-xs text-faint">Members at or above this role are treated as leadership.</span>
+    </label>
+    <label class="label">Named recipients (optional)
+      <select name="leadership_user_ids" multiple size="6" class="input-field mt-1">
+        {% for m in members %}
+        <option value="{{ m.id }}" {% if m.selected %}selected{% endif %}>{{ m.name }}</option>
+        {% endfor %}
+      </select>
+      <span class="mt-1 block text-xs text-faint">When set, these named pilots are the leadership distribution
+        (ctrl/cmd-click to multi-select). Leave empty to use the role above.</span>
+    </label>
+    <div class="sm:col-span-2"><button class="btn-gold">Save leadership</button></div>
+  </form>
+</section>
+
+{# --- channel clearance summary --------------------------------------------- #}
+<section class="panel p-5 mb-5">
+  <h2 class="eyebrow text-gold mb-1">Leadership channels</h2>
+  <p class="mb-3 text-sm text-faint">To let a sensitive notification reach a chat channel, designate that channel
+    a leadership channel — raise its classification ceiling to <span class="data">high command</span> or higher on the
+    <a href="{% url 'admin_audit:pingboard_channels' %}" class="text-gold hover:underline">Channels</a> page.
+    Otherwise leadership traffic is delivered in-app / by EVE-mail only.</p>
+  {% if channels %}
+  <ul class="grid gap-2 sm:grid-cols-2">
+    {% for c in channels %}
+    <li class="flex items-center justify-between rounded border border-line/60 px-3 py-2 text-sm">
+      <span class="text-ink">{{ c.label }} <span class="text-xs text-faint">· {{ c.kind }}</span></span>
+      {% if c.leadership_ok %}
+      <span class="chip text-gold">leadership · {{ c.ceiling }}</span>
+      {% else %}
+      <span class="chip text-faint">corp-wide</span>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="text-sm text-faint">No broadcast chat channels are armed yet.</p>
+  {% endif %}
+</section>
+
+{# --- the event catalogue ---------------------------------------------------- #}
+<form method="post">
+  {% csrf_token %}<input type="hidden" name="form" value="events">
+  {% for gkey, glabel in group_order %}
+  <section class="panel p-5 mb-5">
+    <h2 class="eyebrow text-gold mb-3">{{ glabel }}</h2>
+    <div class="space-y-3">
+      {% for e in events %}{% if e.group == gkey %}
+      <div class="rounded-lg border border-line/60 p-4">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-2">
+              <h3 class="font-display font-semibold text-ink">{{ e.label }}</h3>
+              {% if e.sensitive %}<span class="chip text-gold">leadership</span>{% endif %}
+              {% if e.reaches_mass %}
+              <span class="chip text-faint">corp-wide</span>
+              {% else %}
+              <span class="chip text-gold">leadership channels only</span>
+              {% endif %}
+            </div>
+            <p class="mt-1 text-sm text-faint">{{ e.description }}</p>
+            {% if e.triggers %}<p class="mt-1 text-xs text-faint">Fires: {{ e.triggers }}</p>{% endif %}
+          </div>
+          <label class="chip cursor-pointer whitespace-nowrap">
+            <input type="checkbox" name="enabled__{{ e.key }}" class="mr-1 align-middle" {% if e.enabled %}checked{% endif %}>Enabled</label>
+        </div>
+        <div class="mt-3 grid gap-3 sm:grid-cols-3">
+          <label class="label text-xs">Audience
+            <select name="audience__{{ e.key }}" class="input-field mt-1">
+              {% for a in audience_choices %}
+              <option value="{{ a }}" {% if a == e.audience %}selected{% endif %}>{{ a|capfirst }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          {% if e.has_severity %}
+          <label class="label text-xs">Min severity (0–100)
+            <input type="number" min="0" max="100" name="severity__{{ e.key }}" value="{{ e.min_severity }}" class="input-field mt-1">
+          </label>
+          {% endif %}
+          <div class="self-end text-xs text-faint">
+            Classification: <span class="data">{{ e.classification }}</span>
+          </div>
+        </div>
+      </div>
+      {% endif %}{% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+  <div class="mb-6"><button class="btn-gold">Save notification settings</button></div>
+</form>
+
+<p class="mt-2 text-[11px] text-faint">Config v{{ meta.version }}{% if meta.by %} · last change by {{ meta.by }}{% endif %}.
+  Changing an event's audience to <span class="data">corp</span> opts it into corp-wide broadcast; keeping it
+  <span class="data">officer</span>/<span class="data">director</span> keeps it off mass channels.</p>
+{% endblock %}

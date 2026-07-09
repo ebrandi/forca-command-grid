@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Recommendation tuning · Admin{% endblock %}
+{% block content %}
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
+<header class="mt-3 mb-6">
+  <p class="eyebrow">Alerts &amp; finance</p>
+  <h1 class="mt-1 text-2xl font-bold text-ink">Recommendation engine tuning</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">Mute noisy evaluators, tune the combat-loss window/threshold, and set a severity floor — the <a href="{% url 'recommendations:officer' %}" class="text-cyan hover:underline">officer board</a> updates on the next run (every 30 min), no deploy required.</p>
+</header>
+
+<form method="post" class="max-w-2xl space-y-5">
+  {% csrf_token %}
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">Evaluators</h2>
+    <div class="space-y-2">
+      {% for e in evaluators %}
+      <label class="flex items-center gap-3 rounded-md border border-line p-3 text-sm hover:border-gold/40">
+        <input type="checkbox" name="evaluator" value="{{ e.key }}" {% if e.enabled %}checked{% endif %}>
+        <span class="text-ink">{{ e.label }}</span>
+        <span class="ml-auto text-[11px] text-faint">{{ e.key }}</span>
+      </label>
+      {% endfor %}
+    </div>
+    <p class="mt-2 text-[11px] text-faint">Unchecked evaluators are skipped on every run.</p>
+  </section>
+
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">Thresholds</h2>
+    <div class="grid gap-4 sm:grid-cols-3">
+      <div>
+        <label class="label" for="wd">Combat-loss window (days)</label>
+        <input id="wd" name="combat_loss_window_days" type="number" min="1" max="90" value="{{ cfg.combat_loss_window_days }}" class="input-field mt-1">
+      </div>
+      <div>
+        <label class="label" for="th">Combat-loss threshold</label>
+        <input id="th" name="combat_loss_threshold" type="number" min="1" max="100" value="{{ cfg.combat_loss_threshold }}" class="input-field mt-1">
+        <p class="mt-1 text-[11px] text-faint">Flag a ship lost this many times in the window.</p>
+      </div>
+      <div>
+        <label class="label" for="ms">Severity floor</label>
+        <input id="ms" name="min_severity" type="number" min="0" max="100" value="{{ cfg.min_severity }}" class="input-field mt-1">
+        <p class="mt-1 text-[11px] text-faint">Drop drafts below this. 0 = keep all.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="flex items-center gap-3">
+    <button type="submit" class="btn-gold">Save tuning</button>
+    <a href="{% url 'admin_audit:console' %}" class="btn-ghost">Cancel</a>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}Build Board · [FORCA] Command Grid{% endblock %}
+{% block content %}
+
+<header class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <p class="eyebrow">Corp Store · Fulfilment</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">Build board</h1>
+    <p class="mt-1 text-sm text-faint">Claim an order, build or assemble it, and contract it to the buyer. Capital builds start once the deposit lands.</p>
+  </div>
+  <div class="flex items-center gap-2">
+    <a href="{% url 'store:supply_forecast' %}" class="btn-gold text-sm"><svg class="h-4 w-4"><use href="#i-coin"/></svg> Supply forecast</a>
+    <a href="{% url 'store:storefront' %}" class="btn-ghost text-sm">Storefront</a>
+    {% if is_officer %}<a href="{% url 'store:config' %}" class="btn-ghost text-sm">Settings</a>{% endif %}
+  </div>
+</header>
+
+
+{% if mine %}
+<section class="mb-6">
+  <h2 class="eyebrow mb-2 text-gold">Your active orders</h2>
+  <div class="space-y-2">
+    {% for o in mine %}
+    <a href="{% url 'store:order' o.pk %}" class="panel flex flex-wrap items-center gap-x-5 gap-y-2 p-4 hover:border-gold/40 ring-1 ring-gold/20">
+      <img src="{% eve_type_render o.ship_type_id 64 %}" alt="" loading="lazy" class="h-10 w-10 rounded bg-space object-cover ring-1 ring-line">
+      <div class="min-w-0 flex-1">
+        <p class="font-medium text-ink">{{ o.ship_name }}{% if o.quantity > 1 %} ×{{ o.quantity }}{% endif %}</p>
+        <p class="text-xs text-faint">{{ o.get_kind_display }} · for {% if o.buyer_character_id %}{% eve_name o.buyer_character_id %}{% else %}buyer{% endif %}</p>
+      </div>
+      <span class="chip !text-cyan">{{ o.get_status_display }}</span>
+      <span class="data text-gold">{{ o.total_price|isk }}</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="mb-6">
+  <h2 class="eyebrow mb-2 text-gold">Open orders · {{ open_orders|length }}</h2>
+  <div class="panel overflow-hidden">
+    <div class="overflow-x-auto"><table class="w-full text-sm">
+      <thead class="text-left text-faint"><tr class="border-b border-line/60">
+        <th class="px-4 py-2 font-medium">Ship</th>
+        <th class="px-4 py-2 font-medium">Type</th>
+        <th class="px-4 py-2 text-right font-medium">Qty</th>
+        <th class="px-4 py-2 text-right font-medium">Deposit</th>
+        <th class="px-4 py-2 text-right font-medium">Value</th>
+        <th class="px-4 py-2 text-right font-medium"></th>
+      </tr></thead>
+      <tbody>
+        {% for o in open_orders %}
+        <tr class="border-t border-line/40 hover:bg-panel2/40">
+          <td class="px-4 py-2.5">
+            <a href="{% url 'store:order' o.pk %}" class="flex items-center gap-2 font-medium text-ink hover:text-gold">
+              <img src="{% eve_type_icon o.ship_type_id 32 %}" alt="" loading="lazy" class="h-6 w-6 rounded-sm">{{ o.ship_name }}
+            </a>
+            <p class="mt-0.5 text-[11px] text-faint">{% if o.fit_name and o.kind == 'doctrine_fit' %}{{ o.fit_name }} · {% endif %}for {% if o.buyer_character_id %}{% eve_name o.buyer_character_id %}{% else %}buyer{% endif %}{% if o.location_name %} → {{ o.location_name }}{% endif %}</p>
+          </td>
+          <td class="px-4 py-2.5">
+            <span class="chip {% if o.kind == 'hull' %}!text-gold{% endif %}">{% if o.kind == 'hull' %}Build{% else %}Stock{% endif %}</span>
+            {% if o.is_capital %}<span class="chip !text-loss">{{ o.get_hull_class_display }}</span>{% endif %}
+          </td>
+          <td class="px-4 py-2.5 text-right data text-faint">{{ o.quantity }}</td>
+          <td class="px-4 py-2.5 text-right data text-muted">{% if o.requires_build %}{{ o.deposit_amount|isk }}{% else %}—{% endif %}</td>
+          <td class="px-4 py-2.5 text-right data font-semibold text-gold">{{ o.total_price|isk }}</td>
+          <td class="px-4 py-2.5 text-right">
+            <form method="post" action="{% url 'store:claim_order' o.pk %}" class="inline">{% csrf_token %}<button class="btn-gold !py-1 !text-xs">Claim</button></form>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="px-4 py-12 text-center text-faint">No open orders right now.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+{% if done %}
+<section>
+  <h2 class="eyebrow mb-2 text-faint">Recently delivered by you</h2>
+  <div class="panel divide-y divide-line/40">
+    {% for o in done %}
+    <a href="{% url 'store:order' o.pk %}" class="flex items-center gap-3 px-4 py-2 text-sm hover:bg-panel2/40">
+      <span class="chip !text-kill">Delivered</span>
+      <span class="min-w-0 flex-1 truncate text-muted">{{ o.ship_name }} for {% if o.buyer_character_id %}{% eve_name o.buyer_character_id %}{% else %}buyer{% endif %}</span>
+      <span class="data text-gold">{{ o.total_price|isk }}</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}

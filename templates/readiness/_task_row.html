@@ -1,0 +1,17 @@
+{% comment %}One readiness task row: priority, title, severity (from its finding), assignee.{% endcomment %}
+<div class="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 hover:bg-panel2/40">
+  <div class="min-w-0">
+    <span class="block truncate text-sm font-medium text-ink">{{ row.task.title }}</span>
+    <span class="block text-[11px] text-faint">
+      {{ row.task.get_type_display }} · priority {{ row.task.priority }}
+      {% if row.finding %} · {{ row.finding.dimension_key }}{% endif %}
+      {% if row.task.assignee %} · {{ row.task.assignee.display_name }}{% else %} · unassigned{% endif %}
+    </span>
+  </div>
+  <div class="flex items-center gap-2">
+    {% if row.finding %}
+      <span class="chip {% if row.finding.severity == 'critical' %}text-loss{% elif row.finding.severity == 'high' %}text-gold{% elif row.finding.severity == 'warn' %}text-cyan{% else %}text-faint{% endif %}">{{ row.finding.get_severity_display }}</span>
+    {% endif %}
+    <span class="chip text-faint">{{ row.task.get_status_display }}</span>
+  </div>
+</div>

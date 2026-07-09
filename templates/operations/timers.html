@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Timers · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-gold">Defense</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">Structure &amp; sov timers</h1>
+    <p class="mt-1 text-sm text-faint">Upcoming reinforcement and sovereignty timers, counting down in EVE (UTC) time. Every timer also lands on the Pingboard calendar and notifies your armed channels.</p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    {% if features.pingboard %}<a href="{% url 'pingboard:calendar' %}" class="btn-ghost text-sm">Pingboard calendar →</a>{% endif %}
+    <a href="{% url 'operations:list' %}" class="btn-ghost text-sm">← Operations</a>
+  </div>
+</header>
+
+
+<div class="panel divide-y divide-line/40 overflow-hidden">
+  {% for t in timers %}
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 text-sm">
+      <span class="inline-block h-2.5 w-2.5 shrink-0 rounded-full {% if t.side == 'hostile' %}bg-loss{% elif t.side == 'friendly' %}bg-kill{% else %}bg-faint{% endif %}" title="{{ t.get_side_display }}"></span>
+      <span class="min-w-0 font-medium text-ink">{{ t.name }}</span>
+      <span class="chip !text-[10px]">{{ t.get_timer_type_display }}</span>
+      {% if t.structure_type %}<span class="text-xs text-faint">{{ t.structure_type }}</span>{% endif %}
+      {% if t.system_name %}<span class="text-xs text-muted">{{ t.system_name }}</span>{% endif %}
+      <span class="ml-auto text-right">
+        <span class="data block font-semibold text-gold" data-countdown="{{ t.exits_at|date:'c' }}">—</span>
+        <span class="block text-[10px] text-faint">{{ t.exits_at|date:"D j M · H:i" }} EVE</span>
+      </span>
+      {% if is_officer %}<form method="post" action="{% url 'operations:timer_remove' t.pk %}">{% csrf_token %}<button class="text-[11px] text-faint hover:text-loss">remove</button></form>{% endif %}
+      {% if t.notes %}<p class="w-full pl-6 text-xs text-faint">{{ t.notes }}</p>{% endif %}
+    </div>
+  {% empty %}
+    <p class="px-4 py-10 text-center text-sm text-faint">No timers on the board.</p>
+  {% endfor %}
+</div>
+
+{% if is_officer %}
+<section class="panel mt-6 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Add a timer</h2></div>
+  <form method="post" action="{% url 'operations:timer_add' %}" class="grid gap-3 p-4 sm:grid-cols-2">
+    {% csrf_token %}
+    <div><label class="label" for="lf_name_1">Structure name / label</label><input id="lf_name_1" name="name" required class="input-field" placeholder="e.g. Fortizar — 1DQ1-A"></div>
+    <div><label class="label" for="lf_system_name_2">System</label><input id="lf_system_name_2" name="system_name" class="input-field" placeholder="e.g. 1DQ1-A"></div>
+    <div><label class="label" for="lf_structure_type_3">Structure type</label><input id="lf_structure_type_3" name="structure_type" class="input-field" placeholder="Astrahus / Fortizar / IHub…"></div>
+    <div><label class="label" for="lf_timer_type_4">Timer</label><select id="lf_timer_type_4" name="timer_type" class="input-field">{% for v, l in timer_types %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
+    <div><label class="label" for="lf_side_5">Side</label><select id="lf_side_5" name="side" class="input-field">{% for v, l in sides %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
+    <div><label class="label" for="lf_exits_at_6">Exit time (EVE / UTC)</label><input id="lf_exits_at_6" name="exits_at" type="datetime-local" required class="input-field"></div>
+    <div class="sm:col-span-2"><label class="label" for="lf_notes_7">Notes</label><input id="lf_notes_7" name="notes" class="input-field" placeholder="Optional"></div>
+    <div class="sm:col-span-2 space-y-2">
+      <label class="chip cursor-pointer"><input type="checkbox" name="announce" value="1" class="mr-1 align-middle">Announce now</label>
+      {% if announce_channels %}
+      <div class="flex flex-wrap items-center gap-2 text-xs text-faint">
+        <span class="uppercase tracking-wide">Channels:</span>
+        {% for kind, label in announce_channels %}
+        <label class="chip cursor-pointer"><input type="checkbox" name="channel_{{ kind }}" class="mr-1 align-middle" checked>{{ label }}</label>
+        {% endfor %}
+      </div>
+      <p class="text-[11px] text-faint">Fans out via Pingboard to the ticked channels. Leave all ticked to reach every armed channel.</p>
+      {% else %}
+      <p class="text-[11px] text-faint">Announcing fans out via Pingboard to every armed channel. Arm channels in <span class="text-faint">Pingboard → Channels</span>.</p>
+      {% endif %}
+    </div>
+    <div class="sm:col-span-2"><button class="btn-gold">Add timer</button></div>
+  </form>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script nonce="{{ csp_nonce }}">
+  function fmt(ms) {
+    if (ms <= 0) return 'OUT';
+    var s = Math.floor(ms / 1000), d = Math.floor(s / 86400);
+    s -= d * 86400; var h = Math.floor(s / 3600); s -= h * 3600;
+    var m = Math.floor(s / 60); s -= m * 60;
+    return (d ? d + 'd ' : '') + (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }
+  function tick() {
+    var now = Date.now();
+    document.querySelectorAll('[data-countdown]').forEach(function (el) {
+      var t = new Date(el.getAttribute('data-countdown')).getTime();
+      el.textContent = fmt(t - now);
+      if (t - now <= 0) el.classList.add('text-loss');
+    });
+  }
+  tick(); setInterval(tick, 1000);
+</script>
+{% endblock %}

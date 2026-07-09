@@ -1,0 +1,15 @@
+{# Shared avoidance controls: avoid systems / regions + incursions. #}
+<div class="grid gap-3 sm:grid-cols-2">
+  <div>
+    <label class="label" for="lf_avoid_sys_1">Avoid systems <span class="text-faint">(comma-separated)</span></label>
+    <input id="lf_avoid_sys_1" type="text" name="avoid_sys" value="{{ avoid_sys }}" placeholder="e.g. Tama, Rancer" autocomplete="off" class="input-field">
+  </div>
+  <div>
+    <label class="label" for="lf_avoid_region_2">Avoid regions</label>
+    <input id="lf_avoid_region_2" type="text" name="avoid_region" value="{{ avoid_region }}" placeholder="e.g. Providence" autocomplete="off" class="input-field">
+  </div>
+</div>
+<label class="mt-2 flex items-center gap-2 text-sm text-muted">
+  <input type="checkbox" name="avoid_incursions" value="1" {% if avoid_incursions %}checked{% endif %}> Avoid incursion systems
+</label>
+{% if unresolved %}<p class="mt-1 text-[11px] text-loss">Couldn't find: {{ unresolved|join:", " }} — check spelling.</p>{% endif %}

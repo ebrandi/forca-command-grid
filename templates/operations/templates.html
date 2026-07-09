@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Recurring op templates · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-gold">Operations</p>
+    <h1 class="mt-1 text-2xl font-bold text-ink">Recurring op templates</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">One template spawns a fleet on a weekly cadence — composition, comms, SRP and RSVP deadline set once. Instances appear on the ops board, dashboards and the calendar.</p>
+  </div>
+  <div class="flex items-center gap-2">
+    <form method="post" action="{% url 'operations:template_run' %}">{% csrf_token %}<button class="btn-ghost text-sm">Materialise now</button></form>
+    <a href="{% url 'operations:template_create' %}" class="btn-gold text-sm">New template</a>
+    <a href="{% url 'operations:list' %}" class="btn-ghost text-sm">← Ops board</a>
+  </div>
+</header>
+
+{% if templates %}
+<div class="panel overflow-x-auto">
+  <table class="w-full text-sm">
+    <thead class="border-b border-line text-left text-[11px] uppercase tracking-wide text-faint">
+      <tr><th class="px-4 py-2">Template</th><th class="px-4 py-2">Cadence (UTC)</th><th class="px-4 py-2">Composition</th><th class="px-4 py-2">Spawned</th><th class="px-4 py-2">Status</th><th class="px-4 py-2"></th></tr>
+    </thead>
+    <tbody>
+      {% for t in templates %}
+      <tr class="border-b border-line/50">
+        <td class="px-4 py-2"><span class="font-medium text-ink">{{ t.name }}</span><span class="ml-1 text-faint">· {{ t.get_type_display }}</span></td>
+        <td class="px-4 py-2 text-muted">{% for n, label in weekdays %}{% if n == t.weekday %}{{ label }}{% endif %}{% endfor %} {{ t.hour|stringformat:"02d" }}:{{ t.minute|stringformat:"02d" }} · {{ t.lead_days }}d ahead</td>
+        <td class="px-4 py-2 text-muted">{{ t.slots.count }} slot{{ t.slots.count|pluralize }}{% if t.min_pilots %} · min {{ t.min_pilots }}{% endif %}</td>
+        <td class="px-4 py-2 text-muted">{{ t.n_instances }}</td>
+        <td class="px-4 py-2">{% if t.active %}<span class="chip !border-kill/40 !text-kill">active</span>{% else %}<span class="chip !border-line !text-faint">paused</span>{% endif %}</td>
+        <td class="px-4 py-2">
+          <div class="flex items-center justify-end gap-2">
+            <a href="{% url 'operations:template_edit' t.pk %}" class="text-xs text-gold hover:underline">Edit</a>
+            <form method="post" action="{% url 'operations:template_toggle' t.pk %}">{% csrf_token %}<button class="text-xs text-faint hover:text-ink">{% if t.active %}Pause{% else %}Activate{% endif %}</button></form>
+            <form method="post" action="{% url 'operations:template_delete' t.pk %}" data-confirm="Delete this template? Already-spawned operations are unaffected."><button class="text-xs text-loss hover:underline">Delete</button>{% csrf_token %}</form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="panel p-8 text-center text-sm text-faint">No templates yet. Create one to put a recurring fleet on autopilot.</div>
+{% endif %}
+{% endblock %}

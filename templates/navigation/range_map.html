@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{% if map %}In range of {{ map.origin }}{% else %}Range map{% endif %} · [FORCA] Command Grid{% endblock %}
+{% block extra_head %}
+{% if map %}<script defer src="{% static 'js/vendor/svg-pan-zoom.min.js' %}"></script>{% endif %}
+{% endblock %}
+{% block content %}
+
+{% if not map %}
+  <div class="panel px-4 py-16 text-center">
+    <p class="font-display text-lg text-muted">No systems to draw</p>
+    <p class="mt-1 text-sm text-faint">Find the systems in range first, then open them on the map.</p>
+    <a href="{% url 'navigation:range_finder' %}" class="btn-ghost mt-4 text-sm"><svg class="h-4 w-4"><use href="#i-jump"/></svg> Jump range</a>
+  </div>
+{% else %}
+<header class="mb-4 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <p class="eyebrow">Range map</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">In range of <span class="text-cyan">{{ map.origin }}</span></h1>
+    <p class="mt-1 text-sm text-faint">{{ map.count }} system{{ map.count|pluralize }} within one jump · {{ map.region_count }} region{{ map.region_count|pluralize }} · reach fan from the origin</p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <a href="{% url 'navigation:range_finder' %}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-jump"/></svg> Jump range</a>
+    <a href="{% url 'navigation:jump_planner' %}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-jump"/></svg> Jump planner</a>
+  </div>
+</header>
+
+<div class="panel overflow-hidden" style="height: 78vh;">
+  <svg id="range-map" viewBox="0 0 {{ map.view }} {{ map.view }}" width="100%" height="100%"
+       style="background: radial-gradient(circle at 50% 40%, #0d1320, #06080e);">
+    <defs>
+      <filter id="range-glow" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+
+    <!-- Region labels, behind everything -->
+    <g>
+      {% for r in map.regions %}
+      <text x="{{ r.px }}" y="{{ r.py }}" text-anchor="middle" font-size="20" fill="#3b4860"
+            font-family="'Chakra Petch', sans-serif" style="pointer-events: none; text-transform: uppercase; letter-spacing: 2px;">{{ r.name }}</text>
+      {% endfor %}
+    </g>
+
+    <!-- Reach spokes: a faint line from the origin out to each in-range system -->
+    <g stroke="#2b6f7a" stroke-width="0.9" stroke-linecap="round" stroke-dasharray="3 4" opacity="0.55">
+      {% for s in map.spokes %}<line x1="{{ map.origin_x }}" y1="{{ map.origin_y }}" x2="{{ s.x2 }}" y2="{{ s.y2 }}"/>{% endfor %}
+    </g>
+
+    <!-- In-range systems -->
+    <g>
+      {% for n in map.nodes %}{% if not n.origin %}
+      <a href="{% url 'navigation:system_detail' n.id %}">
+        <circle cx="{{ n.px }}" cy="{{ n.py }}" r="4.5" fill="{{ n.colour }}" stroke="#06080e" stroke-width="1.2"><title>{{ n.name }} · {{ n.security }} · {{ n.band }}</title></circle>
+        <text x="{{ n.px }}" y="{{ n.py }}" dy="-7" text-anchor="middle" font-size="10"
+              fill="#cdd7e4" font-family="'JetBrains Mono', monospace"
+              style="pointer-events: none; paint-order: stroke; stroke: #06080e; stroke-width: 2.5px;">{{ n.name }}</text>
+      </a>
+      {% endif %}{% endfor %}
+    </g>
+
+    <!-- Origin, drawn last so it sits on top -->
+    <g>
+      {% for n in map.nodes %}{% if n.origin %}
+      <a href="{% url 'navigation:system_detail' n.id %}">
+        <circle cx="{{ n.px }}" cy="{{ n.py }}" r="10" fill="none" stroke="#46cfe0" stroke-width="2.5" filter="url(#range-glow)"/>
+        <circle cx="{{ n.px }}" cy="{{ n.py }}" r="5.5" fill="{{ n.colour }}" stroke="#06080e" stroke-width="1.4"><title>{{ n.name }} · {{ n.security }} · {{ n.band }} · origin</title></circle>
+        <text x="{{ n.px }}" y="{{ n.py }}" dy="-11" text-anchor="middle" font-size="12" font-weight="700"
+              fill="#e8eef6" font-family="'JetBrains Mono', monospace"
+              style="pointer-events: none; paint-order: stroke; stroke: #06080e; stroke-width: 3px;">{{ n.name }}</text>
+      </a>
+      {% endif %}{% endfor %}
+    </g>
+  </svg>
+</div>
+<div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-faint">
+  <span class="inline-flex items-center gap-1"><span class="inline-block h-2.5 w-2.5 rounded-full ring-2 ring-cyan" style="background:transparent"></span> origin</span>
+  <span class="inline-flex items-center gap-1"><span class="inline-block h-0.5 w-4" style="background:#2b6f7a"></span> in range</span>
+  <span class="inline-flex items-center gap-1"><span class="inline-block h-2.5 w-2.5 rounded-full" style="background:#3b7be0"></span> high</span>
+  <span class="inline-flex items-center gap-1"><span class="inline-block h-2.5 w-2.5 rounded-full" style="background:#e0d23e"></span> low</span>
+  <span class="inline-flex items-center gap-1"><span class="inline-block h-2.5 w-2.5 rounded-full" style="background:#c02929"></span> null</span>
+  <span>· click a system for details</span>
+  <span class="ml-auto">Drag to pan · scroll to zoom</span>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if map %}
+<script nonce="{{ csp_nonce }}">
+  document.addEventListener('DOMContentLoaded', function () {
+    var el = document.getElementById('range-map');
+    if (el && window.svgPanZoom) {
+      svgPanZoom(el, { controlIconsEnabled: true, fit: true, center: true, minZoom: 0.4, maxZoom: 60 });
+    }
+  });
+</script>
+{% endif %}
+{% endblock %}

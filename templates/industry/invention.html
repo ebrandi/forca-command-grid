@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}T2 invention planner · Industry{% endblock %}
+{% block content %}
+
+<a href="{% url 'industry:home' %}" class="text-xs text-faint hover:text-gold">← Industry Center</a>
+<header class="mt-3 mb-5">
+  <p class="eyebrow">Industry &amp; Economy</p>
+  <h1 class="mt-1 text-2xl font-bold text-ink">T2 invention planner</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">Pick a Tech II item. We'll work out the success chance, how many attempts it takes on average, and the real cost per BPC — then whether it's cheaper to invent or just buy.</p>
+</header>
+
+<form method="get" class="panel mb-5 p-5">
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+    <div class="lg:col-span-2">
+      <label class="label">Tech II item</label>
+      {% include "components/_type_picker.html" with field="type_id" endpoint="/industry/type-search/?buildable=1" placeholder="Search a T2 ship or module…" initial_id=stype.type_id initial_name=stype.name %}
+    </div>
+    <div><label class="label" for="i_s1">Science 1</label><input id="i_s1" type="number" name="science_1" min="0" max="5" value="{{ science_1 }}" class="input-field"></div>
+    <div><label class="label" for="i_s2">Science 2</label><input id="i_s2" type="number" name="science_2" min="0" max="5" value="{{ science_2 }}" class="input-field"></div>
+    <div><label class="label" for="i_enc">Encryption</label><input id="i_enc" type="number" name="encryption" min="0" max="5" value="{{ encryption }}" class="input-field"></div>
+  </div>
+  <div class="mt-3 flex flex-wrap items-end gap-3">
+    <div>
+      <label class="label" for="i_dec">Decryptor</label>
+      <select id="i_dec" name="decryptor" class="input-field w-64">
+        <option value="">None</option>
+        {% for d in decryptors %}<option value="{{ d.type_id }}" {% if d.type_id == decryptor_id %}selected{% endif %}>{{ d.name }}</option>{% endfor %}
+      </select>
+    </div>
+    <button class="btn-gold ml-auto text-sm">Plan invention</button>
+  </div>
+  <p class="mt-2 text-[11px] text-faint">Science &amp; encryption are your skill levels (0–5). These are assumptions — set them to your real trained levels for an accurate chance.</p>
+</form>
+
+{% if stype and not plan %}
+  <div class="panel border-loss/40 bg-loss/5 px-4 py-3 text-sm text-loss">“{{ stype.name }}” isn't invented (it's a T1 item, or we don't have invention data for it). Try a Tech II hull or module.</div>
+{% elif plan %}
+  <section class="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="panel p-4"><p class="eyebrow text-faint">Success chance</p><p class="data mt-1 text-2xl font-bold text-cyan">{% widthratio plan.probability 1 100 %}%</p><p class="mt-0.5 text-[11px] text-faint">base {% widthratio plan.base_probability 1 100 %}%</p></div>
+    <div class="panel p-4"><p class="eyebrow text-faint">Attempts / success</p><p class="data mt-1 text-2xl font-bold text-ink">{{ plan.expected_attempts|floatformat:1 }}</p></div>
+    <div class="panel p-4"><p class="eyebrow text-faint">Cost / BPC</p><p class="data mt-1 text-2xl font-bold text-gold">{{ plan.cost_per_bpc|isk }}</p><p class="mt-0.5 text-[11px] text-faint">{{ plan.runs_per_success }} runs → {{ plan.cost_per_run|isk }}/unit</p></div>
+    <div class="panel p-4"><p class="eyebrow text-faint">Resulting BPC</p><p class="data mt-1 text-lg font-bold text-ink">ME {{ plan.resulting_me }} · TE {{ plan.resulting_te }}</p></div>
+  </section>
+
+  <div class="grid gap-4 lg:grid-cols-2">
+    <section class="panel p-5">
+      <h2 class="eyebrow mb-3 text-gold">Inputs per attempt</h2>
+      <table class="w-full text-sm">
+        <tbody>
+          {% for d in plan.datacores %}
+          <tr class="border-b border-line/30"><td class="flex items-center gap-2 py-1.5 text-muted"><img src="{% eve_type_icon d.type_id 32 %}" alt="" class="h-5 w-5 rounded-sm">{% type_name d.type_id %} ×{{ d.quantity }}</td><td class="py-1.5 text-right data text-ink">{{ d.line_cost|isk }}</td></tr>
+          {% endfor %}
+          {% if plan.decryptor %}<tr class="border-b border-line/30"><td class="py-1.5 text-muted">{{ plan.decryptor.name }}</td><td class="py-1.5 text-right data text-ink">{{ plan.decryptor.unit_price|isk }}</td></tr>{% endif %}
+          <tr><td class="py-1.5 font-semibold text-ink">Per attempt</td><td class="py-1.5 text-right data font-semibold text-ink">{{ plan.cost_per_attempt|isk }}</td></tr>
+        </tbody>
+      </table>
+      {% if plan.skills %}<p class="mt-3 text-[11px] text-faint">Requires invention skills: {% for s in plan.skills %}{% type_name s.skill_type_id %}{% if not forloop.last %}, {% endif %}{% endfor %}.</p>{% endif %}
+    </section>
+
+    {% if comparison %}
+    <section class="panel p-5">
+      <h2 class="eyebrow mb-3 text-gold">Invent vs buy (per unit)</h2>
+      <dl class="space-y-1.5 text-sm">
+        <div class="flex justify-between"><dt class="text-faint">Buy the T2 item</dt><dd class="data text-ink">{{ comparison.buy_t2|isk }}</dd></div>
+        <div class="flex justify-between"><dt class="text-faint">Invention (per unit)</dt><dd class="data text-ink">{{ comparison.invention_per_unit|isk }}</dd></div>
+        <div class="flex justify-between"><dt class="text-faint">Manufacture (mats + fee)</dt><dd class="data text-ink">{{ comparison.manufacture_per_unit|isk }}</dd></div>
+        <div class="flex justify-between border-t border-line/60 pt-1.5"><dt class="font-semibold text-ink">Invent &amp; build</dt><dd class="data font-semibold text-ink">{{ comparison.invent_and_build|isk }}</dd></div>
+      </dl>
+      <p class="mt-3 rounded-md px-3 py-2 text-center text-sm font-semibold {% if comparison.cheaper == 'invent' %}bg-kill/10 text-kill{% else %}bg-panel2 text-muted{% endif %}">
+        {% if comparison.cheaper == 'invent' %}✓ Inventing &amp; building is cheaper than buying{% elif comparison.cheaper == 'buy' %}Buying the finished T2 is cheaper right now{% else %}Not enough price data to compare{% endif %}
+      </p>
+    </section>
+    {% endif %}
+  </div>
+
+  <p class="mt-4 text-center text-[11px] text-faint">{{ plan.assumptions.note }}</p>
+{% else %}
+  <div class="panel px-4 py-16 text-center">
+    <p class="font-display text-lg text-muted">Pick a Tech II item</p>
+    <p class="mt-1 text-sm text-faint">Search above for a T2 ship or module to plan its invention.</p>
+  </div>
+{% endif %}
+{% endblock %}

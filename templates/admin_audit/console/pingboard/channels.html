@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Pingboard channels · Admin{% endblock %}
+{% block content %}
+<a href="{% url 'admin_audit:pingboard_settings' %}" class="text-sm text-faint hover:text-gold">← Pingboard settings</a>
+<header class="mb-6 mt-2 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-gold">Pingboard</p>
+    <h1 class="text-3xl font-bold text-ink">Channels &amp; providers</h1>
+    <p class="text-sm text-faint">Where alerts go out — Discord, EVE&#8209;mail, Slack, Telegram, WhatsApp.
+      Secrets are write&#8209;only; the stored value is never shown.</p>
+  </div>
+  <a href="{% url 'admin_audit:pingboard_channel_new' %}" class="btn-gold">+ Add a channel</a>
+</header>
+
+<div class="panel overflow-x-auto mb-4">
+  <table class="w-full text-sm">
+    <thead><tr class="text-[11px] uppercase text-faint">
+      <th class="px-4 py-2 text-left">Label</th><th class="px-4 py-2 text-left">Kind</th>
+      <th class="px-4 py-2 text-left">Target</th><th class="px-4 py-2 text-left">Secret</th>
+      <th class="px-4 py-2 text-left">Health</th><th class="px-4 py-2 text-left">State</th>
+      <th class="px-4 py-2 text-right">Actions</th></tr></thead>
+    <tbody class="divide-y divide-line/50">
+      {% for p in providers %}
+      <tr class="hover:bg-panel2/40 align-top">
+        <td class="px-4 py-2 text-ink">
+          <a href="{% url 'admin_audit:pingboard_channel_edit' p.id %}" class="hover:text-gold">{{ p.label }}</a>
+        </td>
+        <td class="px-4 py-2 text-faint">{{ p.get_kind_display }}</td>
+        <td class="px-4 py-2 text-[12px] text-faint">
+          {% if p.routing.sender_character_id %}sender #{{ p.routing.sender_character_id }}
+          {% elif p.routing.channel %}channel {{ p.routing.channel }}
+          {% elif p.routing.chat_id %}chat {{ p.routing.chat_id }}
+          {% elif p.kind == 'whatsapp' %}{% if p.routing.to %}{{ p.routing.to }} {% endif %}<span class="text-faint/70">via {{ p.routing.backend|default:"?" }}</span>
+          {% elif p.routing.to %}{{ p.routing.to }}
+          {% elif p.kind == 'in_app' %}every pilot's inbox
+          {% else %}—{% endif %}
+        </td>
+        <td class="px-4 py-2">{% if p.has_secret %}<span class="chip border-kill text-kill">set</span>{% elif p.kind == 'discord' %}<span class="chip border-loss text-loss">missing</span>{% elif p.kind == 'slack' or p.kind == 'telegram' or p.kind == 'whatsapp' %}<span class="chip border-line text-faint">—</span>{% else %}<span class="chip border-line text-faint">n/a</span>{% endif %}</td>
+        <td class="px-4 py-2 text-[11px] {% if p.last_error %}text-loss{% else %}text-faint{% endif %}">{% if p.last_error %}{{ p.last_error }}{% elif p.last_ok_at %}ok {{ p.last_ok_at|date:"j M H:i" }}{% else %}untested{% endif %}</td>
+        <td class="px-4 py-2">{% if p.enabled %}<span class="chip border-kill text-kill">on</span>{% else %}<span class="chip border-line text-faint">off</span>{% endif %}</td>
+        <td class="px-4 py-2">
+          <div class="flex flex-wrap justify-end gap-1">
+            <a href="{% url 'admin_audit:pingboard_channel_edit' p.id %}" class="btn-ghost">Configure</a>
+            <form method="post">{% csrf_token %}<input type="hidden" name="action" value="test"><input type="hidden" name="provider_id" value="{{ p.id }}"><button class="btn-ghost">Test</button></form>
+            <form method="post">{% csrf_token %}<input type="hidden" name="action" value="toggle"><input type="hidden" name="provider_id" value="{{ p.id }}"><button class="btn-ghost">{% if p.enabled %}Disable{% else %}Enable{% endif %}</button></form>
+            <form method="post" data-confirm="Delete this channel?">{% csrf_token %}<input type="hidden" name="action" value="delete"><input type="hidden" name="provider_id" value="{{ p.id }}"><button class="btn-danger">Delete</button></form>
+          </div>
+        </td>
+      </tr>
+      {% empty %}<tr><td colspan="7" class="px-4 py-6 text-center text-faint">No channels configured yet. <a href="{% url 'admin_audit:pingboard_channel_new' %}" class="text-gold">Add your first channel →</a></td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<p class="text-[12px] text-faint">New here? Read the
+  <span class="text-ink">step&#8209;by&#8209;step channel setup guide</span> at
+  <span class="font-mono text-cyan">handbooks/administrator-handbook/console-overview.md</span> for per&#8209;channel walkthroughs and examples.
+  Telegram and WhatsApp are now configured entirely here — bot token, backend and credentials included — with no server access required.</p>
+{% endblock %}

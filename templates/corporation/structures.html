@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Structures · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-gold">Leadership</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">Structures</h1>
+    <p class="mt-1 text-sm text-faint">Fuel, state and reinforcement timers for every corp structure, counting down in EVE (UTC).</p>
+  </div>
+  {% if is_officer %}<form method="post" action="{% url 'corporation:structures_sync' %}">{% csrf_token %}<button class="btn-ghost text-sm">Sync now</button></form>{% endif %}
+</header>
+
+
+{% if structures %}
+<div class="mb-4 flex flex-wrap gap-2 text-xs">
+  <span class="chip">{{ structures|length }} structure{{ structures|length|pluralize }}</span>
+  {% if low_fuel %}<span class="chip !border-loss/40 !text-loss">{{ low_fuel }} low on fuel</span>{% endif %}
+  {% if reinforced %}<span class="chip !border-gold/40 !text-gold">{{ reinforced }} reinforced</span>{% endif %}
+</div>
+{% endif %}
+
+<div class="panel divide-y divide-line/40 overflow-hidden">
+  {% for s in structures %}
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 text-sm">
+      <div class="min-w-0">
+        <span class="font-medium text-ink">{{ s.name|default:s.type_name|default:"Structure" }}</span>
+        <span class="block text-xs text-faint">{{ s.type_name }}{% if s.system_name %} · {{ s.system_name }}{% endif %}{% if s.state %} · {{ s.state|cut:"_"|title }}{% endif %}</span>
+      </div>
+      <div class="ml-auto flex items-center gap-5 text-right">
+        {% if s.is_reinforced %}
+          <span>
+            <span class="data block font-semibold text-gold" data-countdown="{{ s.state_timer_end|date:'c' }}">—</span>
+            <span class="block text-[10px] text-faint">reinforced · {{ s.state_timer_end|date:"D j M · H:i" }} EVE</span>
+          </span>
+        {% endif %}
+        <span>
+          {% if s.fuel_expires %}
+            <span class="data block font-semibold {% if s.is_low_fuel %}text-loss{% else %}text-ink{% endif %}" data-countdown="{{ s.fuel_expires|date:'c' }}">—</span>
+            <span class="block text-[10px] text-faint">fuel · {{ s.fuel_expires|date:"D j M · H:i" }} EVE</span>
+          {% else %}
+            <span class="text-xs text-faint">no fuel data</span>
+          {% endif %}
+        </span>
+      </div>
+    </div>
+  {% empty %}
+    <p class="px-4 py-12 text-center text-sm text-faint">No structures tracked. A Director or Station Manager needs to grant the “Structure monitoring” scope on the ESI Scopes page, then sync.</p>
+  {% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script nonce="{{ csp_nonce }}">
+  function fmt(ms) {
+    if (ms <= 0) return 'OUT';
+    var s = Math.floor(ms / 1000), d = Math.floor(s / 86400); s -= d * 86400;
+    var h = Math.floor(s / 3600); s -= h * 3600; var m = Math.floor(s / 60); s -= m * 60;
+    return (d ? d + 'd ' : '') + (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }
+  function tick() {
+    var now = Date.now();
+    document.querySelectorAll('[data-countdown]').forEach(function (el) {
+      var t = new Date(el.getAttribute('data-countdown')).getTime();
+      el.textContent = fmt(t - now);
+    });
+  }
+  tick(); setInterval(tick, 1000);
+</script>
+{% endblock %}

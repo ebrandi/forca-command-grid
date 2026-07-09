@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}{{ candidate.name }} · Recruitment{% endblock %}
+{% block content %}
+<a href="{% url 'recruitment:list' %}" class="text-xs text-faint hover:text-gold">← Recruitment</a>
+
+<header class="mt-2 mb-5 flex flex-wrap items-start justify-between gap-4">
+  <div class="flex items-center gap-3">
+    <img src="{% eve_portrait candidate.character_id 64 %}" alt="" class="h-12 w-12 rounded-lg ring-1 ring-line">
+    <div>
+      <h1 class="text-2xl font-bold text-ink">{{ candidate.name }}</h1>
+      <p class="text-xs text-faint">
+        {{ candidate.get_status_display }}
+        {% if candidate.evidence_refreshed_at %}· evidence as of {{ candidate.evidence_refreshed_at|timesince }} ago{% else %}· gathering evidence…{% endif %}
+        · <a href="https://zkillboard.com/character/{{ candidate.character_id }}/" target="_blank" rel="noopener" class="text-gold hover:underline">zKillboard ↗</a>
+      </p>
+    </div>
+  </div>
+  <form method="post" action="{% url 'recruitment:refresh' candidate.pk %}">{% csrf_token %}<button class="btn-ghost !py-1 !text-xs">Refresh evidence</button></form>
+</header>
+
+
+{% if flags %}
+<div class="panel mb-4 border-l-2 border-loss/50 p-4">
+  <p class="eyebrow mb-1 text-loss">Worth asking about</p>
+  {% for f in flags %}<p class="text-sm text-muted">• {{ f.claim }} <span class="text-faint">({{ f.get_confidence_display }} confidence)</span></p>{% endfor %}
+</div>
+{% endif %}
+
+{% if killboard %}
+<div class="panel mb-4 p-4 {% if killboard.is_hostile %}border-l-2 border-loss/50{% elif killboard.is_friendly %}border-l-2 border-kill/50{% endif %}">
+  <p class="eyebrow mb-2 {% if killboard.is_hostile %}text-loss{% elif killboard.is_friendly %}text-kill{% else %}text-gold{% endif %}">On our killboard</p>
+  <div class="flex flex-wrap gap-x-6 gap-y-1 text-sm">
+    {% if killboard.fought_against %}<span class="text-loss">⚔ Fought <strong>against</strong> us on {{ killboard.fought_against }} killmail{{ killboard.fought_against|pluralize }}</span>{% endif %}
+    {% if killboard.fought_with %}<span class="text-kill">🤝 Fought <strong>alongside</strong> us on {{ killboard.fought_with }} killmail{{ killboard.fought_with|pluralize }}</span>{% endif %}
+    {% if killboard.killed_by_us %}<span class="text-muted">☠ We've killed this pilot {{ killboard.killed_by_us }} time{{ killboard.killed_by_us|pluralize }}</span>{% endif %}
+  </div>
+  {% if killboard.last_activity %}<p class="mt-2 text-[11px] text-faint">Most recent involvement {{ killboard.last_activity|timesince }} ago · from FORCA's own killmail data.</p>{% endif %}
+</div>
+{% endif %}
+
+<div class="grid gap-5 lg:grid-cols-3">
+  <!-- Evidence -->
+  <section class="panel overflow-hidden lg:col-span-2">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Evidence</h2></div>
+    <div class="divide-y divide-line/40">
+      {% for theme, items in themes %}
+        <div class="px-4 py-3">
+          <p class="eyebrow mb-1">{{ theme }}</p>
+          {% for ev in items %}
+            <p class="flex items-center gap-2 text-sm text-muted">
+              <span>{{ ev.claim }}</span>
+              <span class="ml-auto chip {% if ev.is_flag %}!border-loss/40 !text-loss{% endif %}">{{ ev.get_confidence_display }} · {{ ev.source }}</span>
+            </p>
+          {% endfor %}
+        </div>
+      {% empty %}
+        <p class="px-4 py-6 text-center text-sm text-faint">No evidence yet — gathering public data, or none available.</p>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- Notes + status + consent -->
+  <div class="space-y-5">
+    <section class="panel overflow-hidden">
+      <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Recruiter notes</h2></div>
+      <form method="post" action="{% url 'recruitment:update' candidate.pk %}" class="space-y-3 p-4">
+        {% csrf_token %}
+        <select name="status" class="input-field">
+          {% for v, l in statuses %}<option value="{{ v }}" {% if v == candidate.status %}selected{% endif %}>{{ l }}</option>{% endfor %}
+        </select>
+        <textarea name="notes" rows="5" class="input-field text-sm" placeholder="What we discussed…">{{ candidate.notes }}</textarea>
+        <button class="btn-gold w-full">Save</button>
+      </form>
+    </section>
+
+    <section class="panel overflow-hidden">
+      <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">ESI link (optional)</h2></div>
+      <div class="space-y-3 p-4 text-sm">
+        <p class="text-muted">Request the candidate's consent to confirm skills/roles. Scoped, time-boxed, revocable — we store only the derived claims, never their token.</p>
+        <div class="flex flex-wrap gap-1">{% for s in consent_scopes %}<span class="chip text-faint">{{ s }}</span>{% endfor %}</div>
+        {% if not recruitment_enabled %}<p class="text-[11px] text-loss">Live ESI link isn't configured on this deployment — recruitment stays public-evidence-only.</p>{% endif %}
+        <form method="post" action="{% url 'recruitment:request_consent' candidate.pk %}">{% csrf_token %}<button class="btn-ghost w-full">Request ESI link</button></form>
+        {% for c in consents %}
+          <div class="rounded-md border border-line/60 p-2">
+            <p class="text-xs {% if c.granted_at %}text-kill{% elif c.is_active %}text-cyan{% else %}text-faint{% endif %}">Consent {% if c.granted_at %}granted {{ c.granted_at|date:"j M H:i" }}{% elif c.revoked_at %}revoked{% elif c.is_active %}awaiting candidate{% else %}expired{% endif %} · expires {{ c.expires_at|date:"j M H:i" }}</p>
+            {% if c.is_active and not c.granted_at %}
+              <p class="mt-1 text-[11px] text-faint">Single-use link — send it to the candidate:</p>
+              <input type="text" readonly x-data @click="$el.select()" value="{{ request.scheme }}://{{ request.get_host }}{% url 'recruitment:oauth_begin' c.state %}" class="input-field mt-1 w-full text-[11px]">
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

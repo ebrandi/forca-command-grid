@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}Supply Forecast · [FORCA] Command Grid{% endblock %}
+{% block content %}
+
+<header class="mb-5 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow">Corp Store · builders &amp; traders</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">Supply Forecast</h1>
+    <p class="mt-1 max-w-3xl text-sm text-faint">What's worth stocking. Demand comes from the doctrine ships the corp actually loses; profit is the fair store price minus the cheaper of building locally or importing the fit from Jita, including jump-freight to staging.</p>
+  </div>
+  <a href="{% url 'store:board' %}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-cube"/></svg> Build board</a>
+</header>
+
+<form method="get" class="panel mb-4 flex flex-wrap items-end gap-3 px-4 py-3">
+  <label class="block">
+    <span class="eyebrow text-faint">Loss window</span>
+    <select name="window" class="input-field mt-1">
+      <option value="7" {% if window == 7 %}selected{% endif %}>7 days</option>
+      <option value="14" {% if window == 14 %}selected{% endif %}>14 days</option>
+      <option value="30" {% if window == 30 %}selected{% endif %}>30 days</option>
+      <option value="60" {% if window == 60 %}selected{% endif %}>60 days</option>
+      <option value="90" {% if window == 90 %}selected{% endif %}>90 days</option>
+      <option value="180" {% if window == 180 %}selected{% endif %}>180 days</option>
+    </select>
+  </label>
+  <label class="block">
+    <span class="eyebrow text-faint">Staging system{% if not is_officer %} (preview){% endif %}</span>
+    <input name="staging" value="{{ staging_q }}" placeholder="{% if staging_sys %}{{ staging_sys.name }}{% else %}e.g. 1DQ1-A{% endif %}" autocomplete="off" class="input-field mt-1">
+  </label>
+  <button type="submit" class="btn-primary text-sm">Recalculate</button>
+  <div class="ml-auto text-right text-xs text-faint">
+    {% if staging_sys %}<p>Staging: <span class="text-muted">{{ staging_sys.name }}</span> · {{ data.hops }} JF jump{{ data.hops|pluralize }} from Jita</p>{% else %}<p>Set a staging system to include freight cost</p>{% endif %}
+    <p class="mt-0.5">Forecast monthly profit (top picks): <span class="font-semibold text-gold">{{ data.total_profit_month|isk }}</span></p>
+  </div>
+</form>
+
+{% if is_officer and staging_sys %}
+{# Persisting the corp-wide default staging is a state change → an explicit CSRF-protected POST, not a side effect of the GET filter above (which only previews). #}
+<form method="post" action="{% url 'store:supply_forecast' %}" class="mb-4 -mt-2 text-xs">
+  {% csrf_token %}
+  <input type="hidden" name="staging" value="{{ staging_sys.name }}">
+  <input type="hidden" name="window" value="{{ window }}">
+  <button type="submit" class="btn-ghost text-xs text-faint hover:text-muted">Pin <span class="text-muted">{{ staging_sys.name }}</span> as the corp default staging</button>
+</form>
+{% endif %}
+
+{% if rows %}
+<div class="panel overflow-x-auto">
+  <table class="w-full min-w-[920px] text-sm">
+    <thead class="text-left text-xs uppercase tracking-wide text-faint">
+      <tr class="border-b border-line/50">
+        <th class="px-3 py-2">Ship</th>
+        <th class="px-3 py-2 text-right">Lost / {{ window }}d</th>
+        <th class="px-3 py-2 text-right">Next wk</th>
+        <th class="px-3 py-2 text-right">Next mo</th>
+        <th class="px-3 py-2 text-right">Supply cost</th>
+        <th class="px-3 py-2 text-right">Fair sell</th>
+        <th class="px-3 py-2 text-right">Margin</th>
+        <th class="px-3 py-2 text-right">Profit / mo</th>
+        <th class="px-3 py-2"></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-line/30">
+      {% for r in rows %}
+      <tr class="hover:bg-panel2">
+        <td class="px-3 py-2">
+          <div class="flex items-center gap-2">
+            <img src="{% eve_type_icon r.ship_type_id 32 %}" alt="" loading="lazy" class="h-7 w-7 shrink-0 rounded-sm">
+            <div class="min-w-0">
+              <p class="truncate font-medium text-ink">{{ r.ship_name }}
+                {% if r.is_doctrine %}<span class="chip !border-gold/30 !py-0 !text-[10px] !text-gold">doctrine</span>{% endif %}</p>
+              <p class="truncate text-[11px] text-faint">{{ r.hull_class }}{% if r.is_doctrine %} · {{ r.doctrine }}{% else %} · import &amp; sell hull{% endif %}{% if r.trend_pct is not None %} · <span class="{% if r.trend_pct > 0 %}text-win{% elif r.trend_pct < 0 %}text-loss{% else %}text-faint{% endif %}" title="Jita price change, last 30 days">{% if r.trend_pct > 0 %}▲{% elif r.trend_pct < 0 %}▼{% else %}▬{% endif %}{{ r.trend_pct }}%</span>{% endif %}</p>
+            </div>
+          </div>
+        </td>
+        <td class="px-3 py-2 text-right text-muted">{{ r.losses }}<span class="block text-[10px] text-faint">{{ r.per_week }}/wk</span></td>
+        <td class="px-3 py-2 text-right text-ink">{{ r.forecast_week }}</td>
+        <td class="px-3 py-2 text-right text-ink">{{ r.forecast_month }}</td>
+        <td class="px-3 py-2 text-right">
+          <span class="text-muted">{{ r.supply_cost|isk }}</span>
+          <span class="block text-[10px] {% if r.method == 'build' %}text-cyan{% else %}text-faint{% endif %}">{{ r.method }}{% if r.method == 'build' and r.build_source == 'estimate' %}<span title="Local one-level estimate — EVE Ref couldn't price this build">~est</span>{% endif %}{% if r.freight_unit %} · frt {{ r.freight_unit|isk }}{% endif %}</span>
+        </td>
+        <td class="px-3 py-2 text-right text-muted">{{ r.sell_unit|isk }}</td>
+        <td class="px-3 py-2 text-right {% if r.margin_unit > 0 %}text-win{% else %}text-loss{% endif %}">{{ r.margin_unit|isk }}</td>
+        <td class="px-3 py-2 text-right font-semibold {% if r.profit_month > 0 %}text-gold{% else %}text-loss{% endif %}">{{ r.profit_month|isk }}</td>
+        <td class="px-3 py-2 text-right"><a href="{% url 'store:storefront' %}" class="text-xs text-faint hover:text-gold">stock →</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<p class="mt-3 text-[11px] text-faint">Demand = corp ship losses (killboard) over the window, projected to a weekly/monthly rate. Supply cost = cheaper of <span class="text-cyan">build</span> (hull at EVE Ref's full job cost — ME-adjusted materials + install fee — or our local estimate when the API can't price it, marked <span class="text-cyan">~est</span>; modules bought at Jita) or <span class="text-muted">import</span> (full fit at Jita), plus jump-freight to staging priced off the corp rate card. Fair sell = the store's doctrine price (Jita sell × markup). Prices are as fresh as the last market sync; capital freight is approximate.</p>
+{% else %}
+<div class="panel px-4 py-16 text-center">
+  <p class="text-sm text-faint">No doctrine-ship losses in the last {{ window }} days, or no priced doctrine fits yet. Widen the window, or check that doctrines and market prices are loaded.</p>
+</div>
+{% endif %}
+{% endblock %}

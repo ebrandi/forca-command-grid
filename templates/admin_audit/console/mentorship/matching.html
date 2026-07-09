@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% load static eve %}
+{% block title %}Matching · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<a href="{% url 'admin_audit:mentorship_hub' %}" class="text-xs text-faint hover:text-gold">&larr; Mentorship</a>
+<header class="mt-2 mb-6">
+  <p class="eyebrow text-gold">Mentorship</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">Matching</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">Pair each unpaired Cadet with the best-fit Veteran Mentor. Scores blend goals, areas, timezone and load — but you know your pilots, so the call is yours.</p>
+</header>
+
+{% comment %}Top bar auto-suggests for every unpaired cadet. Each row shows the
+cadet then their top mentor suggestions with a Pair form (with an optional
+"pair & activate now"). Existing system-suggested pairings are listed below.{% endcomment %}
+
+<div class="panel mb-6 flex flex-wrap items-center justify-between gap-3 p-4">
+  <div class="flex items-start gap-3">
+    <svg class="h-5 w-5 shrink-0 text-cyan"><use href="#i-target"/></svg>
+    <div>
+      <p class="text-sm font-semibold text-ink">Let the matcher do a first pass</p>
+      <p class="mt-0.5 text-xs text-faint">Generates a suggested pairing for every unpaired cadet. Nothing activates until you or the pilots confirm.</p>
+    </div>
+  </div>
+  <form method="post" action="{% url 'admin_audit:mentorship_auto_suggest' %}">
+    {% csrf_token %}
+    <button class="btn-cyan !px-3 !py-1.5 text-xs">Auto-suggest for all</button>
+  </form>
+</div>
+
+{% if handoff %}
+<!-- Onboarding cadets not yet in mentorship (MEN-2 handoff) -->
+<section class="mb-8">
+  <h2 class="eyebrow mb-2 text-gold">Onboarding cadets not yet in mentorship</h2>
+  <p class="mb-3 max-w-2xl text-xs text-faint">These pilots finished or stalled on the onboarding checklist and aren't a mentee or mentor yet — reach out and enrol them so no cadet is silently left unpaired.</p>
+  <div class="panel overflow-hidden">
+    <div class="divide-y divide-line/40">
+      {% for h in handoff %}
+      <div class="flex flex-wrap items-center gap-3 px-4 py-2.5 text-sm">
+        <svg class="h-4 w-4 shrink-0 text-cyan"><use href="#i-rookie"/></svg>
+        <span class="min-w-0 flex-1 text-ink">{{ h.character.name }}</span>
+        <span class="chip {% if h.state == 'complete' %}text-kill{% else %}text-gold{% endif %}">{{ h.state|title }} onboarding</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- Unpaired cadets with suggestions -->
+<section class="mb-8 space-y-4">
+  {% for row in rows %}
+  <div class="panel p-5">
+    <div class="flex flex-wrap items-start justify-between gap-3 border-b border-line/40 pb-3">
+      <div class="min-w-0">
+        <div class="flex flex-wrap items-center gap-2">
+          <svg class="h-5 w-5 text-gold"><use href="#i-rookie"/></svg>
+          <h3 class="font-display text-base font-semibold text-ink">{{ row.mentee.user.display_name }}</h3>
+          <span class="chip text-cyan">{{ row.mentee.get_experience_display }}</span>
+          {% if row.mentee.timezone %}<span class="chip text-muted">{{ row.mentee.timezone }}</span>{% endif %}
+        </div>
+        {% if row.mentee.goals %}
+        <div class="mt-2 flex flex-wrap gap-1.5">
+          {% for goal in row.mentee.goals %}<span class="chip text-gold">{{ goal }}</span>{% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="mt-3">
+      <h4 class="eyebrow mb-2 text-faint">Suggested mentors</h4>
+      {% if row.suggestions %}
+      <div class="space-y-2.5">
+        {% for s in row.suggestions %}
+        <div class="rounded-lg border border-line/60 bg-panel2/40 p-3">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="text-sm font-medium text-ink">{{ s.mentor.user.display_name }}</span>
+                <span class="chip {% if s.score >= 70 %}text-kill{% elif s.score >= 40 %}text-cyan{% else %}text-muted{% endif %}">Match {{ s.score|floatformat:0 }}</span>
+                {% if s.mentor.timezone %}<span class="chip text-muted">{{ s.mentor.timezone }}</span>{% endif %}
+              </div>
+              {% if s.mentor.areas %}
+              <div class="mt-1.5 flex flex-wrap gap-1.5">
+                {% for area in s.mentor.areas %}<span class="chip text-cyan">{{ area }}</span>{% endfor %}
+              </div>
+              {% endif %}
+              {% if s.reasons %}
+              <ul class="mt-1.5 space-y-0.5 text-[11px] text-faint">
+                {% for reason in s.reasons %}
+                <li class="flex items-start gap-1.5"><span class="mt-0.5 text-faint">&middot;</span><span>{{ reason }}</span></li>
+                {% endfor %}
+              </ul>
+              {% endif %}
+            </div>
+            <form method="post" action="{% url 'admin_audit:mentorship_pair_create' %}" class="flex shrink-0 flex-col items-end gap-2">
+              {% csrf_token %}
+              <input type="hidden" name="mentor_id" value="{{ s.mentor.id }}">
+              <input type="hidden" name="mentee_id" value="{{ row.mentee.id }}">
+              <label class="flex items-center gap-1.5 text-[11px] text-muted">
+                <input type="checkbox" name="activate" value="1"> pair &amp; activate now
+              </label>
+              <button class="btn-gold !px-3 !py-1.5 text-xs">Pair</button>
+            </form>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="rounded-lg border border-line/40 bg-panel2/30 px-3 py-4 text-center text-xs text-faint">No mentor is a clear fit yet. Approve more Veteran Mentors, or pair manually from the roster.</p>
+      {% endif %}
+    </div>
+  </div>
+  {% empty %}
+  <div class="panel p-8 text-center">
+    <svg class="mx-auto h-8 w-8 text-kill"><use href="#i-check"/></svg>
+    <p class="mt-3 text-sm text-faint">Every cadet is paired — the roster is fully crewed. New sign-ups will appear here ready to match.</p>
+  </div>
+  {% endfor %}
+</section>
+
+<!-- Existing system-suggested pairings -->
+<section class="mb-4">
+  <h2 class="eyebrow mb-3 text-gold">System-suggested pairings</h2>
+  <div class="panel overflow-hidden">
+    <div class="divide-y divide-line/40">
+      {% for p in suggested %}
+      <div class="flex flex-wrap items-center gap-3 px-4 py-3">
+        <p class="min-w-0 flex-1 text-sm text-ink">
+          <span class="font-medium">{{ p.mentor.user.display_name }}</span>
+          <span class="text-faint"> mentors </span>
+          <span class="font-medium">{{ p.mentee.user.display_name }}</span>
+        </p>
+        <span class="chip text-cyan">Match {{ p.match_score|floatformat:0 }}</span>
+        <span class="chip text-gold">Awaiting a pilot</span>
+        <form method="post" action="{% url 'admin_audit:mentorship_pair_create' %}" class="shrink-0">
+          {% csrf_token %}
+          <input type="hidden" name="mentor_id" value="{{ p.mentor.id }}">
+          <input type="hidden" name="mentee_id" value="{{ p.mentee.id }}">
+          <input type="hidden" name="activate" value="1">
+          <button class="btn-cyan !px-3 !py-1.5 text-xs">Activate now</button>
+        </form>
+      </div>
+      {% empty %}
+      <p class="px-4 py-6 text-center text-sm text-faint">No system-suggested pairings in flight. Run an auto-suggest above to draft some.</p>
+      {% endfor %}
+    </div>
+  </div>
+  {% if suggested %}
+  <p class="mt-2 text-[11px] text-faint">These were drafted by the matcher and are waiting on either the mentor or the cadet to confirm. Activate one here to skip the wait.</p>
+  {% endif %}
+</section>
+{% endblock %}

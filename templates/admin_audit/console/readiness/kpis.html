@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Readiness · KPIs · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
+<header class="mt-2 mb-6">
+  <p class="eyebrow">Readiness configuration</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">KPIs</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">Tune the individual KPIs inside each dimension. A <span class="text-ink">disabled</span> KPI is dropped from its dimension's score; a non-default <span class="text-ink">weight</span> makes the dimension a weighted mean of its KPIs; <span class="text-ink">amber/red</span> override the KPI's status bands on its drill-down. Defaults — all enabled, weight 1.0, leave bands blank — reproduce the engine exactly, so the index only moves once you change something.</p>
+</header>
+
+
+<form method="post" action="{% url 'admin_audit:readiness_kpis' %}">
+  {% csrf_token %}
+  {% for g in groups %}
+  <section class="panel mb-5 overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{{ g.label }}</h2></div>
+    <div class="hidden border-b border-line px-4 py-2 text-[11px] uppercase tracking-wide text-faint sm:grid sm:grid-cols-[1fr_4rem_5rem_5rem_5rem] sm:gap-3">
+      <span>KPI</span><span class="text-center">On</span><span class="text-right">Weight</span><span class="text-right">Amber</span><span class="text-right">Red</span>
+    </div>
+    <div class="divide-y divide-line/40">
+      {% for r in g.rows %}
+      <div class="grid grid-cols-2 items-center gap-3 px-4 py-3 hover:bg-panel2/40 sm:grid-cols-[1fr_4rem_5rem_5rem_5rem]">
+        <div class="col-span-2 sm:col-span-1"><span class="block font-mono text-sm text-ink">{{ r.key }}</span><span class="block text-[11px] text-faint">{{ r.label }}</span></div>
+        <label class="flex items-center justify-center"><span class="mr-2 text-xs text-faint sm:hidden">Enabled</span><input type="checkbox" name="kpi_{{ r.key }}_enabled" {% if r.enabled %}checked{% endif %}></label>
+        <label class="flex items-center gap-2 sm:block"><span class="text-xs text-faint sm:hidden">Weight</span><input type="number" step="0.1" min="0" name="kpi_{{ r.key }}_weight" value="{{ r.weight }}" class="input-field w-full text-right" inputmode="decimal"></label>
+        <label class="flex items-center gap-2 sm:block"><span class="text-xs text-faint sm:hidden">Amber</span><input type="number" min="0" max="100" name="kpi_{{ r.key }}_amber" value="{{ r.amber }}" placeholder="—" class="input-field w-full text-right" inputmode="numeric"></label>
+        <label class="flex items-center gap-2 sm:block"><span class="text-xs text-faint sm:hidden">Red</span><input type="number" min="0" max="100" name="kpi_{{ r.key }}_red" value="{{ r.red }}" placeholder="—" class="input-field w-full text-right" inputmode="numeric"></label>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% empty %}
+  <p class="panel px-4 py-10 text-center text-sm text-faint">No configurable KPIs yet — enable a KPI-bearing dimension on the <a href="{% url 'admin_audit:readiness_dimensions' %}" class="text-cyan hover:underline">Dimensions page</a> first.</p>
+  {% endfor %}
+
+  {% if groups %}
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <p class="text-[11px] text-faint">config v{{ meta.version }}{% if meta.by %} · last changed by {{ meta.by }}{% endif %}{% if meta.at %} · {{ meta.at|date:"j M Y H:i" }}{% endif %}</p>
+    <button class="btn-gold">Save changes</button>
+  </div>
+  {% endif %}
+</form>
+
+{% if groups %}
+<form method="post" action="{% url 'admin_audit:readiness_reset' 'kpis' %}" class="mt-3">
+  {% csrf_token %}
+  <button class="btn-ghost text-sm">Reset to defaults</button>
+  <span class="ml-2 text-[11px] text-faint">Clears every KPI override (all enabled, weight 1.0, provider bands).</span>
+</form>
+{% endif %}
+{% endblock %}

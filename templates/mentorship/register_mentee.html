@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% load static eve %}
+{% block title %}Register as a Cadet · [FORCA] Command Grid{% endblock %}
+{% block content %}
+
+<header class="mb-6">
+  <p class="eyebrow text-gold">Mentorship</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">Register as a Cadet</h1>
+  <p class="mt-1 text-sm text-faint">Get paired with a Veteran Mentor who'll fast-track your first weeks in nullsec — fits, fleets, and staying alive.</p>
+</header>
+
+{% comment %}
+Eligibility banner — Cadet framing: cadets are pilots newer than the tenure
+cap. Green when the pilot qualifies, amber when not (leadership can still
+approve case-by-case). Age/tenure humanised; confidence note reflects ESI.
+{% endcomment %}
+<section class="panel mb-6 p-5 {% if eligibility.eligible %}border-kill/50{% else %}border-gold/50{% endif %}">
+  <div class="flex flex-wrap items-center gap-3">
+    {% if eligibility.eligible %}
+      <span class="chip text-kill">Eligible</span>
+      <p class="text-sm text-muted">You're within the Cadet window — cadets are pilots newer than the tenure cap. Tell us your goals below and we'll find you a mentor.</p>
+    {% else %}
+      <span class="chip text-gold">Not yet eligible</span>
+      <p class="text-sm text-muted">You're past the usual Cadet window — cadets are pilots newer than the tenure cap — but leadership pairs Cadets case-by-case, so you can still apply.</p>
+    {% endif %}
+  </div>
+
+  <div class="mt-4 grid gap-4 sm:grid-cols-2">
+    <div>
+      <p class="eyebrow">Character age</p>
+      <p class="data mt-0.5 text-lg text-ink">
+        {% if eligibility.character_age_days is None %}unknown{% elif eligibility.character_age_days >= 365 %}{% widthratio eligibility.character_age_days 365 1 as age_years %}~{{ age_years }}y <span class="text-sm text-faint">({{ eligibility.character_age_days }}d)</span>{% else %}{{ eligibility.character_age_days }}d{% endif %}
+      </p>
+    </div>
+    <div>
+      <p class="eyebrow">Corp tenure</p>
+      <p class="data mt-0.5 text-lg text-ink">
+        {% if eligibility.corp_tenure_days is None %}unknown{% else %}{{ eligibility.corp_tenure_days }}d{% endif %}
+      </p>
+    </div>
+  </div>
+
+  <p class="mt-3 text-xs {% if eligibility.source == 'esi' %}text-faint{% else %}text-gold{% endif %}">
+    {% if eligibility.source == 'esi' %}Based on ESI.{% elif eligibility.confidence == 'low' %}Estimated — ESI unavailable.{% else %}Based on your character record.{% endif %}
+  </p>
+
+  {% if eligibility.reasons %}
+  <ul class="mt-3 space-y-1 text-sm text-faint">
+    {% for reason in eligibility.reasons %}
+    <li class="flex gap-2"><span class="{% if eligibility.eligible %}text-kill{% else %}text-gold{% endif %}">•</span><span>{{ reason }}</span></li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  <p class="mt-3 text-[11px] text-faint">Leadership may pair Cadets case-by-case regardless of the numbers above.</p>
+</section>
+
+{% if not program.enabled %}
+  <section class="panel p-6 text-center">
+    <div class="mx-auto grid h-11 w-11 place-items-center rounded-md bg-panel2 text-gold"><svg class="h-5 w-5"><use href="#i-lock"/></svg></div>
+    <h2 class="mt-3 font-display text-lg font-semibold text-ink">Cadet sign-ups are paused</h2>
+    <p class="mx-auto mt-1 max-w-md text-sm text-faint">Leadership isn't taking new Cadet registrations right now. Check back soon — or ask in corp chat and a veteran will look after you in the meantime.</p>
+  </section>
+{% else %}
+
+  {% if existing %}
+  <div class="panel mb-4 flex flex-wrap items-center gap-3 p-4">
+    <span class="grid h-9 w-9 place-items-center rounded-md bg-panel2 text-cyan"><svg class="h-5 w-5"><use href="#i-rookie"/></svg></span>
+    <div class="min-w-0 flex-1">
+      <p class="text-sm text-ink">You're already registered as a Cadet.</p>
+      <p class="text-xs text-faint">Update your profile below whenever your goals or availability change.</p>
+    </div>
+    <span class="chip text-cyan">{{ existing.get_status_display }}</span>
+  </div>
+  {% endif %}
+
+  <form method="post" class="space-y-5">
+    {% csrf_token %}
+
+    <section class="panel p-5">
+      <h2 class="eyebrow mb-3 text-gold">What you want out of this</h2>
+      <div>
+        <label class="label">{{ form.goals.label }}</label>
+        {{ form.goals }}
+        {% if form.goals.help_text %}<p class="mt-1 text-[11px] text-faint">{{ form.goals.help_text }}</p>{% endif %}
+        {% if form.goals.errors %}<p class="mt-1 text-xs text-loss">{{ form.goals.errors|join:" " }}</p>{% endif %}
+      </div>
+      <div class="mt-4">
+        <label class="label">{{ form.interests.label }}</label>
+        {{ form.interests }}
+        {% if form.interests.help_text %}<p class="mt-1 text-[11px] text-faint">{{ form.interests.help_text }}</p>{% endif %}
+        {% if form.interests.errors %}<p class="mt-1 text-xs text-loss">{{ form.interests.errors|join:" " }}</p>{% endif %}
+      </div>
+    </section>
+
+    <section class="panel p-5">
+      <h2 class="eyebrow mb-3 text-gold">Where you're at</h2>
+      <div class="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label class="label">{{ form.experience.label }}</label>
+          {{ form.experience }}
+          {% if form.experience.help_text %}<p class="mt-1 text-[11px] text-faint">{{ form.experience.help_text }}</p>{% endif %}
+          {% if form.experience.errors %}<p class="mt-1 text-xs text-loss">{{ form.experience.errors|join:" " }}</p>{% endif %}
+        </div>
+        <div>
+          <label class="label">{{ form.ships_can_fly.label }}</label>
+          {{ form.ships_can_fly }}
+          {% if form.ships_can_fly.help_text %}<p class="mt-1 text-[11px] text-faint">{{ form.ships_can_fly.help_text }}</p>{% endif %}
+          {% if form.ships_can_fly.errors %}<p class="mt-1 text-xs text-loss">{{ form.ships_can_fly.errors|join:" " }}</p>{% endif %}
+        </div>
+      </div>
+    </section>
+
+    <section class="panel p-5">
+      <h2 class="eyebrow mb-3 text-gold">When &amp; how you fly</h2>
+      <div class="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label class="label">{{ form.timezone.label }}</label>
+          {{ form.timezone }}
+          {% if form.timezone.help_text %}<p class="mt-1 text-[11px] text-faint">{{ form.timezone.help_text }}</p>{% endif %}
+          {% if form.timezone.errors %}<p class="mt-1 text-xs text-loss">{{ form.timezone.errors|join:" " }}</p>{% endif %}
+        </div>
+        <div>
+          <label class="label">{{ form.play_windows.label }}</label>
+          {{ form.play_windows }}
+          {% if form.play_windows.help_text %}<p class="mt-1 text-[11px] text-faint">{{ form.play_windows.help_text }}</p>{% endif %}
+          {% if form.play_windows.errors %}<p class="mt-1 text-xs text-loss">{{ form.play_windows.errors|join:" " }}</p>{% endif %}
+        </div>
+        <div class="sm:col-span-2">
+          <label class="label">{{ form.languages.label }}</label>
+          {{ form.languages }}
+          {% if form.languages.help_text %}<p class="mt-1 text-[11px] text-faint">{{ form.languages.help_text }}</p>{% endif %}
+          {% if form.languages.errors %}<p class="mt-1 text-xs text-loss">{{ form.languages.errors|join:" " }}</p>{% endif %}
+        </div>
+      </div>
+    </section>
+
+    <section class="panel p-5">
+      <h2 class="eyebrow mb-3 text-gold">What you need a hand with</h2>
+      <div class="space-y-2 text-sm text-muted">
+        <label class="flex items-center gap-2">{{ form.needs_skill_help }} {{ form.needs_skill_help.label }}</label>
+        <label class="flex items-center gap-2">{{ form.needs_fitting_help }} {{ form.needs_fitting_help.label }}</label>
+        <label class="flex items-center gap-2">{{ form.voice_comfortable }} {{ form.voice_comfortable.label }}</label>
+      </div>
+      {% if form.needs_skill_help.errors %}<p class="mt-1 text-xs text-loss">{{ form.needs_skill_help.errors|join:" " }}</p>{% endif %}
+      {% if form.needs_fitting_help.errors %}<p class="mt-1 text-xs text-loss">{{ form.needs_fitting_help.errors|join:" " }}</p>{% endif %}
+      {% if form.voice_comfortable.errors %}<p class="mt-1 text-xs text-loss">{{ form.voice_comfortable.errors|join:" " }}</p>{% endif %}
+    </section>
+
+    <section class="panel p-5">
+      <h2 class="eyebrow mb-3 text-gold">Anything else</h2>
+      <div>
+        <label class="label">{{ form.notes.label }}</label>
+        {{ form.notes }}
+        {% if form.notes.help_text %}<p class="mt-1 text-[11px] text-faint">{{ form.notes.help_text }}</p>{% endif %}
+        {% if form.notes.errors %}<p class="mt-1 text-xs text-loss">{{ form.notes.errors|join:" " }}</p>{% endif %}
+      </div>
+    </section>
+
+    {% if form.non_field_errors %}<p class="text-xs text-loss">{{ form.non_field_errors|join:" " }}</p>{% endif %}
+
+    <div class="flex justify-end">
+      <button class="btn-gold">{% if existing %}Update registration{% else %}Submit registration{% endif %}</button>
+    </div>
+  </form>
+{% endif %}
+{% endblock %}

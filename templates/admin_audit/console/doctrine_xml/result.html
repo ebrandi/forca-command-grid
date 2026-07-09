@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}XML import complete · Admin{% endblock %}
+{% block content %}
+<a href="{% url 'admin_audit:doctrines' %}" class="text-xs text-faint hover:text-gold">← Manage doctrines</a>
+<header class="mt-3 mb-6">
+  <p class="eyebrow">Operations</p>
+  <h1 class="mt-1 text-2xl font-bold text-ink">Import complete</h1>
+  <p class="mt-1 text-sm text-faint">From <span class="text-ink">{{ batch.source_filename }}</span>{% if batch.committed_at %} · {{ batch.committed_at|date:"Y-m-d H:i" }}{% endif %}.</p>
+</header>
+
+<div class="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+  <div class="panel px-3 py-3"><p class="text-2xl font-bold text-cyan">{{ result.created|default:"0" }}</p><p class="eyebrow text-faint">New imported</p></div>
+  <div class="panel px-3 py-3"><p class="text-2xl font-bold text-cyan">{{ result.renamed|default:"0" }}</p><p class="eyebrow text-faint">Renamed &amp; imported</p></div>
+  <div class="panel px-3 py-3"><p class="text-2xl font-bold text-loss">{{ result.replaced|default:"0" }}</p><p class="eyebrow text-faint">Replaced</p></div>
+  <div class="panel px-3 py-3"><p class="text-2xl font-bold text-faint">{{ result.identical|default:"0" }}</p><p class="eyebrow text-faint">Identical skipped</p></div>
+  <div class="panel px-3 py-3"><p class="text-2xl font-bold text-faint">{{ result.skipped|default:"0" }}</p><p class="eyebrow text-faint">Skipped</p></div>
+  <div class="panel px-3 py-3"><p class="text-2xl font-bold text-faint">{{ result.rejected|default:"0" }}</p><p class="eyebrow text-faint">Invalid rejected</p></div>
+</div>
+
+{% if result.notes %}
+<section class="panel mb-4 border-l-2 border-gold p-4">
+  <h2 class="eyebrow mb-2 text-gold">Warnings</h2>
+  <ul class="list-disc space-y-1 pl-4 text-sm text-faint">{% for n in result.notes %}<li>{{ n }}</li>{% endfor %}</ul>
+</section>
+{% endif %}
+
+<div class="grid gap-4 lg:grid-cols-3">
+  {% if result.created_names %}
+  <section class="panel p-4"><h2 class="eyebrow mb-2 text-cyan">New ({{ result.created_names|length }})</h2><ul class="space-y-1 text-sm text-faint">{% for n in result.created_names %}<li class="text-ink">{{ n }}</li>{% endfor %}</ul></section>
+  {% endif %}
+  {% if result.renamed_names %}
+  <section class="panel p-4"><h2 class="eyebrow mb-2 text-cyan">Renamed ({{ result.renamed_names|length }})</h2><ul class="space-y-1 text-sm text-faint">{% for n in result.renamed_names %}<li class="text-ink">{{ n }}</li>{% endfor %}</ul></section>
+  {% endif %}
+  {% if result.replaced_names %}
+  <section class="panel p-4"><h2 class="eyebrow mb-2 text-loss">Replaced ({{ result.replaced_names|length }})</h2><ul class="space-y-1 text-sm text-faint">{% for n in result.replaced_names %}<li class="text-ink">{{ n }}</li>{% endfor %}</ul></section>
+  {% endif %}
+</div>
+
+<div class="mt-6 flex flex-wrap gap-3">
+  <a href="{% url 'admin_audit:doctrines' %}" class="btn-gold">Back to doctrines</a>
+  <a href="{% url 'admin_audit:doctrine_xml_import' %}" class="btn-ghost">Import another file</a>
+</div>
+{% endblock %}

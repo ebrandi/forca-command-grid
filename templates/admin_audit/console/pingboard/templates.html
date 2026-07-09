@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Pingboard templates · Admin{% endblock %}
+{% block content %}
+<a href="{% url 'admin_audit:pingboard_settings' %}" class="text-sm text-faint hover:text-gold">← Pingboard settings</a>
+<header class="mb-6 mt-2"><p class="eyebrow text-gold">Pingboard</p>
+  <h1 class="text-3xl font-bold text-ink">Message templates</h1>
+  <p class="text-sm text-faint">Templates use <code class="text-gold">{% templatetag openvariable %} variable {% templatetag closevariable %}</code> placeholders (declared variables only; no object traversal).</p></header>
+
+<div class="panel overflow-x-auto mb-6">
+  <table class="w-full text-sm">
+    <thead><tr class="text-[11px] uppercase text-faint">
+      <th class="px-4 py-2 text-left">Template</th><th class="px-4 py-2 text-left">Category</th>
+      <th class="px-4 py-2 text-left">Priority</th><th class="px-4 py-2 text-left">State</th>
+      <th class="px-4 py-2 text-right">Actions</th></tr></thead>
+    <tbody class="divide-y divide-line/50">
+      {% for t in templates %}
+      <tr class="hover:bg-panel2/40">
+        <td class="px-4 py-2 text-ink">{{ t.label }} <span class="text-[11px] text-faint">{{ t.key }}</span></td>
+        <td class="px-4 py-2 text-faint">{{ t.get_category_display|default:"any" }}</td>
+        <td class="px-4 py-2 text-faint">{{ t.get_default_priority_display }}</td>
+        <td class="px-4 py-2">{% if t.enabled %}<span class="chip border-kill text-kill">on</span>{% else %}<span class="chip border-line text-faint">off</span>{% endif %}</td>
+        <td class="px-4 py-2"><div class="flex justify-end gap-1">
+          <form method="post">{% csrf_token %}<input type="hidden" name="action" value="toggle"><input type="hidden" name="template_id" value="{{ t.id }}"><button class="btn-ghost">{% if t.enabled %}Disable{% else %}Enable{% endif %}</button></form>
+          <form method="post" data-confirm="Delete this template?">{% csrf_token %}<input type="hidden" name="action" value="delete"><input type="hidden" name="template_id" value="{{ t.id }}"><button class="btn-danger">Delete</button></form>
+        </div></td>
+      </tr>
+      {% empty %}<tr><td colspan="5" class="px-4 py-6 text-center text-faint">No templates yet.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<section class="panel p-5">
+  <h2 class="eyebrow text-gold mb-3">New template</h2>
+  <form method="post" class="grid gap-3 sm:grid-cols-2">
+    {% csrf_token %}<input type="hidden" name="action" value="create">
+    <label class="label">Key<input name="key" class="input-field mt-1" required placeholder="op-formup"></label>
+    <label class="label">Label<input name="label" class="input-field mt-1" required></label>
+    <label class="label">Category<select name="category" class="input-field mt-1"><option value="">Any</option>{% for v, l in categories %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></label>
+    <label class="label">Default priority<select name="default_priority" class="input-field mt-1">{% for v, l in priorities %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></label>
+    <label class="label sm:col-span-2">Subject (EVE mail)<input name="subject" class="input-field mt-1"></label>
+    <label class="label sm:col-span-2">Body<textarea name="body" rows="3" class="input-field mt-1" placeholder="Form up for {% templatetag openvariable %} operation_name {% templatetag closevariable %} at {% templatetag openvariable %} formup_system {% templatetag closevariable %}."></textarea></label>
+    <div class="sm:col-span-2"><button class="btn-gold">Create template</button></div>
+  </form>
+</section>
+{% endblock %}

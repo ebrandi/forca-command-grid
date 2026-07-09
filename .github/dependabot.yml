@@ -1,0 +1,42 @@
+# Automated dependency updates.
+#
+# The security workflow tells you a dependency is vulnerable; Dependabot opens the
+# PR that fixes it. Both matter: pip-audit only fails CI when requirements.txt
+# already names a vulnerable range, and requirements.txt uses lower bounds, so a
+# newly-disclosed CVE in an installed package needs a floor bump to be enforced.
+#
+# `github-actions` is included because this repo pins actions to commit SHAs — a
+# pinned SHA never picks up an upstream security fix on its own.
+
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+    open-pull-requests-limit: 5
+    labels: ["dependencies"]
+    commit-message:
+      prefix: "deps"
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+    labels: ["dependencies", "ci"]
+    commit-message:
+      prefix: "ci"
+
+  - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+    labels: ["dependencies", "docker"]
+    commit-message:
+      prefix: "docker"

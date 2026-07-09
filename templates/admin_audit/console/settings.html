@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Settings & maintenance · Admin{% endblock %}
+{% block content %}
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
+<header class="mt-3 mb-6">
+  <p class="eyebrow">Operations</p>
+  <h1 class="mt-1 text-2xl font-bold text-ink">Settings &amp; maintenance</h1>
+</header>
+
+<div class="grid gap-5 lg:grid-cols-2">
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">Corp configuration</h2>
+    <dl class="space-y-2 text-sm">
+      <div class="flex justify-between"><dt class="text-faint">Home corporation ID</dt><dd class="data text-ink">{{ home_corp_id }}</dd></div>
+      <div class="flex justify-between"><dt class="text-faint">Market locations</dt><dd class="data text-ink">{{ locations|length }}</dd></div>
+    </dl>
+    <div class="mt-3 space-y-1.5">
+      {% for loc in locations %}
+        <div class="flex items-center justify-between text-xs">
+          <span class="text-muted">{{ loc.name }}</span>
+          <span class="flex gap-1">{% if loc.is_price_reference %}<span class="chip">price ref</span>{% endif %}{% if loc.is_staging %}<span class="chip">staging</span>{% endif %}</span>
+        </div>
+      {% endfor %}
+    </div>
+    <p class="mt-3 text-xs text-faint">Add market locations from the <a href="{% url 'market:dashboard' %}" class="text-gold hover:underline">Market</a> page. Home corp ID is set in the deployment environment.</p>
+  </section>
+
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">Run a job now</h2>
+    <p class="mb-3 text-xs text-faint">These run on their own schedule; trigger one manually after a change. Results appear under <a href="{% url 'admin_audit:health' %}" class="text-gold hover:underline">Integrations</a>.</p>
+    <div class="grid gap-2 sm:grid-cols-2">
+      {% for action, label in tasks %}
+        <form method="post" action="{% url 'admin_audit:run_maintenance' action %}">
+          {% csrf_token %}
+          <button class="btn-ghost w-full justify-center">{{ label }}</button>
+        </form>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}

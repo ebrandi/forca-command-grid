@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}SRP queue · [FORCA] Command Grid{% endblock %}
+{% block content %}
+{% if features.recommendations %}<a href="{% url 'recommendations:officer' %}" class="text-xs text-faint hover:text-gold">← Command</a>{% endif %}
+<header class="mt-2 mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-gold">Leadership</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">SRP queue</h1>
+    <p class="mt-1 text-sm text-faint">Review replacement claims. No ISK is moved by the app — settling a claim is recorded only.</p>
+  </div>
+  <div class="flex items-center gap-3">
+    <div class="panel px-4 py-2 text-right">
+      <p class="eyebrow">Open exposure</p>
+      <p class="font-display text-xl font-bold text-loss">{{ exposure|isk }}</p>
+    </div>
+    <a href="{% url 'srp:settings' %}" class="btn-ghost text-sm">Settings</a>
+  </div>
+</header>
+
+<!-- Current policy reminder -->
+<div class="panel mb-4 flex flex-wrap items-center gap-2 px-4 py-2 text-xs">
+  {% if not program.enabled %}<span class="chip !border-loss/40 !text-loss">Programme paused</span>{% endif %}
+  <span class="text-faint">Mode:</span> <span class="text-muted">{{ program.get_payout_mode_display }}</span>
+  <span class="text-faint">·</span> <span class="text-faint">Valuation:</span> <span class="text-muted">{{ program.get_valuation_display }}</span>
+  {% if program.payout_mode == 'isk_topup' %}<span class="text-faint">· assumes {{ program.insurance_fraction }}× hull insurance</span>{% endif %}
+</div>
+
+
+<!-- Pending review -->
+<section class="panel overflow-hidden">
+  <div class="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3">
+    <h2 class="eyebrow text-gold">Pending review{% if pending_count %} · {{ pending_count }}{% endif %}</h2>
+    {% if pending_count %}
+    <form method="post" action="{% url 'srp:batch_approve' %}" data-confirm="Approve all {{ pending_count }} pending claim(s) you're eligible to review? Any claims you filed yourself are skipped for another officer.">{% csrf_token %}
+      <button class="btn-cyan !py-1 !text-xs">Approve all eligible</button>
+    </form>
+    {% endif %}
+  </div>
+  <div class="divide-y divide-line/40">
+    {% for c in pending %}
+      <div class="px-4 py-3">
+        <div class="flex items-center gap-3">
+          <img src="{% eve_type_icon c.killmail.victim_ship_type_id 32 %}" alt="" loading="lazy" class="h-8 w-8 rounded-sm">
+          <div class="min-w-0 flex-1">
+            <a href="{% url 'killboard:detail' c.killmail.killmail_id %}" class="text-sm text-ink hover:text-gold">{% type_name c.killmail.victim_ship_type_id %}</a>
+            <p class="text-xs text-faint">{{ c.claimant.display_name }} · {{ c.killmail.killmail_time|timesince }} ago{% if c.auto_drafted %} · <span class="chip align-middle text-[10px] !text-cyan" title="Auto-drafted from an attended-op loss — still needs your approval">auto-drafted</span>{% endif %}</p>
+          </div>
+          <div class="text-right">
+            {% if c.is_replacement %}
+              <p class="data text-sm text-cyan">Replacement</p>
+              <p class="text-[11px] text-faint">≈ {{ c.loss_value|isk }}</p>
+            {% else %}
+              <p class="data text-sm text-cyan">{{ c.payout|isk }}</p>
+              <p class="text-[11px] text-faint">loss {{ c.loss_value|isk }}{% if c.insurance_estimate %} − ins {{ c.insurance_estimate|isk }}{% endif %}</p>
+            {% endif %}
+          </div>
+        </div>
+        <form method="post" action="{% url 'srp:decide' c.pk %}" class="mt-2 flex flex-wrap items-center gap-2">
+          {% csrf_token %}
+          {% if not c.is_replacement %}
+            <label class="text-[11px] text-faint">Adjust ISK
+              <input name="approved_payout" type="number" min="0" step="1" placeholder="{{ c.computed_payout|floatformat:0 }}" class="input-field !py-1 !text-xs !w-32 ml-1">
+            </label>
+          {% endif %}
+          <input name="reason" placeholder="Reason (optional)" class="input-field !py-1 !text-xs flex-1 min-w-[10rem]">
+          <button name="decision" value="approve" class="btn-cyan !py-1 !text-xs">Approve</button>
+          <button name="decision" value="deny" class="btn-ghost !py-1 !text-xs !text-loss hover:!border-loss/40">Deny</button>
+        </form>
+      </div>
+    {% empty %}
+      <p class="px-4 py-6 text-center text-sm text-faint">Nothing waiting for review.</p>
+    {% endfor %}
+  </div>
+  {% if pending.paginator.num_pages > 1 %}
+  <div class="flex items-center justify-center gap-3 border-t border-line px-4 py-2 text-xs text-faint">
+    {% if pending.has_previous %}<a href="?ppage={{ pending.previous_page_number }}" class="hover:text-gold">← Prev</a>{% endif %}
+    <span>Page {{ pending.number }} of {{ pending.paginator.num_pages }}</span>
+    {% if pending.has_next %}<a href="?ppage={{ pending.next_page_number }}" class="hover:text-gold">Next →</a>{% endif %}
+  </div>
+  {% endif %}
+</section>
+
+<!-- Approved, awaiting settlement -->
+{% if approved_count %}
+<section class="panel mt-5 overflow-hidden">
+  <div class="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3">
+    <h2 class="eyebrow">Approved · awaiting {% if program.payout_mode == 'replacement' %}delivery{% else %}payout{% endif %} · {{ approved_count }}</h2>
+    <form method="post" action="{% url 'srp:batch_pay' %}" class="flex items-center gap-2" data-confirm="Settle all {{ approved_count }} approved claim(s) against this reference? Any you filed yourself are skipped.">{% csrf_token %}
+      <input name="payment_reference" placeholder="one settlement reference" class="input-field !py-1 !text-xs w-44">
+      <button class="btn-ghost !py-1 !text-xs">Mark all {% if program.payout_mode == 'replacement' %}delivered{% else %}paid{% endif %}</button>
+    </form>
+  </div>
+  <div class="divide-y divide-line/40">
+    {% for c in approved %}
+      <form method="post" action="{% url 'srp:pay' c.pk %}" class="flex flex-wrap items-center gap-2 px-4 py-2.5 text-sm">
+        {% csrf_token %}
+        <img src="{% eve_type_icon c.killmail.victim_ship_type_id 32 %}" alt="" loading="lazy" class="h-7 w-7 rounded-sm">
+        <span class="min-w-0 flex-1 truncate text-ink">{{ c.claimant.display_name }} · {% type_name c.killmail.victim_ship_type_id %}</span>
+        <span class="data text-xs text-cyan">{% if c.is_replacement %}ship{% else %}{{ c.payout|isk }}{% endif %}</span>
+        <input name="payment_reference" placeholder="{% if program.payout_mode == 'replacement' %}hull delivered / note{% else %}wallet note{% endif %}" class="input-field !py-1 !text-xs w-44">
+        <button class="btn-ghost !py-1 !text-xs">Mark {% if program.payout_mode == 'replacement' %}delivered{% else %}paid{% endif %}</button>
+      </form>
+    {% endfor %}
+  </div>
+  {% if approved.paginator.num_pages > 1 %}
+  <div class="flex items-center justify-center gap-3 border-t border-line px-4 py-2 text-xs text-faint">
+    {% if approved.has_previous %}<a href="?apage={{ approved.previous_page_number }}" class="hover:text-gold">← Prev</a>{% endif %}
+    <span>Page {{ approved.number }} of {{ approved.paginator.num_pages }}</span>
+    {% if approved.has_next %}<a href="?apage={{ approved.next_page_number }}" class="hover:text-gold">Next →</a>{% endif %}
+  </div>
+  {% endif %}
+</section>
+{% endif %}
+
+<!-- History -->
+{% if recent %}
+<section class="panel mt-5 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Recent decisions</h2></div>
+  <div class="divide-y divide-line/40">
+    {% for c in recent %}
+      <div class="flex items-center gap-3 px-4 py-2.5 text-sm">
+        <span class="min-w-0 flex-1 truncate text-muted">{{ c.claimant.display_name }} · {% type_name c.killmail.victim_ship_type_id %}</span>
+        <span class="data text-xs text-faint">{% if c.is_replacement and c.status == 'paid' %}ship{% else %}{{ c.payout|isk }}{% endif %}</span>
+        <span class="chip {% if c.status == 'paid' %}!border-kill/40 !text-kill{% else %}!text-faint{% endif %}">{{ c.get_status_display }}</span>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}

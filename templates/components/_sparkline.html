@@ -1,0 +1,40 @@
+{% comment %}
+Reusable sparkline (D9). One primitive, two idioms.
+
+  values    list of raw numbers (required). Normalised internally — callers pass
+            raw counts/scores, never pre-scaled SVG coordinates.
+  mode      "line" (default) or "bars".
+
+  line mode — interactive SVG line + area fill + hover tooltip (Alpine). CSP-clean.
+    stroke    line colour (default "#3fb950").
+    fill      translucent area fill (default "rgba(63,185,80,0.12)").
+    unit      tooltip suffix, e.g. "kills" (optional).
+    svg_cls   sizing classes on the svg (default "h-8 w-32").
+
+  bars mode — compact state glyph; a bar per value. No JS.
+    threshold colour each bar by its 75/50 band (kill/gold/loss). Assumes 0-100.
+    bar_color bar colour class when threshold is off (default "bg-gold/50").
+    bar_w     bar width class (default "w-0.5").
+    bar_h     px height of a full-height (100) bar (default 16).
+    gap       gap class between bars (default "gap-px").
+    wrap_cls  extra classes on the wrapper (e.g. "h-4").
+{% endcomment %}
+{% if mode == "bars" %}
+<span class="flex items-end {{ gap|default:'gap-px' }} {{ wrap_cls }}">
+  {% for v in values %}<span class="{{ bar_w|default:'w-0.5' }} rounded-sm {% if threshold %}{% if v >= 75 %}bg-kill/60{% elif v >= 50 %}bg-gold/60{% else %}bg-loss/60{% endif %}{% else %}{{ bar_color|default:'bg-gold/50' }}{% endif %}" style="height:{% widthratio v 100 bar_h|default:16 %}px"></span>{% endfor %}
+</span>
+{% else %}
+<div class="relative inline-block" x-data="sparkline([{{ values|join:',' }}], {unit:'{{ unit|escapejs }}'})">
+  <svg viewBox="0 0 120 28" preserveAspectRatio="none" class="{{ svg_cls|default:'h-8 w-32' }} overflow-visible">
+    <path :d="areaPath" fill="{{ fill|default:'rgba(63,185,80,0.12)' }}" stroke="none"/>
+    <polyline :points="linePoints" fill="none" stroke="{{ stroke|default:'#3fb950' }}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  </svg>
+  <div class="absolute inset-0 cursor-crosshair" @mousemove="track($event)" @mouseleave="leave()"></div>
+  <template x-if="hoverPt">
+    <span class="pointer-events-none absolute -ml-[3px] -mt-[3px] h-1.5 w-1.5 rounded-full ring-1 ring-line" :style="`left:${hoverPt.x / w * 100}%;top:${hoverPt.y / h * 100}%;background:{{ stroke|default:'#3fb950' }}`"></span>
+  </template>
+  <template x-if="hover >= 0">
+    <span class="pointer-events-none absolute -top-5 -translate-x-1/2 whitespace-nowrap rounded bg-panel2 px-1.5 py-0.5 text-[10px] font-medium text-ink shadow-lg ring-1 ring-line" :style="`left:${hoverPt.x / w * 100}%`" x-text="hoverLabel"></span>
+  </template>
+</div>
+{% endif %}

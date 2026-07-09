@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% load eve static %}
+{% block title %}Doctrines · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<script defer src="{% static 'js/vendor/chart.umd.js' %}"></script>
+
+<header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow">Sanctioned fits</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">Doctrines</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">What the corp flies, and where to point your training to fly more of it.</p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    {% if characters|length > 1 %}
+    <form method="get" class="contents">
+      {% for k, v in request.GET.items %}{% if k != 'character_id' %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endif %}{% endfor %}
+      <select name="character_id" class="input-field" data-autosubmit aria-label="Pilot">
+        {% for c in characters %}<option value="{{ c.character_id }}" {% if character and c.character_id == character.character_id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+      </select>
+    </form>
+    {% endif %}
+    <a href="{% url 'doctrines:ships' %}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-ship"/></svg> Shipyard</a>
+    {% if is_member %}<a href="{% url 'doctrines:my_readiness' %}" class="btn-gold text-sm"><svg class="h-4 w-4"><use href="#i-bolt"/></svg> Best next to unlock</a>{% endif %}
+  </div>
+</header>
+
+{# ---- Headline numbers ---- #}
+<div class="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+  <div class="panel px-4 py-3">
+    <p class="text-2xl font-bold text-ink">{{ headline.doctrines }}</p>
+    <p class="eyebrow text-faint">Doctrines</p>
+  </div>
+  <div class="panel px-4 py-3">
+    <p class="text-2xl font-bold text-ink">{{ headline.fits }}</p>
+    <p class="eyebrow text-faint">Fits</p>
+  </div>
+  <div class="panel px-4 py-3">
+    <p class="text-2xl font-bold text-ink">{{ headline.hulls }}</p>
+    <p class="eyebrow text-faint">Hull classes</p>
+  </div>
+  <div class="panel px-4 py-3">
+    <p class="text-2xl font-bold text-ink">{{ headline.categories }}</p>
+    <p class="eyebrow text-faint">Categories</p>
+  </div>
+  <div class="panel px-4 py-3">
+    {% if has_skills %}
+      <p class="text-2xl font-bold text-win">{{ headline.can_fly }}<span class="text-base font-normal text-faint">/{{ headline.doctrines }}</span></p>
+      <p class="eyebrow text-faint">You can fly</p>
+    {% else %}
+      <p class="text-2xl font-bold text-faint">—</p>
+      <p class="eyebrow text-faint">You can fly</p>
+    {% endif %}
+  </div>
+</div>
+
+{# ---- Charts ---- #}
+<div class="mb-6 grid grid-cols-1 gap-3 lg:grid-cols-12">
+  {# Training priority — the headline insight #}
+  <section class="panel p-4 lg:col-span-7">
+    <div class="mb-1 flex items-center justify-between gap-2">
+      <h2 class="font-display font-semibold text-ink">Train these next</h2>
+      {% if has_skills %}<span class="text-xs text-faint">for {{ character.name }}</span>{% endif %}
+    </div>
+    <p class="mb-3 text-xs text-faint">Skills ranked by how many doctrine fits they'd open up. Gold = unlocks a fit on its own.</p>
+    {% if has_skills %}
+      {% if priority.skills %}
+        <div class="relative h-72 skeleton"><canvas id="dc-priority"></canvas></div>
+      {% else %}
+        <div class="flex h-72 flex-col items-center justify-center text-center">
+          <p class="text-sm font-medium text-win">You can already fly every doctrine.</p>
+          <p class="mt-1 text-xs text-faint">Nothing left to train for the current library.</p>
+        </div>
+      {% endif %}
+    {% else %}
+      <div class="flex h-72 flex-col items-center justify-center text-center">
+        <p class="text-sm text-faint">Import this pilot's skills to see a personal training plan.</p>
+        {% if is_member %}<a href="{% url 'doctrines:my_readiness' %}" class="btn-ghost mt-3 text-xs">How readiness works</a>{% endif %}
+      </div>
+    {% endif %}
+  </section>
+
+  {# Readiness donut #}
+  <section class="panel p-4 lg:col-span-5">
+    <h2 class="mb-1 font-display font-semibold text-ink">Your readiness</h2>
+    <p class="mb-3 text-xs text-faint">Across all {{ headline.doctrines }} doctrines, by your best fit.</p>
+    {% if has_skills %}
+      <div class="relative mx-auto h-56 w-56 skeleton"><canvas id="dc-readiness"></canvas></div>
+      <div class="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs">
+        <span class="inline-flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-full bg-win"></span> Can fly {{ readiness.optimal|add:readiness.viable }}</span>
+        <span class="inline-flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-full" style="background:#f4a52b"></span> Training {{ readiness.not_ready }}</span>
+        <span class="inline-flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-full bg-faint"></span> No data {{ readiness.unknown }}</span>
+      </div>
+    {% else %}
+      <div class="flex h-56 items-center justify-center text-center">
+        <p class="text-sm text-faint">No skills imported for this pilot yet.</p>
+      </div>
+    {% endif %}
+  </section>
+
+  {# Fleet composition by hull class #}
+  <section class="panel p-4 lg:col-span-6">
+    <h2 class="mb-1 font-display font-semibold text-ink">Fleet shape</h2>
+    <p class="mb-3 text-xs text-faint">Sanctioned fits by hull class.</p>
+    <div class="relative mx-auto h-56 w-56 skeleton"><canvas id="dc-hull"></canvas></div>
+  </section>
+
+  {# By category #}
+  <section class="panel p-4 lg:col-span-6">
+    <h2 class="mb-1 font-display font-semibold text-ink">By category</h2>
+    <p class="mb-3 text-xs text-faint">Doctrines grouped by purpose.</p>
+    <div class="relative mx-auto h-56 w-56 skeleton"><canvas id="dc-category"></canvas></div>
+  </section>
+</div>
+
+{# ---- Filters ---- #}
+<form method="get" class="panel mb-4 flex flex-wrap items-end gap-3 px-4 py-3" id="filters"
+      hx-get="{% url 'doctrines:list' %}" hx-target="#dc-results" hx-swap="outerHTML" hx-push-url="true" hx-trigger="submit, change from:select">
+  {% if character %}<input type="hidden" name="character_id" value="{{ character.character_id }}">{% endif %}
+  <label class="block min-w-[12rem] flex-1">
+    <span class="eyebrow text-faint">Search</span>
+    <input type="search" name="q" value="{{ q }}" placeholder="Doctrine name or notes…" class="input-field mt-1 w-full">
+  </label>
+  <label class="block">
+    <span class="eyebrow text-faint">Category</span>
+    <select name="category" class="input-field mt-1">
+      <option value="">Any category</option>
+      {% for c in categories %}<option value="{{ c.id }}" {% if f_category == c.id|stringformat:'s' %}selected{% endif %}>{{ c.label }}</option>{% endfor %}
+    </select>
+  </label>
+  <label class="block">
+    <span class="eyebrow text-faint">Hull</span>
+    <select name="hull" class="input-field mt-1">
+      <option value="">Any hull</option>
+      {% for c in hull_classes %}<option value="{{ c }}" {% if f_hull == c %}selected{% endif %}>{{ c }}</option>{% endfor %}
+    </select>
+  </label>
+  {% if roles %}
+  <label class="block">
+    <span class="eyebrow text-faint">Role</span>
+    <select name="role" class="input-field mt-1">
+      <option value="">Any role</option>
+      {% for r in roles %}<option value="{{ r }}" {% if f_role == r %}selected{% endif %}>{{ r }}</option>{% endfor %}
+    </select>
+  </label>
+  {% endif %}
+  {% if has_skills %}
+  <label class="block">
+    <span class="eyebrow text-faint">Flyable</span>
+    <select name="fly" class="input-field mt-1">
+      <option value="">All</option>
+      <option value="yes" {% if f_fly == 'yes' %}selected{% endif %}>Can fly now</option>
+      <option value="no" {% if f_fly == 'no' %}selected{% endif %}>Can't fly yet</option>
+    </select>
+  </label>
+  {% endif %}
+  <button type="submit" class="btn-ghost text-sm">Apply</button>
+  {% if active_filters %}<a href="?{% if character %}character_id={{ character.character_id }}{% endif %}" class="btn-ghost text-sm">Clear</a>{% endif %}
+</form>
+
+{% include 'doctrines/_list_results.html' %}
+
+{{ stats|json_script:"dc-stats-data" }}
+{{ readiness|json_script:"dc-readiness-data" }}
+{{ priority|json_script:"dc-priority-data" }}
+{% endblock %}
+
+{% block scripts %}
+<script nonce="{{ csp_nonce }}">
+  document.addEventListener('DOMContentLoaded', function () {
+    if (!window.forcaChart.applyDefaults({legendBox:true})) return;
+
+    var stats = forcaChart.read('dc-stats-data');
+    if (stats) {
+      forcaChart.doughnut('dc-hull', stats.hull, {legend:'bottom'});
+      forcaChart.doughnut('dc-category', stats.category, {legend:'bottom'});
+    }
+
+    // --- Readiness donut ---
+    var rd = forcaChart.read('dc-readiness-data');
+    var rdEl = document.getElementById('dc-readiness');
+    if (rd && rd.configured && rdEl) {
+      var canFly = rd.optimal + rd.viable;
+      new Chart(rdEl, {
+        type: 'doughnut',
+        data: {
+          labels: ['Can fly', 'Training', 'No data'],
+          datasets: [{
+            data: [canFly, rd.not_ready, rd.unknown],
+            backgroundColor: [forcaChart.colors.win, forcaChart.colors.gold, 'rgba(90,102,120,.45)'],
+            borderColor: '#10151f', borderWidth: 2,
+          }],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, cutout: '64%',
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: function (ctx) { return ctx.label + ': ' + ctx.parsed; } } },
+          },
+        },
+      });
+    }
+
+    // --- Training priority (horizontal stacked bar) ---
+    var pr = forcaChart.read('dc-priority-data');
+    var prEl = document.getElementById('dc-priority');
+    if (pr && pr.configured && prEl && pr.skills && pr.skills.length) {
+      var labels = pr.skills.map(function (s) { return s.name; });
+      var unlocks = pr.skills.map(function (s) { return s.unlocks; });
+      var prereq = pr.skills.map(function (s) { return s.blocks - s.unlocks; });
+      new Chart(prEl, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            { label: 'Unlocks a fit', data: unlocks, backgroundColor: forcaChart.colors.gold, stack: 's' },
+            { label: 'Needed for more', data: prereq, backgroundColor: 'rgba(70,207,224,.55)', stack: 's' },
+          ],
+        },
+        options: {
+          indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+          scales: {
+            x: { stacked: true, beginAtZero: true, grid: { color: forcaChart.colors.line },
+                 ticks: { precision: 0 }, title: { display: true, text: 'doctrine fits', color: forcaChart.colors.faint } },
+            y: { stacked: true, grid: { display: false } },
+          },
+          plugins: {
+            legend: { labels: { color: forcaChart.colors.faint } },
+            tooltip: { callbacks: {
+              label: function (ctx) { return ctx.dataset.label + ': ' + ctx.parsed.x; },
+              footer: function (items) {
+                var s = pr.skills[items[0].dataIndex];
+                return 'Blocks ' + s.blocks + ' fit' + (s.blocks === 1 ? '' : 's') + ' total';
+              },
+            } },
+          },
+        },
+      });
+    }
+  });
+</script>
+{% endblock %}

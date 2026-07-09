@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}SRP budget · [FORCA] Command Grid{% endblock %}
+{% block content %}
+{% if features.recommendations %}<a href="{% url 'recommendations:officer' %}" class="text-xs text-faint hover:text-gold">← Command</a>{% endif %}
+<header class="mt-2 mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-gold">Leadership</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">SRP budget &amp; solvency</h1>
+    <p class="mt-1 text-sm text-faint">Allocation vs what’s been paid this month vs open claims. Spend is computed live from settled claims — no ISK is moved by the app.</p>
+  </div>
+  <a href="{% url 'srp:queue' %}" class="btn-ghost text-sm">SRP queue</a>
+</header>
+
+<section class="mb-6 grid gap-3 sm:grid-cols-4">
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">Allocated · {{ current_period }}</p>
+    <p class="data text-xl font-bold text-ink">{{ current_allocated|isk }}</p>
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">Paid this month</p>
+    <p class="data text-xl font-bold text-cyan">{{ current_spent|isk }}</p>
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">Open exposure</p>
+    <p class="data text-xl font-bold text-loss">{{ open_exposure|isk }}</p>
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">Solvency</p>
+    <p class="data text-xl font-bold {% if solvency < 0 %}text-loss{% else %}text-kill{% endif %}">{{ solvency|isk }}</p>
+    <p class="text-[11px] text-faint">allocation − paid − open claims</p>
+  </div>
+</section>
+
+{% if solvency < 0 %}
+<div class="panel mb-5 border-loss/40 bg-loss/10 px-4 py-2.5 text-sm text-loss/90">
+  This month’s allocation can’t cover what’s already paid plus every open claim. Raise the allocation or work down the queue.
+</div>
+{% endif %}
+
+<section class="panel mb-6 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">Last 6 months</h2></div>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="text-left text-xs text-faint">
+        <tr class="border-b border-line/60">
+          <th class="px-4 py-2 font-medium">Period</th>
+          <th class="px-4 py-2 text-right font-medium">Allocated</th>
+          <th class="px-4 py-2 text-right font-medium">Paid</th>
+          <th class="px-4 py-2 text-right font-medium">Remaining</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-line/40">
+        {% for r in rows %}
+        <tr>
+          <td class="px-4 py-2 text-muted">{{ r.period }}</td>
+          <td class="px-4 py-2 text-right text-ink">{{ r.allocated|isk }}</td>
+          <td class="px-4 py-2 text-right text-cyan">{{ r.spent|isk }}</td>
+          <td class="px-4 py-2 text-right {% if r.remaining < 0 %}text-loss{% else %}text-faint{% endif %}">{{ r.remaining|isk }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="panel p-5">
+  <h2 class="eyebrow mb-3 text-gold">Set a period’s allocation</h2>
+  <form method="post" action="{% url 'srp:budget_save' %}" class="flex flex-wrap items-end gap-3">
+    {% csrf_token %}
+    <div>
+      <label class="label" for="srp-budget-period">Period</label>
+      <input id="srp-budget-period" name="period" value="{{ current_period }}" pattern="\d{4}-\d{2}" class="input-field" placeholder="2026-06" required>
+    </div>
+    <div>
+      <label class="label" for="srp-budget-allocated">Allocated ISK</label>
+      <input id="srp-budget-allocated" name="allocated" type="number" min="0" step="1" class="input-field" placeholder="1000000000" required>
+    </div>
+    <button class="btn-gold">Save</button>
+  </form>
+</section>
+{% endblock %}

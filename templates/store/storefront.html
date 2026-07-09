@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Corp Store · [FORCA] Command Grid{% endblock %}
+{% block content %}
+
+<header class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <p class="eyebrow">Forças Armadas · Corp Store</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">Corp Store</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">Have any hull — up to capitals and supers — built to order. Corp members fulfil every order by contract.</p>
+  </div>
+  <div class="flex items-center gap-2">
+    {% if request.user.is_authenticated %}<a href="{% url 'store:my_orders' %}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-check"/></svg> My orders</a>{% endif %}
+    {% if is_member %}<a href="{% url 'store:board' %}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-cube"/></svg> Build board{% if open_count %} · {{ open_count }}{% endif %}</a>{% endif %}
+  </div>
+</header>
+
+
+{% if features.doctrines %}
+<!-- Ready-to-fly doctrine ships live on the Shipyard now (it prices every fit). -->
+<a href="{% url 'doctrines:ships' %}" class="panel mb-5 flex items-center gap-4 p-4 transition hover:border-gold/40">
+  <svg class="h-6 w-6 shrink-0 text-gold"><use href="#i-ship"/></svg>
+  <div class="min-w-0 flex-1">
+    <p class="font-display font-semibold text-ink">Looking for a ready-to-fly doctrine ship?</p>
+    <p class="text-sm text-faint">Browse every sanctioned fit, see what you can fly, and order it — priced and fitted — on the Shipyard.</p>
+  </div>
+  <span class="btn-ghost shrink-0 text-sm">Open Shipyard →</span>
+</a>
+{% endif %}
+
+<!-- Made to order -->
+<div class="grid gap-5 lg:grid-cols-[1fr_1fr]">
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">Build any hull to order</h2>
+    <form method="post" action="{% url 'store:order_hull' %}" class="space-y-3">
+      {% csrf_token %}
+      <div>
+        <label class="label" for="lf_quantity_1">Ship hull</label>
+        {% include "components/_type_picker.html" with field="ship_type_id" endpoint="/store/hulls/search/" placeholder="Search a ship hull — frigate to titan…" required=1 %}
+      </div>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <div><label class="label">Quantity</label><input id="lf_quantity_1" type="number" name="quantity" value="1" min="1" max="100" class="input-field"></div>
+        <div>
+          <label class="label" for="lf_location_name_2">Deliver to (optional)</label>
+          {# System autocomplete — suggestions as you type, but still free-text (a staging citadel, notes to the builder, etc.). #}
+          <div x-data="typePicker('{% url 'store:system_search' %}', '', '')" class="relative" @click.outside="open=false">
+            <input id="lf_location_name_2" type="text" name="location_name" x-model="q"
+                   @input.debounce.250ms="lookup()" @focus="open = results.length > 0"
+                   autocomplete="off" spellcheck="false"
+                   class="input-field" placeholder="Start typing a system…">
+            <div x-show="open" x-cloak
+                 class="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-md border border-line bg-panel shadow-xl">
+              <template x-for="r in results" :key="r.type_id">
+                <button type="button" @click="choose(r)"
+                        class="block w-full px-3 py-1.5 text-left text-sm text-muted hover:bg-panel2 hover:text-ink"
+                        x-text="r.name"></button>
+              </template>
+              <p x-show="!results.length" class="px-3 py-2 text-xs text-faint">No matching system — you can still type a custom location.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <input type="text" name="notes" class="input-field" placeholder="Notes for the builder (optional)" maxlength="300">
+      <button class="btn-gold w-full">Place build order</button>
+    </form>
+  </section>
+
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">How made-to-order works</h2>
+
+    <div class="space-y-4 text-sm text-faint">
+      <div>
+        <p class="mb-1 font-display font-semibold text-ink">Subcapital ships</p>
+        <ol class="space-y-1">
+          <li><span class="text-ink">1.</span> Priced automatically at <span class="text-gold">Jita sell +{{ hull_markup_pct }}%</span> — no deposit.</li>
+          <li><span class="text-ink">2.</span> A corp member claims your order on the build board and builds it.</li>
+          <li><span class="text-ink">3.</span> They contract it to you; you pay the full price on pickup.</li>
+        </ol>
+      </div>
+
+      <div>
+        <p class="mb-1 font-display font-semibold text-ink">Capitals &amp; supercapitals</p>
+        <ol class="space-y-1">
+          <li><span class="text-ink">1.</span> A corp builder claims your order and sends you the <span class="text-ink">price and delivery time</span> in a private message.</li>
+          <li><span class="text-ink">2.</span> Pay a <span class="text-gold">{{ deposit_pct }}% deposit</span> to that builder <span class="text-ink">within 7 days</span> — that makes the order effective and starts production.</li>
+          <li><span class="text-ink">3.</span> When it's built they contract it to you; you pay the balance on pickup. If the deposit isn't paid within 7 days the order lapses.</li>
+        </ol>
+      </div>
+    </div>
+
+    <p class="mt-4 text-[11px] text-faint">Track every order's status on its own order page.</p>
+  </section>
+</div>
+{% endblock %}

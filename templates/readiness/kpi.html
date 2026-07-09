@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Readiness · {{ kpi.key }} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<a href="{% url 'readiness:dimension' dimension_key %}" class="text-xs text-faint hover:text-gold">← {{ dimension_label }}</a>
+<header class="mt-2 mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <p class="eyebrow text-gold">KPI drill-down</p>
+    <h1 class="mt-1 flex flex-wrap items-center gap-2 font-mono text-2xl font-bold text-ink">{{ kpi.key }}
+      {% if kpi_disabled %}<span class="chip text-faint">disabled · not in score</span>{% endif %}
+    </h1>
+    <p class="mt-1 text-sm text-faint">Part of the <a href="{% url 'readiness:dimension' dimension_key %}" class="text-cyan hover:underline">{{ dimension_label }}</a> dimension · weight {{ kpi_weight }}.{% if kpi_disabled %} Re-enable it on the <a href="{% url 'admin_audit:readiness_kpis' %}" class="text-cyan hover:underline">KPIs page</a>.{% endif %}</p>
+  </div>
+  <div class="panel px-6 py-4 text-center">
+    <p class="font-display text-5xl font-bold {% if kpi.status == 'green' %}text-kill{% elif kpi.status == 'amber' %}text-gold{% elif kpi.status == 'red' %}text-loss{% else %}text-faint{% endif %}">{% if kpi.score is None %}—{% else %}{{ kpi.score }}{% endif %}</p>
+    <p class="text-[10px] uppercase tracking-wide text-faint">score · measured {{ kpi.value|default:"—" }}</p>
+  </div>
+</header>
+
+<section class="panel mb-5 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Score history</h2></div>
+  {% if trend %}
+  <div class="flex items-end gap-1 px-4 py-5" style="height:8rem">
+    {% for t in trend %}
+    <div class="flex-1 rounded-t {% if t >= 75 %}bg-kill{% elif t >= 50 %}bg-gold{% else %}bg-loss{% endif %}"
+         style="height:{% widthratio t trend_max 100 %}%" title="{{ t }}"></div>
+    {% endfor %}
+  </div>
+  <p class="border-t border-line px-4 py-2 text-[11px] text-faint">Last {{ trend|length }} snapshot{{ trend|length|pluralize }} (oldest → newest). Latest score {{ trend|last }}.</p>
+  {% else %}
+  <p class="px-4 py-10 text-center text-sm text-faint">No history yet — this KPI's trend appears once a couple of snapshots have been recorded.</p>
+  {% endif %}
+</section>
+
+{% if kpi.detail %}
+<section class="panel mb-5 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">Breakdown</h2></div>
+  <pre class="overflow-x-auto px-4 py-3 font-mono text-xs text-muted">{{ kpi.detail }}</pre>
+</section>
+{% endif %}
+
+<section class="panel overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-loss">Open findings</h2></div>
+  {% if findings %}
+  <div class="divide-y divide-line/50">
+    {% for f in findings %}
+    <div class="flex items-center justify-between px-4 py-2.5 text-sm">
+      <span class="text-ink">{{ f.title }}</span>
+      <span class="chip {% if f.severity == 'critical' %}text-loss{% elif f.severity == 'high' %}text-gold{% else %}text-cyan{% endif %}">{{ f.severity }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="px-4 py-8 text-center text-sm text-faint">No open findings tied to this KPI — it's not currently flagging a gap.</p>
+  {% endif %}
+</section>
+{% endblock %}

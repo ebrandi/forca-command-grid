@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}Killmail {{ killmail.killmail_id }} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<a href="{% url 'killboard:list' %}" class="text-xs text-faint hover:text-gold">← Killboard</a>
+
+<!-- Hero -->
+<div class="panel mt-3 overflow-hidden">
+  <div class="relative">
+    <img src="{% eve_type_render killmail.victim_ship_type_id 512 %}" alt="" class="h-48 w-full object-cover opacity-40">
+    <div class="absolute inset-0 bg-gradient-to-t from-panel via-panel/70 to-transparent"></div>
+    <div class="absolute bottom-0 left-0 flex items-end gap-4 p-5">
+      <img src="{% eve_type_render killmail.victim_ship_type_id 256 %}" alt="" class="h-24 w-24 rounded-lg bg-space object-cover ring-1 ring-line shadow-xl">
+      <div class="pb-1">
+        <div class="flex items-center gap-2">
+          <span class="h-2.5 w-2.5 rounded-full {% if killmail.home_corp_role == 'victim' %}bg-loss{% else %}bg-kill{% endif %}"></span>
+          <p class="eyebrow">{% if killmail.home_corp_role == 'victim' %}Loss{% else %}Kill{% endif %}</p>
+        </div>
+        <h1 class="mt-0.5 text-2xl font-bold text-ink">{% type_name killmail.victim_ship_type_id %}</h1>
+        <p class="mt-0.5 text-xs text-faint">
+          {% system_security killmail.solar_system_id as sec %}
+          <span class="data font-semibold {{ sec|sec_class }}">{{ sec }}</span>
+          <span class="text-muted">{% system_name killmail.solar_system_id %}</span> · {% region_name killmail.region_id %}
+          · {{ killmail.killmail_time|date:"Y-m-d H:i" }}
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="grid grid-cols-2 sm:grid-cols-4 divide-x divide-line border-t border-line">
+    <div class="p-4"><p class="eyebrow">Total</p><p class="data mt-1 text-lg font-bold text-gold">{{ killmail.total_value|isk }}</p></div>
+    <div class="p-4"><p class="eyebrow">Destroyed</p><p class="data mt-1 text-lg font-semibold text-loss">{{ killmail.destroyed_value|isk }}</p></div>
+    <div class="p-4"><p class="eyebrow">Dropped</p><p class="data mt-1 text-lg font-semibold text-cyan">{{ killmail.dropped_value|isk }}</p></div>
+    <div class="p-4"><p class="eyebrow">Points</p><p class="data mt-1 text-lg font-semibold text-ink">{{ killmail.points }}</p></div>
+  </div>
+</div>
+
+<div class="mt-5 grid gap-5 lg:grid-cols-2">
+  <!-- Victim -->
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3">Victim</h2>
+    <div class="flex items-center gap-3">
+      {% if killmail.victim_character_id %}<img src="{% eve_portrait killmail.victim_character_id 64 %}" alt="" class="h-12 w-12 rounded-full ring-1 ring-line">{% endif %}
+      <div>
+        <p class="font-medium text-ink">{% if killmail.victim_character_id %}{% eve_name killmail.victim_character_id %}{% else %}Structure / NPC{% endif %}</p>
+        <p class="flex items-center gap-1.5 text-xs text-faint">
+          {% if killmail.victim_corporation_id %}<img src="{% eve_corp_logo killmail.victim_corporation_id 32 %}" alt="" class="h-4 w-4 rounded-sm">{% eve_name killmail.victim_corporation_id %}{% endif %}
+        </p>
+      </div>
+      <span class="data ml-auto chip">{{ killmail.damage_taken }} dmg taken</span>
+    </div>
+  </section>
+
+  <!-- Attackers -->
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3">Attackers · {{ attackers|length }}</h2>
+    <ul class="space-y-2 max-h-72 overflow-y-auto pr-1">
+      {% for a in attackers %}
+        <li class="flex items-center gap-2.5">
+          {% if a.character_id %}<img src="{% eve_portrait a.character_id 32 %}" alt="" loading="lazy" class="h-7 w-7 rounded-full ring-1 ring-line">{% else %}<span class="h-7 w-7 rounded-full bg-panel2 ring-1 ring-line"></span>{% endif %}
+          <div class="min-w-0 flex-1">
+            <p class="truncate text-sm text-ink">{% if a.character_id %}{% eve_name a.character_id %}{% else %}NPC{% endif %} {% if a.final_blow %}<span class="chip !text-gold !border-gold/40">final blow</span>{% endif %}</p>
+            <p class="truncate text-[11px] text-faint">{% type_name a.ship_type_id %}{% if a.weapon_type_id and a.weapon_type_id != a.ship_type_id %} · {% type_name a.weapon_type_id %}{% endif %}</p>
+          </div>
+          <span class="data text-xs text-muted">{{ a.damage_done }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+</div>
+
+<!-- Fitting / cargo -->
+{% if killmail.items.all %}
+<section class="panel mt-5 p-5">
+  <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+    <div class="flex flex-wrap items-center gap-2">
+      <h2 class="eyebrow">Fitting &amp; cargo</h2>
+      {% if killmail.doctrine_fit %}<a href="{% url 'doctrines:detail' killmail.doctrine_fit.doctrine_id %}" class="chip !border-gold/40 !text-gold" title="This loss matched a doctrine fit">◆ {{ killmail.doctrine_fit.name }}</a>{% endif %}
+    </div>
+    {% if is_director %}<a href="{% url 'admin_audit:doctrine_from_killmail' killmail.killmail_id %}" class="btn-ghost !py-1 !text-xs"><svg class="h-3.5 w-3.5"><use href="#i-ship"/></svg> Import as doctrine</a>{% endif %}
+  </div>
+  <div class="grid gap-1.5 sm:grid-cols-2">
+    {% for item in killmail.items.all %}
+      <div class="flex items-center gap-2.5 rounded border border-line/60 bg-panel2/40 px-2.5 py-1.5">
+        <img src="{% eve_type_icon item.item_type_id 32 %}" alt="" loading="lazy" class="h-6 w-6 rounded-sm">
+        <span class="min-w-0 flex-1 truncate text-sm text-muted">{% type_name item.item_type_id %}</span>
+        {% if item.quantity_destroyed %}<span class="chip !text-loss">×{{ item.quantity_destroyed }}</span>{% endif %}
+        {% if item.quantity_dropped %}<span class="chip !text-cyan">↧{{ item.quantity_dropped }}</span>{% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if deviation %}{# Fit deviation (KB-14): the view passes this only to the loss owner and officers #}
+<section class="panel mt-5 p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <h2 class="eyebrow text-loss">Fit deviation</h2>
+    <span class="text-xs text-faint">vs {{ killmail.doctrine_fit.name }} · only you and officers see this</span>
+  </div>
+  <div class="mt-3 grid gap-5 sm:grid-cols-2">
+    <div>
+      <p class="eyebrow mb-2 text-loss">Missing from your fit</p>
+      {% if deviation.missing %}
+      <ul class="space-y-1.5">
+        {% for m in deviation.missing %}
+        <li class="flex items-center gap-2 text-sm">
+          <img src="{% eve_type_icon m.type_id 32 %}" alt="" loading="lazy" class="h-6 w-6 rounded-sm">
+          <span class="min-w-0 flex-1 truncate text-muted">{% type_name m.type_id %}</span>
+          {% if m.quantity > 1 %}<span class="chip !text-loss">×{{ m.quantity }}</span>{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}<p class="text-xs text-faint">Nothing missing.</p>{% endif %}
+    </div>
+    <div>
+      <p class="eyebrow mb-2 text-cyan">Extra / off-doctrine</p>
+      {% if deviation.extra %}
+      <ul class="space-y-1.5">
+        {% for m in deviation.extra %}
+        <li class="flex items-center gap-2 text-sm">
+          <img src="{% eve_type_icon m.type_id 32 %}" alt="" loading="lazy" class="h-6 w-6 rounded-sm">
+          <span class="min-w-0 flex-1 truncate text-muted">{% type_name m.type_id %}</span>
+          {% if m.quantity > 1 %}<span class="chip !text-cyan">×{{ m.quantity }}</span>{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}<p class="text-xs text-faint">Nothing off-doctrine.</p>{% endif %}
+    </div>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

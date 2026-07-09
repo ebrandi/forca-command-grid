@@ -1,0 +1,84 @@
+{
+  "categories": [
+    {"category_id": 6, "name": "Ship"},
+    {"category_id": 7, "name": "Module"},
+    {"category_id": 8, "name": "Charge"},
+    {"category_id": 16, "name": "Skill"},
+    {"category_id": 4, "name": "Material"},
+    {"category_id": 35, "name": "Decryptors"}
+  ],
+  "groups": [
+    {"group_id": 25, "category_id": 6, "name": "Frigate"},
+    {"group_id": 55, "category_id": 7, "name": "Projectile Weapon"},
+    {"group_id": 60, "category_id": 7, "name": "Damage Control"},
+    {"group_id": 83, "category_id": 8, "name": "Projectile Ammo"},
+    {"group_id": 257, "category_id": 16, "name": "Spaceship Command"},
+    {"group_id": 255, "category_id": 16, "name": "Gunnery"},
+    {"group_id": 375, "category_id": 16, "name": "Science"},
+    {"group_id": 18, "category_id": 4, "name": "Mineral"},
+    {"group_id": 26, "category_id": 6, "name": "Cruiser"},
+    {"group_id": 334, "category_id": 4, "name": "Construction Component"},
+    {"group_id": 1304, "category_id": 35, "name": "Decryptors"}
+  ],
+  "types": [
+    {"type_id": 587, "group_id": 25, "name": "Rifter", "volume": 27289.0, "base_price": 380000},
+    {"type_id": 484, "group_id": 55, "name": "200mm AutoCannon I", "volume": 5.0, "base_price": 12000},
+    {"type_id": 2046, "group_id": 60, "name": "Damage Control I", "volume": 5.0, "base_price": 8000},
+    {"type_id": 192, "group_id": 83, "name": "Fusion S", "volume": 0.0125, "base_price": 5},
+    {"type_id": 3331, "group_id": 257, "name": "Minmatar Frigate", "volume": 0.01, "base_price": 0, "rank": 2},
+    {"type_id": 3301, "group_id": 255, "name": "Small Projectile Turret", "volume": 0.01, "base_price": 0, "rank": 1},
+    {"type_id": 3300, "group_id": 255, "name": "Gunnery", "volume": 0.01, "base_price": 0, "rank": 1},
+    {"type_id": 34, "group_id": 18, "name": "Tritanium", "volume": 0.01, "base_price": 5},
+    {"type_id": 35, "group_id": 18, "name": "Pyerite", "volume": 0.01, "base_price": 12},
+    {"type_id": 600, "group_id": 26, "name": "Test Cruiser", "volume": 101000.0, "base_price": 50000000},
+    {"type_id": 700, "group_id": 334, "name": "Construction Component", "volume": 1000.0, "base_price": 500000},
+    {"type_id": 800, "group_id": 334, "name": "Reacted Alloy", "volume": 10.0, "base_price": 50000},
+    {"type_id": 900, "group_id": 334, "name": "Datacore - Test Engineering", "volume": 0.1, "base_price": 100000},
+    {"type_id": 20424, "group_id": 375, "name": "Test Encryption Methods", "volume": 0.01, "base_price": 0, "rank": 5},
+    {"type_id": 11433, "group_id": 375, "name": "Test Engineering Science", "volume": 0.01, "base_price": 0, "rank": 4},
+    {"type_id": 34201, "group_id": 1304, "name": "Accelerant Decryptor", "volume": 0.1, "base_price": 800000},
+    {"type_id": 34202, "group_id": 1304, "name": "Attainment Decryptor", "volume": 0.1, "base_price": 900000},
+    {"type_id": 34203, "group_id": 1304, "name": "Augmentation Decryptor", "volume": 0.1, "base_price": 600000}
+  ],
+  "regions": [
+    {"region_id": 10000002, "name": "The Forge"}
+  ],
+  "systems": [
+    {"system_id": 30000142, "region_id": 10000002, "name": "Jita", "security": 0.9},
+    {"system_id": 30002053, "region_id": 10000002, "name": "Otitoh", "security": 0.3}
+  ],
+  "type_skills": [
+    {"type_id": 587, "skill_type_id": 3331, "level": 1},
+    {"type_id": 484, "skill_type_id": 3301, "level": 1},
+    {"type_id": 2046, "skill_type_id": 3300, "level": 1}
+  ],
+  "blueprint_materials": [
+    {"blueprint_type_id": 588, "product_type_id": 587, "material_type_id": 34, "quantity": 32000},
+    {"blueprint_type_id": 588, "product_type_id": 587, "material_type_id": 35, "quantity": 6000},
+    {"blueprint_type_id": 601, "product_type_id": 600, "material_type_id": 700, "quantity": 10, "output_quantity": 1, "activity": "manufacturing"},
+    {"blueprint_type_id": 601, "product_type_id": 600, "material_type_id": 34, "quantity": 100000, "output_quantity": 1, "activity": "manufacturing"},
+    {"blueprint_type_id": 701, "product_type_id": 700, "material_type_id": 800, "quantity": 5, "output_quantity": 1, "activity": "manufacturing"},
+    {"blueprint_type_id": 701, "product_type_id": 700, "material_type_id": 35, "quantity": 1000, "output_quantity": 1, "activity": "manufacturing"},
+    {"blueprint_type_id": 801, "product_type_id": 800, "material_type_id": 34, "quantity": 1000, "output_quantity": 200, "activity": "reaction"},
+    {"blueprint_type_id": 599, "product_type_id": 600, "material_type_id": 900, "quantity": 2, "output_quantity": 1, "activity": "invention"}
+  ],
+  "blueprint_skills": [
+    {"blueprint_type_id": 601, "product_type_id": 600, "skill_type_id": 3300, "level": 1, "activity": "manufacturing"},
+    {"blueprint_type_id": 599, "product_type_id": 600, "skill_type_id": 20424, "level": 1, "activity": "invention"},
+    {"blueprint_type_id": 599, "product_type_id": 600, "skill_type_id": 11433, "level": 1, "activity": "invention"}
+  ],
+  "invention_products": [
+    {"t1_blueprint_type_id": 599, "t2_blueprint_type_id": 601, "product_type_id": 600, "runs": 10, "probability": 0.34}
+  ],
+  "decryptors": [
+    {"type_id": 34201, "name": "Accelerant Decryptor", "probability_multiplier": 1.2, "run_modifier": 1, "me_modifier": 2, "te_modifier": 10},
+    {"type_id": 34202, "name": "Attainment Decryptor", "probability_multiplier": 1.8, "run_modifier": 4, "me_modifier": -1, "te_modifier": 4},
+    {"type_id": 34203, "name": "Augmentation Decryptor", "probability_multiplier": 0.6, "run_modifier": 9, "me_modifier": -2, "te_modifier": 2}
+  ],
+  "activity_times": [
+    {"blueprint_type_id": 588, "product_type_id": 587, "activity": "manufacturing", "time": 600},
+    {"blueprint_type_id": 601, "product_type_id": 600, "activity": "manufacturing", "time": 6000},
+    {"blueprint_type_id": 701, "product_type_id": 700, "activity": "manufacturing", "time": 1200},
+    {"blueprint_type_id": 599, "product_type_id": 600, "activity": "invention", "time": 3600}
+  ]
+}

@@ -1,0 +1,32 @@
+{% comment %}
+Reusable item autocomplete. Params:
+  field      hidden input name that receives the chosen type_id (required)
+  endpoint   JSON search URL (returns [{type_id,name}]); defaults to industry search
+  placeholder, initial_id, initial_name, required
+Selecting a result fills the hidden field; typing again clears it so the form
+can't submit a stale id with a mismatched name.
+{% endcomment %}
+{% load eve %}
+{% eve_img_base as img_base %}
+<div
+  x-data="typePicker('{{ endpoint|default:'/industry/type-search/' }}', '{{ initial_id }}', `{{ initial_name }}`)"
+  class="relative"
+  @click.outside="open=false"
+>
+  <input type="hidden" name="{{ field }}" :value="id" {% if required %}required{% endif %}>
+  <input
+    type="text" x-model="q" @input.debounce.250ms="lookup()" @focus="open = results.length>0"
+    class="input-field" autocomplete="off"
+    placeholder="{{ placeholder|default:'Search for an item…' }}"
+  >
+  <div x-show="open" x-cloak class="absolute z-30 mt-1 max-h-64 w-full overflow-auto rounded-md border border-line bg-panel shadow-xl">
+    <template x-for="r in results" :key="r.type_id">
+      <button type="button" @click="choose(r)" class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm text-muted hover:bg-panel2 hover:text-ink">
+        <img :src="`{{ img_base }}/types/${r.type_id}/icon?size=32`" alt="" class="h-5 w-5 rounded-sm" loading="lazy">
+        <span x-text="r.name"></span>
+      </button>
+    </template>
+    <p x-show="!results.length" class="px-3 py-2 text-xs text-faint">No matches.</p>
+  </div>
+</div>
+{% block type_picker_js %}{% endblock %}

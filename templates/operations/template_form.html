@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}{% if template %}Edit{% else %}New{% endif %} op template · [FORCA]{% endblock %}
+{% block content %}
+{% with t=template %}
+<header class="mb-6">
+  <p class="eyebrow text-gold">Operations</p>
+  <h1 class="mt-1 text-2xl font-bold text-ink">{% if t %}Edit template{% else %}New recurring template{% endif %}</h1>
+</header>
+
+<form method="post" class="max-w-3xl space-y-6" action="{% if t %}{% url 'operations:template_edit' t.pk %}{% else %}{% url 'operations:template_create' %}{% endif %}">
+  {% csrf_token %}
+
+  <section class="panel space-y-4 p-5">
+    <div>
+      <label class="label">Template name</label>
+      <input name="name" class="input" value="{% firstof values.name t.name '' %}" required>
+    </div>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div>
+        <label class="label">Op type</label>
+        <select name="type" class="input">
+          {% for v, label in types %}<option value="{{ v }}" {% if v == values.type or v == t.type %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="label">SRP coverage</label>
+        <select name="srp" class="input">
+          <option value="">— none set —</option>
+          {% for v, label in srps %}<option value="{{ v }}" {% if v == values.srp or v == t.srp %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel space-y-4 p-5">
+    <h2 class="eyebrow text-gold">Weekly cadence (UTC)</h2>
+    <div class="grid gap-4 sm:grid-cols-4">
+      <div>
+        <label class="label">Day</label>
+        <select name="weekday" class="input">{% for n, label in weekdays %}<option value="{{ n }}" {% if n|stringformat:'s' == values.weekday or t and n == t.weekday %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+      </div>
+      <div><label class="label">Hour</label><input name="hour" type="number" min="0" max="23" class="input" value="{% firstof values.hour t.hour 20 %}"></div>
+      <div><label class="label">Minute</label><input name="minute" type="number" min="0" max="59" class="input" value="{% firstof values.minute t.minute 0 %}"></div>
+      <div><label class="label">Materialise (days ahead)</label><input name="lead_days" type="number" min="1" max="60" class="input" value="{% firstof values.lead_days t.lead_days 10 %}"></div>
+    </div>
+    <label class="flex items-center gap-2 text-sm text-ink"><input type="checkbox" name="active" value="1" {% if t.active or not t and not values %}checked{% elif values.active %}checked{% endif %}> Active (spawn instances automatically)</label>
+  </section>
+
+  <section class="panel space-y-4 p-5">
+    <h2 class="eyebrow text-gold">Instance details</h2>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div><label class="label">Form-up location</label><input name="formup" class="input" value="{% firstof values.formup t.formup '' %}"></div>
+      <div><label class="label">Destination / target</label><input name="destination" class="input" value="{% firstof values.destination t.destination '' %}"></div>
+      <div><label class="label">Comms</label><input name="comms" class="input" value="{% firstof values.comms t.comms '' %}"></div>
+      <div><label class="label">Doctrine / fitting link</label><input name="link" class="input" value="{% firstof values.link t.link '' %}"></div>
+      <div><label class="label">Duration (min)</label><input name="duration_minutes" type="number" min="0" class="input" value="{% firstof values.duration_minutes t.duration_minutes 60 %}"></div>
+      <div><label class="label">Min pilots to run</label><input name="min_pilots" type="number" min="0" class="input" value="{% firstof values.min_pilots t.min_pilots 0 %}"></div>
+      <div><label class="label">RSVP deadline (min before form-up)</label><input name="rsvp_offset_minutes" type="number" min="0" class="input" value="{% firstof values.rsvp_offset_minutes t.rsvp_offset_minutes 0 %}"></div>
+    </div>
+    <div><label class="label">Notes</label><textarea name="notes" rows="2" class="input">{% firstof values.notes t.notes '' %}</textarea></div>
+  </section>
+
+  <section class="panel space-y-2 p-5">
+    <h2 class="eyebrow text-gold">Composition (blank rows ignored)</h2>
+    <div class="grid grid-cols-12 gap-2 text-[11px] uppercase tracking-wide text-faint">
+      <span class="col-span-5">Ship</span><span class="col-span-3">Role</span><span class="col-span-1">Min</span><span class="col-span-1">Max</span><span class="col-span-2">Priority</span>
+    </div>
+    {% for s in slots %}
+    <div class="grid grid-cols-12 gap-2">
+      <input name="slot_ship" class="input col-span-5" value="{{ s.ship_name }}">
+      <select name="slot_role" class="input col-span-3">{% for v, label in roles %}<option value="{{ v }}" {% if v == s.role %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+      <input name="slot_min" type="number" min="0" class="input col-span-1" value="{{ s.min_pilots }}">
+      <input name="slot_max" type="number" min="0" class="input col-span-1" value="{{ s.max_pilots }}">
+      <input name="slot_priority" type="number" min="1" class="input col-span-2" value="{{ s.priority }}">
+    </div>
+    {% endfor %}
+    {% for _ in "12345" %}
+    <div class="grid grid-cols-12 gap-2">
+      <input name="slot_ship" class="input col-span-5" placeholder="e.g. Ferox">
+      <select name="slot_role" class="input col-span-3">{% for v, label in roles %}<option value="{{ v }}">{{ label }}</option>{% endfor %}</select>
+      <input name="slot_min" type="number" min="0" class="input col-span-1" value="1">
+      <input name="slot_max" type="number" min="0" class="input col-span-1" value="0">
+      <input name="slot_priority" type="number" min="1" class="input col-span-2" value="1">
+    </div>
+    {% endfor %}
+  </section>
+
+  <div class="flex justify-end gap-3">
+    <a href="{% url 'operations:templates' %}" class="btn-ghost">Cancel</a>
+    <button type="submit" class="btn-gold">{% if t %}Save template{% else %}Create template{% endif %}</button>
+  </div>
+</form>
+{% endwith %}
+{% endblock %}

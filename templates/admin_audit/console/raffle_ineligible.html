@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}Outreach report · {{ contest.name }} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-gold">Raffle · {{ contest.name }}</p>
+    <h1 class="mt-1 text-2xl font-bold text-ink">Outreach &amp; adoption report</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">These pilots flew eligible activity during the contest but earned <span class="text-ink">nothing</span> — they aren't enrolled in FORCA, or their ESI token isn't live. Reach out: enrolling and reconnecting is all it takes for them to take part next time.</p>
+  </div>
+  <div class="flex items-center gap-2">
+    <form method="post" action="{% url 'admin_audit:raffle_send_outreach' contest.pk %}"
+          data-confirm="Send a one-time enrolment nudge to each ranked unenrolled pilot with a linked account? Pilots already nudged, opted out, or now enrolled are skipped.">
+      {% csrf_token %}
+      <button type="submit" class="btn-gold text-sm">Send enrolment nudges</button>
+    </form>
+    <a href="?export=csv" class="btn-cyan text-sm">Export CSV</a>
+    <a href="{% url 'admin_audit:raffle_detail' contest.pk %}" class="btn-ghost text-sm">← Back</a>
+  </div>
+</header>
+{% if outreach_sent %}<p class="-mt-4 mb-4 text-[11px] text-faint">{{ outreach_sent }} pilot{{ outreach_sent|pluralize }} already nudged for this contest.</p>{% endif %}
+
+<section class="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">Active corp pilots</p>
+    <p class="data mt-1 text-2xl font-bold text-ink">{{ adoption.active_pilots }}</p>
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">Enrolled in FORCA</p>
+    <p class="data mt-1 text-2xl font-bold text-kill">{{ adoption.enrolled }}</p>
+    <p class="mt-0.5 text-[11px] text-faint">{{ adoption.conversion_rate }}% of active pilots</p>
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">Missed out (unenrolled)</p>
+    <p class="data mt-1 text-2xl font-bold text-gold">{{ adoption.unenrolled_with_activity }}</p>
+    <p class="mt-0.5 text-[11px] text-faint">had activity, earned no tickets</p>
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">Expired / revoked token</p>
+    <p class="data mt-1 text-2xl font-bold text-loss">{{ adoption.expired_or_revoked }}</p>
+    <p class="mt-0.5 text-[11px] text-faint">enrolled, need to reconnect ESI</p>
+  </div>
+</section>
+
+{% comment %}Why they missed out — one chip per reason bucket.{% endcomment %}
+{% if by_reason %}
+<section class="panel mb-6 p-4">
+  <p class="eyebrow mb-3 text-faint">Why they earned nothing</p>
+  <div class="flex flex-wrap gap-2 text-xs">
+    {% for reason, count in by_reason.items %}
+      <span class="chip">
+        {% if reason == 'not_enrolled' %}No FORCA account{% elif reason == 'no_token' %}No valid ESI token{% elif reason == 'token_expired' %}ESI token expired/revoked{% elif reason == 'missing_scope' %}Missing required scope{% elif reason == 'not_corp' %}Not a recognised corp pilot{% elif reason == 'excluded' %}Manually excluded{% else %}{{ reason }}{% endif %}
+        <span class="data ml-1 text-gold">{{ count }}</span>
+      </span>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="panel overflow-hidden">
+  <div class="flex items-center justify-between border-b border-line px-4 py-3">
+    <h2 class="eyebrow text-gold">Pilots to reach out to</h2>
+    <span class="text-[11px] text-faint">{{ total }} ineligible event{{ total|pluralize }} · top {{ by_char|length }} pilots by would-be tickets</span>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-line/60 text-left text-[11px] uppercase tracking-wide text-faint">
+          <th class="px-4 py-2 font-medium">Pilot</th>
+          <th class="px-4 py-2 font-medium">Why ineligible</th>
+          <th class="px-4 py-2 text-right font-medium">Events</th>
+          <th class="px-4 py-2 text-right font-medium">Tickets they'd have earned</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-line/40">
+        {% for row in by_char %}
+          <tr>
+            <td class="px-4 py-2.5">
+              <div class="flex items-center gap-2">
+                <img src="{% eve_portrait row.character_id 32 %}" alt="" loading="lazy" class="h-6 w-6 rounded-full ring-1 ring-line">
+                <div class="min-w-0">
+                  <span class="block truncate text-ink">{{ row.character_name|default:row.character_id }}</span>
+                  <span class="data block text-[11px] text-faint">{{ row.character_id }}</span>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-2.5">
+              <span class="chip {% if row.reason == 'excluded' %}!border-loss/40 !text-loss{% else %}!border-gold/40 !text-gold{% endif %}">
+                {% if row.reason == 'not_enrolled' %}No FORCA account{% elif row.reason == 'no_token' %}No valid ESI token{% elif row.reason == 'token_expired' %}ESI token expired/revoked{% elif row.reason == 'missing_scope' %}Missing required scope{% elif row.reason == 'not_corp' %}Not a recognised corp pilot{% elif row.reason == 'excluded' %}Manually excluded{% else %}{{ row.reason }}{% endif %}
+              </span>
+            </td>
+            <td class="px-4 py-2.5 text-right"><span class="data text-muted">{{ row.events }}</span></td>
+            <td class="px-4 py-2.5 text-right"><span class="data font-semibold text-gold">{{ row.tickets|default:0 }}</span></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4" class="px-4 py-10 text-center text-sm text-faint">No ineligible activity recorded — every active pilot who flew was enrolled with a live token. That's the goal.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<p class="mt-6 text-center text-[11px] text-faint">Ineligible activity is recorded for outreach only and is never drawable. Enable retroactive tickets on the contest to reward a pilot's earlier activity once they enrol.</p>
+{% endblock %}

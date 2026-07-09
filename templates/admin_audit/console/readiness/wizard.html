@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Activate readiness · Admin{% endblock %}
+{% block content %}
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
+<header class="mt-3 mb-6">
+  <p class="eyebrow">Readiness configuration</p>
+  <h1 class="mt-1 text-2xl font-bold text-ink">Activate readiness dimensions</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">These dimensions are built and tested but ship <strong class="text-ink">disabled</strong> so they don't change your index until you opt in. Each card previews its would-be live score now; enabling one adds it to the index at the recommended starter weight. Fine-tune weights and bands afterwards on <a href="{% url 'admin_audit:readiness_dimensions' %}" class="text-cyan hover:underline">Dimensions &amp; weights</a>.</p>
+</header>
+
+{% if rows %}
+<div class="grid gap-3 sm:grid-cols-2">
+  {% for r in rows %}
+  <div class="panel p-5">
+    <div class="flex items-start justify-between gap-3">
+      <div>
+        <h2 class="font-display font-semibold text-ink">{{ r.label }}</h2>
+        <p class="mt-0.5 text-[11px] text-faint">recommended weight {{ r.recommended_weight }}</p>
+      </div>
+      <div class="text-right">
+        {% if r.score is not None %}
+          <p class="data text-2xl font-bold {% if r.score >= 60 %}text-kill{% elif r.score >= 40 %}text-gold{% else %}text-loss{% endif %}">{{ r.score }}</p>
+          <p class="text-[11px] text-faint">would-be score</p>
+        {% else %}
+          <p class="text-sm text-faint">no data yet</p>
+        {% endif %}
+      </div>
+    </div>
+    <form method="post" class="mt-4">
+      {% csrf_token %}
+      <input type="hidden" name="dimension" value="{{ r.key }}">
+      <button type="submit" class="btn-gold w-full text-sm">Enable {{ r.label }}</button>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="panel p-10 text-center">
+  <p class="font-display text-lg text-muted">Every dimension is already active</p>
+  <p class="mt-1 text-sm text-faint">Tune weights and amber/red bands on the <a href="{% url 'admin_audit:readiness_dimensions' %}" class="text-cyan hover:underline">Dimensions &amp; weights</a> page.</p>
+</div>
+{% endif %}
+{% endblock %}

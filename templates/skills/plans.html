@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}My Skills &amp; Training · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-gold">Training</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">My skills &amp; training</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">Your live in-game skill queue and your training plans, in one place. Looking for which doctrines you can fly? That's on the <a href="{% url 'doctrines:list' %}" class="text-cyan hover:underline">Doctrines</a> page.</p>
+  </div>
+  <form method="post" action="{% url 'skills:import_mine' %}">{% csrf_token %}<button class="btn-ghost whitespace-nowrap text-sm">↻ Refresh from EVE</button></form>
+</header>
+
+
+{% if not characters %}
+  <div class="panel p-8 text-center">
+    <p class="text-muted">Link an EVE character to see your skills and training queue.</p>
+    <a href="{% url 'sso:login' %}" class="btn-gold mt-4">Link a character with EVE</a>
+  </div>
+{% else %}
+
+<!-- Per-character training -->
+{% for t in trainings %}
+<section class="panel mb-6 overflow-hidden">
+  <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-3">
+    <div class="flex items-center gap-3">
+      <img src="{% eve_portrait t.character.character_id 64 %}" alt="" class="h-10 w-10 rounded-full ring-1 ring-line" loading="lazy">
+      <div>
+        <h2 class="font-display font-semibold text-ink">{{ t.character.name }}{% if t.character.is_main %} <span class="text-[10px] text-gold">main</span>{% endif %}</h2>
+        {% if t.is_training %}<span class="text-[11px] text-kill">▲ Training</span>
+        {% elif t.has_queue_data %}<span class="text-[11px] text-loss">▼ Idle — not training</span>
+        {% else %}<span class="text-[11px] text-faint">no queue data</span>{% endif %}
+      </div>
+    </div>
+    {% if t.has_skills %}
+    <div class="flex gap-5 text-center">
+      <div><p class="data text-xl text-ink">{{ t.total_sp|sp }}</p><p class="text-[10px] uppercase tracking-wide text-faint">total SP</p></div>
+      <div><p class="data text-xl text-ink">{{ t.n_skills }}</p><p class="text-[10px] uppercase tracking-wide text-faint">skills</p></div>
+      <div><p class="data text-xl text-gold">{{ t.n_at_v }}</p><p class="text-[10px] uppercase tracking-wide text-faint">at level V</p></div>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if not t.has_skills %}
+    <p class="px-4 py-6 text-center text-sm text-faint">No skills imported yet — hit <span class="text-ink">Refresh from EVE</span> above. If it says access is missing, log out and back in with EVE to grant the skills scope.</p>
+  {% else %}
+
+  <!-- Currently training -->
+  {% if t.current %}
+  <div class="border-b border-line px-4 py-4" data-train data-finish="{{ t.current.finish|date:'c' }}">
+    <div class="flex items-baseline justify-between gap-3">
+      <p class="text-sm"><span class="text-[11px] uppercase tracking-wide text-kill">Now training</span> · <span class="font-medium text-ink">{{ t.current.name }} {{ t.current.level }}</span></p>
+      <p class="data text-sm text-muted"><span data-train-remaining>{{ t.current.remaining_seconds|duration }}</span> left</p>
+    </div>
+    <div class="mt-2 h-2 overflow-hidden rounded-full bg-space">
+      <div class="h-full rounded-full bg-kill transition-[width] duration-1000" data-train-bar style="width:{{ t.current.progress }}%"></div>
+    </div>
+  </div>
+  {% elif t.is_empty_queue %}
+  <div class="border-b border-line border-l-2 border-l-loss/60 bg-loss/5 px-4 py-4">
+    <p class="text-sm font-medium text-loss">Your training queue is empty.</p>
+    <p class="mt-0.5 text-sm text-muted">{{ t.character.name }} isn't learning anything right now — every idle minute is wasted SP. Queue a skill in the EVE client, or build a plan below and paste it into your in-game planner.</p>
+  </div>
+  {% endif %}
+
+  <!-- Queue -->
+  {% if t.queue %}
+  <div class="px-4 py-3">
+    <div class="mb-2 flex items-center justify-between">
+      <h3 class="eyebrow text-faint">In-game queue</h3>
+      <span class="text-[11px] text-faint">{% if t.queue_remaining_seconds %}empties in <span class="data text-muted">{{ t.queue_remaining_seconds|duration }}</span>{% endif %}{% if t.queue_finish %} · {{ t.queue_finish|date:"j M H:i" }}{% endif %}</span>
+    </div>
+    <ol class="divide-y divide-line/40">
+      {% for q in t.queue %}
+      <li class="flex items-center justify-between gap-3 py-1.5 text-sm {% if q.is_current %}text-ink{% else %}text-muted{% endif %}">
+        <span class="flex min-w-0 items-center gap-2">
+          <span class="w-5 shrink-0 text-right font-mono text-[11px] text-faint">{{ forloop.counter }}</span>
+          <span class="truncate">{{ q.name }} <span class="text-faint">{{ q.level }}</span>{% if q.is_current %} <span class="text-[10px] uppercase tracking-wide text-kill">training</span>{% endif %}</span>
+        </span>
+        <span class="data shrink-0 text-[11px] text-faint">{% if q.remaining_seconds %}{{ q.remaining_seconds|duration }}{% else %}paused{% endif %}</span>
+      </li>
+      {% endfor %}
+    </ol>
+  </div>
+  {% endif %}
+
+  <p class="border-t border-line px-4 py-2 text-[11px] text-faint">
+    Read-only from ESI — to change what's training, edit your queue in the EVE client.
+    {% if t.synced_at %}Synced {{ t.synced_at|timesince }} ago.{% endif %}
+  </p>
+  {% endif %}
+</section>
+{% endfor %}
+
+<!-- Training plans -->
+<section class="panel mb-6 overflow-hidden">
+  <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-3">
+    <h2 class="eyebrow text-gold">My training plans</h2>
+    <span class="text-[11px] text-faint">build a plan → <span class="text-ink">Copy</span> → paste into the in-game skill planner</span>
+  </div>
+  {% if plans %}
+  <div class="grid gap-3 p-4 sm:grid-cols-2">
+    {% for p in plans %}
+    <div class="rounded-lg border border-line p-4">
+      <div class="flex items-center justify-between gap-2">
+        <a href="{% url 'skills:detail' p.plan.pk %}" class="font-display font-semibold text-ink hover:text-gold">{{ p.plan.name }}</a>
+        <span class="chip">{{ p.plan.character.name }}</span>
+      </div>
+      <div class="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-space">
+        <div class="h-full bg-gold" style="width: {% widthratio p.done p.total 100 %}%"></div>
+      </div>
+      <div class="mt-2 flex items-center justify-between gap-2">
+        <p class="text-xs text-faint">{{ p.done }}/{{ p.total }} trained · <span class="data">{{ p.remaining|duration }}</span> left</p>
+        <button type="button" class="btn-gold !py-1 text-xs" data-copy-url="{% url 'skills:export' p.plan.pk %}">Copy to in-game planner</button>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="px-4 py-8 text-center text-sm text-faint">No plans yet. Build one below to turn "can't fly it yet" into an ordered training list — quick wins first.</p>
+  {% endif %}
+
+  <!-- Build a plan (compact) -->
+  {% if characters and doctrines %}
+  <form method="post" action="{% url 'skills:create' %}" class="grid items-end gap-3 border-t border-line p-4 sm:grid-cols-[1fr_1fr_auto]">
+    {% csrf_token %}
+    <label class="text-xs text-faint">Character
+      <select name="character_id" class="input-field mt-1" required>{% for c in characters %}<option value="{{ c.character_id }}">{{ c.name }}</option>{% endfor %}</select>
+    </label>
+    <label class="text-xs text-faint">Build a plan to fly
+      <select name="doctrine_id" class="input-field mt-1" required>{% for d in doctrines %}<option value="{{ d.id }}">{{ d.name }}</option>{% endfor %}</select>
+    </label>
+    <button class="btn-ghost text-sm">Build plan</button>
+  </form>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script nonce="{{ csp_nonce }}">
+(function () {
+  function fmt(ms) {
+    if (ms <= 0) return "0m";
+    var s = Math.floor(ms / 1000), d = Math.floor(s / 86400);
+    s -= d * 86400; var h = Math.floor(s / 3600); s -= h * 3600; var m = Math.floor(s / 60);
+    var out = []; if (d) out.push(d + "d"); if (h) out.push(h + "h"); if (!d) out.push(m + "m");
+    return out.join(" ");
+  }
+  // Copy a plan to the clipboard in the in-game skill-planner format.
+  document.querySelectorAll("[data-copy-url]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      fetch(btn.getAttribute("data-copy-url"), { credentials: "same-origin" })
+        .then(function (r) { return r.text(); })
+        .then(function (text) { return navigator.clipboard.writeText(text); })
+        .then(function () { var o = btn.textContent; btn.textContent = "Copied ✓";
+          setTimeout(function () { btn.textContent = o; }, 1800); })
+        .catch(function () { btn.textContent = "Copy failed"; });
+    });
+  });
+  // Live-tick the "now training" countdown.
+  document.querySelectorAll("[data-train]").forEach(function (el) {
+    var finish = new Date(el.getAttribute("data-finish")).getTime();
+    var rem = el.querySelector("[data-train-remaining]");
+    function tick() {
+      var left = finish - Date.now();
+      if (rem) rem.textContent = left > 0 ? fmt(left) : "completing…";
+    }
+    tick(); setInterval(tick, 30000);
+  });
+})();
+</script>
+{% endblock %}

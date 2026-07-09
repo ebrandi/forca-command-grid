@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}Route Planner · [FORCA] Command Grid{% endblock %}
+{% block content %}
+
+<header class="mb-5 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <p class="eyebrow">Navigation</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">Route planner</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">Plan a stargate route between any two systems — shortest, safer (prefer high-sec), or less secure.</p>
+  </div>
+  <a href="{% url 'navigation:jump_planner' %}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-jump"/></svg> Jump planner</a>
+</header>
+
+<form method="get" class="panel mb-5 p-5">
+  <div class="grid gap-3 sm:grid-cols-2">
+    <div><label class="label" for="lf_waypoints_1">From</label>
+      {% include "navigation/_system_picker.html" with prefix="from" placeholder="Origin system" init_id=origin.system_id init_name=origin.name %}
+    </div>
+    <div><label class="label">To</label>
+      {% include "navigation/_system_picker.html" with prefix="to" placeholder="Destination system" init_id=dest.system_id init_name=dest.name %}
+    </div>
+  </div>
+  <div class="mt-3 flex flex-wrap items-center gap-2 text-xs">
+    <span class="text-faint">Preference:</span>
+    {% for key, label in preferences %}
+    <label class="chip cursor-pointer {% if preference == key %}!border-gold/40 !text-gold{% else %}hover:text-ink{% endif %}">
+      <input type="radio" name="pref" value="{{ key }}" class="hidden" {% if preference == key %}checked{% endif %} data-autosubmit> {{ label }}
+    </label>
+    {% endfor %}
+  </div>
+  <div class="mt-3 space-y-2 border-t border-line/60 pt-3">
+    <div>
+      <label class="label">Waypoints <span class="text-faint">(in order, comma-separated)</span></label>
+      <input id="lf_waypoints_1" type="text" name="waypoints" value="{{ waypoints_text }}" placeholder="force route through… e.g. Amamake, Rancer" autocomplete="off" class="input-field">
+      {% if wp_unresolved %}<p class="mt-1 text-[11px] text-loss">Couldn't find waypoint: {{ wp_unresolved|join:", " }}</p>{% endif %}
+    </div>
+    {% include "navigation/_avoid_controls.html" %}
+    {% if ansiblex_count %}<label class="flex items-center gap-2 text-sm text-muted"><input type="checkbox" name="ansiblex" value="1" {% if use_ansiblex %}checked{% endif %}> Use alliance jump bridges ({{ ansiblex_count }} registered)</label>{% endif %}
+  </div>
+  <button class="btn-gold mt-4 text-sm">Plan route</button>
+</form>
+
+{% if error %}
+  <div class="panel border-loss/40 bg-loss/5 px-4 py-3 text-sm text-loss">{{ error }}</div>
+{% elif result %}
+{% if camp.flagged %}
+<div class="panel mb-3 px-4 py-3 text-sm {% if camp.worst == 'danger' %}border-l-2 border-l-[#f0533f]{% else %}border-l-2 border-l-[#f4a52b]{% endif %}">
+  <p class="font-semibold {% if camp.worst == 'danger' %}text-[#f0533f]{% else %}text-[#f4a52b]{% endif %}">
+    ⚠ Gate-camp activity on this route — {% if camp.danger %}{{ camp.danger }} danger{% endif %}{% if camp.danger and camp.caution %}, {% endif %}{% if camp.caution %}{{ camp.caution }} caution{% endif %}
+  </p>
+  <ul class="mt-1 space-y-0.5 text-faint">
+    {% for f in camp.flagged %}<li><span class="font-medium {% if f.level == 'danger' %}text-[#f0533f]{% else %}text-[#f4a52b]{% endif %}">{{ f.name }}</span> <span class="text-[11px]">({{ f.level }}) — {{ f.reasons|join:", " }}</span></li>{% endfor %}
+  </ul>
+  <p class="mt-1.5 text-[11px] text-faint">Last-hour public kill data, system-level. Scout these hops before committing a loaded ship. <a href="{% url 'navigation:gatecamp' %}" class="text-gold hover:underline">Gate Camp Watch →</a></p>
+</div>
+{% endif %}
+<section class="panel overflow-hidden">
+  <div class="flex flex-wrap items-center gap-2 border-b border-line px-4 py-3">
+    <h2 class="font-display text-sm font-semibold text-ink">{{ origin.name }} → {{ dest.name }}</h2>
+    {% if map_link %}<a href="{{ map_link }}" class="ml-auto btn-ghost text-xs"><svg class="h-3.5 w-3.5"><use href="#i-map"/></svg> View route map</a>{% endif %}
+    <span class="chip !text-gold {% if not map_link %}ml-auto{% endif %}">{{ result.jumps }} jump{{ result.jumps|pluralize }}</span>
+  </div>
+  <ol class="divide-y divide-line/40">
+    {% for s in result.systems %}
+    <li class="flex items-center gap-3 px-4 py-1.5 text-sm {% if forloop.first or forloop.last %}bg-panel2/40{% endif %}">
+      <span class="data w-6 shrink-0 text-right text-[11px] text-faint">{{ forloop.counter0 }}</span>
+      <span class="data w-9 shrink-0 text-right font-semibold {{ s.security|sec_class }}">{{ s.security }}</span>
+      <span class="min-w-0 flex-1 truncate text-muted">{{ s.name }}{% if forloop.first %} <span class="text-[10px] text-faint">· start</span>{% elif forloop.last %} <span class="text-[10px] text-faint">· end</span>{% endif %}</span>
+      {% if s.camp.level == 'danger' or s.camp.level == 'caution' %}<span class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase {% if s.camp.level == 'danger' %}bg-[#f0533f]/15 text-[#f0533f]{% else %}bg-[#f4a52b]/15 text-[#f4a52b]{% endif %}" title="{{ s.camp.reasons|join:', ' }}">{{ s.camp.level }}</span>{% endif %}
+      <span class="hidden truncate text-xs text-faint sm:block">{{ s.region }}</span>
+    </li>
+    {% endfor %}
+  </ol>
+</section>
+<p class="mt-3 text-center text-[11px] text-faint">Gate route via ESI. “Safer” prefers high-sec; “less secure” prefers low/null. Routes are cached for a week.</p>
+{% else %}
+  <div class="panel px-4 py-16 text-center">
+    <p class="font-display text-lg text-muted">Pick two systems</p>
+    <p class="mt-1 text-sm text-faint">Choose an origin and destination above to plan a gate route.</p>
+  </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}SRP loss impact · [FORCA] Command Grid{% endblock %}
+{% block content %}
+{% if features.recommendations %}<a href="{% url 'recommendations:officer' %}" class="text-xs text-faint hover:text-gold">← Command</a>{% endif %}
+<header class="mt-2 mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-gold">Leadership</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">Loss impact</h1>
+    <p class="mt-1 text-sm text-faint">Where doctrine losses come from and which fittings are repeatedly missing — last {{ summary.days }} days.</p>
+  </div>
+  <a href="{% url 'srp:queue' %}" class="btn-ghost text-sm">SRP queue</a>
+</header>
+
+<section class="mb-6 grid gap-3 sm:grid-cols-2">
+  <div class="panel p-4"><p class="eyebrow text-faint">Doctrine losses</p><p class="data text-2xl font-bold text-loss">{{ summary.total_losses }}</p></div>
+  <div class="panel p-4"><p class="eyebrow text-faint">Deviated from fit</p><p class="data text-2xl font-bold text-gold">{{ summary.total_deviated }}</p></div>
+</section>
+
+{% if summary.total_losses %}
+<div class="grid gap-5 lg:grid-cols-3">
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">Losses by doctrine</h2></div>
+    <ul class="divide-y divide-line/40">
+      {% for d in summary.doctrines %}
+      <li class="flex items-center justify-between gap-2 px-4 py-2 text-sm">
+        <span class="min-w-0 flex-1 truncate text-muted">{{ d.name }}</span>
+        <span class="data text-xs text-ink">{{ d.losses }}</span>
+        {% if d.deviated %}<span class="chip !text-loss" title="deviated from the canonical fit">{{ d.deviated }} off</span>{% endif %}
+      </li>
+      {% empty %}<li class="px-4 py-6 text-center text-xs text-faint">No doctrine losses.</li>{% endfor %}
+    </ul>
+  </section>
+
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">Most-missing fittings</h2></div>
+    <ul class="divide-y divide-line/40">
+      {% for m in summary.most_missing %}
+      <li class="flex items-center gap-2.5 px-4 py-2 text-sm">
+        <img src="{% eve_type_icon m.type_id 32 %}" alt="" loading="lazy" class="h-6 w-6 rounded-sm">
+        <span class="min-w-0 flex-1 truncate text-muted">{% type_name m.type_id %}</span>
+        <span class="data text-xs text-loss">{{ m.count }}×</span>
+      </li>
+      {% empty %}<li class="px-4 py-6 text-center text-xs text-faint">No missing-module pattern yet.</li>{% endfor %}
+    </ul>
+  </section>
+
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">Repeated mistakes</h2></div>
+    <ul class="divide-y divide-line/40">
+      {% for p in summary.repeat_offenders %}
+      <li class="flex items-center gap-2.5 px-4 py-2 text-sm">
+        <img src="{% eve_portrait p.character_id 32 %}" alt="" loading="lazy" class="h-6 w-6 rounded-full ring-1 ring-line">
+        <span class="min-w-0 flex-1 truncate text-muted">{% eve_name p.character_id %}</span>
+        <span class="data text-xs text-loss" title="{{ p.deviated }} of {{ p.losses }} doctrine losses deviated">{{ p.deviated }}/{{ p.losses }}</span>
+      </li>
+      {% empty %}<li class="px-4 py-6 text-center text-xs text-faint">No repeated mistakes.</li>{% endfor %}
+    </ul>
+  </section>
+</div>
+{% else %}
+<div class="panel px-4 py-16 text-center">
+  <p class="font-display text-lg text-muted">No doctrine losses in this window</p>
+  <p class="mt-1 text-sm text-faint">Losses get analysed once doctrine fits exist and members lose tagged hulls.</p>
+</div>
+{% endif %}
+{% endblock %}

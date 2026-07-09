@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}My alert channels · Pingboard{% endblock %}
+{% block content %}
+<header class="mb-6"><p class="eyebrow text-gold">Pingboard</p>
+  <h1 class="text-3xl font-bold text-ink">My alert channels</h1>
+  <p class="text-sm text-faint">Link a chat account to receive direct alerts. EVE-mail always reaches you — linking is optional.</p></header>
+
+<section class="panel p-5 mb-5">
+  <h2 class="eyebrow text-faint mb-3">Linked channels</h2>
+  <ul class="divide-y divide-line/50">
+    {% for c in channels %}
+    <li class="flex items-center justify-between gap-3 py-2">
+      <span class="text-ink">{{ c.get_kind_display }}
+        {% if c.verified %}<span class="chip border-kill text-kill">verified</span>
+        {% else %}<span class="chip border-gold text-gold">pending</span>{% endif %}</span>
+      <div class="flex items-center gap-2">
+        {# c.verify_code is blanked by the view while a director is viewing-as, which hides this deep link. #}
+        {% if not c.verified and c.kind == 'telegram' and telegram_username and c.verify_code %}
+        <a href="https://t.me/{{ telegram_username }}?start={{ c.verify_code }}" class="btn-ghost" target="_blank" rel="noopener">Open Telegram &amp; verify</a>
+        {% elif not c.verified %}
+        <form method="post" action="{% url 'pingboard:channel_confirm' %}" class="flex items-end gap-1">{% csrf_token %}
+          <input type="hidden" name="kind" value="{{ c.kind }}">
+          <input name="code" placeholder="code" class="input-field w-24"><button class="btn-ghost">Confirm</button></form>
+        {% endif %}
+        <form method="post" action="{% url 'pingboard:channel_unlink' %}" data-confirm="Remove this channel?">{% csrf_token %}
+          <input type="hidden" name="kind" value="{{ c.kind }}"><button class="btn-danger">Remove</button></form>
+      </div>
+    </li>
+    {% empty %}<li class="py-3 text-sm text-faint">No channels linked.</li>{% endfor %}
+  </ul>
+</section>
+
+{% if prefs %}
+<section class="panel p-5 mb-5">
+  <h2 class="eyebrow text-faint mb-1">What reaches each channel</h2>
+  <p class="text-sm text-faint mb-4">Tick the categories you want as direct messages. Unticked categories still appear in-app and (where applicable) by EVE-mail — you just won't get a DM. Emergency alerts always reach every linked channel.</p>
+  {% for row in prefs %}
+  <form method="post" action="{% url 'pingboard:channel_prefs' %}" class="mb-4 last:mb-0">{% csrf_token %}
+    <input type="hidden" name="kind" value="{{ row.kind }}">
+    <div class="flex items-center justify-between mb-2">
+      <h3 class="text-ink font-semibold">{{ row.label }}</h3>
+      <button class="btn-ghost">Save {{ row.label }}</button>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1">
+      {% for cat in row.categories %}
+      <label class="flex items-center gap-2 text-sm text-faint">
+        <input type="checkbox" name="deliver" value="{{ cat.value }}" {% if not cat.muted %}checked{% endif %}>
+        <span>{{ cat.label }}</span>
+      </label>
+      {% endfor %}
+    </div>
+  </form>
+  {% endfor %}
+</section>
+{% endif %}
+
+<section class="panel p-5">
+  <h2 class="eyebrow text-gold mb-3">Link a channel</h2>
+  <form method="post" action="{% url 'pingboard:channel_link' %}" class="flex flex-wrap items-end gap-3">
+    {% csrf_token %}
+    <label class="label">Channel<select name="kind" class="input-field mt-1">
+      {% for v, l in kinds %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></label>
+    <label class="label">Handle (Slack id / phone; Telegram uses the deep link)
+      <input name="handle" class="input-field mt-1"></label>
+    <button class="btn-gold">Link</button>
+  </form>
+</section>
+{% endblock %}

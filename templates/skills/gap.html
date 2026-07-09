@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}Skill gap · [FORCA] Command Grid{% endblock %}
+{% block content %}
+{% if features.recommendations %}<a href="{% url 'recommendations:officer' %}" class="text-xs text-faint hover:text-gold">← Command</a>{% endif %}
+
+<header class="mt-2 mb-6">
+  <p class="eyebrow text-gold">Leadership</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">Skill gap intelligence</h1>
+  <p class="mt-1 text-sm text-faint">What's blocking the most pilots, and who we can train into each doctrine fastest — across {{ member_count }} corp character{{ member_count|pluralize }}.</p>
+</header>
+
+<div class="grid gap-5 lg:grid-cols-3">
+  <!-- Bottlenecks -->
+  <section class="panel overflow-hidden lg:col-span-1">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Bottleneck skills</h2></div>
+    <div class="divide-y divide-line/40">
+      {% for b in bottlenecks %}
+        <div class="flex items-center gap-3 px-4 py-2.5">
+          <img src="{% eve_type_icon b.skill_type_id 32 %}" alt="" loading="lazy" class="h-7 w-7 rounded-sm">
+          <span class="min-w-0 flex-1 truncate text-sm text-ink">{{ b.name }}</span>
+          <span class="data text-xs text-gold">{{ b.members }}</span>
+          <span class="text-xs text-faint">blocked</span>
+        </div>
+      {% empty %}
+        <p class="px-4 py-6 text-center text-sm text-faint">No gaps found — or no member skills imported yet.</p>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- Fastest candidates per doctrine -->
+  <section class="space-y-5 lg:col-span-2">
+    {% for row in doctrines %}
+      <div class="panel overflow-hidden">
+        <div class="flex items-center justify-between border-b border-line px-4 py-3">
+          <h2 class="eyebrow">Fastest into <span class="text-gold">{{ row.doctrine.name }}</span></h2>
+          <a href="{% url 'doctrines:readiness' row.doctrine.id %}" class="text-xs text-faint hover:text-gold">Coverage →</a>
+        </div>
+        <div class="divide-y divide-line/40">
+          {% for c in row.candidates %}
+            <div class="flex items-center gap-3 px-4 py-2.5">
+              <img src="{% eve_portrait c.character_id 32 %}" alt="" loading="lazy" class="h-7 w-7 rounded-full ring-1 ring-line">
+              <a href="{% url 'identity:character' c.character_id %}" class="min-w-0 flex-1 truncate text-sm text-ink hover:text-gold">{{ c.name }}</a>
+              <span class="data text-xs text-cyan">{{ c.seconds|duration }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% empty %}
+      <div class="panel p-6 text-center text-sm text-faint">No candidate doctrines — every active doctrine is either fully covered or has no near-ready pilots.</div>
+    {% endfor %}
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Planetary Industry settings · Admin Console{% endblock %}
+{% block content %}
+<header class="mb-6">
+  <a href="{% url 'admin_audit:planetary_hub' %}" class="text-xs text-faint hover:text-gold">← Planetary Industry admin</a>
+  <h1 class="mt-1 text-3xl font-bold text-ink">Planetary Industry settings</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">Corp-wide defaults for the PI planner. New plans start from these numbers; pilots can adjust their own copies.</p>
+</header>
+
+<form method="post" class="max-w-3xl space-y-4">
+  {% csrf_token %}
+
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">Module</h2>
+    <label class="flex items-center gap-2 text-sm text-ink">{{ form.enabled }} Enable the Planetary Industry planner for pilots</label>
+    {% if form.enabled.help_text %}<p class="mt-1 text-[11px] text-faint">{{ form.enabled.help_text }}</p>{% endif %}
+    <div class="mt-4 grid gap-4 sm:grid-cols-2">
+      {% include "planetary/_field.html" with field=form.name %}
+      {% include "planetary/_field.html" with field=form.default_visibility %}
+    </div>
+  </section>
+
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">Market, taxes &amp; hauling defaults</h2>
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {% include "planetary/_field.html" with field=form.default_market_region_id %}
+      {% include "planetary/_field.html" with field=form.default_extraction_rate_per_hour %}
+      {% include "planetary/_field.html" with field=form.corp_buyback_rate %}
+      {% include "planetary/_field.html" with field=form.default_customs_export_tax %}
+      {% include "planetary/_field.html" with field=form.default_customs_import_tax %}
+      {% include "planetary/_field.html" with field=form.default_sales_tax %}
+      {% include "planetary/_field.html" with field=form.default_broker_fee %}
+      {% include "planetary/_field.html" with field=form.default_hauling_cost_per_m3 %}
+    </div>
+  </section>
+
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">Corp guidance</h2>
+    <div class="space-y-4">
+      {% include "planetary/_field.html" with field=form.recommended_products_text %}
+      {% include "planetary/_field.html" with field=form.recommended_regions %}
+      {% include "planetary/_field.html" with field=form.priority_note %}
+    </div>
+  </section>
+
+  <div class="flex items-center gap-3">
+    <button type="submit" class="btn-gold">Save settings</button>
+    <a href="{% url 'admin_audit:planetary_hub' %}" class="btn-ghost">Cancel</a>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}New Player content · Admin{% endblock %}
+{% block content %}
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
+<header class="mt-3 mb-6">
+  <p class="eyebrow">Operations</p>
+  <h1 class="mt-1 text-2xl font-bold text-ink">New Player content</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">Everything the <a href="{% url 'onboarding:dashboard' %}" class="text-cyan hover:underline">New Player page</a> asks of your pilots — the onboarding milestones and the glossary. Auto checks complete themselves from live data; manual ones give the pilot a check-off button.</p>
+</header>
+
+{# ============================ Milestones ============================ #}
+<section class="panel mb-6 overflow-hidden">
+  <div class="border-b border-line px-4 py-3">
+    <h2 class="eyebrow text-gold">Onboarding milestones</h2>
+    <p class="mt-1 text-xs text-faint">The journey you set for new pilots, in sort order. Grouped on their page by category: Account → Skills → Doctrine → Activity.</p>
+  </div>
+  {% if not milestones %}
+    <p class="px-4 py-8 text-center text-sm text-faint">No milestones yet — add the first one below.</p>
+  {% else %}
+  <div class="divide-y divide-line/50">
+    {% for m in milestones %}
+    <div class="px-4 py-3 {% if not m.active %}opacity-60{% endif %}">
+      <form method="post" action="{% url 'admin_audit:milestone_update' m.id %}" x-data="{ c: '{{ m.check_type }}' }" class="grid grid-cols-2 gap-3 sm:grid-cols-12">
+        {% csrf_token %}
+        <label class="col-span-2 sm:col-span-4 text-xs text-faint">Title
+          <input name="title" value="{{ m.title }}" class="input-field mt-1 w-full" required>
+        </label>
+        <label class="text-xs text-faint sm:col-span-2">Category
+          <select name="category" class="input-field mt-1 w-full">{% for v,l in categories %}<option value="{{ v }}" {% if m.category == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+        </label>
+        <label class="text-xs text-faint sm:col-span-3">Completed when
+          <select name="check" x-model="c" class="input-field mt-1 w-full">{% for v,l in check_types %}<option value="{{ v }}" {% if m.check_type == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+        </label>
+        <label class="text-xs text-faint">Sort
+          <input name="sort_order" type="number" value="{{ m.sort_order }}" class="input-field mt-1 w-full">
+        </label>
+        <div class="flex items-end gap-3 sm:col-span-2">
+          <label class="flex items-center gap-1 pb-2 text-xs text-faint"><input type="checkbox" name="active" {% if m.active %}checked{% endif %}> active</label>
+          <button class="btn-ghost mb-0.5 !py-1 text-xs">Save</button>
+        </div>
+        <label class="col-span-2 sm:col-span-8 text-xs text-faint">Description <span class="text-faint/70">— one didactic sentence: why it matters, how to do it</span>
+          <input name="description" value="{{ m.description }}" class="input-field mt-1 w-full">
+        </label>
+        <label class="col-span-2 sm:col-span-4 text-xs text-faint">Action link <span class="text-faint/70">— internal path or invite URL</span>
+          <input name="url" value="{{ m.url }}" placeholder="/auth/eve/scopes/ or https://discord.gg/…" class="input-field mt-1 w-full">
+        </label>
+        <label class="col-span-2 text-xs text-faint sm:col-span-4" x-show="c === 'doctrine_ready'" x-cloak>Doctrine
+          <select name="doctrine_id" class="input-field mt-1 w-full">{% for d in doctrines %}<option value="{{ d.id }}" {% if m.doctrine_id_param == d.id %}selected{% endif %}>{{ d.name }}</option>{% endfor %}</select>
+        </label>
+        <label class="text-xs text-faint sm:col-span-2" x-show="c === 'skill_min'" x-cloak>Skill type id
+          <input name="skill_type_id" type="number" value="{{ m.skill_type_id_param|default:'' }}" class="input-field mt-1 w-full">
+        </label>
+        <label class="text-xs text-faint" x-show="c === 'skill_min'" x-cloak>Level
+          <input name="skill_level" type="number" min="1" max="5" value="{{ m.skill_level_param|default:'1' }}" class="input-field mt-1 w-full">
+        </label>
+        <label class="col-span-2 text-xs text-faint sm:col-span-8" x-show="c === 'scopes'" x-cloak>ESI scopes <span class="text-faint/70">— comma-separated</span>
+          <input name="scopes" value="{{ m.scopes_param }}" placeholder="esi-assets.read_assets.v1, esi-skills.read_skills.v1" class="input-field mt-1 w-full">
+        </label>
+      </form>
+      <form method="post" action="{% url 'admin_audit:milestone_delete' m.id %}" data-confirm="Delete this milestone? Pilots' progress on it is removed too." class="mt-1">{% csrf_token %}<button class="text-[11px] text-faint hover:text-loss">Remove</button></form>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</section>
+
+<section class="panel mb-8 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">Add a milestone</h2></div>
+  <form method="post" action="{% url 'admin_audit:milestone_create' %}" x-data="{ c: 'manual' }" class="grid grid-cols-2 gap-3 p-4 sm:grid-cols-12">
+    {% csrf_token %}
+    <label class="col-span-2 sm:col-span-4 text-xs text-faint">Title
+      <input name="title" placeholder="Register on alliance voice comms" class="input-field mt-1 w-full" required>
+    </label>
+    <label class="text-xs text-faint sm:col-span-2">Category
+      <select name="category" class="input-field mt-1 w-full">{% for v,l in categories %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select>
+    </label>
+    <label class="text-xs text-faint sm:col-span-3">Completed when
+      <select name="check" x-model="c" class="input-field mt-1 w-full">{% for v,l in check_types %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select>
+    </label>
+    <label class="text-xs text-faint">Sort
+      <input name="sort_order" type="number" value="0" class="input-field mt-1 w-full">
+    </label>
+    <div class="flex items-end gap-3 sm:col-span-2">
+      <label class="flex items-center gap-1 pb-2 text-xs text-faint"><input type="checkbox" name="active" checked> active</label>
+      <button class="btn-gold mb-0.5 !py-1 text-sm">Add</button>
+    </div>
+    <label class="col-span-2 sm:col-span-8 text-xs text-faint">Description
+      <input name="description" placeholder="Comms are mandatory for fleets — you don't need to talk, just listen." class="input-field mt-1 w-full">
+    </label>
+    <label class="col-span-2 sm:col-span-4 text-xs text-faint">Action link
+      <input name="url" placeholder="https://discord.gg/…" class="input-field mt-1 w-full">
+    </label>
+    <label class="col-span-2 text-xs text-faint sm:col-span-4" x-show="c === 'doctrine_ready'" x-cloak>Doctrine
+      <select name="doctrine_id" class="input-field mt-1 w-full">{% for d in doctrines %}<option value="{{ d.id }}">{{ d.name }}</option>{% endfor %}</select>
+    </label>
+    <label class="text-xs text-faint sm:col-span-2" x-show="c === 'skill_min'" x-cloak>Skill type id
+      <input name="skill_type_id" type="number" class="input-field mt-1 w-full">
+    </label>
+    <label class="text-xs text-faint" x-show="c === 'skill_min'" x-cloak>Level
+      <input name="skill_level" type="number" min="1" max="5" value="1" class="input-field mt-1 w-full">
+    </label>
+    <label class="col-span-2 text-xs text-faint sm:col-span-8" x-show="c === 'scopes'" x-cloak>ESI scopes
+      <input name="scopes" placeholder="esi-assets.read_assets.v1" class="input-field mt-1 w-full">
+    </label>
+  </form>
+</section>
+
+{# ============================ Glossary ============================ #}
+<section class="panel mb-5 p-5">
+  <h2 class="eyebrow mb-3 text-gold">Add / update a glossary term</h2>
+  <form method="post" action="{% url 'admin_audit:glossary_create' %}" class="grid items-end gap-3 sm:grid-cols-[1fr_2fr_auto]">
+    {% csrf_token %}
+    <div><label class="label" for="lf_term_1">Term</label><input id="lf_term_1" name="term" class="input-field" placeholder="e.g. Tackle" required></div>
+    <div><label class="label" for="lf_definition_2">Definition</label><input id="lf_definition_2" name="definition" class="input-field" placeholder="What it means" required></div>
+    <button class="btn-gold">Save</button>
+  </form>
+  <p class="mt-2 text-xs text-faint">Re-using an existing term updates its definition.</p>
+</section>
+
+<div class="panel divide-y divide-line/40">
+  {% for g in glossary %}
+    <div class="px-4 py-3">
+      <form method="post" action="{% url 'admin_audit:glossary_create' %}" class="flex items-end gap-3">
+        {% csrf_token %}
+        <input type="hidden" name="term" value="{{ g.term }}">
+        <div class="min-w-0 flex-1">
+          <p class="font-medium text-ink">{{ g.term }}</p>
+          <input name="definition" value="{{ g.definition }}" class="input-field mt-1 w-full !text-sm">
+        </div>
+        <button class="btn-ghost !py-1 !text-xs">Save</button>
+      </form>
+      <form method="post" action="{% url 'admin_audit:glossary_delete' g.id %}" data-confirm="Delete this term?" class="mt-1">{% csrf_token %}<button class="text-[11px] text-faint hover:text-loss">Delete</button></form>
+    </div>
+  {% empty %}<p class="px-4 py-6 text-center text-sm text-faint">No glossary terms yet.</p>{% endfor %}
+</div>
+{% endblock %}

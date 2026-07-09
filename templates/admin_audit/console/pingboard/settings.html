@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Pingboard settings · Admin{% endblock %}
+{% block content %}
+<a href="{% url 'admin_audit:console' %}" class="text-sm text-faint hover:text-gold">← Admin console</a>
+<header class="mb-6 mt-2"><p class="eyebrow text-gold">Pingboard</p>
+  <h1 class="text-3xl font-bold text-ink">Settings</h1></header>
+
+<nav class="mb-6 flex flex-wrap gap-2 text-sm">
+  <a href="{% url 'admin_audit:pingboard_channels' %}" class="btn-ghost">Channels</a>
+  <a href="{% url 'admin_audit:pingboard_automation' %}" class="btn-ghost">Automation rules</a>
+  <a href="{% url 'admin_audit:pingboard_templates' %}" class="btn-ghost">Templates</a>
+</nav>
+
+<section class="panel p-5 mb-5">
+  <h2 class="eyebrow text-gold mb-3">General</h2>
+  <form method="post" class="grid gap-3 sm:grid-cols-2">
+    {% csrf_token %}<input type="hidden" name="domain" value="general">
+    <label class="chip cursor-pointer"><input type="checkbox" name="enabled" class="mr-1 align-middle" {% if general.enabled %}checked{% endif %}>Pingboard enabled</label>
+    <label class="chip cursor-pointer"><input type="checkbox" name="manual_alerts_enabled" class="mr-1 align-middle" {% if general.manual_alerts_enabled %}checked{% endif %}>Manual alerts</label>
+    <label class="chip cursor-pointer"><input type="checkbox" name="automated_alerts_enabled" class="mr-1 align-middle" {% if general.automated_alerts_enabled %}checked{% endif %}>Automated alerts</label>
+    <label class="chip cursor-pointer"><input type="checkbox" name="urgent_alerts_enabled" class="mr-1 align-middle" {% if general.urgent_alerts_enabled %}checked{% endif %}>Urgent alerts</label>
+    <label class="chip cursor-pointer"><input type="checkbox" name="calendar_enabled" class="mr-1 align-middle" {% if general.calendar_enabled %}checked{% endif %}>Calendar</label>
+    <label class="label">Default expiry (minutes)<input type="number" name="default_expiry_minutes" value="{{ general.default_expiry_minutes }}" class="input-field mt-1"></label>
+    <label class="label sm:col-span-2">Site URL for links<input name="site_url" value="{{ general.site_url }}" class="input-field mt-1" placeholder="https://grid.example.com"></label>
+    <div class="sm:col-span-2"><button class="btn-gold">Save general</button></div>
+  </form>
+</section>
+
+<section class="panel p-5 mb-5">
+  <h2 class="eyebrow text-gold mb-3">Anti-abuse</h2>
+  <form method="post" class="grid gap-3 sm:grid-cols-2">
+    {% csrf_token %}<input type="hidden" name="domain" value="anti_abuse">
+    <label class="label">Max / officer / hour<input type="number" name="max_per_officer_per_hour" value="{{ anti_abuse.max_per_officer_per_hour }}" class="input-field mt-1"></label>
+    <label class="label">Max / category / hour<input type="number" name="max_per_category_per_hour" value="{{ anti_abuse.max_per_category_per_hour }}" class="input-field mt-1"></label>
+    <label class="label">Max urgent / day<input type="number" name="max_urgent_per_day" value="{{ anti_abuse.max_urgent_per_day }}" class="input-field mt-1"></label>
+    <label class="label">Cooldown (min)<input type="number" name="cooldown_minutes" value="{{ anti_abuse.cooldown_minutes }}" class="input-field mt-1"></label>
+    <label class="label">Duplicate window (min)<input type="number" name="duplicate_window_minutes" value="{{ anti_abuse.duplicate_window_minutes }}" class="input-field mt-1"></label>
+    <label class="label">Large-audience threshold<input type="number" name="large_audience_threshold" value="{{ anti_abuse.large_audience_threshold }}" class="input-field mt-1"></label>
+    <label class="chip cursor-pointer"><input type="checkbox" name="two_step_urgent" class="mr-1 align-middle" {% if anti_abuse.two_step_urgent %}checked{% endif %}>Two-step for urgent</label>
+    <label class="chip cursor-pointer"><input type="checkbox" name="suppress_duplicates" class="mr-1 align-middle" {% if anti_abuse.suppress_duplicates %}checked{% endif %}>Suppress duplicates</label>
+    <div class="sm:col-span-2"><button class="btn-gold">Save anti-abuse</button></div>
+  </form>
+</section>
+
+<section class="panel p-5">
+  <h2 class="eyebrow text-gold mb-3">Calendar</h2>
+  <form method="post" class="grid gap-3 sm:grid-cols-2">
+    {% csrf_token %}<input type="hidden" name="domain" value="calendar">
+    <label class="chip cursor-pointer"><input type="checkbox" name="manual_entries_enabled" class="mr-1 align-middle" {% if calendar.manual_entries_enabled %}checked{% endif %}>Manual entries</label>
+    <label class="chip cursor-pointer"><input type="checkbox" name="automated_sync_enabled" class="mr-1 align-middle" {% if calendar.automated_sync_enabled %}checked{% endif %}>Automated sync</label>
+    <label class="chip cursor-pointer"><input type="checkbox" name="pilot_visibility" class="mr-1 align-middle" {% if calendar.pilot_visibility %}checked{% endif %}>Pilots can view</label>
+    <label class="label">Auto-alert mode
+      <select name="auto_alerts_mode" class="input-field mt-1">
+        <option value="draft_until_approved" {% if calendar.auto_alerts_mode == 'draft_until_approved' %}selected{% endif %}>Draft until approved</option>
+        <option value="auto_small" {% if calendar.auto_alerts_mode == 'auto_small' %}selected{% endif %}>Auto (small audiences)</option>
+        <option value="auto_all" {% if calendar.auto_alerts_mode == 'auto_all' %}selected{% endif %}>Auto (all)</option>
+      </select>
+    </label>
+    <label class="label">Event retention (days)<input type="number" name="event_retention_days" value="{{ calendar.event_retention_days }}" class="input-field mt-1"></label>
+    <div class="sm:col-span-2"><button class="btn-gold">Save calendar</button></div>
+  </form>
+</section>
+
+<p class="mt-4 text-[11px] text-faint">Config v{{ meta.version }}{% if meta.by %} · last change by {{ meta.by }}{% endif %}. Provider secrets are set on the Channels page and never shown here.</p>
+{% endblock %}

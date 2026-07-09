@@ -1,0 +1,76 @@
+{% comment %}
+Battle after-action review fragment (Combat Intelligence). Self-polls via htmx while the
+worker builds it, then renders the AAR narrative + the deterministic fact panels. CSP-clean
+(htmx attributes only, no JS). ⓘ marks AI-authored narrative; the numbers are computed.
+{% endcomment %}
+<div id="aar-shell"
+     {% if not analysis.is_terminal %}hx-get="{% url 'command_intel:battle_status' analysis.pk %}" hx-trigger="load delay:2s" hx-target="this" hx-swap="outerHTML"{% endif %}>
+{% if not analysis.is_terminal %}
+  <div class="panel p-6 text-center text-sm text-faint"><span class="animate-pulse">◐</span> Analysing the engagement — building the facts, then the after-action narrative…</div>
+{% elif analysis.status == 'failed' %}
+  <div class="panel border-l-2 border-loss/60 p-4"><p class="text-sm text-loss">▼ Analysis failed.{% if analysis.error %} <span class="text-faint">{{ analysis.error }}</span>{% endif %}</p></div>
+{% else %}
+  {% with b=analysis.body t=analysis.facts.totals %}
+  {% if analysis.status == 'ready_degraded' %}
+  <div class="panel mb-4 border-l-2 border-gold/60 px-4 py-3"><p class="text-sm text-muted"><span class="text-gold">⚠ Narrative unavailable</span> — the intelligence officer (AI) could not be reached. The computed facts below are complete.</p></div>
+  {% endif %}
+
+  <section class="panel mb-4 overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">After-action summary</h2></div>
+    <div class="p-4"><p class="text-sm leading-relaxed text-ink">ⓘ {{ b.summary }}</p></div>
+  </section>
+
+  {% if b.what_happened %}
+  <section class="panel mb-4 overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">What happened</h2></div>
+    <div class="p-4"><p class="whitespace-pre-line text-sm text-muted">{{ b.what_happened }}</p></div>
+  </section>
+  {% endif %}
+
+  <div class="mb-4 grid gap-4 lg:grid-cols-2">
+    {% if b.what_went_wrong %}
+    <section class="panel overflow-hidden border-l-2 border-loss/50">
+      <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-loss">What went wrong</h2></div>
+      <ul class="space-y-1 p-4 text-sm text-muted">{% for w in b.what_went_wrong %}<li class="flex gap-2"><span class="text-loss">▼</span><span>{{ w }}</span></li>{% endfor %}</ul>
+    </section>
+    {% endif %}
+    {% if b.what_to_improve %}
+    <section class="panel overflow-hidden border-l-2 border-kill/50">
+      <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-kill">What to improve</h2></div>
+      <ul class="space-y-1 p-4 text-sm text-muted">{% for w in b.what_to_improve %}<li class="flex gap-2"><span class="text-kill">▲</span><span>{{ w }}</span></li>{% endfor %}</ul>
+    </section>
+    {% endif %}
+  </div>
+
+  <section class="panel mb-4 overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">The numbers</h2></div>
+    <div class="grid grid-cols-2 gap-3 p-4 text-sm sm:grid-cols-4">
+      <div><p class="text-faint">Our losses</p><p class="data text-loss">{{ t.our_losses }}</p></div>
+      <div><p class="text-faint">Our kills</p><p class="data text-kill">{{ t.our_kills }}</p></div>
+      <div><p class="text-faint">ISK swing</p><p class="data {% if t.isk_swing|default:0 >= 0 %}text-kill{% else %}text-loss{% endif %}">{{ t.isk_swing|default:0 }}</p></div>
+      <div><p class="text-faint">Logi lost</p><p class="data {% if t.logi_lost %}text-loss{% else %}text-muted{% endif %}">{{ t.logi_lost }}</p></div>
+    </div>
+  </section>
+
+  {% if analysis.facts.our_losses_detail %}
+  <section class="panel mb-4 overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">Our losses</h2></div>
+    <div class="divide-y divide-line/40">
+      {% for l in analysis.facts.our_losses_detail %}
+      <div class="px-4 py-2 text-sm"><span class="text-ink">{{ l.ship }}</span> <span class="text-faint">· {{ l.pilot }}</span>{% if l.off_doctrine %} <span class="chip text-loss">off-doctrine</span>{% endif %}{% if l.killed_by %} <span class="text-[11px] text-faint">— to {{ l.killed_by }}{% if l.killed_by_ship %} ({{ l.killed_by_ship }}){% endif %}</span>{% endif %}</div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if b.key_losses %}
+  <section class="panel mb-4 overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">Key losses</h2></div>
+    <ul class="space-y-1 p-4 text-sm text-muted">{% for k in b.key_losses %}<li>• {{ k }}</li>{% endfor %}</ul>
+  </section>
+  {% endif %}
+
+  <p class="text-[11px] text-faint">model {{ analysis.model_name|default:"deterministic" }}{% if analysis.latency_ms %} · {{ analysis.latency_ms }}ms{% endif %}{% if analysis.token_usage %} · tokens {{ analysis.token_usage.input|default:"—" }}/{{ analysis.token_usage.output|default:"—" }}{% endif %}</p>
+  {% endwith %}
+{% endif %}
+</div>

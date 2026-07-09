@@ -1,0 +1,181 @@
+# [FORCA] Command Grid — production stack (gunicorn + Postgres + Redis + Nginx/TLS)
+
+# Pin the Compose project name. Without this it defaults to the basename of the
+# directory the file lives in (always "app" for the deploy script's <app-dir>/app
+# layout), so two installs on one host — or a re-provision into a fresh directory —
+# silently adopt each other's named volumes, including pg_data. That surfaces as an
+# opaque "password authentication failed for user forca" when the regenerated .env
+# no longer matches the credentials baked into the old volume.
+name: forca
+
+# Container logs are unbounded by default: json-file grows until the disk fills and
+# the whole stack wedges. Cap and rotate them everywhere.
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+x-app: &app
+  build:
+    context: .
+    dockerfile: Dockerfile
+  image: forca-command-grid:prod
+  env_file: .env
+  restart: unless-stopped
+  logging: *default-logging
+  # Container hardening: the app already runs as the non-root `appuser` and binds an
+  # unprivileged port, so it needs no Linux capabilities and never needs to gain
+  # privileges — drop them all and block privilege escalation to shrink the blast
+  # radius of any code-exec foothold.
+  security_opt:
+    - "no-new-privileges:true"
+  cap_drop:
+    - ALL
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    logging: *default-logging
+    security_opt:
+      - "no-new-privileges:true"
+    # Memory backstop. If the host has no swap, an unbounded container that leaks or
+    # spikes can OOM-cascade the whole VM; each service is capped above its observed
+    # working set so a runaway is contained to its own container instead of the host.
+    # Every cap is env-overridable — raise them in .env on a larger host.
+    mem_limit: ${NGINX_MEM_LIMIT:-192m}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx/forca.prod.conf:/etc/nginx/conf.d/default.conf:ro
+      # "N/A" placeholder served for type images CCP has no icon/render for.
+      - ./deploy/nginx/eveimg-placeholder.svg:/etc/nginx/eveimg-placeholder.svg:ro
+      - ./certs:/etc/nginx/certs:ro
+      # Persist the EVE-image proxy cache across nginx restarts so it doesn't
+      # re-fetch every image from CCP on each redeploy.
+      - nginx_cache:/var/cache/nginx
+      # Locally-mirrored type icons/renders, served straight off disk (read-only);
+      # written by `mirror_type_images` in web/worker.
+      - eveimg_data:/srv/eveimg:ro
+    depends_on:
+      - web
+
+  web:
+    <<: *app
+    # Threaded workers: GUNICORN_WORKERS x GUNICORN_THREADS concurrent requests, with
+    # low memory (threads share a process) — well-suited to DB/Redis/ESI waits.
+    # Defaults suit a 2-core / 4 GB box; a rule of thumb is workers = 2 x cores + 1.
+    # max-requests recycles workers to bound any slow memory growth; the heartbeat
+    # file lives on /dev/shm to avoid disk-stall worker timeouts.
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --worker-class gthread --workers ${GUNICORN_WORKERS:-3} --threads ${GUNICORN_THREADS:-4} --timeout 60 --max-requests 1200 --max-requests-jitter 150 --worker-tmp-dir /dev/shm
+    # ~5 gthread workers ≈ 440 MB steady; the cap bounds a leak/spike (max-requests already recycles).
+    mem_limit: ${WEB_MEM_LIMIT:-1g}
+    expose:
+      - "8000"
+    volumes:
+      - static_data:/app/staticfiles
+      - media_data:/app/media
+      - archive_data:/app/archive
+      - eveimg_data:/app/eveimg
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/healthz').status==200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  worker:
+    <<: *app
+    # Concurrency defaults low for a small VM; raise CELERY_CONCURRENCY on a bigger host.
+    command: celery -A config worker -l info --concurrency ${CELERY_CONCURRENCY:-4}
+    # ~600 MB steady; SDE/EveRef imports are the heaviest jobs, so allow more headroom.
+    mem_limit: ${WORKER_MEM_LIMIT:-1536m}
+    volumes:
+      - archive_data:/app/archive
+      - eveimg_data:/app/eveimg
+
+  beat:
+    <<: *app
+    command: celery -A config beat -l info --schedule /tmp/celerybeat-schedule
+    # Scheduler only; ~100 MB. Small cap is plenty.
+    mem_limit: ${BEAT_MEM_LIMIT:-384m}
+
+  postgres:
+    image: postgres:16-alpine
+    env_file: .env
+    restart: unless-stopped
+    logging: *default-logging
+    security_opt:
+      - "no-new-privileges:true"
+    # Postgres ships with tiny defaults; these raise them. The values below are sized
+    # for the documented 4 GB minimum (see handbooks/operator-handbook/deployment.md)
+    # and are env-overridable — a bigger host should raise them in .env rather than
+    # editing this file. Rules of thumb: shared_buffers ~25% of RAM,
+    # effective_cache_size ~50-75% of RAM (a planner HINT, not an allocation, but
+    # lying to it upward on a small box produces bad plans).
+    #   4 GB host  → 1GB / 2GB      8 GB host  → 2GB / 4GB
+    #  16 GB host  → 4GB / 8GB     32 GB host  → 8GB / 24GB
+    command: >
+      postgres
+      -c shared_buffers=${POSTGRES_SHARED_BUFFERS:-1GB}
+      -c effective_cache_size=${POSTGRES_EFFECTIVE_CACHE_SIZE:-2GB}
+      -c work_mem=${POSTGRES_WORK_MEM:-8MB}
+      -c maintenance_work_mem=${POSTGRES_MAINTENANCE_WORK_MEM:-256MB}
+      -c max_connections=${POSTGRES_MAX_CONNECTIONS:-100}
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c max_parallel_workers_per_gather=${POSTGRES_PARALLEL_WORKERS:-2}
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+    # Parallel-query / hash segments use /dev/shm; the Docker default 64 MB is too
+    # small once work_mem and parallel workers grow.
+    shm_size: "${POSTGRES_SHM_SIZE:-512m}"
+    # Backstop only: must stay comfortably above shared_buffers + shm_size + work_mem
+    # bursts, so it bounds a pathological runaway without OOM-killing Postgres mid-query.
+    # Raise together with POSTGRES_SHARED_BUFFERS on a larger host.
+    mem_limit: ${POSTGRES_MEM_LIMIT:-2g}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    logging: *default-logging
+    security_opt:
+      - "no-new-privileges:true"
+    # Bound Redis so a transient spike evicts cold cache keys instead of growing until
+    # the kernel OOM-kills the shared host. `volatile-lru` evicts ONLY keys that carry a
+    # TTL — every cache.set() uses a bounded TTL, so those are shed first, while the
+    # Celery broker list keys (no TTL) are never evicted, keeping the task queue intact.
+    # mem_limit is a container-level backstop above --maxmemory's own overhead headroom.
+    command: ["sh", "-c", "redis-server --requirepass \"$${REDIS_PASSWORD}\" --maxmemory ${REDIS_MAXMEMORY:-256mb} --maxmemory-policy volatile-lru"]
+    mem_limit: ${REDIS_MEM_LIMIT:-384m}
+    env_file: .env
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pg_data:
+  redis_data:
+  static_data:
+  media_data:
+  archive_data:
+  nginx_cache:
+  eveimg_data:

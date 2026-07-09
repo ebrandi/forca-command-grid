@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Readiness · Mandatory ships · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
+<header class="mt-2 mb-6">
+  <p class="eyebrow">Readiness configuration</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">Mandatory ships</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">The ships every pilot should own. The <span class="text-cyan">Strategic Assets</span> dimension scores the share of pilots who actually own each one (checked against their personal assets). Enter the ship's type id — the EVE hull this requires.</p>
+</header>
+
+
+<section class="panel mb-6 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Defined ships</h2></div>
+  {% if not ships %}
+    <p class="px-4 py-8 text-center text-sm text-faint">No mandatory ships yet — add one below. Until you do, the Strategic Assets dimension has nothing to score and stays unavailable.</p>
+  {% else %}
+  <div class="divide-y divide-line/50">
+    {% for s in ships %}
+    <form method="post" action="{% url 'admin_audit:readiness_mandatory_ship_update' s.id %}" class="grid grid-cols-2 items-end gap-3 px-4 py-3 sm:grid-cols-8">
+      {% csrf_token %}
+      <label class="col-span-2 sm:col-span-2 text-xs text-faint">Label<input name="label" value="{{ s.label }}" class="input-field mt-1 w-full" required></label>
+      <label class="text-xs text-faint">Category
+        <select name="category" class="input-field mt-1 w-full">{% for v,l in categories %}<option value="{{ v }}" {% if s.category == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+      </label>
+      <label class="text-xs text-faint">Type id<input name="ship_type_id" type="number" value="{{ s.ship_type_id }}" class="input-field mt-1 w-full" required></label>
+      <label class="text-xs text-faint">Qty<input name="required_quantity" type="number" min="1" value="{{ s.required_quantity }}" class="input-field mt-1 w-full"></label>
+      <label class="text-xs text-faint">Role<input name="applies_to_role" value="{{ s.applies_to_role }}" placeholder="all" class="input-field mt-1 w-full"></label>
+      <label class="flex items-center gap-1 text-xs text-faint"><input type="checkbox" name="active" {% if s.active %}checked{% endif %}> active</label>
+      <div class="flex items-center gap-2">
+        <button class="btn-ghost !py-1 text-xs">Save</button>
+      </div>
+    </form>
+    <form method="post" action="{% url 'admin_audit:readiness_mandatory_ship_delete' s.id %}" class="px-4 pb-2 -mt-2">{% csrf_token %}<button class="text-[11px] text-faint hover:text-loss">Remove</button></form>
+    {% endfor %}
+  </div>
+  {% endif %}
+</section>
+
+<section class="panel overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">Add a mandatory ship</h2></div>
+  <form method="post" action="{% url 'admin_audit:readiness_mandatory_ship_create' %}" class="grid grid-cols-2 items-end gap-3 p-4 sm:grid-cols-8">
+    {% csrf_token %}
+    <label class="col-span-2 text-xs text-faint">Label<input name="label" placeholder="Travel Interceptor" class="input-field mt-1 w-full" required></label>
+    <label class="text-xs text-faint">Category
+      <select name="category" class="input-field mt-1 w-full">{% for v,l in categories %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select>
+    </label>
+    <label class="text-xs text-faint">Type id<input name="ship_type_id" type="number" placeholder="11176" class="input-field mt-1 w-full" required></label>
+    <label class="text-xs text-faint">Qty<input name="required_quantity" type="number" min="1" value="1" class="input-field mt-1 w-full"></label>
+    <label class="text-xs text-faint">Role<input name="applies_to_role" placeholder="all" class="input-field mt-1 w-full"></label>
+    <label class="flex items-center gap-1 text-xs text-faint"><input type="checkbox" name="active" checked> active</label>
+    <button class="btn-gold !py-1 text-sm">Add ship</button>
+  </form>
+</section>
+{% endblock %}

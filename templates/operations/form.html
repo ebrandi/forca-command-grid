@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}{% if op %}Edit {{ op.name }}{% else %}Plan an operation{% endif %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+{% eve_img_base as img_base %}
+<a href="{% if op %}{% url 'operations:detail' op.pk %}{% else %}{% url 'operations:list' %}{% endif %}"
+   class="text-xs text-faint hover:text-gold">← {% if op %}Back to operation{% else %}Operations{% endif %}</a>
+
+<header class="mt-2 mb-6">
+  <p class="eyebrow text-gold">{% if op %}Edit{% else %}Plan ahead{% endif %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% if op %}Edit operation{% else %}Plan an operation{% endif %}</h1>
+  <p class="mt-1 text-sm text-faint">Times are EVE time (UTC). Define the doctrine ships so pilots can claim a place in the fleet.</p>
+</header>
+
+
+<form method="post" action="{% if op %}{% url 'operations:edit' op.pk %}{% else %}{% url 'operations:create' %}{% endif %}" class="space-y-5">
+  {% csrf_token %}
+
+  <!-- Operation details -->
+  <section class="panel">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Operation details</h2></div>
+    <div class="grid gap-3 p-4 sm:grid-cols-2">
+      <div class="sm:col-span-2"><label class="label" for="lf_name_1">Title</label>
+        <input id="lf_name_1" name="name" required value="{{ f.name }}" class="input-field" placeholder="e.g. Home Defence — Saturday"></div>
+      <div><label class="label" for="lf_type_2">Operation type</label>
+        <select id="lf_type_2" name="type" class="input-field">{% for v, l in types %}<option value="{{ v }}" {% if v == f.type %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+      <div><label class="label" for="lf_status_3">Status</label>
+        <select id="lf_status_3" name="status" class="input-field">{% for v, l in statuses %}{% if v == 'draft' or v == 'planned' or v == 'active' %}<option value="{{ v }}" {% if v == f.status %}selected{% endif %}>{{ l }}</option>{% endif %}{% endfor %}</select></div>
+      <div><label class="label" for="lf_target_at_4">Form-up date/time (EVE)</label>
+        <input id="lf_target_at_4" name="target_at" type="datetime-local" value="{{ f.target_at }}" class="input-field"></div>
+      <div><label class="label" for="lf_duration_minutes_5">Expected duration (minutes)</label>
+        <input id="lf_duration_minutes_5" name="duration_minutes" type="number" min="0" value="{{ f.duration_minutes }}" class="input-field" placeholder="e.g. 90"></div>
+      <div><label class="label" for="lf_comms_6">Form-up location</label>
+        <div x-data="typePicker('{% url 'navigation:system_search' %}', '', `{{ f.formup|escapejs }}`)" class="relative" @click.outside="open=false">
+          <input type="text" name="formup" x-model="q" @input.debounce.250ms="lookup()" @focus="open=results.length>0"
+                 autocomplete="off" spellcheck="false" class="input-field" placeholder="Start typing a system…">
+          <div x-show="open" x-cloak class="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-md border border-line bg-panel shadow-xl">
+            <template x-for="r in results" :key="r.type_id">
+              <button type="button" @click="choose(r)" class="block w-full px-3 py-1.5 text-left text-sm text-muted hover:bg-panel2 hover:text-ink" x-text="r.name"></button>
+            </template>
+          </div>
+        </div>
+      </div>
+      <div><label class="label">Destination / target area <span class="text-faint">(optional)</span></label>
+        <div x-data="typePicker('{% url 'navigation:system_search' %}', '', `{{ f.destination|escapejs }}`)" class="relative" @click.outside="open=false">
+          <input type="text" name="destination" x-model="q" @input.debounce.250ms="lookup()" @focus="open=results.length>0"
+                 autocomplete="off" spellcheck="false" class="input-field" placeholder="Start typing a system…">
+          <div x-show="open" x-cloak class="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-md border border-line bg-panel shadow-xl">
+            <template x-for="r in results" :key="r.type_id">
+              <button type="button" @click="choose(r)" class="block w-full px-3 py-1.5 text-left text-sm text-muted hover:bg-panel2 hover:text-ink" x-text="r.name"></button>
+            </template>
+          </div>
+        </div>
+      </div>
+      <div><label class="label">Comms <span class="text-faint">(optional)</span></label>
+        <input id="lf_comms_6" name="comms" value="{{ f.comms }}" class="input-field" placeholder="Mumble / Discord voice"></div>
+      <div><label class="label" for="lf_link_7">Doctrine / fitting link <span class="text-faint">(optional)</span></label>
+        <input id="lf_link_7" name="link" value="{{ f.link }}" class="input-field" placeholder="https://…"></div>
+      <div class="sm:col-span-2"><label class="label" for="lf_notes_8">Objective / notes</label>
+        <textarea id="lf_notes_8" name="notes" rows="2" class="input-field">{{ f.notes }}</textarea></div>
+    </div>
+  </section>
+
+  <!-- Participation requirement -->
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Minimum participation</h2></div>
+    <div class="grid gap-3 p-4 sm:grid-cols-3">
+      <div><label class="label" for="lf_min_pilots_9">Minimum pilots to run</label>
+        <input id="lf_min_pilots_9" name="min_pilots" type="number" min="0" value="{{ f.min_pilots }}" class="input-field" placeholder="e.g. 10"></div>
+      <div><label class="label" for="lf_rsvp_mode_10">Sign-up deadline</label>
+        <select id="lf_rsvp_mode_10" name="rsvp_mode" class="input-field">
+          <option value="none" {% if f.rsvp_mode == 'none' %}selected{% endif %}>No deadline</option>
+          <option value="relative" {% if f.rsvp_mode == 'relative' %}selected{% endif %}>Minutes before form-up</option>
+          <option value="absolute" {% if f.rsvp_mode == 'absolute' %}selected{% endif %}>Specific date/time</option>
+        </select></div>
+      <div><label class="label" for="lf_srp_11">Deadline value</label>
+        <div class="flex gap-2">
+          <input name="rsvp_offset_minutes" type="number" min="0" value="{{ f.rsvp_offset_minutes }}" class="input-field" placeholder="mins before (e.g. 60)">
+          <input name="rsvp_deadline" type="datetime-local" value="{{ f.rsvp_deadline }}" class="input-field">
+        </div>
+        <p class="mt-1 text-[11px] text-faint">Use the minutes box for “relative”, or the date box for “specific”. Must be before form-up.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SRP (combat ops) -->
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Ship replacement (SRP)</h2></div>
+    <div class="p-4">
+      <label class="label">SRP coverage <span class="text-faint">— required for PvP/combat ops so pilots know before they commit</span></label>
+      <select id="lf_srp_11" name="srp" class="input-field sm:w-1/2">
+        <option value="">— not specified —</option>
+        {% for v, l in srp_choices %}<option value="{{ v }}" {% if v == f.srp %}selected{% endif %}>{{ l }}</option>{% endfor %}
+      </select>
+    </div>
+  </section>
+
+  <!-- Fleet composition (Alpine builder) -->
+  <section class="panel"
+           x-data="fleetBuilder('op-catalogue', 'op-slots', '{% url 'operations:ship_search' %}')">
+    {{ catalogue|json_script:"op-catalogue" }}
+    {{ slots_data|json_script:"op-slots" }}
+    <div class="border-b border-line px-4 py-3">
+      <h2 class="eyebrow text-gold">Fleet composition</h2>
+      <p class="mt-1 text-[11px] text-faint">Browse the official doctrine ships and add the ones you need, or add a custom hull with a pasted fit. Set a priority (1 = most needed), a minimum, and an optional max for each.</p>
+    </div>
+
+    <!-- Current composition -->
+    <div class="divide-y divide-line/40">
+      <template x-for="(s, i) in slots" :key="i">
+        <div class="px-4 py-3">
+          <input type="hidden" name="slot_kind" :value="s.kind">
+          <input type="hidden" name="slot_fit_id" :value="s.fit_id">
+          <input type="hidden" name="slot_ship" :value="s.ship_name">
+          <input type="hidden" name="slot_eft" :value="s.eft">
+          <input type="hidden" name="slot_role" :value="s.role">
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <img :src="`{{ img_base }}/types/${s.ship_type_id}/icon?size=32`" alt="" class="h-6 w-6 rounded-sm" loading="lazy" x-show="s.ship_type_id">
+                <span class="font-medium text-ink" x-text="s.ship_name"></span>
+                <span class="chip !text-[9px]" x-text="s.role"></span>
+                <template x-if="s.kind === 'doctrine'"><span class="chip !text-[9px] !border-cyan/30 !text-cyan" x-text="'Doctrine · ' + s.doctrine"></span></template>
+                <template x-if="s.kind === 'custom' && s.eft"><span class="chip !text-[9px] text-faint">custom fit</span></template>
+              </div>
+            </div>
+            <label class="text-[11px] text-faint">Priority
+              <input type="number" name="slot_priority" min="1" x-model="s.priority" required class="input-field !py-1 ml-1 w-16"></label>
+            <label class="text-[11px] text-faint">Min
+              <input type="number" name="slot_min" min="1" x-model="s.min" required class="input-field !py-1 ml-1 w-16"></label>
+            <label class="text-[11px] text-faint">Max
+              <input type="number" name="slot_max" min="1" x-model="s.max" class="input-field !py-1 ml-1 w-16" placeholder="—"></label>
+            <button type="button" @click="remove(i)" class="text-xs text-faint hover:text-loss">remove</button>
+          </div>
+        </div>
+      </template>
+      <p x-show="!slots.length" class="px-4 py-6 text-center text-sm text-faint">No ships yet — add doctrine ships below, or a custom one.</p>
+    </div>
+
+    <!-- Composition vs minimum hint -->
+    <div x-show="{{ f.min_pilots|default:0 }} && slots.length && slotMinTotal !== {{ f.min_pilots|default:0 }}" x-cloak
+         class="border-t border-line bg-gold/5 px-4 py-2 text-[11px] text-gold">
+      Ship minimums total <span x-text="slotMinTotal"></span>, but the operation minimum is {{ f.min_pilots|default:0 }} — align them, or tick “proceed anyway” if you submit.
+    </div>
+    {% if errors.composition %}
+    <div class="border-t border-line bg-loss/5 px-4 py-3">
+      <p class="text-sm text-loss">⚠ {{ errors.composition }}</p>
+      <label class="mt-2 inline-flex cursor-pointer items-center gap-2 text-sm text-ink">
+        <input type="checkbox" name="confirm_mismatch" value="1"> Proceed anyway with this composition
+      </label>
+    </div>
+    {% endif %}
+
+    <!-- Doctrine ship browser -->
+    <div class="border-t border-line p-4">
+      <h3 class="eyebrow mb-2 text-faint">Add doctrine ships</h3>
+      <div class="grid gap-2 sm:grid-cols-4">
+        <select x-model="fCategory" class="input-field !py-1 text-sm"><option value="">All categories</option><template x-for="c in categories" :key="c"><option :value="c" x-text="c"></option></template></select>
+        <select x-model="fHull" class="input-field !py-1 text-sm"><option value="">All hulls</option><template x-for="h in hullClasses" :key="h"><option :value="h" x-text="h"></option></template></select>
+        <select x-model="fRole" class="input-field !py-1 text-sm"><option value="">All roles</option><template x-for="r in roles" :key="r"><option :value="r" x-text="r"></option></template></select>
+        <input type="text" x-model="fSearch" placeholder="Search ship or doctrine…" class="input-field !py-1 text-sm" autocomplete="off">
+      </div>
+      <div class="mt-3 max-h-72 divide-y divide-line/40 overflow-auto rounded-md border border-line">
+        <template x-for="f in filteredFits" :key="f.fit_id">
+          <div class="flex items-center gap-3 px-3 py-2 text-sm">
+            <img :src="`{{ img_base }}/types/${f.ship_type_id}/icon?size=32`" alt="" class="h-6 w-6 rounded-sm" loading="lazy">
+            <div class="min-w-0 flex-1">
+              <span class="text-ink" x-text="f.ship_name"></span>
+              <span class="text-[11px] text-faint" x-text="' · ' + f.doctrine + (f.role ? ' · ' + f.role : '')"></span>
+            </div>
+            <button type="button" @click="addDoctrine(f)" :disabled="hasFit(f.fit_id)"
+                    class="btn-ghost !py-1 !text-xs" x-text="hasFit(f.fit_id) ? 'added' : 'add'"></button>
+          </div>
+        </template>
+        <p x-show="!filteredFits.length" class="px-3 py-4 text-center text-xs text-faint">No matching doctrine ships.</p>
+      </div>
+    </div>
+
+    <!-- Custom (non-doctrine) ship -->
+    <div class="border-t border-line p-4">
+      <button type="button" @click="customOpen = !customOpen" class="text-sm text-cyan hover:underline"
+              x-text="customOpen ? '− Cancel custom ship' : '+ Add a custom (non-doctrine) ship'"></button>
+      <div x-show="customOpen" x-cloak class="mt-3 grid gap-3 sm:grid-cols-2">
+        <div class="relative" @click.outside="cOpen=false">
+          <label class="label">Ship hull</label>
+          <input type="text" x-model="cShipQ" @input.debounce.250ms="cLookup()" @focus="cOpen=cResults.length>0"
+                 autocomplete="off" spellcheck="false" class="input-field" placeholder="Search a ship hull…">
+          <div x-show="cOpen" x-cloak class="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-md border border-line bg-panel shadow-xl">
+            <template x-for="r in cResults" :key="r.type_id">
+              <button type="button" @click="cChoose(r)" class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm text-muted hover:bg-panel2 hover:text-ink">
+                <img :src="`{{ img_base }}/types/${r.type_id}/icon?size=32`" alt="" class="h-5 w-5 rounded-sm" loading="lazy"><span x-text="r.name"></span>
+              </button>
+            </template>
+          </div>
+        </div>
+        <div><label class="label">Role</label>
+          <select x-model="cRole" class="input-field">{% for v, l in roles %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
+        <div class="sm:col-span-2"><label class="label">EFT fit <span class="text-faint">(pasted — shown to pilots when they pick this ship)</span></label>
+          <textarea x-model="cEft" rows="4" class="input-field font-mono text-xs" placeholder="[Megathron, My Fit]&#10;…"></textarea></div>
+        <div class="sm:col-span-2"><button type="button" @click="addCustom()" class="btn-ghost !text-sm">Add custom ship</button></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="flex flex-wrap items-center gap-3">
+    <button class="btn-gold">{% if op %}Save changes{% else %}Create operation{% endif %}</button>
+    {% if not op %}<label class="chip cursor-pointer"><input type="checkbox" name="announce" value="1" class="mr-1 align-middle">Announce on Discord</label>{% endif %}
+  </div>
+</form>
+{% endblock %}

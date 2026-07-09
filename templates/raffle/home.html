@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}Raffle · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-gold">Raffle contests</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">Fly, earn tickets, win prizes</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">{{ config.intro_text }}</p>
+  </div>
+  {% if is_officer %}<a href="{% url 'admin_audit:raffle_hub' %}" class="btn-ghost text-sm">Manage raffles →</a>{% endif %}
+</header>
+
+<section class="panel mb-6 grid gap-3 p-4 sm:grid-cols-3">
+  <div><p class="eyebrow text-faint">Enrolled pilots</p><p class="data mt-1 text-xl font-bold text-ink">{{ adoption.enrolled }}<span class="text-sm text-faint">/{{ adoption.active_pilots }}</span></p></div>
+  <div><p class="eyebrow text-faint">Valid ESI tokens</p><p class="data mt-1 text-xl font-bold text-kill">{{ adoption.with_valid_token }}</p></div>
+  <div><p class="eyebrow text-faint">Enrolment rate</p><p class="data mt-1 text-xl font-bold text-gold">{{ adoption.conversion_rate }}%</p></div>
+</section>
+
+{% if active %}
+<h2 class="eyebrow mb-3 text-gold">Live now</h2>
+<div class="mb-6 grid gap-3 sm:grid-cols-2">
+  {% for c in active %}
+  <a href="{% url 'raffle:detail' c.slug %}" class="panel group p-5 hover:border-gold/40 transition">
+    <div class="flex items-center justify-between"><span class="chip !border-kill/40 !text-kill">● Live</span><span class="text-xs text-faint">draws {{ c.draw_at|date:"M j" }}</span></div>
+    <h3 class="mt-2 font-display text-lg font-semibold text-ink group-hover:text-gold">{{ c.name }}</h3>
+    <p class="mt-1 text-sm text-faint">{{ c.objective|default:c.description|truncatewords:20 }}</p>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if upcoming %}
+<h2 class="eyebrow mb-3 text-gold">Coming up</h2>
+<div class="mb-6 divide-y divide-line/40 panel">
+  {% for c in upcoming %}
+  <div class="flex items-center gap-3 px-4 py-3"><span class="min-w-0 flex-1 truncate text-ink">{{ c.name }}</span><span class="text-xs text-faint">opens {{ c.start_at|date:"M j, H:i" }}</span></div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if recent %}
+<h2 class="eyebrow mb-3 text-gold">Recent</h2>
+<div class="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+  {% for c in recent %}
+  <a href="{% url 'raffle:detail' c.slug %}" class="panel group p-4 hover:border-gold/40 transition">
+    <h3 class="font-display font-semibold text-ink group-hover:text-gold">{{ c.name }}</h3>
+    <p class="mt-1 text-xs text-faint">{{ c.get_status_display }} · drew {{ c.draw_at|date:"M j" }}</p>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if not active and not upcoming and not recent %}
+<div class="panel px-4 py-16 text-center">
+  <svg class="mx-auto h-8 w-8 text-faint"><use href="#i-coin"/></svg>
+  <p class="mt-3 font-display text-lg text-muted">No contests yet</p>
+  <p class="mt-1 text-sm text-faint">Leadership hasn't launched a raffle yet — check back soon.</p>
+</div>
+{% endif %}
+
+<div class="text-center"><a href="{% url 'raffle:archive' %}" class="btn-ghost text-sm">Past contests →</a></div>
+{% endblock %}

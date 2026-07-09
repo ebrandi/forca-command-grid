@@ -1,0 +1,10 @@
+{% comment %}A coloured status chip for an operation's derived fleet posture.{% endcomment %}
+{% if posture == "ready" %}<span class="chip !text-[10px] !border-kill/40 !text-kill">Ready to run</span>
+{% elif posture == "override" %}<span class="chip !text-[10px] !border-gold/40 !text-gold">Running (override)</span>
+{% elif posture == "at_risk" %}<span class="chip !text-[10px] !border-loss/40 !text-loss">At risk</span>
+{% elif posture == "running" %}<span class="chip !text-[10px] !border-cyan/40 !text-cyan">Active</span>
+{% elif posture == "completed" %}<span class="chip !text-[10px] text-faint">Completed</span>
+{% elif posture == "cancelled" %}<span class="chip !text-[10px] !border-loss/40 !text-loss">Cancelled</span>
+{% elif posture == "cancelled_auto" %}<span class="chip !text-[10px] !border-loss/40 !text-loss">Cancelled — too few</span>
+{% elif posture == "draft" %}<span class="chip !text-[10px] text-faint">Draft</span>
+{% else %}<span class="chip !text-[10px] text-faint">Scheduled</span>{% endif %}

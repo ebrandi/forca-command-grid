@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}Integrations · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow">Operations</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">Integrations health</h1>
+    <p class="mt-1 text-sm text-faint">ESI token status and how fresh each data feed is — check here first if something stops updating.</p>
+  </div>
+  <span class="chip {% if health.ok %}!border-kill/40 !text-kill{% else %}!border-loss/40 !text-loss{% endif %}">
+    {% if health.ok %}All systems nominal{% else %}Needs attention{% endif %}
+  </span>
+</header>
+
+{% if not health.has_asset_token %}
+<div class="mb-5 rounded-lg border border-loss/40 bg-loss/10 px-4 py-3 text-sm text-loss/90">
+  No healthy Director token holds the corp-asset scope. Corp-asset sync is paused — a Director must
+  re-authorise via <a href="{% url 'sso:scopes' %}" class="underline">ESI Scopes → Grant corp-asset access</a>.
+</div>
+{% endif %}
+
+<!-- Data feeds -->
+<section class="panel mb-6 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Data feeds</h2></div>
+  <table class="w-full text-sm">
+    <thead class="text-faint text-left"><tr class="border-b border-line/60">
+      <th class="px-4 py-2 font-medium">Feed</th><th class="px-4 py-2 font-medium">Status</th>
+      <th class="px-4 py-2 font-medium">Last sync</th><th class="px-4 py-2 text-right font-medium">Records</th>
+      <th class="px-4 py-2 font-medium">Source</th></tr></thead>
+    <tbody>
+      {% for f in health.feeds %}
+        <tr class="border-t border-line/40">
+          <td class="px-4 py-2 text-ink">{{ f.label }}<span class="block text-xs text-faint">{{ f.note }}</span></td>
+          <td class="px-4 py-2">
+            {% if f.status == 'ok' %}<span class="chip !border-kill/40 !text-kill">fresh</span>
+            {% elif f.status == 'stale' %}<span class="chip !border-gold/40 !text-gold">stale</span>
+            {% else %}<span class="chip !border-loss/40 !text-loss">no data</span>{% endif %}
+          </td>
+          <td class="px-4 py-2 data text-muted">
+            {% if f.last %}{{ f.last|date:"Y-m-d H:i" }} <span class="text-faint">· {{ f.last|timesince }} ago</span>{% else %}<span class="text-faint">never</span>{% endif %}
+            {% if f.by %}<span class="block text-xs text-faint">by {{ f.by }}</span>{% endif %}
+          </td>
+          <td class="px-4 py-2 text-right data text-faint">{{ f.count }}</td>
+          <td class="px-4 py-2 text-xs text-faint">{{ f.note }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<!-- SDE static data -->
+<section class="panel mb-6 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">SDE static data</h2></div>
+  <div class="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 text-sm">
+    <div><span class="text-faint">Build</span><span class="ml-2 text-ink data">{{ health.sde.version|default:"—" }}</span></div>
+    <div><span class="text-faint">Loaded</span>
+      {% if health.sde.loaded_at %}<span class="ml-2 text-muted data">{{ health.sde.loaded_at|date:"Y-m-d H:i" }} <span class="text-faint">· {{ health.sde.loaded_at|timesince }} ago</span></span>
+      {% else %}<span class="ml-2 text-faint">never</span>{% endif %}
+    </div>
+    {% if health.sde.status == 'ok' %}<span class="chip !border-kill/40 !text-kill">fresh</span>
+    {% elif health.sde.status == 'stale' %}<span class="chip !border-gold/40 !text-gold">refresh due</span>
+    {% else %}<span class="chip !border-loss/40 !text-loss">not loaded</span>{% endif %}
+  </div>
+  <p class="border-t border-line/40 px-4 py-2 text-xs text-faint">Item names, volumes and attributes. Reload with <code>import_sde_fuzzwork</code> after a game patch.</p>
+</section>
+
+<!-- Scheduled syncs (per-beat last success) -->
+<section class="panel mb-6 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Scheduled syncs</h2></div>
+  <table class="w-full text-sm">
+    <thead class="text-faint text-left"><tr class="border-b border-line/60">
+      <th class="px-4 py-2 font-medium">Beat</th><th class="px-4 py-2 font-medium">Status</th>
+      <th class="px-4 py-2 font-medium">Last success</th><th class="px-4 py-2 font-medium">Detail</th></tr></thead>
+    <tbody>
+      {% for b in health.beats %}
+        <tr class="border-t border-line/40">
+          <td class="px-4 py-2 text-ink">{{ b.label }}<span class="block text-xs text-faint">{{ b.key }}</span></td>
+          <td class="px-4 py-2">
+            {% if b.status == 'ok' %}<span class="chip !border-kill/40 !text-kill">fresh</span>
+            {% elif b.status == 'stale' %}<span class="chip !border-gold/40 !text-gold">stale</span>
+            {% else %}<span class="chip !border-loss/40 !text-loss">never</span>{% endif %}
+          </td>
+          <td class="px-4 py-2 data text-muted">
+            {% if b.last %}{{ b.last|date:"Y-m-d H:i" }} <span class="text-faint">· {{ b.last|timesince }} ago</span>{% else %}<span class="text-faint">never</span>{% endif %}
+          </td>
+          <td class="px-4 py-2 text-xs text-faint">{% for k, v in b.detail.items %}{{ k }}={{ v }} {% endfor %}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4" class="px-4 py-6 text-center text-faint">No sync stamps recorded yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<!-- ESI tokens -->
+<section class="panel overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">ESI tokens</h2></div>
+  <table class="w-full text-sm">
+    <thead class="text-faint text-left"><tr class="border-b border-line/60">
+      <th class="px-4 py-2 font-medium">Character</th><th class="px-4 py-2 font-medium">Health</th>
+      <th class="px-4 py-2 font-medium">Key scopes</th><th class="px-4 py-2 font-medium">Last refresh</th>
+      <th class="px-4 py-2 text-right font-medium">Fails</th></tr></thead>
+    <tbody>
+      {% for t in health.tokens %}
+        <tr class="border-t border-line/40">
+          <td class="px-4 py-2"><span class="flex items-center gap-2"><img src="{% eve_portrait t.character_id 32 %}" alt="" class="h-6 w-6 rounded-full ring-1 ring-line">{{ t.name }}</span></td>
+          <td class="px-4 py-2">
+            {% if t.revoked %}<span class="chip !border-loss/40 !text-loss">revoked</span>
+            {% elif not t.healthy %}<span class="chip !border-loss/40 !text-loss">failing</span>
+            {% elif t.expired %}<span class="chip !border-gold/40 !text-gold">refresh due</span>
+            {% else %}<span class="chip !border-kill/40 !text-kill">valid</span>{% endif %}
+          </td>
+          <td class="px-4 py-2">
+            <span class="flex flex-wrap gap-1">
+              {% for label, present in t.scopes.items %}
+                <span class="chip {% if present %}!border-cyan/40 !text-cyan{% else %}opacity-40{% endif %}">{{ label }}</span>
+              {% endfor %}
+            </span>
+          </td>
+          <td class="px-4 py-2 data text-faint">{% if t.last_refresh_ok_at %}{{ t.last_refresh_ok_at|timesince }} ago{% else %}—{% endif %}</td>
+          <td class="px-4 py-2 text-right data {% if t.refresh_fail_count %}text-loss{% else %}text-faint{% endif %}">{{ t.refresh_fail_count }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5" class="px-4 py-6 text-center text-faint">No ESI tokens linked yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

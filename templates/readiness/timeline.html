@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Readiness · Timeline · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<script defer src="{% static 'js/vendor/chart.umd.js' %}"></script>
+<a href="{% url 'readiness:dashboard' %}" class="text-xs text-faint hover:text-gold">← Readiness</a>
+<header class="mt-2 mb-5 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-gold">Leadership</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">Readiness timeline</h1>
+    <p class="mt-1 text-sm text-faint">How the overall index and each dimension have moved over time.</p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    {% for r in ranges %}
+    <a href="?range={{ r }}" class="chip {% if r == active_range %}!border-gold/50 !text-gold{% endif %}">{{ r }}</a>
+    {% endfor %}
+  </div>
+</header>
+
+{% if not enough %}
+  <div class="panel px-4 py-16 text-center">
+    <p class="font-display text-lg text-muted">Not enough snapshots yet</p>
+    <p class="mt-1 text-sm text-faint">Trends appear after a couple of weeks of snapshots. Keep the scheduler running and check back.</p>
+  </div>
+{% else %}
+<section class="panel mb-5 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">Overall index &amp; dimensions</h2></div>
+  <div class="p-4"><div class="h-80 skeleton"><canvas id="rd-timeline"></canvas></div></div>
+</section>
+
+<section class="panel px-4 py-3">
+  <p class="text-sm text-muted">
+    Over this window the index moved
+    <span class="data {% if net > 0 %}text-kill{% elif net < 0 %}text-loss{% else %}text-faint{% endif %}">{{ net|stringformat:"+d" }}</span>.
+    {% if best %}Biggest gain: <span class="text-kill">{{ best.0 }} +{{ best.1 }}</span>.{% endif %}
+    {% if worst %}Biggest drop: <span class="text-loss">{{ worst.0 }} {{ worst.1 }}</span>.{% endif %}
+  </p>
+</section>
+{% endif %}
+
+{{ chart|json_script:"rd-timeline-data" }}
+{% endblock %}
+
+{% block scripts %}
+<script nonce="{{ csp_nonce }}">
+  document.addEventListener('DOMContentLoaded', function () {
+    if (!window.forcaChart.applyDefaults()) return;
+    var canvas = document.getElementById('rd-timeline');
+    if (!canvas) return;
+    var D = window.forcaChart.read('rd-timeline-data');
+    if (!D || !D.series || D.series.length < 2) return;
+    var palette = ['#46cfe0', '#3fb950', '#f0533f', '#9d7bd8', '#e0a946', '#5aa9e6', '#7ddc8b', '#e87fa5', '#8a98ab', '#c98fe0', '#6ad0c0', '#d6b65a'];
+    var labels = D.series.map(function (p) { return p.label; });
+    var datasets = [{
+      label: 'Overall', data: D.series.map(function (p) { return p.index; }),
+      borderColor: window.forcaChart.colors.gold, backgroundColor: 'rgba(244,165,43,.08)', fill: true,
+      borderWidth: 3, tension: 0.25, pointRadius: 0,
+    }];
+    D.dim_keys.forEach(function (key, i) {
+      datasets.push({
+        label: key, borderColor: palette[i % palette.length], borderWidth: 1.5,
+        tension: 0.25, pointRadius: 0, fill: false, hidden: true,
+        data: D.series.map(function (p) { return (key in p.dimensions) ? p.dimensions[key] : null; }),
+      });
+    });
+    new Chart(canvas, {
+      type: 'line',
+      data: { labels: labels, datasets: datasets },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 8 } } },
+        scales: { x: { grid: { color: window.forcaChart.colors.line }, ticks: { maxTicksLimit: 10 } },
+                  y: { min: 0, max: 100, grid: { color: window.forcaChart.colors.line } } },
+      },
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% load eve %}
+{# Item rows for ONE location, loaded on demand when the location is expanded. #}
+<table class="w-full text-sm">
+  <tbody>
+    {% for it in items %}
+      <tr class="border-t border-line/40">
+        <td class="px-4 py-2"><span class="flex items-center gap-2"><img src="{% eve_type_icon it.type_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">{% type_name it.type_id %}</span></td>
+        <td class="px-4 py-2 text-right data text-muted">{{ it.quantity }}</td>
+        <td class="px-4 py-2 text-right data text-faint">{{ it.value|isk }}</td>
+      </tr>
+    {% empty %}
+      <tr><td class="px-4 py-3 text-center text-xs text-faint">No items at this location.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>

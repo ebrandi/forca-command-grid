@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}Combat rank rewards · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-gold">Killboard · Leadership</p>
+    <h1 class="mt-1 text-2xl font-bold text-ink">Combat rank rewards</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">Rewards pilots earned by reaching new combat ranks. Review, approve, and mark paid — the system never pays automatically. Marking paid is Director-only.</p>
+  </div>
+  <div class="flex gap-2">
+    {% if not settings.rewards_enabled %}<span class="chip text-faint">engine off</span>{% endif %}
+    <form method="post" action="{% url 'admin_audit:combat_reward_scan' %}" data-confirm="Scan the killboard now and create reward events for any pilot who crossed a reward rank?">
+      {% csrf_token %}<button type="submit" class="btn-ghost text-sm">Scan now</button>
+    </form>
+    <a href="{% url 'admin_audit:combat_ranks' %}" class="btn-ghost text-sm">Rank ladder →</a>
+  </div>
+</header>
+
+<!-- Totals -->
+<div class="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+  <div class="panel p-4"><p class="eyebrow">Pending</p><p class="mt-1 font-display text-2xl font-bold text-gold">{{ pending_count }}</p></div>
+  <div class="panel p-4"><p class="eyebrow">Pending liability</p><p class="data mt-1 text-lg font-bold text-cyan">{{ pending_liability|isk }}</p></div>
+  <div class="panel p-4"><p class="eyebrow">Paid this month</p><p class="data mt-1 text-lg font-bold text-kill">{{ paid_this_month|isk }}</p></div>
+  <div class="panel p-4"><p class="eyebrow">Paid this year</p><p class="data mt-1 text-lg font-bold text-kill">{{ paid_this_year|isk }}</p></div>
+</div>
+
+<!-- Filters -->
+<form method="get" class="panel mb-5 flex flex-wrap items-end gap-3 p-4">
+  <div><label class="label">Status</label>
+    <select name="status" class="input-field" data-autosubmit>
+      <option value="">All</option>
+      {% for val, lbl in status_choices %}<option value="{{ val }}" {% if status == val %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
+    </select>
+  </div>
+  <div><label class="label">Reward type</label>
+    <select name="reward_type" class="input-field" data-autosubmit>
+      <option value="">All</option>
+      {% for val, lbl in reward_type_choices %}<option value="{{ val }}" {% if reward_type == val %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
+    </select>
+  </div>
+  <div><label class="label">Pilot (name or id)</label><input type="text" name="pilot" value="{{ pilot }}" class="input-field" placeholder="Search…"></div>
+  <button type="submit" class="btn-gold">Filter</button>
+  <a href="{% url 'admin_audit:combat_rewards' %}" class="btn-ghost">Reset</a>
+  <a href="?status={{ status }}&reward_type={{ reward_type }}&pilot={{ pilot }}&export=csv" class="btn-ghost ml-auto">Export CSV</a>
+</form>
+
+<section class="panel overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Reward events <span class="text-faint">· {{ total }}</span></h2></div>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="text-faint">
+        <tr class="border-b border-line text-left text-xs">
+          <th class="px-3 py-2">Pilot</th>
+          <th class="px-3 py-2">Rank</th>
+          <th class="px-3 py-2 text-right">Kills</th>
+          <th class="px-3 py-2">Reward</th>
+          <th class="px-3 py-2">Achieved</th>
+          <th class="px-3 py-2 text-center">Status</th>
+          <th class="px-3 py-2 text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in events %}
+        <tr class="border-b border-line/40" x-data="{panel:''}">
+          <td class="px-3 py-2"><a href="{% url 'killboard:pilot' e.character_id %}" class="text-ink hover:text-gold">{{ e.character_name|default:e.character_id }}</a></td>
+          <td class="px-3 py-2"><span class="text-gold">{{ e.rank_name }}</span>{% if e.previous_rank_name %}<span class="block text-[11px] text-faint">from {{ e.previous_rank_name }}</span>{% endif %}</td>
+          <td class="px-3 py-2 text-right data text-muted">{{ e.kills_at_award }}</td>
+          <td class="px-3 py-2 text-xs">{{ e.get_reward_type_display }}{% if e.reward_type == 'isk' %} · {{ e.reward_amount|isk }}{% elif e.reward_type == 'plex' %} · {{ e.reward_amount|floatformat:0 }} PLEX{% endif %}</td>
+          <td class="px-3 py-2 text-xs text-faint">{{ e.achieved_at|date:"Y-m-d" }}</td>
+          <td class="px-3 py-2 text-center text-xs">
+            <span class="chip {% if e.status == 'pending' %}text-gold{% elif e.status == 'approved' %}text-cyan{% elif e.status == 'paid' %}text-kill{% elif e.status == 'rejected' %}text-loss{% else %}text-faint{% endif %}">{{ e.get_status_display }}</span>
+          </td>
+          <td class="px-3 py-2 text-right">
+            {% if e.status == 'pending' or e.status == 'approved' %}
+            <div class="flex flex-wrap items-center justify-end gap-1 text-xs">
+              {% if e.status == 'pending' %}
+              <form method="post" action="{% url 'admin_audit:combat_reward_action' e.pk %}" class="inline">{% csrf_token %}<input type="hidden" name="action" value="approve"><button class="text-cyan hover:underline">Approve</button></form>
+              {% endif %}
+              <button type="button" class="text-kill hover:underline" @click="panel = panel === 'paid' ? '' : 'paid'">Paid</button>
+              <button type="button" class="text-loss hover:underline" @click="panel = panel === 'cancel' ? '' : 'cancel'">Cancel</button>
+              {% if e.status == 'pending' %}
+              <button type="button" class="text-faint hover:underline" @click="panel = panel === 'reject' ? '' : 'reject'">Reject</button>
+              {% endif %}
+            </div>
+            <div x-show="panel === 'paid'" x-cloak class="mt-2">
+              <form method="post" action="{% url 'admin_audit:combat_reward_action' e.pk %}" class="flex items-center justify-end gap-1">{% csrf_token %}<input type="hidden" name="action" value="paid"><input type="text" name="reference" class="input-field !py-1 text-xs" placeholder="Payment ref (optional)"><button class="btn-gold !py-1 text-xs">Mark paid</button></form>
+            </div>
+            <div x-show="panel === 'reject'" x-cloak class="mt-2">
+              <form method="post" action="{% url 'admin_audit:combat_reward_action' e.pk %}" class="flex items-center justify-end gap-1">{% csrf_token %}<input type="hidden" name="action" value="reject"><input type="text" name="reason" class="input-field !py-1 text-xs" placeholder="Reason (optional)"><button class="btn-ghost !py-1 text-xs text-loss">Reject</button></form>
+            </div>
+            <div x-show="panel === 'cancel'" x-cloak class="mt-2">
+              <form method="post" action="{% url 'admin_audit:combat_reward_action' e.pk %}" class="flex items-center justify-end gap-1">{% csrf_token %}<input type="hidden" name="action" value="cancel"><input type="text" name="reason" class="input-field !py-1 text-xs" placeholder="Reason (optional)"><button class="btn-ghost !py-1 text-xs text-loss">Cancel</button></form>
+            </div>
+            {% else %}
+            <span class="text-[11px] text-faint">{% if e.paid_at %}paid {{ e.paid_at|date:"Y-m-d" }}{% if e.payment_reference %} · {{ e.payment_reference }}{% endif %}{% else %}—{% endif %}</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="px-3 py-8 text-center text-faint">No reward events{% if status or pilot or reward_type %} match these filters{% else %} yet. They appear when enrolled pilots reach a reward-enabled rank{% endif %}.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

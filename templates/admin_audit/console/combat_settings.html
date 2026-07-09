@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}Combat reward settings · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-gold">Killboard · Leadership</p>
+    <h1 class="mt-1 text-2xl font-bold text-ink">Combat rank reward settings</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">Control the reward engine and the budget the suggestions are sized against. The system never moves ISK — reaching a reward rank only creates a pending event a leader approves and marks paid.</p>
+  </div>
+  <a href="{% url 'admin_audit:combat_ranks' %}" class="btn-ghost text-sm">← Rank ladder</a>
+</header>
+
+<!-- Engine status + controls -->
+<section class="panel mb-5 p-5">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h2 class="eyebrow text-faint">Reward engine</h2>
+      <p class="mt-1 text-lg font-bold {% if settings.rewards_enabled %}text-kill{% else %}text-faint{% endif %}">{% if settings.rewards_enabled %}Enabled{% else %}Disabled (dark){% endif %}</p>
+      {% if settings.baseline_established_at %}<p class="text-[11px] text-faint">Baseline set {{ settings.baseline_established_at|date:"Y-m-d H:i" }} — {{ reward_rank_count }} reward-enabled rank(s).</p>{% else %}<p class="text-[11px] text-faint">No baseline set yet.</p>{% endif %}
+    </div>
+    <div class="flex flex-wrap gap-2">
+      {% if settings.rewards_enabled %}
+      <form method="post" action="{% url 'admin_audit:combat_reward_rebaseline' %}" data-confirm="Re-snapshot every pilot's baseline to their CURRENT rank now? This can only raise baselines (never creates retroactive rewards). Use after big ladder edits.">
+        {% csrf_token %}<button type="submit" class="btn-ghost text-sm">Re-baseline now</button>
+      </form>
+      <form method="post" action="{% url 'admin_audit:combat_reward_disable' %}" data-confirm="Disable the reward engine? No new reward events will be created. Existing events are kept.">
+        {% csrf_token %}<button type="submit" class="btn-ghost text-sm text-loss">Disable rewards</button>
+      </form>
+      {% else %}
+      <form method="post" action="{% url 'admin_audit:combat_reward_enable' %}" data-confirm="Enable rewards? This snapshots every pilot's CURRENT highest rank as their baseline — nothing is granted retroactively. Only ranks reached from now on will create rewards.">
+        {% csrf_token %}<button type="submit" class="btn-gold text-sm">Enable rewards (set baseline)</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<!-- Budget + strategy -->
+<form method="post" action="{% url 'admin_audit:combat_reward_settings' %}" class="max-w-3xl space-y-5">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="panel border-loss/40 bg-loss/10 px-4 py-2 text-sm text-loss">{{ form.non_field_errors }}</div>{% endif %}
+
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">Budget</h2>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div><label class="label">Monthly incentive budget (ISK)</label>{{ form.monthly_budget }}<p class="mt-1 text-[11px] text-faint">Used when income isn't available or the income %% is 0.</p>{% if form.monthly_budget.errors %}<p class="mt-1 text-xs text-loss">{{ form.monthly_budget.errors|join:" " }}</p>{% endif %}</div>
+      <div><label class="label">Max % of monthly income</label>{{ form.max_income_pct }}<p class="mt-1 text-[11px] text-faint">If set &gt; 0 and corp finance is synced, the pool becomes this share of recent income.</p>{% if form.max_income_pct.errors %}<p class="mt-1 text-xs text-loss">{{ form.max_income_pct.errors|join:" " }}</p>{% endif %}</div>
+      <div><label class="label">Monthly cap (ISK)</label>{{ form.monthly_cap }}<p class="mt-1 text-[11px] text-faint">Hard ceiling on the pool (0 = no cap).</p></div>
+      <div><label class="label">Default strategy</label>{{ form.default_strategy }}</div>
+      <div><label class="label">Payout currency</label>{{ form.payout_currency }}</div>
+      <div><label class="label">ISK per PLEX override</label>{{ form.plex_isk_rate }}<p class="mt-1 text-[11px] text-faint">0 = use live market price for ISK-equivalent liability.</p></div>
+    </div>
+    <div class="mt-4 rounded border border-cyan/30 bg-cyan/5 p-3 text-[11px] text-faint">
+      Current pool: <strong class="text-cyan">{{ pool_info.0|isk }}</strong>
+      (source: {{ pool_info.1 }}). Estimated monthly liability from currently-configured reward ranks:
+      <strong class="text-gold">{{ estimated_liability|isk }}</strong>.
+    </div>
+  </section>
+
+  <div class="flex justify-end gap-2">
+    <a href="{% url 'admin_audit:combat_ranks' %}" class="btn-ghost">Cancel</a>
+    <button type="submit" class="btn-gold">Save settings</button>
+  </div>
+</form>
+
+<form method="post" action="{% url 'admin_audit:newbro_settings' %}" class="mt-6 space-y-4">
+  {% csrf_token %}
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-1 text-gold">New pilots</h2>
+    <p class="mb-3 text-[11px] text-faint">Keep the kill/loss "danger" read from demoralising a pilot who simply hasn't fought yet.</p>
+    <label class="flex items-center gap-2 text-sm text-ink">{{ newbro_form.soften_danger_label }} Show "Learning" instead of "Snuggly" for new pilots</label>
+    <div class="mt-3 max-w-xs"><label class="label">Activity floor (kills + losses)</label>{{ newbro_form.soften_below_events }}<p class="mt-1 text-[11px] text-faint">Below this total, the danger label is softened.</p></div>
+    <div class="mt-4 flex justify-end"><button type="submit" class="btn-gold">Save newbro settings</button></div>
+  </section>
+</form>
+{% endblock %}

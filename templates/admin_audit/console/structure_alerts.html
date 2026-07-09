@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Structure-alert thresholds · Admin{% endblock %}
+{% block content %}
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
+<header class="mt-3 mb-6">
+  <p class="eyebrow">Operations &amp; defence</p>
+  <h1 class="mt-1 text-2xl font-bold text-ink">Structure-alert thresholds</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">When a corp <a href="{% url 'corporation:structures' %}" class="text-cyan hover:underline">structure</a> drops below the fuel threshold — or a sovereignty system below the ADM floor — FORCA sends one deduped digest to officers (once per distinct set, resetting when back above threshold). These thresholds also drive the "low fuel" / "soft" flags on the board.</p>
+</header>
+
+<form method="post" class="max-w-xl space-y-5">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="panel border-loss/40 bg-loss/10 px-4 py-2 text-sm text-loss">{{ form.non_field_errors }}</div>{% endif %}
+
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">Thresholds</h2>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div>
+        <label class="label" for="{{ form.fuel_alert_days.id_for_label }}">Low-fuel warning (days)</label>
+        {{ form.fuel_alert_days }}
+        {% if form.fuel_alert_days.errors %}<p class="mt-1 text-[11px] text-loss">{{ form.fuel_alert_days.errors.0 }}</p>{% endif %}
+        <p class="mt-1 text-[11px] text-faint">A structure with fewer than this many days of fuel alerts. Default 3; raise it (e.g. 5) for a staging Keepstar.</p>
+      </div>
+      <div>
+        <label class="label" for="{{ form.adm_alert_floor.id_for_label }}">Sov ADM floor</label>
+        {{ form.adm_alert_floor }}
+        {% if form.adm_alert_floor.errors %}<p class="mt-1 text-[11px] text-loss">{{ form.adm_alert_floor.errors.0 }}</p>{% endif %}
+        <p class="mt-1 text-[11px] text-faint">A sovereignty system with an ADM below this alerts. 1.0–6.0; default 3.0.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="flex items-center gap-3">
+    <button type="submit" class="btn-gold">Save thresholds</button>
+    <a href="{% url 'admin_audit:console' %}" class="btn-ghost">Cancel</a>
+  </div>
+</form>
+{% endblock %}

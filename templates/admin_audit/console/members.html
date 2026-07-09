@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}Members & roles · Admin{% endblock %}
+{% block content %}
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
+<header class="mt-3 mb-6">
+  <p class="eyebrow">Operations</p>
+  <h1 class="mt-1 text-2xl font-bold text-ink">Members &amp; roles</h1>
+  <p class="mt-1 text-sm text-faint">Grant or revoke roles. Officers manage doctrines/stock; Directors get admin. Director grants need a second director's approval.</p>
+</header>
+
+{% if pending_requests %}
+<div class="panel mb-5 overflow-hidden border border-gold/30">
+  <div class="border-b border-line/60 px-4 py-2"><h2 class="eyebrow text-gold">Awaiting approval · {{ pending_requests|length }}</h2></div>
+  <div class="divide-y divide-line/40">
+    {% for req in pending_requests %}
+    <div class="flex flex-wrap items-center gap-3 px-4 py-2.5 text-sm">
+      <span class="min-w-0 flex-1">
+        <span class="text-ink">{{ req.role_key|title }}</span> for
+        <a href="{% url 'admin_audit:member_audit' req.target_id %}" class="text-cyan hover:text-gold">{{ req.target.first_name|default:req.target.username }}</a>
+        <span class="text-xs text-faint">· requested by {{ req.requested_by.first_name|default:req.requested_by.username }}{% if req.expires_at %} · expires {{ req.expires_at|date:"Y-m-d H:i" }} UTC{% endif %}{% if req.reason %} · “{{ req.reason }}”{% endif %}</span>
+      </span>
+      <form method="post" action="{% url 'admin_audit:role_request_decide' req.pk %}" class="flex items-center gap-1">
+        {% csrf_token %}
+        {% if req.requested_by_id == me_id %}
+          <span class="text-[11px] text-faint" title="Separation of duties">your request — another director approves</span>
+          <button name="decision" value="reject" class="btn-ghost !py-1 !text-xs !text-loss">Withdraw</button>
+        {% else %}
+          <button name="decision" value="approve" class="btn-cyan !py-1 !text-xs">Approve</button>
+          <button name="decision" value="reject" class="btn-ghost !py-1 !text-xs !text-loss">Reject</button>
+        {% endif %}
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div class="panel overflow-hidden">
+  <div class="overflow-x-auto"><table class="w-full text-sm">
+    <thead class="text-faint text-left"><tr class="border-b border-line/60">
+      <th class="px-4 py-2 font-medium">Account</th><th class="px-4 py-2 font-medium">Roles</th>
+      <th class="px-4 py-2 text-right font-medium">Manage</th></tr></thead>
+    <tbody>
+      {% for r in rows %}
+        <tr class="border-t border-line/40">
+          <td class="px-4 py-2">
+            <span class="flex items-center gap-2">
+              {% if r.main %}<img src="{% eve_portrait r.main.character_id 32 %}" alt="" class="h-7 w-7 rounded-full ring-1 ring-line">{% endif %}
+              <span>
+                <a href="{% url 'admin_audit:member_audit' r.user.id %}" class="block text-ink hover:text-gold">{{ r.main.name|default:r.user.first_name|default:r.user.username }}</a>
+                {% if r.main.corporation_id %}<span class="block text-xs text-faint">{% eve_name r.main.corporation_id %}{% if r.main.is_corp_member %} · FORCA{% endif %}</span>{% endif %}
+              </span>
+            </span>
+          </td>
+          <td class="px-4 py-2">
+            <span class="flex flex-wrap gap-1">
+              {% for role in manageable %}
+                {% if role in r.roles %}<span class="chip !border-gold/40 !text-gold">{{ role }}</span>{% endif %}
+              {% endfor %}
+              {% if not r.roles %}<span class="text-xs text-faint">none</span>{% endif %}
+            </span>
+          </td>
+          <td class="px-4 py-2">
+            <form method="post" action="{% url 'admin_audit:set_role' r.user.id %}" class="flex flex-wrap items-center justify-end gap-1">
+              {% csrf_token %}
+              <label class="text-[10px] text-faint">expires
+                <input type="datetime-local" name="expires_at" class="input-field !py-0.5 !text-[11px] ml-1" title="Optional — leave blank for a permanent grant (applies to + grants)">
+              </label>
+              {% for role in manageable %}
+                {% if role in r.roles %}
+                  <button name="revoke" value="{{ role }}" class="btn-danger !py-1 !text-xs">− {{ role }}</button>
+                {% else %}
+                  <button name="grant" value="{{ role }}" class="btn-ghost !py-1 !text-xs">+ {{ role }}</button>
+                {% endif %}
+              {% endfor %}
+            </form>
+            {% if r.can_impersonate %}
+            <form method="post" action="{% url 'impersonation:start' r.user.id %}" class="mt-1 flex justify-end">
+              {% csrf_token %}
+              <button type="submit" class="btn-ghost !py-1 !text-xs !text-cyan"
+                      title="Open the site as this pilot — read-only, audited. Troubleshoot what they see.">
+                👁 View as
+              </button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}<tr><td colspan="3" class="px-4 py-6 text-center text-faint">No accounts yet.</td></tr>{% endfor %}
+    </tbody>
+  </table></div>
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}Doctrines · Admin{% endblock %}
+{% block content %}
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
+<header class="mt-3 mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow">Operations</p>
+    <h1 class="mt-1 text-2xl font-bold text-ink">Manage doctrines</h1>
+  </div>
+  <div class="flex flex-wrap gap-2" x-data="{newdoc:false, newcat:false}">
+    <button @click="newdoc=!newdoc" class="btn-gold"><svg class="h-4 w-4"><use href="#i-ship"/></svg> New doctrine</button>
+    {% if is_director %}<a href="{% url 'admin_audit:import_fits' %}" class="btn-ghost"><svg class="h-4 w-4"><use href="#i-cube"/></svg> Import my saved fits</a>
+    <a href="{% url 'admin_audit:doctrine_xml_import' %}" class="btn-ghost"><svg class="h-4 w-4"><use href="#i-box"/></svg> Import from EVE XML</a>{% endif %}
+    <button @click="newcat=!newcat" class="btn-ghost">New category</button>
+    <a href="{% url 'admin_audit:doctrine_settings' %}" class="btn-ghost"><svg class="h-4 w-4"><use href="#i-target"/></svg> Display settings</a>
+
+    <div x-show="newdoc" x-cloak class="fixed inset-0 z-40 flex items-start justify-center bg-black/60 p-4 pt-24" @click.self="newdoc=false">
+      <form method="post" action="{% url 'admin_audit:doctrine_create' %}" class="panel w-full max-w-md space-y-4 p-5">
+        {% csrf_token %}
+        <h2 class="eyebrow text-gold">New doctrine</h2>
+        <div><label class="label" for="lf_name_1">Name</label><input id="lf_name_1" name="name" class="input-field" placeholder="e.g. Ferox Railgun Fleet" required></div>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="label" for="lf_category_2">Category</label><select id="lf_category_2" name="category" class="input-field"><option value="">—</option>{% for c in categories %}<option value="{{ c.id }}">{{ c.label }}</option>{% endfor %}</select></div>
+          <div><label class="label" for="lf_priority_3">Priority</label><input id="lf_priority_3" name="priority" type="number" value="50" class="input-field"></div>
+        </div>
+        <div><label class="label" for="lf_description_4">Description</label><textarea id="lf_description_4" name="description" rows="2" class="input-field"></textarea></div>
+        <div class="flex gap-2"><button class="btn-gold">Create</button><button type="button" @click="newdoc=false" class="btn-ghost">Cancel</button></div>
+      </form>
+    </div>
+    <div x-show="newcat" x-cloak class="fixed inset-0 z-40 flex items-start justify-center bg-black/60 p-4 pt-24" @click.self="newcat=false">
+      <form method="post" action="{% url 'admin_audit:category_create' %}" class="panel w-full max-w-sm space-y-4 p-5">
+        {% csrf_token %}
+        <h2 class="eyebrow text-gold">New category</h2>
+        <div><label class="label" for="lf_label_5">Label</label><input id="lf_label_5" name="label" class="input-field" placeholder="e.g. Logistics" required></div>
+        <div class="flex gap-2"><button class="btn-gold">Add</button><button type="button" @click="newcat=false" class="btn-ghost">Cancel</button></div>
+      </form>
+    </div>
+  </div>
+</header>
+
+<div class="panel divide-y divide-line/40">
+  {% for d in doctrines %}
+    <div class="flex items-center gap-3 px-4 py-3">
+      {% with fit=d.fits.first %}{% if fit %}<img src="{% eve_type_render fit.ship_type_id 64 %}" alt="" class="h-9 w-9 rounded-md bg-space object-cover ring-1 ring-line">{% endif %}{% endwith %}
+      <div class="min-w-0 flex-1">
+        <a href="{% url 'admin_audit:doctrine_edit' d.pk %}" class="font-display font-semibold text-ink hover:text-gold">{{ d.name }}</a>
+        <p class="text-xs text-faint">{{ d.fits.count }} fit{{ d.fits.count|pluralize }}{% if d.category %} · {{ d.category.label }}{% endif %} · priority {{ d.priority }}</p>
+      </div>
+      <span class="chip">{{ d.get_status_display }}</span>
+      <a href="{% url 'admin_audit:doctrine_edit' d.pk %}" class="btn-ghost !py-1 !text-xs">Edit</a>
+      <form method="post" action="{% url 'admin_audit:doctrine_delete' d.pk %}" data-confirm="Delete the “{{ d.name }}” doctrine and its fits?">{% csrf_token %}<button class="btn-ghost !py-1 !text-xs !text-loss hover:!border-loss/40">Delete</button></form>
+    </div>
+  {% empty %}<p class="px-4 py-8 text-center text-sm text-faint">No doctrines yet. Create one above.</p>{% endfor %}
+</div>
+{% endblock %}

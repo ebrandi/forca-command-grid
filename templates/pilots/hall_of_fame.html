@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}Hall of Fame · [FORCA] Command Grid{% endblock %}
+{% block content %}
+
+<header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow">Community</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">Hall of Fame</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">Who's carried the corp this month — every contribution, kill and ISK of ratting income, on one points scale.</p>
+  </div>
+  {% if months %}
+  <form method="get" class="contents">
+    <label class="block">
+      <span class="eyebrow text-faint">Month</span>
+      <select name="m" class="input-field mt-1" data-autosubmit aria-label="Month">
+        {% for m in months %}<option value="{{ m.key }}" {% if m.key == chosen.key %}selected{% endif %}>{{ m.label }}</option>{% endfor %}
+      </select>
+    </label>
+  </form>
+  {% endif %}
+</header>
+
+<!-- Overall top 10 -->
+<section class="panel mb-6 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Top contributors <span class="text-faint">· {{ board.label }}</span></h2></div>
+  {% if board.overall %}
+  <div class="divide-y divide-line/40">
+    {% for p in board.overall %}
+      <div class="flex items-center gap-3 px-4 py-3">
+        <span class="w-7 shrink-0 text-center font-display text-lg font-bold {% if forloop.counter == 1 %}text-gold{% elif forloop.counter <= 3 %}text-ink{% else %}text-faint{% endif %}">{{ forloop.counter }}</span>
+        {% if p.character_id %}<img src="{% eve_portrait p.character_id 64 %}" alt="" loading="lazy" class="h-9 w-9 shrink-0 rounded-full ring-1 ring-line">{% endif %}
+        <div class="min-w-0 flex-1">
+          <p class="truncate font-display font-semibold text-ink">{{ p.name }}</p>
+          <div class="mt-0.5 flex flex-wrap gap-1">
+            {% for b in p.breakdown %}<span class="chip">{{ b.label }} {{ b.points }}</span>{% endfor %}
+          </div>
+        </div>
+        <span class="shrink-0 font-display text-2xl font-bold text-gold">{{ p.points }}</span>
+      </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="px-4 py-10 text-center text-sm text-faint">No scored contributions for {{ board.label }} yet — the categories below show everything that counts.</p>
+  {% endif %}
+</section>
+
+<!-- What counts + per category top 5 -->
+<div class="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+  <h2 class="eyebrow">What counts · top 5 by category</h2>
+  <p class="text-xs text-faint">Every kind of contribution we track, and the points it earns. Leaders tune the weights.</p>
+</div>
+<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+  {% for cat in board.categories %}
+    <section class="panel overflow-hidden">
+      <div class="border-b border-line px-4 py-2.5">
+        <h3 class="eyebrow text-cyan">{{ cat.label }}</h3>
+        {% if cat.how %}<p class="mt-0.5 text-[11px] text-faint">{{ cat.how }}</p>{% endif %}
+      </div>
+      <div class="divide-y divide-line/40 text-sm">
+        {% for r in cat.rows %}
+          <div class="flex items-center gap-2.5 px-4 py-2">
+            <span class="w-4 shrink-0 text-center text-xs text-faint">{{ forloop.counter }}</span>
+            {% if r.character_id %}<img src="{% eve_portrait r.character_id 32 %}" alt="" loading="lazy" class="h-6 w-6 shrink-0 rounded-full ring-1 ring-line">{% endif %}
+            <span class="min-w-0 flex-1 truncate text-ink">{{ r.name }}</span>
+            <span class="data shrink-0 font-bold text-gold">{{ r.points }}</span>
+          </div>
+        {% empty %}
+          <p class="px-4 py-3 text-xs text-faint">No activity yet this month.</p>
+        {% endfor %}
+      </div>
+    </section>
+  {% endfor %}
+</div>
+{% if not board.scoring_enabled %}<p class="mt-4 text-center text-xs text-loss/80">Points scoring is currently turned off in the admin settings.</p>{% endif %}
+{% endblock %}

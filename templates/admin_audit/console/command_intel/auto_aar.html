@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Auto-AAR · Command Intelligence{% endblock %}
+{% block content %}
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
+<header class="mt-3 mb-6">
+  <p class="eyebrow">Command Intelligence</p>
+  <h1 class="mt-1 text-2xl font-bold text-ink">Auto-AAR on notable battles</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">When a fight crosses a threshold below, FORCA queues a <a href="{% url 'command_intel:battles' %}" class="text-cyan hover:underline">battle AAR</a> automatically — no officer has to remember. Ships <strong class="text-ink">off</strong>; one AAR per battle, capped per run, and it rides the LLM rate caps. A threshold of 0 disables that trigger.</p>
+</header>
+
+<form method="post" class="max-w-2xl space-y-5">
+  {% csrf_token %}
+  <section class="panel p-5">
+    <label class="flex items-center gap-3 text-sm text-muted">
+      <input type="checkbox" name="auto_aar_enabled" {% if cfg.auto_aar_enabled %}checked{% endif %}>
+      <span class="text-ink">Auto-AAR enabled</span> <span class="text-faint">— arm the scan (kill switch)</span>
+    </label>
+  </section>
+
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">Notability thresholds</h2>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div>
+        <label class="label" for="isk">Min ISK swing</label>
+        <input id="isk" name="auto_aar_min_isk_swing" type="number" min="0" value="{{ cfg.auto_aar_min_isk_swing }}" class="input-field mt-1">
+        <p class="mt-1 text-[11px] text-faint">Absolute ISK destroyed − lost. 0 = off.</p>
+      </div>
+      <div>
+        <label class="label" for="loss">Min our losses</label>
+        <input id="loss" name="auto_aar_min_our_losses" type="number" min="0" value="{{ cfg.auto_aar_min_our_losses }}" class="input-field mt-1">
+      </div>
+      <div>
+        <label class="label" for="logi">Min logi lost</label>
+        <input id="logi" name="auto_aar_min_logi_lost" type="number" min="0" value="{{ cfg.auto_aar_min_logi_lost }}" class="input-field mt-1">
+      </div>
+      <div>
+        <label class="label" for="od">Min off-doctrine losses</label>
+        <input id="od" name="auto_aar_min_off_doctrine" type="number" min="0" value="{{ cfg.auto_aar_min_off_doctrine }}" class="input-field mt-1">
+      </div>
+    </div>
+  </section>
+
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">Scan limits</h2>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div>
+        <label class="label" for="lb">Lookback (hours)</label>
+        <input id="lb" name="auto_aar_lookback_hours" type="number" min="1" max="168" value="{{ cfg.auto_aar_lookback_hours }}" class="input-field mt-1">
+      </div>
+      <div>
+        <label class="label" for="mpr">Max AARs per run</label>
+        <input id="mpr" name="auto_aar_max_per_run" type="number" min="1" max="20" value="{{ cfg.auto_aar_max_per_run }}" class="input-field mt-1">
+        <p class="mt-1 text-[11px] text-faint">Caps LLM spend on a busy night.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="flex items-center gap-3">
+    <button type="submit" class="btn-gold">Save auto-AAR settings</button>
+    <a href="{% url 'admin_audit:console' %}" class="btn-ghost">Cancel</a>
+  </div>
+</form>
+{% endblock %}

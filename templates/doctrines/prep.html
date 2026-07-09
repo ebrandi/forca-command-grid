@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}Prep · {{ doctrine.name }} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<a href="{% url 'doctrines:detail' doctrine.pk %}" class="text-xs text-faint hover:text-gold">← {{ doctrine.name }}</a>
+
+<header class="mt-2 mb-5 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-cyan">Get fleet-ready</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">Prep · {{ doctrine.name }}</h1>
+    <p class="mt-1 text-sm text-faint">
+      What you can fly, what you're missing, and what to buy — diffed against what you already own.
+    </p>
+  </div>
+  {% if characters|length > 1 %}
+    <form method="get" class="flex items-center gap-2 text-sm">
+      <label class="text-faint">Character</label>
+      <select name="character_id" data-autosubmit class="input-field !py-1 !text-sm">
+        {% for c in characters %}
+          <option value="{{ c.character_id }}" {% if c.character_id == character.character_id %}selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+      </select>
+    </form>
+  {% endif %}
+</header>
+
+{% if not character %}
+  <div class="panel p-6 text-center text-sm text-faint">Link a character to build your prep list.</div>
+{% else %}
+  {% if total_cost %}
+    <div class="panel mb-5 flex items-center justify-between p-4">
+      <span class="text-sm text-muted">Estimated cost to be ready (all fits, what you're missing)</span>
+      <span class="font-display text-2xl font-bold text-gold">{{ total_cost|isk }} ISK</span>
+    </div>
+  {% endif %}
+
+  <div class="grid gap-5 lg:grid-cols-2">
+    {% for f in fits %}
+      <section class="panel overflow-hidden">
+        <div class="flex items-center gap-3 border-b border-line p-4">
+          <img src="{% eve_type_render f.fit.ship_type_id 64 %}" alt="" loading="lazy" class="h-12 w-12 rounded-md bg-space object-cover ring-1 ring-line">
+          <div class="min-w-0 flex-1">
+            <h2 class="truncate font-display font-semibold text-ink">{{ f.fit.name }}</h2>
+            {% with s=f.readiness.status %}
+            <p class="text-xs">
+              {% if s == 'optimal' %}<span class="text-kill">✓ You can fly this (optimal)</span>
+              {% elif s == 'viable' %}<span class="text-cyan">✓ You can fly this</span>
+              {% elif s == 'not_ready' %}<span class="text-loss">✗ {{ f.readiness.missing_viable|length }} skill{{ f.readiness.missing_viable|length|pluralize }} short</span>
+              {% else %}<span class="text-faint">Skills unknown — import to check</span>{% endif %}
+            </p>
+            {% endwith %}
+          </div>
+        </div>
+
+        <div class="p-4">
+          <!-- Skills still needed -->
+          {% if f.readiness.missing_viable %}
+            <p class="eyebrow mb-2">Train to fly</p>
+            <div class="mb-4 space-y-1">
+              {% for m in f.readiness.missing_viable %}
+                <div class="flex items-center gap-2 text-xs text-muted">
+                  <img src="{% eve_type_icon m.skill_type_id 32 %}" alt="" loading="lazy" class="h-4 w-4 rounded-sm">
+                  <span class="truncate">{% type_name m.skill_type_id %}</span>
+                  <span class="ml-auto data text-faint">{{ m.have }} → {{ m.need }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <!-- Shopping list -->
+          <div class="mb-2 flex items-center justify-between">
+            <p class="eyebrow">Shopping list</p>
+            {% if f.short_lines %}
+              <span class="text-xs text-gold">{{ f.missing_cost|isk }} ISK to buy</span>
+            {% else %}
+              <span class="text-xs text-kill">You own it all ✓</span>
+            {% endif %}
+          </div>
+          <div class="space-y-1">
+            {% for line in f.lines %}
+              <div class="flex items-center gap-2 text-xs">
+                <img src="{% eve_type_icon line.type_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">
+                <span class="min-w-0 flex-1 truncate {% if line.short %}text-ink{% else %}text-faint{% endif %}">{% type_name line.type_id %}</span>
+                {% if line.short %}
+                  <span class="data text-loss">need {{ line.short }}</span>
+                {% else %}
+                  <span class="data text-kill">have {{ line.have }}/{{ line.need }}</span>
+                {% endif %}
+                <span class="w-24 text-right data text-faint">{{ line.line_cost|isk }}</span>
+              </div>
+            {% endfor %}
+          </div>
+
+          <!-- Actions -->
+          <div class="mt-4 flex flex-wrap gap-2" x-data="{mb:false,eft:false}">
+            {% if f.short_lines %}
+              <button type="button"
+                @click="navigator.clipboard.writeText($refs.mb.value);mb=true;setTimeout(()=>mb=false,2000)"
+                class="btn-cyan !py-1 !text-xs">
+                <span x-show="!mb">Copy multibuy</span><span x-show="mb" x-cloak>Copied ✓</span>
+              </button>
+              <textarea x-ref="mb" class="hidden">{{ f.multibuy }}</textarea>
+            {% endif %}
+            <button type="button"
+              @click="fetch('{% url 'doctrines:fit_export' f.fit.id %}').then(r=>r.text()).then(t=>{navigator.clipboard.writeText(t);eft=true;setTimeout(()=>eft=false,2000)})"
+              class="btn-ghost !py-1 !text-xs">
+              <span x-show="!eft">Copy fit (EFT)</span><span x-show="eft" x-cloak class="text-kill">Copied ✓</span>
+            </button>
+            {% if f.readiness.missing_viable %}
+              <form method="post" action="{% url 'skills:create' %}">
+                {% csrf_token %}
+                <input type="hidden" name="character_id" value="{{ character.character_id }}">
+                <input type="hidden" name="doctrine_id" value="{{ doctrine.pk }}">
+                <button class="btn-ghost !py-1 !text-xs">Build skill plan</button>
+              </form>
+            {% endif %}
+          </div>
+        </div>
+      </section>
+    {% endfor %}
+  </div>
+{% endif %}
+{% endblock %}

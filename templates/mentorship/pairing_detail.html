@@ -1,0 +1,363 @@
+{% extends "base.html" %}
+{% load static eve %}
+{% block title %}{{ pairing.mentor.user.display_name }} & {{ pairing.mentee.user.display_name }} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+{% comment %}
+The shared mentorship dashboard — the pilot's home for a mentor/cadet pairing.
+Reads: pairing, role ('mentor'|'mentee'|'officer'), is_participant, progress
+(per-track buckets of task assignments), overall_pct/total_tasks/done_tasks,
+sessions, events, rewards, flags (officer only), enrollable_tracks, next_actions.
+Two columns on lg: main = next actions + tracks/exercises, aside = sessions,
+rewards, activity, controls. Everything is server-rendered; mutating actions are
+POST forms with a hidden "action" input the views dispatch on.
+{% endcomment %}
+
+<header class="mb-6">
+  <p class="eyebrow text-gold">Mentorship</p>
+  <div class="mt-1 flex flex-wrap items-center gap-4">
+    <div class="flex items-center -space-x-3">
+      {% if pairing.mentor.user.main_character.character_id %}
+        <img src="{% eve_portrait pairing.mentor.user.main_character.character_id 64 %}" alt="" class="h-12 w-12 rounded-xl ring-2 ring-panel">
+      {% endif %}
+      {% if pairing.mentee.user.main_character.character_id %}
+        <img src="{% eve_portrait pairing.mentee.user.main_character.character_id 64 %}" alt="" class="h-12 w-12 rounded-xl ring-2 ring-panel">
+      {% endif %}
+    </div>
+    <div class="min-w-0 flex-1">
+      <h1 class="text-2xl font-bold text-ink sm:text-3xl">
+        <span class="text-cyan">{{ pairing.mentor.user.display_name }}</span>
+        <span class="text-faint">&amp;</span>
+        <span class="text-gold">{{ pairing.mentee.user.display_name }}</span>
+      </h1>
+      <p class="mt-0.5 text-sm text-faint">
+        {% if role == 'mentor' %}You are the <span class="text-cyan">Veteran Mentor</span> on this track.
+        {% elif role == 'mentee' %}You are the <span class="text-gold">Cadet</span> — this is your path.
+        {% else %}You are observing as an officer.{% endif %}
+        {% if pairing.started_at %}<span class="text-faint"> · Flying together since {{ pairing.started_at|date:"j M Y" }}.</span>{% endif %}
+      </p>
+    </div>
+    <span class="chip shrink-0
+      {% if pairing.status == 'active' %}text-kill
+      {% elif pairing.status == 'paused' %}text-gold
+      {% elif pairing.status == 'pending_approval' or pairing.status == 'completed' %}text-cyan
+      {% elif pairing.status == 'cancelled' or pairing.status == 'expired' %}text-loss
+      {% else %}text-muted{% endif %}">{{ pairing.get_status_display }}</span>
+  </div>
+
+  {% if pairing.note or pairing.pause_reason or pairing.completion_note %}
+  <div class="mt-3 space-y-1.5">
+    {% if pairing.completion_note %}<p class="rounded-md border border-cyan/30 bg-cyan/5 px-3 py-2 text-sm text-cyan"><span class="eyebrow mr-1">Debrief</span>{{ pairing.completion_note }}</p>{% endif %}
+    {% if pairing.pause_reason and pairing.status == 'paused' %}<p class="rounded-md border border-gold/30 bg-gold/5 px-3 py-2 text-sm text-gold"><span class="eyebrow mr-1">Paused</span>{{ pairing.pause_reason }}</p>{% endif %}
+    {% if pairing.note %}<p class="text-sm text-muted">{{ pairing.note }}</p>{% endif %}
+  </div>
+  {% endif %}
+</header>
+
+{% if next_actions %}
+<section class="panel mb-6 border-gold/40 p-5">
+  <div class="flex items-center gap-2">
+    <svg class="h-5 w-5 text-gold"><use href="#i-bolt"/></svg>
+    <h2 class="font-display text-sm font-semibold uppercase tracking-wide text-gold">What to do next</h2>
+  </div>
+  <ul class="mt-3 space-y-2">
+    {% for na in next_actions %}
+    <li class="flex items-start gap-3 text-sm">
+      <span class="mt-1 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-gold/15 text-gold"><svg class="h-3 w-3"><use href="#i-bolt"/></svg></span>
+      <span class="text-ink">{{ na }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+<section class="panel mb-6 p-5">
+  <div class="flex items-baseline justify-between">
+    <h2 class="eyebrow">Overall progress</h2>
+    <span class="data text-sm text-ink">{{ done_tasks }}/{{ total_tasks }} field exercises · {{ overall_pct }}%</span>
+  </div>
+  <div class="mt-2 h-2 overflow-hidden rounded-full bg-space" role="progressbar" aria-valuenow="{{ overall_pct }}" aria-valuemin="0" aria-valuemax="100" aria-label="Overall progress {{ overall_pct }} percent">
+    <div class="h-full rounded-full {% if overall_pct == 100 %}bg-kill{% else %}bg-gold{% endif %}" style="width:{{ overall_pct }}%"></div>
+  </div>
+</section>
+
+<div class="grid gap-6 lg:grid-cols-3">
+  <!-- ===== Main column: tracks + field exercises ===== -->
+  <div class="space-y-6 lg:col-span-2">
+    {% for tr in progress %}
+    <section class="panel overflow-hidden">
+      <div class="flex items-center gap-3 border-b border-line px-4 py-3">
+        <span class="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-space {% if tr.pct == 100 %}text-kill{% else %}text-gold{% endif %}"><svg class="h-5 w-5"><use href="#{{ tr.track.icon|default:'i-target' }}"/></svg></span>
+        <div class="min-w-0 flex-1">
+          <h3 class="font-display text-sm font-semibold uppercase tracking-wide text-ink">{{ tr.track.title }}</h3>
+          <div class="mt-1 h-2 overflow-hidden rounded-full bg-space" role="progressbar" aria-valuenow="{{ tr.pct }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ tr.track.title }} progress {{ tr.pct }} percent">
+            <div class="h-full rounded-full {% if tr.pct == 100 %}bg-kill{% else %}bg-gold{% endif %}" style="width:{{ tr.pct }}%"></div>
+          </div>
+        </div>
+        <span class="data shrink-0 text-xs {% if tr.pct == 100 %}text-kill{% else %}text-muted{% endif %}">{{ tr.done }}/{{ tr.total }}</span>
+      </div>
+
+      <div class="divide-y divide-line/40">
+        {% for a in tr.assignments %}
+        <div class="px-4 py-3.5">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="chip !text-[10px]
+              {% if a.task.difficulty >= 4 %}text-loss{% elif a.task.difficulty == 3 %}text-gold{% else %}text-cyan{% endif %}">{{ a.task.get_difficulty_display }}</span>
+            <span class="min-w-0 flex-1 font-medium text-ink">{{ a.task.title }}{% if a.repeat_index %} <span class="text-faint">#{{ a.repeat_index|add:1 }}</span>{% endif %}</span>
+            <span class="chip !text-[10px]
+              {% if a.status == 'completed' or a.status == 'completed_unrewardable' or a.status == 'waived' %}text-kill
+              {% elif a.status == 'rejected' or a.status == 'expired' %}text-loss
+              {% elif a.status == 'pending_mentor' or a.status == 'pending_mentee' or a.status == 'pending_api' or a.status == 'pending_leadership' or a.status == 'pending_approval' or a.status == 'submitted' %}text-gold
+              {% elif a.status == 'in_progress' %}text-cyan
+              {% else %}text-muted{% endif %}">{{ a.get_status_display }}</span>
+            {% if a.task.reward_eligible %}<span class="chip !text-[10px] text-gold"><svg class="mr-1 inline h-3 w-3"><use href="#i-coin"/></svg>Rewarded</span>{% endif %}
+            {% if a.confidence > 0 %}<span class="chip !text-[10px] text-kill">verified {{ a.confidence }}%</span>{% endif %}
+          </div>
+
+          {% if a.task.description %}<p class="mt-1.5 text-sm text-faint">{{ a.task.description }}</p>{% endif %}
+
+          <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-faint">
+            {% if a.task.estimated_minutes %}<span>≈ {{ a.task.estimated_minutes }} min</span>{% endif %}
+            <span>{{ a.task.get_participants_display }}</span>
+            <span>Check: {{ a.task.get_validation_method_display }}</span>
+            {% if a.task.evidence_requirement != 'none' %}<span>Evidence {{ a.task.get_evidence_requirement_display|lower }}</span>{% endif %}
+            {% if a.task.repeatable %}<span class="text-cyan">Repeatable</span>{% endif %}
+          </div>
+
+          {% if role == 'mentee' and a.task.mentee_instructions %}
+            <p class="mt-2 rounded-md border border-line/60 bg-space/40 px-3 py-2 text-xs text-muted"><span class="eyebrow mr-1 text-gold">Your brief</span>{{ a.task.mentee_instructions }}</p>
+          {% elif role == 'mentor' and a.task.mentor_instructions %}
+            <p class="mt-2 rounded-md border border-line/60 bg-space/40 px-3 py-2 text-xs text-muted"><span class="eyebrow mr-1 text-cyan">Mentor brief</span>{{ a.task.mentor_instructions }}</p>
+          {% elif role == 'officer' %}
+            {% if a.task.mentee_instructions %}<p class="mt-2 rounded-md border border-line/60 bg-space/40 px-3 py-2 text-xs text-muted"><span class="eyebrow mr-1 text-gold">Cadet brief</span>{{ a.task.mentee_instructions }}</p>{% endif %}
+            {% if a.task.mentor_instructions %}<p class="mt-1.5 rounded-md border border-line/60 bg-space/40 px-3 py-2 text-xs text-muted"><span class="eyebrow mr-1 text-cyan">Mentor brief</span>{{ a.task.mentor_instructions }}</p>{% endif %}
+          {% endif %}
+
+          {% if a.last_reason %}<p class="mt-2 text-xs text-muted"><span class="eyebrow mr-1">Note</span>{{ a.last_reason }}</p>{% endif %}
+
+          {% comment %}Action buttons — role + status gated.{% endcomment %}
+          <div class="mt-3 flex flex-wrap items-center gap-2">
+            {% if a.status == 'pending_api' %}
+              <span class="chip !text-[10px] text-muted"><svg class="mr-1 inline h-3 w-3"><use href="#i-bolt"/></svg>Waiting on ESI / activity data</span>
+            {% endif %}
+
+            {% if is_participant and a.status == 'not_started' or is_participant and a.status == 'in_progress' or is_participant and a.status == 'rejected' %}
+              {% if a.status == 'not_started' %}
+                <form method="post" action="{% url 'mentorship:task_action' a.id %}">{% csrf_token %}<input type="hidden" name="action" value="start"><button class="btn-ghost !px-3 !py-1.5 text-xs">Start</button></form>
+              {% endif %}
+              <form method="post" action="{% url 'mentorship:task_action' a.id %}" class="flex flex-wrap items-end gap-2">
+                {% csrf_token %}<input type="hidden" name="action" value="submit">
+                {% if a.task.evidence_requirement == 'required' or a.task.evidence_requirement == 'optional' %}
+                  <input type="url" name="evidence_url" placeholder="Evidence link{% if a.task.evidence_requirement == 'optional' %} (optional){% endif %}" class="input-field !py-1 text-xs sm:w-56">
+                  <input type="text" name="evidence_text" placeholder="Notes for the mentor" class="input-field !py-1 text-xs sm:w-56">
+                {% endif %}
+                <button class="btn-gold !px-3 !py-1.5 text-xs">Mark done / Submit</button>
+              </form>
+            {% endif %}
+
+            {% if role == 'mentor' and a.status == 'pending_mentor' or role == 'officer' and a.status == 'pending_mentor' %}
+              <form method="post" action="{% url 'mentorship:task_action' a.id %}">{% csrf_token %}<input type="hidden" name="action" value="confirm"><button class="btn-cyan !px-3 !py-1.5 text-xs"><svg class="mr-1 inline h-3.5 w-3.5"><use href="#i-check"/></svg>Confirm</button></form>
+              <form method="post" action="{% url 'mentorship:task_action' a.id %}" class="flex flex-wrap items-end gap-2">
+                {% csrf_token %}<input type="hidden" name="action" value="reject">
+                <input type="text" name="reason" placeholder="Why send back? (optional)" class="input-field !py-1 text-xs sm:w-56">
+                <button class="btn-ghost !px-3 !py-1.5 text-xs">Send back</button>
+              </form>
+            {% endif %}
+
+            {% if a.task.repeatable and a.is_done %}
+              <form method="post" action="{% url 'mentorship:task_action' a.id %}">{% csrf_token %}<input type="hidden" name="action" value="repeat"><button class="btn-ghost !px-3 !py-1.5 text-xs">Do again</button></form>
+            {% endif %}
+          </div>
+        </div>
+        {% empty %}
+        <p class="px-4 py-6 text-center text-sm text-faint">No field exercises on this track yet.</p>
+        {% endfor %}
+      </div>
+    </section>
+    {% empty %}
+    <section class="panel p-8 text-center">
+      <svg class="mx-auto h-8 w-8 text-faint"><use href="#i-target"/></svg>
+      <p class="mt-3 text-sm text-muted">No tracks enrolled yet.{% if is_participant and pairing.status == 'active' and enrollable_tracks %} Add a track from the panel on the right to start earning certifications.{% endif %}</p>
+    </section>
+    {% endfor %}
+  </div>
+
+  <!-- ===== Aside: sessions, rewards, activity, controls ===== -->
+  <aside class="space-y-6">
+    <!-- Sessions -->
+    <section class="panel overflow-hidden">
+      <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Sessions</h2></div>
+      <div class="divide-y divide-line/40">
+        {% for s in sessions %}
+        <div class="px-4 py-3">
+          <div class="flex items-start justify-between gap-2">
+            <div class="min-w-0">
+              <p class="font-medium text-ink">{{ s.topic }}</p>
+              <p class="mt-0.5 text-xs text-faint">{{ s.scheduled_at|date:"j M Y, H:i" }} · {{ s.duration_minutes }} min{% if s.location_hint %} · {{ s.location_hint }}{% endif %}</p>
+            </div>
+            <span class="chip shrink-0 !text-[10px]
+              {% if s.status == 'completed' %}text-kill{% elif s.status == 'cancelled' %}text-loss{% elif s.status == 'confirmed' %}text-cyan{% else %}text-gold{% endif %}">{{ s.get_status_display }}</span>
+          </div>
+          {% if s.participants.all %}
+          <ul class="mt-1.5 space-y-0.5 text-xs text-muted">
+            {% for p in s.participants.all %}
+            <li class="flex items-center gap-1.5">
+              {% if p.confirmed %}<svg class="h-3 w-3 text-kill"><use href="#i-check"/></svg>
+              {% elif p.present %}<span class="h-1.5 w-1.5 rounded-full bg-cyan"></span>
+              {% else %}<span class="h-1.5 w-1.5 rounded-full bg-line"></span>{% endif %}
+              <span class="text-ink">{{ p.user.display_name }}</span>
+              <span class="text-faint">· {{ p.get_role_display }}</span>
+            </li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+          {% if is_participant and s.status != 'cancelled' and s.status != 'completed' %}
+          <div class="mt-2 flex flex-wrap gap-2">
+            <form method="post" action="{% url 'mentorship:session_action' s.id %}">{% csrf_token %}<input type="hidden" name="action" value="confirm"><button class="btn-ghost !px-2.5 !py-1 text-[11px]">Confirm</button></form>
+            <form method="post" action="{% url 'mentorship:session_action' s.id %}" data-confirm="Cancel this session?">{% csrf_token %}<input type="hidden" name="action" value="cancel"><button class="!px-2.5 !py-1 text-[11px] text-faint hover:text-loss">Cancel</button></form>
+          </div>
+          {% endif %}
+        </div>
+        {% empty %}
+        <p class="px-4 py-5 text-center text-sm text-faint">No sessions scheduled yet.</p>
+        {% endfor %}
+      </div>
+
+      {% if is_participant and pairing.status == 'active' %}
+      <div class="border-t border-line px-4 py-3">
+        <form method="post" action="{% url 'mentorship:session_create' pairing.id %}" class="space-y-2">
+          {% csrf_token %}
+          <div><label class="label">Topic</label><input type="text" name="topic" required class="input-field" placeholder="e.g. First tackle & overheating"></div>
+          <div><label class="label">When</label><input type="datetime-local" name="scheduled_at" required class="input-field"></div>
+          <div class="grid grid-cols-2 gap-2">
+            <div><label class="label">Minutes</label><input type="number" name="duration_minutes" value="30" min="5" step="5" class="input-field"></div>
+            <div><label class="label">Track</label>
+              <select name="track_id" class="input-field">
+                <option value="">— any —</option>
+                {% for tr in progress %}<option value="{{ tr.track.id }}">{{ tr.track.title }}</option>{% endfor %}
+              </select>
+            </div>
+          </div>
+          <div><label class="label">Where</label><input type="text" name="location_hint" class="input-field" placeholder="e.g. Home staging / Mumble"></div>
+          <button class="btn-cyan !py-1.5 text-xs w-full">Schedule a session</button>
+        </form>
+      </div>
+      {% endif %}
+    </section>
+
+    <!-- Add a track -->
+    {% if is_participant and pairing.status == 'active' and enrollable_tracks %}
+    <section class="panel p-4">
+      <h2 class="eyebrow mb-2 text-gold">Add a track</h2>
+      <form method="post" action="{% url 'mentorship:enroll_track' pairing.id %}" class="flex flex-wrap items-end gap-2">
+        {% csrf_token %}
+        <select name="track_id" required class="input-field flex-1">
+          {% for t in enrollable_tracks %}<option value="{{ t.id }}">{{ t.title }}</option>{% endfor %}
+        </select>
+        <button class="btn-ghost !px-3 !py-1.5 text-xs">Enroll</button>
+      </form>
+    </section>
+    {% endif %}
+
+    <!-- Rewards -->
+    {% if rewards %}
+    <section class="panel overflow-hidden">
+      <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Rewards &amp; recognition</h2></div>
+      <div class="divide-y divide-line/40">
+        {% for r in rewards %}
+        <div class="flex items-start gap-3 px-4 py-2.5 text-sm">
+          <div class="min-w-0 flex-1">
+            <p class="text-ink">{{ r.description }}</p>
+            <p class="mt-0.5 text-[11px] text-faint">{{ r.recipient.display_name }} · {{ r.recipient_role }} · {{ r.get_reward_type_display }}</p>
+          </div>
+          <div class="shrink-0 text-right">
+            <p class="data text-xs text-gold">{% if r.reward_type == 'isk' %}{{ r.amount|isk }}{% else %}{{ r.points }} pts{% endif %}</p>
+            <span class="chip !text-[10px]
+              {% if r.status == 'paid' or r.status == 'approved' %}text-kill
+              {% elif r.status == 'rejected' or r.status == 'cancelled' or r.status == 'expired' %}text-loss
+              {% elif r.status == 'not_eligible' %}text-muted
+              {% else %}text-gold{% endif %}">{{ r.get_status_display }}</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    <!-- Flags (officer) -->
+    {% if flags %}
+    <section class="panel overflow-hidden border-loss/40">
+      <div class="flex items-center gap-2 border-b border-line px-4 py-3">
+        <svg class="h-4 w-4 text-loss"><use href="#i-shield"/></svg>
+        <h2 class="eyebrow text-loss">Risk flags</h2>
+      </div>
+      <div class="divide-y divide-line/40">
+        {% for f in flags %}
+        <div class="px-4 py-2.5 text-sm">
+          <div class="flex items-center gap-2">
+            <span class="chip !text-[10px] {% if f.severity >= 3 %}text-loss{% else %}text-gold{% endif %}">{{ f.get_kind_display }}</span>
+            <span class="text-[11px] text-faint">{{ f.created_at|date:"j M, H:i" }}</span>
+          </div>
+          {% if f.detail %}<p class="mt-1 text-xs text-muted">{{ f.detail }}</p>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    <!-- Recent activity -->
+    {% if events %}
+    <section class="panel overflow-hidden">
+      <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Recent activity</h2></div>
+      <ul class="divide-y divide-line/40">
+        {% for e in events %}
+        <li class="px-4 py-2.5 text-sm">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-ink">{{ e.get_kind_display }}</span>
+            <span class="shrink-0 text-[11px] text-faint">{{ e.created_at|date:"j M, H:i" }}</span>
+          </div>
+          {% if e.from_status or e.to_status %}<p class="mt-0.5 text-[11px] text-faint">{{ e.from_status|default:"—" }} → <span class="text-muted">{{ e.to_status|default:"—" }}</span></p>{% endif %}
+          {% if e.detail %}<p class="mt-0.5 text-xs text-muted">{{ e.detail }}</p>{% endif %}
+          {% if e.actor %}<p class="mt-0.5 text-[11px] text-faint">by {{ e.actor.display_name }}</p>{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+
+    <!-- Match quality -->
+    {% if pairing.match_score or pairing.match_reasons %}
+    <section class="panel p-4">
+      <div class="flex items-center justify-between">
+        <h2 class="eyebrow">Match quality</h2>
+        {% if pairing.match_score %}<span class="data text-xs text-cyan">{{ pairing.match_score }}</span>{% endif %}
+      </div>
+      {% if pairing.match_reasons %}
+      <ul class="mt-2 space-y-1 text-xs text-faint">
+        {% for reason in pairing.match_reasons %}<li class="flex gap-1.5"><span class="text-cyan">·</span>{{ reason }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+    </section>
+    {% endif %}
+
+    <!-- Pairing controls -->
+    {% if is_participant %}
+    <section class="panel p-4">
+      <h2 class="eyebrow mb-3">Pairing controls</h2>
+      <div class="flex flex-wrap gap-2">
+        {% if pairing.status == 'active' %}
+          <form method="post" action="{% url 'mentorship:pairing_action' pairing.id %}">{% csrf_token %}<input type="hidden" name="action" value="pause"><button class="btn-ghost !px-3 !py-1.5 text-xs">Pause</button></form>
+        {% elif pairing.status == 'paused' %}
+          <form method="post" action="{% url 'mentorship:pairing_action' pairing.id %}">{% csrf_token %}<input type="hidden" name="action" value="resume"><button class="btn-cyan !px-3 !py-1.5 text-xs">Resume</button></form>
+        {% endif %}
+        {% if role != 'mentee' and pairing.status != 'completed' and pairing.status != 'cancelled' and pairing.status != 'expired' %}
+          <form method="post" action="{% url 'mentorship:pairing_action' pairing.id %}" data-confirm="Complete this pairing? This closes out the track.">{% csrf_token %}<input type="hidden" name="action" value="complete"><button class="btn-gold !px-3 !py-1.5 text-xs">Complete</button></form>
+        {% endif %}
+        {% if pairing.status != 'completed' and pairing.status != 'cancelled' and pairing.status != 'expired' %}
+          <form method="post" action="{% url 'mentorship:pairing_action' pairing.id %}" data-confirm="Cancel this pairing? This cannot be undone.">{% csrf_token %}<input type="hidden" name="action" value="cancel"><button class="!px-3 !py-1.5 text-xs text-faint hover:text-loss">Cancel</button></form>
+        {% endif %}
+      </div>
+    </section>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

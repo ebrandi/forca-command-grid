@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}Blueprint browser · Industry{% endblock %}
+{% block content %}
+
+<a href="{% url 'industry:home' %}" class="text-xs text-faint hover:text-gold">← Industry Center</a>
+<header class="mt-3 mb-5">
+  <p class="eyebrow">Industry &amp; Economy</p>
+  <h1 class="mt-1 text-2xl font-bold text-ink">Blueprint browser</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">Inspect what any recipe needs, and see the blueprints the corp and pilots already own (imported from ESI).</p>
+</header>
+
+<form method="get" class="panel mb-5 p-5">
+  <label class="label">Inspect a recipe</label>
+  <div class="flex flex-wrap items-end gap-3">
+    <div class="min-w-64 flex-1">
+      {% include "components/_type_picker.html" with field="type_id" endpoint="/industry/type-search/?buildable=1" placeholder="Search an item to see its blueprint…" initial_id=stype.type_id initial_name=stype.name %}
+    </div>
+    <button class="btn-gold text-sm">Inspect</button>
+  </div>
+</form>
+
+{% if recipe and recipe.estimate.buildable %}
+<section class="panel mb-5 p-5">
+  <div class="mb-3 flex items-center gap-2">
+    <img src="{% eve_type_render stype.type_id 64 %}" alt="" class="h-10 w-10 rounded-md bg-space ring-1 ring-line">
+    <div><h2 class="font-display font-semibold text-ink">{{ stype.name }}</h2><p class="text-xs text-faint">{{ recipe.estimate.activity }} · {{ recipe.estimate.output_per_run }}/run{% if recipe.invention %} · Tech II (invented){% endif %}</p></div>
+    <a href="{% url 'industry:calculator' %}?type_id={{ stype.type_id }}" class="ml-auto btn-ghost !py-1 !text-xs">Cost it →</a>
+  </div>
+  <div class="grid gap-1 sm:grid-cols-2">
+    {% for m in recipe.estimate.materials %}
+    <div class="flex items-center gap-2 text-sm text-muted"><img src="{% eve_type_icon m.type_id 32 %}" alt="" class="h-5 w-5 rounded-sm">{% type_name m.type_id %} <span class="ml-auto data text-xs text-faint">×{{ m.required }}</span></div>
+    {% endfor %}
+  </div>
+  {% if recipe.invention %}<p class="mt-3 text-xs text-cyan">This is a T2 item — <a href="{% url 'industry:invention' %}?type_id={{ stype.type_id }}" class="hover:underline">plan its invention →</a></p>{% endif %}
+</section>
+{% elif recipe %}
+<div class="panel mb-5 border-loss/40 bg-loss/5 px-4 py-3 text-sm text-loss">“{{ stype.name }}” has no manufacturing recipe — it can only be bought.</div>
+{% endif %}
+
+<section class="panel overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">Owned blueprints (imported) — {{ owned|length }}</h2></div>
+  {% if owned %}
+  <div class="overflow-x-auto"><table class="w-full text-sm">
+    <thead class="text-left text-faint"><tr class="border-b border-line/60">
+      <th class="px-4 py-2 font-medium">Blueprint</th>
+      <th class="px-4 py-2 font-medium">Owner</th>
+      <th class="px-4 py-2 text-right font-medium">ME / TE</th>
+      <th class="px-4 py-2 font-medium">Type</th>
+    </tr></thead>
+    <tbody>
+      {% for bp in owned %}
+      <tr class="border-t border-line/40">
+        <td class="flex items-center gap-2 px-4 py-1.5 text-muted"><img src="{% eve_type_icon bp.type_id 32 %}" alt="" class="h-5 w-5 rounded-sm">{% type_name bp.type_id %}</td>
+        <td class="px-4 py-1.5 text-xs text-faint">{{ bp.get_owner_type_display }}</td>
+        <td class="px-4 py-1.5 text-right data text-ink">{{ bp.me }} / {{ bp.te }}</td>
+        <td class="px-4 py-1.5 text-xs">{% if bp.is_original %}<span class="text-cyan">BPO</span>{% else %}<span class="text-faint">BPC ×{{ bp.runs }}</span>{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}
+  <p class="px-4 py-10 text-center text-sm text-faint">No blueprints imported yet. A Director can grant <span class="text-muted">Corp blueprints + jobs</span>, and pilots can grant <span class="text-muted">My industry</span>, on the <a href="/auth/eve/scopes/" class="text-gold hover:underline">ESI Scopes</a> page.</p>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,145 @@
+{% comment %}
+The report rendered as a staff briefing (doc 16 §2.4). Root is #report-shell with NO
+hx-* trigger, so when report_status swaps this in over the generating shell the htmx
+poll ends. Body sections render in doctrine order; COA cards come from the related
+manager (report.courses_of_action), never the immutable body. Used both inline (from
+report_detail.html) and as the htmx terminal fragment.
+{% endcomment %}
+<div id="report-shell">
+{% include "command_intel/_classification_banner.html" with classification=report.classification position="top" %}
+
+<header class="mb-5">
+  <p class="eyebrow text-faint">Staff briefing
+    {% if report.snapshot_id %}· snapshot #{{ report.snapshot_id }}{% endif %}
+    · model {{ report.model_name|default:"deterministic" }}
+    {% if report.prompt_version %}· prompt v{{ report.prompt_version }}{% endif %}
+    {% if report.latency_ms %}· {{ report.latency_ms }}ms{% endif %}
+  </p>
+  <h1 class="mt-1 font-display text-2xl font-bold text-ink">{{ report.title|default:"Command Intelligence Report" }}</h1>
+  <p class="mt-1 text-sm text-faint">
+    {% if report.requested_by %}Requested by {{ report.requested_by.username }} · {% endif %}
+    {% if report.generated_at %}generated {{ report.generated_at|date:"d M Y H:i" }} · {% endif %}
+    {% if report.status == 'ready' %}<span class="text-kill">▲ READY</span>
+    {% elif report.status == 'ready_degraded' %}<span class="text-gold">⚠ READY (degraded)</span>
+    {% elif report.status == 'failed' %}<span class="text-loss">▼ FAILED</span>{% endif %}
+  </p>
+</header>
+
+{% if report.status == 'failed' %}
+  <section class="panel overflow-hidden border-l-2 border-loss/60">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-loss">Generation failed</h2></div>
+    <div class="space-y-3 p-4">
+      <p class="text-sm text-muted">The briefing could not be generated.{% if report.error %} Reason: <span class="text-loss">{{ report.error }}</span>.{% endif %}</p>
+      <form method="post" action="{% url 'command_intel:generate' %}">{% csrf_token %}<button class="btn-gold !py-1.5 !text-xs">Retry generation</button></form>
+    </div>
+  </section>
+{% else %}
+
+  {% if report.status == 'ready_degraded' %}
+  <div role="status" class="panel mb-5 border-l-2 border-gold/60 px-4 py-3">
+    <p class="text-sm text-muted"><span class="text-gold">⚠ Narrative unavailable</span> — the intelligence officer (AI) could not be reached. The operational picture, constraints and templated courses of action below are computed and complete.</p>
+  </div>
+  {% endif %}
+
+  {% comment %}① Executive summary — LLM prose, fenced from the facts.{% endcomment %}
+  <section class="panel mb-5 overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">① Executive summary</h2></div>
+    <div class="p-4"><p class="text-sm leading-relaxed text-ink">ⓘ {{ report.body.executive_summary|default:report.summary }}</p></div>
+  </section>
+
+  {% comment %}② Operational picture — snapshot facts (read-through).{% endcomment %}
+  {% with op=report.body.operational_picture %}
+  <section class="panel mb-5 overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">② Operational picture</h2></div>
+    <div class="space-y-3 p-4">
+      {% if op.posture_statement %}<p class="text-sm text-muted">{{ op.posture_statement }}</p>{% endif %}
+      {% if op.overall_readiness is not None %}<p class="text-sm text-faint">Overall readiness <span class="data text-muted">{{ op.overall_readiness }}</span> of 100.</p>{% endif %}
+      {% if op.highlights %}
+        <ul class="space-y-1 text-sm text-muted">
+          {% for h in op.highlights %}<li class="flex gap-2"><span class="text-gold">▸</span><span>{{ h }}</span></li>{% endfor %}
+        </ul>
+      {% endif %}
+      {% if op.not_assessed %}
+        <div class="rounded-lg border border-dashed border-line/60 p-3">
+          <p class="eyebrow text-faint">Could not evaluate</p>
+          <ul class="mt-1.5 space-y-1 text-xs text-faint">
+            {% for n in op.not_assessed %}<li>○ {{ n }}</li>{% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+  {% endwith %}
+
+  {% comment %}③ Operational constraints — the body's prioritised interpretations.{% endcomment %}
+  {% if report.body.operational_constraints %}
+  <section class="panel mb-5 overflow-hidden">
+    <div class="flex items-center justify-between border-b border-line px-4 py-3">
+      <h2 class="eyebrow text-faint">③ Operational constraints</h2>
+      <a href="{% url 'command_intel:constraints' %}" class="text-xs text-cyan hover:underline">full board →</a>
+    </div>
+    <div class="divide-y divide-line/40">
+      {% for c in report.body.operational_constraints %}
+        <div class="px-4 py-2.5 text-sm text-muted">
+          <span class="data text-xs text-faint">#{{ c.priority_rank }}</span>
+          {{ c.interpretation|default:c }}
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% comment %}④ Courses of action — from the related manager (live state), not the body.{% endcomment %}
+  {% with coas=report.courses_of_action.all %}
+  {% if coas %}
+  <section class="mb-5">
+    <p class="eyebrow mb-2 text-gold">④ Courses of action · {{ coas|length }} proposed</p>
+    <div class="grid gap-3 lg:grid-cols-2">
+      {% for coa in coas %}{% include "command_intel/_coa_card.html" with coa=coa %}{% endfor %}
+    </div>
+  </section>
+  {% endif %}
+  {% endwith %}
+
+  <div class="mb-5 grid gap-5 lg:grid-cols-2">
+    {% comment %}⑥ Strategic risks.{% endcomment %}
+    {% if report.body.strategic_risks %}
+    <section class="panel overflow-hidden">
+      <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">⑤ Strategic risks</h2></div>
+      <div class="divide-y divide-line/40">
+        {% for r in report.body.strategic_risks %}
+          <div class="px-4 py-2.5">
+            <p class="text-sm text-muted">
+              {% if r.severity == 'critical' or r.severity == 'high' %}<span class="text-loss">▼</span>
+              {% elif r.severity == 'watch' %}<span class="text-gold">◆</span>
+              {% else %}<span class="text-kill">▲</span>{% endif %}
+              {{ r.risk|default:r }}
+            </p>
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    {% comment %}⑦ Forecast.{% endcomment %}
+    <section class="panel overflow-hidden border-l-2 border-cyan/60">
+      <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-cyan">⑥ Forecast</h2></div>
+      <div class="p-4"><p class="text-sm text-muted">ⓘ {{ report.body.forecast|default:"Trend forecasting accumulates over time as snapshots build history." }}</p></div>
+    </section>
+  </div>
+
+  {% comment %}⑧ Annexes — the audit trail (provenance).{% endcomment %}
+  <section class="panel mb-5 overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">⑦ Annexes &amp; provenance</h2></div>
+    <div class="flex flex-wrap items-center gap-2 p-4 text-xs">
+      {% for a in report.body.annexes %}<span class="chip">{{ a.title|default:a }}</span>{% endfor %}
+      <span class="chip text-faint">Generation: prompt v{{ report.prompt_version }} · cfg v{{ report.config_version }}
+        {% if report.token_usage %}· tokens {{ report.token_usage.input|default:"—" }}/{{ report.token_usage.output|default:"—" }}{% endif %}
+      </span>
+    </div>
+  </section>
+
+{% endif %}
+
+{% include "command_intel/_classification_banner.html" with classification=report.classification position="bottom" %}
+</div>

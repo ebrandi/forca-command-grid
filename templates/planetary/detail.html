@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}{{ plan.name }} · Planetary Industry{% endblock %}
+{% block content %}
+{% with totals=economics.totals %}
+<header class="mb-5 flex flex-wrap items-end justify-between gap-3">
+  <div class="min-w-0">
+    <a href="{% url 'planetary:landing' %}" class="text-xs text-faint hover:text-gold">← Planetary Industry</a>
+    <h1 class="mt-1 flex items-center gap-2 text-2xl font-bold text-ink">{{ plan.name }}
+      <span class="chip">{{ plan.get_status_display }}</span>
+    </h1>
+    <p class="mt-1 text-sm text-faint">{{ plan.get_goal_display }}{% if plan.character_name %} · {{ plan.character_name }}{% endif %} · prices from {{ plan.market_region_name }}{% if plan.last_priced_at %} · costed {{ plan.last_priced_at|timesince }} ago{% endif %}</p>
+  </div>
+  {% if can_manage %}
+  <div class="flex flex-wrap items-center gap-2">
+    <a href="{% url 'planetary:edit' plan.pk %}" class="btn-ghost !text-xs">Edit</a>
+    <form method="post" action="{% url 'planetary:recalc' plan.pk %}">{% csrf_token %}<button class="btn-ghost !text-xs">Recalculate</button></form>
+    <form method="post" action="{% url 'planetary:duplicate' plan.pk %}">{% csrf_token %}<button class="btn-ghost !text-xs">Duplicate</button></form>
+    <form method="post" action="{% url 'planetary:status' plan.pk %}" class="inline">{% csrf_token %}
+      <select name="status" data-autosubmit class="input-field !py-1 !text-xs">
+        {% for val, label in statuses %}<option value="{{ val }}" {% if plan.status == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </form>
+    <form method="post" action="{% url 'planetary:delete' plan.pk %}" data-confirm="{% if plan.status == 'archived' %}Permanently delete this plan? This cannot be undone.{% else %}Archive this plan?{% endif %}">{% csrf_token %}
+      <button class="btn-danger !py-1 !text-xs">{% if plan.status == 'archived' %}Delete permanently{% else %}Archive{% endif %}</button>
+    </form>
+  </div>
+  {% endif %}
+</header>
+
+{% if economics.warnings %}
+<div class="panel mb-4 border-gold/30 p-4">
+  <p class="eyebrow text-gold">Heads up</p>
+  <ul class="mt-1 space-y-1 text-sm text-faint">
+    {% for w in economics.warnings %}<li>• {{ w }}</li>{% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{% if colony_reconciliation %}
+<div class="panel mb-4 p-4">
+  <p class="eyebrow text-gold">Your live colonies vs this plan</p>
+  <div class="mt-2 space-y-1.5 text-sm">
+    {% for r in colony_reconciliation %}
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="{% if r.ok %}text-kill{% elif r.colony %}text-loss{% else %}text-faint{% endif %}">{% if r.ok %}✓{% elif r.colony %}!{% else %}○{% endif %}</span>
+      <span class="text-ink">{{ r.planet.planet_type.name }}</span>
+      {% if r.colony %}<span class="text-faint">· live in {{ r.colony.solar_system_name|default:"a system" }}{% if r.extra_colonies %} (+{{ r.extra_colonies }} more){% endif %}</span>{% endif %}
+      {% if r.drift %}<span class="text-loss">— {{ r.drift }}</span>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  <p class="mt-2 text-[11px] text-faint">Matched from your imported colonies (refinery-observer / ESI). ○ no live colony · ! needs attention · ✓ matches the plan.</p>
+</div>
+{% endif %}
+
+{# Profit summary widgets #}
+<div class="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">Net / day</p>
+    <p class="mt-1 text-2xl font-bold data {% if totals.net_day > 0 %}text-kill{% elif totals.net_day < 0 %}text-loss{% else %}text-ink{% endif %}">{{ totals.net_day|isk }}</p>
+  </div>
+  <div class="panel p-4"><p class="eyebrow text-faint">Net / week</p><p class="mt-1 text-lg font-semibold data text-ink">{{ totals.net_week|isk }}</p></div>
+  <div class="panel p-4"><p class="eyebrow text-faint">Net / month</p><p class="mt-1 text-lg font-semibold data text-ink">{{ totals.net_month|isk }}</p></div>
+  <div class="panel p-4"><p class="eyebrow text-faint">Per planet / day</p><p class="mt-1 text-lg font-semibold data text-ink">{{ totals.net_per_planet_day|isk }}</p></div>
+  <div class="panel p-4"><p class="eyebrow text-faint">Tax + fees / day</p><p class="mt-1 text-lg font-semibold data text-gold">{{ totals.tax_burden_day|isk }}</p></div>
+</div>
+
+<div class="mb-4 flex flex-wrap items-center gap-2 text-xs text-faint">
+  <span>Complexity <span class="text-ink">{{ economics.complexity }}</span></span>·
+  <span>Confidence <span class="text-ink">{{ economics.confidence }}</span></span>·
+  <span>Gross {{ totals.gross_day|isk }}/day</span>·
+  <span>Inputs {{ totals.input_cost_day|isk }}/day</span>·
+  <span>Customs {{ economics.totals.customs_day|isk }}/day</span>·
+  <span>Hauling {{ totals.hauling_day|isk }}/day</span>
+</div>
+
+<div class="grid gap-4 lg:grid-cols-3">
+  {# Per-planet economics + setup #}
+  <div class="space-y-4 lg:col-span-2">
+    <section class="panel p-5">
+      <h2 class="eyebrow mb-3 text-gold">Per-planet estimate</h2>
+      <div class="-mx-2 overflow-x-auto">
+        <table class="w-full min-w-[560px] text-sm">
+          <thead><tr class="border-b border-line text-left text-[11px] uppercase tracking-wider text-faint">
+            <th class="px-2 py-1.5">Planet</th><th class="px-2 py-1.5">Makes</th>
+            <th class="px-2 py-1.5 text-right">Units/day</th><th class="px-2 py-1.5 text-right">Gross</th>
+            <th class="px-2 py-1.5 text-right">Costs</th><th class="px-2 py-1.5 text-right">Net/day</th>
+          </tr></thead>
+          <tbody>
+            {% for row in economics.planets %}
+            <tr class="border-b border-line/50">
+              <td class="px-2 py-1.5 text-faint">{{ row.planet_type }} <span class="text-[10px] text-faint">· {{ row.role_label }}</span></td>
+              <td class="px-2 py-1.5 text-ink">{% if row.product_id %}{{ row.product }} <span class="chip">{{ row.tier }}</span>{% else %}—{% endif %}</td>
+              <td class="px-2 py-1.5 text-right data text-faint">{{ row.daily_units|floatformat:0 }}</td>
+              <td class="px-2 py-1.5 text-right data text-cyan">{{ row.gross_day|isk }}</td>
+              <td class="px-2 py-1.5 text-right data text-faint">{{ row.input_cost_day|add:row.customs_day|add:row.fees_day|add:row.hauling_day|isk }}</td>
+              <td class="px-2 py-1.5 text-right data {% if row.net_day > 0 %}text-kill{% elif row.net_day < 0 %}text-loss{% endif %}">{{ row.net_day|isk }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <p class="mt-2 text-[11px] text-faint">Costs = inputs + customs + market fees + hauling. Extraction planets self-supply their P0 (no input cost).</p>
+    </section>
+
+    {# Setup guide #}
+    <section class="panel p-5">
+      <h2 class="eyebrow mb-3 text-gold">Setup guide</h2>
+      <div class="space-y-3">
+        {% for s in setup %}
+        <div class="rounded-lg border border-line bg-panel2/40 p-4">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="font-medium text-ink">{{ s.planet_type }}</span>
+            <span class="chip">{{ s.role_label }}</span>
+            {% if s.product %}<span class="text-xs text-faint">→ {{ s.product }} <span class="chip">{{ s.product_tier }}</span></span>{% endif %}
+          </div>
+          <p class="mt-1.5 text-sm text-faint">{{ s.purpose }}</p>
+          {% if s.extract_from %}<p class="mt-1.5 text-xs text-faint">Extract &amp; refine: <span class="text-ink">{{ s.extract_from|join:", " }}</span></p>{% endif %}
+          {% if s.imports %}<p class="mt-1.5 text-xs text-faint">Import per cycle: {% for i in s.imports %}<span class="text-ink">{{ i.quantity_per_cycle }}× {{ i.name }}</span>{% if not forloop.last %}, {% endif %}{% endfor %}</p>{% endif %}
+          <details class="mt-2 text-xs">
+            <summary class="cursor-pointer text-gold">Facilities &amp; routing</summary>
+            <ul class="mt-1.5 space-y-1 text-faint">{% for f in s.facilities %}<li>• {{ f }}</li>{% endfor %}</ul>
+            <p class="mt-1.5 text-faint"><span class="text-ink">Routes:</span> {{ s.routes }}</p>
+            <p class="mt-1 text-faint"><span class="text-ink">Trade:</span> {{ s.export }}</p>
+          </details>
+        </div>
+        {% empty %}
+        <p class="text-sm text-faint">No planets on this plan yet. <a href="{% url 'planetary:edit' plan.pk %}" class="text-gold hover:underline">Add some →</a></p>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+
+  {# Right column: assumptions, chain, comparison #}
+  <div class="space-y-4">
+    <section class="panel p-5">
+      <h2 class="eyebrow mb-2 text-gold">How this was calculated</h2>
+      <ul class="space-y-1.5 text-xs text-faint">
+        {% for a in economics.assumptions %}<li>• {{ a }}</li>{% endfor %}
+      </ul>
+      <p class="mt-2 text-[11px] text-faint">These are estimates, not promises. Tune the assumptions on the edit page, or enter measured output per planet.</p>
+    </section>
+
+    {% if comparison %}
+    <section class="panel p-5">
+      <h2 class="eyebrow mb-2 text-gold">Sell inputs, or refine?</h2>
+      <p class="text-xs text-faint">Per cycle of {{ comparison.output.quantity }}× {{ comparison.output.name }}:</p>
+      <div class="mt-2 space-y-1 text-sm">
+        <div class="flex justify-between"><span class="text-faint">Inputs sold as-is</span><span class="data text-ink">{{ comparison.input_value|isk }}</span></div>
+        <div class="flex justify-between"><span class="text-faint">Refined output</span><span class="data text-ink">{{ comparison.output_value|isk }}</span></div>
+        <div class="flex justify-between border-t border-line pt-1"><span class="text-faint">Difference</span><span class="data {% if comparison.delta > 0 %}text-kill{% else %}text-loss{% endif %}">{{ comparison.delta|isk }}</span></div>
+      </div>
+      <p class="mt-2 text-xs {% if comparison.better == 'refine' %}text-kill{% else %}text-gold{% endif %}">
+        {% if comparison.better == 'refine' %}Refining wins — build the next tier.{% else %}Selling the inputs wins at these prices — don't over-refine.{% endif %}
+        {% if not comparison.priced %}<span class="text-faint">(some prices missing — treat as indicative)</span>{% endif %}
+      </p>
+    </section>
+    {% endif %}
+
+    {% if chain_tree %}
+    <section class="panel p-5">
+      <h2 class="eyebrow mb-2 text-gold">What you're building</h2>
+      <p class="mb-2 text-[11px] text-faint">One unit of {{ chain_tree.name }}, down to raw resources.</p>
+      {% include "planetary/_chain_node.html" with node=chain_tree %}
+    </section>
+    {% endif %}
+  </div>
+</div>
+
+{# Mistakes + checklist #}
+<div class="mt-4 grid gap-4 lg:grid-cols-2">
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">Mistakes to avoid</h2>
+    <ul class="space-y-2 text-sm">
+      {% for title, body in mistakes %}
+      <li><span class="text-ink">{{ title }}.</span> <span class="text-faint">{{ body }}</span></li>
+      {% endfor %}
+    </ul>
+  </section>
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">Build checklist (in EVE)</h2>
+    <ol class="space-y-1.5 text-sm text-faint">
+      {% for step in checklist %}<li class="flex gap-2"><span class="text-gold">{{ forloop.counter }}.</span> {{ step }}</li>{% endfor %}
+    </ol>
+  </section>
+</div>
+{% endwith %}
+{% endblock %}

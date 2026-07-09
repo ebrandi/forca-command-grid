@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}Jump Planner &middot; [FORCA] Command Grid{% endblock %}
+{% block content %}
+
+<header class="mb-5 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <p class="eyebrow">Navigation</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">Jump planner</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">Plan a jump-drive route &mdash; fewest jumps within range, with per-hull fuel in the right isotope. High-sec destinations are routed to a low-sec exit, then on stargates.</p>
+  </div>
+  <div class="flex items-center gap-2">
+    {% if saved_routes is not None %}<a href="{% url 'navigation:jump_routes' %}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-target"/></svg> Saved routes</a>{% endif %}
+    <a href="{% url 'navigation:route_planner' %}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-route"/></svg> Gate route planner</a>
+  </div>
+</header>
+
+<form id="jumpform" method="get" class="panel mb-5 p-5 space-y-3">
+  <div class="grid gap-3 sm:grid-cols-2">
+    <div><label class="label" for="lf_ship_1">From</label>
+      {% include "navigation/_system_picker.html" with prefix="from" placeholder="Origin system" init_id=origin.system_id init_name=origin.name %}
+    </div>
+    <div><label class="label">To</label>
+      {% include "navigation/_system_picker.html" with prefix="to" placeholder="Destination system" init_id=dest.system_id init_name=dest.name %}
+    </div>
+  </div>
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+    <div class="lg:col-span-2">
+      <label class="label">Ship</label>
+      <select id="lf_ship_1" name="ship" data-autosubmit class="input-field">
+        {% for group_label, hulls in ship_groups %}
+        <optgroup label="{{ group_label }}">
+          {% for s in hulls %}<option value="{{ s.key }}" {% if s.key == profile.key %}selected{% endif %}>{{ s.label }}</option>{% endfor %}
+        </optgroup>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="label" for="lf_jdc_2">JDC <span class="text-faint">range</span></label>
+      <select id="lf_jdc_2" name="jdc" data-autosubmit class="input-field">
+        {% for n in levels %}<option value="{{ n }}" {% if n == jdc %}selected{% endif %}>{{ n }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="label" for="lf_jfc_3">JFC <span class="text-faint">fuel</span></label>
+      <select id="lf_jfc_3" name="jfc" data-autosubmit class="input-field">
+        {% for n in levels %}<option value="{{ n }}" {% if n == jfc %}selected{% endif %}>{{ n }}</option>{% endfor %}
+      </select>
+    </div>
+    {% if profile.jf_skill %}
+    <div>
+      <label class="label" for="lf_jf_4">JF skill</label>
+      <select id="lf_jf_4" name="jf" data-autosubmit class="input-field">
+        {% for n in levels %}<option value="{{ n }}" {% if n == jf_skill %}selected{% endif %}>{{ n }}</option>{% endfor %}
+      </select>
+    </div>
+    {% else %}<input type="hidden" name="jf" value="{{ jf_skill }}">{% endif %}
+    {% if profile.rig_eligible %}
+    <div>
+      <label class="label" for="lf_rigs_5">JDE rigs <span class="text-faint">fuel</span></label>
+      <select id="lf_rigs_5" name="rigs" data-autosubmit class="input-field">
+        {% for n in rig_levels %}<option value="{{ n }}" {% if n == jde_rigs %}selected{% endif %}>{{ n }}</option>{% endfor %}
+      </select>
+    </div>
+    {% else %}<input type="hidden" name="rigs" value="0">{% endif %}
+  </div>
+  {% if pilot_skills %}
+    <p class="text-[11px] text-cyan/80">JDC/JFC/JF pre-filled from {{ pilot_skills.character.name }}'s trained skills — change any to compare.</p>
+  {% elif user.is_authenticated %}
+    <p class="text-[11px] text-faint">We'll auto-fill these from your character once your skills have synced (leadership refreshes member skills on a schedule).</p>
+  {% endif %}
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <div>
+      <label class="label" for="lf_range_6">Range (ly) <span class="text-faint">override</span></label>
+      <input id="lf_range_6" type="number" name="range" value="{{ custom_range }}" step="0.1" min="0.1" placeholder="{{ range_ly }}" class="input-field">
+    </div>
+    <div>
+      <label class="label" for="lf_pref_7">Gate-leg preference</label>
+      <select id="lf_pref_7" name="pref" data-autosubmit class="input-field">
+        {% for k, label in preferences %}<option value="{{ k }}" {% if k == preference %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="label" for="lf_waypoints_8">Waypoints <span class="text-faint">(low/null, in order)</span></label>
+      <input id="lf_waypoints_8" type="text" name="waypoints" value="{{ waypoints_text }}" placeholder="force jumps through&hellip;" autocomplete="off" class="input-field">
+      {% if wp_unresolved %}<p class="mt-1 text-[11px] text-loss">Couldn't find waypoint: {{ wp_unresolved|join:", " }}</p>{% endif %}
+    </div>
+  </div>
+  <div class="space-y-2 border-t border-line/60 pt-3">
+    {% include "navigation/_avoid_controls.html" %}
+    <div class="flex flex-wrap items-center gap-4">
+      <label class="flex items-center gap-2 text-sm text-muted"><input type="checkbox" name="stations_only" value="1" {% if require_stations %}checked{% endif %}> Only hop/exit through dockable (NPC-station) systems</label>
+      {% if ansiblex_count %}<label class="flex items-center gap-2 text-sm text-muted"><input type="checkbox" name="ansiblex" value="1" {% if use_ansiblex %}checked{% endif %}> Use corp Ansiblex bridges on gate legs ({{ ansiblex_count }})</label>{% endif %}
+    </div>
+  </div>
+  <div class="flex flex-wrap items-center justify-between gap-2">
+    <p class="text-[11px] text-faint">{{ profile.class_label }} &middot; jump range <span class="data text-cyan">{{ range_ly }} ly</span> &middot; burns <span class="text-gold">{{ profile.isotope_name }}</span> via {{ profile.cyno_label|lower }}. Cyno can't be lit in high-sec.</p>
+    <button class="btn-gold text-sm">Plan jump</button>
+  </div>
+</form>
+
+{% if error %}
+  <div class="panel border-loss/40 bg-loss/5 px-4 py-3 text-sm text-loss">{{ error }}</div>
+{% elif result %}
+{# --- Route-mode banner --- #}
+<div class="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-cyan/30 bg-cyan/5 px-4 py-3">
+  <span class="chip bg-cyan/15 text-cyan">{{ result.mode_label }}</span>
+  <p class="min-w-0 flex-1 text-xs text-muted">{{ result.reason }}</p>
+  {% if map_link %}<a href="{{ map_link }}" class="btn-ghost text-xs"><svg class="h-3.5 w-3.5"><use href="#i-map"/></svg> Route map</a>{% endif %}
+</div>
+
+{# --- High-sec exit selector (mixed-mode only) --- #}
+{% if result.exit_candidates %}
+<section class="panel mb-4 p-4">
+  <div class="mb-2 flex items-center justify-between">
+    <h2 class="eyebrow text-faint">Low-sec exit &mdash; pick your staging system</h2>
+    {% if config.allow_pilot_exit_override %}<span class="text-[11px] text-faint">Choose an alternative below</span>{% endif %}
+  </div>
+  <div class="flex flex-wrap gap-2">
+    {% for c in result.exit_candidates %}
+    <button form="jumpform" name="exit" value="{{ c.system_id }}"
+            class="rounded-md border px-3 py-2 text-left text-xs transition {% if result.exit and c.system_id == result.exit.system_id %}border-gold/50 bg-gold/10 text-ink{% else %}border-line bg-panel2/40 text-muted hover:border-cyan/40 hover:text-ink{% endif %}"
+            {% if not config.allow_pilot_exit_override and not forloop.first %}disabled{% endif %}>
+      <span class="data font-semibold {{ c.security|sec_class }}">{{ c.security }}</span>
+      <span class="font-medium">{{ c.name }}</span>
+      <span class="block text-[10px] text-faint">{{ c.region }} &middot; {{ c.gate_jumps }} gate{{ c.gate_jumps|pluralize }} to dest &middot; {{ c.jump_jumps }} cyno jump{{ c.jump_jumps|pluralize }}{% if c.has_station %} &middot; dockable{% endif %}</span>
+    </button>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{# --- Summary --- #}
+<section class="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">Cyno jumps</p>
+    <p class="data mt-1 text-2xl font-bold text-cyan">{{ result.summary.cyno_jumps }}</p>
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">Gate jumps</p>
+    <p class="data mt-1 text-2xl font-bold text-ink">{{ result.summary.gate_jumps }}</p>
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">Distance</p>
+    <p class="data mt-1 text-2xl font-bold text-ink">{{ result.summary.total_ly }} <span class="text-sm text-faint">ly</span></p>
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">Fuel</p>
+    <p class="data mt-1 text-2xl font-bold text-gold">{{ result.summary.fuel_with_margin }}</p>
+    <p class="mt-0.5 text-[11px] text-faint">{{ result.summary.isotope_name }}{% if result.summary.safety_margin_pct %} (+{{ result.summary.safety_margin_pct|floatformat:0 }}% margin){% endif %}</p>
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">Fuel cost</p>
+    {% if result.summary.fuel_isk %}<p class="data mt-1 text-2xl font-bold text-gold">{{ result.summary.fuel_isk|isk }}</p><p class="mt-0.5 text-[11px] text-faint">Jita sell</p>
+    {% else %}<p class="data mt-1 text-lg font-bold text-faint">&mdash;</p><p class="mt-0.5 text-[11px] text-faint">no market price</p>{% endif %}
+  </div>
+</section>
+
+{# --- Warnings --- #}
+{% if result.warnings %}
+<div class="panel mb-4 border-gold/30 bg-gold/5 px-4 py-3">
+  <ul class="space-y-1 text-xs text-gold">
+    {% for w in result.warnings %}<li class="flex gap-2"><svg class="mt-0.5 h-3.5 w-3.5 shrink-0"><use href="#i-shield"/></svg><span>{{ w }}</span></li>{% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{# --- True endpoints strip --- #}
+<div class="mb-3 flex flex-wrap items-center gap-3 text-sm">
+  <span class="chip bg-cyan/15 text-cyan">Origin</span>
+  <span class="data {{ result.origin.security|sec_class }}">{{ result.origin.security }}</span> {{ result.origin.name }}
+  <span class="text-faint">&rarr;</span>
+  <span class="chip bg-gold/15 text-gold">Destination</span>
+  <span class="data {{ result.dest.security|sec_class }}">{{ result.dest.security }}</span> <span class="font-semibold text-ink">{{ result.dest.name }}</span>
+</div>
+
+{# --- Segments (ordered jump/gate legs) --- #}
+{% for seg in result.segments %}
+<section class="panel mb-3 overflow-hidden {% if seg.kind == 'jump' %}border-cyan/25{% else %}border-line{% endif %}">
+  <div class="flex flex-wrap items-center gap-2 border-b px-4 py-2.5 {% if seg.kind == 'jump' %}border-cyan/20 bg-cyan/5{% else %}border-line bg-panel2/30{% endif %}">
+    <span class="grid h-6 w-6 place-items-center rounded-md {% if seg.kind == 'jump' %}bg-cyan/20 text-cyan{% else %}bg-panel2 text-faint{% endif %}">
+      <svg class="h-3.5 w-3.5"><use href="#{% if seg.kind == 'jump' %}i-jump{% else %}i-route{% endif %}"/></svg>
+    </span>
+    <h2 class="font-display text-sm font-semibold text-ink">{{ seg.title }}</h2>
+    <span class="chip ml-auto">{% if seg.kind == 'jump' %}{{ seg.jumps }} cyno jump{{ seg.jumps|pluralize }} &middot; {{ seg.ly }} ly &middot; {{ seg.fuel }} fuel{% else %}{{ seg.jumps }} gate{{ seg.jumps|pluralize }}{% endif %}</span>
+  </div>
+  {% if seg.kind == 'jump' %}
+  <ol class="divide-y divide-line/40">
+    {% for w in seg.waypoints %}
+    <li class="flex items-center gap-3 px-4 py-2 text-sm {% if forloop.first or forloop.last %}bg-panel2/40{% endif %}">
+      <span class="grid h-5 w-5 shrink-0 place-items-center rounded-full text-[10px] font-bold {% if forloop.first %}bg-cyan/20 text-cyan{% elif forloop.last %}bg-gold/20 text-gold{% else %}bg-panel2 text-faint{% endif %}">{{ forloop.counter0 }}</span>
+      <span class="data w-9 shrink-0 text-right font-semibold {{ w.security|sec_class }}">{{ w.security }}</span>
+      <span class="min-w-0 flex-1 truncate text-muted">{{ w.name }}</span>
+    </li>
+    {% endfor %}
+  </ol>
+  <div class="overflow-x-auto border-t border-line/40"><table class="w-full text-sm">
+    <thead class="text-left text-faint"><tr class="border-b border-line/60">
+      <th class="px-4 py-2 font-medium">#</th><th class="px-4 py-2 font-medium">From &rarr; To</th>
+      <th class="px-4 py-2 text-right font-medium">Light-years</th>
+      <th class="px-4 py-2 text-right font-medium">Fuel</th>
+      <th class="px-4 py-2 text-right font-medium">Cooldown</th>
+    </tr></thead>
+    <tbody>
+      {% for h in seg.hops %}
+      <tr class="border-t border-line/40">
+        <td class="px-4 py-2 data text-faint">{{ forloop.counter }}</td>
+        <td class="px-4 py-2 text-muted">{% system_name h.from %} &rarr; {% system_name h.to %}</td>
+        <td class="px-4 py-2 text-right data text-ink">{{ h.ly }}</td>
+        <td class="px-4 py-2 text-right data text-gold">{{ h.fuel }}</td>
+        <td class="px-4 py-2 text-right data text-faint">{{ h.cooldown_min|floatformat:1 }}m</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}
+  <ol class="flex flex-wrap gap-x-1 gap-y-1 px-4 py-3 text-sm">
+    {% for s in seg.systems %}
+    <li class="flex items-center gap-1">
+      <span class="data font-semibold {{ s.security|sec_class }}">{{ s.security }}</span>
+      <span class="text-muted">{{ s.name }}</span>
+      {% if not forloop.last %}<span class="text-faint">&rsaquo;</span>{% endif %}
+    </li>
+    {% endfor %}
+  </ol>
+  {% endif %}
+</section>
+{% endfor %}
+
+{# --- Copy lists --- #}
+<section class="panel mt-4 p-4" x-data="{ tab: 'summary' }">
+  <div class="mb-2 flex items-center gap-2 text-xs">
+    <span class="text-faint">Copy:</span>
+    <button type="button" @click="tab='summary'" :class="tab==='summary' ? 'text-gold' : 'text-muted'">Summary</button>
+    <span class="text-line">&middot;</span>
+    <button type="button" @click="tab='cyno'" :class="tab==='cyno' ? 'text-gold' : 'text-muted'">Cyno waypoints</button>
+    <span class="text-line">&middot;</span>
+    <button type="button" @click="tab='gate'" :class="tab==='gate' ? 'text-gold' : 'text-muted'">Gate route</button>
+  </div>
+  <textarea readonly rows="4" @click="$el.select()" x-show="tab==='summary'" class="input-field font-mono text-xs">{{ result.origin.name }} -> {{ result.dest.name }} ({{ result.mode_label }})
+{{ result.summary.cyno_jumps }} cyno jumps, {{ result.summary.gate_jumps }} gate jumps, {{ result.summary.total_ly }} ly
+Fuel: {{ result.summary.fuel_with_margin }} {{ result.summary.isotope_name }}{% if result.summary.fuel_isk %} (~{{ result.summary.fuel_isk|isk }}){% endif %}
+{% for seg in result.segments %}- {{ seg.title }}
+{% endfor %}</textarea>
+  <textarea readonly rows="4" @click="$el.select()" x-show="tab==='cyno'" x-cloak class="input-field font-mono text-xs">{% for seg in result.segments %}{% if seg.kind == 'jump' %}{% for w in seg.waypoints %}{{ w.name }}
+{% endfor %}{% endif %}{% endfor %}</textarea>
+  <textarea readonly rows="4" @click="$el.select()" x-show="tab==='gate'" x-cloak class="input-field font-mono text-xs">{% for seg in result.segments %}{% if seg.kind == 'gate' %}{% for s in seg.systems %}{{ s.name }}
+{% endfor %}{% endif %}{% endfor %}</textarea>
+</section>
+
+{# --- Assumptions --- #}
+{% if result.assumptions %}
+<div class="mt-3 rounded-lg border border-line/60 bg-panel2/20 px-4 py-3">
+  <p class="eyebrow mb-1 text-faint">Assumptions</p>
+  <ul class="space-y-0.5 text-[11px] text-faint">
+    {% for a in result.assumptions %}<li>&bull; {{ a }}</li>{% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{# --- Save route (logged-in members) --- #}
+{% if saved_routes is not None %}
+<form method="post" action="{% url 'navigation:jump_route_save' %}" class="panel mt-4 flex flex-wrap items-end gap-3 p-4">
+  {% csrf_token %}
+  <input type="hidden" name="from" value="{{ result.origin.system_id }}"><input type="hidden" name="from_q" value="{{ result.origin.name }}">
+  <input type="hidden" name="to" value="{{ result.dest.system_id }}"><input type="hidden" name="to_q" value="{{ result.dest.name }}">
+  <input type="hidden" name="ship" value="{{ profile.key }}"><input type="hidden" name="jdc" value="{{ jdc }}">
+  <input type="hidden" name="jfc" value="{{ jfc }}"><input type="hidden" name="jf" value="{{ jf_skill }}">
+  <input type="hidden" name="rigs" value="{{ jde_rigs }}"><input type="hidden" name="pref" value="{{ preference }}">
+  <input type="hidden" name="range" value="{{ custom_range }}"><input type="hidden" name="waypoints" value="{{ waypoints_text }}">
+  <input type="hidden" name="avoid_sys" value="{{ avoid_sys }}"><input type="hidden" name="avoid_region" value="{{ avoid_region }}">
+  {% if require_stations %}<input type="hidden" name="stations_only" value="1">{% endif %}
+  {% if result.exit %}<input type="hidden" name="exit" value="{{ result.exit.system_id }}">{% endif %}
+  <div class="grow"><label class="label" for="lf_savename">Save this route</label>
+    <input id="lf_savename" type="text" name="name" placeholder="{{ result.origin.name }} -> {{ result.dest.name }}" class="input-field"></div>
+  <div><label class="label" for="lf_savevis">Visibility</label>
+    <select id="lf_savevis" name="visibility" class="input-field">
+      <option value="private">Private (only me)</option>
+      <option value="leadership">Shared with leadership</option>
+    </select></div>
+  <button class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-target"/></svg> Save</button>
+</form>
+{% endif %}
+
+{% else %}
+  <div class="panel px-4 py-16 text-center">
+    <p class="font-display text-lg text-muted">Pick two systems</p>
+    <p class="mt-1 text-sm text-faint">Choose an origin, destination and hull above to plan a jump route. High-sec destinations are handled automatically for jump freighters.</p>
+  </div>
+{% endif %}
+{% endblock %}

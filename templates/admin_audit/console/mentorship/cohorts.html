@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load static eve %}
+{% block title %}Cohorts / intakes · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<a href="{% url 'admin_audit:mentorship_hub' %}" class="text-xs text-faint hover:text-gold">&larr; Mentorship</a>
+<header class="mt-2 mb-6">
+  <p class="eyebrow text-gold">Mentorship</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">Cohorts / intakes</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">Group each wave of cadets into a named intake — e.g. &ldquo;Q3 2026 Rookie Intake&rdquo; — so you can track a season from first sign-up to graduation.</p>
+</header>
+
+<div class="grid gap-5 lg:grid-cols-3">
+  <!-- Existing cohorts -->
+  <section class="lg:col-span-2">
+    <h2 class="eyebrow mb-3 text-faint">Intakes</h2>
+    {% if cohorts %}
+    <div class="space-y-3">
+      {% for c in cohorts %}
+      <div class="panel flex flex-wrap items-start justify-between gap-3 p-4">
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center gap-2">
+            <h3 class="font-display font-semibold text-ink">{{ c.name }}</h3>
+            <span class="data text-[11px] text-faint">{{ c.key }}</span>
+            {% if c.is_active %}<span class="chip text-kill">Active</span>{% else %}<span class="chip text-muted">Inactive</span>{% endif %}
+          </div>
+          {% if c.description %}<p class="mt-1 text-sm text-faint">{{ c.description }}</p>{% endif %}
+          <p class="mt-2 text-[11px] text-faint">
+            {% if c.starts_on %}<span class="text-muted">Opens</span> {{ c.starts_on|date:"j M Y" }}{% else %}<span class="text-muted">No start date</span>{% endif %}
+            <span class="text-line"> · </span>
+            {% if c.ends_on %}<span class="text-muted">Closes</span> {{ c.ends_on|date:"j M Y" }}{% else %}<span class="text-muted">Open-ended</span>{% endif %}
+          </p>
+        </div>
+        <form method="post" action="{% url 'admin_audit:mentorship_cohort_delete' c.id %}"
+              data-confirm="Delete the “{{ c.name }}” intake? Cadets keep their progress but lose this grouping.">
+          {% csrf_token %}
+          <button class="btn-danger !px-3 !py-1.5 text-xs">Delete</button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="panel p-8 text-center">
+      <svg class="mx-auto h-8 w-8 text-faint"><use href="#i-command"/></svg>
+      <p class="mt-3 text-sm text-ink">No intakes yet.</p>
+      <p class="mt-1 text-sm text-faint">Create your first cohort on the right to start tracking a season of cadets.</p>
+    </div>
+    {% endif %}
+  </section>
+
+  <!-- New cohort -->
+  <section>
+    <h2 class="eyebrow mb-3 text-faint">New cohort</h2>
+    <form method="post" action="{% url 'admin_audit:mentorship_cohort_create' %}" class="panel space-y-4 p-5">
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+      <p class="text-xs text-loss">{{ form.non_field_errors|join:" " }}</p>
+      {% endif %}
+      {% for field in form %}
+      <div>
+        <label class="label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<p class="mt-1 text-[11px] text-faint">{{ field.help_text }}</p>{% endif %}
+        {% if field.errors %}<p class="mt-1 text-xs text-loss">{{ field.errors|join:" " }}</p>{% endif %}
+      </div>
+      {% endfor %}
+      <button class="btn-gold w-full">Create intake</button>
+    </form>
+  </section>
+</div>
+{% endblock %}

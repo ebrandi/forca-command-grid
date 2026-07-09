@@ -1,0 +1,15 @@
+{# System autocomplete. Params: prefix, placeholder, init_id, init_name #}
+<div x-data="typePicker('{% url 'navigation:system_search' %}', '{{ init_id|default:'' }}', '{{ init_name|default:'' }}')" class="relative">
+  <input type="text" name="{{ prefix }}_q" x-model="q" @input.debounce.250ms="lookup()"
+         @focus="open = results.length > 0" autocomplete="off" spellcheck="false"
+         class="input-field" placeholder="{{ placeholder }}">
+  <input type="hidden" name="{{ prefix }}" :value="id">
+  <div x-show="open" @click.outside="open = false" x-cloak
+       class="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-md border border-line bg-panel shadow-lg">
+    <template x-for="r in results" :key="r.type_id">
+      <button type="button" @click="choose(r)"
+              class="block w-full px-3 py-1.5 text-left text-sm text-muted hover:bg-panel2 hover:text-ink"
+              x-text="r.name"></button>
+    </template>
+  </div>
+</div>

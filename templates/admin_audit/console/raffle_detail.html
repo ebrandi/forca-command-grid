@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}{{ contest.name }} · Raffle · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-gold">Raffle · Command deck</p>
+    <div class="mt-1 flex flex-wrap items-center gap-2">
+      <h1 class="text-2xl font-bold text-ink">{{ contest.name }}</h1>
+      <span class="chip {% if contest.status == 'active' %}!border-kill/40 !text-kill{% elif contest.status == 'closed' %}!border-gold/40 !text-gold{% elif contest.status == 'scheduled' or contest.status == 'completed' %}!border-cyan/40 !text-cyan{% elif contest.status == 'cancelled' %}!border-loss/40 !text-loss{% endif %}">{{ contest.get_status_display }}</span>
+      {% if contest.is_accruing %}<span class="chip !border-kill/40 !text-kill">Accruing now</span>{% elif contest.is_frozen %}<span class="chip !border-gold/40 !text-gold">Ledger frozen</span>{% endif %}
+      {% if contest.is_boosted_now %}<span class="chip !border-cyan/40 !text-cyan">Booster ×{{ contest.booster_multiplier }}</span>{% endif %}
+    </div>
+    {% if contest.objective %}<p class="mt-1 max-w-2xl text-sm text-faint">{{ contest.objective }}</p>{% endif %}
+  </div>
+  <a href="{% url 'admin_audit:raffle_hub' %}" class="btn-ghost text-sm">← Contests</a>
+</header>
+
+{% comment %}Cockpit navigation — every management surface for this contest.{% endcomment %}
+<nav class="mb-5 flex flex-wrap gap-2">
+  <a href="{% url 'admin_audit:raffle_edit' contest.pk %}" class="btn-ghost text-xs">Edit</a>
+  <a href="{% url 'admin_audit:raffle_prizes' contest.pk %}" class="btn-ghost text-xs">Prizes</a>
+  <a href="{% url 'admin_audit:raffle_sources' contest.pk %}" class="btn-ghost text-xs">Sources</a>
+  <a href="{% url 'admin_audit:raffle_grant' contest.pk %}" class="btn-ghost text-xs">Grant tickets</a>
+  <a href="{% url 'admin_audit:raffle_ledger' contest.pk %}" class="btn-ghost text-xs">Ledger</a>
+  <a href="{% url 'admin_audit:raffle_ineligible' contest.pk %}" class="btn-ghost text-xs">Ineligible report</a>
+  <a href="{% url 'admin_audit:raffle_draw' contest.pk %}" class="btn-cyan text-xs">Draw manager</a>
+  <a href="{% url 'admin_audit:raffle_stats' contest.pk %}" class="btn-ghost text-xs">Statistics</a>
+  <a href="{% url 'admin_audit:raffle_flags' contest.pk %}" class="btn-ghost text-xs">Flags{% if open_flags %} <span class="chip !border-loss/40 !text-loss">{{ open_flags }}</span>{% endif %}</a>
+</nav>
+
+{% if draw %}
+<div class="panel mb-5 flex flex-wrap items-center gap-2 border-cyan/40 bg-cyan/10 px-4 py-3 text-sm">
+  <span class="chip !border-cyan/40 !text-cyan">Draw complete</span>
+  <span class="text-muted">{{ draw.results.count }} winner{{ draw.results.count|pluralize }} drawn {{ draw.completed_at|date:"M j, Y H:i" }}.</span>
+  <a href="{% url 'admin_audit:raffle_draw' contest.pk %}" class="text-cyan hover:underline">Winners &amp; fulfilment →</a>
+</div>
+{% endif %}
+
+{% comment %}Lifecycle controls: guarded status transitions + (draft/scheduled only) template apply.{% endcomment %}
+<section class="panel mb-6 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Lifecycle</h2></div>
+  <div class="grid gap-4 px-4 py-4 lg:grid-cols-3">
+    <dl class="space-y-1 text-[11px] text-faint">
+      <div class="flex justify-between gap-2"><dt>Opens</dt><dd class="data text-muted">{{ contest.start_at|date:"M j, Y H:i" }}</dd></div>
+      <div class="flex justify-between gap-2"><dt>Closes</dt><dd class="data text-muted">{{ contest.end_at|date:"M j, Y H:i" }}</dd></div>
+      <div class="flex justify-between gap-2"><dt>Draws</dt><dd class="data text-muted">{{ contest.draw_at|date:"M j, Y H:i" }}</dd></div>
+    </dl>
+    <div class="lg:col-span-2">
+      <p class="eyebrow mb-2 text-faint">Move to</p>
+      {% if next_statuses %}
+        <div class="flex flex-wrap gap-2">
+          {% for s in next_statuses %}
+            <form method="post" action="{% url 'admin_audit:raffle_status' contest.pk %}"{% if s == 'cancelled' %} data-confirm="Cancel this contest? This stops all ticket accrual and can't be undone."{% endif %}>
+              {% csrf_token %}
+              <input type="hidden" name="status" value="{{ s }}">
+              <button class="btn-ghost text-xs{% if s == 'cancelled' %} !text-loss hover:!border-loss/40{% endif %}">{{ s.label }}</button>
+            </form>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-xs text-faint">No status changes available from the current state.</p>
+      {% endif %}
+
+      {% if contest.is_editable %}
+      {# The apply-template picker mirrors the built-in blueprints in apps/raffle/contest_templates.BUILTIN. #}
+      <div class="mt-4 border-t border-line/60 pt-4">
+        <p class="eyebrow mb-2 text-faint">Apply a template</p>
+        <form method="post" action="{% url 'admin_audit:raffle_apply_template' contest.pk %}" class="flex flex-wrap items-end gap-2" data-confirm="Apply this template? It overwrites the prize ladder and re-seeds the ticket sources for this contest.">
+          {% csrf_token %}
+          <select name="template_key" class="input-field w-64">
+            <option value="">Choose a template…</option>
+            <option value="pvp_activity">PVP activity raffle</option>
+            <option value="solo_kill">Solo kill challenge</option>
+            <option value="home_defence">Home defence contest</option>
+            <option value="mining_month">Mining month</option>
+            <option value="industry_drive">Industry production drive</option>
+            <option value="logistics_campaign">Logistics support campaign</option>
+            <option value="newbro_support">Newbro support contest</option>
+            <option value="alliance_deployment">Alliance deployment raffle</option>
+            <option value="mixed_engagement">Mixed activity engagement</option>
+            <option value="esi_adoption">ESI adoption campaign</option>
+          </select>
+          <button class="btn-ghost text-sm">Apply</button>
+        </form>
+        <p class="mt-1 text-[11px] text-faint">Only draft / scheduled contests can have a template applied.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+{% comment %}Headline metrics.{% endcomment %}
+<section class="mb-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">Participants</p>
+    <p class="data mt-1 text-2xl font-bold text-gold">{{ stats.participants }}</p>
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">Eligible to win</p>
+    <p class="data mt-1 text-2xl font-bold text-kill">{{ stats.eligible_participants }}</p>
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">Tickets in the pool</p>
+    <p class="data mt-1 text-2xl font-bold text-cyan">{{ stats.total_tickets }}</p>
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">Prize pool</p>
+    <p class="data mt-1 text-2xl font-bold text-gold">{{ stats.prize_value|isk }}</p>
+  </div>
+</section>
+<section class="mb-6 grid gap-3 sm:grid-cols-3">
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">Manual grants</p>
+    <p class="data mt-1 text-xl font-bold text-muted">{{ stats.manual_total }} <span class="text-xs font-normal text-faint">tickets</span></p>
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">Kill value driven</p>
+    <p class="data mt-1 text-xl font-bold text-muted">{{ stats.kill_value|isk }}</p>
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">Ineligible events</p>
+    <p class="data mt-1 text-xl font-bold text-loss">{{ stats.ineligible_events }}</p>
+    <p class="mt-1 text-[11px] text-faint">{{ adoption.unenrolled_with_activity }} unenrolled pilot{{ adoption.unenrolled_with_activity|pluralize }} — an outreach list.</p>
+  </div>
+</section>
+
+<div class="grid gap-6 lg:grid-cols-2">
+  {% comment %}Ticket sources.{% endcomment %}
+  <section class="panel overflow-hidden">
+    <div class="flex items-center justify-between border-b border-line px-4 py-3">
+      <h2 class="eyebrow text-gold">Ticket sources</h2>
+      <a href="{% url 'admin_audit:raffle_sources' contest.pk %}" class="text-xs text-cyan hover:underline">Configure →</a>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-line/60 text-left text-[11px] uppercase tracking-wide text-faint">
+            <th class="px-4 py-2 font-medium">Source</th>
+            <th class="px-4 py-2 font-medium">State</th>
+            <th class="px-4 py-2 font-medium">Mode</th>
+            <th class="px-4 py-2 text-right font-medium">Tickets</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-line/40">
+          {% for row in source_rows %}
+            <tr>
+              <td class="px-4 py-2.5">
+                <span class="text-ink">{{ row.source.label|default:row.config.source_key }}</span>
+                {% if row.source.unit %}<span class="block text-[11px] text-faint">per {{ row.source.unit }}</span>{% endif %}
+              </td>
+              <td class="px-4 py-2.5">
+                {% if row.config.enabled %}<span class="chip !border-kill/40 !text-kill">on</span>{% else %}<span class="chip !text-faint">off</span>{% endif %}
+              </td>
+              <td class="px-4 py-2.5 text-muted">{{ row.config.get_mode_display }}</td>
+              <td class="px-4 py-2.5 text-right"><span class="data text-cyan">{{ row.tickets }}</span></td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4" class="px-4 py-6 text-center text-faint">No ticket sources configured yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  {% comment %}Prizes.{% endcomment %}
+  <section class="panel overflow-hidden">
+    <div class="flex items-center justify-between border-b border-line px-4 py-3">
+      <h2 class="eyebrow text-gold">Prizes</h2>
+      <a href="{% url 'admin_audit:raffle_prizes' contest.pk %}" class="text-xs text-cyan hover:underline">Manage →</a>
+    </div>
+    <div class="divide-y divide-line/40">
+      {% for p in prizes %}
+        <div class="flex items-center gap-3 px-4 py-2.5 text-sm">
+          <span class="chip !border-gold/40 !text-gold shrink-0">#{{ p.rank }}</span>
+          {% if p.icon_type_id %}<img src="{% eve_type_icon p.icon_type_id 32 %}" alt="" loading="lazy" class="h-7 w-7 rounded-sm">{% endif %}
+          <span class="min-w-0 flex-1 truncate text-ink">{{ p.name }}{% if p.quantity > 1 %} <span class="text-faint">×{{ p.quantity }}</span>{% endif %}</span>
+          <span class="chip shrink-0">{{ p.get_prize_type_display }}</span>
+          <span class="data shrink-0 text-xs text-cyan">{{ p.estimated_value|isk }}</span>
+        </div>
+      {% empty %}
+        <p class="px-4 py-6 text-center text-sm text-faint">No prizes yet — <a href="{% url 'admin_audit:raffle_prizes' contest.pk %}" class="text-gold hover:underline">add a prize ladder</a>.</p>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+
+{% comment %}Exclude a pilot — reversible; lifted from the same page after the fact.{% endcomment %}
+<section class="panel mt-6 overflow-hidden">
+  <div class="border-b border-line px-4 py-3">
+    <h2 class="eyebrow text-gold">Exclude a pilot</h2>
+    <p class="mt-1 text-xs text-faint">Bar a pilot from this contest — they earn no new tickets and are removed from the winner pool at draw time. Audited and reversible.</p>
+  </div>
+  <div class="px-4 py-3">
+    <form method="post" action="{% url 'admin_audit:raffle_exclude' contest.pk %}" class="flex flex-wrap items-end gap-2">
+      {% csrf_token %}
+      <div>
+        <label class="label">Character id</label>
+        <input name="character_id" type="number" min="1" placeholder="EVE character id" class="input-field w-44">
+      </div>
+      <div class="min-w-[12rem] flex-1">
+        <label class="label">Reason</label>
+        <input name="reason" placeholder="Why they're excluded" class="input-field w-full">
+      </div>
+      <button class="btn-ghost text-sm !text-loss hover:!border-loss/40">Exclude</button>
+    </form>
+  </div>
+</section>
+
+{% comment %}Recent ledger activity.{% endcomment %}
+<section class="panel mt-6 overflow-hidden">
+  <div class="flex items-center justify-between border-b border-line px-4 py-3">
+    <h2 class="eyebrow text-gold">Recent activity</h2>
+    <a href="{% url 'admin_audit:raffle_ledger' contest.pk %}" class="text-xs text-cyan hover:underline">Full ledger →</a>
+  </div>
+  <div class="divide-y divide-line/40">
+    {% for e in recent %}
+      <div class="flex items-center gap-3 px-4 py-2.5 text-sm">
+        <span class="data w-16 shrink-0 text-[11px] text-faint">{{ e.created_at|date:"M j H:i" }}</span>
+        <span class="min-w-0 flex-1 truncate text-ink">{{ e.character_name|default:e.character_id }}</span>
+        <span class="hidden text-xs text-faint sm:inline">{{ e.source_key }}</span>
+        <span class="data w-12 shrink-0 text-right {% if e.amount < 0 %}text-loss{% else %}text-cyan{% endif %}">{{ e.amount }}</span>
+        <span class="chip shrink-0 {% if e.status == 'approved' %}!border-kill/40 !text-kill{% elif e.status == 'pending' %}!border-gold/40 !text-gold{% elif e.status == 'excluded' or e.status == 'disqualified' or e.status == 'reversed' %}!border-loss/40 !text-loss{% endif %}">{{ e.get_status_display }}</span>
+      </div>
+    {% empty %}
+      <p class="px-4 py-6 text-center text-sm text-faint">No ticket activity recorded yet.</p>
+    {% endfor %}
+  </div>
+</section>
+
+{% if recommendations %}
+<section class="panel mt-6 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Leadership insights</h2></div>
+  <ul class="space-y-2 px-4 py-3 text-sm text-muted">
+    {% for rec in recommendations %}
+      <li class="flex gap-2"><span class="text-gold">•</span><span>{{ rec }}</span></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+{% endblock %}

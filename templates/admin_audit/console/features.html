@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Services & features · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
+<header class="mt-2 mb-6">
+  <p class="eyebrow">System</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">Services &amp; features</h1>
+  <p class="mt-1 text-sm text-faint">Choose what your pilots can see and use. Everything is on by default — turn off anything your corp doesn't need and it disappears from their menu. The audience-controlled features and member services below also choose <em>who</em> can use them (off / corp / corp &amp; alliance / public).</p>
+</header>
+
+
+<form method="post">
+  {% csrf_token %}
+  <div class="space-y-6">
+    {% for group in groups %}
+      <section class="panel overflow-hidden">
+        <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">{{ group.name }}</h2></div>
+        <div class="divide-y divide-line/40">
+          {% for item in group.features %}
+            <label class="flex cursor-pointer items-start gap-3 px-4 py-3 hover:bg-panel2/40">
+              <input type="checkbox" name="feature" value="{{ item.f.key }}" {% if item.enabled %}checked{% endif %} class="mt-1">
+              <span class="min-w-0">
+                <span class="block text-sm font-medium text-ink">{{ item.f.label }}</span>
+                <span class="block text-xs text-faint">{{ item.f.description }}</span>
+              </span>
+            </label>
+          {% endfor %}
+        </div>
+      </section>
+    {% endfor %}
+
+    <!-- Audience-controlled features: the same 4-state control as the member services. -->
+    <section class="panel overflow-hidden">
+      <div class="border-b border-line px-4 py-3">
+        <h2 class="eyebrow text-faint">Ships, doctrines &amp; navigation</h2>
+        <p class="mt-1 text-xs text-faint">Choose who can see each — off, corp only, corp &amp; alliance (friendly corps included), or public.</p>
+      </div>
+      <div class="divide-y divide-line/40 text-sm">
+        {% for a in audience_features %}
+        <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+          <span class="min-w-0">
+            <span class="block font-medium text-ink">{{ a.label }}</span>
+            <span class="block text-xs text-faint">{{ a.description }}</span>
+          </span>
+          <div class="flex items-center gap-3">
+            <label class="sr-only" for="faud-{{ a.key }}">{{ a.label }} audience</label>
+            <select id="faud-{{ a.key }}" name="feature_audience:{{ a.key }}"
+                    class="rounded border border-line bg-panel2 px-2 py-1 text-sm text-ink">
+              {% for value, label in audience_choices %}
+                <option value="{{ value }}" {% if value == a.audience %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- Member services: who can see and use each (off / corp / alliance / public). -->
+    <section class="panel overflow-hidden">
+      <div class="border-b border-line px-4 py-3">
+        <h2 class="eyebrow text-faint">Member &amp; alliance services</h2>
+        <p class="mt-1 text-xs text-faint">Set who can see and use each service. “Settings →” opens its pricing and detailed options.</p>
+      </div>
+      <div class="divide-y divide-line/40 text-sm">
+        {% for s in services %}
+        <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+          <span class="min-w-0 font-medium text-ink">{{ s.label }}</span>
+          <div class="flex items-center gap-3">
+            <label class="sr-only" for="audience-{{ s.key }}">{{ s.label }} audience</label>
+            <select id="audience-{{ s.key }}" name="audience:{{ s.key }}"
+                    class="rounded border border-line bg-panel2 px-2 py-1 text-sm text-ink">
+              {% for value, label in audience_choices %}
+                <option value="{{ value }}" {% if value == s.audience %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+            <a href="{% url s.url %}" class="text-xs text-faint hover:text-gold">Settings →</a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+
+  <div class="mt-5"><button class="btn-gold">Save changes</button></div>
+</form>
+{% endblock %}

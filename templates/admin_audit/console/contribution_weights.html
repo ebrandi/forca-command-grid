@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Contribution weights · Admin{% endblock %}
+{% block content %}
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
+<header class="mt-3 mb-6">
+  <p class="eyebrow">Operations</p>
+  <h1 class="mt-1 text-2xl font-bold text-ink">Contribution weights</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">Tune how each kind of contribution scores points. The ledger always keeps native units (ISK, ships, m³…); these weights turn them into one comparable corp score.</p>
+</header>
+
+
+<form method="post" class="max-w-2xl space-y-5">
+  {% csrf_token %}
+
+  <section class="panel p-5">
+    <label class="flex items-center gap-3">
+      {{ form.enabled }}
+      <span><span class="font-display font-semibold text-ink">Points scoring enabled</span><span class="block text-xs text-faint">When off, every contribution scores 0 points (native units are unaffected).</span></span>
+    </label>
+  </section>
+
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">Per-event &amp; per-unit kinds</h2>
+    <div class="grid gap-4 sm:grid-cols-2">
+      {% for f in form %}
+        {% if f.name == 'task_points' or f.name == 'fleet_points' or f.name == 'haul_points' or f.name == 'build_points_per_ship' or f.name == 'mining_points_per_mil' or f.name == 'srp_points_per_mil' %}
+          <div>
+            <label class="label">{{ f.label }}</label>
+            {{ f }}
+            {% if f.help_text %}<p class="mt-1 text-[11px] text-faint">{{ f.help_text }}</p>{% endif %}
+            {% for e in f.errors %}<p class="mt-1 text-[11px] text-loss">{{ e }}</p>{% endfor %}
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+    <label class="mt-4 flex items-center gap-3 border-t border-line/50 pt-4">
+      {{ form.haul_requires_verification }}
+      <span><span class="text-sm text-ink">Haul points require in-game ESI verification</span><span class="block text-[11px] text-faint">{{ form.haul_requires_verification.help_text }}</span></span>
+    </label>
+  </section>
+
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">Skill training</h2>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div>
+        <label class="label">{{ form.train_points_per_level.label }}</label>
+        {{ form.train_points_per_level }}
+        <p class="mt-1 text-[11px] text-faint">{{ form.train_points_per_level.help_text }}</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">Doctrine unlock <span class="text-faint">· variable</span></h2>
+    <p class="mb-3 text-xs text-faint">points = base + (priority × coef) + (required SP in millions × coef)</p>
+    <div class="grid gap-4 sm:grid-cols-3">
+      {% for f in form %}
+        {% if f.name == 'doctrine_base' or f.name == 'doctrine_priority_coef' or f.name == 'doctrine_effort_per_mil_sp' %}
+          <div>
+            <label class="label">{{ f.label }}</label>
+            {{ f }}
+            {% if f.help_text %}<p class="mt-1 text-[11px] text-faint">{{ f.help_text }}</p>{% endif %}
+            {% for e in f.errors %}<p class="mt-1 text-[11px] text-loss">{{ e }}</p>{% endfor %}
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">PVP &amp; PVE <span class="text-faint">· Hall of Fame</span></h2>
+    <p class="mb-3 text-xs text-faint">Fold combat and ratting income into the same points scale for the Hall of Fame ranking.</p>
+    <div class="grid gap-4 sm:grid-cols-2">
+      {% for f in form %}
+        {% if f.name == 'pvp_points_per_kill' or f.name == 'pvp_final_blow_bonus' or f.name == 'pve_points_per_mil' %}
+          <div>
+            <label class="label">{{ f.label }}</label>
+            {{ f }}
+            {% if f.help_text %}<p class="mt-1 text-[11px] text-faint">{{ f.help_text }}</p>{% endif %}
+            {% for e in f.errors %}<p class="mt-1 text-[11px] text-loss">{{ e }}</p>{% endfor %}
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+    <div class="mt-4 border-t border-line/50 pt-4">
+      <label class="label">{{ form.pve_ref_types.label }}</label>
+      {{ form.pve_ref_types }}
+      <p class="mt-1 text-[11px] text-faint">{{ form.pve_ref_types.help_text }}</p>
+      {% for e in form.pve_ref_types.errors %}<p class="mt-1 text-[11px] text-loss">{{ e }}</p>{% endfor %}
+    </div>
+  </section>
+
+  <div class="flex gap-2"><button class="btn-gold">Save weights</button></div>
+</form>
+{% endblock %}

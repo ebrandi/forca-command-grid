@@ -1,0 +1,618 @@
+{% extends "base.html" %}
+{% load eve %}
+{% comment %}
+The Command Center — the pilot's single home page. Absorbed "My Readiness"
+(/readiness/me/) and the "Daily Briefing" (/pilots/briefing/), which had itself
+absorbed "Your Orders" and "Recommended Actions". Zones, top to bottom: hero →
+time-sensitive signals → THE quest queue (the only advice surface, both engines
+through pilots/_quest_row.html) → combat log (my losses above the corp feed) |
+sidebar (getting started, pilot stats, doctrines capacitor bar + almost-there,
+my work, contribution+recognition, characters) → pick-up boards → officer deck.
+GOVERNANCE (keep these or the merge erodes):
+1. ONE-GOLD-BUTTON RULE: the only .btn-gold above the command deck is Priority
+   One's action (the link-a-character CTA in the no-character state excepted).
+2. ADVICE APPEARS ONCE: advice lives in the quest queue only. Signals are
+   timers, stats/doctrines are status, boards are opportunity.
+3. REPLACE, DON'T APPEND: new content must replace an existing zone, not add
+   another band — the fold budget is spent.
+{% endcomment %}
+{% block title %}Command Center · [FORCA] Command Grid{% endblock %}
+{% block content %}
+
+{% if not characters %}
+<header class="mb-6">
+  <p class="eyebrow text-gold">Command Center</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">Your day, one page.</h1>
+</header>
+<div class="panel p-8 text-center">
+  <p class="text-muted">Link an EVE character and the Grid will brief you every day — your orders, your readiness, your ISK on the table.</p>
+  <a href="{% url 'sso:login' %}" class="btn-gold mt-4">Link a character with EVE</a>
+</div>
+{% else %}
+
+<header class="mb-6 flex flex-wrap items-center gap-4">
+  <a href="{% url 'identity:character' main_character.character_id %}"><img src="{% eve_portrait main_character.character_id 128 %}" alt="" class="h-16 w-16 rounded-xl ring-1 ring-line hover:ring-gold/60"></a>
+  <div class="min-w-0 flex-1">
+    <p class="eyebrow text-gold">Command Center · <span class="data">{% now "Y-m-d" %}</span> EVE</p>
+    <h1 class="mt-0.5 text-3xl font-bold text-ink">Good hunting, {{ main_character.name }}.</h1>
+    <p class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-faint">
+      {% if main_character.corporation_id %}<span class="flex items-center gap-1"><img src="{% eve_corp_logo main_character.corporation_id 32 %}" alt="" class="h-4 w-4 rounded-sm">{% eve_name main_character.corporation_id %}</span>{% endif %}
+      {% if is_director %}<span class="chip text-gold">Director</span>{% elif is_officer %}<span class="chip text-gold">Officer</span>{% else %}<span class="chip">Member</span>{% endif %}
+      {% if combat_rank %}<a href="{% url 'killboard:rankings' %}" class="chip !border-cyan/40 !text-cyan hover:!border-gold/40" title="{{ combat_rank.kills }} kills · {{ combat_rank.efficiency|effpct }}% efficiency · {{ combat_rank.danger.label }}">{{ combat_rank.rank.title }}</a>{% endif %}
+      {% if pilot_readiness %}<a href="#stats" class="chip {% if pilot_readiness.overall >= 75 %}!border-kill/40 !text-kill{% elif pilot_readiness.overall >= 50 %}!border-gold/40 !text-gold{% else %}!border-loss/40 !text-loss{% endif %}" title="my readiness — details in the stats panel">{{ pilot_readiness.overall }} {% if pilot_readiness.overall >= 75 %}▲{% elif pilot_readiness.overall >= 50 %}◆{% else %}▼{% endif %}</a>{% endif %}
+      <a href="#chars" class="hover:text-gold">{{ characters|length }} character{{ characters|length|pluralize }} linked</a>
+      <a href="{% url 'identity:character' main_character.character_id %}" class="text-gold hover:underline">· My skills &amp; readiness →</a>
+      {% if features.killboard %}<a href="{% url 'killboard:pilot' main_character.character_id %}" class="text-gold hover:underline">· My combat stats →</a>{% endif %}
+    </p>
+    <p class="mt-1 text-sm text-faint">Your day, one page. Start at №1 — everything else can wait.</p>
+  </div>
+  {% if leadership or officer %}<a href="#deck" class="btn-ghost">Command deck ↓</a>{% endif %}
+</header>
+
+{% if hideable_panels %}
+<details class="mb-4">
+  <summary class="cursor-pointer text-xs text-faint hover:text-gold">Customize panels</summary>
+  <form method="post" action="{% url 'identity:save_dashboard_layout' %}" class="panel mt-2 p-4">
+    {% csrf_token %}
+    <p class="mb-2 text-xs text-faint">Untick a panel to hide it from your Command Center. Everything stays where it is by default.</p>
+    <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      {% for key, label in hideable_panels %}
+      <label class="flex items-center gap-2 text-sm text-muted">
+        <input type="checkbox" name="show" value="{{ key }}" {% if key not in hidden_panels %}checked{% endif %}>
+        <span>{{ label }}</span>
+      </label>
+      {% endfor %}
+    </div>
+    <div class="mt-3 flex justify-end"><button class="btn-ghost !py-1 !text-xs">Save layout</button></div>
+  </form>
+</details>
+{% endif %}
+
+<div class="grid gap-5 lg:grid-cols-3">
+  <div class="space-y-5 lg:col-span-2">
+
+    {% if signals or show_next_op %}
+    <section class="panel overflow-hidden">
+      <div class="flex items-center justify-between border-b border-line px-4 py-3">
+        <h2 class="eyebrow text-loss">Time-sensitive</h2>
+        <span class="text-[11px] text-faint">these expire</span>
+      </div>
+      <div class="divide-y divide-line/40">
+        {% if show_next_op %}
+        {# Pinned answer to "when's the next fleet" — renders even when quiet. #}
+        {% if next_op %}
+        <a href="{% url 'operations:detail' next_op.id %}" class="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-panel2">
+          <span class="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-space text-gold"><svg class="h-5 w-5"><use href="#i-bolt"/></svg></span>
+          <span class="min-w-0 flex-1"><span class="text-ink">Next op: {{ next_op.name }}</span> <span class="text-faint">· {% if next_op.started %}underway{% elif next_op.target_at %}in {{ next_op.target_at|timeuntil }}{% else %}time TBD{% endif %}</span></span>
+          {% if next_op.total %}<span class="chip shrink-0 {% if next_op.ready == next_op.total %}!border-kill/40 !text-kill{% elif next_op.ready %}!border-gold/40 !text-gold{% else %}!border-loss/40 !text-loss{% endif %}" title="doctrines you can fly">fly {{ next_op.ready }}/{{ next_op.total }}</span>{% endif %}
+          <span class="shrink-0 text-xs text-cyan">RSVP →</span>
+        </a>
+        {% else %}
+        <div class="flex items-center gap-3 px-4 py-2.5 text-sm">
+          <span class="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-space text-faint"><svg class="h-5 w-5"><use href="#i-bolt"/></svg></span>
+          <span class="min-w-0 flex-1 text-faint">No ops scheduled.</span>
+          <a href="{% url 'operations:list' %}" class="shrink-0 text-xs text-faint hover:text-gold">Operations →</a>
+        </div>
+        {% endif %}
+        {% endif %}
+        {% for it in signals %}
+          <a href="{{ it.url }}" class="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-panel2">
+            <span class="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-space text-gold"><svg class="h-5 w-5"><use href="{% if it.kind == 'operation' %}#i-bolt{% else %}#i-coin{% endif %}"/></svg></span>
+            <span class="min-w-0 flex-1 text-ink">{{ it.text }}</span>
+            <span class="text-faint">→</span>
+          </a>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    {% if raffle and 'raffle' not in hidden_panels %}
+    <section class="panel overflow-hidden">
+      <div class="flex items-center justify-between border-b border-line px-4 py-3">
+        <h2 class="eyebrow text-gold">Raffle</h2>
+        {% if raffle.active %}<a href="{{ raffle.active.url }}" class="text-[11px] text-cyan hover:underline">View contest →</a>{% endif %}
+      </div>
+      {% if raffle.pending_win %}
+      <a href="{{ raffle.pending_win.url }}" class="m-3 flex items-center gap-3 rounded-lg bg-panel2/60 px-4 py-3 text-sm ring-1 ring-gold/30 hover:bg-panel2">
+        <span class="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-space text-gold">🎉</span>
+        <span class="min-w-0 flex-1"><span class="text-ink">You won {{ raffle.pending_win.prize_name }}</span> <span class="text-faint">· {{ raffle.pending_win.contest_name }} — awaiting fulfilment</span></span>
+        <span class="chip !border-gold/40 !text-gold shrink-0">claim</span>
+      </a>
+      {% endif %}
+      {% if raffle.active %}
+      <a href="{{ raffle.active.url }}" class="flex items-center gap-3 px-4 py-3 text-sm hover:bg-panel2">
+        <span class="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-space text-gold"><svg class="h-5 w-5"><use href="#i-coin"/></svg></span>
+        <span class="min-w-0 flex-1">
+          <span class="text-ink">{{ raffle.active.name }}</span>
+          <span class="block text-xs text-faint">{{ raffle.active.my_tickets }} ticket{{ raffle.active.my_tickets|pluralize }}{% if raffle.active.odds_pct %} · ~{{ raffle.active.odds_pct }}% odds{% endif %}{% if raffle.active.my_rank %} · rank #{{ raffle.active.my_rank }}{% endif %} · draw in {{ raffle.active.draw_at|timeuntil }}</span>
+        </span>
+        {% if raffle.active.accruing and not raffle.active.my_tickets %}<span class="chip !border-cyan/40 !text-cyan shrink-0">earn tickets</span>{% endif %}
+      </a>
+      {% endif %}
+    </section>
+    {% endif %}
+
+    {% if show_orders or show_readiness or advice %}
+    <section class="panel overflow-hidden" id="queue">
+      <div class="flex items-center justify-between border-b border-line px-4 py-3">
+        <h2 class="eyebrow text-gold">Quest log</h2>
+        <span class="text-[11px] text-faint">ranked for corp impact</span>
+      </div>
+      {% if quests %}
+        <p class="px-4 pt-3 text-sm text-muted">Everything the Grid wants from you, one list. №1 is today's play — the card explains why.</p>
+        {% with q=quests.0 %}
+        {# Priority One — always expanded; the page's single call to action. #}
+        <div class="mx-3 mt-3 rounded-lg bg-panel2/60 px-5 py-5 {% if q.corp_order %}ring-1 ring-gold/30{% endif %}">
+          <div class="flex flex-wrap items-start gap-4">
+            <span class="grid h-12 w-12 shrink-0 place-items-center rounded-md bg-gold/15 ring-1 ring-gold/40"><span class="font-display text-2xl font-bold text-gold">1</span></span>
+            <div class="min-w-0 flex-1">
+              <p class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <span class="eyebrow text-gold">Priority one · {% if q.corp_order %}Corp order · {% endif %}{{ q.category_label }}</span>
+                {% if q.corp_order %}<span class="eyebrow text-loss">▼ high leverage</span>{% endif %}
+                {% if q.is_new %}<span class="chip !border-cyan/40 !text-cyan">new</span>{% endif %}
+              </p>
+              <p class="mt-1 font-display text-xl font-bold text-ink">{{ q.title }}</p>
+            </div>
+            <span class="chip shrink-0 text-gold">+{{ q.points }} pts</span>
+          </div>
+          <div class="mt-3">
+            <p class="eyebrow text-cyan">Why the corp needs this</p>
+            <p class="mt-1 max-w-2xl text-sm text-muted">{{ q.detail|truncatechars:220 }}</p>
+          </div>
+          <div class="mt-3 flex flex-wrap items-center gap-2">
+            {% if q.action_available %}<a href="{{ q.action_url }}" class="btn-gold !py-1 text-sm">{{ q.category_label }} →</a>{% endif %}
+            <form method="post" action="{% url q.form_url_name q.id %}" class="inline">{% csrf_token %}<input type="hidden" name="action" value="done"><button class="btn-ghost !py-1 text-xs">Mark done</button></form>
+            <form method="post" action="{% url q.form_url_name q.id %}" class="inline">{% csrf_token %}<input type="hidden" name="action" value="snooze"><button class="btn-ghost !py-1 text-xs">Snooze 7d</button></form>
+            <form method="post" action="{% url q.form_url_name q.id %}" class="inline">{% csrf_token %}<input type="hidden" name="action" value="dismiss"><button class="btn-ghost !py-1 text-xs text-faint">Not for me</button></form>
+          </div>
+        </div>
+        {% endwith %}
+        {% if quests|length > 1 %}<div class="mt-3 border-t border-line"></div>{% else %}<div class="mt-3"></div>{% endif %}
+        {% for q in quests|slice:"1:7" %}
+          {% include "pilots/_quest_row.html" with q=q rank=forloop.counter|add:1 %}
+        {% endfor %}
+        {% if quests|length > 7 %}
+        <div x-data="{ all: false }">
+          <div x-show="all" x-cloak>
+            {% for q in quests|slice:"7:" %}
+              {% include "pilots/_quest_row.html" with q=q rank=forloop.counter|add:7 %}
+            {% endfor %}
+          </div>
+          <div class="border-t border-line/40 px-4 py-2">
+            <button type="button" @click="all = !all" :aria-expanded="all" class="text-xs text-cyan hover:underline">
+              <span x-show="!all">Show all {{ quests|length }} quests</span><span x-show="all" x-cloak>Show fewer</span>
+            </button>
+          </div>
+        </div>
+        {% endif %}
+        <div class="border-t border-line px-4 py-2 text-[11px] text-faint">Points show each quest's corp impact · Snooze hides one for 7 days · Not for me removes it for good.</div>
+      {% elif advice %}
+        {# Fallback when both quest engines are off: the digest's training advice. #}
+        <div class="divide-y divide-line/40">
+          {% for it in advice %}
+            <a href="{{ it.url }}" class="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-panel2">
+              <span class="chip shrink-0">{{ it.kind }}</span>
+              <span class="min-w-0 flex-1 text-ink">{{ it.text }}</span>
+              <span class="text-faint">→</span>
+            </a>
+          {% endfor %}
+        </div>
+        <div class="border-t border-line px-4 py-2 text-[11px] text-faint">From today's digest.</div>
+      {% else %}
+        <div class="px-4 py-10 text-center">
+          <span class="mx-auto grid h-12 w-12 place-items-center rounded-md bg-panel2 text-kill"><svg class="h-6 w-6"><use href="#i-check"/></svg></span>
+          <p class="mt-3 text-sm text-faint">You're current — nothing the corp needs from you today.{% if features.killboard %} <a href="{% url 'killboard:list' %}" class="text-cyan hover:underline">Go shoot something →</a>{% endif %}</p>
+        </div>
+      {% endif %}
+    </section>
+    {% endif %}
+
+    {% if features.killboard and 'combat_log' not in hidden_panels %}
+    <section class="panel overflow-hidden">
+      <div class="flex items-center justify-between border-b border-line px-4 py-3">
+        <h2 class="eyebrow">Combat log <span class="text-faint">· corp · 7d</span></h2>
+        <a href="{% url 'killboard:list' %}" class="text-xs text-faint hover:text-gold">Killboard →</a>
+      </div>
+      <div class="grid grid-cols-2 gap-px bg-line/40 lg:grid-cols-4">
+        <a href="{% url 'killboard:list' %}?kind=kills" class="bg-panel p-4 hover:bg-panel2"><p class="eyebrow">Kills</p><p class="mt-1 font-display text-2xl font-bold text-kill">{{ combat7.kills }}</p></a>
+        <a href="{% url 'killboard:list' %}?kind=losses" class="bg-panel p-4 hover:bg-panel2"><p class="eyebrow">Losses</p><p class="mt-1 font-display text-2xl font-bold text-loss">{{ combat7.losses }}</p></a>
+        <div class="bg-panel p-4"><p class="eyebrow">ISK destroyed</p><p class="data mt-1 text-lg font-bold text-kill">{{ combat7.isk_destroyed|isk }}</p></div>
+        <div class="bg-panel p-4"><p class="eyebrow">ISK lost</p><p class="data mt-1 text-lg font-bold text-loss">{{ combat7.isk_lost|isk }}</p></div>
+      </div>
+      {% if combat_mine %}
+      {# The corp tiles say how WE did; this line says how YOU did. #}
+      <div class="flex items-center gap-2 border-t border-line px-4 py-2 text-xs text-muted">
+        <span class="min-w-0 flex-1">You this week: <span class="data text-kill">{{ combat_mine.kills }}</span> kill{{ combat_mine.kills|pluralize }} · <span class="data text-loss">{{ combat_mine.losses }}</span> loss{{ combat_mine.losses|pluralize:"es" }} · <span class="data text-gold">{{ combat_mine.isk_destroyed|isk }}</span> destroyed</span>
+        <a href="{% url 'killboard:pilot' main_character.character_id %}" class="shrink-0 text-faint hover:text-gold">My stats →</a>
+      </div>
+      {% endif %}
+      {# My losses (with Claim-SRP) outrank the ambient corp feed — personal ISK first. #}
+      {% include "identity/_my_losses.html" %}
+      <div class="border-t border-line">
+        {% if my_losses %}<p class="eyebrow px-4 pt-3">Corp feed</p>{% endif %}
+        <div class="divide-y divide-line/40">
+        {% for km in recent_kms %}
+          <a href="{% url 'killboard:detail' km.killmail_id %}" class="flex items-center gap-3 border-l-2 {% if km.home_corp_role == 'attacker' %}border-kill/60{% else %}border-loss/60{% endif %} px-4 py-2 text-sm hover:bg-panel2">
+            <img src="{% eve_type_icon km.victim_ship_type_id 32 %}" alt="" loading="lazy" class="h-6 w-6 rounded-sm">
+            <span class="min-w-0 flex-1 truncate text-muted">{% if km.home_corp_role == 'attacker' %}<span class="text-kill">Killed</span>{% else %}<span class="text-loss">Lost</span>{% endif %} {% type_name km.victim_ship_type_id %} <span class="text-faint">· {% system_name km.solar_system_id %}</span></span>
+            <span class="data shrink-0 text-xs text-gold">{{ km.total_value|isk }}</span>
+            <span class="shrink-0 text-xs text-faint">{{ km.killmail_time|timesince }} ago</span>
+          </a>
+        {% empty %}<p class="px-4 py-4 text-sm text-faint">No corp combat recorded yet.</p>{% endfor %}
+        </div>
+      </div>
+    </section>
+    {% elif my_losses and features.srp %}
+    {# Killboard off but SRP on — the claim surface stands alone. #}
+    <section class="panel overflow-hidden">
+      {% include "identity/_my_losses.html" %}
+    </section>
+    {% endif %}
+  </div>
+
+  <div class="space-y-5">
+    {% if features.killboard and combat_rank_progress %}
+    {% with cr=combat_rank_progress %}
+    <section class="panel overflow-hidden">
+      <div class="flex items-center justify-between border-b border-line px-4 py-3">
+        <h2 class="eyebrow">Combat rank</h2>
+        <a href="{% url 'killboard:rankings' %}" class="text-xs text-faint hover:text-gold">Ranks →</a>
+      </div>
+      <div class="px-4 py-4">
+        <div class="flex items-end justify-between gap-2">
+          <div class="min-w-0">
+            <p class="font-display text-2xl font-bold {{ cr.current.color }}">{{ cr.current.title }}</p>
+            <p class="text-xs text-faint">Tier {{ cr.tier|add:1 }} of {{ cr.max_tier|add:1 }} · <span class="data text-muted">{{ cr.kills }}</span> kill{{ cr.kills|pluralize }}</p>
+          </div>
+          {% if cr.kills_this_month %}<span class="chip text-kill shrink-0" title="kills this month">+{{ cr.kills_this_month }} this month</span>{% endif %}
+        </div>
+
+        {% if not cr.is_maxed %}
+        <div class="mt-3">
+          <div class="mb-1 flex items-center justify-between text-[11px]">
+            <span class="text-faint">Next: <span class="{{ cr.next.color }}">{{ cr.next.title }}</span></span>
+            <span class="data text-muted">{{ cr.kills }}/{{ cr.next.min_kills }}</span>
+          </div>
+          <div class="h-2 overflow-hidden rounded-full bg-space">
+            <div class="h-full bg-gold" style="width:{{ cr.progress_pct }}%"></div>
+          </div>
+          <p class="mt-2 text-xs text-cyan">
+            {% if cr.kills == 0 %}Your first combat title is {{ cr.kills_to_next }} kill{{ cr.kills_to_next|pluralize }} away.{% else %}Only {{ cr.kills_to_next }} kill{{ cr.kills_to_next|pluralize }} until <span class="{{ cr.next.color }}">{{ cr.next.title }}</span>.{% endif %}
+          </p>
+        </div>
+        {% else %}
+        <p class="mt-3 text-xs text-kill">▲ Top rank reached — you're a legend of the Grid.</p>
+        {% endif %}
+
+        {# The next reward-bearing rank ahead (looks past reward-less rungs) #}
+        {% if cr.reward.enabled and cr.next_reward %}
+        <div class="mt-3 rounded border border-gold/30 bg-gold/5 px-3 py-2 text-[11px]">
+          <p class="text-gold"><svg class="mr-1 inline h-3 w-3"><use href="#i-coin"/></svg>Next reward — <span class="{{ cr.next_reward.color }}">{{ cr.next_reward.title }}</span>: {{ cr.next_reward.label }}{% if cr.next_reward.kills_away %} <span class="text-faint">· {{ cr.next_reward.kills_away }} kill{{ cr.next_reward.kills_away|pluralize }} away</span>{% endif %}</p>
+          {% if cr.reward.eligible %}
+          <p class="mt-0.5 text-faint">Reach this title in future activity to receive it.</p>
+          {% else %}
+          <p class="mt-0.5 text-faint"><a href="{% url 'sso:scopes' %}" class="text-cyan hover:underline">Connect your ESI token</a> to become eligible for rank rewards.</p>
+          {% endif %}
+        </div>
+        {% endif %}
+        {% if cr.reward.pending %}<p class="mt-2 text-[11px] text-cyan">{{ cr.reward.pending }} reward{{ cr.reward.pending|pluralize }} pending leadership approval.</p>{% endif %}
+
+        {# Progression ladder — completed / current / aspirational #}
+        <div class="mt-4 border-t border-line/60 pt-3">
+          <p class="eyebrow mb-2 text-faint">Progression</p>
+          <div class="flex flex-wrap gap-1">
+            {% for r in cr.ladder %}
+            <span class="inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] {% if r.is_current %}border-gold/60 bg-gold/10 {{ r.color }} font-semibold{% elif r.earned %}border-line/40 text-faint{% else %}border-dashed border-line/40 text-faint/70{% endif %}" title="{{ r.name }} · {{ r.min_kills }}+ kills{% if r.grants_reward %} · reward{% endif %}">
+              {% if r.earned and not r.is_current %}✓ {% endif %}{{ r.name }}{% if r.grants_reward %} ◈{% endif %}
+            </span>
+            {% endfor %}
+          </div>
+          {% if cr.reward.enabled %}<p class="mt-2 text-[10px] text-faint">◈ reward rank · rewards apply only to titles reached from now on.</p>{% endif %}
+        </div>
+
+        {# 4.3: parallel support-role tracks — the zero-kill logi/solo/regular pilot still climbs #}
+        {% if combat_tracks %}
+        <div class="mt-4 border-t border-line/60 pt-3">
+          <p class="eyebrow mb-2 text-faint">Other tracks</p>
+          <div class="space-y-2.5">
+            {% for t in combat_tracks %}
+            <div>
+              <div class="flex items-center justify-between text-[11px]">
+                <span class="text-faint">{{ t.label }}</span>
+                <span class="{{ t.current.color }} font-semibold">{{ t.current.title }} <span class="font-normal text-faint">· {{ t.count }}</span></span>
+              </div>
+              {% if not t.is_maxed %}
+              <div class="mt-1 h-1.5 overflow-hidden rounded-full bg-space">
+                <div class="h-full bg-cyan/70" style="width:{{ t.progress_pct }}%"></div>
+              </div>
+              <p class="mt-0.5 text-[10px] text-faint">{{ t.to_next }} to <span class="{{ t.next.color }}">{{ t.next.title }}</span></p>
+              {% else %}
+              <p class="mt-0.5 text-[10px] text-kill">▲ Top of the track.</p>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </section>
+    {% endwith %}
+    {% endif %}
+
+    {% if onboarding and 'onboarding' not in hidden_panels %}
+    <section class="panel overflow-hidden">
+      <div class="border-b border-line px-4 py-3">
+        <h2 class="eyebrow text-cyan">Getting started</h2>
+        <p class="mt-1 text-xs text-faint">Finish setup so the Grid can brief you properly.</p>
+      </div>
+      <div class="divide-y divide-line/40">
+        {% for o in onboarding %}
+          <div class="flex items-center gap-3 px-4 py-3 text-sm">
+            <img src="{% eve_portrait o.character.character_id 32 %}" alt="" class="h-6 w-6 rounded-full ring-1 ring-line">
+            <span class="min-w-0 flex-1"><span class="text-ink">{{ o.action.title }}</span> <span class="text-faint">— {{ o.action.description }}</span></span>
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    {% if pilot_readiness and 'pilot_stats' not in hidden_panels %}
+    <section class="panel overflow-hidden" id="stats">
+      <div class="border-b border-line px-4 py-3">
+        <h2 class="eyebrow">Pilot stats</h2>
+        <p class="mt-1 text-xs text-faint">How ready you are — <a href="#queue" class="text-cyan hover:underline">your lowest facet feeds the quest log ↖</a></p>
+      </div>
+      <div class="flex flex-col items-center px-4 py-5">
+        <div class="relative h-32 w-32">
+          <svg viewBox="0 0 120 120" class="h-32 w-32 -rotate-90">
+            <circle cx="60" cy="60" r="56" fill="none" stroke-width="7" class="stroke-line"/>
+            <circle cx="60" cy="60" r="56" fill="none" stroke-width="7" stroke-linecap="round" class="{% if pilot_readiness.overall >= 75 %}stroke-kill{% elif pilot_readiness.overall >= 50 %}stroke-gold{% else %}stroke-loss{% endif %}" style="stroke-dasharray:{{ pilot_readiness.ring_dash }} 352"/>
+          </svg>
+          <div class="absolute inset-0 grid place-items-center">
+            <span class="font-display text-4xl font-bold {% if pilot_readiness.overall >= 75 %}text-kill{% elif pilot_readiness.overall >= 50 %}text-gold{% else %}text-loss{% endif %}">{{ pilot_readiness.overall }}</span>
+          </div>
+        </div>
+        <p class="mt-2 text-xs {% if pilot_readiness.overall >= 75 %}text-kill{% elif pilot_readiness.overall >= 50 %}text-gold{% else %}text-loss{% endif %}">{% if pilot_readiness.overall >= 75 %}▲ Ready{% elif pilot_readiness.overall >= 50 %}◆ On track{% else %}▼ Needs work{% endif %}{% if pilot_readiness.week_delta is not None and pilot_readiness.week_delta != 0 %} <span class="text-faint">· {% if pilot_readiness.week_delta > 0 %}▲ +{{ pilot_readiness.week_delta }}{% else %}▼ {{ pilot_readiness.week_delta }}{% endif %} this week</span>{% endif %}</p>
+        {% if pilot_readiness.trend|length > 1 %}
+        <div class="mt-2" title="last 14 days">{% include "components/_sparkline.html" with values=pilot_readiness.trend mode="bars" threshold=1 bar_w="w-1.5" bar_h=14 gap="gap-0.5" %}</div>
+        {% endif %}
+      </div>
+      <div class="divide-y divide-line/40 border-t border-line">
+        {% for f in pilot_readiness.facets %}
+        <div class="px-4 py-2.5">
+          <div class="flex items-center justify-between text-sm">
+            <span class="capitalize {% if f.key == pilot_readiness.lowest %}text-gold{% else %}text-muted{% endif %}">{{ f.key }}{% if f.key == pilot_readiness.lowest %} <a href="#queue" class="text-[10px] uppercase tracking-wide hover:underline">· focus here</a>{% endif %}</span>
+            {% if f.score is None %}<span class="text-xs text-faint">no data</span>{% else %}<span class="data text-sm {% if f.score >= 75 %}text-kill{% elif f.score >= 50 %}text-gold{% else %}text-loss{% endif %}">{{ f.score }}</span>{% endif %}
+          </div>
+          {% if f.score is not None %}
+          <div class="mt-1 h-1.5 overflow-hidden rounded-full bg-space">
+            <div class="h-full {% if f.score >= 75 %}bg-kill{% elif f.score >= 50 %}bg-gold{% else %}bg-loss{% endif %}" style="width:{{ f.score }}%"></div>
+          </div>
+          {% else %}
+          <div class="mt-1 h-1.5 rounded-full border border-dashed border-line"></div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    {% if features.doctrines and readiness and 'doctrines' not in hidden_panels %}
+    <section class="panel overflow-hidden">
+      <div class="flex items-start justify-between gap-3 border-b border-line px-4 py-3">
+        <div class="min-w-0">
+          <h2 class="eyebrow">Doctrines</h2>
+          <p class="mt-1 text-xs text-faint">Status, not homework — anything worth training is already in your quest log.</p>
+        </div>
+        <a href="{% url 'doctrines:list' %}" class="shrink-0 text-xs text-faint hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold">All doctrines →</a>
+      </div>
+      {# Capacitor readout — the whole doctrine catalog as one charge bar, not 54 chips. #}
+      <div class="px-4 pb-3 pt-4" title="{{ doctrine_breakdown.optimal }} optimal · {{ doctrine_breakdown.viable }} viable · {{ doctrine_breakdown.not_ready }} not ready · {{ doctrine_breakdown.unknown }} unknown — of {{ readiness|length }} corp doctrines">
+        <div class="flex items-baseline justify-between gap-2">
+          <p class="font-display text-3xl font-bold leading-none text-ink" aria-label="{{ ready_count }} of {{ readiness|length }} doctrines fly-ready">{{ ready_count }}<span class="text-base font-semibold text-faint">/{{ readiness|length }}</span></p>
+          <p class="text-xs text-muted">{% widthratio ready_count readiness|length 100 %}% fly-ready</p>
+        </div>
+        <div class="mt-3 flex h-2.5 w-full gap-0.5 overflow-hidden rounded-full bg-space" aria-hidden="true">
+          {% if doctrine_breakdown.optimal %}<div class="h-full bg-kill" style="flex-grow:{{ doctrine_breakdown.optimal }}" title="{{ doctrine_breakdown.optimal }} optimal — the doctrine fit, as written"></div>{% endif %}
+          {% if doctrine_breakdown.viable %}<div class="h-full bg-cyan" style="flex-grow:{{ doctrine_breakdown.viable }}" title="{{ doctrine_breakdown.viable }} viable — a downgraded fit works"></div>{% endif %}
+          {% if doctrine_breakdown.not_ready %}<div class="h-full bg-loss/60" style="flex-grow:{{ doctrine_breakdown.not_ready }}" title="{{ doctrine_breakdown.not_ready }} not ready"></div>{% endif %}
+          {% if doctrine_breakdown.unknown %}<div class="h-full border border-dashed border-line" style="flex-grow:{{ doctrine_breakdown.unknown }}" title="{{ doctrine_breakdown.unknown }} unknown — not yet evaluated against your skills"></div>{% endif %}
+        </div>
+        <div class="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-xs text-muted">
+          <span><span class="mr-1 inline-block h-2 w-2 rounded-sm bg-kill"></span><span class="text-ink">{{ doctrine_breakdown.optimal }}</span> optimal</span>
+          <span><span class="mr-1 inline-block h-2 w-2 rounded-sm bg-cyan"></span><span class="text-ink">{{ doctrine_breakdown.viable }}</span> viable</span>
+          <span><span class="mr-1 inline-block h-2 w-2 rounded-sm bg-loss/60"></span><span class="text-ink">{{ doctrine_breakdown.not_ready }}</span> not ready</span>
+          {% if doctrine_breakdown.unknown %}<span><span class="mr-1 inline-block h-2 w-2 rounded-sm border border-dashed border-line"></span><span class="text-ink">{{ doctrine_breakdown.unknown }}</span> unknown</span>{% endif %}
+          <a href="{% url 'doctrines:my_readiness' %}" class="ml-auto text-cyan hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold">My readiness →</a>
+        </div>
+      </div>
+      {% if closest %}
+      <div class="border-t border-line">
+        <p class="eyebrow px-4 pt-3">Almost there</p>
+        <div class="divide-y divide-line/40">
+          {% for d in closest %}
+            <div class="flex items-center gap-3 px-4 py-2.5 text-sm">
+              <a href="{% url 'doctrines:readiness' d.doctrine_id %}" class="min-w-0 flex-1 truncate text-muted hover:text-ink">{{ d.doctrine }}</a>
+              <span class="data shrink-0 text-xs text-faint">{{ d.seconds|duration }}</span>
+              {% if features.skills %}
+              <form method="post" action="{% url 'skills:create' %}">{% csrf_token %}
+                <input type="hidden" name="character_id" value="{{ main_character.character_id }}">
+                <input type="hidden" name="doctrine_id" value="{{ d.doctrine_id }}">
+                <button class="btn-cyan !py-0.5 !px-2 text-xs">Build plan</button>
+              </form>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </section>
+    {% endif %}
+
+    <section class="panel overflow-hidden">
+      <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">My work</h2></div>
+      <div class="divide-y divide-line/40 text-sm">
+        {% if training %}
+        {# The LIVE in-game queue (ESI snapshot) — the plan rows below are corp-side. #}
+        <a href="{% url 'identity:character' main_character.character_id %}" class="flex items-center gap-3 px-4 py-2.5 hover:bg-panel2">
+          <svg class="h-4 w-4 shrink-0 {% if training.has_queue_data and training.is_empty_queue %}text-loss{% else %}text-faint{% endif %}"><use href="#i-rookie"/></svg>
+          {% if training.is_training %}
+            <span class="min-w-0 flex-1 truncate text-muted">Training {{ training.current.name }} {{ training.current.level }}<span class="text-faint"> · done in {{ training.current.remaining_seconds|duration }}</span></span>
+            {% if training.queue_remaining_seconds and training.queue_remaining_seconds < 172800 %}<span class="chip shrink-0 !border-gold/40 !text-gold" title="top up your queue in-game">queue ends {{ training.queue_remaining_seconds|duration }}</span>{% else %}<span class="data shrink-0 text-xs text-faint" title="whole queue">{{ training.queue_remaining_seconds|duration }}</span>{% endif %}
+          {% elif training.has_queue_data and training.is_empty_queue %}
+            <span class="min-w-0 flex-1 text-loss">Skill queue empty — you're not training anything</span>
+          {% elif training.has_queue_data %}
+            <span class="min-w-0 flex-1 truncate text-muted">Skill queue paused<span class="text-faint"> · {{ training.queue|length }} skill{{ training.queue|length|pluralize }} waiting</span></span>
+          {% else %}
+            <span class="min-w-0 flex-1 text-muted">Skill queue <span class="text-faint">· not synced yet</span></span>
+          {% endif %}
+        </a>
+        {% endif %}
+        {% if features.tasks %}
+        <a href="{% url 'tasks:board' %}" class="flex items-center gap-3 px-4 py-2.5 hover:bg-panel2">
+          <svg class="h-4 w-4 shrink-0 text-faint"><use href="#i-check"/></svg>
+          <span class="min-w-0 flex-1 text-muted">{{ my_tasks|length }} task{{ my_tasks|length|pluralize }} assigned to you</span>
+          {% if claimable_count %}<span class="chip !border-cyan/40 !text-cyan">+{{ claimable_count }} to claim</span>{% endif %}
+        </a>
+        {% endif %}
+        {% if features.skills %}
+        {% if skill_plan %}
+        <a href="{% url 'skills:detail' skill_plan.plan.pk %}" class="flex items-center gap-3 px-4 py-2.5 hover:bg-panel2">
+          <svg class="h-4 w-4 shrink-0 text-faint"><use href="#i-rookie"/></svg>
+          <span class="min-w-0 flex-1 truncate text-muted">{{ skill_plan.plan.name }} <span class="text-faint">· {{ skill_plan.left }} skill{{ skill_plan.left|pluralize }} left</span></span>
+          <span class="data shrink-0 text-xs text-faint">{{ skill_plan.remaining|duration }}</span>
+        </a>
+        {% else %}
+        <a href="{% url 'skills:plans' %}" class="flex items-center gap-3 px-4 py-2.5 hover:bg-panel2">
+          <svg class="h-4 w-4 shrink-0 text-faint"><use href="#i-rookie"/></svg>
+          <span class="min-w-0 flex-1 text-muted">No active skill plan <span class="text-faint">· build one →</span></span>
+        </a>
+        {% endif %}
+        {% endif %}
+        {% if features.stockpile and logistics.mine %}
+        <a href="{% url 'stockpile:logistics' %}" class="flex items-center gap-3 px-4 py-2.5 hover:bg-panel2">
+          <svg class="h-4 w-4 shrink-0 text-faint"><use href="#i-truck"/></svg>
+          <span class="min-w-0 flex-1 text-muted">{{ logistics.mine }} haul{{ logistics.mine|pluralize }} you claimed</span>
+        </a>
+        {% endif %}
+        {% for it in my_services %}
+        {# In-flight ISK with the member services — rows render only when non-zero. #}
+        <a href="{% url it.url_name %}" class="flex items-center gap-3 px-4 py-2.5 hover:bg-panel2">
+          <svg class="h-4 w-4 shrink-0 text-faint"><use href="{{ it.icon }}"/></svg>
+          <span class="min-w-0 flex-1 text-muted">{{ it.text }}</span>
+        </a>
+        {% endfor %}
+      </div>
+    </section>
+
+    {% if features.contributions %}
+    {# One panel for the whole topic: your ledger on top, its social mirror below. #}
+    <section class="panel overflow-hidden">
+      <div class="flex items-center justify-between border-b border-line px-4 py-3">
+        <h2 class="eyebrow">Your contribution <span class="text-faint">· this month</span></h2>
+        <a href="{% url 'pilots:contributions' %}" class="text-xs text-faint hover:text-gold">History →</a>
+      </div>
+      <div class="flex flex-wrap gap-2 px-4 py-3">
+        {% for row in contribution %}
+          <span class="chip">{{ row.label }}: <span class="ml-1 text-gold">{% if row.unit == 'isk' %}{{ row.total|isk }}{% else %}{{ row.total|floatformat:"-2" }} {{ row.unit }}{% endif %}</span></span>
+        {% empty %}
+          <span class="text-sm text-faint">Nothing logged yet — fly a fleet, haul, or build to get on the board.</span>
+        {% endfor %}
+      </div>
+      {% if recognition %}
+      <div class="border-t border-line">
+        <p class="eyebrow px-4 pt-3">Recently recognised</p>
+        <div class="divide-y divide-line/40 text-sm">
+          {% for ev in recognition %}
+            <div class="flex items-center gap-3 px-4 py-2.5">
+              <span class="chip shrink-0">{{ ev.get_kind_display }}</span>
+              <span class="min-w-0 flex-1 truncate"><span class="text-ink">{{ ev.user.display_name }}</span> <span class="text-faint">· {{ ev.description|default:ev.get_kind_display }}</span></span>
+              <span class="shrink-0 text-xs text-faint">{{ ev.occurred_at|timesince }} ago</span>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </section>
+    {% endif %}
+
+    <section class="panel overflow-hidden" id="chars">
+      <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Your characters</h2></div>
+      <div class="divide-y divide-line/40 text-sm">
+        {% for c in characters %}
+          <a href="{% url 'identity:character' c.character_id %}" class="flex items-center gap-3 px-4 py-2.5 hover:bg-panel2">
+            <img src="{% eve_portrait c.character_id 64 %}" alt="" loading="lazy" class="h-7 w-7 rounded-full ring-1 ring-line">
+            <span class="min-w-0 flex-1 truncate text-ink">{{ c.name }}</span>
+            {% if c.is_main %}<span class="chip">main</span>{% endif %}
+            {% if c.is_corp_member %}<span class="chip !border-gold/40 !text-gold">FORCA</span>{% endif %}
+          </a>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+</div>
+
+{% if hauls_board or projects_board or claimable_board %}
+<section class="mt-8">
+  <h2 class="eyebrow text-cyan">Pick-up work</h2>
+  <p class="mt-1 text-sm text-muted">Nobody is assigned these — they're open to whoever has time. Claiming one earns contribution points and keeps the corp moving.</p>
+  <div class="mt-4 grid gap-5 sm:grid-cols-2 {% if claimable_board %}lg:grid-cols-3{% endif %}">
+    {% if features.stockpile %}
+    <div>
+      <div class="mb-3 flex items-center justify-between">
+        <h3 class="eyebrow">Hauling jobs</h3>
+        <a href="{% url 'stockpile:logistics' %}" class="text-xs text-faint hover:text-gold">All logistics →</a>
+      </div>
+      <div class="panel divide-y divide-line/40">
+        {% for t in hauls_board %}
+          <a href="{% url 'stockpile:logistics' %}" class="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-panel2">
+            {% if t.type_id %}<img src="{% eve_type_icon t.type_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">{% endif %}
+            <span class="min-w-0 flex-1 truncate text-muted">{% if t.type_id %}{% type_name t.type_id %}{% else %}Multi-item{% endif %} <span class="text-faint">×{{ t.quantity|default:"?" }}</span></span>
+            <span class="shrink-0 text-xs text-faint">{{ t.dest_location|default:"—" }}</span>
+          </a>
+        {% empty %}<p class="px-4 py-4 text-sm text-faint">No open jobs — nice and tidy.</p>{% endfor %}
+      </div>
+    </div>
+    {% endif %}
+    {% if features.industry %}
+    <div>
+      <div class="mb-3 flex items-center justify-between">
+        <h3 class="eyebrow">Projects needing a lead</h3>
+        <a href="{% url 'industry:board' %}" class="text-xs text-faint hover:text-gold">All projects →</a>
+      </div>
+      <div class="panel divide-y divide-line/40">
+        {% for p in projects_board %}
+          <a href="{% url 'industry:detail' p.pk %}" class="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-panel2">
+            <svg class="h-4 w-4 shrink-0 text-faint"><use href="#i-cube"/></svg>
+            <span class="min-w-0 flex-1 truncate text-muted">{{ p.name }}</span>
+            <span class="data shrink-0 text-xs text-gold">{{ p.estimated_cost|default:0|isk }}</span>
+          </a>
+        {% empty %}<p class="px-4 py-4 text-sm text-faint">Every active project has a lead.</p>{% endfor %}
+      </div>
+    </div>
+    {% endif %}
+    {% if claimable_board %}
+    <div>
+      <div class="mb-3 flex items-center justify-between">
+        <h3 class="eyebrow">Tasks open to claim</h3>
+        <a href="{% url 'tasks:board' %}" class="text-xs text-faint hover:text-gold">Task board →</a>
+      </div>
+      <div class="panel divide-y divide-line/40">
+        {% for t in claimable_board %}
+          <a href="{% url 'tasks:board' %}" class="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-panel2">
+            <svg class="h-4 w-4 shrink-0 text-faint"><use href="#i-check"/></svg>
+            <span class="min-w-0 flex-1 truncate text-muted">{{ t.title }}</span>
+            <span class="chip shrink-0 !border-cyan/40 !text-cyan">claim</span>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
+
+{% endif %}{# characters #}
+
+{% if leadership or officer %}{% include "identity/_command_deck.html" %}{% endif %}
+{% endblock %}

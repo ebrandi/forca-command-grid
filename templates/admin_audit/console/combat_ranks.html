@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}Combat rank titles · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-gold">Killboard · Leadership</p>
+    <h1 class="mt-1 text-2xl font-bold text-ink">Combat rank titles</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">The rank ladder pilots climb on all-time PvP kills. Every rung is configurable — retune thresholds, colours and reward eligibility. New pilots get a friendly starting title; veterans keep long-term goals.</p>
+  </div>
+  <div class="flex gap-2">
+    <a href="{% url 'admin_audit:combat_reward_settings' %}" class="btn-ghost text-sm">Reward settings →</a>
+    <a href="{% url 'admin_audit:combat_rewards' %}" class="btn-ghost text-sm">Reward events →</a>
+  </div>
+</header>
+
+<!-- Summary strip -->
+<div class="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+  <div class="panel p-4"><p class="eyebrow">Ranks</p><p class="mt-1 font-display text-2xl font-bold text-ink">{{ active_count }}<span class="text-sm text-faint">/{{ rank_count }} active</span></p></div>
+  <div class="panel p-4"><p class="eyebrow">Reward engine</p><p class="mt-1 font-display text-2xl font-bold {% if settings.rewards_enabled %}text-kill{% else %}text-faint{% endif %}">{% if settings.rewards_enabled %}On{% else %}Off{% endif %}</p></div>
+  <div class="panel p-4"><p class="eyebrow">Est. monthly liability</p><p class="data mt-1 text-lg font-bold text-gold">{{ estimated_liability|isk }}</p></div>
+  <div class="panel p-4"><p class="eyebrow">Pending (unpaid)</p><p class="data mt-1 text-lg font-bold text-cyan">{{ pending_liability|isk }}</p></div>
+</div>
+
+<!-- Dashboard preview -->
+<section class="panel mb-5 p-4">
+  <h2 class="eyebrow mb-1 text-faint">Pilot dashboard preview</h2>
+  <p class="mb-3 text-xs text-faint">How the ladder appears to pilots (visible rungs only).</p>
+  <div class="flex flex-wrap gap-2 text-xs">
+    {% for e in ladder_preview %}{% if e.is_visible %}
+    <span class="chip {{ e.color }}">{{ e.name }}{% if e.min_kills %} · {{ e.min_kills }}+{% endif %}{% if e.grants_reward %} <svg class="ml-1 inline h-3 w-3 text-gold"><use href="#i-coin"/></svg>{% endif %}</span>
+    {% endif %}{% endfor %}
+  </div>
+</section>
+
+<!-- Ladder table -->
+<section class="panel mb-5 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Rank ladder</h2></div>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="text-faint">
+        <tr class="border-b border-line text-left text-xs">
+          <th class="px-3 py-2">#</th>
+          <th class="px-3 py-2">Title</th>
+          <th class="px-3 py-2 text-right">Kills ≥</th>
+          <th class="px-3 py-2 text-center">Status</th>
+          <th class="px-3 py-2 text-right">Pilots now</th>
+          <th class="px-3 py-2 text-right" title="Projected pilots reaching this rank in 30 / 90 / 180 days">Proj 30/90/180</th>
+          <th class="px-3 py-2">Reward</th>
+          <th class="px-3 py-2 text-right" title="Suggested per-pilot reward: conservative / standard / aggressive">Suggested C/S/A</th>
+          <th class="px-3 py-2"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr class="border-b border-line/40 {% if not row.rank.is_active %}opacity-50{% endif %}">
+          <td class="px-3 py-2 text-faint">{{ forloop.counter0 }}</td>
+          <td class="px-3 py-2"><span class="font-display font-semibold {{ row.rank.color_class }}">{{ row.rank.name }}</span>{% if row.rank.metric != 'kills' %} <span class="chip !border-cyan/40 !text-cyan align-middle text-[10px]">{{ row.rank.get_metric_display }}</span>{% endif %}{% if row.rank.description %}<span class="block text-[11px] text-faint">{{ row.rank.description }}</span>{% endif %}</td>
+          <td class="px-3 py-2 text-right data text-muted">{{ row.rank.min_kills }}</td>
+          <td class="px-3 py-2 text-center text-xs">
+            {% if row.rank.is_active %}<span class="chip text-kill">active</span>{% else %}<span class="chip text-faint">inactive</span>{% endif %}
+            {% if not row.rank.is_visible %}<span class="chip text-faint">hidden</span>{% endif %}
+          </td>
+          <td class="px-3 py-2 text-right data text-ink">{{ row.pilots_now }}</td>
+          <td class="px-3 py-2 text-right data text-faint">{{ row.proj_30 }}/{{ row.proj_90 }}/{{ row.proj_180 }}</td>
+          <td class="px-3 py-2 text-xs">
+            {% if row.rank.grants_reward %}<span class="text-gold">{{ row.rank.get_reward_type_display }}{% if row.rank.reward_type == 'isk' %} {{ row.rank.reward_amount|isk }}{% elif row.rank.reward_type == 'plex' %} {{ row.rank.reward_amount|floatformat:0 }} PLEX{% endif %}</span>{% else %}<span class="text-faint">—</span>{% endif %}
+          </td>
+          <td class="px-3 py-2 text-right data text-[11px] text-cyan">{{ row.suggest_conservative|isk }} / {{ row.suggest_standard|isk }} / {{ row.suggest_aggressive|isk }}</td>
+          <td class="px-3 py-2 text-right">
+            <a href="{% url 'admin_audit:combat_rank_edit' row.rank.pk %}" class="text-xs text-faint hover:text-gold">Edit</a>
+            <form method="post" action="{% url 'admin_audit:combat_rank_delete' row.rank.pk %}" class="inline" data-confirm="Remove the “{{ row.rank.name }}” rank? Pilots will be re-titled on the next-lower rank.">
+              {% csrf_token %}<button type="submit" class="ml-2 text-xs text-faint hover:text-loss">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- Reward suggestion note -->
+<section class="panel mb-5 border-cyan/30 bg-cyan/5 p-4">
+  <h2 class="eyebrow mb-1 text-cyan">How the suggestions are sized</h2>
+  <p class="text-[11px] text-faint">A monthly ISK pool is derived from
+    {% if suggestions.pool_source == 'income' %}<strong>{{ suggestions.pool|isk }}</strong> (a share of recent corp income){% elif suggestions.pool_source == 'budget' %}your configured budget of <strong>{{ suggestions.pool|isk }}</strong>{% else %}<strong>your budget/income settings</strong> (currently unset — set them in Reward settings){% endif %}.
+    Each rank is weighted by rarity (√ threshold) so higher ranks pay more, and per-award amounts are solved so the <em>standard</em> strategy's expected monthly spend matches the pool. {% if suggestions.weight_only %}<span class="text-gold">Projections are sparse, so amounts are weighted by rarity only.</span>{% endif %}
+    These are suggestions — set each rank's actual reward on its edit page.</p>
+</section>
+
+<!-- Add a rank -->
+<section class="panel p-5">
+  <h2 class="eyebrow mb-3 text-gold">Add a rank</h2>
+  <form method="post" action="{% url 'admin_audit:combat_rank_create' %}" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    {% csrf_token %}
+    <div><label class="label">Title</label>{{ form.name }}{% if form.name.errors %}<p class="mt-1 text-xs text-loss">{{ form.name.errors|join:" " }}</p>{% endif %}</div>
+    <div><label class="label">Kills ≥</label>{{ form.min_kills }}{% if form.min_kills.errors %}<p class="mt-1 text-xs text-loss">{{ form.min_kills.errors|join:" " }}</p>{% endif %}</div>
+    <div><label class="label">Colour class</label>{{ form.color_class }}</div>
+    <div><label class="label">Sort order</label>{{ form.sort_order }}</div>
+    <div class="sm:col-span-2 lg:col-span-4"><label class="label">Description</label>{{ form.description }}</div>
+    <div class="sm:col-span-2 lg:col-span-4 flex justify-end">
+      <button type="submit" class="btn-gold">Add rank</button>
+    </div>
+  </form>
+  <p class="mt-2 text-[11px] text-faint">Configure reward eligibility, icon and visibility on the rank's edit page after adding. Colour classes are theme tokens (e.g. <code>text-gold</code>, <code>text-cyan</code>, <code>text-kill</code>, <code>text-faint</code>).</p>
+</section>
+{% endblock %}

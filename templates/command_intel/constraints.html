@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Operational constraints · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<a href="{% url 'command_intel:overview' %}" class="text-xs text-faint hover:text-gold">← Command overview</a>
+
+<header class="mt-2 mb-5">
+  <p class="eyebrow text-gold">Operational constraints
+    {% if snapshot %}· {{ computed_count }} computed · {{ unknown_count }} not assessable · snapshot #{{ snapshot.pk }}{% endif %}
+  </p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">What is limiting us</h1>
+  <p class="mt-1 text-sm text-faint">Each row: a capability capped at a value, the factor capping it, and the remaining headroom. Honest data — <span class="text-faint">○ NO DATA</span> / <span class="text-faint">⚠ OFFLINE</span> rows state why, never a fabricated number.</p>
+</header>
+
+<section class="panel overflow-hidden">
+  <div class="hidden items-center gap-3 border-b border-line px-4 py-2.5 text-[11px] uppercase tracking-wide text-faint sm:flex">
+    <span class="w-[5.5rem] shrink-0">Severity</span>
+    <span class="flex-1">Constraint</span>
+    <span>Binding metric · limiting factor · headroom</span>
+  </div>
+  <div class="divide-y divide-line/40">
+    {% for c in constraints %}
+      {% include "command_intel/_constraint_row.html" with c=c compact=False %}
+    {% empty %}
+      <p class="px-4 py-12 text-center text-sm text-faint">
+        {% if snapshot %}No binding constraints — the corp is operating with headroom, or there isn't enough imported data to compute them.
+        {% else %}No intelligence snapshot yet. Generate a briefing from the <a href="{% url 'command_intel:overview' %}" class="text-cyan hover:underline">Command overview</a> to compute the constraint board.{% endif %}
+      </p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

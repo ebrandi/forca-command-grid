@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}Stockpiles · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow">Supply</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">Stockpiles</h1>
+    <p class="mt-1 text-sm text-faint">Keep the corp's count honest — update what you see in the hangar.</p>
+  </div>
+  <div class="flex gap-2" x-data="{stock:false, pile:false}">
+    <a href="{% url 'stockpile:assets' %}" class="btn-ghost"><svg class="h-4 w-4"><use href="#i-box"/></svg> Live assets</a>
+    <button @click="stock=!stock" class="btn-gold">Update stock</button>
+    {% if can_create_stockpile %}<button @click="pile=!pile" class="btn-ghost">New stockpile</button>{% endif %}
+
+    <div x-show="stock" x-cloak class="fixed inset-0 z-40 flex items-start justify-center bg-black/60 p-4 pt-24" @click.self="stock=false">
+      <form method="post" action="{% url 'stockpile:record_stock' %}" class="panel w-full max-w-md space-y-4 p-5">
+        {% csrf_token %}
+        <h2 class="eyebrow text-gold">Record stock</h2>
+        <div><label class="label">Stockpile</label>{{ stock_form.stockpile }}</div>
+        <div><label class="label">Item</label>{% include "components/_type_picker.html" with field="type_id" placeholder="Search an item…" required=1 %}</div>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="label">Current</label>{{ stock_form.quantity_current }}</div>
+          <div><label class="label">Target (optional)</label>{{ stock_form.quantity_target }}</div>
+        </div>
+        <div class="flex gap-2"><button class="btn-gold">Save</button><button type="button" @click="stock=false" class="btn-ghost">Cancel</button></div>
+      </form>
+    </div>
+
+    {% if can_create_stockpile %}
+    <div x-show="pile" x-cloak class="fixed inset-0 z-40 flex items-start justify-center bg-black/60 p-4 pt-24" @click.self="pile=false">
+      <form method="post" action="{% url 'stockpile:create_stockpile' %}" class="panel w-full max-w-md space-y-4 p-5">
+        {% csrf_token %}
+        <h2 class="eyebrow text-gold">New stockpile</h2>
+        <div><label class="label">Name</label>{{ stockpile_form.name }}</div>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="label">Kind</label>{{ stockpile_form.kind }}</div>
+          <div><label class="label">Location</label>{{ stockpile_form.location }}</div>
+        </div>
+        <div class="flex gap-2"><button class="btn-gold">Create</button><button type="button" @click="pile=false" class="btn-ghost">Cancel</button></div>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+</header>
+
+{% if shortfalls %}
+<section class="panel mb-5 p-5">
+  <h2 class="eyebrow mb-3 text-gold">Below target</h2>
+  <div class="space-y-1.5">
+    {% for s in shortfalls %}
+      <div class="flex items-center gap-2.5 text-sm">
+        <img src="{% eve_type_icon s.type_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">
+        <span class="flex-1 text-muted">{% type_name s.type_id %} <span class="text-faint">· {{ s.stockpile }}</span></span>
+        <span class="data text-faint">{{ s.current }}/{{ s.target }}</span>
+        <span class="data text-gold">need {{ s.deficit }}</span>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% for entry in reconciled %}
+  <section class="panel mb-4 overflow-hidden">
+    <div class="flex items-center justify-between border-b border-line p-4">
+      <h2 class="font-display font-semibold text-ink">{{ entry.sp.name }}</h2>
+      <span class="flex items-center gap-1.5">
+        {% if entry.recon.covered %}<span class="chip border-kill/40 text-kill" title="ESI on-hand = all corp assets in this solar system (not station-specific)">ESI-covered</span>{% else %}<span class="chip border-gold/40 text-gold" title="No corp ESI coverage — manual count is authoritative">Manual only</span>{% endif %}
+        <span class="chip">{{ entry.sp.get_kind_display }}</span><span class="chip">{{ entry.sp.get_source_display }}</span>
+      </span>
+    </div>
+    <div class="overflow-x-auto"><table class="w-full text-sm">
+      <thead class="text-faint text-left"><tr class="border-b border-line/60">
+        <th class="px-4 py-2 font-medium">Item</th><th class="px-4 py-2 text-right font-medium">Manual</th>
+        <th class="px-4 py-2 text-right font-medium">Reserved</th><th class="px-4 py-2 text-right font-medium">Available</th>
+        <th class="px-4 py-2 text-right font-medium">ESI on-hand</th>
+        <th class="px-4 py-2 text-right font-medium">Target</th><th class="px-4 py-2 text-right font-medium">Shortfall</th></tr></thead>
+      <tbody>
+        {% for r in entry.recon.rows %}
+          <tr class="border-t border-line/40">
+            <td class="px-4 py-2"><span class="flex items-center gap-2"><img src="{% eve_type_icon r.type_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">{% type_name r.type_id %} <span class="chip ml-1">{{ r.item.get_provenance_display }}</span></span></td>
+            <td class="px-4 py-2 text-right data text-muted">{{ r.manual_current }}</td>
+            <td class="px-4 py-2 text-right data text-faint">{{ r.item.quantity_reserved }}</td>
+            <td class="px-4 py-2 text-right data text-ink">{{ r.item.quantity_available }}</td>
+            <td class="px-4 py-2 text-right data {% if r.covered %}text-ink{% else %}text-faint{% endif %}">{% if r.covered %}{{ r.esi_on_hand|default:"0" }}{% else %}—{% endif %}</td>
+            <td class="px-4 py-2 text-right data text-faint">{{ r.target|default:"—" }}</td>
+            <td class="px-4 py-2 text-right data {% if r.shortfall %}text-loss{% else %}text-muted{% endif %}">{% if r.target %}{{ r.shortfall }}{% else %}—{% endif %}</td>
+          </tr>
+        {% empty %}<tr><td colspan="7" class="px-4 py-3 text-faint">Empty — use “Update stock”.</td></tr>{% endfor %}
+      </tbody>
+    </table></div>
+    {% if entry.recon.covered %}<p class="border-t border-line/40 px-4 py-2 text-[11px] text-faint">ESI on-hand aggregates all corp assets in this solar system — not station-specific.</p>{% else %}<p class="border-t border-line/40 px-4 py-2 text-[11px] text-faint">No corp ESI coverage for this location (no corp token / wormhole) — the manual count is the source of truth here.</p>{% endif %}
+  </section>
+{% empty %}
+  <div class="panel p-8 text-center text-sm text-faint">No stockpiles yet.{% if can_create_stockpile %} Create one above.{% endif %}</div>
+{% endfor %}
+{% endblock %}

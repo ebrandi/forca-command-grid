@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Alert history · Pingboard{% endblock %}
+{% block content %}
+<header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div><p class="eyebrow text-gold">Pingboard</p><h1 class="text-3xl font-bold text-ink">Alert history</h1></div>
+  <a href="{% url 'pingboard:compose' %}" class="btn-gold">Send alert</a>
+</header>
+
+<form method="get" class="mb-5 flex flex-wrap items-end gap-3">
+  <label class="text-[11px] text-faint">Category<select name="category" class="input-field mt-1" data-autosubmit>
+    <option value="">All</option>{% for v, l in categories %}<option value="{{ v }}" {% if v == category %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></label>
+  <label class="text-[11px] text-faint">Status<select name="status" class="input-field mt-1" data-autosubmit>
+    <option value="">All</option>{% for v, l in statuses %}<option value="{{ v }}" {% if v == status %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></label>
+  <label class="text-[11px] text-faint">Priority<select name="priority" class="input-field mt-1" data-autosubmit>
+    <option value="">All</option>{% for v, l in priorities %}<option value="{{ v }}" {% if v == priority %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></label>
+  <noscript><button class="btn-ghost">Filter</button></noscript>
+</form>
+
+<div class="panel overflow-x-auto">
+  <table class="w-full text-sm">
+    <thead><tr class="text-[11px] uppercase tracking-wide text-faint">
+      <th class="px-4 py-2 text-left">When</th><th class="px-4 py-2 text-left">Alert</th>
+      <th class="px-4 py-2 text-left">Category</th><th class="px-4 py-2 text-left">Priority</th>
+      <th class="px-4 py-2 text-left">By</th><th class="px-4 py-2 text-left">Status</th></tr></thead>
+    <tbody class="divide-y divide-line/50">
+      {% for a in alerts %}
+      <tr class="hover:bg-panel2/40">
+        <td class="px-4 py-2 data whitespace-nowrap">{{ a.created_at|date:"j M H:i" }}</td>
+        <td class="px-4 py-2"><a href="{% url 'pingboard:alert_detail' a.id %}" class="text-ink hover:text-gold">{{ a.title }}</a></td>
+        <td class="px-4 py-2 text-faint">{{ a.get_category_display }}</td>
+        <td class="px-4 py-2 {% if a.priority == 'urgent' or a.priority == 'emergency' %}text-loss{% elif a.priority == 'high' %}text-gold{% else %}text-faint{% endif %}">{{ a.get_priority_display }}</td>
+        <td class="px-4 py-2 text-[11px] text-faint">{{ a.created_by|default:a.source }}</td>
+        <td class="px-4 py-2">{% include "pingboard/_status_chip.html" with status=a.status label=a.get_status_display %}</td>
+      </tr>
+      {% empty %}<tr><td colspan="6" class="px-4 py-6 text-center text-faint">No alerts match.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

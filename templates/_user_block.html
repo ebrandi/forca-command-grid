@@ -1,0 +1,25 @@
+{% load eve %}
+<div class="border-t border-line p-3">
+  {% if main_character %}
+    <div class="flex items-center gap-3 rounded-lg bg-panel2 p-2.5">
+      <img src="{% eve_portrait main_character.character_id 64 %}" alt="" class="h-10 w-10 rounded-full ring-1 ring-line">
+      <div class="min-w-0 flex-1">
+        <p class="truncate text-sm font-medium text-ink">{{ main_character.name }}</p>
+        <p class="truncate text-[11px] text-faint">
+          {% if is_director %}Director{% elif is_officer %}Officer{% elif is_member %}Member{% else %}Capsuleer{% endif %}
+          {% if main_character.is_corp_member %}· FORCA{% endif %}
+        </p>
+      </div>
+      <form action="{% url 'sso:logout' %}" method="post">{% csrf_token %}
+        <button class="text-faint hover:text-loss" title="Log out" aria-label="Log out">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 6V5a2 2 0 00-2-2H6a2 2 0 00-2 2v14a2 2 0 002 2h6a2 2 0 002-2v-1M9 12h12m0 0l-3-3m3 3l-3 3"/></svg>
+        </button>
+      </form>
+    </div>
+  {% else %}
+    <a href="{% url 'sso:login' %}" class="btn-gold w-full">
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M7 12h11m0 0l-3-3m3 3l-3 3"/></svg>
+      Log in with EVE
+    </a>
+  {% endif %}
+</div>

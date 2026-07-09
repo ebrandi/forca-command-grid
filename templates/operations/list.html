@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}Operations · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-gold">Plan ahead</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">Operations</h1>
+    <p class="mt-1 text-sm text-faint">Scheduled fleets — who's needed, who's committed, and whether they'll fly.</p>
+  </div>
+  {% if is_officer %}<a href="{% url 'operations:templates' %}" class="btn-ghost !py-2 !text-sm">Recurring templates</a><a href="{% url 'operations:create' %}" class="btn-gold !py-2 !text-sm">Plan an operation</a>{% endif %}
+</header>
+
+
+<div class="grid gap-4 sm:grid-cols-2">
+  {% for c in cards %}
+    <a href="{% url 'operations:detail' c.op.pk %}" class="panel p-5 hover:border-gold/40 transition">
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <p class="eyebrow">{{ c.op.get_type_display }}</p>
+          <h2 class="mt-0.5 font-display text-lg font-semibold text-ink">{{ c.op.name }}</h2>
+          {% if c.op.target_at %}<p class="mt-1 text-xs text-faint">{{ c.op.target_at|date:"D j M · H:i" }} EVE{% if c.op.formup %} · {{ c.op.formup }}{% endif %}</p>{% endif %}
+          <div class="mt-2 flex flex-wrap items-center gap-1.5">
+            {% include "operations/_posture.html" with posture=c.plan.posture %}
+            {% if c.op.min_pilots %}<span class="chip !text-[10px] {% if c.plan.min_met %}!border-kill/30 !text-kill{% else %}text-faint{% endif %}">{{ c.plan.total_confirmed }}/{{ c.op.min_pilots }} pilots</span>{% elif c.plan.total_confirmed %}<span class="chip !text-[10px] text-faint">{{ c.plan.total_confirmed }} committed</span>{% endif %}
+          </div>
+        </div>
+        <div class="shrink-0 text-right">
+          <p class="font-display text-3xl font-bold {% if c.readiness.pct >= 75 %}text-kill{% elif c.readiness.pct >= 50 %}text-gold{% else %}text-loss{% endif %}">{{ c.readiness.pct }}<span class="text-base">%</span></p>
+          <p class="text-[10px] uppercase tracking-wide text-faint">ready</p>
+        </div>
+      </div>
+    </a>
+  {% empty %}
+    <p class="panel p-6 text-center text-sm text-faint sm:col-span-2">No upcoming operations.</p>
+  {% endfor %}
+</div>
+
+{% if leaderboard %}
+<section class="panel mt-6 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Top participation · last 90 days</h2></div>
+  <ol class="divide-y divide-line/40">
+    {% for p in leaderboard %}
+    <li class="flex items-center justify-between px-4 py-2 text-sm"><span class="text-ink">{{ forloop.counter }}. {{ p.name }}</span><span class="data text-xs text-gold">{{ p.count }} fleet{{ p.count|pluralize }}</span></li>
+    {% endfor %}
+  </ol>
+</section>
+{% endif %}
+
+{% endblock %}

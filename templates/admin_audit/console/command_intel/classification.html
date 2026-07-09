@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Command Intelligence · Classification · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
+<header class="mt-2 mb-6">
+  <p class="eyebrow">Command Intelligence configuration</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">Classification</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">Set the default report classification and the tier → minimum-role map that gates who can read each tier. A <span class="text-cyan">design floor</span> is enforced server-side — a tier can be tightened but never loosened below its built-in minimum.</p>
+</header>
+
+<form method="post" action="{% url 'admin_audit:command_intel_classification' %}">
+  {% csrf_token %}
+  <section class="panel overflow-hidden">
+    <div class="divide-y divide-line/40">
+      <label class="grid grid-cols-1 items-center gap-2 px-4 py-3 hover:bg-panel2/40 sm:grid-cols-[1fr_14rem]">
+        <div>
+          <span class="block text-sm font-medium text-ink">Default classification</span>
+          <span class="block text-[11px] text-faint">The tier a report falls back to when its template specifies none.</span>
+        </div>
+        <select name="default" class="input-field w-full">
+          {% for tier in tiers %}
+          <option value="{{ tier.key }}" {% if tier.key == default %}selected{% endif %}>{{ tier.label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+    </div>
+    <div class="border-y border-line px-4 py-2.5 text-[11px] uppercase tracking-wide text-faint">Tier → minimum role</div>
+    <div class="divide-y divide-line/40">
+      {% for tier in tiers %}
+      <label class="grid grid-cols-1 items-center gap-2 px-4 py-3 hover:bg-panel2/40 sm:grid-cols-[1fr_14rem]">
+        <div>
+          <span class="block text-sm font-medium text-ink">{{ tier.label }}</span>
+          <span class="block font-mono text-[11px] text-faint">{{ tier.key }}</span>
+        </div>
+        <select name="tier_{{ tier.key }}" class="input-field w-full">
+          {% for rank in ranks %}
+          <option value="{{ rank }}" {% if rank == tier.rank %}selected{% endif %}>{{ rank|title }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      {% endfor %}
+    </div>
+    <div class="flex flex-wrap items-center justify-between gap-3 border-t border-line px-4 py-3">
+      <p class="text-[11px] text-faint">config v{{ meta.version }}{% if meta.by %} · last changed by {{ meta.by }}{% endif %}{% if meta.at %} · {{ meta.at|date:"j M Y H:i" }}{% endif %}</p>
+      <button class="btn-gold">Save changes</button>
+    </div>
+  </section>
+</form>
+
+<form method="post" action="{% url 'admin_audit:command_intel_reset' 'classification' %}" class="mt-3">
+  {% csrf_token %}
+  <button class="btn-ghost text-sm">Reset to defaults</button>
+  <span class="ml-2 text-[11px] text-faint">Restores the default classification and every tier floor to the shipped defaults.</span>
+</form>
+{% endblock %}

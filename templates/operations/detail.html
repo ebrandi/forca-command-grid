@@ -1,0 +1,338 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}{{ op.name }} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<a href="{% url 'operations:list' %}" class="text-xs text-faint hover:text-gold">← Operations</a>
+
+<header class="mt-2 mb-6 flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <p class="eyebrow text-gold">{{ op.get_type_display }}</p>
+    <h1 class="mt-1 flex flex-wrap items-center gap-2 text-3xl font-bold text-ink">{{ op.name }}
+      {% include "operations/_posture.html" with posture=plan.posture %}
+    </h1>
+    {% if op.target_at %}
+      <p class="mt-1 flex items-center gap-2 text-sm text-faint">
+        {{ op.target_at|date:"l j F · H:i" }} EVE
+        {% if op.duration_minutes %}<span class="text-faint">· ~{{ op.duration_minutes }} min</span>{% endif %}
+      </p>
+    {% endif %}
+    <div class="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-faint">
+      {% if op.formup %}<span>📍 Form-up: <span class="text-muted">{{ op.formup }}</span></span>{% endif %}
+      {% if op.destination %}<span>🎯 {{ op.destination }}</span>{% endif %}
+      {% if op.comms %}<span>🎧 {{ op.comms }}</span>{% endif %}
+      {% if op.effective_fc %}<span>FC:
+        {% with fc_char=op.effective_fc.main_character %}
+          {% if fc_char %}<a href="{% url 'killboard:pilot' fc_char.character_id %}" class="text-cyan hover:underline">{{ fc_char.name }}</a>
+          {% else %}<span class="text-muted">{{ op.effective_fc.display_name }}</span>{% endif %}
+        {% endwith %}</span>{% endif %}
+    </div>
+    {% if op.link %}<p class="mt-1 text-sm"><a href="{{ op.link }}" rel="noopener noreferrer" target="_blank" class="text-cyan hover:underline">Doctrine / fitting link →</a></p>{% endif %}
+    {% if op.rsvp_deadline %}<p class="mt-1 text-xs {% if plan.deadline_passed %}text-loss{% elif plan.near_deadline %}text-gold{% else %}text-faint{% endif %}">Sign-ups {% if plan.deadline_passed %}closed{% else %}close{% endif %} {{ op.rsvp_deadline|date:"D j M · H:i" }} EVE</p>{% endif %}
+    {% if op.notes %}<p class="mt-2 max-w-2xl text-sm text-muted">{{ op.notes }}</p>{% endif %}
+  </div>
+  <div class="panel px-6 py-4 text-center">
+    <p class="font-display text-5xl font-bold {% if readiness.pct >= 75 %}text-kill{% elif readiness.pct >= 50 %}text-gold{% else %}text-loss{% endif %}">{{ readiness.pct }}%</p>
+    <p class="text-[10px] uppercase tracking-wide text-faint">corp ready</p>
+  </div>
+</header>
+
+
+<!-- SRP banner (combat ops) — visible before pilots commit -->
+{% if op.is_pvp %}
+<div class="panel mb-4 flex items-center gap-3 border-l-2 {% if op.srp == 'none' %}border-loss/60{% elif op.srp %}border-kill/60{% else %}border-gold/60{% endif %} px-4 py-2.5 text-sm">
+  <span class="eyebrow text-faint">SRP</span>
+  {% if op.srp %}<span class="text-ink">{{ op.get_srp_display }}</span>
+  {% else %}<span class="text-gold">Not specified — ask the FC before you undock.</span>{% endif %}
+</div>
+{% endif %}
+
+<!-- Fleet composition — required ships, who's committed, what's still needed -->
+{% if plan.has_slots or op.min_pilots %}
+<section class="panel mb-5 overflow-hidden">
+  <div class="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3">
+    <h2 class="eyebrow text-gold">Join the fleet</h2>
+    <div class="flex items-center gap-2 text-xs text-faint">
+      <span class="{% if plan.min_met %}text-kill{% else %}text-loss{% endif %}">{{ plan.total_confirmed }}{% if op.min_pilots %}/{{ op.min_pilots }}{% endif %} coming</span>
+      {% if plan.total_maybe %}<span class="text-cyan">· {{ plan.total_maybe }} maybe</span>{% endif %}
+      {% if rsvp.counts.no %}<span>· {{ rsvp.counts.no }} out</span>{% endif %}
+      {% if plan.viable %}<span class="chip !text-[10px] !border-kill/30 !text-kill">viable</span>{% else %}<span class="chip !text-[10px] !border-loss/30 !text-loss">not yet viable</span>{% endif %}
+    </div>
+  </div>
+
+  {% if op.is_open_for_signup %}
+  <p class="border-b border-line bg-space/30 px-4 py-2 text-[11px] text-faint">Choose the ship you'll fly, then tell the FC if you're <span class="text-kill">coming</span> or <span class="text-cyan">maybe</span>.</p>
+  {% endif %}
+
+  <div class="divide-y divide-line/40">
+    {% for row in plan.slots %}
+      <div class="px-4 py-3 {% if row.slot.id == my_commitment.slot_id %}bg-cyan/5{% elif row.slot.id == plan.recommended_slot_id and not my_commitment %}bg-gold/5{% endif %}">
+        <div class="flex flex-wrap items-center justify-between gap-3 text-sm">
+          <div class="min-w-0 flex items-center gap-2">
+            <span class="data text-[10px] text-faint">#{{ row.slot.priority }}</span>
+            <span class="truncate text-ink">{{ row.slot.ship_name }}</span>
+            <span class="chip !text-[9px] text-faint">{{ row.slot.get_role_display }}</span>
+            {% if row.slot.id == my_commitment.slot_id %}<span class="chip !text-[9px] !border-cyan/40 !text-cyan">your ship</span>
+            {% elif row.slot.id == plan.recommended_slot_id and not my_commitment %}<span class="chip !text-[9px] !border-gold/40 !text-gold">most needed</span>{% endif %}
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <span class="data text-xs {% if row.met %}text-kill{% else %}text-loss{% endif %}">{{ row.confirmed }}/{{ row.min }}{% if row.maybe %} <span class="text-cyan">+{{ row.maybe }}?</span>{% endif %}{% if row.max %} (max {{ row.max }}){% endif %}</span>
+            {% if op.is_open_for_signup %}
+            <form method="post" action="{% url 'operations:commit' op.pk %}" class="flex gap-1">{% csrf_token %}
+              <input type="hidden" name="slot_id" value="{{ row.slot.id }}">
+              <button name="response" value="yes" class="{% if row.slot.id == my_commitment.slot_id and not my_commitment.is_maybe %}btn-gold{% else %}btn-ghost{% endif %} !py-1 !text-xs"
+                      {% if not row.has_room and not row.slot.id == my_commitment.slot_id %}disabled title="Full"{% endif %}>{% if not row.has_room and not row.slot.id == my_commitment.slot_id %}full{% else %}Coming{% endif %}</button>
+              <button name="response" value="maybe" class="{% if row.slot.id == my_commitment.slot_id and my_commitment.is_maybe %}btn-cyan{% else %}btn-ghost{% endif %} !py-1 !text-xs">Maybe</button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+        <div class="mt-1.5 flex items-center gap-2">
+          <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-space">
+            <div class="h-full {% if row.met %}bg-kill{% else %}bg-loss{% endif %}" style="width:{{ row.pct }}%"></div>
+          </div>
+          {% if row.still_needed %}<span class="text-[10px] text-loss">{{ row.still_needed }} more</span>{% else %}<span class="text-[10px] text-kill">filled</span>{% endif %}
+          {% if row.slot.is_doctrine %}<a href="{% url 'doctrines:detail' row.slot.doctrine_id %}" class="text-[10px] text-cyan hover:underline">view doctrine</a>{% endif %}
+          {% if row.slot.fitting_link %}<a href="{{ row.slot.fitting_link }}" target="_blank" rel="noopener noreferrer" class="text-[10px] text-cyan hover:underline">fit</a>{% endif %}
+        </div>
+        {% if row.slot.eft_text %}
+        <details class="mt-1.5">
+          <summary class="cursor-pointer text-[10px] text-cyan hover:underline">show fit (EFT)</summary>
+          <pre class="mt-1 max-h-48 overflow-auto rounded-md border border-line bg-space px-3 py-2 font-mono text-[11px] text-muted">{{ row.slot.eft_text }}</pre>
+        </details>
+        {% endif %}
+      </div>
+    {% empty %}
+      <p class="px-4 py-6 text-center text-sm text-faint">No specific ships requested yet — check back once the FC sets the composition.</p>
+    {% endfor %}
+  </div>
+
+  <!-- Your participation -->
+  {% if op.is_open_for_signup %}
+  <div class="flex flex-wrap items-center justify-between gap-2 border-t border-line px-4 py-3 text-sm">
+    {% if my_commitment %}
+      <span class="{% if my_commitment.is_maybe %}text-cyan{% else %}text-kill{% endif %}">
+        {% if my_commitment.is_maybe %}● You're a <strong>maybe</strong>{% else %}✓ You're <strong>coming</strong>{% endif %}{% if my_commitment.slot %}, flying {{ my_commitment.slot.ship_name }}{% endif %}.
+        <span class="text-faint">Use the buttons above to change ship or answer.</span>
+      </span>
+      <form method="post" action="{% url 'operations:uncommit' op.pk %}">{% csrf_token %}<button class="btn-ghost !py-1 !text-xs">Withdraw</button></form>
+    {% elif my_rsvp == 'no' %}
+      <span class="text-faint">You're marked as unavailable. Changed your mind? Pick a ship above.</span>
+    {% else %}
+      <span class="text-faint">Not signed up yet.</span>
+      <form method="post" action="{% url 'operations:rsvp' op.pk %}">{% csrf_token %}<input type="hidden" name="response" value="no"><button class="btn-ghost !py-1 !text-xs">Can't make it</button></form>
+    {% endif %}
+  </div>
+  {% elif op.is_cancelled %}
+  <div class="border-t border-line px-4 py-3 text-sm text-loss">This operation was cancelled — sign-ups are closed.</div>
+  {% elif op.rsvp_deadline %}
+  <div class="border-t border-line px-4 py-3 text-sm text-faint">Sign-ups are closed.{% if my_commitment %} You were down as {% if my_commitment.is_maybe %}a maybe{% else %}coming{% endif %}{% if my_commitment.slot %} on {{ my_commitment.slot.ship_name }}{% endif %}.{% endif %}</div>
+  {% endif %}
+</section>
+{% endif %}
+
+<!-- Organiser panel -->
+{% if is_officer %}
+<section class="panel mb-5 overflow-hidden">
+  <div class="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3">
+    <h2 class="eyebrow text-cyan">Organiser</h2>
+    <a href="{% url 'operations:edit' op.pk %}" class="btn-ghost !py-1 !text-xs">Edit operation</a>
+  </div>
+  <div class="grid gap-3 px-4 py-3 text-sm sm:grid-cols-4">
+    <div><p class="text-[10px] uppercase tracking-wide text-faint">Confirmed</p><p class="data text-ink">{{ plan.total_confirmed }}{% if op.min_pilots %} / {{ op.min_pilots }}{% endif %}</p></div>
+    <div><p class="text-[10px] uppercase tracking-wide text-faint">Composition</p><p class="data {% if plan.composition_met %}text-kill{% else %}text-loss{% endif %}">{{ plan.required_filled }} / {{ plan.required_total }} slots</p></div>
+    <div><p class="text-[10px] uppercase tracking-wide text-faint">Viable</p><p class="data {% if plan.viable %}text-kill{% else %}text-loss{% endif %}">{% if plan.viable %}Yes{% if plan.overridden %} (override){% endif %}{% else %}No{% endif %}</p></div>
+    <div><p class="text-[10px] uppercase tracking-wide text-faint">Deadline</p><p class="data {% if plan.deadline_passed %}text-loss{% elif plan.near_deadline %}text-gold{% else %}text-ink{% endif %}">{% if op.rsvp_deadline %}{{ op.rsvp_deadline|date:"j M H:i" }}{% else %}—{% endif %}</p></div>
+  </div>
+  {% if plan.slot_mismatch %}<p class="px-4 pb-2 text-xs text-gold">⚠ Ship slots require {{ plan.required_total }} pilots but the minimum is {{ op.min_pilots }} — edit to align them.</p>{% endif %}
+  {% if not plan.viable and op.is_upcoming %}
+  <div class="border-t border-line bg-space/40 px-4 py-3">
+    <form method="post" action="{% url 'operations:override' op.pk %}" class="flex flex-wrap items-center gap-2">{% csrf_token %}
+      <input type="hidden" name="override" value="1">
+      <input name="override_note" value="{{ op.override_note }}" class="input-field !py-1 !text-xs flex-1" placeholder="Reason (optional) — e.g. running with what we have">
+      <button class="btn-ghost !py-1 !text-xs">Run anyway (override minimum)</button>
+    </form>
+  </div>
+  {% elif plan.overridden %}
+  <div class="border-t border-line px-4 py-3 text-xs">
+    <form method="post" action="{% url 'operations:override' op.pk %}" class="flex items-center gap-2">{% csrf_token %}
+      <input type="hidden" name="override" value="0">
+      <span class="text-gold">Override active{% if op.override_note %} — {{ op.override_note }}{% endif %}.</span>
+      <button class="text-faint hover:text-gold">clear</button>
+    </form>
+  </div>
+  {% endif %}
+</section>
+{% endif %}
+
+<div class="grid gap-5 lg:grid-cols-2">
+  <!-- My prep -->
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-cyan">Your prep</h2></div>
+    <div class="divide-y divide-line/40">
+      {% for r in my_prep %}
+        <div class="flex items-center gap-3 px-4 py-2.5 text-sm">
+          {% if r.ready %}<span class="text-kill">✓</span>{% else %}<span class="text-loss">✗</span>{% endif %}
+          <span class="min-w-0 flex-1 truncate text-ink">{{ r.doctrine.name }}</span>
+          {% if not r.ready %}<a href="{% url 'doctrines:prep' r.doctrine.id %}" class="btn-cyan !py-1 !text-xs">Prep</a>{% else %}<span class="text-xs text-kill">ready</span>{% endif %}
+        </div>
+      {% empty %}
+        <p class="px-4 py-6 text-center text-sm text-faint">No doctrines set for this op yet.</p>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- Corp coverage -->
+  <section class="panel overflow-hidden">
+    <div class="flex items-center justify-between border-b border-line px-4 py-3">
+      <h2 class="eyebrow">Corp coverage</h2>
+      {% if is_officer %}<form method="post" action="{% url 'operations:generate_tasks' op.pk %}">{% csrf_token %}<button class="btn-ghost !py-1 !text-xs">Generate prep tasks</button></form>{% endif %}
+    </div>
+    <div class="divide-y divide-line/40">
+      {% for row in readiness.rows %}
+        <div class="px-4 py-3">
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-ink">{{ row.doctrine.name }}</span>
+            <span class="data text-xs {% if row.pct >= 75 %}text-kill{% elif row.pct >= 50 %}text-gold{% else %}text-loss{% endif %}">{{ row.ready }}{% if row.target %}/{{ row.target }}{% else %}/{{ row.known }}{% endif %} · {{ row.pct }}%</span>
+          </div>
+          <div class="mt-1 h-1.5 overflow-hidden rounded-full bg-space">
+            <div class="h-full {% if row.pct >= 75 %}bg-kill{% elif row.pct >= 50 %}bg-gold{% else %}bg-loss{% endif %}" style="width:{{ row.pct }}%"></div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+
+<!-- Sign-up roster (who's coming, on what ship) -->
+{% if op.is_upcoming %}
+<section class="panel mt-5 overflow-hidden">
+  <div class="border-b border-line px-4 py-3">
+    <h2 class="eyebrow">Sign-ups
+      <span class="text-faint">· {{ coming_signups|length }} coming · {{ maybe_signups|length }} maybe · {{ cant_make_it|length }} out</span>
+    </h2>
+  </div>
+  <div class="divide-y divide-line/40">
+    {% for c in coming_signups %}
+      <div class="flex items-center gap-3 px-4 py-2 text-sm">
+        <span class="text-kill">✓</span>
+        <span class="min-w-0 flex-1 truncate text-ink">{{ c.character_name|default:"Pilot" }}</span>
+        {% if c.slot %}<span class="chip !text-[10px] text-faint">{{ c.slot.ship_name }}</span>{% else %}<span class="text-[11px] text-faint">no ship</span>{% endif %}
+      </div>
+    {% endfor %}
+    {% for c in maybe_signups %}
+      <div class="flex items-center gap-3 px-4 py-2 text-sm">
+        <span class="text-cyan">●</span>
+        <span class="min-w-0 flex-1 truncate text-ink">{{ c.character_name|default:"Pilot" }} <span class="text-[10px] text-cyan">maybe</span></span>
+        {% if c.slot %}<span class="chip !text-[10px] text-faint">{{ c.slot.ship_name }}</span>{% endif %}
+      </div>
+    {% endfor %}
+    {% if not coming_signups and not maybe_signups %}
+      <p class="px-4 py-6 text-center text-sm text-faint">No sign-ups yet — be the first to pick a ship above.</p>
+    {% endif %}
+    {% for r in cant_make_it %}
+      <div class="flex items-center gap-3 px-4 py-2 text-sm opacity-60">
+        <span class="text-faint">✗</span>
+        <span class="min-w-0 flex-1 truncate text-faint">{{ r.character_name|default:"Pilot" }} <span class="text-[10px]">can't make it</span></span>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<!-- Participation (PAP) -->
+<section class="panel mt-5 overflow-hidden">
+  <div class="flex items-center justify-between border-b border-line px-4 py-3">
+    <h2 class="eyebrow">Participation <span class="text-faint">· {{ attend_count }} pilot{{ attend_count|pluralize }}</span></h2>
+    {% if is_officer %}<form method="post" action="{% url 'operations:pull_fleet' op.pk %}" class="mr-auto ml-3">{% csrf_token %}<button class="btn-ghost !py-1 !text-xs" title="Read your live fleet and record attendance">Pull from fleet</button></form>{% endif %}
+    {% if i_attended %}
+      <form method="post" action="{% url 'operations:unattend' op.pk %}">{% csrf_token %}<button class="btn-ghost !py-1 !text-xs">Remove me</button></form>
+    {% else %}
+      <form method="post" action="{% url 'operations:attend' op.pk %}">{% csrf_token %}<button class="btn-gold !py-1 !text-xs">I was there</button></form>
+    {% endif %}
+  </div>
+  <div class="divide-y divide-line/40">
+    {% for a in attendance %}
+      <div class="flex items-center gap-3 px-4 py-2 text-sm">
+        <span class="min-w-0 flex-1 truncate text-ink">{{ a.character_name|default:"Pilot" }}</span>
+        {% if a.confirmed %}<span class="chip !border-kill/30 !text-[10px] !text-kill">confirmed</span>{% else %}<span class="chip !text-[10px] text-faint">self-reported</span>{% endif %}
+        {% if is_officer %}
+        <form method="post" action="{% url 'operations:attendance_action' op.pk %}" class="flex gap-2">{% csrf_token %}
+          <input type="hidden" name="att_id" value="{{ a.id }}">
+          {% if a.confirmed %}<button name="action" value="unconfirm" class="text-[11px] text-faint hover:text-gold">unconfirm</button>{% else %}<button name="action" value="confirm" class="text-[11px] text-faint hover:text-kill">confirm</button>{% endif %}
+          <button name="action" value="remove" class="text-[11px] text-faint hover:text-loss">remove</button>
+        </form>
+        {% endif %}
+      </div>
+    {% empty %}
+      <p class="px-4 py-6 text-center text-sm text-faint">No one on the roster yet — click “I was there” after the fleet.</p>
+    {% endfor %}
+  </div>
+</section>
+
+{# 4.19: on-grid composition vs plan — killboard-evidenced AAR, officers only #}
+{% if composition %}
+<section class="panel mt-5 overflow-hidden">
+  <div class="border-b border-line px-4 py-3">
+    <h2 class="eyebrow text-gold">On-grid vs plan <span class="text-faint">· AAR</span></h2>
+    <p class="mt-1 text-xs text-faint">Home-corp pilots seen on killmails during the op window — a lower bound (pilots who never touched a killmail don't appear), not presence tracking.</p>
+  </div>
+  {% if not composition.has_plan %}
+    <p class="px-4 py-6 text-center text-sm text-faint">No planned ship composition on this op to compare against.</p>
+  {% elif not composition.any_participants %}
+    <p class="px-4 py-6 text-center text-sm text-faint">No home-corp killmails in the op window — nothing on grid to reconcile.</p>
+  {% else %}
+  <div class="flex flex-wrap gap-4 px-4 py-3 text-xs">
+    <span class="text-faint">Planned seats: <span class="data text-ink">{{ composition.total_planned }}</span></span>
+    <span class="text-faint">On-plan fielded: <span class="data text-cyan">{{ composition.total_on_plan_fielded }}</span></span>
+  </div>
+  <div class="overflow-x-auto"><table class="w-full text-sm">
+    <thead class="text-left text-[11px] uppercase text-faint"><tr class="border-b border-line/60">
+      <th class="px-4 py-2">Ship</th><th class="px-4 py-2 text-right">Planned</th><th class="px-4 py-2 text-right">On grid</th><th class="px-4 py-2 text-right">Gap</th>
+    </tr></thead>
+    <tbody>
+      {% for r in composition.planned_rows %}
+      <tr class="border-t border-line/40">
+        <td class="px-4 py-1.5 text-muted">{% if r.ship_type_id %}{% type_name r.ship_type_id %}{% else %}{{ r.name }}{% endif %}</td>
+        <td class="px-4 py-1.5 text-right data text-faint">{{ r.planned }}</td>
+        <td class="px-4 py-1.5 text-right data {% if r.met %}text-kill{% else %}text-loss{% endif %}">{{ r.fielded }}</td>
+        <td class="px-4 py-1.5 text-right data">{% if r.short %}<span class="text-loss">−{{ r.short }}</span>{% else %}<span class="text-kill">✓</span>{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  {% if composition.off_plan %}
+  <div class="border-t border-line/60 px-4 py-3">
+    <p class="eyebrow mb-1 text-faint">Off-plan ships fielded</p>
+    <div class="flex flex-wrap gap-1.5">
+      {% for o in composition.off_plan %}<span class="chip align-middle text-[11px] !text-faint">{% type_name o.ship_type_id %} ×{{ o.fielded }}</span>{% endfor %}
+    </div>
+  </div>
+  {% endif %}
+  {% endif %}
+</section>
+{% endif %}
+
+{% if is_officer %}
+<div class="mt-5 flex flex-wrap items-center gap-2">
+  <form method="post" action="{% url 'operations:status' op.pk %}" class="flex items-center gap-2">
+    {% csrf_token %}
+    <select name="status" class="input-field !py-1 !text-sm w-auto">
+      {% for v, l in op.Status.choices %}<option value="{{ v }}" {% if v == op.status %}selected{% endif %}>{{ l }}</option>{% endfor %}
+    </select>
+    <button class="btn-ghost !py-1 !text-xs">Update status</button>
+  </form>
+  {% if announce_channels %}
+  <form method="post" action="{% url 'operations:announce' op.pk %}" class="w-full mt-1 flex flex-wrap items-center gap-2 border-t border-line pt-3">
+    {% csrf_token %}
+    <span class="text-xs text-faint">Announce to</span>
+    {% for val, lbl in announce_channels %}
+    <label class="chip cursor-pointer !text-xs"><input type="checkbox" name="channel_{{ val }}" checked class="mr-1 align-middle">{{ lbl }}</label>
+    {% endfor %}
+    <button class="btn-ghost !py-1 !text-xs ml-auto"><svg class="h-3.5 w-3.5"><use href="#i-bolt"/></svg> Announce</button>
+  </form>
+  {% else %}
+  <form method="post" action="{% url 'operations:announce' op.pk %}" class="ml-auto">{% csrf_token %}<button class="btn-ghost !py-1 !text-xs" title="Arm a channel in the Admin Console → Pingboard first"><svg class="h-3.5 w-3.5"><use href="#i-bolt"/></svg> Announce</button></form>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

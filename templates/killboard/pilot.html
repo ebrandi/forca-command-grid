@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+{% load eve static %}
+{% block title %}{{ pilot_name }} · Combat Analytics · [FORCA] Command Grid{% endblock %}
+
+{% block extra_head %}
+{% if not denied %}
+<script defer src="{% static 'js/vendor/chart.umd.js' %}"></script>
+<style>
+  .hm-cell { width: 100%; aspect-ratio: 1 / 1; border-radius: 2px; }
+  .hm-0 { background: rgba(34,45,62,.35); }
+  .hm-1 { background: rgba(70,207,224,.22); }
+  .hm-2 { background: rgba(70,207,224,.42); }
+  .hm-3 { background: rgba(70,207,224,.70); }
+  .hm-4 { background: rgba(70,207,224,1); }
+</style>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+
+{% if denied %}
+  <div class="panel px-4 py-16 text-center">
+    <svg class="mx-auto h-8 w-8 text-faint"><use href="#i-lock"/></svg>
+    <p class="mt-3 font-display text-lg text-muted">Pilot analytics are corp &amp; alliance only</p>
+    <p class="mt-1 text-sm text-faint">Available to corporation members and registered alliance pilots.</p>
+    <a href="{% url 'killboard:list' %}" class="btn-ghost mt-4 text-sm">← Back to the killfeed</a>
+  </div>
+{% else %}
+
+<header class="mb-5 flex flex-wrap items-end justify-between gap-4">
+  <div class="flex items-center gap-4">
+    <img src="{% eve_portrait character_id 64 %}" alt="" class="h-14 w-14 rounded-lg ring-1 ring-line">
+    <div>
+      <p class="eyebrow">Combat analytics</p>
+      <h1 class="mt-0.5 text-2xl font-bold text-ink">{{ pilot_name }}</h1>
+      <p class="mt-0.5 font-display text-sm font-bold {{ card.rank.color }}">{{ card.rank.title }}
+        <span class="ml-1 chip {{ card.danger.color }}">{{ card.danger.label }}</span>
+      </p>
+    </div>
+  </div>
+  <div class="flex gap-2">
+    <a href="{% url 'killboard:list' %}?character_id={{ character_id }}" class="btn-ghost text-sm">Killmails</a>
+    <a href="{% url 'killboard:stats' %}" class="btn-ghost text-sm">Corp stats</a>
+  </div>
+</header>
+
+{% if milestones %}
+<section class="mb-5 flex flex-wrap items-center gap-2">
+  <span class="eyebrow text-faint">Milestones</span>
+  {% for m in milestones %}
+  <span class="chip border-gold/50 text-gold" title="{{ m.achieved_at|date:'Y-m-d' }}">🏅 {{ m.get_kind_display }}</span>
+  {% endfor %}
+</section>
+{% endif %}
+
+{% if not card.has_record %}
+  <div class="panel px-4 py-16 text-center">
+    <p class="font-display text-lg text-muted">No PvP record yet</p>
+    <p class="mt-1 text-sm text-faint">Kills and losses for this pilot will appear here as they're discovered.</p>
+  </div>
+{% else %}
+
+<!-- Summary cards -->
+<section class="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">Kills</p>
+    <p class="data mt-1 text-2xl font-bold text-kill">{{ card.kills }}</p>
+    <p class="mt-0.5 text-[11px] text-faint">{{ card.isk_destroyed|isk }} destroyed</p>
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">Losses</p>
+    <p class="data mt-1 text-2xl font-bold text-loss">{{ card.losses }}</p>
+    <p class="mt-0.5 text-[11px] text-faint">{{ card.isk_lost|isk }} lost</p>
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">Efficiency</p>
+    <p class="data mt-1 text-2xl font-bold text-gold">{{ card.efficiency|effpct }}%</p>
+    <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-loss/40">
+      <div class="h-full rounded-full bg-kill" style="width: {{ card.efficiency|effpct }}%"></div>
+    </div>
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">Solo</p>
+    <p class="data mt-1 text-2xl font-bold text-cyan">{{ card.solo_kills }}</p>
+    <p class="mt-0.5 text-[11px] text-faint">{{ card.solo_pct|floatformat:0 }}% of kills · {{ card.final_blows }} final blows</p>
+  </div>
+</section>
+
+<!-- Monthly trend -->
+<section class="panel mb-6 overflow-hidden">
+  <div class="flex items-center gap-2 border-b border-line px-4 py-3">
+    <svg class="h-4 w-4 text-gold"><use href="#i-bolt"/></svg>
+    <h2 class="font-display text-sm font-semibold text-ink">Kills &amp; losses per month</h2>
+    <span class="ml-auto text-[11px] text-faint">last {{ months_back }} months</span>
+  </div>
+  <div class="p-4"><div class="relative h-64 skeleton"><canvas id="pilot-monthly-chart"></canvas></div></div>
+</section>
+
+<!-- Ships flown / lost -->
+<div class="mb-6 grid gap-4 lg:grid-cols-2">
+  {% for board in ship_boards %}
+  <section class="panel overflow-hidden">
+    <div class="flex items-center gap-2 border-b border-line px-4 py-3">
+      <svg class="h-4 w-4 {{ board.color }}"><use href="#i-ship"/></svg>
+      <h2 class="font-display text-sm font-semibold text-ink">{{ board.title }}</h2>
+      <span class="ml-auto text-[11px] text-faint">top {{ board.rows|length }}</span>
+    </div>
+    {% if board.rows %}
+    <div class="grid items-center gap-3 p-4 sm:grid-cols-[160px_1fr]">
+      <div class="relative mx-auto h-40 w-40 skeleton"><canvas id="{{ board.canvas }}"></canvas></div>
+      <ol class="min-w-0 space-y-1.5">
+        {% for r in board.rows %}
+        <li class="flex items-center gap-2.5 text-sm">
+          <img src="{% eve_type_icon r.ship_type_id 32 %}" alt="" loading="lazy" class="h-6 w-6 shrink-0 rounded bg-space ring-1 ring-line">
+          <span class="min-w-0 flex-1 truncate text-muted">{{ r.name }}</span>
+          <span class="data shrink-0 text-xs font-semibold text-ink">{{ r.count }}</span>
+        </li>
+        {% endfor %}
+      </ol>
+    </div>
+    {% else %}
+    <p class="px-4 py-10 text-center text-xs text-faint">Nothing here yet.</p>
+    {% endif %}
+  </section>
+  {% endfor %}
+</div>
+
+<!-- Activity heatmap -->
+<section class="panel mb-6 overflow-hidden">
+  <div class="flex items-center gap-2 border-b border-line px-4 py-3">
+    <svg class="h-4 w-4 text-cyan"><use href="#i-grid"/></svg>
+    <h2 class="font-display text-sm font-semibold text-ink">When this pilot fights</h2>
+    <span class="ml-auto text-[11px] text-faint">last {{ heatmap_days }} days · EVE time (UTC)</span>
+  </div>
+  {% if heatmap.total %}
+  <div class="overflow-x-auto p-4">
+    <div class="min-w-[640px]">
+      <div class="mb-1 grid grid-cols-[34px_repeat(24,1fr)] gap-0.5">
+        <span></span>
+        {% for h in heatmap.rows.0 %}
+          <span class="text-center text-[9px] text-faint">{% if forloop.counter0|divisibleby:3 %}{{ forloop.counter0 }}{% endif %}</span>
+        {% endfor %}
+      </div>
+      {% for row in heatmap.cells %}
+      <div class="mb-0.5 grid grid-cols-[34px_repeat(24,1fr)] items-center gap-0.5">
+        <span class="text-[10px] font-medium text-faint">{{ row.label }}</span>
+        {% for c in row.hours %}
+          <div class="hm-cell hm-{{ c.level }}" title="{{ row.label }} {{ c.hour }}:00 — {{ c.n }} fight{{ c.n|pluralize }}"></div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% else %}
+  <p class="px-4 py-10 text-center text-xs text-faint">No activity in the last {{ heatmap_days }} days.</p>
+  {% endif %}
+</section>
+
+<!-- Top systems -->
+<section class="panel overflow-hidden">
+  <div class="flex items-center gap-2 border-b border-line px-4 py-3">
+    <svg class="h-4 w-4 text-muted"><use href="#i-target"/></svg>
+    <h2 class="font-display text-sm font-semibold text-ink">Favourite systems</h2>
+  </div>
+  {% if systems %}
+  <ol class="divide-y divide-line/40">
+    {% with max=systems.0.count %}
+    {% for r in systems %}
+    <li class="px-4 py-2">
+      <div class="mb-1 flex items-center gap-2 text-sm">
+        <a href="{% url 'killboard:list' %}?system_id={{ r.system_id }}" class="min-w-0 flex-1 truncate text-muted hover:text-gold transition">{{ r.name }}</a>
+        <span class="data shrink-0 text-xs font-semibold text-ink">{{ r.count }}</span>
+      </div>
+      <div class="h-1 w-full overflow-hidden rounded-full bg-panel2">
+        <div class="h-full rounded-full bg-cyan/60" style="width: {% widthratio r.count max 100 %}%"></div>
+      </div>
+    </li>
+    {% endfor %}
+    {% endwith %}
+  </ol>
+  {% else %}
+  <p class="px-4 py-10 text-center text-xs text-faint">No fights recorded yet.</p>
+  {% endif %}
+</section>
+
+{{ monthly|json_script:"pilot-monthly-data" }}
+{{ ships|json_script:"pilot-ships-data" }}
+{% endif %}
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if not denied and card.has_record %}
+<script nonce="{{ csp_nonce }}">
+  document.addEventListener('DOMContentLoaded', function () {
+    if (!window.forcaChart.applyDefaults({legendBox:true})) return;
+
+    var m = forcaChart.read('pilot-monthly-data');
+    var mc = document.getElementById('pilot-monthly-chart');
+    if (m && mc) {
+      new Chart(mc, {
+        type: 'bar',
+        data: {
+          labels: m.labels,
+          datasets: [
+            { label: 'Kills', data: m.kills, backgroundColor: forcaChart.colors.kill },
+            { label: 'Losses', data: m.losses, backgroundColor: forcaChart.colors.loss },
+          ],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          scales: { x: { grid: { color: forcaChart.colors.line }, ticks: { maxRotation: 0 } },
+                    y: { beginAtZero: true, grid: { color: forcaChart.colors.line } } },
+          plugins: { legend: { labels: { color: forcaChart.colors.faint, boxWidth: 10, boxHeight: 10 } } },
+        },
+      });
+    }
+
+    var ships = forcaChart.read('pilot-ships-data');
+    if (ships) {
+      forcaChart.doughnut('pilot-ships-flown', ships.flown);
+      forcaChart.doughnut('pilot-ships-lost', ships.lost);
+    }
+  });
+</script>
+{% endif %}
+{% endblock %}

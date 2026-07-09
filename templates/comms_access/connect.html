@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Connect comms accounts{% endblock %}
+{% block content %}
+<header class="mb-6"><p class="eyebrow text-gold">Comms</p>
+  <h1 class="text-3xl font-bold text-ink">Connect your comms accounts</h1>
+  <p class="mt-2 text-sm text-faint max-w-2xl">Link your out-of-game comms account so your roles there follow your
+  corp membership and rank automatically. We store only your account id and display name — the sign-in token is
+  discarded right after linking, and you can unlink at any time.</p>
+</header>
+
+<section class="panel p-5 max-w-xl">
+  <div class="flex items-center justify-between gap-4">
+    <div>
+      <h2 class="font-display font-semibold text-ink">Discord</h2>
+      {% if discord %}
+        <p class="mt-1 text-sm text-faint">Linked as <span class="text-ink">{{ discord.external_handle|default:discord.external_id }}</span>
+        {% if discord.verified %}<span class="chip ml-1 text-xs">verified</span>{% endif %}
+        {% if discord.pinned %}<span class="chip ml-1 text-xs">sync-exempt</span>{% endif %}</p>
+        {% if discord.last_synced_at %}<p class="mt-0.5 text-xs text-faint">Last synced {{ discord.last_synced_at }}</p>{% endif %}
+      {% else %}
+        <p class="mt-1 text-sm text-faint">Not linked.</p>
+      {% endif %}
+    </div>
+    <div>
+      {% if not discord_enabled %}
+        <span class="text-xs text-faint">Discord linking isn’t configured yet.</span>
+      {% elif discord %}
+        <form method="post" action="{% url 'comms_access:discord_unlink' %}" data-confirm="Unlink your Discord account?">
+          {% csrf_token %}<button class="btn-ghost">Unlink</button>
+        </form>
+      {% else %}
+        <form method="post" action="{% url 'comms_access:discord_begin' %}">
+          {% csrf_token %}<button class="btn-gold">Connect Discord</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<p class="mt-6 text-xs text-faint max-w-xl">Slack and Mumble are planned. Your roles are only ever changed to match the
+corp entitlements leadership has mapped — nothing else on the server is touched.</p>
+{% endblock %}

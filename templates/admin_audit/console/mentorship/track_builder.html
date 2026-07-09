@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% load static eve %}
+{% block title %}{{ track.title }} · Field exercises · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<a href="{% url 'admin_audit:mentorship_tracks' %}" class="text-xs text-faint hover:text-gold">&larr; Tracks &amp; field exercises</a>
+<header class="mt-2 mb-6">
+  <p class="eyebrow text-gold">Mentorship · Track builder</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{{ track.title }} — field exercises</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">Design and order the field exercises a cadet completes on the <span class="data">{{ track.key }}</span> track. Each exercise can auto-validate against live killboard, skill and service data.</p>
+</header>
+
+{% comment %}Existing exercises — each in its own panel with an Edit disclosure whose
+inputs match TaskForm fields, a criteria JSON textarea, and a delete form.{% endcomment %}
+
+<section class="space-y-3">
+  {% for task in tasks %}
+  <div class="panel p-5">
+    <div class="flex flex-wrap items-start justify-between gap-4">
+      <div class="min-w-0">
+        <div class="flex flex-wrap items-center gap-2">
+          <h2 class="font-display text-base font-semibold text-ink">{{ task.title }}</h2>
+          <span class="chip text-cyan">{{ task.get_difficulty_display }}</span>
+          <span class="chip text-muted">{{ task.get_participants_display }}</span>
+          <span class="chip">{{ task.get_validation_method_display }}</span>
+          {% if task.reward_eligible %}<span class="chip text-gold">Rewarded</span>{% endif %}
+          {% if task.active %}<span class="chip text-kill">Active</span>{% else %}<span class="chip text-muted">Inactive</span>{% endif %}
+        </div>
+        <p class="mt-1 text-xs text-faint">order <span class="data">{{ task.sort_order }}</span></p>
+      </div>
+      <form method="post" action="{% url 'admin_audit:mentorship_task_delete' task.id %}"
+            data-confirm="Delete the field exercise “{{ task.title }}”?">
+        {% csrf_token %}
+        <button class="btn-danger !px-3 !py-1.5 text-xs">Delete</button>
+      </form>
+    </div>
+
+    <div class="mt-3">
+      <span class="eyebrow text-faint">Validation criteria</span>
+      <pre class="mt-1 overflow-x-auto rounded-md bg-space p-3"><code class="data text-xs text-cyan">{{ task.criteria }}</code></pre>
+    </div>
+
+    <details class="mt-4 border-t border-line/40 pt-3">
+      <summary class="cursor-pointer text-xs font-medium text-faint hover:text-gold">Edit field exercise</summary>
+      <form method="post" action="{% url 'admin_audit:mentorship_task_update' task.id %}" class="mt-3 grid gap-4 sm:grid-cols-2">
+        {% csrf_token %}
+        <div class="sm:col-span-2">
+          <label class="label">Track</label>
+          <select name="track" class="input-field w-full">
+            {% for t in tracks_all %}
+            <option value="{{ t.id }}"{% if t.id == track.id %} selected{% endif %}>{{ t.title }}</option>
+            {% empty %}
+            <option value="{{ track.id }}" selected>{{ track.title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="sm:col-span-2">
+          <label class="label">Title</label>
+          <input name="title" value="{{ task.title }}" class="input-field w-full" required>
+        </div>
+        <div class="sm:col-span-2">
+          <label class="label">Description</label>
+          <textarea name="description" rows="2" class="input-field w-full">{{ task.description }}</textarea>
+        </div>
+        <div>
+          <label class="label">Difficulty</label>
+          <select name="difficulty" class="input-field w-full">
+            <option value="intro"{% if task.difficulty == "intro" %} selected{% endif %}>Intro</option>
+            <option value="basic"{% if task.difficulty == "basic" %} selected{% endif %}>Basic</option>
+            <option value="intermediate"{% if task.difficulty == "intermediate" %} selected{% endif %}>Intermediate</option>
+            <option value="advanced"{% if task.difficulty == "advanced" %} selected{% endif %}>Advanced</option>
+          </select>
+        </div>
+        <div>
+          <label class="label">Estimated minutes</label>
+          <input type="number" min="0" name="estimated_minutes" value="{{ task.estimated_minutes }}" class="input-field w-full font-mono">
+        </div>
+        <div>
+          <label class="label">Participants</label>
+          <select name="participants" class="input-field w-full">
+            <option value="mentee"{% if task.participants == "mentee" %} selected{% endif %}>Mentee only</option>
+            <option value="mentor"{% if task.participants == "mentor" %} selected{% endif %}>Mentor only</option>
+            <option value="both"{% if task.participants == "both" %} selected{% endif %}>Mentor &amp; mentee together</option>
+            <option value="fleet"{% if task.participants == "fleet" %} selected{% endif %}>A fleet / group</option>
+          </select>
+        </div>
+        <div>
+          <label class="label">Validation method</label>
+          <select name="validation_method" class="input-field w-full">
+            {% for value, label in validation_choices %}
+            <option value="{{ value }}"{% if value == task.validation_method %} selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="sm:col-span-2">
+          <label class="label">Mentor instructions</label>
+          <textarea name="mentor_instructions" rows="2" class="input-field w-full">{{ task.mentor_instructions }}</textarea>
+        </div>
+        <div class="sm:col-span-2">
+          <label class="label">Mentee instructions</label>
+          <textarea name="mentee_instructions" rows="2" class="input-field w-full">{{ task.mentee_instructions }}</textarea>
+        </div>
+        <div>
+          <label class="label">Evidence requirement</label>
+          <select name="evidence_requirement" class="input-field w-full">
+            <option value="none"{% if task.evidence_requirement == "none" %} selected{% endif %}>None</option>
+            <option value="optional"{% if task.evidence_requirement == "optional" %} selected{% endif %}>Optional</option>
+            <option value="required"{% if task.evidence_requirement == "required" %} selected{% endif %}>Required</option>
+          </select>
+        </div>
+        <div>
+          <label class="label">Evidence kind</label>
+          <select name="evidence_kind" class="input-field w-full">
+            <option value="link"{% if task.evidence_kind == "link" %} selected{% endif %}>Link</option>
+            <option value="text"{% if task.evidence_kind == "text" %} selected{% endif %}>Text</option>
+          </select>
+        </div>
+        <div>
+          <label class="label">Cooldown (hours)</label>
+          <input type="number" min="0" name="cooldown_hours" value="{{ task.cooldown_hours }}" class="input-field w-full font-mono">
+        </div>
+        <div>
+          <label class="label">Max repeats</label>
+          <input type="number" min="0" name="max_repeats" value="{{ task.max_repeats }}" class="input-field w-full font-mono">
+        </div>
+        <div>
+          <label class="label">Visibility</label>
+          <select name="visibility" class="input-field w-full">
+            <option value="pair"{% if task.visibility == "pair" %} selected{% endif %}>Mentor &amp; cadet</option>
+            <option value="mentor_only"{% if task.visibility == "mentor_only" %} selected{% endif %}>Mentor only</option>
+          </select>
+        </div>
+        <div>
+          <label class="label">Sort order</label>
+          <input type="number" name="sort_order" value="{{ task.sort_order }}" class="input-field w-full font-mono">
+        </div>
+        <div class="sm:col-span-2 grid gap-2 sm:grid-cols-3">
+          <label class="flex items-center gap-2 text-sm text-muted">
+            <input type="checkbox" name="reward_eligible" value="1"{% if task.reward_eligible %} checked{% endif %}> Reward-eligible
+          </label>
+          <label class="flex items-center gap-2 text-sm text-muted">
+            <input type="checkbox" name="repeatable" value="1"{% if task.repeatable %} checked{% endif %}> Repeatable
+          </label>
+          <label class="flex items-center gap-2 text-sm text-muted">
+            <input type="checkbox" name="mandatory" value="1"{% if task.mandatory %} checked{% endif %}> Mandatory
+          </label>
+          <label class="flex items-center gap-2 text-sm text-muted">
+            <input type="checkbox" name="active" value="1"{% if task.active %} checked{% endif %}> Active
+          </label>
+        </div>
+        <div class="sm:col-span-2">
+          <label class="label">Criteria (JSON)</label>
+          <textarea name="criteria" rows="3" class="input-field w-full font-mono text-xs">{{ task.criteria }}</textarea>
+        </div>
+        <div class="sm:col-span-2">
+          <label class="label">Tags (comma-separated)</label>
+          <input name="tags" value="{{ task.tags }}" class="input-field w-full">
+        </div>
+        <div class="sm:col-span-2 flex justify-end">
+          <button class="btn-gold !px-4 !py-1.5 text-sm">Save exercise</button>
+        </div>
+      </form>
+    </details>
+  </div>
+  {% empty %}
+  <div class="panel p-8 text-center">
+    <svg class="mx-auto h-8 w-8 text-faint"><use href="#i-target"/></svg>
+    <p class="mt-3 text-sm text-faint">No field exercises on this track yet. Add the first one below — start simple and build up the difficulty.</p>
+  </div>
+  {% endfor %}
+</section>
+
+<!-- New field exercise -->
+<section class="panel mt-6 p-5">
+  <h2 class="eyebrow mb-3 text-gold">New field exercise</h2>
+  <form method="post" action="{% url 'admin_audit:mentorship_task_create' %}" class="space-y-4">
+    {% csrf_token %}
+    {{ task_form.as_p }}
+    <div>
+      <label class="label">Criteria (JSON)</label>
+      <textarea name="criteria" class="input-field w-full font-mono text-xs" rows="3" placeholder='{"type":"doctrine_any"}'></textarea>
+    </div>
+    <div>
+      <label class="label">Tags (comma-separated)</label>
+      <input name="tags" class="input-field w-full" placeholder="pvp, tackle">
+    </div>
+    <div class="flex justify-end">
+      <button class="btn-gold">Add field exercise</button>
+    </div>
+  </form>
+
+  <details class="mt-5 border-t border-line/40 pt-3">
+    <summary class="cursor-pointer text-xs font-medium text-faint hover:text-gold">Available criteria types</summary>
+    <div class="mt-3 overflow-x-auto">
+      <table class="w-full text-xs">
+        <tbody class="divide-y divide-line/40">
+          <tr><td class="py-1.5 pr-4 data text-cyan">skill_min</td><td class="py-1.5 text-faint"><code>{"type":"skill_min","skill_id":3300,"level":3}</code> — pilot has a skill at a level.</td></tr>
+          <tr><td class="py-1.5 pr-4 data text-cyan">total_sp_min</td><td class="py-1.5 text-faint"><code>{"type":"total_sp_min","sp":5000000}</code> — total skillpoints floor.</td></tr>
+          <tr><td class="py-1.5 pr-4 data text-cyan">skillqueue_has</td><td class="py-1.5 text-faint"><code>{"type":"skillqueue_has","skill_id":3300}</code> — skill is in the training queue.</td></tr>
+          <tr><td class="py-1.5 pr-4 data text-cyan">doctrine_ready</td><td class="py-1.5 text-faint"><code>{"type":"doctrine_ready","doctrine_id":5}</code> — can fly a specific doctrine fit.</td></tr>
+          <tr><td class="py-1.5 pr-4 data text-cyan">doctrine_any</td><td class="py-1.5 text-faint"><code>{"type":"doctrine_any"}</code> — can fly at least one doctrine fit.</td></tr>
+          <tr><td class="py-1.5 pr-4 data text-cyan">skill_plan_exists</td><td class="py-1.5 text-faint"><code>{"type":"skill_plan_exists"}</code> — has a saved skill plan.</td></tr>
+          <tr><td class="py-1.5 pr-4 data text-cyan">killmail_recent</td><td class="py-1.5 text-faint"><code>{"type":"killmail_recent","days":30}</code> — on a killmail within N days.</td></tr>
+          <tr><td class="py-1.5 pr-4 data text-cyan">shared_killmail</td><td class="py-1.5 text-faint"><code>{"type":"shared_killmail"}</code> — on a killmail alongside their mentor.</td></tr>
+          <tr><td class="py-1.5 pr-4 data text-cyan">fleet_attended</td><td class="py-1.5 text-faint"><code>{"type":"fleet_attended","count":1}</code> — attended a scheduled fleet.</td></tr>
+          <tr><td class="py-1.5 pr-4 data text-cyan">contribution_kind</td><td class="py-1.5 text-faint"><code>{"type":"contribution_kind","kind":"HAUL"}</code> — logged a contribution of a kind.</td></tr>
+          <tr><td class="py-1.5 pr-4 data text-cyan">courier_contract</td><td class="py-1.5 text-faint"><code>{"type":"courier_contract"}</code> — completed a courier contract.</td></tr>
+          <tr><td class="py-1.5 pr-4 data text-cyan">buyback_offer</td><td class="py-1.5 text-faint"><code>{"type":"buyback_offer"}</code> — submitted a buyback offer.</td></tr>
+          <tr><td class="py-1.5 pr-4 data text-cyan">mining_ledger</td><td class="py-1.5 text-faint"><code>{"type":"mining_ledger","m3":1000}</code> — mined volume in the ledger.</td></tr>
+          <tr><td class="py-1.5 pr-4 data text-cyan">industry_job</td><td class="py-1.5 text-faint"><code>{"type":"industry_job"}</code> — ran a manufacturing / industry job.</td></tr>
+          <tr><td class="py-1.5 pr-4 data text-cyan">session_confirmed</td><td class="py-1.5 text-faint"><code>{"type":"session_confirmed"}</code> — a mentoring session was confirmed.</td></tr>
+          <tr><td class="py-1.5 pr-4 data text-cyan">scopes_granted</td><td class="py-1.5 text-faint"><code>{"type":"scopes_granted","feature":"skills"}</code> — granted the required ESI scopes.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+</section>
+{% endblock %}

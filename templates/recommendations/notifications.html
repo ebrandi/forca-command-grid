@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Alerts · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-gold">Leadership</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">In-game alerts</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">Relayed ESI notifications — structure attacks, war declarations, sovereignty and moon extractions — pulled from a role-holder's token. Fresh red alerts also go to Discord.</p>
+  </div>
+  {% if is_director %}<form method="post" action="{% url 'recommendations:notifications_sync' %}">{% csrf_token %}<button class="btn-ghost text-sm">Sync now</button></form>{% endif %}
+</header>
+
+{% if is_director %}
+<div class="mb-4 flex flex-wrap items-center gap-2 rounded-md border border-line bg-panel px-4 py-2 text-xs text-faint">
+  <span>Relay source:</span>
+  {% if relay_name %}<span class="font-medium text-ink">{{ relay_name }}</span>{% else %}<span class="text-muted">first available token <span class="text-faint">(no character designated)</span></span>{% endif %}
+  <a href="{% url 'admin_audit:relay_settings' %}" class="ml-auto text-cyan hover:underline">Change relay character →</a>
+</div>
+{% endif %}
+
+
+<div class="panel divide-y divide-line/40 overflow-hidden">
+  {% for r in rows %}
+    <div class="flex items-center gap-3 px-4 py-2.5 text-sm">
+      <span class="inline-block h-2.5 w-2.5 shrink-0 rounded-full {% if r.alert %}bg-loss{% else %}bg-faint{% endif %}"></span>
+      <span class="min-w-0 flex-1 truncate {% if r.alert %}font-medium text-ink{% else %}text-muted{% endif %}">{{ r.label }}</span>
+      <span class="shrink-0 text-xs text-faint">{{ r.n.timestamp|date:"D j M · H:i" }} EVE</span>
+    </div>
+  {% empty %}
+    <p class="px-4 py-12 text-center text-sm text-faint">No relayed notifications yet. A director needs to grant the notifications scope on the ESI Scopes page, then sync.</p>
+  {% endfor %}
+</div>
+{% endblock %}

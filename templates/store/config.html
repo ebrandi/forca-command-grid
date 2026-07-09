@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Store Settings · [FORCA] Command Grid{% endblock %}
+{% block content %}
+
+<header class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <p class="eyebrow">Corp Store · Leadership</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">Store settings</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">Markups are multipliers on the live Jita sell price — 1.10 charges +10%. The deposit is the fraction of the total a buyer pays up front to start a made-to-order build.</p>
+  </div>
+  <a href="{% url 'store:board' %}" class="btn-ghost text-sm">← Build board</a>
+</header>
+
+
+<form method="post" action="{% url 'store:config' %}" class="space-y-5">
+  {% csrf_token %}
+
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">Service</h2>
+    <div class="grid gap-3 sm:grid-cols-2">
+      <div><label class="label">Name</label>{{ form.name }}</div>
+      <div>
+        <label class="label">Audience</label>{{ form.audience }}
+        <p class="mt-1 text-[11px] text-faint">Who can shop. The build board stays corp-only regardless.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">Pricing</h2>
+    <div class="grid gap-3 sm:grid-cols-3">
+      <div><label class="label">Doctrine ship markup</label>{{ form.doctrine_markup }}<p class="mt-1 text-[11px] text-faint">1.10 = Jita sell +10%</p></div>
+      <div><label class="label">Made-to-order hull markup</label>{{ form.hull_markup }}<p class="mt-1 text-[11px] text-faint">1.10 = Jita sell +10%</p></div>
+      <div><label class="label">Build-slot deposit</label>{{ form.deposit_pct }}<p class="mt-1 text-[11px] text-faint">0.25 = 25% up front</p></div>
+    </div>
+  </section>
+
+  <div class="flex justify-end"><button class="btn-gold">Save settings</button></div>
+</form>
+{% endblock %}

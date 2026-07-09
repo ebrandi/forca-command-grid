@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}{% if creating %}New rank{% else %}Edit {{ rank.name }}{% endif %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-gold">Killboard · Leadership</p>
+    <h1 class="mt-1 text-2xl font-bold text-ink">{% if creating %}New combat rank{% else %}Edit “{{ rank.name }}”{% endif %}</h1>
+    {% if not creating %}<p class="mt-1 text-sm text-faint">{{ pilots_now }} pilot(s) currently hold this rank.</p>{% endif %}
+  </div>
+  <a href="{% url 'admin_audit:combat_ranks' %}" class="btn-ghost text-sm">← Back to ladder</a>
+</header>
+
+<form method="post" action="{% if creating %}{% url 'admin_audit:combat_rank_new' %}{% else %}{% url 'admin_audit:combat_rank_edit' rank.pk %}{% endif %}" class="max-w-3xl space-y-5">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="panel border-loss/40 bg-loss/10 px-4 py-2 text-sm text-loss">{{ form.non_field_errors }}</div>{% endif %}
+
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">Title</h2>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div><label class="label">Name</label>{{ form.name }}{% if form.name.errors %}<p class="mt-1 text-xs text-loss">{{ form.name.errors|join:" " }}</p>{% endif %}</div>
+      <div><label class="label">Metric</label>{{ form.metric }}<p class="mt-1 text-[11px] text-faint">Only “All-time PvP kills” is live today.</p></div>
+      <div><label class="label">Threshold (metric ≥)</label>{{ form.min_kills }}{% if form.min_kills.errors %}<p class="mt-1 text-xs text-loss">{{ form.min_kills.errors|join:" " }}</p>{% endif %}</div>
+      <div><label class="label">Sort order</label>{{ form.sort_order }}</div>
+      <div class="sm:col-span-2"><label class="label">Description</label>{{ form.description }}<p class="mt-1 text-[11px] text-faint">A short line shown to pilots on the progression ladder.</p></div>
+      <div><label class="label">Colour class</label>{{ form.color_class }}<p class="mt-1 text-[11px] text-faint">Theme token, e.g. <code>text-gold</code>.</p></div>
+      <div><label class="label">Badge icon (optional)</label>{{ form.badge_icon }}<p class="mt-1 text-[11px] text-faint">Sprite id, e.g. <code>i-trophy</code>. Leave blank for none.</p></div>
+    </div>
+    <div class="mt-3 flex flex-wrap gap-4 text-sm text-muted">
+      <label class="flex items-center gap-2">{{ form.is_active }} Active (in the live ladder)</label>
+      <label class="flex items-center gap-2">{{ form.is_visible }} Visible to pilots</label>
+    </div>
+  </section>
+
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-1 text-gold">Reward</h2>
+    <p class="mb-3 text-[11px] text-faint">Rewards are <strong>future-only</strong>: they only ever trigger for pilots reaching this rank <em>after</em> the reward baseline was set, and always create a pending event a leader approves — the system never pays automatically.</p>
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <label class="flex items-center gap-2 text-sm text-muted">{{ form.grants_reward }} Grants a reward</label>
+      <div><label class="label">Reward type</label>{{ form.reward_type }}{% if form.reward_type.errors %}<p class="mt-1 text-xs text-loss">{{ form.reward_type.errors|join:" " }}</p>{% endif %}</div>
+      <div><label class="label">Amount (ISK, or PLEX qty)</label>{{ form.reward_amount }}{% if form.reward_amount.errors %}<p class="mt-1 text-xs text-loss">{{ form.reward_amount.errors|join:" " }}</p>{% endif %}</div>
+      <div><label class="label">Item type id (item reward)</label>{{ form.reward_item_type_id }}{% if form.reward_item_type_id.errors %}<p class="mt-1 text-xs text-loss">{{ form.reward_item_type_id.errors|join:" " }}</p>{% endif %}</div>
+      <div class="sm:col-span-2 lg:col-span-4"><label class="label">Reward notes</label>{{ form.reward_notes }}</div>
+    </div>
+  </section>
+
+  <div class="flex justify-end gap-2">
+    <a href="{% url 'admin_audit:combat_ranks' %}" class="btn-ghost">Cancel</a>
+    <button type="submit" class="btn-gold">{% if creating %}Create rank{% else %}Save changes{% endif %}</button>
+  </div>
+</form>
+{% endblock %}

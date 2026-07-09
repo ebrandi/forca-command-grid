@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Readiness · Officer task queue · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<a href="{% url 'readiness:findings' %}" class="text-xs text-faint hover:text-gold">← Risk register</a>
+<header class="mt-2 mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-gold">Readiness</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">Officer task queue</h1>
+    <p class="mt-1 text-sm text-faint">Readiness-generated tasks grouped by the desk that owns them. Every task here is an ordinary corp task — claim and close it on the <a href="{% url 'tasks:board' %}" class="text-cyan hover:underline">task board</a>.</p>
+  </div>
+  <span class="chip text-faint">{{ active_count }} active</span>
+</header>
+
+
+{% if not active_count %}
+  <div class="panel px-4 py-16 text-center">
+    <p class="font-display text-lg text-muted">No readiness tasks yet</p>
+    <p class="mt-1 text-sm text-faint">Create one from the <a href="{% url 'readiness:findings' %}" class="text-cyan hover:underline">risk register</a>, or they appear automatically once alert rules opt in.</p>
+  </div>
+{% else %}
+<div class="space-y-5">
+  {% for label, rows in groups %}
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-2.5"><h2 class="eyebrow text-faint">{{ label }} <span class="text-faint">· {{ rows|length }}</span></h2></div>
+    <div class="divide-y divide-line/50">
+      {% for row in rows %}{% include "readiness/_task_row.html" with row=row %}{% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+
+  {% if unowned %}
+  <section class="panel overflow-hidden border-gold/20">
+    <div class="border-b border-line px-4 py-2.5"><h2 class="eyebrow text-gold">Unowned <span class="text-faint">· {{ unowned|length }} · claimable by anyone</span></h2></div>
+    <div class="divide-y divide-line/50">
+      {% for row in unowned %}{% include "readiness/_task_row.html" with row=row %}{% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if recently_closed %}
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-2.5"><h2 class="eyebrow text-faint">Recently closed</h2></div>
+    <div class="divide-y divide-line/50">
+      {% for task in recently_closed %}
+      <div class="flex items-center justify-between px-4 py-2 text-sm">
+        <span class="text-muted line-through">{{ task.title }}</span>
+        <span class="chip {% if task.status == 'done' %}text-kill{% else %}text-faint{% endif %}">{{ task.get_status_display }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

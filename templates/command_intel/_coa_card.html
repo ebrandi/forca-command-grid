@@ -1,0 +1,101 @@
+{% comment %}
+A Course of Action — the full decision payload (objective, reasoning, expected impact,
+confidence, owner, risk-if-ignored) plus the two leadership actions: Accept (convert to
+a tracked task) and Dismiss (recorded reason). Accept/Dismiss are plain Django POST
+forms with {% templatetag openblock %} csrf_token {% templatetag closeblock %}; CSP-clean.
+
+Params:
+  coa : a CourseOfAction
+{% endcomment %}
+<article class="panel overflow-hidden p-4" x-data="{ dismissing: false }">
+  <div class="flex flex-wrap items-start justify-between gap-2">
+    <div class="min-w-0">
+      <p class="eyebrow text-faint">Course of action{% if coa.constraint %} · relieves ▸ {{ coa.constraint.label }}{% endif %}</p>
+      <p class="mt-1.5 font-display text-base text-ink">{{ coa.objective }}</p>
+    </div>
+    <div class="flex shrink-0 flex-col items-end gap-1">
+      {% if coa.state == 'in_progress' %}<span class="chip !border-cyan/50 text-cyan">◐ In progress</span>
+      {% elif coa.state == 'accepted' %}<span class="chip !border-gold/50 text-gold">◆ Accepted</span>
+      {% elif coa.state == 'completed' %}<span class="chip !border-kill/50 text-kill">▲ Completed</span>
+      {% elif coa.state == 'dismissed' %}<span class="chip !border-loss/50 text-loss">▼ Dismissed</span>
+      {% elif coa.state == 'superseded' %}<span class="chip text-faint">○ Superseded</span>
+      {% else %}<span class="chip !border-gold/50 text-gold">◆ Proposed</span>{% endif %}
+    </div>
+  </div>
+
+  <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+    {% if coa.severity_if_ignored == 'critical' or coa.severity_if_ignored == 'high' %}
+      <span class="data text-loss">▼ {{ coa.severity_if_ignored|upper }} priority</span>
+    {% elif coa.severity_if_ignored == 'watch' %}
+      <span class="data text-gold">◆ WATCH priority</span>
+    {% else %}
+      <span class="data text-kill">▲ {{ coa.severity_if_ignored|upper }} priority</span>
+    {% endif %}
+    <span class="text-faint">confidence
+      <span class="data text-muted">{{ coa.confidence|floatformat:2 }}</span>
+      ({{ coa.get_confidence_label_display|lower }})
+    </span>
+    <span class="text-faint">effort <span class="text-muted">{{ coa.get_effort_display|lower }}</span></span>
+  </div>
+
+  <div class="mt-3 grid gap-3 sm:grid-cols-2">
+    {% if coa.reasoning %}
+    <div class="rounded-lg border border-line bg-space/30 p-3">
+      <p class="eyebrow text-faint">Reasoning</p>
+      <p class="mt-1.5 text-xs leading-relaxed text-muted">{{ coa.reasoning }}</p>
+    </div>
+    {% endif %}
+    <div class="rounded-lg border border-line bg-space/30 p-3">
+      <p class="eyebrow text-faint">Expected impact</p>
+      <dl class="mt-1.5 space-y-1 text-xs">
+        {% for key, delta in coa.expected_impact.items %}
+          <div class="flex items-center justify-between gap-2">
+            <dt class="truncate text-faint">{{ key }}</dt>
+            <dd class="data text-muted">{{ delta }}</dd>
+          </div>
+        {% empty %}
+          <p class="text-faint">Impact quantified on the next snapshot.</p>
+        {% endfor %}
+        {% if coa.readiness_delta is not None %}
+          <div class="flex items-center justify-between gap-2 border-t border-line/40 pt-1">
+            <dt class="text-faint">Posture (overall)</dt>
+            <dd class="data {% if coa.readiness_delta < 0 %}text-loss{% else %}text-kill{% endif %}">{% if coa.readiness_delta > 0 %}+{% endif %}{{ coa.readiness_delta|floatformat:"-2" }}</dd>
+          </div>
+        {% endif %}
+      </dl>
+      <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-space" title="Confidence">
+        <div class="h-full bg-gold" style="width:{% widthratio coa.confidence 1 100 %}%"></div>
+      </div>
+    </div>
+  </div>
+
+  {% if coa.risk_if_ignored %}
+  <div class="mt-3 rounded-lg border-l-2 border-loss/60 bg-loss/5 px-3 py-2">
+    <p class="eyebrow text-loss">Risk if ignored</p>
+    <p class="mt-1 text-xs text-muted">{{ coa.risk_if_ignored }}
+      {% if coa.responsible_user %}<span class="text-faint">Responsible ▸ {{ coa.responsible_user.username }}.</span>
+      {% elif coa.owner_tag %}<span class="text-faint">Owner ▸ {{ coa.owner_tag }}.</span>{% endif %}
+    </p>
+  </div>
+  {% endif %}
+
+  {% if coa.is_active %}
+  <div class="mt-3 flex flex-wrap items-center gap-2">
+    <form method="post" action="{% url 'command_intel:coa_accept' coa.pk %}">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.path }}">
+      <button class="btn-gold !py-1.5 !text-xs">✓ Accept → create task</button>
+    </form>
+    <button type="button" @click="dismissing = !dismissing" :aria-expanded="dismissing" class="btn-danger !py-1.5 !text-xs">✕ Dismiss…</button>
+  </div>
+  <form method="post" action="{% url 'command_intel:coa_dismiss' coa.pk %}" x-show="dismissing" x-cloak x-transition.opacity class="mt-2">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.path }}">
+    <label class="label" for="coa-dismiss-{{ coa.pk }}">Reason for dismissal (recorded for audit)</label>
+    <textarea id="coa-dismiss-{{ coa.pk }}" name="note" rows="2" class="input-field mt-1 w-full text-xs" placeholder="Why this course of action is not being taken…"></textarea>
+    <button class="btn-danger mt-2 !py-1.5 !text-xs">Confirm dismiss</button>
+  </form>
+  {% elif coa.state == 'dismissed' and coa.decision_note %}
+  <p class="mt-3 text-xs text-faint">Dismissed: <span class="text-muted">{{ coa.decision_note }}</span></p>
+  {% endif %}
+</article>

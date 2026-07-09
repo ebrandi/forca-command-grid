@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Compliance · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
+<header class="mt-2 mb-6">
+  <p class="eyebrow">People &amp; roles</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">Member compliance</h1>
+  <p class="mt-1 text-sm text-faint">Who to chase: unlinked characters, missing baseline scopes, and inactive members.</p>
+</header>
+
+<div class="mb-5 grid gap-3 sm:grid-cols-4">
+  <div class="panel p-4"><p class="data text-2xl font-bold text-ink">{{ report.compliant }}/{{ report.total }}</p><p class="text-xs text-faint">compliant</p></div>
+  <div class="panel p-4"><p class="data text-2xl font-bold {% if report.unregistered %}text-loss{% else %}text-ink{% endif %}">{{ report.unregistered }}</p><p class="text-xs text-faint">not registered</p></div>
+  <div class="panel p-4"><p class="data text-2xl font-bold {% if report.missing_scopes %}text-gold{% else %}text-ink{% endif %}">{{ report.missing_scopes }}</p><p class="text-xs text-faint">missing scopes</p></div>
+  <div class="panel p-4"><p class="data text-2xl font-bold {% if report.inactive %}text-gold{% else %}text-ink{% endif %}">{{ report.inactive }}</p><p class="text-xs text-faint">inactive ≥ {{ report.inactive_days }}d</p></div>
+</div>
+
+<form method="get" class="mb-4 flex items-center gap-2 text-sm">
+  <label class="text-faint">Inactivity threshold</label>
+  <input name="inactive_days" type="number" min="1" max="365" value="{{ report.inactive_days }}" class="input-field !w-24 !py-1">
+  <button class="btn-ghost !py-1 !text-xs">Apply</button>
+</form>
+
+<div class="panel overflow-hidden">
+  <div class="overflow-x-auto"><table class="w-full text-sm">
+    <thead><tr class="eyebrow border-b border-line text-left text-faint">
+      <th class="px-4 py-2">Pilot</th><th class="px-4 py-2">Status</th>
+      <th class="px-4 py-2">Missing scopes</th><th class="px-4 py-2">Last login</th>
+    </tr></thead>
+    <tbody class="divide-y divide-line/40">
+      {% for r in report.rows %}
+        <tr class="{% if not r.compliant %}bg-loss/5{% endif %}">
+          <td class="px-4 py-2 text-ink">{{ r.name }}</td>
+          <td class="px-4 py-2">
+            {% if not r.registered %}
+              <span class="chip !border-loss/40 !text-[10px] !text-loss">{% if r.linked_no_token %}token revoked{% else %}not linked{% endif %}</span>
+            {% elif r.compliant %}
+              <span class="chip !border-kill/30 !text-[10px] !text-kill">compliant</span>
+            {% else %}
+              <span class="chip !border-gold/40 !text-[10px] !text-gold">action needed</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-2 text-xs text-faint">{% if r.missing_scopes %}{{ r.missing_scopes|join:", " }}{% else %}—{% endif %}</td>
+          <td class="px-4 py-2 text-xs {% if r.is_inactive %}text-gold{% else %}text-faint{% endif %}">
+            {% if r.days_inactive is not None %}{{ r.days_inactive }}d ago{% else %}—{% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4" class="px-4 py-12 text-center text-sm text-faint">No corp members imported yet — grant the member-tracking scope and sync the roster.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+</div>
+{% endblock %}

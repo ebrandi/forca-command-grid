@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}Source simulator · {{ contest.name }} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-gold">Raffle · {{ contest.name }}</p>
+    <h1 class="mt-1 text-2xl font-bold text-ink">Source simulator</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">A dry run of a ticket source over recent history. It estimates what the current rules <span class="text-ink">would</span> generate and — crucially — how many pilots would miss out for want of enrolment or a live ESI token. It writes nothing.</p>
+  </div>
+  <a href="{% url 'admin_audit:raffle_detail' contest.pk %}" class="btn-ghost text-sm">← Back to contest</a>
+</header>
+
+<section class="panel mb-6 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Simulate</h2></div>
+  <form method="get" action="{% url 'admin_audit:raffle_preview' contest.pk %}" class="flex flex-wrap items-end gap-3 p-4">
+    <div>
+      <label class="label">Source</label>
+      <select name="source" class="input-field">
+        {% for s in sources %}
+          <option value="{{ s.key }}" {% if s.key == source_key %}selected{% endif %}>{{ s.label|default:s.key }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="label">Lookback (days)</label>
+      <input name="days" type="number" min="1" max="365" value="{{ lookback }}" class="input-field w-32">
+    </div>
+    <button class="btn-gold">Run simulation</button>
+  </form>
+</section>
+
+<section class="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">Tickets generated</p>
+    <p class="data mt-1 text-2xl font-bold text-gold">{{ preview.tickets }}</p>
+    <p class="mt-1 text-[11px] text-faint">from eligible pilots</p>
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">Qualifying events</p>
+    <p class="data mt-1 text-2xl font-bold text-ink">{{ preview.events }}</p>
+    <p class="mt-1 text-[11px] text-faint">activities that scored</p>
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">Eligible pilots</p>
+    <p class="data mt-1 text-2xl font-bold text-cyan">{{ preview.pilots }}</p>
+    <p class="mt-1 text-[11px] text-faint">enrolled + valid token</p>
+  </div>
+  <div class="panel border-loss/40 p-4">
+    <p class="eyebrow text-loss">Pilots excluded</p>
+    <p class="data mt-1 text-2xl font-bold text-loss">{{ preview.excluded_pilots }}</p>
+    <p class="mt-1 text-[11px] text-faint">missing enrolment / ESI — outreach targets</p>
+  </div>
+</section>
+
+<section class="panel overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">What this means</h2></div>
+  <div class="space-y-3 px-4 py-4 text-sm text-muted">
+    <p>Over the last <span class="text-ink">{{ lookback }}</span> day{{ lookback|pluralize }}, the <span class="text-ink">{{ source_key }}</span> source found <span class="text-ink">{{ preview.events }}</span> qualifying event{{ preview.events|pluralize }} worth <span class="text-gold">{{ preview.tickets }}</span> ticket{{ preview.tickets|pluralize }} for enrolled pilots.</p>
+    {% if preview.ineligible %}
+      <p><span class="text-loss">{{ preview.ineligible }}</span> event{{ preview.ineligible|pluralize }} from <span class="text-loss">{{ preview.excluded_pilots }}</span> pilot{{ preview.excluded_pilots|pluralize }} were skipped — those pilots flew with the corp but couldn't be awarded tickets. That's your enrolment gap: reach out and get them connected.</p>
+    {% else %}
+      <p class="text-faint">No eligible-looking activity was skipped in this window.</p>
+    {% endif %}
+    <p class="text-[11px] text-faint">This is a labelled estimate over past data using the source's current rules — it does not create tickets, ledger rows or ineligible-activity records. Tune the rules on the <a href="{% url 'admin_audit:raffle_sources' contest.pk %}" class="text-cyan hover:underline">ticket sources</a> page, then re-run.</p>
+  </div>
+</section>
+{% endblock %}

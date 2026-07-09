@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Readiness · Officer responsibilities · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
+<header class="mt-2 mb-6">
+  <p class="eyebrow">Readiness configuration</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">Officer responsibilities</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">Map each dimension to an owner desk, and assign members to those desks. A generated task routes to the first member on its desk; an unmapped dimension leaves its tasks in the open claimable pool.</p>
+</header>
+
+
+<form method="post" action="{% url 'admin_audit:readiness_responsibilities' %}">
+  {% csrf_token %}
+
+  <section class="panel mb-6 overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Owner desks</h2></div>
+    <div class="divide-y divide-line/40">
+      {% for t in tag_rows %}
+      <div class="grid grid-cols-1 gap-3 px-4 py-3 sm:grid-cols-[16rem_1fr]">
+        <div>
+          <label class="text-xs text-faint">Desk label
+            <input name="tag_{{ t.tag }}_label" value="{{ t.label }}" class="input-field mt-1 w-full">
+          </label>
+          <span class="mt-1 block font-mono text-[11px] text-faint">{{ t.tag }}</span>
+        </div>
+        <label class="text-xs text-faint">Assigned members <span class="text-faint/70">(ctrl/⌘-click for several; first = auto-assignee)</span>
+          <select name="tag_{{ t.tag }}_users" multiple size="4" class="input-field mt-1 w-full">
+            {% for u in t.users %}<option value="{{ u.id }}" {% if u.assigned %}selected{% endif %}>{{ u.name }}</option>{% endfor %}
+          </select>
+        </label>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">Dimension → owner desk</h2></div>
+    <div class="divide-y divide-line/40">
+      {% for d in dim_rows %}
+      <label class="grid grid-cols-2 items-center gap-3 px-4 py-3 hover:bg-panel2/40 sm:grid-cols-[1fr_16rem]">
+        <div>
+          <span class="block text-sm font-medium text-ink">{{ d.label }}</span>
+          <span class="block font-mono text-[11px] text-faint">{{ d.key }}</span>
+        </div>
+        <select name="dim_{{ d.key }}_owner" class="input-field w-full">
+          <option value="">— unassigned (claimable) —</option>
+          {% for o in owner_tags %}<option value="{{ o.tag }}" {% if d.owner == o.tag %}selected{% endif %}>{{ o.label }}</option>{% endfor %}
+        </select>
+      </label>
+      {% endfor %}
+    </div>
+    <div class="flex flex-wrap items-center justify-between gap-3 border-t border-line px-4 py-3">
+      <p class="text-[11px] text-faint">config v{{ meta.version }}{% if meta.by %} · last changed by {{ meta.by }}{% endif %}{% if meta.at %} · {{ meta.at|date:"j M Y H:i" }}{% endif %}</p>
+      <button class="btn-gold">Save changes</button>
+    </div>
+  </section>
+</form>
+
+<form method="post" action="{% url 'admin_audit:readiness_reset' 'responsibilities' %}" class="mt-3">
+  {% csrf_token %}
+  <button class="btn-ghost text-sm">Reset to defaults</button>
+  <span class="ml-2 text-[11px] text-faint">Restores the desk labels and dimension mapping to the shipped defaults (clears member assignments).</span>
+</form>
+{% endblock %}

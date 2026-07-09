@@ -1,0 +1,30 @@
+[project]
+name = "forca-command-grid"
+version = "1.0.0"
+description = "Free EVE Online tools for capsuleers, fleets, and industry planners."
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = ["migrations"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "DJ", "S"]
+# S101: allow assert in tests. DJ008: not every model needs __str__
+# (join/intermediate tables). E501 handled by the formatter's line length.
+ignore = ["S101", "DJ008"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S105", "S106"]
+"**/tests/*" = ["S105", "S106"]
+"*/settings/*" = ["S105"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+python_files = ["test_*.py", "tests.py"]
+addopts = "-ra -q"
+testpaths = ["tests", "apps", "core"]
+
+[tool.coverage.run]
+omit = ["*/migrations/*", "*/tests/*", "config/wsgi.py", "config/asgi.py"]

@@ -1,0 +1,289 @@
+{% extends "base.html" %}
+{% load eve static %}
+{% block title %}{{ contest.name }} · Raffle · [FORCA] Command Grid{% endblock %}
+
+{% block extra_head %}<script defer src="{% static 'js/vendor/chart.umd.js' %}"></script>{% endblock %}
+
+{% block content %}
+{# ---- Hero ---------------------------------------------------------------- #}
+<header class="mb-6">
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <p class="eyebrow text-gold">Raffle contest</p>
+      <h1 class="mt-1 text-3xl font-bold text-ink">{{ contest.name }}</h1>
+      {% if contest.objective %}<p class="mt-1 max-w-2xl text-sm text-muted">{{ contest.objective }}</p>{% endif %}
+    </div>
+    <div class="text-right">
+      {% if contest.status == 'active' %}<span class="chip !border-kill/40 !text-kill">● Live</span>
+      {% elif contest.status == 'closed' %}<span class="chip !border-gold/40 !text-gold">Awaiting draw</span>
+      {% elif contest.status == 'completed' or contest.status == 'archived' %}<span class="chip !border-cyan/40 !text-cyan">Completed</span>
+      {% else %}<span class="chip">{{ contest.get_status_display }}</span>{% endif %}
+      {% if contest.is_boosted_now %}<span class="chip !border-gold/40 !text-gold">🔥 {{ contest.booster_multiplier|floatformat:"-2" }}× booster</span>{% endif %}
+    </div>
+  </div>
+  {% if contest.description %}<p class="mt-3 max-w-3xl text-sm text-faint">{{ contest.description|linebreaksbr }}</p>{% endif %}
+</header>
+
+{# ---- Timeline ------------------------------------------------------------ #}
+<section class="panel mb-6 p-5">
+  <div class="grid gap-4 sm:grid-cols-3">
+    <div><p class="eyebrow text-faint">Accrual opens</p><p class="data mt-1 text-ink">{{ contest.start_at|date:"M j, H:i" }}</p></div>
+    <div><p class="eyebrow text-faint">Accrual closes</p><p class="data mt-1 text-ink">{{ contest.end_at|date:"M j, H:i" }}</p></div>
+    <div><p class="eyebrow text-faint">Draw</p><p class="data mt-1 text-gold">{{ contest.draw_at|date:"M j, H:i" }}</p></div>
+  </div>
+</section>
+
+{# ---- Eligibility / ESI enrolment CTA (the adoption driver) --------------- #}
+{% if my_elig %}
+<section class="panel mb-6 overflow-hidden {% if my_elig.eligible %}!border-kill/30{% else %}!border-gold/40{% endif %}">
+  <div class="p-5">
+    {% if my_elig.eligible %}
+      <div class="flex items-center gap-3">
+        <svg class="h-7 w-7 text-kill"><use href="#i-shield"/></svg>
+        <div>
+          <h2 class="font-display text-lg text-ink">You're in the raffle 🎟️</h2>
+          <p class="text-sm text-faint">{{ my_elig.message }}</p>
+        </div>
+        <div class="ml-auto text-right">
+          <p class="data text-3xl font-bold text-gold">{{ my_summary.total_tickets|default:0 }}</p>
+          <p class="text-[11px] text-faint">your tickets{% if contest.show_odds and my_summary %} · ~{{ my_summary.total_tickets }}/{{ stats.total_tickets }} odds{% endif %}</p>
+        </div>
+      </div>
+      <div class="mt-3"><a href="{% url 'raffle:me' contest.slug %}" class="btn-ghost text-sm">View my progress →</a></div>
+    {% else %}
+      <div class="flex flex-wrap items-center gap-3">
+        <svg class="h-7 w-7 text-gold"><use href="#i-lock"/></svg>
+        <div class="min-w-0">
+          <h2 class="font-display text-lg text-ink">Not eligible yet</h2>
+          <p class="text-sm text-muted">{{ my_elig.message }}</p>
+          <p class="mt-1 text-sm font-medium text-gold">{{ my_elig.cta }}</p>
+        </div>
+        <div class="ml-auto">
+          {% if my_elig.reason_code == 'no_token' or my_elig.reason_code == 'token_expired' or my_elig.reason_code == 'missing_scope' %}
+            <a href="{% url 'sso:login' %}" class="btn-gold">Connect ESI</a>
+          {% elif my_elig.reason_code == 'not_enrolled' %}
+            <a href="{% url 'sso:login' %}" class="btn-gold">Enrol with EVE SSO</a>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</section>
+{% else %}
+<section class="panel mb-6 !border-gold/40 p-5 text-center">
+  <svg class="mx-auto h-8 w-8 text-gold"><use href="#i-coin"/></svg>
+  <h2 class="mt-2 font-display text-lg text-ink">Only enrolled pilots with a valid ESI token can win</h2>
+  <p class="mx-auto mt-1 max-w-xl text-sm text-faint">Connect your ESI token and enrol in FORCA Command Grid to start earning raffle tickets from your activity.</p>
+  <a href="{% url 'sso:login' %}" class="btn-gold mt-3">Sign in with EVE SSO</a>
+</section>
+{% endif %}
+
+{# ---- Activity goals & boosters ------------------------------------------ #}
+{% if activity.configured or booster.configured or contest.booster_multiplier > 1 %}
+<section class="mb-6 grid gap-3 md:grid-cols-2">
+  {% if activity.configured %}
+  <div class="panel p-4 {% if activity.met %}!border-kill/30{% else %}!border-gold/40{% endif %}">
+    <div class="flex items-center justify-between">
+      <p class="eyebrow {% if activity.met %}text-kill{% else %}text-gold{% endif %}">{% if activity.met %}✓ Raffle unlocked{% else %}Fly to unlock the raffle{% endif %}</p>
+      <span class="data text-xs text-faint">{% if activity.money %}{{ activity.value|isk }} / {{ activity.threshold|isk }}{% else %}{{ activity.value|floatformat:0 }} / {{ activity.threshold|floatformat:0 }}{% endif %}</span>
+    </div>
+    <p class="mt-1 text-sm text-muted">Prizes are drawn only once the corp reaches <strong>{% if activity.money %}{{ activity.threshold|isk }} ISK{% else %}{{ activity.threshold|floatformat:0 }}{% endif %} {{ activity.label|lower }}</strong> — so the event has to actually happen.</p>
+    <div class="mt-2 h-2 w-full overflow-hidden rounded-full bg-panel2"><div class="h-full rounded-full {% if activity.met %}bg-kill{% else %}bg-gold{% endif %}" style="width: {{ activity.pct }}%"></div></div>
+    <p class="mt-1 text-[11px] {% if activity.met %}text-kill{% else %}text-faint{% endif %}">{% if activity.met %}Target reached — the draw is on!{% else %}{% if activity.money %}{{ activity.remaining|isk }} ISK{% else %}{{ activity.remaining|floatformat:0 }}{% endif %} more to go — get out and fly!{% endif %}</p>
+  </div>
+  {% endif %}
+  {% if booster.configured %}
+  <div class="panel p-4 {% if booster.achieved %}!border-cyan/40{% endif %}">
+    <div class="flex items-center justify-between">
+      <p class="eyebrow text-cyan">{% if booster.achieved %}🎉 Prize boost unlocked{% else %}Unlock bigger prizes{% endif %}</p>
+      <span class="data text-xs text-faint">{% if booster.money %}{{ booster.value|isk }} / {{ booster.goal|isk }}{% else %}{{ booster.value|floatformat:0 }} / {{ booster.goal|floatformat:0 }}{% endif %}</span>
+    </div>
+    <p class="mt-1 text-sm text-muted">Reach <strong>{% if booster.money %}{{ booster.goal|isk }} ISK{% else %}{{ booster.goal|floatformat:0 }}{% endif %} {{ booster.label|lower }}</strong> and every ISK/PLEX prize is worth <strong class="text-cyan">+{{ booster.percent|floatformat:0 }}%</strong>.</p>
+    <div class="mt-2 h-2 w-full overflow-hidden rounded-full bg-panel2"><div class="h-full rounded-full bg-cyan" style="width: {{ booster.pct }}%"></div></div>
+    <p class="mt-1 text-[11px] {% if booster.achieved %}text-cyan{% else %}text-faint{% endif %}">{% if booster.achieved %}Unlocked — the prizes below show the boosted values!{% else %}{% if booster.money %}{{ booster.remaining|isk }} ISK{% else %}{{ booster.remaining|floatformat:0 }}{% endif %} more to unlock the bigger prizes.{% endif %}</p>
+  </div>
+  {% endif %}
+  {% if contest.booster_multiplier > 1 and contest.booster_start_at %}
+  <div class="panel p-4 !border-gold/40 md:col-span-2">
+    <p class="eyebrow text-gold">🔥 Ticket booster{% if contest.is_boosted_now %} — active right now!{% endif %}</p>
+    <p class="mt-1 text-sm text-muted">Earn <strong class="text-gold">{{ contest.booster_multiplier|floatformat:"-2" }}× tickets</strong> for everything you do from <strong>{{ contest.booster_start_at|date:"M j, H:i" }}</strong> to <strong>{{ contest.booster_end_at|date:"M j, H:i" }}</strong>. Time your activity to cash in.</p>
+  </div>
+  {% endif %}
+</section>
+{% endif %}
+
+{# ---- Prizes -------------------------------------------------------------- #}
+{% if prizes %}
+<section class="mb-6">
+  <h2 class="eyebrow mb-3 text-gold">Prizes{% if booster.achieved %} <span class="chip !border-cyan/40 !text-cyan align-middle">boosted +{{ booster.percent|floatformat:0 }}%</span>{% endif %}</h2>
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    {% for row in prizes %}
+    <div class="panel p-4 {% if row.boosted %}!border-cyan/30{% endif %}">
+      <div class="flex items-center gap-3">
+        {% if row.prize.icon_type_id %}<img src="{% eve_type_icon row.prize.icon_type_id 64 %}" alt="" loading="lazy" class="h-10 w-10 rounded">{% else %}<span class="grid h-10 w-10 place-items-center rounded bg-panel2 text-gold"><svg class="h-5 w-5"><use href="#i-trophy"/></svg></span>{% endif %}
+        <div class="min-w-0">
+          <p class="eyebrow text-faint">#{{ row.prize.rank }} · {{ row.prize.get_prize_type_display }}</p>
+          <p class="truncate font-display font-semibold text-ink">{{ row.prize.name }}</p>
+        </div>
+      </div>
+      {% if row.prize.estimated_value %}
+        {% if row.boosted %}
+        <p class="data mt-2 text-sm"><span class="text-faint line-through">{{ row.prize.estimated_value|isk }}</span> <span class="font-semibold text-cyan">{{ row.effective|isk }} ISK</span></p>
+        {% else %}
+        <p class="data mt-2 text-sm text-gold">≈ {{ row.effective|isk }} ISK{% if booster.configured and row.boostable %} <span class="text-[10px] text-cyan">+{{ booster.percent|floatformat:0 }}% at goal</span>{% endif %}</p>
+        {% endif %}
+      {% endif %}
+      {% if row.prize.description %}<p class="mt-1 text-xs text-faint">{{ row.prize.description }}</p>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{# ---- Stat tiles ---------------------------------------------------------- #}
+<section class="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+  <div class="panel p-4"><p class="eyebrow text-faint">Eligible pilots</p><p class="data mt-1 text-2xl font-bold text-ink">{{ stats.eligible_participants }}</p></div>
+  <div class="panel p-4"><p class="eyebrow text-faint">Tickets issued</p><p class="data mt-1 text-2xl font-bold text-gold">{{ stats.total_tickets }}</p></div>
+  <div class="panel p-4"><p class="eyebrow text-faint">Enrolled in corp</p><p class="data mt-1 text-2xl font-bold text-ink">{{ adoption.enrolled }}<span class="text-sm text-faint">/{{ adoption.active_pilots }}</span></p><p class="mt-0.5 text-[11px] text-faint">{{ adoption.conversion_rate }}% enrolled</p></div>
+  <div class="panel p-4"><p class="eyebrow text-faint">Prize pool</p><p class="data mt-1 text-2xl font-bold text-gold">{{ stats.prize_value|isk }}</p></div>
+</section>
+
+{# ---- Winners (completed) ------------------------------------------------- #}
+{% if winners %}
+<section class="panel mb-6 overflow-hidden">
+  <div class="flex items-center justify-between border-b border-line px-4 py-3">
+    <h2 class="eyebrow text-gold">🏆 Winners</h2>
+    <a href="{% url 'raffle:transparency' contest.slug %}" class="text-xs text-cyan hover:text-gold">Transparency report →</a>
+  </div>
+  <div class="divide-y divide-line/40">
+    {% for w in winners %}
+    <div class="flex items-center gap-3 px-4 py-2.5">
+      <span class="grid h-7 w-7 place-items-center rounded-full bg-panel2 text-xs font-bold text-gold">{{ w.prize.rank }}</span>
+      {% if w.winner_character_id %}<img src="{% eve_portrait w.winner_character_id 32 %}" alt="" class="h-6 w-6 rounded-full ring-1 ring-line">{% endif %}
+      <span class="min-w-0 flex-1 truncate text-sm text-ink">{{ w.winner_character_name }}</span>
+      <span class="text-sm text-gold">{{ w.prize.name }}</span>
+      {% if w.fulfil_status == 'delivered' %}<span class="chip !border-kill/40 !text-kill">delivered</span>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if superseded_draws %}
+<section class="panel mb-6 p-4 !border-gold/40">
+  <p class="text-xs text-gold"><strong>{{ superseded_draws|length }} earlier draw{{ superseded_draws|length|pluralize }} superseded.</strong> <span class="text-faint">Leadership redrew this contest; only the final draw above stands. Every discarded draw's committed seed is on the record —</span> <a href="{% url 'raffle:transparency' contest.slug %}" class="underline hover:text-goldb">see the full draw history →</a></p>
+</section>
+{% endif %}
+
+{# ---- How to earn tickets ------------------------------------------------- #}
+<section class="mb-6">
+  <h2 class="eyebrow mb-3 text-gold">How to earn tickets</h2>
+  <div class="grid gap-3 lg:grid-cols-3">
+    {% for s in sources %}
+    <div class="panel p-4">
+      <div class="flex items-center gap-2">
+        <svg class="h-5 w-5 text-cyan"><use href="#i-grid"/></svg>
+        <h3 class="font-display font-semibold text-ink">{{ s.source.label }}</h3>
+      </div>
+      <p class="mt-1 text-xs text-faint">{{ s.source.description }}</p>
+      {% if s.config.source_key == 'pvp' and s.config.show_calculation %}
+      <ul class="mt-2 space-y-1 text-[11px] text-muted">
+        <li><span class="text-gold data">{{ s.config.config.solo|default:100 }}</span> tickets — solo kill</li>
+        <li><span class="text-gold data">{{ s.config.config.final_blow|default:10 }}</span> tickets — final blow on a shared kill</li>
+        <li><span class="text-gold data">{{ s.config.config.per_kill|default:1 }}</span> ticket — kill participation</li>
+      </ul>
+      {% endif %}
+      {% if s.config.mode == 'officer_approved' %}<p class="mt-2 text-[11px] text-faint">Awarded after officer approval.</p>{% elif s.config.mode == 'manual' %}<p class="mt-2 text-[11px] text-faint">Awarded by leadership recognition.</p>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+{# ---- Leaderboard + source breakdown -------------------------------------- #}
+<div class="mb-6 grid gap-4 lg:grid-cols-3">
+  {% if contest.leaderboard_visible %}
+  <section class="panel overflow-hidden lg:col-span-2">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Leaderboard</h2></div>
+    {% if leaderboard %}
+    <table class="w-full text-sm" x-data="sortableTable('tickets','desc')">
+      <thead class="text-faint">
+        <tr class="border-b border-line/60">
+          <th class="px-4 py-2 text-left">#</th>
+          <th class="px-4 py-2 text-left">Pilot</th>
+          <th class="px-4 py-2 text-right"><button type="button" @click="sortBy('tickets')" class="hover:text-gold">Tickets</button></th>
+        </tr>
+      </thead>
+      <tbody x-ref="body">
+        {% for row in leaderboard %}
+        <tr data-row class="border-b border-line/30">
+          <td class="px-4 py-2 text-faint" data-sort-key="rank" data-sort-value="{{ row.rank }}">{{ row.rank }}</td>
+          <td class="px-4 py-2"><span class="flex items-center gap-2">{% if row.character_id %}<img src="{% eve_portrait row.character_id 32 %}" alt="" class="h-5 w-5 rounded-full ring-1 ring-line">{% endif %}<span class="text-ink">{{ row.character_name }}</span></span></td>
+          <td class="px-4 py-2 text-right data text-gold" data-sort-key="tickets" data-sort-value="{{ row.total_tickets }}">{{ row.total_tickets }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<p class="px-4 py-10 text-center text-sm text-faint">No tickets yet — be the first on the board.</p>{% endif %}
+  </section>
+  {% endif %}
+
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Tickets by source</h2></div>
+    <div class="p-4">
+      <div class="relative h-56 skeleton"><canvas id="raffle-source-chart"></canvas></div>
+    </div>
+  </section>
+</div>
+
+{# ---- Recent events ------------------------------------------------------- #}
+{% if contest.show_recent_events and recent_events %}
+<section class="panel mb-6 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Recent ticket events</h2></div>
+  <div class="divide-y divide-line/40">
+    {% for e in recent_events %}
+    <div class="flex items-center gap-3 px-4 py-2 text-sm">
+      <span class="min-w-0 flex-1 truncate text-ink">{{ e.character_name|default:"A pilot" }}</span>
+      {# Officer-authored free-text (manual/reversal reasons) isn't shown corp-wide; #}
+      {# non-officers see only a neutral per-source label. #}
+      <span class="text-xs text-faint">{% if is_officer %}{{ e.reason }}{% else %}{{ e.source_key }}{% endif %}</span>
+      <span class="data text-gold">+{{ e.amount }}</span>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{# ---- Fairness + rules ---------------------------------------------------- #}
+<div class="mb-6 grid gap-4 lg:grid-cols-2">
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-2 text-gold">How the draw is fair</h2>
+    <ul class="space-y-2 text-sm text-muted">
+      <li>🔒 A secret random seed is generated with a cryptographically-secure generator, and its fingerprint is published <em>before</em> the draw.</li>
+      <li>🎲 Winners are picked by a repeatable hash of that seed — after the draw the seed is revealed so anyone can recompute and verify every pick.</li>
+      <li>🎟️ Only enrolled pilots with a valid ESI token at draw time are in the pool. One prize per pilot{% if not contest.one_prize_per_pilot %} is off — a pilot can win more than once{% endif %}.</li>
+    </ul>
+    {% if winners %}<a href="{% url 'raffle:transparency' contest.slug %}" class="btn-ghost mt-3 text-sm">See the transparency report →</a>{% endif %}
+  </section>
+  {% if contest.public_rules %}
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-2 text-gold">Rules</h2>
+    <div class="prose-invert text-sm text-muted">{{ contest.public_rules|linebreaksbr }}</div>
+  </section>
+  {% endif %}
+</div>
+
+<div class="text-center"><a href="{% url 'raffle:archive' %}" class="btn-ghost text-sm">← Past contests</a></div>
+
+{{ stats.by_source|json_script:"raffle-source-data" }}
+{% endblock %}
+
+{% block scripts %}
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', function () {
+  if (!window.forcaChart || !window.forcaChart.applyDefaults({legendBox: true})) return;
+  var raw = forcaChart.read('raffle-source-data') || {};
+  var rows = Object.keys(raw).map(function (k) { return {name: k, count: raw[k]}; });
+  forcaChart.doughnut('raffle-source-chart', rows, {legend: 'bottom'});
+});
+</script>
+{% endblock %}

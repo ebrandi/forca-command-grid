@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}Job tracker · Industry{% endblock %}
+{% block content %}
+
+<a href="{% url 'industry:home' %}" class="text-xs text-faint hover:text-gold">← Industry Center</a>
+<header class="mt-3 mb-5">
+  <p class="eyebrow">Industry &amp; Economy</p>
+  <h1 class="mt-1 text-2xl font-bold text-ink">Job tracker</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">Your own running jobs (imported from ESI) and the corporation's production board, so nobody double-builds.</p>
+</header>
+
+{% if not has_my_industry %}
+<div class="panel mb-5 border-cyan/30 bg-cyan/5 px-4 py-3 text-sm">
+  <p class="text-cyan">Import your own industry jobs</p>
+  <p class="mt-1 text-xs text-faint">Grant the <strong>My industry</strong> ESI feature to pull your running jobs and owned blueprints here, and match them to your plans. <a href="/auth/eve/scopes/" class="text-gold hover:underline">Manage ESI scopes →</a></p>
+</div>
+{% endif %}
+
+{% if unmatched %}
+<div class="panel mb-5 border-l-2 border-l-gold px-4 py-3">
+  <p class="text-sm font-semibold text-goldb">{{ unmatched|length }} running job{{ unmatched|pluralize }} not linked to a plan</p>
+  <p class="mt-1 text-xs text-faint">These are in production but you have no matching plan. Turn one into a tracked plan from the calculator.</p>
+  <ul class="mt-2 flex flex-wrap gap-2">
+    {% for j in unmatched %}<li><a href="{% url 'industry:calculator' %}?type_id={{ j.product_type_id }}" class="chip hover:!text-gold">{% type_name j.product_type_id %} →</a></li>{% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{% if is_officer %}
+<form method="post" action="{% url 'erp:create_job' %}" class="panel mb-5 flex flex-wrap items-end gap-3 p-4">
+  {% csrf_token %}
+  <div class="min-w-64 flex-1">
+    <label class="label">Queue a corp build job</label>
+    {% include "components/_type_picker.html" with field="output_type_id" endpoint="/industry/type-search/?buildable=1" placeholder="Search the item to build…" required=1 %}
+  </div>
+  <div><label class="label" for="bj_qty">Quantity</label><input id="bj_qty" type="number" name="quantity" min="1" value="1" class="input-field w-28"></div>
+  <button class="btn-gold text-sm">Queue job</button>
+</form>
+{% endif %}
+
+<div class="mb-5 grid gap-5 lg:grid-cols-2">
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">Build queue — {{ queued|length }}</h2></div>
+    {% if queued %}
+    <ul class="divide-y divide-line/40">
+      {% for q in queued %}
+      <li class="px-4 py-2 text-sm" x-data="{open:{% if q.job.status == 'blocked' %}false{% else %}false{% endif %}, edit:false}">
+        <div class="flex items-center gap-2">
+          <img src="{% eve_type_icon q.job.output_type_id 32 %}" alt="" class="h-5 w-5 shrink-0 rounded-sm">
+          <button type="button" @click="open=!open" class="min-w-0 flex-1 truncate text-left text-muted hover:text-ink">{% type_name q.job.output_type_id %} <span class="data text-xs text-faint">×{{ q.job.quantity }}</span></button>
+          {% if q.job.status == 'blocked' %}<button type="button" @click="open=!open" class="chip !py-0.5 !text-[10px] !text-loss">blocked</button>
+          {% else %}<form method="post" action="{% url 'erp:claim' q.job.pk %}">{% csrf_token %}<button class="btn-ghost !py-1 !text-xs">Claim</button></form>{% endif %}
+          {% if q.can_manage %}
+          <button type="button" @click="edit=!edit" class="btn-ghost !py-1 !text-xs">Edit</button>
+          <form method="post" action="{% url 'erp:cancel' q.job.pk %}" data-confirm="Cancel this build job?">{% csrf_token %}<button class="btn-ghost !py-1 !text-xs !text-loss hover:!border-loss/40">Cancel</button></form>
+          {% endif %}
+        </div>
+        {% if q.can_manage %}
+        <form x-show="edit" x-cloak method="post" action="{% url 'erp:edit' q.job.pk %}" class="mt-2 flex items-end gap-2">
+          {% csrf_token %}
+          <div><label class="label !text-[10px]" for="eq{{ q.job.pk }}">Quantity</label><input id="eq{{ q.job.pk }}" type="number" name="quantity" min="1" value="{{ q.job.quantity }}" class="input-field !py-1 w-24 text-xs"></div>
+          <button class="btn-gold !py-1 !text-xs">Save</button>
+        </form>
+        {% endif %}
+        <div x-show="open" x-cloak class="mt-2 rounded-md bg-panel2/50 p-2">
+          {% if q.mats.buildable %}
+          {% if q.job.status == 'blocked' %}<p class="mb-1 text-[11px] text-loss">Short on materials in corp stock — stock these and it becomes claimable:</p>{% endif %}
+          <table class="w-full text-[11px]">
+            {% for ln in q.mats.lines %}
+            <tr class="{% if ln.short %}text-loss{% else %}text-faint{% endif %}">
+              <td class="py-0.5">{{ ln.name }}</td>
+              <td class="py-0.5 text-right data">have {{ ln.have }} / need {{ ln.need }}</td>
+              <td class="py-0.5 text-right data">{% if ln.short %}short {{ ln.short }}{% else %}✓{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </table>
+          {% if not q.mats.ready %}
+          <details class="mt-2"><summary class="cursor-pointer text-[11px] text-cyan">Copy shopping list (multibuy)</summary>
+            <textarea readonly rows="3" class="input-field mt-1 w-full text-[11px]" @click="$el.select()">{% for ln in q.mats.lines %}{% if ln.short %}{{ ln.name }} {{ ln.short }}
+{% endif %}{% endfor %}</textarea>
+          </details>
+          {% endif %}
+          {% else %}<p class="text-[11px] text-faint">No recipe — this item can only be bought.</p>{% endif %}
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}<p class="px-4 py-8 text-center text-sm text-faint">Nothing queued. {% if is_officer %}Queue a build above.{% else %}Leadership hasn't queued any builds.{% endif %}</p>{% endif %}
+  </section>
+
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">My build jobs — {{ my_builds|length }}</h2></div>
+    {% if my_builds %}
+    <ul class="divide-y divide-line/40">
+      {% for q in my_builds %}
+      <li class="px-4 py-2 text-sm" x-data="{open:false}">
+        <div class="flex items-center gap-2">
+          <img src="{% eve_type_icon q.job.output_type_id 32 %}" alt="" class="h-5 w-5 shrink-0 rounded-sm">
+          <button type="button" @click="open=!open" class="min-w-0 flex-1 truncate text-left text-muted hover:text-ink">{% type_name q.job.output_type_id %} <span class="data text-xs text-faint">×{{ q.job.quantity }}</span></button>
+          <span class="chip !py-0.5 !text-[10px]">{{ q.job.get_status_display }}</span>
+          {% if q.job.status == 'building' %}
+            <form method="post" action="{% url 'erp:status' q.job.pk %}">{% csrf_token %}<input type="hidden" name="status" value="built"><button class="btn-ghost !py-1 !text-xs">Mark built</button></form>
+            <form method="post" action="{% url 'erp:deliver' q.job.pk %}">{% csrf_token %}<button class="btn-gold !py-1 !text-xs">Deliver</button></form>
+          {% elif q.job.status == 'built' %}
+            <form method="post" action="{% url 'erp:deliver' q.job.pk %}">{% csrf_token %}<button class="btn-gold !py-1 !text-xs">Deliver</button></form>
+          {% endif %}
+          {% if q.can_manage %}<form method="post" action="{% url 'erp:cancel' q.job.pk %}" data-confirm="Cancel this build job?">{% csrf_token %}<button class="btn-ghost !py-1 !text-xs !text-loss hover:!border-loss/40">Cancel</button></form>{% endif %}
+        </div>
+        <div x-show="open" x-cloak class="mt-2 rounded-md bg-panel2/50 p-2">
+          {% if q.mats.buildable %}<table class="w-full text-[11px]">
+            {% for ln in q.mats.lines %}<tr class="{% if ln.short %}text-loss{% else %}text-faint{% endif %}"><td class="py-0.5">{{ ln.name }}</td><td class="py-0.5 text-right data">have {{ ln.have }} / need {{ ln.need }}</td></tr>{% endfor %}
+          </table>{% else %}<p class="text-[11px] text-faint">No recipe.</p>{% endif %}
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}<p class="px-4 py-8 text-center text-sm text-faint">You have no build jobs in progress. Claim one from the queue.</p>{% endif %}
+  </section>
+</div>
+
+<h2 class="eyebrow mb-2 mt-6 text-gold">Imported ESI jobs</h2>
+<div class="grid gap-5 lg:grid-cols-2">
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">My jobs — {{ my_jobs|length }}</h2></div>
+    {% if my_jobs %}
+    <ul class="divide-y divide-line/40">
+      {% for j in my_jobs %}
+      <li class="flex items-center gap-2 px-4 py-2 text-sm">
+        <img src="{% eve_type_icon j.product_type_id 32 %}" alt="" class="h-5 w-5 rounded-sm">
+        <span class="min-w-0 flex-1 truncate text-muted">{% type_name j.product_type_id %}</span>
+        <span class="chip !py-0.5 !text-[10px]">{{ j.activity_label }}</span>
+        <span class="data text-xs text-faint">×{{ j.runs }}</span>
+        {% if j.matched %}<span class="text-[10px] text-kill" title="Matches one of your plans">● planned</span>
+        {% else %}{% if j.is_active %}<span class="text-[10px] text-gold">● live</span>{% else %}<span class="text-[10px] text-faint">{{ j.status }}</span>{% endif %}
+          {% if j.product_type_id %}<form method="post" action="{% url 'industry:plan_from_job' %}"><input type="hidden" name="type_id" value="{{ j.product_type_id }}"><input type="hidden" name="quantity" value="{{ j.runs }}">{% csrf_token %}<button class="btn-ghost !py-0.5 !text-[10px]" title="Create a tracked plan for this item">Plan</button></form>{% endif %}
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="px-4 py-10 text-center text-sm text-faint">{% if has_my_industry %}No jobs found in your latest sync.{% else %}Grant the My industry scope to see your jobs.{% endif %}</p>
+    {% endif %}
+  </section>
+
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">Corp production — {{ corp_jobs|length }}</h2></div>
+    {% if corp_jobs %}
+    <ul class="divide-y divide-line/40">
+      {% for j in corp_jobs %}
+      <li class="flex items-center gap-2 px-4 py-2 text-sm">
+        <img src="{% eve_type_icon j.product_type_id 32 %}" alt="" class="h-5 w-5 rounded-sm">
+        <span class="min-w-0 flex-1 truncate text-muted">{% type_name j.product_type_id %}</span>
+        <span class="chip !py-0.5 !text-[10px]">{{ j.activity_label }}</span>
+        <span class="data text-xs text-faint">×{{ j.runs }}</span>
+        {% if j.is_active %}<span class="text-[10px] text-gold">● live</span>{% else %}<span class="text-[10px] text-faint">{{ j.status }}</span>{% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="px-4 py-10 text-center text-sm text-faint">No corp jobs imported. A Director can grant <strong>Corp blueprints + jobs</strong> on the <a href="/auth/eve/scopes/" class="text-gold hover:underline">ESI Scopes</a> page.</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

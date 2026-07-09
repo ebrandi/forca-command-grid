@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Relay character · Admin{% endblock %}
+{% block content %}
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
+<header class="mt-3 mb-6">
+  <p class="eyebrow">Operations &amp; defence</p>
+  <h1 class="mt-1 text-2xl font-bold text-ink">Notification relay character</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">The corp character whose in-game <a href="{% url 'recommendations:notifications' %}" class="text-cyan hover:underline">notifications</a> and mail FORCA relays (structure attacks, wars, sov, moons). Pick one so the feed is authoritative and predictable, instead of whichever token happened to be found first.</p>
+</header>
+
+<form method="post" class="max-w-2xl space-y-4">
+  {% csrf_token %}
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">Designated relay character</h2>
+    {% if eligible %}
+    <div class="space-y-2">
+      <label class="flex items-center gap-3 rounded-md border border-line p-3 text-sm hover:border-gold/40">
+        <input type="radio" name="character_id" value="" {% if not current %}checked{% endif %}>
+        <span class="text-muted">No designated character <span class="text-faint">— fall back to the first valid token (the old behaviour)</span></span>
+      </label>
+      {% for c in eligible %}
+      <label class="flex items-center gap-3 rounded-md border border-line p-3 text-sm hover:border-gold/40">
+        <input type="radio" name="character_id" value="{{ c.character_id }}" {% if c.character_id == current %}checked{% endif %}>
+        <span class="flex-1">
+          <span class="font-medium text-ink">{{ c.name }}</span>
+          <span class="ml-2 text-[11px] text-faint">
+            {% if c.has_notifications %}<span class="chip">notifications</span>{% endif %}
+            {% if c.has_mail %}<span class="chip">mail</span>{% endif %}
+          </span>
+        </span>
+      </label>
+      {% endfor %}
+    </div>
+    <div class="mt-4 flex items-center gap-3">
+      <button type="submit" class="btn-gold">Save relay character</button>
+      <a href="{% url 'admin_audit:console' %}" class="btn-ghost">Cancel</a>
+    </div>
+    {% else %}
+    <p class="text-sm text-faint">No corp character currently holds the notifications or mail scope. A director needs to grant <code class="text-faint">esi-characters.read_notifications.v1</code> / <code class="text-faint">esi-mail.read_mail.v1</code> on the <a href="{% url 'sso:scopes' %}" class="text-cyan hover:underline">ESI scopes page</a> first.</p>
+    {% endif %}
+  </section>
+</form>
+{% endblock %}

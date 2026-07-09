@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Compose campaign · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<a href="{% url 'command_intel:campaigns' %}" class="text-xs text-faint hover:text-gold">← Strategic campaigns</a>
+
+<header class="mt-2 mb-6">
+  <p class="eyebrow text-gold">Command Intelligence</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">Compose a campaign</h1>
+  <p class="mt-1 text-sm text-faint">Name the objective, pick the metric to move, and sequence the courses of action that move it.</p>
+</header>
+
+<form method="post" action="{% url 'command_intel:campaign_compose' %}" class="space-y-5">
+  {% csrf_token %}
+
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">Objective &amp; target</h2></div>
+    <div class="grid gap-4 p-4 sm:grid-cols-2">
+      <div class="sm:col-span-2">
+        <label class="label" for="camp-objective">Objective</label>
+        <input id="camp-objective" name="objective" type="text" required maxlength="280"
+               class="input-field mt-1 w-full" placeholder="e.g. Raise Combat posture 82 → 92 before deployment">
+      </div>
+      <div>
+        <label class="label" for="camp-metric">Target metric</label>
+        <select id="camp-metric" name="target_metric" class="input-field mt-1 w-full">
+          <option value="readiness.overall">readiness.overall — corporate posture</option>
+          {% for key in metric_keys %}
+            <option value="{{ key }}">{{ key }} — operational constraint</option>
+          {% endfor %}
+        </select>
+        <p class="mt-1 text-[11px] text-faint">The metric the planner trajectory tracks toward.</p>
+      </div>
+      <div>
+        <label class="label" for="camp-target">Target value <span class="text-faint">(optional)</span></label>
+        <input id="camp-target" name="target_value" type="number" step="any"
+               class="input-field mt-1 w-full" placeholder="e.g. 92">
+        <p class="mt-1 text-[11px] text-faint">Drives the headroom factor in the success probability.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel overflow-hidden">
+    <div class="flex items-center justify-between border-b border-line px-4 py-3">
+      <h2 class="eyebrow text-faint">Courses of action</h2>
+      <span class="text-xs text-faint">select the steps to sequence</span>
+    </div>
+    {% if coas %}
+      <fieldset class="divide-y divide-line/40">
+        <legend class="sr-only">Courses of action to include in this campaign</legend>
+        {% for coa in coas %}
+          <label for="coa-{{ coa.pk }}" class="flex cursor-pointer items-start gap-3 px-4 py-3 transition hover:bg-panel2/40">
+            <input id="coa-{{ coa.pk }}" type="checkbox" name="coa_ids" value="{{ coa.pk }}"
+                   class="mt-1 h-4 w-4 shrink-0 rounded border-line bg-space text-gold focus:ring-gold">
+            <span class="min-w-0 flex-1">
+              <span class="block text-sm text-ink">{{ coa.objective }}</span>
+              <span class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                {% if coa.severity_if_ignored == 'critical' or coa.severity_if_ignored == 'high' %}
+                  <span class="data text-loss">▼ {{ coa.severity_if_ignored|upper }} priority</span>
+                {% elif coa.severity_if_ignored == 'watch' %}
+                  <span class="data text-gold">◆ WATCH priority</span>
+                {% else %}
+                  <span class="data text-kill">▲ {{ coa.severity_if_ignored|upper }} priority</span>
+                {% endif %}
+                <span class="text-faint">priority <span class="data text-muted">{{ coa.priority }}</span></span>
+                {% if coa.readiness_delta is not None %}
+                  <span class="text-faint">posture Δ
+                    <span class="data {% if coa.readiness_delta < 0 %}text-loss{% else %}text-kill{% endif %}">{% if coa.readiness_delta > 0 %}+{% endif %}{{ coa.readiness_delta|floatformat:"-2" }}</span>
+                  </span>
+                {% endif %}
+                {% if coa.state != 'proposed' %}<span class="chip text-faint">{{ coa.get_state_display }}</span>{% endif %}
+              </span>
+            </span>
+          </label>
+        {% endfor %}
+      </fieldset>
+    {% else %}
+      <div class="px-4 py-12 text-center">
+        <p class="text-sm text-muted">No composable courses of action.</p>
+        <p class="mt-1 text-xs text-faint">Generate a briefing and accept (or leave proposed) some courses of action first — dismissed and already-grouped ones are excluded.</p>
+      </div>
+    {% endif %}
+  </section>
+
+  <div class="flex flex-wrap items-center gap-3">
+    <button type="submit" class="btn-gold" {% if not coas %}disabled aria-disabled="true"{% endif %}>Compose campaign →</button>
+    <a href="{% url 'command_intel:campaigns' %}" class="btn-ghost">Cancel</a>
+    <p class="text-xs text-faint">The campaign starts as a draft; launch it when the plan is set.</p>
+  </div>
+</form>
+{% endblock %}

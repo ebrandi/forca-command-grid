@@ -1,0 +1,37 @@
+import django.db.models.deletion
+from django.conf import settings
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ("identity", "0002_seed_lateral_roles"),
+    ]
+
+    operations = [
+        migrations.CreateModel(
+            name="RoleChangeRequest",
+            fields=[
+                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("role_key", models.CharField(max_length=32)),
+                ("expires_at", models.DateTimeField(blank=True, null=True)),
+                ("reason", models.CharField(blank=True, max_length=200)),
+                ("status", models.CharField(choices=[("pending", "Pending"), ("approved", "Approved"), ("rejected", "Rejected")], db_index=True, default="pending", max_length=10)),
+                ("decided_at", models.DateTimeField(blank=True, null=True)),
+                ("decided_by", models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name="role_requests_decided", to=settings.AUTH_USER_MODEL)),
+                ("requested_by", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="role_requests_made", to=settings.AUTH_USER_MODEL)),
+                ("target", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="role_requests", to=settings.AUTH_USER_MODEL)),
+            ],
+            options={"ordering": ["-created_at"]},
+        ),
+        migrations.AddConstraint(
+            model_name="rolechangerequest",
+            constraint=models.UniqueConstraint(
+                fields=("target", "role_key"), condition=models.Q(status="pending"),
+                name="uniq_open_role_request",
+            ),
+        ),
+    ]

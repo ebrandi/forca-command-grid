@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}SRP Settings · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <p class="eyebrow text-gold">SRP · Leadership</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">SRP programme settings</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">Decide how your Ship Replacement Programme works — what pilots receive, how losses are valued, and what's covered. These settings drive every pilot's claim.</p>
+  </div>
+  <a href="{% url 'srp:queue' %}" class="btn-ghost text-sm">← Review queue</a>
+</header>
+
+
+<form method="post" action="{% url 'srp:settings' %}" class="space-y-5">
+  {% csrf_token %}
+
+  <section class="panel p-5">
+    <div class="flex items-center justify-between">
+      <h2 class="eyebrow text-gold">Programme</h2>
+      <label class="flex items-center gap-2 text-sm text-muted">{{ form.enabled }} Programme enabled</label>
+    </div>
+    <p class="mt-1 text-xs text-faint">When disabled, pilots see the programme is paused and can't file new claims.</p>
+    {% if form.intro_text.errors %}<p class="mt-2 text-xs text-loss">{{ form.intro_text.errors|join:" " }}</p>{% endif %}
+    <div class="mt-3">
+      <label class="label">Pilot-facing explainer</label>
+      {{ form.intro_text }}
+      <p class="mt-1 text-[11px] text-faint">Shown at the top of the pilot's “My SRP” page — explain the deal in your own words.</p>
+    </div>
+  </section>
+
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">What pilots receive</h2>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div>
+        <label class="label">Payout mode</label>
+        {{ form.payout_mode }}
+        <ul class="mt-2 space-y-1 text-[11px] text-faint">
+          <li><span class="text-muted">Replacement ship &amp; fit</span> — you hand over a hull; no ISK changes hands.</li>
+          <li><span class="text-muted">ISK — full loss value</span> — pay ISK up to the loss value (market insurance).</li>
+          <li><span class="text-muted">ISK — top up insurance</span> — pay only the gap above the official in-game insurance.</li>
+        </ul>
+      </div>
+      <div>
+        <label class="label">Loss valuation</label>
+        {{ form.valuation }}
+        <ul class="mt-2 space-y-1 text-[11px] text-faint">
+          <li><span class="text-muted">Actual loss</span> — hull + the modules actually destroyed, at market.</li>
+          <li><span class="text-muted">Doctrine fit</span> — the value of the doctrine's standard fit.</li>
+          <li><span class="text-muted">Hull only</span> — modules are on the pilot.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="mt-4 grid gap-4 sm:grid-cols-2">
+      <div>
+        <label class="label">Assumed insurance (top-up mode)</label>
+        {{ form.insurance_fraction }}
+        <p class="mt-1 text-[11px] text-faint">Fraction of hull value the official insurance is assumed to pay (e.g. 0.40). The SRP covers the rest. Only used in top-up mode.</p>
+        {% if form.insurance_fraction.errors %}<p class="mt-1 text-xs text-loss">{{ form.insurance_fraction.errors|join:" " }}</p>{% endif %}
+      </div>
+      <div>
+        <label class="label">Default payout cap (ISK, 0 = none)</label>
+        {{ form.default_cap }}
+        <p class="mt-1 text-[11px] text-faint">Ceiling on any single payout unless a rule sets its own.</p>
+        {% if form.default_cap.errors %}<p class="mt-1 text-xs text-loss">{{ form.default_cap.errors|join:" " }}</p>{% endif %}
+      </div>
+    </div>
+  </section>
+
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">What's covered</h2>
+    <div class="space-y-2 text-sm text-muted">
+      <label class="flex items-center gap-2">{{ form.require_doctrine }} Only doctrine ships are eligible</label>
+      <label class="flex items-center gap-2">{{ form.cover_pod }} Also cover capsule (pod) losses</label>
+    </div>
+    <p class="mt-2 text-[11px] text-faint">With doctrine-only off, any corp ship loss can be claimed (an officer still reviews each one).</p>
+  </section>
+
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">Fleet-op gate</h2>
+    <label class="flex items-center gap-2 text-sm text-muted">{{ form.require_fleet_op }} Only cover losses during a sanctioned fleet op</label>
+    <p class="mt-2 text-[11px] text-faint">When on, a loss only qualifies if it happened inside a sanctioned (SRP-covered, non-cancelled) operation's window — so solo roams, gate camps and rat losses don't drain the budget. Existing claims are unaffected.</p>
+    <div class="mt-4 grid gap-4 sm:grid-cols-3">
+      <div>
+        <label class="label" for="id_fleet_op_grace_minutes">Grace (minutes)</label>
+        {{ form.fleet_op_grace_minutes }}
+        <p class="mt-1 text-[11px] text-faint">Slack before/after the op for form-up &amp; travel.</p>
+      </div>
+      <div>
+        <label class="label" for="id_fleet_op_default_duration_minutes">Default op length (minutes)</label>
+        {{ form.fleet_op_default_duration_minutes }}
+        <p class="mt-1 text-[11px] text-faint">Used when an op has no explicit duration.</p>
+      </div>
+      <div class="sm:pt-6">
+        <label class="flex items-center gap-2 text-sm text-muted">{{ form.fleet_op_require_attendance }} Require recorded attendance (PAP)</label>
+      </div>
+      <label class="mt-3 flex items-center gap-2 text-sm text-muted">{{ form.auto_draft_enabled }} Auto-draft claims for eligible losses</label>
+      <p class="mt-1 text-[11px] text-faint">When on, the system files a <span class="text-cyan">draft</span> SRP claim for each eligible loss so pilots don't have to — it still needs your approval (nothing is auto-paid). Only losses from when you switch this on (never past ones), for enrolled pilots with a valid ESI token.</p>
+    </div>
+  </section>
+
+  <div class="flex justify-end"><button class="btn-gold">Save settings</button></div>
+</form>
+
+<!-- Per-doctrine rules -->
+<section class="panel mt-6 overflow-hidden">
+  <div class="border-b border-line px-4 py-3">
+    <h2 class="eyebrow text-gold">Payout rules</h2>
+    <p class="mt-1 text-xs text-faint">Optional overrides per doctrine: a fixed payout, or a cap on that doctrine's losses. A doctrine-specific rule beats the catch-all.</p>
+  </div>
+  <div class="divide-y divide-line/40">
+    {% for rule in rules %}
+      <div class="flex items-center gap-3 px-4 py-2.5 text-sm">
+        <span class="min-w-0 flex-1 text-ink">{{ rule.doctrine.name|default:"Any doctrine (catch-all)" }}</span>
+        <span class="chip">{{ rule.get_basis_display }}</span>
+        <span class="data text-xs text-faint">{% if rule.max_payout %}{{ rule.max_payout|isk }}{% else %}—{% endif %}</span>
+        <span class="chip {% if rule.active %}!border-kill/40 !text-kill{% else %}!text-faint{% endif %}">{% if rule.active %}active{% else %}off{% endif %}</span>
+        <form method="post" action="{% url 'srp:rule_delete' rule.pk %}" data-confirm="Delete this SRP rule?">{% csrf_token %}<button class="text-faint hover:text-loss" title="Delete">✕</button></form>
+      </div>
+    {% empty %}
+      <p class="px-4 py-6 text-center text-sm text-faint">No rules yet — the programme settings above apply to every eligible loss.</p>
+    {% endfor %}
+  </div>
+  <div class="border-t border-line px-4 py-3">
+    <form method="post" action="{% url 'srp:rule_add' %}" class="flex flex-wrap items-end gap-2">
+      {% csrf_token %}
+      <div><label class="label">Doctrine</label>{{ rule_form.doctrine }}</div>
+      <div><label class="label">Basis</label>{{ rule_form.basis }}</div>
+      <div><label class="label">Fixed / cap (ISK)</label>{{ rule_form.max_payout }}</div>
+      <label class="flex items-center gap-1.5 pb-2 text-xs text-muted">{{ rule_form.active }} active</label>
+      <button class="btn-ghost text-sm">Add rule</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

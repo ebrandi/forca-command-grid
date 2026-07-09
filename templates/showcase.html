@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Features · [FORCA] Command Grid{% endblock %}
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/showcase.css' %}">
+  {# Non-deferred so window.showcaseGallery is defined before the deferred Alpine boots. #}
+  <script src="{% static 'js/showcase.js' %}"></script>
+{% endblock %}
+{% block content %}
+<div class="sg-root" x-data="showcaseGallery()" @keydown.escape.window="closeLightbox()">
+
+  <!-- Hero: the thesis -->
+  <section class="sg-hero sg-reveal is-visible">
+    <span class="sg-hero-eyebrow">Forças Armadas · Command Grid</span>
+    <h1 class="sg-hero-title">Every system your corp runs, on <em>one grid</em>.</h1>
+    <p class="sg-hero-lede">
+      From the killboard to industry, fleet ops to comms — [FORCA] Command Grid turns raw EVE data
+      into the next clear action for every pilot and director. Here is the whole platform, screen by screen.
+    </p>
+    <div class="sg-hero-cta">
+      {% if user.is_authenticated %}
+        <a href="{% url 'identity:dashboard' %}" class="sg-btn sg-btn-gold">Open your dashboard</a>
+      {% else %}
+        <a href="{% url 'sso:login' %}" class="sg-btn sg-btn-gold">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M7 12h11m0 0l-3-3m3 3l-3 3"/></svg>
+          Log in with EVE
+        </a>
+        <a href="{% url 'onboarding:dashboard' %}" class="sg-btn sg-btn-ghost">Join the corp</a>
+      {% endif %}
+    </div>
+    <div class="sg-stats">
+      <div><div class="sg-stat-n">{{ system_count }}</div><div class="sg-stat-l">Capability areas</div></div>
+      <div><div class="sg-stat-n">{{ showcase_features|length }}</div><div class="sg-stat-l">Modules shown</div></div>
+      <div><div class="sg-stat-n">1<span> login</span></div><div class="sg-stat-l">EVE SSO · live ESI</div></div>
+    </div>
+  </section>
+
+  <!-- Filter rail -->
+  <div class="sg-filter" role="group" aria-label="Filter features by area">
+    <button type="button" class="sg-chip" aria-pressed="true" :aria-pressed="filter==='all' ? 'true' : 'false'" @click="setFilter('all')">
+      All <span class="sg-chip-n">{{ showcase_features|length }}</span>
+    </button>
+    {% for c in categories %}
+    <button type="button" class="sg-chip" aria-pressed="false" :aria-pressed="filter==='{{ c.key }}' ? 'true' : 'false'" @click="setFilter('{{ c.key }}')">
+      {{ c.label }} <span class="sg-chip-n">{{ c.count }}</span>
+    </button>
+    {% endfor %}
+  </div>
+
+  <!-- Feature feed -->
+  <div class="sg-feed">
+    {% for f in showcase_features %}
+    <article class="sg-feature sg-reveal {% if f.flip %}sg-flip{% endif %}"
+             x-show="matches('{{ f.category_key }}')" x-transition.opacity.duration.400ms>
+      <div class="sg-shot">
+        <button type="button" class="sg-frame"
+                @click="openLightbox('{% static f.shot %}', '{{ f.alt|escapejs }}', '{{ f.title|escapejs }} · {{ f.category_label|escapejs }}')"
+                aria-label="Zoom screenshot: {{ f.title }}">
+          <img src="{% static f.shot %}" alt="{{ f.alt }}" loading="lazy" decoding="async">
+          <span class="sg-zoomhint">Click to zoom</span>
+        </button>
+        <span class="sg-corner tl"></span><span class="sg-corner tr"></span>
+        <span class="sg-corner bl"></span><span class="sg-corner br"></span>
+      </div>
+      <div class="sg-copy">
+        <span class="sg-callsign">{{ f.category_label }} · <span class="sg-idx">{{ f.idx }}</span></span>
+        <h2 class="sg-copy-title">{{ f.title }}</h2>
+        <p class="sg-copy-lede">{{ f.lede }}</p>
+        {% if f.benefits %}
+        <ul class="sg-benefits">
+          {% for b in f.benefits %}
+          <li class="sg-benefit">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+            <span>{{ b }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% if f.thumbs %}
+        <div class="sg-thumbs">
+          {% for t in f.thumbs %}
+          <button type="button" class="sg-thumb"
+                  @click="openLightbox('{% static t.src %}', '{{ t.alt|escapejs }}', '{{ t.alt|escapejs }}')"
+                  aria-label="Zoom screenshot: {{ t.alt }}">
+            <img src="{% static t.src %}" alt="{{ t.alt }}" loading="lazy" decoding="async">
+          </button>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+
+  <!-- The command deck: private leadership tools (no screenshots — redacted HUD treatment) -->
+  {% if private_features %}
+  <section class="sg-classified sg-reveal" aria-labelledby="sg-cmd-deck">
+    <div class="sg-classified-head">
+      <span class="sg-hero-eyebrow">Restricted · corp eyes only</span>
+      <h2 id="sg-cmd-deck">The command deck</h2>
+      <p>The tools leadership runs behind the doors. They're private to the corp, so there are no
+        screenshots here — but here's what they do.</p>
+    </div>
+    <div class="sg-classified-grid">
+      {% for p in private_features %}
+      <article class="sg-cf-card">
+        <div class="sg-cf-viewport" aria-hidden="true">
+          <span class="sg-corner tl"></span><span class="sg-corner tr"></span>
+          <span class="sg-corner bl"></span><span class="sg-corner br"></span>
+          <div class="sg-cf-lock">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><use href="#i-lock"/></svg>
+            <span>Restricted view</span>
+          </div>
+        </div>
+        <div class="sg-cf-body">
+          <div class="sg-cf-top">
+            <svg class="sg-cf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><use href="#{{ p.icon }}"/></svg>
+            <span class="sg-cf-tag">{{ p.tag }}</span>
+          </div>
+          <h3 class="sg-cf-title">{{ p.title }}</h3>
+          <p class="sg-cf-lede">{{ p.lede }}</p>
+          <ul class="sg-cf-benefits">
+            {% for b in p.benefits %}<li>{{ b }}</li>{% endfor %}
+          </ul>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- CTA band -->
+  <section class="sg-cta sg-reveal">
+    <span class="sg-hero-eyebrow">Ready when you are</span>
+    <h2>Bring your corp onto the grid.</h2>
+    <p>One EVE-SSO login connects your killboard, skills, doctrines and industry — and every pilot
+      gets a clear next move. Officers see readiness; nobody sees your EVE password.</p>
+    <div class="sg-hero-cta">
+      {% if user.is_authenticated %}
+        <a href="{% url 'identity:dashboard' %}" class="sg-btn sg-btn-gold">Open your dashboard</a>
+        <a href="{% url 'killboard:list' %}" class="sg-btn sg-btn-ghost">View the killboard</a>
+      {% else %}
+        <a href="{% url 'sso:login' %}" class="sg-btn sg-btn-gold">Log in with EVE</a>
+        <a href="{% url 'killboard:list' %}" class="sg-btn sg-btn-ghost">View the killboard</a>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- Lightbox -->
+  <div class="sg-lightbox" x-show="lb.open" x-cloak x-transition.opacity
+       role="dialog" aria-modal="true" aria-label="Screenshot viewer"
+       @click.self="closeLightbox()" @keydown.tab.prevent="$refs.lbClose.focus()">
+    <button type="button" class="sg-lightbox-close" x-ref="lbClose" @click="closeLightbox()" aria-label="Close viewer">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <img :src="lb.src" :alt="lb.alt">
+    <div class="sg-lightbox-cap" x-text="lb.cap"></div>
+  </div>
+
+</div>
+{% endblock %}

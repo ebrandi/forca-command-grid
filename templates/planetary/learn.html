@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}Learn Planetary Industry · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-6">
+  <a href="{% url 'planetary:landing' %}" class="text-xs text-faint hover:text-gold">← Planetary Industry</a>
+  <h1 class="mt-1 text-3xl font-bold text-ink">Learn Planetary Industry</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">A five-minute primer. By the end you'll know what to build and why the planner asks what it asks.</p>
+</header>
+
+<div class="grid gap-4 lg:grid-cols-2">
+  <section class="panel p-5">
+    <p class="eyebrow text-gold">Why bother?</p>
+    <h2 class="mt-1 text-lg font-semibold text-ink">Income while you sleep</h2>
+    <p class="mt-2 text-sm text-faint">PI is the closest thing EVE has to passive income. Once a colony is set up it keeps producing; you just reset extractors and haul. A handful of planets can quietly fund your PLEX, your ammo, or a corp's fuel supply. It scales from "one planet, ten minutes a week" to "a factory network feeding capital construction".</p>
+  </section>
+
+  <section class="panel p-5">
+    <p class="eyebrow text-gold">Two kinds of planet</p>
+    <h2 class="mt-1 text-lg font-semibold text-ink">Extraction vs factory</h2>
+    <ul class="mt-2 space-y-2 text-sm text-faint">
+      <li><span class="text-ink">Extraction planet</span> — an Extractor Control Unit pulls a raw P0 resource; Basic Industry Facilities refine it into P1. You export P1 (or feed it onward). Its output is set by how you place extractor heads and how often you reset.</li>
+      <li><span class="text-ink">Factory planet</span> — no extraction. It imports cheaper materials and combines them into higher-tier goods (P2, P3, P4). Its output is set by how many factories you can fit and feed.</li>
+    </ul>
+  </section>
+</div>
+
+<div class="mt-4">{% include "planetary/_onboarding.html" %}</div>
+
+<section class="panel mt-4 p-5">
+  <p class="eyebrow text-gold">What decides your profit</p>
+  <div class="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 text-sm">
+    <div><p class="font-medium text-ink">Market price</p><p class="mt-1 text-faint">Where and what you sell. The planner prices against a hub you choose.</p></div>
+    <div><p class="font-medium text-ink">Customs (POCO) tax</p><p class="mt-1 text-faint">Charged every time you launch goods to/from a planet. High in hostile space.</p></div>
+    <div><p class="font-medium text-ink">Hauling</p><p class="mt-1 text-faint">Getting output to market costs time or ISK — especially from null/wormhole.</p></div>
+    <div><p class="font-medium text-ink">Sales tax &amp; broker</p><p class="mt-1 text-faint">Market fees when you sell. Corp buyback trades a bit of margin for convenience.</p></div>
+  </div>
+  <p class="mt-4 text-sm text-faint">Command Grid takes all of these, applies your assumptions, and shows the estimated net — with every assumption on the table so you can see exactly how the number was reached.</p>
+  <a href="{% url 'planetary:create' %}" class="btn-gold mt-4 inline-flex"><svg class="h-4 w-4"><use href="#i-bolt"/></svg> Plan your first colony</a>
+</section>
+{% endblock %}

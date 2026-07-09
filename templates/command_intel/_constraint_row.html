@@ -1,0 +1,69 @@
+{% comment %}
+One Operational Constraint row: "capability capped at X, the thing capping it is Y,
+headroom is Z". Severity/status carry glyph + word + colour (never colour alone).
+Honest data: status=unknown -> ○ NO DATA, status=unavailable -> ⚠ OFFLINE, each
+stating WHY rather than a fabricated number.
+
+Params:
+  c       : an OperationalConstraint
+  compact : bool — single-line variant (briefing §③, overview top-list)
+{% endcomment %}
+<div class="px-4 py-3 {% if c.status == 'unavailable' %}border-l-2 border-dashed border-line/60{% endif %}"{% if not compact %} x-data="{ open: false }"{% endif %}>
+  <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+    {% if c.status == 'unknown' %}
+      <span class="data shrink-0 text-xs text-faint" title="Insufficient data">○ NO DATA</span>
+    {% elif c.status == 'unavailable' %}
+      <span class="data shrink-0 text-xs text-faint" title="Provider offline">⚠ OFFLINE</span>
+    {% elif c.severity == 'critical' %}
+      <span class="data shrink-0 text-xs text-loss">▼ CRITICAL</span>
+    {% elif c.severity == 'high' %}
+      <span class="data shrink-0 text-xs text-loss">▼ HIGH</span>
+    {% elif c.severity == 'watch' %}
+      <span class="data shrink-0 text-xs text-gold">◆ WATCH</span>
+    {% else %}
+      <span class="data shrink-0 text-xs text-kill">▲ INFO</span>
+    {% endif %}
+
+    {% if compact %}
+      <span class="min-w-0 flex-1 truncate text-sm text-ink">{{ c.label }}</span>
+    {% else %}
+      <button type="button" @click="open = !open" :aria-expanded="open" class="flex min-w-0 flex-1 items-center gap-1.5 text-left text-sm text-ink transition hover:text-gold">
+        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" class="h-3 w-3 shrink-0 text-faint transition-transform" :class="open && 'rotate-90'"><path d="M4 2.5l4 3.5-4 3.5"/></svg>
+        <span class="truncate">{{ c.label }}</span>
+      </button>
+    {% endif %}
+
+    {% if c.status == 'computed' %}
+      <span class="data shrink-0 text-sm text-muted">{{ c.binding_metric|floatformat:"-2" }} {{ c.unit }}</span>
+      {% if c.limiting_factor %}<span class="hidden shrink-0 text-xs text-faint sm:inline">limited by ▸ {{ c.limiting_factor }}</span>{% endif %}
+      {% if c.headroom is not None %}
+        <span class="data shrink-0 text-sm {% if c.headroom < 0 %}text-loss{% else %}text-kill{% endif %}" title="Headroom">{% if c.headroom > 0 %}+{% endif %}{{ c.headroom|floatformat:"-2" }}</span>
+      {% endif %}
+    {% else %}
+      <span class="shrink-0 text-xs italic text-faint">not assessable</span>
+    {% endif %}
+  </div>
+
+  {% if c.status == 'computed' and c.score is not None %}
+    <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-space">
+      <div class="h-full {% if c.severity == 'critical' or c.severity == 'high' %}bg-loss{% elif c.severity == 'watch' %}bg-gold{% else %}bg-kill{% endif %}" style="width:{{ c.score }}%"></div>
+    </div>
+  {% endif %}
+
+  {% if not compact %}
+    <div x-show="open" x-cloak x-transition.opacity class="mt-2 space-y-2 pl-[1.4rem] text-xs">
+      <p class="text-faint">
+        <span class="uppercase tracking-wide">{{ c.category }}</span>
+        {% if c.affected_capabilities %}· caps {{ c.affected_capabilities|join:", " }}{% endif %}
+      </p>
+      {% if c.evidence %}
+        <div class="flex flex-wrap gap-1.5">
+          {% for e in c.evidence %}<span class="chip">{{ e.name }} {{ e.value }}{% if e.unit %} {{ e.unit }}{% endif %}</span>{% endfor %}
+        </div>
+      {% endif %}
+      {% if c.detail %}<p class="text-muted">{{ c.detail }}</p>{% endif %}
+    </div>
+  {% elif c.status != 'computed' and c.detail %}
+    <p class="mt-1 pl-[1.4rem] text-xs text-faint">{{ c.detail }}</p>
+  {% endif %}
+</div>

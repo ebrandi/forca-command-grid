@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% comment %}Recent killboard battles with their AI after-action-review status (Combat
+Intelligence). Officer-gated; open one to generate/read its AAR.{% endcomment %}
+{% block title %}Battle Analysis · [FORCA] Command Grid{% endblock %}
+{% block content %}
+
+<header class="mb-6">
+  <a href="{% url 'command_intel:overview' %}" class="text-xs text-faint hover:text-gold">← Command overview</a>
+  <p class="mt-2 eyebrow text-gold">Combat intelligence</p>
+  <h1 class="mt-1 font-display text-2xl font-bold text-ink">Battle analysis</h1>
+  <p class="mt-1 text-sm text-faint">Recent engagements from the killboard — open one for an AI after-action review: what happened, what went wrong, what to improve.</p>
+</header>
+
+{% if not rows %}
+  <div class="panel p-8 text-center">
+    <p class="text-muted">No battle reports on file yet. They're created from the killboard (Intel → battle reports) or auto-clustered from notable fights.</p>
+  </div>
+{% else %}
+<section class="panel overflow-hidden">
+  <div class="divide-y divide-line/40">
+    {% for row in rows %}
+    <a href="{% url 'command_intel:battle_detail' row.battle.pk %}" class="flex items-center justify-between gap-3 px-4 py-3 hover:bg-panel2/40">
+      <span class="min-w-0">
+        <span class="block truncate text-sm text-ink">{{ row.battle.title|default:"Battle" }}</span>
+        <span class="block text-[11px] text-faint">{{ row.battle.start_time|date:"d M Y H:i" }}</span>
+      </span>
+      <span class="shrink-0 text-xs">
+        {% if row.analysis and row.analysis.status == 'ready' %}<span class="text-kill">▲ analysed</span>
+        {% elif row.analysis and row.analysis.status == 'ready_degraded' %}<span class="text-gold">◆ facts only</span>
+        {% elif row.analysis and not row.analysis.is_terminal %}<span class="text-cyan">◐ analysing</span>
+        {% else %}<span class="text-faint">analyse →</span>{% endif %}
+      </span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}

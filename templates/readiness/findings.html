@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Readiness · Risk register · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<a href="{% url 'readiness:dashboard' %}" class="text-xs text-faint hover:text-gold">← Readiness</a>
+<header class="mt-2 mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-gold">Readiness</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">Risk register</h1>
+    <p class="mt-1 text-sm text-faint">Current gaps and risks detected across every dimension, with how long each has been open. Turn one into a claimable task for the right desk.</p>
+  </div>
+  <a href="{% url 'readiness:task_queue' %}" class="btn-ghost text-sm">Officer task queue →</a>
+</header>
+
+
+{% if not findings %}
+  <div class="panel px-4 py-16 text-center">
+    <p class="font-display text-lg text-muted">No open findings</p>
+    <p class="mt-1 text-sm text-faint">The corporation has no detected gaps right now{% if resolved_count %} ({{ resolved_count }} resolved){% endif %}. Findings appear here after the next readiness recompute.</p>
+  </div>
+{% else %}
+<div class="panel overflow-hidden">
+  <div class="overflow-x-auto"><table class="w-full text-sm">
+    <thead class="border-b border-line text-left text-[11px] uppercase tracking-wide text-faint">
+      <tr>
+        <th class="px-4 py-2.5 font-medium">Finding</th>
+        <th class="hidden px-3 py-2.5 font-medium sm:table-cell">Dimension</th>
+        <th class="hidden px-3 py-2.5 text-center font-medium md:table-cell">Severity</th>
+        <th class="px-3 py-2.5 text-right font-medium">Age</th>
+        <th class="px-3 py-2.5 text-right font-medium"></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-line/50">
+      {% for f in findings %}
+      <tr class="hover:bg-panel2/40">
+        <td class="px-4 py-2.5">
+          <span class="block font-medium text-ink">{{ f.title }}</span>
+          {% if f.owner_tag %}<span class="block text-[11px] text-faint">owner: {{ f.owner_tag }}</span>{% endif %}
+        </td>
+        <td class="hidden px-3 py-2.5 text-muted sm:table-cell">{{ f.dimension_key }}</td>
+        <td class="hidden px-3 py-2.5 text-center md:table-cell">
+          <span class="chip {% if f.severity == 'critical' %}text-loss{% elif f.severity == 'high' %}text-gold{% elif f.severity == 'warn' %}text-cyan{% else %}text-faint{% endif %}">{{ f.get_severity_display }}</span>
+        </td>
+        <td class="px-3 py-2.5 text-right tabular-nums text-faint">{{ f.age_days }}d</td>
+        <td class="px-3 py-2.5 text-right">
+          {% if f.task and f.task.is_active %}
+            <span class="text-[11px] text-faint">tasked</span>
+          {% else %}
+            <form method="post" action="{% url 'readiness:gap_task' %}" class="inline">
+              {% csrf_token %}
+              <input type="hidden" name="finding_id" value="{{ f.id }}">
+              <button class="btn-ghost whitespace-nowrap text-xs">Create task</button>
+            </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+</div>
+{% if resolved_count %}<p class="mt-3 text-[11px] text-faint">{{ resolved_count }} finding{{ resolved_count|pluralize }} resolved and cleared from the register.</p>{% endif %}
+{% endif %}
+{% endblock %}

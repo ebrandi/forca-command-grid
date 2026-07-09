@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}Audit · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-6">
+  <p class="eyebrow">Accountability</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">Audit log</h1>
+  <p class="mt-2 text-sm text-muted">Sensitive actions, including officer access to member data. Append-only.</p>
+</header>
+
+<form method="get" action="{% url 'admin_audit:audit' %}" class="mb-4 grid items-end gap-2 sm:grid-cols-6">
+  <div><label class="label" for="f-actor">Actor</label>
+    <input id="f-actor" name="actor" value="{{ filters.actor }}" class="input-field" placeholder="name / username"></div>
+  <div><label class="label" for="f-action">Action</label>
+    <input id="f-action" name="action" value="{{ filters.action }}" class="input-field" placeholder="e.g. detach"></div>
+  <div><label class="label" for="f-target">Target</label>
+    <input id="f-target" name="target" value="{{ filters.target }}" class="input-field" placeholder="type / id"></div>
+  <div><label class="label" for="f-from">From</label>
+    <input id="f-from" name="from" value="{{ filters.from }}" type="date" class="input-field"></div>
+  <div><label class="label" for="f-to">To</label>
+    <input id="f-to" name="to" value="{{ filters.to }}" type="date" class="input-field"></div>
+  <div class="flex gap-2">
+    <button type="submit" class="btn-gold text-sm">Filter</button>
+    <button type="submit" name="export" value="csv" class="btn-ghost text-sm">Export CSV</button>
+  </div>
+</form>
+{% if has_filters %}<a href="{% url 'admin_audit:audit' %}" class="mb-3 inline-block text-xs text-faint hover:text-gold">← Clear filters</a>{% endif %}
+
+<div class="panel overflow-hidden">
+  <div class="overflow-x-auto"><table class="w-full text-sm">
+    <thead class="text-faint text-left"><tr class="border-b border-line/60">
+      <th class="px-4 py-2 font-medium">When</th><th class="px-4 py-2 font-medium">Actor</th>
+      <th class="px-4 py-2 font-medium">Action</th><th class="px-4 py-2 font-medium">Target</th>
+      <th class="px-4 py-2 font-medium">IP</th></tr></thead>
+    <tbody>
+      {% for l in logs %}
+        <tr class="border-t border-line/40">
+          <td class="px-4 py-2 data text-faint">{{ l.created_at|date:"Y-m-d H:i:s" }}</td>
+          <td class="px-4 py-2">
+            {% if l.actor %}
+              <span class="flex items-center gap-2">
+                {% if l.actor.main_character_id %}<img src="{% eve_portrait l.actor.main_character_id 32 %}" alt="" class="h-6 w-6 rounded-full ring-1 ring-line">{% endif %}
+                <span class="text-muted">{{ l.actor.first_name|default:l.actor.username }}</span>
+              </span>
+            {% else %}<span class="text-faint">system</span>{% endif %}
+          </td>
+          <td class="px-4 py-2"><span class="chip">{{ l.action }}</span></td>
+          <td class="px-4 py-2">
+            {% if l.target_type == 'character' and l.target_id %}
+              <span class="flex items-center gap-2">
+                <img src="{% eve_portrait l.target_id 32 %}" alt="" class="h-6 w-6 rounded-full ring-1 ring-line">
+                <span class="text-muted">{% eve_name l.target_id %}</span>
+              </span>
+            {% else %}<span class="data text-faint">{{ l.target_type }}{% if l.target_id %}:{{ l.target_id }}{% endif %}</span>{% endif %}
+          </td>
+          <td class="px-4 py-2 data text-xs text-faint">{{ l.ip|default:"—" }}</td>
+        </tr>
+      {% empty %}<tr><td colspan="5" class="px-4 py-10 text-center text-faint">No audit entries.</td></tr>{% endfor %}
+    </tbody>
+  </table></div>
+</div>
+{% endblock %}

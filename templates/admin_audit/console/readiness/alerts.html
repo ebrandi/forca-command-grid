@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Readiness · Alert rules · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
+<header class="mt-2 mb-6">
+  <p class="eyebrow">Readiness configuration</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">Alert rules</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">Turn findings into Discord / EVE-mail notifications. Rules match on dimension and kind; each fires once per gap, dedupes for its cooldown window, and can escalate if a gap stays open. With no rules the alert layer stays inert.</p>
+</header>
+
+
+<!-- EVE-mail sender -->
+<section class="panel mb-6 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">EVE-mail sender</h2></div>
+  <form method="post" action="{% url 'admin_audit:readiness_mail_sender' %}" class="flex flex-wrap items-end gap-3 p-4">
+    {% csrf_token %}
+    <label class="text-xs text-faint">Send alert mail from
+      <select name="sender_character_id" class="input-field mt-1 w-72">
+        <option value="">— EVE-mail disabled —</option>
+        {% for s in senders %}<option value="{{ s.character_id }}" {% if s.character_id == current_sender %}selected{% endif %}>{{ s.name }}{% if not s.granted %} (scope not granted){% endif %}</option>{% endfor %}
+      </select>
+    </label>
+    <button class="btn-gold !py-1 text-sm">Save sender</button>
+    <p class="w-full text-[11px] text-faint">Rules whose channels include <span class="text-ink">EVE-mail</span> send in-game from this director to the responsible officer, for <span class="text-ink">high</span>/<span class="text-ink">critical</span> alerts. The chosen director must grant the <span class="font-mono">Readiness mail sender</span> scope on the <a href="{% url 'sso:scopes' %}" class="text-cyan hover:underline">ESI scopes</a> page — until then EVE-mail degrades to a no-op. {% if not senders %}<span class="text-loss">No director characters are linked yet.</span>{% endif %}</p>
+  </form>
+</section>
+
+<section class="panel mb-6 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Active rules</h2></div>
+  {% if not rules %}
+    <p class="px-4 py-8 text-center text-sm text-faint">No alert rules yet. Add one below to start notifying on readiness gaps.</p>
+  {% else %}
+  <div class="divide-y divide-line/50">
+    {% for r in rules %}
+    <form method="post" action="{% url 'admin_audit:readiness_alert_save' %}" class="grid grid-cols-2 items-end gap-3 px-4 py-3 sm:grid-cols-12">
+      {% csrf_token %}
+      <input type="hidden" name="original_key" value="{{ r.key }}">
+      <label class="text-xs text-faint sm:col-span-2">Key<input name="key" value="{{ r.key }}" class="input-field mt-1 w-full font-mono text-xs"></label>
+      <label class="text-xs text-faint sm:col-span-2">Severity
+        <select name="severity" class="input-field mt-1 w-full">{% for s in severities %}<option value="{{ s }}" {% if r.severity == s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select>
+      </label>
+      <label class="text-xs text-faint sm:col-span-2">Dimension
+        <select name="dimension" class="input-field mt-1 w-full"><option value="">Any</option>{% for d in dimensions %}<option value="{{ d.key }}" {% if r.dimension == d.key %}selected{% endif %}>{{ d.label }}</option>{% endfor %}</select>
+      </label>
+      <label class="text-xs text-faint sm:col-span-2">Kind
+        <select name="kind" class="input-field mt-1 w-full">{% for v,l in kinds %}<option value="{{ v }}" {% if r.kind == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+      </label>
+      <label class="text-xs text-faint sm:col-span-1">Score &lt;<input name="score_below" type="number" min="0" max="100" value="{{ r.score_below }}" placeholder="any" class="input-field mt-1 w-full"></label>
+      <div class="text-xs text-faint sm:col-span-2">Channels
+        <div class="mt-1 flex gap-3">{% for c,l in channels %}<label class="flex items-center gap-1"><input type="checkbox" name="channel_{{ c }}" {% if c in r.channels %}checked{% endif %}>{{ l }}</label>{% endfor %}</div>
+      </div>
+      <label class="text-xs text-faint sm:col-span-1">Cooldown h<input name="cooldown_hours" type="number" min="0" value="{{ r.cooldown_hours }}" class="input-field mt-1 w-full"></label>
+      <label class="text-xs text-faint sm:col-span-2">Escalate after h<input name="escalate_after_hours" type="number" min="0" value="{{ r.escalate_after_hours }}" placeholder="none" class="input-field mt-1 w-full"></label>
+      <div class="text-xs text-faint sm:col-span-2">Escalate via
+        <div class="mt-1 flex gap-3">{% for c,l in channels %}<label class="flex items-center gap-1"><input type="checkbox" name="escalate_{{ c }}" {% if c in r.escalate_channels %}checked{% endif %}>{{ l }}</label>{% endfor %}</div>
+      </div>
+      <button class="btn-ghost !py-1 text-xs sm:col-span-1">Save</button>
+    </form>
+    <form method="post" action="{% url 'admin_audit:readiness_alert_delete' r.key %}" class="px-4 pb-2 -mt-2">{% csrf_token %}<button class="text-[11px] text-faint hover:text-loss">Remove rule</button></form>
+    {% endfor %}
+  </div>
+  {% endif %}
+</section>
+
+<section class="panel overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">Add a rule</h2></div>
+  <form method="post" action="{% url 'admin_audit:readiness_alert_save' %}" class="grid grid-cols-2 items-end gap-3 p-4 sm:grid-cols-12">
+    {% csrf_token %}
+    <label class="text-xs text-faint sm:col-span-2">Key<input name="key" placeholder="low-fuel" class="input-field mt-1 w-full font-mono text-xs"></label>
+    <label class="text-xs text-faint sm:col-span-2">Severity
+      <select name="severity" class="input-field mt-1 w-full">{% for s in severities %}<option value="{{ s }}" {% if s == 'warn' %}selected{% endif %}>{{ s }}</option>{% endfor %}</select>
+    </label>
+    <label class="text-xs text-faint sm:col-span-2">Dimension
+      <select name="dimension" class="input-field mt-1 w-full"><option value="">Any</option>{% for d in dimensions %}<option value="{{ d.key }}">{{ d.label }}</option>{% endfor %}</select>
+    </label>
+    <label class="text-xs text-faint sm:col-span-2">Kind
+      <select name="kind" class="input-field mt-1 w-full">{% for v,l in kinds %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select>
+    </label>
+    <label class="text-xs text-faint sm:col-span-1">Score &lt;<input name="score_below" type="number" min="0" max="100" placeholder="any" class="input-field mt-1 w-full"></label>
+    <div class="text-xs text-faint sm:col-span-2">Channels
+      <div class="mt-1 flex gap-3">{% for c,l in channels %}<label class="flex items-center gap-1"><input type="checkbox" name="channel_{{ c }}" {% if c == 'discord' %}checked{% endif %}>{{ l }}</label>{% endfor %}</div>
+    </div>
+    <label class="text-xs text-faint sm:col-span-1">Cooldown h<input name="cooldown_hours" type="number" min="0" value="24" class="input-field mt-1 w-full"></label>
+    <label class="text-xs text-faint sm:col-span-2">Escalate after h<input name="escalate_after_hours" type="number" min="0" placeholder="none" class="input-field mt-1 w-full"></label>
+    <div class="text-xs text-faint sm:col-span-2">Escalate via
+      <div class="mt-1 flex gap-3">{% for c,l in channels %}<label class="flex items-center gap-1"><input type="checkbox" name="escalate_{{ c }}">{{ l }}</label>{% endfor %}</div>
+    </div>
+    <button class="btn-gold !py-1 text-sm sm:col-span-1">Add rule</button>
+  </form>
+</section>
+{% endblock %}

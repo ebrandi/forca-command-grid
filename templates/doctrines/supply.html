@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}Supply · {{ doctrine.name }} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<a href="{% url 'doctrines:detail' doctrine.pk %}" class="text-xs text-faint hover:text-gold">← {{ doctrine.name }}</a>
+
+<header class="mt-2 mb-5 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-gold">Supply chain</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">Supply · {{ doctrine.name }}</h1>
+    <p class="mt-1 text-sm text-faint">Keep complete sets stocked: target vs on-hand, and the cheaper of buy or build per line.</p>
+  </div>
+  <form method="get" class="flex items-end gap-2 text-sm">
+    <div>
+      <label class="label" for="lf_sets_1">Keep in stock</label>
+      <input id="lf_sets_1" name="sets" type="number" min="1" value="{{ sets }}" class="input-field !py-1 w-24">
+    </div>
+    <button class="btn-ghost">Recompute</button>
+  </form>
+</header>
+
+
+<div class="panel mb-5 flex flex-wrap items-center justify-between gap-3 p-4">
+  <span class="text-sm text-muted">To stock {{ sets }} set{{ sets|pluralize }} · estimated</span>
+  <div class="flex gap-6">
+    <div class="text-right"><p class="eyebrow">Buy everything</p><p class="font-display text-xl font-bold text-gold">{{ plan.total_buy|isk }}</p></div>
+    <div class="text-right"><p class="eyebrow">Cheapest mix</p><p class="font-display text-xl font-bold text-cyan">{{ plan.total_recommended|isk }}</p></div>
+  </div>
+</div>
+
+<section class="panel overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Per-item plan</h2></div>
+  <div class="divide-y divide-line/40">
+    {% for line in plan.lines %}
+      <div class="flex flex-wrap items-center gap-3 px-4 py-2.5 text-sm">
+        <img src="{% eve_type_icon line.type_id 32 %}" alt="" loading="lazy" class="h-7 w-7 rounded-sm">
+        <span class="min-w-0 flex-1 truncate {% if line.need %}text-ink{% else %}text-faint{% endif %}">{{ line.name }}</span>
+        <span class="data text-xs text-faint">{{ line.have }}/{{ line.target }}</span>
+        {% if line.need %}
+          <span class="data text-xs text-loss">need {{ line.need }}</span>
+          {% if line.buildable and line.decision == 'build' %}
+            <span class="chip !border-cyan/40 !text-cyan">build · {{ line.build_cost|isk }}</span>
+          {% else %}
+            <span class="chip">buy · {{ line.buy_cost|isk }}</span>
+          {% endif %}
+          {% if is_officer %}
+            <form method="post" action="{% url 'doctrines:supply_task' %}">
+              {% csrf_token %}
+              <input type="hidden" name="type_id" value="{{ line.type_id }}">
+              <input type="hidden" name="action" value="{{ line.decision }}">
+              <input type="hidden" name="title" value="{{ line.decision|capfirst }} {{ line.need }}× {{ line.name }} for {{ doctrine.name }}">
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <button class="btn-cyan !py-1 !text-xs">Task</button>
+            </form>
+          {% endif %}
+        {% else %}
+          <span class="chip !border-kill/40 !text-kill">stocked</span>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+{% if priority %}
+<section class="panel mt-6 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Corp-wide priority shopping list</h2></div>
+  <div class="divide-y divide-line/40">
+    {% for p in priority %}
+      <div class="flex items-center gap-3 px-4 py-2.5 text-sm">
+        <img src="{% eve_type_icon p.type_id 32 %}" alt="" loading="lazy" class="h-6 w-6 rounded-sm">
+        <span class="min-w-0 flex-1 truncate text-muted">{{ p.name }}</span>
+        <span class="data text-xs text-loss">{{ p.need }}</span>
+        <span class="data w-28 text-right text-xs text-faint">{{ p.cost|isk }}</span>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}

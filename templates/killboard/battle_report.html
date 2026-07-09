@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% load eve static %}
+{% block title %}{{ report.title }} · Battle Report{% endblock %}
+{% block extra_head %}
+<script defer src="{% static 'js/vendor/chart.umd.js' %}"></script>
+{% endblock %}
+{% block content %}
+<a href="{% url 'killboard:watchlists' %}" class="text-xs text-faint hover:text-gold">← Intel</a>
+<header class="mt-3 mb-6">
+  <p class="eyebrow">Battle report</p>
+  <h1 class="mt-1 text-2xl font-bold text-ink">{{ report.title }}</h1>
+  <p class="mt-1 flex flex-wrap items-center gap-2 text-sm text-faint">
+    {% for sid in report.system_ids %}<span class="chip">{% system_name sid %}</span>{% endfor %}
+    <span>{{ report.start_time|date:"M j, H:i" }} – {{ report.end_time|date:"H:i" }}</span>
+    <span>· {{ report.killmails.count }} killmails</span>
+    {% if is_officer and features.command_intel %}<a href="{% url 'command_intel:battle_detail' report.pk %}" class="text-gold hover:underline">· AI after-action review →</a>{% endif %}
+  </p>
+</header>
+
+<!-- Visual summary -->
+<div class="mb-5 grid gap-5 lg:grid-cols-2">
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">ISK lost by side</h2></div>
+    <div class="p-4"><div class="relative h-56 skeleton"><canvas id="br-sides"></canvas></div></div>
+  </section>
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Ships destroyed</h2></div>
+    <div class="p-4"><div class="relative mx-auto h-56 w-56 skeleton"><canvas id="br-ships"></canvas></div></div>
+  </section>
+</div>
+
+<div class="grid gap-5 lg:grid-cols-2">
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Sides (by ISK lost)</h2></div>
+    <div class="overflow-x-auto"><table class="w-full text-sm">
+      <thead class="text-faint text-left"><tr class="border-b border-line/60">
+        <th class="px-4 py-2 font-medium">Corporation</th><th class="px-4 py-2 text-right font-medium">Kills</th>
+        <th class="px-4 py-2 text-right font-medium">Losses</th><th class="px-4 py-2 text-right font-medium">ISK lost</th></tr></thead>
+      <tbody>
+        {% for s in report.sides.corporations %}
+          <tr class="border-t border-line/40">
+            <td class="px-4 py-2"><span class="flex items-center gap-2"><img src="{% eve_corp_logo s.corporation_id 32 %}" alt="" class="h-5 w-5 rounded-sm">{% eve_name s.corporation_id %}</span></td>
+            <td class="px-4 py-2 text-right data text-kill">{{ s.kills }}</td>
+            <td class="px-4 py-2 text-right data text-loss">{{ s.losses }}</td>
+            <td class="px-4 py-2 text-right data text-gold">{{ s.isk_lost|isk }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Ships destroyed</h2></div>
+    <div class="divide-y divide-line/40">
+      {% for type_id, n in report.ship_breakdown.items %}
+        <div class="flex items-center gap-2.5 px-4 py-2 text-sm">
+          <img src="{% eve_type_icon type_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">
+          <span class="flex-1 text-muted">{% type_name type_id %}</span>
+          <span class="data text-faint">×{{ n }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+
+<section class="panel mt-5 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Killmails</h2></div>
+  <div class="divide-y divide-line/40">
+    {% for km in report.killmails.all %}
+      <a href="{% url 'killboard:detail' km.killmail_id %}" class="flex items-center gap-3 px-4 py-2 text-sm hover:bg-panel2">
+        <img src="{% eve_type_icon km.victim_ship_type_id 32 %}" alt="" loading="lazy" class="h-6 w-6 rounded-sm">
+        <span class="flex-1 text-muted">{% type_name km.victim_ship_type_id %}</span>
+        <span class="data text-xs text-faint">{{ km.total_value|isk }}</span>
+        <span class="text-xs text-faint">{{ km.killmail_time|date:"H:i" }}</span>
+      </a>
+    {% endfor %}
+  </div>
+</section>
+
+{{ sides_chart|json_script:"br-sides-data" }}
+{{ ships_chart|json_script:"br-ships-data" }}
+{% endblock %}
+
+{% block scripts %}
+<script nonce="{{ csp_nonce }}">
+  document.addEventListener('DOMContentLoaded', function () {
+    if (!window.forcaChart.applyDefaults()) return;
+
+    var s = forcaChart.read('br-sides-data');
+    var sc = document.getElementById('br-sides');
+    if (s && sc && s.labels.length) {
+      new Chart(sc, {
+        type: 'bar',
+        data: { labels: s.labels,
+          datasets: [{ label: 'ISK lost', data: s.isk_lost, backgroundColor: forcaChart.colors.gold }] },
+        options: {
+          indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+          scales: { x: { beginAtZero: true, grid: { color: forcaChart.colors.line }, ticks: { callback: forcaChart.isk } },
+                    y: { grid: { display: false } } },
+          plugins: { legend: { display: false },
+            tooltip: { callbacks: { label: function (ctx) { return forcaChart.isk(ctx.parsed.x) + ' ISK'; } } } },
+        },
+      });
+    }
+
+    var sh = forcaChart.read('br-ships-data');
+    var shc = document.getElementById('br-ships');
+    if (sh && shc && sh.labels.length) {
+      var palette = ['#46cfe0', '#f4a52b', '#3fb950', '#f0533f', '#9d7bd8', '#e0a946',
+                     '#5aa9e6', '#7ddc8b', '#e87fa5', '#8a98ab', '#c0c8d4', '#6fb3d2'];
+      new Chart(shc, {
+        type: 'doughnut',
+        data: { labels: sh.labels,
+          datasets: [{ data: sh.counts,
+            backgroundColor: sh.labels.map(function (_, i) { return palette[i % palette.length]; }),
+            borderColor: '#10151f', borderWidth: 2 }] },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '55%',
+          plugins: { legend: { display: false },
+            tooltip: { callbacks: { label: function (ctx) { return ctx.label + ': ' + ctx.parsed; } } } } },
+      });
+    }
+  });
+</script>
+{% endblock %}

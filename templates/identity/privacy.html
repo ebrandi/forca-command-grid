@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}Privacy · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-6">
+  <p class="eyebrow">Your data</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">Privacy &amp; data</h1>
+  <p class="mt-2 max-w-2xl text-sm text-muted">
+    Officers of FORCA can see your skills and doctrine readiness; this is disclosed here and at login,
+    and every access is recorded in the audit log. Disconnect a character to revoke our access.
+  </p>
+</header>
+
+<h2 class="eyebrow mb-3">Linked characters</h2>
+<div class="space-y-2">
+  {% for c in characters %}
+    <div class="panel flex items-center gap-3 p-3">
+      <img src="{% eve_portrait c.character_id 64 %}" alt="" class="h-9 w-9 rounded-lg ring-1 ring-line">
+      <span class="flex-1 text-ink">{{ c.name }}</span>
+      <form method="post" action="{% url 'sso:disconnect' c.character_id %}">{% csrf_token %}
+        <button class="btn-ghost !py-1 !text-loss hover:!border-loss/40">Disconnect</button>
+      </form>
+    </div>
+  {% endfor %}
+</div>
+
+{% if features.contributions %}
+<section class="panel mt-8 p-5">
+  <h2 class="font-display font-semibold text-ink">Recognition</h2>
+  <p class="mt-1 max-w-2xl text-sm text-muted">
+    When recognition is on, the things you do for the corp — ships built, loads hauled, tasks completed —
+    can be celebrated corp-wide. Turn it off and your contributions stay private to you; every personal
+    feature keeps working either way.
+  </p>
+  <form method="post" action="{% url 'pilots:toggle_recognition' %}" class="mt-4 flex items-center gap-3">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.path }}">
+    <span class="text-sm text-muted">Corp recognition is
+      <span class="{% if prefs.public_recognition %}text-kill{% else %}text-faint{% endif %} font-semibold">{% if prefs.public_recognition %}on{% else %}off{% endif %}</span>.</span>
+    <button class="btn-ghost !py-1">{% if prefs.public_recognition %}Make private{% else %}Turn on{% endif %}</button>
+  </form>
+
+  <p class="mt-5 max-w-2xl text-sm text-muted">
+    Opt in to a direct message when one of your characters' skill queues runs dry, so you
+    never bleed SP. Off by default; you're only ever pinged if you turn this on, and only
+    once each time a queue empties.
+  </p>
+  <form method="post" action="{% url 'pilots:toggle_idle_queue_nudge' %}" class="mt-3 flex items-center gap-3">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.path }}">
+    <span class="text-sm text-muted">Idle-queue reminders are
+      <span class="{% if prefs.notify_idle_queue %}text-kill{% else %}text-faint{% endif %} font-semibold">{% if prefs.notify_idle_queue %}on{% else %}off{% endif %}</span>.</span>
+    <button class="btn-ghost !py-1">{% if prefs.notify_idle_queue %}Turn off{% else %}Turn on{% endif %}</button>
+  </form>
+</section>
+{% endif %}
+
+<section class="panel mt-6 p-5">
+  <h2 class="font-display font-semibold text-ink">What officers can see about you</h2>
+  <ul class="mt-2 max-w-2xl space-y-1.5 text-sm text-muted">
+    <li>• <span class="text-ink">Your skills &amp; doctrine readiness</span> — yes, and every access is recorded in the audit log.</li>
+    <li>• <span class="text-ink">Corp-wide readiness</span> — only as aggregate counts ("5 can fly logi"), never your personal dashboard.</li>
+    <li>• <span class="text-ink">Your assets &amp; wallet</span> — never, unless you grant a corp-asset scope; personal assets stay yours.</li>
+    <li>• <span class="text-ink">Your contributions</span> — only if recognition is on (above).</li>
+    <li>• <span class="text-ink">Your character passwords</span> — never; we never see or store them (EVE SSO only).</li>
+  </ul>
+</section>
+
+<section class="panel mt-6 border-loss/40 p-5">
+  <h2 class="font-display font-semibold text-loss">Delete my data</h2>
+  <p class="mt-1 max-w-2xl text-sm text-muted">Erase your imported skills, tokens, plans and progress, and detach your characters. Public killmails are retained as EVE facts. This logs you out.</p>
+  <form method="post" action="{% url 'identity:delete_data' %}" class="mt-4" data-confirm="Delete all your private data? This cannot be undone.">{% csrf_token %}
+    <button class="inline-flex items-center gap-2 rounded-md bg-loss px-4 py-2 font-display text-sm font-semibold uppercase tracking-wider text-space hover:bg-loss/90 transition">Delete my data</button>
+  </form>
+</section>
+{% endblock %}

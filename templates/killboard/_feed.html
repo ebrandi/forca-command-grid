@@ -1,0 +1,117 @@
+{% load eve %}
+{% comment %}D5: the killfeed fragment — filters + feed + pagination. The view returns just
+   this template for htmx requests (HX-Request), so filtering/paging swaps only
+   #kb-feed (no full reload, no scroll-jump). hx-target/hx-push-url inherit to
+   every control inside; each anchor reuses its href's querystring for hx-get
+   (and keeps href for no-JS / right-click). The killmail detail links and the
+   side-rail are OUTSIDE this fragment and stay normal navigations.
+   rel="nofollow" on every filter/drill-down link keeps crawlers out of the
+   faceted URL space (character×corp×ship×system×side×window); the killmail
+   detail links stay followable as canonical content.{% endcomment %}
+<div id="kb-feed" hx-target="#kb-feed" hx-swap="outerHTML" hx-push-url="true">
+    <!-- Filters: kind + window + active chips -->
+    <div class="mb-3 flex flex-wrap items-center gap-2 text-xs">
+      <div class="inline-flex rounded-lg border border-line bg-panel p-1">
+        <a rel="nofollow" href="{% querystring kind='all' page=None %}" hx-get="{% querystring kind='all' page=None %}" class="rounded px-3 py-1 font-display uppercase tracking-wide {% if kind == 'all' %}bg-gold text-space font-semibold{% else %}text-muted hover:text-ink{% endif %}">All</a>
+        <a rel="nofollow" href="{% querystring kind='kills' page=None %}" hx-get="{% querystring kind='kills' page=None %}" class="rounded px-3 py-1 font-display uppercase tracking-wide {% if kind == 'kills' %}bg-gold text-space font-semibold{% else %}text-muted hover:text-ink{% endif %}">Kills</a>
+        <a rel="nofollow" href="{% querystring kind='losses' page=None %}" hx-get="{% querystring kind='losses' page=None %}" class="rounded px-3 py-1 font-display uppercase tracking-wide {% if kind == 'losses' %}bg-gold text-space font-semibold{% else %}text-muted hover:text-ink{% endif %}">Losses</a>
+      </div>
+      <span class="ml-1 text-faint">Window:</span>
+      <a rel="nofollow" href="{% querystring days=None page=None %}" hx-get="{% querystring days=None page=None %}" class="chip {% if not days %}!border-gold/40 !text-gold{% else %}hover:text-ink{% endif %}">All time</a>
+      {% for d, lbl in days_options %}
+        <a rel="nofollow" href="{% querystring days=d page=None %}" hx-get="{% querystring days=d page=None %}" class="chip {% if days == d %}!border-gold/40 !text-gold{% else %}hover:text-ink{% endif %}">{{ lbl }}</a>
+      {% endfor %}
+      {% if alliances %}
+        <form method="get" class="inline-flex">
+          {% for k, v in request.GET.items %}{% if k != 'alliance_id' and k != 'page' %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endif %}{% endfor %}
+          <select name="alliance_id" class="input-field !py-1 !text-xs" hx-get="{% url 'killboard:list' %}" hx-trigger="change" hx-include="closest form" aria-label="Filter by alliance">
+            <option value="">All alliances</option>
+            {% for a in alliances %}<option value="{{ a.id }}" {% if alliance_id == a.id|stringformat:'s' %}selected{% endif %}>{{ a.name }}</option>{% endfor %}
+          </select>
+        </form>
+      {% endif %}
+      {% if entity_active %}
+      <span class="ml-1 text-faint">Side:</span>
+      <div class="inline-flex rounded-lg border border-line bg-panel p-1" title="Match the pilot / corp / alliance filter against the victim or any attacker">
+        <a rel="nofollow" href="{% querystring side='victim' page=None %}" hx-get="{% querystring side='victim' page=None %}" class="rounded px-2.5 py-1 font-display uppercase tracking-wide {% if side != 'attacker' %}bg-gold text-space font-semibold{% else %}text-muted hover:text-ink{% endif %}">Victim</a>
+        <a rel="nofollow" href="{% querystring side='attacker' page=None %}" hx-get="{% querystring side='attacker' page=None %}" class="rounded px-2.5 py-1 font-display uppercase tracking-wide {% if side == 'attacker' %}bg-gold text-space font-semibold{% else %}text-muted hover:text-ink{% endif %}">Attacker</a>
+      </div>
+      {% endif %}
+      {% if active_filters %}
+        {% for f in active_filters %}
+          <a rel="nofollow" href="{{ f.remove_url }}" hx-get="{{ f.remove_url }}" class="chip !border-cyan/40 !text-cyan" title="Remove filter">{{ f.label }}: {{ f.name }} ✕</a>
+        {% endfor %}
+        <a rel="nofollow" href="{% url 'killboard:list' %}" hx-get="{% url 'killboard:list' %}" class="chip !text-loss hover:!border-loss/40">Clear all</a>
+      {% endif %}
+    </div>
+
+    <div class="panel divide-y divide-line/70 overflow-hidden">
+      {% for km in page %}
+        {% ifchanged km.killmail_time|date:"Y-m-d" %}
+        <div class="bg-panel2/40 px-4 py-1.5">
+          <p class="eyebrow text-faint">
+            {% if km.killmail_time|date:"Y-m-d" == today_str %}Today
+            {% elif km.killmail_time|date:"Y-m-d" == yesterday_str %}Yesterday
+            {% else %}{{ km.killmail_time|date:"l · M j" }}{% endif %}
+          </p>
+        </div>
+        {% endifchanged %}
+        <div class="group flex items-center gap-3 px-3 py-3 hover:bg-panel2/50 transition sm:gap-4 sm:px-4">
+          <span class="h-12 w-1 shrink-0 rounded {% if km.home_corp_role == 'victim' %}bg-loss{% else %}bg-kill{% endif %}"></span>
+          <a href="{% url 'killboard:detail' km.killmail_id %}" class="relative shrink-0">
+            <img src="{% eve_type_render km.victim_ship_type_id 64 %}" alt="" loading="lazy" class="h-12 w-12 rounded-md bg-space object-cover ring-1 ring-line">
+            {% if km.attacker_count > 1 %}<span class="data absolute -bottom-1 -right-1 rounded bg-space/90 px-1 text-[9px] font-semibold text-muted ring-1 ring-line" title="{{ km.attacker_count }} attackers">{{ km.attacker_count }}</span>{% endif %}
+          </a>
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2">
+              <a rel="nofollow" href="{% querystring ship_type_id=km.victim_ship_type_id page=None %}" hx-get="{% querystring ship_type_id=km.victim_ship_type_id page=None %}" class="truncate font-medium text-ink hover:text-gold transition">{% type_name km.victim_ship_type_id %}</a>
+              {% if km.is_solo %}<span class="chip">solo</span>{% endif %}
+              {% if km.is_npc %}<span class="chip">npc</span>{% endif %}
+              {% if km.is_awox %}<span class="chip !text-loss">awox</span>{% endif %}
+            </div>
+            <div class="mt-0.5 flex items-center gap-1.5 text-xs text-faint">
+              {% system_security km.solar_system_id as sec %}
+              <span class="data font-semibold {{ sec|sec_class }}">{{ sec }}</span>
+              <a rel="nofollow" href="{% querystring system_id=km.solar_system_id page=None %}" hx-get="{% querystring system_id=km.solar_system_id page=None %}" class="text-muted hover:text-gold">{% system_name km.solar_system_id %}</a>
+              <span class="hidden sm:inline">· <a rel="nofollow" href="{% querystring region_id=km.region_id page=None %}" hx-get="{% querystring region_id=km.region_id page=None %}" class="hover:text-gold">{% region_name km.region_id %}</a></span>
+            </div>
+            {% with fb=km.final_blowers.0 %}
+            {% if fb and fb.character_id %}
+            <div class="mt-1 flex items-center gap-1.5 text-[11px]">
+              <img src="{% eve_portrait fb.character_id 32 %}" alt="" loading="lazy" class="h-4 w-4 rounded-full ring-1 ring-line">
+              <span class="text-faint">final blow</span>
+              <span class="truncate {% if km.home_corp_role == 'victim' %}text-loss/80{% else %}text-gold/90{% endif %}">{% eve_name fb.character_id %}</span>
+            </div>
+            {% endif %}
+            {% endwith %}
+          </div>
+          {% if km.victim_character_id %}
+          <div class="hidden w-40 items-center gap-2.5 sm:flex">
+            <img src="{% eve_portrait km.victim_character_id 32 %}" alt="" loading="lazy" class="h-8 w-8 shrink-0 rounded-full ring-1 ring-line">
+            <div class="min-w-0 text-xs leading-tight">
+              <a rel="nofollow" href="{% querystring character_id=km.victim_character_id page=None %}" hx-get="{% querystring character_id=km.victim_character_id page=None %}" class="block truncate text-muted hover:text-gold">{% eve_name km.victim_character_id %}</a>
+              <a rel="nofollow" href="{% querystring corporation_id=km.victim_corporation_id page=None %}" hx-get="{% querystring corporation_id=km.victim_corporation_id page=None %}" class="block truncate text-faint hover:text-gold">{% eve_name km.victim_corporation_id %}</a>
+            </div>
+          </div>
+          {% endif %}
+          <a href="{% url 'killboard:detail' km.killmail_id %}" class="shrink-0 text-right">
+            <p class="data text-sm font-semibold {% if km.home_corp_role == 'victim' %}text-loss{% else %}text-gold{% endif %}">{{ km.total_value|isk }}</p>
+            <p class="text-[11px] text-faint">{{ km.killmail_time|timesince|truncatewords:1 }} ago · {{ km.points }} pts</p>
+          </a>
+        </div>
+      {% empty %}
+        <div class="px-4 py-16 text-center">
+          <p class="font-display text-lg text-muted">No killmails in range</p>
+          <p class="mt-1 text-sm text-faint">{% if active_filters or days %}Try widening the window or clearing filters.{% else %}Combat records appear here as they're discovered.{% endif %}</p>
+        </div>
+      {% endfor %}
+    </div>
+
+    {% if page.paginator.num_pages > 1 %}
+    <div class="mt-5 flex items-center justify-center gap-4 text-sm">
+      {% if page.has_previous %}<a rel="nofollow" class="btn-ghost" href="{% querystring page=page.previous_page_number %}" hx-get="{% querystring page=page.previous_page_number %}">← Prev</a>{% endif %}
+      <span class="data text-faint">Page {{ page.number }} / {{ page.paginator.num_pages }}</span>
+      {% if page.has_next %}<a rel="nofollow" class="btn-ghost" href="{% querystring page=page.next_page_number %}" hx-get="{% querystring page=page.next_page_number %}">Next →</a>{% endif %}
+    </div>
+    {% endif %}
+</div>

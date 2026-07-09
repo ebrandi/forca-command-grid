@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% load static eve %}
+{% block title %}Approvals · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<a href="{% url 'admin_audit:mentorship_hub' %}" class="text-xs text-faint hover:text-gold">&larr; Mentorship</a>
+<header class="mt-2 mb-6">
+  <p class="eyebrow text-gold">Mentorship</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">Approvals</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">Sign off on Veteran Mentor and Cadet applications, and on the pairings waiting to fly. Eligibility is measured against your programme thresholds — you have the final call.</p>
+</header>
+
+{% comment %}Three queues: pending mentors, pending cadets, pending pairings.
+Each card shows the evidence the decision needs, then approve / reject forms.
+Reject carries an optional reason input so the applicant gets context.{% endcomment %}
+
+<!-- Pending Veteran Mentors -->
+<section class="mb-8">
+  <div class="mb-3 flex items-center justify-between">
+    <h2 class="eyebrow text-gold">Veteran Mentor applications</h2>
+    <span class="chip text-muted">{{ mentors|length }} waiting</span>
+  </div>
+  <div class="space-y-3">
+    {% for m in mentors %}
+    <div class="panel p-5">
+      <div class="flex flex-wrap items-start gap-4">
+        <img src="{% eve_portrait m.user.main_character.character_id 64 %}" alt="" class="h-14 w-14 shrink-0 rounded-full ring-1 ring-line">
+        <div class="min-w-0 flex-1">
+          <div class="flex flex-wrap items-center gap-2">
+            <h3 class="font-display text-base font-semibold text-ink">{{ m.user.display_name }}</h3>
+            {% if m.eligibility.eligible %}
+            <span class="chip text-kill">Eligible</span>
+            {% else %}
+            <span class="chip text-gold">Not eligible per thresholds</span>
+            {% endif %}
+            {% if m.eligibility.confidence %}<span class="chip text-cyan">{{ m.eligibility.confidence }}% confidence</span>{% endif %}
+          </div>
+          <p class="mt-1 text-[11px] text-faint">
+            <span class="data">{{ m.eligibility.character_age_days }}</span>d character age
+            &middot; <span class="data">{{ m.eligibility.corp_tenure_days }}</span>d corp tenure
+            {% if m.timezone %}&middot; {{ m.timezone }}{% endif %}
+            {% if m.languages %}&middot; {{ m.languages|join:", " }}{% endif %}
+          </p>
+          {% if m.areas %}
+          <div class="mt-2 flex flex-wrap gap-1.5">
+            {% for area in m.areas %}<span class="chip text-cyan">{{ area }}</span>{% endfor %}
+          </div>
+          {% endif %}
+          {% if m.eligibility.reasons %}
+          <ul class="mt-2 space-y-0.5 text-[11px] text-faint">
+            {% for reason in m.eligibility.reasons %}
+            <li class="flex items-start gap-1.5"><span class="mt-0.5 text-faint">&middot;</span><span>{{ reason }}</span></li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+          {% if m.bio %}<p class="mt-2 text-sm text-muted">{{ m.bio }}</p>{% endif %}
+        </div>
+      </div>
+      <div class="mt-4 flex flex-wrap items-end gap-3 border-t border-line/40 pt-3">
+        <form method="post" action="{% url 'admin_audit:mentorship_mentor_decide' m.id %}">
+          {% csrf_token %}
+          <input type="hidden" name="decision" value="approve">
+          <button class="btn-gold !px-3 !py-1.5 text-xs">Approve mentor</button>
+        </form>
+        <form method="post" action="{% url 'admin_audit:mentorship_mentor_decide' m.id %}" class="flex items-end gap-2">
+          {% csrf_token %}
+          <input type="hidden" name="decision" value="reject">
+          <div>
+            <label class="label" for="mreason-{{ m.id }}">Reason (optional)</label>
+            <input id="mreason-{{ m.id }}" name="reason" class="input-field w-56 text-xs" placeholder="Why not this time…">
+          </div>
+          <button class="btn-danger !px-3 !py-1.5 text-xs">Reject</button>
+        </form>
+      </div>
+    </div>
+    {% empty %}
+    <div class="panel p-8 text-center">
+      <svg class="mx-auto h-8 w-8 text-faint"><use href="#i-shield"/></svg>
+      <p class="mt-3 text-sm text-faint">No mentor applications waiting — nice and clear. New Veteran Mentors will land here to sign off.</p>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- Pending Cadets -->
+<section class="mb-8">
+  <div class="mb-3 flex items-center justify-between">
+    <h2 class="eyebrow text-gold">Cadet applications</h2>
+    <span class="chip text-muted">{{ mentees|length }} waiting</span>
+  </div>
+  <div class="space-y-3">
+    {% for m in mentees %}
+    <div class="panel p-5">
+      <div class="flex flex-wrap items-start gap-4">
+        <img src="{% eve_portrait m.user.main_character.character_id 64 %}" alt="" class="h-14 w-14 shrink-0 rounded-full ring-1 ring-line">
+        <div class="min-w-0 flex-1">
+          <div class="flex flex-wrap items-center gap-2">
+            <h3 class="font-display text-base font-semibold text-ink">{{ m.user.display_name }}</h3>
+            <span class="chip text-cyan">{{ m.get_experience_display }}</span>
+            {% if m.eligibility.eligible %}
+            <span class="chip text-kill">Eligible</span>
+            {% elif m.eligibility %}
+            <span class="chip text-gold">Not eligible per thresholds</span>
+            {% endif %}
+          </div>
+          <p class="mt-1 text-[11px] text-faint">
+            {% if m.timezone %}{{ m.timezone }}{% endif %}
+            {% if m.eligibility.reasons %}&middot; {{ m.eligibility.reasons|join:" · " }}{% endif %}
+          </p>
+          {% if m.goals %}
+          <div class="mt-2 flex flex-wrap gap-1.5">
+            {% for goal in m.goals %}<span class="chip text-gold">{{ goal }}</span>{% endfor %}
+          </div>
+          {% endif %}
+          {% if m.notes %}<p class="mt-2 text-sm text-muted">{{ m.notes }}</p>{% endif %}
+        </div>
+      </div>
+      <div class="mt-4 flex flex-wrap items-end gap-3 border-t border-line/40 pt-3">
+        <form method="post" action="{% url 'admin_audit:mentorship_mentee_decide' m.id %}">
+          {% csrf_token %}
+          <input type="hidden" name="decision" value="approve">
+          <button class="btn-gold !px-3 !py-1.5 text-xs">Approve cadet</button>
+        </form>
+        <form method="post" action="{% url 'admin_audit:mentorship_mentee_decide' m.id %}" class="flex items-end gap-2">
+          {% csrf_token %}
+          <input type="hidden" name="decision" value="reject">
+          <div>
+            <label class="label" for="creason-{{ m.id }}">Reason (optional)</label>
+            <input id="creason-{{ m.id }}" name="reason" class="input-field w-56 text-xs" placeholder="Why not this time…">
+          </div>
+          <button class="btn-danger !px-3 !py-1.5 text-xs">Reject</button>
+        </form>
+      </div>
+    </div>
+    {% empty %}
+    <div class="panel p-8 text-center">
+      <svg class="mx-auto h-8 w-8 text-faint"><use href="#i-rookie"/></svg>
+      <p class="mt-3 text-sm text-faint">No cadet applications waiting — nice and clear. New pilots asking for a mentor will show up here.</p>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- Pending Pairings -->
+<section class="mb-4">
+  <div class="mb-3 flex items-center justify-between">
+    <h2 class="eyebrow text-gold">Pairings awaiting sign-off</h2>
+    <span class="chip text-muted">{{ pairings|length }} waiting</span>
+  </div>
+  <div class="space-y-3">
+    {% for p in pairings %}
+    <div class="panel p-5">
+      <div class="flex flex-wrap items-start justify-between gap-4">
+        <div class="min-w-0">
+          <p class="text-sm text-ink">
+            <span class="font-semibold">{{ p.mentor.user.display_name }}</span>
+            <span class="text-faint"> mentors </span>
+            <span class="font-semibold">{{ p.mentee.user.display_name }}</span>
+          </p>
+          <div class="mt-2 flex flex-wrap items-center gap-2">
+            <span class="chip text-cyan">Match {{ p.match_score|floatformat:0 }}</span>
+            <span class="chip text-muted">{{ p.get_initiated_by_display }}</span>
+          </div>
+          {% if p.match_reasons %}
+          <ul class="mt-2 space-y-0.5 text-[11px] text-faint">
+            {% for reason in p.match_reasons %}
+            <li class="flex items-start gap-1.5"><span class="mt-0.5 text-faint">&middot;</span><span>{{ reason }}</span></li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+        </div>
+      </div>
+      <div class="mt-4 flex flex-wrap items-end gap-3 border-t border-line/40 pt-3">
+        <form method="post" action="{% url 'admin_audit:mentorship_pairing_decide' p.id %}">
+          {% csrf_token %}
+          <input type="hidden" name="decision" value="approve">
+          <button class="btn-gold !px-3 !py-1.5 text-xs">Approve &amp; activate</button>
+        </form>
+        <form method="post" action="{% url 'admin_audit:mentorship_pairing_decide' p.id %}" class="flex items-end gap-2">
+          {% csrf_token %}
+          <input type="hidden" name="decision" value="reject">
+          <div>
+            <label class="label" for="preason-{{ p.id }}">Reason (optional)</label>
+            <input id="preason-{{ p.id }}" name="reason" class="input-field w-56 text-xs" placeholder="Why not this pairing…">
+          </div>
+          <button class="btn-danger !px-3 !py-1.5 text-xs">Reject</button>
+        </form>
+      </div>
+    </div>
+    {% empty %}
+    <div class="panel p-8 text-center">
+      <svg class="mx-auto h-8 w-8 text-faint"><use href="#i-check"/></svg>
+      <p class="mt-3 text-sm text-faint">No pairings awaiting sign-off. Head to <a href="{% url 'admin_audit:mentorship_matching' %}" class="text-gold hover:underline">Matching</a> to pair a cadet with a mentor.</p>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

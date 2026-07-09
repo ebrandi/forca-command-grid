@@ -1,0 +1,2 @@
+{# Colored chip; a literal class per colour so Tailwind's JIT keeps them. Params: label, color. #}
+<span class="chip {% if color == 'kill' %}!border-kill/40 !text-kill{% elif color == 'loss' %}!border-loss/40 !text-loss{% elif color == 'gold' %}!border-gold/40 !text-gold{% elif color == 'win' %}!border-win/40 !text-win{% elif color == 'cyan' %}!border-cyan/40 !text-cyan{% elif color == 'goldb' %}!border-goldb/40 !text-goldb{% else %}!text-faint{% endif %}">{{ label }}</span>

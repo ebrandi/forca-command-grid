@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Buyback Settings · [FORCA] Command Grid{% endblock %}
+{% block content %}
+
+<header class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <p class="eyebrow">Buyback · Leadership</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">Buyback settings</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">Set the payout rate per item location and choose who can use the service. Rates are the fraction of the live Jita sell price paid.</p>
+  </div>
+  <a href="{% url 'buyback:board' %}" class="btn-ghost text-sm">← Board</a>
+</header>
+
+
+<form method="post" action="{% url 'buyback:config' %}" class="space-y-5">
+  {% csrf_token %}
+
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">Service</h2>
+    <div class="grid gap-3 sm:grid-cols-2">
+      <div><label class="label">Name</label>{{ form.name }}</div>
+      <div>
+        <label class="label">Audience</label>{{ form.audience }}
+        <p class="mt-1 text-[11px] text-faint">Who can use it. Alliance pilots must be registered.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">Payout rate by item location</h2>
+    <p class="mb-3 text-xs text-faint">Fraction of Jita sell price paid. 0.90 means the seller receives 90% (a 10% margin).</p>
+    <div class="grid gap-3 sm:grid-cols-3">
+      <div><label class="label">Highsec</label>{{ form.highsec_pct }}</div>
+      <div><label class="label">Lowsec</label>{{ form.lowsec_pct }}</div>
+      <div><label class="label">Nullsec / WH</label>{{ form.nullsec_pct }}</div>
+    </div>
+  </section>
+
+  <section class="panel p-5">
+    <h2 class="eyebrow text-gold">Ore / mineral mode</h2>
+    <label class="mt-2 flex items-center gap-2 text-sm text-muted">{{ form.ore_mode_enabled }} Let sellers value ore/ice by its refined mineral output</label>
+    <div class="mt-3 max-w-xs"><label class="label">Effective refine yield</label>{{ form.reprocessing_pct }}
+      <p class="mt-1 text-[11px] text-faint">The fraction of minerals you actually get reprocessing (skills + structure + rig), e.g. 0.906 for max. Ore is valued at (mineral output × this) then the location rate.</p>
+    </div>
+  </section>
+
+  <div class="flex justify-end"><button class="btn-gold">Save settings</button></div>
+</form>
+
+<form method="post" action="{% url 'buyback:config' %}" class="mt-6 space-y-4">
+  {% csrf_token %}
+  <section class="panel p-5 border border-loss/30">
+    <h2 class="eyebrow text-gold">Corp-funded guaranteed buyback</h2>
+    <p class="mt-1 text-xs text-faint">The corp itself buys a member's lot at the quoted price — a member requests, an officer approves (budget-capped), then the corp pays in-game and the app reconciles that payment read-only against the corp wallet. <span class="text-loss">No ISK moves through the app.</span> Ships off; arm deliberately.</p>
+    <label class="mt-3 flex items-center gap-2 text-sm text-muted">{{ gb_form.enabled }} Enable guaranteed buyback (master switch)</label>
+    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+      <div><label class="label">Audience</label>{{ gb_form.audience }}<p class="mt-1 text-[11px] text-faint">Keep Disabled until you're ready — both this and the master switch must be on.</p></div>
+      <label class="flex items-center gap-2 self-end pb-2 text-sm text-muted">{{ gb_form.require_esi_reconcile }} Settle only from the corp wallet (ESI)</label>
+      <div><label class="label">Per-lot cap (ISK)</label>{{ gb_form.per_lot_cap }}{% if gb_form.per_lot_cap.errors %}<p class="text-xs text-loss">{{ gb_form.per_lot_cap.errors|join:" " }}</p>{% endif %}</div>
+      <div><label class="label">Rolling 24h budget (ISK)</label>{{ gb_form.daily_budget }}{% if gb_form.daily_budget.errors %}<p class="text-xs text-loss">{{ gb_form.daily_budget.errors|join:" " }}</p>{% endif %}</div>
+    </div>
+    <div><label class="label mt-3">Intro shown to members</label>{{ gb_form.intro_text }}</div>
+    <div class="mt-4 flex items-center justify-between">
+      <a href="{% url 'buyback:guaranteed_queue' %}" class="btn-ghost text-sm">Review queue →</a>
+      <button name="save_guaranteed" value="1" class="btn-gold">Save guaranteed settings</button>
+    </div>
+  </section>
+</form>
+{% endblock %}

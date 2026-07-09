@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}New project · Industry{% endblock %}
+{% block content %}
+<a href="{% url 'industry:board' %}" class="text-xs text-faint hover:text-gold">← Industry projects</a>
+<header class="mt-3 mb-6">
+  <p class="eyebrow">Production</p>
+  <h1 class="mt-1 text-2xl font-bold text-ink">Start a build project</h1>
+  <p class="mt-1 text-sm text-faint">Name it, pick what to build, and we’ll cost the whole bill of materials.</p>
+</header>
+
+<form method="post" class="max-w-2xl space-y-5">
+  {% csrf_token %}
+  {% if form.non_field_errors or item_form.non_field_errors %}
+    <div class="rounded-md border border-loss/40 bg-loss/10 px-4 py-2 text-sm text-loss/90">
+      {{ form.non_field_errors }}{{ item_form.non_field_errors }}
+    </div>
+  {% endif %}
+
+  <div class="panel space-y-4 p-5">
+    <div>
+      <label class="label" for="{{ form.name.id_for_label }}">Project name</label>
+      {{ form.name }}
+      {% if form.name.errors %}<p class="mt-1 text-xs text-loss/90">{{ form.name.errors|striptags }}</p>{% endif %}
+    </div>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div><label class="label">Objective</label>{{ form.objective_type }}</div>
+    </div>
+    <div><label class="label">Notes (optional)</label>{{ form.description }}</div>
+  </div>
+
+  <div class="panel space-y-4 p-5">
+    <h2 class="eyebrow text-gold">What to build</h2>
+    <div>
+      <label class="label">Item</label>
+      {% include "components/_type_picker.html" with field="type_id" endpoint="/industry/type-search/?buildable=1" placeholder="Search a ship, module, component…" required=1 %}
+      <p class="mt-1 text-xs text-faint">Pick from the list — anything with a manufacturing or reaction recipe.</p>
+    </div>
+    <div class="grid gap-4 sm:grid-cols-3">
+      <div><label class="label">Quantity</label>{{ item_form.quantity }}</div>
+      <div><label class="label">Material efficiency %</label>{{ item_form.me }}</div>
+      <div><label class="label">Strategy</label>{{ item_form.strategy }}</div>
+    </div>
+    <input type="hidden" name="build_or_buy" value="build">
+  </div>
+
+  <div class="flex gap-2">
+    <button class="btn-gold">Create &amp; cost it</button>
+    <a href="{% url 'industry:board' %}" class="btn-ghost">Cancel</a>
+  </div>
+</form>
+{% endblock %}

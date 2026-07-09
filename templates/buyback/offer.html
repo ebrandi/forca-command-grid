@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}Buyback Lot #{{ offer.pk }} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<a href="{% url 'buyback:board' %}" class="text-xs text-faint hover:text-gold">← Buyback board</a>
+
+
+<header class="mb-5 mt-3 flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold text-ink">Lot #{{ offer.pk }}</h1>
+    <p class="mt-1 flex items-center gap-2 text-sm text-faint">
+      <span class="chip {% if offer.status == 'open' %}!text-gold{% elif offer.status == 'paid' %}!text-kill{% elif offer.status == 'cancelled' %}!text-faint{% else %}!text-cyan{% endif %}">{{ offer.get_status_display }}</span>
+      <span class="chip {% if offer.sec_band == 'highsec' %}!text-kill{% elif offer.sec_band == 'lowsec' %}!text-gold{% else %}!text-loss{% endif %}">{{ offer.get_sec_band_display }}</span>
+      {{ offer.item_count }} items · {{ offer.volume_m3|floatformat:0 }} m³
+      {% if offer.location_name %}· at {{ offer.location_name }}{% endif %}
+    </p>
+  </div>
+  <div class="text-right">
+    <p class="data text-3xl font-bold text-gold">{{ offer.offer_total|isk }}</p>
+    <p class="text-xs text-faint">Jita sell {{ offer.jita_total|isk }} · save {{ offer.savings_vs_jita|isk }}</p>
+  </div>
+</header>
+
+{% if offer.notes %}<p class="panel mb-4 px-4 py-2 text-sm text-muted">“{{ offer.notes }}”</p>{% endif %}
+
+<div class="mb-5 flex flex-wrap items-center gap-3">
+  <span class="flex items-center gap-2 text-sm text-faint">
+    Seller:
+    {% if offer.seller_character_id %}<img src="{% eve_portrait offer.seller_character_id 32 %}" alt="" class="h-6 w-6 rounded-full ring-1 ring-line">{% eve_name offer.seller_character_id %}{% else %}—{% endif %}
+  </span>
+  {% if offer.buyer_character_id %}
+  <span class="flex items-center gap-2 text-sm text-faint">Buyer:
+    <img src="{% eve_portrait offer.buyer_character_id 32 %}" alt="" class="h-6 w-6 rounded-full ring-1 ring-line">{% eve_name offer.buyer_character_id %}
+  </span>
+  {% endif %}
+</div>
+
+<!-- Actions -->
+<div class="mb-5 flex flex-wrap gap-2">
+  {% if offer.status == 'open' and not is_seller %}
+    <form method="post" action="{% url 'buyback:buy_offer' offer.pk %}">{% csrf_token %}<button class="btn-gold">Buy this lot</button></form>
+  {% endif %}
+  {% if offer.status == 'open' and is_seller %}
+    <form method="post" action="{% url 'buyback:offer_action' offer.pk %}">{% csrf_token %}<button name="action" value="cancel" class="btn-danger">Cancel lot</button></form>
+  {% endif %}
+  {% if offer.status == 'purchased' %}
+    <form method="post" action="{% url 'buyback:offer_action' offer.pk %}">{% csrf_token %}<button name="action" value="paid" class="btn-gold">Mark paid &amp; delivered</button></form>
+    {% if is_officer or is_seller %}<form method="post" action="{% url 'buyback:offer_action' offer.pk %}">{% csrf_token %}<button name="action" value="cancel" class="btn-ghost">Cancel</button></form>{% endif %}
+  {% endif %}
+</div>
+
+{% if offer.status == 'purchased' %}
+<div class="panel mb-5 border-l-2 border-cyan/50 px-4 py-3 text-sm text-muted">Reserved. Settle in-game: the buyer pays {{ offer.offer_total|isk }} ISK to the seller, and the seller contracts the items to the buyer. Then mark it paid.</div>
+{% endif %}
+
+<!-- Manifest -->
+<div class="panel overflow-hidden">
+  <div class="overflow-x-auto"><table class="w-full text-sm" x-data="sortableTable()">
+    <thead class="text-left text-faint"><tr class="border-b border-line/60">
+      <th class="px-4 py-2 font-medium">Item</th>
+      <th class="px-4 py-2 text-right font-medium" :aria-sort="ariaSort('qty')"><button type="button" @click="sortBy('qty')" class="inline-flex items-center gap-1 cursor-pointer select-none hover:text-gold">Qty<span x-show="key==='qty'" x-text="dir==='asc'?' ↑':' ↓'" class="text-gold"></span></button></th>
+      <th class="px-4 py-2 text-right font-medium" :aria-sort="ariaSort('unit')"><button type="button" @click="sortBy('unit')" class="inline-flex items-center gap-1 cursor-pointer select-none hover:text-gold">Unit (Jita)<span x-show="key==='unit'" x-text="dir==='asc'?' ↑':' ↓'" class="text-gold"></span></button></th>
+      <th class="px-4 py-2 text-right font-medium" :aria-sort="ariaSort('offer')"><button type="button" @click="sortBy('offer')" class="inline-flex items-center gap-1 cursor-pointer select-none hover:text-gold">Line offer<span x-show="key==='offer'" x-text="dir==='asc'?' ↑':' ↓'" class="text-gold"></span></button></th>
+    </tr></thead>
+    <tbody x-ref="body">
+      {% for it in offer.items %}
+      <tr class="border-t border-line/40" data-row>
+        <td class="px-4 py-2"><span class="flex items-center gap-2"><img src="{% eve_type_icon it.type_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">{{ it.name }}</span></td>
+        <td class="px-4 py-2 text-right data text-faint" data-sort-key="qty" data-sort-value="{{ it.quantity }}">{{ it.quantity }}</td>
+        <td class="px-4 py-2 text-right data text-muted" data-sort-key="unit" data-sort-value="{{ it.unit_jita }}">{{ it.unit_jita|isk }}</td>
+        <td class="px-4 py-2 text-right data text-ink" data-sort-key="offer" data-sort-value="{{ it.line_offer }}">{{ it.line_offer|isk }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+</div>
+{% endblock %}

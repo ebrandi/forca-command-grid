@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}Integrity flags · {{ contest.name }} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-gold">Raffle · {{ contest.name }}</p>
+    <h1 class="mt-1 text-2xl font-bold text-ink">Integrity flags</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">Automatically-detected suspicious ticket events. Nothing is deleted — review each one, then <span class="text-ink">dismiss</span> to keep the ticket or <span class="text-ink">uphold</span> to disqualify it.</p>
+  </div>
+  <a href="{% url 'admin_audit:raffle_detail' contest.pk %}" class="btn-ghost text-sm">← Back</a>
+</header>
+
+{% comment %}Open flags — pending officer review, each with a resolve form.{% endcomment %}
+<section class="panel overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Open · awaiting review</h2></div>
+  <div class="divide-y divide-line/40">
+    {% for flag in flags %}
+      {% if flag.status == 'open' %}
+        <div class="px-4 py-3">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="chip !border-loss/40 !text-loss shrink-0">{{ flag.get_flag_type_display }}</span>
+            <span class="min-w-0 flex-1 text-sm text-ink">{{ flag.detail|default:"Flagged for review." }}</span>
+            <span class="data shrink-0 text-[11px] text-faint">{{ flag.created_at|date:"M j H:i" }}</span>
+          </div>
+          <p class="mt-1 text-[11px] text-faint">
+            {% if flag.character_id %}Character <span class="data text-muted">{{ flag.character_id }}</span>{% endif %}
+            {% if flag.ledger_entry %}· ledger entry <span class="data text-muted">#{{ flag.ledger_entry_id }}</span> ({{ flag.ledger_entry.amount }}t {{ flag.ledger_entry.source_key }}){% else %}· not linked to a specific ticket{% endif %}
+          </p>
+          <form method="post" action="{% url 'admin_audit:raffle_flag_resolve' contest.pk flag.pk %}" class="mt-2 flex flex-wrap items-center gap-2" data-confirm="Resolve this flag? Upholding disqualifies the linked ticket; dismissing keeps it. Continue?">
+            {% csrf_token %}
+            <input name="resolution" placeholder="Resolution note (optional)" class="input-field !py-1 !text-xs flex-1 min-w-[10rem]">
+            <button name="action" value="dismiss" class="btn-ghost !py-1 !text-xs">Dismiss (keep)</button>
+            <button name="action" value="uphold" class="btn-ghost !py-1 !text-xs !text-loss hover:!border-loss/40">Uphold (disqualify)</button>
+          </form>
+        </div>
+      {% endif %}
+    {% empty %}
+      <p class="px-4 py-10 text-center text-sm text-faint">No flags raised for this contest.</p>
+    {% endfor %}
+  </div>
+</section>
+
+{% comment %}Resolved flags — read-only history, greyed out.{% endcomment %}
+<section class="panel mt-6 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Resolved</h2></div>
+  <div class="divide-y divide-line/40">
+    {% for flag in flags %}
+      {% if flag.status != 'open' %}
+        <div class="flex flex-wrap items-center gap-2 px-4 py-2.5 text-sm opacity-60">
+          <span class="chip shrink-0">{{ flag.get_flag_type_display }}</span>
+          <span class="min-w-0 flex-1 truncate text-muted">{{ flag.detail|default:"—" }}{% if flag.resolution %} · <span class="text-faint">{{ flag.resolution }}</span>{% endif %}</span>
+          <span class="chip shrink-0 {% if flag.status == 'upheld' %}!border-loss/40 !text-loss{% else %}!text-faint{% endif %}">{{ flag.get_status_display }}</span>
+          <span class="data shrink-0 text-[11px] text-faint">{{ flag.created_at|date:"M j" }}</span>
+        </div>
+      {% endif %}
+    {% empty %}
+      <p class="px-4 py-6 text-center text-sm text-faint">Nothing resolved yet.</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

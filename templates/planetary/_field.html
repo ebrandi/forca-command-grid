@@ -1,0 +1,7 @@
+{# One labelled form field: label + widget + help text + errors. #}
+<div>
+  <label class="label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+  {{ field }}
+  {% if field.help_text %}<p class="mt-1 text-[11px] leading-snug text-faint">{{ field.help_text }}</p>{% endif %}
+  {% if field.errors %}<p class="mt-1 text-xs text-loss">{{ field.errors|join:" " }}</p>{% endif %}
+</div>

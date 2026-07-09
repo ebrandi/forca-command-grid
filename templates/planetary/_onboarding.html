@@ -1,0 +1,41 @@
+{% load eve %}
+{# Didactic intro: the tiers and the planets. Shared by the landing and /learn/. #}
+<section class="panel p-5">
+  <p class="eyebrow text-gold">What is Planetary Industry?</p>
+  <h2 class="mt-1 text-lg font-semibold text-ink">Passive ISK from the ground up</h2>
+  <p class="mt-2 max-w-3xl text-sm text-faint">
+    You deploy colonies on planets. <span class="text-ink">Extractor</span> planets pull
+    raw resources and refine them; <span class="text-ink">factory</span> planets combine
+    materials into higher-value goods. Reset the extractors on your own schedule, haul the
+    output to market, and it earns while you're doing other things. Taxes, hauling and
+    market prices decide whether it's worth it — this planner does that maths for you.
+  </p>
+
+  {# The P0 → P4 ladder #}
+  <div class="mt-4 grid gap-2 sm:grid-cols-5">
+    {% for tier, meta in tier_meta %}
+    <div class="rounded-lg border border-line bg-panel2/60 p-3">
+      <div class="flex items-center justify-between">
+        <span class="chip {% if tier == 'P0' %}!text-faint{% elif tier == 'P1' %}!border-cyan/40 !text-cyan{% elif tier == 'P2' %}!border-gold/40 !text-gold{% elif tier == 'P3' %}!border-win/40 !text-win{% else %}!border-goldb/40 !text-goldb{% endif %}">{{ tier }}</span>
+        {% if not forloop.last %}<svg class="h-3 w-3 text-faint"><use href="#i-bolt"/></svg>{% endif %}
+      </div>
+      <p class="mt-2 text-xs font-medium text-ink">{{ meta.label }}</p>
+      <p class="mt-1 text-[11px] leading-snug text-faint">{{ meta.short }}</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  {# The 8 planet types #}
+  <p class="eyebrow mt-6 text-faint">The eight planet types</p>
+  <div class="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+    {% for p in planet_types %}
+    <a href="{% url 'planetary:explore' %}?planet={{ p.slug }}" class="group rounded-lg border border-line bg-panel2/40 p-3 hover:border-gold/40">
+      <div class="flex items-center gap-2">
+        <img src="{% eve_type_render p.type_id 32 %}" alt="" loading="lazy" class="h-7 w-7 rounded bg-space ring-1 ring-line">
+        <p class="text-sm font-medium text-ink group-hover:text-gold">{{ p.name }}</p>
+      </div>
+      <p class="mt-1 text-[11px] leading-snug text-faint">{{ p.best_for }}</p>
+    </a>
+    {% endfor %}
+  </div>
+</section>

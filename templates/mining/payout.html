@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}{{ payout.name }} · Payout · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<a href="{% url 'mining:payouts' %}" class="text-xs text-faint hover:text-gold">← Payouts</a>
+
+<header class="mt-2 mb-6 flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <p class="eyebrow text-gold">{{ payout.get_method_display }} · tax {{ payout.tax_rate|floatformat:2 }}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{{ payout.name }}</h1>
+    <p class="mt-1 text-sm text-faint">{{ payout.period_start|date:"j M Y" }} – {{ payout.period_end|date:"j M Y" }} · {{ lines|length }} participant{{ lines|length|pluralize }} · {{ payout.get_status_display }}</p>
+  </div>
+  <div class="panel px-6 py-4 text-center">
+    <p class="font-display text-2xl font-bold text-gold">{{ payout.pool_isk|isk }}</p>
+    <p class="text-[10px] uppercase tracking-wide text-faint">pool</p>
+  </div>
+</header>
+
+
+<div class="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+  <div class="panel px-4 py-3"><p class="eyebrow text-faint">Value mined</p><p class="mt-1 text-lg font-bold text-ink">{{ payout.total_value|isk }}</p></div>
+  <div class="panel px-4 py-3"><p class="eyebrow text-faint">Gross</p><p class="mt-1 text-lg font-bold text-ink">{{ total_gross|isk }}</p></div>
+  <div class="panel px-4 py-3"><p class="eyebrow text-faint">Tax kept</p><p class="mt-1 text-lg font-bold text-gold">{{ total_tax|isk }}</p></div>
+  <div class="panel px-4 py-3"><p class="eyebrow text-faint">Net to pilots</p><p class="mt-1 text-lg font-bold text-win">{{ total_net|isk }}</p></div>
+</div>
+
+{% if payout.status != 'final' %}
+<div class="mb-4 flex flex-wrap items-end gap-2">
+  <form method="post" action="{% url 'mining:payout_recompute' payout.pk %}" class="flex items-end gap-2">{% csrf_token %}
+    <label class="block"><span class="eyebrow text-faint">Pool (ISK)</span><input name="pool_isk" value="{{ payout.pool_isk|floatformat:0 }}" type="number" class="input-field mt-1 w-40"></label>
+    <button class="btn-ghost text-sm">Recompute</button>
+  </form>
+  <form method="post" action="{% url 'mining:payout_finalise' payout.pk %}" class="ml-auto">{% csrf_token %}<button class="btn-ghost text-sm">Finalise</button></form>
+</div>
+{% endif %}
+
+<div class="panel overflow-x-auto">
+  <table class="w-full min-w-[680px] text-sm">
+    <thead class="text-left text-xs uppercase tracking-wide text-faint">
+      <tr class="border-b border-line/50"><th class="px-3 py-2">Pilot</th><th class="px-3 py-2 text-right">Value mined</th><th class="px-3 py-2 text-right">Share</th><th class="px-3 py-2 text-right">Gross</th><th class="px-3 py-2 text-right">Tax</th><th class="px-3 py-2 text-right">Net</th><th class="px-3 py-2 text-right">Paid</th></tr>
+    </thead>
+    <tbody class="divide-y divide-line/30">
+      {% for line in lines %}
+      <tr class="hover:bg-panel2 {% if line.paid %}opacity-60{% endif %}">
+        <td class="px-3 py-2 text-ink">{{ line.character_name }}</td>
+        <td class="px-3 py-2 text-right text-muted">{{ line.value_mined|isk }}</td>
+        <td class="px-3 py-2 text-right text-faint">{{ line.share_pct }}%</td>
+        <td class="px-3 py-2 text-right text-muted">{{ line.gross|isk }}</td>
+        <td class="px-3 py-2 text-right text-gold">{{ line.tax|isk }}</td>
+        <td class="px-3 py-2 text-right font-semibold text-win">{{ line.net|isk }}</td>
+        <td class="px-3 py-2 text-right">
+          {% if payout.status == 'final' %}
+            <span class="text-xs {% if line.paid %}text-win{% else %}text-faint{% endif %}">{% if line.paid %}✓ paid{% else %}unpaid{% endif %}</span>
+          {% else %}
+          <form method="post" action="{% url 'mining:line_paid' payout.pk line.id %}">{% csrf_token %}
+            <button class="text-xs {% if line.paid %}text-win{% else %}text-faint hover:text-gold{% endif %}">{% if line.paid %}✓ paid{% else %}mark paid{% endif %}</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" class="px-3 py-12 text-center text-sm text-faint">No participants in this window — adjust the dates and recompute.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<p class="mt-3 text-[11px] text-faint">{{ paid_count }}/{{ lines|length }} paid. Marking a line paid credits the pilot's contribution ledger with the net ISK.</p>
+{% endblock %}

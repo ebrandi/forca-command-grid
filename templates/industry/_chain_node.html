@@ -1,0 +1,20 @@
+{% load eve %}
+<li class="py-0.5">
+  <div class="flex flex-wrap items-center gap-2 text-sm">
+    <img src="{% eve_type_icon node.type_id 32 %}" alt="" class="h-5 w-5 shrink-0 rounded-sm">
+    <span class="font-medium text-ink">{{ node.name }}</span>
+    <span class="data text-xs text-faint">×{{ node.quantity }}</span>
+    {% if node.buildable %}
+      <span class="chip !py-0.5 !text-[10px] {% if node.decision == 'build' %}!text-cyan{% else %}!text-faint{% endif %}">{{ node.decision }}{% if node.activity == 'reaction' %} · react{% endif %}</span>
+    {% else %}
+      <span class="chip !py-0.5 !text-[10px] !text-faint">buy · raw</span>
+    {% endif %}
+    {% if node.on_hand %}<span class="text-[10px] text-kill">{{ node.on_hand }} on hand</span>{% endif %}
+    <span class="data ml-auto text-xs text-gold">{% if node.decision == 'build' %}{{ node.build_cost|isk }}{% else %}{{ node.buy_cost|isk }}{% endif %}</span>
+  </div>
+  {% if node.children %}
+  <ul class="ml-3 mt-0.5 border-l border-line/40 pl-3">
+    {% for c in node.children %}{% include "industry/_chain_node.html" with node=c %}{% endfor %}
+  </ul>
+  {% endif %}
+</li>

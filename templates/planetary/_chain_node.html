@@ -1,0 +1,16 @@
+{% load eve %}
+{# Recursive chain node. Context: node = {type_id,name,tier,quantity,unit_price,is_raw,inputs} #}
+<div>
+  <div class="flex items-center gap-2 py-1">
+    <img src="{% eve_type_render node.type_id 24 %}" alt="" loading="lazy" class="h-5 w-5 rounded bg-space ring-1 ring-line">
+    <span class="chip {% if node.tier == 'P0' %}!text-faint{% elif node.tier == 'P1' %}!border-cyan/40 !text-cyan{% elif node.tier == 'P2' %}!border-gold/40 !text-gold{% elif node.tier == 'P3' %}!border-win/40 !text-win{% else %}!border-goldb/40 !text-goldb{% endif %}">{{ node.tier }}</span>
+    <span class="text-sm text-ink">{{ node.name }}</span>
+    <span class="text-xs text-faint">× {{ node.quantity|floatformat:0 }}</span>
+    {% if node.unit_price %}<span class="ml-auto data text-xs text-faint">{{ node.unit_price|isk }}/u</span>{% endif %}
+  </div>
+  {% if node.inputs %}
+  <div class="ml-4 border-l border-line pl-3">
+    {% for child in node.inputs %}{% include "planetary/_chain_node.html" with node=child %}{% endfor %}
+  </div>
+  {% endif %}
+</div>

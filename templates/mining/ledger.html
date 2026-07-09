@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}Mining Ledger · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-5 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-gold">Industry · Leadership</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">Mining ledger</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">Who mined what, valued at Jita, with the tax owed at the corp rate. Use it to track participation and feed a profit-split payout.</p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <a href="{% url 'mining:payouts' %}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-coin"/></svg> Payouts</a>
+    <form method="post" action="{% url 'mining:sync' %}">{% csrf_token %}<button class="btn-ghost text-sm">Sync now</button></form>
+  </div>
+</header>
+
+
+<div class="mb-4 flex flex-wrap items-end gap-3">
+  <form method="get" class="flex items-end gap-2">
+    <label class="block"><span class="eyebrow text-faint">Window</span>
+      <select name="days" class="input-field mt-1" data-autosubmit>
+        <option value="7" {% if days == 7 %}selected{% endif %}>7 days</option>
+        <option value="30" {% if days == 30 %}selected{% endif %}>30 days</option>
+        <option value="60" {% if days == 60 %}selected{% endif %}>60 days</option>
+        <option value="90" {% if days == 90 %}selected{% endif %}>90 days</option>
+      </select>
+    </label>
+  </form>
+  <form method="post" action="{% url 'mining:set_tax' %}" class="flex items-end gap-2">{% csrf_token %}
+    <label class="block"><span class="eyebrow text-faint">Mining tax %</span>
+      <input name="rate_pct" value="{{ rate_pct }}" class="input-field mt-1 w-24" inputmode="decimal"></label>
+    <button class="btn-ghost text-sm">Set</button>
+  </form>
+  <div class="ml-auto text-right text-sm">
+    <p class="text-faint">Value mined · <span class="font-semibold text-ink">{{ total_value|isk }}</span></p>
+    <p class="text-faint">Tax owed @ {{ rate_pct }}% · <span class="font-semibold text-gold">{{ total_tax|isk }}</span></p>
+  </div>
+</div>
+
+<div class="panel overflow-x-auto">
+  <table class="w-full min-w-[560px] text-sm">
+    <thead class="text-left text-xs uppercase tracking-wide text-faint">
+      <tr class="border-b border-line/50"><th class="px-3 py-2">Pilot</th><th class="px-3 py-2 text-right">Units</th><th class="px-3 py-2 text-right">Value</th><th class="px-3 py-2 text-right">Tax</th></tr>
+    </thead>
+    <tbody class="divide-y divide-line/30">
+      {% for r in rows %}
+      <tr class="hover:bg-panel2">
+        <td class="px-3 py-2 text-ink">{{ r.name }}</td>
+        <td class="px-3 py-2 text-right text-muted">{{ r.quantity }}</td>
+        <td class="px-3 py-2 text-right text-ink">{{ r.value|isk }}</td>
+        <td class="px-3 py-2 text-right text-gold">{{ r.tax|isk }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4" class="px-3 py-12 text-center text-sm text-faint">No mining recorded in this window. A role-holder needs to grant the corp-mining scope on the ESI Scopes page, then sync.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<p class="mt-3 text-[11px] text-faint">Ore is valued at its Jita sell price (a raw-ore proxy). Tax is informational here; a payout withholds it per pilot.</p>
+{% endblock %}

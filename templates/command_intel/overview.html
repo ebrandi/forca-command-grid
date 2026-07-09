@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Command overview · [FORCA] Command Grid{% endblock %}
+{% block content %}
+{% if features.recommendations %}<a href="{% url 'recommendations:officer' %}" class="text-xs text-faint hover:text-gold">← Command</a>{% endif %}
+
+<header class="mt-2 mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-gold">Command Intelligence</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">Command overview</h1>
+    <p class="mt-1 text-sm text-faint">What is limiting us right now, and what we are doing about it.</p>
+  </div>
+  <form method="post" action="{% url 'command_intel:generate' %}">{% csrf_token %}<button class="btn-gold">⊕ Generate briefing</button></form>
+</header>
+
+<div class="grid gap-5 lg:grid-cols-3">
+  {% comment %}Posture hero — the readiness overall index, re-narrated as a military posture.{% endcomment %}
+  <section class="panel p-6 text-center lg:col-span-1"
+           aria-label="Corporate posture {% if posture is not None %}{{ posture }} of 100{% else %}not yet assessed{% endif %}">
+    <p class="eyebrow">Corporate posture</p>
+    {% if posture is None %}
+      <p class="mt-2 font-display text-5xl font-bold text-faint">—</p>
+      <p class="mt-1 text-xs text-faint">No snapshot yet · generate a briefing to assess</p>
+    {% else %}
+      <p class="mt-2 font-display text-6xl font-bold {% if posture >= 75 %}text-kill{% elif posture >= 50 %}text-gold{% else %}text-loss{% endif %}">{{ posture }}</p>
+      <p class="mt-1 text-xs {% if posture >= 75 %}text-kill{% elif posture >= 50 %}text-gold{% else %}text-loss{% endif %}">
+        {% if posture >= 75 %}▲ READY{% elif posture >= 50 %}◆ WATCH{% else %}▼ CRITICAL{% endif %} · posture of 100
+      </p>
+      {% if snapshot %}<p class="mt-2 text-[11px] text-faint">assessed {{ snapshot.created_at|timesince }} ago · snap #{{ snapshot.pk }}</p>{% endif %}
+    {% endif %}
+    {% if not ai_enabled %}
+      <p class="mt-3 border-t border-line pt-3 text-[11px] text-faint">ⓘ AI offline — deterministic picture only. The constraint board is still computed.</p>
+    {% endif %}
+  </section>
+
+  {% comment %}Top binding constraints — ranked by severity.{% endcomment %}
+  <section class="panel overflow-hidden lg:col-span-2">
+    <div class="flex items-center justify-between border-b border-line px-4 py-3">
+      <h2 class="eyebrow text-gold">Top binding constraints</h2>
+      <a href="{% url 'command_intel:constraints' %}" class="text-xs text-cyan hover:underline">all constraints →</a>
+    </div>
+    <div class="divide-y divide-line/40">
+      {% for c in top_constraints %}
+        {% include "command_intel/_constraint_row.html" with c=c compact=True %}
+      {% empty %}
+        <p class="px-4 py-8 text-center text-sm text-faint">No binding constraints — the corp is operating with headroom, or there isn't enough imported data to find them.</p>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+
+{% comment %}Latest briefing — respects classification (never a card above clearance).{% endcomment %}
+<section class="panel mt-5 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">Latest briefing</h2></div>
+  {% if latest_report %}
+    <a href="{% url 'command_intel:report_detail' latest_report.pk %}" class="block px-4 py-4 transition hover:bg-panel2/40">
+      <div class="flex flex-wrap items-center gap-2">
+        {% if latest_report.classification == 'director_eyes_only' %}<span class="chip !border-loss/50 text-loss">◈ Director — eyes only</span>
+        {% elif latest_report.classification == 'alliance_command' %}<span class="chip !border-win/50 text-win">✦ Alliance command</span>
+        {% elif latest_report.classification == 'corp_internal' %}<span class="chip !border-cyan/50 text-cyan">◇ Corporation internal</span>
+        {% else %}<span class="chip !border-gold/50 text-gold">◆ High command</span>{% endif %}
+        <span class="text-sm font-medium text-ink">{{ latest_report.title|default:"Command Intelligence Report" }}</span>
+        {% if latest_report.generated_at %}<span class="text-xs text-faint">— {{ latest_report.generated_at|date:"d M Y" }}</span>{% endif %}
+      </div>
+      {% if latest_report.summary %}<p class="mt-2 text-sm text-muted">{{ latest_report.summary|truncatewords:40 }}</p>{% endif %}
+      <span class="mt-2 inline-block text-xs text-cyan">read briefing →</span>
+    </a>
+  {% else %}
+    <div class="px-4 py-10 text-center">
+      <p class="text-sm text-muted">No command intelligence on file yet.</p>
+      <p class="mt-1 text-xs text-faint">Generate the first briefing to see the corporation's binding constraints and recommended courses of action.</p>
+      <form method="post" action="{% url 'command_intel:generate' %}" class="mt-4 inline-block">{% csrf_token %}<button class="btn-gold">⊕ Generate first briefing</button></form>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}
