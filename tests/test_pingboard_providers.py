@@ -1,6 +1,8 @@
 """Phase 2 — Slack / Telegram / WhatsApp adapters + DM dispatch + SSRF allowlist."""
 from __future__ import annotations
 
+from urllib.parse import urlparse
+
 import pytest
 
 from apps.pingboard import services
@@ -129,7 +131,7 @@ def test_whatsapp_meta(monkeypatch, settings):
     res = WhatsAppProvider(None).send(subject="", body="hi",
                                       recipients=[Recipient("whatsapp", "phone", "+15551234")])
     assert res.ok and res.provider_message_id == "wamid.1"
-    assert "graph.facebook.com" in cap["url"]
+    assert urlparse(cap["url"]).hostname == "graph.facebook.com"
     assert cap["json"]["to"] == "+15551234"
 
 

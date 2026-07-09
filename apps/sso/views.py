@@ -11,6 +11,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import redirect, render
 from django.utils import timezone
+from django.utils.html import escape
 from django.views.decorators.http import require_POST
 
 from core.audit import audit_log, client_ip
@@ -63,7 +64,9 @@ def callback_view(request: HttpRequest) -> HttpResponse:
         return HttpResponseBadRequest("Not available while viewing as another pilot.")
     error = request.GET.get("error")
     if error:
-        return HttpResponseBadRequest(f"SSO error: {error}")
+        # Escape: this value is reflected into an HTML response and is fully
+        # attacker-controlled (the callback is reachable before state validation).
+        return HttpResponseBadRequest(f"SSO error: {escape(error)}")
 
     state = request.GET.get("state")
     expected_state = request.session.pop(_SESS_STATE, None)

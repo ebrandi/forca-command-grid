@@ -10,6 +10,7 @@ it never builds a snapshot or calls the LLM itself.
 from __future__ import annotations
 
 import datetime as dt
+from urllib.parse import urlencode
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -550,7 +551,8 @@ def simulator_save(request):
               target_id=str(scenario.pk), ip=client_ip(request),
               metadata={"name": name, "scenario": key, "magnitude": mag})
     messages.success(request, f"Saved scenario “{name}”.")
-    return redirect(f"{reverse('command_intel:simulator')}?scenario={key}&magnitude={mag}")
+    query = urlencode({"scenario": key, "magnitude": mag})
+    return redirect(f"{reverse('command_intel:simulator')}?{query}")
 
 
 @login_required

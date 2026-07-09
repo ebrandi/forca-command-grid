@@ -12,6 +12,8 @@ Never self-serviceable by the locked-out account (it can't sign in to reach this
 """
 from __future__ import annotations
 
+from urllib.parse import urlencode
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
@@ -83,10 +85,10 @@ def character_detach(request: HttpRequest) -> HttpResponse:
     )
     if character is None:
         messages.error(request, "That character was not found.")
-        return redirect(f"{_recovery_url()}?q={q}")
+        return redirect(f"{_recovery_url()}?{urlencode({'q': q})}")
     if not reason:
         messages.error(request, "A reason is required to detach a character (it is audited).")
-        return redirect(f"{_recovery_url()}?q={q or character.character_id}")
+        return redirect(f"{_recovery_url()}?{urlencode({'q': q or character.character_id})}")
     # Escalation guard: only a Director+ may detach a Director/Admin-linked character.
     target_user = character.user
     if (
@@ -95,7 +97,7 @@ def character_detach(request: HttpRequest) -> HttpResponse:
         and not rbac.has_role(request.user, rbac.ROLE_DIRECTOR)
     ):
         messages.error(request, "Only a Director can detach a character linked to a Director.")
-        return redirect(f"{_recovery_url()}?q={q or character.character_id}")
+        return redirect(f"{_recovery_url()}?{urlencode({'q': q or character.character_id})}")
 
     result = detach_character(character, actor=request.user, reason=reason)
     audit_log(request.user, "recovery.character_detach.console", target_type="eve_character",
@@ -107,7 +109,7 @@ def character_detach(request: HttpRequest) -> HttpResponse:
         f"Detached {character.name or character.character_id}{freed}. "
         "The owner can now re-link it at their next EVE login.",
     )
-    return redirect(f"{_recovery_url()}?q={q or character.character_id}")
+    return redirect(f"{_recovery_url()}?{urlencode({'q': q or character.character_id})}")
 
 
 def _recovery_url() -> str:

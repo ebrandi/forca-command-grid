@@ -1,6 +1,8 @@
 """View/permission smoke tests."""
 from __future__ import annotations
 
+from urllib.parse import urlparse
+
 import pytest
 
 from apps.doctrines.models import Doctrine, DoctrineCategory
@@ -29,7 +31,7 @@ def test_killboard_list_ok(client):
 def test_login_redirects_to_ccp(client):
     resp = client.get("/auth/eve/login/")
     assert resp.status_code == 302
-    assert "login.eveonline.com" in resp["Location"]
+    assert urlparse(resp["Location"]).hostname == "login.eveonline.com"
 
 
 @pytest.mark.django_db
