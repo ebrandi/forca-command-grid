@@ -20,7 +20,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
 from django.db.models import Prefetch, Q
-from django.http import Http404, HttpRequest, HttpResponse
+from django.http import Http404, HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -77,15 +77,51 @@ _OBJECTIVE_EDIT_FIELDS = [
 #  Small shared helpers
 # --------------------------------------------------------------------------- #
 def _user_pool():
-    """Users holding any role — the people who can command, sponsor, lead or own (doc 10 §6.10)."""
+    """Users holding any role — the people who can command, sponsor, lead or own (doc 10 §6.10).
+    Characters are prefetched because every user-facing surface renders ``display_name``
+    (main-character name), which walks the character set."""
     from apps.identity.models import RoleAssignment
 
     ids = RoleAssignment.objects.values_list("user_id", flat=True).distinct()
-    return User.objects.filter(pk__in=ids).order_by("username")
+    return User.objects.filter(pk__in=ids).prefetch_related("characters").order_by("username")
+
+
+def _user_choices():
+    """The pool as a list sorted by the pilot name a select actually shows."""
+    return sorted(_user_pool(), key=lambda u: _user_label(u).lower())
 
 
 def _user_label(user) -> str:
     return getattr(user, "display_name", "") or user.get_username()
+
+
+def _staging_system_name(system_id: int | None) -> str:
+    """Resolve the cached staging-system name from the SDE — the id (picked via the
+    autocomplete) is the source of truth; the client never types or submits the name."""
+    if system_id is None:
+        return ""
+    from apps.sde.models import SdeSolarSystem
+
+    row = SdeSolarSystem.objects.filter(system_id=system_id).only("name").first()
+    return row.name if row else ""
+
+
+@login_required
+def system_search(request: HttpRequest) -> JsonResponse:
+    """Autocomplete for the staging-system picker: ``[{id, name, security}]``.
+
+    SDE data is not sensitive; login (plus the campaigns feature gate on the
+    namespace) keeps the endpoint off the anonymous surface."""
+    q = (request.GET.get("q") or "").strip()
+    rows = []
+    if len(q) >= 2:
+        from apps.sde.models import SdeSolarSystem
+
+        rows = [
+            {"id": s.system_id, "name": s.name, "security": round(s.security, 1)}
+            for s in SdeSolarSystem.objects.filter(name__icontains=q).order_by("name")[:15]
+        ]
+    return JsonResponse(rows, safe=False)
 
 
 def _campaign_for_view(request, pk: int) -> Campaign:
@@ -306,8 +342,9 @@ def portfolio(request: HttpRequest) -> HttpResponse:
             "awaiting": base.filter(status=Campaign.Status.PROPOSED).count(),
         }
 
-    commanders = (
-        _user_pool().filter(pk__in=base.values_list("commander_id", flat=True)).distinct()
+    commanders = sorted(
+        _user_pool().filter(pk__in=base.values_list("commander_id", flat=True)).distinct(),
+        key=lambda u: _user_label(u).lower(),
     )
     active_filters = any([f_status, f_health, f_category, f_commander, f_tag, q])
     ctx = {
@@ -393,7 +430,7 @@ def _apply_campaign_fields(campaign, request, *, budget_allowed) -> bool:
         raise ValidationError("The target end date cannot be before the start date.")
 
     campaign.staging_system_id = _int(post.get("staging_system_id"))
-    campaign.staging_system_name = (post.get("staging_system_name") or "").strip()[:100]
+    campaign.staging_system_name = _staging_system_name(campaign.staging_system_id)
     campaign.tags = _parse_tags(post.get("tags"))
 
     if budget_allowed:
@@ -584,7 +621,7 @@ def _campaign_form_ctx(request, campaign, *, template=None) -> dict:
     ctx = {
         "campaign": campaign,
         "editing": editing,
-        "users": _user_pool(),
+        "users": _user_choices(),
         "categories": Campaign.Category.choices,
         "visibilities": Campaign.Visibility.choices,
         "progress_modes": Campaign.ProgressMode.choices,
@@ -946,7 +983,7 @@ def _objective_form_ctx(request, campaign, objective) -> dict:
         "campaign": campaign,
         "objective": objective,
         "editing": objective.pk is not None,
-        "users": _user_pool(),
+        "users": _user_choices(),
         "workstreams": campaign.workstreams.order_by("sort_order", "id"),
         "directions": Objective.Direction.choices,
         "due_at_local": _dt_local(objective.due_at),
@@ -1165,7 +1202,7 @@ def _milestone_form_ctx(request, campaign, milestone) -> dict:
         "campaign": campaign,
         "milestone": milestone,
         "editing": milestone.pk is not None,
-        "users": _user_pool(),
+        "users": _user_choices(),
         "workstreams": campaign.workstreams.order_by("sort_order", "id"),
         "due_at_local": _dt_local(milestone.due_at),
     }
@@ -1276,7 +1313,7 @@ def _workstream_form_ctx(request, campaign, workstream) -> dict:
         "campaign": campaign,
         "workstream": workstream,
         "editing": workstream.pk is not None,
-        "users": _user_pool(),
+        "users": _user_choices(),
         "statuses": Workstream.WorkstreamStatus.choices,
     }
 
@@ -1359,7 +1396,7 @@ def _risk_form_ctx(request, campaign, risk) -> dict:
         "campaign": campaign,
         "risk": risk,
         "editing": risk.pk is not None,
-        "users": _user_pool(),
+        "users": _user_choices(),
         "workstreams": campaign.workstreams.order_by("sort_order", "id"),
         "levels": Risk.RiskLevel.choices,
         "statuses": Risk.RiskStatus.choices,
@@ -1445,7 +1482,7 @@ def issue_create(request: HttpRequest, pk: int) -> HttpResponse:
 def _issue_form_ctx(request, campaign) -> dict:
     return {
         "campaign": campaign,
-        "users": _user_pool(),
+        "users": _user_choices(),
         "objectives": campaign.objectives.exclude(
             status=Objective.ObjectiveStatus.DROPPED
         ).order_by("sort_order", "id"),
@@ -1814,7 +1851,7 @@ def _close_ctx(request, campaign, budget_allowed) -> dict:
             (obj_status.MET, "Met"), (obj_status.MISSED, "Missed"), (obj_status.DROPPED, "Dropped"),
         ],
         "participation": services.participation_panel(campaign, user),
-        "users": _user_pool(),
+        "users": _user_choices(),
     }
 
 
@@ -1933,7 +1970,7 @@ def recognition_manage(request: HttpRequest, pk: int) -> HttpResponse:
         "recognitions": list(
             campaign.recognitions.select_related("user", "awarded_by")[:100]
         ),
-        "users": _user_pool(),
+        "users": _user_choices(),
     }
     return render(request, "campaigns/recognition.html", ctx)
 

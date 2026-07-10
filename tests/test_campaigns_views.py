@@ -341,3 +341,72 @@ def test_system_check_clean():
     out = StringIO()
     call_command("check", stdout=out)
     assert "no issues" in out.getvalue()
+
+
+# --- People & dates form block: pilot names + staging autocomplete (UX revision) --------------
+def test_form_selects_show_pilot_names_not_ids(client, django_user_model):
+    """Commander/sponsor options render the main character's name, never the eve:<id> username."""
+    from apps.sso.models import EveCharacter
+
+    officer = _user(django_user_model, "eve:9301", rbac.ROLE_OFFICER)
+    EveCharacter.objects.create(
+        character_id=9301, user=officer, name="Aria Vex", is_main=True, is_corp_member=True
+    )
+    client.force_login(officer)
+    html = client.get(reverse("campaigns:new")).content.decode()
+    assert "Aria Vex" in html
+    assert ">eve:9301<" not in html  # option labels never fall back to the raw username here
+
+
+@pytest.mark.usefixtures("sde")
+def test_system_search_returns_matches_and_requires_two_chars(client, django_user_model):
+    member = _user(django_user_model, "eve:9302", rbac.ROLE_MEMBER)
+    client.force_login(member)
+    resp = client.get(reverse("campaigns:system_search"), {"q": "jit"})
+    assert resp.status_code == 200
+    rows = resp.json()
+    assert [r["name"] for r in rows] == ["Jita"]
+    assert rows[0]["id"] == 30000142
+    assert client.get(reverse("campaigns:system_search"), {"q": "j"}).json() == []
+
+
+def test_system_search_requires_login(client):
+    resp = client.get(reverse("campaigns:system_search"), {"q": "jit"})
+    assert resp.status_code in (301, 302)  # login redirect, never data
+
+
+@pytest.mark.usefixtures("sde")
+def test_staging_name_resolved_from_sde_and_client_name_ignored(client, django_user_model):
+    """The form submits only the picked system id; the cached name comes from the SDE.
+    A forged staging_system_name in the POST must never be stored (no retyping, no spoofing)."""
+    officer = _user(django_user_model, "eve:9303", rbac.ROLE_OFFICER)
+    client.force_login(officer)
+    resp = client.post(reverse("campaigns:new"), {
+        "name": "Staging autocomplete campaign",
+        "category": Campaign.Category.DEPLOYMENT,
+        "visibility": Campaign.Visibility.OFFICERS,
+        "progress_mode": Campaign.ProgressMode.WEIGHTED,
+        "staging_system_id": "30000142",
+        "staging_system_name": "Forged Name",
+    })
+    assert resp.status_code == 302
+    campaign = Campaign.objects.get(name="Staging autocomplete campaign")
+    assert campaign.staging_system_id == 30000142
+    assert campaign.staging_system_name == "Jita"
+
+
+def test_staging_cleared_when_no_system_picked(client, django_user_model):
+    officer = _user(django_user_model, "eve:9304", rbac.ROLE_OFFICER)
+    client.force_login(officer)
+    resp = client.post(reverse("campaigns:new"), {
+        "name": "No staging campaign",
+        "category": Campaign.Category.OTHER,
+        "visibility": Campaign.Visibility.OFFICERS,
+        "progress_mode": Campaign.ProgressMode.WEIGHTED,
+        "staging_system_id": "",
+        "staging_system_name": "Typed But Never Picked",
+    })
+    assert resp.status_code == 302
+    campaign = Campaign.objects.get(name="No staging campaign")
+    assert campaign.staging_system_id is None
+    assert campaign.staging_system_name == ""

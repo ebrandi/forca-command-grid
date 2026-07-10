@@ -21,6 +21,7 @@ urlpatterns = [
     path("new/template/", views.template_picker, name="template_picker"),
     path("lessons/", views.lessons_library, name="lessons"),
     path("workspace/", views.officer_workspace, name="workspace"),
+    path("systems/", views.system_search, name="system_search"),
     path("<int:pk>/", views.campaign_detail, name="detail"),
     path("<int:pk>/edit/", views.campaign_edit, name="edit"),
     path("<int:pk>/status/", views.campaign_set_status, name="set_status"),

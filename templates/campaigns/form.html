@@ -39,13 +39,28 @@
     <p class="eyebrow mb-3">People &amp; dates</p>
     <div class="grid gap-3 sm:grid-cols-2">
       <label class="block"><span class="label">Commander</span>
-        <select name="commander" class="input-field mt-1 w-full"><option value="">—</option>{% for u in users %}<option value="{{ u.pk }}" {% if campaign.commander_id == u.pk %}selected{% endif %}>{{ u.username }}</option>{% endfor %}</select></label>
+        <select name="commander" class="input-field mt-1 w-full"><option value="">—</option>{% for u in users %}<option value="{{ u.pk }}" {% if campaign.commander_id == u.pk %}selected{% endif %}>{{ u.display_name }}</option>{% endfor %}</select></label>
       <label class="block"><span class="label">Sponsor</span>
-        <select name="sponsor" class="input-field mt-1 w-full"><option value="">—</option>{% for u in users %}<option value="{{ u.pk }}" {% if campaign.sponsor_id == u.pk %}selected{% endif %}>{{ u.username }}</option>{% endfor %}</select></label>
+        <select name="sponsor" class="input-field mt-1 w-full"><option value="">—</option>{% for u in users %}<option value="{{ u.pk }}" {% if campaign.sponsor_id == u.pk %}selected{% endif %}>{{ u.display_name }}</option>{% endfor %}</select></label>
       <label class="block"><span class="label">Start</span><input type="datetime-local" name="start_at" value="{{ start_at_local }}" class="input-field mt-1 w-full"></label>
       <label class="block"><span class="label">Target end</span><input type="datetime-local" name="target_end_at" value="{{ target_end_at_local }}" class="input-field mt-1 w-full"></label>
-      <label class="block"><span class="label">Staging system id</span><input type="number" name="staging_system_id" value="{{ campaign.staging_system_id|default:'' }}" class="input-field mt-1 w-full"></label>
-      <label class="block"><span class="label">Staging system name</span><input type="text" name="staging_system_name" value="{{ campaign.staging_system_name }}" maxlength="100" class="input-field mt-1 w-full"></label>
+      <div class="block sm:col-span-2"><span class="label">Staging system</span>
+        <div class="relative mt-1" x-data="systemPicker('{% url 'campaigns:system_search' %}', '{{ campaign.staging_system_id|default_if_none:'' }}', '{{ campaign.staging_system_name|escapejs }}')" @click.outside="open=false">
+          <input type="hidden" name="staging_system_id" :value="id">
+          <input type="text" x-model="q" @input.debounce.250ms="lookup()" @focus="open = results.length>0"
+            class="input-field w-full" autocomplete="off" placeholder="Start typing a system name…">
+          <div x-show="open" x-cloak class="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-md border border-line bg-panel shadow-xl">
+            <template x-for="r in results" :key="'sys:' + r.id">
+              <button type="button" @click="choose(r)" class="flex w-full items-baseline gap-2 px-3 py-1.5 text-left text-sm hover:bg-panel2">
+                <span class="text-ink" x-text="r.name"></span>
+                <span class="text-[11px] text-faint" x-text="r.security"></span>
+              </button>
+            </template>
+            <p x-show="!results.length" class="px-3 py-2 text-xs text-faint">No matching system.</p>
+          </div>
+          <p class="mt-1 text-[11px] text-faint">Pick from the suggestions; the name is filled in automatically. Clear the field to unset.</p>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -57,7 +72,7 @@
       <label class="block"><span class="label">Progress mode</span>
         <select name="progress_mode" class="input-field mt-1 w-full">{% for value, label in progress_modes %}<option value="{{ value }}" {% if campaign.progress_mode == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
       <label class="block sm:col-span-2" x-show="visibility === 'restricted'" x-cloak><span class="label">Restricted to</span>
-        <select name="restricted_users" multiple size="5" class="input-field mt-1 w-full">{% for u in users %}<option value="{{ u.pk }}" {% if u.pk in restricted_ids %}selected{% endif %}>{{ u.username }}</option>{% endfor %}</select></label>
+        <select name="restricted_users" multiple size="5" class="input-field mt-1 w-full">{% for u in users %}<option value="{{ u.pk }}" {% if u.pk in restricted_ids %}selected{% endif %}>{{ u.display_name }}</option>{% endfor %}</select></label>
       {% if budget_allowed %}
       <label class="block"><span class="label">Budget (ISK)</span><input type="text" name="budget_isk" value="{{ campaign.budget_isk|default:'' }}" inputmode="decimal" class="input-field mt-1 w-full"></label>
       {% endif %}

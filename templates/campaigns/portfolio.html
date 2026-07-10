@@ -54,7 +54,7 @@
     <span class="eyebrow text-faint">Commander</span>
     <select name="commander" class="input-field mt-1" data-autosubmit>
       <option value="">Any commander</option>
-      {% for u in commanders %}<option value="{{ u.pk }}" {% if f_commander == u.pk|stringformat:'s' %}selected{% endif %}>{{ u.username }}</option>{% endfor %}
+      {% for u in commanders %}<option value="{{ u.pk }}" {% if f_commander == u.pk|stringformat:'s' %}selected{% endif %}>{{ u.display_name }}</option>{% endfor %}
     </select>
   </label>
   <label class="block">

@@ -13,7 +13,7 @@
       <label class="block"><span class="label">Workstream</span>
         <select name="workstream" class="input-field mt-1 w-full"><option value="">—</option>{% for ws in workstreams %}<option value="{{ ws.pk }}" {% if objective.workstream_id == ws.pk %}selected{% endif %}>{{ ws.name }}</option>{% endfor %}</select></label>
       <label class="block"><span class="label">Owner</span>
-        <select name="owner" class="input-field mt-1 w-full"><option value="">—</option>{% for u in users %}<option value="{{ u.pk }}" {% if objective.owner_id == u.pk %}selected{% endif %}>{{ u.username }}</option>{% endfor %}</select></label>
+        <select name="owner" class="input-field mt-1 w-full"><option value="">—</option>{% for u in users %}<option value="{{ u.pk }}" {% if objective.owner_id == u.pk %}selected{% endif %}>{{ u.display_name }}</option>{% endfor %}</select></label>
       <label class="block"><span class="label">Baseline</span><input type="text" name="baseline_value" value="{{ objective.baseline_value|default:'' }}" inputmode="decimal" class="input-field mt-1 w-full"></label>
       <label class="block"><span class="label">Target *</span><input type="text" name="target_value" value="{{ objective.target_value|default:'' }}" inputmode="decimal" class="input-field mt-1 w-full"></label>
       <label class="block"><span class="label">Unit</span><input type="text" name="unit" value="{{ objective.unit }}" maxlength="16" class="input-field mt-1 w-full"></label>

@@ -13,7 +13,7 @@
       <label class="block"><span class="label">Blocks objective</span>
         <select name="objective" class="input-field mt-1 w-full"><option value="">— none —</option>{% for o in objectives %}<option value="{{ o.pk }}">{{ o.title }}</option>{% endfor %}</select></label>
       <label class="block"><span class="label">Owner</span>
-        <select name="owner" class="input-field mt-1 w-full"><option value="">—</option>{% for u in users %}<option value="{{ u.pk }}">{{ u.username }}</option>{% endfor %}</select></label>
+        <select name="owner" class="input-field mt-1 w-full"><option value="">—</option>{% for u in users %}<option value="{{ u.pk }}">{{ u.display_name }}</option>{% endfor %}</select></label>
       <label class="block"><span class="label">Target resolution</span><input type="datetime-local" name="target_resolution_at" class="input-field mt-1 w-full"></label>
     </div>
     <p class="mt-2 text-xs text-faint">Linking an objective blocks it until the issue is resolved.</p>

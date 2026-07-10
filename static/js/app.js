@@ -27,6 +27,25 @@ window.typePicker = (endpoint, initialId, initialName) => ({
   choose(r) { this.q = r.name; this.id = r.type_id; this.open = false; },
 });
 
+// Solar-system autocomplete (campaign staging system): one visible search box,
+// one hidden id field. The server resolves the cached name from the id, so a
+// selection is the only way to set it — clearing the box unsets it.
+window.systemPicker = (endpoint, initId, initName) => ({
+  q: initName || '', id: initId || '', results: [], open: false,
+  async lookup() {
+    this.id = '';
+    const q = this.q.trim();
+    if (q.length < 2) { this.results = []; this.open = false; return; }
+    try {
+      const sep = endpoint.includes('?') ? '&' : '?';
+      const resp = await fetch(endpoint + sep + 'q=' + encodeURIComponent(q), { headers: { Accept: 'application/json' } });
+      this.results = resp.ok ? await resp.json() : [];
+    } catch (err) { this.results = []; }
+    this.open = this.results.length > 0;
+  },
+  choose(r) { this.id = String(r.id); this.q = r.name; this.results = []; this.open = false; },
+});
+
 // Freight location picker: searches stations/structures/systems and, for a
 // structure the pilot can't search, a manual (name + system) fallback. Writes
 // four hidden fields: <prefix>_name / _kind / _id / _system_id.

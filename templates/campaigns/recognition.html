@@ -14,7 +14,7 @@
     <p class="eyebrow mb-3">Record recognition</p>
     <form method="post" action="{% url 'campaigns:recognition' campaign.pk %}" class="space-y-2">
       {% csrf_token %}
-      <select name="user" class="input-field w-full text-sm"><option value="">Pilot…</option>{% for u in users %}<option value="{{ u.pk }}">{{ u.username }}</option>{% endfor %}</select>
+      <select name="user" class="input-field w-full text-sm"><option value="">Pilot…</option>{% for u in users %}<option value="{{ u.pk }}">{{ u.display_name }}</option>{% endfor %}</select>
       <input type="text" name="category" class="input-field w-full text-sm" placeholder="Category (e.g. logistics, FC, mentoring)">
       <input type="number" name="points" class="input-field w-full text-sm" placeholder="Points (optional)">
       <textarea name="reason" rows="2" class="input-field w-full text-sm" placeholder="Reason (required)"></textarea>
