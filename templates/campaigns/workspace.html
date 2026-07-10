@@ -24,9 +24,9 @@
     {% if t.kind == 'volunteers' %}
       {% for a in t.items %}
         <div class="flex flex-wrap items-center gap-2 py-2 text-sm">
-          <span class="shrink-0 text-muted">{% if a.actor %}{{ a.actor.username }}{% else %}A pilot{% endif %}</span>
+          <span class="shrink-0 text-muted">{% if a.actor %}{{ a.actor.display_name }}{% else %}A pilot{% endif %}</span>
           <span class="text-faint">volunteered on</span>
-          <a href="{% url 'campaigns:objective_detail' a.target_id %}" class="min-w-0 flex-1 truncate text-cyan hover:underline">objective #{{ a.target_id }}</a>
+          <a href="{% url 'campaigns:objective_detail' a.target_id %}" class="min-w-0 flex-1 truncate text-cyan hover:underline">{{ a.objective_title|default:"an objective" }}</a>
           <span class="data shrink-0 text-xs text-faint">{{ a.created_at|date:"d M" }}</span>
         </div>
       {% empty %}<p class="py-3 text-sm text-faint">{{ t.empty }}</p>{% endfor %}
@@ -61,7 +61,7 @@
       <div class="flex flex-wrap items-center gap-2 py-2 text-sm">
         <span class="chip shrink-0 text-cyan border-cyan/40">campaign</span>
         <a href="{% url 'campaigns:detail' c.pk %}" class="min-w-0 flex-1 truncate text-cyan hover:underline">{{ c.name }}</a>
-        {% if c.commander %}<span class="shrink-0 text-xs text-faint">by {{ c.commander.username }}</span>{% endif %}
+        {% if c.commander %}<span class="shrink-0 text-xs text-faint">by {{ c.commander.display_name }}</span>{% endif %}
         <a href="{% url 'campaigns:detail' c.pk %}" class="btn-ghost shrink-0 !py-1 !text-xs">Review</a>
       </div>
     {% endfor %}

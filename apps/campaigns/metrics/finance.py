@@ -16,8 +16,8 @@ class FinanceWalletBalance(MetricSource):
     data_class = "default"
     sensitive_default = True
     params_schema = [
-        {"name": "division", "kind": "int", "label": "Wallet division", "required": True,
-         "help": "Corp wallet division number (1–7)."},
+        {"name": "division", "kind": "int", "widget": "wallet_division", "label": "Wallet division", "required": True,
+         "help": "Corp wallet division to read the balance of."},
     ]
 
     def measure(self, params: dict) -> Measurement:

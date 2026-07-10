@@ -15,8 +15,8 @@ class ReadinessDimension(MetricSource):
     unit = "score"
     data_class = "skills"
     params_schema = [
-        {"name": "dimension", "kind": "str", "label": "Dimension key", "required": True,
-         "help": "Readiness dimension key, e.g. doctrine, logistics, financial, staging."},
+        {"name": "dimension", "kind": "str", "widget": "readiness_dimension", "label": "Dimension", "required": True,
+         "help": "Which readiness dimension score to track."},
     ]
 
     def measure(self, params: dict) -> Measurement:

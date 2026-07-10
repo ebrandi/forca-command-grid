@@ -35,7 +35,7 @@
       {% include "campaigns/_status_chip.html" with status=c.status label=c.get_status_display %}
       <span class="chip text-faint border-line">{{ c.get_category_display }}</span>
     </div>
-    <p class="mt-1 data text-xs text-faint">{{ c.start_at|date:"Y-m-d"|default:"—" }} → {{ c.actual_end_at|date:"Y-m-d"|default:c.target_end_at|date:"Y-m-d"|default:"—" }}{% if c.commander %} · Cmdr {{ c.commander.username }}{% endif %}</p>
+    <p class="mt-1 data text-xs text-faint">{{ c.start_at|date:"Y-m-d"|default:"—" }} → {{ c.actual_end_at|date:"Y-m-d"|default:c.target_end_at|date:"Y-m-d"|default:"—" }}{% if c.commander %} · Cmdr {{ c.commander.display_name }}{% endif %}</p>
     <p class="mt-2 whitespace-pre-line text-sm text-muted">{{ c.lessons_learned|truncatewords:60 }}</p>
     <a href="{% url 'campaigns:report' c.pk %}" class="mt-2 inline-block text-xs text-cyan hover:underline">Open close-out report →</a>
   </section>

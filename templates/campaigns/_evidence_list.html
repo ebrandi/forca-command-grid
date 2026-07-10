@@ -9,7 +9,7 @@
       {% else %}
         <span class="min-w-0 flex-1 text-muted">{{ e.note }}</span>
       {% endif %}
-      {% if not e.added_by %}<span class="chip shrink-0 text-faint border-line" title="Recorded automatically">auto</span>{% else %}<span class="shrink-0 text-xs text-faint">{{ e.added_by.username }}</span>{% endif %}
+      {% if not e.added_by %}<span class="chip shrink-0 text-faint border-line" title="Recorded automatically">auto</span>{% else %}<span class="shrink-0 text-xs text-faint">{{ e.added_by.display_name }}</span>{% endif %}
       {% if e.added_by and can_attach %}
         <form method="post" action="{% url 'campaigns:evidence_delete' e.pk %}" class="shrink-0">{% csrf_token %}<button class="text-xs text-loss hover:underline" data-confirm="Remove this evidence?">remove</button></form>
       {% endif %}

@@ -33,8 +33,8 @@
   </div>
 
   <p class="mt-3 text-sm text-faint">
-    {% if campaign.commander %}Cmdr: <span class="text-muted">{{ campaign.commander.username }}</span>{% else %}<span class="text-gold">No commander</span>{% endif %}
-    {% if campaign.sponsor %} · Sponsor: <span class="text-muted">{{ campaign.sponsor.username }}</span>{% endif %}
+    {% if campaign.commander %}Cmdr: <span class="text-muted">{{ campaign.commander.display_name }}</span>{% else %}<span class="text-gold">No commander</span>{% endif %}
+    {% if campaign.sponsor %} · Sponsor: <span class="text-muted">{{ campaign.sponsor.display_name }}</span>{% endif %}
     {% if campaign.start_at or campaign.target_end_at %} · <span class="data text-muted">{{ campaign.start_at|date:"Y-m-d"|default:"—" }} → {{ campaign.target_end_at|date:"Y-m-d"|default:"—" }}</span>{% endif %}
   </p>
 
@@ -132,7 +132,7 @@
     {% for group in grouped_objectives %}
       <div class="mt-4">
         {% if group.workstream %}
-          <p class="eyebrow text-faint">{{ group.workstream.name }} — {% if group.workstream.lead %}lead: {{ group.workstream.lead.username }}{% else %}<span class="text-gold">unowned</span>{% endif %}</p>
+          <p class="eyebrow text-faint">{{ group.workstream.name }} — {% if group.workstream.lead %}lead: {{ group.workstream.lead.display_name }}{% else %}<span class="text-gold">unowned</span>{% endif %}</p>
         {% else %}
           <p class="eyebrow text-faint">Ungrouped</p>
         {% endif %}
@@ -239,16 +239,16 @@
 
 <div class="mt-4 grid gap-4 lg:grid-cols-2">
   {# ── Dependencies ─────────────────────────────────────────────────────── #}
-  <section class="panel p-5">
+  <section class="panel p-5" x-data="{ depOpen: false, dto: '' }">
     <div class="flex items-center justify-between">
       <p class="eyebrow">Dependencies</p>
-      {% if can_manage %}<button type="button" class="btn-ghost text-xs" x-data @click="$refs.depform.classList.toggle('hidden')">Add</button>{% endif %}
+      {% if can_manage %}<button type="button" class="btn-ghost text-xs" @click="depOpen = !depOpen">Add</button>{% endif %}
     </div>
     <div class="mt-2 divide-y divide-line/40">
       {% for row in dependencies %}
         <div class="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
           <span class="chip shrink-0 text-loss border-loss/40">blocked-by</span>
-          <span class="min-w-0 flex-1 text-sm text-muted">{{ row.dep.from_kind }} #{{ row.dep.from_id }} ← {% if row.external %}external{% else %}{{ row.dep.to_kind }} #{{ row.dep.to_id }}{% endif %}{% if row.dep.note %} · {{ row.dep.note }}{% endif %}</span>
+          <span class="min-w-0 flex-1 text-sm text-muted">{{ row.from_label }} ← {% if row.external %}external{% else %}{{ row.to_label }}{% endif %}{% if row.dep.note %} · {{ row.dep.note }}{% endif %}</span>
           {% if can_manage and row.external %}
             <form method="post" action="{% url 'campaigns:dependency_resolve' row.dep.pk %}" class="inline-flex items-center gap-1">{% csrf_token %}
               <input type="text" name="reason" required maxlength="300" placeholder="Reason" class="input-field !py-1 !text-xs w-40">
@@ -261,17 +261,25 @@
       {% endfor %}
     </div>
     {% if can_manage %}
-    <form method="post" action="{% url 'campaigns:dependency_create' campaign.pk %}" x-ref="depform" class="mt-3 hidden space-y-2 border-t border-line pt-3">
+    <form method="post" action="{% url 'campaigns:dependency_create' campaign.pk %}" x-show="depOpen" x-cloak class="mt-3 space-y-2 border-t border-line pt-3">
       {% csrf_token %}
-      <div class="grid grid-cols-2 gap-2 text-xs">
-        <label class="block"><span class="eyebrow text-faint">From kind</span>
-          <select name="from_kind" class="input-field mt-1"><option value="objective">objective</option><option value="milestone">milestone</option><option value="workstream">workstream</option><option value="campaign">campaign</option></select></label>
-        <label class="block"><span class="eyebrow text-faint">From id</span><input type="number" name="from_id" class="input-field mt-1 w-full"></label>
-        <label class="block"><span class="eyebrow text-faint">Blocked-by kind</span>
-          <select name="to_kind" class="input-field mt-1"><option value="objective">objective</option><option value="milestone">milestone</option><option value="workstream">workstream</option><option value="campaign">campaign</option><option value="external">external</option></select></label>
-        <label class="block"><span class="eyebrow text-faint">Blocked-by id</span><input type="number" name="to_id" class="input-field mt-1 w-full"></label>
-      </div>
-      <input type="text" name="note" class="input-field w-full text-xs" placeholder="Note (required for external)">
+      <label class="block text-xs"><span class="eyebrow text-faint">This item</span>
+        <select name="from" required class="input-field mt-1 w-full">
+          <option value="">Choose an item…</option>
+          {% if dep_objectives %}<optgroup label="Objectives">{% for id, title in dep_objectives %}<option value="objective:{{ id }}">{{ title }}</option>{% endfor %}</optgroup>{% endif %}
+          {% if dep_milestones %}<optgroup label="Milestones">{% for id, title in dep_milestones %}<option value="milestone:{{ id }}">{{ title }}</option>{% endfor %}</optgroup>{% endif %}
+          {% if dep_workstreams %}<optgroup label="Workstreams">{% for id, name in dep_workstreams %}<option value="workstream:{{ id }}">{{ name }}</option>{% endfor %}</optgroup>{% endif %}
+        </select></label>
+      <label class="block text-xs"><span class="eyebrow text-faint">is blocked by</span>
+        <select name="to" x-model="dto" required class="input-field mt-1 w-full">
+          <option value="">Choose a blocker…</option>
+          {% if dep_objectives %}<optgroup label="Objectives">{% for id, title in dep_objectives %}<option value="objective:{{ id }}">{{ title }}</option>{% endfor %}</optgroup>{% endif %}
+          {% if dep_milestones %}<optgroup label="Milestones">{% for id, title in dep_milestones %}<option value="milestone:{{ id }}">{{ title }}</option>{% endfor %}</optgroup>{% endif %}
+          {% if dep_workstreams %}<optgroup label="Workstreams">{% for id, name in dep_workstreams %}<option value="workstream:{{ id }}">{{ name }}</option>{% endfor %}</optgroup>{% endif %}
+          {% if dep_campaigns %}<optgroup label="Other campaigns">{% for id, name in dep_campaigns %}<option value="campaign:{{ id }}">{{ name }}</option>{% endfor %}</optgroup>{% endif %}
+          <option value="external">External blocker…</option>
+        </select></label>
+      <input type="text" name="note" maxlength="200" x-show="dto === 'external'" x-cloak class="input-field w-full text-xs" placeholder="Describe the external blocker (required)">
       <button class="btn-cyan !py-1 !text-xs">Add dependency</button>
     </form>
     {% endif %}
@@ -323,7 +331,7 @@
     {% csrf_token %}
     <label class="block text-xs"><span class="eyebrow text-faint">Operation</span>
       <select name="operation_id" class="input-field mt-1 w-full">
-        {% for op in linkable_operations %}<option value="{{ op.pk }}">{{ op.name }}{% if op.target_at %} — {{ op.target_at|date:"d M Y" }}{% endif %}</option>{% endfor %}
+        {% for op in linkable_operations %}<option value="{{ op.pk }}">{{ op.name }} · {{ op.get_type_display }}{% if op.target_at %} · {{ op.target_at|date:"Y-m-d H:i" }}{% endif %}</option>{% endfor %}
       </select></label>
     <input type="text" name="note" class="input-field w-full text-xs" placeholder="Note (optional)">
     <button class="btn-cyan !py-1 !text-xs">Link operation</button>
@@ -358,7 +366,7 @@
     {% for a in activity %}
       <div class="flex flex-wrap items-baseline gap-x-2 py-2 text-sm">
         <span class="data shrink-0 text-xs text-faint">{{ a.created_at|date:"d M H:i" }}</span>
-        <span class="shrink-0 text-muted">{% if a.actor %}{{ a.actor.username }}{% else %}auto{% endif %}</span>
+        <span class="shrink-0 text-muted">{% if a.actor %}{{ a.actor.display_name }}{% else %}auto{% endif %}</span>
         <span class="min-w-0 flex-1 text-faint">{{ a.verb }}{% if a.reason %} — {{ a.reason }}{% endif %}</span>
       </div>
     {% empty %}

@@ -1969,8 +1969,18 @@ def workspace_queues(user) -> dict:
     volunteers = list(
         CampaignActivity.objects.filter(
             verb="objective.volunteer", target_kind="objective", target_id__in=my_objective_ids or [0],
-        ).select_related("campaign", "actor").order_by("-created_at")[:50]
+        ).select_related("campaign", "actor").prefetch_related("actor__characters")
+        .order_by("-created_at")[:50]
     )
+    # Resolve each volunteered-on objective's title so the queue names it instead of "objective #<id>"
+    # (the target_ids are all objectives this user owns). One query for the set, not per row.
+    if volunteers:
+        titles = dict(
+            Objective.objects.filter(pk__in={a.target_id for a in volunteers})
+            .values_list("pk", "title")
+        )
+        for a in volunteers:
+            a.objective_title = titles.get(a.target_id)
     return {
         "my_objectives": list(live.order_by("due_at")[:50]),
         "overdue": list(live.filter(due_at__lt=now).order_by("due_at")[:50]),
@@ -2314,10 +2324,15 @@ def _participation_aggregate(campaign) -> dict:
         rec["points"] += int(ev["points"] or 0)
 
     recognitions: dict = {}
-    for r in campaign.recognitions.select_related("awarded_by").order_by("created_at", "id"):
+    for r in (
+        campaign.recognitions.select_related("awarded_by")
+        .prefetch_related("awarded_by__characters").order_by("created_at", "id")
+    ):
         recognitions.setdefault(r.user_id, []).append({
             "points": r.points, "reason": r.reason, "category": r.category,
-            "awarded_by": (r.awarded_by.get_username() if r.awarded_by_id else ""),
+            # The awarder's friendly (main-character) name, not the opaque ``eve:<id>`` username —
+            # the aggregate is cached, so this resolves once per 300 s window (doc 11 §2.4).
+            "awarded_by": (r.awarded_by.display_name if r.awarded_by_id else ""),
             "at": r.created_at.isoformat(),
         })
 
@@ -2349,6 +2364,11 @@ def participation_panel(campaign, user) -> dict:
 
     agg = _participation_aggregate(campaign)
     all_uids = set(agg["contrib"]) | set(agg["recognitions"])
+    if not all_uids:
+        # Nothing to attribute yet — skip the preference/user lookups entirely (a campaign with no
+        # contributions or awards renders the empty state, doc 11 §2.4).
+        return {"mode": mode, "public": campaign.recognition_public, "rows": [],
+                "other_count": 0, "rule_text": _participation_rule_text(mode), "has_content": False}
     uid = getattr(user, "pk", None)
     is_leader = has_role(user, ROLE_DIRECTOR) or can_manage(user, campaign)
     public = campaign.recognition_public
@@ -2361,7 +2381,10 @@ def participation_panel(campaign, user) -> dict:
         PilotPreference.objects.filter(user_id__in=all_uids or [0], public_recognition=False)
         .values_list("user_id", flat=True)
     )
-    users = {u.pk: u for u in get_user_model().objects.filter(pk__in=all_uids or [0])}
+    users = {
+        u.pk: u
+        for u in get_user_model().objects.filter(pk__in=all_uids or [0]).prefetch_related("characters")
+    }
 
     rows = []
     other_count = 0

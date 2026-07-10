@@ -18,7 +18,7 @@ class SrpReserve(MetricSource):
     data_class = "default"
     sensitive_default = True
     params_schema = [
-        {"name": "period", "kind": "str", "label": "Period (YYYY-MM)", "required": False,
+        {"name": "period", "kind": "str", "widget": "month", "label": "Period", "required": False,
          "help": "Budget period; defaults to the current month."},
     ]
 

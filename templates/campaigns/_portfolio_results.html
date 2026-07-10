@@ -13,7 +13,7 @@ flex-wrap. Empty states branch on whether filters are active.{% endcomment %}
             {% include "campaigns/_health_chip.html" with health=row.c.health label=row.c.get_health_display reasons=row.c.health_reasons %}
           </div>
           <p class="mt-0.5 text-xs text-faint">
-            {% if row.c.commander %}Cmdr: {{ row.c.commander.username }}{% else %}<span class="text-gold">No commander</span>{% endif %} · {{ row.c.get_category_display }}
+            {% if row.c.commander %}Cmdr: {{ row.c.commander.display_name }}{% else %}<span class="text-gold">No commander</span>{% endif %} · {{ row.c.get_category_display }}
           </p>
           {% if row.worst_reason and row.c.health in "blocked,critical,at_risk" %}
             <p class="mt-1 text-sm text-loss">{{ row.worst_reason.label }}{% if row.worst_reason.detail %} — {{ row.worst_reason.detail }}{% endif %}</p>

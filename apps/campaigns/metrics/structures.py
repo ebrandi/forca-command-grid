@@ -16,8 +16,8 @@ class StructuresFuelDays(MetricSource):
     unit = "days"
     data_class = "default"
     params_schema = [
-        {"name": "structure_ids", "kind": "ints", "label": "Structure ids", "required": False,
-         "help": "Comma-separated structure ids; omitted uses every corp structure."},
+        {"name": "structure_ids", "kind": "ints", "widget": "structure_multi", "label": "Structures", "required": False,
+         "help": "Leave all unchecked to use every corp structure."},
     ]
 
     def measure(self, params: dict) -> Measurement:

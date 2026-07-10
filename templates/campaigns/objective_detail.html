@@ -29,7 +29,7 @@
   </div>
 
   <p class="mt-3 text-xs text-faint">
-    {% if objective.owner %}owner: {{ objective.owner.username }}{% else %}<span class="text-gold">no owner</span>{% endif %}
+    {% if objective.owner %}owner: {{ objective.owner.display_name }}{% else %}<span class="text-gold">no owner</span>{% endif %}
     {% if objective.due_at %} · due <span class="data">{{ objective.due_at|date:"Y-m-d" }}</span>{% endif %}
     · weight <span class="data">{{ objective.weight }}</span>
     · {{ objective.get_direction_display }} {% if objective.target_value is not None and vm.value_visible %}{{ objective.target_value|floatformat:"-2" }}{% endif %}
@@ -96,7 +96,7 @@
 {% if objective.requires_verification and objective.status == 'met' %}
 <section class="panel mt-4 border-l-2 {% if objective.verified_by_id %}border-kill{% else %}border-cyan{% endif %} p-4">
   {% if objective.verified_by_id %}
-    <p class="text-sm text-kill">Verified by {{ objective.verified_by.username }} on {{ objective.verified_at|date:"Y-m-d" }}.</p>
+    <p class="text-sm text-kill">Verified by {{ objective.verified_by.display_name }} on {{ objective.verified_at|date:"Y-m-d" }}.</p>
   {% else %}
     <p class="text-sm text-cyan">Marked met — awaiting officer verification.</p>
     {% if can_verify_now %}
@@ -129,7 +129,7 @@
       {% for a in activity %}
         <div class="flex flex-wrap items-baseline gap-x-2 py-2 text-sm">
           <span class="data shrink-0 text-xs text-faint">{{ a.created_at|date:"d M H:i" }}</span>
-          <span class="shrink-0 text-muted">{% if a.actor %}{{ a.actor.username }}{% else %}auto{% endif %}</span>
+          <span class="shrink-0 text-muted">{% if a.actor %}{{ a.actor.display_name }}{% else %}auto{% endif %}</span>
           <span class="min-w-0 flex-1 text-faint">{{ a.verb }}{% if a.reason %} — {{ a.reason }}{% endif %}</span>
         </div>
       {% empty %}
@@ -147,7 +147,7 @@
       {% for t in linked_tasks %}
         <div class="flex flex-wrap items-center gap-2 py-2 text-sm">
           <span class="min-w-0 flex-1 truncate text-muted">{{ t.title }}</span>
-          {% if t.assignee %}<span class="shrink-0 text-xs text-faint">{{ t.assignee.username }}</span>{% endif %}
+          {% if t.assignee %}<span class="shrink-0 text-xs text-faint">{{ t.assignee.display_name }}</span>{% endif %}
           <span class="chip shrink-0 {% if t.status == 'done' %}text-kill border-kill/40{% elif t.status == 'cancelled' %}text-faint border-line{% else %}text-gold border-gold/40{% endif %}">{{ t.get_status_display }}</span>
         </div>
       {% empty %}

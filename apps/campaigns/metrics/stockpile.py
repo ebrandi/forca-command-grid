@@ -15,9 +15,9 @@ class StockpileOnHand(MetricSource):
     unit = "units"
     data_class = "assets"
     params_schema = [
-        {"name": "stockpile_id", "kind": "int", "label": "Stockpile id", "required": True,
+        {"name": "stockpile_id", "kind": "int", "widget": "stockpile", "label": "Stockpile", "required": True,
          "help": "The corp stockpile to reconcile against live ESI on-hand."},
-        {"name": "type_id", "kind": "int", "label": "Item type id", "required": False,
+        {"name": "type_id", "kind": "int", "widget": "type", "label": "Item type", "required": False,
          "help": "Optional — a single item type; omitted sums every item in the stockpile."},
     ]
 

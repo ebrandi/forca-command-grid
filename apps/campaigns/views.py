@@ -124,18 +124,48 @@ def system_search(request: HttpRequest) -> JsonResponse:
     return JsonResponse(rows, safe=False)
 
 
+@login_required
+def type_search(request: HttpRequest) -> JsonResponse:
+    """Autocomplete for the SDE item-type pickers (industry / stockpile params): ``[{type_id, name}]``.
+
+    Mirrors :func:`system_search` — SDE data is not sensitive, login + the campaigns feature gate keep
+    it off the anonymous surface. Returns ``type_id`` (not ``id``) so it drops into the shared
+    ``typePicker`` Alpine factory unchanged."""
+    q = (request.GET.get("q") or "").strip()
+    rows = []
+    if len(q) >= 2:
+        from apps.sde.models import SdeType
+
+        rows = [
+            {"type_id": t.type_id, "name": t.name}
+            for t in SdeType.objects.filter(name__icontains=q).order_by("name")[:15]
+        ]
+    return JsonResponse(rows, safe=False)
+
+
 def _campaign_for_view(request, pk: int) -> Campaign:
     """Resolve a campaign and enforce the visibility chokepoint — 404 for anything the viewer may
-    not see (no existence oracle, doc 07 §1.4)."""
-    campaign = get_object_or_404(Campaign, pk=pk)
+    not see (no existence oracle, doc 07 §1.4).
+
+    ``commander``/``sponsor``/``closed_by`` are join-loaded because the detail, report and portfolio
+    surfaces all render their ``display_name`` (main-character name); the join avoids a per-page
+    lazy FK load and the ``.display_name`` character walk stays a single query for the one row."""
+    campaign = get_object_or_404(
+        Campaign.objects.select_related("commander", "sponsor", "closed_by"), pk=pk
+    )
     if not services.can_view(request.user, campaign):
         raise Http404("No such campaign.")
     return campaign
 
 
 def _objective_for(request, pk: int) -> Objective:
-    """Resolve an objective *through* its campaign and re-check visibility (subresource rule)."""
-    objective = get_object_or_404(Objective.objects.select_related("campaign", "workstream"), pk=pk)
+    """Resolve an objective *through* its campaign and re-check visibility (subresource rule).
+
+    ``owner``/``verified_by`` are join-loaded because the objective page renders their
+    ``display_name``; the join keeps each a single character-walk query, not a lazy FK load first."""
+    objective = get_object_or_404(
+        Objective.objects.select_related("campaign", "workstream", "owner", "verified_by"), pk=pk
+    )
     if not services.can_view(request.user, objective.campaign):
         raise Http404("No such objective.")
     return objective
@@ -316,7 +346,9 @@ def portfolio(request: HttpRequest) -> HttpResponse:
         qs = qs.filter(tags__contains=[f_tag])
     if q:
         qs = qs.filter(Q(name__icontains=q) | Q(summary__icontains=q))
-    qs = qs.distinct().prefetch_related(_upcoming_milestones_prefetch())
+    qs = qs.distinct().prefetch_related(
+        _upcoming_milestones_prefetch(), "commander__characters"
+    )
 
     page_obj = _page(request, qs, 25)
     now = timezone.now()
@@ -695,7 +727,14 @@ def campaign_detail(request: HttpRequest, pk: int) -> HttpResponse:
     objectives = list(
         campaign.objectives.select_related("workstream", "owner").order_by("sort_order", "id")
     )
-    workstreams = list(campaign.workstreams.select_related("lead").order_by("sort_order", "id"))
+    workstreams = list(
+        campaign.workstreams.select_related("lead")
+        .prefetch_related("lead__characters")
+        .order_by("sort_order", "id")
+    )
+    milestones = list(
+        campaign.milestones.select_related("owner", "workstream").order_by("sort_order", "due_at", "id")
+    )
 
     # Objectives grouped by workstream (None group last), with sensitive values stripped.
     grouped: list[dict] = []
@@ -714,15 +753,13 @@ def campaign_detail(request: HttpRequest, pk: int) -> HttpResponse:
         "grouped_objectives": grouped,
         "has_objectives": bool(objectives),
         "workstreams": workstreams,
-        "milestones": campaign.milestones.select_related("owner", "workstream").order_by(
-            "sort_order", "due_at", "id"
-        ),
+        "milestones": milestones,
         "risks": campaign.risks.select_related("owner").exclude(status=Risk.RiskStatus.RETIRED),
         "issues": campaign.issues.select_related("owner", "objective").exclude(
             status=Issue.IssueStatus.RESOLVED
         ),
-        "dependencies": _dependency_rows(campaign),
-        "activity": campaign.activity.select_related("actor")[:20],
+        "dependencies": _dependency_rows(campaign, objectives, milestones, workstreams),
+        "activity": campaign.activity.select_related("actor").prefetch_related("actor__characters")[:20],
         "next_actions": _recommended_actions(campaign, objectives),
         "lifecycle_buttons": _lifecycle_buttons(campaign, user),
         "staging_visible": _staging_visible(user, campaign),
@@ -737,6 +774,16 @@ def campaign_detail(request: HttpRequest, pk: int) -> HttpResponse:
         "linkable_operations": _linkable_operations(campaign) if can_manage else [],
         "manual_progress": can_manage and campaign.progress_mode == Campaign.ProgressMode.MANUAL,
     }
+    if can_manage:
+        # The dependency builder's From/To pickers offer this campaign's own items by name, plus other
+        # visible campaigns as blockers — never a free-typed kind/id (doc 04 §8).
+        ctx["dep_objectives"] = [(o.pk, o.title) for o in objectives]
+        ctx["dep_milestones"] = [(m.pk, m.title) for m in milestones]
+        ctx["dep_workstreams"] = [(w.pk, w.name) for w in workstreams]
+        ctx["dep_campaigns"] = list(
+            services.visible_campaigns(user).exclude(pk=campaign.pk)
+            .order_by("name").values_list("pk", "name")[:100]
+        )
     return render(request, "campaigns/detail.html", ctx)
 
 
@@ -754,12 +801,46 @@ def _staging_visible(user, campaign) -> bool:
     return services.can_manage(user, campaign) or rbac.has_role(user, rbac.ROLE_DIRECTOR)
 
 
-def _dependency_rows(campaign) -> list[dict]:
-    """Unresolved dependency edges rendered with a live-blocker flag (doc 10 §6.2)."""
-    rows = []
-    for dep in campaign.dependencies.filter(is_resolved=False).select_related("campaign"):
-        rows.append({"dep": dep, "external": dep.to_kind == DependencyKind.EXTERNAL})
-    return rows
+def _dependency_rows(campaign, objectives, milestones, workstreams) -> list[dict]:
+    """Unresolved dependency edges, each endpoint resolved to a friendly name instead of a bare
+    ``objective #5`` (doc 10 §6.2). Own-campaign endpoints resolve from the already-loaded objective/
+    milestone/workstream lists (no extra query); only a cross-campaign endpoint costs one lookup, and
+    only when such an edge exists. A since-removed endpoint degrades to ``kind #id (removed)``."""
+    deps = list(campaign.dependencies.filter(is_resolved=False).select_related("campaign"))
+    if not deps:
+        return []
+    dk = DependencyKind
+    names = {
+        dk.OBJECTIVE: {o.pk: o.title for o in objectives},
+        dk.MILESTONE: {m.pk: m.title for m in milestones},
+        dk.WORKSTREAM: {w.pk: w.name for w in workstreams},
+        dk.CAMPAIGN: {},
+    }
+    camp_ids = {
+        d.to_id for d in deps if d.to_kind == dk.CAMPAIGN
+    } | {d.from_id for d in deps if d.from_kind == dk.CAMPAIGN}
+    if camp_ids:
+        names[dk.CAMPAIGN] = dict(
+            Campaign.objects.filter(pk__in=camp_ids).values_list("pk", "name")
+        )
+
+    def label(kind, oid):
+        if kind == dk.EXTERNAL:
+            return "external"
+        if kind == dk.CAMPAIGN and oid == campaign.pk:
+            return campaign.name
+        resolved = names.get(kind, {}).get(oid)
+        return resolved or f"{kind} #{oid} (removed)"
+
+    return [
+        {
+            "dep": dep,
+            "external": dep.to_kind == dk.EXTERNAL,
+            "from_label": label(dep.from_kind, dep.from_id),
+            "to_label": label(dep.to_kind, dep.to_id),
+        }
+        for dep in deps
+    ]
 
 
 def _recommended_actions(campaign, objectives) -> list[dict]:
@@ -909,39 +990,127 @@ def _apply_objective_fields(objective, request, campaign) -> None:
         objective.metric_params = {}
     else:
         objective.metric_source = source.key
-        raw = {
-            f["name"]: post.get(f"p__{source.key}__{f['name']}")
-            for f in source.params_schema
-        }
+        raw = {}
+        for f in source.params_schema:
+            field_name = f"p__{source.key}__{f['name']}"
+            # A native multi-select posts one value per choice → read the list; every other widget
+            # (including the type-chips, which post one comma-joined hidden field) is a single value.
+            if f.get("widget") == "structure_multi":
+                raw[f["name"]] = post.getlist(field_name)
+            else:
+                raw[f["name"]] = post.get(field_name)
         objective.metric_params = metrics.clean_params(source, raw)
     objective.is_sensitive = bool(post.get("is_sensitive")) or (
         source is not None and source.sensitive_default
     )
 
 
+# --------------------------------------------------------------------------- #
+#  Metric-param widgets (doc 04 §3, doc 12 §3): the objective form and objective page
+#  resolve every entity id to a friendly name here, at the presentation boundary. The
+#  stored ``metric_params`` primitives (int / list-of-int / str) are never changed — only
+#  the rendered control (a name select / picker) and the displayed value are resolved.
+# --------------------------------------------------------------------------- #
+# Widgets whose options are a fixed model-backed ``(value, label)`` list (a server ``<select>``);
+# the type autocomplete and the month input resolve differently and are not in this set.
+_OPTION_WIDGETS = {"doctrine", "stockpile", "wallet_division", "structure_multi", "readiness_dimension"}
+
+
+def _widget_options(widget: str) -> list[tuple]:
+    """``(value, label)`` options for a model-backed metric-param ``<select>`` — active doctrines,
+    stockpiles, wallet divisions, corp structures, or readiness dimensions, each labelled by name.
+    Empty for a non-option widget, or when the backing table is empty (the form shows an empty
+    state, never a number box)."""
+    if widget == "doctrine":
+        from apps.doctrines.models import Doctrine
+
+        return [
+            (d.pk, d.name)
+            for d in Doctrine.objects.filter(status=Doctrine.Status.ACTIVE).order_by("name")
+        ]
+    if widget == "stockpile":
+        from apps.stockpile.models import Stockpile
+
+        rows = []
+        for s in Stockpile.objects.select_related("location").order_by("name"):
+            loc = (s.location.name or str(s.location_id)) if s.location_id else ""
+            rows.append((s.pk, f"{s.name} — {loc}" if loc else s.name))
+        return rows
+    if widget == "wallet_division":
+        from apps.corporation.models import CorpWalletDivision
+
+        return [
+            (d.division, f"{d.division} — {d.name}" if d.name else f"Division {d.division}")
+            for d in CorpWalletDivision.objects.order_by("division")
+        ]
+    if widget == "structure_multi":
+        from apps.corporation.models import CorpStructure
+
+        return [
+            (s.structure_id, f"{s.name or s.structure_id} — {s.system_name or 'unknown system'}")
+            for s in CorpStructure.objects.order_by("name")
+        ]
+    if widget == "readiness_dimension":
+        from apps.readiness.engine import registry
+
+        return [(p.key, p.label) for p in registry.providers()]
+    return []
+
+
+def _sde_type_names(type_ids) -> dict:
+    """``{str(type_id): name}`` for the given ids (the type-picker seed / objective-page display)."""
+    ids = [int(t) for t in type_ids if str(t).strip().lstrip("-").isdigit()]
+    if not ids:
+        return {}
+    from apps.sde.models import SdeType
+
+    return {
+        str(tid): name
+        for tid, name in SdeType.objects.filter(type_id__in=ids).values_list("type_id", "name")
+    }
+
+
+def _lookup_or_removed(labels: dict, value) -> str:
+    """Resolve an id/key against a ``{str(key): label}`` map, degrading a since-removed id to
+    ``id N (removed)`` rather than leaking (or 404ing on) the bare number (soft-link discipline)."""
+    return labels.get(str(value)) or f"id {value} (removed)"
+
+
 def _metric_source_options(current_key="", current_params=None) -> list[dict]:
-    """Registry sources shaped for the objective-form picker — each param field carries its resolved
-    choice options and, for the objective's current source, its stored value pre-filled (doc 10 §5)."""
+    """Registry sources shaped for the objective-form picker (doc 10 §5). Each param field carries
+    its widget kind, the resolved name options for a model-backed select, and — for the objective's
+    current source — its stored value pre-filled (a scalar, a multi-select id list, or the SDE
+    type name(s) that seed a type picker), so the form never asks for a raw id."""
     current_params = current_params or {}
     options = []
     for source in metrics.all_sources():
         is_current = source.key == current_key
         fields = []
         for f in source.params_schema:
+            widget = f.get("widget", "")
             raw = current_params.get(f["name"]) if is_current else None
-            if isinstance(raw, list):
-                value = ", ".join(str(v) for v in raw)
-            else:
-                value = "" if raw is None else str(raw)
-            fields.append({
+            raw_list = raw if isinstance(raw, list) else ([] if raw in (None, "") else [raw])
+            field = {
                 "name": f["name"],
                 "kind": f.get("kind", "str"),
+                "widget": widget,
                 "label": f.get("label", f["name"]),
                 "required": bool(f.get("required")),
                 "help": f.get("help", ""),
                 "choices": metrics.resolve_choices(f) if f.get("kind") == "choice" else [],
-                "value": value,
-            })
+                "is_select": widget in _OPTION_WIDGETS,
+                "options": _widget_options(widget) if widget in _OPTION_WIDGETS else [],
+                "value": "" if isinstance(raw, list) or raw is None else str(raw),
+                "value_list": [str(v) for v in raw_list],
+            }
+            if widget == "type":
+                field["value_name"] = _sde_type_names([raw]).get(str(raw), "") if raw not in (None, "") else ""
+            elif widget == "type_multi":
+                names = _sde_type_names(raw_list)
+                field["value_items"] = [
+                    {"id": str(v), "name": names.get(str(v), f"type {v}")} for v in raw_list
+                ]
+            fields.append(field)
         options.append({
             "key": source.key, "label": source.label, "unit": source.unit,
             "sensitive": source.sensitive_default, "fields": fields,
@@ -949,20 +1118,45 @@ def _metric_source_options(current_key="", current_params=None) -> list[dict]:
     return options
 
 
-def _params_summary(source, params) -> list[dict]:
-    """Human ``(label, value)`` pairs for an objective's stored metric params (objective page)."""
+def params_display(source, params) -> list[dict]:
+    """Friendly ``(label, value)`` pairs for an objective's stored metric params (objective page) —
+    every doctrine / stockpile / wallet / structure / dimension / item-type id resolved to its name.
+    A since-removed id degrades to ``id N (removed)``; an omitted optional multi reads ``all``."""
     params = params or {}
+    # One SDE lookup for every item-type id referenced by this source's type widgets.
+    type_ids: list = []
+    for f in source.params_schema:
+        if f.get("widget") in ("type", "type_multi") and f["name"] in params:
+            v = params[f["name"]]
+            type_ids += v if isinstance(v, list) else [v]
+    type_names = _sde_type_names(type_ids)
+
     out = []
     for f in source.params_schema:
-        if f["name"] not in params:
+        name = f["name"]
+        if name not in params:
             continue
-        value = params[f["name"]]
-        if isinstance(value, list):
-            value = ", ".join(str(v) for v in value)
+        value = params[name]
+        widget = f.get("widget", "")
+        if widget in _OPTION_WIDGETS:
+            labels = {str(k): str(v) for k, v in _widget_options(widget)}
+            if isinstance(value, list):
+                display = ", ".join(_lookup_or_removed(labels, v) for v in value) or "all"
+            else:
+                display = _lookup_or_removed(labels, value)
+        elif widget in ("type", "type_multi"):
+            if isinstance(value, list):
+                display = ", ".join(_lookup_or_removed(type_names, v) for v in value) or "all"
+            else:
+                display = _lookup_or_removed(type_names, value)
         elif f.get("kind") == "choice":
             labels = {str(c[0]): str(c[1]) for c in metrics.resolve_choices(f)}
-            value = labels.get(str(value), value)
-        out.append({"label": f.get("label", f["name"]), "value": value})
+            display = labels.get(str(value), value)
+        elif isinstance(value, list):
+            display = ", ".join(str(v) for v in value)
+        else:
+            display = value
+        out.append({"label": f.get("label", name), "value": display})
     return out
 
 
@@ -1080,12 +1274,15 @@ def objective_detail(request: HttpRequest, pk: int) -> HttpResponse:
         # ``samples`` are newest-first; the sparkline reads oldest → newest, left to right.
         sparkline_values = [float(s.value) for s in reversed(samples)]
     source = metrics.get_source(objective.metric_source) if objective.metric_source else None
-    params_summary = _params_summary(source, objective.metric_params) if source else []
-    activity = campaign.activity.select_related("actor").filter(
+    params_summary = params_display(source, objective.metric_params) if source else []
+    activity = campaign.activity.select_related("actor").prefetch_related("actor__characters").filter(
         target_kind="objective", target_id=objective.pk
     )[:20]
     can_manage = services.can_manage(user, campaign)
-    linked_tasks = list(objective.linked_tasks().select_related("assignee").order_by("status", "-updated_at"))
+    linked_tasks = list(
+        objective.linked_tasks().select_related("assignee")
+        .prefetch_related("assignee__characters").order_by("status", "-updated_at")
+    )
     ctx = {
         "campaign": campaign,
         "objective": objective,
@@ -1120,10 +1317,14 @@ def objective_detail(request: HttpRequest, pk: int) -> HttpResponse:
 
 
 def _evidence_rows(campaign, kind, attached_id):
-    """Evidence attached to one object, newest first (author resolved for the render layer)."""
+    """Evidence attached to one object, newest first (author resolved for the render layer).
+
+    ``added_by__characters`` is prefetched because the list renders each author's ``display_name``
+    (main-character name) — one query for the set instead of a per-row character walk."""
     return (
         campaign.evidence.filter(attached_kind=kind, attached_id=attached_id)
         .select_related("added_by")
+        .prefetch_related("added_by__characters")
     )
 
 
@@ -1514,20 +1715,34 @@ def issue_resolve(request: HttpRequest, pk: int) -> HttpResponse:
 # --------------------------------------------------------------------------- #
 #  Dependencies (doc 10 §6.2)
 # --------------------------------------------------------------------------- #
+def _parse_dep_endpoint(raw: str) -> tuple[str, int]:
+    """Split a dependency picker value ``"kind:id"`` (e.g. ``"objective:5"``, ``"campaign:7"``) into
+    ``(kind, id)``; the bare ``"external"`` option maps to ``("external", 0)``. The kind/id are then
+    validated by ``services.add_dependency`` exactly as before (in-campaign source, reachable target)."""
+    raw = (raw or "").strip()
+    if raw == DependencyKind.EXTERNAL:
+        return DependencyKind.EXTERNAL, 0
+    kind, _sep, sid = raw.partition(":")
+    return kind.strip(), _int(sid, 0) or 0
+
+
 @login_required
 @require_POST
 def dependency_create(request: HttpRequest, pk: int) -> HttpResponse:
-    """Add a blocked-by edge — cycle/self/depth validated in the service (doc 04 §8)."""
+    """Add a blocked-by edge — cycle/self/depth validated in the service (doc 04 §8). The From/To
+    pickers post ``kind:id`` values (or ``external``); the service re-checks every endpoint."""
     campaign = _campaign_for_view(request, pk)
     if not services.can_manage(request.user, campaign):
         raise PermissionDenied("You cannot manage this campaign.")
+    from_kind, from_id = _parse_dep_endpoint(request.POST.get("from"))
+    to_kind, to_id = _parse_dep_endpoint(request.POST.get("to"))
     try:
         services.add_dependency(
             campaign,
-            (request.POST.get("from_kind") or "").strip(),
-            _int(request.POST.get("from_id"), 0) or 0,
-            (request.POST.get("to_kind") or "").strip(),
-            to_id=_int(request.POST.get("to_id"), 0) or 0,
+            from_kind,
+            from_id,
+            to_kind,
+            to_id=to_id,
             note=request.POST.get("note", ""),
             user=request.user,
         )
@@ -1577,13 +1792,18 @@ def _linked_operation_rows(campaign) -> list[dict]:
 
 
 def _linkable_operations(campaign):
-    """Operations not yet linked to this campaign, for the link picker (bounded, newest first)."""
+    """Operations not yet linked to this campaign, for the link picker: those scheduled within the
+    last 90 days or in the future, newest first, capped at 100 (doc 10 line 216). The picker offers
+    a named operation to select, never a bare id to type."""
     from apps.operations.models import Operation
 
+    cutoff = timezone.now() - timezone.timedelta(days=90)
     linked = set(campaign.linked_operations.values_list("operation_id", flat=True))
-    return [
-        op for op in Operation.objects.order_by("-target_at", "-id")[:100] if op.pk not in linked
-    ]
+    return list(
+        Operation.objects.filter(target_at__gte=cutoff)
+        .exclude(pk__in=linked or [0])
+        .order_by("-target_at", "-id")[:100]
+    )
 
 
 @login_required
@@ -1804,7 +2024,8 @@ def officer_workspace(request: HttpRequest) -> HttpResponse:
         vis = services.visible_campaigns(user)
         awaiting = {
             "proposed": list(
-                vis.filter(status=Campaign.Status.PROPOSED).select_related("commander")[:25]
+                vis.filter(status=Campaign.Status.PROPOSED)
+                .select_related("commander").prefetch_related("commander__characters")[:25]
             ),
             "milestones": list(
                 Milestone.objects.filter(
@@ -1968,7 +2189,8 @@ def recognition_manage(request: HttpRequest, pk: int) -> HttpResponse:
         "campaign": campaign,
         "participation": services.participation_panel(campaign, request.user),
         "recognitions": list(
-            campaign.recognitions.select_related("user", "awarded_by")[:100]
+            campaign.recognitions.select_related("user", "awarded_by")
+            .prefetch_related("user__characters", "awarded_by__characters")[:100]
         ),
         "users": _user_choices(),
     }
@@ -2013,7 +2235,8 @@ def campaign_report(request: HttpRequest, pk: int) -> HttpResponse:
     can_budget = services.can_view_budget(user, campaign)
     objective_rows = [
         _objective_vm(o, user)
-        for o in campaign.objectives.select_related("workstream", "owner").order_by("sort_order", "id")
+        for o in campaign.objectives.select_related("workstream", "owner", "verified_by")
+        .prefetch_related("verified_by__characters").order_by("sort_order", "id")
     ]
     # Close-out follow-ups: the "Follow-up: …" tasks on member-visible campaigns, or the neutral
     # "Campaign follow-up task" rows on restricted-tier campaigns (title carries no leak, #1).
@@ -2082,7 +2305,10 @@ def lessons_library(request: HttpRequest) -> HttpResponse:
         qs = qs.filter(status=f_outcome)
     if f_tag:
         qs = qs.filter(tags__contains=[f_tag])
-    qs = qs.select_related("commander").order_by("-actual_end_at", "-updated_at").distinct()
+    qs = (
+        qs.select_related("commander").prefetch_related("commander__characters")
+        .order_by("-actual_end_at", "-updated_at").distinct()
+    )
     page_obj = _page(request, qs, 25)
     ctx = {
         "page_obj": page_obj,
@@ -2172,7 +2398,10 @@ def campaign_activity(request: HttpRequest, pk: int) -> HttpResponse:
     """The full campaign activity stream, paged (doc 10 line 199) — ``can_view``. The detail page
     shows the latest 20; this is the complete history, 50 per page (newest first)."""
     campaign = _campaign_for_view(request, pk)
-    qs = campaign.activity.select_related("actor")  # model default ordering is -created_at, -id
+    # ``actor__characters`` prefetched: the stream renders each actor's display_name (doc 10 line 199).
+    qs = campaign.activity.select_related("actor").prefetch_related(
+        "actor__characters"
+    )  # model default ordering is -created_at, -id
     ctx = {
         "campaign": campaign,
         "page_obj": _page(request, qs, 50),

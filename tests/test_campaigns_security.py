@@ -229,7 +229,7 @@ def test_stranger_post_to_every_mutation_forbidden(client, django_user_model):
          {"description": "x", "probability": "medium", "impact": "medium"}),
         (reverse("campaigns:risk_edit", args=[risk.pk]), {"description": "x"}),
         (reverse("campaigns:dependency_create", args=[c.pk]),
-         {"from_kind": "objective", "from_id": str(obj.pk), "to_kind": "external", "note": "x"}),
+         {"from": f"objective:{obj.pk}", "to": "external", "note": "x"}),
         (reverse("campaigns:dependency_resolve", args=[dep.pk]), {}),
         (reverse("campaigns:issue_resolve", args=[issue.pk]), {"resolution_notes": "x"}),
         (reverse("campaigns:issue_escalate", args=[issue.pk]), {"reason": "x"}),
@@ -638,8 +638,7 @@ def test_dependency_cycle_rejected_via_view(client, django_user_model):
     b = _objective(c, title="B", status=OS.ACTIVE)
     client.force_login(officer)
     url = reverse("campaigns:dependency_create", args=[c.pk])
-    client.post(url, {"from_kind": "objective", "from_id": str(a.pk),
-                      "to_kind": "objective", "to_id": str(b.pk)})
-    client.post(url, {"from_kind": "objective", "from_id": str(b.pk),
-                      "to_kind": "objective", "to_id": str(a.pk)})  # would close a cycle
+    client.post(url, {"from": f"objective:{a.pk}", "to": f"objective:{b.pk}"})
+    client.post(url, {"from": f"objective:{b.pk}",
+                      "to": f"objective:{a.pk}"})  # would close a cycle
     assert CampaignDependency.objects.filter(campaign=c).count() == 1

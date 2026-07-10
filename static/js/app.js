@@ -27,6 +27,36 @@ window.typePicker = (endpoint, initialId, initialName) => ({
   choose(r) { this.q = r.name; this.id = r.type_id; this.open = false; },
 });
 
+// Multi-item autocomplete (objective metric params: industry output items). Manages a chip list of
+// {id,name} and exposes a comma-joined id string via `csv` for one hidden field the server's
+// list-of-ints cleaner already parses. Initial chips are read from a json_script block by id
+// (CSP-safe), so an edited objective re-opens with its stored items resolved to names.
+window.typeMultiPicker = (endpoint, itemsId) => ({
+  q: '', results: [], open: false,
+  items: (function () {
+    try { return JSON.parse(document.getElementById(itemsId).textContent) || []; }
+    catch (e) { return []; }
+  })(),
+  get csv() { return this.items.map((i) => i.id).join(','); },
+  async lookup() {
+    if (this.q.trim().length < 2) { this.results = []; this.open = false; return; }
+    try {
+      const sep = endpoint.includes('?') ? '&' : '?';
+      const r = await fetch(endpoint + sep + 'q=' + encodeURIComponent(this.q),
+        { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+      this.results = r.ok ? await r.json() : [];
+    } catch (e) { this.results = []; }
+    this.open = true;
+  },
+  add(r) {
+    if (!this.items.some((i) => String(i.id) === String(r.type_id))) {
+      this.items.push({ id: String(r.type_id), name: r.name });
+    }
+    this.q = ''; this.results = []; this.open = false;
+  },
+  remove(i) { this.items.splice(i, 1); },
+});
+
 // Solar-system autocomplete (campaign staging system): one visible search box,
 // one hidden id field. The server resolves the cached name from the id, so a
 // selection is the only way to set it — clearing the box unsets it.

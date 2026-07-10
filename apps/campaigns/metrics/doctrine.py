@@ -15,7 +15,7 @@ class DoctrineQualifiedPilots(MetricSource):
     unit = "pilots"
     data_class = "skills"
     params_schema = [
-        {"name": "doctrine_id", "kind": "int", "label": "Doctrine id", "required": True,
+        {"name": "doctrine_id", "kind": "int", "widget": "doctrine", "label": "Doctrine", "required": True,
          "help": "Active doctrine to count fly-capable pilots for."},
         {"name": "active_days", "kind": "int", "label": "Active within N days", "required": False,
          "help": "Optional — only count pilots seen online in the last N days."},

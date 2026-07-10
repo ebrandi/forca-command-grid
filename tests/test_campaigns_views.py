@@ -376,6 +376,104 @@ def test_system_search_requires_login(client):
 
 
 @pytest.mark.usefixtures("sde")
+def test_type_search_returns_matches_and_requires_two_chars(client, django_user_model):
+    """The SDE item-type autocomplete mirrors ``system_search``: ``[{type_id, name}]``, ≥2 chars."""
+    member = _user(django_user_model, "eve:ts1", rbac.ROLE_MEMBER)
+    client.force_login(member)
+    rows = client.get(reverse("campaigns:type_search"), {"q": "trit"}).json()
+    assert rows and all({"type_id", "name"} <= set(r) for r in rows)
+    assert any(r["name"] == "Tritanium" for r in rows)
+    assert client.get(reverse("campaigns:type_search"), {"q": "t"}).json() == []
+
+
+def test_type_search_requires_login(client):
+    assert client.get(reverse("campaigns:type_search"), {"q": "trit"}).status_code in (301, 302)
+
+
+# --- Metric-param widgets: name pickers that still store the same primitives (UX revision) ------
+def test_metric_param_widgets_store_same_primitives(client, django_user_model):
+    """Each friendly param picker posts an entity id/key, but the stored ``metric_params`` keeps the
+    exact primitive shape an existing objective uses — a single int, a list-of-int (both the comma
+    chips and the native multi-select), and a str key — so old objectives keep working unchanged."""
+    officer = _user(django_user_model, "eve:pm1", rbac.ROLE_OFFICER)
+    c = _campaign(commander=officer)
+    client.force_login(officer)
+    url = reverse("campaigns:objective_create", args=[c.pk])
+
+    # Single-select (doctrine) → stored int.
+    client.post(url, {"title": "Doc", "metric_source": "doctrine.qualified_pilots",
+                      "p__doctrine.qualified_pilots__doctrine_id": "7"})
+    assert c.objectives.get(title="Doc").metric_params == {"doctrine_id": 7}
+
+    # Type chips (industry) → one comma-joined hidden field → stored list-of-int.
+    client.post(url, {"title": "Ind", "metric_source": "industry.deliveries",
+                      "p__industry.deliveries__type_ids": "34,35,36"})
+    assert c.objectives.get(title="Ind").metric_params == {"type_ids": [34, 35, 36]}
+
+    # Native multi-select (structures) → getlist → stored list-of-int.
+    client.post(url, {"title": "Str", "metric_source": "structures.fuel_days",
+                      "p__structures.fuel_days__structure_ids": ["11", "22"]})
+    assert c.objectives.get(title="Str").metric_params == {"structure_ids": [11, 22]}
+
+    # Dimension select (readiness) → stored str key; wallet select → stored int.
+    client.post(url, {"title": "Rd", "metric_source": "readiness.dimension",
+                      "p__readiness.dimension__dimension": "doctrine"})
+    assert c.objectives.get(title="Rd").metric_params == {"dimension": "doctrine"}
+    client.post(url, {"title": "Fin", "metric_source": "finance.wallet_balance",
+                      "p__finance.wallet_balance__division": "3"})
+    fin = c.objectives.get(title="Fin")
+    assert fin.metric_params == {"division": 3} and fin.is_sensitive  # finance defaults sensitive
+
+
+def test_dependency_form_parses_kind_id(client, django_user_model):
+    """The dependency builder posts ``kind:id`` (or ``external``) values; the view parses them and
+    the service stores the edge with the right endpoints — no free-typed numeric id."""
+    officer = _user(django_user_model, "eve:dep", rbac.ROLE_OFFICER)
+    c = _campaign(commander=officer)
+    a = Objective.objects.create(campaign=c, title="A", status=OS.ACTIVE)
+    b = Objective.objects.create(campaign=c, title="B", status=OS.ACTIVE)
+    client.force_login(officer)
+    url = reverse("campaigns:dependency_create", args=[c.pk])
+
+    assert client.post(url, {"from": f"objective:{a.pk}", "to": f"objective:{b.pk}"}).status_code == 302
+    dep = c.dependencies.get()
+    assert (dep.from_kind, dep.from_id, dep.to_kind, dep.to_id) == ("objective", a.pk, "objective", b.pk)
+
+    client.post(url, {"from": f"objective:{a.pk}", "to": "external", "note": "market wait"})
+    ext = c.dependencies.get(to_kind="external")
+    assert ext.to_id == 0 and ext.note == "market wait"
+
+
+def test_pages_render_pilot_names_not_usernames(client, django_user_model):
+    """Activity, detail and recognition surfaces render the main-character name, never eve:<id>."""
+    from apps.campaigns import services
+    from apps.sso.models import EveCharacter
+
+    officer = _user(django_user_model, "eve:77001", rbac.ROLE_OFFICER)
+    EveCharacter.objects.create(character_id=77001, user=officer, name="Kira Nend",
+                                is_main=True, is_corp_member=True)
+    member = _user(django_user_model, "eve:77002", rbac.ROLE_MEMBER)
+    EveCharacter.objects.create(character_id=77002, user=member, name="Jax Orn",
+                                is_main=True, is_corp_member=True)
+    c = _campaign(commander=officer, recognition_mode=Campaign.RecognitionMode.COUNTS,
+                  recognition_public=True, start_at=timezone.now() - timezone.timedelta(days=1))
+    CampaignActivity.objects.create(campaign=c, actor=officer, verb="status.changed",
+                                    target_kind="campaign")
+    services.award_recognition(c, member, officer, category="logistics", points=3, reason="hauled fuel")
+    client.force_login(officer)
+
+    detail = client.get(reverse("campaigns:detail", args=[c.pk])).content.decode()
+    assert "Kira Nend" in detail  # commander shown by pilot name
+
+    activity = client.get(reverse("campaigns:activity", args=[c.pk])).content.decode()
+    assert "Kira Nend" in activity and ">eve:77001<" not in activity
+
+    rec = client.get(reverse("campaigns:recognition", args=[c.pk])).content.decode()
+    assert "Jax Orn" in rec and "Kira Nend" in rec  # recipient + awarder both named
+    assert ">eve:77002<" not in rec
+
+
+@pytest.mark.usefixtures("sde")
 def test_staging_name_resolved_from_sde_and_client_name_ignored(client, django_user_model):
     """The form submits only the picked system id; the cached name comes from the SDE.
     A forged staging_system_name in the POST must never be stored (no retyping, no spoofing)."""

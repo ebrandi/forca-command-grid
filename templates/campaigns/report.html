@@ -14,10 +14,10 @@
   {% if campaign.summary %}<p class="mt-1 text-sm text-faint">{{ campaign.summary }}</p>{% endif %}
   <div class="mt-3 max-w-md">{% include "campaigns/_progress_bar.html" with pct=campaign.progress_pct health=campaign.health %}</div>
   <p class="mt-3 text-sm text-faint">
-    {% if campaign.commander %}Cmdr: <span class="text-muted">{{ campaign.commander.username }}</span>{% endif %}
-    {% if campaign.sponsor %} · Sponsor: <span class="text-muted">{{ campaign.sponsor.username }}</span>{% endif %}
+    {% if campaign.commander %}Cmdr: <span class="text-muted">{{ campaign.commander.display_name }}</span>{% endif %}
+    {% if campaign.sponsor %} · Sponsor: <span class="text-muted">{{ campaign.sponsor.display_name }}</span>{% endif %}
     · <span class="data text-muted">{{ campaign.start_at|date:"Y-m-d"|default:"—" }} → {{ campaign.actual_end_at|date:"Y-m-d"|default:campaign.target_end_at|date:"Y-m-d"|default:"—" }}</span>
-    {% if campaign.closed_by %} · closed by <span class="text-muted">{{ campaign.closed_by.username }}</span>{% endif %}
+    {% if campaign.closed_by %} · closed by <span class="text-muted">{{ campaign.closed_by.display_name }}</span>{% endif %}
   </p>
 </section>
 
@@ -44,7 +44,7 @@
           <td class="py-2 pr-3">{% if vm.value_visible %}<span class="data text-muted">{% if vm.baseline is not None %}{{ vm.baseline|floatformat:"-2" }}{% else %}—{% endif %} → {% if vm.current is not None %}{{ vm.current|floatformat:"-2" }}{% else %}—{% endif %} {{ vm.obj.unit }}</span>{% else %}<span class="chip text-faint border-line">restricted</span>{% endif %}</td>
           <td class="py-2 pr-3">{% if vm.value_visible and vm.target is not None %}<span class="data text-faint">{{ vm.target|floatformat:"-2" }}</span>{% else %}—{% endif %}</td>
           <td class="py-2 pr-3">{% include "campaigns/_objective_status_chip.html" with status=vm.obj.status label=vm.obj.get_status_display %}</td>
-          <td class="py-2">{% if vm.obj.verified_by_id %}<span class="chip text-cyan border-cyan/40">✓ {{ vm.obj.verified_by.username }}</span>{% elif vm.obj.requires_verification %}<span class="text-xs text-faint">—</span>{% else %}<span class="text-xs text-faint">n/a</span>{% endif %}</td>
+          <td class="py-2">{% if vm.obj.verified_by_id %}<span class="chip text-cyan border-cyan/40">✓ {{ vm.obj.verified_by.display_name }}</span>{% elif vm.obj.requires_verification %}<span class="text-xs text-faint">—</span>{% else %}<span class="text-xs text-faint">n/a</span>{% endif %}</td>
         </tr>
       {% empty %}
         <tr><td colspan="5" class="py-3 text-faint">No objectives.</td></tr>

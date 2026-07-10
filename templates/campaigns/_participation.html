@@ -9,7 +9,7 @@ Redaction is applied in services.participation_panel — the template only rende
     {% for row in participation.rows %}
       <div class="py-2">
         <div class="flex flex-wrap items-center gap-x-3">
-          <span class="min-w-0 flex-1 truncate text-sm text-ink">{% if row.user %}{{ row.user.username }}{% else %}Unknown pilot{% endif %}</span>
+          <span class="min-w-0 flex-1 truncate text-sm text-ink">{% if row.user %}{{ row.user.display_name }}{% else %}Unknown pilot{% endif %}</span>
           {% if participation.mode == 'points' %}<span class="data shrink-0 text-sm text-gold">{{ row.points }} pts</span>{% endif %}
           <span class="data shrink-0 text-xs text-faint">{{ row.count }} task{{ row.count|pluralize }}</span>
         </div>

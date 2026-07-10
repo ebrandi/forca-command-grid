@@ -16,8 +16,8 @@ class IndustryDeliveries(MetricSource):
     unit = "units"
     data_class = "industry_jobs"
     params_schema = [
-        {"name": "type_ids", "kind": "ints", "label": "Output type ids", "required": True,
-         "help": "Comma-separated built-item type ids to count deliveries of."},
+        {"name": "type_ids", "kind": "ints", "widget": "type_multi", "label": "Output items", "required": True,
+         "help": "Built items to count deliveries of."},
     ]
 
     def measure(self, params: dict) -> Measurement:
