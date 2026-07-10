@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}{% if editing %}Edit risk{% else %}New risk{% endif %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<p class="eyebrow text-faint"><a href="{% url 'campaigns:index' %}" class="hover:text-gold">Campaign Command</a> › <a href="{% url 'campaigns:detail' campaign.pk %}" class="hover:text-gold">{{ campaign.name|truncatechars:36 }}</a> › {% if editing %}Edit risk{% else %}New risk{% endif %}</p>
+<h1 class="mt-1 mb-4 text-2xl font-bold text-ink">{% if editing %}Edit risk{% else %}New risk{% endif %}</h1>
+
+<form method="post" action="{% if editing %}{% url 'campaigns:risk_edit' risk.pk %}{% else %}{% url 'campaigns:risk_create' campaign.pk %}{% endif %}" class="space-y-4">
+  {% csrf_token %}
+  <section class="panel p-5">
+    <div class="grid gap-3 sm:grid-cols-2">
+      <label class="block sm:col-span-2"><span class="label">Description *</span><textarea name="description" rows="2" required class="input-field mt-1 w-full">{{ risk.description }}</textarea></label>
+      <label class="block"><span class="label">Probability</span>
+        <select name="probability" class="input-field mt-1 w-full">{% for value, label in levels %}<option value="{{ value }}" {% if risk.probability == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+      <label class="block"><span class="label">Impact</span>
+        <select name="impact" class="input-field mt-1 w-full">{% for value, label in levels %}<option value="{{ value }}" {% if risk.impact == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+      <label class="block"><span class="label">Owner</span>
+        <select name="owner" class="input-field mt-1 w-full"><option value="">—</option>{% for u in users %}<option value="{{ u.pk }}" {% if risk.owner_id == u.pk %}selected{% endif %}>{{ u.username }}</option>{% endfor %}</select></label>
+      <label class="block"><span class="label">Workstream</span>
+        <select name="workstream" class="input-field mt-1 w-full"><option value="">—</option>{% for ws in workstreams %}<option value="{{ ws.pk }}" {% if risk.workstream_id == ws.pk %}selected{% endif %}>{{ ws.name }}</option>{% endfor %}</select></label>
+      <label class="block"><span class="label">Status</span>
+        <select name="status" class="input-field mt-1 w-full">{% for value, label in statuses %}<option value="{{ value }}" {% if risk.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+      <label class="block"><span class="label">Due</span><input type="datetime-local" name="due_at" value="{{ due_at_local }}" class="input-field mt-1 w-full"></label>
+      <label class="block sm:col-span-2"><span class="label">Mitigation</span><textarea name="mitigation" rows="2" class="input-field mt-1 w-full">{{ risk.mitigation }}</textarea></label>
+      <label class="block sm:col-span-2"><span class="label">Contingency</span><textarea name="contingency" rows="2" class="input-field mt-1 w-full">{{ risk.contingency }}</textarea></label>
+      <label class="block sm:col-span-2"><span class="label">Trigger</span><input type="text" name="trigger" value="{{ risk.trigger }}" maxlength="200" class="input-field mt-1 w-full"></label>
+    </div>
+  </section>
+  <div class="flex items-center gap-2">
+    <button class="btn-gold">{% if editing %}Save changes{% else %}Add risk{% endif %}</button>
+    <a href="{% url 'campaigns:detail' campaign.pk %}" class="btn-ghost">Cancel</a>
+  </div>
+</form>
+{% endblock %}

@@ -392,6 +392,149 @@ REGISTRY: tuple[Event, ...] = (
         audience="corp", sensitive=False,
         triggers="Beat killboard.notify_rank_ups (nightly, after the member rollup).",
     ),
+    # --- Campaign Command (doc 09 §3) -----------------------------------------
+    # Per-user campaign traffic ("your objective / your deadline") — targeted,
+    # never a mass broadcast. Restricted campaigns emit name-only, individually
+    # targeted payloads only (enforced in apps/campaigns/notify.py, doc 09 §4.1).
+    Event(
+        key="campaigns.assigned",
+        label="Campaign objective assigned",
+        description=(
+            "A DM to a pilot when they are made owner of a campaign objective, workstream "
+            "lead, milestone owner, or a campaign's commander. Targeted at the newly "
+            "assigned pilot only."
+        ),
+        group=GROUP_MEMBER, source_service="campaigns",
+        audience="user", sensitive=False, broadcast=False,
+        triggers="Owner/lead/commander set or changed to a user on create or edit.",
+    ),
+    Event(
+        key="campaigns.deadline_soon",
+        label="Campaign deadline approaching",
+        description=(
+            "A bucketed reminder (7d / 48h / 24h / overdue) to an objective or milestone "
+            "owner as a due date nears — falls back to the commander when unowned. One per "
+            "(item, bucket), never hourly nagging."
+        ),
+        group=GROUP_MEMBER, source_service="campaigns",
+        audience="user", sensitive=False, broadcast=False,
+        triggers="Beat campaigns.sweep_deadlines (hourly) reaching a reminder bucket.",
+    ),
+    Event(
+        key="campaigns.objective_blocked",
+        label="Campaign objective blocked",
+        description=(
+            "A DM to the objective owner and campaign commander when an objective flips to "
+            "blocked (an open issue links it, or a dependency target went bad). Re-notifies "
+            "only when the blocking cause changes."
+        ),
+        group=GROUP_MEMBER, source_service="campaigns",
+        audience="user", sensitive=False, broadcast=False,
+        triggers="An objective becomes blocked via the issue-linkage rule.",
+    ),
+    Event(
+        key="campaigns.dependency_completed",
+        label="Campaign dependency completed",
+        description=(
+            "A DM to the owners of now-unblocked items (and the commander) when a "
+            "dependency target reaches a terminal-done state and its edge auto-resolves."
+        ),
+        group=GROUP_MEMBER, source_service="campaigns",
+        audience="user", sensitive=False, broadcast=False,
+        triggers="A dependency target reaches met/dropped/done/completed and the edge resolves.",
+    ),
+    Event(
+        key="campaigns.health_changed",
+        label="Campaign health changed",
+        description=(
+            "A leadership alert when a campaign's health level changes — degradations name "
+            "the blockers, budget state and deadline risk. Fires once per distinct "
+            "problem-set signature; recovery re-arms it. Sensitive: kept off low-ceiling "
+            "mass channels."
+        ),
+        group=GROUP_LEADERSHIP, source_service="campaigns",
+        audience="officer", sensitive=True, broadcast=True,
+        triggers="Campaign health recompute (write-path or beat) that changes the signature.",
+    ),
+    Event(
+        key="campaigns.approval_needed",
+        label="Campaign approval required",
+        description=(
+            "A director alert when a campaign is proposed for approval; also reused to nudge "
+            "a commander when a milestone is marked ready for review. Sensitive."
+        ),
+        group=GROUP_LEADERSHIP, source_service="campaigns",
+        audience="director", sensitive=True, broadcast=False,
+        triggers="A campaign transitions draft→proposed, or a milestone → ready_for_review.",
+    ),
+    Event(
+        key="campaigns.started",
+        label="Campaign started",
+        description=(
+            "A corp announcement when a campaign goes active (member-visible campaigns); "
+            "officer/director tiers announce to their tier; restricted campaigns announce "
+            "only to their individually-listed participants."
+        ),
+        group=GROUP_MEMBER, source_service="campaigns",
+        audience="corp", sensitive=False, broadcast=True,
+        triggers="A campaign transitions approved→active.",
+    ),
+    Event(
+        key="campaigns.completed",
+        label="Campaign completed",
+        description=(
+            "A corp announcement when a campaign reaches completed/failed/cancelled "
+            "(audience mirrors campaigns.started; restricted campaigns stay participant-only)."
+        ),
+        group=GROUP_MEMBER, source_service="campaigns",
+        audience="corp", sensitive=False, broadcast=True,
+        triggers="A campaign transitions active→completed/failed/cancelled.",
+    ),
+    Event(
+        key="campaigns.recognition",
+        label="Campaign contribution recognised",
+        description=(
+            "A private DM to a pilot recognised for a campaign contribution (close-out or "
+            "ad hoc). Sent regardless of the pilot's public-recognition opt-out — it is "
+            "private to them."
+        ),
+        group=GROUP_MEMBER, source_service="campaigns",
+        audience="user", sensitive=False, broadcast=False,
+        triggers="A CampaignRecognition row is created while recognition_mode is not none.",
+    ),
+    Event(
+        key="campaigns.manual_update_needed",
+        label="Campaign metric needs manual update",
+        description=(
+            "A low-priority nudge to a manual-metric objective's owner when its value has "
+            "gone stale past the confirmation interval — at most one per objective per week."
+        ),
+        group=GROUP_MEMBER, source_service="campaigns",
+        audience="user", sensitive=False, broadcast=False,
+        triggers="Beat campaigns.sweep_deadlines finds a stale manual-metric objective.",
+    ),
+    Event(
+        key="campaigns.issue_escalated",
+        label="Campaign issue escalated",
+        description=(
+            "A leadership alert when a campaign issue is escalated (a deliberate human "
+            "action). Sensitive: issue detail is kept off low-ceiling mass channels."
+        ),
+        group=GROUP_LEADERSHIP, source_service="campaigns",
+        audience="officer", sensitive=True, broadcast=True,
+        triggers="A campaign issue transitions open→escalated.",
+    ),
+    Event(
+        key="campaigns.approved",
+        label="Campaign approved",
+        description=(
+            "A DM to the commander/proposer when a director approves their campaign. "
+            "Targeted at the individual only, never a mass audience."
+        ),
+        group=GROUP_MEMBER, source_service="campaigns",
+        audience="user", sensitive=False, broadcast=False,
+        triggers="A campaign transitions proposed→approved.",
+    ),
 )
 
 _BY_KEY: dict[str, Event] = {e.key: e for e in REGISTRY}

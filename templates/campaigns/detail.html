@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+{% block title %}{{ campaign.name|truncatechars:48 }} · Campaign · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<p class="eyebrow text-faint"><a href="{% url 'campaigns:index' %}" class="hover:text-gold">Campaign Command</a> › {{ campaign.get_category_display }}</p>
+
+{# ── Header ─────────────────────────────────────────────────────────────── #}
+<section class="panel mt-2 p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    {% include "campaigns/_status_chip.html" with status=campaign.status label=campaign.get_status_display %}
+    {% include "campaigns/_health_chip.html" with health=campaign.health label=campaign.get_health_display reasons=campaign.health_reasons %}
+    {% for tag in campaign.tags %}<span class="chip text-faint border-line">{{ tag }}</span>{% endfor %}
+  </div>
+  <h1 class="mt-2 font-display text-2xl font-bold text-ink">{{ campaign.name }}</h1>
+  {% if campaign.summary %}<p class="mt-1 text-sm text-faint">{{ campaign.summary }}</p>{% endif %}
+
+  <div class="mt-3 max-w-md">
+    {% include "campaigns/_progress_bar.html" with pct=campaign.progress_pct health=campaign.health %}
+    <a href="{% url 'campaigns:explain' campaign.pk %}" class="mt-1 inline-block text-xs text-cyan hover:underline">How is this computed?</a>
+    {% if manual_progress %}
+    <div x-data="{ open: false }" class="mt-1">
+      <button type="button" @click="open=!open" class="text-xs text-cyan hover:underline">Set progress manually…</button>
+      <form method="post" action="{% url 'campaigns:set_progress' campaign.pk %}" x-show="open" x-cloak x-transition.opacity class="mt-2 space-y-2">
+        {% csrf_token %}
+        <div class="flex items-end gap-2">
+          <label class="block"><span class="eyebrow text-faint">Progress %</span>
+            <input type="number" name="progress_pct" min="0" max="100" value="{{ campaign.progress_pct }}" class="input-field mt-1 w-24 text-sm" required></label>
+        </div>
+        <textarea name="note" rows="2" class="input-field w-full text-xs" placeholder="Note (required — recorded as provenance)" required></textarea>
+        <button class="btn-cyan !py-1.5 !text-xs">Record progress</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+
+  <p class="mt-3 text-sm text-faint">
+    {% if campaign.commander %}Cmdr: <span class="text-muted">{{ campaign.commander.username }}</span>{% else %}<span class="text-gold">No commander</span>{% endif %}
+    {% if campaign.sponsor %} · Sponsor: <span class="text-muted">{{ campaign.sponsor.username }}</span>{% endif %}
+    {% if campaign.start_at or campaign.target_end_at %} · <span class="data text-muted">{{ campaign.start_at|date:"Y-m-d"|default:"—" }} → {{ campaign.target_end_at|date:"Y-m-d"|default:"—" }}</span>{% endif %}
+  </p>
+
+  {# Lifecycle actions — only legal transitions for THIS user render (doc 04 §1). #}
+  {% if lifecycle_buttons %}
+  <div class="mt-4 flex flex-wrap items-start gap-2 border-t border-line pt-4">
+    {% for b in lifecycle_buttons %}
+      {% if b.reason or b.override %}
+        <div x-data="{ open: false }" class="inline-block">
+          <button type="button" @click="open=!open" :aria-expanded="open" class="{{ b.btn }} text-sm">{{ b.label }}…</button>
+          <form method="post" action="{% url 'campaigns:set_status' campaign.pk %}" x-show="open" x-cloak x-transition.opacity class="mt-2 w-full max-w-md">
+            {% csrf_token %}
+            <input type="hidden" name="to" value="{{ b.to }}">
+            <label class="label" for="reason-{{ b.to }}">{% if b.override %}Override reason (required only if mandatory objectives are still open){% else %}Reason (recorded for audit){% endif %}</label>
+            <textarea id="reason-{{ b.to }}" name="reason" rows="2" class="input-field mt-1 w-full text-xs" placeholder="Why…"></textarea>
+            <button class="{{ b.btn }} mt-2 !py-1.5 !text-xs" {% if b.confirm %}data-confirm="Confirm — {{ b.label|lower }} this campaign?"{% endif %}>Confirm {{ b.label|lower }}</button>
+          </form>
+        </div>
+      {% else %}
+        <form method="post" action="{% url 'campaigns:set_status' campaign.pk %}" class="inline">
+          {% csrf_token %}
+          <input type="hidden" name="to" value="{{ b.to }}">
+          <button class="{{ b.btn }} text-sm" {% if b.confirm %}data-confirm="Confirm — {{ b.label|lower }} this campaign?"{% endif %}>{{ b.label }}</button>
+        </form>
+      {% endif %}
+    {% endfor %}
+    {% if can_manage %}<a href="{% url 'campaigns:edit' campaign.pk %}" class="btn-ghost text-sm">Edit</a>{% endif %}
+  </div>
+  {% endif %}
+
+  {# ── Views & close-out ──────────────────────────────────────────────────── #}
+  <nav class="mt-4 flex flex-wrap items-center gap-2 border-t border-line pt-4 text-sm">
+    <a href="{% url 'campaigns:timeline' campaign.pk %}" class="btn-ghost text-sm">Timeline</a>
+    {% if participation.mode != 'none' or can_manage %}<a href="{% url 'campaigns:recognition' campaign.pk %}" class="btn-ghost text-sm">Recognition</a>{% endif %}
+    {% if is_terminal %}<a href="{% url 'campaigns:report' campaign.pk %}" class="btn-ghost text-sm">Close-out report</a>{% endif %}
+    {% if can_close %}<a href="{% url 'campaigns:close' campaign.pk %}" class="btn-danger text-sm">Close out…</a>{% endif %}
+    {% if is_terminal and can_manage %}
+    <div x-data="{ open: false }" class="inline-block">
+      <button type="button" @click="open=!open" class="btn-ghost text-sm">Save as template…</button>
+      <form method="post" action="{% url 'campaigns:save_template' campaign.pk %}" x-show="open" x-cloak x-transition.opacity class="mt-2 w-full max-w-md space-y-2">
+        {% csrf_token %}
+        <input type="text" name="template_name" class="input-field w-full text-sm" placeholder="Template name" required>
+        <input type="text" name="template_description" class="input-field w-full text-sm" placeholder="Description">
+        <button class="btn-cyan !py-1.5 !text-xs">Save template (structure only)</button>
+      </form>
+    </div>
+    {% endif %}
+  </nav>
+</section>
+
+{% if campaign.status == 'draft' %}
+<section class="panel mt-4 border-l-2 border-cyan bg-cyan/5 p-4">
+  <p class="text-sm text-cyan">Draft — visible only to its officers until proposed.</p>
+</section>
+{% endif %}
+
+<div class="mt-4 grid gap-4 lg:grid-cols-3">
+  {# ── Why this matters ─────────────────────────────────────────────────── #}
+  <section class="panel p-5 lg:col-span-2">
+    <p class="eyebrow">Why this matters</p>
+    {% if campaign.rationale %}<p class="mt-2 whitespace-pre-line text-sm text-muted">{{ campaign.rationale }}</p>{% else %}<p class="mt-2 text-sm text-faint">No rationale recorded yet.</p>{% endif %}
+    {% if campaign.desired_outcome %}<p class="mt-3 text-sm"><span class="eyebrow text-faint">Desired outcome</span><br>{{ campaign.desired_outcome }}</p>{% endif %}
+    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+      {% if campaign.success_criteria %}<div><span class="eyebrow text-faint">Success criteria</span><p class="mt-1 whitespace-pre-line text-sm text-muted">{{ campaign.success_criteria }}</p></div>{% endif %}
+      {% if campaign.failure_criteria %}<div><span class="eyebrow text-faint">Failure criteria</span><p class="mt-1 whitespace-pre-line text-sm text-muted">{{ campaign.failure_criteria }}</p></div>{% endif %}
+    </div>
+    {% if staging_visible and campaign.staging_system_name %}<p class="mt-3 text-xs text-faint">Staging: <span class="text-muted">{{ campaign.staging_system_name }}</span></p>{% endif %}
+  </section>
+
+  {# ── Next actions ─────────────────────────────────────────────────────── #}
+  <section class="panel p-5">
+    <p class="eyebrow">Recommended next actions</p>
+    <ol class="mt-2 space-y-2 text-sm">
+      {% for a in next_actions %}
+        <li class="flex items-start gap-2">
+          <span class="chip shrink-0 {% if a.kind == 'overdue' %}text-loss border-loss/40{% elif a.kind == 'blocked' %}text-loss border-loss/40{% else %}text-gold border-gold/40{% endif %}">{{ a.kind }}</span>
+          <a href="{% url 'campaigns:objective_detail' a.obj.pk %}" class="min-w-0 flex-1 text-muted hover:text-gold">{{ a.obj.title }}<span class="block text-xs text-faint">{{ a.note }}</span></a>
+        </li>
+      {% empty %}
+        <li class="text-sm text-faint">Nothing needs attention right now.</li>
+      {% endfor %}
+    </ol>
+  </section>
+</div>
+
+{# ── Objectives grouped by workstream ─────────────────────────────────────── #}
+<section class="panel mt-4 p-5">
+  <div class="flex items-center justify-between">
+    <p class="eyebrow">Objectives</p>
+    {% if can_manage %}<a href="{% url 'campaigns:objective_create' campaign.pk %}" class="btn-ghost text-xs">Add objective</a>{% endif %}
+  </div>
+  {% if not has_objectives %}
+    <p class="mt-3 text-sm text-faint">This campaign has no objectives yet — progress cannot be computed until it does.</p>
+  {% else %}
+    {% for group in grouped_objectives %}
+      <div class="mt-4">
+        {% if group.workstream %}
+          <p class="eyebrow text-faint">{{ group.workstream.name }} — {% if group.workstream.lead %}lead: {{ group.workstream.lead.username }}{% else %}<span class="text-gold">unowned</span>{% endif %}</p>
+        {% else %}
+          <p class="eyebrow text-faint">Ungrouped</p>
+        {% endif %}
+        <div class="mt-2 divide-y divide-line/40">
+          {% for vm in group.objectives %}
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
+              <a href="{% url 'campaigns:objective_detail' vm.obj.pk %}" class="min-w-0 flex-1 truncate text-sm text-ink hover:text-gold">{{ vm.obj.title }}</a>
+              {% if vm.value_visible %}
+                <span class="data shrink-0 text-xs text-muted">{% if vm.current is not None %}{{ vm.current|floatformat:"-2" }}{% else %}—{% endif %}{% if vm.target is not None %} / {{ vm.target|floatformat:"-2" }}{% endif %} {{ vm.obj.unit }}</span>
+              {% else %}
+                <span class="chip shrink-0 text-faint border-line" title="Value restricted">— restricted</span>
+              {% endif %}
+              {% if vm.value_visible and vm.freshness %}<span class="chip shrink-0 {% if vm.manual %}text-cyan border-cyan/40{% else %}text-faint border-line{% endif %}">{% if vm.manual %}manual{% else %}⟳ {{ vm.freshness }}{% endif %}</span>{% endif %}
+              {% if vm.obj.help_wanted %}<span class="chip shrink-0 text-cyan border-cyan/40">help wanted</span>{% endif %}
+              {% include "campaigns/_objective_status_chip.html" with status=vm.obj.status label=vm.obj.get_status_display %}
+              <div class="w-32 shrink-0">{% include "campaigns/_progress_bar.html" with pct=vm.progress_pct health=campaign.health %}</div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  {% endif %}
+</section>
+
+<div class="mt-4 grid gap-4 lg:grid-cols-2">
+  {# ── Milestones ───────────────────────────────────────────────────────── #}
+  <section class="panel p-5">
+    <div class="flex items-center justify-between">
+      <p class="eyebrow">Milestones</p>
+      {% if can_manage %}<a href="{% url 'campaigns:milestone_create' campaign.pk %}" class="btn-ghost text-xs">Add milestone</a>{% endif %}
+    </div>
+    <div class="mt-2 divide-y divide-line/40">
+      {% for m in milestones %}
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
+          {% include "campaigns/_milestone_status_chip.html" with status=m.status label=m.get_status_display %}
+          <span class="min-w-0 flex-1 truncate text-sm text-ink" title="{{ m.title }}">{{ m.title }}</span>
+          {% if m.due_at %}<span class="data shrink-0 text-xs text-faint">{{ m.due_at|date:"d M" }}</span>{% endif %}
+          {% if can_manage and m.status == 'ready_for_review' %}
+            <form method="post" action="{% url 'campaigns:milestone_set_status' m.pk %}" class="inline">{% csrf_token %}<input type="hidden" name="to" value="done"><button class="btn-cyan !py-1 !text-xs">Approve</button></form>
+          {% endif %}
+          {% if can_manage %}<a href="{% url 'campaigns:milestone_edit' m.pk %}" class="text-xs text-faint hover:text-gold">edit</a>{% endif %}
+        </div>
+      {% empty %}
+        <p class="py-3 text-sm text-faint">No milestones scheduled yet.</p>
+      {% endfor %}
+    </div>
+  </section>
+
+  {# ── Risks & Issues (Alpine tabs) ─────────────────────────────────────── #}
+  <section class="panel p-5" x-data="{ tab: 'risks' }">
+    <div class="flex items-center gap-3">
+      <button type="button" @click="tab='risks'" :class="tab==='risks' ? 'text-gold' : 'text-faint'" class="eyebrow">Risks</button>
+      <button type="button" @click="tab='issues'" :class="tab==='issues' ? 'text-gold' : 'text-faint'" class="eyebrow">Issues</button>
+      <span class="flex-1"></span>
+      {% if can_manage %}<a href="{% url 'campaigns:risk_create' campaign.pk %}" class="btn-ghost text-xs">Add risk</a>{% endif %}
+      <a href="{% url 'campaigns:issue_create' campaign.pk %}" class="btn-ghost text-xs">Raise issue</a>
+    </div>
+    <div x-show="tab==='risks'" class="mt-2 divide-y divide-line/40">
+      {% for r in risks %}
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
+          <span class="chip shrink-0 {% if r.severity >= 9 %}text-loss border-loss/40{% elif r.severity >= 6 %}text-gold border-gold/40{% else %}text-muted border-line{% endif %}">sev {{ r.severity }}</span>
+          <span class="min-w-0 flex-1 truncate text-sm text-muted" title="{{ r.description }}">{{ r.description }}</span>
+          {% if can_manage %}<a href="{% url 'campaigns:risk_edit' r.pk %}" class="text-xs text-faint hover:text-gold">edit</a>{% endif %}
+        </div>
+      {% empty %}
+        <p class="py-3 text-sm text-faint">No open risks.</p>
+      {% endfor %}
+    </div>
+    <div x-show="tab==='issues'" x-cloak class="mt-2 divide-y divide-line/40">
+      {% for i in issues %}
+        <div class="py-2">
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span class="chip shrink-0 {% if i.status == 'escalated' %}text-loss border-loss/40{% else %}text-gold border-gold/40{% endif %}">{{ i.get_status_display }}</span>
+            <span class="min-w-0 flex-1 truncate text-sm text-muted" title="{{ i.description }}">{{ i.description }}</span>
+            {% if can_manage and i.status == 'open' %}
+            <button type="button" class="btn-ghost !py-1 !text-xs" x-data @click="$refs.escalate{{ i.pk }}.classList.toggle('hidden')">Escalate</button>
+            {% endif %}
+            {% if can_manage or i.owner_id == request.user.pk %}
+            <button type="button" class="btn-ghost !py-1 !text-xs" x-data @click="$refs.resolve{{ i.pk }}.classList.toggle('hidden')">Resolve</button>
+            {% endif %}
+          </div>
+          {% if i.objective_id %}<p class="mt-0.5 text-xs text-faint">Blocking objective: {{ i.objective.title }}</p>{% endif %}
+          {% if can_manage and i.status == 'open' %}
+          <form method="post" action="{% url 'campaigns:issue_escalate' i.pk %}" x-ref="escalate{{ i.pk }}" class="mt-2 hidden">
+            {% csrf_token %}
+            <textarea name="reason" rows="2" class="input-field w-full text-xs" placeholder="Escalation reason (required) — notifies leadership"></textarea>
+            <button class="btn-danger mt-1 !py-1 !text-xs">Escalate to leadership</button>
+          </form>
+          {% endif %}
+          {% if can_manage or i.owner_id == request.user.pk %}
+          <form method="post" action="{% url 'campaigns:issue_resolve' i.pk %}" x-ref="resolve{{ i.pk }}" class="mt-2 hidden">
+            {% csrf_token %}
+            <textarea name="resolution_notes" rows="2" class="input-field w-full text-xs" placeholder="Resolution notes (required) — resolving unblocks the linked objective"></textarea>
+            <button class="btn-cyan mt-1 !py-1 !text-xs">Resolve issue</button>
+          </form>
+          {% endif %}
+        </div>
+      {% empty %}
+        <p class="py-3 text-sm text-faint">No open issues — raise one if something is blocking you.</p>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+
+<div class="mt-4 grid gap-4 lg:grid-cols-2">
+  {# ── Dependencies ─────────────────────────────────────────────────────── #}
+  <section class="panel p-5">
+    <div class="flex items-center justify-between">
+      <p class="eyebrow">Dependencies</p>
+      {% if can_manage %}<button type="button" class="btn-ghost text-xs" x-data @click="$refs.depform.classList.toggle('hidden')">Add</button>{% endif %}
+    </div>
+    <div class="mt-2 divide-y divide-line/40">
+      {% for row in dependencies %}
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
+          <span class="chip shrink-0 text-loss border-loss/40">blocked-by</span>
+          <span class="min-w-0 flex-1 text-sm text-muted">{{ row.dep.from_kind }} #{{ row.dep.from_id }} ← {% if row.external %}external{% else %}{{ row.dep.to_kind }} #{{ row.dep.to_id }}{% endif %}{% if row.dep.note %} · {{ row.dep.note }}{% endif %}</span>
+          {% if can_manage and row.external %}
+            <form method="post" action="{% url 'campaigns:dependency_resolve' row.dep.pk %}" class="inline-flex items-center gap-1">{% csrf_token %}
+              <input type="text" name="reason" required maxlength="300" placeholder="Reason" class="input-field !py-1 !text-xs w-40">
+              <button class="btn-ghost !py-1 !text-xs">Resolve</button>
+            </form>
+          {% endif %}
+        </div>
+      {% empty %}
+        <p class="py-3 text-sm text-faint">No unresolved dependencies.</p>
+      {% endfor %}
+    </div>
+    {% if can_manage %}
+    <form method="post" action="{% url 'campaigns:dependency_create' campaign.pk %}" x-ref="depform" class="mt-3 hidden space-y-2 border-t border-line pt-3">
+      {% csrf_token %}
+      <div class="grid grid-cols-2 gap-2 text-xs">
+        <label class="block"><span class="eyebrow text-faint">From kind</span>
+          <select name="from_kind" class="input-field mt-1"><option value="objective">objective</option><option value="milestone">milestone</option><option value="workstream">workstream</option><option value="campaign">campaign</option></select></label>
+        <label class="block"><span class="eyebrow text-faint">From id</span><input type="number" name="from_id" class="input-field mt-1 w-full"></label>
+        <label class="block"><span class="eyebrow text-faint">Blocked-by kind</span>
+          <select name="to_kind" class="input-field mt-1"><option value="objective">objective</option><option value="milestone">milestone</option><option value="workstream">workstream</option><option value="campaign">campaign</option><option value="external">external</option></select></label>
+        <label class="block"><span class="eyebrow text-faint">Blocked-by id</span><input type="number" name="to_id" class="input-field mt-1 w-full"></label>
+      </div>
+      <input type="text" name="note" class="input-field w-full text-xs" placeholder="Note (required for external)">
+      <button class="btn-cyan !py-1 !text-xs">Add dependency</button>
+    </form>
+    {% endif %}
+  </section>
+
+  {# ── Budget (gated) ───────────────────────────────────────────────────── #}
+  {% if can_budget %}
+  <section class="panel p-5">
+    <p class="eyebrow">Budget</p>
+    {% if campaign.budget_isk %}
+      <p class="mt-2 text-sm text-muted"><span class="data text-ink">{{ campaign.spent_isk|floatformat:"-2" }}</span> spent of <span class="data">{{ campaign.budget_isk|floatformat:"-2" }}</span> ISK</p>
+      {% widthratio campaign.spent_isk campaign.budget_isk 100 as budget_pct %}
+      <div class="mt-2">{% include "campaigns/_progress_bar.html" with pct=budget_pct health=campaign.health %}</div>
+    {% else %}
+      <p class="mt-2 text-sm text-faint">No budget set.</p>
+    {% endif %}
+    <p class="mt-2 text-xs text-faint">Visible only to directors and the commander.</p>
+  </section>
+  {% endif %}
+</div>
+
+{# ── Linked operations ────────────────────────────────────────────────────── #}
+<section class="panel mt-4 p-5">
+  <div class="flex items-center justify-between">
+    <p class="eyebrow">Linked operations</p>
+    {% if can_manage and linkable_operations %}
+    <button type="button" class="btn-ghost text-xs" x-data @click="$refs.opform.classList.toggle('hidden')">Link operation</button>
+    {% endif %}
+  </div>
+  <div class="mt-2 divide-y divide-line/40">
+    {% for row in linked_operations %}
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 text-sm">
+        {% if row.removed %}
+          <span class="min-w-0 flex-1 text-faint">Operation #{{ row.link.operation_id }} <span class="chip text-faint border-line">removed</span></span>
+        {% else %}
+          <span class="min-w-0 flex-1 truncate text-muted">{{ row.op.name }}{% if row.link.note %} <span class="text-xs text-faint">· {{ row.link.note }}</span>{% endif %}</span>
+          {% if row.op.target_at %}<span class="data shrink-0 text-xs text-faint">{{ row.op.target_at|date:"d M" }}</span>{% endif %}
+        {% endif %}
+        {% if can_manage %}
+        <form method="post" action="{% url 'campaigns:operation_unlink' campaign.pk %}" class="inline">{% csrf_token %}<input type="hidden" name="operation_id" value="{{ row.link.operation_id }}"><button class="text-xs text-faint hover:text-loss">unlink</button></form>
+        {% endif %}
+      </div>
+    {% empty %}
+      <p class="py-3 text-sm text-faint">No operations linked yet.</p>
+    {% endfor %}
+  </div>
+  {% if can_manage and linkable_operations %}
+  <form method="post" action="{% url 'campaigns:operation_link' campaign.pk %}" x-ref="opform" class="mt-3 hidden space-y-2 border-t border-line pt-3">
+    {% csrf_token %}
+    <label class="block text-xs"><span class="eyebrow text-faint">Operation</span>
+      <select name="operation_id" class="input-field mt-1 w-full">
+        {% for op in linkable_operations %}<option value="{{ op.pk }}">{{ op.name }}{% if op.target_at %} — {{ op.target_at|date:"d M Y" }}{% endif %}</option>{% endfor %}
+      </select></label>
+    <input type="text" name="note" class="input-field w-full text-xs" placeholder="Note (optional)">
+    <button class="btn-cyan !py-1 !text-xs">Link operation</button>
+  </form>
+  {% endif %}
+</section>
+
+{# ── Participation & recognition ──────────────────────────────────────────── #}
+{% if participation.mode != 'none' %}
+<section class="panel mt-4 p-5">
+  <div class="flex items-center justify-between">
+    <p class="eyebrow">Participation &amp; recognition</p>
+    {% if can_manage %}<a href="{% url 'campaigns:recognition' campaign.pk %}" class="btn-ghost text-xs">Manage</a>{% endif %}
+  </div>
+  {% include "campaigns/_participation.html" %}
+</section>
+{% endif %}
+
+{# ── Evidence ─────────────────────────────────────────────────────────────── #}
+<section class="panel mt-4 p-5">
+  <p class="eyebrow">Evidence</p>
+  {% include "campaigns/_evidence_list.html" with evidence=evidence can_attach=can_attach_evidence attached_kind="campaign" attached_id=campaign.pk campaign=campaign %}
+</section>
+
+{# ── Activity ─────────────────────────────────────────────────────────────── #}
+<section class="panel mt-4 p-5">
+  <div class="flex items-baseline justify-between gap-2">
+    <p class="eyebrow">Activity</p>
+    <a href="{% url 'campaigns:activity' campaign.pk %}" class="text-xs text-faint hover:text-gold">View all →</a>
+  </div>
+  <div class="mt-2 divide-y divide-line/40">
+    {% for a in activity %}
+      <div class="flex flex-wrap items-baseline gap-x-2 py-2 text-sm">
+        <span class="data shrink-0 text-xs text-faint">{{ a.created_at|date:"d M H:i" }}</span>
+        <span class="shrink-0 text-muted">{% if a.actor %}{{ a.actor.username }}{% else %}auto{% endif %}</span>
+        <span class="min-w-0 flex-1 text-faint">{{ a.verb }}{% if a.reason %} — {{ a.reason }}{% endif %}</span>
+      </div>
+    {% empty %}
+      <p class="py-3 text-sm text-faint">No activity recorded yet.</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

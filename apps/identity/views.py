@@ -324,8 +324,22 @@ HIDEABLE_PANELS = (
     ("onboarding", "Getting started"),
     ("pilot_stats", "Pilot stats"),
     ("doctrines", "Doctrine readiness"),
+    ("campaigns", "Campaign Command"),
 )
 _HIDEABLE_KEYS = frozenset(k for k, _ in HIDEABLE_PANELS)
+
+
+def _campaigns_panel(user):
+    """The Command-Center Campaign Command panel context, or ``None`` when the feature is off or
+    the pilot has nothing to show (the panel is omitted, never rendered hollow — doc 10 §3.3)."""
+    from core.features import feature_enabled
+
+    if not feature_enabled("campaigns"):
+        return None
+    from apps.campaigns import services as campaign_services
+
+    panel = campaign_services.pilot_panel(user)
+    return panel if panel["has_content"] else None
 
 
 def _hidden_panels(user) -> set:
@@ -701,6 +715,7 @@ def _dashboard_context(request: HttpRequest) -> dict:
         "training": training,
         "my_services": my_services,
         "onboarding": onboarding,
+        "campaigns_panel": _campaigns_panel(user),
         "hidden_panels": _hidden_panels(user),
         "hideable_panels": HIDEABLE_PANELS,
     }
@@ -782,7 +797,10 @@ def dashboard(request: HttpRequest) -> HttpResponse:
     """
     if not request.user.characters.exists():
         # Link-a-character CTA replaces the pilot body; officers keep their deck.
-        ctx: dict = {"characters": [], **_officer_deck_context(request.user)}
+        ctx: dict = {
+            "characters": [], "campaigns_panel": _campaigns_panel(request.user),
+            **_officer_deck_context(request.user),
+        }
         return render(request, "identity/dashboard.html", ctx)
     return render(request, "identity/dashboard.html", _dashboard_context(request))
 

@@ -62,6 +62,9 @@ class Task(TimeStampedModel):
         indexes = [
             models.Index(fields=["status", "is_open"]),
             models.Index(fields=["assignee", "status"]),
+            # Every soft-linked lookup (campaign objective ↔ task roll-up, volunteer idempotency)
+            # filters on the related ref; without this it sequential-scans a growing table.
+            models.Index(fields=["related_type", "related_id"]),
         ]
 
     def __str__(self) -> str:

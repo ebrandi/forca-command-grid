@@ -630,6 +630,25 @@ app.conf.beat_schedule = {
         "task": "raffle.refresh_adoption",
         "schedule": crontab(minute="21,51"),
     },
+    # Campaign Command: refresh auto-measured objective values, recompute progress/health.
+    # A due-table sweep gated per-source by min refresh intervals; feature-gated, inert
+    # when Campaign Command is disabled.
+    "campaigns-refresh-metrics": {
+        "task": "campaigns.refresh_metrics",
+        "schedule": crontab(minute="7-59/15"),
+    },
+    # Campaign Command: due-soon/overdue/blocked/manual-stale notification sweep.
+    # Bucketed idempotency keys make re-runs no-ops.
+    "campaigns-sweep-deadlines": {
+        "task": "campaigns.sweep_deadlines",
+        "schedule": crontab(minute=23),
+    },
+    # Campaign Command: retention pruning, staggered with the other
+    # nightly housekeeping prunes.
+    "campaigns-housekeeping": {
+        "task": "campaigns.housekeeping",
+        "schedule": crontab(minute=35, hour=3),
+    },
 }
 
 

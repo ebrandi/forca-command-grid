@@ -1,0 +1,4 @@
+{% comment %}Campaign health chip (design doc 10 §2.1), worst-wins colour + always-present label.
+Params: health (value), label (display text), reasons (list of {label,detail}) for the tooltip.
+{% endcomment %}
+<span class="chip {% if health == 'healthy' %}text-kill border-kill/40{% elif health == 'watch' %}text-cyan border-cyan/40{% elif health == 'at_risk' %}text-gold border-gold/40{% elif health == 'critical' %}text-loss border-loss/40{% elif health == 'blocked' %}text-loss border-loss bg-loss/10{% else %}text-muted border-line{% endif %}"{% if reasons %} title="{% for r in reasons %}{{ r.label }}{% if not forloop.last %} · {% endif %}{% endfor %}"{% endif %}>{% if health == 'blocked' %}<svg class="mr-1 inline h-3 w-3"><use href="#i-cross"/></svg>{% endif %}{{ label }}</span>

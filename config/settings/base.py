@@ -74,6 +74,7 @@ INSTALLED_APPS = [
     "apps.raffle",
     "apps.comms_access",
     "apps.impersonation",
+    "apps.campaigns",
 ]
 
 MIDDLEWARE = [

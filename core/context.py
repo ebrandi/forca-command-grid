@@ -38,6 +38,7 @@ def roles(request) -> dict:
         # is NOT an officer still sees their one surface in the nav.
         "can_recruit": rbac.has_perm(user, rbac.PERM_RECRUITMENT_MANAGE),
         "can_manage_fleet": rbac.has_perm(user, rbac.PERM_FLEET_MANAGE),
+        "can_manage_campaigns": rbac.has_perm(user, rbac.PERM_CAMPAIGN_MANAGE),
         "main_character": main_character,
         # Home corporation id for branding (its in-game logo is the app mark).
         "home_corp_id": getattr(settings, "FORCA_HOME_CORP_ID", 0),

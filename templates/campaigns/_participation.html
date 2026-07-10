@@ -1,0 +1,25 @@
+{% comment %}Participation & recognition panel body (doc 11 §2.4). Params: participation, campaign.
+Redaction is applied in services.participation_panel — the template only renders what it is given
+(opted-out / private pilots arrive as an ``other_count``, never as named rows).{% endcomment %}
+{% if participation.mode == 'none' %}
+  <p class="mt-2 text-sm text-faint">Recognition is turned off for this campaign.</p>
+{% elif participation.has_content %}
+  <p class="mt-1 text-xs text-faint">{{ participation.rule_text }}</p>
+  <div class="mt-2 divide-y divide-line/40">
+    {% for row in participation.rows %}
+      <div class="py-2">
+        <div class="flex flex-wrap items-center gap-x-3">
+          <span class="min-w-0 flex-1 truncate text-sm text-ink">{% if row.user %}{{ row.user.username }}{% else %}Unknown pilot{% endif %}</span>
+          {% if participation.mode == 'points' %}<span class="data shrink-0 text-sm text-gold">{{ row.points }} pts</span>{% endif %}
+          <span class="data shrink-0 text-xs text-faint">{{ row.count }} task{{ row.count|pluralize }}</span>
+        </div>
+        {% for r in row.recognitions %}
+          <p class="mt-0.5 text-xs text-faint">★ {{ r.category }}{% if r.points %} ({{ r.points }}){% endif %} — {{ r.reason }}{% if r.awarded_by %} · by {{ r.awarded_by }}{% endif %}</p>
+        {% endfor %}
+      </div>
+    {% endfor %}
+  </div>
+  {% if participation.other_count %}<p class="mt-2 text-xs text-faint">+ {{ participation.other_count }} other contributor{{ participation.other_count|pluralize }} (recognition kept private).</p>{% endif %}
+{% else %}
+  <p class="mt-2 text-sm text-faint">No contributions recorded yet — completed campaign tasks and manual recognition will show here.</p>
+{% endif %}

@@ -62,6 +62,7 @@ DEFAULTS: dict[str, dict] = {
             "buyback": {"audience": "user", "channels": ["in_app", "eve_mail"], "priority": "normal"},
             "mentorship": {"audience": "user", "channels": ["in_app"], "priority": "low"},
             "announcement": {"audience": "corp", "channels": ["discord"], "priority": "low"},
+            "campaign": {"audience": "user", "channels": ["in_app", "eve_mail"], "priority": "normal"},
             "system": {"audience": "officer", "channels": ["in_app"], "priority": "low"},
         },
     },
@@ -97,7 +98,7 @@ DEFAULTS: dict[str, dict] = {
         # Auto-generated calendar alerts are DRAFT-until-approved (locked decision E4).
         "auto_alerts_mode": "draft_until_approved",  # draft_until_approved|auto_small|auto_all
         "publishing_services": [
-            "operations", "corporation", "erp", "mentorship", "pingboard",
+            "operations", "corporation", "erp", "mentorship", "pingboard", "campaigns",
         ],
         "reminder_offsets_minutes": {
             "fleet_op": [1440, 60, 15],

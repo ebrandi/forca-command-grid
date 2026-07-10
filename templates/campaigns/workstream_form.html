@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}{% if editing %}Edit workstream{% else %}New workstream{% endif %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<p class="eyebrow text-faint"><a href="{% url 'campaigns:index' %}" class="hover:text-gold">Campaign Command</a> › <a href="{% url 'campaigns:detail' campaign.pk %}" class="hover:text-gold">{{ campaign.name|truncatechars:36 }}</a> › {% if editing %}Edit workstream{% else %}New workstream{% endif %}</p>
+<h1 class="mt-1 mb-4 text-2xl font-bold text-ink">{% if editing %}Edit workstream{% else %}New workstream{% endif %}</h1>
+
+<form method="post" action="{% if editing %}{% url 'campaigns:workstream_edit' workstream.pk %}{% else %}{% url 'campaigns:workstream_create' campaign.pk %}{% endif %}" class="space-y-4">
+  {% csrf_token %}
+  <section class="panel p-5">
+    <div class="grid gap-3 sm:grid-cols-2">
+      <label class="block sm:col-span-2"><span class="label">Name *</span><input type="text" name="name" value="{{ workstream.name }}" maxlength="120" required class="input-field mt-1 w-full"></label>
+      <label class="block sm:col-span-2"><span class="label">Description</span><textarea name="description" rows="2" class="input-field mt-1 w-full">{{ workstream.description }}</textarea></label>
+      <label class="block"><span class="label">Lead</span>
+        <select name="lead" class="input-field mt-1 w-full"><option value="">—</option>{% for u in users %}<option value="{{ u.pk }}" {% if workstream.lead_id == u.pk %}selected{% endif %}>{{ u.username }}</option>{% endfor %}</select></label>
+      <label class="block"><span class="label">Status</span>
+        <select name="status" class="input-field mt-1 w-full">{% for value, label in statuses %}<option value="{{ value }}" {% if workstream.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+      <label class="block"><span class="label">Sort order</span><input type="number" name="sort_order" value="{{ workstream.sort_order|default:0 }}" class="input-field mt-1 w-full"></label>
+    </div>
+  </section>
+  <div class="flex items-center gap-2">
+    <button class="btn-gold">{% if editing %}Save changes{% else %}Add workstream{% endif %}</button>
+    <a href="{% url 'campaigns:detail' campaign.pk %}" class="btn-ghost">Cancel</a>
+  </div>
+</form>
+{% endblock %}

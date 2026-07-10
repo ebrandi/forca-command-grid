@@ -120,6 +120,19 @@
   </div>
   {% endif %}
 
+  {% comment %}Campaign Command — the strategic-campaign portfolio. Member-facing (the portfolio
+     shows each pilot their visible campaigns), so it lives in the shared member region gated by
+     its own feature key, a sibling of the officer Command Intelligence / Readiness groups.{% endcomment %}
+  {% if features.campaigns %}
+  <div data-acc data-acc-key="campaigns">
+    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">Campaign Command</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
+    <div data-acc-body class="space-y-1">
+      <a href="{% url 'campaigns:index' %}" class="navlink {% if ns == 'campaigns' and un != 'workspace' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-target"/></svg> Campaigns</a>
+      {% if is_officer or can_manage_campaigns %}<a href="{% url 'campaigns:workspace' %}" class="navlink {% if ns == 'campaigns' and un == 'workspace' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-check"/></svg> My Workspace</a>{% endif %}
+    </div>
+  </div>
+  {% endif %}
+
   {% if is_officer %}
   {% comment %}Leadership: day-to-day command only, plus a single Admin Console gateway.
      The operational reads and config that used to be DUPLICATED here (Structures,
@@ -140,7 +153,7 @@
       <a href="{% url 'command_intel:constraints' %}" class="navlink {% if ns == 'command_intel' and un == 'constraints' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-shield"/></svg> Operational Constraints</a>
       <a href="{% url 'command_intel:simulator' %}" class="navlink {% if ns == 'command_intel' and un == 'simulator' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-grid"/></svg> What-if Simulator</a>
       <a href="{% url 'command_intel:battles' %}" class="navlink {% if ns == 'command_intel' and un == 'battles' or ns == 'command_intel' and un == 'battle_detail' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-cross"/></svg> Battle Analysis</a>
-      <a href="{% url 'command_intel:campaigns' %}" class="navlink {% if ns == 'command_intel' and un == 'campaigns' or ns == 'command_intel' and un == 'campaign_detail' or ns == 'command_intel' and un == 'campaign_new' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-bolt"/></svg> Strategic Campaigns</a>
+      <a href="{% url 'command_intel:campaigns' %}" class="navlink {% if ns == 'command_intel' and un == 'campaigns' or ns == 'command_intel' and un == 'campaign_detail' or ns == 'command_intel' and un == 'campaign_new' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-bolt"/></svg> Improvement Plans</a>
       <a href="{% url 'command_intel:reports' %}" class="navlink {% if ns == 'command_intel' and un == 'reports' or ns == 'command_intel' and un == 'report_detail' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-trophy"/></svg> Intelligence Reports</a>
     </div>
   </div>

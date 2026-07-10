@@ -1,0 +1,3 @@
+{% comment %}Campaign status chip (design doc 10 §2.2). Colour is never the only carrier — the
+label text always renders. Params: status (value), label (display text).{% endcomment %}
+<span class="chip {% if status == 'proposed' or status == 'approved' %}text-cyan border-cyan/40{% elif status == 'active' %}text-gold border-gold/40{% elif status == 'completed' %}text-kill border-kill/40{% elif status == 'failed' %}text-loss border-loss/40{% elif status == 'archived' %}text-faint border-line{% else %}text-muted border-line{% endif %}">{{ label }}</span>

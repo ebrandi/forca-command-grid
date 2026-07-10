@@ -93,6 +93,9 @@ FEATURES: list[Feature] = [
             "The unified alerting + calendar system: the dashboard, officer alert composer "
             "and history, and the corporation calendar of operations, timers and reminders.",
             "Command & readiness"),
+    Feature("campaigns", "Campaign Command",
+            "Strategic campaigns: objectives, workstreams, risks and progress toward "
+            "corporation goals.", "Command & readiness"),
     Feature("recruitment", "Recruitment",
             "The recruiter's candidate tracker and evidence desk.", "Leadership"),
 ]
@@ -281,6 +284,9 @@ _NAMESPACE_FEATURE = {
     # command_intel's officer surface; the member '/command/me/' pilot slice is
     # kept on command_intel_pilot by the _VIEW_FEATURE overrides below.
     "command_intel": "command_intel",
+    # Campaign Command: the whole /campaigns/ namespace is one feature, so disabling it
+    # 404s every route (portfolio, detail, mutations) via the gate middleware.
+    "campaigns": "campaigns",
     # recruitment: this also gates the candidate OAuth begin/callback, which is the
     # intended behaviour — when recruitment is off, no candidate should be able to link.
     "recruitment": "recruitment",

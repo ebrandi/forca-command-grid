@@ -42,6 +42,7 @@ urlpatterns = [
     path("store/", include("apps.store.urls")),
     path("tools/", include("apps.navigation.urls")),
     path("command/", include("apps.command_intel.urls")),
+    path("campaigns/", include("apps.campaigns.urls")),
     path("comms/", include("apps.comms_access.urls")),
 ]
 

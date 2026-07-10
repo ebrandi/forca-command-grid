@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Report · {{ campaign.name|truncatechars:40 }} · Campaign Command{% endblock %}
+{% block content %}
+<p class="eyebrow text-faint"><a href="{% url 'campaigns:index' %}" class="hover:text-gold">Campaign Command</a> › <a href="{% url 'campaigns:detail' campaign.pk %}" class="hover:text-gold">{{ campaign.name|truncatechars:40 }}</a> › Report</p>
+
+{# Executive summary block (doc 11 §2.2, reused verbatim from detail). #}
+<section class="panel mt-2 p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    {% include "campaigns/_status_chip.html" with status=campaign.status label=campaign.get_status_display %}
+    {% include "campaigns/_health_chip.html" with health=campaign.health label=campaign.get_health_display reasons=campaign.health_reasons %}
+    <span class="chip text-faint border-line">{{ campaign.get_category_display }}</span>
+  </div>
+  <h1 class="mt-2 font-display text-2xl font-bold text-ink">{{ campaign.name }}</h1>
+  {% if campaign.summary %}<p class="mt-1 text-sm text-faint">{{ campaign.summary }}</p>{% endif %}
+  <div class="mt-3 max-w-md">{% include "campaigns/_progress_bar.html" with pct=campaign.progress_pct health=campaign.health %}</div>
+  <p class="mt-3 text-sm text-faint">
+    {% if campaign.commander %}Cmdr: <span class="text-muted">{{ campaign.commander.username }}</span>{% endif %}
+    {% if campaign.sponsor %} · Sponsor: <span class="text-muted">{{ campaign.sponsor.username }}</span>{% endif %}
+    · <span class="data text-muted">{{ campaign.start_at|date:"Y-m-d"|default:"—" }} → {{ campaign.actual_end_at|date:"Y-m-d"|default:campaign.target_end_at|date:"Y-m-d"|default:"—" }}</span>
+    {% if campaign.closed_by %} · closed by <span class="text-muted">{{ campaign.closed_by.username }}</span>{% endif %}
+  </p>
+</section>
+
+{# Outcome vs criteria. #}
+<section class="panel mt-4 p-5">
+  <p class="eyebrow">Outcome</p>
+  {% if campaign.outcome_summary %}<p class="mt-2 whitespace-pre-line text-sm text-muted">{{ campaign.outcome_summary }}</p>{% else %}<p class="mt-2 text-sm text-faint">No outcome summary recorded.</p>{% endif %}
+  <div class="mt-3 grid gap-3 sm:grid-cols-2">
+    {% if campaign.success_criteria %}<div><span class="eyebrow text-faint">Success criteria</span><p class="mt-1 whitespace-pre-line text-sm text-muted">{{ campaign.success_criteria }}</p></div>{% endif %}
+    {% if campaign.failure_criteria %}<div><span class="eyebrow text-faint">Failure criteria</span><p class="mt-1 whitespace-pre-line text-sm text-muted">{{ campaign.failure_criteria }}</p></div>{% endif %}
+  </div>
+</section>
+
+{# Objective final table. #}
+<section class="panel mt-4 p-5">
+  <p class="eyebrow">Objectives — final</p>
+  <div class="mt-2 overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead><tr class="text-left text-faint"><th class="py-1 pr-3">Objective</th><th class="py-1 pr-3">Baseline → final</th><th class="py-1 pr-3">Target</th><th class="py-1 pr-3">Status</th><th class="py-1">Verified</th></tr></thead>
+      <tbody class="divide-y divide-line/40">
+      {% for vm in objective_rows %}
+        <tr>
+          <td class="py-2 pr-3">{{ vm.obj.title }}{% if vm.obj.is_mandatory %} <span class="chip text-gold border-gold/40">mandatory</span>{% endif %}</td>
+          <td class="py-2 pr-3">{% if vm.value_visible %}<span class="data text-muted">{% if vm.baseline is not None %}{{ vm.baseline|floatformat:"-2" }}{% else %}—{% endif %} → {% if vm.current is not None %}{{ vm.current|floatformat:"-2" }}{% else %}—{% endif %} {{ vm.obj.unit }}</span>{% else %}<span class="chip text-faint border-line">restricted</span>{% endif %}</td>
+          <td class="py-2 pr-3">{% if vm.value_visible and vm.target is not None %}<span class="data text-faint">{{ vm.target|floatformat:"-2" }}</span>{% else %}—{% endif %}</td>
+          <td class="py-2 pr-3">{% include "campaigns/_objective_status_chip.html" with status=vm.obj.status label=vm.obj.get_status_display %}</td>
+          <td class="py-2">{% if vm.obj.verified_by_id %}<span class="chip text-cyan border-cyan/40">✓ {{ vm.obj.verified_by.username }}</span>{% elif vm.obj.requires_verification %}<span class="text-xs text-faint">—</span>{% else %}<span class="text-xs text-faint">n/a</span>{% endif %}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5" class="py-3 text-faint">No objectives.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<div class="mt-4 grid gap-4 lg:grid-cols-2">
+  {# Milestones. #}
+  <section class="panel p-5">
+    <p class="eyebrow">Milestones</p>
+    <div class="mt-2 divide-y divide-line/40">
+      {% for m in milestones %}
+        <div class="flex flex-wrap items-center gap-x-3 py-2 text-sm">
+          {% include "campaigns/_milestone_status_chip.html" with status=m.status label=m.get_status_display %}
+          <span class="min-w-0 flex-1 truncate text-muted">{{ m.title }}</span>
+          {% if m.due_at %}<span class="data text-xs text-faint">{{ m.due_at|date:"d M" }}</span>{% endif %}
+        </div>
+      {% empty %}<p class="py-3 text-sm text-faint">No milestones.</p>{% endfor %}
+    </div>
+  </section>
+
+  {# Budget variance (gated). #}
+  {% if can_budget %}
+  <section class="panel p-5">
+    <p class="eyebrow">Budget variance</p>
+    {% if campaign.budget_isk %}
+      <p class="mt-2 text-sm text-muted"><span class="data text-ink">{{ campaign.spent_isk|floatformat:"-2" }}</span> spent of <span class="data">{{ campaign.budget_isk|floatformat:"-2" }}</span> ISK</p>
+      {% widthratio campaign.spent_isk campaign.budget_isk 100 as budget_pct %}
+      <div class="mt-2">{% include "campaigns/_progress_bar.html" with pct=budget_pct health=campaign.health %}</div>
+    {% else %}<p class="mt-2 text-sm text-faint">No budget was set.</p>{% endif %}
+    <p class="mt-2 text-xs text-faint">Visible only to directors and the commander.</p>
+  </section>
+  {% endif %}
+</div>
+
+<div class="mt-4 grid gap-4 lg:grid-cols-2">
+  {# Realised risks & resolved issues. #}
+  <section class="panel p-5">
+    <p class="eyebrow">Risk register — final</p>
+    <div class="mt-2 divide-y divide-line/40">
+      {% for r in risks %}
+        <div class="flex flex-wrap items-center gap-x-3 py-2 text-sm">
+          <span class="chip shrink-0 {% if r.severity >= 9 %}text-loss border-loss/40{% elif r.severity >= 6 %}text-gold border-gold/40{% else %}text-muted border-line{% endif %}">sev {{ r.severity }}</span>
+          <span class="chip shrink-0 text-faint border-line">{{ r.get_status_display }}</span>
+          <span class="min-w-0 flex-1 truncate text-muted">{{ r.description }}</span>
+        </div>
+      {% empty %}<p class="py-3 text-sm text-faint">No risks recorded.</p>{% endfor %}
+    </div>
+  </section>
+
+  {# Follow-up work. #}
+  <section class="panel p-5">
+    <p class="eyebrow">Follow-up work</p>
+    <div class="mt-2 divide-y divide-line/40">
+      {% for t in followups %}
+        <div class="flex flex-wrap items-center gap-x-3 py-2 text-sm">
+          <span class="chip shrink-0 text-muted border-line">{{ t.get_status_display }}</span>
+          <span class="min-w-0 flex-1 truncate text-muted">{{ t.title }}</span>
+        </div>
+      {% empty %}<p class="py-3 text-sm text-faint">No follow-up tasks were spawned.</p>{% endfor %}
+    </div>
+  </section>
+</div>
+
+{# Participation & recognition. #}
+<section class="panel mt-4 p-5">
+  <p class="eyebrow">Participation &amp; recognition</p>
+  {% include "campaigns/_participation.html" %}
+</section>
+
+{# Lessons learned. #}
+<section class="panel mt-4 p-5">
+  <p class="eyebrow">Lessons learned</p>
+  {% if campaign.lessons_learned %}<p class="mt-2 whitespace-pre-line text-sm text-muted">{{ campaign.lessons_learned }}</p>{% else %}<p class="mt-2 text-sm text-faint">No lessons recorded.</p>{% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}My Workspace · Campaign Command · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<p class="eyebrow text-faint"><a href="{% url 'campaigns:index' %}" class="hover:text-gold">Campaign Command</a> › My Workspace</p>
+<h1 class="mt-1 mb-4 text-2xl font-bold text-ink">My Workspace</h1>
+
+{% if total == 0 and not awaiting.proposed and not awaiting.milestones %}
+<section class="panel p-6 text-center">
+  <p class="text-muted">All clear. Nothing needs your attention.</p>
+</section>
+{% else %}
+
+<section class="panel p-5" x-data="{ tab: '{{ workspace_tabs.0.key }}' }">
+  <div class="flex flex-wrap items-center gap-2 overflow-x-auto border-b border-line pb-3">
+    {% for t in workspace_tabs %}
+    <button type="button" @click="tab='{{ t.key }}'"
+            :class="tab==='{{ t.key }}' ? 'text-gold border-gold/40' : 'text-faint border-line'"
+            class="chip whitespace-nowrap">{{ t.label }} <span class="data ml-1">{{ t.count }}</span></button>
+    {% endfor %}
+  </div>
+
+  {% for t in workspace_tabs %}
+  <div x-show="tab==='{{ t.key }}'" x-cloak class="mt-3 divide-y divide-line/40">
+    {% if t.kind == 'volunteers' %}
+      {% for a in t.items %}
+        <div class="flex flex-wrap items-center gap-2 py-2 text-sm">
+          <span class="shrink-0 text-muted">{% if a.actor %}{{ a.actor.username }}{% else %}A pilot{% endif %}</span>
+          <span class="text-faint">volunteered on</span>
+          <a href="{% url 'campaigns:objective_detail' a.target_id %}" class="min-w-0 flex-1 truncate text-cyan hover:underline">objective #{{ a.target_id }}</a>
+          <span class="data shrink-0 text-xs text-faint">{{ a.created_at|date:"d M" }}</span>
+        </div>
+      {% empty %}<p class="py-3 text-sm text-faint">{{ t.empty }}</p>{% endfor %}
+    {% elif t.kind == 'workstreams' %}
+      {% for ws in t.items %}
+        <div class="flex flex-wrap items-center gap-2 py-2 text-sm">
+          <span class="min-w-0 flex-1 truncate text-muted">{{ ws.name }}</span>
+          <a href="{% url 'campaigns:detail' ws.campaign_id %}" class="shrink-0 text-xs text-faint hover:text-gold">{{ ws.campaign.name|truncatechars:28 }}</a>
+          <span class="chip shrink-0 text-muted border-line">{{ ws.get_status_display }}</span>
+        </div>
+      {% empty %}<p class="py-3 text-sm text-faint">{{ t.empty }}</p>{% endfor %}
+    {% else %}
+      {% for o in t.items %}
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 text-sm">
+          <a href="{% url 'campaigns:objective_detail' o.pk %}" class="min-w-0 flex-1 truncate text-cyan hover:underline">{{ o.title }}</a>
+          <span class="shrink-0 text-xs text-faint">{{ o.campaign.name|truncatechars:28 }}</span>
+          {% if o.due_at %}<span class="chip shrink-0 {% if o.due_at < now %}text-loss border-loss/40{% else %}text-faint border-line{% endif %}">due {{ o.due_at|date:"d M" }}</span>{% endif %}
+          {% include "campaigns/_objective_status_chip.html" with status=o.status label=o.get_status_display %}
+          <a href="{% url 'campaigns:objective_detail' o.pk %}#update" class="shrink-0 text-xs text-faint hover:text-gold">Update value</a>
+        </div>
+      {% empty %}<p class="py-3 text-sm text-faint">{{ t.empty }}</p>{% endfor %}
+    {% endif %}
+  </div>
+  {% endfor %}
+</section>
+
+{% if is_director and awaiting %}
+<section class="panel mt-4 p-5">
+  <p class="eyebrow">Awaiting my approval</p>
+  <div class="mt-2 divide-y divide-line/40">
+    {% for c in awaiting.proposed %}
+      <div class="flex flex-wrap items-center gap-2 py-2 text-sm">
+        <span class="chip shrink-0 text-cyan border-cyan/40">campaign</span>
+        <a href="{% url 'campaigns:detail' c.pk %}" class="min-w-0 flex-1 truncate text-cyan hover:underline">{{ c.name }}</a>
+        {% if c.commander %}<span class="shrink-0 text-xs text-faint">by {{ c.commander.username }}</span>{% endif %}
+        <a href="{% url 'campaigns:detail' c.pk %}" class="btn-ghost shrink-0 !py-1 !text-xs">Review</a>
+      </div>
+    {% endfor %}
+    {% for m in awaiting.milestones %}
+      <div class="flex flex-wrap items-center gap-2 py-2 text-sm">
+        <span class="chip shrink-0 text-cyan border-cyan/40">milestone</span>
+        <span class="min-w-0 flex-1 truncate text-muted">{{ m.title }}</span>
+        <a href="{% url 'campaigns:detail' m.campaign_id %}" class="shrink-0 text-xs text-faint hover:text-gold">{{ m.campaign.name|truncatechars:24 }}</a>
+        <a href="{% url 'campaigns:detail' m.campaign_id %}" class="btn-ghost shrink-0 !py-1 !text-xs">Review</a>
+      </div>
+    {% endfor %}
+    {% if not awaiting.proposed and not awaiting.milestones %}<p class="py-3 text-sm text-faint">Nothing awaiting your approval.</p>{% endif %}
+  </div>
+</section>
+{% endif %}
+{% endif %}
+{% endblock %}

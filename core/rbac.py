@@ -43,9 +43,11 @@ def has_role(user, role: str) -> bool:
 # — the grant adds a capability, never authority elsewhere.
 ROLE_RECRUITER = "recruiter"
 ROLE_FC = "fc"
+ROLE_CAMPAIGN_LEAD = "campaign_lead"
 
 PERM_RECRUITMENT_MANAGE = "recruitment.manage"
 PERM_FLEET_MANAGE = "fleet.manage"
+PERM_CAMPAIGN_MANAGE = "campaign.manage"
 
 # Each capability is ALSO implied by a rank baseline, so every surface that was rank-gated
 # before 4.16 keeps working for officers/directors; a lateral role just extends that one
@@ -53,6 +55,7 @@ PERM_FLEET_MANAGE = "fleet.manage"
 _PERM_RANK_BASELINE = {
     PERM_RECRUITMENT_MANAGE: ROLE_RANK[ROLE_OFFICER],
     PERM_FLEET_MANAGE: ROLE_RANK[ROLE_OFFICER],
+    PERM_CAMPAIGN_MANAGE: ROLE_RANK[ROLE_OFFICER],
 }
 
 

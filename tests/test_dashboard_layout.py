@@ -31,14 +31,15 @@ def test_save_layout_stores_hidden(client, django_user_model):
                        {"show": ["raffle", "combat_log"]})
     assert resp.status_code == 302
     hidden = set(get_prefs(user).dashboard_layout["hidden"])
-    assert hidden == {"onboarding", "pilot_stats", "doctrines"}
+    assert hidden == {"onboarding", "pilot_stats", "doctrines", "campaigns"}
 
 
 def test_save_layout_all_shown_is_default(client, django_user_model):
     user = _member(django_user_model, with_char=False)
     client.force_login(user)
     client.post(reverse("identity:save_dashboard_layout"),
-                {"show": ["raffle", "combat_log", "onboarding", "pilot_stats", "doctrines"]})
+                {"show": ["raffle", "combat_log", "onboarding", "pilot_stats", "doctrines",
+                          "campaigns"]})
     assert get_prefs(user).dashboard_layout["hidden"] == []
 
 
@@ -49,7 +50,7 @@ def test_save_layout_ignores_unknown_keys(client, django_user_model):
     # bogus isn't a real panel, so every real panel ends up hidden; none is 'bogus'
     hidden = set(get_prefs(user).dashboard_layout["hidden"])
     assert "bogus" not in hidden
-    assert hidden == {"raffle", "combat_log", "onboarding", "pilot_stats", "doctrines"}
+    assert hidden == {"raffle", "combat_log", "onboarding", "pilot_stats", "doctrines", "campaigns"}
 
 
 # --- helper ------------------------------------------------------------------

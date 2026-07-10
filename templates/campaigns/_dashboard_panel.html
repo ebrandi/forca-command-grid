@@ -1,0 +1,64 @@
+{# Campaign Command — pilot Command Center panel (doc 10 §6.5). Rendered only when
+   features.campaigns and 'campaigns' not in hidden_panels and campaigns_panel (non-empty).
+   Tone (doc 10 §6.6): lead with why; volunteering is opt-in opportunity, never a demand. #}
+<section class="panel overflow-hidden">
+  <div class="flex items-start justify-between gap-3 border-b border-line px-4 py-3">
+    <div class="min-w-0">
+      <h2 class="eyebrow">Campaign Command</h2>
+      <p class="mt-1 text-xs text-faint">The corp's strategic pushes — and where you fit in.</p>
+    </div>
+    <a href="{% url 'campaigns:index' %}" class="shrink-0 text-xs text-faint hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold">All campaigns →</a>
+  </div>
+
+  <div class="space-y-3 px-4 py-4">
+    {% for c in campaigns_panel.campaigns %}
+      <div class="text-sm">
+        <div class="flex flex-wrap items-center gap-2">
+          <a href="{% url 'campaigns:detail' c.pk %}" class="min-w-0 truncate font-medium text-cyan hover:underline">{{ c.name }}</a>
+          {% include "campaigns/_status_chip.html" with status=c.status label=c.get_status_display %}
+          {% include "campaigns/_health_chip.html" with health=c.health label=c.get_health_display reasons=c.health_reasons %}
+        </div>
+        {% if c.rationale or c.summary %}<p class="mt-0.5 text-xs text-faint">{{ c.rationale|default:c.summary|truncatechars:120 }}</p>{% endif %}
+      </div>
+    {% endfor %}
+
+    {% if campaigns_panel.my_objectives or campaigns_panel.my_tasks %}
+    <div class="border-t border-line pt-3">
+      <p class="eyebrow text-faint">My part</p>
+      <div class="mt-1 space-y-1 text-sm">
+        {% for o in campaigns_panel.my_objectives %}
+          <a href="{% url 'campaigns:objective_detail' o.pk %}" class="block truncate text-muted hover:text-gold">objective: {{ o.title }}</a>
+        {% endfor %}
+        {% for t in campaigns_panel.my_tasks %}
+          <p class="truncate text-muted">task: {{ t.title }}{% if t.due_at %} <span class="text-xs text-faint">due {{ t.due_at|date:"d M" }}</span>{% endif %}</p>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if campaigns_panel.help_wanted %}
+    <div class="border-t border-line pt-3">
+      <p class="eyebrow text-faint">Where you could help</p>
+      <div class="mt-1 space-y-1">
+        {% for o in campaigns_panel.help_wanted %}
+        <div class="flex flex-wrap items-center gap-2 text-sm">
+          <a href="{% url 'campaigns:objective_detail' o.pk %}" class="min-w-0 flex-1 truncate text-muted hover:text-gold">{{ o.title }}</a>
+          <form method="post" action="{% url 'campaigns:volunteer' o.pk %}">{% csrf_token %}<button class="btn-cyan shrink-0 !py-1 !text-xs">I can help</button></form>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if campaigns_panel.recognition %}
+    <div class="border-t border-line pt-3">
+      <p class="eyebrow text-faint">Recognised for</p>
+      <div class="mt-1 space-y-1 text-sm">
+        {% for r in campaigns_panel.recognition %}
+        <p class="text-muted">★ {{ r.category }}{% if r.points %} <span class="data text-gold">({{ r.points }})</span>{% endif %} — <span class="text-faint">{{ r.campaign.name|truncatechars:40 }}</span></p>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</section>

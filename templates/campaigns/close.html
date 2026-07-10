@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Close {{ campaign.name|truncatechars:40 }} · Campaign Command{% endblock %}
+{% block content %}
+<p class="eyebrow text-faint"><a href="{% url 'campaigns:index' %}" class="hover:text-gold">Campaign Command</a> › <a href="{% url 'campaigns:detail' campaign.pk %}" class="hover:text-gold">{{ campaign.name|truncatechars:40 }}</a> › Close-out</p>
+<h1 class="mt-1 mb-4 text-2xl font-bold text-ink">Close out {{ campaign.name }}</h1>
+
+<form method="post" action="{% url 'campaigns:close' campaign.pk %}" x-data="{ recs: [], final: '' }" class="space-y-4">
+  {% csrf_token %}
+
+  {# 1 · Final status #}
+  <section class="panel p-5">
+    <p class="eyebrow mb-3">1 · Final status</p>
+    <div class="flex flex-wrap gap-4 text-sm">
+      <label class="flex items-center gap-2"><input type="radio" name="final_status" value="completed" x-model="final" required> Completed</label>
+      <label class="flex items-center gap-2"><input type="radio" name="final_status" value="failed" x-model="final"> Failed</label>
+      <label class="flex items-center gap-2"><input type="radio" name="final_status" value="cancelled" x-model="final"> Cancelled</label>
+    </div>
+    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+      {% if campaign.success_criteria %}<div><span class="eyebrow text-faint">Success criteria</span><p class="mt-1 whitespace-pre-line text-sm text-muted">{{ campaign.success_criteria }}</p></div>{% endif %}
+      {% if campaign.failure_criteria %}<div><span class="eyebrow text-faint">Failure criteria</span><p class="mt-1 whitespace-pre-line text-sm text-muted">{{ campaign.failure_criteria }}</p></div>{% endif %}
+    </div>
+    {% if open_mandatory %}<p class="mt-3 text-xs text-gold">⚠ Mandatory objectives are still open — completing needs a director override reason below.</p>{% endif %}
+    <label class="mt-3 block" x-show="final==='failed' || final==='cancelled' || {{ open_mandatory|yesno:'true,false' }}" x-cloak>
+      <span class="label">{% if open_mandatory %}Override / {% endif %}Reason</span>
+      <textarea name="override_reason" rows="2" class="input-field mt-1 w-full text-sm" placeholder="Required to fail or cancel, or to complete with open mandatory objectives (director)."></textarea>
+    </label>
+  </section>
+
+  {# 2 · Objective final values #}
+  <section class="panel p-5">
+    <p class="eyebrow mb-3">2 · Objective final values</p>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead><tr class="text-left text-faint"><th class="py-1 pr-3">Objective</th><th class="py-1 pr-3">Current</th><th class="py-1 pr-3">Final status</th><th class="py-1">Note</th></tr></thead>
+        <tbody class="divide-y divide-line/40">
+        {% for row in objective_rows %}
+          <tr>
+            <td class="py-2 pr-3">{{ row.obj.title }}{% if row.obj.is_mandatory %} <span class="chip text-gold border-gold/40">mandatory</span>{% endif %}</td>
+            <td class="py-2 pr-3">
+              {% if row.value_visible %}
+                {% if row.obj.metric_source %}<span class="data text-muted">{% if row.current is not None %}{{ row.current|floatformat:"-2" }}{% else %}—{% endif %}</span>
+                {% else %}<input type="text" name="value_{{ row.obj.pk }}" value="{% if row.current is not None %}{{ row.current|floatformat:'-2' }}{% endif %}" class="input-field w-24 text-xs" inputmode="decimal">{% endif %}
+              {% else %}<span class="chip text-faint border-line">restricted</span>{% endif %}
+            </td>
+            <td class="py-2 pr-3">
+              {% if row.is_open %}
+                <select name="resolve_{{ row.obj.pk }}" class="input-field text-xs"><option value="">— keep {{ row.obj.get_status_display|lower }}</option>{% for v, l in resolution_choices %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select>
+              {% else %}{% include "campaigns/_objective_status_chip.html" with status=row.obj.status label=row.obj.get_status_display %}{% endif %}
+              {% if row.unverified %}<span class="chip text-gold border-gold/40">unverified</span>{% endif %}
+            </td>
+            <td class="py-2"><input type="text" name="note_{{ row.obj.pk }}" class="input-field w-full text-xs" placeholder="note"></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4" class="py-3 text-faint">This campaign has no objectives.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <label class="mt-3 flex items-center gap-2 text-sm"><input type="checkbox" required> I've reviewed the final values.</label>
+  </section>
+
+  {# 3 · Outcomes & lessons #}
+  <section class="panel p-5">
+    <p class="eyebrow mb-3">3 · Outcomes &amp; lessons</p>
+    <label class="block"><span class="label">Outcome summary — expected vs actual *</span>
+      <textarea name="outcome_summary" rows="3" required class="input-field mt-1 w-full">{{ campaign.outcome_summary }}</textarea></label>
+    <label class="mt-3 block"><span class="label">Lessons learned (required to complete or fail)</span>
+      <textarea name="lessons_learned" rows="3" class="input-field mt-1 w-full">{{ campaign.lessons_learned }}</textarea></label>
+    {% if budget_allowed and campaign.budget_isk %}
+    <p class="mt-3 text-sm text-muted">Budget: <span class="data">{{ campaign.budget_isk|floatformat:"-2" }}</span> budgeted ·
+      <input type="text" name="spent_isk" value="{{ campaign.spent_isk|floatformat:'-2' }}" inputmode="decimal" class="input-field w-32 text-xs"> spent</p>
+    {% endif %}
+  </section>
+
+  {# 4 · Unfinished work & recognition #}
+  <section class="panel p-5">
+    <p class="eyebrow mb-3">4 · Unfinished work &amp; recognition</p>
+    <p class="text-xs text-faint">Tick an open objective to spawn a follow-up task for it.</p>
+    <div class="mt-2 space-y-1">
+      {% for row in objective_rows %}{% if row.is_open %}
+        <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="followup" value="{{ row.obj.pk }}"> {{ row.obj.title }}</label>
+      {% endif %}{% endfor %}
+    </div>
+    {% if participation.mode != 'none' %}
+    <div class="mt-4 border-t border-line pt-3">
+      <p class="eyebrow text-faint">Recognition preview</p>
+      {% include "campaigns/_participation.html" %}
+      <p class="mt-3 text-xs text-faint">Add manual awards (reason required; you can't award yourself unless you're a director):</p>
+      <template x-for="(r, i) in recs" :key="i">
+        <div class="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-4">
+          <select name="rec_user" class="input-field text-xs"><option value="">pilot…</option>{% for u in users %}<option value="{{ u.pk }}">{{ u.username }}</option>{% endfor %}</select>
+          <input type="text" name="rec_category" class="input-field text-xs" placeholder="category">
+          <input type="number" name="rec_points" class="input-field text-xs" placeholder="points">
+          <input type="text" name="rec_reason" class="input-field text-xs" placeholder="reason (required)">
+        </div>
+      </template>
+      <button type="button" class="btn-ghost mt-2 !text-xs" @click="recs.push({})">+ Add award</button>
+    </div>
+    {% else %}
+      <p class="mt-3 text-xs text-faint">Recognition is turned off for this campaign — enable it in Edit to record awards.</p>
+    {% endif %}
+  </section>
+
+  {# 5 · Save as template #}
+  <section class="panel p-5">
+    <p class="eyebrow mb-3">5 · Save as template (optional)</p>
+    <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="save_template"> Save this campaign's structure as a reusable template</label>
+    <div class="mt-2 grid gap-2 sm:grid-cols-2">
+      <input type="text" name="template_name" class="input-field text-sm" placeholder="Template name">
+      <input type="text" name="template_description" class="input-field text-sm" placeholder="Description">
+    </div>
+    <p class="mt-1 text-xs text-faint">People, dates and measured values are stripped.</p>
+  </section>
+
+  <div class="flex items-center gap-2">
+    <button class="btn-danger" data-confirm="Close this campaign? This becomes its permanent record.">Close campaign</button>
+    <a href="{% url 'campaigns:detail' campaign.pk %}" class="btn-ghost">Cancel</a>
+  </div>
+</form>
+{% endblock %}

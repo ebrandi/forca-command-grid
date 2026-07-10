@@ -536,6 +536,10 @@ GOVERNANCE (keep these or the merge erodes):
     </section>
     {% endif %}
 
+    {% if features.campaigns and 'campaigns' not in hidden_panels and campaigns_panel %}
+    {% include "campaigns/_dashboard_panel.html" %}
+    {% endif %}
+
     <section class="panel overflow-hidden" id="chars">
       <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Your characters</h2></div>
       <div class="divide-y divide-line/40 text-sm">

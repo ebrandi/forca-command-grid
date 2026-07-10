@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Recognition · {{ campaign.name|truncatechars:40 }} · Campaign Command{% endblock %}
+{% block content %}
+<p class="eyebrow text-faint"><a href="{% url 'campaigns:index' %}" class="hover:text-gold">Campaign Command</a> › <a href="{% url 'campaigns:detail' campaign.pk %}" class="hover:text-gold">{{ campaign.name|truncatechars:40 }}</a> › Recognition</p>
+<h1 class="mt-1 mb-4 text-2xl font-bold text-ink">Recognition — {{ campaign.name }}</h1>
+
+<div class="grid gap-4 lg:grid-cols-2">
+  <section class="panel p-5">
+    <p class="eyebrow">Participation</p>
+    {% include "campaigns/_participation.html" %}
+  </section>
+
+  <section class="panel p-5">
+    <p class="eyebrow mb-3">Record recognition</p>
+    <form method="post" action="{% url 'campaigns:recognition' campaign.pk %}" class="space-y-2">
+      {% csrf_token %}
+      <select name="user" class="input-field w-full text-sm"><option value="">Pilot…</option>{% for u in users %}<option value="{{ u.pk }}">{{ u.username }}</option>{% endfor %}</select>
+      <input type="text" name="category" class="input-field w-full text-sm" placeholder="Category (e.g. logistics, FC, mentoring)">
+      <input type="number" name="points" class="input-field w-full text-sm" placeholder="Points (optional)">
+      <textarea name="reason" rows="2" class="input-field w-full text-sm" placeholder="Reason (required)"></textarea>
+      <button class="btn-gold text-sm">Record recognition</button>
+      <p class="text-xs text-faint">You can't recognise your own account unless you're a director. Corrections are compensating negative-point entries, not edits.</p>
+    </form>
+  </section>
+</div>
+
+<section class="panel mt-4 p-5">
+  <p class="eyebrow">All recognition entries</p>
+  <div class="mt-2 divide-y divide-line/40">
+    {% for r in recognitions %}
+      <div class="flex flex-wrap items-center gap-x-3 py-2 text-sm">
+        <span class="min-w-0 truncate text-ink">{{ r.user.username }}</span>
+        <span class="chip text-muted border-line">{{ r.category }}</span>
+        {% if r.points %}<span class="data {% if r.points < 0 %}text-loss{% else %}text-gold{% endif %}">{{ r.points }}</span>{% endif %}
+        <span class="min-w-0 flex-1 text-faint">{{ r.reason }}</span>
+        <span class="text-xs text-faint">{% if r.awarded_by %}by {{ r.awarded_by.username }} · {% endif %}{{ r.created_at|date:"d M H:i" }}</span>
+      </div>
+    {% empty %}<p class="py-3 text-sm text-faint">No recognition recorded yet.</p>{% endfor %}
+  </div>
+</section>
+{% endblock %}

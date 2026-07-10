@@ -1,0 +1,2 @@
+{% comment %}Milestone status chip (doc 10 §2.3). Params: status (value), label (display).{% endcomment %}
+<span class="chip {% if status == 'ready_for_review' %}text-cyan border-cyan/40{% elif status == 'done' %}text-kill border-kill/40{% elif status == 'missed' %}text-loss border-loss/40{% else %}text-muted border-line{% endif %}">{{ label }}</span>

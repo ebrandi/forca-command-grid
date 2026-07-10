@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}{% if editing %}Edit campaign{% else %}New campaign{% endif %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<p class="eyebrow text-faint"><a href="{% url 'campaigns:index' %}" class="hover:text-gold">Campaign Command</a> › {% if editing %}Edit{% elif template %}From template{% else %}New{% endif %}</p>
+<div class="mb-4 mt-1 flex flex-wrap items-end justify-between gap-3">
+  <h1 class="text-2xl font-bold text-ink">{% if editing %}Edit campaign{% else %}New campaign{% endif %}</h1>
+  {% if not editing and not template %}<a href="{% url 'campaigns:template_picker' %}" class="btn-cyan text-sm">Start from a template</a>{% endif %}
+</div>
+
+{% if template %}
+<section class="panel mb-4 border-l-2 border-cyan bg-cyan/5 p-4">
+  <p class="text-sm text-cyan">Creating from <strong>{{ template.name }}</strong> — set the name and dates below; the objectives, workstreams, milestones and risks come from the template and stay fully editable after you save.</p>
+  <p class="mt-1 data text-xs text-faint">{{ template_counts.objectives }} objective{{ template_counts.objectives|pluralize }} · {{ template_counts.workstreams }} workstream{{ template_counts.workstreams|pluralize }} · {{ template_counts.milestones }} milestone{{ template_counts.milestones|pluralize }} · {{ template_counts.risks }} risk{{ template_counts.risks|pluralize }}</p>
+</section>
+{% endif %}
+
+<form method="post" action="{% if editing %}{% url 'campaigns:edit' campaign.pk %}{% else %}{% url 'campaigns:new' %}{% endif %}" x-data="{ visibility: '{{ campaign.visibility|default:'officers' }}' }" class="space-y-4">
+  {% csrf_token %}
+  {% if template %}<input type="hidden" name="template_key" value="{{ template.key }}">{% endif %}
+
+  <section class="panel p-5">
+    <p class="eyebrow mb-3">Basics</p>
+    <div class="grid gap-3 sm:grid-cols-2">
+      <label class="block sm:col-span-2"><span class="label">Name *</span><input type="text" name="name" value="{{ campaign.name }}" maxlength="120" required class="input-field mt-1 w-full"></label>
+      <label class="block sm:col-span-2"><span class="label">Summary</span><input type="text" name="summary" value="{{ campaign.summary }}" maxlength="200" class="input-field mt-1 w-full"></label>
+      <label class="block"><span class="label">Category</span>
+        <select name="category" class="input-field mt-1 w-full">{% for value, label in categories %}<option value="{{ value }}" {% if campaign.category == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+      <label class="block"><span class="label">Priority</span><input type="number" name="priority" value="{{ campaign.priority|default:0 }}" class="input-field mt-1 w-full"></label>
+      <label class="block sm:col-span-2"><span class="label">Tags (comma-separated)</span><input type="text" name="tags" value="{{ tags_str }}" class="input-field mt-1 w-full"></label>
+      <label class="block sm:col-span-2"><span class="label">Description</span><textarea name="description" rows="3" class="input-field mt-1 w-full">{{ campaign.description }}</textarea></label>
+      <label class="block sm:col-span-2"><span class="label">Rationale — shown to pilots as "why this matters"; write for them, not for the audit log</span><textarea name="rationale" rows="3" class="input-field mt-1 w-full">{{ campaign.rationale }}</textarea></label>
+      <label class="block sm:col-span-2"><span class="label">Desired outcome</span><textarea name="desired_outcome" rows="2" class="input-field mt-1 w-full">{{ campaign.desired_outcome }}</textarea></label>
+      <label class="block"><span class="label">Success criteria</span><textarea name="success_criteria" rows="2" class="input-field mt-1 w-full">{{ campaign.success_criteria }}</textarea></label>
+      <label class="block"><span class="label">Failure criteria</span><textarea name="failure_criteria" rows="2" class="input-field mt-1 w-full">{{ campaign.failure_criteria }}</textarea></label>
+    </div>
+  </section>
+
+  <section class="panel p-5">
+    <p class="eyebrow mb-3">People &amp; dates</p>
+    <div class="grid gap-3 sm:grid-cols-2">
+      <label class="block"><span class="label">Commander</span>
+        <select name="commander" class="input-field mt-1 w-full"><option value="">—</option>{% for u in users %}<option value="{{ u.pk }}" {% if campaign.commander_id == u.pk %}selected{% endif %}>{{ u.username }}</option>{% endfor %}</select></label>
+      <label class="block"><span class="label">Sponsor</span>
+        <select name="sponsor" class="input-field mt-1 w-full"><option value="">—</option>{% for u in users %}<option value="{{ u.pk }}" {% if campaign.sponsor_id == u.pk %}selected{% endif %}>{{ u.username }}</option>{% endfor %}</select></label>
+      <label class="block"><span class="label">Start</span><input type="datetime-local" name="start_at" value="{{ start_at_local }}" class="input-field mt-1 w-full"></label>
+      <label class="block"><span class="label">Target end</span><input type="datetime-local" name="target_end_at" value="{{ target_end_at_local }}" class="input-field mt-1 w-full"></label>
+      <label class="block"><span class="label">Staging system id</span><input type="number" name="staging_system_id" value="{{ campaign.staging_system_id|default:'' }}" class="input-field mt-1 w-full"></label>
+      <label class="block"><span class="label">Staging system name</span><input type="text" name="staging_system_name" value="{{ campaign.staging_system_name }}" maxlength="100" class="input-field mt-1 w-full"></label>
+    </div>
+  </section>
+
+  <section class="panel p-5">
+    <p class="eyebrow mb-3">Visibility &amp; budget</p>
+    <div class="grid gap-3 sm:grid-cols-2">
+      <label class="block"><span class="label">Visibility</span>
+        <select name="visibility" class="input-field mt-1 w-full" x-model="visibility">{% for value, label in visibilities %}<option value="{{ value }}" {% if campaign.visibility == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+      <label class="block"><span class="label">Progress mode</span>
+        <select name="progress_mode" class="input-field mt-1 w-full">{% for value, label in progress_modes %}<option value="{{ value }}" {% if campaign.progress_mode == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+      <label class="block sm:col-span-2" x-show="visibility === 'restricted'" x-cloak><span class="label">Restricted to</span>
+        <select name="restricted_users" multiple size="5" class="input-field mt-1 w-full">{% for u in users %}<option value="{{ u.pk }}" {% if u.pk in restricted_ids %}selected{% endif %}>{{ u.username }}</option>{% endfor %}</select></label>
+      {% if budget_allowed %}
+      <label class="block"><span class="label">Budget (ISK)</span><input type="text" name="budget_isk" value="{{ campaign.budget_isk|default:'' }}" inputmode="decimal" class="input-field mt-1 w-full"></label>
+      {% endif %}
+      <label class="block"><span class="label">Recognition mode</span>
+        <select name="recognition_mode" class="input-field mt-1 w-full">
+          <option value="none" {% if campaign.recognition_mode == 'none' %}selected{% endif %}>None — no participation panel</option>
+          <option value="counts" {% if campaign.recognition_mode == 'counts' %}selected{% endif %}>Counts — completed tasks per pilot</option>
+          <option value="points" {% if campaign.recognition_mode == 'points' %}selected{% endif %}>Points — weighted + manual awards</option>
+        </select></label>
+      <label class="flex items-center gap-2 self-end pb-2"><input type="checkbox" name="recognition_public" {% if campaign.recognition_public %}checked{% endif %}> <span class="label !mb-0">Public recognition</span></label>
+    </div>
+    <p class="mt-2 text-xs text-cyan">Budget figures are visible only to directors and the commander. Public recognition still honours each pilot's opt-out.</p>
+  </section>
+
+  {% if template %}
+  <section class="panel p-5">
+    <p class="eyebrow mb-3">From this template (editable after saving)</p>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div>
+        <p class="eyebrow text-faint">Objectives</p>
+        <ul class="mt-1 space-y-1 text-sm text-muted">{% for o in template_objectives %}<li class="truncate">{{ o.title }}{% if o.metric_source %} <span class="chip text-cyan border-cyan/40">auto</span>{% endif %}</li>{% endfor %}</ul>
+      </div>
+      <div>
+        <p class="eyebrow text-faint">Workstreams</p>
+        <ul class="mt-1 space-y-1 text-sm text-muted">{% for w in template_workstreams %}<li class="truncate">{{ w.name }}</li>{% endfor %}</ul>
+        <p class="eyebrow mt-3 text-faint">Milestones</p>
+        <ul class="mt-1 space-y-1 text-sm text-muted">{% for m in template_milestones %}<li class="truncate">{{ m.title }}</li>{% endfor %}</ul>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <div class="flex items-center gap-2">
+    <button class="btn-gold">{% if editing %}Save changes{% elif template %}Create from template{% else %}Save draft{% endif %}</button>
+    <a href="{% if editing %}{% url 'campaigns:detail' campaign.pk %}{% else %}{% url 'campaigns:index' %}{% endif %}" class="btn-ghost">Cancel</a>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,8 @@
+{% comment %}Progress bar (design doc 10 §2.4): a track + fill, always beside the .data percent so
+the bar is never the only representation. Params: pct (int), health (value).{% endcomment %}
+<div class="flex items-center gap-2">
+  <div class="h-2 w-full max-w-[8rem] rounded bg-panel2">
+    <div class="h-2 rounded {% if health == 'blocked' or health == 'critical' %}bg-loss{% elif pct >= 100 %}bg-kill{% else %}bg-gold{% endif %}" style="width: {{ pct }}%"></div>
+  </div>
+  <span class="data text-xs text-muted">{{ pct }}%</span>
+</div>

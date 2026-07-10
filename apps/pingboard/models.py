@@ -39,6 +39,7 @@ class AlertCategory(models.TextChoices):
     STRUCTURE_TIMER = "structure_timer", "Structure timer"
     ANNOUNCEMENT = "announcement", "Corporation announcement"
     SYSTEM = "system", "System notification"
+    CAMPAIGN = "campaign", "Campaign"
     CUSTOM = "custom", "Custom"
 
 

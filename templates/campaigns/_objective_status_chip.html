@@ -1,0 +1,2 @@
+{% comment %}Objective status chip (doc 10 §2.3). Params: status (value), label (display).{% endcomment %}
+<span class="chip {% if status == 'active' %}text-gold border-gold/40{% elif status == 'met' %}text-kill border-kill/40{% elif status == 'blocked' or status == 'missed' %}text-loss border-loss/40{% elif status == 'dropped' %}text-faint border-line{% else %}text-muted border-line{% endif %}">{% if status == 'blocked' %}<svg class="mr-1 inline h-3 w-3"><use href="#i-cross"/></svg>{% endif %}{{ label }}</span>

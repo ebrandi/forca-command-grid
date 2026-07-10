@@ -1,0 +1,31 @@
+{% comment %}Evidence list + add form for a campaign / objective / milestone (doc 04 §9, doc 10 §6.3).
+   Context: evidence (rows), can_attach (bool), attached_kind, attached_id, campaign.
+   Links render as escaped text with rel="noopener noreferrer nofollow" — never embedded.{% endcomment %}
+<div class="mt-2 divide-y divide-line/40">
+  {% for e in evidence %}
+    <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1 py-2 text-sm">
+      {% if e.url %}
+        <a href="{{ e.url }}" target="_blank" rel="noopener noreferrer nofollow" class="min-w-0 flex-1 truncate text-cyan hover:underline">{{ e.url }}</a>
+      {% else %}
+        <span class="min-w-0 flex-1 text-muted">{{ e.note }}</span>
+      {% endif %}
+      {% if not e.added_by %}<span class="chip shrink-0 text-faint border-line" title="Recorded automatically">auto</span>{% else %}<span class="shrink-0 text-xs text-faint">{{ e.added_by.username }}</span>{% endif %}
+      {% if e.added_by and can_attach %}
+        <form method="post" action="{% url 'campaigns:evidence_delete' e.pk %}" class="shrink-0">{% csrf_token %}<button class="text-xs text-loss hover:underline" data-confirm="Remove this evidence?">remove</button></form>
+      {% endif %}
+      {% if e.url and e.note %}<span class="w-full text-xs text-faint">{{ e.note }}</span>{% endif %}
+    </div>
+  {% empty %}
+    <p class="py-2 text-sm text-faint">No evidence attached.</p>
+  {% endfor %}
+</div>
+{% if can_attach %}
+<form method="post" action="{% url 'campaigns:evidence_create' campaign.pk %}" class="mt-3 space-y-2 border-t border-line pt-3">
+  {% csrf_token %}
+  <input type="hidden" name="attached_kind" value="{{ attached_kind }}">
+  <input type="hidden" name="attached_id" value="{{ attached_id }}">
+  <input type="url" name="url" class="input-field w-full text-sm" placeholder="https://… (optional)">
+  <input type="text" name="note" maxlength="400" class="input-field w-full text-sm" placeholder="Note (required if no link)">
+  <button class="btn-ghost text-sm">Attach evidence</button>
+</form>
+{% endif %}

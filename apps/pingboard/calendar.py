@@ -343,6 +343,7 @@ def sync_calendar_sources() -> dict:
         ("corporation", "structure", _sync_structures),
         ("erp", "industry", _sync_industry),
         ("mentorship", "mentorship", _sync_mentorship),
+        ("campaigns", "campaigns", _sync_campaigns),
     ]
     for service, label, fn in plan:
         if service not in services_on:
@@ -447,6 +448,15 @@ def _sync_industry() -> int:
                       status=CalendarEventStatus.SYNCED, visibility="officer")
         n += 1
     return n
+
+
+def _sync_campaigns() -> int:
+    """Publish ACTIVE (and APPROVED-with-dates) non-restricted campaigns' windows + milestone
+    deadlines, retiring events whose campaign no longer qualifies. Implemented in
+    ``apps.campaigns.calendar`` and lazy-imported here, matching the other sync sources."""
+    from apps.campaigns.calendar import sync
+
+    return sync()
 
 
 def _sync_mentorship() -> int:
