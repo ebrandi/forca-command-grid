@@ -54,6 +54,19 @@ def _affiliation(char_id: int, corporation_id: int) -> None:
     )
 
 
+def _corp(corporation_id: int, ceo_id: int) -> None:
+    """Register the public corporation read the CEO check performs before /roles/."""
+    responses.add(
+        responses.GET,
+        f"https://esi.evetech.net/corporations/{corporation_id}/",
+        json={"ceo_id": ceo_id, "name": "Home Corp"},
+        status=200,
+    )
+
+
+_OTHER_CEO = 3999  # a CEO that is never one of the test characters
+
+
 @responses.activate
 @pytest.mark.django_db
 def test_in_game_director_is_auto_granted_director_role(settings):
@@ -61,6 +74,7 @@ def test_in_game_director_is_auto_granted_director_role(settings):
     user, char = _member("eve:3001")
     _grant_roles_token(char)
     _affiliation(3001, _HOME_CORP)  # currently in the home corp
+    _corp(_HOME_CORP, ceo_id=_OTHER_CEO)  # not the CEO — proven by the explicit role
     responses.add(
         responses.GET,
         "https://esi.evetech.net/characters/3001/roles/",
@@ -73,11 +87,38 @@ def test_in_game_director_is_auto_granted_director_role(settings):
 
 @responses.activate
 @pytest.mark.django_db
+def test_ceo_is_auto_granted_director_without_roles_scope(settings):
+    # The corp CEO holds full authority in-game but is NOT listed with the "Director"
+    # role by /roles/, and may never have granted the roles scope. Recognise the CEO
+    # from public corp data alone (no token, no /roles/ read).
+    settings.FORCA_HOME_CORP_ID = _HOME_CORP
+    user, char = _member("eve:3010")  # no roles token granted
+    _affiliation(3010, _HOME_CORP)
+    _corp(_HOME_CORP, ceo_id=3010)  # this character IS the CEO
+    sync_roles_for_user(user)
+    assert rbac.has_role(user, rbac.ROLE_DIRECTOR) is True
+
+
+@responses.activate
+@pytest.mark.django_db
+def test_ceo_of_a_different_corp_is_not_granted_director(settings):
+    # CEO of some OTHER corp who is a stale home-corp member: the live affiliation
+    # co-check sees a non-home corp, so no Director grant.
+    settings.FORCA_HOME_CORP_ID = _HOME_CORP
+    user, char = _member("eve:3011")  # is_corp_member=True (stale)
+    _affiliation(3011, 98009999)  # actually in a different corp now
+    sync_roles_for_user(user)
+    assert rbac.has_role(user, rbac.ROLE_DIRECTOR) is False
+
+
+@responses.activate
+@pytest.mark.django_db
 def test_non_director_member_does_not_get_director_role(settings):
     settings.FORCA_HOME_CORP_ID = _HOME_CORP
     user, char = _member("eve:3002")
     _grant_roles_token(char)
     _affiliation(3002, _HOME_CORP)
+    _corp(_HOME_CORP, ceo_id=_OTHER_CEO)
     responses.add(
         responses.GET,
         "https://esi.evetech.net/characters/3002/roles/",
@@ -97,6 +138,7 @@ def test_director_role_is_withdrawn_once_not_a_director(settings):
     _grant_roles_token(char)
     RoleAssignment.objects.create(user=user, role=ensure_role(rbac.ROLE_DIRECTOR))
     _affiliation(3003, _HOME_CORP)
+    _corp(_HOME_CORP, ceo_id=_OTHER_CEO)
     responses.add(
         responses.GET,
         "https://esi.evetech.net/characters/3003/roles/",
@@ -139,6 +181,7 @@ def test_director_role_kept_when_roles_unreadable_but_token_present(settings):
     _grant_roles_token(char)
     RoleAssignment.objects.create(user=user, role=ensure_role(rbac.ROLE_DIRECTOR))
     _affiliation(3004, _HOME_CORP)
+    _corp(_HOME_CORP, ceo_id=_OTHER_CEO)
     # ESI returns an error for the roles lookup → status is "unknown" (None).
     responses.add(
         responses.GET,
@@ -152,12 +195,16 @@ def test_director_role_kept_when_roles_unreadable_but_token_present(settings):
 
 @responses.activate
 @pytest.mark.django_db
-def test_director_role_withdrawn_when_no_proving_token():
+def test_director_role_withdrawn_when_no_proving_token(settings):
     # No non-revoked token carrying the roles scope can ever substantiate the
     # grant (e.g. the proving character was disconnected), so the stale Director
-    # role is withdrawn rather than left sticky.
+    # role is withdrawn rather than left sticky. (Not the CEO, so the non-CEO path
+    # runs and finds no proving token.)
+    settings.FORCA_HOME_CORP_ID = _HOME_CORP
     user, _ = _member("eve:3006")
     RoleAssignment.objects.create(user=user, role=ensure_role(rbac.ROLE_DIRECTOR))
+    _affiliation(3006, _HOME_CORP)
+    _corp(_HOME_CORP, ceo_id=_OTHER_CEO)
     sync_roles_for_user(user)
     assert rbac.has_role(user, rbac.ROLE_DIRECTOR) is False
 

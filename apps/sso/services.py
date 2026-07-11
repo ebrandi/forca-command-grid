@@ -397,30 +397,47 @@ def reconcile_director_roles(*, staleness_hours: int = 5, limit: int = 200) -> d
 def character_is_corp_director(
     character: EveCharacter, client: ESIClient | None = None
 ) -> bool | None:
-    """Whether a character holds the in-game corporation Director role.
+    """Whether a character has home-corp Director authority.
 
-    Returns True/False when ESI answers, or None when we can't tell (no token,
-    the roles scope was not granted, or ESI failed) — callers must treat None as
-    "unknown" and never act on it, so a missing scope never strips a role.
+    True when the character is the home corporation's CEO (which carries full
+    Director authority in-game) or explicitly holds the in-game Director role.
+    False when ESI affirmatively says neither. None when we can't tell (no token
+    for the roles check, or ESI failed) — callers must treat None as "unknown"
+    and never act on it, so a missing scope never strips a role.
+
+    The CEO is identified from PUBLIC corp data (``/corporations/{id}/`` names the
+    ``ceo_id``); a CEO is NOT listed with the "Director" role by ``/roles/`` because
+    CEO authority is implicit. So the CEO is recognised without the roles scope, and
+    only the non-CEO Director path needs ``ROLE_SCOPE``.
     """
-    try:
-        access = get_valid_access_token(character, [ROLE_SCOPE])
-    except NoValidToken:
-        return None
     client = client or ESIClient()
-    # Co-verify the character is CURRENTLY in the home corp from live public affiliation
-    # at the same moment we read roles. `/roles/` names no corporation, so without this a
-    # Directorship held in a *different* corp would be mistaken for a home-corp
-    # Directorship whenever the cached `is_corp_member` flag is stale (refresh_affiliation
-    # fails open on an ESI error). An unreadable affiliation returns None ("unknown"), so
-    # the caller leaves the role unchanged rather than acting on incomplete data.
+    # Live public affiliation: which corp is the character in right now? `/roles/`
+    # names no corporation, so this co-check stops a Directorship held in a *different*
+    # corp from being mistaken for a home-corp one when the cached is_corp_member flag
+    # is stale. An unreadable affiliation returns None ("unknown"), so the caller
+    # leaves the role unchanged rather than acting on incomplete data.
     try:
         pub = client.get(f"/characters/{character.character_id}/", essential=True).data or {}
     except ESIError as exc:
         log.warning("director co-check affiliation failed for %s: %s", character.character_id, exc)
         return None
-    if pub.get("corporation_id") != settings.FORCA_HOME_CORP_ID:
+    corp_id = pub.get("corporation_id")
+    if corp_id != settings.FORCA_HOME_CORP_ID:
         return False
+    # The corp CEO holds full authority in-game but is not returned with the "Director"
+    # role by /roles/, so recognise the CEO from public corp data — no scope required.
+    try:
+        corp = client.get(f"/corporations/{corp_id}/", essential=True).data or {}
+        if corp.get("ceo_id") == character.character_id:
+            return True
+    except ESIError as exc:
+        log.warning("director ceo-check failed for %s: %s", character.character_id, exc)
+        # fall through to the explicit-role check rather than guessing
+    # Non-CEO: require the roles scope and the explicit in-game Director role.
+    try:
+        access = get_valid_access_token(character, [ROLE_SCOPE])
+    except NoValidToken:
+        return None
     try:
         resp = client.get(f"/characters/{character.character_id}/roles/", token=access)
     except ESIError as exc:
