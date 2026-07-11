@@ -9,8 +9,9 @@
   {{ selected_keys|json_script:"cp-cmp-keys" }}
   <div class="mt-2 flex flex-wrap gap-1.5" x-data='{ sel: JSON.parse(document.getElementById("cp-cmp-keys").textContent) || [] }'>
     {% for t in all_templates %}
-    <label class="chip cursor-pointer {% if t.key in selected_keys %}!text-gold !border-gold/40{% else %}text-muted border-line{% endif %}"><input type="checkbox" name="keys" value="{{ t.key }}" class="sr-only" {% if t.key in selected_keys %}checked{% endif %}> {{ t.name }}</label>
+    <button type="button" @click="sel.includes('{{ t.key }}') ? sel = sel.filter(x => x !== '{{ t.key }}') : (sel.length < 4 && sel.push('{{ t.key }}'))" :class="sel.includes('{{ t.key }}') ? 'chip !text-gold !border-gold/40' : 'chip text-muted border-line'">{{ t.name }}</button>
     {% endfor %}
+    <input type="hidden" name="keys" :value="sel.join(',')">
   </div>
   <button class="btn-cyan mt-3 !py-1 text-xs">Compare selected</button>
 </form>
