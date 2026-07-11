@@ -102,6 +102,10 @@ def test_warm_task_runs_deferred_director_check(settings):
     _roles_token(c)
     responses.add(responses.GET, f"https://esi.evetech.net/characters/{c.character_id}/",
                   json={"corporation_id": HOME_CORP, "name": "P"}, status=200)
+    # CEO is someone else, so the character is recognised as Director via the explicit
+    # in-game role rather than the CEO shortcut (director sync fetches public corp data).
+    responses.add(responses.GET, f"https://esi.evetech.net/corporations/{HOME_CORP}/",
+                  json={"ceo_id": 9999}, status=200)
     responses.add(responses.GET, f"https://esi.evetech.net/characters/{c.character_id}/roles/",
                   json={"roles": ["Director"]}, status=200)
     warm_pilot_after_login(c.character_id)  # the task does the director sync (+ best-effort warm)
