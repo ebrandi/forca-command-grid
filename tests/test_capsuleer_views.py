@@ -164,6 +164,25 @@ def test_profile_get_and_save(client, django_user_model):
     assert SuggestionKind.STALLED_GOAL in p.suggestion_muted_kinds
 
 
+def test_profile_activity_lists_are_mutually_exclusive(client, django_user_model):
+    # A value belongs to at most one list: avoided wins over preferred+curious, and
+    # preferred wins over curious. "mining" is in all three, "industry" in pref+curious.
+    user = _pilot(client, django_user_model)
+    resp = client.post(reverse("capsuleer:profile"),
+                       {"pace": "balanced", "corp_alignment": "balanced",
+                        "default_visibility": "private",
+                        "preferred_activities": "mining,industry",
+                        "curious_activities": "mining,industry,exploration",
+                        "avoided_activities": "mining"})
+    assert resp.status_code == 302
+    p = user.career_profile
+    p.refresh_from_db()
+    assert p.avoided_activities == ["mining"]
+    assert "mining" not in p.preferred_activities and "mining" not in p.curious_activities
+    assert p.preferred_activities == ["industry"]        # mining stripped (avoided wins)
+    assert p.curious_activities == ["exploration"]        # mining->avoided, industry->preferred
+
+
 # --- suggestions / quests ----------------------------------------------------
 def test_suggestion_act(client, django_user_model):
     user = _pilot(client, django_user_model)

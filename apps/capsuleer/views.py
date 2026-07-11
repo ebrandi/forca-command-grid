@@ -912,9 +912,12 @@ def _save_profile(request, obj) -> None:
     preferred = _clean_activities(p.get("preferred_activities", ""))
     avoided = _clean_activities(p.get("avoided_activities", ""))
     curious = _clean_activities(p.get("curious_activities", ""))
+    # A value belongs to at most one list (spec §1.1): avoided wins over both, and
+    # preferred wins over curious, so the three lists are mutually exclusive.
     avoided_set = set(avoided)
     obj.preferred_activities = [a for a in preferred if a not in avoided_set]
-    obj.curious_activities = [a for a in curious if a not in avoided_set]
+    pref_set = set(obj.preferred_activities)
+    obj.curious_activities = [a for a in curious if a not in avoided_set and a not in pref_set]
     obj.avoided_activities = avoided
     obj.weekly_hours = _weekly_hours(p.get("weekly_hours"))
     obj.play_windows = (p.get("play_windows") or "")[:200]

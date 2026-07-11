@@ -10,27 +10,29 @@
     <h2 class="eyebrow">Interests</h2>
     <p class="mt-1 text-xs text-faint">Toggle what you enjoy; the last row steers suggestions away.</p>
     {{ profile.preferred_activities|json_script:"cp-pref" }}
-    <div class="mt-2 flex flex-wrap gap-1.5" x-data='{ sel: JSON.parse(document.getElementById("cp-pref").textContent) || [] }'>
-      {% for v, lab in activities %}
-      <button type="button" @click="sel.includes('{{ v }}') ? sel = sel.filter(x => x !== '{{ v }}') : sel.push('{{ v }}')" :class="sel.includes('{{ v }}') ? 'chip !text-gold !border-gold/40' : 'chip text-muted border-line'">{{ lab }}</button>
-      {% endfor %}
-      <input type="hidden" name="preferred_activities" :value="sel.join(',')">
-    </div>
-    <p class="mt-3 text-xs text-faint">Curious about (widened only when you pick “Show everything” below):</p>
     {{ profile.curious_activities|json_script:"cp-curious" }}
-    <div class="mt-1 flex flex-wrap gap-1.5" x-data='{ sel: JSON.parse(document.getElementById("cp-curious").textContent) || [] }'>
-      {% for v, lab in activities %}
-      <button type="button" @click="sel.includes('{{ v }}') ? sel = sel.filter(x => x !== '{{ v }}') : sel.push('{{ v }}')" :class="sel.includes('{{ v }}') ? 'chip !text-cyan !border-cyan/40' : 'chip text-muted border-line'">{{ lab }}</button>
-      {% endfor %}
-      <input type="hidden" name="curious_activities" :value="sel.join(',')">
-    </div>
-    <p class="mt-3 text-xs text-faint">Not interested in:</p>
     {{ profile.avoided_activities|json_script:"cp-avoid" }}
-    <div class="mt-1 flex flex-wrap gap-1.5" x-data='{ sel: JSON.parse(document.getElementById("cp-avoid").textContent) || [] }'>
-      {% for v, lab in activities %}
-      <button type="button" @click="sel.includes('{{ v }}') ? sel = sel.filter(x => x !== '{{ v }}') : sel.push('{{ v }}')" :class="sel.includes('{{ v }}') ? 'chip !text-faint !border-line' : 'chip text-faint border-line/40'">{{ lab }}</button>
-      {% endfor %}
-      <input type="hidden" name="avoided_activities" :value="sel.join(',')">
+    <div x-data='{ pref: JSON.parse(document.getElementById("cp-pref").textContent) || [], curious: JSON.parse(document.getElementById("cp-curious").textContent) || [], avoid: JSON.parse(document.getElementById("cp-avoid").textContent) || [] }'>
+      <div class="mt-2 flex flex-wrap gap-1.5">
+        {% for v, lab in activities %}
+        <button type="button" @click="pref.includes('{{ v }}') ? pref = pref.filter(x => x !== '{{ v }}') : pref.push('{{ v }}'); curious = curious.filter(x => x !== '{{ v }}'); avoid = avoid.filter(x => x !== '{{ v }}')" :class="pref.includes('{{ v }}') ? 'chip !text-gold !border-gold/40' : 'chip text-muted border-line'">{{ lab }}</button>
+        {% endfor %}
+        <input type="hidden" name="preferred_activities" :value="pref.join(',')">
+      </div>
+      <p class="mt-3 text-xs text-faint">Curious about (widened only when you pick “Show everything” below):</p>
+      <div class="mt-1 flex flex-wrap gap-1.5">
+        {% for v, lab in activities %}
+        <button type="button" @click="curious.includes('{{ v }}') ? curious = curious.filter(x => x !== '{{ v }}') : curious.push('{{ v }}'); pref = pref.filter(x => x !== '{{ v }}'); avoid = avoid.filter(x => x !== '{{ v }}')" :class="curious.includes('{{ v }}') ? 'chip !text-cyan !border-cyan/40' : 'chip text-muted border-line'">{{ lab }}</button>
+        {% endfor %}
+        <input type="hidden" name="curious_activities" :value="curious.join(',')">
+      </div>
+      <p class="mt-3 text-xs text-faint">Not interested in — a topic you enjoy or are curious about can't also be here:</p>
+      <div class="mt-1 flex flex-wrap gap-1.5">
+        {% for v, lab in activities %}
+        <button type="button" @click="avoid.includes('{{ v }}') ? avoid = avoid.filter(x => x !== '{{ v }}') : avoid.push('{{ v }}'); pref = pref.filter(x => x !== '{{ v }}'); curious = curious.filter(x => x !== '{{ v }}')" :class="avoid.includes('{{ v }}') ? 'chip !text-loss !border-loss/50 line-through' : 'chip text-faint border-line/40'">{{ lab }}</button>
+        {% endfor %}
+        <input type="hidden" name="avoided_activities" :value="avoid.join(',')">
+      </div>
     </div>
   </section>
 
