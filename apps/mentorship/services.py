@@ -192,6 +192,12 @@ def existing_open_pairing(mentor: MentorProfile, mentee: MenteeProfile):
 def propose_pairing(mentor: MentorProfile, mentee: MenteeProfile, *, actor=None,
                     initiated_by, status=None, score=None, reasons=None) -> MentorshipPairing | None:
     """Create a pairing in a pre-active state. Returns None if one already exists."""
+    # A pilot can never mentor themselves — defence-in-depth against a self-pairing being used to
+    # self-endorse a career milestone (capsuleer findings 6/7).
+    if getattr(mentor, "user_id", None) is not None and mentor.user_id == getattr(
+        mentee, "user_id", None
+    ):
+        return None
     if existing_open_pairing(mentor, mentee):
         return None
     status = status or MentorshipPairing.Status.SUGGESTED

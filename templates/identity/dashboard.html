@@ -540,6 +540,10 @@ GOVERNANCE (keep these or the merge erodes):
     {% include "campaigns/_dashboard_panel.html" %}
     {% endif %}
 
+    {% if features.capsuleer and 'capsuleer' not in hidden_panels and capsuleer_panel %}
+    {% include "capsuleer/_dashboard_panel.html" %}
+    {% endif %}
+
     <section class="panel overflow-hidden" id="chars">
       <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Your characters</h2></div>
       <div class="divide-y divide-line/40 text-sm">

@@ -40,6 +40,7 @@ class AlertCategory(models.TextChoices):
     ANNOUNCEMENT = "announcement", "Corporation announcement"
     SYSTEM = "system", "System notification"
     CAMPAIGN = "campaign", "Campaign"
+    CAPSULEER = "capsuleer", "Capsuleer Path"
     CUSTOM = "custom", "Custom"
 
 

@@ -58,6 +58,37 @@ def delete_user_data(user, actor=None, ip: str = "") -> dict:
     summary["deleted"]["contributions"] = ContributionEvent.objects.filter(user=user).delete()[0]
     PilotPreference.objects.filter(user=user).delete()
 
+    # Capsuleer Path career-planning data (account-scoped personal data — brief §4, doc 09 §7.3).
+    # No auto-discovery exists, so every model is deleted explicitly, children first for accurate
+    # counts (CASCADE would cover them). Corp CareerTemplate rows survive (created_by is SET_NULL);
+    # a mentor note this user left on another pilot's goal is SET_NULL, not deleted — the note was
+    # authored for that goal's owner and is theirs to keep.
+    from apps.capsuleer.models import (
+        CareerActionStep,
+        CareerGoal,
+        CareerMilestone,
+        CareerProfile,
+        GoalActivity,
+        PathSuggestion,
+        ProgressSnapshot,
+    )
+
+    capsuleer_counts = {
+        "path_suggestions": PathSuggestion.objects.filter(user=user).delete()[0],
+        "goal_activity": GoalActivity.objects.filter(goal__user=user).delete()[0],
+        "progress_snapshots": ProgressSnapshot.objects.filter(goal__user=user).delete()[0],
+        "action_steps": CareerActionStep.objects.filter(goal__user=user).delete()[0],
+        "milestones": CareerMilestone.objects.filter(goal__user=user).delete()[0],
+        "goals": CareerGoal.objects.filter(user=user).delete()[0],
+        "profile": CareerProfile.objects.filter(user=user).delete()[0],
+        # A note/endorsement this user left on ANOTHER pilot's goal survives for that goal's owner,
+        # but the authorship link is severed (SET_NULL never fires because the User row is not
+        # deleted — the account is only logged out; doc 09 §7.3).
+        "authored_activity_anonymised": GoalActivity.objects.filter(actor=user)
+        .exclude(goal__user=user).update(actor=None),
+    }
+    summary["capsuleer"] = capsuleer_counts
+
     user.main_character_id = None
     user.save(update_fields=["main_character_id"])
 

@@ -1,0 +1,18 @@
+{# Suggestion row (doc 10 §5.9). Pass s (a PathSuggestion). Owner-only surface. #}
+<div class="border-b border-line/40 px-4 py-3 last:border-b-0">
+  <div class="flex flex-wrap items-center justify-between gap-2">
+    <span class="flex min-w-0 items-center gap-2">
+      <svg class="h-4 w-4 shrink-0 text-faint"><use href="#i-bolt"/></svg>
+      <span class="min-w-0 truncate font-medium text-ink">{{ s.title }}</span>
+    </span>
+    {% if s.corp_driven %}<span class="chip !border-gold/40 !text-gold shrink-0">corp demand · your call</span>{% endif %}
+  </div>
+  <p class="mt-1 text-sm text-muted">{{ s.reason }}</p>
+  {% if s.data_used_line %}<p class="mt-1 text-[11px] text-faint">{{ s.data_used_line }}</p>{% endif %}
+  <div class="mt-2 flex flex-wrap items-center gap-2">
+    <form method="post" action="{% url 'capsuleer:suggestion_act' s.pk %}" class="inline">{% csrf_token %}<input type="hidden" name="action" value="accept"><button class="btn-cyan !py-1 text-xs">Accept →</button></form>
+    <form method="post" action="{% url 'capsuleer:suggestion_act' s.pk %}" class="inline">{% csrf_token %}<input type="hidden" name="action" value="defer"><button class="btn-ghost !py-1 text-xs">Remind me later</button></form>
+    <form method="post" action="{% url 'capsuleer:suggestion_act' s.pk %}" class="inline">{% csrf_token %}<input type="hidden" name="action" value="dismiss"><button class="btn-ghost !py-1 text-xs">Dismiss</button></form>
+    <form method="post" action="{% url 'capsuleer:suggestion_act' s.pk %}" class="inline" data-confirm="Stop suggesting this kind of thing?">{% csrf_token %}<input type="hidden" name="action" value="not_interested"><button class="btn-ghost !py-1 text-xs text-faint">Not interested</button></form>
+  </div>
+</div>

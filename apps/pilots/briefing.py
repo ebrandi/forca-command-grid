@@ -168,8 +168,8 @@ def _quest(obj, *, engine, category_key, rank, corp_order=False, now=None) -> di
     }
 
 
-def unified_quest_queue(directives, recos) -> list[dict]:
-    """Merge the two engines' open items into one ranked queue of quest dicts.
+def unified_quest_queue(directives, recos, career=()) -> list[dict]:
+    """Merge the engines' open items into one ranked queue of quest dicts.
 
     Dedup contract (the merge's core promise — advice appears exactly once,
     and a duplicate class is dropped ONLY when CI actually carries it):
@@ -179,6 +179,13 @@ def unified_quest_queue(directives, recos) -> list[dict]:
     readiness 'fly a fleet' fallback is dropped when CI carries its own; a
     readiness ship reco whose hull already appears in a CI SHIP directive
     title is dropped (same buy-this-hull ask, differently justified).
+
+    ``career`` is ``apps.capsuleer.briefing.career_quests(user)`` — at most one
+    pre-normalized quest dict (doc 08 §10). With ``career=()`` the result is
+    byte-identical to before, so the pinned merge tests do not change. A career
+    row is suppressed when a surviving CI/readiness item already carries the same
+    subject (doctrine or ship hull, by resolved name) — advice appears once; the
+    goal page still shows the step.
 
     Ranking: constraint-grounded CI orders first (1000 + leverage — relieving
     the corp's binding constraint beats everything), then readiness recos by
@@ -206,8 +213,33 @@ def unified_quest_queue(directives, recos) -> list[dict]:
                 continue  # a CI ship order already asks for this hull
         items.append(_quest(r, engine="readiness", category_key=r.category,
                             rank=r.priority, now=now))
+    if career:
+        surviving = " || ".join(q["title"].lower() for q in items)
+        for c in career:
+            if not _career_subject_collides(c, surviving):
+                items.append(c)
     items.sort(key=lambda q: (q["rank"], q["points"]), reverse=True)
     return items
+
+
+def _career_subject_collides(career_row, surviving_titles) -> bool:
+    """True when a surviving quest already carries the career row's subject hull/doctrine (doc 08
+    §10 collision-yield) — matched by resolved name, the house ``ci_ship_titles`` idiom."""
+    ship_id = career_row.get("subject_ship_type_id")
+    doctrine_id = career_row.get("subject_doctrine_id")
+    if ship_id:
+        from apps.sde.models import SdeType
+
+        name = (SdeType.objects.filter(type_id=ship_id).values_list("name", flat=True).first() or "")
+        if name and name.lower() in surviving_titles:
+            return True
+    if doctrine_id:
+        from apps.doctrines.models import Doctrine
+
+        name = (Doctrine.objects.filter(id=doctrine_id).values_list("name", flat=True).first() or "")
+        if name and name.lower() in surviving_titles:
+            return True
+    return False
 
 
 def leadership_briefing() -> dict:

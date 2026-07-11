@@ -1,0 +1,6 @@
+{# Freshness/honesty line (doc 10 §2.5). Pass m (a CareerMilestone). #}
+{% if m.last_checked_at %}
+<p class="text-[11px] text-faint">checked {{ m.last_checked_at|timesince }} ago{% if m.data_source %} · from {{ m.data_source }}{% endif %}</p>
+{% elif m.data_source %}
+<p class="text-[11px] text-faint">{{ m.data_source }}</p>
+{% endif %}

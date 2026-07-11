@@ -535,6 +535,55 @@ REGISTRY: tuple[Event, ...] = (
         audience="user", sensitive=False, broadcast=False,
         triggers="A campaign transitions proposed→approved.",
     ),
+    # --- Capsuleer Path (per-user career DMs; all disarmed on the emitter side) ---------
+    Event(
+        key="capsuleer.milestone_reached",
+        label="Career milestone reached",
+        description=(
+            "A DM to a pilot when one of their own career-goal milestones is credited "
+            "(auto-verified or manually confirmed). Targeted at the goal owner only — "
+            "never a corp channel; goal content beyond the titles never leaves the app."
+        ),
+        group=GROUP_MEMBER, source_service="capsuleer",
+        audience="user", sensitive=False, broadcast=False,
+        triggers="Milestone credit path (skill-import hook, hourly reconcile sweep, or manual confirm).",
+    ),
+    Event(
+        key="capsuleer.goal_completed",
+        label="Career goal completed",
+        description=(
+            "A DM to a pilot when they complete one of their own career goals. "
+            "Targeted at the owner only; any public recognition is a separate, opt-in "
+            "surface — this DM is private regardless."
+        ),
+        group=GROUP_MEMBER, source_service="capsuleer",
+        audience="user", sensitive=False, broadcast=False,
+        triggers="Goal status transition active→completed (owner action, lifecycle service).",
+    ),
+    Event(
+        key="capsuleer.review_due",
+        label="Career goal review nudge",
+        description=(
+            "A gentle DM when one of the pilot's goals has sat unreviewed past the "
+            "cadence or looks stalled. At most one per goal per month; ignoring it has "
+            "no consequence — no escalation, no status change."
+        ),
+        group=GROUP_MEMBER, source_service="capsuleer",
+        audience="user", sensitive=False, broadcast=False,
+        triggers="Beat capsuleer.housekeeping (nightly) sets review_due_at.",
+    ),
+    Event(
+        key="capsuleer.suggestion",
+        label="Capsuleer Path suggestions",
+        description=(
+            "A DM telling a pilot they have new career suggestions waiting — a count and "
+            "a link only, never suggestion content. At most one per pilot per day, and "
+            "only when the daily generation produced new open rows."
+        ),
+        group=GROUP_MEMBER, source_service="capsuleer",
+        audience="user", sensitive=False, broadcast=False,
+        triggers="Beat capsuleer.generate_suggestions (daily), when new rows were admitted.",
+    ),
 )
 
 _BY_KEY: dict[str, Event] = {e.key: e for e in REGISTRY}

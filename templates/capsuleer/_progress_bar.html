@@ -1,0 +1,7 @@
+{# Progress bar (doc 10 §2.4): gold in progress, kill at 100%; never red, always beside a .data %. #}
+<div class="flex items-center gap-2">
+  <div class="h-2 flex-1 rounded-full bg-space">
+    <div class="h-2 rounded-full {% if pct >= 100 %}bg-kill{% else %}bg-gold{% endif %}" style="width:{{ pct }}%"></div>
+  </div>
+  <span class="data shrink-0 text-xs {% if pct >= 100 %}text-kill{% else %}text-muted{% endif %}">{{ pct }}%</span>
+</div>

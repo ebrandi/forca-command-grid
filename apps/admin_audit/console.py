@@ -1011,6 +1011,7 @@ _MAINTENANCE_TASKS = {
     "personal_assets": ("stockpile.sync_personal_assets", "Personal asset sync"),
     "killmails": ("killboard.discover_all_member_killmails", "Killmail discovery"),
     "skills": ("characters.sync_all_member_skills", "Member skill sync"),
+    "capsuleer_reconcile": ("capsuleer.reconcile_progress", "Capsuleer Path reconcile"),
 }
 
 

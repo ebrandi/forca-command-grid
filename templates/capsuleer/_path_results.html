@@ -1,0 +1,25 @@
+{# Browse results grid (doc 10 §5.3) — htmx target. #}
+{% if not templates %}
+<section class="panel px-4 py-10 text-center text-faint">
+  <p>No paths match. <a href="{% url 'capsuleer:paths' %}" class="text-cyan hover:underline">Clear filters →</a> or <a href="{% url 'capsuleer:goal_new' %}" class="text-cyan hover:underline">create a custom goal →</a></p>
+</section>
+{% else %}
+<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+  {% for t in templates %}
+  <a href="{% url 'capsuleer:path_detail' t.key %}" class="panel block px-4 py-4 hover:bg-panel2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold">
+    <p class="eyebrow text-faint">{{ t.get_category_display }}</p>
+    <p class="mt-1 font-medium text-ink">{{ t.name }}</p>
+    <p class="mt-1 line-clamp-2 text-sm text-muted">{{ t.description }}</p>
+    <div class="mt-2 flex flex-wrap items-center gap-1.5">
+      <span class="chip text-muted border-line">{% if t.difficulty == 1 %}●○○ beginner{% elif t.difficulty == 2 %}●●○ intermediate{% else %}●●● advanced{% endif %}</span>
+      <span class="chip text-faint border-line">{{ t.get_solo_group_display }}</span>
+      {% if t.newbro_friendly %}<span class="chip text-muted border-line">newbro-friendly</span>{% endif %}
+      {% if t.key in on_path %}<span class="chip !text-kill !border-kill/40">on this path</span>{% endif %}
+      {% if t.category in demand_activities %}<span class="chip !text-gold !border-gold/40">corp demand</span>{% endif %}
+    </div>
+    {% if t.est_hours_note or t.cost_note %}<p class="mt-2 text-[11px] text-faint">{{ t.est_hours_note }}{% if t.cost_note %} · {{ t.cost_note }}{% endif %}</p>{% endif %}
+  </a>
+  {% endfor %}
+</div>
+<p class="mt-4 text-[11px] text-faint">Estimates are notes, not promises — each path page shows its assumptions.{% if sde_version %} · SDE data version {{ sde_version }}{% endif %}</p>
+{% endif %}

@@ -649,6 +649,28 @@ app.conf.beat_schedule = {
         "task": "campaigns.housekeeping",
         "schedule": crontab(minute=35, hour=3),
     },
+    # Capsuleer Path: hourly non-skill evidence sweep (contributions, combat firsts, ship
+    # ownership). Skill-driven credit rides the import hook, so this beat only covers stores with
+    # their own sync cadences. Minute 41 is unused by every existing recurring minute pattern
+    # (docs/capsuleer-path/12-background-jobs.md §3); feature-gated, inert when disabled.
+    "capsuleer-reconcile-progress": {
+        "task": "capsuleer.reconcile_progress",
+        "schedule": crontab(minute=41),
+    },
+    # Capsuleer Path: daily pilot-scoped suggestion generation. 06:22 UTC follows the nightly
+    # rollups and the mentorship morning block so every generator reads recent data; minute 22 at
+    # hour 6 collides only with cheap due-table sweeps (docs/capsuleer-path/12-background-jobs.md §3.2).
+    "capsuleer-generate-suggestions": {
+        "task": "capsuleer.generate_suggestions",
+        "schedule": crontab(minute=22, hour=6),
+    },
+    # Capsuleer Path: nightly retention + stalled/review-due evaluation, on the 03:00–04:10 prune
+    # ladder — the free rung five minutes after enforce-member-leave (03:05), ten before the
+    # member combat rollup (03:20).
+    "capsuleer-housekeeping": {
+        "task": "capsuleer.housekeeping",
+        "schedule": crontab(minute=10, hour=3),
+    },
 }
 
 

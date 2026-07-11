@@ -63,6 +63,9 @@ DEFAULTS: dict[str, dict] = {
             "mentorship": {"audience": "user", "channels": ["in_app"], "priority": "low"},
             "announcement": {"audience": "corp", "channels": ["discord"], "priority": "low"},
             "campaign": {"audience": "user", "channels": ["in_app", "eve_mail"], "priority": "normal"},
+            # Capsuleer Path: lowest-urgency personal career nudges, in-app only by default; a
+            # pilot who wants them on a DM handle adds the channel via their own preferences.
+            "capsuleer": {"audience": "user", "channels": ["in_app"], "priority": "low"},
             "system": {"audience": "officer", "channels": ["in_app"], "priority": "low"},
         },
     },

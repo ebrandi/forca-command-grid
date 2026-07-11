@@ -13,6 +13,7 @@
       {% comment %}Onboarding is a pilot's own journey, not community content — it lives here.{% endcomment %}
       {% if features.onboarding %}<a href="{% url 'onboarding:dashboard' %}" class="navlink {% if ns == 'onboarding' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-rookie"/></svg> New Player</a>{% endif %}
       {% if features.mentorship %}<a href="{% url 'mentorship:landing' %}" class="navlink {% if ns == 'mentorship' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-shield"/></svg> Mentorship</a>{% endif %}
+      {% if features.capsuleer %}<a href="{% url 'capsuleer:home' %}" class="navlink {% if ns == 'capsuleer' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-route"/></svg> Capsuleer Path</a>{% endif %}
       {% if main_character %}<a href="{% url 'identity:character' main_character.character_id %}" class="navlink {% if un == 'character' or ns == 'skills' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-rookie"/></svg> My Skills &amp; Training</a>
       {% elif features.skills %}<a href="{% url 'skills:plans' %}" class="navlink {% if ns == 'skills' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-rookie"/></svg> My Skills &amp; Training</a>{% endif %}
       {% comment %}The Dashboard (Command Center) absorbed My Readiness (readiness:me) and

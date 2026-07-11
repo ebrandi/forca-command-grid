@@ -96,6 +96,9 @@ FEATURES: list[Feature] = [
     Feature("campaigns", "Campaign Command",
             "Strategic campaigns: objectives, workstreams, risks and progress toward "
             "corporation goals.", "Command & readiness"),
+    Feature("capsuleer", "Capsuleer Path",
+            "Personalised career planning: pick an ambition, get a realistic plan of skills, "
+            "ships and milestones, and track progress privately.", "Command & readiness"),
     Feature("recruitment", "Recruitment",
             "The recruiter's candidate tracker and evidence desk.", "Leadership"),
 ]
@@ -287,6 +290,8 @@ _NAMESPACE_FEATURE = {
     # Campaign Command: the whole /campaigns/ namespace is one feature, so disabling it
     # 404s every route (portfolio, detail, mutations) via the gate middleware.
     "campaigns": "campaigns",
+    # Capsuleer Path: the whole /capsuleer/ namespace maps to one feature (mounted in config/urls).
+    "capsuleer": "capsuleer",
     # recruitment: this also gates the candidate OAuth begin/callback, which is the
     # intended behaviour — when recruitment is off, no candidate should be able to link.
     "recruitment": "recruitment",

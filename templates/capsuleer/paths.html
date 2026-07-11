@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Career paths · Capsuleer Path{% endblock %}
+{% block content %}
+<p class="eyebrow text-faint"><a href="{% url 'capsuleer:home' %}" class="hover:text-gold">Capsuleer Path</a> › Paths</p>
+<header class="mb-4 flex flex-wrap items-end justify-between gap-3">
+  <h1 class="text-2xl font-bold text-ink">Career paths</h1>
+  <a href="{% url 'capsuleer:compare' %}" class="btn-cyan text-sm">Compare paths</a>
+</header>
+
+<form class="panel mb-4 flex flex-wrap items-end gap-3 px-4 py-3" hx-get="{% url 'capsuleer:paths' %}" hx-target="#path-results" hx-push-url="true">
+  <label class="label">Activity
+    <select name="activity" class="input-field mt-1" data-autosubmit>
+      <option value="">Any</option>
+      {% for v, lab in activities %}<option value="{{ v }}" {% if filters.activity == v %}selected{% endif %}>{{ lab }}</option>{% endfor %}
+    </select>
+  </label>
+  <label class="label">Difficulty
+    <select name="difficulty" class="input-field mt-1" data-autosubmit>
+      <option value="">Any</option>
+      <option value="1" {% if filters.difficulty == '1' %}selected{% endif %}>Beginner</option>
+      <option value="2" {% if filters.difficulty == '2' %}selected{% endif %}>Intermediate</option>
+      <option value="3" {% if filters.difficulty == '3' %}selected{% endif %}>Advanced</option>
+    </select>
+  </label>
+  <label class="label">Solo/group
+    <select name="solo_group" class="input-field mt-1" data-autosubmit>
+      <option value="">Any</option>
+      <option value="solo" {% if filters.solo_group == 'solo' %}selected{% endif %}>Solo</option>
+      <option value="group" {% if filters.solo_group == 'group' %}selected{% endif %}>Group</option>
+      <option value="mixed" {% if filters.solo_group == 'mixed' %}selected{% endif %}>Mixed</option>
+    </select>
+  </label>
+  <label class="flex items-center gap-1.5 text-sm"><input type="checkbox" name="newbro" {% if filters.newbro %}checked{% endif %} data-autosubmit> Newbro-friendly</label>
+  <label class="flex items-center gap-1.5 text-sm"><input type="checkbox" name="demand" {% if filters.demand %}checked{% endif %} data-autosubmit> Corp demand</label>
+  <label class="label flex-1">Search <input type="search" name="q" value="{{ filters.q }}" class="input-field mt-1" placeholder="name or description"></label>
+  <button class="btn-ghost text-sm">Filter</button>
+</form>
+
+<div id="path-results">{% include "capsuleer/_path_results.html" %}</div>
+{% endblock %}

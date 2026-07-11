@@ -71,6 +71,15 @@ def import_character_skills(
         award_progression(character, prev_skills, snapshot)
     except Exception:
         logger.exception("award_progression failed for character %s", character.character_id)
+    # Credit any Capsuleer Path skill/doctrine milestones the fresh snapshot now satisfies. A
+    # secondary side-effect isolated exactly like the two above — a reconcile problem (or a disabled
+    # feature) must never fail the skill import (the snapshot above is the source of truth).
+    try:
+        from apps.capsuleer.services import reconcile_from_snapshot
+
+        reconcile_from_snapshot(character, snapshot)
+    except Exception:
+        logger.exception("capsuleer reconcile failed for character %s", character.character_id)
     return snapshot
 
 

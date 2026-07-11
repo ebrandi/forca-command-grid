@@ -325,8 +325,21 @@ HIDEABLE_PANELS = (
     ("pilot_stats", "Pilot stats"),
     ("doctrines", "Doctrine readiness"),
     ("campaigns", "Campaign Command"),
+    ("capsuleer", "Capsuleer Path"),
 )
 _HIDEABLE_KEYS = frozenset(k for k, _ in HIDEABLE_PANELS)
+
+
+def _capsuleer_panel(user):
+    """The Command-Center Capsuleer Path panel context, or ``None`` when the feature is off or the
+    pilot has no active goal (the panel is omitted, never rendered hollow — doc 10 §5.11)."""
+    from core.features import feature_enabled
+
+    if not feature_enabled("capsuleer"):
+        return None
+    from apps.capsuleer import services as capsuleer_services
+
+    return capsuleer_services.dashboard_panel(user)
 
 
 def _campaigns_panel(user):
@@ -485,8 +498,21 @@ def _dashboard_context(request: HttpRequest) -> dict:
             ).filter(Q(snoozed_until__isnull=True) | Q(snoozed_until__lte=tz.now()))
         )
 
-    quests = unified_quest_queue(directives, recos)
-    if quests or show_orders or show_readiness:
+    career = []
+    hidden_panels = _hidden_panels(user)
+    capsuleer_panel = None
+    if feature_enabled("capsuleer"):
+        from apps.capsuleer import services as capsuleer_services
+
+        # One shared active-goal fetch feeds both the quest row and the panel; the panel is skipped
+        # entirely when the pilot has hidden it, keeping the dashboard delta within budget (finding 22).
+        bundle = capsuleer_services.dashboard_bundle(
+            user, include_panel="capsuleer" not in hidden_panels
+        )
+        career = bundle["quests"]
+        capsuleer_panel = bundle["panel"]
+    quests = unified_quest_queue(directives, recos, career=career)
+    if quests or show_orders or show_readiness or career:
         # The queue is the canonical advice — the digest fallback renders only
         # when BOTH engines are off. A drained queue must show the earned
         # "you're current" state, not resurface just-dismissed advice as
@@ -716,7 +742,8 @@ def _dashboard_context(request: HttpRequest) -> dict:
         "my_services": my_services,
         "onboarding": onboarding,
         "campaigns_panel": _campaigns_panel(user),
-        "hidden_panels": _hidden_panels(user),
+        "capsuleer_panel": capsuleer_panel,
+        "hidden_panels": hidden_panels,
         "hideable_panels": HIDEABLE_PANELS,
     }
 
@@ -799,6 +826,7 @@ def dashboard(request: HttpRequest) -> HttpResponse:
         # Link-a-character CTA replaces the pilot body; officers keep their deck.
         ctx: dict = {
             "characters": [], "campaigns_panel": _campaigns_panel(request.user),
+            "capsuleer_panel": _capsuleer_panel(request.user),
             **_officer_deck_context(request.user),
         }
         return render(request, "identity/dashboard.html", ctx)

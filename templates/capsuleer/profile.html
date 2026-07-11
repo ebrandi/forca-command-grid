@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Preferences · Capsuleer Path{% endblock %}
+{% block content %}
+<p class="eyebrow text-faint"><a href="{% url 'capsuleer:home' %}" class="hover:text-gold">Capsuleer Path</a> › Preferences</p>
+<h1 class="mb-4 text-2xl font-bold text-ink">Your preferences</h1>
+
+<form method="post" class="space-y-5">
+  {% csrf_token %}
+  <section class="panel px-4 py-4">
+    <h2 class="eyebrow">Interests</h2>
+    <p class="mt-1 text-xs text-faint">Toggle what you enjoy; the last row steers suggestions away.</p>
+    {{ profile.preferred_activities|json_script:"cp-pref" }}
+    <div class="mt-2 flex flex-wrap gap-1.5" x-data='{ sel: JSON.parse(document.getElementById("cp-pref").textContent) || [] }'>
+      {% for v, lab in activities %}
+      <button type="button" @click="sel.includes('{{ v }}') ? sel = sel.filter(x => x !== '{{ v }}') : sel.push('{{ v }}')" :class="sel.includes('{{ v }}') ? 'chip !text-gold !border-gold/40' : 'chip text-muted border-line'">{{ lab }}</button>
+      {% endfor %}
+      <input type="hidden" name="preferred_activities" :value="sel.join(',')">
+    </div>
+    <p class="mt-3 text-xs text-faint">Curious about (widened only when you pick “Show everything” below):</p>
+    {{ profile.curious_activities|json_script:"cp-curious" }}
+    <div class="mt-1 flex flex-wrap gap-1.5" x-data='{ sel: JSON.parse(document.getElementById("cp-curious").textContent) || [] }'>
+      {% for v, lab in activities %}
+      <button type="button" @click="sel.includes('{{ v }}') ? sel = sel.filter(x => x !== '{{ v }}') : sel.push('{{ v }}')" :class="sel.includes('{{ v }}') ? 'chip !text-cyan !border-cyan/40' : 'chip text-muted border-line'">{{ lab }}</button>
+      {% endfor %}
+      <input type="hidden" name="curious_activities" :value="sel.join(',')">
+    </div>
+    <p class="mt-3 text-xs text-faint">Not interested in:</p>
+    {{ profile.avoided_activities|json_script:"cp-avoid" }}
+    <div class="mt-1 flex flex-wrap gap-1.5" x-data='{ sel: JSON.parse(document.getElementById("cp-avoid").textContent) || [] }'>
+      {% for v, lab in activities %}
+      <button type="button" @click="sel.includes('{{ v }}') ? sel = sel.filter(x => x !== '{{ v }}') : sel.push('{{ v }}')" :class="sel.includes('{{ v }}') ? 'chip !text-faint !border-line' : 'chip text-faint border-line/40'">{{ lab }}</button>
+      {% endfor %}
+      <input type="hidden" name="avoided_activities" :value="sel.join(',')">
+    </div>
+  </section>
+
+  <section class="panel px-4 py-4">
+    <h2 class="eyebrow">Time, pace &amp; budget</h2>
+    <div class="mt-2 grid gap-3 sm:grid-cols-2">
+      <label class="label">Weekly hours <input type="number" name="weekly_hours" min="0" value="{{ profile.weekly_hours|default_if_none:'' }}" class="input-field mt-1"></label>
+      <label class="label">Play windows <input type="text" name="play_windows" value="{{ profile.play_windows }}" class="input-field mt-1"></label>
+      <label class="label">Pace
+        <select name="pace" class="input-field mt-1">
+          <option value="relaxed" {% if profile.pace == 'relaxed' %}selected{% endif %}>Relaxed</option>
+          <option value="balanced" {% if profile.pace == 'balanced' %}selected{% endif %}>Balanced</option>
+          <option value="accelerated" {% if profile.pace == 'accelerated' %}selected{% endif %}>Accelerated</option>
+        </select>
+      </label>
+      <label class="label">Monthly budget (ISK) <input type="text" name="monthly_budget_isk" inputmode="decimal" value="{{ budget_display|default_if_none:'' }}" class="input-field mt-1"><span class="text-[11px] text-faint"><svg class="inline h-3 w-3"><use href="#i-lock"/></svg> Private — only you ever see this.</span></label>
+    </div>
+  </section>
+
+  <section class="panel px-4 py-4">
+    <h2 class="eyebrow">Corp &amp; sharing</h2>
+    <label class="label mt-2 block">How much should the corp shape suggestions?
+      <select name="corp_alignment" class="input-field mt-1">
+        <option value="personal_only" {% if profile.corp_alignment == 'personal_only' %}selected{% endif %}>Only my own goals — no corp-driven suggestions</option>
+        <option value="mostly_personal" {% if profile.corp_alignment == 'mostly_personal' %}selected{% endif %}>Mostly personal — rare corp nudges tied to my goals</option>
+        <option value="balanced" {% if profile.corp_alignment == 'balanced' %}selected{% endif %}>Balanced — corp opportunities labelled, never pushed</option>
+        <option value="corp_forward" {% if profile.corp_alignment == 'corp_forward' %}selected{% endif %}>Corp-forward — surface where the corp needs help first</option>
+        <option value="show_all" {% if profile.corp_alignment == 'show_all' %}selected{% endif %}>Show everything</option>
+      </select>
+    </label>
+    <p class="mt-1 text-xs text-faint">Corp priorities are opportunities, never orders. Leadership can never see or change this.</p>
+    <label class="mt-3 flex items-center gap-2 text-sm"><input type="checkbox" name="mentor_interest" {% if profile.mentor_interest %}checked{% endif %}> I'm open to a mentor</label>
+    <label class="label mt-3 block">Default visibility for new goals
+      <select name="default_visibility" class="input-field mt-1">
+        {% for v, lab in visibilities %}<option value="{{ v }}" {% if profile.default_visibility == v %}selected{% endif %}>{{ lab }}</option>{% endfor %}
+      </select>
+    </label>
+  </section>
+
+  <section class="panel px-4 py-4">
+    <h2 class="eyebrow">Suggestion types</h2>
+    <p class="mt-1 text-xs text-faint">Untick a kind to stop seeing it. Some are muted because you said "not interested".</p>
+    <div class="mt-2 grid gap-1.5 sm:grid-cols-2">
+      {% for v, lab in suggestion_kinds %}
+      <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="mute_{{ v }}" {% if v in muted_kinds %}checked{% endif %}> Mute “{{ lab }}”</label>
+      {% endfor %}
+    </div>
+  </section>
+
+  <div class="flex flex-wrap items-center gap-3">
+    <button class="btn-gold text-sm">Save preferences</button>
+    <a href="{% url 'identity:privacy' %}" class="text-xs text-faint hover:text-gold">Your platform-wide privacy controls →</a>
+  </div>
+</form>
+{% endblock %}

@@ -5,6 +5,7 @@ from django.urls import path
 from . import (
     console,
     console_access,
+    console_capsuleer,
     console_combat,
     console_command_intel,
     console_comms_access,
@@ -28,6 +29,8 @@ app_name = "admin_audit"
 urlpatterns = [
     path("audit/", views.audit_log_view, name="audit"),
     path("health/", views.health_view, name="health"),
+    path("admin/capsuleer/", console_capsuleer.capsuleer_console, name="capsuleer_console"),
+    path("admin/capsuleer/save/", console_capsuleer.capsuleer_save, name="capsuleer_save"),
     # Native admin console (no Django /admin needed).
     path("admin/", console.console_hub, name="console"),
     path("admin/features/", console.features, name="features"),

@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% load eve %}
+{% block title %}{{ goal.title }} · Capsuleer Path{% endblock %}
+{% block content %}
+<p class="eyebrow text-faint"><a href="{% url 'capsuleer:home' %}" class="hover:text-gold">Capsuleer Path</a> › {{ goal.title|truncatechars:40 }}</p>
+
+<div class="mb-2 mt-1 flex flex-wrap items-center gap-1.5">
+  {% if goal.status == 'active' %}<span class="chip !text-gold !border-gold/40">Active</span>
+  {% elif goal.status == 'completed' %}<span class="chip !text-kill !border-kill/40">Completed</span>
+  {% elif goal.status == 'abandoned' %}<span class="chip text-faint border-line">Set aside</span>
+  {% elif goal.status == 'archived' %}<span class="chip text-faint border-line">Archived</span>
+  {% else %}<span class="chip text-muted border-line">{{ goal.get_status_display }}</span>{% endif %}
+  {% if blocked %}<span class="chip !text-cyan !border-cyan/40">Waiting on {{ blocked_reasons.0 }}</span>{% endif %}
+  {% if is_owner %}<span class="chip text-faint border-line"><svg class="inline h-3 w-3"><use href="#i-lock"/></svg>
+    {% if goal.visibility == 'private' %}Private{% elif goal.visibility == 'mentor' %}Shared with mentor{% elif goal.visibility == 'officers' %}Shared with officers{% else %}Aggregate only{% endif %}</span>{% endif %}
+</div>
+
+<div class="flex flex-wrap items-start justify-between gap-3">
+  <h1 class="text-2xl font-bold text-ink">{{ goal.title }}</h1>
+  {% if character_id %}<span class="text-right text-xs text-faint"><img src="{% eve_portrait character_id 40 %}" alt="" class="ml-auto h-8 w-8 rounded-full ring-1 ring-line"><br>{{ character_name }}</span>{% endif %}
+</div>
+
+{% if not is_owner %}
+<p class="mt-1 text-xs text-faint">Viewing as {{ viewer_tier }} — read-only.{% if goal.visibility == 'officers' %} Officer views are audit-logged.{% endif %}</p>
+{% endif %}
+
+<div class="mt-3 max-w-xl">{% include "capsuleer/_progress_bar.html" with pct=goal.progress_percent %}</div>
+{% if is_owner %}
+  {% if eta.state == 'ok' %}
+  <p class="mt-1 text-sm text-muted">Training estimate: <span class="data">{{ eta.earliest|timeuntil }}</span> – <span class="data">{{ eta.likely|timeuntil }}</span> at your pace.
+    {% if eta.target_risk == 'on_track' %}<span class="chip !text-gold !border-gold/40">on track for {{ goal.target_date|date:"d M Y" }}</span>{% elif eta.target_risk == 'at_risk' %}<span class="chip !text-loss !border-loss/40">at risk for {{ goal.target_date|date:"d M Y" }}</span>{% endif %}
+  </p>
+  <details class="mt-1 text-[11px] text-faint"><summary class="cursor-pointer">Assumptions{% if eta.as_of %} · skills as of {{ eta.as_of|date:"d M H:i" }}{% endif %}</summary>
+    <ul class="mt-1 list-disc space-y-0.5 pl-4">{% for a in eta.assumptions %}<li>{{ a }}</li>{% endfor %}</ul>
+  </details>
+  {% elif eta.reason %}
+  <p class="mt-1 text-sm text-faint">Training estimate: unknown — {{ eta.reason }}</p>
+  {% endif %}
+{% endif %}
+
+{# ZONE 1 #}
+{% if is_owner and next_step %}
+<section class="panel mt-5 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Next step</h2></div>
+  <div class="px-4 py-4">
+    <p class="font-medium text-ink">{{ next_step.title }}</p>
+    {% if next_step.note %}<p class="mt-1 text-sm text-muted">{{ next_step.note }}</p>{% endif %}
+    <p class="mt-1 text-xs text-faint">cost: {% if next_step.est_cost_isk %}<span class="data">{{ next_step.est_cost_isk|isk }}</span>{% else %}unknown{% endif %}</p>
+    <div class="mt-3 flex flex-wrap gap-2">
+      <form method="post" action="{% url 'capsuleer:step_status' next_step.pk %}" class="inline">{% csrf_token %}<input type="hidden" name="action" value="done"><button class="btn-gold !py-1 text-sm">Mark done</button></form>
+      {% if not next_step.task_id %}
+      <details class="inline-block align-top">
+        <summary class="btn-ghost !py-1 text-sm cursor-pointer list-none">Make this a corp task</summary>
+        <form method="post" action="{% url 'capsuleer:step_task' next_step.pk %}" class="mt-2 max-w-md space-y-1.5">{% csrf_token %}
+          <input type="text" name="title" value="{{ next_step_task_title }}" maxlength="200" class="input-field w-full text-sm" placeholder="Task title">
+          <textarea name="description" rows="2" class="input-field w-full text-sm" placeholder="Optional detail for the corp"></textarea>
+          <p class="text-[11px] text-faint">This becomes a corp task visible to the whole corporation — the title is neutral by default; edit it before you post.</p>
+          <button class="btn-ghost !py-1 text-xs">Create corp task</button>
+        </form>
+      </details>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<section class="panel mt-5 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Milestones {% if milestones %}({{ milestones|length }}){% endif %}</h2></div>
+  {% for vm in milestones %}{% include "capsuleer/_milestone_row.html" with vm=vm is_owner=is_owner goal=goal can_mentor_note=can_mentor_note can_endorse_officer=can_endorse_officer %}{% empty %}
+  <p class="px-4 py-6 text-sm text-faint">No milestones yet.{% if is_owner %} Add one below to shape the plan.{% endif %}</p>
+  {% endfor %}
+  {% if is_owner %}
+  <details class="border-t border-line px-4 py-3">
+    <summary class="cursor-pointer text-xs text-faint">+ Add milestone</summary>
+    <form method="post" action="{% url 'capsuleer:milestone_add' goal.pk %}" class="mt-3 space-y-2" x-data="{ kind: 'manual' }">
+      {% csrf_token %}
+      <label class="label block">Title <input type="text" name="title" required class="input-field mt-1"></label>
+      <div class="grid gap-2 sm:grid-cols-2">
+        <label class="label">Kind
+          <select name="kind" x-model="kind" class="input-field mt-1">
+            <option value="manual">Manual</option><option value="practical">Practical</option>
+            <option value="skill_target">Skill target</option><option value="ship_owned">Ship owned</option>
+          </select>
+        </label>
+        <label class="label">Verification
+          <select name="verification" class="input-field mt-1">
+            <option value="self">Self</option><option value="mentor">Mentor</option><option value="officer">Officer</option>
+          </select>
+        </label>
+      </div>
+      <div x-show="kind === 'practical'" x-cloak><label class="label block">Instructions <input type="text" name="instructions" class="input-field mt-1"></label></div>
+      <div x-show="kind === 'skill_target'" x-cloak class="grid gap-2 sm:grid-cols-2">
+        <div>{% include "components/_type_picker.html" with field="type_id" endpoint="/capsuleer/types/" placeholder="Search a skill…" %}</div>
+        <label class="label">Level <input type="number" name="level" min="1" max="5" value="4" class="input-field mt-1"></label>
+      </div>
+      <div x-show="kind === 'ship_owned'" x-cloak>{% include "components/_type_picker.html" with field="ship_type_id" endpoint="/capsuleer/ships/" placeholder="Search a hull…" %}</div>
+      <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="required" checked> Required</label>
+      <button class="btn-cyan !py-1 text-xs">Add milestone</button>
+    </form>
+  </details>
+  {% endif %}
+</section>
+
+{# ZONE 2 — owner only #}
+{% if is_owner %}
+<div class="mt-5 grid gap-5 lg:grid-cols-2">
+  <section class="panel px-4 py-4">
+    <h2 class="eyebrow">Skill plan</h2>
+    {% if plan.exists %}
+    <p class="mt-1 text-sm text-muted">{{ plan.plan.name }} · <span class="data">{{ plan.remaining_seconds|duration }}</span> remaining</p>
+    <a href="{% url 'skills:detail' plan.plan.pk %}" class="mt-1 inline-block text-xs text-cyan hover:underline">Open plan →</a>
+    {% else %}
+    <p class="mt-1 text-sm text-faint">No plan yet.</p>
+    {% if goal.character_id %}<form method="post" action="{% url 'capsuleer:goal_build_plan' goal.pk %}" class="mt-2">{% csrf_token %}<button class="btn-cyan !py-1 text-xs">Build my plan</button></form>{% endif %}
+    {% endif %}
+  </section>
+  <section class="panel px-4 py-4">
+    <h2 class="eyebrow">Costs</h2>
+    {% if plan.exists %}
+    <p class="mt-1 text-sm text-muted">Hull: {% if plan.cost.unknown %}<span class="text-faint">unknown</span>{% else %}<span class="data">{{ plan.cost.isk|isk }}</span>{% endif %}</p>
+    {% if plan.cost.source %}<p class="text-[11px] text-faint">{{ plan.cost.source }}{% if plan.cost.as_of %} · as of {{ plan.cost.as_of|date:"d M Y" }}{% endif %}{% if sde_version %} · SDE {{ sde_version }}{% endif %}</p>{% endif %}
+    {% else %}<p class="mt-1 text-sm text-faint">No costed items yet.</p>{% endif %}
+    {% if owner_budget is not None %}<p class="mt-1 text-[11px] text-faint">Your budget: <span class="data">{{ owner_budget|isk }}</span> (private)</p>{% endif %}
+  </section>
+</div>
+{% endif %}
+
+{# ZONE 3 — collapsed #}
+{% if is_owner %}
+<div class="mt-5 space-y-2">
+  {% if suggestions %}
+  <details class="panel px-4 py-3"><summary class="cursor-pointer eyebrow">Suggestions for this goal ({{ suggestions|length }})</summary>
+    <div class="mt-2">{% for s in suggestions %}{% include "capsuleer/_suggestion_row.html" with s=s %}{% endfor %}</div>
+  </details>
+  {% endif %}
+
+  <details class="panel px-4 py-3"><summary class="cursor-pointer eyebrow">Action steps</summary>
+    <div class="mt-2 divide-y divide-line/40">
+      {% for st in steps %}
+      <div class="flex items-center gap-3 py-2 text-sm">
+        <span class="min-w-0 flex-1 truncate {% if st.status != 'open' %}text-faint line-through{% else %}text-muted{% endif %}">{{ st.title }}</span>
+        {% if st.status == 'open' %}<form method="post" action="{% url 'capsuleer:step_status' st.pk %}" class="inline">{% csrf_token %}<input type="hidden" name="action" value="done"><button class="btn-ghost !py-1 text-xs">Done</button></form>{% endif %}
+      </div>
+      {% empty %}<p class="py-2 text-sm text-faint">No steps yet.</p>{% endfor %}
+    </div>
+    <form method="post" action="{% url 'capsuleer:step_add' goal.pk %}" class="mt-2 flex flex-wrap gap-2">{% csrf_token %}<input type="text" name="title" placeholder="A next action…" class="input-field flex-1"><button class="btn-cyan !py-1 text-xs">Add step</button></form>
+  </details>
+
+  <details class="panel px-4 py-3"><summary class="cursor-pointer eyebrow">Sharing &amp; mentor</summary>
+    <form method="post" action="{% url 'capsuleer:goal_share' goal.pk %}" class="mt-2 space-y-1.5 text-sm">{% csrf_token %}
+      {% for v, lab in visibilities %}<label class="flex items-center gap-2"><input type="radio" name="visibility" value="{{ v }}" {% if goal.visibility == v %}checked{% endif %}> {{ lab }}</label>{% endfor %}
+      <button class="btn-cyan !py-1 text-xs">Update sharing</button>
+    </form>
+    <p class="mt-2 text-xs text-faint">Officers who view an officers-shared goal are audit-logged.</p>
+    {% if mentor_directory_url %}<a href="{{ mentor_directory_url }}" class="mt-1 inline-block text-xs text-cyan hover:underline">Find a mentor →</a>{% endif %}
+  </details>
+
+  <details class="panel px-4 py-3"><summary class="cursor-pointer eyebrow">History</summary>
+    <div class="mt-2 space-y-1 text-xs text-faint">
+      {% for a in activity %}<p>{{ a.created_at|date:"d M H:i" }} · {% if a.actor %}{{ a.actor.display_name }}{% else %}auto{% endif %} · {{ a.verb }}</p>{% empty %}<p>No history yet.</p>{% endfor %}
+    </div>
+  </details>
+
+  <details class="panel px-4 py-3"><summary class="cursor-pointer eyebrow">Settings &amp; danger zone</summary>
+    <div class="mt-2 flex flex-wrap gap-2">
+      <a href="{% url 'capsuleer:goal_edit' goal.pk %}" class="btn-ghost !py-1 text-xs">Edit goal</a>
+      {% for to in legal_transitions %}
+      {% if to == 'paused' %}<form method="post" action="{% url 'capsuleer:goal_status' goal.pk %}" class="inline">{% csrf_token %}<input type="hidden" name="to" value="paused"><button class="btn-ghost !py-1 text-xs">Pause</button></form>
+      {% elif to == 'active' %}<form method="post" action="{% url 'capsuleer:goal_status' goal.pk %}" class="inline">{% csrf_token %}<input type="hidden" name="to" value="active"><button class="btn-ghost !py-1 text-xs">{% if goal.status == 'completed' %}Reopen{% elif goal.status == 'paused' %}Resume{% else %}Start{% endif %}</button></form>
+      {% elif to == 'completed' %}<form method="post" action="{% url 'capsuleer:goal_status' goal.pk %}" class="inline">{% csrf_token %}<input type="hidden" name="to" value="completed"><input type="hidden" name="reason" value=""><button class="btn-ghost !py-1 text-xs">Complete</button></form>
+      {% elif to == 'considering' %}<form method="post" action="{% url 'capsuleer:goal_status' goal.pk %}" class="inline">{% csrf_token %}<input type="hidden" name="to" value="considering"><button class="btn-ghost !py-1 text-xs">Revive</button></form>
+      {% elif to == 'abandoned' %}<form method="post" action="{% url 'capsuleer:goal_status' goal.pk %}" class="inline" data-confirm="Set this goal aside? Your history stays; you can start it again any time.">{% csrf_token %}<input type="hidden" name="to" value="abandoned"><button class="btn-danger !py-1 text-xs">Set aside</button></form>
+      {% elif to == 'archived' %}<form method="post" action="{% url 'capsuleer:goal_status' goal.pk %}" class="inline">{% csrf_token %}<input type="hidden" name="to" value="archived"><button class="btn-ghost !py-1 text-xs text-faint">Archive</button></form>{% endif %}
+      {% endfor %}
+    </div>
+    <p class="mt-2 text-[11px] text-faint">Paused is a plan, not a failure.</p>
+  </details>
+</div>
+{% elif can_mentor_note %}
+<section class="panel mt-5 px-4 py-4">
+  <h2 class="eyebrow">Suggest a note</h2>
+  <form method="post" action="{% url 'capsuleer:goal_note' goal.pk %}" class="mt-2 flex flex-wrap gap-2">{% csrf_token %}
+    <input type="text" name="text" placeholder="A suggestion for this pilot…" class="input-field flex-1">
+    <button class="btn-cyan !py-1 text-xs">Add note</button>
+  </form>
+  <p class="mt-1 text-[11px] text-faint">Mentors suggest and endorse — they never change the goal.</p>
+</section>
+{% endif %}
+{% endblock %}

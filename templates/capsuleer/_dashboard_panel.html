@@ -1,0 +1,21 @@
+{# Capsuleer Path — Command Center panel (doc 10 §5.11). Status only, no advice, no gold button.
+   Rendered only when features.capsuleer and 'capsuleer' not in hidden_panels and capsuleer_panel. #}
+<section class="panel overflow-hidden">
+  <div class="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
+    <h2 class="eyebrow">Capsuleer Path</h2>
+    <a href="{% url 'capsuleer:home' %}" class="shrink-0 text-xs text-faint hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold">My path →</a>
+  </div>
+  <div class="space-y-2 px-4 py-4">
+    <a href="{% url 'capsuleer:goal_detail' capsuleer_panel.goal.pk %}" class="block truncate font-medium text-ink hover:text-gold">{{ capsuleer_panel.goal.title }}</a>
+    {% include "capsuleer/_progress_bar.html" with pct=capsuleer_panel.goal.progress_percent %}
+    {% if capsuleer_panel.next_milestone %}<p class="text-xs text-faint">next: {{ capsuleer_panel.next_milestone }}</p>{% endif %}
+    {% if capsuleer_panel.review_due %}<p class="text-[11px]"><span class="chip !text-cyan !border-cyan/40">review due</span></p>{% endif %}
+    {% if capsuleer_panel.freshness %}<p class="text-[11px] text-faint">checked {{ capsuleer_panel.freshness|timesince }} ago</p>{% endif %}
+    {% if capsuleer_panel.second %}
+    <div class="border-t border-line pt-2">
+      <a href="{% url 'capsuleer:goal_detail' capsuleer_panel.second.pk %}" class="block truncate text-sm text-muted hover:text-gold">{{ capsuleer_panel.second.title }}</a>
+      {% include "capsuleer/_progress_bar.html" with pct=capsuleer_panel.second.progress_percent %}
+    </div>
+    {% endif %}
+  </div>
+</section>
