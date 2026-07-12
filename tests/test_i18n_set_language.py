@@ -12,8 +12,10 @@ from core.i18n.views import set_language
 pytestmark = pytest.mark.django_db
 
 
-def _post(data, *, user=None, secure=False):
+def _post(data, *, user=None, secure=False, referer=None):
     request = RequestFactory().post("/i18n/setlang/", data, secure=secure)
+    if referer is not None:
+        request.META["HTTP_REFERER"] = referer
     request.user = user or AnonymousUser()
     request.real_user = request.user
     return request
@@ -40,6 +42,29 @@ def test_open_redirect_is_rejected():
     assert resp["Location"] == "/"
     # A same-origin next still works and the choice is still applied.
     assert resp.cookies["forca_language"].value == "de"
+
+
+def test_scheme_relative_redirect_is_rejected():
+    # //evil.example/pwn has no scheme but browsers follow it off-origin.
+    config.set_i18n_config(locales={"de": True})
+    resp = set_language(_post({"language": "de", "next": "//evil.example/pwn"}))
+    assert resp["Location"] == "/"
+
+
+def test_offsite_referer_fallback_is_rejected():
+    # With no `next`, the referer is the fallback — it must clear the same guard.
+    config.set_i18n_config(locales={"de": True})
+    resp = set_language(_post({"language": "de"}, referer="https://evil.example/pwn"))
+    assert resp["Location"] == "/"
+    assert set_language(_post({"language": "de"}, referer="/dashboard/"))["Location"] == "/dashboard/"
+
+
+def test_allow_list_match_is_exact():
+    # The cookie carries the code from the allow-list, not the posted bytes, so a
+    # near-miss ("DE" for "de") matches nothing and is refused rather than echoed.
+    config.set_i18n_config(locales={"de": True})
+    resp = set_language(_post({"language": "DE", "next": "/"}))
+    assert "forca_language" not in resp.cookies
 
 
 def test_invalid_locale_is_not_applied():
