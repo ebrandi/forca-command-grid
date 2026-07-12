@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import logging
 
-from django.utils import timezone
+from django.utils import timezone, translation
+
+from core.i18n import broadcast_locale
 
 from . import config
 from .models import (
@@ -21,9 +23,32 @@ from .models import (
     ChannelProvider,
     DeliveryStatus,
 )
-from .providers import Recipient, provider_class
+from .providers import Recipient, SendResult, provider_class
+from .rendering_i18n import render_for
 
 log = logging.getLogger("forca.pingboard")
+
+
+def _resolve_delivery_language(raw: str, default: str) -> str:
+    """Validate a stored ``User.language`` for off-request (worker) delivery.
+
+    The background-job read contract (doc 06 §8): validate the raw stored code against the
+    runtime allow-list (``LANGUAGES`` ∩ enabled i18n.config) with
+    ``get_supported_language_variant``, and return the corp ``default`` broadcast locale
+    when the value is blank, disabled, or tampered — NEVER build a filesystem path from raw
+    input (D18). A blank ``User.language`` off-request collapses straight to the default.
+    """
+    from django.utils.translation import get_supported_language_variant
+
+    from core.i18n import enabled_locales, is_i18n_enabled
+
+    if not is_i18n_enabled() or not raw or not isinstance(raw, str):
+        return default
+    try:
+        variant = get_supported_language_variant(raw.replace("_", "-"))
+    except (LookupError, TypeError, ValueError):
+        return default
+    return variant if variant in set(enabled_locales()) else default
 
 # Delivery modes by channel kind:
 #  - PER_USER_KINDS resolve to per-recipient rows sent through the provider (in-app users,
@@ -239,18 +264,54 @@ class AlertDispatcher:
                     self._delivery(alert, kind, row, status=DeliveryStatus.SKIPPED,
                                    error="provider not implemented yet")
                     continue
-                try:
-                    result = pcls(row).send(
-                        subject=alert.title, body=alert.body,
-                        recipients=self._send_recipients(kind, row, recipients),
-                    )
-                except Exception:  # noqa: BLE001 - a provider must never crash the dispatcher
-                    log.exception("Pingboard provider %s crashed", kind)
-                    self._delivery(alert, kind, row, status=DeliveryStatus.FAILED,
-                                   error="provider raised", bump_attempt=True)
-                    any_fail = True
-                    continue
-                self._delivery(alert, kind, row, from_result=result)
+
+                if self._is_per_recipient(kind, row):
+                    # Per-user leg (in-app rows, EVE-mail, the DM-handle leg): bucket the
+                    # resolved recipients by their delivery locale, then render+send once
+                    # per bucket under translation.override so each pilot gets their own
+                    # language (worker-safe — no request/LocaleMiddleware here). EVE-mail's
+                    # ≤50 chunking is preserved WITHIN each bucket (the provider is
+                    # unchanged; each send already sees only one locale's recipients).
+                    send_recipients = self._send_recipients(kind, row, recipients)
+                    buckets = self._bucket_by_language(send_recipients)
+                    if not buckets:
+                        # No per-user recipients — send once (empty) in the broadcast
+                        # locale so the pre-i18n outcome is preserved (e.g. an in-app leg
+                        # with a zero-user audience still records DELIVERED).
+                        buckets = {broadcast_locale(): []}
+                    results = []
+                    for lang, bucket in buckets.items():  # deterministic (locale-sorted)
+                        with translation.override(lang):
+                            subject, body = render_for(alert, lang)
+                            try:
+                                results.append(
+                                    pcls(row).send(subject=subject, body=body, recipients=bucket)
+                                )
+                            except Exception:  # noqa: BLE001 - never crash the dispatcher
+                                log.exception("Pingboard provider %s crashed", kind)
+                                results.append(SendResult(ok=False, error="provider raised"))
+                        self._stamp_recipient_language(alert, kind, bucket, lang)
+                    result = self._merge_results(results)
+                    self._delivery(alert, kind, row, from_result=result)
+                else:
+                    # Shared/broadcast leg (Discord webhook, configured group/channel row):
+                    # no single recipient, so render ONCE in the corp default broadcast
+                    # locale and record it on the delivery row (doc 08 §9).
+                    lang = broadcast_locale()
+                    with translation.override(lang):
+                        subject, body = render_for(alert, lang)
+                        try:
+                            result = pcls(row).send(
+                                subject=subject, body=body,
+                                recipients=self._send_recipients(kind, row, recipients),
+                            )
+                        except Exception:  # noqa: BLE001 - a provider must never crash the dispatcher
+                            log.exception("Pingboard provider %s crashed", kind)
+                            self._delivery(alert, kind, row, status=DeliveryStatus.FAILED,
+                                           error="provider raised", bump_attempt=True)
+                            any_fail = True
+                            continue
+                    self._delivery(alert, kind, row, from_result=result, language=lang)
                 if row is not None:
                     self._update_health(row, result)
                 if result.ok:
@@ -294,8 +355,62 @@ class AlertDispatcher:
             for r in recipients
         ])
 
+    def _is_per_recipient(self, kind: str, row) -> bool:
+        """The exact set of legs that carry per-pilot recipients with ``user_id``:
+        the per-user kinds (in-app / EVE-mail) and the DM-handle leg (``row is None``)."""
+        return kind in PER_USER_KINDS or (kind in DM_HANDLE_KINDS and row is None)
+
+    def _bucket_by_language(self, recipients: list[Recipient]) -> dict[str, list[Recipient]]:
+        """Group per-user recipients by their resolved delivery locale.
+
+        One extra query per dispatch (``user_id -> language`` for the ids already in hand),
+        not one per recipient. Blank/unset/de-listed locales collapse to the corp default
+        broadcast locale. Buckets are returned in deterministic (locale-sorted) order so
+        snapshot tests and delivery logs are stable.
+        """
+        from django.contrib.auth import get_user_model
+
+        user_ids = {r.user_id for r in recipients if r.user_id}
+        lang_by_uid = (
+            dict(get_user_model().objects.filter(id__in=user_ids).values_list("id", "language"))
+            if user_ids else {}
+        )
+        default = broadcast_locale()
+        buckets: dict[str, list[Recipient]] = {}
+        for r in recipients:
+            raw = lang_by_uid.get(r.user_id, "") if r.user_id else ""
+            lang = _resolve_delivery_language(raw, default)
+            buckets.setdefault(lang, []).append(r)
+        return dict(sorted(buckets.items()))
+
+    def _stamp_recipient_language(self, alert, kind, bucket, lang) -> None:
+        """Record the delivered locale on each per-pilot ``AlertRecipient`` row (D14.8)."""
+        user_ids = [r.user_id for r in bucket if r.user_id]
+        if not user_ids:
+            return
+        AlertRecipient.objects.filter(
+            alert=alert, kind=kind, user_id__in=user_ids
+        ).update(language=lang)
+
+    def _merge_results(self, results: list[SendResult]) -> SendResult:
+        """Fold the per-bucket ``SendResult``s into the one ``AlertDelivery`` row's summary
+        (summed ok/failed counts), preserving today's channel-level delivery semantics."""
+        if not results:
+            return SendResult(ok=False, skipped=True, error="no recipients")
+        any_ok = any(r.ok for r in results)
+        return SendResult(
+            ok=any_ok,
+            recipients_ok=sum(r.recipients_ok for r in results),
+            recipients_failed=sum(r.recipients_failed for r in results),
+            provider_message_id=next(
+                (r.provider_message_id for r in reversed(results) if r.provider_message_id), ""
+            ),
+            error="" if any_ok else (results[-1].error or ""),
+            skipped=all(r.skipped for r in results),
+        )
+
     def _delivery(self, alert, kind, provider, *, status=None, error="",
-                  from_result=None, bump_attempt=False):
+                  from_result=None, bump_attempt=False, language=None):
         d, _ = AlertDelivery.objects.get_or_create(alert=alert, kind=kind, provider=provider)
         if from_result is not None:
             d.attempts += 1
@@ -315,6 +430,8 @@ class AlertDispatcher:
                 d.attempts += 1
             d.status = status or d.status
             d.last_error = (error or "")[:300]
+        if language is not None:
+            d.language = language
         d.save()
         return d
 

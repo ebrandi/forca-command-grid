@@ -75,13 +75,21 @@ def deliver_leadership_briefing() -> dict:
     emailed = 0
     if recipients:
         from django.core.mail import send_mail
+        from django.utils import translation
+        from django.utils.translation import gettext as _
+
+        from core.i18n import broadcast_locale
 
         corp = getattr(settings, "FORCA_CORP_NAME", "Corp")
-        # Email body is plain text; strip the Discord bold markers.
+        # Email body is plain text; strip the Discord bold markers. The digest is
+        # corp/leadership DATA and is not re-translated; only the subject chrome localises,
+        # in the corp default broadcast locale (no single recipient to key off — doc 08 §12).
         body = digest.replace("**", "")
         try:
+            with translation.override(broadcast_locale()):
+                subject = _("%(corp)s — daily briefing") % {"corp": corp}
             emailed = send_mail(
-                subject=f"{corp} — daily briefing",
+                subject=subject,
                 message=body,
                 from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None),
                 recipient_list=recipients,

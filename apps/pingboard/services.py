@@ -10,9 +10,10 @@ import datetime as dt
 import logging
 
 from django.db import transaction
-from django.utils import timezone
+from django.utils import timezone, translation
 
 from core.audit import audit_log
+from core.i18n import broadcast_locale
 
 from . import config, ratelimit, rendering
 from .dispatch import AlertDispatcher, RecipientResolver
@@ -105,8 +106,13 @@ def emit_alert(
         audience = {"kind": routing.get("audience", "corp")}
     channels = channels or routing.get("channels") or gen["default_channels"]
 
-    body_text, custom = _render_body(template, body, context)
-    title_text = rendering.render(title, context) if context else title
+    resolved_key = _resolve_template_key(template)
+    # Freeze the audit body under the corp default broadcast locale so the stored
+    # Alert.body is deterministic regardless of who/what triggered the emit. Per-recipient
+    # locales are re-rendered later from template_key + context (dispatch / in-app view).
+    with translation.override(broadcast_locale()):
+        body_text, custom = _render_body(template, body, context)
+        title_text = rendering.render(title, context) if context else title
 
     src = source or (
         AlertSource.SCHEDULED if scheduled_at
@@ -192,6 +198,8 @@ def emit_alert(
         recipient_count=est,
         template=_template_obj(template),
         custom_message=custom,
+        template_key=resolved_key,
+        context=_persist_context(context),
         automation_rule=automation_rule,
         source_service=source_service,
         source_object_id=str(source_object_id or ""),
@@ -512,8 +520,45 @@ def _template_obj(template):
     return None
 
 
+def _resolve_template_key(template) -> str:
+    """The stable message-identity string to persist on ``Alert.template_key``.
+
+    Covers a code message-scaffold key, a DB ``AlertTemplate.key``, or ``""``. Kept as a
+    plain string (separate from the ``template`` FK) so a historical alert stays
+    re-renderable/auditable even if a DB template is later deleted (doc 08 §4.1).
+    """
+    if isinstance(template, AlertTemplate):
+        return template.key
+    if isinstance(template, str):
+        return template
+    return ""
+
+
+def _persist_context(context) -> dict:
+    """The audit-safe ``{str: str}`` context to persist on ``Alert.context``.
+
+    Reuses ``rendering._flatten`` (every value coerced to ``str``) so the stored map is
+    always JSON-serialisable and carries exactly the interpolation values the frozen,
+    audit-safe ``Alert.body`` already reflects (no secrets/tokens — doc 08 §4.4).
+    """
+    return rendering._flatten(context)
+
+
 def _render_body(template, body, context) -> tuple[str, bool]:
-    """Return (rendered_body, is_custom_message)."""
+    """Return (rendered_body, is_custom_message).
+
+    A code message-scaffold key (``messages.SCAFFOLDS``) and a DB ``AlertTemplate`` both
+    render a template-backed body (``custom=False``); only a bare ``body=`` with no key
+    yields ``custom=True`` (genuine verbatim free-text). The scaffold is checked first so
+    a code registry wins over a same-named DB template, matching ``render_for``.
+    """
+    if isinstance(template, str) and template:
+        from .messages import SCAFFOLDS
+
+        sc = SCAFFOLDS.get(template)
+        if sc is not None:
+            # str() resolves the gettext_lazy proxy under the active override(broadcast).
+            return rendering.render(str(sc.body), context), False
     tpl = _template_obj(template)
     if tpl is not None:
         missing = rendering.missing_required(tpl.required_vars, context)

@@ -10,6 +10,8 @@ from __future__ import annotations
 import logging
 
 from django.conf import settings
+from django.utils import formats
+from django.utils.translation import gettext as _
 
 log = logging.getLogger(__name__)
 
@@ -73,22 +75,27 @@ def format_digest(body: dict, period_start, period_end) -> str:
     """Render the report body as a compact plain-text/Discord-markdown digest."""
     corp = getattr(settings, "FORCA_CORP_NAME", "Corp")
     lines = [
-        f"**{corp} — weekly readiness report** ({period_start:%d %b}–{period_end:%d %b})",
-        f"• Overall index: {body['index']}%",
+        _("**%(corp)s — weekly readiness report** (%(start)s–%(end)s)") % {
+            "corp": corp, "start": formats.date_format(period_start, "d M"),
+            "end": formats.date_format(period_end, "d M")},
+        _("• Overall index: %(index)s%%") % {"index": body["index"]},
     ]
     if body.get("worst"):
         w = body["worst"]
-        lines.append(f"• Biggest drop: {w['dimension']} {w['delta']:+d} (now {w['score']})")
+        lines.append(_("• Biggest drop: %(dim)s %(delta)s (now %(score)s)") % {
+            "dim": w["dimension"], "delta": f"{w['delta']:+d}", "score": w["score"]})
     if body.get("best"):
         b = body["best"]
-        lines.append(f"• Biggest gain: {b['dimension']} {b['delta']:+d} (now {b['score']})")
+        lines.append(_("• Biggest gain: %(dim)s %(delta)s (now %(score)s)") % {
+            "dim": b["dimension"], "delta": f"{b['delta']:+d}", "score": b["score"]})
     risks = body.get("top_risks") or []
     if risks:
-        lines.append("• Top risks: " + "; ".join(r["title"] for r in risks[:3]))
+        lines.append(_("• Top risks: %(titles)s") % {"titles": "; ".join(r["title"] for r in risks[:3])})
     tasks = body.get("top_tasks") or []
     if tasks:
-        lines.append(f"• Open readiness tasks: {len(tasks)} (top: {tasks[0]})")
-    lines.append("Full board: </readiness/>")
+        lines.append(_("• Open readiness tasks: %(count)s (top: %(top)s)") % {
+            "count": len(tasks), "top": tasks[0]})
+    lines.append(_("Full board: </readiness/>"))
     return "\n".join(lines)
 
 
@@ -135,10 +142,17 @@ def weekly_report(period_start=None, period_end=None) -> dict:
     if recipients:
         try:
             from django.core.mail import send_mail
+            from django.utils import translation
+
+            from core.i18n import broadcast_locale
 
             corp = getattr(settings, "FORCA_CORP_NAME", "Corp")
+            # No single recipient (static config list) → render the subject chrome in the
+            # corp default broadcast locale; the digest body is data, not re-translated.
+            with translation.override(broadcast_locale()):
+                subject = _("%(corp)s — weekly readiness report") % {"corp": corp}
             delivered["email"] = send_mail(
-                subject=f"{corp} — weekly readiness report",
+                subject=subject,
                 message=digest.replace("**", "").replace("</readiness/>", "/readiness/"),
                 from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None),
                 recipient_list=recipients, fail_silently=True,

@@ -26,6 +26,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from django.utils.translation import gettext_lazy as _
+
 from . import config
 
 # --- audience → classification -------------------------------------------------
@@ -93,17 +95,17 @@ GROUP_LEADERSHIP = "leadership"
 GROUP_OPERATIONS = "operations"
 GROUP_MEMBER = "member"
 GROUP_LABELS = {
-    GROUP_LEADERSHIP: "Leadership & command",
-    GROUP_OPERATIONS: "Operations & defence",
-    GROUP_MEMBER: "Members & community",
+    GROUP_LEADERSHIP: _("Leadership & command"),
+    GROUP_OPERATIONS: _("Operations & defence"),
+    GROUP_MEMBER: _("Members & community"),
 }
 
 REGISTRY: tuple[Event, ...] = (
     # --- leadership / command (sensitive: keep OFF mass channels) -------------
     Event(
         key="recommendations.officer_digest",
-        label="Officer recommendations digest",
-        description=(
+        label=_("Officer recommendations digest"),
+        description=_(
             "High-severity officer recommendations — stock shortages, doctrine readiness "
             "gaps, build-vs-buy calls, market seeding, hauling backlog and repeated combat "
             "losses (e.g. “Lost 6 × Capsule in the last 7d”)."
@@ -114,24 +116,24 @@ REGISTRY: tuple[Event, ...] = (
     ),
     Event(
         key="readiness.alert",
-        label="Readiness alerts",
-        description="Fleet-readiness findings that cross a configured alert rule (owner-routed).",
+        label=_("Readiness alerts"),
+        description=_("Fleet-readiness findings that cross a configured alert rule (owner-routed)."),
         group=GROUP_LEADERSHIP, source_service="readiness",
         audience="officer", sensitive=True,
         triggers="Beat readiness.evaluate_alerts, over open findings.",
     ),
     Event(
         key="readiness.weekly_report",
-        label="Weekly readiness report",
-        description="The weekly executive readiness digest — index, biggest movers, top risks.",
+        label=_("Weekly readiness report"),
+        description=_("The weekly executive readiness digest — index, biggest movers, top risks."),
         group=GROUP_LEADERSHIP, source_service="readiness",
         audience="officer", sensitive=True,
         triggers="Beat readiness.weekly_report (weekly).",
     ),
     Event(
         key="pilots.leadership_briefing",
-        label="Daily leadership briefing",
-        description=(
+        label=_("Daily leadership briefing"),
+        description=_(
             "The daily command briefing — readiness index, 24h losses, open tasks/hauls, "
             "stock shortfalls, SRP exposure and the top contributor."
         ),
@@ -141,8 +143,8 @@ REGISTRY: tuple[Event, ...] = (
     ),
     Event(
         key="mentorship.review",
-        label="Mentorship review notices",
-        description=(
+        label=_("Mentorship review notices"),
+        description=_(
             "Mentor/cadet applications pending review, pairings awaiting approval and "
             "stalled-pair nudges — officer/mentor review traffic."
         ),
@@ -152,8 +154,8 @@ REGISTRY: tuple[Event, ...] = (
     ),
     Event(
         key="command_intel.report",
-        label="Command-intelligence reports",
-        description=(
+        label=_("Command-intelligence reports"),
+        description=_(
             "Scheduled Command-Intelligence reports. Self-classifies per report and is "
             "already gated at the sink; listed here for visibility and the on/off switch."
         ),
@@ -163,8 +165,8 @@ REGISTRY: tuple[Event, ...] = (
     ),
     Event(
         key="admin_audit.integration_health",
-        label="Integration health & dependency alerts",
-        description=(
+        label=_("Integration health & dependency alerts"),
+        description=_(
             "One deduped director alert when a background sync stops running, the SDE "
             "static data goes stale, or a dependency vulnerability (CVE) is found — the "
             "corp would otherwise bleed stale data until a director opens the health page. "
@@ -176,8 +178,8 @@ REGISTRY: tuple[Event, ...] = (
     ),
     Event(
         key="srp.sla_alert",
-        label="SRP SLA & solvency alerts",
-        description=(
+        label=_("SRP SLA & solvency alerts"),
+        description=_(
             "One deduped SRP-officer digest when the ship-replacement queue breaches its "
             "configured service level — backlog too large, oldest claim too old, average "
             "approval wait too long, or the period budget underwater. Reuses the readiness "
@@ -189,8 +191,8 @@ REGISTRY: tuple[Event, ...] = (
     ),
     Event(
         key="sso.ingestion_token_dead",
-        label="Ingestion-token liveness alerts",
-        description=(
+        label=_("Ingestion-token liveness alerts"),
+        description=_(
             "One nudge to the owning director when a corp-ingestion token (assets / "
             "wallet / roster / structures) dies — revoked or refresh-failing past the "
             "retry limit — so corp data doesn't silently go stale. Names the character "
@@ -202,8 +204,8 @@ REGISTRY: tuple[Event, ...] = (
     ),
     Event(
         key="corporation.infrastructure_alert",
-        label="Structure fuel & sov-ADM alerts",
-        description=(
+        label=_("Structure fuel & sov-ADM alerts"),
+        description=_(
             "One deduped officer digest when a corp structure crosses the leadership-set "
             "low-fuel threshold (or runs dry) or a sovereignty system drops below the ADM "
             "floor. Thresholds are tunable on the Structure-alert settings page; fires once "
@@ -216,8 +218,8 @@ REGISTRY: tuple[Event, ...] = (
     # --- operations / defence (corp-wide by design) ---------------------------
     Event(
         key="esi.corp_alert",
-        label="Structure / war ESI alerts",
-        description=(
+        label=_("Structure / war ESI alerts"),
+        description=_(
             "Interesting in-game ESI notifications relayed as corp alerts — structure "
             "under attack, war declared, sov reinforced, low fuel. Home-defence items are "
             "corp-wide; structure-timer/fuel items follow the officer routing default."
@@ -228,24 +230,24 @@ REGISTRY: tuple[Event, ...] = (
     ),
     Event(
         key="operations.fleet",
-        label="Fleet & timer announcements",
-        description="Fleet-op rally calls and structure-timer announcements posted by officers.",
+        label=_("Fleet & timer announcements"),
+        description=_("Fleet-op rally calls and structure-timer announcements posted by officers."),
         group=GROUP_OPERATIONS, source_service="operations",
         audience="corp", sensitive=False,
         triggers="Operations board announce / structure-timer announce.",
     ),
     Event(
         key="killboard.killfeed",
-        label="Kill feed",
-        description="Sizeable corp kills and losses above the configured ISK thresholds.",
+        label=_("Kill feed"),
+        description=_("Sizeable corp kills and losses above the configured ISK thresholds."),
         group=GROUP_OPERATIONS, source_service="killboard",
         audience="corp", sensitive=False,
         triggers="Beat killboard.run_kill_feed (kill-feed config must be enabled).",
     ),
     Event(
         key="mail_relay.corp_mail",
-        label="Corp mail relay",
-        description="New corporation / alliance / mailing-list mail headers relayed to chat.",
+        label=_("Corp mail relay"),
+        description=_("New corporation / alliance / mailing-list mail headers relayed to chat."),
         group=GROUP_OPERATIONS, source_service="recommendations",
         audience="corp", sensitive=False,
         triggers="Beat recommendations.relay_mail (mail-scoped token required).",
@@ -253,16 +255,16 @@ REGISTRY: tuple[Event, ...] = (
     # --- members / community --------------------------------------------------
     Event(
         key="raffle.announce",
-        label="Raffle announcements",
-        description="Raffle open/draw/winner announcements and per-pilot ticket/winner DMs.",
+        label=_("Raffle announcements"),
+        description=_("Raffle open/draw/winner announcements and per-pilot ticket/winner DMs."),
         group=GROUP_MEMBER, source_service="raffle",
         audience="corp", sensitive=False,
         triggers="Raffle lifecycle events (inert until channels are armed).",
     ),
     Event(
         key="operations.formup_reminder",
-        label="Form-up reminders",
-        description=(
+        label=_("Form-up reminders"),
+        description=_(
             "A T-minus reminder to a pilot who claimed a seat, before their fleet op forms "
             "up. Targeted per-pilot (only those who signed up) — never a corp-wide ping."
         ),
@@ -272,8 +274,8 @@ REGISTRY: tuple[Event, ...] = (
     ),
     Event(
         key="logistics.haul_overdue",
-        label="Haul deadline & overdue nudges",
-        description=(
+        label=_("Haul deadline & overdue nudges"),
+        description=_(
             "A pre-deadline reminder DM to the hauler running a courier contract, and — when a "
             "haul passes its deadline and is auto-released back to the pool — a notice to the "
             "poster and the former hauler. Targeted per-pilot, never a corp-wide ping. The "
@@ -285,8 +287,8 @@ REGISTRY: tuple[Event, ...] = (
     ),
     Event(
         key="store.order_status",
-        label="Corp Store order updates",
-        description=(
+        label=_("Corp Store order updates"),
+        description=_(
             "A DM to the buyer when their Corp Store order changes status (claimed, in "
             "production, ready, delivered, cancelled). Targeted at the buyer only — never a "
             "corp-wide ping — and at most one per status change."
@@ -297,8 +299,8 @@ REGISTRY: tuple[Event, ...] = (
     ),
     Event(
         key="planetary.colony_issue",
-        label="PI colony issue nudges",
-        description=(
+        label=_("PI colony issue nudges"),
+        description=_(
             "A DM to a PI pilot when one of their imported colonies develops an issue — an "
             "expired extractor or an unrouted factory — so passive income doesn't silently "
             "stop. Targeted at the owner only, at most one per detected issue-set."
@@ -309,8 +311,8 @@ REGISTRY: tuple[Event, ...] = (
     ),
     Event(
         key="raffle.enrolment_outreach",
-        label="Raffle enrolment nudges",
-        description=(
+        label=_("Raffle enrolment nudges"),
+        description=_(
             "A one-time DM to an active-but-unenrolled pilot who earned would-be raffle "
             "tickets, nudging them to enrol and claim them. Officer-triggered from the "
             "ineligible report; once per pilot per contest, honours a permanent opt-out."
@@ -321,8 +323,8 @@ REGISTRY: tuple[Event, ...] = (
     ),
     Event(
         key="mining.chunk_arrival",
-        label="Moon chunk-arrival reminders",
-        description=(
+        label=_("Moon chunk-arrival reminders"),
+        description=_(
             "An opt-in corp reminder ahead of a moon extraction's chunk arrival (default 24h "
             "and 1h before the fracture), so the corp forms up and doesn't miss the window. "
             "At most one per extraction per offset; inert until leadership arms channels."
@@ -333,8 +335,8 @@ REGISTRY: tuple[Event, ...] = (
     ),
     Event(
         key="killboard.watchlist_activity",
-        label="Watchlist activity tripwire",
-        description=(
+        label=_("Watchlist activity tripwire"),
+        description=_(
             "An opt-in corp alert when a watched entity (hostile pilot / corp / alliance) "
             "shows up on a fresh killmail — a gate-camp / roam early warning. Per watchlist, "
             "at most one alert per entity per cooldown, on a fresh activation. A risk "
@@ -346,8 +348,8 @@ REGISTRY: tuple[Event, ...] = (
     ),
     Event(
         key="navigation.route_watch",
-        label="Saved-route camp / incursion push",
-        description=(
+        label=_("Saved-route camp / incursion push"),
+        description=_(
             "An opt-in DM to the OWNER of a saved jump route when a gate camp or incursion "
             "appears on one of its systems — so a hauler scouts before undocking. Per route, "
             "only on a change in the threat set. A risk indicator, not a guarantee."
@@ -358,8 +360,8 @@ REGISTRY: tuple[Event, ...] = (
     ),
     Event(
         key="skills.idle_queue",
-        label="Idle skill-queue nudge",
-        description=(
+        label=_("Idle skill-queue nudge"),
+        description=_(
             "An opt-in reminder DMed to a pilot when one of their characters' skill queues "
             "runs dry, so they stop bleeding SP. Off by default per pilot; one nudge per "
             "empty transition, targeted per-pilot — never a shared channel."
@@ -370,8 +372,8 @@ REGISTRY: tuple[Event, ...] = (
     ),
     Event(
         key="killboard.newbro_milestone",
-        label="Newbro combat milestones",
-        description=(
+        label=_("Newbro combat milestones"),
+        description=_(
             "A new pilot's own 'first kill / first solo / first final blow' celebration. "
             "Delivered per-pilot, and only for a recently-achieved first (never a "
             "retroactive back-congratulation)."
@@ -382,8 +384,8 @@ REGISTRY: tuple[Event, ...] = (
     ),
     Event(
         key="killboard.rank_up",
-        label="Combat rank-ups",
-        description=(
+        label=_("Combat rank-ups"),
+        description=_(
             "A pilot's own one-time 'you reached <rank>!' celebration when they climb the "
             "combat ladder (plus a note when a rank reward is pending). Delivered per-pilot "
             "— never posted to a shared channel."
@@ -398,8 +400,8 @@ REGISTRY: tuple[Event, ...] = (
     # targeted payloads only (enforced in apps/campaigns/notify.py, doc 09 §4.1).
     Event(
         key="campaigns.assigned",
-        label="Campaign objective assigned",
-        description=(
+        label=_("Campaign objective assigned"),
+        description=_(
             "A DM to a pilot when they are made owner of a campaign objective, workstream "
             "lead, milestone owner, or a campaign's commander. Targeted at the newly "
             "assigned pilot only."
@@ -410,8 +412,8 @@ REGISTRY: tuple[Event, ...] = (
     ),
     Event(
         key="campaigns.deadline_soon",
-        label="Campaign deadline approaching",
-        description=(
+        label=_("Campaign deadline approaching"),
+        description=_(
             "A bucketed reminder (7d / 48h / 24h / overdue) to an objective or milestone "
             "owner as a due date nears — falls back to the commander when unowned. One per "
             "(item, bucket), never hourly nagging."
@@ -422,8 +424,8 @@ REGISTRY: tuple[Event, ...] = (
     ),
     Event(
         key="campaigns.objective_blocked",
-        label="Campaign objective blocked",
-        description=(
+        label=_("Campaign objective blocked"),
+        description=_(
             "A DM to the objective owner and campaign commander when an objective flips to "
             "blocked (an open issue links it, or a dependency target went bad). Re-notifies "
             "only when the blocking cause changes."
@@ -434,8 +436,8 @@ REGISTRY: tuple[Event, ...] = (
     ),
     Event(
         key="campaigns.dependency_completed",
-        label="Campaign dependency completed",
-        description=(
+        label=_("Campaign dependency completed"),
+        description=_(
             "A DM to the owners of now-unblocked items (and the commander) when a "
             "dependency target reaches a terminal-done state and its edge auto-resolves."
         ),
@@ -445,8 +447,8 @@ REGISTRY: tuple[Event, ...] = (
     ),
     Event(
         key="campaigns.health_changed",
-        label="Campaign health changed",
-        description=(
+        label=_("Campaign health changed"),
+        description=_(
             "A leadership alert when a campaign's health level changes — degradations name "
             "the blockers, budget state and deadline risk. Fires once per distinct "
             "problem-set signature; recovery re-arms it. Sensitive: kept off low-ceiling "
@@ -458,8 +460,8 @@ REGISTRY: tuple[Event, ...] = (
     ),
     Event(
         key="campaigns.approval_needed",
-        label="Campaign approval required",
-        description=(
+        label=_("Campaign approval required"),
+        description=_(
             "A director alert when a campaign is proposed for approval; also reused to nudge "
             "a commander when a milestone is marked ready for review. Sensitive."
         ),
@@ -469,8 +471,8 @@ REGISTRY: tuple[Event, ...] = (
     ),
     Event(
         key="campaigns.started",
-        label="Campaign started",
-        description=(
+        label=_("Campaign started"),
+        description=_(
             "A corp announcement when a campaign goes active (member-visible campaigns); "
             "officer/director tiers announce to their tier; restricted campaigns announce "
             "only to their individually-listed participants."
@@ -481,8 +483,8 @@ REGISTRY: tuple[Event, ...] = (
     ),
     Event(
         key="campaigns.completed",
-        label="Campaign completed",
-        description=(
+        label=_("Campaign completed"),
+        description=_(
             "A corp announcement when a campaign reaches completed/failed/cancelled "
             "(audience mirrors campaigns.started; restricted campaigns stay participant-only)."
         ),
@@ -492,8 +494,8 @@ REGISTRY: tuple[Event, ...] = (
     ),
     Event(
         key="campaigns.recognition",
-        label="Campaign contribution recognised",
-        description=(
+        label=_("Campaign contribution recognised"),
+        description=_(
             "A private DM to a pilot recognised for a campaign contribution (close-out or "
             "ad hoc). Sent regardless of the pilot's public-recognition opt-out — it is "
             "private to them."
@@ -504,8 +506,8 @@ REGISTRY: tuple[Event, ...] = (
     ),
     Event(
         key="campaigns.manual_update_needed",
-        label="Campaign metric needs manual update",
-        description=(
+        label=_("Campaign metric needs manual update"),
+        description=_(
             "A low-priority nudge to a manual-metric objective's owner when its value has "
             "gone stale past the confirmation interval — at most one per objective per week."
         ),
@@ -515,8 +517,8 @@ REGISTRY: tuple[Event, ...] = (
     ),
     Event(
         key="campaigns.issue_escalated",
-        label="Campaign issue escalated",
-        description=(
+        label=_("Campaign issue escalated"),
+        description=_(
             "A leadership alert when a campaign issue is escalated (a deliberate human "
             "action). Sensitive: issue detail is kept off low-ceiling mass channels."
         ),
@@ -526,8 +528,8 @@ REGISTRY: tuple[Event, ...] = (
     ),
     Event(
         key="campaigns.approved",
-        label="Campaign approved",
-        description=(
+        label=_("Campaign approved"),
+        description=_(
             "A DM to the commander/proposer when a director approves their campaign. "
             "Targeted at the individual only, never a mass audience."
         ),
@@ -538,8 +540,8 @@ REGISTRY: tuple[Event, ...] = (
     # --- Capsuleer Path (per-user career DMs; all disarmed on the emitter side) ---------
     Event(
         key="capsuleer.milestone_reached",
-        label="Career milestone reached",
-        description=(
+        label=_("Career milestone reached"),
+        description=_(
             "A DM to a pilot when one of their own career-goal milestones is credited "
             "(auto-verified or manually confirmed). Targeted at the goal owner only — "
             "never a corp channel; goal content beyond the titles never leaves the app."
@@ -550,8 +552,8 @@ REGISTRY: tuple[Event, ...] = (
     ),
     Event(
         key="capsuleer.goal_completed",
-        label="Career goal completed",
-        description=(
+        label=_("Career goal completed"),
+        description=_(
             "A DM to a pilot when they complete one of their own career goals. "
             "Targeted at the owner only; any public recognition is a separate, opt-in "
             "surface — this DM is private regardless."
@@ -562,8 +564,8 @@ REGISTRY: tuple[Event, ...] = (
     ),
     Event(
         key="capsuleer.review_due",
-        label="Career goal review nudge",
-        description=(
+        label=_("Career goal review nudge"),
+        description=_(
             "A gentle DM when one of the pilot's goals has sat unreviewed past the "
             "cadence or looks stalled. At most one per goal per month; ignoring it has "
             "no consequence — no escalation, no status change."
@@ -574,8 +576,8 @@ REGISTRY: tuple[Event, ...] = (
     ),
     Event(
         key="capsuleer.suggestion",
-        label="Capsuleer Path suggestions",
-        description=(
+        label=_("Capsuleer Path suggestions"),
+        description=_(
             "A DM telling a pilot they have new career suggestions waiting — a count and "
             "a link only, never suggestion content. At most one per pilot per day, and "
             "only when the daily generation produced new open rows."

@@ -17,6 +17,7 @@ import logging
 from django.conf import settings
 from django.db import models
 from django.db.models import Q
+from django.utils.translation import gettext_lazy as _
 
 from core.mixins import TimeStampedModel
 
@@ -25,31 +26,31 @@ log = logging.getLogger("forca.pingboard")
 
 # --- shared vocabulary -------------------------------------------------------
 class AlertCategory(models.TextChoices):
-    EMERGENCY = "emergency", "Emergency"
-    HOME_DEFENCE = "home_defence", "Home defence"
-    MINING = "mining", "Mining"
-    MOON_EXTRACTION = "moon_extraction", "Moon extraction"
-    PVP_FLEET = "pvp_fleet", "PvP fleet"
-    ROAMING_GANG = "roaming_gang", "Roaming gang"
-    GATECAMP = "gatecamp", "Gatecamp"
-    LOGISTICS = "logistics", "Logistics"
-    BUYBACK = "buyback", "Buyback"
-    MENTORSHIP = "mentorship", "Mentorship"
-    INDUSTRY_JOB = "industry_job", "Industry job"
-    STRUCTURE_TIMER = "structure_timer", "Structure timer"
-    ANNOUNCEMENT = "announcement", "Corporation announcement"
-    SYSTEM = "system", "System notification"
-    CAMPAIGN = "campaign", "Campaign"
-    CAPSULEER = "capsuleer", "Capsuleer Path"
-    CUSTOM = "custom", "Custom"
+    EMERGENCY = "emergency", _("Emergency")
+    HOME_DEFENCE = "home_defence", _("Home defence")
+    MINING = "mining", _("Mining")
+    MOON_EXTRACTION = "moon_extraction", _("Moon extraction")
+    PVP_FLEET = "pvp_fleet", _("PvP fleet")
+    ROAMING_GANG = "roaming_gang", _("Roaming gang")
+    GATECAMP = "gatecamp", _("Gatecamp")
+    LOGISTICS = "logistics", _("Logistics")
+    BUYBACK = "buyback", _("Buyback")
+    MENTORSHIP = "mentorship", _("Mentorship")
+    INDUSTRY_JOB = "industry_job", _("Industry job")
+    STRUCTURE_TIMER = "structure_timer", _("Structure timer")
+    ANNOUNCEMENT = "announcement", _("Corporation announcement")
+    SYSTEM = "system", _("System notification")
+    CAMPAIGN = "campaign", _("Campaign")
+    CAPSULEER = "capsuleer", _("Capsuleer Path")
+    CUSTOM = "custom", _("Custom")
 
 
 class AlertPriority(models.TextChoices):
-    LOW = "low", "Low"
-    NORMAL = "normal", "Normal"
-    HIGH = "high", "High"
-    URGENT = "urgent", "Urgent"
-    EMERGENCY = "emergency", "Emergency"
+    LOW = "low", _("Low")
+    NORMAL = "normal", _("Normal")
+    HIGH = "high", _("High")
+    URGENT = "urgent", _("Urgent")
+    EMERGENCY = "emergency", _("Emergency")
 
 
 # Priority ordering for gates (dispatch-authority floor, styling, rate tiers).
@@ -63,22 +64,22 @@ PRIORITY_RANK = {
 
 
 class AlertSource(models.TextChoices):
-    MANUAL = "manual", "Manual"
-    AUTOMATION = "automation", "Automation rule"
-    SCHEDULED = "scheduled", "Scheduled"
-    SERVICE = "service", "Service-emitted"
+    MANUAL = "manual", _("Manual")
+    AUTOMATION = "automation", _("Automation rule")
+    SCHEDULED = "scheduled", _("Scheduled")
+    SERVICE = "service", _("Service-emitted")
 
 
 class AlertStatus(models.TextChoices):
-    DRAFT = "draft", "Draft"
-    SCHEDULED = "scheduled", "Scheduled"
-    QUEUED = "queued", "Queued"
-    SENDING = "sending", "Sending"
-    SENT = "sent", "Sent"
-    PARTIAL = "partial", "Partial failure"
-    FAILED = "failed", "Failed"
-    CANCELLED = "cancelled", "Cancelled"
-    EXPIRED = "expired", "Expired"
+    DRAFT = "draft", _("Draft")
+    SCHEDULED = "scheduled", _("Scheduled")
+    QUEUED = "queued", _("Queued")
+    SENDING = "sending", _("Sending")
+    SENT = "sent", _("Sent")
+    PARTIAL = "partial", _("Partial failure")
+    FAILED = "failed", _("Failed")
+    CANCELLED = "cancelled", _("Cancelled")
+    EXPIRED = "expired", _("Expired")
 
 
 # Terminal states — a swept/scheduled alert in one of these is never re-dispatched.
@@ -92,21 +93,21 @@ ALERT_TERMINAL = {
 
 
 class ChannelKind(models.TextChoices):
-    IN_APP = "in_app", "In-app"
-    EVE_MAIL = "eve_mail", "EVE Mail"
-    DISCORD = "discord", "Discord"
-    SLACK = "slack", "Slack"
-    TELEGRAM = "telegram", "Telegram"
-    WHATSAPP = "whatsapp", "WhatsApp"
+    IN_APP = "in_app", _("In-app")
+    EVE_MAIL = "eve_mail", _("EVE Mail")
+    DISCORD = "discord", _("Discord")
+    SLACK = "slack", _("Slack")
+    TELEGRAM = "telegram", _("Telegram")
+    WHATSAPP = "whatsapp", _("WhatsApp")
 
 
 class DeliveryStatus(models.TextChoices):
-    PENDING = "pending", "Pending"
-    SENDING = "sending", "Sending"
-    DELIVERED = "delivered", "Delivered"
-    FAILED = "failed", "Failed"
-    SKIPPED = "skipped", "Skipped"
-    RATE_LIMITED = "rate_limited", "Rate limited"
+    PENDING = "pending", _("Pending")
+    SENDING = "sending", _("Sending")
+    DELIVERED = "delivered", _("Delivered")
+    FAILED = "failed", _("Failed")
+    SKIPPED = "skipped", _("Skipped")
+    RATE_LIMITED = "rate_limited", _("Rate limited")
 
 
 # --- provider configuration (subsumes recommendations.NotificationChannel) ----
@@ -272,6 +273,15 @@ class Alert(TimeStampedModel):
         AlertTemplate, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
     )
     custom_message = models.BooleanField(default=False)
+
+    # Localisation re-render inputs (D14.2). Persisted so the dispatcher (and the in-app
+    # viewer) can re-render title/body per recipient locale from the SAME inputs emit used,
+    # instead of fanning the single frozen Alert.body. Empty template_key + empty context =
+    # nothing to re-render -> fall back to the frozen Alert.body (custom free-text, or a
+    # call site not yet migrated off body=f"..."). NEVER holds a secret/token/URL-with-token:
+    # it carries exactly the interpolation values the audit-safe Alert.body already reflects.
+    template_key = models.CharField(max_length=60, blank=True, default="")
+    context = models.JSONField(default=dict, blank=True)
     automation_rule = models.ForeignKey(
         "AutomationRule", on_delete=models.SET_NULL, null=True, blank=True, related_name="alerts"
     )
@@ -329,6 +339,12 @@ class AlertDelivery(TimeStampedModel):
     recipients_ok = models.IntegerField(default=0)
     recipients_failed = models.IntegerField(default=0)
 
+    # The locale a NON-per-user leg (broadcast/group channel, DM-channel row, static SMTP)
+    # was rendered in — normally i18n.config.broadcast_locale. For per-user kinds the row
+    # aggregates multiple language buckets, so per-pilot locale lives on AlertRecipient and
+    # this stays "" for those rows. Debug-only; low-cardinality; never a hot-path filter.
+    language = models.CharField(max_length=16, blank=True, default="")
+
     class Meta:
         ordering = ["kind"]
         constraints = [
@@ -355,6 +371,11 @@ class AlertRecipient(TimeStampedModel):
         max_length=12, choices=DeliveryStatus.choices, default=DeliveryStatus.PENDING
     )
     error = models.CharField(max_length=200, blank=True, default="")
+
+    # The locale this recipient's per-user leg (in-app row / EVE-mail) was rendered in.
+    # Debug-only; low-cardinality; never a query filter on a hot path. Empty = pre-i18n row
+    # or a locale that resolved to the default. max_length matches identity.User.language.
+    language = models.CharField(max_length=16, blank=True, default="")
 
     class Meta:
         ordering = ["kind"]
@@ -448,29 +469,29 @@ class PilotChannelPreference(TimeStampedModel):
 
 # --- calendar ----------------------------------------------------------------
 class CalendarEventType(models.TextChoices):
-    SCHEDULED_ALERT = "scheduled_alert", "Scheduled alert"
-    FLEET_OP = "fleet_op", "Fleet operation"
-    EMERGENCY_FLEET = "emergency_fleet", "Emergency fleet"
-    MINING = "mining", "Mining operation"
-    MOON_EXTRACTION = "moon_extraction", "Moon extraction"
-    INDUSTRY_JOB = "industry_job", "Industry job"
-    STRUCTURE_TIMER = "structure_timer", "Structure timer"
-    LOGISTICS = "logistics", "Logistics event"
-    BUYBACK = "buyback", "Buyback event"
-    MENTORSHIP = "mentorship", "Mentorship event"
-    ANNOUNCEMENT = "announcement", "Corporation announcement"
-    CUSTOM = "custom", "Custom timer"
+    SCHEDULED_ALERT = "scheduled_alert", _("Scheduled alert")
+    FLEET_OP = "fleet_op", _("Fleet operation")
+    EMERGENCY_FLEET = "emergency_fleet", _("Emergency fleet")
+    MINING = "mining", _("Mining operation")
+    MOON_EXTRACTION = "moon_extraction", _("Moon extraction")
+    INDUSTRY_JOB = "industry_job", _("Industry job")
+    STRUCTURE_TIMER = "structure_timer", _("Structure timer")
+    LOGISTICS = "logistics", _("Logistics event")
+    BUYBACK = "buyback", _("Buyback event")
+    MENTORSHIP = "mentorship", _("Mentorship event")
+    ANNOUNCEMENT = "announcement", _("Corporation announcement")
+    CUSTOM = "custom", _("Custom timer")
 
 
 class CalendarEventStatus(models.TextChoices):
-    DRAFT = "draft", "Draft"
-    SCHEDULED = "scheduled", "Scheduled"
-    ACTIVE = "active", "Active"
-    COMPLETED = "completed", "Completed"
-    CANCELLED = "cancelled", "Cancelled"
-    FAILED = "failed", "Failed"
-    SYNCED = "synced", "Synced"
-    SYNC_CONFLICT = "sync_conflict", "Sync conflict"
+    DRAFT = "draft", _("Draft")
+    SCHEDULED = "scheduled", _("Scheduled")
+    ACTIVE = "active", _("Active")
+    COMPLETED = "completed", _("Completed")
+    CANCELLED = "cancelled", _("Cancelled")
+    FAILED = "failed", _("Failed")
+    SYNCED = "synced", _("Synced")
+    SYNC_CONFLICT = "sync_conflict", _("Sync conflict")
 
 
 # Calendar statuses that are open (a reminder may still fire).
