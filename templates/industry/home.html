@@ -1,38 +1,39 @@
 {% extends "base.html" %}
 {% load eve %}
-{% block title %}Industry Center · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Industry Center" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 
 <header class="mb-6">
-  <p class="eyebrow">Industry &amp; Economy</p>
-  <h1 class="mt-1 text-3xl font-bold text-ink">Industry Center</h1>
-  <p class="mt-1 max-w-2xl text-sm text-faint">Plan what to build, work out the profit, invent T2, and track your jobs — all in one place. New to industry? Start with the guide.</p>
+  <p class="eyebrow">{% translate "Industry &amp; Economy" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Industry Center" %}</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Plan what to build, work out the profit, invent T2, and track your jobs — all in one place. New to industry? Start with the guide." %}</p>
 </header>
 
 <!-- Pulse -->
 <section class="mb-6 grid gap-3 sm:grid-cols-3">
-  <div class="panel p-4"><p class="eyebrow text-faint">Active plans</p><p class="data mt-1 text-2xl font-bold text-cyan">{{ active_plans }}</p></div>
-  <div class="panel p-4"><p class="eyebrow text-faint">Corp jobs running</p><p class="data mt-1 text-2xl font-bold text-gold">{{ corp_jobs }}</p></div>
-  <div class="panel p-4"><p class="eyebrow text-faint">My jobs running</p><p class="data mt-1 text-2xl font-bold text-ink">{{ my_jobs }}</p></div>
+  <div class="panel p-4"><p class="eyebrow text-faint">{% translate "Active plans" %}</p><p class="data mt-1 text-2xl font-bold text-cyan">{{ active_plans }}</p></div>
+  <div class="panel p-4"><p class="eyebrow text-faint">{% translate "Corp jobs running" %}</p><p class="data mt-1 text-2xl font-bold text-gold">{{ corp_jobs }}</p></div>
+  <div class="panel p-4"><p class="eyebrow text-faint">{% translate "My jobs running" %}</p><p class="data mt-1 text-2xl font-bold text-ink">{{ my_jobs }}</p></div>
 </section>
 
 <!-- Tools -->
 <section class="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-  {% include "industry/_toolcard.html" with url='industry:guide' icon='i-rookie' title='Industry guide' desc='How blueprints, ME/TE, invention, job cost and profit actually work — in plain English.' %}
-  {% include "industry/_toolcard.html" with url='industry:calculator' icon='i-cube' title='Manufacturing calculator' desc='Materials, job cost, and net profit for building any item.' %}
-  {% include "industry/_toolcard.html" with url='industry:invention' icon='i-bolt' title='T2 invention planner' desc='Probability, expected attempts, cost per BPC, and invent-vs-buy.' %}
-  {% include "industry/_toolcard.html" with url='industry:chain' icon='i-route' title='Production chain' desc='The full dependency tree, with build-or-buy at every step.' %}
-  {% include "industry/_toolcard.html" with url='industry:blueprints' icon='i-grid' title='Blueprint browser' desc='Owned blueprints and what each recipe needs.' %}
-  {% include "industry/_toolcard.html" with url='industry:jobs' icon='i-target' title='Job tracker' desc='Your imported ESI jobs and the corp production board.' %}
-  {% include "industry/_toolcard.html" with url='industry:demand' icon='i-shield' title='Corp demand' desc='What the fleet is short on — turn a shortfall into a plan.' %}
+  {% translate "Industry guide" as tc_guide_title %}{% translate "How blueprints, ME/TE, invention, job cost and profit actually work — in plain English." as tc_guide_desc %}{% include "industry/_toolcard.html" with url='industry:guide' icon='i-rookie' title=tc_guide_title desc=tc_guide_desc %}
+  {% translate "Manufacturing calculator" as tc_calc_title %}{% translate "Materials, job cost, and net profit for building any item." as tc_calc_desc %}{% include "industry/_toolcard.html" with url='industry:calculator' icon='i-cube' title=tc_calc_title desc=tc_calc_desc %}
+  {% translate "T2 invention planner" as tc_inv_title %}{% translate "Probability, expected attempts, cost per BPC, and invent-vs-buy." as tc_inv_desc %}{% include "industry/_toolcard.html" with url='industry:invention' icon='i-bolt' title=tc_inv_title desc=tc_inv_desc %}
+  {% translate "Production chain" as tc_chain_title %}{% translate "The full dependency tree, with build-or-buy at every step." as tc_chain_desc %}{% include "industry/_toolcard.html" with url='industry:chain' icon='i-route' title=tc_chain_title desc=tc_chain_desc %}
+  {% translate "Blueprint browser" as tc_bp_title %}{% translate "Owned blueprints and what each recipe needs." as tc_bp_desc %}{% include "industry/_toolcard.html" with url='industry:blueprints' icon='i-grid' title=tc_bp_title desc=tc_bp_desc %}
+  {% translate "Job tracker" as tc_jobs_title %}{% translate "Your imported ESI jobs and the corp production board." as tc_jobs_desc %}{% include "industry/_toolcard.html" with url='industry:jobs' icon='i-target' title=tc_jobs_title desc=tc_jobs_desc %}
+  {% translate "Corp demand" as tc_demand_title %}{% translate "What the fleet is short on — turn a shortfall into a plan." as tc_demand_desc %}{% include "industry/_toolcard.html" with url='industry:demand' icon='i-shield' title=tc_demand_title desc=tc_demand_desc %}
 </section>
 
 <!-- My plans -->
 <section class="panel overflow-hidden">
   <div class="flex flex-wrap items-center gap-2 border-b border-line px-4 py-3">
-    <h2 class="font-display text-sm font-semibold text-ink">My production plans</h2>
-    <a href="{% url 'industry:create' %}" class="ml-auto btn-gold !py-1 !text-xs"><svg class="h-3.5 w-3.5"><use href="#i-ship"/></svg> New plan</a>
-    <a href="{% url 'industry:board' %}" class="btn-ghost !py-1 !text-xs">All plans</a>
+    <h2 class="font-display text-sm font-semibold text-ink">{% translate "My production plans" %}</h2>
+    <a href="{% url 'industry:create' %}" class="ml-auto btn-gold !py-1 !text-xs"><svg class="h-3.5 w-3.5"><use href="#i-ship"/></svg> {% translate "New plan" %}</a>
+    <a href="{% url 'industry:board' %}" class="btn-ghost !py-1 !text-xs">{% translate "All plans" %}</a>
   </div>
   {% if mine %}
   <ul class="divide-y divide-line/40">
@@ -40,14 +41,14 @@
     <li class="flex items-center gap-3 px-4 py-2.5 text-sm">
       <span class="chip">{{ p.get_status_display }}</span>
       <a href="{% url 'industry:detail' p.pk %}" class="min-w-0 flex-1 truncate font-medium text-ink hover:text-gold">{{ p.name }}</a>
-      {% if p.estimated_value %}<span class="data hidden text-xs text-faint sm:block">{{ p.estimated_value|isk }} ISK value</span>{% endif %}
+      {% if p.estimated_value %}<span class="data hidden text-xs text-faint sm:block">{{ p.estimated_value|isk }} {% translate "ISK value" %}</span>{% endif %}
     </li>
     {% endfor %}
   </ul>
   {% else %}
   <div class="px-4 py-10 text-center">
-    <p class="text-sm text-muted">You haven't started a plan yet.</p>
-    <p class="mt-1 text-xs text-faint">Use the calculator to check profit, then <a href="{% url 'industry:create' %}" class="text-gold hover:underline">create a plan</a> to track the build.</p>
+    <p class="text-sm text-muted">{% translate "You haven't started a plan yet." %}</p>
+    {% url 'industry:create' as create_url %}<p class="mt-1 text-xs text-faint">{% blocktranslate %}Use the calculator to check profit, then <a href="{{ create_url }}" class="text-gold hover:underline">create a plan</a> to track the build.{% endblocktranslate %}</p>
   </div>
   {% endif %}
 </section>

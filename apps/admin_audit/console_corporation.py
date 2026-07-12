@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
+from django.utils.translation import gettext_lazy as _
 
 from apps.corporation.models import StructureAlertConfig
 from core import rbac
@@ -29,13 +30,13 @@ class StructureAlertConfigForm(forms.ModelForm):
         # Bound server-side too (the widget min/max is client-only): a crafted 0 would
         # make is_low_fuel always false and silently disable the whole fuel alert.
         if not (1 <= v <= 30):
-            raise forms.ValidationError("Low-fuel warning must be between 1 and 30 days.")
+            raise forms.ValidationError(_("Low-fuel warning must be between 1 and 30 days."))
         return v
 
     def clean_adm_alert_floor(self):
         v = self.cleaned_data["adm_alert_floor"]
         if not (1.0 <= v <= 6.0):
-            raise forms.ValidationError("ADM floor must be between 1.0 and 6.0.")
+            raise forms.ValidationError(_("ADM floor must be between 1.0 and 6.0."))
         return v
 
 
@@ -53,9 +54,9 @@ def structure_alert_settings(request: HttpRequest) -> HttpResponse:
                 target_type="structure_alert_config", target_id=str(config.pk),
                 ip=client_ip(request),
             )
-            messages.success(request, "Structure-alert thresholds saved.")
+            messages.success(request, _("Structure-alert thresholds saved."))
             return redirect("admin_audit:structure_alert_settings")
-        messages.error(request, "Please correct the errors below.")
+        messages.error(request, _("Please correct the errors below."))
     else:
         form = StructureAlertConfigForm(instance=config)
     return render(request, "admin_audit/console/structure_alerts.html",

@@ -1,5 +1,5 @@
 {# Milestone row (doc 10 §5.7). Pass vm (a _milestone_vm dict) and is_owner. #}
-{% load eve %}
+{% load eve i18n %}
 <div class="border-b border-line/40 px-4 py-3 last:border-b-0">
   <div class="flex flex-wrap items-start justify-between gap-2">
     <div class="min-w-0">
@@ -10,15 +10,15 @@
         <span class="min-w-0 {% if vm.milestone.status == 'skipped' %}text-faint{% else %}text-ink{% endif %}">{{ vm.milestone.title }}</span>
       </p>
       <div class="mt-1 flex flex-wrap items-center gap-1.5 pl-6">
-        {% if vm.milestone.required %}<span class="chip text-muted border-line">required</span>{% else %}<span class="chip text-faint border-line">optional</span>{% endif %}
-        {% if vm.milestone.status == 'skipped' %}<span class="chip text-faint border-line">Skipped — your call</span>{% endif %}
+        {% if vm.milestone.required %}<span class="chip text-muted border-line">{% translate "required" %}</span>{% else %}<span class="chip text-faint border-line">{% translate "optional" %}</span>{% endif %}
+        {% if vm.milestone.status == 'skipped' %}<span class="chip text-faint border-line">{% translate "Skipped — your call" %}</span>{% endif %}
         {% if vm.milestone.status == 'pending' %}
-          {% if vm.milestone.check_state == 'unknown' %}<span class="chip text-muted border-line">unknown — no data</span>
-          {% elif vm.milestone.check_state == 'stale' %}<span class="chip !text-gold !border-gold/40">stale · checked {{ vm.milestone.last_checked_at|timesince }} ago</span>{% endif %}
+          {% if vm.milestone.check_state == 'unknown' %}<span class="chip text-muted border-line">{% translate "unknown — no data" %}</span>
+          {% elif vm.milestone.check_state == 'stale' %}<span class="chip !text-gold !border-gold/40">{% blocktranslate with ago=vm.milestone.last_checked_at|timesince %}stale · checked {{ ago }} ago{% endblocktranslate %}</span>{% endif %}
         {% endif %}
-        {% if vm.awaiting_endorsement %}<span class="chip !text-cyan !border-cyan/40">awaiting endorsement</span>{% elif vm.endorsed %}<span class="chip !text-cyan !border-cyan/40">endorsed</span>{% endif %}
+        {% if vm.awaiting_endorsement %}<span class="chip !text-cyan !border-cyan/40">{% translate "awaiting endorsement" %}</span>{% elif vm.endorsed %}<span class="chip !text-cyan !border-cyan/40">{% translate "endorsed" %}</span>{% endif %}
         {% if vm.milestone.status == 'done' %}
-          <span class="text-[11px] text-faint">{% if vm.milestone.verification == 'auto' %}auto-verified{% elif vm.milestone.verification == 'self' %}self-checked{% elif vm.milestone.verification == 'mentor' %}confirmed by mentor{% else %}confirmed by officer{% endif %}</span>
+          <span class="text-[11px] text-faint">{% if vm.milestone.verification == 'auto' %}{% translate "auto-verified" %}{% elif vm.milestone.verification == 'self' %}{% translate "self-checked" %}{% elif vm.milestone.verification == 'mentor' %}{% translate "confirmed by mentor" %}{% else %}{% translate "confirmed by officer" %}{% endif %}</span>
         {% endif %}
       </div>
       {% if vm.milestone.status == 'done' and vm.evidence_summary %}<p class="pl-6 text-[11px] text-faint">{{ vm.evidence_summary }}</p>{% endif %}
@@ -27,19 +27,19 @@
     {% if is_owner %}
     <div class="flex shrink-0 flex-wrap items-center gap-1.5">
       {% if vm.milestone.status == 'pending' and vm.milestone.verification != 'auto' %}
-        <form method="post" action="{% url 'capsuleer:milestone_status' vm.milestone.pk %}" class="inline">{% csrf_token %}<input type="hidden" name="action" value="done"><button class="btn-ghost !py-1 text-xs">Mark done</button></form>
+        <form method="post" action="{% url 'capsuleer:milestone_status' vm.milestone.pk %}" class="inline">{% csrf_token %}<input type="hidden" name="action" value="done"><button class="btn-ghost !py-1 text-xs">{% translate "Mark done" %}</button></form>
       {% endif %}
       {% if vm.milestone.status == 'pending' %}
-        <form method="post" action="{% url 'capsuleer:milestone_status' vm.milestone.pk %}" class="inline">{% csrf_token %}<input type="hidden" name="action" value="skip"><button class="btn-ghost !py-1 text-xs text-faint">Skip</button></form>
+        <form method="post" action="{% url 'capsuleer:milestone_status' vm.milestone.pk %}" class="inline">{% csrf_token %}<input type="hidden" name="action" value="skip"><button class="btn-ghost !py-1 text-xs text-faint">{% translate "Skip" %}</button></form>
       {% elif vm.milestone.status == 'skipped' %}
-        <form method="post" action="{% url 'capsuleer:milestone_status' vm.milestone.pk %}" class="inline">{% csrf_token %}<input type="hidden" name="action" value="unskip"><button class="btn-ghost !py-1 text-xs">Un-skip</button></form>
+        <form method="post" action="{% url 'capsuleer:milestone_status' vm.milestone.pk %}" class="inline">{% csrf_token %}<input type="hidden" name="action" value="unskip"><button class="btn-ghost !py-1 text-xs">{% translate "Un-skip" %}</button></form>
       {% elif vm.milestone.status == 'done' and vm.milestone.verification != 'auto' %}
-        <form method="post" action="{% url 'capsuleer:milestone_status' vm.milestone.pk %}" class="inline">{% csrf_token %}<input type="hidden" name="action" value="reopen"><button class="btn-ghost !py-1 text-xs text-faint">Reopen</button></form>
+        <form method="post" action="{% url 'capsuleer:milestone_status' vm.milestone.pk %}" class="inline">{% csrf_token %}<input type="hidden" name="action" value="reopen"><button class="btn-ghost !py-1 text-xs text-faint">{% translate "Reopen" %}</button></form>
       {% endif %}
     </div>
     {% elif vm.awaiting_endorsement %}
       {% if can_mentor_note and vm.milestone.verification == 'mentor' or can_endorse_officer and vm.milestone.verification == 'officer' %}
-      <form method="post" action="{% url 'capsuleer:goal_endorse' goal.pk %}" class="inline">{% csrf_token %}<input type="hidden" name="milestone_id" value="{{ vm.milestone.pk }}"><button class="btn-ghost !py-1 text-xs">Endorse milestone</button></form>
+      <form method="post" action="{% url 'capsuleer:goal_endorse' goal.pk %}" class="inline">{% csrf_token %}<input type="hidden" name="milestone_id" value="{{ vm.milestone.pk }}"><button class="btn-ghost !py-1 text-xs">{% translate "Endorse milestone" %}</button></form>
       {% endif %}
     {% endif %}
   </div>

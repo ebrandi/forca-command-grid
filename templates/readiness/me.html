@@ -1,28 +1,28 @@
 {% extends "base.html" %}
-{% load eve %}
-{% block title %}My Readiness · [FORCA] Command Grid{% endblock %}
+{% load eve i18n %}
+{% block title %}{% translate "My Readiness" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 
 {% if no_character %}
-  <header class="mb-6"><p class="eyebrow">My readiness</p><h1 class="mt-1 text-3xl font-bold text-ink">Your next moves</h1></header>
+  <header class="mb-6"><p class="eyebrow">{% translate "My readiness" %}</p><h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Your next moves" %}</h1></header>
   <div class="panel p-8 text-center">
-    <p class="text-muted">Link an EVE character to see your personal readiness and quest log.</p>
-    <a href="{% url 'sso:login' %}" class="btn-gold mt-4">Link a character with EVE</a>
+    <p class="text-muted">{% translate "Link an EVE character to see your personal readiness and quest log." %}</p>
+    <a href="{% url 'sso:login' %}" class="btn-gold mt-4">{% translate "Link a character with EVE" %}</a>
   </div>
 {% else %}
 
 {% if viewing_other %}
 <header class="mb-6">
-  <a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
-  <p class="mt-2 eyebrow text-cyan">Pilot readiness · officer view</p>
-  <h1 class="mt-1 text-3xl font-bold text-ink">{{ character.name }}'s readiness</h1>
-  <p class="mt-1 text-sm text-faint">A read-only view of this pilot's facets and quest log, for coaching. Only the pilot can action their own quests.</p>
+  <a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← {% translate "Admin console" %}</a>
+  <p class="mt-2 eyebrow text-cyan">{% translate "Pilot readiness · officer view" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% blocktranslate with name=character.name %}{{ name }}'s readiness{% endblocktranslate %}</h1>
+  <p class="mt-1 text-sm text-faint">{% translate "A read-only view of this pilot's facets and quest log, for coaching. Only the pilot can action their own quests." %}</p>
 </header>
 {% else %}
 <header class="mb-6">
-  <p class="eyebrow text-gold">My readiness</p>
-  <h1 class="mt-1 text-3xl font-bold text-ink">Your next moves, {{ character.name }}.</h1>
-  <p class="mt-1 text-sm text-faint">Do the top card. Each one makes you — and the corp — more ready.</p>
+  <p class="eyebrow text-gold">{% translate "My readiness" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% blocktranslate with name=character.name %}Your next moves, {{ name }}.{% endblocktranslate %}</h1>
+  <p class="mt-1 text-sm text-faint">{% translate "Do the top card. Each one makes you — and the corp — more ready." %}</p>
 </header>
 {% endif %}
 
@@ -31,18 +31,18 @@
   <!-- Overall score -->
   <section class="panel flex flex-col items-center justify-center p-6 text-center">
     <p class="font-display text-6xl font-bold {% if overall >= 75 %}text-kill{% elif overall >= 50 %}text-gold{% else %}text-loss{% endif %}">{{ overall }}</p>
-    <p class="mt-1 text-[11px] uppercase tracking-wide text-faint">my readiness</p>
-    <p class="mt-1 text-xs {% if overall >= 75 %}text-kill{% elif overall >= 50 %}text-gold{% else %}text-loss{% endif %}">{% if overall >= 75 %}▲ Ready{% elif overall >= 50 %}◆ On track{% else %}▼ Needs work{% endif %}</p>
+    <p class="mt-1 text-[11px] uppercase tracking-wide text-faint">{% translate "my readiness" %}</p>
+    <p class="mt-1 text-xs {% if overall >= 75 %}text-kill{% elif overall >= 50 %}text-gold{% else %}text-loss{% endif %}">{% if overall >= 75 %}▲ {% translate "Ready" %}{% elif overall >= 50 %}◆ {% translate "On track" %}{% else %}▼ {% translate "Needs work" %}{% endif %}</p>
   </section>
   <!-- Six facets -->
   <section class="panel overflow-hidden">
-    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">Six facets</h2></div>
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">{% translate "Six facets" %}</h2></div>
     <div class="divide-y divide-line/40">
       {% for f in facets %}
       <div class="px-4 py-2.5">
         <div class="flex items-center justify-between text-sm">
-          <span class="capitalize {% if f.key == lowest %}text-gold{% else %}text-muted{% endif %}">{{ f.key }}{% if f.key == lowest %} <span class="text-[10px] uppercase tracking-wide">· focus here</span>{% endif %}</span>
-          {% if f.score is None %}<span class="text-xs text-faint">no data</span>{% else %}<span class="data text-sm {% if f.score >= 75 %}text-kill{% elif f.score >= 50 %}text-gold{% else %}text-loss{% endif %}">{{ f.score }}</span>{% endif %}
+          <span class="capitalize {% if f.key == lowest %}text-gold{% else %}text-muted{% endif %}">{{ f.key }}{% if f.key == lowest %} <span class="text-[10px] uppercase tracking-wide">· {% translate "focus here" %}</span>{% endif %}</span>
+          {% if f.score is None %}<span class="text-xs text-faint">{% translate "no data" %}</span>{% else %}<span class="data text-sm {% if f.score >= 75 %}text-kill{% elif f.score >= 50 %}text-gold{% else %}text-loss{% endif %}">{{ f.score }}</span>{% endif %}
         </div>
         {% if f.score is not None %}
         <div class="mt-1 h-1.5 overflow-hidden rounded-full bg-space">
@@ -58,11 +58,11 @@
 <!-- Quest log -->
 <section class="panel mb-6 overflow-hidden">
   <div class="flex items-center justify-between border-b border-line px-4 py-3">
-    <h2 class="eyebrow text-gold">Your quest log</h2>
-    <span class="text-[11px] text-faint">ranked for impact</span>
+    <h2 class="eyebrow text-gold">{% translate "Your quest log" %}</h2>
+    <span class="text-[11px] text-faint">{% translate "ranked for impact" %}</span>
   </div>
   {% if not recommendations %}
-    <p class="px-4 py-10 text-center text-sm text-faint">Nothing queued right now — you're current on the corp's doctrines. Check back after the next sync, or join an op to stay sharp.</p>
+    <p class="px-4 py-10 text-center text-sm text-faint">{% translate "Nothing queued right now — you're current on the corp's doctrines. Check back after the next sync, or join an op to stay sharp." %}</p>
   {% else %}
   <div class="divide-y divide-line/40">
     {% for r in recommendations %}
@@ -74,7 +74,7 @@
           <span class="mt-1 block font-medium text-ink">{{ r.title }}</span>
         </span>
         <span class="flex shrink-0 items-center gap-2">
-          <span class="chip text-gold">+{{ r.points }} pts</span>
+          <span class="chip text-gold">{% blocktranslate with points=r.points %}+{{ points }} pts{% endblocktranslate %}</span>
           <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" class="h-3 w-3 text-faint transition-transform" :class="open && 'rotate-90'"><path d="M4 2.5l4 3.5-4 3.5"/></svg>
         </span>
       </button>
@@ -83,9 +83,9 @@
         <div class="mt-2 flex flex-wrap items-center gap-2">
           {% if r.action_url %}<a href="{{ r.action_url }}" class="btn-gold !py-1 text-sm">{{ r.get_category_display }} →</a>{% endif %}
           {% if not viewing_other %}
-          <form method="post" action="{% url 'readiness:reco_action' r.id %}" class="inline">{% csrf_token %}<input type="hidden" name="action" value="done"><button class="btn-ghost !py-1 text-xs">Mark done</button></form>
-          <form method="post" action="{% url 'readiness:reco_action' r.id %}" class="inline">{% csrf_token %}<input type="hidden" name="action" value="snooze"><button class="btn-ghost !py-1 text-xs">Snooze 7d</button></form>
-          <form method="post" action="{% url 'readiness:reco_action' r.id %}" class="inline">{% csrf_token %}<input type="hidden" name="action" value="dismiss"><button class="btn-ghost !py-1 text-xs text-faint">Not for me</button></form>
+          <form method="post" action="{% url 'readiness:reco_action' r.id %}" class="inline">{% csrf_token %}<input type="hidden" name="action" value="done"><button class="btn-ghost !py-1 text-xs">{% translate "Mark done" %}</button></form>
+          <form method="post" action="{% url 'readiness:reco_action' r.id %}" class="inline">{% csrf_token %}<input type="hidden" name="action" value="snooze"><button class="btn-ghost !py-1 text-xs">{% translate "Snooze 7d" %}</button></form>
+          <form method="post" action="{% url 'readiness:reco_action' r.id %}" class="inline">{% csrf_token %}<input type="hidden" name="action" value="dismiss"><button class="btn-ghost !py-1 text-xs text-faint">{% translate "Not for me" %}</button></form>
           {% endif %}
         </div>
       </div>
@@ -98,14 +98,14 @@
 <!-- How I affect the corp -->
 {% if not viewing_other %}
 <section class="panel border-l-2 border-cyan/50 px-4 py-3">
-  <p class="eyebrow text-cyan">How I affect the corp</p>
+  <p class="eyebrow text-cyan">{% translate "How I affect the corp" %}</p>
   <p class="mt-1 text-sm text-muted">
-    {% if lowest %}Your lowest facet is <span class="capitalize text-gold">{{ lowest }}</span> — clearing your top quest lifts it, and the corp's readiness with it. {% endif %}
-    {% if contributions %}Last 30 days you contributed:
+    {% if lowest %}{% blocktranslate with lowest=lowest %}Your lowest facet is <span class="capitalize text-gold">{{ lowest }}</span> — clearing your top quest lifts it, and the corp's readiness with it.{% endblocktranslate %} {% endif %}
+    {% if contributions %}{% translate "Last 30 days you contributed:" %}
       {% for kind, n in contributions.items %}{{ n }} {{ kind }}{% if not forloop.last %} · {% endif %}{% endfor %}.
-    {% else %}Log a contribution this month — fly a fleet, haul, or build — to lift your contribution facet.{% endif %}
+    {% else %}{% translate "Log a contribution this month — fly a fleet, haul, or build — to lift your contribution facet." %}{% endif %}
   </p>
-  {% if features.contributions %}<a href="{% url 'pilots:contributions' %}" class="mt-1 inline-block text-xs text-cyan hover:underline">My contribution →</a>{% endif %}
+  {% if features.contributions %}<a href="{% url 'pilots:contributions' %}" class="mt-1 inline-block text-xs text-cyan hover:underline">{% translate "My contribution" %} →</a>{% endif %}
 </section>
 {% endif %}
 {% endif %}

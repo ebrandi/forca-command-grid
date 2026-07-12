@@ -1,16 +1,17 @@
 {% extends "base.html" %}
-{% block title %}Command · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Command" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <header class="mb-6">
-  <p class="eyebrow">Action queue</p>
-  <h1 class="mt-1 text-3xl font-bold text-ink">Officer command dashboard</h1>
-  <p class="mt-2 text-sm text-muted">Prioritised actions from across the command grid — each shows its inputs, confidence, and freshness.</p>
+  <p class="eyebrow">{% translate "Action queue" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Officer command dashboard" %}</h1>
+  <p class="mt-2 text-sm text-muted">{% translate "Prioritised actions from across the command grid — each shows its inputs, confidence, and freshness." %}</p>
 </header>
 <div class="space-y-3">
   {% for rec in recs %}
     {% include "recommendations/_rec_card.html" %}
   {% empty %}
-    <div class="panel p-8 text-center text-sm text-faint">No open recommendations. The engine runs on a schedule; run it now with the <span class="data">recommendations.run</span> task.</div>
+    <div class="panel p-8 text-center text-sm text-faint">{% blocktranslate %}No open recommendations. The engine runs on a schedule; run it now with the <span class="data">recommendations.run</span> task.{% endblocktranslate %}</div>
   {% endfor %}
 </div>
 {% endblock %}

@@ -6,6 +6,7 @@ from datetime import timedelta
 
 from django import forms
 from django.utils import timezone
+from django.utils.translation import gettext, gettext_lazy as _
 
 from . import metrics
 from .models import (
@@ -42,7 +43,7 @@ class _JSONField(forms.CharField):
         try:
             return json.loads(value)
         except json.JSONDecodeError as e:
-            raise forms.ValidationError(f"Invalid JSON: {e}") from e
+            raise forms.ValidationError(gettext("Invalid JSON: %(error)s") % {"error": e}) from e
 
 
 class RaffleContestForm(forms.ModelForm):
@@ -114,26 +115,26 @@ class RaffleContestForm(forms.ModelForm):
         # start was already fixed isn't blocked); a 1-minute grace absorbs the pick /
         # submit lag so "start now" still works.
         if start and "start_at" in self.changed_data and start < timezone.now() - timedelta(minutes=1):
-            self.add_error("start_at", "The start date can't be in the past.")
+            self.add_error("start_at", _("The start date can't be in the past."))
         if start and end and end <= start:
-            self.add_error("end_at", "End must be after the start.")
+            self.add_error("end_at", _("End must be after the start."))
         if end and draw and draw < end:
-            self.add_error("draw_at", "The draw can't be before accrual ends.")
+            self.add_error("draw_at", _("The draw can't be before accrual ends."))
         bs, be = cleaned.get("booster_start_at"), cleaned.get("booster_end_at")
         if bool(bs) ^ bool(be):
-            self.add_error("booster_end_at", "Set both booster start and end, or neither.")
+            self.add_error("booster_end_at", _("Set both booster start and end, or neither."))
         if bs and be and be <= bs:
-            self.add_error("booster_end_at", "Booster end must be after its start.")
+            self.add_error("booster_end_at", _("Booster end must be after its start."))
         # A minimum-activity metric needs a positive threshold to mean anything.
         if cleaned.get("min_activity_metric") and (cleaned.get("min_activity_threshold") or 0) <= 0:
             self.add_error("min_activity_threshold",
-                           "Set a positive threshold (or clear the metric).")
+                           _("Set a positive threshold (or clear the metric)."))
         # A prize-value booster needs both a positive goal and a positive percent.
         if cleaned.get("prize_booster_metric"):
             if (cleaned.get("prize_booster_goal") or 0) <= 0:
-                self.add_error("prize_booster_goal", "Set a positive goal (or clear the metric).")
+                self.add_error("prize_booster_goal", _("Set a positive goal (or clear the metric)."))
             if (cleaned.get("prize_booster_percent") or 0) <= 0:
-                self.add_error("prize_booster_percent", "Set a positive boost percent.")
+                self.add_error("prize_booster_percent", _("Set a positive boost percent."))
         return cleaned
 
 
@@ -156,8 +157,8 @@ class RafflePrizeForm(forms.ModelForm):
 
 
 class RaffleSourceConfigForm(forms.ModelForm):
-    config = _JSONField(required=False, help_text="Source rate/rules as JSON.")
-    filters = _JSONField(required=False, help_text="Eligibility filters as JSON.")
+    config = _JSONField(required=False, help_text=_("Source rate/rules as JSON."))
+    filters = _JSONField(required=False, help_text=_("Eligibility filters as JSON."))
 
     class Meta:
         model = RaffleTicketSourceConfig
@@ -180,17 +181,17 @@ class RaffleSourceConfigForm(forms.ModelForm):
 
 class RaffleManualGrantForm(forms.Form):
     character_id = forms.IntegerField(
-        widget=forms.NumberInput(attrs={**_INPUT, "placeholder": "EVE character id"}),
-        help_text="The pilot's EVE character id (their main).",
+        widget=forms.NumberInput(attrs={**_INPUT, "placeholder": _("EVE character id")}),
+        help_text=_("The pilot's EVE character id (their main)."),
     )
     amount = forms.IntegerField(min_value=1, widget=forms.NumberInput(attrs={**_INPUT, "min": "1"}))
     reason = forms.CharField(widget=forms.TextInput(attrs=_INPUT))
     category = forms.CharField(required=False, widget=forms.TextInput(
-        attrs={**_INPUT, "placeholder": "e.g. Fleet command, Logistics, Newbro help"}))
+        attrs={**_INPUT, "placeholder": _("e.g. Fleet command, Logistics, Newbro help")}))
     internal_notes = forms.CharField(required=False, widget=forms.Textarea(attrs={**_INPUT, "rows": "2"}))
     override = forms.BooleanField(
         required=False, widget=forms.CheckboxInput(attrs=_CHECK),
-        help_text="Emergency override (Director only, must be enabled in config).",
+        help_text=_("Emergency override (Director only, must be enabled in config)."),
     )
 
 

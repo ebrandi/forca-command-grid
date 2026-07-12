@@ -12,6 +12,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from decimal import ROUND_HALF_UP, Decimal
 
+from django.utils.translation import gettext as _
+
 from apps.market.pricing import price_maps
 from apps.sde.models import SdeType
 
@@ -96,7 +98,7 @@ def price_doctrine_fit(fit, markup: Decimal) -> Priced:
     markup = Decimal(markup)
     req = _fit_required_quantities(fit)
     if not req:
-        return Priced(False, error="That fit has no hull or modules to price.")
+        return Priced(False, error=_("That fit has no hull or modules to price."))
     names = dict(SdeType.objects.filter(type_id__in=list(req)).values_list("type_id", "name"))
     manifest: list[dict] = []
     jita_total = Decimal("0")
@@ -169,9 +171,9 @@ def price_hull(ship_type_id: int, markup: Decimal) -> Priced:
     markup = Decimal(markup)
     sde = SdeType.objects.filter(type_id=ship_type_id).first()
     if not sde:
-        return Priced(False, error="Unknown ship type.")
+        return Priced(False, error=_("Unknown ship type."))
     if not is_ship(ship_type_id):
-        return Priced(False, error="That isn't a ship hull.")
+        return Priced(False, error=_("That isn't a ship hull."))
     unit, as_of = _price_and_asof(ship_type_id)
     jita = _q(unit)
     return Priced(

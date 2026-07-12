@@ -1,21 +1,22 @@
 {% extends "base.html" %}
-{% block title %}Readiness · Officer task queue · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Readiness" %} · {% translate "Officer task queue" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
-<a href="{% url 'readiness:findings' %}" class="text-xs text-faint hover:text-gold">← Risk register</a>
+<a href="{% url 'readiness:findings' %}" class="text-xs text-faint hover:text-gold">← {% translate "Risk register" %}</a>
 <header class="mt-2 mb-6 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <p class="eyebrow text-gold">Readiness</p>
-    <h1 class="mt-1 text-3xl font-bold text-ink">Officer task queue</h1>
-    <p class="mt-1 text-sm text-faint">Readiness-generated tasks grouped by the desk that owns them. Every task here is an ordinary corp task — claim and close it on the <a href="{% url 'tasks:board' %}" class="text-cyan hover:underline">task board</a>.</p>
+    <p class="eyebrow text-gold">{% translate "Readiness" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Officer task queue" %}</h1>
+    <p class="mt-1 text-sm text-faint">{% url 'tasks:board' as board_url %}{% blocktranslate %}Readiness-generated tasks grouped by the desk that owns them. Every task here is an ordinary corp task — claim and close it on the <a href="{{ board_url }}" class="text-cyan hover:underline">task board</a>.{% endblocktranslate %}</p>
   </div>
-  <span class="chip text-faint">{{ active_count }} active</span>
+  <span class="chip text-faint">{% blocktranslate with count=active_count %}{{ count }} active{% endblocktranslate %}</span>
 </header>
 
 
 {% if not active_count %}
   <div class="panel px-4 py-16 text-center">
-    <p class="font-display text-lg text-muted">No readiness tasks yet</p>
-    <p class="mt-1 text-sm text-faint">Create one from the <a href="{% url 'readiness:findings' %}" class="text-cyan hover:underline">risk register</a>, or they appear automatically once alert rules opt in.</p>
+    <p class="font-display text-lg text-muted">{% translate "No readiness tasks yet" %}</p>
+    <p class="mt-1 text-sm text-faint">{% url 'readiness:findings' as findings_url %}{% blocktranslate %}Create one from the <a href="{{ findings_url }}" class="text-cyan hover:underline">risk register</a>, or they appear automatically once alert rules opt in.{% endblocktranslate %}</p>
   </div>
 {% else %}
 <div class="space-y-5">
@@ -30,7 +31,7 @@
 
   {% if unowned %}
   <section class="panel overflow-hidden border-gold/20">
-    <div class="border-b border-line px-4 py-2.5"><h2 class="eyebrow text-gold">Unowned <span class="text-faint">· {{ unowned|length }} · claimable by anyone</span></h2></div>
+    <div class="border-b border-line px-4 py-2.5"><h2 class="eyebrow text-gold">{% blocktranslate with count=unowned|length %}Unowned <span class="text-faint">· {{ count }} · claimable by anyone</span>{% endblocktranslate %}</h2></div>
     <div class="divide-y divide-line/50">
       {% for row in unowned %}{% include "readiness/_task_row.html" with row=row %}{% endfor %}
     </div>
@@ -39,7 +40,7 @@
 
   {% if recently_closed %}
   <section class="panel overflow-hidden">
-    <div class="border-b border-line px-4 py-2.5"><h2 class="eyebrow text-faint">Recently closed</h2></div>
+    <div class="border-b border-line px-4 py-2.5"><h2 class="eyebrow text-faint">{% translate "Recently closed" %}</h2></div>
     <div class="divide-y divide-line/50">
       {% for task in recently_closed %}
       <div class="flex items-center justify-between px-4 py-2 text-sm">

@@ -26,6 +26,8 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _l
 from django.views.decorators.http import require_POST
 
 from core import rbac
@@ -154,7 +156,7 @@ def _campaign_for_view(request, pk: int) -> Campaign:
         Campaign.objects.select_related("commander", "sponsor", "closed_by"), pk=pk
     )
     if not services.can_view(request.user, campaign):
-        raise Http404("No such campaign.")
+        raise Http404(_("No such campaign."))
     return campaign
 
 
@@ -167,7 +169,7 @@ def _objective_for(request, pk: int) -> Objective:
         Objective.objects.select_related("campaign", "workstream", "owner", "verified_by"), pk=pk
     )
     if not services.can_view(request.user, objective.campaign):
-        raise Http404("No such objective.")
+        raise Http404(_("No such objective."))
     return objective
 
 
@@ -487,7 +489,7 @@ def campaign_create(request: HttpRequest) -> HttpResponse:
     from the blueprint and previews its children; POST instantiates the whole structure as one
     draft via :func:`services.instantiate_template`, with the name/dates taken from the form)."""
     if not rbac.has_perm(request.user, rbac.PERM_CAMPAIGN_MANAGE):
-        raise PermissionDenied("You cannot create campaigns.")
+        raise PermissionDenied(_("You cannot create campaigns."))
     budget_allowed = rbac.has_role(request.user, rbac.ROLE_DIRECTOR)
     if request.method == "POST":
         template = _active_template(request.POST.get("template_key"))
@@ -505,7 +507,7 @@ def campaign_create(request: HttpRequest) -> HttpResponse:
                               _campaign_form_ctx(request, Campaign(), template=template))
             _notify_assignment(campaign, "campaign", campaign.pk, campaign.commander, None,
                                request.user, what="command of this campaign")
-            messages.success(request, "Campaign draft created from template — edit anything you like.")
+            messages.success(request, _("Campaign draft created from template — edit anything you like."))
             return redirect("campaigns:detail", pk=campaign.pk)
 
         campaign = _new_campaign(request.user)
@@ -522,7 +524,7 @@ def campaign_create(request: HttpRequest) -> HttpResponse:
         )
         _notify_assignment(campaign, "campaign", campaign.pk, campaign.commander, None,
                            request.user, what="command of this campaign")
-        messages.success(request, "Campaign draft created.")
+        messages.success(request, _("Campaign draft created."))
         return redirect("campaigns:detail", pk=campaign.pk)
 
     template = _active_template(request.GET.get("template"))
@@ -574,7 +576,7 @@ def template_picker(request: HttpRequest) -> HttpResponse:
     """The start-from-template gallery (doc 10 §6.10): active templates as cards, filterable by
     category and search. ``PERM_CAMPAIGN_MANAGE`` — only campaign managers create."""
     if not rbac.has_perm(request.user, rbac.PERM_CAMPAIGN_MANAGE):
-        raise PermissionDenied("You cannot create campaigns.")
+        raise PermissionDenied(_("You cannot create campaigns."))
     f_category = (request.GET.get("category") or "").strip()
     q = (request.GET.get("q") or "").strip()
     qs = CampaignTemplate.objects.filter(active=True)
@@ -600,7 +602,7 @@ def campaign_edit(request: HttpRequest, pk: int) -> HttpResponse:
     """Edit a campaign's definition (``can_manage``); a visibility change is audited (doc 07 T4)."""
     campaign = _campaign_for_view(request, pk)
     if not services.can_manage(request.user, campaign):
-        raise PermissionDenied("You cannot manage this campaign.")
+        raise PermissionDenied(_("You cannot manage this campaign."))
     budget_allowed = services.can_view_budget(request.user, campaign)
     if request.method == "POST":
         old_commander_id = campaign.commander_id
@@ -629,7 +631,7 @@ def campaign_edit(request: HttpRequest, pk: int) -> HttpResponse:
         # A progress-mode or window change must recompute progress/health in the same request, not
         # wait for the hourly sweep (doc 04 line 156, #11); recompute takes the row lock itself.
         services.recompute(campaign)
-        messages.success(request, "Campaign updated.")
+        messages.success(request, _("Campaign updated."))
         return redirect("campaigns:detail", pk=campaign.pk)
     return render(request, "campaigns/form.html", _campaign_form_ctx(request, campaign))
 
@@ -683,13 +685,13 @@ def _campaign_form_ctx(request, campaign, *, template=None) -> dict:
 # close-out (the "Close out…" button → campaigns:close), never a one-click direct transition, so
 # the mandatory permanent record can never be bypassed (doc 04 T7/T8, #2).
 _TRANSITION_META = {
-    Campaign.Status.PROPOSED: ("Propose", "btn-cyan", False),
-    Campaign.Status.APPROVED: ("Approve", "btn-cyan", False),
-    Campaign.Status.ACTIVE: ("Start", "btn-gold", False),
-    Campaign.Status.PAUSED: ("Pause", "btn-ghost", True),
-    Campaign.Status.CANCELLED: ("Cancel", "btn-danger", True),
-    Campaign.Status.DRAFT: ("Send back to draft", "btn-ghost", False),
-    Campaign.Status.ARCHIVED: ("Archive", "btn-ghost", True),
+    Campaign.Status.PROPOSED: (_l("Propose"), "btn-cyan", False),
+    Campaign.Status.APPROVED: (_l("Approve"), "btn-cyan", False),
+    Campaign.Status.ACTIVE: (_l("Start"), "btn-gold", False),
+    Campaign.Status.PAUSED: (_l("Pause"), "btn-ghost", True),
+    Campaign.Status.CANCELLED: (_l("Cancel"), "btn-danger", True),
+    Campaign.Status.DRAFT: (_l("Send back to draft"), "btn-ghost", False),
+    Campaign.Status.ARCHIVED: (_l("Archive"), "btn-ghost", True),
 }
 _REASON_TARGETS = {
     Campaign.Status.DRAFT, Campaign.Status.PAUSED, Campaign.Status.FAILED, Campaign.Status.CANCELLED,
@@ -704,7 +706,7 @@ def _lifecycle_buttons(campaign, user) -> list[dict]:
         if not services.can_transition(campaign, to_status, user):
             continue
         if to_status == Campaign.Status.ACTIVE and campaign.status == Campaign.Status.PAUSED:
-            label = "Resume"
+            label = _("Resume")
         buttons.append({
             "to": to_status,
             "label": label,
@@ -853,11 +855,11 @@ def _recommended_actions(campaign, objectives) -> list[dict]:
         if o.status in terminal:
             continue
         if o.due_at and o.due_at < now:
-            overdue.append({"kind": "overdue", "obj": o, "note": "overdue"})
+            overdue.append({"kind": "overdue", "obj": o, "note": _("overdue")})
         elif o.status == obj_status.BLOCKED:
-            blocked.append({"kind": "blocked", "obj": o, "note": o.block_reason or "blocked"})
+            blocked.append({"kind": "blocked", "obj": o, "note": o.block_reason or _("blocked")})
         elif o.owner_id is None:
-            unowned.append({"kind": "unowned", "obj": o, "note": "no owner assigned"})
+            unowned.append({"kind": "unowned", "obj": o, "note": _("no owner assigned")})
     return (overdue + blocked + unowned)[:8]
 
 
@@ -869,22 +871,25 @@ def campaign_set_status(request: HttpRequest, pk: int) -> HttpResponse:
     campaign = _campaign_for_view(request, pk)
     to_status = (request.POST.get("to") or "").strip()
     if to_status not in Campaign.Status.values:
-        messages.error(request, "Unknown status.")
+        messages.error(request, _("Unknown status."))
         return redirect("campaigns:detail", pk=campaign.pk)
 
     # 403 for a forbidden action on a campaign the user can see (doc 07: 403 ≠ 404).
     if to_status == Campaign.Status.APPROVED:
         if not services.can_approve(request.user):
-            raise PermissionDenied("Approval is director-only.")
+            raise PermissionDenied(_("Approval is director-only."))
     elif not services.can_manage(request.user, campaign):
-        raise PermissionDenied("You cannot manage this campaign.")
+        raise PermissionDenied(_("You cannot manage this campaign."))
 
     try:
         services.set_status(campaign, to_status, request.user, reason=request.POST.get("reason", ""))
     except ValidationError as exc:
         messages.error(request, "; ".join(exc.messages))
     else:
-        messages.success(request, f"Campaign is now {campaign.get_status_display().lower()}.")
+        messages.success(
+            request,
+            _("Campaign is now %(status)s.") % {"status": campaign.get_status_display().lower()},
+        )
     return redirect("campaigns:detail", pk=campaign.pk)
 
 
@@ -898,7 +903,7 @@ def campaign_set_progress(request: HttpRequest, pk: int) -> HttpResponse:
     requires a provenance note and rejects any non-manual progress mode."""
     campaign = _campaign_for_view(request, pk)
     if not services.can_manage(request.user, campaign):
-        raise PermissionDenied("You cannot manage this campaign.")
+        raise PermissionDenied(_("You cannot manage this campaign."))
     try:
         services.set_manual_progress(
             campaign, request.user, request.POST.get("progress_pct", ""),
@@ -907,7 +912,7 @@ def campaign_set_progress(request: HttpRequest, pk: int) -> HttpResponse:
     except ValidationError as exc:
         messages.error(request, "; ".join(exc.messages))
     else:
-        messages.success(request, "Progress updated.")
+        messages.success(request, _("Progress updated."))
     return redirect("campaigns:detail", pk=campaign.pk)
 
 
@@ -1189,7 +1194,7 @@ def _objective_form_ctx(request, campaign, objective) -> dict:
 def objective_create(request: HttpRequest, pk: int) -> HttpResponse:
     campaign = _campaign_for_view(request, pk)
     if not services.can_manage(request.user, campaign):
-        raise PermissionDenied("You cannot manage this campaign.")
+        raise PermissionDenied(_("You cannot manage this campaign."))
     objective = Objective(campaign=campaign)
     if request.method == "POST":
         try:
@@ -1206,7 +1211,7 @@ def objective_create(request: HttpRequest, pk: int) -> HttpResponse:
         _notify_assignment(campaign, "objective", objective.pk, objective.owner, None,
                            request.user, what="an objective")
         services.recompute(campaign)
-        messages.success(request, "Objective added.")
+        messages.success(request, _("Objective added."))
         return redirect("campaigns:detail", pk=campaign.pk)
     return render(request, "campaigns/objective_form.html",
                   _objective_form_ctx(request, campaign, objective))
@@ -1217,7 +1222,7 @@ def objective_edit(request: HttpRequest, pk: int) -> HttpResponse:
     objective = _objective_for(request, pk)
     campaign = objective.campaign
     if not services.can_manage(request.user, campaign):
-        raise PermissionDenied("You cannot manage this campaign.")
+        raise PermissionDenied(_("You cannot manage this campaign."))
     if request.method == "POST":
         old_owner_id = objective.owner_id
         structural_before = _objective_structural_snapshot(objective)
@@ -1250,7 +1255,7 @@ def objective_edit(request: HttpRequest, pk: int) -> HttpResponse:
         _notify_assignment(campaign, "objective", objective.pk, objective.owner, old_owner_id,
                            request.user, what="an objective")
         services.recompute(campaign)
-        messages.success(request, "Objective updated.")
+        messages.success(request, _("Objective updated."))
         return redirect("campaigns:objective_detail", pk=objective.pk)
     return render(request, "campaigns/objective_form.html",
                   _objective_form_ctx(request, campaign, objective))
@@ -1334,7 +1339,7 @@ def objective_update_value(request: HttpRequest, pk: int) -> HttpResponse:
     """Record a manual value (owner / workstream lead / manage). Note is mandatory (service)."""
     objective = _objective_for(request, pk)
     if not services.can_update_objective(request.user, objective):
-        raise PermissionDenied("You cannot update this objective.")
+        raise PermissionDenied(_("You cannot update this objective."))
     try:
         services.update_manual_value(
             objective, request.user, request.POST.get("value", ""), request.POST.get("note", "")
@@ -1342,7 +1347,7 @@ def objective_update_value(request: HttpRequest, pk: int) -> HttpResponse:
     except ValidationError as exc:
         messages.error(request, "; ".join(exc.messages))
     else:
-        messages.success(request, "Value recorded.")
+        messages.success(request, _("Value recorded."))
     return redirect("campaigns:objective_detail", pk=objective.pk)
 
 
@@ -1352,13 +1357,13 @@ def objective_verify(request: HttpRequest, pk: int) -> HttpResponse:
     """Officer sign-off on a met claim — officer rank required (403 below), verifier ≠ claimant."""
     objective = _objective_for(request, pk)
     if not rbac.has_role(request.user, rbac.ROLE_OFFICER):
-        raise PermissionDenied("Verification requires officer rank.")
+        raise PermissionDenied(_("Verification requires officer rank."))
     try:
         services.verify_objective(objective, request.user)
     except ValidationError as exc:
         messages.error(request, "; ".join(exc.messages))
     else:
-        messages.success(request, "Objective verified.")
+        messages.success(request, _("Objective verified."))
     return redirect("campaigns:objective_detail", pk=objective.pk)
 
 
@@ -1368,7 +1373,7 @@ def objective_set_status(request: HttpRequest, pk: int) -> HttpResponse:
     """Move an objective through its status set (owner / lead / manage)."""
     objective = _objective_for(request, pk)
     if not services.can_update_objective(request.user, objective):
-        raise PermissionDenied("You cannot change this objective.")
+        raise PermissionDenied(_("You cannot change this objective."))
     to_status = (request.POST.get("to") or "").strip()
     try:
         services.set_objective_status(
@@ -1377,7 +1382,7 @@ def objective_set_status(request: HttpRequest, pk: int) -> HttpResponse:
     except ValidationError as exc:
         messages.error(request, "; ".join(exc.messages))
     else:
-        messages.success(request, "Objective status updated.")
+        messages.success(request, _("Objective status updated."))
     return redirect("campaigns:objective_detail", pk=objective.pk)
 
 
@@ -1419,7 +1424,7 @@ def _milestone_form_ctx(request, campaign, milestone) -> dict:
 def milestone_create(request: HttpRequest, pk: int) -> HttpResponse:
     campaign = _campaign_for_view(request, pk)
     if not services.can_manage(request.user, campaign):
-        raise PermissionDenied("You cannot manage this campaign.")
+        raise PermissionDenied(_("You cannot manage this campaign."))
     milestone = Milestone(campaign=campaign)
     if request.method == "POST":
         try:
@@ -1431,7 +1436,7 @@ def milestone_create(request: HttpRequest, pk: int) -> HttpResponse:
         services.save_milestone(milestone, request.user)
         _notify_assignment(campaign, "milestone", milestone.pk, milestone.owner, None,
                            request.user, what="a milestone")
-        messages.success(request, "Milestone added.")
+        messages.success(request, _("Milestone added."))
         return redirect("campaigns:detail", pk=campaign.pk)
     return render(request, "campaigns/milestone_form.html",
                   _milestone_form_ctx(request, campaign, milestone))
@@ -1442,9 +1447,9 @@ def milestone_edit(request: HttpRequest, pk: int) -> HttpResponse:
     milestone = get_object_or_404(Milestone.objects.select_related("campaign"), pk=pk)
     campaign = milestone.campaign
     if not services.can_view(request.user, campaign):
-        raise Http404("No such milestone.")
+        raise Http404(_("No such milestone."))
     if not services.can_manage(request.user, campaign):
-        raise PermissionDenied("You cannot manage this campaign.")
+        raise PermissionDenied(_("You cannot manage this campaign."))
     if request.method == "POST":
         old_owner_id = milestone.owner_id
         try:
@@ -1456,7 +1461,7 @@ def milestone_edit(request: HttpRequest, pk: int) -> HttpResponse:
         services.save_milestone(milestone, request.user)
         _notify_assignment(campaign, "milestone", milestone.pk, milestone.owner, old_owner_id,
                            request.user, what="a milestone")
-        messages.success(request, "Milestone updated.")
+        messages.success(request, _("Milestone updated."))
         return redirect("campaigns:detail", pk=campaign.pk)
     return render(request, "campaigns/milestone_form.html",
                   _milestone_form_ctx(request, campaign, milestone))
@@ -1469,7 +1474,7 @@ def milestone_set_status(request: HttpRequest, pk: int) -> HttpResponse:
     milestone = get_object_or_404(Milestone.objects.select_related("campaign", "workstream"), pk=pk)
     campaign = milestone.campaign
     if not services.can_view(request.user, campaign):
-        raise Http404("No such milestone.")
+        raise Http404(_("No such milestone."))
     to_status = (request.POST.get("to") or "").strip()
     ms = Milestone.MilestoneStatus
     if to_status == ms.READY_FOR_REVIEW:
@@ -1482,13 +1487,13 @@ def milestone_set_status(request: HttpRequest, pk: int) -> HttpResponse:
     else:
         allowed = services.can_manage(request.user, campaign)
     if not allowed:
-        raise PermissionDenied("You cannot change this milestone.")
+        raise PermissionDenied(_("You cannot change this milestone."))
     try:
         services.set_milestone_status(milestone, request.user, to_status)
     except ValidationError as exc:
         messages.error(request, "; ".join(exc.messages))
     else:
-        messages.success(request, "Milestone status updated.")
+        messages.success(request, _("Milestone status updated."))
     return redirect("campaigns:detail", pk=campaign.pk)
 
 
@@ -1523,7 +1528,7 @@ def _workstream_form_ctx(request, campaign, workstream) -> dict:
 def workstream_create(request: HttpRequest, pk: int) -> HttpResponse:
     campaign = _campaign_for_view(request, pk)
     if not services.can_manage(request.user, campaign):
-        raise PermissionDenied("You cannot manage this campaign.")
+        raise PermissionDenied(_("You cannot manage this campaign."))
     workstream = Workstream(campaign=campaign)
     if request.method == "POST":
         try:
@@ -1535,7 +1540,7 @@ def workstream_create(request: HttpRequest, pk: int) -> HttpResponse:
         services.save_workstream(workstream, request.user)
         _notify_assignment(campaign, "workstream", workstream.pk, workstream.lead, None,
                            request.user, what="a workstream")
-        messages.success(request, "Workstream added.")
+        messages.success(request, _("Workstream added."))
         return redirect("campaigns:detail", pk=campaign.pk)
     return render(request, "campaigns/workstream_form.html",
                   _workstream_form_ctx(request, campaign, workstream))
@@ -1546,9 +1551,9 @@ def workstream_edit(request: HttpRequest, pk: int) -> HttpResponse:
     workstream = get_object_or_404(Workstream.objects.select_related("campaign"), pk=pk)
     campaign = workstream.campaign
     if not services.can_view(request.user, campaign):
-        raise Http404("No such workstream.")
+        raise Http404(_("No such workstream."))
     if not services.can_manage(request.user, campaign):
-        raise PermissionDenied("You cannot manage this campaign.")
+        raise PermissionDenied(_("You cannot manage this campaign."))
     if request.method == "POST":
         old_lead_id = workstream.lead_id
         try:
@@ -1560,7 +1565,7 @@ def workstream_edit(request: HttpRequest, pk: int) -> HttpResponse:
         services.save_workstream(workstream, request.user)
         _notify_assignment(campaign, "workstream", workstream.pk, workstream.lead, old_lead_id,
                            request.user, what="a workstream")
-        messages.success(request, "Workstream updated.")
+        messages.success(request, _("Workstream updated."))
         return redirect("campaigns:detail", pk=campaign.pk)
     return render(request, "campaigns/workstream_form.html",
                   _workstream_form_ctx(request, campaign, workstream))
@@ -1617,7 +1622,7 @@ def _can_manage_risks(user, campaign, risk=None) -> bool:
 def risk_create(request: HttpRequest, pk: int) -> HttpResponse:
     campaign = _campaign_for_view(request, pk)
     if not _can_manage_risks(request.user, campaign):
-        raise PermissionDenied("You cannot add risks to this campaign.")
+        raise PermissionDenied(_("You cannot add risks to this campaign."))
     risk = Risk(campaign=campaign)
     if request.method == "POST":
         try:
@@ -1627,7 +1632,7 @@ def risk_create(request: HttpRequest, pk: int) -> HttpResponse:
             return render(request, "campaigns/risk_form.html",
                           _risk_form_ctx(request, campaign, risk))
         services.save_risk(risk, request.user)
-        messages.success(request, "Risk added.")
+        messages.success(request, _("Risk added."))
         return redirect("campaigns:detail", pk=campaign.pk)
     return render(request, "campaigns/risk_form.html", _risk_form_ctx(request, campaign, risk))
 
@@ -1637,9 +1642,9 @@ def risk_edit(request: HttpRequest, pk: int) -> HttpResponse:
     risk = get_object_or_404(Risk.objects.select_related("campaign"), pk=pk)
     campaign = risk.campaign
     if not services.can_view(request.user, campaign):
-        raise Http404("No such risk.")
+        raise Http404(_("No such risk."))
     if not _can_manage_risks(request.user, campaign, risk):
-        raise PermissionDenied("You cannot edit this risk.")
+        raise PermissionDenied(_("You cannot edit this risk."))
     if request.method == "POST":
         try:
             _apply_risk_fields(risk, request, campaign)
@@ -1648,7 +1653,7 @@ def risk_edit(request: HttpRequest, pk: int) -> HttpResponse:
             return render(request, "campaigns/risk_form.html",
                           _risk_form_ctx(request, campaign, risk))
         services.save_risk(risk, request.user)
-        messages.success(request, "Risk updated.")
+        messages.success(request, _("Risk updated."))
         return redirect("campaigns:detail", pk=campaign.pk)
     return render(request, "campaigns/risk_form.html", _risk_form_ctx(request, campaign, risk))
 
@@ -1661,7 +1666,7 @@ def issue_create(request: HttpRequest, pk: int) -> HttpResponse:
     """Raise a blocker — open to any participant who can view the campaign (doc 10 §5)."""
     campaign = _campaign_for_view(request, pk)
     if not rbac.has_role(request.user, rbac.ROLE_MEMBER):
-        raise PermissionDenied("Members only.")
+        raise PermissionDenied(_("Members only."))
     if request.method == "POST":
         obj_id = _int(request.POST.get("objective"))
         objective = campaign.objectives.filter(pk=obj_id).first() if obj_id else None
@@ -1675,7 +1680,7 @@ def issue_create(request: HttpRequest, pk: int) -> HttpResponse:
         except ValidationError as exc:
             messages.error(request, "; ".join(exc.messages))
             return render(request, "campaigns/issue_form.html", _issue_form_ctx(request, campaign))
-        messages.success(request, "Issue raised.")
+        messages.success(request, _("Issue raised."))
         return redirect("campaigns:detail", pk=campaign.pk)
     return render(request, "campaigns/issue_form.html", _issue_form_ctx(request, campaign))
 
@@ -1697,18 +1702,18 @@ def issue_resolve(request: HttpRequest, pk: int) -> HttpResponse:
     issue = get_object_or_404(Issue.objects.select_related("campaign", "objective"), pk=pk)
     campaign = issue.campaign
     if not services.can_view(request.user, campaign):
-        raise Http404("No such issue.")
+        raise Http404(_("No such issue."))
     if not (services.can_manage(request.user, campaign) or issue.owner_id == request.user.pk):
-        raise PermissionDenied("You cannot resolve this issue.")
+        raise PermissionDenied(_("You cannot resolve this issue."))
     try:
         services.resolve_issue(issue, request.user, request.POST.get("resolution_notes", ""))
     except ValidationError as exc:
         messages.error(request, "; ".join(exc.messages))
     else:
-        note = ""
         if issue.objective_id and issue.objective.status != Objective.ObjectiveStatus.BLOCKED:
-            note = " Objective unblocked."
-        messages.success(request, f"Issue resolved.{note}")
+            messages.success(request, _("Issue resolved. Objective unblocked."))
+        else:
+            messages.success(request, _("Issue resolved."))
     return redirect("campaigns:detail", pk=campaign.pk)
 
 
@@ -1733,7 +1738,7 @@ def dependency_create(request: HttpRequest, pk: int) -> HttpResponse:
     pickers post ``kind:id`` values (or ``external``); the service re-checks every endpoint."""
     campaign = _campaign_for_view(request, pk)
     if not services.can_manage(request.user, campaign):
-        raise PermissionDenied("You cannot manage this campaign.")
+        raise PermissionDenied(_("You cannot manage this campaign."))
     from_kind, from_id = _parse_dep_endpoint(request.POST.get("from"))
     to_kind, to_id = _parse_dep_endpoint(request.POST.get("to"))
     try:
@@ -1750,7 +1755,7 @@ def dependency_create(request: HttpRequest, pk: int) -> HttpResponse:
         detail = "; ".join(exc.messages) if isinstance(exc, ValidationError) else str(exc)
         messages.error(request, detail)
     else:
-        messages.success(request, "Dependency added.")
+        messages.success(request, _("Dependency added."))
     return redirect("campaigns:detail", pk=campaign.pk)
 
 
@@ -1761,15 +1766,15 @@ def dependency_resolve(request: HttpRequest, pk: int) -> HttpResponse:
     dependency = get_object_or_404(CampaignDependency.objects.select_related("campaign"), pk=pk)
     campaign = dependency.campaign
     if not services.can_view(request.user, campaign):
-        raise Http404("No such dependency.")
+        raise Http404(_("No such dependency."))
     if not services.can_manage(request.user, campaign):
-        raise PermissionDenied("You cannot manage this campaign.")
+        raise PermissionDenied(_("You cannot manage this campaign."))
     try:
         services.resolve_dependency(dependency, request.user, reason=request.POST.get("reason", ""))
     except ValidationError as exc:
         messages.error(request, "; ".join(exc.messages))
     else:
-        messages.success(request, "Dependency resolved.")
+        messages.success(request, _("Dependency resolved."))
     return redirect("campaigns:detail", pk=campaign.pk)
 
 
@@ -1812,17 +1817,17 @@ def operation_link(request: HttpRequest, pk: int) -> HttpResponse:
     """Soft-link an operation to a campaign (``can_manage``, doc 10 line 216). Idempotent."""
     campaign = _campaign_for_view(request, pk)
     if not services.can_manage(request.user, campaign):
-        raise PermissionDenied("You cannot manage this campaign.")
+        raise PermissionDenied(_("You cannot manage this campaign."))
     op_id = _int(request.POST.get("operation_id"))
     if op_id is None:
-        messages.error(request, "Choose an operation to link.")
+        messages.error(request, _("Choose an operation to link."))
         return redirect("campaigns:detail", pk=campaign.pk)
     try:
         services.link_operation(campaign, request.user, op_id, note=request.POST.get("note", ""))
     except ValidationError as exc:
         messages.error(request, "; ".join(exc.messages))
     else:
-        messages.success(request, "Operation linked.")
+        messages.success(request, _("Operation linked."))
     return redirect("campaigns:detail", pk=campaign.pk)
 
 
@@ -1832,9 +1837,9 @@ def operation_unlink(request: HttpRequest, pk: int) -> HttpResponse:
     """Remove a campaign↔operation link (``can_manage``)."""
     campaign = _campaign_for_view(request, pk)
     if not services.can_manage(request.user, campaign):
-        raise PermissionDenied("You cannot manage this campaign.")
+        raise PermissionDenied(_("You cannot manage this campaign."))
     services.unlink_operation(campaign, request.user, _int(request.POST.get("operation_id")))
-    messages.success(request, "Operation unlinked.")
+    messages.success(request, _("Operation unlinked."))
     return redirect("campaigns:detail", pk=campaign.pk)
 
 
@@ -1848,15 +1853,15 @@ def issue_escalate(request: HttpRequest, pk: int) -> HttpResponse:
     issue = get_object_or_404(Issue.objects.select_related("campaign"), pk=pk)
     campaign = issue.campaign
     if not services.can_view(request.user, campaign):
-        raise Http404("No such issue.")
+        raise Http404(_("No such issue."))
     if not services.can_manage(request.user, campaign):
-        raise PermissionDenied("Escalation requires manage capability.")
+        raise PermissionDenied(_("Escalation requires manage capability."))
     try:
         services.escalate_issue(issue, request.user, request.POST.get("reason", ""))
     except ValidationError as exc:
         messages.error(request, "; ".join(exc.messages))
     else:
-        messages.success(request, "Issue escalated to leadership.")
+        messages.success(request, _("Issue escalated to leadership."))
     return redirect("campaigns:detail", pk=campaign.pk)
 
 
@@ -1870,13 +1875,13 @@ def objective_create_task(request: HttpRequest, pk: int) -> HttpResponse:
     objective = _objective_for(request, pk)
     if not (services.can_manage(request.user, objective.campaign)
             or objective.owner_id == request.user.pk):
-        raise PermissionDenied("You cannot add a task to this objective.")
+        raise PermissionDenied(_("You cannot add a task to this objective."))
     title = (request.POST.get("title") or "").strip() or objective.title
     assignee = _pool_user(request.POST.get("assignee"))
     services.create_objective_task(
         objective, request.user, title=title, assignee=assignee, due_at=objective.due_at,
     )
-    messages.success(request, "Task created and linked to this objective.")
+    messages.success(request, _("Task created and linked to this objective."))
     return redirect("campaigns:objective_detail", pk=objective.pk)
 
 
@@ -1889,13 +1894,13 @@ def objective_volunteer(request: HttpRequest, pk: int) -> HttpResponse:
     in their workspace (doc 10 §6.5–§6.6). No status change, no officer approval."""
     objective = _objective_for(request, pk)
     if not rbac.has_role(request.user, rbac.ROLE_MEMBER):
-        raise PermissionDenied("Members only.")
+        raise PermissionDenied(_("Members only."))
     fallback = reverse("campaigns:objective_detail", args=[objective.pk])
     if not objective.help_wanted:
-        messages.error(request, "This objective is not currently asking for help.")
+        messages.error(request, _("This objective is not currently asking for help."))
         return _back(request, fallback)
     services.volunteer_for_objective(objective, request.user)
-    messages.success(request, "You're on it — added to your tasks.")
+    messages.success(request, _("You're on it — added to your tasks."))
     return _back(request, fallback)
 
 
@@ -1924,27 +1929,27 @@ def evidence_create(request: HttpRequest, pk: int) -> HttpResponse:
     campaign = _campaign_for_view(request, pk)
     kind = (request.POST.get("attached_kind") or "").strip()
     if kind not in EvidenceKind.values:
-        raise Http404("Unknown evidence target.")
+        raise Http404(_("Unknown evidence target."))
     attached_id = _int(request.POST.get("attached_id"), 0) or 0
     if kind == EvidenceKind.CAMPAIGN:
         attached_id = campaign.pk
     elif kind == EvidenceKind.OBJECTIVE:
         if not campaign.objectives.filter(pk=attached_id).exists():
-            raise Http404("No such objective.")
+            raise Http404(_("No such objective."))
     elif not campaign.milestones.filter(pk=attached_id).exists():
-        raise Http404("No such milestone.")
+        raise Http404(_("No such milestone."))
 
     if not services.can_attach_evidence(request.user, campaign, kind, attached_id):
-        raise PermissionDenied("You cannot attach evidence here.")
+        raise PermissionDenied(_("You cannot attach evidence here."))
 
     url = (request.POST.get("url") or "").strip()
     note = (request.POST.get("note") or "").strip()
     fallback = _evidence_default_url(campaign, kind, attached_id)
     if url and not url.lower().startswith("https://"):
-        messages.error(request, "Evidence links must start with https://.")
+        messages.error(request, _("Evidence links must start with https://."))
         return redirect(fallback)
     if not url and not note:
-        messages.error(request, "Add a link or a note.")
+        messages.error(request, _("Add a link or a note."))
         return redirect(fallback)
 
     CampaignEvidence.objects.create(
@@ -1955,7 +1960,7 @@ def evidence_create(request: HttpRequest, pk: int) -> HttpResponse:
         campaign, request.user, "evidence.added", target_kind=kind, target_id=attached_id,
         after={"url": url[:200], "note": note[:100]},
     )
-    messages.success(request, "Evidence attached.")
+    messages.success(request, _("Evidence attached."))
     return _back(request, fallback)
 
 
@@ -1967,13 +1972,13 @@ def evidence_delete(request: HttpRequest, pk: int) -> HttpResponse:
     ev = get_object_or_404(CampaignEvidence.objects.select_related("campaign"), pk=pk)
     campaign = ev.campaign
     if not services.can_view(request.user, campaign):
-        raise Http404("No such evidence.")
+        raise Http404(_("No such evidence."))
     if ev.added_by_id is None:
-        raise PermissionDenied("Automatically-recorded evidence cannot be removed.")
+        raise PermissionDenied(_("Automatically-recorded evidence cannot be removed."))
     if not (ev.added_by_id == request.user.pk or services.can_manage(request.user, campaign)):
-        raise PermissionDenied("You cannot remove this evidence.")
+        raise PermissionDenied(_("You cannot remove this evidence."))
     if campaign.status == Campaign.Status.ARCHIVED:
-        raise PermissionDenied("Archived campaigns are read-only.")
+        raise PermissionDenied(_("Archived campaigns are read-only."))
 
     kind, attached_id = ev.attached_kind, ev.attached_id
     before = {"url": ev.url[:200], "note": ev.note[:200], "kind": kind, "attached_id": attached_id}
@@ -1986,7 +1991,7 @@ def evidence_delete(request: HttpRequest, pk: int) -> HttpResponse:
         request.user, "campaigns.evidence_removed", target_type="campaign",
         target_id=str(campaign.pk), ip=client_ip(request), metadata=before,
     )
-    messages.success(request, "Evidence removed.")
+    messages.success(request, _("Evidence removed."))
     return _back(request, _evidence_default_url(campaign, kind, attached_id))
 
 
@@ -1999,18 +2004,18 @@ def officer_workspace(request: HttpRequest) -> HttpResponse:
     or an update. Officer+ / campaign_lead / campaign owner (``services.workspace_access``)."""
     user = request.user
     if not services.workspace_access(user):
-        raise PermissionDenied("The campaign workspace is for officers and campaign leads.")
+        raise PermissionDenied(_("The campaign workspace is for officers and campaign leads."))
     q = services.workspace_queues(user)
     # Tab order + labels + per-queue empty copy + row kind, built here so the template stays
     # filter-free (doc 10 §6.7 tab bar).
     tabs = [
-        ("overdue", "Overdue", "objectives", "Nothing overdue — good."),
-        ("blocked", "Blocked", "objectives", "Nothing blocked."),
-        ("awaiting_verification", "Awaiting verification", "objectives", "Nothing awaiting verification."),
-        ("stale_metrics", "Stale metrics", "objectives", "No stale metrics."),
-        ("my_objectives", "My objectives", "objectives", "You own no live objectives."),
-        ("my_workstreams", "My workstreams", "workstreams", "You lead no workstreams."),
-        ("volunteers", "Volunteers", "volunteers", "No new volunteers."),
+        ("overdue", _("Overdue"), "objectives", _("Nothing overdue — good.")),
+        ("blocked", _("Blocked"), "objectives", _("Nothing blocked.")),
+        ("awaiting_verification", _("Awaiting verification"), "objectives", _("Nothing awaiting verification.")),
+        ("stale_metrics", _("Stale metrics"), "objectives", _("No stale metrics.")),
+        ("my_objectives", _("My objectives"), "objectives", _("You own no live objectives.")),
+        ("my_workstreams", _("My workstreams"), "workstreams", _("You lead no workstreams.")),
+        ("volunteers", _("Volunteers"), "volunteers", _("No new volunteers.")),
     ]
     workspace_tabs = [
         {"key": key, "label": label, "kind": kind, "empty": empty,
@@ -2069,7 +2074,7 @@ def _close_ctx(request, campaign, budget_allowed) -> dict:
         "is_director": rbac.has_role(user, rbac.ROLE_DIRECTOR),
         "budget_allowed": budget_allowed,
         "resolution_choices": [
-            (obj_status.MET, "Met"), (obj_status.MISSED, "Missed"), (obj_status.DROPPED, "Dropped"),
+            (obj_status.MET, _("Met")), (obj_status.MISSED, _("Missed")), (obj_status.DROPPED, _("Dropped")),
         ],
         "participation": services.participation_panel(campaign, user),
         "users": _user_choices(),
@@ -2141,9 +2146,9 @@ def campaign_close(request: HttpRequest, pk: int) -> HttpResponse:
     service validates and applies everything in one transaction."""
     campaign = _campaign_for_view(request, pk)
     if not services.can_manage(request.user, campaign):
-        raise PermissionDenied("You cannot close this campaign.")
+        raise PermissionDenied(_("You cannot close this campaign."))
     if campaign.status != Campaign.Status.ACTIVE:
-        messages.error(request, "Only an active campaign can be closed.")
+        messages.error(request, _("Only an active campaign can be closed."))
         return redirect("campaigns:detail", pk=campaign.pk)
     budget_allowed = services.can_view_budget(request.user, campaign)
     if request.method == "POST":
@@ -2153,7 +2158,10 @@ def campaign_close(request: HttpRequest, pk: int) -> HttpResponse:
         except ValidationError as exc:
             messages.error(request, "; ".join(exc.messages))
             return render(request, "campaigns/close.html", _close_ctx(request, campaign, budget_allowed))
-        messages.success(request, f"Campaign closed — now {campaign.get_status_display().lower()}.")
+        messages.success(
+            request,
+            _("Campaign closed — now %(status)s.") % {"status": campaign.get_status_display().lower()},
+        )
         return redirect("campaigns:detail", pk=campaign.pk)
     return render(request, "campaigns/close.html", _close_ctx(request, campaign, budget_allowed))
 
@@ -2167,11 +2175,11 @@ def recognition_manage(request: HttpRequest, pk: int) -> HttpResponse:
     and a self-award is blocked unless the awarder is a director (service-enforced)."""
     campaign = _campaign_for_view(request, pk)
     if not services.can_manage(request.user, campaign):
-        raise PermissionDenied("You cannot manage recognition on this campaign.")
+        raise PermissionDenied(_("You cannot manage recognition on this campaign."))
     if request.method == "POST":
         target = _pool_user(request.POST.get("user"))
         if target is None:
-            messages.error(request, "Choose a pilot to recognise.")
+            messages.error(request, _("Choose a pilot to recognise."))
         else:
             try:
                 services.award_recognition(
@@ -2183,7 +2191,7 @@ def recognition_manage(request: HttpRequest, pk: int) -> HttpResponse:
             except ValidationError as exc:
                 messages.error(request, "; ".join(exc.messages))
             else:
-                messages.success(request, "Recognition recorded.")
+                messages.success(request, _("Recognition recorded."))
         return redirect("campaigns:recognition", pk=campaign.pk)
     ctx = {
         "campaign": campaign,
@@ -2203,9 +2211,9 @@ def campaign_save_template(request: HttpRequest, pk: int) -> HttpResponse:
     """Save a terminal campaign's structure as a reusable template (``can_manage``, doc 04 §13)."""
     campaign = _campaign_for_view(request, pk)
     if not services.can_manage(request.user, campaign):
-        raise PermissionDenied("You cannot save this campaign as a template.")
+        raise PermissionDenied(_("You cannot save this campaign as a template."))
     if campaign.status not in _TERMINAL_STATUSES:
-        messages.error(request, "Save-as-template is available once a campaign is closed.")
+        messages.error(request, _("Save-as-template is available once a campaign is closed."))
         return redirect("campaigns:detail", pk=campaign.pk)
     try:
         template = services.save_as_template(
@@ -2217,7 +2225,7 @@ def campaign_save_template(request: HttpRequest, pk: int) -> HttpResponse:
     except ValidationError as exc:
         messages.error(request, "; ".join(exc.messages))
     else:
-        messages.success(request, f"Saved as template “{template.name}”.")
+        messages.success(request, _("Saved as template “%(name)s”.") % {"name": template.name})
     return _back(request, reverse("campaigns:detail", args=[campaign.pk]))
 
 
@@ -2230,7 +2238,7 @@ def campaign_report(request: HttpRequest, pk: int) -> HttpResponse:
     restricted campaign's report is a sensitive-access audit event."""
     campaign = _campaign_for_view(request, pk)
     if campaign.status not in _TERMINAL_STATUSES:
-        raise Http404("This campaign has no close-out report yet.")
+        raise Http404(_("This campaign has no close-out report yet."))
     user = request.user
     can_budget = services.can_view_budget(user, campaign)
     objective_rows = [
@@ -2290,7 +2298,7 @@ def lessons_library(request: HttpRequest) -> HttpResponse:
     """Cross-campaign lessons-learned library — officer+ over ``visible_campaigns`` (doc 11 §2.6)."""
     user = request.user
     if not rbac.has_role(user, rbac.ROLE_OFFICER):
-        raise PermissionDenied("Lessons learned are a leadership retrospection tool (officer+).")
+        raise PermissionDenied(_("Lessons learned are a leadership retrospection tool (officer+)."))
     base = (
         services.visible_campaigns(user)
         .filter(status__in=_TERMINAL_STATUSES).exclude(lessons_learned="")
@@ -2332,7 +2340,7 @@ def _timeline_events(campaign) -> list[dict]:
     now = timezone.now()
     events: list[dict] = []
     if campaign.start_at:
-        events.append({"kind": "start", "date": campaign.start_at, "title": "Campaign start"})
+        events.append({"kind": "start", "date": campaign.start_at, "title": _("Campaign start")})
     for ms in campaign.milestones.select_related("workstream").order_by("due_at", "id"):
         if ms.due_at:
             events.append({
@@ -2361,14 +2369,14 @@ def _timeline_events(campaign) -> list[dict]:
             events.append({
                 "kind": "operation",
                 "date": getattr(op, "target_at", None) if op else None,
-                "title": op.name if op else f"Operation #{oid} (removed)",
+                "title": op.name if op else _("Operation #%(id)s (removed)") % {"id": oid},
                 "removed": op is None,
             })
     if campaign.actual_end_at:
         events.append({"kind": "close", "date": campaign.actual_end_at,
-                       "title": f"Campaign {campaign.get_status_display().lower()}"})
+                       "title": _("Campaign %(status)s") % {"status": campaign.get_status_display().lower()}})
     if campaign.target_end_at:
-        events.append({"kind": "target_end", "date": campaign.target_end_at, "title": "Target end"})
+        events.append({"kind": "target_end", "date": campaign.target_end_at, "title": _("Target end")})
 
     events.sort(key=lambda e: (e["date"] is None, e["date"] or now))
     return events

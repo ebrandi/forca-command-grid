@@ -1,15 +1,15 @@
 {% extends "base.html" %}
-{% load eve %}
-{% block title %}{{ plan.name }} · Skill Plans{% endblock %}
+{% load eve i18n %}
+{% block title %}{{ plan.name }} · {% translate "Skill Plans" %}{% endblock %}
 {% block content %}
-<a href="{% url 'skills:plans' %}" class="text-xs text-faint hover:text-gold">← Skill plans</a>
+<a href="{% url 'skills:plans' %}" class="text-xs text-faint hover:text-gold">← {% translate "Skill plans" %}</a>
 <header class="mt-3 flex flex-wrap items-start justify-between gap-4">
   <div>
     <h1 class="text-2xl font-bold text-ink">{{ plan.name }}</h1>
     <p class="mt-1 flex items-center gap-2 text-sm text-faint">
       <img src="{% eve_portrait plan.character.character_id 32 %}" alt="" class="h-6 w-6 rounded-full ring-1 ring-line">
       <span class="text-muted">{{ plan.character.name }}</span>
-      <span>· est. <span class="data text-gold">{{ remaining|duration }}</span> remaining</span>
+      <span>{% blocktranslate with rem=remaining|duration %}· est. <span class="data text-gold">{{ rem }}</span> remaining{% endblocktranslate %}</span>
     </p>
   </div>
   <div class="flex flex-wrap gap-2" x-data="{copied:false}">
@@ -17,31 +17,31 @@
       @click="fetch('{% url 'skills:export' plan.pk %}').then(r=>r.text()).then(t=>{navigator.clipboard.writeText(t);copied=true;setTimeout(()=>copied=false,2000)})"
       class="btn-gold"
     >
-      <span x-show="!copied">Copy for EVE</span><span x-show="copied" x-cloak>Copied ✓</span>
+      <span x-show="!copied">{% translate "Copy for EVE" %}</span><span x-show="copied" x-cloak>{% translate "Copied ✓" %}</span>
     </button>
-    <a href="{% url 'skills:export' plan.pk %}" target="_blank" class="btn-ghost">View text</a>
-    <form method="post" action="{% url 'skills:delete' plan.pk %}" data-confirm="Delete this plan?">{% csrf_token %}<button class="btn-danger">Delete</button></form>
+    <a href="{% url 'skills:export' plan.pk %}" target="_blank" class="btn-ghost">{% translate "View text" %}</a>
+    <form method="post" action="{% url 'skills:delete' plan.pk %}" data-confirm="{% translate 'Delete this plan?' %}">{% csrf_token %}<button class="btn-danger">{% translate "Delete" %}</button></form>
   </div>
 </header>
 
 {% if remap %}
 <section class="panel mt-4 border-l-2 border-gold/60 p-4">
-  <p class="eyebrow text-gold">Remap suggestion</p>
-  <p class="mt-1 max-w-3xl text-sm text-muted">This plan trains mostly on
-    <span class="font-semibold text-ink">{{ remap.primary }}</span> and
-    <span class="font-semibold text-ink">{{ remap.secondary }}</span>. A neural remap
-    favouring them could cut about <span class="data text-gold">{{ remap.saved_seconds|duration }}</span>
-    off the remaining time (est. {{ remap.remapped_seconds|duration }} vs {{ remap.current_seconds|duration }}).
-    Remaps have a long cooldown, so save it for a plan you're committed to.</p>
+  <p class="eyebrow text-gold">{% translate "Remap suggestion" %}</p>
+  <p class="mt-1 max-w-3xl text-sm text-muted">{% blocktranslate with primary=remap.primary secondary=remap.secondary saved=remap.saved_seconds|duration remapped=remap.remapped_seconds|duration current=remap.current_seconds|duration %}This plan trains mostly on
+    <span class="font-semibold text-ink">{{ primary }}</span> and
+    <span class="font-semibold text-ink">{{ secondary }}</span>. A neural remap
+    favouring them could cut about <span class="data text-gold">{{ saved }}</span>
+    off the remaining time (est. {{ remapped }} vs {{ current }}).
+    Remaps have a long cooldown, so save it for a plan you're committed to.{% endblocktranslate %}</p>
 </section>
 {% endif %}
 
 <section class="panel mt-5 overflow-hidden">
   <div class="hidden overflow-x-auto sm:block"><table class="w-full text-sm" x-data="sortableTable()">
     <thead class="text-faint text-left"><tr class="border-b border-line/60">
-      <th class="px-4 py-2 font-medium">#</th><th class="px-4 py-2 font-medium" :aria-sort="ariaSort('skill')"><button type="button" @click="sortBy('skill')" class="inline-flex items-center gap-1 cursor-pointer select-none hover:text-gold">Skill<span x-show="key==='skill'" x-text="dir==='asc'?' ↑':' ↓'" class="text-gold"></span></button></th>
-      <th class="px-4 py-2 text-center font-medium" :aria-sort="ariaSort('level')"><button type="button" @click="sortBy('level')" class="inline-flex items-center gap-1 cursor-pointer select-none hover:text-gold">Level<span x-show="key==='level'" x-text="dir==='asc'?' ↑':' ↓'" class="text-gold"></span></button></th><th class="px-4 py-2 text-right font-medium" :aria-sort="ariaSort('time')"><button type="button" @click="sortBy('time')" class="inline-flex items-center gap-1 cursor-pointer select-none hover:text-gold">Est. time<span x-show="key==='time'" x-text="dir==='asc'?' ↑':' ↓'" class="text-gold"></span></button></th>
-      <th class="px-4 py-2 text-center font-medium">Order</th><th class="px-4 py-2 text-right font-medium">Actions</th></tr></thead>
+      <th class="px-4 py-2 font-medium">#</th><th class="px-4 py-2 font-medium" :aria-sort="ariaSort('skill')"><button type="button" @click="sortBy('skill')" class="inline-flex items-center gap-1 cursor-pointer select-none hover:text-gold">{% translate "Skill" %}<span x-show="key==='skill'" x-text="dir==='asc'?' ↑':' ↓'" class="text-gold"></span></button></th>
+      <th class="px-4 py-2 text-center font-medium" :aria-sort="ariaSort('level')"><button type="button" @click="sortBy('level')" class="inline-flex items-center gap-1 cursor-pointer select-none hover:text-gold">{% translate "Level" %}<span x-show="key==='level'" x-text="dir==='asc'?' ↑':' ↓'" class="text-gold"></span></button></th><th class="px-4 py-2 text-right font-medium" :aria-sort="ariaSort('time')"><button type="button" @click="sortBy('time')" class="inline-flex items-center gap-1 cursor-pointer select-none hover:text-gold">{% translate "Est. time" %}<span x-show="key==='time'" x-text="dir==='asc'?' ↑':' ↓'" class="text-gold"></span></button></th>
+      <th class="px-4 py-2 text-center font-medium">{% translate "Order" %}</th><th class="px-4 py-2 text-right font-medium">{% translate "Actions" %}</th></tr></thead>
     <tbody x-ref="body">
       {% for s in steps %}
         <tr data-row class="border-t border-line/40 {% if s.status == 'done' %}opacity-50{% endif %}">
@@ -56,23 +56,23 @@
           <td class="px-4 py-2 text-right data text-faint" data-sort-key="time" data-sort-value="{{ s.estimated_seconds }}">{{ s.estimated_seconds|duration }}</td>
           <td class="px-4 py-2">
             <div class="flex items-center justify-center gap-1">
-              {% if not forloop.first %}<form method="post" action="{% url 'skills:move_step' plan.pk s.id %}">{% csrf_token %}<input type="hidden" name="dir" value="up"><button class="btn-ghost !px-2 !py-1 !text-xs" title="Move up">↑</button></form>{% endif %}
-              {% if not forloop.last %}<form method="post" action="{% url 'skills:move_step' plan.pk s.id %}">{% csrf_token %}<input type="hidden" name="dir" value="down"><button class="btn-ghost !px-2 !py-1 !text-xs" title="Move down">↓</button></form>{% endif %}
+              {% if not forloop.first %}<form method="post" action="{% url 'skills:move_step' plan.pk s.id %}">{% csrf_token %}<input type="hidden" name="dir" value="up"><button class="btn-ghost !px-2 !py-1 !text-xs" title="{% translate 'Move up' %}">↑</button></form>{% endif %}
+              {% if not forloop.last %}<form method="post" action="{% url 'skills:move_step' plan.pk s.id %}">{% csrf_token %}<input type="hidden" name="dir" value="down"><button class="btn-ghost !px-2 !py-1 !text-xs" title="{% translate 'Move down' %}">↓</button></form>{% endif %}
             </div>
           </td>
           <td class="px-4 py-2 text-right">
             <div class="inline-flex gap-1">
               <form method="post" action="{% url 'skills:toggle_step' plan.pk s.id %}">{% csrf_token %}
-                <button class="btn-ghost !py-1 !text-xs">{% if s.status == 'done' %}Undo{% else %}Mark trained{% endif %}</button>
+                <button class="btn-ghost !py-1 !text-xs">{% if s.status == 'done' %}{% translate "Undo" %}{% else %}{% translate "Mark trained" %}{% endif %}</button>
               </form>
-              <form method="post" action="{% url 'skills:remove_step' plan.pk s.id %}" data-confirm="Remove this skill from the plan?">{% csrf_token %}
-                <button class="btn-danger !py-1 !text-xs">Remove</button>
+              <form method="post" action="{% url 'skills:remove_step' plan.pk s.id %}" data-confirm="{% translate 'Remove this skill from the plan?' %}">{% csrf_token %}
+                <button class="btn-danger !py-1 !text-xs">{% translate "Remove" %}</button>
               </form>
             </div>
           </td>
         </tr>
       {% empty %}
-        <tr><td colspan="6" class="px-4 py-10 text-center text-faint">Nothing to train — you’re ready.</td></tr>
+        <tr><td colspan="6" class="px-4 py-10 text-center text-faint">{% translate "Nothing to train — you’re ready." %}</td></tr>
       {% endfor %}
     </tbody>
   </table></div>
@@ -89,17 +89,17 @@
         <div class="mt-2 flex items-center justify-between gap-2 pl-7">
           <span class="data text-xs text-faint">{{ s.estimated_seconds|duration }}</span>
           <div class="flex flex-wrap items-center justify-end gap-1">
-            {% if not forloop.first %}<form method="post" action="{% url 'skills:move_step' plan.pk s.id %}">{% csrf_token %}<input type="hidden" name="dir" value="up"><button class="btn-ghost !px-2 !py-1 !text-xs" title="Move up">↑</button></form>{% endif %}
-            {% if not forloop.last %}<form method="post" action="{% url 'skills:move_step' plan.pk s.id %}">{% csrf_token %}<input type="hidden" name="dir" value="down"><button class="btn-ghost !px-2 !py-1 !text-xs" title="Move down">↓</button></form>{% endif %}
-            <form method="post" action="{% url 'skills:toggle_step' plan.pk s.id %}">{% csrf_token %}<button class="btn-ghost !py-1 !text-xs">{% if s.status == 'done' %}Undo{% else %}Mark trained{% endif %}</button></form>
-            <form method="post" action="{% url 'skills:remove_step' plan.pk s.id %}" data-confirm="Remove this skill from the plan?">{% csrf_token %}<button class="btn-danger !py-1 !text-xs">Remove</button></form>
+            {% if not forloop.first %}<form method="post" action="{% url 'skills:move_step' plan.pk s.id %}">{% csrf_token %}<input type="hidden" name="dir" value="up"><button class="btn-ghost !px-2 !py-1 !text-xs" title="{% translate 'Move up' %}">↑</button></form>{% endif %}
+            {% if not forloop.last %}<form method="post" action="{% url 'skills:move_step' plan.pk s.id %}">{% csrf_token %}<input type="hidden" name="dir" value="down"><button class="btn-ghost !px-2 !py-1 !text-xs" title="{% translate 'Move down' %}">↓</button></form>{% endif %}
+            <form method="post" action="{% url 'skills:toggle_step' plan.pk s.id %}">{% csrf_token %}<button class="btn-ghost !py-1 !text-xs">{% if s.status == 'done' %}{% translate "Undo" %}{% else %}{% translate "Mark trained" %}{% endif %}</button></form>
+            <form method="post" action="{% url 'skills:remove_step' plan.pk s.id %}" data-confirm="{% translate 'Remove this skill from the plan?' %}">{% csrf_token %}<button class="btn-danger !py-1 !text-xs">{% translate "Remove" %}</button></form>
           </div>
         </div>
       </div>
     {% empty %}
-      <p class="px-4 py-10 text-center text-faint">Nothing to train — you’re ready.</p>
+      <p class="px-4 py-10 text-center text-faint">{% translate "Nothing to train — you’re ready." %}</p>
     {% endfor %}
   </div>
 </section>
-<p class="mt-3 text-xs text-faint">Times are estimates from your training attributes where known (a 2000 SP/hour fallback otherwise); your real rate also depends on implants.</p>
+<p class="mt-3 text-xs text-faint">{% translate "Times are estimates from your training attributes where known (a 2000 SP/hour fallback otherwise); your real rate also depends on implants." %}</p>
 {% endblock %}

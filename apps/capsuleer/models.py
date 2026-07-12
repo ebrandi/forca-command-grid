@@ -29,6 +29,8 @@ from __future__ import annotations
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
+from django.utils.translation import pgettext_lazy
 
 from core.mixins import TimeStampedModel
 
@@ -42,126 +44,126 @@ _MONEY = {"max_digits": 20, "decimal_places": 2}
 #  Enumerations (doc 07 §5)
 # --------------------------------------------------------------------------- #
 class Pace(models.TextChoices):
-    RELAXED = "relaxed", "Relaxed"
-    BALANCED = "balanced", "Balanced"
-    ACCELERATED = "accelerated", "Accelerated"
+    RELAXED = "relaxed", _("Relaxed")
+    BALANCED = "balanced", _("Balanced")
+    ACCELERATED = "accelerated", _("Accelerated")
 
 
 class GoalPace(models.TextChoices):
-    INHERIT = "inherit", "Inherit from profile"
-    RELAXED = "relaxed", "Relaxed"
-    BALANCED = "balanced", "Balanced"
-    ACCELERATED = "accelerated", "Accelerated"
+    INHERIT = "inherit", _("Inherit from profile")
+    RELAXED = "relaxed", _("Relaxed")
+    BALANCED = "balanced", _("Balanced")
+    ACCELERATED = "accelerated", _("Accelerated")
 
 
 class CorpAlignment(models.TextChoices):
-    PERSONAL_ONLY = "personal_only", "Personal only"
-    MOSTLY_PERSONAL = "mostly_personal", "Mostly personal"
-    BALANCED = "balanced", "Balanced"
-    CORP_FORWARD = "corp_forward", "Corp forward"
-    SHOW_ALL = "show_all", "Show all"
+    PERSONAL_ONLY = "personal_only", _("Personal only")
+    MOSTLY_PERSONAL = "mostly_personal", _("Mostly personal")
+    BALANCED = "balanced", _("Balanced")
+    CORP_FORWARD = "corp_forward", _("Corp forward")
+    SHOW_ALL = "show_all", _("Show all")
 
 
 class Visibility(models.TextChoices):
-    PRIVATE = "private", "Private"
-    MENTOR = "mentor", "Mentor"
-    OFFICERS = "officers", "Officers"
-    AGGREGATE_ONLY = "aggregate_only", "Aggregate only"
+    PRIVATE = "private", _("Private")
+    MENTOR = "mentor", _("Mentor")
+    OFFICERS = "officers", _("Officers")
+    AGGREGATE_ONLY = "aggregate_only", _("Aggregate only")
 
 
 class GoalType(models.TextChoices):
-    TEMPLATE = "template", "Template"
-    DOCTRINE = "doctrine", "Doctrine"
-    SHIP = "ship", "Ship"
-    ACTIVITY = "activity", "Activity"
-    CUSTOM = "custom", "Custom"
+    TEMPLATE = "template", _("Template")
+    DOCTRINE = "doctrine", _("Doctrine")
+    SHIP = "ship", _("Ship")
+    ACTIVITY = "activity", _("Activity")
+    CUSTOM = "custom", _("Custom")
 
 
 class GoalStatus(models.TextChoices):
-    CONSIDERING = "considering", "Considering"
-    ACTIVE = "active", "Active"
-    PAUSED = "paused", "Paused"
-    COMPLETED = "completed", "Completed"
-    ABANDONED = "abandoned", "Abandoned"
-    ARCHIVED = "archived", "Archived"
+    CONSIDERING = "considering", _("Considering")
+    ACTIVE = "active", _("Active")
+    PAUSED = "paused", _("Paused")
+    COMPLETED = "completed", _("Completed")
+    ABANDONED = "abandoned", _("Abandoned")
+    ARCHIVED = "archived", _("Archived")
 
 
 class Priority(models.TextChoices):
-    PRIMARY = "primary", "Primary"
-    SECONDARY = "secondary", "Secondary"
-    SOMEDAY = "someday", "Someday"
+    PRIMARY = "primary", pgettext_lazy("goal priority", "Primary")
+    SECONDARY = "secondary", _("Secondary")
+    SOMEDAY = "someday", _("Someday")
 
 
 class MilestoneKind(models.TextChoices):
-    SKILL_TARGET = "skill_target", "Skill target"
-    DOCTRINE_READY = "doctrine_ready", "Doctrine ready"
-    SHIP_OWNED = "ship_owned", "Ship owned"
-    CONTRIBUTION = "contribution", "Contribution"
-    COMBAT_FIRST = "combat_first", "Combat first"
-    PRACTICAL = "practical", "Practical"
-    MANUAL = "manual", "Manual"
+    SKILL_TARGET = "skill_target", _("Skill target")
+    DOCTRINE_READY = "doctrine_ready", _("Doctrine ready")
+    SHIP_OWNED = "ship_owned", _("Ship owned")
+    CONTRIBUTION = "contribution", _("Contribution")
+    COMBAT_FIRST = "combat_first", _("Combat first")
+    PRACTICAL = "practical", _("Practical")
+    MANUAL = "manual", _("Manual")
 
 
 class MilestoneStatus(models.TextChoices):
-    PENDING = "pending", "Pending"
-    DONE = "done", "Done"
-    SKIPPED = "skipped", "Skipped"
+    PENDING = "pending", _("Pending")
+    DONE = "done", _("Done")
+    SKIPPED = "skipped", _("Skipped")
 
 
 class Verification(models.TextChoices):
-    AUTO = "auto", "Automatic"
-    SELF = "self", "Self"
-    MENTOR = "mentor", "Mentor"
-    OFFICER = "officer", "Officer"
+    AUTO = "auto", _("Automatic")
+    SELF = "self", _("Self")
+    MENTOR = "mentor", _("Mentor")
+    OFFICER = "officer", _("Officer")
 
 
 class CheckState(models.TextChoices):
-    OK = "ok", "OK"
-    UNKNOWN = "unknown", "Unknown"
-    STALE = "stale", "Stale"
+    OK = "ok", _("OK")
+    UNKNOWN = "unknown", _("Unknown")
+    STALE = "stale", _("Stale")
 
 
 class StepStatus(models.TextChoices):
-    OPEN = "open", "Open"
-    DONE = "done", "Done"
-    DISMISSED = "dismissed", "Dismissed"
+    OPEN = "open", _("Open")
+    DONE = "done", _("Done")
+    DISMISSED = "dismissed", _("Dismissed")
 
 
 class StepSource(models.TextChoices):
-    PILOT = "pilot", "Pilot"
-    TEMPLATE = "template", "Template"
-    SUGGESTION = "suggestion", "Suggestion"
+    PILOT = "pilot", _("Pilot")
+    TEMPLATE = "template", _("Template")
+    SUGGESTION = "suggestion", _("Suggestion")
 
 
 class SuggestionKind(models.TextChoices):
-    NEAR_QUALIFICATION = "near_qualification", "Near qualification"
-    EVENT_MATCH = "event_match", "Event match"
-    MENTOR_AVAILABLE = "mentor_available", "Mentor available"
-    STALLED_GOAL = "stalled_goal", "Stalled goal"
-    BLOCKED_PREREQ = "blocked_prereq", "Blocked prerequisite"
-    SHIP_AVAILABLE = "ship_available", "Ship available"
-    CAMPAIGN_OPPORTUNITY = "campaign_opportunity", "Campaign opportunity"
-    REVIEW_DUE = "review_due", "Review due"
+    NEAR_QUALIFICATION = "near_qualification", _("Near qualification")
+    EVENT_MATCH = "event_match", _("Event match")
+    MENTOR_AVAILABLE = "mentor_available", _("Mentor available")
+    STALLED_GOAL = "stalled_goal", _("Stalled goal")
+    BLOCKED_PREREQ = "blocked_prereq", _("Blocked prerequisite")
+    SHIP_AVAILABLE = "ship_available", _("Ship available")
+    CAMPAIGN_OPPORTUNITY = "campaign_opportunity", _("Campaign opportunity")
+    REVIEW_DUE = "review_due", _("Review due")
 
 
 class SuggestionStatus(models.TextChoices):
-    OPEN = "open", "Open"
-    ACCEPTED = "accepted", "Accepted"
-    DISMISSED = "dismissed", "Dismissed"
-    DEFERRED = "deferred", "Deferred"
-    NOT_INTERESTED = "not_interested", "Not interested"
-    INCORRECT = "incorrect", "Incorrect"
+    OPEN = "open", _("Open")
+    ACCEPTED = "accepted", _("Accepted")
+    DISMISSED = "dismissed", _("Dismissed")
+    DEFERRED = "deferred", _("Deferred")
+    NOT_INTERESTED = "not_interested", _("Not interested")
+    INCORRECT = "incorrect", _("Incorrect")
 
 
 class TemplateSource(models.TextChoices):
-    BUILTIN = "builtin", "Built-in"
-    CORP = "corp", "Corp"
+    BUILTIN = "builtin", _("Built-in")
+    CORP = "corp", _("Corp")
 
 
 class SoloGroup(models.TextChoices):
-    SOLO = "solo", "Solo"
-    GROUP = "group", "Group"
-    MIXED = "mixed", "Mixed"
+    SOLO = "solo", _("Solo")
+    GROUP = "group", _("Group")
+    MIXED = "mixed", _("Mixed")
 
 
 # --------------------------------------------------------------------------- #

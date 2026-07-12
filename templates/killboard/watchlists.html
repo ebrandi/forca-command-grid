@@ -1,42 +1,44 @@
 {% extends "base.html" %}
 {% load eve %}
-{% block title %}Intel · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Intel" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <header class="mb-6 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <p class="eyebrow">Intel</p>
-    <h1 class="mt-1 text-3xl font-bold text-ink">Watchlists &amp; battle reports</h1>
-    <p class="mt-1 text-sm text-faint">Track adversaries and turn a fight into an after-action report.</p>
+    <p class="eyebrow">{% translate "Intel" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Watchlists &amp; battle reports" %}</h1>
+    <p class="mt-1 text-sm text-faint">{% translate "Track adversaries and turn a fight into an after-action report." %}</p>
     <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
-      <a href="{% url 'navigation:roaming' %}" class="inline-flex items-center gap-1.5 text-gold hover:underline"><svg class="h-4 w-4"><use href="#i-target"/></svg> Roaming targets — where ratters &amp; miners are active now →</a>
-      <a href="{% url 'navigation:gatecamp' %}" class="inline-flex items-center gap-1.5 text-gold hover:underline"><svg class="h-4 w-4"><use href="#i-shield"/></svg> Gate Camp Watch — where hostiles are camping now →</a>
+      <a href="{% url 'navigation:roaming' %}" class="inline-flex items-center gap-1.5 text-gold hover:underline"><svg class="h-4 w-4"><use href="#i-target"/></svg> {% translate "Roaming targets — where ratters &amp; miners are active now" %} →</a>
+      <a href="{% url 'navigation:gatecamp' %}" class="inline-flex items-center gap-1.5 text-gold hover:underline"><svg class="h-4 w-4"><use href="#i-shield"/></svg> {% translate "Gate Camp Watch — where hostiles are camping now" %} →</a>
     </div>
   </div>
   {% if can_manage %}
   <div class="flex gap-2" x-data="{wl:false, br:false}">
-    <button @click="wl=!wl" class="btn-gold"><svg class="h-4 w-4"><use href="#i-cross"/></svg> New watchlist</button>
-    <button @click="br=!br" class="btn-ghost">Generate battle report</button>
+    <button @click="wl=!wl" class="btn-gold"><svg class="h-4 w-4"><use href="#i-cross"/></svg> {% translate "New watchlist" %}</button>
+    <button @click="br=!br" class="btn-ghost">{% translate "Generate battle report" %}</button>
 
     <div x-show="wl" x-cloak class="fixed inset-0 z-40 flex items-start justify-center bg-black/60 p-4 pt-24" @click.self="wl=false">
       <form method="post" action="{% url 'killboard:watchlist_create' %}" class="panel w-full max-w-md space-y-4 p-5">
         {% csrf_token %}
-        <h2 class="eyebrow text-gold">New watchlist</h2>
-        <div><label class="label">Name</label>{{ form.name }}</div>
-        <div><label class="label">Purpose</label>{{ form.purpose }}</div>
-        <div class="flex gap-2"><button class="btn-gold">Create</button><button type="button" @click="wl=false" class="btn-ghost">Cancel</button></div>
+        <h2 class="eyebrow text-gold">{% translate "New watchlist" %}</h2>
+        <div><label class="label">{% translate "Name" %}</label>{{ form.name }}</div>
+        <div><label class="label">{% translate "Purpose" %}</label>{{ form.purpose }}</div>
+        <div class="flex gap-2"><button class="btn-gold">{% translate "Create" %}</button><button type="button" @click="wl=false" class="btn-ghost">{% translate "Cancel" %}</button></div>
       </form>
     </div>
 
     <div x-show="br" x-cloak class="fixed inset-0 z-40 flex items-start justify-center bg-black/60 p-4 pt-24" @click.self="br=false">
       <form method="post" action="{% url 'killboard:battle_report_create' %}" class="panel w-full max-w-md space-y-4 p-5">
         {% csrf_token %}
-        <h2 class="eyebrow text-gold">Generate battle report</h2>
-        <div><label class="label">System</label>{% include "components/_type_picker.html" with field="system_id" endpoint="/killboard/intel/systems/" placeholder="Search a solar system…" required=1 %}</div>
+        <h2 class="eyebrow text-gold">{% translate "Generate battle report" %}</h2>
+        {% translate "Search a solar system…" as system_ph %}
+        <div><label class="label">{% translate "System" %}</label>{% include "components/_type_picker.html" with field="system_id" endpoint="/killboard/intel/systems/" placeholder=system_ph required=1 %}</div>
         <div class="grid grid-cols-2 gap-3">
-          <div><label class="label">Title (optional)</label>{{ battle_form.title }}</div>
-          <div><label class="label">Window (hours)</label>{{ battle_form.hours }}</div>
+          <div><label class="label">{% translate "Title (optional)" %}</label>{{ battle_form.title }}</div>
+          <div><label class="label">{% translate "Window (hours)" %}</label>{{ battle_form.hours }}</div>
         </div>
-        <div class="flex gap-2"><button class="btn-gold">Generate</button><button type="button" @click="br=false" class="btn-ghost">Cancel</button></div>
+        <div class="flex gap-2"><button class="btn-gold">{% translate "Generate" %}</button><button type="button" @click="br=false" class="btn-ghost">{% translate "Cancel" %}</button></div>
       </form>
     </div>
   </div>
@@ -45,24 +47,24 @@
 
 <div class="grid gap-6 lg:grid-cols-3">
   <section class="lg:col-span-2">
-    <h2 class="eyebrow mb-2">Watchlists</h2>
+    <h2 class="eyebrow mb-2">{% translate "Watchlists" %}</h2>
     <div class="grid gap-3 sm:grid-cols-2">
       {% for wl in watchlists %}
         <a href="{% url 'killboard:watchlist_detail' wl.pk %}" class="panel group p-4 hover:border-gold/40 transition">
           <div class="flex items-center justify-between gap-2">
             <h3 class="font-display font-semibold text-ink group-hover:text-gold transition">{{ wl.name }}</h3>
-            <span class="chip">{{ wl.entries.count }} target{{ wl.entries.count|pluralize }}</span>
+            <span class="chip">{% blocktranslate count n=wl.entries.count %}{{ n }} target{% plural %}{{ n }} targets{% endblocktranslate %}</span>
           </div>
           {% if wl.purpose %}<p class="mt-1 text-xs text-faint">{{ wl.purpose }}</p>{% endif %}
         </a>
       {% empty %}
-        <div class="panel p-8 text-center text-sm text-faint sm:col-span-2">No watchlists yet.{% if can_manage %} Create one to start tracking adversaries.{% endif %}</div>
+        <div class="panel p-8 text-center text-sm text-faint sm:col-span-2">{% translate "No watchlists yet." %}{% if can_manage %} {% translate "Create one to start tracking adversaries." %}{% endif %}</div>
       {% endfor %}
     </div>
   </section>
 
   <section>
-    <h2 class="eyebrow mb-2">Recent battle reports</h2>
+    <h2 class="eyebrow mb-2">{% translate "Recent battle reports" %}</h2>
     <div class="panel divide-y divide-line/40">
       {% for r in reports %}
         <a href="{% url 'killboard:battle_report_detail' r.pk %}" class="block px-4 py-2.5 text-sm hover:bg-panel2">
@@ -70,7 +72,7 @@
           <span class="block text-xs text-faint">{{ r.start_time|date:"M j, H:i" }} · {{ r.killmails.count }} killmails</span>
         </a>
       {% empty %}
-        <p class="px-4 py-6 text-center text-sm text-faint">No reports yet.</p>
+        <p class="px-4 py-6 text-center text-sm text-faint">{% translate "No reports yet." %}</p>
       {% endfor %}
     </div>
   </section>

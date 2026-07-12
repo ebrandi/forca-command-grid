@@ -1,39 +1,40 @@
 {% extends "base.html" %}
 {% load eve %}
-{% block title %}My progress · {{ contest.name }} · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "My progress" %} · {{ contest.name }} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <header class="mb-6 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <p class="eyebrow text-gold">My raffle progress</p>
+    <p class="eyebrow text-gold">{% translate "My raffle progress" %}</p>
     <h1 class="mt-1 text-2xl font-bold text-ink">{{ contest.name }}</h1>
   </div>
-  <a href="{% url 'raffle:detail' contest.slug %}" class="btn-ghost text-sm">← Back to contest</a>
+  <a href="{% url 'raffle:detail' contest.slug %}" class="btn-ghost text-sm">← {% translate "Back to contest" %}</a>
 </header>
 
 {# Eligibility banner #}
 <section class="panel mb-6 p-5 {% if eligibility.eligible %}!border-kill/30{% else %}!border-gold/40{% endif %}">
   {% if eligibility.eligible %}
-    <div class="flex items-center gap-3"><svg class="h-6 w-6 text-kill"><use href="#i-shield"/></svg><p class="text-sm text-muted">You're eligible. ESI token: <span class="text-kill">{{ eligibility.esi_status }}</span>.</p></div>
+    <div class="flex items-center gap-3"><svg class="h-6 w-6 text-kill"><use href="#i-shield"/></svg><p class="text-sm text-muted">{% blocktranslate with status=eligibility.esi_status %}You're eligible. ESI token: <span class="text-kill">{{ status }}</span>.{% endblocktranslate %}</p></div>
   {% else %}
     <div class="flex flex-wrap items-center gap-3">
       <svg class="h-6 w-6 text-gold"><use href="#i-lock"/></svg>
       <p class="text-sm text-muted">{{ eligibility.message }} <span class="text-gold">{{ eligibility.cta }}</span></p>
-      <a href="{% url 'sso:login' %}" class="btn-gold ml-auto text-sm">Fix eligibility</a>
+      <a href="{% url 'sso:login' %}" class="btn-gold ml-auto text-sm">{% translate "Fix eligibility" %}</a>
     </div>
   {% endif %}
 </section>
 
 {# Ticket tiles #}
 <section class="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-  <div class="panel p-4"><p class="eyebrow text-faint">My tickets</p><p class="data mt-1 text-2xl font-bold text-gold">{{ perf.my_tickets }}</p></div>
-  <div class="panel p-4"><p class="eyebrow text-faint">Rank</p><p class="data mt-1 text-2xl font-bold text-ink">{% if perf.summary %}#{{ perf.summary.rank }}{% else %}—{% endif %}</p></div>
-  <div class="panel p-4"><p class="eyebrow text-faint">Est. odds</p><p class="data mt-1 text-2xl font-bold text-cyan">{{ perf.odds }}%</p></div>
-  <div class="panel p-4"><p class="eyebrow text-faint">Eligible pool</p><p class="data mt-1 text-2xl font-bold text-ink">{{ perf.total_eligible_tickets }}</p></div>
+  <div class="panel p-4"><p class="eyebrow text-faint">{% translate "My tickets" %}</p><p class="data mt-1 text-2xl font-bold text-gold">{{ perf.my_tickets }}</p></div>
+  <div class="panel p-4"><p class="eyebrow text-faint">{% translate "Rank" %}</p><p class="data mt-1 text-2xl font-bold text-ink">{% if perf.summary %}#{{ perf.summary.rank }}{% else %}—{% endif %}</p></div>
+  <div class="panel p-4"><p class="eyebrow text-faint">{% translate "Est. odds" %}</p><p class="data mt-1 text-2xl font-bold text-cyan">{{ perf.odds }}%</p></div>
+  <div class="panel p-4"><p class="eyebrow text-faint">{% translate "Eligible pool" %}</p><p class="data mt-1 text-2xl font-bold text-ink">{{ perf.total_eligible_tickets }}</p></div>
 </section>
 
 {% if perf.summary %}
 <section class="panel mb-6 p-5">
-  <h2 class="eyebrow mb-3 text-gold">PVP breakdown</h2>
+  <h2 class="eyebrow mb-3 text-gold">{% translate "PVP breakdown" %}</h2>
   <div class="grid gap-3 sm:grid-cols-4 text-center">
     <div><p class="data text-xl text-ink">{{ perf.summary.pvp_kills }}</p><p class="text-[11px] text-faint">kills</p></div>
     <div><p class="data text-xl text-gold">{{ perf.summary.pvp_solo }}</p><p class="text-[11px] text-faint">solo</p></div>
@@ -49,7 +50,7 @@
 {% endif %}
 
 <section class="panel overflow-hidden">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Ticket history</h2></div>
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "Ticket history" %}</h2></div>
   <div class="divide-y divide-line/40">
     {% for e in perf.entries %}
     <div class="flex items-center gap-3 px-4 py-2 text-sm">
@@ -60,7 +61,7 @@
       {% else %}<span class="chip !border-gold/40 !text-gold">{{ e.status }}</span>{% endif %}
     </div>
     {% empty %}
-    <p class="px-4 py-8 text-center text-sm text-faint">No tickets yet — undock and get on some kills!</p>
+    <p class="px-4 py-8 text-center text-sm text-faint">{% translate "No tickets yet — undock and get on some kills!" %}</p>
     {% endfor %}
   </div>
 </section>

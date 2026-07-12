@@ -32,6 +32,7 @@ from __future__ import annotations
 
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from core.mixins import TimeStampedModel
 
@@ -40,8 +41,8 @@ class MeasurementSource(models.TextChoices):
     """Provenance of a measured value — shared by ``Objective.measurement_source`` and
     ``ObjectiveSample.source`` so the manual/auto distinction is one enum (doc 06 §4.9)."""
 
-    AUTO = "auto", "Automatic"
-    MANUAL = "manual", "Manual"
+    AUTO = "auto", _("Automatic")
+    MANUAL = "manual", _("Manual")
 
 
 class DependencyKind(models.TextChoices):
@@ -49,27 +50,27 @@ class DependencyKind(models.TextChoices):
     ``to_kind`` and carries ``to_id=0`` with a mandatory note — the escape hatch for a blocker
     that lives outside any campaign entity (a market delivery, an alliance decision)."""
 
-    OBJECTIVE = "objective", "Objective"
-    MILESTONE = "milestone", "Milestone"
-    WORKSTREAM = "workstream", "Workstream"
-    CAMPAIGN = "campaign", "Campaign"
-    EXTERNAL = "external", "External"
+    OBJECTIVE = "objective", _("Objective")
+    MILESTONE = "milestone", _("Milestone")
+    WORKSTREAM = "workstream", _("Workstream")
+    CAMPAIGN = "campaign", _("Campaign")
+    EXTERNAL = "external", _("External")
 
 
 class EvidenceKind(models.TextChoices):
     """What a piece of evidence hangs off (doc 06 §4.16)."""
 
-    CAMPAIGN = "campaign", "Campaign"
-    OBJECTIVE = "objective", "Objective"
-    MILESTONE = "milestone", "Milestone"
+    CAMPAIGN = "campaign", _("Campaign")
+    OBJECTIVE = "objective", _("Objective")
+    MILESTONE = "milestone", _("Milestone")
 
 
 class ActivitySource(models.TextChoices):
     """Whether an activity row came from a human action or automation (doc 06 §4.17).
     Automation rows always carry ``actor=NULL`` so the two are never confused."""
 
-    MANUAL = "manual", "Manual"
-    AUTOMATION = "automation", "Automation"
+    MANUAL = "manual", _("Manual")
+    AUTOMATION = "automation", _("Automation")
 
 
 class Campaign(TimeStampedModel):
@@ -82,53 +83,53 @@ class Campaign(TimeStampedModel):
     """
 
     class Category(models.TextChoices):
-        DOCTRINE_ROLLOUT = "doctrine_rollout", "Doctrine Rollout"
-        DEPLOYMENT = "deployment", "Deployment"
-        RELOCATION = "relocation", "Relocation"
-        DEFENCE_READINESS = "defence_readiness", "Defence Readiness"
-        STOCKPILE = "stockpile", "Stockpile"
-        SRP_RESERVE = "srp_reserve", "SRP Reserve"
-        MEMBERSHIP = "membership", "Membership"
-        TRAINING = "training", "Training"
-        INDUSTRY = "industry", "Industry"
-        LOGISTICS = "logistics", "Logistics"
-        COVERAGE = "coverage", "Coverage"
-        OTHER = "other", "Other"
+        DOCTRINE_ROLLOUT = "doctrine_rollout", _("Doctrine Rollout")
+        DEPLOYMENT = "deployment", _("Deployment")
+        RELOCATION = "relocation", _("Relocation")
+        DEFENCE_READINESS = "defence_readiness", _("Defence Readiness")
+        STOCKPILE = "stockpile", _("Stockpile")
+        SRP_RESERVE = "srp_reserve", _("SRP Reserve")
+        MEMBERSHIP = "membership", _("Membership")
+        TRAINING = "training", _("Training")
+        INDUSTRY = "industry", _("Industry")
+        LOGISTICS = "logistics", _("Logistics")
+        COVERAGE = "coverage", _("Coverage")
+        OTHER = "other", _("Other")
 
     class Status(models.TextChoices):
-        DRAFT = "draft", "Draft"
-        PROPOSED = "proposed", "Proposed"
-        APPROVED = "approved", "Approved"
-        ACTIVE = "active", "Active"
-        PAUSED = "paused", "Paused"
-        COMPLETED = "completed", "Completed"
-        FAILED = "failed", "Failed"
-        CANCELLED = "cancelled", "Cancelled"
-        ARCHIVED = "archived", "Archived"
+        DRAFT = "draft", _("Draft")
+        PROPOSED = "proposed", _("Proposed")
+        APPROVED = "approved", _("Approved")
+        ACTIVE = "active", _("Active")
+        PAUSED = "paused", _("Paused")
+        COMPLETED = "completed", _("Completed")
+        FAILED = "failed", _("Failed")
+        CANCELLED = "cancelled", _("Cancelled")
+        ARCHIVED = "archived", _("Archived")
 
     class Health(models.TextChoices):
-        HEALTHY = "healthy", "Healthy"
-        WATCH = "watch", "Watch"
-        AT_RISK = "at_risk", "At Risk"
-        CRITICAL = "critical", "Critical"
-        BLOCKED = "blocked", "Blocked"
-        UNKNOWN = "unknown", "Unknown"
+        HEALTHY = "healthy", _("Healthy")
+        WATCH = "watch", _("Watch")
+        AT_RISK = "at_risk", _("At Risk")
+        CRITICAL = "critical", _("Critical")
+        BLOCKED = "blocked", _("Blocked")
+        UNKNOWN = "unknown", _("Unknown")
 
     class ProgressMode(models.TextChoices):
-        WEIGHTED = "weighted", "Weighted objectives"
-        MILESTONES = "milestones", "Milestones"
-        MANUAL = "manual", "Manual"
+        WEIGHTED = "weighted", _("Weighted objectives")
+        MILESTONES = "milestones", _("Milestones")
+        MANUAL = "manual", _("Manual")
 
     class Visibility(models.TextChoices):
-        MEMBERS = "members", "Members"
-        OFFICERS = "officers", "Officers"
-        DIRECTORS = "directors", "Directors"
-        RESTRICTED = "restricted", "Restricted"
+        MEMBERS = "members", _("Members")
+        OFFICERS = "officers", _("Officers")
+        DIRECTORS = "directors", _("Directors")
+        RESTRICTED = "restricted", _("Restricted")
 
     class RecognitionMode(models.TextChoices):
-        NONE = "none", "None"
-        COUNTS = "counts", "Counts"
-        POINTS = "points", "Points"
+        NONE = "none", _("None")
+        COUNTS = "counts", _("Counts")
+        POINTS = "points", _("Points")
 
     name = models.CharField(max_length=120)
     summary = models.CharField(max_length=200, blank=True)
@@ -217,9 +218,9 @@ class Workstream(TimeStampedModel):
     """
 
     class WorkstreamStatus(models.TextChoices):
-        OPEN = "open", "Open"
-        ON_HOLD = "on_hold", "On Hold"
-        DONE = "done", "Done"
+        OPEN = "open", _("Open")
+        ON_HOLD = "on_hold", _("On Hold")
+        DONE = "done", _("Done")
 
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE, related_name="workstreams")
     name = models.CharField(max_length=120)
@@ -254,16 +255,16 @@ class Objective(TimeStampedModel):
     """
 
     class ObjectiveStatus(models.TextChoices):
-        PENDING = "pending", "Pending"
-        ACTIVE = "active", "Active"
-        BLOCKED = "blocked", "Blocked"
-        MET = "met", "Met"
-        MISSED = "missed", "Missed"
-        DROPPED = "dropped", "Dropped"
+        PENDING = "pending", _("Pending")
+        ACTIVE = "active", _("Active")
+        BLOCKED = "blocked", _("Blocked")
+        MET = "met", _("Met")
+        MISSED = "missed", _("Missed")
+        DROPPED = "dropped", _("Dropped")
 
     class Direction(models.TextChoices):
-        GTE = "gte", "Reach at least"
-        LTE = "lte", "Keep at or below"
+        GTE = "gte", _("Reach at least")
+        LTE = "lte", _("Keep at or below")
 
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE, related_name="objectives")
     workstream = models.ForeignKey(
@@ -384,10 +385,10 @@ class Milestone(TimeStampedModel):
     """
 
     class MilestoneStatus(models.TextChoices):
-        PENDING = "pending", "Pending"
-        READY_FOR_REVIEW = "ready_for_review", "Ready for review"
-        DONE = "done", "Done"
-        MISSED = "missed", "Missed"
+        PENDING = "pending", _("Pending")
+        READY_FOR_REVIEW = "ready_for_review", _("Ready for review")
+        DONE = "done", _("Done")
+        MISSED = "missed", _("Missed")
 
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE, related_name="milestones")
     workstream = models.ForeignKey(
@@ -467,15 +468,15 @@ class Risk(TimeStampedModel):
     """
 
     class RiskLevel(models.TextChoices):
-        LOW = "low", "Low"
-        MEDIUM = "medium", "Medium"
-        HIGH = "high", "High"
+        LOW = "low", _("Low")
+        MEDIUM = "medium", _("Medium")
+        HIGH = "high", _("High")
 
     class RiskStatus(models.TextChoices):
-        OPEN = "open", "Open"
-        MITIGATING = "mitigating", "Mitigating"
-        REALISED = "realised", "Realised"
-        RETIRED = "retired", "Retired"
+        OPEN = "open", _("Open")
+        MITIGATING = "mitigating", _("Mitigating")
+        REALISED = "realised", _("Realised")
+        RETIRED = "retired", _("Retired")
 
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE, related_name="risks")
     workstream = models.ForeignKey(
@@ -513,9 +514,9 @@ class Issue(TimeStampedModel):
     resolves)."""
 
     class IssueStatus(models.TextChoices):
-        OPEN = "open", "Open"
-        ESCALATED = "escalated", "Escalated"
-        RESOLVED = "resolved", "Resolved"
+        OPEN = "open", _("Open")
+        ESCALATED = "escalated", _("Escalated")
+        RESOLVED = "resolved", _("Resolved")
 
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE, related_name="issues")
     objective = models.ForeignKey(

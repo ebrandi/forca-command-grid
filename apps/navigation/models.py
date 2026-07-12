@@ -9,13 +9,14 @@ from __future__ import annotations
 
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from core.mixins import TimeStampedModel
 
 
 class Source(models.TextChoices):
-    MANUAL = "manual", "Manual"
-    ESI = "esi", "ESI sync"
+    MANUAL = "manual", _("Manual")
+    ESI = "esi", _("ESI sync")
 
 
 class AnsiblexBridge(TimeStampedModel):
@@ -63,9 +64,9 @@ class JumpPlannerConfig(TimeStampedModel):
     """
 
     class Preference(models.TextChoices):
-        SAFER = "safer", "Safer (prefer high-sec)"
-        SHORTEST = "shortest", "Shortest"
-        INSECURE = "insecure", "Less secure (prefer low/null)"
+        SAFER = "safer", _("Safer (prefer high-sec)")
+        SHORTEST = "shortest", _("Shortest")
+        INSECURE = "insecure", _("Less secure (prefer low/null)")
 
     is_active = models.BooleanField(default=True)
     enabled = models.BooleanField(default=True)
@@ -90,7 +91,7 @@ class JumpPlannerConfig(TimeStampedModel):
     )
 
     class Meta:
-        verbose_name = "Jump planner config"
+        verbose_name = _("Jump planner config")
 
     def __str__(self) -> str:
         return "Jump planner config"
@@ -109,8 +110,8 @@ class SavedJumpRoute(TimeStampedModel):
     """
 
     class Visibility(models.TextChoices):
-        PRIVATE = "private", "Private (only me)"
-        LEADERSHIP = "leadership", "Shared with leadership"
+        PRIVATE = "private", _("Private (only me)")
+        LEADERSHIP = "leadership", _("Shared with leadership")
 
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="saved_jump_routes"

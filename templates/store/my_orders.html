@@ -1,22 +1,23 @@
 {% extends "base.html" %}
 {% load eve %}
+{% load i18n %}
 {% block title %}My Orders · [FORCA] Command Grid{% endblock %}
 {% block content %}
 
 <header class="mb-6 flex flex-wrap items-end justify-between gap-4">
   <div>
-    <p class="eyebrow">Forças Armadas · Corp Store</p>
-    <h1 class="mt-1 text-3xl font-bold text-ink">My orders</h1>
-    <p class="mt-1 text-sm text-faint">Everything you've ordered from the store and where each one stands.</p>
+    <p class="eyebrow">Forças Armadas · {% translate "Corp Store" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "My orders" %}</h1>
+    <p class="mt-1 text-sm text-faint">{% translate "Everything you've ordered from the store and where each one stands." %}</p>
   </div>
-  <a href="{% url 'store:storefront' %}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-ship"/></svg> Storefront</a>
+  <a href="{% url 'store:storefront' %}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-ship"/></svg> {% translate "Storefront" %}</a>
 </header>
 
 
 <section class="mb-6">
   <div class="mb-2 flex items-center justify-between">
-    <h2 class="eyebrow text-gold">In progress · {{ active|length }}</h2>
-    {% if outstanding_value %}<p class="text-xs text-faint">Outstanding value <span class="data text-gold">{{ outstanding_value|isk }}</span></p>{% endif %}
+    <h2 class="eyebrow text-gold">{% translate "In progress" %} · {{ active|length }}</h2>
+    {% if outstanding_value %}<p class="text-xs text-faint">{% blocktranslate with value=outstanding_value|isk %}Outstanding value <span class="data text-gold">{{ value }}</span>{% endblocktranslate %}</p>{% endif %}
   </div>
   <div class="space-y-2">
     {% for o in active %}
@@ -27,31 +28,32 @@
         <p class="text-xs text-faint">
           {{ o.get_kind_display }}
           {% if o.is_capital %}· <span class="text-loss">{{ o.get_hull_class_display }}</span>{% endif %}
-          {% if o.claimed_by_character_id %}· builder {% eve_name o.claimed_by_character_id %}{% else %}· awaiting a builder{% endif %}
+          {% if o.claimed_by_character_id %}· {% translate "builder" %} {% eve_name o.claimed_by_character_id %}{% else %}· {% translate "awaiting a builder" %}{% endif %}
         </p>
       </div>
       <!-- Buyer's next action for this status -->
       <div class="min-w-44 text-xs text-faint">
-        {% if o.status == 'open' %}Waiting for a corp member to claim it.
-        {% elif o.status == 'claimed' and o.requires_build %}<span class="text-gold">Pay the {{ o.deposit_amount|isk }} deposit</span> to start the build.
-        {% elif o.status == 'claimed' %}Being prepared for contract.
-        {% elif o.status == 'deposit_paid' %}Deposit received — queued for production.
-        {% elif o.status == 'in_production' %}In production.
-        {% elif o.status == 'ready' %}<span class="text-cyan">Ready — accept the contract &amp; pay the balance.</span>
+        {% if o.status == 'open' %}{% translate "Waiting for a corp member to claim it." %}
+        {% elif o.status == 'claimed' and o.requires_build %}{% blocktranslate with amount=o.deposit_amount|isk %}<span class="text-gold">Pay the {{ amount }} deposit</span> to start the build.{% endblocktranslate %}
+        {% elif o.status == 'claimed' %}{% translate "Being prepared for contract." %}
+        {% elif o.status == 'deposit_paid' %}{% translate "Deposit received — queued for production." %}
+        {% elif o.status == 'in_production' %}{% translate "In production." %}
+        {% elif o.status == 'ready' %}<span class="text-cyan">{% translate "Ready — accept the contract &amp; pay the balance." %}</span>
         {% endif %}
       </div>
       <span class="chip {% if o.status == 'open' %}!text-gold{% elif o.status == 'ready' %}!text-cyan{% else %}!text-muted{% endif %}">{{ o.get_status_display }}</span>
       <span class="data text-right text-gold">{{ o.total_price|isk }}</span>
     </a>
     {% empty %}
-    <div class="panel p-10 text-center text-sm text-faint">No active orders. <a href="{% url 'store:storefront' %}" class="text-gold hover:underline">Visit the store →</a></div>
+    {% url 'store:storefront' as storefront_url %}
+    <div class="panel p-10 text-center text-sm text-faint">{% blocktranslate %}No active orders. <a href="{{ storefront_url }}" class="text-gold hover:underline">Visit the store →</a>{% endblocktranslate %}</div>
     {% endfor %}
   </div>
 </section>
 
 {% if history %}
 <section>
-  <h2 class="eyebrow mb-2 text-faint">History</h2>
+  <h2 class="eyebrow mb-2 text-faint">{% translate "History" %}</h2>
   <div class="panel divide-y divide-line/40">
     {% for o in history %}
     <a href="{% url 'store:order' o.pk %}" class="flex items-center gap-3 px-4 py-2 text-sm hover:bg-panel2/40">

@@ -1,26 +1,27 @@
 {% extends "base.html" %}
-{% block title %}Recruitment ESI link · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Recruitment ESI link" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <section class="panel mx-auto mt-8 max-w-lg p-6">
   {% if not enabled %}
-    <p class="eyebrow text-loss">Unavailable</p>
-    <h1 class="mt-1 text-xl font-bold text-ink">ESI link not available</h1>
-    <p class="mt-2 text-sm text-muted">This deployment can’t process candidate ESI links right now. Please let your recruiter know.</p>
+    <p class="eyebrow text-loss">{% translate "Unavailable" %}</p>
+    <h1 class="mt-1 text-xl font-bold text-ink">{% translate "ESI link not available" %}</h1>
+    <p class="mt-2 text-sm text-muted">{% translate "This deployment can’t process candidate ESI links right now. Please let your recruiter know." %}</p>
   {% elif not consent %}
-    <p class="eyebrow text-loss">Link expired</p>
-    <h1 class="mt-1 text-xl font-bold text-ink">This consent link is invalid or already used</h1>
-    <p class="mt-2 text-sm text-muted">Consent links are single-use and time-boxed. Ask your recruiter for a fresh one.</p>
+    <p class="eyebrow text-loss">{% translate "Link expired" %}</p>
+    <h1 class="mt-1 text-xl font-bold text-ink">{% translate "This consent link is invalid or already used" %}</h1>
+    <p class="mt-2 text-sm text-muted">{% translate "Consent links are single-use and time-boxed. Ask your recruiter for a fresh one." %}</p>
   {% else %}
-    <p class="eyebrow text-gold">[FORCA] Command Grid · Recruitment</p>
-    <h1 class="mt-1 text-xl font-bold text-ink">Confirm your application — {{ consent.candidate.name }}</h1>
-    <p class="mt-3 text-sm text-muted">You’re about to grant <span class="text-ink">read-only</span> access so the recruitment team can confirm a few facts about your character. We read this <span class="text-ink">once</span> and keep only short derived notes — <span class="text-ink">your EVE token is never stored</span>.</p>
+    <p class="eyebrow text-gold">[FORCA] Command Grid · {% translate "Recruitment" %}</p>
+    <h1 class="mt-1 text-xl font-bold text-ink">{% blocktranslate with name=consent.candidate.name %}Confirm your application — {{ name }}{% endblocktranslate %}</h1>
+    <p class="mt-3 text-sm text-muted">{% blocktranslate %}You’re about to grant <span class="text-ink">read-only</span> access so the recruitment team can confirm a few facts about your character. We read this <span class="text-ink">once</span> and keep only short derived notes — <span class="text-ink">your EVE token is never stored</span>.{% endblocktranslate %}</p>
     <ul class="mt-3 space-y-1 text-sm text-muted">
-      <li>• Your <span class="text-ink">skills</span> — to confirm what you can fly</li>
-      <li>• Your <span class="text-ink">roles in your current corp</span></li>
+      <li>• {% blocktranslate %}Your <span class="text-ink">skills</span> — to confirm what you can fly{% endblocktranslate %}</li>
+      <li>• {% blocktranslate %}Your <span class="text-ink">roles in your current corp</span>{% endblocktranslate %}</li>
     </ul>
-    <p class="mt-3 text-xs text-faint">You’ll sign in at EVE Online’s official login. Please authorise as <span class="text-muted">{{ consent.candidate.name }}</span> — a different character won’t be accepted. This link expires {{ consent.expires_at|date:"j M H:i" }} UTC.</p>
+    <p class="mt-3 text-xs text-faint">{% blocktranslate with name=consent.candidate.name expires=consent.expires_at|date:"j M H:i" %}You’ll sign in at EVE Online’s official login. Please authorise as <span class="text-muted">{{ name }}</span> — a different character won’t be accepted. This link expires {{ expires }} UTC.{% endblocktranslate %}</p>
     <form method="post" class="mt-5">{% csrf_token %}
-      <button class="btn-gold w-full">Authorise with EVE Online</button>
+      <button class="btn-gold w-full">{% translate "Authorise with EVE Online" %}</button>
     </form>
   {% endif %}
 </section>

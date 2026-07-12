@@ -1,3 +1,4 @@
+{% load i18n %}
 {% comment %}
 The "generating…" lifecycle stepper AND the htmx poll target. #report-shell polls
 report_status every 2s (CSP-clean: htmx attrs only, no JS); the view returns this same
@@ -13,36 +14,36 @@ Rendered for non-terminal statuses only (queued → validating).
      hx-swap="outerHTML"
      aria-live="polite"
      class="panel overflow-hidden">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Staff briefing · assembling</h2></div>
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "Staff briefing · assembling" %}</h2></div>
   <div class="p-4">
-    <p class="text-sm text-muted">Compiling command intelligence…</p>
+    <p class="text-sm text-muted">{% translate "Compiling command intelligence…" %}</p>
     <ul class="mt-4 space-y-2 text-sm">
       {% comment %}Each step: ✓ done · ◐ active · ○ pending — the report state machine.{% endcomment %}
       <li class="flex items-center gap-2.5">
-        {% if report.status == 'queued' %}<span class="text-gold" aria-hidden="true">◐</span><span class="text-ink">Queued</span><span class="ml-auto text-xs text-faint">working…</span>
-        {% else %}<span class="text-kill" aria-hidden="true">✓</span><span class="text-muted">Queued</span><span class="ml-auto text-xs text-faint">done</span>{% endif %}
+        {% if report.status == 'queued' %}<span class="text-gold" aria-hidden="true">◐</span><span class="text-ink">{% translate "Queued" %}</span><span class="ml-auto text-xs text-faint">{% translate "working…" %}</span>
+        {% else %}<span class="text-kill" aria-hidden="true">✓</span><span class="text-muted">{% translate "Queued" %}</span><span class="ml-auto text-xs text-faint">{% translate "done" %}</span>{% endif %}
       </li>
       <li class="flex items-center gap-2.5">
-        {% if report.status == 'building_snapshot' %}<span class="text-gold" aria-hidden="true">◐</span><span class="text-ink">Building intelligence snapshot</span><span class="ml-auto text-xs text-faint">working…</span>
-        {% elif report.status == 'computing_constraints' or report.status == 'calling_llm' or report.status == 'validating' %}<span class="text-kill" aria-hidden="true">✓</span><span class="text-muted">Building intelligence snapshot</span><span class="ml-auto text-xs text-faint">done</span>
-        {% else %}<span class="text-faint" aria-hidden="true">○</span><span class="text-faint">Building intelligence snapshot</span>{% endif %}
+        {% if report.status == 'building_snapshot' %}<span class="text-gold" aria-hidden="true">◐</span><span class="text-ink">{% translate "Building intelligence snapshot" %}</span><span class="ml-auto text-xs text-faint">{% translate "working…" %}</span>
+        {% elif report.status == 'computing_constraints' or report.status == 'calling_llm' or report.status == 'validating' %}<span class="text-kill" aria-hidden="true">✓</span><span class="text-muted">{% translate "Building intelligence snapshot" %}</span><span class="ml-auto text-xs text-faint">{% translate "done" %}</span>
+        {% else %}<span class="text-faint" aria-hidden="true">○</span><span class="text-faint">{% translate "Building intelligence snapshot" %}</span>{% endif %}
       </li>
       <li class="flex items-center gap-2.5">
-        {% if report.status == 'computing_constraints' %}<span class="text-gold" aria-hidden="true">◐</span><span class="text-ink">Computing operational constraints</span><span class="ml-auto text-xs text-faint">working…</span>
-        {% elif report.status == 'calling_llm' or report.status == 'validating' %}<span class="text-kill" aria-hidden="true">✓</span><span class="text-muted">Computing operational constraints</span><span class="ml-auto text-xs text-faint">done</span>
-        {% else %}<span class="text-faint" aria-hidden="true">○</span><span class="text-faint">Computing operational constraints</span>{% endif %}
+        {% if report.status == 'computing_constraints' %}<span class="text-gold" aria-hidden="true">◐</span><span class="text-ink">{% translate "Computing operational constraints" %}</span><span class="ml-auto text-xs text-faint">{% translate "working…" %}</span>
+        {% elif report.status == 'calling_llm' or report.status == 'validating' %}<span class="text-kill" aria-hidden="true">✓</span><span class="text-muted">{% translate "Computing operational constraints" %}</span><span class="ml-auto text-xs text-faint">{% translate "done" %}</span>
+        {% else %}<span class="text-faint" aria-hidden="true">○</span><span class="text-faint">{% translate "Computing operational constraints" %}</span>{% endif %}
       </li>
       <li class="flex items-center gap-2.5">
-        {% if report.status == 'calling_llm' %}<span class="text-gold" aria-hidden="true">◐</span><span class="text-ink">Calling intelligence officer (AI)</span><span class="ml-auto text-xs text-faint">working…</span>
-        {% elif report.status == 'validating' %}<span class="text-kill" aria-hidden="true">✓</span><span class="text-muted">Calling intelligence officer (AI)</span><span class="ml-auto text-xs text-faint">done</span>
-        {% else %}<span class="text-faint" aria-hidden="true">○</span><span class="text-faint">Calling intelligence officer (AI)</span>{% endif %}
+        {% if report.status == 'calling_llm' %}<span class="text-gold" aria-hidden="true">◐</span><span class="text-ink">{% translate "Calling intelligence officer (AI)" %}</span><span class="ml-auto text-xs text-faint">{% translate "working…" %}</span>
+        {% elif report.status == 'validating' %}<span class="text-kill" aria-hidden="true">✓</span><span class="text-muted">{% translate "Calling intelligence officer (AI)" %}</span><span class="ml-auto text-xs text-faint">{% translate "done" %}</span>
+        {% else %}<span class="text-faint" aria-hidden="true">○</span><span class="text-faint">{% translate "Calling intelligence officer (AI)" %}</span>{% endif %}
       </li>
       <li class="flex items-center gap-2.5">
-        {% if report.status == 'validating' %}<span class="text-gold" aria-hidden="true">◐</span><span class="text-ink">Validating against snapshot</span><span class="ml-auto text-xs text-faint">working…</span>
-        {% else %}<span class="text-faint" aria-hidden="true">○</span><span class="text-faint">Validating against snapshot</span>{% endif %}
+        {% if report.status == 'validating' %}<span class="text-gold" aria-hidden="true">◐</span><span class="text-ink">{% translate "Validating against snapshot" %}</span><span class="ml-auto text-xs text-faint">{% translate "working…" %}</span>
+        {% else %}<span class="text-faint" aria-hidden="true">○</span><span class="text-faint">{% translate "Validating against snapshot" %}</span>{% endif %}
       </li>
       <li class="flex items-center gap-2.5">
-        <span class="text-faint" aria-hidden="true">○</span><span class="text-faint">Ready</span>
+        <span class="text-faint" aria-hidden="true">○</span><span class="text-faint">{% translate "Ready" %}</span>
       </li>
     </ul>
     <div class="mt-4 space-y-2">
@@ -50,6 +51,6 @@ Rendered for non-terminal statuses only (queued → validating).
       <div class="skeleton h-3 w-full rounded"></div>
       <div class="skeleton h-3 w-2/3 rounded"></div>
     </div>
-    <p class="mt-4 text-xs text-faint">This usually takes 5–15 seconds. The snapshot and constraints are already computed; only the narrative is pending. Safe to leave — it will be in the reports list.</p>
+    <p class="mt-4 text-xs text-faint">{% translate "This usually takes 5–15 seconds. The snapshot and constraints are already computed; only the narrative is pending. Safe to leave — it will be in the reports list." %}</p>
   </div>
 </div>

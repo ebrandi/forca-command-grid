@@ -9,18 +9,19 @@ from __future__ import annotations
 
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from core.mixins import TimeStampedModel
 
 
 class BuildJob(TimeStampedModel):
     class Status(models.TextChoices):
-        QUEUED = "queued", "Queued"
-        BLOCKED = "blocked", "Blocked"
-        BUILDING = "building", "Building"
-        BUILT = "built", "Built"
-        DELIVERED = "delivered", "Delivered"
-        CANCELLED = "cancelled", "Cancelled"
+        QUEUED = "queued", _("Queued")
+        BLOCKED = "blocked", _("Blocked")
+        BUILDING = "building", _("Building")
+        BUILT = "built", _("Built")
+        DELIVERED = "delivered", _("Delivered")
+        CANCELLED = "cancelled", _("Cancelled")
 
     output_type_id = models.IntegerField(db_index=True)
     quantity = models.IntegerField(default=1)
@@ -42,7 +43,7 @@ class BuildJob(TimeStampedModel):
     due_at = models.DateTimeField(null=True, blank=True)
     note = models.CharField(max_length=200, blank=True)
     blocked_reason = models.CharField(
-        max_length=200, blank=True, help_text="Why a queued job can't start (materials short)."
+        max_length=200, blank=True, help_text=_("Why a queued job can't start (materials short).")
     )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
@@ -63,12 +64,12 @@ class BuildJob(TimeStampedModel):
 
 class Blueprint(TimeStampedModel):
     class Owner(models.TextChoices):
-        CORPORATION = "corporation", "Corporation"
-        CHARACTER = "character", "Character"
+        CORPORATION = "corporation", _("Corporation")
+        CHARACTER = "character", _("Character")
 
     owner_type = models.CharField(max_length=12, choices=Owner.choices, default=Owner.CORPORATION)
     owner_id = models.BigIntegerField(default=0)
-    type_id = models.IntegerField(db_index=True, help_text="Blueprint type id.")
+    type_id = models.IntegerField(db_index=True, help_text=_("Blueprint type id."))
     product_type_id = models.IntegerField(null=True, blank=True, db_index=True)
     me = models.PositiveSmallIntegerField(default=0)
     te = models.PositiveSmallIntegerField(default=0)
@@ -77,8 +78,8 @@ class Blueprint(TimeStampedModel):
     # quantity distinguishes an original (-1, builds forever) from a copy (-2, with
     # a finite ``runs``). Coverage cares whether a usable BPO/BPC is actually owned.
     item_id = models.BigIntegerField(null=True, blank=True, db_index=True)
-    quantity = models.IntegerField(default=-1, help_text="ESI: -1 original (BPO), -2 copy (BPC).")
-    runs = models.IntegerField(default=-1, help_text="BPC runs remaining; -1 for an original.")
+    quantity = models.IntegerField(default=-1, help_text=_("ESI: -1 original (BPO), -2 copy (BPC)."))
+    runs = models.IntegerField(default=-1, help_text=_("BPC runs remaining; -1 for an original."))
     location_id = models.BigIntegerField(null=True, blank=True)
 
     def __str__(self) -> str:
@@ -105,8 +106,8 @@ class CorpIndustryJob(TimeStampedModel):
 
     # ESI industry activity ids (the ones we surface).
     ACTIVITY_LABELS = {
-        1: "Manufacturing", 3: "TE research", 4: "ME research",
-        5: "Copying", 7: "Reverse engineering", 8: "Invention", 9: "Reactions",
+        1: _("Manufacturing"), 3: _("TE research"), 4: _("ME research"),
+        5: _("Copying"), 7: _("Reverse engineering"), 8: _("Invention"), 9: _("Reactions"),
     }
 
     job_id = models.BigIntegerField(unique=True)
@@ -129,7 +130,7 @@ class CorpIndustryJob(TimeStampedModel):
 
     @property
     def activity_label(self) -> str:
-        return self.ACTIVITY_LABELS.get(self.activity_id, f"Activity {self.activity_id}")
+        return self.ACTIVITY_LABELS.get(self.activity_id, _("Activity %(id)s") % {"id": self.activity_id})
 
     @property
     def is_active(self) -> bool:
@@ -146,8 +147,8 @@ class CharacterIndustryJob(TimeStampedModel):
     """
 
     ACTIVITY_LABELS = {
-        1: "Manufacturing", 3: "TE research", 4: "ME research",
-        5: "Copying", 7: "Reverse engineering", 8: "Invention", 9: "Reactions",
+        1: _("Manufacturing"), 3: _("TE research"), 4: _("ME research"),
+        5: _("Copying"), 7: _("Reverse engineering"), 8: _("Invention"), 9: _("Reactions"),
     }
 
     character_id = models.BigIntegerField(db_index=True)
@@ -171,7 +172,7 @@ class CharacterIndustryJob(TimeStampedModel):
 
     @property
     def activity_label(self) -> str:
-        return self.ACTIVITY_LABELS.get(self.activity_id, f"Activity {self.activity_id}")
+        return self.ACTIVITY_LABELS.get(self.activity_id, _("Activity %(id)s") % {"id": self.activity_id})
 
     @property
     def is_active(self) -> bool:

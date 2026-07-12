@@ -1,25 +1,26 @@
 {% extends "base.html" %}
-{% block title %}View-as sessions · Admin{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "View-as sessions" %} · {% translate "Admin" %}{% endblock %}
 {% block content %}
-<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← {% translate "Admin console" %}</a>
 <header class="mt-3 mb-6">
-  <p class="eyebrow">Operations</p>
-  <h1 class="mt-1 text-2xl font-bold text-ink">View-as sessions</h1>
-  <p class="mt-1 text-sm text-faint">Every time a director viewed the site as another pilot to troubleshoot.
+  <p class="eyebrow">{% translate "Operations" %}</p>
+  <h1 class="mt-1 text-2xl font-bold text-ink">{% translate "View-as sessions" %}</h1>
+  <p class="mt-1 text-sm text-faint">{% url 'admin_audit:members' as members_url %}{% blocktranslate %}Every time a director viewed the site as another pilot to troubleshoot.
     Impersonation is read-only, capped at {{ max_minutes }} minutes, and can only ever target a pilot below the
-    director's rank. Start one from <a href="{% url 'admin_audit:members' %}" class="text-cyan hover:text-gold">Members &amp; roles</a>.</p>
+    director's rank. Start one from <a href="{{ members_url }}" class="text-cyan hover:text-gold">Members &amp; roles</a>.{% endblocktranslate %}</p>
 </header>
 
 <section class="mb-7">
-  <h2 class="eyebrow mb-2 text-gold">Active now · {{ active|length }}</h2>
+  <h2 class="eyebrow mb-2 text-gold">{% blocktranslate with n=active|length %}Active now · {{ n }}{% endblocktranslate %}</h2>
   <div class="panel overflow-hidden">
     <div class="overflow-x-auto"><table class="w-full text-sm">
       <thead class="text-left text-faint"><tr class="border-b border-line/60">
-        <th class="px-4 py-2 font-medium">Director</th>
-        <th class="px-4 py-2 font-medium">Viewing as</th>
-        <th class="px-4 py-2 font-medium">Started</th>
-        <th class="px-4 py-2 font-medium">Reason</th>
-        <th class="px-4 py-2 font-medium">IP</th>
+        <th class="px-4 py-2 font-medium">{% translate "Director" %}</th>
+        <th class="px-4 py-2 font-medium">{% translate "Viewing as" %}</th>
+        <th class="px-4 py-2 font-medium">{% translate "Started" %}</th>
+        <th class="px-4 py-2 font-medium">{% translate "Reason" %}</th>
+        <th class="px-4 py-2 font-medium">{% translate "IP" %}</th>
       </tr></thead>
       <tbody>
         {% for s in active %}
@@ -31,7 +32,7 @@
           <td class="px-4 py-2 font-mono text-xs text-faint">{{ s.ip|default:"—" }}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="5" class="px-4 py-6 text-center text-faint">No active view-as sessions.</td></tr>
+        <tr><td colspan="5" class="px-4 py-6 text-center text-faint">{% translate "No active view-as sessions." %}</td></tr>
         {% endfor %}
       </tbody>
     </table></div>
@@ -39,15 +40,15 @@
 </section>
 
 <section>
-  <h2 class="eyebrow mb-2 text-faint">Recent history</h2>
+  <h2 class="eyebrow mb-2 text-faint">{% translate "Recent history" %}</h2>
   <div class="panel overflow-hidden">
     <div class="overflow-x-auto"><table class="w-full text-sm">
       <thead class="text-left text-faint"><tr class="border-b border-line/60">
-        <th class="px-4 py-2 font-medium">Director</th>
-        <th class="px-4 py-2 font-medium">Viewed as</th>
-        <th class="px-4 py-2 font-medium">Started</th>
-        <th class="px-4 py-2 font-medium">Ended</th>
-        <th class="px-4 py-2 font-medium">Outcome</th>
+        <th class="px-4 py-2 font-medium">{% translate "Director" %}</th>
+        <th class="px-4 py-2 font-medium">{% translate "Viewed as" %}</th>
+        <th class="px-4 py-2 font-medium">{% translate "Started" %}</th>
+        <th class="px-4 py-2 font-medium">{% translate "Ended" %}</th>
+        <th class="px-4 py-2 font-medium">{% translate "Outcome" %}</th>
       </tr></thead>
       <tbody>
         {% for s in history %}
@@ -57,12 +58,12 @@
           <td class="px-4 py-2 text-faint">{{ s.started_at|date:"Y-m-d H:i" }} UTC</td>
           <td class="px-4 py-2 text-faint">{% if s.ended_at %}{{ s.ended_at|date:"Y-m-d H:i" }} UTC{% else %}—{% endif %}</td>
           <td class="px-4 py-2">
-            {% if s.abandoned %}<span class="chip">abandoned</span>
+            {% if s.abandoned %}<span class="chip">{% translate "abandoned" %}</span>
             {% else %}<span class="chip">{{ s.get_end_reason_display }}</span>{% endif %}
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="5" class="px-4 py-6 text-center text-faint">No history yet.</td></tr>
+        <tr><td colspan="5" class="px-4 py-6 text-center text-faint">{% translate "No history yet." %}</td></tr>
         {% endfor %}
       </tbody>
     </table></div>

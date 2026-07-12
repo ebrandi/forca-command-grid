@@ -3,6 +3,7 @@ wonder "what do I put here?". Planet rows are parsed separately (see views._pars
 from __future__ import annotations
 
 from django import forms
+from django.utils.translation import gettext_lazy as _
 
 from .constants import TRADE_HUBS, hub_label
 from .models import PiMaterial, PiPlan, PiVisibility, PlanetaryConfig
@@ -17,13 +18,13 @@ class PiPlanForm(forms.ModelForm):
 
     character = forms.ChoiceField(
         required=False, widget=forms.Select(attrs=_INPUT),
-        help_text="Which of your pilots will run this colony network. Used to label the "
-                  "plan and to match imported colonies — nothing is changed in-game.")
+        help_text=_("Which of your pilots will run this colony network. Used to label the "
+                    "plan and to match imported colonies — nothing is changed in-game."))
     market_region_id = forms.TypedChoiceField(
         coerce=int, choices=[(h["region_id"], hub_label(h["region_id"])) for h in TRADE_HUBS],
-        widget=forms.Select(attrs=_INPUT), label="Pricing hub",
-        help_text="Where you'll sell. Prices and profit are estimated against this hub. "
-                  "Jita is the most liquid and the safest default.")
+        widget=forms.Select(attrs=_INPUT), label=_("Pricing hub"),
+        help_text=_("Where you'll sell. Prices and profit are estimated against this hub. "
+                    "Jita is the most liquid and the safest default."))
 
     class Meta:
         model = PiPlan
@@ -34,9 +35,9 @@ class PiPlanForm(forms.ModelForm):
             "effort", "export_strategy", "visibility", "notes",
         ]
         widgets = {
-            "name": forms.TextInput(attrs={**_INPUT, "placeholder": "e.g. Jita P2 Coolant run"}),
+            "name": forms.TextInput(attrs={**_INPUT, "placeholder": _("e.g. Jita P2 Coolant run")}),
             "goal": forms.Select(attrs=_INPUT),
-            "system_name": forms.TextInput(attrs={**_INPUT, "placeholder": "e.g. Amamake (optional)"}),
+            "system_name": forms.TextInput(attrs={**_INPUT, "placeholder": _("e.g. Amamake (optional)")}),
             "planet_count": forms.NumberInput(attrs={**_NUM, "max": "6"}),
             "risk": forms.Select(attrs=_INPUT),
             "customs_export_tax": forms.NumberInput(attrs=_PCT),
@@ -50,35 +51,35 @@ class PiPlanForm(forms.ModelForm):
             "export_strategy": forms.Select(attrs=_INPUT),
             "visibility": forms.Select(attrs=_INPUT),
             "notes": forms.Textarea(attrs={**_INPUT, "rows": 3,
-                     "placeholder": "Anything you want to remember about this setup."}),
+                     "placeholder": _("Anything you want to remember about this setup.")}),
         }
         help_texts = {
-            "name": "A short name you'll recognise in your plan list.",
-            "goal": "What you want out of PI. This tunes the recommendations and the guidance.",
-            "system_name": "The system (or staging) you'll run this from. Optional, for your notes.",
-            "planet_count": "How many planets you'll dedicate (1–6). Alpha clones are limited; "
-                            "Omega pilots can run more with the right skills.",
-            "risk": "Where you'll set up. Nullsec/wormhole planets yield more but cost you "
-                    "hauling and danger — this is context for the guidance, not a hard rule.",
-            "customs_export_tax": "Customs office (POCO) tax on export, as a %. In hostile "
-                                  "space this can be high — check the POCO before you commit.",
-            "customs_import_tax": "POCO tax on importing materials to a factory planet, as a %.",
-            "sales_tax": "Market sales tax when you sell (%). Scales down with Accounting.",
-            "broker_fee": "Broker fee on sell orders (%). 0 if you only sell to buy orders.",
-            "hauling_cost_per_m3": "ISK per m³ to move goods to the hub. 0 if you haul yourself. "
-                                   "Applied only when the export strategy is 'haul to hub'.",
-            "corp_buyback_rate": "If you use corp buyback, the % of Jita sell it pays.",
-            "extraction_rate_per_hour": "Planning assumption: P0 units/hour on one extraction "
-                                        "planet. Tune it to your real colonies for accuracy.",
-            "effort": "How often you'll reset extractors and haul. Low effort favours simple, "
-                      "long-cycle setups.",
-            "export_strategy": "What you'll do with the output — it changes which fees apply.",
-            "visibility": "Who can see this plan. Private is only you.",
+            "name": _("A short name you'll recognise in your plan list."),
+            "goal": _("What you want out of PI. This tunes the recommendations and the guidance."),
+            "system_name": _("The system (or staging) you'll run this from. Optional, for your notes."),
+            "planet_count": _("How many planets you'll dedicate (1–6). Alpha clones are limited; "
+                              "Omega pilots can run more with the right skills."),
+            "risk": _("Where you'll set up. Nullsec/wormhole planets yield more but cost you "
+                      "hauling and danger — this is context for the guidance, not a hard rule."),
+            "customs_export_tax": _("Customs office (POCO) tax on export, as a %. In hostile "
+                                    "space this can be high — check the POCO before you commit."),
+            "customs_import_tax": _("POCO tax on importing materials to a factory planet, as a %."),
+            "sales_tax": _("Market sales tax when you sell (%). Scales down with Accounting."),
+            "broker_fee": _("Broker fee on sell orders (%). 0 if you only sell to buy orders."),
+            "hauling_cost_per_m3": _("ISK per m³ to move goods to the hub. 0 if you haul yourself. "
+                                     "Applied only when the export strategy is 'haul to hub'."),
+            "corp_buyback_rate": _("If you use corp buyback, the % of Jita sell it pays."),
+            "extraction_rate_per_hour": _("Planning assumption: P0 units/hour on one extraction "
+                                          "planet. Tune it to your real colonies for accuracy."),
+            "effort": _("How often you'll reset extractors and haul. Low effort favours simple, "
+                        "long-cycle setups."),
+            "export_strategy": _("What you'll do with the output — it changes which fees apply."),
+            "visibility": _("Who can see this plan. Private is only you."),
         }
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
-        choices = [("", "— select a pilot —")]
+        choices = [("", _("— select a pilot —"))]
         if user is not None:
             for c in user.characters.all().order_by("-is_main", "name"):
                 choices.append((str(c.character_id), c.name))
@@ -90,7 +91,7 @@ class PiPlanForm(forms.ModelForm):
     def _clean_pct(self, field):
         value = self.cleaned_data.get(field)
         if value is not None and not (0 <= value <= 100):
-            raise forms.ValidationError("Enter a percentage between 0 and 100.")
+            raise forms.ValidationError(_("Enter a percentage between 0 and 100."))
         return value
 
     def clean_customs_export_tax(self):
@@ -111,7 +112,7 @@ class PiPlanForm(forms.ModelForm):
     def clean_planet_count(self):
         n = self.cleaned_data.get("planet_count") or 0
         if not (1 <= n <= 6):
-            raise forms.ValidationError("A pilot can run between 1 and 6 planets.")
+            raise forms.ValidationError(_("A pilot can run between 1 and 6 planets."))
         return n
 
     def save(self, commit=True):
@@ -133,13 +134,13 @@ class PlanetaryConfigForm(forms.ModelForm):
 
     default_market_region_id = forms.TypedChoiceField(
         coerce=int, choices=[(h["region_id"], hub_label(h["region_id"])) for h in TRADE_HUBS],
-        widget=forms.Select(attrs=_INPUT), label="Default pricing hub")
+        widget=forms.Select(attrs=_INPUT), label=_("Default pricing hub"))
     recommended_products_text = forms.CharField(
         required=False, widget=forms.Textarea(attrs={**_INPUT, "rows": 2}),
-        label="Corp priority products",
-        help_text="Comma-separated PI product names the corp wants pilots to make "
-                  "(e.g. Coolant, Mechanical Parts, Robotics). They get a badge in the "
-                  "recommendations.")
+        label=_("Corp priority products"),
+        help_text=_("Comma-separated PI product names the corp wants pilots to make "
+                    "(e.g. Coolant, Mechanical Parts, Robotics). They get a badge in the "
+                    "recommendations."))
 
     class Meta:
         model = PlanetaryConfig
@@ -160,18 +161,18 @@ class PlanetaryConfigForm(forms.ModelForm):
             "default_hauling_cost_per_m3": forms.NumberInput(attrs=_NUM),
             "corp_buyback_rate": forms.NumberInput(attrs=_PCT),
             "recommended_regions": forms.TextInput(attrs={**_INPUT,
-                "placeholder": "e.g. lowsec staging, home constellation"}),
+                "placeholder": _("e.g. lowsec staging, home constellation")}),
             "priority_note": forms.Textarea(attrs={**_INPUT, "rows": 2}),
             "default_visibility": forms.Select(attrs=_INPUT, choices=PiVisibility.choices),
         }
         help_texts = {
-            "enabled": "Master switch. Off hides the whole planner from pilots.",
-            "name": "A label for this config (only you see it).",
-            "default_extraction_rate_per_hour": "Starting extraction assumption for new plans.",
-            "corp_buyback_rate": "% of Jita sell the corp buyback pays, for plans that use it.",
-            "recommended_regions": "Free text: where the corp suggests running PI.",
-            "priority_note": "A short note shown to pilots about what the corp needs.",
-            "default_visibility": "Default sharing for newly-created plans.",
+            "enabled": _("Master switch. Off hides the whole planner from pilots."),
+            "name": _("A label for this config (only you see it)."),
+            "default_extraction_rate_per_hour": _("Starting extraction assumption for new plans."),
+            "corp_buyback_rate": _("% of Jita sell the corp buyback pays, for plans that use it."),
+            "recommended_regions": _("Free text: where the corp suggests running PI."),
+            "priority_note": _("A short note shown to pilots about what the corp needs."),
+            "default_visibility": _("Default sharing for newly-created plans."),
         }
 
     def __init__(self, *args, **kwargs):

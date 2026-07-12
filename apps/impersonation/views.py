@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
 from core import rbac
@@ -25,16 +26,19 @@ def start(request: HttpRequest, user_id: int) -> HttpResponse:
     """Begin viewing the site as another (strictly lower-ranked) pilot. Director/admin only."""
     # Never nest impersonations — exit the current one first.
     if request.session.get(policy.SESSION_TARGET_KEY) is not None:
-        messages.error(request, "Exit your current view-as session before starting another.")
+        messages.error(request, _("Exit your current view-as session before starting another."))
         return redirect("impersonation:log")
     target = get_object_or_404(User, pk=user_id)
     if not policy.can_impersonate(request.user, target):
-        raise PermissionDenied("You can't view the site as that account.")
+        raise PermissionDenied(_("You can't view the site as that account."))
     services.begin(request, target, reason=(request.POST.get("reason") or "").strip())
     messages.success(
         request,
-        f"You are now viewing the site as {target.display_name}. Everything is read-only — "
-        "use “Exit” in the top banner to return to your own account.",
+        _(
+            "You are now viewing the site as %(name)s. Everything is read-only — "
+            "use “Exit” in the top banner to return to your own account."
+        )
+        % {"name": target.display_name},
     )
     return redirect("/dashboard/")
 
@@ -49,7 +53,7 @@ def stop(request: HttpRequest) -> HttpResponse:
     if not getattr(request, "is_impersonating", False):
         return redirect("/dashboard/")
     services.end(request, reason="manual", actor=getattr(request, "impersonator", None))
-    messages.success(request, "View-as ended — you're back on your own account.")
+    messages.success(request, _("View-as ended — you're back on your own account."))
     return redirect("admin_audit:members")
 
 

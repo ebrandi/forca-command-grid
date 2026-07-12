@@ -1,14 +1,15 @@
 {% extends "base.html" %}
+{% load i18n %}
 {% comment %}
 A battle + its AI after-action review (Combat Intelligence). Shows a generate affordance when
 no AAR exists, else the AAR (which polls itself while the worker builds it). Officer-gated.
 {% endcomment %}
-{% block title %}Battle After-Action · [FORCA] Command Grid{% endblock %}
+{% block title %}{% translate "Battle After-Action" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 
 <header class="mb-6">
-  <a href="{% url 'command_intel:battles' %}" class="text-xs text-faint hover:text-gold">← Battle analysis</a>
-  <p class="mt-2 eyebrow text-gold">Combat intelligence · after-action review</p>
+  <a href="{% url 'command_intel:battles' %}" class="text-xs text-faint hover:text-gold">← {% translate "Battle analysis" %}</a>
+  <p class="mt-2 eyebrow text-gold">{% translate "Combat intelligence · after-action review" %}</p>
   <h1 class="mt-1 font-display text-2xl font-bold text-ink">{{ battle.title|default:"Battle" }}</h1>
   <p class="mt-1 text-sm text-faint">
     {{ battle.start_time|date:"d M Y H:i" }} → {{ battle.end_time|date:"H:i" }} · {{ battle.killmails.count }} killmails ·
@@ -18,16 +19,16 @@ no AAR exists, else the AAR (which polls itself while the worker builds it). Off
 
 {% if not analysis %}
   <div class="panel p-8 text-center">
-    <p class="text-muted">No after-action review yet for this battle.</p>
+    <p class="text-muted">{% translate "No after-action review yet for this battle." %}</p>
     <form method="post" action="{% url 'command_intel:battle_generate' battle.pk %}" class="mt-4">{% csrf_token %}
-      <button class="btn-gold">⊕ Analyse this battle</button>
+      <button class="btn-gold">⊕ {% translate "Analyse this battle" %}</button>
     </form>
-    {% if not ai_enabled %}<p class="mt-2 text-[11px] text-gold">AI is offline — you'll get the computed facts without the narrative.</p>{% endif %}
+    {% if not ai_enabled %}<p class="mt-2 text-[11px] text-gold">{% translate "AI is offline — you'll get the computed facts without the narrative." %}</p>{% endif %}
   </div>
 {% else %}
   {% include "command_intel/_battle_aar.html" with analysis=analysis %}
   {% if analysis.is_terminal %}
-  <form method="post" action="{% url 'command_intel:battle_generate' battle.pk %}" class="mt-2">{% csrf_token %}<button class="btn-ghost !py-1 text-xs text-faint">Re-analyse</button></form>
+  <form method="post" action="{% url 'command_intel:battle_generate' battle.pk %}" class="mt-2">{% csrf_token %}<button class="btn-ghost !py-1 text-xs text-faint">{% translate "Re-analyse" %}</button></form>
   {% endif %}
 {% endif %}
 {% endblock %}

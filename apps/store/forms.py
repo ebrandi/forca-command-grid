@@ -4,6 +4,7 @@ from __future__ import annotations
 from decimal import Decimal
 
 from django import forms
+from django.utils.translation import gettext_lazy as _
 
 from .models import StoreConfig
 
@@ -18,11 +19,11 @@ class HullOrderForm(forms.Form):
     )
     location_name = forms.CharField(
         max_length=200, required=False,
-        widget=forms.TextInput(attrs={**_INPUT, "placeholder": "Delivery / staging system"}),
+        widget=forms.TextInput(attrs={**_INPUT, "placeholder": _("Delivery / staging system")}),
     )
     notes = forms.CharField(
         max_length=300, required=False,
-        widget=forms.TextInput(attrs={**_INPUT, "placeholder": "Anything the builder should know"}),
+        widget=forms.TextInput(attrs={**_INPUT, "placeholder": _("Anything the builder should know")}),
     )
 
 
@@ -34,7 +35,7 @@ class FitOrderForm(forms.Form):
     )
     location_name = forms.CharField(
         max_length=200, required=False,
-        widget=forms.TextInput(attrs={**_INPUT, "placeholder": "Delivery / staging system"}),
+        widget=forms.TextInput(attrs={**_INPUT, "placeholder": _("Delivery / staging system")}),
     )
     notes = forms.CharField(max_length=300, required=False, widget=forms.HiddenInput())
 
@@ -54,7 +55,7 @@ class ConfigForm(forms.ModelForm):
     def _check(self, field, low, high):
         value = self.cleaned_data.get(field)
         if value is not None and not (low <= value <= high):
-            self.add_error(field, f"Must be between {low} and {high}.")
+            self.add_error(field, _("Must be between %(low)s and %(high)s.") % {"low": low, "high": high})
 
     def clean(self):
         cleaned = super().clean()

@@ -1,16 +1,16 @@
 {# Goal card (doc 10 §5.1). Pass g (a CareerGoal). #}
-{% load eve %}
+{% load eve i18n %}
 <a href="{% url 'capsuleer:goal_detail' g.pk %}" class="block rounded-lg border border-line px-4 py-3 hover:bg-panel2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold">
   <div class="flex items-start justify-between gap-3">
     <div class="min-w-0">
       <p class="truncate font-medium text-ink">{{ g.title }}</p>
       <div class="mt-1 flex flex-wrap items-center gap-1.5">
-        {% if g.status == 'considering' %}<span class="chip text-muted border-line">Considering</span>
-        {% elif g.status == 'active' %}<span class="chip !text-gold !border-gold/40">Active</span>
-        {% elif g.status == 'paused' %}<span class="chip text-muted border-line">Paused</span>
-        {% elif g.status == 'completed' %}<span class="chip !text-kill !border-kill/40">Completed</span>
-        {% else %}<span class="chip text-faint border-line">Set aside</span>{% endif %}
-        {% if g.review_due_at %}<span class="chip !text-cyan !border-cyan/40">review due</span>{% endif %}
+        {% if g.status == 'considering' %}<span class="chip text-muted border-line">{% translate "Considering" %}</span>
+        {% elif g.status == 'active' %}<span class="chip !text-gold !border-gold/40">{% translate "Active" %}</span>
+        {% elif g.status == 'paused' %}<span class="chip text-muted border-line">{% translate "Paused" %}</span>
+        {% elif g.status == 'completed' %}<span class="chip !text-kill !border-kill/40">{% translate "Completed" %}</span>
+        {% else %}<span class="chip text-faint border-line">{% translate "Set aside" %}</span>{% endif %}
+        {% if g.review_due_at %}<span class="chip !text-cyan !border-cyan/40">{% translate "review due" %}</span>{% endif %}
       </div>
     </div>
     {% if g.character_id %}

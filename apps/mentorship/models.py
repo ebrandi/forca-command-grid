@@ -29,6 +29,7 @@ from __future__ import annotations
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from apps.sso.models import EveCharacter
 from core.mixins import TimeStampedModel
@@ -46,20 +47,20 @@ class MentorshipProgram(TimeStampedModel):
     """
 
     class EligibilityLogic(models.TextChoices):
-        EITHER = "either", "Meet either threshold"
-        BOTH = "both", "Meet both thresholds"
+        EITHER = "either", _("Meet either threshold")
+        BOTH = "both", _("Meet both thresholds")
 
     class RewardMode(models.TextChoices):
         # Reward is only written to the ledger as owed; no approval workflow.
-        RECORDED_ONLY = "recorded_only", "Record as owed only"
+        RECORDED_ONLY = "recorded_only", _("Record as owed only")
         # Reward is queued for leadership approval before it can be paid.
-        QUEUED = "queued", "Queue for leadership approval"
+        QUEUED = "queued", _("Queue for leadership approval")
         # Reward is auto-approved on grant (still recorded, still paid manually).
-        AUTO = "auto", "Auto-approve on grant"
+        AUTO = "auto", _("Auto-approve on grant")
 
     class ProfileVisibility(models.TextChoices):
-        MEMBERS = "members", "All corp members"
-        OFFICERS = "officers", "Officers only"
+        MEMBERS = "members", _("All corp members")
+        OFFICERS = "officers", _("Officers only")
 
     name = models.CharField(max_length=80, default="Mentorship Program")
     is_active = models.BooleanField(default=True)
@@ -77,21 +78,21 @@ class MentorshipProgram(TimeStampedModel):
 
     # --- Eligibility (configurable thresholds) ---
     mentor_min_character_age_days = models.PositiveIntegerField(
-        default=365, help_text="Mentor: minimum character age (from ESI birthday)."
+        default=365, help_text=_("Mentor: minimum character age (from ESI birthday).")
     )
     mentor_min_corp_tenure_days = models.PositiveIntegerField(
-        default=182, help_text="Mentor: minimum time in the corp (~6 months)."
+        default=182, help_text=_("Mentor: minimum time in the corp (~6 months).")
     )
     mentor_eligibility_logic = models.CharField(
         max_length=8, choices=EligibilityLogic.choices, default=EligibilityLogic.EITHER,
-        help_text="Whether a mentor must meet either or both age/tenure thresholds.",
+        help_text=_("Whether a mentor must meet either or both age/tenure thresholds."),
     )
     mentee_max_corp_tenure_days = models.PositiveIntegerField(
-        default=90, help_text="Mentee: must have been in the corp less than this (~3 months)."
+        default=90, help_text=_("Mentee: must have been in the corp less than this (~3 months).")
     )
     enforce_mentee_eligibility = models.BooleanField(
         default=True,
-        help_text="If off, any member may register as a mentee regardless of tenure.",
+        help_text=_("If off, any member may register as a mentee regardless of tenure."),
     )
 
     # --- Approvals ---
@@ -101,19 +102,19 @@ class MentorshipProgram(TimeStampedModel):
     # --- Pairing ---
     max_active_mentees_per_mentor = models.PositiveIntegerField(default=3)
     allow_mentor_initiated = models.BooleanField(
-        default=True, help_text="Mentors may invite a specific mentee."
+        default=True, help_text=_("Mentors may invite a specific mentee.")
     )
     allow_mentee_initiated = models.BooleanField(
-        default=True, help_text="Mentees may request a specific mentor."
+        default=True, help_text=_("Mentees may request a specific mentor.")
     )
     pairing_requires_approval = models.BooleanField(
-        default=True, help_text="A pairing needs leadership approval before it goes active.",
+        default=True, help_text=_("A pairing needs leadership approval before it goes active."),
     )
     pairing_ttl_days = models.PositiveIntegerField(
-        default=14, help_text="Auto-expire suggested/requested pairings after N days (0 = never)."
+        default=14, help_text=_("Auto-expire suggested/requested pairings after N days (0 = never).")
     )
     stale_pair_days = models.PositiveIntegerField(
-        default=14, help_text="Flag an active pair with no activity for N days (0 = never)."
+        default=14, help_text=_("Flag an active pair with no activity for N days (0 = never).")
     )
 
     # --- Rewards ---
@@ -123,45 +124,45 @@ class MentorshipProgram(TimeStampedModel):
     )
     esi_validation_required = models.BooleanField(
         default=False,
-        help_text="Rewardable tasks must pass an ESI/internal auto-check, not just a sign-off.",
+        help_text=_("Rewardable tasks must pass an ESI/internal auto-check, not just a sign-off."),
     )
     allow_unverified_rewards = models.BooleanField(
         default=True,
-        help_text="Allow rewards for tasks completed by sign-off alone (no auto-verification).",
+        help_text=_("Allow rewards for tasks completed by sign-off alone (no auto-verification)."),
     )
     default_task_cooldown_hours = models.PositiveIntegerField(
-        default=0, help_text="Default anti-farming cooldown between repeats of a task (0 = none)."
+        default=0, help_text=_("Default anti-farming cooldown between repeats of a task (0 = none).")
     )
     mentee_reward_cap_isk = models.DecimalField(
         max_digits=20, decimal_places=2, default=0,
-        help_text="Max ISK a mentee can accrue in the current cohort/season (0 = no cap).",
+        help_text=_("Max ISK a mentee can accrue in the current cohort/season (0 = no cap)."),
     )
     mentor_reward_cap_isk = models.DecimalField(
         max_digits=20, decimal_places=2, default=0,
-        help_text="Max ISK a mentor can accrue in the current cohort/season (0 = no cap).",
+        help_text=_("Max ISK a mentor can accrue in the current cohort/season (0 = no cap)."),
     )
 
     # --- Visibility ---
     mentor_directory_visible = models.BooleanField(
-        default=True, help_text="Show the mentor directory to eligible mentees."
+        default=True, help_text=_("Show the mentor directory to eligible mentees.")
     )
     profile_visibility = models.CharField(
         max_length=8, choices=ProfileVisibility.choices, default=ProfileVisibility.MEMBERS,
-        help_text="Who can see mentor/mentee profiles and progress (beyond the pair itself).",
+        help_text=_("Who can see mentor/mentee profiles and progress (beyond the pair itself)."),
     )
 
     # --- Notifications ---
     notify_discord = models.BooleanField(
         default=False,
-        help_text="Broadcast programme events (new applications, stalled pairs) to Discord. "
-                  "Disarmed by default; needs a configured Discord webhook.",
+        help_text=_("Broadcast programme events (new applications, stalled pairs) to Discord. "
+                    "Disarmed by default; needs a configured Discord webhook."),
     )
 
     # --- Season / cohort ---
     active_cohort = models.ForeignKey(
         "MentorshipCohort", on_delete=models.SET_NULL, null=True, blank=True,
         related_name="+",
-        help_text="The current intake; new registrations attach to it.",
+        help_text=_("The current intake; new registrations attach to it."),
     )
 
     class Meta:
@@ -196,19 +197,19 @@ class MentorshipTrack(TimeStampedModel):
     """A group of tasks that teaches one area of EVE / corp life."""
 
     class Category(models.TextChoices):
-        WELCOME = "welcome", "Welcome to the corporation"
-        CLIENT = "client", "EVE client & overview"
-        TRAVEL = "travel", "Travel, safety & survival"
-        FITTING = "fitting", "Fitting & doctrine basics"
+        WELCOME = "welcome", _("Welcome to the corporation")
+        CLIENT = "client", _("EVE client & overview")
+        TRAVEL = "travel", _("Travel, safety & survival")
+        FITTING = "fitting", _("Fitting & doctrine basics")
         RATTING = "ratting", "Ratting"
-        MINING = "mining", "Mining"
-        EXPLORATION = "exploration", "Exploration"
-        PVP = "pvp", "PvP basics"
-        FLEET = "fleet", "Fleet operations"
-        LOGISTICS = "logistics", "Logistics & buyback services"
-        INDUSTRY = "industry", "Manufacturing & industry"
-        SKILLS = "skills", "Skill planning"
-        OTHER = "other", "Other"
+        MINING = "mining", _("Mining")
+        EXPLORATION = "exploration", _("Exploration")
+        PVP = "pvp", _("PvP basics")
+        FLEET = "fleet", _("Fleet operations")
+        LOGISTICS = "logistics", _("Logistics & buyback services")
+        INDUSTRY = "industry", _("Manufacturing & industry")
+        SKILLS = "skills", _("Skill planning")
+        OTHER = "other", _("Other")
 
     key = models.SlugField(max_length=64, unique=True)
     title = models.CharField(max_length=140)
@@ -217,9 +218,9 @@ class MentorshipTrack(TimeStampedModel):
     category = models.CharField(
         max_length=16, choices=Category.choices, default=Category.OTHER
     )
-    icon = models.CharField(max_length=32, default="i-rookie", help_text="Sprite id, e.g. i-ship.")
+    icon = models.CharField(max_length=32, default="i-rookie", help_text=_("Sprite id, e.g. i-ship."))
     is_core = models.BooleanField(
-        default=False, help_text="Part of the core cadet path (auto-enrolled on pairing)."
+        default=False, help_text=_("Part of the core cadet path (auto-enrolled on pairing).")
     )
     estimated_sessions = models.PositiveIntegerField(default=1)
     sort_order = models.IntegerField(default=0)
@@ -236,40 +237,40 @@ class MentorshipTask(TimeStampedModel):
     """One field exercise inside a track."""
 
     class Difficulty(models.TextChoices):
-        INTRO = "intro", "Intro"
-        BASIC = "basic", "Basic"
-        INTERMEDIATE = "intermediate", "Intermediate"
-        ADVANCED = "advanced", "Advanced"
+        INTRO = "intro", _("Intro")
+        BASIC = "basic", _("Basic")
+        INTERMEDIATE = "intermediate", _("Intermediate")
+        ADVANCED = "advanced", _("Advanced")
 
     class Participants(models.TextChoices):
-        MENTEE = "mentee", "Mentee only"
-        MENTOR = "mentor", "Mentor only"
-        BOTH = "both", "Mentor & mentee together"
-        FLEET = "fleet", "A fleet / group"
+        MENTEE = "mentee", _("Mentee only")
+        MENTOR = "mentor", _("Mentor only")
+        BOTH = "both", _("Mentor & mentee together")
+        FLEET = "fleet", _("A fleet / group")
 
     class Validation(models.TextChoices):
-        MANUAL_MENTOR = "manual_mentor", "Mentor sign-off"
-        MENTEE_CONFIRM = "mentee_confirm", "Mentee self-confirmation"
-        DUAL_CONFIRM = "dual_confirm", "Both mentor & mentee confirm"
-        LEADERSHIP = "leadership", "Leadership approval"
-        API_ASSISTED = "api_assisted", "API-assisted (auto-check + mentor sign-off)"
-        API_REQUIRED = "api_required", "API-required (auto-check must pass)"
-        EVIDENCE = "evidence", "Evidence link/note + mentor sign-off"
-        AUTO_INTERNAL = "auto_internal", "Auto from Command Grid activity"
-        HYBRID = "hybrid", "Hybrid (auto-check contributes; mentor confirms)"
+        MANUAL_MENTOR = "manual_mentor", _("Mentor sign-off")
+        MENTEE_CONFIRM = "mentee_confirm", _("Mentee self-confirmation")
+        DUAL_CONFIRM = "dual_confirm", _("Both mentor & mentee confirm")
+        LEADERSHIP = "leadership", _("Leadership approval")
+        API_ASSISTED = "api_assisted", _("API-assisted (auto-check + mentor sign-off)")
+        API_REQUIRED = "api_required", _("API-required (auto-check must pass)")
+        EVIDENCE = "evidence", _("Evidence link/note + mentor sign-off")
+        AUTO_INTERNAL = "auto_internal", _("Auto from Command Grid activity")
+        HYBRID = "hybrid", _("Hybrid (auto-check contributes; mentor confirms)")
 
     class Evidence(models.TextChoices):
-        NONE = "none", "Not required"
-        OPTIONAL = "optional", "Optional"
-        REQUIRED = "required", "Required"
+        NONE = "none", _("Not required")
+        OPTIONAL = "optional", _("Optional")
+        REQUIRED = "required", _("Required")
 
     class EvidenceKind(models.TextChoices):
-        LINK = "link", "A link (killboard, screenshot host, doc)"
-        TEXT = "text", "A written note"
+        LINK = "link", _("A link (killboard, screenshot host, doc)")
+        TEXT = "text", _("A written note")
 
     class Visibility(models.TextChoices):
-        PAIR = "pair", "Mentor & mentee"
-        MENTOR_ONLY = "mentor_only", "Mentor only (prep/debrief)"
+        PAIR = "pair", _("Mentor & mentee")
+        MENTOR_ONLY = "mentor_only", _("Mentor only (prep/debrief)")
 
     track = models.ForeignKey(
         MentorshipTrack, on_delete=models.CASCADE, related_name="tasks"
@@ -358,14 +359,14 @@ class MentorshipBadge(TimeStampedModel):
     """A cosmetic recognition badge (a "certification")."""
 
     class Tier(models.TextChoices):
-        BRONZE = "bronze", "Bronze"
-        SILVER = "silver", "Silver"
-        GOLD = "gold", "Gold"
+        BRONZE = "bronze", _("Bronze")
+        SILVER = "silver", _("Silver")
+        GOLD = "gold", _("Gold")
 
     class Audience(models.TextChoices):
-        MENTOR = "mentor", "Mentor"
-        MENTEE = "mentee", "Mentee"
-        BOTH = "both", "Both"
+        MENTOR = "mentor", _("Mentor")
+        MENTEE = "mentee", _("Mentee")
+        BOTH = "both", _("Both")
 
     key = models.SlugField(max_length=64, unique=True)
     label = models.CharField(max_length=100)
@@ -387,24 +388,24 @@ class MentorshipRewardRule(TimeStampedModel):
     """When to grant a reward, to whom, and how much."""
 
     class Audience(models.TextChoices):
-        MENTOR = "mentor", "Mentor"
-        MENTEE = "mentee", "Mentee"
-        BOTH = "both", "Both"
+        MENTOR = "mentor", _("Mentor")
+        MENTEE = "mentee", _("Mentee")
+        BOTH = "both", _("Both")
 
     class Trigger(models.TextChoices):
-        TASK = "task", "A specific task completes"
-        TRACK_COMPLETE = "track_complete", "A track is completed"
-        PROGRAM_COMPLETE = "program_complete", "The whole programme is completed"
-        MILESTONE = "milestone", "A named milestone"
-        PAIRING_ACTIVE_DAYS = "pairing_active_days", "A pairing stays active N days"
-        SESSION = "session", "A mentorship session is confirmed"
+        TASK = "task", _("A specific task completes")
+        TRACK_COMPLETE = "track_complete", _("A track is completed")
+        PROGRAM_COMPLETE = "program_complete", _("The whole programme is completed")
+        MILESTONE = "milestone", _("A named milestone")
+        PAIRING_ACTIVE_DAYS = "pairing_active_days", _("A pairing stays active N days")
+        SESSION = "session", _("A mentorship session is confirmed")
 
     class RewardType(models.TextChoices):
-        ISK = "isk", "ISK (recorded, paid manually)"
-        POINTS = "points", "Contribution points"
-        BADGE = "badge", "Recognition badge"
-        TITLE = "title", "Title / recognition text"
-        CUSTOM = "custom", "Custom (paid outside the system)"
+        ISK = "isk", _("ISK (recorded, paid manually)")
+        POINTS = "points", _("Contribution points")
+        BADGE = "badge", _("Recognition badge")
+        TITLE = "title", _("Title / recognition text")
+        CUSTOM = "custom", _("Custom (paid outside the system)")
 
     key = models.SlugField(max_length=80, unique=True)
     label = models.CharField(max_length=140)
@@ -415,7 +416,7 @@ class MentorshipRewardRule(TimeStampedModel):
     trigger_ref = models.CharField(max_length=80, blank=True)
 
     reward_type = models.CharField(max_length=8, choices=RewardType.choices, default=RewardType.POINTS)
-    amount = models.DecimalField(max_digits=20, decimal_places=2, default=0, help_text="ISK amount.")
+    amount = models.DecimalField(max_digits=20, decimal_places=2, default=0, help_text=_("ISK amount."))
     points = models.IntegerField(default=0)
     badge = models.ForeignKey(
         MentorshipBadge, on_delete=models.SET_NULL, null=True, blank=True, related_name="reward_rules"
@@ -424,12 +425,12 @@ class MentorshipRewardRule(TimeStampedModel):
 
     cap_per_recipient = models.DecimalField(
         max_digits=20, decimal_places=2, default=0,
-        help_text="Max total from this rule per recipient (0 = no cap).",
+        help_text=_("Max total from this rule per recipient (0 = no cap)."),
     )
     cooldown_hours = models.PositiveIntegerField(default=0)
     requires_leadership_approval = models.BooleanField(default=True)
     requires_verification = models.BooleanField(
-        default=False, help_text="Only grant if the triggering task was auto-verified.",
+        default=False, help_text=_("Only grant if the triggering task was auto-verified."),
     )
     cohort = models.ForeignKey(
         MentorshipCohort, on_delete=models.SET_NULL, null=True, blank=True, related_name="reward_rules"
@@ -449,12 +450,12 @@ class MentorshipRewardRule(TimeStampedModel):
 # Participant profiles
 # ---------------------------------------------------------------------------
 class _ProfileStatus(models.TextChoices):
-    DRAFT = "draft", "Draft"
-    PENDING = "pending", "Pending approval"
-    ACTIVE = "active", "Active"
-    PAUSED = "paused", "Paused"
-    REJECTED = "rejected", "Rejected"
-    RETIRED = "retired", "Retired"
+    DRAFT = "draft", _("Draft")
+    PENDING = "pending", _("Pending approval")
+    ACTIVE = "active", _("Active")
+    PAUSED = "paused", _("Paused")
+    REJECTED = "rejected", _("Rejected")
+    RETIRED = "retired", _("Retired")
 
 
 class MentorProfile(TimeStampedModel):
@@ -473,13 +474,13 @@ class MentorProfile(TimeStampedModel):
     )
 
     # Preferences / matching signals.
-    areas = models.JSONField(default=list, blank=True, help_text="Track categories + free tags.")
+    areas = models.JSONField(default=list, blank=True, help_text=_("Track categories + free tags."))
     timezone = models.CharField(max_length=64, blank=True)
     play_windows = models.CharField(max_length=200, blank=True)
     languages = models.JSONField(default=list, blank=True)
     comms = models.CharField(max_length=120, blank=True)
     max_active_mentees = models.PositiveIntegerField(
-        default=0, help_text="0 = use the programme default."
+        default=0, help_text=_("0 = use the programme default.")
     )
     open_to_adhoc = models.BooleanField(default=True)
     bio = models.TextField(blank=True)
@@ -509,17 +510,17 @@ class MenteeProfile(TimeStampedModel):
     """A new pilot (cadet) seeking mentorship."""
 
     class Status(models.TextChoices):
-        DRAFT = "draft", "Draft"
-        PENDING = "pending", "Pending approval"
-        ACTIVE = "active", "Active"
-        PAUSED = "paused", "Paused"
-        GRADUATED = "graduated", "Graduated"
-        REJECTED = "rejected", "Rejected"
+        DRAFT = "draft", _("Draft")
+        PENDING = "pending", _("Pending approval")
+        ACTIVE = "active", _("Active")
+        PAUSED = "paused", _("Paused")
+        GRADUATED = "graduated", _("Graduated")
+        REJECTED = "rejected", _("Rejected")
 
     class Experience(models.TextChoices):
-        BRAND_NEW = "brand_new", "Brand new to EVE"
-        RETURNING = "returning", "Returning after a break"
-        SOME_EXP = "some_exp", "Some experience, new to the corp"
+        BRAND_NEW = "brand_new", _("Brand new to EVE")
+        RETURNING = "returning", _("Returning after a break")
+        SOME_EXP = "some_exp", _("Some experience, new to the corp")
 
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="mentee_profile"
@@ -531,7 +532,7 @@ class MenteeProfile(TimeStampedModel):
         max_length=10, choices=Status.choices, default=Status.PENDING, db_index=True
     )
 
-    goals = models.JSONField(default=list, blank=True, help_text="Track categories they want to learn.")
+    goals = models.JSONField(default=list, blank=True, help_text=_("Track categories they want to learn."))
     experience = models.CharField(
         max_length=12, choices=Experience.choices, default=Experience.BRAND_NEW
     )
@@ -571,20 +572,20 @@ class MentorshipPairing(TimeStampedModel):
     """A mentor↔mentee relationship and its lifecycle."""
 
     class Status(models.TextChoices):
-        SUGGESTED = "suggested", "Suggested"
-        REQUESTED = "requested", "Requested"
-        PENDING_APPROVAL = "pending_approval", "Pending approval"
-        ACTIVE = "active", "Active"
-        PAUSED = "paused", "Paused"
-        COMPLETED = "completed", "Completed"
-        CANCELLED = "cancelled", "Cancelled"
-        EXPIRED = "expired", "Expired"
+        SUGGESTED = "suggested", _("Suggested")
+        REQUESTED = "requested", _("Requested")
+        PENDING_APPROVAL = "pending_approval", _("Pending approval")
+        ACTIVE = "active", _("Active")
+        PAUSED = "paused", _("Paused")
+        COMPLETED = "completed", _("Completed")
+        CANCELLED = "cancelled", _("Cancelled")
+        EXPIRED = "expired", _("Expired")
 
     class InitiatedBy(models.TextChoices):
-        MENTOR = "mentor", "Mentor"
-        MENTEE = "mentee", "Mentee"
-        LEADER = "leader", "Leadership"
-        SYSTEM = "system", "System (auto-suggested)"
+        MENTOR = "mentor", _("Mentor")
+        MENTEE = "mentee", _("Mentee")
+        LEADER = "leader", _("Leadership")
+        SYSTEM = "system", _("System (auto-suggested)")
 
     # Non-terminal states that block a duplicate pairing for the same pair.
     OPEN_STATUSES = frozenset({
@@ -646,9 +647,9 @@ class MentorshipPairingEvent(models.Model):
     """Append-only pairing lifecycle / activity log."""
 
     class Kind(models.TextChoices):
-        STATUS = "status", "Status change"
-        NOTE = "note", "Note"
-        SYSTEM = "system", "System"
+        STATUS = "status", _("Status change")
+        NOTE = "note", _("Note")
+        SYSTEM = "system", _("System")
 
     pairing = models.ForeignKey(
         MentorshipPairing, on_delete=models.CASCADE, related_name="events"
@@ -673,9 +674,9 @@ class MentorshipEnrollment(TimeStampedModel):
     """A pairing working through a track."""
 
     class Status(models.TextChoices):
-        ACTIVE = "active", "Active"
-        COMPLETED = "completed", "Completed"
-        PAUSED = "paused", "Paused"
+        ACTIVE = "active", _("Active")
+        COMPLETED = "completed", _("Completed")
+        PAUSED = "paused", _("Paused")
 
     pairing = models.ForeignKey(
         MentorshipPairing, on_delete=models.CASCADE, related_name="enrollments"
@@ -704,18 +705,18 @@ class MentorshipTaskAssignment(TimeStampedModel):
     """A task's progress for one pairing (the completion state lives here)."""
 
     class Status(models.TextChoices):
-        NOT_STARTED = "not_started", "Not started"
-        IN_PROGRESS = "in_progress", "In progress"
-        SUBMITTED = "submitted", "Submitted"
-        PENDING_MENTOR = "pending_mentor", "Pending mentor confirmation"
-        PENDING_MENTEE = "pending_mentee", "Pending mentee confirmation"
-        PENDING_API = "pending_api", "Pending API validation"
-        PENDING_LEADERSHIP = "pending_leadership", "Pending leadership approval"
-        COMPLETED = "completed", "Completed"
-        COMPLETED_UNREWARDABLE = "completed_unrewardable", "Completed (not rewardable)"
-        REJECTED = "rejected", "Rejected"
-        EXPIRED = "expired", "Expired"
-        WAIVED = "waived", "Waived"
+        NOT_STARTED = "not_started", _("Not started")
+        IN_PROGRESS = "in_progress", _("In progress")
+        SUBMITTED = "submitted", _("Submitted")
+        PENDING_MENTOR = "pending_mentor", _("Pending mentor confirmation")
+        PENDING_MENTEE = "pending_mentee", _("Pending mentee confirmation")
+        PENDING_API = "pending_api", _("Pending API validation")
+        PENDING_LEADERSHIP = "pending_leadership", _("Pending leadership approval")
+        COMPLETED = "completed", _("Completed")
+        COMPLETED_UNREWARDABLE = "completed_unrewardable", _("Completed (not rewardable)")
+        REJECTED = "rejected", _("Rejected")
+        EXPIRED = "expired", _("Expired")
+        WAIVED = "waived", _("Waived")
 
     DONE_STATUSES = frozenset({Status.COMPLETED, Status.COMPLETED_UNREWARDABLE, Status.WAIVED})
     PENDING_STATUSES = frozenset({
@@ -777,17 +778,17 @@ class MentorshipTaskValidation(models.Model):
     """One validation step for an assignment (append-only audit)."""
 
     class Source(models.TextChoices):
-        MENTOR = "mentor", "Mentor"
-        MENTEE = "mentee", "Mentee"
-        LEADERSHIP = "leadership", "Leadership"
-        API = "api", "ESI auto-check"
-        INTERNAL = "internal", "Command Grid activity"
-        SYSTEM = "system", "System"
+        MENTOR = "mentor", _("Mentor")
+        MENTEE = "mentee", _("Mentee")
+        LEADERSHIP = "leadership", _("Leadership")
+        API = "api", _("ESI auto-check")
+        INTERNAL = "internal", _("Command Grid activity")
+        SYSTEM = "system", _("System")
 
     class Result(models.TextChoices):
-        PENDING = "pending", "Pending"
-        PASS = "pass", "Pass"
-        FAIL = "fail", "Fail"
+        PENDING = "pending", _("Pending")
+        PASS = "pass", _("Pass")
+        FAIL = "fail", _("Fail")
 
     assignment = models.ForeignKey(
         MentorshipTaskAssignment, on_delete=models.CASCADE, related_name="validations"
@@ -818,8 +819,8 @@ class MentorshipEvidence(TimeStampedModel):
     """A link or note submitted as evidence for a task."""
 
     class Kind(models.TextChoices):
-        LINK = "link", "Link"
-        NOTE = "note", "Note"
+        LINK = "link", _("Link")
+        NOTE = "note", _("Note")
 
     assignment = models.ForeignKey(
         MentorshipTaskAssignment, on_delete=models.CASCADE, related_name="evidence_items"
@@ -845,10 +846,10 @@ class MentorshipSession(TimeStampedModel):
     """A scheduled (or logged) mentoring session."""
 
     class Status(models.TextChoices):
-        SCHEDULED = "scheduled", "Scheduled"
-        COMPLETED = "completed", "Completed"
-        CANCELLED = "cancelled", "Cancelled"
-        NO_SHOW = "no_show", "No-show"
+        SCHEDULED = "scheduled", _("Scheduled")
+        COMPLETED = "completed", _("Completed")
+        CANCELLED = "cancelled", _("Cancelled")
+        NO_SHOW = "no_show", _("No-show")
 
     pairing = models.ForeignKey(
         MentorshipPairing, on_delete=models.CASCADE, related_name="sessions"
@@ -879,9 +880,9 @@ class MentorshipSession(TimeStampedModel):
 
 class MentorshipSessionParticipant(models.Model):
     class Role(models.TextChoices):
-        MENTOR = "mentor", "Mentor"
-        MENTEE = "mentee", "Mentee"
-        OBSERVER = "observer", "Observer"
+        MENTOR = "mentor", _("Mentor")
+        MENTEE = "mentee", _("Mentee")
+        OBSERVER = "observer", _("Observer")
 
     session = models.ForeignKey(
         MentorshipSession, on_delete=models.CASCADE, related_name="participants"
@@ -913,19 +914,19 @@ class MentorshipRewardLedger(TimeStampedModel):
     through the approval/payment workflow and is stamped with who/when."""
 
     class Role(models.TextChoices):
-        MENTOR = "mentor", "Mentor"
-        MENTEE = "mentee", "Mentee"
+        MENTOR = "mentor", _("Mentor")
+        MENTEE = "mentee", _("Mentee")
 
     class Status(models.TextChoices):
-        NOT_ELIGIBLE = "not_eligible", "Not eligible"
-        ELIGIBLE = "eligible", "Eligible"
-        PENDING_VALIDATION = "pending_validation", "Pending validation"
-        PENDING_APPROVAL = "pending_approval", "Pending approval"
-        APPROVED = "approved", "Approved"
-        PAID = "paid", "Paid"
-        REJECTED = "rejected", "Rejected"
-        CANCELLED = "cancelled", "Cancelled"
-        EXPIRED = "expired", "Expired"
+        NOT_ELIGIBLE = "not_eligible", _("Not eligible")
+        ELIGIBLE = "eligible", _("Eligible")
+        PENDING_VALIDATION = "pending_validation", _("Pending validation")
+        PENDING_APPROVAL = "pending_approval", _("Pending approval")
+        APPROVED = "approved", _("Approved")
+        PAID = "paid", _("Paid")
+        REJECTED = "rejected", _("Rejected")
+        CANCELLED = "cancelled", _("Cancelled")
+        EXPIRED = "expired", _("Expired")
 
     OPEN_STATUSES = frozenset({
         Status.ELIGIBLE, Status.PENDING_VALIDATION, Status.PENDING_APPROVAL, Status.APPROVED,
@@ -1036,14 +1037,14 @@ class MentorshipFlag(TimeStampedModel):
     """An anomaly worth a leader's eyes (append-only until resolved)."""
 
     class Kind(models.TextChoices):
-        RAPID_COMPLETION = "rapid_completion", "Tasks completed unusually fast"
-        SELF_CONFIRM_STREAK = "self_confirm_streak", "Long streak of self-confirmed tasks"
-        MENTOR_RUBBER_STAMP = "mentor_rubber_stamp", "Mentor approving without review"
-        ALT_SUSPICION = "alt_suspicion", "Possible alt / self-pairing"
-        CAPACITY_EXCEEDED = "capacity_exceeded", "Mentor over capacity"
-        REVERSED_CREDIT = "reversed_credit", "An internal credit was reversed"
-        CAP_HIT = "cap_hit", "Reward cap reached"
-        STALE_PAIR = "stale_pair", "Pair inactive"
+        RAPID_COMPLETION = "rapid_completion", _("Tasks completed unusually fast")
+        SELF_CONFIRM_STREAK = "self_confirm_streak", _("Long streak of self-confirmed tasks")
+        MENTOR_RUBBER_STAMP = "mentor_rubber_stamp", _("Mentor approving without review")
+        ALT_SUSPICION = "alt_suspicion", _("Possible alt / self-pairing")
+        CAPACITY_EXCEEDED = "capacity_exceeded", _("Mentor over capacity")
+        REVERSED_CREDIT = "reversed_credit", _("An internal credit was reversed")
+        CAP_HIT = "cap_hit", _("Reward cap reached")
+        STALE_PAIR = "stale_pair", _("Pair inactive")
 
     kind = models.CharField(max_length=24, choices=Kind.choices, db_index=True)
     severity = models.PositiveIntegerField(default=50, help_text="0–100.")

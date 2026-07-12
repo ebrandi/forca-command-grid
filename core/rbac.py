@@ -4,6 +4,7 @@ from __future__ import annotations
 from functools import wraps
 
 from django.core.exceptions import PermissionDenied
+from django.utils.translation import gettext as _
 from rest_framework.permissions import BasePermission
 
 # Ordered role tiers (higher rank = more authority).
@@ -93,7 +94,7 @@ def perm_required(perm_key: str):
         @wraps(view_func)
         def _wrapped(request, *args, **kwargs):
             if not has_perm(request.user, perm_key):
-                raise PermissionDenied("Insufficient permission.")
+                raise PermissionDenied(_("Insufficient permission."))
             return view_func(request, *args, **kwargs)
 
         return _wrapped
@@ -108,7 +109,7 @@ def role_required(role: str):
         @wraps(view_func)
         def _wrapped(request, *args, **kwargs):
             if not has_role(request.user, role):
-                raise PermissionDenied("Insufficient role.")
+                raise PermissionDenied(_("Insufficient role."))
             return view_func(request, *args, **kwargs)
 
         return _wrapped

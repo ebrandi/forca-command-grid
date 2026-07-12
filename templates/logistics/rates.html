@@ -1,28 +1,29 @@
 {% extends "base.html" %}
 {% load eve %}
-{% block title %}Freight Rates · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Freight Rates" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 
 <header class="mb-6 flex flex-wrap items-end justify-between gap-4">
   <div>
-    <p class="eyebrow">Freight · Leadership</p>
-    <h1 class="mt-1 text-3xl font-bold text-ink">Rate card</h1>
-    <p class="mt-1 max-w-2xl text-sm text-faint">All freight quotes use these constants. The <span class="text-gold">price multiplier</span> scales every quote — 1.00 charges the full rate, 0.80 charges 20% less. Set the audience to control who can use the service.</p>
+    <p class="eyebrow">{% translate "Freight · Leadership" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Rate card" %}</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">{% blocktranslate %}All freight quotes use these constants. The <span class="text-gold">price multiplier</span> scales every quote — 1.00 charges the full rate, 0.80 charges 20% less. Set the audience to control who can use the service.{% endblocktranslate %}</p>
   </div>
-  <a href="{% url 'logistics:contracts' %}" class="btn-ghost text-sm">← Freight board</a>
+  <a href="{% url 'logistics:contracts' %}" class="btn-ghost text-sm">← {% translate "Freight board" %}</a>
 </header>
 
 
 {% if benchmark %}
 <section class="panel mb-5 p-5">
-  <h2 class="eyebrow mb-3 text-gold">Live courier market — benchmark</h2>
+  <h2 class="eyebrow mb-3 text-gold">{% translate "Live courier market — benchmark" %}</h2>
   <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-    <div><p class="eyebrow text-faint">Contracts</p><p class="text-xl font-bold text-ink">{{ benchmark.count }}</p></div>
-    <div><p class="eyebrow text-faint">Median reward</p><p class="text-xl font-bold text-ink">{{ benchmark.median_reward|isk }}</p></div>
+    <div><p class="eyebrow text-faint">{% translate "Contracts" %}</p><p class="text-xl font-bold text-ink">{{ benchmark.count }}</p></div>
+    <div><p class="eyebrow text-faint">{% translate "Median reward" %}</p><p class="text-xl font-bold text-ink">{{ benchmark.median_reward|isk }}</p></div>
     <div><p class="eyebrow text-faint">ISK / m³</p><p class="text-xl font-bold text-ink">{{ benchmark.median_reward_per_m3 }}</p></div>
     <div><p class="eyebrow text-faint">ISK / m³ / jump</p><p class="text-xl font-bold text-gold">{{ benchmark.isk_per_m3_jump|default:"—" }}</p><p class="text-[10px] text-faint">{{ benchmark.jump_sample }} routed</p></div>
   </div>
-  <p class="mt-3 text-[11px] text-faint">Median of {{ benchmark.count }} public courier contracts ({{ benchmark.updated }}). Compare <span class="text-gold">ISK/m³/jump</span> against your freighter per-warp rate and JF per-jump fee to judge competitiveness; collateral fees on the market run ~{{ benchmark.median_collateral_pct }}% of value. Refresh with <code>manage.py import_everef_contracts</code>.</p>
+  <p class="mt-3 text-[11px] text-faint">{% blocktranslate with count=benchmark.count updated=benchmark.updated median_collateral_pct=benchmark.median_collateral_pct %}Median of {{ count }} public courier contracts ({{ updated }}). Compare <span class="text-gold">ISK/m³/jump</span> against your freighter per-warp rate and JF per-jump fee to judge competitiveness; collateral fees on the market run ~{{ median_collateral_pct }}% of value. Refresh with <code>manage.py import_everef_contracts</code>.{% endblocktranslate %}</p>
 </section>
 {% endif %}
 
@@ -30,62 +31,62 @@
   {% csrf_token %}
 
   <section class="panel p-5">
-    <h2 class="eyebrow mb-3 text-gold">Service & headline</h2>
+    <h2 class="eyebrow mb-3 text-gold">{% translate "Service & headline" %}</h2>
     <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-      <div><label class="label">Name</label>{{ form.name }}</div>
+      <div><label class="label">{% translate "Name" %}</label>{{ form.name }}</div>
       <div>
-        <label class="label">Audience</label>{{ form.audience }}
-        <p class="mt-1 text-[11px] text-faint">Who can use the service. Alliance pilots must be registered.</p>
+        <label class="label">{% translate "Audience" %}</label>{{ form.audience }}
+        <p class="mt-1 text-[11px] text-faint">{% translate "Who can use the service. Alliance pilots must be registered." %}</p>
       </div>
-      <div><label class="label">Price multiplier</label>{{ form.discount }}<p class="mt-1 text-[11px] text-faint">1.00 = full rate · 0.80 = 20% less</p></div>
-      <div><label class="label">Minimum reward</label>{{ form.min_reward }}</div>
+      <div><label class="label">{% translate "Price multiplier" %}</label>{{ form.discount }}<p class="mt-1 text-[11px] text-faint">{% translate "1.00 = full rate · 0.80 = 20% less" %}</p></div>
+      <div><label class="label">{% translate "Minimum reward" %}</label>{{ form.min_reward }}</div>
     </div>
   </section>
 
   <section class="panel p-5">
     <h2 class="eyebrow mb-3 text-gold">Blockade Runner / DST</h2>
     <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-      <div><label class="label">Rate / warp (HS)</label>{{ form.dst_rate_per_warp }}</div>
-      <div><label class="label">Rate / warp (low/null)</label>{{ form.dst_lowsec_rate_per_warp }}</div>
-      <div><label class="label">Max m³</label>{{ form.dst_max_m3 }}</div>
-      <div><label class="label">Max collateral</label>{{ form.dst_max_collateral }}</div>
+      <div><label class="label">{% translate "Rate / warp (HS)" %}</label>{{ form.dst_rate_per_warp }}</div>
+      <div><label class="label">{% translate "Rate / warp (low/null)" %}</label>{{ form.dst_lowsec_rate_per_warp }}</div>
+      <div><label class="label">{% translate "Max m³" %}</label>{{ form.dst_max_m3 }}</div>
+      <div><label class="label">{% translate "Max collateral" %}</label>{{ form.dst_max_collateral }}</div>
     </div>
   </section>
 
   <section class="panel p-5">
     <h2 class="eyebrow mb-3 text-gold">Freighter</h2>
     <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      <div><label class="label">Rate / warp</label>{{ form.freighter_rate_per_warp }}</div>
-      <div><label class="label">Rate / warp (long route)</label>{{ form.freighter_rate_per_warp_long }}</div>
-      <div><label class="label">Long-route threshold (warps)</label>{{ form.freighter_long_threshold }}</div>
-      <div><label class="label">Max m³</label>{{ form.freighter_max_m3 }}</div>
-      <div><label class="label">Max collateral</label>{{ form.freighter_max_collateral }}</div>
+      <div><label class="label">{% translate "Rate / warp" %}</label>{{ form.freighter_rate_per_warp }}</div>
+      <div><label class="label">{% translate "Rate / warp (long route)" %}</label>{{ form.freighter_rate_per_warp_long }}</div>
+      <div><label class="label">{% translate "Long-route threshold (warps)" %}</label>{{ form.freighter_long_threshold }}</div>
+      <div><label class="label">{% translate "Max m³" %}</label>{{ form.freighter_max_m3 }}</div>
+      <div><label class="label">{% translate "Max collateral" %}</label>{{ form.freighter_max_collateral }}</div>
     </div>
   </section>
 
   <section class="panel p-5">
     <h2 class="eyebrow mb-3 text-gold">Jump Freighter</h2>
     <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-      <div><label class="label">Base fee</label>{{ form.jf_base }}</div>
-      <div><label class="label">Per cyno jump</label>{{ form.jf_per_jump }}</div>
-      <div><label class="label">Assumed JDC (range)</label>{{ form.jf_assumed_jdc }}</div>
-      <div><label class="label">Max m³</label>{{ form.jf_max_m3 }}</div>
-      <div><label class="label">Max collateral</label>{{ form.jf_max_collateral }}</div>
+      <div><label class="label">{% translate "Base fee" %}</label>{{ form.jf_base }}</div>
+      <div><label class="label">{% translate "Per cyno jump" %}</label>{{ form.jf_per_jump }}</div>
+      <div><label class="label">{% translate "Assumed JDC (range)" %}</label>{{ form.jf_assumed_jdc }}</div>
+      <div><label class="label">{% translate "Max m³" %}</label>{{ form.jf_max_m3 }}</div>
+      <div><label class="label">{% translate "Max collateral" %}</label>{{ form.jf_max_collateral }}</div>
     </div>
-    <p class="mt-2 text-[11px] text-faint">JDC sets the assumed jump range (V → 10 ly). Cyno jumps are computed from system coordinates, not gate jumps.</p>
+    <p class="mt-2 text-[11px] text-faint">{% translate "JDC sets the assumed jump range (V → 10 ly). Cyno jumps are computed from system coordinates, not gate jumps." %}</p>
   </section>
 
   <section class="panel p-5">
-    <h2 class="eyebrow mb-3 text-gold">Surcharges & terms</h2>
+    <h2 class="eyebrow mb-3 text-gold">{% translate "Surcharges & terms" %}</h2>
     <div class="grid gap-3 sm:grid-cols-3">
-      <div><label class="label">Rush fee (HS)</label>{{ form.rush_fee_hs }}</div>
-      <div><label class="label">Rush fee (JF)</label>{{ form.rush_fee_jf }}</div>
-      <div><label class="label">Days to complete</label>{{ form.contract_days }}</div>
+      <div><label class="label">{% translate "Rush fee (HS)" %}</label>{{ form.rush_fee_hs }}</div>
+      <div><label class="label">{% translate "Rush fee (JF)" %}</label>{{ form.rush_fee_jf }}</div>
+      <div><label class="label">{% translate "Days to complete" %}</label>{{ form.contract_days }}</div>
     </div>
   </section>
 
   <div class="flex justify-end">
-    <button class="btn-gold">Save rate card</button>
+    <button class="btn-gold">{% translate "Save rate card" %}</button>
   </div>
 </form>
 {% endblock %}

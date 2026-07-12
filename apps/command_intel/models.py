@@ -11,29 +11,30 @@ from __future__ import annotations
 
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from core.mixins import TimeStampedModel
 
 
 class Trigger(models.TextChoices):
-    MANUAL = "manual", "Manual"
-    SCHEDULED = "scheduled", "Scheduled"
-    OUTCOME = "outcome", "Outcome measurement"
-    AUTONOMOUS = "autonomous", "Autonomous proposal"
+    MANUAL = "manual", _("Manual")
+    SCHEDULED = "scheduled", _("Scheduled")
+    OUTCOME = "outcome", _("Outcome measurement")
+    AUTONOMOUS = "autonomous", _("Autonomous proposal")
 
 
 class Severity(models.TextChoices):
-    INFO = "info", "Info"
-    WATCH = "watch", "Watch"
-    HIGH = "high", "High"
-    CRITICAL = "critical", "Critical"
+    INFO = "info", _("Info")
+    WATCH = "watch", _("Watch")
+    HIGH = "high", _("High")
+    CRITICAL = "critical", _("Critical")
 
 
 class Classification(models.TextChoices):
-    CORP_INTERNAL = "corp_internal", "Corporation Internal"
-    HIGH_COMMAND = "high_command", "High Command"
-    DIRECTOR_EYES_ONLY = "director_eyes_only", "Director — Eyes Only"
-    ALLIANCE_COMMAND = "alliance_command", "Alliance Command"
+    CORP_INTERNAL = "corp_internal", _("Corporation Internal")
+    HIGH_COMMAND = "high_command", _("High Command")
+    DIRECTOR_EYES_ONLY = "director_eyes_only", _("Director — Eyes Only")
+    ALLIANCE_COMMAND = "alliance_command", _("Alliance Command")
 
 
 class IntelligenceSnapshot(TimeStampedModel):
@@ -66,9 +67,9 @@ class OperationalConstraint(TimeStampedModel):
     """A computed limit on maximum capability, derived from a snapshot (doc 03 §3.2)."""
 
     class Status(models.TextChoices):
-        COMPUTED = "computed", "Computed"
-        UNKNOWN = "unknown", "Unknown (insufficient data)"
-        UNAVAILABLE = "unavailable", "Unavailable"
+        COMPUTED = "computed", _("Computed")
+        UNKNOWN = "unknown", _("Unknown (insufficient data)")
+        UNAVAILABLE = "unavailable", _("Unavailable")
 
     snapshot = models.ForeignKey(
         IntelligenceSnapshot, on_delete=models.CASCADE, related_name="constraints"
@@ -104,14 +105,14 @@ class IntelligenceReport(TimeStampedModel):
     """The generated staff briefing — immutable once ``ready`` (doc 03 §3.3)."""
 
     class Status(models.TextChoices):
-        QUEUED = "queued", "Queued"
-        BUILDING_SNAPSHOT = "building_snapshot", "Building snapshot"
-        COMPUTING_CONSTRAINTS = "computing_constraints", "Computing constraints"
-        CALLING_LLM = "calling_llm", "Calling LLM"
-        VALIDATING = "validating", "Validating"
-        READY = "ready", "Ready"
-        READY_DEGRADED = "ready_degraded", "Ready (degraded — no narrative)"
-        FAILED = "failed", "Failed"
+        QUEUED = "queued", _("Queued")
+        BUILDING_SNAPSHOT = "building_snapshot", _("Building snapshot")
+        COMPUTING_CONSTRAINTS = "computing_constraints", _("Computing constraints")
+        CALLING_LLM = "calling_llm", _("Calling LLM")
+        VALIDATING = "validating", _("Validating")
+        READY = "ready", _("Ready")
+        READY_DEGRADED = "ready_degraded", _("Ready (degraded — no narrative)")
+        FAILED = "failed", _("Failed")
 
     snapshot = models.ForeignKey(
         IntelligenceSnapshot, on_delete=models.PROTECT, null=True, blank=True,
@@ -164,22 +165,22 @@ class CourseOfAction(TimeStampedModel):
     """A structured, owned, prioritised proposed action (doc 03 §3.4)."""
 
     class Effort(models.TextChoices):
-        LOW = "low", "Low"
-        MEDIUM = "medium", "Medium"
-        HIGH = "high", "High"
+        LOW = "low", _("Low")
+        MEDIUM = "medium", _("Medium")
+        HIGH = "high", _("High")
 
     class State(models.TextChoices):
-        PROPOSED = "proposed", "Proposed"
-        ACCEPTED = "accepted", "Accepted"
-        IN_PROGRESS = "in_progress", "In progress"
-        COMPLETED = "completed", "Completed"
-        DISMISSED = "dismissed", "Dismissed"
-        SUPERSEDED = "superseded", "Superseded"
+        PROPOSED = "proposed", _("Proposed")
+        ACCEPTED = "accepted", _("Accepted")
+        IN_PROGRESS = "in_progress", _("In progress")
+        COMPLETED = "completed", _("Completed")
+        DISMISSED = "dismissed", _("Dismissed")
+        SUPERSEDED = "superseded", _("Superseded")
 
     class ConfidenceLabel(models.TextChoices):
-        HIGH = "high", "High"
-        MEDIUM = "medium", "Medium"
-        LOW = "low", "Low"
+        HIGH = "high", _("High")
+        MEDIUM = "medium", _("Medium")
+        LOW = "low", _("Low")
 
     report = models.ForeignKey(
         IntelligenceReport, on_delete=models.SET_NULL, null=True, blank=True,
@@ -283,10 +284,10 @@ class Campaign(TimeStampedModel):
     """A sequenced improvement plan toward a target metric (doc 03 §3.5, doc 08)."""
 
     class Status(models.TextChoices):
-        DRAFT = "draft", "Draft"
-        ACTIVE = "active", "Active"
-        COMPLETED = "completed", "Completed"
-        ABANDONED = "abandoned", "Abandoned"
+        DRAFT = "draft", _("Draft")
+        ACTIVE = "active", _("Active")
+        COMPLETED = "completed", _("Completed")
+        ABANDONED = "abandoned", _("Abandoned")
 
     objective = models.TextField()
     target_metric = models.CharField(max_length=80)            # "readiness.overall" or a constraint key
@@ -330,10 +331,10 @@ class CampaignMilestone(TimeStampedModel):
     """One sequenced step of a campaign, optionally wrapping a COA (doc 03 §3.5)."""
 
     class Status(models.TextChoices):
-        PENDING = "pending", "Pending"
-        IN_PROGRESS = "in_progress", "In progress"
-        DONE = "done", "Done"
-        BLOCKED = "blocked", "Blocked"
+        PENDING = "pending", _("Pending")
+        IN_PROGRESS = "in_progress", _("In progress")
+        DONE = "done", _("Done")
+        BLOCKED = "blocked", _("Blocked")
 
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE, related_name="milestones")
     order = models.IntegerField(default=0)
@@ -370,15 +371,15 @@ class PilotDirective(TimeStampedModel):
     """
 
     class State(models.TextChoices):
-        OPEN = "open", "Open"
-        DONE = "done", "Done"
-        DISMISSED = "dismissed", "Dismissed"
+        OPEN = "open", _("Open")
+        DONE = "done", _("Done")
+        DISMISSED = "dismissed", _("Dismissed")
 
     class Category(models.TextChoices):
-        SKILL = "skill", "Training"
-        SHIP = "ship", "Ship"
-        LOGISTICS = "logistics", "Logistics"
-        ROLE = "role", "Role"
+        SKILL = "skill", _("Training")
+        SHIP = "ship", _("Ship")
+        LOGISTICS = "logistics", _("Logistics")
+        ROLE = "role", _("Role")
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="command_intel_directives",
@@ -426,11 +427,11 @@ class ConversationTurn(TimeStampedModel):
     """
 
     class Status(models.TextChoices):
-        PENDING = "pending", "Pending"
-        ANSWERING = "answering", "Answering"
-        READY = "ready", "Ready"
-        READY_DEGRADED = "ready_degraded", "Ready (degraded — retrieval only)"
-        FAILED = "failed", "Failed"
+        PENDING = "pending", _("Pending")
+        ANSWERING = "answering", _("Answering")
+        READY = "ready", _("Ready")
+        READY_DEGRADED = "ready_degraded", _("Ready (degraded — retrieval only)")
+        FAILED = "failed", _("Failed")
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="command_intel_questions",
@@ -474,12 +475,12 @@ class BattleAnalysis(TimeStampedModel):
     """
 
     class Status(models.TextChoices):
-        PENDING = "pending", "Pending"
-        BUILDING_FACTS = "building_facts", "Building facts"
-        CALLING_LLM = "calling_llm", "Calling LLM"
-        READY = "ready", "Ready"
-        READY_DEGRADED = "ready_degraded", "Ready (degraded — facts only)"
-        FAILED = "failed", "Failed"
+        PENDING = "pending", _("Pending")
+        BUILDING_FACTS = "building_facts", _("Building facts")
+        CALLING_LLM = "calling_llm", _("Calling LLM")
+        READY = "ready", _("Ready")
+        READY_DEGRADED = "ready_degraded", _("Ready (degraded — facts only)")
+        FAILED = "failed", _("Failed")
 
     battle_report_id = models.IntegerField(db_index=True)
     classification = models.CharField(

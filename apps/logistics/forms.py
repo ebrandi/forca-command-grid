@@ -4,6 +4,7 @@ from __future__ import annotations
 from decimal import Decimal
 
 from django import forms
+from django.utils.translation import gettext_lazy as _
 
 from .models import RateCard, ShipClass
 
@@ -31,7 +32,7 @@ class QuoteForm(forms.Form):
 
     jumps = forms.IntegerField(
         min_value=1, max_value=200, required=False,
-        widget=forms.NumberInput(attrs={**_INPUT, "placeholder": "auto from route"}),
+        widget=forms.NumberInput(attrs={**_INPUT, "placeholder": _("auto from route")}),
     )
     volume_m3 = forms.FloatField(
         min_value=1,
@@ -49,7 +50,7 @@ class QuoteForm(forms.Form):
             cleaned.get("origin_name") and cleaned.get("dest_name")
         )
         if not cleaned.get("jumps") and not has_route:
-            raise forms.ValidationError("Pick an origin and destination, or enter a manual jump count.")
+            raise forms.ValidationError(_("Pick an origin and destination, or enter a manual jump count."))
         return cleaned
 
 
@@ -85,9 +86,9 @@ class RateCardForm(forms.ModelForm):
         # The discount is a price multiplier; 0 would make every quote free.
         discount = cleaned.get("discount")
         if discount is not None and not (Decimal("0") < discount <= Decimal("2")):
-            self.add_error("discount", "Must be greater than 0 and at most 2.")
+            self.add_error("discount", _("Must be greater than 0 and at most 2."))
         for field in self._NON_NEGATIVE:
             value = cleaned.get(field)
             if value is not None and value < 0:
-                self.add_error(field, "Can't be negative.")
+                self.add_error(field, _("Can't be negative."))
         return cleaned

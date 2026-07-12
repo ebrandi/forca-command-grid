@@ -1,12 +1,13 @@
 {% extends "base.html" %}
 {% load eve %}
-{% block title %}Tasks · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Tasks" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <header class="mb-6 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <p class="eyebrow text-gold">Get it done</p>
-    <h1 class="mt-1 text-3xl font-bold text-ink">Tasks</h1>
-    <p class="mt-1 text-sm text-faint">Claimable corp work. Finish one and it counts toward your contribution.</p>
+    <p class="eyebrow text-gold">{% translate "Get it done" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Tasks" %}</h1>
+    <p class="mt-1 text-sm text-faint">{% translate "Claimable corp work. Finish one and it counts toward your contribution." %}</p>
   </div>
 </header>
 
@@ -14,7 +15,7 @@
 <div class="grid gap-5 lg:grid-cols-2">
   <!-- My tasks -->
   <section class="panel overflow-hidden">
-    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">My tasks</h2></div>
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">{% translate "My tasks" %}</h2></div>
     <div class="divide-y divide-line/40">
       {% for t in mine %}
         <div class="px-4 py-3">
@@ -23,27 +24,27 @@
             <div class="min-w-0 flex-1">
               <p class="text-sm text-ink">{{ t.title }}</p>
               {% if t.description %}<p class="mt-0.5 text-xs text-faint">{{ t.description }}</p>{% endif %}
-              <p class="mt-1 text-xs text-faint">{{ t.get_status_display }}{% if t.due_at %} · due {{ t.due_at|date:"M j" }}{% endif %}</p>
+              <p class="mt-1 text-xs text-faint">{{ t.get_status_display }}{% if t.due_at %} · {% blocktranslate with d=t.due_at|date:"M j" %}due {{ d }}{% endblocktranslate %}{% endif %}</p>
             </div>
           </div>
           <div class="mt-2 flex flex-wrap gap-2">
             {% if t.status == 'claimed' %}
-              <form method="post" action="{% url 'tasks:status' t.pk %}">{% csrf_token %}<input type="hidden" name="status" value="in_progress"><button class="btn-ghost !py-1 !text-xs">Start</button></form>
+              <form method="post" action="{% url 'tasks:status' t.pk %}">{% csrf_token %}<input type="hidden" name="status" value="in_progress"><button class="btn-ghost !py-1 !text-xs">{% translate "Start" %}</button></form>
             {% endif %}
             {% if t.status != 'done' %}
-              <form method="post" action="{% url 'tasks:status' t.pk %}">{% csrf_token %}<input type="hidden" name="status" value="done"><button class="btn-cyan !py-1 !text-xs">Mark done</button></form>
+              <form method="post" action="{% url 'tasks:status' t.pk %}">{% csrf_token %}<input type="hidden" name="status" value="done"><button class="btn-cyan !py-1 !text-xs">{% translate "Mark done" %}</button></form>
             {% endif %}
           </div>
         </div>
       {% empty %}
-        <p class="px-4 py-6 text-center text-sm text-faint">Nothing assigned to you. Claim something from the open pool →</p>
+        <p class="px-4 py-6 text-center text-sm text-faint">{% translate "Nothing assigned to you. Claim something from the open pool →" %}</p>
       {% endfor %}
     </div>
   </section>
 
   <!-- Open to claim -->
   <section class="panel overflow-hidden">
-    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Open to claim</h2></div>
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "Open to claim" %}</h2></div>
     <div class="divide-y divide-line/40">
       {% for t in claimable %}
         <div class="flex items-start gap-2 px-4 py-3">
@@ -51,12 +52,12 @@
           <div class="min-w-0 flex-1">
             <p class="text-sm text-ink">{{ t.title }}</p>
             {% if t.description %}<p class="mt-0.5 text-xs text-faint">{{ t.description }}</p>{% endif %}
-            {% if t.priority %}<p class="mt-0.5 text-xs text-gold">priority {{ t.priority }}</p>{% endif %}
+            {% if t.priority %}<p class="mt-0.5 text-xs text-gold">{% blocktranslate with p=t.priority %}priority {{ p }}{% endblocktranslate %}</p>{% endif %}
           </div>
-          <form method="post" action="{% url 'tasks:claim' t.pk %}">{% csrf_token %}<button class="btn-cyan !py-1 !text-xs">Claim</button></form>
+          <form method="post" action="{% url 'tasks:claim' t.pk %}">{% csrf_token %}<button class="btn-cyan !py-1 !text-xs">{% translate "Claim" %}</button></form>
         </div>
       {% empty %}
-        <p class="px-4 py-6 text-center text-sm text-faint">No open tasks right now.</p>
+        <p class="px-4 py-6 text-center text-sm text-faint">{% translate "No open tasks right now." %}</p>
       {% endfor %}
     </div>
   </section>
@@ -65,44 +66,44 @@
 {% if is_officer %}
 <!-- Officer: create + manage -->
 <section class="panel mt-6 overflow-hidden">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Create a task</h2></div>
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "Create a task" %}</h2></div>
   <form method="post" action="{% url 'tasks:create' %}" class="grid gap-3 p-4 sm:grid-cols-2">
     {% csrf_token %}
     <div class="sm:col-span-2">
-      <label class="label" for="lf_title_1">Title</label>
-      <input id="lf_title_1" name="title" required class="input-field" placeholder="e.g. Haul 24 Rifters to staging">
+      <label class="label" for="lf_title_1">{% translate "Title" %}</label>
+      <input id="lf_title_1" name="title" required class="input-field" placeholder="{% translate 'e.g. Haul 24 Rifters to staging' %}">
     </div>
     <div>
-      <label class="label" for="lf_type_2">Type</label>
+      <label class="label" for="lf_type_2">{% translate "Type" %}</label>
       <select id="lf_type_2" name="type" class="input-field">
         {% for value, label in types %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
       </select>
     </div>
     <div>
-      <label class="label" for="lf_assignee_id_3">Assign to</label>
+      <label class="label" for="lf_assignee_id_3">{% translate "Assign to" %}</label>
       <select id="lf_assignee_id_3" name="assignee_id" class="input-field">
-        <option value="">— Open to anyone —</option>
+        <option value="">{% translate "— Open to anyone —" %}</option>
         {% for m in members %}<option value="{{ m.id }}">{{ m.display_name }}</option>{% endfor %}
       </select>
     </div>
     <div>
-      <label class="label" for="lf_priority_4">Priority</label>
+      <label class="label" for="lf_priority_4">{% translate "Priority" %}</label>
       <input id="lf_priority_4" name="priority" type="number" value="0" class="input-field">
     </div>
     <div class="sm:col-span-2">
-      <label class="label" for="lf_description_5">Description (optional)</label>
+      <label class="label" for="lf_description_5">{% translate "Description (optional)" %}</label>
       <textarea id="lf_description_5" name="description" rows="2" class="input-field"></textarea>
     </div>
-    <div class="sm:col-span-2"><button class="btn-gold">Create task</button></div>
+    <div class="sm:col-span-2"><button class="btn-gold">{% translate "Create task" %}</button></div>
   </form>
 </section>
 
 <section class="panel mt-5 overflow-hidden">
   <div class="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3">
-    <h2 class="eyebrow">All tasks</h2>
+    <h2 class="eyebrow">{% translate "All tasks" %}</h2>
     <form method="get" class="flex items-center gap-2 text-xs">
       <select name="status" data-autosubmit class="input-field !py-1 !text-xs">
-        <option value="">All statuses</option>
+        <option value="">{% translate "All statuses" %}</option>
         {% for value, label in statuses %}<option value="{{ value }}" {% if value == filter_status %}selected{% endif %}>{{ label }}</option>{% endfor %}
       </select>
     </form>
@@ -112,14 +113,14 @@
       <div class="flex items-center gap-2 px-4 py-2.5 text-sm">
         <span class="chip shrink-0">{{ t.get_type_display }}</span>
         <a href="{% url 'tasks:detail' t.pk %}" class="min-w-0 flex-1 truncate text-ink hover:text-gold">{{ t.title }}</a>
-        <span class="text-xs text-faint">{% if t.assignee %}{{ t.assignee.display_name }}{% else %}open{% endif %}</span>
+        <span class="text-xs text-faint">{% if t.assignee %}{{ t.assignee.display_name }}{% else %}{% translate "open" %}{% endif %}</span>
         <span class="chip {% if t.status == 'done' %}!border-kill/40 !text-kill{% elif t.status == 'cancelled' %}!text-faint{% else %}!text-gold{% endif %}">{{ t.get_status_display }}</span>
         {% if t.is_active %}
-          <form method="post" action="{% url 'tasks:status' t.pk %}">{% csrf_token %}<input type="hidden" name="status" value="cancelled"><button class="text-xs text-faint hover:text-loss">cancel</button></form>
+          <form method="post" action="{% url 'tasks:status' t.pk %}">{% csrf_token %}<input type="hidden" name="status" value="cancelled"><button class="text-xs text-faint hover:text-loss">{% translate "cancel" %}</button></form>
         {% endif %}
       </div>
     {% empty %}
-      <p class="px-4 py-6 text-center text-sm text-faint">No tasks{% if filter_status %} with that status{% endif %}.</p>
+      <p class="px-4 py-6 text-center text-sm text-faint">{% if filter_status %}{% translate "No tasks with that status." %}{% else %}{% translate "No tasks." %}{% endif %}</p>
     {% endfor %}
   </div>
 </section>

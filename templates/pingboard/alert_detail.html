@@ -1,48 +1,49 @@
 {% extends "base.html" %}
+{% load i18n %}
 {% block title %}{{ alert.title }} · Pingboard{% endblock %}
 {% block content %}
-<a href="{% url 'pingboard:history' %}" class="text-sm text-faint hover:text-gold">← Alert history</a>
+<a href="{% url 'pingboard:history' %}" class="text-sm text-faint hover:text-gold">← {% translate "Alert history" %}</a>
 <header class="mb-6 mt-2 flex flex-wrap items-end justify-between gap-3">
   <div>
     <p class="eyebrow text-gold">{{ alert.get_category_display }} · {{ alert.get_priority_display }} · {{ alert.get_source_display }}</p>
-    <h1 class="text-3xl font-bold text-ink">{{ alert.title }}</h1>
-    <p class="text-sm text-faint">by {{ alert.created_by|default:"system" }} · {{ alert.created_at|date:"l j M · H:i" }} EVE
-      {% if alert.recipient_count %}· ~{{ alert.recipient_count }} pilots{% endif %}</p>
+    <h1 class="text-3xl font-bold text-ink">{{ alert_subject|default:alert.title }}</h1>
+    <p class="text-sm text-faint">{% blocktranslate with author=alert.created_by|default:"system" when=alert.created_at|date:"l j M · H:i" %}by {{ author }} · {{ when }} EVE{% endblocktranslate %}
+      {% if alert.recipient_count %}· {% blocktranslate with n=alert.recipient_count %}~{{ n }} pilots{% endblocktranslate %}{% endif %}</p>
   </div>
   {% include "pingboard/_status_chip.html" with status=alert.status label=alert.get_status_display %}
 </header>
 
-{% if alert.body %}<pre class="panel p-4 mb-5 whitespace-pre-wrap font-sans text-sm text-muted">{{ alert.body }}</pre>{% endif %}
-{% if alert.reason %}<p class="mb-5 text-sm"><span class="text-faint">Reason:</span> <span class="text-ink">{{ alert.reason }}</span></p>{% endif %}
-{% if alert.calendar_event %}<p class="mb-5 text-sm"><span class="text-faint">Linked event:</span>
+{% if alert_body %}<pre class="panel p-4 mb-5 whitespace-pre-wrap font-sans text-sm text-muted">{{ alert_body }}</pre>{% endif %}
+{% if alert.reason %}<p class="mb-5 text-sm"><span class="text-faint">{% translate "Reason:" %}</span> <span class="text-ink">{{ alert.reason }}</span></p>{% endif %}
+{% if alert.calendar_event %}<p class="mb-5 text-sm"><span class="text-faint">{% translate "Linked event:" %}</span>
   <a href="{% url 'pingboard:calendar_event' alert.calendar_event.id %}" class="text-gold">{{ alert.calendar_event.title }}</a></p>{% endif %}
 
 <section class="panel p-5 mb-5">
-  <h2 class="eyebrow text-faint mb-3">Delivery per channel</h2>
+  <h2 class="eyebrow text-faint mb-3">{% translate "Delivery per channel" %}</h2>
   <table class="w-full text-sm">
-    <thead><tr class="text-[11px] uppercase text-faint"><th class="py-1 text-left">Channel</th><th class="py-1 text-left">Provider</th>
-      <th class="py-1 text-left">Status</th><th class="py-1 text-left">Attempts</th><th class="py-1 text-left">Detail</th></tr></thead>
+    <thead><tr class="text-[11px] uppercase text-faint"><th class="py-1 text-left">{% translate "Channel" %}</th><th class="py-1 text-left">{% translate "Provider" %}</th>
+      <th class="py-1 text-left">{% translate "Status" %}</th><th class="py-1 text-left">{% translate "Attempts" %}</th><th class="py-1 text-left">{% translate "Detail" %}</th></tr></thead>
     <tbody class="divide-y divide-line/50">
       {% for d in deliveries %}
       <tr><td class="py-1.5">{{ d.get_kind_display }}</td>
         <td class="py-1.5 text-faint">{{ d.provider.label|default:"—" }}</td>
         <td class="py-1.5">{% include "pingboard/_status_chip.html" with status=d.status label=d.get_status_display %}</td>
         <td class="py-1.5 text-faint">{{ d.attempts }}/{{ d.max_attempts }}</td>
-        <td class="py-1.5 text-[11px] text-faint">{% if d.last_error %}{{ d.last_error }}{% elif d.recipients_ok %}{{ d.recipients_ok }} ok{% endif %}</td></tr>
-      {% empty %}<tr><td colspan="5" class="py-3 text-faint">No deliveries recorded.</td></tr>{% endfor %}
+        <td class="py-1.5 text-[11px] text-faint">{% if d.last_error %}{{ d.last_error }}{% elif d.recipients_ok %}{% blocktranslate with n=d.recipients_ok %}{{ n }} ok{% endblocktranslate %}{% endif %}</td></tr>
+      {% empty %}<tr><td colspan="5" class="py-3 text-faint">{% translate "No deliveries recorded." %}</td></tr>{% endfor %}
     </tbody>
   </table>
 </section>
 
 <div class="flex flex-wrap gap-2">
   {% if alert.status == 'draft' %}
-  <form method="post" action="{% url 'pingboard:alert_action' alert.id 'approve' %}">{% csrf_token %}<button class="btn-gold">Approve &amp; send</button></form>
+  <form method="post" action="{% url 'pingboard:alert_action' alert.id 'approve' %}">{% csrf_token %}<button class="btn-gold">{% translate "Approve &amp; send" %}</button></form>
   {% endif %}
   {% if alert.status == 'failed' or alert.status == 'partial' %}
-  <form method="post" action="{% url 'pingboard:alert_action' alert.id 'retry' %}">{% csrf_token %}<button class="btn-ghost">Retry failed channels</button></form>
+  <form method="post" action="{% url 'pingboard:alert_action' alert.id 'retry' %}">{% csrf_token %}<button class="btn-ghost">{% translate "Retry failed channels" %}</button></form>
   {% endif %}
   {% if alert.status == 'scheduled' or alert.status == 'draft' or alert.status == 'queued' %}
-  <form method="post" action="{% url 'pingboard:alert_action' alert.id 'cancel' %}" data-confirm="Cancel this alert?">{% csrf_token %}<button class="btn-danger">Cancel</button></form>
+  <form method="post" action="{% url 'pingboard:alert_action' alert.id 'cancel' %}" data-confirm="{% translate 'Cancel this alert?' %}">{% csrf_token %}<button class="btn-danger">{% translate "Cancel" %}</button></form>
   {% endif %}
 </div>
 {% endblock %}

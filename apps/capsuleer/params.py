@@ -24,6 +24,7 @@ doc 13.1).
 from __future__ import annotations
 
 from django.core.exceptions import ValidationError
+from django.utils.translation import gettext as _
 
 from .models import MilestoneKind, Verification
 
@@ -45,20 +46,26 @@ _DOCTRINE_RESOLVERS = frozenset({"category", "key"})
 def _require_keys(params: dict, required: set[str], optional: set[str], where: str) -> None:
     """Reject unknown keys and any missing required key (the mass-assignment guard)."""
     if not isinstance(params, dict):
-        raise ValidationError(f"{where} params must be an object.")
+        raise ValidationError(_("%(where)s params must be an object.") % {"where": where})
     allowed = required | optional
     unknown = set(params) - allowed
     if unknown:
-        raise ValidationError(f"{where}: unexpected params key(s): {', '.join(sorted(unknown))}.")
+        raise ValidationError(
+            _("%(where)s: unexpected params key(s): %(keys)s.")
+            % {"where": where, "keys": ", ".join(sorted(unknown))}
+        )
     missing = required - set(params)
     if missing:
-        raise ValidationError(f"{where}: missing params key(s): {', '.join(sorted(missing))}.")
+        raise ValidationError(
+            _("%(where)s: missing params key(s): %(keys)s.")
+            % {"where": where, "keys": ", ".join(sorted(missing))}
+        )
 
 
 def _pos_int(value, name: str):
     """A strict positive integer (``bool`` is not an int here)."""
     if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
-        raise ValidationError(f"{name} must be a positive integer.")
+        raise ValidationError(_("%(name)s must be a positive integer.") % {"name": name})
     return value
 
 
@@ -66,14 +73,14 @@ def _validate_skill_target(params: dict) -> None:
     _require_keys(params, {"skills"}, set(), "skill_target")
     skills = params["skills"]
     if not isinstance(skills, list) or not (1 <= len(skills) <= 25):
-        raise ValidationError("skill_target.skills must be a list of 1-25 entries.")
+        raise ValidationError(_("skill_target.skills must be a list of 1-25 entries."))
     for entry in skills:
         if not isinstance(entry, dict) or set(entry) - {"type_id", "level"}:
-            raise ValidationError("skill_target.skills entries take only type_id and level.")
+            raise ValidationError(_("skill_target.skills entries take only type_id and level."))
         _pos_int(entry.get("type_id"), "skill_target.skills[].type_id")
         level = entry.get("level")
         if isinstance(level, bool) or not isinstance(level, int) or not (1 <= level <= 5):
-            raise ValidationError("skill_target.skills[].level must be an int in 1-5.")
+            raise ValidationError(_("skill_target.skills[].level must be an int in 1-5."))
 
 
 def _validate_doctrine_ready(params: dict) -> None:
@@ -89,33 +96,33 @@ def _validate_doctrine_ready(params: dict) -> None:
     if "fit_id" in params:
         _pos_int(params["fit_id"], "doctrine_ready.fit_id")
     if params.get("resolver") is not None and params["resolver"] not in _DOCTRINE_RESOLVERS:
-        raise ValidationError("doctrine_ready.resolver must be 'category' or 'key'.")
+        raise ValidationError(_("doctrine_ready.resolver must be 'category' or 'key'."))
     if "unresolved" in params and not isinstance(params["unresolved"], bool):
-        raise ValidationError("doctrine_ready.unresolved must be a boolean.")
+        raise ValidationError(_("doctrine_ready.unresolved must be a boolean."))
     # Amendment: optional tier, viable|optimal, default viable (applied by the checker).
     if params.get("tier") is not None and params["tier"] not in _DOCTRINE_TIERS:
-        raise ValidationError("doctrine_ready.tier must be 'viable' or 'optimal'.")
+        raise ValidationError(_("doctrine_ready.tier must be 'viable' or 'optimal'."))
 
 
 def _validate_ship_owned(params: dict) -> None:
     _require_keys(params, {"type_ids"}, {"require_fitted"}, "ship_owned")
     type_ids = params["type_ids"]
     if not isinstance(type_ids, list) or len(type_ids) < 1:
-        raise ValidationError("ship_owned.type_ids must be a non-empty list.")
+        raise ValidationError(_("ship_owned.type_ids must be a non-empty list."))
     for tid in type_ids:
         _pos_int(tid, "ship_owned.type_ids[]")
     if "require_fitted" in params and not isinstance(params["require_fitted"], bool):
-        raise ValidationError("ship_owned.require_fitted must be a boolean.")
+        raise ValidationError(_("ship_owned.require_fitted must be a boolean."))
 
 
 def _validate_contribution(params: dict) -> None:
     # baseline_count is system-stamped at goal activation, never author-supplied — reject it.
     if "baseline_count" in params:
-        raise ValidationError("contribution.baseline_count is system-managed, not author-supplied.")
+        raise ValidationError(_("contribution.baseline_count is system-managed, not author-supplied."))
     _require_keys(params, {"kinds"}, {"count"}, "contribution")
     kinds = params["kinds"]
     if not isinstance(kinds, list) or not kinds or not all(isinstance(k, str) and k for k in kinds):
-        raise ValidationError("contribution.kinds must be a non-empty list of strings.")
+        raise ValidationError(_("contribution.kinds must be a non-empty list of strings."))
     if "count" in params:
         _pos_int(params["count"], "contribution.count")
 
@@ -124,7 +131,7 @@ def _validate_combat_first(params: dict) -> None:
     _require_keys(params, {"milestone_key"}, set(), "combat_first")
     key = params["milestone_key"]
     if not isinstance(key, str) or not key.strip():
-        raise ValidationError("combat_first.milestone_key must be a non-empty string.")
+        raise ValidationError(_("combat_first.milestone_key must be a non-empty string."))
 
 
 def _validate_practical(params: dict) -> None:
@@ -133,15 +140,15 @@ def _validate_practical(params: dict) -> None:
     if "instructions" in params:
         val = params["instructions"]
         if not isinstance(val, str) or len(val) > 500:
-            raise ValidationError("practical.instructions must be a string of at most 500 chars.")
+            raise ValidationError(_("practical.instructions must be a string of at most 500 chars."))
     if "evidence_hint" in params:
         val = params["evidence_hint"]
         if not isinstance(val, str) or len(val) > 200:
-            raise ValidationError("practical.evidence_hint must be a string of at most 200 chars.")
+            raise ValidationError(_("practical.evidence_hint must be a string of at most 200 chars."))
     if "link" in params:
         val = params["link"]
         if not isinstance(val, str) or len(val) > 200:
-            raise ValidationError("practical.link must be a string of at most 200 chars.")
+            raise ValidationError(_("practical.link must be a string of at most 200 chars."))
 
 
 def _validate_manual(params: dict) -> None:
@@ -163,9 +170,13 @@ def validate_verification(kind: str, verification: str) -> None:
     """Enforce the kind ↔ verification rule (doc 07 §6): ``auto`` only for auto-capable kinds;
     ``practical``/``manual`` never ``auto``."""
     if verification not in Verification.values:
-        raise ValidationError(f"Unknown verification mode: {verification!r}.")
+        raise ValidationError(
+            _("Unknown verification mode: %(value)s.") % {"value": repr(verification)}
+        )
     if verification == Verification.AUTO and kind not in AUTO_CAPABLE_KINDS:
-        raise ValidationError(f"'{kind}' milestones cannot use automatic verification.")
+        raise ValidationError(
+            _("'%(kind)s' milestones cannot use automatic verification.") % {"kind": kind}
+        )
 
 
 def validate_milestone_params(kind: str, params: dict | None, verification: str) -> None:
@@ -175,6 +186,6 @@ def validate_milestone_params(kind: str, params: dict | None, verification: str)
     success. ``params`` defaults to an empty dict.
     """
     if kind not in _VALIDATORS:
-        raise ValidationError(f"Unknown milestone kind: {kind!r}.")
+        raise ValidationError(_("Unknown milestone kind: %(value)s.") % {"value": repr(kind)})
     validate_verification(kind, verification)
     _VALIDATORS[kind](params or {})

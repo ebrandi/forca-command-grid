@@ -6,6 +6,8 @@ Freight location autocomplete (station / structure / system). Params:
 Selecting a result fills the hidden fields; a "structure not listed" toggle
 reveals a manual name + system entry for a structure the pilot can't search.
 {% endcomment %}
+{% load i18n %}
+{% translate "Station, structure, or system…" as default_location_ph %}
 <div x-data="locationPicker('{{ endpoint|default:'/freight/locations/' }}', '{{ prefix }}')" class="relative">
   <input type="hidden" name="{{ prefix }}_name" :value="outName()">
   <input type="hidden" name="{{ prefix }}_kind" :value="outKind()">
@@ -16,7 +18,7 @@ reveals a manual name + system entry for a structure the pilot can't search.
   <div x-show="mode === 'search'" class="relative" @click.outside="open=false">
     <input type="text" x-model="q" @input.debounce.250ms="lookup()" @focus="open = results.length>0"
       class="input-field" autocomplete="off"
-      placeholder="{{ placeholder|default:'Station, structure, or system…' }}">
+      placeholder="{{ placeholder|default:default_location_ph }}">
     <div x-show="open" x-cloak class="absolute z-30 mt-1 max-h-64 w-full overflow-auto rounded-md border border-line bg-panel shadow-xl">
       <template x-for="r in results" :key="r.kind + ':' + r.id">
         <button type="button" @click="choose(r)" class="flex w-full items-start gap-2 px-3 py-1.5 text-left text-sm hover:bg-panel2">
@@ -29,24 +31,24 @@ reveals a manual name + system entry for a structure the pilot can't search.
           </span>
         </button>
       </template>
-      <p x-show="!results.length" class="px-3 py-2 text-xs text-faint">No matches — try a station or system, or enter a structure below.</p>
+      <p x-show="!results.length" class="px-3 py-2 text-xs text-faint">{% translate "No matches — try a station or system, or enter a structure below." %}</p>
     </div>
-    <button type="button" @click="mode='manual'; clearSel()" class="mt-1 text-[11px] text-faint hover:text-cyan">Structure not listed? Enter it manually →</button>
+    <button type="button" @click="mode='manual'; clearSel()" class="mt-1 text-[11px] text-faint hover:text-cyan">{% translate "Structure not listed? Enter it manually" %} →</button>
   </div>
 
   <!-- Manual structure mode (name + system) -->
   <div x-show="mode === 'manual'" x-cloak class="space-y-1.5">
-    <input type="text" x-model="mName" class="input-field" autocomplete="off" placeholder="Exact structure name (e.g. 1DQ1-A - The Keepstar)">
+    <input type="text" x-model="mName" class="input-field" autocomplete="off" placeholder="{% blocktranslate with example='1DQ1-A - The Keepstar' %}Exact structure name (e.g. {{ example }}){% endblocktranslate %}">
     <div class="relative" @click.outside="sysOpen=false">
       <input type="text" x-model="sysQ" @input.debounce.250ms="sysLookup()" @focus="sysOpen = sysResults.length>0"
-        class="input-field" autocomplete="off" placeholder="System the structure is in…">
+        class="input-field" autocomplete="off" placeholder="{% translate 'System the structure is in…' %}">
       <div x-show="sysOpen" x-cloak class="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-md border border-line bg-panel shadow-xl">
         <template x-for="r in sysResults" :key="'sys:' + r.id">
           <button type="button" @click="chooseSys(r)" class="block w-full truncate px-3 py-1.5 text-left text-sm text-muted hover:bg-panel2 hover:text-ink" x-text="r.name"></button>
         </template>
-        <p x-show="!sysResults.length" class="px-3 py-2 text-xs text-faint">No matching system.</p>
+        <p x-show="!sysResults.length" class="px-3 py-2 text-xs text-faint">{% translate "No matching system." %}</p>
       </div>
     </div>
-    <button type="button" @click="mode='search'" class="text-[11px] text-faint hover:text-cyan">← Back to search</button>
+    <button type="button" @click="mode='search'" class="text-[11px] text-faint hover:text-cyan">← {% translate "Back to search" %}</button>
   </div>
 </div>

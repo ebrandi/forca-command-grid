@@ -1,16 +1,17 @@
 {% extends "base.html" %}
-{% block title %}Recruitment ESI link · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Recruitment ESI link" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <section class="panel mx-auto mt-8 max-w-lg p-6 text-center">
   {% if ok %}
-    <p class="eyebrow text-kill">Thank you</p>
-    <h1 class="mt-1 text-xl font-bold text-ink">All set{% if candidate %}, {{ candidate.name }}{% endif %}</h1>
-    <p class="mt-2 text-sm text-muted">Your skills and corp roles were confirmed and shared with the recruitment team. We kept only the derived notes — <span class="text-ink">your EVE token has already been discarded</span>. You can close this tab.</p>
+    <p class="eyebrow text-kill">{% translate "Thank you" %}</p>
+    <h1 class="mt-1 text-xl font-bold text-ink">{% translate "All set" %}{% if candidate %}, {{ candidate.name }}{% endif %}</h1>
+    <p class="mt-2 text-sm text-muted">{% blocktranslate %}Your skills and corp roles were confirmed and shared with the recruitment team. We kept only the derived notes — <span class="text-ink">your EVE token has already been discarded</span>. You can close this tab.{% endblocktranslate %}</p>
   {% else %}
-    <p class="eyebrow text-loss">Couldn’t complete</p>
-    <h1 class="mt-1 text-xl font-bold text-ink">We couldn’t finish that</h1>
+    <p class="eyebrow text-loss">{% translate "Couldn’t complete" %}</p>
+    <h1 class="mt-1 text-xl font-bold text-ink">{% translate "We couldn’t finish that" %}</h1>
     <p class="mt-2 text-sm text-muted">{{ reason }}</p>
-    <p class="mt-3 text-xs text-faint">Ask your recruiter for a fresh link if you’d like to try again. Nothing was stored.</p>
+    <p class="mt-3 text-xs text-faint">{% translate "Ask your recruiter for a fresh link if you’d like to try again. Nothing was stored." %}</p>
   {% endif %}
 </section>
 {% endblock %}

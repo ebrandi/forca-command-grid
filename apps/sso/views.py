@@ -12,6 +12,7 @@ from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.utils.html import escape
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
 from core.audit import audit_log, client_ip
@@ -40,7 +41,7 @@ def login_view(request: HttpRequest) -> HttpResponse:
     # callback would link the director's own character + tokens to the impersonated pilot's
     # account. The impersonation middleware already blocks this route (belt to that braces).
     if getattr(request, "is_impersonating", False):
-        return HttpResponseBadRequest("Not available while viewing as another pilot.")
+        return HttpResponseBadRequest(_("Not available while viewing as another pilot."))
     state = oauth.generate_state()
     verifier, challenge = oauth.generate_pkce()
     scopes = list(settings.EVE_SSO_DEFAULT_SCOPES)
@@ -61,12 +62,12 @@ def callback_view(request: HttpRequest) -> HttpResponse:
     # resolve_login_account would resolve the swapped pilot as the login account and link the
     # director's character/tokens (and possibly a Director grant) to the pilot's account.
     if getattr(request, "is_impersonating", False):
-        return HttpResponseBadRequest("Not available while viewing as another pilot.")
+        return HttpResponseBadRequest(_("Not available while viewing as another pilot."))
     error = request.GET.get("error")
     if error:
         # Escape: this value is reflected into an HTML response and is fully
         # attacker-controlled (the callback is reachable before state validation).
-        return HttpResponseBadRequest(f"SSO error: {escape(error)}")
+        return HttpResponseBadRequest(_("SSO error: %(error)s") % {"error": escape(error)})
 
     state = request.GET.get("state")
     expected_state = request.session.pop(_SESS_STATE, None)
@@ -75,9 +76,9 @@ def callback_view(request: HttpRequest) -> HttpResponse:
     code = request.GET.get("code")
 
     if not state or not expected_state or not secrets.compare_digest(state, expected_state):
-        return HttpResponseBadRequest("Invalid OAuth state.")
+        return HttpResponseBadRequest(_("Invalid OAuth state."))
     if not code or not verifier:
-        return HttpResponseBadRequest("Missing authorization code.")
+        return HttpResponseBadRequest(_("Missing authorization code."))
 
     try:
         token = oauth.exchange_code(code, verifier)
@@ -91,7 +92,7 @@ def callback_view(request: HttpRequest) -> HttpResponse:
             metadata={"reason": str(exc)[:200]},
             ip=client_ip(request),
         )
-        return HttpResponseBadRequest("Authentication failed.")
+        return HttpResponseBadRequest(_("Authentication failed."))
 
     # Rotate the session key to defeat session fixation on login.
     request.session.cycle_key()
@@ -106,7 +107,7 @@ def callback_view(request: HttpRequest) -> HttpResponse:
         services.complete_login(account, claims, token)
     except CharacterAlreadyLinked:
         return HttpResponseBadRequest(
-            "This EVE character is already linked to another account."
+            _("This EVE character is already linked to another account.")
         )
     except CharacterOwnershipChanged:
         audit_log(
@@ -117,8 +118,10 @@ def callback_view(request: HttpRequest) -> HttpResponse:
             ip=client_ip(request),
         )
         return HttpResponseBadRequest(
-            "This EVE character's ownership has changed since it was linked. "
-            "For security it cannot sign in until an officer detaches it."
+            _(
+                "This EVE character's ownership has changed since it was linked. "
+                "For security it cannot sign in until an officer detaches it."
+            )
         )
 
     if not request.user.is_authenticated:
@@ -196,7 +199,7 @@ def reconcile_view(request: HttpRequest) -> HttpResponse:
         res = reconcile_user_scopes(request.user, verify=False)  # instant, no ESI
     except Exception:  # noqa: BLE001 - reconciliation is best-effort, never a 500
         log.exception("self-service scope reconcile failed for %s", request.user.pk)
-        messages.error(request, "Could not re-check your access just now — try again shortly.")
+        messages.error(request, _("Could not re-check your access just now — try again shortly."))
         return redirect("sso:scopes")
 
     # Offload the CCP-hitting deep verify; one run per user per 5 min.
@@ -215,17 +218,21 @@ def reconcile_view(request: HttpRequest) -> HttpResponse:
         metadata={"activated": res["activated"], "deactivated": res["deactivated"], "deep": queued},
         ip=client_ip(request),
     )
-    deep = " A full CCP re-check is running in the background." if queued else ""
+    deep = " " + _("A full CCP re-check is running in the background.") if queued else ""
     if res["deactivated"]:
         messages.warning(
             request,
-            f"{len(res['deactivated'])} scope(s) are no longer granted and have been marked "
-            f"inactive.{deep}",
+            _("%(n)d scope(s) are no longer granted and have been marked inactive.%(deep)s")
+            % {"n": len(res["deactivated"]), "deep": deep},
         )
     elif res["activated"]:
-        messages.success(request, f"{len(res['activated'])} scope(s) reconciled.{deep}")
+        messages.success(
+            request,
+            _("%(n)d scope(s) reconciled.%(deep)s")
+            % {"n": len(res["activated"]), "deep": deep},
+        )
     else:
-        messages.success(request, f"Your access is in sync.{deep}")
+        messages.success(request, _("Your access is in sync.%(deep)s") % {"deep": deep})
     return redirect("sso:scopes")
 
 
@@ -235,7 +242,7 @@ def disconnect_view(request: HttpRequest, character_id: int) -> HttpResponse:
     """Disconnect a character: revoke its tokens (audit-logged)."""
     character = request.user.characters.filter(character_id=character_id).first()
     if not character:
-        return HttpResponseBadRequest("Not your character.")
+        return HttpResponseBadRequest(_("Not your character."))
     # Local erasure is the hard guarantee, done synchronously. Capture the refresh-token
     # plaintexts FIRST (the ciphertext is about to be wiped), then hand the best-effort
     # CCP revocation to a Celery task so a CCP /revoke slowdown can't tie up this gunicorn

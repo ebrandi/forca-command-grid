@@ -1,10 +1,11 @@
 {% extends "base.html" %}
-{% block title %}Members only · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Members only" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <div class="panel mx-auto max-w-md p-8 text-center">
   <span class="mx-auto grid h-12 w-12 place-items-center rounded-full bg-loss/15 text-loss"><svg class="h-6 w-6"><use href="#i-lock"/></svg></span>
-  <h1 class="mt-4 font-display text-lg font-semibold text-ink">Members only</h1>
-  <p class="mt-1 text-sm text-faint">This content is restricted to verified FORCA members.</p>
-  {% if not user.is_authenticated %}<a href="{% url 'sso:login' %}" class="btn-gold mt-5">Log in with EVE</a>{% endif %}
+  <h1 class="mt-4 font-display text-lg font-semibold text-ink">{% translate "Members only" %}</h1>
+  <p class="mt-1 text-sm text-faint">{% translate "This content is restricted to verified FORCA members." %}</p>
+  {% if not user.is_authenticated %}<a href="{% url 'sso:login' %}" class="btn-gold mt-5">{% translate "Log in with EVE" %}</a>{% endif %}
 </div>
 {% endblock %}

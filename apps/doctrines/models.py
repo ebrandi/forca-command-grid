@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from core.mixins import TimeStampedModel
 
@@ -25,9 +26,9 @@ class DoctrineCategory(models.Model):
 
 class Doctrine(TimeStampedModel):
     class Status(models.TextChoices):
-        DRAFT = "draft", "Draft"
-        ACTIVE = "active", "Active"
-        RETIRED = "retired", "Retired"
+        DRAFT = "draft", _("Draft")
+        ACTIVE = "active", _("Active")
+        RETIRED = "retired", _("Retired")
 
     name = models.CharField(max_length=200)
     category = models.ForeignKey(
@@ -36,7 +37,7 @@ class Doctrine(TimeStampedModel):
     description = models.TextField(blank=True)
     status = models.CharField(max_length=12, choices=Status.choices, default=Status.ACTIVE)
     is_public_preview = models.BooleanField(default=False)
-    priority = models.IntegerField(default=0, help_text="Corp-need weight for skill planning.")
+    priority = models.IntegerField(default=0, help_text=_("Corp-need weight for skill planning."))
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True
     )
@@ -67,11 +68,12 @@ class DoctrineFit(TimeStampedModel):
 
 class DoctrineRequirement(models.Model):
     class Kind(models.TextChoices):
+        # Implant/Booster/Rig/Ammo are EVE item categories — left English on purpose.
         IMPLANT = "implant", "Implant"
         BOOSTER = "booster", "Booster"
         RIG = "rig", "Rig"
         AMMO = "ammo", "Ammo"
-        NOTE = "note", "Note"
+        NOTE = "note", _("Note")
 
     fit = models.ForeignKey(DoctrineFit, on_delete=models.CASCADE, related_name="requirements")
     kind = models.CharField(max_length=12, choices=Kind.choices)
@@ -82,8 +84,8 @@ class DoctrineRequirement(models.Model):
 
 class SkillRequirement(models.Model):
     class DerivedFrom(models.TextChoices):
-        AUTO_DOGMA = "auto_dogma", "Auto (dogma)"
-        MANUAL = "manual", "Manual override"
+        AUTO_DOGMA = "auto_dogma", _("Auto (dogma)")
+        MANUAL = "manual", _("Manual override")
 
     fit = models.ForeignKey(DoctrineFit, on_delete=models.CASCADE, related_name="skill_requirements")
     skill_type_id = models.IntegerField()
@@ -109,9 +111,9 @@ class DoctrineImportBatch(TimeStampedModel):
     """
 
     class Status(models.TextChoices):
-        PREVIEW = "preview", "Awaiting review"
-        COMMITTED = "committed", "Imported"
-        EXPIRED = "expired", "Expired"
+        PREVIEW = "preview", _("Awaiting review")
+        COMMITTED = "committed", _("Imported")
+        EXPIRED = "expired", _("Expired")
 
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
@@ -151,11 +153,11 @@ class DoctrineImportConfig(TimeStampedModel):
     is_active = models.BooleanField(default=True)
     max_fittings_per_import = models.PositiveIntegerField(
         default=xml_parser.DEFAULT_MAX_FITTINGS,
-        help_text=(
-            "How many fittings one XML upload may contain "
-            f"(1–{xml_parser.MAX_FITTINGS_CEILING}). {xml_parser.MAX_FITTINGS_CEILING} is the "
-            "hard safety maximum; set it there to effectively remove the limit."
-        ),
+        help_text=_(
+            "How many fittings one XML upload may contain (1–%(ceiling)s). "
+            "%(ceiling)s is the hard safety maximum; set it there to effectively "
+            "remove the limit."
+        ) % {"ceiling": xml_parser.MAX_FITTINGS_CEILING},
     )
 
     class Meta:
@@ -205,10 +207,10 @@ class DoctrineDisplayConfig(TimeStampedModel):
     is_active = models.BooleanField(default=True)
     per_page = models.PositiveIntegerField(
         default=DEFAULT_PER_PAGE,
-        help_text=(
-            f"Doctrines/ships shown per page on the Doctrines and Shipyard pages "
-            f"({MIN_PER_PAGE}–{MAX_PER_PAGE})."
-        ),
+        help_text=_(
+            "Doctrines/ships shown per page on the Doctrines and Shipyard pages "
+            "(%(min)s–%(max)s)."
+        ) % {"min": MIN_PER_PAGE, "max": MAX_PER_PAGE},
     )
 
     class Meta:

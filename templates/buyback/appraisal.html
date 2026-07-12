@@ -1,53 +1,54 @@
 {% extends "base.html" %}
 {% load eve %}
+{% load i18n %}
 {% block title %}Buyback · [FORCA] Command Grid{% endblock %}
 {% block content %}
 
 <header class="mb-6 flex flex-wrap items-end justify-between gap-4">
   <div>
     <p class="eyebrow">Forças Armadas · Buyback</p>
-    <h1 class="mt-1 text-3xl font-bold text-ink">Sell your items</h1>
-    <p class="mt-1 max-w-2xl text-sm text-faint">Paste anything from your hangar for an instant offer, priced off the live Jita sell price. Wherever your items sit, we buy them.</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Sell your items" %}</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Paste anything from your hangar for an instant offer, priced off the live Jita sell price. Wherever your items sit, we buy them." %}</p>
   </div>
-  <a href="{% url 'buyback:board' %}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-box"/></svg> Buyback board{% if open_count %} · {{ open_count }}{% endif %}</a>
+  <a href="{% url 'buyback:board' %}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-box"/></svg> {% translate "Buyback board" %}{% if open_count %} · {{ open_count }}{% endif %}</a>
 </header>
 
 
 <div class="grid gap-5 lg:grid-cols-[1fr_1.1fr]">
   <!-- Paste form -->
   <section class="panel p-5">
-    <h2 class="eyebrow mb-3 text-gold">Paste your items</h2>
+    <h2 class="eyebrow mb-3 text-gold">{% translate "Paste your items" %}</h2>
     <form method="post" action="{% url 'buyback:appraisal' %}" class="space-y-3">
       {% csrf_token %}
       {{ form.items }}
-      {% if form.items.errors %}<p class="text-xs text-loss">Paste at least one item.</p>{% endif %}
+      {% if form.items.errors %}<p class="text-xs text-loss">{% translate "Paste at least one item." %}</p>{% endif %}
       <div class="grid gap-3 sm:grid-cols-2">
         <div>
-          <label class="label">Item location</label>
+          <label class="label">{% translate "Item location" %}</label>
           {{ form.sec_band }}
-          <p class="mt-1 text-[11px] text-faint">Highsec {{ cfg.highsec_pct|floatformat:2 }}× · Lowsec {{ cfg.lowsec_pct|floatformat:2 }}× · Nullsec {{ cfg.nullsec_pct|floatformat:2 }}× of Jita sell</p>
+          <p class="mt-1 text-[11px] text-faint">{% blocktranslate with hs=cfg.highsec_pct|floatformat:2 ls=cfg.lowsec_pct|floatformat:2 ns=cfg.nullsec_pct|floatformat:2 %}Highsec {{ hs }}× · Lowsec {{ ls }}× · Nullsec {{ ns }}× of Jita sell{% endblocktranslate %}</p>
         </div>
-        <div><label class="label">Where (optional)</label>{{ form.location_name }}</div>
+        <div><label class="label">{% translate "Where (optional)" %}</label>{{ form.location_name }}</div>
       </div>
-      <div><label class="label">Notes (optional)</label>{{ form.notes }}</div>
+      <div><label class="label">{% translate "Notes (optional)" %}</label>{{ form.notes }}</div>
       {% if cfg.ore_mode_enabled %}
-      <label class="flex items-center gap-2 text-sm text-muted">{{ form.ore }} Value ore/ice by refined minerals (≈{{ cfg.reprocessing_pct|floatformat:1 }}× yield)</label>
+      <label class="flex items-center gap-2 text-sm text-muted">{{ form.ore }} {% blocktranslate with pct=cfg.reprocessing_pct|floatformat:1 %}Value ore/ice by refined minerals (≈{{ pct }}× yield){% endblocktranslate %}</label>
       {% endif %}
-      <button class="btn-gold w-full">Appraise</button>
+      <button class="btn-gold w-full">{% translate "Appraise" %}</button>
     </form>
   </section>
 
   <!-- Result -->
   <section class="panel p-5">
-    <h2 class="eyebrow mb-3 text-gold">Your offer</h2>
+    <h2 class="eyebrow mb-3 text-gold">{% translate "Your offer" %}</h2>
     {% if result %}
       <div class="rounded-xl border border-gold/30 bg-gold/5 p-4 text-center">
-        <p class="eyebrow text-faint">We pay you</p>
+        <p class="eyebrow text-faint">{% translate "We pay you" %}</p>
         <p class="data mt-1 text-4xl font-bold text-gold">{{ result.offer_total|isk }}<span class="text-lg"> ISK</span></p>
-        <p class="mt-1 text-xs text-faint">{{ result.item_count }} items · {{ result.volume_m3|floatformat:0 }} m³ · {{ result.sec_band|capfirst }} rate {{ result.rate|floatformat:2 }}×</p>
-        <p class="mt-0.5 text-[11px] text-faint">Jita sell value {{ result.jita_total|isk }}</p>
+        <p class="mt-1 text-xs text-faint">{% blocktranslate with count=result.item_count vol=result.volume_m3|floatformat:0 band=result.sec_band|capfirst rate=result.rate|floatformat:2 %}{{ count }} items · {{ vol }} m³ · {{ band }} rate {{ rate }}×{% endblocktranslate %}</p>
+        <p class="mt-0.5 text-[11px] text-faint">{% blocktranslate with total=result.jita_total|isk %}Jita sell value {{ total }}{% endblocktranslate %}</p>
         <p class="mt-1 text-[11px] {% if result.priced_as_of %}text-faint{% else %}text-loss{% endif %}">
-          {% if result.priced_as_of %}Prices updated {{ result.priced_as_of|timesince }} ago ({{ result.priced_as_of|date:"Y-m-d H:i" }} UTC){% else %}No live market prices — valued at SDE base price{% endif %}
+          {% if result.priced_as_of %}{% blocktranslate with ago=result.priced_as_of|timesince when=result.priced_as_of|date:"Y-m-d H:i" %}Prices updated {{ ago }} ago ({{ when }} UTC){% endblocktranslate %}{% else %}{% translate "No live market prices — valued at SDE base price" %}{% endif %}
         </p>
       </div>
 
@@ -55,15 +56,15 @@
       <div class="mt-4 max-h-72 overflow-auto rounded-lg border border-line/50">
         <div class="overflow-x-auto"><table class="w-full text-xs" x-data="sortableTable()">
           <thead class="sticky top-0 bg-panel text-left text-faint"><tr>
-            <th class="px-3 py-1.5 font-medium" :aria-sort="ariaSort('item')"><button type="button" @click="sortBy('item')" class="inline-flex items-center gap-1 cursor-pointer select-none hover:text-gold">Item<span x-show="key==='item'" x-text="dir==='asc'?' ↑':' ↓'" class="text-gold"></span></button></th>
-            <th class="px-3 py-1.5 text-right font-medium" :aria-sort="ariaSort('qty')"><button type="button" @click="sortBy('qty')" class="inline-flex items-center gap-1 cursor-pointer select-none hover:text-gold">Qty<span x-show="key==='qty'" x-text="dir==='asc'?' ↑':' ↓'" class="text-gold"></span></button></th>
+            <th class="px-3 py-1.5 font-medium" :aria-sort="ariaSort('item')"><button type="button" @click="sortBy('item')" class="inline-flex items-center gap-1 cursor-pointer select-none hover:text-gold">{% translate "Item" %}<span x-show="key==='item'" x-text="dir==='asc'?' ↑':' ↓'" class="text-gold"></span></button></th>
+            <th class="px-3 py-1.5 text-right font-medium" :aria-sort="ariaSort('qty')"><button type="button" @click="sortBy('qty')" class="inline-flex items-center gap-1 cursor-pointer select-none hover:text-gold">{% translate "Qty" %}<span x-show="key==='qty'" x-text="dir==='asc'?' ↑':' ↓'" class="text-gold"></span></button></th>
             <th class="px-3 py-1.5 text-right font-medium" :aria-sort="ariaSort('jita')"><button type="button" @click="sortBy('jita')" class="inline-flex items-center gap-1 cursor-pointer select-none hover:text-gold">Jita<span x-show="key==='jita'" x-text="dir==='asc'?' ↑':' ↓'" class="text-gold"></span></button></th>
-            <th class="px-3 py-1.5 text-right font-medium" :aria-sort="ariaSort('offer')"><button type="button" @click="sortBy('offer')" class="inline-flex items-center gap-1 cursor-pointer select-none hover:text-gold">Offer<span x-show="key==='offer'" x-text="dir==='asc'?' ↑':' ↓'" class="text-gold"></span></button></th>
+            <th class="px-3 py-1.5 text-right font-medium" :aria-sort="ariaSort('offer')"><button type="button" @click="sortBy('offer')" class="inline-flex items-center gap-1 cursor-pointer select-none hover:text-gold">{% translate "Offer" %}<span x-show="key==='offer'" x-text="dir==='asc'?' ↑':' ↓'" class="text-gold"></span></button></th>
           </tr></thead>
           <tbody x-ref="body">
             {% for line in result.lines %}
             <tr class="border-t border-line/40" data-row>
-              <td class="px-3 py-1.5" data-sort-key="item" data-sort-value="{{ line.name }}"><span class="flex items-center gap-1.5"><img src="{% eve_type_icon line.type_id 32 %}" alt="" loading="lazy" class="h-4 w-4 rounded-sm">{{ line.name }}{% if line.basis == 'reprocessed' %} <span class="chip !text-[9px] !text-cyan" title="Valued by its refined mineral output, not the ore's own sell price">refined</span>{% endif %}</span></td>
+              <td class="px-3 py-1.5" data-sort-key="item" data-sort-value="{{ line.name }}"><span class="flex items-center gap-1.5"><img src="{% eve_type_icon line.type_id 32 %}" alt="" loading="lazy" class="h-4 w-4 rounded-sm">{{ line.name }}{% if line.basis == 'reprocessed' %} <span class="chip !text-[9px] !text-cyan" title="{% translate "Valued by its refined mineral output, not the ore's own sell price" %}">{% translate "refined" %}</span>{% endif %}</span></td>
               <td class="px-3 py-1.5 text-right data text-faint" data-sort-key="qty" data-sort-value="{{ line.quantity }}">{{ line.quantity }}</td>
               <td class="px-3 py-1.5 text-right data text-muted" data-sort-key="jita" data-sort-value="{{ line.line_jita }}">{{ line.line_jita|isk }}</td>
               <td class="px-3 py-1.5 text-right data text-ink" data-sort-key="offer" data-sort-value="{{ line.line_offer }}">{{ line.line_offer|isk }}</td>
@@ -76,32 +77,32 @@
 
       {% if result.unknown %}
       <div class="mt-3 rounded-lg border border-loss/30 bg-loss/5 px-3 py-2 text-xs text-loss">
-        Couldn't price {{ result.unknown|length }} line{{ result.unknown|length|pluralize }}: {{ result.unknown|join:", "|truncatechars:160 }}
+        {% blocktranslate count n=result.unknown|length with items=result.unknown|join:", "|truncatechars:160 %}Couldn't price {{ n }} line: {{ items }}{% plural %}Couldn't price {{ n }} lines: {{ items }}{% endblocktranslate %}
       </div>
       {% endif %}
 
       {% if can_submit %}
       <form method="post" action="{% url 'buyback:submit_offer' %}" class="mt-4 border-t border-line/60 pt-4">
         {% csrf_token %}
-        <button class="btn-gold w-full">Post this lot to the board →</button>
-        <p class="mt-1.5 text-center text-[11px] text-faint">Your corpmates can buy it at this price.</p>
+        <button class="btn-gold w-full">{% translate "Post this lot to the board" %} →</button>
+        <p class="mt-1.5 text-center text-[11px] text-faint">{% translate "Your corpmates can buy it at this price." %}</p>
       </form>
       {% if guaranteed_available %}
       <form method="post" action="{% url 'buyback:guaranteed_request' %}" class="mt-2">
         {% csrf_token %}
-        <button class="btn-ghost w-full !border-cyan/40 !text-cyan">Request a corp-guaranteed buyout →</button>
-        <p class="mt-1.5 text-center text-[11px] text-faint">The corp buys it directly, pending an officer's approval.</p>
+        <button class="btn-ghost w-full !border-cyan/40 !text-cyan">{% translate "Request a corp-guaranteed buyout" %} →</button>
+        <p class="mt-1.5 text-center text-[11px] text-faint">{% translate "The corp buys it directly, pending an officer's approval." %}</p>
       </form>
       {% endif %}
       {% elif not result.lines %}
-      <p class="mt-3 text-sm text-faint">Nothing priced yet — check the item names and try again.</p>
+      <p class="mt-3 text-sm text-faint">{% translate "Nothing priced yet — check the item names and try again." %}</p>
       {% else %}
-      <p class="mt-4 border-t border-line/60 pt-4 text-xs text-faint">Log in with EVE to post this lot for buyback.</p>
+      <p class="mt-4 border-t border-line/60 pt-4 text-xs text-faint">{% translate "Log in with EVE to post this lot for buyback." %}</p>
       {% endif %}
     {% else %}
       <div class="flex h-full min-h-64 flex-col items-center justify-center text-center text-sm text-faint">
         <svg class="mb-2 h-8 w-8 text-line"><use href="#i-coin"/></svg>
-        <p>Paste items and hit Appraise for an instant offer.</p>
+        <p>{% translate "Paste items and hit Appraise for an instant offer." %}</p>
       </div>
     {% endif %}
   </section>
@@ -109,16 +110,16 @@
 
 <section class="panel mt-5 grid gap-4 p-5 sm:grid-cols-3 text-sm">
   <div>
-    <p class="eyebrow text-gold">Instant, fair pricing</p>
-    <p class="mt-1.5 text-faint">Every item valued at the live Jita sell price, minus a small location-based margin.</p>
+    <p class="eyebrow text-gold">{% translate "Instant, fair pricing" %}</p>
+    <p class="mt-1.5 text-faint">{% translate "Every item valued at the live Jita sell price, minus a small location-based margin." %}</p>
   </div>
   <div>
-    <p class="eyebrow text-gold">Sell from anywhere</p>
-    <p class="mt-1.5 text-faint">Highsec, lowsec, nullsec — it doesn't matter where your assets are parked.</p>
+    <p class="eyebrow text-gold">{% translate "Sell from anywhere" %}</p>
+    <p class="mt-1.5 text-faint">{% translate "Highsec, lowsec, nullsec — it doesn't matter where your assets are parked." %}</p>
   </div>
   <div>
-    <p class="eyebrow text-gold">No market hassle</p>
-    <p class="mt-1.5 text-faint">No broker fees, no sell orders, no waiting. Post the lot and get paid.</p>
+    <p class="eyebrow text-gold">{% translate "No market hassle" %}</p>
+    <p class="mt-1.5 text-faint">{% translate "No broker fees, no sell orders, no waiting. Post the lot and get paid." %}</p>
   </div>
 </section>
 {% endblock %}

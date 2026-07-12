@@ -11,6 +11,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
 from apps.doctrines.models import DoctrineFit
@@ -104,7 +105,7 @@ def order_fit(request: HttpRequest) -> HttpResponse:
     cfg = active_config()
     form = FitOrderForm(request.POST)
     if not form.is_valid():
-        messages.error(request, "Could not place that order.")
+        messages.error(request, _("Could not place that order."))
         return redirect("store:storefront")
     fit = get_object_or_404(DoctrineFit, pk=form.cleaned_data["fit_id"])
     priced = price_doctrine_fit(fit, cfg.doctrine_markup)
@@ -122,7 +123,7 @@ def order_fit(request: HttpRequest) -> HttpResponse:
     )
     audit_log(request.user, "store.order", target_type="store_order",
               target_id=str(order.id), ip=client_ip(request))
-    messages.success(request, "Order placed — it's on the corp fulfilment board.")
+    messages.success(request, _("Order placed — it's on the corp fulfilment board."))
     return redirect("store:order", pk=order.pk)
 
 
@@ -136,11 +137,11 @@ def order_hull(request: HttpRequest) -> HttpResponse:
     cfg = active_config()
     form = HullOrderForm(request.POST)
     if not form.is_valid():
-        messages.error(request, "Pick a hull and a quantity.")
+        messages.error(request, _("Pick a hull and a quantity."))
         return redirect("store:storefront")
     type_id = form.cleaned_data["ship_type_id"]
     if not is_ship(type_id):
-        messages.error(request, "That isn't a ship hull.")
+        messages.error(request, _("That isn't a ship hull."))
         return redirect("store:storefront")
     priced = price_hull(type_id, cfg.hull_markup)
     if not priced.ok:
@@ -156,7 +157,7 @@ def order_hull(request: HttpRequest) -> HttpResponse:
     )
     audit_log(request.user, "store.order", target_type="store_order",
               target_id=str(order.id), ip=client_ip(request))
-    messages.success(request, "Build order placed — a corp member will claim it on the board.")
+    messages.success(request, _("Build order placed — a corp member will claim it on the board."))
     return redirect("store:order", pk=order.pk)
 
 
@@ -243,7 +244,7 @@ def supply_forecast(request: HttpRequest) -> HttpResponse:
                     key="store.staging_system_id",
                     defaults={"value": {"system_id": staging_id, "name": sys.name}},
                 )
-                messages.success(request, f"Corp default staging set to {sys.name}.")
+                messages.success(request, _("Corp default staging set to %(name)s.") % {"name": sys.name})
 
     try:
         window = max(7, min(int(request.POST.get("window") or request.GET.get("window") or 30), 180))
@@ -288,7 +289,7 @@ def board(request: HttpRequest) -> HttpResponse:
 def claim_order(request: HttpRequest, pk: int) -> HttpResponse:
     order = get_object_or_404(StoreOrder, pk=pk)
     if order.buyer_id == request.user.id:
-        messages.error(request, "You can't fulfil your own order.")
+        messages.error(request, _("You can't fulfil your own order."))
         return redirect("store:board")
     # Atomic claim: only one member can win the OPEN→CLAIMED transition, even if
     # two click "Claim" at the same moment.
@@ -298,13 +299,13 @@ def claim_order(request: HttpRequest, pk: int) -> HttpResponse:
         claimed_by_character_id=_main_char_id(request.user),
     )
     if not claimed:
-        messages.error(request, "That order is no longer open.")
+        messages.error(request, _("That order is no longer open."))
         return redirect("store:board")
     audit_log(request.user, "store.claim", target_type="store_order",
               target_id=str(order.id), ip=client_ip(request))
     order.refresh_from_db()  # .update() didn't touch the in-memory instance
     notify_order_status(order, actor=request.user)
-    messages.success(request, "Order claimed. Coordinate with the buyer and fulfil it.")
+    messages.success(request, _("Order claimed. Coordinate with the buyer and fulfil it."))
     return redirect("store:order", pk=order.pk)
 
 
@@ -315,18 +316,18 @@ def advance_order(request: HttpRequest, pk: int) -> HttpResponse:
     """Move a claimed order to its next status (claimer or officer)."""
     order = get_object_or_404(StoreOrder, pk=pk)
     if not (order.claimed_by_id == request.user.id or rbac.has_role(request.user, rbac.ROLE_OFFICER)):
-        messages.error(request, "That isn't your build.")
+        messages.error(request, _("That isn't your build."))
         return redirect("store:board")
     nxt = next_status(order)
     if not nxt:
-        messages.error(request, "Nothing to advance.")
+        messages.error(request, _("Nothing to advance."))
         return redirect("store:order", pk=order.pk)
     order.status = nxt
     order.save(update_fields=["status"])
     notify_order_status(order, actor=request.user)
     audit_log(request.user, "store.advance", target_type="store_order",
               target_id=str(order.id), metadata={"to": nxt}, ip=client_ip(request))
-    messages.success(request, f"Order moved to “{order.get_status_display()}”.")
+    messages.success(request, _("Order moved to “%(status)s”.") % {"status": order.get_status_display()})
     return redirect("store:order", pk=order.pk)
 
 
@@ -343,7 +344,7 @@ def order_action(request: HttpRequest, pk: int) -> HttpResponse:
 
     if action == "release":
         if not (is_claimer or is_officer) or order.status != StoreOrder.Status.CLAIMED:
-            messages.error(request, "Can only release a freshly claimed order.")
+            messages.error(request, _("Can only release a freshly claimed order."))
             return redirect("store:board")
         order.status = StoreOrder.Status.OPEN
         order.claimed_by = None
@@ -351,20 +352,20 @@ def order_action(request: HttpRequest, pk: int) -> HttpResponse:
         order.save(update_fields=["status", "claimed_by", "claimed_by_character_id"])
     elif action == "cancel":
         if not (is_buyer or is_officer):
-            messages.error(request, "Only the buyer or an officer can cancel.")
+            messages.error(request, _("Only the buyer or an officer can cancel."))
             return redirect("store:order", pk=order.pk)
         if order.status in (StoreOrder.Status.DELIVERED, StoreOrder.Status.CANCELLED):
-            messages.error(request, "That order can't be cancelled.")
+            messages.error(request, _("That order can't be cancelled."))
             return redirect("store:order", pk=order.pk)
         order.status = StoreOrder.Status.CANCELLED
         order.save(update_fields=["status"])
         notify_order_status(order, actor=request.user)  # skips self-cancel by the buyer
     else:
-        messages.error(request, "Unknown action.")
+        messages.error(request, _("Unknown action."))
         return redirect("store:order", pk=order.pk)
     audit_log(request.user, f"store.{action}", target_type="store_order",
               target_id=str(order.id), ip=client_ip(request))
-    messages.success(request, "Order updated.")
+    messages.success(request, _("Order updated."))
     return redirect("store:order", pk=order.pk)
 
 
@@ -379,7 +380,7 @@ def config(request: HttpRequest) -> HttpResponse:
             invalidate_audience_cache()
             audit_log(request.user, "store.config_update", target_type="store_config",
                       target_id=str(cfg.id), ip=client_ip(request))
-            messages.success(request, "Store settings updated.")
+            messages.success(request, _("Store settings updated."))
             return redirect("store:config")
     else:
         form = ConfigForm(instance=cfg)

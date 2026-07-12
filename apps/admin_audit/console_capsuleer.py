@@ -12,6 +12,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
+from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
 from core import rbac
@@ -57,7 +58,7 @@ def capsuleer_save(request: HttpRequest) -> HttpResponse:
             config.reset(domain, user=request.user)
         audit_log(request.user, "capsuleer.config.reset", target_type="capsuleer_config",
                   ip=client_ip(request))
-        messages.success(request, "Capsuleer Path settings reset to defaults.")
+        messages.success(request, _("Capsuleer Path settings reset to defaults."))
         return redirect("admin_audit:capsuleer_console")
     try:
         config.set("reconcile", {"enabled": p.get("reconcile_enabled") == "on"}, user=request.user)
@@ -82,7 +83,7 @@ def capsuleer_save(request: HttpRequest) -> HttpResponse:
         return redirect("admin_audit:capsuleer_console")
     audit_log(request.user, "capsuleer.config.update", target_type="capsuleer_config",
               ip=client_ip(request))
-    messages.success(request, "Capsuleer Path settings saved.")
+    messages.success(request, _("Capsuleer Path settings saved."))
     return redirect("admin_audit:capsuleer_console")
 
 

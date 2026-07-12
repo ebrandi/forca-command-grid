@@ -1,37 +1,38 @@
 {% extends "base.html" %}
-{% block title %}Readiness · {{ label }} · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Readiness" %} · {{ label }} · [FORCA] Command Grid{% endblock %}
 {% block content %}
-<a href="{% url 'readiness:dashboard' %}" class="text-xs text-faint hover:text-gold">← Readiness</a>
+<a href="{% url 'readiness:dashboard' %}" class="text-xs text-faint hover:text-gold">← {% translate "Readiness" %}</a>
 <header class="mt-2 mb-6 flex flex-wrap items-end justify-between gap-4">
   <div>
-    <p class="eyebrow text-gold">Readiness dimension</p>
+    <p class="eyebrow text-gold">{% translate "Readiness dimension" %}</p>
     <h1 class="mt-1 flex flex-wrap items-center gap-2 text-3xl font-bold text-ink">{{ label }}
-      {% if not enabled %}<span class="chip text-faint">disabled · preview</span>{% endif %}
+      {% if not enabled %}<span class="chip text-faint">{% translate "disabled · preview" %}</span>{% endif %}
     </h1>
     <p class="mt-1 text-sm text-faint">
-      {% if data_sources %}Sources: {{ data_sources|join:", " }}.{% endif %}
-      {% if not enabled %} This dimension is not yet counted in the overall index — enable it on the <a href="{% url 'admin_audit:readiness_dimensions' %}" class="text-cyan hover:underline">Dimensions page</a> once you're happy with it.{% endif %}
+      {% if data_sources %}{% blocktranslate with sources=data_sources|join:", " %}Sources: {{ sources }}.{% endblocktranslate %}{% endif %}
+      {% if not enabled %} {% url 'admin_audit:readiness_dimensions' as dims_url %}{% blocktranslate %}This dimension is not yet counted in the overall index — enable it on the <a href="{{ dims_url }}" class="text-cyan hover:underline">Dimensions page</a> once you're happy with it.{% endblocktranslate %}{% endif %}
     </p>
   </div>
   {% if result and result.score is not None %}
   <div class="panel px-6 py-4 text-center">
     <p class="font-display text-5xl font-bold {% if result.status == 'green' %}text-kill{% elif result.status == 'amber' %}text-gold{% else %}text-loss{% endif %}">{{ result.score }}</p>
-    <p class="text-[10px] uppercase tracking-wide text-faint">score · weight {{ weight }}</p>
+    <p class="text-[10px] uppercase tracking-wide text-faint">{% blocktranslate with weight=weight %}score · weight {{ weight }}{% endblocktranslate %}</p>
   </div>
   {% endif %}
 </header>
 
 {% if not result or result.score is None %}
   <div class="panel px-4 py-12 text-center">
-    <p class="font-display text-lg text-muted">No score yet</p>
-    <p class="mt-1 text-sm text-faint">{% if result and result.detail.reason %}{{ result.detail.reason }}{% else %}This dimension has no data to score right now, so it's excluded from the index (an honest score never reads a missing input as zero).{% endif %}</p>
+    <p class="font-display text-lg text-muted">{% translate "No score yet" %}</p>
+    <p class="mt-1 text-sm text-faint">{% if result and result.detail.reason %}{{ result.detail.reason }}{% else %}{% translate "This dimension has no data to score right now, so it's excluded from the index (an honest score never reads a missing input as zero)." %}{% endif %}</p>
   </div>
 {% else %}
 <section class="panel mb-5 overflow-hidden">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Why this score</h2></div>
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "Why this score" %}</h2></div>
   <div class="overflow-x-auto"><table class="w-full text-sm">
     <thead class="border-b border-line text-left text-[11px] uppercase tracking-wide text-faint">
-      <tr><th class="px-4 py-2 font-medium">KPI</th><th class="px-3 py-2 text-right font-medium">Measured</th><th class="px-3 py-2 text-right font-medium">Score</th><th class="px-3 py-2 text-center font-medium">Status</th></tr>
+      <tr><th class="px-4 py-2 font-medium">{% translate "KPI" %}</th><th class="px-3 py-2 text-right font-medium">{% translate "Measured" %}</th><th class="px-3 py-2 text-right font-medium">{% translate "Score" %}</th><th class="px-3 py-2 text-center font-medium">{% translate "Status" %}</th></tr>
     </thead>
     <tbody class="divide-y divide-line/50">
       {% for kpi in result.kpis %}
@@ -48,7 +49,7 @@
 
 {% if result.findings %}
 <section class="panel overflow-hidden">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-loss">Findings</h2></div>
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-loss">{% translate "Findings" %}</h2></div>
   <div class="divide-y divide-line/50">
     {% for f in result.findings %}
     <div class="flex items-center justify-between px-4 py-2.5 text-sm">

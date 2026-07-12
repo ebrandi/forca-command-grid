@@ -13,16 +13,17 @@ from __future__ import annotations
 
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from core.mixins import TimeStampedModel
 
 
 class Candidate(TimeStampedModel):
     class Status(models.TextChoices):
-        PROSPECT = "prospect", "Prospect"
-        LINKED = "linked", "ESI linked"
-        JOINED = "joined", "Joined"
-        REJECTED = "rejected", "Rejected"
+        PROSPECT = "prospect", _("Prospect")
+        LINKED = "linked", _("ESI linked")
+        JOINED = "joined", _("Joined")
+        REJECTED = "rejected", _("Rejected")
 
     character_id = models.BigIntegerField(unique=True)
     name = models.CharField(max_length=120)
@@ -42,17 +43,17 @@ class Candidate(TimeStampedModel):
 
 class CandidateEvidence(TimeStampedModel):
     class Theme(models.TextChoices):
-        IDENTITY = "identity", "Identity"
-        COMBAT = "combat", "Combat"
-        INDUSTRY = "industry", "Industry"
-        ROLES = "roles", "Roles"
-        TIMEZONE = "timezone", "Timezone"
-        RISK = "risk", "Risk"
+        IDENTITY = "identity", _("Identity")
+        COMBAT = "combat", _("Combat")
+        INDUSTRY = "industry", _("Industry")
+        ROLES = "roles", _("Roles")
+        TIMEZONE = "timezone", _("Timezone")
+        RISK = "risk", _("Risk")
 
     class Confidence(models.TextChoices):
-        HIGH = "high", "High"
-        MEDIUM = "medium", "Medium"
-        LOW = "low", "Low"
+        HIGH = "high", _("High")
+        MEDIUM = "medium", _("Medium")
+        LOW = "low", _("Low")
 
     candidate = models.ForeignKey(Candidate, on_delete=models.CASCADE, related_name="evidence")
     theme = models.CharField(max_length=12, choices=Theme.choices)

@@ -10,6 +10,7 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from core.mixins import TimeStampedModel
 
@@ -59,13 +60,13 @@ class MiningPayout(TimeStampedModel):
     """A leadership-created profit split of operation proceeds over a date window."""
 
     class Method(models.TextChoices):
-        BY_VALUE = "by_value", "By ISK value mined"
-        BY_VOLUME = "by_volume", "By quantity mined"
-        EQUAL = "equal", "Split equally"
+        BY_VALUE = "by_value", _("By ISK value mined")
+        BY_VOLUME = "by_volume", _("By quantity mined")
+        EQUAL = "equal", _("Split equally")
 
     class Status(models.TextChoices):
-        DRAFT = "draft", "Draft"
-        FINAL = "final", "Finalised"
+        DRAFT = "draft", _("Draft")
+        FINAL = "final", _("Finalised")
 
     name = models.CharField(max_length=200)
     period_start = models.DateField()

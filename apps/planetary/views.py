@@ -14,6 +14,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
 from core import rbac
@@ -60,16 +61,16 @@ def _plan_card(plan: PiPlan) -> dict:
 def _health(plan: PiPlan, snap: dict) -> tuple[str, str]:
     """A derived status badge (label, colour) on top of the persisted status."""
     if plan.status == PiStatus.ARCHIVED:
-        return ("Archived", "faint")
+        return (_("Archived"), "faint")
     if not plan.planets.exists():
-        return ("Missing planets", "loss")
+        return (_("Missing planets"), "loss")
     if not snap:
-        return ("Not costed", "faint")
+        return (_("Not costed"), "faint")
     if snap.get("missing_prices"):
-        return ("Missing prices", "gold")
+        return (_("Missing prices"), "gold")
     if (snap.get("totals", {}).get("net_day") or 0) <= 0:
-        return ("Unprofitable", "loss")
-    return ("Profitable", "kill")
+        return (_("Unprofitable"), "loss")
+    return (_("Profitable"), "kill")
 
 
 def _get_plan_for_view(user, pk: int) -> PiPlan:
@@ -152,7 +153,7 @@ def learn(request: HttpRequest) -> HttpResponse:
 def plan_create(request: HttpRequest) -> HttpResponse:
     config = services.active_config()
     if not config.enabled:
-        messages.info(request, "The Planetary Industry planner is currently disabled by leadership.")
+        messages.info(request, _("The Planetary Industry planner is currently disabled by leadership."))
         return redirect("planetary:landing")
 
     if request.method == "POST":
@@ -160,10 +161,10 @@ def plan_create(request: HttpRequest) -> HttpResponse:
         planet_rows = _parse_planets(request)
         errors = []
         if not planet_rows:
-            errors.append("Add at least one planet — that's what the plan is built around.")
+            errors.append(_("Add at least one planet — that's what the plan is built around."))
         for row in planet_rows:
             if row["role"] in (PiPlanetRole.FACTORY,) and not row["product_id"]:
-                errors.append("Each factory planet needs a product to build — pick one.")
+                errors.append(_("Each factory planet needs a product to build — pick one."))
                 break
         if form.is_valid() and not errors:
             plan = form.save(commit=False)
@@ -177,7 +178,7 @@ def plan_create(request: HttpRequest) -> HttpResponse:
             audit_log(request.user, "planetary.plan_create", target_type="pi_plan",
                       target_id=str(plan.id), metadata={"name": plan.name, "goal": plan.goal},
                       ip=client_ip(request))
-            messages.success(request, f"Plan “{plan.name}” created — here's your setup and profit estimate.")
+            messages.success(request, _("Plan “%(name)s” created — here's your setup and profit estimate.") % {"name": plan.name})
             return redirect("planetary:detail", pk=plan.pk)
         for err in errors:
             messages.error(request, err)
@@ -204,10 +205,10 @@ def plan_edit(request: HttpRequest, pk: int) -> HttpResponse:
             services.recompute(plan)
             audit_log(request.user, "planetary.plan_update", target_type="pi_plan",
                       target_id=str(plan.id), ip=client_ip(request))
-            messages.success(request, "Plan updated and re-costed.")
+            messages.success(request, _("Plan updated and re-costed."))
             return redirect("planetary:detail", pk=plan.pk)
         if not planet_rows:
-            messages.error(request, "Keep at least one planet on the plan.")
+            messages.error(request, _("Keep at least one planet on the plan."))
     else:
         form = PiPlanForm(instance=plan, user=request.user)
     return render(request, "planetary/wizard.html", _form_context(request, form, plan=plan))
@@ -314,7 +315,7 @@ def plan_recalc(request: HttpRequest, pk: int) -> HttpResponse:
     services.recompute(plan)
     audit_log(request.user, "planetary.plan_recalc", target_type="pi_plan",
               target_id=str(plan.id), ip=client_ip(request))
-    messages.success(request, "Re-costed with the latest market prices.")
+    messages.success(request, _("Re-costed with the latest market prices."))
     return redirect("planetary:detail", pk=plan.pk)
 
 
@@ -327,7 +328,7 @@ def plan_duplicate(request: HttpRequest, pk: int) -> HttpResponse:
     services.recompute(clone)
     audit_log(request.user, "planetary.plan_duplicate", target_type="pi_plan",
               target_id=str(clone.id), metadata={"from": plan.id}, ip=client_ip(request))
-    messages.success(request, f"Duplicated as “{clone.name}”.")
+    messages.success(request, _("Duplicated as “%(name)s”.") % {"name": clone.name})
     return redirect("planetary:detail", pk=clone.pk)
 
 
@@ -343,7 +344,7 @@ def plan_status(request: HttpRequest, pk: int) -> HttpResponse:
         plan.save(update_fields=["status", "updated_at"])
         audit_log(request.user, "planetary.plan_status", target_type="pi_plan",
                   target_id=str(plan.id), metadata={"status": new_status}, ip=client_ip(request))
-        messages.success(request, f"Status set to {plan.get_status_display()}.")
+        messages.success(request, _("Status set to %(status)s.") % {"status": plan.get_status_display()})
     return redirect("planetary:detail", pk=plan.pk)
 
 
@@ -357,13 +358,13 @@ def plan_delete(request: HttpRequest, pk: int) -> HttpResponse:
         services.archive_plan(plan)
         audit_log(request.user, "planetary.plan_archive", target_type="pi_plan",
                   target_id=str(plan.id), ip=client_ip(request))
-        messages.success(request, f"“{plan.name}” archived. Delete again to remove it permanently.")
+        messages.success(request, _("“%(name)s” archived. Delete again to remove it permanently.") % {"name": plan.name})
         return redirect("planetary:detail", pk=plan.pk)
     name = plan.name
     audit_log(request.user, "planetary.plan_delete", target_type="pi_plan",
               target_id=str(plan.id), metadata={"name": name}, ip=client_ip(request))
     plan.delete()
-    messages.success(request, f"“{name}” permanently deleted.")
+    messages.success(request, _("“%(name)s” permanently deleted.") % {"name": name})
     return redirect("planetary:landing")
 
 
@@ -471,9 +472,9 @@ def colonies_sync(request: HttpRequest) -> HttpResponse:
         sync_character_colonies.delay(char.character_id)
         queued += 1
     if queued:
-        messages.success(request, f"Colony sync queued for {queued} pilot(s) — refresh in a minute.")
+        messages.success(request, _("Colony sync queued for %(count)s pilot(s) — refresh in a minute.") % {"count": queued})
     else:
-        messages.info(request, "Grant the Planetary Industry scope first, then sync your colonies.")
+        messages.info(request, _("Grant the Planetary Industry scope first, then sync your colonies."))
     audit_log(request.user, "planetary.colonies_sync", metadata={"queued": queued},
               ip=client_ip(request))
     return redirect("planetary:colonies")

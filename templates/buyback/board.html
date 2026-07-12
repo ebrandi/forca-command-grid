@@ -1,32 +1,33 @@
 {% extends "base.html" %}
 {% load eve %}
+{% load i18n %}
 {% block title %}Buyback Board · [FORCA] Command Grid{% endblock %}
 {% block content %}
 
 <header class="mb-6 flex flex-wrap items-end justify-between gap-4">
   <div>
     <p class="eyebrow">Forças Armadas · Buyback</p>
-    <h1 class="mt-1 text-3xl font-bold text-ink">Buyback board</h1>
-    <p class="mt-1 text-sm text-faint">Lots posted by corpmates. Buy one, pay the seller, and take the items — flip them at Jita for the spread.</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Buyback board" %}</h1>
+    <p class="mt-1 text-sm text-faint">{% translate "Lots posted by corpmates. Buy one, pay the seller, and take the items — flip them at Jita for the spread." %}</p>
   </div>
   <div class="flex items-center gap-2">
-    <a href="{% url 'buyback:appraisal' %}" class="btn-gold text-sm"><svg class="h-4 w-4"><use href="#i-coin"/></svg> Sell items</a>
-    {% if is_officer %}<a href="{% url 'buyback:config' %}" class="btn-ghost text-sm">Settings</a>{% endif %}
+    <a href="{% url 'buyback:appraisal' %}" class="btn-gold text-sm"><svg class="h-4 w-4"><use href="#i-coin"/></svg> {% translate "Sell items" %}</a>
+    {% if is_officer %}<a href="{% url 'buyback:config' %}" class="btn-ghost text-sm">{% translate "Settings" %}</a>{% endif %}
   </div>
 </header>
 
 
 <section class="mb-6">
-  <h2 class="eyebrow mb-2 text-gold">Open lots · {{ open_offers|length }}</h2>
+  <h2 class="eyebrow mb-2 text-gold">{% translate "Open lots" %} · {{ open_offers|length }}</h2>
   <div class="grid gap-3 sm:grid-cols-2">
     {% for o in open_offers %}
     <div class="panel p-4">
       <div class="flex items-start justify-between gap-3">
         <div class="min-w-0">
-          <a href="{% url 'buyback:offer' o.pk %}" class="font-medium text-ink hover:text-gold">Lot #{{ o.pk }}</a>
+          <a href="{% url 'buyback:offer' o.pk %}" class="font-medium text-ink hover:text-gold">{% translate "Lot" %} #{{ o.pk }}</a>
           <p class="mt-0.5 text-xs text-faint">
             <span class="chip {% if o.sec_band == 'highsec' %}!text-kill{% elif o.sec_band == 'lowsec' %}!text-gold{% else %}!text-loss{% endif %}">{{ o.get_sec_band_display }}</span>
-            {{ o.item_count }} items · {{ o.volume_m3|floatformat:0 }} m³
+            {% blocktranslate with count=o.item_count vol=o.volume_m3|floatformat:0 %}{{ count }} items · {{ vol }} m³{% endblocktranslate %}
           </p>
           {% if o.location_name %}<p class="mt-0.5 truncate text-[11px] text-faint">at {{ o.location_name }}</p>{% endif %}
         </div>
@@ -38,29 +39,30 @@
       <div class="mt-3 flex items-center justify-between gap-2 border-t border-line/50 pt-3">
         <span class="flex items-center gap-1.5 text-xs text-faint">
           {% if o.seller_character_id %}<img src="{% eve_portrait o.seller_character_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-full ring-1 ring-line">{% endif %}
-          {% if o.seller_character_id %}{% eve_name o.seller_character_id %}{% else %}corpmate{% endif %}
+          {% if o.seller_character_id %}{% eve_name o.seller_character_id %}{% else %}{% translate "corpmate" %}{% endif %}
         </span>
         {% if o.seller_id == request.user.id %}
-          <form method="post" action="{% url 'buyback:offer_action' o.pk %}">{% csrf_token %}<button name="action" value="cancel" class="btn-ghost !py-1 !text-xs">Cancel</button></form>
+          <form method="post" action="{% url 'buyback:offer_action' o.pk %}">{% csrf_token %}<button name="action" value="cancel" class="btn-ghost !py-1 !text-xs">{% translate "Cancel" %}</button></form>
         {% else %}
-          <form method="post" action="{% url 'buyback:buy_offer' o.pk %}">{% csrf_token %}<button class="btn-gold !py-1 !text-xs">Buy lot</button></form>
+          <form method="post" action="{% url 'buyback:buy_offer' o.pk %}">{% csrf_token %}<button class="btn-gold !py-1 !text-xs">{% translate "Buy lot" %}</button></form>
         {% endif %}
       </div>
     </div>
     {% empty %}
-    <div class="panel p-10 text-center text-sm text-faint sm:col-span-2">No open lots. <a href="{% url 'buyback:appraisal' %}" class="text-gold hover:underline">Post one →</a></div>
+    {% url 'buyback:appraisal' as appraisal_url %}
+    <div class="panel p-10 text-center text-sm text-faint sm:col-span-2">{% blocktranslate %}No open lots. <a href="{{ appraisal_url }}" class="text-gold hover:underline">Post one →</a>{% endblocktranslate %}</div>
     {% endfor %}
   </div>
 </section>
 
 {% if mine %}
 <section class="mb-6">
-  <h2 class="eyebrow mb-2 text-faint">Your lots</h2>
+  <h2 class="eyebrow mb-2 text-faint">{% translate "Your lots" %}</h2>
   <div class="panel divide-y divide-line/40">
     {% for o in mine %}
     <a href="{% url 'buyback:offer' o.pk %}" class="flex items-center gap-3 px-4 py-2 text-sm hover:bg-panel2/40">
       <span class="chip {% if o.status == 'open' %}!text-gold{% elif o.status == 'paid' %}!text-kill{% elif o.status == 'cancelled' %}!text-faint{% else %}!text-cyan{% endif %}">{{ o.get_status_display }}</span>
-      <span class="min-w-0 flex-1 truncate text-muted">Lot #{{ o.pk }} · {{ o.item_count }} items · {{ o.get_sec_band_display }}</span>
+      <span class="min-w-0 flex-1 truncate text-muted">{% blocktranslate with pk=o.pk count=o.item_count band=o.get_sec_band_display %}Lot #{{ pk }} · {{ count }} items · {{ band }}{% endblocktranslate %}</span>
       <span class="data text-gold">{{ o.offer_total|isk }}</span>
     </a>
     {% endfor %}
@@ -70,12 +72,12 @@
 
 {% if bought %}
 <section>
-  <h2 class="eyebrow mb-2 text-faint">You bought</h2>
+  <h2 class="eyebrow mb-2 text-faint">{% translate "You bought" %}</h2>
   <div class="panel divide-y divide-line/40">
     {% for o in bought %}
     <a href="{% url 'buyback:offer' o.pk %}" class="flex items-center gap-3 px-4 py-2 text-sm hover:bg-panel2/40">
       <span class="chip {% if o.status == 'paid' %}!text-kill{% else %}!text-cyan{% endif %}">{{ o.get_status_display }}</span>
-      <span class="min-w-0 flex-1 truncate text-muted">Lot #{{ o.pk }} from {% if o.seller_character_id %}{% eve_name o.seller_character_id %}{% else %}corpmate{% endif %}</span>
+      <span class="min-w-0 flex-1 truncate text-muted">{% translate "Lot" %} #{{ o.pk }} from {% if o.seller_character_id %}{% eve_name o.seller_character_id %}{% else %}{% translate "corpmate" %}{% endif %}</span>
       <span class="data text-gold">{{ o.offer_total|isk }}</span>
     </a>
     {% endfor %}

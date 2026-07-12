@@ -1,47 +1,48 @@
 {% extends "base.html" %}
-{% block title %}Roaming Targets · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Roaming Targets" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 
 <header class="mb-5 flex flex-wrap items-end justify-between gap-4">
   <div>
-    <p class="eyebrow">Intel</p>
-    <h1 class="mt-1 text-3xl font-bold text-ink">Roaming Targets</h1>
-    <p class="mt-1 max-w-2xl text-sm text-faint">Where a roaming gang will find ratters and miners. Systems are ranked by NPC kills in the last hour (a proxy for PvE activity) and biased toward space with little recent PvP — busy but undefended.</p>
+    <p class="eyebrow">{% translate "Intel" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Roaming Targets" %}</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Where a roaming gang will find ratters and miners. Systems are ranked by NPC kills in the last hour (a proxy for PvE activity) and biased toward space with little recent PvP — busy but undefended." %}</p>
   </div>
-  <a href="{% url 'navigation:map_index' %}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-map"/></svg> Maps</a>
+  <a href="{% url 'navigation:map_index' %}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-map"/></svg> {% translate "Maps" %}</a>
 </header>
 
 <form method="get" class="panel mb-5 flex flex-wrap items-end gap-3 px-4 py-3">
   <label class="block">
-    <span class="eyebrow text-faint">Security</span>
+    <span class="eyebrow text-faint">{% translate "Security" %}</span>
     <select name="band" class="input-field mt-1">
       <option value="nullsec" {% if band == 'nullsec' %}selected{% endif %}>Null-sec</option>
       <option value="lowsec" {% if band == 'lowsec' %}selected{% endif %}>Low-sec</option>
       <option value="highsec" {% if band == 'highsec' %}selected{% endif %}>High-sec</option>
-      <option value="all" {% if band == 'all' %}selected{% endif %}>All</option>
+      <option value="all" {% if band == 'all' %}selected{% endif %}>{% translate "All" %}</option>
     </select>
   </label>
   <label class="block">
-    <span class="eyebrow text-faint">Region (optional)</span>
-    <input list="region-list" name="region" value="{{ region_q }}" placeholder="Any region" autocomplete="off" class="input-field mt-1">
+    <span class="eyebrow text-faint">{% translate "Region (optional)" %}</span>
+    <input list="region-list" name="region" value="{{ region_q }}" placeholder="{% translate 'Any region' %}" autocomplete="off" class="input-field mt-1">
     <datalist id="region-list">{% for r in regions %}<option value="{{ r.name }}"></option>{% endfor %}</datalist>
   </label>
-  <button type="submit" class="btn-primary text-sm">Find targets</button>
-  {% if region_obj %}<a href="?band={{ band }}" class="btn-ghost text-sm">Clear region</a>{% endif %}
+  <button type="submit" class="btn-primary text-sm">{% translate "Find targets" %}</button>
+  {% if region_obj %}<a href="?band={{ band }}" class="btn-ghost text-sm">{% translate "Clear region" %}</a>{% endif %}
 </form>
 
 {% if targets %}
-<p class="mb-2 text-sm text-faint">{{ count }} system{{ count|pluralize }} with ratting activity{% if region_obj %} in {{ region_obj.name }}{% endif %}, best opportunities first.</p>
+<p class="mb-2 text-sm text-faint">{% if region_obj %}{% blocktranslate count c=count with region=region_obj.name %}{{ c }} system with ratting activity in {{ region }}, best opportunities first.{% plural %}{{ c }} systems with ratting activity in {{ region }}, best opportunities first.{% endblocktranslate %}{% else %}{% blocktranslate count c=count %}{{ c }} system with ratting activity, best opportunities first.{% plural %}{{ c }} systems with ratting activity, best opportunities first.{% endblocktranslate %}{% endif %}</p>
 <div class="panel overflow-x-auto">
   <table class="w-full text-sm">
     <thead class="text-left text-xs uppercase tracking-wide text-faint">
       <tr class="border-b border-line/40">
-        <th class="px-3 py-2">System</th>
-        <th class="px-3 py-2">Region</th>
-        <th class="px-3 py-2 text-right">Score</th>
-        <th class="px-3 py-2 text-right">NPC kills</th>
-        <th class="px-3 py-2 text-right">Ship kills</th>
-        <th class="px-3 py-2 text-right">Traffic</th>
+        <th class="px-3 py-2">{% translate "System" %}</th>
+        <th class="px-3 py-2">{% translate "Region" %}</th>
+        <th class="px-3 py-2 text-right">{% translate "Score" %}</th>
+        <th class="px-3 py-2 text-right">{% translate "NPC kills" %}</th>
+        <th class="px-3 py-2 text-right">{% translate "Ship kills" %}</th>
+        <th class="px-3 py-2 text-right">{% translate "Traffic" %}</th>
         <th class="px-3 py-2"></th>
       </tr>
     </thead>
@@ -59,14 +60,14 @@
         <td class="px-3 py-2 text-right text-ink">{{ t.npc_kills }}</td>
         <td class="px-3 py-2 text-right {% if t.contested %}text-[#f0533f]{% else %}text-faint{% endif %}">{{ t.ship_kills }}</td>
         <td class="px-3 py-2 text-right text-muted">{{ t.traffic }}</td>
-        <td class="px-3 py-2 text-right"><a href="{% url 'navigation:route_planner' %}?to={{ t.system_id }}&to_q={{ t.name|urlencode }}" class="text-xs text-faint hover:text-gold">route →</a></td>
+        <td class="px-3 py-2 text-right"><a href="{% url 'navigation:route_planner' %}?to={{ t.system_id }}&to_q={{ t.name|urlencode }}" class="text-xs text-faint hover:text-gold">{% translate "route →" %}</a></td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
 </div>
-<p class="mt-3 text-[11px] text-faint">Score = NPC kills ÷ (1 + 2 × recent ship kills). Red ship-kill counts mean the field is already contested. Data is CCP's public hourly feed; mining can't be measured directly, so quiet systems with high NPC kills are the best mining/ratting bets.</p>
+<p class="mt-3 text-[11px] text-faint">{% translate "Score = NPC kills ÷ (1 + 2 × recent ship kills). Red ship-kill counts mean the field is already contested. Data is CCP's public hourly feed; mining can't be measured directly, so quiet systems with high NPC kills are the best mining/ratting bets." %}</p>
 {% else %}
-<div class="panel px-4 py-16 text-center"><p class="text-sm text-faint">No ratting activity reported{% if region_obj %} in {{ region_obj.name }}{% endif %} right now. Try another region or security band — the feed updates hourly.</p></div>
+<div class="panel px-4 py-16 text-center"><p class="text-sm text-faint">{% if region_obj %}{% blocktranslate with region=region_obj.name %}No ratting activity reported in {{ region }} right now. Try another region or security band — the feed updates hourly.{% endblocktranslate %}{% else %}{% translate "No ratting activity reported right now. Try another region or security band — the feed updates hourly." %}{% endif %}</p></div>
 {% endif %}
 {% endblock %}

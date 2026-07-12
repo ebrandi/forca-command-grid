@@ -30,6 +30,7 @@ import logging
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from core.mixins import TimeStampedModel
 
@@ -37,27 +38,28 @@ log = logging.getLogger("forca.comms_access")
 
 
 class Platform(models.TextChoices):
+    # Third-party platform brand names — intentionally kept English/untranslated.
     DISCORD = "discord", "Discord"
     SLACK = "slack", "Slack"
     MUMBLE = "mumble", "Mumble"
 
 
 class MappingMode(models.TextChoices):
-    ADDITIVE = "additive", "Additive (grant only)"
-    AUTHORITATIVE = "authoritative", "Authoritative (grant + remove)"
+    ADDITIVE = "additive", _("Additive (grant only)")
+    AUTHORITATIVE = "authoritative", _("Authoritative (grant + remove)")
 
 
 class SyncAction(models.TextChoices):
-    GRANT = "grant", "Grant"
-    REVOKE = "revoke", "Revoke"
-    KICK = "kick", "Kick"
+    GRANT = "grant", _("Grant")
+    REVOKE = "revoke", _("Revoke")
+    KICK = "kick", _("Kick")
 
 
 class SyncResult(models.TextChoices):
-    APPLIED = "applied", "Applied"
-    DRY_RUN = "dry_run", "Dry run (preview)"
-    SKIPPED = "skipped", "Skipped"
-    FAILED = "failed", "Failed"
+    APPLIED = "applied", _("Applied")
+    DRY_RUN = "dry_run", _("Dry run (preview)")
+    SKIPPED = "skipped", _("Skipped")
+    FAILED = "failed", _("Failed")
 
 
 class CommsAccount(TimeStampedModel):

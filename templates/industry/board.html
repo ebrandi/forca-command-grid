@@ -1,31 +1,32 @@
 {% extends "base.html" %}
 {% load eve %}
-{% block title %}Industry · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Industry" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <header class="mb-6 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <p class="eyebrow">Production</p>
-    <h1 class="mt-1 text-3xl font-bold text-ink">Industry projects</h1>
-    <p class="mt-1 text-sm text-faint">Plan a build, recruit help, and watch the bill of materials resolve to minerals.</p>
+    <p class="eyebrow">{% translate "Production" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Industry projects" %}</h1>
+    <p class="mt-1 text-sm text-faint">{% translate "Plan a build, recruit help, and watch the bill of materials resolve to minerals." %}</p>
   </div>
-  <a href="{% url 'industry:create' %}" class="btn-gold"><svg class="h-4 w-4"><use href="#i-cube"/></svg> New project</a>
+  <a href="{% url 'industry:create' %}" class="btn-gold"><svg class="h-4 w-4"><use href="#i-cube"/></svg> {% translate "New project" %}</a>
 </header>
 
 {% if mine %}
 <section class="mb-6">
-  <h2 class="eyebrow mb-2 text-gold">Led by you</h2>
+  <h2 class="eyebrow mb-2 text-gold">{% translate "Led by you" %}</h2>
   <div class="grid gap-3 sm:grid-cols-2">
     {% for p in mine %}{% include "industry/_project_card.html" with p=p %}{% endfor %}
   </div>
 </section>
 {% endif %}
 
-<h2 class="eyebrow mb-2">All projects</h2>
+<h2 class="eyebrow mb-2">{% translate "All projects" %}</h2>
 <div class="grid gap-3 sm:grid-cols-2">
   {% for p in projects %}{% include "industry/_project_card.html" with p=p %}
   {% empty %}
     <div class="panel p-8 text-center text-sm text-faint sm:col-span-2">
-      No projects yet. <a href="{% url 'industry:create' %}" class="text-gold hover:underline">Start the first one →</a>
+      {% translate "No projects yet." %} <a href="{% url 'industry:create' %}" class="text-gold hover:underline">{% translate "Start the first one →" %}</a>
     </div>
   {% endfor %}
 </div>

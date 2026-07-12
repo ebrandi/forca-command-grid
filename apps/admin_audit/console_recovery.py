@@ -18,6 +18,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
+from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
 from core import rbac
@@ -84,10 +85,10 @@ def character_detach(request: HttpRequest) -> HttpResponse:
         if cid is not None else None
     )
     if character is None:
-        messages.error(request, "That character was not found.")
+        messages.error(request, _("That character was not found."))
         return redirect(f"{_recovery_url()}?{urlencode({'q': q})}")
     if not reason:
-        messages.error(request, "A reason is required to detach a character (it is audited).")
+        messages.error(request, _("A reason is required to detach a character (it is audited)."))
         return redirect(f"{_recovery_url()}?{urlencode({'q': q or character.character_id})}")
     # Escalation guard: only a Director+ may detach a Director/Admin-linked character.
     target_user = character.user
@@ -96,19 +97,21 @@ def character_detach(request: HttpRequest) -> HttpResponse:
         and rbac.has_role(target_user, rbac.ROLE_DIRECTOR)
         and not rbac.has_role(request.user, rbac.ROLE_DIRECTOR)
     ):
-        messages.error(request, "Only a Director can detach a character linked to a Director.")
+        messages.error(request, _("Only a Director can detach a character linked to a Director."))
         return redirect(f"{_recovery_url()}?{urlencode({'q': q or character.character_id})}")
 
     result = detach_character(character, actor=request.user, reason=reason)
     audit_log(request.user, "recovery.character_detach.console", target_type="eve_character",
               target_id=str(character.character_id), ip=client_ip(request),
               metadata={"reason": reason})
-    freed = " and revoked its tokens" if result["tokens_revoked"] else ""
-    messages.success(
-        request,
-        f"Detached {character.name or character.character_id}{freed}. "
-        "The owner can now re-link it at their next EVE login.",
-    )
+    who = character.name or character.character_id
+    if result["tokens_revoked"]:
+        msg = _("Detached %(who)s and revoked its tokens. "
+                "The owner can now re-link it at their next EVE login.") % {"who": who}
+    else:
+        msg = _("Detached %(who)s. "
+                "The owner can now re-link it at their next EVE login.") % {"who": who}
+    messages.success(request, msg)
     return redirect(f"{_recovery_url()}?{urlencode({'q': q or character.character_id})}")
 
 

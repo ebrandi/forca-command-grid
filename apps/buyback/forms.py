@@ -4,6 +4,7 @@ from __future__ import annotations
 from decimal import Decimal
 
 from django import forms
+from django.utils.translation import gettext_lazy as _
 
 from .models import BuybackConfig, GuaranteedBuybackConfig, SecBand
 
@@ -24,11 +25,11 @@ class AppraisalForm(forms.Form):
     )
     location_name = forms.CharField(
         max_length=200, required=False,
-        widget=forms.TextInput(attrs={**_INPUT, "placeholder": "Where the items are (e.g. station / system)"}),
+        widget=forms.TextInput(attrs={**_INPUT, "placeholder": _("Where the items are (e.g. station / system)")}),
     )
     notes = forms.CharField(
         max_length=300, required=False,
-        widget=forms.TextInput(attrs={**_INPUT, "placeholder": "Anything the buyer should know"}),
+        widget=forms.TextInput(attrs={**_INPUT, "placeholder": _("Anything the buyer should know")}),
     )
     # 4.9: value ore/ice by refined mineral output. Ignored unless the config enables ore mode.
     ore = forms.BooleanField(required=False)
@@ -56,7 +57,7 @@ class ConfigForm(forms.ModelForm):
         for field in ("highsec_pct", "lowsec_pct", "nullsec_pct", "reprocessing_pct"):
             value = cleaned.get(field)
             if value is not None and not (Decimal("0") <= value <= Decimal("1")):
-                self.add_error(field, "Must be between 0 and 1.")
+                self.add_error(field, _("Must be between 0 and 1."))
         return cleaned
 
 
@@ -83,5 +84,5 @@ class GuaranteedConfigForm(forms.ModelForm):
         for field in ("per_lot_cap", "daily_budget"):
             value = cleaned.get(field)
             if value is not None and value < 0:
-                self.add_error(field, "Must be zero or more.")
+                self.add_error(field, _("Must be zero or more."))
         return cleaned

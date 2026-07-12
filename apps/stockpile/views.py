@@ -11,6 +11,7 @@ from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET, require_POST
 
 from apps.sde.models import SdeType
@@ -74,9 +75,9 @@ def record_stock(request: HttpRequest) -> HttpResponse:
         )
         audit_log(request.user, "stock.manual_update", target_type="type",
                   target_id=str(form.cleaned_data["type_id"]), ip=client_ip(request))
-        messages.success(request, "Stock updated.")
+        messages.success(request, _("Stock updated."))
     else:
-        messages.error(request, "Could not update stock — pick an item from the list.")
+        messages.error(request, _("Could not update stock — pick an item from the list."))
     return redirect("stockpile:dashboard")
 
 
@@ -167,7 +168,7 @@ def sync_corp_assets(request: HttpRequest) -> HttpResponse:
                   ip=client_ip(request))
         messages.success(request, result["message"])
     elif result["status"] == "no_scope":
-        messages.warning(request, result["message"] + " Use “Grant corp-asset access” on the ESI Scopes page.")
+        messages.warning(request, result["message"] + _(" Use “Grant corp-asset access” on the ESI Scopes page."))
     else:
         messages.error(request, result["message"])
     return redirect(f"{reverse('stockpile:assets')}?owner=corp")
@@ -182,7 +183,7 @@ def sync_my_assets(request: HttpRequest) -> HttpResponse:
 
     character = request.user.characters.filter(is_main=True).first() or request.user.characters.first()
     if not character:
-        messages.error(request, "Link an EVE character first.")
+        messages.error(request, _("Link an EVE character first."))
         return redirect("stockpile:assets")
     result = import_character_assets(character)
     if result["status"] == "ok":
@@ -201,9 +202,9 @@ def create_stockpile(request: HttpRequest) -> HttpResponse:
     form = StockpileForm(request.POST)
     if form.is_valid():
         form.save()
-        messages.success(request, "Stockpile created.")
+        messages.success(request, _("Stockpile created."))
     else:
-        messages.error(request, "Could not create stockpile.")
+        messages.error(request, _("Could not create stockpile."))
     return redirect("stockpile:dashboard")
 
 
@@ -239,9 +240,9 @@ def create_haul(request: HttpRequest) -> HttpResponse:
         task.volume_m3 = (sde.volume if sde else 0.0) * (task.quantity or 0)
         task.status = HaulingTask.Status.OPEN
         task.save()
-        messages.success(request, "Hauling job posted.")
+        messages.success(request, _("Hauling job posted."))
     else:
-        messages.error(request, "Could not post job — pick an item and two locations.")
+        messages.error(request, _("Could not post job — pick an item and two locations."))
     return redirect("stockpile:logistics")
 
 
@@ -251,17 +252,17 @@ def create_haul(request: HttpRequest) -> HttpResponse:
 def claim_haul(request: HttpRequest, pk: int) -> HttpResponse:
     task = get_object_or_404(HaulingTask, pk=pk)
     if task.status != HaulingTask.Status.OPEN:
-        raise PermissionDenied("This job is no longer open.")
+        raise PermissionDenied(_("This job is no longer open."))
     char_id = _main_character_id(request.user)
     if not char_id:
-        messages.error(request, "Link an EVE character before claiming jobs.")
+        messages.error(request, _("Link an EVE character before claiming jobs."))
         return redirect("stockpile:logistics")
     task.status = HaulingTask.Status.CLAIMED
     task.claimed_by_character_id = char_id
     task.save(update_fields=["status", "claimed_by_character_id"])
     audit_log(request.user, "haul.claim", target_type="hauling_task", target_id=str(task.id),
               ip=client_ip(request))
-    messages.success(request, "Job claimed — fly safe.")
+    messages.success(request, _("Job claimed — fly safe."))
     return redirect("stockpile:logistics")
 
 
@@ -272,7 +273,7 @@ def haul_transition(request: HttpRequest, pk: int) -> HttpResponse:
     """Advance a claimed job: start / complete / release back to the pool."""
     task = get_object_or_404(HaulingTask, pk=pk)
     if not _owns_haul(request.user, task):
-        raise PermissionDenied("Not your job.")
+        raise PermissionDenied(_("Not your job."))
     action = request.POST.get("action", "")
     if action == "start":
         task.status = HaulingTask.Status.IN_PROGRESS
@@ -282,11 +283,11 @@ def haul_transition(request: HttpRequest, pk: int) -> HttpResponse:
         task.status = HaulingTask.Status.OPEN
         task.claimed_by_character_id = None
     else:
-        raise PermissionDenied("Unknown action.")
+        raise PermissionDenied(_("Unknown action."))
     task.save(update_fields=["status", "claimed_by_character_id"])
     audit_log(request.user, f"haul.{action}", target_type="hauling_task", target_id=str(task.id),
               ip=client_ip(request))
-    messages.success(request, "Job updated.")
+    messages.success(request, _("Job updated."))
     return redirect("stockpile:logistics")
 
 

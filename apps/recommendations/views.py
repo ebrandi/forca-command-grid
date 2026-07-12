@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
 from core import rbac
@@ -78,7 +79,7 @@ def notifications(request: HttpRequest) -> HttpResponse:
         "rows": rows,
         "is_director": rbac.has_role(request.user, rbac.ROLE_DIRECTOR),
         "relay_id": relay_id,
-        "relay_name": relay_name or (relay_id and f"Character {relay_id}") or None,
+        "relay_name": relay_name or (relay_id and _("Character %(id)s") % {"id": relay_id}) or None,
     })
 
 
@@ -95,11 +96,11 @@ def notifications_sync(request: HttpRequest) -> HttpResponse:
               metadata={"status": result["status"]}, ip=client_ip(request))
     from django.contrib import messages
     if result["status"] == "ok":
-        messages.success(request, f"Synced — {result['new']} new notification(s).")
+        messages.success(request, _("Synced — %(n)d new notification(s).") % {"n": result["new"]})
     elif result["status"] == "no_token":
-        messages.warning(request, "No character has granted the notifications scope yet.")
+        messages.warning(request, _("No character has granted the notifications scope yet."))
     else:
-        messages.error(request, "Notification sync failed; try again later.")
+        messages.error(request, _("Notification sync failed; try again later."))
     return redirect("recommendations:notifications")
 
 
@@ -125,12 +126,12 @@ def act(request: HttpRequest, pk: int) -> HttpResponse:
     # Deny by default: every recommendation must match an explicit allow branch.
     if rec.required_permission in ("officer", "director"):
         if not rbac.has_role(request.user, rbac.ROLE_OFFICER):
-            raise PermissionDenied("Officer role required.")
+            raise PermissionDenied(_("Officer role required."))
     elif rec.required_permission == "member" and rec.subject_type == "character":
         if not request.user.characters.filter(character_id=rec.subject_id).exists():
-            raise PermissionDenied("Not your recommendation.")
+            raise PermissionDenied(_("Not your recommendation."))
     else:
-        raise PermissionDenied("Not permitted to act on this recommendation.")
+        raise PermissionDenied(_("Not permitted to act on this recommendation."))
 
     try:
         act_on_recommendation(rec, request.user, action, ip=client_ip(request))
@@ -154,7 +155,7 @@ def link_action_item(request: HttpRequest, pk: int) -> HttpResponse:
 
     rec = get_object_or_404(Recommendation, pk=pk)
     if not rbac.has_role(request.user, rbac.ROLE_OFFICER):
-        raise PermissionDenied("Officer role required.")
+        raise PermissionDenied(_("Officer role required."))
 
     def _valid_int(raw, queryset):
         try:
@@ -172,5 +173,5 @@ def link_action_item(request: HttpRequest, pk: int) -> HttpResponse:
         HaulingTask.objects.filter(status=HaulingTask.Status.OPEN),
     )
     set_action_links(rec, request.user, project_id=project_id, haul_task_id=haul_task_id, ip=client_ip(request))
-    messages.success(request, "Recommendation linked.")
+    messages.success(request, _("Recommendation linked."))
     return redirect("recommendations:officer")

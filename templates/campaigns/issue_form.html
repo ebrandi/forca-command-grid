@@ -1,26 +1,27 @@
 {% extends "base.html" %}
-{% block title %}Raise issue · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Raise issue" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
-<p class="eyebrow text-faint"><a href="{% url 'campaigns:index' %}" class="hover:text-gold">Campaign Command</a> › <a href="{% url 'campaigns:detail' campaign.pk %}" class="hover:text-gold">{{ campaign.name|truncatechars:36 }}</a> › Raise issue</p>
-<h1 class="mt-1 mb-4 text-2xl font-bold text-ink">Raise an issue</h1>
+<p class="eyebrow text-faint"><a href="{% url 'campaigns:index' %}" class="hover:text-gold">{% translate "Campaign Command" %}</a> › <a href="{% url 'campaigns:detail' campaign.pk %}" class="hover:text-gold">{{ campaign.name|truncatechars:36 }}</a> › {% translate "Raise issue" %}</p>
+<h1 class="mt-1 mb-4 text-2xl font-bold text-ink">{% translate "Raise an issue" %}</h1>
 
 <form method="post" action="{% url 'campaigns:issue_create' campaign.pk %}" class="space-y-4">
   {% csrf_token %}
   <section class="panel p-5">
     <div class="grid gap-3 sm:grid-cols-2">
-      <label class="block sm:col-span-2"><span class="label">What is blocking? *</span><textarea name="description" rows="2" required class="input-field mt-1 w-full"></textarea></label>
-      <label class="block sm:col-span-2"><span class="label">Effect (what it stops)</span><textarea name="effect" rows="2" class="input-field mt-1 w-full"></textarea></label>
-      <label class="block"><span class="label">Blocks objective</span>
-        <select name="objective" class="input-field mt-1 w-full"><option value="">— none —</option>{% for o in objectives %}<option value="{{ o.pk }}">{{ o.title }}</option>{% endfor %}</select></label>
-      <label class="block"><span class="label">Owner</span>
+      <label class="block sm:col-span-2"><span class="label">{% translate "What is blocking?" %} *</span><textarea name="description" rows="2" required class="input-field mt-1 w-full"></textarea></label>
+      <label class="block sm:col-span-2"><span class="label">{% translate "Effect (what it stops)" %}</span><textarea name="effect" rows="2" class="input-field mt-1 w-full"></textarea></label>
+      <label class="block"><span class="label">{% translate "Blocks objective" %}</span>
+        <select name="objective" class="input-field mt-1 w-full"><option value="">{% translate "— none —" %}</option>{% for o in objectives %}<option value="{{ o.pk }}">{{ o.title }}</option>{% endfor %}</select></label>
+      <label class="block"><span class="label">{% translate "Owner" %}</span>
         <select name="owner" class="input-field mt-1 w-full"><option value="">—</option>{% for u in users %}<option value="{{ u.pk }}">{{ u.display_name }}</option>{% endfor %}</select></label>
-      <label class="block"><span class="label">Target resolution</span><input type="datetime-local" name="target_resolution_at" class="input-field mt-1 w-full"></label>
+      <label class="block"><span class="label">{% translate "Target resolution" %}</span><input type="datetime-local" name="target_resolution_at" class="input-field mt-1 w-full"></label>
     </div>
-    <p class="mt-2 text-xs text-faint">Linking an objective blocks it until the issue is resolved.</p>
+    <p class="mt-2 text-xs text-faint">{% translate "Linking an objective blocks it until the issue is resolved." %}</p>
   </section>
   <div class="flex items-center gap-2">
-    <button class="btn-gold">Raise issue</button>
-    <a href="{% url 'campaigns:detail' campaign.pk %}" class="btn-ghost">Cancel</a>
+    <button class="btn-gold">{% translate "Raise issue" %}</button>
+    <a href="{% url 'campaigns:detail' campaign.pk %}" class="btn-ghost">{% translate "Cancel" %}</a>
   </div>
 </form>
 {% endblock %}

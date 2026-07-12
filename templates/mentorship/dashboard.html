@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% load static eve %}
-{% block title %}My Mentorship · [FORCA] Command Grid{% endblock %}
+{% load static eve i18n %}
+{% block title %}{% translate "My Mentorship" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 {% comment %}
 "My Mentorship" — the pilot's personal cockpit for the programme: their
@@ -9,30 +9,30 @@ or decline, recommended mentors with match scores, and earned recognition.
 Every mutating action is a POST form with a hidden action/decision field.
 {% endcomment %}
 
-<a href="{% url 'mentorship:landing' %}" class="text-xs text-faint hover:text-gold">← Mentorship Program</a>
+<a href="{% url 'mentorship:landing' %}" class="text-xs text-faint hover:text-gold">← {% translate "Mentorship Program" %}</a>
 <header class="mt-2 mb-6 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <p class="eyebrow text-gold">Mentorship</p>
-    <h1 class="mt-1 text-3xl font-bold text-ink">My Mentorship</h1>
-    <p class="mt-1 text-sm text-faint">Your roles, pairings, invitations and recognition — all in one place.</p>
+    <p class="eyebrow text-gold">{% translate "Mentorship" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "My Mentorship" %}</h1>
+    <p class="mt-1 text-sm text-faint">{% translate "Your roles, pairings, invitations and recognition — all in one place." %}</p>
   </div>
-  <a href="{% url 'mentorship:tracks' %}" class="btn-ghost text-sm">Browse Learning Tracks</a>
+  <a href="{% url 'mentorship:tracks' %}" class="btn-ghost text-sm">{% translate "Browse Learning Tracks" %}</a>
 </header>
 
 <!-- ===== Your role(s) ===== -->
-<h2 class="eyebrow mb-3">Your role(s)</h2>
+<h2 class="eyebrow mb-3">{% translate "Your role(s)" %}</h2>
 {% if not mentor_profile and not mentee_profile %}
 <section class="panel flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
   <div class="flex items-start gap-3">
     <span class="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-panel2 text-gold"><svg class="h-5 w-5"><use href="#i-rookie"/></svg></span>
     <div>
-      <p class="font-medium text-ink">You haven't joined yet.</p>
-      <p class="mt-0.5 text-sm text-faint">Register as a Cadet to get paired with a Veteran Mentor, or sign up to mentor others. You can do both.</p>
+      <p class="font-medium text-ink">{% translate "You haven't joined yet." %}</p>
+      <p class="mt-0.5 text-sm text-faint">{% translate "Register as a Cadet to get paired with a Veteran Mentor, or sign up to mentor others. You can do both." %}</p>
     </div>
   </div>
   <div class="flex flex-wrap gap-3">
-    <a href="{% url 'mentorship:register_mentee' %}" class="btn-gold">Register as Cadet</a>
-    <a href="{% url 'mentorship:register_mentor' %}" class="btn-cyan">Become a Mentor</a>
+    <a href="{% url 'mentorship:register_mentee' %}" class="btn-gold">{% translate "Register as Cadet" %}</a>
+    <a href="{% url 'mentorship:register_mentor' %}" class="btn-cyan">{% translate "Become a Mentor" %}</a>
   </div>
 </section>
 {% else %}
@@ -40,51 +40,51 @@ Every mutating action is a POST form with a hidden action/decision field.
   <!-- Cadet card -->
   <div class="panel p-5">
     <div class="flex items-center justify-between gap-3">
-      <div class="flex items-center gap-2"><svg class="h-5 w-5 text-gold"><use href="#i-rookie"/></svg><h3 class="font-display font-semibold text-ink">Cadet</h3></div>
+      <div class="flex items-center gap-2"><svg class="h-5 w-5 text-gold"><use href="#i-rookie"/></svg><h3 class="font-display font-semibold text-ink">{% translate "Cadet" %}</h3></div>
       {% if mentee_profile %}
         <span class="chip {% if mentee_profile.status == 'active' %}text-kill{% elif mentee_profile.status == 'pending_approval' or mentee_profile.status == 'suggested' %}text-gold{% else %}text-muted{% endif %}">{{ mentee_profile.get_status_display }}</span>
       {% else %}
-        <span class="chip text-faint">Not registered</span>
+        <span class="chip text-faint">{% translate "Not registered" %}</span>
       {% endif %}
     </div>
     {% if mentee_profile %}
       {% if mentee_profile.goals %}
       <div class="mt-3">
-        <p class="eyebrow !text-[10px] text-faint">Your goals</p>
+        <p class="eyebrow !text-[10px] text-faint">{% translate "Your goals" %}</p>
         <div class="mt-1.5 flex flex-wrap gap-1.5">{% for g in mentee_profile.goals %}<span class="chip text-cyan">{{ g }}</span>{% endfor %}</div>
       </div>
       {% endif %}
-      <a href="{% url 'mentorship:register_mentee' %}" class="mt-4 inline-block text-xs text-cyan hover:underline">Edit cadet profile →</a>
+      <a href="{% url 'mentorship:register_mentee' %}" class="mt-4 inline-block text-xs text-cyan hover:underline">{% translate "Edit cadet profile →" %}</a>
     {% else %}
-      <p class="mt-2 text-sm text-faint">Learning the ropes? Register as a Cadet and get matched with a mentor.</p>
-      <a href="{% url 'mentorship:register_mentee' %}" class="btn-gold !px-3 !py-1.5 text-xs mt-3">Register as Cadet</a>
+      <p class="mt-2 text-sm text-faint">{% translate "Learning the ropes? Register as a Cadet and get matched with a mentor." %}</p>
+      <a href="{% url 'mentorship:register_mentee' %}" class="btn-gold !px-3 !py-1.5 text-xs mt-3">{% translate "Register as Cadet" %}</a>
     {% endif %}
   </div>
 
   <!-- Mentor card -->
   <div class="panel p-5">
     <div class="flex items-center justify-between gap-3">
-      <div class="flex items-center gap-2"><svg class="h-5 w-5 text-gold"><use href="#i-shield"/></svg><h3 class="font-display font-semibold text-ink">Veteran Mentor</h3></div>
+      <div class="flex items-center gap-2"><svg class="h-5 w-5 text-gold"><use href="#i-shield"/></svg><h3 class="font-display font-semibold text-ink">{% translate "Veteran Mentor" %}</h3></div>
       {% if mentor_profile %}
         <span class="chip {% if mentor_profile.status == 'active' %}text-kill{% elif mentor_profile.status == 'pending_approval' or mentor_profile.status == 'suggested' %}text-gold{% else %}text-muted{% endif %}">{{ mentor_profile.get_status_display }}</span>
       {% else %}
-        <span class="chip text-faint">Not registered</span>
+        <span class="chip text-faint">{% translate "Not registered" %}</span>
       {% endif %}
     </div>
     {% if mentor_profile %}
       <div class="mt-3 space-y-2">
         {% if mentor_profile.areas %}
         <div>
-          <p class="eyebrow !text-[10px] text-faint">Areas you mentor</p>
+          <p class="eyebrow !text-[10px] text-faint">{% translate "Areas you mentor" %}</p>
           <div class="mt-1.5 flex flex-wrap gap-1.5">{% for a in mentor_profile.areas %}<span class="chip text-cyan">{{ a }}</span>{% endfor %}</div>
         </div>
         {% endif %}
-        {% if mentor_profile.timezone %}<p class="text-xs text-faint">Timezone · <span class="text-muted">{{ mentor_profile.timezone }}</span></p>{% endif %}
+        {% if mentor_profile.timezone %}<p class="text-xs text-faint">{% translate "Timezone" %} · <span class="text-muted">{{ mentor_profile.timezone }}</span></p>{% endif %}
       </div>
-      <a href="{% url 'mentorship:register_mentor' %}" class="mt-4 inline-block text-xs text-cyan hover:underline">Edit mentor profile →</a>
+      <a href="{% url 'mentorship:register_mentor' %}" class="mt-4 inline-block text-xs text-cyan hover:underline">{% translate "Edit mentor profile →" %}</a>
     {% else %}
-      <p class="mt-2 text-sm text-faint">Been there, lost that? Sign up to mentor Cadets and earn recognition for it.</p>
-      <a href="{% url 'mentorship:register_mentor' %}" class="btn-cyan !px-3 !py-1.5 text-xs mt-3">Become a Mentor</a>
+      <p class="mt-2 text-sm text-faint">{% translate "Been there, lost that? Sign up to mentor Cadets and earn recognition for it." %}</p>
+      <a href="{% url 'mentorship:register_mentor' %}" class="btn-cyan !px-3 !py-1.5 text-xs mt-3">{% translate "Become a Mentor" %}</a>
     {% endif %}
   </div>
 </div>
@@ -92,16 +92,16 @@ Every mutating action is a POST form with a hidden action/decision field.
 
 <!-- ===== Requests & invitations ===== -->
 {% if incoming %}
-<h2 class="eyebrow mt-8 mb-3 text-gold">Requests &amp; invitations</h2>
+<h2 class="eyebrow mt-8 mb-3 text-gold">{% translate "Requests &amp; invitations" %}</h2>
 <div class="grid gap-3 lg:grid-cols-2">
   {% for p in incoming %}
   <div class="panel p-5">
     <div class="flex items-start justify-between gap-3">
       <div class="min-w-0">
-        <p class="text-sm text-ink"><span class="text-faint">{{ p.get_initiated_by_display }} proposed:</span></p>
-        <p class="mt-0.5 font-medium text-ink">{{ p.mentor.user.display_name }} <span class="text-faint">mentoring</span> {{ p.mentee.user.display_name }}</p>
+        <p class="text-sm text-ink"><span class="text-faint">{{ p.get_initiated_by_display }} {% translate "proposed:" %}</span></p>
+        <p class="mt-0.5 font-medium text-ink">{{ p.mentor.user.display_name }} <span class="text-faint">{% translate "mentoring" %}</span> {{ p.mentee.user.display_name }}</p>
       </div>
-      {% if p.match_score %}<span class="chip text-cyan shrink-0" title="match score">{{ p.match_score }}% match</span>{% endif %}
+      {% if p.match_score %}<span class="chip text-cyan shrink-0" title="{% translate 'match score' %}">{{ p.match_score }}% {% translate "match" %}</span>{% endif %}
     </div>
     {% if p.match_reasons %}
     <ul class="mt-3 space-y-1 text-xs text-faint">
@@ -110,8 +110,8 @@ Every mutating action is a POST form with a hidden action/decision field.
     {% endif %}
     <form method="post" action="{% url 'mentorship:pairing_respond' p.id %}" class="mt-4 flex flex-wrap gap-2">
       {% csrf_token %}
-      <button name="decision" value="accept" class="btn-gold !px-3 !py-1.5 text-xs">Accept</button>
-      <button name="decision" value="decline" class="btn-ghost !px-3 !py-1.5 text-xs">Decline</button>
+      <button name="decision" value="accept" class="btn-gold !px-3 !py-1.5 text-xs">{% translate "Accept" %}</button>
+      <button name="decision" value="decline" class="btn-ghost !px-3 !py-1.5 text-xs">{% translate "Decline" %}</button>
     </form>
   </div>
   {% endfor %}
@@ -119,36 +119,36 @@ Every mutating action is a POST form with a hidden action/decision field.
 {% endif %}
 
 <!-- ===== Active mentorships ===== -->
-<h2 class="eyebrow mt-8 mb-3">Active mentorships</h2>
+<h2 class="eyebrow mt-8 mb-3">{% translate "Active mentorships" %}</h2>
 {% if active_pairings %}
 <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
   {% for p in active_pairings %}
   <a href="{% url 'mentorship:pairing' p.id %}" class="panel group p-5 hover:border-gold/40 transition">
     <div class="flex items-center gap-2"><svg class="h-5 w-5 text-gold"><use href="#i-target"/></svg><span class="chip text-cyan">{{ p.get_status_display }}</span></div>
     <p class="mt-3 font-medium text-ink group-hover:text-gold">{{ p.mentor.user.display_name }}</p>
-    <p class="text-xs text-faint">mentoring {{ p.mentee.user.display_name }}</p>
-    {% if p.started_at %}<p class="mt-2 text-[11px] text-faint">Started {{ p.started_at|date:"j M Y" }} · {{ p.started_at|timesince }} ago</p>{% endif %}
-    <span class="mt-3 inline-block text-xs text-cyan group-hover:underline">Open pairing →</span>
+    <p class="text-xs text-faint">{% blocktranslate with name=p.mentee.user.display_name %}mentoring {{ name }}{% endblocktranslate %}</p>
+    {% if p.started_at %}<p class="mt-2 text-[11px] text-faint">{% blocktranslate with d=p.started_at|date:"j M Y" t=p.started_at|timesince %}Started {{ d }} · {{ t }} ago{% endblocktranslate %}</p>{% endif %}
+    <span class="mt-3 inline-block text-xs text-cyan group-hover:underline">{% translate "Open pairing →" %}</span>
   </a>
   {% endfor %}
 </div>
 {% else %}
 <div class="panel flex items-center gap-3 p-5">
   <span class="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-panel2 text-gold"><svg class="h-5 w-5"><use href="#i-target"/></svg></span>
-  <p class="text-sm text-faint">No active mentorships yet. Once a pairing is accepted it shows up here — accept an invitation above or request a mentor below.</p>
+  <p class="text-sm text-faint">{% translate "No active mentorships yet. Once a pairing is accepted it shows up here — accept an invitation above or request a mentor below." %}</p>
 </div>
 {% endif %}
 
 <!-- ===== Recommended mentors ===== -->
 {% if suggestions %}
-<h2 class="eyebrow mt-8 mb-3 text-gold">Recommended mentors</h2>
-<p class="-mt-2 mb-3 text-sm text-faint">Best-fit Veteran Mentors for your goals, timezone and areas. Send a request and they'll get the invitation.</p>
+<h2 class="eyebrow mt-8 mb-3 text-gold">{% translate "Recommended mentors" %}</h2>
+<p class="-mt-2 mb-3 text-sm text-faint">{% translate "Best-fit Veteran Mentors for your goals, timezone and areas. Send a request and they'll get the invitation." %}</p>
 <div class="grid gap-3 lg:grid-cols-2">
   {% for s in suggestions %}
   <div class="panel p-5">
     <div class="flex items-start justify-between gap-3">
       <div class="flex items-center gap-2"><svg class="h-5 w-5 text-gold"><use href="#i-shield"/></svg><h3 class="font-display font-semibold text-ink">{{ s.mentor.user.display_name }}</h3></div>
-      <span class="chip text-cyan shrink-0" title="match score">{{ s.score|floatformat:0 }}% match</span>
+      <span class="chip text-cyan shrink-0" title="{% translate 'match score' %}">{{ s.score|floatformat:0 }}% {% translate "match" %}</span>
     </div>
     {% if s.mentor.bio %}<p class="mt-2 text-sm text-faint">{{ s.mentor.bio }}</p>{% endif %}
     <div class="mt-3 flex flex-wrap items-center gap-1.5">
@@ -163,7 +163,7 @@ Every mutating action is a POST form with a hidden action/decision field.
     <form method="post" action="{% url 'mentorship:request_mentor' %}" class="mt-4">
       {% csrf_token %}
       <input type="hidden" name="mentor_id" value="{{ s.mentor.id }}">
-      <button class="btn-gold !px-3 !py-1.5 text-xs">Request this mentor</button>
+      <button class="btn-gold !px-3 !py-1.5 text-xs">{% translate "Request this mentor" %}</button>
     </form>
   </div>
   {% endfor %}
@@ -171,7 +171,7 @@ Every mutating action is a POST form with a hidden action/decision field.
 {% endif %}
 
 <!-- ===== Recognition ===== -->
-<h2 class="eyebrow mt-8 mb-3">Recognition</h2>
+<h2 class="eyebrow mt-8 mb-3">{% translate "Recognition" %}</h2>
 {% if badges %}
 <div class="panel p-5">
   <div class="flex flex-wrap gap-2.5">
@@ -187,13 +187,13 @@ Every mutating action is a POST form with a hidden action/decision field.
 {% else %}
 <div class="panel flex items-center gap-3 p-5">
   <span class="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-panel2 text-gold"><svg class="h-5 w-5"><use href="#i-trophy"/></svg></span>
-  <p class="text-sm text-faint">No badges yet — complete Field Exercises and certifications to earn your first recognition. Every veteran started here.</p>
+  <p class="text-sm text-faint">{% translate "No badges yet — complete Field Exercises and certifications to earn your first recognition. Every veteran started here." %}</p>
 </div>
 {% endif %}
 
 <!-- ===== Past mentorships ===== -->
 {% if past_pairings %}
-<h2 class="eyebrow mt-8 mb-3">Past mentorships</h2>
+<h2 class="eyebrow mt-8 mb-3">{% translate "Past mentorships" %}</h2>
 <section class="panel overflow-hidden">
   <div class="divide-y divide-line/40">
     {% for p in past_pairings %}

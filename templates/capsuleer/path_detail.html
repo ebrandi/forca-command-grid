@@ -1,12 +1,13 @@
 {% extends "base.html" %}
-{% block title %}{{ template.name }} · Capsuleer Path{% endblock %}
+{% load i18n %}
+{% block title %}{{ template.name }} · {% translate "Capsuleer Path" %}{% endblock %}
 {% block content %}
-<p class="eyebrow text-faint"><a href="{% url 'capsuleer:home' %}" class="hover:text-gold">Capsuleer Path</a> › <a href="{% url 'capsuleer:paths' %}" class="hover:text-gold">Paths</a> › {{ template.name }}</p>
+<p class="eyebrow text-faint"><a href="{% url 'capsuleer:home' %}" class="hover:text-gold">{% translate "Capsuleer Path" %}</a> › <a href="{% url 'capsuleer:paths' %}" class="hover:text-gold">{% translate "Paths" %}</a> › {{ template.name }}</p>
 <div class="mb-3 mt-1 flex flex-wrap items-center gap-1.5">
   <span class="chip text-faint border-line">{{ template.get_category_display }}</span>
-  <span class="chip text-muted border-line">{% if template.difficulty == 1 %}●○○ beginner{% elif template.difficulty == 2 %}●●○ intermediate{% else %}●●● advanced{% endif %}</span>
+  <span class="chip text-muted border-line">{% if template.difficulty == 1 %}●○○ {% translate "beginner" %}{% elif template.difficulty == 2 %}●●○ {% translate "intermediate" %}{% else %}●●● {% translate "advanced" %}{% endif %}</span>
   <span class="chip text-faint border-line">{{ template.get_solo_group_display }}</span>
-  {% if template.newbro_friendly %}<span class="chip text-muted border-line">newbro-friendly</span>{% endif %}
+  {% if template.newbro_friendly %}<span class="chip text-muted border-line">{% translate "newbro-friendly" %}</span>{% endif %}
 </div>
 <h1 class="text-2xl font-bold text-ink">{{ template.name }}</h1>
 <p class="mt-1 max-w-2xl text-muted">{{ template.description }}</p>
@@ -14,13 +15,13 @@
 <div class="mt-6 grid gap-6 lg:grid-cols-3">
   <div class="space-y-6 lg:col-span-2">
     <section class="panel overflow-hidden">
-      <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">What you'll do</h2></div>
+      <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">{% translate "What you'll do" %}</h2></div>
       <div class="divide-y divide-line/40">
         {% for m in structure.milestones %}
         <div class="flex items-center gap-3 px-4 py-2.5 text-sm">
           <span class="shrink-0 text-faint">{{ m.order }}</span>
           <span class="min-w-0 flex-1 text-ink">{{ m.title }}</span>
-          {% if m.required %}<span class="chip shrink-0 text-muted border-line">required</span>{% else %}<span class="chip shrink-0 text-faint border-line">optional</span>{% endif %}
+          {% if m.required %}<span class="chip shrink-0 text-muted border-line">{% translate "required" %}</span>{% else %}<span class="chip shrink-0 text-faint border-line">{% translate "optional" %}</span>{% endif %}
         </div>
         {% endfor %}
       </div>
@@ -28,12 +29,12 @@
 
     {% if structure.skill_tiers %}
     <section class="panel px-4 py-4">
-      <h2 class="eyebrow">Skills &amp; ships</h2>
+      <h2 class="eyebrow">{% translate "Skills &amp; ships" %}</h2>
       {% with tiers=structure.skill_tiers %}
       <div class="mt-2 grid gap-4 sm:grid-cols-3">
-        <div><p class="text-xs text-faint">Minimum</p><ul class="mt-1 space-y-0.5 text-sm text-muted">{% for s in tiers.minimum %}<li>{{ s.name }} {{ s.level }}</li>{% empty %}<li class="text-faint">—</li>{% endfor %}</ul></div>
-        <div><p class="text-xs text-faint">Recommended</p><ul class="mt-1 space-y-0.5 text-sm text-muted">{% for s in tiers.recommended %}<li>{{ s.name }} {{ s.level }}</li>{% empty %}<li class="text-faint">—</li>{% endfor %}</ul></div>
-        <div><p class="text-xs text-faint">Mastery</p><ul class="mt-1 space-y-0.5 text-sm text-muted">{% for s in tiers.mastery %}<li>{{ s.name }} {{ s.level }}</li>{% empty %}<li class="text-faint">—</li>{% endfor %}</ul></div>
+        <div><p class="text-xs text-faint">{% translate "Minimum" %}</p><ul class="mt-1 space-y-0.5 text-sm text-muted">{% for s in tiers.minimum %}<li>{{ s.name }} {{ s.level }}</li>{% empty %}<li class="text-faint">—</li>{% endfor %}</ul></div>
+        <div><p class="text-xs text-faint">{% translate "Recommended" %}</p><ul class="mt-1 space-y-0.5 text-sm text-muted">{% for s in tiers.recommended %}<li>{{ s.name }} {{ s.level }}</li>{% empty %}<li class="text-faint">—</li>{% endfor %}</ul></div>
+        <div><p class="text-xs text-faint">{% translate "Mastery" %}</p><ul class="mt-1 space-y-0.5 text-sm text-muted">{% for s in tiers.mastery %}<li>{{ s.name }} {{ s.level }}</li>{% empty %}<li class="text-faint">—</li>{% endfor %}</ul></div>
       </div>
       {% endwith %}
     </section>
@@ -41,7 +42,7 @@
 
     {% if doctrine_linked and not doctrine %}
     <section class="panel border-cyan/30 px-4 py-4 text-sm text-cyan">
-      This path links to a corp doctrine, but no matching doctrine is configured right now. You can still start it — doctrine milestones will wait honestly until one exists.
+      {% translate "This path links to a corp doctrine, but no matching doctrine is configured right now. You can still start it — doctrine milestones will wait honestly until one exists." %}
     </section>
     {% endif %}
 
@@ -52,38 +53,38 @@
 
   <aside class="space-y-6">
     <section class="panel px-4 py-4">
-      <h2 class="eyebrow">At a glance</h2>
+      <h2 class="eyebrow">{% translate "At a glance" %}</h2>
       <dl class="mt-2 space-y-1 text-sm text-muted">
-        {% if template.est_hours_note %}<div><dt class="text-faint">Time</dt><dd>{{ template.est_hours_note }}</dd></div>{% endif %}
-        {% if template.cost_note %}<div><dt class="text-faint">Cost</dt><dd>{{ template.cost_note }}</dd></div>{% endif %}
-        {% if template.risk_note %}<div><dt class="text-faint">Risk</dt><dd>{{ template.risk_note }}</dd></div>{% endif %}
-        {% if template.income_note %}<div><dt class="text-faint">Income</dt><dd>{{ template.income_note }}</dd></div>{% endif %}
-        {% if doctrine %}<div><dt class="text-faint">Doctrine</dt><dd>{{ doctrine.name }}</dd></div>{% endif %}
+        {% if template.est_hours_note %}<div><dt class="text-faint">{% translate "Time" %}</dt><dd>{{ template.est_hours_note }}</dd></div>{% endif %}
+        {% if template.cost_note %}<div><dt class="text-faint">{% translate "Cost" %}</dt><dd>{{ template.cost_note }}</dd></div>{% endif %}
+        {% if template.risk_note %}<div><dt class="text-faint">{% translate "Risk" %}</dt><dd>{{ template.risk_note }}</dd></div>{% endif %}
+        {% if template.income_note %}<div><dt class="text-faint">{% translate "Income" %}</dt><dd>{{ template.income_note }}</dd></div>{% endif %}
+        {% if doctrine %}<div><dt class="text-faint">{% translate "Doctrine" %}</dt><dd>{{ doctrine.name }}</dd></div>{% endif %}
       </dl>
     </section>
 
     {% if advances_to %}
     <section class="panel px-4 py-4">
-      <h2 class="eyebrow">Advances to</h2>
+      <h2 class="eyebrow">{% translate "Advances to" %}</h2>
       <ul class="mt-2 space-y-1 text-sm">{% for a in advances_to %}<li><a href="{% url 'capsuleer:path_detail' a.key %}" class="text-cyan hover:underline">{{ a.name }} →</a></li>{% endfor %}</ul>
     </section>
     {% endif %}
 
     <section class="panel px-4 py-4">
-      <h2 class="eyebrow">Start</h2>
+      <h2 class="eyebrow">{% translate "Start" %}</h2>
       {% if existing_goal %}
-      <p class="mt-2 text-sm text-muted">You're already on this path.</p>
-      <a href="{% url 'capsuleer:goal_detail' existing_goal.pk %}" class="btn-cyan mt-2 text-sm">Open your goal →</a>
+      <p class="mt-2 text-sm text-muted">{% translate "You're already on this path." %}</p>
+      <a href="{% url 'capsuleer:goal_detail' existing_goal.pk %}" class="btn-cyan mt-2 text-sm">{% translate "Open your goal →" %}</a>
       {% else %}
       <form method="post" action="{% url 'capsuleer:path_start' template.key %}" class="mt-2 space-y-2">
         {% csrf_token %}
-        <label class="label block">Character
+        <label class="label block">{% translate "Character" %}
           <select name="character_id" class="input-field mt-1">
             {% for c in characters %}<option value="{{ c.character_id }}" {% if c.is_main %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
           </select>
         </label>
-        <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="start_now"> Start now (else save for later)</label>
-        <button class="btn-gold text-sm">Start this path →</button>
+        <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="start_now"> {% translate "Start now (else save for later)" %}</label>
+        <button class="btn-gold text-sm">{% translate "Start this path →" %}</button>
       </form>
       {% endif %}
     </section>

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% load static eve %}
-{% block title %}Mentorship Program · [FORCA] Command Grid{% endblock %}
+{% load static eve i18n %}
+{% block title %}{% translate "Mentorship Program" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 {% comment %}
 Public-facing landing for the Mentorship Program. Explains the programme,
@@ -15,25 +15,25 @@ surface a prominent notice and drop the register CTAs.
 <section class="relative overflow-hidden rounded-2xl border border-line bg-panel/60 px-6 py-10 sm:px-10 sm:py-14">
   <div class="absolute -right-16 -top-10 h-72 w-72 rounded-full bg-gold/10 blur-3xl"></div>
   <div class="relative max-w-2xl">
-    <p class="eyebrow text-gold">Mentorship Program</p>
-    <h1 class="mt-3 text-4xl font-bold leading-[1.1] text-ink sm:text-5xl">Every capsuleer flies better <span class="text-gold">with a wingman</span>.</h1>
+    <p class="eyebrow text-gold">{% translate "Mentorship Program" %}</p>
+    <h1 class="mt-3 text-4xl font-bold leading-[1.1] text-ink sm:text-5xl">{% blocktranslate %}Every capsuleer flies better <span class="text-gold">with a wingman</span>.{% endblocktranslate %}</h1>
     {% if program.intro_text %}
     <p class="mt-5 text-lg text-muted">{{ program.intro_text }}</p>
     {% else %}
-    <p class="mt-5 text-lg text-muted">Pair up Cadets learning the ropes with Veteran Mentors who have already made every mistake worth making. Field Exercises, real debriefs, and recognition that means something — no spreadsheets, no lectures.</p>
+    <p class="mt-5 text-lg text-muted">{% translate "Pair up Cadets learning the ropes with Veteran Mentors who have already made every mistake worth making. Field Exercises, real debriefs, and recognition that means something — no spreadsheets, no lectures." %}</p>
     {% endif %}
 
     <div class="mt-6 flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-faint">
-      <span class="flex items-center gap-2"><svg class="h-4 w-4 text-cyan"><use href="#i-map"/></svg><span class="data text-ink">{{ track_count }}</span> learning track{{ track_count|pluralize }}</span>
-      <span class="flex items-center gap-2"><svg class="h-4 w-4 text-cyan"><use href="#i-shield"/></svg><span class="data text-ink">{{ mentor_count }}</span> active mentor{{ mentor_count|pluralize }}</span>
+      <span class="flex items-center gap-2"><svg class="h-4 w-4 text-cyan"><use href="#i-map"/></svg>{% blocktranslate count n=track_count %}<span class="data text-ink">{{ n }}</span> learning track{% plural %}<span class="data text-ink">{{ n }}</span> learning tracks{% endblocktranslate %}</span>
+      <span class="flex items-center gap-2"><svg class="h-4 w-4 text-cyan"><use href="#i-shield"/></svg>{% blocktranslate count n=mentor_count %}<span class="data text-ink">{{ n }}</span> active mentor{% plural %}<span class="data text-ink">{{ n }}</span> active mentors{% endblocktranslate %}</span>
     </div>
 
     {% if not open %}
     <div class="mt-7 flex items-start gap-3 rounded-lg border-l-2 border-gold bg-gold/10 px-4 py-3">
       <svg class="mt-0.5 h-5 w-5 shrink-0 text-gold"><use href="#i-lock"/></svg>
       <div>
-        <p class="text-sm font-medium text-ink">The programme is paused right now.</p>
-        <p class="mt-0.5 text-sm text-faint">New Cadet and Mentor registrations are closed while leadership retunes the roster. You can still browse the learning tracks and check in on any mentorship you already hold.</p>
+        <p class="text-sm font-medium text-ink">{% translate "The programme is paused right now." %}</p>
+        <p class="mt-0.5 text-sm text-faint">{% translate "New Cadet and Mentor registrations are closed while leadership retunes the roster. You can still browse the learning tracks and check in on any mentorship you already hold." %}</p>
       </div>
     </div>
     {% endif %}
@@ -43,27 +43,27 @@ surface a prominent notice and drop the register CTAs.
       {% if mentee_profile %}
         <span class="inline-flex items-center gap-2 rounded-md border border-cyan/40 bg-cyan/10 px-4 py-2.5 text-sm text-cyan">
           <svg class="h-5 w-5"><use href="#i-rookie"/></svg>
-          Cadet · <span class="chip !text-cyan">{{ mentee_profile.get_status_display }}</span>
+          {% translate "Cadet" %} · <span class="chip !text-cyan">{{ mentee_profile.get_status_display }}</span>
         </span>
       {% elif open %}
         <a href="{% url 'mentorship:register_mentee' %}" class="btn-gold text-base !px-5 !py-3">
-          <svg class="h-5 w-5"><use href="#i-rookie"/></svg> Register as Cadet
+          <svg class="h-5 w-5"><use href="#i-rookie"/></svg> {% translate "Register as Cadet" %}
         </a>
       {% endif %}
 
       {% if mentor_profile %}
         <span class="inline-flex items-center gap-2 rounded-md border border-cyan/40 bg-cyan/10 px-4 py-2.5 text-sm text-cyan">
           <svg class="h-5 w-5"><use href="#i-shield"/></svg>
-          Mentor · <span class="chip !text-cyan">{{ mentor_profile.get_status_display }}</span>
+          {% translate "Mentor" %} · <span class="chip !text-cyan">{{ mentor_profile.get_status_display }}</span>
         </span>
       {% elif open %}
         <a href="{% url 'mentorship:register_mentor' %}" class="btn-cyan text-base !px-5 !py-3">
-          <svg class="h-5 w-5"><use href="#i-shield"/></svg> Become a Veteran Mentor
+          <svg class="h-5 w-5"><use href="#i-shield"/></svg> {% translate "Become a Veteran Mentor" %}
         </a>
       {% endif %}
 
-      <a href="{% url 'mentorship:dashboard' %}" class="btn-ghost !px-4 !py-3">View My Mentorship</a>
-      <a href="{% url 'mentorship:tracks' %}" class="btn-ghost !px-4 !py-3">Browse Learning Tracks</a>
+      <a href="{% url 'mentorship:dashboard' %}" class="btn-ghost !px-4 !py-3">{% translate "View My Mentorship" %}</a>
+      <a href="{% url 'mentorship:tracks' %}" class="btn-ghost !px-4 !py-3">{% translate "Browse Learning Tracks" %}</a>
     </div>
   </div>
 </section>
@@ -71,85 +71,85 @@ surface a prominent notice and drop the register CTAs.
 <!-- ===== Why join ===== -->
 <div class="mt-8 grid gap-5 lg:grid-cols-2">
   <section class="panel p-6">
-    <div class="flex items-center gap-2"><svg class="h-5 w-5 text-gold"><use href="#i-rookie"/></svg><h2 class="font-display text-lg font-semibold text-ink">Why sign up as a Cadet</h2></div>
+    <div class="flex items-center gap-2"><svg class="h-5 w-5 text-gold"><use href="#i-rookie"/></svg><h2 class="font-display text-lg font-semibold text-ink">{% translate "Why sign up as a Cadet" %}</h2></div>
     <ul class="mt-3 space-y-2.5 text-sm">
-      <li class="flex gap-2.5"><span class="text-kill">✓</span><span class="text-muted"><span class="text-ink">Skip the expensive lessons.</span> One hour with a veteran saves a month of dying to things you never saw coming.</span></li>
-      <li class="flex gap-2.5"><span class="text-kill">✓</span><span class="text-muted"><span class="text-ink">A clear path, not a firehose.</span> Field Exercises take you from docking up to holding tackle on a real fleet, one step at a time.</span></li>
-      <li class="flex gap-2.5"><span class="text-kill">✓</span><span class="text-muted"><span class="text-ink">Someone in your corner.</span> A name you can ping without feeling like you're bothering the whole corp.</span></li>
-      <li class="flex gap-2.5"><span class="text-kill">✓</span><span class="text-muted"><span class="text-ink">Earn as you learn.</span> Completed exercises can pay ISK, points and recognition — see below.</span></li>
+      <li class="flex gap-2.5"><span class="text-kill">✓</span><span class="text-muted"><span class="text-ink">{% translate "Skip the expensive lessons." %}</span> {% translate "One hour with a veteran saves a month of dying to things you never saw coming." %}</span></li>
+      <li class="flex gap-2.5"><span class="text-kill">✓</span><span class="text-muted"><span class="text-ink">{% translate "A clear path, not a firehose." %}</span> {% translate "Field Exercises take you from docking up to holding tackle on a real fleet, one step at a time." %}</span></li>
+      <li class="flex gap-2.5"><span class="text-kill">✓</span><span class="text-muted"><span class="text-ink">{% translate "Someone in your corner." %}</span> {% translate "A name you can ping without feeling like you're bothering the whole corp." %}</span></li>
+      <li class="flex gap-2.5"><span class="text-kill">✓</span><span class="text-muted"><span class="text-ink">{% translate "Earn as you learn." %}</span> {% translate "Completed exercises can pay ISK, points and recognition — see below." %}</span></li>
     </ul>
   </section>
   <section class="panel p-6">
-    <div class="flex items-center gap-2"><svg class="h-5 w-5 text-gold"><use href="#i-shield"/></svg><h2 class="font-display text-lg font-semibold text-ink">Why mentor as a Veteran</h2></div>
+    <div class="flex items-center gap-2"><svg class="h-5 w-5 text-gold"><use href="#i-shield"/></svg><h2 class="font-display text-lg font-semibold text-ink">{% translate "Why mentor as a Veteran" %}</h2></div>
     <ul class="mt-3 space-y-2.5 text-sm">
-      <li class="flex gap-2.5"><span class="text-kill">✓</span><span class="text-muted"><span class="text-ink">Build the fleet you want to fly with.</span> Every Cadet you train is another competent pilot on comms next month.</span></li>
-      <li class="flex gap-2.5"><span class="text-kill">✓</span><span class="text-muted"><span class="text-ink">Recognition that sticks.</span> Mentor badges, certifications and standing on the leadership board.</span></li>
-      <li class="flex gap-2.5"><span class="text-kill">✓</span><span class="text-muted"><span class="text-ink">Light touch, real impact.</span> You pick your areas, your timezone and your pace — the Grid handles the matching and the paperwork.</span></li>
-      <li class="flex gap-2.5"><span class="text-kill">✓</span><span class="text-muted"><span class="text-ink">Give back what you were given.</span> Every veteran here was once the confused newbro asking where the undock button is.</span></li>
+      <li class="flex gap-2.5"><span class="text-kill">✓</span><span class="text-muted"><span class="text-ink">{% translate "Build the fleet you want to fly with." %}</span> {% translate "Every Cadet you train is another competent pilot on comms next month." %}</span></li>
+      <li class="flex gap-2.5"><span class="text-kill">✓</span><span class="text-muted"><span class="text-ink">{% translate "Recognition that sticks." %}</span> {% translate "Mentor badges, certifications and standing on the leadership board." %}</span></li>
+      <li class="flex gap-2.5"><span class="text-kill">✓</span><span class="text-muted"><span class="text-ink">{% translate "Light touch, real impact." %}</span> {% translate "You pick your areas, your timezone and your pace — the Grid handles the matching and the paperwork." %}</span></li>
+      <li class="flex gap-2.5"><span class="text-kill">✓</span><span class="text-muted"><span class="text-ink">{% translate "Give back what you were given." %}</span> {% translate "Every veteran here was once the confused newbro asking where the undock button is." %}</span></li>
     </ul>
   </section>
 </div>
 
 <!-- ===== How it works ===== -->
-<h2 class="eyebrow mt-8 mb-3 text-gold">How it works</h2>
+<h2 class="eyebrow mt-8 mb-3 text-gold">{% translate "How it works" %}</h2>
 <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
   <div class="panel p-5">
     <span class="grid h-9 w-9 place-items-center rounded-md bg-gold/15 font-display text-lg font-bold text-gold">1</span>
-    <h3 class="mt-3 font-display font-semibold text-ink">Register a role</h3>
-    <p class="mt-1 text-sm text-faint">Sign up as a Cadet, a Veteran Mentor, or both. Tell us your goals, areas and timezone.</p>
+    <h3 class="mt-3 font-display font-semibold text-ink">{% translate "Register a role" %}</h3>
+    <p class="mt-1 text-sm text-faint">{% translate "Sign up as a Cadet, a Veteran Mentor, or both. Tell us your goals, areas and timezone." %}</p>
   </div>
   <div class="panel p-5">
     <span class="grid h-9 w-9 place-items-center rounded-md bg-gold/15 font-display text-lg font-bold text-gold">2</span>
-    <h3 class="mt-3 font-display font-semibold text-ink">Get matched</h3>
-    <p class="mt-1 text-sm text-faint">The Grid suggests best-fit pairings by area, timezone and goals. You approve — nobody is forced together.</p>
+    <h3 class="mt-3 font-display font-semibold text-ink">{% translate "Get matched" %}</h3>
+    <p class="mt-1 text-sm text-faint">{% translate "The Grid suggests best-fit pairings by area, timezone and goals. You approve — nobody is forced together." %}</p>
   </div>
   <div class="panel p-5">
     <span class="grid h-9 w-9 place-items-center rounded-md bg-gold/15 font-display text-lg font-bold text-gold">3</span>
-    <h3 class="mt-3 font-display font-semibold text-ink">Run Field Exercises</h3>
-    <p class="mt-1 text-sm text-faint">Work through a Track together — first fit, first fleet, first ratting site — and debrief each one.</p>
+    <h3 class="mt-3 font-display font-semibold text-ink">{% translate "Run Field Exercises" %}</h3>
+    <p class="mt-1 text-sm text-faint">{% translate "Work through a Track together — first fit, first fleet, first ratting site — and debrief each one." %}</p>
   </div>
   <div class="panel p-5">
     <span class="grid h-9 w-9 place-items-center rounded-md bg-gold/15 font-display text-lg font-bold text-gold">4</span>
-    <h3 class="mt-3 font-display font-semibold text-ink">Earn recognition</h3>
-    <p class="mt-1 text-sm text-faint">Completed exercises are validated, then Cadet and Mentor both collect their rewards.</p>
+    <h3 class="mt-3 font-display font-semibold text-ink">{% translate "Earn recognition" %}</h3>
+    <p class="mt-1 text-sm text-faint">{% translate "Completed exercises are validated, then Cadet and Mentor both collect their rewards." %}</p>
   </div>
 </div>
 
 <!-- ===== Recognition & rewards ===== -->
 <div class="mt-8 grid gap-5 lg:grid-cols-3">
   <section class="panel p-6 lg:col-span-2">
-    <div class="flex items-center gap-2"><svg class="h-5 w-5 text-gold"><use href="#i-trophy"/></svg><h2 class="font-display text-lg font-semibold text-ink">What you earn</h2></div>
-    <p class="mt-2 text-sm text-faint">Progress is real recognition, not a participation ribbon. Depending on how leadership has tuned the programme, completing exercises and certifications can grant:</p>
+    <div class="flex items-center gap-2"><svg class="h-5 w-5 text-gold"><use href="#i-trophy"/></svg><h2 class="font-display text-lg font-semibold text-ink">{% translate "What you earn" %}</h2></div>
+    <p class="mt-2 text-sm text-faint">{% translate "Progress is real recognition, not a participation ribbon. Depending on how leadership has tuned the programme, completing exercises and certifications can grant:" %}</p>
     <div class="mt-4 grid gap-3 sm:grid-cols-2">
       <div class="flex items-start gap-3 rounded-lg border border-line/60 bg-panel2/40 p-3">
         <svg class="h-5 w-5 shrink-0 text-gold"><use href="#i-coin"/></svg>
-        <div><p class="text-sm font-medium text-ink">ISK rewards</p><p class="mt-0.5 text-xs text-faint">Direct payouts for milestones — for the Cadet who did the work and the Mentor who taught it.</p></div>
+        <div><p class="text-sm font-medium text-ink">{% translate "ISK rewards" %}</p><p class="mt-0.5 text-xs text-faint">{% translate "Direct payouts for milestones — for the Cadet who did the work and the Mentor who taught it." %}</p></div>
       </div>
       <div class="flex items-start gap-3 rounded-lg border border-line/60 bg-panel2/40 p-3">
         <svg class="h-5 w-5 shrink-0 text-cyan"><use href="#i-bolt"/></svg>
-        <div><p class="text-sm font-medium text-ink">Contribution points</p><p class="mt-0.5 text-xs text-faint">Points on the corp recognition ledger that count toward your standing.</p></div>
+        <div><p class="text-sm font-medium text-ink">{% translate "Contribution points" %}</p><p class="mt-0.5 text-xs text-faint">{% translate "Points on the corp recognition ledger that count toward your standing." %}</p></div>
       </div>
       <div class="flex items-start gap-3 rounded-lg border border-line/60 bg-panel2/40 p-3">
         <svg class="h-5 w-5 shrink-0 text-gold"><use href="#i-shield"/></svg>
-        <div><p class="text-sm font-medium text-ink">Badges</p><p class="mt-0.5 text-xs text-faint">Tiered mentor and cadet badges that show on your profile and dashboard.</p></div>
+        <div><p class="text-sm font-medium text-ink">{% translate "Badges" %}</p><p class="mt-0.5 text-xs text-faint">{% translate "Tiered mentor and cadet badges that show on your profile and dashboard." %}</p></div>
       </div>
       <div class="flex items-start gap-3 rounded-lg border border-line/60 bg-panel2/40 p-3">
         <svg class="h-5 w-5 shrink-0 text-cyan"><use href="#i-check"/></svg>
-        <div><p class="text-sm font-medium text-ink">Certifications</p><p class="mt-0.5 text-xs text-faint">Proof you can fly the doctrine, hold tackle, or lead a small gang — recognised corp-wide.</p></div>
+        <div><p class="text-sm font-medium text-ink">{% translate "Certifications" %}</p><p class="mt-0.5 text-xs text-faint">{% translate "Proof you can fly the doctrine, hold tackle, or lead a small gang — recognised corp-wide." %}</p></div>
       </div>
     </div>
   </section>
 
   <section class="panel p-6">
-    <div class="flex items-center gap-2"><svg class="h-5 w-5 text-gold"><use href="#i-key"/></svg><h2 class="font-display text-lg font-semibold text-ink">Honest validation &amp; privacy</h2></div>
+    <div class="flex items-center gap-2"><svg class="h-5 w-5 text-gold"><use href="#i-key"/></svg><h2 class="font-display text-lg font-semibold text-ink">{% translate "Honest validation &amp; privacy" %}</h2></div>
     <ul class="mt-3 space-y-2.5 text-sm">
-      <li class="flex gap-2.5"><svg class="mt-0.5 h-4 w-4 shrink-0 text-cyan"><use href="#i-check"/></svg><span class="text-faint"><span class="text-ink">Some steps auto-check.</span> Where the Grid can confirm a fact from EVE data — a skill trained, a ship owned — it ticks the box for you.</span></li>
-      <li class="flex gap-2.5"><svg class="mt-0.5 h-4 w-4 shrink-0 text-cyan"><use href="#i-shield"/></svg><span class="text-faint"><span class="text-ink">The rest is a Mentor sign-off.</span> Things a machine can't judge — "did the debrief, showed up, gets it" — your Mentor confirms by hand. No gaming it.</span></li>
-      <li class="flex gap-2.5"><svg class="mt-0.5 h-4 w-4 shrink-0 text-cyan"><use href="#i-lock"/></svg><span class="text-faint"><span class="text-ink">ESI is opt-in and minimal.</span> We only ask for a scope when an exercise genuinely needs it, and never more than that. You can join and progress plenty without granting any.</span></li>
+      <li class="flex gap-2.5"><svg class="mt-0.5 h-4 w-4 shrink-0 text-cyan"><use href="#i-check"/></svg><span class="text-faint"><span class="text-ink">{% translate "Some steps auto-check." %}</span> {% translate "Where the Grid can confirm a fact from EVE data — a skill trained, a ship owned — it ticks the box for you." %}</span></li>
+      <li class="flex gap-2.5"><svg class="mt-0.5 h-4 w-4 shrink-0 text-cyan"><use href="#i-shield"/></svg><span class="text-faint"><span class="text-ink">{% translate "The rest is a Mentor sign-off." %}</span> {% blocktranslate %}Things a machine can't judge — "did the debrief, showed up, gets it" — your Mentor confirms by hand. No gaming it.{% endblocktranslate %}</span></li>
+      <li class="flex gap-2.5"><svg class="mt-0.5 h-4 w-4 shrink-0 text-cyan"><use href="#i-lock"/></svg><span class="text-faint"><span class="text-ink">{% translate "ESI is opt-in and minimal." %}</span> {% translate "We only ask for a scope when an exercise genuinely needs it, and never more than that. You can join and progress plenty without granting any." %}</span></li>
     </ul>
     <div class="mt-4 flex items-center gap-2 rounded-md border border-line/60 bg-panel2/40 px-3 py-2 text-xs text-faint">
       <svg class="h-4 w-4 text-gold"><use href="#i-target"/></svg>
-      <span><span class="text-ink">Commitment:</span> a few hours a week is plenty — set your own pace, pause any time.</span>
+      <span><span class="text-ink">{% translate "Commitment:" %}</span> {% translate "a few hours a week is plenty — set your own pace, pause any time." %}</span>
     </div>
   </section>
 </div>
@@ -157,9 +157,9 @@ surface a prominent notice and drop the register CTAs.
 <!-- ===== Tracks preview ===== -->
 {% if tracks %}
 <div class="mt-8 flex items-center gap-3">
-  <h2 class="eyebrow text-gold">Learning tracks</h2>
+  <h2 class="eyebrow text-gold">{% translate "Learning tracks" %}</h2>
   <div class="h-px flex-1 bg-line"></div>
-  <a href="{% url 'mentorship:tracks' %}" class="text-xs text-faint hover:text-gold">Browse all →</a>
+  <a href="{% url 'mentorship:tracks' %}" class="text-xs text-faint hover:text-gold">{% translate "Browse all →" %}</a>
 </div>
 <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
   {% for t in tracks %}
@@ -171,7 +171,7 @@ surface a prominent notice and drop the register CTAs.
     <p class="mt-2 flex-1 text-sm text-faint">{{ t.summary }}</p>
     <div class="mt-3 flex flex-wrap items-center gap-2">
       <span class="chip text-muted">{{ t.get_category_display }}</span>
-      {% if t.is_core %}<span class="chip text-gold">Core track</span>{% endif %}
+      {% if t.is_core %}<span class="chip text-gold">{% translate "Core track" %}</span>{% endif %}
     </div>
   </div>
   {% endfor %}
@@ -181,13 +181,13 @@ surface a prominent notice and drop the register CTAs.
 <!-- ===== Closing CTA ===== -->
 <section class="mt-8 panel flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
   <div>
-    <h2 class="font-display text-lg font-semibold text-ink">Ready to fly with a wingman?</h2>
-    <p class="mt-1 text-sm text-faint">{% if open %}Pick a side of the programme — you can always add the other later.{% else %}Registrations reopen soon. Browse the tracks and get a head start.{% endif %}</p>
+    <h2 class="font-display text-lg font-semibold text-ink">{% translate "Ready to fly with a wingman?" %}</h2>
+    <p class="mt-1 text-sm text-faint">{% if open %}{% translate "Pick a side of the programme — you can always add the other later." %}{% else %}{% translate "Registrations reopen soon. Browse the tracks and get a head start." %}{% endif %}</p>
   </div>
   <div class="flex flex-wrap gap-3">
-    {% if open and not mentee_profile %}<a href="{% url 'mentorship:register_mentee' %}" class="btn-gold">Register as Cadet</a>{% endif %}
-    {% if open and not mentor_profile %}<a href="{% url 'mentorship:register_mentor' %}" class="btn-cyan">Become a Mentor</a>{% endif %}
-    <a href="{% url 'mentorship:tracks' %}" class="btn-ghost">Browse Learning Tracks</a>
+    {% if open and not mentee_profile %}<a href="{% url 'mentorship:register_mentee' %}" class="btn-gold">{% translate "Register as Cadet" %}</a>{% endif %}
+    {% if open and not mentor_profile %}<a href="{% url 'mentorship:register_mentor' %}" class="btn-cyan">{% translate "Become a Mentor" %}</a>{% endif %}
+    <a href="{% url 'mentorship:tracks' %}" class="btn-ghost">{% translate "Browse Learning Tracks" %}</a>
   </div>
 </section>
 {% endblock %}

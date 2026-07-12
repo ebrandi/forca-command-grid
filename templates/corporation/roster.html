@@ -1,41 +1,41 @@
 {% extends "base.html" %}
-{% load eve %}
-{% block title %}Member roster · [FORCA] Command Grid{% endblock %}
+{% load eve i18n %}
+{% block title %}{% translate "Member roster" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
-{% if features.recommendations %}<a href="{% url 'recommendations:officer' %}" class="text-xs text-faint hover:text-gold">← Command</a>{% endif %}
+{% if features.recommendations %}<a href="{% url 'recommendations:officer' %}" class="text-xs text-faint hover:text-gold">{% translate "← Command" %}</a>{% endif %}
 
 <header class="mt-2 mb-5 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <p class="eyebrow text-gold">Leadership</p>
-    <h1 class="mt-1 text-3xl font-bold text-ink">Member roster</h1>
-    <p class="mt-1 text-sm text-faint">Who's in the corp, where they were last active — and who still needs to register in Command Grid.</p>
+    <p class="eyebrow text-gold">{% translate "Leadership" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Member roster" %}</h1>
+    <p class="mt-1 text-sm text-faint">{% translate "Who's in the corp, where they were last active — and who still needs to register in Command Grid." %}</p>
   </div>
-  <form method="post" action="{% url 'corporation:sync' %}">{% csrf_token %}<button class="btn-gold">Sync roster</button></form>
+  <form method="post" action="{% url 'corporation:sync' %}">{% csrf_token %}<button class="btn-gold">{% translate "Sync roster" %}</button></form>
 </header>
 
 
 <!-- Summary -->
 <div class="mb-5 grid grid-cols-3 gap-3">
-  <div class="panel p-4"><p class="eyebrow">Members</p><p class="mt-1 font-display text-3xl font-bold text-ink">{{ total }}</p></div>
-  <div class="panel p-4"><p class="eyebrow">Registered</p><p class="mt-1 font-display text-3xl font-bold text-kill">{{ registered }}</p></div>
-  <div class="panel p-4 {% if pending %}ring-1 ring-loss/30{% endif %}"><p class="eyebrow">To contact</p><p class="mt-1 font-display text-3xl font-bold {% if pending %}text-loss{% else %}text-faint{% endif %}">{{ pending }}</p></div>
+  <div class="panel p-4"><p class="eyebrow">{% translate "Members" %}</p><p class="mt-1 font-display text-3xl font-bold text-ink">{{ total }}</p></div>
+  <div class="panel p-4"><p class="eyebrow">{% translate "Registered" %}</p><p class="mt-1 font-display text-3xl font-bold text-kill">{{ registered }}</p></div>
+  <div class="panel p-4 {% if pending %}ring-1 ring-loss/30{% endif %}"><p class="eyebrow">{% translate "To contact" %}</p><p class="mt-1 font-display text-3xl font-bold {% if pending %}text-loss{% else %}text-faint{% endif %}">{{ pending }}</p></div>
 </div>
 
 {% if total %}
 <section class="panel overflow-hidden">
   <div class="flex items-center justify-between border-b border-line px-4 py-3">
-    <h2 class="eyebrow">Roster</h2>
-    {% if last_sync_at %}<span class="text-xs text-faint">synced {{ last_sync_at|timesince }} ago{% if last_sync.by %} · {{ last_sync.by }}{% endif %}</span>{% endif %}
+    <h2 class="eyebrow">{% translate "Roster" %}</h2>
+    {% if last_sync_at %}<span class="text-xs text-faint">{% blocktranslate with ago=last_sync_at|timesince %}synced {{ ago }} ago{% endblocktranslate %}{% if last_sync.by %} · {{ last_sync.by }}{% endif %}</span>{% endif %}
   </div>
   <div class="overflow-x-auto">
     <table class="w-full text-sm">
       <thead class="text-left text-xs uppercase tracking-wide text-faint">
         <tr class="border-b border-line">
-          <th class="px-4 py-2 font-medium">Pilot</th>
+          <th class="px-4 py-2 font-medium">{% translate "Pilot" %}</th>
           <th class="px-4 py-2 font-medium">Command Grid</th>
-          <th class="px-4 py-2 font-medium">Last login</th>
-          <th class="px-4 py-2 font-medium">Last ship</th>
-          <th class="px-4 py-2 font-medium">Last location</th>
+          <th class="px-4 py-2 font-medium">{% translate "Last login" %}</th>
+          <th class="px-4 py-2 font-medium">{% translate "Last ship" %}</th>
+          <th class="px-4 py-2 font-medium">{% translate "Last location" %}</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-line/40">
@@ -49,14 +49,14 @@
             </td>
             <td class="px-4 py-2">
               {% if r.registered %}
-                <span class="chip !border-kill/40 !text-kill">Registered</span>
+                <span class="chip !border-kill/40 !text-kill">{% translate "Registered" %}</span>
               {% elif r.linked_no_token %}
-                <span class="chip !border-gold/40 !text-gold">Token expired</span>
+                <span class="chip !border-gold/40 !text-gold">{% translate "Token expired" %}</span>
               {% else %}
-                <span class="chip !border-loss/40 !text-loss">Pending</span>
+                <span class="chip !border-loss/40 !text-loss">{% translate "Pending" %}</span>
               {% endif %}
             </td>
-            <td class="px-4 py-2 text-muted">{% if r.last_login %}{{ r.last_login|timesince }} ago{% else %}<span class="text-faint">—</span>{% endif %}</td>
+            <td class="px-4 py-2 text-muted">{% if r.last_login %}{% blocktranslate with ago=r.last_login|timesince %}{{ ago }} ago{% endblocktranslate %}{% else %}<span class="text-faint">—</span>{% endif %}</td>
             <td class="px-4 py-2">
               {% if r.ship_type_id %}
                 <span class="flex items-center gap-2 text-muted"><img src="{% eve_type_icon r.ship_type_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">{{ r.ship|default:"—" }}</span>
@@ -71,8 +71,8 @@
 </section>
 {% else %}
 <div class="panel p-8 text-center text-sm text-faint">
-  No roster yet. Click <strong class="text-ink">Sync roster</strong> — a Director must first
-  <a href="{% url 'sso:scopes' %}" class="text-gold hover:underline">grant member-tracking access</a>.
+  {% url 'sso:scopes' as scopes_url %}{% blocktranslate %}No roster yet. Click <strong class="text-ink">Sync roster</strong> — a Director must first
+  <a href="{{ scopes_url }}" class="text-gold hover:underline">grant member-tracking access</a>.{% endblocktranslate %}
 </div>
 {% endif %}
 {% endblock %}

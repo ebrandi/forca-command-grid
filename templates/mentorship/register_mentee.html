@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% load static eve %}
-{% block title %}Register as a Cadet · [FORCA] Command Grid{% endblock %}
+{% load static eve i18n %}
+{% block title %}{% translate "Register as a Cadet" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 
 <header class="mb-6">
-  <p class="eyebrow text-gold">Mentorship</p>
-  <h1 class="mt-1 text-3xl font-bold text-ink">Register as a Cadet</h1>
-  <p class="mt-1 text-sm text-faint">Get paired with a Veteran Mentor who'll fast-track your first weeks in nullsec — fits, fleets, and staying alive.</p>
+  <p class="eyebrow text-gold">{% translate "Mentorship" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Register as a Cadet" %}</h1>
+  <p class="mt-1 text-sm text-faint">{% translate "Get paired with a Veteran Mentor who'll fast-track your first weeks in nullsec — fits, fleets, and staying alive." %}</p>
 </header>
 
 {% comment %}
@@ -17,31 +17,31 @@ approve case-by-case). Age/tenure humanised; confidence note reflects ESI.
 <section class="panel mb-6 p-5 {% if eligibility.eligible %}border-kill/50{% else %}border-gold/50{% endif %}">
   <div class="flex flex-wrap items-center gap-3">
     {% if eligibility.eligible %}
-      <span class="chip text-kill">Eligible</span>
-      <p class="text-sm text-muted">You're within the Cadet window — cadets are pilots newer than the tenure cap. Tell us your goals below and we'll find you a mentor.</p>
+      <span class="chip text-kill">{% translate "Eligible" %}</span>
+      <p class="text-sm text-muted">{% translate "You're within the Cadet window — cadets are pilots newer than the tenure cap. Tell us your goals below and we'll find you a mentor." %}</p>
     {% else %}
-      <span class="chip text-gold">Not yet eligible</span>
-      <p class="text-sm text-muted">You're past the usual Cadet window — cadets are pilots newer than the tenure cap — but leadership pairs Cadets case-by-case, so you can still apply.</p>
+      <span class="chip text-gold">{% translate "Not yet eligible" %}</span>
+      <p class="text-sm text-muted">{% translate "You're past the usual Cadet window — cadets are pilots newer than the tenure cap — but leadership pairs Cadets case-by-case, so you can still apply." %}</p>
     {% endif %}
   </div>
 
   <div class="mt-4 grid gap-4 sm:grid-cols-2">
     <div>
-      <p class="eyebrow">Character age</p>
+      <p class="eyebrow">{% translate "Character age" %}</p>
       <p class="data mt-0.5 text-lg text-ink">
-        {% if eligibility.character_age_days is None %}unknown{% elif eligibility.character_age_days >= 365 %}{% widthratio eligibility.character_age_days 365 1 as age_years %}~{{ age_years }}y <span class="text-sm text-faint">({{ eligibility.character_age_days }}d)</span>{% else %}{{ eligibility.character_age_days }}d{% endif %}
+        {% if eligibility.character_age_days is None %}{% translate "unknown" %}{% elif eligibility.character_age_days >= 365 %}{% widthratio eligibility.character_age_days 365 1 as age_years %}~{{ age_years }}y <span class="text-sm text-faint">({{ eligibility.character_age_days }}d)</span>{% else %}{{ eligibility.character_age_days }}d{% endif %}
       </p>
     </div>
     <div>
-      <p class="eyebrow">Corp tenure</p>
+      <p class="eyebrow">{% translate "Corp tenure" %}</p>
       <p class="data mt-0.5 text-lg text-ink">
-        {% if eligibility.corp_tenure_days is None %}unknown{% else %}{{ eligibility.corp_tenure_days }}d{% endif %}
+        {% if eligibility.corp_tenure_days is None %}{% translate "unknown" %}{% else %}{{ eligibility.corp_tenure_days }}d{% endif %}
       </p>
     </div>
   </div>
 
   <p class="mt-3 text-xs {% if eligibility.source == 'esi' %}text-faint{% else %}text-gold{% endif %}">
-    {% if eligibility.source == 'esi' %}Based on ESI.{% elif eligibility.confidence == 'low' %}Estimated — ESI unavailable.{% else %}Based on your character record.{% endif %}
+    {% if eligibility.source == 'esi' %}{% translate "Based on ESI." %}{% elif eligibility.confidence == 'low' %}{% translate "Estimated — ESI unavailable." %}{% else %}{% translate "Based on your character record." %}{% endif %}
   </p>
 
   {% if eligibility.reasons %}
@@ -52,14 +52,14 @@ approve case-by-case). Age/tenure humanised; confidence note reflects ESI.
   </ul>
   {% endif %}
 
-  <p class="mt-3 text-[11px] text-faint">Leadership may pair Cadets case-by-case regardless of the numbers above.</p>
+  <p class="mt-3 text-[11px] text-faint">{% translate "Leadership may pair Cadets case-by-case regardless of the numbers above." %}</p>
 </section>
 
 {% if not program.enabled %}
   <section class="panel p-6 text-center">
     <div class="mx-auto grid h-11 w-11 place-items-center rounded-md bg-panel2 text-gold"><svg class="h-5 w-5"><use href="#i-lock"/></svg></div>
-    <h2 class="mt-3 font-display text-lg font-semibold text-ink">Cadet sign-ups are paused</h2>
-    <p class="mx-auto mt-1 max-w-md text-sm text-faint">Leadership isn't taking new Cadet registrations right now. Check back soon — or ask in corp chat and a veteran will look after you in the meantime.</p>
+    <h2 class="mt-3 font-display text-lg font-semibold text-ink">{% translate "Cadet sign-ups are paused" %}</h2>
+    <p class="mx-auto mt-1 max-w-md text-sm text-faint">{% translate "Leadership isn't taking new Cadet registrations right now. Check back soon — or ask in corp chat and a veteran will look after you in the meantime." %}</p>
   </section>
 {% else %}
 
@@ -67,8 +67,8 @@ approve case-by-case). Age/tenure humanised; confidence note reflects ESI.
   <div class="panel mb-4 flex flex-wrap items-center gap-3 p-4">
     <span class="grid h-9 w-9 place-items-center rounded-md bg-panel2 text-cyan"><svg class="h-5 w-5"><use href="#i-rookie"/></svg></span>
     <div class="min-w-0 flex-1">
-      <p class="text-sm text-ink">You're already registered as a Cadet.</p>
-      <p class="text-xs text-faint">Update your profile below whenever your goals or availability change.</p>
+      <p class="text-sm text-ink">{% translate "You're already registered as a Cadet." %}</p>
+      <p class="text-xs text-faint">{% translate "Update your profile below whenever your goals or availability change." %}</p>
     </div>
     <span class="chip text-cyan">{{ existing.get_status_display }}</span>
   </div>
@@ -78,7 +78,7 @@ approve case-by-case). Age/tenure humanised; confidence note reflects ESI.
     {% csrf_token %}
 
     <section class="panel p-5">
-      <h2 class="eyebrow mb-3 text-gold">What you want out of this</h2>
+      <h2 class="eyebrow mb-3 text-gold">{% translate "What you want out of this" %}</h2>
       <div>
         <label class="label">{{ form.goals.label }}</label>
         {{ form.goals }}
@@ -94,7 +94,7 @@ approve case-by-case). Age/tenure humanised; confidence note reflects ESI.
     </section>
 
     <section class="panel p-5">
-      <h2 class="eyebrow mb-3 text-gold">Where you're at</h2>
+      <h2 class="eyebrow mb-3 text-gold">{% translate "Where you're at" %}</h2>
       <div class="grid gap-4 sm:grid-cols-2">
         <div>
           <label class="label">{{ form.experience.label }}</label>
@@ -112,7 +112,7 @@ approve case-by-case). Age/tenure humanised; confidence note reflects ESI.
     </section>
 
     <section class="panel p-5">
-      <h2 class="eyebrow mb-3 text-gold">When &amp; how you fly</h2>
+      <h2 class="eyebrow mb-3 text-gold">{% translate "When &amp; how you fly" %}</h2>
       <div class="grid gap-4 sm:grid-cols-2">
         <div>
           <label class="label">{{ form.timezone.label }}</label>
@@ -136,7 +136,7 @@ approve case-by-case). Age/tenure humanised; confidence note reflects ESI.
     </section>
 
     <section class="panel p-5">
-      <h2 class="eyebrow mb-3 text-gold">What you need a hand with</h2>
+      <h2 class="eyebrow mb-3 text-gold">{% translate "What you need a hand with" %}</h2>
       <div class="space-y-2 text-sm text-muted">
         <label class="flex items-center gap-2">{{ form.needs_skill_help }} {{ form.needs_skill_help.label }}</label>
         <label class="flex items-center gap-2">{{ form.needs_fitting_help }} {{ form.needs_fitting_help.label }}</label>
@@ -148,7 +148,7 @@ approve case-by-case). Age/tenure humanised; confidence note reflects ESI.
     </section>
 
     <section class="panel p-5">
-      <h2 class="eyebrow mb-3 text-gold">Anything else</h2>
+      <h2 class="eyebrow mb-3 text-gold">{% translate "Anything else" %}</h2>
       <div>
         <label class="label">{{ form.notes.label }}</label>
         {{ form.notes }}
@@ -160,7 +160,7 @@ approve case-by-case). Age/tenure humanised; confidence note reflects ESI.
     {% if form.non_field_errors %}<p class="text-xs text-loss">{{ form.non_field_errors|join:" " }}</p>{% endif %}
 
     <div class="flex justify-end">
-      <button class="btn-gold">{% if existing %}Update registration{% else %}Submit registration{% endif %}</button>
+      <button class="btn-gold">{% if existing %}{% translate "Update registration" %}{% else %}{% translate "Submit registration" %}{% endif %}</button>
     </div>
   </form>
 {% endif %}

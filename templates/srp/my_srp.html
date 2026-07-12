@@ -1,14 +1,14 @@
 {% extends "base.html" %}
-{% load eve %}
-{% block title %}My SRP · [FORCA] Command Grid{% endblock %}
+{% load eve i18n %}
+{% block title %}{% translate "My SRP" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
-<a href="{% url 'identity:dashboard' %}" class="text-xs text-faint hover:text-gold">← Command Center</a>
+<a href="{% url 'identity:dashboard' %}" class="text-xs text-faint hover:text-gold">← {% translate "Command Center" %}</a>
 <header class="mt-2 mb-5 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <p class="eyebrow text-gold">Ship replacement</p>
-    <h1 class="mt-1 text-3xl font-bold text-ink">My SRP</h1>
+    <p class="eyebrow text-gold">{% translate "Ship replacement" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "My SRP" %}</h1>
   </div>
-  {% if is_officer %}<a href="{% url 'srp:settings' %}" class="btn-ghost text-sm">Programme settings</a>{% endif %}
+  {% if is_officer %}<a href="{% url 'srp:settings' %}" class="btn-ghost text-sm">{% translate "Programme settings" %}</a>{% endif %}
 </header>
 
 
@@ -16,23 +16,23 @@
 <section class="panel mb-5 p-5">
   <div class="flex flex-wrap items-center gap-2">
     {% if not program.enabled %}
-      <span class="chip !border-loss/40 !text-loss">Paused</span>
+      <span class="chip !border-loss/40 !text-loss">{% translate "Paused" %}</span>
     {% elif program.payout_mode == 'replacement' %}
-      <span class="chip !border-cyan/40 !text-cyan">🛡 We replace your ship &amp; fit</span>
+      <span class="chip !border-cyan/40 !text-cyan">🛡 {% translate "We replace your ship &amp; fit" %}</span>
     {% elif program.payout_mode == 'isk_topup' %}
-      <span class="chip !border-gold/40 !text-gold">💰 We top up your in-game insurance</span>
+      <span class="chip !border-gold/40 !text-gold">💰 {% translate "We top up your in-game insurance" %}</span>
     {% else %}
-      <span class="chip !border-gold/40 !text-gold">💰 We pay ISK for the loss</span>
+      <span class="chip !border-gold/40 !text-gold">💰 {% translate "We pay ISK for the loss" %}</span>
     {% endif %}
-    <span class="text-[11px] text-faint">Valuation: {{ program.get_valuation_display|lower }}{% if program.default_cap %} · cap {{ program.default_cap|isk }}{% endif %}</span>
+    <span class="text-[11px] text-faint">{% translate "Valuation:" %} {{ program.get_valuation_display|lower }}{% if program.default_cap %} · {% translate "cap" %} {{ program.default_cap|isk }}{% endif %}</span>
   </div>
   <p class="mt-2 text-sm text-muted">{{ program.intro_text }}</p>
   {% if program.enabled %}
     <ol class="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-xs text-faint">
-      <li><span class="text-gold">1.</span> Find your eligible loss below</li>
-      <li><span class="text-gold">2.</span> Click <span class="text-cyan">Claim</span></li>
-      <li><span class="text-gold">3.</span> An officer reviews it</li>
-      <li><span class="text-gold">4.</span> You get {% if program.payout_mode == 'replacement' %}a replacement ship{% else %}paid{% endif %}</li>
+      <li><span class="text-gold">1.</span> {% translate "Find your eligible loss below" %}</li>
+      <li><span class="text-gold">2.</span> {% blocktranslate %}Click <span class="text-cyan">Claim</span>{% endblocktranslate %}</li>
+      <li><span class="text-gold">3.</span> {% translate "An officer reviews it" %}</li>
+      <li><span class="text-gold">4.</span> {% translate "You get" %} {% if program.payout_mode == 'replacement' %}{% translate "a replacement ship" %}{% else %}{% translate "paid" %}{% endif %}</li>
     </ol>
   {% endif %}
 </section>
@@ -40,18 +40,18 @@
 <!-- Coaching: the pilot's own doctrine losses that were missing fit modules (KB-14) -->
 {% if my_deviations %}
 <section class="panel mb-5 p-5">
-  <h2 class="eyebrow text-loss">Learn from your losses</h2>
-  <p class="mt-1 text-xs text-faint">Doctrine ships you lost while missing fit modules — only you and officers see this. Fix these and you’ll survive longer.</p>
+  <h2 class="eyebrow text-loss">{% translate "Learn from your losses" %}</h2>
+  <p class="mt-1 text-xs text-faint">{% translate "Doctrine ships you lost while missing fit modules — only you and officers see this. Fix these and you’ll survive longer." %}</p>
   <div class="mt-3 space-y-3">
     {% for d in my_deviations %}
     <div class="rounded-lg border border-line/60 bg-panel2/40 p-3">
       <div class="flex items-center gap-2.5">
         <img src="{% eve_type_icon d.killmail.victim_ship_type_id 32 %}" alt="" loading="lazy" class="h-7 w-7 rounded-sm">
         <a href="{% url 'killboard:detail' d.killmail.killmail_id %}" class="min-w-0 flex-1 truncate text-sm text-ink hover:text-gold">{% type_name d.killmail.victim_ship_type_id %}</a>
-        <span class="text-[11px] text-faint">{{ d.doctrine_fit.name }} · {{ d.killmail.killmail_time|timesince }} ago</span>
+        <span class="text-[11px] text-faint">{{ d.doctrine_fit.name }} · {% blocktranslate with ago=d.killmail.killmail_time|timesince %}{{ ago }} ago{% endblocktranslate %}</span>
       </div>
       <div class="mt-2 flex flex-wrap items-center gap-1.5">
-        <span class="text-[11px] text-loss">Missing:</span>
+        <span class="text-[11px] text-loss">{% translate "Missing:" %}</span>
         {% for m in d.missing %}<span class="chip !text-loss">{% type_name m.type_id %}{% if m.quantity > 1 %} ×{{ m.quantity }}{% endif %}</span>{% endfor %}
       </div>
     </div>
@@ -63,7 +63,7 @@
 <div class="grid gap-5 lg:grid-cols-2">
   <!-- Eligible losses -->
   <section class="panel overflow-hidden">
-    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Eligible to claim</h2></div>
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "Eligible to claim" %}</h2></div>
     <div class="divide-y divide-line/40">
       {% for e in eligible %}
         <div class="px-4 py-3">
@@ -71,29 +71,29 @@
             <img src="{% eve_type_icon e.killmail.victim_ship_type_id 32 %}" alt="" loading="lazy" class="h-8 w-8 rounded-sm">
             <div class="min-w-0 flex-1">
               <a href="{% url 'killboard:detail' e.killmail.killmail_id %}" class="truncate text-sm text-ink hover:text-gold">{% type_name e.killmail.victim_ship_type_id %}</a>
-              <p class="text-xs text-faint">{% if e.doctrine %}{{ e.doctrine.name }}{% else %}Non-doctrine{% endif %} · {{ e.killmail.killmail_time|timesince }} ago</p>
+              <p class="text-xs text-faint">{% if e.doctrine %}{{ e.doctrine.name }}{% else %}{% translate "Non-doctrine" %}{% endif %} · {% blocktranslate with ago=e.killmail.killmail_time|timesince %}{{ ago }} ago{% endblocktranslate %}</p>
             </div>
             <div class="text-right">
               {% if e.payout_mode == 'replacement' %}
-                <p class="data text-xs text-cyan">Replacement</p>
+                <p class="data text-xs text-cyan">{% translate "Replacement" %}</p>
                 <p class="text-[11px] text-faint">≈ {{ e.loss_value|isk }}</p>
               {% else %}
                 <p class="data text-sm text-cyan">{{ e.payout|isk }}</p>
-                {% if e.payout_mode == 'isk_topup' %}<p class="text-[11px] text-faint">{{ e.loss_value|isk }} − {{ e.insurance_estimate|isk }} ins.</p>{% endif %}
+                {% if e.payout_mode == 'isk_topup' %}<p class="text-[11px] text-faint">{{ e.loss_value|isk }} − {{ e.insurance_estimate|isk }} {% translate "ins." %}</p>{% endif %}
               {% endif %}
             </div>
           </div>
-          <form method="post" action="{% url 'srp:claim' %}" class="mt-2 text-right">{% csrf_token %}<input type="hidden" name="killmail_id" value="{{ e.killmail.killmail_id }}"><button class="btn-cyan !py-1 !text-xs">Claim this loss</button></form>
+          <form method="post" action="{% url 'srp:claim' %}" class="mt-2 text-right">{% csrf_token %}<input type="hidden" name="killmail_id" value="{{ e.killmail.killmail_id }}"><button class="btn-cyan !py-1 !text-xs">{% translate "Claim this loss" %}</button></form>
         </div>
       {% empty %}
-        <p class="px-4 py-6 text-center text-sm text-faint">{% if program.enabled %}No eligible losses — fly safe.{% else %}SRP is paused by leadership right now.{% endif %}</p>
+        <p class="px-4 py-6 text-center text-sm text-faint">{% if program.enabled %}{% translate "No eligible losses — fly safe." %}{% else %}{% translate "SRP is paused by leadership right now." %}{% endif %}</p>
       {% endfor %}
     </div>
   </section>
 
   <!-- My claims -->
   <section class="panel overflow-hidden">
-    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">My claims</h2></div>
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">{% translate "My claims" %}</h2></div>
     <div class="divide-y divide-line/40">
       {% for c in claims %}
         <div class="px-4 py-2.5">
@@ -104,10 +104,10 @@
             <span class="chip {% if c.status == 'approved' or c.status == 'paid' %}!border-kill/40 !text-kill{% elif c.status == 'denied' %}!border-loss/40 !text-loss{% else %}!text-gold{% endif %}">{{ c.get_status_display }}</span>
           </div>
           {% if c.reason %}<p class="mt-1 text-xs text-faint">— {{ c.reason }}</p>{% endif %}
-          {% if c.status == 'paid' and c.payment_reference %}<p class="mt-1 text-xs text-kill/80">Settled: {{ c.payment_reference }}</p>{% endif %}
+          {% if c.status == 'paid' and c.payment_reference %}<p class="mt-1 text-xs text-kill/80">{% translate "Settled:" %} {{ c.payment_reference }}</p>{% endif %}
         </div>
       {% empty %}
-        <p class="px-4 py-6 text-center text-sm text-faint">No claims yet.</p>
+        <p class="px-4 py-6 text-center text-sm text-faint">{% translate "No claims yet." %}</p>
       {% endfor %}
     </div>
   </section>

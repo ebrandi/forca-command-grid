@@ -1,61 +1,63 @@
 {% extends "base.html" %}
 {% load eve %}
-{% block title %}Freight Rates · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Freight Rates" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 
 <header class="mb-6 flex flex-wrap items-end justify-between gap-4">
   <div>
-    <p class="eyebrow">{{ home_corp_name }} · Freight</p>
-    <h1 class="mt-1 text-3xl font-bold text-ink">Freight rate calculator</h1>
-    <p class="mt-1 max-w-2xl text-sm text-faint">Fast, insured hauling across New Eden at competitive rates. Get an instant quote, then book it.</p>
+    <p class="eyebrow">{{ home_corp_name }} · {% translate "Freight" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Freight rate calculator" %}</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Fast, insured hauling across New Eden at competitive rates. Get an instant quote, then book it." %}</p>
   </div>
-  {% if can_post %}<a href="{% url 'logistics:contracts' %}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-truck"/></svg> Freight board{% if outstanding_count %} · {{ outstanding_count }}{% endif %}</a>{% endif %}
+  {% if can_post %}<a href="{% url 'logistics:contracts' %}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-truck"/></svg> {% translate "Freight board" %}{% if outstanding_count %} · {{ outstanding_count }}{% endif %}</a>{% endif %}
 </header>
 
 <div class="grid gap-5 lg:grid-cols-[1fr_1fr]">
   <!-- Quote form -->
   <section class="panel p-5">
-    <h2 class="eyebrow mb-3 text-gold">Get a quote</h2>
+    <h2 class="eyebrow mb-3 text-gold">{% translate "Get a quote" %}</h2>
     <form method="post" action="{% url 'logistics:calculator' %}" class="space-y-3">
       {% csrf_token %}
       <div>
-        <label class="label">Ship class</label>
+        <label class="label">{% translate "Ship class" %}</label>
         {{ form.ship_class }}
         <p class="mt-1 text-[11px] text-faint">Blockade Runner/DST ≤ 62,500 m³ · Freighter ≤ 950,000 m³ · Jump Freighter ≤ 360,000 m³</p>
       </div>
       <div class="grid gap-3 sm:grid-cols-2">
-        <div><label class="label">From (pickup)</label>{% include "components/_location_picker.html" with prefix="origin" %}</div>
-        <div><label class="label">To (drop-off)</label>{% include "components/_location_picker.html" with prefix="dest" %}</div>
+        <div><label class="label">{% translate "From (pickup)" %}</label>{% include "components/_location_picker.html" with prefix="origin" %}</div>
+        <div><label class="label">{% translate "To (drop-off)" %}</label>{% include "components/_location_picker.html" with prefix="dest" %}</div>
       </div>
       {% if can_post and not can_search_structures %}
-      <p class="text-[11px] text-faint">Shipping to or from a player structure? <a class="text-cyan hover:underline" href="{% url 'sso:login' %}?feature=freight_search">Enable structure search</a> to find it by name — otherwise use “enter manually”.</p>
+      {% url 'sso:login' as sso_login_url %}
+      <p class="text-[11px] text-faint">{% blocktranslate %}Shipping to or from a player structure? <a class="text-cyan hover:underline" href="{{ sso_login_url }}?feature=freight_search">Enable structure search</a> to find it by name — otherwise use “enter manually”.{% endblocktranslate %}</p>
       {% endif %}
-      <p class="text-[11px] text-faint">Pick a station/structure for the exact dock, or a system for a system-level job. Pricing uses the route between systems.</p>
+      <p class="text-[11px] text-faint">{% translate "Pick a station/structure for the exact dock, or a system for a system-level job. Pricing uses the route between systems." %}</p>
       <div class="grid gap-3 sm:grid-cols-3">
-        <div><label class="label">Volume (m³)</label>{{ form.volume_m3 }}</div>
-        <div><label class="label">Collateral (ISK)</label>{{ form.collateral }}</div>
-        <div><label class="label">Jumps <span class="text-faint">(optional)</span></label>{{ form.jumps }}</div>
+        <div><label class="label">{% translate "Volume (m³)" %}</label>{{ form.volume_m3 }}</div>
+        <div><label class="label">{% translate "Collateral (ISK)" %}</label>{{ form.collateral }}</div>
+        <div><label class="label">{% translate "Jumps" %} <span class="text-faint">{% translate "(optional)" %}</span></label>{{ form.jumps }}</div>
       </div>
-      <label class="flex items-center gap-2 text-sm text-muted">{{ form.rush }} Rush delivery (priority, surcharge applies)</label>
+      <label class="flex items-center gap-2 text-sm text-muted">{{ form.rush }} {% translate "Rush delivery (priority, surcharge applies)" %}</label>
       {% if form.non_field_errors %}<p class="text-xs text-loss">{{ form.non_field_errors|striptags }}</p>{% endif %}
-      <button class="btn-gold w-full">Calculate price</button>
+      <button class="btn-gold w-full">{% translate "Calculate price" %}</button>
     </form>
   </section>
 
   <!-- Quote result -->
   <section class="panel p-5">
-    <h2 class="eyebrow mb-3 text-gold">Your quote</h2>
+    <h2 class="eyebrow mb-3 text-gold">{% translate "Your quote" %}</h2>
     {% if error %}
       <div class="rounded-lg border border-loss/40 bg-loss/5 px-4 py-3 text-sm text-loss">{{ error }}</div>
     {% elif quote and quote.ok %}
       <div class="rounded-xl border border-gold/30 bg-gold/5 p-4 text-center">
-        <p class="eyebrow text-faint">Reward</p>
+        <p class="eyebrow text-faint">{% translate "Reward" %}</p>
         <p class="data mt-1 text-4xl font-bold text-gold">{{ quote.reward|isk }}<span class="text-lg"> ISK</span></p>
         <p class="mt-1 text-xs text-faint">
           {% if route.jdc %}
-            {{ route.jumps }} cyno jump{{ route.jumps|pluralize }}{% if route.ly %} · ≈{{ route.ly }} ly{% endif %} · JDC {{ route.jdc }} range ({{ route.range_ly }} ly){% if not route.resolved %} · manual estimate{% endif %}
+            {% blocktranslate count jumps=route.jumps %}{{ jumps }} cyno jump{% plural %}{{ jumps }} cyno jumps{% endblocktranslate %}{% if route.ly %} · ≈{{ route.ly }} ly{% endif %} · {% blocktranslate with jdc=route.jdc range_ly=route.range_ly %}JDC {{ jdc }} range ({{ range_ly }} ly){% endblocktranslate %}{% if not route.resolved %} · {% translate "manual estimate" %}{% endif %}
           {% else %}
-            {{ route.jumps }} jump{{ route.jumps|pluralize }}{% if route.resolved %} via {{ route.sec_band }}{% endif %}
+            {% blocktranslate count jumps=route.jumps %}{{ jumps }} jump{% plural %}{{ jumps }} jumps{% endblocktranslate %}{% if route.resolved %} {% blocktranslate with sec_band=route.sec_band %}via {{ sec_band }}{% endblocktranslate %}{% endif %}
           {% endif %}
         </p>
       </div>
@@ -67,7 +69,7 @@
         </div>
         {% endfor %}
         <div class="flex items-center justify-between pt-1 text-gold font-semibold">
-          <dt>Total reward</dt><dd class="data">{{ quote.reward|isk }}</dd>
+          <dt>{% translate "Total reward" %}</dt><dd class="data">{{ quote.reward|isk }}</dd>
         </div>
       </dl>
 
@@ -88,25 +90,25 @@
         <input type="hidden" name="dest_id" value="{{ route.dest.id|default_if_none:'' }}">
         <input type="hidden" name="dest_system_id" value="{{ route.dest.system_id }}">
         <div class="rounded-lg border border-cyan/25 bg-cyan/5 px-3 py-2 text-[11px] leading-relaxed text-muted">
-          After posting, create the courier contract <span class="text-ink">in EVE to {{ home_corp_name }}</span> for
-          <span class="text-ink">{{ route.origin.name }} → {{ route.dest.name }}</span>. A {{ home_corp_name }} hauler accepts and flies it.
+          {% blocktranslate with corp=home_corp_name origin=route.origin.name dest=route.dest.name %}After posting, create the courier contract <span class="text-ink">in EVE to {{ corp }}</span> for
+          <span class="text-ink">{{ origin }} → {{ dest }}</span>. A {{ corp }} hauler accepts and flies it.{% endblocktranslate %}
         </div>
-        <p class="eyebrow text-faint">Who issues the EVE contract?</p>
+        <p class="eyebrow text-faint">{% translate "Who issues the EVE contract?" %}</p>
         <div class="flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted">
-          <label class="flex items-center gap-2"><input type="radio" name="post_as" value="character" checked class="accent-gold"> {{ post_as_self.name }} <span class="text-faint">(my pilot)</span></label>
-          {% if post_as_corp.id %}<label class="flex items-center gap-2"><input type="radio" name="post_as" value="corporation" class="accent-gold"> {{ post_as_corp.name }} <span class="text-faint">(my corp)</span></label>{% endif %}
+          <label class="flex items-center gap-2"><input type="radio" name="post_as" value="character" checked class="accent-gold"> {{ post_as_self.name }} <span class="text-faint">{% translate "(my pilot)" %}</span></label>
+          {% if post_as_corp.id %}<label class="flex items-center gap-2"><input type="radio" name="post_as" value="corporation" class="accent-gold"> {{ post_as_corp.name }} <span class="text-faint">{% translate "(my corp)" %}</span></label>{% endif %}
         </div>
-        <p class="text-[11px] text-faint">Pick whoever will create the EVE contract — the hauler finds it by this issuer and the route above.</p>
-        <button class="btn-gold w-full">Post to freight board →</button>
+        <p class="text-[11px] text-faint">{% translate "Pick whoever will create the EVE contract — the hauler finds it by this issuer and the route above." %}</p>
+        <button class="btn-gold w-full">{% translate "Post to freight board" %} →</button>
       </form>
       {% else %}
-      <p class="mt-4 border-t border-line/60 pt-4 text-xs text-faint">Want this hauled? Make a courier contract in EVE to <span class="text-muted">{{ home_corp_name }}</span> for this route — a hauler will take it.</p>
+      <p class="mt-4 border-t border-line/60 pt-4 text-xs text-faint">{% blocktranslate with corp=home_corp_name %}Want this hauled? Make a courier contract in EVE to <span class="text-muted">{{ corp }}</span> for this route — a hauler will take it.{% endblocktranslate %}</p>
       {% endif %}
     {% else %}
       <div class="flex h-full min-h-48 flex-col items-center justify-center text-center text-sm text-faint">
         <svg class="mb-2 h-8 w-8 text-line"><use href="#i-truck"/></svg>
-        <p>Enter a route and cargo to see your price.</p>
-        <p class="mt-1 text-[11px]">Insured hauling at competitive rates.</p>
+        <p>{% translate "Enter a route and cargo to see your price." %}</p>
+        <p class="mt-1 text-[11px]">{% translate "Insured hauling at competitive rates." %}</p>
       </div>
     {% endif %}
   </section>
@@ -115,7 +117,7 @@
 <!-- Service terms -->
 <section class="panel mt-5 grid gap-4 p-5 sm:grid-cols-3 text-sm">
   <div>
-    <p class="eyebrow text-gold">Volume limits</p>
+    <p class="eyebrow text-gold">{% translate "Volume limits" %}</p>
     <ul class="mt-1.5 space-y-0.5 text-faint">
       <li>Blockade Runner / DST · 62,500 m³</li>
       <li>Freighter · 950,000 m³</li>
@@ -123,7 +125,7 @@
     </ul>
   </div>
   <div>
-    <p class="eyebrow text-gold">Max collateral</p>
+    <p class="eyebrow text-gold">{% translate "Max collateral" %}</p>
     <ul class="mt-1.5 space-y-0.5 text-faint">
       <li>DST · {{ card.dst_max_collateral|isk }}</li>
       <li>Freighter · {{ card.freighter_max_collateral|isk }}</li>
@@ -131,12 +133,12 @@
     </ul>
   </div>
   <div>
-    <p class="eyebrow text-gold">How it works</p>
+    <p class="eyebrow text-gold">{% translate "How it works" %}</p>
     <ol class="mt-1.5 space-y-0.5 text-faint">
-      <li>1 · Quote your route and post the job here.</li>
-      <li>2 · In EVE, make a courier contract to {{ home_corp_name }}.</li>
-      <li>3 · A {{ home_corp_name }} hauler claims it and accepts your contract in-game.</li>
-      <li>4 · {{ card.contract_days }} days to deliver · full collateral cover.</li>
+      <li>1 · {% translate "Quote your route and post the job here." %}</li>
+      <li>2 · {% blocktranslate with corp=home_corp_name %}In EVE, make a courier contract to {{ corp }}.{% endblocktranslate %}</li>
+      <li>3 · {% blocktranslate with corp=home_corp_name %}A {{ corp }} hauler claims it and accepts your contract in-game.{% endblocktranslate %}</li>
+      <li>4 · {% blocktranslate with days=card.contract_days %}{{ days }} days to deliver · full collateral cover.{% endblocktranslate %}</li>
     </ol>
   </div>
 </section>

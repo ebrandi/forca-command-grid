@@ -1,14 +1,15 @@
 {% load eve %}
+{% load i18n %}
 {# Didactic intro: the tiers and the planets. Shared by the landing and /learn/. #}
 <section class="panel p-5">
-  <p class="eyebrow text-gold">What is Planetary Industry?</p>
-  <h2 class="mt-1 text-lg font-semibold text-ink">Passive ISK from the ground up</h2>
+  <p class="eyebrow text-gold">{% translate "What is Planetary Industry?" %}</p>
+  <h2 class="mt-1 text-lg font-semibold text-ink">{% translate "Passive ISK from the ground up" %}</h2>
   <p class="mt-2 max-w-3xl text-sm text-faint">
-    You deploy colonies on planets. <span class="text-ink">Extractor</span> planets pull
+    {% blocktranslate %}You deploy colonies on planets. <span class="text-ink">Extractor</span> planets pull
     raw resources and refine them; <span class="text-ink">factory</span> planets combine
     materials into higher-value goods. Reset the extractors on your own schedule, haul the
     output to market, and it earns while you're doing other things. Taxes, hauling and
-    market prices decide whether it's worth it — this planner does that maths for you.
+    market prices decide whether it's worth it — this planner does that maths for you.{% endblocktranslate %}
   </p>
 
   {# The P0 → P4 ladder #}
@@ -26,7 +27,7 @@
   </div>
 
   {# The 8 planet types #}
-  <p class="eyebrow mt-6 text-faint">The eight planet types</p>
+  <p class="eyebrow mt-6 text-faint">{% translate "The eight planet types" %}</p>
   <div class="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
     {% for p in planet_types %}
     <a href="{% url 'planetary:explore' %}?planet={{ p.slug }}" class="group rounded-lg border border-line bg-panel2/40 p-3 hover:border-gold/40">

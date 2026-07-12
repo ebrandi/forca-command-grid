@@ -16,6 +16,7 @@ is intentionally best-effort and total over :class:`Activity`; unmapped nuance d
 from __future__ import annotations
 
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from apps.mentorship.models import MentorshipTrack
 
@@ -23,21 +24,21 @@ from apps.mentorship.models import MentorshipTrack
 class Activity(models.TextChoices):
     """Career activities a pilot can prefer, avoid, template or set a goal toward."""
 
-    COMBAT_LINE = "combat_line", "Combat line (DPS)"
-    COMBAT_SUPPORT = "combat_support", "Combat support (logi/ewar)"
-    TACKLE_SCOUT = "tackle_scout", "Tackle & scouting"
-    FLEET_COMMAND = "fleet_command", "Fleet command"
-    BLACK_OPS = "black_ops", "Black ops"
-    CAPITALS = "capitals", "Capitals"
-    MINING = "mining", "Mining"
-    INDUSTRY = "industry", "Industry"
-    PLANETARY = "planetary", "Planetary industry"
-    HAULING = "hauling", "Hauling"
-    EXPLORATION = "exploration", "Exploration"
-    WORMHOLES = "wormholes", "Wormholes"
-    TRADE = "trade", "Trade"
-    MENTORING = "mentoring", "Mentoring"
-    CORP_SERVICE = "corp_service", "Corp service"
+    COMBAT_LINE = "combat_line", _("Combat line (DPS)")
+    COMBAT_SUPPORT = "combat_support", _("Combat support (logi/ewar)")
+    TACKLE_SCOUT = "tackle_scout", _("Tackle & scouting")
+    FLEET_COMMAND = "fleet_command", _("Fleet command")
+    BLACK_OPS = "black_ops", _("Black ops")
+    CAPITALS = "capitals", _("Capitals")
+    MINING = "mining", _("Mining")
+    INDUSTRY = "industry", _("Industry")
+    PLANETARY = "planetary", _("Planetary industry")
+    HAULING = "hauling", _("Hauling")
+    EXPLORATION = "exploration", _("Exploration")
+    WORMHOLES = "wormholes", _("Wormholes")
+    TRADE = "trade", _("Trade")
+    MENTORING = "mentoring", _("Mentoring")
+    CORP_SERVICE = "corp_service", _("Corp service")
 
 
 # Every taxonomy value, for membership checks in form/service validation.

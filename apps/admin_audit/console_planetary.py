@@ -10,6 +10,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
+from django.utils.translation import gettext_lazy as _
 
 from apps.planetary import services
 from apps.planetary.forms import PlanetaryConfigForm
@@ -61,9 +62,9 @@ def planetary_config(request: HttpRequest) -> HttpResponse:
             form.save()
             _audit(request, "planetary.config_update", target_type="planetary_config",
                    target_id=str(config.pk))
-            messages.success(request, "Planetary Industry settings saved.")
+            messages.success(request, _("Planetary Industry settings saved."))
             return redirect("admin_audit:planetary_config")
-        messages.error(request, "Please correct the errors below.")
+        messages.error(request, _("Please correct the errors below."))
     else:
         form = PlanetaryConfigForm(instance=config)
     return render(request, "admin_audit/console/planetary/config.html",

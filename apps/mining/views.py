@@ -10,6 +10,8 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.dateparse import parse_date
+from django.utils.translation import gettext as _
+from django.utils.translation import ngettext
 from django.views.decorators.http import require_POST
 
 from core import rbac
@@ -101,11 +103,14 @@ def sync_ledger(request: HttpRequest) -> HttpResponse:
     audit_log(request.user, "mining.ledger_sync", target_type="corp", target_id="mining",
               metadata={"status": result["status"]}, ip=client_ip(request))
     if result["status"] == "ok":
-        messages.success(request, f"Ledger synced — {result['entries']} entries.")
+        messages.success(
+            request,
+            _("Ledger synced — %(count)s entries.") % {"count": result["entries"]},
+        )
     elif result["status"] == "no_token":
-        messages.warning(request, "No character has granted the corp-mining scope yet.")
+        messages.warning(request, _("No character has granted the corp-mining scope yet."))
     else:
-        messages.error(request, "Ledger sync failed; try again later.")
+        messages.error(request, _("Ledger sync failed; try again later."))
     return redirect("mining:ledger")
 
 
@@ -116,7 +121,7 @@ def set_tax(request: HttpRequest) -> HttpResponse:
     try:
         pct = Decimal(request.POST.get("rate_pct") or "0")
     except (InvalidOperation, TypeError):
-        messages.error(request, "Invalid tax rate.")
+        messages.error(request, _("Invalid tax rate."))
         return redirect("mining:ledger")
     rate = max(Decimal("0"), min(pct / 100, Decimal("1")))
     MiningTaxConfig.objects.update(is_active=False)
@@ -124,7 +129,7 @@ def set_tax(request: HttpRequest) -> HttpResponse:
     from core.audit import audit_log, client_ip
     audit_log(request.user, "mining.set_tax", target_type="mining_tax_config",
               target_id="active", metadata={"rate": str(rate)}, ip=client_ip(request))
-    messages.success(request, f"Mining tax set to {rate:.2%}.")
+    messages.success(request, _("Mining tax set to %(rate)s.") % {"rate": f"{rate:.2%}"})
     return redirect("mining:ledger")
 
 
@@ -146,11 +151,11 @@ def payout_create(request: HttpRequest) -> HttpResponse:
     start = parse_date(request.POST.get("period_start") or "")
     end = parse_date(request.POST.get("period_end") or "")
     if not name or start is None or end is None or start > end:
-        messages.error(request, "A payout needs a name and a valid date range.")
+        messages.error(request, _("A payout needs a name and a valid date range."))
         return redirect("mining:payouts")
     pool = _clean_pool(request.POST.get("pool_isk"), Decimal("0"))
     if pool is None:
-        messages.error(request, "Pool ISK must be a number between 0 and 1e18.")
+        messages.error(request, _("Pool ISK must be a number between 0 and 1e18."))
         return redirect("mining:payouts")
     method = request.POST.get("method")
     if method not in MiningPayout.Method.values:
@@ -165,7 +170,11 @@ def payout_create(request: HttpRequest) -> HttpResponse:
               target_id=str(payout.pk),
               metadata={"pool_isk": str(pool), "method": method, "participants": n},
               ip=client_ip(request))
-    messages.success(request, f"Payout created with {n} participant{'' if n == 1 else 's'}.")
+    messages.success(request, ngettext(
+        "Payout created with %(n)s participant.",
+        "Payout created with %(n)s participants.",
+        n,
+    ) % {"n": n})
     return redirect("mining:payout", pk=payout.pk)
 
 
@@ -189,11 +198,11 @@ def payout_detail(request: HttpRequest, pk: int) -> HttpResponse:
 def payout_recompute(request: HttpRequest, pk: int) -> HttpResponse:
     payout = get_object_or_404(MiningPayout, pk=pk)
     if payout.status == MiningPayout.Status.FINAL:
-        messages.error(request, "A finalised payout can't be recomputed.")
+        messages.error(request, _("A finalised payout can't be recomputed."))
         return redirect("mining:payout", pk=pk)
     pool = _clean_pool(request.POST.get("pool_isk"), payout.pool_isk)
     if pool is None:
-        messages.error(request, "Pool ISK must be a number between 0 and 1e18.")
+        messages.error(request, _("Pool ISK must be a number between 0 and 1e18."))
         return redirect("mining:payout", pk=pk)
     payout.pool_isk = pool
     payout.tax_rate = services.active_tax_rate()
@@ -202,7 +211,7 @@ def payout_recompute(request: HttpRequest, pk: int) -> HttpResponse:
     from core.audit import audit_log, client_ip
     audit_log(request.user, "mining.payout_recompute", target_type="mining_payout",
               target_id=str(pk), metadata={"pool_isk": str(pool)}, ip=client_ip(request))
-    messages.success(request, "Payout recomputed.")
+    messages.success(request, _("Payout recomputed."))
     return redirect("mining:payout", pk=pk)
 
 
@@ -226,7 +235,7 @@ def line_paid(request: HttpRequest, pk: int, line_id: int) -> HttpResponse:
         # who was paid, so they can't be flipped after the fact (mirrors the
         # recompute guard). Pay lines first, then finalise to lock.
         if line.payout.status == MiningPayout.Status.FINAL:
-            messages.error(request, "A finalised payout is locked; paid status can't be changed.")
+            messages.error(request, _("A finalised payout is locked; paid status can't be changed."))
             return redirect("mining:payout", pk=pk)
         line.paid = not line.paid
         line.save(update_fields=["paid"])
@@ -268,5 +277,5 @@ def payout_finalise(request: HttpRequest, pk: int) -> HttpResponse:
     audit_log(request.user, "mining.payout_finalise", target_type="mining_payout",
               target_id=str(pk), metadata={"pool_isk": str(payout.pool_isk)},
               ip=client_ip(request))
-    messages.success(request, "Payout finalised.")
+    messages.success(request, _("Payout finalised."))
     return redirect("mining:payout", pk=pk)

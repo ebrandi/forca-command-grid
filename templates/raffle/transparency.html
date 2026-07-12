@@ -1,14 +1,15 @@
 {% extends "base.html" %}
 {% load eve %}
-{% block title %}Draw transparency · {{ contest.name }} · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Draw transparency" %} · {{ contest.name }} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <header class="mb-6 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <p class="eyebrow text-gold">Draw transparency report</p>
+    <p class="eyebrow text-gold">{% translate "Draw transparency report" %}</p>
     <h1 class="mt-1 text-2xl font-bold text-ink">{{ contest.name }}</h1>
-    <p class="mt-1 text-sm text-faint">Drawn {{ draw.completed_at|date:"M j, Y H:i" }} UTC · algorithm v{{ draw.algorithm_version }}{% if draw.code_version %} · build {{ draw.code_version }}{% endif %}</p>
+    <p class="mt-1 text-sm text-faint">{% blocktranslate with when=draw.completed_at|date:"M j, Y H:i" version=draw.algorithm_version %}Drawn {{ when }} UTC · algorithm v{{ version }}{% endblocktranslate %}{% if draw.code_version %} · {% blocktranslate with build=draw.code_version %}build {{ build }}{% endblocktranslate %}{% endif %}</p>
   </div>
-  <a href="{% url 'raffle:detail' contest.slug %}" class="btn-ghost text-sm">← Back to contest</a>
+  <a href="{% url 'raffle:detail' contest.slug %}" class="btn-ghost text-sm">← {% translate "Back to contest" %}</a>
 </header>
 
 {# Verification banner #}
@@ -16,15 +17,15 @@
   <div class="flex items-center gap-3">
     <svg class="h-6 w-6 {% if verification.commitment_ok %}text-kill{% else %}text-loss{% endif %}"><use href="#i-shield"/></svg>
     <div>
-      <h2 class="font-display text-lg text-ink">{% if verification.commitment_ok and verification.winners_match %}Draw verified ✓{% else %}Verification failed{% endif %}</h2>
-      <p class="text-sm text-faint">Seed commitment {% if verification.commitment_ok %}matches{% else %}does NOT match{% endif %} · {{ verification.checked_draws }} random values recomputed {% if verification.winners_match %}and match the winners{% else %}— mismatch{% endif %}.</p>
+      <h2 class="font-display text-lg text-ink">{% if verification.commitment_ok and verification.winners_match %}{% translate "Draw verified" %} ✓{% else %}{% translate "Verification failed" %}{% endif %}</h2>
+      <p class="text-sm text-faint">{% translate "Seed commitment" %} {% if verification.commitment_ok %}{% translate "matches" %}{% else %}{% translate "does NOT match" %}{% endif %} · {{ verification.checked_draws }} {% translate "random values recomputed" %} {% if verification.winners_match %}{% translate "and match the winners" %}{% else %}{% translate "— mismatch" %}{% endif %}.</p>
     </div>
   </div>
 </section>
 
 {# Winners #}
 <section class="panel mb-6 overflow-hidden">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">🏆 Winners</h2></div>
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">🏆 {% translate "Winners" %}</h2></div>
   <div class="divide-y divide-line/40">
     {% for w in winners %}
     <div class="flex items-center gap-3 px-4 py-2.5">
@@ -32,55 +33,55 @@
       {% if w.winner_character_id %}<img src="{% eve_portrait w.winner_character_id 32 %}" alt="" class="h-6 w-6 rounded-full ring-1 ring-line">{% endif %}
       <span class="min-w-0 flex-1 truncate text-ink">{{ w.winner_character_name }}</span>
       <span class="text-sm text-gold">{{ w.prize.name }}</span>
-      <span class="data text-xs text-faint">ticket #{{ w.winning_ticket_index }}</span>
+      <span class="data text-xs text-faint">{% translate "ticket" %} #{{ w.winning_ticket_index }}</span>
     </div>
-    {% empty %}<p class="px-4 py-8 text-center text-sm text-faint">No eligible tickets were in the pool.</p>
+    {% empty %}<p class="px-4 py-8 text-center text-sm text-faint">{% translate "No eligible tickets were in the pool." %}</p>
     {% endfor %}
   </div>
 </section>
 
 {# Census #}
 <section class="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-  <div class="panel p-4"><p class="eyebrow text-faint">Eligible tickets</p><p class="data mt-1 text-2xl font-bold text-gold">{{ draw.total_eligible_tickets }}</p></div>
-  <div class="panel p-4"><p class="eyebrow text-faint">Eligible pilots</p><p class="data mt-1 text-2xl font-bold text-ink">{{ draw.eligible_pilots }}</p></div>
-  <div class="panel p-4"><p class="eyebrow text-faint">Excluded tickets</p><p class="data mt-1 text-2xl font-bold text-muted">{{ draw.total_excluded_tickets }}</p></div>
-  <div class="panel p-4"><p class="eyebrow text-faint">Excluded pilots</p><p class="data mt-1 text-2xl font-bold text-muted">{{ draw.excluded_pilots }}</p></div>
+  <div class="panel p-4"><p class="eyebrow text-faint">{% translate "Eligible tickets" %}</p><p class="data mt-1 text-2xl font-bold text-gold">{{ draw.total_eligible_tickets }}</p></div>
+  <div class="panel p-4"><p class="eyebrow text-faint">{% translate "Eligible pilots" %}</p><p class="data mt-1 text-2xl font-bold text-ink">{{ draw.eligible_pilots }}</p></div>
+  <div class="panel p-4"><p class="eyebrow text-faint">{% translate "Excluded tickets" %}</p><p class="data mt-1 text-2xl font-bold text-muted">{{ draw.total_excluded_tickets }}</p></div>
+  <div class="panel p-4"><p class="eyebrow text-faint">{% translate "Excluded pilots" %}</p><p class="data mt-1 text-2xl font-bold text-muted">{{ draw.excluded_pilots }}</p></div>
 </section>
 
 {% if manifest.exclusion_summary %}
 <section class="panel mb-6 p-5">
-  <h2 class="eyebrow mb-2 text-gold">Why tickets were excluded</h2>
+  <h2 class="eyebrow mb-2 text-gold">{% translate "Why tickets were excluded" %}</h2>
   <div class="flex flex-wrap gap-2">
-    {% for reason, n in manifest.exclusion_summary.items %}<span class="chip">{{ reason }}: {{ n }} pilot(s)</span>{% endfor %}
+    {% for reason, n in manifest.exclusion_summary.items %}<span class="chip">{{ reason }}: {{ n }} {% translate "pilot(s)" %}</span>{% endfor %}
   </div>
-  <p class="mt-2 text-xs text-faint">Excluded pilots weren't enrolled, lacked a valid ESI token, weren't recognised corp pilots, or were manually excluded at draw time.</p>
+  <p class="mt-2 text-xs text-faint">{% translate "Excluded pilots weren't enrolled, lacked a valid ESI token, weren't recognised corp pilots, or were manually excluded at draw time." %}</p>
 </section>
 {% endif %}
 
 {# The commit-reveal proof #}
 <section class="panel mb-6 p-5">
-  <h2 class="eyebrow mb-3 text-gold">Verifiable fairness</h2>
+  <h2 class="eyebrow mb-3 text-gold">{% translate "Verifiable fairness" %}</h2>
   <dl class="space-y-2 text-sm">
-    <div class="flex gap-2"><dt class="w-40 shrink-0 text-faint">Seed commitment</dt><dd class="data break-all text-xs text-muted">{{ draw.seed_commitment }}</dd></div>
-    <div class="flex gap-2"><dt class="w-40 shrink-0 text-faint">Revealed seed</dt><dd class="data break-all text-xs text-ink">{{ draw.seed }}</dd></div>
-    {% if draw.external_entropy %}<div class="flex gap-2"><dt class="w-40 shrink-0 text-faint">External entropy</dt><dd class="data break-all text-xs text-muted">{{ draw.external_entropy }}</dd></div>{% endif %}
-    {% if draw.skipped_draws %}<div class="flex gap-2"><dt class="w-40 shrink-0 text-faint">Skipped draws</dt><dd class="text-xs text-muted">{{ draw.skipped_draws|length }} (a ticket for a pilot who already won, under one-prize-per-pilot)</dd></div>{% endif %}
+    <div class="flex gap-2"><dt class="w-40 shrink-0 text-faint">{% translate "Seed commitment" %}</dt><dd class="data break-all text-xs text-muted">{{ draw.seed_commitment }}</dd></div>
+    <div class="flex gap-2"><dt class="w-40 shrink-0 text-faint">{% translate "Revealed seed" %}</dt><dd class="data break-all text-xs text-ink">{{ draw.seed }}</dd></div>
+    {% if draw.external_entropy %}<div class="flex gap-2"><dt class="w-40 shrink-0 text-faint">{% translate "External entropy" %}</dt><dd class="data break-all text-xs text-muted">{{ draw.external_entropy }}</dd></div>{% endif %}
+    {% if draw.skipped_draws %}<div class="flex gap-2"><dt class="w-40 shrink-0 text-faint">{% translate "Skipped draws" %}</dt><dd class="text-xs text-muted">{{ draw.skipped_draws|length }} {% translate "(a ticket for a pilot who already won, under one-prize-per-pilot)" %}</dd></div>{% endif %}
   </dl>
-  <p class="mt-3 text-xs text-faint">Anyone can verify: hash the revealed seed with SHA-256 and confirm it matches the commitment published before the draw. Then, for each pick, compute <span class="data">sha256(seed:index) mod total_tickets</span> and map it onto the published ticket ranges — the result is exactly the recorded winner.</p>
+  <p class="mt-3 text-xs text-faint">{% blocktranslate %}Anyone can verify: hash the revealed seed with SHA-256 and confirm it matches the commitment published before the draw. Then, for each pick, compute <span class="data">sha256(seed:index) mod total_tickets</span> and map it onto the published ticket ranges — the result is exactly the recorded winner.{% endblocktranslate %}</p>
 </section>
 
 {% if superseded_draws %}
 {# Redraw transparency: the proof above covers only the FINAL draw. If leadership
    redrew, every discarded draw is disclosed here so a "redraw-until-win" is on record. #}
 <section class="panel mb-6 p-5 !border-gold/40">
-  <h2 class="eyebrow mb-2 text-gold">Draw history · {{ superseded_draws|length }} superseded</h2>
-  <p class="mb-3 text-xs text-faint">This contest was drawn more than once. The verified draw above is the one that stands; the earlier draw{{ superseded_draws|length|pluralize }} below {{ superseded_draws|length|pluralize:"was,were" }} discarded by leadership and replaced. Each committed seed is listed so the redraw is fully on the record.</p>
+  <h2 class="eyebrow mb-2 text-gold">{% translate "Draw history" %} · {{ superseded_draws|length }} {% translate "superseded" %}</h2>
+  <p class="mb-3 text-xs text-faint">{% blocktranslate count num=superseded_draws|length %}This contest was drawn more than once. The verified draw above is the one that stands; the earlier draw below was discarded by leadership and replaced. Each committed seed is listed so the redraw is fully on the record.{% plural %}This contest was drawn more than once. The verified draw above is the one that stands; the earlier draws below were discarded by leadership and replaced. Each committed seed is listed so the redraw is fully on the record.{% endblocktranslate %}</p>
   <ul class="space-y-2 text-xs">
     {% for s in superseded_draws %}
     <li class="rounded border border-line/60 p-2">
-      <div class="flex gap-2"><span class="w-36 shrink-0 text-faint">Superseded draw {{ forloop.counter }}</span><span class="text-muted">{{ s.completed_at|date:"Y-m-d H:i" }} UTC</span></div>
-      <div class="flex gap-2"><span class="w-36 shrink-0 text-faint">Seed commitment</span><span class="data break-all text-muted">{{ s.seed_commitment }}</span></div>
-      {% if s.notes %}<div class="flex gap-2"><span class="w-36 shrink-0 text-faint">Reason / note</span><span class="text-muted">{{ s.notes }}</span></div>{% endif %}
+      <div class="flex gap-2"><span class="w-36 shrink-0 text-faint">{% translate "Superseded draw" %} {{ forloop.counter }}</span><span class="text-muted">{{ s.completed_at|date:"Y-m-d H:i" }} UTC</span></div>
+      <div class="flex gap-2"><span class="w-36 shrink-0 text-faint">{% translate "Seed commitment" %}</span><span class="data break-all text-muted">{{ s.seed_commitment }}</span></div>
+      {% if s.notes %}<div class="flex gap-2"><span class="w-36 shrink-0 text-faint">{% translate "Reason / note" %}</span><span class="text-muted">{{ s.notes }}</span></div>{% endif %}
     </li>
     {% endfor %}
   </ul>

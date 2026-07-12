@@ -1,19 +1,20 @@
 {% extends "base.html" %}
-{% block title %}Activity · {{ campaign.name|truncatechars:40 }} · Campaign Command{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Activity" %} · {{ campaign.name|truncatechars:40 }} · {% translate "Campaign Command" %}{% endblock %}
 {% block content %}
-<p class="eyebrow text-faint"><a href="{% url 'campaigns:index' %}" class="hover:text-gold">Campaign Command</a> › <a href="{% url 'campaigns:detail' campaign.pk %}" class="hover:text-gold">{{ campaign.name|truncatechars:40 }}</a> › Activity</p>
-<h1 class="mt-1 mb-4 text-2xl font-bold text-ink">Activity — {{ campaign.name }}</h1>
+<p class="eyebrow text-faint"><a href="{% url 'campaigns:index' %}" class="hover:text-gold">{% translate "Campaign Command" %}</a> › <a href="{% url 'campaigns:detail' campaign.pk %}" class="hover:text-gold">{{ campaign.name|truncatechars:40 }}</a> › {% translate "Activity" %}</p>
+<h1 class="mt-1 mb-4 text-2xl font-bold text-ink">{% blocktranslate with name=campaign.name %}Activity — {{ name }}{% endblocktranslate %}</h1>
 
 <section class="panel p-5">
   <div class="divide-y divide-line/40">
     {% for a in page_obj %}
       <div class="flex flex-wrap items-baseline gap-x-2 py-2 text-sm">
         <span class="data shrink-0 text-xs text-faint">{{ a.created_at|date:"d M Y H:i" }}</span>
-        <span class="shrink-0 text-muted">{% if a.actor %}{{ a.actor.display_name }}{% else %}auto{% endif %}</span>
+        <span class="shrink-0 text-muted">{% if a.actor %}{{ a.actor.display_name }}{% else %}{% translate "auto" %}{% endif %}</span>
         <span class="min-w-0 flex-1 text-faint">{{ a.verb }}{% if a.reason %} — {{ a.reason }}{% endif %}</span>
       </div>
     {% empty %}
-      <p class="py-3 text-sm text-faint">No activity recorded yet.</p>
+      <p class="py-3 text-sm text-faint">{% translate "No activity recorded yet." %}</p>
     {% endfor %}
   </div>
   {% include "campaigns/_pagination.html" %}

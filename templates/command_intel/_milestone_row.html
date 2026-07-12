@@ -1,3 +1,4 @@
+{% load i18n %}
 {% comment %}
 One campaign milestone row (doc 16 §2.6): DAG order, title, status (glyph + word +
 colour — never colour alone), the planned expected value, the responsible owner and a
@@ -11,28 +12,28 @@ Params:
   <span class="data shrink-0 text-xs text-faint" aria-hidden="true">M{{ m.order }}</span>
 
   {% if m.status == 'done' %}
-    <span class="data shrink-0 text-xs text-kill">✓ DONE</span>
+    <span class="data shrink-0 text-xs text-kill">✓ {% translate "DONE" %}</span>
   {% elif m.status == 'in_progress' %}
-    <span class="data shrink-0 text-xs text-cyan">◐ IN PROGRESS</span>
+    <span class="data shrink-0 text-xs text-cyan">◐ {% translate "IN PROGRESS" %}</span>
   {% elif m.status == 'blocked' %}
-    <span class="data shrink-0 text-xs text-loss">▼ BLOCKED</span>
+    <span class="data shrink-0 text-xs text-loss">▼ {% translate "BLOCKED" %}</span>
   {% else %}
-    <span class="data shrink-0 text-xs text-faint">○ PENDING</span>
+    <span class="data shrink-0 text-xs text-faint">○ {% translate "PENDING" %}</span>
   {% endif %}
 
   <span class="min-w-0 flex-1 truncate text-sm text-ink" title="{{ m.title }}">{{ m.title }}</span>
 
   {% if m.expected_value is not None %}
-    <span class="data shrink-0 text-sm text-muted" title="Planned value at this step">exp {{ m.expected_value|floatformat:"-2" }}</span>
+    <span class="data shrink-0 text-sm text-muted" title="{% translate 'Planned value at this step' %}">{% blocktranslate with val=m.expected_value|floatformat:"-2" %}exp {{ val }}{% endblocktranslate %}</span>
   {% endif %}
 
   {% if m.responsible_user %}
-    <span class="hidden shrink-0 text-xs text-faint sm:inline">owner ▸ {{ m.responsible_user.username }}</span>
+    <span class="hidden shrink-0 text-xs text-faint sm:inline">{% blocktranslate with user=m.responsible_user.username %}owner ▸ {{ user }}{% endblocktranslate %}</span>
   {% elif m.owner_tag %}
-    <span class="hidden shrink-0 text-xs text-faint sm:inline">owner ▸ {{ m.owner_tag }}</span>
+    <span class="hidden shrink-0 text-xs text-faint sm:inline">{% blocktranslate with tag=m.owner_tag %}owner ▸ {{ tag }}{% endblocktranslate %}</span>
   {% endif %}
 
   {% if m.coa %}
-    <span class="chip shrink-0 text-faint" title="{{ m.coa.objective }}">COA · {{ m.coa.objective|truncatechars:28 }}</span>
+    <span class="chip shrink-0 text-faint" title="{{ m.coa.objective }}">{% blocktranslate with obj=m.coa.objective|truncatechars:28 %}COA · {{ obj }}{% endblocktranslate %}</span>
   {% endif %}
 </div>

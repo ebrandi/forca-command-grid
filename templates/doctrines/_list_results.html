@@ -1,9 +1,9 @@
-{% load eve %}
+{% load eve i18n %}
 {% comment %}D5: the filtered doctrine results fragment (count + grid). The view returns
    just this for htmx requests, so filtering swaps only #dc-results — the filter
    form keeps its focus/caret and the full-library charts never re-init.{% endcomment %}
 <div id="dc-results">
-  <p class="mb-3 text-sm text-faint">{{ total_shown }} of {{ total_all }} doctrine{{ total_all|pluralize }}{% if active_filters %} match{% endif %}.</p>
+  <p class="mb-3 text-sm text-faint">{% if active_filters %}{% blocktranslate count total_all=total_all with shown=total_shown %}{{ shown }} of {{ total_all }} doctrine match.{% plural %}{{ shown }} of {{ total_all }} doctrines match.{% endblocktranslate %}{% else %}{% blocktranslate count total_all=total_all with shown=total_shown %}{{ shown }} of {{ total_all }} doctrine.{% plural %}{{ shown }} of {{ total_all }} doctrines.{% endblocktranslate %}{% endif %}</p>
 
   <div class="grid gap-3 sm:grid-cols-2">
     {% for r in rows %}
@@ -18,18 +18,18 @@
           <div class="mt-1.5 flex flex-wrap items-center gap-1">
             {% for h in r.hull_classes %}<span class="chip">{{ h }}</span>{% endfor %}
             {% for role in r.roles %}<span class="chip !border-gold/30 !text-gold">{{ role }}</span>{% endfor %}
-            <span class="text-[11px] text-faint">{{ r.fit_count }} fit{{ r.fit_count|pluralize }}</span>
+            <span class="text-[11px] text-faint">{% blocktranslate count n=r.fit_count %}{{ n }} fit{% plural %}{{ n }} fits{% endblocktranslate %}</span>
           </div>
         </div>
         {% if r.status == 'optimal' or r.status == 'viable' %}
-          <span class="shrink-0 inline-flex items-center gap-1 self-start text-xs font-medium text-win"><span class="h-2 w-2 rounded-full bg-win"></span> Can fly</span>
+          <span class="shrink-0 inline-flex items-center gap-1 self-start text-xs font-medium text-win"><span class="h-2 w-2 rounded-full bg-win"></span> {% translate "Can fly" %}</span>
         {% elif r.status == 'not_ready' %}
-          <span class="shrink-0 inline-flex items-center gap-1 self-start text-xs font-medium" style="color:#f4a52b"><span class="h-2 w-2 rounded-full" style="background:#f4a52b"></span> Train</span>
+          <span class="shrink-0 inline-flex items-center gap-1 self-start text-xs font-medium" style="color:#f4a52b"><span class="h-2 w-2 rounded-full" style="background:#f4a52b"></span> {% translate "Train" %}</span>
         {% endif %}
       </a>
     {% empty %}
       <div class="panel col-span-full px-4 py-16 text-center">
-        <p class="text-sm text-faint">{% if active_filters %}No doctrines match these filters. <a href="?{% if character %}character_id={{ character.character_id }}{% endif %}" class="text-gold hover:underline">Clear filters</a>{% else %}No doctrines published yet.{% endif %}</p>
+        <p class="text-sm text-faint">{% if active_filters %}{% translate "No doctrines match these filters." %} <a href="?{% if character %}character_id={{ character.character_id }}{% endif %}" class="text-gold hover:underline">{% translate "Clear filters" %}</a>{% else %}{% translate "No doctrines published yet." %}{% endif %}</p>
       </div>
     {% endfor %}
   </div>

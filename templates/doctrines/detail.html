@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load eve %}
+{% load eve i18n %}
 {% block title %}{{ doctrine.name }} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <a href="{% url 'doctrines:list' %}" class="text-xs text-faint hover:text-gold">← Doctrines</a>
@@ -13,10 +13,10 @@
   </div>
   {% if user.is_authenticated %}
     <div class="flex flex-wrap gap-2">
-      <a href="{% url 'doctrines:ships' %}" class="btn-ghost">Shipyard</a>
-      {% if is_member %}<a href="{% url 'doctrines:prep' doctrine.pk %}" class="btn-cyan">Prep &amp; shopping list</a>{% endif %}
-      {% if is_officer %}<a href="{% url 'doctrines:supply' doctrine.pk %}" class="btn-ghost">Supply plan</a>{% endif %}
-      {% if is_member %}<a href="{% url 'doctrines:readiness' doctrine.pk %}" class="btn-gold">Can I fly this?</a>{% endif %}
+      <a href="{% url 'doctrines:ships' %}" class="btn-ghost">{% translate "Shipyard" %}</a>
+      {% if is_member %}<a href="{% url 'doctrines:prep' doctrine.pk %}" class="btn-cyan">{% translate "Prep &amp; shopping list" %}</a>{% endif %}
+      {% if is_officer %}<a href="{% url 'doctrines:supply' doctrine.pk %}" class="btn-ghost">{% translate "Supply plan" %}</a>{% endif %}
+      {% if is_member %}<a href="{% url 'doctrines:readiness' doctrine.pk %}" class="btn-gold">{% translate "Can I fly this?" %}</a>{% endif %}
     </div>
   {% endif %}
 </header>
@@ -30,7 +30,7 @@
           <h2 class="font-display font-semibold text-ink">{{ fit.name }}</h2>
           <p class="text-xs text-faint">{% type_name fit.ship_type_id %}{% if fit.role %} · {{ fit.role }}{% endif %}</p>
         </div>
-        {% if fit.is_cheap_alt %}<span class="chip ml-auto">cheap alt</span>{% endif %}
+        {% if fit.is_cheap_alt %}<span class="chip ml-auto">{% translate "cheap alt" %}</span>{% endif %}
       </div>
       <div class="p-4">
         {% if is_member %}
@@ -45,28 +45,28 @@
           </div>
           {% endif %}
           <div class="mb-2 flex items-center justify-between gap-2">
-            <p class="eyebrow">{{ fit.skill_requirements.count }} skill requirement{{ fit.skill_requirements.count|pluralize }}</p>
+            <p class="eyebrow">{% blocktranslate count n=fit.skill_requirements.count %}{{ n }} skill requirement{% plural %}{{ n }} skill requirements{% endblocktranslate %}</p>
             <div class="flex items-center gap-2">
               <div x-data="{copied:false}">
                 <button type="button"
                   @click="fetch('{% url 'doctrines:fit_export' fit.id %}').then(r=>r.text()).then(t=>{navigator.clipboard.writeText(t);copied=true;setTimeout(()=>copied=false,2000)})"
                   class="btn-ghost !py-1 !text-xs">
-                  <span x-show="!copied">Copy fit (EFT)</span><span x-show="copied" x-cloak class="text-kill">Copied ✓</span>
+                  <span x-show="!copied">{% translate "Copy fit (EFT)" %}</span><span x-show="copied" x-cloak class="text-kill">{% translate "Copied ✓" %}</span>
                 </button>
               </div>
               {% if store_enabled %}
               <div x-data="{ open: false }" class="relative">
-                <button type="button" @click="open = !open" class="btn-gold !py-1 !text-xs"><svg class="h-3.5 w-3.5"><use href="#i-cube"/></svg> Order</button>
+                <button type="button" @click="open = !open" class="btn-gold !py-1 !text-xs"><svg class="h-3.5 w-3.5"><use href="#i-cube"/></svg> {% translate "Order" %}</button>
                 <div x-show="open" x-cloak @click.outside="open = false" class="absolute right-0 z-20 mt-1 w-56 rounded-lg border border-line bg-panel2 p-3 shadow-xl">
                   <form method="post" action="{% url 'store:order_fit' %}">
                     {% csrf_token %}
                     <input type="hidden" name="fit_id" value="{{ fit.id }}">
-                    <label class="eyebrow text-faint">How many?</label>
+                    <label class="eyebrow text-faint">{% translate "How many?" %}</label>
                     <div class="mt-1 flex items-center gap-2">
                       <input type="number" name="quantity" value="1" min="1" max="1000" class="input-field w-20" required>
-                      <button type="submit" class="btn-gold flex-1 text-xs">Place order</button>
+                      <button type="submit" class="btn-gold flex-1 text-xs">{% translate "Place order" %}</button>
                     </div>
-                    <p class="mt-2 text-[10px] text-faint">Jita sell + corp markup. Lands on the build board.</p>
+                    <p class="mt-2 text-[10px] text-faint">{% translate "Jita sell + corp markup. Lands on the build board." %}</p>
                   </form>
                 </div>
               </div>
@@ -75,7 +75,7 @@
           </div>
           {% if fit.requirements.all %}
           <div class="mb-3 rounded-lg border border-line/60 bg-space/40 p-3">
-            <p class="eyebrow mb-2 text-cyan">Also bring</p>
+            <p class="eyebrow mb-2 text-cyan">{% translate "Also bring" %}</p>
             <div class="space-y-1">
               {% for r in fit.requirements.all %}
                 <div class="flex items-center gap-2 text-xs">
@@ -85,18 +85,18 @@
                     <span class="text-muted">{% type_name r.type_id %}</span>
                   {% endif %}
                   {% if r.text %}<span class="text-faint">{{ r.text }}</span>{% endif %}
-                  {% if not r.is_recommended %}<span class="ml-auto text-[10px] uppercase tracking-wide text-loss/80">required</span>{% else %}<span class="ml-auto text-[10px] uppercase tracking-wide text-faint">recommended</span>{% endif %}
+                  {% if not r.is_recommended %}<span class="ml-auto text-[10px] uppercase tracking-wide text-loss/80">{% translate "required" %}</span>{% else %}<span class="ml-auto text-[10px] uppercase tracking-wide text-faint">{% translate "recommended" %}</span>{% endif %}
                 </div>
               {% endfor %}
             </div>
           </div>
           {% endif %}
           <details class="text-xs">
-            <summary class="cursor-pointer text-faint hover:text-gold">Show EFT</summary>
+            <summary class="cursor-pointer text-faint hover:text-gold">{% translate "Show EFT" %}</summary>
             <pre class="mt-2 overflow-x-auto rounded-lg bg-space p-3 text-[11px] leading-relaxed text-muted">{{ fit.eft_text|default:"" }}</pre>
           </details>
         {% else %}
-          <p class="text-xs text-faint">Log in as a member to see the full fit and requirements.</p>
+          <p class="text-xs text-faint">{% translate "Log in as a member to see the full fit and requirements." %}</p>
         {% endif %}
       </div>
     </div>

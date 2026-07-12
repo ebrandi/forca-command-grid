@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% load static %}
-{% block title %}Maps · [FORCA] Command Grid{% endblock %}
+{% load static i18n %}
+{% block title %}{% translate "Maps" %} · [FORCA] Command Grid{% endblock %}
 {% block extra_head %}
 {% if universe.nodes %}<script defer src="{% static 'js/vendor/svg-pan-zoom.min.js' %}"></script>{% endif %}
 {% endblock %}
@@ -8,11 +8,11 @@
 
 <header class="mb-5 flex flex-wrap items-end justify-between gap-4">
   <div>
-    <p class="eyebrow">Navigation</p>
-    <h1 class="mt-1 text-3xl font-bold text-ink">Maps</h1>
-    <p class="mt-1 max-w-2xl text-sm text-faint">Known space as a region graph — each node is a region, sized by how many systems it holds and coloured by its average security. Lines are stargate connections between regions. Click a region to open its system map.</p>
+    <p class="eyebrow">{% translate "Navigation" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Maps" %}</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Known space as a region graph — each node is a region, sized by how many systems it holds and coloured by its average security. Lines are stargate connections between regions. Click a region to open its system map." %}</p>
   </div>
-  <a href="{% url 'navigation:route_planner' %}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-route"/></svg> Route planner</a>
+  <a href="{% url 'navigation:route_planner' %}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-route"/></svg> {% translate "Route planner" %}</a>
 </header>
 
 {% if universe.nodes %}
@@ -38,19 +38,19 @@
   </svg>
 </section>
 <div class="mb-6 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-faint">
-  <span>Avg security:</span>
+  <span>{% translate "Avg security:" %}</span>
   <span class="inline-flex items-center gap-1"><span class="inline-block h-2.5 w-2.5 rounded-full" style="background:#3b7be0"></span> high</span>
   <span class="inline-flex items-center gap-1"><span class="inline-block h-2.5 w-2.5 rounded-full" style="background:#e0d23e"></span> low</span>
   <span class="inline-flex items-center gap-1"><span class="inline-block h-2.5 w-2.5 rounded-full" style="background:#c02929"></span> null</span>
   <span class="inline-flex items-center gap-1"><span class="inline-block h-2.5 w-2.5 rounded-full" style="border:1.5px solid #b13b3b"></span> Pochven</span>
-  <span>· node size = system count</span>
-  <span class="ml-auto">Drag to pan · scroll to zoom · click a region</span>
+  <span>· {% translate "node size = system count" %}</span>
+  <span class="ml-auto">{% translate "Drag to pan · scroll to zoom · click a region" %}</span>
 </div>
 {% endif %}
 
-<h2 class="eyebrow mb-3 text-faint">All regions</h2>
+<h2 class="eyebrow mb-3 text-faint">{% translate "All regions" %}</h2>
 <div x-data="{ q: '' }">
-  <input x-model="q" type="text" placeholder="Filter regions…" autocomplete="off" class="input-field mb-4 max-w-sm">
+  <input x-model="q" type="text" placeholder="{% translate 'Filter regions…' %}" autocomplete="off" class="input-field mb-4 max-w-sm">
   <div class="grid gap-2 sm:grid-cols-3 lg:grid-cols-4">
     {% for r in regions %}
     <a data-name="{{ r.name|lower }}" x-show="$el.dataset.name.includes(q.toLowerCase().trim())"

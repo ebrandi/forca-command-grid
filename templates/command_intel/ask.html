@@ -1,36 +1,37 @@
 {% extends "base.html" %}
+{% load i18n %}
 {% comment %}
 Conversational intelligence (P7, doc 17 §3) — read-only Q&A grounded in the archive. The
 question POSTs, the answer is produced in a worker (ADR-0008: no LLM in a web request), and
 each non-terminal turn card polls itself via htmx until ready. CSP-clean: a Django POST form
 + htmx attributes, no inline JS.
 {% endcomment %}
-{% block title %}Ask Intelligence · [FORCA] Command Grid{% endblock %}
+{% block title %}{% translate "Ask Intelligence" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 
 <header class="mb-6">
-  <a href="{% url 'command_intel:overview' %}" class="text-xs text-faint hover:text-gold">← Command overview</a>
-  <p class="mt-2 eyebrow text-gold">Command intelligence · ask</p>
-  <h1 class="mt-1 font-display text-2xl font-bold text-ink">Ask the intelligence archive</h1>
-  <p class="mt-1 text-sm text-faint">Grounded, read-only answers from past briefings, constraints, decisions and outcomes — it answers, it never acts, and it only surfaces what you're cleared to see.
-    {% if not ai_enabled %}<span class="text-gold">AI is offline — you'll get the most relevant archive entries.</span>{% endif %}
+  <a href="{% url 'command_intel:overview' %}" class="text-xs text-faint hover:text-gold">← {% translate "Command overview" %}</a>
+  <p class="mt-2 eyebrow text-gold">{% translate "Command intelligence · ask" %}</p>
+  <h1 class="mt-1 font-display text-2xl font-bold text-ink">{% translate "Ask the intelligence archive" %}</h1>
+  <p class="mt-1 text-sm text-faint">{% translate "Grounded, read-only answers from past briefings, constraints, decisions and outcomes — it answers, it never acts, and it only surfaces what you're cleared to see." %}
+    {% if not ai_enabled %}<span class="text-gold">{% translate "AI is offline — you'll get the most relevant archive entries." %}</span>{% endif %}
   </p>
 </header>
 
 <form method="post" action="{% url 'command_intel:ask_submit' %}" class="panel mb-6 p-4">
   {% csrf_token %}
-  <label class="label" for="question">Your question</label>
+  <label class="label" for="question">{% translate "Your question" %}</label>
   <div class="mt-1 flex flex-col gap-2 sm:flex-row">
     <input id="question" name="question" type="text" class="input-field w-full"
-           placeholder="e.g. What did we decide about logistics last month, and did it work?"
+           placeholder="{% translate 'e.g. What did we decide about logistics last month, and did it work?' %}"
            required maxlength="2000" autocomplete="off">
-    <button class="btn-gold shrink-0">Ask</button>
+    <button class="btn-gold shrink-0">{% translate "Ask" %}</button>
   </div>
 </form>
 
 {% if not turns %}
   <div class="panel p-8 text-center">
-    <p class="text-muted">No questions yet. Ask about your current posture, a past decision, a constraint's trend, or whether an action actually worked.</p>
+    <p class="text-muted">{% translate "No questions yet. Ask about your current posture, a past decision, a constraint's trend, or whether an action actually worked." %}</p>
   </div>
 {% else %}
 <div class="space-y-4">

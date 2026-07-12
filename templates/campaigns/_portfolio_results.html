@@ -1,8 +1,9 @@
+{% load i18n %}
 {% comment %}Portfolio results fragment (doc 10 §6.1). htmx swaps only this #cmp-results node, so
 filtering keeps the filter bar's focus. Rows read as a table on desktop and stack on mobile via
 flex-wrap. Empty states branch on whether filters are active.{% endcomment %}
 <div id="cmp-results">
-  <p class="eyebrow mb-2 text-faint">Campaigns · {{ page_obj.paginator.count }} total</p>
+  <p class="eyebrow mb-2 text-faint">{% blocktranslate with count=page_obj.paginator.count %}Campaigns · {{ count }} total{% endblocktranslate %}</p>
   <div class="space-y-2">
     {% for row in rows %}
       <a href="{% url 'campaigns:detail' row.c.pk %}" class="panel flex flex-wrap items-center gap-x-4 gap-y-2 p-4 transition hover:border-gold/40">
@@ -13,7 +14,7 @@ flex-wrap. Empty states branch on whether filters are active.{% endcomment %}
             {% include "campaigns/_health_chip.html" with health=row.c.health label=row.c.get_health_display reasons=row.c.health_reasons %}
           </div>
           <p class="mt-0.5 text-xs text-faint">
-            {% if row.c.commander %}Cmdr: {{ row.c.commander.display_name }}{% else %}<span class="text-gold">No commander</span>{% endif %} · {{ row.c.get_category_display }}
+            {% if row.c.commander %}{% translate "Cmdr:" %} {{ row.c.commander.display_name }}{% else %}<span class="text-gold">{% translate "No commander" %}</span>{% endif %} · {{ row.c.get_category_display }}
           </p>
           {% if row.worst_reason and row.c.health in "blocked,critical,at_risk" %}
             <p class="mt-1 text-sm text-loss">{{ row.worst_reason.label }}{% if row.worst_reason.detail %} — {{ row.worst_reason.detail }}{% endif %}</p>
@@ -23,10 +24,10 @@ flex-wrap. Empty states branch on whether filters are active.{% endcomment %}
           {% include "campaigns/_progress_bar.html" with pct=row.c.progress_pct health=row.c.health %}
         </div>
         <div class="w-40 shrink-0 text-xs text-faint">
-          {% if row.c.target_end_at %}<p>Target <span class="data text-muted">{{ row.c.target_end_at|date:"d M Y" }}</span></p>{% endif %}
+          {% if row.c.target_end_at %}<p>{% translate "Target" %} <span class="data text-muted">{{ row.c.target_end_at|date:"d M Y" }}</span></p>{% endif %}
           {% if row.next_milestone %}
-            <p class="mt-0.5">Next: <span class="truncate">{{ row.next_milestone.title }}</span>
-              {% if row.next_milestone.due_at %}<span class="chip {% if row.ms_overdue %}text-loss border-loss/40{% elif row.ms_soon %}text-gold border-gold/40{% else %}text-faint border-line{% endif %}">due {{ row.next_milestone.due_at|date:"d M" }}</span>{% endif %}
+            <p class="mt-0.5">{% translate "Next:" %} <span class="truncate">{{ row.next_milestone.title }}</span>
+              {% if row.next_milestone.due_at %}<span class="chip {% if row.ms_overdue %}text-loss border-loss/40{% elif row.ms_soon %}text-gold border-gold/40{% else %}text-faint border-line{% endif %}">{% translate "due" %} {{ row.next_milestone.due_at|date:"d M" }}</span>{% endif %}
             </p>
           {% endif %}
         </div>
@@ -34,10 +35,10 @@ flex-wrap. Empty states branch on whether filters are active.{% endcomment %}
     {% empty %}
       <div class="panel px-4 py-16 text-center">
         {% if active_filters %}
-          <p class="text-sm text-faint">No campaigns match these filters. <a href="{% url 'campaigns:index' %}" class="text-gold hover:underline">Clear filters</a></p>
+          <p class="text-sm text-faint">{% translate "No campaigns match these filters." %} <a href="{% url 'campaigns:index' %}" class="text-gold hover:underline">{% translate "Clear filters" %}</a></p>
         {% else %}
-          <p class="text-sm text-faint">No active campaigns right now. When leadership launches one, you'll see it here — along with how you can help.</p>
-          {% if can_manage_campaigns %}<a href="{% url 'campaigns:new' %}" class="btn-gold mt-4 inline-flex text-sm">Create the first campaign</a>{% endif %}
+          <p class="text-sm text-faint">{% translate "No active campaigns right now. When leadership launches one, you'll see it here — along with how you can help." %}</p>
+          {% if can_manage_campaigns %}<a href="{% url 'campaigns:new' %}" class="btn-gold mt-4 inline-flex text-sm">{% translate "Create the first campaign" %}</a>{% endif %}
         {% endif %}
       </div>
     {% endfor %}

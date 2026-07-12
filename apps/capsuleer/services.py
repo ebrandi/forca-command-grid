@@ -22,6 +22,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import F, Max, OuterRef, Q, Subquery
 from django.utils import timezone
+from django.utils.translation import gettext as _t
 
 from core.audit import audit_log
 from core.rbac import ROLE_OFFICER, has_role
@@ -231,25 +232,25 @@ def create_goal(
     baseline stamp (Stage 2) — are not run here; a goal created ``active`` only sets ``started_at``.
     """
     if not (title or "").strip():
-        raise ValidationError("A goal needs a title.")
+        raise ValidationError(_t("A goal needs a title."))
     if goal_type not in GoalType.values:
-        raise ValidationError(f"Unknown goal type: {goal_type!r}.")
+        raise ValidationError(_t("Unknown goal type: %(value)s.") % {"value": repr(goal_type)})
     if status not in (GoalStatus.CONSIDERING, GoalStatus.ACTIVE):
-        raise ValidationError("A new goal starts as considering or active.")
+        raise ValidationError(_t("A new goal starts as considering or active."))
     if priority not in Priority.values:
-        raise ValidationError(f"Unknown priority: {priority!r}.")
+        raise ValidationError(_t("Unknown priority: %(value)s.") % {"value": repr(priority)})
     if pace not in GoalPace.values:
-        raise ValidationError(f"Unknown pace: {pace!r}.")
+        raise ValidationError(_t("Unknown pace: %(value)s.") % {"value": repr(pace)})
     if character is not None and character.user_id != getattr(user, "pk", None):
-        raise ValidationError("That character does not belong to you.")
+        raise ValidationError(_t("That character does not belong to you."))
     if budget_isk is not None and budget_isk < 0:
-        raise ValidationError("Budget cannot be negative.")
+        raise ValidationError(_t("Budget cannot be negative."))
 
     if visibility is None:
         profile = CareerProfile.objects.filter(user=user).first()
         visibility = profile.default_visibility if profile else Visibility.PRIVATE
     elif visibility not in Visibility.values:
-        raise ValidationError(f"Unknown visibility: {visibility!r}.")
+        raise ValidationError(_t("Unknown visibility: %(value)s.") % {"value": repr(visibility)})
 
     template_key = template.key if template is not None else ""
     if template is not None:
@@ -264,7 +265,8 @@ def create_goal(
     active_count = CareerGoal.objects.filter(user=user).exclude(status=GoalStatus.ARCHIVED).count()
     if active_count >= MAX_ACTIVE_GOALS:
         raise ValidationError(
-            f"You already have {MAX_ACTIVE_GOALS} active goals — archive one before adding another."
+            _t("You already have %(max)d active goals — archive one before adding another.")
+            % {"max": MAX_ACTIVE_GOALS}
         )
 
     goal = CareerGoal(
@@ -343,24 +345,26 @@ def set_goal_status(goal, to_status, actor, reason="") -> CareerGoal:
     audit metadata or activity detail (doc 09 §7.1); the completion override is recorded as a flag.
     """
     if to_status not in GoalStatus.values:
-        raise ValidationError(f"Unknown status: {to_status!r}.")
+        raise ValidationError(_t("Unknown status: %(value)s.") % {"value": repr(to_status)})
     locked = CareerGoal.objects.select_for_update().get(pk=goal.pk)
     if locked.user_id != getattr(actor, "pk", None):
-        raise ValidationError("Only the goal owner can change its status.")
+        raise ValidationError(_t("Only the goal owner can change its status."))
     old = locked.status
     if old == to_status:
         _mirror(goal, locked)
         return locked
     if (old, to_status) not in _LEGAL_GOAL_TRANSITIONS:
-        raise ValidationError("That status change is not allowed from the goal's current state.")
+        raise ValidationError(_t("That status change is not allowed from the goal's current state."))
 
     now = timezone.now()
     override = False
     if to_status == GoalStatus.COMPLETED and _completion_blockers(locked):
         if not (reason or "").strip():
             raise ValidationError(
-                "Complete a goal when its required milestones are done, or supply an override "
-                "reason."
+                _t(
+                    "Complete a goal when its required milestones are done, or supply an "
+                    "override reason."
+                )
             )
         override = True
 
@@ -408,11 +412,11 @@ def set_goal_visibility(goal, actor, visibility) -> CareerGoal:
     cached authorisation), recorded in ``GoalActivity``. Narrowing revokes mentor/officer access
     on the next request through :func:`visible_goals`."""
     if visibility not in Visibility.values:
-        raise ValidationError(f"Unknown visibility: {visibility!r}.")
+        raise ValidationError(_t("Unknown visibility: %(value)s.") % {"value": repr(visibility)})
     with transaction.atomic():
         locked = CareerGoal.objects.select_for_update().get(pk=goal.pk)
         if locked.user_id != getattr(actor, "pk", None):
-            raise ValidationError("Only the goal owner can change its visibility.")
+            raise ValidationError(_t("Only the goal owner can change its visibility."))
         if locked.visibility == visibility:
             _mirror(goal, locked)
             return locked
@@ -429,7 +433,7 @@ def set_goal_visibility(goal, actor, visibility) -> CareerGoal:
 # --------------------------------------------------------------------------- #
 def _require_owner(goal, actor) -> None:
     if goal.user_id != getattr(actor, "pk", None):
-        raise ValidationError("Only the goal owner can edit its milestones.")
+        raise ValidationError(_t("Only the goal owner can edit its milestones."))
 
 
 # A finished goal is frozen: no new milestones/steps, credits, activity rows or notifications may
@@ -441,7 +445,7 @@ _TERMINAL_STATUSES = frozenset({GoalStatus.COMPLETED, GoalStatus.ABANDONED, Goal
 def _reject_if_terminal(goal) -> None:
     if goal.status in _TERMINAL_STATUSES:
         raise ValidationError(
-            "This goal is finished — reopen it before changing its milestones or steps."
+            _t("This goal is finished — reopen it before changing its milestones or steps.")
         )
 
 
@@ -459,7 +463,9 @@ def add_milestone(
     params = params or {}
     validate_milestone_params(kind, params, verification)
     if locked.milestones.count() >= MAX_MILESTONES_PER_GOAL:
-        raise ValidationError(f"A goal cannot hold more than {MAX_MILESTONES_PER_GOAL} milestones.")
+        raise ValidationError(
+            _t("A goal cannot hold more than %(max)d milestones.") % {"max": MAX_MILESTONES_PER_GOAL}
+        )
     if order is None:
         order = (locked.milestones.aggregate(m=Max("order"))["m"] or 0) + 1
     milestone = CareerMilestone.objects.create(
@@ -529,15 +535,15 @@ def complete_milestone(goal, milestone, actor, *, evidence_note="") -> CareerMil
         _mirror(goal, locked)
         return ms
     if ms.status == MilestoneStatus.SKIPPED:
-        raise ValidationError("Unskip this milestone before completing it.")
+        raise ValidationError(_t("Unskip this milestone before completing it."))
     if ms.verification == Verification.AUTO:
-        raise ValidationError("Automatic milestones are credited by verification, not by hand.")
+        raise ValidationError(_t("Automatic milestones are credited by verification, not by hand."))
 
     snapshot = {"at": timezone.now().isoformat()}
     if ms.verification in (Verification.MENTOR, Verification.OFFICER):
         endorsement = _active_endorsement(locked, ms, ms.verification)
         if endorsement is None:
-            raise ValidationError("This milestone needs a matching endorsement before completion.")
+            raise ValidationError(_t("This milestone needs a matching endorsement before completion."))
         # Role only — never the endorser's raw user id (doc 09 §1.4: an evidence snapshot must not
         # freeze another pilot's identifiers onto the owner's milestone). The endorsement itself is
         # attributed on its own GoalActivity row, which GDPR erasure anonymises.
@@ -576,7 +582,7 @@ def reopen_milestone(goal, milestone, actor) -> CareerMilestone:
         _mirror(goal, locked)
         return ms
     if ms.verification == Verification.AUTO:
-        raise ValidationError("Automatically credited milestones cannot be reopened.")
+        raise ValidationError(_t("Automatically credited milestones cannot be reopened."))
     ms.status = MilestoneStatus.PENDING
     ms.completed_at = None
     ms.save(update_fields=["status", "completed_at", "updated_at"])
@@ -637,22 +643,22 @@ def _assert_can_endorse(goal, milestone, endorser) -> str:
     milestones done — this only authorises the note (doc 05 §4.3, doc 09 §3.1/§3.3).
     """
     if milestone.goal_id != goal.pk:
-        raise ValidationError("That milestone is not part of this goal.")
+        raise ValidationError(_t("That milestone is not part of this goal."))
     # An endorsement must come from a second party — an officer/mentor can never endorse their own
     # goal's milestone (self-verification forgery, findings 6/7, doc 09 §3.3). Guards both roles.
     if getattr(endorser, "pk", None) == goal.user_id:
-        raise ValidationError("You cannot endorse your own milestone.")
+        raise ValidationError(_t("You cannot endorse your own milestone."))
     role = milestone.verification
     if role == Verification.MENTOR:
         if goal.visibility != Visibility.MENTOR or goal.user_id not in _active_mentee_user_ids(
             endorser
         ):
-            raise ValidationError("Only an active mentor of a mentor-shared goal can endorse this.")
+            raise ValidationError(_t("Only an active mentor of a mentor-shared goal can endorse this."))
     elif role == Verification.OFFICER:
         if goal.visibility != Visibility.OFFICERS or not has_role(endorser, ROLE_OFFICER):
-            raise ValidationError("Only an officer can endorse an officers-shared goal milestone.")
+            raise ValidationError(_t("Only an officer can endorse an officers-shared goal milestone."))
     else:
-        raise ValidationError("This milestone does not take endorsements.")
+        raise ValidationError(_t("This milestone does not take endorsements."))
     return role
 
 
@@ -688,7 +694,7 @@ def retract_endorsement(goal, milestone, endorser, *, note="") -> GoalActivity:
     ms = locked.milestones.select_for_update().get(pk=milestone.pk)
     role = _assert_can_endorse(locked, ms, endorser)
     if ms.status == MilestoneStatus.DONE:
-        raise ValidationError("The milestone is already complete; the owner must reopen it.")
+        raise ValidationError(_t("The milestone is already complete; the owner must reopen it."))
     return record_activity(locked, endorser, V_ENDORSE_RETRACTED,
                            {"milestone_id": ms.pk, "role": role, "note": (note or "")[:200]})
 
@@ -729,13 +735,13 @@ def make_corp_task_from_step(goal, step, actor, *, title=None, description="") -
 
     locked = CareerGoal.objects.select_for_update().get(pk=goal.pk)
     if locked.user_id != getattr(actor, "pk", None):
-        raise ValidationError("Only the goal owner can create a corp task.")
+        raise ValidationError(_t("Only the goal owner can create a corp task."))
     _reject_if_terminal(locked)
     ms = locked.action_steps.select_for_update().get(pk=step.pk)
     if ms.status != "open":
-        raise ValidationError("Only an open step can become a corp task.")
+        raise ValidationError(_t("Only an open step can become a corp task."))
     if not feature_enabled("tasks"):
-        raise ValidationError("The corp task board is not enabled.")
+        raise ValidationError(_t("The corp task board is not enabled."))
 
     if locked.visibility == Visibility.OFFICERS:
         task_title = (title or ms.title)[:200]
@@ -768,7 +774,7 @@ def add_mentor_note(goal, mentor, text) -> GoalActivity:
     if locked.visibility != Visibility.MENTOR or locked.user_id not in _active_mentee_user_ids(
         mentor
     ):
-        raise ValidationError("Only an active mentor of a mentor-shared goal can add a note.")
+        raise ValidationError(_t("Only an active mentor of a mentor-shared goal can add a note."))
     return record_activity(locked, mentor, V_MENTOR_NOTE, {"text": (text or "")[:500]})
 
 
@@ -1133,7 +1139,7 @@ def complete_review(goal, actor, *, note="") -> CareerGoal:
     suggestion next run and stops the review DM. Owner-only."""
     locked = CareerGoal.objects.select_for_update().get(pk=goal.pk)
     if locked.user_id != getattr(actor, "pk", None):
-        raise ValidationError("Only the goal owner can review it.")
+        raise ValidationError(_t("Only the goal owner can review it."))
     locked.review_due_at = None
     locked.save(update_fields=["review_due_at", "updated_at"])
     profile, _ = CareerProfile.objects.get_or_create(user=locked.user)
@@ -1260,7 +1266,7 @@ def _resolve_doctrines(dim, total, min_group, published):
 
     names = dict(Doctrine.objects.filter(id__in=[d for d, _ in dim]).values_list("id", "name"))
     return [
-        {"label": names.get(did, "unknown doctrine"), "count": n}
+        {"label": names.get(did, _t("unknown doctrine")), "count": n}
         for did, n in dim
         if published and not _suppress(n, total, min_group)
     ]

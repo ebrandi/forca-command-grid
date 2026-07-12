@@ -12,6 +12,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.translation import gettext as _
 
 from core import rbac
 
@@ -196,6 +197,6 @@ def outreach_opt_out(request):
     """RAF-3 (3.9): a pilot permanently opts out of enrolment-nudge DMs."""
     if request.method == "POST":
         services.opt_out_of_outreach(request.user)
-        messages.success(request, "Done — you won't be nudged about enrolling again.")
+        messages.success(request, _("Done — you won't be nudged about enrolling again."))
         return redirect("raffle:home")
     return render(request, "raffle/outreach_opt_out.html", {})

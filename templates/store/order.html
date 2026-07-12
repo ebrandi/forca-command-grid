@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 {% load eve %}
-{% block title %}Order #{{ order.pk }} · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Order" %} #{{ order.pk }} · [FORCA] Command Grid{% endblock %}
 {% block content %}
-<a href="{% if is_buyer %}{% url 'store:my_orders' %}{% elif is_member %}{% url 'store:board' %}{% else %}{% url 'store:storefront' %}{% endif %}" class="text-xs text-faint hover:text-gold">← Back</a>
+<a href="{% if is_buyer %}{% url 'store:my_orders' %}{% elif is_member %}{% url 'store:board' %}{% else %}{% url 'store:storefront' %}{% endif %}" class="text-xs text-faint hover:text-gold">← {% translate "Back" %}</a>
 
 
 <header class="mb-5 mt-3 flex flex-wrap items-center justify-between gap-4">
@@ -20,14 +21,14 @@
   </div>
   <div class="text-right">
     <p class="data text-3xl font-bold text-gold">{{ order.total_price|isk }}</p>
-    <p class="text-xs text-faint">{{ order.unit_price|isk }} each · Jita {{ order.unit_jita|isk }}</p>
+    <p class="text-xs text-faint">{% blocktranslate with unit=order.unit_price|isk jita=order.unit_jita|isk %}{{ unit }} each · Jita {{ jita }}{% endblocktranslate %}</p>
   </div>
 </header>
 
 <div class="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
   <!-- Manifest -->
   <div class="panel overflow-hidden">
-    <div class="border-b border-line px-4 py-2"><h2 class="eyebrow">{% if order.kind == 'doctrine_fit' %}Fit contents{% else %}Hull{% endif %}</h2></div>
+    <div class="border-b border-line px-4 py-2"><h2 class="eyebrow">{% if order.kind == 'doctrine_fit' %}{% translate "Fit contents" %}{% else %}{% translate "Hull" %}{% endif %}</h2></div>
     <div class="overflow-x-auto"><table class="w-full text-sm">
       <tbody>
         {% for it in order.manifest %}
@@ -44,43 +45,43 @@
   <!-- Status / actions -->
   <div class="space-y-4">
     <div class="panel p-4 text-sm">
-      <div class="flex items-center justify-between"><span class="text-faint">Buyer</span>
+      <div class="flex items-center justify-between"><span class="text-faint">{% translate "Buyer" %}</span>
         <span class="flex items-center gap-1.5 text-ink">{% if order.buyer_character_id %}<img src="{% eve_portrait order.buyer_character_id 32 %}" alt="" class="h-5 w-5 rounded-full ring-1 ring-line">{% eve_name order.buyer_character_id %}{% else %}—{% endif %}</span>
       </div>
-      <div class="mt-2 flex items-center justify-between"><span class="text-faint">Builder</span>
-        <span class="flex items-center gap-1.5 text-ink">{% if order.claimed_by_character_id %}<img src="{% eve_portrait order.claimed_by_character_id 32 %}" alt="" class="h-5 w-5 rounded-full ring-1 ring-line">{% eve_name order.claimed_by_character_id %}{% else %}<span class="text-faint">unclaimed</span>{% endif %}</span>
+      <div class="mt-2 flex items-center justify-between"><span class="text-faint">{% translate "Builder" %}</span>
+        <span class="flex items-center gap-1.5 text-ink">{% if order.claimed_by_character_id %}<img src="{% eve_portrait order.claimed_by_character_id 32 %}" alt="" class="h-5 w-5 rounded-full ring-1 ring-line">{% eve_name order.claimed_by_character_id %}{% else %}<span class="text-faint">{% translate "unclaimed" %}</span>{% endif %}</span>
       </div>
       {% if order.requires_build %}
-      <div class="mt-2 flex items-center justify-between border-t border-line/50 pt-2"><span class="text-faint">Build-slot deposit</span>
+      <div class="mt-2 flex items-center justify-between border-t border-line/50 pt-2"><span class="text-faint">{% translate "Build-slot deposit" %}</span>
         <span class="data font-semibold text-gold">{{ order.deposit_amount|isk }}</span>
       </div>
       {% endif %}
-      {% if order.location_name %}<div class="mt-2 flex items-center justify-between"><span class="text-faint">Deliver to</span><span class="text-muted">{{ order.location_name }}</span></div>{% endif %}
+      {% if order.location_name %}<div class="mt-2 flex items-center justify-between"><span class="text-faint">{% translate "Deliver to" %}</span><span class="text-muted">{{ order.location_name }}</span></div>{% endif %}
     </div>
 
     {% if order.notes %}<p class="panel px-4 py-2 text-sm text-muted">“{{ order.notes }}”</p>{% endif %}
 
     {% if order.requires_build and order.status == 'claimed' %}
-    <div class="panel border-l-2 border-gold/50 px-4 py-3 text-sm text-muted">Pay the <span class="text-gold">{{ order.deposit_amount|isk }}</span> deposit to the builder to secure your slot. They confirm it to start production.</div>
+    <div class="panel border-l-2 border-gold/50 px-4 py-3 text-sm text-muted">{% blocktranslate with amount=order.deposit_amount|isk %}Pay the <span class="text-gold">{{ amount }}</span> deposit to the builder to secure your slot. They confirm it to start production.{% endblocktranslate %}</div>
     {% endif %}
     {% if order.status == 'ready' %}
-    <div class="panel border-l-2 border-cyan/50 px-4 py-3 text-sm text-muted">Your ship is ready. Accept the in-game contract and pay the balance.</div>
+    <div class="panel border-l-2 border-cyan/50 px-4 py-3 text-sm text-muted">{% translate "Your ship is ready. Accept the in-game contract and pay the balance." %}</div>
     {% endif %}
 
     <!-- Actions -->
     <div class="flex flex-wrap gap-2">
       {% if order.status == 'open' and is_member and not is_buyer %}
-        <form method="post" action="{% url 'store:claim_order' order.pk %}">{% csrf_token %}<button class="btn-gold">Claim &amp; fulfil</button></form>
+        <form method="post" action="{% url 'store:claim_order' order.pk %}">{% csrf_token %}<button class="btn-gold">{% translate "Claim &amp; fulfil" %}</button></form>
       {% endif %}
       {% if next_status and is_claimer or next_status and is_officer %}
         <form method="post" action="{% url 'store:advance_order' order.pk %}">{% csrf_token %}<button class="btn-gold">{{ advance_label }}</button></form>
       {% endif %}
       {% if order.status == 'claimed' and is_claimer %}
-        <form method="post" action="{% url 'store:order_action' order.pk %}">{% csrf_token %}<button name="action" value="release" class="btn-ghost">Release</button></form>
+        <form method="post" action="{% url 'store:order_action' order.pk %}">{% csrf_token %}<button name="action" value="release" class="btn-ghost">{% translate "Release" %}</button></form>
       {% endif %}
       {% if is_buyer or is_officer %}
         {% if order.status != 'delivered' and order.status != 'cancelled' %}
-        <form method="post" action="{% url 'store:order_action' order.pk %}">{% csrf_token %}<button name="action" value="cancel" class="btn-danger">Cancel order</button></form>
+        <form method="post" action="{% url 'store:order_action' order.pk %}">{% csrf_token %}<button name="action" value="cancel" class="btn-danger">{% translate "Cancel order" %}</button></form>
         {% endif %}
       {% endif %}
     </div>

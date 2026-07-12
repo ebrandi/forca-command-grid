@@ -10,6 +10,8 @@ from django.db.models import Sum
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.translation import gettext as _t
+from django.utils.translation import ngettext
 from django.views.decorators.http import require_POST
 
 from apps.doctrines.services import readiness_summary_for_character
@@ -211,7 +213,11 @@ def _my_service_rows(user) -> list[dict]:
                 {
                     "url_name": "buyback:board",
                     "icon": "#i-coin",
-                    "text": f"{n} buyback offer{'s' if n != 1 else ''} awaiting a buyer or payout",
+                    "text": ngettext(
+                        "%(n)d buyback offer awaiting a buyer or payout",
+                        "%(n)d buyback offers awaiting a buyer or payout",
+                        n,
+                    ) % {"n": n},
                 }
             )
     if store_access(user):
@@ -234,7 +240,11 @@ def _my_service_rows(user) -> list[dict]:
                 {
                     "url_name": "store:my_orders",
                     "icon": "#i-cube",
-                    "text": f"{n} corp-store order{'s' if n != 1 else ''} in progress",
+                    "text": ngettext(
+                        "%(n)d corp-store order in progress",
+                        "%(n)d corp-store orders in progress",
+                        n,
+                    ) % {"n": n},
                 }
             )
     if freight_access(user):
@@ -261,7 +271,11 @@ def _my_service_rows(user) -> list[dict]:
                 {
                     "url_name": "logistics:contracts",
                     "icon": "#i-truck",
-                    "text": f"{n} freight contract{'s' if n != 1 else ''} in flight",
+                    "text": ngettext(
+                        "%(n)d freight contract in flight",
+                        "%(n)d freight contracts in flight",
+                        n,
+                    ) % {"n": n},
                 }
             )
     return rows
@@ -851,7 +865,7 @@ def save_dashboard_layout(request: HttpRequest) -> HttpResponse:
     layout["hidden"] = hidden
     prefs.dashboard_layout = layout
     prefs.save(update_fields=["dashboard_layout", "updated_at"])
-    messages.success(request, "Dashboard layout saved.")
+    messages.success(request, _t("Dashboard layout saved."))
     return redirect("identity:dashboard")
 
 
@@ -863,7 +877,7 @@ def _grouped_skills(snapshot) -> list[dict]:
     from apps.sde.models import SdeType
 
     meta = {
-        tid: (name, grp or "Other")
+        tid: (name, grp or _t("Other"))
         for tid, name, grp in SdeType.objects.filter(type_id__in=[int(k) for k in snapshot.skills])
         .select_related("group").values_list("type_id", "name", "group__name")
     }

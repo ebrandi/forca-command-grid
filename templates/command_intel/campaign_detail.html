@@ -1,52 +1,52 @@
 {% extends "base.html" %}
-{% load static %}
-{% block title %}{{ campaign.objective|truncatechars:48 }} · Campaign · [FORCA] Command Grid{% endblock %}
+{% load static i18n %}
+{% block title %}{{ campaign.objective|truncatechars:48 }} · {% translate "Campaign" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <script defer src="{% static 'js/vendor/chart.umd.js' %}"></script>
-<a href="{% url 'command_intel:campaigns' %}" class="text-xs text-faint hover:text-gold">← Strategic campaigns</a>
+<a href="{% url 'command_intel:campaigns' %}" class="text-xs text-faint hover:text-gold">← {% translate "Strategic campaigns" %}</a>
 
 <header class="mt-2 mb-5">
-  <p class="eyebrow text-gold">Strategic campaign ·
-    {% if campaign.status == 'active' %}<span class="text-gold">◆ active</span>
-    {% elif campaign.status == 'completed' %}<span class="text-kill">▲ completed</span>
-    {% elif campaign.status == 'abandoned' %}<span class="text-loss">▼ abandoned</span>
-    {% else %}<span class="text-faint">○ draft</span>{% endif %}
-    {% if campaign.owner %} · lead ▸ {{ campaign.owner.username }}{% endif %}
+  <p class="eyebrow text-gold">{% translate "Strategic campaign" %} ·
+    {% if campaign.status == 'active' %}<span class="text-gold">◆ {% translate "active" %}</span>
+    {% elif campaign.status == 'completed' %}<span class="text-kill">▲ {% translate "completed" %}</span>
+    {% elif campaign.status == 'abandoned' %}<span class="text-loss">▼ {% translate "abandoned" %}</span>
+    {% else %}<span class="text-faint">○ {% translate "draft" %}</span>{% endif %}
+    {% if campaign.owner %} · {% blocktranslate with owner=campaign.owner.username %}lead ▸ {{ owner }}{% endblocktranslate %}{% endif %}
   </p>
   <h1 class="mt-1 font-display text-2xl font-bold text-ink">{{ campaign.objective }}</h1>
   <p class="mt-1 text-sm text-faint">
-    baseline <span class="data text-muted">{% if campaign.baseline_value is not None %}{{ campaign.baseline_value|floatformat:"-2" }}{% else %}—{% endif %}</span>
-    {% if campaign.target_value is not None %} · target <span class="data text-muted">{{ campaign.target_value|floatformat:"-2" }}</span>{% endif %}
-    · now <span class="data text-ink">{% if current is not None %}{{ current|floatformat:"-2" }}{% else %}—{% endif %}</span>
-    {% if campaign.due_at %} · due {{ campaign.due_at|date:"d M Y" }}{% endif %}
+    {% translate "baseline" %} <span class="data text-muted">{% if campaign.baseline_value is not None %}{{ campaign.baseline_value|floatformat:"-2" }}{% else %}—{% endif %}</span>
+    {% if campaign.target_value is not None %} · {% translate "target" %} <span class="data text-muted">{{ campaign.target_value|floatformat:"-2" }}</span>{% endif %}
+    · {% translate "now" %} <span class="data text-ink">{% if current is not None %}{{ current|floatformat:"-2" }}{% else %}—{% endif %}</span>
+    {% if campaign.due_at %} · {% blocktranslate with due=campaign.due_at|date:"d M Y" %}due {{ due }}{% endblocktranslate %}{% endif %}
   </p>
 </header>
 
 <div class="grid gap-5 lg:grid-cols-3">
   {% comment %}Success probability — the factors are visible, never a black box (doc 08 §5).{% endcomment %}
   <section class="panel p-5 text-center lg:col-span-1" aria-label="Success probability {{ campaign.success_probability|floatformat:2 }}">
-    <p class="eyebrow">Success probability</p>
+    <p class="eyebrow">{% translate "Success probability" %}</p>
     <p class="mt-2 font-display text-5xl font-bold {% if campaign.success_probability >= 0.66 %}text-kill{% elif campaign.success_probability >= 0.4 %}text-gold{% else %}text-loss{% endif %}">{{ campaign.success_probability|floatformat:2 }}</p>
     <div class="mt-3 space-y-1 border-t border-line pt-3 text-left text-[11px] text-faint">
-      <p>= Π (milestone completion × confidence) × headroom</p>
-      <p>milestones ▸ <span class="data text-muted">{{ milestones|length }}</span></p>
-      <p>plan end ▸ <span class="data text-muted">{% if chart.expected %}{{ chart.expected|last|floatformat:"-2" }}{% else %}—{% endif %}</span>{% if campaign.target_value is not None %} vs target <span class="data text-muted">{{ campaign.target_value|floatformat:"-2" }}</span>{% endif %}</p>
-      <p>progress ▸ <span class="data text-muted">{{ campaign.progress_pct }}%</span></p>
+      <p>{% translate "= Π (milestone completion × confidence) × headroom" %}</p>
+      <p>{% blocktranslate with n=milestones|length %}milestones ▸ <span class="data text-muted">{{ n }}</span>{% endblocktranslate %}</p>
+      <p>{% translate "plan end ▸" %} <span class="data text-muted">{% if chart.expected %}{{ chart.expected|last|floatformat:"-2" }}{% else %}—{% endif %}</span>{% if campaign.target_value is not None %} {% translate "vs target" %} <span class="data text-muted">{{ campaign.target_value|floatformat:"-2" }}</span>{% endif %}</p>
+      <p>{% blocktranslate with pct=campaign.progress_pct %}progress ▸ <span class="data text-muted">{{ pct }}%</span>{% endblocktranslate %}</p>
     </div>
   </section>
 
   {% comment %}Expected-vs-measured trajectory (doc 16 §2.6): gold dashed plan, cyan solid actual.{% endcomment %}
   <section class="panel overflow-hidden lg:col-span-2">
     <div class="flex items-center justify-between border-b border-line px-4 py-3">
-      <h2 class="eyebrow text-faint">Trajectory · expected vs measured</h2>
-      <span class="text-[11px] text-faint"><span class="text-gold">┄ expected</span> · <span class="text-cyan">━ measured</span></span>
+      <h2 class="eyebrow text-faint">{% translate "Trajectory · expected vs measured" %}</h2>
+      <span class="text-[11px] text-faint"><span class="text-gold">┄ {% translate "expected" %}</span> · <span class="text-cyan">━ {% translate "measured" %}</span></span>
     </div>
     <div class="p-4">
-      <div class="h-72 skeleton"><canvas id="camp-track" role="img" aria-label="Expected versus measured trajectory for {{ campaign.target_metric }}"></canvas></div>
+      <div class="h-72 skeleton"><canvas id="camp-track" role="img" aria-label="{% blocktranslate with metric=campaign.target_metric %}Expected versus measured trajectory for {{ metric }}{% endblocktranslate %}"></canvas></div>
       <p class="mt-2 text-[11px] text-faint">
-        Plan: baseline <span class="data">{% if campaign.baseline_value is not None %}{{ campaign.baseline_value|floatformat:"-2" }}{% else %}—{% endif %}</span>
-        → end <span class="data">{% if chart.expected %}{{ chart.expected|last|floatformat:"-2" }}{% else %}—{% endif %}</span>.
-        Measured now: <span class="data">{% if current is not None %}{{ current|floatformat:"-2" }}{% else %}— (sampled after launch){% endif %}</span>.
+        {% translate "Plan: baseline" %} <span class="data">{% if campaign.baseline_value is not None %}{{ campaign.baseline_value|floatformat:"-2" }}{% else %}—{% endif %}</span>
+        → {% translate "end" %} <span class="data">{% if chart.expected %}{{ chart.expected|last|floatformat:"-2" }}{% else %}—{% endif %}</span>.
+        {% translate "Measured now:" %} <span class="data">{% if current is not None %}{{ current|floatformat:"-2" }}{% else %}{% translate "— (sampled after launch)" %}{% endif %}</span>.
       </p>
     </div>
   </section>
@@ -55,14 +55,14 @@
 {% comment %}Milestone timeline — DAG order, glyph+word status.{% endcomment %}
 <section class="panel mt-5 overflow-hidden">
   <div class="flex items-center justify-between border-b border-line px-4 py-3">
-    <h2 class="eyebrow text-faint">Milestones · DAG order</h2>
-    <span class="data text-xs text-faint">{{ campaign.progress_pct }}% complete</span>
+    <h2 class="eyebrow text-faint">{% translate "Milestones · DAG order" %}</h2>
+    <span class="data text-xs text-faint">{% blocktranslate with pct=campaign.progress_pct %}{{ pct }}% complete{% endblocktranslate %}</span>
   </div>
   <div class="divide-y divide-line/40">
     {% for m in milestones %}
       {% include "command_intel/_milestone_row.html" with m=m %}
     {% empty %}
-      <p class="px-4 py-8 text-center text-sm text-faint">No milestones — this campaign has no sequenced steps.</p>
+      <p class="px-4 py-8 text-center text-sm text-faint">{% translate "No milestones — this campaign has no sequenced steps." %}</p>
     {% endfor %}
   </div>
 </section>
@@ -74,16 +74,16 @@
     <form method="post" action="{% url 'command_intel:campaign_launch' campaign.pk %}">
       {% csrf_token %}
       <input type="hidden" name="next" value="{{ request.path }}">
-      <button class="btn-gold">⚡ Launch campaign</button>
+      <button class="btn-gold">⚡ {% translate "Launch campaign" %}</button>
     </form>
   {% endif %}
-  <button type="button" @click="abandoning = !abandoning" :aria-expanded="abandoning" class="btn-danger">✕ Abandon…</button>
+  <button type="button" @click="abandoning = !abandoning" :aria-expanded="abandoning" class="btn-danger">✕ {% translate "Abandon…" %}</button>
   <form method="post" action="{% url 'command_intel:campaign_abandon' campaign.pk %}" x-show="abandoning" x-cloak x-transition.opacity class="w-full max-w-lg">
     {% csrf_token %}
     <input type="hidden" name="next" value="{{ request.path }}">
-    <label class="label" for="camp-abandon">Reason for abandoning (recorded for audit)</label>
-    <textarea id="camp-abandon" name="note" rows="2" class="input-field mt-1 w-full text-xs" placeholder="Why this campaign is being stood down…"></textarea>
-    <button class="btn-danger mt-2 !py-1.5 !text-xs">Confirm abandon</button>
+    <label class="label" for="camp-abandon">{% translate "Reason for abandoning (recorded for audit)" %}</label>
+    <textarea id="camp-abandon" name="note" rows="2" class="input-field mt-1 w-full text-xs" placeholder="{% translate 'Why this campaign is being stood down…' %}"></textarea>
+    <button class="btn-danger mt-2 !py-1.5 !text-xs">{% translate "Confirm abandon" %}</button>
   </form>
 </section>
 {% endif %}

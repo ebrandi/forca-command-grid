@@ -1,29 +1,29 @@
 {% extends "base.html" %}
-{% load eve %}
-{% block title %}Skill gap · [FORCA] Command Grid{% endblock %}
+{% load eve i18n %}
+{% block title %}{% translate "Skill gap" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
-{% if features.recommendations %}<a href="{% url 'recommendations:officer' %}" class="text-xs text-faint hover:text-gold">← Command</a>{% endif %}
+{% if features.recommendations %}<a href="{% url 'recommendations:officer' %}" class="text-xs text-faint hover:text-gold">← {% translate "Command" %}</a>{% endif %}
 
 <header class="mt-2 mb-6">
-  <p class="eyebrow text-gold">Leadership</p>
-  <h1 class="mt-1 text-3xl font-bold text-ink">Skill gap intelligence</h1>
-  <p class="mt-1 text-sm text-faint">What's blocking the most pilots, and who we can train into each doctrine fastest — across {{ member_count }} corp character{{ member_count|pluralize }}.</p>
+  <p class="eyebrow text-gold">{% translate "Leadership" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Skill gap intelligence" %}</h1>
+  <p class="mt-1 text-sm text-faint">{% blocktranslate count count=member_count %}What's blocking the most pilots, and who we can train into each doctrine fastest — across {{ count }} corp character.{% plural %}What's blocking the most pilots, and who we can train into each doctrine fastest — across {{ count }} corp characters.{% endblocktranslate %}</p>
 </header>
 
 <div class="grid gap-5 lg:grid-cols-3">
   <!-- Bottlenecks -->
   <section class="panel overflow-hidden lg:col-span-1">
-    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Bottleneck skills</h2></div>
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">{% translate "Bottleneck skills" %}</h2></div>
     <div class="divide-y divide-line/40">
       {% for b in bottlenecks %}
         <div class="flex items-center gap-3 px-4 py-2.5">
           <img src="{% eve_type_icon b.skill_type_id 32 %}" alt="" loading="lazy" class="h-7 w-7 rounded-sm">
           <span class="min-w-0 flex-1 truncate text-sm text-ink">{{ b.name }}</span>
           <span class="data text-xs text-gold">{{ b.members }}</span>
-          <span class="text-xs text-faint">blocked</span>
+          <span class="text-xs text-faint">{% translate "blocked" %}</span>
         </div>
       {% empty %}
-        <p class="px-4 py-6 text-center text-sm text-faint">No gaps found — or no member skills imported yet.</p>
+        <p class="px-4 py-6 text-center text-sm text-faint">{% translate "No gaps found — or no member skills imported yet." %}</p>
       {% endfor %}
     </div>
   </section>
@@ -33,8 +33,8 @@
     {% for row in doctrines %}
       <div class="panel overflow-hidden">
         <div class="flex items-center justify-between border-b border-line px-4 py-3">
-          <h2 class="eyebrow">Fastest into <span class="text-gold">{{ row.doctrine.name }}</span></h2>
-          <a href="{% url 'doctrines:readiness' row.doctrine.id %}" class="text-xs text-faint hover:text-gold">Coverage →</a>
+          <h2 class="eyebrow">{% blocktranslate with doctrine=row.doctrine.name %}Fastest into <span class="text-gold">{{ doctrine }}</span>{% endblocktranslate %}</h2>
+          <a href="{% url 'doctrines:readiness' row.doctrine.id %}" class="text-xs text-faint hover:text-gold">{% translate "Coverage" %} →</a>
         </div>
         <div class="divide-y divide-line/40">
           {% for c in row.candidates %}
@@ -47,7 +47,7 @@
         </div>
       </div>
     {% empty %}
-      <div class="panel p-6 text-center text-sm text-faint">No candidate doctrines — every active doctrine is either fully covered or has no near-ready pilots.</div>
+      <div class="panel p-6 text-center text-sm text-faint">{% translate "No candidate doctrines — every active doctrine is either fully covered or has no near-ready pilots." %}</div>
     {% endfor %}
   </section>
 </div>

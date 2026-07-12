@@ -1,4 +1,5 @@
 {% load eve %}
+{% load i18n %}
 <div class="panel overflow-hidden">
   <div class="flex">
     <span class="w-1 shrink-0 {% if rec.severity >= 50 %}bg-loss{% elif rec.severity >= 20 %}bg-gold{% else %}bg-cyan{% endif %}"></span>
@@ -19,29 +20,29 @@
       <div class="min-w-0 flex-1">
         <div class="flex items-start justify-between gap-3">
           <span class="chip">{{ rec.get_type_display }}</span>
-          <span class="data shrink-0 rounded px-2 py-0.5 text-xs {% if rec.severity >= 50 %}bg-loss/15 text-loss{% else %}bg-panel2 text-faint{% endif %}" title="severity {{ rec.severity }} · confidence {{ rec.get_confidence_display }}{% if rec.isk_impact %} · {{ rec.isk_impact|isk }} at stake{% endif %}">rank {{ rec.rank|default:rec.severity }}</span>
+          <span class="data shrink-0 rounded px-2 py-0.5 text-xs {% if rec.severity >= 50 %}bg-loss/15 text-loss{% else %}bg-panel2 text-faint{% endif %}" title="{% blocktranslate with sev=rec.severity conf=rec.get_confidence_display %}severity {{ sev }} · confidence {{ conf }}{% endblocktranslate %}{% if rec.isk_impact %} · {% blocktranslate with stake=rec.isk_impact|isk %}{{ stake }} at stake{% endblocktranslate %}{% endif %}">{% blocktranslate with r=rec.rank|default:rec.severity %}rank {{ r }}{% endblocktranslate %}</span>
         </div>
         <p class="mt-2 text-ink">{{ rec.message }}</p>
-        <p class="mt-1 text-xs text-faint">{{ rec.logic_summary }} · confidence {{ rec.get_confidence_display }} · as of {{ rec.data_freshness|date:"Y-m-d H:i" }}</p>
+        <p class="mt-1 text-xs text-faint">{{ rec.logic_summary }} · {% blocktranslate with conf=rec.get_confidence_display %}confidence {{ conf }}{% endblocktranslate %} · {% blocktranslate with fresh=rec.data_freshness|date:"Y-m-d H:i" %}as of {{ fresh }}{% endblocktranslate %}</p>
         <form method="post" action="{% url 'recommendations:act' rec.pk %}" class="mt-3 flex gap-2">{% csrf_token %}
-          <button name="action" value="acknowledge" class="btn-ghost !py-1 !text-xs">Acknowledge</button>
-          <button name="action" value="action" class="rounded-md bg-kill/90 px-3 py-1 text-xs font-semibold text-space hover:bg-kill transition">Mark actioned</button>
-          <button name="action" value="dismiss" class="btn-ghost !py-1 !text-xs hover:!text-loss">Dismiss</button>
+          <button name="action" value="acknowledge" class="btn-ghost !py-1 !text-xs">{% translate "Acknowledge" %}</button>
+          <button name="action" value="action" class="rounded-md bg-kill/90 px-3 py-1 text-xs font-semibold text-space hover:bg-kill transition">{% translate "Mark actioned" %}</button>
+          <button name="action" value="dismiss" class="btn-ghost !py-1 !text-xs hover:!text-loss">{% translate "Dismiss" %}</button>
         </form>
         {% if rec.required_permission != 'member' %}
         {% with item=rec.action_items.all.0 %}
         <form method="post" action="{% url 'recommendations:link' rec.pk %}" class="mt-2 flex flex-wrap items-center gap-2 text-xs">{% csrf_token %}
-          <span class="text-faint">Link to:</span>
-          <select name="project_id" class="input-field !py-1 !text-xs" aria-label="Link to project">
-            <option value="">— project —</option>
+          <span class="text-faint">{% translate "Link to:" %}</span>
+          <select name="project_id" class="input-field !py-1 !text-xs" aria-label="{% translate 'Link to project' %}">
+            <option value="">{% translate "— project —" %}</option>
             {% for p in projects %}<option value="{{ p.pk }}" {% if item and item.linked_project_id == p.pk %}selected{% endif %}>{{ p.name }}</option>{% endfor %}
           </select>
-          <select name="haul_task_id" class="input-field !py-1 !text-xs" aria-label="Link to haul task">
-            <option value="">— haul —</option>
+          <select name="haul_task_id" class="input-field !py-1 !text-xs" aria-label="{% translate 'Link to haul task' %}">
+            <option value="">{% translate "— haul —" %}</option>
             {% for h in hauls %}<option value="{{ h.pk }}" {% if item and item.linked_hauling_task_id == h.pk %}selected{% endif %}>#{{ h.pk }} {% type_name h.type_id %}</option>{% endfor %}
           </select>
-          <button class="btn-ghost !py-1 !text-xs">Link</button>
-          {% if item and item.linked_project_id or item and item.linked_hauling_task_id %}<span class="chip !border-cyan/40 !text-cyan">linked</span>{% endif %}
+          <button class="btn-ghost !py-1 !text-xs">{% translate "Link" %}</button>
+          {% if item and item.linked_project_id or item and item.linked_hauling_task_id %}<span class="chip !border-cyan/40 !text-cyan">{% translate "linked" %}</span>{% endif %}
         </form>
         {% endwith %}
         {% endif %}

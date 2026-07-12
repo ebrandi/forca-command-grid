@@ -3,33 +3,34 @@ from __future__ import annotations
 
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from core.mixins import TimeStampedModel
 
 
 class Recommendation(TimeStampedModel):
     class Type(models.TextChoices):
-        DOCTRINE_READINESS = "doctrine_readiness", "Doctrine readiness"
-        SKILL_TRAINING = "skill_training", "Skill training"
-        STOCK_SHORTAGE = "stock_shortage", "Stock shortage"
-        BUILD_VS_BUY = "build_vs_buy", "Build vs buy"
-        MARKET_SEEDING = "market_seeding", "Market seeding"
-        HAULING = "hauling", "Hauling"
-        NEWBRO_NEXT_STEP = "newbro_next_step", "Newbro next step"
-        COMBAT_LOSS_PATTERN = "combat_loss_pattern", "Combat loss pattern"
-        OFFICER_ACTION = "officer_action", "Officer action"
+        DOCTRINE_READINESS = "doctrine_readiness", _("Doctrine readiness")
+        SKILL_TRAINING = "skill_training", _("Skill training")
+        STOCK_SHORTAGE = "stock_shortage", _("Stock shortage")
+        BUILD_VS_BUY = "build_vs_buy", _("Build vs buy")
+        MARKET_SEEDING = "market_seeding", _("Market seeding")
+        HAULING = "hauling", _("Hauling")
+        NEWBRO_NEXT_STEP = "newbro_next_step", _("Newbro next step")
+        COMBAT_LOSS_PATTERN = "combat_loss_pattern", _("Combat loss pattern")
+        OFFICER_ACTION = "officer_action", _("Officer action")
 
     class Confidence(models.TextChoices):
-        HIGH = "high", "High"
-        MEDIUM = "medium", "Medium"
-        LOW = "low", "Low"
+        HIGH = "high", _("High")
+        MEDIUM = "medium", _("Medium")
+        LOW = "low", _("Low")
 
     class State(models.TextChoices):
-        NEW = "new", "New"
-        ACKNOWLEDGED = "acknowledged", "Acknowledged"
-        ACTIONED = "actioned", "Actioned"
-        DISMISSED = "dismissed", "Dismissed"
-        SUPERSEDED = "superseded", "Superseded"
+        NEW = "new", _("New")
+        ACKNOWLEDGED = "acknowledged", _("Acknowledged")
+        ACTIONED = "actioned", _("Actioned")
+        DISMISSED = "dismissed", _("Dismissed")
+        SUPERSEDED = "superseded", _("Superseded")
 
     type = models.CharField(max_length=32, choices=Type.choices, db_index=True)
     subject_type = models.CharField(max_length=32, blank=True)
@@ -64,7 +65,7 @@ class Recommendation(TimeStampedModel):
 
 class Alert(TimeStampedModel):
     class Channel(models.TextChoices):
-        IN_APP = "in_app", "In-app"
+        IN_APP = "in_app", _("In-app")
 
     recommendation = models.ForeignKey(
         Recommendation, on_delete=models.CASCADE, null=True, blank=True, related_name="alerts"
@@ -79,10 +80,10 @@ class Alert(TimeStampedModel):
 
 class ActionQueueItem(TimeStampedModel):
     class Status(models.TextChoices):
-        OPEN = "open", "Open"
-        IN_PROGRESS = "in_progress", "In progress"
-        DONE = "done", "Done"
-        DISMISSED = "dismissed", "Dismissed"
+        OPEN = "open", _("Open")
+        IN_PROGRESS = "in_progress", _("In progress")
+        DONE = "done", _("Done")
+        DISMISSED = "dismissed", _("Dismissed")
 
     recommendation = models.ForeignKey(
         Recommendation, on_delete=models.CASCADE, related_name="action_items"
@@ -144,12 +145,12 @@ class RecommendationConfig(TimeStampedModel):
 
     is_active = models.BooleanField(default=True)
     disabled_evaluators = models.JSONField(
-        default=list, blank=True, help_text="Evaluator keys to skip (see the tuning console)."
+        default=list, blank=True, help_text=_("Evaluator keys to skip (see the tuning console).")
     )
     combat_loss_window_days = models.PositiveSmallIntegerField(default=7)
     combat_loss_threshold = models.PositiveSmallIntegerField(default=3)
     min_severity = models.PositiveSmallIntegerField(
-        default=0, help_text="Drop drafts scoring below this severity (0 = keep all)."
+        default=0, help_text=_("Drop drafts scoring below this severity (0 = keep all).")
     )
 
     def __str__(self) -> str:

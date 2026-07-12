@@ -1,38 +1,39 @@
 {% extends "base.html" %}
 {% load eve %}
-{% block title %}Manufacturing calculator · Industry{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Manufacturing calculator" %} · {% translate "Industry" %}{% endblock %}
 {% block content %}
 
-<a href="{% url 'industry:home' %}" class="text-xs text-faint hover:text-gold">← Industry Center</a>
+<a href="{% url 'industry:home' %}" class="text-xs text-faint hover:text-gold">← {% translate "Industry Center" %}</a>
 <header class="mt-3 mb-5">
-  <p class="eyebrow">Industry &amp; Economy</p>
-  <h1 class="mt-1 text-2xl font-bold text-ink">Manufacturing calculator</h1>
-  <p class="mt-1 max-w-2xl text-sm text-faint">Pick an item and we'll work out the full material bill, the job fee, and the profit at current Jita prices.</p>
+  <p class="eyebrow">{% translate "Industry &amp; Economy" %}</p>
+  <h1 class="mt-1 text-2xl font-bold text-ink">{% translate "Manufacturing calculator" %}</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Pick an item and we'll work out the full material bill, the job fee, and the profit at current Jita prices." %}</p>
 </header>
 
 <form method="get" class="panel mb-5 p-5">
   <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
     <div class="lg:col-span-2">
-      <label class="label">Item to build</label>
-      {% include "components/_type_picker.html" with field="type_id" endpoint="/industry/type-search/?buildable=1" placeholder="Search a ship, module, component…" initial_id=stype.type_id initial_name=stype.name %}
+      <label class="label">{% translate "Item to build" %}</label>
+      {% translate "Search a ship, module, component…" as pick_ph %}{% include "components/_type_picker.html" with field="type_id" endpoint="/industry/type-search/?buildable=1" placeholder=pick_ph initial_id=stype.type_id initial_name=stype.name %}
     </div>
-    <div><label class="label" for="c_runs">Runs</label><input id="c_runs" type="number" name="runs" min="1" value="{{ runs }}" class="input-field"></div>
-    <div><label class="label" for="c_me">ME %</label><input id="c_me" type="number" name="me" min="0" max="10" value="{{ me }}" class="input-field"></div>
-    <div><label class="label" for="c_structure">Structure <span class="text-faint">material rig</span></label>
+    <div><label class="label" for="c_runs">{% translate "Runs" %}</label><input id="c_runs" type="number" name="runs" min="1" value="{{ runs }}" class="input-field"></div>
+    <div><label class="label" for="c_me">{% translate "ME %" %}</label><input id="c_me" type="number" name="me" min="0" max="10" value="{{ me }}" class="input-field"></div>
+    <div><label class="label" for="c_structure">{% translate "Structure" %} <span class="text-faint">{% translate "material rig" %}</span></label>
       <select id="c_structure" name="structure" class="input-field">
         {% for key, label, bonus in structure_presets %}<option value="{{ key }}" {% if structure == key %}selected{% endif %}>{{ label }}</option>{% endfor %}
       </select>
     </div>
-    <div><label class="label" for="c_strategy">Strategy</label>
+    <div><label class="label" for="c_strategy">{% translate "Strategy" %}</label>
       <select id="c_strategy" name="strategy" class="input-field">
-        <option value="build_vs_buy" {% if strategy == 'build_vs_buy' %}selected{% endif %}>Build when cheaper</option>
-        <option value="build_to_minerals" {% if strategy == 'build_to_minerals' %}selected{% endif %}>Build all the way down</option>
+        <option value="build_vs_buy" {% if strategy == 'build_vs_buy' %}selected{% endif %}>{% translate "Build when cheaper" %}</option>
+        <option value="build_to_minerals" {% if strategy == 'build_to_minerals' %}selected{% endif %}>{% translate "Build all the way down" %}</option>
       </select>
     </div>
   </div>
   <div class="mt-3 flex flex-wrap items-center gap-4">
-    {% if inv_plan %}<label class="flex items-center gap-2 text-sm text-muted"><input type="checkbox" name="invent" value="1" {% if fold_invention %}checked{% endif %}> Include T2 invention cost ({{ inv_plan.cost_per_run|isk }} ISK/unit)</label>{% endif %}
-    <button class="btn-gold ml-auto text-sm">Calculate</button>
+    {% if inv_plan %}<label class="flex items-center gap-2 text-sm text-muted"><input type="checkbox" name="invent" value="1" {% if fold_invention %}checked{% endif %}> {% blocktranslate with cost=inv_plan.cost_per_run|isk %}Include T2 invention cost ({{ cost }} ISK/unit){% endblocktranslate %}</label>{% endif %}
+    <button class="btn-gold ml-auto text-sm">{% translate "Calculate" %}</button>
   </div>
 </form>
 
@@ -46,46 +47,46 @@
   {% endif %}
 
   <section class="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-    <div class="panel p-4"><p class="eyebrow text-faint">Total cost</p><p class="data mt-1 text-2xl font-bold text-ink">{{ estimate.total_cost|isk }}</p></div>
-    <div class="panel p-4"><p class="eyebrow text-faint">Sell value</p><p class="data mt-1 text-2xl font-bold text-cyan">{{ estimate.revenue_gross|isk }}</p></div>
+    <div class="panel p-4"><p class="eyebrow text-faint">{% translate "Total cost" %}</p><p class="data mt-1 text-2xl font-bold text-ink">{{ estimate.total_cost|isk }}</p></div>
+    <div class="panel p-4"><p class="eyebrow text-faint">{% translate "Sell value" %}</p><p class="data mt-1 text-2xl font-bold text-cyan">{{ estimate.revenue_gross|isk }}</p></div>
     <div class="panel p-4">
-      <p class="eyebrow text-faint">Net profit</p>
+      <p class="eyebrow text-faint">{% translate "Net profit" %}</p>
       <p class="data mt-1 text-2xl font-bold {% if estimate.net_profit > 0 %}text-kill{% else %}text-loss{% endif %}">{{ estimate.net_profit|isk }}</p>
-      {% if estimate.margin is not None %}<p class="mt-0.5 text-[11px] text-faint">{% widthratio estimate.margin 1 100 %}% margin</p>{% endif %}
+      {% if estimate.margin is not None %}<p class="mt-0.5 text-[11px] text-faint">{% widthratio estimate.margin 1 100 %}% {% translate "margin" %}</p>{% endif %}
     </div>
     <div class="panel p-4">
-      <p class="eyebrow text-faint">Per unit</p>
+      <p class="eyebrow text-faint">{% translate "Per unit" %}</p>
       <p class="data mt-1 text-2xl font-bold text-gold">{{ estimate.profit_per_unit|isk }}</p>
-      <p class="mt-0.5 text-[11px] text-faint">{{ estimate.total_units }} unit{{ estimate.total_units|pluralize }} · break-even {{ estimate.break_even_price|isk }}</p>
+      <p class="mt-0.5 text-[11px] text-faint">{% blocktranslate count n=estimate.total_units %}{{ n }} unit{% plural %}{{ n }} units{% endblocktranslate %} · {% translate "break-even" %} {{ estimate.break_even_price|isk }}</p>
     </div>
   </section>
 
   <div class="grid gap-4 lg:grid-cols-3">
     <!-- Cost breakdown -->
     <section class="panel p-5">
-      <h2 class="eyebrow mb-3 text-gold">Cost breakdown</h2>
+      <h2 class="eyebrow mb-3 text-gold">{% translate "Cost breakdown" %}</h2>
       <dl class="space-y-1.5 text-sm">
-        <div class="flex justify-between"><dt class="text-faint">Materials (buy)</dt><dd class="data text-ink">{{ estimate.material_cost|isk }}</dd></div>
-        <div class="flex justify-between"><dt class="text-faint">Job install fee</dt><dd class="data text-ink">{{ estimate.install_fee|isk }}</dd></div>
-        {% if estimate.invention_cost %}<div class="flex justify-between"><dt class="text-faint">Invention</dt><dd class="data text-ink">{{ estimate.invention_cost|isk }}</dd></div>{% endif %}
-        <div class="flex justify-between border-t border-line/60 pt-1.5"><dt class="font-semibold text-ink">Total</dt><dd class="data font-semibold text-ink">{{ estimate.total_cost|isk }}</dd></div>
+        <div class="flex justify-between"><dt class="text-faint">{% translate "Materials (buy)" %}</dt><dd class="data text-ink">{{ estimate.material_cost|isk }}</dd></div>
+        <div class="flex justify-between"><dt class="text-faint">{% translate "Job install fee" %}</dt><dd class="data text-ink">{{ estimate.install_fee|isk }}</dd></div>
+        {% if estimate.invention_cost %}<div class="flex justify-between"><dt class="text-faint">{% translate "Invention" %}</dt><dd class="data text-ink">{{ estimate.invention_cost|isk }}</dd></div>{% endif %}
+        <div class="flex justify-between border-t border-line/60 pt-1.5"><dt class="font-semibold text-ink">{% translate "Total" %}</dt><dd class="data font-semibold text-ink">{{ estimate.total_cost|isk }}</dd></div>
       </dl>
       <div class="mt-3 space-y-1 text-[11px] text-faint">
-        <p>Runs: {{ estimate.runs }} · output/run: {{ estimate.output_per_run }}</p>
-        {% if estimate.production_seconds %}<p>Est. build time: {{ estimate.production_seconds|duration }} (TE {{ estimate.te }})</p>{% endif %}
-        <p>Hauling volume: {{ estimate.hauling_volume_m3 }} m³</p>
+        <p>{% translate "Runs:" %} {{ estimate.runs }} · {% translate "output/run:" %} {{ estimate.output_per_run }}</p>
+        {% if estimate.production_seconds %}<p>{% translate "Est. build time:" %} {{ estimate.production_seconds|duration }} (TE {{ estimate.te }})</p>{% endif %}
+        <p>{% translate "Hauling volume:" %} {{ estimate.hauling_volume_m3 }} m³</p>
       </div>
     </section>
 
     <!-- Materials -->
     <section class="panel overflow-hidden lg:col-span-2">
-      <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">Shopping list ({{ estimate.materials|length }} materials)</h2></div>
+      <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">{% blocktranslate with n=estimate.materials|length %}Shopping list ({{ n }} materials){% endblocktranslate %}</h2></div>
       <div class="overflow-x-auto"><table class="w-full text-sm">
         <thead class="text-left text-faint"><tr class="border-b border-line/60">
-          <th class="px-4 py-2 font-medium">Material</th>
-          <th class="px-4 py-2 text-right font-medium">Need</th>
-          <th class="px-4 py-2 text-right font-medium">To buy</th>
-          <th class="px-4 py-2 text-right font-medium">Cost</th>
+          <th class="px-4 py-2 font-medium">{% translate "Material" %}</th>
+          <th class="px-4 py-2 text-right font-medium">{% translate "Need" %}</th>
+          <th class="px-4 py-2 text-right font-medium">{% translate "To buy" %}</th>
+          <th class="px-4 py-2 text-right font-medium">{% translate "Cost" %}</th>
         </tr></thead>
         <tbody>
           {% for m in estimate.materials %}
@@ -101,11 +102,11 @@
     </section>
   </div>
 
-  <p class="mt-4 text-center text-[11px] text-faint">{{ estimate.assumptions.note }} Sales tax {% widthratio estimate.assumptions.sales_tax 1 100 %}%, broker {% widthratio estimate.assumptions.broker_fee 1 100 %}%, cost index {% widthratio estimate.assumptions.system_cost_index 1 100 %}%.</p>
+  <p class="mt-4 text-center text-[11px] text-faint">{{ estimate.assumptions.note }} {% translate "Sales tax" %} {% widthratio estimate.assumptions.sales_tax 1 100 %}%, {% translate "broker" %} {% widthratio estimate.assumptions.broker_fee 1 100 %}%, {% translate "cost index" %} {% widthratio estimate.assumptions.system_cost_index 1 100 %}%.</p>
 {% else %}
   <div class="panel px-4 py-16 text-center">
-    <p class="font-display text-lg text-muted">Pick an item to build</p>
-    <p class="mt-1 text-sm text-faint">Search above for anything with a manufacturing or reaction recipe.</p>
+    <p class="font-display text-lg text-muted">{% translate "Pick an item to build" %}</p>
+    <p class="mt-1 text-sm text-faint">{% translate "Search above for anything with a manufacturing or reaction recipe." %}</p>
   </div>
 {% endif %}
 {% endblock %}

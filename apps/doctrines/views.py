@@ -8,6 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
 from core import rbac
@@ -341,7 +342,7 @@ def supply_task(request: HttpRequest) -> HttpResponse:
     action = request.POST.get("action") or "buy"
     task_type = {"build": Task.Type.BUILD, "buy": Task.Type.BUY}.get(action, Task.Type.BUY)
     if not (type_id and title):
-        messages.error(request, "Incomplete supply line.")
+        messages.error(request, _("Incomplete supply line."))
         return redirect("doctrines:list")
     related_type = "supply"
     if not Task.objects.filter(
@@ -353,9 +354,9 @@ def supply_task(request: HttpRequest) -> HttpResponse:
             priority=8, created_by=request.user,
             related_type=related_type, related_id=type_id,
         )
-        messages.success(request, "Task created — open to claim.")
+        messages.success(request, _("Task created — open to claim."))
     else:
-        messages.info(request, "A task for that item is already open.")
+        messages.info(request, _("A task for that item is already open."))
     from core.redirects import safe_next
     return redirect(safe_next(request, request.POST.get("next"), "doctrines:list"))
 

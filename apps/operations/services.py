@@ -196,11 +196,13 @@ def announce_structure_timer(timer, *, channels=None, created_by=None):
     """Best-effort corp alert for a timer, fanned across every armed channel (or the
     ``channels`` subset) via Pingboard. ``channels=None`` reaches every armed channel."""
     try:
+        from django.utils import formats
+
         from apps.pingboard import services as pingboard
 
         body = (
             f"⏰ **Timer** — {timer.name} ({timer.get_timer_type_display()}, "
-            f"{timer.get_side_display()})\n🕒 {timer.exits_at:%a %d %b · %H:%M} EVE"
+            f"{timer.get_side_display()})\n🕒 {formats.date_format(timer.exits_at, 'D d M · H:i')} EVE"
             + (f" · {timer.system_name}" if timer.system_name else "")
         )
         # An officer announcing a timer wants the whole corp to rally, so force the corp

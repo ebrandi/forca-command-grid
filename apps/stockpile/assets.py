@@ -11,6 +11,7 @@ from __future__ import annotations
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from apps.sso.models import EveCharacter
 from apps.sso.token_service import NoValidToken, get_valid_access_token
@@ -133,13 +134,13 @@ def import_corporation_assets(corp_id: int | None = None, client: ESIClient | No
     missing grant — returns a status dict the UI can act on."""
     corp_id = corp_id or settings.FORCA_HOME_CORP_ID
     if not corp_id:
-        return {"status": "no_corp", "message": "No home corporation configured."}
+        return {"status": "no_corp", "message": _("No home corporation configured.")}
 
     character = find_director_token_character(corp_id)
     if character is None:
         return {
             "status": "no_scope",
-            "message": (
+            "message": _(
                 "No Director has granted corp-asset access yet. A CEO/Director must "
                 "re-authorise with the corp-assets scope."
             ),
@@ -150,7 +151,7 @@ def import_corporation_assets(corp_id: int | None = None, client: ESIClient | No
         access = get_valid_access_token(character, [CORP_ASSETS_SCOPE])
         assets = client.get_paged(f"/corporations/{corp_id}/assets/", token=access)
     except (NoValidToken, ESIError) as exc:
-        return {"status": "error", "message": f"Could not read corp assets: {exc}"}
+        return {"status": "error", "message": _("Could not read corp assets: %(error)s") % {"error": exc}}
 
     struct_token = _structure_token(character)
     grouped = _aggregate_by_location(assets, client, struct_token)
@@ -162,7 +163,8 @@ def import_corporation_assets(corp_id: int | None = None, client: ESIClient | No
                 types=types, locations=len(grouped))
     return {
         "status": "ok",
-        "message": f"Imported {types} asset stacks across {len(grouped)} locations from {character.name}.",
+        "message": _("Imported %(types)s asset stacks across %(locations)s locations from %(character)s.")
+        % {"types": types, "locations": len(grouped), "character": character.name},
         "types": types, "locations": len(grouped), "character": character.name,
     }
 
@@ -175,12 +177,12 @@ def import_character_assets(character: EveCharacter, client: ESIClient | None = 
     except NoValidToken:
         return {
             "status": "no_scope",
-            "message": "Grant personal-asset access first (ESI Scopes → Track my assets).",
+            "message": _("Grant personal-asset access first (ESI Scopes → Track my assets)."),
         }
     try:
         assets = client.get_paged(f"/characters/{character.character_id}/assets/", token=access)
     except ESIError as exc:
-        return {"status": "error", "message": f"Could not read your assets: {exc}"}
+        return {"status": "error", "message": _("Could not read your assets: %(error)s") % {"error": exc}}
 
     struct_token = _structure_token(character)
     grouped = _aggregate_by_location(assets, client, struct_token)
@@ -188,7 +190,8 @@ def import_character_assets(character: EveCharacter, client: ESIClient | None = 
     _store_fitted_ships(character, extract_fitted_ships(assets))
     return {
         "status": "ok",
-        "message": f"Imported {types} asset stacks across {len(grouped)} locations.",
+        "message": _("Imported %(types)s asset stacks across %(locations)s locations.")
+        % {"types": types, "locations": len(grouped)},
         "types": types, "locations": len(grouped),
     }
 

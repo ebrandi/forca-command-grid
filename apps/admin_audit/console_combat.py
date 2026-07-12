@@ -19,6 +19,7 @@ from django.db.models import Q
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
 from apps.killboard import ranks, rewards
@@ -65,13 +66,13 @@ class CombatRankForm(forms.ModelForm):
     def clean_name(self) -> str:
         name = (self.cleaned_data.get("name") or "").strip()
         if not name:
-            raise forms.ValidationError("A rank title can't be empty.")
+            raise forms.ValidationError(_("A rank title can't be empty."))
         return name
 
     def clean_reward_amount(self):
         amt = self.cleaned_data.get("reward_amount") or Decimal("0")
         if amt < 0:
-            raise forms.ValidationError("Reward amount can't be negative.")
+            raise forms.ValidationError(_("Reward amount can't be negative."))
         return amt
 
     def clean(self):
@@ -84,7 +85,7 @@ class CombatRankForm(forms.ModelForm):
             if self.instance and self.instance.pk:
                 clash = clash.exclude(pk=self.instance.pk)
             if clash.exists():
-                self.add_error("min_kills", "Another rank already uses this threshold for this metric.")
+                self.add_error("min_kills", _("Another rank already uses this threshold for this metric."))
         # A reward-granting rank must have a valid reward configured.
         if cleaned.get("grants_reward"):
             # Rewards are kills-only by design — the engine scans metric=KILLS. Reject a
@@ -92,16 +93,16 @@ class CombatRankForm(forms.ModelForm):
             if metric is not None and metric != RankMetric.KILLS:
                 self.add_error(
                     "grants_reward",
-                    "Rewards apply to the all-time PvP kills track only — "
-                    "the support-role tracks are recognition-only.",
+                    _("Rewards apply to the all-time PvP kills track only — "
+                      "the support-role tracks are recognition-only."),
                 )
             rtype = cleaned.get("reward_type")
             if rtype in (None, RewardType.NONE):
-                self.add_error("reward_type", "Choose a reward type, or untick “grants reward”.")
+                self.add_error("reward_type", _("Choose a reward type, or untick “grants reward”."))
             elif rtype == RewardType.ITEM and not cleaned.get("reward_item_type_id"):
-                self.add_error("reward_item_type_id", "An item reward needs an EVE type id.")
+                self.add_error("reward_item_type_id", _("An item reward needs an EVE type id."))
             elif rtype in (RewardType.ISK, RewardType.PLEX) and not (cleaned.get("reward_amount") or 0) > 0:
-                self.add_error("reward_amount", "An ISK/PLEX reward needs a positive amount.")
+                self.add_error("reward_amount", _("An ISK/PLEX reward needs a positive amount."))
         return cleaned
 
 
@@ -126,9 +127,9 @@ class RankRewardSettingsForm(forms.ModelForm):
         for f in ("monthly_budget", "max_income_pct", "monthly_cap", "plex_isk_rate"):
             v = cleaned.get(f)
             if v is not None and v < 0:
-                self.add_error(f, "Must be zero or positive.")
+                self.add_error(f, _("Must be zero or positive."))
         if (cleaned.get("max_income_pct") or 0) > 100:
-            self.add_error("max_income_pct", "Can't exceed 100%.")
+            self.add_error("max_income_pct", _("Can't exceed 100%."))
         return cleaned
 
 
@@ -154,9 +155,9 @@ def newbro_settings(request: HttpRequest) -> HttpResponse:
         cache.delete("killboard:newbro_soften")  # take effect immediately, not after the TTL
         audit_log(request.user, "combat.newbro.settings", target_type="newbro_config",
                   target_id="1", ip=client_ip(request))
-        messages.success(request, "Newbro settings saved.")
+        messages.success(request, _("Newbro settings saved."))
     else:
-        messages.error(request, "Please correct the newbro settings.")
+        messages.error(request, _("Please correct the newbro settings."))
     return redirect("admin_audit:combat_reward_settings")
 
 
@@ -222,9 +223,9 @@ def combat_rank_edit(request: HttpRequest, pk: int | None = None) -> HttpRespons
                       target_id=str(rank.pk), ip=client_ip(request),
                       metadata={"name": rank.name, "min_kills": rank.min_kills,
                                 "grants_reward": rank.grants_reward})
-            messages.success(request, f"Rank “{rank.name}” saved.")
+            messages.success(request, _("Rank “%(name)s” saved.") % {"name": rank.name})
             return redirect("admin_audit:combat_ranks")
-        messages.error(request, "Please correct the errors below.")
+        messages.error(request, _("Please correct the errors below."))
     else:
         form = CombatRankForm(instance=instance)
 
@@ -254,7 +255,7 @@ def combat_rank_delete(request: HttpRequest, pk: int) -> HttpResponse:
     ranks.invalidate_ladder_cache()
     audit_log(request.user, "combat.rank.delete", target_type="combat_rank",
               target_id=str(pk), ip=client_ip(request), metadata={"name": name})
-    messages.success(request, f"Rank “{name}” removed.")
+    messages.success(request, _("Rank “%(name)s” removed.") % {"name": name})
     return redirect("admin_audit:combat_ranks")
 
 
@@ -273,9 +274,9 @@ def combat_reward_settings(request: HttpRequest) -> HttpResponse:
             obj.save()
             audit_log(request.user, "combat.reward.settings", target_type="rank_reward_settings",
                       target_id=str(obj.pk), ip=client_ip(request))
-            messages.success(request, "Reward settings saved.")
+            messages.success(request, _("Reward settings saved."))
             return redirect("admin_audit:combat_reward_settings")
-        messages.error(request, "Please correct the errors below.")
+        messages.error(request, _("Please correct the errors below."))
     else:
         form = RankRewardSettingsForm(instance=settings)
 
@@ -302,8 +303,8 @@ def combat_reward_enable(request: HttpRequest) -> HttpResponse:
               target_id="1", ip=client_ip(request), metadata={"baselined": n})
     messages.success(
         request,
-        f"Rewards enabled. Baseline snapshotted for {n} pilot(s) — only ranks reached "
-        "from now on will create rewards.",
+        _("Rewards enabled. Baseline snapshotted for %(n)d pilot(s) — only ranks reached "
+          "from now on will create rewards.") % {"n": n},
     )
     return redirect("admin_audit:combat_reward_settings")
 
@@ -315,7 +316,7 @@ def combat_reward_disable(request: HttpRequest) -> HttpResponse:
     rewards.disable_rewards(actor=request.user)
     audit_log(request.user, "combat.reward.disable", target_type="rank_reward_settings",
               target_id="1", ip=client_ip(request))
-    messages.success(request, "Rewards disabled. No new reward events will be created.")
+    messages.success(request, _("Rewards disabled. No new reward events will be created."))
     return redirect("admin_audit:combat_reward_settings")
 
 
@@ -327,7 +328,7 @@ def combat_reward_rebaseline(request: HttpRequest) -> HttpResponse:
     n = rewards.establish_baseline(actor=request.user)
     audit_log(request.user, "combat.reward.baseline", target_type="rank_reward_settings",
               target_id="1", ip=client_ip(request), metadata={"baselined": n})
-    messages.success(request, f"Baseline re-snapshotted for {n} pilot(s).")
+    messages.success(request, _("Baseline re-snapshotted for %(n)d pilot(s).") % {"n": n})
     return redirect("admin_audit:combat_reward_settings")
 
 
@@ -339,7 +340,7 @@ def combat_reward_scan(request: HttpRequest) -> HttpResponse:
     n = rewards.scan_and_award(actor=request.user)
     audit_log(request.user, "combat.reward.scan", target_type="rank_reward",
               target_id="", ip=client_ip(request), metadata={"created": n})
-    messages.success(request, f"Reward scan complete — {n} new reward event(s) created.")
+    messages.success(request, _("Reward scan complete — %(n)d new reward event(s) created.") % {"n": n})
     return redirect("admin_audit:combat_rewards")
 
 
@@ -424,10 +425,10 @@ def combat_reward_action(request: HttpRequest, pk: int) -> HttpResponse:
     event = get_object_or_404(RankRewardEvent, pk=pk)
     action = request.POST.get("action", "")
     if action not in _ACTIONS:
-        raise PermissionDenied("Unknown action.")
+        raise PermissionDenied(_("Unknown action."))
     # Marking paid is the ISK-moving confirmation → Director only.
     if action == "paid" and not rbac.has_role(request.user, rbac.ROLE_DIRECTOR):
-        raise PermissionDenied("Only a Director can mark a reward paid.")
+        raise PermissionDenied(_("Only a Director can mark a reward paid."))
     reason = request.POST.get("reason", "").strip()
     reference = request.POST.get("reference", "").strip()
     try:
@@ -446,5 +447,6 @@ def combat_reward_action(request: HttpRequest, pk: int) -> HttpResponse:
               target_id=str(event.pk), ip=client_ip(request),
               metadata={"character_id": event.character_id, "rank": event.rank_name,
                         "reference": reference, "reason": reason})
-    messages.success(request, f"Reward {action} — {event.character_name} · {event.rank_name}.")
+    messages.success(request, _("Reward %(action)s — %(character)s · %(rank)s.") % {
+        "action": action, "character": event.character_name, "rank": event.rank_name})
     return redirect("admin_audit:combat_rewards")

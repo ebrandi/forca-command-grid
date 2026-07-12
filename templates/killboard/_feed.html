@@ -1,4 +1,5 @@
 {% load eve %}
+{% load i18n %}
 {% comment %}D5: the killfeed fragment — filters + feed + pagination. The view returns just
    this template for htmx requests (HX-Request), so filtering/paging swaps only
    #kb-feed (no full reload, no scroll-jump). hx-target/hx-push-url inherit to
@@ -12,36 +13,36 @@
     <!-- Filters: kind + window + active chips -->
     <div class="mb-3 flex flex-wrap items-center gap-2 text-xs">
       <div class="inline-flex rounded-lg border border-line bg-panel p-1">
-        <a rel="nofollow" href="{% querystring kind='all' page=None %}" hx-get="{% querystring kind='all' page=None %}" class="rounded px-3 py-1 font-display uppercase tracking-wide {% if kind == 'all' %}bg-gold text-space font-semibold{% else %}text-muted hover:text-ink{% endif %}">All</a>
+        <a rel="nofollow" href="{% querystring kind='all' page=None %}" hx-get="{% querystring kind='all' page=None %}" class="rounded px-3 py-1 font-display uppercase tracking-wide {% if kind == 'all' %}bg-gold text-space font-semibold{% else %}text-muted hover:text-ink{% endif %}">{% translate "All" %}</a>
         <a rel="nofollow" href="{% querystring kind='kills' page=None %}" hx-get="{% querystring kind='kills' page=None %}" class="rounded px-3 py-1 font-display uppercase tracking-wide {% if kind == 'kills' %}bg-gold text-space font-semibold{% else %}text-muted hover:text-ink{% endif %}">Kills</a>
         <a rel="nofollow" href="{% querystring kind='losses' page=None %}" hx-get="{% querystring kind='losses' page=None %}" class="rounded px-3 py-1 font-display uppercase tracking-wide {% if kind == 'losses' %}bg-gold text-space font-semibold{% else %}text-muted hover:text-ink{% endif %}">Losses</a>
       </div>
-      <span class="ml-1 text-faint">Window:</span>
-      <a rel="nofollow" href="{% querystring days=None page=None %}" hx-get="{% querystring days=None page=None %}" class="chip {% if not days %}!border-gold/40 !text-gold{% else %}hover:text-ink{% endif %}">All time</a>
+      <span class="ml-1 text-faint">{% translate "Window:" %}</span>
+      <a rel="nofollow" href="{% querystring days=None page=None %}" hx-get="{% querystring days=None page=None %}" class="chip {% if not days %}!border-gold/40 !text-gold{% else %}hover:text-ink{% endif %}">{% translate "All time" %}</a>
       {% for d, lbl in days_options %}
         <a rel="nofollow" href="{% querystring days=d page=None %}" hx-get="{% querystring days=d page=None %}" class="chip {% if days == d %}!border-gold/40 !text-gold{% else %}hover:text-ink{% endif %}">{{ lbl }}</a>
       {% endfor %}
       {% if alliances %}
         <form method="get" class="inline-flex">
           {% for k, v in request.GET.items %}{% if k != 'alliance_id' and k != 'page' %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endif %}{% endfor %}
-          <select name="alliance_id" class="input-field !py-1 !text-xs" hx-get="{% url 'killboard:list' %}" hx-trigger="change" hx-include="closest form" aria-label="Filter by alliance">
-            <option value="">All alliances</option>
+          <select name="alliance_id" class="input-field !py-1 !text-xs" hx-get="{% url 'killboard:list' %}" hx-trigger="change" hx-include="closest form" aria-label="{% translate 'Filter by alliance' %}">
+            <option value="">{% translate "All alliances" %}</option>
             {% for a in alliances %}<option value="{{ a.id }}" {% if alliance_id == a.id|stringformat:'s' %}selected{% endif %}>{{ a.name }}</option>{% endfor %}
           </select>
         </form>
       {% endif %}
       {% if entity_active %}
-      <span class="ml-1 text-faint">Side:</span>
-      <div class="inline-flex rounded-lg border border-line bg-panel p-1" title="Match the pilot / corp / alliance filter against the victim or any attacker">
+      <span class="ml-1 text-faint">{% translate "Side:" %}</span>
+      <div class="inline-flex rounded-lg border border-line bg-panel p-1" title="{% translate 'Match the pilot / corp / alliance filter against the victim or any attacker' %}">
         <a rel="nofollow" href="{% querystring side='victim' page=None %}" hx-get="{% querystring side='victim' page=None %}" class="rounded px-2.5 py-1 font-display uppercase tracking-wide {% if side != 'attacker' %}bg-gold text-space font-semibold{% else %}text-muted hover:text-ink{% endif %}">Victim</a>
         <a rel="nofollow" href="{% querystring side='attacker' page=None %}" hx-get="{% querystring side='attacker' page=None %}" class="rounded px-2.5 py-1 font-display uppercase tracking-wide {% if side == 'attacker' %}bg-gold text-space font-semibold{% else %}text-muted hover:text-ink{% endif %}">Attacker</a>
       </div>
       {% endif %}
       {% if active_filters %}
         {% for f in active_filters %}
-          <a rel="nofollow" href="{{ f.remove_url }}" hx-get="{{ f.remove_url }}" class="chip !border-cyan/40 !text-cyan" title="Remove filter">{{ f.label }}: {{ f.name }} ✕</a>
+          <a rel="nofollow" href="{{ f.remove_url }}" hx-get="{{ f.remove_url }}" class="chip !border-cyan/40 !text-cyan" title="{% translate 'Remove filter' %}">{{ f.label }}: {{ f.name }} ✕</a>
         {% endfor %}
-        <a rel="nofollow" href="{% url 'killboard:list' %}" hx-get="{% url 'killboard:list' %}" class="chip !text-loss hover:!border-loss/40">Clear all</a>
+        <a rel="nofollow" href="{% url 'killboard:list' %}" hx-get="{% url 'killboard:list' %}" class="chip !text-loss hover:!border-loss/40">{% translate "Clear all" %}</a>
       {% endif %}
     </div>
 
@@ -50,8 +51,8 @@
         {% ifchanged km.killmail_time|date:"Y-m-d" %}
         <div class="bg-panel2/40 px-4 py-1.5">
           <p class="eyebrow text-faint">
-            {% if km.killmail_time|date:"Y-m-d" == today_str %}Today
-            {% elif km.killmail_time|date:"Y-m-d" == yesterday_str %}Yesterday
+            {% if km.killmail_time|date:"Y-m-d" == today_str %}{% translate "Today" %}
+            {% elif km.killmail_time|date:"Y-m-d" == yesterday_str %}{% translate "Yesterday" %}
             {% else %}{{ km.killmail_time|date:"l · M j" }}{% endif %}
           </p>
         </div>
@@ -96,22 +97,22 @@
           {% endif %}
           <a href="{% url 'killboard:detail' km.killmail_id %}" class="shrink-0 text-right">
             <p class="data text-sm font-semibold {% if km.home_corp_role == 'victim' %}text-loss{% else %}text-gold{% endif %}">{{ km.total_value|isk }}</p>
-            <p class="text-[11px] text-faint">{{ km.killmail_time|timesince|truncatewords:1 }} ago · {{ km.points }} pts</p>
+            <p class="text-[11px] text-faint">{{ km.killmail_time|timesince|truncatewords:1 }} {% translate "ago" %} · {{ km.points }} pts</p>
           </a>
         </div>
       {% empty %}
         <div class="px-4 py-16 text-center">
-          <p class="font-display text-lg text-muted">No killmails in range</p>
-          <p class="mt-1 text-sm text-faint">{% if active_filters or days %}Try widening the window or clearing filters.{% else %}Combat records appear here as they're discovered.{% endif %}</p>
+          <p class="font-display text-lg text-muted">{% translate "No killmails in range" %}</p>
+          <p class="mt-1 text-sm text-faint">{% if active_filters or days %}{% translate "Try widening the window or clearing filters." %}{% else %}{% translate "Combat records appear here as they're discovered." %}{% endif %}</p>
         </div>
       {% endfor %}
     </div>
 
     {% if page.paginator.num_pages > 1 %}
     <div class="mt-5 flex items-center justify-center gap-4 text-sm">
-      {% if page.has_previous %}<a rel="nofollow" class="btn-ghost" href="{% querystring page=page.previous_page_number %}" hx-get="{% querystring page=page.previous_page_number %}">← Prev</a>{% endif %}
-      <span class="data text-faint">Page {{ page.number }} / {{ page.paginator.num_pages }}</span>
-      {% if page.has_next %}<a rel="nofollow" class="btn-ghost" href="{% querystring page=page.next_page_number %}" hx-get="{% querystring page=page.next_page_number %}">Next →</a>{% endif %}
+      {% if page.has_previous %}<a rel="nofollow" class="btn-ghost" href="{% querystring page=page.previous_page_number %}" hx-get="{% querystring page=page.previous_page_number %}">← {% translate "Prev" %}</a>{% endif %}
+      <span class="data text-faint">{% translate "Page" %} {{ page.number }} / {{ page.paginator.num_pages }}</span>
+      {% if page.has_next %}<a rel="nofollow" class="btn-ghost" href="{% querystring page=page.next_page_number %}" hx-get="{% querystring page=page.next_page_number %}">{% translate "Next" %} →</a>{% endif %}
     </div>
     {% endif %}
 </div>

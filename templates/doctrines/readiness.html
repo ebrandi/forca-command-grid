@@ -1,13 +1,14 @@
 {% extends "base.html" %}
-{% load eve %}
-{% block title %}Readiness · {{ doctrine.name }}{% endblock %}
+{% load eve i18n %}
+{% block title %}{% translate "Readiness" %} · {{ doctrine.name }}{% endblock %}
 {% block content %}
+{% translate "(no character linked)" as no_character_label %}
 <a href="{% url 'doctrines:detail' doctrine.pk %}" class="text-xs text-faint hover:text-gold">← {{ doctrine.name }}</a>
 <header class="mt-3 flex items-center gap-3">
   {% if character %}<img src="{% eve_portrait character.character_id 64 %}" alt="" class="h-11 w-11 rounded-lg ring-1 ring-line">{% endif %}
   <div>
-    <h1 class="text-2xl font-bold text-ink">Can I fly {{ doctrine.name }}?</h1>
-    <p class="text-sm text-faint">{{ character.name|default:"(no character linked)" }}</p>
+    <h1 class="text-2xl font-bold text-ink">{% blocktranslate with name=doctrine.name %}Can I fly {{ name }}?{% endblocktranslate %}</h1>
+    <p class="text-sm text-faint">{{ character.name|default:no_character_label }}</p>
   </div>
 </header>
 
@@ -23,7 +24,7 @@
           {% else %}bg-loss/15 text-loss{% endif %}">{{ r.status }}</span>
       </div>
       {% if r.missing_viable %}
-        <p class="eyebrow mt-3 mb-2">Missing to fly</p>
+        <p class="eyebrow mt-3 mb-2">{% translate "Missing to fly" %}</p>
         <div class="grid gap-1.5 sm:grid-cols-2">
           {% for m in r.missing_viable %}
             <div class="flex items-center gap-2 rounded border border-line/60 bg-panel2/40 px-2.5 py-1.5 text-sm">
@@ -34,13 +35,13 @@
           {% endfor %}
         </div>
       {% elif r.status == 'unknown' %}
-        <p class="mt-2 text-xs text-faint">Skills not imported yet for this character.</p>
+        <p class="mt-2 text-xs text-faint">{% translate "Skills not imported yet for this character." %}</p>
       {% else %}
-        <p class="mt-2 text-xs text-kill">Ready to fly.</p>
+        <p class="mt-2 text-xs text-kill">{% translate "Ready to fly." %}</p>
       {% endif %}
     </div>
   {% empty %}
-    <p class="text-sm text-faint">No fits in this doctrine yet.</p>
+    <p class="text-sm text-faint">{% translate "No fits in this doctrine yet." %}</p>
   {% endfor %}
 </div>
 {% endblock %}

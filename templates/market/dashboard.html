@@ -1,31 +1,31 @@
 {% extends "base.html" %}
-{% load eve %}
-{% block title %}Market · [FORCA] Command Grid{% endblock %}
+{% load eve i18n %}
+{% block title %}{% translate "Market" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <header class="mb-6 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <p class="eyebrow">Stocking &amp; opportunities</p>
-    <h1 class="mt-1 text-3xl font-bold text-ink">Market</h1>
-    <p class="mt-1 text-sm text-faint">What the corp needs, where to source it, and where the spreads are.</p>
+    <p class="eyebrow">{% translate "Stocking &amp; opportunities" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Market" %}</h1>
+    <p class="mt-1 text-sm text-faint">{% translate "What the corp needs, where to source it, and where the spreads are." %}</p>
   </div>
   {% if can_manage %}
   <div class="flex gap-2" x-data="{loc:false}">
-    <form method="post" action="{% url 'market:refresh' %}">{% csrf_token %}<button class="btn-gold"><svg class="h-4 w-4"><use href="#i-coin"/></svg> Refresh market data</button></form>
-    <button @click="loc=!loc" class="btn-ghost">Add location</button>
+    <form method="post" action="{% url 'market:refresh' %}">{% csrf_token %}<button class="btn-gold"><svg class="h-4 w-4"><use href="#i-coin"/></svg> {% translate "Refresh market data" %}</button></form>
+    <button @click="loc=!loc" class="btn-ghost">{% translate "Add location" %}</button>
     <div x-show="loc" x-cloak class="fixed inset-0 z-40 flex items-start justify-center bg-black/60 p-4 pt-24" @click.self="loc=false">
       <form method="post" action="{% url 'market:create_location' %}" class="panel w-full max-w-md space-y-4 p-5">
         {% csrf_token %}
-        <h2 class="eyebrow text-gold">New market location</h2>
-        <div><label class="label">Name</label>{{ location_form.name }}</div>
+        <h2 class="eyebrow text-gold">{% translate "New market location" %}</h2>
+        <div><label class="label">{% translate "Name" %}</label>{{ location_form.name }}</div>
         <div class="grid grid-cols-2 gap-3">
-          <div><label class="label">Type</label>{{ location_form.location_type }}</div>
-          <div><label class="label">Region ID</label>{{ location_form.region_id }}</div>
+          <div><label class="label">{% translate "Type" %}</label>{{ location_form.location_type }}</div>
+          <div><label class="label">{% translate "Region ID" %}</label>{{ location_form.region_id }}</div>
         </div>
         <div class="grid grid-cols-2 gap-3">
-          <div><label class="label">System ID</label>{{ location_form.system_id }}</div>
-          <label class="flex items-center gap-2 self-end text-sm text-muted">{{ location_form.is_staging }} Staging</label>
+          <div><label class="label">{% translate "System ID" %}</label>{{ location_form.system_id }}</div>
+          <label class="flex items-center gap-2 self-end text-sm text-muted">{{ location_form.is_staging }} {% translate "Staging" %}</label>
         </div>
-        <div class="flex gap-2"><button class="btn-gold">Add</button><button type="button" @click="loc=false" class="btn-ghost">Cancel</button></div>
+        <div class="flex gap-2"><button class="btn-gold">{% translate "Add" %}</button><button type="button" @click="loc=false" class="btn-ghost">{% translate "Cancel" %}</button></div>
       </form>
     </div>
   </div>
@@ -34,15 +34,15 @@
 
 {% if can_manage %}
 <section class="panel mb-5 overflow-hidden">
-  <h2 class="eyebrow border-b border-line p-4 text-gold">Market locations</h2>
+  <h2 class="eyebrow border-b border-line p-4 text-gold">{% translate "Market locations" %}</h2>
   <table class="w-full text-sm">
     <thead class="text-left text-faint"><tr class="border-b border-line/60">
-      <th class="px-4 py-2 font-medium">Name</th>
-      <th class="px-4 py-2 font-medium">Type</th>
-      <th class="px-4 py-2 font-medium">Region / System</th>
-      <th class="px-4 py-2 font-medium">Flags</th>
-      <th class="px-4 py-2 font-medium">Status</th>
-      <th class="px-4 py-2 text-right font-medium">Actions</th>
+      <th class="px-4 py-2 font-medium">{% translate "Name" %}</th>
+      <th class="px-4 py-2 font-medium">{% translate "Type" %}</th>
+      <th class="px-4 py-2 font-medium">{% translate "Region / System" %}</th>
+      <th class="px-4 py-2 font-medium">{% translate "Flags" %}</th>
+      <th class="px-4 py-2 font-medium">{% translate "Status" %}</th>
+      <th class="px-4 py-2 text-right font-medium">{% translate "Actions" %}</th>
     </tr></thead>
     <tbody>
       {% for loc in locations %}
@@ -50,32 +50,32 @@
         <td class="px-4 py-2 text-ink">{{ loc.name }}</td>
         <td class="px-4 py-2 text-muted">{{ loc.get_location_type_display }}</td>
         <td class="px-4 py-2 text-muted">{{ loc.region_id|default:"—" }} / {{ loc.system_id|default:"—" }}</td>
-        <td class="px-4 py-2 text-xs text-faint">{% if loc.is_staging %}<span class="text-cyan">staging</span> {% endif %}{% if loc.is_price_reference %}<span class="text-gold">price-ref</span>{% endif %}</td>
-        <td class="px-4 py-2">{% if loc.active %}<span class="text-cyan">Active</span>{% else %}<span class="text-faint">Inactive</span>{% endif %}</td>
+        <td class="px-4 py-2 text-xs text-faint">{% if loc.is_staging %}<span class="text-cyan">{% translate "staging" %}</span> {% endif %}{% if loc.is_price_reference %}<span class="text-gold">{% translate "price-ref" %}</span>{% endif %}</td>
+        <td class="px-4 py-2">{% if loc.active %}<span class="text-cyan">{% translate "Active" %}</span>{% else %}<span class="text-faint">{% translate "Inactive" %}</span>{% endif %}</td>
         <td class="px-4 py-2 text-right" x-data="{edit:false}">
-          <button @click="edit=!edit" class="btn-ghost !py-1 !text-xs">Edit</button>
-          <form method="post" action="{% url 'market:toggle_location' loc.pk %}" class="inline">{% csrf_token %}<button class="btn-ghost !py-1 !text-xs">{% if loc.active %}Deactivate{% else %}Activate{% endif %}</button></form>
+          <button @click="edit=!edit" class="btn-ghost !py-1 !text-xs">{% translate "Edit" %}</button>
+          <form method="post" action="{% url 'market:toggle_location' loc.pk %}" class="inline">{% csrf_token %}<button class="btn-ghost !py-1 !text-xs">{% if loc.active %}{% translate "Deactivate" %}{% else %}{% translate "Activate" %}{% endif %}</button></form>
           <div x-show="edit" x-cloak class="fixed inset-0 z-40 flex items-start justify-center bg-black/60 p-4 pt-24" @click.self="edit=false">
             <form method="post" action="{% url 'market:edit_location' loc.pk %}" class="panel w-full max-w-md space-y-4 p-5 text-left">
               {% csrf_token %}
-              <h2 class="eyebrow text-gold">Edit {{ loc.name }}</h2>
-              <div><label class="label">Name</label>{{ loc.edit_form.name }}</div>
+              <h2 class="eyebrow text-gold">{% blocktranslate with name=loc.name %}Edit {{ name }}{% endblocktranslate %}</h2>
+              <div><label class="label">{% translate "Name" %}</label>{{ loc.edit_form.name }}</div>
               <div class="grid grid-cols-2 gap-3">
-                <div><label class="label">Type</label>{{ loc.edit_form.location_type }}</div>
-                <div><label class="label">Region ID</label>{{ loc.edit_form.region_id }}</div>
+                <div><label class="label">{% translate "Type" %}</label>{{ loc.edit_form.location_type }}</div>
+                <div><label class="label">{% translate "Region ID" %}</label>{{ loc.edit_form.region_id }}</div>
               </div>
               <div class="grid grid-cols-2 gap-3">
-                <div><label class="label">System ID</label>{{ loc.edit_form.system_id }}</div>
-                <label class="flex items-center gap-2 self-end text-sm text-muted">{{ loc.edit_form.is_staging }} Staging</label>
+                <div><label class="label">{% translate "System ID" %}</label>{{ loc.edit_form.system_id }}</div>
+                <label class="flex items-center gap-2 self-end text-sm text-muted">{{ loc.edit_form.is_staging }} {% translate "Staging" %}</label>
               </div>
-              <label class="flex items-center gap-2 text-sm text-muted">{{ loc.edit_form.is_price_reference }} Price reference</label>
-              <div class="flex gap-2"><button class="btn-gold">Save</button><button type="button" @click="edit=false" class="btn-ghost">Cancel</button></div>
+              <label class="flex items-center gap-2 text-sm text-muted">{{ loc.edit_form.is_price_reference }} {% translate "Price reference" %}</label>
+              <div class="flex gap-2"><button class="btn-gold">{% translate "Save" %}</button><button type="button" @click="edit=false" class="btn-ghost">{% translate "Cancel" %}</button></div>
             </form>
           </div>
         </td>
       </tr>
       {% empty %}
-      <tr><td colspan="6" class="px-4 py-6 text-center text-faint">No locations yet — add one above.</td></tr>
+      <tr><td colspan="6" class="px-4 py-6 text-center text-faint">{% translate "No locations yet — add one above." %}</td></tr>
       {% endfor %}
     </tbody>
   </table>
@@ -83,13 +83,13 @@
 {% endif %}
 
 <section class="panel mb-5 overflow-hidden">
-  <h2 class="eyebrow border-b border-line p-4 text-gold">Items the corp needs</h2>
+  <h2 class="eyebrow border-b border-line p-4 text-gold">{% translate "Items the corp needs" %}</h2>
   {% if needs %}
   <table class="w-full text-sm">
     <thead class="text-faint text-left"><tr class="border-b border-line/60">
-      <th class="px-4 py-2 font-medium">Item</th><th class="px-4 py-2 font-medium">Where</th>
-      <th class="px-4 py-2 text-right font-medium">Have</th><th class="px-4 py-2 text-right font-medium">Target</th>
-      <th class="px-4 py-2 text-right font-medium">Need</th></tr></thead>
+      <th class="px-4 py-2 font-medium">{% translate "Item" %}</th><th class="px-4 py-2 font-medium">{% translate "Where" %}</th>
+      <th class="px-4 py-2 text-right font-medium">{% translate "Have" %}</th><th class="px-4 py-2 text-right font-medium">{% translate "Target" %}</th>
+      <th class="px-4 py-2 text-right font-medium">{% translate "Need" %}</th></tr></thead>
     <tbody>
       {% for n in needs %}
         <tr class="border-t border-line/40">
@@ -102,17 +102,17 @@
       {% endfor %}
     </tbody>
   </table>
-  {% else %}<p class="p-4 text-sm text-faint">Nothing below target.</p>{% endif %}
+  {% else %}<p class="p-4 text-sm text-faint">{% translate "Nothing below target." %}</p>{% endif %}
 </section>
 
 <section class="panel mb-5 overflow-hidden">
-  <h2 class="eyebrow border-b border-line p-4 text-gold">Profitable to build <span class="font-sans normal-case tracking-normal text-faint">· build cost vs Jita sell — one level, excludes job fees</span></h2>
+  <h2 class="eyebrow border-b border-line p-4 text-gold">{% translate "Profitable to build" %} <span class="font-sans normal-case tracking-normal text-faint">{% translate "· build cost vs Jita sell — one level, excludes job fees" %}</span></h2>
   {% if build_ops %}
   <table class="w-full text-sm">
     <thead class="text-faint text-left"><tr class="border-b border-line/60">
-      <th class="px-4 py-2 font-medium">Item</th><th class="px-4 py-2 text-right font-medium">Build cost</th>
-      <th class="px-4 py-2 text-right font-medium">Sell</th><th class="px-4 py-2 text-right font-medium">Profit</th>
-      <th class="px-4 py-2 text-right font-medium">Margin</th></tr></thead>
+      <th class="px-4 py-2 font-medium">{% translate "Item" %}</th><th class="px-4 py-2 text-right font-medium">{% translate "Build cost" %}</th>
+      <th class="px-4 py-2 text-right font-medium">{% translate "Sell" %}</th><th class="px-4 py-2 text-right font-medium">{% translate "Profit" %}</th>
+      <th class="px-4 py-2 text-right font-medium">{% translate "Margin" %}</th></tr></thead>
     <tbody>
       {% for b in build_ops %}
         <tr class="border-t border-line/40">
@@ -125,17 +125,17 @@
       {% endfor %}
     </tbody>
   </table>
-  {% else %}<p class="p-4 text-sm text-faint">No build opportunities in tracked prices — sync market data and the SDE first.</p>{% endif %}
+  {% else %}<p class="p-4 text-sm text-faint">{% translate "No build opportunities in tracked prices — sync market data and the SDE first." %}</p>{% endif %}
 </section>
 
 <section class="panel mb-5 overflow-hidden">
-  <h2 class="eyebrow border-b border-line p-4 text-cyan">Margin opportunities <span class="font-sans normal-case tracking-normal text-faint">· spread signal — excludes fees/fill time</span></h2>
+  <h2 class="eyebrow border-b border-line p-4 text-cyan">{% translate "Margin opportunities" %} <span class="font-sans normal-case tracking-normal text-faint">{% translate "· spread signal — excludes fees/fill time" %}</span></h2>
   {% if margins %}
   <table class="w-full text-sm">
     <thead class="text-faint text-left"><tr class="border-b border-line/60">
-      <th class="px-4 py-2 font-medium">Item</th><th class="px-4 py-2 text-right font-medium">Buy max</th>
-      <th class="px-4 py-2 text-right font-medium">Sell min</th><th class="px-4 py-2 text-right font-medium">Spread</th>
-      <th class="px-4 py-2 text-right font-medium">Margin</th></tr></thead>
+      <th class="px-4 py-2 font-medium">{% translate "Item" %}</th><th class="px-4 py-2 text-right font-medium">{% translate "Buy max" %}</th>
+      <th class="px-4 py-2 text-right font-medium">{% translate "Sell min" %}</th><th class="px-4 py-2 text-right font-medium">{% translate "Spread" %}</th>
+      <th class="px-4 py-2 text-right font-medium">{% translate "Margin" %}</th></tr></thead>
     <tbody>
       {% for m in margins %}
         <tr class="border-t border-line/40">
@@ -148,17 +148,17 @@
       {% endfor %}
     </tbody>
   </table>
-  {% else %}<p class="p-4 text-sm text-faint">No notable spreads in tracked prices.</p>{% endif %}
+  {% else %}<p class="p-4 text-sm text-faint">{% translate "No notable spreads in tracked prices." %}</p>{% endif %}
 </section>
 
 {% if watch_prices %}
 <section class="panel mb-5 overflow-hidden">
-  <h2 class="eyebrow border-b border-line p-4 text-gold">My watchlist</h2>
+  <h2 class="eyebrow border-b border-line p-4 text-gold">{% translate "My watchlist" %}</h2>
   <div class="overflow-x-auto"><table class="w-full min-w-[640px] text-sm">
     <thead class="text-left text-faint"><tr class="border-b border-line/60">
-      <th class="px-4 py-2 font-medium">Item</th><th class="px-4 py-2 font-medium">Location</th>
-      <th class="px-4 py-2 text-right font-medium">Sell min</th><th class="px-4 py-2 text-right font-medium">Buy max</th>
-      <th class="px-4 py-2 text-right font-medium">30d trend</th><th class="px-4 py-2 font-medium"></th></tr></thead>
+      <th class="px-4 py-2 font-medium">{% translate "Item" %}</th><th class="px-4 py-2 font-medium">{% translate "Location" %}</th>
+      <th class="px-4 py-2 text-right font-medium">{% translate "Sell min" %}</th><th class="px-4 py-2 text-right font-medium">{% translate "Buy max" %}</th>
+      <th class="px-4 py-2 text-right font-medium">{% translate "30d trend" %}</th><th class="px-4 py-2 font-medium"></th></tr></thead>
     <tbody>
       {% for p in watch_prices %}
         <tr class="border-t border-line/40">
@@ -167,7 +167,7 @@
           <td class="px-4 py-2 text-right data text-cyan">{% if p.sell_min %}{{ p.sell_min|isk }}{% else %}—{% endif %}</td>
           <td class="px-4 py-2 text-right data text-muted">{% if p.buy_max %}{{ p.buy_max|isk }}{% else %}—{% endif %}</td>
           <td class="px-4 py-2 text-right data">{% if p.trend %}<span class="{% if p.trend.change_pct > 0 %}text-kill{% elif p.trend.change_pct < 0 %}text-loss{% else %}text-faint{% endif %}">{{ p.trend.change_pct|floatformat:1 }}%</span>{% else %}<span class="text-faint">—</span>{% endif %}</td>
-          <td class="px-4 py-2 text-right"><form method="post" action="{% url 'market:toggle_watch' %}"><input type="hidden" name="type_id" value="{{ p.type_id }}"><input type="hidden" name="next" value="{{ request.get_full_path }}">{% csrf_token %}<button class="btn-ghost !py-1 !text-xs" title="Remove from watchlist">★ Unwatch</button></form></td>
+          <td class="px-4 py-2 text-right"><form method="post" action="{% url 'market:toggle_watch' %}"><input type="hidden" name="type_id" value="{{ p.type_id }}"><input type="hidden" name="next" value="{{ request.get_full_path }}">{% csrf_token %}<button class="btn-ghost !py-1 !text-xs" title="{% translate 'Remove from watchlist' %}">★ {% translate "Unwatch" %}</button></form></td>
         </tr>
       {% endfor %}
     </tbody>
@@ -177,18 +177,18 @@
 
 <section class="panel overflow-hidden">
   <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line p-4">
-    <h2 class="eyebrow">Tracked prices <span class="font-sans normal-case tracking-normal text-faint">· cached, ESI-friendly</span></h2>
+    <h2 class="eyebrow">{% translate "Tracked prices" %} <span class="font-sans normal-case tracking-normal text-faint">{% translate "· cached, ESI-friendly" %}</span></h2>
     <form method="get" class="flex items-center gap-2">
-      <input name="q" value="{{ q }}" placeholder="Search an item…" class="input-field !py-1 w-52 text-sm">
-      <button class="btn-ghost !py-1 !text-xs">Search</button>
-      {% if q %}<a href="{% url 'market:dashboard' %}" class="text-xs text-faint hover:text-gold">clear</a>{% endif %}
+      <input name="q" value="{{ q }}" placeholder="{% translate 'Search an item…' %}" class="input-field !py-1 w-52 text-sm">
+      <button class="btn-ghost !py-1 !text-xs">{% translate "Search" %}</button>
+      {% if q %}<a href="{% url 'market:dashboard' %}" class="text-xs text-faint hover:text-gold">{% translate "clear" %}</a>{% endif %}
     </form>
   </div>
   <div class="overflow-x-auto"><table class="w-full min-w-[720px] text-sm">
     <thead class="text-faint text-left"><tr class="border-b border-line/60">
-      <th class="px-4 py-2 font-medium">Item</th><th class="px-4 py-2 font-medium">Location</th>
-      <th class="px-4 py-2 text-right font-medium">Sell min</th><th class="px-4 py-2 text-right font-medium">Buy max</th>
-      <th class="px-4 py-2 text-right font-medium">30d trend</th><th class="px-4 py-2 text-right font-medium">Avg vol/day</th><th class="px-4 py-2 font-medium"></th></tr></thead>
+      <th class="px-4 py-2 font-medium">{% translate "Item" %}</th><th class="px-4 py-2 font-medium">{% translate "Location" %}</th>
+      <th class="px-4 py-2 text-right font-medium">{% translate "Sell min" %}</th><th class="px-4 py-2 text-right font-medium">{% translate "Buy max" %}</th>
+      <th class="px-4 py-2 text-right font-medium">{% translate "30d trend" %}</th><th class="px-4 py-2 text-right font-medium">{% translate "Avg vol/day" %}</th><th class="px-4 py-2 font-medium"></th></tr></thead>
     <tbody>
       {% for p in prices %}
         <tr class="border-t border-line/40">
@@ -198,17 +198,17 @@
           <td class="px-4 py-2 text-right data text-muted">{% if p.buy_max %}{{ p.buy_max|isk }}{% else %}—{% endif %}</td>
           <td class="px-4 py-2 text-right data">{% if p.trend %}<span class="{% if p.trend.change_pct > 0 %}text-kill{% elif p.trend.change_pct < 0 %}text-loss{% else %}text-faint{% endif %}">{{ p.trend.change_pct|floatformat:1 }}%</span>{% else %}<span class="text-faint">—</span>{% endif %}</td>
           <td class="px-4 py-2 text-right data text-faint">{% if p.trend %}{{ p.trend.avg_volume|isk }}{% else %}—{% endif %}</td>
-          <td class="px-4 py-2 text-right"><form method="post" action="{% url 'market:toggle_watch' %}"><input type="hidden" name="type_id" value="{{ p.type_id }}"><input type="hidden" name="next" value="{{ request.get_full_path }}">{% csrf_token %}<button class="btn-ghost !py-1 !text-xs {% if p.watched %}text-gold{% endif %}" title="{% if p.watched %}Remove from watchlist{% else %}Add to watchlist{% endif %}">{% if p.watched %}★{% else %}☆{% endif %}</button></form></td>
+          <td class="px-4 py-2 text-right"><form method="post" action="{% url 'market:toggle_watch' %}"><input type="hidden" name="type_id" value="{{ p.type_id }}"><input type="hidden" name="next" value="{{ request.get_full_path }}">{% csrf_token %}<button class="btn-ghost !py-1 !text-xs {% if p.watched %}text-gold{% endif %}" title="{% if p.watched %}{% translate 'Remove from watchlist' %}{% else %}{% translate 'Add to watchlist' %}{% endif %}">{% if p.watched %}★{% else %}☆{% endif %}</button></form></td>
         </tr>
-      {% empty %}<tr><td colspan="7" class="px-4 py-3 text-faint">{% if q %}No tracked items match “{{ q }}”.{% else %}No prices ingested yet.{% endif %}</td></tr>{% endfor %}
+      {% empty %}<tr><td colspan="7" class="px-4 py-3 text-faint">{% if q %}{% blocktranslate %}No tracked items match “{{ q }}”.{% endblocktranslate %}{% else %}{% translate "No prices ingested yet." %}{% endif %}</td></tr>{% endfor %}
     </tbody>
   </table></div>
   {% if page_obj.paginator.num_pages > 1 %}
   <div class="flex items-center justify-between gap-2 border-t border-line/60 p-3 text-xs text-faint">
-    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} · {{ page_obj.paginator.count }} items</span>
+    <span>{% blocktranslate with number=page_obj.number num_pages=page_obj.paginator.num_pages total=page_obj.paginator.count %}Page {{ number }} of {{ num_pages }} · {{ total }} items{% endblocktranslate %}</span>
     <span class="flex gap-2">
-      {% if page_obj.has_previous %}<a href="?{% if q %}q={{ q }}&amp;{% endif %}page={{ page_obj.previous_page_number }}" class="btn-ghost !py-1 !text-xs">← Prev</a>{% endif %}
-      {% if page_obj.has_next %}<a href="?{% if q %}q={{ q }}&amp;{% endif %}page={{ page_obj.next_page_number }}" class="btn-ghost !py-1 !text-xs">Next →</a>{% endif %}
+      {% if page_obj.has_previous %}<a href="?{% if q %}q={{ q }}&amp;{% endif %}page={{ page_obj.previous_page_number }}" class="btn-ghost !py-1 !text-xs">← {% translate "Prev" %}</a>{% endif %}
+      {% if page_obj.has_next %}<a href="?{% if q %}q={{ q }}&amp;{% endif %}page={{ page_obj.next_page_number }}" class="btn-ghost !py-1 !text-xs">{% translate "Next" %} →</a>{% endif %}
     </span>
   </div>
   {% endif %}

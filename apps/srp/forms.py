@@ -4,6 +4,7 @@ from __future__ import annotations
 from decimal import Decimal
 
 from django import forms
+from django.utils.translation import gettext_lazy as _
 
 from apps.doctrines.models import Doctrine
 
@@ -44,19 +45,19 @@ class SrpProgramForm(forms.ModelForm):
     def clean_insurance_fraction(self) -> Decimal:
         frac = self.cleaned_data["insurance_fraction"]
         if frac < 0 or frac > 1:
-            raise forms.ValidationError("Insurance fraction must be between 0 and 1.")
+            raise forms.ValidationError(_("Insurance fraction must be between 0 and 1."))
         return frac
 
     def clean_default_cap(self) -> Decimal:
         cap = self.cleaned_data["default_cap"]
         if cap < 0:
-            raise forms.ValidationError("Cap can't be negative.")
+            raise forms.ValidationError(_("Cap can't be negative."))
         return cap
 
     def clean_fleet_op_default_duration_minutes(self) -> int:
         mins = self.cleaned_data["fleet_op_default_duration_minutes"]
         if mins < 1:
-            raise forms.ValidationError("Default op length must be at least 1 minute.")
+            raise forms.ValidationError(_("Default op length must be at least 1 minute."))
         return mins
 
 
@@ -76,10 +77,10 @@ class SrpRuleForm(forms.ModelForm):
         # A blank doctrine = the catch-all rule for any doctrine-tagged loss.
         self.fields["doctrine"].queryset = Doctrine.objects.order_by("name")
         self.fields["doctrine"].required = False
-        self.fields["doctrine"].empty_label = "Any doctrine (catch-all)"
+        self.fields["doctrine"].empty_label = _("Any doctrine (catch-all)")
 
     def clean_max_payout(self) -> Decimal:
         amount = self.cleaned_data["max_payout"]
         if amount < 0:
-            raise forms.ValidationError("Amount can't be negative.")
+            raise forms.ValidationError(_("Amount can't be negative."))
         return amount

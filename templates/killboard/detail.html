@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load eve %}
+{% load i18n %}
 {% block title %}Killmail {{ killmail.killmail_id }} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <a href="{% url 'killboard:list' %}" class="text-xs text-faint hover:text-gold">← Killboard</a>
@@ -27,10 +28,10 @@
     </div>
   </div>
   <div class="grid grid-cols-2 sm:grid-cols-4 divide-x divide-line border-t border-line">
-    <div class="p-4"><p class="eyebrow">Total</p><p class="data mt-1 text-lg font-bold text-gold">{{ killmail.total_value|isk }}</p></div>
-    <div class="p-4"><p class="eyebrow">Destroyed</p><p class="data mt-1 text-lg font-semibold text-loss">{{ killmail.destroyed_value|isk }}</p></div>
-    <div class="p-4"><p class="eyebrow">Dropped</p><p class="data mt-1 text-lg font-semibold text-cyan">{{ killmail.dropped_value|isk }}</p></div>
-    <div class="p-4"><p class="eyebrow">Points</p><p class="data mt-1 text-lg font-semibold text-ink">{{ killmail.points }}</p></div>
+    <div class="p-4"><p class="eyebrow">{% translate "Total" %}</p><p class="data mt-1 text-lg font-bold text-gold">{{ killmail.total_value|isk }}</p></div>
+    <div class="p-4"><p class="eyebrow">{% translate "Destroyed" %}</p><p class="data mt-1 text-lg font-semibold text-loss">{{ killmail.destroyed_value|isk }}</p></div>
+    <div class="p-4"><p class="eyebrow">{% translate "Dropped" %}</p><p class="data mt-1 text-lg font-semibold text-cyan">{{ killmail.dropped_value|isk }}</p></div>
+    <div class="p-4"><p class="eyebrow">{% translate "Points" %}</p><p class="data mt-1 text-lg font-semibold text-ink">{{ killmail.points }}</p></div>
   </div>
 </div>
 
@@ -46,7 +47,7 @@
           {% if killmail.victim_corporation_id %}<img src="{% eve_corp_logo killmail.victim_corporation_id 32 %}" alt="" class="h-4 w-4 rounded-sm">{% eve_name killmail.victim_corporation_id %}{% endif %}
         </p>
       </div>
-      <span class="data ml-auto chip">{{ killmail.damage_taken }} dmg taken</span>
+      <span class="data ml-auto chip">{{ killmail.damage_taken }} {% translate "dmg taken" %}</span>
     </div>
   </section>
 
@@ -73,10 +74,10 @@
 <section class="panel mt-5 p-5">
   <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
     <div class="flex flex-wrap items-center gap-2">
-      <h2 class="eyebrow">Fitting &amp; cargo</h2>
-      {% if killmail.doctrine_fit %}<a href="{% url 'doctrines:detail' killmail.doctrine_fit.doctrine_id %}" class="chip !border-gold/40 !text-gold" title="This loss matched a doctrine fit">◆ {{ killmail.doctrine_fit.name }}</a>{% endif %}
+      <h2 class="eyebrow">{% translate "Fitting &amp; cargo" %}</h2>
+      {% if killmail.doctrine_fit %}<a href="{% url 'doctrines:detail' killmail.doctrine_fit.doctrine_id %}" class="chip !border-gold/40 !text-gold" title="{% translate 'This loss matched a doctrine fit' %}">◆ {{ killmail.doctrine_fit.name }}</a>{% endif %}
     </div>
-    {% if is_director %}<a href="{% url 'admin_audit:doctrine_from_killmail' killmail.killmail_id %}" class="btn-ghost !py-1 !text-xs"><svg class="h-3.5 w-3.5"><use href="#i-ship"/></svg> Import as doctrine</a>{% endif %}
+    {% if is_director %}<a href="{% url 'admin_audit:doctrine_from_killmail' killmail.killmail_id %}" class="btn-ghost !py-1 !text-xs"><svg class="h-3.5 w-3.5"><use href="#i-ship"/></svg> {% translate "Import as doctrine" %}</a>{% endif %}
   </div>
   <div class="grid gap-1.5 sm:grid-cols-2">
     {% for item in killmail.items.all %}
@@ -94,12 +95,12 @@
 {% if deviation %}{# Fit deviation (KB-14): the view passes this only to the loss owner and officers #}
 <section class="panel mt-5 p-5">
   <div class="flex flex-wrap items-center gap-2">
-    <h2 class="eyebrow text-loss">Fit deviation</h2>
-    <span class="text-xs text-faint">vs {{ killmail.doctrine_fit.name }} · only you and officers see this</span>
+    <h2 class="eyebrow text-loss">{% translate "Fit deviation" %}</h2>
+    <span class="text-xs text-faint">vs {{ killmail.doctrine_fit.name }} · {% translate "only you and officers see this" %}</span>
   </div>
   <div class="mt-3 grid gap-5 sm:grid-cols-2">
     <div>
-      <p class="eyebrow mb-2 text-loss">Missing from your fit</p>
+      <p class="eyebrow mb-2 text-loss">{% translate "Missing from your fit" %}</p>
       {% if deviation.missing %}
       <ul class="space-y-1.5">
         {% for m in deviation.missing %}
@@ -110,10 +111,10 @@
         </li>
         {% endfor %}
       </ul>
-      {% else %}<p class="text-xs text-faint">Nothing missing.</p>{% endif %}
+      {% else %}<p class="text-xs text-faint">{% translate "Nothing missing." %}</p>{% endif %}
     </div>
     <div>
-      <p class="eyebrow mb-2 text-cyan">Extra / off-doctrine</p>
+      <p class="eyebrow mb-2 text-cyan">{% translate "Extra / off-doctrine" %}</p>
       {% if deviation.extra %}
       <ul class="space-y-1.5">
         {% for m in deviation.extra %}
@@ -124,7 +125,7 @@
         </li>
         {% endfor %}
       </ul>
-      {% else %}<p class="text-xs text-faint">Nothing off-doctrine.</p>{% endif %}
+      {% else %}<p class="text-xs text-faint">{% translate "Nothing off-doctrine." %}</p>{% endif %}
     </div>
   </div>
 </section>

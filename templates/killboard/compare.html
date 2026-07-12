@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load eve static %}
-{% block title %}Compare Pilots · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Compare Pilots" %} · [FORCA] Command Grid{% endblock %}
 
 {% block extra_head %}
 {% if not denied %}<script defer src="{% static 'js/vendor/chart.umd.js' %}"></script>{% endif %}
@@ -11,18 +12,18 @@
 {% if denied %}
   <div class="panel px-4 py-16 text-center">
     <svg class="mx-auto h-8 w-8 text-faint"><use href="#i-lock"/></svg>
-    <p class="mt-3 font-display text-lg text-muted">Pilot comparison is corp &amp; alliance only</p>
-    <a href="{% url 'killboard:list' %}" class="btn-ghost mt-4 text-sm">← Back to the killfeed</a>
+    <p class="mt-3 font-display text-lg text-muted">{% translate "Pilot comparison is corp &amp; alliance only" %}</p>
+    <a href="{% url 'killboard:list' %}" class="btn-ghost mt-4 text-sm">← {% translate "Back to the killfeed" %}</a>
   </div>
 {% else %}
 
 <header class="mb-5 flex flex-wrap items-end justify-between gap-4">
   <div>
     <p class="eyebrow">Killboard</p>
-    <h1 class="mt-1 text-2xl font-bold text-ink">Compare pilots</h1>
-    <p class="mt-1 text-sm text-faint">Overlay up to 5 pilots' monthly kills — built for head-to-head prize challenges.</p>
+    <h1 class="mt-1 text-2xl font-bold text-ink">{% translate "Compare pilots" %}</h1>
+    <p class="mt-1 text-sm text-faint">{% translate "Overlay up to 5 pilots' monthly kills — built for head-to-head prize challenges." %}</p>
   </div>
-  <a href="{% url 'killboard:stats' %}" class="btn-ghost text-sm">← Corp stats</a>
+  <a href="{% url 'killboard:stats' %}" class="btn-ghost text-sm">← {% translate "Corp stats" %}</a>
 </header>
 
 <!-- Picker -->
@@ -32,23 +33,23 @@
       <span class="chip !border-gold/40 !text-gold">
         <img src="{% eve_portrait row.character_id 32 %}" alt="" class="h-4 w-4 rounded-full">
         {{ row.name }}
-        <a href="{% url 'killboard:compare' %}?pilots={{ pilots_param }}&remove={{ row.character_id }}" class="ml-1 text-faint hover:text-loss" title="Remove">✕</a>
+        <a href="{% url 'killboard:compare' %}?pilots={{ pilots_param }}&remove={{ row.character_id }}" class="ml-1 text-faint hover:text-loss" title="{% translate 'Remove' %}">✕</a>
       </span>
     {% empty %}
-      <span class="text-sm text-faint">No pilots selected yet — add some below.</span>
+      <span class="text-sm text-faint">{% translate "No pilots selected yet — add some below." %}</span>
     {% endfor %}
   </div>
   {% if selected_ids|length < 5 %}
   <form method="get" action="{% url 'killboard:compare' %}" class="mt-3 flex flex-wrap items-center gap-2">
     <input type="hidden" name="pilots" value="{{ pilots_param }}">
     <select name="add" class="input-field max-w-xs text-sm" required>
-      <option value="">Add a corp member…</option>
+      <option value="">{% translate "Add a corp member…" %}</option>
       {% for m in members %}<option value="{{ m.character_id }}">{{ m.name }}</option>{% endfor %}
     </select>
-    <button type="submit" class="btn-gold text-sm">Add</button>
+    <button type="submit" class="btn-gold text-sm">{% translate "Add" %}</button>
   </form>
   {% else %}
-  <p class="mt-3 text-xs text-faint">Maximum of 5 pilots — remove one to add another.</p>
+  <p class="mt-3 text-xs text-faint">{% translate "Maximum of 5 pilots — remove one to add another." %}</p>
   {% endif %}
 </section>
 
@@ -57,20 +58,20 @@
 <section class="panel mb-5 overflow-hidden">
   <div class="flex items-center gap-2 border-b border-line px-4 py-3">
     <svg class="h-4 w-4 text-gold"><use href="#i-bolt"/></svg>
-    <h2 class="font-display text-sm font-semibold text-ink">Kills per month</h2>
+    <h2 class="font-display text-sm font-semibold text-ink">{% translate "Kills per month" %}</h2>
   </div>
   <div class="p-4"><div class="relative h-72 skeleton"><canvas id="cmp-chart"></canvas></div></div>
 </section>
 
 <!-- Totals table -->
 <section class="panel overflow-hidden">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">All-time totals</h2></div>
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">{% translate "All-time totals" %}</h2></div>
   <div class="overflow-x-auto"><table class="w-full text-sm" x-data="sortableTable()">
     <thead class="text-left text-faint"><tr class="border-b border-line/60">
-      <th class="px-4 py-2 font-medium" :aria-sort="ariaSort('pilot')"><button type="button" @click="sortBy('pilot')" class="inline-flex items-center gap-1 cursor-pointer select-none hover:text-gold">Pilot<span x-show="key==='pilot'" x-text="dir==='asc'?' ↑':' ↓'" class="text-gold"></span></button></th>
+      <th class="px-4 py-2 font-medium" :aria-sort="ariaSort('pilot')"><button type="button" @click="sortBy('pilot')" class="inline-flex items-center gap-1 cursor-pointer select-none hover:text-gold">{% translate "Pilot" %}<span x-show="key==='pilot'" x-text="dir==='asc'?' ↑':' ↓'" class="text-gold"></span></button></th>
       <th class="px-4 py-2 text-right font-medium" :aria-sort="ariaSort('kills')"><button type="button" @click="sortBy('kills')" class="inline-flex items-center gap-1 cursor-pointer select-none hover:text-gold">Kills<span x-show="key==='kills'" x-text="dir==='asc'?' ↑':' ↓'" class="text-gold"></span></button></th>
       <th class="px-4 py-2 text-right font-medium" :aria-sort="ariaSort('losses')"><button type="button" @click="sortBy('losses')" class="inline-flex items-center gap-1 cursor-pointer select-none hover:text-gold">Losses<span x-show="key==='losses'" x-text="dir==='asc'?' ↑':' ↓'" class="text-gold"></span></button></th>
-      <th class="px-4 py-2 text-right font-medium" :aria-sort="ariaSort('eff')"><button type="button" @click="sortBy('eff')" class="inline-flex items-center gap-1 cursor-pointer select-none hover:text-gold">Efficiency<span x-show="key==='eff'" x-text="dir==='asc'?' ↑':' ↓'" class="text-gold"></span></button></th>
+      <th class="px-4 py-2 text-right font-medium" :aria-sort="ariaSort('eff')"><button type="button" @click="sortBy('eff')" class="inline-flex items-center gap-1 cursor-pointer select-none hover:text-gold">{% translate "Efficiency" %}<span x-show="key==='eff'" x-text="dir==='asc'?' ↑':' ↓'" class="text-gold"></span></button></th>
       <th class="px-4 py-2 text-right font-medium" :aria-sort="ariaSort('solo')"><button type="button" @click="sortBy('solo')" class="inline-flex items-center gap-1 cursor-pointer select-none hover:text-gold">Solo<span x-show="key==='solo'" x-text="dir==='asc'?' ↑':' ↓'" class="text-gold"></span></button></th>
     </tr></thead>
     <tbody x-ref="body">

@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.text import slugify
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
 from core import rbac
@@ -74,7 +75,7 @@ def kb_save(request: HttpRequest, slug: str | None = None) -> HttpResponse:
     if visibility not in KbPage.Visibility.values:
         visibility = KbPage.Visibility.MEMBER
     if not title:
-        messages.error(request, "A page needs a title.")
+        messages.error(request, _("A page needs a title."))
         return redirect("kb:list")
 
     if slug:
@@ -97,7 +98,7 @@ def kb_save(request: HttpRequest, slug: str | None = None) -> HttpResponse:
         )
     KbRevision.objects.create(page=page, body_md=body, edited_by=request.user)
     audit_log(request.user, "kb.saved", target_type="kb_page", target_id=str(page.pk), ip=client_ip(request))
-    messages.success(request, f"Saved: {page.title}")
+    messages.success(request, _("Saved: %(title)s") % {"title": page.title})
     return redirect("kb:detail", slug=page.slug)
 
 
@@ -107,5 +108,5 @@ def kb_save(request: HttpRequest, slug: str | None = None) -> HttpResponse:
 def kb_delete(request: HttpRequest, slug: str) -> HttpResponse:
     page = get_object_or_404(KbPage, slug=slug)
     page.delete()
-    messages.success(request, "Page deleted.")
+    messages.success(request, _("Page deleted."))
     return redirect("kb:list")

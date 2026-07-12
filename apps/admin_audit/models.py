@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from core.mixins import TimeStampedModel
 
@@ -48,16 +49,16 @@ class AppSetting(TimeStampedModel):
 
 class DataRetentionPolicy(TimeStampedModel):
     class DataClass(models.TextChoices):
-        SKILL_SNAPSHOT = "skill_snapshot", "Skill snapshot"
-        ASSET_SNAPSHOT = "asset_snapshot", "Asset snapshot"
-        TOKEN = "token", "OAuth token"
-        AUDIT = "audit", "Audit log"
-        MARKET_SNAPSHOT = "market_snapshot", "Market snapshot"
+        SKILL_SNAPSHOT = "skill_snapshot", _("Skill snapshot")
+        ASSET_SNAPSHOT = "asset_snapshot", _("Asset snapshot")
+        TOKEN = "token", _("OAuth token")
+        AUDIT = "audit", _("Audit log")
+        MARKET_SNAPSHOT = "market_snapshot", _("Market snapshot")
 
     class OnLeave(models.TextChoices):
-        DELETE = "delete", "Delete"
-        ANONYMISE = "anonymise", "Anonymise"
-        RETAIN = "retain", "Retain"
+        DELETE = "delete", _("Delete")
+        ANONYMISE = "anonymise", _("Anonymise")
+        RETAIN = "retain", _("Retain")
 
     data_class = models.CharField(max_length=32, choices=DataClass.choices, unique=True)
     retention_days = models.PositiveIntegerField(default=365)

@@ -1,21 +1,22 @@
+{% load i18n %}
 {% comment %}Pagination nav for the portfolio (doctrines/_pagination idiom, swapping #cmp-results).
 Params: page_obj, base_qs (current query minus page), htmx (bool).{% endcomment %}
 {% if page_obj.paginator.num_pages > 1 %}
-<nav class="mt-6 flex flex-wrap items-center justify-center gap-3 text-sm" aria-label="Pagination">
+<nav class="mt-6 flex flex-wrap items-center justify-center gap-3 text-sm" aria-label="{% translate 'Pagination' %}">
   {% if page_obj.has_previous %}
     <a href="?page={{ page_obj.previous_page_number }}{% if base_qs %}&{{ base_qs }}{% endif %}"
        {% if htmx %}hx-get="?page={{ page_obj.previous_page_number }}{% if base_qs %}&{{ base_qs }}{% endif %}" hx-target="#cmp-results" hx-swap="outerHTML" hx-push-url="true"{% endif %}
-       class="btn-ghost text-sm" rel="prev">← Prev</a>
+       class="btn-ghost text-sm" rel="prev">← {% translate "Prev" %}</a>
   {% else %}
-    <span class="btn-ghost text-sm !opacity-40 pointer-events-none">← Prev</span>
+    <span class="btn-ghost text-sm !opacity-40 pointer-events-none">← {% translate "Prev" %}</span>
   {% endif %}
-  <span class="text-faint">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} · {{ page_obj.paginator.count }} total</span>
+  <span class="text-faint">{% blocktranslate with number=page_obj.number pages=page_obj.paginator.num_pages count=page_obj.paginator.count %}Page {{ number }} of {{ pages }} · {{ count }} total{% endblocktranslate %}</span>
   {% if page_obj.has_next %}
     <a href="?page={{ page_obj.next_page_number }}{% if base_qs %}&{{ base_qs }}{% endif %}"
        {% if htmx %}hx-get="?page={{ page_obj.next_page_number }}{% if base_qs %}&{{ base_qs }}{% endif %}" hx-target="#cmp-results" hx-swap="outerHTML" hx-push-url="true"{% endif %}
-       class="btn-ghost text-sm" rel="next">Next →</a>
+       class="btn-ghost text-sm" rel="next">{% translate "Next" %} →</a>
   {% else %}
-    <span class="btn-ghost text-sm !opacity-40 pointer-events-none">Next →</span>
+    <span class="btn-ghost text-sm !opacity-40 pointer-events-none">{% translate "Next" %} →</span>
   {% endif %}
 </nav>
 {% endif %}

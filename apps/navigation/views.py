@@ -12,6 +12,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils.translation import gettext as _t
 from django.views.decorators.http import require_POST
 
 from apps.logistics.jumps import (
@@ -334,7 +335,7 @@ def beacon_sync(request: HttpRequest) -> HttpResponse:
     if result["status"] == "ok":
         messages.success(request, result["message"])
     elif result["status"] == "no_scope":
-        messages.warning(request, result["message"] + " Grant it on the ESI Scopes page.")
+        messages.warning(request, result["message"] + " " + _t("Grant it on the ESI Scopes page."))
     else:
         messages.error(request, result["message"])
     return redirect("navigation:beacons")
@@ -347,7 +348,7 @@ def beacon_add(request: HttpRequest) -> HttpResponse:
     frm = _resolve_system(request.POST.get("from"), request.POST.get("from_q"))
     to = _resolve_system(request.POST.get("to"), request.POST.get("to_q"))
     if not frm or not to or frm.system_id == to.system_id:
-        messages.error(request, "Pick two different systems for the bridge.")
+        messages.error(request, _t("Pick two different systems for the bridge."))
         return redirect("navigation:beacons")
     # Store canonically (lower system id first); the route helper adds both directions.
     a, b = sorted([(frm.system_id, frm.name), (to.system_id, to.name)])
@@ -362,7 +363,7 @@ def beacon_add(request: HttpRequest) -> HttpResponse:
         obj.from_system_name, obj.to_system_name = a[1], b[1]
         obj.name, obj.note = name or obj.name, note or obj.note
         obj.save()
-    messages.success(request, f"Jump bridge {a[1]} ⇄ {b[1]} saved.")
+    messages.success(request, _t("Jump bridge %(a)s ⇄ %(b)s saved.") % {"a": a[1], "b": b[1]})
     return redirect("navigation:beacons")
 
 
@@ -371,7 +372,7 @@ def beacon_add(request: HttpRequest) -> HttpResponse:
 @require_POST
 def beacon_remove(request: HttpRequest, pk: int) -> HttpResponse:
     get_object_or_404(AnsiblexBridge, pk=pk).delete()
-    messages.success(request, "Jump bridge removed.")
+    messages.success(request, _t("Jump bridge removed."))
     return redirect("navigation:beacons")
 
 
@@ -593,13 +594,13 @@ def jump_route_save(request: HttpRequest) -> HttpResponse:
     from .models import JumpPlannerConfig, SavedJumpRoute
 
     if not JumpPlannerConfig.active().allow_saved_routes:
-        messages.error(request, "Saved routes are turned off.")
+        messages.error(request, _t("Saved routes are turned off."))
         return redirect("navigation:jump_planner")
 
     origin = _resolve_system(request.POST.get("from"), request.POST.get("from_q"))
     dest = _resolve_system(request.POST.get("to"), request.POST.get("to_q"))
     if not origin or not dest:
-        messages.error(request, "Plan a route first, then save it.")
+        messages.error(request, _t("Plan a route first, then save it."))
         return redirect("navigation:jump_planner")
 
     name = (request.POST.get("name") or f"{origin.name} → {dest.name}").strip()[:120]
@@ -626,7 +627,7 @@ def jump_route_save(request: HttpRequest) -> HttpResponse:
         visibility=visibility,
         note=(request.POST.get("note") or "").strip()[:200],
     )
-    messages.success(request, f"Saved route “{name}”.")
+    messages.success(request, _t("Saved route “%(name)s”.") % {"name": name})
     return redirect("navigation:jump_routes")
 
 
@@ -659,7 +660,7 @@ def jump_route_open(request: HttpRequest, pk: int) -> HttpResponse:
     if route.owner_id != request.user.id and not (
         is_officer and route.visibility == SavedJumpRoute.Visibility.LEADERSHIP
     ):
-        messages.error(request, "You can't open that route.")
+        messages.error(request, _t("You can't open that route."))
         return redirect("navigation:jump_routes")
     params = {
         "from": route.origin_system_id, "from_q": route.origin_name,
@@ -691,9 +692,9 @@ def jump_route_delete(request: HttpRequest, pk: int) -> HttpResponse:
         is_officer and route.visibility == SavedJumpRoute.Visibility.LEADERSHIP
     ):
         route.delete()
-        messages.success(request, "Route removed.")
+        messages.success(request, _t("Route removed."))
     else:
-        messages.error(request, "You can't remove that route.")
+        messages.error(request, _t("You can't remove that route."))
     return redirect("navigation:jump_routes")
 
 
@@ -712,17 +713,23 @@ def jump_route_watch(request: HttpRequest, pk: int) -> HttpResponse:
     if not route.watch_enabled:  # about to arm — cap the per-user watch fan-out
         watched = SavedJumpRoute.objects.filter(owner=request.user, watch_enabled=True).count()
         if watched >= _MAX_WATCHED_ROUTES:
-            messages.error(request, f"You can watch at most {_MAX_WATCHED_ROUTES} routes at once — "
-                                    "turn one off first.")
+            messages.error(request, _t("You can watch at most %(n)d routes at once — turn one off first.")
+                           % {"n": _MAX_WATCHED_ROUTES})
             return redirect("navigation:jump_routes")
     route.watch_enabled = not route.watch_enabled
     route.alerted_sig = ""  # reset the tripwire marker so re-arming re-evaluates from scratch
     route.save(update_fields=["watch_enabled", "alerted_sig", "updated_at"])
-    messages.success(
-        request,
-        f"Camp/incursion watch {'on' if route.watch_enabled else 'off'} for “{route.name}”."
-        + (" You'll be DMed when a threat appears on it." if route.watch_enabled else ""),
-    )
+    if route.watch_enabled:
+        messages.success(
+            request,
+            _t("Camp/incursion watch on for “%(name)s”. You'll be DMed when a threat appears on it.")
+            % {"name": route.name},
+        )
+    else:
+        messages.success(
+            request,
+            _t("Camp/incursion watch off for “%(name)s”.") % {"name": route.name},
+        )
     return redirect("navigation:jump_routes")
 
 

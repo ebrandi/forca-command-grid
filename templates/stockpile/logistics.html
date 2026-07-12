@@ -1,59 +1,59 @@
 {% extends "base.html" %}
-{% load eve %}
-{% block title %}Logistics · [FORCA] Command Grid{% endblock %}
+{% load eve i18n %}
+{% block title %}{% translate "Logistics" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <header class="mb-6">
-  <p class="eyebrow">What needs hauling</p>
-  <h1 class="mt-1 text-3xl font-bold text-ink">Logistics</h1>
-  <p class="mt-1 text-sm text-faint">Claim a job, fly it, mark it done — or post a haul the corp needs.</p>
+  <p class="eyebrow">{% translate "What needs hauling" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Logistics" %}</h1>
+  <p class="mt-1 text-sm text-faint">{% translate "Claim a job, fly it, mark it done — or post a haul the corp needs." %}</p>
 </header>
 
 <section class="panel mb-5 p-5" x-data="{show:false}">
-  <button @click="show=!show" class="btn-ghost"><svg class="h-4 w-4"><use href="#i-truck"/></svg> Post a hauling job</button>
+  <button @click="show=!show" class="btn-ghost"><svg class="h-4 w-4"><use href="#i-truck"/></svg> {% translate "Post a hauling job" %}</button>
   <form x-show="show" x-cloak method="post" action="{% url 'stockpile:create_haul' %}" class="mt-4 grid items-end gap-3 sm:grid-cols-[1fr_auto_1fr_1fr_auto]">
     {% csrf_token %}
-    <div><label class="label">Item</label>{% include "components/_type_picker.html" with field="type_id" placeholder="Search an item…" required=1 %}</div>
-    <div><label class="label">Qty</label>{{ haul_form.quantity }}</div>
-    <div><label class="label">From</label>{{ haul_form.source_location }}</div>
-    <div><label class="label">To</label>{{ haul_form.dest_location }}</div>
-    <button class="btn-gold">Post</button>
+    <div><label class="label">{% translate "Item" %}</label>{% translate "Search an item…" as type_ph %}{% include "components/_type_picker.html" with field="type_id" placeholder=type_ph required=1 %}</div>
+    <div><label class="label">{% translate "Qty" %}</label>{{ haul_form.quantity }}</div>
+    <div><label class="label">{% translate "From" %}</label>{{ haul_form.source_location }}</div>
+    <div><label class="label">{% translate "To" %}</label>{{ haul_form.dest_location }}</div>
+    <button class="btn-gold">{% translate "Post" %}</button>
   </form>
 </section>
 
 <div class="panel overflow-hidden">
   <div class="overflow-x-auto"><table class="w-full text-sm">
     <thead class="text-faint text-left"><tr class="border-b border-line/60">
-      <th class="px-4 py-2 font-medium">Item</th><th class="px-4 py-2 text-right font-medium">Qty</th>
-      <th class="px-4 py-2 text-right font-medium">m³</th><th class="px-4 py-2 font-medium">From</th>
-      <th class="px-4 py-2 font-medium">To</th><th class="px-4 py-2 font-medium">Status</th>
-      <th class="px-4 py-2 text-right font-medium">Action</th></tr></thead>
+      <th class="px-4 py-2 font-medium">{% translate "Item" %}</th><th class="px-4 py-2 text-right font-medium">{% translate "Qty" %}</th>
+      <th class="px-4 py-2 text-right font-medium">m³</th><th class="px-4 py-2 font-medium">{% translate "From" %}</th>
+      <th class="px-4 py-2 font-medium">{% translate "To" %}</th><th class="px-4 py-2 font-medium">{% translate "Status" %}</th>
+      <th class="px-4 py-2 text-right font-medium">{% translate "Action" %}</th></tr></thead>
     <tbody>
       {% for t in tasks %}
         <tr class="border-t border-line/40">
-          <td class="px-4 py-2">{% if t.type_id %}<span class="flex items-center gap-2"><img src="{% eve_type_icon t.type_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">{% type_name t.type_id %}</span>{% else %}<span class="text-faint">multi-item</span>{% endif %}</td>
+          <td class="px-4 py-2">{% if t.type_id %}<span class="flex items-center gap-2"><img src="{% eve_type_icon t.type_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">{% type_name t.type_id %}</span>{% else %}<span class="text-faint">{% translate "multi-item" %}</span>{% endif %}</td>
           <td class="px-4 py-2 text-right data text-muted">{{ t.quantity|default:"—" }}</td>
           <td class="px-4 py-2 text-right data text-faint">{{ t.volume_m3|floatformat:0 }}</td>
           <td class="px-4 py-2 text-muted">{{ t.source_location|default:"—" }}</td>
           <td class="px-4 py-2 text-muted">{{ t.dest_location|default:"—" }}</td>
           <td class="px-4 py-2">
             <span class="chip">{{ t.get_status_display }}</span>
-            {% if t.claimed_by_character_id %}<img src="{% eve_portrait t.claimed_by_character_id 32 %}" alt="" class="ml-1 inline h-5 w-5 rounded-full ring-1 ring-line" title="Claimed">{% endif %}
+            {% if t.claimed_by_character_id %}<img src="{% eve_portrait t.claimed_by_character_id 32 %}" alt="" class="ml-1 inline h-5 w-5 rounded-full ring-1 ring-line" title="{% translate 'Claimed' %}">{% endif %}
           </td>
           <td class="px-4 py-2 text-right">
             {% if t.status == 'open' %}
-              <form method="post" action="{% url 'stockpile:claim_haul' t.pk %}" class="inline">{% csrf_token %}<button class="btn-ghost !py-1 !text-xs">Claim</button></form>
+              <form method="post" action="{% url 'stockpile:claim_haul' t.pk %}" class="inline">{% csrf_token %}<button class="btn-ghost !py-1 !text-xs">{% translate "Claim" %}</button></form>
             {% elif t.claimed_by_character_id in my_character_ids or is_officer %}
               <form method="post" action="{% url 'stockpile:haul_transition' t.pk %}" class="inline-flex gap-1">
                 {% csrf_token %}
-                {% if t.status == 'claimed' %}<button name="action" value="start" class="btn-ghost !py-1 !text-xs">Start</button>{% endif %}
-                <button name="action" value="done" class="btn-ghost !py-1 !text-xs">Done</button>
-                <button name="action" value="release" class="btn-danger !py-1 !text-xs">Release</button>
+                {% if t.status == 'claimed' %}<button name="action" value="start" class="btn-ghost !py-1 !text-xs">{% translate "Start" %}</button>{% endif %}
+                <button name="action" value="done" class="btn-ghost !py-1 !text-xs">{% translate "Done" %}</button>
+                <button name="action" value="release" class="btn-danger !py-1 !text-xs">{% translate "Release" %}</button>
               </form>
             {% else %}<span class="text-xs text-faint">—</span>{% endif %}
           </td>
         </tr>
       {% empty %}
-        <tr><td colspan="7" class="px-4 py-10 text-center text-faint">Nothing to haul right now.</td></tr>
+        <tr><td colspan="7" class="px-4 py-10 text-center text-faint">{% translate "Nothing to haul right now." %}</td></tr>
       {% endfor %}
     </tbody>
   </table></div>

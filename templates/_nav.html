@@ -1,3 +1,4 @@
+{% load i18n %}
 {% with ns=request.resolver_match.namespace un=request.resolver_match.url_name %}
 {% comment %}Each group is a collapsible accordion section. The body shows/hides and the
    open state persists in localStorage; app.js auto-opens the group holding the
@@ -7,116 +8,116 @@
   {# ---- Corp member: grouped by intent ---- #}
 
   <div data-acc data-acc-key="pilot">
-    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">Pilot</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
+    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">{% translate "Pilot" %}</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
     <div data-acc-body class="space-y-1">
-      <a href="{% url 'identity:dashboard' %}" class="navlink {% if ns == 'identity' and un == 'dashboard' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-grid"/></svg> Dashboard</a>
+      <a href="{% url 'identity:dashboard' %}" class="navlink {% if ns == 'identity' and un == 'dashboard' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-grid"/></svg> {% translate "Dashboard" %}</a>
       {% comment %}Onboarding is a pilot's own journey, not community content — it lives here.{% endcomment %}
-      {% if features.onboarding %}<a href="{% url 'onboarding:dashboard' %}" class="navlink {% if ns == 'onboarding' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-rookie"/></svg> New Player</a>{% endif %}
-      {% if features.mentorship %}<a href="{% url 'mentorship:landing' %}" class="navlink {% if ns == 'mentorship' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-shield"/></svg> Mentorship</a>{% endif %}
-      {% if features.capsuleer %}<a href="{% url 'capsuleer:home' %}" class="navlink {% if ns == 'capsuleer' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-route"/></svg> Capsuleer Path</a>{% endif %}
-      {% if main_character %}<a href="{% url 'identity:character' main_character.character_id %}" class="navlink {% if un == 'character' or ns == 'skills' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-rookie"/></svg> My Skills &amp; Training</a>
-      {% elif features.skills %}<a href="{% url 'skills:plans' %}" class="navlink {% if ns == 'skills' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-rookie"/></svg> My Skills &amp; Training</a>{% endif %}
+      {% if features.onboarding %}<a href="{% url 'onboarding:dashboard' %}" class="navlink {% if ns == 'onboarding' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-rookie"/></svg> {% translate "New Player" %}</a>{% endif %}
+      {% if features.mentorship %}<a href="{% url 'mentorship:landing' %}" class="navlink {% if ns == 'mentorship' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-shield"/></svg> {% translate "Mentorship" %}</a>{% endif %}
+      {% if features.capsuleer %}<a href="{% url 'capsuleer:home' %}" class="navlink {% if ns == 'capsuleer' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-route"/></svg> {% translate "Capsuleer Path" %}</a>{% endif %}
+      {% if main_character %}<a href="{% url 'identity:character' main_character.character_id %}" class="navlink {% if un == 'character' or ns == 'skills' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-rookie"/></svg> {% translate "My Skills &amp; Training" %}</a>
+      {% elif features.skills %}<a href="{% url 'skills:plans' %}" class="navlink {% if ns == 'skills' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-rookie"/></svg> {% translate "My Skills &amp; Training" %}</a>{% endif %}
       {% comment %}The Dashboard (Command Center) absorbed My Readiness (readiness:me) and
          the Daily Briefing (pilots:briefing) — which itself had absorbed Your Orders and
          Recommended Actions. One pilot home; sections gate per feature key inside it.{% endcomment %}
-      {% if features.tasks %}<a href="{% url 'tasks:board' %}" class="navlink {% if ns == 'tasks' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-check"/></svg> My Tasks</a>{% endif %}
-      {% if features.srp %}<a href="{% url 'srp:mine' %}" class="navlink {% if ns == 'srp' and un == 'mine' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-shield"/></svg> My SRP</a>{% endif %}
-      {% if features.contributions %}<a href="{% url 'pilots:contributions' %}" class="navlink {% if ns == 'pilots' and un == 'contributions' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-bolt"/></svg> My Contribution</a>{% endif %}
+      {% if features.tasks %}<a href="{% url 'tasks:board' %}" class="navlink {% if ns == 'tasks' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-check"/></svg> {% translate "My Tasks" %}</a>{% endif %}
+      {% if features.srp %}<a href="{% url 'srp:mine' %}" class="navlink {% if ns == 'srp' and un == 'mine' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-shield"/></svg> {% translate "My SRP" %}</a>{% endif %}
+      {% if features.contributions %}<a href="{% url 'pilots:contributions' %}" class="navlink {% if ns == 'pilots' and un == 'contributions' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-bolt"/></svg> {% translate "My Contribution" %}</a>{% endif %}
     </div>
   </div>
 
   {% if features.pingboard %}
   <div data-acc data-acc-key="pingboard">
-    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">Pingboard</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
+    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">{% translate "Pingboard" %}</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
     <div data-acc-body class="space-y-1">
-      <a href="{% url 'pingboard:dashboard' %}" class="navlink {% if ns == 'pingboard' and un == 'dashboard' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-bell"/></svg> Dashboard</a>
-      <a href="{% url 'pingboard:calendar' %}" class="navlink {% if ns == 'pingboard' and un == 'calendar' or ns == 'pingboard' and un == 'calendar_event' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-calendar"/></svg> Calendar</a>
-      {% if is_officer %}<a href="{% url 'pingboard:compose' %}" class="navlink {% if un == 'compose' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-bolt"/></svg> Send alert</a>
-      <a href="{% url 'pingboard:history' %}" class="navlink {% if un == 'history' or un == 'alert_detail' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-check"/></svg> Alert history</a>{% endif %}
+      <a href="{% url 'pingboard:dashboard' %}" class="navlink {% if ns == 'pingboard' and un == 'dashboard' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-bell"/></svg> {% translate "Dashboard" %}</a>
+      <a href="{% url 'pingboard:calendar' %}" class="navlink {% if ns == 'pingboard' and un == 'calendar' or ns == 'pingboard' and un == 'calendar_event' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-calendar"/></svg> {% translate "Calendar" %}</a>
+      {% if is_officer %}<a href="{% url 'pingboard:compose' %}" class="navlink {% if un == 'compose' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-bolt"/></svg> {% translate "Send alert" %}</a>
+      <a href="{% url 'pingboard:history' %}" class="navlink {% if un == 'history' or un == 'alert_detail' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-check"/></svg> {% translate "Alert history" %}</a>{% endif %}
     </div>
   </div>
   {% endif %}
 
   {% if features.killboard or features.hall_of_fame or features.knowledge_base or features.raffle %}
   <div data-acc data-acc-key="community">
-    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">Community</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
+    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">{% translate "Community" %}</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
     <div data-acc-body class="space-y-1">
-      {% if features.killboard %}<a href="{% url 'killboard:list' %}" class="navlink {% if ns == 'killboard' and un != 'watchlists' and un != 'watchlist_detail' and un != 'battle_report_detail' and un != 'rankings' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-cross"/></svg> Killboard</a>
-      <a href="{% url 'killboard:rankings' %}" class="navlink {% if un == 'rankings' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-target"/></svg> Rankings</a>{% endif %}
-      {% if features.hall_of_fame %}<a href="{% url 'pilots:hall_of_fame' %}" class="navlink {% if un == 'hall_of_fame' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-trophy"/></svg> Hall of Fame</a>{% endif %}
-      {% if features.raffle %}<a href="{% url 'raffle:home' %}" class="navlink {% if ns == 'raffle' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-coin"/></svg> Raffle</a>{% endif %}
-      {% if features.killboard %}<a href="{% url 'killboard:stats' %}" class="navlink {% if un == 'stats' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-grid"/></svg> Combat Stats</a>
-      <a href="{% url 'killboard:roster' %}" class="navlink {% if un == 'roster' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-rookie"/></svg> Combat Roster</a>{% endif %}
-      {% if features.knowledge_base %}<a href="{% url 'kb:list' %}" class="navlink {% if ns == 'kb' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-rookie"/></svg> Knowledge base</a>{% endif %}
+      {% if features.killboard %}<a href="{% url 'killboard:list' %}" class="navlink {% if ns == 'killboard' and un != 'watchlists' and un != 'watchlist_detail' and un != 'battle_report_detail' and un != 'rankings' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-cross"/></svg> {% translate "Killboard" %}</a>
+      <a href="{% url 'killboard:rankings' %}" class="navlink {% if un == 'rankings' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-target"/></svg> {% translate "Rankings" %}</a>{% endif %}
+      {% if features.hall_of_fame %}<a href="{% url 'pilots:hall_of_fame' %}" class="navlink {% if un == 'hall_of_fame' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-trophy"/></svg> {% translate "Hall of Fame" %}</a>{% endif %}
+      {% if features.raffle %}<a href="{% url 'raffle:home' %}" class="navlink {% if ns == 'raffle' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-coin"/></svg> {% translate "Raffle" %}</a>{% endif %}
+      {% if features.killboard %}<a href="{% url 'killboard:stats' %}" class="navlink {% if un == 'stats' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-grid"/></svg> {% translate "Combat Stats" %}</a>
+      <a href="{% url 'killboard:roster' %}" class="navlink {% if un == 'roster' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-rookie"/></svg> {% translate "Combat Roster" %}</a>{% endif %}
+      {% if features.knowledge_base %}<a href="{% url 'kb:list' %}" class="navlink {% if ns == 'kb' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-rookie"/></svg> {% translate "Knowledge base" %}</a>{% endif %}
     </div>
   </div>
   {% endif %}
 
   {% if features.doctrines %}
   <div data-acc data-acc-key="ships">
-    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">Ships &amp; Doctrines</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
+    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">{% translate "Ships &amp; Doctrines" %}</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
     <div data-acc-body class="space-y-1">
-      <a href="{% url 'doctrines:list' %}" class="navlink {% if ns == 'doctrines' and un != 'ships' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-ship"/></svg> Doctrines</a>
-      <a href="{% url 'doctrines:ships' %}" class="navlink {% if un == 'ships' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-ship"/></svg> Shipyard</a>
+      <a href="{% url 'doctrines:list' %}" class="navlink {% if ns == 'doctrines' and un != 'ships' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-ship"/></svg> {% translate "Doctrines" %}</a>
+      <a href="{% url 'doctrines:ships' %}" class="navlink {% if un == 'ships' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-ship"/></svg> {% translate "Shipyard" %}</a>
     </div>
   </div>
   {% endif %}
 
   {% if features.operations or features.intel or features.standings %}
   <div data-acc data-acc-key="fleet">
-    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">Fleet &amp; Combat</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
+    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">{% translate "Fleet &amp; Combat" %}</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
     <div data-acc-body class="space-y-1">
-      {% if features.operations %}<a href="{% url 'operations:list' %}" class="navlink {% if ns == 'operations' and un != 'timers' and un != 'timer_add' and un != 'timer_remove' and un != 'sov' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-target"/></svg> Fleet Ops</a>
-      <a href="{% url 'operations:timers' %}" class="navlink {% if un == 'timers' or un == 'timer_add' or un == 'timer_remove' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-bolt"/></svg> Timers</a>{% endif %}
-      {% if features.intel %}<a href="{% url 'killboard:watchlists' %}" class="navlink {% if un == 'watchlists' or un == 'watchlist_detail' or un == 'battle_report_detail' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-shield"/></svg> Intel</a>
-      <a href="{% url 'navigation:roaming' %}" class="navlink {% if un == 'roaming' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-target"/></svg> Roaming Targets</a>
-      <a href="{% url 'navigation:gatecamp' %}" class="navlink {% if un == 'gatecamp' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-shield"/></svg> Gate Camp Watch</a>{% endif %}
-      {% if features.standings %}<a href="{% url 'corporation:standings' %}" class="navlink {% if un == 'standings' or un == 'standings_sync' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-target"/></svg> Standings</a>{% endif %}
+      {% if features.operations %}<a href="{% url 'operations:list' %}" class="navlink {% if ns == 'operations' and un != 'timers' and un != 'timer_add' and un != 'timer_remove' and un != 'sov' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-target"/></svg> {% translate "Fleet Ops" %}</a>
+      <a href="{% url 'operations:timers' %}" class="navlink {% if un == 'timers' or un == 'timer_add' or un == 'timer_remove' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-bolt"/></svg> {% translate "Timers" %}</a>{% endif %}
+      {% if features.intel %}<a href="{% url 'killboard:watchlists' %}" class="navlink {% if un == 'watchlists' or un == 'watchlist_detail' or un == 'battle_report_detail' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-shield"/></svg> {% translate "Intel" %}</a>
+      <a href="{% url 'navigation:roaming' %}" class="navlink {% if un == 'roaming' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-target"/></svg> {% translate "Roaming Targets" %}</a>
+      <a href="{% url 'navigation:gatecamp' %}" class="navlink {% if un == 'gatecamp' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-shield"/></svg> {% translate "Gate Camp Watch" %}</a>{% endif %}
+      {% if features.standings %}<a href="{% url 'corporation:standings' %}" class="navlink {% if un == 'standings' or un == 'standings_sync' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-target"/></svg> {% translate "Standings" %}</a>{% endif %}
     </div>
   </div>
   {% endif %}
 
   {% if features.navigation %}
   <div data-acc data-acc-key="navigation">
-    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">Navigation</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
+    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">{% translate "Navigation" %}</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
     <div data-acc-body class="space-y-1">
-      <a href="{% url 'navigation:route_planner' %}" class="navlink {% if un == 'route_planner' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-route"/></svg> Route Planner</a>
-      <a href="{% url 'navigation:jump_planner' %}" class="navlink {% if un == 'jump_planner' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-jump"/></svg> Jump Planner</a>
-      <a href="{% url 'navigation:range_finder' %}" class="navlink {% if un == 'range_finder' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-target"/></svg> Jump Range</a>
-      <a href="{% url 'navigation:map_index' %}" class="navlink {% if un == 'map_index' or un == 'map_region' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-map"/></svg> Region Maps</a>
-      <a href="{% url 'navigation:beacons' %}" class="navlink {% if un == 'beacons' or un == 'beacon_add' or un == 'beacon_remove' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-shield"/></svg> Jump Bridges</a>
+      <a href="{% url 'navigation:route_planner' %}" class="navlink {% if un == 'route_planner' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-route"/></svg> {% translate "Route Planner" %}</a>
+      <a href="{% url 'navigation:jump_planner' %}" class="navlink {% if un == 'jump_planner' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-jump"/></svg> {% translate "Jump Planner" %}</a>
+      <a href="{% url 'navigation:range_finder' %}" class="navlink {% if un == 'range_finder' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-target"/></svg> {% translate "Jump Range" %}</a>
+      <a href="{% url 'navigation:map_index' %}" class="navlink {% if un == 'map_index' or un == 'map_region' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-map"/></svg> {% translate "Region Maps" %}</a>
+      <a href="{% url 'navigation:beacons' %}" class="navlink {% if un == 'beacons' or un == 'beacon_add' or un == 'beacon_remove' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-shield"/></svg> {% translate "Jump Bridges" %}</a>
     </div>
   </div>
   {% endif %}
 
   {% if features.industry or features.planetary or features.mining or features.stockpile or features.market %}
   <div data-acc data-acc-key="economy">
-    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">Industry &amp; Economy</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
+    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">{% translate "Industry &amp; Economy" %}</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
     <div data-acc-body class="space-y-1">
-      {% if features.industry %}<a href="{% url 'industry:home' %}" class="navlink {% if ns == 'industry' and un != 'jobs' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-cube"/></svg> Industry Center</a>{% endif %}
-      {% if features.planetary %}<a href="{% url 'planetary:landing' %}" class="navlink {% if ns == 'planetary' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-bolt"/></svg> Planetary Industry</a>{% endif %}
-      {% if features.industry %}<a href="{% url 'industry:jobs' %}" class="navlink {% if un == 'jobs' or ns == 'erp' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-target"/></svg> Job tracker</a>
-      <a href="{% url 'corporation:extractions' %}" class="navlink {% if un == 'extractions' or un == 'extractions_sync' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-bolt"/></svg> Moon Extractions</a>{% endif %}
-      {% if features.mining %}<a href="{% url 'mining:me' %}" class="navlink {% if ns == 'mining' and un == 'me' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-coin"/></svg> My mining</a>
-      {% if is_officer %}<a href="{% url 'mining:ledger' %}" class="navlink {% if ns == 'mining' and un != 'me' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-coin"/></svg> Mining Ledger</a>{% endif %}{% endif %}
-      {% if features.stockpile %}<a href="{% url 'stockpile:dashboard' %}" class="navlink {% if ns == 'stockpile' and un == 'dashboard' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-box"/></svg> Stockpile</a>
-      <a href="{% url 'stockpile:assets' %}" class="navlink {% if un == 'assets' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-box"/></svg> Assets</a>{% endif %}
-      {% if features.market %}<a href="{% url 'market:dashboard' %}" class="navlink {% if ns == 'market' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-coin"/></svg> Market</a>{% endif %}
-      {% if features.stockpile %}<a href="{% url 'stockpile:logistics' %}" class="navlink {% if un == 'logistics' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-truck"/></svg> Corp Logistics</a>{% endif %}
+      {% if features.industry %}<a href="{% url 'industry:home' %}" class="navlink {% if ns == 'industry' and un != 'jobs' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-cube"/></svg> {% translate "Industry Center" %}</a>{% endif %}
+      {% if features.planetary %}<a href="{% url 'planetary:landing' %}" class="navlink {% if ns == 'planetary' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-bolt"/></svg> {% translate "Planetary Industry" %}</a>{% endif %}
+      {% if features.industry %}<a href="{% url 'industry:jobs' %}" class="navlink {% if un == 'jobs' or ns == 'erp' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-target"/></svg> {% translate "Job tracker" %}</a>
+      <a href="{% url 'corporation:extractions' %}" class="navlink {% if un == 'extractions' or un == 'extractions_sync' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-bolt"/></svg> {% translate "Moon Extractions" %}</a>{% endif %}
+      {% if features.mining %}<a href="{% url 'mining:me' %}" class="navlink {% if ns == 'mining' and un == 'me' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-coin"/></svg> {% translate "My mining" %}</a>
+      {% if is_officer %}<a href="{% url 'mining:ledger' %}" class="navlink {% if ns == 'mining' and un != 'me' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-coin"/></svg> {% translate "Mining Ledger" %}</a>{% endif %}{% endif %}
+      {% if features.stockpile %}<a href="{% url 'stockpile:dashboard' %}" class="navlink {% if ns == 'stockpile' and un == 'dashboard' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-box"/></svg> {% translate "Stockpile" %}</a>
+      <a href="{% url 'stockpile:assets' %}" class="navlink {% if un == 'assets' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-box"/></svg> {% translate "Assets" %}</a>{% endif %}
+      {% if features.market %}<a href="{% url 'market:dashboard' %}" class="navlink {% if ns == 'market' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-coin"/></svg> {% translate "Market" %}</a>{% endif %}
+      {% if features.stockpile %}<a href="{% url 'stockpile:logistics' %}" class="navlink {% if un == 'logistics' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-truck"/></svg> {% translate "Corp Logistics" %}</a>{% endif %}
     </div>
   </div>
   {% endif %}
 
   {% if freight_enabled or buyback_enabled or store_enabled %}
   <div data-acc data-acc-key="services">
-    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">Services</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
+    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">{% translate "Services" %}</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
     <div data-acc-body class="space-y-1">
-      {% if freight_enabled %}<a href="{% url 'logistics:calculator' %}" class="navlink {% if ns == 'logistics' and un != 'corp_contracts' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-truck"/></svg> Freight Services</a>{% endif %}
-      {% if buyback_enabled %}<a href="{% url 'buyback:appraisal' %}" class="navlink {% if ns == 'buyback' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-coin"/></svg> Buyback Services</a>{% endif %}
-      {% if store_enabled %}<a href="{% url 'store:storefront' %}" class="navlink {% if ns == 'store' and un != 'board' and un != 'config' and un != 'my_orders' and un != 'supply_forecast' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-ship"/></svg> Corp Store</a>{% endif %}
-      {% if store_enabled %}<a href="{% url 'store:my_orders' %}" class="navlink {% if un == 'my_orders' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-check"/></svg> My Orders</a>{% endif %}
-      {% if store_enabled and is_member %}<a href="{% url 'store:board' %}" class="navlink {% if un == 'board' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-cube"/></svg> Build Board</a>{% endif %}
-      {% if store_enabled and is_member %}<a href="{% url 'store:supply_forecast' %}" class="navlink {% if un == 'supply_forecast' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-coin"/></svg> Supply Forecast</a>{% endif %}
+      {% if freight_enabled %}<a href="{% url 'logistics:calculator' %}" class="navlink {% if ns == 'logistics' and un != 'corp_contracts' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-truck"/></svg> {% translate "Freight Services" %}</a>{% endif %}
+      {% if buyback_enabled %}<a href="{% url 'buyback:appraisal' %}" class="navlink {% if ns == 'buyback' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-coin"/></svg> {% translate "Buyback Services" %}</a>{% endif %}
+      {% if store_enabled %}<a href="{% url 'store:storefront' %}" class="navlink {% if ns == 'store' and un != 'board' and un != 'config' and un != 'my_orders' and un != 'supply_forecast' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-ship"/></svg> {% translate "Corp Store" %}</a>{% endif %}
+      {% if store_enabled %}<a href="{% url 'store:my_orders' %}" class="navlink {% if un == 'my_orders' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-check"/></svg> {% translate "My Orders" %}</a>{% endif %}
+      {% if store_enabled and is_member %}<a href="{% url 'store:board' %}" class="navlink {% if un == 'board' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-cube"/></svg> {% translate "Build Board" %}</a>{% endif %}
+      {% if store_enabled and is_member %}<a href="{% url 'store:supply_forecast' %}" class="navlink {% if un == 'supply_forecast' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-coin"/></svg> {% translate "Supply Forecast" %}</a>{% endif %}
     </div>
   </div>
   {% endif %}
@@ -126,10 +127,10 @@
      its own feature key, a sibling of the officer Command Intelligence / Readiness groups.{% endcomment %}
   {% if features.campaigns %}
   <div data-acc data-acc-key="campaigns">
-    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">Campaign Command</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
+    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">{% translate "Campaign Command" %}</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
     <div data-acc-body class="space-y-1">
-      <a href="{% url 'campaigns:index' %}" class="navlink {% if ns == 'campaigns' and un != 'workspace' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-target"/></svg> Campaigns</a>
-      {% if is_officer or can_manage_campaigns %}<a href="{% url 'campaigns:workspace' %}" class="navlink {% if ns == 'campaigns' and un == 'workspace' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-check"/></svg> My Workspace</a>{% endif %}
+      <a href="{% url 'campaigns:index' %}" class="navlink {% if ns == 'campaigns' and un != 'workspace' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-target"/></svg> {% translate "Campaigns" %}</a>
+      {% if is_officer or can_manage_campaigns %}<a href="{% url 'campaigns:workspace' %}" class="navlink {% if ns == 'campaigns' and un == 'workspace' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-check"/></svg> {% translate "My Workspace" %}</a>{% endif %}
     </div>
   </div>
   {% endif %}
@@ -147,15 +148,15 @@
      classification-filtered per row, server-side.{% endcomment %}
   {% if features.command_intel %}
   <div data-acc data-acc-key="command-intel">
-    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">Command Intelligence</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
+    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">{% translate "Command Intelligence" %}</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
     <div data-acc-body class="space-y-1">
-      <a href="{% url 'command_intel:overview' %}" class="navlink {% if ns == 'command_intel' and un == 'overview' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-target"/></svg> Command Overview</a>
-      <a href="{% url 'command_intel:ask' %}" class="navlink {% if ns == 'command_intel' and un == 'ask' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-rookie"/></svg> Ask Intelligence</a>
-      <a href="{% url 'command_intel:constraints' %}" class="navlink {% if ns == 'command_intel' and un == 'constraints' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-shield"/></svg> Operational Constraints</a>
-      <a href="{% url 'command_intel:simulator' %}" class="navlink {% if ns == 'command_intel' and un == 'simulator' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-grid"/></svg> What-if Simulator</a>
-      <a href="{% url 'command_intel:battles' %}" class="navlink {% if ns == 'command_intel' and un == 'battles' or ns == 'command_intel' and un == 'battle_detail' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-cross"/></svg> Battle Analysis</a>
-      <a href="{% url 'command_intel:campaigns' %}" class="navlink {% if ns == 'command_intel' and un == 'campaigns' or ns == 'command_intel' and un == 'campaign_detail' or ns == 'command_intel' and un == 'campaign_new' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-bolt"/></svg> Improvement Plans</a>
-      <a href="{% url 'command_intel:reports' %}" class="navlink {% if ns == 'command_intel' and un == 'reports' or ns == 'command_intel' and un == 'report_detail' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-trophy"/></svg> Intelligence Reports</a>
+      <a href="{% url 'command_intel:overview' %}" class="navlink {% if ns == 'command_intel' and un == 'overview' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-target"/></svg> {% translate "Command Overview" %}</a>
+      <a href="{% url 'command_intel:ask' %}" class="navlink {% if ns == 'command_intel' and un == 'ask' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-rookie"/></svg> {% translate "Ask Intelligence" %}</a>
+      <a href="{% url 'command_intel:constraints' %}" class="navlink {% if ns == 'command_intel' and un == 'constraints' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-shield"/></svg> {% translate "Operational Constraints" %}</a>
+      <a href="{% url 'command_intel:simulator' %}" class="navlink {% if ns == 'command_intel' and un == 'simulator' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-grid"/></svg> {% translate "What-if Simulator" %}</a>
+      <a href="{% url 'command_intel:battles' %}" class="navlink {% if ns == 'command_intel' and un == 'battles' or ns == 'command_intel' and un == 'battle_detail' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-cross"/></svg> {% translate "Battle Analysis" %}</a>
+      <a href="{% url 'command_intel:campaigns' %}" class="navlink {% if ns == 'command_intel' and un == 'campaigns' or ns == 'command_intel' and un == 'campaign_detail' or ns == 'command_intel' and un == 'campaign_new' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-bolt"/></svg> {% translate "Improvement Plans" %}</a>
+      <a href="{% url 'command_intel:reports' %}" class="navlink {% if ns == 'command_intel' and un == 'reports' or ns == 'command_intel' and un == 'report_detail' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-trophy"/></svg> {% translate "Intelligence Reports" %}</a>
     </div>
   </div>
   {% endif %}
@@ -165,29 +166,29 @@
      old catch-all Leadership group so that section holds only day-to-day command.{% endcomment %}
   {% if features.readiness %}
   <div data-acc data-acc-key="readiness">
-    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">Readiness</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
+    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">{% translate "Readiness" %}</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
     <div data-acc-body class="space-y-1">
-      <a href="{% url 'readiness:dashboard' %}" class="navlink {% if ns == 'readiness' and un == 'dashboard' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-grid"/></svg> Readiness</a>
-      <a href="{% url 'readiness:findings' %}" class="navlink {% if un == 'findings' or un == 'task_queue' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-shield"/></svg> Risk register</a>
-      <a href="{% url 'readiness:alerts' %}" class="navlink {% if un == 'alerts' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-bolt"/></svg> Readiness alerts</a>
-      <a href="{% url 'readiness:report' %}" class="navlink {% if un == 'report' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-trophy"/></svg> Weekly report</a>
-      <a href="{% url 'readiness:timeline' %}" class="navlink {% if un == 'timeline' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-grid"/></svg> Readiness timeline</a>
-      <a href="{% url 'readiness:simulator' %}" class="navlink {% if un == 'simulator' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-target"/></svg> Fleet simulator</a>
+      <a href="{% url 'readiness:dashboard' %}" class="navlink {% if ns == 'readiness' and un == 'dashboard' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-grid"/></svg> {% translate "Readiness" %}</a>
+      <a href="{% url 'readiness:findings' %}" class="navlink {% if un == 'findings' or un == 'task_queue' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-shield"/></svg> {% translate "Risk register" %}</a>
+      <a href="{% url 'readiness:alerts' %}" class="navlink {% if un == 'alerts' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-bolt"/></svg> {% translate "Readiness alerts" %}</a>
+      <a href="{% url 'readiness:report' %}" class="navlink {% if un == 'report' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-trophy"/></svg> {% translate "Weekly report" %}</a>
+      <a href="{% url 'readiness:timeline' %}" class="navlink {% if un == 'timeline' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-grid"/></svg> {% translate "Readiness timeline" %}</a>
+      <a href="{% url 'readiness:simulator' %}" class="navlink {% if un == 'simulator' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-target"/></svg> {% translate "Fleet simulator" %}</a>
     </div>
   </div>
   {% endif %}
 
   <div data-acc data-acc-key="leadership">
-    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">Leadership</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
+    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">{% translate "Leadership" %}</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
     <div data-acc-body class="space-y-1">
-      {% if features.recommendations %}<a href="{% url 'recommendations:officer' %}" class="navlink {% if ns == 'recommendations' and un == 'officer' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-command"/></svg> Command</a>{% endif %}
-      {% if features.srp %}<a href="{% url 'srp:queue' %}" class="navlink {% if ns == 'srp' and un != 'mine' and un != 'settings' and un != 'budget' and un != 'budget_save' and un != 'loss_impact' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-shield"/></svg> SRP Review</a>
-      <a href="{% url 'srp:budget' %}" class="navlink {% if un == 'budget' or un == 'budget_save' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-coin"/></svg> SRP Budget</a>
-      <a href="{% url 'srp:loss_impact' %}" class="navlink {% if un == 'loss_impact' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-target"/></svg> Loss Impact</a>{% endif %}
-      <a href="{% url 'corporation:roster' %}" class="navlink {% if ns == 'corporation' and un == 'roster' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-shield"/></svg> Member Roster</a>
-      {% if features.recruitment %}<a href="{% url 'recruitment:list' %}" class="navlink {% if ns == 'recruitment' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-rookie"/></svg> Recruitment</a>{% endif %}
-      {% if features.operations %}<a href="{% url 'operations:cancellation_analytics' %}" class="navlink {% if un == 'cancellation_analytics' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-bolt"/></svg> Cancellation analytics</a>{% endif %}
-      <a href="{% url 'admin_audit:console' %}" class="navlink {% if ns == 'admin_audit' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-command"/></svg> Admin Console</a>
+      {% if features.recommendations %}<a href="{% url 'recommendations:officer' %}" class="navlink {% if ns == 'recommendations' and un == 'officer' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-command"/></svg> {% translate "Command" %}</a>{% endif %}
+      {% if features.srp %}<a href="{% url 'srp:queue' %}" class="navlink {% if ns == 'srp' and un != 'mine' and un != 'settings' and un != 'budget' and un != 'budget_save' and un != 'loss_impact' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-shield"/></svg> {% translate "SRP Review" %}</a>
+      <a href="{% url 'srp:budget' %}" class="navlink {% if un == 'budget' or un == 'budget_save' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-coin"/></svg> {% translate "SRP Budget" %}</a>
+      <a href="{% url 'srp:loss_impact' %}" class="navlink {% if un == 'loss_impact' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-target"/></svg> {% translate "Loss Impact" %}</a>{% endif %}
+      <a href="{% url 'corporation:roster' %}" class="navlink {% if ns == 'corporation' and un == 'roster' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-shield"/></svg> {% translate "Member Roster" %}</a>
+      {% if features.recruitment %}<a href="{% url 'recruitment:list' %}" class="navlink {% if ns == 'recruitment' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-rookie"/></svg> {% translate "Recruitment" %}</a>{% endif %}
+      {% if features.operations %}<a href="{% url 'operations:cancellation_analytics' %}" class="navlink {% if un == 'cancellation_analytics' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-bolt"/></svg> {% translate "Cancellation analytics" %}</a>{% endif %}
+      <a href="{% url 'admin_audit:console' %}" class="navlink {% if ns == 'admin_audit' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-command"/></svg> {% translate "Admin Console" %}</a>
     </div>
   </div>
   {% endif %}
@@ -195,19 +196,19 @@
   {# Lateral roles (4.16): a recruiter / FC who is NOT an officer still reaches their surface. #}
   {% if not is_officer %}{% if can_recruit and features.recruitment or can_manage_fleet and features.operations %}
   <div data-acc data-acc-key="delegated">
-    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">Delegated</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
+    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">{% translate "Delegated" %}</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
     <div data-acc-body class="space-y-1">
-      {% if can_recruit and features.recruitment %}<a href="{% url 'recruitment:list' %}" class="navlink {% if ns == 'recruitment' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-rookie"/></svg> Recruitment</a>{% endif %}
-      {% if can_manage_fleet and features.operations %}<a href="{% url 'operations:list' %}" class="navlink {% if ns == 'operations' and un == 'list' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-bolt"/></svg> Fleet operations</a>{% endif %}
+      {% if can_recruit and features.recruitment %}<a href="{% url 'recruitment:list' %}" class="navlink {% if ns == 'recruitment' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-rookie"/></svg> {% translate "Recruitment" %}</a>{% endif %}
+      {% if can_manage_fleet and features.operations %}<a href="{% url 'operations:list' %}" class="navlink {% if ns == 'operations' and un == 'list' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-bolt"/></svg> {% translate "Fleet operations" %}</a>{% endif %}
     </div>
   </div>
   {% endif %}{% endif %}
 
   <div data-acc data-acc-key="account">
-    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">Account</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
+    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">{% translate "Account" %}</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
     <div data-acc-body class="space-y-1">
-      <a href="{% url 'sso:scopes' %}" class="navlink {% if ns == 'sso' and un == 'scopes' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-key"/></svg> ESI Scopes</a>
-      <a href="{% url 'identity:privacy' %}" class="navlink {% if un == 'privacy' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-lock"/></svg> Privacy</a>
+      <a href="{% url 'sso:scopes' %}" class="navlink {% if ns == 'sso' and un == 'scopes' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-key"/></svg> {% translate "ESI Scopes" %}</a>
+      <a href="{% url 'identity:privacy' %}" class="navlink {% if un == 'privacy' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-lock"/></svg> {% translate "Privacy" %}</a>
     </div>
   </div>
 
@@ -215,85 +216,85 @@
   {# ---- Logged-in pilot NOT in the corp: recruitment, plus alliance services ---- #}
   {% if features.navigation %}
   <div data-acc data-acc-key="navigation">
-    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">Navigation</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
+    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">{% translate "Navigation" %}</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
     <div data-acc-body class="space-y-1">
-      <a href="{% url 'navigation:route_planner' %}" class="navlink {% if un == 'route_planner' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-route"/></svg> Route Planner</a>
-      <a href="{% url 'navigation:jump_planner' %}" class="navlink {% if un == 'jump_planner' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-jump"/></svg> Jump Planner</a>
-      <a href="{% url 'navigation:range_finder' %}" class="navlink {% if un == 'range_finder' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-target"/></svg> Jump Range</a>
-      <a href="{% url 'navigation:map_index' %}" class="navlink {% if un == 'map_index' or un == 'map_region' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-map"/></svg> Region Maps</a>
+      <a href="{% url 'navigation:route_planner' %}" class="navlink {% if un == 'route_planner' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-route"/></svg> {% translate "Route Planner" %}</a>
+      <a href="{% url 'navigation:jump_planner' %}" class="navlink {% if un == 'jump_planner' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-jump"/></svg> {% translate "Jump Planner" %}</a>
+      <a href="{% url 'navigation:range_finder' %}" class="navlink {% if un == 'range_finder' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-target"/></svg> {% translate "Jump Range" %}</a>
+      <a href="{% url 'navigation:map_index' %}" class="navlink {% if un == 'map_index' or un == 'map_region' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-map"/></svg> {% translate "Region Maps" %}</a>
     </div>
   </div>
   {% endif %}
   {% if features.doctrines %}
   <div data-acc data-acc-key="doctrines">
-    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">Ships &amp; doctrines</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
+    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">{% translate "Ships &amp; doctrines" %}</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
     <div data-acc-body class="space-y-1">
-      <a href="{% url 'doctrines:list' %}" class="navlink {% if ns == 'doctrines' and un != 'ships' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-ship"/></svg> Doctrines</a>
-      <a href="{% url 'doctrines:ships' %}" class="navlink {% if un == 'ships' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-ship"/></svg> Shipyard</a>
+      <a href="{% url 'doctrines:list' %}" class="navlink {% if ns == 'doctrines' and un != 'ships' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-ship"/></svg> {% translate "Doctrines" %}</a>
+      <a href="{% url 'doctrines:ships' %}" class="navlink {% if un == 'ships' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-ship"/></svg> {% translate "Shipyard" %}</a>
     </div>
   </div>
   {% endif %}
   {% if is_alliance %}
   {% if features.killboard %}
   <div data-acc data-acc-key="community">
-    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">Killboard</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
+    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">{% translate "Killboard" %}</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
     <div data-acc-body class="space-y-1">
-      <a href="{% url 'killboard:stats' %}" class="navlink {% if un == 'stats' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-grid"/></svg> Combat Stats</a>
-      <a href="{% url 'killboard:roster' %}" class="navlink {% if un == 'roster' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-rookie"/></svg> Combat Roster</a>
+      <a href="{% url 'killboard:stats' %}" class="navlink {% if un == 'stats' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-grid"/></svg> {% translate "Combat Stats" %}</a>
+      <a href="{% url 'killboard:roster' %}" class="navlink {% if un == 'roster' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-rookie"/></svg> {% translate "Combat Roster" %}</a>
     </div>
   </div>
   {% endif %}
   {% if features.raffle %}
   <div data-acc data-acc-key="raffle">
-    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">Raffle</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
+    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">{% translate "Raffle" %}</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
     <div data-acc-body class="space-y-1">
-      <a href="{% url 'raffle:home' %}" class="navlink {% if ns == 'raffle' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-coin"/></svg> Raffle contests</a>
+      <a href="{% url 'raffle:home' %}" class="navlink {% if ns == 'raffle' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-coin"/></svg> {% translate "Raffle contests" %}</a>
     </div>
   </div>
   {% endif %}
   {% if freight_audience == 'alliance' or freight_audience == 'public' or buyback_audience == 'alliance' or buyback_audience == 'public' or store_audience == 'alliance' or store_audience == 'public' %}
   <div data-acc data-acc-key="services">
-    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">Services</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
+    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">{% translate "Services" %}</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
     <div data-acc-body class="space-y-1">
-      {% if freight_audience == 'alliance' or freight_audience == 'public' %}<a href="{% url 'logistics:calculator' %}" class="navlink {% if ns == 'logistics' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-truck"/></svg> Freight Services</a>{% endif %}
-      {% if buyback_audience == 'alliance' or buyback_audience == 'public' %}<a href="{% url 'buyback:appraisal' %}" class="navlink {% if ns == 'buyback' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-coin"/></svg> Buyback Services</a>{% endif %}
-      {% if store_audience == 'alliance' or store_audience == 'public' %}<a href="{% url 'store:storefront' %}" class="navlink {% if ns == 'store' and un != 'my_orders' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-ship"/></svg> Corp Store</a>{% endif %}
-      {% if store_audience == 'alliance' or store_audience == 'public' %}<a href="{% url 'store:my_orders' %}" class="navlink {% if un == 'my_orders' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-check"/></svg> My Orders</a>{% endif %}
+      {% if freight_audience == 'alliance' or freight_audience == 'public' %}<a href="{% url 'logistics:calculator' %}" class="navlink {% if ns == 'logistics' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-truck"/></svg> {% translate "Freight Services" %}</a>{% endif %}
+      {% if buyback_audience == 'alliance' or buyback_audience == 'public' %}<a href="{% url 'buyback:appraisal' %}" class="navlink {% if ns == 'buyback' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-coin"/></svg> {% translate "Buyback Services" %}</a>{% endif %}
+      {% if store_audience == 'alliance' or store_audience == 'public' %}<a href="{% url 'store:storefront' %}" class="navlink {% if ns == 'store' and un != 'my_orders' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-ship"/></svg> {% translate "Corp Store" %}</a>{% endif %}
+      {% if store_audience == 'alliance' or store_audience == 'public' %}<a href="{% url 'store:my_orders' %}" class="navlink {% if un == 'my_orders' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-check"/></svg> {% translate "My Orders" %}</a>{% endif %}
     </div>
   </div>
   {% endif %}
   {% endif %}
   <div data-acc data-acc-key="recruitment">
-    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">Recruitment</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
+    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">{% translate "Recruitment" %}</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
     <div data-acc-body class="space-y-1">
-      {% if features.onboarding %}<a href="{% url 'onboarding:dashboard' %}" class="navlink {% if ns == 'onboarding' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-rookie"/></svg> Join the corp</a>{% endif %}
+      {% if features.onboarding %}<a href="{% url 'onboarding:dashboard' %}" class="navlink {% if ns == 'onboarding' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-rookie"/></svg> {% translate "Join the corp" %}</a>{% endif %}
     </div>
   </div>
   <div data-acc data-acc-key="account">
-    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">Account</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
+    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">{% translate "Account" %}</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
     <div data-acc-body class="space-y-1">
-      <a href="{% url 'sso:scopes' %}" class="navlink"><svg class="navicon"><use href="#i-key"/></svg> ESI Scopes</a>
-      <a href="{% url 'identity:privacy' %}" class="navlink"><svg class="navicon"><use href="#i-lock"/></svg> Privacy</a>
+      <a href="{% url 'sso:scopes' %}" class="navlink"><svg class="navicon"><use href="#i-key"/></svg> {% translate "ESI Scopes" %}</a>
+      <a href="{% url 'identity:privacy' %}" class="navlink"><svg class="navicon"><use href="#i-lock"/></svg> {% translate "Privacy" %}</a>
     </div>
   </div>
 
   {% else %}
   {# ---- Anonymous visitor: public surface ---- #}
   <div data-acc data-acc-key="intel">
-    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">Explore</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
+    <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">{% translate "Explore" %}</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
     <div data-acc-body class="space-y-1">
       {% comment %}Public visitors only: a tour of what the platform does. Hidden once logged in (members explore the live features themselves).{% endcomment %}
-      <a href="{% url 'showcase' %}" class="navlink {% if un == 'showcase' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-grid"/></svg> Features</a>
-      {% if features.killboard %}<a href="{% url 'killboard:list' %}" class="navlink {% if ns == 'killboard' and un != 'rankings' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-cross"/></svg> Killboard</a>
-      <a href="{% url 'killboard:rankings' %}" class="navlink {% if un == 'rankings' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-target"/></svg> Rankings</a>{% endif %}
-      {% if freight_public %}<a href="{% url 'logistics:calculator' %}" class="navlink {% if ns == 'logistics' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-truck"/></svg> Freight Services</a>{% endif %}
-      {% if buyback_public %}<a href="{% url 'buyback:appraisal' %}" class="navlink {% if ns == 'buyback' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-coin"/></svg> Buyback Services</a>{% endif %}
-      {% if store_public %}<a href="{% url 'store:storefront' %}" class="navlink {% if ns == 'store' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-ship"/></svg> Corp Store</a>{% endif %}
-      {% if features.navigation %}<a href="{% url 'navigation:route_planner' %}" class="navlink {% if un == 'route_planner' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-route"/></svg> Route Planner</a>
-      <a href="{% url 'navigation:jump_planner' %}" class="navlink {% if un == 'jump_planner' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-jump"/></svg> Jump Planner</a>
-      <a href="{% url 'navigation:range_finder' %}" class="navlink {% if un == 'range_finder' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-target"/></svg> Jump Range</a>
-      <a href="{% url 'navigation:map_index' %}" class="navlink {% if un == 'map_index' or un == 'map_region' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-map"/></svg> Region Maps</a>{% endif %}
-      {% if features.onboarding %}<a href="{% url 'onboarding:dashboard' %}" class="navlink {% if ns == 'onboarding' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-rookie"/></svg> Join the corp</a>{% endif %}
+      <a href="{% url 'showcase' %}" class="navlink {% if un == 'showcase' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-grid"/></svg> {% translate "Features" %}</a>
+      {% if features.killboard %}<a href="{% url 'killboard:list' %}" class="navlink {% if ns == 'killboard' and un != 'rankings' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-cross"/></svg> {% translate "Killboard" %}</a>
+      <a href="{% url 'killboard:rankings' %}" class="navlink {% if un == 'rankings' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-target"/></svg> {% translate "Rankings" %}</a>{% endif %}
+      {% if freight_public %}<a href="{% url 'logistics:calculator' %}" class="navlink {% if ns == 'logistics' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-truck"/></svg> {% translate "Freight Services" %}</a>{% endif %}
+      {% if buyback_public %}<a href="{% url 'buyback:appraisal' %}" class="navlink {% if ns == 'buyback' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-coin"/></svg> {% translate "Buyback Services" %}</a>{% endif %}
+      {% if store_public %}<a href="{% url 'store:storefront' %}" class="navlink {% if ns == 'store' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-ship"/></svg> {% translate "Corp Store" %}</a>{% endif %}
+      {% if features.navigation %}<a href="{% url 'navigation:route_planner' %}" class="navlink {% if un == 'route_planner' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-route"/></svg> {% translate "Route Planner" %}</a>
+      <a href="{% url 'navigation:jump_planner' %}" class="navlink {% if un == 'jump_planner' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-jump"/></svg> {% translate "Jump Planner" %}</a>
+      <a href="{% url 'navigation:range_finder' %}" class="navlink {% if un == 'range_finder' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-target"/></svg> {% translate "Jump Range" %}</a>
+      <a href="{% url 'navigation:map_index' %}" class="navlink {% if un == 'map_index' or un == 'map_region' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-map"/></svg> {% translate "Region Maps" %}</a>{% endif %}
+      {% if features.onboarding %}<a href="{% url 'onboarding:dashboard' %}" class="navlink {% if ns == 'onboarding' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-rookie"/></svg> {% translate "Join the corp" %}</a>{% endif %}
     </div>
   </div>
   {% endif %}

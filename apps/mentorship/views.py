@@ -14,6 +14,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
 from core import rbac
@@ -134,7 +135,7 @@ def register_mentor(request: HttpRequest) -> HttpResponse:
         elig.evaluate(request.user, program, "mentor")
     if request.method == "POST":
         if not services.program_open():
-            messages.error(request, "The Mentorship Program is currently paused.")
+            messages.error(request, _("The Mentorship Program is currently paused."))
             return redirect("mentorship:landing")
         form = forms.MentorRegistrationForm(request.POST)
         if form.is_valid():
@@ -142,9 +143,9 @@ def register_mentor(request: HttpRequest) -> HttpResponse:
             if profile.status == MentorProfile.Status.PENDING:
                 from . import notify
                 notify.mentor_application(profile)
-                messages.success(request, "Mentor registration submitted — pending leadership approval.")
+                messages.success(request, _("Mentor registration submitted — pending leadership approval."))
             else:
-                messages.success(request, "You're registered as a mentor. Thank you!")
+                messages.success(request, _("You're registered as a mentor. Thank you!"))
             return redirect("mentorship:dashboard")
     else:
         form = forms.MentorRegistrationForm.from_profile(existing)
@@ -163,7 +164,7 @@ def register_mentee(request: HttpRequest) -> HttpResponse:
         elig.evaluate(request.user, program, "mentee")
     if request.method == "POST":
         if not services.program_open():
-            messages.error(request, "The Mentorship Program is currently paused.")
+            messages.error(request, _("The Mentorship Program is currently paused."))
             return redirect("mentorship:landing")
         form = forms.MenteeRegistrationForm(request.POST)
         if form.is_valid():
@@ -171,9 +172,9 @@ def register_mentee(request: HttpRequest) -> HttpResponse:
             if profile.status == MenteeProfile.Status.PENDING:
                 from . import notify
                 notify.mentee_application(profile)
-                messages.success(request, "Cadet registration submitted — pending leadership approval.")
+                messages.success(request, _("Cadet registration submitted — pending leadership approval."))
             else:
-                messages.success(request, "You're registered as a cadet. Let's find you a mentor!")
+                messages.success(request, _("You're registered as a cadet. Let's find you a mentor!"))
             return redirect("mentorship:dashboard")
     else:
         form = forms.MenteeRegistrationForm.from_profile(existing)
@@ -215,7 +216,7 @@ def track_detail(request: HttpRequest, key: str) -> HttpResponse:
 def mentor_directory(request: HttpRequest) -> HttpResponse:
     program = services.active_program()
     if not program.mentor_directory_visible:
-        messages.info(request, "The mentor directory is not currently open.")
+        messages.info(request, _("The mentor directory is not currently open."))
         return redirect("mentorship:landing")
     mentee = MenteeProfile.objects.filter(user=request.user).first()
     mentors = (
@@ -246,12 +247,12 @@ def request_mentor(request: HttpRequest) -> HttpResponse:
     program = services.active_program()
     mentee = MenteeProfile.objects.filter(user=request.user, status=MenteeProfile.Status.ACTIVE).first()
     if not mentee or not program.allow_mentee_initiated:
-        messages.error(request, "You can't request a mentor right now.")
+        messages.error(request, _("You can't request a mentor right now."))
         return redirect("mentorship:directory")
     mentor = get_object_or_404(MentorProfile, pk=request.POST.get("mentor_id"),
                                status=MentorProfile.Status.ACTIVE)
     if not services.mentor_has_capacity(mentor):
-        messages.error(request, "That mentor is at capacity.")
+        messages.error(request, _("That mentor is at capacity."))
         return redirect("mentorship:directory")
     pairing = services.propose_pairing(
         mentor, mentee, actor=request.user,
@@ -259,9 +260,9 @@ def request_mentor(request: HttpRequest) -> HttpResponse:
         status=MentorshipPairing.Status.REQUESTED,
     )
     if pairing is None:
-        messages.info(request, "You already have a pending or active pairing with that mentor.")
+        messages.info(request, _("You already have a pending or active pairing with that mentor."))
     else:
-        messages.success(request, f"Request sent to {mentor.user.display_name}.")
+        messages.success(request, _("Request sent to %(name)s.") % {"name": mentor.user.display_name})
     return redirect("mentorship:dashboard")
 
 
@@ -273,10 +274,10 @@ def invite_mentee(request: HttpRequest) -> HttpResponse:
     program = services.active_program()
     mentor = MentorProfile.objects.filter(user=request.user, status=MentorProfile.Status.ACTIVE).first()
     if not mentor or not program.allow_mentor_initiated:
-        messages.error(request, "You can't invite a cadet right now.")
+        messages.error(request, _("You can't invite a cadet right now."))
         return redirect("mentorship:dashboard")
     if not services.mentor_has_capacity(mentor):
-        messages.error(request, "You're already at your mentee capacity.")
+        messages.error(request, _("You're already at your mentee capacity."))
         return redirect("mentorship:dashboard")
     mentee = get_object_or_404(MenteeProfile, pk=request.POST.get("mentee_id"),
                                status=MenteeProfile.Status.ACTIVE)
@@ -286,9 +287,9 @@ def invite_mentee(request: HttpRequest) -> HttpResponse:
         status=MentorshipPairing.Status.REQUESTED,
     )
     if pairing is None:
-        messages.info(request, "You already have a pending or active pairing with that cadet.")
+        messages.info(request, _("You already have a pending or active pairing with that cadet."))
     else:
-        messages.success(request, f"Invitation sent to {mentee.user.display_name}.")
+        messages.success(request, _("Invitation sent to %(name)s.") % {"name": mentee.user.display_name})
     return redirect("mentorship:dashboard")
 
 
@@ -302,24 +303,24 @@ def pairing_respond(request: HttpRequest, pk: int) -> HttpResponse:
     role = _role_in_pairing(request.user, pairing)
     decision = request.POST.get("decision")
     if pairing.status not in (MentorshipPairing.Status.SUGGESTED, MentorshipPairing.Status.REQUESTED):
-        messages.error(request, "That pairing can no longer be answered.")
+        messages.error(request, _("That pairing can no longer be answered."))
         return redirect("mentorship:dashboard")
     # The initiator can't accept on the other's behalf.
     initiator_role = {"mentor": "mentor", "mentee": "mentee"}.get(pairing.initiated_by)
     if decision == "accept":
         if role == initiator_role and pairing.status == MentorshipPairing.Status.REQUESTED:
-            messages.error(request, "The other pilot needs to accept this one.")
+            messages.error(request, _("The other pilot needs to accept this one."))
             return redirect("mentorship:dashboard")
         outcome = services.activate_or_queue(pairing, actor=request.user)
         if outcome == "pending":
             from . import notify
             notify.pairing_pending(pairing)
-            messages.success(request, "Accepted — now awaiting leadership approval.")
+            messages.success(request, _("Accepted — now awaiting leadership approval."))
         else:
-            messages.success(request, "Mentorship is now active. Fair winds!")
+            messages.success(request, _("Mentorship is now active. Fair winds!"))
     else:
-        services.cancel_pairing(pairing, request.user, reason="Declined by pilot.")
-        messages.info(request, "Pairing declined.")
+        services.cancel_pairing(pairing, request.user, reason=_("Declined by pilot."))
+        messages.info(request, _("Pairing declined."))
     return redirect("mentorship:dashboard")
 
 
@@ -365,14 +366,14 @@ def _next_actions(pairing, role) -> list[str]:
         pending_mentor = pairing.assignments.filter(
             status=MentorshipTaskAssignment.Status.PENDING_MENTOR).count()
         if role in ("mentor", "officer") and pending_mentor:
-            out.append(f"{pending_mentor} task(s) awaiting your sign-off.")
+            out.append(_("%(count)d task(s) awaiting your sign-off.") % {"count": pending_mentor})
         todo = pairing.assignments.filter(
             status__in=[MentorshipTaskAssignment.Status.NOT_STARTED,
                         MentorshipTaskAssignment.Status.IN_PROGRESS]).count()
         if role == "mentee" and todo:
-            out.append(f"{todo} field exercise(s) to work on.")
+            out.append(_("%(count)d field exercise(s) to work on.") % {"count": todo})
         if not pairing.sessions.exists():
-            out.append("Schedule your first mentoring session.")
+            out.append(_("Schedule your first mentoring session."))
     return out
 
 
@@ -409,27 +410,27 @@ def task_action(request: HttpRequest, pk: int) -> HttpResponse:
                 url=url, text=note)
         result = workflow.mentee_submit(assignment, request.user, evidence=evidence)
         if result == "needs_evidence":
-            messages.error(request, "This exercise needs an evidence link or note.")
+            messages.error(request, _("This exercise needs an evidence link or note."))
         elif result == "blocked":
-            messages.error(request, "Finish the prerequisite exercises first.")
+            messages.error(request, _("Finish the prerequisite exercises first."))
         elif result == "completed":
-            messages.success(request, "Exercise completed!")
+            messages.success(request, _("Exercise completed!"))
         else:
-            messages.success(request, "Submitted for review.")
+            messages.success(request, _("Submitted for review."))
     elif action in ("confirm", "reject"):
         # Only the mentor (or an officer) may sign off — never the mentee.
         if role not in ("mentor", "officer"):
-            messages.error(request, "Only the mentor can sign this off.")
+            messages.error(request, _("Only the mentor can sign this off."))
             return redirect("mentorship:pairing", pk=pairing.pk)
         workflow.mentor_decide(assignment, request.user, approve=(action == "confirm"), reason=reason)
-        messages.success(request, "Exercise confirmed." if action == "confirm" else "Exercise sent back.")
+        messages.success(request, _("Exercise confirmed.") if action == "confirm" else _("Exercise sent back."))
     elif action == "repeat" and role in ("mentor", "mentee"):
         if workflow.create_repeat(assignment, request.user):
-            messages.success(request, "Opened another attempt.")
+            messages.success(request, _("Opened another attempt."))
         else:
-            messages.info(request, "Can't repeat this exercise yet.")
+            messages.info(request, _("Can't repeat this exercise yet."))
     else:
-        messages.error(request, "That action isn't available.")
+        messages.error(request, _("That action isn't available."))
     return redirect("mentorship:pairing", pk=pairing.pk)
 
 
@@ -443,7 +444,7 @@ def task_action(request: HttpRequest, pk: int) -> HttpResponse:
 def session_create(request: HttpRequest, pk: int) -> HttpResponse:
     pairing = _get_pairing_for(request.user, pk)
     if _role_in_pairing(request.user, pairing) not in ("mentor", "mentee"):
-        messages.error(request, "Only the pair can schedule a session.")
+        messages.error(request, _("Only the pair can schedule a session."))
         return redirect("mentorship:pairing", pk=pk)
     when = parse_datetime(request.POST.get("scheduled_at") or "")
     if when and timezone.is_naive(when):
@@ -458,7 +459,7 @@ def session_create(request: HttpRequest, pk: int) -> HttpResponse:
         duration_minutes=int(request.POST.get("duration_minutes") or 30),
         track=track, location_hint=(request.POST.get("location_hint") or "").strip(),
     )
-    messages.success(request, "Session scheduled.")
+    messages.success(request, _("Session scheduled."))
     return redirect("mentorship:pairing", pk=pk)
 
 
@@ -479,10 +480,10 @@ def session_action(request: HttpRequest, pk: int) -> HttpResponse:
         if session.status == models.MentorshipSession.Status.COMPLETED:
             from . import rewards
             rewards.on_session_confirmed(session)
-        messages.success(request, "Session confirmed.")
+        messages.success(request, _("Session confirmed."))
     elif action == "cancel":
         services.cancel_session(session, request.user)
-        messages.info(request, "Session cancelled.")
+        messages.info(request, _("Session cancelled."))
     return redirect("mentorship:pairing", pk=session.pairing_id)
 
 
@@ -499,11 +500,11 @@ def enroll_track(request: HttpRequest, pk: int) -> HttpResponse:
         from django.http import Http404
         raise Http404()
     if pairing.status != MentorshipPairing.Status.ACTIVE:
-        messages.error(request, "The pairing must be active to add tracks.")
+        messages.error(request, _("The pairing must be active to add tracks."))
         return redirect("mentorship:pairing", pk=pk)
     track = get_object_or_404(MentorshipTrack, pk=request.POST.get("track_id"), active=True)
     services.enroll_track(pairing, track, actor=request.user)
-    messages.success(request, f"Enrolled in “{track.title}”.")
+    messages.success(request, _("Enrolled in “%(title)s”.") % {"title": track.title})
     return redirect("mentorship:pairing", pk=pk)
 
 
@@ -521,17 +522,17 @@ def pairing_action(request: HttpRequest, pk: int) -> HttpResponse:
     reason = (request.POST.get("reason") or "").strip()
     if action == "pause":
         services.pause_pairing(pairing, request.user, reason)
-        messages.info(request, "Mentorship paused.")
+        messages.info(request, _("Mentorship paused."))
     elif action == "resume" and pairing.status == MentorshipPairing.Status.PAUSED:
         services.set_status(pairing, MentorshipPairing.Status.ACTIVE, actor=request.user,
-                            detail="Resumed.")
-        messages.success(request, "Mentorship resumed.")
+                            detail=_("Resumed."))
+        messages.success(request, _("Mentorship resumed."))
     elif action == "complete" and role in ("mentor", "officer"):
         services.complete_pairing(pairing, request.user, reason)
-        messages.success(request, "Mentorship marked complete. Well done!")
+        messages.success(request, _("Mentorship marked complete. Well done!"))
     elif action == "cancel":
         services.cancel_pairing(pairing, request.user, reason)
-        messages.info(request, "Mentorship cancelled.")
+        messages.info(request, _("Mentorship cancelled."))
     else:
-        messages.error(request, "That action isn't available.")
+        messages.error(request, _("That action isn't available."))
     return redirect("mentorship:dashboard")

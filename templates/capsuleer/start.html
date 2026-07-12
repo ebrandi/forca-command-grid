@@ -1,20 +1,21 @@
 {% extends "base.html" %}
-{% block title %}Find your path · Capsuleer Path{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Find your path" %} · {% translate "Capsuleer Path" %}{% endblock %}
 {% block content %}
-<p class="eyebrow text-faint"><a href="{% url 'capsuleer:home' %}" class="hover:text-gold">Capsuleer Path</a> › Start</p>
+<p class="eyebrow text-faint"><a href="{% url 'capsuleer:home' %}" class="hover:text-gold">{% translate "Capsuleer Path" %}</a> › {% translate "Start" %}</p>
 <header class="mb-4 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <h1 class="text-2xl font-bold text-ink">Find your path</h1>
-    <p class="mt-1 max-w-2xl text-sm text-faint">A few questions help the Grid suggest paths. Skip anything — or skip everything and just browse.</p>
+    <h1 class="text-2xl font-bold text-ink">{% translate "Find your path" %}</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "A few questions help the Grid suggest paths. Skip anything — or skip everything and just browse." %}</p>
   </div>
-  <a href="{% url 'capsuleer:paths' %}" class="btn-ghost text-sm">Skip — browse all paths</a>
+  <a href="{% url 'capsuleer:paths' %}" class="btn-ghost text-sm">{% translate "Skip — browse all paths" %}</a>
 </header>
 
 <form method="post" class="space-y-5">
   {% csrf_token %}
   <section class="panel px-4 py-4">
-    <h2 class="eyebrow">1 · What do you enjoy today?</h2>
-    <p class="mt-1 text-xs text-faint">Optional — toggle what appeals. A second row marks things to steer away from.</p>
+    <h2 class="eyebrow">{% translate "1 · What do you enjoy today?" %}</h2>
+    <p class="mt-1 text-xs text-faint">{% translate "Optional — toggle what appeals. A second row marks things to steer away from." %}</p>
     <div x-data="{ pref: [], avoid: [] }">
       <div class="mt-3 flex flex-wrap gap-1.5">
         {% for a in taxonomy %}
@@ -22,7 +23,7 @@
         {% endfor %}
         <input type="hidden" name="preferred_activities" :value="pref.join(',')">
       </div>
-      <p class="mt-3 text-xs text-faint">Not interested in — a topic you enjoy can't also be here:</p>
+      <p class="mt-3 text-xs text-faint">{% translate "Not interested in — a topic you enjoy can't also be here:" %}</p>
       <div class="mt-1 flex flex-wrap gap-1.5">
         {% for a in taxonomy %}
         <button type="button" @click="avoid.includes('{{ a.value }}') ? avoid = avoid.filter(x => x !== '{{ a.value }}') : avoid.push('{{ a.value }}'); pref = pref.filter(x => x !== '{{ a.value }}')" :class="avoid.includes('{{ a.value }}') ? 'chip !text-loss !border-loss/50 line-through' : 'chip text-faint border-line/40'">{{ a.label }}</button>
@@ -33,46 +34,46 @@
   </section>
 
   <section class="panel px-4 py-4">
-    <h2 class="eyebrow">2 · Time &amp; pace</h2>
+    <h2 class="eyebrow">{% translate "2 · Time &amp; pace" %}</h2>
     <div class="mt-3 grid gap-3 sm:grid-cols-2">
-      <label class="label">Weekly hours <input type="number" name="weekly_hours" min="0" inputmode="numeric" class="input-field mt-1"></label>
-      <label class="label">Play windows <input type="text" name="play_windows" placeholder="weekday evenings EU" class="input-field mt-1"></label>
+      <label class="label">{% translate "Weekly hours" %} <input type="number" name="weekly_hours" min="0" inputmode="numeric" class="input-field mt-1"></label>
+      <label class="label">{% translate "Play windows" %} <input type="text" name="play_windows" placeholder="{% translate 'weekday evenings EU' %}" class="input-field mt-1"></label>
     </div>
-    <fieldset class="mt-3"><legend class="label">Pace</legend>
+    <fieldset class="mt-3"><legend class="label">{% translate "Pace" %}</legend>
       <div class="mt-1 flex flex-wrap gap-4 text-sm">
-        <label class="flex items-center gap-1.5"><input type="radio" name="pace" value="relaxed"> Relaxed</label>
-        <label class="flex items-center gap-1.5"><input type="radio" name="pace" value="balanced" checked> Balanced</label>
-        <label class="flex items-center gap-1.5"><input type="radio" name="pace" value="accelerated"> Accelerated</label>
+        <label class="flex items-center gap-1.5"><input type="radio" name="pace" value="relaxed"> {% translate "Relaxed" %}</label>
+        <label class="flex items-center gap-1.5"><input type="radio" name="pace" value="balanced" checked> {% translate "Balanced" %}</label>
+        <label class="flex items-center gap-1.5"><input type="radio" name="pace" value="accelerated"> {% translate "Accelerated" %}</label>
       </div>
     </fieldset>
   </section>
 
   <section class="panel px-4 py-4">
-    <h2 class="eyebrow">3 · ISK comfort</h2>
-    <label class="label mt-2 block">Monthly budget (ISK)
+    <h2 class="eyebrow">{% translate "3 · ISK comfort" %}</h2>
+    <label class="label mt-2 block">{% translate "Monthly budget (ISK)" %}
       <input type="text" name="monthly_budget_isk" inputmode="decimal" class="input-field mt-1">
     </label>
-    <p class="mt-1 text-xs text-faint"><svg class="inline h-3 w-3"><use href="#i-lock"/></svg> Private. Only you ever see this.</p>
+    <p class="mt-1 text-xs text-faint"><svg class="inline h-3 w-3"><use href="#i-lock"/></svg> {% translate "Private. Only you ever see this." %}</p>
   </section>
 
   <section class="panel px-4 py-4">
-    <h2 class="eyebrow">4 · Corp &amp; mentoring</h2>
-    <label class="label mt-2 block">How much should the corp shape your suggestions?
+    <h2 class="eyebrow">{% translate "4 · Corp &amp; mentoring" %}</h2>
+    <label class="label mt-2 block">{% translate "How much should the corp shape your suggestions?" %}
       <select name="corp_alignment" class="input-field mt-1">
-        <option value="personal_only">Only my own goals</option>
-        <option value="mostly_personal">Mostly personal</option>
-        <option value="balanced" selected>Balanced</option>
-        <option value="corp_forward">Corp-forward</option>
-        <option value="show_all">Show everything</option>
+        <option value="personal_only">{% translate "Only my own goals" %}</option>
+        <option value="mostly_personal">{% translate "Mostly personal" %}</option>
+        <option value="balanced" selected>{% translate "Balanced" %}</option>
+        <option value="corp_forward">{% translate "Corp-forward" %}</option>
+        <option value="show_all">{% translate "Show everything" %}</option>
       </select>
     </label>
-    <p class="mt-1 text-xs text-faint">Corp priorities are opportunities, never orders.</p>
-    <label class="mt-3 flex items-center gap-2 text-sm"><input type="checkbox" name="mentor_interest"> I'm open to a mentor</label>
+    <p class="mt-1 text-xs text-faint">{% translate "Corp priorities are opportunities, never orders." %}</p>
+    <label class="mt-3 flex items-center gap-2 text-sm"><input type="checkbox" name="mentor_interest"> {% translate "I'm open to a mentor" %}</label>
   </section>
 
   <div class="flex flex-wrap gap-2">
-    <button class="btn-gold text-sm">Show my matches →</button>
-    <a href="{% url 'capsuleer:paths' %}" class="btn-ghost text-sm">Skip — browse all paths</a>
+    <button class="btn-gold text-sm">{% translate "Show my matches →" %}</button>
+    <a href="{% url 'capsuleer:paths' %}" class="btn-ghost text-sm">{% translate "Skip — browse all paths" %}</a>
   </div>
 </form>
 {% endblock %}

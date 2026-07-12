@@ -1,19 +1,20 @@
 {% extends "base.html" %}
 {% load eve %}
-{% block title %}Hall of Fame · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Hall of Fame" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 
 <header class="mb-6 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <p class="eyebrow">Community</p>
-    <h1 class="mt-1 text-3xl font-bold text-ink">Hall of Fame</h1>
-    <p class="mt-1 max-w-2xl text-sm text-faint">Who's carried the corp this month — every contribution, kill and ISK of ratting income, on one points scale.</p>
+    <p class="eyebrow">{% translate "Community" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Hall of Fame" %}</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Who's carried the corp this month — every contribution, kill and ISK of ratting income, on one points scale." %}</p>
   </div>
   {% if months %}
   <form method="get" class="contents">
     <label class="block">
-      <span class="eyebrow text-faint">Month</span>
-      <select name="m" class="input-field mt-1" data-autosubmit aria-label="Month">
+      <span class="eyebrow text-faint">{% translate "Month" %}</span>
+      <select name="m" class="input-field mt-1" data-autosubmit aria-label="{% translate 'Month' %}">
         {% for m in months %}<option value="{{ m.key }}" {% if m.key == chosen.key %}selected{% endif %}>{{ m.label }}</option>{% endfor %}
       </select>
     </label>
@@ -23,7 +24,7 @@
 
 <!-- Overall top 10 -->
 <section class="panel mb-6 overflow-hidden">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Top contributors <span class="text-faint">· {{ board.label }}</span></h2></div>
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "Top contributors" %} <span class="text-faint">· {{ board.label }}</span></h2></div>
   {% if board.overall %}
   <div class="divide-y divide-line/40">
     {% for p in board.overall %}
@@ -41,14 +42,14 @@
     {% endfor %}
   </div>
   {% else %}
-  <p class="px-4 py-10 text-center text-sm text-faint">No scored contributions for {{ board.label }} yet — the categories below show everything that counts.</p>
+  <p class="px-4 py-10 text-center text-sm text-faint">{% blocktranslate with label=board.label %}No scored contributions for {{ label }} yet — the categories below show everything that counts.{% endblocktranslate %}</p>
   {% endif %}
 </section>
 
 <!-- What counts + per category top 5 -->
 <div class="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-  <h2 class="eyebrow">What counts · top 5 by category</h2>
-  <p class="text-xs text-faint">Every kind of contribution we track, and the points it earns. Leaders tune the weights.</p>
+  <h2 class="eyebrow">{% translate "What counts · top 5 by category" %}</h2>
+  <p class="text-xs text-faint">{% translate "Every kind of contribution we track, and the points it earns. Leaders tune the weights." %}</p>
 </div>
 <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
   {% for cat in board.categories %}
@@ -66,11 +67,11 @@
             <span class="data shrink-0 font-bold text-gold">{{ r.points }}</span>
           </div>
         {% empty %}
-          <p class="px-4 py-3 text-xs text-faint">No activity yet this month.</p>
+          <p class="px-4 py-3 text-xs text-faint">{% translate "No activity yet this month." %}</p>
         {% endfor %}
       </div>
     </section>
   {% endfor %}
 </div>
-{% if not board.scoring_enabled %}<p class="mt-4 text-center text-xs text-loss/80">Points scoring is currently turned off in the admin settings.</p>{% endif %}
+{% if not board.scoring_enabled %}<p class="mt-4 text-center text-xs text-loss/80">{% translate "Points scoring is currently turned off in the admin settings." %}</p>{% endif %}
 {% endblock %}

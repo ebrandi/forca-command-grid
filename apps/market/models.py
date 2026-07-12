@@ -3,16 +3,17 @@ from __future__ import annotations
 
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from core.mixins import ProvenanceMixin
 
 
 class MarketLocation(models.Model):
     class LocationType(models.TextChoices):
-        STATION = "station", "Station"
-        STRUCTURE = "structure", "Structure"
-        SYSTEM = "system", "System"
-        REGION = "region", "Region"
+        STATION = "station", _("Station")
+        STRUCTURE = "structure", _("Structure")
+        SYSTEM = "system", _("System")
+        REGION = "region", _("Region")
 
     name = models.CharField(max_length=200)
     location_type = models.CharField(max_length=12, choices=LocationType.choices)

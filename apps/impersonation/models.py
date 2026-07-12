@@ -15,18 +15,19 @@ from __future__ import annotations
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 
 class ImpersonationSession(models.Model):
     """One director "view-as" session: who, as whom, when it started/ended, why it ended."""
 
     class EndReason(models.TextChoices):
-        ACTIVE = "", "Active"
-        MANUAL = "manual", "Exited by director"
-        EXPIRED = "expired", "Auto-expired (max duration)"
-        ACTOR_INVALID = "actor_invalid", "Director no longer authorised"
-        TARGET_INVALID = "target_invalid", "Target no longer impersonatable"
-        LOGOUT = "logout", "Director logged out"
+        ACTIVE = "", _("Active")
+        MANUAL = "manual", _("Exited by director")
+        EXPIRED = "expired", _("Auto-expired (max duration)")
+        ACTOR_INVALID = "actor_invalid", _("Director no longer authorised")
+        TARGET_INVALID = "target_invalid", _("Target no longer impersonatable")
+        LOGOUT = "logout", _("Director logged out")
 
     # SET_NULL + snapshot labels so the audit trail survives an account
     # deletion / GDPR erasure of either party.

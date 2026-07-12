@@ -1,44 +1,45 @@
 {% extends "base.html" %}
-{% block title %}Strategic campaigns · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Strategic campaigns" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
-<a href="{% url 'command_intel:overview' %}" class="text-xs text-faint hover:text-gold">← Command overview</a>
+<a href="{% url 'command_intel:overview' %}" class="text-xs text-faint hover:text-gold">← {% translate "Command overview" %}</a>
 
 <header class="mt-2 mb-6 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <p class="eyebrow text-gold">Command Intelligence</p>
-    <h1 class="mt-1 text-3xl font-bold text-ink">Strategic campaigns</h1>
-    <p class="mt-1 text-sm text-faint">Multi-week arcs that sequence courses of action toward a target metric.</p>
+    <p class="eyebrow text-gold">{% translate "Command Intelligence" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Strategic campaigns" %}</h1>
+    <p class="mt-1 text-sm text-faint">{% translate "Multi-week arcs that sequence courses of action toward a target metric." %}</p>
   </div>
-  <a href="{% url 'command_intel:campaign_new' %}" class="btn-gold">⊕ Compose campaign</a>
+  <a href="{% url 'command_intel:campaign_new' %}" class="btn-gold">⊕ {% translate "Compose campaign" %}</a>
 </header>
 
 <section class="panel overflow-hidden">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">All campaigns · newest first</h2></div>
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">{% translate "All campaigns · newest first" %}</h2></div>
   <div class="divide-y divide-line/40">
     {% for c in campaigns %}
       <a href="{% url 'command_intel:campaign_detail' c.pk %}" class="block px-4 py-4 transition hover:bg-panel2/40">
         <div class="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
           <div class="min-w-0 flex-1">
             <div class="flex flex-wrap items-center gap-2">
-              {% if c.status == 'active' %}<span class="chip !border-gold/50 text-gold">◆ Active</span>
-              {% elif c.status == 'completed' %}<span class="chip !border-kill/50 text-kill">▲ Completed</span>
-              {% elif c.status == 'abandoned' %}<span class="chip !border-loss/50 text-loss">▼ Abandoned</span>
-              {% else %}<span class="chip text-faint">○ Draft</span>{% endif %}
+              {% if c.status == 'active' %}<span class="chip !border-gold/50 text-gold">◆ {% translate "Active" %}</span>
+              {% elif c.status == 'completed' %}<span class="chip !border-kill/50 text-kill">▲ {% translate "Completed" %}</span>
+              {% elif c.status == 'abandoned' %}<span class="chip !border-loss/50 text-loss">▼ {% translate "Abandoned" %}</span>
+              {% else %}<span class="chip text-faint">○ {% translate "Draft" %}</span>{% endif %}
               <span class="min-w-0 truncate text-sm font-medium text-ink">{{ c.objective }}</span>
             </div>
             <p class="mt-1.5 text-xs text-faint">
-              target ▸ <span class="data text-muted">{{ c.target_metric }}</span>{% if c.target_value is not None %} → <span class="data text-muted">{{ c.target_value|floatformat:"-2" }}</span>{% endif %}
-              {% if c.baseline_value is not None %} · baseline <span class="data text-muted">{{ c.baseline_value|floatformat:"-2" }}</span>{% endif %}
-              {% if c.owner %} · lead ▸ {{ c.owner.username }}{% endif %}
+              {% blocktranslate with metric=c.target_metric %}target ▸ <span class="data text-muted">{{ metric }}</span>{% endblocktranslate %}{% if c.target_value is not None %} → <span class="data text-muted">{{ c.target_value|floatformat:"-2" }}</span>{% endif %}
+              {% if c.baseline_value is not None %} · {% blocktranslate with base=c.baseline_value|floatformat:"-2" %}baseline <span class="data text-muted">{{ base }}</span>{% endblocktranslate %}{% endif %}
+              {% if c.owner %} · {% blocktranslate with owner=c.owner.username %}lead ▸ {{ owner }}{% endblocktranslate %}{% endif %}
             </p>
           </div>
           <div class="shrink-0 text-right">
             <p class="data text-sm {% if c.success_probability >= 0.66 %}text-kill{% elif c.success_probability >= 0.4 %}text-gold{% else %}text-loss{% endif %}">{{ c.success_probability|floatformat:2 }}</p>
-            <p class="text-[11px] text-faint">success prob.</p>
+            <p class="text-[11px] text-faint">{% translate "success prob." %}</p>
           </div>
         </div>
         <div class="mt-3 flex items-center gap-3">
-          <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-space" role="progressbar" aria-valuenow="{{ c.progress_pct }}" aria-valuemin="0" aria-valuemax="100" aria-label="Campaign progress">
+          <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-space" role="progressbar" aria-valuenow="{{ c.progress_pct }}" aria-valuemin="0" aria-valuemax="100" aria-label="{% translate 'Campaign progress' %}">
             <div class="h-full {% if c.status == 'completed' %}bg-kill{% elif c.status == 'abandoned' %}bg-loss{% else %}bg-gold{% endif %}" style="width:{{ c.progress_pct }}%"></div>
           </div>
           <span class="data shrink-0 text-xs text-faint">{{ c.progress_pct }}%</span>
@@ -46,9 +47,9 @@
       </a>
     {% empty %}
       <div class="px-4 py-12 text-center">
-        <p class="text-sm text-muted">No campaigns yet.</p>
-        <p class="mt-1 text-xs text-faint">Compose one from the open courses of action to plan a multi-week push toward a target metric.</p>
-        <a href="{% url 'command_intel:campaign_new' %}" class="btn-gold mt-4 inline-block">⊕ Compose the first campaign</a>
+        <p class="text-sm text-muted">{% translate "No campaigns yet." %}</p>
+        <p class="mt-1 text-xs text-faint">{% translate "Compose one from the open courses of action to plan a multi-week push toward a target metric." %}</p>
+        <a href="{% url 'command_intel:campaign_new' %}" class="btn-gold mt-4 inline-block">⊕ {% translate "Compose the first campaign" %}</a>
       </div>
     {% endfor %}
   </div>

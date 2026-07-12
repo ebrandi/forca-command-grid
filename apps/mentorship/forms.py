@@ -9,6 +9,7 @@ criteria shape depends on the chosen validation type.
 from __future__ import annotations
 
 from django import forms
+from django.utils.translation import gettext_lazy as _
 
 from .models import (
     MenteeProfile,
@@ -35,26 +36,26 @@ def _split(raw: str) -> list[str]:
 class MentorRegistrationForm(forms.Form):
     areas = forms.MultipleChoiceField(
         choices=_AREA_CHOICES, required=False, widget=forms.CheckboxSelectMultiple,
-        label="Areas you can mentor",
+        label=_("Areas you can mentor"),
     )
     timezone = forms.CharField(required=False, widget=forms.TextInput(attrs=_INPUT),
-                               label="Time zone", help_text="e.g. EU, US East, AU.")
+                               label=_("Time zone"), help_text=_("e.g. EU, US East, AU."))
     play_windows = forms.CharField(required=False, widget=forms.TextInput(attrs=_INPUT),
-                                   label="Usual play windows", help_text="e.g. weekday evenings 19:00–23:00 EVE.")
+                                   label=_("Usual play windows"), help_text=_("e.g. weekday evenings 19:00–23:00 EVE."))
     languages = forms.CharField(required=False, widget=forms.TextInput(attrs=_INPUT),
-                                help_text="Comma-separated, e.g. English, Portuguese.")
+                                help_text=_("Comma-separated, e.g. English, Portuguese."))
     comms = forms.CharField(required=False, widget=forms.TextInput(attrs=_INPUT),
-                            label="Preferred comms", help_text="e.g. Discord voice, Mumble.")
+                            label=_("Preferred comms"), help_text=_("e.g. Discord voice, Mumble."))
     max_active_mentees = forms.IntegerField(required=False, min_value=0,
                                             widget=forms.NumberInput(attrs=_INPUT),
-                                            help_text="0 = use the programme default.")
+                                            help_text=_("0 = use the programme default."))
     open_to_adhoc = forms.BooleanField(required=False, initial=True,
                                        widget=forms.CheckboxInput(attrs=_CHECK),
-                                       label="Open to ad-hoc questions")
+                                       label=_("Open to ad-hoc questions"))
     bio = forms.CharField(required=False, widget=forms.Textarea(attrs={**_INPUT, "rows": 3}),
-                          label="Short mentor bio")
+                          label=_("Short mentor bio"))
     restrictions = forms.CharField(required=False, widget=forms.TextInput(attrs=_INPUT),
-                                   help_text='e.g. "PvP only", "EU evenings only".')
+                                   help_text=_('e.g. "PvP only", "EU evenings only".'))
 
     def to_data(self) -> dict:
         c = self.cleaned_data
@@ -86,29 +87,29 @@ class MentorRegistrationForm(forms.Form):
 class MenteeRegistrationForm(forms.Form):
     goals = forms.MultipleChoiceField(
         choices=_AREA_CHOICES, required=False, widget=forms.CheckboxSelectMultiple,
-        label="What do you want to learn?",
+        label=_("What do you want to learn?"),
     )
     experience = forms.ChoiceField(
         choices=MenteeProfile.Experience.choices, widget=forms.Select(attrs=_INPUT),
-        label="Your experience level",
+        label=_("Your experience level"),
     )
-    timezone = forms.CharField(required=False, widget=forms.TextInput(attrs=_INPUT), label="Time zone")
+    timezone = forms.CharField(required=False, widget=forms.TextInput(attrs=_INPUT), label=_("Time zone"))
     play_windows = forms.CharField(required=False, widget=forms.TextInput(attrs=_INPUT),
-                                   label="Usual play windows")
+                                   label=_("Usual play windows"))
     languages = forms.CharField(required=False, widget=forms.TextInput(attrs=_INPUT),
-                                help_text="Comma-separated.")
+                                help_text=_("Comma-separated."))
     interests = forms.CharField(required=False, widget=forms.TextInput(attrs=_INPUT),
-                                help_text="Free-text interests, comma-separated.")
+                                help_text=_("Free-text interests, comma-separated."))
     ships_can_fly = forms.CharField(required=False, widget=forms.TextInput(attrs=_INPUT),
-                                    label="Ships you can fly")
+                                    label=_("Ships you can fly"))
     needs_skill_help = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs=_CHECK),
-                                          label="I'd like help with skill planning")
+                                          label=_("I'd like help with skill planning"))
     needs_fitting_help = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs=_CHECK),
-                                            label="I'd like help with fitting")
+                                            label=_("I'd like help with fitting"))
     voice_comfortable = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs=_CHECK),
-                                           label="I'm comfortable on voice comms")
+                                           label=_("I'm comfortable on voice comms"))
     notes = forms.CharField(required=False, widget=forms.Textarea(attrs={**_INPUT, "rows": 3}),
-                            label="Anything to help matching?")
+                            label=_("Anything to help matching?"))
 
     def to_data(self) -> dict:
         c = self.cleaned_data
@@ -177,7 +178,7 @@ class MentorshipProgramForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["active_cohort"].queryset = MentorshipCohort.objects.order_by("-starts_on")
         self.fields["active_cohort"].required = False
-        self.fields["active_cohort"].empty_label = "— none —"
+        self.fields["active_cohort"].empty_label = _("— none —")
         for field in self.fields.values():
             if isinstance(field.widget, forms.CheckboxInput):
                 field.widget.attrs.setdefault("class", "h-4 w-4")
@@ -276,10 +277,10 @@ class RewardRuleForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["badge"].queryset = MentorshipBadge.objects.order_by("sort_order")
         self.fields["badge"].required = False
-        self.fields["badge"].empty_label = "— none —"
+        self.fields["badge"].empty_label = _("— none —")
         self.fields["cohort"].queryset = MentorshipCohort.objects.order_by("-starts_on")
         self.fields["cohort"].required = False
-        self.fields["cohort"].empty_label = "— any cohort —"
+        self.fields["cohort"].empty_label = _("— any cohort —")
 
 
 class BadgeForm(forms.ModelForm):

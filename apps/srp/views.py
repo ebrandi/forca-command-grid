@@ -10,6 +10,7 @@ from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.translation import gettext as _t
 from django.views.decorators.http import require_POST
 
 from apps.killboard.models import Killmail
@@ -68,9 +69,10 @@ def submit_claim(request: HttpRequest) -> HttpResponse:
     killmail = get_object_or_404(Killmail, pk=request.POST.get("killmail_id"))
     claim = services.submit_claim(request.user, killmail, char_ids)
     if claim:
-        messages.success(request, f"SRP claim submitted: {claim.computed_payout:,.0f} ISK pending review.")
+        messages.success(request, _t("SRP claim submitted: %(amount)s ISK pending review.") % {
+            "amount": f"{claim.computed_payout:,.0f}"})
     else:
-        messages.error(request, "That loss isn't eligible, or a claim already exists.")
+        messages.error(request, _t("That loss isn't eligible, or a claim already exists."))
     return redirect("srp:mine")
 
 
@@ -114,13 +116,16 @@ def batch_approve(request: HttpRequest) -> HttpResponse:
     audit_log(request.user, "srp.batch_approve", target_type="srp_batch",
               metadata=result, ip=client_ip(request))
     if result["approved"]:
-        msg = f"Approved {result['approved']} claim(s)."
+        msg = _t("Approved %(count)d claim(s).") % {"count": result["approved"]}
         if result["skipped"]:
-            msg += f" Skipped {result['skipped']} of your own — another officer must review those."
+            msg += " " + _t("Skipped %(count)d of your own — another officer must review those.") % {
+                "count": result["skipped"]}
         messages.success(request, msg)
+    elif result["skipped"]:
+        messages.info(request, _t("Nothing to approve — %(count)d were your own claims.") % {
+            "count": result["skipped"]})
     else:
-        messages.info(request, "Nothing to approve"
-                      + (f" — {result['skipped']} were your own claims." if result["skipped"] else "."))
+        messages.info(request, _t("Nothing to approve."))
     return redirect("srp:queue")
 
 
@@ -134,14 +139,19 @@ def batch_pay(request: HttpRequest) -> HttpResponse:
     audit_log(request.user, "srp.batch_pay", target_type="srp_batch",
               metadata={**result, "reference": reference}, ip=client_ip(request))
     if result["paid"]:
-        msg = f"Settled {result['paid']} claim(s)"
-        msg += f" against “{reference}”." if reference else "."
+        if reference:
+            msg = _t("Settled %(count)d claim(s) against “%(ref)s”.") % {
+                "count": result["paid"], "ref": reference}
+        else:
+            msg = _t("Settled %(count)d claim(s).") % {"count": result["paid"]}
         if result["skipped"]:
-            msg += f" Skipped {result['skipped']} of your own."
+            msg += " " + _t("Skipped %(count)d of your own.") % {"count": result["skipped"]}
         messages.success(request, msg)
+    elif result["skipped"]:
+        messages.info(request, _t("No approved claims to settle — %(count)d were your own.") % {
+            "count": result["skipped"]})
     else:
-        messages.info(request, "No approved claims to settle"
-                      + (f" — {result['skipped']} were your own." if result["skipped"] else "."))
+        messages.info(request, _t("No approved claims to settle."))
     return redirect("srp:queue")
 
 
@@ -194,14 +204,15 @@ def budget_save(request: HttpRequest) -> HttpResponse:
         and period[:4].isdigit() and period[5:7].isdigit() and "01" <= period[5:7] <= "12"
     )
     if not valid_period or allocated is None:
-        messages.error(request, "Enter a valid period (YYYY-MM) and a non-negative amount.")
+        messages.error(request, _t("Enter a valid period (YYYY-MM) and a non-negative amount."))
         return redirect("srp:budget")
     SrpBudget.objects.update_or_create(period=period, defaults={"allocated": allocated})
     audit_log(
         request.user, "srp.budget_update", target_type="srp_budget", target_id=period,
         metadata={"allocated": str(allocated)}, ip=client_ip(request),
     )
-    messages.success(request, f"Budget for {period} set to {allocated:,.0f} ISK.")
+    messages.success(request, _t("Budget for %(period)s set to %(amount)s ISK.") % {
+        "period": period, "amount": f"{allocated:,.0f}"})
     return redirect("srp:budget")
 
 
@@ -235,10 +246,10 @@ def decide(request: HttpRequest, pk: int) -> HttpResponse:
             target_id=str(claim.pk),
             ip=client_ip(request),
         )
-        messages.error(request, "You can't decide your own SRP claim — another officer must review it.")
+        messages.error(request, _t("You can't decide your own SRP claim — another officer must review it."))
         return redirect("srp:queue")
     if not changed:
-        messages.error(request, "That claim is no longer awaiting a decision.")
+        messages.error(request, _t("That claim is no longer awaiting a decision."))
         return redirect("srp:queue")
     audit_log(
         request.user,
@@ -248,7 +259,7 @@ def decide(request: HttpRequest, pk: int) -> HttpResponse:
         metadata={"approve": approve, "payout": str(claim.computed_payout)},
         ip=client_ip(request),
     )
-    messages.success(request, f"Claim {'approved' if approve else 'denied'}.")
+    messages.success(request, _t("Claim approved.") if approve else _t("Claim denied."))
     return redirect("srp:queue")
 
 
@@ -268,10 +279,10 @@ def pay(request: HttpRequest, pk: int) -> HttpResponse:
             target_id=str(claim.pk),
             ip=client_ip(request),
         )
-        messages.error(request, "You can't pay out your own SRP claim — another officer must.")
+        messages.error(request, _t("You can't pay out your own SRP claim — another officer must."))
         return redirect("srp:queue")
     if not paid:
-        messages.error(request, "That claim isn't approved and awaiting payment.")
+        messages.error(request, _t("That claim isn't approved and awaiting payment."))
         return redirect("srp:queue")
     audit_log(
         request.user,
@@ -281,7 +292,7 @@ def pay(request: HttpRequest, pk: int) -> HttpResponse:
         metadata={"payout": str(claim.payout), "reference": reference},
         ip=client_ip(request),
     )
-    messages.success(request, "Marked paid.")
+    messages.success(request, _t("Marked paid."))
     return redirect("srp:queue")
 
 
@@ -306,7 +317,7 @@ def settings_view(request: HttpRequest) -> HttpResponse:
             saved.save()
             audit_log(request.user, "srp.program_update", target_type="srp_program",
                       target_id=str(program.pk), ip=client_ip(request))
-            messages.success(request, "SRP programme updated.")
+            messages.success(request, _t("SRP programme updated."))
             return redirect("srp:settings")
     else:
         form = SrpProgramForm(instance=program)
@@ -331,9 +342,9 @@ def rule_add(request: HttpRequest) -> HttpResponse:
         rule = form.save()
         audit_log(request.user, "srp.rule_add", target_type="srp_rule",
                   target_id=str(rule.pk), ip=client_ip(request))
-        messages.success(request, "SRP rule added.")
+        messages.success(request, _t("SRP rule added."))
     else:
-        messages.error(request, "Couldn't add that rule — check the values.")
+        messages.error(request, _t("Couldn't add that rule — check the values."))
     return redirect("srp:settings")
 
 
@@ -345,5 +356,5 @@ def rule_delete(request: HttpRequest, pk: int) -> HttpResponse:
     rule.delete()
     audit_log(request.user, "srp.rule_delete", target_type="srp_rule",
               target_id=str(pk), ip=client_ip(request))
-    messages.success(request, "SRP rule removed.")
+    messages.success(request, _t("SRP rule removed."))
     return redirect("srp:settings")

@@ -12,6 +12,7 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from core.mixins import TimeStampedModel
 
@@ -54,15 +55,15 @@ class ContributionEvent(TimeStampedModel):
         # call sites). SEED/DELIVERY were removed in 0003 (never recorded); TRAIN
         # was re-added in 0005 with a real recorder (skill-progression detection)
         # alongside DOCTRINE (newly-flyable doctrine ships).
-        BUILD = "build", "Built"
-        HAUL = "haul", "Hauled"
-        TASK = "task", "Completed task"
-        SRP = "srp", "Ship replacement"
-        MINING = "mining", "Mined"
-        FLEET = "fleet", "Flew in fleet"
-        TRAIN = "train", "Trained skill"
-        DOCTRINE = "doctrine", "Unlocked doctrine"
-        DIRECTIVE = "directive", "Completed directive"  # CMD-2 (3.6)
+        BUILD = "build", _("Built")
+        HAUL = "haul", _("Hauled")
+        TASK = "task", _("Completed task")
+        SRP = "srp", _("Ship replacement")
+        MINING = "mining", _("Mined")
+        FLEET = "fleet", _("Flew in fleet")
+        TRAIN = "train", _("Trained skill")
+        DOCTRINE = "doctrine", _("Unlocked doctrine")
+        DIRECTIVE = "directive", _("Completed directive")  # CMD-2 (3.6)
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="contributions"
@@ -115,62 +116,62 @@ class ContributionWeights(TimeStampedModel):
     enabled = models.BooleanField(default=True)
 
     # Flat per-event kinds.
-    task_points = models.IntegerField(default=1, help_text="Points per completed task.")
-    fleet_points = models.IntegerField(default=2, help_text="Points per fleet attended.")
-    haul_points = models.IntegerField(default=3, help_text="Points per delivered haul.")
+    task_points = models.IntegerField(default=1, help_text=_("Points per completed task."))
+    fleet_points = models.IntegerField(default=2, help_text=_("Points per fleet attended."))
+    haul_points = models.IntegerField(default=3, help_text=_("Points per delivered haul."))
     haul_requires_verification = models.BooleanField(
         default=True,
-        help_text="Only award haul points once the delivery is ESI-verified in-game.",
+        help_text=_("Only award haul points once the delivery is ESI-verified in-game."),
     )
 
     # Per-unit kinds.
     build_points_per_ship = models.IntegerField(
-        default=1, help_text="Points per ship built and delivered."
+        default=1, help_text=_("Points per ship built and delivered.")
     )
     mining_points_per_mil = models.DecimalField(
         max_digits=8, decimal_places=3, default=Decimal("0.100"),
-        help_text="Points per 1,000,000 ISK of mining payout.",
+        help_text=_("Points per 1,000,000 ISK of mining payout."),
     )
     srp_points_per_mil = models.DecimalField(
         max_digits=8, decimal_places=3, default=Decimal("0.000"),
-        help_text="Points per 1,000,000 ISK of SRP (0 = SRP earns no points).",
+        help_text=_("Points per 1,000,000 ISK of SRP (0 = SRP earns no points)."),
     )
 
     # Skill training: points per recommended skill level trained.
     train_points_per_level = models.IntegerField(
-        default=1, help_text="Points per recommended skill level trained."
+        default=1, help_text=_("Points per recommended skill level trained.")
     )
 
     # Doctrine unlock: variable — base + corp-priority + effort (required SP).
     doctrine_base = models.IntegerField(
-        default=5, help_text="Base points for unlocking any doctrine ship."
+        default=5, help_text=_("Base points for unlocking any doctrine ship.")
     )
     doctrine_priority_coef = models.DecimalField(
         max_digits=6, decimal_places=2, default=Decimal("0.10"),
-        help_text="Extra points × the doctrine's corp priority (0–100).",
+        help_text=_("Extra points × the doctrine's corp priority (0–100)."),
     )
     doctrine_effort_per_mil_sp = models.DecimalField(
         max_digits=6, decimal_places=2, default=Decimal("1.00"),
-        help_text="Extra points per 1,000,000 SP the doctrine fit requires.",
+        help_text=_("Extra points per 1,000,000 SP the doctrine fit requires."),
     )
 
     # PVP: points for kills the pilot was an attacker on (Hall of Fame).
     pvp_points_per_kill = models.IntegerField(
-        default=1, help_text="Points per enemy kill the pilot was involved in."
+        default=1, help_text=_("Points per enemy kill the pilot was involved in.")
     )
     pvp_final_blow_bonus = models.IntegerField(
-        default=0, help_text="Extra points when the pilot landed the final blow."
+        default=0, help_text=_("Extra points when the pilot landed the final blow.")
     )
 
     # PVE: points for the ratting/bounty income the corp receives from a member.
     pve_points_per_mil = models.DecimalField(
         max_digits=8, decimal_places=3, default=Decimal("0.050"),
-        help_text="Points per 1,000,000 ISK of corp PVE (ratting) income from a member.",
+        help_text=_("Points per 1,000,000 ISK of corp PVE (ratting) income from a member."),
     )
     pve_ref_types = models.CharField(
         max_length=255, default="bounty_prizes,ess_escrow_transfer",
-        help_text="Corp wallet ref_types that count as members' PVE income "
-                  "(comma-separated). The Corp Finance page shows your real ref_types.",
+        help_text=_("Corp wallet ref_types that count as members' PVE income "
+                    "(comma-separated). The Corp Finance page shows your real ref_types."),
     )
 
     def __str__(self) -> str:

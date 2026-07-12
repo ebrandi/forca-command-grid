@@ -1,45 +1,46 @@
 {% extends "base.html" %}
-{% block title %}Send alert · Pingboard{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Send alert" %} · Pingboard{% endblock %}
 {% block content %}
 <header class="mb-6">
   <p class="eyebrow text-gold">Pingboard</p>
-  <h1 class="text-3xl font-bold text-ink">Send an alert</h1>
-  <p class="text-sm text-faint">Dispatch to the corporation through the enabled channels.</p>
+  <h1 class="text-3xl font-bold text-ink">{% translate "Send an alert" %}</h1>
+  <p class="text-sm text-faint">{% translate "Dispatch to the corporation through the enabled channels." %}</p>
 </header>
 
 {% if requirements %}
 <div class="panel border-gold/40 bg-gold/10 mb-5 p-4 text-sm">
-  <p class="font-semibold text-gold">Confirm before sending</p>
-  <p class="text-muted">This alert reaches about <strong>{{ requirements.estimated_recipients }}</strong> pilots. Tick the required confirmations below and resubmit.</p>
+  <p class="font-semibold text-gold">{% translate "Confirm before sending" %}</p>
+  <p class="text-muted">{% blocktranslate with n=requirements.estimated_recipients %}This alert reaches about <strong>{{ n }}</strong> pilots. Tick the required confirmations below and resubmit.{% endblocktranslate %}</p>
 </div>
 {% endif %}
 
 <form method="post" class="panel p-5 grid gap-4 sm:grid-cols-2">
   {% csrf_token %}
-  <label class="label">Category
+  <label class="label">{% translate "Category" %}
     <select name="category" class="input-field mt-1">
       {% for val, lbl in categories %}<option value="{{ val }}" {% if form.category == val %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
     </select>
   </label>
-  <label class="label">Priority
+  <label class="label">{% translate "Priority" %}
     <select name="priority" class="input-field mt-1">
       {% for val, lbl in priorities %}<option value="{{ val }}" {% if form.priority == val %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
     </select>
   </label>
-  <label class="label">Audience
+  <label class="label">{% translate "Audience" %}
     <select name="audience" class="input-field mt-1">
       {% for val, lbl in audiences %}<option value="{{ val }}" {% if form.audience == val %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
     </select>
   </label>
-  <label class="label">Template (optional)
+  <label class="label">{% translate "Template (optional)" %}
     <select name="template" class="input-field mt-1">
-      <option value="">— custom message —</option>
+      <option value="">{% translate "— custom message —" %}</option>
       {% for t in templates %}<option value="{{ t.key }}" {% if form.template == t.key %}selected{% endif %}>{{ t.label }}</option>{% endfor %}
     </select>
   </label>
 
   <fieldset class="sm:col-span-2">
-    <span class="label">Channels</span>
+    <span class="label">{% translate "Channels" %}</span>
     <div class="mt-1 flex flex-wrap gap-2">
       {% for val, lbl in channel_kinds %}
       <label class="chip cursor-pointer"><input type="checkbox" name="channel_{{ val }}" {% if val == 'in_app' or val == 'discord' %}checked{% endif %} class="mr-1 align-middle">{{ lbl }}</label>
@@ -47,15 +48,15 @@
     </div>
   </fieldset>
 
-  <label class="label sm:col-span-2">Title<input name="title" value="{{ form.title|default:'' }}" class="input-field mt-1"></label>
-  <label class="label sm:col-span-2">Message<textarea name="body" rows="4" class="input-field mt-1">{{ form.body|default:'' }}</textarea></label>
-  <label class="label sm:col-span-2">Reason (required for urgent/emergency)<input name="reason" value="{{ form.reason|default:'' }}" class="input-field mt-1"></label>
+  <label class="label sm:col-span-2">{% translate "Title" %}<input name="title" value="{{ form.title|default:'' }}" class="input-field mt-1"></label>
+  <label class="label sm:col-span-2">{% translate "Message" %}<textarea name="body" rows="4" class="input-field mt-1">{{ form.body|default:'' }}</textarea></label>
+  <label class="label sm:col-span-2">{% translate "Reason (required for urgent/emergency)" %}<input name="reason" value="{{ form.reason|default:'' }}" class="input-field mt-1"></label>
 
   <div class="sm:col-span-2 space-y-2 border-t border-line pt-3">
-    <label class="chip cursor-pointer border-loss/40"><input type="checkbox" name="confirm_two_step" class="mr-1 align-middle">I confirm this urgent/emergency alert</label>
-    <label class="chip cursor-pointer border-gold/40"><input type="checkbox" name="confirm_large" class="mr-1 align-middle">I confirm this large-audience alert</label>
+    <label class="chip cursor-pointer border-loss/40"><input type="checkbox" name="confirm_two_step" class="mr-1 align-middle">{% translate "I confirm this urgent/emergency alert" %}</label>
+    <label class="chip cursor-pointer border-gold/40"><input type="checkbox" name="confirm_large" class="mr-1 align-middle">{% translate "I confirm this large-audience alert" %}</label>
   </div>
 
-  <div class="sm:col-span-2"><button class="btn-gold">Preview &amp; send</button></div>
+  <div class="sm:col-span-2"><button class="btn-gold">{% translate "Preview &amp; send" %}</button></div>
 </form>
 {% endblock %}

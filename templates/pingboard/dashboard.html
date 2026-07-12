@@ -1,22 +1,23 @@
 {% extends "base.html" %}
+{% load i18n %}
 {% block title %}Pingboard · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <header class="mb-6 flex flex-wrap items-end justify-between gap-3">
   <div>
     <p class="eyebrow text-gold">Pingboard</p>
-    <h1 class="text-3xl font-bold text-ink">Dashboard</h1>
-    <p class="text-sm text-faint">Alerts, timers and the corporation calendar at a glance.</p>
+    <h1 class="text-3xl font-bold text-ink">{% translate "Dashboard" %}</h1>
+    <p class="text-sm text-faint">{% translate "Alerts, timers and the corporation calendar at a glance." %}</p>
   </div>
   <div class="flex gap-2">
-    <a href="{% url 'pingboard:calendar' %}" class="btn-ghost">Calendar</a>
-    <a href="{% url 'pingboard:my_channels' %}" class="btn-ghost">My channels</a>
-    {% if is_officer %}<a href="{% url 'pingboard:compose' %}" class="btn-gold">Send alert</a>{% endif %}
+    <a href="{% url 'pingboard:calendar' %}" class="btn-ghost">{% translate "Calendar" %}</a>
+    <a href="{% url 'pingboard:my_channels' %}" class="btn-ghost">{% translate "My channels" %}</a>
+    {% if is_officer %}<a href="{% url 'pingboard:compose' %}" class="btn-gold">{% translate "Send alert" %}</a>{% endif %}
   </div>
 </header>
 
 <div class="grid gap-4 lg:grid-cols-2">
   <section class="panel p-5">
-    <h2 class="eyebrow text-faint mb-3">Recent alerts</h2>
+    <h2 class="eyebrow text-faint mb-3">{% translate "Recent alerts" %}</h2>
     <ul class="divide-y divide-line/50">
       {% for a in recent %}
       <li class="flex items-center justify-between gap-3 py-2">
@@ -26,12 +27,12 @@
         {% if is_officer %}</a>{% else %}</span>{% endif %}
         {% include "pingboard/_status_chip.html" with status=a.status label=a.get_status_display %}
       </li>
-      {% empty %}<li class="py-3 text-sm text-faint">No alerts yet.</li>{% endfor %}
+      {% empty %}<li class="py-3 text-sm text-faint">{% translate "No alerts yet." %}</li>{% endfor %}
     </ul>
   </section>
 
   <section class="panel p-5">
-    <h2 class="eyebrow text-faint mb-3">Upcoming on the calendar</h2>
+    <h2 class="eyebrow text-faint mb-3">{% translate "Upcoming on the calendar" %}</h2>
     <ul class="divide-y divide-line/50">
       {% for e in upcoming %}
       <li class="flex items-center justify-between gap-3 py-2">
@@ -41,42 +42,42 @@
         </a>
         {% include "pingboard/_status_chip.html" with status=e.status label=e.get_status_display %}
       </li>
-      {% empty %}<li class="py-3 text-sm text-faint">Nothing scheduled.</li>{% endfor %}
+      {% empty %}<li class="py-3 text-sm text-faint">{% translate "Nothing scheduled." %}</li>{% endfor %}
     </ul>
   </section>
 
   <section class="panel p-5">
-    <h2 class="eyebrow text-faint mb-3">Scheduled alerts</h2>
+    <h2 class="eyebrow text-faint mb-3">{% translate "Scheduled alerts" %}</h2>
     <ul class="divide-y divide-line/50">
       {% for a in scheduled %}
       <li class="flex items-center justify-between gap-3 py-2">
         <span class="min-w-0"><span class="block truncate text-ink">{{ a.title }}</span>
-          <span class="text-[11px] text-faint">fires {{ a.scheduled_at|date:"D j M H:i" }} EVE</span></span>
+          <span class="text-[11px] text-faint">{% blocktranslate with d=a.scheduled_at|date:"D j M H:i" %}fires {{ d }} EVE{% endblocktranslate %}</span></span>
         <span class="chip border-cyan text-cyan">{{ a.get_priority_display }}</span>
       </li>
-      {% empty %}<li class="py-3 text-sm text-faint">None scheduled.</li>{% endfor %}
+      {% empty %}<li class="py-3 text-sm text-faint">{% translate "None scheduled." %}</li>{% endfor %}
     </ul>
   </section>
 
   <section class="panel p-5">
-    <h2 class="eyebrow text-loss mb-3">Failed alerts &amp; syncs</h2>
+    <h2 class="eyebrow text-loss mb-3">{% translate "Failed alerts &amp; syncs" %}</h2>
     <ul class="divide-y divide-line/50">
       {% for a in failed %}
       <li class="flex items-center justify-between gap-3 py-2">
         {% if is_officer %}<a href="{% url 'pingboard:alert_detail' a.id %}" class="truncate text-ink">{{ a.title }}</a>
-        <span class="chip border-loss text-loss">retry</span>{% else %}<span class="truncate text-ink">{{ a.title }}</span>{% endif %}
+        <span class="chip border-loss text-loss">{% translate "retry" %}</span>{% else %}<span class="truncate text-ink">{{ a.title }}</span>{% endif %}
       </li>
       {% empty %}{% endfor %}
       {% for s in failed_syncs %}
-      <li class="py-2 text-[12px] text-faint">Sync {{ s.action }}: {{ s.source_system }}/{{ s.source_object_id }}</li>
+      <li class="py-2 text-[12px] text-faint">{% blocktranslate with action=s.action sys=s.source_system oid=s.source_object_id %}Sync {{ action }}: {{ sys }}/{{ oid }}{% endblocktranslate %}</li>
       {% empty %}{% endfor %}
-      {% if not failed and not failed_syncs %}<li class="py-3 text-sm text-faint">All clear.</li>{% endif %}
+      {% if not failed and not failed_syncs %}<li class="py-3 text-sm text-faint">{% translate "All clear." %}</li>{% endif %}
     </ul>
   </section>
 
   {% if urgent %}
   <section class="panel p-5 border-loss/40">
-    <h2 class="eyebrow text-loss mb-3">Urgent alert activity</h2>
+    <h2 class="eyebrow text-loss mb-3">{% translate "Urgent alert activity" %}</h2>
     <ul class="divide-y divide-line/50">
       {% for a in urgent %}
       <li class="flex items-center justify-between gap-3 py-2">
@@ -91,15 +92,15 @@
 
   {% if is_officer and providers %}
   <section class="panel p-5">
-    <h2 class="eyebrow text-faint mb-3">Provider health</h2>
+    <h2 class="eyebrow text-faint mb-3">{% translate "Provider health" %}</h2>
     <ul class="divide-y divide-line/50">
       {% for p in providers %}
       <li class="flex items-center justify-between gap-3 py-2">
         <span class="text-ink">{{ p.label }} <span class="text-[11px] text-faint">{{ p.get_kind_display }}</span></span>
-        {% if not p.enabled %}<span class="chip border-line text-faint">off</span>
-        {% elif p.last_error %}<span class="chip border-loss text-loss" title="{{ p.last_error }}">error</span>
-        {% elif p.last_ok_at %}<span class="chip border-kill text-kill">ok</span>
-        {% else %}<span class="chip border-cyan text-cyan">ready</span>{% endif %}
+        {% if not p.enabled %}<span class="chip border-line text-faint">{% translate "off" %}</span>
+        {% elif p.last_error %}<span class="chip border-loss text-loss" title="{{ p.last_error }}">{% translate "error" %}</span>
+        {% elif p.last_ok_at %}<span class="chip border-kill text-kill">{% translate "ok" %}</span>
+        {% else %}<span class="chip border-cyan text-cyan">{% translate "ready" %}</span>{% endif %}
       </li>
       {% endfor %}
     </ul>

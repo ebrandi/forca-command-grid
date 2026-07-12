@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
+from django.utils.translation import gettext_lazy as _
 
 from apps.recommendations import relay
 from core import rbac
@@ -25,21 +26,21 @@ def relay_settings(request: HttpRequest) -> HttpResponse:
             relay.set_designated_relay_character(None)
             audit_log(request.user, "recommendations.relay.clear", target_type="corp",
                       target_id="relay", ip=client_ip(request))
-            messages.success(request, "Relay character cleared — falling back to the first valid token.")
+            messages.success(request, _("Relay character cleared — falling back to the first valid token."))
             return redirect("admin_audit:relay_settings")
         try:
             cid = int(raw)
         except ValueError:
-            messages.error(request, "Invalid character.")
+            messages.error(request, _("Invalid character."))
             return redirect("admin_audit:relay_settings")
         # Only allow a character that actually holds a relay scope (never trust the POST id).
         if cid not in eligible_ids:
-            messages.error(request, "That character does not currently hold a relay scope.")
+            messages.error(request, _("That character does not currently hold a relay scope."))
             return redirect("admin_audit:relay_settings")
         relay.set_designated_relay_character(cid)
         audit_log(request.user, "recommendations.relay.set", target_type="character",
                   target_id=str(cid), ip=client_ip(request))
-        messages.success(request, "Designated relay character saved.")
+        messages.success(request, _("Designated relay character saved."))
         return redirect("admin_audit:relay_settings")
 
     return render(request, "admin_audit/console/relay_settings.html", {
@@ -73,7 +74,7 @@ def recommendations_tuning(request: HttpRequest) -> HttpResponse:
         cfg.save()
         audit_log(request.user, "recommendations.tuning.saved",
                   target_type="recommendation_config", target_id=str(cfg.pk), ip=client_ip(request))
-        messages.success(request, "Recommendation engine tuning saved.")
+        messages.success(request, _("Recommendation engine tuning saved."))
         return redirect("admin_audit:recommendations_tuning")
 
     disabled = set(cfg.disabled_evaluators or [])

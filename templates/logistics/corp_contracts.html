@@ -1,43 +1,44 @@
 {% extends "base.html" %}
 {% load humanize %}
-{% block title %}Corp contracts · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Corp contracts" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
-<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← {% translate "Admin console" %}</a>
 <header class="mt-2 mb-6 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <p class="eyebrow text-gold">Logistics</p>
-    <h1 class="mt-1 text-3xl font-bold text-ink">Corp contracts</h1>
-    <p class="mt-1 text-sm text-faint">Every corp contract — item exchange, courier, auction, loan — with status.</p>
+    <p class="eyebrow text-gold">{% translate "Logistics" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Corp contracts" %}</h1>
+    <p class="mt-1 text-sm text-faint">{% translate "Every corp contract — item exchange, courier, auction, loan — with status." %}</p>
   </div>
-  <form method="post">{% csrf_token %}<button class="btn-ghost text-sm">Sync now</button></form>
+  <form method="post">{% csrf_token %}<button class="btn-ghost text-sm">{% translate "Sync now" %}</button></form>
 </header>
 
 
 {% if contracts %}
 <div class="mb-4 flex flex-wrap gap-2 text-xs">
-  <span class="chip">{{ contracts|length }} contract{{ contracts|length|pluralize }}</span>
-  {% if open_count %}<span class="chip !border-gold/40 !text-gold">{{ open_count }} open</span>{% endif %}
+  <span class="chip">{% blocktranslate count n=contracts|length %}{{ n }} contract{% plural %}{{ n }} contracts{% endblocktranslate %}</span>
+  {% if open_count %}<span class="chip !border-gold/40 !text-gold">{% blocktranslate with open_count=open_count %}{{ open_count }} open{% endblocktranslate %}</span>{% endif %}
 </div>
 {% endif %}
 
 <div class="panel overflow-hidden">
   <div class="overflow-x-auto"><table class="w-full text-sm">
     <thead><tr class="eyebrow border-b border-line text-left text-faint">
-      <th class="px-4 py-2">Contract</th><th class="px-4 py-2">Type</th>
-      <th class="px-4 py-2">Status</th><th class="px-4 py-2">From → to</th>
-      <th class="px-4 py-2 text-right">Value</th>
+      <th class="px-4 py-2">{% translate "Contract" %}</th><th class="px-4 py-2">{% translate "Type" %}</th>
+      <th class="px-4 py-2">{% translate "Status" %}</th><th class="px-4 py-2">{% translate "From → to" %}</th>
+      <th class="px-4 py-2 text-right">{% translate "Value" %}</th>
     </tr></thead>
     <tbody class="divide-y divide-line/40">
       {% for c in contracts %}
         <tr class="{% if c.is_open %}bg-gold/5{% endif %}">
-          <td class="px-4 py-2 text-ink">{{ c.title|default:"(no title)" }}</td>
+          {% translate "(no title)" as no_title %}<td class="px-4 py-2 text-ink">{{ c.title|default:no_title }}</td>
           <td class="px-4 py-2 text-xs text-faint">{{ c.type|cut:"_"|title }}</td>
           <td class="px-4 py-2"><span class="chip !text-[10px] {% if c.is_open %}!border-gold/40 !text-gold{% else %}text-faint{% endif %}">{{ c.status|cut:"_"|title }}</span></td>
           <td class="px-4 py-2 text-xs text-faint">{{ c.issuer_name|default:"—" }} → {{ c.assignee_name|default:"—" }}</td>
           <td class="px-4 py-2 text-right data">{% if c.reward %}{{ c.reward|floatformat:0|intcomma }}{% else %}{{ c.price|floatformat:0|intcomma }}{% endif %}</td>
         </tr>
       {% empty %}
-        <tr><td colspan="5" class="px-4 py-12 text-center text-sm text-faint">No corp contracts tracked. A director needs to grant the corp-contracts scope, then sync.</td></tr>
+        <tr><td colspan="5" class="px-4 py-12 text-center text-sm text-faint">{% translate "No corp contracts tracked. A director needs to grant the corp-contracts scope, then sync." %}</td></tr>
       {% endfor %}
     </tbody>
   </table></div>

@@ -1,11 +1,12 @@
 {% extends "base.html" %}
-{% block title %}Doctrine coverage · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Doctrine coverage" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
-<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← {% translate "Admin console" %}</a>
 <header class="mt-3 mb-6">
-  <p class="eyebrow text-gold">Leadership</p>
-  <h1 class="mt-1 text-2xl font-bold text-ink">Doctrine coverage</h1>
-  <p class="mt-1 max-w-2xl text-sm text-faint">How many of the {{ member_count }} member pilots can fly each active doctrine (best fit), priority doctrines first. <span class="text-kill">Optimal</span> flies it comfortably; <span class="text-cyan">viable</span> can fly it; <span class="text-faint">not-ready</span> is missing skills; unknown has no skill import.</p>
+  <p class="eyebrow text-gold">{% translate "Leadership" %}</p>
+  <h1 class="mt-1 text-2xl font-bold text-ink">{% translate "Doctrine coverage" %}</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">{% blocktranslate with n=member_count %}How many of the {{ n }} member pilots can fly each active doctrine (best fit), priority doctrines first. <span class="text-kill">Optimal</span> flies it comfortably; <span class="text-cyan">viable</span> can fly it; <span class="text-faint">not-ready</span> is missing skills; unknown has no skill import.{% endblocktranslate %}</p>
 </header>
 
 {% if rows %}
@@ -16,9 +17,9 @@
       <div class="flex items-center gap-2">
         <h2 class="font-display font-semibold text-ink">{{ r.name }}</h2>
         {% if r.category %}<span class="chip">{{ r.category }}</span>{% endif %}
-        {% if r.priority >= 80 %}<span class="chip !border-gold/40 !text-gold">priority</span>{% endif %}
+        {% if r.priority >= 80 %}<span class="chip !border-gold/40 !text-gold">{% translate "priority" %}</span>{% endif %}
       </div>
-      <div class="text-sm"><span class="data font-semibold text-ink">{{ r.can_fly }}</span><span class="text-faint">/{{ r.total }} can fly</span></div>
+      <div class="text-sm"><span class="data font-semibold text-ink">{{ r.can_fly }}</span><span class="text-faint">/{{ r.total }} {% translate "can fly" %}</span></div>
     </div>
     <div class="mt-2 flex h-2.5 w-full overflow-hidden rounded-full bg-panel2">
       {% widthratio r.optimal r.total 100 as opt_pct %}
@@ -27,15 +28,15 @@
       <div class="h-full bg-cyan" style="width: {{ via_pct }}%"></div>
     </div>
     <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-faint">
-      <span><span class="mr-1 inline-block h-2 w-2 rounded-full bg-kill"></span>optimal <span class="data text-ink">{{ r.optimal }}</span></span>
-      <span><span class="mr-1 inline-block h-2 w-2 rounded-full bg-cyan"></span>viable <span class="data text-ink">{{ r.viable }}</span></span>
-      <span>not-ready <span class="data text-ink">{{ r.not_ready }}</span></span>
-      {% if r.unknown %}<span>unknown <span class="data text-ink">{{ r.unknown }}</span></span>{% endif %}
+      <span><span class="mr-1 inline-block h-2 w-2 rounded-full bg-kill"></span>{% translate "optimal" %} <span class="data text-ink">{{ r.optimal }}</span></span>
+      <span><span class="mr-1 inline-block h-2 w-2 rounded-full bg-cyan"></span>{% translate "viable" %} <span class="data text-ink">{{ r.viable }}</span></span>
+      <span>{% translate "not-ready" %} <span class="data text-ink">{{ r.not_ready }}</span></span>
+      {% if r.unknown %}<span>{% translate "unknown" %} <span class="data text-ink">{{ r.unknown }}</span></span>{% endif %}
     </div>
   </div>
   {% endfor %}
 </div>
 {% else %}
-<div class="panel p-8 text-center text-faint">No active doctrines to report coverage for.</div>
+<div class="panel p-8 text-center text-faint">{% translate "No active doctrines to report coverage for." %}</div>
 {% endif %}
 {% endblock %}

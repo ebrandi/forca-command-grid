@@ -1,16 +1,17 @@
 {% extends "base.html" %}
 {% load eve %}
+{% load i18n %}
 {% block title %}Killboard · [FORCA] Command Grid{% endblock %}
 {% block content %}
 
 <header class="mb-4 flex flex-wrap items-end justify-between gap-4">
   <div>
-    <p class="eyebrow">Combat record · {{ home_corp_name }}</p>
+    <p class="eyebrow">{% translate "Combat record" %} · {{ home_corp_name }}</p>
     <h1 class="mt-1 text-3xl font-bold text-ink">Killboard</h1>
   </div>
   <div class="flex items-center gap-2">
-    <a href="{% url 'killboard:stats' %}" class="btn-ghost text-xs"><svg class="h-4 w-4"><use href="#i-grid"/></svg> Stats</a>
-    <a href="{% url 'killboard:rankings' %}" class="btn-gold text-xs"><svg class="h-4 w-4"><use href="#i-target"/></svg> Rankings</a>
+    <a href="{% url 'killboard:stats' %}" class="btn-ghost text-xs"><svg class="h-4 w-4"><use href="#i-grid"/></svg> {% translate "Stats" %}</a>
+    <a href="{% url 'killboard:rankings' %}" class="btn-gold text-xs"><svg class="h-4 w-4"><use href="#i-target"/></svg> {% translate "Rankings" %}</a>
   </div>
 </header>
 
@@ -29,21 +30,21 @@
       <p class="text-[11px] text-faint">{{ s.isk_lost|isk }}</p>
     </div>
     <div>
-      <p class="eyebrow text-faint">Efficiency</p>
+      <p class="eyebrow text-faint">{% translate "Efficiency" %}</p>
       <p class="data text-2xl font-bold text-gold">{{ s.efficiency|effpct }}%</p>
       <div class="mt-1.5 h-1.5 w-20 overflow-hidden rounded-full bg-loss/40">
         <div class="h-full rounded-full bg-kill" style="width: {{ s.efficiency|effpct }}%"></div>
       </div>
     </div>
     <div>
-      <p class="eyebrow text-faint">Threat</p>
+      <p class="eyebrow text-faint">{% translate "Threat" %}</p>
       <p class="data text-2xl font-bold {{ s.danger.color }}">{{ s.danger.label }}</p>
       <p class="text-[11px] text-faint">{{ s.solo_kills }} solo</p>
     </div>
   </div>
   {% if overview.spark|length > 1 %}
   <div class="flex flex-col justify-center border-l border-line/60 pl-6">
-    <p class="eyebrow mb-1 text-faint">Kills · last 14 days</p>
+    <p class="eyebrow mb-1 text-faint">{% translate "Kills · last 14 days" %}</p>
     {% include "components/_sparkline.html" with values=overview.spark unit="kills" %}
   </div>
   {% endif %}
@@ -55,8 +56,8 @@
 <section class="panel mb-4 overflow-hidden">
   <div class="flex items-center gap-2 border-b border-line px-4 py-2.5">
     <svg class="h-4 w-4 text-gold"><use href="#i-target"/></svg>
-    <h2 class="eyebrow text-gold">Biggest kills</h2>
-    <span class="ml-auto text-[11px] text-faint">last 7 days</span>
+    <h2 class="eyebrow text-gold">{% translate "Biggest kills" %}</h2>
+    <span class="ml-auto text-[11px] text-faint">{% translate "last 7 days" %}</span>
   </div>
   <div class="flex gap-3 overflow-x-auto p-3">
     {% for k in overview.biggest %}
@@ -90,7 +91,7 @@
     <section class="panel overflow-hidden">
       <div class="flex items-center gap-2 border-b border-line px-4 py-2.5">
         <svg class="h-4 w-4 text-gold"><use href="#i-cross"/></svg>
-        <h2 class="font-display text-sm font-semibold text-ink">Top killers</h2>
+        <h2 class="font-display text-sm font-semibold text-ink">{% translate "Top killers" %}</h2>
         <span class="ml-auto text-[11px] text-faint">7d</span>
       </div>
       {% if overview.top_killers %}
@@ -107,16 +108,16 @@
         {% endfor %}
       </ol>
       {% else %}
-      <p class="px-4 py-8 text-center text-xs text-faint">No kills in the last 7 days.</p>
+      <p class="px-4 py-8 text-center text-xs text-faint">{% translate "No kills in the last 7 days." %}</p>
       {% endif %}
-      <a href="{% url 'killboard:rankings' %}" class="block border-t border-line px-4 py-2 text-center text-[11px] text-faint hover:text-gold">Full rankings →</a>
+      <a href="{% url 'killboard:rankings' %}" class="block border-t border-line px-4 py-2 text-center text-[11px] text-faint hover:text-gold">{% translate "Full rankings" %} →</a>
     </section>
 
     <section class="panel overflow-hidden">
       <div class="flex items-center gap-2 border-b border-line px-4 py-2.5">
         <svg class="h-4 w-4 text-cyan"><use href="#i-target"/></svg>
-        <h2 class="font-display text-sm font-semibold text-ink">Most active</h2>
-        <span class="ml-auto text-[11px] text-faint">7d · systems</span>
+        <h2 class="font-display text-sm font-semibold text-ink">{% translate "Most active" %}</h2>
+        <span class="ml-auto text-[11px] text-faint">{% translate "7d · systems" %}</span>
       </div>
       {% if overview.active_systems %}
       <ol class="divide-y divide-line/40">
@@ -135,7 +136,7 @@
         {% endwith %}
       </ol>
       {% else %}
-      <p class="px-4 py-8 text-center text-xs text-faint">No activity in the last 7 days.</p>
+      <p class="px-4 py-8 text-center text-xs text-faint">{% translate "No activity in the last 7 days." %}</p>
       {% endif %}
     </section>
   </aside>

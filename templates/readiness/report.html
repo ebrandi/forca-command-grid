@@ -1,21 +1,22 @@
 {% extends "base.html" %}
-{% block title %}Readiness · Weekly report · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Readiness" %} · {% translate "Weekly report" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
-<a href="{% url 'readiness:dashboard' %}" class="text-xs text-faint hover:text-gold">← Readiness</a>
+<a href="{% url 'readiness:dashboard' %}" class="text-xs text-faint hover:text-gold">← {% translate "Readiness" %}</a>
 <header class="mt-2 mb-6">
-  <p class="eyebrow text-gold">Weekly executive report</p>
+  <p class="eyebrow text-gold">{% translate "Weekly executive report" %}</p>
   {% if report %}
   <h1 class="mt-1 text-3xl font-bold text-ink">{{ report.period_start|date:"j M" }} – {{ report.period_end|date:"j M Y" }}</h1>
-  <p class="mt-1 text-sm text-faint">The corporation's readiness for the week, composed automatically each Monday.</p>
+  <p class="mt-1 text-sm text-faint">{% translate "The corporation's readiness for the week, composed automatically each Monday." %}</p>
   {% else %}
-  <h1 class="mt-1 text-3xl font-bold text-ink">Weekly executive report</h1>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Weekly executive report" %}</h1>
   {% endif %}
 </header>
 
 {% if not report %}
   <div class="panel px-4 py-12 text-center">
-    <p class="font-display text-lg text-muted">No report yet</p>
-    <p class="mt-1 text-sm text-faint">The first executive report lands the Monday after a full week of snapshots.</p>
+    <p class="font-display text-lg text-muted">{% translate "No report yet" %}</p>
+    <p class="mt-1 text-sm text-faint">{% translate "The first executive report lands the Monday after a full week of snapshots." %}</p>
   </div>
 {% else %}
 <div class="grid gap-4 lg:grid-cols-[1fr_16rem]">
@@ -23,17 +24,17 @@
     <section class="panel mb-4 flex items-center gap-5 p-6">
       <div class="text-center">
         <p class="font-display text-6xl font-bold {% if body.index >= 75 %}text-kill{% elif body.index >= 50 %}text-gold{% else %}text-loss{% endif %}">{{ body.index }}</p>
-        <p class="text-[10px] uppercase tracking-wide text-faint">overall index</p>
+        <p class="text-[10px] uppercase tracking-wide text-faint">{% translate "overall index" %}</p>
       </div>
       <div class="space-y-1 text-sm">
-        {% if body.best %}<p class="text-kill">▲ Biggest gain: <span class="capitalize text-ink">{{ body.best.dimension }}</span> +{{ body.best.delta }}</p>{% endif %}
-        {% if body.worst %}<p class="text-loss">▼ Biggest drop: <span class="capitalize text-ink">{{ body.worst.dimension }}</span> {{ body.worst.delta }}</p>{% endif %}
-        {% if not body.best and not body.worst %}<p class="text-faint">No material movement this week.</p>{% endif %}
+        {% if body.best %}<p class="text-kill">▲ {% blocktranslate with dim=body.best.dimension delta=body.best.delta %}Biggest gain: <span class="capitalize text-ink">{{ dim }}</span> +{{ delta }}{% endblocktranslate %}</p>{% endif %}
+        {% if body.worst %}<p class="text-loss">▼ {% blocktranslate with dim=body.worst.dimension delta=body.worst.delta %}Biggest drop: <span class="capitalize text-ink">{{ dim }}</span> {{ delta }}{% endblocktranslate %}</p>{% endif %}
+        {% if not body.best and not body.worst %}<p class="text-faint">{% translate "No material movement this week." %}</p>{% endif %}
       </div>
     </section>
 
     <section class="panel mb-4 overflow-hidden">
-      <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-loss">Top risks</h2></div>
+      <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-loss">{% translate "Top risks" %}</h2></div>
       {% if body.top_risks %}
       <div class="divide-y divide-line/50">
         {% for r in body.top_risks %}
@@ -43,25 +44,25 @@
         </div>
         {% endfor %}
       </div>
-      {% else %}<p class="px-4 py-6 text-center text-sm text-faint">No open risks — clean board.</p>{% endif %}
+      {% else %}<p class="px-4 py-6 text-center text-sm text-faint">{% translate "No open risks — clean board." %}</p>{% endif %}
     </section>
 
     <section class="panel overflow-hidden">
-      <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Top tasks</h2></div>
+      <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "Top tasks" %}</h2></div>
       {% if body.top_tasks %}
       <ul class="divide-y divide-line/50">
         {% for t in body.top_tasks %}<li class="px-4 py-2.5 text-sm text-ink">{{ t }}</li>{% endfor %}
       </ul>
-      {% else %}<p class="px-4 py-6 text-center text-sm text-faint">No outstanding readiness tasks.</p>{% endif %}
+      {% else %}<p class="px-4 py-6 text-center text-sm text-faint">{% translate "No outstanding readiness tasks." %}</p>{% endif %}
     </section>
   </div>
 
   <aside class="panel h-fit overflow-hidden">
-    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">Past weeks</h2></div>
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">{% translate "Past weeks" %}</h2></div>
     <div class="divide-y divide-line/40">
       {% for r in reports %}
       <a href="?period_start={{ r.period_start|date:'Y-m-d' }}" class="block px-4 py-2.5 text-sm hover:bg-panel2/40 {% if r.period_start|date:'Y-m-d' == selected_start %}text-gold{% else %}text-muted{% endif %}">
-        {{ r.period_start|date:"j M" }} – {{ r.period_end|date:"j M Y" }}<span class="ml-2 text-[11px] text-faint">idx {{ r.index }}</span>
+        {{ r.period_start|date:"j M" }} – {{ r.period_end|date:"j M Y" }}<span class="ml-2 text-[11px] text-faint">{% blocktranslate with idx=r.index %}idx {{ idx }}{% endblocktranslate %}</span>
       </a>
       {% endfor %}
     </div>

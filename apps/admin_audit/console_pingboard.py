@@ -11,6 +11,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from apps.pingboard import config
 from apps.pingboard.models import (
@@ -69,7 +70,7 @@ def pingboard_settings(request):
                 "default_expiry_minutes": _int(p.get("default_expiry_minutes"), 720),
                 "site_url": p.get("site_url", "").strip(),
             }
-            return _audited_set(request, "general", doc, ok="General settings saved.", back=back)
+            return _audited_set(request, "general", doc, ok=_("General settings saved."), back=back)
         if domain == "anti_abuse":
             doc = {
                 "max_per_officer_per_hour": _int(p.get("max_per_officer_per_hour"), 20),
@@ -81,7 +82,7 @@ def pingboard_settings(request):
                 "two_step_urgent": p.get("two_step_urgent") == "on",
                 "suppress_duplicates": p.get("suppress_duplicates") == "on",
             }
-            return _audited_set(request, "anti_abuse", doc, ok="Anti-abuse settings saved.", back=back)
+            return _audited_set(request, "anti_abuse", doc, ok=_("Anti-abuse settings saved."), back=back)
         if domain == "calendar":
             doc = {
                 "manual_entries_enabled": p.get("manual_entries_enabled") == "on",
@@ -90,7 +91,7 @@ def pingboard_settings(request):
                 "pilot_visibility": p.get("pilot_visibility") == "on",
                 "event_retention_days": _int(p.get("event_retention_days"), 90),
             }
-            return _audited_set(request, "calendar", doc, ok="Calendar settings saved.", back=back)
+            return _audited_set(request, "calendar", doc, ok=_("Calendar settings saved."), back=back)
 
     ctx = {
         "general": config.get("general"),
@@ -139,7 +140,7 @@ def _channels_post(request):
         prov.save()
         audit_log(request.user, "pingboard.channel.configured", target_type="pingboard_provider",
                   target_id=str(prov.id), metadata={"kind": prov.kind}, ip=client_ip(request))
-        messages.success(request, "Channel added.")
+        messages.success(request, _("Channel added."))
         return redirect(back)
 
     prov = get_object_or_404(ChannelProvider, pk=p.get("provider_id"))
@@ -148,14 +149,14 @@ def _channels_post(request):
         prov.save(update_fields=["enabled", "updated_at"])
         audit_log(request.user, "pingboard.channel.armed" if prov.enabled else "pingboard.channel.disabled",
                   target_type="pingboard_provider", target_id=str(prov.id), ip=client_ip(request))
-        messages.success(request, f"Channel {'enabled' if prov.enabled else 'disabled'}.")
+        messages.success(request, _("Channel enabled.") if prov.enabled else _("Channel disabled."))
     elif action == "test":
         _run_test(request, prov)
     elif action == "delete":
         prov.delete()
         audit_log(request.user, "pingboard.channel.deleted", target_type="pingboard_provider",
                   target_id=str(p.get("provider_id")), ip=client_ip(request))
-        messages.success(request, "Channel deleted.")
+        messages.success(request, _("Channel deleted."))
     return redirect(back)
 
 
@@ -191,9 +192,10 @@ def pingboard_channel_save(request, pk=None):
     )
     ok, why = _provider_ready(prov)
     if ok:
-        messages.success(request, f"Channel “{prov.label}” saved and ready to send.")
+        messages.success(request, _("Channel “%(label)s” saved and ready to send.") % {"label": prov.label})
     else:
-        messages.warning(request, f"Channel “{prov.label}” saved, but not operational yet: {why}")
+        messages.warning(request, _("Channel “%(label)s” saved, but not operational yet: %(why)s") % {
+            "label": prov.label, "why": why})
     return redirect("admin_audit:pingboard_channels")
 
 
@@ -251,11 +253,11 @@ def _provider_ready(prov) -> tuple[bool, str]:
 
     cls = provider_class(prov.kind)
     if cls is None:
-        return False, "no provider implementation for this channel kind"
+        return False, _("no provider implementation for this channel kind")
     try:
         return cls(prov).validate_configuration()
     except Exception:  # noqa: BLE001 - a config probe must never 500 the page
-        return False, "could not verify configuration"
+        return False, _("could not verify configuration")
 
 
 def _test_recipient(user, kind):
@@ -282,14 +284,14 @@ def _run_test(request, prov):
 
     cls = provider_class(prov.kind)
     if cls is None:
-        messages.error(request, "No provider implementation for this channel.")
+        messages.error(request, _("No provider implementation for this channel."))
         return
     to = _test_recipient(request.user, prov.kind)
     if prov.kind == "eve_mail" and to is None:
         messages.error(
             request,
-            "Can't send a test EVE-mail — your account has no linked character to receive it. "
-            "Link a character, or just send a real alert (delivery to the corp works independently).",
+            _("Can't send a test EVE-mail — your account has no linked character to receive it. "
+              "Link a character, or just send a real alert (delivery to the corp works independently)."),
         )
         return
     result = cls(prov).send_test(to=to)
@@ -299,13 +301,14 @@ def _run_test(request, prov):
         prov.last_ok_at = now
         prov.last_error = ""
         if prov.kind == "eve_mail":
-            messages.success(request, f"Test mail sent to {to.display or 'your character'} — check your in-game inbox.")
+            messages.success(request, _("Test mail sent to %(recipient)s — check your in-game inbox.") % {
+                "recipient": to.display or _("your character")})
         else:
-            messages.success(request, "Test message sent.")
+            messages.success(request, _("Test message sent."))
     else:
         prov.last_error = (result.error or "failed")[:300]
         prov.last_error_at = now
-        messages.error(request, f"Test failed: {result.error or 'unknown error'}")
+        messages.error(request, _("Test failed: %(error)s") % {"error": result.error or _("unknown error")})
     prov.save(update_fields=["last_test_at", "last_ok_at", "last_error", "last_error_at", "updated_at"])
     audit_log(request.user, "pingboard.channel.test", target_type="pingboard_provider",
               target_id=str(prov.id), metadata={"ok": result.ok}, ip=client_ip(request))
@@ -358,14 +361,14 @@ class AutomationRuleForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["expires_at"].input_formats = ["%Y-%m-%dT%H:%M", "%Y-%m-%d %H:%M:%S"]
         self.fields["template"].required = False
-        self.fields["template"].empty_label = "— none (use title/body below) —"
+        self.fields["template"].empty_label = _("— none (use title/body below) —")
 
     def clean_condition(self):
         v = self.cleaned_data["condition"]
         if v in (None, ""):
             return {}
         if not isinstance(v, dict):
-            raise forms.ValidationError("Condition must be a JSON object, e.g. {\"amount_gt\": 1000000000}.")
+            raise forms.ValidationError(_("Condition must be a JSON object, e.g. {\"amount_gt\": 1000000000}."))
         return v
 
     def clean_audience(self):
@@ -373,37 +376,39 @@ class AutomationRuleForm(forms.ModelForm):
         if v in (None, ""):
             return {}
         if not isinstance(v, dict):
-            raise forms.ValidationError("Audience must be a JSON object, e.g. {\"kind\": \"officer\"}.")
+            raise forms.ValidationError(_("Audience must be a JSON object, e.g. {\"kind\": \"officer\"}."))
         # Reject an unknown `kind`: downstream classification defaults an unrecognised kind
         # to uncapped (corp-internal), so a typo like {"kind":"directors"} would fail OPEN
         # and could post a restricted alert to a corp-wide channel. Fail closed here instead.
         kind = v.get("kind")
         if kind not in _AUDIENCE_KINDS:
             raise forms.ValidationError(
-                f"Unknown audience kind {kind!r}. Use one of: {', '.join(sorted(_AUDIENCE_KINDS))}."
+                _("Unknown audience kind %(kind)r. Use one of: %(kinds)s.") % {
+                    "kind": kind, "kinds": ', '.join(sorted(_AUDIENCE_KINDS))}
             )
         if kind == "role" and v.get("role") not in _AUDIENCE_ROLES:
             raise forms.ValidationError(
-                f"Audience role must be one of: {', '.join(sorted(_AUDIENCE_ROLES))}."
+                _("Audience role must be one of: %(roles)s.") % {
+                    "roles": ', '.join(sorted(_AUDIENCE_ROLES))}
             )
         return v
 
     def clean_window_minutes(self):
         v = self.cleaned_data["window_minutes"]
         if v < 1:
-            raise forms.ValidationError("Window must be at least 1 minute.")
+            raise forms.ValidationError(_("Window must be at least 1 minute."))
         return v
 
     def clean_cooldown_minutes(self):
         v = self.cleaned_data["cooldown_minutes"]
         if v < 0:
-            raise forms.ValidationError("Cooldown can't be negative.")
+            raise forms.ValidationError(_("Cooldown can't be negative."))
         return v
 
     def clean_max_per_window(self):
         v = self.cleaned_data["max_per_window"]
         if v < 0:
-            raise forms.ValidationError("Max per window can't be negative (0 = unlimited).")
+            raise forms.ValidationError(_("Max per window can't be negative (0 = unlimited)."))
         return v
 
     def clean_channels(self):
@@ -411,7 +416,7 @@ class AutomationRuleForm(forms.ModelForm):
         if v in (None, ""):
             return []
         if not isinstance(v, list) or not all(isinstance(c, str) for c in v):
-            raise forms.ValidationError("Channels must be a JSON list of channel keys, e.g. [\"in_app\", \"discord\"].")
+            raise forms.ValidationError(_("Channels must be a JSON list of channel keys, e.g. [\"in_app\", \"discord\"]."))
         return v
 
 
@@ -429,9 +434,9 @@ def pingboard_automation(request):
                 audit_log(request.user,
                           "pingboard.automation.updated" if action == "edit" else "pingboard.automation.created",
                           target_type="pingboard_automation_rule", target_id=rule.key, ip=client_ip(request))
-                messages.success(request, "Rule updated." if action == "edit" else "Rule created (disabled).")
+                messages.success(request, _("Rule updated.") if action == "edit" else _("Rule created (disabled)."))
                 return redirect("admin_audit:pingboard_automation")
-            messages.error(request, "Please correct the errors below.")
+            messages.error(request, _("Please correct the errors below."))
             return render(request, "admin_audit/console/pingboard/automation.html",
                           {"rules": AutomationRule.objects.select_related("template"),
                            "form": form, "editing": instance})
@@ -442,12 +447,12 @@ def pingboard_automation(request):
             audit_log(request.user,
                       "pingboard.automation.enabled" if rule.enabled else "pingboard.automation.disabled",
                       target_type="pingboard_automation_rule", target_id=rule.key, ip=client_ip(request))
-            messages.success(request, f"Rule {'enabled' if rule.enabled else 'disabled'}.")
+            messages.success(request, _("Rule enabled.") if rule.enabled else _("Rule disabled."))
         elif action == "delete":
             rule.delete()
             audit_log(request.user, "pingboard.automation.deleted",
                       target_type="pingboard_automation_rule", target_id=rule.key, ip=client_ip(request))
-            messages.success(request, "Rule deleted.")
+            messages.success(request, _("Rule deleted."))
         return redirect("admin_audit:pingboard_automation")
 
     edit_pk = request.GET.get("edit")
@@ -476,18 +481,18 @@ def pingboard_templates(request):
             tpl.save()
             audit_log(request.user, "pingboard.template.created", target_type="pingboard_template",
                       target_id=tpl.key, ip=client_ip(request))
-            messages.success(request, "Template created.")
+            messages.success(request, _("Template created."))
         else:
             tpl = get_object_or_404(AlertTemplate, pk=p.get("template_id"))
             if action == "toggle":
                 tpl.enabled = not tpl.enabled
                 tpl.save(update_fields=["enabled", "updated_at"])
-                messages.success(request, f"Template {'enabled' if tpl.enabled else 'disabled'}.")
+                messages.success(request, _("Template enabled.") if tpl.enabled else _("Template disabled."))
             elif action == "delete":
                 tpl.delete()
                 audit_log(request.user, "pingboard.template.deleted", target_type="pingboard_template",
                           target_id=str(p.get("template_id")), ip=client_ip(request))
-                messages.success(request, "Template deleted.")
+                messages.success(request, _("Template deleted."))
         return redirect("admin_audit:pingboard_templates")
     ctx = {"templates": AlertTemplate.objects.all(), "categories": AlertCategory.choices,
            "priorities": AlertPriority.choices}

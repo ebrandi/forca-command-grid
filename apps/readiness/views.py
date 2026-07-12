@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
 from core import rbac
@@ -89,14 +90,14 @@ def recompute(request: HttpRequest) -> HttpResponse:
     from django.core.cache import cache
 
     if not cache.add("readiness:recompute:lock", "1", timeout=60):
-        messages.info(request, "Readiness is already recomputing — give it a moment.")
+        messages.info(request, _("Readiness is already recomputing — give it a moment."))
         return redirect("readiness:dashboard")
     try:
         result = compute_readiness(persist=True)
     except Exception:
         cache.delete("readiness:recompute:lock")  # release so a failed run can be retried
         raise
-    messages.success(request, f"Readiness recomputed: index {result['index']}.")
+    messages.success(request, _("Readiness recomputed: index %(index)s.") % {"index": result["index"]})
     return redirect("readiness:dashboard")
 
 
@@ -134,15 +135,15 @@ def reco_action(request: HttpRequest, pk: int) -> HttpResponse:
     if action == "done":
         reco.state = PilotRecommendation.State.DONE
         reco.save(update_fields=["state", "updated_at"])
-        messages.success(request, "Nice — marked done. That lifts your readiness.")
+        messages.success(request, _("Nice — marked done. That lifts your readiness."))
     elif action == "dismiss":
         reco.state = PilotRecommendation.State.DISMISSED
         reco.save(update_fields=["state", "updated_at"])
-        messages.success(request, "Hidden — it won't come back unless you ask.")
+        messages.success(request, _("Hidden — it won't come back unless you ask."))
     elif action == "snooze":
         reco.snoozed_until = timezone.now() + dt.timedelta(days=7)
         reco.save(update_fields=["snoozed_until", "updated_at"])
-        messages.success(request, "Snoozed for a week.")
+        messages.success(request, _("Snoozed for a week."))
     return redirect("identity:dashboard")
 
 
@@ -218,7 +219,7 @@ def dimension_detail(request: HttpRequest, key: str) -> HttpResponse:
     if provider is None:
         from django.http import Http404
 
-        raise Http404("Unknown readiness dimension.")
+        raise Http404(_("Unknown readiness dimension."))
     result = compute_dimension(key)
     dim_cfg = config_get("dimensions").get(key, {})
     # A disabled KPI doesn't contribute to the score, so it's dropped from the "why
@@ -262,13 +263,13 @@ def kpi_detail(request: HttpRequest, key: str) -> HttpResponse:
     dimension_key = key.split(".", 1)[0]
     provider = registry.get(dimension_key)
     if provider is None:
-        raise Http404("Unknown readiness dimension.")
+        raise Http404(_("Unknown readiness dimension."))
     result = compute_dimension(dimension_key)
     kpi = None
     if result is not None:
         kpi = next((k for k in result.kpis if k.key == key), None)
     if kpi is None:
-        raise Http404("Unknown KPI for this dimension.")
+        raise Http404(_("Unknown KPI for this dimension."))
     kpi_cfg = config_get("kpis")
     _kpi_status_override(kpi, kpi_cfg)
     this_cfg = kpi_cfg.get(key) or {}
@@ -375,7 +376,7 @@ def timeline(request: HttpRequest) -> HttpResponse:
     """Historical evolution of the overall index and each dimension over time."""
     import datetime as dt
 
-    from django.utils import timezone
+    from django.utils import formats, timezone
 
     from .models import ReadinessSnapshot
 
@@ -393,7 +394,7 @@ def timeline(request: HttpRequest) -> HttpResponse:
         rows = rows[::step]
 
     series = [{
-        "label": r.created_at.strftime("%d %b"),
+        "label": formats.date_format(r.created_at, "d M"),
         "index": r.index,
         "dimensions": {k: v for k, v in (r.dimensions or {}).items() if v is not None},
     } for r in rows]
@@ -558,17 +559,17 @@ def create_tasks_from_gap(request: HttpRequest) -> HttpResponse:
         from .tasks_bridge import active_task_exists, task_for_finding
 
         if not finding_id.isdigit():
-            messages.error(request, "Invalid finding.")
+            messages.error(request, _("Invalid finding."))
             return redirect("readiness:findings")
         finding = get_object_or_404(ReadinessFinding, pk=finding_id)
         if active_task_exists(finding):
-            messages.info(request, "A task for that finding is already open.")
+            messages.info(request, _("A task for that finding is already open."))
             return redirect("readiness:findings")
         task = task_for_finding(finding, user=request.user)
         audit_log(request.user, "readiness.gap_tasked",
                   target_type="readiness", target_id=str(finding.id),
                   metadata={"task_id": task.id}, ip=client_ip(request))
-        messages.success(request, "Task created from finding — now open to claim.")
+        messages.success(request, _("Task created from finding — now open to claim."))
         return redirect("readiness:findings")
 
     # Legacy path: a gap row on the dashboard (kept for backward compatibility).
@@ -579,7 +580,7 @@ def create_tasks_from_gap(request: HttpRequest) -> HttpResponse:
     if task_type not in Task.Type.values:
         task_type = Task.Type.OTHER
     if not (kind and ref_id and title):
-        messages.error(request, "Incomplete gap.")
+        messages.error(request, _("Incomplete gap."))
         return redirect("readiness:dashboard")
 
     related_type = f"gap:{kind}"
@@ -588,7 +589,7 @@ def create_tasks_from_gap(request: HttpRequest) -> HttpResponse:
         status__in=[Task.Status.OPEN, Task.Status.CLAIMED, Task.Status.IN_PROGRESS],
     ).exists()
     if existing:
-        messages.info(request, "A task for that gap is already open.")
+        messages.info(request, _("A task for that gap is already open."))
         return redirect("readiness:dashboard")
 
     Task.objects.create(
@@ -601,5 +602,5 @@ def create_tasks_from_gap(request: HttpRequest) -> HttpResponse:
         target_type=related_type, target_id=ref_id,
         ip=client_ip(request),
     )
-    messages.success(request, "Task created from gap — now open to claim.")
+    messages.success(request, _("Task created from gap — now open to claim."))
     return redirect("readiness:dashboard")

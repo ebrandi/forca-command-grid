@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
 from core import rbac
@@ -65,11 +66,11 @@ def sync_extractions(request: HttpRequest) -> HttpResponse:
 
     result = sync_moon_extractions()
     if result["status"] == "ok":
-        messages.success(request, f"Extractions synced — {result['count']} scheduled.")
+        messages.success(request, _("Extractions synced — %(count)d scheduled.") % {"count": result["count"]})
     elif result["status"] == "no_token":
-        messages.warning(request, "No character has granted the corp-mining scope yet.")
+        messages.warning(request, _("No character has granted the corp-mining scope yet."))
     else:
-        messages.error(request, "Extraction sync failed; try again later.")
+        messages.error(request, _("Extraction sync failed; try again later."))
     return redirect("corporation:extractions")
 
 
@@ -111,11 +112,11 @@ def sync_structures(request: HttpRequest) -> HttpResponse:
 
     result = sync_corp_structures()
     if result["status"] == "ok":
-        messages.success(request, f"Structures synced — {result['count']} tracked.")
+        messages.success(request, _("Structures synced — %(count)d tracked.") % {"count": result["count"]})
     elif result["status"] == "no_token":
-        messages.warning(request, "No character has granted the structure-monitoring scope yet.")
+        messages.warning(request, _("No character has granted the structure-monitoring scope yet."))
     else:
-        messages.error(request, "Structure sync failed; try again later.")
+        messages.error(request, _("Structure sync failed; try again later."))
     return redirect("corporation:structures")
 
 
@@ -142,11 +143,11 @@ def sync_contacts(request: HttpRequest) -> HttpResponse:
 
     result = sync_corp_contacts()
     if result["status"] == "ok":
-        messages.success(request, f"Standings synced — {result['count']} contacts.")
+        messages.success(request, _("Standings synced — %(count)d contacts.") % {"count": result["count"]})
     elif result["status"] == "no_token":
-        messages.warning(request, "No character has granted the corp-contacts scope yet.")
+        messages.warning(request, _("No character has granted the corp-contacts scope yet."))
     else:
-        messages.error(request, "Standings sync failed; try again later.")
+        messages.error(request, _("Standings sync failed; try again later."))
     return redirect("corporation:standings")
 
 
@@ -202,11 +203,11 @@ def sync_finance(request: HttpRequest) -> HttpResponse:
     audit_log(request.user, "corp.finance_sync", target_type="corp", target_id="wallet",
               metadata={"status": result["status"]}, ip=client_ip(request))
     if result["status"] == "ok":
-        messages.success(request, f"Wallet synced — {result['entries']} journal entries.")
+        messages.success(request, _("Wallet synced — %(entries)d journal entries.") % {"entries": result["entries"]})
     elif result["status"] == "no_token":
-        messages.warning(request, "No character has granted the corp-wallet scope yet.")
+        messages.warning(request, _("No character has granted the corp-wallet scope yet."))
     else:
-        messages.error(request, "Wallet sync failed; try again later.")
+        messages.error(request, _("Wallet sync failed; try again later."))
     return redirect("corporation:finance")
 
 
@@ -218,14 +219,14 @@ def sync_roster(request: HttpRequest) -> HttpResponse:
 
     result = import_corp_members()
     if result["status"] == "ok":
-        messages.success(request, f"Roster synced — {result['count']} members.")
+        messages.success(request, _("Roster synced — %(count)d members.") % {"count": result["count"]})
     elif result["status"] == "no_token":
         messages.warning(
             request,
-            result["message"] + " Use “Grant member-tracking access” on the ESI Scopes page.",
+            result["message"] + " " + _("Use “Grant member-tracking access” on the ESI Scopes page."),
         )
     elif result["status"] == "no_corp":
         messages.error(request, result["message"])
     else:
-        messages.error(request, f"Sync failed: {result['message']}")
+        messages.error(request, _("Sync failed: %(message)s") % {"message": result["message"]})
     return redirect("corporation:roster")

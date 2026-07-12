@@ -6,6 +6,7 @@ from decimal import Decimal
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from apps.doctrines.models import DoctrineFit
 from core.mixins import ProvenanceMixin, TimeStampedModel
@@ -18,7 +19,7 @@ class SecBand(models.TextChoices):
     WORMHOLE = "wh", "Wormhole"
     ABYSSAL = "abyssal", "Abyssal"
     POCHVEN = "pochven", "Pochven"
-    UNKNOWN = "unknown", "Unknown"
+    UNKNOWN = "unknown", _("Unknown")
 
 
 class Killmail(ProvenanceMixin):
@@ -255,11 +256,11 @@ class KillFeedConfig(TimeStampedModel):
     enabled = models.BooleanField(default=False)
     min_loss_value = models.DecimalField(
         max_digits=20, decimal_places=2, default=Decimal("100000000"),
-        help_text="Post a corp loss when its value is at least this (0 = off).",
+        help_text=_("Post a corp loss when its value is at least this (0 = off)."),
     )
     min_kill_value = models.DecimalField(
         max_digits=20, decimal_places=2, default=Decimal("500000000"),
-        help_text="Post a corp kill when its value is at least this (0 = off).",
+        help_text=_("Post a corp kill when its value is at least this (0 = off)."),
     )
 
     @classmethod
@@ -285,11 +286,11 @@ class NewbroConfig(TimeStampedModel):
 
     soften_danger_label = models.BooleanField(
         default=True,
-        help_text="Show 'Learning' instead of 'Snuggly' for pilots below the activity floor.",
+        help_text=_("Show 'Learning' instead of 'Snuggly' for pilots below the activity floor."),
     )
     soften_below_events = models.PositiveIntegerField(
         default=20,
-        help_text="Total kills + losses below which the danger label is softened.",
+        help_text=_("Total kills + losses below which the danger label is softened."),
     )
 
     @classmethod
@@ -308,9 +309,9 @@ class PilotMilestone(models.Model):
     """
 
     class Kind(models.TextChoices):
-        FIRST_KILL = "first_kill", "First kill"
-        FIRST_SOLO = "first_solo", "First solo kill"
-        FIRST_FINAL_BLOW = "first_final_blow", "First final blow"
+        FIRST_KILL = "first_kill", _("First kill")
+        FIRST_SOLO = "first_solo", _("First solo kill")
+        FIRST_FINAL_BLOW = "first_final_blow", _("First final blow")
 
     character_id = models.BigIntegerField(db_index=True)
     character_name = models.CharField(max_length=128, blank=True)
@@ -341,20 +342,20 @@ class RankMetric(models.TextChoices):
     final blows, points, ISK destroyed or active days without a schema change.
     """
 
-    KILLS = "kills", "All-time PvP kills"
-    SOLO_KILLS = "solo_kills", "Solo kills"
-    FINAL_BLOWS = "final_blows", "Final blows"
-    POINTS = "points", "Points"
-    ISK_DESTROYED = "isk_destroyed", "ISK destroyed"
-    ACTIVE_DAYS = "active_days", "Active days"
+    KILLS = "kills", _("All-time PvP kills")
+    SOLO_KILLS = "solo_kills", _("Solo kills")
+    FINAL_BLOWS = "final_blows", _("Final blows")
+    POINTS = "points", _("Points")
+    ISK_DESTROYED = "isk_destroyed", _("ISK destroyed")
+    ACTIVE_DAYS = "active_days", _("Active days")
 
 
 class RewardType(models.TextChoices):
-    NONE = "none", "No reward"
+    NONE = "none", _("No reward")
     ISK = "isk", "ISK"
     PLEX = "plex", "PLEX"
-    ITEM = "item", "Item"
-    MANUAL = "manual", "Manual / other"
+    ITEM = "item", _("Item")
+    MANUAL = "manual", _("Manual / other")
 
 
 class CombatRankTitle(TimeStampedModel):
@@ -367,41 +368,41 @@ class CombatRankTitle(TimeStampedModel):
     cached, and ``combat_rank`` maps a kill count onto them.
     """
 
-    name = models.CharField(max_length=64, help_text="The title a pilot earns, e.g. “Line Pilot”.")
+    name = models.CharField(max_length=64, help_text=_("The title a pilot earns, e.g. “Line Pilot”."))
     metric = models.CharField(
         max_length=16, choices=RankMetric.choices, default=RankMetric.KILLS,
-        help_text="Which stat the threshold measures. Only “All-time PvP kills” is live today.",
+        help_text=_("Which stat the threshold measures. Only “All-time PvP kills” is live today."),
     )
     min_kills = models.PositiveIntegerField(
         default=0,
-        help_text="Minimum value of the metric to hold this title (0 = the entry-level rank).",
+        help_text=_("Minimum value of the metric to hold this title (0 = the entry-level rank)."),
     )
     description = models.CharField(max_length=200, blank=True)
     badge_icon = models.CharField(
         max_length=32, blank=True,
-        help_text="Optional icon symbol id from the sprite sheet (e.g. “i-trophy”).",
+        help_text=_("Optional icon symbol id from the sprite sheet (e.g. “i-trophy”)."),
     )
     color_class = models.CharField(
         max_length=32, default="text-faint",
-        help_text="Tailwind text-colour token for the title (e.g. “text-gold”).",
+        help_text=_("Tailwind text-colour token for the title (e.g. “text-gold”)."),
     )
-    sort_order = models.PositiveIntegerField(default=0, help_text="Display order (low → high).")
+    sort_order = models.PositiveIntegerField(default=0, help_text=_("Display order (low → high)."))
     is_active = models.BooleanField(
-        default=True, help_text="Inactive ranks are excluded from the live ladder."
+        default=True, help_text=_("Inactive ranks are excluded from the live ladder.")
     )
     is_visible = models.BooleanField(
-        default=True, help_text="Whether pilots see this rung on the public ladder."
+        default=True, help_text=_("Whether pilots see this rung on the public ladder.")
     )
     grants_reward = models.BooleanField(
-        default=False, help_text="Whether reaching this rank (after baseline) creates a reward."
+        default=False, help_text=_("Whether reaching this rank (after baseline) creates a reward.")
     )
     reward_type = models.CharField(max_length=8, choices=RewardType.choices, default=RewardType.NONE)
     reward_amount = models.DecimalField(
         max_digits=20, decimal_places=2, default=0,
-        help_text="ISK amount, or PLEX quantity, per pilot reaching this rank.",
+        help_text=_("ISK amount, or PLEX quantity, per pilot reaching this rank."),
     )
     reward_item_type_id = models.IntegerField(
-        null=True, blank=True, help_text="For item rewards: the EVE type id.",
+        null=True, blank=True, help_text=_("For item rewards: the EVE type id."),
     )
     reward_notes = models.CharField(max_length=200, blank=True)
 
@@ -449,39 +450,39 @@ class RankRewardSettings(TimeStampedModel):
     class Currency(models.TextChoices):
         ISK = "isk", "ISK"
         PLEX = "plex", "PLEX"
-        MANUAL = "manual", "Manual"
+        MANUAL = "manual", _("Manual")
 
     class Strategy(models.TextChoices):
-        CONSERVATIVE = "conservative", "Conservative"
-        STANDARD = "standard", "Standard"
-        AGGRESSIVE = "aggressive", "Aggressive"
+        CONSERVATIVE = "conservative", _("Conservative")
+        STANDARD = "standard", _("Standard")
+        AGGRESSIVE = "aggressive", _("Aggressive")
 
     rewards_enabled = models.BooleanField(
         default=False,
-        help_text="Master switch. Off = ranks/titles work but no reward events are ever created.",
+        help_text=_("Master switch. Off = ranks/titles work but no reward events are ever created."),
     )
     baseline_established_at = models.DateTimeField(
         null=True, blank=True,
-        help_text="When the future-only reward baseline was last (re)snapshotted.",
+        help_text=_("When the future-only reward baseline was last (re)snapshotted."),
     )
     monthly_budget = models.DecimalField(
         max_digits=20, decimal_places=2, default=0,
-        help_text="Fallback monthly ISK incentive budget when income data isn't used.",
+        help_text=_("Fallback monthly ISK incentive budget when income data isn't used."),
     )
     max_income_pct = models.DecimalField(
         max_digits=5, decimal_places=2, default=0,
-        help_text="Max %% of recent monthly corp income to spend on rank rewards (0 = ignore income).",
+        help_text=_("Max %% of recent monthly corp income to spend on rank rewards (0 = ignore income)."),
     )
     monthly_cap = models.DecimalField(
         max_digits=20, decimal_places=2, default=0,
-        help_text="Hard ceiling on monthly reward liability (0 = no cap).",
+        help_text=_("Hard ceiling on monthly reward liability (0 = no cap)."),
     )
     payout_currency = models.CharField(
         max_length=8, choices=Currency.choices, default=Currency.ISK
     )
     plex_isk_rate = models.DecimalField(
         max_digits=20, decimal_places=2, default=0,
-        help_text="ISK per PLEX override for liability estimates (0 = use live market price).",
+        help_text=_("ISK per PLEX override for liability estimates (0 = use live market price)."),
     )
     default_strategy = models.CharField(
         max_length=16, choices=Strategy.choices, default=Strategy.STANDARD
@@ -510,7 +511,7 @@ class PilotRankBaseline(TimeStampedModel):
         CombatRankTitle, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
     )
     baseline_min_kills = models.PositiveIntegerField(
-        default=0, help_text="Threshold of the pilot's highest rank at baseline time."
+        default=0, help_text=_("Threshold of the pilot's highest rank at baseline time.")
     )
     baseline_kills = models.PositiveIntegerField(default=0)
     established_at = models.DateTimeField(default=timezone.now)
@@ -529,11 +530,11 @@ class RankRewardEvent(TimeStampedModel):
     """
 
     class Status(models.TextChoices):
-        PENDING = "pending", "Pending"
-        APPROVED = "approved", "Approved"
-        PAID = "paid", "Paid"
-        REJECTED = "rejected", "Rejected"
-        CANCELLED = "cancelled", "Cancelled"
+        PENDING = "pending", _("Pending")
+        APPROVED = "approved", _("Approved")
+        PAID = "paid", _("Paid")
+        REJECTED = "rejected", _("Rejected")
+        CANCELLED = "cancelled", _("Cancelled")
 
     character_id = models.BigIntegerField(db_index=True)
     character_name = models.CharField(max_length=128, blank=True)

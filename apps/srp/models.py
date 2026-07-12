@@ -12,6 +12,7 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from apps.doctrines.models import Doctrine
 from core.mixins import TimeStampedModel
@@ -32,19 +33,19 @@ class SrpProgram(TimeStampedModel):
 
     class PayoutMode(models.TextChoices):
         # We hand the pilot a replacement ship + fit (logistics, no ISK transfer).
-        REPLACEMENT = "replacement", "Replacement ship & fit"
+        REPLACEMENT = "replacement", _("Replacement ship & fit")
         # We pay ISK up to the loss value (acts like full-market insurance).
-        ISK_FULL = "isk_full", "ISK — full loss value"
+        ISK_FULL = "isk_full", _("ISK — full loss value")
         # We pay only the gap the official in-game insurance leaves (a top-up).
-        ISK_INSURANCE_TOPUP = "isk_topup", "ISK — top up official insurance"
+        ISK_INSURANCE_TOPUP = "isk_topup", _("ISK — top up official insurance")
 
     class Valuation(models.TextChoices):
         # What the pilot actually lost: hull + destroyed modules, market-priced.
-        ACTUAL_LOSS = "actual", "Actual loss (hull + destroyed modules)"
+        ACTUAL_LOSS = "actual", _("Actual loss (hull + destroyed modules)")
         # The matching doctrine fit's value (hull + the doctrine's modules).
-        DOCTRINE_FIT = "doctrine", "Doctrine fit value"
+        DOCTRINE_FIT = "doctrine", _("Doctrine fit value")
         # Hull only — modules are on the pilot.
-        HULL_ONLY = "hull", "Hull only"
+        HULL_ONLY = "hull", _("Hull only")
 
     name = models.CharField(max_length=80, default="Standard")
     is_active = models.BooleanField(default=True)
@@ -64,10 +65,10 @@ class SrpProgram(TimeStampedModel):
     # Eligibility knobs.
     require_doctrine = models.BooleanField(
         default=True,
-        help_text="Only losses flying an active doctrine hull are eligible.",
+        help_text=_("Only losses flying an active doctrine hull are eligible."),
     )
     cover_pod = models.BooleanField(
-        default=False, help_text="Also cover capsule (pod) losses."
+        default=False, help_text=_("Also cover capsule (pod) losses.")
     )
 
     # SRP-1 (2.8): fleet-op eligibility gate. When on, a loss only qualifies if it
@@ -76,19 +77,19 @@ class SrpProgram(TimeStampedModel):
     # Ships OFF (future-only: existing claims are untouched; this only affects new checks).
     require_fleet_op = models.BooleanField(
         default=False,
-        help_text="Only cover losses during a sanctioned fleet op's window.",
+        help_text=_("Only cover losses during a sanctioned fleet op's window."),
     )
     fleet_op_grace_minutes = models.PositiveIntegerField(
         default=30,
-        help_text="Minutes of grace added before and after an op window (form-up / travel).",
+        help_text=_("Minutes of grace added before and after an op window (form-up / travel)."),
     )
     fleet_op_default_duration_minutes = models.PositiveIntegerField(
         default=120,
-        help_text="Assumed op length when an operation has no explicit duration.",
+        help_text=_("Assumed op length when an operation has no explicit duration."),
     )
     fleet_op_require_attendance = models.BooleanField(
         default=False,
-        help_text="Also require the pilot's recorded attendance (PAP) on that op, not just the window.",
+        help_text=_("Also require the pilot's recorded attendance (PAP) on that op, not just the window."),
     )
 
     # 4.6: auto-draft a SUBMITTED claim for an eligible loss so the pilot doesn't have to
@@ -132,9 +133,9 @@ class SrpProgram(TimeStampedModel):
 
 class SrpRule(TimeStampedModel):
     class Basis(models.TextChoices):
-        HULL = "hull", "Hull only"
-        FIT = "fit", "Full fit"
-        FIXED = "fixed", "Fixed cap"
+        HULL = "hull", _("Hull only")
+        FIT = "fit", _("Full fit")
+        FIXED = "fixed", _("Fixed cap")
 
     # A rule with no doctrine applies to any doctrine-tagged loss.
     doctrine = models.ForeignKey(
@@ -152,11 +153,11 @@ class SrpRule(TimeStampedModel):
 
 class SrpClaim(TimeStampedModel):
     class Status(models.TextChoices):
-        ELIGIBLE = "eligible", "Eligible"
-        SUBMITTED = "submitted", "Submitted"
-        APPROVED = "approved", "Approved"
-        DENIED = "denied", "Denied"
-        PAID = "paid", "Paid"
+        ELIGIBLE = "eligible", _("Eligible")
+        SUBMITTED = "submitted", _("Submitted")
+        APPROVED = "approved", _("Approved")
+        DENIED = "denied", _("Denied")
+        PAID = "paid", _("Paid")
 
     killmail = models.ForeignKey(
         "killboard.Killmail", on_delete=models.CASCADE, related_name="srp_claims"
@@ -222,7 +223,7 @@ class SrpClaim(TimeStampedModel):
 class SrpBudget(TimeStampedModel):
     """A period's SRP allocation, for tracking solvency against exposure."""
 
-    period = models.CharField(max_length=20, unique=True, help_text="e.g. 2026-06")
+    period = models.CharField(max_length=20, unique=True, help_text=_("e.g. 2026-06"))
     allocated = models.DecimalField(max_digits=20, decimal_places=2, default=0)
     # Spend is not stored here — it is derived live from PAID claims by
     # ``services.spent_for_period`` (a stored column would drift out of sync).

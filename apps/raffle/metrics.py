@@ -17,6 +17,8 @@ from dataclasses import dataclass
 from datetime import timedelta
 from decimal import Decimal
 
+from django.utils.translation import gettext_lazy as _
+
 
 @dataclass(frozen=True)
 class Metric:
@@ -29,15 +31,15 @@ class Metric:
 
 
 METRICS: list[Metric] = [
-    Metric("pvp_kills", "Valid PVP kills", "kills", has_baseline=True),
-    Metric("pvp_isk_destroyed", "ISK destroyed (PVP)", "ISK", money=True, has_baseline=True),
-    Metric("solo_kills", "Solo kills", "kills", has_baseline=True),
-    Metric("fleet_ops", "Fleet attendances", "PAPs", has_baseline=True),
-    Metric("total_tickets", "Tickets issued", "tickets"),
-    Metric("participants", "Participating pilots", "pilots"),
+    Metric("pvp_kills", _("Valid PVP kills"), "kills", has_baseline=True),
+    Metric("pvp_isk_destroyed", _("ISK destroyed (PVP)"), "ISK", money=True, has_baseline=True),
+    Metric("solo_kills", _("Solo kills"), "kills", has_baseline=True),
+    Metric("fleet_ops", _("Fleet attendances"), "PAPs", has_baseline=True),
+    Metric("total_tickets", _("Tickets issued"), "tickets"),
+    Metric("participants", _("Participating pilots"), "pilots"),
 ]
 METRIC_BY_KEY = {m.key: m for m in METRICS}
-CHOICES = [("", "— none —")] + [(m.key, m.label) for m in METRICS]
+CHOICES = [("", _("— none —"))] + [(m.key, m.label) for m in METRICS]
 
 
 def get(key: str) -> Metric | None:

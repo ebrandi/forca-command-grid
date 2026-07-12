@@ -1,33 +1,34 @@
 {% extends "base.html" %}
-{% block title %}{% if editing %}Edit milestone{% else %}New milestone{% endif %} · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% if editing %}{% translate "Edit milestone" %}{% else %}{% translate "New milestone" %}{% endif %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
-<p class="eyebrow text-faint"><a href="{% url 'campaigns:index' %}" class="hover:text-gold">Campaign Command</a> › <a href="{% url 'campaigns:detail' campaign.pk %}" class="hover:text-gold">{{ campaign.name|truncatechars:36 }}</a> › {% if editing %}Edit milestone{% else %}New milestone{% endif %}</p>
-<h1 class="mt-1 mb-4 text-2xl font-bold text-ink">{% if editing %}Edit milestone{% else %}New milestone{% endif %}</h1>
+<p class="eyebrow text-faint"><a href="{% url 'campaigns:index' %}" class="hover:text-gold">{% translate "Campaign Command" %}</a> › <a href="{% url 'campaigns:detail' campaign.pk %}" class="hover:text-gold">{{ campaign.name|truncatechars:36 }}</a> › {% if editing %}{% translate "Edit milestone" %}{% else %}{% translate "New milestone" %}{% endif %}</p>
+<h1 class="mt-1 mb-4 text-2xl font-bold text-ink">{% if editing %}{% translate "Edit milestone" %}{% else %}{% translate "New milestone" %}{% endif %}</h1>
 
 <form method="post" action="{% if editing %}{% url 'campaigns:milestone_edit' milestone.pk %}{% else %}{% url 'campaigns:milestone_create' campaign.pk %}{% endif %}" class="space-y-4">
   {% csrf_token %}
   <section class="panel p-5">
     <div class="grid gap-3 sm:grid-cols-2">
-      <label class="block sm:col-span-2"><span class="label">Title *</span><input type="text" name="title" value="{{ milestone.title }}" maxlength="200" required class="input-field mt-1 w-full"></label>
-      <label class="block sm:col-span-2"><span class="label">Description</span><textarea name="description" rows="2" class="input-field mt-1 w-full">{{ milestone.description }}</textarea></label>
-      <label class="block"><span class="label">Workstream</span>
+      <label class="block sm:col-span-2"><span class="label">{% translate "Title" %} *</span><input type="text" name="title" value="{{ milestone.title }}" maxlength="200" required class="input-field mt-1 w-full"></label>
+      <label class="block sm:col-span-2"><span class="label">{% translate "Description" %}</span><textarea name="description" rows="2" class="input-field mt-1 w-full">{{ milestone.description }}</textarea></label>
+      <label class="block"><span class="label">{% translate "Workstream" %}</span>
         <select name="workstream" class="input-field mt-1 w-full"><option value="">—</option>{% for ws in workstreams %}<option value="{{ ws.pk }}" {% if milestone.workstream_id == ws.pk %}selected{% endif %}>{{ ws.name }}</option>{% endfor %}</select></label>
-      <label class="block"><span class="label">Owner</span>
+      <label class="block"><span class="label">{% translate "Owner" %}</span>
         <select name="owner" class="input-field mt-1 w-full"><option value="">—</option>{% for u in users %}<option value="{{ u.pk }}" {% if milestone.owner_id == u.pk %}selected{% endif %}>{{ u.display_name }}</option>{% endfor %}</select></label>
-      <label class="block"><span class="label">Due</span><input type="datetime-local" name="due_at" value="{{ due_at_local }}" class="input-field mt-1 w-full"></label>
-      <label class="block"><span class="label">Sort order</span><input type="number" name="sort_order" value="{{ milestone.sort_order|default:0 }}" class="input-field mt-1 w-full"></label>
+      <label class="block"><span class="label">{% translate "Due" %}</span><input type="datetime-local" name="due_at" value="{{ due_at_local }}" class="input-field mt-1 w-full"></label>
+      <label class="block"><span class="label">{% translate "Sort order" %}</span><input type="number" name="sort_order" value="{{ milestone.sort_order|default:0 }}" class="input-field mt-1 w-full"></label>
     </div>
   </section>
   <div class="flex items-center gap-2">
-    <button class="btn-gold">{% if editing %}Save changes{% else %}Add milestone{% endif %}</button>
-    <a href="{% url 'campaigns:detail' campaign.pk %}" class="btn-ghost">Cancel</a>
+    <button class="btn-gold">{% if editing %}{% translate "Save changes" %}{% else %}{% translate "Add milestone" %}{% endif %}</button>
+    <a href="{% url 'campaigns:detail' campaign.pk %}" class="btn-ghost">{% translate "Cancel" %}</a>
   </div>
 </form>
 
 {% if editing %}
 {# Evidence attaches to a saved milestone (doc 04 §9) — kept outside the edit form (no nesting). #}
 <section class="panel mt-4 p-5">
-  <p class="eyebrow">Evidence</p>
+  <p class="eyebrow">{% translate "Evidence" %}</p>
   {% include "campaigns/_evidence_list.html" with evidence=evidence can_attach=can_attach_evidence attached_kind="milestone" attached_id=milestone.pk campaign=campaign %}
 </section>
 {% endif %}

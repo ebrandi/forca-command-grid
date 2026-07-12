@@ -6,8 +6,9 @@ Reusable item autocomplete. Params:
 Selecting a result fills the hidden field; typing again clears it so the form
 can't submit a stale id with a mismatched name.
 {% endcomment %}
-{% load eve %}
+{% load eve i18n %}
 {% eve_img_base as img_base %}
+{% translate "Search for an item…" as default_item_ph %}
 <div
   x-data="typePicker('{{ endpoint|default:'/industry/type-search/' }}', '{{ initial_id }}', `{{ initial_name }}`)"
   class="relative"
@@ -17,7 +18,7 @@ can't submit a stale id with a mismatched name.
   <input
     type="text" x-model="q" @input.debounce.250ms="lookup()" @focus="open = results.length>0"
     class="input-field" autocomplete="off"
-    placeholder="{{ placeholder|default:'Search for an item…' }}"
+    placeholder="{{ placeholder|default:default_item_ph }}"
   >
   <div x-show="open" x-cloak class="absolute z-30 mt-1 max-h-64 w-full overflow-auto rounded-md border border-line bg-panel shadow-xl">
     <template x-for="r in results" :key="r.type_id">
@@ -26,7 +27,7 @@ can't submit a stale id with a mismatched name.
         <span x-text="r.name"></span>
       </button>
     </template>
-    <p x-show="!results.length" class="px-3 py-2 text-xs text-faint">No matches.</p>
+    <p x-show="!results.length" class="px-3 py-2 text-xs text-faint">{% translate "No matches." %}</p>
   </div>
 </div>
 {% block type_picker_js %}{% endblock %}

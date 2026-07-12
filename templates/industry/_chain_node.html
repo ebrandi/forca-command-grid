@@ -1,15 +1,16 @@
 {% load eve %}
+{% load i18n %}
 <li class="py-0.5">
   <div class="flex flex-wrap items-center gap-2 text-sm">
     <img src="{% eve_type_icon node.type_id 32 %}" alt="" class="h-5 w-5 shrink-0 rounded-sm">
     <span class="font-medium text-ink">{{ node.name }}</span>
     <span class="data text-xs text-faint">×{{ node.quantity }}</span>
     {% if node.buildable %}
-      <span class="chip !py-0.5 !text-[10px] {% if node.decision == 'build' %}!text-cyan{% else %}!text-faint{% endif %}">{{ node.decision }}{% if node.activity == 'reaction' %} · react{% endif %}</span>
+      <span class="chip !py-0.5 !text-[10px] {% if node.decision == 'build' %}!text-cyan{% else %}!text-faint{% endif %}">{{ node.decision }}{% if node.activity == 'reaction' %} · {% translate "react" %}{% endif %}</span>
     {% else %}
-      <span class="chip !py-0.5 !text-[10px] !text-faint">buy · raw</span>
+      <span class="chip !py-0.5 !text-[10px] !text-faint">{% translate "buy · raw" %}</span>
     {% endif %}
-    {% if node.on_hand %}<span class="text-[10px] text-kill">{{ node.on_hand }} on hand</span>{% endif %}
+    {% if node.on_hand %}<span class="text-[10px] text-kill">{{ node.on_hand }} {% translate "on hand" %}</span>{% endif %}
     <span class="data ml-auto text-xs text-gold">{% if node.decision == 'build' %}{{ node.build_cost|isk }}{% else %}{{ node.buy_cost|isk }}{% endif %}</span>
   </div>
   {% if node.children %}

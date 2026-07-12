@@ -1,28 +1,29 @@
 {% extends "base.html" %}
+{% load i18n %}
 {% comment %}4.18: side-by-side contingency comparison of saved simulator scenarios,
 each re-run live against the current snapshot. CSP-clean, no JS.{% endcomment %}
-{% block title %}Compare scenarios · [FORCA] Command Grid{% endblock %}
+{% block title %}{% translate "Compare scenarios" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
-<a href="{% url 'command_intel:simulator' %}" class="text-xs text-faint hover:text-gold">← Simulator</a>
+<a href="{% url 'command_intel:simulator' %}" class="text-xs text-faint hover:text-gold">← {% translate "Simulator" %}</a>
 <header class="mt-2 mb-5">
-  <p class="eyebrow text-gold">Contingency comparison</p>
-  <h1 class="mt-1 text-3xl font-bold text-ink">Which contingency hurts most?</h1>
-  <p class="mt-1 max-w-2xl text-sm text-faint">Each saved scenario re-run against the current readiness snapshot, ranked by how many constraints it pushes past their limit — a live comparison, never a stored screenshot.</p>
+  <p class="eyebrow text-gold">{% translate "Contingency comparison" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Which contingency hurts most?" %}</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Each saved scenario re-run against the current readiness snapshot, ranked by how many constraints it pushes past their limit — a live comparison, never a stored screenshot." %}</p>
 </header>
 
 {% if not comparison %}
-  <div class="panel p-8 text-center text-muted">No saved scenarios to compare. Save a few what-ifs on the <a href="{% url 'command_intel:simulator' %}" class="text-cyan hover:underline">simulator</a> first.</div>
+  <div class="panel p-8 text-center text-muted">{% url 'command_intel:simulator' as sim_url %}{% blocktranslate %}No saved scenarios to compare. Save a few what-ifs on the <a href="{{ sim_url }}" class="text-cyan hover:underline">simulator</a> first.{% endblocktranslate %}</div>
 {% elif snapshot_missing %}
-  <div class="panel p-8 text-center text-muted">No intelligence snapshot on file yet — generate a Command Intelligence report first; the simulator runs over the latest snapshot.</div>
+  <div class="panel p-8 text-center text-muted">{% translate "No intelligence snapshot on file yet — generate a Command Intelligence report first; the simulator runs over the latest snapshot." %}</div>
 {% else %}
 <section class="panel overflow-hidden">
   <div class="overflow-x-auto"><table class="w-full text-sm">
     <thead class="border-b border-line text-left text-[11px] uppercase tracking-wide text-faint">
       <tr>
-        <th class="px-4 py-2">Scenario</th>
-        <th class="px-4 py-2">Stressor</th>
-        <th class="px-4 py-2 text-right">Constraints worsened</th>
-        <th class="px-4 py-2">Worst-hit constraint</th>
+        <th class="px-4 py-2">{% translate "Scenario" %}</th>
+        <th class="px-4 py-2">{% translate "Stressor" %}</th>
+        <th class="px-4 py-2 text-right">{% translate "Constraints worsened" %}</th>
+        <th class="px-4 py-2">{% translate "Worst-hit constraint" %}</th>
       </tr>
     </thead>
     <tbody>
@@ -32,13 +33,13 @@ each re-run live against the current snapshot. CSP-clean, no JS.{% endcomment %}
         <td class="px-4 py-2 text-xs text-muted">{{ c.scenario_label }} · {{ c.param_label }} {{ c.magnitude }}</td>
         <td class="px-4 py-2 text-right"><span class="data font-bold {% if c.worsened_count %}text-loss{% else %}text-kill{% endif %}">{{ c.worsened_count }}</span></td>
         <td class="px-4 py-2 text-xs">
-          {% if c.worst %}<span class="{% if c.worst.worsened %}text-loss{% else %}text-muted{% endif %}">{{ c.worst.label }}</span>{% if c.worst.delta is not None %} <span class="text-faint">({{ c.worst.delta }} {{ c.worst.unit }})</span>{% endif %}{% else %}<span class="text-faint">no binding change</span>{% endif %}
+          {% if c.worst %}<span class="{% if c.worst.worsened %}text-loss{% else %}text-muted{% endif %}">{{ c.worst.label }}</span>{% if c.worst.delta is not None %} <span class="text-faint">({{ c.worst.delta }} {{ c.worst.unit }})</span>{% endif %}{% else %}<span class="text-faint">{% translate "no binding change" %}</span>{% endif %}
         </td>
       </tr>
       {% endfor %}
     </tbody>
   </table></div>
-  <p class="border-t border-line/60 px-4 py-2 text-[11px] text-faint">Ranked most-dangerous first. "Constraints worsened" counts limits that move to a higher severity band under the stressor.{% if truncated %} Showing the first {{ max_compare }} saved scenarios — narrow the comparison to see others.{% endif %}</p>
+  <p class="border-t border-line/60 px-4 py-2 text-[11px] text-faint">{% blocktranslate %}Ranked most-dangerous first. "Constraints worsened" counts limits that move to a higher severity band under the stressor.{% endblocktranslate %}{% if truncated %} {% blocktranslate with max=max_compare %}Showing the first {{ max }} saved scenarios — narrow the comparison to see others.{% endblocktranslate %}{% endif %}</p>
 </section>
 {% endif %}
 {% endblock %}

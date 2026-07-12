@@ -1,30 +1,31 @@
 {% extends "base.html" %}
-{% block title %}Lessons learned · Campaign Command{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Lessons learned" %} · {% translate "Campaign Command" %}{% endblock %}
 {% block content %}
 <header class="mb-4 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <p class="eyebrow">Campaign Command</p>
-    <h1 class="mt-1 text-3xl font-bold text-ink">Lessons learned</h1>
-    <p class="mt-1 max-w-2xl text-sm text-faint">What closed campaigns taught us — newest first. A retrospection tool for leadership.</p>
+    <p class="eyebrow">{% translate "Campaign Command" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Lessons learned" %}</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "What closed campaigns taught us — newest first. A retrospection tool for leadership." %}</p>
   </div>
-  <a href="{% url 'campaigns:index' %}" class="btn-ghost text-sm">All campaigns</a>
+  <a href="{% url 'campaigns:index' %}" class="btn-ghost text-sm">{% translate "All campaigns" %}</a>
 </header>
 
 <form method="get" class="panel mb-4 flex flex-wrap items-end gap-3 px-4 py-3">
-  <label class="block"><span class="eyebrow text-faint">Category</span>
+  <label class="block"><span class="eyebrow text-faint">{% translate "Category" %}</span>
     <select name="category" class="input-field mt-1" data-autosubmit>
-      <option value="">Any category</option>
+      <option value="">{% translate "Any category" %}</option>
       {% for value, label in categories %}<option value="{{ value }}" {% if f_category == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
     </select></label>
-  <label class="block"><span class="eyebrow text-faint">Outcome</span>
+  <label class="block"><span class="eyebrow text-faint">{% translate "Outcome" %}</span>
     <select name="outcome" class="input-field mt-1" data-autosubmit>
-      <option value="">Any outcome</option>
+      <option value="">{% translate "Any outcome" %}</option>
       {% for value, label in outcomes %}<option value="{{ value }}" {% if f_outcome == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
     </select></label>
-  <label class="block"><span class="eyebrow text-faint">Tag</span>
-    <input type="text" name="tag" value="{{ f_tag }}" placeholder="tag" class="input-field mt-1 w-28"></label>
-  <button type="submit" class="btn-ghost text-sm">Apply</button>
-  {% if active_filters %}<a href="{% url 'campaigns:lessons' %}" class="btn-ghost text-sm">Clear</a>{% endif %}
+  <label class="block"><span class="eyebrow text-faint">{% translate "Tag" %}</span>
+    <input type="text" name="tag" value="{{ f_tag }}" placeholder="{% translate 'tag' %}" class="input-field mt-1 w-28"></label>
+  <button type="submit" class="btn-ghost text-sm">{% translate "Apply" %}</button>
+  {% if active_filters %}<a href="{% url 'campaigns:lessons' %}" class="btn-ghost text-sm">{% translate "Clear" %}</a>{% endif %}
 </form>
 
 <div class="space-y-3">
@@ -35,12 +36,12 @@
       {% include "campaigns/_status_chip.html" with status=c.status label=c.get_status_display %}
       <span class="chip text-faint border-line">{{ c.get_category_display }}</span>
     </div>
-    <p class="mt-1 data text-xs text-faint">{{ c.start_at|date:"Y-m-d"|default:"—" }} → {{ c.actual_end_at|date:"Y-m-d"|default:c.target_end_at|date:"Y-m-d"|default:"—" }}{% if c.commander %} · Cmdr {{ c.commander.display_name }}{% endif %}</p>
+    <p class="mt-1 data text-xs text-faint">{{ c.start_at|date:"Y-m-d"|default:"—" }} → {{ c.actual_end_at|date:"Y-m-d"|default:c.target_end_at|date:"Y-m-d"|default:"—" }}{% if c.commander %} · {% translate "Cmdr" %} {{ c.commander.display_name }}{% endif %}</p>
     <p class="mt-2 whitespace-pre-line text-sm text-muted">{{ c.lessons_learned|truncatewords:60 }}</p>
-    <a href="{% url 'campaigns:report' c.pk %}" class="mt-2 inline-block text-xs text-cyan hover:underline">Open close-out report →</a>
+    <a href="{% url 'campaigns:report' c.pk %}" class="mt-2 inline-block text-xs text-cyan hover:underline">{% translate "Open close-out report" %} →</a>
   </section>
   {% empty %}
-  <section class="panel p-6 text-center"><p class="text-sm text-faint">No lessons recorded yet{% if active_filters %} for these filters{% endif %}.</p></section>
+  <section class="panel p-6 text-center"><p class="text-sm text-faint">{% if active_filters %}{% translate "No lessons recorded yet for these filters." %}{% else %}{% translate "No lessons recorded yet." %}{% endif %}</p></section>
   {% endfor %}
 </div>
 

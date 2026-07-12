@@ -4,6 +4,7 @@ from __future__ import annotations
 from decimal import ROUND_HALF_UP, Decimal
 
 from django.core.cache import cache
+from django.utils.translation import gettext as _
 
 from .models import Audience, StoreConfig, StoreOrder
 from .pricing import Priced
@@ -163,8 +164,8 @@ def notify_order_status(order: StoreOrder, *, actor=None) -> None:
 def advance_label(order: StoreOrder) -> str:
     """Friendly label for the 'move to next status' button."""
     return {
-        StoreOrder.Status.DEPOSIT_PAID: "Confirm deposit paid",
-        StoreOrder.Status.IN_PRODUCTION: "Start production",
-        StoreOrder.Status.READY: "Mark ready (contract up)",
-        StoreOrder.Status.DELIVERED: "Mark delivered",
-    }.get(next_status(order) or "", "Advance")
+        StoreOrder.Status.DEPOSIT_PAID: _("Confirm deposit paid"),
+        StoreOrder.Status.IN_PRODUCTION: _("Start production"),
+        StoreOrder.Status.READY: _("Mark ready (contract up)"),
+        StoreOrder.Status.DELIVERED: _("Mark delivered"),
+    }.get(next_status(order) or "", _("Advance"))

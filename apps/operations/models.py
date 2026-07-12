@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy as _t
 
 from apps.doctrines.models import Doctrine
 from core.mixins import TimeStampedModel
@@ -17,69 +18,69 @@ from core.mixins import TimeStampedModel
 class Operation(TimeStampedModel):
     class Type(models.TextChoices):
         # Combat / fleet types (added for the fleet planner).
-        PVP = "pvp", "PvP fleet"
-        ROAM = "roam", "Roaming gang"
-        GATECAMP = "gatecamp", "Gate camp"
-        RATTING = "ratting", "Ratting fleet"
-        MINING = "mining", "Mining operation"
-        LOGISTICS = "logistics", "Transport / logistics"
+        PVP = "pvp", _t("PvP fleet")
+        ROAM = "roam", _t("Roaming gang")
+        GATECAMP = "gatecamp", _t("Gate camp")
+        RATTING = "ratting", _t("Ratting fleet")
+        MINING = "mining", _t("Mining operation")
+        LOGISTICS = "logistics", _t("Transport / logistics")
         # Original planning types (kept for backwards compatibility).
-        DEPLOYMENT = "deployment", "Deployment"
-        WAR_PREP = "war_prep", "War preparation"
-        HOME_DEFENCE = "home_defence", "Home defence"
-        STRUCTURE_TIMER = "structure_timer", "Structure timer"
-        DOCTRINE_ROLLOUT = "doctrine_rollout", "Doctrine rollout"
-        INDUSTRIAL = "industrial", "Industrial campaign"
+        DEPLOYMENT = "deployment", _t("Deployment")
+        WAR_PREP = "war_prep", _t("War preparation")
+        HOME_DEFENCE = "home_defence", _t("Home defence")
+        STRUCTURE_TIMER = "structure_timer", _t("Structure timer")
+        DOCTRINE_ROLLOUT = "doctrine_rollout", _t("Doctrine rollout")
+        INDUSTRIAL = "industrial", _t("Industrial campaign")
 
     # Types that are combat in nature → SRP coverage is relevant and prompted for.
     PVP_TYPES = frozenset({"pvp", "roam", "gatecamp", "home_defence", "war_prep", "deployment"})
 
     class Status(models.TextChoices):
-        DRAFT = "draft", "Draft"
-        PLANNED = "planned", "Scheduled"
-        ACTIVE = "active", "Active"
-        DONE = "done", "Completed"
-        CANCELLED = "cancelled", "Cancelled (manual)"
-        CANCELLED_AUTO = "cancelled_auto", "Cancelled — too few sign-ups"
+        DRAFT = "draft", _t("Draft")
+        PLANNED = "planned", _t("Scheduled")
+        ACTIVE = "active", _t("Active")
+        DONE = "done", _t("Completed")
+        CANCELLED = "cancelled", _t("Cancelled (manual)")
+        CANCELLED_AUTO = "cancelled_auto", _t("Cancelled — too few sign-ups")
 
     class Srp(models.TextChoices):
-        ALLIANCE = "alliance", "Alliance SRP"
-        CORP = "corp", "Corp SRP"
-        ORGANISER = "organiser", "Organiser-funded SRP"
-        NONE = "none", "No SRP coverage"
+        ALLIANCE = "alliance", _t("Alliance SRP")
+        CORP = "corp", _t("Corp SRP")
+        ORGANISER = "organiser", _t("Organiser-funded SRP")
+        NONE = "none", _t("No SRP coverage")
 
     name = models.CharField(max_length=200)
     type = models.CharField(max_length=20, choices=Type.choices, default=Type.PVP)
     target_at = models.DateTimeField(null=True, blank=True)
     duration_minutes = models.PositiveIntegerField(
-        null=True, blank=True, help_text="Expected duration in minutes."
+        null=True, blank=True, help_text=_t("Expected duration in minutes.")
     )
     staging_location_id = models.BigIntegerField(null=True, blank=True)
-    formup = models.CharField(max_length=200, blank=True, help_text="Form-up / staging location.")
-    destination = models.CharField(max_length=200, blank=True, help_text="Destination or target area.")
-    comms = models.CharField(max_length=200, blank=True, help_text="Comms channel / Mumble / Discord voice.")
-    link = models.CharField(max_length=500, blank=True, help_text="Doctrine, fitting or external link.")
+    formup = models.CharField(max_length=200, blank=True, help_text=_t("Form-up / staging location."))
+    destination = models.CharField(max_length=200, blank=True, help_text=_t("Destination or target area."))
+    comms = models.CharField(max_length=200, blank=True, help_text=_t("Comms channel / Mumble / Discord voice."))
+    link = models.CharField(max_length=500, blank=True, help_text=_t("Doctrine, fitting or external link."))
     notes = models.TextField(blank=True)
 
     # Minimum-participation requirement.
-    min_pilots = models.PositiveIntegerField(default=0, help_text="Confirmed pilots needed to run.")
+    min_pilots = models.PositiveIntegerField(default=0, help_text=_t("Confirmed pilots needed to run."))
     rsvp_deadline = models.DateTimeField(
-        null=True, blank=True, help_text="Sign-up cut-off (EVE/UTC); must be before form-up."
+        null=True, blank=True, help_text=_t("Sign-up cut-off (EVE/UTC); must be before form-up.")
     )
     rsvp_offset_minutes = models.PositiveIntegerField(
         null=True, blank=True,
-        help_text="If set, the deadline tracks this many minutes before form-up.",
+        help_text=_t("If set, the deadline tracks this many minutes before form-up."),
     )
 
     srp = models.CharField(max_length=10, choices=Srp.choices, blank=True)
     requirements_overridden = models.BooleanField(
-        default=False, help_text="Organiser confirmed the op runs even if the minimum isn't met."
+        default=False, help_text=_t("Organiser confirmed the op runs even if the minimum isn't met.")
     )
     override_note = models.CharField(max_length=200, blank=True)
 
     fc = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name="+", help_text="Fleet commander / organiser.",
+        related_name="+", help_text=_t("Fleet commander / organiser."),
     )
     status = models.CharField(
         max_length=15, choices=Status.choices, default=Status.PLANNED, db_index=True
@@ -154,6 +155,8 @@ class OperationShipSlot(models.Model):
     """
 
     class Role(models.TextChoices):
+        # Fleet-role jargon labels (DPS, logi, tackle, scout, EWAR, command ship, …)
+        # stay English by policy; only the generic "Other" fallback is translated.
         DPS = "dps", "DPS"
         LOGI = "logi", "Logistics"
         TACKLE = "tackle", "Tackle"
@@ -163,24 +166,24 @@ class OperationShipSlot(models.Model):
         MINER = "miner", "Miner"
         COMMAND = "command", "Command ship"
         EWAR = "ewar", "EWAR"
-        OTHER = "other", "Other"
+        OTHER = "other", _t("Other")
 
     operation = models.ForeignKey(Operation, on_delete=models.CASCADE, related_name="ship_slots")
     ship_name = models.CharField(max_length=200)
     ship_type_id = models.BigIntegerField(null=True, blank=True)
     role = models.CharField(max_length=10, choices=Role.choices, default=Role.DPS)
-    min_pilots = models.PositiveIntegerField(default=1, help_text="Pilots required on this ship.")
+    min_pilots = models.PositiveIntegerField(default=1, help_text=_t("Pilots required on this ship."))
     max_pilots = models.PositiveIntegerField(
-        null=True, blank=True, help_text="Optional hard cap (blank = no cap)."
+        null=True, blank=True, help_text=_t("Optional hard cap (blank = no cap).")
     )
-    priority = models.PositiveIntegerField(default=1, help_text="1 = most needed; shown first.")
+    priority = models.PositiveIntegerField(default=1, help_text=_t("1 = most needed; shown first."))
     # A slot is either an official doctrine ship (link the pilots can open) …
     doctrine_fit = models.ForeignKey(
         "doctrines.DoctrineFit", on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
-        help_text="The doctrine fit this slot is for, if it's an official doctrine ship.",
+        help_text=_t("The doctrine fit this slot is for, if it's an official doctrine ship."),
     )
     # … or a one-off custom ship with a pasted EFT the pilots can read.
-    eft_text = models.TextField(blank=True, help_text="EFT for a non-doctrine (custom) ship.")
+    eft_text = models.TextField(blank=True, help_text=_t("EFT for a non-doctrine (custom) ship."))
     fitting_link = models.CharField(max_length=500, blank=True)
     notes = models.CharField(max_length=200, blank=True)
 
@@ -214,8 +217,8 @@ class OperationCommitment(TimeStampedModel):
     """
 
     class Response(models.TextChoices):
-        YES = "yes", "Coming"
-        MAYBE = "maybe", "Maybe"
+        YES = "yes", _t("Coming")
+        MAYBE = "maybe", _t("Maybe")
 
     operation = models.ForeignKey(Operation, on_delete=models.CASCADE, related_name="commitments")
     user = models.ForeignKey(
@@ -253,9 +256,9 @@ class OperationCancellation(models.Model):
     """
 
     class Reason(models.TextChoices):
-        INSUFFICIENT = "insufficient_signups", "Too few sign-ups"
-        COMPOSITION = "composition_unmet", "Doctrine composition not met"
-        MANUAL = "manual", "Cancelled by organiser"
+        INSUFFICIENT = "insufficient_signups", _t("Too few sign-ups")
+        COMPOSITION = "composition_unmet", _t("Doctrine composition not met")
+        MANUAL = "manual", _t("Cancelled by organiser")
 
     operation = models.ForeignKey(
         Operation, on_delete=models.SET_NULL, null=True, blank=True, related_name="cancellations"
@@ -282,7 +285,7 @@ class OperationCancellation(models.Model):
 class OperationDoctrine(models.Model):
     operation = models.ForeignKey(Operation, on_delete=models.CASCADE, related_name="doctrines")
     doctrine = models.ForeignKey(Doctrine, on_delete=models.CASCADE, related_name="+")
-    target_count = models.IntegerField(default=0, help_text="Pilots wanted on this doctrine (0 = any).")
+    target_count = models.IntegerField(default=0, help_text=_t("Pilots wanted on this doctrine (0 = any)."))
 
     class Meta:
         unique_together = ("operation", "doctrine")
@@ -304,7 +307,7 @@ class OperationAttendance(TimeStampedModel):
     )
     character_id = models.BigIntegerField(null=True, blank=True)
     character_name = models.CharField(max_length=200, blank=True)
-    confirmed = models.BooleanField(default=False, help_text="Verified by an FC / officer.")
+    confirmed = models.BooleanField(default=False, help_text=_t("Verified by an FC / officer."))
     added_by_officer = models.BooleanField(default=False)
 
     class Meta:
@@ -324,9 +327,9 @@ class OperationRsvp(TimeStampedModel):
     """
 
     class Response(models.TextChoices):
-        YES = "yes", "Coming"
-        MAYBE = "maybe", "Maybe"
-        NO = "no", "Can't make it"
+        YES = "yes", _t("Coming")
+        MAYBE = "maybe", _t("Maybe")
+        NO = "no", _t("Can't make it")
 
     operation = models.ForeignKey(Operation, on_delete=models.CASCADE, related_name="rsvps")
     user = models.ForeignKey(
@@ -353,18 +356,19 @@ class StructureTimer(TimeStampedModel):
     """
 
     class TimerType(models.TextChoices):
-        ARMOR = "armor", "Armor"
-        HULL = "hull", "Hull / Final"
-        ANCHORING = "anchoring", "Anchoring"
-        UNANCHORING = "unanchoring", "Unanchoring"
+        ARMOR = "armor", _t("Armor")
+        HULL = "hull", _t("Hull / Final")
+        ANCHORING = "anchoring", _t("Anchoring")
+        UNANCHORING = "unanchoring", _t("Unanchoring")
+        # "Sov · IHub" / "Sov · TCU" — sov jargon + EVE structure abbreviations; kept English.
         IHUB = "ihub", "Sov · IHub"
         TCU = "tcu", "Sov · TCU"
-        OTHER = "other", "Other"
+        OTHER = "other", _t("Other")
 
     class Side(models.TextChoices):
-        FRIENDLY = "friendly", "Friendly (defend)"
-        HOSTILE = "hostile", "Hostile (attack)"
-        NEUTRAL = "neutral", "Neutral"
+        FRIENDLY = "friendly", _t("Friendly (defend)")
+        HOSTILE = "hostile", _t("Hostile (attack)")
+        NEUTRAL = "neutral", _t("Neutral")
 
     # Marker put on rows created by the structure-monitoring ESI bridge
     # (apps.corporation.structures_esi.import_reinforcement_timers). Those already
@@ -373,13 +377,14 @@ class StructureTimer(TimeStampedModel):
     # to avoid publishing the same reinforcement timer twice.
     AUTO_IMPORT_NOTE = "Auto-imported from structure monitoring."
 
-    name = models.CharField(max_length=200, help_text="Structure name or label.")
+    name = models.CharField(max_length=200, help_text=_t("Structure name or label."))
     system_name = models.CharField(max_length=120, blank=True)
     system_id = models.BigIntegerField(null=True, blank=True)
+    # help_text lists EVE structure type names (game data) — kept English verbatim.
     structure_type = models.CharField(max_length=80, blank=True, help_text="Astrahus, Fortizar…")
     timer_type = models.CharField(max_length=12, choices=TimerType.choices, default=TimerType.ARMOR)
     side = models.CharField(max_length=10, choices=Side.choices, default=Side.HOSTILE)
-    exits_at = models.DateTimeField(db_index=True, help_text="When the timer comes out (EVE/UTC).")
+    exits_at = models.DateTimeField(db_index=True, help_text=_t("When the timer comes out (EVE/UTC)."))
     notes = models.CharField(max_length=300, blank=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
@@ -409,7 +414,7 @@ class SovStructure(TimeStampedModel):
     solar_system_id = models.IntegerField(db_index=True)
     system_name = models.CharField(max_length=120, blank=True)
     structure_type_id = models.IntegerField(default=0)
-    adm = models.FloatField(default=1.0, help_text="Activity Defense Multiplier (1.0–6.0).")
+    adm = models.FloatField(default=1.0, help_text=_t("Activity Defense Multiplier (1.0–6.0)."))
     vulnerable_start = models.DateTimeField(null=True, blank=True)
     vulnerable_end = models.DateTimeField(null=True, blank=True)
 
@@ -451,20 +456,20 @@ class OperationTemplate(TimeStampedModel):
     min_pilots = models.PositiveIntegerField(default=0)
     srp = models.CharField(max_length=10, choices=Operation.Srp.choices, blank=True)
     rsvp_offset_minutes = models.PositiveIntegerField(
-        default=0, help_text="Instance RSVP deadline = this many minutes before form-up (0 = none).")
+        default=0, help_text=_t("Instance RSVP deadline = this many minutes before form-up (0 = none)."))
 
     # Weekly cadence, in UTC.
     weekday = models.PositiveSmallIntegerField(
-        default=5, help_text="0 = Monday … 6 = Sunday (UTC).")
-    hour = models.PositiveSmallIntegerField(default=20, help_text="Form-up hour, 0–23 (UTC).")
-    minute = models.PositiveSmallIntegerField(default=0, help_text="Form-up minute, 0–59 (UTC).")
+        default=5, help_text=_t("0 = Monday … 6 = Sunday (UTC)."))
+    hour = models.PositiveSmallIntegerField(default=20, help_text=_t("Form-up hour, 0–23 (UTC)."))
+    minute = models.PositiveSmallIntegerField(default=0, help_text=_t("Form-up minute, 0–59 (UTC)."))
     lead_days = models.PositiveSmallIntegerField(
-        default=10, help_text="Materialise instances this many days ahead.")
+        default=10, help_text=_t("Materialise instances this many days ahead."))
 
     active = models.BooleanField(default=True)
     fc = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name="+", help_text="Default fleet commander for spawned ops.")
+        related_name="+", help_text=_t("Default fleet commander for spawned ops."))
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
 
@@ -485,7 +490,7 @@ class OperationTemplateSlot(models.Model):
     role = models.CharField(max_length=10, choices=OperationShipSlot.Role.choices,
                             default=OperationShipSlot.Role.DPS)
     min_pilots = models.PositiveIntegerField(default=1)
-    max_pilots = models.PositiveIntegerField(default=0, help_text="0 = no cap.")
+    max_pilots = models.PositiveIntegerField(default=0, help_text=_t("0 = no cap."))
     priority = models.PositiveIntegerField(default=1)
 
     class Meta:

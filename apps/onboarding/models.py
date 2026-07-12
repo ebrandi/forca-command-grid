@@ -2,16 +2,17 @@
 from __future__ import annotations
 
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from apps.sso.models import EveCharacter
 
 
 class OnboardingMilestone(models.Model):
     class Category(models.TextChoices):
-        ACCOUNT = "account", "Account"
-        SKILLS = "skills", "Skills"
-        DOCTRINE = "doctrine", "Doctrine"
-        ACTIVITY = "activity", "Activity"
+        ACCOUNT = "account", _("Account")
+        SKILLS = "skills", _("Skills")
+        DOCTRINE = "doctrine", _("Doctrine")
+        ACTIVITY = "activity", _("Activity")
 
     key = models.SlugField(max_length=64, unique=True)
     title = models.CharField(max_length=200)
@@ -33,9 +34,9 @@ class OnboardingMilestone(models.Model):
 
 class OnboardingProgress(models.Model):
     class Status(models.TextChoices):
-        TODO = "todo", "To do"
-        IN_PROGRESS = "in_progress", "In progress"
-        DONE = "done", "Done"
+        TODO = "todo", _("To do")
+        IN_PROGRESS = "in_progress", _("In progress")
+        DONE = "done", _("Done")
 
     character = models.ForeignKey(
         EveCharacter, on_delete=models.CASCADE, related_name="onboarding_progress"

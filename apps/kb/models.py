@@ -8,15 +8,16 @@ from __future__ import annotations
 
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from core.mixins import TimeStampedModel
 
 
 class KbPage(TimeStampedModel):
     class Visibility(models.TextChoices):
-        PUBLIC = "public", "Public"
-        MEMBER = "member", "Members"
-        OFFICER = "officer", "Officers"
+        PUBLIC = "public", _("Public")
+        MEMBER = "member", _("Members")
+        OFFICER = "officer", _("Officers")
 
     slug = models.SlugField(max_length=80, unique=True)
     title = models.CharField(max_length=200)

@@ -1,4 +1,4 @@
-{% load eve %}
+{% load eve i18n %}
 {# Item rows for ONE location, loaded on demand when the location is expanded. #}
 <table class="w-full text-sm">
   <tbody>
@@ -9,7 +9,7 @@
         <td class="px-4 py-2 text-right data text-faint">{{ it.value|isk }}</td>
       </tr>
     {% empty %}
-      <tr><td class="px-4 py-3 text-center text-xs text-faint">No items at this location.</td></tr>
+      <tr><td class="px-4 py-3 text-center text-xs text-faint">{% translate "No items at this location." %}</td></tr>
     {% endfor %}
   </tbody>
 </table>

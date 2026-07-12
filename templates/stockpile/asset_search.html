@@ -1,27 +1,27 @@
 {% extends "base.html" %}
-{% load humanize %}
-{% block title %}Asset search · [FORCA] Command Grid{% endblock %}
+{% load humanize i18n %}
+{% block title %}{% translate "Asset search" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
-<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← {% translate "Admin console" %}</a>
 <header class="mt-2 mb-6">
-  <p class="eyebrow">Structures &amp; assets</p>
-  <h1 class="mt-1 text-3xl font-bold text-ink">Asset search</h1>
-  <p class="mt-1 text-sm text-faint">Find where a ship, module or commodity sits across corp and member assets.</p>
+  <p class="eyebrow">{% translate "Structures &amp; assets" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Asset search" %}</h1>
+  <p class="mt-1 text-sm text-faint">{% translate "Find where a ship, module or commodity sits across corp and member assets." %}</p>
 </header>
 
 <form method="get" class="mb-5 flex gap-2">
   <input name="q" value="{{ q }}" placeholder="e.g. Megathron, Scourge Fury, Tritanium" class="input-field" autofocus>
-  <button class="btn-gold">Search</button>
+  <button class="btn-gold">{% translate "Search" %}</button>
 </form>
 
 {% if q %}
   {% if rows %}
-    <p class="mb-2 text-xs text-faint">{{ rows|length }} location{{ rows|length|pluralize }}{% if truncated %} (showing first 500){% endif %}</p>
+    <p class="mb-2 text-xs text-faint">{% blocktranslate count n=rows|length %}{{ n }} location{% plural %}{{ n }} locations{% endblocktranslate %}{% if truncated %} {% translate "(showing first 500)" %}{% endif %}</p>
     <div class="panel overflow-hidden">
       <div class="overflow-x-auto"><table class="w-full text-sm">
         <thead><tr class="eyebrow border-b border-line text-left text-faint">
-          <th class="px-4 py-2">Type</th><th class="px-4 py-2">Holder</th>
-          <th class="px-4 py-2">Location</th><th class="px-4 py-2 text-right">Qty</th>
+          <th class="px-4 py-2">{% translate "Type" %}</th><th class="px-4 py-2">{% translate "Holder" %}</th>
+          <th class="px-4 py-2">{% translate "Location" %}</th><th class="px-4 py-2 text-right">{% translate "Qty" %}</th>
         </tr></thead>
         <tbody class="divide-y divide-line/40">
           {% for r in rows %}
@@ -36,7 +36,7 @@
       </table></div>
     </div>
   {% else %}
-    <p class="panel px-4 py-12 text-center text-sm text-faint">No assets match “{{ q }}”. Corp assets need the corp-assets scope; personal assets need each pilot's asset scope.</p>
+    <p class="panel px-4 py-12 text-center text-sm text-faint">{% blocktranslate %}No assets match “{{ q }}”. Corp assets need the corp-assets scope; personal assets need each pilot's asset scope.{% endblocktranslate %}</p>
   {% endif %}
 {% endif %}
 {% endblock %}

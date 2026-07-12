@@ -9,35 +9,36 @@ from __future__ import annotations
 
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from core.mixins import TimeStampedModel
 
 
 class Task(TimeStampedModel):
     class Type(models.TextChoices):
-        BUILD = "build", "Build ships"
-        BUY = "buy", "Buy modules"
-        MOVE = "move", "Move assets"
-        SEED = "seed", "Seed market"
-        TRAIN = "train", "Train into doctrine"
-        REPLACE = "replace", "Replace losses"
-        PREPARE = "prepare", "Prepare for fleet"
-        REVIEW_FIT = "review_fit", "Review fit"
-        MINING = "mining", "Join mining op"
-        DELIVER = "deliver", "Deliver materials"
-        OTHER = "other", "Other"
+        BUILD = "build", _("Build ships")
+        BUY = "buy", _("Buy modules")
+        MOVE = "move", _("Move assets")
+        SEED = "seed", _("Seed market")
+        TRAIN = "train", _("Train into doctrine")
+        REPLACE = "replace", _("Replace losses")
+        PREPARE = "prepare", _("Prepare for fleet")
+        REVIEW_FIT = "review_fit", _("Review fit")
+        MINING = "mining", _("Join mining op")
+        DELIVER = "deliver", _("Deliver materials")
+        OTHER = "other", _("Other")
 
     class Status(models.TextChoices):
-        OPEN = "open", "Open"
-        CLAIMED = "claimed", "Claimed"
-        IN_PROGRESS = "in_progress", "In progress"
-        DONE = "done", "Done"
-        CANCELLED = "cancelled", "Cancelled"
+        OPEN = "open", _("Open")
+        CLAIMED = "claimed", _("Claimed")
+        IN_PROGRESS = "in_progress", _("In progress")
+        DONE = "done", _("Done")
+        CANCELLED = "cancelled", _("Cancelled")
 
     type = models.CharField(max_length=12, choices=Type.choices, default=Type.OTHER, db_index=True)
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
-    priority = models.IntegerField(default=0, help_text="Higher = more urgent.")
+    priority = models.IntegerField(default=0, help_text=_("Higher = more urgent."))
     due_at = models.DateTimeField(null=True, blank=True)
     status = models.CharField(
         max_length=12, choices=Status.choices, default=Status.OPEN, db_index=True
@@ -48,7 +49,7 @@ class Task(TimeStampedModel):
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
         related_name="assigned_tasks",
     )
-    is_open = models.BooleanField(default=True, help_text="Claimable by anyone when unassigned.")
+    is_open = models.BooleanField(default=True, help_text=_("Claimable by anyone when unassigned."))
     # Optional link to the thing this task serves (doctrine/operation/...).
     related_type = models.CharField(max_length=32, blank=True)
     related_id = models.CharField(max_length=64, blank=True)

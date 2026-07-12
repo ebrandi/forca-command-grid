@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load eve static %}
-{% block title %}Combat Stats · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Combat Stats" %} · [FORCA] Command Grid{% endblock %}
 
 {% block extra_head %}
 {% if not denied %}
@@ -21,31 +22,31 @@
 {% if denied %}
   <div class="panel px-4 py-16 text-center">
     <svg class="mx-auto h-8 w-8 text-faint"><use href="#i-lock"/></svg>
-    <p class="mt-3 font-display text-lg text-muted">Combat stats are corp &amp; alliance only</p>
-    <p class="mt-1 text-sm text-faint">This dashboard is available to corporation members and registered alliance pilots.</p>
-    <a href="{% url 'killboard:list' %}" class="btn-ghost mt-4 text-sm">← Back to the killfeed</a>
+    <p class="mt-3 font-display text-lg text-muted">{% translate "Combat stats are corp &amp; alliance only" %}</p>
+    <p class="mt-1 text-sm text-faint">{% translate "This dashboard is available to corporation members and registered alliance pilots." %}</p>
+    <a href="{% url 'killboard:list' %}" class="btn-ghost mt-4 text-sm">← {% translate "Back to the killfeed" %}</a>
   </div>
 {% else %}
 
 <header class="mb-5 flex flex-wrap items-end justify-between gap-4">
   <div>
     <p class="eyebrow">Killboard · {{ home_corp_name }}</p>
-    <h1 class="mt-1 text-3xl font-bold text-ink">Combat statistics</h1>
-    <p class="mt-1 text-sm text-faint">All-time PvP performance, trends, and where we fight. Ratting and structure kills excluded.</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Combat statistics" %}</h1>
+    <p class="mt-1 text-sm text-faint">{% translate "All-time PvP performance, trends, and where we fight. Ratting and structure kills excluded." %}</p>
   </div>
   <div class="flex flex-wrap items-center gap-2">
-    <a href="{% url 'killboard:compare' %}" class="btn-ghost text-sm">Compare pilots</a>
-    <a href="{% url 'killboard:rankings' %}" class="btn-ghost text-sm">Rankings</a>
+    <a href="{% url 'killboard:compare' %}" class="btn-ghost text-sm">{% translate "Compare pilots" %}</a>
+    <a href="{% url 'killboard:rankings' %}" class="btn-ghost text-sm">{% translate "Rankings" %}</a>
     <a href="{% url 'killboard:list' %}" class="btn-ghost text-sm">← Killfeed</a>
   </div>
 </header>
 
 <!-- Export bar -->
 <div class="mb-4 flex flex-wrap items-center gap-2 text-xs">
-  <span class="text-faint">Export:</span>
-  <button id="exp-monthly-csv" type="button" class="chip hover:!border-gold/40 hover:!text-gold">Monthly CSV</button>
-  <button id="exp-ships-csv" type="button" class="chip hover:!border-gold/40 hover:!text-gold">Ship data CSV</button>
-  <button id="exp-png" type="button" class="chip hover:!border-cyan/40 hover:!text-cyan">Chart images (PNG)</button>
+  <span class="text-faint">{% translate "Export:" %}</span>
+  <button id="exp-monthly-csv" type="button" class="chip hover:!border-gold/40 hover:!text-gold">{% translate "Monthly CSV" %}</button>
+  <button id="exp-ships-csv" type="button" class="chip hover:!border-gold/40 hover:!text-gold">{% translate "Ship data CSV" %}</button>
+  <button id="exp-png" type="button" class="chip hover:!border-cyan/40 hover:!text-cyan">{% translate "Chart images (PNG)" %}</button>
 </div>
 
 <!-- Summary cards -->
@@ -53,22 +54,22 @@
   <div class="panel p-4">
     <p class="eyebrow text-faint">Kills</p>
     <p class="data mt-1 text-2xl font-bold text-kill">{{ summary.kills }}</p>
-    <p class="mt-0.5 text-[11px] text-faint">{{ summary.isk_destroyed|isk }} destroyed</p>
+    <p class="mt-0.5 text-[11px] text-faint">{{ summary.isk_destroyed|isk }} {% translate "destroyed" %}</p>
   </div>
   <div class="panel p-4">
     <p class="eyebrow text-faint">Losses</p>
     <p class="data mt-1 text-2xl font-bold text-loss">{{ summary.losses }}</p>
-    <p class="mt-0.5 text-[11px] text-faint">{{ summary.isk_lost|isk }} lost</p>
+    <p class="mt-0.5 text-[11px] text-faint">{{ summary.isk_lost|isk }} {% translate "lost" %}</p>
   </div>
   <div class="panel p-4">
-    <p class="eyebrow text-faint">ISK Efficiency</p>
+    <p class="eyebrow text-faint">{% translate "ISK Efficiency" %}</p>
     <p class="data mt-1 text-2xl font-bold text-gold">{{ summary.efficiency|effpct }}%</p>
     <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-loss/40">
       <div class="h-full rounded-full bg-kill" style="width: {{ summary.efficiency|effpct }}%"></div>
     </div>
   </div>
   <div class="panel p-4">
-    <p class="eyebrow text-faint">Threat</p>
+    <p class="eyebrow text-faint">{% translate "Threat" %}</p>
     <p class="data mt-1 text-2xl font-bold {{ summary.danger.color }}">{{ summary.danger.label }}</p>
     <p class="mt-0.5 text-[11px] text-faint">{{ summary.solo_kills }} solo kills</p>
   </div>
@@ -78,14 +79,14 @@
 <section class="panel mb-6 overflow-hidden">
   <div class="flex items-center gap-2 border-b border-line px-4 py-3">
     <svg class="h-4 w-4 text-gold"><use href="#i-bolt"/></svg>
-    <h2 class="font-display text-sm font-semibold text-ink">Kills &amp; losses per month</h2>
-    <span class="ml-auto text-[11px] text-faint">last {{ months_back }} months · bars = count, lines = ISK</span>
+    <h2 class="font-display text-sm font-semibold text-ink">{% translate "Kills &amp; losses per month" %}</h2>
+    <span class="ml-auto text-[11px] text-faint">{% blocktranslate with n=months_back %}last {{ n }} months · bars = count, lines = ISK{% endblocktranslate %}</span>
   </div>
   <div class="p-4">
     {% if summary.kills or summary.losses %}
       <div class="relative h-72 skeleton"><canvas id="kb-monthly-chart"></canvas></div>
     {% else %}
-      <p class="py-12 text-center text-sm text-faint">No PvP killmails recorded yet.</p>
+      <p class="py-12 text-center text-sm text-faint">{% translate "No PvP killmails recorded yet." %}</p>
     {% endif %}
   </div>
 </section>
@@ -97,7 +98,7 @@
     <div class="flex items-center gap-2 border-b border-line px-4 py-3">
       <svg class="h-4 w-4 {{ board.color }}"><use href="#i-ship"/></svg>
       <h2 class="font-display text-sm font-semibold text-ink">{{ board.title }}</h2>
-      <span class="ml-auto text-[11px] text-faint">top {{ board.rows|length }}</span>
+      <span class="ml-auto text-[11px] text-faint">{% blocktranslate with n=board.rows|length %}top {{ n }}{% endblocktranslate %}</span>
     </div>
     {% if board.rows %}
     <div class="grid items-center gap-3 p-4 sm:grid-cols-[160px_1fr]">
@@ -114,7 +115,7 @@
       </ol>
     </div>
     {% else %}
-    <p class="px-4 py-10 text-center text-xs text-faint">Nothing here yet.</p>
+    <p class="px-4 py-10 text-center text-xs text-faint">{% translate "Nothing here yet." %}</p>
     {% endif %}
   </section>
   {% endfor %}
@@ -125,28 +126,28 @@
   <section class="panel overflow-hidden lg:col-span-2">
     <div class="flex items-center gap-2 border-b border-line px-4 py-3">
       <svg class="h-4 w-4 text-muted"><use href="#i-ship"/></svg>
-      <h2 class="font-display text-sm font-semibold text-ink">Ship-class composition</h2>
+      <h2 class="font-display text-sm font-semibold text-ink">{% translate "Ship-class composition" %}</h2>
     </div>
     {% if ship_classes.killed or ship_classes.lost %}
     <div class="grid gap-4 p-4 sm:grid-cols-2">
       <div>
-        <p class="eyebrow mb-2 text-center text-faint">Enemy destroyed</p>
+        <p class="eyebrow mb-2 text-center text-faint">{% translate "Enemy destroyed" %}</p>
         <div class="relative mx-auto h-44 w-44 skeleton"><canvas id="kb-class-killed"></canvas></div>
       </div>
       <div>
-        <p class="eyebrow mb-2 text-center text-faint">Ours lost</p>
+        <p class="eyebrow mb-2 text-center text-faint">{% translate "Ours lost" %}</p>
         <div class="relative mx-auto h-44 w-44 skeleton"><canvas id="kb-class-lost"></canvas></div>
       </div>
     </div>
     {% else %}
-    <p class="px-4 py-10 text-center text-xs text-faint">No PvP killmails yet.</p>
+    <p class="px-4 py-10 text-center text-xs text-faint">{% translate "No PvP killmails yet." %}</p>
     {% endif %}
   </section>
 
   <section class="panel overflow-hidden">
     <div class="flex items-center gap-2 border-b border-line px-4 py-3">
       <svg class="h-4 w-4 text-gold"><use href="#i-shield"/></svg>
-      <h2 class="font-display text-sm font-semibold text-ink">Doctrine compliance</h2>
+      <h2 class="font-display text-sm font-semibold text-ink">{% translate "Doctrine compliance" %}</h2>
     </div>
     {% if doctrine.configured and doctrine.total %}
     <div class="p-4 text-center">
@@ -154,16 +155,16 @@
         <canvas id="kb-doctrine"></canvas>
         <div class="absolute inset-0 flex flex-col items-center justify-center">
           <span class="data text-2xl font-bold text-gold">{{ doctrine.on_pct|floatformat:0 }}%</span>
-          <span class="text-[10px] text-faint">on doctrine</span>
+          <span class="text-[10px] text-faint">{% translate "on doctrine" %}</span>
         </div>
       </div>
-      <p class="mt-3 text-xs text-muted">{{ doctrine.on }} of {{ doctrine.total }} ships fielded on kills were active-doctrine hulls.</p>
-      <p class="mt-1 text-[11px] text-faint">Capsules excluded.</p>
+      <p class="mt-3 text-xs text-muted">{% blocktranslate with on=doctrine.on total=doctrine.total %}{{ on }} of {{ total }} ships fielded on kills were active-doctrine hulls.{% endblocktranslate %}</p>
+      <p class="mt-1 text-[11px] text-faint">{% translate "Capsules excluded." %}</p>
     </div>
     {% elif doctrine.configured %}
-    <p class="px-4 py-10 text-center text-xs text-faint">No ships fielded on kills yet.</p>
+    <p class="px-4 py-10 text-center text-xs text-faint">{% translate "No ships fielded on kills yet." %}</p>
     {% else %}
-    <p class="px-4 py-10 text-center text-xs text-faint">No active doctrines configured — set one up under Doctrines to track compliance.</p>
+    <p class="px-4 py-10 text-center text-xs text-faint">{% translate "No active doctrines configured — set one up under Doctrines to track compliance." %}</p>
     {% endif %}
   </section>
 </div>
@@ -172,8 +173,8 @@
 <section class="panel mb-6 overflow-hidden">
   <div class="flex items-center gap-2 border-b border-line px-4 py-3">
     <svg class="h-4 w-4 text-cyan"><use href="#i-shield"/></svg>
-    <h2 class="font-display text-sm font-semibold text-ink">Where in space</h2>
-    <span class="ml-auto text-[11px] text-faint">by security band</span>
+    <h2 class="font-display text-sm font-semibold text-ink">{% translate "Where in space" %}</h2>
+    <span class="ml-auto text-[11px] text-faint">{% translate "by security band" %}</span>
   </div>
   {% if space.killed or space.lost %}
   <div class="grid gap-4 p-4 sm:grid-cols-2">
@@ -187,7 +188,7 @@
     </div>
   </div>
   {% else %}
-  <p class="px-4 py-10 text-center text-xs text-faint">No PvP killmails yet.</p>
+  <p class="px-4 py-10 text-center text-xs text-faint">{% translate "No PvP killmails yet." %}</p>
   {% endif %}
 </section>
 
@@ -195,8 +196,8 @@
 <section class="panel mb-6 overflow-hidden">
   <div class="flex items-center gap-2 border-b border-line px-4 py-3">
     <svg class="h-4 w-4 text-cyan"><use href="#i-grid"/></svg>
-    <h2 class="font-display text-sm font-semibold text-ink">When we fight</h2>
-    <span class="ml-auto text-[11px] text-faint">last {{ heatmap_days }} days · EVE time (UTC)</span>
+    <h2 class="font-display text-sm font-semibold text-ink">{% translate "When we fight" %}</h2>
+    <span class="ml-auto text-[11px] text-faint">{% blocktranslate with n=heatmap_days %}last {{ n }} days · EVE time (UTC){% endblocktranslate %}</span>
   </div>
   {% if heatmap.total %}
   <div class="overflow-x-auto p-4">
@@ -212,23 +213,23 @@
       <div class="mb-0.5 grid grid-cols-[34px_repeat(24,1fr)] items-center gap-0.5">
         <span class="text-[10px] font-medium text-faint">{{ row.label }}</span>
         {% for c in row.hours %}
-          <div class="hm-cell hm-{{ c.level }}" title="{{ row.label }} {{ c.hour }}:00 — {{ c.n }} fight{{ c.n|pluralize }}"></div>
+          <div class="hm-cell hm-{{ c.level }}" title="{% blocktranslate with day=row.label hour=c.hour count n=c.n %}{{ day }} {{ hour }}:00 — {{ n }} fight{% plural %}{{ day }} {{ hour }}:00 — {{ n }} fights{% endblocktranslate %}"></div>
         {% endfor %}
       </div>
       {% endfor %}
       <div class="mt-3 flex items-center justify-end gap-1.5 text-[10px] text-faint">
-        <span>less</span>
+        <span>{% translate "less" %}</span>
         <span class="hm-cell hm-0 !h-3 !w-3"></span>
         <span class="hm-cell hm-1 !h-3 !w-3"></span>
         <span class="hm-cell hm-2 !h-3 !w-3"></span>
         <span class="hm-cell hm-3 !h-3 !w-3"></span>
         <span class="hm-cell hm-4 !h-3 !w-3"></span>
-        <span>more</span>
+        <span>{% translate "more" %}</span>
       </div>
     </div>
   </div>
   {% else %}
-  <p class="px-4 py-10 text-center text-xs text-faint">No activity in the last {{ heatmap_days }} days.</p>
+  <p class="px-4 py-10 text-center text-xs text-faint">{% blocktranslate with n=heatmap_days %}No activity in the last {{ n }} days.{% endblocktranslate %}</p>
   {% endif %}
 </section>
 
@@ -257,13 +258,13 @@
       {% endwith %}
     </ol>
     {% else %}
-    <p class="px-4 py-10 text-center text-xs text-faint">No fights recorded yet.</p>
+    <p class="px-4 py-10 text-center text-xs text-faint">{% translate "No fights recorded yet." %}</p>
     {% endif %}
   </section>
   {% endfor %}
 </div>
 
-<p class="mt-6 text-center text-[11px] text-faint">PvP only — kills and deaths involving no player don't count. Figures refresh every few minutes.</p>
+<p class="mt-6 text-center text-[11px] text-faint">{% translate "PvP only — kills and deaths involving no player don't count. Figures refresh every few minutes." %}</p>
 
 {{ monthly|json_script:"kb-monthly-data" }}
 {{ ships|json_script:"kb-ships-data" }}

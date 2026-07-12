@@ -11,6 +11,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils.translation import gettext_lazy as _t
 
 from apps.comms_access import config, credentials
 from apps.comms_access.entitlements import ENTITLEMENTS
@@ -90,17 +91,17 @@ def comms_access_settings(request):
                 audit_log(request.user, "comms_access.credentials.update",
                           target_type="comms_access_config", target_id="discord",
                           metadata={"platform": "discord"}, ip=client_ip(request))
-                messages.success(request, "Discord credentials saved.")
+                messages.success(request, _t("Discord credentials saved."))
                 return redirect(_BACK)
             else:
-                messages.error(request, "Unknown settings section.")
+                messages.error(request, _t("Unknown settings section."))
                 return redirect(_BACK)
         except config.ConfigError as exc:
             messages.error(request, str(exc))
             return redirect(_BACK)
         audit_log(request.user, "comms_access.config.update", target_type="comms_access_config",
                   target_id=domain, metadata={"domain": domain}, ip=client_ip(request))
-        messages.success(request, "Settings saved.")
+        messages.success(request, _t("Settings saved."))
         return redirect(_BACK)
 
     platforms = config.get("platforms")
@@ -163,7 +164,7 @@ def comms_access_mapping_save(request, pk=None):
 
     valid_platforms = {c[0] for c in Platform.choices}
     if platform not in valid_platforms or entitlement_key not in ENTITLEMENTS or not target_ref:
-        messages.error(request, "Platform, entitlement and target are required.")
+        messages.error(request, _t("Platform, entitlement and target are required."))
         return redirect("admin_audit:comms_access_mappings")
 
     fields = {
@@ -183,7 +184,7 @@ def comms_access_mapping_save(request, pk=None):
         try:
             mapping.save()
         except Exception:  # noqa: BLE001 - unique-constraint clash
-            messages.error(request, "A mapping for that platform + entitlement + target already exists.")
+            messages.error(request, _t("A mapping for that platform + entitlement + target already exists."))
             return redirect("admin_audit:comms_access_mappings")
         action = "comms_access.mapping.update"
     else:
@@ -192,13 +193,13 @@ def comms_access_mapping_save(request, pk=None):
             defaults=fields,
         )
         if not created:
-            messages.error(request, "That mapping already exists.")
+            messages.error(request, _t("That mapping already exists."))
             return redirect("admin_audit:comms_access_mappings")
         action = "comms_access.mapping.create"
     audit_log(request.user, action, target_type="comms_mapping", target_id=mapping.pk,
               metadata={"platform": platform, "entitlement": entitlement_key, "mode": fields["mode"]},
               ip=client_ip(request))
-    messages.success(request, "Mapping saved.")
+    messages.success(request, _t("Mapping saved."))
     return redirect("admin_audit:comms_access_mappings")
 
 
@@ -212,7 +213,7 @@ def comms_access_mapping_delete(request, pk):
     mapping.delete()
     audit_log(request.user, "comms_access.mapping.delete", target_type="comms_mapping",
               target_id=mid, ip=client_ip(request))
-    messages.success(request, "Mapping removed.")
+    messages.success(request, _t("Mapping removed."))
     return redirect("admin_audit:comms_access_mappings")
 
 

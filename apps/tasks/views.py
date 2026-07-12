@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
 from core import rbac
@@ -56,7 +57,7 @@ def board(request: HttpRequest) -> HttpResponse:
 def create(request: HttpRequest) -> HttpResponse:
     title = (request.POST.get("title") or "").strip()
     if not title:
-        messages.error(request, "A task needs a title.")
+        messages.error(request, _("A task needs a title."))
         return redirect("tasks:board")
     ttype = request.POST.get("type")
     if ttype not in Task.Type.values:
@@ -83,7 +84,7 @@ def create(request: HttpRequest) -> HttpResponse:
         related_type=(request.POST.get("related_type") or "").strip(),
         related_id=(request.POST.get("related_id") or "").strip(),
     )
-    messages.success(request, f"Task created: {task.title}")
+    messages.success(request, _("Task created: %(title)s") % {"title": task.title})
     return redirect("tasks:board")
 
 
@@ -93,9 +94,9 @@ def create(request: HttpRequest) -> HttpResponse:
 def claim(request: HttpRequest, pk: int) -> HttpResponse:
     task = get_object_or_404(Task, pk=pk)
     if services.claim(task, request.user):
-        messages.success(request, f"Claimed: {task.title}")
+        messages.success(request, _("Claimed: %(title)s") % {"title": task.title})
     else:
-        messages.error(request, "That task is no longer available to claim.")
+        messages.error(request, _("That task is no longer available to claim."))
     return redirect("tasks:board")
 
 
@@ -106,17 +107,17 @@ def update_status(request: HttpRequest, pk: int) -> HttpResponse:
     task = get_object_or_404(Task, pk=pk)
     is_officer = rbac.has_role(request.user, rbac.ROLE_OFFICER)
     if not services.can_act(request.user, task, is_officer=is_officer):
-        messages.error(request, "You can only update your own tasks.")
+        messages.error(request, _("You can only update your own tasks."))
         return redirect("tasks:board")
     to_status = request.POST.get("status")
     # Members may not cancel; that's an officer action.
     if to_status == Task.Status.CANCELLED and not is_officer:
-        messages.error(request, "Only officers can cancel tasks.")
+        messages.error(request, _("Only officers can cancel tasks."))
         return redirect("tasks:board")
     if services.set_status(task, request.user, to_status):
-        messages.success(request, f"Updated: {task.title}")
+        messages.success(request, _("Updated: %(title)s") % {"title": task.title})
     else:
-        messages.error(request, "That status change isn't allowed.")
+        messages.error(request, _("That status change isn't allowed."))
     nxt = request.POST.get("next")
     if nxt and url_has_allowed_host_and_scheme(nxt, allowed_hosts={request.get_host()}):
         return redirect(nxt)
@@ -191,11 +192,11 @@ def edit(request: HttpRequest, pk: int) -> HttpResponse:
     task = get_object_or_404(Task, pk=pk)
     is_officer = rbac.has_role(request.user, rbac.ROLE_OFFICER)
     if not _can_edit(request.user, task, is_officer=is_officer):
-        messages.error(request, "You can't edit this task.")
+        messages.error(request, _("You can't edit this task."))
         return redirect("tasks:detail", pk=pk)
     title = (request.POST.get("title") or "").strip()
     if not title:
-        messages.error(request, "Title can't be empty.")
+        messages.error(request, _("Title can't be empty."))
         return redirect("tasks:detail", pk=pk)
     # Only officers/creator may change priority (the board orders by -priority, so an
     # assignee shouldn't be able to bump their own task to the top).
@@ -209,12 +210,12 @@ def edit(request: HttpRequest, pk: int) -> HttpResponse:
     if due_raw:
         due_at = _parse_dt(due_raw)
         if due_at is None:
-            messages.error(request, "Couldn't read the due date.")
+            messages.error(request, _("Couldn't read the due date."))
             return redirect("tasks:detail", pk=pk)
     else:
         due_at = None
     if services.edit_task(task, request.user, title=title, priority=priority, due_at=due_at):
-        messages.success(request, "Task updated.")
+        messages.success(request, _("Task updated."))
     return redirect("tasks:detail", pk=pk)
 
 
@@ -230,8 +231,8 @@ def reassign(request: HttpRequest, pk: int) -> HttpResponse:
     if uid:
         new_assignee = get_user_model().objects.filter(pk=uid).first()
         if new_assignee is None or not _is_corp_member(new_assignee):
-            messages.error(request, "Pick a current corp member.")
+            messages.error(request, _("Pick a current corp member."))
             return redirect("tasks:detail", pk=pk)
     if services.reassign(task, request.user, new_assignee):
-        messages.success(request, "Task reassigned." if new_assignee else "Task unassigned.")
+        messages.success(request, _("Task reassigned.") if new_assignee else _("Task unassigned."))
     return redirect("tasks:detail", pk=pk)

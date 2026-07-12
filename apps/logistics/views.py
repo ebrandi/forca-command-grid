@@ -11,6 +11,8 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 
 from apps.sde.search import search_systems
@@ -34,7 +36,7 @@ from .services import (
 )
 from .structures import has_structure_search
 
-_UNRESOLVED_MSG = "Couldn't resolve one of those locations — pick from the list or enter jumps manually."
+_UNRESOLVED_MSG = gettext_lazy("Couldn't resolve one of those locations — pick from the list or enter jumps manually.")
 
 
 def _build_quote(form_data, card):
@@ -83,7 +85,7 @@ def _build_quote(form_data, card):
         if hops is None:  # no graphed route — use the manual jump count
             hops = manual_jumps
         if not hops:
-            return None, route_ctx, "Pick a route or enter a manual jump count."
+            return None, route_ctx, _("Pick a route or enter a manual jump count.")
         q = price_quote(
             card, ship_class=ship_class, jumps=hops, jump_hops=hops,
             volume_m3=volume, collateral=collateral, sec_band=sec_band, rush=rush,
@@ -106,10 +108,10 @@ def _build_quote(form_data, card):
             if not jumps:
                 return None, route_ctx, str(exc)
     elif have_location and not jumps:
-        return None, route_ctx, "Couldn't resolve one of those locations — pick from the list or enter jumps manually."
+        return None, route_ctx, _("Couldn't resolve one of those locations — pick from the list or enter jumps manually.")
 
     if not jumps:
-        return None, route_ctx, "Pick a route or enter a manual jump count."
+        return None, route_ctx, _("Pick a route or enter a manual jump count.")
 
     q = price_quote(
         card, ship_class=ship_class, jumps=jumps, lowsec_jumps=lowsec_jumps,
@@ -171,22 +173,22 @@ def post_contract(request: HttpRequest) -> HttpResponse:
     """Re-price the submitted quote and post it as an outstanding contract."""
     card = active_rate_card()
     if not can_access(request.user):
-        messages.error(request, "The freight service isn't available to you right now.")
+        messages.error(request, _("The freight service isn't available to you right now."))
         return redirect("logistics:calculator")
     form = QuoteForm(request.POST)
     if not form.is_valid():
-        messages.error(request, "Check the quote details and try again.")
+        messages.error(request, _("Check the quote details and try again."))
         return redirect("logistics:calculator")
     quote, route_ctx, error = _build_quote(form.cleaned_data, card)
     if not quote or not quote.ok:
-        messages.error(request, error or "Couldn't price that job.")
+        messages.error(request, error or _("Couldn't price that job."))
         return redirect("logistics:calculator")
     # A postable contract needs concrete pickup and drop-off points (so the
     # hauler knows the exact docks), not just a manual jump count.
     origin = route_ctx.get("origin")
     dest = route_ctx.get("dest")
     if not origin or not dest:
-        messages.error(request, "Pick a pickup and a drop-off location before posting.")
+        messages.error(request, _("Pick a pickup and a drop-off location before posting."))
         return redirect("logistics:calculator")
 
     post_as = request.POST.get("post_as", "character")
@@ -208,7 +210,7 @@ def post_contract(request: HttpRequest) -> HttpResponse:
     )
     audit_log(request.user, "courier.post", target_type="courier_contract",
               target_id=str(contract.id), ip=client_ip(request))
-    messages.success(request, "Contract posted to the freight board.")
+    messages.success(request, _("Contract posted to the freight board."))
     return redirect("logistics:contracts")
 
 
@@ -257,7 +259,7 @@ def claim_contract(request: HttpRequest, pk: int) -> HttpResponse:
     main = EveCharacter.objects.filter(user=request.user, is_main=True).first() or \
         EveCharacter.objects.filter(user=request.user).first()
     if not main:
-        messages.error(request, "Link an EVE character before claiming hauls.")
+        messages.error(request, _("Link an EVE character before claiming hauls."))
         return redirect("logistics:contracts")
     # Atomic claim: only one hauler can win the OUTSTANDING→IN_PROGRESS transition.
     # LOG-1 (3.2): give the hauler a fresh delivery window from now (and clear any prior
@@ -278,14 +280,15 @@ def claim_contract(request: HttpRequest, pk: int) -> HttpResponse:
         reminder_sent_at=None,
     )
     if not claimed:
-        messages.error(request, "That contract is no longer available.")
+        messages.error(request, _("That contract is no longer available."))
         return redirect("logistics:contracts")
     audit_log(request.user, "courier.claim", target_type="courier_contract",
               target_id=str(contract.id), ip=client_ip(request))
-    issuer = contract.posted_as_name or "the customer"
+    issuer = contract.posted_as_name or _("the customer")
     messages.success(
         request,
-        f"Haul claimed — in EVE, find and accept the courier contract from {issuer} for this route, then fly safe.",
+        _("Haul claimed — in EVE, find and accept the courier contract from %(issuer)s for this route, then fly safe.")
+        % {"issuer": issuer},
     )
     return redirect("logistics:contracts")
 
@@ -298,13 +301,13 @@ def transition_contract(request: HttpRequest, pk: int) -> HttpResponse:
     contract = get_object_or_404(CourierContract, pk=pk)
     is_owner = contract.assigned_user_id == request.user.id
     if not (is_owner or rbac.has_role(request.user, rbac.ROLE_OFFICER)):
-        messages.error(request, "That isn't your haul.")
+        messages.error(request, _("That isn't your haul."))
         return redirect("logistics:contracts")
     action = request.POST.get("action", "")
     # These transitions are only valid on a contract that is actually in progress;
     # a delivered/failed/cancelled contract can't be re-driven.
     if contract.status != CourierContract.Status.IN_PROGRESS:
-        messages.error(request, "That contract isn't in progress.")
+        messages.error(request, _("That contract isn't in progress."))
         return redirect("logistics:contracts")
     if action == "delivered":
         contract.status = CourierContract.Status.DELIVERED
@@ -315,7 +318,7 @@ def transition_contract(request: HttpRequest, pk: int) -> HttpResponse:
         contract.assigned_user = None
         contract.assigned_hauler_character_id = None
     else:
-        messages.error(request, "Unknown action.")
+        messages.error(request, _("Unknown action."))
         return redirect("logistics:contracts")
     contract.save(update_fields=["status", "assigned_user", "assigned_hauler_character_id"])
     # Credit the hauler for a completed run (idempotent per contract). 'delivered'
@@ -339,7 +342,7 @@ def transition_contract(request: HttpRequest, pk: int) -> HttpResponse:
         )
     audit_log(request.user, f"courier.{action}", target_type="courier_contract",
               target_id=str(contract.id), ip=client_ip(request))
-    messages.success(request, "Contract updated.")
+    messages.success(request, _("Contract updated."))
     return redirect("logistics:contracts")
 
 
@@ -349,13 +352,13 @@ def transition_contract(request: HttpRequest, pk: int) -> HttpResponse:
 def cancel_contract(request: HttpRequest, pk: int) -> HttpResponse:
     contract = get_object_or_404(CourierContract, pk=pk)
     if contract.status in (CourierContract.Status.DELIVERED, CourierContract.Status.CANCELLED):
-        messages.error(request, "That contract can't be cancelled.")
+        messages.error(request, _("That contract can't be cancelled."))
         return redirect("logistics:contracts")
     contract.status = CourierContract.Status.CANCELLED
     contract.save(update_fields=["status"])
     audit_log(request.user, "courier.cancel", target_type="courier_contract",
               target_id=str(contract.id), ip=client_ip(request))
-    messages.success(request, "Contract cancelled.")
+    messages.success(request, _("Contract cancelled."))
     return redirect("logistics:contracts")
 
 
@@ -371,7 +374,7 @@ def rates(request: HttpRequest) -> HttpResponse:
             invalidate_audience_cache()
             audit_log(request.user, "courier.rates_update", target_type="rate_card",
                       target_id=str(card.id), ip=client_ip(request))
-            messages.success(request, "Rate card updated.")
+            messages.success(request, _("Rate card updated."))
             return redirect("logistics:rates")
     else:
         form = RateCardForm(instance=card)
@@ -392,11 +395,11 @@ def corp_contracts(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
         result = sync_corp_contracts()
         if result["status"] == "ok":
-            messages.success(request, f"Synced {result['count']} corp contract(s).")
+            messages.success(request, _("Synced %(count)d corp contract(s).") % {"count": result["count"]})
         elif result["status"] == "no_token":
-            messages.warning(request, "No director has granted the corp-contracts scope yet.")
+            messages.warning(request, _("No director has granted the corp-contracts scope yet."))
         else:
-            messages.error(request, "Contract sync failed; try again later.")
+            messages.error(request, _("Contract sync failed; try again later."))
         return redirect("logistics:corp_contracts")
 
     rows = list(CorpContract.objects.all())

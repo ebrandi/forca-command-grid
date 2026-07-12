@@ -17,6 +17,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
 from apps.doctrines import xml_import
@@ -62,7 +63,7 @@ def xml_import_upload(request: HttpRequest) -> HttpResponse:
         entries, counts = xml_import.classify_fittings(raw)
     except XmlImportError as exc:
         # ``exc`` is a safe, curated message — never raw upload content.
-        messages.error(request, f"Import rejected: {exc}")
+        messages.error(request, _("Import rejected: %(error)s") % {"error": exc})
         return redirect("admin_audit:doctrine_xml_import")
 
     batch = xml_import.create_batch(request.user, filename, len(data), entries, counts)
@@ -133,7 +134,7 @@ def xml_import_commit(request: HttpRequest, pk: int) -> HttpResponse:
         },
         ip=client_ip(request),
     )
-    messages.success(request, "XML import applied.")
+    messages.success(request, _("XML import applied."))
     return redirect("admin_audit:doctrine_xml_result", pk=batch.id)
 
 
@@ -160,7 +161,7 @@ def xml_import_settings(request: HttpRequest) -> HttpResponse:
         try:
             requested = int(raw)
         except ValueError:
-            messages.error(request, "Enter a whole number.")
+            messages.error(request, _("Enter a whole number."))
             return redirect("admin_audit:doctrine_xml_settings")
         clamped = clamp_max_fittings(requested)
         config.max_fittings_per_import = clamped
@@ -173,10 +174,11 @@ def xml_import_settings(request: HttpRequest) -> HttpResponse:
         if clamped != requested:
             messages.info(
                 request,
-                f"Limit set to {clamped} (values are kept within 1–{MAX_FITTINGS_CEILING}).",
+                _("Limit set to %(clamped)s (values are kept within 1–%(ceiling)s).") % {
+                    "clamped": clamped, "ceiling": MAX_FITTINGS_CEILING},
             )
         else:
-            messages.success(request, f"Import limit set to {clamped} fittings.")
+            messages.success(request, _("Import limit set to %(clamped)s fittings.") % {"clamped": clamped})
         return redirect("admin_audit:doctrine_xml_settings")
 
     return render(request, "admin_audit/console/doctrine_xml/settings.html", {

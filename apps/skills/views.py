@@ -5,6 +5,8 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.translation import gettext as _
+from django.utils.translation import ngettext
 from django.views.decorators.http import require_POST
 
 from apps.doctrines.models import Doctrine
@@ -65,12 +67,18 @@ def import_mine(request: HttpRequest) -> HttpResponse:
             failed += 1
 
     if imported:
-        messages.success(request, f"Imported skills for {imported} character{'s' if imported != 1 else ''}.")
+        messages.success(request, ngettext(
+            "Imported skills for %(count)d character.",
+            "Imported skills for %(count)d characters.",
+            imported,
+        ) % {"count": imported})
     if failed and not imported:
         messages.warning(
             request,
-            "Couldn't read your skills — your character hasn't granted skills access yet. "
-            "Log out and log back in with EVE to authorise it.",
+            _(
+                "Couldn't read your skills — your character hasn't granted skills access yet. "
+                "Log out and log back in with EVE to authorise it."
+            ),
         )
     return redirect("skills:plans")
 
@@ -131,9 +139,11 @@ def create_plan(request: HttpRequest) -> HttpResponse:
     plan = generate_plan_for_doctrine(character, doctrine)
     if not plan.steps.exists():
         plan.delete()
-        messages.success(request, f"{character.name} can already fly {doctrine.name} — no plan needed.")
+        messages.success(request, _("%(character)s can already fly %(doctrine)s — no plan needed.") % {
+            "character": character.name, "doctrine": doctrine.name})
         return redirect("skills:plans")
-    messages.success(request, f"Plan built: {plan.steps.count()} skills toward {doctrine.name}.")
+    messages.success(request, _("Plan built: %(count)d skills toward %(doctrine)s.") % {
+        "count": plan.steps.count(), "doctrine": doctrine.name})
     return redirect("skills:detail", pk=plan.pk)
 
 
@@ -177,7 +187,7 @@ def remove_step(request: HttpRequest, pk: int, step_id: int) -> HttpResponse:
     plan = _get_owned_plan(request.user, pk)
     get_object_or_404(SkillPlanStep, pk=step_id, plan=plan).delete()
     _resequence(plan)
-    messages.success(request, "Skill removed from the plan.")
+    messages.success(request, _("Skill removed from the plan."))
     return redirect("skills:detail", pk=pk)
 
 
@@ -219,7 +229,7 @@ def _resequence(plan) -> None:
 @require_POST
 def delete_plan(request: HttpRequest, pk: int) -> HttpResponse:
     _get_owned_plan(request.user, pk).delete()
-    messages.success(request, "Plan deleted.")
+    messages.success(request, _("Plan deleted."))
     return redirect("skills:plans")
 
 

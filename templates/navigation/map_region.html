@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% load static %}
-{% block title %}{% if map %}{{ map.region.name }} Map{% else %}Region Map{% endif %} · [FORCA] Command Grid{% endblock %}
+{% load static i18n %}
+{% block title %}{% if map %}{% blocktranslate with region=map.region.name %}{{ region }} Map{% endblocktranslate %}{% else %}{% translate "Region Map" %}{% endif %} · [FORCA] Command Grid{% endblock %}
 {% block extra_head %}
 {% if map %}<script defer src="{% static 'js/vendor/svg-pan-zoom.min.js' %}"></script>{% endif %}
 {% endblock %}
@@ -8,25 +8,25 @@
 
 {% if missing %}
   <div class="panel px-4 py-16 text-center">
-    <p class="font-display text-lg text-muted">Region “{{ missing }}” not found</p>
-    <a href="{% url 'navigation:map_index' %}" class="btn-ghost mt-4 text-sm">← All region maps</a>
+    <p class="font-display text-lg text-muted">{% blocktranslate with name=missing %}Region “{{ name }}” not found{% endblocktranslate %}</p>
+    <a href="{% url 'navigation:map_index' %}" class="btn-ghost mt-4 text-sm">{% translate "← All region maps" %}</a>
   </div>
 {% else %}
 <header class="mb-4 flex flex-wrap items-end justify-between gap-4">
   <div>
-    <p class="eyebrow">Region map</p>
+    <p class="eyebrow">{% translate "Region map" %}</p>
     <h1 class="mt-1 text-3xl font-bold text-ink">{{ map.region.name }}</h1>
-    <p class="mt-1 text-sm text-faint">{{ map.nodes|length }} systems · {{ map.edges|length }} stargate links · {{ map.constellations|length }} constellations</p>
+    <p class="mt-1 text-sm text-faint">{% blocktranslate with n=map.nodes|length %}{{ n }} systems{% endblocktranslate %} · {% blocktranslate with n=map.edges|length %}{{ n }} stargate links{% endblocktranslate %} · {% blocktranslate with n=map.constellations|length %}{{ n }} constellations{% endblocktranslate %}</p>
   </div>
   <div class="flex flex-wrap gap-2">
-    <a href="{% url 'navigation:map_index' %}" class="btn-ghost text-sm">← All maps</a>
-    <a href="{% url 'navigation:route_planner' %}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-route"/></svg> Route planner</a>
+    <a href="{% url 'navigation:map_index' %}" class="btn-ghost text-sm">{% translate "← All maps" %}</a>
+    <a href="{% url 'navigation:route_planner' %}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-route"/></svg> {% translate "Route planner" %}</a>
   </div>
 </header>
 
 <!-- Overlay switcher -->
 <div class="mb-3 flex flex-wrap items-center gap-1.5 text-xs">
-  <span class="text-faint">Layer:</span>
+  <span class="text-faint">{% translate "Layer:" %}</span>
   {% for key, label in overlays %}
   <a href="?overlay={{ key }}{% if hl_param %}&hl={{ hl_param }}{% endif %}{% if route_param %}&route={{ route_param }}{% endif %}" class="chip {% if overlay == key %}!border-gold/40 !text-gold{% else %}hover:text-ink{% endif %}">{{ label }}</a>
   {% endfor %}
@@ -65,31 +65,31 @@
 </div>
 <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-faint">
   {% if overlay == 'security' %}
-    <span>Security:</span>
+    <span>{% translate "Security:" %}</span>
     <span class="inline-flex items-center gap-1"><span class="inline-block h-2.5 w-2.5 rounded-full" style="background:#3b7be0"></span> high</span>
     <span class="inline-flex items-center gap-1"><span class="inline-block h-2.5 w-2.5 rounded-full" style="background:#e0d23e"></span> low</span>
     <span class="inline-flex items-center gap-1"><span class="inline-block h-2.5 w-2.5 rounded-full" style="background:#c02929"></span> null</span>
   {% elif overlay == 'sov' %}
-    <span>Each colour is a sovereignty holder; grey = unclaimed. Hover a system for the alliance.</span>
+    <span>{% translate "Each colour is a sovereignty holder; grey = unclaimed. Hover a system for the alliance." %}</span>
   {% elif overlay == 'fw' %}
-    <span>Faction war:</span>
+    <span>{% translate "Faction war:" %}</span>
     <span class="inline-flex items-center gap-1"><span class="inline-block h-2.5 w-2.5 rounded-full" style="background:#4a7ab5"></span> Caldari</span>
     <span class="inline-flex items-center gap-1"><span class="inline-block h-2.5 w-2.5 rounded-full" style="background:#3a8f6a"></span> Gallente</span>
     <span class="inline-flex items-center gap-1"><span class="inline-block h-2.5 w-2.5 rounded-full" style="background:#c8a93b"></span> Amarr</span>
     <span class="inline-flex items-center gap-1"><span class="inline-block h-2.5 w-2.5 rounded-full" style="background:#a0432b"></span> Minmatar</span>
-    <span class="inline-flex items-center gap-1"><span class="inline-block h-2.5 w-2.5 rounded-full" style="background:#f0533f"></span> contested front</span>
+    <span class="inline-flex items-center gap-1"><span class="inline-block h-2.5 w-2.5 rounded-full" style="background:#f0533f"></span> {% translate "contested front" %}</span>
   {% elif overlay == 'incursions' %}
-    <span>Red = system under incursion.</span>
+    <span>{% translate "Red = system under incursion." %}</span>
   {% else %}
-    <span>Brighter/bigger = more activity in the last hour. Hover a system for the count.</span>
+    <span>{% translate "Brighter/bigger = more activity in the last hour. Hover a system for the count." %}</span>
   {% endif %}
-  {% if map.bridges %}<span class="inline-flex items-center gap-1"><span class="inline-block h-0.5 w-4" style="background:#f4a52b"></span> Ansiblex bridge</span>{% endif %}
-  {% if route_segments %}<span class="inline-flex items-center gap-1"><span class="inline-block h-0.5 w-4" style="background:#f4c430"></span> planned route</span>{% endif %}
-  <span class="inline-flex items-center gap-1"><span class="inline-block h-2.5 w-2.5 rounded-full" style="border:1.5px dashed #5fd0c4"></span> region exit</span>
-  <span class="ml-auto">Drag to pan · scroll to zoom · click a system for details</span>
+  {% if map.bridges %}<span class="inline-flex items-center gap-1"><span class="inline-block h-0.5 w-4" style="background:#f4a52b"></span> {% translate "Ansiblex bridge" %}</span>{% endif %}
+  {% if route_segments %}<span class="inline-flex items-center gap-1"><span class="inline-block h-0.5 w-4" style="background:#f4c430"></span> {% translate "planned route" %}</span>{% endif %}
+  <span class="inline-flex items-center gap-1"><span class="inline-block h-2.5 w-2.5 rounded-full" style="border:1.5px dashed #5fd0c4"></span> {% translate "region exit" %}</span>
+  <span class="ml-auto">{% translate "Drag to pan · scroll to zoom · click a system for details" %}</span>
 </div>
 {% else %}
-  <div class="panel px-4 py-16 text-center"><p class="text-sm text-faint">No mapped systems in this region.</p></div>
+  <div class="panel px-4 py-16 text-center"><p class="text-sm text-faint">{% translate "No mapped systems in this region." %}</p></div>
 {% endif %}
 {% endif %}
 {% endblock %}

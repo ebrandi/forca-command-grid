@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from apps.industry.models import IndustryProject
 from apps.market.models import MarketLocation
@@ -10,8 +11,8 @@ from core.mixins import ProvenanceMixin, TimeStampedModel
 
 class Stockpile(ProvenanceMixin):
     class Kind(models.TextChoices):
-        CORP = "corp", "Corp"
-        PERSONAL = "personal", "Personal"
+        CORP = "corp", _("Corp")
+        PERSONAL = "personal", _("Personal")
 
     name = models.CharField(max_length=200)
     location = models.ForeignKey(
@@ -27,8 +28,8 @@ class Stockpile(ProvenanceMixin):
 class StockpileItem(ProvenanceMixin):
     class Provenance(models.TextChoices):
         ESI = "esi", "ESI"
-        MANUAL = "manual", "Manual"
-        ESTIMATED = "estimated", "Estimated"
+        MANUAL = "manual", _("Manual")
+        ESTIMATED = "estimated", _("Estimated")
 
     stockpile = models.ForeignKey(Stockpile, on_delete=models.CASCADE, related_name="items")
     type_id = models.IntegerField()
@@ -55,9 +56,9 @@ class StockpileItem(ProvenanceMixin):
 
 class StockReservation(models.Model):
     class Status(models.TextChoices):
-        ACTIVE = "active", "Active"
-        CONSUMED = "consumed", "Consumed"
-        RELEASED = "released", "Released"
+        ACTIVE = "active", _("Active")
+        CONSUMED = "consumed", _("Consumed")
+        RELEASED = "released", _("Released")
 
     stockpile_item = models.ForeignKey(
         StockpileItem, on_delete=models.CASCADE, related_name="reservations"
@@ -75,10 +76,10 @@ class StockReservation(models.Model):
 
 class HaulingTask(TimeStampedModel):
     class Status(models.TextChoices):
-        OPEN = "open", "Open"
-        CLAIMED = "claimed", "Claimed"
-        IN_PROGRESS = "in_progress", "In progress"
-        DONE = "done", "Done"
+        OPEN = "open", _("Open")
+        CLAIMED = "claimed", _("Claimed")
+        IN_PROGRESS = "in_progress", _("In progress")
+        DONE = "done", _("Done")
 
     type_id = models.IntegerField(null=True, blank=True)
     manifest = models.JSONField(default=list, blank=True)
@@ -106,10 +107,10 @@ class AssetLocation(models.Model):
     """
 
     class Kind(models.TextChoices):
-        STATION = "station", "Station"
-        SOLAR_SYSTEM = "solar_system", "Solar system"
-        STRUCTURE = "structure", "Structure"
-        OTHER = "other", "Other"
+        STATION = "station", _("Station")
+        SOLAR_SYSTEM = "solar_system", _("Solar system")
+        STRUCTURE = "structure", _("Structure")
+        OTHER = "other", _("Other")
 
     location_id = models.BigIntegerField(primary_key=True)
     name = models.CharField(max_length=200, blank=True)
@@ -133,8 +134,8 @@ class Asset(ProvenanceMixin):
     """
 
     class Owner(models.TextChoices):
-        CORPORATION = "corporation", "Corporation"
-        CHARACTER = "character", "Character"
+        CORPORATION = "corporation", _("Corporation")
+        CHARACTER = "character", _("Character")
 
     owner_type = models.CharField(max_length=12, choices=Owner.choices, db_index=True)
     owner_id = models.BigIntegerField(db_index=True)

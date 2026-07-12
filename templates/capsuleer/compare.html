@@ -1,11 +1,12 @@
 {% extends "base.html" %}
-{% block title %}Compare paths · Capsuleer Path{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Compare paths" %} · {% translate "Capsuleer Path" %}{% endblock %}
 {% block content %}
-<p class="eyebrow text-faint"><a href="{% url 'capsuleer:home' %}" class="hover:text-gold">Capsuleer Path</a> › <a href="{% url 'capsuleer:paths' %}" class="hover:text-gold">Paths</a> › Compare</p>
-<h1 class="mb-4 text-2xl font-bold text-ink">Compare paths</h1>
+<p class="eyebrow text-faint"><a href="{% url 'capsuleer:home' %}" class="hover:text-gold">{% translate "Capsuleer Path" %}</a> › <a href="{% url 'capsuleer:paths' %}" class="hover:text-gold">{% translate "Paths" %}</a> › {% translate "Compare" %}</p>
+<h1 class="mb-4 text-2xl font-bold text-ink">{% translate "Compare paths" %}</h1>
 
 <form class="panel mb-4 px-4 py-3" method="get">
-  <p class="eyebrow text-faint">Pick up to 4</p>
+  <p class="eyebrow text-faint">{% translate "Pick up to 4" %}</p>
   {{ selected_keys|json_script:"cp-cmp-keys" }}
   <div class="mt-2 flex flex-wrap gap-1.5" x-data='{ sel: JSON.parse(document.getElementById("cp-cmp-keys").textContent) || [] }'>
     {% for t in all_templates %}
@@ -13,7 +14,7 @@
     {% endfor %}
     <input type="hidden" name="keys" :value="sel.join(',')">
   </div>
-  <button class="btn-cyan mt-3 !py-1 text-xs">Compare selected</button>
+  <button class="btn-cyan mt-3 !py-1 text-xs">{% translate "Compare selected" %}</button>
 </form>
 
 {% if rows %}
@@ -22,17 +23,17 @@
     <table class="w-full text-sm" x-data="sortableTable('name','asc')">
       <thead class="border-b border-line text-left text-faint">
         <tr>
-          <th class="px-3 py-2"><button type="button" data-sort-key="name" class="eyebrow">Path</button></th>
-          <th class="px-3 py-2">Training time*</th>
-          <th class="px-3 py-2">Initial cost*</th>
-          <th class="px-3 py-2">Solo/group</th>
-          <th class="px-3 py-2">Risk</th>
-          <th class="px-3 py-2">Income</th>
-          <th class="px-3 py-2">Corp demand</th>
-          <th class="px-3 py-2">Newbro</th>
-          <th class="px-3 py-2"><button type="button" data-sort-key="mentors" class="eyebrow">Mentors</button></th>
-          <th class="px-3 py-2">Upcoming ops</th>
-          <th class="px-3 py-2">Advances to</th>
+          <th class="px-3 py-2"><button type="button" data-sort-key="name" class="eyebrow">{% translate "Path" %}</button></th>
+          <th class="px-3 py-2">{% translate "Training time*" %}</th>
+          <th class="px-3 py-2">{% translate "Initial cost*" %}</th>
+          <th class="px-3 py-2">{% translate "Solo/group" %}</th>
+          <th class="px-3 py-2">{% translate "Risk" %}</th>
+          <th class="px-3 py-2">{% translate "Income" %}</th>
+          <th class="px-3 py-2">{% translate "Corp demand" %}</th>
+          <th class="px-3 py-2">{% translate "Newbro" %}</th>
+          <th class="px-3 py-2"><button type="button" data-sort-key="mentors" class="eyebrow">{% translate "Mentors" %}</button></th>
+          <th class="px-3 py-2">{% translate "Upcoming ops" %}</th>
+          <th class="px-3 py-2">{% translate "Advances to" %}</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-line/40">
@@ -44,10 +45,10 @@
           <td class="px-3 py-2 text-muted">{{ r.template.get_solo_group_display }}</td>
           <td class="px-3 py-2 text-faint">{{ r.template.risk_note|default:"—" }}</td>
           <td class="px-3 py-2 text-faint">{{ r.template.income_note|default:"—" }}</td>
-          <td class="px-3 py-2 text-muted">{% if r.template.category in demand_activities %}<span class="text-gold">yes</span>{% else %}no{% endif %}</td>
-          <td class="px-3 py-2 text-muted">{% if r.template.newbro_friendly %}yes{% else %}no{% endif %}</td>
-          <td class="px-3 py-2" data-sort-key="mentors" data-sort-value="{{ r.mentors }}" title="live lookup"><span class="data text-muted">{% if r.mentors %}{{ r.mentors }}{% else %}none listed right now{% endif %}</span></td>
-          <td class="px-3 py-2" title="live lookup · type match only"><span class="data text-muted">{{ r.upcoming_ops }}</span></td>
+          <td class="px-3 py-2 text-muted">{% if r.template.category in demand_activities %}<span class="text-gold">{% translate "yes" %}</span>{% else %}{% translate "no" %}{% endif %}</td>
+          <td class="px-3 py-2 text-muted">{% if r.template.newbro_friendly %}{% translate "yes" %}{% else %}{% translate "no" %}{% endif %}</td>
+          <td class="px-3 py-2" data-sort-key="mentors" data-sort-value="{{ r.mentors }}" title="{% translate 'live lookup' %}"><span class="data text-muted">{% if r.mentors %}{{ r.mentors }}{% else %}{% translate "none listed right now" %}{% endif %}</span></td>
+          <td class="px-3 py-2" title="{% translate 'live lookup · type match only' %}"><span class="data text-muted">{{ r.upcoming_ops }}</span></td>
           <td class="px-3 py-2 text-faint">{% for a in r.template.advanced_paths.all %}{{ a.name }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</td>
         </tr>
         {% endfor %}
@@ -55,8 +56,8 @@
     </table>
   </div>
 </section>
-<p class="mt-3 text-[11px] text-faint">Training time assumes the mapped skills at current SDE data{% if sde_version %} ({{ sde_version }}){% endif %}; costs use corp market pricing where known — unknown means unknown, not zero.</p>
+<p class="mt-3 text-[11px] text-faint">{% translate "Training time assumes the mapped skills at current SDE data" %}{% if sde_version %} ({{ sde_version }}){% endif %}{% translate "; costs use corp market pricing where known — unknown means unknown, not zero." %}</p>
 {% else %}
-<section class="panel px-4 py-10 text-center text-faint">Pick two or more paths above to compare them side by side.</section>
+<section class="panel px-4 py-10 text-center text-faint">{% translate "Pick two or more paths above to compare them side by side." %}</section>
 {% endif %}
 {% endblock %}

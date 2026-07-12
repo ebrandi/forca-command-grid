@@ -1,29 +1,30 @@
 {% extends "base.html" %}
 {% load eve %}
-{% block title %}Corp demand · Industry{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Corp demand" %} · {% translate "Industry" %}{% endblock %}
 {% block content %}
 
-<a href="{% url 'industry:home' %}" class="text-xs text-faint hover:text-gold">← Industry Center</a>
+<a href="{% url 'industry:home' %}" class="text-xs text-faint hover:text-gold">← {% translate "Industry Center" %}</a>
 <header class="mt-3 mb-5 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <p class="eyebrow">Industry &amp; Economy</p>
-    <h1 class="mt-1 text-2xl font-bold text-ink">Corp demand</h1>
-    <p class="mt-1 max-w-2xl text-sm text-faint">What the fleet is short on across all active doctrines — ranked by ISK to close. Turn any line into a tracked production plan.</p>
+    <p class="eyebrow">{% translate "Industry &amp; Economy" %}</p>
+    <h1 class="mt-1 text-2xl font-bold text-ink">{% translate "Corp demand" %}</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "What the fleet is short on across all active doctrines — ranked by ISK to close. Turn any line into a tracked production plan." %}</p>
   </div>
   <form method="get" class="flex items-end gap-2">
-    <div><label class="label" for="d_sets">Doctrine sets</label><input id="d_sets" type="number" name="sets" min="1" max="100" value="{{ sets }}" class="input-field w-24"></div>
-    <button class="btn-ghost text-sm">Update</button>
+    <div><label class="label" for="d_sets">{% translate "Doctrine sets" %}</label><input id="d_sets" type="number" name="sets" min="1" max="100" value="{{ sets }}" class="input-field w-24"></div>
+    <button class="btn-ghost text-sm">{% translate "Update" %}</button>
   </form>
 </header>
 
 <section class="panel overflow-hidden">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">Shortfalls to keep {{ sets }} set{{ sets|pluralize }} stocked</h2></div>
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">{% blocktranslate count n=sets %}Shortfalls to keep {{ n }} set stocked{% plural %}Shortfalls to keep {{ n }} sets stocked{% endblocktranslate %}</h2></div>
   {% if rows %}
   <div class="overflow-x-auto"><table class="w-full text-sm">
     <thead class="text-left text-faint"><tr class="border-b border-line/60">
-      <th class="px-4 py-2 font-medium">Item</th>
-      <th class="px-4 py-2 text-right font-medium">Short</th>
-      <th class="px-4 py-2 text-right font-medium">Buy cost</th>
+      <th class="px-4 py-2 font-medium">{% translate "Item" %}</th>
+      <th class="px-4 py-2 text-right font-medium">{% translate "Short" %}</th>
+      <th class="px-4 py-2 text-right font-medium">{% translate "Buy cost" %}</th>
       <th class="px-4 py-2 text-right font-medium"></th>
     </tr></thead>
     <tbody>
@@ -34,11 +35,11 @@
         <td class="px-4 py-1.5 text-right data text-gold">{{ r.cost|isk }}</td>
         <td class="px-4 py-1.5 text-right">
           <div class="flex items-center justify-end gap-1">
-            <a href="{% url 'industry:calculator' %}?type_id={{ r.type_id }}&runs={{ r.need }}" class="btn-ghost !py-1 !text-xs">Cost</a>
+            <a href="{% url 'industry:calculator' %}?type_id={{ r.type_id }}&runs={{ r.need }}" class="btn-ghost !py-1 !text-xs">{% translate "Cost" %}</a>
             <form method="post" action="{% url 'industry:plan_from_demand' %}">{% csrf_token %}
               <input type="hidden" name="type_id" value="{{ r.type_id }}">
               <input type="hidden" name="quantity" value="{{ r.need }}">
-              <button class="btn-gold !py-1 !text-xs">Plan</button>
+              <button class="btn-gold !py-1 !text-xs">{% translate "Plan" %}</button>
             </form>
           </div>
         </td>
@@ -47,7 +48,7 @@
     </tbody>
   </table></div>
   {% else %}
-  <p class="px-4 py-12 text-center text-sm text-faint">No shortfalls — the corp is fully stocked for {{ sets }} set{{ sets|pluralize }}, or no active doctrines have fits with buildable items.</p>
+  <p class="px-4 py-12 text-center text-sm text-faint">{% blocktranslate count n=sets %}No shortfalls — the corp is fully stocked for {{ n }} set, or no active doctrines have fits with buildable items.{% plural %}No shortfalls — the corp is fully stocked for {{ n }} sets, or no active doctrines have fits with buildable items.{% endblocktranslate %}</p>
   {% endif %}
 </section>
 {% endblock %}

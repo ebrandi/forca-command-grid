@@ -11,21 +11,23 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from core.mixins import TimeStampedModel
 
 
 class ShipClass(models.TextChoices):
+    # EVE ship-group proper nouns (game data) — kept English, not translated.
     DST = "dst", "Blockade Runner / DST"
     FREIGHTER = "freighter", "Freighter"
     JF = "jf", "Jump Freighter"
 
 
 class Audience(models.TextChoices):
-    PUBLIC = "public", "Public — anyone can get quotes"
-    ALLIANCE = "alliance", "Corp & alliance members only"
-    CORP = "corp", "Corp members only"
-    DISABLED = "disabled", "Disabled"
+    PUBLIC = "public", _("Public — anyone can get quotes")
+    ALLIANCE = "alliance", _("Corp & alliance members only")
+    CORP = "corp", _("Corp members only")
+    DISABLED = "disabled", _("Disabled")
 
 
 class RateCard(TimeStampedModel):
@@ -92,12 +94,12 @@ class CourierContract(TimeStampedModel):
     """
 
     class Status(models.TextChoices):
-        QUOTE = "quote", "Quote"
-        OUTSTANDING = "outstanding", "Outstanding"
-        IN_PROGRESS = "in_progress", "In progress"
-        DELIVERED = "delivered", "Delivered"
-        FAILED = "failed", "Failed"
-        CANCELLED = "cancelled", "Cancelled"
+        QUOTE = "quote", _("Quote")
+        OUTSTANDING = "outstanding", _("Outstanding")
+        IN_PROGRESS = "in_progress", _("In progress")
+        DELIVERED = "delivered", _("Delivered")
+        FAILED = "failed", _("Failed")
+        CANCELLED = "cancelled", _("Cancelled")
 
     # Customer the haul is for (free text so external corps/alliances work).
     customer = models.CharField(max_length=120, blank=True)
@@ -149,9 +151,9 @@ class CourierContract(TimeStampedModel):
     )
 
     class Verification(models.TextChoices):
-        UNVERIFIED = "unverified", "Not verified"
-        VERIFIED = "verified", "Verified in-game"
-        FAILED = "failed", "Failed in-game"
+        UNVERIFIED = "unverified", _("Not verified")
+        VERIFIED = "verified", _("Verified in-game")
+        FAILED = "failed", _("Failed in-game")
 
     # ESI cross-check of the actual in-game contract (see contracts_esi.py). A
     # self-reported delivery only earns full haul credit once verified.

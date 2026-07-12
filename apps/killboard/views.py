@@ -9,6 +9,7 @@ from django.core.cache import cache
 from django.core.paginator import Page, Paginator
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.translation import gettext as _t
 from django.views.decorators.http import require_POST
 
 from apps.sde.models import SdeSolarSystem
@@ -349,16 +350,16 @@ def killboard_stats(request: HttpRequest) -> HttpResponse:
     data = dashboard()
     ships = data["ships"]
     ship_boards = [
-        {"title": "Ships we destroy", "color": "text-kill", "canvas": "kb-ships-killed",
+        {"title": _t("Ships we destroy"), "color": "text-kill", "canvas": "kb-ships-killed",
          "kind": "kills", "rows": ships["killed"]},
-        {"title": "Ships we lose", "color": "text-loss", "canvas": "kb-ships-lost",
+        {"title": _t("Ships we lose"), "color": "text-loss", "canvas": "kb-ships-lost",
          "kind": "losses", "rows": ships["lost"]},
     ]
     location_boards = [
-        {"title": "Top systems", "param": "system_id",
+        {"title": _t("Top systems"), "param": "system_id",
          "rows": [{"id": s["system_id"], "name": s["name"], "count": s["count"]}
                   for s in data["systems"]]},
-        {"title": "Top regions", "param": "region_id",
+        {"title": _t("Top regions"), "param": "region_id",
          "rows": [{"id": r["region_id"], "name": r["name"], "count": r["count"]}
                   for r in data["regions"]]},
     ]
@@ -411,9 +412,9 @@ def killboard_pilot(request: HttpRequest, character_id: int) -> HttpResponse:
     )
     ships = data["ships"]
     ship_boards = [
-        {"title": "Ships flown", "color": "text-kill", "canvas": "pilot-ships-flown",
+        {"title": _t("Ships flown"), "color": "text-kill", "canvas": "pilot-ships-flown",
          "rows": ships["flown"]},
-        {"title": "Ships lost", "color": "text-loss", "canvas": "pilot-ships-lost",
+        {"title": _t("Ships lost"), "color": "text-loss", "canvas": "pilot-ships-lost",
          "rows": ships["lost"]},
     ]
     return render(request, "killboard/pilot.html", {
@@ -552,9 +553,9 @@ def watchlist_create(request: HttpRequest) -> HttpResponse:
     form = WatchlistForm(request.POST)
     if form.is_valid():
         wl = form.save()
-        messages.success(request, f"Watchlist “{wl.name}” created.")
+        messages.success(request, _t("Watchlist “%(name)s” created.") % {"name": wl.name})
         return redirect("killboard:watchlist_detail", pk=wl.pk)
-    messages.error(request, "Could not create watchlist.")
+    messages.error(request, _t("Could not create watchlist."))
     return redirect("killboard:watchlists")
 
 
@@ -569,11 +570,11 @@ def watchlist_add_entry(request: HttpRequest, pk: int) -> HttpResponse:
         entry.watchlist = watchlist
         try:
             entry.save()
-            messages.success(request, "Target added to watchlist.")
+            messages.success(request, _t("Target added to watchlist."))
         except Exception:  # noqa: BLE001 - unique_together clash = already watched
-            messages.error(request, "That entity is already on this watchlist.")
+            messages.error(request, _t("That entity is already on this watchlist."))
     else:
-        messages.error(request, "Could not add target — check the entity id.")
+        messages.error(request, _t("Could not add target — check the entity id."))
     return redirect("killboard:watchlist_detail", pk=pk)
 
 
@@ -582,7 +583,7 @@ def watchlist_add_entry(request: HttpRequest, pk: int) -> HttpResponse:
 @require_POST
 def watchlist_remove_entry(request: HttpRequest, pk: int, entry_id: int) -> HttpResponse:
     get_object_or_404(WatchlistEntry, pk=entry_id, watchlist_id=pk).delete()
-    messages.success(request, "Target removed.")
+    messages.success(request, _t("Target removed."))
     return redirect("killboard:watchlist_detail", pk=pk)
 
 
@@ -591,7 +592,7 @@ def watchlist_remove_entry(request: HttpRequest, pk: int, entry_id: int) -> Http
 @require_POST
 def watchlist_delete(request: HttpRequest, pk: int) -> HttpResponse:
     get_object_or_404(Watchlist, pk=pk).delete()
-    messages.success(request, "Watchlist deleted.")
+    messages.success(request, _t("Watchlist deleted."))
     return redirect("killboard:watchlists")
 
 
@@ -634,21 +635,21 @@ def battle_report_detail(request: HttpRequest, pk: int) -> HttpResponse:
 def battle_report_create(request: HttpRequest) -> HttpResponse:
     form = BattleReportForm(request.POST)
     if not form.is_valid():
-        messages.error(request, "Pick a system and a window (1–168h).")
+        messages.error(request, _t("Pick a system and a window (1–168h)."))
         return redirect("killboard:watchlists")
     system_id = form.cleaned_data["system_id"]
     if not SdeSolarSystem.objects.filter(system_id=system_id).exists():
-        messages.error(request, "Pick a system from the list.")
+        messages.error(request, _t("Pick a system from the list."))
         return redirect("killboard:watchlists")
     report = generate_battle_report(
         system_id, hours=form.cleaned_data["hours"], title=form.cleaned_data.get("title", "")
     )
     if not report:
-        messages.error(request, "No killmails in that system/window to report on.")
+        messages.error(request, _t("No killmails in that system/window to report on."))
         return redirect("killboard:watchlists")
     audit_log(request.user, "battle_report.create", target_type="battle_report",
               target_id=str(report.id), metadata={"system_id": system_id}, ip=client_ip(request))
-    messages.success(request, "Battle report generated.")
+    messages.success(request, _t("Battle report generated."))
     return redirect("killboard:battle_report_detail", pk=report.pk)
 
 
@@ -674,6 +675,6 @@ def killfeed_config(request: HttpRequest) -> HttpResponse:
         cfg.min_loss_value = _dec("min_loss_value", cfg.min_loss_value)
         cfg.min_kill_value = _dec("min_kill_value", cfg.min_kill_value)
         cfg.save(update_fields=["enabled", "min_loss_value", "min_kill_value", "updated_at"])
-        messages.success(request, "Kill-feed settings saved.")
+        messages.success(request, _t("Kill-feed settings saved."))
         return redirect("killboard:killfeed_config")
     return render(request, "killboard/killfeed_config.html", {"cfg": cfg})

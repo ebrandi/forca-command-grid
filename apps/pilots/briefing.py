@@ -7,6 +7,8 @@ data plus shareable corp asks.
 """
 from __future__ import annotations
 
+from django.utils.translation import gettext as _
+
 
 def pilot_briefing(user) -> dict:
     """What changed / what to do, for one pilot — their own data only.
@@ -41,14 +43,19 @@ def pilot_briefing(user) -> dict:
     if main:
         op = upcoming_for_pilot(main)
         if op:
-            msg = f"Prep for {op['op'].name}: you're ready for {op['ready']}/{op['total']} doctrines."
+            msg = _("Prep for %(op)s: you're ready for %(ready)s/%(total)s doctrines.") % {
+                "op": op["op"].name, "ready": op["ready"], "total": op["total"],
+            }
             headline = {"kind": "operation", "text": msg, "url": f"/operations/{op['op'].pk}/"}
 
         lev = highest_leverage_skill(main)
         if lev:
             items.append({
                 "kind": "train",
-                "text": f"Train {lev['name']} {lev['target_level']} — unlocks {lev['doctrine_count']} doctrine(s).",
+                "text": _("Train %(name)s %(level)s — unlocks %(count)s doctrine(s).") % {
+                    "name": lev["name"], "level": lev["target_level"],
+                    "count": lev["doctrine_count"],
+                },
                 "url": "/skills/",
             })
 
@@ -56,7 +63,7 @@ def pilot_briefing(user) -> dict:
         if close:
             items.append({
                 "kind": "doctrine",
-                "text": f"You're closest to flying {close[0]['doctrine']}.",
+                "text": _("You're closest to flying %(doctrine)s.") % {"doctrine": close[0]["doctrine"]},
                 "url": f"/doctrines/{close[0]['doctrine_id']}/readiness/",
             })
 
@@ -67,7 +74,9 @@ def pilot_briefing(user) -> dict:
         total = sum((e["payout"] for e in srp), start=Decimal("0"))
         items.append({
             "kind": "srp",
-            "text": f"{len(srp)} loss(es) eligible for SRP (~{total:,.0f} ISK). Submit a claim.",
+            "text": _("%(n)s loss(es) eligible for SRP (~%(isk)s ISK). Submit a claim.") % {
+                "n": len(srp), "isk": f"{total:,.0f}",
+            },
             "url": "/srp/",
         })
 
@@ -78,11 +87,11 @@ def pilot_briefing(user) -> dict:
         is_open=True, assignee__isnull=True, status=Task.Status.OPEN
     ).count()
     if open_tasks:
-        items.append({"kind": "task", "text": f"You have {open_tasks} open task(s).", "url": "/tasks/"})
+        items.append({"kind": "task", "text": _("You have %(n)s open task(s).") % {"n": open_tasks}, "url": "/tasks/"})
     elif claimable:
         # kind 'task_open' so the merged page can route it: it is a claimable-work
         # pointer, not a personal deadline — suppressed when the pick-up boards render.
-        items.append({"kind": "task_open", "text": f"{claimable} task(s) open to claim.", "url": "/tasks/"})
+        items.append({"kind": "task_open", "text": _("%(n)s task(s) open to claim.") % {"n": claimable}, "url": "/tasks/"})
 
     if headline is None and items:
         headline = items.pop(0)

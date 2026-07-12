@@ -1,33 +1,33 @@
 {% extends "base.html" %}
-{% load eve %}
-{% block title %}Readiness · [FORCA] Command Grid{% endblock %}
+{% load eve i18n %}
+{% block title %}{% translate "Readiness" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
-{% if features.recommendations %}<a href="{% url 'recommendations:officer' %}" class="text-xs text-faint hover:text-gold">← Command</a>{% endif %}
+{% if features.recommendations %}<a href="{% url 'recommendations:officer' %}" class="text-xs text-faint hover:text-gold">← {% translate "Command" %}</a>{% endif %}
 
 <header class="mt-2 mb-6 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <p class="eyebrow text-gold">Leadership</p>
-    <h1 class="mt-1 text-3xl font-bold text-ink">Corporation readiness</h1>
-    <p class="mt-1 text-sm text-faint">One number for "how ready are we" — and the gaps behind it. Each gap can become a claimable task.</p>
+    <p class="eyebrow text-gold">{% translate "Leadership" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Corporation readiness" %}</h1>
+    <p class="mt-1 text-sm text-faint">{% translate 'One number for "how ready are we" — and the gaps behind it. Each gap can become a claimable task.' %}</p>
   </div>
-  <form method="post" action="{% url 'readiness:recompute' %}">{% csrf_token %}<button class="btn-ghost">Recompute &amp; snapshot</button></form>
+  <form method="post" action="{% url 'readiness:recompute' %}">{% csrf_token %}<button class="btn-ghost">{% translate "Recompute &amp; snapshot" %}</button></form>
 </header>
 
 
 <!-- Quick rail -->
 <nav class="mb-4 flex flex-wrap gap-2">
-  <a href="{% url 'readiness:findings' %}" class="chip hover:!border-gold/40">Risk register</a>
-  <a href="{% url 'readiness:task_queue' %}" class="chip hover:!border-gold/40">Officer tasks</a>
-  <a href="{% url 'readiness:timeline' %}" class="chip hover:!border-gold/40">Timeline</a>
-  <a href="{% url 'readiness:simulator' %}" class="chip hover:!border-gold/40">Fleet simulator</a>
-  <a href="{% url 'readiness:report' %}" class="chip hover:!border-gold/40">Weekly report</a>
-  <a href="{% url 'readiness:alerts' %}" class="chip hover:!border-gold/40">Alerts</a>
+  <a href="{% url 'readiness:findings' %}" class="chip hover:!border-gold/40">{% translate "Risk register" %}</a>
+  <a href="{% url 'readiness:task_queue' %}" class="chip hover:!border-gold/40">{% translate "Officer tasks" %}</a>
+  <a href="{% url 'readiness:timeline' %}" class="chip hover:!border-gold/40">{% translate "Timeline" %}</a>
+  <a href="{% url 'readiness:simulator' %}" class="chip hover:!border-gold/40">{% translate "Fleet simulator" %}</a>
+  <a href="{% url 'readiness:report' %}" class="chip hover:!border-gold/40">{% translate "Weekly report" %}</a>
+  <a href="{% url 'readiness:alerts' %}" class="chip hover:!border-gold/40">{% translate "Alerts" %}</a>
 </nav>
 
 {% if forecast_count %}
 <a href="{% url 'readiness:findings' %}" class="panel mb-4 flex items-center gap-3 border-l-2 border-loss/60 px-4 py-3 transition hover:bg-panel2/40">
   <svg class="h-5 w-5 shrink-0 text-loss"><use href="#i-bolt"/></svg>
-  <p class="text-sm text-muted"><span class="font-medium text-loss">{{ forecast_count }} forecast{{ forecast_count|pluralize }}</span> predict a dimension crossing its red band soon — review the risk register before it breaches.</p>
+  <p class="text-sm text-muted">{% blocktranslate count n=forecast_count %}<span class="font-medium text-loss">{{ n }} forecast</span> predict a dimension crossing its red band soon — review the risk register before it breaches.{% plural %}<span class="font-medium text-loss">{{ n }} forecasts</span> predict a dimension crossing its red band soon — review the risk register before it breaches.{% endblocktranslate %}</p>
 </a>
 {% endif %}
 
@@ -35,16 +35,16 @@
   <!-- Index + dimensions -->
   <div class="space-y-5 lg:col-span-1">
     <section class="panel p-6 text-center">
-      <p class="eyebrow">Readiness index</p>
+      <p class="eyebrow">{% translate "Readiness index" %}</p>
       <p class="mt-2 font-display text-6xl font-bold {% if index >= 75 %}text-kill{% elif index >= 50 %}text-gold{% else %}text-loss{% endif %}">{{ index }}</p>
-      <p class="mt-1 text-xs text-faint">of 100 · equal-weight mean of dimensions</p>
+      <p class="mt-1 text-xs text-faint">{% translate "of 100 · equal-weight mean of dimensions" %}</p>
       {% if trend|length > 1 %}
         <div class="mt-3 flex justify-center">{% include "components/_sparkline.html" with values=trend unit="index" stroke="#f4c430" fill="rgba(244,196,48,0.12)" %}</div>
       {% endif %}
     </section>
 
     <section class="panel overflow-hidden">
-      <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Dimensions</h2></div>
+      <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">{% translate "Dimensions" %}</h2></div>
       <div class="divide-y divide-line/40">
         {% for d in dimensions %}
           <a href="{% url 'readiness:dimension' d.key %}" class="block px-4 py-3 transition hover:bg-panel2/40">
@@ -53,7 +53,7 @@
               <span class="flex items-center gap-2">
                 {% if d.delta %}<span class="text-[11px] {% if d.delta > 0 %}text-kill{% else %}text-loss{% endif %}">{% if d.delta > 0 %}▲{% else %}▼{% endif %}{{ d.delta }}</span>{% endif %}
                 {% if d.spark|length > 1 %}{% include "components/_sparkline.html" with mode="bars" values=d.spark threshold=1 wrap_cls="h-4" %}{% endif %}
-                {% if d.score is None %}<span class="text-xs text-faint">unknown</span>{% else %}<span class="data text-sm {% if d.score >= 75 %}text-kill{% elif d.score >= 50 %}text-gold{% else %}text-loss{% endif %}">{{ d.score }}</span>{% endif %}
+                {% if d.score is None %}<span class="text-xs text-faint">{% translate "unknown" %}</span>{% else %}<span class="data text-sm {% if d.score >= 75 %}text-kill{% elif d.score >= 50 %}text-gold{% else %}text-loss{% endif %}">{{ d.score }}</span>{% endif %}
               </span>
             </div>
             {% if d.score is not None %}
@@ -66,21 +66,21 @@
       </div>
       {% if preview_dimensions %}
       <div class="border-t border-line px-4 py-2.5">
-        <p class="text-[11px] uppercase tracking-wide text-faint">Preview (not yet in the index)</p>
+        <p class="text-[11px] uppercase tracking-wide text-faint">{% translate "Preview (not yet in the index)" %}</p>
         <div class="mt-1.5 flex flex-wrap gap-2">
           {% for p in preview_dimensions %}<a href="{% url 'readiness:dimension' p.key %}" class="chip hover:!border-gold/40">{{ p.label }} →</a>{% endfor %}
         </div>
       </div>
       {% endif %}
       <p class="border-t border-line px-4 py-2 text-xs text-faint">
-        Coverage: {{ coverage.known }}/{{ coverage.characters }} characters with skills imported · {{ coverage.ready_any }} can fly a doctrine.
+        {% blocktranslate with known=coverage.known characters=coverage.characters ready=coverage.ready_any %}Coverage: {{ known }}/{{ characters }} characters with skills imported · {{ ready }} can fly a doctrine.{% endblocktranslate %}
       </p>
     </section>
   </div>
 
   <!-- Top blocking gaps -->
   <section class="panel overflow-hidden lg:col-span-2">
-    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Top blocking gaps this week</h2></div>
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "Top blocking gaps this week" %}</h2></div>
     <div class="divide-y divide-line/40">
       {% for g in gaps %}
         {# D10: expand a gap to preview the task it would create before committing. #}
@@ -97,15 +97,15 @@
               <input type="hidden" name="ref_id" value="{{ g.ref_id }}">
               <input type="hidden" name="title" value="{{ g.task_title }}">
               <input type="hidden" name="task_type" value="{{ g.task_type }}">
-              <button class="btn-cyan !py-1 !text-xs">Create task</button>
+              <button class="btn-cyan !py-1 !text-xs">{% translate "Create task" %}</button>
             </form>
           </div>
           <div x-show="open" x-cloak x-transition.opacity class="mt-2 pl-[1.9rem] text-xs text-faint">
-            Creating a task here queues <span class="text-muted">"{{ g.task_title }}"</span> as a <span class="text-muted">{{ g.task_type }}</span> quest you can claim and track.
+            {% blocktranslate with title=g.task_title type=g.task_type %}Creating a task here queues <span class="text-muted">"{{ title }}"</span> as a <span class="text-muted">{{ type }}</span> quest you can claim and track.{% endblocktranslate %}
           </div>
         </div>
       {% empty %}
-        <p class="px-4 py-8 text-center text-sm text-faint">No blocking gaps — the corp is in good shape, or there's not enough imported data to find them.</p>
+        <p class="px-4 py-8 text-center text-sm text-faint">{% translate "No blocking gaps — the corp is in good shape, or there's not enough imported data to find them." %}</p>
       {% endfor %}
     </div>
   </section>

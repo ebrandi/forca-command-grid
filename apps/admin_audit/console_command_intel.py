@@ -15,6 +15,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
+from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
 from apps.command_intel import config
@@ -87,7 +88,7 @@ def command_intel_reset(request: HttpRequest, domain: str) -> HttpResponse:
     audit_log(request.user, "command_intel.config.reset",
               target_type="command_intel_config", target_id=domain,
               metadata={"domain": domain}, ip=client_ip(request))
-    messages.success(request, f"{domain.title()} reset to defaults.")
+    messages.success(request, _("%(domain)s reset to defaults.") % {"domain": domain.title()})
     return redirect(back)
 
 
@@ -111,7 +112,7 @@ def command_intel_provider(request: HttpRequest) -> HttpResponse:
             doc[key] = _int_or(request.POST.get(key), current.get(key))
         doc["temperature"] = _float_or(request.POST.get("temperature"), current.get("temperature"))
         return _audited_set(request, "provider", doc,
-                            ok_message="Provider & model settings saved.",
+                            ok_message=_("Provider & model settings saved."),
                             back="admin_audit:command_intel_provider")
     return render(request, "admin_audit/console/command_intel/provider.html", {
         "enabled": bool(getattr(settings, "COMMAND_INTEL_ENABLED", False)),
@@ -122,9 +123,9 @@ def command_intel_provider(request: HttpRequest) -> HttpResponse:
 
 # --- Constraints & thresholds (config domain "constraints"; doc 13 §2.3) -----
 _GLOBAL_RATIOS = [
-    ("critical_ratio", "Critical ratio", "Headroom/demand at or below this colours a constraint critical."),
-    ("high_ratio", "High ratio", "Above critical, at or below this colours it high."),
-    ("watch_ratio", "Watch ratio", "Above high, at or below this colours it watch."),
+    ("critical_ratio", _("Critical ratio"), _("Headroom/demand at or below this colours a constraint critical.")),
+    ("high_ratio", _("High ratio"), _("Above critical, at or below this colours it high.")),
+    ("watch_ratio", _("Watch ratio"), _("Above high, at or below this colours it watch.")),
 ]
 
 
@@ -176,7 +177,7 @@ def command_intel_constraints(request: HttpRequest) -> HttpResponse:
         doc["providers"] = providers
         doc["demand_targets"] = demand
         return _audited_set(request, "constraints", doc,
-                            ok_message="Constraints & thresholds saved.",
+                            ok_message=_("Constraints & thresholds saved."),
                             back="admin_audit:command_intel_constraints")
     cfg = config.get("constraints")
     glob = cfg.get("global") or {}
@@ -210,7 +211,7 @@ def command_intel_classification(request: HttpRequest) -> HttpResponse:
         doc["default"] = default
         doc["tier_min_rank"] = new_tiers
         return _audited_set(request, "classification", doc,
-                            ok_message="Classification settings saved.",
+                            ok_message=_("Classification settings saved."),
                             back="admin_audit:command_intel_classification")
     cfg = config.get("classification")
     tiers = cfg.get("tier_min_rank") or {}
@@ -228,10 +229,10 @@ def command_intel_classification(request: HttpRequest) -> HttpResponse:
 # Only broadcast-SAFE tiers are offered for Discord; the config validator also refuses
 # the forbidden pairing server-side, so the page can never arm an unsafe broadcast.
 _TIER_LABELS = {
-    "corp_internal": "Corporation Internal",
-    "high_command": "High Command",
-    "director_eyes_only": "Director — Eyes Only",
-    "alliance_command": "Alliance Command",
+    "corp_internal": _("Corporation Internal"),
+    "high_command": _("High Command"),
+    "director_eyes_only": _("Director — Eyes Only"),
+    "alliance_command": _("Alliance Command"),
 }
 _DISCORD_TIERS = ["corp_internal", "high_command"]
 _MAIL_TIERS = ["corp_internal", "high_command", "director_eyes_only", "alliance_command"]
@@ -266,7 +267,7 @@ def command_intel_notifications(request: HttpRequest) -> HttpResponse:
         if sev in _SEVERITIES:
             doc["min_severity_to_deliver"] = sev
         return _audited_set(request, "notifications", doc,
-                            ok_message="Notification & delivery settings saved.",
+                            ok_message=_("Notification & delivery settings saved."),
                             back="admin_audit:command_intel_notifications")
     cfg = config.get("notifications")
     return render(request, "admin_audit/console/command_intel/notifications.html", {
@@ -309,7 +310,7 @@ def command_intel_autonomous(request: HttpRequest) -> HttpResponse:
         doc["max_calibration_spread"] = _float_or(
             request.POST.get("max_calibration_spread"), current.get("max_calibration_spread"))
         return _audited_set(request, "autonomous", doc,
-                            ok_message="Autonomous proposal settings saved.",
+                            ok_message=_("Autonomous proposal settings saved."),
                             back="admin_audit:command_intel_autonomous")
     return render(request, "admin_audit/console/command_intel/autonomous.html", {
         "cfg": config.get("autonomous"),
@@ -333,7 +334,7 @@ def command_intel_auto_aar(request: HttpRequest) -> HttpResponse:
         doc["auto_aar_min_our_losses"] = max(0, _int_or(request.POST.get("auto_aar_min_our_losses"), 5))
         doc["auto_aar_min_logi_lost"] = max(0, _int_or(request.POST.get("auto_aar_min_logi_lost"), 1))
         doc["auto_aar_min_off_doctrine"] = max(0, _int_or(request.POST.get("auto_aar_min_off_doctrine"), 3))
-        return _audited_set(request, "battle", doc, ok_message="Auto-AAR settings saved.",
+        return _audited_set(request, "battle", doc, ok_message=_("Auto-AAR settings saved."),
                             back="admin_audit:command_intel_auto_aar")
     return render(request, "admin_audit/console/command_intel/auto_aar.html",
                   {"cfg": cfg, "meta": config.meta("battle")})

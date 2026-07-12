@@ -1,26 +1,26 @@
 {% extends "base.html" %}
-{% load eve %}
-{% block title %}Assets · [FORCA] Command Grid{% endblock %}
+{% load eve i18n %}
+{% block title %}{% translate "Assets" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <header class="mb-5">
-  <p class="eyebrow">Supply</p>
-  <h1 class="mt-1 text-3xl font-bold text-ink">Assets</h1>
-  <p class="mt-1 text-sm text-faint">Where your stuff actually is, and what it's worth — grouped by location.</p>
+  <p class="eyebrow">{% translate "Supply" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Assets" %}</h1>
+  <p class="mt-1 text-sm text-faint">{% translate "Where your stuff actually is, and what it's worth — grouped by location." %}</p>
 </header>
 
 <!-- Owner switch: personal vs corp, kept visually distinct to avoid mistakes -->
 <div class="mb-5 flex flex-wrap items-center gap-2">
   <div class="inline-flex rounded-lg border border-line bg-panel p-1">
-    <a href="?owner=mine" class="rounded-md px-4 py-1.5 text-sm font-display font-semibold uppercase tracking-wide {% if owner == 'mine' %}bg-cyan/15 text-cyan{% else %}text-faint hover:text-ink{% endif %}">My assets</a>
+    <a href="?owner=mine" class="rounded-md px-4 py-1.5 text-sm font-display font-semibold uppercase tracking-wide {% if owner == 'mine' %}bg-cyan/15 text-cyan{% else %}text-faint hover:text-ink{% endif %}">{% translate "My assets" %}</a>
     {% if can_view_corp %}
-      <a href="?owner=corp" class="rounded-md px-4 py-1.5 text-sm font-display font-semibold uppercase tracking-wide {% if owner == 'corp' %}bg-gold/15 text-gold{% else %}text-faint hover:text-ink{% endif %}">Corp assets</a>
+      <a href="?owner=corp" class="rounded-md px-4 py-1.5 text-sm font-display font-semibold uppercase tracking-wide {% if owner == 'corp' %}bg-gold/15 text-gold{% else %}text-faint hover:text-ink{% endif %}">{% translate "Corp assets" %}</a>
     {% endif %}
   </div>
   <div class="ml-auto flex items-center gap-2">
     {% if owner == 'mine' %}
-      <form method="post" action="{% url 'stockpile:sync_my_assets' %}">{% csrf_token %}<button class="btn-cyan">Sync my assets</button></form>
+      <form method="post" action="{% url 'stockpile:sync_my_assets' %}">{% csrf_token %}<button class="btn-cyan">{% translate "Sync my assets" %}</button></form>
     {% elif can_sync_corp %}
-      <form method="post" action="{% url 'stockpile:sync_corp_assets' %}">{% csrf_token %}<button class="btn-gold">Sync corp assets</button></form>
+      <form method="post" action="{% url 'stockpile:sync_corp_assets' %}">{% csrf_token %}<button class="btn-gold">{% translate "Sync corp assets" %}</button></form>
     {% endif %}
   </div>
 </div>
@@ -28,23 +28,23 @@
 <!-- Context banner: which holdings am I looking at -->
 <div class="mb-5 rounded-lg border px-4 py-2.5 text-sm {% if owner == 'corp' %}border-gold/30 bg-gold/5{% else %}border-cyan/30 bg-cyan/5{% endif %}">
   {% if owner == 'corp' %}
-    <span class="font-display font-semibold uppercase tracking-wide text-gold">Corporation holdings</span>
-    <span class="text-muted">— shared corp hangars, synced via a Director token.</span>
+    <span class="font-display font-semibold uppercase tracking-wide text-gold">{% translate "Corporation holdings" %}</span>
+    <span class="text-muted">{% translate "— shared corp hangars, synced via a Director token." %}</span>
   {% else %}
-    <span class="font-display font-semibold uppercase tracking-wide text-cyan">Your personal holdings</span>
-    <span class="text-muted">— only you (and no one else) can see these here.</span>
+    <span class="font-display font-semibold uppercase tracking-wide text-cyan">{% translate "Your personal holdings" %}</span>
+    <span class="text-muted">{% translate "— only you (and no one else) can see these here." %}</span>
   {% endif %}
 </div>
 
 <!-- Total -->
 <div class="panel mb-5 flex flex-wrap items-center justify-between gap-3 px-5 py-4">
   <div>
-    <p class="eyebrow">Total estimated value</p>
+    <p class="eyebrow">{% translate "Total estimated value" %}</p>
     <p class="data mt-0.5 text-2xl font-bold {% if owner == 'corp' %}text-gold{% else %}text-cyan{% endif %}">{{ data.total_value|isk }} ISK</p>
   </div>
   <div class="text-right text-xs text-faint">
-    <p>{{ data.locations|length }} location{{ data.locations|length|pluralize }}</p>
-    {% if data.as_of %}<p>as of {{ data.as_of|timesince }} ago</p>{% endif %}
+    <p>{% blocktranslate count n=data.locations|length %}{{ n }} location{% plural %}{{ n }} locations{% endblocktranslate %}</p>
+    {% if data.as_of %}<p>{% blocktranslate with ago=data.as_of|timesince %}as of {{ ago }} ago{% endblocktranslate %}</p>{% endif %}
   </div>
 </div>
 
@@ -63,12 +63,12 @@
           </div>
           <div class="text-right">
             <p class="data text-sm font-semibold {% if owner == 'corp' %}text-gold{% else %}text-cyan{% endif %}">{{ loc.value|isk }} ISK</p>
-            <p class="text-xs text-faint">{{ loc.item_count }} item type{{ loc.item_count|pluralize }} · {{ loc.units }} units <span x-show="!open" class="text-faint/70">· tap to expand</span></p>
+            <p class="text-xs text-faint">{% blocktranslate count n=loc.item_count %}{{ n }} item type{% plural %}{{ n }} item types{% endblocktranslate %} · {% blocktranslate with units=loc.units %}{{ units }} units{% endblocktranslate %} <span x-show="!open" class="text-faint/70">· {% translate "tap to expand" %}</span></p>
           </div>
         </button>
         {# Items are fetched on first expand by the button's @click (same fetch-then-text pattern as the Copy-fit button) and swapped into x-ref="items". hx-trigger on x-if content is not reliably processed by htmx, which left it stuck on "Loading…". #}
         <div x-show="open" x-cloak class="overflow-x-auto">
-          <div x-ref="items"><p class="px-4 py-3 text-xs text-faint">Loading items…</p></div>
+          <div x-ref="items"><p class="px-4 py-3 text-xs text-faint">{% translate "Loading items…" %}</p></div>
         </div>
       </section>
     {% endfor %}
@@ -76,11 +76,11 @@
 {% else %}
   <div class="panel p-8 text-center text-sm text-faint">
     {% if owner == 'mine' %}
-      No personal assets synced yet. Click <span class="text-cyan">“Sync my assets”</span> — you'll be asked to grant
-      asset access the first time (<a href="{% url 'sso:scopes' %}" class="text-cyan hover:underline">ESI Scopes</a>).
+      {% url 'sso:scopes' as scopes_url %}{% blocktranslate %}No personal assets synced yet. Click <span class="text-cyan">“Sync my assets”</span> — you'll be asked to grant
+      asset access the first time (<a href="{{ scopes_url }}" class="text-cyan hover:underline">ESI Scopes</a>).{% endblocktranslate %}
     {% else %}
-      No corp assets synced yet. A Director must grant corp-asset access on the
-      <a href="{% url 'sso:scopes' %}" class="text-gold hover:underline">ESI Scopes</a> page, then click “Sync corp assets”.
+      {% url 'sso:scopes' as scopes_url %}{% blocktranslate %}No corp assets synced yet. A Director must grant corp-asset access on the
+      <a href="{{ scopes_url }}" class="text-gold hover:underline">ESI Scopes</a> page, then click “Sync corp assets”.{% endblocktranslate %}
     {% endif %}
   </div>
 {% endif %}

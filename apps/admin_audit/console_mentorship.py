@@ -16,6 +16,7 @@ from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.text import slugify
+from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
 from apps.mentorship import forms, matching, reporting, rewards, services, trust
@@ -72,9 +73,9 @@ def mentorship_config(request: HttpRequest) -> HttpResponse:
             form.save()
             _audit(request, "mentorship.config_update", target_type="mentorship_program",
                    target_id=str(program.pk))
-            messages.success(request, "Mentorship Program settings saved.")
+            messages.success(request, _("Mentorship Program settings saved."))
             return redirect("admin_audit:mentorship_config")
-        messages.error(request, "Please correct the errors below.")
+        messages.error(request, _("Please correct the errors below."))
     else:
         form = forms.MentorshipProgramForm(instance=program)
     return render(request, "admin_audit/console/mentorship/config.html",
@@ -103,9 +104,9 @@ def mentorship_cohort_save(request: HttpRequest, pk: int | None = None) -> HttpR
         obj = form.save()
         _audit(request, f"mentorship.cohort_{'update' if pk else 'create'}",
                target_type="mentorship_cohort", target_id=str(obj.pk))
-        messages.success(request, "Cohort saved.")
+        messages.success(request, _("Cohort saved."))
     else:
-        messages.error(request, "Couldn't save the cohort — check the values.")
+        messages.error(request, _("Couldn't save the cohort — check the values."))
     return redirect("admin_audit:mentorship_cohorts")
 
 
@@ -115,7 +116,7 @@ def mentorship_cohort_save(request: HttpRequest, pk: int | None = None) -> HttpR
 def mentorship_cohort_delete(request: HttpRequest, pk: int) -> HttpResponse:
     MentorshipCohort.objects.filter(pk=pk).delete()
     _audit(request, "mentorship.cohort_delete", target_type="mentorship_cohort", target_id=str(pk))
-    messages.success(request, "Cohort removed.")
+    messages.success(request, _("Cohort removed."))
     return redirect("admin_audit:mentorship_cohorts")
 
 
@@ -141,9 +142,9 @@ def mentorship_track_save(request: HttpRequest, pk: int | None = None) -> HttpRe
         obj.save()
         _audit(request, f"mentorship.track_{'update' if pk else 'create'}",
                target_type="mentorship_track", target_id=str(obj.pk))
-        messages.success(request, "Track saved.")
+        messages.success(request, _("Track saved."))
     else:
-        messages.error(request, "Couldn't save the track — check the values.")
+        messages.error(request, _("Couldn't save the track — check the values."))
     return redirect("admin_audit:mentorship_tracks")
 
 
@@ -153,7 +154,7 @@ def mentorship_track_save(request: HttpRequest, pk: int | None = None) -> HttpRe
 def mentorship_track_delete(request: HttpRequest, pk: int) -> HttpResponse:
     MentorshipTrack.objects.filter(pk=pk).delete()
     _audit(request, "mentorship.track_delete", target_type="mentorship_track", target_id=str(pk))
-    messages.success(request, "Track removed.")
+    messages.success(request, _("Track removed."))
     return redirect("admin_audit:mentorship_tracks")
 
 
@@ -175,7 +176,7 @@ def mentorship_track_clone(request: HttpRequest, pk: int) -> HttpResponse:
         task.key = _unique_slug(MentorshipTask, task.title)
         task.save()
     _audit(request, "mentorship.track_clone", target_type="mentorship_track", target_id=str(track.pk))
-    messages.success(request, "Track cloned (as a draft).")
+    messages.success(request, _("Track cloned (as a draft)."))
     return redirect("admin_audit:mentorship_tracks")
 
 
@@ -206,8 +207,8 @@ def mentorship_task_save(request: HttpRequest, pk: int | None = None) -> HttpRes
             if not isinstance(criteria, dict):
                 raise ValueError
         except (json.JSONDecodeError, ValueError):
-            messages.error(request, "Criteria must be a JSON object, e.g. "
-                                    '{"type": "skill_min", "skill_type_id": 3300, "level": 3}.')
+            messages.error(request, _("Criteria must be a JSON object, e.g. "
+                                      '{"type": "skill_min", "skill_type_id": 3300, "level": 3}.'))
             return redirect(_task_return(form, instance))
     if form.is_valid():
         obj = form.save(commit=False)
@@ -218,9 +219,9 @@ def mentorship_task_save(request: HttpRequest, pk: int | None = None) -> HttpRes
         obj.save()
         _audit(request, f"mentorship.task_{'update' if pk else 'create'}",
                target_type="mentorship_task", target_id=str(obj.pk))
-        messages.success(request, "Field exercise saved.")
+        messages.success(request, _("Field exercise saved."))
         return redirect("admin_audit:mentorship_track_builder", pk=obj.track_id)
-    messages.error(request, "Couldn't save the exercise — check the values.")
+    messages.error(request, _("Couldn't save the exercise — check the values."))
     return redirect(_task_return(form, instance))
 
 
@@ -241,7 +242,7 @@ def mentorship_task_delete(request: HttpRequest, pk: int) -> HttpResponse:
     track_id = task.track_id
     task.delete()
     _audit(request, "mentorship.task_delete", target_type="mentorship_task", target_id=str(pk))
-    messages.success(request, "Field exercise removed.")
+    messages.success(request, _("Field exercise removed."))
     return redirect("admin_audit:mentorship_track_builder", pk=track_id)
 
 
@@ -272,9 +273,9 @@ def mentorship_reward_rule_save(request: HttpRequest, pk: int | None = None) -> 
         obj.save()
         _audit(request, f"mentorship.reward_rule_{'update' if pk else 'create'}",
                target_type="mentorship_reward_rule", target_id=str(obj.pk))
-        messages.success(request, "Reward rule saved.")
+        messages.success(request, _("Reward rule saved."))
     else:
-        messages.error(request, "Couldn't save the reward rule — check the values.")
+        messages.error(request, _("Couldn't save the reward rule — check the values."))
     return redirect("admin_audit:mentorship_reward_rules")
 
 
@@ -285,7 +286,7 @@ def mentorship_reward_rule_delete(request: HttpRequest, pk: int) -> HttpResponse
     MentorshipRewardRule.objects.filter(pk=pk).delete()
     _audit(request, "mentorship.reward_rule_delete", target_type="mentorship_reward_rule",
            target_id=str(pk))
-    messages.success(request, "Reward rule removed.")
+    messages.success(request, _("Reward rule removed."))
     return redirect("admin_audit:mentorship_reward_rules")
 
 
@@ -302,9 +303,9 @@ def mentorship_badge_save(request: HttpRequest, pk: int | None = None) -> HttpRe
         obj.save()
         _audit(request, f"mentorship.badge_{'update' if pk else 'create'}",
                target_type="mentorship_badge", target_id=str(obj.pk))
-        messages.success(request, "Badge saved.")
+        messages.success(request, _("Badge saved."))
     else:
-        messages.error(request, "Couldn't save the badge — check the values.")
+        messages.error(request, _("Couldn't save the badge — check the values."))
     return redirect("admin_audit:mentorship_reward_rules")
 
 
@@ -314,7 +315,7 @@ def mentorship_badge_save(request: HttpRequest, pk: int | None = None) -> HttpRe
 def mentorship_badge_delete(request: HttpRequest, pk: int) -> HttpResponse:
     MentorshipBadge.objects.filter(pk=pk).delete()
     _audit(request, "mentorship.badge_delete", target_type="mentorship_badge", target_id=str(pk))
-    messages.success(request, "Badge removed.")
+    messages.success(request, _("Badge removed."))
     return redirect("admin_audit:mentorship_reward_rules")
 
 
@@ -348,7 +349,7 @@ def mentorship_mentor_decide(request: HttpRequest, pk: int) -> HttpResponse:
         services.reject_mentor(profile, request.user, reason)
     _audit(request, "mentorship.mentor_decide", target_type="mentor_profile",
            target_id=str(pk), metadata={"approve": approve})
-    messages.success(request, "Mentor application updated.")
+    messages.success(request, _("Mentor application updated."))
     return redirect("admin_audit:mentorship_approvals")
 
 
@@ -365,7 +366,7 @@ def mentorship_mentee_decide(request: HttpRequest, pk: int) -> HttpResponse:
         services.reject_mentee(profile, request.user, reason)
     _audit(request, "mentorship.mentee_decide", target_type="mentee_profile",
            target_id=str(pk), metadata={"approve": approve})
-    messages.success(request, "Cadet application updated.")
+    messages.success(request, _("Cadet application updated."))
     return redirect("admin_audit:mentorship_approvals")
 
 
@@ -378,13 +379,13 @@ def mentorship_pairing_decide(request: HttpRequest, pk: int) -> HttpResponse:
     reason = (request.POST.get("reason") or "").strip()
     if approve:
         if not services.approve_pairing(pairing, request.user):
-            messages.error(request, "Couldn't activate — the mentor may be at capacity.")
+            messages.error(request, _("Couldn't activate — the mentor may be at capacity."))
             return redirect("admin_audit:mentorship_approvals")
     else:
         services.cancel_pairing(pairing, request.user, reason or "Rejected by leadership.")
     _audit(request, "mentorship.pairing_decide", target_type="mentorship_pairing",
            target_id=str(pk), metadata={"approve": approve})
-    messages.success(request, "Pairing updated.")
+    messages.success(request, _("Pairing updated."))
     return redirect("admin_audit:mentorship_approvals")
 
 
@@ -420,13 +421,13 @@ def mentorship_pair_create(request: HttpRequest) -> HttpResponse:
         status=MentorshipPairing.Status.PENDING_APPROVAL,
     )
     if pairing is None:
-        messages.info(request, "Those two already have an open pairing.")
+        messages.info(request, _("Those two already have an open pairing."))
         return redirect("admin_audit:mentorship_matching")
     if request.POST.get("activate") == "1":
         services.approve_pairing(pairing, request.user)
     _audit(request, "mentorship.pair_create", target_type="mentorship_pairing",
            target_id=str(pairing.pk))
-    messages.success(request, "Pairing created.")
+    messages.success(request, _("Pairing created."))
     return redirect("admin_audit:mentorship_matching")
 
 
@@ -436,7 +437,7 @@ def mentorship_pair_create(request: HttpRequest) -> HttpResponse:
 def mentorship_auto_suggest(request: HttpRequest) -> HttpResponse:
     created = matching.auto_suggest(limit_per_mentee=1)
     _audit(request, "mentorship.auto_suggest", metadata={"created": created})
-    messages.success(request, f"Generated {created} suggestion(s).")
+    messages.success(request, _("Generated %(count)s suggestion(s).") % {"count": created})
     return redirect("admin_audit:mentorship_matching")
 
 
@@ -475,11 +476,11 @@ def mentorship_reward_decide(request: HttpRequest, pk: int) -> HttpResponse:
     except PermissionDenied:
         _audit(request, "mentorship.reward_decide.denied_self", target_type="mentorship_reward",
                target_id=str(pk))
-        messages.error(request, "You can't decide your own reward — another officer must.")
+        messages.error(request, _("You can't decide your own reward — another officer must."))
         return redirect("admin_audit:mentorship_rewards")
     _audit(request, "mentorship.reward_decide", target_type="mentorship_reward",
            target_id=str(pk), metadata={"approve": approve})
-    messages.success(request, "Reward updated.")
+    messages.success(request, _("Reward updated."))
     return redirect("admin_audit:mentorship_rewards")
 
 
@@ -494,9 +495,9 @@ def mentorship_reward_pay(request: HttpRequest, pk: int) -> HttpResponse:
     except PermissionDenied:
         _audit(request, "mentorship.reward_pay.denied_self", target_type="mentorship_reward",
                target_id=str(pk))
-        messages.error(request, "You can't pay out your own reward — another officer must.")
+        messages.error(request, _("You can't pay out your own reward — another officer must."))
         return redirect("admin_audit:mentorship_rewards")
-    messages.success(request, "Marked paid." if paid else "That reward isn't ready to pay.")
+    messages.success(request, _("Marked paid.") if paid else _("That reward isn't ready to pay."))
     _audit(request, "mentorship.reward_paid", target_type="mentorship_reward", target_id=str(pk),
            metadata={"reference": reference})
     return redirect("admin_audit:mentorship_rewards")
@@ -525,7 +526,7 @@ def mentorship_flag_resolve(request: HttpRequest, pk: int) -> HttpResponse:
     flag = get_object_or_404(MentorshipFlag, pk=pk)
     trust.resolve_flag(flag, request.user)
     _audit(request, "mentorship.flag_resolve", target_type="mentorship_flag", target_id=str(pk))
-    messages.success(request, "Flag resolved.")
+    messages.success(request, _("Flag resolved."))
     return redirect("admin_audit:mentorship_report")
 
 

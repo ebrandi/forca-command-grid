@@ -15,6 +15,8 @@ from __future__ import annotations
 
 import copy
 
+from django.utils.translation import gettext_lazy as _
+
 from . import config
 from .engine import pipeline
 from .engine.base import SEVERITY_ORDER
@@ -59,27 +61,27 @@ def _apply_income_drop(slices: dict, pct: float) -> None:
 # --- scenario registry -------------------------------------------------------
 SCENARIOS: dict[str, dict] = {
     "pilot_attrition": {
-        "label": "Pilot attrition",
-        "desc": "Lose N qualified pilots from every doctrine.",
-        "param_label": "Pilots lost",
+        "label": _("Pilot attrition"),
+        "desc": _("Lose N qualified pilots from every doctrine."),
+        "param_label": _("Pilots lost"),
         "default": 5, "min": 1, "max": 200, "apply": _apply_pilot_attrition,
     },
     "lose_staging": {
-        "label": "Lose staging",
-        "desc": "Lose a percentage of staged hulls (contested staging / stranded assets).",
-        "param_label": "Hulls lost (%)",
+        "label": _("Lose staging"),
+        "desc": _("Lose a percentage of staged hulls (contested staging / stranded assets)."),
+        "param_label": _("Hulls lost (%)"),
         "default": 50, "min": 1, "max": 100, "apply": _apply_lose_staging,
     },
     "fuel_shock": {
-        "label": "Fuel shock",
-        "desc": "Fuel consumption multiplies — structure runways shorten.",
-        "param_label": "Burn multiplier (×)",
+        "label": _("Fuel shock"),
+        "desc": _("Fuel consumption multiplies — structure runways shorten."),
+        "param_label": _("Burn multiplier (×)"),
         "default": 2, "min": 1, "max": 10, "apply": _apply_fuel_shock,
     },
     "income_drop": {
-        "label": "Income shock",
-        "desc": "A one-time hit to the wallet shortens the ISK runway.",
-        "param_label": "Wallet hit (%)",
+        "label": _("Income shock"),
+        "desc": _("A one-time hit to the wallet shortens the ISK runway."),
+        "param_label": _("Wallet hit (%)"),
         "default": 30, "min": 1, "max": 100, "apply": _apply_income_drop,
     },
 }

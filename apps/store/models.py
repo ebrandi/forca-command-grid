@@ -13,19 +13,21 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from apps.doctrines.models import DoctrineFit
 from core.mixins import TimeStampedModel
 
 
 class Audience(models.TextChoices):
-    PUBLIC = "public", "Public — anyone can shop"
-    ALLIANCE = "alliance", "Corp & alliance members only"
-    CORP = "corp", "Corp members only"
-    DISABLED = "disabled", "Disabled"
+    PUBLIC = "public", _("Public — anyone can shop")
+    ALLIANCE = "alliance", _("Corp & alliance members only")
+    CORP = "corp", _("Corp members only")
+    DISABLED = "disabled", _("Disabled")
 
 
 class HullClass(models.TextChoices):
+    # Capital-ship-class community jargon (sub-cap / capital / super) — kept English.
     SUBCAP = "subcap", "Sub-capital"
     CAPITAL = "capital", "Capital"
     SUPERCAPITAL = "supercapital", "Supercapital"
@@ -59,17 +61,17 @@ class StoreOrder(TimeStampedModel):
     """
 
     class Kind(models.TextChoices):
-        DOCTRINE_FIT = "doctrine_fit", "Ready-to-fly doctrine ship"
-        HULL = "hull", "Made-to-order hull"
+        DOCTRINE_FIT = "doctrine_fit", _("Ready-to-fly doctrine ship")
+        HULL = "hull", _("Made-to-order hull")
 
     class Status(models.TextChoices):
-        OPEN = "open", "Open"
-        CLAIMED = "claimed", "Claimed"
-        DEPOSIT_PAID = "deposit_paid", "Deposit paid"
-        IN_PRODUCTION = "in_production", "In production"
-        READY = "ready", "Ready"
-        DELIVERED = "delivered", "Delivered"
-        CANCELLED = "cancelled", "Cancelled"
+        OPEN = "open", _("Open")
+        CLAIMED = "claimed", _("Claimed")
+        DEPOSIT_PAID = "deposit_paid", _("Deposit paid")
+        IN_PRODUCTION = "in_production", _("In production")
+        READY = "ready", _("Ready")
+        DELIVERED = "delivered", _("Delivered")
+        CANCELLED = "cancelled", _("Cancelled")
 
     buyer = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,

@@ -23,7 +23,8 @@ from datetime import datetime
 
 from django.core.cache import cache
 from django.db.models import Count, Q, Sum
-from django.utils import timezone
+from django.utils import formats, timezone
+from django.utils.translation import gettext_lazy as _t
 
 from apps.pilots.models import ContributionEvent
 from apps.pilots.weights import points_for
@@ -36,8 +37,8 @@ CATEGORY_TOP = 5
 # Ordered categories shown on the page (ledger kinds + the two derived ones).
 CATEGORIES: list[tuple[str, str]] = [
     *ContributionEvent.Kind.choices,
-    ("pvp", "PvP kills"),
-    ("pve", "Ratting income"),
+    ("pvp", _t("PvP kills")),
+    ("pve", _t("Ratting income")),
 ]
 CATEGORY_LABELS = dict(CATEGORIES)
 
@@ -69,7 +70,8 @@ def available_months() -> list[dict]:
     y, m = now.year, now.month
     for _ in range(_MAX_MONTHS):
         start, _end = month_range(y, m)
-        months.append({"year": y, "month": m, "key": f"{y:04d}-{m:02d}", "label": f"{start:%B %Y}"})
+        months.append({"year": y, "month": m, "key": f"{y:04d}-{m:02d}",
+                       "label": formats.date_format(start, "F Y")})
         if start <= earliest:
             break
         m -= 1
@@ -265,22 +267,32 @@ def _resolve_names(char_ids: set[int], hints: dict | None = None) -> dict[int, s
 
 def category_how(key: str, w) -> str:
     """One-line description of how a category scores, under the current weights."""
+    # Runtime (scoreboard build time) — eager gettext returns a concrete str that the
+    # cached scoreboard can pickle. Numbers stay outside the translated text as placeholders.
+    from django.utils.translation import gettext as _
     how = {
-        "pvp": f"{w.pvp_points_per_kill} pt/kill"
-               + (f" +{w.pvp_final_blow_bonus} final blow" if w.pvp_final_blow_bonus else ""),
-        "pve": f"{w.pve_points_per_mil} pts / 1M ISK ratting income",
-        "mining": f"{w.mining_points_per_mil} pts / 1M ISK mined (Jita value)",
-        "build": f"{w.build_points_per_ship} pt/ship built",
-        "haul": f"{w.haul_points} pts/delivery"
-                + (" (ESI-verified)" if w.haul_requires_verification else ""),
-        "task": f"{w.task_points} pt/task done",
-        "srp": f"{w.srp_points_per_mil} pts / 1M ISK",
-        "fleet": f"{w.fleet_points} pts/fleet attended",
-        "train": f"{w.train_points_per_level} pt/recommended skill level",
-        "doctrine": f"{w.doctrine_base} base + corp priority & required SP",
+        "pvp": (
+            _("%(pts)s pt/kill +%(fb)s final blow")
+            % {"pts": w.pvp_points_per_kill, "fb": w.pvp_final_blow_bonus}
+            if w.pvp_final_blow_bonus
+            else _("%(pts)s pt/kill") % {"pts": w.pvp_points_per_kill}
+        ),
+        "pve": _("%(pts)s pts / 1M ISK ratting income") % {"pts": w.pve_points_per_mil},
+        "mining": _("%(pts)s pts / 1M ISK mined (Jita value)") % {"pts": w.mining_points_per_mil},
+        "build": _("%(pts)s pt/ship built") % {"pts": w.build_points_per_ship},
+        "haul": (
+            _("%(pts)s pts/delivery (ESI-verified)") % {"pts": w.haul_points}
+            if w.haul_requires_verification
+            else _("%(pts)s pts/delivery") % {"pts": w.haul_points}
+        ),
+        "task": _("%(pts)s pt/task done") % {"pts": w.task_points},
+        "srp": _("%(pts)s pts / 1M ISK") % {"pts": w.srp_points_per_mil},
+        "fleet": _("%(pts)s pts/fleet attended") % {"pts": w.fleet_points},
+        "train": _("%(pts)s pt/recommended skill level") % {"pts": w.train_points_per_level},
+        "doctrine": _("%(pts)s base + corp priority & required SP") % {"pts": w.doctrine_base},
         # Directive credit is the directive's own configured points (stored on the
         # ledger event), not a per-unit weight — so it has no weight formula here.
-        "directive": "the directive's own points",
+        "directive": _("the directive's own points"),
     }
     return how.get(key, "")
 
@@ -360,7 +372,7 @@ def scoreboard(year: int, month: int) -> dict:
         })
 
     result = {
-        "year": year, "month": month, "label": f"{start:%B %Y}",
+        "year": year, "month": month, "label": formats.date_format(start, "F Y"),
         "overall": overall, "categories": categories,
         "scored": bool(overall),
         "scoring_enabled": weights.enabled,

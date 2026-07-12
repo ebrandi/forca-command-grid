@@ -1,22 +1,23 @@
 {% extends "base.html" %}
-{% block title %}{% if goal %}Edit goal{% else %}New goal{% endif %} · Capsuleer Path{% endblock %}
+{% load i18n %}
+{% block title %}{% if goal %}{% translate "Edit goal" %}{% else %}{% translate "New goal" %}{% endif %} · {% translate "Capsuleer Path" %}{% endblock %}
 {% block content %}
-<p class="eyebrow text-faint"><a href="{% url 'capsuleer:home' %}" class="hover:text-gold">Capsuleer Path</a> › {% if goal %}Edit goal{% else %}New goal{% endif %}</p>
-<h1 class="mb-4 text-2xl font-bold text-ink">{% if goal %}Edit «{{ goal.title }}»{% else %}New goal{% endif %}</h1>
+<p class="eyebrow text-faint"><a href="{% url 'capsuleer:home' %}" class="hover:text-gold">{% translate "Capsuleer Path" %}</a> › {% if goal %}{% translate "Edit goal" %}{% else %}{% translate "New goal" %}{% endif %}</p>
+<h1 class="mb-4 text-2xl font-bold text-ink">{% if goal %}{% blocktranslate with title=goal.title %}Edit «{{ title }}»{% endblocktranslate %}{% else %}{% translate "New goal" %}{% endif %}</h1>
 
 <form method="post" action="{% if goal %}{% url 'capsuleer:goal_edit' goal.pk %}{% else %}{% url 'capsuleer:goal_new' %}{% endif %}" class="space-y-5" x-data="{ kind: '{% if goal %}{{ goal.goal_type }}{% else %}custom{% endif %}' }">
   {% csrf_token %}
   <section class="panel px-4 py-4">
-    <h2 class="eyebrow">Basics</h2>
-    <label class="label mt-2 block">Title *
+    <h2 class="eyebrow">{% translate "Basics" %}</h2>
+    <label class="label mt-2 block">{% translate "Title" %} *
       <input type="text" name="title" required maxlength="140" value="{{ goal.title|default:'' }}" class="input-field mt-1">
     </label>
-    <label class="label mt-3 block">Why (for you — write for yourself, not an audience)
+    <label class="label mt-3 block">{% translate "Why (for you — write for yourself, not an audience)" %}
       <textarea name="motivation" rows="2" class="input-field mt-1">{{ owner_motivation|default:goal.motivation|default:'' }}</textarea>
     </label>
-    <label class="label mt-3 block">Character
-      <select name="character_id" class="input-field mt-1" {% if goal and goal.status != 'considering' %}disabled title="Locked after activation"{% endif %}>
-        <option value="">— none —</option>
+    <label class="label mt-3 block">{% translate "Character" %}
+      <select name="character_id" class="input-field mt-1" {% if goal and goal.status != 'considering' %}disabled title="{% translate 'Locked after activation' %}"{% endif %}>
+        <option value="">{% translate "— none —" %}</option>
         {% for c in characters %}<option value="{{ c.character_id }}" {% if goal.character_id == c.character_id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
       </select>
     </label>
@@ -24,29 +25,30 @@
 
   {% if not goal %}
   <section class="panel px-4 py-4">
-    <h2 class="eyebrow">What kind</h2>
+    <h2 class="eyebrow">{% translate "What kind" %}</h2>
     <div class="mt-2 flex flex-wrap gap-4 text-sm">
-      <label class="flex items-center gap-1.5"><input type="radio" name="goal_type" value="custom" x-model="kind" checked> Custom</label>
-      <label class="flex items-center gap-1.5"><input type="radio" name="goal_type" value="doctrine" x-model="kind"> Doctrine</label>
-      <label class="flex items-center gap-1.5"><input type="radio" name="goal_type" value="ship" x-model="kind"> Ship</label>
-      <label class="flex items-center gap-1.5"><input type="radio" name="goal_type" value="activity" x-model="kind"> Activity</label>
+      <label class="flex items-center gap-1.5"><input type="radio" name="goal_type" value="custom" x-model="kind" checked> {% translate "Custom" %}</label>
+      <label class="flex items-center gap-1.5"><input type="radio" name="goal_type" value="doctrine" x-model="kind"> {% translate "Doctrine" %}</label>
+      <label class="flex items-center gap-1.5"><input type="radio" name="goal_type" value="ship" x-model="kind"> {% translate "Ship" %}</label>
+      <label class="flex items-center gap-1.5"><input type="radio" name="goal_type" value="activity" x-model="kind"> {% translate "Activity" %}</label>
     </div>
     <div class="mt-3" x-show="kind === 'doctrine'" x-cloak>
-      <label class="label block">Doctrine
+      <label class="label block">{% translate "Doctrine" %}
         <select name="doctrine_id" class="input-field mt-1">
-          <option value="">— pick a doctrine —</option>
+          <option value="">{% translate "— pick a doctrine —" %}</option>
           {% for d in doctrines %}<option value="{{ d.id }}">{{ d.name }}</option>{% endfor %}
         </select>
       </label>
     </div>
     <div class="mt-3" x-show="kind === 'ship'" x-cloak>
-      <p class="label">Ship hull</p>
-      {% include "components/_type_picker.html" with field="ship_type_id" endpoint="/capsuleer/ships/" placeholder="Search for a hull…" %}
+      <p class="label">{% translate "Ship hull" %}</p>
+      {% translate "Search for a hull…" as ship_hull_placeholder %}
+      {% include "components/_type_picker.html" with field="ship_type_id" endpoint="/capsuleer/ships/" placeholder=ship_hull_placeholder %}
     </div>
     <div class="mt-3" x-show="kind === 'activity'" x-cloak>
-      <label class="label block">Activity
+      <label class="label block">{% translate "Activity" %}
         <select name="activity" class="input-field mt-1">
-          <option value="">— pick an activity —</option>
+          <option value="">{% translate "— pick an activity —" %}</option>
           {% for v, lab in activities %}<option value="{{ v }}">{{ lab }}</option>{% endfor %}
         </select>
       </label>
@@ -55,37 +57,37 @@
   {% endif %}
 
   <section class="panel px-4 py-4">
-    <h2 class="eyebrow">How you'll run it</h2>
+    <h2 class="eyebrow">{% translate "How you'll run it" %}</h2>
     <div class="mt-2 grid gap-3 sm:grid-cols-2">
-      <label class="label">Priority
+      <label class="label">{% translate "Priority" %}
         <select name="priority" class="input-field mt-1">
           {% for v, lab in priorities %}<option value="{{ v }}" {% if goal.priority == v %}selected{% endif %}>{{ lab }}</option>{% endfor %}
         </select>
       </label>
-      <label class="label">Pace
+      <label class="label">{% translate "Pace" %}
         <select name="pace" class="input-field mt-1">
           {% for v, lab in paces %}<option value="{{ v }}" {% if goal.pace == v %}selected{% endif %}>{{ lab }}</option>{% endfor %}
         </select>
       </label>
-      <label class="label">Target date <input type="date" name="target_date" value="{{ goal.target_date|date:'Y-m-d'|default:'' }}" class="input-field mt-1"></label>
-      <label class="label">Budget (ISK) <input type="text" name="budget_isk" inputmode="decimal" value="{{ owner_budget|default_if_none:'' }}" class="input-field mt-1"><span class="text-[11px] text-faint">Private — only you see it.</span></label>
+      <label class="label">{% translate "Target date" %} <input type="date" name="target_date" value="{{ goal.target_date|date:'Y-m-d'|default:'' }}" class="input-field mt-1"></label>
+      <label class="label">{% translate "Budget (ISK)" %} <input type="text" name="budget_isk" inputmode="decimal" value="{{ owner_budget|default_if_none:'' }}" class="input-field mt-1"><span class="text-[11px] text-faint">{% translate "Private — only you see it." %}</span></label>
     </div>
   </section>
 
   <section class="panel px-4 py-4">
-    <h2 class="eyebrow">Who can see it</h2>
+    <h2 class="eyebrow">{% translate "Who can see it" %}</h2>
     <fieldset class="mt-2 space-y-1.5 text-sm">
-      <label class="flex items-start gap-2"><input type="radio" name="visibility" value="private" {% if not goal or goal.visibility == 'private' %}checked{% endif %}> <span>Private <span class="text-faint">— only you.</span></span></label>
-      <label class="flex items-start gap-2"><input type="radio" name="visibility" value="mentor" {% if goal.visibility == 'mentor' %}checked{% endif %}> <span>Mentor <span class="text-faint">— an active mentor of yours can view and endorse.</span></span></label>
-      <label class="flex items-start gap-2"><input type="radio" name="visibility" value="officers" {% if goal.visibility == 'officers' %}checked{% endif %}> <span>Officers <span class="text-faint">— officers can view (audit-logged) and endorse.</span></span></label>
-      <label class="flex items-start gap-2"><input type="radio" name="visibility" value="aggregate_only" {% if goal.visibility == 'aggregate_only' %}checked{% endif %}> <span>Aggregate only <span class="text-faint">— counts toward totals; no one views it directly.</span></span></label>
+      <label class="flex items-start gap-2"><input type="radio" name="visibility" value="private" {% if not goal or goal.visibility == 'private' %}checked{% endif %}> <span>{% translate "Private" %} <span class="text-faint">{% translate "— only you." %}</span></span></label>
+      <label class="flex items-start gap-2"><input type="radio" name="visibility" value="mentor" {% if goal.visibility == 'mentor' %}checked{% endif %}> <span>{% translate "Mentor" %} <span class="text-faint">{% translate "— an active mentor of yours can view and endorse." %}</span></span></label>
+      <label class="flex items-start gap-2"><input type="radio" name="visibility" value="officers" {% if goal.visibility == 'officers' %}checked{% endif %}> <span>{% translate "Officers" %} <span class="text-faint">{% translate "— officers can view (audit-logged) and endorse." %}</span></span></label>
+      <label class="flex items-start gap-2"><input type="radio" name="visibility" value="aggregate_only" {% if goal.visibility == 'aggregate_only' %}checked{% endif %}> <span>{% translate "Aggregate only" %} <span class="text-faint">{% translate "— counts toward totals; no one views it directly." %}</span></span></label>
     </fieldset>
-    <label class="mt-3 flex items-start gap-2 text-sm"><input type="checkbox" name="corp_alignment_optin" {% if goal.corp_alignment_optin %}checked{% endif %}> <span>Count me in corp pipeline totals <span class="text-faint">(numbers only, never your name below group size {{ min_group }}).</span></span></label>
+    <label class="mt-3 flex items-start gap-2 text-sm"><input type="checkbox" name="corp_alignment_optin" {% if goal.corp_alignment_optin %}checked{% endif %}> <span>{% translate "Count me in corp pipeline totals" %} <span class="text-faint">{% blocktranslate with min_group=min_group %}(numbers only, never your name below group size {{ min_group }}).{% endblocktranslate %}</span></span></label>
   </section>
 
   <div class="flex flex-wrap gap-2">
-    <button class="btn-gold text-sm">Save goal</button>
-    <a href="{% if goal %}{% url 'capsuleer:goal_detail' goal.pk %}{% else %}{% url 'capsuleer:home' %}{% endif %}" class="btn-ghost text-sm">Cancel</a>
+    <button class="btn-gold text-sm">{% translate "Save goal" %}</button>
+    <a href="{% if goal %}{% url 'capsuleer:goal_detail' goal.pk %}{% else %}{% url 'capsuleer:home' %}{% endif %}" class="btn-ghost text-sm">{% translate "Cancel" %}</a>
   </div>
 </form>
 {% endblock %}

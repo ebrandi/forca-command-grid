@@ -1,34 +1,35 @@
 {% extends "base.html" %}
-{% block title %}Readiness · Fleet simulator · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Readiness" %} · {% translate "Fleet simulator" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
-<a href="{% url 'readiness:dashboard' %}" class="text-xs text-faint hover:text-gold">← Readiness</a>
+<a href="{% url 'readiness:dashboard' %}" class="text-xs text-faint hover:text-gold">← {% translate "Readiness" %}</a>
 <header class="mt-2 mb-5">
-  <p class="eyebrow text-gold">Fleet readiness simulator</p>
-  <h1 class="mt-1 text-3xl font-bold text-ink">Can we field it?</h1>
-  <p class="mt-1 max-w-2xl text-sm text-faint">Qualified pilots vs the corp's strategic-role targets, right now. "Fieldable" is the honest number — how many you can actually put on grid in each role.</p>
+  <p class="eyebrow text-gold">{% translate "Fleet readiness simulator" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Can we field it?" %}</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">{% blocktranslate %}Qualified pilots vs the corp's strategic-role targets, right now. "Fieldable" is the honest number — how many you can actually put on grid in each role.{% endblocktranslate %}</p>
 </header>
 
 {% if has_targets %}
 <div class="mb-5 flex flex-wrap items-center gap-2">
-  <a href="?" class="chip {% if not available %}!border-gold/50 !text-gold{% else %}!text-faint hover:!text-muted{% endif %}">Full roster</a>
-  <a href="?available=1" class="chip {% if available %}!border-cyan/50 !text-cyan{% else %}!text-faint hover:!text-muted{% endif %}">Likely available</a>
-  {% if available %}<span class="text-[11px] text-faint">{{ active_count }} member{{ active_count|pluralize }} logged in within {{ window_days }}d — a realistic "who'll show up" count, not presence tracking.</span>{% else %}<span class="text-[11px] text-faint">Counting the whole qualified roster. Switch to <span class="text-cyan">Likely available</span> for who's realistically online.</span>{% endif %}
+  <a href="?" class="chip {% if not available %}!border-gold/50 !text-gold{% else %}!text-faint hover:!text-muted{% endif %}">{% translate "Full roster" %}</a>
+  <a href="?available=1" class="chip {% if available %}!border-cyan/50 !text-cyan{% else %}!text-faint hover:!text-muted{% endif %}">{% translate "Likely available" %}</a>
+  {% if available %}<span class="text-[11px] text-faint">{% blocktranslate count n=active_count with window=window_days %}{{ n }} member logged in within {{ window }}d — a realistic "who'll show up" count, not presence tracking.{% plural %}{{ n }} members logged in within {{ window }}d — a realistic "who'll show up" count, not presence tracking.{% endblocktranslate %}</span>{% else %}<span class="text-[11px] text-faint">{% blocktranslate %}Counting the whole qualified roster. Switch to <span class="text-cyan">Likely available</span> for who's realistically online.{% endblocktranslate %}</span>{% endif %}
 </div>
 {% endif %}
 
 {% if not has_targets %}
   <div class="panel px-4 py-16 text-center">
-    <p class="font-display text-lg text-muted">No role targets to simulate</p>
-    <p class="mt-1 text-sm text-faint">Set desired headcounts in <a href="{% url 'admin_audit:readiness_strategic_roles' %}" class="text-cyan hover:underline">Strategic roles</a> first — then this page tells you whether the roster can field them.</p>
+    <p class="font-display text-lg text-muted">{% translate "No role targets to simulate" %}</p>
+    <p class="mt-1 text-sm text-faint">{% url 'admin_audit:readiness_strategic_roles' as roles_url %}{% blocktranslate %}Set desired headcounts in <a href="{{ roles_url }}" class="text-cyan hover:underline">Strategic roles</a> first — then this page tells you whether the roster can field them.{% endblocktranslate %}</p>
   </div>
 {% else %}
 <section class="panel mb-5 px-6 py-4 text-center">
   <p class="font-display text-2xl font-bold
     {% if verdict == 'ready' %}text-kill{% elif verdict == 'partial' %}text-gold{% elif verdict == 'cannot_field' %}text-loss{% else %}text-faint{% endif %}">
-    {% if verdict == 'ready' %}▲ READY — can field every role
-    {% elif verdict == 'partial' %}◆ PARTIAL — {{ total_fieldable }} / {{ total_desired }} seats fillable
-    {% elif verdict == 'cannot_field' %}▼ CANNOT FIELD — {{ total_fieldable }} / {{ total_desired }} seats
-    {% else %}○ NO DATA — set skill detection on your roles to measure{% endif %}
+    {% if verdict == 'ready' %}▲ {% translate "READY — can field every role" %}
+    {% elif verdict == 'partial' %}◆ {% blocktranslate with fieldable=total_fieldable desired=total_desired %}PARTIAL — {{ fieldable }} / {{ desired }} seats fillable{% endblocktranslate %}
+    {% elif verdict == 'cannot_field' %}▼ {% blocktranslate with fieldable=total_fieldable desired=total_desired %}CANNOT FIELD — {{ fieldable }} / {{ desired }} seats{% endblocktranslate %}
+    {% else %}○ {% translate "NO DATA — set skill detection on your roles to measure" %}{% endif %}
   </p>
   {% if total_desired %}
   <div class="mx-auto mt-2 h-2 max-w-md overflow-hidden rounded-full bg-space">
@@ -38,15 +39,15 @@
 </section>
 
 <section class="panel overflow-hidden">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">Role by role</h2></div>
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">{% translate "Role by role" %}</h2></div>
   <div class="overflow-x-auto"><table class="w-full text-sm">
     <thead class="border-b border-line text-left text-[11px] uppercase tracking-wide text-faint">
       <tr>
-        <th class="px-4 py-2 font-medium">Role</th>
-        <th class="px-3 py-2 text-right font-medium">Need</th>
-        <th class="px-3 py-2 text-right font-medium">Qualified</th>
-        <th class="px-3 py-2 text-right font-medium">Fieldable</th>
-        <th class="px-3 py-2 text-center font-medium">Status</th>
+        <th class="px-4 py-2 font-medium">{% translate "Role" %}</th>
+        <th class="px-3 py-2 text-right font-medium">{% translate "Need" %}</th>
+        <th class="px-3 py-2 text-right font-medium">{% translate "Qualified" %}</th>
+        <th class="px-3 py-2 text-right font-medium">{% translate "Fieldable" %}</th>
+        <th class="px-3 py-2 text-center font-medium">{% translate "Status" %}</th>
       </tr>
     </thead>
     <tbody class="divide-y divide-line/50">
@@ -57,16 +58,16 @@
         <td class="px-3 py-2.5 text-right tabular-nums {% if r.qualified is None %}text-faint{% else %}text-muted{% endif %}">{% if r.qualified is None %}—{% else %}{{ r.qualified }}{% endif %}</td>
         <td class="px-3 py-2.5 text-right tabular-nums {% if r.fieldable is None %}text-faint{% elif r.short %}text-loss{% else %}text-kill{% endif %}">{% if r.fieldable is None %}—{% else %}{{ r.fieldable }}{% endif %}</td>
         <td class="px-3 py-2.5 text-center">
-          {% if r.status == 'ready' %}<span class="chip text-kill">▲ ready</span>
-          {% elif r.status == 'tight' %}<span class="chip text-gold">◆ tight</span>
-          {% elif r.status == 'short' %}<span class="chip text-loss">▼ short {{ r.short }}</span>
-          {% else %}<span class="chip text-faint">○ manual</span>{% endif %}
+          {% if r.status == 'ready' %}<span class="chip text-kill">▲ {% translate "ready" %}</span>
+          {% elif r.status == 'tight' %}<span class="chip text-gold">◆ {% translate "tight" %}</span>
+          {% elif r.status == 'short' %}<span class="chip text-loss">▼ {% blocktranslate with n=r.short %}short {{ n }}{% endblocktranslate %}</span>
+          {% else %}<span class="chip text-faint">○ {% translate "manual" %}</span>{% endif %}
         </td>
       </tr>
       {% endfor %}
     </tbody>
   </table></div>
-  <p class="border-t border-line px-4 py-2 text-[11px] text-faint">Counts pilots whose latest skills qualify them for the role (by-skills detection). Manual/asset roles aren't auto-counted.</p>
+  <p class="border-t border-line px-4 py-2 text-[11px] text-faint">{% translate "Counts pilots whose latest skills qualify them for the role (by-skills detection). Manual/asset roles aren't auto-counted." %}</p>
 </section>
 {% endif %}
 {% endblock %}

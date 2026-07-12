@@ -9,6 +9,7 @@ from __future__ import annotations
 from datetime import timedelta
 
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from .models import AppSetting
 
@@ -80,7 +81,7 @@ def feed_health() -> list[dict]:
     rec = _last_sync("corp_assets")
     last = _parse_dt(rec.get("at")) if rec else None
     feeds.append({
-        "key": "corp_assets", "label": "Corp assets",
+        "key": "corp_assets", "label": _("Corp assets"),
         "last": last, "status": _status(last, 12),
         "count": Asset.objects.filter(owner_type=Asset.Owner.CORPORATION).count(),
         "by": rec.get("character") if rec else None,
@@ -95,7 +96,7 @@ def feed_health() -> list[dict]:
         .values("owner_id").distinct().count()
     )
     feeds.append({
-        "key": "personal_assets", "label": "Personal assets",
+        "key": "personal_assets", "label": _("Personal assets"),
         "last": last, "status": _status(last, 12) if last else ("ok" if pilots else "missing"),
         "count": Asset.objects.filter(owner_type=Asset.Owner.CHARACTER).count(),
         "by": f"{pilots} pilot(s)", "note": "each pilot's own token",
@@ -107,7 +108,7 @@ def feed_health() -> list[dict]:
     if last is None:
         last = MarketHistory.objects.order_by("-as_of").values_list("as_of", flat=True).first()
     feeds.append({
-        "key": "market_history", "label": "Market history",
+        "key": "market_history", "label": _("Market history"),
         "last": last, "status": _status(last, 36),
         "count": MarketHistory.objects.count(),
         "by": "public ESI", "note": "no token required",
@@ -120,7 +121,7 @@ def feed_health() -> list[dict]:
         or Killmail.objects.order_by("-as_of").values_list("as_of", flat=True).first()
     )
     feeds.append({
-        "key": "killmails", "label": "Killmails",
+        "key": "killmails", "label": _("Killmails"),
         "last": last_km, "status": _status(last_km, 6),
         "count": Killmail.objects.count(),
         "by": "char/corp tokens + zKill", "note": "discovery every 10m",
@@ -132,7 +133,7 @@ def feed_health() -> list[dict]:
     rec = _last_sync("corp_members")
     last = _parse_dt(rec.get("at")) if rec else None
     feeds.append({
-        "key": "corp_members", "label": "Member roster",
+        "key": "corp_members", "label": _("Member roster"),
         "last": last, "status": _status(last, 12),
         "count": CorpMember.objects.count(),
         "by": rec.get("by") if rec else None,
@@ -145,7 +146,7 @@ def feed_health() -> list[dict]:
         .order_by("-as_of").values_list("as_of", flat=True).first()
     )
     feeds.append({
-        "key": "skills", "label": "Member skills",
+        "key": "skills", "label": _("Member skills"),
         "last": last_skill, "status": _status(last_skill, 36),
         "count": CharacterSkillSnapshot.objects.filter(is_latest=True).count(),
         "by": "character tokens", "note": "sync every 12h",
@@ -154,7 +155,7 @@ def feed_health() -> list[dict]:
     # Market prices (Jita aggregates) — last price refresh.
     last_price = MarketPrice.objects.order_by("-as_of").values_list("as_of", flat=True).first()
     feeds.append({
-        "key": "market_prices", "label": "Market prices",
+        "key": "market_prices", "label": _("Market prices"),
         "last": last_price, "status": _status(last_price, 72),
         "count": MarketPrice.objects.count(),
         "by": "public ESI", "note": "price import",
@@ -167,13 +168,13 @@ def feed_health() -> list[dict]:
 # Unknown keys fall back to a humanised label and a generous default threshold, so a
 # newly-added ``record_sync`` call appears on the panel automatically.
 _SYNC_LABELS = {
-    "corp_assets": ("Corp assets", 12),
-    "personal_assets": ("Personal assets", 24),
-    "corp_members": ("Member roster", 12),
-    "market_history": ("Market history", 36),
-    "market_adjusted_prices": ("Market adjusted prices", 36),
-    "market_jita_prices": ("Market Jita prices", 36),
-    "jump_network": ("Jump network", 200),
+    "corp_assets": (_("Corp assets"), 12),
+    "personal_assets": (_("Personal assets"), 24),
+    "corp_members": (_("Member roster"), 12),
+    "market_history": (_("Market history"), 36),
+    "market_adjusted_prices": (_("Market adjusted prices"), 36),
+    "market_jita_prices": (_("Market Jita prices"), 36),
+    "jump_network": (_("Jump network"), 200),
 }
 _DEFAULT_SYNC_STALE_H = 48
 

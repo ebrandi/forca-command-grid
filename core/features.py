@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from functools import wraps
 
 from django.http import Http404
+from django.utils.translation import gettext as _
 
 _SETTING_KEY = "features.disabled"
 _CACHE_KEY = "features:disabled:v2"
@@ -250,7 +251,7 @@ def feature_required(key: str):
         @wraps(view)
         def wrapped(request, *args, **kwargs):
             if not feature_enabled(key):
-                raise Http404("This feature is not enabled for this corporation.")
+                raise Http404(_("This feature is not enabled for this corporation."))
             return view(request, *args, **kwargs)
 
         return wrapped
@@ -371,7 +372,7 @@ class FeatureGateMiddleware:
         # when fully disabled); plain features 404 only when turned off.
         if feature in AUDIENCE_FEATURES:
             if not feature_visible_to(feature, getattr(request, "user", None)):
-                raise Http404("This feature is not available.")
+                raise Http404(_("This feature is not available."))
         elif not feature_enabled(feature):
-            raise Http404("This feature is not enabled for this corporation.")
+            raise Http404(_("This feature is not enabled for this corporation."))
         return None

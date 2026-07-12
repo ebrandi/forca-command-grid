@@ -1,11 +1,12 @@
 {% extends "base.html" %}
-{% block title %}New project · Industry{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "New project" %} · {% translate "Industry" %}{% endblock %}
 {% block content %}
-<a href="{% url 'industry:board' %}" class="text-xs text-faint hover:text-gold">← Industry projects</a>
+<a href="{% url 'industry:board' %}" class="text-xs text-faint hover:text-gold">← {% translate "Industry projects" %}</a>
 <header class="mt-3 mb-6">
   <p class="eyebrow">Production</p>
-  <h1 class="mt-1 text-2xl font-bold text-ink">Start a build project</h1>
-  <p class="mt-1 text-sm text-faint">Name it, pick what to build, and we’ll cost the whole bill of materials.</p>
+  <h1 class="mt-1 text-2xl font-bold text-ink">{% translate "Start a build project" %}</h1>
+  <p class="mt-1 text-sm text-faint">{% translate "Name it, pick what to build, and we’ll cost the whole bill of materials." %}</p>
 </header>
 
 <form method="post" class="max-w-2xl space-y-5">
@@ -18,34 +19,34 @@
 
   <div class="panel space-y-4 p-5">
     <div>
-      <label class="label" for="{{ form.name.id_for_label }}">Project name</label>
+      <label class="label" for="{{ form.name.id_for_label }}">{% translate "Project name" %}</label>
       {{ form.name }}
       {% if form.name.errors %}<p class="mt-1 text-xs text-loss/90">{{ form.name.errors|striptags }}</p>{% endif %}
     </div>
     <div class="grid gap-4 sm:grid-cols-2">
-      <div><label class="label">Objective</label>{{ form.objective_type }}</div>
+      <div><label class="label">{% translate "Objective" %}</label>{{ form.objective_type }}</div>
     </div>
-    <div><label class="label">Notes (optional)</label>{{ form.description }}</div>
+    <div><label class="label">{% translate "Notes (optional)" %}</label>{{ form.description }}</div>
   </div>
 
   <div class="panel space-y-4 p-5">
-    <h2 class="eyebrow text-gold">What to build</h2>
+    <h2 class="eyebrow text-gold">{% translate "What to build" %}</h2>
     <div>
-      <label class="label">Item</label>
-      {% include "components/_type_picker.html" with field="type_id" endpoint="/industry/type-search/?buildable=1" placeholder="Search a ship, module, component…" required=1 %}
-      <p class="mt-1 text-xs text-faint">Pick from the list — anything with a manufacturing or reaction recipe.</p>
+      <label class="label">{% translate "Item" %}</label>
+      {% translate "Search a ship, module, component…" as pick_ph %}{% include "components/_type_picker.html" with field="type_id" endpoint="/industry/type-search/?buildable=1" placeholder=pick_ph required=1 %}
+      <p class="mt-1 text-xs text-faint">{% translate "Pick from the list — anything with a manufacturing or reaction recipe." %}</p>
     </div>
     <div class="grid gap-4 sm:grid-cols-3">
-      <div><label class="label">Quantity</label>{{ item_form.quantity }}</div>
-      <div><label class="label">Material efficiency %</label>{{ item_form.me }}</div>
-      <div><label class="label">Strategy</label>{{ item_form.strategy }}</div>
+      <div><label class="label">{% translate "Quantity" %}</label>{{ item_form.quantity }}</div>
+      <div><label class="label">{% translate "Material efficiency %" %}</label>{{ item_form.me }}</div>
+      <div><label class="label">{% translate "Strategy" %}</label>{{ item_form.strategy }}</div>
     </div>
     <input type="hidden" name="build_or_buy" value="build">
   </div>
 
   <div class="flex gap-2">
-    <button class="btn-gold">Create &amp; cost it</button>
-    <a href="{% url 'industry:board' %}" class="btn-ghost">Cancel</a>
+    <button class="btn-gold">{% translate "Create &amp; cost it" %}</button>
+    <a href="{% url 'industry:board' %}" class="btn-ghost">{% translate "Cancel" %}</a>
   </div>
 </form>
 {% endblock %}

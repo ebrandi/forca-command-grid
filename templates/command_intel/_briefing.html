@@ -1,3 +1,4 @@
+{% load i18n %}
 {% comment %}
 The report rendered as a staff briefing (doc 16 §2.4). Root is #report-shell with NO
 hx-* trigger, so when report_status swaps this in over the generating shell the htmx
@@ -9,7 +10,7 @@ report_detail.html) and as the htmx terminal fragment.
 {% include "command_intel/_classification_banner.html" with classification=report.classification position="top" %}
 
 <header class="mb-5">
-  <p class="eyebrow text-faint">Staff briefing
+  <p class="eyebrow text-faint">{% translate "Staff briefing" %}
     {% if report.snapshot_id %}· snapshot #{{ report.snapshot_id }}{% endif %}
     · model {{ report.model_name|default:"deterministic" }}
     {% if report.prompt_version %}· prompt v{{ report.prompt_version }}{% endif %}
@@ -17,43 +18,43 @@ report_detail.html) and as the htmx terminal fragment.
   </p>
   <h1 class="mt-1 font-display text-2xl font-bold text-ink">{{ report.title|default:"Command Intelligence Report" }}</h1>
   <p class="mt-1 text-sm text-faint">
-    {% if report.requested_by %}Requested by {{ report.requested_by.username }} · {% endif %}
-    {% if report.generated_at %}generated {{ report.generated_at|date:"d M Y H:i" }} · {% endif %}
-    {% if report.status == 'ready' %}<span class="text-kill">▲ READY</span>
-    {% elif report.status == 'ready_degraded' %}<span class="text-gold">⚠ READY (degraded)</span>
-    {% elif report.status == 'failed' %}<span class="text-loss">▼ FAILED</span>{% endif %}
+    {% if report.requested_by %}{% blocktranslate with user=report.requested_by.username %}Requested by {{ user }}{% endblocktranslate %} · {% endif %}
+    {% if report.generated_at %}{% blocktranslate with date=report.generated_at|date:"d M Y H:i" %}generated {{ date }}{% endblocktranslate %} · {% endif %}
+    {% if report.status == 'ready' %}<span class="text-kill">▲ {% translate "READY" %}</span>
+    {% elif report.status == 'ready_degraded' %}<span class="text-gold">⚠ {% translate "READY (degraded)" %}</span>
+    {% elif report.status == 'failed' %}<span class="text-loss">▼ {% translate "FAILED" %}</span>{% endif %}
   </p>
 </header>
 
 {% if report.status == 'failed' %}
   <section class="panel overflow-hidden border-l-2 border-loss/60">
-    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-loss">Generation failed</h2></div>
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-loss">{% translate "Generation failed" %}</h2></div>
     <div class="space-y-3 p-4">
-      <p class="text-sm text-muted">The briefing could not be generated.{% if report.error %} Reason: <span class="text-loss">{{ report.error }}</span>.{% endif %}</p>
-      <form method="post" action="{% url 'command_intel:generate' %}">{% csrf_token %}<button class="btn-gold !py-1.5 !text-xs">Retry generation</button></form>
+      <p class="text-sm text-muted">{% translate "The briefing could not be generated." %}{% if report.error %} {% blocktranslate with error=report.error %}Reason: <span class="text-loss">{{ error }}</span>.{% endblocktranslate %}{% endif %}</p>
+      <form method="post" action="{% url 'command_intel:generate' %}">{% csrf_token %}<button class="btn-gold !py-1.5 !text-xs">{% translate "Retry generation" %}</button></form>
     </div>
   </section>
 {% else %}
 
   {% if report.status == 'ready_degraded' %}
   <div role="status" class="panel mb-5 border-l-2 border-gold/60 px-4 py-3">
-    <p class="text-sm text-muted"><span class="text-gold">⚠ Narrative unavailable</span> — the intelligence officer (AI) could not be reached. The operational picture, constraints and templated courses of action below are computed and complete.</p>
+    <p class="text-sm text-muted">{% blocktranslate %}<span class="text-gold">⚠ Narrative unavailable</span> — the intelligence officer (AI) could not be reached. The operational picture, constraints and templated courses of action below are computed and complete.{% endblocktranslate %}</p>
   </div>
   {% endif %}
 
   {% comment %}① Executive summary — LLM prose, fenced from the facts.{% endcomment %}
   <section class="panel mb-5 overflow-hidden">
-    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">① Executive summary</h2></div>
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">① {% translate "Executive summary" %}</h2></div>
     <div class="p-4"><p class="text-sm leading-relaxed text-ink">ⓘ {{ report.body.executive_summary|default:report.summary }}</p></div>
   </section>
 
   {% comment %}② Operational picture — snapshot facts (read-through).{% endcomment %}
   {% with op=report.body.operational_picture %}
   <section class="panel mb-5 overflow-hidden">
-    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">② Operational picture</h2></div>
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">② {% translate "Operational picture" %}</h2></div>
     <div class="space-y-3 p-4">
       {% if op.posture_statement %}<p class="text-sm text-muted">{{ op.posture_statement }}</p>{% endif %}
-      {% if op.overall_readiness is not None %}<p class="text-sm text-faint">Overall readiness <span class="data text-muted">{{ op.overall_readiness }}</span> of 100.</p>{% endif %}
+      {% if op.overall_readiness is not None %}<p class="text-sm text-faint">{% blocktranslate with val=op.overall_readiness %}Overall readiness <span class="data text-muted">{{ val }}</span> of 100.{% endblocktranslate %}</p>{% endif %}
       {% if op.highlights %}
         <ul class="space-y-1 text-sm text-muted">
           {% for h in op.highlights %}<li class="flex gap-2"><span class="text-gold">▸</span><span>{{ h }}</span></li>{% endfor %}
@@ -61,7 +62,7 @@ report_detail.html) and as the htmx terminal fragment.
       {% endif %}
       {% if op.not_assessed %}
         <div class="rounded-lg border border-dashed border-line/60 p-3">
-          <p class="eyebrow text-faint">Could not evaluate</p>
+          <p class="eyebrow text-faint">{% translate "Could not evaluate" %}</p>
           <ul class="mt-1.5 space-y-1 text-xs text-faint">
             {% for n in op.not_assessed %}<li>○ {{ n }}</li>{% endfor %}
           </ul>
@@ -75,8 +76,8 @@ report_detail.html) and as the htmx terminal fragment.
   {% if report.body.operational_constraints %}
   <section class="panel mb-5 overflow-hidden">
     <div class="flex items-center justify-between border-b border-line px-4 py-3">
-      <h2 class="eyebrow text-faint">③ Operational constraints</h2>
-      <a href="{% url 'command_intel:constraints' %}" class="text-xs text-cyan hover:underline">full board →</a>
+      <h2 class="eyebrow text-faint">③ {% translate "Operational constraints" %}</h2>
+      <a href="{% url 'command_intel:constraints' %}" class="text-xs text-cyan hover:underline">{% translate "full board" %} →</a>
     </div>
     <div class="divide-y divide-line/40">
       {% for c in report.body.operational_constraints %}
@@ -93,7 +94,7 @@ report_detail.html) and as the htmx terminal fragment.
   {% with coas=report.courses_of_action.all %}
   {% if coas %}
   <section class="mb-5">
-    <p class="eyebrow mb-2 text-gold">④ Courses of action · {{ coas|length }} proposed</p>
+    <p class="eyebrow mb-2 text-gold">④ {% blocktranslate with count=coas|length %}Courses of action · {{ count }} proposed{% endblocktranslate %}</p>
     <div class="grid gap-3 lg:grid-cols-2">
       {% for coa in coas %}{% include "command_intel/_coa_card.html" with coa=coa %}{% endfor %}
     </div>
@@ -105,7 +106,7 @@ report_detail.html) and as the htmx terminal fragment.
     {% comment %}⑥ Strategic risks.{% endcomment %}
     {% if report.body.strategic_risks %}
     <section class="panel overflow-hidden">
-      <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">⑤ Strategic risks</h2></div>
+      <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">⑤ {% translate "Strategic risks" %}</h2></div>
       <div class="divide-y divide-line/40">
         {% for r in report.body.strategic_risks %}
           <div class="px-4 py-2.5">
@@ -123,14 +124,14 @@ report_detail.html) and as the htmx terminal fragment.
 
     {% comment %}⑦ Forecast.{% endcomment %}
     <section class="panel overflow-hidden border-l-2 border-cyan/60">
-      <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-cyan">⑥ Forecast</h2></div>
-      <div class="p-4"><p class="text-sm text-muted">ⓘ {{ report.body.forecast|default:"Trend forecasting accumulates over time as snapshots build history." }}</p></div>
+      <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-cyan">⑥ {% translate "Forecast" %}</h2></div>
+      <div class="p-4">{% translate "Trend forecasting accumulates over time as snapshots build history." as forecast_default %}<p class="text-sm text-muted">ⓘ {{ report.body.forecast|default:forecast_default }}</p></div>
     </section>
   </div>
 
   {% comment %}⑧ Annexes — the audit trail (provenance).{% endcomment %}
   <section class="panel mb-5 overflow-hidden">
-    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">⑦ Annexes &amp; provenance</h2></div>
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">⑦ {% translate "Annexes &amp; provenance" %}</h2></div>
     <div class="flex flex-wrap items-center gap-2 p-4 text-xs">
       {% for a in report.body.annexes %}<span class="chip">{{ a.title|default:a }}</span>{% endfor %}
       <span class="chip text-faint">Generation: prompt v{{ report.prompt_version }} · cfg v{{ report.config_version }}

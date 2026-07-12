@@ -18,6 +18,7 @@ from decimal import Decimal
 from django.db import transaction
 from django.db.models import Sum
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from .models import Audience, GuaranteedBuybackConfig, GuaranteedBuyout
 
@@ -85,16 +86,16 @@ def approval_blocker(buyout: GuaranteedBuyout, officer, config=None, now=None) -
     config = config or active_config()
     now = now or timezone.now()
     if not is_live(config):
-        return "Guaranteed buyback is turned off."
+        return _("Guaranteed buyback is turned off.")
     if buyout.status != GuaranteedBuyout.Status.REQUESTED:
-        return "This request is no longer pending."
+        return _("This request is no longer pending.")
     if buyout.seller_id and buyout.seller_id == getattr(officer, "id", None):
         # No self-approval on a real-ISK commitment — not even a superuser (MED).
-        return "You can't approve your own request — another officer must."
+        return _("You can't approve your own request — another officer must.")
     if buyout.quoted_value > config.per_lot_cap:
-        return "Above the per-lot cap."
+        return _("Above the per-lot cap.")
     if committed_last_24h(now) + buyout.quoted_value > config.daily_budget:
-        return "Would exceed the rolling 24h budget."
+        return _("Would exceed the rolling 24h budget.")
     return None
 
 
@@ -112,7 +113,7 @@ def approve_buyout(buyout_id: int, officer, reason: str = "") -> tuple[bool, str
         .filter(pk=buyout_id).first()
     )
     if buyout is None:
-        return False, "No such request."
+        return False, _("No such request.")
     blocker = approval_blocker(buyout, officer, config)
     if blocker:
         return False, blocker
@@ -121,7 +122,10 @@ def approve_buyout(buyout_id: int, officer, reason: str = "") -> tuple[bool, str
     buyout.decided_at = timezone.now()
     buyout.decision_reason = reason[:200]
     buyout.save(update_fields=["status", "decided_by", "decided_at", "decision_reason", "updated_at"])
-    return True, f"Approved — pay {buyout.seller_character_id or 'the seller'} and note “{buyout.payment_token}”."
+    return True, _("Approved — pay %(who)s and note “%(token)s”.") % {
+        "who": buyout.seller_character_id or _("the seller"),
+        "token": buyout.payment_token,
+    }
 
 
 @transaction.atomic
@@ -156,15 +160,15 @@ def mark_settled_manual(buyout_id: int, officer, reference: str) -> tuple[bool, 
     officer can't settle their own request."""
     config = active_config()
     if config.require_esi_reconcile:
-        return False, "Manual settlement is off — this settles automatically from the corp wallet."
+        return False, _("Manual settlement is off — this settles automatically from the corp wallet.")
     buyout = GuaranteedBuyout.objects.select_for_update().filter(
         pk=buyout_id, status=GuaranteedBuyout.Status.APPROVED).first()
     if buyout is None:
-        return False, "Not awaiting payment."
+        return False, _("Not awaiting payment.")
     if buyout.seller_id and buyout.seller_id == officer.id:
-        return False, "You can't settle your own request."  # no self-settle, superuser included
+        return False, _("You can't settle your own request.")  # no self-settle, superuser included
     _settle(buyout, GuaranteedBuyout.SettlementKind.MANUAL, reference[:64])
-    return True, "Marked settled."
+    return True, _("Marked settled.")
 
 
 def _settle(buyout: GuaranteedBuyout, kind: str, ref: str) -> None:

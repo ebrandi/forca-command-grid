@@ -1,58 +1,59 @@
 {% extends "base.html" %}
-{% block title %}Pipeline · Capsuleer Path{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Pipeline" %} · {% translate "Capsuleer Path" %}{% endblock %}
 {% block content %}
-<p class="eyebrow text-faint"><a href="{% url 'capsuleer:home' %}" class="hover:text-gold">Capsuleer Path</a> › Leadership</p>
+<p class="eyebrow text-faint"><a href="{% url 'capsuleer:home' %}" class="hover:text-gold">{% translate "Capsuleer Path" %}</a> › {% translate "Leadership" %}</p>
 <header class="mb-4">
-  <h1 class="text-2xl font-bold text-ink">Pipeline</h1>
-  <p class="mt-1 text-sm text-faint">Aggregates of goals pilots chose to share. Views of this page are audit-logged.</p>
+  <h1 class="text-2xl font-bold text-ink">{% translate "Pipeline" %}</h1>
+  <p class="mt-1 text-sm text-faint">{% translate "Aggregates of goals pilots chose to share. Views of this page are audit-logged." %}</p>
 </header>
 
 {% if not pipeline.published %}
 <section class="panel px-4 py-10 text-center text-faint">
-  Fewer than {{ pipeline.min_group }} shared goals right now — nothing is published to protect the pilots involved.
+  {% blocktranslate with n=pipeline.min_group %}Fewer than {{ n }} shared goals right now — nothing is published to protect the pilots involved.{% endblocktranslate %}
 </section>
 {% else %}
 <div class="space-y-5">
   <section class="panel overflow-hidden">
-    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Pilots per path</h2></div>
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">{% translate "Pilots per path" %}</h2></div>
     <div class="divide-y divide-line/40">
       {% for row in pipeline.by_template %}
       <div class="flex items-center gap-3 px-4 py-2.5 text-sm">
         <span class="min-w-0 flex-1 truncate text-muted">{{ row.label }}</span>
         <span class="data shrink-0 text-ink">{{ row.count }}</span>
       </div>
-      {% empty %}<p class="px-4 py-6 text-sm text-faint">No template-based goals shared yet.</p>{% endfor %}
+      {% empty %}<p class="px-4 py-6 text-sm text-faint">{% translate "No template-based goals shared yet." %}</p>{% endfor %}
     </div>
-    <p class="border-t border-line px-4 py-2 text-[11px] text-faint">Completed in the last 90 days: {% if pipeline.completed_90d.suppressed %}<span class="text-faint">fewer than {{ pipeline.min_group }}</span>{% else %}<span class="data">{{ pipeline.completed_90d.count }}</span>{% endif %}</p>
+    <p class="border-t border-line px-4 py-2 text-[11px] text-faint">{% translate "Completed in the last 90 days:" %} {% if pipeline.completed_90d.suppressed %}<span class="text-faint">{% blocktranslate with n=pipeline.min_group %}fewer than {{ n }}{% endblocktranslate %}</span>{% else %}<span class="data">{{ pipeline.completed_90d.count }}</span>{% endif %}</p>
   </section>
 
   <section class="panel overflow-hidden">
-    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Doctrine pipeline</h2></div>
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">{% translate "Doctrine pipeline" %}</h2></div>
     <div class="divide-y divide-line/40">
       {% for row in pipeline.by_doctrine %}
       <div class="flex items-center gap-3 px-4 py-2.5 text-sm">
         <span class="min-w-0 flex-1 truncate text-muted">{{ row.label }}</span>
         <span class="data shrink-0 text-ink">{{ row.count }}</span>
       </div>
-      {% empty %}<p class="px-4 py-6 text-sm text-faint">No doctrine-linked goals shared yet.</p>{% endfor %}
+      {% empty %}<p class="px-4 py-6 text-sm text-faint">{% translate "No doctrine-linked goals shared yet." %}</p>{% endfor %}
     </div>
   </section>
 
   <section class="panel overflow-hidden">
-    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Activity mix</h2></div>
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">{% translate "Activity mix" %}</h2></div>
     <div class="divide-y divide-line/40">
       {% for row in pipeline.by_activity %}
       <div class="flex items-center gap-3 px-4 py-2.5 text-sm">
         <span class="min-w-0 flex-1 truncate text-muted">{{ row.label }}</span>
         <span class="data shrink-0 text-ink">{{ row.count }}</span>
       </div>
-      {% empty %}<p class="px-4 py-6 text-sm text-faint">No activity goals shared yet.</p>{% endfor %}
+      {% empty %}<p class="px-4 py-6 text-sm text-faint">{% translate "No activity goals shared yet." %}</p>{% endfor %}
     </div>
   </section>
 
   {% if pipeline.shared_with_officers %}
   <section class="panel overflow-hidden">
-    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Shared with officers</h2></div>
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">{% translate "Shared with officers" %}</h2></div>
     <div class="divide-y divide-line/40">
       {% for g in pipeline.shared_with_officers %}
       <div class="flex items-center gap-3 px-4 py-2.5 text-sm">
@@ -67,5 +68,5 @@
 </div>
 {% endif %}
 
-<p class="mt-4 text-[11px] text-faint">Not shown here, by design: private goals, budgets, motivations, dismissed suggestions, preferences.</p>
+<p class="mt-4 text-[11px] text-faint">{% translate "Not shown here, by design: private goals, budgets, motivations, dismissed suggestions, preferences." %}</p>
 {% endblock %}

@@ -1,34 +1,35 @@
 {% extends "base.html" %}
-{% block title %}Calendar · Pingboard{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Calendar" %} · Pingboard{% endblock %}
 {% block content %}
 <header class="mb-6 flex flex-wrap items-end justify-between gap-3">
   <div>
     <p class="eyebrow text-gold">Pingboard</p>
-    <h1 class="text-3xl font-bold text-ink">Calendar</h1>
+    <h1 class="text-3xl font-bold text-ink">{% translate "Calendar" %}</h1>
   </div>
   <div class="flex flex-wrap gap-2">
-    <a href="?view=agenda{% if type %}&type={{ type }}{% endif %}" class="chip {% if view == 'agenda' %}border-gold text-gold{% else %}border-line text-faint{% endif %}">Agenda</a>
-    <a href="?view=month{% if type %}&type={{ type }}{% endif %}" class="chip {% if view == 'month' %}border-gold text-gold{% else %}border-line text-faint{% endif %}">Month</a>
+    <a href="?view=agenda{% if type %}&type={{ type }}{% endif %}" class="chip {% if view == 'agenda' %}border-gold text-gold{% else %}border-line text-faint{% endif %}">{% translate "Agenda" %}</a>
+    <a href="?view=month{% if type %}&type={{ type }}{% endif %}" class="chip {% if view == 'month' %}border-gold text-gold{% else %}border-line text-faint{% endif %}">{% translate "Month" %}</a>
   </div>
 </header>
 
 <form method="get" class="mb-5 flex flex-wrap items-end gap-3">
   <input type="hidden" name="view" value="{{ view }}">
-  <label class="text-[11px] text-faint">Type
+  <label class="text-[11px] text-faint">{% translate "Type" %}
     <select name="type" class="input-field mt-1" data-autosubmit>
-      <option value="">All types</option>
+      <option value="">{% translate "All types" %}</option>
       {% for val, lbl in event_types %}<option value="{{ val }}" {% if val == type %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
     </select>
   </label>
-  <noscript><button class="btn-ghost">Filter</button></noscript>
+  <noscript><button class="btn-ghost">{% translate "Filter" %}</button></noscript>
 </form>
 
 {% if view == 'month' and month %}
 <div class="panel p-4 overflow-x-auto">
   <div class="mb-3 flex items-center justify-between">
-    <a href="?view=month&month={{ month.prev }}{% if type %}&type={{ type }}{% endif %}" class="btn-ghost">← Prev</a>
+    <a href="?view=month&month={{ month.prev }}{% if type %}&type={{ type }}{% endif %}" class="btn-ghost">← {% translate "Prev" %}</a>
     <h2 class="font-display text-lg text-ink">{{ month.label }}</h2>
-    <a href="?view=month&month={{ month.next }}{% if type %}&type={{ type }}{% endif %}" class="btn-ghost">Next →</a>
+    <a href="?view=month&month={{ month.next }}{% if type %}&type={{ type }}{% endif %}" class="btn-ghost">{% translate "Next" %} →</a>
   </div>
   <div class="grid grid-cols-7 gap-px text-[11px] text-faint">
     {% for d in "MTWTFSS"|make_list %}<div class="px-1 pb-1 text-center uppercase">{{ d }}</div>{% endfor %}
@@ -46,19 +47,19 @@
 <div class="panel overflow-x-auto">
   <table class="w-full text-sm">
     <thead><tr class="text-[11px] uppercase tracking-wide text-faint">
-      <th class="px-4 py-2 text-left">When (EVE)</th><th class="px-4 py-2 text-left">Event</th>
-      <th class="px-4 py-2 text-left">Type</th><th class="px-4 py-2 text-left">Source</th>
-      <th class="px-4 py-2 text-left">Status</th></tr></thead>
+      <th class="px-4 py-2 text-left">{% translate "When (EVE)" %}</th><th class="px-4 py-2 text-left">{% translate "Event" %}</th>
+      <th class="px-4 py-2 text-left">{% translate "Type" %}</th><th class="px-4 py-2 text-left">{% translate "Source" %}</th>
+      <th class="px-4 py-2 text-left">{% translate "Status" %}</th></tr></thead>
     <tbody class="divide-y divide-line/50">
       {% for e in events %}
       <tr class="hover:bg-panel2/40">
         <td class="px-4 py-2 data whitespace-nowrap">{{ e.start_at|date:"D j M · H:i" }}</td>
         <td class="px-4 py-2"><a href="{% url 'pingboard:calendar_event' e.id %}" class="text-ink hover:text-gold">{{ e.title }}</a></td>
         <td class="px-4 py-2 text-faint">{{ e.get_event_type_display }}</td>
-        <td class="px-4 py-2 text-[11px] text-faint">{% if e.is_manual %}manual{% else %}{{ e.source_system }}{% endif %}</td>
+        <td class="px-4 py-2 text-[11px] text-faint">{% if e.is_manual %}{% translate "manual" %}{% else %}{{ e.source_system }}{% endif %}</td>
         <td class="px-4 py-2">{% include "pingboard/_status_chip.html" with status=e.status label=e.get_status_display %}</td>
       </tr>
-      {% empty %}<tr><td colspan="5" class="px-4 py-6 text-center text-faint">No events.</td></tr>{% endfor %}
+      {% empty %}<tr><td colspan="5" class="px-4 py-6 text-center text-faint">{% translate "No events." %}</td></tr>{% endfor %}
     </tbody>
   </table>
 </div>
@@ -66,35 +67,35 @@
 
 {% if is_officer %}
 <section class="panel mt-6 p-5">
-  <h2 class="eyebrow text-gold mb-3">Add a manual event</h2>
+  <h2 class="eyebrow text-gold mb-3">{% translate "Add a manual event" %}</h2>
   <form method="post" action="{% url 'pingboard:event_create' %}" class="grid gap-3 sm:grid-cols-2" x-data="{etype: 'scheduled_alert'}">
     {% csrf_token %}
-    <label class="label">Title<input name="title" class="input-field mt-1" required></label>
+    <label class="label">{% translate "Title" %}<input name="title" class="input-field mt-1" required></label>
     <label class="label"><span x-text="etype === 'structure_timer' ? 'Exit time (EVE / UTC)' : 'Start (EVE / UTC)'">Start (EVE / UTC)</span><input type="datetime-local" name="start_at" class="input-field mt-1" required></label>
-    <label class="label">Type
+    <label class="label">{% translate "Type" %}
       <select name="event_type" class="input-field mt-1" x-model="etype">
         {% for val, lbl in event_types %}<option value="{{ val }}">{{ lbl }}</option>{% endfor %}
       </select>
     </label>
-    <label class="label">Visibility
-      <select name="visibility" class="input-field mt-1"><option value="member">Members</option><option value="officer">Officers</option><option value="director">Directors</option></select>
+    <label class="label">{% translate "Visibility" %}
+      <select name="visibility" class="input-field mt-1"><option value="member">{% translate "Members" %}</option><option value="officer">{% translate "Officers" %}</option><option value="director">{% translate "Directors" %}</option></select>
     </label>
     {# Structure-timer detail — same fields as the operations timer board. #}
     <template x-if="etype === 'structure_timer'">
       <div class="sm:col-span-2 grid gap-3 rounded-lg border border-line/50 bg-panel2/40 p-3 sm:grid-cols-2">
-        <label class="label">System<input name="system_name" class="input-field mt-1" placeholder="e.g. 1DQ1-A"></label>
-        <label class="label">Structure type<input name="structure_type" class="input-field mt-1" placeholder="Astrahus / Fortizar / IHub…"></label>
-        <label class="label">Timer
+        <label class="label">{% translate "System" %}<input name="system_name" class="input-field mt-1" placeholder="e.g. 1DQ1-A"></label>
+        <label class="label">{% translate "Structure type" %}<input name="structure_type" class="input-field mt-1" placeholder="Astrahus / Fortizar / IHub…"></label>
+        <label class="label">{% translate "Timer" %}
           <select name="timer_type" class="input-field mt-1">{% for v, l in timer_types %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select>
         </label>
-        <label class="label">Side
+        <label class="label">{% translate "Side" %}
           <select name="side" class="input-field mt-1">{% for v, l in sides %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select>
         </label>
-        <label class="chip cursor-pointer sm:col-span-2"><input type="checkbox" name="announce" value="1" class="mr-1 align-middle">Announce now to armed channels</label>
+        <label class="chip cursor-pointer sm:col-span-2"><input type="checkbox" name="announce" value="1" class="mr-1 align-middle">{% translate "Announce now to armed channels" %}</label>
       </div>
     </template>
     <label class="label sm:col-span-2"><span x-text="etype === 'structure_timer' ? 'Notes' : 'Description'">Description</span><textarea name="description" class="input-field mt-1" rows="2"></textarea></label>
-    <div class="sm:col-span-2"><button class="btn-gold">Create event</button></div>
+    <div class="sm:col-span-2"><button class="btn-gold">{% translate "Create event" %}</button></div>
   </form>
 </section>
 {% endif %}

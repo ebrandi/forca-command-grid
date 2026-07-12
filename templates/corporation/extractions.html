@@ -1,33 +1,33 @@
 {% extends "base.html" %}
-{% load eve %}
-{% block title %}Moon Extractions · [FORCA] Command Grid{% endblock %}
+{% load eve i18n %}
+{% block title %}{% translate "Moon Extractions" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <header class="mb-6 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <p class="eyebrow text-gold">Industry</p>
-    <h1 class="mt-1 text-3xl font-bold text-ink">Moon extractions</h1>
-    <p class="mt-1 text-sm text-faint">When each moon chunk is ready to fracture, counting down in EVE (UTC) time.</p>
+    <p class="eyebrow text-gold">{% translate "Industry" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Moon extractions" %}</h1>
+    <p class="mt-1 text-sm text-faint">{% translate "When each moon chunk is ready to fracture, counting down in EVE (UTC) time." %}</p>
   </div>
-  {% if is_officer %}<form method="post" action="{% url 'corporation:extractions_sync' %}">{% csrf_token %}<button class="btn-ghost text-sm">Sync now</button></form>{% endif %}
+  {% if is_officer %}<form method="post" action="{% url 'corporation:extractions_sync' %}">{% csrf_token %}<button class="btn-ghost text-sm">{% translate "Sync now" %}</button></form>{% endif %}
 </header>
 
 
 <div class="panel divide-y divide-line/40 overflow-hidden">
-  {% for e in extractions %}
+  {% translate "Moon" as t_moon %}{% for e in extractions %}
     <div class="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 text-sm">
-      <span class="min-w-0 font-medium text-ink">{{ e.moon_name|default:e.moon_id|default:"Moon" }}</span>
+      <span class="min-w-0 font-medium text-ink">{{ e.moon_name|default:e.moon_id|default:t_moon }}</span>
       {% if e.structure_name %}<span class="text-xs text-faint">{{ e.structure_name }}</span>{% endif %}
-      {% if e.composition %}<span class="chip align-middle text-[10px] !text-cyan" title="Estimated from this refinery's recent mining ledger — a guide from observed history, not a scan of the pending chunk">≈ {{ e.composition.isk_per_m3|isk }}/m³</span>{% endif %}
+      {% if e.composition %}<span class="chip align-middle text-[10px] !text-cyan" title="{% translate "Estimated from this refinery's recent mining ledger — a guide from observed history, not a scan of the pending chunk" %}">≈ {{ e.composition.isk_per_m3|isk }}/m³</span>{% endif %}
       <span class="ml-auto text-right">
         <span class="data block font-semibold text-gold" data-countdown="{{ e.chunk_arrival|date:'c' }}">—</span>
         <span class="block text-[10px] text-faint">{{ e.chunk_arrival|date:"D j M · H:i" }} EVE</span>
       </span>
       {% if e.composition %}
-      <div class="w-full text-[11px] text-faint">Likely ore <span class="text-faint/70">(recent {{ e.composition.days }}d)</span>: {% for o in e.composition.rows %}<span class="text-muted">{{ o.name }}</span> {{ o.value_share }}%{% if not forloop.last %} · {% endif %}{% endfor %}</div>
+      <div class="w-full text-[11px] text-faint">{% translate "Likely ore" %} <span class="text-faint/70">{% blocktranslate with days=e.composition.days %}(recent {{ days }}d){% endblocktranslate %}</span>: {% for o in e.composition.rows %}<span class="text-muted">{{ o.name }}</span> {{ o.value_share }}%{% if not forloop.last %} · {% endif %}{% endfor %}</div>
       {% endif %}
     </div>
   {% empty %}
-    <p class="px-4 py-12 text-center text-sm text-faint">No scheduled extractions. A role-holder needs to grant the corp-mining scope on the ESI Scopes page, then sync.</p>
+    <p class="px-4 py-12 text-center text-sm text-faint">{% translate "No scheduled extractions. A role-holder needs to grant the corp-mining scope on the ESI Scopes page, then sync." %}</p>
   {% endfor %}
 </div>
 {% endblock %}

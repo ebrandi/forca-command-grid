@@ -15,6 +15,8 @@ from __future__ import annotations
 
 import logging
 
+from django.utils.translation import gettext as _
+
 logger = logging.getLogger(__name__)
 
 _SEVERITY_PREFIX = {"info": "ℹ️", "warn": "⚠️", "high": "🟧", "critical": "🟥"}
@@ -30,7 +32,7 @@ def _drill_link(finding) -> str:
 
 def _owner_label(owner_tag: str, responsibilities: dict) -> str:
     if not owner_tag:
-        return "Unassigned"
+        return _("Unassigned")
     return ((responsibilities.get("owner_tags") or {}).get(owner_tag) or {}).get("label", owner_tag)
 
 
@@ -46,7 +48,7 @@ def render_alert(rule: dict, finding, responsibilities: dict) -> str:
     link = _drill_link(finding)
     bits = [f"{prefix} **{severity.upper()} — {label}** {summary}."]
     if severity in _OWNER_NOTIFY_SEVERITIES:
-        bits.append(f"Owner: {owner}.")
+        bits.append(_("Owner: %(owner)s.") % {"owner": owner})
     bits.append(f"<{link}>")
     return " ".join(bits)
 
@@ -95,13 +97,16 @@ def render_mail(rule: dict, finding, responsibilities: dict) -> tuple[str, str]:
     link = f"{_site_base()}{_drill_link(finding)}"
     subject = f"[FORCA Readiness] {severity.upper()}: {label}"
     score = getattr(finding, "score", None)
-    score_line = f"Current score: {score}\n" if score is not None else ""
+    score_line = (_("Current score: %(score)s") % {"score": score}) + "\n" if score is not None else ""
+    owner_line = _("Owner: %(owner)s") % {"owner": owner}
+    detail_line = _("Detail / action: %(link)s") % {"link": link}
+    footer = _("— FORCA Command Grid (automated). Manage alert rules in the Admin Console.")
     body = (
         f"{finding.title if finding else ''}\n"
         f"{score_line}"
-        f"Owner: {owner}\n"
-        f"Detail / action: {link}\n"
-        "— FORCA Command Grid (automated). Manage alert rules in the Admin Console."
+        f"{owner_line}\n"
+        f"{detail_line}\n"
+        f"{footer}"
     )
     return subject, body
 

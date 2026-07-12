@@ -11,21 +11,23 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from core.mixins import TimeStampedModel
 
 
 class Audience(models.TextChoices):
-    PUBLIC = "public", "Public — anyone can use it"
-    ALLIANCE = "alliance", "Corp & alliance members only"
-    CORP = "corp", "Corp members only"
-    DISABLED = "disabled", "Disabled"
+    PUBLIC = "public", _("Public — anyone can use it")
+    ALLIANCE = "alliance", _("Corp & alliance members only")
+    CORP = "corp", _("Corp members only")
+    DISABLED = "disabled", _("Disabled")
 
 
 class SecBand(models.TextChoices):
-    HIGHSEC = "highsec", "Highsec"
-    LOWSEC = "lowsec", "Lowsec"
-    NULLSEC = "nullsec", "Nullsec / wormhole"
+    # Security-band community jargon — kept spelled English inside the msgid.
+    HIGHSEC = "highsec", _("Highsec")
+    LOWSEC = "lowsec", _("Lowsec")
+    NULLSEC = "nullsec", _("Nullsec / wormhole")
 
 
 class BuybackConfig(TimeStampedModel):
@@ -50,7 +52,7 @@ class BuybackConfig(TimeStampedModel):
     ore_mode_enabled = models.BooleanField(default=False)
     reprocessing_pct = models.DecimalField(
         max_digits=4, decimal_places=3, default=Decimal("0.906"),
-        help_text="Effective refine yield (skills + structure + rig) used to value ore.",
+        help_text=_("Effective refine yield (skills + structure + rig) used to value ore."),
     )
 
     class Meta:
@@ -76,10 +78,10 @@ class BuybackOffer(TimeStampedModel):
     """
 
     class Status(models.TextChoices):
-        OPEN = "open", "Open"
-        PURCHASED = "purchased", "Purchased"
-        PAID = "paid", "Paid"
-        CANCELLED = "cancelled", "Cancelled"
+        OPEN = "open", _("Open")
+        PURCHASED = "purchased", _("Purchased")
+        PAID = "paid", _("Paid")
+        CANCELLED = "cancelled", _("Cancelled")
 
     seller = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
@@ -167,15 +169,15 @@ class GuaranteedBuyout(TimeStampedModel):
     reconciles."""
 
     class Status(models.TextChoices):
-        REQUESTED = "requested", "Requested"
-        APPROVED = "approved", "Approved — awaiting corp payment"
-        SETTLED = "settled", "Settled"
-        REJECTED = "rejected", "Rejected"
-        CANCELLED = "cancelled", "Cancelled"
+        REQUESTED = "requested", _("Requested")
+        APPROVED = "approved", _("Approved — awaiting corp payment")
+        SETTLED = "settled", _("Settled")
+        REJECTED = "rejected", _("Rejected")
+        CANCELLED = "cancelled", _("Cancelled")
 
     class SettlementKind(models.TextChoices):
-        ESI = "esi", "ESI wallet match"
-        MANUAL = "manual", "Officer-confirmed"
+        ESI = "esi", _("ESI wallet match")
+        MANUAL = "manual", _("Officer-confirmed")
 
     seller = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,

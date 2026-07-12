@@ -1,20 +1,21 @@
 {% extends "base.html" %}
 {% load eve %}
-{% block title %}Combat Rankings · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Combat Rankings" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 
 <header class="mb-4 flex flex-wrap items-end justify-between gap-4">
   <div>
     <p class="eyebrow">Killboard · Forças Armadas</p>
-    <h1 class="mt-1 text-3xl font-bold text-ink">Combat rankings</h1>
-    <p class="mt-1 text-sm text-faint">Who's topping the boards — PvP only, period by period. Built for fair prize challenges.</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Combat rankings" %}</h1>
+    <p class="mt-1 text-sm text-faint">{% translate "Who's topping the boards — PvP only, period by period. Built for fair prize challenges." %}</p>
   </div>
   <a href="{% url 'killboard:list' %}" class="btn-ghost text-sm">← Killfeed</a>
 </header>
 
 <!-- Window selector (live periods) -->
 <div class="mb-3 flex flex-wrap items-center gap-2 text-xs">
-  <span class="text-faint">Period:</span>
+  <span class="text-faint">{% translate "Period:" %}</span>
   {% for key, label in windows %}
     <a href="?window={{ key }}" class="chip {% if not historical and window.key == key %}!border-gold/50 !text-gold{% else %}hover:text-ink{% endif %}">{{ label }}</a>
   {% endfor %}
@@ -23,24 +24,24 @@
 <!-- Historical filter (month / year) -->
 <div class="mb-5 flex flex-wrap items-center gap-3 text-xs">
   <form method="get" class="flex flex-wrap items-center gap-2">
-    <span class="text-faint">History:</span>
+    <span class="text-faint">{% translate "History:" %}</span>
     <select name="year" class="input-field !w-auto !py-1 !text-xs" data-autosubmit>
-      <option value="">— year —</option>
+      <option value="">{% translate "— year —" %}</option>
       {% for y in available_years %}<option value="{{ y }}" {% if sel_year == y %}selected{% endif %}>{{ y }}</option>{% endfor %}
     </select>
     <select name="month" class="input-field !w-auto !py-1 !text-xs" data-autosubmit>
-      <option value="">Whole year</option>
+      <option value="">{% translate "Whole year" %}</option>
       {% for m, name in month_names %}<option value="{{ m }}" {% if sel_month == m %}selected{% endif %}>{{ name }}</option>{% endfor %}
     </select>
-    <noscript><button type="submit" class="chip hover:text-ink">Go</button></noscript>
-    <span class="text-[10px] text-faint">pick a year (month optional)</span>
+    <noscript><button type="submit" class="chip hover:text-ink">{% translate "Go" %}</button></noscript>
+    <span class="text-[10px] text-faint">{% translate "pick a year (month optional)" %}</span>
   </form>
   {% if historical %}
   <span class="text-line">|</span>
   {% if prev_period %}<a href="?year={{ prev_period.year }}{% if prev_period.month %}&month={{ prev_period.month }}{% endif %}" class="chip hover:text-ink">← {{ prev_period.label }}</a>{% endif %}
   <span class="chip !border-gold/50 !text-gold">{{ window.label }}</span>
   {% if next_period %}<a href="?year={{ next_period.year }}{% if next_period.month %}&month={{ next_period.month }}{% endif %}" class="chip hover:text-ink">{{ next_period.label }} →</a>{% endif %}
-  <a href="{% url 'killboard:rankings' %}" class="chip text-faint hover:text-loss">Reset</a>
+  <a href="{% url 'killboard:rankings' %}" class="chip text-faint hover:text-loss">{% translate "Reset" %}</a>
   {% endif %}
 </div>
 
@@ -50,28 +51,28 @@
   <div class="flex items-center gap-3">
     <img src="{% eve_portrait my_card.character_id 64 %}" alt="" class="h-12 w-12 rounded-lg ring-1 ring-line">
     <div>
-      <p class="eyebrow text-faint">Your standing · all time</p>
+      <p class="eyebrow text-faint">{% translate "Your standing · all time" %}</p>
       <p class="font-display text-lg font-bold {{ my_card.rank.color }}">{{ my_card.rank.title }}</p>
     </div>
   </div>
   <div class="flex flex-1 flex-wrap items-center justify-end gap-x-6 gap-y-2 text-sm">
     <span><span class="data font-semibold text-gold">{{ my_card.kills }}</span> <span class="text-faint">kills</span></span>
     <span><span class="data font-semibold text-loss">{{ my_card.losses }}</span> <span class="text-faint">losses</span></span>
-    <span><span class="data font-semibold text-ink">{{ my_card.efficiency|effpct }}%</span> <span class="text-faint">efficiency</span></span>
+    <span><span class="data font-semibold text-ink">{{ my_card.efficiency|effpct }}%</span> <span class="text-faint">{% translate "efficiency" %}</span></span>
     <span><span class="data font-semibold text-cyan">{{ my_card.solo_kills }}</span> <span class="text-faint">solo</span></span>
     <span class="chip {{ my_card.danger.color }}">{{ my_card.danger.label }}</span>
-    <a href="{% url 'killboard:pilot' my_card.character_id %}" class="btn-ghost text-xs">My analytics →</a>
+    <a href="{% url 'killboard:pilot' my_card.character_id %}" class="btn-ghost text-xs">{% translate "My analytics" %} →</a>
   </div>
 </section>
 {% endif %}
 
 {% if not pilot_count %}
   <div class="panel px-4 py-16 text-center">
-    <p class="font-display text-lg text-muted">No combat in {{ window.label }}</p>
-    <p class="mt-1 text-sm text-faint">Standings fill as kills land during the period.{% if not historical %} See the full history below.{% endif %}</p>
+    <p class="font-display text-lg text-muted">{% blocktranslate with period=window.label %}No combat in {{ period }}{% endblocktranslate %}</p>
+    <p class="mt-1 text-sm text-faint">{% translate "Standings fill as kills land during the period." %}{% if not historical %} {% translate "See the full history below." %}{% endif %}</p>
     <div class="mt-4 flex items-center justify-center gap-2">
-      <a href="?window=all" class="btn-gold text-sm">View all-time rankings</a>
-      {% if historical %}<a href="{% url 'killboard:rankings' %}" class="btn-ghost text-sm">Reset filters</a>{% endif %}
+      <a href="?window=all" class="btn-gold text-sm">{% translate "View all-time rankings" %}</a>
+      {% if historical %}<a href="{% url 'killboard:rankings' %}" class="btn-ghost text-sm">{% translate "Reset filters" %}</a>{% endif %}
     </div>
   </div>
 {% else %}
@@ -81,7 +82,7 @@
 <section class="panel mb-6 overflow-hidden">
   <div class="flex items-center gap-2 border-b border-line px-4 py-3">
     <svg class="h-4 w-4 text-gold"><use href="#i-target"/></svg>
-    <h2 class="eyebrow text-gold">Most valuable kills</h2>
+    <h2 class="eyebrow text-gold">{% translate "Most valuable kills" %}</h2>
     <span class="ml-auto text-[11px] text-faint">{{ window.label }}</span>
   </div>
   <div class="divide-y divide-line/50">
@@ -127,7 +128,7 @@
           <img src="{% eve_portrait row.character_id 32 %}" alt="" loading="lazy" class="h-7 w-7 shrink-0 rounded-full ring-1 ring-line {% if row.place == 1 %}!ring-gold/60{% endif %}">
           <span class="min-w-0 flex-1 truncate text-sm text-muted group-hover:text-gold transition">{% eve_name row.character_id %}</span>
         </a>
-        {% if is_member or is_alliance %}<a href="{% url 'killboard:pilot' row.character_id %}" class="shrink-0 text-faint hover:text-cyan" title="Combat analytics"><svg class="h-3.5 w-3.5"><use href="#i-grid"/></svg></a>{% endif %}
+        {% if is_member or is_alliance %}<a href="{% url 'killboard:pilot' row.character_id %}" class="shrink-0 text-faint hover:text-cyan" title="{% translate 'Combat analytics' %}"><svg class="h-3.5 w-3.5"><use href="#i-grid"/></svg></a>{% endif %}
         <div class="shrink-0 text-right">
           <p class="data text-sm font-semibold text-ink">
             {% if cat.kind == 'isk' %}{{ row.value|isk }}{% elif cat.kind == 'pct' %}{{ row.value|effpct }}%{% else %}{{ row.value }}{% endif %}
@@ -139,7 +140,7 @@
     </ol>
     {% else %}
     <p class="px-4 py-8 text-center text-xs text-faint">
-      {% if cat.key == 'efficiency' %}No pilot has {{ efficiency_min_fights }}+ fights this period yet.{% else %}Nothing on the board yet.{% endif %}
+      {% if cat.key == 'efficiency' %}{% blocktranslate with n=efficiency_min_fights %}No pilot has {{ n }}+ fights this period yet.{% endblocktranslate %}{% else %}{% translate "Nothing on the board yet." %}{% endif %}
     </p>
     {% endif %}
   </section>
@@ -148,8 +149,8 @@
 
 <!-- Rank ladder legend (configurable — from the DB ladder) -->
 <section class="panel mt-6 p-4">
-  <h2 class="eyebrow mb-1 text-faint">Combat ranks</h2>
-  <p class="mb-3 text-xs text-faint">Earned on your all-time PvP kills. Climb the ladder, claim the title.</p>
+  <h2 class="eyebrow mb-1 text-faint">{% translate "Combat ranks" %}</h2>
+  <p class="mb-3 text-xs text-faint">{% translate "Earned on your all-time PvP kills. Climb the ladder, claim the title." %}</p>
   <div class="flex flex-wrap gap-2 text-xs">
     {% for e in rank_ladder %}{% if e.is_visible %}
     <span class="chip {{ e.color }}">{{ e.name }}{% if e.min_kills %} · {{ e.min_kills }}+{% endif %}</span>
@@ -157,6 +158,6 @@
   </div>
 </section>
 
-<p class="mt-4 text-center text-[11px] text-faint">PvP only — kills and deaths involving no player (ratting, structure shoots) don't count. Efficiency needs {{ efficiency_min_fights }}+ fights to rank.</p>
+<p class="mt-4 text-center text-[11px] text-faint">{% blocktranslate with n=efficiency_min_fights %}PvP only — kills and deaths involving no player (ratting, structure shoots) don't count. Efficiency needs {{ n }}+ fights to rank.{% endblocktranslate %}</p>
 {% endif %}
 {% endblock %}

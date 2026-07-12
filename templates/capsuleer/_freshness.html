@@ -1,6 +1,7 @@
+{% load i18n %}
 {# Freshness/honesty line (doc 10 §2.5). Pass m (a CareerMilestone). #}
 {% if m.last_checked_at %}
-<p class="text-[11px] text-faint">checked {{ m.last_checked_at|timesince }} ago{% if m.data_source %} · from {{ m.data_source }}{% endif %}</p>
+<p class="text-[11px] text-faint">{% blocktranslate with ago=m.last_checked_at|timesince %}checked {{ ago }} ago{% endblocktranslate %}{% if m.data_source %} · {% blocktranslate with src=m.data_source %}from {{ src }}{% endblocktranslate %}{% endif %}</p>
 {% elif m.data_source %}
 <p class="text-[11px] text-faint">{{ m.data_source }}</p>
 {% endif %}

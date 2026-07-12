@@ -1,28 +1,28 @@
 {% extends "base.html" %}
-{% load eve %}
-{% block title %}Recruitment · [FORCA] Command Grid{% endblock %}
+{% load eve i18n %}
+{% block title %}{% translate "Recruitment" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <header class="mb-6">
-  <p class="eyebrow text-gold">Leadership</p>
-  <h1 class="mt-1 text-3xl font-bold text-ink">Recruitment</h1>
-  <p class="mt-1 text-sm text-faint">Evidence-based candidate briefs from public data. No automated verdicts — evidence to discuss.</p>
+  <p class="eyebrow text-gold">{% translate "Leadership" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Recruitment" %}</h1>
+  <p class="mt-1 text-sm text-faint">{% translate "Evidence-based candidate briefs from public data. No automated verdicts — evidence to discuss." %}</p>
 </header>
 
 
 <section class="panel mb-6 overflow-hidden">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Add a candidate</h2></div>
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "Add a candidate" %}</h2></div>
   <form method="post" action="{% url 'recruitment:add' %}" class="grid gap-3 p-4 sm:grid-cols-3">
     {% csrf_token %}
     <div class="sm:col-span-2">
-      <label class="label" for="lf_name_1">Pilot name</label>
+      <label class="label" for="lf_name_1">{% translate "Pilot name" %}</label>
       <input id="lf_name_1" name="name" required autocomplete="off" class="input-field" placeholder="e.g. Stromgren">
     </div>
-    <div class="flex items-end"><button class="btn-gold w-full">Add &amp; gather evidence</button></div>
+    <div class="flex items-end"><button class="btn-gold w-full">{% translate "Add &amp; gather evidence" %}</button></div>
   </form>
 </section>
 
 <section class="panel overflow-hidden">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Candidates</h2></div>
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">{% translate "Candidates" %}</h2></div>
   <div class="divide-y divide-line/40">
     {% for c in candidates %}
       <a href="{% url 'recruitment:detail' c.pk %}" class="flex items-center gap-3 px-4 py-2.5 hover:bg-panel2">
@@ -31,7 +31,7 @@
         <span class="chip {% if c.status == 'joined' %}!border-kill/40 !text-kill{% elif c.status == 'rejected' %}!text-faint{% else %}!text-gold{% endif %}">{{ c.get_status_display }}</span>
       </a>
     {% empty %}
-      <p class="px-4 py-6 text-center text-sm text-faint">No candidates yet.</p>
+      <p class="px-4 py-6 text-center text-sm text-faint">{% translate "No candidates yet." %}</p>
     {% endfor %}
   </div>
 </section>

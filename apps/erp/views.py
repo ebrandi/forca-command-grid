@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
 from core import rbac
@@ -56,14 +57,14 @@ def create_job(request: HttpRequest) -> HttpResponse:
         output_type_id = int(request.POST.get("output_type_id"))
         quantity = max(1, int(request.POST.get("quantity") or 1))
     except (TypeError, ValueError):
-        messages.error(request, "Need a valid type and quantity.")
+        messages.error(request, _("Need a valid type and quantity."))
         return redirect("erp:board")
     job = BuildJob.objects.create(
         output_type_id=output_type_id, quantity=quantity,
         note=(request.POST.get("note") or "").strip(), created_by=request.user,
     )
     services.recheck_block(job)  # flag immediately if corp stock can't cover it
-    messages.success(request, f"Build job queued: {job.quantity}× {job.output_type_id}.")
+    messages.success(request, _("Build job queued: %(qty)s× %(type_id)s.") % {"qty": job.quantity, "type_id": job.output_type_id})
     return redirect("erp:board")
 
 
@@ -74,11 +75,11 @@ def claim(request: HttpRequest, pk: int) -> HttpResponse:
     job = get_object_or_404(BuildJob, pk=pk)
     services.recheck_block(job)  # unblock if stock has since arrived (or re-block)
     if job.status == BuildJob.Status.BLOCKED:
-        messages.error(request, f"Can't claim — {job.blocked_reason or 'materials are short'}.")
+        messages.error(request, _("Can't claim — %(reason)s.") % {"reason": job.blocked_reason or _("materials are short")})
     elif services.claim(job, request.user):
-        messages.success(request, "Claimed — materials and BOM are on the card.")
+        messages.success(request, _("Claimed — materials and BOM are on the card."))
     else:
-        messages.error(request, "That job is no longer available.")
+        messages.error(request, _("That job is no longer available."))
     return redirect("erp:board")
 
 
@@ -89,11 +90,11 @@ def update_status(request: HttpRequest, pk: int) -> HttpResponse:
     job = get_object_or_404(BuildJob, pk=pk)
     is_officer = rbac.has_role(request.user, rbac.ROLE_OFFICER)
     if not services.can_act(request.user, job, is_officer=is_officer):
-        messages.error(request, "You can only update your own jobs.")
+        messages.error(request, _("You can only update your own jobs."))
         return redirect("erp:board")
     to = request.POST.get("status")
     if to == BuildJob.Status.CANCELLED and not is_officer:
-        messages.error(request, "Only officers can cancel jobs.")
+        messages.error(request, _("Only officers can cancel jobs."))
         return redirect("erp:board")
     services.set_status(job, to)
     return redirect("erp:board")
@@ -106,12 +107,12 @@ def deliver(request: HttpRequest, pk: int) -> HttpResponse:
     job = get_object_or_404(BuildJob, pk=pk)
     is_officer = rbac.has_role(request.user, rbac.ROLE_OFFICER)
     if not services.can_act(request.user, job, is_officer=is_officer):
-        messages.error(request, "You can only deliver your own jobs.")
+        messages.error(request, _("You can only deliver your own jobs."))
         return redirect("erp:board")
     if services.deliver(job, request.user):
-        messages.success(request, "Delivered — corp stock updated and you've been credited.")
+        messages.success(request, _("Delivered — corp stock updated and you've been credited."))
     else:
-        messages.info(request, "Already delivered.")
+        messages.info(request, _("Already delivered."))
     return redirect("erp:board")
 
 
@@ -124,12 +125,12 @@ def cancel_job(request: HttpRequest, pk: int) -> HttpResponse:
     job = get_object_or_404(BuildJob, pk=pk)
     is_officer = rbac.has_role(request.user, rbac.ROLE_OFFICER)
     if not services.can_manage(request.user, job, is_officer=is_officer):
-        messages.error(request, "You can't manage that job.")
+        messages.error(request, _("You can't manage that job."))
     elif job.status in (BuildJob.Status.DELIVERED, BuildJob.Status.CANCELLED):
-        messages.info(request, "That job is already closed.")
+        messages.info(request, _("That job is already closed."))
     else:
         services.set_status(job, BuildJob.Status.CANCELLED)
-        messages.success(request, "Job cancelled.")
+        messages.success(request, _("Job cancelled."))
     return redirect("industry:jobs")
 
 
@@ -141,20 +142,20 @@ def edit_job(request: HttpRequest, pk: int) -> HttpResponse:
     job = get_object_or_404(BuildJob, pk=pk)
     is_officer = rbac.has_role(request.user, rbac.ROLE_OFFICER)
     if not services.can_manage(request.user, job, is_officer=is_officer):
-        messages.error(request, "You can't manage that job.")
+        messages.error(request, _("You can't manage that job."))
         return redirect("industry:jobs")
     if job.status not in (BuildJob.Status.QUEUED, BuildJob.Status.BLOCKED):
-        messages.error(request, "Only a queued job can be edited.")
+        messages.error(request, _("Only a queued job can be edited."))
         return redirect("industry:jobs")
     try:
         quantity = max(1, int(request.POST.get("quantity") or job.quantity))
     except (TypeError, ValueError):
-        messages.error(request, "Enter a valid quantity.")
+        messages.error(request, _("Enter a valid quantity."))
         return redirect("industry:jobs")
     if services.update_quantity(job, quantity, request.POST.get("note", "")):
-        messages.success(request, "Job updated.")
+        messages.success(request, _("Job updated."))
     else:
-        messages.error(request, "That job can no longer be edited — it was just claimed.")
+        messages.error(request, _("That job can no longer be edited — it was just claimed."))
     return redirect("industry:jobs")
 
 
@@ -165,7 +166,7 @@ def add_blueprint(request: HttpRequest) -> HttpResponse:
     try:
         type_id = int(request.POST.get("type_id"))
     except (TypeError, ValueError):
-        messages.error(request, "Need a valid blueprint type id.")
+        messages.error(request, _("Need a valid blueprint type id."))
         return redirect("erp:board")
     product = request.POST.get("product_type_id")
     Blueprint.objects.create(
@@ -174,5 +175,5 @@ def add_blueprint(request: HttpRequest) -> HttpResponse:
         me=int(request.POST.get("me") or 0), te=int(request.POST.get("te") or 0),
         source="manual",
     )
-    messages.success(request, "Blueprint recorded.")
+    messages.success(request, _("Blueprint recorded."))
     return redirect("erp:board")

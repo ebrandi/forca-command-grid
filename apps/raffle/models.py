@@ -28,6 +28,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
+from django.utils.translation import gettext_lazy as _
 
 from core.mixins import TimeStampedModel
 
@@ -52,13 +53,13 @@ class RaffleContest(TimeStampedModel):
     """
 
     class Status(models.TextChoices):
-        DRAFT = "draft", "Draft"
-        SCHEDULED = "scheduled", "Scheduled"
-        ACTIVE = "active", "Active"
-        CLOSED = "closed", "Closed (awaiting draw)"
-        COMPLETED = "completed", "Completed"
-        ARCHIVED = "archived", "Archived"
-        CANCELLED = "cancelled", "Cancelled"
+        DRAFT = "draft", _("Draft")
+        SCHEDULED = "scheduled", _("Scheduled")
+        ACTIVE = "active", _("Active")
+        CLOSED = "closed", _("Closed (awaiting draw)")
+        COMPLETED = "completed", _("Completed")
+        ARCHIVED = "archived", _("Archived")
+        CANCELLED = "cancelled", _("Cancelled")
 
     # Statuses whose pilot-facing pages the public/archive may show.
     VISIBLE_STATUSES = (Status.ACTIVE, Status.CLOSED, Status.COMPLETED, Status.ARCHIVED)
@@ -67,77 +68,77 @@ class RaffleContest(TimeStampedModel):
 
     name = models.CharField(max_length=120)
     slug = models.SlugField(max_length=140, unique=True, blank=True)
-    description = models.TextField(blank=True, help_text="Short pitch shown in the hero.")
+    description = models.TextField(blank=True, help_text=_("Short pitch shown in the hero."))
     objective = models.CharField(
         max_length=300, blank=True,
-        help_text="Why the contest exists — the engagement goal in one line.",
+        help_text=_("Why the contest exists — the engagement goal in one line."),
     )
     public_rules = models.TextField(
-        blank=True, help_text="Leadership-authored rules shown to pilots."
+        blank=True, help_text=_("Leadership-authored rules shown to pilots.")
     )
-    admin_notes = models.TextField(blank=True, help_text="Internal — never shown to pilots.")
+    admin_notes = models.TextField(blank=True, help_text=_("Internal — never shown to pilots."))
 
     status = models.CharField(
         max_length=10, choices=Status.choices, default=Status.DRAFT, db_index=True
     )
 
-    start_at = models.DateTimeField(help_text="Ticket accrual opens.")
-    end_at = models.DateTimeField(help_text="Ticket accrual closes.")
-    draw_at = models.DateTimeField(help_text="Winners are drawn.")
+    start_at = models.DateTimeField(help_text=_("Ticket accrual opens."))
+    end_at = models.DateTimeField(help_text=_("Ticket accrual closes."))
+    draw_at = models.DateTimeField(help_text=_("Winners are drawn."))
 
     # --- Eligibility / ESI-adoption policy --------------------------------- #
     require_enrolled = models.BooleanField(
         default=True,
-        help_text="Only pilots enrolled in FORCA earn tickets (strongly recommended).",
+        help_text=_("Only pilots enrolled in FORCA earn tickets (strongly recommended)."),
     )
     require_valid_token = models.BooleanField(
         default=True,
-        help_text="Require a live, non-revoked ESI token to earn tickets (recommended).",
+        help_text=_("Require a live, non-revoked ESI token to earn tickets (recommended)."),
     )
     required_scopes = models.JSONField(
         default=list, blank=True,
-        help_text="Extra ESI scopes a pilot's token must carry (usually empty for PVP).",
+        help_text=_("Extra ESI scopes a pilot's token must carry (usually empty for PVP)."),
     )
     include_alliance = models.BooleanField(
         default=False,
-        help_text="Also admit registered alliance / friendly-corp pilots (default: corp only).",
+        help_text=_("Also admit registered alliance / friendly-corp pilots (default: corp only)."),
     )
     retroactive_enabled = models.BooleanField(
         default=False,
-        help_text="Award tickets for eligible activity back to the start date once a "
-                  "pilot enrols (still must be enrolled + valid at draw to win).",
+        help_text=_("Award tickets for eligible activity back to the start date once a "
+                    "pilot enrols (still must be enrolled + valid at draw to win)."),
     )
 
     # --- Draw policy ------------------------------------------------------- #
     one_prize_per_pilot = models.BooleanField(
-        default=True, help_text="A pilot can win at most one prize (spreads rewards)."
+        default=True, help_text=_("A pilot can win at most one prize (spreads rewards).")
     )
     algorithm_version = models.CharField(max_length=8, default=DEFAULT_ALGORITHM_VERSION)
     auto_draw = models.BooleanField(
-        default=True, help_text="Draw automatically at the draw time (else officer runs it)."
+        default=True, help_text=_("Draw automatically at the draw time (else officer runs it).")
     )
 
     # --- Display / transparency ------------------------------------------- #
     leaderboard_visible = models.BooleanField(default=True)
     leaderboard_size = models.PositiveIntegerField(default=25)
     show_odds = models.BooleanField(
-        default=False, help_text="Show each pilot their estimated chance of winning."
+        default=False, help_text=_("Show each pilot their estimated chance of winning.")
     )
     show_recent_events = models.BooleanField(
-        default=True, help_text="Show a recent-ticket-events feed on the dashboard."
+        default=True, help_text=_("Show a recent-ticket-events feed on the dashboard.")
     )
     show_ineligible_to_pilots = models.BooleanField(
         default=False,
-        help_text="Show a pilot the tickets they *would* have earned before enrolling.",
+        help_text=_("Show a pilot the tickets they *would* have earned before enrolling."),
     )
     archive_public = models.BooleanField(
-        default=True, help_text="Keep this contest visible in the archive after completion."
+        default=True, help_text=_("Keep this contest visible in the archive after completion.")
     )
 
     # --- Booster window (double-ticket weekends, strategic pushes) --------- #
     booster_multiplier = models.DecimalField(
         max_digits=4, decimal_places=2, default=Decimal("1"),
-        help_text="Ticket multiplier applied inside the booster window (1 = off).",
+        help_text=_("Ticket multiplier applied inside the booster window (1 = off)."),
     )
     booster_start_at = models.DateTimeField(null=True, blank=True)
     booster_end_at = models.DateTimeField(null=True, blank=True)
@@ -147,22 +148,22 @@ class RaffleContest(TimeStampedModel):
     # Leadership can still force a manual draw. Blank metric = no minimum.
     min_activity_metric = models.CharField(
         max_length=32, blank=True,
-        help_text="Activity metric that gates a valid draw (blank = always valid).",
+        help_text=_("Activity metric that gates a valid draw (blank = always valid)."),
     )
     min_activity_threshold = models.DecimalField(
         max_digits=24, decimal_places=2, default=0,
-        help_text="The contest is valid for an automatic draw only once this metric reaches this value.",
+        help_text=_("The contest is valid for an automatic draw only once this metric reaches this value."),
     )
 
     # --- Prize-value booster: hit a goal → ISK/PLEX prizes are worth more --- #
     prize_booster_metric = models.CharField(
         max_length=32, blank=True,
-        help_text="Activity metric whose goal unlocks a prize-value boost (blank = off).",
+        help_text=_("Activity metric whose goal unlocks a prize-value boost (blank = off)."),
     )
     prize_booster_goal = models.DecimalField(max_digits=24, decimal_places=2, default=0)
     prize_booster_percent = models.DecimalField(
         max_digits=6, decimal_places=2, default=0,
-        help_text="Boost ISK/PLEX prize values by this percent when the goal is reached (e.g. 10).",
+        help_text=_("Boost ISK/PLEX prize values by this percent when the goal is reached (e.g. 10)."),
     )
 
     # --- Goals / milestones (JSON: [{label, metric, target}]) -------------- #
@@ -254,30 +255,30 @@ class RafflePrize(TimeStampedModel):
     class PrizeType(models.TextChoices):
         ISK = "isk", "ISK"
         PLEX = "plex", "PLEX"
-        ITEM = "item", "In-game item"
+        ITEM = "item", _("In-game item")
         DOCTRINE_SHIP = "doctrine_ship", "Doctrine ship"
         CAPITAL = "capital", "Capital ship"
         SUPERCAPITAL = "supercapital", "Supercapital ship"
-        CUSTOM = "custom", "Custom reward"
+        CUSTOM = "custom", _("Custom reward")
 
     contest = models.ForeignKey(
         RaffleContest, on_delete=models.CASCADE, related_name="prizes"
     )
-    rank = models.PositiveIntegerField(default=1, help_text="1 = first prize.")
+    rank = models.PositiveIntegerField(default=1, help_text=_("1 = first prize."))
     name = models.CharField(max_length=140)
     prize_type = models.CharField(
         max_length=14, choices=PrizeType.choices, default=PrizeType.ISK
     )
     icon_type_id = models.IntegerField(
-        null=True, blank=True, help_text="EVE type id for the prize icon (ships/items)."
+        null=True, blank=True, help_text=_("EVE type id for the prize icon (ships/items).")
     )
     quantity = models.PositiveIntegerField(default=1)
     estimated_value = models.DecimalField(max_digits=20, decimal_places=2, default=0)
     description = models.TextField(blank=True)
     delivery_instructions = models.TextField(
-        blank=True, help_text="Public: how the winner receives the prize."
+        blank=True, help_text=_("Public: how the winner receives the prize.")
     )
-    internal_notes = models.TextField(blank=True, help_text="Internal — leaders only.")
+    internal_notes = models.TextField(blank=True, help_text=_("Internal — leaders only."))
 
     class Meta:
         ordering = ["contest", "rank"]
@@ -296,15 +297,15 @@ class RaffleTicketSourceConfig(TimeStampedModel):
     """Per-contest configuration for one ticket source (see :mod:`apps.raffle.sources`)."""
 
     class Mode(models.TextChoices):
-        AUTO = "auto", "Automatic"
-        OFFICER_APPROVED = "officer_approved", "Officer-approved"
-        MANUAL = "manual", "Manual only"
+        AUTO = "auto", _("Automatic")
+        OFFICER_APPROVED = "officer_approved", _("Officer-approved")
+        MANUAL = "manual", _("Manual only")
 
     class CapScope(models.TextChoices):
-        NONE = "none", "No cap"
-        DAILY = "daily", "Per day"
-        WEEKLY = "weekly", "Per week"
-        CONTEST = "contest", "Per contest"
+        NONE = "none", _("No cap")
+        DAILY = "daily", _("Per day")
+        WEEKLY = "weekly", _("Per week")
+        CONTEST = "contest", _("Per contest")
 
     contest = models.ForeignKey(
         RaffleContest, on_delete=models.CASCADE, related_name="source_configs"
@@ -320,24 +321,24 @@ class RaffleTicketSourceConfig(TimeStampedModel):
 
     min_threshold = models.DecimalField(
         max_digits=20, decimal_places=2, default=0,
-        help_text="Minimum event magnitude (e.g. min kill ISK, min m³) to earn a ticket.",
+        help_text=_("Minimum event magnitude (e.g. min kill ISK, min m³) to earn a ticket."),
     )
     max_per_event = models.PositiveIntegerField(
-        null=True, blank=True, help_text="Cap tickets from a single event (blank = no cap)."
+        null=True, blank=True, help_text=_("Cap tickets from a single event (blank = no cap).")
     )
     cap_scope = models.CharField(max_length=8, choices=CapScope.choices, default=CapScope.NONE)
     cap_amount = models.PositiveIntegerField(null=True, blank=True)
 
     require_esi = models.BooleanField(
         default=True,
-        help_text="Require enrolment + a valid ESI token (leave on — not recommended to disable).",
+        help_text=_("Require enrolment + a valid ESI token (leave on — not recommended to disable)."),
     )
     retroactive = models.BooleanField(
-        default=False, help_text="Recompute from the start date once a pilot enrols."
+        default=False, help_text=_("Recompute from the start date once a pilot enrols.")
     )
     visible_to_pilots = models.BooleanField(default=True)
     show_calculation = models.BooleanField(
-        default=True, help_text="Show pilots the detailed ticket maths for this source."
+        default=True, help_text=_("Show pilots the detailed ticket maths for this source.")
     )
     last_processed_at = models.DateTimeField(null=True, blank=True)
 
@@ -366,17 +367,17 @@ class RaffleTicketLedgerEntry(TimeStampedModel):
     """
 
     class Status(models.TextChoices):
-        PENDING = "pending", "Pending approval"
-        APPROVED = "approved", "Approved"
-        EXCLUDED = "excluded", "Excluded"
-        REVERSED = "reversed", "Reversed"
-        DISQUALIFIED = "disqualified", "Disqualified"
+        PENDING = "pending", _("Pending approval")
+        APPROVED = "approved", _("Approved")
+        EXCLUDED = "excluded", _("Excluded")
+        REVERSED = "reversed", _("Reversed")
+        DISQUALIFIED = "disqualified", _("Disqualified")
 
     class EsiStatus(models.TextChoices):
-        VALID = "valid", "Valid"
-        EXPIRED = "expired", "Expired"
-        REVOKED = "revoked", "Revoked"
-        NONE = "none", "No token"
+        VALID = "valid", _("Valid")
+        EXPIRED = "expired", _("Expired")
+        REVOKED = "revoked", _("Revoked")
+        NONE = "none", _("No token")
 
     contest = models.ForeignKey(
         RaffleContest, on_delete=models.CASCADE, related_name="ledger_entries"
@@ -392,9 +393,9 @@ class RaffleTicketLedgerEntry(TimeStampedModel):
 
     source_key = models.CharField(max_length=40, db_index=True)
     source_ref = models.CharField(
-        max_length=120, help_text="Stable event id, e.g. killmail:123 / manual:45."
+        max_length=120, help_text=_("Stable event id, e.g. killmail:123 / manual:45.")
     )
-    amount = models.IntegerField(default=0, help_text="Tickets (negative for reversals).")
+    amount = models.IntegerField(default=0, help_text=_("Tickets (negative for reversals)."))
     # When the underlying ACTIVITY happened (distinct from created_at, when the row
     # was written) — drives period caps, the accrual-by-day curve, and the
     # non-retroactive pre-enrolment gate.
@@ -463,7 +464,7 @@ class RaffleManualGrant(TimeStampedModel):
     amount = models.PositiveIntegerField(default=1)
     reason = models.CharField(max_length=300)
     category = models.CharField(max_length=60, blank=True)
-    internal_notes = models.TextField(blank=True, help_text="Leaders only — never shown to the pilot.")
+    internal_notes = models.TextField(blank=True, help_text=_("Leaders only — never shown to the pilot."))
     override_used = models.BooleanField(default=False)
 
     granted_by = models.ForeignKey(
@@ -542,12 +543,12 @@ class RaffleIneligibleActivity(TimeStampedModel):
     """
 
     class Reason(models.TextChoices):
-        NOT_ENROLLED = "not_enrolled", "No FORCA account"
-        NO_TOKEN = "no_token", "No valid ESI token"
-        TOKEN_EXPIRED = "token_expired", "ESI token expired/revoked"
-        MISSING_SCOPE = "missing_scope", "Missing required scope"
-        NOT_CORP = "not_corp", "Not a recognised corp pilot"
-        EXCLUDED = "excluded", "Manually excluded"
+        NOT_ENROLLED = "not_enrolled", _("No FORCA account")
+        NO_TOKEN = "no_token", _("No valid ESI token")
+        TOKEN_EXPIRED = "token_expired", _("ESI token expired/revoked")
+        MISSING_SCOPE = "missing_scope", _("Missing required scope")
+        NOT_CORP = "not_corp", _("Not a recognised corp pilot")
+        EXCLUDED = "excluded", _("Manually excluded")
 
     contest = models.ForeignKey(
         RaffleContest, on_delete=models.CASCADE, related_name="ineligible_activity"
@@ -591,25 +592,25 @@ class RaffleDraw(TimeStampedModel):
     """
 
     class Status(models.TextChoices):
-        PENDING = "pending", "Pending"
-        COMMITTED = "committed", "Seed committed"
-        RUNNING = "running", "Running"
-        COMPLETED = "completed", "Completed"
-        FAILED = "failed", "Failed"
+        PENDING = "pending", _("Pending")
+        COMMITTED = "committed", _("Seed committed")
+        RUNNING = "running", _("Running")
+        COMPLETED = "completed", _("Completed")
+        FAILED = "failed", _("Failed")
 
     contest = models.ForeignKey(RaffleContest, on_delete=models.CASCADE, related_name="draws")
     status = models.CharField(
         max_length=10, choices=Status.choices, default=Status.PENDING, db_index=True
     )
     algorithm_version = models.CharField(max_length=8, default=DEFAULT_ALGORITHM_VERSION)
-    code_version = models.CharField(max_length=40, blank=True, help_text="git commit at draw time.")
+    code_version = models.CharField(max_length=40, blank=True, help_text=_("git commit at draw time."))
 
     # Commit-reveal fairness: the sha256 of the secret seed is stored (and shown)
     # BEFORE the draw; the seed itself is revealed after, so anyone can recompute.
     seed_commitment = models.CharField(max_length=64, blank=True)
     seed = models.CharField(max_length=128, blank=True)
     external_entropy = models.CharField(
-        max_length=200, blank=True, help_text="Optional public seed folded into the entropy."
+        max_length=200, blank=True, help_text=_("Optional public seed folded into the entropy.")
     )
     committed_at = models.DateTimeField(null=True, blank=True)
     revealed_at = models.DateTimeField(null=True, blank=True)
@@ -625,7 +626,7 @@ class RaffleDraw(TimeStampedModel):
     # Activity-safeguard + prize-booster outcome frozen at draw time.
     min_activity_met = models.BooleanField(default=True)
     forced_below_minimum = models.BooleanField(
-        default=False, help_text="Drawn by leadership override despite unmet minimum activity."
+        default=False, help_text=_("Drawn by leadership override despite unmet minimum activity.")
     )
     prize_booster_applied = models.BooleanField(default=False)
     prize_booster_percent = models.DecimalField(max_digits=6, decimal_places=2, default=0)
@@ -636,7 +637,7 @@ class RaffleDraw(TimeStampedModel):
 
     executed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name="+", help_text="Null = automatic draw.",
+        related_name="+", help_text=_("Null = automatic draw."),
     )
     superseded_by = models.ForeignKey(
         "self", on_delete=models.SET_NULL, null=True, blank=True, related_name="supersedes"
@@ -662,16 +663,16 @@ class RaffleDrawResult(TimeStampedModel):
     """A winning draw → prize assignment (and its fulfilment lifecycle)."""
 
     class Status(models.TextChoices):
-        WON = "won", "Won"
-        FORFEITED = "forfeited", "Forfeited"
-        REDRAWN = "redrawn", "Redrawn"
-        VOID = "void", "Void"
+        WON = "won", _("Won")
+        FORFEITED = "forfeited", _("Forfeited")
+        REDRAWN = "redrawn", _("Redrawn")
+        VOID = "void", _("Void")
 
     class FulfilStatus(models.TextChoices):
-        PENDING = "pending", "Pending"
-        CONTACTED = "contacted", "Contacted"
-        DELIVERED = "delivered", "Delivered"
-        CANCELLED = "cancelled", "Cancelled"
+        PENDING = "pending", _("Pending")
+        CONTACTED = "contacted", _("Contacted")
+        DELIVERED = "delivered", _("Delivered")
+        CANCELLED = "cancelled", _("Cancelled")
 
     draw = models.ForeignKey(RaffleDraw, on_delete=models.CASCADE, related_name="results")
     prize = models.ForeignKey(RafflePrize, on_delete=models.CASCADE, related_name="results")
@@ -682,7 +683,7 @@ class RaffleDrawResult(TimeStampedModel):
     winner_character_id = models.BigIntegerField(null=True, blank=True)
     winner_character_name = models.CharField(max_length=200, blank=True)
 
-    draw_order = models.PositiveIntegerField(default=1, help_text="1 = first prize drawn.")
+    draw_order = models.PositiveIntegerField(default=1, help_text=_("1 = first prize drawn."))
     winning_ticket_index = models.IntegerField(default=0)
     winning_ticket_ref = models.CharField(max_length=120, blank=True)
     # Effective value actually awarded = prize value × the prize booster when it was
@@ -698,7 +699,7 @@ class RaffleDrawResult(TimeStampedModel):
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
     )
     fulfilled_at = models.DateTimeField(null=True, blank=True)
-    fulfilment_notes = models.TextField(blank=True, help_text="Internal fulfilment notes.")
+    fulfilment_notes = models.TextField(blank=True, help_text=_("Internal fulfilment notes."))
 
     class Meta:
         ordering = ["draw", "draw_order"]
@@ -750,17 +751,17 @@ class RaffleSuspiciousActivityFlag(TimeStampedModel):
     """A flagged (not deleted) ticket event pending officer review."""
 
     class FlagType(models.TextChoices):
-        REPEATED_VICTIM = "repeated_victim", "Same victim repeated"
-        LOW_VALUE = "low_value", "Very low value kill"
-        SELF_KILL = "self_kill", "Possible self-kill / awox"
-        RAPID_REPEAT = "rapid_repeat", "Rapid repeated kills"
-        BLUE_KILL = "blue_kill", "Blue / friendly kill"
-        OTHER = "other", "Other"
+        REPEATED_VICTIM = "repeated_victim", _("Same victim repeated")
+        LOW_VALUE = "low_value", _("Very low value kill")
+        SELF_KILL = "self_kill", _("Possible self-kill / awox")
+        RAPID_REPEAT = "rapid_repeat", _("Rapid repeated kills")
+        BLUE_KILL = "blue_kill", _("Blue / friendly kill")
+        OTHER = "other", _("Other")
 
     class Status(models.TextChoices):
-        OPEN = "open", "Open"
-        DISMISSED = "dismissed", "Dismissed (kept)"
-        UPHELD = "upheld", "Upheld (disqualified)"
+        OPEN = "open", _("Open")
+        DISMISSED = "dismissed", _("Dismissed (kept)")
+        UPHELD = "upheld", _("Upheld (disqualified)")
 
     contest = models.ForeignKey(
         RaffleContest, on_delete=models.CASCADE, related_name="suspicious_flags"
@@ -861,7 +862,7 @@ class RaffleConfig(TimeStampedModel):
     # explicit per-grant confirmation, and always audited.
     allow_manual_override = models.BooleanField(
         default=False,
-        help_text="DANGER: allow Director grants to non-enrolled pilots (off by default).",
+        help_text=_("DANGER: allow Director grants to non-enrolled pilots (off by default)."),
     )
     intro_text = models.TextField(
         blank=True,
@@ -876,13 +877,13 @@ class RaffleConfig(TimeStampedModel):
     # 0 = off. Prize value is counted in the month a contest draws.
     monthly_prize_budget = models.DecimalField(
         max_digits=20, decimal_places=2, default=0,
-        help_text="Monthly raffle prize ISK ceiling (0 = no limit). Warns near it and "
-                  "holds new contests once a month is committed past it.",
+        help_text=_("Monthly raffle prize ISK ceiling (0 = no limit). Warns near it and "
+                    "holds new contests once a month is committed past it."),
     )
     budget_warn_pct = models.PositiveSmallIntegerField(
         default=80,
-        help_text="Warn leadership once a month's committed prize value reaches this "
-                  "percent of the ceiling.",
+        help_text=_("Warn leadership once a month's committed prize value reaches this "
+                    "percent of the ceiling."),
     )
 
     class Meta:

@@ -1,53 +1,53 @@
 {% extends "base.html" %}
-{% load eve %}
-{% block title %}Jump Range · [FORCA] Command Grid{% endblock %}
+{% load eve i18n %}
+{% block title %}{% translate "Jump Range" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 
 <header class="mb-5 flex flex-wrap items-end justify-between gap-4">
   <div>
-    <p class="eyebrow">Navigation</p>
-    <h1 class="mt-1 text-3xl font-bold text-ink">Jump range</h1>
-    <p class="mt-1 max-w-2xl text-sm text-faint">Every cyno-capable system reachable from a chosen system — one jump, or a multi-jump cyno chain — for a ship and skill level.</p>
+    <p class="eyebrow">{% translate "Navigation" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Jump range" %}</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Every cyno-capable system reachable from a chosen system — one jump, or a multi-jump cyno chain — for a ship and skill level." %}</p>
   </div>
   <div class="flex gap-2">
-    <a href="{% url 'navigation:jump_planner' %}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-jump"/></svg> Jump planner</a>
-    <a href="{% url 'navigation:route_planner' %}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-route"/></svg> Route planner</a>
+    <a href="{% url 'navigation:jump_planner' %}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-jump"/></svg> {% translate "Jump planner" %}</a>
+    <a href="{% url 'navigation:route_planner' %}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-route"/></svg> {% translate "Route planner" %}</a>
   </div>
 </header>
 
 <form method="get" class="panel mb-5 p-5 space-y-3">
   <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-    <div class="lg:col-span-2"><label class="label" for="lf_ship_1">System</label>
-      {% include "navigation/_system_picker.html" with prefix="from" placeholder="From system" init_id=origin.system_id init_name=origin.name %}
+    <div class="lg:col-span-2"><label class="label" for="lf_ship_1">{% translate "System" %}</label>
+      {% translate "From system" as ph_from %}{% include "navigation/_system_picker.html" with prefix="from" placeholder=ph_from init_id=origin.system_id init_name=origin.name %}
     </div>
     <div>
-      <label class="label">Ship</label>
+      <label class="label">{% translate "Ship" %}</label>
       <select id="lf_ship_1" name="ship" data-autosubmit class="input-field">
         {% for group_label, hulls in ship_groups %}<optgroup label="{{ group_label }}">{% for s in hulls %}<option value="{{ s.key }}" {% if s.key == ship.key %}selected{% endif %}>{{ s.label }}</option>{% endfor %}</optgroup>{% endfor %}
       </select>
     </div>
     <div>
-      <label class="label" for="lf_jdc_2">JDC <span class="text-faint">range</span></label>
+      <label class="label" for="lf_jdc_2">JDC <span class="text-faint">{% translate "range" %}</span></label>
       <select id="lf_jdc_2" name="jdc" data-autosubmit class="input-field">
         {% for n in levels %}<option value="{{ n }}" {% if n == jdc %}selected{% endif %}>{{ n }}</option>{% endfor %}
       </select>
     </div>
     <div>
-      <label class="label" for="lf_jumps_2b">Jumps <span class="text-faint">cyno chain</span></label>
+      <label class="label" for="lf_jumps_2b">{% translate "Jumps" %} <span class="text-faint">{% translate "cyno chain" %}</span></label>
       <select id="lf_jumps_2b" name="jumps" data-autosubmit class="input-field">
         {% for n in jump_levels %}<option value="{{ n }}" {% if n == max_jumps %}selected{% endif %}>{{ n }}</option>{% endfor %}
       </select>
     </div>
   </div>
   <div class="grid gap-3 sm:grid-cols-2">
-    <div><label class="label" for="lf_range_3">Range (ly) <span class="text-faint">override</span></label>
+    <div><label class="label" for="lf_range_3">{% translate "Range (ly)" %} <span class="text-faint">{% translate "override" %}</span></label>
       <input id="lf_range_3" type="number" name="range" value="{{ custom_range }}" step="0.1" min="0.1" placeholder="{{ range_ly }}" class="input-field"></div>
-    <label class="flex items-end gap-2 pb-2 text-sm text-muted"><input type="checkbox" name="stations_only" value="1" {% if require_stations %}checked{% endif %}> Only systems with a dockable station</label>
+    <label class="flex items-end gap-2 pb-2 text-sm text-muted"><input type="checkbox" name="stations_only" value="1" {% if require_stations %}checked{% endif %}> {% translate "Only systems with a dockable station" %}</label>
   </div>
   <div class="space-y-2 border-t border-line/60 pt-3">{% include "navigation/_avoid_controls.html" %}</div>
   <div class="flex flex-wrap items-center justify-between gap-2">
-    <p class="text-[11px] text-faint">Range: <span class="data text-cyan">{{ range_ly }} ly</span> ({{ ship.label }} · JDC {{ jdc }}).</p>
-    <button class="btn-gold text-sm">Find systems</button>
+    <p class="text-[11px] text-faint">{% translate "Range:" %} <span class="data text-cyan">{{ range_ly }} ly</span> ({{ ship.label }} · JDC {{ jdc }}).</p>
+    <button class="btn-gold text-sm">{% translate "Find systems" %}</button>
   </div>
 </form>
 
@@ -56,17 +56,17 @@
 {% elif rows is not None %}
 <section class="panel overflow-hidden">
   <div class="flex flex-wrap items-center gap-2 border-b border-line px-4 py-3">
-    <h2 class="font-display text-sm font-semibold text-ink">{% if max_jumps > 1 %}Within {{ max_jumps }} jumps of{% else %}In range of{% endif %} {{ origin.name }}</h2>
-    {% if map_link %}<a href="{{ map_link }}" class="ml-auto btn-ghost text-xs"><svg class="h-3.5 w-3.5"><use href="#i-map"/></svg> View range map</a>{% endif %}
-    <span class="chip !text-cyan {% if not map_link %}ml-auto{% endif %}">{{ count }} system{{ count|pluralize }}</span>
+    <h2 class="font-display text-sm font-semibold text-ink">{% if max_jumps > 1 %}{% blocktranslate with n=max_jumps origin=origin.name %}Within {{ n }} jumps of {{ origin }}{% endblocktranslate %}{% else %}{% blocktranslate with origin=origin.name %}In range of {{ origin }}{% endblocktranslate %}{% endif %}</h2>
+    {% if map_link %}<a href="{{ map_link }}" class="ml-auto btn-ghost text-xs"><svg class="h-3.5 w-3.5"><use href="#i-map"/></svg> {% translate "View range map" %}</a>{% endif %}
+    <span class="chip !text-cyan {% if not map_link %}ml-auto{% endif %}">{% blocktranslate count c=count %}{{ c }} system{% plural %}{{ c }} systems{% endblocktranslate %}</span>
   </div>
   {% if rows %}
   <div class="overflow-x-auto"><table class="w-full text-sm">
     <thead class="text-left text-faint"><tr class="border-b border-line/60">
-      <th class="px-4 py-2 font-medium">System</th>
-      <th class="px-4 py-2 font-medium">Sec</th>
-      <th class="px-4 py-2 font-medium">Region</th>
-      <th class="px-4 py-2 text-right font-medium">{% if max_jumps > 1 %}Jumps{% else %}Distance{% endif %}</th>
+      <th class="px-4 py-2 font-medium">{% translate "System" %}</th>
+      <th class="px-4 py-2 font-medium">{% translate "Sec" %}</th>
+      <th class="px-4 py-2 font-medium">{% translate "Region" %}</th>
+      <th class="px-4 py-2 text-right font-medium">{% if max_jumps > 1 %}{% translate "Jumps" %}{% else %}{% translate "Distance" %}{% endif %}</th>
     </tr></thead>
     <tbody>
       {% for r in rows %}
@@ -80,13 +80,13 @@
     </tbody>
   </table></div>
   {% else %}
-  <p class="px-4 py-10 text-center text-xs text-faint">No cyno-capable systems in range with these filters.</p>
+  <p class="px-4 py-10 text-center text-xs text-faint">{% translate "No cyno-capable systems in range with these filters." %}</p>
   {% endif %}
 </section>
 {% else %}
   <div class="panel px-4 py-16 text-center">
-    <p class="font-display text-lg text-muted">Pick a system</p>
-    <p class="mt-1 text-sm text-faint">Choose a system and a ship to see everything within reach — one jump or a multi-jump cyno chain.</p>
+    <p class="font-display text-lg text-muted">{% translate "Pick a system" %}</p>
+    <p class="mt-1 text-sm text-faint">{% translate "Choose a system and a ship to see everything within reach — one jump or a multi-jump cyno chain." %}</p>
   </div>
 {% endif %}
 {% endblock %}

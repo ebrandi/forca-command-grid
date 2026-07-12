@@ -1,14 +1,14 @@
 {% extends "base.html" %}
-{% load static %}
-{% block title %}Readiness · Timeline · [FORCA] Command Grid{% endblock %}
+{% load static i18n %}
+{% block title %}{% translate "Readiness" %} · {% translate "Timeline" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <script defer src="{% static 'js/vendor/chart.umd.js' %}"></script>
-<a href="{% url 'readiness:dashboard' %}" class="text-xs text-faint hover:text-gold">← Readiness</a>
+<a href="{% url 'readiness:dashboard' %}" class="text-xs text-faint hover:text-gold">← {% translate "Readiness" %}</a>
 <header class="mt-2 mb-5 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <p class="eyebrow text-gold">Leadership</p>
-    <h1 class="mt-1 text-3xl font-bold text-ink">Readiness timeline</h1>
-    <p class="mt-1 text-sm text-faint">How the overall index and each dimension have moved over time.</p>
+    <p class="eyebrow text-gold">{% translate "Leadership" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Readiness timeline" %}</h1>
+    <p class="mt-1 text-sm text-faint">{% translate "How the overall index and each dimension have moved over time." %}</p>
   </div>
   <div class="flex flex-wrap gap-2">
     {% for r in ranges %}
@@ -19,21 +19,21 @@
 
 {% if not enough %}
   <div class="panel px-4 py-16 text-center">
-    <p class="font-display text-lg text-muted">Not enough snapshots yet</p>
-    <p class="mt-1 text-sm text-faint">Trends appear after a couple of weeks of snapshots. Keep the scheduler running and check back.</p>
+    <p class="font-display text-lg text-muted">{% translate "Not enough snapshots yet" %}</p>
+    <p class="mt-1 text-sm text-faint">{% translate "Trends appear after a couple of weeks of snapshots. Keep the scheduler running and check back." %}</p>
   </div>
 {% else %}
 <section class="panel mb-5 overflow-hidden">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">Overall index &amp; dimensions</h2></div>
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">{% translate "Overall index &amp; dimensions" %}</h2></div>
   <div class="p-4"><div class="h-80 skeleton"><canvas id="rd-timeline"></canvas></div></div>
 </section>
 
 <section class="panel px-4 py-3">
   <p class="text-sm text-muted">
-    Over this window the index moved
+    {% translate "Over this window the index moved" %}
     <span class="data {% if net > 0 %}text-kill{% elif net < 0 %}text-loss{% else %}text-faint{% endif %}">{{ net|stringformat:"+d" }}</span>.
-    {% if best %}Biggest gain: <span class="text-kill">{{ best.0 }} +{{ best.1 }}</span>.{% endif %}
-    {% if worst %}Biggest drop: <span class="text-loss">{{ worst.0 }} {{ worst.1 }}</span>.{% endif %}
+    {% if best %}{% blocktranslate with dim=best.0 delta=best.1 %}Biggest gain: <span class="text-kill">{{ dim }} +{{ delta }}</span>.{% endblocktranslate %}{% endif %}
+    {% if worst %}{% blocktranslate with dim=worst.0 delta=worst.1 %}Biggest drop: <span class="text-loss">{{ dim }} {{ delta }}</span>.{% endblocktranslate %}{% endif %}
   </p>
 </section>
 {% endif %}

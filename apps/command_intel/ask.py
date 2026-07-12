@@ -13,6 +13,7 @@ import logging
 
 from django.conf import settings
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from . import access, config, retrieval
 from .models import ConversationTurn
@@ -37,7 +38,7 @@ def answer_question(turn: ConversationTurn) -> ConversationTurn:
         valid_ids = {p["id"] for p in passages}
 
         if not settings.COMMAND_INTEL_ENABLED:
-            _degraded(turn, passages, "AI is offline — here are the most relevant archive entries.")
+            _degraded(turn, passages, _("AI is offline — here are the most relevant archive entries."))
             return turn
 
         from . import prompts
@@ -53,7 +54,8 @@ def answer_question(turn: ConversationTurn) -> ConversationTurn:
             )
             res = client.generate(req)
         except (LLMUnavailable, LLMError) as exc:
-            _degraded(turn, passages, f"AI unavailable ({exc}). Here are the most relevant archive entries.")
+            _degraded(turn, passages,
+                      _("AI unavailable (%(error)s). Here are the most relevant archive entries.") % {"error": exc})
             return turn
 
         obj = res.obj if isinstance(res.obj, dict) else {}
@@ -64,7 +66,7 @@ def answer_question(turn: ConversationTurn) -> ConversationTurn:
         # Show the cited passages; if the model grounded nothing, still surface the top few
         # retrieved passages as "consulted" but flag the answer as ungrounded.
         shown = cited_ids or [p["id"] for p in passages[:3]]
-        turn.answer = answer or "I could not find an answer to that in the intelligence archive."
+        turn.answer = answer or _("I could not find an answer to that in the intelligence archive.")
         turn.citations = [_cite(p) for p in passages if p["id"] in shown]
         turn.grounded = bool(cited_ids) and answerable
         turn.model_name = res.model
@@ -86,7 +88,7 @@ def _degraded(turn: ConversationTurn, passages: list[dict], note: str) -> None:
     """Retrieval-only answer when the LLM is unavailable — still grounded, still gated."""
     lines = [note, ""]
     lines += [f"- [{p['kind']}] {p['title']}" for p in passages[:5]]
-    turn.answer = "\n".join(lines) if passages else "The intelligence archive has nothing on that yet."
+    turn.answer = "\n".join(lines) if passages else _("The intelligence archive has nothing on that yet.")
     turn.citations = [_cite(p) for p in passages[:5]]
     turn.grounded = False
     turn.status = ConversationTurn.Status.READY_DEGRADED

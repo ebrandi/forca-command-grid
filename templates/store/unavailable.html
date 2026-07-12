@@ -1,16 +1,17 @@
 {% extends "base.html" %}
+{% load i18n %}
 {% block title %}Corp Store · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <div class="panel mx-auto max-w-lg p-10 text-center">
   <svg class="mx-auto mb-3 h-10 w-10 text-line"><use href="#i-ship"/></svg>
-  <h1 class="text-2xl font-bold text-ink">Corp Store</h1>
+  <h1 class="text-2xl font-bold text-ink">{% translate "Corp Store" %}</h1>
   {% if audience == 'disabled' %}
-    <p class="mt-2 text-sm text-faint">The store is currently closed. Check back later.</p>
+    <p class="mt-2 text-sm text-faint">{% translate "The store is currently closed. Check back later." %}</p>
   {% elif not authenticated %}
-    <p class="mt-2 text-sm text-faint">The store is for corp and alliance members. Log in with EVE to shop.</p>
-    <a href="{% url 'sso:login' %}" class="btn-gold mt-4">Log in with EVE</a>
+    <p class="mt-2 text-sm text-faint">{% translate "The store is for corp and alliance members. Log in with EVE to shop." %}</p>
+    <a href="{% url 'sso:login' %}" class="btn-gold mt-4">{% translate "Log in with EVE" %}</a>
   {% else %}
-    <p class="mt-2 text-sm text-faint">The store is limited to corp and alliance members. If you fly with us and this looks wrong, contact a director.</p>
+    <p class="mt-2 text-sm text-faint">{% translate "The store is limited to corp and alliance members. If you fly with us and this looks wrong, contact a director." %}</p>
   {% endif %}
 </div>
 {% endblock %}

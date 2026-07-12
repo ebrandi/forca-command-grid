@@ -1,3 +1,4 @@
+{% load i18n %}
 {% comment %}
 Classification banner — the visible half of the server-side access gate (doc 16 §3).
 Rendered top AND bottom of a briefing (the staff-document convention). Colour is never
@@ -8,38 +9,38 @@ Params:
   position       : "top" (distribution rule) or "bottom" (end-of-briefing)
 {% endcomment %}
 {% if classification == 'corp_internal' %}
-  {% with glyph='◇' label='CORPORATION INTERNAL' cls='border-cyan/50 text-cyan' %}
-  <div role="note" aria-label="Classification: {{ label }}. Not for distribution below member."
+  {% translate "CORPORATION INTERNAL" as label %}{% with glyph='◇' cls='border-cyan/50 text-cyan' %}
+  <div role="note" aria-label="{% blocktranslate %}Classification: {{ label }}. Not for distribution below member.{% endblocktranslate %}"
        class="my-3 flex items-center justify-center gap-3 border-y {{ cls }} bg-panel/40 px-4 py-2 font-display text-[11px] font-semibold uppercase tracking-[0.25em]">
     <span aria-hidden="true">{{ glyph }}</span>
-    <span>{{ label }}{% if position == 'bottom' %} — END OF BRIEFING{% else %} — NOT FOR DISTRIBUTION{% endif %}</span>
+    <span>{{ label }}{% if position == 'bottom' %} — {% translate "END OF BRIEFING" %}{% else %} — {% translate "NOT FOR DISTRIBUTION" %}{% endif %}</span>
     <span aria-hidden="true">{{ glyph }}</span>
   </div>
   {% endwith %}
 {% elif classification == 'director_eyes_only' %}
-  {% with glyph='◈' label='DIRECTOR — EYES ONLY' cls='border-loss/60 text-loss' %}
-  <div role="note" aria-label="Classification: {{ label }}. Not for distribution below director."
+  {% translate "DIRECTOR — EYES ONLY" as label %}{% with glyph='◈' cls='border-loss/60 text-loss' %}
+  <div role="note" aria-label="{% blocktranslate %}Classification: {{ label }}. Not for distribution below director.{% endblocktranslate %}"
        class="my-3 flex items-center justify-center gap-3 border-y {{ cls }} bg-panel/40 px-4 py-2 font-display text-[11px] font-semibold uppercase tracking-[0.25em]">
     <span aria-hidden="true">{{ glyph }}</span>
-    <span>{{ label }}{% if position == 'bottom' %} — END OF BRIEFING{% else %} — NOT FOR DISTRIBUTION{% endif %}</span>
+    <span>{{ label }}{% if position == 'bottom' %} — {% translate "END OF BRIEFING" %}{% else %} — {% translate "NOT FOR DISTRIBUTION" %}{% endif %}</span>
     <span aria-hidden="true">{{ glyph }}</span>
   </div>
   {% endwith %}
 {% elif classification == 'alliance_command' %}
-  {% with glyph='✦' label='ALLIANCE COMMAND' cls='border-win/50 text-win' %}
-  <div role="note" aria-label="Classification: {{ label }}. Not for distribution below alliance command."
+  {% translate "ALLIANCE COMMAND" as label %}{% with glyph='✦' cls='border-win/50 text-win' %}
+  <div role="note" aria-label="{% blocktranslate %}Classification: {{ label }}. Not for distribution below alliance command.{% endblocktranslate %}"
        class="my-3 flex items-center justify-center gap-3 border-y {{ cls }} bg-panel/40 px-4 py-2 font-display text-[11px] font-semibold uppercase tracking-[0.25em]">
     <span aria-hidden="true">{{ glyph }}</span>
-    <span>{{ label }}{% if position == 'bottom' %} — END OF BRIEFING{% else %} — NOT FOR DISTRIBUTION{% endif %}</span>
+    <span>{{ label }}{% if position == 'bottom' %} — {% translate "END OF BRIEFING" %}{% else %} — {% translate "NOT FOR DISTRIBUTION" %}{% endif %}</span>
     <span aria-hidden="true">{{ glyph }}</span>
   </div>
   {% endwith %}
 {% else %}
-  {% with glyph='◆' label='HIGH COMMAND' cls='border-gold/50 text-gold' %}
-  <div role="note" aria-label="Classification: {{ label }}. Not for distribution below officer."
+  {% translate "HIGH COMMAND" as label %}{% with glyph='◆' cls='border-gold/50 text-gold' %}
+  <div role="note" aria-label="{% blocktranslate %}Classification: {{ label }}. Not for distribution below officer.{% endblocktranslate %}"
        class="my-3 flex items-center justify-center gap-3 border-y {{ cls }} bg-panel/40 px-4 py-2 font-display text-[11px] font-semibold uppercase tracking-[0.25em]">
     <span aria-hidden="true">{{ glyph }}</span>
-    <span>{{ label }}{% if position == 'bottom' %} — END OF BRIEFING{% else %} — NOT FOR DISTRIBUTION{% endif %}</span>
+    <span>{{ label }}{% if position == 'bottom' %} — {% translate "END OF BRIEFING" %}{% else %} — {% translate "NOT FOR DISTRIBUTION" %}{% endif %}</span>
     <span aria-hidden="true">{{ glyph }}</span>
   </div>
   {% endwith %}

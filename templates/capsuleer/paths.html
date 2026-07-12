@@ -1,39 +1,40 @@
 {% extends "base.html" %}
-{% block title %}Career paths · Capsuleer Path{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Career paths" %} · {% translate "Capsuleer Path" %}{% endblock %}
 {% block content %}
-<p class="eyebrow text-faint"><a href="{% url 'capsuleer:home' %}" class="hover:text-gold">Capsuleer Path</a> › Paths</p>
+<p class="eyebrow text-faint"><a href="{% url 'capsuleer:home' %}" class="hover:text-gold">{% translate "Capsuleer Path" %}</a> › {% translate "Paths" %}</p>
 <header class="mb-4 flex flex-wrap items-end justify-between gap-3">
-  <h1 class="text-2xl font-bold text-ink">Career paths</h1>
-  <a href="{% url 'capsuleer:compare' %}" class="btn-cyan text-sm">Compare paths</a>
+  <h1 class="text-2xl font-bold text-ink">{% translate "Career paths" %}</h1>
+  <a href="{% url 'capsuleer:compare' %}" class="btn-cyan text-sm">{% translate "Compare paths" %}</a>
 </header>
 
 <form class="panel mb-4 flex flex-wrap items-end gap-3 px-4 py-3" hx-get="{% url 'capsuleer:paths' %}" hx-target="#path-results" hx-push-url="true">
-  <label class="label">Activity
+  <label class="label">{% translate "Activity" %}
     <select name="activity" class="input-field mt-1" data-autosubmit>
-      <option value="">Any</option>
+      <option value="">{% translate "Any" %}</option>
       {% for v, lab in activities %}<option value="{{ v }}" {% if filters.activity == v %}selected{% endif %}>{{ lab }}</option>{% endfor %}
     </select>
   </label>
-  <label class="label">Difficulty
+  <label class="label">{% translate "Difficulty" %}
     <select name="difficulty" class="input-field mt-1" data-autosubmit>
-      <option value="">Any</option>
-      <option value="1" {% if filters.difficulty == '1' %}selected{% endif %}>Beginner</option>
-      <option value="2" {% if filters.difficulty == '2' %}selected{% endif %}>Intermediate</option>
-      <option value="3" {% if filters.difficulty == '3' %}selected{% endif %}>Advanced</option>
+      <option value="">{% translate "Any" %}</option>
+      <option value="1" {% if filters.difficulty == '1' %}selected{% endif %}>{% translate "Beginner" %}</option>
+      <option value="2" {% if filters.difficulty == '2' %}selected{% endif %}>{% translate "Intermediate" %}</option>
+      <option value="3" {% if filters.difficulty == '3' %}selected{% endif %}>{% translate "Advanced" %}</option>
     </select>
   </label>
-  <label class="label">Solo/group
+  <label class="label">{% translate "Solo/group" %}
     <select name="solo_group" class="input-field mt-1" data-autosubmit>
-      <option value="">Any</option>
-      <option value="solo" {% if filters.solo_group == 'solo' %}selected{% endif %}>Solo</option>
-      <option value="group" {% if filters.solo_group == 'group' %}selected{% endif %}>Group</option>
-      <option value="mixed" {% if filters.solo_group == 'mixed' %}selected{% endif %}>Mixed</option>
+      <option value="">{% translate "Any" %}</option>
+      <option value="solo" {% if filters.solo_group == 'solo' %}selected{% endif %}>{% translate "Solo" %}</option>
+      <option value="group" {% if filters.solo_group == 'group' %}selected{% endif %}>{% translate "Group" %}</option>
+      <option value="mixed" {% if filters.solo_group == 'mixed' %}selected{% endif %}>{% translate "Mixed" %}</option>
     </select>
   </label>
-  <label class="flex items-center gap-1.5 text-sm"><input type="checkbox" name="newbro" {% if filters.newbro %}checked{% endif %} data-autosubmit> Newbro-friendly</label>
-  <label class="flex items-center gap-1.5 text-sm"><input type="checkbox" name="demand" {% if filters.demand %}checked{% endif %} data-autosubmit> Corp demand</label>
-  <label class="label flex-1">Search <input type="search" name="q" value="{{ filters.q }}" class="input-field mt-1" placeholder="name or description"></label>
-  <button class="btn-ghost text-sm">Filter</button>
+  <label class="flex items-center gap-1.5 text-sm"><input type="checkbox" name="newbro" {% if filters.newbro %}checked{% endif %} data-autosubmit> {% translate "Newbro-friendly" %}</label>
+  <label class="flex items-center gap-1.5 text-sm"><input type="checkbox" name="demand" {% if filters.demand %}checked{% endif %} data-autosubmit> {% translate "Corp demand" %}</label>
+  <label class="label flex-1">{% translate "Search" %} <input type="search" name="q" value="{{ filters.q }}" class="input-field mt-1" placeholder="{% translate 'name or description' %}"></label>
+  <button class="btn-ghost text-sm">{% translate "Filter" %}</button>
 </form>
 
 <div id="path-results">{% include "capsuleer/_path_results.html" %}</div>

@@ -15,6 +15,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
 from core import rbac
@@ -85,7 +86,7 @@ def candidate_add(request: HttpRequest) -> HttpResponse:
 
     raw = (request.POST.get("name") or "").strip()
     if not raw:
-        messages.error(request, "Enter a pilot name.")
+        messages.error(request, _("Enter a pilot name."))
         return redirect("recruitment:list")
 
     if raw.isdigit():
@@ -94,10 +95,13 @@ def candidate_add(request: HttpRequest) -> HttpResponse:
         try:
             match = resolve_character_id(raw)
         except requests.RequestException:
-            messages.error(request, "Couldn't reach EVE to look up that name — try again.")
+            messages.error(request, _("Couldn't reach EVE to look up that name — try again."))
             return redirect("recruitment:list")
         if not match:
-            messages.error(request, f"No EVE pilot found named “{raw}”. Check the spelling.")
+            messages.error(
+                request,
+                _("No EVE pilot found named “%(name)s”. Check the spelling.") % {"name": raw},
+            )
             return redirect("recruitment:list")
         character_id, resolved_name = match
 
@@ -114,9 +118,12 @@ def candidate_add(request: HttpRequest) -> HttpResponse:
         from .tasks import refresh_candidate_evidence
 
         refresh_candidate_evidence.delay(candidate.pk)
-        messages.success(request, f"Added {candidate.name}; gathering public evidence.")
+        messages.success(
+            request,
+            _("Added %(name)s; gathering public evidence.") % {"name": candidate.name},
+        )
     else:
-        messages.info(request, f"{candidate.name} is already on the desk.")
+        messages.info(request, _("%(name)s is already on the desk.") % {"name": candidate.name})
     return redirect("recruitment:detail", pk=candidate.pk)
 
 
@@ -128,7 +135,7 @@ def candidate_refresh(request: HttpRequest, pk: int) -> HttpResponse:
     from .tasks import refresh_candidate_evidence
 
     refresh_candidate_evidence.delay(candidate.pk)
-    messages.success(request, "Refreshing public evidence.")
+    messages.success(request, _("Refreshing public evidence."))
     return redirect("recruitment:detail", pk=candidate.pk)
 
 
@@ -151,18 +158,22 @@ def candidate_update(request: HttpRequest, pk: int) -> HttpResponse:
     elif candidate.status == Candidate.Status.JOINED and not was_joined:
         result = services.handoff_joined_candidate(candidate)
         if result["handed_off"]:
-            routed = [w for w, on in (("onboarding", result["onboarding_started"]),
-                                      ("mentorship matching", result["mentee_created"])) if on]
+            routed = [w for w, on in ((_("onboarding"), result["onboarding_started"]),
+                                      (_("mentorship matching"), result["mentee_created"])) if on]
             if routed:
-                messages.success(request, f"Joined — routed into {' and '.join(routed)}.")
+                messages.success(
+                    request,
+                    _("Joined — routed into %(targets)s.")
+                    % {"targets": " and ".join(str(w) for w in routed)},
+                )
             else:
-                messages.info(request, "Joined. (Onboarding and mentorship were already set "
-                                       "up or are paused.)")
+                messages.info(request, _("Joined. (Onboarding and mentorship were already set "
+                                         "up or are paused.)"))
         else:
             messages.info(
-                request, "Marked joined. Ask them to sign in with EVE SSO so we can start "
-                "their onboarding and suggest a mentor.")
-    messages.success(request, "Candidate updated.")
+                request, _("Marked joined. Ask them to sign in with EVE SSO so we can start "
+                           "their onboarding and suggest a mentor."))
+    messages.success(request, _("Candidate updated."))
     return redirect("recruitment:detail", pk=candidate.pk)
 
 
@@ -184,14 +195,19 @@ def request_consent(request: HttpRequest, pk: int) -> HttpResponse:
     if settings.RECRUITMENT_SSO_ENABLED:
         messages.success(
             request,
-            f"Consent link ready — send it to {candidate.name} to authorise (expires "
-            f"{consent.expires_at:%j %b %H:%M} UTC): {begin_url}",
+            _("Consent link ready — send it to %(name)s to authorise (expires "
+              "%(expires)s UTC): %(url)s")
+            % {
+                "name": candidate.name,
+                "expires": f"{consent.expires_at:%j %b %H:%M}",
+                "url": begin_url,
+            },
         )
     else:
         messages.warning(
             request,
-            "Consent recorded, but the live ESI link is not configured on this "
-            "deployment — recruitment stays public-evidence-only.",
+            _("Consent recorded, but the live ESI link is not configured on this "
+              "deployment — recruitment stays public-evidence-only."),
         )
     return redirect("recruitment:detail", pk=candidate.pk)
 
@@ -233,7 +249,9 @@ def oauth_callback(request: HttpRequest) -> HttpResponse:
     the token. Never stores access/refresh tokens."""
     err = request.GET.get("error")
     if err:
-        return render(request, "recruitment/oauth_done.html", {"ok": False, "reason": "cancelled"})
+        return render(
+            request, "recruitment/oauth_done.html", {"ok": False, "reason": _("cancelled")}
+        )
 
     state = request.GET.get("state") or ""
     code = request.GET.get("code")
@@ -243,7 +261,7 @@ def oauth_callback(request: HttpRequest) -> HttpResponse:
     if not consent or not code or not verifier:
         return render(
             request, "recruitment/oauth_done.html",
-            {"ok": False, "reason": "This link is invalid, already used, or expired."},
+            {"ok": False, "reason": _("This link is invalid, already used, or expired.")},
             status=400,
         )
 
@@ -261,7 +279,7 @@ def oauth_callback(request: HttpRequest) -> HttpResponse:
         )
         return render(
             request, "recruitment/oauth_done.html",
-            {"ok": False, "reason": "We could not verify that authorization. Please try again."},
+            {"ok": False, "reason": _("We could not verify that authorization. Please try again.")},
             status=400,
         )
 
@@ -278,7 +296,8 @@ def oauth_callback(request: HttpRequest) -> HttpResponse:
         return render(
             request, "recruitment/oauth_done.html",
             {"ok": False, "candidate": candidate,
-             "reason": f"You signed in as a different character. Please authorise as {candidate.name}."},
+             "reason": _("You signed in as a different character. Please authorise as %(name)s.")
+             % {"name": candidate.name}},
             status=400,
         )
 
@@ -290,7 +309,7 @@ def oauth_callback(request: HttpRequest) -> HttpResponse:
         return render(
             request, "recruitment/oauth_done.html",
             {"ok": False, "candidate": candidate,
-             "reason": "We reached EVE but could not read your data — please try again shortly."},
+             "reason": _("We reached EVE but could not read your data — please try again shortly.")},
             status=502,
         )
     finally:

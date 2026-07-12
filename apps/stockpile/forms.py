@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from django import forms
+from django.utils.translation import gettext_lazy as _
 
 from apps.market.models import MarketLocation
 
@@ -25,13 +26,13 @@ class HaulingTaskForm(forms.ModelForm):
         locs = MarketLocation.objects.order_by("name")
         self.fields["source_location"].queryset = locs
         self.fields["dest_location"].queryset = locs
-        self.fields["source_location"].empty_label = "— from —"
-        self.fields["dest_location"].empty_label = "— to —"
+        self.fields["source_location"].empty_label = _("— from —")
+        self.fields["dest_location"].empty_label = _("— to —")
 
     def clean(self):
         cleaned = super().clean()
         if cleaned.get("source_location") and cleaned.get("source_location") == cleaned.get("dest_location"):
-            raise forms.ValidationError("Source and destination must differ.")
+            raise forms.ValidationError(_("Source and destination must differ."))
         return cleaned
 
 
@@ -60,7 +61,7 @@ class StockpileForm(forms.ModelForm):
         model = Stockpile
         fields = ["name", "kind", "location"]
         widgets = {
-            "name": forms.TextInput(attrs={"class": "input-field", "placeholder": "e.g. Staging hangar"}),
+            "name": forms.TextInput(attrs={"class": "input-field", "placeholder": _("e.g. Staging hangar")}),
             "kind": forms.Select(attrs={"class": "input-field"}),
             "location": forms.Select(attrs={"class": "input-field"}),
         }

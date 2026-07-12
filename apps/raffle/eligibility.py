@@ -25,6 +25,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from django.utils.translation import gettext as _
+
 from apps.sso.models import EveCharacter
 
 # ESI-status labels (mirror RaffleTicketLedgerEntry.EsiStatus / RaffleIneligibleActivity.Reason).
@@ -154,8 +156,8 @@ def for_character_id(contest, character_id: int, *, character_name: str = "") ->
         return Eligibility(
             reason_code="not_enrolled", esi_status=ESI_NONE,
             character_id=character_id, character_name=character_name,
-            message="This pilot has no FORCA Command Grid account.",
-            cta="Ask them to sign in with EVE SSO to start earning tickets.",
+            message=_("This pilot has no FORCA Command Grid account."),
+            cta=_("Ask them to sign in with EVE SSO to start earning tickets."),
         )
     return for_character(contest, character, character_name=character_name or character.name)
 
@@ -175,8 +177,8 @@ def for_character(contest, character: EveCharacter, *, character_name: str = "",
     if user is None:
         result.reason_code = "not_enrolled"
         result.esi_status = ESI_NONE
-        result.message = "This character isn't linked to a FORCA account."
-        result.cta = "Sign in with EVE SSO to enrol and start earning tickets."
+        result.message = _("This character isn't linked to a FORCA account.")
+        result.cta = _("Sign in with EVE SSO to enrol and start earning tickets.")
         return result
 
     has_token, esi_status, scopes, _since = _token_state(character)
@@ -197,31 +199,31 @@ def for_character(contest, character: EveCharacter, *, character_name: str = "",
 
     if result.excluded:
         result.reason_code = "excluded"
-        result.message = "You've been excluded from this contest by leadership."
-        result.cta = "Contact a director if you believe this is a mistake."
+        result.message = _("You've been excluded from this contest by leadership.")
+        result.cta = _("Contact a director if you believe this is a mistake.")
         return result
     if contest.require_valid_token and not has_token:
         result.reason_code = "no_token" if esi_status == ESI_NONE else "token_expired"
         if esi_status == ESI_NONE:
-            result.message = "You haven't connected an ESI token yet."
-            result.cta = "Connect your ESI token to start earning raffle tickets."
+            result.message = _("You haven't connected an ESI token yet.")
+            result.cta = _("Connect your ESI token to start earning raffle tickets.")
         else:
-            result.message = "Your ESI token has expired or been revoked."
-            result.cta = "Reconnect your ESI token to keep earning tickets."
+            result.message = _("Your ESI token has expired or been revoked.")
+            result.cta = _("Reconnect your ESI token to keep earning tickets.")
         return result
     if not result.scopes_ok:
         result.reason_code = "missing_scope"
-        result.message = "Your ESI token is missing a scope this contest needs."
-        result.cta = "Re-authorise with the required scopes to earn tickets."
+        result.message = _("Your ESI token is missing a scope this contest needs.")
+        result.cta = _("Re-authorise with the required scopes to earn tickets.")
         return result
     if not result.is_corp_member:
         result.reason_code = "not_corp"
-        result.message = "Only recognised corporation pilots can take part."
-        result.cta = "Make sure your main is in the corp and re-sync your affiliation."
+        result.message = _("Only recognised corporation pilots can take part.")
+        result.cta = _("Make sure your main is in the corp and re-sync your affiliation.")
         return result
 
     result.eligible = True
-    result.message = "You're eligible — fly, earn tickets and check your progress."
+    result.message = _("You're eligible — fly, earn tickets and check your progress.")
     return result
 
 
@@ -235,15 +237,15 @@ def for_user(contest, user, *, ctx: _Ctx | None = None) -> Eligibility:
     if user is None or not getattr(user, "is_authenticated", False):
         return Eligibility(
             reason_code="not_enrolled",
-            message="Sign in with EVE SSO to take part in the raffle.",
-            cta="Sign in to enrol and start earning tickets.",
+            message=_("Sign in with EVE SSO to take part in the raffle."),
+            cta=_("Sign in to enrol and start earning tickets."),
         )
     characters = list(user.characters.all())
     if not characters:
         return Eligibility(
             enrolled=True, user_id=user.id, reason_code="no_token", esi_status=ESI_NONE,
-            message="Your account has no linked EVE character yet.",
-            cta="Link a character with EVE SSO to earn tickets.",
+            message=_("Your account has no linked EVE character yet."),
+            cta=_("Link a character with EVE SSO to earn tickets."),
         )
     best: Eligibility | None = None
     for character in characters:

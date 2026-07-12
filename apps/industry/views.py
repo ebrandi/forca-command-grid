@@ -7,6 +7,7 @@ from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
 from apps.sde.models import SdeType
@@ -82,7 +83,7 @@ def project_duplicate(request: HttpRequest, pk: int) -> HttpResponse:
     """Clone a plan (name + items) into a fresh draft owned by the current pilot."""
     source = get_object_or_404(IndustryProject, pk=pk)
     if not _can_see(request.user, source):
-        raise PermissionDenied("You can't see that plan.")
+        raise PermissionDenied(_("You can't see that plan."))
     clone = IndustryProject.objects.create(
         name=f"Copy of {source.name}"[:200], description=source.description,
         objective_type=source.objective_type, status=IndustryProject.Status.DRAFT,
@@ -101,7 +102,7 @@ def project_duplicate(request: HttpRequest, pk: int) -> HttpResponse:
     compute_project_bom(clone)
     audit_log(request.user, "industry.project.duplicate", target_type="industry_project",
               target_id=str(clone.id), metadata={"from": source.id}, ip=client_ip(request))
-    messages.success(request, f"Duplicated into “{clone.name}”.")
+    messages.success(request, _("Duplicated into “%(name)s”.") % {"name": clone.name})
     return redirect("industry:detail", pk=clone.pk)
 
 
@@ -112,7 +113,7 @@ def project_archive(request: HttpRequest, pk: int) -> HttpResponse:
     """Soft-delete: archive a plan (recoverable) — never a hard delete by default."""
     project = get_object_or_404(IndustryProject, pk=pk)
     if not _can_manage(request.user, project):
-        raise PermissionDenied("Not your project to manage.")
+        raise PermissionDenied(_("Not your project to manage."))
     unarchive = request.POST.get("unarchive") == "1"
     project.is_archived = not unarchive
     project.archived_at = None if unarchive else timezone.now()
@@ -121,9 +122,9 @@ def project_archive(request: HttpRequest, pk: int) -> HttpResponse:
               target_id=str(project.id), metadata={"archived": project.is_archived},
               ip=client_ip(request))
     if unarchive:
-        messages.success(request, "Plan restored.")
+        messages.success(request, _("Plan restored."))
         return redirect("industry:detail", pk=pk)
-    messages.success(request, "Plan archived.")
+    messages.success(request, _("Plan archived."))
     return redirect("industry:board")
 
 
@@ -149,7 +150,7 @@ def project_create(request: HttpRequest) -> HttpResponse:
         if form.is_valid() and item_form.is_valid():
             type_id = item_form.cleaned_data["type_id"]
             if not SdeType.objects.filter(type_id=type_id).exists():
-                item_form.add_error(None, "Pick an item from the search list.")
+                item_form.add_error(None, _("Pick an item from the search list."))
             else:
                 project = form.save(commit=False)
                 project.created_by = request.user
@@ -165,7 +166,7 @@ def project_create(request: HttpRequest) -> HttpResponse:
                     target_type="industry_project", target_id=str(project.id),
                     metadata={"name": project.name, "type_id": type_id}, ip=client_ip(request),
                 )
-                messages.success(request, f"Project “{project.name}” created and costed.")
+                messages.success(request, _("Project “%(name)s” created and costed.") % {"name": project.name})
                 return redirect("industry:detail", pk=project.pk)
     else:
         form = ProjectForm()
@@ -183,7 +184,7 @@ def project_detail(request: HttpRequest, pk: int) -> HttpResponse:
         pk=pk,
     )
     if not _can_see(request.user, project):
-        raise PermissionDenied("You can't see that plan.")
+        raise PermissionDenied(_("You can't see that plan."))
     return render(
         request,
         "industry/detail.html",
@@ -209,21 +210,21 @@ def project_claim(request: HttpRequest, pk: int) -> HttpResponse:
     # _can_see/_can_manage — so without this an unassigned PRIVATE/LEADERSHIP project could
     # be claimed by any member to gain read+manage on it.
     if not _can_see(request.user, project):
-        raise PermissionDenied("You can't claim this project.")
+        raise PermissionDenied(_("You can't claim this project."))
     # Don't let one member yank an active lead from another; officers may reassign.
     if (
         project.assigned_to_id
         and project.assigned_to_id != request.user.id
         and not rbac.has_role(request.user, rbac.ROLE_OFFICER)
     ):
-        raise PermissionDenied("This project already has a lead.")
+        raise PermissionDenied(_("This project already has a lead."))
     project.assigned_to = request.user
     if project.status == IndustryProject.Status.DRAFT:
         project.status = IndustryProject.Status.ACTIVE
     project.save(update_fields=["assigned_to", "status"])
     audit_log(request.user, "industry.project.claim", target_type="industry_project",
               target_id=str(project.id), ip=client_ip(request))
-    messages.success(request, "You’re now leading this project.")
+    messages.success(request, _("You’re now leading this project."))
     return redirect("industry:detail", pk=pk)
 
 
@@ -240,15 +241,15 @@ def project_push_jobs(request: HttpRequest, pk: int) -> HttpResponse:
     if project.is_archived or project.status in (
         IndustryProject.Status.DONE, IndustryProject.Status.CANCELLED
     ):
-        messages.info(request, "This plan is closed — reopen it before pushing jobs.")
+        messages.info(request, _("This plan is closed — reopen it before pushing jobs."))
         return redirect("industry:detail", pk=pk)
     created = push_project_to_jobs(project, request.user)
     audit_log(request.user, "industry.project.push_jobs", target_type="industry_project",
               target_id=str(project.id), metadata={"created": created}, ip=client_ip(request))
     if created:
-        messages.success(request, f"Pushed {created} build job(s) to the job board.")
+        messages.success(request, _("Pushed %(count)d build job(s) to the job board.") % {"count": created})
     else:
-        messages.info(request, "Nothing to push — every buildable line already has a job.")
+        messages.info(request, _("Nothing to push — every buildable line already has a job."))
     return redirect("industry:detail", pk=pk)
 
 
@@ -258,15 +259,15 @@ def project_push_jobs(request: HttpRequest, pk: int) -> HttpResponse:
 def project_status(request: HttpRequest, pk: int) -> HttpResponse:
     project = get_object_or_404(IndustryProject, pk=pk)
     if not _can_manage(request.user, project):
-        raise PermissionDenied("Not your project to manage.")
+        raise PermissionDenied(_("Not your project to manage."))
     new_status = request.POST.get("status", "")
     if new_status not in IndustryProject.Status.values:
-        raise PermissionDenied("Invalid status.")
+        raise PermissionDenied(_("Invalid status."))
     project.status = new_status
     project.save(update_fields=["status"])
     audit_log(request.user, "industry.project.status", target_type="industry_project",
               target_id=str(project.id), metadata={"status": new_status}, ip=client_ip(request))
-    messages.success(request, f"Project marked {project.get_status_display()}.")
+    messages.success(request, _("Project marked %(status)s.") % {"status": project.get_status_display()})
     return redirect("industry:detail", pk=pk)
 
 
@@ -276,16 +277,16 @@ def project_status(request: HttpRequest, pk: int) -> HttpResponse:
 def add_item(request: HttpRequest, pk: int) -> HttpResponse:
     project = get_object_or_404(IndustryProject, pk=pk)
     if not _can_manage(request.user, project):
-        raise PermissionDenied("Not your project to manage.")
+        raise PermissionDenied(_("Not your project to manage."))
     item_form = ProjectItemForm(request.POST)
     if item_form.is_valid() and SdeType.objects.filter(type_id=item_form.cleaned_data["type_id"]).exists():
         item = item_form.save(commit=False)
         item.project = project
         item.save()
         compute_project_bom(project)
-        messages.success(request, "Item added and BOM recomputed.")
+        messages.success(request, _("Item added and BOM recomputed."))
     else:
-        messages.error(request, "Could not add item — pick one from the search list.")
+        messages.error(request, _("Could not add item — pick one from the search list."))
     return redirect("industry:detail", pk=pk)
 
 
@@ -295,10 +296,10 @@ def add_item(request: HttpRequest, pk: int) -> HttpResponse:
 def remove_item(request: HttpRequest, pk: int, item_id: int) -> HttpResponse:
     project = get_object_or_404(IndustryProject, pk=pk)
     if not _can_manage(request.user, project):
-        raise PermissionDenied("Not your project to manage.")
+        raise PermissionDenied(_("Not your project to manage."))
     get_object_or_404(IndustryProjectItem, pk=item_id, project=project).delete()
     compute_project_bom(project)
-    messages.success(request, "Item removed.")
+    messages.success(request, _("Item removed."))
     return redirect("industry:detail", pk=pk)
 
 
@@ -308,9 +309,9 @@ def remove_item(request: HttpRequest, pk: int, item_id: int) -> HttpResponse:
 def recompute_bom(request: HttpRequest, pk: int) -> HttpResponse:
     project = get_object_or_404(IndustryProject, pk=pk)
     if not _can_manage(request.user, project):
-        raise PermissionDenied("Not your project to manage.")
+        raise PermissionDenied(_("Not your project to manage."))
     compute_project_bom(project)
-    messages.success(request, "BOM recomputed.")
+    messages.success(request, _("BOM recomputed."))
     return redirect("industry:detail", pk=pk)
 
 
@@ -320,9 +321,9 @@ def recompute_bom(request: HttpRequest, pk: int) -> HttpResponse:
 def make_shopping_list(request: HttpRequest, pk: int) -> HttpResponse:
     project = get_object_or_404(IndustryProject, pk=pk)
     if not _can_manage(request.user, project):
-        raise PermissionDenied("Not your project to manage.")
+        raise PermissionDenied(_("Not your project to manage."))
     generate_shopping_list(project)
-    messages.success(request, "Shopping list generated.")
+    messages.success(request, _("Shopping list generated."))
     return redirect("industry:detail", pk=pk)
 
 
@@ -332,17 +333,18 @@ def make_shopping_list(request: HttpRequest, pk: int) -> HttpResponse:
 def reserve_stock(request: HttpRequest, pk: int) -> HttpResponse:
     project = get_object_or_404(IndustryProject, pk=pk)
     if not _can_manage(request.user, project):
-        raise PermissionDenied("Not your project to manage.")
+        raise PermissionDenied(_("Not your project to manage."))
     result = reserve_project_stock(project)
     if result["units"]:
         audit_log(request.user, "industry.reserve_stock", target_type="industry_project",
                   target_id=str(project.id), metadata=result, ip=client_ip(request))
         messages.success(
             request,
-            f"Reserved {result['units']} units across {result['types']} material(s) from corp stock.",
+            _("Reserved %(units)s units across %(types)s material(s) from corp stock.")
+            % {"units": result["units"], "types": result["types"]},
         )
     else:
-        messages.warning(request, "Nothing reserved — no matching corp stock is available.")
+        messages.warning(request, _("Nothing reserved — no matching corp stock is available."))
     return redirect("industry:detail", pk=pk)
 
 
@@ -352,7 +354,7 @@ def reserve_stock(request: HttpRequest, pk: int) -> HttpResponse:
 def release_stock(request: HttpRequest, pk: int) -> HttpResponse:
     project = get_object_or_404(IndustryProject, pk=pk)
     if not _can_manage(request.user, project):
-        raise PermissionDenied("Not your project to manage.")
+        raise PermissionDenied(_("Not your project to manage."))
     n = release_project_stock(project)
-    messages.success(request, f"Released {n} reservation(s) back to corp stock.")
+    messages.success(request, _("Released %(n)s reservation(s) back to corp stock.") % {"n": n})
     return redirect("industry:detail", pk=pk)

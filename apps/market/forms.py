@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from django import forms
+from django.utils.translation import gettext_lazy as _
 
 from .models import MarketLocation
 
@@ -13,6 +14,6 @@ class MarketLocationForm(forms.ModelForm):
         widgets = {
             "name": forms.TextInput(attrs={"class": "input-field", "placeholder": "e.g. Amarr VIII (Oris)"}),
             "location_type": forms.Select(attrs={"class": "input-field"}),
-            "region_id": forms.NumberInput(attrs={"class": "input-field", "placeholder": "Region ID"}),
-            "system_id": forms.NumberInput(attrs={"class": "input-field", "placeholder": "System ID"}),
+            "region_id": forms.NumberInput(attrs={"class": "input-field", "placeholder": _("Region ID")}),
+            "system_id": forms.NumberInput(attrs={"class": "input-field", "placeholder": _("System ID")}),
         }

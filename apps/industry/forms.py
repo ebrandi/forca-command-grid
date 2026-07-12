@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from django import forms
+from django.utils.translation import gettext_lazy as _
 
 from .models import IndustryProject, IndustryProjectItem
 
@@ -11,7 +12,7 @@ class ProjectForm(forms.ModelForm):
         model = IndustryProject
         fields = ["name", "objective_type", "description"]
         widgets = {
-            "name": forms.TextInput(attrs={"class": "input-field", "placeholder": "e.g. Build 5 Feroxes"}),
+            "name": forms.TextInput(attrs={"class": "input-field", "placeholder": _("e.g. Build 5 Feroxes")}),
             "objective_type": forms.Select(attrs={"class": "input-field"}),
             "description": forms.Textarea(attrs={"class": "input-field", "rows": 2}),
         }
@@ -35,11 +36,11 @@ class ProjectItemForm(forms.ModelForm):
     def clean_quantity(self):
         qty = self.cleaned_data["quantity"]
         if qty < 1:
-            raise forms.ValidationError("Quantity must be at least 1.")
+            raise forms.ValidationError(_("Quantity must be at least 1."))
         return qty
 
     def clean_me(self):
         me = self.cleaned_data["me"]
         if not 0 <= me <= 10:
-            raise forms.ValidationError("Material efficiency is between 0 and 10.")
+            raise forms.ValidationError(_("Material efficiency is between 0 and 10."))
         return me

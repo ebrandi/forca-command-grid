@@ -13,6 +13,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal
 
+from django.utils.translation import gettext as _
+
 from .models import RateCard, ShipClass
 
 ISK = Decimal
@@ -98,14 +100,16 @@ def quote(
 
     max_m3, max_coll = caps_for(card, ship_class)
     if volume_m3 <= 0 or jumps <= 0:
-        return Quote(False, ISK(0), {}, "Enter a route (jumps) and a volume.")
+        return Quote(False, ISK(0), {}, _("Enter a route (jumps) and a volume."))
     if volume_m3 > max_m3:
         return Quote(
             False, ISK(0), {},
-            f"Volume {volume_m3:,.0f} m³ exceeds the {max_m3:,} m³ limit for this ship class.",
+            _("Volume %(volume)s m³ exceeds the %(max)s m³ limit for this ship class.")
+            % {"volume": f"{volume_m3:,.0f}", "max": f"{max_m3:,}"},
         )
     if collateral > max_coll:
-        return Quote(False, ISK(0), {}, f"Collateral exceeds the {max_coll/1e9:,.0f}b limit for this ship class.")
+        return Quote(False, ISK(0), {}, _("Collateral exceeds the %(max)sb limit for this ship class.")
+                     % {"max": f"{max_coll/1e9:,.0f}"})
 
     discount = ISK(card.discount)
     is_lowsec = sec_band in ("lowsec", "nullsec")
@@ -122,9 +126,10 @@ def quote(
         rush_fee = card.rush_fee_jf if rush else 0
         gross = base + per_jump + coll_fee + rush_fee
         lines = [
+            # "Jump freighter" is an EVE ship-group proper noun — kept English, not wrapped.
             {"label": "Jump freighter base", "isk": base},
-            {"label": f"Cyno jumps × {hops}", "isk": per_jump},
-            {"label": "Collateral fee", "isk": coll_fee},
+            {"label": _("Cyno jumps × %(hops)s") % {"hops": hops}, "isk": per_jump},
+            {"label": _("Collateral fee"), "isk": coll_fee},
         ]
     else:
         warps = jumps + 1
@@ -143,12 +148,13 @@ def quote(
         rush_fee = card.rush_fee_hs if rush else 0
         gross = with_coll + ISK(rush_fee)
         lines = [
-            {"label": f"Route · {warps} warps", "isk": int(jump_cost)},
-            {"label": f"Collateral cover ×{mult.normalize()}", "isk": int(with_coll - jump_cost)},
+            {"label": _("Route · %(warps)s warps") % {"warps": warps}, "isk": int(jump_cost)},
+            {"label": _("Collateral cover ×%(mult)s") % {"mult": mult.normalize()},
+             "isk": int(with_coll - jump_cost)},
         ]
 
     if rush:
-        lines.append({"label": "Rush priority", "isk": int(rush_fee)})
+        lines.append({"label": _("Rush priority"), "isk": int(rush_fee)})
 
     gross = ISK(gross)
     discounted = _q(gross * discount)
@@ -161,7 +167,7 @@ def quote(
     visible = [ln for ln in lines if ln["isk"]]
     display: list[dict] = []
     if min_applied:
-        display = [{"label": "Minimum reward", "isk": int(reward)}]
+        display = [{"label": _("Minimum reward"), "isk": int(reward)}]
     else:
         acc = 0
         for i, ln in enumerate(visible):

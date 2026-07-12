@@ -1,11 +1,12 @@
+{% load i18n %}
 {% comment %}One readiness task row: priority, title, severity (from its finding), assignee.{% endcomment %}
 <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 hover:bg-panel2/40">
   <div class="min-w-0">
     <span class="block truncate text-sm font-medium text-ink">{{ row.task.title }}</span>
     <span class="block text-[11px] text-faint">
-      {{ row.task.get_type_display }} · priority {{ row.task.priority }}
+      {{ row.task.get_type_display }} · {% blocktranslate with p=row.task.priority %}priority {{ p }}{% endblocktranslate %}
       {% if row.finding %} · {{ row.finding.dimension_key }}{% endif %}
-      {% if row.task.assignee %} · {{ row.task.assignee.display_name }}{% else %} · unassigned{% endif %}
+      {% if row.task.assignee %} · {{ row.task.assignee.display_name }}{% else %} · {% translate "unassigned" %}{% endif %}
     </span>
   </div>
   <div class="flex items-center gap-2">

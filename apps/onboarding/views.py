@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
 from .models import GlossaryTerm, OnboardingMilestone, OnboardingProgress
@@ -13,14 +14,14 @@ from .services import evaluate_milestones, is_manual, next_actions
 # The journey phases, in the order a new pilot walks them. Icons are sprite ids
 # from templates/_icons.html; blurbs set expectations before the checklist.
 PHASES = [
-    ("account", "Get connected", "#i-key",
-     "Link your characters and plug into corp comms — this is how we find you and how the Grid briefs you."),
-    ("skills", "Show us your skills", "#i-rookie",
-     "Share your skill sheet so every tool here can answer 'can I fly this?' honestly."),
-    ("doctrine", "Get combat-ready", "#i-ship",
-     "Train into a corp doctrine ship. Flying what the FC calls for is the single biggest thing you can do."),
-    ("activity", "Live here", "#i-bolt",
-     "Move in, undock with us, and start earning — nullsec pays the pilots who show up."),
+    ("account", _("Get connected"), "#i-key",
+     _("Link your characters and plug into corp comms — this is how we find you and how the Grid briefs you.")),
+    ("skills", _("Show us your skills"), "#i-rookie",
+     _("Share your skill sheet so every tool here can answer 'can I fly this?' honestly.")),
+    ("doctrine", _("Get combat-ready"), "#i-ship",
+     _("Train into a corp doctrine ship. Flying what the FC calls for is the single biggest thing you can do.")),
+    ("activity", _("Live here"), "#i-bolt",
+     _("Move in, undock with us, and start earning — nullsec pays the pilots who show up.")),
 ]
 
 

@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% load static eve %}
-{% block title %}Become a Veteran Mentor · [FORCA] Command Grid{% endblock %}
+{% load static eve i18n %}
+{% block title %}{% translate "Become a Veteran Mentor" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 
 <header class="mb-6">
-  <p class="eyebrow text-gold">Mentorship</p>
-  <h1 class="mt-1 text-3xl font-bold text-ink">Become a Veteran Mentor</h1>
-  <p class="mt-1 text-sm text-faint">Pass on what nullsec taught you. Take a Cadet under your wing and get them undocked, alive, and on killmails.</p>
+  <p class="eyebrow text-gold">{% translate "Mentorship" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Become a Veteran Mentor" %}</h1>
+  <p class="mt-1 text-sm text-faint">{% translate "Pass on what nullsec taught you. Take a Cadet under your wing and get them undocked, alive, and on killmails." %}</p>
 </header>
 
 {% comment %}
@@ -17,31 +17,31 @@ confidence note reflects whether the numbers came from ESI or an estimate.
 <section class="panel mb-6 p-5 {% if eligibility.eligible %}border-kill/50{% else %}border-gold/50{% endif %}">
   <div class="flex flex-wrap items-center gap-3">
     {% if eligibility.eligible %}
-      <span class="chip text-kill">Eligible</span>
-      <p class="text-sm text-muted">You clear the veteran bar. Fill in your mentor profile below and you're in.</p>
+      <span class="chip text-kill">{% translate "Eligible" %}</span>
+      <p class="text-sm text-muted">{% translate "You clear the veteran bar. Fill in your mentor profile below and you're in." %}</p>
     {% else %}
-      <span class="chip text-gold">Not yet eligible</span>
-      <p class="text-sm text-muted">You're a little short of the automatic bar — but leadership approves mentors case-by-case, so you can still apply.</p>
+      <span class="chip text-gold">{% translate "Not yet eligible" %}</span>
+      <p class="text-sm text-muted">{% translate "You're a little short of the automatic bar — but leadership approves mentors case-by-case, so you can still apply." %}</p>
     {% endif %}
   </div>
 
   <div class="mt-4 grid gap-4 sm:grid-cols-2">
     <div>
-      <p class="eyebrow">Character age</p>
+      <p class="eyebrow">{% translate "Character age" %}</p>
       <p class="data mt-0.5 text-lg text-ink">
-        {% if eligibility.character_age_days is None %}unknown{% elif eligibility.character_age_days >= 365 %}{% widthratio eligibility.character_age_days 365 1 as age_years %}~{{ age_years }}y <span class="text-sm text-faint">({{ eligibility.character_age_days }}d)</span>{% else %}{{ eligibility.character_age_days }}d{% endif %}
+        {% if eligibility.character_age_days is None %}{% translate "unknown" %}{% elif eligibility.character_age_days >= 365 %}{% widthratio eligibility.character_age_days 365 1 as age_years %}~{{ age_years }}y <span class="text-sm text-faint">({{ eligibility.character_age_days }}d)</span>{% else %}{{ eligibility.character_age_days }}d{% endif %}
       </p>
     </div>
     <div>
-      <p class="eyebrow">Corp tenure</p>
+      <p class="eyebrow">{% translate "Corp tenure" %}</p>
       <p class="data mt-0.5 text-lg text-ink">
-        {% if eligibility.corp_tenure_days is None %}unknown{% else %}{{ eligibility.corp_tenure_days }}d{% endif %}
+        {% if eligibility.corp_tenure_days is None %}{% translate "unknown" %}{% else %}{{ eligibility.corp_tenure_days }}d{% endif %}
       </p>
     </div>
   </div>
 
   <p class="mt-3 text-xs {% if eligibility.source == 'esi' %}text-faint{% else %}text-gold{% endif %}">
-    {% if eligibility.source == 'esi' %}Based on ESI.{% elif eligibility.confidence == 'low' %}Estimated — ESI unavailable.{% else %}Based on your character record.{% endif %}
+    {% if eligibility.source == 'esi' %}{% translate "Based on ESI." %}{% elif eligibility.confidence == 'low' %}{% translate "Estimated — ESI unavailable." %}{% else %}{% translate "Based on your character record." %}{% endif %}
   </p>
 
   {% if eligibility.reasons %}
@@ -52,14 +52,14 @@ confidence note reflects whether the numbers came from ESI or an estimate.
   </ul>
   {% endif %}
 
-  <p class="mt-3 text-[11px] text-faint">Leadership may approve mentors case-by-case regardless of the numbers above.</p>
+  <p class="mt-3 text-[11px] text-faint">{% translate "Leadership may approve mentors case-by-case regardless of the numbers above." %}</p>
 </section>
 
 {% if not program.enabled %}
   <section class="panel p-6 text-center">
     <div class="mx-auto grid h-11 w-11 place-items-center rounded-md bg-panel2 text-gold"><svg class="h-5 w-5"><use href="#i-lock"/></svg></div>
-    <h2 class="mt-3 font-display text-lg font-semibold text-ink">Mentor sign-ups are paused</h2>
-    <p class="mx-auto mt-1 max-w-md text-sm text-faint">Leadership isn't taking new Veteran Mentor registrations right now. Check back soon — or ping a director if you're keen to help.</p>
+    <h2 class="mt-3 font-display text-lg font-semibold text-ink">{% translate "Mentor sign-ups are paused" %}</h2>
+    <p class="mx-auto mt-1 max-w-md text-sm text-faint">{% translate "Leadership isn't taking new Veteran Mentor registrations right now. Check back soon — or ping a director if you're keen to help." %}</p>
   </section>
 {% else %}
 
@@ -67,8 +67,8 @@ confidence note reflects whether the numbers came from ESI or an estimate.
   <div class="panel mb-4 flex flex-wrap items-center gap-3 p-4">
     <span class="grid h-9 w-9 place-items-center rounded-md bg-panel2 text-cyan"><svg class="h-5 w-5"><use href="#i-shield"/></svg></span>
     <div class="min-w-0 flex-1">
-      <p class="text-sm text-ink">You're already registered as a Veteran Mentor.</p>
-      <p class="text-xs text-faint">Update your profile below whenever your availability or focus changes.</p>
+      <p class="text-sm text-ink">{% translate "You're already registered as a Veteran Mentor." %}</p>
+      <p class="text-xs text-faint">{% translate "Update your profile below whenever your availability or focus changes." %}</p>
     </div>
     <span class="chip text-cyan">{{ existing.get_status_display }}</span>
   </div>
@@ -78,7 +78,7 @@ confidence note reflects whether the numbers came from ESI or an estimate.
     {% csrf_token %}
 
     <section class="panel p-5">
-      <h2 class="eyebrow mb-3 text-gold">Where you can help</h2>
+      <h2 class="eyebrow mb-3 text-gold">{% translate "Where you can help" %}</h2>
       <div>
         <label class="label">{{ form.areas.label }}</label>
         {{ form.areas }}
@@ -88,7 +88,7 @@ confidence note reflects whether the numbers came from ESI or an estimate.
     </section>
 
     <section class="panel p-5">
-      <h2 class="eyebrow mb-3 text-gold">When &amp; how you fly</h2>
+      <h2 class="eyebrow mb-3 text-gold">{% translate "When &amp; how you fly" %}</h2>
       <div class="grid gap-4 sm:grid-cols-2">
         <div>
           <label class="label">{{ form.timezone.label }}</label>
@@ -118,7 +118,7 @@ confidence note reflects whether the numbers came from ESI or an estimate.
     </section>
 
     <section class="panel p-5">
-      <h2 class="eyebrow mb-3 text-gold">Your commitment</h2>
+      <h2 class="eyebrow mb-3 text-gold">{% translate "Your commitment" %}</h2>
       <div class="grid gap-4 sm:grid-cols-2">
         <div>
           <label class="label">{{ form.max_mentees.label }}</label>
@@ -135,7 +135,7 @@ confidence note reflects whether the numbers came from ESI or an estimate.
     </section>
 
     <section class="panel p-5">
-      <h2 class="eyebrow mb-3 text-gold">Introduce yourself</h2>
+      <h2 class="eyebrow mb-3 text-gold">{% translate "Introduce yourself" %}</h2>
       <div>
         <label class="label">{{ form.bio.label }}</label>
         {{ form.bio }}
@@ -153,7 +153,7 @@ confidence note reflects whether the numbers came from ESI or an estimate.
     {% if form.non_field_errors %}<p class="text-xs text-loss">{{ form.non_field_errors|join:" " }}</p>{% endif %}
 
     <div class="flex justify-end">
-      <button class="btn-gold">{% if existing %}Update registration{% else %}Submit registration{% endif %}</button>
+      <button class="btn-gold">{% if existing %}{% translate "Update registration" %}{% else %}{% translate "Submit registration" %}{% endif %}</button>
     </div>
   </form>
 {% endif %}

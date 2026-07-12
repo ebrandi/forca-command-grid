@@ -1,29 +1,30 @@
 {% extends "base.html" %}
-{% block title %}{% if page %}Edit{% else %}New page{% endif %} · Knowledge base{% endblock %}
+{% load i18n %}
+{% block title %}{% if page %}{% translate "Edit" %}{% else %}{% translate "New page" %}{% endif %} · {% translate "Knowledge base" %}{% endblock %}
 {% block content %}
-<a href="{% url 'kb:list' %}" class="text-xs text-faint hover:text-gold">← Knowledge base</a>
+<a href="{% url 'kb:list' %}" class="text-xs text-faint hover:text-gold">{% translate "← Knowledge base" %}</a>
 <header class="mt-2 mb-5">
-  <h1 class="text-3xl font-bold text-ink">{% if page %}Edit page{% else %}New page{% endif %}</h1>
-  <p class="mt-1 text-sm text-faint">Markdown: <code class="rounded bg-space px-1">#</code> headings, <code class="rounded bg-space px-1">**bold**</code>, <code class="rounded bg-space px-1">- lists</code>, <code class="rounded bg-space px-1">[text](url)</code>. Live embeds: <code class="rounded bg-space px-1">{% templatetag openvariable %}readiness:doctrine=Name{% templatetag closevariable %}</code>, <code class="rounded bg-space px-1">{% templatetag openvariable %}my-srp{% templatetag closevariable %}</code>.</p>
+  <h1 class="text-3xl font-bold text-ink">{% if page %}{% translate "Edit page" %}{% else %}{% translate "New page" %}{% endif %}</h1>
+  <p class="mt-1 text-sm text-faint">{% translate "Markdown:" %} <code class="rounded bg-space px-1">#</code> {% translate "headings" %}, <code class="rounded bg-space px-1">**bold**</code>, <code class="rounded bg-space px-1">- lists</code>, <code class="rounded bg-space px-1">[text](url)</code>. {% translate "Live embeds:" %} <code class="rounded bg-space px-1">{% templatetag openvariable %}readiness:doctrine=Name{% templatetag closevariable %}</code>, <code class="rounded bg-space px-1">{% templatetag openvariable %}my-srp{% templatetag closevariable %}</code>.</p>
 </header>
 
 <form method="post" action="{% if page %}{% url 'kb:save' page.slug %}{% else %}{% url 'kb:create' %}{% endif %}" class="panel space-y-4 p-5">
   {% csrf_token %}
   <div class="grid gap-4 sm:grid-cols-3">
-    <div class="sm:col-span-2"><label class="label" for="lf_title_1">Title</label><input id="lf_title_1" name="title" required value="{{ page.title|default:'' }}" class="input-field"></div>
-    <div><label class="label" for="lf_category_2">Category</label><input id="lf_category_2" name="category" value="{{ page.category|default:'' }}" class="input-field" placeholder="e.g. Logistics"></div>
+    <div class="sm:col-span-2"><label class="label" for="lf_title_1">{% translate "Title" %}</label><input id="lf_title_1" name="title" required value="{{ page.title|default:'' }}" class="input-field"></div>
+    <div><label class="label" for="lf_category_2">{% translate "Category" %}</label><input id="lf_category_2" name="category" value="{{ page.category|default:'' }}" class="input-field" placeholder="{% translate 'e.g. Logistics' %}"></div>
   </div>
   <div>
-    <label class="label" for="lf_visibility_3">Visibility</label>
+    <label class="label" for="lf_visibility_3">{% translate "Visibility" %}</label>
     <select id="lf_visibility_3" name="visibility" class="input-field w-auto">
       {% for v, l in visibilities %}<option value="{{ v }}" {% if page.visibility == v %}selected{% endif %}>{{ l }}</option>{% endfor %}
     </select>
-    <span class="ml-2 text-xs text-faint">Public pages must contain no exact fits or intel.</span>
+    <span class="ml-2 text-xs text-faint">{% translate "Public pages must contain no exact fits or intel." %}</span>
   </div>
   <div>
-    <label class="label" for="lf_body_md_4">Body</label>
-    <textarea id="lf_body_md_4" name="body_md" rows="18" class="input-field font-mono text-xs" placeholder="# Title&#10;&#10;Write your guide...&#10;&#10;Your status: {% templatetag openvariable %}readiness:doctrine=Tackle{% templatetag closevariable %}">{{ page.body_md|default:'' }}</textarea>
+    <label class="label" for="lf_body_md_4">{% translate "Body" %}</label>
+    <textarea id="lf_body_md_4" name="body_md" rows="18" class="input-field font-mono text-xs" placeholder="# {% translate 'Title' %}&#10;&#10;{% translate 'Write your guide...' %}&#10;&#10;{% translate 'Your status:' %} {% templatetag openvariable %}readiness:doctrine=Tackle{% templatetag closevariable %}">{{ page.body_md|default:'' }}</textarea>
   </div>
-  <div class="flex gap-2"><button class="btn-gold">Save page</button><a href="{% url 'kb:list' %}" class="btn-ghost">Cancel</a></div>
+  <div class="flex gap-2"><button class="btn-gold">{% translate "Save page" %}</button><a href="{% url 'kb:list' %}" class="btn-ghost">{% translate "Cancel" %}</a></div>
 </form>
 {% endblock %}

@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
 from apps.stockpile.services import shortfalls_against_targets
@@ -111,7 +112,9 @@ def toggle_watch(request: HttpRequest) -> HttpResponse:
     elif MarketWatch.objects.filter(user=request.user).count() < _WATCHLIST_CAP:
         MarketWatch.objects.get_or_create(user=request.user, type_id=type_id)
     else:
-        messages.warning(request, f"Your watchlist is full ({_WATCHLIST_CAP} items).")
+        messages.warning(
+            request, _("Your watchlist is full (%(cap)s items).") % {"cap": _WATCHLIST_CAP}
+        )
     return redirect(dest)
 
 
@@ -122,9 +125,9 @@ def create_location(request: HttpRequest) -> HttpResponse:
     form = MarketLocationForm(request.POST)
     if form.is_valid():
         form.save()
-        messages.success(request, "Market location added.")
+        messages.success(request, _("Market location added."))
     else:
-        messages.error(request, "Could not add location — check the fields.")
+        messages.error(request, _("Could not add location — check the fields."))
     return redirect("market:dashboard")
 
 
@@ -136,9 +139,9 @@ def edit_location(request: HttpRequest, pk: int) -> HttpResponse:
     form = MarketLocationForm(request.POST, instance=loc)
     if form.is_valid():
         form.save()
-        messages.success(request, "Market location updated.")
+        messages.success(request, _("Market location updated."))
     else:
-        messages.error(request, "Could not update location — check the fields.")
+        messages.error(request, _("Could not update location — check the fields."))
     return redirect("market:dashboard")
 
 
@@ -149,7 +152,9 @@ def toggle_location(request: HttpRequest, pk: int) -> HttpResponse:
     loc = get_object_or_404(MarketLocation, pk=pk)
     loc.active = not loc.active
     loc.save(update_fields=["active"])
-    messages.success(request, f"Location {'activated' if loc.active else 'deactivated'}.")
+    messages.success(
+        request, _("Location activated.") if loc.active else _("Location deactivated.")
+    )
     return redirect("market:dashboard")
 
 
@@ -162,7 +167,7 @@ def refresh_market(request: HttpRequest) -> HttpResponse:
 
     type_ids = tracked_history_type_ids(limit=80)
     if not type_ids:
-        messages.warning(request, "No tracked prices yet — run the price import first.")
+        messages.warning(request, _("No tracked prices yet — run the price import first."))
         return redirect("market:dashboard")
     # Dispatch to the worker instead of running ~80 sequential ESI history calls inside the
     # request (which would pin a gunicorn thread for 30 s-2 min and, on a double-click, several).
@@ -171,6 +176,7 @@ def refresh_market(request: HttpRequest) -> HttpResponse:
     sync_market_history.delay(max_types=len(type_ids))
     messages.success(
         request,
-        f"Market history refresh queued for {len(type_ids)} items — it'll update shortly.",
+        _("Market history refresh queued for %(count)s items — it'll update shortly.")
+        % {"count": len(type_ids)},
     )
     return redirect("market:dashboard")

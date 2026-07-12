@@ -16,6 +16,7 @@ from __future__ import annotations
 
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from core.mixins import ProvenanceMixin, TimeStampedModel
 
@@ -23,11 +24,11 @@ from . import constants
 
 
 class PiTier(models.TextChoices):
-    P0 = "P0", "P0 · Raw resource"
-    P1 = "P1", "P1 · Processed material"
-    P2 = "P2", "P2 · Refined commodity"
-    P3 = "P3", "P3 · Specialised commodity"
-    P4 = "P4", "P4 · Advanced commodity"
+    P0 = "P0", _("P0 · Raw resource")
+    P1 = "P1", _("P1 · Processed material")
+    P2 = "P2", _("P2 · Refined commodity")
+    P3 = "P3", _("P3 · Specialised commodity")
+    P4 = "P4", _("P4 · Advanced commodity")
 
 
 # --------------------------------------------------------------------------- #
@@ -39,7 +40,7 @@ class PiMaterial(models.Model):
     type_id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=200, db_index=True)
     tier = models.CharField(max_length=2, choices=PiTier.choices, db_index=True)
-    volume = models.FloatField(default=0.0, help_text="m³ per unit — used for hauling sizing.")
+    volume = models.FloatField(default=0.0, help_text=_("m³ per unit — used for hauling sizing."))
 
     class Meta:
         ordering = ["tier", "name"]
@@ -128,8 +129,8 @@ class PlanetaryConfig(TimeStampedModel):
 
     is_active = models.BooleanField(default=True)
     enabled = models.BooleanField(
-        default=True, help_text="Master switch shown to pilots. Turning this off hides the "
-        "planner even if the feature flag is on.")
+        default=True, help_text=_("Master switch shown to pilots. Turning this off hides the "
+        "planner even if the feature flag is on."))
     name = models.CharField(max_length=80, default="Standard")
 
     default_market_region_id = models.IntegerField(default=constants.THE_FORGE)
@@ -137,26 +138,26 @@ class PlanetaryConfig(TimeStampedModel):
 
     default_customs_export_tax = models.DecimalField(
         max_digits=5, decimal_places=2, default=constants.DEFAULT_CUSTOMS_EXPORT_TAX,
-        help_text="Customs office (POCO) export tax %, applied to item base value.")
+        help_text=_("Customs office (POCO) export tax %, applied to item base value."))
     default_customs_import_tax = models.DecimalField(
         max_digits=5, decimal_places=2, default=constants.DEFAULT_CUSTOMS_IMPORT_TAX)
     default_sales_tax = models.DecimalField(
         max_digits=5, decimal_places=2, default=constants.DEFAULT_SALES_TAX,
-        help_text="Market sales tax %.")
+        help_text=_("Market sales tax %."))
     default_broker_fee = models.DecimalField(
         max_digits=5, decimal_places=2, default=constants.DEFAULT_BROKER_FEE)
     default_hauling_cost_per_m3 = models.DecimalField(
         max_digits=12, decimal_places=2, default=constants.DEFAULT_HAULING_COST_PER_M3,
-        help_text="ISK per m³ to move goods to the hub (0 = you self-haul).")
+        help_text=_("ISK per m³ to move goods to the hub (0 = you self-haul)."))
     corp_buyback_rate = models.DecimalField(
         max_digits=5, decimal_places=2, default=constants.DEFAULT_CORP_BUYBACK_RATE,
-        help_text="% of Jita sell the corp buyback pays.")
+        help_text=_("% of Jita sell the corp buyback pays."))
     default_extraction_rate_per_hour = models.PositiveIntegerField(
         default=constants.DEFAULT_EXTRACTION_RATE_PER_HOUR,
-        help_text="Planning assumption: P0 units/hour on one extraction planet.")
+        help_text=_("Planning assumption: P0 units/hour on one extraction planet."))
 
     recommended_products = models.JSONField(
-        default=list, blank=True, help_text="Type ids the corp wants pilots to produce.")
+        default=list, blank=True, help_text=_("Type ids the corp wants pilots to produce."))
     priority_note = models.TextField(blank=True)
     recommended_regions = models.CharField(max_length=200, blank=True)
     default_visibility = models.CharField(max_length=12, default="private")
@@ -172,55 +173,55 @@ class PlanetaryConfig(TimeStampedModel):
 # Pilot plans
 # --------------------------------------------------------------------------- #
 class PiGoal(models.TextChoices):
-    BEGINNER = "beginner", "Beginner passive income"
-    LOW_EFFORT = "low_effort", "Low-effort extraction"
-    P0_P1 = "p0_p1", "P0 → P1 processing"
-    P0_P2 = "p0_p2", "P0 → P2 refined"
-    FACTORY = "factory", "Factory planet"
-    P3_P4 = "p3_p4", "P3 / P4 advanced production"
-    CORP_SUPPLY = "corp_supply", "Corporation supply chain"
-    MAX_PROFIT = "max_profit", "Maximum ISK profit"
+    BEGINNER = "beginner", _("Beginner passive income")
+    LOW_EFFORT = "low_effort", _("Low-effort extraction")
+    P0_P1 = "p0_p1", _("P0 → P1 processing")
+    P0_P2 = "p0_p2", _("P0 → P2 refined")
+    FACTORY = "factory", _("Factory planet")
+    P3_P4 = "p3_p4", _("P3 / P4 advanced production")
+    CORP_SUPPLY = "corp_supply", _("Corporation supply chain")
+    MAX_PROFIT = "max_profit", _("Maximum ISK profit")
 
 
 class PiStatus(models.TextChoices):
-    DRAFT = "draft", "Draft"
-    READY = "ready", "Ready to build"
-    ACTIVE = "active", "Active"
-    NEEDS_REVIEW = "needs_review", "Needs review"
-    ARCHIVED = "archived", "Archived"
+    DRAFT = "draft", _("Draft")
+    READY = "ready", _("Ready to build")
+    ACTIVE = "active", _("Active")
+    NEEDS_REVIEW = "needs_review", _("Needs review")
+    ARCHIVED = "archived", _("Archived")
 
 
 class PiVisibility(models.TextChoices):
-    PRIVATE = "private", "Private (only me)"
-    LEADERSHIP = "leadership", "Shared with leadership"
-    CORP = "corp", "Shared with corporation"
+    PRIVATE = "private", _("Private (only me)")
+    LEADERSHIP = "leadership", _("Shared with leadership")
+    CORP = "corp", _("Shared with corporation")
 
 
 class PiEffort(models.TextChoices):
-    LOW = "low", "Low effort"
-    DAILY = "daily", "Daily reset"
-    FEW_DAYS = "few_days", "Every 2–3 days"
-    WEEKLY = "weekly", "Weekly"
+    LOW = "low", _("Low effort")
+    DAILY = "daily", _("Daily reset")
+    FEW_DAYS = "few_days", _("Every 2–3 days")
+    WEEKLY = "weekly", _("Weekly")
 
 
 class PiRisk(models.TextChoices):
-    HIGHSEC = "highsec", "High-sec convenience"
-    LOW_NULL = "low_null", "Low-sec / null-sec yield"
-    WORMHOLE = "wormhole", "Wormhole production"
-    CORP_SPACE = "corp_space", "Corp-controlled space"
+    HIGHSEC = "highsec", _("High-sec convenience")
+    LOW_NULL = "low_null", _("Low-sec / null-sec yield")
+    WORMHOLE = "wormhole", _("Wormhole production")
+    CORP_SPACE = "corp_space", _("Corp-controlled space")
 
 
 class PiExportStrategy(models.TextChoices):
-    SELL_LOCAL = "sell_local", "Sell locally"
-    HAUL_HUB = "haul_hub", "Haul to market hub"
-    CORP_BUYBACK = "corp_buyback", "Use corp buyback"
-    FEED_CHAIN = "feed_chain", "Feed another chain"
+    SELL_LOCAL = "sell_local", _("Sell locally")
+    HAUL_HUB = "haul_hub", _("Haul to market hub")
+    CORP_BUYBACK = "corp_buyback", _("Use corp buyback")
+    FEED_CHAIN = "feed_chain", _("Feed another chain")
 
 
 class PiPlanetRole(models.TextChoices):
-    EXTRACT = "extract", "Extraction"
-    FACTORY = "factory", "Factory"
-    STORAGE = "storage", "Storage / staging"
+    EXTRACT = "extract", _("Extraction")
+    FACTORY = "factory", _("Factory")
+    STORAGE = "storage", _("Storage / staging")
 
 
 class PiPlan(TimeStampedModel):

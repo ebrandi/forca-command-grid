@@ -1,24 +1,25 @@
 {% extends "base.html" %}
 {% load eve %}
+{% load i18n %}
 {% block title %}Guaranteed buyback queue · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <header class="mb-5 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <p class="eyebrow text-gold">Buyback · Leadership</p>
-    <h1 class="mt-1 text-2xl font-bold text-ink">Guaranteed buyback</h1>
-    <p class="mt-1 text-sm text-faint">Approve corp buyouts, then pay the seller in-game. <span class="text-loss">No ISK moves through this app</span> — it only tracks and reconciles.</p>
+    <p class="eyebrow text-gold">{% translate "Buyback · Leadership" %}</p>
+    <h1 class="mt-1 text-2xl font-bold text-ink">{% translate "Guaranteed buyback" %}</h1>
+    <p class="mt-1 text-sm text-faint">{% blocktranslate %}Approve corp buyouts, then pay the seller in-game. <span class="text-loss">No ISK moves through this app</span> — it only tracks and reconciles.{% endblocktranslate %}</p>
   </div>
-  <a href="{% url 'buyback:config' %}" class="btn-ghost text-sm">Settings</a>
+  <a href="{% url 'buyback:config' %}" class="btn-ghost text-sm">{% translate "Settings" %}</a>
 </header>
 
 {% if not config.enabled or config.audience == 'disabled' %}
-<div class="panel mb-4 border border-loss/30 px-4 py-2 text-sm text-loss">Guaranteed buyback is turned off — arm it in Settings.</div>
+<div class="panel mb-4 border border-loss/30 px-4 py-2 text-sm text-loss">{% translate "Guaranteed buyback is turned off — arm it in Settings." %}</div>
 {% endif %}
-<div class="panel mb-4 px-4 py-2 text-xs text-faint">Committed in the last 24h: <span class="data text-ink">{{ committed_24h|isk }}</span> · Budget {{ config.daily_budget|isk }} · Per-lot cap {{ config.per_lot_cap|isk }}</div>
+<div class="panel mb-4 px-4 py-2 text-xs text-faint">{% blocktranslate with committed=committed_24h|isk budget=config.daily_budget|isk cap=config.per_lot_cap|isk %}Committed in the last 24h: <span class="data text-ink">{{ committed }}</span> · Budget {{ budget }} · Per-lot cap {{ cap }}{% endblocktranslate %}</div>
 
 <!-- Pending approval -->
 <section class="panel overflow-hidden">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Requested · {{ pending|length }}</h2></div>
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "Requested" %} · {{ pending|length }}</h2></div>
   <div class="divide-y divide-line/40">
     {% for b in pending %}
       <div class="px-4 py-3">
@@ -33,15 +34,15 @@
           {% else %}
             <form method="post" action="{% url 'buyback:guaranteed_decide' b.pk %}" class="flex items-center gap-1">
               {% csrf_token %}
-              <input name="reason" placeholder="note (optional)" class="input-field !py-1 !text-xs w-36">
-              <button name="decision" value="approve" class="btn-cyan !py-1 !text-xs">Approve</button>
-              <button name="decision" value="reject" class="btn-ghost !py-1 !text-xs !text-loss">Reject</button>
+              <input name="reason" placeholder="{% translate 'note (optional)' %}" class="input-field !py-1 !text-xs w-36">
+              <button name="decision" value="approve" class="btn-cyan !py-1 !text-xs">{% translate "Approve" %}</button>
+              <button name="decision" value="reject" class="btn-ghost !py-1 !text-xs !text-loss">{% translate "Reject" %}</button>
             </form>
           {% endif %}
         </div>
       </div>
     {% empty %}
-      <p class="px-4 py-6 text-center text-sm text-faint">Nothing awaiting approval.</p>
+      <p class="px-4 py-6 text-center text-sm text-faint">{% translate "Nothing awaiting approval." %}</p>
     {% endfor %}
   </div>
 </section>
@@ -49,21 +50,21 @@
 <!-- Approved, awaiting payment -->
 {% if approved %}
 <section class="panel mt-5 overflow-hidden">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Awaiting corp payment · {{ approved|length }}</h2></div>
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">{% translate "Awaiting corp payment" %} · {{ approved|length }}</h2></div>
   <div class="divide-y divide-line/40">
     {% for b in approved %}
       <div class="flex flex-wrap items-center gap-3 px-4 py-2.5 text-sm">
         <span class="min-w-0 flex-1">
-          <span class="text-ink">{{ b.quoted_value|isk }}</span> to <span class="text-cyan">{{ b.seller.display_name|default:"—" }}</span>
-          <span class="text-xs text-faint">· pay in-game, put <span class="data text-gold">{{ b.payment_token }}</span> in the reason</span>
+          {% blocktranslate with value=b.quoted_value|isk name=b.seller.display_name|default:"—" %}<span class="text-ink">{{ value }}</span> to <span class="text-cyan">{{ name }}</span>{% endblocktranslate %}
+          <span class="text-xs text-faint">· {% blocktranslate with token=b.payment_token %}pay in-game, put <span class="data text-gold">{{ token }}</span> in the reason{% endblocktranslate %}</span>
         </span>
         {% if config.require_esi_reconcile %}
-          <span class="text-[11px] text-faint">auto-settles from the corp wallet</span>
+          <span class="text-[11px] text-faint">{% translate "auto-settles from the corp wallet" %}</span>
         {% else %}
           <form method="post" action="{% url 'buyback:guaranteed_settle' b.pk %}" class="flex items-center gap-1">
             {% csrf_token %}
-            <input name="reference" placeholder="wallet ref" class="input-field !py-1 !text-xs w-32">
-            <button class="btn-ghost !py-1 !text-xs">Mark settled</button>
+            <input name="reference" placeholder="{% translate 'wallet ref' %}" class="input-field !py-1 !text-xs w-32">
+            <button class="btn-ghost !py-1 !text-xs">{% translate "Mark settled" %}</button>
           </form>
         {% endif %}
       </div>
@@ -75,7 +76,7 @@
 <!-- Recent -->
 {% if recent %}
 <section class="panel mt-5 overflow-hidden">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Recent</h2></div>
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">{% translate "Recent" %}</h2></div>
   <div class="divide-y divide-line/40">
     {% for b in recent %}
       <div class="flex items-center gap-3 px-4 py-2 text-sm">

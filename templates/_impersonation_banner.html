@@ -4,18 +4,19 @@ impersonation is active (request.is_impersonating is set by ImpersonationMiddlew
 "Exit" control sits in the top-right corner; everything else on the page reflects the
 impersonated pilot. High z-index so it always sits above the rail, drawer and command palette.
 {% endcomment %}
+{% load i18n %}
 {% if request.is_impersonating %}
 <div class="sticky top-0 z-[70] w-full border-b-2 border-gold bg-gold/15 text-ink backdrop-blur">
   <div class="mx-auto flex max-w-7xl items-center gap-3 px-4 py-2 sm:px-6">
     <svg class="h-5 w-5 shrink-0 text-gold" fill="none" stroke="currentColor" stroke-width="1.8"><use href="#i-key"/></svg>
     <div class="min-w-0 flex-1 text-sm leading-tight">
-      <span class="font-semibold">Viewing as {{ request.impersonation.target.display_name }}</span>
-      <span class="ml-1 text-xs text-muted">· read-only · you are {{ request.impersonation.actor.display_name }}</span>
+      <span class="font-semibold">{% blocktranslate with name=request.impersonation.target.display_name %}Viewing as {{ name }}{% endblocktranslate %}</span>
+      <span class="ml-1 text-xs text-muted">{% blocktranslate with actor=request.impersonation.actor.display_name %}· read-only · you are {{ actor }}{% endblocktranslate %}</span>
     </div>
     <form method="post" action="{% url 'impersonation:stop' %}" class="shrink-0">
       {% csrf_token %}
       <button type="submit" class="btn-gold !px-3 !py-1 text-xs whitespace-nowrap">
-        Exit — return to your account
+        {% translate "Exit — return to your account" %}
       </button>
     </form>
   </div>

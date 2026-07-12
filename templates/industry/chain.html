@@ -1,30 +1,31 @@
 {% extends "base.html" %}
 {% load eve %}
-{% block title %}Production chain · Industry{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Production chain" %} · {% translate "Industry" %}{% endblock %}
 {% block content %}
 
-<a href="{% url 'industry:home' %}" class="text-xs text-faint hover:text-gold">← Industry Center</a>
+<a href="{% url 'industry:home' %}" class="text-xs text-faint hover:text-gold">← {% translate "Industry Center" %}</a>
 <header class="mt-3 mb-5">
-  <p class="eyebrow">Industry &amp; Economy</p>
-  <h1 class="mt-1 text-2xl font-bold text-ink">Production chain explorer</h1>
-  <p class="mt-1 max-w-2xl text-sm text-faint">See the whole dependency tree for an item — every sub-component, reaction and raw material, with a build-or-buy call at each step.</p>
+  <p class="eyebrow">{% translate "Industry &amp; Economy" %}</p>
+  <h1 class="mt-1 text-2xl font-bold text-ink">{% translate "Production chain explorer" %}</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "See the whole dependency tree for an item — every sub-component, reaction and raw material, with a build-or-buy call at each step." %}</p>
 </header>
 
 <form method="get" class="panel mb-5 p-5">
   <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
     <div class="lg:col-span-2">
-      <label class="label">Item</label>
-      {% include "components/_type_picker.html" with field="type_id" endpoint="/industry/type-search/?buildable=1" placeholder="Search a buildable item…" initial_id=stype.type_id initial_name=stype.name %}
+      <label class="label">{% translate "Item" %}</label>
+      {% translate "Search a buildable item…" as pick_ph %}{% include "components/_type_picker.html" with field="type_id" endpoint="/industry/type-search/?buildable=1" placeholder=pick_ph initial_id=stype.type_id initial_name=stype.name %}
     </div>
-    <div><label class="label" for="ch_qty">Quantity</label><input id="ch_qty" type="number" name="quantity" min="1" value="{{ quantity }}" class="input-field"></div>
-    <div><label class="label" for="ch_strategy">Strategy</label>
+    <div><label class="label" for="ch_qty">{% translate "Quantity" %}</label><input id="ch_qty" type="number" name="quantity" min="1" value="{{ quantity }}" class="input-field"></div>
+    <div><label class="label" for="ch_strategy">{% translate "Strategy" %}</label>
       <select id="ch_strategy" name="strategy" class="input-field">
-        <option value="build_to_minerals" {% if strategy == 'build_to_minerals' %}selected{% endif %}>Build all the way down</option>
-        <option value="build_vs_buy" {% if strategy == 'build_vs_buy' %}selected{% endif %}>Build when cheaper</option>
+        <option value="build_to_minerals" {% if strategy == 'build_to_minerals' %}selected{% endif %}>{% translate "Build all the way down" %}</option>
+        <option value="build_vs_buy" {% if strategy == 'build_vs_buy' %}selected{% endif %}>{% translate "Build when cheaper" %}</option>
       </select>
     </div>
   </div>
-  <div class="mt-3 flex justify-end"><button class="btn-gold text-sm">Explore</button></div>
+  <div class="mt-3 flex justify-end"><button class="btn-gold text-sm">{% translate "Explore" %}</button></div>
 </form>
 
 {% if tree %}
@@ -34,12 +35,12 @@
     <span class="chip !text-cyan">{{ tree.decision }}</span>
   </div>
   <ul class="text-sm">{% include "industry/_chain_node.html" with node=tree %}</ul>
-  <p class="mt-3 text-[11px] text-faint">“Build” nodes expand into their inputs; “buy” / raw nodes are leaves you acquire. Costs are Jita estimates. On-hand quantities appear when your assets are imported.</p>
+  <p class="mt-3 text-[11px] text-faint">{% translate "“Build” nodes expand into their inputs; “buy” / raw nodes are leaves you acquire. Costs are Jita estimates. On-hand quantities appear when your assets are imported." %}</p>
 </section>
 {% else %}
   <div class="panel px-4 py-16 text-center">
-    <p class="font-display text-lg text-muted">Pick an item</p>
-    <p class="mt-1 text-sm text-faint">Search above to unfold its production chain.</p>
+    <p class="font-display text-lg text-muted">{% translate "Pick an item" %}</p>
+    <p class="mt-1 text-sm text-faint">{% translate "Search above to unfold its production chain." %}</p>
   </div>
 {% endif %}
 {% endblock %}

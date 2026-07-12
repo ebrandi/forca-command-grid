@@ -1,24 +1,25 @@
 {% extends "base.html" %}
-{% block title %}Campaigns · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Campaigns" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <header class="mb-6 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <p class="eyebrow">Campaign Command</p>
-    <h1 class="mt-1 text-3xl font-bold text-ink">Campaigns</h1>
-    <p class="mt-1 max-w-2xl text-sm text-faint">What the corp is driving toward — objectives, health and progress on one screen.</p>
+    <p class="eyebrow">{% translate "Campaign Command" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Campaigns" %}</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "What the corp is driving toward — objectives, health and progress on one screen." %}</p>
   </div>
   {% if can_manage_campaigns %}
-  <a href="{% url 'campaigns:new' %}" class="btn-gold text-sm"><svg class="h-4 w-4"><use href="#i-target"/></svg> New campaign</a>
+  <a href="{% url 'campaigns:new' %}" class="btn-gold text-sm"><svg class="h-4 w-4"><use href="#i-target"/></svg> {% translate "New campaign" %}</a>
   {% endif %}
 </header>
 
 {% if summary %}
 {# Summary strip — officer+ only, computed inline over the visible set (doc 10 §6.1). #}
 <div class="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-  <div class="panel px-4 py-3"><p class="data text-2xl font-bold text-ink">{{ summary.active }}</p><p class="eyebrow text-faint">Active</p></div>
-  <div class="panel px-4 py-3"><p class="data text-2xl font-bold text-gold">{{ summary.at_risk }}</p><p class="eyebrow text-faint">At risk</p></div>
-  <div class="panel px-4 py-3"><p class="data text-2xl font-bold text-loss">{{ summary.blocked }}</p><p class="eyebrow text-faint">Blocked</p></div>
-  <a href="?status=proposed" class="panel px-4 py-3 transition hover:border-cyan/40"><p class="data text-2xl font-bold text-cyan">{{ summary.awaiting }}</p><p class="eyebrow text-faint">Awaiting approval →</p></a>
+  <div class="panel px-4 py-3"><p class="data text-2xl font-bold text-ink">{{ summary.active }}</p><p class="eyebrow text-faint">{% translate "Active" %}</p></div>
+  <div class="panel px-4 py-3"><p class="data text-2xl font-bold text-gold">{{ summary.at_risk }}</p><p class="eyebrow text-faint">{% translate "At risk" %}</p></div>
+  <div class="panel px-4 py-3"><p class="data text-2xl font-bold text-loss">{{ summary.blocked }}</p><p class="eyebrow text-faint">{% translate "Blocked" %}</p></div>
+  <a href="?status=proposed" class="panel px-4 py-3 transition hover:border-cyan/40"><p class="data text-2xl font-bold text-cyan">{{ summary.awaiting }}</p><p class="eyebrow text-faint">{% translate "Awaiting approval" %} →</p></a>
 </div>
 {% endif %}
 
@@ -26,43 +27,43 @@
 <form method="get" class="panel mb-4 flex flex-wrap items-end gap-3 px-4 py-3"
       hx-get="{% url 'campaigns:index' %}" hx-target="#cmp-results" hx-swap="outerHTML" hx-push-url="true" hx-trigger="submit, change from:select">
   <label class="block min-w-[10rem] flex-1">
-    <span class="eyebrow text-faint">Search</span>
-    <input type="search" name="q" value="{{ q }}" placeholder="Campaign name…" class="input-field mt-1 w-full">
+    <span class="eyebrow text-faint">{% translate "Search" %}</span>
+    <input type="search" name="q" value="{{ q }}" placeholder="{% translate 'Campaign name…' %}" class="input-field mt-1 w-full">
   </label>
   <label class="block">
-    <span class="eyebrow text-faint">Status</span>
+    <span class="eyebrow text-faint">{% translate "Status" %}</span>
     <select name="status" class="input-field mt-1" data-autosubmit>
-      <option value="">Any status</option>
+      <option value="">{% translate "Any status" %}</option>
       {% for value, label in statuses %}<option value="{{ value }}" {% if f_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
     </select>
   </label>
   <label class="block">
-    <span class="eyebrow text-faint">Health</span>
+    <span class="eyebrow text-faint">{% translate "Health" %}</span>
     <select name="health" class="input-field mt-1" data-autosubmit>
-      <option value="">Any health</option>
+      <option value="">{% translate "Any health" %}</option>
       {% for value, label in healths %}<option value="{{ value }}" {% if f_health == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
     </select>
   </label>
   <label class="block">
-    <span class="eyebrow text-faint">Category</span>
+    <span class="eyebrow text-faint">{% translate "Category" %}</span>
     <select name="category" class="input-field mt-1" data-autosubmit>
-      <option value="">Any category</option>
+      <option value="">{% translate "Any category" %}</option>
       {% for value, label in categories %}<option value="{{ value }}" {% if f_category == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
     </select>
   </label>
   <label class="block">
-    <span class="eyebrow text-faint">Commander</span>
+    <span class="eyebrow text-faint">{% translate "Commander" %}</span>
     <select name="commander" class="input-field mt-1" data-autosubmit>
-      <option value="">Any commander</option>
+      <option value="">{% translate "Any commander" %}</option>
       {% for u in commanders %}<option value="{{ u.pk }}" {% if f_commander == u.pk|stringformat:'s' %}selected{% endif %}>{{ u.display_name }}</option>{% endfor %}
     </select>
   </label>
   <label class="block">
-    <span class="eyebrow text-faint">Tag</span>
-    <input type="text" name="tag" value="{{ f_tag }}" placeholder="tag" class="input-field mt-1 w-28">
+    <span class="eyebrow text-faint">{% translate "Tag" %}</span>
+    <input type="text" name="tag" value="{{ f_tag }}" placeholder="{% translate 'tag' %}" class="input-field mt-1 w-28">
   </label>
-  <button type="submit" class="btn-ghost text-sm">Apply</button>
-  {% if active_filters %}<a href="{% url 'campaigns:index' %}" class="btn-ghost text-sm">Clear</a>{% endif %}
+  <button type="submit" class="btn-ghost text-sm">{% translate "Apply" %}</button>
+  {% if active_filters %}<a href="{% url 'campaigns:index' %}" class="btn-ghost text-sm">{% translate "Clear" %}</a>{% endif %}
 </form>
 
 {% include "campaigns/_portfolio_results.html" %}

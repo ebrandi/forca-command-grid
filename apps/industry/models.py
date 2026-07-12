@@ -5,6 +5,7 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from apps.doctrines.models import Doctrine
 from apps.market.models import MarketLocation
@@ -19,9 +20,9 @@ class IndustryEconomyConfig(TimeStampedModel):
     """
 
     class Visibility(models.TextChoices):
-        PRIVATE = "private", "Private (owner + leadership)"
-        LEADERSHIP = "leadership", "Leadership only"
-        CORP = "corp", "Whole corporation"
+        PRIVATE = "private", _("Private (owner + leadership)")
+        LEADERSHIP = "leadership", _("Leadership only")
+        CORP = "corp", _("Whole corporation")
 
     is_active = models.BooleanField(default=True)
     # /erp/ backwards-compat: when true, /erp/ redirects into the unified Job Tracker.
@@ -56,30 +57,30 @@ class IndustryEconomyConfig(TimeStampedModel):
 
 class IndustryProject(TimeStampedModel):
     class Objective(models.TextChoices):
-        BUILD = "build", "Build"
-        STOCK = "stock", "Stock"
-        AMMO = "ammo", "Ammo"
-        CONTRACTS = "contracts", "Contracts"
-        CUSTOM = "custom", "Custom"
+        BUILD = "build", _("Build")
+        STOCK = "stock", _("Stock")
+        AMMO = "ammo", _("Ammo")
+        CONTRACTS = "contracts", _("Contracts")
+        CUSTOM = "custom", _("Custom")
 
     class Status(models.TextChoices):
-        DRAFT = "draft", "Draft"
-        ACTIVE = "active", "Active"
-        BLOCKED = "blocked", "Blocked"
-        DONE = "done", "Done"
-        CANCELLED = "cancelled", "Cancelled"
+        DRAFT = "draft", _("Draft")
+        ACTIVE = "active", _("Active")
+        BLOCKED = "blocked", _("Blocked")
+        DONE = "done", _("Done")
+        CANCELLED = "cancelled", _("Cancelled")
 
     class Visibility(models.TextChoices):
-        PRIVATE = "private", "Private (owner + leadership)"
-        LEADERSHIP = "leadership", "Leadership only"
-        CORP = "corp", "Whole corporation"
+        PRIVATE = "private", _("Private (owner + leadership)")
+        LEADERSHIP = "leadership", _("Leadership only")
+        CORP = "corp", _("Whole corporation")
 
     class Source(models.TextChoices):
-        MANUAL = "manual", "Manual"
-        DOCTRINE_SUPPLY = "doctrine_supply", "Doctrine supply gap"
-        STORE_ORDER = "store_order", "Corp Store order"
-        STORE_GAP = "store_gap", "Corp Store stock gap"
-        ESI_JOB = "esi_job", "Imported ESI job"
+        MANUAL = "manual", _("Manual")
+        DOCTRINE_SUPPLY = "doctrine_supply", _("Doctrine supply gap")
+        STORE_ORDER = "store_order", _("Corp Store order")
+        STORE_GAP = "store_gap", _("Corp Store stock gap")
+        ESI_JOB = "esi_job", _("Imported ESI job")
 
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True)
@@ -126,21 +127,21 @@ class IndustryProject(TimeStampedModel):
 
 class IndustryProjectItem(models.Model):
     class BuildOrBuy(models.TextChoices):
-        BUILD = "build", "Build"
-        BUY = "buy", "Buy"
-        UNDECIDED = "undecided", "Undecided"
+        BUILD = "build", _("Build")
+        BUY = "buy", _("Buy")
+        UNDECIDED = "undecided", _("Undecided")
 
     class Strategy(models.TextChoices):
-        BUILD_VS_BUY = "build_vs_buy", "Build when cheaper"
-        BUILD_TO_MINERALS = "build_to_minerals", "Build all the way down"
+        BUILD_VS_BUY = "build_vs_buy", _("Build when cheaper")
+        BUILD_TO_MINERALS = "build_to_minerals", _("Build all the way down")
 
     class BlueprintSource(models.TextChoices):
-        OWN_BPO = "own_bpo", "I own a BPO"
-        OWN_BPC = "own_bpc", "I own a BPC"
-        BUY = "buy", "Buy the blueprint"
-        INVENT = "invent", "Invent a T2 BPC"
-        CORP = "corp", "Corporation blueprint"
-        UNKNOWN = "unknown", "Not sure — guide me"
+        OWN_BPO = "own_bpo", _("I own a BPO")
+        OWN_BPC = "own_bpc", _("I own a BPC")
+        BUY = "buy", _("Buy the blueprint")
+        INVENT = "invent", _("Invent a T2 BPC")
+        CORP = "corp", _("Corporation blueprint")
+        UNKNOWN = "unknown", _("Not sure — guide me")
 
     project = models.ForeignKey(IndustryProject, on_delete=models.CASCADE, related_name="items")
     type_id = models.IntegerField()
@@ -211,13 +212,13 @@ class Blueprint(ProvenanceMixin):
 
 class MaterialRequirement(models.Model):
     class AcquireMethod(models.TextChoices):
-        BUILD = "build", "Build"
-        BUY = "buy", "Buy"
-        REACT = "react", "React"
-        INVENT = "invent", "Invent"
+        BUILD = "build", _("Build")
+        BUY = "buy", _("Buy")
+        REACT = "react", _("React")
+        INVENT = "invent", _("Invent")
         PI = "pi", "PI"
-        HAUL = "haul", "Haul"
-        CONTRACT = "contract", "Contract"
+        HAUL = "haul", _("Haul")
+        CONTRACT = "contract", _("Contract")
 
     project_item = models.ForeignKey(
         IndustryProjectItem, on_delete=models.CASCADE, related_name="material_requirements"

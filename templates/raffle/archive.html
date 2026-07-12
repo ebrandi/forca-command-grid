@@ -1,13 +1,14 @@
 {% extends "base.html" %}
 {% load eve %}
-{% block title %}Raffle archive · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Raffle archive" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <header class="mb-6 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <p class="eyebrow text-gold">Raffle archive</p>
-    <h1 class="mt-1 text-2xl font-bold text-ink">Past contests</h1>
+    <p class="eyebrow text-gold">{% translate "Raffle archive" %}</p>
+    <h1 class="mt-1 text-2xl font-bold text-ink">{% translate "Past contests" %}</h1>
   </div>
-  <a href="{% url 'raffle:home' %}" class="btn-ghost text-sm">← Raffle home</a>
+  <a href="{% url 'raffle:home' %}" class="btn-ghost text-sm">← {% translate "Raffle home" %}</a>
 </header>
 
 {% if contests %}
@@ -20,15 +21,15 @@
     </div>
     <h3 class="mt-2 font-display font-semibold text-ink group-hover:text-gold">{{ c.name }}</h3>
     <p class="mt-1 text-xs text-faint">{{ c.objective|default:c.description|truncatewords:16 }}</p>
-    <p class="mt-2 text-xs text-cyan group-hover:text-gold">View winners & transparency →</p>
+    <p class="mt-2 text-xs text-cyan group-hover:text-gold">{% translate "View winners & transparency" %} →</p>
   </a>
   {% endfor %}
 </div>
 {% else %}
 <div class="panel px-4 py-16 text-center">
   <svg class="mx-auto h-8 w-8 text-faint"><use href="#i-coin"/></svg>
-  <p class="mt-3 font-display text-lg text-muted">No past contests yet</p>
-  <p class="mt-1 text-sm text-faint">Completed raffles will appear here with their winners and fairness reports.</p>
+  <p class="mt-3 font-display text-lg text-muted">{% translate "No past contests yet" %}</p>
+  <p class="mt-1 text-sm text-faint">{% translate "Completed raffles will appear here with their winners and fairness reports." %}</p>
 </div>
 {% endif %}
 {% endblock %}

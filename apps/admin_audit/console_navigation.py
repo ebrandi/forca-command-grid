@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
+from django.utils.translation import gettext_lazy as _
 
 from apps.navigation.models import JumpPlannerConfig
 from core import rbac
@@ -40,7 +41,7 @@ class JumpPlannerConfigForm(forms.ModelForm):
     def clean_fuel_safety_margin_pct(self):
         val = self.cleaned_data["fuel_safety_margin_pct"]
         if val < 0 or val > 100:
-            raise forms.ValidationError("Safety margin must be between 0 and 100%.")
+            raise forms.ValidationError(_("Safety margin must be between 0 and 100%."))
         return val
 
 
@@ -58,9 +59,9 @@ def jump_planner_settings(request: HttpRequest) -> HttpResponse:
                 target_type="jump_planner_config", target_id=str(config.pk),
                 ip=client_ip(request),
             )
-            messages.success(request, "Jump Planner settings saved.")
+            messages.success(request, _("Jump Planner settings saved."))
             return redirect("admin_audit:jump_planner_settings")
-        messages.error(request, "Please correct the errors below.")
+        messages.error(request, _("Please correct the errors below."))
     else:
         form = JumpPlannerConfigForm(instance=config)
     return render(request, "admin_audit/console/jump_planner_settings.html",

@@ -1,3 +1,4 @@
+{% load i18n %}
 {% comment %}
 One Operational Constraint row: "capability capped at X, the thing capping it is Y,
 headroom is Z". Severity/status carry glyph + word + colour (never colour alone).
@@ -11,17 +12,17 @@ Params:
 <div class="px-4 py-3 {% if c.status == 'unavailable' %}border-l-2 border-dashed border-line/60{% endif %}"{% if not compact %} x-data="{ open: false }"{% endif %}>
   <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
     {% if c.status == 'unknown' %}
-      <span class="data shrink-0 text-xs text-faint" title="Insufficient data">○ NO DATA</span>
+      <span class="data shrink-0 text-xs text-faint" title="{% translate 'Insufficient data' %}">○ {% translate "NO DATA" %}</span>
     {% elif c.status == 'unavailable' %}
-      <span class="data shrink-0 text-xs text-faint" title="Provider offline">⚠ OFFLINE</span>
+      <span class="data shrink-0 text-xs text-faint" title="{% translate 'Provider offline' %}">⚠ {% translate "OFFLINE" %}</span>
     {% elif c.severity == 'critical' %}
-      <span class="data shrink-0 text-xs text-loss">▼ CRITICAL</span>
+      <span class="data shrink-0 text-xs text-loss">▼ {% translate "CRITICAL" %}</span>
     {% elif c.severity == 'high' %}
-      <span class="data shrink-0 text-xs text-loss">▼ HIGH</span>
+      <span class="data shrink-0 text-xs text-loss">▼ {% translate "HIGH" %}</span>
     {% elif c.severity == 'watch' %}
-      <span class="data shrink-0 text-xs text-gold">◆ WATCH</span>
+      <span class="data shrink-0 text-xs text-gold">◆ {% translate "WATCH" %}</span>
     {% else %}
-      <span class="data shrink-0 text-xs text-kill">▲ INFO</span>
+      <span class="data shrink-0 text-xs text-kill">▲ {% translate "INFO" %}</span>
     {% endif %}
 
     {% if compact %}
@@ -35,12 +36,12 @@ Params:
 
     {% if c.status == 'computed' %}
       <span class="data shrink-0 text-sm text-muted">{{ c.binding_metric|floatformat:"-2" }} {{ c.unit }}</span>
-      {% if c.limiting_factor %}<span class="hidden shrink-0 text-xs text-faint sm:inline">limited by ▸ {{ c.limiting_factor }}</span>{% endif %}
+      {% if c.limiting_factor %}<span class="hidden shrink-0 text-xs text-faint sm:inline">{% blocktranslate with factor=c.limiting_factor %}limited by ▸ {{ factor }}{% endblocktranslate %}</span>{% endif %}
       {% if c.headroom is not None %}
-        <span class="data shrink-0 text-sm {% if c.headroom < 0 %}text-loss{% else %}text-kill{% endif %}" title="Headroom">{% if c.headroom > 0 %}+{% endif %}{{ c.headroom|floatformat:"-2" }}</span>
+        <span class="data shrink-0 text-sm {% if c.headroom < 0 %}text-loss{% else %}text-kill{% endif %}" title="{% translate 'Headroom' %}">{% if c.headroom > 0 %}+{% endif %}{{ c.headroom|floatformat:"-2" }}</span>
       {% endif %}
     {% else %}
-      <span class="shrink-0 text-xs italic text-faint">not assessable</span>
+      <span class="shrink-0 text-xs italic text-faint">{% translate "not assessable" %}</span>
     {% endif %}
   </div>
 
@@ -54,7 +55,7 @@ Params:
     <div x-show="open" x-cloak x-transition.opacity class="mt-2 space-y-2 pl-[1.4rem] text-xs">
       <p class="text-faint">
         <span class="uppercase tracking-wide">{{ c.category }}</span>
-        {% if c.affected_capabilities %}· caps {{ c.affected_capabilities|join:", " }}{% endif %}
+        {% if c.affected_capabilities %}{% blocktranslate with caps=c.affected_capabilities|join:", " %}· caps {{ caps }}{% endblocktranslate %}{% endif %}
       </p>
       {% if c.evidence %}
         <div class="flex flex-wrap gap-1.5">

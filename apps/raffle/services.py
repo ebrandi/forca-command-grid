@@ -16,6 +16,8 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
+from django.utils.translation import gettext as _t
+from django.utils.translation import ngettext
 
 from core.audit import audit_log
 
@@ -273,7 +275,7 @@ def grant_manual_tickets(contest, actor, *, character_id=None, user=None, amount
 def exclude_pilot(contest, actor, *, user=None, character_id=None, character_name: str = "",
                   reason: str) -> RaffleExclusion:
     if not reason.strip():
-        raise ValidationError("An exclusion reason is required.")
+        raise ValidationError(_t("An exclusion reason is required."))
     excl, _ = RaffleExclusion.objects.update_or_create(
         contest=contest,
         user=user if user is not None else None,
@@ -613,12 +615,15 @@ def _emit_outreach(contest, user_id: int, tickets: int) -> None:
         opt_out_url = reverse("raffle:outreach_opt_out")
     except Exception:  # noqa: BLE001 — never let a URL hiccup abort the run
         enrol_url, opt_out_url = "/raffle/", "/raffle/outreach/opt-out/"
-    plural = "s" if tickets != 1 else ""
-    body = (
-        f"You earned {tickets} would-be raffle ticket{plural} in “{contest.name}” but "
-        f"aren't enrolled yet — connect your ESI token and enrol to start claiming them: "
-        f"{enrol_url}\n\nPrefer not to be nudged? Opt out here: {opt_out_url}"
-    )
+    body = ngettext(
+        "You earned %(tickets)d would-be raffle ticket in “%(contest)s” but "
+        "aren't enrolled yet — connect your ESI token and enrol to start claiming them: "
+        "%(enrol)s\n\nPrefer not to be nudged? Opt out here: %(opt_out)s",
+        "You earned %(tickets)d would-be raffle tickets in “%(contest)s” but "
+        "aren't enrolled yet — connect your ESI token and enrol to start claiming them: "
+        "%(enrol)s\n\nPrefer not to be nudged? Opt out here: %(opt_out)s",
+        tickets,
+    ) % {"tickets": tickets, "contest": contest.name, "enrol": enrol_url, "opt_out": opt_out_url}
     pingboard.emit_broadcast(
         category=AlertCategory.ANNOUNCEMENT,
         title="Enrol to claim your raffle tickets",

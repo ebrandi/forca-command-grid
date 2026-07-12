@@ -1,19 +1,20 @@
 {% extends "base.html" %}
+{% load i18n %}
 {% comment %}Recent killboard battles with their AI after-action-review status (Combat
 Intelligence). Officer-gated; open one to generate/read its AAR.{% endcomment %}
-{% block title %}Battle Analysis · [FORCA] Command Grid{% endblock %}
+{% block title %}{% translate "Battle Analysis" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 
 <header class="mb-6">
-  <a href="{% url 'command_intel:overview' %}" class="text-xs text-faint hover:text-gold">← Command overview</a>
-  <p class="mt-2 eyebrow text-gold">Combat intelligence</p>
-  <h1 class="mt-1 font-display text-2xl font-bold text-ink">Battle analysis</h1>
-  <p class="mt-1 text-sm text-faint">Recent engagements from the killboard — open one for an AI after-action review: what happened, what went wrong, what to improve.</p>
+  <a href="{% url 'command_intel:overview' %}" class="text-xs text-faint hover:text-gold">← {% translate "Command overview" %}</a>
+  <p class="mt-2 eyebrow text-gold">{% translate "Combat intelligence" %}</p>
+  <h1 class="mt-1 font-display text-2xl font-bold text-ink">{% translate "Battle analysis" %}</h1>
+  <p class="mt-1 text-sm text-faint">{% translate "Recent engagements from the killboard — open one for an AI after-action review: what happened, what went wrong, what to improve." %}</p>
 </header>
 
 {% if not rows %}
   <div class="panel p-8 text-center">
-    <p class="text-muted">No battle reports on file yet. They're created from the killboard (Intel → battle reports) or auto-clustered from notable fights.</p>
+    <p class="text-muted">{% translate "No battle reports on file yet. They're created from the killboard (Intel → battle reports) or auto-clustered from notable fights." %}</p>
   </div>
 {% else %}
 <section class="panel overflow-hidden">
@@ -25,10 +26,10 @@ Intelligence). Officer-gated; open one to generate/read its AAR.{% endcomment %}
         <span class="block text-[11px] text-faint">{{ row.battle.start_time|date:"d M Y H:i" }}</span>
       </span>
       <span class="shrink-0 text-xs">
-        {% if row.analysis and row.analysis.status == 'ready' %}<span class="text-kill">▲ analysed</span>
-        {% elif row.analysis and row.analysis.status == 'ready_degraded' %}<span class="text-gold">◆ facts only</span>
-        {% elif row.analysis and not row.analysis.is_terminal %}<span class="text-cyan">◐ analysing</span>
-        {% else %}<span class="text-faint">analyse →</span>{% endif %}
+        {% if row.analysis and row.analysis.status == 'ready' %}<span class="text-kill">▲ {% translate "analysed" %}</span>
+        {% elif row.analysis and row.analysis.status == 'ready_degraded' %}<span class="text-gold">◆ {% translate "facts only" %}</span>
+        {% elif row.analysis and not row.analysis.is_terminal %}<span class="text-cyan">◐ {% translate "analysing" %}</span>
+        {% else %}<span class="text-faint">{% translate "analyse" %} →</span>{% endif %}
       </span>
     </a>
     {% endfor %}

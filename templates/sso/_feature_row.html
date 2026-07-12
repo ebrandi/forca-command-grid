@@ -1,3 +1,4 @@
+{% load i18n %}
 {% comment %}
 One feature: label + description, then either a "Granted" status pill or a "Grant
 access" button. Context: f (Feature), granted (bool). EVE SSO prompts for which
@@ -11,9 +12,9 @@ character to authenticate, so the grant link needs no character hint.
   {% if granted %}
     <span class="shrink-0 inline-flex items-center gap-1.5 rounded-md border border-kill/40 bg-kill/10 px-3 py-1.5 text-xs font-medium text-kill">
       <svg class="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3.5 8.5l3 3 6-7"/></svg>
-      Granted
+      {% translate "Granted" %}
     </span>
   {% else %}
-    <a href="{% url 'sso:login' %}?feature={{ f.key }}" class="btn-gold shrink-0 !px-3 !py-1.5 text-xs">Grant access</a>
+    <a href="{% url 'sso:login' %}?feature={{ f.key }}" class="btn-gold shrink-0 !px-3 !py-1.5 text-xs">{% translate "Grant access" %}</a>
   {% endif %}
 </div>

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from apps.doctrines.models import Doctrine
 from apps.sso.models import EveCharacter
@@ -10,9 +11,10 @@ from core.mixins import TimeStampedModel
 
 class SkillPlan(TimeStampedModel):
     class Goal(models.TextChoices):
+        # "Doctrine" and "Newbro" are EVE community jargon — left English on purpose.
         DOCTRINE = "doctrine", "Doctrine"
         NEWBRO = "newbro", "Newbro"
-        CUSTOM = "custom", "Custom"
+        CUSTOM = "custom", _("Custom")
 
     character = models.ForeignKey(EveCharacter, on_delete=models.CASCADE, related_name="skill_plans")
     name = models.CharField(max_length=200)
@@ -29,9 +31,9 @@ class SkillPlan(TimeStampedModel):
 
 class SkillPlanStep(models.Model):
     class Status(models.TextChoices):
-        PENDING = "pending", "Pending"
-        TRAINING = "training", "Training"
-        DONE = "done", "Done"
+        PENDING = "pending", _("Pending")
+        TRAINING = "training", _("Training")
+        DONE = "done", _("Done")
 
     plan = models.ForeignKey(SkillPlan, on_delete=models.CASCADE, related_name="steps")
     order = models.IntegerField(default=0)

@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% load eve static %}
-{% block title %}Corp Finance · [FORCA] Command Grid{% endblock %}
+{% load eve static i18n %}
+{% block title %}{% translate "Corp Finance" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <script defer src="{% static 'js/vendor/chart.umd.js' %}"></script>
 <header class="mb-5">
-  <p class="eyebrow text-gold">Director</p>
-  <h1 class="mt-1 text-3xl font-bold text-ink">Corp finance</h1>
-  <p class="mt-1 text-sm text-faint">The corporation's financial life — balances, income, expenses, who's earning, and where it's heading.</p>
+  <p class="eyebrow text-gold">{% translate "Director" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Corp finance" %}</h1>
+  <p class="mt-1 text-sm text-faint">{% translate "The corporation's financial life — balances, income, expenses, who's earning, and where it's heading." %}</p>
 </header>
 
 <!-- Controls -->
@@ -21,61 +21,61 @@
     <input type="hidden" name="window" value="{{ d.window }}">
     {% if d.divisions|length > 1 %}
     <select name="division" class="input-field !w-auto !py-1">
-      <option value="">All divisions</option>
+      <option value="">{% translate "All divisions" %}</option>
       {% for div in d.divisions %}<option value="{{ div.division }}" {% if d.division == div.division %}selected{% endif %}>{{ div.name|default:div }}</option>{% endfor %}
     </select>
     {% endif %}
-    <label class="text-faint">Forecast</label>
+    <label class="text-faint">{% translate "Forecast" %}</label>
     <select name="horizon" class="input-field !w-auto !py-1">
       {% for key, label in d.horizons.items %}<option value="{{ key }}" {% if d.horizon == key %}selected{% endif %}>{{ label }}</option>{% endfor %}
     </select>
-    <button class="btn-ghost !py-1 !text-xs">Apply</button>
+    <button class="btn-ghost !py-1 !text-xs">{% translate "Apply" %}</button>
   </form>
 </div>
 
 <!-- KPI strip -->
 <div class="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-  <div class="panel p-4"><p class="eyebrow text-faint">Balance</p><p class="mt-1 data text-xl font-bold text-gold">{{ d.current_balance|isk }}</p></div>
-  <div class="panel p-4"><p class="eyebrow text-faint">Net · {{ d.window_label }}</p><p class="mt-1 data text-xl font-bold {% if d.net_total >= 0 %}text-kill{% else %}text-loss{% endif %}">{{ d.net_total|isk }}</p></div>
-  <div class="panel p-4"><p class="eyebrow text-faint">Income</p><p class="mt-1 data text-xl font-bold text-kill">{{ d.income_total|isk }}</p></div>
-  <div class="panel p-4"><p class="eyebrow text-faint">Expenses</p><p class="mt-1 data text-xl font-bold text-loss">{{ d.expense_total|isk }}</p></div>
-  <div class="panel p-4"><p class="eyebrow text-faint">Tax collected</p><p class="mt-1 data text-xl font-bold text-ink">{{ d.tax_total|isk }}</p></div>
+  <div class="panel p-4"><p class="eyebrow text-faint">{% translate "Balance" %}</p><p class="mt-1 data text-xl font-bold text-gold">{{ d.current_balance|isk }}</p></div>
+  <div class="panel p-4"><p class="eyebrow text-faint">{% translate "Net" %} · {{ d.window_label }}</p><p class="mt-1 data text-xl font-bold {% if d.net_total >= 0 %}text-kill{% else %}text-loss{% endif %}">{{ d.net_total|isk }}</p></div>
+  <div class="panel p-4"><p class="eyebrow text-faint">{% translate "Income" %}</p><p class="mt-1 data text-xl font-bold text-kill">{{ d.income_total|isk }}</p></div>
+  <div class="panel p-4"><p class="eyebrow text-faint">{% translate "Expenses" %}</p><p class="mt-1 data text-xl font-bold text-loss">{{ d.expense_total|isk }}</p></div>
+  <div class="panel p-4"><p class="eyebrow text-faint">{% translate "Tax collected" %}</p><p class="mt-1 data text-xl font-bold text-ink">{{ d.tax_total|isk }}</p></div>
 </div>
 
 <!-- Charts: balance + income mix -->
 <div class="mb-5 grid gap-4 lg:grid-cols-3">
   <section class="panel overflow-hidden lg:col-span-2">
-    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Wallet balance &amp; forecast</h2></div>
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">{% translate "Wallet balance &amp; forecast" %}</h2></div>
     <div class="p-4"><div class="h-64 skeleton"><canvas id="fin-balance"></canvas></div></div>
   </section>
   <section class="panel overflow-hidden">
-    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Income mix</h2></div>
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">{% translate "Income mix" %}</h2></div>
     <div class="p-4"><div class="h-64 skeleton"><canvas id="fin-income-mix"></canvas></div></div>
   </section>
 </div>
 
 <!-- Income vs expense bars -->
 <section class="panel mb-5 overflow-hidden">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Income vs expense <span class="text-faint">· by {{ d.granularity }}</span></h2></div>
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">{% translate "Income vs expense" %} <span class="text-faint">{% blocktranslate with g=d.granularity %}· by {{ g }}{% endblocktranslate %}</span></h2></div>
   <div class="p-4"><div class="h-64 skeleton"><canvas id="fin-flow"></canvas></div></div>
 </section>
 
 <!-- Forecast callout -->
 <section class="panel mb-5 overflow-hidden">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Forecast <span class="text-faint">· {{ d.horizon_label }}</span></h2></div>
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">{% translate "Forecast" %} <span class="text-faint">· {{ d.horizon_label }}</span></h2></div>
   <div class="p-4">
     {% if d.forecast.enough %}
       <div class="grid gap-3 sm:grid-cols-3">
-        <div><p class="eyebrow text-faint">Projected net</p><p class="data text-lg font-bold {% if d.forecast.projected_net >= 0 %}text-kill{% else %}text-loss{% endif %}">{{ d.forecast.projected_net|isk }}</p><p class="text-[11px] text-faint">range {{ d.forecast.projected_net_low|isk }} … {{ d.forecast.projected_net_high|isk }}</p></div>
-        <div><p class="eyebrow text-faint">Projected balance</p><p class="data text-lg font-bold text-gold">{{ d.forecast.projected_balance|isk }}</p><p class="text-[11px] text-faint">in {{ d.forecast.horizon_days }} day{{ d.forecast.horizon_days|pluralize }}</p></div>
-        <div><p class="eyebrow text-faint">Trend</p>
-          {% if d.forecast.runway_days %}<p class="data text-lg font-bold text-loss">≈ {{ d.forecast.runway_days }}d runway</p><p class="text-[11px] text-faint">at the current burn rate</p>
-          {% else %}<p class="data text-lg font-bold text-kill">cash-positive</p><p class="text-[11px] text-faint">{{ d.forecast.avg_daily|isk }}/day average</p>{% endif %}
+        <div><p class="eyebrow text-faint">{% translate "Projected net" %}</p><p class="data text-lg font-bold {% if d.forecast.projected_net >= 0 %}text-kill{% else %}text-loss{% endif %}">{{ d.forecast.projected_net|isk }}</p><p class="text-[11px] text-faint">{% blocktranslate with low=d.forecast.projected_net_low|isk high=d.forecast.projected_net_high|isk %}range {{ low }} … {{ high }}{% endblocktranslate %}</p></div>
+        <div><p class="eyebrow text-faint">{% translate "Projected balance" %}</p><p class="data text-lg font-bold text-gold">{{ d.forecast.projected_balance|isk }}</p><p class="text-[11px] text-faint">{% blocktranslate count c=d.forecast.horizon_days %}in {{ c }} day{% plural %}in {{ c }} days{% endblocktranslate %}</p></div>
+        <div><p class="eyebrow text-faint">{% translate "Trend" %}</p>
+          {% if d.forecast.runway_days %}<p class="data text-lg font-bold text-loss">≈ {% blocktranslate with n=d.forecast.runway_days %}{{ n }}d runway{% endblocktranslate %}</p><p class="text-[11px] text-faint">{% translate "at the current burn rate" %}</p>
+          {% else %}<p class="data text-lg font-bold text-kill">{% translate "cash-positive" %}</p><p class="text-[11px] text-faint">{% blocktranslate with amt=d.forecast.avg_daily|isk %}{{ amt }}/day average{% endblocktranslate %}</p>{% endif %}
         </div>
       </div>
-      <p class="mt-3 text-[11px] text-faint">Estimate from {{ d.forecast.trained_days }} days of history (trailing average + variability band). Ratting income is volatile — treat as a guide.</p>
+      <p class="mt-3 text-[11px] text-faint">{% blocktranslate with days=d.forecast.trained_days %}Estimate from {{ days }} days of history (trailing average + variability band). Ratting income is volatile — treat as a guide.{% endblocktranslate %}</p>
     {% else %}
-      <p class="text-sm text-faint">Not enough wallet history yet to forecast ({{ d.forecast.horizon_days }}-day horizon needs at least two weeks of data). Keep the wallet sync running and check back.</p>
+      <p class="text-sm text-faint">{% blocktranslate with days=d.forecast.horizon_days %}Not enough wallet history yet to forecast ({{ days }}-day horizon needs at least two weeks of data). Keep the wallet sync running and check back.{% endblocktranslate %}</p>
     {% endif %}
   </div>
 </section>
@@ -83,20 +83,20 @@
 <div class="grid gap-5 lg:grid-cols-2">
   <!-- Top earners -->
   <section class="panel overflow-hidden">
-    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Top earners <span class="text-faint">· {{ d.window_label }}</span></h2></div>
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">{% translate "Top earners" %} <span class="text-faint">· {{ d.window_label }}</span></h2></div>
     <table class="w-full text-sm">
       <tbody class="divide-y divide-line/40">
         {% for e in d.top_earners %}
           <tr><td class="px-4 py-2 text-ink">{{ e.name }}</td><td class="px-4 py-2 text-right data text-kill">{{ e.total|isk }}</td></tr>
         {% empty %}
-          <tr><td class="px-4 py-10 text-center text-sm text-faint">No member income in this window.</td></tr>
+          <tr><td class="px-4 py-10 text-center text-sm text-faint">{% translate "No member income in this window." %}</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </section>
   <!-- Biggest movements -->
   <section class="panel overflow-hidden">
-    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Biggest movements</h2></div>
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">{% translate "Biggest movements" %}</h2></div>
     <table class="w-full text-sm">
       <tbody class="divide-y divide-line/40">
         {% for m in d.movements %}
@@ -105,7 +105,7 @@
             <td class="px-4 py-2 text-right data {% if m.amount >= 0 %}text-kill{% else %}text-loss{% endif %}">{{ m.amount|isk }}</td>
           </tr>
         {% empty %}
-          <tr><td class="px-4 py-10 text-center text-sm text-faint">No movements in this window.</td></tr>
+          <tr><td class="px-4 py-10 text-center text-sm text-faint">{% translate "No movements in this window." %}</td></tr>
         {% endfor %}
       </tbody>
     </table>
@@ -114,12 +114,12 @@
 
 <!-- Journal -->
 <section class="panel mt-5 overflow-hidden">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">Recent journal</h2></div>
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">{% translate "Recent journal" %}</h2></div>
   <div class="overflow-x-auto">
     <table class="w-full min-w-[640px] text-sm">
       <thead><tr class="eyebrow border-b border-line text-left text-faint">
-        <th class="px-4 py-2">When</th><th class="px-4 py-2">Category</th>
-        <th class="px-4 py-2">From → to</th><th class="px-4 py-2 text-right">Amount</th>
+        <th class="px-4 py-2">{% translate "When" %}</th><th class="px-4 py-2">{% translate "Category" %}</th>
+        <th class="px-4 py-2">{% translate "From → to" %}</th><th class="px-4 py-2 text-right">{% translate "Amount" %}</th>
       </tr></thead>
       <tbody class="divide-y divide-line/40">
         {% for e in d.journal %}
@@ -130,7 +130,7 @@
             <td class="px-4 py-2 text-right data {% if e.amount >= 0 %}text-kill{% else %}text-loss{% endif %}">{{ e.amount|isk }}</td>
           </tr>
         {% empty %}
-          <tr><td colspan="4" class="px-4 py-12 text-center text-sm text-faint">No journal yet — a director needs to grant the corp-wallet scope, then sync.</td></tr>
+          <tr><td colspan="4" class="px-4 py-12 text-center text-sm text-faint">{% translate "No journal yet — a director needs to grant the corp-wallet scope, then sync." %}</td></tr>
         {% endfor %}
       </tbody>
     </table>

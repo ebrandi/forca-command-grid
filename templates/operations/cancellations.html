@@ -1,14 +1,15 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}Cancellation analytics · Operations · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Cancellation analytics" %} · {% translate "Operations" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <script defer src="{% static 'js/vendor/chart.umd.js' %}"></script>
-<a href="{% url 'operations:list' %}" class="text-xs text-faint hover:text-gold">← Fleet operations</a>
+<a href="{% url 'operations:list' %}" class="text-xs text-faint hover:text-gold">{% translate "← Fleet operations" %}</a>
 <header class="mt-2 mb-5 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <p class="eyebrow text-gold">Leadership</p>
-    <h1 class="mt-1 text-3xl font-bold text-ink">Cancellation analytics</h1>
-    <p class="mt-1 text-sm text-faint">Why scheduled operations fall through — too few sign-ups, doctrine gaps, or organiser calls.</p>
+    <p class="eyebrow text-gold">{% translate "Leadership" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Cancellation analytics" %}</h1>
+    <p class="mt-1 text-sm text-faint">{% translate "Why scheduled operations fall through — too few sign-ups, doctrine gaps, or organiser calls." %}</p>
   </div>
   <div class="flex flex-wrap gap-2">
     {% for r in ranges %}
@@ -19,23 +20,23 @@
 
 {% if not enough %}
   <div class="panel px-4 py-16 text-center">
-    <p class="font-display text-lg text-muted">No cancellations in this window</p>
-    <p class="mt-1 text-sm text-faint">When an operation is cancelled (manually or by the auto-cancel job) it’s recorded here. Widen the range or check back later.</p>
+    <p class="font-display text-lg text-muted">{% translate "No cancellations in this window" %}</p>
+    <p class="mt-1 text-sm text-faint">{% translate "When an operation is cancelled (manually or by the auto-cancel job) it’s recorded here. Widen the range or check back later." %}</p>
   </div>
 {% else %}
 <section class="mb-5 grid gap-3 sm:grid-cols-3">
   <div class="panel p-4">
-    <p class="eyebrow text-faint">Cancelled</p>
+    <p class="eyebrow text-faint">{% translate "Cancelled" %}</p>
     <p class="data text-2xl font-bold text-loss">{{ total }}</p>
-    <p class="text-[11px] text-faint">in the last {{ active_range }}</p>
+    <p class="text-[11px] text-faint">{% blocktranslate with range=active_range %}in the last {{ range }}{% endblocktranslate %}</p>
   </div>
   <div class="panel p-4">
-    <p class="eyebrow text-faint">Avg pilot shortfall</p>
+    <p class="eyebrow text-faint">{% translate "Avg pilot shortfall" %}</p>
     <p class="data text-2xl font-bold text-gold">{{ avg_shortfall }}</p>
-    <p class="text-[11px] text-faint">pilots below the minimum at deadline</p>
+    <p class="text-[11px] text-faint">{% translate "pilots below the minimum at deadline" %}</p>
   </div>
   <div class="panel p-4">
-    <p class="eyebrow mb-1 text-faint">By reason</p>
+    <p class="eyebrow mb-1 text-faint">{% translate "By reason" %}</p>
     <ul class="space-y-0.5 text-xs">
       {% for r in by_reason %}<li class="flex justify-between gap-2"><span class="truncate text-muted">{{ r.label }}</span><span class="data text-ink">{{ r.count }}</span></li>{% endfor %}
     </ul>
@@ -43,13 +44,13 @@
 </section>
 
 <section class="panel mb-5 overflow-hidden">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">Cancellations by week &amp; reason</h2></div>
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">{% translate "Cancellations by week &amp; reason" %}</h2></div>
   <div class="p-4"><div class="h-80 skeleton"><canvas id="ops-cancel-chart"></canvas></div></div>
 </section>
 
 {% if by_type %}
 <section class="panel overflow-hidden">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">Most-cancelled operation types</h2></div>
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">{% translate "Most-cancelled operation types" %}</h2></div>
   <ul class="divide-y divide-line/40">
     {% for t in by_type %}
     <li class="flex items-center justify-between gap-2 px-4 py-2 text-sm">

@@ -11,6 +11,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from django.utils import timezone
+from django.utils.translation import gettext as _t
 from django.views.decorators.http import require_POST
 
 from core.audit import audit_log, client_ip
@@ -37,7 +38,7 @@ def connect(request):
 @require_POST
 def discord_begin(request):
     if not oauth.enabled():
-        messages.error(request, "Discord linking is not configured.")
+        messages.error(request, _t("Discord linking is not configured."))
         return redirect("comms_access:connect")
     state = oauth.generate_state()
     verifier, challenge = oauth.generate_pkce()
@@ -51,7 +52,9 @@ def discord_callback(request):
     # would rebind the director's Discord to the impersonated pilot (and hand it the pilot's
     # comms roles). The impersonation middleware already blocks this route.
     if getattr(request, "is_impersonating", False):
-        messages.error(request, "Account linking isn't available while viewing as another pilot.")
+        messages.error(
+            request, _t("Account linking isn't available while viewing as another pilot.")
+        )
         return redirect("comms_access:connect")
     state = request.GET.get("state", "")
     code = request.GET.get("code", "")
@@ -59,18 +62,18 @@ def discord_callback(request):
     verifier = request.session.pop(session_key, None) if state else None
 
     if request.GET.get("error"):
-        messages.error(request, "Discord linking was cancelled.")
+        messages.error(request, _t("Discord linking was cancelled."))
         return redirect("comms_access:connect")
     if not code or not verifier:
         # Missing/expired state ⇒ reject (CSRF protection for the OAuth redirect).
-        messages.error(request, "Discord linking failed — please try again.")
+        messages.error(request, _t("Discord linking failed — please try again."))
         return redirect("comms_access:connect")
 
     try:
         tokens = oauth.exchange_code(code, verifier)
         identity = oauth.fetch_identity(tokens["access_token"])
     except oauth.OAuthError as exc:
-        messages.error(request, f"Discord linking failed: {exc}")
+        messages.error(request, _t("Discord linking failed: %(error)s") % {"error": exc})
         return redirect("comms_access:connect")
 
     external_id = str(identity["id"])
@@ -81,7 +84,7 @@ def discord_callback(request):
         .exists()
     )
     if clash:
-        messages.error(request, "That Discord account is already linked to another pilot.")
+        messages.error(request, _t("That Discord account is already linked to another pilot."))
         return redirect("comms_access:connect")
 
     account, _ = CommsAccount.objects.get_or_create(user=request.user, platform=Platform.DISCORD)
@@ -97,7 +100,9 @@ def discord_callback(request):
               target_id=account.pk, metadata={"handle": account.external_handle},
               ip=client_ip(request))
     enqueue_user_reconcile(request.user, source_ref="link")
-    messages.success(request, f"Linked Discord account {account.external_handle}.")
+    messages.success(
+        request, _t("Linked Discord account %(handle)s.") % {"handle": account.external_handle}
+    )
     return redirect("comms_access:connect")
 
 
@@ -114,5 +119,5 @@ def discord_unlink(request):
         account.delete()
         audit_log(request.user, "comms_access.unlink.discord", target_type="comms_account",
                   target_id=aid, ip=client_ip(request))
-        messages.success(request, "Unlinked your Discord account.")
+        messages.success(request, _t("Unlinked your Discord account."))
     return redirect("comms_access:connect")

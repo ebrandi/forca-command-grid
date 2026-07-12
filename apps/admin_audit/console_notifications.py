@@ -17,6 +17,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
+from django.utils.translation import gettext_lazy as _
 
 from apps.pingboard import config, notifications
 from apps.pingboard.models import ChannelProvider
@@ -80,7 +81,7 @@ def notifications_console(request):
             return _save_leadership(request, back)
         if domain == "events":
             return _save_events(request, back)
-        messages.error(request, "Unknown form.")
+        messages.error(request, _("Unknown form."))
         return redirect(back)
 
     User = get_user_model()
@@ -121,7 +122,7 @@ def _save_leadership(request, back):
     doc = dict(config.get("notifications"))
     doc["leadership_role"] = role
     doc["leadership_user_ids"] = user_ids
-    return _audited_set(request, doc, ok="Leadership distribution saved.", back=back)
+    return _audited_set(request, doc, ok=_("Leadership distribution saved."), back=back)
 
 
 def _save_events(request, back):
@@ -138,7 +139,7 @@ def _save_events(request, back):
         events[key] = entry
     doc = dict(config.get("notifications"))
     doc["events"] = events
-    return _audited_set(request, doc, ok="Notification settings saved.", back=back)
+    return _audited_set(request, doc, ok=_("Notification settings saved."), back=back)
 
 
 def _audited_set(request, doc, *, ok, back):

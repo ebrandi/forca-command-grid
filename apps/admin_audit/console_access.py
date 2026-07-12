@@ -11,6 +11,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
 from core import rbac
@@ -64,7 +65,7 @@ def partner_alliance_save(request: HttpRequest, alliance_id: int | None = None) 
     if alliance_id is None:
         alliance_id = _int_or(request.POST.get("entity_id"))
         if not alliance_id:
-            messages.error(request, "Enter a valid alliance id.")
+            messages.error(request, _("Enter a valid alliance id."))
             return redirect("admin_audit:access_governance")
         name = (request.POST.get("name") or "").strip() or _resolve_name(alliance_id)
         PartnerAlliance.objects.update_or_create(
@@ -81,7 +82,7 @@ def partner_alliance_save(request: HttpRequest, alliance_id: int | None = None) 
         action = "update"
     audit_log(request.user, f"access.partner_alliance.{action}", target_type="partner_alliance",
               target_id=str(alliance_id), ip=client_ip(request))
-    messages.success(request, "Partner alliance saved.")
+    messages.success(request, _("Partner alliance saved."))
     return redirect("admin_audit:access_governance")
 
 
@@ -94,7 +95,7 @@ def partner_alliance_delete(request: HttpRequest, alliance_id: int) -> HttpRespo
     PartnerAlliance.objects.filter(alliance_id=alliance_id).delete()
     audit_log(request.user, "access.partner_alliance.delete", target_type="partner_alliance",
               target_id=str(alliance_id), ip=client_ip(request))
-    messages.success(request, "Partner alliance removed.")
+    messages.success(request, _("Partner alliance removed."))
     return redirect("admin_audit:access_governance")
 
 
@@ -109,7 +110,7 @@ def friendly_corp_save(request: HttpRequest, corporation_id: int | None = None) 
     if corporation_id is None:
         corporation_id = _int_or(request.POST.get("entity_id"))
         if not corporation_id:
-            messages.error(request, "Enter a valid corporation id.")
+            messages.error(request, _("Enter a valid corporation id."))
             return redirect("admin_audit:access_governance")
         name = (request.POST.get("name") or "").strip() or _resolve_name(corporation_id)
         FriendlyCorporation.objects.update_or_create(
@@ -126,7 +127,7 @@ def friendly_corp_save(request: HttpRequest, corporation_id: int | None = None) 
         action = "update"
     audit_log(request.user, f"access.friendly_corp.{action}", target_type="friendly_corporation",
               target_id=str(corporation_id), ip=client_ip(request))
-    messages.success(request, "Friendly corporation saved.")
+    messages.success(request, _("Friendly corporation saved."))
     return redirect("admin_audit:access_governance")
 
 
@@ -139,5 +140,5 @@ def friendly_corp_delete(request: HttpRequest, corporation_id: int) -> HttpRespo
     FriendlyCorporation.objects.filter(corporation_id=corporation_id).delete()
     audit_log(request.user, "access.friendly_corp.delete", target_type="friendly_corporation",
               target_id=str(corporation_id), ip=client_ip(request))
-    messages.success(request, "Friendly corporation removed.")
+    messages.success(request, _("Friendly corporation removed."))
     return redirect("admin_audit:access_governance")

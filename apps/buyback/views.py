@@ -15,6 +15,7 @@ from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
 from core import rbac
@@ -103,7 +104,7 @@ def submit_offer(request: HttpRequest) -> HttpResponse:
 
     pending = request.session.get("buyback_pending")
     if not pending or not pending.get("items"):
-        messages.error(request, "Run an appraisal first, then post it.")
+        messages.error(request, _("Run an appraisal first, then post it."))
         return redirect("buyback:appraisal")
 
     from apps.sso.models import EveCharacter
@@ -118,7 +119,7 @@ def submit_offer(request: HttpRequest) -> HttpResponse:
     # the absolute value must stay below 1e18. Reject an out-of-range appraisal with
     # a friendly error rather than letting the create() raise an unhandled 500.
     if max(abs(jita_total), abs(offer_total)) >= _MAX_OFFER_TOTAL:
-        messages.error(request, "That appraisal is too large to post as a single lot.")
+        messages.error(request, _("That appraisal is too large to post as a single lot."))
         return redirect("buyback:appraisal")
     offer = BuybackOffer.objects.create(
         seller=request.user,
@@ -136,7 +137,7 @@ def submit_offer(request: HttpRequest) -> HttpResponse:
     request.session.pop("buyback_pending", None)
     audit_log(request.user, "buyback.post", target_type="buyback_offer",
               target_id=str(offer.id), ip=client_ip(request))
-    messages.success(request, "Lot posted to the buyback board.")
+    messages.success(request, _("Lot posted to the buyback board."))
     return redirect("buyback:board")
 
 
@@ -195,7 +196,7 @@ def buy_offer(request: HttpRequest, pk: int) -> HttpResponse:
 
     offer = get_object_or_404(BuybackOffer, pk=pk)
     if offer.seller_id == request.user.id:
-        messages.error(request, "You can't buy your own lot.")
+        messages.error(request, _("You can't buy your own lot."))
         return redirect("buyback:board")
 
     from apps.sso.models import EveCharacter
@@ -212,13 +213,13 @@ def buy_offer(request: HttpRequest, pk: int) -> HttpResponse:
         purchased_at=timezone.now(),
     )
     if not bought:
-        messages.error(request, "That lot is no longer available.")
+        messages.error(request, _("That lot is no longer available."))
         return redirect("buyback:board")
     audit_log(request.user, "buyback.buy", target_type="buyback_offer",
               target_id=str(offer.id), ip=client_ip(request))
     messages.success(
         request,
-        "Lot reserved. Pay the seller and have them contract the items to you in-game.",
+        _("Lot reserved. Pay the seller and have them contract the items to you in-game."),
     )
     return redirect("buyback:offer", pk=offer.pk)
 
@@ -236,28 +237,28 @@ def offer_action(request: HttpRequest, pk: int) -> HttpResponse:
 
     if action == "cancel":
         if not (offer.seller_id == request.user.id or is_officer):
-            messages.error(request, "Not your lot.")
+            messages.error(request, _("Not your lot."))
             return redirect("buyback:board")
         if offer.status not in (BuybackOffer.Status.OPEN, BuybackOffer.Status.PURCHASED):
-            messages.error(request, "That lot can't be cancelled.")
+            messages.error(request, _("That lot can't be cancelled."))
             return redirect("buyback:board")
         offer.status = BuybackOffer.Status.CANCELLED
     elif action == "paid":
         if not (offer.buyer_id == request.user.id or offer.seller_id == request.user.id or is_officer):
-            messages.error(request, "Only the buyer, seller, or an officer can settle this.")
+            messages.error(request, _("Only the buyer, seller, or an officer can settle this."))
             return redirect("buyback:board")
         if offer.status != BuybackOffer.Status.PURCHASED:
-            messages.error(request, "That lot isn't awaiting payment.")
+            messages.error(request, _("That lot isn't awaiting payment."))
             return redirect("buyback:board")
         offer.status = BuybackOffer.Status.PAID
     else:
-        messages.error(request, "Unknown action.")
+        messages.error(request, _("Unknown action."))
         return redirect("buyback:board")
 
     offer.save(update_fields=["status"])
     audit_log(request.user, f"buyback.{action}", target_type="buyback_offer",
               target_id=str(offer.id), ip=client_ip(request))
-    messages.success(request, "Lot updated.")
+    messages.success(request, _("Lot updated."))
     return redirect("buyback:board")
 
 
@@ -280,7 +281,7 @@ def config(request: HttpRequest) -> HttpResponse:
                 audit_log(request.user, "guaranteed_buyback.config_update",
                           target_type="guaranteed_buyback_config", target_id=str(gb_cfg.id),
                           ip=client_ip(request))
-                messages.success(request, "Guaranteed buyback settings updated.")
+                messages.success(request, _("Guaranteed buyback settings updated."))
                 return redirect("buyback:config")
         else:
             form = ConfigForm(request.POST, instance=cfg)
@@ -289,7 +290,7 @@ def config(request: HttpRequest) -> HttpResponse:
                 invalidate_audience_cache()
                 audit_log(request.user, "buyback.config_update", target_type="buyback_config",
                           target_id=str(cfg.id), ip=client_ip(request))
-                messages.success(request, "Buyback settings updated.")
+                messages.success(request, _("Buyback settings updated."))
                 return redirect("buyback:config")
     return render(request, "buyback/config.html",
                   {"form": form, "cfg": cfg, "gb_form": gb_form, "gb_cfg": gb_cfg})
@@ -306,11 +307,11 @@ def guaranteed_request(request: HttpRequest) -> HttpResponse:
     from . import guaranteed as gb
 
     if not gb.can_request(request.user):
-        messages.error(request, "Guaranteed buyback isn't available to you right now.")
+        messages.error(request, _("Guaranteed buyback isn't available to you right now."))
         return redirect("buyback:appraisal")
     pending = request.session.get("buyback_pending")
     if not pending or not pending.get("items"):
-        messages.error(request, "Run an appraisal first, then request the corp buyout.")
+        messages.error(request, _("Run an appraisal first, then request the corp buyout."))
         return redirect("buyback:appraisal")
     main = (
         EveCharacter.objects.filter(user=request.user, is_main=True).first()
@@ -319,7 +320,7 @@ def guaranteed_request(request: HttpRequest) -> HttpResponse:
     jita = Decimal(pending.get("jita_total", "0"))
     quoted = Decimal(pending.get("offer_total", "0"))
     if max(abs(jita), abs(quoted)) >= _MAX_OFFER_TOTAL:
-        messages.error(request, "That appraisal is too large for a single guaranteed lot.")
+        messages.error(request, _("That appraisal is too large for a single guaranteed lot."))
         return redirect("buyback:appraisal")
     buyout = gb.request_buyout(
         request.user, seller_character_id=main.character_id if main else None,
@@ -328,12 +329,12 @@ def guaranteed_request(request: HttpRequest) -> HttpResponse:
         location_name=pending.get("location_name", ""), notes=pending.get("notes", ""),
     )
     if buyout is None:
-        messages.error(request, "That lot is above the guaranteed-buyback per-lot cap — post it to the board instead.")
+        messages.error(request, _("That lot is above the guaranteed-buyback per-lot cap — post it to the board instead."))
         return redirect("buyback:appraisal")
     request.session.pop("buyback_pending", None)
     audit_log(request.user, "guaranteed_buyback.request", target_type="guaranteed_buyout",
               target_id=str(buyout.id), ip=client_ip(request))
-    messages.success(request, "Requested — an officer will review the corp buyout. No ISK moves through the app.")
+    messages.success(request, _("Requested — an officer will review the corp buyout. No ISK moves through the app."))
     return redirect("buyback:appraisal")
 
 
@@ -344,9 +345,9 @@ def guaranteed_cancel(request: HttpRequest, pk: int) -> HttpResponse:
     from . import guaranteed as gb
 
     if gb.cancel_buyout(pk, request.user):
-        messages.success(request, "Request withdrawn.")
+        messages.success(request, _("Request withdrawn."))
     else:
-        messages.error(request, "You can't withdraw that request.")
+        messages.error(request, _("You can't withdraw that request."))
     return redirect("buyback:appraisal")
 
 
@@ -390,7 +391,7 @@ def guaranteed_decide(request: HttpRequest, pk: int) -> HttpResponse:
         ok, msg = gb.approve_buyout(pk, request.user, reason)
     else:
         ok = gb.reject_buyout(pk, request.user, reason)
-        msg = "Rejected." if ok else "Couldn't reject that request."
+        msg = _("Rejected.") if ok else _("Couldn't reject that request.")
     (messages.success if ok else messages.error)(request, msg)
     if ok:
         audit_log(request.user, f"guaranteed_buyback.{'approve' if approve else 'reject'}",

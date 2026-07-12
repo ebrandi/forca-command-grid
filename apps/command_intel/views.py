@@ -19,6 +19,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
 from core.features import feature_required
@@ -138,7 +139,7 @@ def report_detail(request, pk: int):
     """A report rendered as a staff briefing — or the generating page while building."""
     report = get_object_or_404(IntelligenceReport, pk=pk)
     if not access.can_view_report(request.user, report):
-        raise PermissionDenied("Above your clearance.")
+        raise PermissionDenied(_("Above your clearance."))
     return render(request, "command_intel/report_detail.html", {"report": report})
 
 
@@ -152,7 +153,7 @@ def report_status(request, pk: int):
     """
     report = get_object_or_404(IntelligenceReport, pk=pk)
     if not access.can_view_report(request.user, report):
-        raise PermissionDenied("Above your clearance.")
+        raise PermissionDenied(_("Above your clearance."))
     if not request.headers.get("HX-Request"):
         return redirect("command_intel:report_detail", pk=report.pk)
     template = (
@@ -179,7 +180,7 @@ def coa_accept(request, pk: int):
     """Accept a Course of Action — converts it to a tracked task."""
     coa = get_object_or_404(CourseOfAction, pk=pk)
     if not access.can_view_coa(request.user, coa):
-        raise PermissionDenied("Above your clearance.")
+        raise PermissionDenied(_("Above your clearance."))
     accept_coa(coa, request.user)
     default = (
         reverse("command_intel:report_detail", args=[coa.report_id])
@@ -196,7 +197,7 @@ def coa_dismiss(request, pk: int):
     """Dismiss a Course of Action with a recorded reason."""
     coa = get_object_or_404(CourseOfAction, pk=pk)
     if not access.can_view_coa(request.user, coa):
-        raise PermissionDenied("Above your clearance.")
+        raise PermissionDenied(_("Above your clearance."))
     dismiss_coa(coa, request.user, note=request.POST.get("note", ""))
     default = (
         reverse("command_intel:report_detail", args=[coa.report_id])
@@ -375,15 +376,15 @@ def directive_action(request, pk: int):
             _credit_directive(directive)  # CMD-2 (3.6): recognition on completion
         else:
             directive.save(update_fields=["state", "updated_at"])
-        messages.success(request, "Order complete — o7.")
+        messages.success(request, _("Order complete — o7."))
     elif action == "dismiss":
         directive.state = PilotDirective.State.DISMISSED
         directive.save(update_fields=["state", "updated_at"])
-        messages.info(request, "Dismissed — this order won't be suggested again.")
+        messages.info(request, _("Dismissed — this order won't be suggested again."))
     elif action == "snooze":
         directive.snoozed_until = timezone.now() + dt.timedelta(days=7)
         directive.save(update_fields=["snoozed_until", "updated_at"])
-        messages.info(request, "Snoozed — it returns in 7 days.")
+        messages.info(request, _("Snoozed — it returns in 7 days."))
     return redirect("identity:dashboard")
 
 
@@ -485,7 +486,7 @@ def battle_status(request, pk: int):
     """htmx poll target for a battle AAR fragment — classification-gated."""
     analysis = get_object_or_404(BattleAnalysis, pk=pk)
     if not access.can_view_report(request.user, analysis):
-        raise PermissionDenied("Above your clearance.")
+        raise PermissionDenied(_("Above your clearance."))
     if not request.headers.get("HX-Request"):
         return redirect("command_intel:battle_detail", battle_id=analysis.battle_report_id)
     return render(request, "command_intel/_battle_aar.html", {"analysis": analysis})
@@ -536,11 +537,11 @@ def simulator_save(request):
 
     name = (request.POST.get("name") or "").strip()[:120]
     if not name:
-        messages.error(request, "Give the scenario a name before saving.")
+        messages.error(request, _("Give the scenario a name before saving."))
         return redirect("command_intel:simulator")
     if SavedSimScenario.objects.count() >= MAX_SAVED_SCENARIOS:
-        messages.error(request, f"The saved-scenario library is full ({MAX_SAVED_SCENARIOS}). "
-                                "Delete an old scenario before adding another.")
+        messages.error(request, _("The saved-scenario library is full (%(max)s). "
+                                  "Delete an old scenario before adding another.") % {"max": MAX_SAVED_SCENARIOS})
         return redirect("command_intel:simulator")
     key, mag = simulation.validate_scenario(request.POST.get("scenario"), request.POST.get("magnitude"))
     scenario = SavedSimScenario.objects.create(
@@ -550,7 +551,7 @@ def simulator_save(request):
     audit_log(request.user, "command_intel.sim.save", target_type="saved_sim_scenario",
               target_id=str(scenario.pk), ip=client_ip(request),
               metadata={"name": name, "scenario": key, "magnitude": mag})
-    messages.success(request, f"Saved scenario “{name}”.")
+    messages.success(request, _("Saved scenario “%(name)s”.") % {"name": name})
     query = urlencode({"scenario": key, "magnitude": mag})
     return redirect(f"{reverse('command_intel:simulator')}?{query}")
 
@@ -571,7 +572,7 @@ def simulator_delete(request, pk: int):
     scenario.delete()
     audit_log(request.user, "command_intel.sim.delete", target_type="saved_sim_scenario",
               target_id=str(pk), ip=client_ip(request), metadata={"name": name})
-    messages.success(request, f"Removed scenario “{name}”.")
+    messages.success(request, _("Removed scenario “%(name)s”.") % {"name": name})
     return redirect("command_intel:simulator")
 
 

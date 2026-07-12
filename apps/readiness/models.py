@@ -12,6 +12,7 @@ from __future__ import annotations
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from core.mixins import TimeStampedModel
 
@@ -45,20 +46,20 @@ class ReadinessFinding(models.Model):
     """
 
     class Status(models.TextChoices):
-        OPEN = "open", "Open"
-        ACKNOWLEDGED = "acknowledged", "Acknowledged"
-        RESOLVED = "resolved", "Resolved"
+        OPEN = "open", _("Open")
+        ACKNOWLEDGED = "acknowledged", _("Acknowledged")
+        RESOLVED = "resolved", _("Resolved")
 
     class Severity(models.TextChoices):
-        INFO = "info", "Info"
-        WARN = "warn", "Warning"
-        HIGH = "high", "High"
-        CRITICAL = "critical", "Critical"
+        INFO = "info", _("Info")
+        WARN = "warn", _("Warning")
+        HIGH = "high", _("High")
+        CRITICAL = "critical", _("Critical")
 
     class Kind(models.TextChoices):
-        GAP = "gap", "Gap"
-        RISK = "risk", "Risk"
-        FORECAST = "forecast", "Forecast"
+        GAP = "gap", _("Gap")
+        RISK = "risk", _("Risk")
+        FORECAST = "forecast", _("Forecast")
 
     dimension_key = models.CharField(max_length=40, db_index=True)
     kpi_key = models.CharField(max_length=40, blank=True)
@@ -119,17 +120,17 @@ class MandatoryShip(models.Model):
     a specific hull (``ship_type_id``) or a doctrine fit (``doctrine_fit``)."""
 
     class Category(models.TextChoices):
-        TRAVEL = "travel", "Travel"
+        TRAVEL = "travel", _("Travel")
         DOCTRINE = "doctrine", "Doctrine"
-        HOME_DEFENSE = "home_defense", "Home defense"
+        HOME_DEFENSE = "home_defense", _("Home defense")
         CYNO = "cyno", "Cyno"
         SCOUT = "scout", "Scout"
-        OTHER = "other", "Other"
+        OTHER = "other", _("Other")
 
     class LocationKind(models.TextChoices):
-        ANY = "any", "Anywhere"
-        SYSTEM = "system", "Specific system"
-        STRUCTURE = "structure", "Specific structure"
+        ANY = "any", _("Anywhere")
+        SYSTEM = "system", _("Specific system")
+        STRUCTURE = "structure", _("Specific structure")
 
     label = models.CharField(max_length=120)
     category = models.CharField(max_length=20, choices=Category.choices, default=Category.OTHER)
@@ -162,9 +163,9 @@ class StrategicRoleTarget(models.Model):
     strategic/leadership/fleet_comp providers against qualifying pilots."""
 
     class Detection(models.TextChoices):
-        SKILLS = "skills", "By skills"
-        ASSET = "asset", "By asset"
-        MANUAL = "manual", "Manual"
+        SKILLS = "skills", _("By skills")
+        ASSET = "asset", _("By asset")
+        MANUAL = "manual", _("Manual")
 
     role_key = models.CharField(max_length=20, unique=True)
     label = models.CharField(max_length=80)
@@ -263,17 +264,17 @@ class PilotRecommendation(models.Model):
     ref_id)`` upsert key. Populated by the Phase-4 pilot pipeline."""
 
     class State(models.TextChoices):
-        OPEN = "open", "Open"
-        DONE = "done", "Done"
-        DISMISSED = "dismissed", "Dismissed"
+        OPEN = "open", _("Open")
+        DONE = "done", _("Done")
+        DISMISSED = "dismissed", _("Dismissed")
 
     class Category(models.TextChoices):
-        SHIP = "ship", "Ship"
-        SKILL = "skill", "Skill"
-        ASSET = "asset", "Asset"
-        ROLE = "role", "Role"
-        INDUSTRY = "industry", "Industry"
-        LOGISTICS = "logistics", "Logistics"
+        SHIP = "ship", _("Ship")
+        SKILL = "skill", _("Skill")
+        ASSET = "asset", _("Asset")
+        ROLE = "role", _("Role")
+        INDUSTRY = "industry", _("Industry")
+        LOGISTICS = "logistics", _("Logistics")
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="readiness_recommendations"

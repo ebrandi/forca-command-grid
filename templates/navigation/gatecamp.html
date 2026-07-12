@@ -1,37 +1,38 @@
 {% extends "base.html" %}
-{% block title %}Gate Camp Watch · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Gate Camp Watch" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 
 <header class="mb-5 flex flex-wrap items-end justify-between gap-4">
   <div>
-    <p class="eyebrow">Intel</p>
-    <h1 class="mt-1 text-3xl font-bold text-ink">Gate Camp Watch</h1>
-    <p class="mt-1 max-w-2xl text-sm text-faint">Systems showing gate-camp signatures in the last hour — pods and ships dying where hostiles wait for careless travellers. Pods weigh heaviest; ratting noise is filtered out; chokepoints (few-gate pipes on a security border) are flagged. A risk indicator, not a guarantee — scout before you commit.</p>
+    <p class="eyebrow">{% translate "Intel" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Gate Camp Watch" %}</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Systems showing gate-camp signatures in the last hour — pods and ships dying where hostiles wait for careless travellers. Pods weigh heaviest; ratting noise is filtered out; chokepoints (few-gate pipes on a security border) are flagged. A risk indicator, not a guarantee — scout before you commit." %}</p>
   </div>
-  <a href="{% url 'navigation:route_planner' %}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-route"/></svg> Route planner</a>
+  <a href="{% url 'navigation:route_planner' %}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-route"/></svg> {% translate "Route planner" %}</a>
 </header>
 
 <form method="get" class="panel mb-5 flex flex-wrap items-end gap-3 px-4 py-3">
   <label class="block">
-    <span class="eyebrow text-faint">Security</span>
+    <span class="eyebrow text-faint">{% translate "Security" %}</span>
     <select name="band" class="input-field mt-1">
-      <option value="all" {% if band == 'all' %}selected{% endif %}>All</option>
+      <option value="all" {% if band == 'all' %}selected{% endif %}>{% translate "All" %}</option>
       <option value="lowsec" {% if band == 'lowsec' %}selected{% endif %}>Low-sec</option>
       <option value="nullsec" {% if band == 'nullsec' %}selected{% endif %}>Null-sec</option>
       <option value="highsec" {% if band == 'highsec' %}selected{% endif %}>High-sec</option>
     </select>
   </label>
   <label class="block">
-    <span class="eyebrow text-faint">Region (optional)</span>
-    <input list="region-list" name="region" value="{{ region_q }}" placeholder="Any region" autocomplete="off" class="input-field mt-1">
+    <span class="eyebrow text-faint">{% translate "Region (optional)" %}</span>
+    <input list="region-list" name="region" value="{{ region_q }}" placeholder="{% translate 'Any region' %}" autocomplete="off" class="input-field mt-1">
     <datalist id="region-list">{% for r in regions %}<option value="{{ r.name }}"></option>{% endfor %}</datalist>
   </label>
-  <button type="submit" class="btn-primary text-sm">Refresh</button>
-  {% if region_obj %}<a href="?band={{ band }}" class="btn-ghost text-sm">Clear region</a>{% endif %}
+  <button type="submit" class="btn-primary text-sm">{% translate "Refresh" %}</button>
+  {% if region_obj %}<a href="?band={{ band }}" class="btn-ghost text-sm">{% translate "Clear region" %}</a>{% endif %}
 </form>
 
 {% if rows %}
-<p class="mb-2 text-sm text-faint">{{ count }} system{{ count|pluralize }} flagged{% if region_obj %} in {{ region_obj.name }}{% endif %}, highest risk first.</p>
+<p class="mb-2 text-sm text-faint">{% if region_obj %}{% blocktranslate count c=count with region=region_obj.name %}{{ c }} system flagged in {{ region }}, highest risk first.{% plural %}{{ c }} systems flagged in {{ region }}, highest risk first.{% endblocktranslate %}{% else %}{% blocktranslate count c=count %}{{ c }} system flagged, highest risk first.{% plural %}{{ c }} systems flagged, highest risk first.{% endblocktranslate %}{% endif %}</p>
 <div class="space-y-2">
   {% for t in rows %}
   <div class="panel flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
@@ -42,21 +43,21 @@
       <span class="font-mono text-xs" style="color:{{ t.colour }}">{{ t.security }}</span>
     </a>
     <span class="text-sm text-muted">{{ t.region }}</span>
-    {% if t.chokepoint %}<span class="chip !border-[#5fd0c4]/40 !text-[#5fd0c4]">chokepoint</span>{% endif %}
+    {% if t.chokepoint %}<span class="chip !border-[#5fd0c4]/40 !text-[#5fd0c4]">{% translate "chokepoint" %}</span>{% endif %}
     <span class="text-sm text-faint">{{ t.reasons|join:" · " }}</span>
     <span class="ml-auto flex items-center gap-3 text-xs text-faint">
-      <span title="pods killed"><span class="text-[#f0533f]">{{ t.pod_kills }}</span> pods</span>
-      <span title="ships killed">{{ t.ship_kills }} ships</span>
-      <span title="ship jumps last hour">{{ t.traffic }} traffic</span>
-      <a href="{% url 'navigation:route_planner' %}?to={{ t.system_id }}&to_q={{ t.name|urlencode }}" class="hover:text-gold">route →</a>
+      <span title="{% translate 'pods killed' %}"><span class="text-[#f0533f]">{{ t.pod_kills }}</span> pods</span>
+      <span title="{% translate 'ships killed' %}">{{ t.ship_kills }} ships</span>
+      <span title="{% translate 'ship jumps last hour' %}">{{ t.traffic }} traffic</span>
+      <a href="{% url 'navigation:route_planner' %}?to={{ t.system_id }}&to_q={{ t.name|urlencode }}" class="hover:text-gold">{% translate "route →" %}</a>
     </span>
   </div>
   {% endfor %}
 </div>
-<p class="mt-3 text-[11px] text-faint">Built from CCP's public hourly system-kill feed. It's system-level, not per-gate, and refreshes about every hour — treat it as "scout this hop", not "the camp is on gate X right now". <a href="{% url 'navigation:roaming' %}" class="text-gold hover:underline">Looking for targets instead? → Roaming Targets</a></p>
+<p class="mt-3 text-[11px] text-faint">{% translate "Built from CCP's public hourly system-kill feed. It's system-level, not per-gate, and refreshes about every hour — treat it as “scout this hop”, not “the camp is on gate X right now”." %} <a href="{% url 'navigation:roaming' %}" class="text-gold hover:underline">{% translate "Looking for targets instead? → Roaming Targets" %}</a></p>
 {% else %}
 <div class="panel px-4 py-16 text-center">
-  <p class="text-sm text-faint">No gate-camp signatures{% if region_obj %} in {{ region_obj.name }}{% endif %} right now — quiet skies. The feed updates hourly; try another region or security band.</p>
+  <p class="text-sm text-faint">{% if region_obj %}{% blocktranslate with region=region_obj.name %}No gate-camp signatures in {{ region }} right now — quiet skies. The feed updates hourly; try another region or security band.{% endblocktranslate %}{% else %}{% translate "No gate-camp signatures right now — quiet skies. The feed updates hourly; try another region or security band." %}{% endif %}</p>
 </div>
 {% endif %}
 {% endblock %}

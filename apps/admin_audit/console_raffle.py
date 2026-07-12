@@ -21,6 +21,7 @@ from django.db.models import Count, Q, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
 from apps.raffle import boosters, contest_templates, engine, integrity, metrics, services, stats
@@ -108,9 +109,9 @@ def raffle_create(request):
                 contest_templates.apply_template(contest, template_key, overwrite_prizes=True)
             _audit(request, "raffle.create", target_type="raffle_contest",
                    target_id=str(contest.pk), metadata={"template": template_key})
-            messages.success(request, f"Contest “{contest.name}” created as a draft.")
+            messages.success(request, _("Contest “%(name)s” created as a draft.") % {"name": contest.name})
             return redirect("admin_audit:raffle_detail", pk=contest.pk)
-        messages.error(request, "Please correct the errors below.")
+        messages.error(request, _("Please correct the errors below."))
     else:
         form = RaffleContestForm()
     return render(request, "admin_audit/console/raffle_form.html", {
@@ -129,7 +130,7 @@ def raffle_config(request):
             form.save()
             _audit(request, "raffle.config", target_type="raffle_config", target_id=str(cfg.pk),
                    metadata={"override": cfg.allow_manual_override})
-            messages.success(request, "Raffle settings saved.")
+            messages.success(request, _("Raffle settings saved."))
             return redirect("admin_audit:raffle_config")
     else:
         form = RaffleConfigForm(instance=cfg)
@@ -186,14 +187,14 @@ def raffle_edit(request, pk):
                 for f in _PROTECTED_EDIT_FIELDS:
                     setattr(obj, f, getattr(fresh, f))
                 messages.info(request,
-                              "This contest has started accruing tickets (or is closed) — its "
-                              "schedule and rules are locked; only the text/display fields were saved.")
+                              _("This contest has started accruing tickets (or is closed) — its "
+                                "schedule and rules are locked; only the text/display fields were saved."))
             obj.save()
             _audit(request, "raffle.edit", target_type="raffle_contest", target_id=str(contest.pk),
                    metadata={"frozen_edit": not editable})
-            messages.success(request, "Contest updated.")
+            messages.success(request, _("Contest updated."))
             return redirect("admin_audit:raffle_detail", pk=contest.pk)
-        messages.error(request, "Please correct the errors below.")
+        messages.error(request, _("Please correct the errors below."))
     else:
         form = RaffleContestForm(instance=contest)
     return render(request, "admin_audit/console/raffle_form.html", {
@@ -210,7 +211,7 @@ def raffle_status(request, pk):
     contest = _contest(pk)
     new_status = request.POST.get("status", "")
     if new_status == RaffleContest.Status.CANCELLED and not rbac.has_role(request.user, rbac.ROLE_DIRECTOR):
-        messages.error(request, "Only a Director can cancel a contest.")
+        messages.error(request, _("Only a Director can cancel a contest."))
         return redirect("admin_audit:raffle_detail", pk=pk)
     if contest.status == RaffleContest.Status.DRAFT and new_status in (
         RaffleContest.Status.SCHEDULED, RaffleContest.Status.ACTIVE
@@ -220,9 +221,9 @@ def raffle_status(request, pk):
             messages.error(request, block)
             return redirect("admin_audit:raffle_detail", pk=pk)
     if services.set_status(contest, new_status, request.user, reason=request.POST.get("reason", "")):
-        messages.success(request, f"Contest moved to {new_status}.")
+        messages.success(request, _("Contest moved to %(status)s.") % {"status": new_status})
     else:
-        messages.error(request, "That status change isn't allowed from the current state.")
+        messages.error(request, _("That status change isn't allowed from the current state."))
     return redirect("admin_audit:raffle_detail", pk=pk)
 
 
@@ -232,15 +233,15 @@ def raffle_status(request, pk):
 def raffle_apply_template(request, pk):
     contest = _contest(pk)
     if not contest.is_editable:
-        messages.error(request, "Templates can only be applied to a draft/scheduled contest.")
+        messages.error(request, _("Templates can only be applied to a draft/scheduled contest."))
         return redirect("admin_audit:raffle_detail", pk=pk)
     key = request.POST.get("template_key", "")
     if contest_templates.apply_template(contest, key, overwrite_prizes=True):
         _audit(request, "raffle.template", target_type="raffle_contest", target_id=str(pk),
                metadata={"template": key})
-        messages.success(request, f"Applied the “{key}” template.")
+        messages.success(request, _("Applied the “%(key)s” template.") % {"key": key})
     else:
-        messages.error(request, "Unknown template.")
+        messages.error(request, _("Unknown template."))
     return redirect("admin_audit:raffle_detail", pk=pk)
 
 
@@ -269,7 +270,7 @@ def raffle_prize_save(request, pk, prize_id=None):
         prize.contest = contest
         prize.save()
         _audit(request, "raffle.prize.save", target_type="raffle_prize", target_id=str(prize.pk))
-        messages.success(request, "Prize saved.")
+        messages.success(request, _("Prize saved."))
     else:
         messages.error(request, "; ".join(f"{k}: {v.as_text()}" for k, v in form.errors.items()))
     return redirect("admin_audit:raffle_prizes", pk=pk)
@@ -283,7 +284,7 @@ def raffle_prize_delete(request, pk, prize_id):
     prize = get_object_or_404(RafflePrize, pk=prize_id, contest=contest)
     prize.delete()
     _audit(request, "raffle.prize.delete", target_type="raffle_prize", target_id=str(prize_id))
-    messages.success(request, "Prize removed.")
+    messages.success(request, _("Prize removed."))
     return redirect("admin_audit:raffle_prizes", pk=pk)
 
 
@@ -315,7 +316,7 @@ def raffle_source_save(request, pk, source_pk):
         form.save()
         _audit(request, "raffle.source.save", target_type="raffle_source", target_id=str(cfg.pk),
                metadata={"source": cfg.source_key, "enabled": cfg.enabled})
-        messages.success(request, f"“{cfg.source_key}” source saved.")
+        messages.success(request, _("“%(source)s” source saved.") % {"source": cfg.source_key})
     else:
         messages.error(request, "; ".join(f"{k}: {v.as_text()}" for k, v in form.errors.items()))
     return redirect("admin_audit:raffle_sources", pk=pk)
@@ -340,14 +341,15 @@ def raffle_grant(request, pk):
                 )
                 messages.success(
                     request,
-                    f"Granted {grant.amount} tickets to "
-                    f"{grant.character_name or cd['character_id']}.",
+                    _("Granted %(amount)s tickets to %(who)s.") % {
+                        "amount": grant.amount,
+                        "who": grant.character_name or cd['character_id']},
                 )
                 return redirect("admin_audit:raffle_grant", pk=pk)
             except services.GrantBlocked as e:
                 messages.error(request, str(e))
         else:
-            messages.error(request, "Please correct the errors below.")
+            messages.error(request, _("Please correct the errors below."))
     else:
         form = RaffleManualGrantForm()
     recent = list(contest.manual_grants.select_related("granted_by").order_by("-created_at")[:25])
@@ -408,12 +410,12 @@ def raffle_ledger_action(request, pk, entry_id):
     reason = request.POST.get("reason", "")
     if action == "reverse":
         services.reverse_entry(entry, request.user, reason=reason or "correction")
-        messages.success(request, "Entry reversed (a correcting row was appended).")
+        messages.success(request, _("Entry reversed (a correcting row was appended)."))
     elif action in ("approved", "excluded", "disqualified"):
         if services.set_entry_status(entry, request.user, action, reason=reason):
-            messages.success(request, f"Entry marked {action}.")
+            messages.success(request, _("Entry marked %(status)s.") % {"status": action})
         else:
-            messages.error(request, "Couldn't change that entry.")
+            messages.error(request, _("Couldn't change that entry."))
     return redirect("admin_audit:raffle_ledger", pk=pk)
 
 
@@ -454,19 +456,21 @@ def raffle_send_outreach(request, pk):
     """RAF-3 (3.9): nudge the ranked active-but-unenrolled pilots to enrol (one-click)."""
     contest = _contest(pk)
     result = services.send_enrolment_outreach(contest, actor=request.user)
-    capped = " Only the top 200 pilots by tickets were considered — run again for more." \
+    capped = _(" Only the top 200 pilots by tickets were considered — run again for more.") \
         if result.get("capped") else ""
     if result.get("reason") == "event_disabled":
         messages.error(
-            request, "Enrolment outreach is turned off in the notification console.")
+            request, _("Enrolment outreach is turned off in the notification console."))
     elif result["sent"]:
         messages.success(
             request,
-            f"Sent {result['sent']} enrolment nudge(s); skipped {result['skipped']} "
-            f"(already nudged, opted out, now enrolled, or no linked account).{capped}")
+            _("Sent %(sent)s enrolment nudge(s); skipped %(skipped)s "
+              "(already nudged, opted out, now enrolled, or no linked account).%(capped)s") % {
+                "sent": result["sent"], "skipped": result["skipped"], "capped": capped})
     else:
         messages.info(
-            request, f"No new pilots to nudge (skipped {result['skipped']}).{capped}")
+            request, _("No new pilots to nudge (skipped %(skipped)s).%(capped)s") % {
+                "skipped": result["skipped"], "capped": capped})
     return redirect("admin_audit:raffle_ineligible", pk=pk)
 
 
@@ -518,38 +522,41 @@ def raffle_draw_action(request, pk):
 
     if action == "close":
         if services.set_status(contest, RaffleContest.Status.CLOSED, request.user, reason="freeze for draw"):
-            messages.success(request, "Contest closed — the ledger is frozen.")
+            messages.success(request, _("Contest closed — the ledger is frozen."))
         else:
-            messages.error(request, "Can't close from the current state.")
+            messages.error(request, _("Can't close from the current state."))
     elif action == "prepare":
         draw = services.prepare_draw(contest, request.user, external_entropy=entropy)
-        messages.success(request, f"Seed committed: {draw.seed_commitment[:16]}… Ready to draw.")
+        messages.success(request, _("Seed committed: %(seed)s… Ready to draw.") % {
+            "seed": draw.seed_commitment[:16]})
     elif action == "execute":
         if not director:
-            messages.error(request, "Only a Director can execute the draw.")
+            messages.error(request, _("Only a Director can execute the draw."))
         else:
             force = request.POST.get("override") == "1"  # the "draw anyway" button
             try:
                 draw = services.run_draw(contest, request.user, external_entropy=entropy, force=force)
                 if draw is None:
-                    messages.info(request, "A draw is already running.")
+                    messages.info(request, _("A draw is already running."))
                 elif force and draw.forced_below_minimum:
-                    messages.success(request, f"Drawn by override (below minimum activity) — "
-                                              f"{draw.results.count()} winners.")
+                    messages.success(request, _("Drawn by override (below minimum activity) — "
+                                                "%(winners)s winners.") % {"winners": draw.results.count()})
                 else:
-                    messages.success(request, f"Draw complete — {draw.results.count()} winners.")
+                    messages.success(request, _("Draw complete — %(winners)s winners.") % {
+                        "winners": draw.results.count()})
             except services.ActivityNotMet as e:
                 messages.error(request, str(e))
             except services.GrantBlocked as e:
                 messages.error(request, str(e))
     elif action == "redraw":
         if not director:
-            messages.error(request, "Only a Director can redraw.")
+            messages.error(request, _("Only a Director can redraw."))
         else:
             draw = services.redraw(contest, request.user,
                                    reason=request.POST.get("reason", "manual redraw"),
                                    external_entropy=entropy)
-            messages.success(request, f"Redraw complete — {draw.results.count()} winners.")
+            messages.success(request, _("Redraw complete — %(winners)s winners.") % {
+                "winners": draw.results.count()})
     return redirect("admin_audit:raffle_draw", pk=pk)
 
 
@@ -562,7 +569,7 @@ def raffle_fulfil(request, pk, result_id):
     result = get_object_or_404(RaffleDrawResult, pk=result_id, draw=draw)
     services.set_fulfilment(result, request.user, status=request.POST.get("status", "pending"),
                             notes=request.POST.get("notes", ""))
-    messages.success(request, "Fulfilment updated.")
+    messages.success(request, _("Fulfilment updated."))
     return redirect("admin_audit:raffle_draw", pk=pk)
 
 
@@ -599,7 +606,7 @@ def raffle_exclude(request, pk):
             character_name=request.POST.get("character_name", ""),
             reason=request.POST.get("reason", ""),
         )
-        messages.success(request, "Pilot excluded from the contest.")
+        messages.success(request, _("Pilot excluded from the contest."))
     except ValidationError as e:
         messages.error(request, "; ".join(e.messages))
     return redirect("admin_audit:raffle_detail", pk=pk)
@@ -612,7 +619,7 @@ def raffle_exclude_remove(request, pk, exclusion_id):
     contest = _contest(pk)
     excl = get_object_or_404(RaffleExclusion, pk=exclusion_id, contest=contest)
     services.remove_exclusion(excl, request.user)
-    messages.success(request, "Exclusion lifted.")
+    messages.success(request, _("Exclusion lifted."))
     return redirect("admin_audit:raffle_detail", pk=pk)
 
 
@@ -632,7 +639,7 @@ def raffle_flag_resolve(request, pk, flag_id):
     flag = get_object_or_404(RaffleSuspiciousActivityFlag, pk=flag_id, contest=contest)
     integrity.resolve_flag(flag, request.user, uphold=request.POST.get("action") == "uphold",
                            resolution=request.POST.get("resolution", ""))
-    messages.success(request, "Flag resolved.")
+    messages.success(request, _("Flag resolved."))
     return redirect("admin_audit:raffle_flags", pk=pk)
 
 

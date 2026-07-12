@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
+from django.utils.translation import gettext_lazy as _
 
 from apps.industry.models import IndustryEconomyConfig
 from core import rbac
@@ -52,9 +53,9 @@ def industry_settings(request: HttpRequest) -> HttpResponse:
                 request.user, "industry.economy.config", target_type="industry_config",
                 target_id=str(config.pk), ip=client_ip(request),
             )
-            messages.success(request, "Industry & Economy settings saved.")
+            messages.success(request, _("Industry & Economy settings saved."))
             return redirect("admin_audit:industry_settings")
-        messages.error(request, "Please correct the errors below.")
+        messages.error(request, _("Please correct the errors below."))
     else:
         form = IndustryEconomyConfigForm(instance=config)
     return render(request, "admin_audit/console/industry_settings.html",

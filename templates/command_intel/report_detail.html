@@ -1,15 +1,16 @@
 {% extends "base.html" %}
-{% block title %}Intelligence report · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Intelligence report" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
-<a href="{% url 'command_intel:reports' %}" class="text-xs text-faint hover:text-gold">← Intelligence reports</a>
+<a href="{% url 'command_intel:reports' %}" class="text-xs text-faint hover:text-gold">← {% translate "Intelligence reports" %}</a>
 
 <div class="mt-3">
   {% if report.is_terminal %}
     {% include "command_intel/_briefing.html" with report=report %}
   {% else %}
     <header class="mb-4">
-      <p class="eyebrow text-gold">Command Intelligence</p>
-      <h1 class="mt-1 font-display text-2xl font-bold text-ink">Compiling command intelligence…</h1>
+      <p class="eyebrow text-gold">{% translate "Command Intelligence" %}</p>
+      <h1 class="mt-1 font-display text-2xl font-bold text-ink">{% translate "Compiling command intelligence…" %}</h1>
     </header>
     {% include "command_intel/_generating.html" with report=report %}
   {% endif %}

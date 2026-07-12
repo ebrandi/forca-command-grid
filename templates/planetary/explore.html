@@ -1,11 +1,12 @@
 {% extends "base.html" %}
 {% load eve %}
-{% block title %}Explore PI chains · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Explore PI chains" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <header class="mb-6">
-  <a href="{% url 'planetary:landing' %}" class="text-xs text-faint hover:text-gold">← Planetary Industry</a>
-  <h1 class="mt-1 text-3xl font-bold text-ink">Production chain explorer</h1>
-  <p class="mt-1 max-w-2xl text-sm text-faint">Pick a product to see everything it needs and which planets make it; or pick a planet to see what it yields and what you can build from it.</p>
+  <a href="{% url 'planetary:landing' %}" class="text-xs text-faint hover:text-gold">← {% translate "Planetary Industry" %}</a>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Production chain explorer" %}</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Pick a product to see everything it needs and which planets make it; or pick a planet to see what it yields and what you can build from it." %}</p>
 </header>
 
 {# Planet selector row #}
@@ -22,29 +23,29 @@
     <img src="{% eve_type_render m.info.type_id 48 %}" alt="" class="h-11 w-11 rounded bg-space ring-1 ring-line">
     <div>
       <h2 class="text-lg font-semibold text-ink">{{ m.info.name }} <span class="chip">{{ m.info.tier }}</span></h2>
-      <p class="text-xs text-faint">You need these planets: <span class="text-ink">{{ m.planets_needed|join:", "|default:"—" }}</span></p>
+      <p class="text-xs text-faint">{% translate "You need these planets:" %} <span class="text-ink">{{ m.planets_needed|join:", "|default:"—" }}</span></p>
     </div>
   </div>
   <div class="mt-4 grid gap-4 lg:grid-cols-2">
     {% if m.tree %}
     <div>
-      <p class="eyebrow mb-2 text-faint">Full input tree (1 unit)</p>
+      <p class="eyebrow mb-2 text-faint">{% translate "Full input tree (1 unit)" %}</p>
       {% include "planetary/_chain_node.html" with node=m.tree %}
     </div>
     {% endif %}
     <div>
       {% if m.becomes %}
-      <p class="eyebrow mb-2 text-faint">Can become</p>
+      <p class="eyebrow mb-2 text-faint">{% translate "Can become" %}</p>
       <div class="flex flex-wrap gap-1.5">
         {% for b in m.becomes %}<a href="?material={{ b.type_id }}" class="chip hover:!border-gold/40">{{ b.name }} · {{ b.tier }}</a>{% endfor %}
       </div>
       {% endif %}
       {% if m.comparison %}
-      <p class="eyebrow mb-2 mt-4 text-faint">Sell inputs or refine?</p>
+      <p class="eyebrow mb-2 mt-4 text-faint">{% translate "Sell inputs or refine?" %}</p>
       <div class="rounded-lg border border-line bg-panel2/40 p-3 text-sm">
-        <div class="flex justify-between"><span class="text-faint">Inputs</span><span class="data text-ink">{{ m.comparison.input_value|isk }}</span></div>
-        <div class="flex justify-between"><span class="text-faint">Refined</span><span class="data text-ink">{{ m.comparison.output_value|isk }}</span></div>
-        <p class="mt-1 text-xs {% if m.comparison.better == 'refine' %}text-kill{% else %}text-gold{% endif %}">{% if m.comparison.better == 'refine' %}Refining adds value.{% else %}Selling inputs is better here.{% endif %}</p>
+        <div class="flex justify-between"><span class="text-faint">{% translate "Inputs" %}</span><span class="data text-ink">{{ m.comparison.input_value|isk }}</span></div>
+        <div class="flex justify-between"><span class="text-faint">{% translate "Refined" %}</span><span class="data text-ink">{{ m.comparison.output_value|isk }}</span></div>
+        <p class="mt-1 text-xs {% if m.comparison.better == 'refine' %}text-kill{% else %}text-gold{% endif %}">{% if m.comparison.better == 'refine' %}{% translate "Refining adds value." %}{% else %}{% translate "Selling inputs is better here." %}{% endif %}</p>
       </div>
       {% endif %}
     </div>
@@ -58,17 +59,17 @@
 <section class="panel mb-4 p-5">
   <div class="flex items-center gap-3">
     <img src="{% eve_type_render sp.planet.type_id 48 %}" alt="" class="h-11 w-11 rounded bg-space ring-1 ring-line">
-    <div><h2 class="text-lg font-semibold text-ink">{{ sp.planet.name }} planet</h2><p class="text-xs text-faint">{{ sp.planet.blurb }}</p></div>
+    <div><h2 class="text-lg font-semibold text-ink">{% blocktranslate with name=sp.planet.name %}{{ name }} planet{% endblocktranslate %}</h2><p class="text-xs text-faint">{{ sp.planet.blurb }}</p></div>
   </div>
   <div class="mt-4 grid gap-4 sm:grid-cols-2">
     <div>
-      <p class="eyebrow mb-2 text-faint">Raw resources (P0) you can extract</p>
+      <p class="eyebrow mb-2 text-faint">{% translate "Raw resources (P0) you can extract" %}</p>
       <div class="flex flex-wrap gap-1.5">{% for r in sp.resources %}<a href="?material={{ r.type_id }}" class="chip hover:!border-gold/40">{{ r.name }}</a>{% endfor %}</div>
     </div>
     <div>
-      <p class="eyebrow mb-2 text-faint">Products reachable from this planet's resources</p>
+      <p class="eyebrow mb-2 text-faint">{% translate "Products reachable from this planet's resources" %}</p>
       <div class="flex flex-wrap gap-1.5">{% for r in sp.reachable %}<a href="?material={{ r.type_id }}" class="chip {% if r.tier == 'P1' %}!text-cyan{% elif r.tier == 'P2' %}!text-gold{% endif %} hover:!border-gold/40">{{ r.name }} · {{ r.tier }}</a>{% endfor %}</div>
-      <p class="mt-2 text-[11px] text-faint">Higher tiers usually need inputs from more than one planet.</p>
+      <p class="mt-2 text-[11px] text-faint">{% translate "Higher tiers usually need inputs from more than one planet." %}</p>
     </div>
   </div>
 </section>
@@ -77,7 +78,7 @@
 
 {# Tier browser (default / always available) #}
 <section class="panel p-5">
-  <h2 class="eyebrow mb-3 text-gold">Browse by tier (P0 → P4)</h2>
+  <h2 class="eyebrow mb-3 text-gold">{% translate "Browse by tier (P0 → P4)" %}</h2>
   <div class="grid gap-4 lg:grid-cols-5">
     {% for tier, meta, mats in by_tier %}
     <div>

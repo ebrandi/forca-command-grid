@@ -1,11 +1,12 @@
 {% extends "base.html" %}
 {% load eve %}
-{% block title %}{% if plan %}Edit plan{% else %}New PI plan{% endif %} · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% if plan %}{% translate "Edit plan" %}{% else %}{% translate "New PI plan" %}{% endif %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <header class="mb-6">
-  <a href="{% if plan %}{% url 'planetary:detail' plan.pk %}{% else %}{% url 'planetary:landing' %}{% endif %}" class="text-xs text-faint hover:text-gold">← {% if plan %}Back to plan{% else %}Planetary Industry{% endif %}</a>
-  <h1 class="mt-1 text-3xl font-bold text-ink">{% if plan %}Edit “{{ plan.name }}”{% else %}Plan a colony network{% endif %}</h1>
-  <p class="mt-1 max-w-2xl text-sm text-faint">Fill this in and Command Grid gives you a setup guide and a profit estimate. Every field has a hint — hover if you're unsure. Nothing here touches your game account.</p>
+  <a href="{% if plan %}{% url 'planetary:detail' plan.pk %}{% else %}{% url 'planetary:landing' %}{% endif %}" class="text-xs text-faint hover:text-gold">← {% if plan %}{% translate "Back to plan" %}{% else %}{% translate "Planetary Industry" %}{% endif %}</a>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% if plan %}{% blocktranslate with name=plan.name %}Edit “{{ name }}”{% endblocktranslate %}{% else %}{% translate "Plan a colony network" %}{% endif %}</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Fill this in and Command Grid gives you a setup guide and a profit estimate. Every field has a hint — hover if you're unsure. Nothing here touches your game account." %}</p>
 </header>
 
 <form method="post" action="{% if plan %}{% url 'planetary:edit' plan.pk %}{% else %}{% url 'planetary:create' %}{% endif %}" class="space-y-4">
@@ -13,7 +14,7 @@
 
   {# 1 · Basics #}
   <section class="panel p-5">
-    <h2 class="eyebrow mb-3 text-gold">1 · The basics</h2>
+    <h2 class="eyebrow mb-3 text-gold">{% translate "1 · The basics" %}</h2>
     <div class="grid gap-4 sm:grid-cols-2">
       {% include "planetary/_field.html" with field=form.name %}
       {% include "planetary/_field.html" with field=form.character %}
@@ -26,8 +27,8 @@
     {{ planet_catalogue|json_script:"pi-planets" }}
     {{ material_catalogue|json_script:"pi-materials" }}
     {{ existing_planets|json_script:"pi-existing" }}
-    <h2 class="eyebrow mb-1 text-gold">2 · Your planets</h2>
-    <p class="mb-3 text-[11px] text-faint">Add each planet you'll dedicate. Pick the planet type, whether it extracts or is a factory, and what it should ultimately produce. Extraction planets self-refine a raw resource into P1; factory planets buy inputs and build a higher tier.</p>
+    <h2 class="eyebrow mb-1 text-gold">{% translate "2 · Your planets" %}</h2>
+    <p class="mb-3 text-[11px] text-faint">{% translate "Add each planet you'll dedicate. Pick the planet type, whether it extracts or is a factory, and what it should ultimately produce. Extraction planets self-refine a raw resource into P1; factory planets buy inputs and build a higher tier." %}</p>
 
     <div class="space-y-2">
       <template x-for="(row, i) in rows" :key="i">
@@ -35,7 +36,7 @@
           <div class="grid items-start gap-2 sm:grid-cols-12">
             <div class="sm:col-span-4">
               <select name="planet_type" x-model="row.slug" class="input-field">
-                <option value="">— planet type —</option>
+                <option value="">{% translate "— planet type —" %}</option>
                 <template x-for="p in planetTypes" :key="p.slug"><option :value="p.slug" x-text="p.name"></option></template>
               </select>
             </div>
@@ -45,7 +46,7 @@
               </select>
             </div>
             <div class="relative sm:col-span-4" @click.outside="row.open=false">
-              <input type="text" class="input-field" placeholder="Product it makes…" x-model="row.q" @focus="row.open=true" @input="row.open=true; row.product_id=''" autocomplete="off">
+              <input type="text" class="input-field" placeholder="{% translate 'Product it makes…' %}" x-model="row.q" @focus="row.open=true" @input="row.open=true; row.product_id=''" autocomplete="off">
               <input type="hidden" name="planet_product" :value="row.product_id">
               <div x-show="row.open" x-cloak class="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-line bg-panel2 shadow-xl">
                 <template x-for="m in resultsFor(row)" :key="m.type_id">
@@ -57,21 +58,21 @@
               </div>
             </div>
             <div class="flex justify-end sm:col-span-1">
-              <button type="button" @click="remove(i)" class="text-faint hover:text-loss" title="Remove planet">✕</button>
+              <button type="button" @click="remove(i)" class="text-faint hover:text-loss" title="{% translate 'Remove planet' %}">✕</button>
             </div>
           </div>
           <template x-if="planetFor(row.slug)">
-            <p class="mt-1.5 text-[11px] text-faint">Yields: <span x-text="planetFor(row.slug).resources.join(', ')"></span></p>
+            <p class="mt-1.5 text-[11px] text-faint">{% translate "Yields:" %} <span x-text="planetFor(row.slug).resources.join(', ')"></span></p>
           </template>
         </div>
       </template>
     </div>
-    <button type="button" @click="add()" class="btn-ghost mt-2 !text-xs">+ Add a planet</button>
+    <button type="button" @click="add()" class="btn-ghost mt-2 !text-xs">{% translate "+ Add a planet" %}</button>
   </section>
 
   {# 3 · Location & scale #}
   <section class="panel p-5">
-    <h2 class="eyebrow mb-3 text-gold">3 · Where &amp; how you'll run it</h2>
+    <h2 class="eyebrow mb-3 text-gold">{% translate "3 · Where &amp; how you'll run it" %}</h2>
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {% include "planetary/_field.html" with field=form.system_name %}
       {% include "planetary/_field.html" with field=form.planet_count %}
@@ -82,8 +83,8 @@
 
   {# 4 · Market & taxes #}
   <section class="panel p-5">
-    <h2 class="eyebrow mb-1 text-gold">4 · Market, taxes &amp; hauling</h2>
-    <p class="mb-3 text-[11px] text-faint">These start from the corp defaults — adjust them to your situation. They're the difference between a profit and a loss, so they're all editable and all shown in the estimate.</p>
+    <h2 class="eyebrow mb-1 text-gold">{% translate "4 · Market, taxes &amp; hauling" %}</h2>
+    <p class="mb-3 text-[11px] text-faint">{% translate "These start from the corp defaults — adjust them to your situation. They're the difference between a profit and a loss, so they're all editable and all shown in the estimate." %}</p>
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {% include "planetary/_field.html" with field=form.market_region_id %}
       {% include "planetary/_field.html" with field=form.extraction_rate_per_hour %}
@@ -98,7 +99,7 @@
 
   {# 5 · Strategy #}
   <section class="panel p-5">
-    <h2 class="eyebrow mb-3 text-gold">5 · Strategy &amp; sharing</h2>
+    <h2 class="eyebrow mb-3 text-gold">{% translate "5 · Strategy &amp; sharing" %}</h2>
     <div class="grid gap-4 sm:grid-cols-2">
       {% include "planetary/_field.html" with field=form.export_strategy %}
       {% include "planetary/_field.html" with field=form.visibility %}
@@ -107,8 +108,8 @@
   </section>
 
   <div class="flex items-center gap-3">
-    <button type="submit" class="btn-gold"><svg class="h-4 w-4"><use href="#i-check"/></svg> {% if plan %}Save changes{% else %}Create plan &amp; estimate profit{% endif %}</button>
-    <a href="{% if plan %}{% url 'planetary:detail' plan.pk %}{% else %}{% url 'planetary:landing' %}{% endif %}" class="btn-ghost">Cancel</a>
+    <button type="submit" class="btn-gold"><svg class="h-4 w-4"><use href="#i-check"/></svg> {% if plan %}{% translate "Save changes" %}{% else %}{% translate "Create plan &amp; estimate profit" %}{% endif %}</button>
+    <a href="{% if plan %}{% url 'planetary:detail' plan.pk %}{% else %}{% url 'planetary:landing' %}{% endif %}" class="btn-ghost">{% translate "Cancel" %}</a>
   </div>
 </form>
 {% endblock %}

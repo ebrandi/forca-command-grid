@@ -1,25 +1,26 @@
 {% extends "base.html" %}
 {% load eve humanize %}
-{% block title %}My mining · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "My mining" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <header class="mb-5">
-  <p class="eyebrow text-gold">Industry · Mine</p>
-  <h1 class="mt-1 text-3xl font-bold text-ink">My mining</h1>
-  <p class="mt-1 max-w-2xl text-sm text-faint">What the corp has recorded you mining, valued at Jita, plus the payouts owed and paid to you. This is your own record only.</p>
+  <p class="eyebrow text-gold">{% translate "Industry · Mine" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "My mining" %}</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "What the corp has recorded you mining, valued at Jita, plus the payouts owed and paid to you. This is your own record only." %}</p>
 </header>
 
 {% if not has_characters %}
-<div class="panel p-6 text-sm text-faint">Link an EVE character to see your mining.</div>
+<div class="panel p-6 text-sm text-faint">{% translate "Link an EVE character to see your mining." %}</div>
 {% else %}
 
 <div class="mb-4 flex flex-wrap items-end gap-3">
   <form method="get" class="flex items-end gap-2">
-    <label class="block"><span class="eyebrow text-faint">Window</span>
+    <label class="block"><span class="eyebrow text-faint">{% translate "Window" %}</span>
       <select name="days" class="input-field mt-1" data-autosubmit>
-        <option value="30" {% if days == 30 %}selected{% endif %}>30 days</option>
-        <option value="90" {% if days == 90 %}selected{% endif %}>90 days</option>
-        <option value="180" {% if days == 180 %}selected{% endif %}>180 days</option>
-        <option value="365" {% if days == 365 %}selected{% endif %}>1 year</option>
+        <option value="30" {% if days == 30 %}selected{% endif %}>{% translate "30 days" %}</option>
+        <option value="90" {% if days == 90 %}selected{% endif %}>{% translate "90 days" %}</option>
+        <option value="180" {% if days == 180 %}selected{% endif %}>{% translate "180 days" %}</option>
+        <option value="365" {% if days == 365 %}selected{% endif %}>{% translate "1 year" %}</option>
       </select>
     </label>
   </form>
@@ -27,47 +28,47 @@
 
 <div class="grid gap-3 sm:grid-cols-3 mb-5">
   <div class="panel p-4">
-    <p class="eyebrow text-faint">Volume mined</p>
+    <p class="eyebrow text-faint">{% translate "Volume mined" %}</p>
     <p class="mt-1 text-2xl font-bold text-ink">{{ summary.total_m3|floatformat:0|intcomma }} <span class="text-sm font-normal text-faint">m³</span></p>
   </div>
   <div class="panel p-4">
-    <p class="eyebrow text-faint">Jita value</p>
+    <p class="eyebrow text-faint">{% translate "Jita value" %}</p>
     <p class="mt-1 text-2xl font-bold text-ink">{{ summary.total_value|isk }}</p>
   </div>
   <div class="panel p-4">
-    <p class="eyebrow text-faint">Raffle tickets (mining)</p>
+    <p class="eyebrow text-faint">{% translate "Raffle tickets (mining)" %}</p>
     <p class="mt-1 text-2xl font-bold text-gold">{{ tickets|intcomma }}</p>
-    <p class="text-[11px] text-faint">From the active contest, if any.</p>
+    <p class="text-[11px] text-faint">{% translate "From the active contest, if any." %}</p>
   </div>
 </div>
 
 <section class="mb-6">
-  <h2 class="eyebrow mb-2 text-faint">Mining milestones</h2>
+  <h2 class="eyebrow mb-2 text-faint">{% translate "Mining milestones" %}</h2>
   <div class="panel p-5">
-    <p class="text-sm text-faint">All-time recorded volume <span class="ml-1 font-display text-lg font-bold text-ink">{{ milestones.cumulative_m3|intcomma }}</span> m³
-      {% if milestones.months_active_6mo %}· active in <strong class="text-ink">{{ milestones.months_active_6mo }}</strong> of the last 6 months{% endif %}</p>
+    <p class="text-sm text-faint">{% translate "All-time recorded volume" %} <span class="ml-1 font-display text-lg font-bold text-ink">{{ milestones.cumulative_m3|intcomma }}</span> m³
+      {% if milestones.months_active_6mo %}{% blocktranslate with months=milestones.months_active_6mo %}· active in <strong class="text-ink">{{ months }}</strong> of the last 6 months{% endblocktranslate %}{% endif %}</p>
     <div class="mt-3 flex flex-wrap gap-2">
-      {% for m in milestones.reached %}<span class="chip border-gold/40 text-gold">{{ m|intcomma }} m³ ✓</span>{% empty %}<span class="text-sm text-faint">No milestones yet — your first is 1,000,000 m³.</span>{% endfor %}
+      {% for m in milestones.reached %}<span class="chip border-gold/40 text-gold">{{ m|intcomma }} m³ ✓</span>{% empty %}<span class="text-sm text-faint">{% translate "No milestones yet — your first is 1,000,000 m³." %}</span>{% endfor %}
     </div>
     {% if milestones.next_threshold %}
-    <p class="mt-3 text-[11px] text-faint">Next: <strong class="text-muted">{{ milestones.next_threshold|intcomma }} m³</strong> — {{ milestones.remaining|intcomma }} m³ to go.</p>
+    <p class="mt-3 text-[11px] text-faint">{% blocktranslate with nxt=milestones.next_threshold|intcomma rem=milestones.remaining|intcomma %}Next: <strong class="text-muted">{{ nxt }} m³</strong> — {{ rem }} m³ to go.{% endblocktranslate %}</p>
     {% else %}
-    <p class="mt-3 text-[11px] text-gold">Top milestone reached — o7, industrialist.</p>
+    <p class="mt-3 text-[11px] text-gold">{% translate "Top milestone reached — o7, industrialist." %}</p>
     {% endif %}
-    <p class="mt-2 text-[11px] text-faint">Milestones count only refinery-observer mining. Reaching a new one earns recognition on your ledger.</p>
+    <p class="mt-2 text-[11px] text-faint">{% translate "Milestones count only refinery-observer mining. Reaching a new one earns recognition on your ledger." %}</p>
   </div>
 </section>
 
 <section class="mb-6">
-  <h2 class="eyebrow text-faint mb-2">By ore</h2>
+  <h2 class="eyebrow text-faint mb-2">{% translate "By ore" %}</h2>
   <div class="panel overflow-x-auto">
     <table class="w-full min-w-[520px] text-sm">
       <thead class="text-left text-xs uppercase tracking-wide text-faint">
         <tr class="border-b border-line/50">
-          <th class="px-3 py-2">Ore</th>
-          <th class="px-3 py-2 text-right">Units</th>
+          <th class="px-3 py-2">{% translate "Ore" %}</th>
+          <th class="px-3 py-2 text-right">{% translate "Units" %}</th>
           <th class="px-3 py-2 text-right">m³</th>
-          <th class="px-3 py-2 text-right">Jita value</th>
+          <th class="px-3 py-2 text-right">{% translate "Jita value" %}</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-line/30">
@@ -79,7 +80,7 @@
           <td class="px-3 py-2 text-right text-ink">{{ r.value|isk }}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="4" class="px-3 py-10 text-center text-sm text-faint">No mining recorded for you in this window.</td></tr>
+        <tr><td colspan="4" class="px-3 py-10 text-center text-sm text-faint">{% translate "No mining recorded for you in this window." %}</td></tr>
         {% endfor %}
       </tbody>
     </table>
@@ -88,21 +89,21 @@
 
 <section>
   <div class="mb-2 flex flex-wrap items-end justify-between gap-2">
-    <h2 class="eyebrow text-faint">Payouts</h2>
+    <h2 class="eyebrow text-faint">{% translate "Payouts" %}</h2>
     <div class="text-right text-sm">
-      <span class="text-faint">Owed · <span class="font-semibold text-gold">{{ payouts.owed|isk }}</span></span>
-      <span class="ml-3 text-faint">Paid · <span class="font-semibold text-ink">{{ payouts.paid|isk }}</span></span>
+      <span class="text-faint">{% translate "Owed" %} · <span class="font-semibold text-gold">{{ payouts.owed|isk }}</span></span>
+      <span class="ml-3 text-faint">{% translate "Paid" %} · <span class="font-semibold text-ink">{{ payouts.paid|isk }}</span></span>
     </div>
   </div>
   <div class="panel overflow-x-auto">
     <table class="w-full min-w-[560px] text-sm">
       <thead class="text-left text-xs uppercase tracking-wide text-faint">
         <tr class="border-b border-line/50">
-          <th class="px-3 py-2">Payout</th>
-          <th class="px-3 py-2">Period</th>
-          <th class="px-3 py-2 text-right">Your share</th>
-          <th class="px-3 py-2 text-right">Net</th>
-          <th class="px-3 py-2 text-right">Status</th>
+          <th class="px-3 py-2">{% translate "Payout" %}</th>
+          <th class="px-3 py-2">{% translate "Period" %}</th>
+          <th class="px-3 py-2 text-right">{% translate "Your share" %}</th>
+          <th class="px-3 py-2 text-right">{% translate "Net" %}</th>
+          <th class="px-3 py-2 text-right">{% translate "Status" %}</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-line/30">
@@ -113,18 +114,18 @@
           <td class="px-3 py-2 text-right text-muted">{{ line.share_pct }}%</td>
           <td class="px-3 py-2 text-right text-ink">{{ line.net|isk }}</td>
           <td class="px-3 py-2 text-right">
-            {% if line.paid %}<span class="chip border-kill text-kill">paid</span>
-            {% else %}<span class="chip border-gold text-gold">owed</span>{% endif %}
+            {% if line.paid %}<span class="chip border-kill text-kill">{% translate "paid" %}</span>
+            {% else %}<span class="chip border-gold text-gold">{% translate "owed" %}</span>{% endif %}
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="5" class="px-3 py-10 text-center text-sm text-faint">No payouts recorded for you yet.</td></tr>
+        <tr><td colspan="5" class="px-3 py-10 text-center text-sm text-faint">{% translate "No payouts recorded for you yet." %}</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </section>
 
-<p class="mt-4 text-[11px] text-faint">Only mining captured by a corp refinery's observer is recorded — belt or nomad mining outside a corp refinery won't appear here, so this can undercount what you actually mined. Ore is valued at its Jita sell price (a raw-ore proxy).</p>
+<p class="mt-4 text-[11px] text-faint">{% translate "Only mining captured by a corp refinery's observer is recorded — belt or nomad mining outside a corp refinery won't appear here, so this can undercount what you actually mined. Ore is valued at its Jita sell price (a raw-ore proxy)." %}</p>
 {% endif %}
 {% endblock %}

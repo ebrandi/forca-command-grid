@@ -9,7 +9,7 @@ from __future__ import annotations
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
-from django.utils import timezone
+from django.utils import formats, timezone
 
 from .models import ContributionEvent, PilotPreference
 
@@ -229,7 +229,10 @@ def personal_trend(user, months: int = 6, now=None) -> dict:
             current = run
 
     return {
-        "month_labels": [m.strftime("%b") for m in month_starts],
+        # date_format honours the active locale ("janv." fr, "3月" ja) while staying
+        # byte-identical to the old strftime("%b") under English. Labels are frozen into
+        # the json_script chart payload server-side (no JS-side date formatting).
+        "month_labels": [formats.date_format(m, "M") for m in month_starts],
         "kinds": kinds,
         "longest_streak": longest,
         "current_streak": current,

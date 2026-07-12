@@ -1,28 +1,29 @@
 {% extends "base.html" %}
 {% load eve %}
-{% block title %}My colonies · Planetary Industry{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "My colonies" %} · {% translate "Planetary Industry" %}{% endblock %}
 {% block content %}
 <header class="mb-5 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <a href="{% url 'planetary:landing' %}" class="text-xs text-faint hover:text-gold">← Planetary Industry</a>
-    <h1 class="mt-1 text-3xl font-bold text-ink">My colonies</h1>
-    <p class="mt-1 max-w-2xl text-sm text-faint">Import your live colonies from EVE to see your layouts, spot problems, and compare them with your plans.</p>
+    <a href="{% url 'planetary:landing' %}" class="text-xs text-faint hover:text-gold">← {% translate "Planetary Industry" %}</a>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "My colonies" %}</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Import your live colonies from EVE to see your layouts, spot problems, and compare them with your plans." %}</p>
   </div>
   {% if any_granted %}
   <form method="post" action="{% url 'planetary:colonies_sync' %}">{% csrf_token %}
-    <button class="btn-gold"><svg class="h-4 w-4"><use href="#i-jump"/></svg> Sync now</button>
+    <button class="btn-gold"><svg class="h-4 w-4"><use href="#i-jump"/></svg> {% translate "Sync now" %}</button>
   </form>
   {% endif %}
 </header>
 
 {# Staleness caveat — always visible so nobody is misled #}
 <div class="panel mb-4 border-cyan/30 p-4">
-  <p class="text-sm text-cyan">Heads-up: EVE only updates a colony's layout in ESI when you <span class="font-medium">open that colony in the game client</span>. Imported data can lag reality — open each colony in EVE, then sync, for an accurate picture.</p>
+  <p class="text-sm text-cyan">{% blocktranslate %}Heads-up: EVE only updates a colony's layout in ESI when you <span class="font-medium">open that colony in the game client</span>. Imported data can lag reality — open each colony in EVE, then sync, for an accurate picture.{% endblocktranslate %}</p>
 </div>
 
 {# Per-character access #}
 <section class="panel mb-4 p-5">
-  <h2 class="eyebrow mb-3 text-gold">Access</h2>
+  <h2 class="eyebrow mb-3 text-gold">{% translate "Access" %}</h2>
   <div class="space-y-2">
     {% for c in characters %}
     <div class="flex items-center justify-between gap-3 rounded-lg border border-line bg-panel2/40 px-3 py-2">
@@ -31,17 +32,18 @@
         <span class="text-sm text-ink">{{ c.char.name }}</span>
       </div>
       {% if c.granted %}
-        <span class="chip !border-kill/40 !text-kill">Access granted</span>
+        <span class="chip !border-kill/40 !text-kill">{% translate "Access granted" %}</span>
       {% else %}
-        <a href="{% url 'sso:login' %}?feature={{ scope_feature }}" class="btn-ghost !text-xs">Grant PI access</a>
+        <a href="{% url 'sso:login' %}?feature={{ scope_feature }}" class="btn-ghost !text-xs">{% translate "Grant PI access" %}</a>
       {% endif %}
     </div>
     {% empty %}
-    <p class="text-sm text-faint">Link an EVE character first to import colonies.</p>
+    <p class="text-sm text-faint">{% translate "Link an EVE character first to import colonies." %}</p>
     {% endfor %}
   </div>
   {% if not any_granted %}
-  <p class="mt-3 text-xs text-faint">Granting is opt-in and read-only — it only lets the planner see your colonies. You can revoke it any time on the <a href="{% url 'sso:scopes' %}" class="text-gold hover:underline">access page</a>.</p>
+  {% url 'sso:scopes' as scopes_url %}
+  <p class="mt-3 text-xs text-faint">{% blocktranslate %}Granting is opt-in and read-only — it only lets the planner see your colonies. You can revoke it any time on the <a href="{{ scopes_url }}" class="text-gold hover:underline">access page</a>.{% endblocktranslate %}</p>
   {% endif %}
 </section>
 
@@ -52,22 +54,23 @@
   <div class="panel p-4">
     <div class="flex items-start justify-between gap-2">
       <div>
-        <p class="font-medium text-ink">{{ col.planet_type_name }} colony</p>
-        <p class="text-xs text-faint">{{ col.solar_system_name|default:"Unknown system" }} · CC level {{ col.upgrade_level }} · {{ col.num_pins }} pins</p>
+        <p class="font-medium text-ink">{% blocktranslate with name=col.planet_type_name %}{{ name }} colony{% endblocktranslate %}</p>
+        {% translate "Unknown system" as unknown_system %}
+        <p class="text-xs text-faint">{{ col.solar_system_name|default:unknown_system }} · {% translate "CC level" %} {{ col.upgrade_level }} · {{ col.num_pins }} {% translate "pins" %}</p>
       </div>
       {% if col.last_update %}
-        <span class="text-[11px] text-faint" title="Last touched in the EVE client">updated {{ col.last_update|timesince }} ago</span>
+        <span class="text-[11px] text-faint" title="{% translate 'Last touched in the EVE client' %}">{% blocktranslate with ago=col.last_update|timesince %}updated {{ ago }} ago{% endblocktranslate %}</span>
       {% else %}
-        <span class="chip !text-faint">no timestamp</span>
+        <span class="chip !text-faint">{% translate "no timestamp" %}</span>
       {% endif %}
     </div>
     {% with s=col.summary %}
     <div class="mt-3 flex flex-wrap gap-1.5 text-xs">
-      {% if s.facilities %}<span class="chip">{{ s.facilities.extractor }} extractor{{ s.facilities.extractor|pluralize }}</span><span class="chip">{{ s.facilities.factory }} factor{{ s.facilities.factory|pluralize:"y,ies" }}</span>{% endif %}
-      {% if s.routes %}<span class="chip">{{ s.routes }} routes</span>{% endif %}
+      {% if s.facilities %}<span class="chip">{% blocktranslate count n=s.facilities.extractor %}{{ n }} extractor{% plural %}{{ n }} extractors{% endblocktranslate %}</span><span class="chip">{% blocktranslate count n=s.facilities.factory %}{{ n }} factory{% plural %}{{ n }} factories{% endblocktranslate %}</span>{% endif %}
+      {% if s.routes %}<span class="chip">{{ s.routes }} {% translate "routes" %}</span>{% endif %}
     </div>
-    {% if s.extracting %}<p class="mt-2 text-xs text-faint">Extracting: <span class="text-ink">{% for e in s.extracting %}{{ e.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</span></p>{% endif %}
-    {% if s.schematics %}<p class="mt-1 text-xs text-faint">Producing: <span class="text-ink">{% for sc in s.schematics %}{{ sc.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</span></p>{% endif %}
+    {% if s.extracting %}<p class="mt-2 text-xs text-faint">{% translate "Extracting:" %} <span class="text-ink">{% for e in s.extracting %}{{ e.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</span></p>{% endif %}
+    {% if s.schematics %}<p class="mt-1 text-xs text-faint">{% translate "Producing:" %} <span class="text-ink">{% for sc in s.schematics %}{{ sc.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</span></p>{% endif %}
     {% if s.issues %}
     <div class="mt-2 rounded border border-loss/30 bg-loss/5 p-2">
       {% for issue in s.issues %}<p class="text-xs text-loss">⚠ {{ issue }}</p>{% endfor %}
@@ -80,7 +83,7 @@
 {% else %}
 <div class="panel px-4 py-12 text-center">
   <svg class="mx-auto h-8 w-8 text-faint"><use href="#i-box"/></svg>
-  <p class="mt-3 text-sm text-faint">No colonies imported yet. Grant access above, open your colonies in EVE, then hit <span class="text-ink">Sync</span>.</p>
+  <p class="mt-3 text-sm text-faint">{% blocktranslate %}No colonies imported yet. Grant access above, open your colonies in EVE, then hit <span class="text-ink">Sync</span>.{% endblocktranslate %}</p>
 </div>
 {% endif %}
 {% endblock %}

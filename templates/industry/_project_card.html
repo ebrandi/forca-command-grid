@@ -1,4 +1,5 @@
 {% load eve %}
+{% load i18n %}
 <a href="{% url 'industry:detail' p.pk %}" class="panel group p-4 hover:border-gold/40 transition">
   <div class="flex items-center justify-between gap-2">
     <h3 class="font-display font-semibold text-ink group-hover:text-gold transition">{{ p.name }}</h3>
@@ -6,6 +7,6 @@
   </div>
   <p class="mt-1.5 text-xs text-faint">{{ p.get_objective_type_display }} · est. <span class="data text-gold">{{ p.estimated_cost|default:0|isk }}</span> ISK</p>
   <p class="mt-1 text-xs text-faint">
-    {% if p.assigned_to %}Led by <span class="text-muted">{{ p.assigned_to.first_name|default:p.assigned_to.username }}</span>{% else %}<span class="text-loss/80">Unclaimed — needs a lead</span>{% endif %}
+    {% if p.assigned_to %}{% translate "Led by" %} <span class="text-muted">{{ p.assigned_to.first_name|default:p.assigned_to.username }}</span>{% else %}<span class="text-loss/80">{% translate "Unclaimed — needs a lead" %}</span>{% endif %}
   </p>
 </a>
