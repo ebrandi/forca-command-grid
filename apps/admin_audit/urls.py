@@ -11,6 +11,7 @@ from . import (
     console_comms_access,
     console_corporation,
     console_doctrine_xml,
+    console_i18n,
     console_industry,
     console_mentorship,
     console_navigation,
@@ -36,6 +37,8 @@ urlpatterns = [
     path("admin/features/", console.features, name="features"),
     path("admin/compliance/", console.compliance, name="compliance"),
     path("admin/retention/settings/", console.retention_settings, name="retention_settings"),
+    # Localisation policy — which locales the language selector offers (Director).
+    path("admin/i18n/", console_i18n.i18n_settings, name="i18n_settings"),
     # Access governance — partner alliances + friendly corporations (Director).
     path("admin/access/", console_access.access_governance, name="access_governance"),
     path("admin/access/partner-alliances/save/", console_access.partner_alliance_save,

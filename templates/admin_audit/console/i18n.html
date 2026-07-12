@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Localisation" %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← {% translate "Admin console" %}</a>
+<header class="mt-2 mb-6">
+  <p class="eyebrow">{% translate "System" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Localisation" %}</h1>
+  <p class="mt-1 text-sm text-faint">{% translate "Choose which languages the selector offers your pilots. English is the source language and is always available. Turning a language on here reveals it in the language menu; the app stays English-default until a pilot picks another." %}</p>
+</header>
+
+<form method="post">
+  {% csrf_token %}
+  <div class="space-y-6">
+
+    <!-- Enabled locales + per-language translation coverage. -->
+    <section class="panel overflow-hidden">
+      <div class="border-b border-line px-4 py-3">
+        <h2 class="eyebrow text-faint">{% translate "Languages the selector offers" %}</h2>
+        <p class="mt-1 text-xs text-faint">{% translate "Tick a language to offer it in the selector. English can’t be turned off — it’s the fallback for anything not yet translated." %}</p>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-line/60 text-left text-xs text-faint">
+              <th class="px-4 py-2 font-medium">{% translate "Offer" %}</th>
+              <th class="px-4 py-2 font-medium">{% translate "Language" %}</th>
+              <th class="px-4 py-2 font-medium">{% translate "Code" %}</th>
+              <th class="px-4 py-2 font-medium">{% translate "Translation coverage" %}</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-line/40">
+            {% for row in rows %}
+            <tr class="hover:bg-panel2/40">
+              <td class="px-4 py-3 align-top">
+                <input type="checkbox" name="locale" value="{{ row.code }}"
+                       {% if row.enabled %}checked{% endif %}
+                       {% if row.is_english %}disabled title="{% translate 'English is always available.' %}"{% endif %}>
+                {% if row.is_english %}
+                  {# Disabled boxes aren't submitted — force English on server-side. #}
+                  <input type="hidden" name="locale" value="{{ row.code }}">
+                {% endif %}
+              </td>
+              <td class="px-4 py-3 align-top">
+                <span class="block font-medium text-ink" lang="{{ row.code }}">{{ row.native }}</span>
+                <span class="block text-xs text-faint">{{ row.label }}</span>
+              </td>
+              <td class="px-4 py-3 align-top data text-xs text-faint">{{ row.code }}</td>
+              <td class="px-4 py-3 align-top text-xs text-faint">
+                {% if row.is_english %}
+                  {% translate "Source language" %}
+                {% elif row.coverage %}
+                  {% blocktranslate with percent=row.coverage.percent x=row.coverage.translated y=row.coverage.total %}{{ percent }}% ({{ x }}/{{ y }} strings){% endblocktranslate %}
+                {% else %}
+                  {% translate "No catalogue yet" %}
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Default + broadcast locale. -->
+    <section class="panel overflow-hidden">
+      <div class="border-b border-line px-4 py-3">
+        <h2 class="eyebrow text-faint">{% translate "Default &amp; broadcast language" %}</h2>
+        <p class="mt-1 text-xs text-faint">{% translate "The default is used before a pilot chooses. The broadcast language is used for group messages that have no single recipient. Both must be an offered language." %}</p>
+      </div>
+      <div class="divide-y divide-line/40 text-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+          <label class="font-medium text-ink" for="default-locale">{% translate "Default language" %}</label>
+          <select id="default-locale" name="default"
+                  class="rounded border border-line bg-panel2 px-2 py-1 text-sm text-ink">
+            {% for row in rows %}
+              <option value="{{ row.code }}" {% if row.code == default_locale %}selected{% endif %}>{{ row.native }} ({{ row.code }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+          <label class="font-medium text-ink" for="broadcast-locale">{% translate "Broadcast language" %}</label>
+          <select id="broadcast-locale" name="broadcast_locale"
+                  class="rounded border border-line bg-panel2 px-2 py-1 text-sm text-ink">
+            {% for row in rows %}
+              <option value="{{ row.code }}" {% if row.code == broadcast_locale %}selected{% endif %}>{{ row.native }} ({{ row.code }})</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- Selection behaviour toggles. -->
+    <section class="panel overflow-hidden">
+      <div class="border-b border-line px-4 py-3">
+        <h2 class="eyebrow text-faint">{% translate "Selection behaviour" %}</h2>
+      </div>
+      <div class="divide-y divide-line/40">
+        <label class="flex cursor-pointer items-start gap-3 px-4 py-3 hover:bg-panel2/40">
+          <input type="checkbox" name="browser_detection" {% if browser_detection %}checked{% endif %} class="mt-1">
+          <span class="min-w-0">
+            <span class="block text-sm font-medium text-ink">{% translate "Detect language from the browser" %}</span>
+            <span class="block text-xs text-faint">{% translate "For a new visitor who hasn’t chosen, use the browser’s preferred language if it’s one you offer." %}</span>
+          </span>
+        </label>
+        <label class="flex cursor-pointer items-start gap-3 px-4 py-3 hover:bg-panel2/40">
+          <input type="checkbox" name="anon_selection" {% if anon_selection %}checked{% endif %} class="mt-1">
+          <span class="min-w-0">
+            <span class="block text-sm font-medium text-ink">{% translate "Let signed-out visitors pick a language" %}</span>
+            <span class="block text-xs text-faint">{% translate "Show the language selector to anonymous visitors, not only signed-in pilots." %}</span>
+          </span>
+        </label>
+      </div>
+    </section>
+
+    <!-- CCP game-data localisation status (read-only, honest). -->
+    <section class="panel overflow-hidden">
+      <div class="border-b border-line px-4 py-3">
+        <h2 class="eyebrow text-faint">{% translate "Game-data names" %}</h2>
+      </div>
+      <div class="px-4 py-3 text-xs text-faint">{{ ccp_status }}</div>
+    </section>
+  </div>
+
+  <div class="mt-5"><button class="btn-gold">{% translate "Save changes" %}</button></div>
+</form>
+{% endblock %}
