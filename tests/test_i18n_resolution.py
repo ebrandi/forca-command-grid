@@ -80,6 +80,23 @@ def test_browser_detection_toggle_off():
     assert resolve_language(_req(accept="de-DE,de;q=0.9")) == "en"
 
 
+def test_configured_default_is_honoured_when_no_other_signal():
+    # Leadership sets the corp default to German; a visitor with no preference, no
+    # cookie, and no matching browser language gets German (not English).
+    config.set_i18n_config(locales={"de": True}, default="de")
+    assert resolve_language(_req()) == "de"
+
+
+def test_browser_language_still_beats_the_configured_default():
+    config.set_i18n_config(locales={"de": True, "fr": True}, default="de")
+    assert resolve_language(_req(accept="fr-FR,fr;q=0.9")) == "fr"
+
+
+def test_english_remains_the_ultimate_fallback():
+    # Default config (English-only) → English.
+    assert resolve_language(_req()) == "en"
+
+
 def test_region_variant_folds_to_base():
     config.set_i18n_config(locales={"de": True})
     # A regional Accept-Language collapses to the supported base variant.

@@ -22,7 +22,7 @@ from django.conf import settings
 from django.utils.translation import get_supported_language_variant
 from django.utils.translation.trans_real import parse_accept_lang_header
 
-from .config import enabled_locales, get_i18n_config, is_i18n_enabled
+from .config import default_locale, enabled_locales, get_i18n_config, is_i18n_enabled
 
 
 def _supported(code, allowed: set[str]) -> str | None:
@@ -73,5 +73,7 @@ def resolve_language(request) -> str:
         if hit:
             return hit
 
-    # 4. Canonical English default.
-    return _supported(fallback, allowed) or "en"
+    # 4. The corp-configured default locale (English unless leadership changed it in
+    #    the admin panel), validated against the enabled allow-list; a matching browser
+    #    language above still wins. English is the ultimate fallback.
+    return _supported(default_locale(), allowed) or _supported(fallback, allowed) or "en"
