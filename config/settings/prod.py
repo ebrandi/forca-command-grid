@@ -102,6 +102,11 @@ SESSION_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_SECURE = env.bool("DJANGO_CSRF_COOKIE_SECURE", default=True)
 CSRF_COOKIE_HTTPONLY = False  # template forms need to read it via {% csrf_token %}
 CSRF_COOKIE_SAMESITE = "Lax"
+# The language cookie holds a locale code, not a credential, but there is no reason
+# to ship it over plaintext when nothing else here is. Default to the session
+# cookie's posture so an HTTP-only test box that already relaxed that one keeps
+# working (a Secure cookie over HTTP is silently dropped, losing the selection).
+LANGUAGE_COOKIE_SECURE = env.bool("DJANGO_LANGUAGE_COOKIE_SECURE", default=SESSION_COOKIE_SECURE)
 
 # Session lifetime: cap the replay window of a stolen session cookie. Django's
 # default is a 2-week absolute age with no idle timeout; for an ops hub holding

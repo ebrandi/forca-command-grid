@@ -28,6 +28,16 @@ def test_sets_cookie_and_redirects_to_safe_next():
     assert resp.cookies["forca_language"].value == "de"
 
 
+def test_cookie_is_not_script_readable():
+    # Only the server-side resolver reads this cookie, so it stays out of reach of
+    # document.cookie. (Secure is a prod-only flag — dev/test speak plain HTTP.)
+    config.set_i18n_config(locales={"de": True})
+    resp = set_language(_post({"language": "de", "next": "/"}))
+    cookie = resp.cookies["forca_language"]
+    assert cookie["httponly"] is True
+    assert cookie["samesite"] == "Lax"
+
+
 def test_persists_authenticated_preference():
     config.set_i18n_config(locales={"de": True})
     user = User.objects.create(username="eve:1")

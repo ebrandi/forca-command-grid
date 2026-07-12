@@ -212,10 +212,14 @@ I18N_ENABLED = env.bool("I18N_ENABLED", default=True)
 
 # The explicit/anonymous language choice is persisted in this cookie (Django ≥4.0
 # no longer stores locale in the session). Authenticated users additionally get an
-# account preference (identity.User.language). prod.py may set LANGUAGE_COOKIE_SECURE.
+# account preference (identity.User.language). prod.py sets LANGUAGE_COOKIE_SECURE.
 LANGUAGE_COOKIE_NAME = "forca_language"
 LANGUAGE_COOKIE_AGE = 365 * 24 * 60 * 60  # 1 year
 LANGUAGE_COOKIE_SAMESITE = "Lax"
+# Django defaults this to False because the cookie is script-readable by design.
+# Nothing here reads it from JS — only the server-side resolver does — so close
+# the XSS read/write path the default leaves open.
+LANGUAGE_COOKIE_HTTPONLY = True
 
 # --- Static / media -----------------------------------------------------
 STATIC_URL = "/static/"
