@@ -5,3 +5,6 @@ pytest-cov>=5.0,<7.0
 factory-boy>=3.3,<4.0
 responses>=0.25,<0.26
 ruff>=0.7,<0.13
+# Reads/writes .po/.mo catalogues for the localisation tooling and the catalogue
+# validation + terminology checks (see docs/i18n/design/11-catalogue-maintenance.md).
+polib>=1.2,<2.0

@@ -17,6 +17,19 @@ class User(AbstractUser):
     # import cycle with the sso app).
     main_character_id = models.BigIntegerField(null=True, blank=True)
 
+    # Preferred UI language (a settings.LANGUAGES code, e.g. "pt-br"). Blank = not
+    # explicitly chosen, so the locale resolver may use the browser's Accept-Language
+    # before falling back to English. Account-level, never per-character. Validated
+    # against the enabled allow-list at the set_language boundary, not on the column
+    # (so widening LANGUAGES needs no migration). See docs/i18n/design/06-preference-data-model.md.
+    language = models.CharField(
+        max_length=16,
+        blank=True,
+        default="",
+        help_text="Preferred UI language (a settings.LANGUAGES code, e.g. 'pt-br'); "
+        "blank = auto-detect from the browser, then English.",
+    )
+
     def max_role_rank(self) -> int:
         """Highest role rank this user holds (used by core.rbac).
 

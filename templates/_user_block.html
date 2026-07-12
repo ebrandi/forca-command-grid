@@ -1,4 +1,4 @@
-{% load eve %}
+{% load eve i18n %}
 <div class="border-t border-line p-3">
   {% if main_character %}
     <div class="flex items-center gap-3 rounded-lg bg-panel2 p-2.5">
@@ -6,12 +6,12 @@
       <div class="min-w-0 flex-1">
         <p class="truncate text-sm font-medium text-ink">{{ main_character.name }}</p>
         <p class="truncate text-[11px] text-faint">
-          {% if is_director %}Director{% elif is_officer %}Officer{% elif is_member %}Member{% else %}Capsuleer{% endif %}
+          {% if is_director %}{% translate "Director" %}{% elif is_officer %}{% translate "Officer" %}{% elif is_member %}{% translate "Member" %}{% else %}{% translate "Capsuleer" %}{% endif %}
           {% if main_character.is_corp_member %}· FORCA{% endif %}
         </p>
       </div>
       <form action="{% url 'sso:logout' %}" method="post">{% csrf_token %}
-        <button class="text-faint hover:text-loss" title="Log out" aria-label="Log out">
+        <button class="text-faint hover:text-loss" title="{% translate 'Log out' %}" aria-label="{% translate 'Log out' %}">
           <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 6V5a2 2 0 00-2-2H6a2 2 0 00-2 2v14a2 2 0 002 2h6a2 2 0 002-2v-1M9 12h12m0 0l-3-3m3 3l-3 3"/></svg>
         </button>
       </form>
@@ -19,7 +19,25 @@
   {% else %}
     <a href="{% url 'sso:login' %}" class="btn-gold w-full">
       <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M7 12h11m0 0l-3-3m3 3l-3 3"/></svg>
-      Log in with EVE
+      {% translate "Log in with EVE" %}
     </a>
+  {% endif %}
+
+  {# Language selector: native labels, no flags, keyboard/AT accessible; shown only when >1 locale is enabled. data-autosubmit posts on change (app.js); the noscript button keeps it usable without JS. #}
+  {% if i18n_show_selector %}
+  <form action="{% url 'set_language' %}" method="post" class="mt-2">{% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+    <label for="lang-select" class="sr-only">{% translate "Interface language" %}</label>
+    <div class="flex items-center gap-1.5">
+      <svg class="h-4 w-4 shrink-0 text-faint" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18"/></svg>
+      <select id="lang-select" name="language" data-autosubmit
+              class="w-full rounded-md border border-line bg-space/40 px-2 py-1.5 text-xs text-muted focus:border-gold/40 focus:text-ink focus:outline-none">
+        {% for loc in i18n_locales %}
+        <option value="{{ loc.code }}" {% if loc.current %}selected{% endif %}>{{ loc.native }}</option>
+        {% endfor %}
+      </select>
+      <noscript><button type="submit" class="rounded-md border border-line px-2 py-1.5 text-xs text-muted">{% translate "Go" %}</button></noscript>
+    </div>
+  </form>
   {% endif %}
 </div>

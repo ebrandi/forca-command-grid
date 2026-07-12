@@ -72,8 +72,18 @@ jobs:
           cache: pip
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
+      - name: Install gettext (msgfmt, for catalogue compilation)
+        run: sudo apt-get update && sudo apt-get install -y gettext
       - name: Django system check
         run: python manage.py check
+      - name: Compile message catalogues
+        # Fails the build on a malformed .po — a broken locale must never ship
+        # silently (docs/i18n/design/11-catalogue-maintenance.md). A harmless no-op
+        # until the first catalogues land. The catalogue-freshness gate
+        # (makemessages --all --no-obsolete + a clean git diff) and the terminology
+        # linter over locale/**/*.po are enabled alongside the initial extracted
+        # catalogues in Phase 2.
+        run: python manage.py compilemessages
       - name: Run tests
         run: pytest -q
 

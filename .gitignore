@@ -128,3 +128,16 @@ sbom.cdx.json
 
 # Written by scripts/rollback.sh
 .rollback-from
+
+# ─────────────────────────────────────────────────────────────
+#  Localisation
+# ─────────────────────────────────────────────────────────────
+# Compiled gettext catalogues — build artifacts compiled from the tracked .po
+# sources into the image / by CI (docs/i18n/design/11-catalogue-maintenance.md).
+# The .po files under locale/ ARE tracked.
+*.mo
+# Scratch dir for the machine-translation drafting pipeline (not source).
+.i18n_work/
+
+# Temporary documentation
+docs/

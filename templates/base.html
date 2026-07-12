@@ -1,5 +1,5 @@
-{% load static eve %}<!doctype html>
-<html lang="en" class="h-full">
+{% load static eve i18n %}<!doctype html>
+<html lang="{{ LANGUAGE_CODE|default:'en' }}" class="h-full">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -20,7 +20,7 @@
   {% block extra_head %}{% endblock %}
 </head>
 <body class="min-h-full font-sans text-ink antialiased" x-data="{open:false}">
-  <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 btn-gold">Skip to content</a>
+  <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 btn-gold">{% translate "Skip to content" %}</a>
 
   {# Director "view-as": full-width banner + top-right Exit control while impersonating. #}
   {% include "_impersonation_banner.html" %}
@@ -56,7 +56,7 @@
   <aside class="hidden lg:flex fixed inset-y-0 left-0 z-30 w-60 flex-col border-r border-line bg-panel/70 backdrop-blur">
     <a href="/" class="flex items-center gap-2 border-b border-line px-5 h-16">
       {% if home_corp_id %}
-        <img src="{% eve_corp_logo home_corp_id 64 %}" alt="Corporation logo" class="h-9 w-9 rounded">
+        <img src="{% eve_corp_logo home_corp_id 64 %}" alt="{% translate 'Corporation logo' %}" class="h-9 w-9 rounded">
       {% else %}
         <span class="grid h-8 w-8 place-items-center rounded bg-gold text-space"><svg class="h-5 w-5"><use href="#i-grid"/></svg></span>
       {% endif %}
@@ -65,10 +65,10 @@
         <span class="block text-[10px] uppercase tracking-[0.2em] text-faint">Command Grid</span>
       </span>
     </a>
-    <button @click="$dispatch('cmdk')" type="button" aria-label="Open command palette"
+    <button @click="$dispatch('cmdk')" type="button" aria-label="{% translate 'Open command palette' %}"
             class="mx-3 mt-3 mb-1 flex items-center gap-2 rounded-md border border-line bg-space/40 px-3 py-2 text-xs text-faint transition hover:border-gold/40 hover:text-ink">
       <svg class="h-4 w-4"><use href="#i-command"/></svg>
-      <span class="flex-1 text-left">Jump to…</span>
+      <span class="flex-1 text-left">{% translate "Jump to…" %}</span>
       <kbd class="rounded border border-line px-1.5 py-0.5 text-[10px]">⌘K</kbd>
     </button>
     {% include "_nav.html" %}
@@ -77,16 +77,16 @@
 
   <!-- Mobile top bar -->
   <header class="lg:hidden sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-line bg-panel/90 px-4 backdrop-blur">
-    <button @click="open=true" class="text-muted hover:text-ink" aria-label="Open menu">
+    <button @click="open=true" class="text-muted hover:text-ink" aria-label="{% translate 'Open menu' %}">
       <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
     </button>
     <a href="/" class="flex items-center gap-2 font-display text-sm font-bold tracking-wider text-gold">
       {% if home_corp_id %}<img src="{% eve_corp_logo home_corp_id 64 %}" alt="" class="h-7 w-7 rounded">{% endif %}[FORCA] Command Grid
     </a>
     <div class="ml-auto flex items-center gap-3">
-      <button @click="$dispatch('cmdk')" type="button" aria-label="Open command palette" class="text-muted hover:text-ink"><svg class="h-5 w-5"><use href="#i-command"/></svg></button>
+      <button @click="$dispatch('cmdk')" type="button" aria-label="{% translate 'Open command palette' %}" class="text-muted hover:text-ink"><svg class="h-5 w-5"><use href="#i-command"/></svg></button>
       {% if main_character %}<img src="{% eve_portrait main_character.character_id 32 %}" alt="" class="h-8 w-8 rounded-full ring-1 ring-line">
-      {% else %}<a href="{% url 'sso:login' %}" class="btn-gold !px-3 !py-1.5 text-xs">Log in</a>{% endif %}
+      {% else %}<a href="{% url 'sso:login' %}" class="btn-gold !px-3 !py-1.5 text-xs">{% translate "Log in" %}</a>{% endif %}
     </div>
   </header>
 
@@ -99,7 +99,7 @@
           {% if home_corp_id %}<img src="{% eve_corp_logo home_corp_id 64 %}" alt="" class="h-8 w-8 rounded">{% endif %}
           <span class="font-display font-bold tracking-wider text-gold">[FORCA]</span>
         </span>
-        <button @click="open=false" type="button" aria-label="Close menu" class="text-muted hover:text-ink"><svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+        <button @click="open=false" type="button" aria-label="{% translate 'Close menu' %}" class="text-muted hover:text-ink"><svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       </div>
       {% include "_nav.html" %}
       {% include "_user_block.html" %}
@@ -123,12 +123,12 @@
     </main>
     <footer class="border-t border-line/60">
       <div class="mx-auto max-w-6xl px-4 sm:px-6 py-5 text-[11px] leading-relaxed text-faint">
-        {% if not user.is_authenticated %}<p class="mb-1"><a href="{% url 'showcase' %}" class="text-muted hover:text-gold">Features</a></p>{% endif %}
-        <p>Created by <span class="text-muted">Stromgren</span>.{% if app_commit %}
+        {% if not user.is_authenticated %}<p class="mb-1"><a href="{% url 'showcase' %}" class="text-muted hover:text-gold">{% translate "Features" %}</a></p>{% endif %}
+        <p>{% translate "Created by" %} <span class="text-muted">Stromgren</span>.{% if app_commit %}
           <span class="text-faint/70">·</span>
-          <span title="Deployed source revision">build <span class="font-mono text-muted">{{ app_commit }}</span></span>{% endif %}</p>
-        <p class="mt-1">EVE Online and the EVE logo are the registered trademarks of CCP hf. All rights reserved.
-        This is a fan site, not affiliated with or endorsed by CCP hf.</p>
+          <span title="{% translate 'Deployed source revision' %}">{% translate "build" %} <span class="font-mono text-muted">{{ app_commit }}</span></span>{% endif %}</p>
+        <p class="mt-1">{% blocktranslate %}EVE Online and the EVE logo are the registered trademarks of CCP hf. All rights reserved.
+        This is a fan site, not affiliated with or endorsed by CCP hf.{% endblocktranslate %}</p>
       </div>
     </footer>
   </div>
@@ -146,7 +146,7 @@
            @keydown.down.prevent="move(1)" @keydown.up.prevent="move(-1)" @keydown.enter.prevent="go()">
         <div class="flex items-center gap-2 border-b border-line px-4 py-3">
           <svg class="h-4 w-4 text-faint"><use href="#i-command"/></svg>
-          <input x-ref="q" x-model="q" type="text" placeholder="Jump to a page…" autocomplete="off" spellcheck="false"
+          <input x-ref="q" x-model="q" type="text" placeholder="{% translate 'Jump to a page…' %}" autocomplete="off" spellcheck="false"
                  class="w-full bg-transparent text-sm text-ink placeholder:text-faint focus:outline-none" @input="sel = 0">
           <kbd class="rounded border border-line px-1.5 py-0.5 text-[10px] text-faint">esc</kbd>
         </div>
@@ -162,7 +162,7 @@
               </a>
             </li>
           </template>
-          <li x-show="!filtered.length" class="px-4 py-8 text-center text-xs text-faint">No matches.</li>
+          <li x-show="!filtered.length" class="px-4 py-8 text-center text-xs text-faint">{% translate "No matches." %}</li>
         </ul>
       </div>
     </div>

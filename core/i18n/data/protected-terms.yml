@@ -1,0 +1,346 @@
+# =============================================================================
+# FORCA Command Grid — protected-terms.yml
+# Machine-readable terminology rule data for the pytest terminology linter
+# (tests/test_i18n_terminology.py, Decision D16). Loaded by core/i18n/terminology.py.
+# Human counterpart: docs/i18n/glossary/README.md. Governing policy:
+# docs/i18n/design/04-terminology-governance.md. (This data file is version-controlled;
+# the docs/ tree is not — that is why the rule data lives here in the package.)
+# =============================================================================
+#
+# WHAT THIS FILE IS
+#   The linter loads this file with a YAML parser and checks every
+#   non-English catalogue (locale/<lang>/LC_MESSAGES/*.po, for each <lang> in
+#   settings.LANGUAGES except "en"). For each .po entry with a non-empty
+#   msgstr it enforces:
+#     - Category B: if a protected term (or one of its aliases) appears in the
+#       msgid, the msgstr must PRESERVE that term (keep English) UNLESS an
+#       approved per-locale exception exists, in which case the exception's
+#       `value` is also accepted (and, if `require: true`, is the ONLY accepted
+#       form for that locale).
+#     - Category A: if one of `category_a.sample_terms` appears in the msgid,
+#       the identical token must appear in the msgstr. There are NO .po
+#       exceptions for Category A — an official CCP game-data localisation is
+#       applied at the SDE display seam (D13), never in a .po file.
+#   An empty msgstr ("" = untranslated → English fallback) never violates.
+#
+# SCHEMA
+#   version: <int>                     # schema version; bump on breaking change
+#
+#   category_a:                        # GAME-DATA PROPER NOUNS (D13, discovery/game-data.md §7.4)
+#     policy: do_not_translate         # informational; A has no .po exception path
+#     source:                          # documents WHERE A names come from (never this file)
+#       description: <str>
+#       models: [<SdeModel>, ...]      # the 7 named SDE models
+#       ship_category_id: <int>        # apps/sde/search.py:59  (ships  = SDE category 6)
+#       skill_category_id: <int>       # apps/sde/search.py:77  (skills = SDE category 16)
+#       provider: <str>                # official CCP data source (EVE Ref name map)
+#     sample_terms:                    # leak-detector tripwire ONLY (not the full ~52k SDE corpus).
+#       - <str>                        #   Matched case-sensitively, word-boundary, in msgid;
+#       ...                            #   must be preserved verbatim in msgstr. No exceptions.
+#
+#   category_b:                        # COMMUNITY ENGLISH JARGON (kept English by default)
+#     policy: keep_english
+#     terms:
+#       - term: <str>                  # canonical English token as it appears in msgids
+#         aliases: [<str>, ...]        # other spellings that count as "the English token"
+#                                      #   (e.g. highsec / hi-sec for high-sec). Optional.
+#         case_sensitive: <bool>       # default false; abbreviations (FC, SRP, PI) may set true
+#         note: <str>                  # optional, for humans
+#         exceptions:                  # optional; per-locale approved translations (policy §5)
+#           <django-locale-code>:      # e.g. ru, zh-hans, es, fr, de, pt-br, ja, ko
+#             value: <str>             # the approved target-language form
+#             type: official_ccp|community
+#             approved_by: <str>       # required
+#             date: <YYYY-MM-DD>       # required
+#             source: <str>            # required when type == official_ccp (CCP citation)
+#             rationale: <str>         # required when type == community
+#             evidence: <str>          # required when type == community (usage proof)
+#             require: <bool>          # optional; if true the approved value is MANDATORY
+#                                      #   (English token no longer accepted for this locale)
+#
+# NOTES
+#   * Locale codes are Django canonical codes (D2): en, pt-br, es, fr, ru, de,
+#     zh-hans, ko, ja. This file only ever names the eight NON-English locales
+#     in `exceptions:`.
+#   * Word-boundary matching is Unicode-aware; multi-word / hyphenated terms
+#     (e.g. "command destroyer", "high-sec") are matched as phrases so that
+#     "cyno" does not match inside "cynosural" and "logi" not inside "logistics".
+#   * The exceptions below are ILLUSTRATIVE placeholders left EMPTY ({}) by
+#     default: no per-locale translation is approved until the §5 process fills
+#     one in. The commented example on `high-sec` shows the exact shape.
+#   * This file and docs/i18n/glossary/README.md must stay in sync (policy §7).
+# =============================================================================
+
+version: 1
+
+# -----------------------------------------------------------------------------
+# CATEGORY A — game-data proper nouns. Names come ONLY from CCP data (D13);
+# this block documents the source and provides a small leak-detector list.
+# -----------------------------------------------------------------------------
+category_a:
+  policy: do_not_translate
+  source:
+    description: >-
+      EVE game-data names (ships, modules, charges, ore, skills, groups,
+      categories, systems, constellations, regions, stations) are stored per
+      EVE id in the SDE and localised ONLY from official CCP data at the display
+      seam apps/sde/templatetags/eve.py (D13). They are never authored in a .po
+      file. pt-BR has no official CCP game data and falls back to English by
+      design (discovery/game-data.md §6).
+    models:
+      - SdeType
+      - SdeGroup
+      - SdeCategory
+      - SdeRegion
+      - SdeConstellation
+      - SdeSolarSystem
+      - SdeStation
+    ship_category_id: 6      # apps/sde/search.py:59
+    skill_category_id: 16    # apps/sde/search.py:77
+    provider: "CCP SDE via EVE Ref reference-data name map (apps/sde/everef_refdata.py)"
+
+  # Leak detector ONLY: the highest-frequency game-data names likely to slip
+  # into chrome msgids (seeded doctrine text, hub systems). If present in a
+  # msgid, must be preserved verbatim in msgstr. No per-locale exceptions.
+  sample_terms:
+    # ships / hulls
+    - Rifter
+    - Drake
+    - Ferox
+    - Megathron
+    - Machariel
+    - Rattlesnake
+    - Nightmare
+    - Ishtar
+    - Guardian
+    - Basilisk
+    - Sabre
+    - Loki
+    - Muninn
+    # modules / skills (multi-word — matched as phrases)
+    - Damage Control II
+    - Large Shield Extender II
+    - Warp Scrambler II
+    - Stasis Webifier II
+    - Cynosural Field Generator
+    - Cynosural Field Theory
+    # systems / regions
+    - Jita
+    - Amarr
+    - Rens
+    - Hek
+    - Dodixie
+    - The Forge
+    - Delve
+    - Providence
+    - Catch
+
+# -----------------------------------------------------------------------------
+# CATEGORY B — community English jargon. Kept English in msgstr by default;
+# translated only where a governed per-locale exception is recorded.
+# -----------------------------------------------------------------------------
+category_b:
+  policy: keep_english
+  terms:
+    - term: FC
+      case_sensitive: true
+      note: "Fleet Commander; the spelled-out form also stays English."
+      exceptions: {}
+
+    - term: Fleet Commander
+      note: "Spelled-out role; kept English."
+      exceptions: {}
+
+    - term: cyno
+      note: "Cynosural field (lit for jumps). The MODULE is Category A. RU/ZH may localise (on approval)."
+      exceptions: {}
+
+    - term: logi
+      note: "Logistics (rep) role. The HULL (Guardian/Basilisk) is Category A."
+      exceptions: {}
+
+    - term: tackle
+      note: "Warp-disruption role (verb/noun)."
+      exceptions: {}
+
+    - term: scout
+      note: "Forward recon pilot; keep English in fleet context despite common-word overlap."
+      exceptions: {}
+
+    - term: blops
+      note: "Black Ops covert bridging fleet/hull class."
+      exceptions: {}
+
+    - term: doctrine
+      note: "The concept is B; a specific doctrine NAME is Category D (verbatim)."
+      exceptions: {}
+
+    - term: killmail
+      aliases: [killmails, KM]
+      note: "Combat loss record."
+      exceptions: {}
+
+    - term: killboard
+      aliases: [killboards]
+      note: "Kill/loss aggregator (zKillboard)."
+      exceptions: {}
+
+    - term: gatecamp
+      aliases: [gate camp, gatecamps]
+      note: "Also the AlertCategory.GATECAMP label (apps/pingboard/models.py)."
+      exceptions: {}
+
+    - term: roaming
+      note: "Mobile PvP gang; also AlertCategory.ROAMING_GANG ('Roaming gang')."
+      exceptions: {}
+
+    - term: ratting
+      note: "Killing NPCs for ISK/bounty."
+      exceptions: {}
+
+    - term: SRP
+      case_sensitive: true
+      note: "Ship Replacement Programme; abbreviation and spell-out both stay English."
+      exceptions: {}
+
+    - term: buyback
+      note: "Corp ore/loot buy programme; also AlertCategory.BUYBACK label."
+      exceptions: {}
+
+    - term: high-sec
+      aliases: [highsec, hi-sec, "high security"]
+      note: "High-security space."
+      exceptions: {}
+      # ------------------------------------------------------------------
+      # EXAMPLE of an approved community exception (leave commented until
+      # a native-speaker reviewer signs off via policy §5):
+      # exceptions:
+      #   ru:
+      #     value: "хайсек"
+      #     type: community
+      #     approved_by: "loc-lead + ru-reviewer"
+      #     date: "2026-07-11"
+      #     rationale: "de-facto standard in the RU EVE community"
+      #     evidence: "<links / reviewer attestation>"
+      #     require: false
+      # ------------------------------------------------------------------
+
+    - term: low-sec
+      aliases: [lowsec, lo-sec, "low security"]
+      note: "Low-security space."
+      exceptions: {}
+
+    - term: null-sec
+      aliases: [nullsec, "null security", nullsov]
+      note: "Null-security space. Bare 'null' is too ambiguous to protect on its own."
+      exceptions: {}
+
+    - term: PI
+      case_sensitive: true
+      note: "Planetary Interaction; distinct from planet NAMES (Category A)."
+      exceptions: {}
+
+    - term: capital
+      note: "Capital-ship class jargon; a specific hull is Category A."
+      exceptions: {}
+
+    - term: super
+      note: "Supercarrier shorthand; hull names are Category A."
+      exceptions: {}
+
+    - term: dread
+      aliases: [dreads]
+      note: "Dreadnought shorthand; hull names are Category A."
+      exceptions: {}
+
+    - term: carrier
+      note: "Carrier class jargon; specific hulls are Category A."
+      exceptions: {}
+
+    - term: FAX
+      case_sensitive: true
+      note: "Force Auxiliary (capital logistics)."
+      exceptions: {}
+
+    - term: interdictor
+      aliases: [dictor, interdictors]
+      note: "Bubble-deploying destroyer class; hulls (Sabre) are Category A."
+      exceptions: {}
+
+    - term: command destroyer
+      aliases: [command destroyers]
+      note: "Micro-jump destroyer class (multi-word); hulls are Category A."
+      exceptions: {}
+
+    - term: DPS
+      case_sensitive: true
+      note: "Damage per second / damage role."
+      exceptions: {}
+
+    - term: EWAR
+      case_sensitive: true
+      aliases: [ewar]
+      note: "Electronic warfare."
+      exceptions: {}
+
+    - term: neut
+      aliases: [neuts, neuting]
+      note: "Energy neutraliser (verb/noun); the MODULE is Category A."
+      exceptions: {}
+
+    - term: web
+      note: "Stasis webifier (verb/noun); the MODULE is Category A. Common-word overlap — match in fleet context."
+      exceptions: {}
+
+    - term: scram
+      aliases: [scrams]
+      note: "Warp scrambler jargon; the MODULE is Category A."
+      exceptions: {}
+
+    - term: bubble
+      aliases: [bubbles]
+      note: "Warp-disruption sphere."
+      exceptions: {}
+
+    - term: sov
+      note: "Sovereignty; appears in notification descriptions."
+      exceptions: {}
+
+    - term: ADM
+      case_sensitive: true
+      note: "Activity Defense Multiplier."
+      exceptions: {}
+
+    - term: TiDi
+      case_sensitive: true
+      aliases: [tidi]
+      note: "Time dilation; keep CamelCase."
+      exceptions: {}
+
+    - term: pod
+      aliases: [podded]
+      note: "Capsule (escape pod). Common-word overlap — match in fleet/loss context."
+      exceptions: {}
+
+    - term: gank
+      aliases: [ganks, ganked, ganking]
+      note: "Suicide-gank kill."
+      exceptions: {}
+
+    - term: hot-drop
+      aliases: [hotdrop, "hot drop"]
+      note: "Surprise capital escalation."
+      exceptions: {}
+
+    - term: wardec
+      aliases: [wardecs, "war dec"]
+      note: "War declaration."
+      exceptions: {}
+
+    - term: primary
+      note: "Called kill target. Common-word overlap — match in fleet context; keep English."
+      exceptions: {}
+
+    - term: anchor
+      note: "Pilot others orbit/follow. Common-word overlap — match in fleet context."
+      exceptions: {}

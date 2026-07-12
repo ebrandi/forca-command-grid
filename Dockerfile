@@ -6,11 +6,12 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# System deps: libpq for psycopg. (Healthchecks use Python's urllib, so no curl
-# is installed — keeping it out of the runtime image removes a ready-made
-# SSRF/exfil tool for a post-exploitation attacker.)
+# System deps: libpq for psycopg; gettext for `compilemessages` (msgfmt) so the
+# localisation catalogues can be compiled into the image. (Healthchecks use Python's
+# urllib, so no curl is installed — keeping it out of the runtime image removes a
+# ready-made SSRF/exfil tool for a post-exploitation attacker.)
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libpq5 \
+    && apt-get install -y --no-install-recommends libpq5 gettext \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -28,6 +29,13 @@ RUN pip install -r requirements.txt \
 
 # App source
 COPY . .
+
+# Compile message catalogues (.po → .mo) into the image so translations are live at
+# runtime and LOCALE_PATHS finds them. The build FAILS on a malformed catalogue — a
+# broken locale must never ship silently (docs/i18n/design/11-catalogue-maintenance.md).
+# With no catalogues yet this is a harmless no-op. Pinned to the base settings so the
+# step needs no runtime env.
+RUN DJANGO_SETTINGS_MODULE=config.settings.base python manage.py compilemessages
 
 # Non-root runtime user
 RUN useradd --system --create-home appuser \

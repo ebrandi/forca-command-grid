@@ -11,6 +11,8 @@ urlpatterns = [
     path("", views.landing, name="landing"),
     path("features/", views.showcase, name="showcase"),
     path("healthz", views.healthz, name="healthz"),
+    # Language selector POST target (set_language) + the JS message catalogue (jsi18n).
+    path("i18n/", include("core.i18n.urls")),
     path("auth/eve/", include("apps.sso.urls")),
     path("", include("apps.identity.urls")),
     path("killboard/", include("apps.killboard.urls")),

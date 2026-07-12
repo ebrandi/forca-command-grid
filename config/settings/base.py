@@ -91,6 +91,12 @@ MIDDLEWARE = [
     # downstream gate/view/nav transparently sees the pilot. Enforces view-only + live
     # re-validation; see apps.impersonation.middleware.
     "apps.impersonation.middleware.ImpersonationMiddleware",
+    # Immediately after ImpersonationMiddleware so the active UI language can follow
+    # request.real_user (a director's "view-as" renders in the DIRECTOR's language),
+    # and before the gates that may short-circuit the response. Stock LocaleMiddleware
+    # runs before request.user exists and can't honour the profile/impersonation; we
+    # also don't use i18n_patterns. See core.i18n + docs/i18n/adr/ADR-0003.
+    "core.i18n.LocaleMiddleware",
     # After AuthenticationMiddleware (needs request.user + session): enforce an
     # absolute session lifetime cap over the sliding idle timeout.
     "core.middleware.AbsoluteSessionTimeoutMiddleware",
@@ -117,6 +123,9 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                # LANGUAGE_CODE + LANGUAGES for templates; then the enabled selector rows.
+                "django.template.context_processors.i18n",
+                "core.i18n.context.selector",
                 "core.context.roles",
                 "core.context.version",
                 "core.context.csp_nonce",
@@ -160,10 +169,53 @@ SESSION_ABSOLUTE_MAX_AGE = env.int("DJANGO_SESSION_ABSOLUTE_MAX_AGE", default=7 
 IMPERSONATION_MAX_MINUTES = env.int("IMPERSONATION_MAX_MINUTES", default=30)
 
 # --- i18n / tz ----------------------------------------------------------
-LANGUAGE_CODE = "en-us"
+# English is the canonical source language (every msgid IS the English text) and
+# the terminal fallback. See docs/i18n/ for the full localisation design.
+LANGUAGE_CODE = "en"
 TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
+
+# The framework-level locale set (Django canonical codes). This is the second of
+# three rollout gates: I18N_ENABLED (env) → LANGUAGES (here) → i18n.config (which of
+# these the selector actually offers, default English-only). A locale absent here can
+# never be activated. Traditional Chinese (zh-hant) can be added later without redesign.
+LANGUAGES = [
+    ("en", "English"),
+    ("pt-br", "Portuguese (Brazil)"),
+    ("es", "Spanish"),
+    ("fr", "French"),
+    ("ru", "Russian"),
+    ("de", "German"),
+    ("zh-hans", "Simplified Chinese"),
+    ("ko", "Korean"),
+    ("ja", "Japanese"),
+]
+# Native-language selector labels (a language is named in its own language; never a
+# country flag — flags are countries, not languages). Keyed by the codes above.
+LANGUAGE_NATIVE_NAMES = {
+    "en": "English",
+    "pt-br": "Português (Brasil)",
+    "es": "Español",
+    "fr": "Français",
+    "ru": "Русский",
+    "de": "Deutsch",
+    "zh-hans": "简体中文",
+    "ko": "한국어",
+    "ja": "日本語",
+}
+LOCALE_PATHS = [BASE_DIR / "locale"]
+
+# Hard env kill switch (mirrors COMMS_ACCESS_ENABLED): False short-circuits locale
+# resolution to English and hides the selector, at an attribute-lookup cost.
+I18N_ENABLED = env.bool("I18N_ENABLED", default=True)
+
+# The explicit/anonymous language choice is persisted in this cookie (Django ≥4.0
+# no longer stores locale in the session). Authenticated users additionally get an
+# account preference (identity.User.language). prod.py may set LANGUAGE_COOKIE_SECURE.
+LANGUAGE_COOKIE_NAME = "forca_language"
+LANGUAGE_COOKIE_AGE = 365 * 24 * 60 * 60  # 1 year
+LANGUAGE_COOKIE_SAMESITE = "Lax"
 
 # --- Static / media -----------------------------------------------------
 STATIC_URL = "/static/"
