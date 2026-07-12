@@ -71,8 +71,8 @@
 </section>
 
 {% if superseded_draws %}
-{# Redraw transparency: the proof above covers only the FINAL draw. If leadership
-   redrew, every discarded draw is disclosed here so a "redraw-until-win" is on record. #}
+{% comment %}Redraw transparency: the proof above covers only the FINAL draw. If leadership
+   redrew, every discarded draw is disclosed here so a "redraw-until-win" is on record.{% endcomment %}
 <section class="panel mb-6 p-5 !border-gold/40">
   <h2 class="eyebrow mb-2 text-gold">{% translate "Draw history" %} · {{ superseded_draws|length }} {% translate "superseded" %}</h2>
   <p class="mb-3 text-xs text-faint">{% blocktranslate count num=superseded_draws|length %}This contest was drawn more than once. The verified draw above is the one that stands; the earlier draw below was discarded by leadership and replaced. Each committed seed is listed so the redraw is fully on the record.{% plural %}This contest was drawn more than once. The verified draw above is the one that stands; the earlier draws below were discarded by leadership and replaced. Each committed seed is listed so the redraw is fully on the record.{% endblocktranslate %}</p>

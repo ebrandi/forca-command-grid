@@ -1,6 +1,6 @@
 {% load i18n %}
-{# Capsuleer Path — Command Center panel (doc 10 §5.11). Status only, no advice, no gold button.
-   Rendered only when features.capsuleer and 'capsuleer' not in hidden_panels and capsuleer_panel. #}
+{% comment %}Capsuleer Path — Command Center panel (doc 10 §5.11). Status only, no advice, no gold button.
+   Rendered only when features.capsuleer and 'capsuleer' not in hidden_panels and capsuleer_panel.{% endcomment %}
 <section class="panel overflow-hidden">
   <div class="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
     <h2 class="eyebrow">{% translate "Capsuleer Path" %}</h2>

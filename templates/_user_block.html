@@ -31,7 +31,7 @@
     <div class="flex items-center gap-1.5">
       <svg class="h-4 w-4 shrink-0 text-faint" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18"/></svg>
       <select id="lang-select" name="language" data-autosubmit
-              class="w-full rounded-md border border-line bg-space/40 px-2 py-1.5 text-xs text-muted focus:border-gold/40 focus:text-ink focus:outline-none">
+              class="input-field bg-space/40 px-2 py-1.5 text-xs text-muted focus:border-gold/40 focus:text-ink">
         {% for loc in i18n_locales %}
         <option value="{{ loc.code }}" {% if loc.current %}selected{% endif %}>{{ loc.native }}</option>
         {% endfor %}
