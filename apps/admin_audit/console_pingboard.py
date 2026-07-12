@@ -416,7 +416,9 @@ class AutomationRuleForm(forms.ModelForm):
         if v in (None, ""):
             return []
         if not isinstance(v, list) or not all(isinstance(c, str) for c in v):
-            raise forms.ValidationError(_("Channels must be a JSON list of channel keys, e.g. [\"in_app\", \"discord\"]."))
+            raise forms.ValidationError(
+                _("Channels must be a JSON list of channel keys, e.g. [\"in_app\", \"discord\"].")
+            )
         return v
 
 

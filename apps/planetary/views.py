@@ -178,7 +178,10 @@ def plan_create(request: HttpRequest) -> HttpResponse:
             audit_log(request.user, "planetary.plan_create", target_type="pi_plan",
                       target_id=str(plan.id), metadata={"name": plan.name, "goal": plan.goal},
                       ip=client_ip(request))
-            messages.success(request, _("Plan “%(name)s” created — here's your setup and profit estimate.") % {"name": plan.name})
+            messages.success(
+                request,
+                _("Plan “%(name)s” created — here's your setup and profit estimate.") % {"name": plan.name},
+            )
             return redirect("planetary:detail", pk=plan.pk)
         for err in errors:
             messages.error(request, err)
@@ -358,7 +361,9 @@ def plan_delete(request: HttpRequest, pk: int) -> HttpResponse:
         services.archive_plan(plan)
         audit_log(request.user, "planetary.plan_archive", target_type="pi_plan",
                   target_id=str(plan.id), ip=client_ip(request))
-        messages.success(request, _("“%(name)s” archived. Delete again to remove it permanently.") % {"name": plan.name})
+        messages.success(
+            request, _("“%(name)s” archived. Delete again to remove it permanently.") % {"name": plan.name}
+        )
         return redirect("planetary:detail", pk=plan.pk)
     name = plan.name
     audit_log(request.user, "planetary.plan_delete", target_type="pi_plan",
@@ -472,7 +477,9 @@ def colonies_sync(request: HttpRequest) -> HttpResponse:
         sync_character_colonies.delay(char.character_id)
         queued += 1
     if queued:
-        messages.success(request, _("Colony sync queued for %(count)s pilot(s) — refresh in a minute.") % {"count": queued})
+        messages.success(
+            request, _("Colony sync queued for %(count)s pilot(s) — refresh in a minute.") % {"count": queued}
+        )
     else:
         messages.info(request, _("Grant the Planetary Industry scope first, then sync your colonies."))
     audit_log(request.user, "planetary.colonies_sync", metadata={"queued": queued},

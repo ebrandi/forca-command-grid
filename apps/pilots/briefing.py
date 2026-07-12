@@ -91,7 +91,9 @@ def pilot_briefing(user) -> dict:
     elif claimable:
         # kind 'task_open' so the merged page can route it: it is a claimable-work
         # pointer, not a personal deadline — suppressed when the pick-up boards render.
-        items.append({"kind": "task_open", "text": _("%(n)s task(s) open to claim.") % {"n": claimable}, "url": "/tasks/"})
+        items.append(
+            {"kind": "task_open", "text": _("%(n)s task(s) open to claim.") % {"n": claimable}, "url": "/tasks/"}
+        )
 
     if headline is None and items:
         headline = items.pop(0)

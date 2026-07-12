@@ -108,7 +108,8 @@ def _build_quote(form_data, card):
             if not jumps:
                 return None, route_ctx, str(exc)
     elif have_location and not jumps:
-        return None, route_ctx, _("Couldn't resolve one of those locations — pick from the list or enter jumps manually.")
+        msg = _("Couldn't resolve one of those locations — pick from the list or enter jumps manually.")
+        return None, route_ctx, msg
 
     if not jumps:
         return None, route_ctx, _("Pick a route or enter a manual jump count.")

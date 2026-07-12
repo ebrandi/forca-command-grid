@@ -329,7 +329,9 @@ def guaranteed_request(request: HttpRequest) -> HttpResponse:
         location_name=pending.get("location_name", ""), notes=pending.get("notes", ""),
     )
     if buyout is None:
-        messages.error(request, _("That lot is above the guaranteed-buyback per-lot cap — post it to the board instead."))
+        messages.error(
+            request, _("That lot is above the guaranteed-buyback per-lot cap — post it to the board instead.")
+        )
         return redirect("buyback:appraisal")
     request.session.pop("buyback_pending", None)
     audit_log(request.user, "guaranteed_buyback.request", target_type="guaranteed_buyout",

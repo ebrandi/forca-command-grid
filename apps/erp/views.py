@@ -64,7 +64,10 @@ def create_job(request: HttpRequest) -> HttpResponse:
         note=(request.POST.get("note") or "").strip(), created_by=request.user,
     )
     services.recheck_block(job)  # flag immediately if corp stock can't cover it
-    messages.success(request, _("Build job queued: %(qty)s× %(type_id)s.") % {"qty": job.quantity, "type_id": job.output_type_id})
+    messages.success(
+        request,
+        _("Build job queued: %(qty)s× %(type_id)s.") % {"qty": job.quantity, "type_id": job.output_type_id},
+    )
     return redirect("erp:board")
 
 
@@ -75,7 +78,9 @@ def claim(request: HttpRequest, pk: int) -> HttpResponse:
     job = get_object_or_404(BuildJob, pk=pk)
     services.recheck_block(job)  # unblock if stock has since arrived (or re-block)
     if job.status == BuildJob.Status.BLOCKED:
-        messages.error(request, _("Can't claim — %(reason)s.") % {"reason": job.blocked_reason or _("materials are short")})
+        messages.error(
+            request, _("Can't claim — %(reason)s.") % {"reason": job.blocked_reason or _("materials are short")}
+        )
     elif services.claim(job, request.user):
         messages.success(request, _("Claimed — materials and BOM are on the card."))
     else:
