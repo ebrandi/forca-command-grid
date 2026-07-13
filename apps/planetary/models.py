@@ -151,7 +151,7 @@ class PlanetaryConfig(TimeStampedModel):
         help_text=_("ISK per m³ to move goods to the hub (0 = you self-haul)."))
     corp_buyback_rate = models.DecimalField(
         max_digits=5, decimal_places=2, default=constants.DEFAULT_CORP_BUYBACK_RATE,
-        help_text=_("% of Jita sell the corp buyback pays."))
+        help_text=_("Percent of Jita sell the corp buyback pays."))
     default_extraction_rate_per_hour = models.PositiveIntegerField(
         default=constants.DEFAULT_EXTRACTION_RATE_PER_HOUR,
         help_text=_("Planning assumption: P0 units/hour on one extraction planet."))

@@ -68,7 +68,7 @@ class PiPlanForm(forms.ModelForm):
             "broker_fee": _("Broker fee on sell orders (%). 0 if you only sell to buy orders."),
             "hauling_cost_per_m3": _("ISK per m³ to move goods to the hub. 0 if you haul yourself. "
                                      "Applied only when the export strategy is 'haul to hub'."),
-            "corp_buyback_rate": _("If you use corp buyback, the % of Jita sell it pays."),
+            "corp_buyback_rate": _("If you use corp buyback, the percent of Jita sell it pays."),
             "extraction_rate_per_hour": _("Planning assumption: P0 units/hour on one extraction "
                                           "planet. Tune it to your real colonies for accuracy."),
             "effort": _("How often you'll reset extractors and haul. Low effort favours simple, "
@@ -169,7 +169,7 @@ class PlanetaryConfigForm(forms.ModelForm):
             "enabled": _("Master switch. Off hides the whole planner from pilots."),
             "name": _("A label for this config (only you see it)."),
             "default_extraction_rate_per_hour": _("Starting extraction assumption for new plans."),
-            "corp_buyback_rate": _("% of Jita sell the corp buyback pays, for plans that use it."),
+            "corp_buyback_rate": _("Percent of Jita sell the corp buyback pays, for plans that use it."),
             "recommended_regions": _("Free text: where the corp suggests running PI."),
             "priority_note": _("A short note shown to pilots about what the corp needs."),
             "default_visibility": _("Default sharing for newly-created plans."),
