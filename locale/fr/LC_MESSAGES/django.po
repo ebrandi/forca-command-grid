@@ -6,13 +6,13 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-11 23:49+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"POT-Creation-Date: 2026-07-13 20:01+0000\n"
+"PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: fr machine-assisted draft\n"
-"Language: \n"
+"Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -97,7 +97,7 @@ msgstr "Doit être zéro ou positif."
 
 #: apps/admin_audit/console_combat.py
 msgid "Can't exceed 100%."
-msgstr ""
+msgstr "Ne peut pas dépasser 100 %."
 
 #: apps/admin_audit/console_combat.py
 msgid "Newbro settings saved."
@@ -421,7 +421,7 @@ msgstr "Signalement résolu."
 
 #: apps/admin_audit/console_navigation.py
 msgid "Safety margin must be between 0 and 100%."
-msgstr ""
+msgstr "La marge de sécurité doit être comprise entre 0 et 100 %."
 
 #: apps/admin_audit/console_navigation.py
 msgid "Jump Planner settings saved."
@@ -2001,7 +2001,7 @@ msgstr "Obsolète"
 msgid "Dismissed"
 msgstr "Rejeté"
 
-#: apps/capsuleer/models.py templates/_nav.html
+#: apps/capsuleer/models.py config/showcase_data.py templates/_nav.html
 #: templates/corporation/roster.html templates/doctrines/list.html
 #: templates/doctrines/ships.html templates/killboard/compare.html
 #: templates/killboard/roster.html templates/mining/ledger.html
@@ -2379,7 +2379,7 @@ msgstr ""
 
 #: apps/command_intel/simulation.py
 msgid "Hulls lost (%)"
-msgstr ""
+msgstr "Coques perdues (%)"
 
 #: apps/command_intel/simulation.py
 msgid "Fuel shock"
@@ -2405,7 +2405,7 @@ msgstr "Un coup ponctuel porté au portefeuille raccourcit l'autonomie en ISK."
 
 #: apps/command_intel/simulation.py
 msgid "Wallet hit (%)"
-msgstr ""
+msgstr "Impact sur le portefeuille (%)"
 
 #: apps/command_intel/views.py
 msgid "Above your clearance."
@@ -2764,7 +2764,7 @@ msgstr "Un type id de blueprint valide est requis."
 msgid "Blueprint recorded."
 msgstr "Blueprint enregistré."
 
-#: apps/identity/views.py
+#: apps/identity/views.py tests/test_i18n_formatting.py
 #, python-format
 msgid "%(n)d buyback offer awaiting a buyer or payout"
 msgid_plural "%(n)d buyback offers awaiting a buyer or payout"
@@ -3991,7 +3991,7 @@ msgstr "Catégories de parcours qu'ils veulent apprendre."
 msgid "Suggested"
 msgstr "Suggéré"
 
-#: apps/mentorship/models.py templates/_nav.html
+#: apps/mentorship/models.py config/showcase_data.py templates/_nav.html
 #: templates/admin_audit/console/hub.html templates/capsuleer/leadership.html
 #: templates/corporation/infrastructure.html templates/corporation/roster.html
 #: templates/corporation/structures.html templates/doctrines/coverage.html
@@ -4892,6 +4892,10 @@ msgid ""
 "gaps, build-vs-buy calls, market seeding, hauling backlog and repeated "
 "combat losses (e.g. “Lost 6 × Capsule in the last 7d”)."
 msgstr ""
+"Recommandations d'officier de gravité élevée — ruptures de stock, lacunes de"
+" préparation par doctrine, arbitrages produire ou acheter, approvisionnement"
+" du marché, retard de transport et pertes de combat répétées (p. ex. « 6 × "
+"Capsule perdus ces 7 derniers jours »)."
 
 #: apps/pingboard/notifications.py templates/_nav.html
 msgid "Readiness alerts"
@@ -5557,18 +5561,24 @@ msgid ""
 "Customs office (POCO) tax on export, as a %. In hostile space this can be "
 "high — check the POCO before you commit."
 msgstr ""
+"Taxe du bureau de douane (POCO) à l'export, en %. En espace hostile, elle "
+"peut être élevée — vérifiez le POCO avant de vous engager."
 
 #: apps/planetary/forms.py
 msgid "POCO tax on importing materials to a factory planet, as a %."
-msgstr ""
+msgstr "Taxe POCO sur l'import de matériaux vers une planète-usine, en %."
 
 #: apps/planetary/forms.py
 msgid "Market sales tax when you sell (%). Scales down with Accounting."
 msgstr ""
+"Taxe de vente sur le marché quand vous vendez (%). Diminue avec la "
+"compétence Accounting."
 
 #: apps/planetary/forms.py
 msgid "Broker fee on sell orders (%). 0 if you only sell to buy orders."
 msgstr ""
+"Frais de courtage sur les ordres de vente (%). 0 si vous vendez uniquement "
+"aux ordres d'achat."
 
 #: apps/planetary/forms.py
 msgid ""
@@ -5580,8 +5590,8 @@ msgstr ""
 "'haul to hub'."
 
 #: apps/planetary/forms.py
-#, python-format
-msgid "If you use corp buyback, the % of Jita sell it pays."
+#| msgid "If you use corp buyback, the % of Jita sell it pays."
+msgid "If you use corp buyback, the percent of Jita sell it pays."
 msgstr "Si vous utilisez le buyback corp, le % de la vente Jita qu'il paie."
 
 #: apps/planetary/forms.py
@@ -5658,8 +5668,8 @@ msgid "Starting extraction assumption for new plans."
 msgstr "Hypothèse d'extraction initiale pour les nouveaux plans."
 
 #: apps/planetary/forms.py
-#, python-format
-msgid "% of Jita sell the corp buyback pays, for plans that use it."
+#| msgid "% of Jita sell the corp buyback pays, for plans that use it."
+msgid "Percent of Jita sell the corp buyback pays, for plans that use it."
 msgstr ""
 "% de la vente Jita que paie le buyback corp, pour les plans qui l'utilisent."
 
@@ -5710,10 +5720,12 @@ msgstr ""
 #: apps/planetary/models.py
 msgid "Customs office (POCO) export tax %, applied to item base value."
 msgstr ""
+"Taxe d'export du bureau de douane (POCO), en %, appliquée à la valeur de "
+"base de l'objet."
 
 #: apps/planetary/models.py
 msgid "Market sales tax %."
-msgstr ""
+msgstr "Taxe de vente sur le marché, en %."
 
 #: apps/planetary/models.py
 msgid "ISK per m³ to move goods to the hub (0 = you self-haul)."
@@ -5722,8 +5734,8 @@ msgstr ""
 " vous-même)."
 
 #: apps/planetary/models.py
-#, python-format
-msgid "% of Jita sell the corp buyback pays."
+#| msgid "% of Jita sell the corp buyback pays."
+msgid "Percent of Jita sell the corp buyback pays."
 msgstr "% du prix de vente Jita que paie le buyback de la corp."
 
 #: apps/planetary/models.py
@@ -7457,6 +7469,1108 @@ msgstr "Tâche réassignée."
 msgid "Task unassigned."
 msgstr "Tâche désassignée."
 
+#: config/showcase_data.py
+msgid "Combat & Intel"
+msgstr "Combat & intel"
+
+#: config/showcase_data.py
+msgid "Industry & Market"
+msgstr "Industrie & marché"
+
+#: config/showcase_data.py templates/admin_audit/console/hub.html
+msgid "Member services"
+msgstr "Services aux membres"
+
+#: config/showcase_data.py templates/_nav.html
+#: templates/pilots/hall_of_fame.html
+msgid "Community"
+msgstr "Communauté"
+
+#: config/showcase_data.py templates/_nav.html
+#: templates/admin_audit/console/hub.html templates/navigation/beacons.html
+#: templates/navigation/jump_planner.html
+#: templates/navigation/jump_routes.html templates/navigation/map_index.html
+#: templates/navigation/range_finder.html
+#: templates/navigation/route_planner.html
+msgid "Navigation"
+msgstr "Navigation"
+
+#: config/showcase_data.py
+msgid "Director access"
+msgstr "Accès directeur"
+
+#: config/showcase_data.py templates/_nav.html
+#: templates/command_intel/campaign_new.html
+#: templates/command_intel/campaigns.html
+#: templates/command_intel/overview.html
+#: templates/command_intel/report_detail.html
+#: templates/command_intel/reports.html
+msgid "Command Intelligence"
+msgstr "Renseignement de commandement"
+
+#: config/showcase_data.py
+msgid ""
+"An AI staff officer for strategic decisions — grounded in your own "
+"killboard, doctrines and readiness, never generic advice."
+msgstr ""
+"Un officier d'état-major IA pour vos décisions stratégiques — ancré dans "
+"votre propre killboard, vos doctrines et votre préparation, jamais des "
+"conseils génériques."
+
+#: config/showcase_data.py
+msgid ""
+"After-action reviews of every battle: what happened, what went wrong, what "
+"to fix"
+msgstr ""
+"Un débriefing après-action de chaque bataille : ce qui s'est passé, ce qui a"
+" mal tourné, ce qu'il faut corriger"
+
+#: config/showcase_data.py
+msgid "Courses of action weighed against your real constraints and doctrine"
+msgstr ""
+"Des plans d'action pesés face à vos contraintes réelles et à votre doctrine"
+
+#: config/showcase_data.py
+msgid ""
+"Strategic campaigns, a what-if simulator, and plain-language answers from "
+"your intel archive"
+msgstr ""
+"Campagnes stratégiques, simulateur de scénarios et réponses en langage clair"
+" tirées de vos archives d'intel"
+
+#: config/showcase_data.py
+msgid "Officer tools"
+msgstr "Outils d'officier"
+
+#: config/showcase_data.py
+msgid "Readiness platform"
+msgstr "Plateforme de préparation"
+
+#: config/showcase_data.py
+msgid ""
+"One honest score for how ready your corp actually is to fight — across a "
+"dozen dimensions, refreshed continuously."
+msgstr ""
+"Une note honnête sur la capacité réelle de votre corp à se battre — sur une "
+"douzaine de dimensions, réactualisée en continu."
+
+#: config/showcase_data.py
+msgid ""
+"Skills, doctrines, assets, staging, finance, SRP and fleet-shape scored "
+"together"
+msgstr ""
+"Compétences, doctrines, actifs, staging, finances, SRP et composition de "
+"flotte notés ensemble"
+
+#: config/showcase_data.py
+msgid "A risk register that routes each gap to the officer who owns it"
+msgstr ""
+"Un registre des risques qui renvoie chaque lacune vers l'officier qui en a "
+"la charge"
+
+#: config/showcase_data.py
+msgid ""
+"Weekly readiness report, trend timeline and a fleet-composition simulator"
+msgstr ""
+"Rapport de préparation hebdomadaire, courbe de tendance et simulateur de "
+"composition de flotte"
+
+#: config/showcase_data.py
+msgid "Corp finance & SRP"
+msgstr "Finances de la corp & SRP"
+
+#: config/showcase_data.py
+msgid ""
+"The corp's money, visible and under control — from wallet balances to ship "
+"replacement, with the guard rails leadership needs."
+msgstr ""
+"L'argent de la corp, visible et sous contrôle — des soldes de portefeuille "
+"au remplacement des vaisseaux, avec les garde-fous dont le commandement a "
+"besoin."
+
+#: config/showcase_data.py
+msgid "Wallet balances, income/expense, forecast and top earners at a glance"
+msgstr ""
+"Soldes des portefeuilles, revenus/dépenses, prévisions et meilleurs "
+"contributeurs en un coup d'œil"
+
+#: config/showcase_data.py
+msgid ""
+"Ship-replacement program with budgets, payout modes and separation of duties"
+msgstr ""
+"Programme de remplacement des vaisseaux avec budgets, modes de versement et "
+"séparation des rôles"
+
+#: config/showcase_data.py
+msgid "Loss-impact analysis so replacement spend tracks real fleet value"
+msgstr ""
+"Analyse de l'impact des pertes pour que les dépenses de remplacement suivent"
+" la valeur réelle de la flotte"
+
+#: config/showcase_data.py
+msgid "Structures & sovereignty"
+msgstr "Structures & souveraineté"
+
+#: config/showcase_data.py
+msgid ""
+"Never lose a structure to a missed timer — every asset in space, ranked by "
+"urgency, with alerts before it matters."
+msgstr ""
+"Ne perdez plus jamais une structure à cause d'un timer raté — chaque actif "
+"dans l'espace, classé par urgence, avec des alertes qui tombent avant qu'il "
+"ne soit trop tard."
+
+#: config/showcase_data.py
+msgid "Fuel level, state and reinforcement timers for every corp structure"
+msgstr ""
+"Niveau de carburant, état et timers de renforcement de chaque structure de "
+"la corp"
+
+#: config/showcase_data.py
+msgid ""
+"Sovereignty ADM and vulnerability windows where your alliance holds space"
+msgstr ""
+"ADM de souveraineté et fenêtres de vulnérabilité là où votre alliance tient "
+"l'espace"
+
+#: config/showcase_data.py
+msgid "Deduped officer alerts on fuel and timers, days ahead"
+msgstr ""
+"Alertes d'officier dédupliquées sur le carburant et les timers, plusieurs "
+"jours à l'avance"
+
+#: config/showcase_data.py
+msgid "Recruitment desk"
+msgstr "Bureau de recrutement"
+
+#: config/showcase_data.py
+msgid ""
+"Vet applicants on evidence, not vibes — candidates consent to a one-time ESI"
+" read that becomes clear vetting evidence."
+msgstr ""
+"Jugez les candidats sur des preuves, pas au feeling — chaque candidat "
+"consent à une lecture ESI unique qui devient une preuve nette pour le "
+"vetting."
+
+#: config/showcase_data.py
+msgid "Consent-first, one-time skill and corp-role read (no tokens stored)"
+msgstr ""
+"Lecture unique des compétences et des rôles corp, consentement d'abord "
+"(aucun token conservé)"
+
+#: config/showcase_data.py
+msgid ""
+"Derived evidence: can they fly the doctrines, are the roles what they claim"
+msgstr ""
+"Des preuves concrètes : peuvent-ils piloter les doctrines, leurs rôles sont-"
+"ils bien ceux qu'ils annoncent"
+
+#: config/showcase_data.py
+msgid "A pipeline from applicant to member, with officer sign-off"
+msgstr "Un pipeline du candidat au membre, avec validation par un officier"
+
+#: config/showcase_data.py
+msgid "Governance & audit"
+msgstr "Gouvernance & audit"
+
+#: config/showcase_data.py
+msgid ""
+"Least-privilege by construction, and a full record of every sensitive action"
+" — so leadership can hold access to account."
+msgstr ""
+"Le moindre privilège par conception, et un enregistrement complet de chaque "
+"action sensible — pour que le commandement puisse demander des comptes sur "
+"chaque accès."
+
+#: config/showcase_data.py
+msgid "Role-based access with dual-control on director grants"
+msgstr ""
+"Accès basé sur les rôles, avec double validation sur les octrois de "
+"directeur"
+
+#: config/showcase_data.py
+msgid "Per-service audience control — corp, alliance, public or off"
+msgstr ""
+"Contrôle de l'audience service par service — corp, alliance, public ou "
+"désactivé"
+
+#: config/showcase_data.py
+msgid "An immutable audit log and configurable data-retention policy"
+msgstr ""
+"Un journal d'audit immuable et une politique de rétention des données "
+"configurable"
+
+#: config/showcase_data.py
+msgid "Your Command Center"
+msgstr "Votre centre de commandement"
+
+#: config/showcase_data.py
+msgid ""
+"Every pilot lands on one page that already knows what matters — the single "
+"most useful thing to do this week, your combat-rank climb, your readiness, "
+"and the live corp feed."
+msgstr ""
+"Chaque pilote arrive sur une seule page qui sait déjà ce qui compte — la "
+"chose la plus utile à faire cette semaine, votre montée dans les rangs de "
+"combat, votre préparation et le flux live de la corp."
+
+#: config/showcase_data.py
+msgid ""
+"A prioritised quest log tells you what to fly, train or build next — and why"
+" the corp needs it"
+msgstr ""
+"Un carnet de quêtes priorisé vous dit quoi piloter, entraîner ou produire "
+"ensuite — et pourquoi la corp en a besoin"
+
+#: config/showcase_data.py
+msgid "Combat rank, 7-day kills/losses and ISK destroyed, at a glance"
+msgstr ""
+"Rang de combat, kills/pertes sur 7 jours et ISK détruits, en un coup d'œil"
+
+#: config/showcase_data.py
+msgid "Doctrine coverage and a readiness score, with one-click build plans"
+msgstr ""
+"Couverture de chaque doctrine et score de préparation, avec des plans de "
+"production en un clic"
+
+#: config/showcase_data.py
+msgid ""
+"FORCA pilot Command Center dashboard with quest log, combat rank and "
+"readiness"
+msgstr ""
+"Tableau de bord du centre de commandement du pilote FORCA avec carnet de "
+"quêtes, rang de combat et préparation"
+
+#: config/showcase_data.py
+msgid "Skills & training, planned around real demand"
+msgstr "Compétences & entraînement, planifiés selon la demande réelle"
+
+#: config/showcase_data.py
+msgid ""
+"Your full skill sheet and live training queue, synced straight from EVE — "
+"plus training plans that target the doctrines and roles the corp actually "
+"needs."
+msgstr ""
+"Votre fiche de compétences complète et votre file d'entraînement en direct, "
+"synchronisées directement depuis EVE — plus des plans d'entraînement qui "
+"visent les doctrines et les rôles dont la corp a réellement besoin."
+
+#: config/showcase_data.py
+msgid "Total SP, every skill and your live queue with time-to-finish"
+msgstr ""
+"SP total, chaque compétence et votre file en direct avec le temps restant"
+
+#: config/showcase_data.py
+msgid "Build a training plan from a doctrine or role and follow it in order"
+msgstr ""
+"Construisez un plan d'entraînement à partir d'une doctrine ou d'un rôle et "
+"suivez-le dans l'ordre"
+
+#: config/showcase_data.py
+msgid "Refresh straight from EVE — no manual entry, ever"
+msgstr "Actualisation directe depuis EVE — jamais la moindre saisie manuelle"
+
+#: config/showcase_data.py
+msgid "My Skills & Training page with SP totals and a live training queue"
+msgstr ""
+"Page Mes compétences & entraînement avec le total de SP et la file "
+"d'entraînement en direct"
+
+#: config/showcase_data.py
+msgid "Doctrines you can actually fly"
+msgstr "Des doctrines que vous pouvez vraiment piloter"
+
+#: config/showcase_data.py
+msgid ""
+"Every corp doctrine as a fit card tagged with whether you can fly it right "
+"now, backed by charts that show fleet readiness and which skills unlock the "
+"most ships."
+msgstr ""
+"Chaque doctrine de la corp sous forme de carte de fit, marquée selon que "
+"vous pouvez la piloter tout de suite, appuyée par des graphiques qui "
+"montrent la préparation de la flotte et les compétences qui débloquent le "
+"plus de vaisseaux."
+
+#: config/showcase_data.py
+msgid "Filter instantly to fits you're flyable in — or one skill away from"
+msgstr ""
+"Filtrez en un instant les fits que vous pouvez piloter — ou dont une seule "
+"compétence vous sépare"
+
+#: config/showcase_data.py
+msgid "“Train these next” ranks the skills that unlock the most doctrines"
+msgstr ""
+"« À entraîner ensuite » classe les compétences qui débloquent le plus de "
+"doctrines"
+
+#: config/showcase_data.py
+msgid "Fleet-shape and readiness charts show leadership where the gaps are"
+msgstr ""
+"Les graphiques de composition et de préparation de flotte montrent au "
+"commandement où sont les trous"
+
+#: config/showcase_data.py
+msgid "Ships & Doctrines dashboard with readiness donuts and fit cards"
+msgstr ""
+"Tableau de bord Vaisseaux & doctrines avec anneaux de préparation et cartes "
+"de fit"
+
+#: config/showcase_data.py templates/doctrines/my_readiness.html
+msgid "Best next doctrine to unlock"
+msgstr "Meilleure prochaine doctrine à débloquer"
+
+#: config/showcase_data.py
+msgid "A killboard built for your corp"
+msgstr "Un killboard fait pour votre corp"
+
+#: config/showcase_data.py
+msgid ""
+"Your whole combat record in one feed — efficiency, threat level, biggest "
+"kills and the pilots and systems carrying the fight — with none of the "
+"third-party clutter."
+msgstr ""
+"Tout votre palmarès de combat dans un seul flux — efficacité, niveau de "
+"menace, plus gros kills, et les pilotes et systèmes qui portent le combat — "
+"sans le fouillis des sites tiers."
+
+#: config/showcase_data.py
+msgid "Kills tracked with efficiency, threat and a 14-day trend"
+msgstr "Kills suivis avec efficacité, menace et tendance sur 14 jours"
+
+#: config/showcase_data.py
+msgid "Biggest-kills carousel plus top-killer and active-system rails"
+msgstr ""
+"Carrousel des plus gros kills, plus les palmarès des meilleurs killers et "
+"des systèmes les plus actifs"
+
+#: config/showcase_data.py
+msgid "Every killmail doctrine-tagged and filterable by time window"
+msgstr "Chaque killmail marqué par doctrine et filtrable par période"
+
+#: config/showcase_data.py
+msgid "Killboard kill feed with efficiency, threat and biggest kills"
+msgstr "Flux de kills du killboard avec efficacité, menace et plus gros kills"
+
+#: config/showcase_data.py
+msgid "Killmail detail"
+msgstr "Détail du killmail"
+
+#: config/showcase_data.py
+msgid "Combat analytics that find the pattern"
+msgstr "Des analyses de combat qui font ressortir les schémas"
+
+#: config/showcase_data.py
+msgid ""
+"Twelve months of kills and losses, what you destroy versus what you lose, "
+"doctrine compliance, and exactly when your corp fights — the intel to fly "
+"smarter."
+msgstr ""
+"Douze mois de kills et de pertes, ce que vous détruisez face à ce que vous "
+"perdez, le respect de la doctrine, et exactement quand votre corp se bat — "
+"l'intel qu'il faut pour piloter plus intelligemment."
+
+#: config/showcase_data.py
+msgid "Monthly kills/losses and ISK trends in one chart"
+msgstr "Kills/pertes mensuels et tendances ISK sur un seul graphique"
+
+#: config/showcase_data.py
+msgid "Ships-destroyed vs ships-lost donuts with top-10 tables"
+msgstr ""
+"Anneaux vaisseaux détruits vs vaisseaux perdus, avec les tableaux du top 10"
+
+#: config/showcase_data.py
+msgid "A day-by-hour heatmap of when your fleet is strongest"
+msgstr ""
+"Une carte de chaleur jour par heure montrant quand votre flotte est la plus "
+"forte"
+
+#: config/showcase_data.py
+msgid ""
+"Combat statistics dashboard with monthly charts and an activity heatmap"
+msgstr ""
+"Tableau de bord des statistiques de combat avec graphiques mensuels et carte"
+" de chaleur d'activité"
+
+#: config/showcase_data.py
+msgid "Per-pilot combat analytics"
+msgstr "Analyses de combat par pilote"
+
+#: config/showcase_data.py
+msgid "Leaderboards that reward the fight"
+msgstr "Des classements qui récompensent ceux qui se battent"
+
+#: config/showcase_data.py
+msgid ""
+"Nine fair, time-boxed leaderboards — most valuable kills, top killers, solo,"
+" efficiency and more — plus a 17-rung combat-rank ladder, ready to drive "
+"prize challenges."
+msgstr ""
+"Neuf classements équitables, sur des périodes bien définies — kills les plus"
+" juteux, meilleurs killers, solo, efficacité et bien d'autres — plus une "
+"échelle de rangs de combat à 17 échelons, prête à alimenter vos concours à "
+"récompenses."
+
+#: config/showcase_data.py
+msgid "Period filters (7d / 30d / season / all-time) keep contests fair"
+msgstr ""
+"Les filtres de période (7 j / 30 j / saison / depuis toujours) gardent les "
+"concours équitables"
+
+#: config/showcase_data.py
+msgid "See your own standing and climb the combat-rank ladder"
+msgstr "Voyez votre propre place et grimpez l'échelle des rangs de combat"
+
+#: config/showcase_data.py
+msgid "Capital-kill highlights and per-category top pilots"
+msgstr ""
+"Les kills capital mis à l'honneur et les meilleurs pilotes par catégorie"
+
+#: config/showcase_data.py
+msgid "Combat rankings page with nine leaderboards and a rank ladder"
+msgstr ""
+"Page des classements de combat avec neuf classements et une échelle de rangs"
+
+#: config/showcase_data.py
+msgid "Find the fight before it finds you"
+msgstr "Trouvez le combat avant qu'il ne vous trouve"
+
+#: config/showcase_data.py
+msgid ""
+"Rank null-sec systems by live ratting and mining activity — weighted against"
+" recent PvP — so your roam heads where the targets are, not where they were."
+msgstr ""
+"Classez les systèmes null-sec selon l'activité de ratting et de minage en "
+"direct — pondérée par le PvP récent — pour que votre roam parte là où sont "
+"les cibles, pas là où elles étaient."
+
+#: config/showcase_data.py
+msgid "Systems scored by NPC kills, traffic and contested activity"
+msgstr "Systèmes notés selon les kills NPC, le trafic et l'activité contestée"
+
+#: config/showcase_data.py
+msgid "Filter by region and security band in one click"
+msgstr "Filtrez par région et par tranche de sécurité en un clic"
+
+#: config/showcase_data.py
+msgid "Jump straight from a hot system into a route"
+msgstr "D'un système chaud au planificateur de route, directement"
+
+#: config/showcase_data.py
+msgid "Roaming targets intel table scoring null-sec systems by activity"
+msgstr ""
+"Table d'intel des cibles roaming notant les systèmes null-sec selon leur "
+"activité"
+
+#: config/showcase_data.py
+msgid "Gate-camp watch"
+msgstr "Surveillance des gatecamps"
+
+#: config/showcase_data.py
+msgid "Cost any build at live Jita prices"
+msgstr "Chiffrez n'importe quelle fabrication aux prix Jita en direct"
+
+#: config/showcase_data.py
+msgid ""
+"Pick an item, runs, ME and structure — and get the full material bill, job "
+"fees, build time and profit margin, priced against the live market."
+msgstr ""
+"Choisissez un objet, un nombre de runs, un ME et une structure — et obtenez "
+"la nomenclature complète des matériaux, les frais de job, le temps de "
+"fabrication et la marge, chiffrés sur le marché en direct."
+
+#: config/showcase_data.py
+msgid "Total cost, sell value, net profit and per-unit margin up front"
+msgstr ""
+"Coût total, valeur de revente, profit net et marge à l'unité, annoncés "
+"d'emblée"
+
+#: config/showcase_data.py
+msgid "A ready shopping list with need / to-buy / cost per material"
+msgstr ""
+"Une liste de courses prête à l'emploi : besoin / à acheter / coût par "
+"matériau"
+
+#: config/showcase_data.py
+msgid "Structure, rig and “build when cheaper” strategy built in"
+msgstr ""
+"Structure, rigs et stratégie « fabriquer quand c'est moins cher » intégrés"
+
+#: config/showcase_data.py
+msgid "Manufacturing calculator costing a build with a material shopping list"
+msgstr ""
+"Calculateur de fabrication chiffrant une production avec sa liste de courses"
+" en matériaux"
+
+#: config/showcase_data.py
+msgid "Industry Center hub"
+msgstr "Le hub Centre industriel"
+
+#: config/showcase_data.py
+msgid "Know if inventing beats buying"
+msgstr "Sachez si l'invention bat l'achat"
+
+#: config/showcase_data.py
+msgid ""
+"Enter your science skills and a decryptor and the planner returns real "
+"success chance, attempts per success, true cost per BPC — and a clear "
+"invent-vs-buy verdict."
+msgstr ""
+"Saisissez vos compétences scientifiques et un décrypteur : le planificateur "
+"vous rend la vraie chance de réussite, le nombre de tentatives par succès, "
+"le coût réel par BPC — et un verdict net entre inventer et acheter."
+
+#: config/showcase_data.py
+msgid "Success chance and attempts-per-success from your actual skills"
+msgstr ""
+"Chance de réussite et tentatives par succès calculées sur vos compétences "
+"réelles"
+
+#: config/showcase_data.py
+msgid "Real cost per BPC including datacores and decryptor"
+msgstr "Coût réel par BPC, datacores et décrypteur compris"
+
+#: config/showcase_data.py
+msgid "A plain verdict: invent it, or just buy it"
+msgstr "Un verdict sans détour : inventez-le, ou achetez-le tout simplement"
+
+#: config/showcase_data.py
+msgid ""
+"Tech II invention planner with success chance and invent-vs-buy verdict"
+msgstr ""
+"Planificateur d'invention Tech II avec chance de réussite et verdict "
+"inventer ou acheter"
+
+#: config/showcase_data.py
+msgid "Turn a shopping list into a build plan"
+msgstr "Transformez une liste de courses en plan de fabrication"
+
+#: config/showcase_data.py
+msgid ""
+"Plan a batch — say ten Typhoons — and it resolves the entire bill of "
+"materials down to minerals, shows in-stock versus to-acquire, and flags the "
+"cost bottlenecks."
+msgstr ""
+"Planifiez un lot — dix Typhoon par exemple — et l'outil décompose toute la "
+"nomenclature jusqu'aux minerais, affiche ce qui est en stock face à ce qu'il"
+" faut acquérir, et signale les goulots d'étranglement de coût."
+
+#: config/showcase_data.py
+msgid "Full bill of materials resolved to raw minerals"
+msgstr "Nomenclature complète décomposée jusqu'aux minerais bruts"
+
+#: config/showcase_data.py
+msgid "In-stock vs to-acquire, with a bottleneck breakdown"
+msgstr "En stock contre à acquérir, avec le détail des goulots d'étranglement"
+
+#: config/showcase_data.py
+msgid "Push straight to the corp job board and reserve stock"
+msgstr ""
+"Envoyez directement sur le tableau de jobs de la corp et réservez le stock"
+
+#: config/showcase_data.py
+msgid "Industry project detail resolving a Typhoon batch to minerals"
+msgstr ""
+"Détail d'un projet d'industrie décomposant un lot de Typhoon jusqu'aux "
+"minerais"
+
+#: config/showcase_data.py
+msgid "Industry projects board"
+msgstr "Tableau des projets d'industrie"
+
+#: config/showcase_data.py
+msgid "Planetary Industry, guided"
+msgstr "L'industrie planétaire, guidée"
+
+#: config/showcase_data.py
+msgid ""
+"A guided PI assistant that explains the P0→P4 tiers, recommends what to "
+"make, explores production chains, and imports your live colonies to spot "
+"problems."
+msgstr ""
+"Un assistant PI guidé : il explique les paliers P0→P4, recommande quoi "
+"produire, explore les chaînes de production et importe vos colonies actives "
+"pour repérer les problèmes."
+
+#: config/showcase_data.py
+msgid "“What should I make?” recommendations for your planets"
+msgstr "Des recommandations « Qu'est-ce que je produis ? » pour vos planètes"
+
+#: config/showcase_data.py
+msgid "Explore any production chain end to end"
+msgstr "Explorez n'importe quelle chaîne de production de bout en bout"
+
+#: config/showcase_data.py
+msgid "Import live colonies to check layouts and output"
+msgstr "Importez vos colonies actives pour vérifier agencements et production"
+
+#: config/showcase_data.py
+msgid "Planetary Industry hub with chain explorer and tier primer"
+msgstr ""
+"Hub Planetary Industry avec explorateur de chaînes et guide des paliers"
+
+#: config/showcase_data.py
+msgid "PI production-chain explorer"
+msgstr "Explorateur de chaînes de production PI"
+
+#: config/showcase_data.py
+msgid "PI: what should I make?"
+msgstr "PI : qu'est-ce que je produis ?"
+
+#: config/showcase_data.py
+msgid "Build what the fleet is short on"
+msgstr "Produisez ce qui manque à la flotte"
+
+#: config/showcase_data.py
+msgid ""
+"One ranked list of what your doctrines are missing across the corp, costed "
+"by ISK-to-close — turn any shortfall into a tracked production plan in a "
+"click."
+msgstr ""
+"Une seule liste classée de tout ce qui manque à vos doctrines dans la corp, "
+"chiffrée en ISK pour combler le trou — transformez n'importe quel manque en "
+"plan de production suivi, en un clic."
+
+#: config/showcase_data.py
+msgid "Shortfalls ranked by cost to keep N doctrine sets stocked"
+msgstr "Manques classés par coût pour garder N lots de doctrine en stock"
+
+#: config/showcase_data.py
+msgid "Per-hull breakdown of what's missing right now"
+msgstr "Détail par hull de ce qui manque à l'instant T"
+
+#: config/showcase_data.py
+msgid "One click turns a gap into a costed build plan"
+msgstr "Un clic transforme un manque en plan de production chiffré"
+
+#: config/showcase_data.py
+msgid "Corp demand screen ranking doctrine shortfalls by cost to close"
+msgstr ""
+"Écran des besoins de la corp classant les manques de doctrine par coût à "
+"combler"
+
+#: config/showcase_data.py
+msgid "See the spreads worth building"
+msgstr "Repérez les marges qui valent le coup"
+
+#: config/showcase_data.py
+msgid ""
+"What the corp needs and where the profit is — a colour-coded build-cost-"
+"versus-Jita table that surfaces the hulls and rigs actually worth "
+"manufacturing."
+msgstr ""
+"Ce dont la corp a besoin et où se trouve le profit — un tableau couleur coût"
+" de production contre Jita, qui fait ressortir les hulls et les rigs qui "
+"valent vraiment la peine d'être produits."
+
+#: config/showcase_data.py
+msgid "“Profitable to build” ranked by margin against live Jita"
+msgstr ""
+"« Rentable à produire », classé par marge face aux prix Jita en direct"
+
+#: config/showcase_data.py
+msgid "Corp-needs panel flags anything below target stock"
+msgstr ""
+"Le panneau des besoins de la corp signale tout ce qui passe sous le stock "
+"cible"
+
+#: config/showcase_data.py
+msgid "Capital hulls and structure rigs with real margins"
+msgstr "Hulls capital et rigs de structure avec de vraies marges"
+
+#: config/showcase_data.py
+msgid "Market page with a profitable-to-build table and margins"
+msgstr "Page marché avec tableau « rentable à produire » et marges"
+
+#: config/showcase_data.py
+msgid "Order a doctrine ship, built to spec"
+msgstr "Commandez un vaisseau doctrine, monté aux specs"
+
+#: config/showcase_data.py
+msgid ""
+"Every sanctioned fit as an orderable card with a live built price — filter "
+"to your hull and role, confirm you can fly it, and order or copy the EFT in "
+"a click."
+msgstr ""
+"Chaque fit homologué sous forme de carte commandable, avec un prix de "
+"production en direct — filtrez par hull et par rôle, vérifiez que vous "
+"pouvez le piloter, puis commandez ou copiez l'EFT en un clic."
+
+#: config/showcase_data.py
+msgid "Transparent pricing: Jita plus a flat corp markup"
+msgstr "Tarification transparente : Jita plus une marge corp fixe"
+
+#: config/showcase_data.py
+msgid "Filter by hull, role and whether you can fly it"
+msgstr "Filtrez par hull, par rôle et selon que vous pouvez le piloter"
+
+#: config/showcase_data.py
+msgid "Order the hull or copy the EFT straight into EVE"
+msgstr "Commandez le hull ou copiez l'EFT directement dans EVE"
+
+#: config/showcase_data.py
+msgid "Shipyard grid of orderable doctrine fits with built prices"
+msgstr ""
+"Grille du chantier naval : fits de doctrine commandables, avec leur prix de "
+"production"
+
+#: config/showcase_data.py
+msgid "Corp Store build board"
+msgstr "Tableau de production du Corp Store"
+
+#: config/showcase_data.py
+msgid "Corp Store supply forecast"
+msgstr "Prévision d'approvisionnement du Corp Store"
+
+#: config/showcase_data.py
+msgid "Get a fair offer in ten seconds"
+msgstr "Une offre honnête en dix secondes"
+
+#: config/showcase_data.py
+msgid ""
+"Paste your hangar and get an instant, fair offer based on live Jita-sell "
+"prices — sell from anywhere, skip the market grind, get paid."
+msgstr ""
+"Collez votre hangar et recevez une offre honnête immédiate, basée sur les "
+"prix de vente Jita en direct — vendez depuis n'importe où, oubliez le grind "
+"du marché, encaissez."
+
+#: config/showcase_data.py
+msgid "Instant appraisal from live Jita-sell pricing"
+msgstr "Estimation immédiate sur les prix de vente Jita en direct"
+
+#: config/showcase_data.py
+msgid "Transparent location margin — no mystery haircuts"
+msgstr "Marge de localisation transparente — aucune décote mystère"
+
+#: config/showcase_data.py
+msgid "Sell from anywhere; leadership sets who can use it"
+msgstr "Vendez depuis n'importe où ; le commandement décide qui y a droit"
+
+#: config/showcase_data.py
+msgid "Buyback paste-to-appraise screen with an instant ISK offer"
+msgstr "Écran de buyback : collez, estimez, offre en ISK immédiate"
+
+#: config/showcase_data.py
+msgid "Instant courier quotes"
+msgstr "Devis de transport immédiats"
+
+#: config/showcase_data.py
+msgid ""
+"A Red-Frog-style hauling service: pick ship class, route, volume and "
+"collateral and get an instant reward quote — then post it straight to the "
+"corp freight board."
+msgstr ""
+"Un service de transport façon Red Frog : choisissez la classe de vaisseau, "
+"la route, le volume et la caution, et obtenez aussitôt un devis de "
+"récompense — puis publiez-le directement sur le tableau de fret de la corp."
+
+#: config/showcase_data.py
+msgid "Instant reward and jumps from route, volume and collateral"
+msgstr ""
+"Récompense et nombre de sauts calculés aussitôt depuis la route, le volume "
+"et la caution"
+
+#: config/showcase_data.py
+msgid "Rates set by your officers, posted to the freight board"
+msgstr "Tarifs fixés par vos officiers, publiés sur le tableau de fret"
+
+#: config/showcase_data.py
+msgid "Blockade-runner or DST classes with clear limits"
+msgstr "Classes blockade runner ou DST, avec des limites claires"
+
+#: config/showcase_data.py
+msgid "Freight rate calculator producing a courier quote"
+msgstr "Calculateur de tarifs de fret produisant un devis de transport"
+
+#: config/showcase_data.py
+msgid "Every capsuleer flies better with a wingman"
+msgstr "Chaque capsuleer vole mieux avec un équipier"
+
+#: config/showcase_data.py
+msgid ""
+"A full mentorship program pairing new Cadets with Veteran Mentors across "
+"twelve learning tracks — with eligibility, matching, rewards and a clear "
+"four-step flow."
+msgstr ""
+"Un vrai programme de mentorat qui associe les nouveaux Cadets à des Mentors "
+"vétérans sur douze parcours d'apprentissage — éligibilité, appariement, "
+"récompenses et un déroulé clair en quatre étapes."
+
+#: config/showcase_data.py
+msgid "Twelve learning tracks from Ratting to Fleet Ops"
+msgstr "Douze parcours d'apprentissage, du ratting aux opérations de flotte"
+
+#: config/showcase_data.py
+msgid "Eligibility, matching and rewards handled end to end"
+msgstr "Éligibilité, appariement et récompenses gérés de bout en bout"
+
+#: config/showcase_data.py
+msgid "Cadets earn ISK, points and badges as they progress"
+msgstr ""
+"Les Cadets gagnent des ISK, des points et des badges à mesure qu'ils "
+"progressent"
+
+#: config/showcase_data.py
+msgid "Mentorship program landing page with learning tracks"
+msgstr ""
+"Page d'accueil du programme de mentorat avec les parcours d'apprentissage"
+
+#: config/showcase_data.py
+msgid "Learning tracks grid"
+msgstr "Grille des parcours d'apprentissage"
+
+#: config/showcase_data.py
+msgid "Track: fitting & doctrine"
+msgstr "Parcours : fitting & doctrine"
+
+#: config/showcase_data.py
+msgid "Track: fleet operations"
+msgstr "Parcours : opérations de flotte"
+
+#: config/showcase_data.py
+msgid "Recognise who carried the corp"
+msgstr "Saluez ceux qui ont porté la corp"
+
+#: config/showcase_data.py
+msgid ""
+"A monthly leaderboard that puts every contribution — built, hauled, mined, "
+"flown, killed — on one honest points scale, so effort of every kind gets "
+"seen."
+msgstr ""
+"Un classement mensuel qui met chaque contribution — ce que vous produisez, "
+"transportez, minez, pilotez ou tuez — sur une même échelle de points "
+"honnête, pour que tous les efforts soient vus."
+
+#: config/showcase_data.py
+msgid "Top-10 contributors on one unified monthly scale"
+msgstr ""
+"Les 10 meilleurs contributeurs sur une seule échelle mensuelle unifiée"
+
+#: config/showcase_data.py
+msgid "“What counts” makes the scoring fully transparent"
+msgstr ""
+"La rubrique « Ce qui compte » rend le calcul des points totalement "
+"transparent"
+
+#: config/showcase_data.py
+msgid "Per-category top-fives for builders, haulers, miners and more"
+msgstr ""
+"Un top 5 par catégorie : producteurs, transporteurs, mineurs et bien "
+"d'autres"
+
+#: config/showcase_data.py
+msgid "Hall of Fame monthly contribution leaderboard"
+msgstr "Classement mensuel des contributions du Temple de la renommée"
+
+#: config/showcase_data.py
+msgid "Raffles that reward showing up"
+msgstr "Des tombolas qui récompensent la présence"
+
+#: config/showcase_data.py
+msgid ""
+"Provably-fair prize raffles that drive real engagement — earn tickets by "
+"flying, unlock bigger pools as the corp hits goals, and draw winners nobody "
+"can rig."
+msgstr ""
+"Des tombolas à équité prouvable qui font vraiment bouger les pilotes — "
+"gagnez des tickets en pilotant, débloquez des cagnottes plus grosses à "
+"mesure que la corp atteint ses objectifs, et désignez les gagnants par un "
+"tirage que personne ne peut truquer."
+
+#: config/showcase_data.py
+msgid "Earn tickets for PvP, mining or fleet activity"
+msgstr "Gagnez des tickets en PvP, en minage ou en flotte"
+
+#: config/showcase_data.py
+msgid "Unlock bars and ticket boosters drive turnout"
+msgstr ""
+"Jauges de déblocage et boosters de tickets font grimper la participation"
+
+#: config/showcase_data.py
+msgid "A commit-reveal draw that's provably fair"
+msgstr "Un tirage commit-reveal à l'équité prouvable"
+
+#: config/showcase_data.py
+msgid "Raffle contest page with prize tiers and a ticket leaderboard"
+msgstr "Page de tombola avec paliers de lots et classement des tickets"
+
+#: config/showcase_data.py
+msgid "New players, up to speed fast"
+msgstr "Les nouveaux, opérationnels en un rien de temps"
+
+#: config/showcase_data.py
+msgid ""
+"A “Welcome to nullsec” path with a personal progress tracker, a veteran "
+"survival guide, and a searchable glossary of EVE slang — so newbros stop "
+"drowning."
+msgstr ""
+"Un parcours « Welcome to nullsec » avec un suivi de progression personnel, "
+"un guide de survie écrit par des vétérans et un glossaire du jargon EVE "
+"consultable — pour que les newbros arrêtent de couler."
+
+#: config/showcase_data.py
+msgid "A guided checklist from “get connected” to “live here”"
+msgstr "Une checklist guidée, de « se connecter » à « vivre ici »"
+
+#: config/showcase_data.py
+msgid "A veteran survival guide covering the real basics"
+msgstr ""
+"Un guide de survie signé par les vétérans, qui couvre les vraies bases"
+
+#: config/showcase_data.py
+msgid "A searchable glossary so the jargon stops being a wall"
+msgstr "Un glossaire consultable pour que le jargon cesse d'être un mur"
+
+#: config/showcase_data.py
+msgid "New Player onboarding page with progress tracker and glossary"
+msgstr ""
+"Page d'accueil des nouveaux joueurs avec suivi de progression et glossaire"
+
+#: config/showcase_data.py
+msgid "Plan a capital jump, fuel and all"
+msgstr "Planifiez un saut de capital, carburant compris"
+
+#: config/showcase_data.py
+msgid ""
+"Full jump-drive routing for capitals: enter the hull and your JDC/JFC/JF "
+"skills and get a fuelled plan with low-sec staging, per-leg cooldowns and a "
+"copyable cyno chain."
+msgstr ""
+"Routage complet de jump drive pour les capital ships : indiquez le hull et "
+"vos compétences JDC/JFC/JF, et récupérez un plan carburant compris, avec "
+"staging en low-sec, cooldowns par étape et une chaîne de cyno copiable."
+
+#: config/showcase_data.py
+msgid "Cyno and gate legs, distance, fuel and ISK cost computed"
+msgstr "Étapes cyno et gate, distance, carburant et coût en ISK calculés"
+
+#: config/showcase_data.py
+msgid "Low-sec exit staging options ranked for you"
+msgstr "Options de staging de sortie en low-sec, classées pour vous"
+
+#: config/showcase_data.py
+msgid "Copy the cyno waypoints or gate route straight to EVE"
+msgstr "Copiez les waypoints cyno ou la route par gates directement dans EVE"
+
+#: config/showcase_data.py
+msgid "Jump Planner with fuel, staging and per-leg routing"
+msgstr "Jump Planner avec carburant, staging et routage étape par étape"
+
+#: config/showcase_data.py templates/navigation/jump_planner.html
+#: templates/navigation/route_map.html
+msgid "Route map"
+msgstr "Carte d'itinéraire"
+
+#: config/showcase_data.py
+msgid "Jump-range reach map"
+msgstr "Carte de portée de saut"
+
+#: config/showcase_data.py
+msgid "Maps with the data layers that matter"
+msgstr "Des cartes avec les couches de données qui comptent"
+
+#: config/showcase_data.py
+msgid ""
+"Interactive region and system maps with toggleable overlays — security, your"
+" activity, traffic, ship and NPC kills, sovereignty — so you read space at a"
+" glance."
+msgstr ""
+"Cartes interactives de régions et de systèmes avec calques activables — "
+"sécurité, votre activité, trafic, kills de vaisseaux et de NPC, souveraineté"
+" — pour lire l'espace d'un coup d'œil."
+
+#: config/showcase_data.py
+msgid "Overlay security, traffic, kills and sov on any region"
+msgstr "Superposez sécurité, trafic, kills et sov sur n'importe quelle région"
+
+#: config/showcase_data.py
+msgid "Drill from region to constellation to a single system"
+msgstr "Descendez de la région à la constellation, jusqu'au système"
+
+#: config/showcase_data.py
+msgid "Jump from any map straight into route planning"
+msgstr "Passez de n'importe quelle carte au planificateur de route"
+
+#: config/showcase_data.py
+msgid "Region map with data-overlay layer toggles"
+msgstr "Carte de région avec bascules de calques de données"
+
+#: config/showcase_data.py
+msgid "Solar-system detail"
+msgstr "Détail du système solaire"
+
+#: config/showcase_data.py
+msgid "All region maps"
+msgstr "Toutes les cartes de région"
+
+#: config/showcase_data.py
+msgid "Run the whole corp from one console"
+msgstr "Pilotez toute la corp depuis une seule console"
+
+#: config/showcase_data.py
+msgid ""
+"Every leadership control in one place — roles, doctrines, readiness, "
+"rewards, services, structures, alerts and intelligence — with a full audit "
+"trail and no database to touch."
+msgstr ""
+"Tous les leviers du commandement au même endroit — rôles, doctrines, "
+"préparation, récompenses, services, structures, alertes et renseignement — "
+"avec un journal d'audit complet et aucune base de données à toucher."
+
+#: config/showcase_data.py
+msgid "Dozens of self-service config surfaces, grouped and clear"
+msgstr ""
+"Des dizaines d'écrans de configuration en libre-service, groupés et clairs"
+
+#: config/showcase_data.py
+msgid "Every sensitive action role-gated and audit-logged"
+msgstr "Chaque action sensible protégée par rôle et consignée dans l'audit"
+
+#: config/showcase_data.py
+msgid "Runs the corp without ever opening a database"
+msgstr "Gérez la corp sans jamais ouvrir une base de données"
+
+#: config/showcase_data.py
+msgid "Leadership admin console with grouped configuration cards"
+msgstr ""
+"Console d'administration du commandement avec cartes de configuration "
+"groupées"
+
+#: config/showcase_data.py
+msgid "One alerting hub for the whole corp"
+msgstr "Un seul centre d'alertes pour toute la corp"
+
+#: config/showcase_data.py
+msgid ""
+"Pingboard unifies alerts and a shared calendar — timers, pings and urgent "
+"activity in one place, delivered to Discord, EVE-mail and wherever your "
+"pilots actually look."
+msgstr ""
+"Pingboard réunit les alertes et un calendrier partagé — timers, pings et "
+"activité urgente au même endroit, livrés sur Discord, EVE-mail et partout où"
+" vos pilotes regardent vraiment."
+
+#: config/showcase_data.py
+msgid "Recent, scheduled and failed alerts at a glance"
+msgstr "Alertes récentes, programmées et en échec, d'un coup d'œil"
+
+#: config/showcase_data.py
+msgid "A synced corp calendar of ops and timers"
+msgstr "Un calendrier corp synchronisé des ops et des timers"
+
+#: config/showcase_data.py
+msgid "Fans out to Discord, EVE-mail, Slack, Telegram and WhatsApp"
+msgstr "Diffusion vers Discord, EVE-mail, Slack, Telegram et WhatsApp"
+
+#: config/showcase_data.py
+msgid "Pingboard alerts dashboard with calendar and urgent activity"
+msgstr ""
+"Tableau de bord des alertes Pingboard avec calendrier et activité urgente"
+
+#: config/showcase_data.py
+msgid "Corp calendar"
+msgstr "Calendrier corp"
+
 #: core/features.py
 msgid "This feature is not enabled for this corporation."
 msgstr "Cette fonctionnalité n'est pas activée pour cette corporation."
@@ -7532,10 +8646,6 @@ msgstr "Envoyer une alerte"
 msgid "Alert history"
 msgstr "Historique des alertes"
 
-#: templates/_nav.html templates/pilots/hall_of_fame.html
-msgid "Community"
-msgstr "Communauté"
-
 #: templates/_nav.html templates/navigation/system_detail.html
 msgid "Killboard"
 msgstr "Killboard"
@@ -7606,19 +8716,11 @@ msgstr "Cibles roaming"
 
 #: templates/_nav.html templates/navigation/gatecamp.html
 msgid "Gate Camp Watch"
-msgstr ""
+msgstr "Gate Camp Watch"
 
 #: templates/_nav.html templates/corporation/standings.html
 msgid "Standings"
 msgstr "Réputations"
-
-#: templates/_nav.html templates/admin_audit/console/hub.html
-#: templates/navigation/beacons.html templates/navigation/jump_planner.html
-#: templates/navigation/jump_routes.html templates/navigation/map_index.html
-#: templates/navigation/range_finder.html
-#: templates/navigation/route_planner.html
-msgid "Navigation"
-msgstr "Navigation"
 
 #: templates/_nav.html templates/navigation/route_planner.html
 msgid "Route Planner"
@@ -7744,14 +8846,6 @@ msgstr "Campagnes"
 #: templates/_nav.html templates/campaigns/workspace.html
 msgid "My Workspace"
 msgstr "Mon espace de travail"
-
-#: templates/_nav.html templates/command_intel/campaign_new.html
-#: templates/command_intel/campaigns.html
-#: templates/command_intel/overview.html
-#: templates/command_intel/report_detail.html
-#: templates/command_intel/reports.html
-msgid "Command Intelligence"
-msgstr "Renseignement de commandement"
 
 #: templates/_nav.html
 msgid "Command Overview"
@@ -7900,7 +8994,7 @@ msgstr "Se déconnecter"
 #: templates/_user_block.html templates/buyback/unavailable.html
 #: templates/doctrines/forbidden.html templates/landing.html
 #: templates/logistics/unavailable.html templates/showcase.html
-#: templates/store/unavailable.html
+#: templates/store/unavailable.html tests/test_i18n_render.py
 msgid "Log in with EVE"
 msgstr "Se connecter avec EVE"
 
@@ -8042,12 +9136,12 @@ msgstr ""
 #, python-format
 msgid "%(doctrines)s doctrine"
 msgid_plural "%(doctrines)s doctrines"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(doctrines)s doctrine"
+msgstr[1] "%(doctrines)s doctrine"
 
 #: templates/admin_audit/console/hub.html templates/doctrines/coverage.html
 msgid "Doctrine coverage"
-msgstr ""
+msgstr "Couverture doctrine"
 
 #: templates/admin_audit/console/hub.html
 msgid ""
@@ -8436,13 +9530,15 @@ msgstr ""
 
 #: templates/admin_audit/console/hub.html
 msgid "Doctrine classification"
-msgstr ""
+msgstr "Classification doctrine"
 
 #: templates/admin_audit/console/hub.html
 msgid ""
 "Mark primary / mandatory / alliance doctrines and retirement dates — feeds "
 "Doctrine findings."
 msgstr ""
+"Marquez les doctrines primary / obligatoires / d'alliance et leurs dates de "
+"retrait — alimente les constats Doctrine."
 
 #: templates/admin_audit/console/hub.html
 msgid "Command Intelligence configuration"
@@ -8594,10 +9690,6 @@ msgid ""
 msgstr ""
 "Configurez l'échelle des rangs, les seuils, l'éligibilité aux récompenses et"
 " les suggestions de récompenses basées sur les revenus."
-
-#: templates/admin_audit/console/hub.html
-msgid "Member services"
-msgstr "Services aux membres"
 
 #: templates/admin_audit/console/hub.html
 msgid "Freight rates"
@@ -8925,7 +10017,7 @@ msgstr "Noms des données de jeu"
 msgid "Save changes"
 msgstr "Enregistrer les modifications"
 
-#: templates/base.html
+#: templates/base.html tests/test_i18n_render.py
 msgid "Skip to content"
 msgstr "Aller au contenu"
 
@@ -8945,7 +10037,7 @@ msgstr "Aller à…"
 msgid "Open menu"
 msgstr "Ouvrir le menu"
 
-#: templates/base.html
+#: templates/base.html tests/test_i18n_render.py
 msgid "Log in"
 msgstr "Se connecter"
 
@@ -8978,7 +10070,7 @@ msgid "Jump to a page…"
 msgstr "Aller à une page…"
 
 #: templates/base.html templates/campaigns/objective_form.html
-#: templates/components/_type_picker.html
+#: templates/components/_type_picker.html tests/test_i18n_render.py
 msgid "No matches."
 msgstr "Aucun résultat."
 
@@ -11883,7 +12975,7 @@ msgstr "Lancer l'assistant →"
 
 #: templates/capsuleer/home.html
 msgid "Next step · primary goal"
-msgstr ""
+msgstr "Prochaine étape · objectif primary"
 
 #: templates/capsuleer/home.html templates/onboarding/dashboard.html
 msgid "Do it →"
@@ -14094,15 +15186,15 @@ msgstr ""
 #, python-format
 msgid "%(shown)s of %(total_all)s doctrine match."
 msgid_plural "%(shown)s of %(total_all)s doctrines match."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(shown)s doctrine sur %(total_all)s correspond."
+msgstr[1] "%(shown)s doctrine sur %(total_all)s correspondent."
 
 #: templates/doctrines/_list_results.html
 #, python-format
 msgid "%(shown)s of %(total_all)s doctrine."
 msgid_plural "%(shown)s of %(total_all)s doctrines."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(shown)s doctrine sur %(total_all)s."
+msgstr[1] "%(shown)s doctrine sur %(total_all)s."
 
 #: templates/doctrines/_list_results.html templates/doctrines/ships.html
 #, python-format
@@ -14397,10 +15489,6 @@ msgstr "Pas encore pilotable"
 #: templates/doctrines/my_readiness.html
 msgid "My doctrine readiness"
 msgstr "Ma préparation par doctrine"
-
-#: templates/doctrines/my_readiness.html
-msgid "Best next doctrine to unlock"
-msgstr "Meilleure prochaine doctrine à débloquer"
 
 #: templates/doctrines/my_readiness.html
 msgid ""
@@ -15641,6 +16729,8 @@ msgid ""
 "Officers of FORCA can see your skills and doctrine readiness; this is disclosed here and at login,\n"
 "    and every access is recorded in the audit log. Disconnect a character to revoke our access."
 msgstr ""
+"Les officiers de FORCA peuvent voir vos compétences et votre préparation doctrine ; c'est indiqué ici et à la connexion,\n"
+"    et chaque accès est enregistré dans le journal d'audit. Déconnectez un personnage pour révoquer notre accès."
 
 #: templates/identity/privacy.html
 msgid "Linked characters"
@@ -15706,7 +16796,7 @@ msgstr "Ce que les officiers peuvent voir de vous"
 
 #: templates/identity/privacy.html
 msgid "Your skills &amp; doctrine readiness"
-msgstr ""
+msgstr "Vos compétences &amp; votre préparation doctrine"
 
 #: templates/identity/privacy.html
 msgid "yes, and every access is recorded in the audit log."
@@ -16159,7 +17249,7 @@ msgstr ""
 
 #: templates/industry/demand.html
 msgid "Doctrine sets"
-msgstr ""
+msgstr "Lots de doctrine"
 
 #: templates/industry/demand.html
 msgid "Update"
@@ -17753,7 +18843,7 @@ msgstr "Pas encore de killmails PvP."
 
 #: templates/killboard/stats.html
 msgid "Doctrine compliance"
-msgstr ""
+msgstr "Conformité doctrine"
 
 #: templates/killboard/stats.html
 msgid "on doctrine"
@@ -20439,10 +21529,6 @@ msgstr "Un cyno ne peut pas être allumé en high-sec."
 msgid "Plan jump"
 msgstr "Planifier le saut"
 
-#: templates/navigation/jump_planner.html templates/navigation/route_map.html
-msgid "Route map"
-msgstr "Carte d'itinéraire"
-
 #: templates/navigation/jump_planner.html
 msgid "Low-sec exit &mdash; pick your staging system"
 msgstr "Sortie low-sec &mdash; choisissez votre système de staging"
@@ -20974,7 +22060,7 @@ msgstr ""
 
 #: templates/navigation/route_planner.html
 msgid "Gate Camp Watch →"
-msgstr ""
+msgstr "Gate Camp Watch →"
 
 #: templates/navigation/route_planner.html
 msgid "View route map"
@@ -27447,3 +28533,7 @@ msgstr "Réassigner"
 #: templates/tasks/detail.html
 msgid "— Unassign (return to open pool) —"
 msgstr "— Désassigner (retour au pool ouvert) —"
+
+#: tests/test_i18n_activation.py
+msgid "This source string is intentionally never translated"
+msgstr "Cette chaîne source n'est intentionnellement jamais traduite"
