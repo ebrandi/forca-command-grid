@@ -29,8 +29,8 @@ from __future__ import annotations
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+from django.utils.translation import gettext, pgettext_lazy
 from django.utils.translation import gettext_lazy as _
-from django.utils.translation import pgettext_lazy
 
 from core.mixins import TimeStampedModel
 
@@ -472,10 +472,16 @@ class PathSuggestion(TimeStampedModel):
         from django.utils.timesince import timesince
 
         as_of = (self.data or {}).get("as_of") or {}
+        # Keys are the persisted ``data["as_of"]`` source slugs written by the suggestion
+        # generator — never translate them. Only the display labels (the values) are marked.
         labels = {
-            "skills": "your skills", "operations": "upcoming ops", "mentorship": "mentors",
-            "assets": "your assets", "prices": "shipyard prices", "campaigns": "campaigns",
-            "capsuleer": "your plan",
+            "skills": gettext("your skills"),
+            "operations": gettext("upcoming ops"),
+            "mentorship": gettext("mentors"),
+            "assets": gettext("your assets"),
+            "prices": gettext("shipyard prices"),
+            "campaigns": gettext("campaigns"),
+            "capsuleer": gettext("your plan"),
         }
         parts = []
         for key, label in labels.items():
@@ -487,9 +493,14 @@ class PathSuggestion(TimeStampedModel):
             if isinstance(stamp, str):
                 dt = parse_datetime(stamp)
                 if dt is not None:
-                    age = f" ({timesince(dt)} ago)"
-            parts.append(f"{label}{age}")
-        return "based on: " + " · ".join(parts) if parts else ""
+                    age = timesince(dt)
+            if age:
+                parts.append(gettext("%(source)s (%(age)s ago)") % {"source": label, "age": age})
+            else:
+                parts.append(label)
+        if not parts:
+            return ""
+        return gettext("based on: %(sources)s") % {"sources": " · ".join(parts)}
 
 
 class ProgressSnapshot(TimeStampedModel):

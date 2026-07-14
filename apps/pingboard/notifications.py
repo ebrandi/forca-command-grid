@@ -112,7 +112,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_LEADERSHIP, source_service="recommendations",
         audience="officer", sensitive=True, min_severity=50,
-        triggers="Beat recommendations.run (every 30 min) → dispatch_alerts.",
+        triggers=_("Beat recommendations.run (every 30 min) → dispatch_alerts."),
     ),
     Event(
         key="readiness.alert",
@@ -120,7 +120,7 @@ REGISTRY: tuple[Event, ...] = (
         description=_("Fleet-readiness findings that cross a configured alert rule (owner-routed)."),
         group=GROUP_LEADERSHIP, source_service="readiness",
         audience="officer", sensitive=True,
-        triggers="Beat readiness.evaluate_alerts, over open findings.",
+        triggers=_("Beat readiness.evaluate_alerts, over open findings."),
     ),
     Event(
         key="readiness.weekly_report",
@@ -128,7 +128,7 @@ REGISTRY: tuple[Event, ...] = (
         description=_("The weekly executive readiness digest — index, biggest movers, top risks."),
         group=GROUP_LEADERSHIP, source_service="readiness",
         audience="officer", sensitive=True,
-        triggers="Beat readiness.weekly_report (weekly).",
+        triggers=_("Beat readiness.weekly_report (weekly)."),
     ),
     Event(
         key="pilots.leadership_briefing",
@@ -139,7 +139,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_LEADERSHIP, source_service="pilots",
         audience="officer", sensitive=True,
-        triggers="Beat pilots.deliver_leadership_briefing (daily).",
+        triggers=_("Beat pilots.deliver_leadership_briefing (daily)."),
     ),
     Event(
         key="mentorship.review",
@@ -150,7 +150,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_LEADERSHIP, source_service="mentorship",
         audience="officer", sensitive=True,
-        triggers="Mentorship application/pairing events (when the programme arms Discord).",
+        triggers=_("Mentorship application/pairing events (when the programme arms Discord)."),
     ),
     Event(
         key="command_intel.report",
@@ -161,7 +161,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_LEADERSHIP, source_service="command_intel",
         audience="director", sensitive=True,
-        triggers="command_intel.deliver_report for a ready scheduled report.",
+        triggers=_("command_intel.deliver_report for a ready scheduled report."),
     ),
     Event(
         key="admin_audit.integration_health",
@@ -174,7 +174,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_LEADERSHIP, source_service="admin_audit",
         audience="director", sensitive=True,
-        triggers="Beat admin_audit.scan_integration_health (every 30 min), on state change.",
+        triggers=_("Beat admin_audit.scan_integration_health (every 30 min), on state change."),
     ),
     Event(
         key="srp.sla_alert",
@@ -187,7 +187,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_LEADERSHIP, source_service="srp",
         audience="officer", sensitive=True,
-        triggers="Beat srp.scan_sla (every 2h), on breach-set change.",
+        triggers=_("Beat srp.scan_sla (every 2h), on breach-set change."),
     ),
     Event(
         key="sso.ingestion_token_dead",
@@ -200,7 +200,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_LEADERSHIP, source_service="sso",
         audience="director", sensitive=True,
-        triggers="Beat sso.scan_ingestion_tokens (every 30 min), one per token death.",
+        triggers=_("Beat sso.scan_ingestion_tokens (every 30 min), one per token death."),
     ),
     Event(
         key="corporation.infrastructure_alert",
@@ -213,7 +213,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_OPERATIONS, source_service="corporation",
         audience="officer", sensitive=True,
-        triggers="Beat corporation.scan_infrastructure_alerts (every 2h), on breach-set change.",
+        triggers=_("Beat corporation.scan_infrastructure_alerts (every 2h), on breach-set change."),
     ),
     # --- operations / defence (corp-wide by design) ---------------------------
     Event(
@@ -226,7 +226,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_OPERATIONS, source_service="recommendations",
         audience="corp", sensitive=False,
-        triggers="Beat recommendations.sync_notifications (Director notifications token).",
+        triggers=_("Beat recommendations.sync_notifications (Director notifications token)."),
     ),
     Event(
         key="operations.fleet",
@@ -234,7 +234,7 @@ REGISTRY: tuple[Event, ...] = (
         description=_("Fleet-op rally calls and structure-timer announcements posted by officers."),
         group=GROUP_OPERATIONS, source_service="operations",
         audience="corp", sensitive=False,
-        triggers="Operations board announce / structure-timer announce.",
+        triggers=_("Operations board announce / structure-timer announce."),
     ),
     Event(
         key="killboard.killfeed",
@@ -242,7 +242,7 @@ REGISTRY: tuple[Event, ...] = (
         description=_("Sizeable corp kills and losses above the configured ISK thresholds."),
         group=GROUP_OPERATIONS, source_service="killboard",
         audience="corp", sensitive=False,
-        triggers="Beat killboard.run_kill_feed (kill-feed config must be enabled).",
+        triggers=_("Beat killboard.run_kill_feed (kill-feed config must be enabled)."),
     ),
     Event(
         key="mail_relay.corp_mail",
@@ -250,7 +250,7 @@ REGISTRY: tuple[Event, ...] = (
         description=_("New corporation / alliance / mailing-list mail headers relayed to chat."),
         group=GROUP_OPERATIONS, source_service="recommendations",
         audience="corp", sensitive=False,
-        triggers="Beat recommendations.relay_mail (mail-scoped token required).",
+        triggers=_("Beat recommendations.relay_mail (mail-scoped token required)."),
     ),
     # --- members / community --------------------------------------------------
     Event(
@@ -259,7 +259,7 @@ REGISTRY: tuple[Event, ...] = (
         description=_("Raffle open/draw/winner announcements and per-pilot ticket/winner DMs."),
         group=GROUP_MEMBER, source_service="raffle",
         audience="corp", sensitive=False,
-        triggers="Raffle lifecycle events (inert until channels are armed).",
+        triggers=_("Raffle lifecycle events (inert until channels are armed)."),
     ),
     Event(
         key="operations.formup_reminder",
@@ -270,7 +270,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_OPERATIONS, source_service="operations",
         audience="corp", sensitive=False,
-        triggers="Beat operations.formup_reminders (every 5 min, inside the lead window).",
+        triggers=_("Beat operations.formup_reminders (every 5 min, inside the lead window)."),
     ),
     Event(
         key="logistics.haul_overdue",
@@ -283,7 +283,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_MEMBER, source_service="logistics",
         audience="corp", sensitive=False,
-        triggers="Beat logistics.sweep_hauls (every 15 min).",
+        triggers=_("Beat logistics.sweep_hauls (every 15 min)."),
     ),
     Event(
         key="store.order_status",
@@ -295,7 +295,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_MEMBER, source_service="store",
         audience="corp", sensitive=False,
-        triggers="A member/officer advances, claims or cancels a store order.",
+        triggers=_("A member/officer advances, claims or cancels a store order."),
     ),
     Event(
         key="planetary.colony_issue",
@@ -307,7 +307,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_MEMBER, source_service="planetary",
         audience="corp", sensitive=False,
-        triggers="A colony ESI import surfaces a new issue for the enrolled owner.",
+        triggers=_("A colony ESI import surfaces a new issue for the enrolled owner."),
     ),
     Event(
         key="raffle.enrolment_outreach",
@@ -319,7 +319,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_MEMBER, source_service="raffle",
         audience="corp", sensitive=False,
-        triggers="An officer sends enrolment outreach from a contest's ineligible report.",
+        triggers=_("An officer sends enrolment outreach from a contest's ineligible report."),
     ),
     Event(
         key="mining.chunk_arrival",
@@ -331,7 +331,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_MEMBER, source_service="corporation",
         audience="corp", sensitive=False,
-        triggers="The chunk-arrival sweep reaches a configured offset before a fracture.",
+        triggers=_("The chunk-arrival sweep reaches a configured offset before a fracture."),
     ),
     Event(
         key="killboard.watchlist_activity",
@@ -344,7 +344,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_OPERATIONS, source_service="killboard",
         audience="corp", sensitive=False,
-        triggers="The watchlist-activity sweep finds a watched entity on a recent killmail.",
+        triggers=_("The watchlist-activity sweep finds a watched entity on a recent killmail."),
     ),
     Event(
         key="navigation.route_watch",
@@ -356,7 +356,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_MEMBER, source_service="navigation",
         audience="corp", sensitive=False,
-        triggers="The route-watch sweep finds a new camp/incursion on a watched route.",
+        triggers=_("The route-watch sweep finds a new camp/incursion on a watched route."),
     ),
     Event(
         key="skills.idle_queue",
@@ -368,7 +368,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_MEMBER, source_service="skills",
         audience="corp", sensitive=False,
-        triggers="Beat skills.notify_idle_queues (hourly, opted-in pilots only).",
+        triggers=_("Beat skills.notify_idle_queues (hourly, opted-in pilots only)."),
     ),
     Event(
         key="killboard.newbro_milestone",
@@ -380,7 +380,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_MEMBER, source_service="killboard",
         audience="corp", sensitive=False,
-        triggers="Beat killboard.scan_milestones (nightly).",
+        triggers=_("Beat killboard.scan_milestones (nightly)."),
     ),
     Event(
         key="killboard.rank_up",
@@ -392,7 +392,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_MEMBER, source_service="killboard",
         audience="corp", sensitive=False,
-        triggers="Beat killboard.notify_rank_ups (nightly, after the member rollup).",
+        triggers=_("Beat killboard.notify_rank_ups (nightly, after the member rollup)."),
     ),
     # --- Campaign Command (doc 09 §3) -----------------------------------------
     # Per-user campaign traffic ("your objective / your deadline") — targeted,
@@ -408,7 +408,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_MEMBER, source_service="campaigns",
         audience="user", sensitive=False, broadcast=False,
-        triggers="Owner/lead/commander set or changed to a user on create or edit.",
+        triggers=_("Owner/lead/commander set or changed to a user on create or edit."),
     ),
     Event(
         key="campaigns.deadline_soon",
@@ -420,7 +420,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_MEMBER, source_service="campaigns",
         audience="user", sensitive=False, broadcast=False,
-        triggers="Beat campaigns.sweep_deadlines (hourly) reaching a reminder bucket.",
+        triggers=_("Beat campaigns.sweep_deadlines (hourly) reaching a reminder bucket."),
     ),
     Event(
         key="campaigns.objective_blocked",
@@ -432,7 +432,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_MEMBER, source_service="campaigns",
         audience="user", sensitive=False, broadcast=False,
-        triggers="An objective becomes blocked via the issue-linkage rule.",
+        triggers=_("An objective becomes blocked via the issue-linkage rule."),
     ),
     Event(
         key="campaigns.dependency_completed",
@@ -443,7 +443,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_MEMBER, source_service="campaigns",
         audience="user", sensitive=False, broadcast=False,
-        triggers="A dependency target reaches met/dropped/done/completed and the edge resolves.",
+        triggers=_("A dependency target reaches met/dropped/done/completed and the edge resolves."),
     ),
     Event(
         key="campaigns.health_changed",
@@ -456,7 +456,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_LEADERSHIP, source_service="campaigns",
         audience="officer", sensitive=True, broadcast=True,
-        triggers="Campaign health recompute (write-path or beat) that changes the signature.",
+        triggers=_("Campaign health recompute (write-path or beat) that changes the signature."),
     ),
     Event(
         key="campaigns.approval_needed",
@@ -467,7 +467,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_LEADERSHIP, source_service="campaigns",
         audience="director", sensitive=True, broadcast=False,
-        triggers="A campaign transitions draft→proposed, or a milestone → ready_for_review.",
+        triggers=_("A campaign transitions draft→proposed, or a milestone → ready_for_review."),
     ),
     Event(
         key="campaigns.started",
@@ -479,7 +479,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_MEMBER, source_service="campaigns",
         audience="corp", sensitive=False, broadcast=True,
-        triggers="A campaign transitions approved→active.",
+        triggers=_("A campaign transitions approved→active."),
     ),
     Event(
         key="campaigns.completed",
@@ -490,7 +490,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_MEMBER, source_service="campaigns",
         audience="corp", sensitive=False, broadcast=True,
-        triggers="A campaign transitions active→completed/failed/cancelled.",
+        triggers=_("A campaign transitions active→completed/failed/cancelled."),
     ),
     Event(
         key="campaigns.recognition",
@@ -502,7 +502,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_MEMBER, source_service="campaigns",
         audience="user", sensitive=False, broadcast=False,
-        triggers="A CampaignRecognition row is created while recognition_mode is not none.",
+        triggers=_("A CampaignRecognition row is created while recognition_mode is not none."),
     ),
     Event(
         key="campaigns.manual_update_needed",
@@ -513,7 +513,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_MEMBER, source_service="campaigns",
         audience="user", sensitive=False, broadcast=False,
-        triggers="Beat campaigns.sweep_deadlines finds a stale manual-metric objective.",
+        triggers=_("Beat campaigns.sweep_deadlines finds a stale manual-metric objective."),
     ),
     Event(
         key="campaigns.issue_escalated",
@@ -524,7 +524,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_LEADERSHIP, source_service="campaigns",
         audience="officer", sensitive=True, broadcast=True,
-        triggers="A campaign issue transitions open→escalated.",
+        triggers=_("A campaign issue transitions open→escalated."),
     ),
     Event(
         key="campaigns.approved",
@@ -535,7 +535,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_MEMBER, source_service="campaigns",
         audience="user", sensitive=False, broadcast=False,
-        triggers="A campaign transitions proposed→approved.",
+        triggers=_("A campaign transitions proposed→approved."),
     ),
     # --- Capsuleer Path (per-user career DMs; all disarmed on the emitter side) ---------
     Event(
@@ -548,7 +548,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_MEMBER, source_service="capsuleer",
         audience="user", sensitive=False, broadcast=False,
-        triggers="Milestone credit path (skill-import hook, hourly reconcile sweep, or manual confirm).",
+        triggers=_("Milestone credit path (skill-import hook, hourly reconcile sweep, or manual confirm)."),
     ),
     Event(
         key="capsuleer.goal_completed",
@@ -560,7 +560,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_MEMBER, source_service="capsuleer",
         audience="user", sensitive=False, broadcast=False,
-        triggers="Goal status transition active→completed (owner action, lifecycle service).",
+        triggers=_("Goal status transition active→completed (owner action, lifecycle service)."),
     ),
     Event(
         key="capsuleer.review_due",
@@ -572,7 +572,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_MEMBER, source_service="capsuleer",
         audience="user", sensitive=False, broadcast=False,
-        triggers="Beat capsuleer.housekeeping (nightly) sets review_due_at.",
+        triggers=_("Beat capsuleer.housekeeping (nightly) sets review_due_at."),
     ),
     Event(
         key="capsuleer.suggestion",
@@ -584,7 +584,7 @@ REGISTRY: tuple[Event, ...] = (
         ),
         group=GROUP_MEMBER, source_service="capsuleer",
         audience="user", sensitive=False, broadcast=False,
-        triggers="Beat capsuleer.generate_suggestions (daily), when new rows were admitted.",
+        triggers=_("Beat capsuleer.generate_suggestions (daily), when new rows were admitted."),
     ),
 )
 

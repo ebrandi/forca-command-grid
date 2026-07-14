@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from django.db import transaction
 from django.db.models import Sum
+from django.utils.translation import gettext as _
 
 from apps.industry.bom import direct_materials
 from apps.sde.models import SdeType
@@ -166,7 +167,7 @@ def deliver(job: BuildJob, user, quantity: int | None = None) -> Delivery | None
 
     from apps.stockpile.models import StockpileItem
 
-    item, _ = StockpileItem.objects.get_or_create(
+    item, _created = StockpileItem.objects.get_or_create(
         stockpile=stockpile, type_id=locked.output_type_id
     )
     item.quantity_current = (item.quantity_current or 0) + qty
@@ -301,7 +302,11 @@ def blueprint_coverage() -> dict:
     for hull_id, doctrine_name in hulls.items():
         bp_type = blueprint_for(hull_id)
         has_bp = hull_id in owned_products or (bp_type is not None and bp_type in owned_bp_types)
-        row = {"type_id": hull_id, "name": names.get(hull_id, f"Type {hull_id}"), "doctrine": doctrine_name}
+        row = {
+            "type_id": hull_id,
+            "name": names.get(hull_id, _("Type %(type_id)s") % {"type_id": hull_id}),
+            "doctrine": doctrine_name,
+        }
         (covered if has_bp else gaps).append(row)
     return {"covered": covered, "gaps": gaps}
 
@@ -322,7 +327,7 @@ def in_production(limit: int = 50) -> list[dict]:
         label_id = j.product_type_id or j.blueprint_type_id
         out.append({
             "job": j,
-            "name": names.get(label_id, f"Type {label_id}"),
+            "name": names.get(label_id, _("Type %(type_id)s") % {"type_id": label_id}),
             "activity": j.activity_label,
             "runs": j.runs,
             "ends": j.end_date,

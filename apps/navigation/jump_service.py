@@ -20,6 +20,8 @@ from __future__ import annotations
 import math
 from decimal import Decimal
 
+from django.utils.translation import gettext as _
+
 from apps.logistics.jumps import effective_range, is_cyno_capable, jump_plan_multi
 from apps.logistics.routing import RouteUnavailable, route_plan_multi, security_band
 from apps.logistics.ships import ShipProfile
@@ -101,7 +103,7 @@ def _enrich_path(path: list[int]) -> list[dict]:
     }
     out = []
     for sid in path:
-        name, sec = rows.get(sid, (f"System {sid}", -1.0))
+        name, sec = rows.get(sid, (_("System %(id)s") % {"id": sid}, -1.0))
         out.append({"system_id": sid, "name": name, "security": round(sec, 1),
                     "band": security_band(sec)})
     return out
@@ -133,10 +135,12 @@ def _gate_segment(route: dict, title: str) -> dict:
     lowsec = [s for s in systems if s["band"] != "highsec"]
     warnings = []
     if lowsec:
+        names = ", ".join(s["name"] for s in lowsec[:6])
+        if len(lowsec) > 6:
+            names += "…"
         warnings.append(
-            f"{len(lowsec)} low/null system(s) on the gate leg: "
-            + ", ".join(s["name"] for s in lowsec[:6])
-            + ("…" if len(lowsec) > 6 else "")
+            _("%(count)s low/null system(s) on the gate leg: %(systems)s")
+            % {"count": len(lowsec), "systems": names}
         )
     return {
         "kind": "gate",
@@ -176,15 +180,21 @@ def plan_jump(origin, dest, profile: ShipProfile, *, jdc: int = 5, jfc: int = 5,
     res = resolve_route_mode(origin.security, dest.security, profile)
     if not res.can_plan:
         hs = [s.name for s in (origin, dest) if security_band(s.security) == "highsec"]
-        extra = f"({' and '.join(hs)} is high-sec.)" if hs else ""
+        if len(hs) > 1:
+            extra = _("(%(origin)s and %(dest)s are high-sec.)") % {"origin": hs[0], "dest": hs[1]}
+        elif hs:
+            extra = _("(%(system)s is high-sec.)") % {"system": hs[0]}
+        else:
+            extra = ""
         return _fail(res, origin, dest, extra)
 
     # Waypoints force the *jump* path; they must be cyno-capable (low/null).
     bad_wp = [w.name for w in waypoints if not is_cyno_capable(w.security)]
     if bad_wp:
         return {**_fail(res, origin, dest),
-                "error": f"Waypoint {', '.join(bad_wp)} is high-sec — a cyno can't be lit "
-                         "there. Waypoints must be low-sec or null-sec."}
+                "error": _("Waypoint %(systems)s is high-sec — a cyno can't be lit there. "
+                           "Waypoints must be low-sec or null-sec.")
+                         % {"systems": ", ".join(bad_wp)}}
 
     segments: list[dict] = []
     warnings: list[str] = []
@@ -204,8 +214,8 @@ def plan_jump(origin, dest, profile: ShipProfile, *, jdc: int = 5, jfc: int = 5,
         plan = _jump_only()
         if plan is None:
             return {**_fail(res, origin, dest),
-                    "error": "No jump route within range — try a longer-range hull/JDC, "
-                             "fewer avoided systems/waypoints, or drop ‘dockable only’."}
+                    "error": _("No jump route within range — try a longer-range hull/JDC, "
+                               "fewer avoided systems/waypoints, or drop ‘dockable only’.")}
         segments.append(_jump_segment(plan, profile, f"{origin.name} → {dest.name}"))
 
     elif res.mode == RouteMode.GATE_ONLY:
@@ -223,9 +233,10 @@ def plan_jump(origin, dest, profile: ShipProfile, *, jdc: int = 5, jfc: int = 5,
                                      prefer_stations=prefer_stations)
         if not exit_candidates:
             return {**_fail(res, origin, dest),
-                    "error": f"No low-sec exit near {dest.name} is reachable by jump from "
-                             f"{origin.name}. Try a longer-range hull/JDC, a different origin, "
-                             "or add a waypoint."}
+                    "error": _("No low-sec exit near %(dest)s is reachable by jump from "
+                               "%(origin)s. Try a longer-range hull/JDC, a different origin, "
+                               "or add a waypoint.")
+                             % {"dest": dest.name, "origin": origin.name}}
         def _leg_to_exit(exit_id):
             return jump_plan_multi(
                 [origin.system_id, *[w.system_id for w in waypoints], exit_id],
@@ -237,18 +248,27 @@ def plan_jump(origin, dest, profile: ShipProfile, *, jdc: int = 5, jfc: int = 5,
         chosen_exit, jplan = _first_routable(exit_candidates, exit_system_id, _leg_to_exit)
         if chosen_exit is None:
             return {**_fail(res, origin, dest),
-                    "error": f"No low-sec exit near {dest.name} is reachable by jump from "
-                             f"{origin.name} with these filters. Try a longer-range hull/JDC, "
-                             "fewer avoided systems/waypoints, or dropping ‘dockable only’."}
+                    "error": _("No low-sec exit near %(dest)s is reachable by jump from "
+                               "%(origin)s with these filters. Try a longer-range hull/JDC, "
+                               "fewer avoided systems/waypoints, or dropping ‘dockable only’.")
+                             % {"dest": dest.name, "origin": origin.name}}
         ex = SdeSolarSystem.objects.get(system_id=chosen_exit["system_id"])
         gate = _gate_or_fail(ex.system_id, dest.system_id, preference, avoid, connections)
         if isinstance(gate, str):
             return {**_fail(res, origin, dest), "error": gate}
-        segments.append(_jump_segment(jplan, profile, f"Jump: {origin.name} → {ex.name} (low-sec exit)"))
-        segments.append(_gate_segment(gate, f"Gate: {ex.name} → {dest.name} (high-sec destination)"))
+        segments.append(_jump_segment(
+            jplan, profile,
+            _("Jump: %(origin)s → %(exit)s (low-sec exit)")
+            % {"origin": origin.name, "exit": ex.name}))
+        segments.append(_gate_segment(
+            gate,
+            _("Gate: %(exit)s → %(dest)s (high-sec destination)")
+            % {"exit": ex.name, "dest": dest.name}))
         warnings.append(
-            f"{ex.name} ({chosen_exit['security']}) is your low-sec exit — light a cyno "
-            f"or use a beacon there, then take {gate['jumps']} gate(s) to {dest.name}.")
+            _("%(exit)s (%(security)s) is your low-sec exit — light a cyno or use a beacon "
+              "there, then take %(jumps)s gate(s) to %(dest)s.")
+            % {"exit": ex.name, "security": chosen_exit["security"],
+               "jumps": gate["jumps"], "dest": dest.name})
         warnings += chosen_exit.get("warnings", [])
 
     elif res.mode == RouteMode.GATE_TO_JUMP_ENTRY_THEN_JUMP:
@@ -257,8 +277,9 @@ def plan_jump(origin, dest, profile: ShipProfile, *, jdc: int = 5, jfc: int = 5,
                                      prefer_stations=prefer_stations)
         if not exit_candidates:
             return {**_fail(res, origin, dest),
-                    "error": f"No low-sec staging system near {origin.name} can jump to "
-                             f"{dest.name}. Try a longer-range hull/JDC or a different destination."}
+                    "error": _("No low-sec staging system near %(origin)s can jump to %(dest)s. "
+                               "Try a longer-range hull/JDC or a different destination.")
+                             % {"origin": origin.name, "dest": dest.name}}
         def _leg_from_entry(entry_id):
             return jump_plan_multi(
                 [entry_id, *[w.system_id for w in waypoints], dest.system_id],
@@ -270,18 +291,26 @@ def plan_jump(origin, dest, profile: ShipProfile, *, jdc: int = 5, jfc: int = 5,
         chosen_entry, jplan = _first_routable(exit_candidates, exit_system_id, _leg_from_entry)
         if chosen_entry is None:
             return {**_fail(res, origin, dest),
-                    "error": f"No low-sec staging system near {origin.name} can jump to "
-                             f"{dest.name} with these filters. Try a longer-range hull/JDC, "
-                             "fewer avoided systems/waypoints, or dropping ‘dockable only’."}
+                    "error": _("No low-sec staging system near %(origin)s can jump to %(dest)s "
+                               "with these filters. Try a longer-range hull/JDC, fewer avoided "
+                               "systems/waypoints, or dropping ‘dockable only’.")
+                             % {"origin": origin.name, "dest": dest.name}}
         en = SdeSolarSystem.objects.get(system_id=chosen_entry["system_id"])
         gate = _gate_or_fail(origin.system_id, en.system_id, preference, avoid, connections)
         if isinstance(gate, str):
             return {**_fail(res, origin, dest), "error": gate}
-        segments.append(_gate_segment(gate, f"Gate: {origin.name} (high-sec) → {en.name}"))
-        segments.append(_jump_segment(jplan, profile, f"Jump: {en.name} → {dest.name}"))
+        segments.append(_gate_segment(
+            gate,
+            _("Gate: %(origin)s (high-sec) → %(entry)s")
+            % {"origin": origin.name, "entry": en.name}))
+        segments.append(_jump_segment(
+            jplan, profile,
+            _("Jump: %(entry)s → %(dest)s") % {"entry": en.name, "dest": dest.name}))
         warnings.append(
-            f"Gate out of {origin.name} to {en.name} ({chosen_entry['security']}), light a "
-            "cyno there, then jump.")
+            _("Gate out of %(origin)s to %(entry)s (%(security)s), light a cyno there, "
+              "then jump.")
+            % {"origin": origin.name, "entry": en.name,
+               "security": chosen_entry["security"]})
         warnings += chosen_entry.get("warnings", [])
 
     elif res.mode == RouteMode.MIXED_GATE_AND_JUMP:
@@ -289,9 +318,10 @@ def plan_jump(origin, dest, profile: ShipProfile, *, jdc: int = 5, jfc: int = 5,
                                require_stations=require_stations, prefer_stations=prefer_stations)
         if not pair:
             return {**_fail(res, origin, dest),
-                    "error": f"Couldn't find a low-sec entry near {origin.name} that can jump to "
-                             f"a low-sec exit near {dest.name}. The high-sec pockets may be too "
-                             "far apart for this hull's range."}
+                    "error": _("Couldn't find a low-sec entry near %(origin)s that can jump to a "
+                               "low-sec exit near %(dest)s. The high-sec pockets may be too far "
+                               "apart for this hull's range.")
+                             % {"origin": origin.name, "dest": dest.name}}
         en = SdeSolarSystem.objects.get(system_id=pair["entry"]["system_id"])
         ex = SdeSolarSystem.objects.get(system_id=pair["exit"]["system_id"])
         gate_in = _gate_or_fail(origin.system_id, en.system_id, preference, avoid, connections)
@@ -308,13 +338,23 @@ def plan_jump(origin, dest, profile: ShipProfile, *, jdc: int = 5, jfc: int = 5,
             require_stations=require_stations)
         if jplan is None:
             return {**_fail(res, origin, dest),
-                    "error": "No jump route between the chosen entry and exit systems."}
+                    "error": _("No jump route between the chosen entry and exit systems.")}
         chosen_entry, chosen_exit = pair["entry"], pair["exit"]
-        segments.append(_gate_segment(gate_in, f"Gate: {origin.name} (high-sec) → {en.name}"))
-        segments.append(_jump_segment(jplan, profile, f"Jump: {en.name} → {ex.name}"))
-        segments.append(_gate_segment(gate_out, f"Gate: {ex.name} → {dest.name} (high-sec destination)"))
-        warnings.append(f"Two gate legs: out of {origin.name} to {en.name}, and from {ex.name} "
-                        f"into {dest.name}. Fuel covers the jump between them only.")
+        segments.append(_gate_segment(
+            gate_in,
+            _("Gate: %(origin)s (high-sec) → %(entry)s")
+            % {"origin": origin.name, "entry": en.name}))
+        segments.append(_jump_segment(
+            jplan, profile,
+            _("Jump: %(entry)s → %(exit)s") % {"entry": en.name, "exit": ex.name}))
+        segments.append(_gate_segment(
+            gate_out,
+            _("Gate: %(exit)s → %(dest)s (high-sec destination)")
+            % {"exit": ex.name, "dest": dest.name}))
+        warnings.append(
+            _("Two gate legs: out of %(origin)s to %(entry)s, and from %(exit)s into %(dest)s. "
+              "Fuel covers the jump between them only.")
+            % {"origin": origin.name, "entry": en.name, "exit": ex.name, "dest": dest.name})
 
     # --- Fuel + ISK across every jump segment ---------------------------------
     jump_fuel = sum(s["fuel"] for s in segments if s["kind"] == "jump")
@@ -330,20 +370,34 @@ def plan_jump(origin, dest, profile: ShipProfile, *, jdc: int = 5, jfc: int = 5,
     unit_price = price_fn(profile.isotope_type_id) if jump_fuel else None
     fuel_isk = (unit_price * fuel_with_margin) if unit_price else None
 
+    # Each assumption is a complete sentence: a translator must never have to stitch
+    # fragments together, so the optional JF-skill / rig clauses are their own sentences.
     assumptions = [
-        f"Range {round(range_ly, 2)} ly ({profile.label}, base {profile.base_range_ly} ly × "
-        f"JDC {jdc}). JDC affects range only.",
-        f"Fuel {int(profile.base_fuel_per_ly)} {profile.isotope_name}/ly base, −10%/level JFC "
-        f"(JFC {jfc})" + (f", −10%/level Jump Freighters skill (JF {jf_skill})"
-                          if profile.jf_skill else "")
-        + (f", {jde_rigs}× Jump Drive Economizer rig" if jde_rigs else "") + ".",
-        "Fuel is rounded up per jump (never under-fuel) and covers jump legs only — "
-        "gate legs burn no isotopes.",
+        _("Range %(range)s ly (%(ship)s, base %(base)s ly × JDC %(jdc)s). "
+          "JDC affects range only.")
+        % {"range": round(range_ly, 2), "ship": profile.label,
+           "base": profile.base_range_ly, "jdc": jdc},
+        _("Fuel %(base)s %(isotope)s/ly base, −10%%/level JFC (JFC %(jfc)s).")
+        % {"base": int(profile.base_fuel_per_ly), "isotope": profile.isotope_name,
+           "jfc": jfc},
     ]
+    if profile.jf_skill:
+        assumptions.append(
+            _("Jump Freighters skill saves a further −10%%/level (JF %(jf)s).")
+            % {"jf": jf_skill})
+    if jde_rigs:
+        assumptions.append(
+            _("%(rigs)s× Jump Drive Economizer rig fitted.") % {"rigs": jde_rigs})
+    assumptions.append(
+        _("Fuel is rounded up per jump (never under-fuel) and covers jump legs only — "
+          "gate legs burn no isotopes.")
+    )
     if margin:
-        assumptions.append(f"Includes a {safety_margin_pct:g}% fuel safety margin.")
+        assumptions.append(
+            _("Includes a %(pct)s%% fuel safety margin.")
+            % {"pct": f"{safety_margin_pct:g}"})
     if unit_price is None and jump_fuel:
-        warnings.append("No market price for the fuel isotope — ISK cost unavailable.")
+        warnings.append(_("No market price for the fuel isotope — ISK cost unavailable."))
 
     map_ids = _combined_ids(segments)
     return {

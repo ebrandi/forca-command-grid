@@ -190,7 +190,7 @@ def _dt(value):
         return None
     parsed = parse_datetime(value)
     if parsed is None:
-        raise ValidationError("Enter a valid date and time.")
+        raise ValidationError(_("Enter a valid date and time."))
     if timezone.is_naive(parsed):
         parsed = timezone.make_aware(parsed, timezone.get_current_timezone())
     return parsed
@@ -211,7 +211,7 @@ def _dec(value):
     try:
         return Decimal(value)
     except (InvalidOperation, ValueError) as exc:
-        raise ValidationError("Enter a valid number.") from exc
+        raise ValidationError(_("Enter a valid number.")) from exc
 
 
 def _int(value, default=None):
@@ -428,7 +428,7 @@ def _apply_campaign_fields(campaign, request, *, budget_allowed) -> bool:
     post = request.POST
     name = (post.get("name") or "").strip()
     if not name:
-        raise ValidationError("A campaign needs a name.")
+        raise ValidationError(_("A campaign needs a name."))
 
     old_visibility = campaign.visibility
     campaign.name = name[:120]
@@ -461,7 +461,7 @@ def _apply_campaign_fields(campaign, request, *, budget_allowed) -> bool:
     campaign.start_at = _dt(post.get("start_at"))
     campaign.target_end_at = _dt(post.get("target_end_at"))
     if campaign.target_end_at and campaign.start_at and campaign.target_end_at < campaign.start_at:
-        raise ValidationError("The target end date cannot be before the start date.")
+        raise ValidationError(_("The target end date cannot be before the start date."))
 
     campaign.staging_system_id = _int(post.get("staging_system_id"))
     campaign.staging_system_name = _staging_system_name(campaign.staging_system_id)
@@ -966,7 +966,7 @@ def _apply_objective_fields(objective, request, campaign) -> None:
     post = request.POST
     title = (post.get("title") or "").strip()
     if not title:
-        raise ValidationError("An objective needs a title.")
+        raise ValidationError(_("An objective needs a title."))
     objective.title = title[:200]
     objective.description = (post.get("description") or "").strip()
 
@@ -1044,17 +1044,23 @@ def _widget_options(widget: str) -> list[tuple]:
     if widget == "wallet_division":
         from apps.corporation.models import CorpWalletDivision
 
-        return [
-            (d.division, f"{d.division} — {d.name}" if d.name else f"Division {d.division}")
-            for d in CorpWalletDivision.objects.order_by("division")
-        ]
+        rows = []
+        for d in CorpWalletDivision.objects.order_by("division"):
+            label = (
+                f"{d.division} — {d.name}"
+                if d.name
+                else _("Division %(number)s") % {"number": d.division}
+            )
+            rows.append((d.division, label))
+        return rows
     if widget == "structure_multi":
         from apps.corporation.models import CorpStructure
 
-        return [
-            (s.structure_id, f"{s.name or s.structure_id} — {s.system_name or 'unknown system'}")
-            for s in CorpStructure.objects.order_by("name")
-        ]
+        rows = []
+        for s in CorpStructure.objects.order_by("name"):
+            system = s.system_name or _("unknown system")
+            rows.append((s.structure_id, f"{s.name or s.structure_id} — {system}"))
+        return rows
     if widget == "readiness_dimension":
         from apps.readiness.engine import registry
 
@@ -1078,7 +1084,7 @@ def _sde_type_names(type_ids) -> dict:
 def _lookup_or_removed(labels: dict, value) -> str:
     """Resolve an id/key against a ``{str(key): label}`` map, degrading a since-removed id to
     ``id N (removed)`` rather than leaking (or 404ing on) the bare number (soft-link discipline)."""
-    return labels.get(str(value)) or f"id {value} (removed)"
+    return labels.get(str(value)) or _("id %(value)s (removed)") % {"value": value}
 
 
 def _metric_source_options(current_key="", current_params=None) -> list[dict]:
@@ -1113,7 +1119,11 @@ def _metric_source_options(current_key="", current_params=None) -> list[dict]:
             elif widget == "type_multi":
                 names = _sde_type_names(raw_list)
                 field["value_items"] = [
-                    {"id": str(v), "name": names.get(str(v), f"type {v}")} for v in raw_list
+                    {
+                        "id": str(v),
+                        "name": names.get(str(v), _("type %(id)s") % {"id": v}),
+                    }
+                    for v in raw_list
                 ]
             fields.append(field)
         options.append({
@@ -1146,12 +1156,12 @@ def params_display(source, params) -> list[dict]:
         if widget in _OPTION_WIDGETS:
             labels = {str(k): str(v) for k, v in _widget_options(widget)}
             if isinstance(value, list):
-                display = ", ".join(_lookup_or_removed(labels, v) for v in value) or "all"
+                display = ", ".join(_lookup_or_removed(labels, v) for v in value) or _("all")
             else:
                 display = _lookup_or_removed(labels, value)
         elif widget in ("type", "type_multi"):
             if isinstance(value, list):
-                display = ", ".join(_lookup_or_removed(type_names, v) for v in value) or "all"
+                display = ", ".join(_lookup_or_removed(type_names, v) for v in value) or _("all")
             else:
                 display = _lookup_or_removed(type_names, value)
         elif f.get("kind") == "choice":
@@ -1393,7 +1403,7 @@ def _apply_milestone_fields(milestone, request, campaign) -> None:
     post = request.POST
     title = (post.get("title") or "").strip()
     if not title:
-        raise ValidationError("A milestone needs a title.")
+        raise ValidationError(_("A milestone needs a title."))
     milestone.title = title[:200]
     milestone.description = (post.get("description") or "").strip()
     ws_id = _int(post.get("workstream"))
@@ -1504,7 +1514,7 @@ def _apply_workstream_fields(workstream, request) -> None:
     post = request.POST
     name = (post.get("name") or "").strip()
     if not name:
-        raise ValidationError("A workstream needs a name.")
+        raise ValidationError(_("A workstream needs a name."))
     workstream.name = name[:120]
     workstream.description = (post.get("description") or "").strip()
     workstream.lead = _pool_user(post.get("lead"))
@@ -1578,7 +1588,7 @@ def _apply_risk_fields(risk, request, campaign) -> None:
     post = request.POST
     description = (post.get("description") or "").strip()
     if not description:
-        raise ValidationError("A risk needs a description.")
+        raise ValidationError(_("A risk needs a description."))
     risk.description = description
     levels = Risk.RiskLevel.values
     prob = (post.get("probability") or "").strip()
@@ -2286,10 +2296,10 @@ def campaign_report(request: HttpRequest, pk: int) -> HttpResponse:
 
 
 _LESSONS_OUTCOMES = [
-    (Campaign.Status.COMPLETED, "Completed"),
-    (Campaign.Status.FAILED, "Failed"),
-    (Campaign.Status.CANCELLED, "Cancelled"),
-    (Campaign.Status.ARCHIVED, "Archived"),
+    (Campaign.Status.COMPLETED, _l("Completed")),
+    (Campaign.Status.FAILED, _l("Failed")),
+    (Campaign.Status.CANCELLED, _l("Cancelled")),
+    (Campaign.Status.ARCHIVED, _l("Archived")),
 ]
 
 

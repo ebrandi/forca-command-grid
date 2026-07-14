@@ -7,6 +7,8 @@ cached celestial counts on top.
 """
 from __future__ import annotations
 
+from django.utils.translation import gettext as _
+
 from apps.sde.models import SdeRegion, SdeSolarSystem, SdeStation, SdeSystemJump, SdeType
 
 from .maps import security_band, security_colour
@@ -60,7 +62,10 @@ def recent_kills(system_id: int, limit: int = 12) -> list[dict]:
         rows.append({
             "killmail_id": k["killmail_id"],
             "time": k["killmail_time"],
-            "ship": ship_names.get(k["victim_ship_type_id"], f"Type {k['victim_ship_type_id']}"),
+            "ship": ship_names.get(
+                k["victim_ship_type_id"],
+                _("Type %(type_id)s") % {"type_id": k["victim_ship_type_id"]},
+            ),
             "ship_id": k["victim_ship_type_id"],
             "victim": victim or ("NPC" if k["is_npc"] else "—"),
             "value": k["total_value"],

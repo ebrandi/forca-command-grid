@@ -15,6 +15,8 @@ from __future__ import annotations
 
 import copy
 
+from django.utils.translation import gettext as _
+
 _CACHE_TTL = 600
 _VERSION_KEY = "capsuleer._version"
 
@@ -138,13 +140,13 @@ def meta(domain: str) -> dict:
 # --- validation --------------------------------------------------------------
 def _ensure_dict(value) -> dict:
     if not isinstance(value, dict):
-        raise ConfigError("config document must be an object")
+        raise ConfigError(_("config document must be an object"))
     return value
 
 
 def _pos_int(v, name: str) -> None:
     if isinstance(v, bool) or not isinstance(v, int) or v <= 0:
-        raise ConfigError(f"{name} must be a positive integer")
+        raise ConfigError(_("%(name)s must be a positive integer") % {"name": name})
 
 
 def _validate_reconcile(value: dict) -> dict:
@@ -169,7 +171,7 @@ def _validate_leadership(value: dict) -> dict:
         _pos_int(v["min_group"], "leadership.min_group")
         # A floor of 2 keeps suppression meaningful — a group of 1 can never be published.
         if v["min_group"] < 2:
-            raise ConfigError("leadership.min_group must be at least 2")
+            raise ConfigError(_("leadership.min_group must be at least 2"))
     return v
 
 
@@ -186,7 +188,7 @@ def _validate_templates(value: dict) -> dict:
     if "disabled_keys" in v:
         keys = v["disabled_keys"]
         if not isinstance(keys, list) or not all(isinstance(k, str) for k in keys):
-            raise ConfigError("templates.disabled_keys must be a list of template keys")
+            raise ConfigError(_("templates.disabled_keys must be a list of template keys"))
     return v
 
 
@@ -195,7 +197,7 @@ def _validate_notifications(value: dict) -> dict:
     if "enabled" in v:
         enabled = v["enabled"]
         if not isinstance(enabled, dict):
-            raise ConfigError("notifications.enabled must be an object of event → bool")
+            raise ConfigError(_("notifications.enabled must be an object of event → bool"))
         v["enabled"] = {k: bool(val) for k, val in enabled.items()}
     return v
 

@@ -8,6 +8,8 @@ owns nothing isn't graded on infrastructure).
 """
 from __future__ import annotations
 
+from django.utils.translation import gettext_lazy as _
+
 from ..engine.base import (
     DimensionResult,
     Finding,
@@ -33,13 +35,13 @@ def _kpi(key, value, score, detail):
 
 class InfrastructureProvider:
     key = "infrastructure"
-    label = "Infrastructure Readiness"
+    label = _("Infrastructure Readiness")
     default_weight = 0.9
-    data_sources = ["Corp structures", "Sovereignty structures"]
+    data_sources = [_("Corp structures"), _("Sovereignty structures")]
     kpi_catalogue = [
-        ("infrastructure.fuel_cover", "Fuel cover"),
-        ("infrastructure.timer_exposure", "Timer exposure"),
-        ("infrastructure.sov_health", "Sov health"),
+        ("infrastructure.fuel_cover", _("Fuel cover")),
+        ("infrastructure.timer_exposure", _("Timer exposure")),
+        ("infrastructure.sov_health", _("Sov health")),
     ]
 
     def compute(self, ctx: ReadinessContext) -> DimensionResult:

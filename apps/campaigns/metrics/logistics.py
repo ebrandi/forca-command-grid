@@ -6,12 +6,14 @@ courier model has no indexed destination / ``delivered_at``), so v1 counts every
 """
 from __future__ import annotations
 
+from django.utils.translation import gettext_lazy as _
+
 from .base import Measurement, MetricSource, _dec, register
 
 
 class LogisticsHauledM3(MetricSource):
     key = "logistics.hauled_m3"
-    label = "Logistics — m³ hauled in window"
+    label = _("Logistics — m³ hauled in window")
     unit = "m³"
     data_class = "default"
     params_schema = []

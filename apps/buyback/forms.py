@@ -16,7 +16,7 @@ class AppraisalForm(forms.Form):
         max_length=50_000,
         widget=forms.Textarea(attrs={
             "class": "input-field font-mono text-xs", "rows": 10,
-            "placeholder": "Paste items from EVE, one per line:\nTritanium  1000000\nFerox  3\nIschoten II x5",
+            "placeholder": _("Paste items from EVE, one per line:\nTritanium  1000000\nFerox  3\nIschoten II x5"),
         }),
     )
     sec_band = forms.ChoiceField(

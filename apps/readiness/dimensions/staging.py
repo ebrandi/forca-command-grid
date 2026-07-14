@@ -10,6 +10,8 @@ until set). Honest score: ``None`` when no member owns any doctrine hull at all
 """
 from __future__ import annotations
 
+from django.utils.translation import gettext_lazy as _
+
 from ..engine.base import DimensionResult, Finding, KpiResult, ReadinessContext, status_for
 from ..engine.registry import register
 
@@ -20,10 +22,10 @@ def _kpi(key, value, score, detail) -> KpiResult:
 
 class StagingProvider:
     key = "staging"
-    label = "Asset Staging"
+    label = _("Asset Staging")
     default_weight = 0.8
-    data_sources = ["Staging system", "Personal assets", "Doctrine fits"]
-    kpi_catalogue = [("staging.hulls_at_staging", "Doctrine hulls at staging")]
+    data_sources = [_("Staging system"), _("Personal assets"), _("Doctrine fits")]
+    kpi_catalogue = [("staging.hulls_at_staging", _("Doctrine hulls at staging"))]
 
     def compute(self, ctx: ReadinessContext) -> DimensionResult:
         from django.db.models import Sum

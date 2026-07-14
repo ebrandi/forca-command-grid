@@ -6,18 +6,21 @@ detail never carries journal line items (the command_intel "aggregates, not line
 """
 from __future__ import annotations
 
+from django.utils.translation import gettext_lazy as _
+
 from .base import Measurement, MetricSource, _dec, register
 
 
 class FinanceWalletBalance(MetricSource):
     key = "finance.wallet_balance"
-    label = "Finance — wallet division balance"
+    label = _("Finance — wallet division balance")
     unit = "ISK"
     data_class = "default"
     sensitive_default = True
     params_schema = [
-        {"name": "division", "kind": "int", "widget": "wallet_division", "label": "Wallet division", "required": True,
-         "help": "Corp wallet division to read the balance of."},
+        {"name": "division", "kind": "int", "widget": "wallet_division", "required": True,
+         "label": _("Wallet division"),
+         "help": _("Corp wallet division to read the balance of.")},
     ]
 
     def measure(self, params: dict) -> Measurement:

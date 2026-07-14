@@ -19,6 +19,7 @@ an open session window.
 from __future__ import annotations
 
 from django.conf import settings
+from django.utils.translation import gettext as _
 
 from ._http import _json_body, post_form, post_json
 from .base import AlertProvider, Recipient, SendResult
@@ -70,12 +71,12 @@ class WhatsAppProvider(AlertProvider):
         if backend == "meta":
             if cfg["meta_token"] and cfg["meta_phone_id"]:
                 return True, ""
-            return False, "Meta access token / phone number id not set"
+            return False, _("Meta access token / phone number id not set")
         if backend == "twilio":
             if cfg["twilio_sid"] and cfg["twilio_token"] and cfg["twilio_from"]:
                 return True, ""
-            return False, "Twilio SID / auth token / sender number not set"
-        return False, "Choose a WhatsApp backend (Meta or Twilio)"
+            return False, _("Twilio SID / auth token / sender number not set")
+        return False, _("Choose a WhatsApp backend (Meta or Twilio)")
 
     def _targets(self, recipients):
         targets = [r.recipient_ref for r in recipients if r.recipient_ref]

@@ -6,19 +6,21 @@ viable), optionally intersecting the roster with the recently-active set from
 """
 from __future__ import annotations
 
+from django.utils.translation import gettext_lazy as _
+
 from .base import Measurement, MetricSource, _dec, register
 
 
 class DoctrineQualifiedPilots(MetricSource):
     key = "doctrine.qualified_pilots"
-    label = "Doctrine — qualified pilots"
+    label = _("Doctrine — qualified pilots")
     unit = "pilots"
     data_class = "skills"
     params_schema = [
-        {"name": "doctrine_id", "kind": "int", "widget": "doctrine", "label": "Doctrine", "required": True,
-         "help": "Active doctrine to count fly-capable pilots for."},
-        {"name": "active_days", "kind": "int", "label": "Active within N days", "required": False,
-         "help": "Optional — only count pilots seen online in the last N days."},
+        {"name": "doctrine_id", "kind": "int", "widget": "doctrine", "label": _("Doctrine"), "required": True,
+         "help": _("Active doctrine to count fly-capable pilots for.")},
+        {"name": "active_days", "kind": "int", "label": _("Active within N days"), "required": False,
+         "help": _("Optional — only count pilots seen online in the last N days.")},
     ]
 
     def measure(self, params: dict) -> Measurement:

@@ -7,6 +7,8 @@ as v1 did.
 """
 from __future__ import annotations
 
+from django.utils.translation import gettext_lazy as _
+
 from ..engine.base import DimensionResult, ReadinessContext, status_for
 from ..engine.registry import register
 from .sources import get_stock_logistics
@@ -14,9 +16,9 @@ from .sources import get_stock_logistics
 
 class LogisticsProvider:
     key = "logistics"
-    label = "Logistics Throughput"
+    label = _("Logistics Throughput")
     default_weight = 1.0
-    data_sources = ["Hauling tasks"]
+    data_sources = [_("Hauling tasks")]
 
     def compute(self, ctx: ReadinessContext) -> DimensionResult:
         dims, _gaps = get_stock_logistics(ctx)  # shared, no recompute

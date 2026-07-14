@@ -12,6 +12,8 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 
 from apps.market.pricing import price_for
@@ -92,7 +94,7 @@ def plan_from_demand(request: HttpRequest) -> HttpResponse:
     raw = (request.POST.get("type_id") or "").strip()
     stype = SdeType.objects.filter(type_id=int(raw)).first() if raw.isdigit() else None
     if stype is None:
-        messages.error(request, "Pick a valid item from the demand list.")
+        messages.error(request, _("Pick a valid item from the demand list."))
         return redirect("industry:demand")
     try:
         quantity = max(1, int(request.POST.get("quantity") or 1))
@@ -111,7 +113,11 @@ def plan_from_demand(request: HttpRequest) -> HttpResponse:
     audit_log(request.user, "industry.plan_from_demand", target_type="industry_project",
               target_id=str(project.id), metadata={"type_id": stype.type_id, "quantity": quantity},
               ip=client_ip(request))
-    messages.success(request, f"Plan created for {quantity}× {stype.name}.")
+    messages.success(
+        request,
+        _("Plan created for %(quantity)s× %(item)s.")
+        % {"quantity": quantity, "item": stype.name},
+    )
     return redirect("industry:detail", pk=project.pk)
 
 
@@ -123,7 +129,7 @@ def plan_from_job(request: HttpRequest) -> HttpResponse:
     raw = (request.POST.get("type_id") or "").strip()
     stype = SdeType.objects.filter(type_id=int(raw)).first() if raw.isdigit() else None
     if stype is None:
-        messages.error(request, "Couldn't resolve that job's product.")
+        messages.error(request, _("Couldn't resolve that job's product."))
         return redirect("industry:jobs")
     # The imported job reports blueprint *runs*; the plan wants finished *units*
     # (runs × output-per-run — ammo/charges/drones yield many per run).
@@ -147,7 +153,11 @@ def plan_from_job(request: HttpRequest) -> HttpResponse:
     audit_log(request.user, "industry.plan_from_job", target_type="industry_project",
               target_id=str(project.id), metadata={"type_id": stype.type_id, "quantity": quantity},
               ip=client_ip(request))
-    messages.success(request, f"Plan created for {quantity}× {stype.name}.")
+    messages.success(
+        request,
+        _("Plan created for %(quantity)s× %(item)s.")
+        % {"quantity": quantity, "item": stype.name},
+    )
     return redirect("industry:detail", pk=project.pk)
 
 
@@ -161,13 +171,15 @@ def guide(request: HttpRequest) -> HttpResponse:
 # Structure + rig material-efficiency presets (4.12): the extra material reduction an
 # Engineering Complex with material rigs gives, on top of the blueprint ME. Values are the
 # standard community figures (rig bonus × security multiplier).
+# Only the label (element [1]) is translated: element [0] is the code value that
+# round-trips through ``?structure=`` and is string-compared in calculator.html.
 STRUCTURE_PRESETS = [
-    ("none", "NPC station (no bonus)", 0.0),
-    ("raitaru_t1", "Raitaru · T1 ME rig (highsec)", 0.020),      # 2.0% × 1.0
-    ("raitaru_t2", "Raitaru · T2 ME rig (highsec)", 0.024),      # 2.4% × 1.0
-    ("ec_t1_lowsec", "Azbel/Sotiyo · T1 ME rig (lowsec)", 0.038),  # 2.0% × 1.9
-    ("ec_t2_lowsec", "Azbel/Sotiyo · T2 ME rig (lowsec)", 0.0456),  # 2.4% × 1.9
-    ("ec_t2_null", "Azbel/Sotiyo · T2 ME rig (null/WH)", 0.0504),   # 2.4% × 2.1
+    ("none", gettext_lazy("NPC station (no bonus)"), 0.0),
+    ("raitaru_t1", gettext_lazy("Raitaru · T1 ME rig (highsec)"), 0.020),      # 2.0% × 1.0
+    ("raitaru_t2", gettext_lazy("Raitaru · T2 ME rig (highsec)"), 0.024),      # 2.4% × 1.0
+    ("ec_t1_lowsec", gettext_lazy("Azbel/Sotiyo · T1 ME rig (lowsec)"), 0.038),  # 2.0% × 1.9
+    ("ec_t2_lowsec", gettext_lazy("Azbel/Sotiyo · T2 ME rig (lowsec)"), 0.0456),  # 2.4% × 1.9
+    ("ec_t2_null", gettext_lazy("Azbel/Sotiyo · T2 ME rig (null/WH)"), 0.0504),   # 2.4% × 2.1
 ]
 _STRUCTURE_BONUS = {key: bonus for key, _label, bonus in STRUCTURE_PRESETS}
 

@@ -11,6 +11,8 @@ import logging
 
 from django.db import transaction
 from django.utils import timezone, translation
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _lazy
 
 from core.audit import audit_log
 from core.i18n import broadcast_locale
@@ -54,11 +56,16 @@ def _enforce_dispatch_floor(gen: dict, user, priority, category: str) -> None:
     floors = gen.get("dispatch_floor") or {}
     required = floors.get(str(priority))
     if required and not rbac.has_role(user, required):
-        raise ValueError(f"{str(priority).title()} alerts require the {required} role.")
+        raise ValueError(
+            _("%(priority)s alerts require the %(role)s role.")
+            % {"priority": str(priority).title(), "role": required}
+        )
     if category == "announcement":
         ann = gen.get("announcement_floor", "director")
         if ann and not rbac.has_role(user, ann):
-            raise ValueError(f"Corp-wide announcements require the {ann} role.")
+            raise ValueError(
+                _("Corp-wide announcements require the %(role)s role.") % {"role": ann}
+            )
 
 
 def emit_alert(
@@ -139,13 +146,14 @@ def emit_alert(
         if created_by is not None:
             _enforce_dispatch_floor(gen, created_by, priority, category)
         if priority in _URGENT and aa.get("require_reason_for_urgent", True) and not (reason or "").strip():
-            raise ValueError("Urgent and emergency alerts require a reason.")
+            raise ValueError(_("Urgent and emergency alerts require a reason."))
         if not dry_run:
             if priority in _URGENT and aa.get("two_step_urgent", True) and not conf.get("two_step"):
-                raise ValueError("Urgent/emergency alerts require two-step confirmation.")
+                raise ValueError(_("Urgent/emergency alerts require two-step confirmation."))
             if est > aa.get("large_audience_threshold", 50) and not conf.get("large_audience_ack"):
                 raise ValueError(
-                    f"This alert reaches {est} pilots; large-audience confirmation is required."
+                    _("This alert reaches %(count)s pilots; large-audience confirmation is "
+                      "required.") % {"count": est}
                 )
     approval_required = (
         src == AlertSource.MANUAL and category in (aa.get("approval_required_categories") or [])
@@ -563,7 +571,12 @@ def _render_body(template, body, context) -> tuple[str, bool]:
     if tpl is not None:
         missing = rendering.missing_required(tpl.required_vars, context)
         if missing:
-            raise ValueError(f"Missing required template variables: {', '.join(missing)}")
+            # Lazy: _render_body runs under translation.override(broadcast_locale()), but the
+            # officer reads this via str(exc) in views after the override exits.
+            raise ValueError(
+                _lazy("Missing required template variables: %(variables)s")
+                % {"variables": ", ".join(missing)}
+            )
         return rendering.render(tpl.body, context), False
     if body is None:
         return "", True

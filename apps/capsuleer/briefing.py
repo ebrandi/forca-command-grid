@@ -12,6 +12,8 @@ subject.
 """
 from __future__ import annotations
 
+from django.utils.translation import gettext
+
 from .models import (
     CareerGoal,
     GoalStatus,
@@ -65,7 +67,8 @@ def career_quests_from_goals(goals) -> list[dict]:
     )
     if step is not None:
         return [_row(goal, ref=f"s{step.pk}", title=step.title,
-                     detail=step.note or "Your next step on this goal.", created_at=step.created_at)]
+                     detail=step.note or gettext("Your next step on this goal."),
+                     created_at=step.created_at)]
 
     # Fallback: the first pending required milestone the owner can actually action from the
     # dashboard. Auto milestones are credited by verification, never by a "Mark done" button, so
@@ -78,7 +81,8 @@ def career_quests_from_goals(goals) -> list[dict]:
     )
     if milestone is not None:
         return [_row(goal, ref=f"m{milestone.pk}", title=milestone.title,
-                     detail="Your next milestone on this goal.", created_at=milestone.created_at)]
+                     detail=gettext("Your next milestone on this goal."),
+                     created_at=milestone.created_at)]
 
     return []
 
@@ -91,11 +95,13 @@ def _row(goal, *, ref, title, detail, created_at) -> dict:
         "engine": "capsuleer",
         "id": ref,
         "category_key": "capsuleer",
-        "category_label": "Capsuleer Path",
+        "category_label": gettext("Capsuleer Path"),
         "icon": "#i-route",
         "corp_order": False,               # personal goals are never corp orders
         "title": title,
-        "detail": f"{detail} (goal: {goal.title})",
+        "detail": gettext("%(detail)s (goal: %(title)s)") % {
+            "detail": detail, "title": goal.title
+        },
         "points": _QUEST_POINTS,
         "action_url": reverse("capsuleer:goal_detail", args=[goal.pk]),
         "action_available": True,

@@ -11,6 +11,7 @@ from __future__ import annotations
 from decimal import Decimal
 
 from django.db.models import Sum
+from django.utils.translation import gettext as _
 
 from apps.market.pricing import price_for
 from apps.sde.models import SdeType
@@ -59,7 +60,7 @@ def fit_shopping(character, fit, owned: dict[int, int] | None = None) -> dict:
         lines.append(
             {
                 "type_id": type_id,
-                "name": names.get(type_id, f"Type {type_id}"),
+                "name": names.get(type_id) or _("Type %(type_id)s") % {"type_id": type_id},
                 "need": need_qty,
                 "have": have,
                 "short": short,

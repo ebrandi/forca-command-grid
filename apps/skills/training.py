@@ -12,6 +12,8 @@ a concrete, valid EVE remap (27 / 21 / 17 / 17 / 17, which sums to the 99-point 
 """
 from __future__ import annotations
 
+from django.utils.translation import gettext_lazy as _
+
 # dogma attribute type id → CharacterAttributes field.
 _ATTR_FIELD = {
     164: "charisma",
@@ -20,12 +22,14 @@ _ATTR_FIELD = {
     167: "perception",
     168: "willpower",
 }
+# Keys are ``CharacterAttributes`` field names (used with ``getattr`` and as dict keys
+# below) — only the display labels are translated.
 _ATTR_LABEL = {
-    "charisma": "Charisma",
-    "intelligence": "Intelligence",
-    "memory": "Memory",
-    "perception": "Perception",
-    "willpower": "Willpower",
+    "charisma": _("Charisma"),
+    "intelligence": _("Intelligence"),
+    "memory": _("Memory"),
+    "perception": _("Perception"),
+    "willpower": _("Willpower"),
 }
 
 # A concrete, valid neural remap used to quantify the advice (max primary, strong

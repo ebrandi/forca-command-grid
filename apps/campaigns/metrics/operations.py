@@ -7,6 +7,8 @@ The documented caveat: ``Operation`` DONE is a manual officer action, so un-mark
 """
 from __future__ import annotations
 
+from django.utils.translation import gettext_lazy as _
+
 from .base import Measurement, MetricSource, _dec, register
 
 
@@ -19,13 +21,13 @@ def _op_type_choices():
 
 class OperationsCompleted(MetricSource):
     key = "operations.completed"
-    label = "Operations — completed of type"
+    label = _("Operations — completed of type")
     unit = "ops"
     data_class = "default"
     params_schema = [
-        {"name": "op_type", "kind": "choice", "label": "Operation type", "required": True,
+        {"name": "op_type", "kind": "choice", "label": _("Operation type"), "required": True,
          "choices": _op_type_choices,
-         "help": "Counts DONE operations of this type since the campaign started."},
+         "help": _("Counts DONE operations of this type since the campaign started.")},
     ]
 
     def measure(self, params: dict) -> Measurement:
@@ -50,7 +52,7 @@ class OperationsCompleted(MetricSource):
 
 class OperationsAttendance(MetricSource):
     key = "operations.attendance"
-    label = "Operations — confirmed attendance"
+    label = _("Operations — confirmed attendance")
     unit = "pilots"
     data_class = "default"
     params_schema = []

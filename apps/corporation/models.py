@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from django.db import models
+from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy as _t
 
 from core.mixins import ProvenanceMixin, TimeStampedModel
@@ -40,7 +41,7 @@ class PartnerAlliance(ProvenanceMixin):
 
     def __str__(self) -> str:
         label = self.name or str(self.alliance_id)
-        return label if self.active else f"{label} (inactive)"
+        return label if self.active else _("%(label)s (inactive)") % {"label": label}
 
 
 class FriendlyCorporation(ProvenanceMixin):
@@ -66,7 +67,7 @@ class FriendlyCorporation(ProvenanceMixin):
 
     def __str__(self) -> str:
         label = self.name or str(self.corporation_id)
-        return label if self.active else f"{label} (inactive)"
+        return label if self.active else _("%(label)s (inactive)") % {"label": label}
 
 
 class EveName(models.Model):
@@ -137,7 +138,7 @@ class CorpWalletDivision(ProvenanceMixin):
         ordering = ["division"]
 
     def __str__(self) -> str:
-        return self.name or f"Division {self.division}"
+        return self.name or _("Division %(division)s") % {"division": self.division}
 
 
 class CorpWalletJournalEntry(models.Model):
@@ -224,7 +225,7 @@ class CorpStructure(ProvenanceMixin):
         ordering = ["fuel_expires", "name"]
 
     def __str__(self) -> str:
-        return self.name or f"Structure {self.structure_id}"
+        return self.name or _("Structure %(structure_id)s") % {"structure_id": self.structure_id}
 
     @property
     def fuel_days_left(self) -> float | None:

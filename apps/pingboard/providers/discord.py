@@ -12,6 +12,7 @@ import logging
 from urllib.parse import urlparse
 
 import requests
+from django.utils.translation import gettext as _
 
 from .base import AlertProvider, Recipient, SendResult
 
@@ -42,7 +43,7 @@ class DiscordProvider(AlertProvider):
     def validate_configuration(self) -> tuple[bool, str]:
         if _is_discord_webhook(self._url()):
             return True, ""
-        return False, "Webhook URL missing or not a valid Discord webhook"
+        return False, _("Webhook URL missing or not a valid Discord webhook")
 
     def send(self, *, subject: str, body: str, recipients: list[Recipient]) -> SendResult:
         url = self._url()

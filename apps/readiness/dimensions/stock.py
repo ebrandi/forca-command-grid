@@ -8,6 +8,8 @@ via the context memo.
 """
 from __future__ import annotations
 
+from django.utils.translation import gettext_lazy as _
+
 from ..engine.base import DimensionResult, Finding, KpiResult, ReadinessContext, status_for
 from ..engine.registry import register
 from .sources import get_stock_logistics
@@ -88,9 +90,9 @@ def _build_capacity() -> tuple[int | None, dict]:
 
 class StockProvider:
     key = "stock"
-    label = "Stockpile Coverage"
+    label = _("Stockpile Coverage")
     default_weight = 1.0
-    data_sources = ["Corp stockpiles", "Stockpile targets"]
+    data_sources = [_("Corp stockpiles"), _("Stockpile targets")]
 
     def compute(self, ctx: ReadinessContext) -> DimensionResult:
         dims, gaps = get_stock_logistics(ctx)

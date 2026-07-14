@@ -20,10 +20,10 @@ from .services import compute_readiness, index_trend
 def dashboard(request: HttpRequest) -> HttpResponse:
     result = compute_readiness()
     dim_labels = {
-        "doctrine": "Doctrine",
-        "skill": "Skill",
-        "stock": "Stock",
-        "logistics": "Logistics",
+        "doctrine": _("Doctrine"),
+        "skill": _("Skill"),
+        "stock": _("Stock"),
+        "logistics": _("Logistics"),
     }
     dimensions = [
         {"key": k, "label": dim_labels.get(k, k), "score": v}

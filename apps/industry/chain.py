@@ -10,6 +10,8 @@ from __future__ import annotations
 import math
 from decimal import Decimal
 
+from django.utils.translation import gettext as _
+
 from apps.market.pricing import price_for
 from apps.sde.models import SdeType
 
@@ -83,7 +85,9 @@ def chain_tree(
         names[tid] = name
 
     def annotate(node: dict) -> None:
-        node["name"] = names.get(node["type_id"], f"Type {node['type_id']}")
+        node["name"] = names.get(
+            node["type_id"], _("Type %(type_id)s") % {"type_id": node["type_id"]}
+        )
         for c in node["children"]:
             annotate(c)
 

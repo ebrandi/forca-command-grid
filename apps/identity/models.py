@@ -4,6 +4,7 @@ from __future__ import annotations
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from core import rbac
 from core.mixins import TimeStampedModel
@@ -26,8 +27,10 @@ class User(AbstractUser):
         max_length=16,
         blank=True,
         default="",
-        help_text="Preferred UI language (a settings.LANGUAGES code, e.g. 'pt-br'); "
-        "blank = auto-detect from the browser, then English.",
+        help_text=_(
+            "Preferred UI language (a settings.LANGUAGES code, e.g. 'pt-br'); "
+            "blank = auto-detect from the browser, then English."
+        ),
     )
 
     def max_role_rank(self) -> int:
@@ -151,9 +154,9 @@ class RoleChangeRequest(TimeStampedModel):
     """
 
     class Status(models.TextChoices):
-        PENDING = "pending", "Pending"
-        APPROVED = "approved", "Approved"
-        REJECTED = "rejected", "Rejected"
+        PENDING = "pending", _("Pending")
+        APPROVED = "approved", _("Approved")
+        REJECTED = "rejected", _("Rejected")
 
     target = models.ForeignKey(User, on_delete=models.CASCADE, related_name="role_requests")
     role_key = models.CharField(max_length=32)

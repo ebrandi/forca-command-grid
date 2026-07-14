@@ -15,6 +15,8 @@ from __future__ import annotations
 
 from decimal import Decimal
 
+from django.utils.translation import gettext as _
+
 from apps.market.models import MarketPrice
 from apps.market.pricing import price_for
 from apps.sde.models import SdeBlueprintActivityTime, SdeBlueprintMaterial, SdeType
@@ -98,7 +100,9 @@ def manufacturing_estimate(
     recipe = bom.buildable_recipe(product_type_id)
     if recipe is None:
         return {"buildable": False, "product_type_id": product_type_id,
-                "warnings": ["No blueprint / recipe for this item in the SDE — it can only be bought."]}
+                "warnings": [
+                    _("No blueprint / recipe for this item in the SDE — it can only be bought.")
+                ]}
 
     output_per_run = recipe.output_quantity or 1
     total_units = max(1, runs) * output_per_run
@@ -115,7 +119,10 @@ def manufacturing_estimate(
     for tid, qty in sorted(result.leaves.items()):
         unit = price(tid)
         if unit <= 0:
-            warnings.append(f"Missing market price for type {tid} — treated as 0 ISK.")
+            warnings.append(
+                _("Missing market price for type %(type_id)s — treated as 0 ISK.")
+                % {"type_id": tid}
+            )
         have = int(on_hand.get(tid, 0))
         to_buy = max(0, qty - have)
         material_cost += unit * to_buy
@@ -136,7 +143,7 @@ def manufacturing_estimate(
 
     unit_sell = price(product_type_id)
     if unit_sell <= 0:
-        warnings.append("Missing market price for the product — revenue shown as 0.")
+        warnings.append(_("Missing market price for the product — revenue shown as 0."))
     revenue_gross = unit_sell * total_units
     fee_rate = sales_tax + broker_fee
     revenue_net = revenue_gross * (Decimal("1") - fee_rate)
@@ -185,12 +192,22 @@ def manufacturing_estimate(
             "sales_tax": sales_tax,
             "broker_fee": broker_fee,
             "strategy": strategy,
+            # Two complete sentences per variant — never concatenate fragments, a
+            # translator needs the whole sentence to reorder it.
             "note": (
-                "Prices are Jita-sell estimates; job cost uses CCP adjusted prices × your "
-                "system cost index + facility tax. "
-                + ("A structure/rig material bonus is applied. " if structure_bonus
-                   else "Structure/rig material bonuses are not modelled. ")
-                + "Manufacturing time skills are not modelled — treat as a guide, not a guarantee."
+                _(
+                    "Prices are Jita-sell estimates; job cost uses CCP adjusted prices × "
+                    "your system cost index + facility tax. A structure/rig material bonus "
+                    "is applied. Manufacturing time skills are not modelled — treat as a "
+                    "guide, not a guarantee."
+                )
+                if structure_bonus
+                else _(
+                    "Prices are Jita-sell estimates; job cost uses CCP adjusted prices × "
+                    "your system cost index + facility tax. Structure/rig material bonuses "
+                    "are not modelled. Manufacturing time skills are not modelled — treat "
+                    "as a guide, not a guarantee."
+                )
             ),
         },
         "warnings": warnings,
@@ -201,7 +218,7 @@ def build_vs_buy(product_type_id: int, *, runs: int = 1, me: int = 0, price=pric
     """One-glance build-vs-buy for a product at the given runs/ME."""
     est = manufacturing_estimate(product_type_id, runs=runs, me=me, price=price)
     if not est["buildable"]:
-        return {"buildable": False, "decision": "buy", "reason": "No recipe."}
+        return {"buildable": False, "decision": "buy", "reason": _("No recipe.")}
     buy_total = price(product_type_id) * est["total_units"]
     build_total = est["material_cost"] + est["install_fee"]
     return {

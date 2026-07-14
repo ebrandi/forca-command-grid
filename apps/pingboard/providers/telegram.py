@@ -14,6 +14,7 @@ Sends to a ``chat_id``: the row's group/channel, or an individual pilot's verifi
 from __future__ import annotations
 
 from django.conf import settings
+from django.utils.translation import gettext as _
 
 from ._http import _json_body, post_json
 from .base import AlertProvider, Recipient, SendResult
@@ -45,10 +46,10 @@ class TelegramProvider(AlertProvider):
 
     def validate_configuration(self) -> tuple[bool, str]:
         if not self._token():
-            return False, "Bot token not set — add it on the channel"
+            return False, _("Bot token not set — add it on the channel")
         # A broadcast channel row must also carry a target chat id (DMs don't).
         if self.row is not None and not (self.row.routing or {}).get("chat_id"):
-            return False, "Target chat id not set"
+            return False, _("Target chat id not set")
         return True, ""
 
     def send(self, *, subject: str, body: str, recipients: list[Recipient]) -> SendResult:

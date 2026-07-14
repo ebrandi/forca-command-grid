@@ -9,6 +9,12 @@ from __future__ import annotations
 
 import string
 
+# Lazy, not eager: these errors are raised inside `translation.override(broadcast_locale())`
+# (services.emit_alert), but they surface to the composing officer through `str(exc)` in
+# pingboard.views AFTER that override has exited. An eager gettext would resolve them in the
+# broadcast locale — English — and show English errors on an otherwise translated page.
+from django.utils.translation import gettext_lazy as _
+
 
 class TemplateError(ValueError):
     """Invalid template body or missing required variable."""
@@ -18,12 +24,14 @@ class _SafeFormatter(string.Formatter):
     def get_field(self, field_name, args, kwargs):
         # Disallow anything but a bare name (no ``.attr`` / ``[index]`` traversal).
         if any(ch in field_name for ch in ".[]"):
-            raise TemplateError(f"disallowed field expression: {field_name!r}")
+            raise TemplateError(
+                _("disallowed field expression: %(field)r") % {"field": field_name}
+            )
         return super().get_field(field_name, args, kwargs)
 
     def get_value(self, key, args, kwargs):
         if isinstance(key, int):
-            raise TemplateError("positional fields are not allowed in templates")
+            raise TemplateError(_("positional fields are not allowed in templates"))
         return kwargs.get(key, "")  # unknown variable renders empty (validated separately)
 
 
@@ -43,7 +51,7 @@ def render(text: str, context: dict | None = None) -> str:
     except TemplateError:
         raise
     except (ValueError, KeyError, IndexError) as exc:
-        raise TemplateError(f"invalid template: {exc}") from exc
+        raise TemplateError(_("invalid template: %(error)s") % {"error": exc}) from exc
 
 
 def missing_required(required_vars, context: dict | None) -> list[str]:

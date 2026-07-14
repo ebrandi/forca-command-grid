@@ -31,12 +31,12 @@ class Metric:
 
 
 METRICS: list[Metric] = [
-    Metric("pvp_kills", _("Valid PVP kills"), "kills", has_baseline=True),
+    Metric("pvp_kills", _("Valid PVP kills"), _("kills"), has_baseline=True),
     Metric("pvp_isk_destroyed", _("ISK destroyed (PVP)"), "ISK", money=True, has_baseline=True),
-    Metric("solo_kills", _("Solo kills"), "kills", has_baseline=True),
-    Metric("fleet_ops", _("Fleet attendances"), "PAPs", has_baseline=True),
-    Metric("total_tickets", _("Tickets issued"), "tickets"),
-    Metric("participants", _("Participating pilots"), "pilots"),
+    Metric("solo_kills", _("Solo kills"), _("kills"), has_baseline=True),
+    Metric("fleet_ops", _("Fleet attendances"), _("PAPs"), has_baseline=True),
+    Metric("total_tickets", _("Tickets issued"), _("tickets")),
+    Metric("participants", _("Participating pilots"), _("pilots")),
 ]
 METRIC_BY_KEY = {m.key: m for m in METRICS}
 CHOICES = [("", _("— none —"))] + [(m.key, m.label) for m in METRICS]

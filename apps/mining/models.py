@@ -10,6 +10,7 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 
 from core.mixins import TimeStampedModel
@@ -24,7 +25,9 @@ class MiningObserver(models.Model):
     last_updated = models.DateField(null=True, blank=True)
 
     def __str__(self) -> str:
-        return self.name or f"Observer {self.observer_id}"
+        return self.name or gettext("Observer %(observer_id)s") % {
+            "observer_id": self.observer_id
+        }
 
 
 class MiningLedgerEntry(models.Model):

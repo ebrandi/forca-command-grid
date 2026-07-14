@@ -1,4 +1,6 @@
 from django.contrib import admin, messages
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 
 from .models import CorpMember, CorpStructure, FriendlyCorporation, PartnerAlliance
 
@@ -27,7 +29,7 @@ class PartnerAllianceAdmin(admin.ModelAdmin):
     fields = ("alliance_id", "name", "note", "active")
     actions = ["resolve_names"]
 
-    @admin.action(description="Resolve alliance names from ESI")
+    @admin.action(description=_("Resolve alliance names from ESI"))
     def resolve_names(self, request, queryset):
         """Best-effort fill of the ``name`` label from ESI for the selected rows."""
         from core.esi.names import resolve_ids
@@ -38,7 +40,11 @@ class PartnerAllianceAdmin(admin.ModelAdmin):
         try:
             resolve_ids(ids)
         except Exception as exc:  # noqa: BLE001 - ESI is best-effort here
-            self.message_user(request, f"ESI name lookup failed: {exc}", level=messages.WARNING)
+            self.message_user(
+                request,
+                gettext("ESI name lookup failed: %(error)s") % {"error": exc},
+                level=messages.WARNING,
+            )
             return
         names = dict(EveName.objects.filter(entity_id__in=ids).values_list("entity_id", "name"))
         updated = 0
@@ -48,7 +54,10 @@ class PartnerAllianceAdmin(admin.ModelAdmin):
                 partner.name = resolved
                 partner.save(update_fields=["name"])
                 updated += 1
-        self.message_user(request, f"Resolved {updated} alliance name(s).")
+        self.message_user(
+            request,
+            gettext("Resolved %(count)s alliance name(s).") % {"count": updated},
+        )
 
 
 @admin.register(FriendlyCorporation)

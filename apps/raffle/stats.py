@@ -13,6 +13,7 @@ from decimal import Decimal
 from django.core.cache import cache
 from django.db.models import Count, Sum
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from .models import (
     RaffleIneligibleActivity,
@@ -209,22 +210,32 @@ def recommendations(contest) -> list[str]:
     by_source = stats["by_source"]
     if by_source:
         top = max(by_source.items(), key=lambda kv: kv[1])
-        out.append(f"“{top[0]}” drove the most tickets ({top[1]:,}). Consider featuring it again.")
+        out.append(
+            _("“%(source)s” drove the most tickets (%(tickets)s). Consider featuring it again.")
+            % {"source": top[0], "tickets": f"{top[1]:,}"}
+        )
     adoption = stats["adoption"]
     if adoption["unenrolled_with_activity"]:
         out.append(
-            f"{adoption['unenrolled_with_activity']} active pilots earned no tickets because they "
-            "aren't enrolled — a great outreach list to grow app adoption."
+            _("%(count)s active pilots earned no tickets because they aren't enrolled — a great "
+              "outreach list to grow app adoption.")
+            % {"count": adoption["unenrolled_with_activity"]}
         )
     if adoption["expired_or_revoked"]:
         out.append(
-            f"{adoption['expired_or_revoked']} enrolled pilots have an expired/revoked ESI token — "
-            "nudge them to reconnect before the next contest."
+            _("%(count)s enrolled pilots have an expired/revoked ESI token — nudge them to "
+              "reconnect before the next contest.")
+            % {"count": adoption["expired_or_revoked"]}
         )
     if stats["eligible_participants"] < max(1, stats["participants"] // 2):
-        out.append("Under half of participants were eligible — the enrolment CTA is working; keep pushing it.")
+        out.append(
+            _("Under half of participants were eligible — the enrolment CTA is working; "
+              "keep pushing it.")
+        )
     if not out:
-        out.append("Healthy contest. Repeat the format and try a booster weekend to lift engagement.")
+        out.append(
+            _("Healthy contest. Repeat the format and try a booster weekend to lift engagement.")
+        )
     return out
 
 

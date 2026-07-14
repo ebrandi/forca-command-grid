@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import html
 
+from django.utils.translation import gettext as _
+
 from core import rbac
 
 from .models import KbPage
@@ -44,17 +46,17 @@ def _readiness_embed(user, doctrine_name: str | None) -> str:
     from apps.doctrines.services import character_readiness
 
     if not doctrine_name:
-        return _chip("readiness: name a doctrine")
+        return _chip(_("readiness: name a doctrine"))
     character = next(
         (c for c in user.characters.all() if c.is_main), user.characters.first()
     )
     if character is None:
-        return _chip("link a character to see your readiness")
+        return _chip(_("link a character to see your readiness"))
     doctrine = Doctrine.objects.filter(name__iexact=doctrine_name).prefetch_related(
         "fits__skill_requirements"
     ).first()
     if doctrine is None:
-        return _chip(f"unknown doctrine: {doctrine_name}")
+        return _chip(_("unknown doctrine: %(doctrine)s") % {"doctrine": doctrine_name})
     rank = {"optimal": 3, "viable": 2, "not_ready": 1, "unknown": 0}
     best = "unknown"
     for fit in doctrine.fits.all():
@@ -62,10 +64,10 @@ def _readiness_embed(user, doctrine_name: str | None) -> str:
         if rank[s] > rank[best]:
             best = s
     label = {
-        "optimal": f"You can fly {doctrine.name} (optimal)",
-        "viable": f"You can fly {doctrine.name}",
-        "not_ready": f"You can't fly {doctrine.name} yet",
-        "unknown": f"{doctrine.name}: import skills to check",
+        "optimal": _("You can fly %(doctrine)s (optimal)") % {"doctrine": doctrine.name},
+        "viable": _("You can fly %(doctrine)s") % {"doctrine": doctrine.name},
+        "not_ready": _("You can't fly %(doctrine)s yet") % {"doctrine": doctrine.name},
+        "unknown": _("%(doctrine)s: import skills to check") % {"doctrine": doctrine.name},
     }[best]
     return _chip(label, "good" if best in ("optimal", "viable") else "warn")
 
@@ -76,8 +78,10 @@ def _srp_embed(user) -> str:
     char_ids = list(user.characters.values_list("character_id", flat=True))
     n = len(eligible_losses_for(char_ids, limit=10))
     if n:
-        return _chip(f"You have {n} loss(es) eligible for SRP", "warn")
-    return _chip("No SRP claims pending", "good")
+        return _chip(
+            _("You have %(count)s loss(es) eligible for SRP") % {"count": n}, "warn"
+        )
+    return _chip(_("No SRP claims pending"), "good")
 
 
 def make_resolver(user):
@@ -92,7 +96,7 @@ def make_resolver(user):
         # Viewer-scoped embeds need a linked pilot; a prospect reading a public page has
         # none, so prompt them to log in rather than crashing on ``user.characters``.
         if not authed:
-            return _chip("log in to see your own readiness")
+            return _chip(_("log in to see your own readiness"))
         if name == "readiness":
             return _readiness_embed(user, params.get("doctrine"))
         return _srp_embed(user)

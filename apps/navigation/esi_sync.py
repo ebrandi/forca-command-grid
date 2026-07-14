@@ -13,6 +13,7 @@ import logging
 import re
 
 from django.conf import settings
+from django.utils.translation import gettext as _
 
 from apps.sde.models import SdeSolarSystem
 from apps.sso.models import EveCharacter
@@ -107,10 +108,10 @@ def sync_jump_network(corp_id: int | None = None, client: ESIClient | None = Non
     """
     corp_id = corp_id or settings.FORCA_HOME_CORP_ID
     if not corp_id:
-        return {"status": "no_corp", "message": "No home corporation configured."}
+        return {"status": "no_corp", "message": _("No home corporation configured.")}
     character = _token_character(corp_id)
     if character is None:
-        return {"status": "no_scope", "message": (
+        return {"status": "no_scope", "message": _(
             "No Director has granted structure access yet. A CEO/Director (or a pilot with "
             "the Station Manager role) must authorise with the jump-network scope.")}
 
@@ -119,7 +120,8 @@ def sync_jump_network(corp_id: int | None = None, client: ESIClient | None = Non
         token = get_valid_access_token(character, [STRUCT_SCOPE])
         structures = client.get_paged(f"/corporations/{corp_id}/structures/", token=token)
     except (NoValidToken, ESIError) as exc:
-        return {"status": "error", "message": f"Could not read corp structures: {exc}"}
+        return {"status": "error",
+                "message": _("Could not read corp structures: %(error)s") % {"error": exc}}
     try:
         uni_token = get_valid_access_token(character, [UNIVERSE_SCOPE])
     except NoValidToken:
@@ -162,8 +164,11 @@ def sync_jump_network(corp_id: int | None = None, client: ESIClient | None = Non
     except Exception:  # noqa: BLE001,S110 - health logging is best-effort
         pass
 
-    msg = f"Imported {bridges} jump bridge(s) and {beacons} cyno beacon(s) from {character.name}."
+    msg = _("Imported %(bridges)s jump bridge(s) and %(beacons)s cyno beacon(s) from "
+            "%(character)s.") % {"bridges": bridges, "beacons": beacons,
+                                 "character": character.name}
     if unparsed:
-        msg += f" {len(unparsed)} structure(s) couldn't be matched to systems by name."
+        msg += " " + _("%(count)s structure(s) couldn't be matched to systems by name.") % {
+            "count": len(unparsed)}
     return {"status": "ok", "bridges": bridges, "beacons": beacons,
             "unparsed": unparsed, "character": character.name, "message": msg}

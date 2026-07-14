@@ -9,17 +9,19 @@ from __future__ import annotations
 
 from django.conf import settings
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 # Friendly labels for the baseline scopes every member is expected to grant, so the
 # board can say *what* is missing rather than dumping raw scope strings.
+# Keys are ESI scope identifiers — never translated; only the labels are.
 _SCOPE_LABELS = {
-    "esi-skills.read_skills.v1": "Skills",
-    "esi-skills.read_skillqueue.v1": "Skill queue",
-    "esi-killmails.read_killmails.v1": "Killmails",
-    "esi-clones.read_implants.v1": "Implants",
-    "esi-killmails.read_corporation_killmails.v1": "Corp killmails",
-    "esi-corporations.read_corporation_membership.v1": "Corp membership",
-    "esi-characters.read_corporation_roles.v1": "Corp roles",
+    "esi-skills.read_skills.v1": _("Skills"),
+    "esi-skills.read_skillqueue.v1": _("Skill queue"),
+    "esi-killmails.read_killmails.v1": _("Killmails"),
+    "esi-clones.read_implants.v1": _("Implants"),
+    "esi-killmails.read_corporation_killmails.v1": _("Corp killmails"),
+    "esi-corporations.read_corporation_membership.v1": _("Corp membership"),
+    "esi-characters.read_corporation_roles.v1": _("Corp roles"),
 }
 
 DEFAULT_INACTIVE_DAYS = 30
@@ -57,8 +59,11 @@ def compliance_report(inactive_days: int = DEFAULT_INACTIVE_DAYS) -> dict:
         is_linked = bool(char and char.user_id)
         scopes = token_scopes.get(m.character_id)
         is_registered = is_linked and scopes is not None
+        # str() the labels: a lazy proxy cannot be ordered against the raw scope
+        # string used as the fallback for unmapped scopes. This call site is
+        # request-scoped, so resolving here is correct.
         missing = sorted(
-            _SCOPE_LABELS.get(s, s) for s in (required - scopes)
+            str(_SCOPE_LABELS.get(s, s)) for s in (required - scopes)
         ) if is_registered else []
         days_inactive = (now - m.logon_date).days if m.logon_date else None
         is_inactive = days_inactive is not None and days_inactive >= inactive_days

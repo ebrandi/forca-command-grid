@@ -13,6 +13,8 @@ Plus human guidance text for the setup guide (Journey 6).
 """
 from __future__ import annotations
 
+from django.utils.translation import gettext_lazy as _
+
 # --- The 8 planet types (didactic) -----------------------------------------
 # type_ids are the canonical classic planets (the 5601x rows in the SDE are
 # structure-variant duplicates and are intentionally excluded).
@@ -77,80 +79,84 @@ PLANET_RESOURCES = {
 # Per-role practical guidance; rendered on the planet setup guide, not computed.
 ROLE_GUIDANCE = {
     "extract": {
-        "title": "Extraction planet",
-        "purpose": "Pull one or two raw P0 resources and refine them on-site into P1 "
-                   "(or straight P2 if you have the feedstock).",
+        "title": _("Extraction planet"),
+        "purpose": _("Pull one or two raw P0 resources and refine them on-site into P1 "
+                     "(or straight P2 if you have the feedstock)."),
         "facilities": [
-            "1× Command Center (sets your power/CPU budget — upgrade it fully).",
-            "1× Extractor Control Unit per resource, with as many extractor heads as "
-            "CPU/PG allows (more heads = more yield, but shorter reach).",
-            "Basic Industry Facilities to convert P0 → P1 (each does 3,000 P0 → 20 P1 "
-            "every 30 min).",
-            "1× Launchpad as the export point and buffer storage.",
+            _("1× Command Center (sets your power/CPU budget — upgrade it fully)."),
+            _("1× Extractor Control Unit per resource, with as many extractor heads as "
+              "CPU/PG allows (more heads = more yield, but shorter reach)."),
+            _("Basic Industry Facilities to convert P0 → P1 (each does 3,000 P0 → 20 P1 "
+              "every 30 min)."),
+            _("1× Launchpad as the export point and buffer storage."),
         ],
-        "routes": "Route extractor output → storage/launchpad → factories → launchpad. "
-                  "Keep the extracted P0 flowing into the BIFs and the finished P1 to the "
-                  "launchpad for export.",
-        "export": "Export P1 (or P2) via the customs office. Import nothing.",
+        "routes": _("Route extractor output → storage/launchpad → factories → launchpad. "
+                    "Keep the extracted P0 flowing into the BIFs and the finished P1 to the "
+                    "launchpad for export."),
+        "export": _("Export P1 (or P2) via the customs office. Import nothing."),
     },
     "factory": {
-        "title": "Factory planet",
-        "purpose": "Import cheaper lower-tier materials and refine them up a tier. "
-                   "No extraction — pure manufacturing throughput.",
+        "title": _("Factory planet"),
+        "purpose": _("Import cheaper lower-tier materials and refine them up a tier. "
+                     "No extraction — pure manufacturing throughput."),
         "facilities": [
-            "1× Command Center (upgrade fully for CPU/PG).",
-            "1× Launchpad to receive imports and hold exports.",
-            "As many Advanced Industry Facilities as your power/CPU allows (each does "
-            "40+40 input → 5 output every hour for P2).",
-            "Storage facilities to buffer inputs between imports.",
+            _("1× Command Center (upgrade fully for CPU/PG)."),
+            _("1× Launchpad to receive imports and hold exports."),
+            _("As many Advanced Industry Facilities as your power/CPU allows (each does "
+              "40+40 input → 5 output every hour for P2)."),
+            _("Storage facilities to buffer inputs between imports."),
         ],
-        "routes": "Import inputs to the launchpad → route to each factory → route "
-                  "finished goods back to the launchpad.",
-        "export": "Import the P1/P2 inputs; export the higher-tier product.",
+        "routes": _("Import inputs to the launchpad → route to each factory → route "
+                    "finished goods back to the launchpad."),
+        "export": _("Import the P1/P2 inputs; export the higher-tier product."),
     },
     "storage": {
-        "title": "Storage / staging planet",
-        "purpose": "A buffer or consolidation point. Rare for most pilots — usually a "
-                   "launchpad on another planet does the job.",
-        "facilities": ["1× Command Center", "1× Launchpad", "Storage facilities as needed."],
-        "routes": "Consolidate goods here before a single haul out.",
-        "export": "Export in bulk on your haul day.",
+        "title": _("Storage / staging planet"),
+        "purpose": _("A buffer or consolidation point. Rare for most pilots — usually a "
+                     "launchpad on another planet does the job."),
+        "facilities": [
+            _("1× Command Center"),
+            _("1× Launchpad"),
+            _("Storage facilities as needed."),
+        ],
+        "routes": _("Consolidate goods here before a single haul out."),
+        "export": _("Export in bulk on your haul day."),
     },
 }
 
 # Common mistakes — shown on the setup guide + wizard help.
 COMMON_MISTAKES = [
-    ("Not upgrading the Command Center",
-     "Your Command Center level sets your entire CPU/PG budget. Upgrade it to level 5 "
-     "before you place facilities, or you'll run out of power halfway through."),
-    ("Routing errors",
-     "A facility with no inbound route sits idle; a route to the wrong storage stalls the "
-     "chain. Follow every product from extractor → factory → launchpad."),
-    ("Too many extractor heads",
-     "More heads raise yield but shorten the extraction radius and cost CPU/PG. Balance "
-     "heads against the program length you actually want to run."),
-    ("Insufficient storage",
-     "If a launchpad or storage fills up, upstream facilities stop. Size storage for the "
-     "time between your resets."),
-    ("Wrong schematic",
-     "Setting a factory to the wrong schematic wastes materials. Double-check inputs match "
-     "what you're actually routing in."),
-    ("Overbuilding factories",
-     "Ten factories starved of feedstock earn less than three that run continuously. Match "
-     "factory count to your extraction rate."),
-    ("Ignoring customs (POCO) tax",
-     "Export/import tax at the customs office is charged on every launch. In hostile space "
-     "it can dwarf your margin — factor it in before you commit."),
+    (_("Not upgrading the Command Center"),
+     _("Your Command Center level sets your entire CPU/PG budget. Upgrade it to level 5 "
+       "before you place facilities, or you'll run out of power halfway through.")),
+    (_("Routing errors"),
+     _("A facility with no inbound route sits idle; a route to the wrong storage stalls the "
+       "chain. Follow every product from extractor → factory → launchpad.")),
+    (_("Too many extractor heads"),
+     _("More heads raise yield but shorten the extraction radius and cost CPU/PG. Balance "
+       "heads against the program length you actually want to run.")),
+    (_("Insufficient storage"),
+     _("If a launchpad or storage fills up, upstream facilities stop. Size storage for the "
+       "time between your resets.")),
+    (_("Wrong schematic"),
+     _("Setting a factory to the wrong schematic wastes materials. Double-check inputs match "
+       "what you're actually routing in.")),
+    (_("Overbuilding factories"),
+     _("Ten factories starved of feedstock earn less than three that run continuously. Match "
+       "factory count to your extraction rate.")),
+    (_("Ignoring customs (POCO) tax"),
+     _("Export/import tax at the customs office is charged on every launch. In hostile space "
+       "it can dwarf your margin — factor it in before you commit.")),
 ]
 
 # In-game build checklist — a short, ordered checklist for the detail page.
 BUILD_CHECKLIST = [
-    "Train Command Center Upgrades to unlock the planet tiers you need.",
-    "Buy and deploy a Command Center on each planet, then upgrade it fully.",
-    "On extraction planets: place the ECU, add heads, and start a program.",
-    "Place your factories and set the correct schematic on each.",
-    "Wire the routes: extractor → storage → factory → launchpad.",
-    "Confirm the customs office tax for your space and your standings.",
-    "Set a reset cadence that matches your extractor program length.",
-    "Haul exports to your chosen market hub (or hand to corp buyback).",
+    _("Train Command Center Upgrades to unlock the planet tiers you need."),
+    _("Buy and deploy a Command Center on each planet, then upgrade it fully."),
+    _("On extraction planets: place the ECU, add heads, and start a program."),
+    _("Place your factories and set the correct schematic on each."),
+    _("Wire the routes: extractor → storage → factory → launchpad."),
+    _("Confirm the customs office tax for your space and your standings."),
+    _("Set a reset cadence that matches your extractor program length."),
+    _("Haul exports to your chosen market hub (or hand to corp buyback)."),
 ]

@@ -1,11 +1,12 @@
 from django.apps import AppConfig
+from django.utils.translation import gettext_lazy as _
 
 
 class MentorshipConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "apps.mentorship"
     label = "mentorship"
-    verbose_name = "Mentorship Program"
+    verbose_name = _("Mentorship Program")
 
     def ready(self) -> None:
         # Importing ``validation`` self-registers every task validator in the

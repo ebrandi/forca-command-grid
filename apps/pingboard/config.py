@@ -15,6 +15,8 @@ from __future__ import annotations
 
 import copy
 
+from django.utils.translation import gettext as _
+
 _CACHE_TTL = 600
 _VERSION_KEY = "pingboard._version"
 
@@ -190,7 +192,7 @@ def meta(domain: str) -> dict:
 # --- validation --------------------------------------------------------------
 def _ensure_dict(value) -> dict:
     if not isinstance(value, dict):
-        raise ConfigError("config document must be an object")
+        raise ConfigError(_("config document must be an object"))
     return value
 
 
@@ -203,18 +205,26 @@ def _validate_general(value: dict) -> dict:
     floor = v.get("dispatch_floor")
     if floor is not None:
         if not isinstance(floor, dict):
-            raise ConfigError("general.dispatch_floor must be an object")
+            raise ConfigError(_("general.dispatch_floor must be an object"))
         for tier, role in floor.items():
             if tier not in _PRIORITIES:
-                raise ConfigError(f"general.dispatch_floor has unknown priority {tier!r}")
+                raise ConfigError(
+                    _("general.dispatch_floor has unknown priority %(tier)r") % {"tier": tier}
+                )
             if role not in _ROLE_VALUES:
-                raise ConfigError(f"general.dispatch_floor.{tier} invalid role {role!r}")
+                raise ConfigError(
+                    _("general.dispatch_floor.%(tier)s invalid role %(role)r")
+                    % {"tier": tier, "role": role}
+                )
     for role_key in ("announcement_floor", "config_floor"):
         if role_key in v and v[role_key] not in _ROLE_VALUES:
-            raise ConfigError(f"general.{role_key} invalid role {v[role_key]!r}")
+            raise ConfigError(
+                _("general.%(key)s invalid role %(role)r")
+                % {"key": role_key, "role": v[role_key]}
+            )
     exp = v.get("default_expiry_minutes")
     if exp is not None and (isinstance(exp, bool) or not isinstance(exp, int) or exp < 0):
-        raise ConfigError("general.default_expiry_minutes must be a non-negative integer")
+        raise ConfigError(_("general.default_expiry_minutes must be a non-negative integer"))
     return v
 
 
@@ -229,10 +239,12 @@ def _validate_anti_abuse(value: dict) -> dict:
         if key in v:
             n = v[key]
             if isinstance(n, bool) or not isinstance(n, int) or n < 0:
-                raise ConfigError(f"anti_abuse.{key} must be a non-negative integer")
+                raise ConfigError(
+                    _("anti_abuse.%(key)s must be a non-negative integer") % {"key": key}
+                )
     cats = v.get("approval_required_categories")
     if cats is not None and not (isinstance(cats, list) and all(isinstance(c, str) for c in cats)):
-        raise ConfigError("anti_abuse.approval_required_categories must be a list of strings")
+        raise ConfigError(_("anti_abuse.approval_required_categories must be a list of strings"))
     return v
 
 
@@ -243,25 +255,34 @@ def _validate_notifications(value: dict) -> dict:
     v = _ensure_dict(value)
     role = v.get("leadership_role")
     if role is not None and role not in _ROLE_VALUES:
-        raise ConfigError(f"notifications.leadership_role invalid role {role!r}")
+        raise ConfigError(
+            _("notifications.leadership_role invalid role %(role)r") % {"role": role}
+        )
     ids = v.get("leadership_user_ids")
     if ids is not None and not (isinstance(ids, list) and all(
         isinstance(i, int) and not isinstance(i, bool) for i in ids
     )):
-        raise ConfigError("notifications.leadership_user_ids must be a list of integers")
+        raise ConfigError(_("notifications.leadership_user_ids must be a list of integers"))
     events = v.get("events")
     if events is not None:
         if not isinstance(events, dict):
-            raise ConfigError("notifications.events must be an object")
+            raise ConfigError(_("notifications.events must be an object"))
         for key, ov in events.items():
             if not isinstance(ov, dict):
-                raise ConfigError(f"notifications.events.{key} must be an object")
+                raise ConfigError(
+                    _("notifications.events.%(key)s must be an object") % {"key": key}
+                )
             aud = ov.get("audience")
             if aud is not None and aud not in _AUDIENCE_VALUES:
-                raise ConfigError(f"notifications.events.{key}.audience invalid {aud!r}")
+                raise ConfigError(
+                    _("notifications.events.%(key)s.audience invalid %(audience)r")
+                    % {"key": key, "audience": aud}
+                )
             sev = ov.get("min_severity")
             if sev is not None and (isinstance(sev, bool) or not isinstance(sev, int) or not 0 <= sev <= 100):
-                raise ConfigError(f"notifications.events.{key}.min_severity must be 0–100")
+                raise ConfigError(
+                    _("notifications.events.%(key)s.min_severity must be 0–100") % {"key": key}
+                )
     return v
 
 

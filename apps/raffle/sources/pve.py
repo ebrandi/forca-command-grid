@@ -13,6 +13,7 @@ from datetime import datetime, time
 from functools import lru_cache
 
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from .base import AUTOMATIC, MANUAL, SEMI_AUTO, SourceEvent, TicketSource
 
@@ -28,9 +29,9 @@ def _type_volume(type_id: int) -> float:
 
 class MiningSource(TicketSource):
     key = "mining"
-    label = "Mining"
-    description = "Tickets for ore mined, from the corp mining ledger (X tickets per m³)."
-    unit = "m³"
+    label = _("Mining")
+    description = _("Tickets for ore mined, from the corp mining ledger (X tickets per m³).")
+    unit = _("m³")
     reliability = AUTOMATIC
     default_mode = "auto"
     # basis: "m3" (uses SDE volume) or "units" (raw quantity). per_ticket is the
@@ -78,9 +79,9 @@ class MiningSource(TicketSource):
 
 class FleetSource(TicketSource):
     key = "fleet"
-    label = "Fleet participation"
-    description = "Tickets for confirmed attendance (PAP) on scheduled operations."
-    unit = "ops"
+    label = _("Fleet participation")
+    description = _("Tickets for confirmed attendance (PAP) on scheduled operations.")
+    unit = _("ops")
     reliability = AUTOMATIC
     default_mode = "auto"
     default_config = {"per_op": 5}
@@ -115,9 +116,9 @@ class FleetSource(TicketSource):
 
 class LogisticsSource(TicketSource):
     key = "logistics"
-    label = "Logistics / hauling"
-    description = "Tickets for completed courier contracts delivered by a pilot."
-    unit = "deliveries"
+    label = _("Logistics / hauling")
+    description = _("Tickets for completed courier contracts delivered by a pilot.")
+    unit = _("deliveries")
     reliability = SEMI_AUTO
     default_mode = "officer_approved"
     default_config = {"per_delivery": 5}
@@ -152,9 +153,9 @@ class LogisticsSource(TicketSource):
 
 class MentorshipSource(TicketSource):
     key = "mentorship"
-    label = "Mentorship / academy"
-    description = "Tickets for completed, rewardable mentorship tasks (mentee and/or mentor)."
-    unit = "tasks"
+    label = _("Mentorship / academy")
+    description = _("Tickets for completed, rewardable mentorship tasks (mentee and/or mentor).")
+    unit = _("tasks")
     reliability = SEMI_AUTO
     default_mode = "officer_approved"
     default_config = {"per_task": 3, "reward_mentee": True, "reward_mentor": False}
@@ -199,10 +200,10 @@ class MentorshipSource(TicketSource):
 
 class IndustrySource(TicketSource):
     key = "industry"
-    label = "Manufacturing / industry"
-    description = ("Tickets for industry contribution. No reliable per-pilot completed-job "
-                   "feed exists, so awards are made by officer approval / manual grant.")
-    unit = "jobs"
+    label = _("Manufacturing / industry")
+    description = _("Tickets for industry contribution. No reliable per-pilot completed-job "
+                    "feed exists, so awards are made by officer approval / manual grant.")
+    unit = _("jobs")
     reliability = MANUAL
     default_mode = "officer_approved"
     default_config = {"per_job": 2}
@@ -213,9 +214,9 @@ class DirectiveSource(TicketSource):
     """CMD-2 (3.6): tickets for completing ranked corp directives (the pilot quest log)."""
 
     key = "directive"
-    label = "Directives completed"
-    description = "Tickets for completing your ranked corp directives (the quest log)."
-    unit = "directives"
+    label = _("Directives completed")
+    description = _("Tickets for completing your ranked corp directives (the quest log).")
+    unit = _("directives")
     reliability = AUTOMATIC
     default_mode = "auto"
     default_config = {"per_directive": 2}

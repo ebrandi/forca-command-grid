@@ -19,6 +19,8 @@ from __future__ import annotations
 
 import copy
 
+from django.utils.translation import gettext as _
+
 _CACHE_TTL = 600
 
 
@@ -154,7 +156,9 @@ def get(domain: str) -> dict:
     Returns a deep copy so callers can't mutate the cached document.
     """
     if domain not in DEFAULTS:
-        raise ConfigError(f"Unknown readiness config domain: {domain!r}")
+        raise ConfigError(
+            _("Unknown readiness config domain: %(domain)r") % {"domain": domain}
+        )
     from django.core.cache import cache
 
     ck = _cache_key(domain)
@@ -228,7 +232,9 @@ def set(domain: str, value: dict, *, user=None) -> dict:  # noqa: A001 - documen
     writes). The caller is responsible for the ``audit_log`` trail.
     """
     if domain not in DEFAULTS:
-        raise ConfigError(f"Unknown readiness config domain: {domain!r}")
+        raise ConfigError(
+            _("Unknown readiness config domain: %(domain)r") % {"domain": domain}
+        )
     validated = _VALIDATORS[domain](value)
 
     from apps.admin_audit.models import AppSetting
@@ -265,29 +271,34 @@ def _bust(domain: str) -> None:
 # --- validation --------------------------------------------------------------
 def _validate_dimensions(value) -> dict:
     if not isinstance(value, dict):
-        raise ConfigError("Dimensions configuration must be an object.")
+        raise ConfigError(_("Dimensions configuration must be an object."))
     if not value:
-        raise ConfigError("At least one dimension must be configured.")
+        raise ConfigError(_("At least one dimension must be configured."))
     out: dict[str, dict] = {}
     for key, entry in value.items():
         if not isinstance(entry, dict):
-            raise ConfigError(f"Dimension {key!r} must be an object.")
+            raise ConfigError(_("Dimension %(key)r must be an object.") % {"key": key})
         try:
             weight = float(entry.get("weight", 1.0))
         except (TypeError, ValueError):
-            raise ConfigError(f"{key}: weight must be a number.") from None
+            raise ConfigError(_("%(key)s: weight must be a number.") % {"key": key}) from None
         if weight < 0:
-            raise ConfigError(f"{key}: weight must be ≥ 0.")
+            raise ConfigError(_("%(key)s: weight must be ≥ 0.") % {"key": key})
         thresholds = entry.get("thresholds") or {}
         try:
             amber = int(thresholds.get("amber", 60))
             red = int(thresholds.get("red", 40))
         except (TypeError, ValueError):
-            raise ConfigError(f"{key}: amber and red must be whole numbers.") from None
+            raise ConfigError(
+                _("%(key)s: amber and red must be whole numbers.") % {"key": key}
+            ) from None
         if not (0 <= red < amber <= 100):
             raise ConfigError(
-                f"{key}: thresholds must satisfy 0 ≤ red < amber ≤ 100 "
-                f"(got red={red}, amber={amber})."
+                _(
+                    "%(key)s: thresholds must satisfy 0 ≤ red < amber ≤ 100 "
+                    "(got red=%(red)s, amber=%(amber)s)."
+                )
+                % {"key": key, "red": red, "amber": amber}
             )
         out[key] = {
             "enabled": bool(entry.get("enabled", True)),
@@ -299,27 +310,27 @@ def _validate_dimensions(value) -> dict:
 
 def _validate_scoring(value) -> dict:
     if not isinstance(value, dict):
-        raise ConfigError("Scoring configuration must be an object.")
+        raise ConfigError(_("Scoring configuration must be an object."))
     out = copy.deepcopy(DEFAULTS["scoring"])
     if "index_method" in value:
         if value["index_method"] not in ("weighted_mean",):
-            raise ConfigError("Unsupported index_method (only 'weighted_mean' is available).")
+            raise ConfigError(_("Unsupported index_method (only 'weighted_mean' is available)."))
         out["index_method"] = value["index_method"]
     if "min_coverage_for_green" in value:
         try:
             cov = float(value["min_coverage_for_green"])
         except (TypeError, ValueError):
-            raise ConfigError("min_coverage_for_green must be a number between 0 and 1.") from None
+            raise ConfigError(_("min_coverage_for_green must be a number between 0 and 1.")) from None
         if not (0.0 <= cov <= 1.0):
-            raise ConfigError("min_coverage_for_green must be between 0 and 1.")
+            raise ConfigError(_("min_coverage_for_green must be between 0 and 1."))
         out["min_coverage_for_green"] = cov
     if "default_forecast_window_days" in value:
         try:
             window = int(value["default_forecast_window_days"])
         except (TypeError, ValueError):
-            raise ConfigError("default_forecast_window_days must be a whole number.") from None
+            raise ConfigError(_("default_forecast_window_days must be a whole number.")) from None
         if not (1 <= window <= 90):
-            raise ConfigError("default_forecast_window_days must be between 1 and 90.")
+            raise ConfigError(_("default_forecast_window_days must be between 1 and 90."))
         out["default_forecast_window_days"] = window
     if "exclude_unknown_from_denominator" in value:
         out["exclude_unknown_from_denominator"] = bool(value["exclude_unknown_from_denominator"])
@@ -327,60 +338,64 @@ def _validate_scoring(value) -> dict:
         try:
             mtw = float(value["min_task_weight"])
         except (TypeError, ValueError):
-            raise ConfigError("min_task_weight must be a number.") from None
+            raise ConfigError(_("min_task_weight must be a number.")) from None
         if mtw < 0:
-            raise ConfigError("min_task_weight must be ≥ 0.")
+            raise ConfigError(_("min_task_weight must be ≥ 0."))
         out["min_task_weight"] = mtw
     if "task_severity_floor" in value:
         if value["task_severity_floor"] not in ("info", "warn", "high", "critical"):
-            raise ConfigError("task_severity_floor must be info/warn/high/critical.")
+            raise ConfigError(_("task_severity_floor must be info/warn/high/critical."))
         out["task_severity_floor"] = value["task_severity_floor"]
     if "max_tasks_per_run" in value:
         try:
             mtr = int(value["max_tasks_per_run"])
         except (TypeError, ValueError):
-            raise ConfigError("max_tasks_per_run must be a whole number.") from None
+            raise ConfigError(_("max_tasks_per_run must be a whole number.")) from None
         if mtr < 1:
-            raise ConfigError("max_tasks_per_run must be ≥ 1.")
+            raise ConfigError(_("max_tasks_per_run must be ≥ 1."))
         out["max_tasks_per_run"] = mtr
     return out
 
 
 def _validate_responsibilities(value) -> dict:
     if not isinstance(value, dict):
-        raise ConfigError("Responsibilities configuration must be an object.")
+        raise ConfigError(_("Responsibilities configuration must be an object."))
     owner_tags = value.get("owner_tags") or {}
     dimension_owner = value.get("dimension_owner") or {}
     kpi_owner = value.get("kpi_owner") or {}
     if not isinstance(owner_tags, dict) or not isinstance(dimension_owner, dict) or not isinstance(kpi_owner, dict):
-        raise ConfigError("owner_tags, dimension_owner and kpi_owner must be objects.")
+        raise ConfigError(_("owner_tags, dimension_owner and kpi_owner must be objects."))
     # Every referenced owner tag must be defined (no dangling references).
     for ref in (*dimension_owner.values(), *kpi_owner.values()):
         if ref and ref not in owner_tags:
-            raise ConfigError(f"Owner tag {ref!r} is referenced but not defined.")
+            raise ConfigError(
+                _("Owner tag %(tag)r is referenced but not defined.") % {"tag": ref}
+            )
     return {"owner_tags": owner_tags, "dimension_owner": dimension_owner, "kpi_owner": kpi_owner}
 
 
 def _validate_alerts(value) -> dict:
     if not isinstance(value, dict):
-        raise ConfigError("Alerts configuration must be an object.")
+        raise ConfigError(_("Alerts configuration must be an object."))
     rules = value.get("rules", [])
     if not isinstance(rules, list):
-        raise ConfigError("Alert rules must be a list.")
+        raise ConfigError(_("Alert rules must be a list."))
     # NB: the module-level ``set`` function shadows the builtin, so dedupe with a list.
     seen_keys: list[str] = []
     for rule in rules:
         if not isinstance(rule, dict) or not rule.get("key"):
-            raise ConfigError("Each alert rule needs a unique key.")
+            raise ConfigError(_("Each alert rule needs a unique key."))
         if rule["key"] in seen_keys:
-            raise ConfigError(f"Duplicate alert rule key: {rule['key']!r}.")
+            raise ConfigError(
+                _("Duplicate alert rule key: %(key)r.") % {"key": rule["key"]}
+            )
         seen_keys.append(rule["key"])
     return {"rules": rules}
 
 
 def _validate_finance(value) -> dict:
     if not isinstance(value, dict):
-        raise ConfigError("Financial configuration must be an object.")
+        raise ConfigError(_("Financial configuration must be an object."))
     out = copy.deepcopy(DEFAULTS["finance"])
     isk_keys = (
         "min_wallet", "monthly_burn_target", "srp_budget", "emergency_reserve",
@@ -391,9 +406,11 @@ def _validate_finance(value) -> dict:
             try:
                 amount = float(value[key])
             except (TypeError, ValueError):
-                raise ConfigError(f"{key} must be a number (ISK).") from None
+                raise ConfigError(
+                    _("%(key)s must be a number (ISK).") % {"key": key}
+                ) from None
             if amount < 0:
-                raise ConfigError(f"{key} must be ≥ 0.")
+                raise ConfigError(_("%(key)s must be ≥ 0.") % {"key": key})
             out[key] = amount
     if "wallet_division_scope" in value:
         scope = value["wallet_division_scope"]
@@ -401,64 +418,68 @@ def _validate_finance(value) -> dict:
             try:
                 int(scope)
             except (TypeError, ValueError):
-                raise ConfigError("wallet_division_scope must be 'all' or a division id.") from None
+                raise ConfigError(_("wallet_division_scope must be 'all' or a division id.")) from None
         out["wallet_division_scope"] = scope
     return out
 
 
 def _validate_srp(value) -> dict:
     if not isinstance(value, dict):
-        raise ConfigError("SRP configuration must be an object.")
+        raise ConfigError(_("SRP configuration must be an object."))
     out = copy.deepcopy(DEFAULTS["srp"])
     for key in ("max_pending_claims", "max_avg_wait_hours", "max_claim_age_days"):
         if key in value:
             try:
                 amount = int(value[key])
             except (TypeError, ValueError):
-                raise ConfigError(f"{key} must be a whole number.") from None
+                raise ConfigError(
+                    _("%(key)s must be a whole number.") % {"key": key}
+                ) from None
             if amount < 0:
-                raise ConfigError(f"{key} must be ≥ 0.")
+                raise ConfigError(_("%(key)s must be ≥ 0.") % {"key": key})
             out[key] = amount
     return out
 
 
 def _validate_recruitment(value) -> dict:
     if not isinstance(value, dict):
-        raise ConfigError("Recruitment configuration must be an object.")
+        raise ConfigError(_("Recruitment configuration must be an object."))
     out = copy.deepcopy(DEFAULTS["recruitment"])
     for key in ("target_active_members", "min_monthly_intake"):
         if key in value:
             try:
                 amount = int(value[key])
             except (TypeError, ValueError):
-                raise ConfigError(f"{key} must be a whole number.") from None
+                raise ConfigError(
+                    _("%(key)s must be a whole number.") % {"key": key}
+                ) from None
             if amount < 0:
-                raise ConfigError(f"{key} must be ≥ 0.")
+                raise ConfigError(_("%(key)s must be ≥ 0.") % {"key": key})
             out[key] = amount
     if "max_dormant_ratio" in value:
         try:
             ratio = float(value["max_dormant_ratio"])
         except (TypeError, ValueError):
-            raise ConfigError("max_dormant_ratio must be a number between 0 and 1.") from None
+            raise ConfigError(_("max_dormant_ratio must be a number between 0 and 1.")) from None
         if not (0.0 <= ratio <= 1.0):
-            raise ConfigError("max_dormant_ratio must be between 0 and 1.")
+            raise ConfigError(_("max_dormant_ratio must be between 0 and 1."))
         out["max_dormant_ratio"] = ratio
     return out
 
 
 def _validate_kpis(value) -> dict:
     if not isinstance(value, dict):
-        raise ConfigError("KPI configuration must be an object.")
+        raise ConfigError(_("KPI configuration must be an object."))
     out: dict[str, dict] = {}
     for key, entry in value.items():
         if not isinstance(entry, dict):
-            raise ConfigError(f"KPI {key!r} must be an object.")
+            raise ConfigError(_("KPI %(key)r must be an object.") % {"key": key})
         try:
             weight = float(entry.get("weight", 1.0))
         except (TypeError, ValueError):
-            raise ConfigError(f"{key}: weight must be a number.") from None
+            raise ConfigError(_("%(key)s: weight must be a number.") % {"key": key}) from None
         if weight < 0:
-            raise ConfigError(f"{key}: weight must be ≥ 0.")
+            raise ConfigError(_("%(key)s: weight must be ≥ 0.") % {"key": key})
         item: dict = {"enabled": bool(entry.get("enabled", True)), "weight": weight}
         thresholds = entry.get("thresholds") or {}
         if thresholds:
@@ -466,11 +487,16 @@ def _validate_kpis(value) -> dict:
                 amber = int(thresholds.get("amber", 60))
                 red = int(thresholds.get("red", 40))
             except (TypeError, ValueError):
-                raise ConfigError(f"{key}: amber and red must be whole numbers.") from None
+                raise ConfigError(
+                _("%(key)s: amber and red must be whole numbers.") % {"key": key}
+            ) from None
             if not (0 <= red < amber <= 100):
                 raise ConfigError(
-                    f"{key}: thresholds must satisfy 0 ≤ red < amber ≤ 100 "
-                    f"(got red={red}, amber={amber})."
+                    _(
+                        "%(key)s: thresholds must satisfy 0 ≤ red < amber ≤ 100 "
+                        "(got red=%(red)s, amber=%(amber)s)."
+                    )
+                    % {"key": key, "red": red, "amber": amber}
                 )
             item["thresholds"] = {"amber": amber, "red": red}
         out[key] = item
@@ -479,7 +505,7 @@ def _validate_kpis(value) -> dict:
 
 def _validate_notifications(value) -> dict:
     if not isinstance(value, dict):
-        raise ConfigError("Notifications configuration must be an object.")
+        raise ConfigError(_("Notifications configuration must be an object."))
     cid = value.get("eve_mail_sender_character_id")
     if cid in (None, "", "0", 0):
         sender = None
@@ -487,9 +513,9 @@ def _validate_notifications(value) -> dict:
         try:
             sender = int(cid)
         except (TypeError, ValueError):
-            raise ConfigError("EVE-mail sender must be a character id.") from None
+            raise ConfigError(_("EVE-mail sender must be a character id.")) from None
         if sender <= 0:
-            raise ConfigError("EVE-mail sender must be a positive character id.")
+            raise ConfigError(_("EVE-mail sender must be a positive character id."))
     return {"eve_mail_sender_character_id": sender}
 
 

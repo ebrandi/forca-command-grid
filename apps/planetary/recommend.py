@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from decimal import ROUND_HALF_UP, Decimal
 
+from django.utils.translation import gettext as _
+
 from .chains import PiGraph, build_graph
 from .constants import DEFAULT_FACTORY_OUTPUT_PER_DAY, TIER_ORDER
 from .prices import PriceProvider
@@ -104,17 +106,28 @@ def estimate_product(graph: PiGraph, provider: PriceProvider, config, material_i
 
 def _explain(item: dict, planet_slugs) -> str:
     parts = []
+    product = {"name": item["name"], "tier": item["tier"]}
     if item["role"] == "extract":
-        parts.append(f"An extraction planet self-refining into {item['name']} ({item['tier']})")
+        parts.append(
+            _("An extraction planet self-refining into %(name)s (%(tier)s)") % product
+        )
     else:
-        parts.append(f"A factory planet buying inputs to make {item['name']} ({item['tier']})")
-    parts.append(f"nets about {item['net_day']:,.0f} ISK/day per planet at current prices")
+        parts.append(
+            _("A factory planet buying inputs to make %(name)s (%(tier)s)") % product
+        )
+    parts.append(
+        _("nets about %(isk)s ISK/day per planet at current prices")
+        % {"isk": f"{item['net_day']:,.0f}"}
+    )
     if item["needs_planets"]:
         planets = ", ".join(item["needs_planets"])
         if planet_slugs and set(item["needs_planets"]) <= set(planet_slugs):
-            parts.append(f"and you already have the planets for it ({planets})")
+            parts.append(
+                _("and you already have the planets for it (%(planets)s)")
+                % {"planets": planets}
+            )
         else:
-            parts.append(f"if you can extract from {planets}")
+            parts.append(_("if you can extract from %(planets)s") % {"planets": planets})
     return ", ".join(parts) + "."
 
 
@@ -147,18 +160,18 @@ def recommend(*, config, provider: PriceProvider | None = None, graph: PiGraph |
 
     # Rank: priced first, then net/day. Feasible ones float up when planets given.
     scored.sort(key=lambda x: (x[1], x[0]["priced"], x[0]["net_day"]), reverse=True)
-    top = [e for e, _ in scored[:limit]]
+    top = [e for e, _feasible in scored[:limit]]
 
     # Badges — assigned after ranking so "best profit" is unique.
     for i, item in enumerate(top):
         badges = []
         if item["corp_priority"]:
-            badges.append(("Corp priority", "cyan"))
+            badges.append((_("Corp priority"), "cyan"))
         if i == 0 and item["net_day"] > 0:
-            badges.append(("Best profit", "gold"))
+            badges.append((_("Best profit"), "gold"))
         if item["role"] == "extract" and item["net_day"] > 0:
-            badges.append(("Low effort", "kill"))
+            badges.append((_("Low effort"), "kill"))
         if item["tier"] == "P1" and item["complexity"] == "Low" and item["net_day"] > 0:
-            badges.append(("Beginner recommended", "win"))
+            badges.append((_("Beginner recommended"), "win"))
         item["badges"] = badges
     return top

@@ -11,18 +11,22 @@ via :class:`apps.comms_access.models.EntitlementMapping`.
 """
 from __future__ import annotations
 
+from django.utils.translation import gettext_lazy as _
+
 from apps.corporation.access import is_service_alliance_pilot
 from core import rbac
 
 # The vocabulary the admin UI offers when building a mapping. Extensible: a future
 # ``doctrine:<slug>`` or ``srp:approver`` key is one branch below + one row here.
+# The KEYS are the persisted ``EntitlementMapping.entitlement_key`` and are membership-tested
+# in the console — only the display VALUES are translated.
 ENTITLEMENTS: dict[str, str] = {
-    "member": "Home-corp member",
-    "officer": "Officer (or higher)",
-    "director": "Director (or higher)",
-    "recruiter": "Recruiter (recruitment.manage)",
-    "fc": "Fleet Commander (fleet.manage)",
-    "alliance": "Alliance / friendly-corp pilot (not a home member)",
+    "member": _("Home-corp member"),
+    "officer": _("Officer (or higher)"),
+    "director": _("Director (or higher)"),
+    "recruiter": _("Recruiter (recruitment.manage)"),
+    "fc": _("Fleet Commander (fleet.manage)"),
+    "alliance": _("Alliance / friendly-corp pilot (not a home member)"),
 }
 
 

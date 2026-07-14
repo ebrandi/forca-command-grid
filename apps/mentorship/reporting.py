@@ -5,6 +5,7 @@ from decimal import Decimal
 
 from django.db.models import Count, Sum
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from . import rewards
 from .models import (
@@ -101,7 +102,7 @@ def mentees_needing_attention(limit: int = 10) -> list[dict]:
     """Active mentees who are unpaired or whose pair has stalled/no progress."""
     from . import matching
 
-    out = [{"mentee": m, "why": "Not yet paired"} for m in matching.unpaired_mentees()]
+    out = [{"mentee": m, "why": _("Not yet paired")} for m in matching.unpaired_mentees()]
     for pairing in MentorshipPairing.objects.filter(status=_P.ACTIVE).select_related(
         "mentee__user", "mentor__user"
     ):
@@ -109,7 +110,7 @@ def mentees_needing_attention(limit: int = 10) -> list[dict]:
             status__in=MentorshipTaskAssignment.DONE_STATUSES).count()
         total = pairing.assignments.count()
         if total and done == 0:
-            out.append({"mentee": pairing.mentee, "why": "Paired but no tasks completed yet",
+            out.append({"mentee": pairing.mentee, "why": _("Paired but no tasks completed yet"),
                         "pairing": pairing})
     return out[:limit]
 

@@ -5,6 +5,7 @@ Business logic lives here, never in views. Nothing moves ISK or writes to the ga
 from __future__ import annotations
 
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from core import rbac
 
@@ -178,11 +179,11 @@ def reconcile_plan_colonies(plan) -> list[dict]:
             pp.role == "extract" and expected and extracting and expected not in extracting
         )
         if colony is None:
-            drift = "No live colony of this type imported yet."
+            drift = _("No live colony of this type imported yet.")
         elif issues:
             drift = issues[0]
         elif wrong_product:
-            drift = "Your live colony is pulling a different product than the plan expects."
+            drift = _("Your live colony is pulling a different product than the plan expects.")
         else:
             drift = ""
         rows.append({

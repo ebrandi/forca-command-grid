@@ -4,6 +4,7 @@ from __future__ import annotations
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
 from .services import (
@@ -55,7 +56,7 @@ def briefing(request: HttpRequest) -> HttpResponse:
 
     if not (feature_enabled("briefing") or feature_enabled("command_intel_pilot")
             or feature_enabled("recommendations")):
-        raise Http404("This feature is not enabled for this corporation.")
+        raise Http404(_("This feature is not enabled for this corporation."))
     return redirect("identity:dashboard")
 
 

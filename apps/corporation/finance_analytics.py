@@ -12,46 +12,55 @@ import statistics
 from decimal import Decimal
 
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 # --- ref_type → human category ----------------------------------------------
 # Buckets the raw ESI ref_types so income/expense read in plain language. The
 # sign of the amount decides income vs expense; this is just the label.
+#
+# The labels are lazy on purpose: this dashboard is memoised under a locale-free
+# cache key and warmed by a beat task, so an eager gettext() would freeze the
+# filler's language into the shared blob for the whole TTL. Lazy proxies pickle
+# and re-resolve per viewer, and they hash/compare equal, so using them as
+# aggregation keys still works.
 _REF_CATEGORY = {
     # Ratting / PvE income
-    "bounty_prizes": "Ratting", "bounty_prize": "Ratting",
-    "ess_escrow_transfer": "Ratting", "daily_goal_payouts": "Ratting",
-    "agent_mission_reward": "Missions", "agent_mission_time_bonus_reward": "Missions",
-    "project_discovery_reward": "Ratting", "corporate_reward_payout": "Payouts",
-    "corporate_reward_tax": "Taxes",
+    "bounty_prizes": _("Ratting"), "bounty_prize": _("Ratting"),
+    "ess_escrow_transfer": _("Ratting"), "daily_goal_payouts": _("Ratting"),
+    "agent_mission_reward": _("Missions"), "agent_mission_time_bonus_reward": _("Missions"),
+    "project_discovery_reward": _("Ratting"), "corporate_reward_payout": _("Payouts"),
+    "corporate_reward_tax": _("Taxes"),
     # Industry
-    "industry_job_tax": "Industry", "reprocessing_tax": "Industry",
-    "manufacturing": "Industry", "researching_technology": "Industry",
-    "researching_time_productivity": "Industry", "researching_material_productivity": "Industry",
-    "copying": "Industry", "reaction": "Industry",
+    "industry_job_tax": _("Industry"), "reprocessing_tax": _("Industry"),
+    "manufacturing": _("Industry"), "researching_technology": _("Industry"),
+    "researching_time_productivity": _("Industry"),
+    "researching_material_productivity": _("Industry"),
+    "copying": _("Industry"), "reaction": _("Industry"),
     # Market
-    "market_transaction": "Market", "transaction_tax": "Market",
-    "brokers_fee": "Market", "market_escrow": "Market", "market_provider_tax": "Market",
-    "market_fine_paid": "Market",
+    "market_transaction": _("Market"), "transaction_tax": _("Market"),
+    "brokers_fee": _("Market"), "market_escrow": _("Market"), "market_provider_tax": _("Market"),
+    "market_fine_paid": _("Market"),
     # Contracts
-    "contract_price_payment_corp": "Contracts", "contract_brokers_fee": "Contracts",
-    "contract_reward": "Contracts", "contract_reward_refund": "Contracts",
-    "contract_collateral": "Contracts", "contract_price": "Contracts",
-    "contract_deposit": "Contracts",
+    "contract_price_payment_corp": _("Contracts"), "contract_brokers_fee": _("Contracts"),
+    "contract_reward": _("Contracts"), "contract_reward_refund": _("Contracts"),
+    "contract_collateral": _("Contracts"), "contract_price": _("Contracts"),
+    "contract_deposit": _("Contracts"),
     # Transfers / donations
-    "player_donation": "Donations", "corporation_account_withdrawal": "Transfers",
-    "corp_withdrawal": "Transfers", "player_trading": "Transfers", "donation": "Donations",
+    "player_donation": _("Donations"), "corporation_account_withdrawal": _("Transfers"),
+    "corp_withdrawal": _("Transfers"), "player_trading": _("Transfers"),
+    "donation": _("Donations"),
     # Structures / sov / fees
-    "office_rental_fee": "Structures", "structure_gate_jump": "Structures",
-    "sovereignty_bill": "Structures", "infrastructure_hub_maintenance": "Structures",
-    "jump_clone_activation_fee": "Fees", "jump_clone_installation_fee": "Fees",
-    "insurance": "SRP / Insurance",
+    "office_rental_fee": _("Structures"), "structure_gate_jump": _("Structures"),
+    "sovereignty_bill": _("Structures"), "infrastructure_hub_maintenance": _("Structures"),
+    "jump_clone_activation_fee": _("Fees"), "jump_clone_installation_fee": _("Fees"),
+    "insurance": _("SRP / Insurance"),
 }
 
 
 def categorize(ref_type: str | None) -> str:
     """Human category for a ref_type (humanised fallback for unmapped ones)."""
     if not ref_type:
-        return "Other"
+        return _("Other")
     if ref_type in _REF_CATEGORY:
         return _REF_CATEGORY[ref_type]
     return ref_type.replace("_", " ").title()
@@ -59,20 +68,20 @@ def categorize(ref_type: str | None) -> str:
 
 # --- windows -----------------------------------------------------------------
 WINDOWS = {
-    "7d": ("7 days", 7),
-    "30d": ("30 days", 30),
-    "90d": ("90 days", 90),
-    "12m": ("12 months", 365),
-    "ytd": ("Year to date", None),
-    "all": ("All time", None),
+    "7d": (_("7 days"), 7),
+    "30d": (_("30 days"), 30),
+    "90d": (_("90 days"), 90),
+    "12m": (_("12 months"), 365),
+    "ytd": (_("Year to date"), None),
+    "all": (_("All time"), None),
 }
 DEFAULT_WINDOW = "30d"
 
 HORIZONS = {
-    "eom": "End of month",
-    "30d": "Next 30 days",
-    "60d": "Next 60 days",
-    "90d": "Next 90 days",
+    "eom": _("End of month"),
+    "30d": _("Next 30 days"),
+    "60d": _("Next 60 days"),
+    "90d": _("Next 90 days"),
 }
 DEFAULT_HORIZON = "30d"
 
@@ -265,7 +274,7 @@ def finance_dashboard(window: str = DEFAULT_WINDOW, division: int | None = None,
         .values("date", "ref_type", "amount", "first_party_id", "second_party_id")[:60]
     )
 
-    name_ids = {m for m, _ in ranked_members}
+    name_ids = {m for m, _agg in ranked_members}
     name_ids |= {e["first_party_id"] for e in big} | {e["second_party_id"] for e in big}
     name_ids |= {e["first_party_id"] for e in recent} | {e["second_party_id"] for e in recent}
     names = _names(name_ids)

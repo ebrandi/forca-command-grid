@@ -15,6 +15,7 @@ from urllib.parse import urlencode
 
 import requests
 from django.conf import settings
+from django.utils.translation import gettext as _
 
 from core.esi.oauth import generate_pkce, generate_state  # noqa: F401 (re-exported)
 
@@ -73,15 +74,19 @@ def exchange_code(code: str, code_verifier: str) -> dict:
             timeout=10, allow_redirects=False,
         )
     except requests.RequestException as exc:
-        raise OAuthError(f"token request failed: {type(exc).__name__}") from exc
+        raise OAuthError(
+            _("token request failed: %(error)s") % {"error": type(exc).__name__}
+        ) from exc
     if resp.status_code != 200:
-        raise OAuthError(f"token exchange returned http {resp.status_code}")
+        raise OAuthError(
+            _("token exchange returned http %(status)s") % {"status": resp.status_code}
+        )
     try:
         body = resp.json() or {}
     except ValueError as exc:
-        raise OAuthError("token response was not JSON") from exc
+        raise OAuthError(_("token response was not JSON")) from exc
     if not body.get("access_token"):
-        raise OAuthError("token response missing access_token")
+        raise OAuthError(_("token response missing access_token"))
     return body
 
 
@@ -94,15 +99,19 @@ def fetch_identity(access_token: str) -> dict:
             timeout=10, allow_redirects=False,
         )
     except requests.RequestException as exc:
-        raise OAuthError(f"identity request failed: {type(exc).__name__}") from exc
+        raise OAuthError(
+            _("identity request failed: %(error)s") % {"error": type(exc).__name__}
+        ) from exc
     if resp.status_code != 200:
-        raise OAuthError(f"identity lookup returned http {resp.status_code}")
+        raise OAuthError(
+            _("identity lookup returned http %(status)s") % {"status": resp.status_code}
+        )
     try:
         body = resp.json() or {}
     except ValueError as exc:
-        raise OAuthError("identity response was not JSON") from exc
+        raise OAuthError(_("identity response was not JSON")) from exc
     if not body.get("id"):
-        raise OAuthError("identity response missing user id")
+        raise OAuthError(_("identity response missing user id"))
     return body
 
 

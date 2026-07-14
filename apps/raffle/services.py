@@ -196,12 +196,12 @@ def grant_manual_tickets(contest, actor, *, character_id=None, user=None, amount
     from core import rbac
 
     if amount is None or int(amount) <= 0:
-        raise GrantBlocked("Ticket amount must be a positive number.")
+        raise GrantBlocked(_t("Ticket amount must be a positive number."))
     amount = int(amount)
     if not reason or not reason.strip():
-        raise GrantBlocked("A reason is required for every manual grant.")
+        raise GrantBlocked(_t("A reason is required for every manual grant."))
     if contest.is_frozen:
-        raise GrantBlocked("This contest's ledger is frozen — no new grants.")
+        raise GrantBlocked(_t("This contest's ledger is frozen — no new grants."))
 
     character = None
     if user is not None and character_id is None:
@@ -216,7 +216,7 @@ def grant_manual_tickets(contest, actor, *, character_id=None, user=None, amount
     if (user is not None and actor is not None and user.pk == getattr(actor, "pk", None)
             and not rbac.has_role(actor, rbac.ROLE_DIRECTOR)
             and not getattr(actor, "is_superuser", False)):
-        raise GrantBlocked("You can't grant raffle tickets to your own account.")
+        raise GrantBlocked(_t("You can't grant raffle tickets to your own account."))
 
     e = (
         elig.for_character(contest, character) if character is not None
@@ -231,8 +231,9 @@ def grant_manual_tickets(contest, actor, *, character_id=None, user=None, amount
         )
         if not may_override:
             raise GrantBlocked(
-                f"{e.message or 'Pilot is not eligible.'} Ask them to enrol in FORCA "
-                "Command Grid and connect their ESI token first."
+                _t("%(reason)s Ask them to enrol in FORCA Command Grid and connect their "
+                   "ESI token first.")
+                % {"reason": e.message or _t("Pilot is not eligible.")}
             )
         override_used = True
 
@@ -365,7 +366,7 @@ def run_draw(contest, actor=None, *, external_entropy: str = "", force: bool = F
     manual "draw anyway" action).
     """
     if contest.status not in (RaffleContest.Status.CLOSED, RaffleContest.Status.COMPLETED):
-        raise GrantBlocked("The contest must be closed before drawing.")
+        raise GrantBlocked(_t("The contest must be closed before drawing."))
     lock_key = f"raffle:draw:lock:{contest.pk}"
     if not cache.add(lock_key, "1", _DRAW_LOCK_TTL):
         return None
@@ -382,9 +383,14 @@ def run_draw(contest, actor=None, *, external_entropy: str = "", force: bool = F
         activity = boosters.min_activity_status(contest)
         if activity["configured"] and not activity["met"] and not force:
             raise ActivityNotMet(
-                f"This contest hasn't reached its minimum activity "
-                f"({activity['label']}: {activity['value']:.0f} of {activity['threshold']:.0f}). "
-                "Use the manual override to draw anyway."
+                _t("This contest hasn't reached its minimum activity "
+                   "(%(metric)s: %(value)s of %(threshold)s). "
+                   "Use the manual override to draw anyway.")
+                % {
+                    "metric": activity["label"],
+                    "value": f"{activity['value']:.0f}",
+                    "threshold": f"{activity['threshold']:.0f}",
+                }
             )
         draw = contest.draws.filter(status=RaffleDraw.Status.COMMITTED).order_by("-created_at").first()
         if draw is None:

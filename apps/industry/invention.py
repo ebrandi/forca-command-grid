@@ -21,6 +21,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from decimal import Decimal
 
+from django.utils.translation import gettext as _
+
 from apps.market.pricing import price_for
 from apps.sde.models import (
     SdeBlueprintMaterial,
@@ -203,7 +205,9 @@ def plan(
             "science_2_level": max(0, min(5, science_2)),
             "encryption_level": max(0, min(5, encryption)),
             "skill_multiplier": skill_multiplier(science_1, science_2, encryption),
-            "note": "Probability uses the standard invention formula; skills and decryptor "
-                    "are your inputs. Datacore/decryptor prices are Jita-sell estimates.",
+            "note": _(
+                "Probability uses the standard invention formula; skills and decryptor "
+                "are your inputs. Datacore/decryptor prices are Jita-sell estimates."
+            ),
         },
     }

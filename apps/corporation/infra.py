@@ -12,7 +12,10 @@ from __future__ import annotations
 from datetime import timedelta
 
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
+# Code values, never translated: ``severity`` keys this rank map and both it and
+# ``kind`` are ``==``-compared in the view and the template.
 _SEV_RANK = {"critical": 0, "warning": 1, "ok": 2}
 
 
@@ -29,17 +32,20 @@ def infrastructure_board() -> list[dict]:
         days = s.fuel_days_left
         reinforced = s.is_reinforced
         if s.is_out_of_fuel:
-            sev, order, detail = "critical", 0.0, "Out of fuel"
+            sev, order, detail = "critical", 0.0, _("Out of fuel")
         elif reinforced:
             secs = (s.state_timer_end - now).total_seconds() if s.state_timer_end else 0.0
-            state = (s.state or "timer active").replace("_", " ")
-            sev, order, detail = "critical", max(secs, 0.0), f"Reinforced — {state}"
+            state = s.state.replace("_", " ") if s.state else _("timer active")
+            sev, order = "critical", max(secs, 0.0)
+            detail = _("Reinforced — %(state)s") % {"state": state}
         elif days is not None and days < fuel_days:
-            sev, order, detail = "warning", days * 86400, f"{days:.1f} days of fuel left"
+            sev, order = "warning", days * 86400
+            detail = _("%(days).1f days of fuel left") % {"days": days}
         else:
             sev = "ok"
             order = (days if days is not None else 999) * 86400
-            detail = f"{days:.1f} days of fuel" if days is not None else "Fuel unknown"
+            detail = (_("%(days).1f days of fuel") % {"days": days}
+                      if days is not None else _("Fuel unknown"))
         items.append({
             "kind": "structure",
             "name": s.name or f"Structure {s.structure_id}",
@@ -59,7 +65,10 @@ def infrastructure_board() -> list[dict]:
             "system": sov.system_name,
             "severity": "warning" if soft else "ok",
             "order": sov.adm * 86400,
-            "detail": f"ADM {sov.adm:.1f}" + (" — soft" if soft else ""),
+            # Two complete sentences rather than a concatenated fragment: the
+            # "soft" suffix is not translatable on its own.
+            "detail": (_("ADM %(adm).1f — soft") % {"adm": sov.adm} if soft
+                       else _("ADM %(adm).1f") % {"adm": sov.adm}),
             "adm": round(sov.adm, 1),
             "timer_end": sov.vulnerable_end,
         })
@@ -74,7 +83,8 @@ def infrastructure_board() -> list[dict]:
             "severity": "critical" if secs < 48 * 3600 else "warning",
             # Clamp so a just-exited timer doesn't sort above out-of-fuel (order 0).
             "order": max(secs, 0.0),
-            "detail": f"{t.get_timer_type_display()} timer · {t.get_side_display()}",
+            "detail": _("%(type)s timer · %(side)s") % {
+                "type": t.get_timer_type_display(), "side": t.get_side_display()},
             "timer_end": t.exits_at,
             "side": t.side,
         })

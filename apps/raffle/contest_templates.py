@@ -8,6 +8,8 @@ migration and re-runnable safely).
 """
 from __future__ import annotations
 
+from django.utils.translation import gettext_lazy as _
+
 
 def _prizes(*values):
     names = ["1st prize", "2nd prize", "3rd prize", "4th prize", "5th prize"]
@@ -20,8 +22,8 @@ def _prizes(*values):
 
 BUILTIN: list[dict] = [
     {
-        "key": "pvp_activity", "name": "PVP activity raffle",
-        "description": "Reward everyone who undocks and gets on kills. Solo 100 · final blow 10 · participation 1.",
+        "key": "pvp_activity", "name": _("PVP activity raffle"),
+        "description": _("Reward everyone who undocks and gets on kills. Solo 100 · final blow 10 · participation 1."),
         "config": {
             "contest": {"objective": "Get pilots on more kills.",
                         "one_prize_per_pilot": True},
@@ -31,8 +33,8 @@ BUILTIN: list[dict] = [
         },
     },
     {
-        "key": "solo_kill", "name": "Solo kill challenge",
-        "description": "Heavily reward solo PvP prowess — solo kills are worth 10× a normal kill.",
+        "key": "solo_kill", "name": _("Solo kill challenge"),
+        "description": _("Heavily reward solo PvP prowess — solo kills are worth 10× a normal kill."),
         "config": {
             "contest": {"objective": "Crown the corp's best solo hunter."},
             "sources": {"pvp": {"enabled": True, "mode": "auto",
@@ -42,8 +44,8 @@ BUILTIN: list[dict] = [
         },
     },
     {
-        "key": "home_defence", "name": "Home defence contest",
-        "description": "Reward kills defending home space. Set the home region/systems in the PVP filters.",
+        "key": "home_defence", "name": _("Home defence contest"),
+        "description": _("Reward kills defending home space. Set the home region/systems in the PVP filters."),
         "config": {
             "contest": {"objective": "Defend home — kills in our space earn tickets."},
             "sources": {"pvp": {"enabled": True, "mode": "auto",
@@ -53,8 +55,8 @@ BUILTIN: list[dict] = [
         },
     },
     {
-        "key": "mining_month", "name": "Mining month",
-        "description": "Reward ore mined from the corp mining ledger (X tickets per m³).",
+        "key": "mining_month", "name": _("Mining month"),
+        "description": _("Reward ore mined from the corp mining ledger (X tickets per m³)."),
         "config": {
             "contest": {"objective": "Fill the ore hangar — mine to earn tickets."},
             "sources": {"mining": {"enabled": True, "mode": "auto",
@@ -64,8 +66,9 @@ BUILTIN: list[dict] = [
         },
     },
     {
-        "key": "industry_drive", "name": "Industry production drive",
-        "description": "Recognise builders. Industry has no reliable per-pilot feed, so awards are officer-approved.",
+        "key": "industry_drive", "name": _("Industry production drive"),
+        "description": _("Recognise builders. Industry has no reliable per-pilot feed, "
+                         "so awards are officer-approved."),
         "config": {
             "contest": {"objective": "Keep the production lines running."},
             "sources": {"industry": {"enabled": True, "mode": "officer_approved"},
@@ -74,8 +77,8 @@ BUILTIN: list[dict] = [
         },
     },
     {
-        "key": "logistics_campaign", "name": "Logistics support campaign",
-        "description": "Reward haulers for delivered courier contracts (officer-approved).",
+        "key": "logistics_campaign", "name": _("Logistics support campaign"),
+        "description": _("Reward haulers for delivered courier contracts (officer-approved)."),
         "config": {
             "contest": {"objective": "Keep the supply lines moving."},
             "sources": {"logistics": {"enabled": True, "mode": "officer_approved"},
@@ -84,8 +87,8 @@ BUILTIN: list[dict] = [
         },
     },
     {
-        "key": "newbro_support", "name": "Newbro support contest",
-        "description": "Reward mentors and helpers. Mentorship completions + leadership grants.",
+        "key": "newbro_support", "name": _("Newbro support contest"),
+        "description": _("Reward mentors and helpers. Mentorship completions + leadership grants."),
         "config": {
             "contest": {"objective": "Help new pilots get flying."},
             "sources": {"mentorship": {"enabled": True, "mode": "officer_approved"},
@@ -94,8 +97,8 @@ BUILTIN: list[dict] = [
         },
     },
     {
-        "key": "alliance_deployment", "name": "Alliance deployment raffle",
-        "description": "PVP + fleet attendance during a deployment. Admits alliance / friendly pilots.",
+        "key": "alliance_deployment", "name": _("Alliance deployment raffle"),
+        "description": _("PVP + fleet attendance during a deployment. Admits alliance / friendly pilots."),
         "config": {
             "contest": {"objective": "Show up and fight the deployment.",
                         "include_alliance": True},
@@ -106,8 +109,8 @@ BUILTIN: list[dict] = [
         },
     },
     {
-        "key": "mixed_engagement", "name": "Mixed activity engagement",
-        "description": "A bit of everything — PVP, mining, fleet attendance and leadership grants.",
+        "key": "mixed_engagement", "name": _("Mixed activity engagement"),
+        "description": _("A bit of everything — PVP, mining, fleet attendance and leadership grants."),
         "config": {
             "contest": {"objective": "Reward any way of contributing to the corp."},
             "sources": {"pvp": {"enabled": True, "mode": "auto"},
@@ -118,8 +121,8 @@ BUILTIN: list[dict] = [
         },
     },
     {
-        "key": "esi_adoption", "name": "ESI adoption campaign",
-        "description": "Drive app enrolment — everyone who connects ESI and flies earns; big CTA on the dashboard.",
+        "key": "esi_adoption", "name": _("ESI adoption campaign"),
+        "description": _("Drive app enrolment — everyone who connects ESI and flies earns; big CTA on the dashboard."),
         "config": {
             "contest": {"objective": "Get the whole corp enrolled in FORCA Command Grid.",
                         "show_ineligible_to_pilots": True},

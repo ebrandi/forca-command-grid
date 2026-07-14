@@ -20,6 +20,7 @@ from collections import defaultdict
 from functools import lru_cache
 
 from django.conf import settings
+from django.utils.translation import gettext_lazy as _
 
 from apps.killboard.models import Killmail, KillmailParticipant
 from core.esi.names import names_for
@@ -52,9 +53,10 @@ def _ship_group_category(type_id: int) -> tuple[int | None, int | None]:
 
 class PvpSource(TicketSource):
     key = "pvp"
-    label = "PVP kills"
-    description = "Tickets for participating in corp kills (solo 100 · final blow 10 · participation 1)."
-    unit = "kills"
+    label = _("PVP kills")
+    description = _("Tickets for participating in corp kills "
+                    "(solo 100 · final blow 10 · participation 1).")
+    unit = _("kills")
     reliability = AUTOMATIC
     default_mode = "auto"
     default_config = {"per_kill": 1, "final_blow": 10, "solo": 100}

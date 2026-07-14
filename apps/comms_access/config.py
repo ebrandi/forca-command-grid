@@ -15,6 +15,8 @@ from __future__ import annotations
 
 import copy
 
+from django.utils.translation import gettext as _
+
 _CACHE_TTL = 600
 
 PLATFORMS = ("discord", "slack", "mumble")
@@ -63,7 +65,9 @@ _VERSION_KEY = "comms_access._version"
 
 def get(domain: str) -> dict:
     if domain not in DEFAULTS:
-        raise ConfigError(f"Unknown comms_access config domain: {domain!r}")
+        raise ConfigError(
+            _("Unknown comms_access config domain: %(domain)r") % {"domain": domain}
+        )
     from django.core.cache import cache
 
     ck = _cache_key(domain)
@@ -110,7 +114,7 @@ def meta(domain: str) -> dict:
 # --- validation --------------------------------------------------------------
 def _ensure_dict(value) -> dict:
     if not isinstance(value, dict):
-        raise ConfigError("config document must be an object")
+        raise ConfigError(_("config document must be an object"))
     return value
 
 
@@ -122,7 +126,7 @@ def _validate_general(value: dict) -> dict:
     v = _ensure_dict(value)
     grace = v.get("revoke_grace_minutes")
     if grace is not None and (isinstance(grace, bool) or not isinstance(grace, int) or grace < 0):
-        raise ConfigError("general.revoke_grace_minutes must be a non-negative integer")
+        raise ConfigError(_("general.revoke_grace_minutes must be a non-negative integer"))
     return v
 
 
@@ -130,9 +134,11 @@ def _validate_platforms(value: dict) -> dict:
     v = _ensure_dict(value)
     for name, cfg in v.items():
         if name not in PLATFORMS:
-            raise ConfigError(f"unknown platform {name!r}")
+            raise ConfigError(_("unknown platform %(platform)r") % {"platform": name})
         if not isinstance(cfg, dict):
-            raise ConfigError(f"platforms.{name} must be an object")
+            raise ConfigError(
+                _("platforms.%(platform)s must be an object") % {"platform": name}
+            )
     return v
 
 
@@ -144,7 +150,9 @@ _VALIDATORS = {
 
 def set(domain: str, value: dict, *, user=None) -> dict:  # noqa: A001 - documented public API
     if domain not in DEFAULTS:
-        raise ConfigError(f"Unknown comms_access config domain: {domain!r}")
+        raise ConfigError(
+            _("Unknown comms_access config domain: %(domain)r") % {"domain": domain}
+        )
     validated = _VALIDATORS.get(domain, _ensure_dict)(value)
 
     from apps.admin_audit.models import AppSetting

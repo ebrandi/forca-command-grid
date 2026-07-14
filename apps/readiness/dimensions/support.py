@@ -10,6 +10,8 @@ doctrine/skill scan.
 """
 from __future__ import annotations
 
+from django.utils.translation import gettext_lazy as _
+
 from ..engine.base import (
     DimensionResult,
     Finding,
@@ -27,9 +29,9 @@ def _kpi(key, value, score, detail) -> KpiResult:
 
 class FleetSupportProvider:
     key = "support"
-    label = "Fleet Support"
+    label = _("Fleet Support")
     default_weight = 0.8
-    data_sources = ["Fleet support skills", "Character skills"]
+    data_sources = [_("Fleet support skills"), _("Character skills")]
     # Per-skill KPI keys are dynamic (one per configured skill), so there is no static
     # catalogue to list on the KPI-config page.
     kpi_catalogue: list = []

@@ -14,7 +14,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.utils import timezone
+from django.utils import formats, timezone
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
@@ -193,13 +193,19 @@ def request_consent(request: HttpRequest, pk: int) -> HttpResponse:
         reverse("recruitment:oauth_begin", args=[consent.state])
     )
     if settings.RECRUITMENT_SSO_ENABLED:
+        # strftime's %b is C-locale (LC_TIME) and never follows the active language;
+        # date_format does ("juil." fr, "7月" ja). The rest of the stamp is numeric.
+        expires_at = consent.expires_at
+        expires = (
+            f"{expires_at:%j} {formats.date_format(expires_at, 'M')} {expires_at:%H:%M}"
+        )
         messages.success(
             request,
             _("Consent link ready — send it to %(name)s to authorise (expires "
               "%(expires)s UTC): %(url)s")
             % {
                 "name": candidate.name,
-                "expires": f"{consent.expires_at:%j %b %H:%M}",
+                "expires": expires,
                 "url": begin_url,
             },
         )

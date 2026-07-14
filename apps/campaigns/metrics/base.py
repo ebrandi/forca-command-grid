@@ -26,6 +26,7 @@ from datetime import datetime
 from decimal import Decimal, InvalidOperation
 
 from django.core.exceptions import ValidationError
+from django.utils.translation import gettext as _
 
 logger = logging.getLogger("forca.campaigns")
 
@@ -150,7 +151,9 @@ def clean_params(source: MetricSource, raw: dict) -> dict:
 
         if value is None or (isinstance(value, str) and not value.strip()):
             if required:
-                raise ValidationError(f"“{label}” is required for this metric source.")
+                raise ValidationError(
+                    _("“%(label)s” is required for this metric source.") % {"label": label}
+                )
             continue
 
         if kind == "int":
@@ -160,7 +163,9 @@ def clean_params(source: MetricSource, raw: dict) -> dict:
         elif kind == "choice":
             choices = {str(c[0]) for c in resolve_choices(field_spec)}
             if str(value) not in choices:
-                raise ValidationError(f"“{label}” is not one of the allowed options.")
+                raise ValidationError(
+                    _("“%(label)s” is not one of the allowed options.") % {"label": label}
+                )
             cleaned[name] = str(value)
         else:  # str
             cleaned[name] = str(value).strip()[:120]
@@ -183,7 +188,9 @@ def _clean_int(value, label: str) -> int:
     try:
         return int(str(value).strip())
     except (TypeError, ValueError) as exc:
-        raise ValidationError(f"“{label}” must be a whole number.") from exc
+        raise ValidationError(
+            _("“%(label)s” must be a whole number.") % {"label": label}
+        ) from exc
 
 
 def _clean_ints(value, label: str, required: bool) -> list[int]:
@@ -196,9 +203,14 @@ def _clean_ints(value, label: str, required: bool) -> list[int]:
         try:
             out.append(int(part))
         except (TypeError, ValueError) as exc:
-            raise ValidationError(f"“{label}” must be a comma-separated list of whole numbers.") from exc
+            raise ValidationError(
+                _("“%(label)s” must be a comma-separated list of whole numbers.")
+                % {"label": label}
+            ) from exc
     if required and not out:
-        raise ValidationError(f"“{label}” is required for this metric source.")
+        raise ValidationError(
+            _("“%(label)s” is required for this metric source.") % {"label": label}
+        )
     return out
 
 

@@ -8,6 +8,8 @@ target exists (honest score — an unmeasurable role is excluded, not zero).
 """
 from __future__ import annotations
 
+from django.utils.translation import gettext_lazy as _
+
 from ..engine.base import (
     DimensionResult,
     Finding,
@@ -27,13 +29,13 @@ def _kpi(key, value, score, detail):
 
 class LeadershipProvider:
     key = "leadership"
-    label = "Leadership Capacity"
+    label = _("Leadership Capacity")
     default_weight = 1.0
-    data_sources = ["Officer responsibilities", "Strategic role targets"]
+    data_sources = [_("Officer responsibilities"), _("Strategic role targets")]
     kpi_catalogue = [
-        ("leadership.officer_coverage", "Officer coverage"),
-        ("leadership.fc_bench", "FC bench"),
-        ("leadership.mentor_coverage", "Mentor coverage"),
+        ("leadership.officer_coverage", _("Officer coverage")),
+        ("leadership.fc_bench", _("FC bench")),
+        ("leadership.mentor_coverage", _("Mentor coverage")),
     ]
 
     def compute(self, ctx: ReadinessContext) -> DimensionResult:

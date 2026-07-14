@@ -18,6 +18,8 @@ from __future__ import annotations
 
 from collections import defaultdict
 
+from django.utils.translation import gettext as _
+
 from apps.sde.models import SdeType
 
 from .hulls import CLASS_ORDER, hull_meta
@@ -107,7 +109,7 @@ def build_library(character=None, has_skills: bool = False) -> dict:
                         if sole:
                             unlocks[sid] += 1
 
-        category_label = d.category.label if d.category else "Uncategorised"
+        category_label = d.category.label if d.category else _("Uncategorised")
         category_counts[category_label] += 1
         if has_skills:
             readiness_counts[best_status] += 1
@@ -178,7 +180,7 @@ def build_library(character=None, has_skills: bool = False) -> dict:
         "configured": has_skills,
         "skills": [
             {
-                "name": skill_names.get(s, f"Skill {s}"),
+                "name": skill_names.get(s) or _("Skill %(type_id)s") % {"type_id": s},
                 "blocks": blocks[s],
                 "unlocks": unlocks[s],
             }

@@ -7,12 +7,14 @@ guard against an unhealthy raw kill-count metric.
 """
 from __future__ import annotations
 
+from django.utils.translation import gettext_lazy as _
+
 from .base import Measurement, MetricSource, _dec, register
 
 
 class KillboardKills(MetricSource):
     key = "killboard.kills"
-    label = "Killboard — home-corp kills in window"
+    label = _("Killboard — home-corp kills in window")
     unit = "kills"
     data_class = "killmail"
     params_schema = []

@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import datetime as dt
 
+from django.utils.translation import gettext_lazy as _
+
 from ..engine.base import (
     DimensionResult,
     Finding,
@@ -27,13 +29,13 @@ def _kpi(key, value, score, detail):
 
 class RecruitmentProvider:
     key = "recruitment"
-    label = "Recruitment"
+    label = _("Recruitment")
     default_weight = 0.7
-    data_sources = ["Corp members", "Member join dates", "Activity signals"]
+    data_sources = [_("Corp members"), _("Member join dates"), _("Activity signals")]
     kpi_catalogue = [
-        ("recruitment.headcount_vs_target", "Headcount vs target"),
-        ("recruitment.intake_rate", "Intake rate"),
-        ("recruitment.dormant_ratio", "Dormant ratio"),
+        ("recruitment.headcount_vs_target", _("Headcount vs target")),
+        ("recruitment.intake_rate", _("Intake rate")),
+        ("recruitment.dormant_ratio", _("Dormant ratio")),
     ]
 
     def compute(self, ctx: ReadinessContext) -> DimensionResult:

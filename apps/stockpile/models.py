@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from django.db import models
+from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 
 from apps.industry.models import IndustryProject
@@ -121,8 +122,11 @@ class AssetLocation(models.Model):
     def __str__(self) -> str:
         if self.name:
             return self.name
-        label = "Structure" if self.kind == self.Kind.STRUCTURE else "Location"
-        return f"{label} {self.location_id}"
+        # ``__str__`` must return a real ``str``: use eager gettext, not the module's
+        # lazy ``_`` (a lazy proxy's ``%`` result is still a proxy, not a string).
+        if self.kind == self.Kind.STRUCTURE:
+            return gettext("Structure %(location_id)s") % {"location_id": self.location_id}
+        return gettext("Location %(location_id)s") % {"location_id": self.location_id}
 
 
 class Asset(ProvenanceMixin):

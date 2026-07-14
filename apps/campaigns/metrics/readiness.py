@@ -6,17 +6,19 @@ its last value — the readiness "honest score" rule carried through to the obje
 """
 from __future__ import annotations
 
+from django.utils.translation import gettext_lazy as _
+
 from .base import Measurement, MetricSource, _dec, register
 
 
 class ReadinessDimension(MetricSource):
     key = "readiness.dimension"
-    label = "Readiness — dimension score"
+    label = _("Readiness — dimension score")
     unit = "score"
     data_class = "skills"
     params_schema = [
-        {"name": "dimension", "kind": "str", "widget": "readiness_dimension", "label": "Dimension", "required": True,
-         "help": "Which readiness dimension score to track."},
+        {"name": "dimension", "kind": "str", "widget": "readiness_dimension", "label": _("Dimension"), "required": True,
+         "help": _("Which readiness dimension score to track.")},
     ]
 
     def measure(self, params: dict) -> Measurement:

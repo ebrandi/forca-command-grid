@@ -8,18 +8,20 @@ from __future__ import annotations
 
 from decimal import Decimal
 
+from django.utils.translation import gettext_lazy as _
+
 from .base import Measurement, MetricSource, _dec, register
 
 
 class SrpReserve(MetricSource):
     key = "srp.reserve"
-    label = "SRP — reserve (allocated − spent − exposure)"
+    label = _("SRP — reserve (allocated − spent − exposure)")
     unit = "ISK"
     data_class = "default"
     sensitive_default = True
     params_schema = [
-        {"name": "period", "kind": "str", "widget": "month", "label": "Period", "required": False,
-         "help": "Budget period; defaults to the current month."},
+        {"name": "period", "kind": "str", "widget": "month", "label": _("Period"), "required": False,
+         "help": _("Budget period; defaults to the current month.")},
     ]
 
     def measure(self, params: dict) -> Measurement:

@@ -12,7 +12,9 @@ class MarketLocationForm(forms.ModelForm):
         model = MarketLocation
         fields = ["name", "location_type", "region_id", "system_id", "is_staging", "is_price_reference"]
         widgets = {
-            "name": forms.TextInput(attrs={"class": "input-field", "placeholder": "e.g. Amarr VIII (Oris)"}),
+            "name": forms.TextInput(
+                attrs={"class": "input-field", "placeholder": _("e.g. Amarr VIII (Oris)")}
+            ),
             "location_type": forms.Select(attrs={"class": "input-field"}),
             "region_id": forms.NumberInput(attrs={"class": "input-field", "placeholder": _("Region ID")}),
             "system_id": forms.NumberInput(attrs={"class": "input-field", "placeholder": _("System ID")}),

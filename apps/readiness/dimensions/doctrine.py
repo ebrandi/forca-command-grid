@@ -9,6 +9,8 @@ payload, which Phase 0 must not).
 """
 from __future__ import annotations
 
+from django.utils.translation import gettext_lazy as _
+
 from ..engine.base import DimensionResult, Finding, KpiResult, ReadinessContext, status_for
 from ..engine.registry import register
 from .sources import get_doctrine_skill
@@ -113,9 +115,9 @@ def _doctrine_kpis(per_doctrine: dict) -> list[KpiResult]:
 
 class DoctrineProvider:
     key = "doctrine"
-    label = "Doctrine Readiness"
+    label = _("Doctrine Readiness")
     default_weight = 1.0
-    data_sources = ["Doctrines", "Doctrine fits", "Character skills"]
+    data_sources = [_("Doctrines"), _("Doctrine fits"), _("Character skills")]
 
     def compute(self, ctx: ReadinessContext) -> DimensionResult:
         dims, coverage, gaps, per_doctrine = get_doctrine_skill(ctx)
@@ -159,9 +161,9 @@ def _combat_kpis(ctx: ReadinessContext, skill_score, coverage: dict) -> list[Kpi
 
 class SkillProvider:
     key = "skill"
-    label = "Skill Coverage"
+    label = _("Skill Coverage")
     default_weight = 1.0
-    data_sources = ["Doctrines", "Character skills", "Killboard"]
+    data_sources = [_("Doctrines"), _("Character skills"), _("Killboard")]
 
     def compute(self, ctx: ReadinessContext) -> DimensionResult:
         dims, coverage, _gaps, _per = get_doctrine_skill(ctx)  # shared, no recompute

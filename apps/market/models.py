@@ -51,9 +51,9 @@ class MarketWatch(models.Model):
 
 class MarketPrice(ProvenanceMixin):
     class Profile(models.TextChoices):
-        JITA_SELL = "jita_sell", "Jita sell"
-        JITA_BUY = "jita_buy", "Jita buy"
-        ADJUSTED = "adjusted", "CCP adjusted"
+        JITA_SELL = "jita_sell", _("Jita sell")
+        JITA_BUY = "jita_buy", _("Jita buy")
+        ADJUSTED = "adjusted", _("CCP adjusted")
 
     # Not independently indexed: the unique_together (type_id, location, profile) below has
     # type_id as its leading column, so it already serves every type_id lookup (R4).

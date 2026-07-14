@@ -6,19 +6,21 @@ That flag is surfaced verbatim in ``detail`` so an uncovered (ESI-blind) locatio
 """
 from __future__ import annotations
 
+from django.utils.translation import gettext_lazy as _
+
 from .base import Measurement, MetricSource, _dec, register
 
 
 class StockpileOnHand(MetricSource):
     key = "stockpile.on_hand"
-    label = "Stockpile — effective on-hand"
+    label = _("Stockpile — effective on-hand")
     unit = "units"
     data_class = "assets"
     params_schema = [
-        {"name": "stockpile_id", "kind": "int", "widget": "stockpile", "label": "Stockpile", "required": True,
-         "help": "The corp stockpile to reconcile against live ESI on-hand."},
-        {"name": "type_id", "kind": "int", "widget": "type", "label": "Item type", "required": False,
-         "help": "Optional — a single item type; omitted sums every item in the stockpile."},
+        {"name": "stockpile_id", "kind": "int", "widget": "stockpile", "label": _("Stockpile"), "required": True,
+         "help": _("The corp stockpile to reconcile against live ESI on-hand.")},
+        {"name": "type_id", "kind": "int", "widget": "type", "label": _("Item type"), "required": False,
+         "help": _("Optional — a single item type; omitted sums every item in the stockpile.")},
     ]
 
     def measure(self, params: dict) -> Measurement:

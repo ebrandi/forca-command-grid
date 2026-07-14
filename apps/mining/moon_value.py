@@ -13,6 +13,7 @@ from decimal import Decimal
 
 from django.db.models import Sum
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 
 def structure_composition(structure_id: int, *, days: int = 90) -> dict | None:
@@ -56,7 +57,8 @@ def structure_composition(structure_id: int, *, days: int = 90) -> dict | None:
         total_volume += volume
         if unit_vol > 0:
             priced_value += value
-        rows.append({"type_id": tid, "name": info.get("name") or f"Type {tid}",
+        rows.append({"type_id": tid,
+                     "name": info.get("name") or _("Type %(type_id)s") % {"type_id": tid},
                      "quantity": qty, "value": value, "volume": volume})
     if total_value <= 0:
         return None  # all-unpriced structure — no meaningful value estimate (review LOW-2)

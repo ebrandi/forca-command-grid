@@ -8,6 +8,8 @@ excluded rather than scored zero.
 """
 from __future__ import annotations
 
+from django.utils.translation import gettext_lazy as _
+
 from ..engine.base import (
     DimensionResult,
     Finding,
@@ -26,14 +28,14 @@ def _kpi(key, value, score, detail):
 
 class SrpProvider:
     key = "srp"
-    label = "SRP Health"
+    label = _("SRP Health")
     default_weight = 0.8
-    data_sources = ["SRP claims", "SRP programme", "SRP budget", "SRP thresholds"]
+    data_sources = [_("SRP claims"), _("SRP programme"), _("SRP budget"), _("SRP thresholds")]
     kpi_catalogue = [
-        ("srp.pending_backlog", "Pending backlog"),
-        ("srp.avg_wait", "Average wait"),
-        ("srp.oldest_claim", "Oldest claim"),
-        ("srp.budget_health", "Budget health"),
+        ("srp.pending_backlog", _("Pending backlog")),
+        ("srp.avg_wait", _("Average wait")),
+        ("srp.oldest_claim", _("Oldest claim")),
+        ("srp.budget_health", _("Budget health")),
     ]
 
     def compute(self, ctx: ReadinessContext) -> DimensionResult:

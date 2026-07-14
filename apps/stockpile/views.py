@@ -315,13 +315,15 @@ def asset_search(request: HttpRequest) -> HttpResponse:
         char_ids = {a.owner_id for a in assets if a.owner_type == Asset.Owner.CHARACTER}
         names = dict(EveName.objects.filter(entity_id__in=char_ids).values_list("entity_id", "name"))
         for a in assets:
-            owner = ("Corp" if a.owner_type == Asset.Owner.CORPORATION
+            owner = (_("Corp") if a.owner_type == Asset.Owner.CORPORATION
                      else names.get(a.owner_id, f"#{a.owner_id}"))
             rows.append({
-                "type": type_names.get(a.type_id, f"Type {a.type_id}"),
+                "type": type_names.get(
+                    a.type_id, _("Type %(type_id)s") % {"type_id": a.type_id}
+                ),
                 "owner": owner,
                 "is_corp": a.owner_type == Asset.Owner.CORPORATION,
-                "location": str(a.location) if a.location else "Unknown",
+                "location": str(a.location) if a.location else _("Unknown"),
                 "quantity": a.quantity,
             })
     return render(request, "stockpile/asset_search.html",

@@ -18,7 +18,7 @@ class DoctrineCategory(models.Model):
 
     class Meta:
         ordering = ["sort_order", "label"]
-        verbose_name_plural = "doctrine categories"
+        verbose_name_plural = _("doctrine categories")
 
     def __str__(self) -> str:
         return self.label
@@ -136,7 +136,7 @@ class DoctrineImportBatch(TimeStampedModel):
 
     class Meta:
         ordering = ["-created_at"]
-        verbose_name_plural = "doctrine import batches"
+        verbose_name_plural = _("doctrine import batches")
 
     def __str__(self) -> str:
         return f"XML import #{self.pk} ({self.get_status_display()})"
@@ -162,8 +162,8 @@ class DoctrineImportConfig(TimeStampedModel):
 
     class Meta:
         ordering = ["-is_active", "-updated_at"]
-        verbose_name = "doctrine import config"
-        verbose_name_plural = "doctrine import config"
+        verbose_name = _("doctrine import config")
+        verbose_name_plural = _("doctrine import config")
 
     def __str__(self) -> str:
         return f"DoctrineImportConfig #{self.pk} (max {self.max_fittings_per_import})"
@@ -215,8 +215,8 @@ class DoctrineDisplayConfig(TimeStampedModel):
 
     class Meta:
         ordering = ["-is_active", "-updated_at"]
-        verbose_name = "doctrine display config"
-        verbose_name_plural = "doctrine display config"
+        verbose_name = _("doctrine display config")
+        verbose_name_plural = _("doctrine display config")
 
     def __str__(self) -> str:
         return f"DoctrineDisplayConfig #{self.pk} ({self.per_page}/page)"

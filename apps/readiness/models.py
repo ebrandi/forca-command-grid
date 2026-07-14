@@ -121,10 +121,10 @@ class MandatoryShip(models.Model):
 
     class Category(models.TextChoices):
         TRAVEL = "travel", _("Travel")
-        DOCTRINE = "doctrine", "Doctrine"
+        DOCTRINE = "doctrine", _("Doctrine")
         HOME_DEFENSE = "home_defense", _("Home defense")
-        CYNO = "cyno", "Cyno"
-        SCOUT = "scout", "Scout"
+        CYNO = "cyno", _("Cyno")
+        SCOUT = "scout", _("Scout")
         OTHER = "other", _("Other")
 
     class LocationKind(models.TextChoices):

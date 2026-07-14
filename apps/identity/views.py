@@ -11,6 +11,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.translation import gettext as _t
+from django.utils.translation import gettext_lazy as _l
 from django.utils.translation import ngettext
 from django.views.decorators.http import require_POST
 
@@ -139,8 +140,8 @@ def _reward_label(reward_type: str, amount, item_type_id) -> str:
             SdeType.objects.filter(type_id=item_type_id).values_list("name", flat=True).first()
             if item_type_id else None
         )
-        return name or "an item reward"
-    return "a special reward"  # manual / other
+        return name or _t("an item reward")
+    return _t("a special reward")  # manual / other
 
 
 def _kills_this_month(character_id: int) -> int:
@@ -332,16 +333,19 @@ def _next_op_payload(character) -> dict:
 # single ``and`` chain are listed, so hiding is a pure additive gate — no reordering and
 # no risky rework of the ~360-line context builder. Persisted in
 # ``PilotPreference.dashboard_layout["hidden"]``; absent/empty = the default full layout.
+# NOTE: only the *label* (element [1]) is translated. Element [0] is the persisted key
+# (``dashboard_layout["hidden"]``, a JSONField) and is string-compared in dashboard.html —
+# translating it would poison every saved layout.
 HIDEABLE_PANELS = (
-    ("raffle", "Raffle"),
-    ("combat_log", "Combat log"),
-    ("onboarding", "Getting started"),
-    ("pilot_stats", "Pilot stats"),
-    ("doctrines", "Doctrine readiness"),
-    ("campaigns", "Campaign Command"),
-    ("capsuleer", "Capsuleer Path"),
+    ("raffle", _l("Raffle")),
+    ("combat_log", _l("Combat log")),
+    ("onboarding", _l("Getting started")),
+    ("pilot_stats", _l("Pilot stats")),
+    ("doctrines", _l("Doctrine readiness")),
+    ("campaigns", _l("Campaign Command")),
+    ("capsuleer", _l("Capsuleer Path")),
 )
-_HIDEABLE_KEYS = frozenset(k for k, _ in HIDEABLE_PANELS)
+_HIDEABLE_KEYS = frozenset(k for k, _label in HIDEABLE_PANELS)
 
 
 def _capsuleer_panel(user):
@@ -667,10 +671,12 @@ def _dashboard_context(request: HttpRequest) -> dict:
                 signals.append(
                     {
                         "kind": "srp",
-                        "text": (
-                            f"SRP payout landed: {_isk(c.payout)} ISK"
-                            f" for your {_type_name(c.killmail.victim_ship_type_id)}."
-                        ),
+                        "text": _t(
+                            "SRP payout landed: %(isk)s ISK for your %(ship)s."
+                        ) % {
+                            "isk": _isk(c.payout),
+                            "ship": _type_name(c.killmail.victim_ship_type_id),
+                        },
                         "url": "/srp/",
                     }
                 )
@@ -883,7 +889,10 @@ def _grouped_skills(snapshot) -> list[dict]:
     }
     groups: dict[str, list] = {}
     for sid, info in snapshot.skills.items():
-        name, grp = meta.get(int(sid), (f"Skill {sid}", "Other"))
+        name, grp = meta.get(
+            int(sid),
+            (_t("Skill %(id)s") % {"id": sid}, _t("Other")),
+        )
         groups.setdefault(grp, []).append(
             {"id": int(sid), "name": name, "level": int(info.get("trained_level", 0))}
         )

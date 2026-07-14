@@ -7,6 +7,8 @@ in code.
 """
 from __future__ import annotations
 
+from django.utils.translation import gettext_lazy as _
+
 # --- Trade hubs -------------------------------------------------------------
 # The codebase has no hub list anywhere (see market app — only THE_FORGE is
 # hard-coded). We define the canonical five so a pilot can pick a pricing hub.
@@ -61,44 +63,44 @@ def tier_for(category_id: int, group_id: int, group_name: str = "") -> str:
 # --- Tier metadata (didactic) ----------------------------------------------
 TIER_META = {
     "P0": {
-        "label": "Raw resource",
-        "short": "Pulled straight from a planet by an Extractor Control Unit.",
-        "blurb": "The 15 raw materials. You never sell these — you refine them on-planet "
-                 "into P1. Extraction rate depends on your ECU program and the planet's "
-                 "resource hotspots, so it's the one number you should tune to your colony.",
-        "facility": "Extractor Control Unit (ECU) + extractor heads",
+        "label": _("Raw resource"),
+        "short": _("Pulled straight from a planet by an Extractor Control Unit."),
+        "blurb": _("The 15 raw materials. You never sell these — you refine them on-planet "
+                   "into P1. Extraction rate depends on your ECU program and the planet's "
+                   "resource hotspots, so it's the one number you should tune to your colony."),
+        "facility": _("Extractor Control Unit (ECU) + extractor heads"),
     },
     "P1": {
-        "label": "Processed material",
-        "short": "One P0 refined in a Basic Industry Facility.",
-        "blurb": "15 processed materials. A Basic Industry Facility turns 3,000 of one P0 "
-                 "into 20 P1 every 30 minutes. P1 is the first thing worth selling, and the "
-                 "feedstock for everything above it.",
-        "facility": "Basic Industry Facility (BIF)",
+        "label": _("Processed material"),
+        "short": _("One P0 refined in a Basic Industry Facility."),
+        "blurb": _("15 processed materials. A Basic Industry Facility turns 3,000 of one P0 "
+                   "into 20 P1 every 30 minutes. P1 is the first thing worth selling, and the "
+                   "feedstock for everything above it."),
+        "facility": _("Basic Industry Facility (BIF)"),
     },
     "P2": {
-        "label": "Refined commodity",
-        "short": "Two P1 combined in an Advanced Industry Facility.",
-        "blurb": "Refined commodities combine two P1 inputs. These are the bread-and-butter "
-                 "of profitable PI — good ISK/m³ and steady demand (Coolant, Mechanical Parts, "
-                 "Consumer Electronics, Enriched Uranium…).",
-        "facility": "Advanced Industry Facility (AIF)",
+        "label": _("Refined commodity"),
+        "short": _("Two P1 combined in an Advanced Industry Facility."),
+        "blurb": _("Refined commodities combine two P1 inputs. These are the bread-and-butter "
+                   "of profitable PI — good ISK/m³ and steady demand (Coolant, Mechanical "
+                   "Parts, Consumer Electronics, Enriched Uranium…)."),
+        "facility": _("Advanced Industry Facility (AIF)"),
     },
     "P3": {
-        "label": "Specialised commodity",
-        "short": "Several P2 combined into a high-value good.",
-        "blurb": "Specialised commodities (Robotics, Coolant→…, Guidance Systems, "
-                 "Transcranial Microcontrollers…). High value per unit but they need a "
-                 "multi-planet supply chain or a market to buy the P2 inputs.",
-        "facility": "Advanced Industry Facility (AIF)",
+        "label": _("Specialised commodity"),
+        "short": _("Several P2 combined into a high-value good."),
+        "blurb": _("Specialised commodities (Robotics, Coolant→…, Guidance Systems, "
+                   "Transcranial Microcontrollers…). High value per unit but they need a "
+                   "multi-planet supply chain or a market to buy the P2 inputs."),
+        "facility": _("Advanced Industry Facility (AIF)"),
     },
     "P4": {
-        "label": "Advanced commodity",
-        "short": "The end of the chain — mixes P3 (and some P1) into strategic goods.",
-        "blurb": "Advanced commodities (Nano-Factory, Broadcast Node, Self-Harmonising "
-                 "Power Core, Wetware Mainframe) feed sovereignty structures and capital "
-                 "construction. Only worth it with a dedicated multi-character operation.",
-        "facility": "High-Tech Production Plant",
+        "label": _("Advanced commodity"),
+        "short": _("The end of the chain — mixes P3 (and some P1) into strategic goods."),
+        "blurb": _("Advanced commodities (Nano-Factory, Broadcast Node, Self-Harmonising "
+                   "Power Core, Wetware Mainframe) feed sovereignty structures and capital "
+                   "construction. Only worth it with a dedicated multi-character operation."),
+        "facility": _("High-Tech Production Plant"),
     },
 }
 TIER_ORDER = ["P0", "P1", "P2", "P3", "P4"]

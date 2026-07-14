@@ -256,9 +256,9 @@ class RafflePrize(TimeStampedModel):
         ISK = "isk", "ISK"
         PLEX = "plex", "PLEX"
         ITEM = "item", _("In-game item")
-        DOCTRINE_SHIP = "doctrine_ship", "Doctrine ship"
-        CAPITAL = "capital", "Capital ship"
-        SUPERCAPITAL = "supercapital", "Supercapital ship"
+        DOCTRINE_SHIP = "doctrine_ship", _("Doctrine ship")
+        CAPITAL = "capital", _("Capital ship")
+        SUPERCAPITAL = "supercapital", _("Supercapital ship")
         CUSTOM = "custom", _("Custom reward")
 
     contest = models.ForeignKey(

@@ -20,6 +20,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
+
 from apps.logistics.routing import security_band
 from apps.logistics.ships import HIGHSEC, ShipProfile
 
@@ -37,15 +40,28 @@ class RouteMode(str, Enum):
 
 # Short human labels for the route-mode badge.
 MODE_LABELS = {
-    RouteMode.GATE_ONLY: "Gate route",
-    RouteMode.JUMP_ONLY: "Jump route",
-    RouteMode.BLACK_OPS_JUMP: "Black Ops jump",
-    RouteMode.JUMP_TO_LOWSEC_EXIT_THEN_GATE: "Jump + gate (high-sec exit)",
-    RouteMode.GATE_TO_JUMP_ENTRY_THEN_JUMP: "Gate + jump (high-sec start)",
-    RouteMode.MIXED_GATE_AND_JUMP: "Gate + jump + gate",
-    RouteMode.INVALID_FOR_DESTINATION: "Invalid for this hull",
-    RouteMode.UNSUPPORTED: "Unsupported",
+    RouteMode.GATE_ONLY: _("Gate route"),
+    RouteMode.JUMP_ONLY: _("Jump route"),
+    RouteMode.BLACK_OPS_JUMP: _("Black Ops jump"),
+    RouteMode.JUMP_TO_LOWSEC_EXIT_THEN_GATE: _("Jump + gate (high-sec exit)"),
+    RouteMode.GATE_TO_JUMP_ENTRY_THEN_JUMP: _("Gate + jump (high-sec start)"),
+    RouteMode.MIXED_GATE_AND_JUMP: _("Gate + jump + gate"),
+    RouteMode.INVALID_FOR_DESTINATION: _("Invalid for this hull"),
+    RouteMode.UNSUPPORTED: _("Unsupported"),
 }
+
+# Display names for the security bands. These are PROTECTED EVE terms (see
+# core/i18n/data/protected-terms.yml) — they are never translated. The map exists so
+# prose never interpolates the raw ``security_band()`` slug (``highsec``) verbatim.
+BAND_DISPLAY = {
+    "highsec": "High-sec",
+    "lowsec": "Low-sec",
+    "nullsec": "Null-sec",
+}
+
+
+def band_display(band: str) -> str:
+    return BAND_DISPLAY.get(band, band)
 
 
 @dataclass(frozen=True)
@@ -82,52 +98,75 @@ def resolve_route_mode(origin_security: float, dest_security: float,
     # 1) No jump drive → a plain stargate route (if the hull can gate both ends).
     if not profile.has_jump_drive:
         if profile.can_gate_band(ob) and profile.can_gate_band(db):
-            return RouteResolution(RouteMode.GATE_ONLY, ob, db,
-                                   "This hull has no jump drive — a normal stargate route.", True)
+            return RouteResolution(
+                RouteMode.GATE_ONLY, ob, db,
+                gettext("This hull has no jump drive — a normal stargate route."), True)
         return RouteResolution(
             RouteMode.INVALID_FOR_DESTINATION, ob, db,
-            f"A {profile.label} can't reach a {db} system by stargate.", False)
+            gettext("A %(ship)s can't reach a %(band)s system by stargate.")
+            % {"ship": profile.label, "band": band_display(db)}, False)
 
     # 2) Both endpoints in low/null → a pure jump-drive route.
     if not origin_hs and not dest_hs:
         if profile.ship_class == "black_ops":
             return RouteResolution(
                 RouteMode.BLACK_OPS_JUMP, ob, db,
-                f"Black Ops jump via {profile.cyno_label.lower()} — covert legs, "
-                "reduced jump fatigue.", True)
+                gettext("Black Ops jump via %(cyno)s — covert legs, reduced jump fatigue.")
+                % {"cyno": profile.cyno_label.lower()}, True)
         return RouteResolution(
             RouteMode.JUMP_ONLY, ob, db,
-            f"Direct jump-drive route via {profile.cyno_label.lower()}.", True)
+            gettext("Direct jump-drive route via %(cyno)s.")
+            % {"cyno": profile.cyno_label.lower()}, True)
 
     # 3) A high-sec endpoint is involved. If the hull can't use high-sec gates
     #    at all (true capitals / supers), the route is impossible — don't invent
     #    a misleading low-sec-exit plan.
+    #
+    #    Three complete sentences rather than one sentence with a joined "origin and
+    #    destination" fragment: a translatable unit must be a whole sentence.
     if not profile.reaches_highsec:
-        ends = " and ".join(
-            e for e, hs in (("origin", origin_hs), ("destination", dest_hs)) if hs
-        )
+        if origin_hs and dest_hs:
+            tmpl = gettext(
+                "A %(ship)s can't enter high-sec (no stargate access and no cyno in high-sec), "
+                "so neither the high-sec origin nor the high-sec destination can be reached. "
+                "Choose a low-sec or null-sec system."
+            )
+        elif dest_hs:
+            tmpl = gettext(
+                "A %(ship)s can't enter high-sec (no stargate access and no cyno in high-sec), "
+                "so the high-sec destination can't be reached. Choose a low-sec or null-sec system."
+            )
+        else:
+            tmpl = gettext(
+                "A %(ship)s can't enter high-sec (no stargate access and no cyno in high-sec), "
+                "so the high-sec origin can't be reached. Choose a low-sec or null-sec system."
+            )
         return RouteResolution(
             RouteMode.INVALID_FOR_DESTINATION, ob, db,
-            f"A {profile.label} can't enter high-sec (no stargate access and no "
-            f"cyno in high-sec), so the high-sec {ends} can't be reached. Choose "
-            "a low-sec or null-sec system.", False)
+            tmpl % {"ship": profile.label}, False)
 
     # 4) Jump Freighter / Black Ops with a high-sec endpoint → mixed jump+gate.
     #    A cyno can't be lit in high-sec, so the high-sec leg is flown on gates.
     if origin_hs and dest_hs:
         return RouteResolution(
             RouteMode.MIXED_GATE_AND_JUMP, ob, db,
-            f"A {profile.label} can't cyno into or out of high-sec: gate out of the "
-            "high-sec origin to a low-sec entry, jump, then gate to the high-sec "
-            "destination.", True, needs_exit_dest=True, needs_entry_origin=True)
+            gettext(
+                "A %(ship)s can't cyno into or out of high-sec: gate out of the high-sec origin "
+                "to a low-sec entry, jump, then gate to the high-sec destination."
+            ) % {"ship": profile.label},
+            True, needs_exit_dest=True, needs_entry_origin=True)
     if dest_hs:
         return RouteResolution(
             RouteMode.JUMP_TO_LOWSEC_EXIT_THEN_GATE, ob, db,
-            f"A {profile.label} can't cyno directly into high-sec: jump to a low-sec "
-            "exit near the destination, then take stargates the rest of the way.",
+            gettext(
+                "A %(ship)s can't cyno directly into high-sec: jump to a low-sec exit near the "
+                "destination, then take stargates the rest of the way."
+            ) % {"ship": profile.label},
             True, needs_exit_dest=True)
     return RouteResolution(
         RouteMode.GATE_TO_JUMP_ENTRY_THEN_JUMP, ob, db,
-        f"A {profile.label} can't light a cyno in high-sec: gate out of the high-sec "
-        "origin to a low-sec staging system, then jump from there.",
+        gettext(
+            "A %(ship)s can't light a cyno in high-sec: gate out of the high-sec origin to a "
+            "low-sec staging system, then jump from there."
+        ) % {"ship": profile.label},
         True, needs_entry_origin=True)

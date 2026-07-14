@@ -7,6 +7,8 @@ wallet data the dimension is *unavailable* (excluded from the index), never a ze
 """
 from __future__ import annotations
 
+from django.utils.translation import gettext_lazy as _
+
 from ..engine.base import (
     DimensionResult,
     Finding,
@@ -28,14 +30,14 @@ def _kpi(key, value, score, detail):
 
 class FinancialProvider:
     key = "financial"
-    label = "Financial Health"
+    label = _("Financial Health")
     default_weight = 1.2
-    data_sources = ["Corp wallet divisions", "Corp wallet journal", "Finance targets"]
+    data_sources = [_("Corp wallet divisions"), _("Corp wallet journal"), _("Finance targets")]
     kpi_catalogue = [
-        ("financial.wallet_vs_min", "Wallet vs minimum"),
-        ("financial.runway_months", "Runway (months)"),
-        ("financial.reserve_cover", "Reserve cover"),
-        ("financial.burn_vs_target", "Burn vs target"),
+        ("financial.wallet_vs_min", _("Wallet vs minimum")),
+        ("financial.runway_months", _("Runway (months)")),
+        ("financial.reserve_cover", _("Reserve cover")),
+        ("financial.burn_vs_target", _("Burn vs target")),
     ]
 
     def compute(self, ctx: ReadinessContext) -> DimensionResult:

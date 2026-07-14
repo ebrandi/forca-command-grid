@@ -7,17 +7,19 @@ lives here, not in erp: ``Delivery`` rows (``created_at`` in the campaign window
 """
 from __future__ import annotations
 
+from django.utils.translation import gettext_lazy as _
+
 from .base import Measurement, MetricSource, _dec, register
 
 
 class IndustryDeliveries(MetricSource):
     key = "industry.deliveries"
-    label = "Industry — deliveries in window"
+    label = _("Industry — deliveries in window")
     unit = "units"
     data_class = "industry_jobs"
     params_schema = [
-        {"name": "type_ids", "kind": "ints", "widget": "type_multi", "label": "Output items", "required": True,
-         "help": "Built items to count deliveries of."},
+        {"name": "type_ids", "kind": "ints", "widget": "type_multi", "label": _("Output items"), "required": True,
+         "help": _("Built items to count deliveries of.")},
     ]
 
     def measure(self, params: dict) -> Measurement:

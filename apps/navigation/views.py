@@ -397,7 +397,7 @@ def route_planner(request: HttpRequest) -> HttpResponse:
         except RouteUnavailable as exc:
             error = str(exc)
     elif request.GET.get("from_q") or request.GET.get("to_q"):
-        error = "Pick both systems from the list."
+        error = _t("Pick both systems from the list.")
 
     map_link = camp = None
     if result and dest:
@@ -476,7 +476,7 @@ def jump_planner(request: HttpRequest) -> HttpResponse:
 
     result = error = None
     if not cfg.enabled:
-        error = "The jump planner is currently disabled by leadership."
+        error = _t("The jump planner is currently disabled by leadership.")
     elif origin and dest:
         plan = plan_jump(
             origin, dest, profile, jdc=jdc, jfc=jfc, jf_skill=jf_skill, jde_rigs=jde_rigs,
@@ -490,7 +490,7 @@ def jump_planner(request: HttpRequest) -> HttpResponse:
         else:
             error = plan["error"]
     elif request.GET.get("from_q") or request.GET.get("to_q"):
-        error = "Pick both systems from the list."
+        error = _t("Pick both systems from the list.")
 
     map_link = None
     if result and result.get("map_ids"):
@@ -544,7 +544,7 @@ def range_finder(request: HttpRequest) -> HttpResponse:
             found = systems_in_range(origin.system_id, range_ly, avoid=av["avoid"],
                                      require_stations=require_stations)
         if found is None:
-            error = "That system has no coordinates."
+            error = _t("That system has no coordinates.")
         else:
             meta = {
                 sid: (name, sec, rid)
@@ -563,7 +563,7 @@ def range_finder(request: HttpRequest) -> HttpResponse:
                 rows.append({**r, "name": name, "security": round(sec, 1),
                              "band": security_band(sec), "region": region_names.get(rid, "")})
     elif request.GET.get("from_q"):
-        error = "Pick a system from the list."
+        error = _t("Pick a system from the list.")
 
     map_link = None
     if rows and origin:

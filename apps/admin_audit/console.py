@@ -91,11 +91,11 @@ def _member_services():
     from apps.store import services as store_services
 
     return [
-        ("freight", "Freight service", "logistics:rates", logistics_services,
+        ("freight", _t("Freight service"), "logistics:rates", logistics_services,
          logistics_services.active_rate_card),
-        ("buyback", "Buyback service", "buyback:config", buyback_services,
+        ("buyback", _t("Buyback service"), "buyback:config", buyback_services,
          buyback_services.active_config),
-        ("store", "Corp Store", "store:config", store_services,
+        ("store", _t("Corp Store"), "store:config", store_services,
          store_services.active_config),
     ]
 
@@ -103,7 +103,7 @@ def _member_services():
 def _apply_service_audience(request: HttpRequest) -> list[str]:
     """Persist any changed member-service audience selects; return a change log."""
     changed: list[str] = []
-    for key, label, _url, module, get_config in _member_services():
+    for key, _label, _url, module, get_config in _member_services():
         chosen = request.POST.get(f"audience:{key}")
         if chosen not in _VALID_AUDIENCE:
             continue  # not submitted or tampered — leave it alone
@@ -112,7 +112,9 @@ def _apply_service_audience(request: HttpRequest) -> list[str]:
             config.audience = chosen
             config.save(update_fields=["audience"])
             module.invalidate_audience_cache()  # nav + access checks pick it up at once
-            changed.append(f"{label}={chosen}")
+            # The service KEY, never its (translatable) label: this lands in
+            # AuditLog.metadata (a JSONField) and must stay canonical + serialisable.
+            changed.append(f"{key}={chosen}")
     return changed
 
 

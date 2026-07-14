@@ -13,6 +13,8 @@ from __future__ import annotations
 from datetime import timedelta
 
 from django.utils import timezone
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 
 from .models import GoalStatus, MilestoneStatus, ProgressSnapshot
 
@@ -29,10 +31,10 @@ REVIEW_CADENCE_DAYS = 90
 
 # The verbatim ETA assumptions surfaced on the goal page (doc 11 §3).
 ETA_ASSUMPTIONS = (
-    "continuous skill queue",
-    "current neural attributes",
-    "no implants, boosters or accelerators modelled",
-    "Omega training rates assumed",
+    _("continuous skill queue"),
+    _("current neural attributes"),
+    _("no implants, boosters or accelerators modelled"),
+    _("Omega training rates assumed"),
 )
 
 
@@ -174,10 +176,10 @@ def estimate_eta(goal, *, plan=None, snapshot=None) -> dict:
     if plan is None:
         plan, snapshot = _plan_and_snapshot(goal)
     if plan is None:
-        return {"state": "unknown", "reason": "No skill plan yet."}
+        return {"state": "unknown", "reason": gettext("No skill plan yet.")}
     earliest_seconds = remaining_seconds(plan)
     if earliest_seconds <= 0:
-        return {"state": "unknown", "reason": "No training left on this plan."}
+        return {"state": "unknown", "reason": gettext("No training left on this plan.")}
     pace = _effective_pace(goal)
     likely_seconds = int(earliest_seconds * PACE_UTILISATION.get(pace, 1.15))
     now = timezone.now()

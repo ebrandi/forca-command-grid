@@ -8,6 +8,9 @@ third-party map service.
 """
 from __future__ import annotations
 
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
+
 from apps.sde.models import SdeConstellation, SdeRegion, SdeSolarSystem, SdeSystemJump
 
 VIEW = 1000.0   # SVG viewBox is 0..VIEW on both axes
@@ -110,7 +113,7 @@ def region_map(region_id: int, *, overlay: str = "security") -> dict | None:
     )
     if out_links:
         ext_region = dict(
-            SdeSolarSystem.objects.filter(system_id__in=[t for _, t in out_links])
+            SdeSolarSystem.objects.filter(system_id__in=[t for _src, t in out_links])
             .values_list("system_id", "region_id")
         )
         rnames = dict(
@@ -152,16 +155,18 @@ def region_map(region_id: int, *, overlay: str = "security") -> dict | None:
 
 
 # --- Overlays ---------------------------------------------------------------
+# (key, label). The KEY is a query-string value (``?overlay=``) and is compared in
+# views.map_region — never translate it. Only the label is marked.
 OVERLAYS = [
-    ("security", "Security"),
-    ("constellation", "Constellation"),
-    ("kills", "Our activity"),
-    ("traffic", "Traffic"),
-    ("danger", "Ship kills"),
-    ("ratting", "NPC kills"),
-    ("sov", "Sovereignty"),
-    ("fw", "Faction war"),
-    ("incursions", "Incursions"),
+    ("security", _("Security")),
+    ("constellation", _("Constellation")),
+    ("kills", _("Our activity")),
+    ("traffic", _("Traffic")),
+    ("danger", _("Ship kills")),
+    ("ratting", _("NPC kills")),
+    ("sov", _("Sovereignty")),
+    ("fw", _("Faction war")),
+    ("incursions", _("Incursions")),
 ]
 _DIM = "#39435a"
 
@@ -209,12 +214,14 @@ def sov_colour(entity_id: int | None) -> str:
     return _hsl_to_hex((entity_id * 47) % 360, 60, 58)
 
 
-def _heat(nodes: list, values: dict, suffix: str, radius: bool = True) -> None:
+def _heat(nodes: list, values: dict, label_tmpl: str, radius: bool = True) -> None:
+    """``label_tmpl`` is a whole, already-translated sentence with a ``%(count)s`` slot —
+    never a bare suffix concatenated onto the number (a fragment is untranslatable)."""
     mx = max(values.values(), default=0)
     for n in nodes:
         v = values.get(n["id"], 0)
         n["colour"] = heat_colour(v, mx)
-        n["label"] = f"{v} {suffix}"
+        n["label"] = label_tmpl % {"count": v}
         if radius and mx:
             n["radius"] = round(5.0 + 5.0 * (v / mx) ** 0.5, 1)
 
@@ -224,29 +231,31 @@ def apply_overlay(nodes: list, overlay: str) -> None:
     ids = [n["id"] for n in nodes]
     if overlay == "kills":
         from .map_overlays import corp_system_kills
-        _heat(nodes, corp_system_kills(ids), "kills")
+        _heat(nodes, corp_system_kills(ids), gettext("%(count)s kills"))
     elif overlay == "traffic":
         from .map_overlays import system_jumps
         data = system_jumps()
-        _heat(nodes, {i: data.get(i, 0) for i in ids}, "jumps/h")
+        _heat(nodes, {i: data.get(i, 0) for i in ids}, gettext("%(count)s jumps/h"))
     elif overlay == "danger":
         from .map_overlays import system_kills
         data = system_kills()
         _heat(nodes, {i: data.get(i, {}).get("ship_kills", 0) + data.get(i, {}).get("pod_kills", 0)
-                      for i in ids}, "kills/h")
+                      for i in ids}, gettext("%(count)s kills/h"))
     elif overlay == "ratting":
         from .map_overlays import system_kills
         data = system_kills()
-        _heat(nodes, {i: data.get(i, {}).get("npc_kills", 0) for i in ids}, "NPC/h")
+        _heat(nodes, {i: data.get(i, {}).get("npc_kills", 0) for i in ids},
+              gettext("%(count)s NPC/h"))
     elif overlay == "sov":
         from .map_overlays import sovereignty
         sov = sovereignty()
         names = _sov_names(sov, ids)
+        unclaimed = gettext("Unclaimed")
         for n in nodes:
             s = sov.get(n["id"]) or {}
             holder = s.get("alliance_id") or s.get("corporation_id") or s.get("faction_id")
             n["colour"] = sov_colour(holder)
-            n["label"] = names.get(holder, "Unclaimed") if holder else "Unclaimed"
+            n["label"] = names.get(holder, unclaimed) if holder else unclaimed
     elif overlay == "constellation":
         cids = {n["constellation_id"] for n in nodes if n["constellation_id"]}
         cnames = dict(
@@ -266,7 +275,8 @@ def apply_overlay(nodes: list, overlay: str) -> None:
                 n["colour"] = _DIM
                 n["label"] = "—"
                 continue
-            name, colour = FW_FACTIONS.get(f["occupier"], ("Unaligned", "#888"))
+            # Faction names are PROTECTED EVE terms; only the "no militia" fallback is prose.
+            name, colour = FW_FACTIONS.get(f["occupier"], (gettext("Unaligned"), "#888"))
             front = f["contested"] in ("contested", "vulnerable")
             n["colour"] = _FW_FRONT if front else colour
             pct = round(100 * f["vp"] / f["threshold"]) if f["threshold"] else 0
@@ -275,13 +285,15 @@ def apply_overlay(nodes: list, overlay: str) -> None:
     elif overlay == "incursions":
         from .services import incursion_systems
         inc = incursion_systems()
+        active, clear = gettext("Incursion"), gettext("Clear")
         for n in nodes:
             on = n["id"] in inc
             n["colour"] = "#f0533f" if on else _DIM
-            n["label"] = "Incursion" if on else "Clear"
+            n["label"] = active if on else clear
     else:  # security (default) — node colours already set; add labels
+        tmpl = gettext("sec %(security)s")
         for n in nodes:
-            n["label"] = f"sec {n['security']}"
+            n["label"] = tmpl % {"security": n["security"]}
 
 
 def region_colour(region_id: int) -> str:

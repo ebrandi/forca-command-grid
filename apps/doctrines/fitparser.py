@@ -11,6 +11,8 @@ from __future__ import annotations
 
 import re
 
+from django.utils.translation import gettext as _
+
 from apps.sde.models import SdeType
 
 _QTY_RE = re.compile(r"\sx(\d+)\s*$", re.IGNORECASE)
@@ -25,10 +27,11 @@ def parse_eft(text: str) -> dict:
     """Parse EFT text into {ship_name, ship_type_id, fit_name, modules, unresolved}."""
     lines = [ln.rstrip() for ln in text.strip().splitlines()]
     if not lines or not lines[0].startswith("["):
-        raise ValueError("EFT must start with '[ShipName, Fit name]'")
+        raise ValueError(_("EFT must start with '[ShipName, Fit name]'"))
 
     header = lines[0].strip()[1:-1]
-    ship_name, _, fit_name = header.partition(",")
+    # NB: do not name the throwaway ``_`` here — it would shadow gettext above.
+    ship_name, _sep, fit_name = header.partition(",")
     ship_name = ship_name.strip()
     fit_name = fit_name.strip() or f"{ship_name} fit"
 

@@ -21,6 +21,8 @@ from __future__ import annotations
 
 from collections import defaultdict, deque
 
+from django.utils.translation import gettext as _
+
 from apps.logistics.jumps import is_cyno_capable, jump_route
 from apps.logistics.routing import security_band
 from apps.sde.models import SdeRegion, SdeSolarSystem, SdeSystemJump
@@ -144,9 +146,12 @@ def rank_exits(highsec_system_id: int, jump_anchor_system_id: int, range_ly: flo
         )
         warnings = []
         if not cand["has_station"]:
-            warnings.append("No NPC station — no safe dock at the exit.")
+            warnings.append(_("No NPC station — no safe dock at the exit."))
         if cand["gate_jumps"] > 6:
-            warnings.append(f"{cand['gate_jumps']} gate jumps to the high-sec endpoint.")
+            warnings.append(
+                _("%(jumps)s gate jumps to the high-sec endpoint.")
+                % {"jumps": cand["gate_jumps"]}
+            )
         cand["warnings"] = warnings
         out.append(cand)
         if len(out) >= max_candidates:

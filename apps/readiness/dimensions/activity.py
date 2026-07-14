@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import datetime as dt
 
+from django.utils.translation import gettext_lazy as _
+
 from ..engine.base import (
     DimensionResult,
     Finding,
@@ -27,13 +29,13 @@ def _kpi(key, value, score, detail):
 
 class ActivityProvider:
     key = "activity"
-    label = "Member Activity"
+    label = _("Member Activity")
     default_weight = 1.0
-    data_sources = ["Operation attendance", "Contribution ledger", "Killboard"]
+    data_sources = [_("Operation attendance"), _("Contribution ledger"), _("Killboard")]
     kpi_catalogue = [
-        ("activity.active_ratio", "Active ratio"),
-        ("activity.fleet_participation", "Fleet participation"),
-        ("activity.contribution_breadth", "Contribution breadth"),
+        ("activity.active_ratio", _("Active ratio")),
+        ("activity.fleet_participation", _("Fleet participation")),
+        ("activity.contribution_breadth", _("Contribution breadth")),
     ]
 
     def compute(self, ctx: ReadinessContext) -> DimensionResult:

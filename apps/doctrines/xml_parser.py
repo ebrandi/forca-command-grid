@@ -39,6 +39,7 @@ from xml.etree.ElementTree import ParseError
 
 from defusedxml.common import DefusedXmlException
 from defusedxml.ElementTree import fromstring as _defused_fromstring
+from django.utils.translation import gettext as _
 
 # --- Hard limits (also surfaced in the UI/docs; see LIMITS) -------------------
 MAX_FILE_BYTES = 5 * 1024 * 1024  # 5 MB — a genuine export of thousands of fits is well under this.
@@ -195,18 +196,26 @@ def _localname(tag) -> str | None:
 def _reject_attrs(el, allowed: tuple[str, ...]) -> None:
     for key in el.attrib:
         if _localname(key) not in allowed:
-            raise SchemaError(f"unexpected attribute “{_localname(key)}” on <{_localname(el.tag)}>")
+            raise SchemaError(
+                _("unexpected attribute “%(attribute)s” on <%(element)s>")
+                % {"attribute": _localname(key), "element": _localname(el.tag)}
+            )
 
 
 def _reject_children(el) -> None:
     for child in el:
         if _localname(child.tag) is not None:  # ignore comments/PIs
-            raise SchemaError(f"<{_localname(el.tag)}> must not contain child elements")
+            raise SchemaError(
+                _("<%(element)s> must not contain child elements")
+                % {"element": _localname(el.tag)}
+            )
 
 
 def _check_depth(el, depth: int = 1) -> None:
     if depth > MAX_DEPTH:
-        raise LimitExceededError(f"XML nesting is too deep (limit {MAX_DEPTH})")
+        raise LimitExceededError(
+            _("XML nesting is too deep (limit %(limit)s)") % {"limit": MAX_DEPTH}
+        )
     for child in el:
         if _localname(child.tag) is not None:
             _check_depth(child, depth + 1)
@@ -221,18 +230,19 @@ def _prescan(data: bytes) -> None:
     """
     if len(data) > MAX_FILE_BYTES:
         raise FileTooLargeError(
-            f"file is larger than the {MAX_FILE_BYTES // (1024 * 1024)} MB limit"
+            _("file is larger than the %(limit)s MB limit")
+            % {"limit": MAX_FILE_BYTES // (1024 * 1024)}
         )
     if not data.strip():
-        raise NotXmlError("the file is empty")
+        raise NotXmlError(_("the file is empty"))
     if b"\x00" in data:
-        raise NotXmlError("the file is not text (looks like a binary file)")
+        raise NotXmlError(_("the file is not text (looks like a binary file)"))
 
     lowered = data.lower()
     if b"<!doctype" in lowered:
-        raise ForbiddenConstructError("a DOCTYPE/DTD is not allowed")
+        raise ForbiddenConstructError(_("a DOCTYPE/DTD is not allowed"))
     if b"<!entity" in lowered:
-        raise ForbiddenConstructError("entity definitions are not allowed")
+        raise ForbiddenConstructError(_("entity definitions are not allowed"))
 
     stripped = data.lstrip()
     if stripped.startswith(codecs.BOM_UTF8):
@@ -241,12 +251,12 @@ def _prescan(data: bytes) -> None:
     if stripped[:5].lower() == b"<?xml":
         end = stripped.find(b"?>")
         if end == -1:
-            raise MalformedXmlError("the XML declaration is not terminated")
+            raise MalformedXmlError(_("the XML declaration is not terminated"))
         remainder = stripped[end + 2:]
     if b"<?" in remainder:
-        raise ForbiddenConstructError("processing instructions are not allowed")
+        raise ForbiddenConstructError(_("processing instructions are not allowed"))
     if not remainder.lstrip().startswith(b"<"):
-        raise NotXmlError("the file does not look like XML")
+        raise NotXmlError(_("the file does not look like XML"))
 
 
 def _safe_parse(data: bytes):
@@ -256,12 +266,12 @@ def _safe_parse(data: bytes):
         )
     except DefusedXmlException as exc:
         raise ForbiddenConstructError(
-            "the file uses an unsafe XML construct (DTD, entity or external reference)"
+            _("the file uses an unsafe XML construct (DTD, entity or external reference)")
         ) from exc
     except ParseError as exc:
-        raise MalformedXmlError("the file is not well-formed XML") from exc
+        raise MalformedXmlError(_("the file is not well-formed XML")) from exc
     except (ValueError, TypeError) as exc:  # defensive: odd encodings etc.
-        raise MalformedXmlError("the file could not be parsed as XML") from exc
+        raise MalformedXmlError(_("the file could not be parsed as XML")) from exc
 
 
 def _parse_qty(raw: str | None, errors: list[str], type_name: str) -> int | None:
@@ -335,10 +345,13 @@ def _parse_fitting(el) -> RawFitting:
                 hardware.append(parsed)
             if len(hardware) > MAX_HARDWARE_PER_FIT:
                 raise LimitExceededError(
-                    f"a fitting has more than {MAX_HARDWARE_PER_FIT} hardware entries"
+                    _("a fitting has more than %(limit)s hardware entries")
+                    % {"limit": MAX_HARDWARE_PER_FIT}
                 )
         else:
-            raise SchemaError(f"unexpected <{tag}> inside a <fitting>")
+            raise SchemaError(
+                _("unexpected <%(element)s> inside a <fitting>") % {"element": tag}
+            )
 
     if len(ship_names) != 1 or not ship_names[0]:
         errors.append("the fitting must have exactly one ship type")
@@ -371,7 +384,7 @@ def parse_fittings_xml(data: bytes, *, max_fittings: int | None = None) -> list[
     _check_depth(root)
 
     if _localname(root.tag) != "fittings":
-        raise SchemaError("the root element must be <fittings>")
+        raise SchemaError(_("the root element must be <fittings>"))
     _reject_attrs(root, allowed=())
 
     fittings: list[RawFitting] = []
@@ -380,13 +393,15 @@ def parse_fittings_xml(data: bytes, *, max_fittings: int | None = None) -> list[
         if tag is None:  # comment / PI
             continue
         if tag != "fitting":
-            raise SchemaError(f"unexpected <{tag}> under <fittings>")
+            raise SchemaError(
+                _("unexpected <%(element)s> under <fittings>") % {"element": tag}
+            )
         fittings.append(_parse_fitting(child))
         if len(fittings) > limit:
             raise LimitExceededError(
-                f"the file contains more than {limit} fittings"
+                _("the file contains more than %(limit)s fittings") % {"limit": limit}
             )
 
     if not fittings:
-        raise SchemaError("no <fitting> elements were found in the file")
+        raise SchemaError(_("no <fitting> elements were found in the file"))
     return fittings

@@ -6,6 +6,7 @@ from decimal import ROUND_HALF_UP, Decimal
 
 from django.db.models import Sum
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from apps.market.pricing import price_for
 
@@ -78,7 +79,7 @@ def my_mining_summary(character_ids, start: dt.date, end: dt.date) -> dict:
     rows, total_qty, total_m3, total_value = [], 0, Decimal("0"), Decimal("0")
     for r in agg:
         tid, qty = r["type_id"], r["qty"] or 0
-        name, vol = meta.get(tid, (f"Type {tid}", Decimal("0")))
+        name, vol = meta.get(tid, (_("Type %(type_id)s") % {"type_id": tid}, Decimal("0")))
         m3 = vol * qty
         value = _q(prices.get(tid, Decimal("0")) * qty)
         rows.append({"type_id": tid, "name": name, "quantity": qty, "m3": m3, "value": value})

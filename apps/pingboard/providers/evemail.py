@@ -13,6 +13,8 @@ from __future__ import annotations
 
 import logging
 
+from django.utils.translation import gettext as _
+
 from .base import AlertProvider, Recipient, SendResult
 
 log = logging.getLogger("forca.pingboard")
@@ -42,13 +44,13 @@ class EveMailProvider(AlertProvider):
     def validate_configuration(self) -> tuple[bool, str]:
         sender = self._sender()
         if sender is None:
-            return False, "No sender character configured"
+            return False, _("No sender character configured")
         from apps.sso.token_service import NoValidToken, get_valid_access_token
 
         try:
             get_valid_access_token(sender, [SEND_SCOPE])
         except NoValidToken:
-            return False, "Sender character has not granted the mail-send scope"
+            return False, _("Sender character has not granted the mail-send scope")
         return True, ""
 
     def send(self, *, subject: str, body: str, recipients: list[Recipient]) -> SendResult:

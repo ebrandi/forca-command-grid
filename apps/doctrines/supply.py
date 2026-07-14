@@ -10,6 +10,7 @@ from __future__ import annotations
 from decimal import Decimal
 
 from django.db.models import Sum
+from django.utils.translation import gettext as _
 
 from apps.industry.bom import decide_build_or_buy
 from apps.sde.models import SdeType
@@ -72,7 +73,7 @@ def supply_plan(doctrine: Doctrine, sets: int) -> dict:
         need = max(target - have, 0)
         line = {
             "type_id": type_id,
-            "name": names.get(type_id, f"Type {type_id}"),
+            "name": names.get(type_id) or _("Type %(type_id)s") % {"type_id": type_id},
             "target": target,
             "have": have,
             "need": need,
@@ -114,7 +115,7 @@ def corp_priority_list(sets: int = 10, limit: int = 30) -> list[dict]:
     )
     per_doctrine = [(d, _required_per_set(d)) for d in doctrines]
     all_ids: set[int] = set()
-    for _, req in per_doctrine:
+    for _d, req in per_doctrine:
         all_ids |= set(req)
     if not all_ids:
         return []
@@ -131,7 +132,8 @@ def corp_priority_list(sets: int = 10, limit: int = 30) -> list[dict]:
             decision = decide_build_or_buy(type_id, need)  # cached price/recipe → no queries
             entry = agg.setdefault(
                 type_id,
-                {"type_id": type_id, "name": names.get(type_id, f"Type {type_id}"),
+                {"type_id": type_id,
+                 "name": names.get(type_id) or _("Type %(type_id)s") % {"type_id": type_id},
                  "need": 0, "cost": Decimal("0")},
             )
             entry["need"] += need

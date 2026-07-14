@@ -25,6 +25,8 @@ from collections import defaultdict
 from django.db import transaction
 from django.db.models.functions import Lower
 from django.utils import timezone
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 
 from apps.sde.models import SdeType
 
@@ -45,13 +47,16 @@ STATUS_DUPLICATE_FIT = "duplicate_fit"
 STATUS_HULL_CONFLICT = "hull_conflict"
 STATUS_INVALID = "invalid"
 
+# Display-only labels for the preview table. The KEYS are the persisted status
+# codes (stored in DoctrineImportBatch.payload and compared in the template) —
+# translate the values only.
 STATUS_LABELS = {
-    STATUS_NEW: "New",
-    STATUS_IDENTICAL: "Identical — skip",
-    STATUS_CONFLICT: "Conflict",
-    STATUS_DUPLICATE_FIT: "Possible duplicate fit",
-    STATUS_HULL_CONFLICT: "Name clash (different hull)",
-    STATUS_INVALID: "Invalid",
+    STATUS_NEW: _("New"),
+    STATUS_IDENTICAL: _("Identical — skip"),
+    STATUS_CONFLICT: _("Conflict"),
+    STATUS_DUPLICATE_FIT: _("Possible duplicate fit"),
+    STATUS_HULL_CONFLICT: _("Name clash (different hull)"),
+    STATUS_INVALID: _("Invalid"),
 }
 # The statuses the reviewer can act on (the others are automatic).
 _ACTIONABLE = {STATUS_NEW, STATUS_CONFLICT, STATUS_DUPLICATE_FIT, STATUS_HULL_CONFLICT}
@@ -94,17 +99,20 @@ def read_upload(uploaded) -> tuple[bytes, str]:
     auto-deleted at request end) and we never serve or reference it.
     """
     if uploaded is None:
-        raise xml_parser.NotXmlError("No file was uploaded.")
+        raise xml_parser.NotXmlError(gettext("No file was uploaded."))
     filename = sanitize_filename(getattr(uploaded, "name", ""))
     if not filename.lower().endswith(_ALLOWED_EXT):
-        raise xml_parser.NotXmlError("Only .xml files exported from the EVE client are accepted.")
+        raise xml_parser.NotXmlError(
+            gettext("Only .xml files exported from the EVE client are accepted.")
+        )
     declared = getattr(uploaded, "size", None)
     limit_mb = xml_parser.MAX_FILE_BYTES // (1024 * 1024)
+    too_large = gettext("The file is larger than the %(limit)s MB limit.") % {"limit": limit_mb}
     if declared is not None and declared > xml_parser.MAX_FILE_BYTES:
-        raise xml_parser.FileTooLargeError(f"The file is larger than the {limit_mb} MB limit.")
+        raise xml_parser.FileTooLargeError(too_large)
     data = uploaded.read(xml_parser.MAX_FILE_BYTES + 1)
     if len(data) > xml_parser.MAX_FILE_BYTES:
-        raise xml_parser.FileTooLargeError(f"The file is larger than the {limit_mb} MB limit.")
+        raise xml_parser.FileTooLargeError(too_large)
     _scan_for_malware(data, filename)
     return data, filename
 

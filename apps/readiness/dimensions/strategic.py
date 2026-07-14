@@ -8,6 +8,8 @@ input exists — no mandatory ships and no role targets ⇒ the dimension is una
 """
 from __future__ import annotations
 
+from django.utils.translation import gettext_lazy as _
+
 from ..engine.base import (
     DimensionResult,
     Finding,
@@ -68,13 +70,13 @@ def _mandatory_ship_coverage(members):
 
 class StrategicProvider:
     key = "strategic"
-    label = "Strategic Assets"
+    label = _("Strategic Assets")
     default_weight = 0.8
-    data_sources = ["Mandatory ships", "Strategic role targets", "Personal assets"]
+    data_sources = [_("Mandatory ships"), _("Strategic role targets"), _("Personal assets")]
     kpi_catalogue = [
-        ("strategic.mandatory_ship_coverage", "Mandatory ship coverage"),
-        ("strategic.capital_bench", "Capital bench"),
-        ("strategic.cyno_coverage", "Cyno / scout coverage"),
+        ("strategic.mandatory_ship_coverage", _("Mandatory ship coverage")),
+        ("strategic.capital_bench", _("Capital bench")),
+        ("strategic.cyno_coverage", _("Cyno / scout coverage")),
     ]
 
     def compute(self, ctx: ReadinessContext) -> DimensionResult:

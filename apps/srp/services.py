@@ -12,6 +12,7 @@ from decimal import Decimal
 from django.core.exceptions import PermissionDenied
 from django.db import IntegrityError, transaction
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from apps.doctrines.models import Doctrine
 from apps.doctrines.services import best_doctrine_fit
@@ -184,25 +185,25 @@ def eligibility(killmail: Killmail, program: SrpProgram | None = None) -> dict:
     """Explainable eligibility + payout for a single loss under the programme."""
     program = program or active_program()
     if not program.enabled:
-        return {"eligible": False, "reason": "SRP is currently paused by leadership."}
+        return {"eligible": False, "reason": _("SRP is currently paused by leadership.")}
     if not (killmail.involves_home_corp and killmail.home_corp_role == Killmail.HomeRole.VICTIM):
-        return {"eligible": False, "reason": "Not a corp loss."}
+        return {"eligible": False, "reason": _("Not a corp loss.")}
     if killmail.victim_ship_type_id in POD_TYPE_IDS and not program.cover_pod:
-        return {"eligible": False, "reason": "Pod losses aren't covered."}
+        return {"eligible": False, "reason": _("Pod losses aren't covered.")}
 
     doctrine, fit = matched_doctrine(killmail)
     if program.require_doctrine and not fit:
-        return {"eligible": False, "reason": "Loss isn't an active doctrine hull."}
+        return {"eligible": False, "reason": _("Loss isn't an active doctrine hull.")}
 
     rule = _active_rule_for(doctrine)
     if program.require_doctrine and not rule:
-        return {"eligible": False, "reason": "No active SRP rule.", "doctrine": doctrine}
+        return {"eligible": False, "reason": _("No active SRP rule."), "doctrine": doctrine}
 
     operation = None
     if program.require_fleet_op:
         operation = loss_on_sanctioned_op(killmail, program)
         if operation is None:
-            return {"eligible": False, "reason": "Loss wasn't on a sanctioned fleet op.",
+            return {"eligible": False, "reason": _("Loss wasn't on a sanctioned fleet op."),
                     "doctrine": doctrine}
 
     gross = loss_value(killmail, fit, program)

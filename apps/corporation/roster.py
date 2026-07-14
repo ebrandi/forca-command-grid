@@ -12,6 +12,7 @@ import requests
 from django.conf import settings
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
+from django.utils.translation import gettext_lazy as _
 
 from apps.sso.models import AuthToken, EveCharacter
 from apps.sso.token_service import NoValidToken, get_valid_access_token
@@ -49,19 +50,23 @@ def import_corp_members() -> dict:
     """Refresh the corp roster from the member-tracking endpoint."""
     corp_id = settings.FORCA_HOME_CORP_ID
     if not corp_id:
-        return {"status": "no_corp", "message": "Home corporation id not configured.", "count": 0}
+        return {
+            "status": "no_corp",
+            "message": _("Home corporation id not configured."),
+            "count": 0,
+        }
 
     director = find_director_token_character(corp_id)
     if director is None:
         return {
             "status": "no_token",
-            "message": "No Director has granted member-tracking access.",
+            "message": _("No Director has granted member-tracking access."),
             "count": 0,
         }
     try:
         token = get_valid_access_token(director, [TRACK_MEMBERS_SCOPE])
     except NoValidToken:
-        return {"status": "no_token", "message": "Director token unavailable.", "count": 0}
+        return {"status": "no_token", "message": _("Director token unavailable."), "count": 0}
 
     client = ESIClient()
     try:
@@ -98,7 +103,11 @@ def import_corp_members() -> dict:
     from apps.admin_audit.health import record_sync
 
     record_sync("corp_members", members=len(seen), by=director.name)
-    return {"status": "ok", "message": f"{len(seen)} members synced.", "count": len(seen)}
+    return {
+        "status": "ok",
+        "message": _("%(count)s members synced.") % {"count": len(seen)},
+        "count": len(seen),
+    }
 
 
 def _resolve_names(character_ids) -> None:

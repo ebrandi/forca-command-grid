@@ -1047,7 +1047,7 @@ class MentorshipFlag(TimeStampedModel):
         STALE_PAIR = "stale_pair", _("Pair inactive")
 
     kind = models.CharField(max_length=24, choices=Kind.choices, db_index=True)
-    severity = models.PositiveIntegerField(default=50, help_text="0–100.")
+    severity = models.PositiveIntegerField(default=50, help_text=_("0–100."))
     pairing = models.ForeignKey(
         MentorshipPairing, on_delete=models.SET_NULL, null=True, blank=True, related_name="flags"
     )

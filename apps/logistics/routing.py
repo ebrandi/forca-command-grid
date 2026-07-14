@@ -14,6 +14,8 @@ from __future__ import annotations
 import logging
 
 from django.core.cache import cache
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from apps.sde.models import SdeSolarSystem
 from core.esi.client import ESIClient, ESIError
@@ -43,7 +45,7 @@ def route_facts(origin_system_id: int, dest_system_id: int, *, client: ESIClient
     to jump-freighter pricing). Raises RouteUnavailable if ESI has no route.
     """
     if not origin_system_id or not dest_system_id:
-        raise RouteUnavailable("Both systems are required.")
+        raise RouteUnavailable(_("Both systems are required."))
     if origin_system_id == dest_system_id:
         return {"jumps": 1, "lowsec_jumps": 0, "sec_band": _band_of(origin_system_id), "systems": [origin_system_id]}
 
@@ -65,12 +67,12 @@ def _fetch_route(origin: int, dest: int, client: ESIClient | None) -> dict:
         )
     except ESIError as exc:
         log.warning("route lookup failed %s→%s: %s", origin, dest, exc)
-        raise RouteUnavailable("No gate route between those systems.") from exc
+        raise RouteUnavailable(_("No gate route between those systems.")) from exc
     # New response shape is {"route": [system_id, …]}; tolerate a bare list too.
     data = resp.data or {}
     systems = data.get("route", []) if isinstance(data, dict) else list(data)
     if not systems or len(systems) < 2:
-        raise RouteUnavailable("No gate route between those systems.")
+        raise RouteUnavailable(_("No gate route between those systems."))
 
     secs = dict(
         SdeSolarSystem.objects.filter(system_id__in=systems).values_list("system_id", "security")
@@ -92,10 +94,14 @@ def _band_of(system_id: int) -> str:
 
 
 # Route-planner preferences → ESI /route ``preference`` values.
+# The labels intentionally share their msgids with
+# ``apps.navigation.models.JumpPlannerConfig.Preference`` so both surfaces draw
+# from a single catalogue entry. Keys stay untranslated: they round-trip through
+# ``?preference=`` and are stored in ``JumpPlannerConfig.default_preference``.
 ROUTE_PREFERENCES = {
-    "safer": ("Safer", "Safer (prefer high-sec)"),
-    "shortest": ("Shorter", "Shortest"),
-    "insecure": ("LessSecure", "Less secure (prefer low/null)"),
+    "safer": ("Safer", gettext_lazy("Safer (prefer high-sec)")),
+    "shortest": ("Shorter", gettext_lazy("Shortest")),
+    "insecure": ("LessSecure", gettext_lazy("Less secure (prefer low/null)")),
 }
 
 
@@ -111,8 +117,8 @@ def route_plan(origin_system_id: int, dest_system_id: int, preference: str = "sa
     gate route.
     """
     if not origin_system_id or not dest_system_id:
-        raise RouteUnavailable("Both systems are required.")
-    pref_key, _ = ROUTE_PREFERENCES.get(preference, ROUTE_PREFERENCES["safer"])
+        raise RouteUnavailable(_("Both systems are required."))
+    pref_key, _label = ROUTE_PREFERENCES.get(preference, ROUTE_PREFERENCES["safer"])
     if origin_system_id == dest_system_id:
         return {"jumps": 0, "preference": preference, "systems": [_system_detail(origin_system_id)]}
 
@@ -143,7 +149,7 @@ def route_plan_multi(system_ids: list[int], preference: str = "safer",
     """
     points = [s for s in system_ids if s]
     if len(points) < 2:
-        raise RouteUnavailable("Need at least an origin and a destination.")
+        raise RouteUnavailable(_("Need at least an origin and a destination."))
     systems: list[dict] = []
     total_jumps = 0
     for a, b in zip(points, points[1:], strict=False):
@@ -171,11 +177,11 @@ def _fetch_route_detail(origin: int, dest: int, pref_key: str, preference: str,
         resp = client.post(f"/route/{origin}/{dest}/", json=body, essential=True)
     except ESIError as exc:
         log.warning("route plan failed %s→%s: %s", origin, dest, exc)
-        raise RouteUnavailable("No gate route between those systems.") from exc
+        raise RouteUnavailable(_("No gate route between those systems.")) from exc
     data = resp.data or {}
     systems = data.get("route", []) if isinstance(data, dict) else list(data)
     if not systems or len(systems) < 2:
-        raise RouteUnavailable("No gate route between those systems.")
+        raise RouteUnavailable(_("No gate route between those systems."))
 
     rows = {
         sid: (name, sec, rid)
@@ -218,10 +224,10 @@ def jf_route_facts(origin_system_id: int, dest_system_id: int, range_ly: float) 
     from .jumps import jump_route
 
     if not origin_system_id or not dest_system_id:
-        raise RouteUnavailable("Both systems are required.")
+        raise RouteUnavailable(_("Both systems are required."))
     route = jump_route(origin_system_id, dest_system_id, range_ly)
     if route is None:
-        raise RouteUnavailable("No jump route within range between those systems.")
+        raise RouteUnavailable(_("No jump route within range between those systems."))
     # JF trips run through low/null; the trip is priced as a low/null job.
     band = "highsec" if route["jumps"] == 0 else "nullsec"
     return {

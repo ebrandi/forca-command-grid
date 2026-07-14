@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from django.conf import settings
 from django.core.cache import cache
+from django.utils.translation import gettext_lazy as _
 
 # These three values are read on (nearly) every page render via the ``roles`` context
 # processor, but change only when leadership edits access governance or the home corp's
@@ -80,7 +81,8 @@ def home_corp_name() -> str:
         .values_list("name", flat=True)
         .first()
     )
-    result = name or getattr(settings, "FORCA_CORP_NAME", "") or "our corporation"
+    # Lazy: the value is cached for an hour and re-resolved per viewer on read.
+    result = name or getattr(settings, "FORCA_CORP_NAME", "") or _("our corporation")
     cache.set(_HOME_NAME_KEY, result, _NAME_TTL)
     return result
 

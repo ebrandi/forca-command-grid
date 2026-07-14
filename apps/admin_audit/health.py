@@ -9,6 +9,7 @@ from __future__ import annotations
 from datetime import timedelta
 
 from django.utils import timezone
+from django.utils.text import format_lazy
 from django.utils.translation import gettext_lazy as _
 
 from .models import AppSetting
@@ -85,7 +86,7 @@ def feed_health() -> list[dict]:
         "last": last, "status": _status(last, 12),
         "count": Asset.objects.filter(owner_type=Asset.Owner.CORPORATION).count(),
         "by": rec.get("character") if rec else None,
-        "note": "Director token · esi-assets.read_corporation_assets.v1",
+        "note": _("Director token · esi-assets.read_corporation_assets.v1"),
     })
 
     # Personal assets — aggregate across all pilots who opted in (no private data).
@@ -99,7 +100,8 @@ def feed_health() -> list[dict]:
         "key": "personal_assets", "label": _("Personal assets"),
         "last": last, "status": _status(last, 12) if last else ("ok" if pilots else "missing"),
         "count": Asset.objects.filter(owner_type=Asset.Owner.CHARACTER).count(),
-        "by": f"{pilots} pilot(s)", "note": "each pilot's own token",
+        "by": format_lazy(_("{count} pilot(s)"), count=pilots),
+        "note": _("each pilot's own token"),
     })
 
     # Market history (public) — run record, falling back to the data's own age.
@@ -111,7 +113,7 @@ def feed_health() -> list[dict]:
         "key": "market_history", "label": _("Market history"),
         "last": last, "status": _status(last, 36),
         "count": MarketHistory.objects.count(),
-        "by": "public ESI", "note": "no token required",
+        "by": _("public ESI"), "note": _("no token required"),
     })
 
     # Killmails — most recent fetch, falling back to ingest/record time.
@@ -124,7 +126,7 @@ def feed_health() -> list[dict]:
         "key": "killmails", "label": _("Killmails"),
         "last": last_km, "status": _status(last_km, 6),
         "count": Killmail.objects.count(),
-        "by": "char/corp tokens + zKill", "note": "discovery every 10m",
+        "by": _("char/corp tokens + zKill"), "note": _("discovery every 10m"),
     })
 
     # Corp roster (Director member-tracking) — run record + member count.
@@ -137,7 +139,7 @@ def feed_health() -> list[dict]:
         "last": last, "status": _status(last, 12),
         "count": CorpMember.objects.count(),
         "by": rec.get("by") if rec else None,
-        "note": "Director token · esi-corporations.track_members.v1",
+        "note": _("Director token · esi-corporations.track_members.v1"),
     })
 
     # Member skills — latest snapshot freshness.
@@ -149,7 +151,7 @@ def feed_health() -> list[dict]:
         "key": "skills", "label": _("Member skills"),
         "last": last_skill, "status": _status(last_skill, 36),
         "count": CharacterSkillSnapshot.objects.filter(is_latest=True).count(),
-        "by": "character tokens", "note": "sync every 12h",
+        "by": _("character tokens"), "note": _("sync every 12h"),
     })
 
     # Market prices (Jita aggregates) — last price refresh.
@@ -158,7 +160,7 @@ def feed_health() -> list[dict]:
         "key": "market_prices", "label": _("Market prices"),
         "last": last_price, "status": _status(last_price, 72),
         "count": MarketPrice.objects.count(),
-        "by": "public ESI", "note": "price import",
+        "by": _("public ESI"), "note": _("price import"),
     })
 
     return feeds

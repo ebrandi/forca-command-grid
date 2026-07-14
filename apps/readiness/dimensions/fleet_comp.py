@@ -7,6 +7,8 @@ helper. Honest score: with no role targets configured the dimension is unavailab
 """
 from __future__ import annotations
 
+from django.utils.translation import gettext_lazy as _
+
 from ..engine.base import (
     DimensionResult,
     Finding,
@@ -29,13 +31,13 @@ def _kpi(key, value, score, detail):
 
 class FleetCompProvider:
     key = "fleet_comp"
-    label = "Fleet Composition"
+    label = _("Fleet Composition")
     default_weight = 1.0
-    data_sources = ["Strategic role targets", "Character skills"]
+    data_sources = [_("Strategic role targets"), _("Character skills")]
     kpi_catalogue = [
-        ("fleet_comp.role_coverage", "Role coverage"),
-        ("fleet_comp.logi_ratio", "Logi ratio"),
-        ("fleet_comp.fc_bench", "FC bench"),
+        ("fleet_comp.role_coverage", _("Role coverage")),
+        ("fleet_comp.logi_ratio", _("Logi ratio")),
+        ("fleet_comp.fc_bench", _("FC bench")),
     ]
 
     def compute(self, ctx: ReadinessContext) -> DimensionResult:

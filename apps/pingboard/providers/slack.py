@@ -11,6 +11,7 @@ Slack's Web API returns HTTP 200 even on logical failure, so success requires
 from __future__ import annotations
 
 from django.conf import settings
+from django.utils.translation import gettext as _
 
 from ._http import _json_body, host_allowed, post_json
 from .base import AlertProvider, Recipient, SendResult
@@ -32,7 +33,7 @@ class SlackProvider(AlertProvider):
             return True, ""
         if settings.PINGBOARD_SLACK_ENABLED:
             return True, ""
-        return False, "Slack bot token not configured"
+        return False, _("Slack bot token not configured")
 
     def send(self, *, subject: str, body: str, recipients: list[Recipient]) -> SendResult:
         # Webhook mode: a per-channel incoming webhook on the provider row.

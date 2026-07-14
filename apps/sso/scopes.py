@@ -9,12 +9,20 @@ stays dead even though the backend supports it.
 
 Keep ``FEATURES`` in sync with ``EVE_SSO_FEATURE_SCOPES``; ``test_sso_scopes``
 asserts there are no orphans in either direction.
+
+The label/description/role_hint metadata is display-only (rendered by
+``views.scopes_view`` → ``templates/sso/_feature_row.html``) and is built at
+import time, so it is marked with ``gettext_lazy``: the proxies resolve per
+request, in the viewing pilot's language. The ``key`` and ``audience`` values
+are code, never prose — they are compared and round-tripped through
+``?feature=`` — and stay untranslated.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass
 
 from django.conf import settings
+from django.utils.translation import gettext_lazy as _
 
 # Who can usefully grant a feature. PILOT = any linked character (the data is the
 # pilot's own). DIRECTOR = needs an in-game corp role, so it's only offered to
@@ -40,137 +48,137 @@ class Feature:
 # Ordered for display: pilot self-service first, then corp/director features.
 FEATURES: list[Feature] = [
     Feature(
-        "personal_assets", "Track my assets",
-        "Show your own assets and where they sit across stations and structures "
-        "in the stockpile views.",
+        "personal_assets", _("Track my assets"),
+        _("Show your own assets and where they sit across stations and structures "
+          "in the stockpile views."),
         PILOT,
     ),
     Feature(
-        "my_industry", "My industry jobs + blueprints",
-        "Read your own running industry jobs and owned blueprints, so the Industry "
-        "Center can track your personal production and match it to your plans.",
+        "my_industry", _("My industry jobs + blueprints"),
+        _("Read your own running industry jobs and owned blueprints, so the Industry "
+          "Center can track your personal production and match it to your plans."),
         PILOT,
     ),
     Feature(
-        "freight_search", "Freight location search",
-        "Search the player structures you can dock at when booking a courier "
-        "contract, so a pickup or drop-off resolves to the exact station.",
+        "freight_search", _("Freight location search"),
+        _("Search the player structures you can dock at when booking a courier "
+          "contract, so a pickup or drop-off resolves to the exact station."),
         PILOT,
     ),
     Feature(
-        "my_contracts", "Verify my hauls",
-        "Read your own contracts so the freight service can confirm a courier job "
-        "you delivered actually completed in-game and credit you for it.",
+        "my_contracts", _("Verify my hauls"),
+        _("Read your own contracts so the freight service can confirm a courier job "
+          "you delivered actually completed in-game and credit you for it."),
         PILOT,
     ),
     Feature(
-        "corp_contracts", "Verify corp hauls",
-        "Read corp contracts to auto-verify every hauler's courier delivery "
-        "in-game before crediting it — no per-pilot grant needed.",
-        DIRECTOR, "Director",
+        "corp_contracts", _("Verify corp hauls"),
+        _("Read corp contracts to auto-verify every hauler's courier delivery "
+          "in-game before crediting it — no per-pilot grant needed."),
+        DIRECTOR, _("Director"),
     ),
     Feature(
-        "corp_assets", "Corp assets",
-        "Import the corporation's assets to power the stockpile and supply views.",
-        DIRECTOR, "Director",
+        "corp_assets", _("Corp assets"),
+        _("Import the corporation's assets to power the stockpile and supply views."),
+        DIRECTOR, _("Director"),
     ),
     Feature(
-        "corp_roster", "Member tracking",
-        "Import the corp roster with each member's location, ship and last login "
-        "for the readiness and roster tools.",
-        DIRECTOR, "Director",
+        "corp_roster", _("Member tracking"),
+        _("Import the corp roster with each member's location, ship and last login "
+          "for the readiness and roster tools."),
+        DIRECTOR, _("Director"),
     ),
     Feature(
-        "corp_finance", "Corp wallet",
-        "Import corp wallet balances and the journal for the finance page.",
-        DIRECTOR, "Accountant or Director",
+        "corp_finance", _("Corp wallet"),
+        _("Import corp wallet balances and the journal for the finance page."),
+        DIRECTOR, _("Accountant or Director"),
     ),
     Feature(
-        "corp_contacts", "Corp standings",
-        "Import corp contacts to drive the member-facing blue/red standings board.",
-        DIRECTOR, "Director",
+        "corp_contacts", _("Corp standings"),
+        _("Import corp contacts to drive the member-facing blue/red standings board."),
+        DIRECTOR, _("Director"),
     ),
     Feature(
-        "jump_network", "Jump network",
-        "List the corp's Ansiblex jump bridges and cyno beacons to auto-build the "
-        "jump map and route planner.",
-        DIRECTOR, "Director or Station Manager",
+        "jump_network", _("Jump network"),
+        _("List the corp's Ansiblex jump bridges and cyno beacons to auto-build the "
+          "jump map and route planner."),
+        DIRECTOR, _("Director or Station Manager"),
     ),
     Feature(
-        "corp_structures", "Structure monitoring",
-        "Monitor every corp structure — fuel remaining, online/low-power state and "
-        "reinforcement timers — so nothing runs dry or comes out of reinforcement "
-        "unwatched.",
-        DIRECTOR, "Director or Station Manager",
+        "corp_structures", _("Structure monitoring"),
+        _("Monitor every corp structure — fuel remaining, online/low-power state and "
+          "reinforcement timers — so nothing runs dry or comes out of reinforcement "
+          "unwatched."),
+        DIRECTOR, _("Director or Station Manager"),
     ),
     Feature(
-        "moon_mining", "Moon extractions",
-        "Import scheduled moon extractions for the extraction calendar.",
-        DIRECTOR, "Station Manager or Director",
+        "moon_mining", _("Moon extractions"),
+        _("Import scheduled moon extractions for the extraction calendar."),
+        DIRECTOR, _("Station Manager or Director"),
     ),
     Feature(
-        "corp_industry", "Corp blueprints + jobs",
-        "Import the corp's owned blueprints (ME/TE) and running industry jobs so "
-        "blueprint coverage and build-or-buy reflect what the corp actually owns "
-        "and has in production.",
-        DIRECTOR, "Director or Factory Manager",
+        "corp_industry", _("Corp blueprints + jobs"),
+        _("Import the corp's owned blueprints (ME/TE) and running industry jobs so "
+          "blueprint coverage and build-or-buy reflect what the corp actually owns "
+          "and has in production."),
+        DIRECTOR, _("Director or Factory Manager"),
     ),
     Feature(
-        "notifications", "Notification relay",
-        "Relay in-game notifications — structure attacks, war declarations, "
-        "sovereignty and moon pops — to the site and Discord.",
-        DIRECTOR, "Director or role-holder",
+        "notifications", _("Notification relay"),
+        _("Relay in-game notifications — structure attacks, war declarations, "
+          "sovereignty and moon pops — to the site and Discord."),
+        DIRECTOR, _("Director or role-holder"),
     ),
     Feature(
-        "mail_relay", "Mail relay",
-        "Relay your corp/alliance mailing-list mail to Discord, so announcements "
-        "reach members who don't check in-game mail. Grant from the character "
-        "subscribed to the lists.",
+        "mail_relay", _("Mail relay"),
+        _("Relay your corp/alliance mailing-list mail to Discord, so announcements "
+          "reach members who don't check in-game mail. Grant from the character "
+          "subscribed to the lists."),
         PILOT,
     ),
     Feature(
-        "readiness_mail", "Readiness mail sender",
-        "Let the platform send readiness alert e-mails in-game from this character. "
-        "Grant from the director you select as the readiness mail sender on the "
-        "Admin Console → Readiness → Alerts page.",
+        "readiness_mail", _("Readiness mail sender"),
+        _("Let the platform send readiness alert e-mails in-game from this character. "
+          "Grant from the director you select as the readiness mail sender on the "
+          "Admin Console → Readiness → Alerts page."),
         DIRECTOR,
     ),
     Feature(
-        "pingboard_mail", "Pingboard mail sender",
-        "Let Pingboard send corp alerts in-game from this character. Grant from the "
-        "director you select as the Pingboard EVE-mail sender on the Admin Console → "
-        "Pingboard → Channels page.",
+        "pingboard_mail", _("Pingboard mail sender"),
+        _("Let Pingboard send corp alerts in-game from this character. Grant from the "
+          "director you select as the Pingboard EVE-mail sender on the Admin Console → "
+          "Pingboard → Channels page."),
         DIRECTOR,
     ),
     Feature(
-        "fleet_tracking", "Fleet tracking",
-        "Let an FC pull the live fleet roster to auto-record everyone's "
-        "participation (PAP) for an operation — no manual sign-in. Grant from the "
-        "character that boss-fleets.",
+        "fleet_tracking", _("Fleet tracking"),
+        _("Let an FC pull the live fleet roster to auto-record everyone's "
+          "participation (PAP) for an operation — no manual sign-in. Grant from the "
+          "character that boss-fleets."),
         PILOT,
     ),
     Feature(
-        "mentorship_presence", "Mentorship session check-in",
-        "Optional: let the Mentorship Program confirm you were online and in the "
-        "session's system during a scheduled mentoring session — the only way to "
-        "corroborate 'we flew together', since EVE keeps no history of it. Off by "
-        "default, polled only during a session you booked, and never stored beyond "
-        "the check.",
+        "mentorship_presence", _("Mentorship session check-in"),
+        _("Optional: let the Mentorship Program confirm you were online and in the "
+          "session's system during a scheduled mentoring session — the only way to "
+          "corroborate 'we flew together', since EVE keeps no history of it. Off by "
+          "default, polled only during a session you booked, and never stored beyond "
+          "the check."),
         PILOT,
     ),
     Feature(
-        "fittings", "Import saved fits",
-        "Read your own saved ship fittings so you can import them as corp "
-        "doctrines (ESI has no corp-fittings endpoint, so doctrines are seeded "
-        "from a director's personal fits).",
-        DIRECTOR, "Director",
+        "fittings", _("Import saved fits"),
+        _("Read your own saved ship fittings so you can import them as corp "
+          "doctrines (ESI has no corp-fittings endpoint, so doctrines are seeded "
+          "from a director's personal fits)."),
+        DIRECTOR, _("Director"),
     ),
     Feature(
-        "planetary_industry", "Import PI colonies",
-        "Optional: let the Planetary Industry planner import your live colonies so "
-        "it can show your real layouts, flag issues (idle extractors, missing routes) "
-        "and estimate your current output. EVE only refreshes this when you open the "
-        "colony in the client, so imports can be stale — the planner always says when.",
+        "planetary_industry", _("Import PI colonies"),
+        _("Optional: let the Planetary Industry planner import your live colonies so "
+          "it can show your real layouts, flag issues (idle extractors, missing routes) "
+          "and estimate your current output. EVE only refreshes this when you open the "
+          "colony in the client, so imports can be stale — the planner always says when."),
         PILOT,
     ),
 ]
