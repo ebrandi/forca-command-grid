@@ -32534,14 +32534,6 @@ msgstr "%(k)s kills · %(eff)s%% de eficiência · %(dl)s"
 #: templates/identity/dashboard.html
 msgid "my readiness — details in the stats panel"
 msgstr "minha prontidão — detalhes no painel de estatísticas"
-
-#: templates/identity/dashboard.html
-#, python-format
-msgid "%(n)s character linked"
-msgid_plural "%(n)s characters linked"
-msgstr[0] "%(n)s personagem vinculado"
-msgstr[1] "%(n)s personagens vinculados"
-
 #: templates/identity/dashboard.html
 msgid "My skills &amp; readiness"
 msgstr "Minhas skills &amp; prontidão"
@@ -44422,3 +44414,307 @@ msgstr "— Desatribuir (retornar ao pool aberto) —"
 #: tests/test_i18n_activation.py
 msgid "This source string is intentionally never translated"
 msgstr "Esta string de origem intencionalmente nunca é traduzida"
+
+#: apps/identity/pilot_views.py
+msgid "That pilot is not linked to your account."
+msgstr "Esse piloto não está vinculado à sua conta."
+
+#: apps/identity/pilot_views.py
+#, python-format
+msgid "You are now flying as %(pilot)s."
+msgstr "Agora você está voando como %(pilot)s."
+
+#: apps/identity/pilot_views.py
+#, python-format
+msgid "%(pilot)s is now your main pilot."
+msgstr "%(pilot)s agora é o seu piloto principal."
+
+#: apps/identity/pilot_views.py
+#, python-format
+msgid ""
+"%(pilot)s is the only pilot linked to your account, and an EVE pilot is how "
+"you sign in. Link another pilot first, or delete your account from the "
+"privacy page."
+msgstr ""
+"%(pilot)s é o único piloto vinculado à sua conta, e é com um piloto do EVE "
+"que você entra. Vincule outro piloto primeiro ou exclua sua conta na página "
+"de privacidade."
+
+#: apps/identity/pilot_views.py
+#, python-format
+msgid "%(pilot)s has been unlinked. You are now flying as %(replacement)s."
+msgstr ""
+"%(pilot)s foi desvinculado. Agora você está voando como %(replacement)s."
+
+#: apps/identity/pilot_views.py
+#, python-format
+msgid "%(pilot)s has been unlinked from your account."
+msgstr "%(pilot)s foi desvinculado da sua conta."
+
+#: apps/identity/pilot_views.py
+#, python-format
+msgid ""
+"That page is not available to %(pilot)s, so you are on their dashboard "
+"instead."
+msgstr ""
+"Essa página não está disponível para %(pilot)s, então você foi redirecionado"
+" para o painel desse piloto."
+
+#: apps/sso/linking.py
+msgid "ESI authorisation healthy"
+msgstr "Autorização do ESI em dia"
+
+#: apps/sso/linking.py
+msgid "ESI authorisation required"
+msgstr "Autorização do ESI necessária"
+
+#: apps/sso/linking.py
+msgid "Missing ESI permissions"
+msgstr "Permissões do ESI ausentes"
+
+#: apps/sso/linking.py
+msgid "This pilot's ESI authorisation is current. Nothing to do."
+msgstr "A autorização do ESI deste piloto está em dia. Nada a fazer."
+
+#: apps/sso/linking.py
+msgid ""
+"This pilot's EVE authorisation has expired or been revoked. You can still "
+"switch to them, but their ESI data cannot refresh until you reauthorise."
+msgstr ""
+"A autorização do EVE deste piloto expirou ou foi revogada. Você ainda pode "
+"trocar para ele, mas os dados do ESI dele não podem ser atualizados até que "
+"você reautorize."
+
+#: apps/sso/linking.py
+msgid ""
+"This pilot has not granted every permission FORCA Command Grid asks for. "
+"Some pages will be incomplete until you reauthorise."
+msgstr ""
+"Este piloto não concedeu todas as permissões que o FORCA Command Grid "
+"solicita. Algumas páginas ficarão incompletas até que você reautorize."
+
+#: apps/sso/views.py
+msgid "This pilot-linking request is no longer valid. Please start again."
+msgstr ""
+"Esta solicitação de vinculação de piloto não é mais válida. Comece "
+"novamente."
+
+#: apps/sso/views.py
+#, python-format
+msgid ""
+"%(pilot)s is already linked to a different FORCA Command Grid account. An "
+"officer must detach it before it can be linked here."
+msgstr ""
+"%(pilot)s já está vinculado a outra conta do FORCA Command Grid. Um oficial "
+"precisa desvinculá-lo antes que ele possa ser vinculado aqui."
+
+#: apps/sso/views.py
+msgid ""
+"This pilot's EVE ownership has changed since it was linked. For security an "
+"officer must detach it before it can be used again."
+msgstr ""
+"A propriedade deste piloto no EVE mudou desde que ele foi vinculado. Por "
+"segurança, um oficial precisa desvinculá-lo antes que ele possa ser usado "
+"novamente."
+
+#: apps/sso/views.py
+#, python-format
+msgid "%(pilot)s has been reauthorised."
+msgstr "%(pilot)s foi reautorizado."
+
+#: apps/sso/views.py
+#, python-format
+msgid "%(pilot)s is now linked to your account."
+msgstr "%(pilot)s agora está vinculado à sua conta."
+
+#: apps/sso/views.py
+#, python-format
+msgid ""
+"You authorised %(pilot)s, which is not the pilot you selected. That pilot is"
+" now linked; the pilot you meant to reauthorise still needs attention."
+msgstr ""
+"Você autorizou %(pilot)s, que não é o piloto que você selecionou. Esse "
+"piloto agora está vinculado; o piloto que você pretendia reautorizar ainda "
+"precisa de atenção."
+
+#: templates/_nav.html templates/identity/linked_pilots.html
+msgid "Linked Pilots"
+msgstr "Pilotos Vinculados"
+
+#: templates/_pilot_selector.html
+msgid "Change the pilot you are flying as"
+msgstr "Trocar o piloto com o qual você está voando"
+
+#: templates/_pilot_selector.html templates/identity/linked_pilots.html
+msgid "Corporation unknown"
+msgstr "Corporação desconhecida"
+
+#: templates/_pilot_selector.html
+msgid "Search your linked pilots"
+msgstr "Buscar seus pilotos vinculados"
+
+#: templates/_pilot_selector.html
+msgid "Search pilots…"
+msgstr "Buscar pilotos…"
+
+#: templates/_pilot_selector.html templates/identity/linked_pilots.html
+msgid "Current Pilot"
+msgstr "Piloto Atual"
+
+#: templates/_pilot_selector.html templates/identity/linked_pilots.html
+#, python-format
+msgid "Switch to %(name)s"
+msgstr "Trocar para %(name)s"
+
+#: templates/_pilot_selector.html
+msgid "Main"
+msgstr "Principal"
+
+#: templates/_pilot_selector.html
+msgid "ESI Authorisation Required"
+msgstr "Autorização do ESI Necessária"
+
+#: templates/_pilot_selector.html
+msgid "Switching…"
+msgstr "Trocando…"
+
+#: templates/_pilot_selector.html
+msgid "No pilots match."
+msgstr "Nenhum piloto encontrado."
+
+#: templates/_pilot_selector.html
+msgid "Manage Linked Pilots"
+msgstr "Gerenciar Pilotos Vinculados"
+
+#: templates/_pilot_selector.html templates/identity/linked_pilots.html
+msgid "Link Another Pilot"
+msgstr "Vincular Outro Piloto"
+
+#: templates/base.html
+msgid "Linked Pilots — change the pilot you are flying as"
+msgstr "Pilotos Vinculados — trocar o piloto com o qual você está voando"
+
+#: templates/identity/dashboard.html
+#, python-format
+msgid "%(n)s pilot linked"
+msgid_plural "%(n)s pilots linked"
+msgstr[0] "%(n)s piloto vinculado"
+msgstr[1] "%(n)s pilotos vinculados"
+
+#: templates/identity/linked_pilots.html
+msgid ""
+"Linking pilots lets you switch between them without logging out. Each pilot "
+"keeps their own data, permissions, corporation membership, ESI authorisation"
+" and dashboard."
+msgstr ""
+"Vincular pilotos permite trocar entre eles sem sair da conta. Cada piloto "
+"mantém seus próprios dados, permissões, filiação à corporação, autorização "
+"do ESI e painel."
+
+#: templates/identity/linked_pilots.html
+msgid "Nothing is merged."
+msgstr "Nada é mesclado."
+
+#: templates/identity/linked_pilots.html
+msgid ""
+"Switching pilots changes the identity you are currently using in FORCA "
+"Command Grid. Assets, skills, wallets, readiness, killboard records, "
+"corporation roles and feature access are never combined across your pilots —"
+" each pilot sees only what that pilot may see."
+msgstr ""
+"Trocar de piloto muda a identidade que você está usando no FORCA Command "
+"Grid. Ativos, habilidades, carteiras, prontidão, registros do killboard, "
+"cargos na corporação e acesso a recursos nunca são combinados entre os seus "
+"pilotos — cada piloto vê apenas o que aquele piloto pode ver."
+
+#: templates/identity/linked_pilots.html
+#, python-format
+msgid "You have %(counter)s linked pilot."
+msgid_plural "You have %(counter)s linked pilots."
+msgstr[0] "Você tem %(counter)s piloto vinculado."
+msgstr[1] "Você tem %(counter)s pilotos vinculados."
+
+#: templates/identity/linked_pilots.html
+msgid ""
+"You currently have one pilot linked. Link another pilot to switch between "
+"your EVE pilots without logging out."
+msgstr ""
+"No momento você tem apenas um piloto vinculado. Vincule outro piloto para "
+"trocar entre seus pilotos do EVE sem sair da conta."
+
+#: templates/identity/linked_pilots.html
+msgid "Main Pilot"
+msgstr "Piloto Principal"
+
+#: templates/identity/linked_pilots.html
+#, python-format
+msgid "%(counter)s missing ESI permission"
+msgid_plural "%(counter)s missing ESI permissions"
+msgstr[0] "%(counter)s permissão do ESI ausente"
+msgstr[1] "%(counter)s permissões do ESI ausentes"
+
+#: templates/identity/linked_pilots.html
+msgid "Linked"
+msgstr "Vinculado"
+
+#: templates/identity/linked_pilots.html
+msgid "Last used"
+msgstr "Último uso"
+
+#: templates/identity/linked_pilots.html
+msgid "Never"
+msgstr "Nunca"
+
+#: templates/identity/linked_pilots.html
+msgid "Last synchronised"
+msgstr "Última sincronização"
+
+#: templates/identity/linked_pilots.html
+msgid "Switch Pilot"
+msgstr "Trocar Piloto"
+
+#: templates/identity/linked_pilots.html
+#, python-format
+msgid "Make %(name)s your main pilot"
+msgstr "Tornar %(name)s seu piloto principal"
+
+#: templates/identity/linked_pilots.html
+msgid "Make Main"
+msgstr "Tornar Principal"
+
+#: templates/identity/linked_pilots.html
+#, python-format
+msgid "Reauthorise %(name)s with EVE SSO"
+msgstr "Reautorizar %(name)s com o EVE SSO"
+
+#: templates/identity/linked_pilots.html
+msgid "Reauthorise"
+msgstr "Reautorizar"
+
+#: templates/identity/linked_pilots.html
+#, python-format
+msgid ""
+"Unlink %(name)s? Their EVE authorisation is revoked and they are removed "
+"from your account. Their history is kept, and you can link them again later "
+"with a new EVE SSO authorisation."
+msgstr ""
+"Desvincular %(name)s? A autorização do EVE deste piloto é revogada e ele é "
+"removido da sua conta. O histórico dele é mantido, e você pode vinculá-lo "
+"novamente mais tarde com uma nova autorização do EVE SSO."
+
+#: templates/identity/linked_pilots.html
+#, python-format
+msgid "Unlink %(name)s from your account"
+msgstr "Desvincular %(name)s da sua conta"
+
+#: templates/identity/linked_pilots.html
+msgid ""
+"This is the only pilot linked to your account, and an EVE pilot is how you "
+"sign in."
+msgstr ""
+"Este é o único piloto vinculado à sua conta, e é com um piloto do EVE que "
+"você entra."
+
+#: templates/identity/linked_pilots.html
+msgid "No pilots are linked to this account yet."
+msgstr "Ainda não há pilotos vinculados a esta conta."

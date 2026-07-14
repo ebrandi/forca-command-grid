@@ -55,6 +55,7 @@ Once you have signed in and your character is confirmed as a corp member, you ge
 | [Combat and progression](./combat-and-progression.md) | The killboard, combat ranks, Hall of Fame, newbro milestones |
 | [Fleets and doctrines](./fleets-and-doctrines.md) | Doctrines, readiness, skill plans, fleet ops, SRP |
 | [Tools and services](./tools-and-services.md) | Freight, buyback, corp store, industry, mining, PI, navigation, stockpile, tasks, knowledge base, raffles, mentorship |
+| [Linked Pilots](./linked-pilots.md) | Linking your alts, switching between pilots without logging out, ESI health, unlinking |
 | [Account and ESI](./account-and-esi.md) | Managing scopes, reconnecting ESI, notification channels, your data rights |
 | [Troubleshooting](./troubleshooting.md) | Common problems and what to do about them |
 

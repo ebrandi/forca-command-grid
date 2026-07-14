@@ -86,6 +86,9 @@ responsibility.
 - [testing.md](./testing.md) — running pytest, mocking ESI, coverage, ruff.
 - [domain-model.md](./domain-model.md) — RBAC/SSO/SDE model overview and an ER diagram of
   the core identity relationships.
+- [linked-pilots.md](./linked-pilots.md) — the active-pilot context, the authority ceiling, and
+  the rules every pilot-specific surface must follow. **Read this before writing any code that
+  resolves "the current character".**
 - [api-reference.md](./api-reference.md) — the HTML-view-first routing pattern, JSON
   endpoints, and where the OpenAPI schema is generated from.
 - [esi-integration.md](./esi-integration.md) — OAuth2/PKCE, token encryption, the

@@ -30445,13 +30445,6 @@ msgstr "%(k)s 次击杀 · %(eff)s%% 效率 · %(dl)s"
 #: templates/identity/dashboard.html
 msgid "my readiness — details in the stats panel"
 msgstr "我的战备 — 详情见统计面板"
-
-#: templates/identity/dashboard.html
-#, python-format
-msgid "%(n)s character linked"
-msgid_plural "%(n)s characters linked"
-msgstr[0] "已关联 %(n)s 个角色"
-
 #: templates/identity/dashboard.html
 msgid "My skills &amp; readiness"
 msgstr "我的技能 &amp; 战备"
@@ -41458,3 +41451,273 @@ msgstr "— 取消分配（退回开放池）—"
 #: tests/test_i18n_activation.py
 msgid "This source string is intentionally never translated"
 msgstr "此源字符串刻意保持不翻译"
+
+#: apps/identity/pilot_views.py
+msgid "That pilot is not linked to your account."
+msgstr "该飞行员未关联到你的账户。"
+
+#: apps/identity/pilot_views.py
+#, python-format
+msgid "You are now flying as %(pilot)s."
+msgstr "你现在以 %(pilot)s 的身份飞行。"
+
+#: apps/identity/pilot_views.py
+#, python-format
+msgid "%(pilot)s is now your main pilot."
+msgstr "%(pilot)s 已设为你的主飞行员。"
+
+#: apps/identity/pilot_views.py
+#, python-format
+msgid ""
+"%(pilot)s is the only pilot linked to your account, and an EVE pilot is how "
+"you sign in. Link another pilot first, or delete your account from the "
+"privacy page."
+msgstr "%(pilot)s 是你账户上唯一关联的飞行员，而你正是通过 EVE 飞行员登录的。请先关联另一位飞行员，或在隐私页面删除你的账户。"
+
+#: apps/identity/pilot_views.py
+#, python-format
+msgid "%(pilot)s has been unlinked. You are now flying as %(replacement)s."
+msgstr "%(pilot)s 已解除关联。你现在以 %(replacement)s 的身份飞行。"
+
+#: apps/identity/pilot_views.py
+#, python-format
+msgid "%(pilot)s has been unlinked from your account."
+msgstr "%(pilot)s 已从你的账户解除关联。"
+
+#: apps/identity/pilot_views.py
+#, python-format
+msgid ""
+"That page is not available to %(pilot)s, so you are on their dashboard "
+"instead."
+msgstr "%(pilot)s 无权访问该页面，因此已改为显示其仪表盘。"
+
+#: apps/sso/linking.py
+msgid "ESI authorisation healthy"
+msgstr "ESI 授权正常"
+
+#: apps/sso/linking.py
+msgid "ESI authorisation required"
+msgstr "需要 ESI 授权"
+
+#: apps/sso/linking.py
+msgid "Missing ESI permissions"
+msgstr "缺少 ESI 权限"
+
+#: apps/sso/linking.py
+msgid "This pilot's ESI authorisation is current. Nothing to do."
+msgstr "该飞行员的 ESI 授权仍然有效，无需处理。"
+
+#: apps/sso/linking.py
+msgid ""
+"This pilot's EVE authorisation has expired or been revoked. You can still "
+"switch to them, but their ESI data cannot refresh until you reauthorise."
+msgstr "该飞行员的 EVE 授权已过期或被撤销。你仍可切换到该飞行员，但在你重新授权之前，其 ESI 数据无法刷新。"
+
+#: apps/sso/linking.py
+msgid ""
+"This pilot has not granted every permission FORCA Command Grid asks for. "
+"Some pages will be incomplete until you reauthorise."
+msgstr "该飞行员尚未授予 FORCA Command Grid 所需的全部权限。在你重新授权之前，部分页面的内容将不完整。"
+
+#: apps/sso/views.py
+msgid "This pilot-linking request is no longer valid. Please start again."
+msgstr "此飞行员关联请求已失效。请重新开始。"
+
+#: apps/sso/views.py
+#, python-format
+msgid ""
+"%(pilot)s is already linked to a different FORCA Command Grid account. An "
+"officer must detach it before it can be linked here."
+msgstr "%(pilot)s 已关联到另一个 FORCA Command Grid 账户。必须由官员先将其解绑，才能在此关联。"
+
+#: apps/sso/views.py
+msgid ""
+"This pilot's EVE ownership has changed since it was linked. For security an "
+"officer must detach it before it can be used again."
+msgstr "该飞行员的 EVE 归属自关联以来已发生变更。出于安全考虑，必须由官员先将其解绑，才能再次使用。"
+
+#: apps/sso/views.py
+#, python-format
+msgid "%(pilot)s has been reauthorised."
+msgstr "%(pilot)s 已重新授权。"
+
+#: apps/sso/views.py
+#, python-format
+msgid "%(pilot)s is now linked to your account."
+msgstr "%(pilot)s 已关联到你的账户。"
+
+#: apps/sso/views.py
+#, python-format
+msgid ""
+"You authorised %(pilot)s, which is not the pilot you selected. That pilot is"
+" now linked; the pilot you meant to reauthorise still needs attention."
+msgstr "你授权的是 %(pilot)s，并非你所选择的飞行员。该飞行员现已关联；你原本想重新授权的飞行员仍需处理。"
+
+#: templates/_nav.html templates/identity/linked_pilots.html
+msgid "Linked Pilots"
+msgstr "已关联飞行员"
+
+#: templates/_pilot_selector.html
+msgid "Change the pilot you are flying as"
+msgstr "更改你当前的飞行员身份"
+
+#: templates/_pilot_selector.html templates/identity/linked_pilots.html
+msgid "Corporation unknown"
+msgstr "军团未知"
+
+#: templates/_pilot_selector.html
+msgid "Search your linked pilots"
+msgstr "搜索你已关联的飞行员"
+
+#: templates/_pilot_selector.html
+msgid "Search pilots…"
+msgstr "搜索飞行员…"
+
+#: templates/_pilot_selector.html templates/identity/linked_pilots.html
+msgid "Current Pilot"
+msgstr "当前飞行员"
+
+#: templates/_pilot_selector.html templates/identity/linked_pilots.html
+#, python-format
+msgid "Switch to %(name)s"
+msgstr "切换到 %(name)s"
+
+#: templates/_pilot_selector.html
+msgid "Main"
+msgstr "主号"
+
+#: templates/_pilot_selector.html
+msgid "ESI Authorisation Required"
+msgstr "需要 ESI 授权"
+
+#: templates/_pilot_selector.html
+msgid "Switching…"
+msgstr "正在切换…"
+
+#: templates/_pilot_selector.html
+msgid "No pilots match."
+msgstr "没有匹配的飞行员。"
+
+#: templates/_pilot_selector.html
+msgid "Manage Linked Pilots"
+msgstr "管理已关联飞行员"
+
+#: templates/_pilot_selector.html templates/identity/linked_pilots.html
+msgid "Link Another Pilot"
+msgstr "关联其他飞行员"
+
+#: templates/base.html
+msgid "Linked Pilots — change the pilot you are flying as"
+msgstr "已关联飞行员 —— 更改你当前的飞行员身份"
+
+#: templates/identity/dashboard.html
+#, python-format
+msgid "%(n)s pilot linked"
+msgid_plural "%(n)s pilots linked"
+msgstr[0] "已关联 %(n)s 位飞行员"
+
+#: templates/identity/linked_pilots.html
+msgid ""
+"Linking pilots lets you switch between them without logging out. Each pilot "
+"keeps their own data, permissions, corporation membership, ESI authorisation"
+" and dashboard."
+msgstr "关联飞行员后，你无需登出即可在他们之间切换。每位飞行员都保留各自的数据、权限、军团成员资格、ESI 授权和仪表盘。"
+
+#: templates/identity/linked_pilots.html
+msgid "Nothing is merged."
+msgstr "任何数据都不会合并。"
+
+#: templates/identity/linked_pilots.html
+msgid ""
+"Switching pilots changes the identity you are currently using in FORCA "
+"Command Grid. Assets, skills, wallets, readiness, killboard records, "
+"corporation roles and feature access are never combined across your pilots —"
+" each pilot sees only what that pilot may see."
+msgstr ""
+"切换飞行员会改变你当前在 FORCA Command Grid 中所使用的身份。资产、技能、钱包、战备、killboard "
+"记录、军团角色和功能访问权限绝不会在你的各个飞行员之间合并——每位飞行员只能看到该飞行员有权查看的内容。"
+
+#: templates/identity/linked_pilots.html
+#, python-format
+msgid "You have %(counter)s linked pilot."
+msgid_plural "You have %(counter)s linked pilots."
+msgstr[0] "你已关联 %(counter)s 位飞行员。"
+
+#: templates/identity/linked_pilots.html
+msgid ""
+"You currently have one pilot linked. Link another pilot to switch between "
+"your EVE pilots without logging out."
+msgstr "你目前只关联了一位飞行员。再关联一位飞行员，即可在你的各个 EVE 飞行员之间切换而无需登出。"
+
+#: templates/identity/linked_pilots.html
+msgid "Main Pilot"
+msgstr "主飞行员"
+
+#: templates/identity/linked_pilots.html
+#, python-format
+msgid "%(counter)s missing ESI permission"
+msgid_plural "%(counter)s missing ESI permissions"
+msgstr[0] "缺少 %(counter)s 项 ESI 权限"
+
+#: templates/identity/linked_pilots.html
+msgid "Linked"
+msgstr "关联时间"
+
+#: templates/identity/linked_pilots.html
+msgid "Last used"
+msgstr "上次使用"
+
+#: templates/identity/linked_pilots.html
+msgid "Never"
+msgstr "从未"
+
+#: templates/identity/linked_pilots.html
+msgid "Last synchronised"
+msgstr "上次同步"
+
+#: templates/identity/linked_pilots.html
+msgid "Switch Pilot"
+msgstr "切换飞行员"
+
+#: templates/identity/linked_pilots.html
+#, python-format
+msgid "Make %(name)s your main pilot"
+msgstr "将 %(name)s 设为你的主飞行员"
+
+#: templates/identity/linked_pilots.html
+msgid "Make Main"
+msgstr "设为主号"
+
+#: templates/identity/linked_pilots.html
+#, python-format
+msgid "Reauthorise %(name)s with EVE SSO"
+msgstr "使用 EVE SSO 重新授权 %(name)s"
+
+#: templates/identity/linked_pilots.html
+msgid "Reauthorise"
+msgstr "重新授权"
+
+#: templates/identity/linked_pilots.html
+#, python-format
+msgid ""
+"Unlink %(name)s? Their EVE authorisation is revoked and they are removed "
+"from your account. Their history is kept, and you can link them again later "
+"with a new EVE SSO authorisation."
+msgstr ""
+"确定要解除关联 %(name)s 吗？其 EVE 授权将被撤销，该飞行员也将从你的账户中移除。历史记录会保留，日后你可以通过新的 EVE SSO "
+"授权再次关联该飞行员。"
+
+#: templates/identity/linked_pilots.html
+#, python-format
+msgid "Unlink %(name)s from your account"
+msgstr "将 %(name)s 从你的账户解除关联"
+
+#: templates/identity/linked_pilots.html
+msgid ""
+"This is the only pilot linked to your account, and an EVE pilot is how you "
+"sign in."
+msgstr "这是你账户上唯一关联的飞行员，而你正是通过 EVE 飞行员登录的。"
+
+#: templates/identity/linked_pilots.html
+msgid "No pilots are linked to this account yet."
+msgstr "此账户尚未关联任何飞行员。"

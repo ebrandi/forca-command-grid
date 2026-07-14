@@ -38,6 +38,7 @@ this app (there is no stock Django admin surface to learn). See
 | [Console overview](./console-overview.md) | The `/ops/` hub, audit log, integration health, and officer vs. director gating |
 | [Members and roles](./members-and-roles.md) | How access works: automatic membership, auto-Director, granting officer/recruiter/fc, dual control |
 | [Features and audiences](./features-and-audiences.md) | Turning features on/off and setting audiences at `/ops/admin/features/`, and choosing which languages the app offers |
+| [Linked Pilots](./linked-pilots.md) | What pilot switching changes for authority, what is audited, and the questions you will be asked |
 | [ESI and data](./esi-and-data.md) | Which director scopes power which dashboards, granting them, retention, and troubleshooting empty data |
 | [Leadership features](./leadership-features.md) | Running each leadership subsystem: killboard, operations, readiness, Command Intelligence, Pingboard, SRP, mining, industry, mentorship, raffles, recruitment, finance |
 | [Workflows](./workflows.md) | Recommended day-to-day, weekly, and monthly checklists |

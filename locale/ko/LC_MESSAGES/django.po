@@ -30847,13 +30847,6 @@ msgstr "%(k)s킬 · 효율 %(eff)s%% · %(dl)s"
 #: templates/identity/dashboard.html
 msgid "my readiness — details in the stats panel"
 msgstr "내 준비 상태 — 자세한 내용은 통계 패널에서"
-
-#: templates/identity/dashboard.html
-#, python-format
-msgid "%(n)s character linked"
-msgid_plural "%(n)s characters linked"
-msgstr[0] "캐릭터 %(n)s개 연결됨"
-
 #: templates/identity/dashboard.html
 msgid "My skills &amp; readiness"
 msgstr "내 스킬 &amp; 준비 상태"
@@ -42040,3 +42033,286 @@ msgstr "— 할당 해제 (오픈 풀로 반환) —"
 #: tests/test_i18n_activation.py
 msgid "This source string is intentionally never translated"
 msgstr "This source string is intentionally never translated"
+
+#: apps/identity/pilot_views.py
+msgid "That pilot is not linked to your account."
+msgstr "해당 파일럿은 계정에 연결되어 있지 않습니다."
+
+#: apps/identity/pilot_views.py
+#, python-format
+msgid "You are now flying as %(pilot)s."
+msgstr "이제 %(pilot)s(으)로 활동합니다."
+
+#: apps/identity/pilot_views.py
+#, python-format
+msgid "%(pilot)s is now your main pilot."
+msgstr "이제 %(pilot)s이(가) 메인 파일럿입니다."
+
+#: apps/identity/pilot_views.py
+#, python-format
+msgid ""
+"%(pilot)s is the only pilot linked to your account, and an EVE pilot is how "
+"you sign in. Link another pilot first, or delete your account from the "
+"privacy page."
+msgstr ""
+"%(pilot)s은(는) 계정에 연결된 유일한 파일럿이며, 로그인은 EVE 파일럿으로만 할 수 있습니다. 먼저 다른 파일럿을 연결하거나,"
+" 개인정보 페이지에서 계정을 삭제하세요."
+
+#: apps/identity/pilot_views.py
+#, python-format
+msgid "%(pilot)s has been unlinked. You are now flying as %(replacement)s."
+msgstr "%(pilot)s의 연결을 해제했습니다. 이제 %(replacement)s(으)로 활동합니다."
+
+#: apps/identity/pilot_views.py
+#, python-format
+msgid "%(pilot)s has been unlinked from your account."
+msgstr "%(pilot)s을(를) 계정에서 연결 해제했습니다."
+
+#: apps/identity/pilot_views.py
+#, python-format
+msgid ""
+"That page is not available to %(pilot)s, so you are on their dashboard "
+"instead."
+msgstr "%(pilot)s은(는) 해당 페이지에 접근할 수 없어 대신 이 파일럿의 대시보드로 이동했습니다."
+
+#: apps/sso/linking.py
+msgid "ESI authorisation healthy"
+msgstr "ESI 인증 정상"
+
+#: apps/sso/linking.py
+msgid "ESI authorisation required"
+msgstr "ESI 인증 필요"
+
+#: apps/sso/linking.py
+msgid "Missing ESI permissions"
+msgstr "ESI 권한 누락"
+
+#: apps/sso/linking.py
+msgid "This pilot's ESI authorisation is current. Nothing to do."
+msgstr "이 파일럿의 ESI 인증이 유효합니다. 조치할 사항이 없습니다."
+
+#: apps/sso/linking.py
+msgid ""
+"This pilot's EVE authorisation has expired or been revoked. You can still "
+"switch to them, but their ESI data cannot refresh until you reauthorise."
+msgstr ""
+"이 파일럿의 EVE 인증이 만료되었거나 취소되었습니다. 이 파일럿으로 전환할 수는 있지만, 다시 인증하기 전까지는 ESI 데이터가 "
+"갱신되지 않습니다."
+
+#: apps/sso/linking.py
+msgid ""
+"This pilot has not granted every permission FORCA Command Grid asks for. "
+"Some pages will be incomplete until you reauthorise."
+msgstr ""
+"이 파일럿은 FORCA Command Grid가 요청하는 모든 권한을 부여하지 않았습니다. 다시 인증하기 전까지 일부 페이지는 정보가 "
+"불완전하게 표시됩니다."
+
+#: apps/sso/views.py
+msgid "This pilot-linking request is no longer valid. Please start again."
+msgstr "이 파일럿 연결 요청은 더 이상 유효하지 않습니다. 처음부터 다시 시도해 주세요."
+
+#: apps/sso/views.py
+#, python-format
+msgid ""
+"%(pilot)s is already linked to a different FORCA Command Grid account. An "
+"officer must detach it before it can be linked here."
+msgstr ""
+"%(pilot)s은(는) 이미 다른 FORCA Command Grid 계정에 연결되어 있습니다. 여기에 연결하려면 먼저 임원이 분리해야 "
+"합니다."
+
+#: apps/sso/views.py
+msgid ""
+"This pilot's EVE ownership has changed since it was linked. For security an "
+"officer must detach it before it can be used again."
+msgstr "이 파일럿의 EVE 소유권이 연결된 이후 변경되었습니다. 보안을 위해 다시 사용하려면 먼저 임원이 분리해야 합니다."
+
+#: apps/sso/views.py
+#, python-format
+msgid "%(pilot)s has been reauthorised."
+msgstr "%(pilot)s을(를) 다시 인증했습니다."
+
+#: apps/sso/views.py
+#, python-format
+msgid "%(pilot)s is now linked to your account."
+msgstr "이제 %(pilot)s이(가) 계정에 연결되었습니다."
+
+#: apps/sso/views.py
+#, python-format
+msgid ""
+"You authorised %(pilot)s, which is not the pilot you selected. That pilot is"
+" now linked; the pilot you meant to reauthorise still needs attention."
+msgstr ""
+"선택한 파일럿이 아닌 %(pilot)s(으)로 인증했습니다. 해당 파일럿은 연결되었으며, 다시 인증하려던 파일럿은 여전히 조치가 "
+"필요합니다."
+
+#: templates/_nav.html templates/identity/linked_pilots.html
+msgid "Linked Pilots"
+msgstr "연결된 파일럿"
+
+#: templates/_pilot_selector.html
+msgid "Change the pilot you are flying as"
+msgstr "활동 중인 파일럿 변경"
+
+#: templates/_pilot_selector.html templates/identity/linked_pilots.html
+msgid "Corporation unknown"
+msgstr "코퍼레이션 알 수 없음"
+
+#: templates/_pilot_selector.html
+msgid "Search your linked pilots"
+msgstr "연결된 파일럿 검색"
+
+#: templates/_pilot_selector.html
+msgid "Search pilots…"
+msgstr "파일럿 검색…"
+
+#: templates/_pilot_selector.html templates/identity/linked_pilots.html
+msgid "Current Pilot"
+msgstr "현재 파일럿"
+
+#: templates/_pilot_selector.html templates/identity/linked_pilots.html
+#, python-format
+msgid "Switch to %(name)s"
+msgstr "%(name)s(으)로 전환"
+
+#: templates/_pilot_selector.html
+msgid "Main"
+msgstr "메인"
+
+#: templates/_pilot_selector.html
+msgid "ESI Authorisation Required"
+msgstr "ESI 인증 필요"
+
+#: templates/_pilot_selector.html
+msgid "Switching…"
+msgstr "전환 중…"
+
+#: templates/_pilot_selector.html
+msgid "No pilots match."
+msgstr "일치하는 파일럿 없음."
+
+#: templates/_pilot_selector.html
+msgid "Manage Linked Pilots"
+msgstr "연결된 파일럿 관리"
+
+#: templates/_pilot_selector.html templates/identity/linked_pilots.html
+msgid "Link Another Pilot"
+msgstr "다른 파일럿 연결"
+
+#: templates/base.html
+msgid "Linked Pilots — change the pilot you are flying as"
+msgstr "연결된 파일럿 — 활동 중인 파일럿 변경"
+
+#: templates/identity/dashboard.html
+#, python-format
+msgid "%(n)s pilot linked"
+msgid_plural "%(n)s pilots linked"
+msgstr[0] "파일럿 %(n)s명 연결됨"
+
+#: templates/identity/linked_pilots.html
+msgid ""
+"Linking pilots lets you switch between them without logging out. Each pilot "
+"keeps their own data, permissions, corporation membership, ESI authorisation"
+" and dashboard."
+msgstr ""
+"파일럿을 연결하면 로그아웃하지 않고도 파일럿 간에 전환할 수 있습니다. 각 파일럿은 자신의 데이터, 권한, 코퍼레이션 소속, ESI "
+"인증, 대시보드를 그대로 유지합니다."
+
+#: templates/identity/linked_pilots.html
+msgid "Nothing is merged."
+msgstr "어떤 것도 병합되지 않습니다."
+
+#: templates/identity/linked_pilots.html
+msgid ""
+"Switching pilots changes the identity you are currently using in FORCA "
+"Command Grid. Assets, skills, wallets, readiness, killboard records, "
+"corporation roles and feature access are never combined across your pilots —"
+" each pilot sees only what that pilot may see."
+msgstr ""
+"파일럿을 전환하면 FORCA Command Grid에서 현재 사용 중인 신원이 바뀝니다. 자산, 스킬, 지갑, 준비 태세, "
+"killboard 기록, 코퍼레이션 역할, 기능 접근 권한은 파일럿 간에 절대 합쳐지지 않으며, 각 파일럿은 자신에게 허용된 것만 볼 수"
+" 있습니다."
+
+#: templates/identity/linked_pilots.html
+#, python-format
+msgid "You have %(counter)s linked pilot."
+msgid_plural "You have %(counter)s linked pilots."
+msgstr[0] "연결된 파일럿이 %(counter)s명 있습니다."
+
+#: templates/identity/linked_pilots.html
+msgid ""
+"You currently have one pilot linked. Link another pilot to switch between "
+"your EVE pilots without logging out."
+msgstr "현재 연결된 파일럿이 한 명뿐입니다. 로그아웃하지 않고 EVE 파일럿 간에 전환하려면 다른 파일럿을 연결하세요."
+
+#: templates/identity/linked_pilots.html
+msgid "Main Pilot"
+msgstr "메인 파일럿"
+
+#: templates/identity/linked_pilots.html
+#, python-format
+msgid "%(counter)s missing ESI permission"
+msgid_plural "%(counter)s missing ESI permissions"
+msgstr[0] "ESI 권한 %(counter)s개 누락"
+
+#: templates/identity/linked_pilots.html
+msgid "Linked"
+msgstr "연결일"
+
+#: templates/identity/linked_pilots.html
+msgid "Last used"
+msgstr "마지막 사용"
+
+#: templates/identity/linked_pilots.html
+msgid "Never"
+msgstr "없음"
+
+#: templates/identity/linked_pilots.html
+msgid "Last synchronised"
+msgstr "마지막 동기화"
+
+#: templates/identity/linked_pilots.html
+msgid "Switch Pilot"
+msgstr "파일럿 전환"
+
+#: templates/identity/linked_pilots.html
+#, python-format
+msgid "Make %(name)s your main pilot"
+msgstr "%(name)s을(를) 메인 파일럿으로 지정"
+
+#: templates/identity/linked_pilots.html
+msgid "Make Main"
+msgstr "메인 지정"
+
+#: templates/identity/linked_pilots.html
+#, python-format
+msgid "Reauthorise %(name)s with EVE SSO"
+msgstr "%(name)s을(를) EVE SSO로 재인증"
+
+#: templates/identity/linked_pilots.html
+msgid "Reauthorise"
+msgstr "재인증"
+
+#: templates/identity/linked_pilots.html
+#, python-format
+msgid ""
+"Unlink %(name)s? Their EVE authorisation is revoked and they are removed "
+"from your account. Their history is kept, and you can link them again later "
+"with a new EVE SSO authorisation."
+msgstr ""
+"%(name)s의 연결을 해제할까요? 이 파일럿의 EVE 인증이 취소되고 계정에서 제거됩니다. 기록은 유지되며, 나중에 새 EVE SSO"
+" 인증으로 다시 연결할 수 있습니다."
+
+#: templates/identity/linked_pilots.html
+#, python-format
+msgid "Unlink %(name)s from your account"
+msgstr "%(name)s을(를) 계정에서 연결 해제"
+
+#: templates/identity/linked_pilots.html
+msgid ""
+"This is the only pilot linked to your account, and an EVE pilot is how you "
+"sign in."
+msgstr "이 파일럿은 계정에 연결된 유일한 파일럿이며, 로그인은 EVE 파일럿으로만 할 수 있습니다."
+
+#: templates/identity/linked_pilots.html
+msgid "No pilots are linked to this account yet."
+msgstr "이 계정에 아직 연결된 파일럿이 없습니다."

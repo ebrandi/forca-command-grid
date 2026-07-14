@@ -30798,13 +30798,6 @@ msgstr "%(k)s キル · %(eff)s%% 効率 · %(dl)s"
 #: templates/identity/dashboard.html
 msgid "my readiness — details in the stats panel"
 msgstr "私の即応度 — 詳細は統計パネルに"
-
-#: templates/identity/dashboard.html
-#, python-format
-msgid "%(n)s character linked"
-msgid_plural "%(n)s characters linked"
-msgstr[0] "%(n)s 件のキャラクターがリンク済み"
-
 #: templates/identity/dashboard.html
 msgid "My skills &amp; readiness"
 msgstr "私のスキル &amp; 即応度"
@@ -41976,3 +41969,282 @@ msgstr "— 割り当て解除（オープンプールに戻す）—"
 #: tests/test_i18n_activation.py
 msgid "This source string is intentionally never translated"
 msgstr "This source string is intentionally never translated"
+
+#: apps/identity/pilot_views.py
+msgid "That pilot is not linked to your account."
+msgstr "そのパイロットはあなたのアカウントに連携されていません。"
+
+#: apps/identity/pilot_views.py
+#, python-format
+msgid "You are now flying as %(pilot)s."
+msgstr "現在 %(pilot)s として搭乗しています。"
+
+#: apps/identity/pilot_views.py
+#, python-format
+msgid "%(pilot)s is now your main pilot."
+msgstr "%(pilot)s をメインパイロットに設定しました。"
+
+#: apps/identity/pilot_views.py
+#, python-format
+msgid ""
+"%(pilot)s is the only pilot linked to your account, and an EVE pilot is how "
+"you sign in. Link another pilot first, or delete your account from the "
+"privacy page."
+msgstr ""
+"%(pilot)s はあなたのアカウントに連携されている唯一のパイロットです。サインインには EVE "
+"パイロットが必要なため、先に別のパイロットを連携するか、プライバシーページからアカウントを削除してください。"
+
+#: apps/identity/pilot_views.py
+#, python-format
+msgid "%(pilot)s has been unlinked. You are now flying as %(replacement)s."
+msgstr "%(pilot)s の連携を解除しました。現在は %(replacement)s として搭乗しています。"
+
+#: apps/identity/pilot_views.py
+#, python-format
+msgid "%(pilot)s has been unlinked from your account."
+msgstr "%(pilot)s をあなたのアカウントから連携解除しました。"
+
+#: apps/identity/pilot_views.py
+#, python-format
+msgid ""
+"That page is not available to %(pilot)s, so you are on their dashboard "
+"instead."
+msgstr "そのページは %(pilot)s では利用できないため、代わりにこのパイロットのダッシュボードを表示しています。"
+
+#: apps/sso/linking.py
+msgid "ESI authorisation healthy"
+msgstr "ESI 認証は良好"
+
+#: apps/sso/linking.py
+msgid "ESI authorisation required"
+msgstr "ESI 認証が必要"
+
+#: apps/sso/linking.py
+msgid "Missing ESI permissions"
+msgstr "ESI 権限不足"
+
+#: apps/sso/linking.py
+msgid "This pilot's ESI authorisation is current. Nothing to do."
+msgstr "このパイロットの ESI 認証は最新です。対応は不要です。"
+
+#: apps/sso/linking.py
+msgid ""
+"This pilot's EVE authorisation has expired or been revoked. You can still "
+"switch to them, but their ESI data cannot refresh until you reauthorise."
+msgstr "このパイロットの EVE 認証は期限切れ、または取り消されています。切り替えは可能ですが、再認証するまで ESI データは更新されません。"
+
+#: apps/sso/linking.py
+msgid ""
+"This pilot has not granted every permission FORCA Command Grid asks for. "
+"Some pages will be incomplete until you reauthorise."
+msgstr ""
+"このパイロットは FORCA Command Grid が要求する権限の一部を許可していません。再認証するまで、一部のページは不完全な表示になります。"
+
+#: apps/sso/views.py
+msgid "This pilot-linking request is no longer valid. Please start again."
+msgstr "このパイロット連携リクエストは無効になりました。最初からやり直してください。"
+
+#: apps/sso/views.py
+#, python-format
+msgid ""
+"%(pilot)s is already linked to a different FORCA Command Grid account. An "
+"officer must detach it before it can be linked here."
+msgstr ""
+"%(pilot)s は既に別の FORCA Command Grid "
+"アカウントに連携されています。ここで連携するには、オフィサーによる切り離しが必要です。"
+
+#: apps/sso/views.py
+msgid ""
+"This pilot's EVE ownership has changed since it was linked. For security an "
+"officer must detach it before it can be used again."
+msgstr "このパイロットの EVE 所有者は、連携後に変更されています。セキュリティのため、再び使用するにはオフィサーによる切り離しが必要です。"
+
+#: apps/sso/views.py
+#, python-format
+msgid "%(pilot)s has been reauthorised."
+msgstr "%(pilot)s を再認証しました。"
+
+#: apps/sso/views.py
+#, python-format
+msgid "%(pilot)s is now linked to your account."
+msgstr "%(pilot)s をあなたのアカウントに連携しました。"
+
+#: apps/sso/views.py
+#, python-format
+msgid ""
+"You authorised %(pilot)s, which is not the pilot you selected. That pilot is"
+" now linked; the pilot you meant to reauthorise still needs attention."
+msgstr ""
+"認証したのは %(pilot)s で、選択したパイロットではありません。このパイロットは連携されましたが、再認証が必要なパイロットは未対応のままです。"
+
+#: templates/_nav.html templates/identity/linked_pilots.html
+msgid "Linked Pilots"
+msgstr "連携済みパイロット"
+
+#: templates/_pilot_selector.html
+msgid "Change the pilot you are flying as"
+msgstr "搭乗するパイロットを切り替える"
+
+#: templates/_pilot_selector.html templates/identity/linked_pilots.html
+msgid "Corporation unknown"
+msgstr "コーポレーション不明"
+
+#: templates/_pilot_selector.html
+msgid "Search your linked pilots"
+msgstr "連携済みパイロットを検索"
+
+#: templates/_pilot_selector.html
+msgid "Search pilots…"
+msgstr "パイロットを検索…"
+
+#: templates/_pilot_selector.html templates/identity/linked_pilots.html
+msgid "Current Pilot"
+msgstr "現在のパイロット"
+
+#: templates/_pilot_selector.html templates/identity/linked_pilots.html
+#, python-format
+msgid "Switch to %(name)s"
+msgstr "%(name)s に切り替える"
+
+#: templates/_pilot_selector.html
+msgid "Main"
+msgstr "メイン"
+
+#: templates/_pilot_selector.html
+msgid "ESI Authorisation Required"
+msgstr "ESI 認証が必要"
+
+#: templates/_pilot_selector.html
+msgid "Switching…"
+msgstr "切り替え中…"
+
+#: templates/_pilot_selector.html
+msgid "No pilots match."
+msgstr "一致するパイロットはありません。"
+
+#: templates/_pilot_selector.html
+msgid "Manage Linked Pilots"
+msgstr "連携済みパイロットを管理"
+
+#: templates/_pilot_selector.html templates/identity/linked_pilots.html
+msgid "Link Another Pilot"
+msgstr "別のパイロットを連携"
+
+#: templates/base.html
+msgid "Linked Pilots — change the pilot you are flying as"
+msgstr "連携済みパイロット — 搭乗するパイロットを切り替える"
+
+#: templates/identity/dashboard.html
+#, python-format
+msgid "%(n)s pilot linked"
+msgid_plural "%(n)s pilots linked"
+msgstr[0] "連携済みパイロット %(n)s 名"
+
+#: templates/identity/linked_pilots.html
+msgid ""
+"Linking pilots lets you switch between them without logging out. Each pilot "
+"keeps their own data, permissions, corporation membership, ESI authorisation"
+" and dashboard."
+msgstr ""
+"パイロットを連携すると、ログアウトせずに切り替えられます。各パイロットは、それぞれのデータ、権限、コーポレーション所属、ESI "
+"認証、ダッシュボードを個別に保持します。"
+
+#: templates/identity/linked_pilots.html
+msgid "Nothing is merged."
+msgstr "何も統合されません。"
+
+#: templates/identity/linked_pilots.html
+msgid ""
+"Switching pilots changes the identity you are currently using in FORCA "
+"Command Grid. Assets, skills, wallets, readiness, killboard records, "
+"corporation roles and feature access are never combined across your pilots —"
+" each pilot sees only what that pilot may see."
+msgstr ""
+"パイロットを切り替えると、FORCA Command Grid "
+"で現在操作しているパイロットが変わります。アセット、スキル、ウォレット、即応性、killboard "
+"の記録、コーポレーションのロール、機能へのアクセス権が、パイロット間で統合されることは決してありません。各パイロットには、そのパイロットが閲覧できるものだけが表示されます。"
+
+#: templates/identity/linked_pilots.html
+#, python-format
+msgid "You have %(counter)s linked pilot."
+msgid_plural "You have %(counter)s linked pilots."
+msgstr[0] "%(counter)s 名のパイロットを連携しています。"
+
+#: templates/identity/linked_pilots.html
+msgid ""
+"You currently have one pilot linked. Link another pilot to switch between "
+"your EVE pilots without logging out."
+msgstr "現在、連携しているパイロットは 1 名だけです。別のパイロットを連携すると、ログアウトせずに EVE パイロットを切り替えられます。"
+
+#: templates/identity/linked_pilots.html
+msgid "Main Pilot"
+msgstr "メインパイロット"
+
+#: templates/identity/linked_pilots.html
+#, python-format
+msgid "%(counter)s missing ESI permission"
+msgid_plural "%(counter)s missing ESI permissions"
+msgstr[0] "ESI 権限が %(counter)s 件不足"
+
+#: templates/identity/linked_pilots.html
+msgid "Linked"
+msgstr "連携日"
+
+#: templates/identity/linked_pilots.html
+msgid "Last used"
+msgstr "最終使用"
+
+#: templates/identity/linked_pilots.html
+msgid "Never"
+msgstr "なし"
+
+#: templates/identity/linked_pilots.html
+msgid "Last synchronised"
+msgstr "最終同期"
+
+#: templates/identity/linked_pilots.html
+msgid "Switch Pilot"
+msgstr "パイロット切替"
+
+#: templates/identity/linked_pilots.html
+#, python-format
+msgid "Make %(name)s your main pilot"
+msgstr "%(name)s をメインパイロットに設定"
+
+#: templates/identity/linked_pilots.html
+msgid "Make Main"
+msgstr "メインに設定"
+
+#: templates/identity/linked_pilots.html
+#, python-format
+msgid "Reauthorise %(name)s with EVE SSO"
+msgstr "EVE SSO で %(name)s を再認証"
+
+#: templates/identity/linked_pilots.html
+msgid "Reauthorise"
+msgstr "再認証"
+
+#: templates/identity/linked_pilots.html
+#, python-format
+msgid ""
+"Unlink %(name)s? Their EVE authorisation is revoked and they are removed "
+"from your account. Their history is kept, and you can link them again later "
+"with a new EVE SSO authorisation."
+msgstr ""
+"%(name)s の連携を解除しますか？EVE 認証は取り消され、あなたのアカウントから削除されます。履歴は保持され、後日あらためて EVE SSO "
+"で認証すれば再び連携できます。"
+
+#: templates/identity/linked_pilots.html
+#, python-format
+msgid "Unlink %(name)s from your account"
+msgstr "%(name)s をアカウントから連携解除"
+
+#: templates/identity/linked_pilots.html
+msgid ""
+"This is the only pilot linked to your account, and an EVE pilot is how you "
+"sign in."
+msgstr "これはあなたのアカウントに連携されている唯一のパイロットです。サインインには EVE パイロットが必要です。"
+
+#: templates/identity/linked_pilots.html
+msgid "No pilots are linked to this account yet."
+msgstr "このアカウントにはまだパイロットが連携されていません。"

@@ -9,6 +9,46 @@ project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 
 ### Added
 
+- **Linked Pilots and pilot switching** — a pilot can link several EVE characters to one
+  account and switch between them without logging out. New **Pilot → Linked Pilots** page
+  (`/pilot/linked-pilots/`), a persistent pilot selector in the sidebar and the mobile drawer,
+  and a selector on the Command Center. Every pilot is authorised individually through EVE SSO
+  (CCP exposes no way to discover which characters share an EVE account, so nothing is
+  inferred). Fully translated into all nine languages.
+- **Pilot ESI health** — each linked pilot shows its own authorisation status, missing scopes
+  and last synchronisation, with a per-pilot **Reauthorise** action. A dead token on one pilot
+  never blocks switching to another.
+- **Unlinking** — releases a pilot and destroys its ESI authorisation, keeping its historical
+  records. The last remaining pilot cannot be unlinked (an EVE pilot is how you sign in).
+
+### Changed
+
+- **Corporation authority now follows the active pilot, not the account.** Previously a role
+  was granted to the *account* if **any** of its characters qualified — so linking one Director
+  alt made every pilot on that account a Director, including pilots in unrelated corporations.
+  Authority is now the lesser of what the human was granted and what the pilot they are flying
+  can substantiate: an out-of-corp pilot carries no corp standing at all, and Director authority
+  requires the pilot to actually hold the in-game Director role. Officer still follows the
+  person across their corp pilots; `admin` and superuser are unaffected. **Directors keep their
+  access across the upgrade** — a data migration attaches the in-game Director seat to each
+  current director's corp pilots, and the six-hourly ESI reconcile then narrows it to the pilots
+  that genuinely hold the role.
+- **Pilot quest logs are now per-pilot.** `PilotDirective` and `PilotRecommendation` were keyed
+  on the account while being computed from one character, so regenerating one pilot's quest log
+  overwrote another's. Both are now scoped to the pilot they describe; existing rows are
+  attached to each account's main.
+- The Command Center, "my assets", skills, readiness, operations, doctrines, killboard, buyback,
+  store, freight, mentorship and navigation surfaces all resolve *the pilot you are flying*
+  rather than the account's main.
+
+### Fixed
+
+- The pilot digest cache (`briefing:pilot:*`) was keyed by account while holding one pilot's
+  prose, and was not language-keyed — so it served the Celery warmer's English to every
+  non-English reader for the life of the entry.
+- The htmx history cache kept rendered, pilot-specific pages in `localStorage`, where no
+  `Cache-Control` header governs them; a Back press could repaint a previous pilot's page.
+
 - **Localisation** — the interface is available in nine languages: English, Portuguese
   (Brazil), Spanish, French, Russian, German, Simplified Chinese, Korean, and Japanese.
   English is the canonical source language and cannot be turned off. The translations are
