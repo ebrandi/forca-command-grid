@@ -6,7 +6,14 @@
 <header class="mt-2 mb-6">
   <p class="eyebrow">{% translate "System" %}</p>
   <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Localisation" %}</h1>
-  <p class="mt-1 text-sm text-faint">{% translate "Choose which languages the selector offers your pilots. English is the source language and is always available. Turning a language on here reveals it in the language menu; the app stays English-default until a pilot picks another." %}</p>
+  {% comment %}
+    This paragraph used to say the app "stays English-default until a pilot picks another".
+    That was wrong, and it was the dangerous kind of wrong: browser detection is on by
+    default, so ticking a language immediately changes the interface for every pilot who has
+    not made a language choice of their own and whose browser prefers it. A director reads
+    that as "preview"; it is not one.
+  {% endcomment %}
+  <p class="mt-1 text-sm text-faint">{% translate "Choose which languages the selector offers your pilots. English is the source language and is always available. Turning a language on takes effect straight away: while browser detection is on, any pilot who has not picked a language of their own will get it if their browser asks for it. To offer a language without changing anyone's interface, turn browser detection off as well — pilots can then reach it only by choosing it themselves." %}</p>
 </header>
 
 <form method="post">
