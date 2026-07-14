@@ -44,6 +44,14 @@ _RECRUIT_ALLOWED_PREFIXES = (
     "/impersonation",  # director "view-as" control surface (start/stop/log); the stop
                        # endpoint must stay reachable even while viewing as a NON-member
                        # recruit, whom this gate would otherwise confine to onboarding.
+    "/pilot",        # Linked Pilots: the selector, the management page and the switch/link/
+                     # unlink controls. Authority is computed from the ACTIVE pilot (LP-4), so
+                     # a member who switches to an alt in another corporation correctly stops
+                     # being a member — and this gate would then strand them in onboarding with
+                     # no way back. The switch control must stay reachable from outside the
+                     # corp, exactly as the impersonation stop control must. Every route under
+                     # it is @login_required and resolves pilots through the caller's own
+                     # account, so nothing internal is exposed by allowlisting the prefix.
     "/healthz",
     "/static/",
     "/favicon.ico",

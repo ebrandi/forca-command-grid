@@ -30,6 +30,12 @@ class EveCharacter(ProvenanceMixin):
     alliance_id = models.BigIntegerField(null=True, blank=True)
     is_main = models.BooleanField(default=False)
     is_corp_member = models.BooleanField(default=False)
+    # In-game corporation Director role, per PILOT (LP-4). This has always been *checked*
+    # (services.character_is_corp_director) but only ever stored as an account-level
+    # RoleAssignment, so the app could not answer "is THIS pilot a director" — precisely the
+    # question pilot switching forces. Without it, a director alt would hand Director authority
+    # to every other pilot on the account. Set by the same reconcile that grants the role.
+    is_corp_director = models.BooleanField(default=False, db_default=False)
     security_status = models.FloatField(null=True, blank=True)
     affiliation_updated_at = models.DateTimeField(null=True, blank=True)
     # Last time the in-game Director-role ESI check ran for this character (4.8). Drives
@@ -37,6 +43,14 @@ class EveCharacter(ProvenanceMixin):
     # bounded and decoupled from total alt count.
     director_checked_at = models.DateTimeField(null=True, blank=True)
     added_at = models.DateTimeField(default=timezone.now)
+
+    # --- linked-pilot metadata (LP-1) ---
+    # ``added_at`` is the link date and ``is_main`` the primary flag, so the only genuinely
+    # missing pieces are recency and a user-chosen order. There is no ``link_status`` column:
+    # the link's health is a function of live AuthToken state, and a stored copy would be a
+    # second source of truth that drifts from the tokens it claims to describe.
+    last_used_at = models.DateTimeField(null=True, blank=True)
+    display_order = models.SmallIntegerField(default=0, db_default=0)
 
     class Meta:
         # Back the affiliation + director staleness filters (…IS NULL OR < cutoff,

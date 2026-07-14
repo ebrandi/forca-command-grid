@@ -23,13 +23,66 @@ ROLE_RANK = {
 }
 
 
+def authority_ceiling(user) -> int:
+    """The most authority the user's ACTIVE pilot can substantiate (LP-4).
+
+    Role grants say what the *human* is trusted with. This says what the pilot they are
+    currently flying may *exercise* — the sudo model: holding a right is not the same as
+    wielding it from any seat. A user's authority is the lesser of the two, so linking a
+    Director alt can never hand Director powers to their other pilots, and switching to a
+    pilot in another corporation drops corp standing entirely.
+
+    Outside a request (a Celery worker, a management command) no pilot has been resolved and
+    there is no ceiling: a nightly comms reconcile is asking what *the human* is entitled to,
+    which is a different and legitimate question. ``has_resolved_pilot`` distinguishes that
+    from "this account has no pilots", which fails closed.
+    """
+    from core import pilots
+
+    if not pilots.has_resolved_pilot(user):
+        return ROLE_RANK[ROLE_ADMIN]  # no request resolved a pilot → account-wide authority
+
+    pilot = pilots.active_pilot(user)
+    if pilot is None:
+        # The account holds NO pilots at all — an operator account created by hand, or one whose
+        # pilots an officer detached. A ceiling exists to stop authority leaking from one pilot
+        # to another; with no pilots there is nothing to leak from and nothing to leak to, so
+        # the account's own grants stand exactly as they did before this feature. (This is not
+        # a way in: a pilot-less account cannot reach any pilot-specific surface, because those
+        # all resolve a character first, and an account WITH pilots can never land here — the
+        # middleware always resolves one of them.)
+        return ROLE_RANK[ROLE_ADMIN]
+    if not pilot.is_corp_member:
+        # A pilot outside the home corporation carries no corp standing whatsoever — not
+        # member, not officer, not director — regardless of what other pilots the human owns.
+        return ROLE_RANK[ROLE_PUBLIC]
+    if pilot.is_corp_director:
+        return ROLE_RANK[ROLE_ADMIN]  # in-game Director: the account's grant decides
+    # In the corp but not an in-game Director: corp standing, but Director authority is out of
+    # reach. Officer stays available because it is a trust grant to the *person* and no
+    # per-character evidence exists that could narrow it further (see LP-4).
+    return ROLE_RANK[ROLE_OFFICER]
+
+
 def effective_rank(user) -> int:
-    """Highest role rank a user holds (0 for anonymous/public)."""
+    """Highest role rank a user may exercise right now (0 for anonymous/public).
+
+    The lesser of what the account was granted and what the active pilot can substantiate.
+    """
     if not getattr(user, "is_authenticated", False):
         return ROLE_RANK[ROLE_PUBLIC]
     if getattr(user, "is_superuser", False):
+        # The platform break-glass (the operator), not a corp role. Deliberately NOT ceilinged:
+        # an admin must not be able to lock themselves out by switching to an alt.
         return ROLE_RANK[ROLE_ADMIN]
-    return getattr(user, "max_role_rank", lambda: ROLE_RANK[ROLE_PUBLIC])()
+    account = getattr(user, "max_role_rank", lambda: ROLE_RANK[ROLE_PUBLIC])()
+    if account >= ROLE_RANK[ROLE_ADMIN]:
+        # ROLE_ADMIN is the platform operator, held by a human, evidenced by nothing in-game —
+        # the same kind of authority as is_superuser above, and exempt for the same reason. It
+        # also cannot be ceilinged coherently: the ranks are a ladder, so any cap low enough to
+        # withdraw Director (30) would also withdraw Admin (40).
+        return account
+    return min(account, authority_ceiling(user))
 
 
 def has_role(user, role: str) -> bool:
@@ -83,6 +136,11 @@ def has_perm(user, perm_key: str) -> bool:
     baseline = _PERM_RANK_BASELINE.get(perm_key, ROLE_RANK[ROLE_DIRECTOR])
     if effective_rank(user) >= baseline:
         return True
+    # A lateral grant (recruiter / FC / campaign lead) is subject to the same active-pilot
+    # ceiling as a rank (LP-4): a recruiter flying an alt in another corporation is not
+    # recruiting for us from that seat.
+    if authority_ceiling(user) < ROLE_RANK[ROLE_MEMBER]:
+        return False
     getter = getattr(user, "active_permission_keys", None)
     return callable(getter) and perm_key in getter()
 
@@ -97,6 +155,12 @@ def perm_required(perm_key: str):
                 raise PermissionDenied(_("Insufficient permission."))
             return view_func(request, *args, **kwargs)
 
+        # Make the guard introspectable, so callers can ask "would this view admit that user?"
+        # WITHOUT calling it. Pilot switching needs exactly that: it must decide whether the
+        # page you are on is still yours under the pilot you just switched to, and the honest
+        # answer is the one this decorator would give — not a hand-maintained second list of
+        # which URLs are officer-only, which would drift the day someone adds a view.
+        _wrapped.required_perm = perm_key
         return _wrapped
 
     return decorator
@@ -112,9 +176,24 @@ def role_required(role: str):
                 raise PermissionDenied(_("Insufficient role."))
             return view_func(request, *args, **kwargs)
 
+        _wrapped.required_role = role  # see perm_required
         return _wrapped
 
     return decorator
+
+
+def view_admits(view_func, user) -> bool:
+    """Would ``view_func``'s own rbac guards let ``user`` through right now?
+
+    Answers only for the guards this module installs (``role_required`` / ``perm_required``).
+    A view with neither is treated as admitting — it may still have gates of its own, and the
+    caller is expected to check the middleware gates (membership, feature audience) separately.
+    """
+    role = getattr(view_func, "required_role", None)
+    if role is not None and not has_role(user, role):
+        return False
+    perm = getattr(view_func, "required_perm", None)
+    return not (perm is not None and not has_perm(user, perm))
 
 
 class _MinRolePermission(BasePermission):

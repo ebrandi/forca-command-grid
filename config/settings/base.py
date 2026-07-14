@@ -91,6 +91,12 @@ MIDDLEWARE = [
     # downstream gate/view/nav transparently sees the pilot. Enforces view-only + live
     # re-validation; see apps.impersonation.middleware.
     "apps.impersonation.middleware.ImpersonationMiddleware",
+    # Immediately after ImpersonationMiddleware (it may have swapped request.user, and the
+    # active pilot must be resolved for whoever the request now acts as) and BEFORE the
+    # membership/feature gates and the roles context processor: those all reduce to
+    # core.rbac.effective_rank, which asks the ACTIVE pilot what authority it can substantiate
+    # (LP-2/LP-4). Without this line every gate would fall back to account-wide authority.
+    "core.pilots.ActivePilotMiddleware",
     # Immediately after ImpersonationMiddleware so the active UI language can follow
     # request.real_user (a director's "view-as" renders in the DIRECTOR's language),
     # and before the gates that may short-circuit the response. Stock LocaleMiddleware

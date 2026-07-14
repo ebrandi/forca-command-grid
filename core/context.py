@@ -7,13 +7,16 @@ from core import rbac
 
 
 def roles(request) -> dict:
-    """Expose role booleans and the main character to templates (nav/portrait)."""
+    """Expose role booleans and the ACTIVE pilot to templates (nav/portrait)."""
+    from core import pilots
+
     user = getattr(request, "user", None)
-    main_character = None
-    if getattr(user, "is_authenticated", False):
-        # Reuse the model's main_character property: one query that a
-        # prefetch_related("characters") can short-circuit, vs. two .filter().first() hits.
-        main_character = user.main_character
+    # The pilot the user is currently flying — resolved and ownership-checked once per request
+    # by ActivePilotMiddleware (LP-2). Templates that ask "who am I?" mean this, not the
+    # account's primary pilot: after a switch, the rail portrait, the mobile avatar and every
+    # "my …" link must follow the new pilot or the UI would be quietly lying about identity.
+    active = pilots.active_pilot(user) if getattr(user, "is_authenticated", False) else None
+    selector = _selector_pilots(user) if active is not None else []
     # Member-service visibility (leadership-controlled audience) for the nav.
     from apps.buyback.services import current_audience as buyback_audience
     from apps.corporation.access import home_corp_name as _home_corp_name
@@ -39,7 +42,14 @@ def roles(request) -> dict:
         "can_recruit": rbac.has_perm(user, rbac.PERM_RECRUITMENT_MANAGE),
         "can_manage_fleet": rbac.has_perm(user, rbac.PERM_FLEET_MANAGE),
         "can_manage_campaigns": rbac.has_perm(user, rbac.PERM_CAMPAIGN_MANAGE),
-        "main_character": main_character,
+        # ``main_character`` is retained as the template name because ~30 templates already
+        # render it, but it now resolves to the ACTIVE pilot — which is what every one of
+        # those call sites always meant by it. ``active_pilot`` is the honest name for new code.
+        "main_character": active,
+        "active_pilot": active,
+        # The selector's roster. Ordered active-first, then primary, then recently used, then
+        # alphabetically (core.pilots.ordered_for_selector), each carrying a link_healthy flag.
+        "linked_pilots": selector,
         # Home corporation id for branding (its in-game logo is the app mark).
         "home_corp_id": getattr(settings, "FORCA_HOME_CORP_ID", 0),
         # Display name of the app-owning corp (customers contract freight to it).
@@ -57,6 +67,26 @@ def roles(request) -> dict:
         # Leader-toggled feature flags (default everything on) for the nav.
         "features": _feature_map(user),
     }
+
+
+def _selector_pilots(user) -> list:
+    """The pilot roster for the sidebar selector, each flagged with its ESI health.
+
+    Costs nothing for the single-pilot accounts that are the overwhelming majority: the
+    selector does not render at all below two pilots, so we do not go looking for token health
+    that nothing will display. Above two, the health of the whole roster is ONE aggregate query
+    (``linking.healthy_ids``) — never a query per pilot on every page render.
+    """
+    from apps.sso.linking import healthy_ids
+    from core import pilots
+
+    roster = pilots.ordered_for_selector(user)
+    if len(roster) < 2:
+        return roster
+    healthy = healthy_ids(roster)
+    for pilot in roster:
+        pilot.link_healthy = pilot.character_id in healthy
+    return roster
 
 
 def _feature_map(user) -> dict:
