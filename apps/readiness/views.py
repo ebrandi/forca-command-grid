@@ -178,9 +178,12 @@ def pilot_view(request: HttpRequest, character_id: int) -> HttpResponse:
 
     target_user = getattr(character, "user", None)
     if target_user is not None:
+        # This page is ABOUT one character, so its quest log is that character's — reading the
+        # account's would have shown an alt's readiness panel the main's recommendations (LP-3).
         recos = list(
             PilotRecommendation.objects.filter(
-                user=target_user, state=PilotRecommendation.State.OPEN
+                user=target_user, character_id=character.character_id,
+                state=PilotRecommendation.State.OPEN,
             ).filter(Q(snoozed_until__isnull=True) | Q(snoozed_until__lte=timezone.now()))
         )
     else:
