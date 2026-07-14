@@ -281,7 +281,8 @@ def scan_mining_milestones() -> dict:
                 record_contribution(
                     users[user_id], kind=ContributionEvent.Kind.MINING, magnitude=1,
                     unit="milestones", points=_MILESTONE_POINTS.get(threshold, 5),
-                    description=f"Mined {threshold // 1_000_000}M m³",
+                    # Just the milestone size — "Mined" is the kind, already rendered translated.
+                    description=f"{threshold // 1_000_000}M m³",
                     ref_type="mining_milestone", ref_id=f"{user_id}:{threshold}",
                     occurred_at=now,
                 )

@@ -319,7 +319,13 @@ def pairing_respond(request: HttpRequest, pk: int) -> HttpResponse:
         else:
             messages.success(request, _("Mentorship is now active. Fair winds!"))
     else:
-        services.cancel_pairing(pairing, request.user, reason=_("Declined by pilot."))
+        # NOT _()-wrapped: ``reason`` is PERSISTED (set_status -> _log_event -> MentorshipEvent
+        # .detail) and the mentor, the mentee and every officer read that same row later. A
+        # gettext call here resolves in the *declining pilot's* locale and freezes it into a
+        # shared row, so a German pilot's decline would show up as German on an English mentor's
+        # timeline. Store the canonical English sentinel; translating it for display belongs in a
+        # read-time seam (map the known detail values to labels at render), not at the write site.
+        services.cancel_pairing(pairing, request.user, reason="Declined by pilot.")
         messages.info(request, _("Pairing declined."))
     return redirect("mentorship:dashboard")
 
@@ -524,8 +530,11 @@ def pairing_action(request: HttpRequest, pk: int) -> HttpResponse:
         services.pause_pairing(pairing, request.user, reason)
         messages.info(request, _("Mentorship paused."))
     elif action == "resume" and pairing.status == MentorshipPairing.Status.PAUSED:
+        # NOT _()-wrapped — ``detail`` is persisted on the shared MentorshipEvent row (see the
+        # decline path above). The flash message below IS translated: that one is addressed to
+        # this request's user, so it is display, not data.
         services.set_status(pairing, MentorshipPairing.Status.ACTIVE, actor=request.user,
-                            detail=_("Resumed."))
+                            detail="Resumed.")
         messages.success(request, _("Mentorship resumed."))
     elif action == "complete" and role in ("mentor", "officer"):
         services.complete_pairing(pairing, request.user, reason)

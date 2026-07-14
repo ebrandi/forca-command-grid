@@ -9,11 +9,13 @@ role helpers via ``apps.sso.services.ensure_role`` + ``core.rbac`` constants, no
 """
 from __future__ import annotations
 
+import contextlib
 from decimal import Decimal
 
 import pytest
 from django.core.exceptions import ValidationError
-from django.utils import timezone
+from django.urls import reverse
+from django.utils import timezone, translation
 
 from apps.campaigns import progress as progress_mod
 from apps.campaigns import services
@@ -29,6 +31,7 @@ from apps.campaigns.models import (
 )
 from apps.identity.models import RoleAssignment
 from apps.sso.services import ensure_role
+from apps.tasks.models import Task
 from core import rbac
 
 pytestmark = pytest.mark.django_db
@@ -964,3 +967,99 @@ def test_sensitive_measurement_redacted_in_activity(django_user_model):
     services.update_manual_value(plain, officer, Decimal(4), "on grid")
     prow = CampaignActivity.objects.filter(verb="objective.progress", target_id=plain.pk).latest("id")
     assert prow.after == {"current_value": "4"}
+
+
+# ===========================================================================
+#  i18n: translated text must never be used as a lookup key
+# ===========================================================================
+@contextlib.contextmanager
+def _translated_de(**msgstrs):
+    """Activate ``de`` with ``msgstrs`` genuinely translated, then restore the catalogue.
+
+    The shipped ``de`` catalogue has no msgstr for the follow-up titles *yet*, so plain
+    ``translation.override("de")`` still returns the English msgid and the bug stays invisible.
+    Seeding the msgstrs here is what a translator filling in that .po entry does — it makes the
+    latent breakage reproducible now, and pins the invariant so it cannot regress later.
+    """
+    from django.utils.translation import trans_real
+
+    with translation.override("de"):
+        # ``_catalog`` is Django's TranslationCatalog (a chain of dicts), so write through
+        # __setitem__ — its ``update()`` takes a whole translation object, not a mapping.
+        catalog = trans_real.catalog()._catalog
+        saved = {k: catalog.get(k, _MISSING) for k in msgstrs}
+        for key, value in msgstrs.items():
+            catalog[key] = value
+        try:
+            yield
+        finally:
+            for key, value in saved.items():
+                if value is _MISSING:
+                    catalog._catalogs[0].pop(key, None)
+                else:
+                    catalog[key] = value
+
+
+_MISSING = object()
+
+
+def test_close_out_followups_survive_a_non_english_closer(client, django_user_model):
+    """A follow-up spawned by a German-locale officer still appears in the close-out report.
+
+    Regression for the close-out report filtering ``Task.title`` with the English literals
+    ``"Follow-up: …"`` / ``"Campaign follow-up task"``. Those titles are WRITTEN through gettext,
+    so an officer closing the campaign in any non-English locale stores a translated title and the
+    filter matches nothing — every one of their follow-ups silently vanishes from the report. The
+    report now selects on the structural ``related_id`` marker, which no locale can touch.
+    """
+    officer = _user(django_user_model, "eve:de_close", rbac.ROLE_OFFICER, rbac.ROLE_DIRECTOR)
+    # MEMBERS visibility → the descriptive "Follow-up: …" title (the officers/restricted tiers get
+    # the neutral title, which is equally translated and equally unusable as a key).
+    c = _campaign(desired_outcome="Ready", status=CS.ACTIVE,
+                  visibility=Campaign.Visibility.MEMBERS)
+    obj = _objective(c, title="Stage 200 hulls", status=OS.ACTIVE)
+
+    # The whole close-out runs in German — exactly what a non-English officer's request does.
+    with _translated_de(**{"Follow-up: %(title)s": "Nachfassen: %(title)s"}):
+        services.close_campaign(
+            c, officer, final_status=CS.COMPLETED,
+            resolutions={obj.pk: {"status": OS.MET, "note": ""}},
+            outcome_summary="Fleet staged.", lessons_learned="Start earlier.",
+            followup_objective_ids=[obj.pk],
+        )
+
+    task = Task.objects.get(related_type=Objective.RELATED_TYPE)
+    # The stored title really is German — which is exactly why it can never be the lookup key.
+    assert task.title == "Nachfassen: Stage 200 hulls"
+    assert task.related_id.startswith(Objective.followup_id_prefix(obj.pk))
+
+    # …and the report still finds it. (Pre-fix, the English title filter matched nothing here and
+    # this list came back empty.)
+    client.force_login(officer)
+    resp = client.get(reverse("campaigns:report", args=[c.pk]))
+    assert resp.status_code == 200
+    assert [t.pk for t in resp.context["followups"]] == [task.pk]
+
+
+def test_close_out_report_lists_only_followups_not_every_linked_task(django_user_model):
+    """The report shows close-out follow-ups only — not ordinary linked tasks.
+
+    On a restricted campaign every linked task (volunteer, manually added) is given the SAME
+    neutral title as a follow-up, so the old title filter over-matched and pulled unrelated tasks
+    into the close-out report. The structural marker distinguishes them.
+    """
+    officer = _user(django_user_model, "eve:only_fu", rbac.ROLE_OFFICER)
+    c = _campaign(desired_outcome="x", visibility=Campaign.Visibility.RESTRICTED, status=CS.ACTIVE)
+    obj = _objective(c, title="Cyno network", status=OS.ACTIVE)
+
+    ordinary = services.create_objective_task(obj, officer)
+    followup = services.create_objective_task(obj, officer, followup=True)
+    assert ordinary.title == followup.title == "Campaign follow-up task"  # indistinguishable
+
+    prefix = Objective.followup_id_prefix(obj.pk)
+    marked = Task.objects.filter(
+        related_type=Objective.RELATED_TYPE, related_id__startswith=prefix
+    )
+    assert [t.pk for t in marked] == [followup.pk]
+    # The signal still maps the marked task back to its objective (the marker is transparent).
+    assert followup in obj.linked_tasks()

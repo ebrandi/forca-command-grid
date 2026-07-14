@@ -2256,8 +2256,12 @@ def campaign_report(request: HttpRequest, pk: int) -> HttpResponse:
         for o in campaign.objectives.select_related("workstream", "owner", "verified_by")
         .prefetch_related("verified_by__characters").order_by("sort_order", "id")
     ]
-    # Close-out follow-ups: the "Follow-up: …" tasks on member-visible campaigns, or the neutral
-    # "Campaign follow-up task" rows on restricted-tier campaigns (title carries no leak, #1).
+    # Close-out follow-ups: selected STRUCTURALLY, by the ``{pk}:f…`` marker close_out() writes
+    # into related_id (Objective.FOLLOWUP_MARKER) — never by title. The follow-up title is written
+    # through gettext, so the old title filter ("Follow-up: …" / "Campaign follow-up task") matched
+    # nothing for an officer closing the campaign in any non-English locale, and their follow-ups
+    # silently vanished from the report; on a restricted campaign it also over-matched, because
+    # every linked task there (volunteer, manually added) carries the same neutral title.
     # One query over the campaign's objective-id prefixes (via the related_type/related_id index)
     # instead of a linked_tasks() query per objective (#38, #21).
     followups = []
@@ -2265,13 +2269,12 @@ def campaign_report(request: HttpRequest, pk: int) -> HttpResponse:
     if obj_ids:
         from apps.tasks.models import Task
 
-        linked_match = Q(related_id__in=obj_ids)
+        followup_match = Q()
         for oid in obj_ids:
-            linked_match |= Q(related_id__startswith=f"{oid}:")
+            followup_match |= Q(related_id__startswith=Objective.followup_id_prefix(oid))
         followups = list(
             Task.objects.filter(related_type=Objective.RELATED_TYPE)
-            .filter(Q(title__startswith="Follow-up:") | Q(title="Campaign follow-up task"))
-            .filter(linked_match)
+            .filter(followup_match)
             .order_by("id")
         )
 

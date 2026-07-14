@@ -16,6 +16,38 @@ from django.utils.translation import gettext_lazy as _
 
 from core.mixins import TimeStampedModel
 
+# --------------------------------------------------------------------------- #
+#  Contribution units: a CODE, plus a display label
+# --------------------------------------------------------------------------- #
+# ``ContributionEvent.unit`` is a stored DISPLAY_MAP *code*, not prose. It is COMPARED — the
+# ledger and dashboard templates branch on ``{% if ev.unit == 'isk' %}`` to pick the ISK
+# formatter — so translating the stored value would silently break that comparison for every
+# non-English pilot: their ISK rows would fall through to the plain-number branch and lose the
+# ISK formatting entirely. The code therefore stays canonical English, forever.
+#
+# The *label* is the translatable half. Keeping the two apart is the whole point: the code
+# drives logic, the label is what a human reads. Templates can render ``ev.unit_label`` (or the
+# ``unit_label`` key on the summary rows in ``services``) while ``ev.unit`` keeps driving the
+# ``== 'isk'`` branch untouched.
+UNIT_LABELS: dict[str, str] = {
+    "count": _("count"),
+    "isk": _("ISK"),
+    "m³": _("m³"),
+    "units": _("units"),
+    "tasks": _("tasks"),
+    "fleets": _("fleets"),
+    "levels": _("levels"),
+    "points": _("points"),
+    "doctrines": _("doctrines"),
+    "directives": _("directives"),
+    "milestones": _("milestones"),
+}
+
+
+def unit_label(code: str):
+    """The human label for a ``ContributionEvent.unit`` code (the code itself if unmapped)."""
+    return UNIT_LABELS.get(code, code)
+
 
 class PilotPreference(TimeStampedModel):
     """Per-member settings. Created lazily the first time a member needs one."""
@@ -77,6 +109,13 @@ class ContributionEvent(TimeStampedModel):
     # comparable cross-kind score leaders tune.
     points = models.IntegerField(default=0, db_index=True)
     # What this credit was for, and (optionally) which corp gap it closed.
+    #
+    # ``description`` is OPTIONAL and carries only what ``kind`` cannot: the item name, the
+    # route, the count. It is NOT a restatement of the kind — the ledger template already falls
+    # back to the translated ``get_kind_display`` when it is blank
+    # (``{{ ev.description|default:ev.get_kind_display }}``), so a recorder that has nothing
+    # unique to add should leave it empty and let the display name localise itself, rather than
+    # freeze an English verb ("Built", "Mined") into a row every locale then reads.
     description = models.CharField(max_length=200, blank=True)
     ref_type = models.CharField(max_length=32, blank=True)
     ref_id = models.CharField(max_length=64, blank=True)
@@ -96,6 +135,15 @@ class ContributionEvent(TimeStampedModel):
                 name="uniq_contribution_per_source_action",
             )
         ]
+
+    @property
+    def unit_label(self):
+        """The translated label for this event's ``unit`` code.
+
+        Read-time only. ``self.unit`` stays the canonical code that templates compare against
+        (``{% if ev.unit == 'isk' %}``); this is the half a human is meant to read.
+        """
+        return unit_label(self.unit)
 
     def __str__(self) -> str:
         return f"{self.user_id}:{self.kind}:{self.magnitude}{self.unit}"

@@ -62,7 +62,10 @@ def test_training_and_unlock_are_credited(sde, character):
 
     unlock = ContributionEvent.objects.get(kind="doctrine", user=character.user)
     assert unlock.points >= 5            # base + priority + effort
-    assert "Unlocked Tackle" in unlock.description
+    # The description carries ONLY what the kind cannot: the doctrine's name. The verb
+    # ("Unlocked") is the kind, and the ledger renders that from the translated
+    # ``get_kind_display`` — it is never frozen into the row.
+    assert unlock.description == "Tackle"
 
 
 @pytest.mark.django_db

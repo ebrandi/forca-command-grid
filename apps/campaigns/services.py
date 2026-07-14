@@ -1031,7 +1031,7 @@ def _batch_delete(model, queryset, batch=1000) -> int:
 #  Linked tasks (doc 04 §10, doc 10 §6.3)
 # --------------------------------------------------------------------------- #
 def create_objective_task(objective, user, *, title=None, assignee=None, due_at=None,
-                          task_type="other"):
+                          task_type="other", followup=False):
     """Create a ``tasks.Task`` soft-linked to an objective through the shared task factory.
 
     Linked by ``related_type="campaign_objective"`` and a per-objective ``related_id``
@@ -1039,6 +1039,10 @@ def create_objective_task(objective, user, *, title=None, assignee=None, due_at=
     carry several tasks while ``apps.campaigns.signals`` maps every task back to it by the pk
     prefix. Records an activity row; the completion roll-up lives in the signal, never here
     (a human closes the objective — automation may not, doc 04/08).
+
+    ``followup=True`` (close-out only) marks the task in that same structural column —
+    ``"{pk}:f"``, ``"{pk}:f2"``, … (:attr:`Objective.FOLLOWUP_MARKER`) — so the close-out report
+    can select follow-ups without ever filtering on the **translated** title.
 
     A campaign whose visibility is not ``members`` never puts a leaky title/description on the
     corp-wide task board (doc 07 §1.4): the task carries a neutral title/description that names
@@ -1049,13 +1053,19 @@ def create_objective_task(objective, user, *, title=None, assignee=None, due_at=
     from apps.tasks.services import create_task
 
     base = str(objective.pk)
-    candidates = [base] + [f"{base}:{n}" for n in range(2, 51)]
+    if followup:
+        # "{pk}:f", "{pk}:f2", … — never collides with the numeric suffixes below.
+        prefix = Objective.followup_id_prefix(base)
+        candidates = [prefix] + [f"{prefix}{n}" for n in range(2, 51)]
+        overflow = f"{prefix}{int(timezone.now().timestamp())}"
+    else:
+        candidates = [base] + [f"{base}:{n}" for n in range(2, 51)]
+        overflow = f"{base}:{int(timezone.now().timestamp())}"
     used = set(
         Task.objects.filter(related_type=Objective.RELATED_TYPE, related_id__in=candidates)
         .values_list("related_id", flat=True)
     )
-    related_id = next((c for c in candidates if c not in used),
-                      f"{base}:{int(timezone.now().timestamp())}")
+    related_id = next((c for c in candidates if c not in used), overflow)
     if objective.campaign.visibility == Campaign.Visibility.MEMBERS:
         task_title = (title or objective.title)[:200]
         task_description = _t("Linked to campaign objective “%(title)s”.") % {"title": objective.title}
@@ -2517,8 +2527,11 @@ def close_campaign(campaign, user, *, final_status, reason="", resolutions=None,
         obj = campaign.objectives.filter(pk=obj_id).first()
         if obj is None:
             continue
+        # The title stays translated (a human reads it on the task board); ``followup=True``
+        # is what the close-out report selects on, so the report survives a non-English closer.
         task = create_objective_task(
-            obj, user, title=(_t("Follow-up: %(title)s") % {"title": obj.title})[:200]
+            obj, user, title=(_t("Follow-up: %(title)s") % {"title": obj.title})[:200],
+            followup=True,
         )
         followups.append(task)
 

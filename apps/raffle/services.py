@@ -471,7 +471,8 @@ def _credit_recognition(result: RaffleDrawResult) -> None:
         record_contribution(
             result.winner_user, kind="raffle",
             magnitude=result.awarded_value or result.prize.estimated_value,
-            unit="isk", description=f"Raffle prize: {result.prize.name}",
+            # The prize's own name — the "Raffle prize:" prefix restated the kind.
+            unit="isk", description=result.prize.name,
             ref_type="raffle_result", ref_id=str(result.pk), points=0,
         )
     except Exception:  # noqa: BLE001 — recognition is best-effort

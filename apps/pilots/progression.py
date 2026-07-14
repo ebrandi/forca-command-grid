@@ -65,7 +65,8 @@ def award_progression(character, prev_skills: dict | None, new_snapshot) -> None
         for sid, target in fired:
             record_contribution(
                 user, "train", magnitude=1, unit="levels",
-                description=f"Trained {names.get(sid, sid)} {target}",
+                # Skill + level only; "Trained" is the kind, rendered translated by the ledger.
+                description=f"{names.get(sid, sid)} {target}",
                 ref_type="skill", ref_id=f"{character.character_id}:{sid}:{target}",
                 points=train_points,
             )
@@ -81,7 +82,8 @@ def award_progression(character, prev_skills: dict | None, new_snapshot) -> None
             )
             record_contribution(
                 user, "doctrine", magnitude=1, unit="doctrines",
-                description=f"Unlocked {doctrine.name}",
+                # The doctrine's name; "Unlocked" is the kind, rendered translated by the ledger.
+                description=doctrine.name,
                 ref_type="doctrine", ref_id=f"{user.id}:{doctrine.id}",
                 points=pts,
             )

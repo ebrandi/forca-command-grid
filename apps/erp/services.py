@@ -189,7 +189,10 @@ def deliver(job: BuildJob, user, quantity: int | None = None) -> Delivery | None
     credited = locked.owner or user
     record_contribution(
         credited, kind="build", magnitude=qty, unit="units",
-        description=f"Built {qty}× {locked.output_type_id}",
+        # Only what the kind cannot say. The leading verb ("Built") IS the kind — the ledger
+        # already renders the translated ``get_kind_display`` chip next to this line, so
+        # repeating it here would just freeze an English word into a row every locale reads.
+        description=f"{qty}× {locked.output_type_id}",
         ref_type="build_job", ref_id=str(locked.pk),
     )
 

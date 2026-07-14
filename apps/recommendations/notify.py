@@ -5,7 +5,7 @@ import logging
 from urllib.parse import urlparse
 
 import requests
-from django.utils import timezone
+from django.utils import timezone, translation
 
 from .models import Alert, Recommendation
 
@@ -59,6 +59,27 @@ def broadcast_discord(content: str, *, classification: str | None = None) -> int
     return broadcast_text(content, classification=classification)
 
 
+def _canonical_type_label(rec: Recommendation) -> str:
+    """``rec``'s type label in canonical English — the value that is safe to PERSIST.
+
+    ``rec.get_type_display()`` returns the ``gettext_lazy`` proxy behind ``Type.choices``. That
+    proxy is correct *at display time*, but ``Alert.title`` is a stored column: resolving it here
+    freezes whatever locale happens to be active in the Celery worker that ran the dispatch beat
+    into a row that officers of every other locale then read. The row would show the WORKER's
+    language, not the reader's — and it would change meaning depending on which worker won.
+
+    So the write side stores the stable English label, and the *display* side stays free to
+    translate: ``Alert.recommendation`` is a live FK, so any renderer can call
+    ``alert.recommendation.get_type_display()`` and get the reader's locale. The i18n boundary
+    belongs there, at read time — never frozen into the row.
+    """
+    with translation.override("en"):
+        try:
+            return str(Recommendation.Type(rec.type).label)
+        except ValueError:  # a type not in the enum (legacy row) — store it verbatim
+            return str(rec.type)
+
+
 def dispatch_alerts(min_severity: int | None = None) -> int:
     """Create in-app alerts (and fan out to armed chat channels) for high-severity recs.
 
@@ -85,7 +106,7 @@ def dispatch_alerts(min_severity: int | None = None) -> int:
             continue
         Alert.objects.create(
             recommendation=rec,
-            title=rec.get_type_display(),
+            title=_canonical_type_label(rec),
             body=rec.message,
             severity=rec.severity,
             channel=Alert.Channel.IN_APP,

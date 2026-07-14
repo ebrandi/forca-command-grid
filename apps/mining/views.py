@@ -245,7 +245,8 @@ def line_paid(request: HttpRequest, pk: int, line_id: int) -> HttpResponse:
             from apps.pilots.services import record_contribution
             record_contribution(
                 line.user, ContributionEvent.Kind.MINING, line.net, "isk",
-                description=f"Mining payout: {line.payout.name}",
+                # The payout's own name — the "Mining payout:" prefix restated the kind.
+                description=line.payout.name,
                 ref_type="mining_payout_line", ref_id=str(line.id),
             )
             credited = True

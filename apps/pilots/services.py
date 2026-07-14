@@ -11,7 +11,7 @@ from decimal import Decimal
 from django.contrib.auth import get_user_model
 from django.utils import formats, timezone
 
-from .models import ContributionEvent, PilotPreference
+from .models import ContributionEvent, PilotPreference, unit_label
 
 
 def get_prefs(user) -> PilotPreference:
@@ -83,7 +83,10 @@ def monthly_summary(user, when=None) -> list[dict]:
             {
                 "kind": ev.kind,
                 "label": labels.get(ev.kind, ev.kind),
+                # ``unit`` is the CODE the template compares (``== 'isk'``); ``unit_label`` is
+                # the translated text a human reads. Never swap one for the other.
                 "unit": ev.unit,
+                "unit_label": unit_label(ev.unit),
                 "total": Decimal("0"),
                 "points": 0,
                 "count": 0,
@@ -183,7 +186,8 @@ def personal_trend(user, months: int = 6, now=None) -> dict:
     for r in rows:
         k = r["kind"]
         bucket = by_kind.setdefault(k, {
-            "kind": k, "label": labels.get(k, k), "unit": r["unit"],
+            "kind": k, "label": labels.get(k, k),
+            "unit": r["unit"], "unit_label": unit_label(r["unit"]),
             "series": [Decimal("0")] * len(month_starts),
             "points": [0] * len(month_starts),
         })
@@ -199,7 +203,8 @@ def personal_trend(user, months: int = 6, now=None) -> dict:
         series = bucket["series"]
         peak = max(series) if series else Decimal("0")
         kinds.append({
-            "kind": bucket["kind"], "label": bucket["label"], "unit": bucket["unit"],
+            "kind": bucket["kind"], "label": bucket["label"],
+            "unit": bucket["unit"], "unit_label": bucket["unit_label"],
             "series": series, "peak": peak,
             "total": sum(series, start=Decimal("0")),
             # 0-100 bar heights relative to the pilot's own peak (private, not vs others).
@@ -261,7 +266,8 @@ def corp_monthly_totals(when=None) -> list[dict]:
         bucket = out.setdefault(
             r["kind"],
             {"kind": r["kind"], "label": labels.get(r["kind"], r["kind"]),
-             "unit": r["unit"], "total": Decimal("0"), "points": 0, "count": 0},
+             "unit": r["unit"], "unit_label": unit_label(r["unit"]),
+             "total": Decimal("0"), "points": 0, "count": 0},
         )
         bucket["total"] += r["total"] or Decimal("0")
         bucket["points"] += r["points"] or 0

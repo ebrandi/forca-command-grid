@@ -317,6 +317,21 @@ class Objective(TimeStampedModel):
     # signal still maps every task back to this objective by the ``{pk}`` prefix.
     RELATED_TYPE = "campaign_objective"
 
+    # Close-out follow-up tasks get an "f"-marked suffix instead (``{pk}:f``, ``{pk}:f2``, …).
+    # The close-out report needs to tell a follow-up apart from an ordinary linked task, and it
+    # may NOT do that on the title: the title is written through gettext (it is user-facing), so
+    # a follow-up spawned by a German-locale officer is stored translated and a title filter
+    # matches nothing — the follow-up silently vanishes from the report. The marker lives in
+    # ``related_id``, a structural column no locale can touch. ``signals`` maps a task back to
+    # its objective with ``related_id.split(":")[0]``, so the marker is transparent to it, and
+    # ``linked_tasks()`` still matches every task by the ``{pk}:`` prefix.
+    FOLLOWUP_MARKER = "f"
+
+    @classmethod
+    def followup_id_prefix(cls, objective_pk) -> str:
+        """The ``related_id`` prefix every close-out follow-up task for ``objective_pk`` carries."""
+        return f"{objective_pk}:{cls.FOLLOWUP_MARKER}"
+
     class Meta:
         ordering = ["sort_order", "id"]
         indexes = [

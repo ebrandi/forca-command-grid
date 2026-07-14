@@ -374,7 +374,10 @@ def mark_paid(claim: SrpClaim, officer, reference: str = "") -> bool:
         kind="srp",
         magnitude=claim.payout,
         unit="isk",
-        description=f"SRP for {claim.killmail_id}",
+        # The loss this paid for. "SRP for" restated the kind ("Ship replacement"), which the
+        # ledger already renders translated beside this line — the killmail ref is the only
+        # thing here the kind cannot convey.
+        description=f"#{claim.killmail_id}",
         ref_type="srp_claim",
         ref_id=str(claim.pk),
     )
