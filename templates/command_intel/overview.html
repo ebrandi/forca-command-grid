@@ -59,7 +59,7 @@
         {% elif latest_report.classification == 'alliance_command' %}<span class="chip !border-win/50 text-win">✦ {% translate "Alliance command" %}</span>
         {% elif latest_report.classification == 'corp_internal' %}<span class="chip !border-cyan/50 text-cyan">◇ {% translate "Corporation internal" %}</span>
         {% else %}<span class="chip !border-gold/50 text-gold">◆ {% translate "High command" %}</span>{% endif %}
-        <span class="text-sm font-medium text-ink">{% translate "Command Intelligence Report" as default_title %}{{ latest_report.title|default:default_title }}</span>
+        <span class="text-sm font-medium text-ink">{% translate "Command Intelligence Report" as default_title %}{{ latest_report.title_i18n|default:default_title }}</span>
         {% if latest_report.generated_at %}<span class="text-xs text-faint">— {{ latest_report.generated_at|date:"d M Y" }}</span>{% endif %}
       </div>
       {% if latest_report.summary %}<p class="mt-2 text-sm text-muted">{{ latest_report.summary|truncatewords:40 }}</p>{% endif %}

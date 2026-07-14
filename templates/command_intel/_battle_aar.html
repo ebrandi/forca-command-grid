@@ -11,7 +11,11 @@ worker builds it, then renders the AAR narrative + the deterministic fact panels
 {% elif analysis.status == 'failed' %}
   <div class="panel border-l-2 border-loss/60 p-4"><p class="text-sm text-loss">▼ {% translate "Analysis failed." %}{% if analysis.error %} <span class="text-faint">{{ analysis.error }}</span>{% endif %}</p></div>
 {% else %}
-  {% with b=analysis.body t=analysis.facts.totals %}
+  {% comment %}Seam B: ``body_i18n`` re-renders the deterministic (degraded) AAR from its scaffold
+  key + params under THIS reader's locale; an LLM narrative and any legacy row have no key and
+  render their stored English verbatim. ``facts`` is numbers + EVE names — English by policy.
+  {% endcomment %}
+  {% with b=analysis.body_i18n t=analysis.facts.totals %}
   {% if analysis.status == 'ready_degraded' %}
   <div class="panel mb-4 border-l-2 border-gold/60 px-4 py-3"><p class="text-sm text-muted">{% blocktranslate %}<span class="text-gold">⚠ Narrative unavailable</span> — the intelligence officer (AI) could not be reached. The computed facts below are complete.{% endblocktranslate %}</p></div>
   {% endif %}

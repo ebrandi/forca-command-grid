@@ -21,7 +21,7 @@
           {% if r.status == 'optimal' %}bg-kill/15 text-kill
           {% elif r.status == 'viable' %}bg-gold/15 text-gold
           {% elif r.status == 'unknown' %}bg-panel2 text-faint
-          {% else %}bg-loss/15 text-loss{% endif %}">{{ r.status }}</span>
+          {% else %}bg-loss/15 text-loss{% endif %}">{{ r.status_label }}</span>
       </div>
       {% if r.missing_viable %}
         <p class="eyebrow mt-3 mb-2">{% translate "Missing to fly" %}</p>

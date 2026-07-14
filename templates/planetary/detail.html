@@ -69,8 +69,9 @@
 </div>
 
 <div class="mb-4 flex flex-wrap items-center gap-2 text-xs text-faint">
-  <span>{% translate "Complexity" %} <span class="text-ink">{{ economics.complexity }}</span></span>·
-  <span>{% translate "Confidence" %} <span class="text-ink">{{ economics.confidence }}</span></span>·
+  {# The view hands us the translated labels; ``economics.complexity`` keeps the raw code. #}
+  <span>{% translate "Complexity" %} <span class="text-ink">{{ complexity_label }}</span></span>·
+  <span>{% translate "Confidence" %} <span class="text-ink">{{ confidence_label }}</span></span>·
   <span>{% blocktranslate with v=totals.gross_day|isk %}Gross {{ v }}/day{% endblocktranslate %}</span>·
   <span>{% blocktranslate with v=totals.input_cost_day|isk %}Inputs {{ v }}/day{% endblocktranslate %}</span>·
   <span>{% blocktranslate with v=economics.totals.customs_day|isk %}Customs {{ v }}/day{% endblocktranslate %}</span>·

@@ -53,7 +53,7 @@
   <h2 class="eyebrow mb-2 text-kill">{% translate "Ready to fly" %}</h2>
   <div class="flex flex-wrap gap-2">
     {% for r in ready %}
-      <a href="{% url 'doctrines:detail' r.doctrine_id %}" class="chip !border-kill/40 !text-kill">{{ r.doctrine }} · {{ r.status }}</a>
+      <a href="{% url 'doctrines:detail' r.doctrine_id %}" class="chip !border-kill/40 !text-kill">{{ r.doctrine }} · {{ r.status_label }}</a>
     {% endfor %}
   </div>
 </section>

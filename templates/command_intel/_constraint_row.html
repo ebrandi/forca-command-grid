@@ -5,6 +5,10 @@ headroom is Z". Severity/status carry glyph + word + colour (never colour alone)
 Honest data: status=unknown -> ○ NO DATA, status=unavailable -> ⚠ OFFLINE, each
 stating WHY rather than a fabricated number.
 
+Seam B: label/detail are rendered through the ``*_i18n`` properties — the row was written
+by a locale-less Celery worker, so the sentence is re-resolved from its scaffold key + params under
+THIS reader's locale (a legacy row with no key falls back to its stored English).
+
 Params:
   c       : an OperationalConstraint
   compact : bool — single-line variant (briefing §③, overview top-list)
@@ -26,11 +30,11 @@ Params:
     {% endif %}
 
     {% if compact %}
-      <span class="min-w-0 flex-1 truncate text-sm text-ink">{{ c.label }}</span>
+      <span class="min-w-0 flex-1 truncate text-sm text-ink">{{ c.label_i18n }}</span>
     {% else %}
       <button type="button" @click="open = !open" :aria-expanded="open" class="flex min-w-0 flex-1 items-center gap-1.5 text-left text-sm text-ink transition hover:text-gold">
         <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" class="h-3 w-3 shrink-0 text-faint transition-transform" :class="open && 'rotate-90'"><path d="M4 2.5l4 3.5-4 3.5"/></svg>
-        <span class="truncate">{{ c.label }}</span>
+        <span class="truncate">{{ c.label_i18n }}</span>
       </button>
     {% endif %}
 
@@ -62,9 +66,9 @@ Params:
           {% for e in c.evidence %}<span class="chip">{{ e.name }} {{ e.value }}{% if e.unit %} {{ e.unit }}{% endif %}</span>{% endfor %}
         </div>
       {% endif %}
-      {% if c.detail %}<p class="text-muted">{{ c.detail }}</p>{% endif %}
+      {% if c.detail_i18n %}<p class="text-muted">{{ c.detail_i18n }}</p>{% endif %}
     </div>
-  {% elif c.status != 'computed' and c.detail %}
-    <p class="mt-1 pl-[1.4rem] text-xs text-faint">{{ c.detail }}</p>
+  {% elif c.status != 'computed' and c.detail_i18n %}
+    <p class="mt-1 pl-[1.4rem] text-xs text-faint">{{ c.detail_i18n }}</p>
   {% endif %}
 </div>

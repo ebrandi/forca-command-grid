@@ -38,7 +38,8 @@ Tiles degrade to non-links when their feature is off.
         <p class="eyebrow mb-2">{% translate "Corp contribution" %} <span class="text-faint">· {% translate "this month" %}</span></p>
         <div class="flex flex-wrap gap-2">
           {% for c in leadership.contrib_totals %}
-            <span class="chip">{{ c.label }}: <span class="ml-1 text-gold">{% if c.unit == 'isk' %}{{ c.total|isk }}{% else %}{{ c.total|floatformat:"-2" }} {{ c.unit }}{% endif %}</span></span>
+            {# ``c.unit`` is the code the ``== 'isk'`` test needs; ``c.unit_label`` is what a human reads. #}
+            <span class="chip">{{ c.label }}: <span class="ml-1 text-gold">{% if c.unit == 'isk' %}{{ c.total|isk }}{% else %}{{ c.total|floatformat:"-2" }} {{ c.unit_label }}{% endif %}</span></span>
           {% endfor %}
         </div>
       </div>

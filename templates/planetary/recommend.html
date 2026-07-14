@@ -55,7 +55,8 @@
     <div class="mt-3 grid grid-cols-4 gap-2 text-center text-xs">
       <div><p class="data text-ink">{{ item.net_month|isk }}</p><p class="text-[10px] text-faint">{% translate "/ month" %}</p></div>
       <div><p class="data text-ink">{{ item.isk_per_m3|isk }}</p><p class="text-[10px] text-faint">ISK / m³</p></div>
-      <div><p class="text-ink">{{ item.complexity }}</p><p class="text-[10px] text-faint">{% translate "complexity" %}</p></div>
+      {# ``item.complexity`` stays the code the badge rule compares; the label is what renders. #}
+      <div><p class="text-ink">{{ item.complexity_label }}</p><p class="text-[10px] text-faint">{% translate "complexity" %}</p></div>
       <div><p class="text-ink capitalize">{{ item.role }}</p><p class="text-[10px] text-faint">{% translate "planet" %}</p></div>
     </div>
     <div class="mt-3 flex items-center justify-between">

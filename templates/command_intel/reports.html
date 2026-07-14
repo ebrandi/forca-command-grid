@@ -23,7 +23,7 @@
           {% elif r.classification == 'corp_internal' %}<span class="chip !border-cyan/50 text-cyan">◇ {% translate "Corporation internal" %}</span>
           {% else %}<span class="chip !border-gold/50 text-gold">◆ {% translate "High command" %}</span>{% endif %}
 
-          <span class="min-w-0 flex-1 truncate text-sm font-medium text-ink">{% translate "Command Intelligence Report" as default_title %}{{ r.title|default:default_title }}</span>
+          <span class="min-w-0 flex-1 truncate text-sm font-medium text-ink">{% translate "Command Intelligence Report" as default_title %}{{ r.title_i18n|default:default_title }}</span>
 
           {% if r.status == 'ready' %}<span class="data text-xs text-kill">▲ {% translate "READY" %}</span>
           {% elif r.status == 'ready_degraded' %}<span class="data text-xs text-gold">⚠ {% translate "DEGRADED" %}</span>

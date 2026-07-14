@@ -55,7 +55,7 @@
           <img src="{% eve_type_icon c.job.output_type_id 32 %}" alt="" loading="lazy" class="h-8 w-8 rounded-sm">
           <div class="min-w-0 flex-1">
             <p class="text-sm text-ink">{{ c.job.quantity }}× {% type_name c.job.output_type_id %}</p>
-            <p class="text-xs {% if c.job.status == 'blocked' %}text-loss{% elif c.mats.ready %}text-kill{% else %}text-faint{% endif %}">{% if c.job.status == 'blocked' %}{% translate "Blocked" %} · {{ c.job.blocked_reason }}{% elif c.mats.ready %}{% translate "materials ready" %}{% elif c.mats.buildable %}{% translate "materials short" %}{% else %}{% translate "no BOM" %}{% endif %}{% if c.job.note %} · {{ c.job.note }}{% endif %}</p>
+            <p class="text-xs {% if c.job.status == 'blocked' %}text-loss{% elif c.mats.ready %}text-kill{% else %}text-faint{% endif %}">{% if c.job.status == 'blocked' %}{% translate "Blocked" %} · {{ c.job.blocked_reason_i18n }}{% elif c.mats.ready %}{% translate "materials ready" %}{% elif c.mats.buildable %}{% translate "materials short" %}{% else %}{% translate "no BOM" %}{% endif %}{% if c.job.note %} · {{ c.job.note_i18n }}{% endif %}</p>
           </div>
           {% if c.job.status == 'blocked' %}
             <span class="chip !border-loss/40 !text-loss">{% translate "Blocked" %}</span>

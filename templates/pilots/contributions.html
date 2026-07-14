@@ -48,7 +48,8 @@
         <div class="panel p-4">
           <p class="eyebrow">{{ s.label }}</p>
           <p class="mt-1 font-display text-2xl font-bold text-gold">{% if s.unit == 'isk' %}{{ s.total|isk }}{% else %}{{ s.total|floatformat:"-2" }}{% endif %}</p>
-          <p class="mt-0.5 text-xs text-faint">{{ s.unit }} · {% blocktranslate count n=s.count %}{{ n }} event{% plural %}{{ n }} events{% endblocktranslate %}{% if s.points %} · <span class="text-gold">{{ s.points }} {% translate "pts" %}</span>{% endif %}</p>
+          {# ``s.unit`` is the code the ``== 'isk'`` test above needs; the label is the readable half. #}
+          <p class="mt-0.5 text-xs text-faint">{{ s.unit_label }} · {% blocktranslate count n=s.count %}{{ n }} event{% plural %}{{ n }} events{% endblocktranslate %}{% if s.points %} · <span class="text-gold">{{ s.points }} {% translate "pts" %}</span>{% endif %}</p>
         </div>
       {% endfor %}
     </div>
@@ -73,7 +74,7 @@
     <div class="panel p-4">
       <div class="flex items-baseline justify-between gap-2">
         <p class="eyebrow">{{ k.label }}</p>
-        <p class="text-xs text-faint">{% translate "best" %} {% if k.unit == 'isk' %}{{ k.peak|isk }}{% else %}{{ k.peak|floatformat:"-2" }} {{ k.unit }}{% endif %}</p>
+        <p class="text-xs text-faint">{% translate "best" %} {% if k.unit == 'isk' %}{{ k.peak|isk }}{% else %}{{ k.peak|floatformat:"-2" }} {{ k.unit_label }}{% endif %}</p>
       </div>
       <div class="mt-3 flex h-12 items-end gap-1">
         {% for b in k.bars %}
@@ -98,7 +99,7 @@
       <div class="flex items-center gap-3 px-4 py-2.5 text-sm">
         <span class="chip">{{ ev.get_kind_display }}</span>
         <span class="min-w-0 flex-1 truncate text-ink">{{ ev.description|default:ev.get_kind_display }}{% if ev.gap_ref %} <span class="text-faint">· {{ ev.gap_ref }}</span>{% endif %}</span>
-        <span class="data text-gold">{% if ev.unit == 'isk' %}{{ ev.magnitude|isk }} ISK{% else %}{{ ev.magnitude|floatformat:"-2" }} {{ ev.unit }}{% endif %}</span>
+        <span class="data text-gold">{% if ev.unit == 'isk' %}{{ ev.magnitude|isk }} ISK{% else %}{{ ev.magnitude|floatformat:"-2" }} {{ ev.unit_label }}{% endif %}</span>
         <span class="hidden w-24 text-right text-xs text-faint sm:block">{{ ev.occurred_at|timesince }} {% translate "ago" %}</span>
       </div>
     {% empty %}

@@ -6,7 +6,8 @@
     <span class="font-medium text-ink">{{ node.name }}</span>
     <span class="data text-xs text-faint">×{{ node.quantity }}</span>
     {% if node.buildable %}
-      <span class="chip !py-0.5 !text-[10px] {% if node.decision == 'build' %}!text-cyan{% else %}!text-faint{% endif %}">{{ node.decision }}{% if node.activity == 'reaction' %} · {% translate "react" %}{% endif %}</span>
+      {# The ``== 'build'`` tests keep using the raw code; only the chip text is the label. #}
+      <span class="chip !py-0.5 !text-[10px] {% if node.decision == 'build' %}!text-cyan{% else %}!text-faint{% endif %}">{{ node.decision_label }}{% if node.activity == 'reaction' %} · {% translate "react" %}{% endif %}</span>
     {% else %}
       <span class="chip !py-0.5 !text-[10px] !text-faint">{% translate "buy · raw" %}</span>
     {% endif %}
