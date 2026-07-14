@@ -211,7 +211,7 @@ _ARMOUR_BS = {
          "probability": "medium", "impact": "high",
          "mitigation": "Front-load the build queue; buy hulls to cover the shortfall.",
          "contingency": "Charter freight of pre-built hulls from trade hubs.",
-         "trigger": "Staged hulls below 60% of target at week three."},
+         "trigger": "Staged hulls below 60 percent of target at week three."},
         {"description": "Ammunition / consumable material shortage", "workstream": "procurement",
          "probability": "medium", "impact": "high",
          "mitigation": "Place standing buy orders early; diversify suppliers.",

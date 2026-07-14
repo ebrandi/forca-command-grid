@@ -253,7 +253,7 @@ BUILTIN_MSGIDS: dict[str, dict[str, str]] = {
         "description": _("Missing mainline hulls at staging"),
         "mitigation": _("Front-load the build queue; buy hulls to cover the shortfall."),
         "contingency": _("Charter freight of pre-built hulls from trade hubs."),
-        "trigger": _("Staged hulls below 60% of target at week three."),
+        "trigger": _("Staged hulls below 60 percent of target at week three."),
     },
     "armour_bs_deployment.risk.2": {
         "description": _("Ammunition / consumable material shortage"),
