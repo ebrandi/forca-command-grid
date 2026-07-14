@@ -6,6 +6,7 @@
 - [Request flow through middleware](#request-flow-through-middleware)
 - [Web / worker / beat topology](#web--worker--beat-topology)
 - [The golden rule: ESI and LLM calls only from Celery workers](#the-golden-rule-esi-and-llm-calls-only-from-celery-workers)
+- [The second rule: never persist a translated string](#the-second-rule-never-persist-a-translated-string)
 - [Service and task layering](#service-and-task-layering)
 - [Cache and warmer pattern](#cache-and-warmer-pattern)
 - [Front-end architecture](#front-end-architecture)
@@ -65,17 +66,41 @@ flowchart TD
     D --> E["CommonMiddleware"]
     E --> F["CsrfViewMiddleware"]
     F --> G["AuthenticationMiddleware\n(sets request.user)"]
-    G --> H["AbsoluteSessionTimeoutMiddleware\n(core.middleware)"]
-    H --> I["MembershipGateMiddleware\n(core.middleware)"]
-    I --> J["FeatureGateMiddleware\n(core.features)"]
-    J --> K["MessageMiddleware"]
-    K --> L["XFrameOptionsMiddleware"]
-    L --> M["SecurityHeadersMiddleware\n(core.middleware)"]
-    M --> N[View]
+    G --> H["ImpersonationMiddleware\n(apps.impersonation)"]
+    H --> I["LocaleMiddleware\n(core.i18n)"]
+    I --> J["AbsoluteSessionTimeoutMiddleware\n(core.middleware)"]
+    J --> K["MembershipGateMiddleware\n(core.middleware)"]
+    K --> L["FeatureGateMiddleware\n(core.features)"]
+    L --> M["MessageMiddleware"]
+    M --> N["XFrameOptionsMiddleware"]
+    N --> O["SecurityHeadersMiddleware\n(core.middleware)"]
+    O --> P[View]
 ```
 
 What each project-specific middleware does:
 
+- **`ImpersonationMiddleware`** (`apps/impersonation/middleware.py`) — when a director
+  has an active "view-as" session, swaps `request.user` for the impersonated pilot so
+  every downstream gate, decorator and view transparently sees the pilot, and keeps the
+  real director on `request.real_user` / `request.impersonator`. Impersonation is
+  view-only: while it is active, any request that could mutate the pilot's account is
+  refused (unsafe HTTP methods, plus the GET-served identity/OAuth link flows), apart
+  from the impersonation exit controls and logout.
+- **`LocaleMiddleware`** (`core/i18n/middleware.py`) — resolves the request's language
+  and activates it before the gates below can short-circuit the response, stamps
+  `request.LANGUAGE_CODE`, deactivates it again in a `finally`, and on the way out sets
+  `Content-Language` and patches `Vary: Accept-Language, Cookie` so a shared cache can
+  never serve the wrong language. It is a custom middleware rather than Django's stock
+  `LocaleMiddleware`, which runs before `request.user` exists and therefore cannot honour
+  the account preference or the impersonation swap; the project also does not use
+  `i18n_patterns`, so a URL is language-independent and this late placement is correct.
+  The resolution order (`core/i18n/resolver.py`) for an authenticated operator is: the
+  account preference (`identity.User.language`) → the `forca_language` cookie →
+  `Accept-Language` (only while leadership leaves browser detection on) → the configured
+  default locale. An anonymous visitor drops the first tier. The operator read here is
+  `request.real_user`, so a director's "view-as" session renders in the *director's*
+  language, not the impersonated pilot's. `I18N_ENABLED` (env, defaults to `True`)
+  short-circuits resolution entirely and returns English.
 - **`AbsoluteSessionTimeoutMiddleware`** (`core/middleware.py`) — runs after
   `AuthenticationMiddleware` because it needs `request.user` and the session. It stamps
   `_auth_started_at` on first authenticated request and force-logs-out once
@@ -153,6 +178,34 @@ persists it, then have the view read the persisted result. See
 [esi-integration.md](./esi-integration.md) for the full pattern, and
 [background-jobs.md](./background-jobs.md) for scheduling a new task.
 
+## The second rule: never persist a translated string
+
+**A translated sentence is never written to the database.** Django coerces a lazy
+translation proxy to `str` on `.save()`, so a `_()` at the write site freezes the row in
+the *writer's* locale — usually a Celery worker, which has no request and no user, and so
+writes English — and every later reader sees that language forever, whatever they chose. It
+is a quiet failure: the string passes `makemessages`, is extracted, is translated by the
+catalogues, and still renders English to everyone. (A lazy proxy stored into a `JSONField`
+is a loud one: a `TypeError` at save time.)
+
+So database-backed prose is persisted as a **key plus JSON-safe params** — `message_key` /
+`message_params` alongside the English prose column (`apps/recommendations/models.py`), or a
+`source_key` naming a code-defined string (`apps/campaigns/models.py`) — and the sentence
+itself lives in the owning app's `messages.py` as a real literal `_("…")` call with named
+`%(param)s` slots, resolved under the *reader's* active locale at render time. A literal is
+required because `_(f"…")` and `_(variable)` are silent no-ops that `xgettext` cannot see,
+and the slots are named because translators reorder clauses.
+`apps/recommendations/messages.py`, `apps/erp/messages.py` and `apps/mentorship/messages.py`
+are the worked examples. Each still writes the English prose column at the write site as the
+audit record and the fallback, so a row that carries no key renders its stored English
+rather than nothing.
+
+Notifications apply the same seam at delivery (`apps/pingboard/dispatch.py`): a per-recipient
+leg buckets its recipients by each pilot's `identity.User.language` and renders once per
+bucket under `translation.override`, while a shared broadcast leg (a Discord webhook, a
+configured channel row) has no single recipient and is rendered once in the configured
+`broadcast_locale`.
+
 ## Service and task layering
 
 The typical call shape in an app is:
@@ -189,6 +242,11 @@ schedule pays that cost off the request path. See
 [background-jobs.md](./background-jobs.md) and
 [../reference/background-jobs.md](../reference/background-jobs.md) for the concrete
 cadences.
+
+Any cached payload that embeds *translated* prose must fold the active language into its
+key with `core.i18n.i18n_cache_key` (`"<base>:<lang>"`), or a value rendered in one language
+is served to the next reader in another; language-neutral caches (ids, booleans,
+English-canonical SDE data) do not need it.
 
 Feature flags (`core/features.py`) follow the same shape at a smaller scale: the
 disabled-feature set and audience map are each stored in one `AppSetting` row and

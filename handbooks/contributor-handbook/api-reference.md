@@ -27,6 +27,7 @@ namespace (set via that app's `app_name = "..."`) at a fixed prefix:
 | Namespace | Prefix | App |
 |---|---|---|
 | (none) | `/` | `config.views` (landing page) and `/healthz` |
+| (none) | `/i18n/` | `core.i18n.urls` — the language selector's `set_language` POST target (`/i18n/setlang/`) and Django's `JavaScriptCatalog` (`/i18n/jsi18n/`). Sets no `app_name`, so both route names are unnamespaced. |
 | `sso` | `/auth/eve/` | `apps.sso` |
 | `identity` | `/` | `apps.identity` |
 | `killboard` | `/killboard/` | `apps.killboard` |

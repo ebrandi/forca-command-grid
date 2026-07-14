@@ -6,6 +6,7 @@
 - [Quick start](#quick-start)
 - [What `make dev` starts](#what-make-dev-starts)
 - [Loading data](#loading-data)
+- [Translations in dev](#translations-in-dev)
 - [Settings modules](#settings-modules)
 - [Ports and host binding](#ports-and-host-binding)
 - [Running against real EVE SSO / ESI locally](#running-against-real-eve-sso--esi-locally)
@@ -63,6 +64,34 @@ template changes (only for dependency changes, which do need `--build`).
 - `python manage.py createsuperuser` — a Django superuser bypasses `core.rbac` role
   checks entirely (`effective_rank` treats `is_superuser` as the top `admin` rank), so
   it's the fastest way to explore every gated page locally without wiring up EVE SSO.
+
+## Translations in dev
+
+The app ships nine locales (`LANGUAGES` in `config/settings/base.py`), but a fresh clone
+with a fresh database renders English only, for two independent reasons. You have to clear
+both to see another language locally.
+
+**No compiled catalogues.** The `Dockerfile` runs `python manage.py compilemessages` during
+the image build, but the compiled `.mo` files are git-ignored build output (`*.mo` in
+`.gitignore`; the `.po` sources under `locale/` **are** tracked), and the dev compose file
+mounts the repository over `/app` (`- .:/app` in `docker-compose.yml`), so the host checkout
+shadows the catalogues the image compiled. Compile them inside the running container, and
+again after you edit a `.po`:
+
+```bash
+docker compose exec web python manage.py compilemessages
+```
+
+**No enabled locales.** The shipped `i18n.config` defaults enable English only
+(`core/i18n/config.py`), and `core/i18n/resolver.py` validates every candidate against that
+allow-list, so it cannot return a locale nobody has turned on — however many `.mo` files
+exist. Enable the one you want at `/ops/admin/i18n/`; the page is Director-only, but a dev
+superuser clears that (see [Loading data](#loading-data) above).
+
+To turn localisation off entirely, set `I18N_ENABLED=0` in your root `.env` (it is listed,
+commented out, in `.env.example`). It is the hard env kill switch (`config/settings/base.py`,
+defaults to `True`): it short-circuits locale resolution to English and hides the language
+selector.
 
 ## Settings modules
 

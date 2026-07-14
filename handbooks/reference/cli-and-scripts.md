@@ -95,8 +95,18 @@ are idempotent (they upsert and skip existing rows/files).
 | `backfill_monthly_stats` | Fill the per-pilot monthly ranking aggregates (one-time backfill). |
 | `backfill_raffle_names` | Backfill entity names for raffle records. |
 | `audit_dependencies` | Run the `pip-audit` dependency vulnerability scan. |
+| `rollback_safety` | Check whether a code-only rollback is safe against the current schema (called by `scripts/rollback.sh`). Exit 0 = safe, 1 = not. |
 | `seed_demo` | Seed roles, a home corp, and a demo doctrine (dev). |
 | `seed_examples` | Seed example content (dev). |
+
+There is no custom command for localisation. The message catalogues are compiled into the
+image at build time by stock `python manage.py compilemessages`, which both the
+[`Dockerfile`](../../Dockerfile) and CI run, so a malformed `.po` fails the build instead of
+falling back to English at runtime, and an operator has no compile step to run. Contributors
+re-extract with `make messages` and compile locally with `make compile-messages`. The `.po`
+files under `locale/` are tracked; `.mo` files are build output and are not committed, and
+`.dockerignore` excludes `locale/**/*.mo` so a stale one in the build context cannot make
+`compilemessages` skip silently.
 
 For the scheduled equivalents of the sync/price/import jobs, see
 [background-jobs.md](./background-jobs.md).

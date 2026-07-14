@@ -28,6 +28,7 @@ Legend: **Req** = required in production; **Sec** = sensitive (treat as a secret
 | `DJANGO_DEBUG` | | | `0` | Debug mode (keep `0` in prod) |
 | `DJANGO_ENABLE_ADMIN` | | | `0` (prod) | Mount the stock Django `/admin/` |
 | `DJANGO_HSTS_SECONDS` | | | `31536000` | HSTS max-age |
+| `DJANGO_LANGUAGE_COOKIE_SECURE` | | | `DJANGO_SESSION_COOKIE_SECURE` | Secure flag on the language cookie (`forca_language`) |
 | `DJANGO_LOG_LEVEL` | | | `INFO` | Root log level |
 | `DJANGO_SECRET_KEY` | ✅ | ✅ | dev-only insecure default | Django cryptographic secret |
 | `DJANGO_SECURE_SSL_REDIRECT` | | | `True` | Redirect HTTP → HTTPS |
@@ -35,12 +36,17 @@ Legend: **Req** = required in production; **Sec** = sensitive (treat as a secret
 | `DJANGO_SESSION_COOKIE_AGE` | | | `43200` | Sliding idle session timeout (s) |
 | `DJANGO_SESSION_COOKIE_SECURE` | | | `True` | Secure flag on the session cookie |
 | `DJANGO_SETTINGS_MODULE` | | | `config.settings.dev` | Settings module to load |
+| `I18N_ENABLED` | | | `True` | Localisation kill switch; `0` short-circuits locale resolution |
 | `POSTGRES_DB` | ✅ | | `forca` | Database name |
 | `POSTGRES_PASSWORD` | ✅ | ✅ | — | Database password |
 | `POSTGRES_USER` | ✅ | | `forca` | Database user |
 | `REDIS_PASSWORD` | ✅ | ✅ | — | Redis container password |
 | `REDIS_URL` | ✅ | ✅ | `redis://redis:6379/0` | Cache + default broker URL |
 | `TOKEN_ENCRYPTION_KEY` | ✅ | ✅ | — | Fernet key encrypting stored tokens/credentials |
+
+> `I18N_ENABLED` is only the outermost gate. Which languages the selector actually offers is
+> leadership-managed in the console at `/ops/admin/i18n/`, not in the environment; see
+> [Localisation](../configuration-reference.md#localisation) in the Configuration Reference.
 
 ## EVE SSO, ESI, and imagery
 

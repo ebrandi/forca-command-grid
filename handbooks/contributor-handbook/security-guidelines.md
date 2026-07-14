@@ -109,6 +109,17 @@ and `preload`), and `X-Frame-Options: DENY`. Don't weaken any of these in applic
 code (e.g. by adding `@csrf_exempt` to a state-changing view) without a specific,
 reviewed reason.
 
+The language selector adds a third cookie. It is named `forca_language` rather than
+Django's stock `django_language`, lasts a year, and is `SameSite=Lax` and `HttpOnly`
+(`config/settings/base.py`). `HttpOnly` is a deliberate deviation from Django's
+default, which leaves the language cookie script-readable; nothing here reads it from
+JavaScript — only the server-side resolver (`core/i18n/resolver.py`) does — so the XSS
+read/write path that default leaves open is closed. In production
+`LANGUAGE_COOKIE_SECURE` is read from `DJANGO_LANGUAGE_COOKIE_SECURE`
+(`config/settings/prod.py`) and defaults to whatever `SESSION_COOKIE_SECURE` is. Don't
+turn `HttpOnly` or `Secure` back off, and don't add client-side code that reads or
+writes this cookie.
+
 ## Never log secrets
 
 Never pass a token, refresh token, API key, webhook URL, or client secret to a
@@ -136,7 +147,13 @@ parameter, a POST field) must scope it to what the requesting user is actually a
 to see — filter by the owning user, character, or corporation, not just the primary
 key. This project's audit history includes fixes for exactly this class of bug (an
 owner-hash/id comparison that didn't scope correctly); when writing a new detail view
-or officer action, scope the queryset explicitly rather than trusting an id alone.
+or officer action, scope the queryset explicitly rather than trusting an id alone. The
+same rule applies to a code that arrives in a POST and is then persisted rather than
+used to look something up: `core/i18n/views.py`'s `set_language` re-derives the locale
+from the enabled allow-list instead of echoing the posted string back, so the value
+written to the language cookie and to `identity.User.language` is always one of the
+codes from `settings.LANGUAGES`, never bytes off the wire. Follow that shape for any
+new endpoint that stores a user-chosen code.
 
 ## Separation of duties in money/reward flows
 

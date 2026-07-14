@@ -76,6 +76,22 @@ Full details, including running against real EVE SSO/ESI, are in
   service/task separation used across the codebase.
 - Web requests must never call ESI or an LLM directly — those calls belong in Celery
   tasks. See the [architecture guide](./handbooks/contributor-handbook/architecture.md).
+- Never write a translated string into the database. Django coerces a lazy translation
+  proxy to `str` on `.save()`, which freezes the writer's locale (usually a Celery
+  worker, which has none) and then shows that one language to every reader. Store the
+  English prose plus a key and its parameters — `<field>_key` / `<field>_params`, or a
+  `source_key` — and resolve at render time, per reader. The prose column stays: it is
+  the English fallback for a row written without a key.
+- User-facing strings must be marked for translation and the catalogues kept fresh. Run
+  `make messages` after adding or changing a string: `tests/test_i18n_catalogue_freshness.py`
+  re-extracts and fails the build if a marked string never reached
+  `locale/<code>/LC_MESSAGES/django.po`. `compilemessages` runs in CI and in the Docker
+  image build, so a malformed `.po` is a red build, not a silent English fallback.
+- Never translate a protected EVE term. `tests/test_i18n_terminology.py` lints every
+  catalogue against
+  [`core/i18n/data/protected-terms.yml`](./core/i18n/data/protected-terms.yml): EVE game
+  data and the jargon we agreed to keep in English, such as doctrine, killboard, and
+  killmail.
 
 ## Tests
 
@@ -139,6 +155,8 @@ saves rework and lets maintainers weigh the change against the project's directi
 - [ ] `ruff check` and `ruff format --check` pass.
 - [ ] `pytest` passes, with tests added/updated for the change.
 - [ ] Documentation in `handbooks/` updated where behaviour changed.
+- [ ] Translatable strings marked; `make messages` run; no protected term translated; no
+      translated string persisted.
 - [ ] No secrets, tokens, or personal data added.
 - [ ] Commit messages are clear and describe the change.
 

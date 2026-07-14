@@ -43,6 +43,7 @@ handbook for the depth behind each step.
 | WSGI/ASGI server | gunicorn | `config.wsgi:application`, 3 workers by default in the image `CMD`. |
 | Static files | WhiteNoise | Compressed (dev/test) / compressed-manifest (prod) storage; no external CDN. |
 | Front end | Server-rendered Django templates + htmx + Alpine.js + Tailwind CSS + Chart.js + svg-pan-zoom | All vendored under `static/`, no CDN scripts (CSP hardening). See [architecture.md](./architecture.md). |
+| Localisation | Django i18n (gettext) | Nine languages (`settings.LANGUAGES`); catalogues under `locale/<code>/LC_MESSAGES/django.po`, runtime in `core/i18n/`. Compiled by `compilemessages` in CI and in the image build. |
 | Secrets / crypto | `cryptography` (Fernet) + `PyJWT` | OAuth refresh-token/credential encryption at rest and EVE SSO JWT validation. |
 | XML parsing | `defusedxml` | Hardened parser for EVE-client fitting XML import. |
 | Lint/format | ruff | Config in `pyproject.toml`: line length 120, `py312`, rule sets `E,F,I,UP,B,DJ,S`. |
@@ -59,6 +60,7 @@ forca-command-grid/
 ├── templates/        # Server-rendered Django templates, one directory per app namespace
 ├── static/           # Compiled CSS, hand-written JS, and vendored front-end libraries
 ├── frontend/         # Node-based build that produces the files under static/ (no runtime Node)
+├── locale/           # Translation catalogues (.po), one directory per language
 ├── deploy/           # Production deployment assets (nginx, compose overlays, certs)
 ├── scripts/          # Operational shell scripts (bootstrap, backup, health checks, deploy helpers)
 ├── tests/            # Cross-app pytest suite (~270 test modules) plus tests/conftest.py fixtures
@@ -69,10 +71,11 @@ forca-command-grid/
 Each app under `apps/` owns one bounded context — its models, views, templates
 namespace, Celery tasks, and (where applicable) admin console pages. `core/` holds
 primitives every app depends on (`core.rbac`, `core.features`, `core.middleware`,
-`core.esi`, `core.audit`, `core.mixins`, `core.freshness`, `core.version`) rather than
-duplicating them per app. See [architecture.md](./architecture.md) for how these
-pieces fit together at request time, and [domain-model.md](./domain-model.md) for a
-one-line summary of every app's responsibility.
+`core.esi`, `core.audit`, `core.mixins`, `core.freshness`, `core.version`,
+`core.i18n`) rather than duplicating them per app. See
+[architecture.md](./architecture.md) for how these pieces fit together at request
+time, and [domain-model.md](./domain-model.md) for a one-line summary of every app's
+responsibility.
 
 ## Where to go next
 

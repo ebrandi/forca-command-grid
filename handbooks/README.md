@@ -31,6 +31,7 @@ Documentation is organised by audience. Start with the guide that matches your r
 | Roles, permissions, and ESI scopes | [Permissions and Roles](./permissions-and-roles.md) |
 | What data is stored and how it is protected | [Data and Privacy](./data-and-privacy.md) |
 | External services and integrations | [Third-Party Services](./third-party-services.md) |
+| Languages and localisation | [Configuration Reference](./configuration-reference.md#localisation) |
 | Terminology | [Glossary](./glossary.md) |
 
 ### Detailed reference
@@ -61,7 +62,7 @@ Command Grid's implemented feature areas, grouped as in the application's consol
 - **Command & readiness** — Readiness platform, Command Intelligence, recommendations,
   Pingboard.
 - **Leadership & platform** — Recruitment, corporation data, EVE SSO/account, admin
-  console/audit, comms-access sync, SDE reference data.
+  console/audit, localisation policy, comms-access sync, SDE reference data.
 
 See the [Feature Catalog](./feature-catalog.md) for the complete, detailed list.
 

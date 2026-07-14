@@ -4,6 +4,7 @@
 
 - [The Command Center dashboard](#the-command-center-dashboard)
 - [The navigation menu](#the-navigation-menu)
+- [Choosing your language](#choosing-your-language)
 - [The quest log](#the-quest-log)
 - [Your personal pilot and character pages](#your-personal-pilot-and-character-pages)
 - [Why a feature might not be there](#why-a-feature-might-not-be-there)
@@ -35,6 +36,33 @@ director — a leadership section and the Admin Console.
 Leadership can turn individual features off, or restrict who can see them (member-only,
 allies included, or fully public) — see [Why a feature might not be there](#why-a-feature-might-not-be-there)
 below. A hidden or restricted feature simply doesn't show up in your nav; it isn't broken.
+
+## Choosing your language
+
+The app is translated into nine languages: English, Portuguese (Brazil), Spanish, French,
+Russian, German, Simplified Chinese, Korean, and Japanese. Leadership decides which of them
+are actually offered; English is always available and can't be turned off.
+
+The language selector sits at the bottom of the left sidebar — and of the mobile menu drawer —
+under your character card, or under the log-in button if you're not signed in. It only appears
+when leadership has enabled more than one language, so if you don't see it and the app is in
+English, that's a leadership setting rather than a fault.
+
+If you never pick one, the app follows your browser's language preference (leadership can turn
+that off too), and falls back to the corp's configured default language when your browser asks
+for something that isn't on offer. So the app may already be in your language the first time
+you open it.
+
+While you're signed in, your choice is saved to your account and follows you to any browser or
+device you sign in from. Signed out, it's remembered in a cookie on that browser only — and
+leadership can switch language selection off for signed-out visitors entirely.
+
+Some things stay in English on purpose. EVE's own data — ship, module, system, station, and
+skill names — comes from CCP, and agreed jargon like *doctrine*, *killmail*, and *killboard* is
+kept in English so that everyone on comms is using the same word. Text your corp writes for
+itself is shown exactly as its author wrote it, not translated: knowledge base pages, alert
+templates, and an officer's free-text ping all reach you in whatever language they were typed
+in.
 
 ## The quest log
 

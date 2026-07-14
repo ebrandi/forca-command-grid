@@ -31,7 +31,7 @@ that the software does not itself enforce.
 | Control | Detail |
 |---|---|
 | Django admin disabled by default | `ENABLE_DJANGO_ADMIN` defaults to `False` in production (`config/settings/prod.py`) — the stock `/admin/` is not mounted; the application uses its own role-gated console at `/ops/` instead. Set `DJANGO_ENABLE_ADMIN=1` only as a deliberate break-glass measure. |
-| Secure cookies | `SESSION_COOKIE_SECURE`, `CSRF_COOKIE_SECURE` default to `True`; sessions are `HttpOnly` with `SameSite=Lax`. |
+| Secure cookies | `SESSION_COOKIE_SECURE`, `CSRF_COOKIE_SECURE` default to `True`; sessions are `HttpOnly` with `SameSite=Lax`. The language cookie (`forca_language`, not Django's stock `django_language`) lasts a year and is `HttpOnly` with `SameSite=Lax` — Django leaves it script-readable by default, but nothing in the front end reads it, so `LANGUAGE_COOKIE_HTTPONLY = True` closes that XSS read/write path. Its Secure flag comes from `DJANGO_LANGUAGE_COOKIE_SECURE`, defaulting to whatever `SESSION_COOKIE_SECURE` is, so it is Secure in production too. |
 | Session lifetime bounds | A 12-hour sliding idle timeout (`DJANGO_SESSION_COOKIE_AGE`) with `SESSION_SAVE_EVERY_REQUEST = True`, bounding the replay window of a stolen session cookie. |
 | HTTPS / HSTS | `SECURE_SSL_REDIRECT` defaults `True`; `SECURE_HSTS_SECONDS` defaults to one year with `includeSubDomains` and `preload`. |
 | Clickjacking protection | `X_FRAME_OPTIONS = "DENY"`, reinforced at the nginx edge (see below). |

@@ -14,6 +14,12 @@ Key design properties of the schedule:
 - **Cache warmers** run just under their cache TTL so a visitor never triggers a cold
   recomputation.
 - **Results are ignored globally** (no task result is consumed), keeping Redis lean.
+- **Workers have no ambient locale**: a task runs without a request, so a job that emits
+  prose resolves the language at send time. A per-recipient leg (in-app, EVE-mail, DM) is
+  bucketed by each pilot's `User.language` and rendered once per bucket; a leg with no single
+  recipient (a Discord webhook, a configured group channel) is rendered once in the corp's
+  broadcast locale. That locale is also the fallback for a pilot who has chosen no language,
+  and a director sets it at `/ops/admin/i18n/`.
 
 ## Table of contents
 

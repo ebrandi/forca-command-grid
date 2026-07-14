@@ -51,6 +51,7 @@ Source: [`requirements-dev.txt`](../../requirements-dev.txt) (PyPI).
 | factory-boy | dev-test | MIT | Test data factories |
 | responses | dev-test | Apache-2.0 | HTTP mocking |
 | ruff | dev-test | MIT | Lint + format |
+| polib | dev-test | (verify) | `.po` catalogue parsing (freshness + terminology checks) |
 
 ## Frontend
 
@@ -75,6 +76,10 @@ Source: [`Dockerfile`](../../Dockerfile), [`docker-compose.prod.yml`](../../dock
 | `nginx:1.27-alpine` | deployment | BSD-2-Clause + Alpine | TLS, proxy, image cache |
 | `postgres:16-alpine` | deployment | PostgreSQL License + Alpine | Database |
 | `redis:7-alpine` | deployment | BSD-3-Clause + Alpine | Cache + broker |
+
+On top of the base image, the application image apt-installs `libpq5` (for psycopg) and
+`gettext`, which provides the `msgfmt` that the image's `compilemessages` build step needs.
+Both are OS packages under their own licences, not PyPI dependencies.
 
 ## External services and data
 

@@ -7,6 +7,7 @@
 - [EVE SSO integration](#eve-sso-integration)
 - [The SDE reference layer](#the-sde-reference-layer)
 - [ProvenanceMixin: honest data freshness](#provenancemixin-honest-data-freshness)
+- [Persisted prose: key + params, never a translation](#persisted-prose-key--params-never-a-translation)
 - [Core identity / SSO / corporation ER diagram](#core-identity--sso--corporation-er-diagram)
 - [Bounded contexts (one line per app)](#bounded-contexts-one-line-per-app)
 
@@ -29,7 +30,13 @@ permissions, role assignments"*) defines the platform's own account and RBAC lay
   `eve:<character_id>`-style string, and identity is established entirely through
   linked `EveCharacter` rows. `max_role_rank()` and `active_permission_keys()` compute
   (and memoize on the instance) the user's highest role tier and any explicit lateral
-  capability grants — consumed by `core.rbac`.
+  capability grants — consumed by `core.rbac`. The account's UI language preference also
+  lives here, on `identity.User.language`: a `settings.LANGUAGES` code (e.g. `pt-br`),
+  blank when the pilot has never chosen one, in which case the resolver may fall back to
+  the browser's `Accept-Language`. It is validated against the enabled allow-list at the
+  `set_language` boundary (`core/i18n/views.py`) rather than by `choices` on the column,
+  so widening `LANGUAGES` needs no migration. The preference is per account, never per
+  character.
 - **`Permission`** — a named capability key (e.g. `recruitment.manage`).
 - **`Role`** — a named tier (`key`, `rank`) with a many-to-many to `Permission`.
 - **`RoleAssignment`** — the join between a `User` and a `Role`, with an optional
@@ -90,6 +97,19 @@ honest "as of 12m ago" label instead of presenting synced data as live. `EveChar
 `Killmail`, `EveAlliance`, `PartnerAlliance`, `FriendlyCorporation`, `CorpMember`,
 `EveCorporation`, `CorpWalletDivision`, `Contact`, `CorpStructure`, and
 `CombatMetric` are examples of models built on this mixin.
+
+## Persisted prose: key + params, never a translation
+
+A model that stores a user-facing sentence stores a stable `<field>_key` plus a JSON-safe
+`<field>_params` next to the English prose column, not a translated string — see
+`Recommendation.message_key` / `message_params` (`apps/recommendations/models.py`) and
+`BuildJob.blocked_reason_key` / `blocked_reason_params` (`apps/erp/models.py`). The sentence
+itself lives in that app's `messages.py` and is resolved at read time under the reader's
+locale. Prose copied from a shipped built-in uses the `source_key` variant instead
+(`apps/campaigns/models.py`, resolved by `templates_i18n.py`). A plain `TextField` of
+prose written by a worker freezes the row in the writer's locale for every reader; see
+[architecture.md](./architecture.md#the-second-rule-never-persist-a-translated-string) for
+why.
 
 ## Core identity / SSO / corporation ER diagram
 

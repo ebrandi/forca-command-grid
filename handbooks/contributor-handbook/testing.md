@@ -9,6 +9,7 @@
 - [Celery in tests](#celery-in-tests)
 - [Coverage](#coverage)
 - [Linting](#linting)
+- [Localisation gates](#localisation-gates)
 - [Gotchas](#gotchas)
 
 ## Running the suite
@@ -128,8 +129,51 @@ since not every model — particularly join/intermediate tables — needs one. T
 additionally ignore `S105`/`S106` (hardcoded password/secret string checks), since test
 fixtures legitimately hardcode dummy credentials.
 
+## Localisation gates
+
+The app is localised into nine languages: English, plus eight translated catalogues
+committed at `locale/<code>/LC_MESSAGES/django.po`. Three gates guard them, and any PR
+that adds a user-visible string will meet at least the first two.
+
+**Catalogue compilation.** `python manage.py compilemessages` runs in CI
+(`.github/workflows/ci.yml`, step "Compile message catalogues") and again during the
+Docker image build (`Dockerfile`: `RUN DJANGO_SETTINGS_MODULE=config.settings.base python
+manage.py compilemessages`). A malformed `.po` is a red build, not a silent fallback to
+English.
+
+**Catalogue freshness.** `tests/test_i18n_catalogue_freshness.py` re-runs `django-admin
+makemessages` against a scratch copy of the tree and compares the set of
+`(msgctxt, msgid)` pairs it extracts against the committed
+`locale/de/LC_MESSAGES/django.po` (any locale would do — the msgid set is identical in
+all of them). Comparing msgid identities rather than file bytes is what keeps the gate
+immune to gettext formatting drift. A string marked in the code but never extracted fails
+the suite; the fix is to re-run `makemessages` and commit the updated
+`locale/*/LC_MESSAGES/django.po` in the same PR.
+
+**Terminology.** `tests/test_i18n_terminology.py` lints every committed catalogue against
+`core/i18n/data/protected-terms.yml`. That file holds two lists: a tripwire sample of EVE
+game-data names (`Rifter`, `Jita`, `Damage Control II`), which must appear verbatim in the
+translation, and 41 pieces of community jargon (`FC`, `cyno`, `logi`, `killmail`, `SRP`,
+`doctrine` and so on) that stay English unless a per-locale exception has been approved in
+that same file — none has been so far. A catalogue that renders one of them into the
+target language fails here.
+
+There are 21 `tests/test_*i18n*` modules in all. Beyond the two gates above they cover the
+per-app seams — for example `test_i18n_resolution.py` (which language a request resolves
+to), `test_i18n_render.py`, and `test_readiness_i18n_seam.py`.
+
 ## Gotchas
 
+- **The catalogue-freshness test skips itself when `xgettext` or `polib` is missing.** It
+  is guarded by `shutil.which("xgettext")` and `pytest.importorskip("polib")`. Both are
+  present in the image `docker compose` builds (`gettext` is installed by the `Dockerfile`,
+  `polib` comes from `requirements-dev.txt`), so run the suite in the container. On a bare
+  host without them the gate silently no-ops, and a missing msgid is only caught later, by
+  CI (which installs `gettext` before running the suite).
+- **`.mo` files are build output, never input.** They are gitignored (`*.mo` in
+  `.gitignore`) and `.dockerignore` excludes `locale/**/*.mo`: if a stale `.mo` rides along
+  in the build context, `compilemessages` reports it as already up to date and skips, so
+  the build-time gate never runs. Never commit one — regenerate with `compilemessages`.
 - **Rely on the pytest exit code, not the summary line, when running under a wrapper
   script or CI step that captures output** — some invocation paths (piping through
   another tool, background runs) can truncate the final summary line while the process

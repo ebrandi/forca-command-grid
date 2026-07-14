@@ -16,6 +16,7 @@ docker compose -f docker-compose.prod.yml logs --tail=100 <service>
 - [`DisallowedHost` in the logs](#disallowedhost-in-the-logs)
 - [TLS / certificate renewal problems](#tls--certificate-renewal-problems)
 - [SDE not loaded (raw IDs in the UI)](#sde-not-loaded-raw-ids-in-the-ui)
+- [Wrong language on the site](#wrong-language-on-the-site)
 - [Celery worker not running](#celery-worker-not-running)
 - [Beat is down](#beat-is-down)
 - [Redis memory eviction](#redis-memory-eviction)
@@ -32,6 +33,9 @@ docker compose -f docker-compose.prod.yml logs --tail=100 <service>
 | `Invalid HTTP_HOST header` / `DisallowedHost` | A scanner hit the bare IP (harmless — nginx already drops it at the edge), or your real domain is missing from `DJANGO_ALLOWED_HOSTS` | Add the domain to `DJANGO_ALLOWED_HOSTS` and restart; confirm nginx's bare-IP `444` rule is intact |
 | TLS issuance/renewal fails | DNS doesn't point at this host, or port 80 isn't reachable during the standalone challenge | Confirm the A/AAAA record and that `ufw`/upstream firewall allow 80/443 |
 | UI shows raw numeric IDs instead of ship/system/skill names | The SDE hasn't been imported | `make import-sde` (or `make bootstrap`); confirm with `make health` |
+| Pilots suddenly see the site in a language nobody asked for | A locale was enabled at `/ops/admin/i18n/` while browser detection was still on (its default), so every pilot whose browser prefers that language now gets it | Untick browser detection on that page (the selector still offers the locale), or untick the locale itself |
+| Everything renders in English even though a locale is enabled | `I18N_ENABLED=0` in `.env`, the locale isn't actually ticked at `/ops/admin/i18n/`, or the pilot has an account language preference, which outranks the browser | Check `.env`, then the console page, then the pilot's own selector choice |
+| A signed-out visitor's language choice doesn't survive a new visit | The `forca_language` cookie is marked `Secure` on a box served over plain HTTP, so the browser discards it. `DJANGO_LANGUAGE_COOKIE_SECURE` defaults to whatever `DJANGO_SESSION_COOKIE_SECURE` is, and that defaults on | On an HTTP-only test box, set `DJANGO_SESSION_COOKIE_SECURE=0` and leave `DJANGO_LANGUAGE_COOKIE_SECURE` unset so it follows. Never relax either on an internet-facing instance |
 | Celery tasks pile up / nothing processes | The `worker` container is down or unhealthy | `docker compose -f docker-compose.prod.yml ps worker`; check its logs; restart it |
 | Nothing is scheduled at all, even routine syncs | The `beat` container is down | `docker compose -f docker-compose.prod.yml ps beat`; check its logs; restart it |
 | Redis evicting keys / cache misses climbing | `maxmemory 512mb` reached; `volatile-lru` is evicting TTL-bearing cache keys (by design) | Expected behavior under pressure — confirm the Celery broker (no-TTL keys) is unaffected; raise `--maxmemory` in `docker-compose.prod.yml` if it's chronic |
@@ -104,6 +108,35 @@ yet — expected immediately after a fresh install with `--skip-bootstrap`, or i
 make import-sde        # or: make bootstrap (SDE + PI + referenced images)
 make health             # should report "SDE reference data loaded"
 ```
+
+## Wrong language on the site
+
+**Cause:** the language is resolved per request, first match wins, and most reports come
+down to which signal won:
+
+- **Signed in:** the pilot's account preference (`identity.User.language`, written
+  whenever they pick a language in the selector) → the `forca_language` cookie → the
+  browser's `Accept-Language` header → the configured default locale.
+- **Signed out:** the `forca_language` cookie → `Accept-Language` → the configured
+  default.
+
+`Accept-Language` is consulted only while **browser detection** is on at
+`/ops/admin/i18n/`, and it is on by default — so enabling a locale immediately changes
+the site for every pilot whose browser prefers that language, whether or not they asked
+for it (see
+[Configuration § Language and locale policy](./configuration.md#language-and-locale-policy)).
+
+**Fix:** work down the same order. If the whole site is English, check `I18N_ENABLED` in
+`.env` (setting it to `0` short-circuits resolution to English) and that the locale is
+actually ticked on the console page. If one pilot is stuck on a language, it's their own
+account preference — they change it in the language selector. If a locale is spreading to
+pilots who never chose it, untick browser detection.
+
+**When reproducing a report, don't impersonate.** Under "view-as" the page renders in the
+**Director's** language, not the impersonated pilot's: the resolver reads the real
+operator behind the session, not the account being viewed. Changing the language while
+impersonating writes your own preference, not theirs. To see what a pilot sees, set your
+own language in the selector instead.
 
 ## Celery worker not running
 

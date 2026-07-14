@@ -54,9 +54,17 @@ carry weak-copyleft or specific terms that are worth noting:
 - **htmx licence identifier** — confirm the exact licence of the pinned htmx version
   against its distribution (metadata has historically shown both BSD-2-Clause and MIT for
   different releases).
+- **`polib` licence identifier** — dev/test dependency (`requirements-dev.txt`), used by the
+  catalogue freshness and terminology checks. Confirm its licence against the package
+  metadata and add it to the summary table above.
 - **Container base image bundled packages** — the `-alpine` and `-slim` images bundle many
   OS packages under their own licences. If you redistribute the built images, review the
   aggregate licences of the bundled OS packages.
+- **`gettext` in the application image** — the `Dockerfile` apt-installs `gettext` so
+  `compilemessages` can compile the message catalogues at build time. The image is a single
+  stage, so those binaries ship inside it rather than staying behind in a builder stage. It
+  is used unmodified and is not linked into the application, but confirm the licence of the
+  Debian package before you redistribute the built image.
 - **Exact pinned versions** — regenerate the inventory against the lock files
   (`frontend/package-lock.json` and the resolved Python versions) at release time, since
   transitive dependencies and their licences can change.

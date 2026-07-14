@@ -14,6 +14,8 @@ policy and legal obligations.
 - [How data is refreshed](#how-data-is-refreshed)
 - [How data is cached](#how-data-is-cached)
 - [Logs and data](#logs-and-data)
+- [Data sent to third parties by the visitor's browser](#data-sent-to-third-parties-by-the-visitors-browser)
+- [Cookies](#cookies)
 - [Retention and member departure](#retention-and-member-departure)
 - [Member data rights](#member-data-rights)
 - [Protecting the deployment](#protecting-the-deployment)
@@ -24,7 +26,7 @@ policy and legal obligations.
 
 | Category | Examples | Why it is needed |
 |---|---|---|
-| **Account / identity** | Application user, linked EVE characters, roles | Login, membership gating, access control |
+| **Account / identity** | Application user, linked EVE characters, roles, chosen UI language | Login, membership gating, access control, showing the interface in the pilot's language |
 | **OAuth tokens** | Encrypted EVE refresh tokens and granted scopes | Background syncs of the pilot's authorised data |
 | **Character game data** | Skills, skill queue, attributes, implants, killmails, assets, fittings, industry jobs, PI colonies | Readiness, doctrines, industry, SRP, personal tools |
 | **Corporation game data** | Membership/roster, wallet journal, contacts/standings, structures, moon extractions, mining ledger, corp blueprints/jobs, corp contracts | Leadership dashboards and corp operations |
@@ -107,6 +109,29 @@ in [third-party-services.md](third-party-services.md#google-fonts-web-fonts).
 
 All *server-side* outbound calls (ESI, EveRef, Discord, Slack, Telegram, WhatsApp, LLM
 providers) are made by the application, not the browser, and are host-allowlisted.
+
+## Cookies
+
+Every cookie the application sets is first-party. There are no analytics or advertising
+cookies.
+
+- **Session** and **CSRF** — Django's own, needed for login and form safety. Production
+  marks both `Secure` (`DJANGO_SESSION_COOKIE_SECURE`, `DJANGO_CSRF_COOKIE_SECURE`) and
+  `SameSite=Lax`. The session cookie is `HttpOnly`; the CSRF cookie is not, because
+  template forms have to read it.
+- **`messages`** — Django's transient carrier for one-off notices ("Fit saved"). It is
+  written only when a notice is pending and is cleared once the notice has been shown.
+- **`forca_language`** — the language the visitor picked from the selector. It is written
+  only on an explicit choice, including a choice made by an anonymous visitor when
+  leadership has enabled anonymous selection. It holds a locale code and nothing else, is
+  `HttpOnly` and `SameSite=Lax` with a one-year age, and is `Secure` in production
+  (`DJANGO_LANGUAGE_COOKIE_SECURE`, defaulting to whatever `DJANGO_SESSION_COOKIE_SECURE`
+  is set to).
+
+A signed-in pilot's choice is also stored on the account (`identity.User.language`), which
+is blank until they pick a language, and that account preference is what the interface
+follows. The cookie is written either way; for a visitor who is not signed in it is the
+only record of the choice.
 
 ## Retention and member departure
 

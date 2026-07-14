@@ -39,6 +39,9 @@ Online concepts it relies on, and the technical and operational vocabulary.
 | **PAP** | Participation record — attendance credit for a fleet operation. |
 | **Managed set** | In comms-access sync, the boundary of external roles the app is authorised to manage. |
 | **AppSetting** | A key/value store for runtime configuration edited through the console. |
+| **Locale** | A language the interface can be rendered in — one of the `settings.LANGUAGES` codes (e.g. `pt-br`). English is canonical and can never be disabled. |
+| **Message catalogue** | The per-locale `locale/<code>/LC_MESSAGES/django.po` file holding the translations; compiled to `.mo` at build time. |
+| **Protected term** | EVE game data or agreed keep-English jargon listed in `core/i18n/data/protected-terms.yml` (doctrine, killboard, killmail) that stays English in every catalogue unless a per-locale exception is approved; a CI check enforces it. |
 
 ## EVE Online terms
 

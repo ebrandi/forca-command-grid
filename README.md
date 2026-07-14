@@ -59,6 +59,13 @@ Major implemented feature areas:
 For the complete, implementation-grounded list, see the
 [Feature Catalog](./handbooks/feature-catalog.md).
 
+The interface is localised into nine languages: English (canonical, and never disabled),
+Portuguese (Brazil), Spanish, French, Russian, German, Simplified Chinese, Korean, and
+Japanese. A fresh install ships with English only enabled; leadership turns individual
+locales on from the admin console at `/ops/admin/i18n/`, which also shows per-locale
+translation coverage. The non-English catalogues are machine drafts with an LLM
+native-review pass, not professionally human-reviewed translations.
+
 ## See it live
 
 A live instance is running at **[forca.club](https://forca.club/)**. Sign in with EVE
@@ -135,7 +142,9 @@ Configuration is by environment variables (see [`.env.example`](./.env.example) 
 fully commented template) plus leadership-tunable settings edited in the admin console
 without a redeploy. Production refuses to boot unless `DJANGO_SECRET_KEY`,
 `TOKEN_ENCRYPTION_KEY`, `DJANGO_ALLOWED_HOSTS` and `DATABASE_URL` are all set — it reports
-every missing one at once.
+every missing one at once. `I18N_ENABLED` is the env-level kill switch for localisation and
+defaults on; setting it to `0` forces the whole interface back to English and hides the
+language selector.
 
 Full details: [Configuration Reference](./handbooks/configuration-reference.md) and
 [Environment Variables](./handbooks/reference/environment-variables.md).

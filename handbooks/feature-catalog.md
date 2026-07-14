@@ -529,8 +529,8 @@ corporation offers to its members (and optionally allies or the public).
 - **Purpose:** The native role-gated console at `/ops/` that replaces the stock Django
   admin for day-to-day configuration: services & features, members and roles (with
   dual-control Director grants), access governance and character recovery, doctrines and
-  content, per-subsystem settings, data-retention policy, a maintenance-task launcher, an
-  investigable audit log, and an integration-health page.
+  content, per-subsystem settings, localisation policy, data-retention policy, a
+  maintenance-task launcher, an investigable audit log, and an integration-health page.
 - **Roles:** Hub is officer; most configuration is director. Every sensitive action is
   audit-logged.
 - **Background jobs:** Retention enforcement, member-leave enforcement (report-only until
@@ -552,3 +552,22 @@ corporation offers to its members (and optionally allies or the public).
 - **Purpose:** A relational subset of CCP's Static Data Export that every feature reads to
   turn EVE ids into names, ship hierarchies, skill and build requirements, and map
   geometry. Loaded by operators via management commands; no user-facing routes.
+
+### Languages and localisation
+
+- **Users:** every pilot; directors for the policy.
+- **Purpose:** The interface is localised into nine languages: English (canonical, and
+  always enabled), Portuguese (Brazil), Spanish, French, Russian, German, Simplified
+  Chinese, Korean, and Japanese. A language selector appears in the sidebar user block
+  once more than one locale is enabled, and an authenticated pilot's choice is saved to
+  their account (`identity.User.language`) as well as to the `forca_language` cookie. The
+  active language resolves in order: account preference, then the cookie, then the
+  browser's `Accept-Language` (only while leadership leaves browser detection on), then
+  the configured default — anonymous visitors skip the account step. Notifications are
+  rendered in each recipient's own language; a group broadcast with no single recipient
+  uses the configured broadcast locale. The translations are machine drafts with an LLM
+  native-review pass, not professional human translation.
+- **Roles:** Pilots set their own language. The localisation policy page
+  (`/ops/admin/i18n/`) — which locales the selector offers, the default, browser
+  detection, and the broadcast locale — is Director-only and audit-logged. A fresh
+  install enables English only.

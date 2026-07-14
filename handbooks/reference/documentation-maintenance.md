@@ -42,6 +42,8 @@ Update documentation in the **same pull request** as the change that affects it.
 |---|---|
 | New or changed environment variable | [configuration-reference.md](../configuration-reference.md) and [environment-variables.md](./environment-variables.md) |
 | New or changed feature | [feature-catalog.md](../feature-catalog.md), plus the relevant end-user/administrator page |
+| New or changed user-visible string | the message catalogues (`locale/*/LC_MESSAGES/django.po`), re-extracted with `make messages` — see [contributor-handbook/testing.md](../contributor-handbook/testing.md#localisation-gates) |
+| New or changed locale, or localisation policy | [configuration-reference.md](../configuration-reference.md), [environment-variables.md](./environment-variables.md), and [administrator-handbook/console-overview.md](../administrator-handbook/console-overview.md) |
 | New or changed role, permission, or ESI scope | [permissions-and-roles.md](../permissions-and-roles.md) |
 | New or changed scheduled task | [background-jobs.md](./background-jobs.md) |
 | New management command or script | [cli-and-scripts.md](./cli-and-scripts.md) |
@@ -65,6 +67,8 @@ catalog.
 - Use "recommended" wording for operational best practices that the software does not
   enforce.
 - Prefer relative Markdown links between pages.
+- Write the handbooks in English only. The interface is localised separately, through the
+  catalogues under `locale/`, so a documentation change needs no translation pass.
 
 ## Validating documentation
 

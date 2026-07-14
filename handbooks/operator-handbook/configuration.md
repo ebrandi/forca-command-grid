@@ -11,6 +11,7 @@ does not repeat that content.
 - [Required-to-boot variables](#required-to-boot-variables)
 - [Setting up EVE SSO](#setting-up-eve-sso)
 - [Console-managed configuration (no `.env` required)](#console-managed-configuration-no-env-required)
+  - [Language and locale policy](#language-and-locale-policy)
 - [Changing configuration after deployment](#changing-configuration-after-deployment)
 
 ## Where configuration lives
@@ -89,6 +90,34 @@ application boots and runs normally without any of them. See
 [Third-Party Services](../third-party-services.md) for what each one does and how it
 fails, and [Configuration Reference](../configuration-reference.md) for the fallback
 environment variables.
+
+### Language and locale policy
+
+The application ships in nine languages: English, Portuguese (Brazil), Spanish, French,
+Russian, German, Simplified Chinese, Korean, and Japanese. English is the canonical
+source language and can never be disabled. Which of the others the language selector
+offers is a leadership policy decision rather than deployment configuration: it is set at
+`/ops/admin/i18n/` (**Director** role), stored as the `i18n.config` app setting, and takes
+effect immediately with no redeploy, like the rest of this section. The shipped defaults
+enable **English only**, so a fresh install stays English-only until someone turns a
+locale on. The console page shows per-locale translation coverage; the catalogues are
+machine drafts with an LLM native-review pass, not professionally human-reviewed
+translations, so read the coverage figure before you commit to a language.
+
+**Enabling a locale is a corp-wide flip, not a preview.** Browser detection defaults to
+**on**, so the moment you tick a locale, every pilot whose browser prefers that language
+gets it on their next page load, unless they have already picked a language of their own
+(an explicit choice outranks the browser). To look at a locale before committing, untick
+browser detection first — the locale is then reachable only by picking it explicitly in
+the language selector.
+
+Two knobs stay at the environment level (defaults and detail in the
+[Configuration Reference](../configuration-reference.md#environment-variables)):
+`I18N_ENABLED` (default on) is the hard kill switch — set `I18N_ENABLED=0` in `.env` to
+short-circuit locale resolution to English and hide the selector, in the same spirit as
+the `COMMS_ACCESS_ENABLED` switch above. `DJANGO_LANGUAGE_COOKIE_SECURE` sets the
+`Secure` flag on the `forca_language` cookie and defaults to whatever
+`DJANGO_SESSION_COOKIE_SECURE` is.
 
 ## Changing configuration after deployment
 

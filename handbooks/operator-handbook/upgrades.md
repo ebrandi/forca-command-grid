@@ -20,12 +20,28 @@ on the first failure so a partial upgrade never leaves the stack in an unknown s
 
 | Step | Action |
 |---|---|
-| 1/6 | **Back up the database** (`scripts/backup.sh ./backups`) — aborts the entire upgrade if the backup fails |
-| 2/6 | `git fetch --prune origin`, `git checkout <branch>`, then `git pull --ff-only origin <branch>` — **fast-forward only**; refuses to proceed if your checkout has diverged (e.g. local changes) rather than silently discarding anything |
-| 3/6 | Stamp the new build revision (`deploy/stamp-version.sh`) so the footer reflects what's actually deployed |
-| 4/6 | Rebuild and restart the stack (`docker compose -f docker-compose.prod.yml up -d --build`) |
-| 5/6 | Wait for services to become ready (`scripts/wait-for-services.sh`), then apply migrations and `collectstatic` |
-| 6/6 | Run the health check (`scripts/healthcheck.sh`) — a failure here is reported as a warning, not aborted, since the upgrade steps themselves already completed; investigate immediately if it fails |
+| 1/7 | **Back up the database** (`scripts/backup.sh ./backups`) — aborts the entire upgrade if the backup fails |
+| 2/7 | `git fetch --prune origin`, `git checkout <branch>`, then `git pull --ff-only origin <branch>` — **fast-forward only**; refuses to proceed if your checkout has diverged (e.g. local changes) rather than silently discarding anything |
+| 3/7 | Stamp the new build revision (`deploy/stamp-version.sh`) so the footer reflects what's actually deployed |
+| 4/7 | **Build** the new image (`docker compose -f docker-compose.prod.yml build`) — the running stack keeps serving throughout |
+| 5/7 | **Migrate** on the new image, in a one-off container (`run --rm --no-deps -T web python manage.py migrate --noinput`), while the old stack is still live |
+| 6/7 | **`collectstatic`** on the new image, also in a one-off container — the static manifest must be in the shared volume *before* the new web container boots, or gunicorn starts without one and 500s |
+| 7/7 | **Swap** the containers (`up -d`), wait for services (`scripts/wait-for-services.sh`), then **restart nginx last** — nginx caches the web container's IP and hands out 502s until it is restarted (skipped if this deployment has no `nginx` service) |
+
+Finally it runs the health check (`scripts/healthcheck.sh`) — a failure there is reported as
+a warning, not aborted, since the upgrade steps themselves already completed; investigate
+immediately if it fails.
+
+The order matters, and it is not the obvious one. Building and swapping *before* migrating
+would start the new code against the old schema, and every session-bearing request 500s
+(`column ... does not exist`) for the whole migrate window — the site is down while the
+upgrade "succeeds". Migrating on the new image while the old containers still serve shrinks
+the window in which code and schema disagree to the container swap itself.
+
+The rebuild in step 4/7 is also what ships a translation change: the message catalogues are
+compiled into the image (`compilemessages` runs in the `Dockerfile`), so a catalogue edit
+needs a rebuild rather than a container restart, and a malformed `.po` fails the build here
+instead of silently falling back to English.
 
 By default it upgrades the **currently checked-out branch**; pass a branch explicitly if
 needed:
@@ -56,15 +72,12 @@ initial install.
 
 ## Migration procedure
 
-Database schema migrations are applied automatically by both upgrade paths (`make
-update` and the deploy script), via:
-
-```bash
-docker compose -f docker-compose.prod.yml exec -T web python manage.py migrate --noinput
-```
+Database schema migrations are applied automatically by both upgrade paths (`make update`
+and the deploy script). `scripts/update.sh` runs them in a one-off container on the newly
+built image, before the containers are swapped (step 5/7 above).
 
 To apply migrations on their own at any time (e.g. after a manual `git pull` and
-rebuild):
+rebuild), against the *running* stack:
 
 ```bash
 make migrate
@@ -77,7 +90,7 @@ health check will flag it rather than let the discrepancy go unnoticed.
 ## Rollback considerations
 
 Use `scripts/rollback.sh`. Because `scripts/update.sh` always dumps the database as step
-1/6 — before any code or schema change — the ingredients for a rollback exist for
+1/7 — before any code or schema change — the ingredients for a rollback exist for
 **every** upgrade performed through `make update`.
 
 ```bash
@@ -105,8 +118,34 @@ migrations, the schema is newer than the code you are rolling back to.
 | Situation | What to do |
 | --- | --- |
 | The upgrade added no migrations | `make rollback REF=...` — code only |
-| It added only *additive* migrations (new nullable column, new table) | Code only usually works; the old code simply ignores the new objects |
+| It added only *additive* migrations (new table, new column) | **Not automatically safe.** Code only works if every added column is nullable or carries a *database* default — see below |
 | It *altered* or *dropped* columns, or changed constraints | You must pass `DUMP=` — old code against the new schema will fail in ways that are hard to diagnose |
+
+**"Additive" does not mean "safe".** Django enforces field defaults in Python, not in
+PostgreSQL: `AddField(default=...)` emits `ADD COLUMN ... DEFAULT x NOT NULL` and then
+immediately `ALTER COLUMN ... DROP DEFAULT`, so the column is left **NOT NULL with no
+database default**. Roll the code back and every read still works and `/healthz` still
+passes — while every INSERT from the older code, which does not know the column exists and
+so never supplies it, dies on a not-null violation. The breakage is silent and delayed: it
+lands on whatever writes first. Only `db_default=` (Django 5.0+) leaves a real default
+behind in the database.
+
+This is not hypothetical. `apps/identity/migrations/0004_user_language.py` adds
+`User.language` as a `CharField(max_length=16, blank=True, default="")` — additive, no
+`db_default`. Roll the code back past it without restoring the database and the site looks
+entirely healthy, while a new pilot's first login cannot create a user row.
+
+`scripts/rollback.sh` no longer asks you to make this judgement. Before a code-only
+rollback it works out which migrations exist in the current tree but not in the revision
+you are going back to, and runs `manage.py rollback_safety` on them. That command asks the
+live database what those columns actually look like, and refuses the rollback if any added
+column is NOT NULL with no database default, or if one of the migrations did something
+outright destructive (`RemoveField`, `AlterField`, `DeleteModel`, and similar). It prints
+the offending tables and your options. `make rollback REF=... DRIFT=1` overrides the
+refusal, once you have read the list and accept that those tables become unwritable to the
+rolled-back code. The check reads the schema through the running `web` container, so if the
+stack is down the script stops and tells you it could not verify, rather than passing you
+silently.
 
 Restoring the database **discards every row written since that dump was taken** (new
 killmails, SRP claims, ledger entries). That is the price of a self-consistent state.
@@ -120,5 +159,10 @@ If you would rather not use the script, the same four steps are:
 1. `scripts/backup.sh ./backups` — safety net for the rollback itself.
 2. `git checkout <previous-ref>` and `deploy/stamp-version.sh .`
 3. `docker compose -f docker-compose.prod.yml up -d --build`
-4. `make restore FILE=./backups/<pre-upgrade-dump>.sql.gz` (only if the schema moved),
-   then `make health`.
+4. `make restore FILE=./backups/<pre-upgrade-dump>.sql.gz`, then `make health`.
+
+Skip the restore in step 4 only if you have positively established that the schema left
+behind is writable by the old code: no column added since the target revision may be NOT
+NULL without a database default. An additive `AddField` counts as the schema moving. By
+hand you do not get the `rollback_safety` gate that `scripts/rollback.sh` runs for you, so
+this is the step where the judgement is yours.

@@ -65,7 +65,17 @@ function itself does, following the [ESI integration](./esi-integration.md) patt
    an ESI scope grant). The task should no-op cheaply (one settings/config read) rather
    than erroring, so it's safe to ship enabled in the schedule from day one. See
    the pattern below.
-5. **Document the cadence** in [../reference/background-jobs.md](../reference/background-jobs.md)
+5. **Remember the worker has no locale.** A task runs with no request and no user, so a
+   user-facing sentence it persists must not be translated at the write site: Django coerces
+   a lazy translation proxy to `str` on `.save()`, freezing the row in the worker's locale
+   (English) for every later reader. It fails quietly — the string still passes
+   `makemessages` and still translates nothing. Store a stable `<field>_key` plus JSON-safe
+   `<field>_params` instead, and let the sentence be resolved from the owning app's
+   `messages.py` at render time under the reader's locale (`apps/recommendations/messages.py`
+   is the worked example for engine prose, `apps/pingboard/messages.py` for notifications).
+   The full rule is in
+   [architecture.md](./architecture.md#the-second-rule-never-persist-a-translated-string).
+6. **Document the cadence** in [../reference/background-jobs.md](../reference/background-jobs.md)
    so operators can see the full schedule in one place (`CONTRIBUTING.md` calls this
    out as a required doc update for new background jobs).
 

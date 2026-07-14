@@ -23,6 +23,14 @@ the way the modules feed each other — losses inform doctrine supply, doctrines
 plans, skills inform fleet readiness, readiness informs leadership decisions, and every
 contribution is recognised.
 
+The application is localised into nine languages: English, Portuguese (Brazil), Spanish,
+French, Russian, German, Simplified Chinese, Korean, and Japanese. English is the canonical
+source language and is always enabled; a fresh install offers English only, and leadership
+enables the other locales from the admin console (the policy and its defaults are in
+[configuration-reference.md](./configuration-reference.md)). Once a locale is enabled, each
+pilot picks their own language from the language selector, and the choice is saved to
+their account rather than to a single character, so it follows them between sessions.
+
 ## The problems it solves
 
 Running an EVE corporation well means constantly turning raw game data into decisions:

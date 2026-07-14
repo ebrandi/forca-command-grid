@@ -43,13 +43,15 @@ Once you have signed in and your character is confirmed as a corp member, you ge
   **Hall of Fame**.
 - Control over your own **ESI data-sharing scopes**, your **notification channels**, and
   your **privacy/data rights**.
+- The ability to use the app in **your own language**, where leadership has enabled it:
+  English plus up to eight others.
 
 ## Table of contents
 
 | Page | What's in it |
 |---|---|
 | [Getting started](./getting-started.md) | Signing in with EVE SSO, what ESI access means, what a non-member sees |
-| [Navigating the app](./navigating-the-app.md) | The Command Center dashboard, the nav, the quest log, your character pages |
+| [Navigating the app](./navigating-the-app.md) | The Command Center dashboard, the nav, choosing your language, the quest log, your character pages |
 | [Combat and progression](./combat-and-progression.md) | The killboard, combat ranks, Hall of Fame, newbro milestones |
 | [Fleets and doctrines](./fleets-and-doctrines.md) | Doctrines, readiness, skill plans, fleet ops, SRP |
 | [Tools and services](./tools-and-services.md) | Freight, buyback, corp store, industry, mining, PI, navigation, stockpile, tasks, knowledge base, raffles, mentorship |

@@ -3,6 +3,7 @@
 ## Table of contents
 
 - [Signing in with EVE SSO](#signing-in-with-eve-sso)
+- [The app may already be in your language](#the-app-may-already-be-in-your-language)
 - [What ESI authorisation means](#what-esi-authorisation-means)
 - [What data you share, and why](#what-data-you-share-and-why)
 - [Login scopes vs. optional feature scopes](#login-scopes-vs-optional-feature-scopes)
@@ -25,6 +26,17 @@ You can link more than one character to the same account by repeating this proce
 your account pages. If you hold the **Director** role on your corporation in-game, you are
 automatically recognised as a Director in the app the first time you sign in (and kept in
 sync afterward) — nothing to request.
+
+## The app may already be in your language
+
+The app is available in nine languages. If leadership has enabled the one your browser
+asks for and left browser detection on, the page you sign in from — and everything after
+it — is already in that language the first time you load it, before you choose anything.
+You can change it at any time from the language selector at the bottom of the sidebar,
+which signed-out visitors can use too unless leadership has turned that off; once you're
+signed in, that choice is saved to your account rather than just to the browser you're
+using. See [Choosing your language](./navigating-the-app.md#choosing-your-language) for
+the details.
 
 ## What ESI authorisation means
 

@@ -22,6 +22,7 @@ stored in the database. It is written for operators and contributors.
   - [Command Intelligence / LLM](#command-intelligence--llm)
   - [Pingboard alert channels](#pingboard-alert-channels)
   - [Email and briefings](#email-and-briefings)
+  - [Localisation](#localisation)
 - [Database-stored settings (leadership-tunable)](#database-stored-settings-leadership-tunable)
 - [Feature flags and audiences](#feature-flags-and-audiences)
 
@@ -68,6 +69,7 @@ Legend: **[REQUIRED]** = production boot fails if unset; **[sensitive]** = secre
 | `DJANGO_SECURE_SSL_REDIRECT` | No | `True` | Redirect HTTP→HTTPS. | Disable only on internal HTTP test boxes. |
 | `DJANGO_HSTS_SECONDS` | No | `31536000` | HSTS max-age. | — |
 | `DJANGO_SESSION_COOKIE_SECURE` / `DJANGO_CSRF_COOKIE_SECURE` | No | `True` | Secure cookie flags. | Keep on behind TLS. |
+| `DJANGO_LANGUAGE_COOKIE_SECURE` | No | follows `DJANGO_SESSION_COOKIE_SECURE` | Secure flag on the language cookie. | Keep on behind TLS. |
 
 ### Database
 
@@ -183,6 +185,20 @@ sent).
 | `DEFAULT_FROM_EMAIL` | No | `forca@localhost` | From address. | — |
 | `FORCA_BRIEFING_EMAILS` | No | empty | Comma-separated recipients of the scheduled leadership briefing. | — |
 
+### Localisation
+
+Which languages are actually offered is leadership-tunable (see below); the environment
+only holds the kill switch and the language cookie's `Secure` flag.
+
+| Variable | Req. | Default | Purpose | Security |
+|---|---|---|---|---|
+| `I18N_ENABLED` | No | `1` (on) | Hard kill switch, mirroring `COMMS_ACCESS_ENABLED`; `0` short-circuits locale resolution entirely. | — |
+
+The explicit language choice is persisted in a cookie named **`forca_language`** — not
+Django's stock `django_language` — with a one-year age, `SameSite=Lax`, and `HttpOnly` set
+in [`config/settings/base.py`](../config/settings/base.py). Production adds the `Secure`
+flag through `DJANGO_LANGUAGE_COOKIE_SECURE` (see [Django core](#django-core)).
+
 ## Database-stored settings (leadership-tunable)
 
 Beyond environment variables, most day-to-day behaviour is configured **without a
@@ -198,6 +214,23 @@ directors. Examples include:
 - Command Intelligence model/budget/threshold knobs.
 - Data-retention windows and member-leave policy.
 - Notification event routing and classification.
+- Localisation policy: which languages the selector offers, the default and broadcast
+  locale, browser detection, and anonymous selection.
+
+Localisation is gated three times, in order: **`I18N_ENABLED`** (the environment kill
+switch above) → **`settings.LANGUAGES`** (the framework-level set of known locales) → the
+**`i18n.config`** `AppSetting` row, edited at **Admin Console → Localisation**
+(`/ops/admin/i18n/`, Director-only, audit-logged). That row holds `enabled`, `locales`,
+`default`, `broadcast_locale`, `browser_detection`, and `anon_selection`. The shipped
+defaults enable **English only**, and `en` can never be disabled — it is the canonical
+source language and the terminal fallback.
+
+> **Enabling a locale is a corp-wide flip, not a preview.** `browser_detection` defaults
+> to **on**, so the moment you tick a language, every pilot who has not picked one
+> themselves and whose browser prefers it gets the interface in that language on their
+> next page load — they are never asked. If you want to look at a locale yourself first,
+> untick `browser_detection` before you enable it; the language is then reachable only
+> through the selector.
 
 The full set of console sections is enumerated in the
 [administrator handbook](./administrator-handbook/README.md).

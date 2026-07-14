@@ -41,6 +41,7 @@ routes under a prefix; the app's `urls.py` defines the named routes within it.
 |---|---|---|
 | `/` | `identity` | Command Center dashboard, character pages, privacy/data rights |
 | `/auth/eve/` | `sso` | EVE SSO login, callback, logout, ESI scopes, disconnect |
+| `/i18n/` | `core.i18n` (no namespace) | Language selector target and the JavaScript message catalogue |
 | `/killboard/` | `killboard` | Killboard, rankings, stats, intel, battle reports |
 | `/doctrines/` | `doctrines` | Doctrine library, readiness, Shipyard |
 | `/industry/` | `industry` | Industry Center |
@@ -81,6 +82,8 @@ when `DJANGO_ENABLE_ADMIN=1`.
 | `/healthz` | GET | Liveness/readiness probe. Returns JSON `{status, database}`; `200` when the database is reachable, `503` otherwise. Exempt from the HTTPS redirect for container health checks. |
 | `/robots.txt` | GET | Served by nginx; disallows query-string (faceted) crawl paths. |
 | `/eveimg/...` | GET | Same-origin EVE image proxy/cache (served by nginx). |
+| `/i18n/setlang/` | POST | Language selector target; POST-only (`@require_POST`, [`core/i18n/views.py`](../../core/i18n/views.py)). Resolves the posted code against the enabled allow-list, sets the `forca_language` cookie, and for a signed-in operator also saves the account preference (`identity.User.language`). Redirects only to a same-origin `next`. |
+| `/i18n/jsi18n/` | GET | Django's `JavaScriptCatalog`: the JS message catalogue, served as an external response (no inline script). |
 
 ## Authentication
 

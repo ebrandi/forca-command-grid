@@ -17,6 +17,9 @@
 | I can't grant a scope on the ESI Scopes page | The scope may not be enabled on the app's registered EVE application, or you may not hold the in-game role a Director-tier scope requires | Try again after confirming your in-game role; if it still fails, this is an operator-side configuration issue to raise with leadership |
 | I was asked to fly a doctrine but I'm not sure I can | Check "My readiness" before the op | See [Fleets and doctrines](./fleets-and-doctrines.md#doctrines-and-readiness) |
 | My SRP claim seems stuck | It's awaiting review by an SRP manager | SRP approval and payout are manual leadership steps by design (no self-approval) — check back or ask leadership |
+| The app is in a language I never chose | You haven't picked a language, so the app is following your browser's language preference | Pick your language from the selector at the bottom of the sidebar — see [Navigating the app](./navigating-the-app.md#choosing-your-language). If you're signed in, that choice is saved to your account |
+| There's no language selector in my sidebar | Leadership has only enabled English, or (if you're signed out) has turned off language selection for signed-out visitors | Ask an officer or director whether more languages are meant to be available |
+| The app is in my language but some text is still English | EVE's own names and agreed jargon are deliberately kept in English, and corp-written text (knowledge base pages, alert templates, an officer's free-text ping) shows as its author wrote it | This is by design, not a bug. If a translated phrase is actually wrong or confusing, flag it to leadership |
 
 ## What to contact leadership about
 

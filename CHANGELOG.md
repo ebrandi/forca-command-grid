@@ -5,6 +5,33 @@ All notable changes to [FORCA] Command Grid are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
 project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Localisation** — the interface is available in nine languages: English, Portuguese
+  (Brazil), Spanish, French, Russian, German, Simplified Chinese, Korean, and Japanese.
+  English is the canonical source language and cannot be turned off. The translations are
+  machine drafts with an LLM native-review pass, not professional human translation.
+- **Language selector and account preference** — a selector at the foot of the sidebar lets
+  a pilot pick their interface language. The choice is written to the `forca_language`
+  cookie, so an anonymous visitor's pick survives; a signed-in pilot's is also stored on
+  their account (`identity.User.language`). For a signed-in pilot the active language is
+  resolved from the account preference, then the cookie, then `Accept-Language`, then the
+  configured default.
+- **Localisation policy console** — a Director-only page at `/ops/admin/i18n/` controls
+  which locales the selector offers, the default locale, whether the browser's
+  `Accept-Language` header is honoured, and whether anonymous visitors may choose a
+  language. It ships with English only enabled, so nothing user-visible changes until a
+  Director turns a locale on. Browser detection is on by default, so enabling a locale
+  immediately serves it to every pilot whose browser asks for it.
+- **Per-reader notification text** — notifications and other database-backed prose are no
+  longer stored as translated text. They are persisted as a message key plus its parameters
+  and rendered in the reader's own language at display time; a group broadcast with no
+  single recipient uses the configured broadcast locale.
+- **`I18N_ENABLED`** — an environment kill switch, default on. Turning it off
+  short-circuits locale resolution to English and hides the selector.
+
 ## [1.0.0]
 
 The first public release of [FORCA] Command Grid — a free, self-hostable operations hub for

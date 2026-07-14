@@ -26,6 +26,13 @@ high-level map of the schema by domain; the authoritative definition is the set 
   written but never updated in place.
 - **Configuration** is stored partly as dedicated singleton config tables and partly as
   key/value rows in the `AppSetting` store.
+- **Translatable prose** is never stored already translated. A row keeps its English source
+  column and adds a `<field>_key` plus a `<field>_params` JSON column (or a `source_key`); the
+  text is resolved into the reader's language at render time. Storing the translated string
+  instead would freeze whatever locale the writer had (usually a Celery worker, which has none)
+  and then show that language to every reader. See `apps/command_intel/models.py`
+  (`title_key` / `title_params`, `summary_key`, `objective_key`) and `apps/capsuleer/models.py`
+  (`source_key`, `reason_key` / `reason_params`).
 
 ## Schema by domain
 
@@ -63,6 +70,16 @@ The schema is organised by the same bounded contexts as the apps. Key tables per
 | **Tasks** (`tasks`) | `Task`, `TaskEvent` |
 | **Comms access** (`comms_access`) | `CommsAccount`, `PlatformCredential` (encrypted), `EntitlementMapping`, `AccessSyncLedger` |
 | **Admin & audit** (`admin_audit`) | `AuditLog` (append-only), `AppSetting`, `DataRetentionPolicy` |
+
+Two localisation details the table above does not show:
+
+- `identity.User.language`, a column on the `identity` `User` table, holds the account-level UI
+  language preference (a `settings.LANGUAGES` code such as `pt-br`). Blank means the pilot has
+  not chosen one, so the locale resolver falls back to the language cookie, then the browser's
+  `Accept-Language` (if browser detection is left on), then the configured default locale.
+- The localisation policy (enabled locales, default locale, broadcast locale, browser detection)
+  is a single key/value row in the `AppSetting` store under the key `i18n.config`, edited at
+  `/ops/admin/i18n/`.
 
 ## Reference data (SDE)
 

@@ -59,6 +59,7 @@ notes and its "Admin console and audit" entry:
 | **Access governance** (`/ops/admin/access/`) | Partner-alliance and friendly-corporation records, character recovery/detach. |
 | **Doctrines & content** (`/ops/admin/doctrines/`, `/ops/admin/content/`) | The doctrine library, fits, requirements, XML/killmail/saved-fit import, knowledge-base pages. |
 | **Retention** (`/ops/admin/retention/settings/`) | Data-retention windows and the member-leave sweep policy. |
+| **Localisation** (`/ops/admin/i18n/`) | Which of the nine shipped languages the language selector offers, plus the default locale, the broadcast locale, browser detection, and anonymous selection. Director only. See [Features and audiences](./features-and-audiences.md#languages). |
 | **Per-subsystem settings** | Industry, corporation structure alerts, recommendations relay/tuning, notifications, Pingboard channels/automation/templates, jump-planner defaults, comms-access (Discord role sync), and more — one settings page per subsystem, each covered in [Leadership features](./leadership-features.md). |
 | **Maintenance-task launcher** | Runs one-off management operations (syncs, backfills) from the console instead of the command line. |
 

@@ -82,6 +82,16 @@ configurable (director by default) — adjust them there if an officer needs to 
 time-critical pings. The events calendar syncs from source services automatically and
 materialises reminder alerts on its own.
 
+A ping is not rendered once and copied everywhere. Legs addressed to individual pilots
+(in-app, EVE-mail, DM handles) are grouped by each pilot's own language preference and
+sent once per language, so one ping can leave in several languages at the same time. A
+pilot who has never picked a language gets the broadcast language instead: dispatch runs
+in a background worker, which has no browser to detect one from. A shared leg has no
+single recipient — a Discord webhook, a configured group channel — so it is rendered once
+in the corp's **broadcast language**, set alongside the enabled languages at
+`/ops/admin/i18n/`; see
+[Features and audiences: Languages](./features-and-audiences.md#languages).
+
 ## SRP program
 
 Tune a single ship-replacement program — payout mode (replacement, full ISK, or

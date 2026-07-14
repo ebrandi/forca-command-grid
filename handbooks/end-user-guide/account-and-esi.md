@@ -51,6 +51,19 @@ channel it has armed:
 - Once linked, you'll get direct pings for anything routed to you personally, alongside
   whatever the corp broadcasts to shared channels.
 
+The language a ping arrives in depends on who it was addressed to. Anything sent to you
+personally — an in-app notification, an EVE mail, or a direct message to your linked
+Telegram or WhatsApp handle — is written in the language you chose. Anything the corp posts
+to a shared channel has no single recipient, so it goes out once in the one broadcast
+language leadership has set: that covers its Discord channel, and any group or channel it
+has configured for Telegram or WhatsApp. Discord is always a shared channel, so even with
+your Discord account linked, corp pings reach you there in the broadcast language rather
+than yours.
+
+Two kinds of ping are never translated: an officer's free-text alert, and any alert your
+corp wrote its own template for. Both are delivered exactly as they were typed. The app
+translates its own built-in messages, not corp-authored wording.
+
 ## Setting per-category mute preferences
 
 From your channel preferences page (`/pingboard/channels/prefs/`) you can mute entire
@@ -68,6 +81,12 @@ Every pilot — member or not — has their own data-rights page under `/privacy
 there you can see what the app holds about you and request deletion of your own data. See
 [Data and privacy](../data-and-privacy.md) for the full picture of what's collected, how
 long it's kept, and what happens to your data if you leave the corporation.
+
+One of the things the app stores against your account is your language choice: when you're
+signed in, picking a language saves it to your account, not just to the browser you picked
+it in, which is why it follows you from one device or browser to the next, and why it
+applies to all of your characters at once. You set it from the language selector in the
+sidebar — see [Navigating the app](./navigating-the-app.md#choosing-your-language).
 
 ---
 

@@ -58,6 +58,11 @@ Author and reviewer are deliberately separate passes:
 - [ ] `ruff check` and `ruff format --check` pass.
 - [ ] `pytest` passes, with tests added/updated for the change.
 - [ ] Documentation in `handbooks/` updated where behaviour changed (see below).
+- [ ] New user-visible strings are marked for translation, `make messages` has been
+      re-run, and `locale/*/LC_MESSAGES/django.po` is committed with the change (see
+      [testing.md](./testing.md#localisation-gates)).
+- [ ] No translated string is written to the database, and no protected EVE term
+      (`core/i18n/data/protected-terms.yml`) is translated.
 - [ ] No secrets, tokens, or personal data added.
 - [ ] New outbound integrations validate their target host against an allowlist (see
       [security-guidelines.md](./security-guidelines.md#ssrf-allowlists-on-every-outbound-integration)).
@@ -86,6 +91,13 @@ Author and reviewer are deliberately separate passes:
   [architecture.md](./architecture.md#the-golden-rule-esi-and-llm-calls-only-from-celery-workers).
   This is checked in review, not by a lint rule, so call it out explicitly if you see
   it in a diff.
+- **Never persist a translated string.** Django coerces a lazy translation proxy to
+  `str` on `.save()`, freezing the row in the *writer's* locale (usually a Celery
+  worker, which has no locale) for every reader. Persist a key plus params
+  (`<field>_key` / `<field>_params`, or `source_key`) and resolve it at read time from
+  the app's `messages.py` scaffolds — see
+  [architecture.md](./architecture.md#the-second-rule-never-persist-a-translated-string)
+  and `apps/recommendations/messages.py` for the reference implementation.
 
 ## Updating documentation when behaviour changes
 
@@ -100,6 +112,7 @@ follow-up:
 | New ESI scope or role/permission | [permissions-and-roles.md](../permissions-and-roles.md) |
 | New app, or a change to an app's responsibility | [domain-model.md](./domain-model.md)'s bounded-context table |
 | New outbound integration or security-relevant change | [security-guidelines.md](./security-guidelines.md) and, if it changes the posture summary, [SECURITY.md](../../SECURITY.md) |
+| New or changed user-visible string | the message catalogues (`locale/*/LC_MESSAGES/django.po`), via `make messages` — see [testing.md](./testing.md#localisation-gates) |
 
 ## Release process
 
