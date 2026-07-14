@@ -7,6 +7,7 @@ it can never walk an object graph into a secret. Literal braces escape as ``{{``
 """
 from __future__ import annotations
 
+import re
 import string
 
 # Lazy, not eager: these errors are raised inside `translation.override(broadcast_locale())`
@@ -18,6 +19,10 @@ from django.utils.translation import gettext_lazy as _
 
 class TemplateError(ValueError):
     """Invalid template body or missing required variable."""
+
+
+_MAX_PAD = 200          # no alert body legitimately pads a slot wider than this
+_WIDTH = re.compile(r"\d+")
 
 
 class _SafeFormatter(string.Formatter):
@@ -33,6 +38,21 @@ class _SafeFormatter(string.Formatter):
         if isinstance(key, int):
             raise TemplateError(_("positional fields are not allowed in templates"))
         return kwargs.get(key, "")  # unknown variable renders empty (validated separately)
+
+    def format_field(self, value, format_spec):
+        # ``get_field`` guards the field NAME; the format spec is parsed separately and can
+        # still pad. "{pilot_name:>50000000}" turns a 3-character value into a 50 MB string —
+        # and since a body is now re-rendered once per recipient locale, that cost is paid N
+        # times, not once. Authoring a body is officer-gated, so this is a guard rail rather
+        # than a boundary, but a padding width has no legitimate use here at all.
+        if format_spec and _WIDTH.search(format_spec):
+            width = max(int(m) for m in _WIDTH.findall(format_spec))
+            if width > _MAX_PAD:
+                raise TemplateError(
+                    _("format width %(width)s exceeds the maximum of %(max)s")
+                    % {"width": width, "max": _MAX_PAD}
+                )
+        return super().format_field(value, format_spec)
 
 
 _FORMATTER = _SafeFormatter()

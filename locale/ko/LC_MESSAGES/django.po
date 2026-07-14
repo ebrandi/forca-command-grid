@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-14 11:51+0000\n"
+"POT-Creation-Date: 2026-07-14 12:26+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: ko machine-assisted draft\n"
@@ -2008,7 +2008,6 @@ msgid "Charter freight of pre-built hulls from trade hubs."
 msgstr "무역 허브에서 완제 선체를 전세 화물로 운송하십시오."
 
 #: apps/campaigns/templates_i18n.py
-#| msgid "Staged hulls below 60% of target at week three."
 msgid "Staged hulls below 60 percent of target at week three."
 msgstr "3주 차에 스테이징된 선체가 목표의 60% 미만."
 
@@ -11075,6 +11074,11 @@ msgstr "허용되지 않는 필드 표현식: %(field)r"
 #: apps/pingboard/rendering.py
 msgid "positional fields are not allowed in templates"
 msgstr "템플릿에서는 위치 기반 필드를 사용할 수 없습니다"
+
+#: apps/pingboard/rendering.py
+#, python-format
+msgid "format width %(width)s exceeds the maximum of %(max)s"
+msgstr "형식 너비 %(width)s 이(가) 최대값 %(max)s 을(를) 초과합니다"
 
 #: apps/pingboard/rendering.py
 #, python-format

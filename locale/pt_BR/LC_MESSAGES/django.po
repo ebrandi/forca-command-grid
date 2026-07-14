@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-14 11:51+0000\n"
+"POT-Creation-Date: 2026-07-14 12:26+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: pt-br machine-assisted draft\n"
@@ -2100,7 +2100,6 @@ msgid "Charter freight of pre-built hulls from trade hubs."
 msgstr "Contrate frete de hulls prontos a partir dos trade hubs."
 
 #: apps/campaigns/templates_i18n.py
-#| msgid "Staged hulls below 60% of target at week three."
 msgid "Staged hulls below 60 percent of target at week three."
 msgstr "Hulls no staging abaixo de 60% da meta na terceira semana."
 
@@ -11606,6 +11605,11 @@ msgstr "expressão de campo não permitida: %(field)r"
 #: apps/pingboard/rendering.py
 msgid "positional fields are not allowed in templates"
 msgstr "campos posicionais não são permitidos em modelos"
+
+#: apps/pingboard/rendering.py
+#, python-format
+msgid "format width %(width)s exceeds the maximum of %(max)s"
+msgstr "largura de formato %(width)s excede o máximo de %(max)s"
 
 #: apps/pingboard/rendering.py
 #, python-format
