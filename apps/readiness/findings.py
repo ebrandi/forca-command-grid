@@ -42,11 +42,22 @@ def upsert_findings(engine_findings, *, ran_dimensions=None) -> dict:
             continue  # two emissions share a dedupe key this run — keep the first
         seen_keys.add(key)
         detail = f.detail.get("text", "") if isinstance(f.detail, dict) else str(f.detail or "")
+        # Seam B: persist the scaffold KEY + its plain JSON params alongside the English
+        # prose. The prose column is written exactly as before (English, from the msgid
+        # source), so English output and every legacy reader are unchanged; the key is what
+        # lets a reader in another locale re-render the sentence. A provider that emits no
+        # key writes "" / {} and its row simply renders its stored English forever.
         fields = {
             "severity": f.severity,
             "kind": f.kind,
             "title": (f.label or f.dimension_key)[:200],
+            "title_key": f.label_key,
+            "title_params": f.label_params or {},
             "detail": detail,
+            "detail_key": f.detail_key,
+            "detail_params": f.detail_params or {},
+            "task_title_key": f.task_title_key,
+            "task_title_params": f.task_title_params or {},
             "weight": f.weight,
             "score": f.score,
             "owner_tag": resolve_owner(f.dimension_key, f.kpi_key, responsibilities),

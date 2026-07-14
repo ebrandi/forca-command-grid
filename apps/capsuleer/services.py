@@ -860,9 +860,15 @@ def _stamp_check_state(milestone, result) -> None:
     re-running the engine (finding 21)."""
     milestone.last_checked_at = timezone.now()
     milestone.check_state = result.state
+    # The prose column keeps the English audit record; the key + params are what let a *reader*
+    # re-render the same sentence in their own language later (Seam B, ``messages.py``) — this
+    # runs in a worker, so nothing here may be a lazy gettext proxy.
     milestone.data_source = (result.data_source or "")[:120]
+    milestone.data_source_key = getattr(result, "data_source_key", "") or ""
+    milestone.data_source_params = getattr(result, "data_source_params", None) or {}
     milestone.structural_block = bool(getattr(result, "structural", False))
     milestone.save(update_fields=["last_checked_at", "check_state", "data_source",
+                                  "data_source_key", "data_source_params",
                                   "structural_block", "updated_at"])
 
 
@@ -886,9 +892,12 @@ def _credit_auto_milestone(goal_id, milestone_id, result) -> bool:
         ms.last_checked_at = now
         ms.check_state = result.state if result.state in ("ok", "stale") else "ok"
         ms.data_source = (result.data_source or "")[:120]
+        ms.data_source_key = getattr(result, "data_source_key", "") or ""
+        ms.data_source_params = getattr(result, "data_source_params", None) or {}
         ms.evidence_snapshot = result.evidence or {}
         ms.save(update_fields=["status", "completed_at", "last_checked_at", "check_state",
-                               "data_source", "evidence_snapshot", "updated_at"])
+                               "data_source", "data_source_key", "data_source_params",
+                               "evidence_snapshot", "updated_at"])
         _recompute_and_save(locked, "milestone_credit")
         record_activity(locked, None, "milestone.credited",
                         {"milestone_id": ms.pk, "order": ms.order, "kind": ms.kind, "auto": True})

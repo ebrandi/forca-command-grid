@@ -29,6 +29,7 @@ from django.db import transaction
 
 from apps.skills.prereqs import expand_prerequisites, order_by_prereqs
 
+from . import messages
 from . import templates_i18n as t_i18n
 from .models import CareerMilestone, GoalStatus, GoalType, MilestoneKind, Verification
 from .params import validate_milestone_params
@@ -319,10 +320,22 @@ def resolve_doctrine(resolver: dict):
     return None
 
 
+def _note(key: str, **params) -> dict:
+    """A structural-blocker marker: the English prose *and* the message-scaffold key + params.
+
+    The prose is stamped onto ``CareerMilestone.data_source`` (the audit record / fallback); the
+    key + params go into the new ``data_source_key`` / ``data_source_params`` columns so the reader,
+    not the writer, decides the language (Seam B — ``messages.py``). A ``gettext_lazy`` here would
+    be coerced to ``str`` on ``.save()`` and freeze this row in the *writer's* locale forever.
+    """
+    prose, key, params = messages.english(key, **params)
+    return {"text": prose, "key": key, "params": params}
+
+
 def _concrete_milestone_params(ms: dict, doctrine, goal):
     """Resolve a template milestone's authored params to concrete, validator-passing params.
 
-    Returns ``(params, verification, note)`` where ``note`` is a system GoalActivity marker to record
+    Returns ``(params, verification, note)`` where ``note`` is a :func:`_note` marker to record
     (or ``None``), or ``(None, None, note)`` to signal the milestone should be skipped (its references
     could not be resolved). Doctrine placeholder / hull markers resolve through ``doctrine``.
     """
@@ -335,14 +348,14 @@ def _concrete_milestone_params(ms: dict, doctrine, goal):
     if kind == MilestoneKind.SKILL_TARGET:
         resolved = _resolve_skill_names(params.get("skills", []))
         if not resolved:
-            return None, None, "skill milestone unresolved against current SDE"
+            return None, None, _note(messages.SRC_SKILL_UNRESOLVED)
         return {"skills": [{"type_id": sid, "level": lvl} for sid, lvl in resolved.items()]}, \
             verification, None
 
     if kind == MilestoneKind.SHIP_OWNED:
         if params.get("resolve") == "doctrine_hull":
             if doctrine is None:
-                return None, None, "no matching doctrine available"
+                return None, None, _note(messages.SRC_NO_DOCTRINE)
             type_ids = [f.ship_type_id for f in doctrine.fits.all() if f.ship_type_id]
         else:
             type_ids = []
@@ -352,7 +365,7 @@ def _concrete_milestone_params(ms: dict, doctrine, goal):
                     type_ids.append(sde_type.type_id)
         type_ids = list(dict.fromkeys(type_ids))  # de-dupe, preserve order
         if not type_ids:
-            return None, None, "ship milestone unresolved against current SDE"
+            return None, None, _note(messages.SRC_SHIP_UNRESOLVED)
         out = {"type_ids": type_ids}
         if params.get("require_fitted"):
             out["require_fitted"] = True
@@ -361,7 +374,7 @@ def _concrete_milestone_params(ms: dict, doctrine, goal):
     if kind == MilestoneKind.DOCTRINE_READY:
         tier = params.get("tier", "viable")
         if doctrine is None:
-            return {"unresolved": True, "tier": tier}, verification, "no matching doctrine available"
+            return {"unresolved": True, "tier": tier}, verification, _note(messages.SRC_NO_DOCTRINE)
         return {"doctrine_id": doctrine.id, "tier": tier}, verification, None
 
     # contribution / combat_first / practical / manual — already concrete and validator-valid.
@@ -409,7 +422,8 @@ def instantiate_template(template, user, *, character=None, visibility=None, pri
             params, verification, note = _concrete_milestone_params(ms, doctrine, goal)
             if params is None:
                 services.record_activity(goal, None, "milestone.skipped_unresolved",
-                                         {"title": ms.get("title", "")[:140], "reason": note})
+                                         {"title": ms.get("title", "")[:140],
+                                          "reason": note["text"]})
                 continue
             kind = ms["kind"]
             validate_milestone_params(kind, params, verification)
@@ -423,12 +437,15 @@ def instantiate_template(template, user, *, character=None, visibility=None, pri
                 # re-authored — stamp it so the goal page shows "blocked" on the request path without
                 # waiting for the first sweep (finding 21).
                 milestone.check_state = "unknown"
-                milestone.data_source = note
+                milestone.data_source = note["text"]
+                milestone.data_source_key = note["key"]
+                milestone.data_source_params = note["params"]
                 milestone.structural_block = True
-                milestone.save(update_fields=["check_state", "data_source", "structural_block",
+                milestone.save(update_fields=["check_state", "data_source", "data_source_key",
+                                              "data_source_params", "structural_block",
                                               "updated_at"])
                 services.record_activity(goal, None, "milestone.degraded",
-                                         {"milestone_id": milestone.pk, "reason": note})
+                                         {"milestone_id": milestone.pk, "reason": note["text"]})
 
     if activate and goal.status != GoalStatus.ACTIVE:
         goal = services.set_goal_status(goal, GoalStatus.ACTIVE, user)

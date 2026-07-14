@@ -53,16 +53,26 @@ def candidate_detail(request: HttpRequest, pk: int) -> HttpResponse:
         request.user, "recruitment.viewed",
         target_type="candidate", target_id=str(candidate.pk), ip=client_ip(request),
     )
+    # Seam B read side: the claim was persisted by a locale-less Celery worker, so it is frozen
+    # English on the row. Resolve each one under THIS reader's locale before it reaches the
+    # template. Assigning onto ``claim`` (rather than teaching the template about ``claim_i18n``)
+    # keeps the single render path — and these instances are never saved, so the audit column on
+    # disk is untouched. A legacy row with no key resolves to its stored English, never to blank.
+    evidence = list(candidate.evidence.all())
+    flags = []
     by_theme: dict[str, list] = {}
-    for ev in candidate.evidence.all():
+    for ev in evidence:
+        ev.claim = ev.claim_i18n
         by_theme.setdefault(ev.get_theme_display(), []).append(ev)
+        if ev.is_flag:
+            flags.append(ev)
     return render(
         request,
         "recruitment/detail.html",
         {
             "candidate": candidate,
             "themes": sorted(by_theme.items()),
-            "flags": candidate.evidence.filter(is_flag=True),
+            "flags": flags,
             "killboard": services.home_killboard_evidence(candidate.character_id),  # REC-KB-2 (3.8)
             "consents": candidate.consents.all(),
             "statuses": Candidate.Status.choices,

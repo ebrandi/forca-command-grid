@@ -15,13 +15,28 @@ from django.conf import settings
 from django.utils import timezone
 
 from . import coa as coa_mod
-from . import config
+from . import config, messages
 from . import impact as impact_mod
 from . import snapshot as snapshot_mod
 from .engine import pipeline
 from .models import IntelligenceReport, OperationalConstraint, Severity
 
 logger = logging.getLogger("forca.command_intel")
+
+# Seam B (``.messages``): this pipeline runs in a Celery worker, which has no user and no locale.
+# Every sentence it writes is persisted as a scaffold key + JSON-safe params ALONGSIDE the English
+# prose column, so each reader re-renders it in their own locale. The English column stays the
+# fallback, the audit record, and the LLM's only input.
+_TITLE = "report.title"
+
+
+def _label_ref(c):
+    """The constraint's label as a composable ref (or its raw prose if it has no scaffold)."""
+    return messages.ref(c.label_key, c.label_params) if c.label_key else c.label
+
+
+def _detail_ref(c):
+    return messages.ref(c.detail_key, c.detail_params) if c.detail_key else c.detail
 
 
 # --- snapshot resolution -----------------------------------------------------
@@ -54,6 +69,9 @@ def _persist_constraints(report, constraints) -> dict:
                 "score": c.score, "severity": c.severity, "status": c.status,
                 "affected_capabilities": list(c.affected_capabilities or []),
                 "evidence": evidence, "detail": c.detail,
+                # Seam B: the same sentences as key + params, for per-reader rendering.
+                "label_key": c.label_key, "label_params": c.label_params or {},
+                "detail_key": c.detail_key, "detail_params": c.detail_params or {},
             },
         )
         by_key[c.key] = row
@@ -61,38 +79,69 @@ def _persist_constraints(report, constraints) -> dict:
 
 
 # --- deterministic body (ready_degraded / baseline) --------------------------
-def _deterministic_body(snap, constraints, impacts) -> dict:
+def _deterministic_template(snap, constraints, impacts) -> dict:
+    """The degraded body as a *document template*: identical shape to the body, but every prose
+    leaf is a scaffold ref (``messages.ref``) instead of a frozen English sentence.
+
+    This is what gets persisted in ``IntelligenceReport.body_params``; the English ``body`` column
+    is derived from it with ``messages.english_doc``, so the two can never drift, and
+    ``body_i18n`` re-renders the identical structure under each reader's locale. A lazy proxy could
+    never live here — inside a JSONField it is a hard TypeError at save time; a ref is plain JSON.
+    """
     crit = [c for c in constraints if c.severity == Severity.CRITICAL and c.status == "computed"]
     high = [c for c in constraints if c.severity == Severity.HIGH and c.status == "computed"]
     unknown = [c for c in constraints if c.status == "unknown"]
     readiness = (snap.slices.get("readiness") or {}).get("overall_index")
-    summary = (
-        f"{len(crit)} critical and {len(high)} high operational constraint(s) identified. "
-        + (f"Overall readiness index {readiness}. " if readiness is not None else "")
-        + "Narrative unavailable (AI offline) — deterministic operational picture below."
-    )
+
+    summary_params = {"crit": len(crit), "high": len(high)}
+    if readiness is not None:
+        summary_key = "report.summary.degraded.readiness"
+        summary_params["readiness"] = readiness
+    else:
+        summary_key = "report.summary.degraded"
+
     return {
-        "executive_summary": summary,
+        "executive_summary": messages.ref(summary_key, summary_params),
         "operational_picture": {
-            "posture_statement": "Deterministic constraint picture (no AI narrative).",
+            "posture_statement": messages.ref("report.body.posture_statement"),
             "overall_readiness": readiness,
-            "highlights": [f"{c.label}: {c.binding_metric} {c.unit} ({c.severity})" for c in (crit + high)[:5]],
-            "not_assessed": [f"{c.label} — {c.detail}" for c in unknown[:5]],
+            "highlights": [
+                messages.ref("report.body.highlight", {
+                    "label": _label_ref(c), "metric": c.binding_metric,
+                    "unit": c.unit, "severity": c.severity,
+                })
+                for c in (crit + high)[:5]
+            ],
+            "not_assessed": [
+                messages.ref("report.body.not_assessed", {
+                    "label": _label_ref(c), "detail": _detail_ref(c),
+                })
+                for c in unknown[:5]
+            ],
         },
         "operational_constraints": [
-            {"constraint_key": c.key, "interpretation": c.detail, "priority_rank": i + 1}
+            {"constraint_key": c.key, "interpretation": _detail_ref(c), "priority_rank": i + 1}
             for i, c in enumerate(crit + high)
         ],
         "courses_of_action": [],  # persisted as rows from templated_drafts
         "strategic_risks": [
-            {"risk": f"{c.label} is binding ({c.binding_metric} {c.unit})",
+            {"risk": messages.ref("report.body.strategic_risk", {
+                "label": _label_ref(c), "metric": c.binding_metric, "unit": c.unit,
+             }),
              "severity": c.severity, "linked_constraint": c.key}
             for c in crit
         ],
-        "forecast": "Trend forecasting requires snapshot history (accumulates over time).",
-        "annexes": [{"title": "Constraint evidence", "ref": "constraints"}],
+        "forecast": messages.ref("report.body.forecast"),
+        "annexes": [
+            {"title": messages.ref("report.body.annex.constraint_evidence"), "ref": "constraints"}
+        ],
         "_degraded": True,
     }
+
+
+def _deterministic_body(snap, constraints, impacts) -> dict:
+    """The English degraded body — byte-identical to what this pipeline has always written."""
+    return messages.english_doc(_deterministic_template(snap, constraints, impacts))
 
 
 # --- LLM call with repair + grounding ---------------------------------------
@@ -174,7 +223,7 @@ def run_generation(report: IntelligenceReport, *, force_rebuild: bool = False) -
         impacts = impact_mod.candidate_impacts(constraints, {"sources": snap.slices})
         impacts_by_key = {i["constraint_key"]: i for i in impacts if i.get("constraint_key")}
 
-        degraded, error, body = False, "", None
+        degraded, error, body, template = False, "", None, None
         if settings.COMMAND_INTEL_ENABLED:
             report.status = IntelligenceReport.Status.CALLING_LLM
             report.save(update_fields=["status", "updated_at"])
@@ -190,7 +239,8 @@ def run_generation(report: IntelligenceReport, *, force_rebuild: bool = False) -
             degraded, error = True, "LLM disabled (no LLM_API_KEY)"
 
         if degraded:
-            body = _deterministic_body(snap, constraints, impacts)
+            template = _deterministic_template(snap, constraints, impacts)
+            body = messages.english_doc(template)
             drafts = coa_mod.templated_drafts(constraints, impacts_by_key)
         else:
             drafts = body.get("courses_of_action", []) or []
@@ -199,7 +249,19 @@ def run_generation(report: IntelligenceReport, *, force_rebuild: bool = False) -
 
         report.body = body
         report.summary = (body.get("executive_summary", "") or "")[:1000]
-        report.title = report.title or f"Command Intelligence Report — {timezone.now():%Y-%m-%d}"
+        # Seam B. Only the deterministic body is scaffolded: an LLM-authored briefing is model free
+        # text with no msgid, so it carries no key and renders verbatim to every reader (the
+        # pingboard ``custom_message`` contract). Same for an officer-supplied title.
+        if template is not None:
+            summary_ref = template["executive_summary"]
+            report.summary_key = summary_ref["_msg"]
+            report.summary_params = summary_ref["_params"]
+            report.body_key = "report.body.degraded"
+            report.body_params = template
+        if not report.title:
+            title_params = {"date": f"{timezone.now():%Y-%m-%d}"}
+            report.title = messages.english(_TITLE, title_params)
+            report.title_key, report.title_params = _TITLE, title_params
         report.prompt_version = int(config.get("prompts").get("active_version", 1))
         report.error = error
         report.generated_at = timezone.now()

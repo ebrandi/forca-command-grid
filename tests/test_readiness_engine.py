@@ -64,6 +64,14 @@ def _v1_reference(characters) -> dict:
     scored = [v for v in dims.values() if v is not None]
     index = round(sum(scored) / len(scored)) if scored else 0
     gaps = sorted(doctrine_gaps + stock_gaps, key=lambda g: -g["weight"])[:8]
+    # The gap dicts the source functions hand back now also carry the Seam-B scaffold key +
+    # params (``label_key``/``label_params``/``task_title_key``/``task_title_params``) for the
+    # persisted risk register. Those are an INTERNAL hand-off to ``Finding``; the v1 dashboard
+    # payload is built by ``Finding.as_gap()`` and must keep exactly the six frozen v1 keys.
+    # Projecting to that key set here is what makes this assertion prove it — if a *_key ever
+    # leaked into the payload, ``set(actual) - set(expected)`` and this equality would catch it.
+    v1_gap_keys = ("kind", "ref_id", "label", "weight", "task_type", "task_title")
+    gaps = [{k: g[k] for k in v1_gap_keys} for g in gaps]
     return {"index": index, "dimensions": dims, "coverage": coverage, "gaps": gaps}
 
 

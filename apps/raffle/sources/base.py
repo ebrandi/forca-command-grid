@@ -30,7 +30,15 @@ class SourceEvent:
     occurred_at: object             # datetime the activity happened
     magnitude: float = 0.0          # size (ISK, m³, units…) — for min_threshold + stats
     character_name: str = ""
-    reason: str = ""                # human calc reason, e.g. "Solo kill (100)"
+    reason: str = ""                # human calc reason, e.g. "Solo kill (100)" — English, persisted
+    # Seam B (apps/raffle/messages.py): the translatable form of ``reason``. A source sets BOTH —
+    # ``reason`` (the English prose, the audit record + fallback) and this key/params pair, which
+    # the engine persists so each reader re-renders the sentence in their OWN locale. The worker
+    # writing the row has no locale, so a gettext_lazy proxy here would freeze English forever.
+    # ``reason_params`` must be plain JSON-safe values (int/str) — a lazy proxy in a JSONField is
+    # a TypeError at save time.
+    reason_key: str = ""
+    reason_params: dict = field(default_factory=dict)
     metadata: dict = field(default_factory=dict)
 
 

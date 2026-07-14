@@ -21,6 +21,7 @@ from ..engine.base import (
     status_for,
 )
 from ..engine.registry import register
+from ..messages import english_text
 
 
 def _kpi(key, value, score, detail):
@@ -111,12 +112,16 @@ class ActivityProvider:
         findings = []
         active_ratio = active / total
         if active_ratio < 0.5:
+            label_params = {"active": active, "total": total}
             findings.append(Finding(
                 kind="risk", dimension_key=self.key, kpi_key="activity.active_ratio",
                 severity="high", weight=round(100 * (0.5 - active_ratio)),
-                label=f"Only {active}/{total} members active in the last 30 days",
+                label=english_text("activity.low_active_ratio", label_params),
+                label_key="activity.low_active_ratio", label_params=label_params,
                 ref_type="activity", ref_id="active_ratio",
-                task_type="prepare", task_title="Re-engage dormant members",
+                task_type="prepare",
+                task_title=english_text("activity.reengage_task"),
+                task_title_key="activity.reengage_task",
             ))
 
         score = combine_kpi_scores(kpis, ctx.config.get("kpis", {}))

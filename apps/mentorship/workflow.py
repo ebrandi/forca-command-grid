@@ -17,6 +17,7 @@ from datetime import timedelta
 from django.db import transaction
 from django.utils import timezone
 
+from . import messages as msg
 from . import validation
 from .models import (
     MentorshipEnrollment,
@@ -102,11 +103,36 @@ def create_repeat(assignment, actor=None) -> MentorshipTaskAssignment | None:
 # ---------------------------------------------------------------------------
 # Validation records
 # ---------------------------------------------------------------------------
-def _record(assignment, source, result, confidence=0, detail="", actor=None, evidence=None):
+def _record(assignment, source, result, confidence=0, detail="", actor=None, evidence=None,
+            key="", params=None):
+    """Append a validation row.
+
+    Seam B (see ``messages.py``): a *system* detail is stored as a scaffold ``key`` + plain-JSON
+    ``params``, with the English msgid written to ``detail`` as the audit record and the fallback.
+    A mentor's or officer's free-text note is stored verbatim with no key — it is that person's own
+    words and is never machine-translated. Both are read back by the *other* party under *their*
+    locale, which is why ``_()`` at this write site would be worse than useless.
+    """
+    if key:
+        detail = msg.english(key, params) or detail
     return MentorshipTaskValidation.objects.create(
         assignment=assignment, source=source, result=result,
         confidence=confidence, detail=detail[:300], actor=actor, evidence=evidence,
+        detail_key=key, detail_params=params or {},
     )
+
+
+def _set_reason(assignment, reason="", key="", params=None) -> None:
+    """Stamp ``last_reason`` (+ its scaffold key/params) on an assignment, in memory."""
+    if key:
+        reason = msg.english(key, params) or reason
+    assignment.last_reason = reason[:300]
+    assignment.last_reason_key = key
+    assignment.last_reason_params = params or {}
+
+
+# ``last_reason`` is always saved together with its two Seam B companions.
+_REASON_FIELDS = ["last_reason", "last_reason_key", "last_reason_params"]
 
 
 def _has_pass(assignment, source) -> bool:
@@ -137,7 +163,8 @@ def run_auto_check(assignment):
         result = _V.Result.PENDING
     else:
         result = _V.Result.FAIL
-    _record(assignment, source, result, confidence=outcome.confidence, detail=outcome.detail)
+    _record(assignment, source, result, confidence=outcome.confidence, detail=outcome.detail,
+            key=outcome.key, params=outcome.params)
     if outcome.passed and outcome.confidence > assignment.confidence:
         assignment.confidence = outcome.confidence
         assignment.save(update_fields=["confidence", "updated_at"])
@@ -153,7 +180,7 @@ def _touch(pairing):
 
 
 @transaction.atomic
-def _complete(assignment, actor, confidence, verified, reason=""):
+def _complete(assignment, actor, confidence, verified, reason="", reason_key="", reason_params=None):
     from . import rewards, services
 
     locked = MentorshipTaskAssignment.objects.select_for_update().get(pk=assignment.pk)
@@ -177,12 +204,12 @@ def _complete(assignment, actor, confidence, verified, reason=""):
     locked.rewardable = rewardable
     locked.completed_at = now
     locked.completed_by = actor
-    locked.last_reason = reason[:300]
+    _set_reason(locked, reason, reason_key, reason_params)
     cooldown_hours = task.cooldown_hours or program.default_task_cooldown_hours
     if task.repeatable and cooldown_hours:
         locked.cooldown_until = now + timedelta(hours=cooldown_hours)
     locked.save(update_fields=["status", "rewardable", "completed_at", "completed_by",
-                               "confidence", "last_reason", "cooldown_until", "updated_at"])
+                               "confidence", *_REASON_FIELDS, "cooldown_until", "updated_at"])
     _touch(locked.pairing)
 
     if rewardable:
@@ -223,8 +250,8 @@ def start_task(assignment, actor) -> bool:
     assignment.status = _A.IN_PROGRESS
     if assignment.started_at is None:
         assignment.started_at = timezone.now()
-    assignment.last_reason = ""
-    assignment.save(update_fields=["status", "started_at", "last_reason", "updated_at"])
+    _set_reason(assignment)
+    assignment.save(update_fields=["status", "started_at", *_REASON_FIELDS, "updated_at"])
     _touch(assignment.pairing)
     return True
 
@@ -252,23 +279,29 @@ def mentee_submit(assignment, actor, evidence=None) -> str:
         return "needs_evidence"
 
     _record(assignment, _V.Source.MENTEE, _V.Result.PASS, confidence=CONF_MENTEE,
-            detail="Mentee marked done.", actor=actor, evidence=evidence)
+            key="task.mentee_marked_done", actor=actor, evidence=evidence)
 
     V = MentorshipTask.Validation
     if method == V.MENTEE_CONFIRM:
         assignment.save(update_fields=["submitted_at", "started_at", "updated_at"])
-        _complete(assignment, actor, CONF_MENTEE, verified=False, reason="Mentee self-confirmed.")
+        _complete(assignment, actor, CONF_MENTEE, verified=False,
+                  reason_key="task.mentee_self_confirmed")
         return "completed"
 
     if method in (V.API_REQUIRED, V.AUTO_INTERNAL):
         outcome = run_auto_check(assignment)
         if outcome and outcome.passed:
             assignment.save(update_fields=["submitted_at", "started_at", "updated_at"])
-            _complete(assignment, actor, outcome.confidence, verified=True, reason=outcome.detail)
+            _complete(assignment, actor, outcome.confidence, verified=True,
+                      reason=outcome.detail, reason_key=outcome.key, reason_params=outcome.params)
             return "completed"
         assignment.status = _A.PENDING_API
-        assignment.last_reason = outcome.detail if outcome else "Awaiting activity data."
-        assignment.save(update_fields=["status", "submitted_at", "started_at", "last_reason", "updated_at"])
+        if outcome:
+            _set_reason(assignment, outcome.detail, outcome.key, outcome.params)
+        else:
+            _set_reason(assignment, key="task.awaiting_activity_data")
+        assignment.save(update_fields=["status", "submitted_at", "started_at", *_REASON_FIELDS,
+                                       "updated_at"])
         _touch(assignment.pairing)
         return "pending_api"
 
@@ -281,7 +314,8 @@ def mentee_submit(assignment, actor, evidence=None) -> str:
         # Mentee half done; complete now only if the mentor already confirmed.
         if _has_pass(assignment, _V.Source.MENTOR):
             assignment.save(update_fields=["submitted_at", "started_at", "updated_at"])
-            _complete(assignment, actor, CONF_MENTOR, verified=False, reason="Both confirmed.")
+            _complete(assignment, actor, CONF_MENTOR, verified=False,
+                      reason_key="task.both_confirmed")
             return "completed"
         assignment.status = _A.PENDING_MENTOR
     else:  # MANUAL_MENTOR, EVIDENCE
@@ -297,22 +331,26 @@ def mentor_decide(assignment, actor, approve: bool, reason="") -> bool:
     if assignment.status not in (_A.PENDING_MENTOR, _A.SUBMITTED, _A.IN_PROGRESS, _A.PENDING_API):
         return False
     if not approve:
+        # ``reason`` is the mentor's own words: stored verbatim, no key, never translated.
         _record(assignment, _V.Source.MENTOR, _V.Result.FAIL, detail=reason, actor=actor)
         assignment.status = _A.REJECTED
-        assignment.last_reason = reason[:300]
-        assignment.save(update_fields=["status", "last_reason", "updated_at"])
+        _set_reason(assignment, reason)
+        assignment.save(update_fields=["status", *_REASON_FIELDS, "updated_at"])
         _touch(assignment.pairing)
         return True
 
+    # With no note from the mentor the sentence is ours, so it carries a key; with one, the mentor's
+    # words are stored verbatim.
+    key = "" if reason else "task.mentor_confirmed"
     _record(assignment, _V.Source.MENTOR, _V.Result.PASS, confidence=CONF_MENTOR,
-            detail=reason or "Mentor confirmed.", actor=actor)
+            detail=reason, key=key, actor=actor)
     method = assignment.task.validation_method
     auto_conf = _best_auto_confidence(assignment)
     verified = method in (
         MentorshipTask.Validation.API_ASSISTED, MentorshipTask.Validation.HYBRID
     ) and auto_conf >= VERIFY_THRESHOLD
     _complete(assignment, actor, max(CONF_MENTOR, auto_conf), verified=verified,
-              reason=reason or "Mentor confirmed.")
+              reason=reason, reason_key=key)
     return True
 
 
@@ -320,28 +358,35 @@ def leadership_decide(assignment, actor, approve: bool, reason="") -> bool:
     if assignment.status in MentorshipTaskAssignment.DONE_STATUSES:
         return False
     if not approve:
+        # The officer's own words: verbatim, no key.
         _record(assignment, _V.Source.LEADERSHIP, _V.Result.FAIL, detail=reason, actor=actor)
         assignment.status = _A.REJECTED
-        assignment.last_reason = reason[:300]
-        assignment.save(update_fields=["status", "last_reason", "updated_at"])
+        _set_reason(assignment, reason)
+        assignment.save(update_fields=["status", *_REASON_FIELDS, "updated_at"])
         return True
     _record(assignment, _V.Source.LEADERSHIP, _V.Result.PASS, confidence=CONF_LEADERSHIP,
-            detail=reason or "Approved by leadership.", actor=actor)
-    _complete(assignment, actor, CONF_LEADERSHIP, verified=True, reason=reason or "Leadership approved.")
+            detail=reason, key="" if reason else "task.approved_by_leadership", actor=actor)
+    if reason:
+        _complete(assignment, actor, CONF_LEADERSHIP, verified=True, reason=reason)
+    else:
+        _complete(assignment, actor, CONF_LEADERSHIP, verified=True,
+                  reason_key="task.leadership_approved")
     return True
 
 
 def waive_task(assignment, actor, reason="") -> bool:
     if assignment.status in MentorshipTaskAssignment.DONE_STATUSES:
         return False
-    _record(assignment, _V.Source.SYSTEM, _V.Result.PASS, detail=f"Waived: {reason}", actor=actor)
+    # The sentence is ours; %(reason)s is the officer's free text, interpolated raw.
+    _record(assignment, _V.Source.SYSTEM, _V.Result.PASS, key="task.waived",
+            params={"reason": reason[:280]}, actor=actor)
     assignment.status = _A.WAIVED
     assignment.completed_at = timezone.now()
     assignment.completed_by = actor
     assignment.rewardable = False
-    assignment.last_reason = reason[:300]
+    _set_reason(assignment, reason)
     assignment.save(update_fields=["status", "completed_at", "completed_by", "rewardable",
-                                   "last_reason", "updated_at"])
+                                   *_REASON_FIELDS, "updated_at"])
     _touch(assignment.pairing)
     return True
 
@@ -355,8 +400,10 @@ def sweep_pending_api(assignment) -> bool:
         return False
     outcome = run_auto_check(assignment)
     if outcome and outcome.passed:
+        # This runs in the ``mentorship.sweep_api_validations`` worker: no user, no locale. The
+        # scaffold key is what lets the mentee read it in German later.
         _complete(assignment, assignment.completed_by, outcome.confidence, verified=True,
-                  reason=outcome.detail)
+                  reason=outcome.detail, reason_key=outcome.key, reason_params=outcome.params)
         return True
     return False
 

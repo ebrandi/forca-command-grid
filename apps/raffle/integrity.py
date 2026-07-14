@@ -65,10 +65,17 @@ def scan_contest(contest) -> int:
         if low_value_isk and value and value < low_value_isk:
             keyf = (e["id"], RaffleSuspiciousActivityFlag.FlagType.LOW_VALUE)
             if keyf not in existing:
+                # Seam B (apps/raffle/messages.py): persist the English prose (audit record +
+                # fallback) AND a scaffold key/params, so the reviewing officer sees this in
+                # THEIR locale. This runs on the beat — no user, no locale — so a gettext_lazy
+                # proxy would be coerced to English at bulk_create and frozen for every reader.
+                # The numbers are pre-formatted so the English stays byte-identical.
                 new_flags.append(RaffleSuspiciousActivityFlag(
                     contest=contest, character_id=e["character_id"], user_id=e["user_id"],
                     ledger_entry_id=e["id"], flag_type=RaffleSuspiciousActivityFlag.FlagType.LOW_VALUE,
                     detail=f"Kill worth {value:,.0f} ISK (< {low_value_isk:,.0f}).",
+                    detail_key="integrity.low_value",
+                    detail_params={"value": f"{value:,.0f}", "limit": f"{low_value_isk:,.0f}"},
                 ))
                 existing.add(keyf)
         km = int(md.get("killmail_id") or 0)
@@ -88,6 +95,8 @@ def scan_contest(contest) -> int:
                     ledger_entry_id=e["id"],
                     flag_type=RaffleSuspiciousActivityFlag.FlagType.REPEATED_VICTIM,
                     detail=f"Same victim killed {len(entries)}× (limit {repeat_limit}).",
+                    detail_key="integrity.repeated_victim",
+                    detail_params={"count": len(entries), "limit": int(repeat_limit)},
                 ))
                 existing.add(keyf)
 

@@ -126,6 +126,10 @@ def _finding(**kw):
     base = {"dimension_key": "financial", "kpi_key": "financial.runway_months",
             "title": "Low runway", "owner_tag": "finance_officer", "score": 20}
     base.update(kw)
+    # Seam B: the alert/mail renderers read ``title_i18n`` (the finding's title resolved under the
+    # READER's locale). This stand-in has no scaffold key — like every legacy row — so, exactly as
+    # the real property does, it renders the stored English verbatim.
+    base.setdefault("title_i18n", base["title"])
     return SimpleNamespace(**base)
 
 

@@ -47,6 +47,18 @@ class Finding:
     score: int | None = None
     predicted_breach_at: Any | None = None
     detail: dict = field(default_factory=dict)
+    # --- Seam B: the translatable form of the prose above ---------------------
+    # ``label``/``task_title`` are PERSISTED (ReadinessFinding.title/.task_title) by a Celery
+    # beat that has no reader and therefore no locale, so the sentence itself can only ever be
+    # frozen English. These carry the ``messages.SCAFFOLDS`` key + its plain JSON-safe params
+    # alongside it, so a reader re-renders the sentence under *their* locale. A provider that
+    # sets neither is unchanged: the row keeps its English prose and renders it verbatim.
+    label_key: str = ""
+    label_params: dict = field(default_factory=dict)
+    task_title_key: str = ""
+    task_title_params: dict = field(default_factory=dict)
+    detail_key: str = ""
+    detail_params: dict = field(default_factory=dict)
 
     def as_gap(self) -> dict:
         """The v1 dashboard "gap" shape (kept byte-identical for backward compat)."""

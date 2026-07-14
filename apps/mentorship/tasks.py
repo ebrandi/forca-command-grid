@@ -56,7 +56,9 @@ def expire_stale_pairings() -> dict:
         created_at__lt=cutoff,
     )
     for pairing in stale:
-        if services.set_status(pairing, MentorshipPairing.Status.EXPIRED, detail="Auto-expired (TTL)."):
+        # A scaffold key, not prose: this worker has no locale, and the mentor, the cadet and every
+        # officer read the row it writes under theirs.
+        if services.set_status(pairing, MentorshipPairing.Status.EXPIRED, key="pairing.auto_expired"):
             expired += 1
     return {"expired": expired}
 

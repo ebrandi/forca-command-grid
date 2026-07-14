@@ -34,6 +34,26 @@ from django.utils.translation import gettext_lazy as _
 from apps.sso.models import EveCharacter
 from core.mixins import TimeStampedModel
 
+from . import messages as msg
+
+# Seam B (see ``messages.py``): the prose columns below are written by one actor — usually a Celery
+# worker, which has no user and therefore no locale — and read back by *other* people under *their*
+# locale. ``gettext`` at the write site cannot help: Django coerces a lazy proxy to ``str`` on
+# ``.save()``, freezing the row in the writer's (English) locale forever, and a proxy inside a
+# JSONField is a hard TypeError. So each sink keeps its English prose column (the fallback *and* the
+# audit record) and gains a ``_key`` + ``_params`` pair that the ``_i18n`` read property re-resolves
+# under the reader's locale. Rows written before this change carry no key and degrade to their
+# stored English — never to blank.
+#
+# ``db_default`` (not just ``default``) is load-bearing on every new column: without it Django emits
+# ``ADD COLUMN … DEFAULT x NOT NULL`` followed by ``ALTER COLUMN … DROP DEFAULT``, leaving a NOT NULL
+# column with no database-level default. Any INSERT from older code during a rollback then fails with
+# a not-null violation, while reads keep working — so it looks fine and breaks silently.
+_KEY_FIELD_KWARGS = {"max_length": 64, "blank": True, "default": "", "db_default": ""}
+# NB: ``Value({}, JSONField())`` — not ``Value("{}", …)``, which Django would encode as the JSON
+# *string* ``"{}"`` and hand an old-code INSERT a ``str`` where every reader expects a dict.
+_PARAMS_DB_DEFAULT = models.Value({}, models.JSONField())
+
 
 # ---------------------------------------------------------------------------
 # Configuration (leadership-tunable)
@@ -611,6 +631,11 @@ class MentorshipPairing(TimeStampedModel):
     )
     match_score = models.FloatField(null=True, blank=True)
     match_reasons = models.JSONField(default=list, blank=True)
+    # Seam B: ``[{"key": …, "params": {…}}, …]``, written in lockstep with (and in the same order
+    # as) the English ``match_reasons`` by the auto-suggest worker.
+    match_reasons_keys = models.JSONField(
+        default=list, blank=True, db_default=models.Value([], models.JSONField())
+    )
     cohort = models.ForeignKey(
         MentorshipCohort, on_delete=models.SET_NULL, null=True, blank=True, related_name="pairings"
     )
@@ -639,6 +664,11 @@ class MentorshipPairing(TimeStampedModel):
     def is_active(self) -> bool:
         return self.status == self.Status.ACTIVE
 
+    @property
+    def match_reasons_i18n(self) -> list[str]:
+        """``match_reasons`` under the reader's locale; the stored English for legacy rows."""
+        return msg.render_list(self.match_reasons_keys, self.match_reasons)
+
     def touch_activity(self, when=None) -> None:
         self.last_activity_at = when or timezone.now()
 
@@ -661,6 +691,10 @@ class MentorshipPairingEvent(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
     )
     detail = models.CharField(max_length=300, blank=True)
+    # Seam B: the reader-locale form of ``detail``. Empty for a free-text detail (a pause/cancel
+    # reason a pilot typed) and for legacy rows — both then render ``detail`` verbatim.
+    detail_key = models.CharField(**_KEY_FIELD_KWARGS)
+    detail_params = models.JSONField(default=dict, blank=True, db_default=_PARAMS_DB_DEFAULT)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:
@@ -668,6 +702,11 @@ class MentorshipPairingEvent(models.Model):
 
     def __str__(self) -> str:
         return f"{self.pairing_id}:{self.kind}:{self.to_status or self.detail[:20]}"
+
+    @property
+    def detail_i18n(self) -> str:
+        """``detail`` under the *reader's* locale; the stored English when there is no key."""
+        return msg.render(self.detail_key, self.detail_params, self.detail)
 
 
 class MentorshipEnrollment(TimeStampedModel):
@@ -750,6 +789,10 @@ class MentorshipTaskAssignment(TimeStampedModel):
     # Best validation confidence achieved (0–100).
     confidence = models.PositiveIntegerField(default=0)
     last_reason = models.CharField(max_length=300, blank=True)
+    # Seam B: the reader-locale form of ``last_reason``. Empty when the reason is free text a
+    # mentor/officer typed (rejections, waivers) — that stays verbatim in every locale.
+    last_reason_key = models.CharField(**_KEY_FIELD_KWARGS)
+    last_reason_params = models.JSONField(default=dict, blank=True, db_default=_PARAMS_DB_DEFAULT)
     # Anti-farming: earliest time this (repeatable) task can be redone.
     cooldown_until = models.DateTimeField(null=True, blank=True)
     sort_order = models.IntegerField(default=0)
@@ -772,6 +815,11 @@ class MentorshipTaskAssignment(TimeStampedModel):
     @property
     def is_done(self) -> bool:
         return self.status in self.DONE_STATUSES
+
+    @property
+    def last_reason_i18n(self) -> str:
+        """``last_reason`` under the reader's locale; the stored English when there is no key."""
+        return msg.render(self.last_reason_key, self.last_reason_params, self.last_reason)
 
 
 class MentorshipTaskValidation(models.Model):
@@ -797,6 +845,10 @@ class MentorshipTaskValidation(models.Model):
     result = models.CharField(max_length=8, choices=Result.choices, default=Result.PENDING)
     confidence = models.PositiveIntegerField(default=0)
     detail = models.CharField(max_length=300, blank=True)
+    # Seam B: the reader-locale form of ``detail``. Auto-check details are written by the Celery
+    # sweep; a mentor's rejection note is free text and stays verbatim (no key).
+    detail_key = models.CharField(**_KEY_FIELD_KWARGS)
+    detail_params = models.JSONField(default=dict, blank=True, db_default=_PARAMS_DB_DEFAULT)
     actor = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
     )
@@ -813,6 +865,11 @@ class MentorshipTaskValidation(models.Model):
 
     def __str__(self) -> str:
         return f"Valid<{self.assignment_id}:{self.source}:{self.result}>"
+
+    @property
+    def detail_i18n(self) -> str:
+        """``detail`` under the reader's locale; the stored English when there is no key."""
+        return msg.render(self.detail_key, self.detail_params, self.detail)
 
 
 class MentorshipEvidence(TimeStampedModel):
@@ -1055,7 +1112,12 @@ class MentorshipFlag(TimeStampedModel):
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
     )
     detail = models.CharField(max_length=300, blank=True)
-    # Stable key so the anomaly sweep upserts rather than duplicating.
+    # Seam B: the reader-locale form of ``detail``. Every flag is raised by the anomaly sweep
+    # (a Celery worker with no locale) and read by whichever officer opens the pairing.
+    detail_key = models.CharField(**_KEY_FIELD_KWARGS)
+    detail_params = models.JSONField(default=dict, blank=True, db_default=_PARAMS_DB_DEFAULT)
+    # Stable key so the anomaly sweep upserts rather than duplicating. NEVER translated: it is a
+    # uniqueness lookup (``uniq_mentorship_open_flag``), not prose.
     dedupe_key = models.CharField(max_length=200, blank=True, db_index=True)
     resolved = models.BooleanField(default=False)
     resolved_by = models.ForeignKey(
@@ -1075,3 +1137,8 @@ class MentorshipFlag(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"Flag<{self.kind}:{self.severity}>"
+
+    @property
+    def detail_i18n(self) -> str:
+        """``detail`` under the reader's locale; the stored English when there is no key."""
+        return msg.render(self.detail_key, self.detail_params, self.detail)

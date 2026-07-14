@@ -19,6 +19,7 @@ from ..engine.base import (
     threshold_score,
 )
 from ..engine.registry import register
+from ..messages import english_text
 
 # Runway is clamped to this many months when the corp is cashflow-positive (no burn).
 _RUNWAY_CAP = 99.0
@@ -103,12 +104,18 @@ class FinancialProvider:
             {"balance": balance, "net_monthly_burn": net_burn, "has_burn_data": has_burn_data},
         ))
         if runway_score is not None and runway < 1:
+            # The number is pre-formatted into the params: a params value must be a plain
+            # JSON-safe scalar, and the msgid carries no format spec.
+            label_params = {"runway": f"{runway:.1f}"}
             findings.append(Finding(
                 kind="risk", dimension_key=self.key, kpi_key="financial.runway_months",
                 severity="critical", weight=40.0,
-                label=f"Corp runway is {runway:.1f} months — below 1 month of cover",
+                label=english_text("financial.runway_critical", label_params),
+                label_key="financial.runway_critical", label_params=label_params,
                 ref_type="financial", ref_id="runway_months",
-                task_type="other", task_title="Shore up the corp wallet — runway critical",
+                task_type="other",
+                task_title=english_text("financial.runway_task"),
+                task_title_key="financial.runway_task",
             ))
 
         # reserve_cover — liquid vs the emergency reserve.
@@ -130,12 +137,18 @@ class FinancialProvider:
             {"net_monthly_burn": net_burn, "monthly_burn_target": burn_target},
         ))
         if burn_score is not None and net_burn > burn_target:
+            label_params = {
+                "burn": f"{net_burn / 1e9:.1f}", "target": f"{burn_target / 1e9:.1f}",
+            }
             findings.append(Finding(
                 kind="risk", dimension_key=self.key, kpi_key="financial.burn_vs_target",
                 severity="high", weight=20.0,
-                label=f"Monthly burn ({net_burn/1e9:.1f}B) is over target ({burn_target/1e9:.1f}B)",
+                label=english_text("financial.over_burn", label_params),
+                label_key="financial.over_burn", label_params=label_params,
                 ref_type="financial", ref_id="burn_vs_target",
-                task_type="other", task_title="Review corp expenses — over burn target",
+                task_type="other",
+                task_title=english_text("financial.burn_task"),
+                task_title_key="financial.burn_task",
             ))
 
         score = combine_kpi_scores(kpis, ctx.config.get("kpis", {}))

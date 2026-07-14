@@ -9,9 +9,12 @@ from __future__ import annotations
 
 from django.conf import settings
 from django.db import models
+from django.db.models import JSONField, Value
 from django.utils.translation import gettext_lazy as _
 
 from core.mixins import TimeStampedModel
+
+from .messages import render_text
 
 
 class BuildJob(TimeStampedModel):
@@ -41,10 +44,24 @@ class BuildJob(TimeStampedModel):
         related_name="build_jobs",
     )
     due_at = models.DateTimeField(null=True, blank=True)
+    # The prose columns stay: they are the English fallback AND the audit record of what the
+    # board actually said, and they are what legacy rows (written before the *_key columns
+    # landed) render from. Nothing is backfilled — a keyless row degrades to its stored
+    # English, never to blank. A pilot-typed ``note`` is human free-text and stays verbatim.
     note = models.CharField(max_length=200, blank=True)
     blocked_reason = models.CharField(
         max_length=200, blank=True, help_text=_("Why a queued job can't start (materials short).")
     )
+    # Seam B (see ``messages.py``): the writer of these sentences is never their reader — the
+    # board is read by every other pilot, in the language *they* chose — so the prose above can
+    # only ever be frozen English. These carry the scaffold key + its plain JSON params so
+    # ``*_i18n`` can re-render the sentence under the READER's locale.
+    blocked_reason_key = models.CharField(max_length=60, blank=True, default="", db_default="")
+    blocked_reason_params = models.JSONField(
+        blank=True, default=dict, db_default=Value({}, JSONField())
+    )
+    note_key = models.CharField(max_length=60, blank=True, default="", db_default="")
+    note_params = models.JSONField(blank=True, default=dict, db_default=Value({}, JSONField()))
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
     )
@@ -54,6 +71,18 @@ class BuildJob(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"build {self.quantity}× {self.output_type_id}"
+
+    # --- read side of Seam B ------------------------------------------------
+    # Each resolves its scaffold under the READER's active locale, and falls back to the stored
+    # English prose when the row carries no key (every legacy row, and every pilot-typed note)
+    # or the key is unknown to this deploy. They can never return blank.
+    @property
+    def blocked_reason_i18n(self) -> str:
+        return render_text(self.blocked_reason_key, self.blocked_reason_params, self.blocked_reason)
+
+    @property
+    def note_i18n(self) -> str:
+        return render_text(self.note_key, self.note_params, self.note)
 
     @property
     def is_active(self) -> bool:

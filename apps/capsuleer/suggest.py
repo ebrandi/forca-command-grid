@@ -26,7 +26,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
-from . import config, notify, progress
+from . import config, messages, notify, progress
 from .models import (
     CareerActionStep,
     CareerGoal,
@@ -78,6 +78,16 @@ _COMBAT_ACTIVITIES = frozenset({
 
 @dataclass
 class Draft:
+    """One suggestion to upsert.
+
+    ``title`` / ``reason`` are the English prose that is persisted (the audit record, and what a
+    reader falls back to). ``*_key`` / ``*_params`` are the same two sentences as message scaffolds
+    (:mod:`apps.capsuleer.messages`): this whole module runs in the daily Celery beat, which has no
+    reader and no locale, so a ``gettext``/``gettext_lazy`` here would simply freeze the row in the
+    worker's English — only a key + raw params can be re-rendered later in the *pilot's* language.
+    Build both with :func:`_prose`, never by hand, so they cannot drift apart.
+    """
+
     kind: str
     dedupe_key: str
     goal_id: int | None
@@ -86,6 +96,23 @@ class Draft:
     data: dict
     corp_driven: bool
     expires_at: datetime | None
+    title_key: str = ""
+    title_params: dict = field(default_factory=dict)
+    reason_key: str = ""
+    reason_params: dict = field(default_factory=dict)
+
+
+def _prose(key: str, title_params: dict, reason_params: dict) -> dict:
+    """The ``title`` / ``reason`` (English) + their scaffold keys and params, as ``Draft`` kwargs.
+
+    Every param value must be plain JSON — ints, strings, or nested ``{"text","key","params"}``
+    blocker refs. Never a lazy proxy (a ``JSONField`` write would raise ``TypeError``), never a
+    model instance, never a ``Decimal``.
+    """
+    title, title_key, title_params = messages.english(f"{key}.title", **title_params)
+    reason, reason_key, reason_params = messages.english(f"{key}.reason", **reason_params)
+    return {"title": title, "title_key": title_key, "title_params": title_params,
+            "reason": reason, "reason_key": reason_key, "reason_params": reason_params}
 
 
 # --------------------------------------------------------------------------- #
@@ -243,10 +270,12 @@ def gen_near_qualification(ctx) -> list[Draft]:
             kind=SuggestionKind.NEAR_QUALIFICATION,
             dedupe_key=_dk(ctx.uid, SuggestionKind.NEAR_QUALIFICATION, "doctrine", doctrine_id),
             goal_id=goal.pk,
-            title=f"Close to flying {doctrine.name}",
-            reason=(f"You are about {total_gap} skill level(s) — roughly {days} day(s) of training — "
-                    f"from flying {doctrine.name}, which your goal «{goal.title}» targets. Based on "
-                    f"your skills as of {snap.as_of:%Y-%m-%d}."),
+            **_prose(
+                messages.SUG_NEAR_QUAL,
+                {"doctrine": doctrine.name},
+                {"levels": total_gap, "days": days, "doctrine": doctrine.name,
+                 "goal": goal.title, "as_of": f"{snap.as_of:%Y-%m-%d}"},
+            ),
             data={"inputs": {"doctrine_id": doctrine_id, "doctrine": doctrine.name,
                              "missing_levels": total_gap, "days": days},
                   "as_of": {"skills": snap.as_of.isoformat()}, "corp_demand": {"present": False}},
@@ -277,10 +306,12 @@ def gen_near_qualification(ctx) -> list[Draft]:
                     kind=SuggestionKind.NEAR_QUALIFICATION,
                     dedupe_key=_dk(ctx.uid, SuggestionKind.NEAR_QUALIFICATION, "doctrine", doctrine.id),
                     goal_id=None,
-                    title=f"Close to a corp doctrine: {doctrine.name}",
-                    reason=(f"You are about {total_gap} skill level(s) — roughly {days} day(s) — from "
-                            f"flying {doctrine.name}, a corp priority-{doctrine.priority} doctrine. "
-                            f"Entirely optional — your call."),
+                    **_prose(
+                        messages.SUG_NEAR_QUAL_CORP,
+                        {"doctrine": doctrine.name},
+                        {"levels": total_gap, "days": days, "doctrine": doctrine.name,
+                         "priority": doctrine.priority},
+                    ),
                     data={"inputs": {"doctrine_id": doctrine.id, "doctrine": doctrine.name,
                                      "missing_levels": total_gap, "days": days},
                           "as_of": {"skills": snap.as_of.isoformat()},
@@ -354,9 +385,14 @@ def gen_event_match(ctx) -> list[Draft]:
                 kind=SuggestionKind.EVENT_MATCH,
                 dedupe_key=_dk(ctx.uid, SuggestionKind.EVENT_MATCH, "operation", op.pk),
                 goal_id=goal.pk,
-                title=f"{op.name} matches your {activity} goal",
-                reason=(f"«{op.name}» ({op.get_type_display()}) forms up "
-                        f"{op.target_at:%Y-%m-%d %H:%M} EVE and matches your goal «{goal.title}»."),
+                # ``activity`` is a taxonomy slug and ``op_type`` the operations app's own display
+                # label — both stay raw; only the sentence around them is translated.
+                **_prose(
+                    messages.SUG_EVENT_MATCH,
+                    {"operation": op.name, "activity": activity},
+                    {"operation": op.name, "op_type": str(op.get_type_display()),
+                     "when": f"{op.target_at:%Y-%m-%d %H:%M}", "goal": goal.title},
+                ),
                 data={"inputs": {"operation_id": op.pk, "op_type": op.type, "activity": activity},
                       "as_of": {"operations": {"generated_at": ctx.now.isoformat()}},
                       "corp_demand": {"present": False}},
@@ -380,10 +416,12 @@ def gen_event_match(ctx) -> list[Draft]:
                 kind=SuggestionKind.EVENT_MATCH,
                 dedupe_key=_dk(ctx.uid, SuggestionKind.EVENT_MATCH, "operation", op.pk),
                 goal_id=None,
-                title=f"{op.name} fits your interests",
-                reason=(f"«{op.name}» ({op.get_type_display()}) forms up "
-                        f"{op.target_at:%Y-%m-%d %H:%M} EVE and matches something you enjoy. "
-                        f"Optional — your call."),
+                **_prose(
+                    messages.SUG_EVENT_MATCH_INTEREST,
+                    {"operation": op.name},
+                    {"operation": op.name, "op_type": str(op.get_type_display()),
+                     "when": f"{op.target_at:%Y-%m-%d %H:%M}"},
+                ),
                 data={"inputs": {"operation_id": op.pk, "op_type": op.type},
                       "as_of": {"operations": {"generated_at": ctx.now.isoformat()}},
                       "corp_demand": {"present": False}},
@@ -440,9 +478,11 @@ def gen_mentor_available(ctx) -> list[Draft]:
             kind=SuggestionKind.MENTOR_AVAILABLE,
             dedupe_key=_dk(ctx.uid, SuggestionKind.MENTOR_AVAILABLE, "goal", goal.pk, _month(ctx.now)),
             goal_id=goal.pk,
-            title=f"Mentors available for «{goal.title}»",
-            reason=(f"{count} mentor(s) currently cover {category}, which matches your goal "
-                    f"«{goal.title}». Mentors only ever see what you explicitly share."),
+            **_prose(
+                messages.SUG_MENTOR_AVAILABLE,
+                {"goal": goal.title},
+                {"count": count, "category": str(category), "goal": goal.title},
+            ),
             data={"inputs": {"category": category, "mentor_count": count},
                   "as_of": {"mentorship": {"generated_at": ctx.now.isoformat()}},
                   "corp_demand": {"present": False}},
@@ -466,10 +506,11 @@ def gen_stalled_goal(ctx) -> list[Draft]:
             kind=SuggestionKind.STALLED_GOAL,
             dedupe_key=_dk(ctx.uid, SuggestionKind.STALLED_GOAL, "goal", goal.pk, _month(ctx.now)),
             goal_id=goal.pk,
-            title=f"«{goal.title}» hasn't moved lately",
-            reason=(f"«{goal.title}» hasn't moved in about {idle.days // 7} week(s). That's "
-                    f"completely fine — interests change. If it helps, you could lower its "
-                    f"priority, pause it, or adjust the target date."),
+            **_prose(
+                messages.SUG_STALLED_GOAL,
+                {"goal": goal.title},
+                {"goal": goal.title, "weeks": idle.days // 7},
+            ),
             data={"inputs": {"idle_days": idle.days},
                   "as_of": {"capsuleer": {"generated_at": ctx.now.isoformat()}},
                   "corp_demand": {"present": False}},
@@ -483,20 +524,24 @@ def gen_blocked_prereq(ctx) -> list[Draft]:
     drafts = []
     for goal in ctx.active_goals:
         try:
-            blocked, reasons = progress.derive_blocked(goal)
+            refs = progress.blocked_refs(goal)
         except Exception:  # noqa: BLE001
             ctx.mark_failed(SuggestionKind.BLOCKED_PREREQ)
             continue
-        if not blocked:
+        if not refs:
             continue
+        reasons = [messages.text(r["text"], r["key"], r["params"]) for r in refs]
         drafts.append(Draft(
             kind=SuggestionKind.BLOCKED_PREREQ,
             dedupe_key=_dk(ctx.uid, SuggestionKind.BLOCKED_PREREQ, "goal", goal.pk),
             goal_id=goal.pk,
-            title=f"«{goal.title}» is blocked",
-            reason=(f"«{goal.title}» is blocked: {'; '.join(reasons)}. You can edit the milestone, "
-                    f"pick a different doctrine, or keep the goal parked until this resolves — "
-                    f"nothing expires."),
+            # The blockers are themselves scaffold refs, so ``%(blockers)s`` localises with the
+            # reader too instead of embedding the sweep's frozen English inside the sentence.
+            **_prose(
+                messages.SUG_BLOCKED_PREREQ,
+                {"goal": goal.title},
+                {"goal": goal.title, "blockers": refs},
+            ),
             data={"inputs": {"blockers": reasons},
                   "as_of": {"capsuleer": {"generated_at": ctx.now.isoformat()}},
                   "corp_demand": {"present": False}},
@@ -532,14 +577,14 @@ def gen_ship_available(ctx) -> list[Draft]:
         except Exception:  # noqa: BLE001, S112
             continue
         within = _within_budget(ctx, priced.unit_price)
-        note = " It fits within your configured monthly budget." if within else ""
+        # Two whole scaffolds rather than one sentence plus an appended fragment: a translator must
+        # never be handed half a sentence to concatenate.
+        key = messages.SUG_SHIP_AVAILABLE_BUDGET if within else messages.SUG_SHIP_AVAILABLE
         drafts.append(Draft(
             kind=SuggestionKind.SHIP_AVAILABLE,
             dedupe_key=_dk(ctx.uid, SuggestionKind.SHIP_AVAILABLE, "ship", hull),
             goal_id=goal.pk,
-            title="Shipyard can supply your goal hull",
-            reason=(f"The corp shipyard can supply a {priced.ship_name} for your goal "
-                    f"«{goal.title}».{note}"),
+            **_prose(key, {}, {"ship": priced.ship_name, "goal": goal.title}),
             # data minimisation: a within-budget boolean at most, never the ISK figure (doc 08 §5.6).
             data={"inputs": {"ship_type_id": hull, "ship_name": priced.ship_name,
                              "within_budget": within},
@@ -588,10 +633,11 @@ def gen_campaign_opportunity(ctx) -> list[Draft]:
             kind=SuggestionKind.CAMPAIGN_OPPORTUNITY,
             dedupe_key=_dk(ctx.uid, SuggestionKind.CAMPAIGN_OPPORTUNITY, "campaign", camp.pk),
             goal_id=None,
-            title=f"Campaign «{camp.name}» needs help",
-            reason=(f"Campaign «{camp.name}» is asking for help: «{objective.title}». This matches "
-                    f"your interest in {matched}. Volunteering is entirely optional and visible to "
-                    f"the campaign team."),
+            **_prose(
+                messages.SUG_CAMPAIGN_OPPORTUNITY,
+                {"campaign": camp.name},
+                {"campaign": camp.name, "objective": objective.title, "activity": matched},
+            ),
             data={"inputs": {"campaign_id": camp.pk, "objective_id": objective.pk,
                              "activity": matched},
                   "as_of": {"campaigns": {"generated_at": ctx.now.isoformat()}},
@@ -610,10 +656,11 @@ def gen_review_due(ctx) -> list[Draft]:
                 kind=SuggestionKind.REVIEW_DUE,
                 dedupe_key=_dk(ctx.uid, SuggestionKind.REVIEW_DUE, "goal", goal.pk, _month(ctx.now)),
                 goal_id=goal.pk,
-                title=f"Time to review «{goal.title}»",
-                reason=(f"It's been a while since you looked at «{goal.title}». A two-minute review "
-                        f"keeps the plan honest — reprioritise, adjust the date, or archive it "
-                        f"guilt-free."),
+                **_prose(
+                    messages.SUG_REVIEW_DUE_GOAL,
+                    {"goal": goal.title},
+                    {"goal": goal.title},
+                ),
                 data={"inputs": {"review_due_at": goal.review_due_at.isoformat()},
                       "as_of": {"capsuleer": {"generated_at": ctx.now.isoformat()}},
                       "corp_demand": {"present": False}},
@@ -631,10 +678,7 @@ def gen_review_due(ctx) -> list[Draft]:
                 kind=SuggestionKind.REVIEW_DUE,
                 dedupe_key=_dk(ctx.uid, SuggestionKind.REVIEW_DUE, "profile", 0, _month(ctx.now)),
                 goal_id=None,
-                title="Time to review your preferences",
-                reason=("It's been a while since you reviewed your preferences. A quick look keeps "
-                        "your suggestions relevant — update what you enjoy, your pace, or your "
-                        "budget any time."),
+                **_prose(messages.SUG_REVIEW_DUE_PROFILE, {}, {}),
                 data={"inputs": {"last_reviewed_at": last.isoformat() if last else None},
                       "as_of": {"capsuleer": {"generated_at": ctx.now.isoformat()}},
                       "corp_demand": {"present": False}},
@@ -786,10 +830,17 @@ def _upsert(ctx, drafts, counts) -> int:
 def _refresh_open(existing, draft) -> None:
     existing.title = draft.title[:140]
     existing.reason = draft.reason
+    # The key/params travel with the prose on every refresh — a row must never end up holding a
+    # stale key that describes a sentence it no longer stores.
+    existing.title_key = draft.title_key
+    existing.title_params = draft.title_params
+    existing.reason_key = draft.reason_key
+    existing.reason_params = draft.reason_params
     existing.data = draft.data
     existing.corp_driven = draft.corp_driven
     existing.expires_at = draft.expires_at
-    existing.save(update_fields=["title", "reason", "data", "corp_driven", "expires_at",
+    existing.save(update_fields=["title", "reason", "title_key", "title_params", "reason_key",
+                                 "reason_params", "data", "corp_driven", "expires_at",
                                  "updated_at"])
 
 
@@ -798,7 +849,9 @@ def _create_draft(ctx, draft) -> bool:
         with transaction.atomic():
             PathSuggestion.objects.create(
                 user=ctx.user, goal_id=draft.goal_id, kind=draft.kind, title=draft.title[:140],
-                reason=draft.reason, data=draft.data, corp_driven=draft.corp_driven,
+                reason=draft.reason, title_key=draft.title_key, title_params=draft.title_params,
+                reason_key=draft.reason_key, reason_params=draft.reason_params,
+                data=draft.data, corp_driven=draft.corp_driven,
                 dedupe_key=draft.dedupe_key, expires_at=draft.expires_at,
                 status=SuggestionStatus.OPEN,
             )

@@ -15,6 +15,32 @@ from django.utils.translation import gettext_lazy as _
 
 from core.mixins import TimeStampedModel
 
+from . import messages as msg
+
+# --------------------------------------------------------------------------- #
+#  Seam B — persisted prose that a Celery worker writes and OTHER people read.
+#
+#  Every sentence below (a constraint's label/detail, a COA's objective/reasoning/risk, a pilot's
+#  directive, the briefing title/summary/body, the after-action title/body) is written into the
+#  database by a CI worker — which has no user and therefore no locale — and read back by each
+#  officer/member under THEIR locale. ``gettext`` at the write site cannot help: Django coerces a
+#  lazy proxy to ``str`` on ``.save()``, freezing the row in the writer's (English) locale forever,
+#  and a proxy inside a JSONField is a hard TypeError. So each sink KEEPS its English prose column
+#  (the fallback *and* the audit record, and the LLM's only input) and gains a ``_key`` + ``_params``
+#  pair that the ``_i18n`` read property re-resolves under the reader's locale (``.messages``).
+#  Rows written before this change carry no key and degrade to their stored English — never blank.
+#  An LLM-authored sentence likewise carries no key: model free text renders verbatim, by contract.
+#
+#  ``db_default`` (not just ``default``) is load-bearing on every new column: without it Django
+#  emits ``ADD COLUMN … DEFAULT x NOT NULL`` followed by ``ALTER COLUMN … DROP DEFAULT``, leaving a
+#  NOT NULL column with no database-level default. Any INSERT from older code during a rollback then
+#  fails with a not-null violation, while reads keep working — so it looks fine and breaks silently.
+# --------------------------------------------------------------------------- #
+_KEY_FIELD_KWARGS = {"max_length": 64, "blank": True, "default": "", "db_default": ""}
+# NB: ``Value({}, JSONField())`` — not ``Value("{}", …)``, which Django would encode as the JSON
+# *string* ``"{}"`` and hand an old-code INSERT a ``str`` where every reader expects a dict.
+_PARAMS_DB_DEFAULT = models.Value({}, models.JSONField())
+
 
 class Trigger(models.TextChoices):
     MANUAL = "manual", _("Manual")
@@ -87,6 +113,12 @@ class OperationalConstraint(TimeStampedModel):
     affected_capabilities = models.JSONField(default=list, blank=True)
     evidence = models.JSONField(default=list, blank=True)
     detail = models.TextField(blank=True)
+    # Seam B. ``key`` above is the identifier (compared, filtered, uniqueness-constrained) and is
+    # never translated; these carry the *sentences*.
+    label_key = models.CharField(**_KEY_FIELD_KWARGS)
+    label_params = models.JSONField(default=dict, blank=True, db_default=_PARAMS_DB_DEFAULT)
+    detail_key = models.CharField(**_KEY_FIELD_KWARGS)
+    detail_params = models.JSONField(default=dict, blank=True, db_default=_PARAMS_DB_DEFAULT)
 
     class Meta:
         constraints = [
@@ -99,6 +131,22 @@ class OperationalConstraint(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"{self.label} ({self.binding_metric} {self.unit})"
+
+    # -- reader-locale render (templates use these; ``retrieval``/``notify`` keep the English) --
+    @property
+    def label_i18n(self) -> str:
+        return msg.render(self.label_key, self.label_params, self.label)
+
+    @property
+    def detail_i18n(self) -> str:
+        return msg.render(self.detail_key, self.detail_params, self.detail)
+
+    def label_ref(self) -> dict | str:
+        """This label as a composable ref (see ``messages.ref``), for embedding in another sentence."""
+        return msg.ref(self.label_key, self.label_params) if self.label_key else self.label
+
+    def detail_ref(self) -> dict | str:
+        return msg.ref(self.detail_key, self.detail_params) if self.detail_key else self.detail
 
 
 class IntelligenceReport(TimeStampedModel):
@@ -126,6 +174,15 @@ class IntelligenceReport(TimeStampedModel):
     title = models.CharField(max_length=200, blank=True)
     summary = models.TextField(blank=True)
     body = models.JSONField(default=dict, blank=True)
+    # Seam B. Set only on the deterministic/degraded path; an LLM-authored briefing (or an
+    # officer-typed title) carries no key and renders verbatim. ``body_params`` is the *document
+    # template*: the same structure as ``body`` with its prose leaves replaced by scaffold refs.
+    title_key = models.CharField(**_KEY_FIELD_KWARGS)
+    title_params = models.JSONField(default=dict, blank=True, db_default=_PARAMS_DB_DEFAULT)
+    summary_key = models.CharField(**_KEY_FIELD_KWARGS)
+    summary_params = models.JSONField(default=dict, blank=True, db_default=_PARAMS_DB_DEFAULT)
+    body_key = models.CharField(**_KEY_FIELD_KWARGS)
+    body_params = models.JSONField(default=dict, blank=True, db_default=_PARAMS_DB_DEFAULT)
     requested_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
         related_name="command_intel_reports",
@@ -160,6 +217,25 @@ class IntelligenceReport(TimeStampedModel):
     def __str__(self) -> str:
         return self.title or f"Report #{self.pk}"
 
+    # -- reader-locale render -------------------------------------------------------------
+    @property
+    def title_i18n(self) -> str:
+        return msg.render(self.title_key, self.title_params, self.title)
+
+    @property
+    def summary_i18n(self) -> str:
+        return msg.render(self.summary_key, self.summary_params, self.summary)
+
+    @property
+    def body_i18n(self):
+        """``body`` re-rendered under the reader's locale — same shape, same keys.
+
+        No key (legacy row) or an LLM-authored body → the stored English JSON, verbatim.
+        """
+        if not self.body_key:
+            return self.body
+        return msg.render_doc(self.body_params, self.body)
+
 
 class CourseOfAction(TimeStampedModel):
     """A structured, owned, prioritised proposed action (doc 03 §3.4)."""
@@ -190,9 +266,21 @@ class CourseOfAction(TimeStampedModel):
         OperationalConstraint, on_delete=models.SET_NULL, null=True, blank=True,
         related_name="courses_of_action",
     )
+    # ``slug`` is derived from the ENGLISH objective and is the dedupe/uniqueness key — it is an
+    # identifier and must never be built from a translated string (doc 08 §11.1).
     slug = models.CharField(max_length=160, db_index=True)
     objective = models.TextField()
     reasoning = models.TextField(blank=True)
+    # Seam B. Set only on the templated (ready_degraded) path; an LLM-drafted COA is model free text
+    # with no key and renders verbatim.
+    objective_key = models.CharField(**_KEY_FIELD_KWARGS)
+    objective_params = models.JSONField(default=dict, blank=True, db_default=_PARAMS_DB_DEFAULT)
+    reasoning_key = models.CharField(**_KEY_FIELD_KWARGS)
+    reasoning_params = models.JSONField(default=dict, blank=True, db_default=_PARAMS_DB_DEFAULT)
+    risk_if_ignored_key = models.CharField(**_KEY_FIELD_KWARGS)
+    risk_if_ignored_params = models.JSONField(
+        default=dict, blank=True, db_default=_PARAMS_DB_DEFAULT
+    )
     expected_impact = models.JSONField(default=dict, blank=True)
     readiness_delta = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
     effort = models.CharField(max_length=8, choices=Effort.choices, default=Effort.MEDIUM)
@@ -241,6 +329,21 @@ class CourseOfAction(TimeStampedModel):
     @property
     def is_active(self) -> bool:
         return self.state in {self.State.PROPOSED, self.State.ACCEPTED, self.State.IN_PROGRESS}
+
+    # -- reader-locale render (the card renders these; ``slug``/``create_task`` keep the English) --
+    @property
+    def objective_i18n(self) -> str:
+        return msg.render(self.objective_key, self.objective_params, self.objective)
+
+    @property
+    def reasoning_i18n(self) -> str:
+        return msg.render(self.reasoning_key, self.reasoning_params, self.reasoning)
+
+    @property
+    def risk_if_ignored_i18n(self) -> str:
+        return msg.render(
+            self.risk_if_ignored_key, self.risk_if_ignored_params, self.risk_if_ignored
+        )
 
     def linked_tasks(self):
         """The tasks.Task rows this COA spawned (soft-link, doc 07 §6)."""
@@ -389,6 +492,12 @@ class PilotDirective(TimeStampedModel):
     category = models.CharField(max_length=16, choices=Category.choices, default=Category.SKILL)
     title = models.CharField(max_length=200)
     detail = models.TextField(blank=True)
+    # Seam B. NB ``apps/pilots/briefing.py`` dedupes CI ship directives against readiness recos by
+    # comparing ``title`` — that comparison must keep using this ENGLISH column, never ``title_i18n``.
+    title_key = models.CharField(**_KEY_FIELD_KWARGS)
+    title_params = models.JSONField(default=dict, blank=True, db_default=_PARAMS_DB_DEFAULT)
+    detail_key = models.CharField(**_KEY_FIELD_KWARGS)
+    detail_params = models.JSONField(default=dict, blank=True, db_default=_PARAMS_DB_DEFAULT)
     # The ranking score: how binding the corp constraint this directive relieves is
     # (severity-weighted). Higher = more strategic leverage for this pilot's one move.
     leverage = models.IntegerField(default=0)
@@ -411,6 +520,15 @@ class PilotDirective(TimeStampedModel):
     @property
     def is_open(self) -> bool:
         return self.state == self.State.OPEN
+
+    # -- reader-locale render (the quest log renders these; the dedupe keeps the English) --
+    @property
+    def title_i18n(self) -> str:
+        return msg.render(self.title_key, self.title_params, self.title)
+
+    @property
+    def detail_i18n(self) -> str:
+        return msg.render(self.detail_key, self.detail_params, self.detail)
 
     def __str__(self) -> str:
         return f"{self.user_id}: {self.title[:60]}"
@@ -488,8 +606,16 @@ class BattleAnalysis(TimeStampedModel):
     )
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     title = models.CharField(max_length=200, blank=True)
+    # ``facts`` is NOT a prose sink: it is the deterministic fact set (numbers, ISO timestamps and
+    # EVE names — ship/pilot/system), which stays English by policy and carries no sentences.
     facts = models.JSONField(default=dict, blank=True)
     body = models.JSONField(default=dict, blank=True)
+    # Seam B. Set only on the degraded (facts-only) path; an LLM-authored AAR narrative carries no
+    # key and renders verbatim. ``body_params`` is the document template (prose leaves = refs).
+    title_key = models.CharField(**_KEY_FIELD_KWARGS)
+    title_params = models.JSONField(default=dict, blank=True, db_default=_PARAMS_DB_DEFAULT)
+    body_key = models.CharField(**_KEY_FIELD_KWARGS)
+    body_params = models.JSONField(default=dict, blank=True, db_default=_PARAMS_DB_DEFAULT)
     requested_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
         related_name="command_intel_battle_analyses",
@@ -514,6 +640,21 @@ class BattleAnalysis(TimeStampedModel):
     @property
     def is_terminal(self) -> bool:
         return self.status in {self.Status.READY, self.Status.READY_DEGRADED, self.Status.FAILED}
+
+    # -- reader-locale render -------------------------------------------------------------
+    @property
+    def title_i18n(self) -> str:
+        return msg.render(self.title_key, self.title_params, self.title)
+
+    @property
+    def body_i18n(self):
+        """``body`` re-rendered under the reader's locale — same shape, same keys.
+
+        No key (legacy row) or an LLM-authored narrative → the stored English JSON, verbatim.
+        """
+        if not self.body_key:
+            return self.body
+        return msg.render_doc(self.body_params, self.body)
 
     def __str__(self) -> str:
         return self.title or f"Battle analysis #{self.pk}"

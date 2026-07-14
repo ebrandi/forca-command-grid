@@ -20,6 +20,7 @@ from ..engine.base import (
     status_for,
 )
 from ..engine.registry import register
+from ..messages import english_text
 from .roles import role_score
 
 
@@ -64,12 +65,19 @@ class LeadershipProvider:
         ))
         if filled < defined:
             unfilled = [t.get("label", k) for k, t in owner_tags.items() if not (t.get("users") or [])]
+            # The role names are leadership-authored config content: raw in the params.
+            label_params = {
+                "count": defined - filled, "roles": ", ".join(unfilled[:3]),
+            }
             findings.append(Finding(
                 kind="gap", dimension_key=self.key, kpi_key="leadership.officer_coverage",
                 severity="warn", weight=float(defined - filled),
-                label=f"{defined - filled} officer role(s) unfilled: {', '.join(unfilled[:3])}",
+                label=english_text("leadership.officers_unfilled", label_params),
+                label_key="leadership.officers_unfilled", label_params=label_params,
                 ref_type="leadership", ref_id="officer_coverage",
-                task_type="other", task_title="Assign owners to unfilled officer responsibilities",
+                task_type="other",
+                task_title=english_text("leadership.assign_owners_task"),
+                task_title_key="leadership.assign_owners_task",
             ))
 
         # fc_bench / mentor_coverage — only when a skills-detectable target exists.
@@ -85,12 +93,20 @@ class LeadershipProvider:
                 {"qualified": qualified, "desired": target.desired_count},
             ))
             if qualified < target.desired_count:
+                label_params = {
+                    "role": target.label, "qualified": qualified,
+                    "desired": target.desired_count,
+                }
+                task_params = {"role": target.label}
                 findings.append(Finding(
                     kind="gap", dimension_key=self.key, kpi_key=kpi_key,
                     severity="warn", weight=float(target.desired_count - qualified),
-                    label=f"{target.label} bench {qualified}/{target.desired_count}",
+                    label=english_text("leadership.role_bench", label_params),
+                    label_key="leadership.role_bench", label_params=label_params,
                     ref_type="role", ref_id=role_key,
-                    task_type="train", task_title=f"Grow the {target.label} bench",
+                    task_type="train",
+                    task_title=english_text("leadership.grow_bench_task", task_params),
+                    task_title_key="leadership.grow_bench_task", task_title_params=task_params,
                 ))
 
         score = combine_kpi_scores(kpis, ctx.config.get("kpis", {}))

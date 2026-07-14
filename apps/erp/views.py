@@ -79,7 +79,9 @@ def claim(request: HttpRequest, pk: int) -> HttpResponse:
     services.recheck_block(job)  # unblock if stock has since arrived (or re-block)
     if job.status == BuildJob.Status.BLOCKED:
         messages.error(
-            request, _("Can't claim — %(reason)s.") % {"reason": job.blocked_reason or _("materials are short")}
+            request,
+            _("Can't claim — %(reason)s.")
+            % {"reason": job.blocked_reason_i18n or _("materials are short")},
         )
     elif services.claim(job, request.user):
         messages.success(request, _("Claimed — materials and BOM are on the card."))

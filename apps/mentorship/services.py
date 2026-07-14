@@ -13,6 +13,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from . import eligibility
+from . import messages as msg
 from .models import (
     MenteeProfile,
     MentorProfile,
@@ -176,10 +177,22 @@ def mentor_has_capacity(mentor: MentorProfile) -> bool:
 # Pairing lifecycle
 # ---------------------------------------------------------------------------
 def _log_event(pairing, *, actor=None, kind=MentorshipPairingEvent.Kind.STATUS,
-               from_status="", to_status="", detail=""):
+               from_status="", to_status="", detail="", key="", params=None):
+    """Append a pairing event.
+
+    Seam B: when the sentence is *ours* (a system detail), the caller passes a scaffold ``key`` +
+    plain-JSON ``params`` and the English prose is derived from the msgid — so the row carries both
+    the audit English *and* enough to re-render in the reader's locale. When the sentence is a
+    pilot's own free text (a pause/cancel reason), the caller passes ``detail`` only: it is stored
+    verbatim and shown verbatim to every reader, in every locale. Never ``_()`` either one here —
+    this row is read by other people, not by whoever wrote it.
+    """
+    if key:
+        detail = msg.english(key, params) or detail
     MentorshipPairingEvent.objects.create(
         pairing=pairing, actor=actor, kind=kind,
         from_status=from_status, to_status=to_status, detail=detail[:300],
+        detail_key=key, detail_params=params or {},
     )
 
 
@@ -201,12 +214,17 @@ def propose_pairing(mentor: MentorProfile, mentee: MenteeProfile, *, actor=None,
     if existing_open_pairing(mentor, mentee):
         return None
     status = status or MentorshipPairing.Status.SUGGESTED
+    # ``reasons`` are ``matching.score`` entries ({"key", "params"}). A legacy caller passing plain
+    # strings still works: they land in the English column with no keys, exactly as before.
+    entries = [r for r in (reasons or []) if isinstance(r, dict)]
+    prose = msg.english_list(entries) if entries else [str(r) for r in (reasons or [])]
     pairing = MentorshipPairing.objects.create(
         mentor=mentor, mentee=mentee, status=status, initiated_by=initiated_by,
-        match_score=score, match_reasons=reasons or [], cohort=active_cohort(),
+        match_score=score, match_reasons=prose, match_reasons_keys=entries,
+        cohort=active_cohort(),
     )
     _log_event(pairing, actor=actor, to_status=status,
-               detail=f"Proposed ({pairing.get_initiated_by_display()}).")
+               key=f"pairing.proposed.{getattr(initiated_by, 'value', initiated_by)}")
     # Notify the counterparty (auto-suggest, request or invite) so a fresh pairing
     # never sits unseen. Best-effort — never let a notification block the proposal.
     from . import notify
@@ -216,11 +234,15 @@ def propose_pairing(mentor: MentorProfile, mentee: MenteeProfile, *, actor=None,
 
 
 @transaction.atomic
-def set_status(pairing: MentorshipPairing, to_status: str, *, actor=None, detail="") -> bool:
+def set_status(pairing: MentorshipPairing, to_status: str, *, actor=None, detail="",
+               key="", params=None) -> bool:
     """Move a pairing to ``to_status`` with a row lock + audit event.
 
     Capacity is enforced when moving into ACTIVE/PENDING_APPROVAL. Returns False on
     a no-op (already there) or a blocked transition.
+
+    ``key``/``params`` name a ``messages.SCAFFOLDS`` sentence for a *system* detail; ``detail``
+    alone carries a pilot's free text verbatim. See :func:`_log_event`.
     """
     locked = MentorshipPairing.objects.select_for_update().get(pk=pairing.pk)
     if locked.status == to_status:
@@ -240,7 +262,8 @@ def set_status(pairing: MentorshipPairing, to_status: str, *, actor=None, detail
         locked.approved_by = actor or locked.approved_by
     locked.save(update_fields=["status", "started_at", "ended_at", "approved_by",
                                "last_activity_at", "updated_at"])
-    _log_event(locked, actor=actor, from_status=from_status, to_status=to_status, detail=detail)
+    _log_event(locked, actor=actor, from_status=from_status, to_status=to_status, detail=detail,
+               key=key, params=params)
     if to_status == MentorshipPairing.Status.ACTIVE:
         _on_activated(locked, actor)
     pairing.status = to_status
@@ -259,7 +282,7 @@ def _on_activated(pairing: MentorshipPairing, actor):
 def approve_pairing(pairing: MentorshipPairing, officer) -> bool:
     """Leadership approves a pending pairing → ACTIVE."""
     return set_status(pairing, MentorshipPairing.Status.ACTIVE, actor=officer,
-                      detail="Approved by leadership.")
+                      key="pairing.approved_by_leadership")
 
 
 def activate_or_queue(pairing: MentorshipPairing, *, actor=None) -> str:
@@ -267,9 +290,9 @@ def activate_or_queue(pairing: MentorshipPairing, *, actor=None) -> str:
     program = active_program()
     if program.pairing_requires_approval:
         set_status(pairing, MentorshipPairing.Status.PENDING_APPROVAL, actor=actor,
-                   detail="Awaiting leadership approval.")
+                   key="pairing.awaiting_approval")
         return "pending"
-    set_status(pairing, MentorshipPairing.Status.ACTIVE, actor=actor, detail="Auto-activated.")
+    set_status(pairing, MentorshipPairing.Status.ACTIVE, actor=actor, key="pairing.auto_activated")
     return "active"
 
 
@@ -308,8 +331,10 @@ def enroll_track(pairing: MentorshipPairing, track: MentorshipTrack, *, actor=No
         from . import workflow
         workflow.materialize_track(pairing, track)
         if log:
+            # The track title is corp-authored content: it is interpolated raw and never
+            # translated; only the sentence around it is.
             _log_event(pairing, actor=actor, kind=MentorshipPairingEvent.Kind.SYSTEM,
-                       detail=f"Enrolled in track: {track.title}")
+                       key="pairing.track_enrolled", params={"track": track.title})
     return enrollment
 
 
@@ -333,8 +358,14 @@ def schedule_session(pairing, *, actor, topic="", scheduled_at=None, duration_mi
     )
     pairing.touch_activity()
     pairing.save(update_fields=["last_activity_at", "updated_at"])
-    _log_event(pairing, actor=actor, kind=MentorshipPairingEvent.Kind.SYSTEM,
-               detail=f"Session scheduled: {topic or 'mentoring'}")
+    # The topic is free text the pilot typed — interpolated raw, never translated. With no topic
+    # the sentence is entirely ours, so it gets its own key.
+    if topic:
+        _log_event(pairing, actor=actor, kind=MentorshipPairingEvent.Kind.SYSTEM,
+                   key="pairing.session_scheduled", params={"topic": topic[:160]})
+    else:
+        _log_event(pairing, actor=actor, kind=MentorshipPairingEvent.Kind.SYSTEM,
+                   key="pairing.session_scheduled_default")
     return session
 
 

@@ -16,6 +16,8 @@ from django.core.cache import cache
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
+from . import messages as msg
+
 _AGE_TTL = 7 * 24 * 3600      # ESI character public data caches ~7d
 _HIST_TTL = 24 * 3600         # corporation history caches ~1d
 
@@ -89,6 +91,13 @@ def evaluate(user, program, role: str) -> dict:
 
     Returns a JSON-serialisable dict suitable for ``MentorProfile.eligibility`` /
     ``MenteeProfile.eligibility`` and for rendering "you appear eligible because…".
+
+    Seam B: the snapshot is *persisted* — and refreshed by the ``mentorship.refresh_eligibility``
+    worker, which has no locale — then read back by the pilot and by officers under theirs. So the
+    reasons are stored twice: ``reasons`` is the English prose (the audit record and the fallback
+    for snapshots taken before this change) and ``reasons_i18n`` is the parallel list of scaffold
+    ``{"key", "params"}`` entries that :func:`reasons_for` re-renders in the reader's locale.
+    NEVER a lazy proxy: this dict goes into a JSONField, where a proxy is a TypeError at save time.
     """
     character = _pick_character(user)
     now = timezone.now()
@@ -104,8 +113,7 @@ def evaluate(user, program, role: str) -> dict:
         "computed_at": now.isoformat(),
     }
     if character is None:
-        base["reasons"] = ["No linked character — link a character first."]
-        return base
+        return _with_reasons(base, [{"key": "elig.no_character", "params": {}}])
 
     facts = _fetch_facts(character)
     age = facts["age_days"]
@@ -116,7 +124,7 @@ def evaluate(user, program, role: str) -> dict:
         confidence=facts["confidence"],
         source=facts["source"],
     )
-    reasons: list[str] = []
+    reasons: list[dict] = []
 
     if role == "mentor":
         min_age = program.mentor_min_character_age_days
@@ -128,41 +136,69 @@ def evaluate(user, program, role: str) -> dict:
         else:
             eligible = age_ok or tenure_ok
         if age is not None:
-            reasons.append(
-                f"Character is {age // 365}y {age % 365}d old "
-                f"({'meets' if age_ok else 'below'} the {min_age}d minimum)."
-            )
+            reasons.append({
+                "key": "elig.mentor_age_meets" if age_ok else "elig.mentor_age_below",
+                "params": {"years": age // 365, "days": age % 365, "min": min_age},
+            })
         else:
-            reasons.append("Character age unknown (ESI unavailable).")
+            reasons.append({"key": "elig.mentor_age_unknown", "params": {}})
         if tenure is not None:
-            reasons.append(
-                f"~{tenure} days in the corp "
-                f"({'meets' if tenure_ok else 'below'} the {min_tenure}d minimum)."
-            )
+            reasons.append({
+                "key": "elig.mentor_tenure_meets" if tenure_ok else "elig.mentor_tenure_below",
+                "params": {"days": tenure, "min": min_tenure},
+            })
         else:
-            reasons.append("Corp tenure unknown.")
+            reasons.append({"key": "elig.mentor_tenure_unknown", "params": {}})
         base["eligible"] = bool(eligible)
 
     else:  # mentee
         if not program.enforce_mentee_eligibility:
             base["eligible"] = True
-            reasons.append("Mentee eligibility check is disabled — everyone may join as a cadet.")
+            reasons.append({"key": "elig.mentee_disabled", "params": {}})
         else:
             max_tenure = program.mentee_max_corp_tenure_days
             if tenure is None:
                 # Unknown tenure: allow but flag low confidence (likely a new pilot).
                 base["eligible"] = True
-                reasons.append("Corp tenure unknown; treating as a new pilot (low confidence).")
+                reasons.append({"key": "elig.mentee_tenure_unknown", "params": {}})
             else:
                 eligible = tenure < max_tenure
                 base["eligible"] = bool(eligible)
-                reasons.append(
-                    f"~{tenure} days in the corp "
-                    f"({'under' if eligible else 'over'} the {max_tenure}d cap for cadets)."
-                )
+                reasons.append({
+                    "key": "elig.mentee_tenure_under" if eligible else "elig.mentee_tenure_over",
+                    "params": {"days": tenure, "max": max_tenure},
+                })
 
-    base["reasons"] = reasons
-    return base
+    return _with_reasons(base, reasons)
+
+
+def _with_reasons(snapshot: dict, entries: list[dict]) -> dict:
+    """Stamp both halves of the reason list onto an eligibility snapshot."""
+    snapshot["reasons"] = msg.english_list(entries)
+    snapshot["reasons_i18n"] = entries
+    return snapshot
+
+
+def reasons_for(snapshot: dict | None) -> list[str]:
+    """The snapshot's reasons under the **reader's** locale.
+
+    A snapshot taken before this change has no ``reasons_i18n`` and falls back to its stored
+    English ``reasons``, verbatim — never blank.
+    """
+    snapshot = snapshot or {}
+    return msg.render_list(snapshot.get("reasons_i18n"), snapshot.get("reasons"))
+
+
+def for_display(snapshot: dict | None) -> dict:
+    """A copy of ``snapshot`` whose ``reasons`` are rendered in the reader's locale.
+
+    Views hand this to the template instead of the raw snapshot, so the rendered page localises
+    without the stored row ever being touched.
+    """
+    out = dict(snapshot or {})
+    if out:
+        out["reasons"] = reasons_for(out)
+    return out
 
 
 def invalidate(character_id: int) -> None:

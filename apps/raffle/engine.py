@@ -178,6 +178,7 @@ def process_source(contest, source_key: str, *, dry_run: bool = False) -> Proces
                 character_name=e.character_name or event.character_name,
                 source_key=source_key, source_ref=event.source_ref,
                 amount=tickets, reason=event.reason, status=default_status,
+                reason_key=event.reason_key, reason_params=event.reason_params,
                 occurred_at=event.occurred_at,
                 eligibility_snapshot=e.snapshot(), esi_status=e.esi_status,
                 created_by_system=True, metadata=event.metadata,

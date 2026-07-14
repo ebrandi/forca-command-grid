@@ -20,6 +20,7 @@ from ..engine.base import (
     threshold_score,
 )
 from ..engine.registry import register
+from ..messages import english_text
 
 # Fuel runway bands (days): 14d+ → full, 3d → red.
 _FUEL_AMBER = 14
@@ -73,12 +74,31 @@ class InfrastructureProvider:
                     {"min_fuel_days": round(min_fuel, 1), "structures": len(structures)},
                 ))
                 if min_fuel < _FUEL_RED:
+                    # Two scaffolds each: an unnamed structure folds "A structure"/"structure"
+                    # into the msgid rather than freezing that English word inside a param.
+                    days = f"{min_fuel:.1f}"
+                    label_key = (
+                        "infrastructure.fuel_low" if low.name
+                        else "infrastructure.fuel_low_unnamed"
+                    )
+                    label_params = {"days": days}
+                    task_key = (
+                        "infrastructure.refuel_task" if low.name
+                        else "infrastructure.refuel_task_unnamed"
+                    )
+                    task_params = {}
+                    if low.name:
+                        label_params["structure"] = low.name
+                        task_params["structure"] = low.name
                     findings.append(Finding(
                         kind="risk", dimension_key=self.key, kpi_key="infrastructure.fuel_cover",
                         severity="high", weight=round(100 * (_FUEL_RED - min_fuel) / _FUEL_RED),
-                        label=f"{low.name or 'A structure'} has {min_fuel:.1f} days of fuel left",
+                        label=english_text(label_key, label_params),
+                        label_key=label_key, label_params=label_params,
                         ref_type="structure", ref_id=str(low.structure_id),
-                        task_type="deliver", task_title=f"Refuel {low.name or 'structure'}",
+                        task_type="deliver",
+                        task_title=english_text(task_key, task_params),
+                        task_title_key=task_key, task_title_params=task_params,
                         owner_tag="logistics_director",
                     ))
 

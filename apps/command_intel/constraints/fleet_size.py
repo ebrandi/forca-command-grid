@@ -8,6 +8,7 @@ else the doctrine's own ``min_pilots``. A doctrine missing either fact is report
 """
 from __future__ import annotations
 
+from .. import messages
 from ..engine.base import (
     PRIMARY,
     SECONDARY,
@@ -19,6 +20,13 @@ from ..engine.base import (
 )
 from ..engine.registry import register_constraint
 from ._common import num, slice_facts
+
+# Seam B (``..messages``): persisted prose = scaffold key + JSON-safe params; the English column is
+# derived from the msgid itself so the two cannot drift.
+_LABEL = "constraint.fleet_size.label"
+_DETAIL = "constraint.fleet_size.detail"
+_DETAIL_NO_DEMAND = "constraint.fleet_size.detail.no_demand"
+_DETAIL_UNKNOWN = "constraint.fleet_size.detail.unknown"
 
 
 class FleetSizeProvider:
@@ -50,13 +58,18 @@ class FleetSizeProvider:
             LimitInput("hulls_in_stock", hulls, "hulls",
                        {"source": "doctrine", "path": f"doctrines[{slug}].hulls_in_stock"}),
         ]
+        label_params = {"doctrine": name}
         # Honest-data rule: both candidate limits are required to field a fleet.
         if flyable is None or hulls is None:
             missing = "pilots_qualified" if flyable is None else "hulls_in_stock"
+            detail_params = {"doctrine": name, "missing": missing}
             return Constraint(
-                key=key, category=self.category, label=f"{name} fleet size",
+                key=key, category=self.category,
+                label=messages.english(_LABEL, label_params),
+                label_key=_LABEL, label_params=label_params,
                 status=UNKNOWN, severity="info", affected_capabilities=[cap], inputs=inputs,
-                detail=f"Cannot compute max {name} fleet: {missing} missing from the doctrine slice.",
+                detail=messages.english(_DETAIL_UNKNOWN, detail_params),
+                detail_key=_DETAIL_UNKNOWN, detail_params=detail_params,
             )
 
         binding_in = min((i for i in inputs if i.value is not None), key=lambda i: i.value)
@@ -68,17 +81,22 @@ class FleetSizeProvider:
             demand = num(d.get("min_pilots"))
         headroom = (binding - demand) if demand is not None else None
         severity = severity_for(headroom, demand, cfg, importance=importance)
+        detail_key = _DETAIL if demand is not None else _DETAIL_NO_DEMAND
+        detail_params = {
+            "doctrine": name, "binding": binding, "factor": binding_in.name,
+            "flyable": flyable, "hulls": hulls,
+        }
+        if demand is not None:
+            detail_params |= {"headroom": f"{headroom:+g}", "demand": f"{demand:g}"}
         return Constraint(
-            key=key, category=self.category, label=f"{name} fleet size",
+            key=key, category=self.category,
+            label=messages.english(_LABEL, label_params),
+            label_key=_LABEL, label_params=label_params,
             binding_metric=binding, unit="pilots", limiting_factor=binding_in.name,
             headroom=headroom, score=constraint_score(headroom, demand), severity=severity,
             affected_capabilities=[cap], inputs=inputs,
-            detail=(
-                f"Max {name} fleet = {binding} pilots, limited by {binding_in.name} "
-                f"({flyable} qualified, {hulls} hulls staged)"
-                + (f"; headroom {headroom:+g} vs {demand:g}-pilot demand." if demand is not None
-                   else " (no demand target set).")
-            ),
+            detail=messages.english(detail_key, detail_params),
+            detail_key=detail_key, detail_params=detail_params,
         )
 
 

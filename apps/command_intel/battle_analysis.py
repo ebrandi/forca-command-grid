@@ -13,10 +13,22 @@ import logging
 from django.conf import settings
 from django.utils import timezone
 
-from . import battle, config
+from . import battle, config, messages
 from .models import BattleAnalysis
 
 logger = logging.getLogger("forca.command_intel")
+
+# Seam B (``.messages``): this job runs in a Celery worker (no user, no locale) and the AAR it
+# writes is read by every officer under their own locale. The deterministic (degraded) prose is
+# therefore persisted as a scaffold key + JSON-safe params next to its English column. The LLM
+# narrative is model free text: no key, rendered verbatim. ``facts`` is NOT a prose sink — it is
+# numbers, ISO timestamps and EVE names (ship/pilot/system), which stay English by policy.
+_TITLE = "battle.title"
+_OUTCOME_KEYS = {
+    "favorable": "battle.outcome.favorable",
+    "unfavorable": "battle.outcome.unfavorable",
+    "even": "battle.outcome.even",
+}
 
 
 def _isk(v) -> str:
@@ -43,27 +55,50 @@ def _normalize_body(obj: dict) -> dict:
     }
 
 
-def _deterministic_body(facts: dict) -> dict:
+def _deterministic_template(facts: dict) -> dict:
+    """The degraded AAR body as a *document template* — same shape, prose leaves are scaffold refs.
+
+    Persisted in ``BattleAnalysis.body_params``; the English ``body`` column is derived from it with
+    ``messages.english_doc`` so the two cannot drift, and ``body_i18n`` re-renders it per reader. A
+    ``gettext_lazy`` proxy could not live here at all: inside a JSONField it is a TypeError on save.
+    """
     t = facts.get("totals", {})
-    systems = ", ".join(facts.get("systems") or []) or "the field"
+    # EVE solar-system names stay English by policy; only the empty-case wording is prose.
+    systems = ", ".join(facts.get("systems") or []) or messages.ref("battle.systems.default")
+    outcome = facts.get("outcome", "even")
+    outcome_key = _OUTCOME_KEYS.get(outcome)
+    # An unrecognised outcome degrades to the raw, title-cased code — never blank.
+    outcome_val = messages.ref(outcome_key) if outcome_key else str(outcome).title()
+
     wrong = []
     if t.get("doctrine_losses"):
-        wrong.append(f"{t.get('off_doctrine_losses', 0)} of {t['doctrine_losses']} doctrine losses were off-doctrine.")
+        wrong.append(messages.ref("battle.wrong.off_doctrine", {
+            "off": t.get("off_doctrine_losses", 0), "total": t["doctrine_losses"],
+        }))
     if t.get("logi_lost"):
-        wrong.append(f"{t['logi_lost']} logistics ship(s) lost.")
+        wrong.append(messages.ref("battle.wrong.logi_lost", {"count": t["logi_lost"]}))
     return {
-        "summary": (
-            f"{facts.get('outcome', 'even').title()} engagement in {systems}: lost "
-            f"{t.get('our_losses', 0)} ships ({_isk(t.get('isk_lost'))} ISK), killed "
-            f"{t.get('our_kills', 0)} ({_isk(t.get('isk_destroyed'))} ISK); ISK swing "
-            f"{_isk(t.get('isk_swing'))}. Narrative unavailable (AI offline) — facts below."
-        ),
-        "what_happened": "Deterministic facts only (AI narrative unavailable). See the panels below.",
+        "summary": messages.ref("battle.summary.degraded", {
+            "outcome": outcome_val, "systems": systems,
+            "our_losses": t.get("our_losses", 0), "isk_lost": _isk(t.get("isk_lost")),
+            "our_kills": t.get("our_kills", 0), "isk_destroyed": _isk(t.get("isk_destroyed")),
+            "isk_swing": _isk(t.get("isk_swing")),
+        }),
+        "what_happened": messages.ref("battle.what_happened.degraded"),
         "what_went_wrong": wrong,
         "what_to_improve": [],
-        "key_losses": [f"{loss['ship']} ({loss['pilot']})" for loss in facts.get("our_losses_detail", [])[:5]],
+        # Pure EVE game data (hull + pilot name) — no prose, nothing to translate.
+        "key_losses": [
+            f"{loss['ship']} ({loss['pilot']})"
+            for loss in facts.get("our_losses_detail", [])[:5]
+        ],
         "_degraded": True,
     }
+
+
+def _deterministic_body(facts: dict) -> dict:
+    """The English degraded body — byte-identical to what this job has always written."""
+    return messages.english_doc(_deterministic_template(facts))
 
 
 def _call_llm(facts: dict):
@@ -101,8 +136,16 @@ def run_battle_analysis(analysis: BattleAnalysis) -> BattleAnalysis:
         analysis.save(update_fields=["status", "updated_at"])
         facts = battle.battle_facts(report)
         analysis.facts = facts
-        analysis.title = analysis.title or f"After-action — {facts.get('title') or 'Battle'}"
-        analysis.save(update_fields=["facts", "title", "updated_at"])
+        if not analysis.title:
+            # The battle's own title is killboard/EVE data and stays raw; only the "Battle"
+            # fallback and the "After-action — …" frame are prose.
+            battle_name = facts.get("title") or messages.ref("battle.title.default")
+            title_params = {"battle": battle_name}
+            analysis.title = messages.english(_TITLE, title_params)
+            analysis.title_key, analysis.title_params = _TITLE, title_params
+        analysis.save(update_fields=[
+            "facts", "title", "title_key", "title_params", "updated_at",
+        ])
 
         degraded, error, body = False, "", None
         if settings.COMMAND_INTEL_ENABLED:
@@ -118,7 +161,12 @@ def run_battle_analysis(analysis: BattleAnalysis) -> BattleAnalysis:
             degraded, error = True, "LLM disabled (no LLM_API_KEY)"
 
         if degraded:
-            body = _deterministic_body(facts)
+            # Seam B: only the deterministic body is scaffolded. The LLM narrative above is model
+            # free text with no msgid — it carries no key and renders verbatim to every reader.
+            template = _deterministic_template(facts)
+            body = messages.english_doc(template)
+            analysis.body_key = "battle.body.degraded"
+            analysis.body_params = template
         analysis.body = body
         analysis.error = error
         analysis.generated_at = timezone.now()

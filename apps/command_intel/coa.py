@@ -10,7 +10,7 @@ from __future__ import annotations
 from django.utils import timezone
 from django.utils.text import slugify
 
-from . import config, outcomes
+from . import config, messages, outcomes
 from .models import CourseOfAction, Severity
 
 # Constraint category → officer-responsibility tag (reused/extended from readiness).
@@ -25,15 +25,21 @@ _OWNER_TAG_BY_CATEGORY = {
     "strategic": "strategic_director",
 }
 
-# limiting_factor → (action template, task type) for the deterministic ready_degraded path.
+# limiting_factor → (objective scaffold key, task type) for the deterministic ready_degraded path.
+# Seam B (``.messages``): the objective/reasoning/risk sentences below are written by the Celery
+# worker and read by every officer under their own locale, so each is persisted as a scaffold key +
+# JSON-safe params next to its English column. An LLM-drafted COA is model free text: it gets no key
+# and renders verbatim, exactly like a pingboard ``custom_message``.
 _ACTION_TEMPLATE = {
-    "hulls_in_stock": ("Stage {n} more {label}", "buy"),
-    "pilots_qualified": ("Train {n} more pilots for {label}", "train"),
-    "logi_cap": ("Recruit/train logistics pilots for {label}", "train"),
-    "fuel_days_left": ("Refuel low-fuel structures", "deliver"),
-    "srp_budget": ("Top up the SRP budget", "other"),
-    "balance_isk": ("Raise corp income or cut burn", "other"),
+    "hulls_in_stock": ("coa.objective.stage_hulls", "buy"),
+    "pilots_qualified": ("coa.objective.train_pilots", "train"),
+    "logi_cap": ("coa.objective.recruit_logi", "train"),
+    "fuel_days_left": ("coa.objective.refuel", "deliver"),
+    "srp_budget": ("coa.objective.top_up_srp", "other"),
+    "balance_isk": ("coa.objective.raise_income", "other"),
 }
+_OBJECTIVE_FALLBACK = "coa.objective.relieve"
+_RISK = "coa.risk_if_ignored"
 
 _SEVERITY_PRIORITY = {
     Severity.CRITICAL: 90, Severity.HIGH: 70, Severity.WATCH: 45, Severity.INFO: 20,
@@ -72,15 +78,33 @@ def templated_drafts(constraints: list, impacts_by_key: dict) -> list[dict]:
     for c in constraints:
         if c.status != "computed" or c.severity == Severity.INFO:
             continue
-        tmpl, task_type = _ACTION_TEMPLATE.get(c.limiting_factor or "", (f"Relieve: {c.label}", "other"))
+        obj_key, task_type = _ACTION_TEMPLATE.get(
+            c.limiting_factor or "", (_OBJECTIVE_FALLBACK, "other")
+        )
         n = abs(int(c.headroom)) if c.headroom is not None and c.headroom < 0 else 1
-        label = (c.affected_capabilities[0] if c.affected_capabilities else c.label)
-        objective = tmpl.format(n=n, label=label)
+        # A capability id ("doctrine:vanguard") is an identifier and stays raw; the constraint's own
+        # label is itself a scaffolded sentence, so it is embedded as a composable ref. NB the
+        # generic "Relieve: …" fallback has always quoted the LABEL (never the capability) — keep it.
+        label_ref = messages.ref(c.label_key, c.label_params) if c.label_key else c.label
+        label = (
+            label_ref if obj_key == _OBJECTIVE_FALLBACK
+            else (c.affected_capabilities[0] if c.affected_capabilities else label_ref)
+        )
+        obj_params = {"n": n, "label": label}
+        risk_params = {"label": label_ref, "metric": c.binding_metric, "unit": c.unit}
         drafts.append({
             "constraint_key": c.key,
-            "objective": objective,
+            # The English column: derived from the msgid itself, so the two cannot drift. The slug
+            # is built from THIS English string and must never come from a translated one.
+            "objective": messages.english(obj_key, obj_params),
+            "objective_key": obj_key,
+            "objective_params": obj_params,
             "reasoning": c.detail,
-            "risk_if_ignored": f"{c.label} stays binding at {c.binding_metric} {c.unit}.",
+            "reasoning_key": c.detail_key,
+            "reasoning_params": c.detail_params or {},
+            "risk_if_ignored": messages.english(_RISK, risk_params),
+            "risk_if_ignored_key": _RISK,
+            "risk_if_ignored_params": risk_params,
             "severity_if_ignored": c.severity,
             "effort": CourseOfAction.Effort.MEDIUM,
             "priority": _SEVERITY_PRIORITY.get(c.severity, 30),
@@ -122,6 +146,13 @@ def persist_coas(report, drafts: list[dict], constraints_by_key: dict, impacts_b
                 "constraint": constraint,
                 "objective": d.get("objective", "")[:2000],
                 "reasoning": d.get("reasoning", ""),
+                # Seam B: empty for an LLM draft (free text → verbatim), set for a templated one.
+                "objective_key": d.get("objective_key", ""),
+                "objective_params": d.get("objective_params") or {},
+                "reasoning_key": d.get("reasoning_key", ""),
+                "reasoning_params": d.get("reasoning_params") or {},
+                "risk_if_ignored_key": d.get("risk_if_ignored_key", ""),
+                "risk_if_ignored_params": d.get("risk_if_ignored_params") or {},
                 "expected_impact": impact.get("expected_delta", {}) or {},
                 "readiness_delta": delta,
                 "effort": d.get("effort") if d.get("effort") in CourseOfAction.Effort.values else "medium",
@@ -138,16 +169,22 @@ def persist_coas(report, drafts: list[dict], constraints_by_key: dict, impacts_b
             },
         )
         if not created and coa.state == CourseOfAction.State.PROPOSED:
-            # Refresh a still-proposed COA with the newest reasoning/impact/priority.
+            # Refresh a still-proposed COA with the newest reasoning/impact/priority — the scaffold
+            # key + params move in lockstep with the prose they describe, or the row would render a
+            # stale sentence to a non-English reader while English readers saw the fresh one.
             coa.report = report
             coa.constraint = constraint
             coa.reasoning = d.get("reasoning", "")
+            coa.reasoning_key = d.get("reasoning_key", "")
+            coa.reasoning_params = d.get("reasoning_params") or {}
             coa.expected_impact = impact.get("expected_delta", {}) or {}
             coa.readiness_delta = delta
             coa.priority = priority
             coa.confidence = confidence
             coa.confidence_label = _confidence_label(confidence, cfg)
             coa.risk_if_ignored = d.get("risk_if_ignored", "")
+            coa.risk_if_ignored_key = d.get("risk_if_ignored_key", "")
+            coa.risk_if_ignored_params = d.get("risk_if_ignored_params") or {}
             coa.save()
         out.append(coa)
     return out

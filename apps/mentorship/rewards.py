@@ -239,12 +239,19 @@ def _isk_total(*, recipient, rule=None, role=None, cohort_id=None) -> Decimal:
 
 
 def _flag_cap(pairing, user, rule) -> None:
+    # Seam B: the officer who reads this flag may not be the pilot who tripped it, and neither is
+    # whoever wrote it. Persist the scaffold key + params; the rule label is corp-authored content,
+    # interpolated raw and never translated. (``messages.english`` gives the English audit prose.)
+    from . import messages as msg
+
+    params = {"rule": rule.label}
     MentorshipFlag.objects.get_or_create(
         dedupe_key=f"cap:{user.id}:{rule.key}",
         resolved=False,
         defaults={
             "kind": MentorshipFlag.Kind.CAP_HIT, "severity": 30, "pairing": pairing,
-            "user": user, "detail": f"Reward cap reached for rule '{rule.label}'.",
+            "user": user, "detail": msg.english("flag.cap_hit", params)[:300],
+            "detail_key": "flag.cap_hit", "detail_params": params,
         },
     )
 

@@ -9,10 +9,33 @@ from __future__ import annotations
 import logging
 from datetime import UTC, datetime
 
+from .messages import english_text
+
 _log = logging.getLogger("forca.recruitment")
 
 # How many corps in the last year before we flag churn as something to discuss.
 CORP_HOP_FLAG = 5
+
+
+def _claim(key: str, params: dict, **row) -> dict:
+    """Build one evidence row: the scaffold key + params, AND the English prose (Seam B).
+
+    Both are persisted. ``claim`` keeps being written exactly as before — English behaviour is
+    unchanged and every existing reader (admin, the privacy tests, a legacy deploy) still works
+    off it — while ``claim_key``/``claim_params`` let ``CandidateEvidence.claim_i18n`` re-render
+    the sentence under the *reader's* locale rather than the Celery worker's.
+
+    ``english_text`` renders the prose *through the same msgid*, under ``translation.override(None)``,
+    so (a) the two can never drift apart and (b) the stored bytes are identical whether the writer
+    is the locale-less beat or a German recruiter's consent callback. ``params`` must be plain
+    JSON — ints, floats, strings. A ``gettext_lazy`` proxy in here is a hard TypeError at save.
+    """
+    return {
+        "claim": english_text(key, params),
+        "claim_key": key,
+        "claim_params": params,
+        **row,
+    }
 
 
 def _years_since(iso_birthday: str, now: datetime) -> float | None:
@@ -38,18 +61,20 @@ def build_public_evidence(
 
     age = _years_since(char_public.get("birthday", ""), now)
     if age is not None:
-        rows.append({
-            "theme": "identity", "claim": f"Character age: {age} years",
-            "confidence": "high", "source": "public", "is_flag": False,
-        })
+        rows.append(_claim(
+            "public.character_age", {"years": age},
+            theme="identity", confidence="high", source="public", is_flag=False,
+        ))
 
     # Security status (public) — informational; surfaced for context, not a verdict.
     sec = char_public.get("security_status")
     if sec is not None:
-        rows.append({
-            "theme": "identity", "claim": f"Security status: {float(sec):+.1f}",
-            "confidence": "high", "source": "public", "is_flag": False,
-        })
+        # Pre-formatted at the write site: a "%+.1f" spec inside a msgid is a footgun for
+        # translators and the param must be plain JSON anyway.
+        rows.append(_claim(
+            "public.security_status", {"value": f"{float(sec):+.1f}"},
+            theme="identity", confidence="high", source="public", is_flag=False,
+        ))
 
     # Corp churn over the last 12 months (public corp history).
     cutoff = now.timestamp() - 365 * 24 * 3600
@@ -65,12 +90,13 @@ def build_public_evidence(
     n_recent = len(recent_corps)
     if corp_history:
         flagged = n_recent >= CORP_HOP_FLAG
-        rows.append({
-            "theme": "risk" if flagged else "identity",
-            "claim": f"{n_recent} corporation(s) in the last 12 months"
-            + (" — worth asking about" if flagged else ""),
-            "confidence": "medium", "source": "public", "is_flag": flagged,
-        })
+        # Two whole-sentence keys rather than one key plus a translated suffix — see messages.py.
+        rows.append(_claim(
+            "risk.corp_churn_flagged" if flagged else "public.corp_churn",
+            {"count": n_recent},
+            theme="risk" if flagged else "identity",
+            confidence="medium", source="public", is_flag=flagged,
+        ))
 
     # Cross-check the full employment history against our red standings.
     hostile = {
@@ -78,11 +104,10 @@ def build_public_evidence(
         if e.get("corporation_id") in red
     }
     if hostile:
-        rows.append({
-            "theme": "risk",
-            "claim": f"Flew with {len(hostile)} corp(s) we hold red — verify before accepting",
-            "confidence": "high", "source": "public", "is_flag": True,
-        })
+        rows.append(_claim(
+            "risk.red_standing", {"count": len(hostile)},
+            theme="risk", confidence="high", source="public", is_flag=True,
+        ))
 
     return rows
 
@@ -115,34 +140,35 @@ def build_esi_evidence(skills: dict | None, roles: dict | None) -> list[dict]:
     if skills:
         total = skills.get("total_sp")
         if total is not None:
-            rows.append({
-                "theme": "combat", "claim": f"Total skill points: {_fmt_sp(int(total))} (ESI-confirmed)",
-                "confidence": "high", "source": "esi", "is_flag": False,
-            })
+            rows.append(_claim(
+                "combat.total_sp", {"total_sp": _fmt_sp(int(total))},
+                theme="combat", confidence="high", source="esi", is_flag=False,
+            ))
         skill_list = skills.get("skills") or []
         if skill_list:
             at_v = sum(1 for s in skill_list if s.get("trained_skill_level") == 5)
-            rows.append({
-                "theme": "combat", "claim": f"{len(skill_list)} skills trained, {at_v} at level V",
-                "confidence": "high", "source": "esi", "is_flag": False,
-            })
+            rows.append(_claim(
+                "combat.skills_trained", {"count": len(skill_list), "at_level_v": at_v},
+                theme="combat", confidence="high", source="esi", is_flag=False,
+            ))
 
     if roles is not None:
         held = list(roles.get("roles") or [])
         if held:
+            # ``_FLAG_ROLE`` is COMPARED against ESI data — a lookup value, never a msgid.
             is_dir = _FLAG_ROLE in held
+            # EVE corp-role names are game data: they stay canonical English and ride through as a
+            # raw param. The sentence *around* them is what gets translated.
             pretty = ", ".join(r.replace("_", " ") for r in held)
-            rows.append({
-                "theme": "roles",
-                "claim": f"Holds roles in their current corp: {pretty}"
-                + (" — currently a Director; confirm why they are leaving" if is_dir else ""),
-                "confidence": "high", "source": "esi", "is_flag": is_dir,
-            })
+            rows.append(_claim(
+                "roles.held_director" if is_dir else "roles.held", {"roles": pretty},
+                theme="roles", confidence="high", source="esi", is_flag=is_dir,
+            ))
         else:
-            rows.append({
-                "theme": "roles", "claim": "No special roles in their current corp (line member)",
-                "confidence": "high", "source": "esi", "is_flag": False,
-            })
+            rows.append(_claim(
+                "roles.none", {},
+                theme="roles", confidence="high", source="esi", is_flag=False,
+            ))
 
     return rows
 

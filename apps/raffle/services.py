@@ -318,6 +318,9 @@ def reverse_entry(entry: RaffleTicketLedgerEntry, actor, *, reason: str) -> Raff
         character_name=locked.character_name, source_key=locked.source_key,
         source_ref=f"reversal:{locked.pk}", amount=-locked.amount,
         reason=f"Reversal: {reason[:200]}", status=RaffleTicketLedgerEntry.Status.REVERSED,
+        # Seam B: the "Reversal:" prefix is our prose (translatable); the officer's note is
+        # human free text, interpolated raw and rendered verbatim in every locale.
+        reason_key="ledger.reversal", reason_params={"reason": reason[:200]},
         occurred_at=locked.occurred_at, created_by_system=False, created_by=actor,
         metadata={"reverses": locked.pk},
     )

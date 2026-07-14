@@ -25,6 +25,7 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.db import models
+from django.db.models import Value
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
@@ -426,7 +427,17 @@ class RaffleTicketLedgerEntry(TimeStampedModel):
     # was written) — drives period caps, the accrual-by-day curve, and the
     # non-retroactive pre-enrolment gate.
     occurred_at = models.DateTimeField(default=timezone.now)
+    # The English prose, written by the beat worker. KEPT: it is the audit record and the
+    # fallback that legacy rows (and any un-migrated write path) still render. See the
+    # ``reason_i18n`` property and apps/raffle/messages.py for why this cannot just be _()'d.
     reason = models.CharField(max_length=300, blank=True)
+    # Seam B: the translatable form of ``reason``. The beat worker persists a stable scaffold
+    # key + JSON-safe params instead of a frozen sentence, so each reader re-renders it in
+    # THEIR locale. Blank key = a legacy row -> falls back to ``reason`` verbatim.
+    reason_key = models.CharField(max_length=64, blank=True, default="", db_default="")
+    reason_params = models.JSONField(
+        blank=True, default=dict, db_default=Value({}, models.JSONField())
+    )
 
     status = models.CharField(
         max_length=12, choices=Status.choices, default=Status.APPROVED, db_index=True
@@ -465,6 +476,19 @@ class RaffleTicketLedgerEntry(TimeStampedModel):
     @property
     def counts_for_draw(self) -> bool:
         return self.status == self.Status.APPROVED and self.amount > 0
+
+    @property
+    def reason_i18n(self) -> str:
+        """``reason`` rendered in the **reader's** locale (Seam B — see apps/raffle/messages.py).
+
+        The row was written by a beat worker under English; this resolves the persisted scaffold
+        key + params under whatever locale is active *now*. A legacy row (no key), an unknown
+        key, or unusable params all degrade to the stored English ``reason`` verbatim — never
+        to blank.
+        """
+        from .messages import render_scaffold
+
+        return render_scaffold(self.reason_key, self.reason_params, self.reason)
 
 
 # --------------------------------------------------------------------------- #
@@ -801,7 +825,13 @@ class RaffleSuspiciousActivityFlag(TimeStampedModel):
         related_name="flags",
     )
     flag_type = models.CharField(max_length=16, choices=FlagType.choices)
+    # English prose written by the integrity beat scan — kept as the audit record + fallback.
     detail = models.CharField(max_length=300, blank=True)
+    # Seam B: scaffold key + JSON-safe params, re-rendered in the reading officer's locale.
+    detail_key = models.CharField(max_length=64, blank=True, default="", db_default="")
+    detail_params = models.JSONField(
+        blank=True, default=dict, db_default=Value({}, models.JSONField())
+    )
     status = models.CharField(
         max_length=10, choices=Status.choices, default=Status.OPEN, db_index=True
     )
@@ -813,6 +843,18 @@ class RaffleSuspiciousActivityFlag(TimeStampedModel):
 
     class Meta:
         ordering = ["-created_at"]
+
+    @property
+    def detail_i18n(self) -> str:
+        """``detail`` rendered in the reviewing officer's locale (Seam B).
+
+        Same contract as :attr:`RaffleTicketLedgerEntry.reason_i18n`: written English by the
+        integrity beat scan, re-resolved per reader, degrading to the stored English (never
+        blank) for legacy rows and unknown keys.
+        """
+        from .messages import render_scaffold
+
+        return render_scaffold(self.detail_key, self.detail_params, self.detail)
 
     def __str__(self) -> str:
         return f"flag {self.flag_type} ({self.status})"

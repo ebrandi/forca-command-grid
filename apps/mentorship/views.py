@@ -101,6 +101,8 @@ def dashboard(request: HttpRequest) -> HttpResponse:
         .select_related("mentor__user", "mentee__user")
         .prefetch_related("mentee__user__characters", "mentor__user__characters")
     )
+    for p in my_pairings:
+        _localize_for_reader(pairing=p)
     active = [p for p in my_pairings if p.status == MentorshipPairing.Status.ACTIVE]
     incoming = [
         p for p in my_pairings
@@ -131,8 +133,9 @@ def dashboard(request: HttpRequest) -> HttpResponse:
 def register_mentor(request: HttpRequest) -> HttpResponse:
     program = services.active_program()
     existing = MentorProfile.objects.filter(user=request.user).first()
-    eligibility = (existing.eligibility if existing else None) or \
-        elig.evaluate(request.user, program, "mentor")
+    eligibility = elig.for_display(
+        (existing.eligibility if existing else None) or elig.evaluate(request.user, program, "mentor")
+    )
     if request.method == "POST":
         if not services.program_open():
             messages.error(request, _("The Mentorship Program is currently paused."))
@@ -160,8 +163,9 @@ def register_mentor(request: HttpRequest) -> HttpResponse:
 def register_mentee(request: HttpRequest) -> HttpResponse:
     program = services.active_program()
     existing = MenteeProfile.objects.filter(user=request.user).first()
-    eligibility = (existing.eligibility if existing else None) or \
-        elig.evaluate(request.user, program, "mentee")
+    eligibility = elig.for_display(
+        (existing.eligibility if existing else None) or elig.evaluate(request.user, program, "mentee")
+    )
     if request.method == "POST":
         if not services.program_open():
             messages.error(request, _("The Mentorship Program is currently paused."))
@@ -319,13 +323,15 @@ def pairing_respond(request: HttpRequest, pk: int) -> HttpResponse:
         else:
             messages.success(request, _("Mentorship is now active. Fair winds!"))
     else:
-        # NOT _()-wrapped: ``reason`` is PERSISTED (set_status -> _log_event -> MentorshipEvent
-        # .detail) and the mentor, the mentee and every officer read that same row later. A
-        # gettext call here resolves in the *declining pilot's* locale and freezes it into a
-        # shared row, so a German pilot's decline would show up as German on an English mentor's
-        # timeline. Store the canonical English sentinel; translating it for display belongs in a
-        # read-time seam (map the known detail values to labels at render), not at the write site.
-        services.cancel_pairing(pairing, request.user, reason="Declined by pilot.")
+        # NOT _()-wrapped: this sentence is PERSISTED (set_status -> _log_event ->
+        # MentorshipPairingEvent.detail) and the mentor, the mentee and every officer read that
+        # same row later. A gettext call here would resolve in the *declining pilot's* locale and
+        # freeze it into a shared row, so a German pilot's decline would show up as German on an
+        # English mentor's timeline. Instead we persist the scaffold KEY (Seam B): the English
+        # prose still lands in ``detail`` as the audit record, and ``detail_i18n`` re-renders it in
+        # whichever locale each reader actually has.
+        services.set_status(pairing, MentorshipPairing.Status.CANCELLED, actor=request.user,
+                            key="pairing.declined_by_pilot")
         messages.info(request, _("Pairing declined."))
     return redirect("mentorship:dashboard")
 
@@ -344,6 +350,9 @@ def pairing_detail(request: HttpRequest, pk: int) -> HttpResponse:
     done = sum(r["done"] for r in progress)
     rewards_qs = pairing.rewards.select_related("rule", "recipient").order_by("-created_at")
     next_actions = _next_actions(pairing, role)
+    events = list(pairing.events.select_related("actor")[:15])
+    flags = list(pairing.flags.filter(resolved=False)) if role == "officer" else None
+    _localize_for_reader(pairing, progress, events, flags)
     return render(request, "mentorship/pairing_detail.html", {
         "pairing": pairing,
         "role": role,
@@ -352,13 +361,37 @@ def pairing_detail(request: HttpRequest, pk: int) -> HttpResponse:
         "total_tasks": total,
         "done_tasks": done,
         "sessions": pairing.sessions.all()[:10],
-        "events": pairing.events.select_related("actor")[:15],
+        "events": events,
         "rewards": rewards_qs,
-        "flags": pairing.flags.filter(resolved=False) if role == "officer" else None,
+        "flags": flags,
         "enrollable_tracks": _enrollable_tracks(pairing),
         "next_actions": next_actions,
         "is_participant": role in ("mentor", "mentee"),
     })
+
+
+def _localize_for_reader(pairing=None, progress=None, events=None, flags=None) -> None:
+    """Project the Seam B prose columns into THIS reader's locale, for rendering only.
+
+    Each of these rows was written by someone else — usually a Celery worker with no locale at all
+    — so the stored ``detail`` / ``last_reason`` / ``match_reasons`` is English by construction.
+    The ``*_i18n`` properties re-resolve the persisted scaffold key + params under the active
+    catalogue; assigning the result back onto the in-memory instance is what lets the existing
+    templates keep reading the plain field names.
+
+    This mutates ONLY the in-memory objects handed to the template — these are read-only views and
+    nothing here is ever saved, so the stored English audit record is untouched. (A row with no key
+    — anything written before Seam B landed — resolves to its stored English, unchanged.)
+    """
+    if pairing is not None:
+        pairing.match_reasons = pairing.match_reasons_i18n
+    for bucket in progress or []:
+        for assignment in bucket["assignments"]:
+            assignment.last_reason = assignment.last_reason_i18n
+    for event in events or []:
+        event.detail = event.detail_i18n
+    for flag in flags or []:
+        flag.detail = flag.detail_i18n
 
 
 def _enrollable_tracks(pairing):
@@ -530,11 +563,11 @@ def pairing_action(request: HttpRequest, pk: int) -> HttpResponse:
         services.pause_pairing(pairing, request.user, reason)
         messages.info(request, _("Mentorship paused."))
     elif action == "resume" and pairing.status == MentorshipPairing.Status.PAUSED:
-        # NOT _()-wrapped — ``detail`` is persisted on the shared MentorshipEvent row (see the
-        # decline path above). The flash message below IS translated: that one is addressed to
-        # this request's user, so it is display, not data.
+        # A scaffold key, not prose — ``detail`` is persisted on the shared MentorshipPairingEvent
+        # row (see the decline path above). The flash message below IS translated: that one is
+        # addressed to this request's user, so it is display, not data.
         services.set_status(pairing, MentorshipPairing.Status.ACTIVE, actor=request.user,
-                            detail="Resumed.")
+                            key="pairing.resumed")
         messages.success(request, _("Mentorship resumed."))
     elif action == "complete" and role in ("mentor", "officer"):
         services.complete_pairing(pairing, request.user, reason)

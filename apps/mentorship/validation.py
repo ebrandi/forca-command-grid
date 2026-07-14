@@ -26,16 +26,38 @@ from datetime import timedelta
 
 from django.utils import timezone
 
+from . import messages as msg
+
 
 @dataclass(frozen=True)
 class Outcome:
     """Result of an auto-check. ``partial`` means the check ran but couldn't reach
-    a confident verdict (missing scope, no synced data yet) — never a hard fail."""
+    a confident verdict (missing scope, no synced data yet) — never a hard fail.
+
+    Seam B: ``detail`` is *persisted* (``MentorshipTaskValidation.detail`` and
+    ``MentorshipTaskAssignment.last_reason``) and read back by the mentee, the mentor and officers
+    under their own locales — and the ``mentorship.sweep_api_validations`` worker that writes most
+    of them has no locale at all. So every outcome also carries the scaffold ``key`` + JSON-safe
+    ``params`` it was built from; ``detail`` is the English rendering of exactly that pair.
+    Build one with :func:`_out` rather than by hand, so the two can never drift.
+    """
 
     passed: bool
     confidence: int = 0
     detail: str = ""
     partial: bool = False
+    key: str = ""
+    params: dict | None = None
+
+
+def _out(passed: bool, confidence: int, key: str, params: dict | None = None,
+         partial: bool = False) -> Outcome:
+    """An Outcome whose English ``detail`` is derived from the scaffold ``key`` + ``params``."""
+    params = params or {}
+    return Outcome(
+        passed=passed, confidence=confidence, detail=msg.english(key, params),
+        partial=partial, key=key, params=params,
+    )
 
 
 VALIDATORS: dict[str, callable] = {}
@@ -72,7 +94,7 @@ def run(assignment, criteria: dict | None = None) -> Outcome | None:
         logging.getLogger("forca.mentorship").warning(
             "validator %s failed: %s", criteria.get("type"), exc
         )
-        return Outcome(passed=False, confidence=0, detail="Check unavailable right now.", partial=True)
+        return _out(False, 0, "check.unavailable", partial=True)
 
 
 # --- shared helpers ---------------------------------------------------------
@@ -113,22 +135,24 @@ def _latest_snapshot(char_ids):
 def _skill_min(assignment, criteria):
     snap = _latest_snapshot(_mentee_char_ids(assignment))
     if snap is None:
-        return Outcome(False, 0, "No skills imported yet.", partial=True)
+        return _out(False, 0, "check.no_skills", partial=True)
     want = int(criteria.get("level", 1))
     have = snap.trained_level(int(criteria["skill_type_id"]))
     ok = have >= want
-    return Outcome(ok, 85 if ok else 0, f"Trained level {have} (need {want}).")
+    return _out(ok, 85 if ok else 0, "check.skill_min", {"have": have, "want": want})
 
 
 @register("total_sp_min")
 def _total_sp_min(assignment, criteria):
     snap = _latest_snapshot(_mentee_char_ids(assignment))
     if snap is None:
-        return Outcome(False, 0, "No skills imported yet.", partial=True)
+        return _out(False, 0, "check.no_skills", partial=True)
     want = int(criteria.get("sp", 0))
     ok = (snap.total_sp or 0) >= want
-    # SP can be injected, so this is a moderate signal only.
-    return Outcome(ok, 60 if ok else 0, f"{snap.total_sp:,} SP (need {want:,}).")
+    # SP can be injected, so this is a moderate signal only. The thousands separators are baked into
+    # the params (plain strings): a param is substituted raw and is never re-formatted per locale.
+    return _out(ok, 60 if ok else 0, "check.total_sp_min",
+                {"total": f"{snap.total_sp:,}", "need": f"{want:,}"})
 
 
 @register("skillqueue_has")
@@ -141,8 +165,8 @@ def _skillqueue_has(assignment, criteria):
     ):
         for entry in snap.entries or []:
             if int(entry.get("skill_id", entry.get("skill_type_id", 0))) == want:
-                return Outcome(True, 55, "Skill is in the training queue.")
-    return Outcome(False, 0, "Skill not found in the training queue.", partial=True)
+                return _out(True, 55, "check.skillqueue_present")
+    return _out(False, 0, "check.skillqueue_absent", partial=True)
 
 
 @register("doctrine_ready")
@@ -151,10 +175,11 @@ def _doctrine_ready(assignment, criteria):
 
     snap = _latest_snapshot(_mentee_char_ids(assignment))
     if snap is None:
-        return Outcome(False, 0, "No skills imported yet.", partial=True)
+        return _out(False, 0, "check.no_skills", partial=True)
     want = int(criteria["doctrine_id"])
     ok = want in flyable_doctrine_ids(snap.skills or {})
-    return Outcome(ok, 85 if ok else 0, "Can fly this doctrine." if ok else "Not yet flyable.")
+    return _out(ok, 85 if ok else 0,
+                "check.doctrine_ready" if ok else "check.doctrine_not_ready")
 
 
 @register("doctrine_any")
@@ -163,10 +188,10 @@ def _doctrine_any(assignment, criteria):
 
     snap = _latest_snapshot(_mentee_char_ids(assignment))
     if snap is None:
-        return Outcome(False, 0, "No skills imported yet.", partial=True)
+        return _out(False, 0, "check.no_skills", partial=True)
     flyable = flyable_doctrine_ids(snap.skills or {})
     ok = bool(flyable)
-    return Outcome(ok, 80 if ok else 0, f"Can fly {len(flyable)} doctrine ship(s).")
+    return _out(ok, 80 if ok else 0, "check.doctrine_any", {"count": len(flyable)})
 
 
 @register("skill_plan_exists")
@@ -177,7 +202,8 @@ def _skill_plan_exists(assignment, criteria):
     if criteria.get("doctrine_id"):
         qs = qs.filter(target_doctrine_id=int(criteria["doctrine_id"]))
     ok = qs.exists()
-    return Outcome(ok, 70 if ok else 0, "A skill plan exists." if ok else "No skill plan yet.", partial=not ok)
+    return _out(ok, 70 if ok else 0,
+                "check.skill_plan_exists" if ok else "check.skill_plan_missing", partial=not ok)
 
 
 # --- PvP / killmails (shared participation = strong) ------------------------
@@ -193,7 +219,8 @@ def _killmail_recent(assignment, criteria):
     count = qs.values("killmail_id").distinct().count()
     need = int(criteria.get("min_count", 1))
     ok = count >= need
-    return Outcome(ok, 70 if ok else 0, f"{count} killmail(s) in window (need {need}).", partial=not ok)
+    return _out(ok, 70 if ok else 0, "check.killmail_recent",
+                {"count": count, "need": need}, partial=not ok)
 
 
 @register("shared_killmail")
@@ -211,9 +238,8 @@ def _shared_killmail(assignment, criteria):
     if since:
         qs = qs.filter(killmail_time__gte=since)
     ok = qs.distinct().exists()
-    return Outcome(ok, 90 if ok else 0,
-                   "Mentor & mentee on the same killmail." if ok else "No shared killmail yet.",
-                   partial=not ok)
+    return _out(ok, 90 if ok else 0,
+                "check.shared_killmail" if ok else "check.shared_killmail_none", partial=not ok)
 
 
 # --- internal-event validators (strong; already on the contribution bus) ----
@@ -230,7 +256,8 @@ def _fleet_attended(assignment, criteria):
     count = qs.count()
     need = int(criteria.get("min_count", 1))
     ok = count >= need
-    return Outcome(ok, 80 if ok else 0, f"{count} fleet(s) attended (need {need}).", partial=not ok)
+    return _out(ok, 80 if ok else 0, "check.fleet_attended",
+                {"count": count, "need": need}, partial=not ok)
 
 
 @register("contribution_kind")
@@ -248,7 +275,9 @@ def _contribution_kind(assignment, criteria):
     count = qs.count()
     need = int(criteria.get("min_count", 1))
     ok = count >= need
-    return Outcome(ok, 75 if ok else 0, f"{count} {criteria['kind']} event(s).", partial=not ok)
+    # ``kind`` is a ContributionEvent.Kind code — an identifier, interpolated raw.
+    return _out(ok, 75 if ok else 0, "check.contribution_kind",
+                {"count": count, "kind": criteria["kind"]}, partial=not ok)
 
 
 @register("courier_contract")
@@ -266,8 +295,8 @@ def _courier_contract(assignment, criteria):
         qs = qs.filter(updated_at__gte=since)
     ok = qs.exists()
     conf = 85 if criteria.get("verified_only", True) else 70
-    return Outcome(ok, conf if ok else 0,
-                   "Delivered a courier contract." if ok else "No completed courier yet.", partial=not ok)
+    return _out(ok, conf if ok else 0,
+                "check.courier_delivered" if ok else "check.courier_none", partial=not ok)
 
 
 @register("buyback_offer")
@@ -281,8 +310,8 @@ def _buyback_offer(assignment, criteria):
     if since:
         qs = qs.filter(created_at__gte=since)
     ok = qs.exists()
-    return Outcome(ok, 75 if ok else 0,
-                   "Submitted a buyback lot." if ok else "No buyback lot yet.", partial=not ok)
+    return _out(ok, 75 if ok else 0,
+                "check.buyback_submitted" if ok else "check.buyback_none", partial=not ok)
 
 
 # --- mining / industry (need corp observer / job coverage) ------------------
@@ -300,7 +329,8 @@ def _mining_ledger(assignment, criteria):
     need = int(criteria.get("min_units", 1))
     ok = total >= need
     # Corp mining ledger only sees mining at corp observers → partial by nature.
-    return Outcome(ok, 65 if ok else 0, f"{total:,} units mined (need {need:,}).", partial=not ok)
+    return _out(ok, 65 if ok else 0, "check.mining_ledger",
+                {"total": f"{total:,}", "need": f"{need:,}"}, partial=not ok)
 
 
 @register("industry_job")
@@ -314,8 +344,8 @@ def _industry_job(assignment, criteria):
     if since:
         qs = qs.filter(start_date__gte=since)
     ok = qs.exists()
-    return Outcome(ok, 75 if ok else 0,
-                   "Installed an industry job." if ok else "No industry job yet.", partial=not ok)
+    return _out(ok, 75 if ok else 0,
+                "check.industry_installed" if ok else "check.industry_none", partial=not ok)
 
 
 # --- sessions & scopes ------------------------------------------------------
@@ -329,8 +359,8 @@ def _session_confirmed(assignment, criteria):
     ).prefetch_related("participants"):
         confirmed = sum(1 for p in session.participants.all() if p.confirmed)
         if confirmed >= need:
-            return Outcome(True, 65, "A session was confirmed by both.")
-    return Outcome(False, 0, "No confirmed session yet.", partial=True)
+            return _out(True, 65, "check.session_confirmed")
+    return _out(False, 0, "check.session_none", partial=True)
 
 
 @register("scopes_granted")
@@ -339,10 +369,10 @@ def _scopes_granted(assignment, criteria):
 
     want = set(criteria.get("scopes", []))
     if not want:
-        return Outcome(True, 50, "No scopes required.")
+        return _out(True, 50, "check.scopes_none_required")
     for token in AuthToken.objects.filter(
         character_id__in=_mentee_char_ids(assignment), revoked_at__isnull=True
     ):
         if want.issubset(set(token.scopes or [])):
-            return Outcome(True, 70, "Required ESI scopes are granted.")
-    return Outcome(False, 0, "Required ESI scopes not granted.", partial=True)
+            return _out(True, 70, "check.scopes_granted")
+    return _out(False, 0, "check.scopes_missing", partial=True)

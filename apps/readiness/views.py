@@ -435,6 +435,9 @@ def alerts_log(request: HttpRequest) -> HttpResponse:
     from .models import ExecutiveReport, ReadinessAlert
 
     alerts = list(ReadinessAlert.objects.all()[:100])
+    # Same seam: re-render each frozen summary under the reader's locale (in-memory only).
+    for a in alerts:
+        a.summary = a.summary_i18n
     return render(request, "readiness/alerts.html", {
         "alerts": alerts,
         "open_count": sum(1 for a in alerts if a.is_open),
@@ -453,6 +456,7 @@ def weekly_report(request: HttpRequest) -> HttpResponse:
     beat; this view only reads the archive.
     """
     from .models import ExecutiveReport
+    from .report import risk_title
 
     reports = list(ExecutiveReport.objects.all()[:26])
     selected = None
@@ -461,9 +465,17 @@ def weekly_report(request: HttpRequest) -> HttpResponse:
         selected = next((r for r in reports if r.period_start.isoformat() == ps), None)
     if selected is None:
         selected = reports[0] if reports else None
+
+    # Seam B: the archived body froze each risk line in the weekly beat's English. Re-render it
+    # under the reader's locale from the key the beat stored beside it. A copy — the archive is
+    # never rewritten. ``top_tasks`` are ``tasks.Task`` titles and stay English: translating them
+    # needs a key column on the tasks app, which this change does not own.
+    body = dict(selected.body) if selected and selected.body else (selected.body if selected else None)
+    if body and body.get("top_risks"):
+        body["top_risks"] = [{**r, "title": risk_title(r)} for r in body["top_risks"]]
     return render(request, "readiness/report.html", {
         "report": selected,
-        "body": selected.body if selected else None,
+        "body": body,
         "reports": reports,
         "selected_start": selected.period_start.isoformat() if selected else None,
     })
@@ -480,6 +492,12 @@ def findings_register(request: HttpRequest) -> HttpResponse:
             status__in=[ReadinessFinding.Status.OPEN, ReadinessFinding.Status.ACKNOWLEDGED]
         ).select_related("task")
     )
+    # Seam B read side. The rows were written by a Celery beat with no locale, so their prose is
+    # frozen English; re-render it under THIS reader's language from the persisted scaffold key.
+    # In-memory only — these objects are never saved, so the English audit column is untouched.
+    for f in active:
+        f.title = f.title_i18n
+        f.detail = f.detail_i18n
     resolved_count = ReadinessFinding.objects.filter(
         status=ReadinessFinding.Status.RESOLVED
     ).count()
@@ -523,6 +541,12 @@ def task_queue(request: HttpRequest) -> HttpResponse:
     for task in active:
         finding = findings_by_task.get(task.id)
         tag = finding.owner_tag if finding else ""
+        # Seam B: ``Task.title`` was frozen in English by the readiness beat. The tasks app owns
+        # no scaffold key, but its readiness finding does — so on THIS readiness lens the title is
+        # re-rendered from the finding under the reader's locale (in-memory; never saved). The
+        # generic /tasks/ board still shows the stored English until the tasks app carries a key.
+        if finding is not None:
+            task.title = finding.task_title_i18n or finding.title_i18n
         row = {"task": task, "finding": finding}
         if tag and tag in owner_labels:
             groups.setdefault(owner_labels[tag], []).append(row)

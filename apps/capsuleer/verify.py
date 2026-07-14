@@ -17,10 +17,11 @@ un-credits; the evidence snapshot records what was true at credit time.
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from core import freshness
 
+from . import messages
 from .models import MilestoneKind
 
 logger = logging.getLogger("forca.capsuleer")
@@ -39,13 +40,33 @@ MONOTONIC_KINDS = frozenset({
 
 @dataclass
 class CheckResult:
-    """The outcome of one milestone check (doc 11 §8 return contract)."""
+    """The outcome of one milestone check (doc 11 §8 return contract).
+
+    ``data_source`` is the English provenance sentence that is persisted (the audit record and the
+    fallback). ``data_source_key`` + ``data_source_params`` are the *same* sentence as a message
+    scaffold key and its raw params (``messages.py``): the sweep runs in a Celery worker with no
+    locale, so only the key/params can be re-rendered later under a *reader's* language. Both are
+    stamped together; keeping them in one dataclass is what keeps them from drifting apart.
+    """
 
     met: bool | None            # None = cannot evaluate
     state: str                  # "ok" | "unknown" | "stale"
-    data_source: str            # human provenance
+    data_source: str            # human provenance (English — persisted verbatim)
     evidence: dict | None = None    # §9.6 shape, present only when met is True
     structural: bool = False    # True when the unknown is permanent (feeds the blocked flag)
+    data_source_key: str = ""   # messages.SCAFFOLDS key for ``data_source``
+    data_source_params: dict = field(default_factory=dict)  # JSON-safe only — never a lazy proxy
+
+
+def _result(met, state, key, *, evidence=None, structural=False, **params) -> CheckResult:
+    """A :class:`CheckResult` whose English prose and scaffold key/params come from one msgid.
+
+    Never wrap the prose in ``gettext``/``gettext_lazy`` instead: this runs in a worker, the proxy
+    would be coerced to ``str`` on ``.save()`` and the row would freeze in the writer's locale.
+    """
+    prose, key, params = messages.english(key, **params)
+    return CheckResult(met, state, prose, evidence, structural,
+                       data_source_key=key, data_source_params=params)
 
 
 CHECKERS: dict[str, callable] = {}
@@ -74,14 +95,16 @@ def check_safely(milestone, ctx) -> CheckResult:
     """Run a milestone's checker, degrading any failure to an honest ``unknown`` (never the params)."""
     checker = CHECKERS.get(milestone.kind)
     if checker is None:
-        return CheckResult(None, "unknown", f"No automatic check for {milestone.kind}.",
-                           structural=True)
+        # ``kind`` is an identifier (a MilestoneKind value), never translated — only the sentence
+        # around it is.
+        return _result(None, "unknown", messages.SRC_NO_CHECKER, structural=True,
+                       kind=str(milestone.kind))
     try:
         return checker(milestone, ctx)
     except Exception:  # noqa: BLE001 — a checker failure must never break the sweep
         logger.exception("capsuleer check failed kind=%s milestone=%s",
                          milestone.kind, milestone.pk)
-        return CheckResult(None, "unknown", "Automatic check is temporarily unavailable.")
+        return _result(None, "unknown", messages.SRC_CHECK_UNAVAILABLE)
 
 
 # --------------------------------------------------------------------------- #
@@ -169,7 +192,7 @@ def _type_names(type_ids) -> dict[int, str]:
 def _check_skill_target(milestone, ctx) -> CheckResult:
     snap = ctx.snapshot
     if snap is None:
-        return CheckResult(None, "unknown", "No skill data yet — import your skills.")
+        return _result(None, "unknown", messages.SRC_NO_SKILL_DATA)
     entries = milestone.params.get("skills", [])
     names = _type_names(int(e["type_id"]) for e in entries)
     rows, met = [], True
@@ -181,12 +204,12 @@ def _check_skill_target(milestone, ctx) -> CheckResult:
         if have < need:
             met = False
     state = "stale" if freshness.is_stale(snap.as_of, "skills") else "ok"
-    data_source = f"skills snapshot as of {snap.as_of:%Y-%m-%d %H:%M} UTC"
     evidence = None
     if met:
         evidence = {"kind": "skill_target", "as_of": snap.as_of.isoformat(),
                     "snapshot_id": snap.pk, "skills": rows}
-    return CheckResult(met, state, data_source, evidence)
+    return _result(met, state, messages.SRC_SKILLS_SNAPSHOT, evidence=evidence,
+                   as_of=f"{snap.as_of:%Y-%m-%d %H:%M}")
 
 
 @register(MilestoneKind.DOCTRINE_READY)
@@ -196,16 +219,16 @@ def _check_doctrine_ready(milestone, ctx) -> CheckResult:
 
     params = milestone.params
     if params.get("unresolved"):
-        return CheckResult(None, "unknown", "no matching doctrine available", structural=True)
+        return _result(None, "unknown", messages.SRC_NO_DOCTRINE, structural=True)
     doctrine = (
         Doctrine.objects.filter(id=params.get("doctrine_id"), status=Doctrine.Status.ACTIVE)
         .prefetch_related("fits__skill_requirements").first()
     )
     if doctrine is None:
-        return CheckResult(None, "unknown", "no matching doctrine available", structural=True)
+        return _result(None, "unknown", messages.SRC_NO_DOCTRINE, structural=True)
     snap = ctx.snapshot
     if snap is None:
-        return CheckResult(None, "unknown", "No skill data yet — import your skills.")
+        return _result(None, "unknown", messages.SRC_NO_SKILL_DATA)
 
     tier = params.get("tier", "viable")
     fit_id = params.get("fit_id")
@@ -218,18 +241,18 @@ def _check_doctrine_ready(milestone, ctx) -> CheckResult:
         if best is None or rank[readiness.status] > rank[best.status]:
             best = readiness
     if best is None or best.status == "unknown":
-        return CheckResult(None, "unknown",
-                           f"No derived requirements for {doctrine.name} yet.")
+        # The doctrine *name* is EVE/corp data and stays raw; the sentence around it is translated.
+        return _result(None, "unknown", messages.SRC_NO_DERIVED_REQS, doctrine=doctrine.name)
     met = best.status == "optimal" or (tier == "viable" and best.status == "viable")
     state = "stale" if freshness.is_stale(snap.as_of, "skills") else "ok"
-    data_source = f"doctrine readiness vs skills snapshot as of {snap.as_of:%Y-%m-%d %H:%M} UTC"
     evidence = None
     if met:
         evidence = {"kind": "doctrine_ready", "doctrine_id": doctrine.id,
                     "doctrine_name": doctrine.name, "fit_id": best.fit_id,
                     "fit_name": best.fit_name, "status": best.status,
                     "tier_required": tier, "as_of": snap.as_of.isoformat()}
-    return CheckResult(met, state, data_source, evidence)
+    return _result(met, state, messages.SRC_DOCTRINE_READINESS, evidence=evidence,
+                   as_of=f"{snap.as_of:%Y-%m-%d %H:%M}")
 
 
 @register(MilestoneKind.CONTRIBUTION)
@@ -243,7 +266,6 @@ def _check_contribution(milestone, ctx) -> CheckResult:
     qs = ContributionEvent.objects.filter(user_id=milestone.goal.user_id, kind__in=kinds)
     total = qs.count()
     met = (total - baseline) >= need
-    data_source = "contribution ledger (account-wide, live)"
     evidence = None
     if met:
         recent = list(qs.order_by("-occurred_at")[:5])
@@ -256,7 +278,7 @@ def _check_contribution(milestone, ctx) -> CheckResult:
             ],
         }
     # The ledger is durable append-only data — always ``ok``, never stale.
-    return CheckResult(met, "ok", data_source, evidence)
+    return _result(met, "ok", messages.SRC_CONTRIBUTION_LEDGER, evidence=evidence)
 
 
 @register(MilestoneKind.COMBAT_FIRST)
@@ -264,30 +286,28 @@ def _check_combat_first(milestone, ctx) -> CheckResult:
     from apps.killboard.models import PilotMilestone
 
     if ctx.character is None:
-        return CheckResult(None, "unknown", "This goal's character is not linked.", structural=True)
+        return _result(None, "unknown", messages.SRC_CHARACTER_UNLINKED, structural=True)
     key = milestone.params.get("milestone_key")
     row = PilotMilestone.objects.filter(
         character_id=ctx.character.character_id, kind=key
     ).first()
-    data_source = "killboard firsts (nightly scan — up to 24h behind)"
     if row is None:
         # Durable store: an absent first is an honest "not yet", not "unknown".
-        return CheckResult(False, "ok", data_source)
+        return _result(False, "ok", messages.SRC_KILLBOARD_FIRSTS)
     evidence = {"kind": "combat_first", "milestone_key": key,
                 "achieved_at": row.achieved_at.isoformat(), "killmail_id": row.killmail_id}
-    return CheckResult(True, "ok", data_source, evidence)
+    return _result(True, "ok", messages.SRC_KILLBOARD_FIRSTS, evidence=evidence)
 
 
 @register(MilestoneKind.SHIP_OWNED)
 def _check_ship_owned(milestone, ctx) -> CheckResult:
     if ctx.character is None:
-        return CheckResult(None, "unknown", "This goal's character is not linked.", structural=True)
+        return _result(None, "unknown", messages.SRC_CHARACTER_UNLINKED, structural=True)
     type_ids = [int(t) for t in milestone.params.get("type_ids", [])]
     as_of = ctx.assets_as_of
     if as_of is None:
         # No asset mirror for this character = no scope opt-in; never "not owned" (doc 07 §6.3).
-        return CheckResult(None, "unknown",
-                           "Asset data not shared for this character — opt in to check ownership.")
+        return _result(None, "unknown", messages.SRC_ASSETS_NOT_SHARED)
     owned = ctx.owned
     matched, qty = None, 0
     for tid in type_ids:
@@ -299,7 +319,6 @@ def _check_ship_owned(milestone, ctx) -> CheckResult:
     fitted = matched is not None and matched in ctx.fitted_type_ids
     met = matched is not None and (fitted if require_fitted else True)
     state = "stale" if freshness.is_stale(as_of, "assets") else "ok"
-    data_source = f"asset mirror as of {as_of:%Y-%m-%d %H:%M} UTC"
     evidence = None
     if met:
         names = _type_names([matched])
@@ -307,4 +326,5 @@ def _check_ship_owned(milestone, ctx) -> CheckResult:
                     "ship_name": names.get(matched, str(matched)), "quantity": qty,
                     "fitted": bool(fitted), "character_id": ctx.character.character_id,
                     "as_of": as_of.isoformat()}
-    return CheckResult(met, state, data_source, evidence)
+    return _result(met, state, messages.SRC_ASSET_MIRROR, evidence=evidence,
+                   as_of=f"{as_of:%Y-%m-%d %H:%M}")

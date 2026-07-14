@@ -15,6 +15,12 @@ from apps.recommendations.services import act_on_recommendation, build_action_qu
 from apps.stockpile.models import Stockpile
 from apps.stockpile.services import record_manual_stock
 
+# The shipped ``de`` catalogue has no msgstr for the engine scaffolds yet, so a plain
+# ``translation.override("de")`` would still hand back the English msgid and the Seam-B bug would
+# stay invisible. Seeding the msgstrs — what a translator filling in that .po entry does — is what
+# makes the seam testable. Reuses the catalogue helper from the campaigns suite.
+from tests.test_campaigns_services import _translated_de
+
 
 @pytest.mark.django_db
 def test_stock_shortage_recommendation(sde):
@@ -219,3 +225,131 @@ def test_rec_link_to_project(client, django_user_model, sde):
     RoleAssignment.objects.create(user=member, role=ensure_role(rbac.ROLE_MEMBER))
     client.force_login(member)
     assert client.post(f"/recommendations/{rec.pk}/link/", {"project_id": project.pk}).status_code == 403
+
+
+# ===========================================================================
+#  Seam B: the engine's prose is PERSISTED by a locale-less worker and read
+#  back by officers of eight locales. It must render in the READER's language.
+# ===========================================================================
+_DE_MESSAGE = (
+    "Bestand an %(type_name)s ist %(current)s gegenüber einem Ziel von %(target)s. "
+    "Bauen oder kaufen: %(deficit)s."
+)
+_DE_LOGIC = "aktuell < Ziel um den Fehlbetrag"
+
+_SEEDED_DE = {
+    "Stock of %(type_name)s is %(current)s against a target of %(target)s. "
+    "Build or buy %(deficit)s.": _DE_MESSAGE,
+    "current < target by deficit": _DE_LOGIC,
+}
+
+
+def _shortage_rec():
+    sp = Stockpile.objects.create(name="Staging")
+    record_manual_stock(sp, type_id=587, quantity_current=4, quantity_target=40)
+    engine.run_all()
+    return Recommendation.objects.get(type=Recommendation.Type.STOCK_SHORTAGE, subject_id="587")
+
+
+@pytest.mark.django_db
+def test_engine_persists_scaffold_key_and_english_prose(sde):
+    """The write side (the beat, under English) stores BOTH halves: key+params and the prose."""
+    rec = _shortage_rec()
+
+    assert rec.message_key == "stock_shortage.message"
+    assert rec.logic_summary_key == "stock_shortage.logic"
+    # Params are plain JSON-safe values — a lazy proxy in a JSONField is a TypeError at save time,
+    # so this is the invariant that keeps the write path from blowing up.
+    assert rec.message_params == {
+        "type_name": engine._tname(587), "current": 4, "target": 40, "deficit": 36,
+    }
+    assert rec.logic_summary_params == {}
+
+    # English output is unchanged — the prose column is still exactly what it always was.
+    rec.refresh_from_db()
+    assert rec.message == f"Stock of {engine._tname(587)} is 4 against a target of 40. Build or buy 36."
+    assert rec.logic_summary == "current < target by deficit"
+
+
+@pytest.mark.django_db
+def test_recommendation_renders_in_the_readers_locale_not_the_writers(sde):
+    """THE POINT. Written by the (English, locale-less) worker → read back by a German officer."""
+    rec = _shortage_rec()
+
+    with _translated_de(**_SEEDED_DE):
+        # A different reader, a different locale, the SAME row.
+        fresh = Recommendation.objects.get(pk=rec.pk)
+        assert fresh.message_i18n == (
+            f"Bestand an {engine._tname(587)} ist 4 gegenüber einem Ziel von 40. "
+            "Bauen oder kaufen: 36."
+        )
+        assert fresh.logic_summary_i18n == _DE_LOGIC
+        # The stored prose is untouched: it is the audit record, not the display value.
+        assert fresh.message.startswith("Stock of ")
+
+
+@pytest.mark.django_db
+def test_worker_locale_never_leaks_into_the_stored_prose(sde):
+    """The original trap: if the beat happened to run under a non-English locale, a naive ``_()``
+    would freeze GERMAN into the row and every English reader would then see it. ``messages.english``
+    pins the persisted column to English regardless of the worker's active locale."""
+    with _translated_de(**_SEEDED_DE):
+        rec = _shortage_rec()  # the engine runs with ``de`` active
+
+    rec.refresh_from_db()
+    assert rec.message == f"Stock of {engine._tname(587)} is 4 against a target of 40. Build or buy 36."
+    assert rec.logic_summary == "current < target by deficit"
+    # …and it still renders German for a German reader, because the key survived.
+    with _translated_de(**_SEEDED_DE):
+        assert Recommendation.objects.get(pk=rec.pk).logic_summary_i18n == _DE_LOGIC
+
+
+@pytest.mark.django_db
+def test_legacy_row_without_a_key_renders_its_stored_english_verbatim():
+    """Nothing is backfilled. A row written before this change (or by a caller outside the engine,
+    e.g. apps.admin_audit.tasks) has no key and must degrade to its stored English — NEVER to blank."""
+    legacy = Recommendation.objects.create(
+        type=Recommendation.Type.STOCK_SHORTAGE,
+        subject_type="type", subject_id="587",
+        message="Stock of Rifter is 4 against a target of 40. Build or buy 36.",
+        logic_summary="current < target by deficit",
+    )
+    assert legacy.message_key == ""
+    assert legacy.message_params == {}
+
+    with _translated_de(**_SEEDED_DE):
+        fresh = Recommendation.objects.get(pk=legacy.pk)
+        # The seeded German msgstr exists — but with no key there is nothing to resolve, so the
+        # stored English stands. This is the fallback that keeps legacy rows readable.
+        assert fresh.message_i18n == "Stock of Rifter is 4 against a target of 40. Build or buy 36."
+        assert fresh.logic_summary_i18n == "current < target by deficit"
+
+
+@pytest.mark.django_db
+def test_a_broken_translation_degrades_to_english_rather_than_blanking(sde):
+    """A translator who drops or renames a %(param)s must not blank an officer's dashboard."""
+    rec = _shortage_rec()
+    broken = {
+        "Stock of %(type_name)s is %(current)s against a target of %(target)s. "
+        "Build or buy %(deficit)s.": "Bestand an %(nicht_vorhanden)s.",
+    }
+    with _translated_de(**broken):
+        fresh = Recommendation.objects.get(pk=rec.pk)
+        assert fresh.message_i18n == fresh.message  # falls back, never raises, never blank
+        assert fresh.message_i18n != ""
+
+
+@pytest.mark.django_db
+def test_idempotency_check_still_compares_the_english_prose(sde):
+    """``persist_drafts`` dedupes on ``message``. That column stays English for every writer, so a
+    beat that ran under a different locale cannot supersede-and-recreate (and re-alert) the row."""
+    sp = Stockpile.objects.create(name="Staging")
+    record_manual_stock(sp, type_id=587, quantity_current=4, quantity_target=40)
+    engine.run_all()
+    with _translated_de(**_SEEDED_DE):
+        engine.run_all()  # a German-locale worker must still see its own finding as unchanged
+
+    assert Recommendation.objects.filter(
+        type=Recommendation.Type.STOCK_SHORTAGE, subject_id="587",
+        state=Recommendation.State.NEW,
+    ).count() == 1

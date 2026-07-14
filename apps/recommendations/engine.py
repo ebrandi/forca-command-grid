@@ -23,6 +23,7 @@ from apps.sso.models import EveCharacter
 from apps.stockpile.models import HaulingTask
 from apps.stockpile.services import shortfalls_against_targets
 
+from . import messages
 from .models import Recommendation
 
 
@@ -42,14 +43,34 @@ def _isk(value) -> str:
     return f"{v:.0f}"
 
 
-def _draft(rec_type, *, subject_type, subject_id, message, logic, inputs, confidence, severity,
+def _draft(rec_type, *, subject_type, subject_id, message_key, message_params, logic_key,
+           logic_params=None, inputs, confidence, severity,
            permission="officer", action=None, as_of=None, isk_impact=0):
+    """Build a draft, persisting the i18n scaffold key + params **and** the English prose.
+
+    The engine runs on the beat, in a Celery worker that has no user and no locale, so the sentence
+    cannot be translated here — see ``.messages``. The draft therefore carries both halves:
+
+    * ``message_key``/``message_params`` (and the ``logic_*`` pair): the read-time seam. Params must
+      be plain JSON-safe values — ints, strings — because they land in a JSONField, where a
+      ``gettext_lazy`` proxy is a hard ``TypeError`` at save time.
+    * ``message``/``logic_summary``: the canonical English, derived from the *same* scaffold via
+      ``messages.english`` so the prose and the key can never drift apart. This column stays the
+      audit record and the fallback, and it is what ``persist_drafts`` compares on — so English
+      behaviour, and the idempotency check, are byte-for-byte unchanged.
+    """
+    message_params = message_params or {}
+    logic_params = logic_params or {}
     return {
         "type": rec_type,
         "subject_type": subject_type,
         "subject_id": str(subject_id),
-        "message": message,
-        "logic_summary": logic,
+        "message": messages.english(message_key, message_params),
+        "message_key": message_key,
+        "message_params": message_params,
+        "logic_summary": messages.english(logic_key, logic_params),
+        "logic_summary_key": logic_key,
+        "logic_summary_params": logic_params,
         "inputs": inputs,
         "isk_impact": isk_impact,
         "confidence": confidence,
@@ -112,11 +133,14 @@ def eval_stock_shortage() -> list[dict]:
                 Recommendation.Type.STOCK_SHORTAGE,
                 subject_type="type",
                 subject_id=s["type_id"],
-                message=(
-                    f"Stock of {_tname(s['type_id'])} is {s['current']} against a target of "
-                    f"{s['target']}. Build or buy {s['deficit']}."
-                ),
-                logic="current < target by deficit",
+                message_key="stock_shortage.message",
+                message_params={
+                    "type_name": _tname(s["type_id"]),
+                    "current": s["current"],
+                    "target": s["target"],
+                    "deficit": s["deficit"],
+                },
+                logic_key="stock_shortage.logic",
                 inputs=s,
                 confidence=Recommendation.Confidence.HIGH,
                 severity=min(100, s["deficit"]),
@@ -149,8 +173,9 @@ def eval_doctrine_readiness() -> list[dict]:
                 Recommendation.Type.DOCTRINE_READINESS,
                 subject_type="doctrine",
                 subject_id=doctrine.id,
-                message=f"{ready}/{total} members can fly '{doctrine.name}'.",
-                logic="count of members at viable+ readiness vs total members",
+                message_key="doctrine_readiness.message",
+                message_params={"ready": ready, "total": total, "doctrine": doctrine.name},
+                logic_key="doctrine_readiness.logic",
                 inputs=counts,
                 confidence=confidence,
                 severity=max(0, 50 - ready * 5),
@@ -175,11 +200,17 @@ def eval_build_vs_buy() -> list[dict]:
                 Recommendation.Type.BUILD_VS_BUY,
                 subject_type="project_item",
                 subject_id=item.id,
-                message=(
-                    f"For {_tname(item.type_id)} ×{item.quantity}: {d['decision']} "
-                    f"(build {_isk(d['build_cost'])} vs buy {_isk(d['buy_cost'])} ISK)."
-                ),
-                logic="compare build cost (BOM × prices) vs market buy",
+                message_key="build_vs_buy.message",
+                message_params={
+                    "type_name": _tname(item.type_id),
+                    "quantity": item.quantity,
+                    # The raw decision verb ("build"/"buy") — also ``suggested_action["verb"]``,
+                    # which the UI dispatches on, so it stays canonical English.
+                    "decision": d["decision"],
+                    "build": _isk(d["build_cost"]),
+                    "buy": _isk(d["buy_cost"]),
+                },
+                logic_key="build_vs_buy.logic",
                 inputs={"decision": d["decision"], "build": str(d["build_cost"]), "buy": str(d["buy_cost"])},
                 confidence=Recommendation.Confidence.MEDIUM,
                 severity=20,
@@ -207,8 +238,13 @@ def eval_market_seeding() -> list[dict]:
                         Recommendation.Type.MARKET_SEEDING,
                         subject_type="type",
                         subject_id=f"{type_id}@{loc.id}",
-                        message=f"Seed {deficit} × {_tname(type_id)} at {loc.name}.",
-                        logic="target minus local sell-order volume",
+                        message_key="market_seeding.message",
+                        message_params={
+                            "deficit": deficit,
+                            "type_name": _tname(type_id),
+                            "location": loc.name,
+                        },
+                        logic_key="market_seeding.logic",
                         inputs={"type_id": type_id, "target": target, "deficit": deficit},
                         confidence=Recommendation.Confidence.MEDIUM,
                         severity=15,
@@ -230,8 +266,12 @@ def eval_hauling() -> list[dict]:
             Recommendation.Type.HAULING,
             subject_type="logistics",
             subject_id="open",
-            message=f"{count} hauling task(s) open, ~{total_volume:.0f} m³ to move.",
-            logic="sum of open hauling-task volumes",
+            message_key="hauling.message",
+            # ``volume`` is pre-formatted to a string here (it was an f-string ``:.0f`` before):
+            # the rounding is the engine's, not a translator's, and a float in the JSONField would
+            # leave the formatting to whatever locale the reader happens to have.
+            message_params={"count": count, "volume": f"{total_volume:.0f}"},
+            logic_key="hauling.logic",
             inputs={"count": count, "volume_m3": total_volume},
             confidence=Recommendation.Confidence.HIGH,
             severity=min(100, count * 5),
@@ -257,8 +297,14 @@ def eval_combat_loss_pattern(window_days: int = 7, threshold: int = 3) -> list[d
                     Recommendation.Type.COMBAT_LOSS_PATTERN,
                     subject_type="ship",
                     subject_id=ship_type_id,
-                    message=f"Lost {n} × {_tname(ship_type_id)} in the last {window_days}d.",
-                    logic=f"victim ship recurs >= {threshold} times in window",
+                    message_key="combat_loss.message",
+                    message_params={
+                        "count": n,
+                        "ship_name": _tname(ship_type_id),
+                        "window_days": window_days,
+                    },
+                    logic_key="combat_loss.logic",
+                    logic_params={"threshold": threshold},
                     inputs={"ship_type_id": ship_type_id, "count": n, "window_days": window_days},
                     confidence=Recommendation.Confidence.MEDIUM if n < 5 else Recommendation.Confidence.HIGH,
                     severity=min(100, n * 10),

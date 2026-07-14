@@ -13,6 +13,8 @@ from django.conf import settings
 from django.utils import formats
 from django.utils.translation import gettext as _
 
+from .messages import render_text
+
 log = logging.getLogger(__name__)
 
 
@@ -48,8 +50,21 @@ def build_report(period_start, period_end) -> dict:
     latest = ReadinessSnapshot.objects.order_by("-created_at").first()
     index = latest.index if latest else 0
     movers = _movers(period_start)
+    # Seam B: ``ExecutiveReport.body`` is ALREADY a JSONField, so the risk lines carry their
+    # scaffold key + params *inside* the archived JSON — a `body_key` column would be
+    # meaningless here (the body is a structure, not one sentence). ``title`` stays the frozen
+    # English (the audit record + the fallback for reports archived before this landed); a
+    # reader re-renders via ``risk_title``. A lazy proxy must NEVER be put in here: it is a
+    # hard TypeError on save.
     risks = [
-        {"title": f.title, "dimension": f.dimension_key, "severity": f.severity, "owner": f.owner_tag}
+        {
+            "title": f.title,
+            "title_key": f.title_key,
+            "title_params": f.title_params or {},
+            "dimension": f.dimension_key,
+            "severity": f.severity,
+            "owner": f.owner_tag,
+        }
         for f in ReadinessFinding.objects.filter(status=ReadinessFinding.Status.OPEN)
         .order_by("-weight")[:5]
     ]
@@ -71,6 +86,11 @@ def build_report(period_start, period_end) -> dict:
     }
 
 
+def risk_title(risk: dict) -> str:
+    """An archived ``top_risks`` line under the READER's locale (English when it has no key)."""
+    return render_text(risk.get("title_key", ""), risk.get("title_params"), risk.get("title", ""))
+
+
 def format_digest(body: dict, period_start, period_end) -> str:
     """Render the report body as a compact plain-text/Discord-markdown digest."""
     corp = getattr(settings, "FORCA_CORP_NAME", "Corp")
@@ -90,7 +110,8 @@ def format_digest(body: dict, period_start, period_end) -> str:
             "dim": b["dimension"], "delta": f"{b['delta']:+d}", "score": b["score"]})
     risks = body.get("top_risks") or []
     if risks:
-        lines.append(_("• Top risks: %(titles)s") % {"titles": "; ".join(r["title"] for r in risks[:3])})
+        lines.append(_("• Top risks: %(titles)s") % {
+            "titles": "; ".join(risk_title(r) for r in risks[:3])})
     tasks = body.get("top_tasks") or []
     if tasks:
         lines.append(_("• Open readiness tasks: %(count)s (top: %(top)s)") % {

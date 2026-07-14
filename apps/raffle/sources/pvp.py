@@ -201,12 +201,19 @@ class PvpSource(TicketSource):
                     cid = a["character_id"]
                     if not cid or a["corporation_id"] not in our_corps:
                         continue
+                    # Seam B: persist the English prose (audit + fallback) AND a scaffold
+                    # key/params so each reader renders it in their own locale. Do NOT wrap
+                    # ``reason`` in _() — this runs in a beat worker with no locale, and the
+                    # proxy would be coerced to English on bulk_create and frozen forever.
                     if km.is_solo:
                         tickets, reason = solo_tix, f"Solo kill ({solo_tix})"
+                        reason_key = "pvp.solo_kill"
                     elif a["final_blow"]:
                         tickets, reason = final_blow_tix, f"Final blow on shared kill ({final_blow_tix})"
+                        reason_key = "pvp.final_blow"
                     else:
                         tickets, reason = per_kill, f"Kill participation ({per_kill})"
+                        reason_key = "pvp.participation"
                     yield SourceEvent(
                         character_id=cid,
                         character_name=names.get(cid, ""),
@@ -215,6 +222,8 @@ class PvpSource(TicketSource):
                         occurred_at=km.killmail_time,
                         magnitude=float(km.total_value or 0),
                         reason=reason,
+                        reason_key=reason_key,
+                        reason_params={"tickets": int(tickets)},
                         metadata={
                             "killmail_id": km.killmail_id,
                             "final_blow": bool(a["final_blow"]),

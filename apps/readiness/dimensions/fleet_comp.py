@@ -18,6 +18,7 @@ from ..engine.base import (
     status_for,
 )
 from ..engine.registry import register
+from ..messages import english_text
 from .roles import role_score
 
 # Roles that make up a fleet's shape (logi/tackle/links/dictor/ewar/…) — the
@@ -59,12 +60,20 @@ class FleetCompProvider:
                 continue
             role_scores.append(score)
             if qualified < target.desired_count:
+                # target.label is leadership-authored content: it stays raw in the params.
+                label_params = {
+                    "role": target.label, "short": target.desired_count - qualified,
+                }
+                task_params = {"role": target.label}
                 findings.append(Finding(
                     kind="gap", dimension_key=self.key, kpi_key="fleet_comp.role_coverage",
                     severity="warn", weight=float(target.desired_count - qualified),
-                    label=f"{target.label} short by {target.desired_count - qualified}",
+                    label=english_text("fleet_comp.role_short", label_params),
+                    label_key="fleet_comp.role_short", label_params=label_params,
                     ref_type="role", ref_id=role_key,
-                    task_type="train", task_title=f"Train pilots into {target.label}",
+                    task_type="train",
+                    task_title=english_text("fleet_comp.train_role_task", task_params),
+                    task_title_key="fleet_comp.train_role_task", task_title_params=task_params,
                 ))
         if role_scores:
             kpis.append(_kpi("fleet_comp.role_coverage", None,

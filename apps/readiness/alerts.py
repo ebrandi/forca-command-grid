@@ -43,7 +43,10 @@ def render_alert(rule: dict, finding, responsibilities: dict) -> str:
     label = finding.dimension_key if finding else rule.get("key", "readiness")
     if finding and finding.kpi_key:
         label = f"{finding.dimension_key}/{finding.kpi_key}"
-    summary = finding.title if finding else rule.get("key", "")
+    # ``title_i18n`` resolves the finding's scaffold under the ACTIVE locale (the dispatcher's
+    # ``translation.override`` for a per-recipient send); a keyless/legacy finding returns its
+    # stored English verbatim.
+    summary = finding.title_i18n if finding else rule.get("key", "")
     owner = _owner_label(getattr(finding, "owner_tag", ""), responsibilities)
     link = _drill_link(finding)
     bits = [f"{prefix} **{severity.upper()} — {label}** {summary}."]
@@ -102,7 +105,7 @@ def render_mail(rule: dict, finding, responsibilities: dict) -> tuple[str, str]:
     detail_line = _("Detail / action: %(link)s") % {"link": link}
     footer = _("— FORCA Command Grid (automated). Manage alert rules in the Admin Console.")
     body = (
-        f"{finding.title if finding else ''}\n"
+        f"{finding.title_i18n if finding else ''}\n"
         f"{score_line}"
         f"{owner_line}\n"
         f"{detail_line}\n"
@@ -223,9 +226,14 @@ def evaluate_alerts(now=None) -> int:
 
             # Fresh fire: record the alert first, then deliver (best-effort).
             message = render_alert(rule, finding, responsibilities)
+            # Seam B: the summary is a frozen copy of the finding's English title. Carry the
+            # finding's scaffold key + params across so the alert log re-renders under each
+            # reader's locale; a finding with no key yields no key here and the alert keeps
+            # rendering its stored English.
             alert = ReadinessAlert.objects.create(
                 rule_key=key, dimension_key=finding.dimension_key, kpi_key=finding.kpi_key,
                 severity=rule.get("severity", "warn"), summary=finding.title[:300],
+                summary_key=finding.title_key, summary_params=finding.title_params or {},
                 finding=finding,
             )
             alert.channels = _deliver(message, channels,

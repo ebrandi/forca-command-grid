@@ -14,6 +14,7 @@ from django.utils.translation import gettext_lazy as _
 
 from ..engine.base import DimensionResult, Finding, KpiResult, ReadinessContext, status_for
 from ..engine.registry import register
+from ..messages import english_text
 
 
 def _kpi(key, value, score, detail) -> KpiResult:
@@ -70,12 +71,19 @@ class StagingProvider:
                     "staging": staging.system_name or str(staging.system_id)})
         findings: list[Finding] = []
         if score < 50:
+            # The system name is EVE game data — raw in the params, never translated.
+            label_params = {
+                "pct": score, "system": str(staging.system_name or staging.system_id),
+            }
             findings.append(Finding(
                 kind="gap", dimension_key=self.key, kpi_key="staging.hulls_at_staging",
                 severity="warn", weight=float(50 - score),
-                label=f"Only {score}% of doctrine hulls are at {staging.system_name or staging.system_id}",
+                label=english_text("staging.hulls_off_staging", label_params),
+                label_key="staging.hulls_off_staging", label_params=label_params,
                 ref_type="staging", ref_id=str(staging.system_id),
-                task_type="haul", task_title="Consolidate doctrine hulls at staging",
+                task_type="haul",
+                task_title=english_text("staging.consolidate_task"),
+                task_title_key="staging.consolidate_task",
             ))
         return DimensionResult(
             key=self.key, score=score, status=status_for(score),

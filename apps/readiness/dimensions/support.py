@@ -21,6 +21,7 @@ from ..engine.base import (
     status_for,
 )
 from ..engine.registry import register
+from ..messages import english_text
 
 
 def _kpi(key, value, score, detail) -> KpiResult:
@@ -71,13 +72,22 @@ class FleetSupportProvider:
                 {"skill": name, "level": sk.min_level, "trained": trained, "known": known},
             ))
             if score is not None and score < 50:
+                # The skill name is EVE game data — raw in the params, never translated.
+                label_params = {
+                    "skill": name, "trained": trained, "known": known,
+                    "level": sk.min_level,
+                }
+                task_params = {"skill": name, "level": sk.min_level}
                 findings.append(Finding(
                     kind="gap", dimension_key=self.key,
                     kpi_key=f"support.skill_{sk.skill_type_id}", severity="warn",
                     weight=float(50 - score),
-                    label=f"Thin {name} bench — {trained}/{known} at L{sk.min_level}",
+                    label=english_text("support.thin_bench", label_params),
+                    label_key="support.thin_bench", label_params=label_params,
                     ref_type="support_skill", ref_id=str(sk.skill_type_id),
-                    task_type="train", task_title=f"Grow the {name} (L{sk.min_level}) bench",
+                    task_type="train",
+                    task_title=english_text("support.grow_bench_task", task_params),
+                    task_title_key="support.grow_bench_task", task_title_params=task_params,
                 ))
 
         score = combine_kpi_scores(kpis, ctx.config.get("kpis", {}))

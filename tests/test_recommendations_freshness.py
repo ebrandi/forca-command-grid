@@ -42,8 +42,11 @@ def test_freshness_defaults_to_now_without_a_source():
 
     before = timezone.now()
     d = _draft(
-        "stock_shortage", subject_type="type", subject_id=1, message="m",
-        logic="l", inputs={}, confidence="high", severity=1,
+        "stock_shortage", subject_type="type", subject_id=1,
+        message_key="stock_shortage.message",
+        message_params={"type_name": "Rifter", "current": 1, "target": 2, "deficit": 1},
+        logic_key="stock_shortage.logic",
+        inputs={}, confidence="high", severity=1,
     )
     assert d["data_freshness"] >= before  # defaulted to ~now
 

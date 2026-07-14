@@ -20,6 +20,7 @@ from ..engine.base import (
     threshold_score,
 )
 from ..engine.registry import register
+from ..messages import english_text
 
 
 def _kpi(key, value, score, detail):
@@ -76,12 +77,17 @@ class SrpProvider:
             {"pending": backlog, "max_pending_claims": max_pending},
         ))
         if backlog > max_pending:
+            label_params = {"backlog": backlog, "max": max_pending}
+            task_params = {"backlog": backlog}
             findings.append(Finding(
                 kind="gap", dimension_key=self.key, kpi_key="srp.pending_backlog",
                 severity="high", weight=float(backlog),
-                label=f"{backlog} SRP claims pending (max {max_pending})",
+                label=english_text("srp.pending_backlog", label_params),
+                label_key="srp.pending_backlog", label_params=label_params,
                 ref_type="srp", ref_id="pending_backlog",
-                task_type="other", task_title=f"Clear the SRP backlog ({backlog} pending)",
+                task_type="other",
+                task_title=english_text("srp.clear_backlog_task", task_params),
+                task_title_key="srp.clear_backlog_task", task_title_params=task_params,
             ))
 
         # avg_wait — mean hours from claim to decision over the last 30 days.
@@ -106,12 +112,16 @@ class SrpProvider:
             {"oldest_age_days": oldest_age, "max_claim_age_days": max_age},
         ))
         if oldest_age > max_age:
+            label_params = {"age": oldest_age, "max": max_age}
             findings.append(Finding(
                 kind="gap", dimension_key=self.key, kpi_key="srp.oldest_claim",
                 severity="high", weight=float(oldest_age),
-                label=f"Oldest SRP claim is {oldest_age}d old (max {max_age}d)",
+                label=english_text("srp.oldest_claim", label_params),
+                label_key="srp.oldest_claim", label_params=label_params,
                 ref_type="srp", ref_id="oldest_claim",
-                task_type="other", task_title="Decide the oldest pending SRP claim",
+                task_type="other",
+                task_title=english_text("srp.oldest_claim_task"),
+                task_title_key="srp.oldest_claim_task",
             ))
 
         # budget_health — this period's spend vs allocation (lower is better). Spend is

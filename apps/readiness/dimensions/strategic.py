@@ -19,6 +19,7 @@ from ..engine.base import (
     status_for,
 )
 from ..engine.registry import register
+from ..messages import english_text
 from .roles import role_score
 
 # Strategic role keys whose bench this dimension grades (capitals + cyno/scout).
@@ -93,13 +94,17 @@ class StrategicProvider:
             kpis.append(_kpi("strategic.mandatory_ship_coverage",
                              round(ms_score / 100, 2), ms_score, ms_detail))
             if ms_score < 60:
+                label_params = {"pct": ms_score}
                 findings.append(Finding(
                     kind="gap", dimension_key=self.key,
                     kpi_key="strategic.mandatory_ship_coverage", severity="warn",
                     weight=float(60 - ms_score),
-                    label=f"Only {ms_score}% mandatory-ship coverage across the corp",
+                    label=english_text("strategic.mandatory_ship_coverage", label_params),
+                    label_key="strategic.mandatory_ship_coverage", label_params=label_params,
                     ref_type="strategic", ref_id="mandatory_ship_coverage",
-                    task_type="buy", task_title="Get pilots into their mandatory ships",
+                    task_type="buy",
+                    task_title=english_text("strategic.mandatory_ship_task"),
+                    task_title_key="strategic.mandatory_ship_task",
                 ))
 
         # capital_bench / cyno_coverage — qualified pilots vs StrategicRoleTarget.
@@ -110,12 +115,20 @@ class StrategicProvider:
                 continue
             (cyno_scores if target.role_key in _CYNO_ROLES else cap_scores).append(score)
             if qualified < target.desired_count:
+                label_params = {
+                    "role": target.label, "qualified": qualified,
+                    "desired": target.desired_count,
+                }
+                task_params = {"role": target.label}
                 findings.append(Finding(
                     kind="gap", dimension_key=self.key, kpi_key=f"strategic.{target.role_key}_bench",
                     severity="warn", weight=float(target.desired_count - qualified),
-                    label=f"{target.label} bench {qualified}/{target.desired_count}",
+                    label=english_text("strategic.role_bench", label_params),
+                    label_key="strategic.role_bench", label_params=label_params,
                     ref_type="role", ref_id=target.role_key,
-                    task_type="train", task_title=f"Grow the {target.label} bench",
+                    task_type="train",
+                    task_title=english_text("strategic.grow_bench_task", task_params),
+                    task_title_key="strategic.grow_bench_task", task_title_params=task_params,
                 ))
         if cap_scores:
             kpis.append(_kpi("strategic.capital_bench", None,

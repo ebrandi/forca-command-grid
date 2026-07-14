@@ -6,6 +6,7 @@ suggestion, pair manually, or let either pilot initiate; the score is advisory.
 """
 from __future__ import annotations
 
+from . import messages as msg
 from .models import MenteeProfile, MentorProfile, MentorshipPairing
 
 # Weights (sum of the positive components ≈ 100).
@@ -28,12 +29,21 @@ def _jaccard(a: set, b: set) -> float:
     return len(a & b) / len(a | b)
 
 
-def score(mentor: MentorProfile, mentee: MenteeProfile, *, services=None) -> tuple[float, list[str]]:
-    """Return (score 0–100, human reasons). Assumes both are ACTIVE."""
+def score(mentor: MentorProfile, mentee: MenteeProfile, *, services=None) -> tuple[float, list[dict]]:
+    """Return (score 0–100, reason entries). Assumes both are ACTIVE.
+
+    Seam B: the reasons are *persisted* on ``MentorshipPairing.match_reasons`` by
+    ``mentorship.auto_suggest_pairings`` — a worker with no locale — and read back by the mentor,
+    the cadet and officers under theirs. So a reason is returned as a scaffold
+    ``{"key", "params"}`` entry rather than a finished sentence; ``messages.english_list`` renders
+    the English audit prose at the write site and ``messages.render_list`` the reader's locale at
+    the read site. The interpolated focus areas, languages and time zone are pilot-entered values:
+    substituted raw, never translated.
+    """
     from . import services as svc
 
     services = services or svc
-    reasons: list[str] = []
+    reasons: list[dict] = []
     total = 0.0
 
     mentor_areas = _as_set(mentor.areas)
@@ -42,31 +52,35 @@ def score(mentor: MentorProfile, mentee: MenteeProfile, *, services=None) -> tup
     if overlap:
         j = _jaccard(mentor_areas, mentee_wants)
         total += _W_INTEREST * j
-        reasons.append(f"Shared focus: {', '.join(sorted(overlap))}.")
+        reasons.append({"key": "match.shared_focus",
+                        "params": {"areas": ", ".join(sorted(overlap))}})
     else:
-        reasons.append("No overlapping focus areas.")
+        reasons.append({"key": "match.no_overlap", "params": {}})
 
     if mentor.timezone and mentee.timezone:
         if mentor.timezone.strip().lower() == mentee.timezone.strip().lower():
             total += _W_TZ
-            reasons.append(f"Same time zone ({mentor.timezone}).")
+            reasons.append({"key": "match.same_timezone",
+                            "params": {"timezone": mentor.timezone}})
 
     mentor_langs = _as_set(mentor.languages)
     mentee_langs = _as_set(mentee.languages)
     if mentor_langs & mentee_langs:
         total += _W_LANG
-        reasons.append(f"Shared language: {', '.join(sorted(mentor_langs & mentee_langs))}.")
+        reasons.append({"key": "match.shared_language",
+                        "params": {"languages": ", ".join(sorted(mentor_langs & mentee_langs))}})
 
     capacity = services.mentor_capacity(mentor)
     active = services.mentor_active_count(mentor)
     if active < capacity:
         # More free slots → slightly higher score (spread the load).
         total += _W_CAPACITY * (capacity - active) / capacity
-        reasons.append(f"Has capacity ({active}/{capacity} mentees).")
+        reasons.append({"key": "match.has_capacity",
+                        "params": {"active": active, "capacity": capacity}})
 
     if mentor.open_to_adhoc:
         total += _W_ADHOC
-        reasons.append("Open to ad-hoc questions.")
+        reasons.append({"key": "match.open_to_adhoc", "params": {}})
 
     if mentee.voice_comfortable and mentor.comms:
         total += _W_VOICE
@@ -78,7 +92,7 @@ def score(mentor: MentorProfile, mentee: MenteeProfile, *, services=None) -> tup
     ).exists()
     if prior_cancel:
         total -= _PENALTY_PRIOR_CANCEL
-        reasons.append("Previously unpaired — lower priority.")
+        reasons.append({"key": "match.prior_cancel", "params": {}})
 
     return max(0.0, min(100.0, round(total, 1))), reasons
 
@@ -93,7 +107,10 @@ def suggest_mentors_for(mentee: MenteeProfile, limit: int = 5) -> list[dict]:
         if not services.mentor_has_capacity(mentor):
             continue
         s, reasons = score(mentor, mentee, services=services)
-        out.append({"mentor": mentor, "score": s, "reasons": reasons})
+        # ``reasons`` here is render-time only (a suggestion on the dashboard is never stored), so
+        # it resolves in *this* reader's locale; ``reason_keys`` is what a proposal would persist.
+        out.append({"mentor": mentor, "score": s,
+                    "reasons": msg.render_list(reasons, None), "reason_keys": reasons})
     out.sort(key=lambda r: r["score"], reverse=True)
     return out[:limit]
 
@@ -108,7 +125,8 @@ def suggest_mentees_for(mentor: MentorProfile, limit: int = 5) -> list[dict]:
         if services.existing_open_pairing(mentor, mentee):
             continue
         s, reasons = score(mentor, mentee, services=services)
-        out.append({"mentee": mentee, "score": s, "reasons": reasons})
+        out.append({"mentee": mentee, "score": s,
+                    "reasons": msg.render_list(reasons, None), "reason_keys": reasons})
     out.sort(key=lambda r: r["score"], reverse=True)
     return out[:limit]
 
@@ -140,7 +158,8 @@ def auto_suggest(limit_per_mentee: int = 1) -> int:
                 continue
             pairing = services.propose_pairing(
                 rec["mentor"], mentee, initiated_by=MentorshipPairing.InitiatedBy.SYSTEM,
-                status=MentorshipPairing.Status.SUGGESTED, score=rec["score"], reasons=rec["reasons"],
+                status=MentorshipPairing.Status.SUGGESTED, score=rec["score"],
+                reasons=rec["reason_keys"],
             )
             if pairing is not None:
                 created += 1

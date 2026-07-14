@@ -11,6 +11,7 @@ from datetime import timedelta
 from django.db.models import Q
 from django.utils import timezone
 
+from . import messages as msg
 from .models import (
     MentorshipFlag,
     MentorshipPairing,
@@ -25,11 +26,21 @@ RUBBER_STAMP_SECONDS = 20
 RUBBER_STAMP_COUNT = 5
 
 
-def _raise(kind, *, pairing=None, user=None, severity=50, detail="", key) -> bool:
+def _raise(kind, *, pairing=None, user=None, severity=50, msg_key, params=None, key) -> bool:
+    """Upsert one open flag.
+
+    Seam B: this whole module runs inside the ``mentorship.scan_anomalies`` worker, which has no
+    user and no locale — so the sentence is persisted as a scaffold ``msg_key`` + plain-JSON
+    ``params`` (rendered per reader by ``MentorshipFlag.detail_i18n``) with the English msgid kept
+    in ``detail`` as the audit record and the fallback. ``key`` is the dedupe key: an identifier
+    used in a uniqueness lookup, never prose, never translated.
+    """
+    params = params or {}
     _, created = MentorshipFlag.objects.get_or_create(
         dedupe_key=key, resolved=False,
-        defaults={"kind": kind, "severity": severity, "pairing": pairing,
-                  "user": user, "detail": detail[:300]},
+        defaults={"kind": kind, "severity": severity, "pairing": pairing, "user": user,
+                  "detail": msg.english(msg_key, params)[:300],
+                  "detail_key": msg_key, "detail_params": params},
     )
     return created
 
@@ -51,7 +62,8 @@ def scan_pairing(pairing: MentorshipPairing) -> int:
     if len(recent) >= RAPID_COUNT:
         raised += _raise(
             MentorshipFlag.Kind.RAPID_COMPLETION, pairing=pairing, severity=60,
-            detail=f"{len(recent)} tasks completed within {RAPID_WINDOW_MINUTES} min.",
+            msg_key="flag.rapid_completion",
+            params={"count": len(recent), "minutes": RAPID_WINDOW_MINUTES},
             key=f"rapid:{pairing.pk}:{recent[-1].completed_at:%Y%m%d%H%M}",
         )
 
@@ -73,7 +85,7 @@ def scan_pairing(pairing: MentorshipPairing) -> int:
         if self_only >= SELF_CONFIRM_STREAK:
             raised += _raise(
                 MentorshipFlag.Kind.SELF_CONFIRM_STREAK, pairing=pairing, severity=45,
-                detail=f"{self_only} recent tasks completed by mentee self-confirmation only.",
+                msg_key="flag.self_confirm_streak", params={"count": self_only},
                 key=f"selfconfirm:{pairing.pk}",
             )
 
@@ -89,7 +101,8 @@ def scan_pairing(pairing: MentorshipPairing) -> int:
     if quick >= RUBBER_STAMP_COUNT:
         raised += _raise(
             MentorshipFlag.Kind.MENTOR_RUBBER_STAMP, pairing=pairing, severity=50,
-            detail=f"{quick} mentor approvals landed <{RUBBER_STAMP_SECONDS}s after submission.",
+            msg_key="flag.mentor_rubber_stamp",
+            params={"count": quick, "seconds": RUBBER_STAMP_SECONDS},
             key=f"rubberstamp:{pairing.pk}",
         )
 
@@ -97,7 +110,7 @@ def scan_pairing(pairing: MentorshipPairing) -> int:
     if services.mentor_active_count(pairing.mentor) > services.mentor_capacity(pairing.mentor):
         raised += _raise(
             MentorshipFlag.Kind.CAPACITY_EXCEEDED, pairing=pairing, user=pairing.mentor.user,
-            severity=40, detail="Mentor is over their active-mentee capacity.",
+            severity=40, msg_key="flag.capacity_exceeded",
             key=f"capacity:{pairing.mentor_id}",
         )
 
@@ -107,7 +120,7 @@ def scan_pairing(pairing: MentorshipPairing) -> int:
         if ref and (now - ref) > timedelta(days=program.stale_pair_days):
             raised += _raise(
                 MentorshipFlag.Kind.STALE_PAIR, pairing=pairing, severity=35,
-                detail=f"No activity for {program.stale_pair_days}+ days.",
+                msg_key="flag.stale_pair", params={"days": program.stale_pair_days},
                 key=f"stale:{pairing.pk}",
             )
     return raised

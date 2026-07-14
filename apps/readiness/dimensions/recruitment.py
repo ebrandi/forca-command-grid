@@ -21,6 +21,7 @@ from ..engine.base import (
     threshold_score,
 )
 from ..engine.registry import register
+from ..messages import english_text
 
 
 def _kpi(key, value, score, detail):
@@ -91,12 +92,16 @@ class RecruitmentProvider:
 
         findings = []
         if active < target:
+            label_params = {"active": active, "target": target}
             findings.append(Finding(
                 kind="gap", dimension_key=self.key, kpi_key="recruitment.headcount_vs_target",
                 severity="warn", weight=float(target - active),
-                label=f"Active headcount {active} below target {target}",
+                label=english_text("recruitment.headcount_below_target", label_params),
+                label_key="recruitment.headcount_below_target", label_params=label_params,
                 ref_type="recruitment", ref_id="headcount",
-                task_type="other", task_title="Recruit to grow active headcount",
+                task_type="other",
+                task_title=english_text("recruitment.headcount_task"),
+                task_title_key="recruitment.headcount_task",
             ))
 
         score = combine_kpi_scores(kpis, ctx.config.get("kpis", {}))

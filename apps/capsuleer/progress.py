@@ -16,6 +16,7 @@ from django.utils import timezone
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 
+from . import messages
 from .models import GoalStatus, MilestoneStatus, ProgressSnapshot
 
 _UNSET = object()
@@ -215,19 +216,16 @@ def _last_movement_at(goal):
     return max(times)
 
 
-def derive_blocked(goal, *, milestones=None, live=True) -> tuple[bool, list[str]]:
-    """Whether a goal is structurally blocked, and the verbatim reasons (doc 11 §2, doc 08 §5.5).
+def blocked_refs(goal, *, milestones=None, live=True) -> list[dict]:
+    """The structural blockers of a goal as ``{"text", "key", "params"}`` refs (Seam B).
 
-    A goal is blocked when a **required, pending** milestone has a permanent structural blocker —
-    a dangling/retired doctrine, an unresolved ``$doctrine`` placeholder, or a detached evidence
-    character — surfaced as ``structural=True`` from the verification engine. Missing skill data or
-    an un-opted asset scope are *data* conditions, not blockers (the pilot can still work the plan),
-    so they are excluded by construction (their checks return a non-structural ``unknown``).
+    ``text`` is the stored/derived English (the audit record and the never-blank fallback); ``key``
+    + ``params`` are the message scaffold behind it (``messages.py``), which is what lets a *reader*
+    re-render the blocker in their own language — and what ``suggest.gen_blocked_prereq`` persists
+    into a suggestion's params instead of embedding the worker's frozen English.
 
-    ``live=True`` (the sweep and the ``blocked_prereq`` suggestion rule) runs the checkers and
-    stamps the result. ``live=False`` (the goal_detail request path — doc 11 §2, finding 21) reads
-    the persisted ``structural_block`` flag off the already-loaded milestones, spending zero extra
-    queries; the sweep, the import hook and template instantiation keep that flag fresh.
+    A ref is de-duplicated on its English text, exactly as the reasons list always was. ``key`` is
+    empty for a legacy milestone stamped before this seam existed; such a ref renders its English.
     """
     from . import verify
 
@@ -240,22 +238,51 @@ def derive_blocked(goal, *, milestones=None, live=True) -> tuple[bool, list[str]
         if m.required and m.status == MilestoneStatus.PENDING and m.kind in verify.CHECKERS
     ]
     if not candidates:
-        return False, []
-    reasons: list[str] = []
+        return []
+    refs: list[dict] = []
+    seen: set[str] = set()
+
+    def _add(text, key, params) -> None:
+        text = (text or "").strip()
+        if not text or text in seen:
+            return
+        seen.add(text)
+        refs.append({"text": text, "key": key or "", "params": params or {}})
+
     if not live:
         for milestone in candidates:
             if milestone.structural_block:
-                reason = (milestone.data_source or "").strip()
-                if reason and reason not in reasons:
-                    reasons.append(reason)
-        return bool(reasons), reasons
+                _add(milestone.data_source, milestone.data_source_key,
+                     milestone.data_source_params)
+        return refs
     ctx = verify.context_for(goal.character)
     for milestone in candidates:
         result = verify.check_safely(milestone, ctx)
         if result.structural:
-            reason = (result.data_source or "").strip()
-            if reason and reason not in reasons:
-                reasons.append(reason)
+            _add(result.data_source, result.data_source_key, result.data_source_params)
+    return refs
+
+
+def derive_blocked(goal, *, milestones=None, live=True) -> tuple[bool, list[str]]:
+    """Whether a goal is structurally blocked, and the reasons (doc 11 §2, doc 08 §5.5).
+
+    A goal is blocked when a **required, pending** milestone has a permanent structural blocker —
+    a dangling/retired doctrine, an unresolved ``$doctrine`` placeholder, or a detached evidence
+    character — surfaced as ``structural=True`` from the verification engine. Missing skill data or
+    an un-opted asset scope are *data* conditions, not blockers (the pilot can still work the plan),
+    so they are excluded by construction (their checks return a non-structural ``unknown``).
+
+    ``live=True`` (the sweep and the ``blocked_prereq`` suggestion rule) runs the checkers and
+    stamps the result. ``live=False`` (the goal_detail request path — doc 11 §2, finding 21) reads
+    the persisted ``structural_block`` flag off the already-loaded milestones, spending zero extra
+    queries; the sweep, the import hook and template instantiation keep that flag fresh.
+
+    The reasons come back rendered under the **active** locale (the goal-detail reader's language on
+    a request; plain English in a worker, where they are then persisted as the English fallback), so
+    the request path no longer shows whichever language the sweep happened to stamp the row in.
+    """
+    refs = blocked_refs(goal, milestones=milestones, live=live)
+    reasons = [messages.text(r["text"], r["key"], r["params"]) for r in refs]
     return bool(reasons), reasons
 
 

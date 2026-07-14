@@ -110,11 +110,15 @@ class StockProvider:
             Finding(
                 kind=g["kind"],
                 label=g["label"],
+                label_key=g.get("label_key", ""),
+                label_params=g.get("label_params") or {},
                 weight=g["weight"],
                 ref_type="stock",
                 ref_id=g["ref_id"],
                 task_type=g["task_type"],
                 task_title=g["task_title"],
+                task_title_key=g.get("task_title_key", ""),
+                task_title_params=g.get("task_title_params") or {},
                 dimension_key="stock",
             )
             for g in gaps

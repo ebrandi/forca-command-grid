@@ -11,10 +11,13 @@ from __future__ import annotations
 
 from django.conf import settings
 from django.db import models
+from django.db.models import JSONField, Value
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from core.mixins import TimeStampedModel
+
+from .messages import render_text
 
 
 class ReadinessSnapshot(TimeStampedModel):
@@ -68,12 +71,27 @@ class ReadinessFinding(models.Model):
     score = models.IntegerField(null=True, blank=True)
     severity = models.CharField(max_length=8, choices=Severity.choices, default=Severity.WARN)
     kind = models.CharField(max_length=16, choices=Kind.choices, default=Kind.GAP)
+    # The prose columns stay: they are the English fallback AND the audit record of what was
+    # actually notified, and they are what legacy rows (written before the *_key columns landed)
+    # render from. Nothing is backfilled — a keyless row degrades to its stored English, never
+    # to blank.
     title = models.CharField(max_length=200)
     detail = models.TextField(blank=True)
+    # Seam B (see ``messages.py``): the writer is a Celery beat with no reader and no locale, so
+    # the prose above can only ever be frozen English. These carry the scaffold key + its plain
+    # JSON params so ``*_i18n`` can re-render the sentence under the READER's locale.
+    title_key = models.CharField(max_length=60, blank=True, default="", db_default="")
+    title_params = models.JSONField(blank=True, default=dict, db_default=Value({}, JSONField()))
+    detail_key = models.CharField(max_length=60, blank=True, default="", db_default="")
+    detail_params = models.JSONField(blank=True, default=dict, db_default=Value({}, JSONField()))
     weight = models.FloatField(default=0.0)
     owner_tag = models.CharField(max_length=40, blank=True)
     task_type = models.CharField(max_length=12, blank=True)
     task_title = models.CharField(max_length=200, blank=True)
+    task_title_key = models.CharField(max_length=60, blank=True, default="", db_default="")
+    task_title_params = models.JSONField(
+        blank=True, default=dict, db_default=Value({}, JSONField())
+    )
     ref_type = models.CharField(max_length=40, blank=True)
     ref_id = models.CharField(max_length=64, blank=True)
     status = models.CharField(
@@ -103,6 +121,21 @@ class ReadinessFinding(models.Model):
 
     def __str__(self) -> str:
         return f"{self.dimension_key}:{self.title} ({self.status})"
+
+    # --- Seam B read side: resolve under the READER's locale, never the writer's ----------
+    # Each falls back to the stored English prose when the row carries no key (every legacy row)
+    # or the key is unknown to this deploy. They can never return blank.
+    @property
+    def title_i18n(self) -> str:
+        return render_text(self.title_key, self.title_params, self.title)
+
+    @property
+    def detail_i18n(self) -> str:
+        return render_text(self.detail_key, self.detail_params, self.detail)
+
+    @property
+    def task_title_i18n(self) -> str:
+        return render_text(self.task_title_key, self.task_title_params, self.task_title)
 
     @property
     def age_days(self) -> int:
@@ -217,6 +250,13 @@ class ReadinessAlert(models.Model):
     kpi_key = models.CharField(max_length=40, blank=True)
     severity = models.CharField(max_length=8, blank=True)
     summary = models.CharField(max_length=300)
+    # Seam B: the summary is a copy of the finding's title, frozen at fire time by the
+    # ``readiness.alerts`` beat (no reader, no locale). Carry the finding's scaffold key +
+    # params across so the alert log renders in the READER's language.
+    summary_key = models.CharField(max_length=60, blank=True, default="", db_default="")
+    summary_params = models.JSONField(
+        blank=True, default=dict, db_default=Value({}, JSONField())
+    )
     channels = models.JSONField(default=list, blank=True)
     finding = models.ForeignKey(
         ReadinessFinding, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
@@ -231,6 +271,11 @@ class ReadinessAlert(models.Model):
 
     def __str__(self) -> str:
         return f"{self.rule_key} ({self.severity}) @ {self.created_at:%Y-%m-%d %H:%M}"
+
+    @property
+    def summary_i18n(self) -> str:
+        """The summary under the READER's locale; the stored English when there is no key."""
+        return render_text(self.summary_key, self.summary_params, self.summary)
 
     @property
     def is_open(self) -> bool:

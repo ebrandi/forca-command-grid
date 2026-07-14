@@ -7,6 +7,7 @@ relieves by staging more hulls.
 """
 from __future__ import annotations
 
+from .. import messages
 from ..engine.base import (
     PRIMARY,
     SECONDARY,
@@ -18,6 +19,13 @@ from ..engine.base import (
 )
 from ..engine.registry import register_constraint
 from ._common import num, slice_facts
+
+# Seam B (``..messages``): every persisted sentence is a scaffold key + JSON-safe params, and the
+# English prose column is derived from the msgid itself, so the two can never drift. Numbers the
+# English formats (``{x:+g}``/``{x:g}``) are pre-formatted here — the msgid carries no format spec.
+_LABEL = "constraint.doctrine_stock.label"
+_DETAIL = "constraint.doctrine_stock.detail"
+_DETAIL_UNKNOWN = "constraint.doctrine_stock.detail.unknown"
 
 
 class DoctrineStockProvider:
@@ -50,12 +58,17 @@ class DoctrineStockProvider:
             LimitInput("min_pilots", min_pilots, "pilots",
                        {"source": "doctrine", "path": f"doctrines[{slug}].min_pilots"}),
         ]
+        label_params = {"doctrine": name}
         if hulls is None or min_pilots is None:
             missing = "hulls_in_stock" if hulls is None else "min_pilots"
+            detail_params = {"doctrine": name, "missing": missing}
             return Constraint(
-                key=key, category=self.category, label=f"{name} stock",
+                key=key, category=self.category,
+                label=messages.english(_LABEL, label_params),
+                label_key=_LABEL, label_params=label_params,
                 status=UNKNOWN, severity="info", affected_capabilities=[cap], inputs=inputs,
-                detail=f"Cannot compute staged {name} fleets: {missing} missing from the doctrine slice.",
+                detail=messages.english(_DETAIL_UNKNOWN, detail_params),
+                detail_key=_DETAIL_UNKNOWN, detail_params=detail_params,
             )
 
         per_fleet = max(int(min_pilots), 1)
@@ -63,15 +76,19 @@ class DoctrineStockProvider:
         importance = PRIMARY if d.get("primary") else SECONDARY
         headroom = binding - demand
         severity = severity_for(headroom, demand, cfg, importance=importance)
+        detail_params = {
+            "hulls": int(hulls), "doctrine": name, "fleets": binding, "per_fleet": per_fleet,
+            "headroom": f"{headroom:+g}", "demand": f"{demand:g}",
+        }
         return Constraint(
-            key=key, category=self.category, label=f"{name} stock",
+            key=key, category=self.category,
+            label=messages.english(_LABEL, label_params),
+            label_key=_LABEL, label_params=label_params,
             binding_metric=binding, unit="fleets", limiting_factor="hulls_in_stock",
             headroom=headroom, score=constraint_score(headroom, demand), severity=severity,
             affected_capabilities=[cap], inputs=inputs,
-            detail=(
-                f"{int(hulls)} {name} hulls staged crew {binding} full fleet(s) "
-                f"({per_fleet} pilots each); headroom {headroom:+g} vs {demand:g}-fleet demand."
-            ),
+            detail=messages.english(_DETAIL, detail_params),
+            detail_key=_DETAIL, detail_params=detail_params,
         )
 
 

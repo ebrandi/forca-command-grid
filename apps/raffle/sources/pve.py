@@ -66,6 +66,14 @@ class MiningSource(TicketSource):
                 continue
             occurred = timezone.make_aware(datetime.combine(day, time(12, 0)))
             unit = "m³" if basis == "m3" else "units"
+            # Seam B: one scaffold key PER BASIS. The unit word belongs in the msgid — passing
+            # "units" as a param would freeze that English word into every locale. The amount is
+            # pre-formatted here so the English output stays byte-identical to before.
+            amount = f"{magnitude:,.0f}"
+            if basis == "m3":
+                reason_key, reason_params = "mining.m3", {"volume": amount, "tickets": int(tickets)}
+            else:
+                reason_key, reason_params = "mining.units", {"quantity": amount, "tickets": int(tickets)}
             yield SourceEvent(
                 character_id=cid,
                 source_ref=f"mining:{cid}:{day.isoformat()}",
@@ -73,6 +81,8 @@ class MiningSource(TicketSource):
                 occurred_at=occurred,
                 magnitude=magnitude,
                 reason=f"Mined {magnitude:,.0f} {unit} ({tickets} tickets)",
+                reason_key=reason_key,
+                reason_params=reason_params,
                 metadata={"day": day.isoformat(), "basis": basis, unit: round(magnitude, 1)},
             )
 
@@ -110,6 +120,9 @@ class FleetSource(TicketSource):
                 magnitude=1,
                 character_name=att.character_name,
                 reason=f"Fleet attendance: {att.operation.title[:60]} ({per_op})",
+                # The operation title is corp-authored content: interpolated raw, never translated.
+                reason_key="fleet.attendance",
+                reason_params={"operation": att.operation.title[:60], "tickets": int(per_op)},
                 metadata={"operation_id": att.operation_id},
             )
 
@@ -147,6 +160,11 @@ class LogisticsSource(TicketSource):
                 occurred_at=c.updated_at,
                 magnitude=float(c.reward or 0),
                 reason=f"Courier delivered: {c.origin_name} → {c.dest_name} ({per_delivery})",
+                # Origin/dest are EVE solar-system names (protected game data): raw, never translated.
+                reason_key="logistics.courier",
+                reason_params={
+                    "origin": c.origin_name, "dest": c.dest_name, "tickets": int(per_delivery),
+                },
                 metadata={"contract_id": c.id, "reward": str(c.reward or 0)},
             )
 
@@ -194,6 +212,10 @@ class MentorshipSource(TicketSource):
                     occurred_at=a.completed_at,
                     magnitude=1,
                     reason=f"Mentorship task completed ({role}, {per_task})",
+                    # One key per role: "mentee"/"mentor" are prose and must live in the msgid
+                    # to be translatable — as a param they would stay English in every locale.
+                    reason_key=f"mentorship.{role}",
+                    reason_params={"tickets": int(per_task)},
                     metadata={"assignment_id": a.id, "role": role},
                 )
 
@@ -242,4 +264,7 @@ class DirectiveSource(TicketSource):
                 occurred_at=d.completed_at,
                 magnitude=1,
                 reason=f"Completed “{d.title}”",
+                # The directive title is corp-authored content: interpolated raw, never translated.
+                reason_key="directive.completed",
+                reason_params={"title": d.title},
             )

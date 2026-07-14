@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from django.conf import settings
 from django.db import models
+from django.db.models import Value
 from django.utils.translation import gettext_lazy as _
 
 from core.mixins import TimeStampedModel
@@ -35,9 +36,24 @@ class Recommendation(TimeStampedModel):
     type = models.CharField(max_length=32, choices=Type.choices, db_index=True)
     subject_type = models.CharField(max_length=32, blank=True)
     subject_id = models.CharField(max_length=64, blank=True)
+    # ``message`` / ``logic_summary`` are the canonical **English** prose the engine writes (the
+    # audit record, the fallback, and what ``persist_drafts`` compares on to stay idempotent). The
+    # ``*_key`` / ``*_params`` pairs beside them are the i18n seam: the engine beat runs in a
+    # Celery worker with no reader and no locale, so the sentence cannot be translated at write
+    # time — it is persisted as a scaffold key plus raw JSON params and re-rendered per reader by
+    # ``message_i18n`` / ``logic_summary_i18n``. A row with no key (legacy, or written by a caller
+    # outside the engine) simply renders its stored English. See ``.messages``.
     message = models.TextField()
+    message_key = models.CharField(max_length=64, blank=True, default="", db_default="")
+    message_params = models.JSONField(
+        default=dict, blank=True, db_default=Value({}, models.JSONField())
+    )
     inputs = models.JSONField(default=dict, blank=True)
     logic_summary = models.CharField(max_length=400, blank=True)
+    logic_summary_key = models.CharField(max_length=64, blank=True, default="", db_default="")
+    logic_summary_params = models.JSONField(
+        default=dict, blank=True, db_default=Value({}, models.JSONField())
+    )
     confidence = models.CharField(max_length=8, choices=Confidence.choices, default=Confidence.MEDIUM)
     data_freshness = models.DateTimeField(null=True, blank=True)
     required_permission = models.CharField(max_length=32, default="officer")
@@ -61,6 +77,24 @@ class Recommendation(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"{self.type}:{self.subject_id}"
+
+    @property
+    def message_i18n(self) -> str:
+        """``message`` re-rendered under the **reader's** locale; the stored English otherwise.
+
+        This is the read half of the Seam-B split — see ``.messages``. Never blank: with no key
+        (legacy row, or a rec created outside the engine) it returns ``message`` verbatim.
+        """
+        from .messages import render
+
+        return render(self.message_key, self.message_params, fallback=self.message)
+
+    @property
+    def logic_summary_i18n(self) -> str:
+        """``logic_summary`` re-rendered under the reader's locale; the stored English otherwise."""
+        from .messages import render
+
+        return render(self.logic_summary_key, self.logic_summary_params, fallback=self.logic_summary)
 
 
 class Alert(TimeStampedModel):

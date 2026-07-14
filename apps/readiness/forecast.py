@@ -70,6 +70,7 @@ def forecast_findings(now=None) -> int:
     from django.utils import timezone
 
     from . import config as config_module
+    from .messages import english_text
     from .models import ReadinessFinding, ReadinessSnapshot
 
     now = now or timezone.now()
@@ -103,17 +104,26 @@ def forecast_findings(now=None) -> int:
             continue
         seen_keys.add(dedupe)
         breach_at = now + dt.timedelta(days=days_to_breach)
-        label = (
-            f"{entry.get('label', key) if isinstance(entry, dict) else key} "
-            f"trending toward its red band in ~{round(days_to_breach)}d"
-        )
+        # Seam B: this beat has no reader, so the prose it saves can only ever be English.
+        # Persist the scaffold key + raw params next to it. ``dimension`` is the dimension
+        # KEY (an identifier, never translated) and ``label`` is leadership's configured
+        # dimension label (corp content, verbatim in every locale).
+        days = round(days_to_breach)
+        title_params = {"dimension": key, "days": days}
+        detail_params = {
+            "label": entry.get("label", key) if isinstance(entry, dict) else key,
+            "days": days,
+        }
         ReadinessFinding.objects.update_or_create(
             dimension_key=key, kpi_key="forecast", ref_type="forecast", ref_id=key,
             defaults={
                 "kind": ReadinessFinding.Kind.FORECAST,
                 "severity": ReadinessFinding.Severity.WARN,
-                "title": f"Forecast: {key} may breach red in ~{round(days_to_breach)}d",
-                "detail": label, "weight": round(window - days_to_breach + 1, 1),
+                "title": english_text("forecast.breach_title", title_params),
+                "title_key": "forecast.breach_title", "title_params": title_params,
+                "detail": english_text("forecast.breach_detail", detail_params),
+                "detail_key": "forecast.breach_detail", "detail_params": detail_params,
+                "weight": round(window - days_to_breach + 1, 1),
                 "predicted_breach_at": breach_at, "last_seen": now,
                 "status": ReadinessFinding.Status.OPEN,
             },

@@ -13,6 +13,7 @@ from django.utils.translation import gettext_lazy as _
 
 from ..engine.base import DimensionResult, Finding, KpiResult, ReadinessContext, status_for
 from ..engine.registry import register
+from ..messages import english_text
 from .sources import get_doctrine_skill
 
 
@@ -20,11 +21,15 @@ def _gap_finding(gap: dict) -> Finding:
     return Finding(
         kind=gap["kind"],
         label=gap["label"],
+        label_key=gap.get("label_key", ""),
+        label_params=gap.get("label_params") or {},
         weight=gap["weight"],
         ref_type="doctrine",
         ref_id=gap["ref_id"],
         task_type=gap["task_type"],
         task_title=gap["task_title"],
+        task_title_key=gap.get("task_title_key", ""),
+        task_title_params=gap.get("task_title_params") or {},
         dimension_key="doctrine",
     )
 
@@ -52,21 +57,29 @@ def _config_findings(gaps: list[dict]) -> list[Finding]:
     for gap in gaps:
         cfg = by_id.get(gap["ref_id"])
         if cfg and cfg.is_mandatory:
+            params = {"doctrine": cfg.doctrine.name}
             findings.append(Finding(
                 kind="doctrine", dimension_key="doctrine", kpi_key="doctrine.mandatory_coverage",
                 severity="high", weight=round(float(gap["weight"]) + 10, 2),
-                label=f"Mandatory doctrine under-crewed — {cfg.doctrine.name}",
+                label=english_text("doctrine.mandatory_under_crewed", params),
+                label_key="doctrine.mandatory_under_crewed", label_params=params,
                 ref_type="doctrine", ref_id=gap["ref_id"],
-                task_type="train", task_title=f"Crew the mandatory {cfg.doctrine.name} doctrine",
+                task_type="train",
+                task_title=english_text("doctrine.crew_mandatory_task", params),
+                task_title_key="doctrine.crew_mandatory_task", task_title_params=params,
             ))
     for cfg in configs:
         if cfg.retirement_date and cfg.retirement_date <= today:
+            params = {"doctrine": cfg.doctrine.name}
             findings.append(Finding(
                 kind="doctrine", dimension_key="doctrine", kpi_key="doctrine.retirement",
                 severity="warn", weight=20.0,
-                label=f"Doctrine past its retirement date — {cfg.doctrine.name}",
+                label=english_text("doctrine.past_retirement", params),
+                label_key="doctrine.past_retirement", label_params=params,
                 ref_type="doctrine", ref_id=str(cfg.doctrine_id),
-                task_type="other", task_title=f"Retire or replace {cfg.doctrine.name}",
+                task_type="other",
+                task_title=english_text("doctrine.retire_task", params),
+                task_title_key="doctrine.retire_task", task_title_params=params,
             ))
     return findings
 

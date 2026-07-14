@@ -16,6 +16,7 @@ corp-impact claim.
 """
 from __future__ import annotations
 
+from . import messages
 from .models import PilotDirective
 from .snapshot import latest_snapshot
 
@@ -43,14 +44,24 @@ def open_directives(user) -> list:
     )
 
 
-def _humanize_eta(seconds: int) -> str:
+def _eta_ref(seconds: int) -> dict:
+    """The training ETA as a composable scaffold ref (Seam B) — it is prose inside a sentence.
+
+    ``under an hour`` is plainly translatable; the ``3d``/``5h`` unit suffixes are too (a locale may
+    abbreviate differently), so all three are msgids rather than a bare formatted number.
+    """
     days = seconds // 86400
     if days >= 1:
-        return f"{days}d"
+        return messages.ref("pilot.eta.days", {"n": days})
     hours = seconds // 3600
     if hours >= 1:
-        return f"{hours}h"
-    return "under an hour"
+        return messages.ref("pilot.eta.hours", {"n": hours})
+    return messages.ref("pilot.eta.under_hour")
+
+
+def _humanize_eta(seconds: int) -> str:
+    """The English ETA — derived from the same msgid, so the two can never drift."""
+    return _eta_ref(seconds)["_en"]
 
 
 def _doctrine_names(snapshot) -> dict[str, str]:
@@ -77,6 +88,11 @@ def _open_constraints(snapshot) -> list:
 def _directive(**kw) -> dict:
     kw.setdefault("constraint_key", "")
     kw.setdefault("posture_lift", None)
+    # Seam B: every directive carries its sentences as key + JSON-safe params as well as English.
+    kw.setdefault("title_key", "")
+    kw.setdefault("title_params", {})
+    kw.setdefault("detail_key", "")
+    kw.setdefault("detail_params", {})
     return kw
 
 
@@ -98,29 +114,36 @@ def _relief_directives(character, constraints, names) -> list[dict]:
         weight = _SEV_WEIGHT.get(c.severity, 0)
         metric = f"{c.binding_metric:g}" if c.binding_metric is not None else "—"
 
+        # ``c`` here is the persisted OperationalConstraint row, so its label arrives as a
+        # (label, label_key, label_params) triple — embed the SENTENCE as a ref, not the frozen prose.
+        label_ref = c.label_ref()
+
         if c.limiting_factor == "pilots_qualified" and slug in closest:
             info = closest[slug]
+            title_params = {"doctrine": info["doctrine"]}
+            detail_params = {
+                "constraint": label_ref, "metric": metric, "eta": _eta_ref(info["seconds"]),
+            }
             out.append(_directive(
                 slug=f"{c.key}/train", constraint_key=c.key,
                 category=PilotDirective.Category.SKILL,
-                title=f"Train into {info['doctrine']}",
-                detail=(
-                    f"The corp's binding constraint is {c.label} — only {metric} pilots can field it. "
-                    f"You're about {_humanize_eta(info['seconds'])} of training from flying it; training "
-                    "in directly relieves the corp's shortage and lifts what we can put on grid."
-                ),
+                title=messages.english("pilot.directive.train.title", title_params),
+                title_key="pilot.directive.train.title", title_params=title_params,
+                detail=messages.english("pilot.directive.train.detail", detail_params),
+                detail_key="pilot.directive.train.detail", detail_params=detail_params,
                 leverage=weight + 5, points=12, action_url="/skills/",
             ))
         elif c.limiting_factor == "hulls_in_stock" and slug not in staged:
             staged.add(slug)
+            title_params = {"hull": name}
+            detail_params = {"constraint": label_ref, "hull": name}
             out.append(_directive(
                 slug=f"{c.key}/stage-hull", constraint_key=c.key,
                 category=PilotDirective.Category.SHIP,
-                title=f"Stage a {name} hull",
-                detail=(
-                    f"{c.label} is capped by staged hulls. Buying a {name} and bringing it to the home "
-                    "system adds directly to what the corp can field on short notice."
-                ),
+                title=messages.english("pilot.directive.stage_hull.title", title_params),
+                title_key="pilot.directive.stage_hull.title", title_params=title_params,
+                detail=messages.english("pilot.directive.stage_hull.detail", detail_params),
+                detail_key="pilot.directive.stage_hull.detail", detail_params=detail_params,
                 leverage=weight, points=8, action_url="/store/",
             ))
     return out
@@ -132,21 +155,24 @@ def _fallback_directives(character) -> list[dict]:
 
     out: list[dict] = []
     for i, d in enumerate(closest_doctrines(character, limit=4)):
+        title_params = {"doctrine": d["doctrine"]}
+        detail_params = {"eta": _eta_ref(d["seconds"]), "doctrine": d["doctrine"]}
         out.append(_directive(
             slug=f"doctrine/{d['doctrine_id']}",
             category=PilotDirective.Category.SKILL,
-            title=f"Train into {d['doctrine']}",
-            detail=(
-                f"You're about {_humanize_eta(d['seconds'])} of training from flying {d['doctrine']}, "
-                "one of the corp's doctrines. Closing this makes you — and the corp — more ready."
-            ),
+            title=messages.english("pilot.directive.train.title", title_params),
+            title_key="pilot.directive.train.title", title_params=title_params,
+            detail=messages.english("pilot.directive.fallback_train.detail", detail_params),
+            detail_key="pilot.directive.fallback_train.detail", detail_params=detail_params,
             leverage=0, points=max(2, 10 - i * 2), action_url="/skills/",
         ))
     if not out:
         out.append(_directive(
             slug="stay-current/join-op", category=PilotDirective.Category.ROLE,
-            title="Fly a fleet this week",
-            detail="You're current on the corp's doctrines — keep your edge by joining an op.",
+            title=messages.english("pilot.directive.join_op.title"),
+            title_key="pilot.directive.join_op.title",
+            detail=messages.english("pilot.directive.join_op.detail"),
+            detail_key="pilot.directive.join_op.detail",
             leverage=0, points=4, action_url="/operations/",
         ))
     return out
@@ -187,6 +213,11 @@ def _persist(user, directives: list[dict]) -> None:
             "category": d["category"],
             "title": d["title"][:200],
             "detail": d["detail"],
+            # Seam B: the key + params move in lockstep with the prose they describe.
+            "title_key": d.get("title_key", ""),
+            "title_params": d.get("title_params") or {},
+            "detail_key": d.get("detail_key", ""),
+            "detail_params": d.get("detail_params") or {},
             "leverage": d["leverage"],
             "points": d["points"],
             "posture_lift": d.get("posture_lift"),

@@ -15,6 +15,7 @@ from django.utils import timezone
 
 from apps.identity.models import RoleAssignment
 from apps.mentorship import matching, rewards, services, trust, workflow
+from apps.mentorship import messages as msg
 from apps.mentorship.models import (
     MenteeProfile,
     MentorProfile,
@@ -170,7 +171,10 @@ def test_matching_scores_overlap_and_excludes_full_mentors(django_user_model):
     mentee = _mentee(_member(django_user_model, "cx"), goals=["pvp"], timezone="EU",
                      languages=["English"])
     s, reasons = matching.score(mentor, mentee)
-    assert s > 50 and any("focus" in r.lower() for r in reasons)
+    # ``score`` now returns scaffold entries rather than finished sentences (Seam B): the reasons
+    # are persisted on a pairing and re-rendered per reader. ``english_list`` is the English prose
+    # that the write site stores — which is what this assertion has always been about.
+    assert s > 50 and any("focus" in r.lower() for r in msg.english_list(reasons))
     # A full mentor is excluded from suggestions.
     program = services.active_program()
     program.max_active_mentees_per_mentor = 0

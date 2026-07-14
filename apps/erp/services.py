@@ -8,6 +8,7 @@ from django.utils.translation import gettext as _
 from apps.industry.bom import direct_materials
 from apps.sde.models import SdeType
 
+from .messages import english_text
 from .models import BuildJob, Delivery
 
 
@@ -62,16 +63,56 @@ def recheck_block(job: BuildJob) -> BuildJob:
     mats = job_materials(job)
     if mats["buildable"] and not mats["ready"]:
         short = [ln["name"] for ln in mats["lines"] if ln["short"]]
-        reason = "Short: " + ", ".join(short[:6]) + ("…" if len(short) > 6 else "")
+        # Seam B: persist the scaffold KEY + raw params (the material names are EVE game data —
+        # they stay English and are never translated) alongside the English prose. The prose is
+        # the audit record and the fallback; ``blocked_reason_i18n`` re-renders the sentence
+        # under the reader's locale from the key. ``english_text`` pins the stored prose to
+        # source English even when the caller happens to be a German officer's request.
+        key = "job.blocked_short_truncated" if len(short) > 6 else "job.blocked_short"
+        params = {"materials": ", ".join(short[:6])}
+        reason = english_text(key, params)[:200]
         new_status = BuildJob.Status.BLOCKED
     else:
-        reason = ""
+        key, params, reason = "", {}, ""
         new_status = BuildJob.Status.QUEUED
-    if job.status != new_status or job.blocked_reason != reason:
+    if (
+        job.status != new_status
+        or job.blocked_reason != reason
+        or job.blocked_reason_key != key
+        or (job.blocked_reason_params or {}) != params
+    ):
         job.status = new_status
         job.blocked_reason = reason
-        job.save(update_fields=["status", "blocked_reason", "updated_at"])
+        job.blocked_reason_key = key
+        job.blocked_reason_params = params
+        job.save(
+            update_fields=[
+                "status", "blocked_reason", "blocked_reason_key", "blocked_reason_params",
+                "updated_at",
+            ]
+        )
     return job
+
+
+def plan_note_fields(project) -> dict:
+    """The ``note`` columns for a BuildJob pushed from an industry plan (Seam B write side).
+
+    Returns the ``BuildJob.objects.create(**…)`` kwargs for the note: the English prose exactly
+    as before (the audit record + the fallback) PLUS the scaffold key and its raw params, so
+    ``BuildJob.note_i18n`` can re-render the sentence under each reader's locale. The plan name
+    is corp-authored content and is interpolated raw — never translated.
+
+    Lives here (not in the ``apps.industry`` bridge that calls it) because the columns and the
+    scaffold registry are the ERP's: the bridge only has to spread the result into ``create()``.
+    """
+    from apps.industry.models import IndustryProject
+
+    # A non-corp plan's name is not surfaced on the corp-visible job board.
+    if project.visibility == IndustryProject.Visibility.CORP:
+        key, params = "job.from_plan", {"plan": project.name}
+    else:
+        key, params = "job.from_leadership_plan", {}
+    return {"note": english_text(key, params)[:200], "note_key": key, "note_params": params}
 
 
 def can_act(user, job: BuildJob, *, is_officer: bool) -> bool:
@@ -138,8 +179,16 @@ def update_quantity(job: BuildJob, quantity: int, note: str = "") -> bool:
     if locked.status not in (BuildJob.Status.QUEUED, BuildJob.Status.BLOCKED):
         return False
     locked.quantity = max(1, int(quantity))
-    locked.note = (note or locked.note or "").strip()[:200]
-    locked.save(update_fields=["quantity", "note", "updated_at"])
+    new_note = (note or locked.note or "").strip()[:200]
+    if new_note != locked.note:
+        # A pilot has replaced the note with free text, so the scaffold key the Plan→Job bridge
+        # wrote no longer describes it. Drop the key (and its params) or ``note_i18n`` would keep
+        # re-rendering the *old* plan sentence over the pilot's words. Human free text is never
+        # translated — it renders verbatim from the prose column, in every locale.
+        locked.note_key = ""
+        locked.note_params = {}
+    locked.note = new_note
+    locked.save(update_fields=["quantity", "note", "note_key", "note_params", "updated_at"])
     recheck_block(locked)
     job.quantity = locked.quantity
     return True

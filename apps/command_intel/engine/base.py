@@ -73,6 +73,14 @@ class Constraint:
     affected_capabilities: list[str] = field(default_factory=list)
     inputs: list[LimitInput] = field(default_factory=list)
     detail: str = ""                    # deterministic explanation (no LLM)
+    # Seam B (``..messages``): the scaffold key + JSON-safe params behind ``label``/``detail``,
+    # carried through to the persisted row so a reader can re-render the sentence in THEIR locale.
+    # The prose above stays the English fallback, the audit record, and the LLM's only input —
+    # ``as_dict`` deliberately does not expose these (the model is prompted in English).
+    label_key: str = ""
+    label_params: dict = field(default_factory=dict)
+    detail_key: str = ""
+    detail_params: dict = field(default_factory=dict)
 
     def as_dict(self) -> dict:
         """Serialise for the snapshot's ``operational_constraints`` block (doc 04 §3)."""

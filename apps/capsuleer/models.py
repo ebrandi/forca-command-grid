@@ -421,6 +421,18 @@ class CareerMilestone(TimeStampedModel):
         max_length=8, choices=CheckState.choices, default=CheckState.UNKNOWN
     )
     data_source = models.CharField(max_length=120, blank=True, default="")
+    # The persisted-prose i18n seam ("Seam B", ``messages.py``). ``data_source`` above is written by
+    # a *Celery worker* (the hourly sweep / the skills-import hook), which has no reader and no
+    # locale — so the prose it stores is frozen English forever and a ``gettext_lazy`` there would
+    # be coerced to ``str`` on save and translate nothing. The engine therefore also records the
+    # message scaffold it used plus its raw params, and ``data_source_i18n`` re-renders the sentence
+    # under the READER's locale. The prose column stays: it is the English fallback, the audit
+    # record, and what a legacy (keyless) row renders — never blank. ``db_default`` keeps a real
+    # DATABASE default on both columns so an INSERT from older code during a rollback still works.
+    data_source_key = models.CharField(max_length=80, blank=True, default="", db_default="")
+    data_source_params = models.JSONField(
+        default=dict, blank=True, db_default=models.Value({}, models.JSONField())
+    )
     # Stamped by the verification engine when a required checker reports a permanent structural
     # blocker (dangling doctrine, unresolved placeholder, detached character — doc 11 §2). Read on
     # the request path so ``derive_blocked`` never re-runs the engine per goal_detail GET.
@@ -451,6 +463,13 @@ class CareerMilestone(TimeStampedModel):
     @property
     def title_i18n(self) -> str:
         return _builtin_text(self, "title")
+
+    # Persisted-prose i18n seam (Seam B) — see ``data_source_key`` above.
+    @property
+    def data_source_i18n(self) -> str:
+        from . import messages
+
+        return messages.text(self.data_source, self.data_source_key, self.data_source_params)
 
 
 class CareerActionStep(TimeStampedModel):
@@ -509,6 +528,21 @@ class PathSuggestion(TimeStampedModel):
     kind = models.CharField(max_length=24, choices=SuggestionKind.choices)
     title = models.CharField(max_length=140)
     reason = models.TextField()
+    # Persisted-prose i18n seam ("Seam B", ``messages.py``). Both ``title`` and ``reason`` are prose
+    # assembled by the *daily suggestion beat* — a Celery worker with no reader and no locale — and
+    # read back later on the pilot's own request, in the pilot's own language. The generator stores
+    # the scaffold key + its raw params next to the English prose; ``title_i18n`` / ``reason_i18n``
+    # re-render under the reader's locale. The prose columns remain the English fallback and the
+    # audit record, and are what a legacy (keyless) row renders — never blank. ``db_default`` keeps
+    # a real DATABASE default so an INSERT from older code during a rollback still works.
+    title_key = models.CharField(max_length=80, blank=True, default="", db_default="")
+    title_params = models.JSONField(
+        default=dict, blank=True, db_default=models.Value({}, models.JSONField())
+    )
+    reason_key = models.CharField(max_length=80, blank=True, default="", db_default="")
+    reason_params = models.JSONField(
+        default=dict, blank=True, db_default=models.Value({}, models.JSONField())
+    )
     data = models.JSONField(default=dict, blank=True)
     corp_driven = models.BooleanField(default=False)
     status = models.CharField(
@@ -530,6 +564,20 @@ class PathSuggestion(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"{self.kind}:{self.user_id}"
+
+    # Persisted-prose i18n seam (Seam B) — see ``title_key`` above. Never blank: a row with no key
+    # (legacy, or a future free-text source) renders its stored English verbatim.
+    @property
+    def title_i18n(self) -> str:
+        from . import messages
+
+        return messages.text(self.title, self.title_key, self.title_params)
+
+    @property
+    def reason_i18n(self) -> str:
+        from . import messages
+
+        return messages.text(self.reason, self.reason_key, self.reason_params)
 
     @property
     def data_used_line(self) -> str:

@@ -14,6 +14,7 @@ from apps.doctrines.services import character_readiness
 from apps.sde.models import SdeType
 
 from ..engine.base import ReadinessContext
+from ..messages import english_text
 
 READY = ("viable", "optimal")
 
@@ -86,14 +87,25 @@ def doctrine_and_skill(characters) -> tuple[dict, dict, list, dict]:
             total_w += w
             acc += w * ratio
             if ratio < 1.0:
+                # Seam B: the label/task_title are persisted by the beat, so they carry a
+                # scaffold key + raw params next to the English. The doctrine NAME is corp
+                # content and stays verbatim inside the params (never translated).
+                label_params = {
+                    "doctrine": doctrine.name, "ready": ready, "known": known,
+                }
+                task_params = {"doctrine": doctrine.name}
                 doctrine_gaps.append(
                     {
                         "kind": "doctrine",
                         "ref_id": str(doctrine.id),
-                        "label": f"{doctrine.name}: {ready}/{known} can fly",
+                        "label": english_text("doctrine.coverage_gap", label_params),
+                        "label_key": "doctrine.coverage_gap",
+                        "label_params": label_params,
                         "weight": round(w * (1 - ratio), 2),
                         "task_type": "train",
-                        "task_title": f"Train pilots into {doctrine.name}",
+                        "task_title": english_text("doctrine.train_task", task_params),
+                        "task_title_key": "doctrine.train_task",
+                        "task_title_params": task_params,
                     }
                 )
 
@@ -137,14 +149,25 @@ def stock_and_logistics() -> tuple[dict, list]:
         ).values_list("type_id", "name")
     )
     for s in sorted(shortfalls, key=lambda r: -r["deficit"])[:8]:
+        # The item name is EVE game data and the stockpile name is corp content: both stay raw
+        # inside the params. Only the sentence around them is translatable.
+        item = str(names.get(s["type_id"], s["type_id"]))
+        label_params = {
+            "item": item, "deficit": s["deficit"], "stockpile": s["stockpile"],
+        }
+        task_params = {"item": item, "deficit": s["deficit"]}
         gaps.append(
             {
                 "kind": "stock",
                 "ref_id": str(s["type_id"]),
-                "label": f"{names.get(s['type_id'], s['type_id'])}: {s['deficit']} short at {s['stockpile']}",
+                "label": english_text("stock.shortfall", label_params),
+                "label_key": "stock.shortfall",
+                "label_params": label_params,
                 "weight": float(s["deficit"]),
                 "task_type": "build",
-                "task_title": f"Restock {names.get(s['type_id'], s['type_id'])} (need {s['deficit']})",
+                "task_title": english_text("stock.restock_task", task_params),
+                "task_title_key": "stock.restock_task",
+                "task_title_params": task_params,
             }
         )
     return {"stock": stock_score, "logistics": logistics_score}, gaps
