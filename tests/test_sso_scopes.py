@@ -75,7 +75,8 @@ def test_corp_member_sees_every_feature(_login):
     html = client.get(SCOPES_URL).content.decode()
     # All 9 feature labels are present (pilot + director).
     for feature in scope_catalog.FEATURES:
-        assert feature.label in html, f"missing feature on page: {feature.label}"
+        # ``label`` is a gettext_lazy proxy — coerce before the substring check.
+        assert str(feature.label) in html, f"missing feature on page: {feature.label}"
     # Each ungranted feature offers a grant link with its key.
     for feature in scope_catalog.FEATURES:
         assert f"?feature={feature.key}" in html
