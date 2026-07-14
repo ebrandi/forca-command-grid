@@ -34,18 +34,41 @@ def warm_pilot_after_login(character_id: int) -> None:
         except Exception:  # noqa: BLE001 - a role-sync hiccup must not affect the warm below
             log.exception("warm_pilot_after_login: role sync failed for %s", character_id)
 
-    try:
-        main = character if character.is_main else (
-            user.characters.filter(is_main=True).first() if user else None
-        )
-        if main is not None:
-            from apps.readiness.pilot import compute_pilot
-            from apps.skills.services import closest_doctrines
+    _warm_caches_for(character)
 
-            compute_pilot(main, persist=True)   # warms readiness:pilot:*
-            closest_doctrines(main)             # warms skills:closest:*
+
+@shared_task(name="sso.warm_pilot_caches")
+def warm_pilot_caches(character_id: int) -> None:
+    """Pre-warm ONE pilot's Command Center caches. Fired when a user switches to them (LP-6).
+
+    Every warmer in the app filters ``is_main=True``, so an alt's readiness and closest-doctrine
+    caches were permanently cold — and ``compute_pilot`` is a multi-second recompute. Without
+    this, the first page after every switch would stall, every time, for anyone who flies alts.
+
+    Deliberately NOT ``warm_pilot_after_login``: that one also runs the in-game Director ESI
+    check, which costs two ESI calls per director-scoped character and is rate-limited. A pilot
+    switch is a UI action a user may perform many times a minute; it must not spend an ESI budget.
+    """
+    character = EveCharacter.objects.filter(character_id=character_id).first()
+    if character is not None:
+        _warm_caches_for(character)
+
+
+def _warm_caches_for(character) -> None:
+    """Warm the caches of the pilot we were actually given.
+
+    It used to bounce an alt back to the account's main — correct when the main was the only
+    pilot the app could ever act as, and exactly wrong now: logging in as an alt would warm the
+    main's caches and leave the alt's cold, which is the one pilot about to be rendered.
+    """
+    try:
+        from apps.readiness.pilot import compute_pilot
+        from apps.skills.services import closest_doctrines
+
+        compute_pilot(character, persist=True)   # warms readiness:pilot:*
+        closest_doctrines(character)             # warms skills:closest:*
     except Exception:  # noqa: BLE001 - warming is best-effort; never fail the caller
-        log.exception("warm_pilot_after_login: cache warm failed for %s", character_id)
+        log.exception("cache warm failed for %s", character.character_id)
 
 
 @shared_task(name="sso.refresh_affiliations")

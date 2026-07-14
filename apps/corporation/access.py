@@ -94,18 +94,35 @@ def invalidate_access_cache() -> None:
 
 
 def is_service_alliance_pilot(user) -> bool:
-    """True if any of ``user``'s characters belongs to an allowed alliance OR a
-    registered friendly corporation. (Name kept for its callers; scope now also
-    covers friendly corps.)
+    """True if the pilot ``user`` is currently flying belongs to an allowed alliance OR a
+    registered friendly corporation. (Name kept for its callers; scope now also covers
+    friendly corps.)
+
+    Scoped to the ACTIVE pilot (LP-4). It used to answer "does *any* of this account's
+    characters qualify", which pooled standing across pilots: once a user linked one alt in a
+    partner alliance, every other pilot they owned — including pilots in hostile corporations
+    — was served the alliance-facing surface. Under pilot switching that is a data-isolation
+    hole, not a convenience.
+
+    Outside a request no pilot has been resolved and the account-wide question is the right
+    one (a background comms reconcile asks what *the human* is entitled to), so the union
+    behaviour is kept there, exactly as ``core.rbac.authority_ceiling`` does.
 
     The expensive part — resolving the allowed alliance/corp id sets — is served from the
     cached ``service_alliance_ids`` / ``service_corp_ids`` above (the repeated per-request
     queries the audit flagged). The result is deliberately NOT memoised on the user
     instance: this gates access, and a revoked partner/friendly must take effect on the very
     next check even when the same user object is reused (see tests/test_partner_alliance.py,
-    tests/test_friendly_corp.py). The remaining cost is one or two cheap character EXISTS."""
+    tests/test_friendly_corp.py)."""
     if not getattr(user, "is_authenticated", False):
         return False
+
+    from core import pilots
+
+    if pilots.has_resolved_pilot(user):
+        pilot = pilots.active_pilot(user)
+        return pilot is not None and _pilot_in_service_scope(pilot)
+
     alliance_ids = service_alliance_ids()
     if alliance_ids and user.characters.filter(alliance_id__in=alliance_ids).exists():
         return True
@@ -113,3 +130,12 @@ def is_service_alliance_pilot(user) -> bool:
     if corp_ids and user.characters.filter(corporation_id__in=corp_ids).exists():
         return True
     return False
+
+
+def _pilot_in_service_scope(character) -> bool:
+    """Does this one pilot sit in an allowed alliance or a registered friendly corporation?"""
+    alliance_ids = service_alliance_ids()
+    if character.alliance_id and character.alliance_id in alliance_ids:
+        return True
+    corp_ids = service_corp_ids()
+    return bool(character.corporation_id) and character.corporation_id in corp_ids

@@ -54,6 +54,11 @@ _SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS", "TRACE"})
 # entrypoints are denied.)
 _IDENTITY_MUTATION_VIEWS = frozenset({
     "sso:login", "sso:callback",
+    # Adding a pilot to "the current account" under a swapped identity would attach the
+    # director's freshly authorised pilot — and its tokens — to the PILOT's account. It is
+    # POST-only, so the view-only method guard below already refuses it; naming it here means
+    # the refusal survives someone later deciding the route should answer GET.
+    "sso:link",
     "comms_access:discord_begin", "comms_access:discord_callback", "comms_access:discord_unlink",
     "recruitment:oauth_begin", "recruitment:oauth_callback",
 })

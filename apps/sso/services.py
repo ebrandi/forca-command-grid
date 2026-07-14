@@ -192,7 +192,12 @@ def detach_character(character: EveCharacter, *, actor, reason: str = "") -> dic
     character.user = None
     character.owner_hash = ""
     character.is_main = False
-    character.save(update_fields=["user", "owner_hash", "is_main"])
+    # A detached pilot carries no corp standing into anyone's authority ceiling (LP-4). Left set,
+    # the in-game Director flag would survive the detach and be waiting on the row when the
+    # character is re-claimed — by its real owner, or by whoever bought it. The flag is evidence
+    # about a link that no longer exists, so it goes with the link.
+    character.is_corp_director = False
+    character.save(update_fields=["user", "owner_hash", "is_main", "is_corp_director"])
     if prior_user is not None:
         # If the detached character *defined* the account username (``eve:<id>``),
         # retire that username so a re-claim mints a FRESH account instead of resolving
@@ -485,9 +490,18 @@ def _reconcile_roles_for_user(user, *, check_director: bool = True) -> None:
         RoleAssignment.objects.filter(
             user=user, role__in=[member_role, director_role]
         ).delete()
+        # A pilot outside the corp cannot hold its in-game Director role either. Clearing the
+        # per-pilot flag matters beyond tidiness: it feeds the active-pilot authority ceiling
+        # (LP-4), so a stale True here would let a pilot who has LEFT the corp keep wielding
+        # Director authority from that seat.
+        user.characters.filter(is_corp_director=True).update(is_corp_director=False)
         return
 
     RoleAssignment.objects.get_or_create(user=user, role=member_role)
+    # Same reasoning for any of this user's pilots that are no longer corp members.
+    user.characters.filter(is_corp_director=True).exclude(
+        character_id__in=[c.character_id for c in member_chars]
+    ).update(is_corp_director=False)
 
     if not check_director:
         return
@@ -495,6 +509,16 @@ def _reconcile_roles_for_user(user, *, check_director: bool = True) -> None:
     # Director must be a member of the home corp; only those characters can carry
     # the Director role, so they're the only ones worth querying.
     statuses = [character_is_corp_director(c) for c in member_chars]
+    # Record the answer PER PILOT, not just on the account. The account role says the human is
+    # trusted with Director; the per-pilot flag says which seat may exercise it (LP-4). An
+    # "unknown" (ESI down, scope not granted) leaves the previous value alone — same
+    # anti-flapping rule the account grant below follows.
+    for character, status in zip(member_chars, statuses, strict=True):
+        if status is None or character.is_corp_director == status:
+            continue
+        character.is_corp_director = status
+        character.save(update_fields=["is_corp_director"])
+
     if any(s is True for s in statuses):
         RoleAssignment.objects.get_or_create(user=user, role=director_role)
     elif any(s is False for s in statuses):
@@ -512,6 +536,9 @@ def _reconcile_roles_for_user(user, *, check_director: bool = True) -> None:
         has_proving_token = any(ROLE_SCOPE in (t.scopes or []) for t in proving_tokens)
         if not has_proving_token:
             RoleAssignment.objects.filter(user=user, role=director_role).delete()
+            # Withdraw the seat-level authority with the account grant: a Director flag that
+            # outlived the token that proved it would keep the ceiling open (LP-4).
+            user.characters.filter(is_corp_director=True).update(is_corp_director=False)
 
 
 def complete_login(user, claims: dict, token: oauth.TokenResponse) -> EveCharacter:
