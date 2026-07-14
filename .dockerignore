@@ -73,3 +73,9 @@ media
 Thumbs.db
 *.swp
 *~
+
+# Compiled catalogues are BUILD OUTPUT, never input. If a .mo rides along in the build
+# context, `compilemessages` reports "already compiled and up to date" and silently skips —
+# so the image ships whatever .mo happened to be on the builder's disk, and the build-time
+# gate that is supposed to reject a malformed .po never runs at all.
+locale/**/*.mo
