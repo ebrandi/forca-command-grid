@@ -21,8 +21,11 @@ def _user(django_user_model, name, cid, *roles):
     user = django_user_model.objects.create(username=name)
     for r in roles:
         RoleAssignment.objects.create(user=user, role=ensure_role(r))
-    EveCharacter.objects.create(character_id=cid, user=user, name=name,
-                                is_main=True, is_corp_member=True)
+    # is_corp_director: since LP-4 the app's Director role is only exercisable from a pilot who
+    # holds the in-game Director role, so a director fixture needs the seat that proves it.
+    EveCharacter.objects.create(character_id=cid, user=user, name=name, is_main=True,
+                                is_corp_member=True,
+                                is_corp_director=rbac.ROLE_DIRECTOR in roles)
     return user
 
 

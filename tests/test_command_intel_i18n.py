@@ -295,7 +295,6 @@ def test_legacy_report_body_without_a_key_renders_its_stored_english():
 # --------------------------------------------------------------------------- #
 @pytest.mark.django_db
 def test_pilot_directive_renders_in_the_members_locale(django_user_model, monkeypatch):
-    from types import SimpleNamespace
 
     snap = IntelligenceSnapshot.objects.create(slices={"doctrine": {"doctrines": []}})
     monkeypatch.setattr("apps.command_intel.pilot.latest_snapshot", lambda: snap)
@@ -306,7 +305,12 @@ def test_pilot_directive_renders_in_the_members_locale(django_user_model, monkey
     user = django_user_model.objects.create(username="ci-i18n-pilot")
 
     # The refresh runs with no locale (as the worker does) and writes English.
-    pilot.compute_directives(user, SimpleNamespace(character_id=4242), persist=True)
+    from apps.sso.models import EveCharacter
+
+    character = EveCharacter.objects.create(
+        character_id=4242, user=user, name="P4242", is_main=True, is_corp_member=True,
+    )
+    pilot.compute_directives(user, character, persist=True)
     d = PilotDirective.objects.get(user=user, slug="doctrine/7")
     assert d.title == "Train into Ferox"
     assert d.detail.startswith("You're about under an hour of training from flying Ferox,")

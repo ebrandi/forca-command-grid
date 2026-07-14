@@ -223,7 +223,9 @@ def test_assets_page_corp_tab_officer_only(client, django_user_model, sde):
     from core import rbac
     member = django_user_model.objects.create(username="m")
     RoleAssignment.objects.create(user=member, role=ensure_role(rbac.ROLE_MEMBER))
-    EveCharacter.objects.create(character_id=50, user=member, name="M", is_main=True)
+    # The pilot must actually be in the corp for the account to hold the member role (LP-4).
+    EveCharacter.objects.create(character_id=50, user=member, name="M", is_main=True,
+                                is_corp_member=True)
     client.force_login(member)
     # Member sees their own assets; the corp tab silently falls back to 'mine'.
     assert client.get("/stockpile/assets/").status_code == 200

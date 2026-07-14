@@ -53,7 +53,8 @@ def test_doctrine_non_skill_requirements_shown(client, django_user_model, sde):
 @pytest.mark.django_db
 def test_skill_plan_remove_and_move_step(client, django_user_model, sde):
     user = _member(django_user_model)
-    char = EveCharacter.objects.create(character_id=1, user=user, name="P", is_main=True)
+    char = EveCharacter.objects.create(character_id=1, user=user, name="P", is_main=True,
+                                       is_corp_member=True)
     CharacterSkillSnapshot.objects.create(character=char, skills={}, total_sp=0, is_latest=True)
     doc, _ = _rifter_doctrine()
     plan = generate_plan_for_doctrine(char, doc)
@@ -77,7 +78,8 @@ def test_skill_plan_remove_and_move_step(client, django_user_model, sde):
 def test_skill_plan_edits_are_owner_only(client, django_user_model, sde):
     a = _member(django_user_model, "a")
     b = _member(django_user_model, "b")
-    char = EveCharacter.objects.create(character_id=2, user=a, name="A", is_main=True)
+    char = EveCharacter.objects.create(character_id=2, user=a, name="A", is_main=True,
+                                       is_corp_member=True)
     CharacterSkillSnapshot.objects.create(character=char, skills={}, total_sp=0, is_latest=True)
     doc, _ = _rifter_doctrine()
     plan = generate_plan_for_doctrine(char, doc)
@@ -90,7 +92,8 @@ def test_skill_plan_edits_are_owner_only(client, django_user_model, sde):
 @pytest.mark.django_db
 def test_my_readiness_ranks_and_builds_plan(client, django_user_model, sde):
     user = _member(django_user_model)
-    char = EveCharacter.objects.create(character_id=3, user=user, name="P", is_main=True)
+    char = EveCharacter.objects.create(character_id=3, user=user, name="P", is_main=True,
+                                       is_corp_member=True)
     CharacterSkillSnapshot.objects.create(character=char, skills={}, total_sp=0, is_latest=True)
     doc, _ = _rifter_doctrine()
 

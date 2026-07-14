@@ -27,7 +27,10 @@ _ADMIN_URLS = [
 def _user(dj, uid, role):
     u = dj.objects.create(username=f"u{uid}")
     RoleAssignment.objects.create(user=u, role=ensure_role(role))
-    EveCharacter.objects.create(character_id=uid, user=u, name=f"P{uid}", is_main=True, is_corp_member=True)
+    # is_corp_director: since LP-4 the app's Director role is only exercisable from a pilot who
+    # holds the in-game Director role, so a director fixture needs the seat that proves it.
+    EveCharacter.objects.create(character_id=uid, user=u, name=f"P{uid}", is_main=True,
+                                is_corp_member=True, is_corp_director=role == rbac.ROLE_DIRECTOR)
     return u
 
 

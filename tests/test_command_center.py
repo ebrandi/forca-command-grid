@@ -46,11 +46,17 @@ def _member(django_user_model, suffix, cid):
 
 
 def _prime(user, cid, *, directive=True, reco_kwargs=None):
-    """Warm both engines' caches; optionally persist one item in each."""
+    """Warm both engines' caches; optionally persist one item in each.
+
+    Both quest logs are scoped to the PILOT (LP-3), so the rows must name the character they
+    were computed for or the dashboard — which reads the ACTIVE pilot's log — will not see them.
+    """
+    character = EveCharacter.objects.get(character_id=cid)
     d = None
     if directive:
         d = PilotDirective.objects.create(
-            user=user, slug="fleet_size.shield-ferox/train", constraint_key="fleet_size.shield-ferox",
+            user=user, character=character,
+            slug="fleet_size.shield-ferox/train", constraint_key="fleet_size.shield-ferox",
             category="skill", title="Train into Shield Ferox", detail="Relieves the corp's shortage.",
             leverage=75, points=12, action_url="/skills/",
         )
@@ -58,6 +64,7 @@ def _prime(user, cid, *, directive=True, reco_kwargs=None):
     cache.set(rd_cache_key(cid), RD_PAYLOAD)
     r = None
     if reco_kwargs is not None:
+        reco_kwargs.setdefault("character_id", cid)
         r = PilotRecommendation.objects.create(user=user, **reco_kwargs)
     return d, r
 
@@ -301,9 +308,11 @@ def test_drained_queue_shows_the_earned_empty_state_not_digest_advice(
 def test_show_all_toggle_renders_every_quest_exactly_once(client, django_user_model, sde):
     user = _member(django_user_model, "v", 7312)
     _prime(user, 7312, directive=False)
+    character = EveCharacter.objects.get(character_id=7312)
     for i in range(9):
         PilotDirective.objects.create(
-            user=user, slug=f"fleet_size.d{i}/train", constraint_key=f"fleet_size.d{i}",
+            user=user, character=character,  # the quest log belongs to the pilot (LP-3)
+            slug=f"fleet_size.d{i}/train", constraint_key=f"fleet_size.d{i}",
             category="skill", title=f"Train into Quest{i}", detail="x",
             leverage=90 - i, points=10, action_url="/skills/",
         )

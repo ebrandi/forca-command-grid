@@ -82,7 +82,8 @@ def test_me_renders_the_directive_card(client, django_user_model, sde):
     EveCharacter.objects.create(character_id=4242, user=member, name="Toren",
                                 is_main=True, is_corp_member=True)
     PilotDirective.objects.create(
-        user=member, slug="fleet_size.ferox/train", constraint_key="fleet_size.ferox",
+        user=member, character=member.characters.get(character_id=4242),
+        slug="fleet_size.ferox/train", constraint_key="fleet_size.ferox",
         category="skill", title="Train into Ferox", detail="Relieves the corp's shortage.",
         leverage=75, points=12, action_url="/skills/",
     )

@@ -18,7 +18,11 @@ def test_all_pages_render(client, django_user_model, sde):
     user = django_user_model.objects.create(username="director")
     for role in (rbac.ROLE_MEMBER, rbac.ROLE_OFFICER, rbac.ROLE_DIRECTOR):
         RoleAssignment.objects.create(user=user, role=ensure_role(role))
-    character = EveCharacter.objects.create(character_id=42, user=user, name="Pilot", is_main=True)
+    # The pilot must substantiate the roles the account holds (LP-4): corp standing for
+    # member/officer, the in-game Director seat for director.
+    character = EveCharacter.objects.create(character_id=42, user=user, name="Pilot",
+                                            is_main=True, is_corp_member=True,
+                                            is_corp_director=True)
     client.force_login(user)
 
     project = IndustryProject.objects.create(name="Build Rifters")

@@ -92,12 +92,14 @@ def test_stale_open_recommendation_is_dropped(django_user_model, sde):
     compute_pilot(ch)
     # An OPEN reco the engine no longer generates (gap closed) is removed…
     stale = PilotRecommendation.objects.create(
-        user=user, category=PilotRecommendation.Category.SHIP, ref_type="doctrine",
+        user=user, character_id=ch.character_id,
+        category=PilotRecommendation.Category.SHIP, ref_type="doctrine",
         ref_id="99999", title="Old", detail="", priority=1, points=1,
     )
     # …but a DONE one is preserved as history.
     done = PilotRecommendation.objects.create(
-        user=user, category=PilotRecommendation.Category.SKILL, ref_type="doctrine",
+        user=user, character_id=ch.character_id,
+        category=PilotRecommendation.Category.SKILL, ref_type="doctrine",
         ref_id="88888", title="Done", detail="", priority=1, points=1,
         state=PilotRecommendation.State.DONE,
     )

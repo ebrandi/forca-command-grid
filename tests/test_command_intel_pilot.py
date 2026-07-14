@@ -2,8 +2,6 @@
 self-only IDOR guard on the directive actions."""
 from __future__ import annotations
 
-from types import SimpleNamespace
-
 import pytest
 from django.core.cache import cache
 
@@ -31,6 +29,18 @@ def _member(django_user_model, suffix=""):
     return user
 
 
+def _pilot(user, character_id):
+    """A real EveCharacter. A directive names the PILOT it was computed for (LP-3), so a
+    SimpleNamespace stub no longer stands in for one — the row has to point at a pilot that
+    exists, which is the whole point of scoping the quest log to it."""
+    from apps.sso.models import EveCharacter
+
+    return EveCharacter.objects.create(
+        character_id=character_id, user=user, name=f"P{character_id}",
+        is_main=True, is_corp_member=True,
+    )
+
+
 def _snapshot_with_fleet_constraint(severity="high", limiting="pilots_qualified"):
     snap = IntelligenceSnapshot.objects.create(slices={"doctrine": {"doctrines": [
         {"name": "Ferox", "slug": "ferox", "primary": True,
@@ -53,7 +63,7 @@ def test_relief_directive_ties_to_the_binding_constraint(django_user_model, monk
         lambda ch, limit=8: [{"doctrine": "Ferox", "doctrine_id": 1, "seconds": 600_000}],
     )
     user = _member(django_user_model, "-relief")
-    payload = pilot.compute_directives(user, SimpleNamespace(character_id=1001), persist=True)
+    payload = pilot.compute_directives(user, _pilot(user, 1001), persist=True)
 
     top = payload["directives"][0]
     assert top["constraint_key"] == "fleet_size.ferox"
@@ -73,7 +83,7 @@ def test_falls_back_to_doctrine_training_when_no_relief(django_user_model, monke
         lambda ch, limit=8: [{"doctrine": "Muninn", "doctrine_id": 2, "seconds": 300_000}],
     )
     user = _member(django_user_model, "-fallback")
-    payload = pilot.compute_directives(user, SimpleNamespace(character_id=1002), persist=True)
+    payload = pilot.compute_directives(user, _pilot(user, 1002), persist=True)
 
     assert payload["directives"], "quest log is never empty"
     assert all(d["constraint_key"] == "" for d in payload["directives"])  # no fabricated corp-impact claim
@@ -90,8 +100,11 @@ def test_stale_open_directive_is_dropped_on_regeneration(django_user_model, monk
     )
     user = _member(django_user_model, "-stale")
     # A leftover OPEN directive that this run won't regenerate.
-    PilotDirective.objects.create(user=user, slug="gone/stale", title="Old", category="skill")
-    pilot.compute_directives(user, SimpleNamespace(character_id=1003), persist=True)
+    character = _pilot(user, 1003)
+    PilotDirective.objects.create(
+        user=user, character=character, slug="gone/stale", title="Old", category="skill",
+    )
+    pilot.compute_directives(user, character, persist=True)
     assert not PilotDirective.objects.filter(user=user, slug="gone/stale").exists()
 
 
@@ -104,11 +117,12 @@ def test_done_state_survives_regeneration(django_user_model, monkeypatch):
         lambda ch, limit=8: [{"doctrine": "Ferox", "doctrine_id": 1, "seconds": 600_000}],
     )
     user = _member(django_user_model, "-done")
+    character = _pilot(user, 1004)
     PilotDirective.objects.create(
-        user=user, slug="fleet_size.ferox/train", title="Train into Ferox",
+        user=user, character=character, slug="fleet_size.ferox/train", title="Train into Ferox",
         category="skill", state=PilotDirective.State.DONE,
     )
-    pilot.compute_directives(user, SimpleNamespace(character_id=1004), persist=True)
+    pilot.compute_directives(user, character, persist=True)
     kept = PilotDirective.objects.get(user=user, slug="fleet_size.ferox/train")
     assert kept.state == PilotDirective.State.DONE  # a done directive is not reopened
 

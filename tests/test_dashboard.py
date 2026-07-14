@@ -47,8 +47,10 @@ def test_dashboard_aggregates_command_center(client, django_user_model, sde):
     from apps.command_intel import pilot as ci_pilot
     from apps.command_intel.models import PilotDirective
 
+    # The quest log belongs to the PILOT it was computed for (LP-3).
     PilotDirective.objects.create(
-        user=user, slug="doctrine/1", category="skill", title="Train Gunnery V", points=10,
+        user=user, character=user.characters.get(character_id=777),
+        slug="doctrine/1", category="skill", title="Train Gunnery V", points=10,
     )
     cache.set(ci_pilot.cache_key(777), {"directives": []})
 

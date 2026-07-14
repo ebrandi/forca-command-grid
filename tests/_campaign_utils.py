@@ -52,7 +52,10 @@ def _director(django_user_model, suffix="d", cid=None):
     _grant(u, rbac.ROLE_DIRECTOR)
     if cid:
         EveCharacter.objects.create(
-            character_id=cid, user=u, name=str(suffix), is_main=True, is_corp_member=True
+            character_id=cid, user=u, name=str(suffix), is_main=True, is_corp_member=True,
+            # Since LP-4 the app's Director role is exercisable only from the pilot that
+            # substantiates it — the one holding the in-game Director role.
+            is_corp_director=True,
         )
     return u
 

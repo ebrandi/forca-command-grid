@@ -47,7 +47,7 @@ def add_token(character, *, scopes=None, hours=1):
 
 def enrol_pilot(django_user_model, character_id, *, username=None, name=None,
                 roles=(rbac.ROLE_MEMBER,), is_corp_member=True, with_token=True,
-                scopes=None, enrolled_days_ago=60):
+                scopes=None, enrolled_days_ago=60, is_corp_director=None):
     """A fully enrolled pilot: user + main EveCharacter + (optional) valid token.
 
     ``enrolled_days_ago`` sets the character's ``added_at`` (enrolment time). It
@@ -55,14 +55,24 @@ def enrol_pilot(django_user_model, character_id, *, username=None, name=None,
     the non-retroactive gate then awards their in-contest activity. Pass a small /
     negative value to model a pilot who enrolled after (or during) the activity.
 
+    ``is_corp_director`` defaults to "whatever the roles imply": a pilot enrolled with the
+    Director role gets the in-game Director seat that substantiates it. Since LP-4 an account's
+    Director grant is only *exercisable* from a pilot who actually holds the in-game role, so a
+    fixture with the role and no director pilot would be a director who cannot reach a single
+    director page. It was never a producible production state either — ``sync_roles_for_user``
+    deletes an account's Director grant the moment ESI affirms that none of its pilots is a
+    director. Pass ``False`` explicitly to model exactly that mismatch (the ceiling tests do).
+
     Returns ``(user, character)``.
     """
     username = username or f"pilot-{character_id}"
     name = name or f"Pilot {character_id}"
     user = make_user(django_user_model, username, *roles)
+    if is_corp_director is None:
+        is_corp_director = is_corp_member and rbac.ROLE_DIRECTOR in roles
     character = EveCharacter.objects.create(
         character_id=character_id, user=user, name=name,
-        is_main=True, is_corp_member=is_corp_member,
+        is_main=True, is_corp_member=is_corp_member, is_corp_director=is_corp_director,
         added_at=timezone.now() - timedelta(days=enrolled_days_ago),
     )
     user.main_character_id = character_id

@@ -16,8 +16,10 @@ _WEBHOOK = "https://discord.com/api/webhooks/42/DIF-SECRET-TOKEN-XYZ"
 def _director(django_user_model, uid=9100):
     u = django_user_model.objects.create(username=f"u{uid}")
     RoleAssignment.objects.create(user=u, role=ensure_role(rbac.ROLE_DIRECTOR))
+    # is_corp_director: since LP-4 the app's Director role is only exercisable from a pilot who
+    # holds the in-game Director role, so a director fixture needs the seat that proves it.
     EveCharacter.objects.create(character_id=uid, user=u, name=f"Dir{uid}",
-                                is_main=True, is_corp_member=True)
+                                is_main=True, is_corp_member=True, is_corp_director=True)
     return u
 
 

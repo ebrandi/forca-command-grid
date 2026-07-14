@@ -21,6 +21,8 @@ def _user(dum, username, role, cid=None, owner_hash="oh", with_token=True):
         ch = EveCharacter.objects.create(
             character_id=cid, user=user, name=username, owner_hash=owner_hash,
             is_main=True, is_corp_member=True,
+            # The seat that substantiates the account role (LP-4).
+            is_corp_director=role == rbac.ROLE_DIRECTOR,
         )
         user.main_character_id = cid
         user.save(update_fields=["main_character_id"])
