@@ -12,6 +12,7 @@ from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.utils.html import escape
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
@@ -27,6 +28,21 @@ log = logging.getLogger("forca.sso")
 _SESS_STATE = "eve_sso_state"
 _SESS_VERIFIER = "eve_sso_verifier"
 _SESS_SCOPES = "eve_sso_scopes"
+# Where to land after a successful login. Held in the SESSION, never round-tripped through
+# EVE's OAuth params: a `next` the client could tamper with on the way back would be an open
+# redirect. It is validated on the way in as well (see _safe_next).
+_SESS_NEXT = "eve_sso_next"
+
+
+def _safe_next(request: HttpRequest, url: str | None) -> str | None:
+    """``url`` if it is a same-origin path we may bounce the pilot to, else ``None``."""
+    if not url:
+        return None
+    if not url_has_allowed_host_and_scheme(
+        url, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        return None
+    return url
 
 
 def login_view(request: HttpRequest) -> HttpResponse:
@@ -53,6 +69,14 @@ def login_view(request: HttpRequest) -> HttpResponse:
     request.session[_SESS_STATE] = state
     request.session[_SESS_VERIFIER] = verifier
     request.session[_SESS_SCOPES] = scopes
+    # Remember where the pilot was headed when the login gate stopped them, so the callback
+    # can finish the journey. Overwrite unconditionally: a stale target from an abandoned
+    # login must not hijack the next one.
+    next_url = _safe_next(request, request.GET.get("next"))
+    if next_url:
+        request.session[_SESS_NEXT] = next_url
+    else:
+        request.session.pop(_SESS_NEXT, None)
     return redirect(oauth.build_authorize_url(state, challenge, scopes))
 
 
@@ -135,7 +159,10 @@ def callback_view(request: HttpRequest) -> HttpResponse:
         metadata={"scopes": scopes},
         ip=client_ip(request),
     )
-    return redirect(settings.LOGIN_REDIRECT_URL)
+    # Land them where they were going, not on a generic dashboard. Re-validated even though
+    # it came from our own session: the check is free and the failure mode is an open redirect.
+    destination = _safe_next(request, request.session.pop(_SESS_NEXT, None))
+    return redirect(destination or settings.LOGIN_REDIRECT_URL)
 
 
 @require_POST
