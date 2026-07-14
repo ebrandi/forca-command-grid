@@ -36,6 +36,7 @@ from __future__ import annotations
 
 from django.core.exceptions import FieldDoesNotExist
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import pgettext_lazy
 
 from . import templates_builtin
 
@@ -144,7 +145,7 @@ BUILTIN_MSGIDS: dict[str, dict[str, str]] = {
             "Pilots flying the mainline armour battleship fit. Set the doctrine to measure after creating the "
             "campaign."
         ),
-        "unit": _("pilots"),
+        "unit": pgettext_lazy("objective unit", "pilots"),
     },
     "armour_bs_deployment.obj.1": {
         "title": _("Qualify 12 logistics pilots"),
@@ -152,7 +153,7 @@ BUILTIN_MSGIDS: dict[str, dict[str, str]] = {
             "Pilots flying the fleet logistics fit. Set the logistics doctrine to measure after creating the "
             "campaign."
         ),
-        "unit": _("pilots"),
+        "unit": pgettext_lazy("objective unit", "pilots"),
     },
     "armour_bs_deployment.obj.2": {
         "title": _("Stage 50 fitted mainline hulls"),
@@ -160,7 +161,7 @@ BUILTIN_MSGIDS: dict[str, dict[str, str]] = {
             "Fitted mainline hulls on hand in the staging structure. Point this at the staging stockpile and "
             "hull type after creating."
         ),
-        "unit": _("ships"),
+        "unit": pgettext_lazy("objective unit", "ships"),
     },
     "armour_bs_deployment.obj.3": {
         "title": _("Stage 15 fitted logistics hulls"),
@@ -168,12 +169,12 @@ BUILTIN_MSGIDS: dict[str, dict[str, str]] = {
             "Fitted logistics hulls on hand in staging. Point this at the staging stockpile and logistics "
             "hull type after creating."
         ),
-        "unit": _("ships"),
+        "unit": pgettext_lazy("objective unit", "ships"),
     },
     "armour_bs_deployment.obj.4": {
         "title": _("Build 30 replacement hulls"),
         "description": _("Spare hulls held against losses. Point this at the replacement stockpile after creating."),
-        "unit": _("hulls"),
+        "unit": pgettext_lazy("objective unit", "hulls"),
     },
     "armour_bs_deployment.obj.5": {
         "title": _("Stock ammunition & consumables for 5 fleets"),
@@ -181,7 +182,7 @@ BUILTIN_MSGIDS: dict[str, dict[str, str]] = {
             "Ammo, charges and consumables sufficient for five fleet outings. Point this at the consumables "
             "stockpile after creating."
         ),
-        "unit": _("sets"),
+        "unit": pgettext_lazy("objective unit", "sets"),
     },
     "armour_bs_deployment.obj.6": {
         "title": _("Confirm 3 qualified FCs across timezones"),
@@ -189,7 +190,7 @@ BUILTIN_MSGIDS: dict[str, dict[str, str]] = {
             "Fleet commanders able to run the doctrine, spread across the covered timezones. Tracked manually "
             "and verified."
         ),
-        "unit": _("FCs"),
+        "unit": pgettext_lazy("objective unit", "FCs"),
     },
     "armour_bs_deployment.obj.7": {
         "title": _("Validate the logistics route"),
@@ -197,12 +198,12 @@ BUILTIN_MSGIDS: dict[str, dict[str, str]] = {
             "A confirmed, tested haul route into the staging system. Tracked manually (0 = untested, 1 = "
             "validated) and verified."
         ),
-        "unit": _("route"),
+        "unit": pgettext_lazy("objective unit", "route"),
     },
     "armour_bs_deployment.obj.8": {
         "title": _("Move staged assets before the deadline"),
         "description": _("Percentage of the staging move completed. Tracked manually."),
-        "unit": _("%"),
+        "unit": pgettext_lazy("objective unit", "%"),
     },
     "armour_bs_deployment.obj.9": {
         "title": _("Secure the agreed SRP reserve"),
@@ -210,19 +211,19 @@ BUILTIN_MSGIDS: dict[str, dict[str, str]] = {
             "SRP reserve (allocated − spent − exposure) held for the deployment. Set the reserve target and "
             "period after creating; visible to finance only."
         ),
-        "unit": _("ISK"),
+        "unit": pgettext_lazy("objective unit", "ISK"),
     },
     "armour_bs_deployment.obj.10": {
         "title": _("Run 3 training fleets"),
         "description": _(
             "Completed training operations of the doctrine. Pick the operation type to count after creating."
         ),
-        "unit": _("fleets"),
+        "unit": pgettext_lazy("objective unit", "fleets"),
     },
     "armour_bs_deployment.obj.11": {
         "title": _("Complete 1 final readiness exercise"),
         "description": _("A full dress-rehearsal fleet sign-off. Tracked manually and verified."),
-        "unit": _("exercise"),
+        "unit": pgettext_lazy("objective unit", "exercise"),
     },
     "armour_bs_deployment.ms.0": {
         "title": _("Doctrine approved & published"),
@@ -306,22 +307,22 @@ BUILTIN_MSGIDS: dict[str, dict[str, str]] = {
     "doctrine_rollout.obj.0": {
         "title": _("Approve & publish the doctrine"),
         "description": _("Agree the fit and publish it. Tracked manually (0/1) and verified."),
-        "unit": _("doctrine"),
+        "unit": pgettext_lazy("objective unit", "doctrine"),
     },
     "doctrine_rollout.obj.1": {
         "title": _("Qualify 20 pilots"),
         "description": _("Pilots flying the doctrine fit. Set the doctrine to measure after creating."),
-        "unit": _("pilots"),
+        "unit": pgettext_lazy("objective unit", "pilots"),
     },
     "doctrine_rollout.obj.2": {
         "title": _("Run 3 training fleets"),
         "description": _("Completed training operations. Pick the operation type after creating."),
-        "unit": _("fleets"),
+        "unit": pgettext_lazy("objective unit", "fleets"),
     },
     "doctrine_rollout.obj.3": {
         "title": _("Publish the training schedule"),
         "description": _("Schedule and briefing published to the corp. Tracked manually (0/1)."),
-        "unit": _("post"),
+        "unit": pgettext_lazy("objective unit", "post"),
     },
     "doctrine_rollout.ms.0": {
         "title": _("Doctrine published"),
@@ -359,22 +360,22 @@ BUILTIN_MSGIDS: dict[str, dict[str, str]] = {
     "deployment_prep.obj.0": {
         "title": _("Validate the staging route"),
         "description": _("A tested haul route into staging. Tracked manually (0/1) and verified."),
-        "unit": _("route"),
+        "unit": pgettext_lazy("objective unit", "route"),
     },
     "deployment_prep.obj.1": {
         "title": _("Stage 40 fitted hulls"),
         "description": _("Fitted hulls on hand in staging. Point this at the staging stockpile."),
-        "unit": _("ships"),
+        "unit": pgettext_lazy("objective unit", "ships"),
     },
     "deployment_prep.obj.2": {
         "title": _("Move staged assets"),
         "description": _("Percentage of the move completed. Tracked manually."),
-        "unit": _("%"),
+        "unit": pgettext_lazy("objective unit", "%"),
     },
     "deployment_prep.obj.3": {
         "title": _("Publish the deployment briefing"),
         "description": _("Deployment plan and schedule published. Tracked manually (0/1)."),
-        "unit": _("post"),
+        "unit": pgettext_lazy("objective unit", "post"),
     },
     "deployment_prep.ms.0": {
         "title": _("Route validated"),
@@ -409,17 +410,17 @@ BUILTIN_MSGIDS: dict[str, dict[str, str]] = {
     "stockpile_drive.obj.0": {
         "title": _("Stock 50 replacement hulls"),
         "description": _("Hulls on hand against the replacement target. Point this at the stockpile."),
-        "unit": _("hulls"),
+        "unit": pgettext_lazy("objective unit", "hulls"),
     },
     "stockpile_drive.obj.1": {
         "title": _("Deliver 50 built hulls in the window"),
         "description": _("Hulls delivered from industry in this window. Set the output type ids after creating."),
-        "unit": _("hulls"),
+        "unit": pgettext_lazy("objective unit", "hulls"),
     },
     "stockpile_drive.obj.2": {
         "title": _("Top up consumables for 10 fleets"),
         "description": _("Consumable sets on hand. Point this at the consumables stockpile."),
-        "unit": _("sets"),
+        "unit": pgettext_lazy("objective unit", "sets"),
     },
     "stockpile_drive.ms.0": {
         "title": _("Build queue running"),
@@ -453,12 +454,12 @@ BUILTIN_MSGIDS: dict[str, dict[str, str]] = {
             "SRP reserve (allocated − spent − exposure). Set the target and period after creating; visible to "
             "finance only."
         ),
-        "unit": _("ISK"),
+        "unit": pgettext_lazy("objective unit", "ISK"),
     },
     "srp_recovery.obj.1": {
         "title": _("Run a donations drive"),
         "description": _("Donations campaign published and running. Tracked manually (0/1)."),
-        "unit": _("drive"),
+        "unit": pgettext_lazy("objective unit", "drive"),
     },
     "srp_recovery.ms.0": {
         "title": _("Reserve halfway to floor"),
@@ -487,17 +488,17 @@ BUILTIN_MSGIDS: dict[str, dict[str, str]] = {
     "member_integration.obj.0": {
         "title": _("Assign mentors to every new member"),
         "description": _("New members with an assigned mentor. Tracked manually."),
-        "unit": _("pilots"),
+        "unit": pgettext_lazy("objective unit", "pilots"),
     },
     "member_integration.obj.1": {
         "title": _("Complete onboarding checklist"),
         "description": _("New members through the onboarding checklist. Tracked manually."),
-        "unit": _("pilots"),
+        "unit": pgettext_lazy("objective unit", "pilots"),
     },
     "member_integration.obj.2": {
         "title": _("Fly first fleets"),
         "description": _("New members who have flown at least one fleet. Tracked manually."),
-        "unit": _("pilots"),
+        "unit": pgettext_lazy("objective unit", "pilots"),
     },
     "member_integration.ms.0": {
         "title": _("Mentors assigned"),

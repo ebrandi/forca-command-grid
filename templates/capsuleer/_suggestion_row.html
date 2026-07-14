@@ -1,14 +1,18 @@
 {% load i18n %}
-{# Suggestion row (doc 10 §5.9). Pass s (a PathSuggestion). Owner-only surface. #}
+{% comment %} Suggestion row (doc 10 §5.9). Pass s (a PathSuggestion). Owner-only surface.
+   ``title_i18n``/``reason_i18n`` (never ``title``/``reason``) — the row was written by the daily
+   Celery beat, which has no locale, so the stored prose is frozen English; the properties re-render
+   its message scaffold under the reader's language, falling back to the stored English for a legacy
+   row that carries no key. {% endcomment %}
 <div class="border-b border-line/40 px-4 py-3 last:border-b-0">
   <div class="flex flex-wrap items-center justify-between gap-2">
     <span class="flex min-w-0 items-center gap-2">
       <svg class="h-4 w-4 shrink-0 text-faint"><use href="#i-bolt"/></svg>
-      <span class="min-w-0 truncate font-medium text-ink">{{ s.title }}</span>
+      <span class="min-w-0 truncate font-medium text-ink">{{ s.title_i18n }}</span>
     </span>
     {% if s.corp_driven %}<span class="chip !border-gold/40 !text-gold shrink-0">{% translate "corp demand · your call" %}</span>{% endif %}
   </div>
-  <p class="mt-1 text-sm text-muted">{{ s.reason }}</p>
+  <p class="mt-1 text-sm text-muted">{{ s.reason_i18n }}</p>
   {% if s.data_used_line %}<p class="mt-1 text-[11px] text-faint">{{ s.data_used_line }}</p>{% endif %}
   <div class="mt-2 flex flex-wrap items-center gap-2">
     <form method="post" action="{% url 'capsuleer:suggestion_act' s.pk %}" class="inline">{% csrf_token %}<input type="hidden" name="action" value="accept"><button class="btn-cyan !py-1 text-xs">{% translate "Accept →" %}</button></form>

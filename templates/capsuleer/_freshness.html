@@ -1,7 +1,11 @@
 {% load i18n %}
-{# Freshness/honesty line (doc 10 §2.5). Pass m (a CareerMilestone). #}
+{% comment %} Freshness/honesty line (doc 10 §2.5). Pass m (a CareerMilestone).
+   ``data_source_i18n`` (never ``data_source``) is the reader-locale render of the provenance the
+   Celery sweep stamped: the stored column is the worker's frozen English, the property re-resolves
+   its message scaffold under the language of whoever is looking. A legacy row with no scaffold key
+   falls back to that stored English — never blank. {% endcomment %}
 {% if m.last_checked_at %}
-<p class="text-[11px] text-faint">{% blocktranslate with ago=m.last_checked_at|timesince %}checked {{ ago }} ago{% endblocktranslate %}{% if m.data_source %} · {% blocktranslate with src=m.data_source %}from {{ src }}{% endblocktranslate %}{% endif %}</p>
+<p class="text-[11px] text-faint">{% blocktranslate with ago=m.last_checked_at|timesince %}checked {{ ago }} ago{% endblocktranslate %}{% if m.data_source %} · {% blocktranslate with src=m.data_source_i18n %}from {{ src }}{% endblocktranslate %}{% endif %}</p>
 {% elif m.data_source %}
-<p class="text-[11px] text-faint">{{ m.data_source }}</p>
+<p class="text-[11px] text-faint">{{ m.data_source_i18n }}</p>
 {% endif %}
