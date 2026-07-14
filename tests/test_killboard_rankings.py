@@ -233,3 +233,73 @@ def test_rankings_view_renders(client, battle_data):
     assert "Combat rankings" in html
     assert "Most valuable kills" in html
     assert "Dockside Recruit" in html  # DB-driven rank ladder legend present
+
+
+# --- i18n: the month-name trap + language-scoped cache keys (Seam D) ---------
+def test_month_names_localise_instead_of_staying_c_locale_english():
+    """THE TRAP: ``calendar.month_name`` / ``month_abbr`` come from the C library and stay
+    English under every ``translation.override``. Both killboard month renderers now go
+    through Django's translated names. March is used because its German name (März) differs
+    from English — unlike April/August/September/November, which are spelled the same.
+    """
+    import calendar
+
+    from django.utils import translation
+
+    from apps.killboard.aggregation import _period_label
+    from apps.killboard.analytics import _month_label
+
+    with translation.override("en"):
+        assert _period_label(2026, 3) == "March 2026"   # unchanged English output
+        assert _month_label(2026, 3) == "Mar 26"        # ditto (was "%b %y")
+    with translation.override("de"):
+        assert _period_label(2026, 3) == "März 2026"
+        assert _month_label(2026, 3) == "Mär 26"
+        # The old implementation, for contrast: still stubbornly English under German.
+        assert calendar.month_name[3] == "March"
+        assert calendar.month_abbr[3] == "Mar"
+
+
+def test_window_month_label_is_byte_identical_in_english_and_localises():
+    """The window label keeps its exact English rendering and picks up the active locale."""
+    from django.utils import formats, translation
+
+    now = timezone.now()
+    with translation.override("en"):
+        english = window_for("month").label
+        assert english == f"This month · {now.strftime('%B')}"  # English output unchanged
+    with translation.override("de"):
+        german = window_for("month").label
+        # The month segment is whatever Django renders for this locale — not the C locale's.
+        assert german.endswith(formats.date_format(now, "F"))
+
+
+def test_window_labels_translate_and_key_stays_a_code_value():
+    """Only the label is marked — the window KEY is a code value (query string + cache key)."""
+    from django.utils import translation
+
+    with translation.override("en"):
+        assert window_for("7d").label == "Last 7 days"
+    with translation.override("de"):
+        w = window_for("7d")
+    assert w.key == "7d"  # never translated
+
+
+@pytest.mark.django_db
+def test_leaderboard_cache_is_language_scoped(battle_data):
+    """Two readers in different languages must not share one cached rankings payload."""
+    from django.core.cache import cache
+    from django.utils import translation
+
+    from apps.killboard.leaderboards import CACHE_VERSION
+
+    cache.clear()
+    with translation.override("en"):
+        leaderboards("all")
+    with translation.override("de"):
+        leaderboards("all")
+
+    base = f"kb:lb:{CACHE_VERSION}:{HOME}:all"
+    assert cache.get(f"{base}:en") is not None
+    assert cache.get(f"{base}:de") is not None
+    assert cache.get(base) is None, "the unscoped key must no longer be written"

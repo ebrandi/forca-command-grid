@@ -107,14 +107,42 @@ def test_rebuild_member_metrics_stores_final_blows():
 # --- A.4 Cache warmer --------------------------------------------------------
 @pytest.mark.django_db
 def test_warm_caches_populates_hot_keys():
-    from apps.killboard.analytics import CACHE_VERSION, warm_caches
+    """These payloads embed translated prose, so their keys are language-scoped
+    (``i18n_cache_key``) — the warmer fills one entry per enabled locale."""
+    from apps.killboard.analytics import CACHE_VERSION, warm_caches, warm_languages
 
     cache.clear()
     warm_caches()
     home = _home_corp()
-    assert cache.get(f"kb:stats:{CACHE_VERSION}:{home}") is not None
-    assert cache.get(f"kb:feed:{CACHE_VERSION}:{home}") is not None
-    assert cache.get(f"kb:lb:{CACHE_VERSION}:{home}:7d") is not None
+    for lang in warm_languages():
+        assert cache.get(f"kb:stats:{CACHE_VERSION}:{home}:{lang}") is not None
+        assert cache.get(f"kb:feed:{CACHE_VERSION}:{home}:{lang}") is not None
+        assert cache.get(f"kb:lb:{CACHE_VERSION}:{home}:7d:{lang}") is not None
+    # The officer loss-impact board carries no prose — it keeps a single, unscoped key.
+    assert cache.get(f"kb:lossimpact:{CACHE_VERSION}:{home}:90") is not None
+
+
+@pytest.mark.django_db
+def test_warm_caches_fills_every_enabled_locale(settings):
+    """The warmer runs under ``translation.override`` per locale: without that it would
+    only ever fill ``:en`` and every other locale would take the cold-path recompute."""
+    from apps.killboard.analytics import CACHE_VERSION, warm_caches
+    from core.i18n.config import I18N_SETTING_KEY, set_i18n_config
+
+    cache.clear()
+    set_i18n_config(locales={"de": True})
+    try:
+        warm_caches()
+        home = _home_corp()
+        for lang in ("en", "de"):
+            assert cache.get(f"kb:stats:{CACHE_VERSION}:{home}:{lang}") is not None
+        # A locale nobody can be served in is not warmed (it would burn a full recompute).
+        assert cache.get(f"kb:stats:{CACHE_VERSION}:{home}:ja") is None
+    finally:
+        from apps.admin_audit.models import AppSetting
+
+        AppSetting.objects.filter(key=I18N_SETTING_KEY).delete()
+        cache.clear()
 
 
 # --- A.2 Killfeed page-cache shim -------------------------------------------

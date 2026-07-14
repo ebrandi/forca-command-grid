@@ -15,7 +15,6 @@ cache for a few minutes — rankings do not need to be real-time.
 """
 from __future__ import annotations
 
-import calendar
 from dataclasses import dataclass
 from datetime import timedelta
 
@@ -23,7 +22,11 @@ from django.conf import settings
 from django.core.cache import cache
 from django.db.models import Count, Q, Sum
 from django.db.models.functions import TruncDate
-from django.utils import timezone
+from django.utils import formats, timezone
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
+
+from core.i18n import i18n_cache_key
 
 from .models import Killmail, KillmailParticipant
 from .ranks import active_ladder, combat_rank  # noqa: F401  (re-exported for callers)
@@ -54,28 +57,32 @@ def _month_start(dt):
 
 
 def window_for(key: str) -> Window:
-    """Resolve a window key to concrete bounds. Unknown keys fall back to 30d."""
+    """Resolve a window key to concrete bounds. Unknown keys fall back to 30d.
+
+    The window KEY is a code value (never translated — it is a query-string value and a
+    cache-key component); only the human-readable ``label`` is marked. Month names come
+    from ``formats.date_format(..., "F")``, not ``calendar.month_name``: the C library's
+    month names are locked to the C locale and would stay English in every language.
+    Labels are built per call inside the request/task, so eager ``gettext`` is right.
+    """
     now = timezone.now()
     if key == "all":
-        return Window("all", "All time", None, None)
+        return Window("all", _("All time"), None, None)
     if key == "7d":
-        return Window("7d", "Last 7 days", now - timedelta(days=7), None)
+        return Window("7d", _("Last 7 days"), now - timedelta(days=7), None)
     if key == "90d":
-        return Window("90d", "Last 90 days", now - timedelta(days=90), None)
+        return Window("90d", _("Last 90 days"), now - timedelta(days=90), None)
     if key == "month":
         start = _month_start(now)
-        return Window("month", f"This month · {calendar.month_name[now.month]}", start, None)
+        label = _("This month · %(month)s") % {"month": formats.date_format(now, "F")}
+        return Window("month", label, start, None)
     if key == "lastmonth":
         this_start = _month_start(now)
         last_end = this_start
         last_start = _month_start(this_start - timedelta(days=1))
-        return Window(
-            "lastmonth",
-            f"Last month · {calendar.month_name[last_start.month]}",
-            last_start,
-            last_end,
-        )
-    return Window("30d", "Last 30 days", now - timedelta(days=30), None)
+        label = _("Last month · %(month)s") % {"month": formats.date_format(last_start, "F")}
+        return Window("lastmonth", label, last_start, last_end)
+    return Window("30d", _("Last 30 days"), now - timedelta(days=30), None)
 
 
 WINDOW_KEYS = ["7d", "30d", "90d", "month", "lastmonth", "all"]
@@ -111,7 +118,11 @@ RANK_LADDER = [
 
 
 def _newbro_softening() -> tuple:
-    """``(soften_enabled, below_events)`` for the danger label, cached (singleton config)."""
+    """``(soften_enabled, below_events)`` for the danger label, cached (singleton config).
+
+    The cached value is a ``(bool, int)`` — no prose — so this key stays language-neutral
+    on purpose: scoping it by language would multiply a hot config read by nine for nothing.
+    """
     from django.core.cache import cache
 
     cached = cache.get("killboard:newbro_soften")
@@ -132,16 +143,16 @@ def danger_rating(kills: int, losses: int) -> dict:
     """
     total = kills + losses
     if total == 0:
-        return {"label": "Untested", "ratio": 0.0, "color": "text-faint"}
+        return {"label": _("Untested"), "ratio": 0.0, "color": "text-faint"}
     ratio = kills / total
     if ratio >= 0.8:
-        return {"label": "Dangerous", "ratio": ratio, "color": "text-kill"}
+        return {"label": _("Dangerous"), "ratio": ratio, "color": "text-kill"}
     if ratio >= 0.5:
-        return {"label": "Risky", "ratio": ratio, "color": "text-gold"}
+        return {"label": _("Risky"), "ratio": ratio, "color": "text-gold"}
     soften, below = _newbro_softening()
     if soften and total < below:
-        return {"label": "Learning", "ratio": ratio, "color": "text-faint"}
-    return {"label": "Snuggly", "ratio": ratio, "color": "text-loss"}
+        return {"label": _("Learning"), "ratio": ratio, "color": "text-faint"}
+    return {"label": _("Snuggly"), "ratio": ratio, "color": "text-loss"}
 
 
 # --- Per-pilot aggregates ---------------------------------------------------
@@ -307,56 +318,82 @@ def _most_valuable_kills(window: Window) -> list[dict]:
     return out
 
 
+# key, title, one-line subtitle, value kind ('isk'|'int'|'pct'), icon symbol id.
+# The key / kind / icon are CODE values (dict lookups, template symbol ids) and are never
+# translated. Titles and subtitles are prose: a module-level constant, so they are marked
+# with gettext_lazy — the lazy proxy resolves at the moment a payload is built, under that
+# request's locale (see ``_categories``, which forces them to plain ``str`` before caching).
 CATEGORIES = [
-    # key, title, one-line subtitle, value kind ('isk'|'int'|'pct'), icon symbol id
-    ("top_killers", "Top Killers", "Most kills landed", "int", "i-cross"),
-    ("isk_destroyed", "Most ISK Destroyed", "Damage to the enemy wallet", "isk", "i-coin"),
-    ("points", "Top Points", "Quality kills, not just blobs", "int", "i-bolt"),
-    ("final_blows", "Final Blows", "Who lands the killing shot", "int", "i-target"),
-    ("solo_kills", "Solo Kills", "1v1 — pure pilot skill", "int", "i-shield"),
-    ("efficiency", "Best Efficiency", "ISK destroyed vs. lost", "pct", "i-grid"),
-    ("most_active", "Most Active", "Days undocked and fighting", "int", "i-check"),
-    ("isk_lost", "Most ISK Lost", "Bravest feeder of the month", "isk", "i-ship"),
+    ("top_killers", gettext_lazy("Top Killers"), gettext_lazy("Most kills landed"), "int", "i-cross"),
+    ("isk_destroyed", gettext_lazy("Most ISK Destroyed"), gettext_lazy("Damage to the enemy wallet"),
+     "isk", "i-coin"),
+    ("points", gettext_lazy("Top Points"), gettext_lazy("Quality kills, not just blobs"), "int", "i-bolt"),
+    ("final_blows", gettext_lazy("Final Blows"), gettext_lazy("Who lands the killing shot"), "int", "i-target"),
+    ("solo_kills", gettext_lazy("Solo Kills"), gettext_lazy("1v1 — pure pilot skill"), "int", "i-shield"),
+    ("efficiency", gettext_lazy("Best Efficiency"), gettext_lazy("ISK destroyed vs. lost"), "pct", "i-grid"),
+    ("most_active", gettext_lazy("Most Active"), gettext_lazy("Days undocked and fighting"), "int", "i-check"),
+    ("isk_lost", gettext_lazy("Most ISK Lost"), gettext_lazy("Bravest feeder of the month"), "isk", "i-ship"),
 ]
+
+
+def categories_payload(boards: dict) -> list[dict]:
+    """The eight category cards for a rankings payload, with their prose resolved.
+
+    ``str(...)`` is deliberate: this list goes straight into a cache entry that is pickled
+    into Redis. A lazy proxy pickles fine, but it would re-resolve at *unpickle* time in the
+    READER's locale — which is only what we want when the key is language-neutral. These
+    payloads ARE language-scoped (``i18n_cache_key``), so the value must be frozen to a plain
+    ``str`` at ``cache.set`` time; otherwise a de/fr reader could resolve an entry we already
+    keyed as, say, ``:de`` and the two mechanisms would fight each other.
+    """
+    return [
+        {"key": k, "title": str(t), "subtitle": str(s), "kind": kind, "icon": icon, "rows": boards[k]}
+        for (k, t, s, kind, icon) in CATEGORIES
+    ]
+
+
+# The per-row "secondary" captions. Built inside the request/task that renders a board, so
+# eager gettext (a plain str lands in the cached payload). They were f-strings, which xgettext
+# cannot see — wrapping an f-string in gettext is a silent no-op — so the count is interpolated
+# with a named placeholder AFTER translation instead. The English wording (incl. "1 kills") is
+# kept exactly as it was: ngettext here would change the English output, which is out of scope.
+def secondary_captions() -> dict:
+    """``{board_key: callable}`` producing each board's per-row caption, translated."""
+    return {
+        "top_killers": lambda p: _("%(count)s final blows") % {"count": p["final_blows"]},
+        "kills": lambda p: _("%(count)s kills") % {"count": p["kills"]},
+        "most_active": lambda p: _("%(count)s fights") % {"count": p["engagements"]},
+        "isk_lost": lambda p: _("%(count)s losses") % {"count": p["losses"]},
+        "efficiency": lambda p: _("%(kills)s–%(losses)s K/L")
+        % {"kills": p["kills"], "losses": p["losses"]},
+    }
+
+
+def build_boards(pilots: list[dict]) -> dict:
+    """The eight ranked boards for a set of per-pilot rows (shared with the historical path)."""
+    cap = secondary_captions()
+    return {
+        "top_killers": _rank(pilots, "kills", secondary=cap["top_killers"]),
+        "isk_destroyed": _rank(pilots, "isk_destroyed", secondary=cap["kills"]),
+        "points": _rank(pilots, "points", secondary=cap["kills"]),
+        "final_blows": _rank(pilots, "final_blows"),
+        "solo_kills": _rank(pilots, "solo_kills"),
+        "most_active": _rank(pilots, "active_days", secondary=cap["most_active"]),
+        "isk_lost": _rank(pilots, "isk_lost", secondary=cap["isk_lost"]),
+        "efficiency": _rank(
+            pilots, "efficiency",
+            predicate=lambda p: (p["kills"] + p["losses"]) >= EFFICIENCY_MIN_FIGHTS,
+            secondary=cap["efficiency"],
+        ),
+    }
 
 
 def _build(window_key: str) -> dict:
     window = window_for(window_key)
     pilots = list(_merge_pilots(window).values())
-
-    boards = {
-        "top_killers": _rank(
-            pilots, "kills",
-            secondary=lambda p: f"{p['final_blows']} final blows",
-        ),
-        "isk_destroyed": _rank(
-            pilots, "isk_destroyed",
-            secondary=lambda p: f"{p['kills']} kills",
-        ),
-        "points": _rank(pilots, "points", secondary=lambda p: f"{p['kills']} kills"),
-        "final_blows": _rank(pilots, "final_blows"),
-        "solo_kills": _rank(pilots, "solo_kills"),
-        "most_active": _rank(
-            pilots, "active_days",
-            secondary=lambda p: f"{p['engagements']} fights",
-        ),
-        "isk_lost": _rank(
-            pilots, "isk_lost",
-            secondary=lambda p: f"{p['losses']} losses",
-        ),
-        "efficiency": _rank(
-            pilots, "efficiency",
-            predicate=lambda p: (p["kills"] + p["losses"]) >= EFFICIENCY_MIN_FIGHTS,
-            secondary=lambda p: f"{p['kills']}–{p['losses']} K/L",
-        ),
-    }
-    categories = [
-        {"key": k, "title": t, "subtitle": s, "kind": kind, "icon": icon, "rows": boards[k]}
-        for (k, t, s, kind, icon) in CATEGORIES
-    ]
     return {
-        "window": {"key": window.key, "label": window.label},
-        "categories": categories,
+        "window": {"key": window.key, "label": str(window.label)},
+        "categories": categories_payload(build_boards(pilots)),
         "most_valuable": _most_valuable_kills(window),
         "pilot_count": len(pilots),
         "efficiency_min_fights": EFFICIENCY_MIN_FIGHTS,
@@ -367,12 +404,15 @@ def leaderboards(window_key: str, *, use_cache: bool = True, refresh: bool = Fal
     """Full rankings payload for a window (memoized in the cache).
 
     ``refresh=True`` rebuilds and re-caches even on a hit — used by the warmer.
+
+    Language-scoped key: the payload carries prose (the window label with its month name,
+    the eight category titles/subtitles, each row's secondary caption, the danger labels).
     """
     if window_key not in WINDOW_KEYS:
         window_key = "30d"
     if not use_cache:
         return _build(window_key)
-    key = f"kb:lb:{CACHE_VERSION}:{_home()}:{window_key}"
+    key = i18n_cache_key(f"kb:lb:{CACHE_VERSION}:{_home()}:{window_key}")
     payload = None if refresh else cache.get(key)
     if payload is None:
         payload = _build(window_key)
@@ -429,10 +469,12 @@ def pilot_combat_card(character_id: int, *, use_cache: bool = True) -> dict:
     exists — a single indexed read — and falls back to a live per-pilot
     aggregation otherwise (a pilot who isn't in the rollup yet, or before the
     first rebuild). Memoized briefly either way; it sits on the dashboard hot path.
+
+    Language-scoped key: the card embeds the translated ``danger`` label.
     """
     from .models import CombatMetric
 
-    key = f"kb:card:{CACHE_VERSION}:{_home()}:{character_id}"
+    key = i18n_cache_key(f"kb:card:{CACHE_VERSION}:{_home()}:{character_id}")
     if use_cache:
         cached = cache.get(key)
         if cached is not None:
@@ -470,10 +512,12 @@ def corp_combat_roster(*, use_cache: bool = True, refresh: bool = False) -> list
 
     ``refresh=True`` rebuilds and re-caches even on a hit — used by the warmer so
     the first member after each TTL lapse never pays the all-time recompute.
+
+    Language-scoped key: every row embeds the translated ``danger`` label.
     """
     from apps.sso.models import EveCharacter
 
-    key = f"kb:roster:{CACHE_VERSION}:{_home()}"
+    key = i18n_cache_key(f"kb:roster:{CACHE_VERSION}:{_home()}")
     if use_cache and not refresh:
         cached = cache.get(key)
         if cached is not None:

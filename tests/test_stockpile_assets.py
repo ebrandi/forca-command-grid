@@ -86,6 +86,64 @@ def test_summary_aggregates_and_caches(settings):
     assert assets_summary("corporation", CORP_ID)["total_value"] == Decimal("0")
 
 
+# --- i18n: the summary payload carries translated prose (kind_display) --------
+@pytest.mark.django_db
+def test_summary_cache_is_language_scoped():
+    """The payload embeds ``kind_display`` — a TRANSLATED label. Sharing one key meant the
+    first reader's language was served to everyone else for the whole 15-minute TTL."""
+    from django.core.cache import cache
+    from django.utils import translation
+
+    from apps.market.pricing import reset_price_cache
+    from apps.stockpile.assets import _summary_base_key, assets_summary
+
+    _price(34, "10")
+    reset_price_cache()
+    _asset("corporation", CORP_ID, _loc(60001, "Jita 4-4"), 34, 1)
+    cache.clear()
+
+    with translation.override("en"):
+        assets_summary("corporation", CORP_ID)
+    with translation.override("de"):
+        assets_summary("corporation", CORP_ID)
+
+    base = _summary_base_key("corporation", CORP_ID)
+    assert cache.get(f"{base}:en") is not None
+    assert cache.get(f"{base}:de") is not None
+    assert cache.get(base) is None, "the unscoped key must no longer be written"
+
+
+@pytest.mark.django_db
+def test_sync_invalidates_the_summary_in_every_language():
+    """A sync changes the rows for all locales at once, so it must bust every language's
+    key — busting only the active one would leave the other locales serving pre-sync
+    numbers until the TTL lapsed."""
+    from django.core.cache import cache
+    from django.utils import translation
+
+    from apps.market.pricing import reset_price_cache
+    from apps.stockpile.assets import _store_assets, assets_summary
+
+    _price(34, "10")
+    reset_price_cache()
+    _asset("corporation", CORP_ID, _loc(60001, "Jita 4-4"), 34, 100)
+    cache.clear()
+
+    for lang in ("en", "de", "ja"):
+        with translation.override(lang):
+            assert assets_summary("corporation", CORP_ID)["total_value"] == Decimal("1000")
+
+    # The sync runs under ONE locale (a Celery worker: English) but wipes every row.
+    with translation.override("en"):
+        _store_assets("corporation", CORP_ID, {}, "test")
+
+    for lang in ("en", "de", "ja"):
+        with translation.override(lang):
+            assert assets_summary("corporation", CORP_ID)["total_value"] == Decimal("0"), (
+                f"{lang} still served a stale pre-sync summary"
+            )
+
+
 # --- location item detail ----------------------------------------------------
 @pytest.mark.django_db
 def test_location_items_priced_and_bounded():

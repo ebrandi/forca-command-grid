@@ -10,12 +10,13 @@ from __future__ import annotations
 
 from django.conf import settings
 from django.db import transaction
-from django.utils import timezone
+from django.utils import timezone, translation
 from django.utils.translation import gettext as _
 
 from apps.sso.models import EveCharacter
 from apps.sso.token_service import NoValidToken, get_valid_access_token
 from core.esi.client import ESIClient, ESIError
+from core.i18n import i18n_cache_key
 from core.mixins import Source
 
 from .locations import resolve_location, roll_up_to_root
@@ -247,15 +248,38 @@ def assets_by_location(owner_type: str, owner_id: int) -> dict:
 _ASSETS_SUMMARY_TTL = 900  # 15 min; also explicitly invalidated on each sync
 
 
-def _summary_key(owner_type: str, owner_id: int) -> str:
+def _summary_base_key(owner_type: str, owner_id: int) -> str:
     return f"stockpile:assets:summary:{owner_type}:{owner_id}"
 
 
+def _summary_key(owner_type: str, owner_id: int) -> str:
+    """Language-scoped key. The payload embeds TRANSLATED prose (``kind_display`` — a
+    ``get_kind_display()`` label, plus the unresolved-location fallbacks), so a single
+    shared key would serve whichever language happened to fill the cache to every other
+    user for the whole TTL."""
+    return i18n_cache_key(_summary_base_key(owner_type, owner_id))
+
+
 def invalidate_assets_cache(owner_type: str, owner_id: int) -> None:
-    """Drop the cached asset summary for an owner (called after a sync writes new rows)."""
+    """Drop the cached asset summary for an owner, in EVERY language.
+
+    The summary is now cached per language, but a sync changes the underlying rows for
+    all of them at once. Deleting only the *active* language's key (the language of the
+    task/request that ran the sync — usually English on a Celery worker) would leave the
+    other locales serving pre-sync numbers for the rest of the 15-minute TTL. So we
+    rebuild each language's key and delete the whole set in one round trip.
+
+    The sweep is over ``settings.LANGUAGES`` (the full framework set), not the currently
+    *enabled* locales: a locale that was enabled when the entry was written and has since
+    been switched off would otherwise leave an orphaned, never-busted entry behind.
+    """
     from django.core.cache import cache
 
-    cache.delete(_summary_key(owner_type, owner_id))
+    keys = []
+    for code, _label in settings.LANGUAGES:
+        with translation.override(code):
+            keys.append(_summary_key(owner_type, owner_id))
+    cache.delete_many(keys)
 
 
 def assets_summary(owner_type: str, owner_id: int) -> dict:
@@ -304,9 +328,9 @@ def _build_assets_summary(owner_type: str, owner_id: int) -> dict:
             # Assets whose location couldn't be resolved (an unreadable structure) sit in the
             # null bucket. Use 0 as the id in the lazy-load URL — asset_location_items maps 0
             # back to a location__isnull filter so expanding this card still shows its items.
-            name, system_id, kind_display = "Unknown location", None, ""
+            name, system_id, kind_display = _("Unknown location"), None, ""
         else:
-            name, system_id, kind_display = f"Location {loc_id}", None, ""
+            name, system_id, kind_display = _("Location %(id)s") % {"id": loc_id}, None, ""
         locations.append({
             "location_id": loc_id or 0,
             "name": name,

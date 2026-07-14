@@ -12,14 +12,18 @@ excluded, so the numbers match what the leaderboards already show.
 """
 from __future__ import annotations
 
-import calendar
-from datetime import UTC, timedelta
+from datetime import UTC, date, timedelta
 
 from django.conf import settings
 from django.core.cache import cache
 from django.db.models import Count, Sum
 from django.db.models.functions import ExtractHour, ExtractIsoWeekDay, TruncDate, TruncMonth
-from django.utils import timezone
+from django.utils import formats, timezone, translation
+from django.utils.dates import WEEKDAYS_ABBR
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
+
+from core.i18n import enabled_locales, i18n_cache_key
 
 from .leaderboards import danger_rating
 from .models import Killmail, KillmailParticipant, SecBand
@@ -66,12 +70,22 @@ def _month_buckets(n: int) -> list[tuple[int, int]]:
     now = timezone.now()
     y, m = now.year, now.month
     out: list[tuple[int, int]] = []
-    for _ in range(n):
+    for _i in range(n):
         out.append((y, m))
         m -= 1
         if m == 0:
             m, y = 12, y - 1
     return list(reversed(out))
+
+
+def _month_label(year: int, month: int) -> str:
+    """``"Jul 26"`` — the chart's month-axis tick, localised.
+
+    NOT ``calendar.month_abbr``: that comes from the C library's locale and would stay
+    English under every ``translation.override``. ``date_format(..., "M")`` renders from
+    Django's own (translated) month names, and is byte-identical to ``%b`` under English.
+    """
+    return formats.date_format(date(year, month, 1), "M y")
 
 
 def monthly_series(months: int = MONTHS_BACK) -> dict:
@@ -104,7 +118,7 @@ def monthly_series(months: int = MONTHS_BACK) -> dict:
     labels, kills, losses, isk_destroyed, isk_lost = [], [], [], [], []
     for (y, m) in buckets:
         d = by_key[(y, m)]
-        labels.append(f"{calendar.month_abbr[m]} {str(y)[2:]}")
+        labels.append(_month_label(y, m))
         kills.append(d["kills"])
         losses.append(d["losses"])
         isk_destroyed.append(d["isk_destroyed"])
@@ -208,8 +222,14 @@ def activity_heatmap(days: int = HEATMAP_DAYS) -> dict:
 
 
 def _heatmap_cells(grid: list[list[int]]) -> dict:
-    """Wrap a 7x24 count grid with template-friendly cells + intensity levels."""
-    labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    """Wrap a 7x24 count grid with template-friendly cells + intensity levels.
+
+    Day names come from Django's ``WEEKDAYS_ABBR`` (0=Mon, already translated by the
+    framework's own catalogues) rather than a hard-coded English list; ``str()`` freezes
+    each lazy proxy to a plain string, because this grid is cached under a language-scoped
+    key and must not re-resolve in a reader's locale at unpickle time.
+    """
+    labels = [str(WEEKDAYS_ABBR[d]) for d in range(7)]
     peak = max((max(row) for row in grid), default=0)
     cells = [
         {
@@ -322,8 +342,13 @@ def _alltime_breakdowns(*, use_cache: bool = True, refresh: bool = False) -> dic
     ``refresh=True`` recomputes and re-caches even on a hit — used by the warmer.
     Keys mirror the slice of ``dashboard()`` they feed, so the composed payload is
     byte-for-byte identical to the pre-split version.
+
+    Language-scoped key: mostly SDE names and counts, but the ship-class breakdown carries
+    our "Other" bucket and the security breakdown our "Unknown" band — both translated. It
+    also feeds straight into ``dashboard()``, which is language-scoped, so leaving this one
+    shared would just re-import the bug one level down.
     """
-    key = f"kb:stats:alltime:{CACHE_VERSION}:{_home()}"
+    key = i18n_cache_key(f"kb:stats:alltime:{CACHE_VERSION}:{_home()}")
     if use_cache and not refresh:
         cached = cache.get(key)
         if cached is not None:
@@ -349,8 +374,10 @@ def dashboard(*, use_cache: bool = True, refresh: bool = False) -> dict:
     all-time breakdowns are pulled from their own longer-lived cache (refreshed on
     a slower cadence) so the 5-min warm only recomputes the fresh 12-month/heatmap
     half; on a cold all-time cache they're computed here so output never degrades.
+
+    Language-scoped key: month-axis labels, heatmap day names and the danger label are prose.
     """
-    key = f"kb:stats:{CACHE_VERSION}:{_home()}"
+    key = i18n_cache_key(f"kb:stats:{CACHE_VERSION}:{_home()}")
     if use_cache and not refresh:
         cached = cache.get(key)
         if cached is not None:
@@ -388,14 +415,17 @@ def _class_rows(role: str, limit: int = 8) -> list[dict]:
         .annotate(n=Count("killmail_id"))
     )
     gmap = _group_names([r["victim_ship_type_id"] for r in rows])
+    # Ship-class names themselves are SDE group names — official CCP game data, English by
+    # policy (Category A) — so they are never marked. The "Other" bucket label is ours.
+    other = _("Other")
     agg: dict[str, int] = {}
     for r in rows:
-        cls = gmap.get(r["victim_ship_type_id"]) or "Other"
+        cls = gmap.get(r["victim_ship_type_id"]) or other
         agg[cls] = agg.get(cls, 0) + r["n"]
     out = sorted(({"name": k, "count": v} for k, v in agg.items()), key=lambda x: -x["count"])
     head, tail = out[:limit], out[limit:]
     if tail:
-        head.append({"name": "Other", "count": sum(x["count"] for x in tail)})
+        head.append({"name": other, "count": sum(x["count"] for x in tail)})
     return head
 
 
@@ -484,7 +514,7 @@ def pilot_monthly(character_id: int, months: int = MONTHS_BACK) -> dict:
     lmap = {(r["month"].year, r["month"].month): r["n"] for r in losses}
     labels, k, lo = [], [], []
     for (y, m) in buckets:
-        labels.append(f"{calendar.month_abbr[m]} {str(y)[2:]}")
+        labels.append(_month_label(y, m))
         k.append(kmap.get((y, m), 0))
         lo.append(lmap.get((y, m), 0))
     return {"labels": labels, "kills": k, "losses": lo}
@@ -575,8 +605,11 @@ def pilot_systems(character_id: int, limit: int = TOP_SYSTEMS) -> list[dict]:
 
 
 def pilot_analytics(character_id: int, *, use_cache: bool = True) -> dict:
-    """All per-pilot charts: combat card, monthly trend, ships, heatmap, systems."""
-    key = f"kb:pilot:{CACHE_VERSION}:{character_id}"
+    """All per-pilot charts: combat card, monthly trend, ships, heatmap, systems.
+
+    Language-scoped key: the card's danger label, the month axis and the heatmap day names.
+    """
+    key = i18n_cache_key(f"kb:pilot:{CACHE_VERSION}:{character_id}")
     if use_cache:
         cached = cache.get(key)
         if cached is not None:
@@ -602,6 +635,12 @@ def pilot_analytics(character_id: int, *, use_cache: bool = True) -> dict:
 # Geographic star maps need per-system coordinates the SDE import doesn't carry,
 # so this security-band breakdown is the honest, data-backed answer to "where do
 # we fight" (highsec / lowsec / nullsec / wormhole / …).
+#
+# The six space-type names are PROTECTED EVE terminology (highsec / lowsec / nullsec are
+# Category B in core/i18n/data/protected-terms.yml; Pochven is a Category A region name).
+# The policy requires them verbatim in every locale, so marking them would buy nothing and
+# would only set a terminology-lint trap for a translator who "helpfully" localises one.
+# "Unknown" is ours, and is prose — it is marked (lazily; module-level constant).
 _SEC_BANDS = [
     (SecBand.HIGHSEC, "Highsec"),
     (SecBand.LOWSEC, "Lowsec"),
@@ -609,7 +648,7 @@ _SEC_BANDS = [
     (SecBand.WORMHOLE, "Wormhole"),
     (SecBand.POCHVEN, "Pochven"),
     (SecBand.ABYSSAL, "Abyssal"),
-    (SecBand.UNKNOWN, "Unknown"),
+    (SecBand.UNKNOWN, gettext_lazy("Unknown")),
 ]
 
 
@@ -620,7 +659,10 @@ def _band_rows(role: str) -> list[dict]:
         .values("sec_band")
         .annotate(n=Count("killmail_id"))
     }
-    return [{"name": label, "count": counts[key]} for key, label in _SEC_BANDS if counts.get(key)]
+    # str(): resolve the lazy label now — this row lands in a language-scoped cache entry.
+    return [
+        {"name": str(label), "count": counts[key]} for key, label in _SEC_BANDS if counts.get(key)
+    ]
 
 
 def security_breakdown() -> dict:
@@ -709,8 +751,11 @@ def killfeed_overview(*, use_cache: bool = True, refresh: bool = False) -> dict:
     Memoised briefly — this rides the hot path of the public killfeed, but the
     figures (and the leaderboards it reuses) are already public on the rankings
     page, so nothing new is exposed. ``refresh=True`` re-caches on a hit (warmer).
+
+    Language-scoped key: the danger label plus the top-killer rows lifted out of the
+    (translated) leaderboards payload, which carry a per-row prose caption.
     """
-    key = f"kb:feed:{CACHE_VERSION}:{_home()}"
+    key = i18n_cache_key(f"kb:feed:{CACHE_VERSION}:{_home()}")
     if use_cache and not refresh:
         cached = cache.get(key)
         if cached is not None:
@@ -746,7 +791,12 @@ def _alltime_due() -> bool:
     dashboard refresh to a slower cadence than the 5-min warm tick, without needing a
     separate beat entry. The marker TTL is shorter than ``ALLTIME_TTL`` so the all-time
     cache is always re-warmed before it can lapse; if it ever does, ``dashboard()``
-    still recomputes it on a miss, so output is never stale-broken."""
+    still recomputes it on a miss, so output is never stale-broken.
+
+    Deliberately NOT language-scoped: it holds no payload at all, just a boolean marker.
+    ``warm_caches`` calls it once per tick and applies the one decision to every language,
+    so all locales refresh their all-time slice on the same cadence.
+    """
     key = f"kb:stats:alltime:warmed:{CACHE_VERSION}:{_home()}"
     if cache.get(key) is not None:
         return False
@@ -754,27 +804,58 @@ def _alltime_due() -> bool:
     return True
 
 
+def warm_languages() -> list[str]:
+    """The locales the warmer fills.
+
+    ``enabled_locales()`` — not the raw ``settings.LANGUAGES`` — because that is exactly the
+    set ``core.i18n.resolve_language`` can ever activate for a request (it validates every
+    candidate against this allow-list, and English is always in it). Warming a locale that
+    leadership has not switched on would burn a full recompute of every board, every five
+    minutes, for a language no user can be served in. Invalidation is the mirror case and
+    does sweep all of ``settings.LANGUAGES``: deletes are cheap, and a locale switched off
+    after it was cached still has to be cleaned up.
+    """
+    return enabled_locales()
+
+
 def warm_caches() -> int:
     """Recompute and re-cache the public killboard read paths so visitors never
     pay a cold computation. Called on a schedule (config/celery.py) more often
     than CACHE_TTL, so the dashboard / killfeed / rankings stay warm continuously.
+
+    Every payload below is language-scoped, so the warm has to run once per enabled locale
+    under ``translation.override``. Without that loop the warmer (a Celery task, which runs
+    under the default locale) would only ever fill the ``:en`` keys and every non-English
+    reader would take the cold-path recompute on each request. Returns the number of entries
+    warmed (across all locales).
     """
     from .leaderboards import corp_combat_roster, leaderboards
 
-    # Leaderboard windows first — killfeed_overview reuses the "7d" board.
-    for window in WARM_WINDOWS:
-        leaderboards(window, refresh=True)
-    # Refresh the heavy all-time dashboard breakdowns on a slower (~15 min) cadence;
-    # dashboard() then reuses that warm slice instead of recomputing it every tick.
-    if _alltime_due():
-        _alltime_breakdowns(refresh=True)
-    dashboard(refresh=True)
-    killfeed_overview(refresh=True)
-    # The corp roster and the officer loss-impact board are all-time reads too;
-    # keep them warm so no member/officer pays the cold recompute after a TTL lapse.
-    corp_combat_roster(refresh=True)
+    # One throttle decision per tick, shared by every locale — so they stay in lockstep
+    # instead of one language claiming the marker and the rest skipping their refresh.
+    alltime_due = _alltime_due()
+
+    warmed = 0
+    for code in warm_languages():
+        with translation.override(code):
+            # Leaderboard windows first — killfeed_overview reuses the "7d" board.
+            for window in WARM_WINDOWS:
+                leaderboards(window, refresh=True)
+            # Refresh the heavy all-time dashboard breakdowns on a slower (~15 min) cadence;
+            # dashboard() then reuses that warm slice instead of recomputing it every tick.
+            if alltime_due:
+                _alltime_breakdowns(refresh=True)
+            dashboard(refresh=True)
+            killfeed_overview(refresh=True)
+            # The corp roster is an all-time read too; keep it warm so no member pays the
+            # cold recompute after a TTL lapse.
+            corp_combat_roster(refresh=True)
+            warmed += 3 + len(WARM_WINDOWS)
+
+    # The officer loss-impact board is language-neutral (ids, counts, DB doctrine names), so
+    # it has ONE key — warm it once, outside the loop, not nine times over the same key.
     loss_impact_summary(refresh=True)
-    return 3 + len(WARM_WINDOWS)
+    return warmed + 1
 
 
 def loss_impact_summary(days: int = 90, *, use_cache: bool = True, refresh: bool = False) -> dict:
@@ -786,6 +867,11 @@ def loss_impact_summary(days: int = 90, *, use_cache: bool = True, refresh: bool
 
     Memoized like the sibling dashboard aggregates so the officer request path never
     pays the full deviation scan. ``refresh=True`` re-caches on a hit (warmer).
+
+    The key is deliberately NOT language-scoped: the payload is ids, counts and doctrine
+    NAMES read from the DB (leader-authored content, not gettext strings) — no translated
+    prose anywhere. Language-keying it would multiply this entry by the number of locales
+    for nine byte-identical copies.
     """
     from collections import Counter, defaultdict
 

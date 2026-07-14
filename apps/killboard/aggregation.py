@@ -15,7 +15,6 @@ so the ordering column can't leak into the GROUP BY and inflate the counts.
 """
 from __future__ import annotations
 
-import calendar
 from collections import defaultdict
 from datetime import UTC, datetime
 
@@ -23,7 +22,9 @@ from django.conf import settings
 from django.core.cache import cache
 from django.db.models import Count, Q, Sum
 from django.db.models.functions import TruncDate
-from django.utils import timezone
+from django.utils import formats, timezone, translation
+
+from core.i18n import i18n_cache_key
 
 from .models import Killmail, KillmailParticipant, MonthlyPilotKillStat
 
@@ -244,23 +245,47 @@ def refresh_current_months(n_months: int = 2) -> int:
 # --------------------------------------------------------------------------- #
 #  Cache invalidation
 # --------------------------------------------------------------------------- #
-def _hist_key(year: int, month: int | None) -> str:
+def _hist_base_key(year: int, month: int | None) -> str:
     return f"kb:hist:{CACHE_VERSION}:{_home()}:{year}:{month or 0}"
 
 
+def _hist_key(year: int, month: int | None) -> str:
+    """Language-scoped: a historical board embeds prose (the period label with its month
+    name, the eight category titles/subtitles, each row's caption)."""
+    return i18n_cache_key(_hist_base_key(year, month))
+
+
 def invalidate_period_cache(year: int, month: int | None = None) -> None:
-    """Drop cached historical boards for a period. A month rebuild also busts the
-    whole-year aggregate (year totals include that month)."""
-    cache.delete(_hist_key(year, month))
-    cache.delete(_hist_key(year, None))  # the year-total board always changes too
-    cache.delete(f"kb:hist_years:{CACHE_VERSION}:{_home()}")
+    """Drop cached historical boards for a period, in EVERY language. A month rebuild also
+    busts the whole-year aggregate (year totals include that month).
+
+    Same reasoning as ``stockpile.assets.invalidate_assets_cache``: the boards are cached per
+    language but a rebuild changes the numbers in all of them, and the rebuild runs in a task
+    under one arbitrary locale. Busting only that one would leave every other locale serving
+    pre-rebuild rankings for the rest of the TTL. ``settings.LANGUAGES`` (the full framework
+    set) is swept, not just the enabled locales, so a locale disabled after it was cached
+    cannot leave an orphaned entry behind.
+
+    ``kb:hist_years`` is a list of ints — no prose — so it keeps its single, unscoped key.
+    """
+    keys = []
+    for code, _label in settings.LANGUAGES:
+        with translation.override(code):
+            keys.append(_hist_key(year, month))
+            keys.append(_hist_key(year, None))  # the year-total board always changes too
+    keys.append(f"kb:hist_years:{CACHE_VERSION}:{_home()}")
+    cache.delete_many(keys)
 
 
 # --------------------------------------------------------------------------- #
 #  Historical rankings (read path)
 # --------------------------------------------------------------------------- #
 def available_years(*, use_cache: bool = True) -> list[int]:
-    """Years with any aggregated data, newest first (for the filter dropdown)."""
+    """Years with any aggregated data, newest first (for the filter dropdown).
+
+    Key left UNSCOPED on purpose: the payload is a list of integers. A year number reads the
+    same in every locale, so language-keying it would just store nine identical lists.
+    """
     key = f"kb:hist_years:{CACHE_VERSION}:{_home()}"
     if use_cache:
         cached = cache.get(key)
@@ -319,7 +344,15 @@ def _merge_period_pilots(year: int, month: int | None) -> list[dict]:
 
 
 def _period_label(year: int, month: int | None) -> str:
-    return f"{calendar.month_name[month]} {year}" if month else str(year)
+    """``"July 2026"`` (or just ``"2026"``), localised.
+
+    NOT ``calendar.month_name`` — the C library's names are locked to the C locale and never
+    translate. ``date_format(..., "F Y")`` uses Django's own translated month names and is
+    byte-identical to the old output under English.
+    """
+    if not month:
+        return str(year)
+    return formats.date_format(datetime(year, month, 1, tzinfo=_EVE_TZ), "F Y")
 
 
 def historical_leaderboards(
@@ -327,13 +360,17 @@ def historical_leaderboards(
 ) -> dict:
     """The same eight boards as the live rankings, for a past calendar month or a
     whole year, read fast from ``MonthlyPilotKillStat``. Same payload shape as
-    ``leaderboards.leaderboards`` so the template renders it unchanged."""
+    ``leaderboards.leaderboards`` so the template renders it unchanged.
+
+    The boards and their category cards are built by the shared ``leaderboards`` helpers, so
+    the prose (titles, subtitles, row captions) is marked and resolved in exactly one place.
+    """
     from .leaderboards import (
-        CATEGORIES,
         EFFICIENCY_MIN_FIGHTS,
         Window,
         _most_valuable_kills,
-        _rank,
+        build_boards,
+        categories_payload,
     )
 
     key = _hist_key(year, month)
@@ -343,24 +380,7 @@ def historical_leaderboards(
             return cached
 
     pilots = _merge_period_pilots(year, month)
-    boards = {
-        "top_killers": _rank(pilots, "kills", secondary=lambda p: f"{p['final_blows']} final blows"),
-        "isk_destroyed": _rank(pilots, "isk_destroyed", secondary=lambda p: f"{p['kills']} kills"),
-        "points": _rank(pilots, "points", secondary=lambda p: f"{p['kills']} kills"),
-        "final_blows": _rank(pilots, "final_blows"),
-        "solo_kills": _rank(pilots, "solo_kills"),
-        "most_active": _rank(pilots, "active_days", secondary=lambda p: f"{p['engagements']} fights"),
-        "isk_lost": _rank(pilots, "isk_lost", secondary=lambda p: f"{p['losses']} losses"),
-        "efficiency": _rank(
-            pilots, "efficiency",
-            predicate=lambda p: (p["kills"] + p["losses"]) >= EFFICIENCY_MIN_FIGHTS,
-            secondary=lambda p: f"{p['kills']}–{p['losses']} K/L",
-        ),
-    }
-    categories = [
-        {"key": k, "title": t, "subtitle": s, "kind": kind, "icon": icon, "rows": boards[k]}
-        for (k, t, s, kind, icon) in CATEGORIES
-    ]
+    categories = categories_payload(build_boards(pilots))
 
     # Biggest single kills in the period — small bounded query on the raw mails.
     start, _ = _period_bounds(year, month or 1)

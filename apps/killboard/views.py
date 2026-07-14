@@ -259,12 +259,18 @@ def killboard_rankings(request: HttpRequest) -> HttpResponse:
     ``?year=2026`` (optionally ``&month=7``) shows the historical rankings for that
     calendar period, read fast from the monthly aggregate.
     """
-    import calendar
+    from datetime import date
 
-    from django.utils import timezone
+    from django.utils import formats, timezone
+    from django.utils.dates import MONTHS
 
     from . import aggregation
     from .leaderboards import active_ladder, leaderboards, pilot_combat_card, window_choices
+
+    def _period_label(y: int, m: int) -> str:
+        # Django's month names, not calendar.month_abbr: the C library's names never
+        # translate. Byte-identical to the old "%b %Y" output under English.
+        return formats.date_format(date(y, m, 1), "M Y")
 
     now_year = timezone.now().year
     # EVE launched in 2003 — no killboard history predates it. Bounding the year
@@ -290,9 +296,9 @@ def killboard_rankings(request: HttpRequest) -> HttpResponse:
             pm, py = (12, sel_year - 1) if sel_month == 1 else (sel_month - 1, sel_year)
             nm, ny = (1, sel_year + 1) if sel_month == 12 else (sel_month + 1, sel_year)
             if py >= min_rank_year:
-                prev_period = {"year": py, "month": pm, "label": f"{calendar.month_abbr[pm]} {py}"}
+                prev_period = {"year": py, "month": pm, "label": _period_label(py, pm)}
             if ny <= now_year:
-                next_period = {"year": ny, "month": nm, "label": f"{calendar.month_abbr[nm]} {ny}"}
+                next_period = {"year": ny, "month": nm, "label": _period_label(ny, nm)}
         else:
             if sel_year - 1 >= min_rank_year:
                 prev_period = {"year": sel_year - 1, "month": "", "label": str(sel_year - 1)}
@@ -326,7 +332,9 @@ def killboard_rankings(request: HttpRequest) -> HttpResponse:
             "sel_year": sel_year,
             "sel_month": sel_month,
             "available_years": aggregation.available_years(),
-            "month_names": [(i, calendar.month_name[i]) for i in range(1, 13)],
+            # django.utils.dates.MONTHS is a 1-indexed dict of translated month names —
+            # calendar.month_name would emit English in every locale.
+            "month_names": [(i, str(MONTHS[i])) for i in range(1, 13)],
             "prev_period": prev_period,
             "next_period": next_period,
         },
