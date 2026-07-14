@@ -77,12 +77,17 @@ jobs:
       - name: Django system check
         run: python manage.py check
       - name: Compile message catalogues
-        # Fails the build on a malformed .po — a broken locale must never ship
-        # silently (docs/i18n/design/11-catalogue-maintenance.md). A harmless no-op
-        # until the first catalogues land. The catalogue-freshness gate
-        # (makemessages --all --no-obsolete + a clean git diff) and the terminology
-        # linter over locale/**/*.po are enabled alongside the initial extracted
-        # catalogues in Phase 2.
+        # Fails the build on a malformed .po — a broken locale must never ship silently
+        # (docs/i18n/design/11-catalogue-maintenance.md).
+        #
+        # The other two i18n gates run inside `pytest` below, so they need nothing here:
+        #   * catalogue freshness — tests/test_i18n_catalogue_freshness.py re-extracts into a
+        #     scratch tree and compares the (msgctxt, msgid) SET, so a string marked in the code
+        #     but never extracted fails the build. Comparing identities rather than file bytes is
+        #     what makes it immune to the gettext-version formatting drift that kept this gate
+        #     deferred. It needs the gettext installed above.
+        #   * terminology — tests/test_i18n_terminology.py lints every committed catalogue against
+        #     core/i18n/data/protected-terms.yml.
         run: python manage.py compilemessages
       - name: Run tests
         run: pytest -q
