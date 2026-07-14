@@ -108,8 +108,8 @@ def test_my_readiness_ranks_and_builds_plan(client, django_user_model, sde):
 
 @pytest.mark.django_db
 def test_my_readiness_member_only(client, django_user_model, sde):
-    # /doctrines follows the "Ships & doctrines" audience (default corp), so anonymous
-    # and logged-in outsiders get the audience gate's 404.
-    assert client.get("/doctrines/my-readiness/").status_code == 404  # anon
+    # /doctrines follows the "Ships & doctrines" audience (default corp). A signed-out
+    # visitor is sent to log in; a logged-in outsider gets the audience gate's 404.
+    assert client.get("/doctrines/my-readiness/").status_code == 302  # anon -> log in
     client.force_login(django_user_model.objects.create(username="outsider"))
     assert client.get("/doctrines/my-readiness/").status_code == 404  # non-member

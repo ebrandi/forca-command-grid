@@ -42,8 +42,9 @@ def test_fit_export_eft_follows_doctrine_audience(client, django_user_model, sde
     cache.clear()
     set_feature_audiences({"doctrines": "corp"})  # corp-only (the default)
 
-    # Anonymous / logged-in outsider -> outside the corp audience -> 404.
-    assert client.get(f"/doctrines/fits/{fit.id}/export/").status_code == 404
+    # Anonymous -> sent to log in (we do not know who they are yet).
+    assert client.get(f"/doctrines/fits/{fit.id}/export/").status_code == 302
+    # Logged-in outsider -> outside the corp audience -> 404, leaking nothing.
     client.force_login(django_user_model.objects.create(username="x"))
     assert client.get(f"/doctrines/fits/{fit.id}/export/").status_code == 404
     # Member -> the raw EFT text.

@@ -371,8 +371,33 @@ class FeatureGateMiddleware:
         # Audience-controlled features 404 for anyone outside their audience (not just
         # when fully disabled); plain features 404 only when turned off.
         if feature in AUDIENCE_FEATURES:
-            if not feature_visible_to(feature, getattr(request, "user", None)):
-                raise Http404(_("This feature is not available."))
+            user = getattr(request, "user", None)
+            if feature_visible_to(feature, user):
+                return None
+            if self._should_ask_for_login(feature, user):
+                from django.contrib.auth.views import redirect_to_login
+
+                return redirect_to_login(request.get_full_path())
+            raise Http404(_("This feature is not available."))
         elif not feature_enabled(feature):
             raise Http404(_("This feature is not enabled for this corporation."))
         return None
+
+    @staticmethod
+    def _should_ask_for_login(feature: str, user) -> bool:
+        """Is this visitor outside the audience only because we do not know who they are?
+
+        A signed-out pilot fails every audience except ``public``, and this gate runs in
+        ``process_view`` — before the view's own ``@login_required`` ever gets a chance. So a
+        member who follows a link to a corp-only page while logged out used to be told the
+        page does not exist, with no way to discover that logging in would have shown it.
+        Send them to log in instead; if they are still outside the audience afterwards they
+        get the 404, so we go on telling *identified* outsiders nothing.
+
+        A ``disabled`` audience is different in kind: the feature is off for everybody, so
+        authenticating cannot change the answer and a login round-trip would be a lie. That
+        stays a 404.
+        """
+        if getattr(user, "is_authenticated", False):
+            return False
+        return feature_audience(feature) != AUDIENCE_DISABLED

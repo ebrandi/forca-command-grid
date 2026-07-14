@@ -125,9 +125,11 @@ def test_navigation_public_reachable_by_anon(client):
 
 
 @pytest.mark.django_db
-def test_navigation_corp_404s_anon_but_200s_member(client, django_user_model):
+def test_navigation_corp_sends_anon_to_login_but_200s_member(client, django_user_model):
+    """Narrowing a public feature to corp does not make it vanish for signed-out pilots —
+    it asks them to identify themselves (tests/test_feature_gate_anonymous_login.py)."""
     set_feature_audiences({"navigation": AUDIENCE_CORP})
-    assert client.get(reverse("navigation:route_planner")).status_code == 404
+    assert client.get(reverse("navigation:route_planner")).status_code == 302
     client.force_login(_member(django_user_model, 10))
     assert client.get(reverse("navigation:route_planner")).status_code == 200
 

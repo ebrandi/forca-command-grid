@@ -44,9 +44,9 @@ def test_dashboard_requires_login(client):
 @pytest.mark.django_db
 def test_doctrines_are_member_only(client, django_user_model):
     """Doctrines default to the 'corp' audience (Ships & doctrines feature): only corp
-    members can see them. Anonymous and logged-in outsiders get the audience gate's 404;
-    members get 200. (Leadership can open this to alliance/public on the Features page —
-    see tests/test_feature_audience.py.)
+    members can see them. A signed-out visitor is sent to log in; a logged-in outsider gets
+    the audience gate's 404; members get 200. (Leadership can open this to alliance/public
+    on the Features page — see tests/test_feature_audience.py.)
     """
     from apps.identity.models import RoleAssignment
     from apps.sso.services import ensure_role
@@ -55,11 +55,13 @@ def test_doctrines_are_member_only(client, django_user_model):
     cat = DoctrineCategory.objects.create(key="c", label="C")
     doc = Doctrine.objects.create(name="Shield Ferox", category=cat)
 
-    # Anonymous -> not in the default corp audience -> 404 (audience gate).
-    assert client.get("/doctrines/").status_code == 404
-    assert client.get(f"/doctrines/{doc.pk}/").status_code == 404
+    # Anonymous -> we do not know who they are yet, so ask them to log in rather than
+    # claim the page does not exist (tests/test_feature_gate_anonymous_login.py).
+    assert client.get("/doctrines/").status_code == 302
+    assert client.get(f"/doctrines/{doc.pk}/").status_code == 302
 
-    # Logged-in but not a corp member -> also 404 under the default corp audience.
+    # Logged-in but not a corp member -> 404 under the default corp audience. They HAVE
+    # identified themselves, so the answer is a real "not for you", and we leak nothing.
     outsider = django_user_model.objects.create(username="outsider")
     client.force_login(outsider)
     assert client.get("/doctrines/").status_code == 404
