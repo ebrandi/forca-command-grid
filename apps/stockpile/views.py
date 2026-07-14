@@ -15,7 +15,7 @@ from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET, require_POST
 
 from apps.sde.models import SdeType
-from core import rbac
+from core import pilots, rbac
 from core.audit import audit_log, client_ip
 from core.rbac import role_required
 
@@ -29,7 +29,8 @@ def _character_ids(user) -> set[int]:
 
 
 def _main_character_id(user):
-    char = user.characters.filter(is_main=True).first() or user.characters.first()
+    """The pilot whose assets 'my assets' means — the ACTIVE one (LP-3)."""
+    char = pilots.acting_pilot(user)
     return char.character_id if char else None
 
 

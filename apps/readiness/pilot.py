@@ -420,8 +420,8 @@ def _persist(user, character, overall, facets, recos) -> None:
             "priority": r["priority"], "points": r["points"], "action_url": r["action_url"],
         }
         obj, created = PilotRecommendation.objects.get_or_create(
-            user=user, category=r["category"], ref_type=r["ref_type"], ref_id=r["ref_id"],
-            defaults=display,
+            user=user, character_id=character.character_id, category=r["category"],
+            ref_type=r["ref_type"], ref_id=r["ref_id"], defaults=display,
         )
         if not created:
             # Refresh the display fields but PRESERVE the pilot's state/snooze.
@@ -431,6 +431,10 @@ def _persist(user, character, overall, facets, recos) -> None:
 
     # An OPEN recommendation no longer generated means its gap closed (e.g. the pilot
     # trained the doctrine) → drop it. done/dismissed are kept (state preserved).
-    for obj in PilotRecommendation.objects.filter(user=user, state=PilotRecommendation.State.OPEN):
+    # …and only THIS pilot's (LP-3): an account-wide sweep would delete every other pilot's
+    # open recommendations each time one pilot's quest log regenerated.
+    for obj in PilotRecommendation.objects.filter(
+        user=user, character_id=character.character_id, state=PilotRecommendation.State.OPEN
+    ):
         if (obj.category, obj.ref_type, obj.ref_id) not in seen:
             obj.delete()

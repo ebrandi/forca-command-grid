@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from django.utils.translation import gettext as _
 
+from core import pilots
+
 
 def pilot_briefing(user) -> dict:
     """What changed / what to do, for one pilot — their own data only.
@@ -19,10 +21,17 @@ def pilot_briefing(user) -> dict:
     """
     from django.core.cache import cache
 
-    # v2: item kinds changed with the Daily Briefing merge (task_open split out of
-    # task) — the version bump keeps stale pre-merge digests out of the new
-    # partition logic across a deploy.
-    cache_key = f"briefing:pilot:v2:{user.pk}"
+    # v3: keyed by the PILOT, not the account (LP-3). This digest is one pilot's — their next
+    # operation, their leverage skill, their closest doctrine — and under a per-account key a
+    # user who switched pilots was served the previous pilot's advice for the rest of the TTL.
+    # Also language-keyed: the digest is rendered gettext PROSE, and it is warmed from a Celery
+    # worker with no language activated, so a plain key served the warmer's English to every
+    # non-English reader for 600s (core.i18n.i18n_cache_key — the rule every other prose cache
+    # in this repo already follows).
+    from core.i18n import i18n_cache_key
+
+    pilot = pilots.acting_pilot(user)
+    cache_key = i18n_cache_key(f"briefing:pilot:v3:{pilot.character_id if pilot else 0}")
     cached = cache.get(cache_key)
     if cached is not None:
         return cached
@@ -34,7 +43,7 @@ def pilot_briefing(user) -> dict:
     from apps.tasks.models import Task
 
     characters = list(user.characters.all())
-    main = next((c for c in characters if c.is_main), characters[0] if characters else None)
+    main = pilot
     char_ids = [c.character_id for c in characters]
 
     items: list[dict] = []

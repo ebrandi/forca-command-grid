@@ -26,6 +26,7 @@ from apps.logistics.jumps import effective_range, is_cyno_capable, jump_plan_mul
 from apps.logistics.routing import RouteUnavailable, route_plan_multi, security_band
 from apps.logistics.ships import ShipProfile
 from apps.sde.models import SdeSolarSystem
+from core import pilots
 
 from .highsec_exit import pair_entry_exit, rank_exits
 from .route_mode import RouteMode, resolve_route_mode
@@ -52,9 +53,10 @@ def jump_skills_for_user(user) -> dict | None:
 
     if not user or not getattr(user, "is_authenticated", False):
         return None
-    # user.main_character reads only this user's own characters (is_main → first),
-    # so the lookup is inherently ownership-scoped — no cross-user leak (review LOW-1).
-    char = getattr(user, "main_character", None)
+    # acting_pilot reads only this user's own pilots, so the lookup is inherently
+    # ownership-scoped — no cross-user leak (review LOW-1) — and it follows the pilot the
+    # user is actually flying, whose jump skills are the ones that decide the range (LP-3).
+    char = pilots.acting_pilot(user)
     if char is None:
         return None
     snap = (

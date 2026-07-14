@@ -18,7 +18,7 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
-from core import rbac
+from core import pilots, rbac
 from core.audit import audit_log, client_ip
 from core.rbac import role_required
 
@@ -107,12 +107,8 @@ def submit_offer(request: HttpRequest) -> HttpResponse:
         messages.error(request, _("Run an appraisal first, then post it."))
         return redirect("buyback:appraisal")
 
-    from apps.sso.models import EveCharacter
 
-    main = (
-        EveCharacter.objects.filter(user=request.user, is_main=True).first()
-        or EveCharacter.objects.filter(user=request.user).first()
-    )
+    main = pilots.acting_pilot(request.user)  # LP-3: the pilot the user is FLYING, not the account's main.
     jita_total = Decimal(pending.get("jita_total", "0"))
     offer_total = Decimal(pending.get("offer_total", "0"))
     # jita_total/offer_total are DecimalField(max_digits=20, decimal_places=2), so
@@ -199,12 +195,8 @@ def buy_offer(request: HttpRequest, pk: int) -> HttpResponse:
         messages.error(request, _("You can't buy your own lot."))
         return redirect("buyback:board")
 
-    from apps.sso.models import EveCharacter
 
-    main = (
-        EveCharacter.objects.filter(user=request.user, is_main=True).first()
-        or EveCharacter.objects.filter(user=request.user).first()
-    )
+    main = pilots.acting_pilot(request.user)  # LP-3: the pilot the user is FLYING, not the account's main.
     # Atomic reserve: only one buyer can win the OPEN→PURCHASED transition.
     bought = BuybackOffer.objects.filter(pk=pk, status=BuybackOffer.Status.OPEN).update(
         status=BuybackOffer.Status.PURCHASED,
@@ -302,7 +294,6 @@ def config(request: HttpRequest) -> HttpResponse:
 def guaranteed_request(request: HttpRequest) -> HttpResponse:
     """A member asks the corp to guarantee-buy the last appraised lot. Inert unless the
     feature is armed + the member is in its audience + the lot is within the per-lot cap."""
-    from apps.sso.models import EveCharacter
 
     from . import guaranteed as gb
 
@@ -313,10 +304,7 @@ def guaranteed_request(request: HttpRequest) -> HttpResponse:
     if not pending or not pending.get("items"):
         messages.error(request, _("Run an appraisal first, then request the corp buyout."))
         return redirect("buyback:appraisal")
-    main = (
-        EveCharacter.objects.filter(user=request.user, is_main=True).first()
-        or EveCharacter.objects.filter(user=request.user).first()
-    )
+    main = pilots.acting_pilot(request.user)  # LP-3: the pilot the user is FLYING, not the account's main.
     jita = Decimal(pending.get("jita_total", "0"))
     quoted = Decimal(pending.get("offer_total", "0"))
     if max(abs(jita), abs(quoted)) >= _MAX_OFFER_TOTAL:

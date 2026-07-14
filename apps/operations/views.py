@@ -12,7 +12,7 @@ from django.utils.translation import gettext as _t
 from django.utils.translation import gettext_lazy, ngettext
 from django.views.decorators.http import require_POST
 
-from core import rbac
+from core import pilots, rbac
 from core.rbac import perm_required, role_required
 
 from . import services
@@ -30,7 +30,8 @@ from .models import (
 
 
 def _main_character(user):
-    return next((c for c in user.characters.all() if c.is_main), user.characters.first())
+    """The pilot signing up / being counted — the ACTIVE one (LP-3)."""
+    return pilots.acting_pilot(user)
 
 
 def _visible_op_or_404(request: HttpRequest, pk: int) -> Operation:

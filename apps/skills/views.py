@@ -10,7 +10,7 @@ from django.utils.translation import ngettext
 from django.views.decorators.http import require_POST
 
 from apps.doctrines.models import Doctrine
-from core import rbac
+from core import pilots, rbac
 from core.audit import audit_log, client_ip
 from core.rbac import role_required
 
@@ -36,7 +36,7 @@ def my_plans(request: HttpRequest) -> HttpResponse:
     characters = list(request.user.characters.all())
     if not characters:
         return redirect("identity:dashboard")
-    main = next((c for c in characters if c.is_main), characters[0])
+    main = pilots.acting_pilot(request.user) or characters[0]
     return redirect("identity:character", character_id=main.character_id)
 
 

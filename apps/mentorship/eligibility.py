@@ -16,6 +16,8 @@ from django.core.cache import cache
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
+from core import pilots
+
 from . import messages as msg
 
 _AGE_TTL = 7 * 24 * 3600      # ESI character public data caches ~7d
@@ -79,11 +81,8 @@ def _fetch_facts(character) -> dict:
 
 
 def _pick_character(user):
-    """The character eligibility is judged on: the main, else the first linked."""
-    chars = list(user.characters.all())
-    if not chars:
-        return None
-    return next((c for c in chars if c.is_main), chars[0])
+    """The pilot eligibility is judged on: the one the user is flying (LP-3)."""
+    return pilots.acting_pilot(user)
 
 
 def evaluate(user, program, role: str) -> dict:

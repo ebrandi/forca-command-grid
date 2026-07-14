@@ -16,7 +16,7 @@ from django.utils.translation import ngettext
 from django.views.decorators.http import require_POST
 
 from apps.doctrines.services import readiness_summary_for_character
-from core import rbac
+from core import pilots, rbac
 from core.audit import client_ip
 
 from .services import delete_user_data
@@ -393,7 +393,10 @@ def _dashboard_context(request: HttpRequest) -> dict:
 
     user = request.user
     characters = list(user.characters.select_related("corporation").all())
-    main_character = next((c for c in characters if c.is_main), characters[0] if characters else None)
+    # The pilot this page is ABOUT. It follows the selector, not the account's main: the rail
+    # portrait, the greeting and every panel below must describe the same pilot, or the page is
+    # lying about whose readiness, training and orders these are (LP-3).
+    main_character = pilots.acting_pilot(user)
     char_ids = [c.character_id for c in characters]
 
     # --- The three-page merge: signals + unified quest queue + readiness ------
@@ -456,9 +459,12 @@ def _dashboard_context(request: HttpRequest) -> dict:
         if cache.get(ci_pilot.cache_key(main_character.character_id)) is None:
             from apps.command_intel.models import PilotDirective
 
-            needs_seed = not PilotDirective.objects.filter(user=user).exists()
+            needs_seed = not PilotDirective.objects.filter(
+                user=user, character=main_character
+            ).exists()
             ci_pilot.compute_directives(user, main_character, persist=needs_seed)
-        directives = ci_pilot.open_directives(user)
+        # This pilot's orders, not the account's (LP-3).
+        directives = ci_pilot.open_directives(user, main_character)
 
     recos: list = []
     pilot_readiness = None
@@ -494,7 +500,9 @@ def _dashboard_context(request: HttpRequest) -> dict:
                 payload = {"facets": snap.facets or {}, "overall": snap.overall,
                            "trend": [], "week_delta": None}
             else:
-                needs_seed = not PilotRecommendation.objects.filter(user=user).exists()
+                needs_seed = not PilotRecommendation.objects.filter(
+                    user=user, character_id=main_character.character_id
+                ).exists()
                 payload = compute_pilot(main_character, persist=needs_seed)
         facets = payload["facets"]
         scored = {k: v for k, v in facets.items() if v is not None}
@@ -512,7 +520,8 @@ def _dashboard_context(request: HttpRequest) -> dict:
         }
         recos = list(
             PilotRecommendation.objects.filter(
-                user=user, state=PilotRecommendation.State.OPEN
+                user=user, character_id=main_character.character_id,
+                state=PilotRecommendation.State.OPEN,
             ).filter(Q(snoozed_until__isnull=True) | Q(snoozed_until__lte=tz.now()))
         )
 

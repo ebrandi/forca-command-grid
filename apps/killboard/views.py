@@ -14,7 +14,7 @@ from django.views.decorators.http import require_POST
 
 from apps.sde.models import SdeSolarSystem
 from apps.sde.search import search_systems
-from core import rbac
+from core import pilots, rbac
 from core.audit import audit_log, client_ip
 from core.rbac import role_required
 
@@ -311,10 +311,7 @@ def killboard_rankings(request: HttpRequest) -> HttpResponse:
     # A logged-in member sees their own all-time standing up top — a personal hook.
     my_card = None
     if request.user.is_authenticated:
-        main = (
-            request.user.characters.filter(is_main=True).first()
-            or request.user.characters.first()
-        )
+        main = pilots.acting_pilot(request.user)  # LP-3: my stats = the pilot I am flying
         if main:
             card = pilot_combat_card(main.character_id)
             if card.get("has_record"):

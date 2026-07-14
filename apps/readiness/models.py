@@ -343,9 +343,14 @@ class PilotRecommendation(models.Model):
     class Meta:
         ordering = ["-priority", "-created_at"]
         constraints = [
+            # Scoped to the PILOT, not just the account (LP-3). The row already carried
+            # ``character_id`` — it simply was not part of the identity, so regenerating the
+            # quest log for one pilot upserted over another pilot's rows and the survivor was
+            # shown to whoever asked. Adding it to the key is what makes each pilot's quest log
+            # its own.
             models.UniqueConstraint(
-                fields=["user", "category", "ref_type", "ref_id"],
-                name="uniq_pilot_recommendation_key",
+                fields=["user", "character_id", "category", "ref_type", "ref_id"],
+                name="uniq_pilot_reco_pilot_key",
             ),
         ]
 

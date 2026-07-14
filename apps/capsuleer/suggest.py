@@ -342,7 +342,9 @@ def _near_qual_for(ctx, char, doctrine_id, snap, Doctrine, collect_missing, esti
 
 
 def _main_character(ctx):
-    return getattr(ctx.user, "main_character", None)
+    from core import pilots
+
+    return pilots.acting_pilot(ctx.user)  # LP-3: the pilot the user is FLYING, not the account's main.
 
 
 def gen_event_match(ctx) -> list[Draft]:

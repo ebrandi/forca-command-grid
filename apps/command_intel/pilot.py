@@ -32,15 +32,27 @@ def cache_key(character_id) -> str:
     return f"command_intel:pilot:{character_id}"
 
 
-def open_directives(user) -> list:
-    """The member's currently-actionable directives (OPEN and not snoozed)."""
+def open_directives(user, character=None) -> list:
+    """The currently-actionable directives (OPEN and not snoozed) for ONE pilot.
+
+    Scoped to the pilot (LP-3). A directive is generated from one character's skills, ships and
+    corp standing; showing an alt the orders computed for the main is a merge of pilot-level
+    data, and a confusing one — it tells you to train a skill on a pilot who already has it.
+    """
     from django.db.models import Q
     from django.utils import timezone
 
+    from core import pilots as pilot_ctx
+
+    character = character or pilot_ctx.acting_pilot(user)
+    if character is None:
+        return []
+
     now = timezone.now()
     return list(
-        PilotDirective.objects.filter(user=user, state=PilotDirective.State.OPEN)
-        .filter(Q(snoozed_until__isnull=True) | Q(snoozed_until__lte=now))
+        PilotDirective.objects.filter(
+            user=user, character_id=character.character_id, state=PilotDirective.State.OPEN
+        ).filter(Q(snoozed_until__isnull=True) | Q(snoozed_until__lte=now))
     )
 
 
@@ -191,7 +203,7 @@ def compute_directives(user, character, *, persist: bool = True) -> dict:
     directives = directives[:_MAX_DIRECTIVES]
 
     if persist:
-        _persist(user, directives)
+        _persist(user, character, directives)
 
     payload = {
         "directives": directives,
@@ -203,8 +215,8 @@ def compute_directives(user, character, *, persist: bool = True) -> dict:
     return payload
 
 
-def _persist(user, directives: list[dict]) -> None:
-    """Upsert directives by ``(user, slug)``, preserving state; drop stale OPEN ones."""
+def _persist(user, character, directives: list[dict]) -> None:
+    """Upsert directives by ``(user, character, slug)``, preserving state; drop stale OPEN ones."""
     seen: set[str] = set()
     for d in directives:
         seen.add(d["slug"])
@@ -224,7 +236,7 @@ def _persist(user, directives: list[dict]) -> None:
             "action_url": d.get("action_url", ""),
         }
         obj, created = PilotDirective.objects.get_or_create(
-            user=user, slug=d["slug"], defaults=display,
+            user=user, character=character, slug=d["slug"], defaults=display,
         )
         if not created:
             # Refresh the display fields but PRESERVE the pilot's state/snooze.
@@ -234,6 +246,10 @@ def _persist(user, directives: list[dict]) -> None:
 
     # An OPEN directive no longer generated means its constraint stopped binding → drop it.
     # done/dismissed/snoozed are kept (state preserved).
-    for obj in PilotDirective.objects.filter(user=user, state=PilotDirective.State.OPEN):
+    # …and only THIS pilot's. Sweeping the account's would delete the other pilots' quest logs
+    # on every regeneration, which is how "each pilot keeps their own" quietly stops being true.
+    for obj in PilotDirective.objects.filter(
+        user=user, character=character, state=PilotDirective.State.OPEN
+    ):
         if obj.slug not in seen:
             obj.delete()

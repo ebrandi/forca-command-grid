@@ -15,7 +15,7 @@ from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
 from apps.doctrines.models import DoctrineFit
-from core import rbac
+from core import pilots, rbac
 from core.audit import audit_log, client_ip
 from core.rbac import role_required
 
@@ -388,10 +388,6 @@ def config(request: HttpRequest) -> HttpResponse:
 
 
 def _main_char_id(user):
-    from apps.sso.models import EveCharacter
 
-    char = (
-        EveCharacter.objects.filter(user=user, is_main=True).first()
-        or EveCharacter.objects.filter(user=user).first()
-    )
+    char = pilots.acting_pilot(user)  # LP-3: the pilot the user is FLYING, not the account's main.
     return char.character_id if char else None

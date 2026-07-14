@@ -11,7 +11,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
-from core import rbac
+from core import pilots, rbac
 from core.audit import audit_log, client_ip
 
 from .browse import readiness_sort_key
@@ -46,9 +46,9 @@ def doctrine_list(request: HttpRequest) -> HttpResponse:
     character = None
     if char_id:
         character = next((c for c in characters if str(c.character_id) == char_id), None)
-    character = character or next(
-        (c for c in characters if c.is_main), characters[0] if characters else None
-    )
+    # An explicit ?character= wins (the pilot picker on the page); otherwise the pilot the
+    # user is currently flying — never the account's main, which may not even be in the corp.
+    character = character or pilots.acting_pilot(request.user)
     has_skills = bool(
         character and character.skill_snapshots.filter(is_latest=True).exists()
     )
@@ -154,9 +154,9 @@ def doctrine_ships(request: HttpRequest) -> HttpResponse:
     character = None
     if char_id:
         character = next((c for c in characters if str(c.character_id) == char_id), None)
-    character = character or next(
-        (c for c in characters if c.is_main), characters[0] if characters else None
-    )
+    # An explicit ?character= wins (the pilot picker on the page); otherwise the pilot the
+    # user is currently flying — never the account's main, which may not even be in the corp.
+    character = character or pilots.acting_pilot(request.user)
 
     # When the Corp Store is enabled the Shipyard also prices each fit (Jita sell ×
     # doctrine markup), so it is the one place to browse and order a doctrine ship.
@@ -283,9 +283,9 @@ def doctrine_prep(request: HttpRequest, pk: int) -> HttpResponse:
     character = None
     if char_id:
         character = next((c for c in characters if str(c.character_id) == char_id), None)
-    character = character or next(
-        (c for c in characters if c.is_main), characters[0] if characters else None
-    )
+    # An explicit ?character= wins (the pilot picker on the page); otherwise the pilot the
+    # user is currently flying — never the account's main, which may not even be in the corp.
+    character = character or pilots.acting_pilot(request.user)
     char_ids = [c.character_id for c in characters]
     fits = build_prep(character, doctrine, char_ids) if character else []
     return render(
@@ -403,9 +403,7 @@ def doctrine_readiness(request: HttpRequest, pk: int) -> HttpResponse:
                 ip=client_ip(request),
             )
     if character is None:
-        character = request.user.characters.filter(is_main=True).first() or (
-            request.user.characters.first()
-        )
+        character = pilots.acting_pilot(request.user)
 
     results = []
     if character:

@@ -16,7 +16,7 @@ from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 
 from apps.sde.search import search_systems
-from core import rbac
+from core import pilots, rbac
 from core.audit import audit_log, client_ip
 from core.rbac import role_required
 
@@ -254,11 +254,9 @@ def contracts(request: HttpRequest) -> HttpResponse:
 @role_required(rbac.ROLE_MEMBER)
 @require_POST
 def claim_contract(request: HttpRequest, pk: int) -> HttpResponse:
-    from apps.sso.models import EveCharacter
 
     contract = get_object_or_404(CourierContract, pk=pk)
-    main = EveCharacter.objects.filter(user=request.user, is_main=True).first() or \
-        EveCharacter.objects.filter(user=request.user).first()
+    main = pilots.acting_pilot(request.user)  # LP-3: the pilot the user is FLYING, not the account's main.
     if not main:
         messages.error(request, _("Link an EVE character before claiming hauls."))
         return redirect("logistics:contracts")

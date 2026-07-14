@@ -48,7 +48,14 @@ def warm_briefings() -> int:
         user = character.user
         try:
             if feature_enabled("briefing"):
-                cache.delete(f"briefing:pilot:v2:{user.pk}")
+                # The digest is keyed by PILOT and by language (LP-3). This sweep warms each
+                # account's MAIN — which is what ``pilot_briefing`` resolves to outside a
+                # request — so the key it busts must name that same pilot, not the account.
+                from core.i18n import i18n_cache_key
+
+                cache.delete(
+                    i18n_cache_key(f"briefing:pilot:v3:{character.character_id}")
+                )
                 pilot_briefing(user)
             if feature_enabled("command_intel_pilot"):
                 ci_pilot.compute_directives(user, character, persist=True)

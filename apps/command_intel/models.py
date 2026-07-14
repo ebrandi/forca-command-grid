@@ -487,6 +487,16 @@ class PilotDirective(TimeStampedModel):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="command_intel_directives",
     )
+    # The PILOT this directive was computed for (LP-3). It used to be keyed on the account
+    # alone, while being generated from exactly one character — so the moment a user could fly
+    # more than one pilot, regenerating the quest log for pilot B silently overwrote pilot A's,
+    # and the surviving list was shown to whichever pilot asked. That is a merge of pilot-level
+    # data in the DATABASE, not a cache-key bug: no key can fix a row that only exists once.
+    # Nullable so the migration that adds it is rollback-safe; backfilled to each account's main.
+    character = models.ForeignKey(
+        "sso.EveCharacter", on_delete=models.CASCADE, null=True, blank=True,
+        related_name="command_intel_directives",
+    )
     slug = models.CharField(max_length=160)
     constraint_key = models.CharField(max_length=80, blank=True)
     category = models.CharField(max_length=16, choices=Category.choices, default=Category.SKILL)
@@ -513,9 +523,11 @@ class PilotDirective(TimeStampedModel):
     class Meta:
         ordering = ["-leverage", "-points", "-created_at"]
         constraints = [
-            models.UniqueConstraint(fields=["user", "slug"], name="uniq_ci_directive_user_slug"),
+            models.UniqueConstraint(
+                fields=["user", "character", "slug"], name="uniq_ci_directive_pilot_slug",
+            ),
         ]
-        indexes = [models.Index(fields=["user", "state"])]
+        indexes = [models.Index(fields=["user", "state"]), models.Index(fields=["character", "state"])]
 
     @property
     def is_open(self) -> bool:

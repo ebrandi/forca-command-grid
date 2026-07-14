@@ -5,7 +5,7 @@ import html
 
 from django.utils.translation import gettext as _
 
-from core import rbac
+from core import pilots, rbac
 
 from .models import KbPage
 
@@ -47,9 +47,7 @@ def _readiness_embed(user, doctrine_name: str | None) -> str:
 
     if not doctrine_name:
         return _chip(_("readiness: name a doctrine"))
-    character = next(
-        (c for c in user.characters.all() if c.is_main), user.characters.first()
-    )
+    character = pilots.acting_pilot(user)  # LP-3: the pilot the user is FLYING, not the account's main.
     if character is None:
         return _chip(_("link a character to see your readiness"))
     doctrine = Doctrine.objects.filter(name__iexact=doctrine_name).prefetch_related(

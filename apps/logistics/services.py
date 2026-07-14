@@ -8,6 +8,7 @@ from django.core.cache import cache
 from django.utils import timezone
 
 from apps.sde.models import SdeSolarSystem
+from core import pilots
 
 from .models import Audience, CourierContract, RateCard
 from .pricing import Quote
@@ -153,12 +154,8 @@ def poster_identity(user, kind: str) -> dict:
     Returns ``{kind, id, name}``. ``kind`` is normalised to 'character' unless
     'corporation' is requested and the pilot's corp is known.
     """
-    from apps.sso.models import EveCharacter
 
-    main = (
-        EveCharacter.objects.filter(user=user, is_main=True).select_related("corporation").first()
-        or EveCharacter.objects.filter(user=user).select_related("corporation").first()
-    )
+    main = pilots.acting_pilot(user)  # LP-3: the pilot the user is FLYING, not the account's main.
     if not main:
         return {"kind": "character", "id": None, "name": ""}
     if kind == "corporation" and main.corporation_id:

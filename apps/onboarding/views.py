@@ -8,6 +8,8 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
+from core import pilots
+
 from .models import GlossaryTerm, OnboardingMilestone, OnboardingProgress
 from .services import evaluate_milestones, is_manual, next_actions
 
@@ -32,10 +34,7 @@ def onboarding_dashboard(request: HttpRequest) -> HttpResponse:
     phases: list[dict] = []
     done_count = total_count = 0
     if request.user.is_authenticated:
-        character = (
-            request.user.characters.filter(is_main=True).first()
-            or request.user.characters.first()
-        )
+        character = pilots.acting_pilot(request.user)  # LP-3: the pilot the user is FLYING, not the account's main.
         if character:
             evaluate_milestones(character)
             progress_by_id = {
