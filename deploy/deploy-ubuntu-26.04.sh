@@ -400,19 +400,49 @@ if [[ -x "${APP_SRC}/deploy/stamp-version.sh" ]]; then
     || warn "Could not stamp the build revision; the footer will hide it."
 fi
 
-log "Building and starting the Docker Compose stack"
-as_app docker compose -f "${COMPOSE_FILE}" up -d --build
+# Build, migrate, THEN swap. This script is re-runnable against an existing install, and on
+# a re-run the order matters: starting the new code before migrating runs it against the old
+# schema, and any new column on a hot table then makes every session-bearing request fail
+# ("column ... does not exist") until the migration lands. Migrating on the new image while
+# the old stack still serves shrinks that window to the container swap itself. On a first
+# install there is nothing to serve and no user to affect, so this costs nothing.
+log "Building the application image"
+as_app docker compose -f "${COMPOSE_FILE}" build
+
+log "Starting the data services"
+as_app docker compose -f "${COMPOSE_FILE}" up -d postgres redis
+
+# One-off containers on the NEW image. --no-deps: postgres/redis are already up above.
+run_web_once() { as_app docker compose -f "${COMPOSE_FILE}" run --rm --no-deps -T web "$@"; }
+
+log "Waiting for Postgres to accept connections"
+as_app docker compose -f "${COMPOSE_FILE}" exec -T postgres \
+  sh -c 'for i in $(seq 1 60); do pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" >/dev/null 2>&1 && exit 0; sleep 2; done; exit 1' \
+  || die "Postgres did not become ready — cannot migrate."
 
 # ---------------------------------------------------------------------------
 # 9. First-run application tasks
 # ---------------------------------------------------------------------------
+log "Applying migrations (on the new image, before the app containers start)"
+run_web_once python manage.py migrate --noinput
+
+# Must precede the web container's boot: WhiteNoise's manifest storage 500s on every request
+# if gunicorn starts before the static manifest exists in the shared volume.
+log "Collecting static assets"
+run_web_once python manage.py collectstatic --noinput
+
+log "Starting the application stack"
+as_app docker compose -f "${COMPOSE_FILE}" up -d
+
 log "Waiting for services to become ready"
 as_app bash scripts/wait-for-services.sh 240 || warn "Services slow to start; continuing (check 'docker compose ps')."
 
-run_web() { as_app docker compose -f "${COMPOSE_FILE}" exec -T web "$@"; }
-log "Applying migrations and collecting static assets"
-run_web python manage.py migrate --noinput
-run_web python manage.py collectstatic --noinput
+# nginx caches the web container's IP; after a swap it dials the old one and returns 502
+# until restarted. Always last.
+if as_app docker compose -f "${COMPOSE_FILE}" config --services | grep -qx nginx; then
+  log "Restarting nginx so it picks up the web container's address"
+  as_app docker compose -f "${COMPOSE_FILE}" restart nginx
+fi
 
 if [[ "${SKIP_BOOTSTRAP}" -eq 0 ]]; then
   log "Loading EVE reference data (full SDE + PI + referenced images; can take several minutes)"

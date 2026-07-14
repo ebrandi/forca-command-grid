@@ -75,10 +75,13 @@ sudo ./deploy/deploy-ubuntu-26.04.sh \
    `fail2ban`, and configures `unattended-upgrades`.
 8. Stamps the deployed Git commit (`deploy/stamp-version.sh`) so the application footer
    shows exactly what's running.
-9. Builds and starts the full containerized stack (`docker compose -f
-   docker-compose.prod.yml up -d --build`).
-10. Waits for Postgres, Redis, and the web app to become ready
-    (`scripts/wait-for-services.sh`), then applies migrations and `collectstatic`.
+9. Builds the application image, starts Postgres and Redis, then applies migrations and
+   `collectstatic` **on the new image while the app containers are not yet running**.
+10. Starts the full stack, waits for it to become ready (`scripts/wait-for-services.sh`),
+    and restarts nginx last. The order matters on a **re-run** against an existing install:
+    starting new code before migrating runs it against the old schema, and a new column on a
+    hot table would then fail every session-bearing request until the migration lands. See
+    [Upgrades](./upgrades.md).
 11. Runs the **full SDE + PI + referenced-image bootstrap**
     (`scripts/bootstrap-data.sh`), unless `--skip-bootstrap`.
 12. Ensures a Django superuser exists for the given `--admin-email`.
@@ -108,7 +111,7 @@ cd forca-command-grid
 make setup                        # creates .env from .env.example (never overwrites)
 $EDITOR .env                      # fill in secrets + EVE SSO (see configuration.md)
 
-make deploy                       # build + start the stack, migrate, collectstatic
+make deploy                       # build, migrate, then start the stack (in that order)
 make bootstrap                    # full SDE + PI rulebook + referenced images
 make create-admin EMAIL=you@example.com
 make health                       # confirm everything is up
@@ -118,7 +121,7 @@ make health                       # confirm everything is up
 |---|---|
 | `make setup` | `cp .env.example .env` if `.env` doesn't already exist |
 | `make build` | `docker compose -f docker-compose.prod.yml build` |
-| `make deploy` | `up -d --build`, then waits for services, migrates, and collects static assets |
+| `make deploy` | Builds the image, migrates and collects static on it, and only then starts the stack — see [Upgrades](./upgrades.md) for why that order |
 | `make update` | `scripts/update.sh` — the safe upgrade path (see [Upgrades](./upgrades.md)) |
 | `make migrate` | Applies database migrations |
 | `make collectstatic` | Collects static assets |

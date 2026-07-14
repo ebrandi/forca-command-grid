@@ -28,15 +28,26 @@ setup: ## Create .env from the template if it does not exist
 build: ## Build the production images
 	$(DC) -f $(PROD) build
 
-deploy: ## Build + start the prod stack, then migrate & collectstatic
-	$(DC) -f $(PROD) up -d --build
+deploy: ## Build, migrate, then start the prod stack (in that order — see below)
+	# Order matters. Starting the new code BEFORE migrating runs it against the old schema,
+	# and any new column on a hot table then 500s every session-bearing request until the
+	# migration lands. So: build, bring up only the data services, migrate and collect static
+	# on the new image, and only then swap the app containers. nginx restarts last because it
+	# caches the web container's IP and serves 502s until it is told to look again.
+	$(DC) -f $(PROD) build
+	$(DC) -f $(PROD) up -d postgres redis
+	$(DC) -f $(PROD) exec -T postgres sh -c 'until pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" >/dev/null 2>&1; do sleep 2; done'
+	$(DC) -f $(PROD) run --rm --no-deps -T web python manage.py migrate --noinput
+	$(DC) -f $(PROD) run --rm --no-deps -T web python manage.py collectstatic --noinput
+	$(DC) -f $(PROD) up -d
 	@bash scripts/wait-for-services.sh
-	$(DC) -f $(PROD) exec -T web python manage.py migrate --noinput
-	$(DC) -f $(PROD) exec -T web python manage.py collectstatic --noinput
+	$(DC) -f $(PROD) restart nginx
 	@echo "Deploy complete. Next: 'make bootstrap' (first install) then 'make health'."
 
-rollback: ## Roll back to an earlier revision (REF=v1.0.0 [DUMP=./backups/....sql.gz])
-	@bash scripts/rollback.sh $(REF) $(if $(DUMP),--restore $(DUMP),)
+rollback: ## Roll back to an earlier revision (REF=v1.0.0 [DUMP=./backups/....sql.gz] [DRIFT=1])
+	# A code-only rollback (no DUMP) is refused if the schema it leaves behind has columns the
+	# older code cannot write to — see scripts/rollback.sh. DRIFT=1 overrides that refusal.
+	@bash scripts/rollback.sh $(REF) $(if $(DUMP),--restore $(DUMP),) $(if $(DRIFT),--accept-schema-drift,)
 
 update: ## Pull latest code, rebuild, migrate (safe upgrade path)
 	@bash scripts/update.sh
@@ -121,6 +132,19 @@ dev-logs: ## Tail dev logs
 # precedence over pyproject.toml's [tool.pytest.ini_options] value. Without --ds the
 # suite would run against dev settings and fail trying to reach Redis.
 TEST_DS := --ds=config.settings.test
+
+messages: ## Re-extract translatable strings into locale/<lang>/LC_MESSAGES/django.po
+	# These flags must match tests/test_i18n_catalogue_freshness.py, which re-extracts and
+	# fails the build if a string marked in the code never reached a catalogue. Extracting
+	# differently here would hand you catalogues that CI then rejects.
+	$(DC) -f $(DEV) run --rm --no-deps web python manage.py makemessages --all \
+		--no-obsolete --add-location file --extension py,html \
+		--ignore '.venv/*' --ignore 'staticfiles/*' --ignore 'node_modules/*'
+	@echo "Catalogues updated. Translate the new entries, then run 'make compile-messages'."
+	@echo "Never translate a protected EVE term — see core/i18n/data/protected-terms.yml."
+
+compile-messages: ## Compile the catalogues to .mo (CI and the image build do this too)
+	$(DC) -f $(DEV) run --rm --no-deps web python manage.py compilemessages
 
 lint: ## Run the ruff linter (same checks as CI)
 	$(DC) -f $(DEV) run --rm --no-deps web ruff check .
