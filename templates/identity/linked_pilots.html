@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% load eve i18n %}
+{% block title %}{% translate "Linked Pilots" %} · [FORCA] Command Grid{% endblock %}
+
+{% comment %}The Linked Pilots management page (LP-7).
+
+  Every string here goes through gettext. The explanatory copy is the part people actually read
+  before trusting an identity feature with their alts, so it is translated like everything else
+  — an English paragraph sitting inside a Portuguese page would undo it.
+
+  Terminology: "pilot" throughout (never "character", never "account merge"). EVE terms that CCP
+  does not officially translate — ESI, SSO, corporation, alliance — stay English in every locale
+  and are enforced by the terminology linter.{% endcomment %}
+
+{% block content %}
+<header class="mb-6">
+  <p class="eyebrow">{% translate "Pilot" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Linked Pilots" %}</h1>
+  <p class="mt-2 max-w-2xl text-sm text-muted">
+    {% blocktranslate %}Linking pilots lets you switch between them without logging out. Each pilot keeps their own data, permissions, corporation membership, ESI authorisation and dashboard.{% endblocktranslate %}
+  </p>
+</header>
+
+{# The isolation guarantee, stated where it is load-bearing: people link alts only if they #}
+{# believe the app will not pool them. Say it plainly, next to the thing it describes.     #}
+<div class="panel mb-6 border-l-2 border-cyan/50 p-4">
+  <p class="text-sm text-muted">
+    <span class="font-semibold text-ink">{% translate "Nothing is merged." %}</span>
+    {% blocktranslate %}Switching pilots changes the identity you are currently using in FORCA Command Grid. Assets, skills, wallets, readiness, killboard records, corporation roles and feature access are never combined across your pilots — each pilot sees only what that pilot may see.{% endblocktranslate %}
+  </p>
+</div>
+
+<div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+  <p class="text-sm text-faint" aria-live="polite">
+    {% blocktranslate count counter=pilot_count %}You have {{ counter }} linked pilot.{% plural %}You have {{ counter }} linked pilots.{% endblocktranslate %}
+  </p>
+  {% comment %}POST, not a link: a GET that begins an OAuth authorisation is login-CSRF —
+     any site could start this flow in your session from an <img> tag.{% endcomment %}
+  <form method="post" action="{% url 'sso:link' %}">{% csrf_token %}
+    <button class="btn-gold">
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      {% translate "Link Another Pilot" %}
+    </button>
+  </form>
+</div>
+
+{% if pilot_count == 1 %}
+  <div class="panel mb-6 p-5 text-center">
+    <p class="text-sm text-muted">
+      {% blocktranslate %}You currently have one pilot linked. Link another pilot to switch between your EVE pilots without logging out.{% endblocktranslate %}
+    </p>
+  </div>
+{% endif %}
+
+<ul class="space-y-3" role="list">
+{% for card in cards %}
+  {% with c=card.character h=card.health %}
+  <li class="panel p-5 {% if card.is_active %}border-gold/40 bg-gold/[0.03]{% endif %}">
+    <div class="flex flex-wrap items-start gap-4">
+      <img src="{% eve_portrait c.character_id 128 %}" alt="" class="h-16 w-16 shrink-0 rounded-lg ring-1 ring-line">
+
+      <div class="min-w-0 flex-1">
+        <div class="flex flex-wrap items-center gap-2">
+          <h2 class="font-display text-lg font-semibold text-ink">{{ c.name }}</h2>
+          {% if card.is_active %}
+            <span class="chip !border-gold/40 !text-gold">{% translate "Current Pilot" %}</span>
+          {% endif %}
+          {% if c.is_main %}
+            <span class="chip">{% translate "Main Pilot" %}</span>
+          {% endif %}
+        </div>
+
+        <p class="mt-0.5 truncate text-sm text-muted">
+          {% if c.corporation %}
+            {{ c.corporation.name }}{% if c.corporation.ticker %} <span class="text-faint">[{{ c.corporation.ticker }}]</span>{% endif %}
+            {% if c.corporation.alliance %}<span class="text-faint">· {{ c.corporation.alliance.name }}</span>{% endif %}
+          {% else %}
+            <span class="text-faint">{% translate "Corporation unknown" %}</span>
+          {% endif %}
+        </p>
+
+        {# Token health. A machine code chooses the chip; the LABEL is translated at render #}
+        {# time, never stored — a persisted translation would freeze one viewer's language. #}
+        <p class="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
+          {% if h.healthy %}
+            <span class="chip !border-kill/40 !text-kill">
+              <svg class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M4 8l3 3 6-7"/></svg>
+              {{ h.label }}
+            </span>
+          {% else %}
+            <span class="chip !border-loss/50 !text-loss">
+              <svg class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M8 4v5M8 12h.01"/></svg>
+              {{ h.label }}
+            </span>
+          {% endif %}
+        </p>
+        <p class="mt-1 text-xs text-faint">{{ h.help }}</p>
+
+        {% if h.missing_scopes %}
+          <details class="mt-2">
+            <summary class="cursor-pointer text-xs text-faint hover:text-muted">
+              {% blocktranslate count counter=h.missing_scopes|length %}{{ counter }} missing ESI permission{% plural %}{{ counter }} missing ESI permissions{% endblocktranslate %}
+            </summary>
+            <ul class="mt-1 space-y-0.5" role="list">
+              {% for scope in h.missing_scopes %}<li class="font-mono text-[11px] text-faint">{{ scope }}</li>{% endfor %}
+            </ul>
+          </details>
+        {% endif %}
+
+        <dl class="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-xs text-faint">
+          <div>
+            <dt class="inline">{% translate "Linked" %}:</dt>
+            {# date filter = locale-aware formatting; never a hand-built date string. #}
+            <dd class="inline text-muted">{{ c.added_at|date:"DATE_FORMAT" }}</dd>
+          </div>
+          <div>
+            <dt class="inline">{% translate "Last used" %}:</dt>
+            <dd class="inline text-muted">
+              {% if c.last_used_at %}{% blocktranslate with ago=c.last_used_at|timesince %}{{ ago }} ago{% endblocktranslate %}{% else %}{% translate "Never" %}{% endif %}
+            </dd>
+          </div>
+          <div>
+            <dt class="inline">{% translate "Last synchronised" %}:</dt>
+            <dd class="inline text-muted">
+              {% if h.last_synced_at %}{% blocktranslate with ago=h.last_synced_at|timesince %}{{ ago }} ago{% endblocktranslate %}{% else %}{% translate "Never" %}{% endif %}
+            </dd>
+          </div>
+        </dl>
+      </div>
+
+      <div class="flex shrink-0 flex-wrap items-center gap-2">
+        {% if not card.is_active %}
+          <form method="post" action="{% url 'identity:pilot_switch' %}">{% csrf_token %}
+            <input type="hidden" name="character_id" value="{{ c.character_id }}">
+            <button class="btn-ghost" aria-label="{% blocktranslate with name=c.name %}Switch to {{ name }}{% endblocktranslate %}">
+              {% translate "Switch Pilot" %}
+            </button>
+          </form>
+        {% endif %}
+
+        {% if not c.is_main %}
+          <form method="post" action="{% url 'identity:pilot_main' %}">{% csrf_token %}
+            <input type="hidden" name="character_id" value="{{ c.character_id }}">
+            <button class="btn-ghost" aria-label="{% blocktranslate with name=c.name %}Make {{ name }} your main pilot{% endblocktranslate %}">
+              {% translate "Make Main" %}
+            </button>
+          </form>
+        {% endif %}
+
+        {% comment %}Reauthorising means completing a fresh EVE SSO authorisation for this pilot.
+           CCP's own screen is where the human chooses the character — we cannot preselect it —
+           so character_id is only a statement of intent, and the callback says so plainly if a
+           different pilot comes back.{% endcomment %}
+        <form method="post" action="{% url 'sso:link' %}">{% csrf_token %}
+          <input type="hidden" name="character_id" value="{{ c.character_id }}">
+          <button class="btn-ghost {% if not h.healthy %}!border-gold/50 !text-gold{% endif %}"
+                  aria-label="{% blocktranslate with name=c.name %}Reauthorise {{ name }} with EVE SSO{% endblocktranslate %}">
+            {% translate "Reauthorise" %}
+          </button>
+        </form>
+
+        {% if can_unlink %}
+          <form method="post" action="{% url 'identity:pilot_unlink' %}"
+                data-confirm="{% blocktranslate with name=c.name %}Unlink {{ name }}? Their EVE authorisation is revoked and they are removed from your account. Their history is kept, and you can link them again later with a new EVE SSO authorisation.{% endblocktranslate %}">
+            {% csrf_token %}
+            <input type="hidden" name="character_id" value="{{ c.character_id }}">
+            <button class="btn-danger" aria-label="{% blocktranslate with name=c.name %}Unlink {{ name }} from your account{% endblocktranslate %}">
+              {% translate "Unlink" %}
+            </button>
+          </form>
+        {% else %}
+          <button class="btn-danger cursor-not-allowed opacity-40" disabled
+                  title="{% translate 'This is the only pilot linked to your account, and an EVE pilot is how you sign in.' %}">
+            {% translate "Unlink" %}
+          </button>
+        {% endif %}
+      </div>
+    </div>
+  </li>
+  {% endwith %}
+{% empty %}
+  <li class="panel p-8 text-center">
+    <p class="text-sm text-muted">{% translate "No pilots are linked to this account yet." %}</p>
+    <form method="post" action="{% url 'sso:link' %}" class="mt-4">{% csrf_token %}
+      <button class="btn-gold">{% translate "Link Another Pilot" %}</button>
+    </form>
+  </li>
+{% endfor %}
+</ul>
+{% endblock %}

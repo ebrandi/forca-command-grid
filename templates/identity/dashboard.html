@@ -41,12 +41,18 @@ GOVERNANCE (keep these or the merge erodes):
       {% if is_director %}<span class="chip text-gold">{% translate "Director" %}</span>{% elif is_officer %}<span class="chip text-gold">{% translate "Officer" %}</span>{% else %}<span class="chip">{% translate "Member" %}</span>{% endif %}
       {% if combat_rank %}<a href="{% url 'killboard:rankings' %}" class="chip !border-cyan/40 !text-cyan hover:!border-gold/40" title="{% blocktranslate with k=combat_rank.kills eff=combat_rank.efficiency|effpct dl=combat_rank.danger.label %}{{ k }} kills · {{ eff }}% efficiency · {{ dl }}{% endblocktranslate %}">{{ combat_rank.rank.title }}</a>{% endif %}
       {% if pilot_readiness %}<a href="#stats" class="chip {% if pilot_readiness.overall >= 75 %}!border-kill/40 !text-kill{% elif pilot_readiness.overall >= 50 %}!border-gold/40 !text-gold{% else %}!border-loss/40 !text-loss{% endif %}" title="{% translate 'my readiness — details in the stats panel' %}">{{ pilot_readiness.overall }} {% if pilot_readiness.overall >= 75 %}▲{% elif pilot_readiness.overall >= 50 %}◆{% else %}▼{% endif %}</a>{% endif %}
-      <a href="#chars" class="hover:text-gold">{% blocktranslate count n=characters|length %}{{ n }} character linked{% plural %}{{ n }} characters linked{% endblocktranslate %}</a>
+      <a href="{% url 'identity:linked_pilots' %}" class="hover:text-gold">{% blocktranslate count n=characters|length %}{{ n }} pilot linked{% plural %}{{ n }} pilots linked{% endblocktranslate %}</a>
       <a href="{% url 'identity:character' main_character.character_id %}" class="text-gold hover:underline">· {% translate "My skills &amp; readiness" %} →</a>
       {% if features.killboard %}<a href="{% url 'killboard:pilot' main_character.character_id %}" class="text-gold hover:underline">· {% translate "My combat stats" %} →</a>{% endif %}
     </p>
     <p class="mt-1 text-sm text-faint">{% translate "Your day, one page. Start at №1 — everything else can wait." %}</p>
   </div>
+  {% comment %}The pilot selector on the Pilot Dashboard. Deliberately the SAME component as the
+     sidebar's (templates/_pilot_selector.html), not a second implementation of it: the dashboard
+     is where identity confusion is most costly, and two selectors that could drift apart in
+     behaviour or wording is exactly how that confusion starts. It renders itself away when the
+     account has one pilot, so a single-pilot user's dashboard is unchanged.{% endcomment %}
+  {% if linked_pilots|length > 1 %}<div class="w-full sm:w-60">{% include "_pilot_selector.html" %}</div>{% endif %}
   {% if leadership or officer %}<a href="#deck" class="btn-ghost">{% translate "Command deck" %} ↓</a>{% endif %}
 </header>
 

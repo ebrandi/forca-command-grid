@@ -49,6 +49,8 @@
       <symbol id="i-map" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2z"/><path d="M9 3v16M15 5v16"/></symbol>
       <symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></symbol>
       <symbol id="i-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+      {# Linked Pilots: two capsuleers, one behind the other — several pilots, one human. #}
+      <symbol id="i-pilots" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.3 3.1-5 7-5s7 1.7 7 5"/><path d="M16 5.2a3.5 3.5 0 010 5.6M18 15.4c2.4.7 4 2.3 4 4.6"/></symbol>
     </defs>
   </svg>
 
@@ -85,7 +87,15 @@
     </a>
     <div class="ml-auto flex items-center gap-3">
       <button @click="$dispatch('cmdk')" type="button" aria-label="{% translate 'Open command palette' %}" class="text-muted hover:text-ink"><svg class="h-5 w-5"><use href="#i-command"/></svg></button>
-      {% if main_character %}<img src="{% eve_portrait main_character.character_id 32 %}" alt="" class="h-8 w-8 rounded-full ring-1 ring-line">
+      {% comment %}On mobile the top-right avatar is the obvious "who am I?" affordance, so make it
+         do the obvious thing: go to Linked Pilots. Without this it is a dead image and the only
+         way to switch is hamburger → scroll the drawer → selector. The drawer selector still
+         exists; this is the one-tap path. A ring highlights it when a pilot needs
+         reauthorisation, so the warning is not buried in a menu.{% endcomment %}
+      {% if main_character %}
+        <a href="{% url 'identity:linked_pilots' %}" aria-label="{% translate 'Linked Pilots — change the pilot you are flying as' %}">
+          <img src="{% eve_portrait main_character.character_id 64 %}" alt="" class="h-8 w-8 rounded-full ring-1 ring-line hover:ring-gold/60">
+        </a>
       {% else %}<a href="{% url 'sso:login' %}" class="btn-gold !px-3 !py-1.5 text-xs">{% translate "Log in" %}</a>{% endif %}
     </div>
   </header>

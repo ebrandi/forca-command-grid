@@ -21,6 +21,10 @@
          the Daily Briefing (pilots:briefing) — which itself had absorbed Your Orders and
          Recommended Actions. One pilot home; sections gate per feature key inside it.{% endcomment %}
       {% if features.tasks %}<a href="{% url 'tasks:board' %}" class="navlink {% if ns == 'tasks' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-check"/></svg> {% translate "My Tasks" %}</a>{% endif %}
+      {% comment %}Linked Pilots lives in the Pilot group: it is about which of YOUR pilots you
+         are flying, not about account settings. It is never feature-gated — a pilot must always
+         be able to reach the pilot they are locked out of.{% endcomment %}
+      <a href="{% url 'identity:linked_pilots' %}" class="navlink {% if un == 'linked_pilots' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-pilots"/></svg> {% translate "Linked Pilots" %}</a>
       {% if features.srp %}<a href="{% url 'srp:mine' %}" class="navlink {% if ns == 'srp' and un == 'mine' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-shield"/></svg> {% translate "My SRP" %}</a>{% endif %}
       {% if features.contributions %}<a href="{% url 'pilots:contributions' %}" class="navlink {% if ns == 'pilots' and un == 'contributions' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-bolt"/></svg> {% translate "My Contribution" %}</a>{% endif %}
     </div>
@@ -274,6 +278,7 @@
     <button type="button" data-acc-toggle class="navgroup"><span class="eyebrow">{% translate "Account" %}</span><svg class="acc-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2.5l4 3.5-4 3.5"/></svg></button>
     <div data-acc-body class="space-y-1">
       <a href="{% url 'sso:scopes' %}" class="navlink"><svg class="navicon"><use href="#i-key"/></svg> {% translate "ESI Scopes" %}</a>
+      <a href="{% url 'identity:linked_pilots' %}" class="navlink {% if un == 'linked_pilots' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-pilots"/></svg> {% translate "Linked Pilots" %}</a>
       <a href="{% url 'identity:privacy' %}" class="navlink"><svg class="navicon"><use href="#i-lock"/></svg> {% translate "Privacy" %}</a>
     </div>
   </div>

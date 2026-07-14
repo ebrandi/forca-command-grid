@@ -1,0 +1,116 @@
+{% load eve i18n %}
+{% comment %}The persistent pilot selector (LP-6).
+
+  Included from _user_block.html, which base.html renders in BOTH the desktop rail and the
+  mobile drawer — so one implementation serves both, and the two can never drift apart.
+
+  Interaction is click/tap-driven, never hover: hover does not exist on a touch screen. Alpine
+  drives open/closed state (window.pilotSelector in static/js/app.js — no inline script, because
+  the CSP forbids it).
+
+  Accessibility: the trigger is a real <button> with aria-expanded/aria-haspopup and a label
+  that says what the control DOES, not just who is in it. Escape closes and returns focus. Each
+  pilot is a submit button in its own POST form (switching is a mutation, so it can never be a
+  link). The result is announced by the flash message in base.html, which is aria-live.{% endcomment %}
+
+{% if linked_pilots|length > 1 %}
+<div class="mb-2" x-data="pilotSelector()" @keydown.escape.window="close()">
+  <button type="button" x-ref="trigger" @click="toggle()"
+          :aria-expanded="open ? 'true' : 'false'"
+          aria-haspopup="true" aria-controls="pilot-selector-menu"
+          aria-label="{% translate 'Change the pilot you are flying as' %}"
+          class="flex w-full items-center gap-2.5 rounded-lg border border-line bg-panel2 p-2 text-left transition hover:border-gold/40">
+    <img src="{% eve_portrait active_pilot.character_id 64 %}" alt="" class="h-8 w-8 shrink-0 rounded-full ring-1 ring-line">
+    <span class="min-w-0 flex-1">
+      <span class="block truncate text-sm font-medium text-ink">{{ active_pilot.name }}</span>
+      <span class="block truncate text-[11px] text-faint">
+        {% if active_pilot.corporation.ticker %}[{{ active_pilot.corporation.ticker }}]{% elif active_pilot.corporation %}{{ active_pilot.corporation.name }}{% else %}{% translate "Corporation unknown" %}{% endif %}
+      </span>
+    </span>
+    <svg class="h-4 w-4 shrink-0 text-faint transition-transform" :class="open && 'rotate-180'"
+         fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M6 9l6 6 6-6"/>
+    </svg>
+  </button>
+
+  <div x-show="open" x-cloak x-transition.opacity id="pilot-selector-menu"
+       @click.outside="close()"
+       class="mt-1 overflow-hidden rounded-lg border border-line bg-panel shadow-xl">
+
+    {# A search box only earns its place once scanning the list stops being instant. #}
+    {% if linked_pilots|length > 6 %}
+      <div class="border-b border-line p-2">
+        <label for="pilot-search" class="sr-only">{% translate "Search your linked pilots" %}</label>
+        <input id="pilot-search" x-ref="search" x-model="q" type="search" autocomplete="off"
+               placeholder="{% translate 'Search pilots…' %}"
+               class="input-field px-2 py-1.5 text-xs">
+      </div>
+    {% endif %}
+
+    <ul class="max-h-72 overflow-y-auto py-1" role="list">
+      {% for pilot in linked_pilots %}
+        {% comment %}data-name feeds the client-side filter; the SERVER decides what a switch
+           does. The list is already scoped to this account's pilots, so nothing here is a
+           lookup key — the switch view re-resolves the id through the caller's own pilots.{% endcomment %}
+        <li data-pilot-name="{{ pilot.name }}" x-show="matches('{{ pilot.name|escapejs }}')">
+          {% if pilot.character_id == active_pilot.character_id %}
+            <div class="flex items-center gap-2.5 bg-panel2 px-3 py-2" aria-current="true">
+              <img src="{% eve_portrait pilot.character_id 64 %}" alt="" class="h-7 w-7 shrink-0 rounded-full ring-1 ring-gold/50">
+              <span class="min-w-0 flex-1">
+                <span class="block truncate text-sm text-gold">{{ pilot.name }}</span>
+                <span class="block truncate text-[11px] text-faint">{% translate "Current Pilot" %}</span>
+              </span>
+              <svg class="h-4 w-4 shrink-0 text-gold" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>
+            </div>
+          {% else %}
+            <form method="post" action="{% url 'identity:pilot_switch' %}" @submit="busy = true">
+              {% csrf_token %}
+              <input type="hidden" name="character_id" value="{{ pilot.character_id }}">
+              {# Come back to the page you were on, if it is still this pilot's to see. #}
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <button type="submit" :disabled="busy"
+                      class="flex w-full items-center gap-2.5 px-3 py-2 text-left transition hover:bg-panel2 disabled:opacity-50"
+                      aria-label="{% blocktranslate with name=pilot.name %}Switch to {{ name }}{% endblocktranslate %}">
+                <img src="{% eve_portrait pilot.character_id 64 %}" alt="" class="h-7 w-7 shrink-0 rounded-full ring-1 ring-line">
+                <span class="min-w-0 flex-1">
+                  <span class="block truncate text-sm text-muted">{{ pilot.name }}</span>
+                  <span class="block truncate text-[11px] text-faint">
+                    {% if pilot.corporation.ticker %}[{{ pilot.corporation.ticker }}]{% elif pilot.corporation %}{{ pilot.corporation.name }}{% endif %}
+                    {% if pilot.is_main %}· {% translate "Main" %}{% endif %}
+                  </span>
+                </span>
+                {# A dead token never blocks the switch — it is a warning, not a gate. #}
+                {% if not pilot.link_healthy %}
+                  <span class="shrink-0 text-loss" title="{% translate 'ESI Authorisation Required' %}"
+                        aria-label="{% translate 'ESI Authorisation Required' %}">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v5M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
+                  </span>
+                {% endif %}
+                <span x-show="busy" x-cloak class="shrink-0 text-faint text-[10px]">{% translate "Switching…" %}</span>
+              </button>
+            </form>
+          {% endif %}
+        </li>
+      {% endfor %}
+      <li x-show="q && !anyMatch()" x-cloak class="px-3 py-4 text-center text-xs text-faint">
+        {% translate "No pilots match." %}
+      </li>
+    </ul>
+
+    <div class="border-t border-line p-1">
+      <a href="{% url 'identity:linked_pilots' %}"
+         class="flex items-center gap-2 rounded-md px-3 py-2 text-xs text-muted transition hover:bg-panel2 hover:text-ink">
+        <svg class="h-4 w-4 shrink-0 text-faint" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.3 3.1-5 7-5s7 1.7 7 5"/></svg>
+        {% translate "Manage Linked Pilots" %}
+      </a>
+      <form method="post" action="{% url 'sso:link' %}">{% csrf_token %}
+        <button type="submit"
+                class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-xs text-muted transition hover:bg-panel2 hover:text-gold">
+          <svg class="h-4 w-4 shrink-0 text-faint" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          {% translate "Link Another Pilot" %}
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}

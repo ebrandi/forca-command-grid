@@ -1,5 +1,10 @@
 {% load eve i18n %}
 <div class="border-t border-line p-3">
+  {% comment %}The persistent pilot selector. base.html includes this block in BOTH the desktop
+     rail and the mobile drawer, so the selector reaches both from one implementation and the
+     two can never drift. It renders itself away when the account has only one pilot.{% endcomment %}
+  {% include "_pilot_selector.html" %}
+
   {% if main_character %}
     <div class="flex items-center gap-3 rounded-lg bg-panel2 p-2.5">
       <img src="{% eve_portrait main_character.character_id 64 %}" alt="" class="h-10 w-10 rounded-full ring-1 ring-line">

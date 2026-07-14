@@ -577,3 +577,59 @@ window.sparkline = (values, opts) => ({
   },
   leave() { this.hover = -1; },
 });
+
+/* Pilot selector (LP-6) — the persistent "which pilot am I flying?" control in the sidebar
+   and the mobile drawer (templates/_pilot_selector.html).
+
+   Interaction is click/tap only: hover does not exist on a touch screen, so a hover menu is
+   simply unreachable on mobile. Escape closes and returns focus to the trigger, which is what
+   a keyboard user expects and what a screen reader needs in order not to strand the cursor
+   inside a hidden subtree.
+
+   `busy` latches on submit so a double-tap cannot fire two switch POSTs — the second would
+   race the first and the user could end up flying a pilot they did not pick last. The result
+   itself is announced by the flash message in base.html, which is aria-live. */
+window.pilotSelector = () => ({
+  open: false,
+  busy: false,
+  q: '',
+  toggle() {
+    this.open = !this.open;
+    if (this.open && this.$refs.search) {
+      // Focus the filter only once the menu is actually painted.
+      this.$nextTick(() => this.$refs.search.focus());
+    }
+  },
+  close() {
+    if (!this.open) return;
+    this.open = false;
+    this.q = '';
+    if (this.$refs.trigger) this.$refs.trigger.focus();
+  },
+  matches(name) {
+    if (!this.q) return true;
+    return String(name).toLowerCase().indexOf(this.q.toLowerCase().trim()) !== -1;
+  },
+  anyMatch() {
+    var self = this;
+    return Array.prototype.some.call(
+      this.$el.querySelectorAll('[data-pilot-name]'),
+      function (el) { return self.matches(el.getAttribute('data-pilot-name')); }
+    );
+  },
+});
+
+/* htmx keeps a cache of rendered pages in localStorage and restores them on Back
+   (historyCacheSize defaults to 10). That is a rendered-HTML cache of PILOT-SPECIFIC pages,
+   sitting on disk, outside every Cache-Control header we set — so after switching pilots (or
+   after logging out on a shared machine) a Back navigation could repaint the previous pilot's
+   page, portrait, orders and all.
+
+   Setting the cache size to 0 keeps hx-push-url working — Back still navigates — but makes it
+   re-fetch from the server, where the active pilot is authoritative. The cost is one request on
+   a Back press; the alternative is showing someone another pilot's data and calling it history. */
+document.addEventListener('htmx:load', function once() {
+  document.removeEventListener('htmx:load', once);
+  if (window.htmx && window.htmx.config) window.htmx.config.historyCacheSize = 0;
+});
+if (window.htmx && window.htmx.config) window.htmx.config.historyCacheSize = 0;
