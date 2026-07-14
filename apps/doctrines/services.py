@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from django.utils.translation import gettext_lazy as _
+
 from apps.sde.models import SdeTypeSkill
 
 # The key + its shipped English label live in category_i18n (the render-time seam's
@@ -253,6 +255,28 @@ def derive_skill_requirements(fit: DoctrineFit) -> int:
     return created
 
 
+# --------------------------------------------------------------------------- #
+#  Readiness status: a CODE, plus a display label
+# --------------------------------------------------------------------------- #
+# ``FitReadiness.status`` is a code, not prose. Every caller branches on it —
+# ``{% if r.status == 'optimal' %}``, ``STATUS_RANK[status]``, the ``can_fly`` /
+# sort-key helpers in ``browse``/``library`` — so translating the value itself would
+# silently break readiness colouring, ranking and filtering for every non-English
+# pilot. The code stays canonical English; only the *label* is translated, and only
+# at render time.
+READINESS_LABELS: dict[str, str] = {
+    "optimal": _("optimal"),
+    "viable": _("viable"),
+    "not_ready": _("not ready"),
+    "unknown": _("unknown"),
+}
+
+
+def readiness_label(code: str):
+    """The human label for a readiness status code (the code itself if unmapped)."""
+    return READINESS_LABELS.get(code, code)
+
+
 @dataclass
 class FitReadiness:
     fit_id: int
@@ -260,6 +284,12 @@ class FitReadiness:
     status: str  # "optimal" | "viable" | "not_ready" | "unknown"
     missing_viable: list[dict] = field(default_factory=list)
     missing_optimal: list[dict] = field(default_factory=list)
+
+    @property
+    def status_label(self):
+        """The translated label for ``status``. Read-time only — ``self.status`` stays
+        the canonical code every ``==`` comparison is written against."""
+        return readiness_label(self.status)
 
 
 _SNAPSHOT_UNSET = object()
@@ -328,7 +358,10 @@ def readiness_summary_for_character(character) -> list[dict]:
                 {
                     "doctrine_id": doctrine.id,
                     "doctrine": doctrine.name,
+                    # ``status`` is the CODE the views/templates compare; ``status_label``
+                    # is the half a human reads.
                     "status": best.status,
+                    "status_label": readiness_label(best.status),
                     "fit": best.fit_name,
                     "missing_viable": best.missing_viable,
                 }

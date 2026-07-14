@@ -125,6 +125,32 @@ _STATUS_BODY = {
     StoreOrder.Status.CANCELLED: "Your order for {ship} was cancelled.",
 }
 
+# The per-status message scaffold that re-renders this DM in the buyer's own language
+# (apps.pingboard.messages.SCAFFOLDS). ``_STATUS_BODY`` above stays the frozen English
+# audit/fallback column for a status with no scaffold.
+_STATUS_TEMPLATE = {
+    StoreOrder.Status.CLAIMED: "store.order_status.claimed",
+    StoreOrder.Status.DEPOSIT_PAID: "store.order_status.deposit_paid",
+    StoreOrder.Status.IN_PRODUCTION: "store.order_status.in_production",
+    StoreOrder.Status.READY: "store.order_status.ready",
+    StoreOrder.Status.DELIVERED: "store.order_status.delivered",
+    StoreOrder.Status.CANCELLED: "store.order_status.cancelled",
+}
+
+# The CANONICAL ENGLISH audit title per status — deliberately plain strings and NOT
+# ``get_status_display()``: that is a gettext_lazy proxy which resolves under whatever locale is
+# active at emit time, i.e. the *acting officer's* language on a request path. Every word of it
+# already exists translatably inside the matching scaffold's ``subject`` msgid, which is what the
+# buyer actually reads; this map only freezes ``Alert.title`` (the English audit column).
+_STATUS_TITLE = {
+    StoreOrder.Status.CLAIMED: "Order update: Claimed",
+    StoreOrder.Status.DEPOSIT_PAID: "Order update: Deposit paid",
+    StoreOrder.Status.IN_PRODUCTION: "Order update: In production",
+    StoreOrder.Status.READY: "Order update: Ready",
+    StoreOrder.Status.DELIVERED: "Order update: Delivered",
+    StoreOrder.Status.CANCELLED: "Order update: Cancelled",
+}
+
 
 def notify_order_status(order: StoreOrder, *, actor=None) -> None:
     """MKT-5 (3.18): DM the buyer their order's new status — one non-spammy ping per change.
@@ -147,10 +173,16 @@ def notify_order_status(order: StoreOrder, *, actor=None) -> None:
         if not is_enabled("store.order_status"):
             return
         ship = order.ship_name or order.fit_name or "your order"
-        label = order.get_status_display()
-        body = _STATUS_BODY.get(order.status, f"Your order is now “{label}”.").format(ship=ship)
+        body = _STATUS_BODY.get(order.status, "Your order status changed.").format(ship=ship)
         pingboard.emit_broadcast(
-            category=AlertCategory.ANNOUNCEMENT, title=f"Order update: {label}", body=body,
+            category=AlertCategory.ANNOUNCEMENT,
+            title=_STATUS_TITLE.get(order.status, "Order update"), body=body,
+            # The scaffold + raw context re-render this line in the buyer's language; ``body`` and
+            # ``title`` above stay the frozen English audit columns. The status LABEL is chrome and
+            # lives inside the per-status scaffold msgids — never in ``context``, whose slots are
+            # interpolated raw and would otherwise freeze the acting officer's locale.
+            template=_STATUS_TEMPLATE.get(order.status),
+            context={"ship_name": ship},
             audience={"kind": "user", "id": order.buyer_id},
             source_service="store", source_object_id=f"order_status:{order.id}:{order.status}",
             idempotency_key=f"store:order_status:{order.id}:{order.status}",

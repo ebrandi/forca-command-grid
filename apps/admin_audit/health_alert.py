@@ -129,6 +129,10 @@ def _emit(problems: list[dict], sig: str) -> bool:
             category="custom",
             title="Integration health degraded",
             body=body,
+            # Scaffold + raw context: the digest chrome localises per recipient; the problem
+            # lines are diagnostic data and stay raw. ``body`` is the frozen English audit column.
+            template="admin_audit.integration_health",
+            context={"details": lines},
             audience={"kind": audience_kind},
             source_service="admin_audit",
             source_object_id=f"integration_health:{sig[:16]}:{stamp}",

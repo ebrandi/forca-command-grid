@@ -136,8 +136,18 @@ def _emit(route, threats) -> None:
     # a permanent idempotency key would wrongly suppress a camp that clears then recurs.
     pingboard.emit_broadcast(
         category=AlertCategory.GATECAMP,
-        title=f"Route watch: {route.name}",
+        title="Route watch: {route_name}",
         body=body,
+        # Scaffold + raw context: the warning chrome localises per recipient while the route,
+        # system names and threat lines stay raw. ``body`` remains the frozen English audit column.
+        template="navigation.route_watch",
+        context={
+            "route_name": route.name,
+            "origin_system": route.origin_name,
+            "destination_system": route.dest_name,
+            "threat_count": len(threats),
+            "details": lines,
+        },
         source_service="navigation",
         source_object_id=str(route.id),
         audience={"kind": "user", "id": route.owner_id},

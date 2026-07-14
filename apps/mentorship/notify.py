@@ -79,20 +79,27 @@ def pairing_proposed(pairing) -> None:
     mentor_name = pairing.mentor.user.display_name
     mentee_name = pairing.mentee.user.display_name
     by = pairing.initiated_by
+    # (recipient, English audit sentence, scaffold key) — one key per sentence, so the whole
+    # line is a translatable msgid and only the pilot names ride in as raw slots.
+    ctx = {"mentor_name": mentor_name, "mentee_name": mentee_name}
     if by == MentorshipPairing.InitiatedBy.MENTEE:
-        targets = [(mentor_uid, f"{mentee_name} has requested you as their mentor.")]
+        targets = [(mentor_uid, f"{mentee_name} has requested you as their mentor.",
+                    "mentorship.pairing.mentor_requested")]
     elif by == MentorshipPairing.InitiatedBy.MENTOR:
-        targets = [(mentee_uid, f"{mentor_name} has invited you as their cadet.")]
+        targets = [(mentee_uid, f"{mentor_name} has invited you as their cadet.",
+                    "mentorship.pairing.mentee_invited")]
     else:  # SYSTEM / LEADER — neither pilot initiated, so tell both.
         targets = [
-            (mentor_uid, f"We suggested {mentee_name} as a cadet you could mentor."),
-            (mentee_uid, f"We found you a mentor match: {mentor_name}."),
+            (mentor_uid, f"We suggested {mentee_name} as a cadet you could mentor.",
+             "mentorship.pairing.suggested_cadet"),
+            (mentee_uid, f"We found you a mentor match: {mentor_name}.",
+             "mentorship.pairing.suggested_mentor"),
         ]
-    for user_id, body in targets:
-        _dm_counterparty(user_id, pairing, body)
+    for user_id, body, key in targets:
+        _dm_counterparty(user_id, pairing, body, template=key, context=dict(ctx))
 
 
-def _dm_counterparty(user_id, pairing, body: str) -> None:
+def _dm_counterparty(user_id, pairing, body: str, *, template=None, context=None) -> None:
     if not user_id:
         return
     try:
@@ -102,6 +109,7 @@ def _dm_counterparty(user_id, pairing, body: str) -> None:
             category="mentorship",
             title="Mentorship pairing",
             body=body + " Respond on your mentorship dashboard.",
+            template=template, context=context,
             audience={"kind": "user", "id": user_id},
             channels=["in_app"],
             source_service="mentorship",

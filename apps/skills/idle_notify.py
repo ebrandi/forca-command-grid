@@ -49,13 +49,17 @@ def _send_idle_nudge(character, tracker) -> None:
 
         pingboard.emit_broadcast(
             category="custom",
-            title=f"Your skill queue is empty — {character.name}",
+            title="Your skill queue is empty — {character_name}",
             body=(
                 f"{character.name}'s training queue has run dry, so it's not earning SP. "
                 "Queue your next skills in the EVE client (the Skills page has a plan you "
                 "can paste in). This is based on the last skill sync, so ignore it if you "
                 "just queued something."
             ),
+            # Scaffold + raw context → the nudge renders in the pilot's own language; the
+            # character name stays raw and ``body`` remains the frozen English audit column.
+            template="skills.idle_queue",
+            context={"character_name": character.name},
             audience={"kind": "user", "id": character.user_id},
             source_service="skills",
             # The tracker PK is minted fresh each idle period, so both the dedup hash

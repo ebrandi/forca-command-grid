@@ -445,6 +445,10 @@ def _notify_role_request(target, role_key: str, requester) -> None:
             title="Role grant awaiting approval",
             body=(f"{by} requested a {role_key.title()} grant for {who}. A different director "
                   "must approve it in the Members console."),
+            # Scaffold + raw context: each director reads it in their own language; the pilot
+            # names and role key stay raw. ``body`` is the frozen English audit column.
+            template="identity.role_request",
+            context={"actor_name": by, "role_name": role_key.title(), "pilot_name": who},
             source_service="identity",
             audience={"kind": rbac.ROLE_DIRECTOR},
         )

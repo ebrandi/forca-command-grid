@@ -254,7 +254,9 @@ def sweep_overdue_hauls() -> dict:
     return {"reminded": reminded, "released": released}
 
 
-def _emit_haul_dm(*, user_id, title, body, object_id):
+def _emit_haul_dm(*, user_id, title, body, object_id, template=None, context=None):
+    """One haul DM. ``template`` is a ``pingboard.messages.SCAFFOLDS`` key and ``context`` its raw
+    values, so the line re-renders in the hauler's language; ``body`` stays the English audit column."""
     if not user_id:
         return
     try:
@@ -263,6 +265,7 @@ def _emit_haul_dm(*, user_id, title, body, object_id):
 
         pingboard.emit_broadcast(
             category=AlertCategory.LOGISTICS, title=title, body=body,
+            template=template, context=context,
             audience={"kind": "user", "id": user_id},
             source_service="logistics", source_object_id=object_id,
             idempotency_key=f"logi:{object_id}",
@@ -278,21 +281,27 @@ def _remind_hauler(c, now) -> None:
         title="Haul deadline approaching",
         body=(f"Your haul {c.origin_name} → {c.dest_name} is due in about {mins} min. "
               "Deliver it and mark the contract complete to get paid."),
+        template="logistics.haul_reminder",
+        context={"origin_system": c.origin_name, "destination_system": c.dest_name,
+                 "minutes": mins},
         object_id=f"haul_reminder:{c.id}:{int(c.deadline.timestamp())}",
     )
 
 
 def _notify_haul_released(c, former_user_id, stamp) -> None:
     route = f"{c.origin_name} → {c.dest_name}"
+    ctx = {"origin_system": c.origin_name, "destination_system": c.dest_name}
     _emit_haul_dm(
         user_id=c.created_by_id,
         title="Haul overdue — released to the pool",
         body=f"The haul {route} passed its deadline and was returned to the pool for another hauler.",
+        template="logistics.haul_released_poster", context=dict(ctx),
         object_id=f"haul_overdue_poster:{c.id}:{stamp}",
     )
     _emit_haul_dm(
         user_id=former_user_id,
         title="Your haul was released",
         body=f"Your haul {route} passed its deadline and was released back to the pool.",
+        template="logistics.haul_released_hauler", context=dict(ctx),
         object_id=f"haul_overdue_hauler:{c.id}:{former_user_id}:{stamp}",
     )

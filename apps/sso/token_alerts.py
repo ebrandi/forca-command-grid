@@ -124,8 +124,12 @@ def _emit_death(token, ingestion_scopes: set[str]) -> bool:
 
         alert = pingboard.emit_broadcast(
             category="custom",
-            title=f"Re-authorise {char_name}: corp data ingestion stopped",
+            title="Re-authorise {character_name}: corp data ingestion stopped",
             body=body, audience=audience, source_service="sso",
+            # Scaffold + raw context: the sentence re-renders in the token owner's language,
+            # while ``body`` stays the frozen English audit column.
+            template="sso.token_death",
+            context={"character_name": char_name, "scopes": areas},
             source_object_id=f"tokdeath:{token.id}:{stamp}",
             idempotency_key=f"sso:tokdeath:{token.id}:{stamp}",
         )

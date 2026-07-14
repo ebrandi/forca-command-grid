@@ -112,6 +112,11 @@ def _emit_colony_dm(colony, character, issues) -> bool:
 
         pingboard.emit_broadcast(
             category=AlertCategory.INDUSTRY_JOB, title="PI colony needs attention", body=body,
+            # Scaffold + raw context: the chrome re-renders per recipient locale; the colony's
+            # planet/system names and the issue list stay raw. ``body`` is the English audit column.
+            template="planetary.colony_issue",
+            context={"planet_type": planet, "system_name": where,
+                     "details": "; ".join(issues[:3])},
             audience={"kind": "user", "id": character.user_id},
             source_service="planetary", source_object_id=f"colony_issue:{colony.id}:{stamp}",
             idempotency_key=f"pi:colony_issue:{colony.id}:{stamp}",

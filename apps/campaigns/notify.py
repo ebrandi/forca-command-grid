@@ -53,6 +53,19 @@ _HEALTH_SIG_KEY = "campaigns:health:{pk}"
 # Health levels at or above which a change is high-priority leadership traffic (doc 09 §4).
 _HIGH_HEALTH = {"at_risk", "critical", "blocked"}
 
+# The CANONICAL ENGLISH label for each Campaign.Health value — deliberately a plain-str map and
+# NOT ``get_health_display()``: that returns a gettext_lazy proxy which would resolve under the
+# emitting officer's request locale. These strings only ever reach the frozen English audit
+# columns (``Alert.title``/``Alert.body``); the per-recipient sentence comes from the
+# ``campaigns.health_changed.<level>`` scaffold msgids, which carry the same words translatably.
+_HEALTH_LABEL_EN = {
+    "healthy": "Healthy",
+    "watch": "Watch",
+    "at_risk": "At Risk",
+    "critical": "Critical",
+    "blocked": "Blocked",
+}
+
 
 # --------------------------------------------------------------------------- #
 #  Low-level helpers
@@ -147,8 +160,15 @@ def _restricted_leadership_ids(campaign, *, include_participants: bool = False) 
 
 
 def _emit(campaign, key, *, audience, title, body, source_object_id, idempotency_key,
-          priority=None):
-    """The one place a campaign alert is created. Fail-soft; enforces the restricted rules."""
+          priority=None, template=None, context=None):
+    """The one place a campaign alert is created. Fail-soft; enforces the restricted rules.
+
+    ``template`` is an ``apps.pingboard.messages.SCAFFOLDS`` key and ``context`` its raw
+    interpolation values, so the sentence re-renders in each recipient's own language while
+    ``title``/``body`` stay the frozen English audit columns. The restricted-payload rule applies
+    to the scaffold too: a restricted campaign is re-keyed to the name-only ``campaigns.restricted``
+    scaffold with a name-only context, so no objective title or value can leak through ``context``.
+    """
     try:
         from apps.pingboard.notifications import is_enabled
 
@@ -163,11 +183,14 @@ def _emit(campaign, key, *, audience, title, body, source_object_id, idempotency
             return None
         if _is_restricted(campaign):
             title, body = _restricted_payload(campaign)
+            template = "campaigns.restricted"
+            context = {"campaign_name": campaign.name, "link": _detail_url(campaign)}
 
         from apps.pingboard import services as pingboard
 
         alert = pingboard.emit_broadcast(
             category=CATEGORY, title=title, body=body, audience=audience,
+            template=template, context=context,
             source_service="campaigns", source_object_id=source_object_id,
             idempotency_key=idempotency_key, priority=priority,
         )
@@ -206,14 +229,24 @@ def assigned(campaign, kind: str, obj_id, user, *, what: str = "") -> None:
     label = what or {"objective": "an objective", "workstream": "a workstream",
                      "milestone": "a milestone", "campaign": "command of this campaign"}.get(
         kind, "a campaign item")
+    why = (campaign.rationale or campaign.summary or "").strip()[:160] or "see the campaign."
     body = (
         f"You've been assigned {label} on campaign «{campaign.name}». "
-        f"Why it matters: {(campaign.rationale or campaign.summary or '').strip()[:160] or 'see the campaign.'} "
+        f"Why it matters: {why} "
         f"{_detail_url(campaign)}"
     )
+    # The item noun ("an objective", "a workstream", …) is chrome, so each stock kind gets its own
+    # scaffold key rather than pushing an English fragment through a never-translated slot. A
+    # caller-supplied ``what`` is free-text and falls back to the slot-carrying generic key.
+    key = "campaigns.assigned"
+    if not what and kind in ("objective", "workstream", "milestone", "campaign"):
+        key = f"campaigns.assigned.{kind}"
     _emit(
         campaign, ASSIGNED, audience={"kind": "user", "id": ids[0]},
-        title=f"Assigned on «{campaign.name}»", body=body,
+        title="Assigned on «{campaign_name}»", body=body,
+        template=key,
+        context={"campaign_name": campaign.name, "assignment_label": label, "reason": why,
+                 "link": _detail_url(campaign)},
         source_object_id=f"{kind}:{obj_id}",
         idempotency_key=f"campaigns:assigned:{kind}:{obj_id}:{ids[0]}",
     )
@@ -229,14 +262,18 @@ def recognition(recognition_row) -> None:
     ids = _viewable_ids(campaign, [uid])
     if not ids:
         return
+    why = recognition_row.reason.strip()[:160] if recognition_row.reason else ""
     body = (
         f"You were recognised for your contribution to campaign «{campaign.name}»"
-        f"{' — ' + recognition_row.reason.strip()[:160] if recognition_row.reason else ''}. "
+        f"{' — ' + why if why else ''}. "
         f"{_detail_url(campaign)}"
     )
     _emit(
         campaign, RECOGNITION, audience={"kind": "user", "id": ids[0]},
-        title=f"Recognised on «{campaign.name}»", body=body,
+        title="Recognised on «{campaign_name}»", body=body,
+        # One key per English sentence shape — the "— reason" clause carries chrome punctuation.
+        template="campaigns.recognition.reason" if why else "campaigns.recognition",
+        context={"campaign_name": campaign.name, "reason": why, "link": _detail_url(campaign)},
         source_object_id=f"recognition:{recognition_row.pk}",
         idempotency_key=f"campaigns:recognition:{recognition_row.pk}", priority="low",
     )
@@ -254,14 +291,18 @@ def objective_blocked(objective, *, blockers) -> None:
     ids = _viewable_ids(campaign, [objective.owner_id, campaign.commander_id])
     if not ids:
         return
+    why = objective.block_reason.strip()[:160] if objective.block_reason else ""
     body = (
         f"Objective «{objective.title}» on campaign «{campaign.name}» is blocked"
-        f"{' — ' + objective.block_reason.strip()[:160] if objective.block_reason else ''}. "
+        f"{' — ' + why if why else ''}. "
         f"{_detail_url(campaign)}"
     )
     _emit(
         campaign, OBJECTIVE_BLOCKED, audience={"kind": "users", "ids": ids},
-        title=f"Objective blocked on «{campaign.name}»", body=body,
+        title="Objective blocked on «{campaign_name}»", body=body,
+        template="campaigns.objective_blocked.reason" if why else "campaigns.objective_blocked",
+        context={"campaign_name": campaign.name, "objective_title": objective.title,
+                 "reason": why, "link": _detail_url(campaign)},
         source_object_id=f"objective:{objective.pk}",
         idempotency_key=f"campaigns:blocked:{objective.pk}:{sig}", priority="high",
     )
@@ -280,7 +321,9 @@ def dependency_completed(dependency, owner_ids) -> None:
     )
     _emit(
         campaign, DEPENDENCY_COMPLETED, audience={"kind": "users", "ids": ids},
-        title=f"Dependency cleared on «{campaign.name}»", body=body,
+        title="Dependency cleared on «{campaign_name}»", body=body,
+        template="campaigns.dependency_completed",
+        context={"campaign_name": campaign.name, "link": _detail_url(campaign)},
         source_object_id=f"dependency:{dependency.pk}",
         idempotency_key=f"campaigns:dep_done:{dependency.pk}",
     )
@@ -297,13 +340,19 @@ def deadline_soon(campaign, kind: str, item, bucket: str, *, owner_id=None, titl
     if not ids:
         return
     when = "is overdue" if bucket == "overdue" else "is due soon"
+    item_title = title or getattr(item, "title", "A campaign item")
     body = (
-        f"«{title or getattr(item, 'title', 'A campaign item')}» on campaign «{campaign.name}» "
+        f"«{item_title}» on campaign «{campaign.name}» "
         f"{when}. {_detail_url(campaign)}"
     )
     _emit(
         campaign, DEADLINE_SOON, audience={"kind": "user", "id": ids[0]},
-        title=f"Deadline on «{campaign.name}»", body=body,
+        title="Deadline on «{campaign_name}»", body=body,
+        # "is due soon" / "is overdue" is chrome → one scaffold key per phrasing.
+        template=("campaigns.deadline_soon.overdue" if bucket == "overdue"
+                  else "campaigns.deadline_soon"),
+        context={"campaign_name": campaign.name, "item_title": item_title,
+                 "link": _detail_url(campaign)},
         source_object_id=f"{kind}:{getattr(item, 'pk', 0)}",
         idempotency_key=f"campaigns:due:{kind}:{getattr(item, 'pk', 0)}:{bucket}",
         priority="high" if bucket == "overdue" else "normal",
@@ -322,7 +371,10 @@ def manual_update_needed(campaign, objective, iso_week: str, *, owner_id=None) -
     )
     _emit(
         campaign, MANUAL_UPDATE_NEEDED, audience={"kind": "user", "id": ids[0]},
-        title=f"Metric needs an update on «{campaign.name}»", body=body,
+        title="Metric needs an update on «{campaign_name}»", body=body,
+        template="campaigns.manual_update_needed",
+        context={"campaign_name": campaign.name, "objective_title": objective.title,
+                 "link": _detail_url(campaign)},
         source_object_id=f"objective:{objective.pk}",
         idempotency_key=f"campaigns:manual:{objective.pk}:{iso_week}", priority="low",
     )
@@ -346,9 +398,12 @@ def approval_needed(campaign, *, milestone=None) -> None:
         )
         _emit(
             campaign, APPROVAL_NEEDED, audience={"kind": "user", "id": ids[0]},
-            title=f"Milestone ready for review on «{campaign.name}»",
+            title="Milestone ready for review on «{campaign_name}»",
             body=(f"Milestone «{milestone.title}» is ready for your review on campaign "
                   f"«{campaign.name}». {_detail_url(campaign)}"),
+            template="campaigns.approval_needed.milestone",
+            context={"campaign_name": campaign.name, "milestone_title": milestone.title,
+                     "link": _detail_url(campaign)},
             source_object_id=f"milestone:{milestone.pk}",
             idempotency_key=f"campaigns:mreview:{milestone.pk}:{count}", priority="high",
         )
@@ -364,9 +419,11 @@ def approval_needed(campaign, *, milestone=None) -> None:
         audience = {"kind": "director"}
     _emit(
         campaign, APPROVAL_NEEDED, audience=audience,
-        title=f"Campaign proposed: «{campaign.name}»",
+        title="Campaign proposed: «{campaign_name}»",
         body=(f"Campaign «{campaign.name}» has been proposed and needs a director's approval. "
               f"{_detail_url(campaign)}"),
+        template="campaigns.approval_needed",
+        context={"campaign_name": campaign.name, "link": _detail_url(campaign)},
         source_object_id=f"campaign:{campaign.pk}",
         idempotency_key=f"campaigns:approval:{campaign.pk}:{count}", priority="high",
     )
@@ -381,9 +438,11 @@ def approved(campaign) -> None:
     count = _transition_count(campaign, "status.changed", "approved")
     _emit(
         campaign, APPROVED, audience={"kind": "user", "id": ids[0]},
-        title=f"Campaign approved: «{campaign.name}»",
+        title="Campaign approved: «{campaign_name}»",
         body=(f"Your campaign «{campaign.name}» was approved and is ready to start. "
               f"{_detail_url(campaign)}"),
+        template="campaigns.approved",
+        context={"campaign_name": campaign.name, "link": _detail_url(campaign)},
         source_object_id=f"campaign:{campaign.pk}",
         idempotency_key=f"campaigns:approved:{campaign.pk}:{count}",
     )
@@ -409,12 +468,18 @@ def started(campaign) -> None:
     audience = _visibility_audience(campaign)
     if audience.get("kind") == "users" and not audience.get("ids"):
         return
+    blurb = (campaign.rationale or campaign.summary or "").strip()[:200]
     _emit(
         campaign, STARTED, audience=audience,
-        title=f"Campaign started: «{campaign.name}»",
+        title="Campaign started: «{campaign_name}»",
         body=(f"Campaign «{campaign.name}» is now active. "
-              f"{(campaign.rationale or campaign.summary or '').strip()[:200]} "
+              f"{blurb} "
               f"{_detail_url(campaign)}"),
+        # The officer-written rationale is corp content (verbatim in every locale, D14.8) and
+        # rides in as a raw slot; only the chrome around it localises.
+        template="campaigns.started",
+        context={"campaign_name": campaign.name, "details": blurb,
+                 "link": _detail_url(campaign)},
         source_object_id=f"campaign:{campaign.pk}",
         idempotency_key=f"campaigns:status:{campaign.pk}:active",
     )
@@ -427,10 +492,22 @@ def completed(campaign, to_status: str) -> None:
         return
     verb = {"completed": "completed", "failed": "ended (failed)",
             "cancelled": "was cancelled"}.get(to_status, to_status)
+    # The verb is chrome, so it stays inside the msgid: one scaffold key per terminal status
+    # (an unknown status has no key and keeps the legacy verbatim-English body).
+    key = {"completed": "campaigns.completed", "failed": "campaigns.completed.failed",
+           "cancelled": "campaigns.completed.cancelled"}.get(to_status)
+    title = f"Campaign {verb}: «{campaign.name}»"
+    context = None
+    if key is not None:
+        title = {"completed": "Campaign completed: «{campaign_name}»",
+                 "failed": "Campaign ended (failed): «{campaign_name}»",
+                 "cancelled": "Campaign was cancelled: «{campaign_name}»"}[to_status]
+        context = {"campaign_name": campaign.name, "link": _detail_url(campaign)}
     _emit(
         campaign, COMPLETED, audience=audience,
-        title=f"Campaign {verb}: «{campaign.name}»",
+        title=title,
         body=(f"Campaign «{campaign.name}» {verb}. {_detail_url(campaign)}"),
+        template=key, context=context,
         source_object_id=f"campaign:{campaign.pk}",
         idempotency_key=f"campaigns:status:{campaign.pk}:{to_status}",
     )
@@ -448,9 +525,11 @@ def issue_escalated(issue) -> None:
         audience = {"kind": "officer"}
     _emit(
         campaign, ISSUE_ESCALATED, audience=audience,
-        title=f"Issue escalated on «{campaign.name}»",
+        title="Issue escalated on «{campaign_name}»",
         body=(f"An issue on campaign «{campaign.name}» has been escalated and needs leadership "
               f"attention. {_detail_url(campaign)}"),
+        template="campaigns.issue_escalated",
+        context={"campaign_name": campaign.name, "link": _detail_url(campaign)},
         source_object_id=f"issue:{issue.pk}",
         idempotency_key=f"campaigns:issue_escalated:{issue.pk}", priority="high",
     )
@@ -494,9 +573,20 @@ def health_changed(campaign) -> None:
         base_key = f"campaigns:health:{campaign.pk}:{level}:{sig[:16]}:{stamp}"
         priority = "high" if level in _HIGH_HEALTH else "normal"
         labels = ", ".join(r.get("label", "") for r in reasons if isinstance(r, dict))[:200]
-        title = f"Campaign health {campaign.get_health_display()}: «{campaign.name}»"
-        body = (f"Campaign «{campaign.name}» is now {campaign.get_health_display()}"
+        # The health label is CHROME: it lives inside the scaffold msgid (one key per health
+        # value), never in a context slot. ``get_health_display()`` is a gettext_lazy proxy, so
+        # str()-ing it into ``context`` would freeze the *emitting officer's* request locale into
+        # the JSONField and hand it to every recipient (slots are interpolated raw, never
+        # re-translated). The key is selected from the RAW ``campaign.health`` code; the frozen
+        # English audit title/body carry the canonical English label from _HEALTH_LABEL_EN.
+        label_en = _HEALTH_LABEL_EN.get(level, level)
+        title = f"Campaign health {label_en}: «{{campaign_name}}»"
+        body = (f"Campaign «{campaign.name}» is now {label_en}"
                 f"{' — ' + labels if labels else ''}. {_detail_url(campaign)}")
+        # One key per English sentence shape (the "— reasons" clause carries chrome punctuation).
+        tpl = f"campaigns.health_changed.{level}" + (".reasons" if labels else "")
+        ctx = {"campaign_name": campaign.name,
+               "details": labels, "link": _detail_url(campaign)}
 
         if _is_restricted(campaign):
             ids = _restricted_leadership_ids(campaign)  # already includes commander + sponsor
@@ -510,6 +600,7 @@ def health_changed(campaign) -> None:
 
         alert = _emit(
             campaign, HEALTH_CHANGED, audience=audience, title=title, body=body,
+            template=tpl, context=dict(ctx),
             source_object_id=f"campaign:{campaign.pk}", idempotency_key=base_key, priority=priority,
         )
         if not _is_restricted(campaign):
@@ -519,7 +610,8 @@ def health_changed(campaign) -> None:
             if lead_ids:
                 _emit(
                     campaign, HEALTH_CHANGED, audience={"kind": "users", "ids": lead_ids},
-                    title=title, body=body, source_object_id=f"campaign:{campaign.pk}",
+                    title=title, body=body, template=tpl, context=dict(ctx),
+                    source_object_id=f"campaign:{campaign.pk}",
                     idempotency_key=f"{base_key}:leads", priority=priority,
                 )
         if alert is not None:

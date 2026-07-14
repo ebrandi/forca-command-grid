@@ -26,6 +26,13 @@ _BODY = {
     PilotMilestone.Kind.FIRST_SOLO: "Your first solo kill — you took one down all on your own. Nice work.",
     PilotMilestone.Kind.FIRST_FINAL_BLOW: "You landed your first final blow. The killing shot is yours.",
 }
+# The per-kind message scaffold (apps.pingboard.messages.SCAFFOLDS) that re-renders the
+# celebration in the pilot's own language. ``_BODY`` stays the frozen English audit column.
+_TEMPLATE = {
+    PilotMilestone.Kind.FIRST_KILL: "killboard.milestone.first_kill",
+    PilotMilestone.Kind.FIRST_SOLO: "killboard.milestone.first_solo",
+    PilotMilestone.Kind.FIRST_FINAL_BLOW: "killboard.milestone.first_final_blow",
+}
 
 
 def _first_events(character_id: int) -> dict:
@@ -63,6 +70,9 @@ def _notify_milestone(user_id: int, milestone: PilotMilestone) -> None:
             category="custom",
             title=f"Milestone unlocked: {label}!",
             body=_BODY.get(milestone.kind, f"You reached a milestone: {label}."),
+            # Slot-free scaffolds: the whole celebration is chrome, so it localises wholesale
+            # (an unknown kind keeps the legacy verbatim-English body).
+            template=_TEMPLATE.get(milestone.kind),
             audience={"kind": "user", "id": user_id},
             source_service="killboard",
             source_object_id=f"milestone:{milestone.character_id}:{milestone.kind}",

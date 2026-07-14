@@ -22,8 +22,14 @@ def contest_url(contest) -> str:
     return f"{_site_base()}/raffle/{contest.slug}/"
 
 
-def announce(contest, *, title: str, body: str, suffix: str, audience: dict | None = None):
-    """Corp-wide (or targeted) multi-channel announcement — returns Alert or None."""
+def announce(contest, *, title: str, body: str, suffix: str, audience: dict | None = None,
+             template: str | None = None, context: dict | None = None):
+    """Corp-wide (or targeted) multi-channel announcement — returns Alert or None.
+
+    ``template`` is a ``pingboard.messages.SCAFFOLDS`` key and ``context`` its raw values, so the
+    sentence re-renders in each recipient's language; ``title``/``body`` stay the frozen English
+    audit columns (``title`` may itself carry ``{slot}`` placeholders).
+    """
     try:
         from apps.pingboard import services as pingboard
 
@@ -31,6 +37,8 @@ def announce(contest, *, title: str, body: str, suffix: str, audience: dict | No
             category="announcement",
             title=title,
             body=body,
+            template=template,
+            context=context,
             audience=audience or {"kind": "corp"},
             source_service="raffle",
             source_object_id=f"{suffix}:{contest.id}",
@@ -41,12 +49,14 @@ def announce(contest, *, title: str, body: str, suffix: str, audience: dict | No
         return None
 
 
-def notify_user(contest, user_id: int, *, title: str, body: str, suffix: str):
+def notify_user(contest, user_id: int, *, title: str, body: str, suffix: str,
+                template: str | None = None, context: dict | None = None):
     """DM a single pilot (winner / ticket / eligibility nudge)."""
     if not user_id:
         return None
     return announce(
         contest, title=title, body=body, suffix=f"{suffix}:{user_id}",
+        template=template, context=context,
         audience={"kind": "user", "id": user_id},
     )
 

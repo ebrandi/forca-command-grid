@@ -56,13 +56,33 @@ def _send_formup_reminder(op, commitment) -> bool:
     if op.comms:
         body += f" · comms {op.comms}"
     body += ". You signed up — see you there."
+    # One scaffold key per English sentence shape (timed/imminent × place? × comms?): the optional
+    # fragments are chrome, so they live inside a msgid rather than being smuggled through a slot
+    # (a slot value is raw and would freeze the worker's English into every locale).
+    if mins > 0:
+        key = {
+            (True, True): "operations.formup_reminder",
+            (True, False): "operations.formup_reminder.no_comms",
+            (False, True): "operations.formup_reminder.no_place",
+            (False, False): "operations.formup_reminder.time_only",
+        }[(bool(where), bool(op.comms))]
+    else:
+        key = {
+            (True, True): "operations.formup_reminder.soon",
+            (True, False): "operations.formup_reminder.soon_no_comms",
+            (False, True): "operations.formup_reminder.soon_no_place",
+            (False, False): "operations.formup_reminder.soon_only",
+        }[(bool(where), bool(op.comms))]
     try:
         from apps.pingboard import services as pingboard
 
         pingboard.emit_broadcast(
             category=op_alert_category(op),
-            title=f"Form-up reminder: {op.name}",
+            title="Form-up reminder: {operation_name}",
             body=body,
+            template=key,
+            context={"operation_name": op.name, "start_time": f"{mins} min",
+                     "formup_system": where, "link": op.comms},
             audience={"kind": "user", "id": commitment.user_id},
             source_service="operations",
             source_object_id=f"formup:{op.id}:{commitment.user_id}",
@@ -115,11 +135,16 @@ def send_formup_reminders() -> int:
     return sent
 
 
-def notify_operation(op, *, title, body, source_suffix, channels=None, created_by=None):
+def notify_operation(op, *, title, body, source_suffix, channels=None, created_by=None,
+                     template=None, context=None):
     """Best-effort corp alert for an operation, fanned out across every armed channel via
     Pingboard (Discord + in-app + EVE-mail + Telegram + WhatsApp + Slack) with history +
     retry. Returns the ``Alert`` (or ``None`` when disabled/suppressed/failed); never
     raises into the caller's business action.
+
+    ``template`` (a ``pingboard.messages.SCAFFOLDS`` key) + ``context`` (raw scalars) make the
+    alert re-renderable per recipient locale. An officer-composed announcement passes neither —
+    its text is human free-text and is delivered verbatim (D14.6).
     """
     try:
         from apps.pingboard import services as pingboard
@@ -128,6 +153,7 @@ def notify_operation(op, *, title, body, source_suffix, channels=None, created_b
         # than inheriting a category's officer/user routing default.
         return pingboard.emit_broadcast(
             category=op_alert_category(op), title=title, body=body,
+            template=template, context=context,
             audience={"kind": "corp"},
             source_service="operations", source_object_id=f"{source_suffix}:{op.pk}",
             channels=channels, created_by=created_by,
@@ -196,19 +222,45 @@ def announce_structure_timer(timer, *, channels=None, created_by=None):
     """Best-effort corp alert for a timer, fanned across every armed channel (or the
     ``channels`` subset) via Pingboard. ``channels=None`` reaches every armed channel."""
     try:
-        from django.utils import formats
+        from django.utils import formats, translation
 
         from apps.pingboard import services as pingboard
 
-        body = (
-            f"⏰ **Timer** — {timer.name} ({timer.get_timer_type_display()}, "
-            f"{timer.get_side_display()})\n🕒 {formats.date_format(timer.exits_at, 'D d M · H:i')} EVE"
-            + (f" · {timer.system_name}" if timer.system_name else "")
-        )
+        from .models import StructureTimer
+
+        # Everything that lands in ``context`` or in the frozen English audit ``body`` is resolved
+        # under EN, never under the announcing officer's request locale. ``date_format`` is
+        # locale-aware (a Japanese officer would freeze Japanese weekday/month names into the
+        # JSONField) and ``get_*_display()`` returns a gettext_lazy proxy, so both are pinned here.
+        with translation.override("en"):
+            when = formats.date_format(timer.exits_at, "D d M · H:i")
+            body = (
+                f"⏰ **Timer** — {timer.name} ({timer.get_timer_type_display()}, "
+                f"{timer.get_side_display()})\n🕒 {when} EVE"
+                + (f" · {timer.system_name}" if timer.system_name else "")
+            )
+        # The timer-type/side LABELS are chrome and live inside the msgid: one scaffold key per
+        # (timer_type, side) pair × the with/without-system sentence shape, selected here from the
+        # RAW codes. A label pushed through a context slot would be interpolated verbatim into
+        # every recipient's render, freezing the emitting officer's locale. An out-of-choices code
+        # (only reachable by a direct ORM write — ``create_structure_timer`` normalises) resolves
+        # to no scaffold, so the alert safely degrades to the verbatim English ``body``.
+        key = ""
+        if (timer.timer_type in StructureTimer.TimerType.values
+                and timer.side in StructureTimer.Side.values):
+            key = f"operations.structure_timer.{timer.timer_type}.{timer.side}"
+            if not timer.system_name:
+                key += ".no_system"
         # An officer announcing a timer wants the whole corp to rally, so force the corp
         # audience rather than the structure_timer category's officer-only routing default.
         return pingboard.emit_broadcast(
-            category="structure_timer", title=f"Timer — {timer.name}", body=body,
+            category="structure_timer", title="Timer — {structure_name}", body=body,
+            template=key or None,
+            context={
+                "structure_name": timer.name,
+                "timer_time": when,
+                "system_name": timer.system_name,
+            },
             audience={"kind": "corp"}, channels=channels, source_service="operations",
             source_object_id=f"timer:{timer.pk}", created_by=created_by,
         )
@@ -724,11 +776,14 @@ def _announce_auto_cancel(operation, plan) -> None:
     """
     notify_operation(
         operation, source_suffix="cancel",
-        title=f"Cancelled — {operation.name}",
+        title="Cancelled — {operation_name}",
         body=(
             f"❌ {operation.name} auto-cancelled — only {plan['total_confirmed']} "
             f"of {operation.min_pilots} pilots confirmed by the sign-up deadline."
         ),
+        template="operations.auto_cancelled",
+        context={"operation_name": operation.name, "count": plan["total_confirmed"],
+                 "required_count": operation.min_pilots},
     )
 
 

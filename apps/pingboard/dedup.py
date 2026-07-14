@@ -31,7 +31,8 @@ def _signature(keys: list[str]) -> str:
 
 
 def _emit(*, title: str, body: str, audience: dict, source_service: str,
-          source_prefix: str, sig: str) -> bool:
+          source_prefix: str, sig: str, template: str | None = None,
+          context: dict | None = None) -> bool:
     # Per-firing microsecond stamp: two sequential firings are always distinct, so a
     # genuine recurrence is never swallowed by pingboard's idempotency/duplicate guard.
     stamp = int(timezone.now().timestamp() * 1_000_000)
@@ -42,6 +43,8 @@ def _emit(*, title: str, body: str, audience: dict, source_service: str,
             category="custom",
             title=title,
             body=body,
+            template=template,
+            context=context,
             audience=audience,
             source_service=source_service,
             source_object_id=f"{source_prefix}:{sig[:16]}:{stamp}",
@@ -57,13 +60,17 @@ def _emit(*, title: str, body: str, audience: dict, source_service: str,
 
 def fire_on_change(*, event_key: str, sig_key: str, problems: list[str], title: str,
                    body: str, source_service: str, source_prefix: str,
-                   audience: dict | None = None) -> dict:
+                   audience: dict | None = None, template: str | None = None,
+                   context: dict | None = None) -> dict:
     """Emit at most one alert per distinct problem set; a no-op when unchanged.
 
     ``event_key``   governance event (``is_enabled`` off-switch + audience override).
     ``sig_key``     ``AppSetting`` key holding the last-alerted signature (dedup state).
     ``problems``    stable string keys identifying the current problem set ([] = healthy).
     ``audience``    explicit audience dict; defaults to the event's console audience.
+    ``template``    ``pingboard.messages.SCAFFOLDS`` key — the digest chrome, re-rendered per
+                    recipient locale. ``context`` carries its raw values (the diagnostic lines);
+                    ``title``/``body`` stay the frozen English audit columns.
     """
     from apps.admin_audit.models import AppSetting
     from apps.pingboard.notifications import is_enabled, resolve
@@ -84,7 +91,7 @@ def fire_on_change(*, event_key: str, sig_key: str, problems: list[str], title: 
     if audience is None:
         audience = {"kind": resolve(event_key).get("audience") or "officer"}
 
-    if not _emit(title=title, body=body, audience=audience,
+    if not _emit(title=title, body=body, audience=audience, template=template, context=context,
                  source_service=source_service, source_prefix=source_prefix, sig=sig):
         return {"status": "alert_failed", "problems": len(problems)}
 

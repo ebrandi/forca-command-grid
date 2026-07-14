@@ -218,12 +218,21 @@ def build_vs_buy(product_type_id: int, *, runs: int = 1, me: int = 0, price=pric
     """One-glance build-vs-buy for a product at the given runs/ME."""
     est = manufacturing_estimate(product_type_id, runs=runs, me=me, price=price)
     if not est["buildable"]:
-        return {"buildable": False, "decision": "buy", "reason": _("No recipe.")}
+        return {
+            "buildable": False,
+            # ``decision`` stays the canonical code every caller compares against;
+            # ``decision_label`` is the translated half a human reads.
+            "decision": "buy",
+            "decision_label": bom.decision_label("buy"),
+            "reason": _("No recipe."),
+        }
     buy_total = price(product_type_id) * est["total_units"]
     build_total = est["material_cost"] + est["install_fee"]
+    decision = "build" if build_total < buy_total else "buy"
     return {
         "buildable": True,
-        "decision": "build" if build_total < buy_total else "buy",
+        "decision": decision,
+        "decision_label": bom.decision_label(decision),
         "build_cost": build_total,
         "buy_cost": buy_total,
         "saving": buy_total - build_total,

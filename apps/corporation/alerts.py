@@ -55,6 +55,7 @@ def scan_infrastructure_alerts() -> dict:
 
     breaches = infrastructure_breaches()
     body = ""
+    lines = ""
     if breaches:
         lines = "\n".join(f"• {b['detail']}" for b in breaches)
         body = (
@@ -66,5 +67,8 @@ def scan_infrastructure_alerts() -> dict:
         event_key=_EVENT_KEY, sig_key=_SIG_KEY,
         problems=[b["key"] for b in breaches],
         title="Corp infrastructure alert", body=body,
+        # The digest chrome localises per officer; the fuel/ADM breach lines are diagnostic data
+        # and stay raw. ``body`` remains the frozen English audit column.
+        template="corporation.infrastructure_alert", context={"details": lines},
         source_service="corporation", source_prefix="corp_infra",
     )

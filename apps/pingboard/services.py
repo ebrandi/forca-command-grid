@@ -117,9 +117,16 @@ def emit_alert(
     # Freeze the audit body under the corp default broadcast locale so the stored
     # Alert.body is deterministic regardless of who/what triggered the emit. Per-recipient
     # locales are re-rendered later from template_key + context (dispatch / in-app view).
+    #
+    # The persisted context is flattened INSIDE the same override: a context slot must carry a raw
+    # code / EVE / user datum (never a translated label — doc 08 §11.1), but should a call site ever
+    # slip a gettext_lazy proxy in, freezing it here keeps it deterministic (the corp broadcast
+    # locale, consistent with Alert.body) instead of silently capturing whatever locale the acting
+    # officer's request happened to be in and shipping it to every recipient.
     with translation.override(broadcast_locale()):
         body_text, custom = _render_body(template, body, context)
-        title_text = rendering.render(title, context) if context else title
+        title_text = _render_title(title, context)
+        context_frozen = _persist_context(context)
 
     src = source or (
         AlertSource.SCHEDULED if scheduled_at
@@ -207,7 +214,7 @@ def emit_alert(
         template=_template_obj(template),
         custom_message=custom,
         template_key=resolved_key,
-        context=_persist_context(context),
+        context=context_frozen,
         automation_rule=automation_rule,
         source_service=source_service,
         source_object_id=str(source_object_id or ""),
@@ -466,8 +473,15 @@ def emit_broadcast(
     source_object_id: str = "", priority: str | None = None, reason: str = "",
     audience: dict | None = None, channels: list[str] | None = None,
     idempotency_key: str = "", created_by=None,
+    template: str | AlertTemplate | None = None, context: dict | None = None,
 ) -> Alert | None:
     """Service entry point: emit an alert across every armed channel by default.
+
+    A migrated service passes ``template`` (a ``messages.SCAFFOLDS`` key) + ``context`` (plain
+    JSON-safe scalars) so the sentence re-renders in each recipient's locale; ``body`` stays the
+    frozen English audit/fallback column and ``title`` may itself carry ``{slot}`` placeholders
+    (it is rendered against ``context`` under the broadcast locale). A site that has not migrated
+    passes ``body`` alone and keeps delivering verbatim English, exactly as before.
 
     Thin wrapper over :func:`emit_alert` that defaults ``channels`` to
     :func:`enabled_channel_values` (in-app + EVE-mail + Discord + Telegram + WhatsApp +
@@ -486,6 +500,7 @@ def emit_broadcast(
     """
     return emit_alert(
         category=category, title=title, body=body, priority=priority,
+        template=template, context=context,
         audience=audience,
         channels=channels if channels is not None else enabled_channel_values(),
         source=AlertSource.SERVICE, source_service=source_service,
@@ -550,6 +565,22 @@ def _persist_context(context) -> dict:
     audit-safe ``Alert.body`` already reflects (no secrets/tokens — doc 08 §4.4).
     """
     return rendering._flatten(context)
+
+
+def _render_title(title, context) -> str:
+    """The frozen (broadcast-locale) audit title.
+
+    A migrated service passes an English title *template* carrying ``{slot}`` placeholders, so it
+    is rendered against the same raw context as the body. A title that is already interpolated
+    (a legacy f-string) may still contain a stray brace from an EVE/user name — that is a bad
+    template, never a reason to lose the alert, so it degrades to the raw string.
+    """
+    if not context:
+        return title
+    try:
+        return rendering.render(title, context)
+    except rendering.TemplateError:
+        return title
 
 
 def _render_body(template, body, context) -> tuple[str, bool]:

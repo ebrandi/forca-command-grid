@@ -250,10 +250,23 @@ def _auto_attach_reminders(event) -> None:
 
 # --- reminder materialisation ------------------------------------------------
 def _reminder_context(event) -> dict:
+    """The raw interpolation context persisted on the reminder alert.
+
+    ``get_event_type_display()`` is a ``gettext_lazy`` proxy: ``Alert.context`` is a JSONField that
+    ``services._persist_context`` stringifies OUTSIDE ``translation.override(broadcast_locale())``,
+    so an un-pinned label would freeze whatever locale happened to be active in the emitting worker
+    and be interpolated verbatim into every recipient's render (a context slot is never
+    re-translated — doc 08 §11.1). Pinned to canonical English so the value is locale-invariant,
+    exactly like the other raw slots here.
+    """
+    from django.utils import translation
+
+    with translation.override("en"):
+        category = str(event.get_event_type_display())
     return {
         "calendar_event_title": event.title,
         "calendar_event_start": f"{event.start_at:%Y-%m-%d %H:%M} EVE",
-        "alert_category": event.get_event_type_display(),
+        "alert_category": category,
     }
 
 

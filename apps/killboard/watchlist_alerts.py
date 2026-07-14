@@ -131,8 +131,14 @@ def _emit(entry, ctx, names, now) -> None:
     )
     pingboard.emit_broadcast(
         category=AlertCategory.HOME_DEFENCE,
-        title=f"Watchlist tripwire: {ename}",
+        title="Watchlist tripwire: {entity_name}",
         body=body,
+        # Scaffold + raw context: the tripwire chrome localises; the watched entity, the
+        # watchlist name and the system stay raw. ``body`` is the frozen English audit column.
+        template="killboard.watchlist_tripwire",
+        context={"entity_type": kind, "entity_name": ename,
+                 "watchlist_name": entry.watchlist.name, "system_name": system,
+                 "minutes": mins},
         source_service="killboard",
         source_object_id=str(entry.id),
         audience={"kind": "corp"},

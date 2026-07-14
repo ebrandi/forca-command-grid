@@ -12,6 +12,7 @@ from django.utils.translation import gettext as _
 
 from .chains import PiGraph, build_graph
 from .constants import DEFAULT_FACTORY_OUTPUT_PER_DAY, TIER_ORDER
+from .labels import complexity_label
 from .prices import PriceProvider
 
 _CENTS = Decimal("0.01")
@@ -98,7 +99,10 @@ def estimate_product(graph: PiGraph, provider: PriceProvider, config, material_i
         "net_month": _money(net * 30),
         "isk_per_m3": _money((net / (Decimal(str(info.volume)) * daily)) if info.volume and daily else 0),
         "priced": provider.is_priced(material_id) and inputs_priced,
+        # ``complexity`` is the CODE the badge rule below compares (``== "Low"``);
+        # ``complexity_label`` is the translated half the template renders.
         "complexity": _complexity_for_tier(tier),
+        "complexity_label": complexity_label(_complexity_for_tier(tier)),
         "needs_planets": graph.planet_cover(list(p0_leaves)),
         "raw_leaves": list(p0_leaves),
     }

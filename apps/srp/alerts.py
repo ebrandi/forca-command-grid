@@ -112,6 +112,7 @@ def scan_srp_health() -> dict:
 
     breaches = srp_breaches()
     body = ""
+    lines = ""
     if breaches:
         lines = "\n".join(f"• {b['detail']}" for b in breaches)
         body = (
@@ -123,5 +124,8 @@ def scan_srp_health() -> dict:
         event_key=_EVENT_KEY, sig_key=_SIG_KEY,
         problems=[b["key"] for b in breaches],
         title="SRP needs attention", body=body,
+        # The digest chrome localises per SRP officer; the breach lines are diagnostic data and
+        # stay raw. ``body`` remains the frozen English audit column.
+        template="srp.sla_breach", context={"details": lines},
         source_service="srp", source_prefix="srp_sla",
     )

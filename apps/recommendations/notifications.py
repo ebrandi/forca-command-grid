@@ -86,6 +86,10 @@ def _emit_corp_alert(ntype: str, label: str, nid, ts) -> bool:
         alert = pingboard.emit_broadcast(
             category=category, priority=priority,
             title=label, body=f"🚨 {label} — {ts:%a %d %b %H:%M} EVE",
+            # Only the chrome around the ESI event localises; the event label is a CCP/EVE term
+            # and the timestamp is data, so both stay raw slots. ``body`` is the English audit column.
+            template="recommendations.esi_corp_alert",
+            context={"event_label": label, "event_time": f"{ts:%a %d %b %H:%M}"},
             source_service="recommendations", source_object_id=f"esi-notif:{nid}",
             idempotency_key=f"esi-notif:{nid}",
             reason="Automated ESI corp alert",

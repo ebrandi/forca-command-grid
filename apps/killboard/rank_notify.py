@@ -57,8 +57,12 @@ def _send_rank_up(character_id: int, user_id: int, cur: dict, kills: int, note: 
 
         pingboard.emit_broadcast(
             category="custom",
-            title=f"Combat rank achieved: {rank_name}",
+            title="Combat rank achieved: {rank_name}",
             body=body,
+            # Two keys, one per English sentence shape: the pending-reward clause is chrome and
+            # must live inside a msgid, never in a (never-translated) slot value.
+            template="killboard.rank_up.reward" if note else "killboard.rank_up",
+            context={"rank_name": rank_name, "kill_count": f"{kills:,}"},
             audience={"kind": "user", "id": user_id},
             source_service="killboard",
             source_object_id=f"rankup:{character_id}:{cur['min_kills']}",

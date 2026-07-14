@@ -76,8 +76,14 @@ def _armed(key: str) -> bool:
     return bool(config.get("notifications").get("enabled", {}).get(suffix, False))
 
 
-def _emit(key, *, owner_id, title, body, source_object_id, idempotency_key, priority="low"):
-    """The one place a capsuleer alert is created (doc 13 §1, §3). Fail-soft; per-user DM only."""
+def _emit(key, *, owner_id, title, body, source_object_id, idempotency_key, priority="low",
+          template=None, context=None):
+    """The one place a capsuleer alert is created (doc 13 §1, §3). Fail-soft; per-user DM only.
+
+    ``template`` is an ``apps.pingboard.messages.SCAFFOLDS`` key and ``context`` its raw
+    interpolation values (plain scalars) — together they let the alert re-render in the owner's
+    own language. ``title``/``body`` remain the frozen English audit columns.
+    """
     try:
         if not owner_id:
             return None
@@ -95,6 +101,7 @@ def _emit(key, *, owner_id, title, body, source_object_id, idempotency_key, prio
 
         alert = pingboard.emit_broadcast(
             category=CATEGORY, title=title, body=body,
+            template=template, context=context,
             audience={"kind": "user", "id": owner_id},
             # In-app only, explicitly (doc 13 §4/§8): never fall through to every armed channel, so a
             # personal goal title can never be posted to a shared leadership channel (finding 14).
@@ -119,7 +126,10 @@ def milestone_reached(goal, milestone):
     )
     return _emit(
         MILESTONE_REACHED, owner_id=goal.user_id,
-        title=f"Milestone reached: «{milestone.title}»", body=body,
+        title="Milestone reached: «{milestone_title}»", body=body,
+        template="capsuleer.milestone_reached",
+        context={"milestone_title": milestone.title, "goal_title": goal.title,
+                 "link": _abs(_goal_path(goal.pk))},
         source_object_id=str(milestone.pk),
         idempotency_key=f"capsuleer:milestone_reached:{milestone.pk}",
     )
@@ -130,7 +140,9 @@ def goal_completed(goal):
     body = f"You completed your career goal «{goal.title}». {_abs(_goal_path(goal.pk))}"
     return _emit(
         GOAL_COMPLETED, owner_id=goal.user_id,
-        title=f"Goal completed: «{goal.title}»", body=body,
+        title="Goal completed: «{goal_title}»", body=body,
+        template="capsuleer.goal_completed",
+        context={"goal_title": goal.title, "link": _abs(_goal_path(goal.pk))},
         source_object_id=str(goal.pk),
         idempotency_key=f"capsuleer:goal_completed:{goal.pk}",
     )
@@ -147,7 +159,10 @@ def review_due(goal, *, bucket):
     )
     return _emit(
         REVIEW_DUE, owner_id=goal.user_id,
-        title=f"Review nudge: «{goal.title}»", body=body,
+        title="Review nudge: «{goal_title}»", body=body,
+        template="capsuleer.review_due",
+        context={"goal_title": goal.title, "review_month": bucket,
+                 "link": _abs(_review_path(goal.pk))},
         source_object_id=str(goal.pk),
         idempotency_key=f"capsuleer:review_due:{goal.pk}:{bucket}",
     )
@@ -164,6 +179,10 @@ def suggestion_batch(user_id, count, *, day):
     return _emit(
         SUGGESTION, owner_id=user_id,
         title="New Capsuleer Path suggestions", body=body,
+        # One scaffold key per English plural form: a gettext msgid is a whole sentence, so the
+        # singular/plural split lives in the key, never in a (never-translated) slot value.
+        template="capsuleer.suggestion.one" if count == 1 else "capsuleer.suggestion.many",
+        context={"count": count, "link": _abs(_home_path())},
         source_object_id=str(user_id),
         idempotency_key=f"capsuleer:suggestion:{user_id}:{day}",
     )

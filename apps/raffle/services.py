@@ -132,13 +132,19 @@ def set_status(contest: RaffleContest, new_status: str, actor=None, *, reason: s
     if new_status in (RaffleContest.Status.SCHEDULED, RaffleContest.Status.ACTIVE):
         notify.publish_timeline(locked)
     if new_status == RaffleContest.Status.ACTIVE:
-        notify.announce(locked, title=f"🎟️ Raffle open: {locked.name}",
-                        body=(locked.objective or locked.description or "")[:400]
-                        + "  Connect your ESI token and fly to earn tickets.",
+        blurb = (locked.objective or locked.description or "")[:400]
+        notify.announce(locked, title="🎟️ Raffle open: {contest_name}",
+                        body=blurb + "  Connect your ESI token and fly to earn tickets.",
+                        # The officer-written blurb is corp content (verbatim in every locale,
+                        # D14.8) and rides in as a raw slot; only the chrome around it localises.
+                        template="raffle.started",
+                        context={"contest_name": locked.name, "details": blurb},
                         suffix="started")
     if new_status == RaffleContest.Status.CLOSED:
-        notify.announce(locked, title=f"Raffle closed: {locked.name}",
+        notify.announce(locked, title="Raffle closed: {contest_name}",
                         body="Ticket accrual is closed. The draw happens soon — good luck!",
+                        template="raffle.closed",
+                        context={"contest_name": locked.name},
                         suffix="closed")
     if new_status == RaffleContest.Status.CANCELLED:
         notify.cancel_timeline(locked)
@@ -263,8 +269,11 @@ def grant_manual_tickets(contest, actor, *, character_id=None, user=None, amount
               metadata={"grant_id": grant.pk, "amount": amount, "character_id": character_id,
                         "override": override_used, "reason": reason[:120]})
     if user is not None:
-        notify.notify_user(contest, user.id, title=f"🎟️ +{amount} raffle tickets",
+        notify.notify_user(contest, user.id, title="🎟️ +{ticket_count} raffle tickets",
                            body=f"You received {amount} tickets in “{contest.name}”: {reason[:200]}",
+                           template="raffle.grant",
+                           context={"ticket_count": amount, "contest_name": contest.name,
+                                    "reason": reason[:200]},
                            suffix="grant")
     return grant
 
@@ -436,15 +445,20 @@ def _announce_winners(contest, draw: RaffleDraw) -> None:
     if not results:
         return
     lines = [f"#{r.prize.rank} {r.prize.name} → {r.winner_character_name}" for r in results]
-    notify.announce(contest, title=f"🏆 Raffle winners: {contest.name}",
+    notify.announce(contest, title="🏆 Raffle winners: {contest_name}",
                     body="Congratulations!\n" + "\n".join(lines),
+                    template="raffle.winners",
+                    context={"contest_name": contest.name, "details": "\n".join(lines)},
                     suffix="winners")
     for r in results:
         if r.winner_user_id:
             notify.notify_user(contest, r.winner_user_id,
-                               title=f"🏆 You won {r.prize.name}!",
+                               title="🏆 You won {prize_name}!",
                                body=f"You won #{r.prize.rank} in “{contest.name}”. "
                                     "Leadership will be in touch about delivery.",
+                               template="raffle.win",
+                               context={"prize_name": r.prize.name, "prize_rank": r.prize.rank,
+                                        "contest_name": contest.name},
                                suffix="win")
 
 
@@ -638,6 +652,13 @@ def _emit_outreach(contest, user_id: int, tickets: int) -> None:
         category=AlertCategory.ANNOUNCEMENT,
         title="Enrol to claim your raffle tickets",
         body=body,
+        # ``ngettext`` above resolves in the *worker's* locale and freezes into ``body`` (the
+        # English audit column); the scaffold — one key per English plural form — is what actually
+        # re-renders this nudge in the pilot's own language at delivery.
+        template=("raffle.enrolment_outreach.one" if tickets == 1
+                  else "raffle.enrolment_outreach.many"),
+        context={"ticket_count": tickets, "contest_name": contest.name,
+                 "link": enrol_url, "opt_out_link": opt_out_url},
         audience={"kind": "user", "id": user_id},
         source_service="raffle",
         source_object_id=f"outreach:{contest.id}:{user_id}",

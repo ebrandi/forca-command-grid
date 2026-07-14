@@ -88,6 +88,9 @@ def chain_tree(
         node["name"] = names.get(
             node["type_id"], _("Type %(type_id)s") % {"type_id": node["type_id"]}
         )
+        # ``decision`` stays the code the templates compare (``== 'build'`` picks the
+        # build cost and the cyan chip); ``decision_label`` is the translated chip text.
+        node["decision_label"] = bom.decision_label(node["decision"])
         for c in node["children"]:
             annotate(c)
 

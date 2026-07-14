@@ -25,6 +25,7 @@ from . import calc, chains, guide, recommend, services
 from .constants import TIER_META, TIER_ORDER, TRADE_HUBS, hub_label
 from .esi import PLANETS_SCOPE, colonies_for_user
 from .forms import PiPlanForm
+from .labels import complexity_label, confidence_label
 from .models import PiGoal, PiMaterial, PiPlan, PiPlanetRole, PiPlanetType, PiStatus
 from .prices import PriceProvider
 
@@ -51,8 +52,12 @@ def _plan_card(plan: PiPlan) -> dict:
         "net_week": totals.get("net_week"),
         "net_month": totals.get("net_month"),
         "tax_burden_day": totals.get("tax_burden_day"),
+        # The snapshot stores CODES ("Low"/"Medium"/"High"); the labels are resolved here,
+        # at render time, so a locale is never frozen into the persisted JSON.
         "complexity": snap.get("complexity", "—"),
+        "complexity_label": complexity_label(snap.get("complexity", "—")),
         "confidence": snap.get("confidence", "—"),
+        "confidence_label": confidence_label(snap.get("confidence", "—")),
         "health": health,
         "priced": not snap.get("missing_prices"),
     }
@@ -275,6 +280,11 @@ def plan_detail(request: HttpRequest, pk: int) -> HttpResponse:
         "plan": plan,
         "can_manage": services.can_manage(request.user, plan),
         "economics": economics,
+        # ``economics`` carries the raw complexity/confidence CODES (it is snapshotted as
+        # JSON elsewhere, so no lazy string may ever be put inside it). The labels ride
+        # alongside, resolved per request.
+        "complexity_label": complexity_label(economics.get("complexity", "—")),
+        "confidence_label": confidence_label(economics.get("confidence", "—")),
         "setup": setup,
         "chain_tree": chain_tree,
         "comparison": comparison,

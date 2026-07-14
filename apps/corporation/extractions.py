@@ -91,6 +91,10 @@ def _emit_chunk_reminder(ext, hours: int) -> None:
     try:
         pingboard.emit_broadcast(
             category=AlertCategory.MOON_EXTRACTION, title="Moon chunk arriving soon", body=body,
+            # Scaffold + raw context: the rally chrome localises per recipient; the moon/structure
+            # name and the hours-out stay raw. ``body`` is the frozen English audit column.
+            template="corporation.chunk_arrival",
+            context={"structure_name": where, "hours": hours},
             # Explicit corp audience — this is a corp-wide "form up to mine" rally, not the
             # MOON_EXTRACTION category's default officer routing (which would also be gated
             # off corp chat channels by the high_command classification).

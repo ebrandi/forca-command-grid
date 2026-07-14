@@ -16,6 +16,8 @@ import time
 from dataclasses import dataclass, field
 from decimal import Decimal
 
+from django.utils.translation import gettext_lazy as _
+
 from apps.market.pricing import price_for
 from apps.sde.models import SdeBlueprintMaterial
 
@@ -25,6 +27,25 @@ BUILD_ACTIVITIES = (SdeBlueprintMaterial.MANUFACTURING, SdeBlueprintMaterial.REA
 STRATEGY_BUILD_VS_BUY = "build_vs_buy"
 STRATEGY_BUILD_TO_MINERALS = "build_to_minerals"
 DEFAULT_MAX_DEPTH = 8
+
+# --------------------------------------------------------------------------- #
+#  Build-or-buy decision: a CODE, plus a display label
+# --------------------------------------------------------------------------- #
+# ``decision`` is a code, not prose. It drives the chain templates
+# (``{% if node.decision == 'build' %}`` picks the build cost and the cyan chip), the
+# doctrine supply form (``<input name="action" value="{{ line.decision }}">``) and the
+# strategy branches in this module — so translating the value itself would silently
+# break all of them for every non-English pilot. The code stays canonical English; the
+# label beside it is the translated half, resolved at render time only.
+DECISION_LABELS: dict[str, str] = {
+    "build": _("build"),
+    "buy": _("buy"),
+}
+
+
+def decision_label(code: str):
+    """The human label for a build-or-buy decision code (the code itself if unmapped)."""
+    return DECISION_LABELS.get(code, code)
 
 # --------------------------------------------------------------------------- #
 # Process-local recipe cache

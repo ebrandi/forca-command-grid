@@ -60,10 +60,31 @@ def missing_required(required_vars, context: dict | None) -> list[str]:
     return [v for v in (required_vars or []) if not str(ctx.get(v, "")).strip()]
 
 
-# The template-variable catalogue (documentation + composer preview helper).
+# The template-variable catalogue (documentation + composer preview helper) — ALSO the
+# closed set of slot names a code message-scaffold (``messages.SCAFFOLDS``) may interpolate
+# (doc 08 §11.1). Every entry is a *raw* value: the interpolated EVE/game/user datum is
+# substituted verbatim and never passes through gettext.
 VARIABLE_CATALOGUE = [
+    # Fleet / operations
     "pilot_name", "corp_name", "operation_name", "fleet_type", "fleet_commander",
-    "formup_system", "destination_system", "start_time", "doctrine_name", "required_ships",
-    "moon_name", "structure_name", "industry_job_name", "alert_priority", "alert_category",
-    "calendar_event_title", "calendar_event_start", "link",
+    "formup_system", "destination_system", "origin_system", "system_name", "route_name",
+    "start_time",
+    "doctrine_name", "required_ships", "required_count",
+    # Structures / industry / moons
+    "moon_name", "structure_name", "industry_job_name", "timer_type", "timer_side",
+    "timer_time", "planet_type",
+    # Alert metadata + deep links
+    "alert_priority", "alert_category", "calendar_event_title", "calendar_event_start",
+    "link", "opt_out_link", "event_label", "event_time",
+    # Pilots / identity
+    "character_name", "actor_name", "role_name", "mentor_name", "mentee_name",
+    # Killboard
+    "rank_name", "kill_count", "entity_type", "entity_name", "watchlist_name",
+    # Campaigns / capsuleer
+    "campaign_name", "objective_title", "milestone_title", "goal_title", "item_title",
+    "assignment_label", "health_label", "review_month",
+    # Store / raffle / logistics
+    "ship_name", "status_label", "contest_name", "ticket_count", "prize_name", "prize_rank",
+    # Generic scalars shared by many scaffolds
+    "count", "minutes", "hours", "reason", "details", "scopes", "threat_count",
 ]
