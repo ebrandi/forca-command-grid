@@ -179,10 +179,14 @@ def sync_corp_assets(request: HttpRequest) -> HttpResponse:
 @role_required(rbac.ROLE_MEMBER)
 @require_POST
 def sync_my_assets(request: HttpRequest) -> HttpResponse:
-    """Pull the signed-in pilot's personal assets via their own token."""
+    """Pull the active pilot's personal assets via their own token."""
     from .assets import import_character_assets
 
-    character = request.user.characters.filter(is_main=True).first() or request.user.characters.first()
+    # The pilot you are flying, not the account's main (LP-3). The assets page shows the active
+    # pilot's assets (via _main_character_id, which now resolves the active pilot); syncing must
+    # pull for that same pilot — otherwise "Sync my assets" while flying an alt would import the
+    # main's assets under the alt's view, spending the main's token.
+    character = pilots.acting_pilot(request.user)
     if not character:
         messages.error(request, _("Link an EVE character first."))
         return redirect("stockpile:assets")

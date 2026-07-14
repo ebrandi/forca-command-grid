@@ -246,6 +246,26 @@ def test_the_service_refuses_the_last_pilot_even_without_the_view(django_user_mo
 
 
 @pytest.mark.django_db
+def test_a_second_unlink_of_an_already_released_pilot_is_a_no_op(django_user_model):
+    """The concurrent-unlink race: two requests unlink the two pilots of a two-pilot account at
+    once. The last-pilot guard counts under a row lock and re-confirms the target is still ours,
+    so the account can never be left with zero credentials. Serialised here, the second unlink of
+    a pilot the first already released simply does nothing — it does not raise, and it does not
+    strand the account."""
+    user = _account(django_user_model)
+    a = _pilot(user, 1, "A", main=True)
+    b = _pilot(user, 2, "B")
+
+    linking.unlink(user, a)          # now one pilot remains
+    b.refresh_from_db()
+    # Re-releasing A (already detached) is a no-op, and B — the last one — is still protected.
+    linking.unlink(user, a)          # no-op, no raise
+    with pytest.raises(linking.LastPilotError):
+        linking.unlink(user, b)
+    assert user.characters.count() == 1
+
+
+@pytest.mark.django_db
 def test_unlinking_the_active_pilot_switches_to_another(client, django_user_model):
     user = _account(django_user_model)
     main = _pilot(user, 1, "Main", main=True)

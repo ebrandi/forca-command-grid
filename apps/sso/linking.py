@@ -163,14 +163,28 @@ def unlink(user, character) -> None:
     reachable again if the same human relinks the pilot (a fresh SSO authorisation), and the
     account-deletion path on the privacy page remains the way to erase it.
     """
+    from django.db import transaction
     from django.utils import timezone
 
     from core import pilots
 
+    from .models import EveCharacter
     from .tasks import revoke_tokens_at_ccp
 
-    if user.characters.count() <= 1:
-        raise LastPilotError
+    # The last-pilot guard has to be atomic, or two unlink requests racing on a two-pilot account
+    # can both read "2 remaining", both pass, and both detach — leaving the account with zero
+    # credentials and no way to sign in. Lock this account's pilots for the duration, count under
+    # the lock, and re-confirm the target is still ours (a concurrent unlink may have taken it).
+    with transaction.atomic():
+        owned = list(
+            EveCharacter.objects.select_for_update()
+            .filter(user=user)
+            .values_list("character_id", flat=True)
+        )
+        if character.character_id not in owned:
+            return  # already unlinked by a concurrent request — nothing to do
+        if len(owned) <= 1:
+            raise LastPilotError
 
     # Capture the refresh-token plaintexts BEFORE wiping the ciphertext.
     active = list(AuthToken.objects.filter(character=character, revoked_at__isnull=True))
