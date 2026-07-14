@@ -1,0 +1,16 @@
+{% load eve i18n %}
+{% comment %}The active pilot's identity: portrait, name, and role · corporation. Shared by the
+  two faces of the identity block in _pilot_selector.html — the switch <button> (with a chevron)
+  when the account has several pilots, and the static card when it has one — so the two can never
+  drift. ``chevron`` adds the open/close affordance (only the button variant passes it).{% endcomment %}
+<img src="{% eve_portrait active_pilot.character_id 64 %}" alt="" class="h-9 w-9 shrink-0 rounded-full ring-1 ring-line">
+<span class="min-w-0 flex-1">
+  <span class="block truncate text-sm font-medium text-ink">{{ active_pilot.name }}</span>
+  <span class="block truncate text-[11px] text-faint">
+    {% if is_director %}{% translate "Director" %}{% elif is_officer %}{% translate "Officer" %}{% elif is_member %}{% translate "Member" %}{% else %}{% translate "Capsuleer" %}{% endif %}{% if active_pilot.corporation.ticker %} · [{{ active_pilot.corporation.ticker }}]{% elif active_pilot.corporation %} · {{ active_pilot.corporation.name }}{% endif %}
+  </span>
+</span>
+{% if chevron %}
+<svg class="h-4 w-4 shrink-0 text-faint transition-transform" :class="open && 'rotate-180'"
+     fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+{% endif %}
