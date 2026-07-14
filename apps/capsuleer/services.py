@@ -1213,7 +1213,9 @@ def leadership_pipeline() -> dict:
     ):
         shared.append({
             "pilot": _pilot_display(goal.user),
-            "title": goal.title,
+            # Display-only row: an unedited template goal names itself in the reader's locale, a
+            # pilot-written title stays verbatim (``templates_i18n``).
+            "title": goal.title_i18n,
             "progress": goal.progress_percent,
             "goal_id": goal.pk,
             "status": goal.status,
@@ -1242,7 +1244,12 @@ def _pilot_display(user) -> str:
 def _resolve_templates(dim, total, min_group, published):
     from .models import CareerTemplate
 
-    names = dict(CareerTemplate.objects.filter(key__in=[k for k, _ in dim]).values_list("key", "name"))
+    # The dimension label is display-only, so a built-in path names itself in the reader's locale
+    # (``templates_i18n``); a corp template is not in the catalogue and stays verbatim.
+    names = {
+        t.key: t.name_i18n
+        for t in CareerTemplate.objects.filter(key__in=[k for k, _ in dim]).only("key", "name")
+    }
     return [
         {"label": names.get(key, key), "count": n}
         for key, n in dim

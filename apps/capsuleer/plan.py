@@ -29,6 +29,7 @@ from django.db import transaction
 
 from apps.skills.prereqs import expand_prerequisites, order_by_prereqs
 
+from . import templates_i18n as t_i18n
 from .models import CareerMilestone, GoalStatus, GoalType, MilestoneKind, Verification
 from .params import validate_milestone_params
 
@@ -375,6 +376,12 @@ def instantiate_template(template, user, *, character=None, visibility=None, pri
     milestone with validator-passing concrete params, and — when ``activate`` — moves the goal to
     ``active`` (which runs :func:`build_plan` and stamps contribution baselines through the service
     activation path). Returns the created (or pre-existing live) goal.
+
+    Each copied milestone title is stamped with the built-in's stable ``source_key``
+    (``templates_i18n``), so the render seam can show the *translated* built-in title while the row
+    still holds the shipped English, and the pilot's own words verbatim once they edit it. The goal
+    itself needs no new column: it already records ``template_key``, and its title is the path's
+    name. English is what gets stored (never a lazy proxy) — the row stays the audit record.
     """
     from . import services
 
@@ -409,6 +416,7 @@ def instantiate_template(template, user, *, character=None, visibility=None, pri
             milestone = CareerMilestone.objects.create(
                 goal=goal, order=ms["order"], title=ms["title"][:140], kind=kind,
                 required=ms.get("required", True), params=params, verification=verification,
+                source_key=t_i18n.milestone_key(template.key, ms["order"]),
             )
             if note:
                 # An unresolved reference is a permanent structural blocker until the template is

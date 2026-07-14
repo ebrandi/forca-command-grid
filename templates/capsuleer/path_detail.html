@@ -1,16 +1,16 @@
 {% extends "base.html" %}
 {% load i18n %}
-{% block title %}{{ template.name }} · {% translate "Capsuleer Path" %}{% endblock %}
+{% block title %}{{ template.name_i18n }} · {% translate "Capsuleer Path" %}{% endblock %}
 {% block content %}
-<p class="eyebrow text-faint"><a href="{% url 'capsuleer:home' %}" class="hover:text-gold">{% translate "Capsuleer Path" %}</a> › <a href="{% url 'capsuleer:paths' %}" class="hover:text-gold">{% translate "Paths" %}</a> › {{ template.name }}</p>
+<p class="eyebrow text-faint"><a href="{% url 'capsuleer:home' %}" class="hover:text-gold">{% translate "Capsuleer Path" %}</a> › <a href="{% url 'capsuleer:paths' %}" class="hover:text-gold">{% translate "Paths" %}</a> › {{ template.name_i18n }}</p>
 <div class="mb-3 mt-1 flex flex-wrap items-center gap-1.5">
   <span class="chip text-faint border-line">{{ template.get_category_display }}</span>
   <span class="chip text-muted border-line">{% if template.difficulty == 1 %}●○○ {% translate "beginner" %}{% elif template.difficulty == 2 %}●●○ {% translate "intermediate" %}{% else %}●●● {% translate "advanced" %}{% endif %}</span>
   <span class="chip text-faint border-line">{{ template.get_solo_group_display }}</span>
   {% if template.newbro_friendly %}<span class="chip text-muted border-line">{% translate "newbro-friendly" %}</span>{% endif %}
 </div>
-<h1 class="text-2xl font-bold text-ink">{{ template.name }}</h1>
-<p class="mt-1 max-w-2xl text-muted">{{ template.description }}</p>
+<h1 class="text-2xl font-bold text-ink">{{ template.name_i18n }}</h1>
+<p class="mt-1 max-w-2xl text-muted">{{ template.description_i18n }}</p>
 
 <div class="mt-6 grid gap-6 lg:grid-cols-3">
   <div class="space-y-6 lg:col-span-2">
@@ -55,10 +55,10 @@
     <section class="panel px-4 py-4">
       <h2 class="eyebrow">{% translate "At a glance" %}</h2>
       <dl class="mt-2 space-y-1 text-sm text-muted">
-        {% if template.est_hours_note %}<div><dt class="text-faint">{% translate "Time" %}</dt><dd>{{ template.est_hours_note }}</dd></div>{% endif %}
-        {% if template.cost_note %}<div><dt class="text-faint">{% translate "Cost" %}</dt><dd>{{ template.cost_note }}</dd></div>{% endif %}
-        {% if template.risk_note %}<div><dt class="text-faint">{% translate "Risk" %}</dt><dd>{{ template.risk_note }}</dd></div>{% endif %}
-        {% if template.income_note %}<div><dt class="text-faint">{% translate "Income" %}</dt><dd>{{ template.income_note }}</dd></div>{% endif %}
+        {% if template.est_hours_note %}<div><dt class="text-faint">{% translate "Time" %}</dt><dd>{{ template.est_hours_note_i18n }}</dd></div>{% endif %}
+        {% if template.cost_note %}<div><dt class="text-faint">{% translate "Cost" %}</dt><dd>{{ template.cost_note_i18n }}</dd></div>{% endif %}
+        {% if template.risk_note %}<div><dt class="text-faint">{% translate "Risk" %}</dt><dd>{{ template.risk_note_i18n }}</dd></div>{% endif %}
+        {% if template.income_note %}<div><dt class="text-faint">{% translate "Income" %}</dt><dd>{{ template.income_note_i18n }}</dd></div>{% endif %}
         {% if doctrine %}<div><dt class="text-faint">{% translate "Doctrine" %}</dt><dd>{{ doctrine.name }}</dd></div>{% endif %}
       </dl>
     </section>
@@ -66,7 +66,7 @@
     {% if advances_to %}
     <section class="panel px-4 py-4">
       <h2 class="eyebrow">{% translate "Advances to" %}</h2>
-      <ul class="mt-2 space-y-1 text-sm">{% for a in advances_to %}<li><a href="{% url 'capsuleer:path_detail' a.key %}" class="text-cyan hover:underline">{{ a.name }} →</a></li>{% endfor %}</ul>
+      <ul class="mt-2 space-y-1 text-sm">{% for a in advances_to %}<li><a href="{% url 'capsuleer:path_detail' a.key %}" class="text-cyan hover:underline">{{ a.name_i18n }} →</a></li>{% endfor %}</ul>
     </section>
     {% endif %}
 

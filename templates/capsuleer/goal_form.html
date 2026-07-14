@@ -3,7 +3,7 @@
 {% block title %}{% if goal %}{% translate "Edit goal" %}{% else %}{% translate "New goal" %}{% endif %} · {% translate "Capsuleer Path" %}{% endblock %}
 {% block content %}
 <p class="eyebrow text-faint"><a href="{% url 'capsuleer:home' %}" class="hover:text-gold">{% translate "Capsuleer Path" %}</a> › {% if goal %}{% translate "Edit goal" %}{% else %}{% translate "New goal" %}{% endif %}</p>
-<h1 class="mb-4 text-2xl font-bold text-ink">{% if goal %}{% blocktranslate with title=goal.title %}Edit «{{ title }}»{% endblocktranslate %}{% else %}{% translate "New goal" %}{% endif %}</h1>
+<h1 class="mb-4 text-2xl font-bold text-ink">{% if goal %}{% blocktranslate with title=goal.title_i18n %}Edit «{{ title }}»{% endblocktranslate %}{% else %}{% translate "New goal" %}{% endif %}</h1>
 
 <form method="post" action="{% if goal %}{% url 'capsuleer:goal_edit' goal.pk %}{% else %}{% url 'capsuleer:goal_new' %}{% endif %}" class="space-y-5" x-data="{ kind: '{% if goal %}{{ goal.goal_type }}{% else %}custom{% endif %}' }">
   {% csrf_token %}

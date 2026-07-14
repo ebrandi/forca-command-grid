@@ -5,16 +5,49 @@ A template's ``config`` has three parts: ``contest`` (field defaults),
 list of prize dicts). :func:`apply_template` writes them onto a draft contest;
 :func:`seed_builtin_templates` upserts the built-ins (called from the data
 migration and re-runnable safely).
+
+i18n — the render-time seam (Seam A)
+------------------------------------
+The prose inside ``config`` is **seeded into the database**: ``seed_builtin_templates``
+persists it on ``RaffleContestTemplate.config``, and :func:`apply_template` then copies
+it onto ``RaffleContest.objective`` and ``RafflePrize.name``. Wrapping it in
+``gettext_lazy`` would be worse than useless: ``config`` is a **JSONField**, and a lazy
+proxy inside it is a hard ``TypeError`` at save/migrate time; on the CharFields it would
+silently freeze whatever locale was active at seed time into the row.
+
+So the English stays **plain ``str``** — canonical, JSON-safe, the audit record and the
+fallback — and is marked for extraction with ``gettext_noop`` (Django's ``makemessages``
+passes ``--keyword=gettext_noop``, so xgettext sees these literals exactly as it sees
+``_()``). Translation happens at *render* time, in :func:`objective_for` /
+:func:`prize_name_for`, keyed on the stable ``RaffleContestTemplate.key`` (mirrored onto
+``RaffleContest.template_key``) — see the ``*_i18n`` properties on the models.
+
+A row is only translated while its stored text is still **byte-identical to the shipped
+English**. The moment a leader edits the objective (or a contest was never built from a
+built-in template) the stored text is their content and is rendered verbatim, in every
+locale. Nothing here ever returns blank.
 """
 from __future__ import annotations
 
+from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_noop as _noop
+
+# The default prize-ladder rank names, persisted into ``config["prizes"][*]["name"]``
+# (and from there onto ``RafflePrize.name``). Plain strings — marked for extraction,
+# translated at render time by :func:`prize_name_for`.
+RANK_NAMES: list[str] = [
+    _noop("1st prize"),
+    _noop("2nd prize"),
+    _noop("3rd prize"),
+    _noop("4th prize"),
+    _noop("5th prize"),
+]
 
 
 def _prizes(*values):
-    names = ["1st prize", "2nd prize", "3rd prize", "4th prize", "5th prize"]
     return [
-        {"rank": i + 1, "name": names[i], "prize_type": "isk",
+        {"rank": i + 1, "name": RANK_NAMES[i], "prize_type": "isk",
          "estimated_value": v, "description": ""}
         for i, v in enumerate(values)
     ]
@@ -25,7 +58,7 @@ BUILTIN: list[dict] = [
         "key": "pvp_activity", "name": _("PVP activity raffle"),
         "description": _("Reward everyone who undocks and gets on kills. Solo 100 · final blow 10 · participation 1."),
         "config": {
-            "contest": {"objective": "Get pilots on more kills.",
+            "contest": {"objective": _noop("Get pilots on more kills."),
                         "one_prize_per_pilot": True},
             "sources": {"pvp": {"enabled": True, "mode": "auto"},
                         "manual": {"enabled": True, "mode": "manual"}},
@@ -36,7 +69,7 @@ BUILTIN: list[dict] = [
         "key": "solo_kill", "name": _("Solo kill challenge"),
         "description": _("Heavily reward solo PvP prowess — solo kills are worth 10× a normal kill."),
         "config": {
-            "contest": {"objective": "Crown the corp's best solo hunter."},
+            "contest": {"objective": _noop("Crown the corp's best solo hunter.")},
             "sources": {"pvp": {"enabled": True, "mode": "auto",
                                  "config": {"per_kill": 1, "final_blow": 5, "solo": 250}},
                         "manual": {"enabled": True, "mode": "manual"}},
@@ -47,7 +80,7 @@ BUILTIN: list[dict] = [
         "key": "home_defence", "name": _("Home defence contest"),
         "description": _("Reward kills defending home space. Set the home region/systems in the PVP filters."),
         "config": {
-            "contest": {"objective": "Defend home — kills in our space earn tickets."},
+            "contest": {"objective": _noop("Defend home — kills in our space earn tickets.")},
             "sources": {"pvp": {"enabled": True, "mode": "auto",
                                  "filters": {"exclude_blue": True}},
                         "manual": {"enabled": True, "mode": "manual"}},
@@ -58,7 +91,7 @@ BUILTIN: list[dict] = [
         "key": "mining_month", "name": _("Mining month"),
         "description": _("Reward ore mined from the corp mining ledger (X tickets per m³)."),
         "config": {
-            "contest": {"objective": "Fill the ore hangar — mine to earn tickets."},
+            "contest": {"objective": _noop("Fill the ore hangar — mine to earn tickets.")},
             "sources": {"mining": {"enabled": True, "mode": "auto",
                                     "config": {"basis": "m3", "per_ticket": 50000}},
                         "manual": {"enabled": True, "mode": "manual"}},
@@ -70,7 +103,7 @@ BUILTIN: list[dict] = [
         "description": _("Recognise builders. Industry has no reliable per-pilot feed, "
                          "so awards are officer-approved."),
         "config": {
-            "contest": {"objective": "Keep the production lines running."},
+            "contest": {"objective": _noop("Keep the production lines running.")},
             "sources": {"industry": {"enabled": True, "mode": "officer_approved"},
                         "manual": {"enabled": True, "mode": "manual"}},
             "prizes": _prizes("800000000", "400000000", "200000000", "100000000", "50000000"),
@@ -80,7 +113,7 @@ BUILTIN: list[dict] = [
         "key": "logistics_campaign", "name": _("Logistics support campaign"),
         "description": _("Reward haulers for delivered courier contracts (officer-approved)."),
         "config": {
-            "contest": {"objective": "Keep the supply lines moving."},
+            "contest": {"objective": _noop("Keep the supply lines moving.")},
             "sources": {"logistics": {"enabled": True, "mode": "officer_approved"},
                         "manual": {"enabled": True, "mode": "manual"}},
             "prizes": _prizes("500000000", "300000000", "150000000", "100000000", "50000000"),
@@ -90,7 +123,7 @@ BUILTIN: list[dict] = [
         "key": "newbro_support", "name": _("Newbro support contest"),
         "description": _("Reward mentors and helpers. Mentorship completions + leadership grants."),
         "config": {
-            "contest": {"objective": "Help new pilots get flying."},
+            "contest": {"objective": _noop("Help new pilots get flying.")},
             "sources": {"mentorship": {"enabled": True, "mode": "officer_approved"},
                         "manual": {"enabled": True, "mode": "manual"}},
             "prizes": _prizes("500000000", "300000000", "150000000", "100000000", "50000000"),
@@ -100,7 +133,7 @@ BUILTIN: list[dict] = [
         "key": "alliance_deployment", "name": _("Alliance deployment raffle"),
         "description": _("PVP + fleet attendance during a deployment. Admits alliance / friendly pilots."),
         "config": {
-            "contest": {"objective": "Show up and fight the deployment.",
+            "contest": {"objective": _noop("Show up and fight the deployment."),
                         "include_alliance": True},
             "sources": {"pvp": {"enabled": True, "mode": "auto"},
                         "fleet": {"enabled": True, "mode": "auto", "config": {"per_op": 10}},
@@ -112,7 +145,7 @@ BUILTIN: list[dict] = [
         "key": "mixed_engagement", "name": _("Mixed activity engagement"),
         "description": _("A bit of everything — PVP, mining, fleet attendance and leadership grants."),
         "config": {
-            "contest": {"objective": "Reward any way of contributing to the corp."},
+            "contest": {"objective": _noop("Reward any way of contributing to the corp.")},
             "sources": {"pvp": {"enabled": True, "mode": "auto"},
                         "mining": {"enabled": True, "mode": "auto"},
                         "fleet": {"enabled": True, "mode": "auto"},
@@ -124,7 +157,7 @@ BUILTIN: list[dict] = [
         "key": "esi_adoption", "name": _("ESI adoption campaign"),
         "description": _("Drive app enrolment — everyone who connects ESI and flies earns; big CTA on the dashboard."),
         "config": {
-            "contest": {"objective": "Get the whole corp enrolled in FORCA Command Grid.",
+            "contest": {"objective": _noop("Get the whole corp enrolled in FORCA Command Grid."),
                         "show_ineligible_to_pilots": True},
             "sources": {"pvp": {"enabled": True, "mode": "auto"},
                         "manual": {"enabled": True, "mode": "manual"}},
@@ -134,6 +167,44 @@ BUILTIN: list[dict] = [
 ]
 
 BUILTIN_BY_KEY = {t["key"]: t for t in BUILTIN}
+
+
+# --------------------------------------------------------------------------- #
+#  Render-time i18n seam (Seam A)
+# --------------------------------------------------------------------------- #
+def builtin_objective(template_key: str) -> str:
+    """The shipped English objective for a built-in template key, or ``""``."""
+    tpl = BUILTIN_BY_KEY.get(template_key or "")
+    if not tpl:
+        return ""
+    return tpl.get("config", {}).get("contest", {}).get("objective", "")
+
+
+def objective_for(template_key: str, stored: str) -> str:
+    """The objective to *display* for a row that stores ``stored`` under ``template_key``.
+
+    Translated only while the row still holds the shipped English for a **built-in**
+    template. An unknown/blank ``template_key`` (a hand-rolled contest) or an edited
+    objective (leader content) is returned verbatim — the same text in every locale.
+    Never returns blank: the stored value is always the floor.
+    """
+    if stored and stored == builtin_objective(template_key):
+        return gettext(stored)
+    return stored
+
+
+def prize_name_for(template_key: str, rank: int, stored: str) -> str:
+    """The prize name to *display* for rank ``rank`` of a contest built from ``template_key``.
+
+    Only the untouched default ladder ("1st prize" … "5th prize") seeded from a built-in
+    template translates. A renamed prize ("Vargur + fit"), or any prize on a contest that
+    did not come from a built-in template, is leader content and renders verbatim.
+    """
+    if not stored or template_key not in BUILTIN_BY_KEY:
+        return stored
+    if 1 <= (rank or 0) <= len(RANK_NAMES) and stored == RANK_NAMES[rank - 1]:
+        return gettext(stored)
+    return stored
 
 
 def apply_template(contest, template_key: str, *, overwrite_prizes: bool = False) -> bool:

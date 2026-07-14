@@ -32,6 +32,8 @@ from django.utils.translation import gettext_lazy as _
 
 from core.mixins import TimeStampedModel
 
+from . import contest_templates
+
 # The base scope every SSO login stores; "has a valid ESI token" means at least a
 # non-revoked token exists — no extra scope is required for the PVP source. A
 # contest may demand more via ``RaffleContest.required_scopes``.
@@ -201,6 +203,18 @@ class RaffleContest(TimeStampedModel):
     def get_absolute_url(self) -> str:
         return reverse("raffle:detail", args=[self.slug])
 
+    # --- Render-time i18n seam (Seam A) ------------------------------------ #
+    @property
+    def objective_i18n(self) -> str:
+        """``objective`` for display: the built-in objective translated, else verbatim.
+
+        ``objective`` is seeded English copied from the template's ``config`` JSON at
+        :func:`~apps.raffle.contest_templates.apply_template` time, so the column can't
+        hold a lazy proxy. It is translated here, at render time, keyed on the stable
+        ``template_key`` — and only while the leader has not edited it. Never blank.
+        """
+        return contest_templates.objective_for(self.template_key, self.objective)
+
     # --- Derived state ----------------------------------------------------- #
     @property
     def is_accruing(self) -> bool:
@@ -288,6 +302,18 @@ class RafflePrize(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"#{self.rank} {self.name}"
+
+    # --- Render-time i18n seam (Seam A) ------------------------------------ #
+    @property
+    def name_i18n(self) -> str:
+        """``name`` for display: the untouched default ladder name translated, else verbatim.
+
+        Keyed on the owning contest's stable ``template_key`` + this prize's ``rank``.
+        A renamed prize is leader content and renders verbatim in every locale.
+        """
+        return contest_templates.prize_name_for(
+            self.contest.template_key, self.rank, self.name
+        )
 
 
 # --------------------------------------------------------------------------- #
@@ -849,6 +875,23 @@ class RaffleContestTemplate(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"template<{self.key}>"
+
+    # --- Render-time i18n seam (Seam A) ------------------------------------ #
+    @property
+    def objective_i18n(self) -> str:
+        """The objective stored in ``config`` for display — translated when it is still
+        the shipped English for this built-in ``key``, else verbatim. Never blank."""
+        stored = (self.config or {}).get("contest", {}).get("objective", "")
+        return contest_templates.objective_for(self.key, stored)
+
+    @property
+    def prize_names_i18n(self) -> list[str]:
+        """The ``config`` prize-ladder names for display, in rank order — each translated
+        only while it is still the shipped default for that rank, else verbatim."""
+        return [
+            contest_templates.prize_name_for(self.key, p.get("rank", 0), p.get("name", ""))
+            for p in (self.config or {}).get("prizes", [])
+        ]
 
 
 class RaffleConfig(TimeStampedModel):

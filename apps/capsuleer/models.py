@@ -40,6 +40,18 @@ from .taxonomy import Activity
 _MONEY = {"max_digits": 20, "decimal_places": 2}
 
 
+def _builtin_text(obj, field: str, msgid_field: str | None = None) -> str:
+    """The render-time i18n seam (:mod:`apps.capsuleer.templates_i18n`) for one field.
+
+    Imported lazily *inside* the call, not at module scope: ``templates_i18n`` imports
+    ``templates_builtin``, which imports ``MilestoneKind`` from this very module — a module-level
+    import here would be a cycle that fails at app load.
+    """
+    from . import templates_i18n
+
+    return templates_i18n.text(obj, field, msgid_field=msgid_field)
+
+
 # --------------------------------------------------------------------------- #
 #  Enumerations (doc 07 §5)
 # --------------------------------------------------------------------------- #
@@ -258,6 +270,38 @@ class CareerTemplate(TimeStampedModel):
     def __str__(self) -> str:
         return self.name
 
+    # --- Render-time i18n seam (translate-until-edited) --------------------- #
+    # One read-only ``*_i18n`` property per field the built-in catalogue carries prose for
+    # (``templates_i18n.BUILTIN_MSGIDS``). A built-in path row *is* the built-in, so its provenance
+    # is its own ``key``; a corp template's key is not in the catalogue and renders verbatim, as
+    # does an officer-renamed built-in. Templates render ``{{ path.name_i18n }}``; the raw column
+    # stays the audit record and is what forms, comparisons and lookups keep using. The prose that
+    # lives inside ``structure`` (ship notes, KB labels, assumptions) is not a column — it is
+    # rendered through the ``{% builtin_structure_text %}`` tag instead.
+    @property
+    def name_i18n(self) -> str:
+        return _builtin_text(self, "name")
+
+    @property
+    def description_i18n(self) -> str:
+        return _builtin_text(self, "description")
+
+    @property
+    def est_hours_note_i18n(self) -> str:
+        return _builtin_text(self, "est_hours_note")
+
+    @property
+    def cost_note_i18n(self) -> str:
+        return _builtin_text(self, "cost_note")
+
+    @property
+    def risk_note_i18n(self) -> str:
+        return _builtin_text(self, "risk_note")
+
+    @property
+    def income_note_i18n(self) -> str:
+        return _builtin_text(self, "income_note")
+
 
 class CareerGoal(TimeStampedModel):
     """One pilot ambition (doc 07 §4.3).
@@ -333,6 +377,15 @@ class CareerGoal(TimeStampedModel):
     def __str__(self) -> str:
         return self.title
 
+    # Render-time i18n seam — see CareerTemplate. A goal needs no ``source_key`` column: it already
+    # records the ``template_key`` it was instantiated from, and its ``title`` is the path's *name*
+    # copied at instantiation (hence ``msgid_field="name"``). A goal the pilot wrote themselves has
+    # an empty ``template_key`` and always renders verbatim, as does a renamed template goal.
+    # ``motivation`` is the pilot's own words and is never in the catalogue.
+    @property
+    def title_i18n(self) -> str:
+        return _builtin_text(self, "title", msgid_field="name")
+
 
 class CareerMilestone(TimeStampedModel):
     """An ordered checkpoint within a goal (doc 07 §4.4).
@@ -372,6 +425,14 @@ class CareerMilestone(TimeStampedModel):
     # blocker (dangling doctrine, unresolved placeholder, detached character — doc 11 §2). Read on
     # the request path so ``derive_blocked`` never re-runs the engine per goal_detail GET.
     structural_block = models.BooleanField(default=False)
+    # Provenance back to the built-in template milestone this title was copied from — the i18n
+    # "translate until edited" seam (``templates_i18n``): while ``title`` still holds the shipped
+    # English, the seam renders the translated built-in string; the moment the pilot edits it, it
+    # is their text and renders verbatim in every locale. Blank for a custom milestone.
+    # ``db_default`` (not just ``default``) keeps the empty-string default in the DATABASE: a plain
+    # AddField leaves the column NOT NULL with *no* DB default, which breaks INSERTs from older
+    # code during a rollback.
+    source_key = models.CharField(max_length=160, blank=True, default="", db_default="")
 
     class Meta:
         ordering = ["order", "id"]
@@ -384,6 +445,12 @@ class CareerMilestone(TimeStampedModel):
 
     def __str__(self) -> str:
         return self.title
+
+    # Render-time i18n seam — see CareerTemplate. ``title`` is the only prose copied from the
+    # built-in; ``evidence_note`` is the pilot's own and ``kind``/``params`` are identifiers.
+    @property
+    def title_i18n(self) -> str:
+        return _builtin_text(self, "title")
 
 
 class CareerActionStep(TimeStampedModel):

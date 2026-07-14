@@ -10,7 +10,7 @@
   {{ selected_keys|json_script:"cp-cmp-keys" }}
   <div class="mt-2 flex flex-wrap gap-1.5" x-data='{ sel: JSON.parse(document.getElementById("cp-cmp-keys").textContent) || [] }'>
     {% for t in all_templates %}
-    <button type="button" @click="sel.includes('{{ t.key }}') ? sel = sel.filter(x => x !== '{{ t.key }}') : (sel.length < 4 && sel.push('{{ t.key }}'))" :class="sel.includes('{{ t.key }}') ? 'chip !text-gold !border-gold/40' : 'chip text-muted border-line'">{{ t.name }}</button>
+    <button type="button" @click="sel.includes('{{ t.key }}') ? sel = sel.filter(x => x !== '{{ t.key }}') : (sel.length < 4 && sel.push('{{ t.key }}'))" :class="sel.includes('{{ t.key }}') ? 'chip !text-gold !border-gold/40' : 'chip text-muted border-line'">{{ t.name_i18n }}</button>
     {% endfor %}
     <input type="hidden" name="keys" :value="sel.join(',')">
   </div>
@@ -39,17 +39,17 @@
       <tbody class="divide-y divide-line/40">
         {% for r in rows %}
         <tr data-row>
-          <td class="px-3 py-2 font-medium text-ink" data-sort-key="name" data-sort-value="{{ r.template.name }}"><a href="{% url 'capsuleer:path_detail' r.template.key %}" class="hover:text-gold">{{ r.template.name }}</a></td>
-          <td class="px-3 py-2 text-faint">{{ r.template.est_hours_note|default:"—" }}</td>
-          <td class="px-3 py-2 text-faint">{{ r.template.cost_note|default:"—" }}</td>
+          <td class="px-3 py-2 font-medium text-ink" data-sort-key="name" data-sort-value="{{ r.template.name }}"><a href="{% url 'capsuleer:path_detail' r.template.key %}" class="hover:text-gold">{{ r.template.name_i18n }}</a></td>
+          <td class="px-3 py-2 text-faint">{{ r.template.est_hours_note_i18n|default:"—" }}</td>
+          <td class="px-3 py-2 text-faint">{{ r.template.cost_note_i18n|default:"—" }}</td>
           <td class="px-3 py-2 text-muted">{{ r.template.get_solo_group_display }}</td>
-          <td class="px-3 py-2 text-faint">{{ r.template.risk_note|default:"—" }}</td>
-          <td class="px-3 py-2 text-faint">{{ r.template.income_note|default:"—" }}</td>
+          <td class="px-3 py-2 text-faint">{{ r.template.risk_note_i18n|default:"—" }}</td>
+          <td class="px-3 py-2 text-faint">{{ r.template.income_note_i18n|default:"—" }}</td>
           <td class="px-3 py-2 text-muted">{% if r.template.category in demand_activities %}<span class="text-gold">{% translate "yes" %}</span>{% else %}{% translate "no" %}{% endif %}</td>
           <td class="px-3 py-2 text-muted">{% if r.template.newbro_friendly %}{% translate "yes" %}{% else %}{% translate "no" %}{% endif %}</td>
           <td class="px-3 py-2" data-sort-key="mentors" data-sort-value="{{ r.mentors }}" title="{% translate 'live lookup' %}"><span class="data text-muted">{% if r.mentors %}{{ r.mentors }}{% else %}{% translate "none listed right now" %}{% endif %}</span></td>
           <td class="px-3 py-2" title="{% translate 'live lookup · type match only' %}"><span class="data text-muted">{{ r.upcoming_ops }}</span></td>
-          <td class="px-3 py-2 text-faint">{% for a in r.template.advanced_paths.all %}{{ a.name }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</td>
+          <td class="px-3 py-2 text-faint">{% for a in r.template.advanced_paths.all %}{{ a.name_i18n }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</td>
         </tr>
         {% endfor %}
       </tbody>

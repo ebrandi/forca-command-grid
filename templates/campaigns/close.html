@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% load i18n %}
-{% block title %}{% blocktranslate with name=campaign.name|truncatechars:40 %}Close {{ name }}{% endblocktranslate %} · {% translate "Campaign Command" %}{% endblock %}
+{% block title %}{% blocktranslate with name=campaign.name_i18n|truncatechars:40 %}Close {{ name }}{% endblocktranslate %} · {% translate "Campaign Command" %}{% endblock %}
 {% block content %}
-<p class="eyebrow text-faint"><a href="{% url 'campaigns:index' %}" class="hover:text-gold">{% translate "Campaign Command" %}</a> › <a href="{% url 'campaigns:detail' campaign.pk %}" class="hover:text-gold">{{ campaign.name|truncatechars:40 }}</a> › {% translate "Close-out" %}</p>
-<h1 class="mt-1 mb-4 text-2xl font-bold text-ink">{% blocktranslate with name=campaign.name %}Close out {{ name }}{% endblocktranslate %}</h1>
+<p class="eyebrow text-faint"><a href="{% url 'campaigns:index' %}" class="hover:text-gold">{% translate "Campaign Command" %}</a> › <a href="{% url 'campaigns:detail' campaign.pk %}" class="hover:text-gold">{{ campaign.name_i18n|truncatechars:40 }}</a> › {% translate "Close-out" %}</p>
+<h1 class="mt-1 mb-4 text-2xl font-bold text-ink">{% blocktranslate with name=campaign.name_i18n %}Close out {{ name }}{% endblocktranslate %}</h1>
 
 <form method="post" action="{% url 'campaigns:close' campaign.pk %}" x-data="{ recs: [], final: '' }" class="space-y-4">
   {% csrf_token %}
@@ -17,8 +17,8 @@
       <label class="flex items-center gap-2"><input type="radio" name="final_status" value="cancelled" x-model="final"> {% translate "Cancelled" %}</label>
     </div>
     <div class="mt-3 grid gap-3 sm:grid-cols-2">
-      {% if campaign.success_criteria %}<div><span class="eyebrow text-faint">{% translate "Success criteria" %}</span><p class="mt-1 whitespace-pre-line text-sm text-muted">{{ campaign.success_criteria }}</p></div>{% endif %}
-      {% if campaign.failure_criteria %}<div><span class="eyebrow text-faint">{% translate "Failure criteria" %}</span><p class="mt-1 whitespace-pre-line text-sm text-muted">{{ campaign.failure_criteria }}</p></div>{% endif %}
+      {% if campaign.success_criteria %}<div><span class="eyebrow text-faint">{% translate "Success criteria" %}</span><p class="mt-1 whitespace-pre-line text-sm text-muted">{{ campaign.success_criteria_i18n }}</p></div>{% endif %}
+      {% if campaign.failure_criteria %}<div><span class="eyebrow text-faint">{% translate "Failure criteria" %}</span><p class="mt-1 whitespace-pre-line text-sm text-muted">{{ campaign.failure_criteria_i18n }}</p></div>{% endif %}
     </div>
     {% if open_mandatory %}<p class="mt-3 text-xs text-gold">⚠ {% translate "Mandatory objectives are still open — completing needs a director override reason below." %}</p>{% endif %}
     <label class="mt-3 block" x-show="final==='failed' || final==='cancelled' || {{ open_mandatory|yesno:'true,false' }}" x-cloak>
@@ -36,7 +36,7 @@
         <tbody class="divide-y divide-line/40">
         {% for row in objective_rows %}
           <tr>
-            <td class="py-2 pr-3">{{ row.obj.title }}{% if row.obj.is_mandatory %} <span class="chip text-gold border-gold/40">{% translate "mandatory" %}</span>{% endif %}</td>
+            <td class="py-2 pr-3">{{ row.obj.title_i18n }}{% if row.obj.is_mandatory %} <span class="chip text-gold border-gold/40">{% translate "mandatory" %}</span>{% endif %}</td>
             <td class="py-2 pr-3">
               {% if row.value_visible %}
                 {% if row.obj.metric_source %}<span class="data text-muted">{% if row.current is not None %}{{ row.current|floatformat:"-2" }}{% else %}—{% endif %}</span>
@@ -79,7 +79,7 @@
     <p class="text-xs text-faint">{% translate "Tick an open objective to spawn a follow-up task for it." %}</p>
     <div class="mt-2 space-y-1">
       {% for row in objective_rows %}{% if row.is_open %}
-        <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="followup" value="{{ row.obj.pk }}"> {{ row.obj.title }}</label>
+        <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="followup" value="{{ row.obj.pk }}"> {{ row.obj.title_i18n }}</label>
       {% endif %}{% endfor %}
     </div>
     {% if participation.mode != 'none' %}

@@ -7,7 +7,7 @@ from django.utils.translation import gettext_lazy as _
 
 from core.mixins import TimeStampedModel
 
-from . import xml_parser
+from . import category_i18n, xml_parser
 
 
 class DoctrineCategory(models.Model):
@@ -22,6 +22,16 @@ class DoctrineCategory(models.Model):
 
     def __str__(self) -> str:
         return self.label
+
+    # --- Render-time i18n seam (Seam A) ------------------------------------ #
+    @property
+    def label_i18n(self) -> str:
+        """``label`` for display: the seeded built-in label translated, else verbatim.
+
+        The column keeps canonical English (a lazy proxy would be frozen to str on save).
+        Keyed on the stable ``key`` — see :mod:`apps.doctrines.category_i18n`.
+        """
+        return category_i18n.category_label(self.key, self.label)
 
 
 class Doctrine(TimeStampedModel):

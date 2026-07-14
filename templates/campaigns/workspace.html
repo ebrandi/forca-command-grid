@@ -35,16 +35,16 @@
     {% elif t.kind == 'workstreams' %}
       {% for ws in t.items %}
         <div class="flex flex-wrap items-center gap-2 py-2 text-sm">
-          <span class="min-w-0 flex-1 truncate text-muted">{{ ws.name }}</span>
-          <a href="{% url 'campaigns:detail' ws.campaign_id %}" class="shrink-0 text-xs text-faint hover:text-gold">{{ ws.campaign.name|truncatechars:28 }}</a>
+          <span class="min-w-0 flex-1 truncate text-muted">{{ ws.name_i18n }}</span>
+          <a href="{% url 'campaigns:detail' ws.campaign_id %}" class="shrink-0 text-xs text-faint hover:text-gold">{{ ws.campaign.name_i18n|truncatechars:28 }}</a>
           <span class="chip shrink-0 text-muted border-line">{{ ws.get_status_display }}</span>
         </div>
       {% empty %}<p class="py-3 text-sm text-faint">{{ t.empty }}</p>{% endfor %}
     {% else %}
       {% for o in t.items %}
         <div class="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 text-sm">
-          <a href="{% url 'campaigns:objective_detail' o.pk %}" class="min-w-0 flex-1 truncate text-cyan hover:underline">{{ o.title }}</a>
-          <span class="shrink-0 text-xs text-faint">{{ o.campaign.name|truncatechars:28 }}</span>
+          <a href="{% url 'campaigns:objective_detail' o.pk %}" class="min-w-0 flex-1 truncate text-cyan hover:underline">{{ o.title_i18n }}</a>
+          <span class="shrink-0 text-xs text-faint">{{ o.campaign.name_i18n|truncatechars:28 }}</span>
           {% if o.due_at %}<span class="chip shrink-0 {% if o.due_at < now %}text-loss border-loss/40{% else %}text-faint border-line{% endif %}">{% translate "due" %} {{ o.due_at|date:"d M" }}</span>{% endif %}
           {% include "campaigns/_objective_status_chip.html" with status=o.status label=o.get_status_display %}
           <a href="{% url 'campaigns:objective_detail' o.pk %}#update" class="shrink-0 text-xs text-faint hover:text-gold">{% translate "Update value" %}</a>
@@ -62,7 +62,7 @@
     {% for c in awaiting.proposed %}
       <div class="flex flex-wrap items-center gap-2 py-2 text-sm">
         <span class="chip shrink-0 text-cyan border-cyan/40">{% translate "campaign" %}</span>
-        <a href="{% url 'campaigns:detail' c.pk %}" class="min-w-0 flex-1 truncate text-cyan hover:underline">{{ c.name }}</a>
+        <a href="{% url 'campaigns:detail' c.pk %}" class="min-w-0 flex-1 truncate text-cyan hover:underline">{{ c.name_i18n }}</a>
         {% if c.commander %}<span class="shrink-0 text-xs text-faint">{% translate "by" %} {{ c.commander.display_name }}</span>{% endif %}
         <a href="{% url 'campaigns:detail' c.pk %}" class="btn-ghost shrink-0 !py-1 !text-xs">{% translate "Review" %}</a>
       </div>
@@ -70,8 +70,8 @@
     {% for m in awaiting.milestones %}
       <div class="flex flex-wrap items-center gap-2 py-2 text-sm">
         <span class="chip shrink-0 text-cyan border-cyan/40">{% translate "milestone" %}</span>
-        <span class="min-w-0 flex-1 truncate text-muted">{{ m.title }}</span>
-        <a href="{% url 'campaigns:detail' m.campaign_id %}" class="shrink-0 text-xs text-faint hover:text-gold">{{ m.campaign.name|truncatechars:24 }}</a>
+        <span class="min-w-0 flex-1 truncate text-muted">{{ m.title_i18n }}</span>
+        <a href="{% url 'campaigns:detail' m.campaign_id %}" class="shrink-0 text-xs text-faint hover:text-gold">{{ m.campaign.name_i18n|truncatechars:24 }}</a>
         <a href="{% url 'campaigns:detail' m.campaign_id %}" class="btn-ghost shrink-0 !py-1 !text-xs">{% translate "Review" %}</a>
       </div>
     {% endfor %}

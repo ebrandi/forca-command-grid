@@ -87,7 +87,7 @@
     <section class="panel px-4 py-4">
       <h2 class="eyebrow">{% translate "Recently completed" %}</h2>
       <div class="mt-2 space-y-1 text-sm">
-        {% for g in completed %}<p class="text-muted"><svg class="inline h-3.5 w-3.5 text-kill"><use href="#i-trophy"/></svg> {{ g.title }} <span class="text-faint">{{ g.completed_at|date:"d M" }}</span></p>{% endfor %}
+        {% for g in completed %}<p class="text-muted"><svg class="inline h-3.5 w-3.5 text-kill"><use href="#i-trophy"/></svg> {{ g.title_i18n }} <span class="text-faint">{{ g.completed_at|date:"d M" }}</span></p>{% endfor %}
       </div>
     </section>
     {% endif %}

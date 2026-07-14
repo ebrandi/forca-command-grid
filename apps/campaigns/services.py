@@ -36,6 +36,7 @@ from core.rbac import (
 
 from . import calendar as cal
 from . import config, health, metrics, notify, progress
+from . import templates_i18n as t_i18n
 from .models import (
     Campaign,
     CampaignActivity,
@@ -1989,10 +1990,14 @@ def workspace_queues(user) -> dict:
     # Resolve each volunteered-on objective's title so the queue names it instead of "objective #<id>"
     # (the target_ids are all objectives this user owns). One query for the set, not per row.
     if volunteers:
-        titles = dict(
-            Objective.objects.filter(pk__in={a.target_id for a in volunteers})
-            .values_list("pk", "title")
-        )
+        # ``title_i18n``, not the raw column: the queue is display-only, so a still-unedited
+        # built-in objective names itself in the reader's locale (``templates_i18n``).
+        titles = {
+            o.pk: o.title_i18n
+            for o in Objective.objects.filter(
+                pk__in={a.target_id for a in volunteers}
+            ).only("pk", "title", "source_key")
+        }
         for a in volunteers:
             a.objective_title = titles.get(a.target_id)
     return {
@@ -2056,6 +2061,12 @@ def instantiate_template(template, user, *, name=None, start_at=None, target_end
     back to ``start_at + window_days``. The campaign's creator becomes its commander by default and
     everything is fully editable afterwards — a template imposes nothing after creation. Children
     are written through the ORM with activity rows, then a single recompute settles progress/health.
+
+    Every row that gets prose copied into it is stamped with the built-in item's stable
+    ``source_key`` (``templates_i18n``). That is what lets the render seam show a *translated*
+    built-in string while the row still holds the shipped English, and the officer's own words
+    verbatim the moment they edit it. Copying English into the row (never a lazy proxy) keeps the
+    database the English audit record, exactly as before.
     """
     bp = template.blueprint or {}
     creator = user if getattr(user, "pk", None) else None
@@ -2079,6 +2090,7 @@ def instantiate_template(template, user, *, name=None, start_at=None, target_end
         target_end_at=target_end_at,
         recognition_mode=recognition_cfg.get("default_mode", "none"),
         recognition_public=bool(recognition_cfg.get("default_public", False)),
+        source_key=t_i18n.template_key(template.key),
     )
 
     ws_by_key: dict = {}
@@ -2087,13 +2099,16 @@ def instantiate_template(template, user, *, name=None, start_at=None, target_end
             campaign=campaign, name=(w.get("name") or "Lane")[:120],
             key=(w.get("key") or "")[:64], description=w.get("description") or "",
             sort_order=int(w.get("sort_order") or 0),
+            source_key=(
+                t_i18n.workstream_key(template.key, w["key"]) if w.get("key") else ""
+            ),
         )
         save_workstream(ws, user)  # derives a campaign-unique key + writes activity
         if w.get("key"):
             ws_by_key[w["key"]] = ws
 
     directions = set(Objective.Direction.values)
-    for o in bp.get("objectives", []):
+    for i, o in enumerate(bp.get("objectives", [])):
         ws = ws_by_key.get(o.get("workstream"))
         obj = Objective.objects.create(
             campaign=campaign, workstream=ws,
@@ -2109,17 +2124,19 @@ def instantiate_template(template, user, *, name=None, start_at=None, target_end
             metric_params=_strip_instance_params(o.get("metric_params") or {}),
             due_at=_offset_due(start_at, o.get("due_offset_days")),
             sort_order=int(o.get("sort_order") or 0),
+            source_key=t_i18n.objective_key(template.key, i),
         )
         record_activity(
             campaign, user, "objective.created", target_kind="objective", target_id=obj.pk,
         )
 
-    for m in bp.get("milestones", []):
+    for i, m in enumerate(bp.get("milestones", [])):
         ms = Milestone.objects.create(
             campaign=campaign, workstream=ws_by_key.get(m.get("workstream")),
             title=(m.get("title") or "Milestone")[:200], description=m.get("description") or "",
             due_at=_offset_due(start_at, m.get("due_offset_days")),
             sort_order=int(m.get("sort_order") or 0),
+            source_key=t_i18n.milestone_key(template.key, i),
         )
         record_activity(
             campaign, user, "milestone.saved", target_kind="milestone", target_id=ms.pk,
@@ -2127,7 +2144,7 @@ def instantiate_template(template, user, *, name=None, start_at=None, target_end
         )
 
     levels = set(Risk.RiskLevel.values)
-    for r in bp.get("risks", []):
+    for i, r in enumerate(bp.get("risks", [])):
         risk = Risk(
             campaign=campaign, workstream=ws_by_key.get(r.get("workstream")),
             description=r.get("description") or "Risk",
@@ -2135,6 +2152,7 @@ def instantiate_template(template, user, *, name=None, start_at=None, target_end
             impact=r.get("impact") if r.get("impact") in levels else Risk.RiskLevel.MEDIUM,
             mitigation=r.get("mitigation") or "", contingency=r.get("contingency") or "",
             trigger=(r.get("trigger") or "")[:200],
+            source_key=t_i18n.risk_key(template.key, i),
         )
         risk.severity = compute_severity(risk.probability, risk.impact)
         risk.save()

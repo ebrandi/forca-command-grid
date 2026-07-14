@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% load i18n %}
-{% block title %}{% translate "Activity" %} · {{ campaign.name|truncatechars:40 }} · {% translate "Campaign Command" %}{% endblock %}
+{% block title %}{% translate "Activity" %} · {{ campaign.name_i18n|truncatechars:40 }} · {% translate "Campaign Command" %}{% endblock %}
 {% block content %}
-<p class="eyebrow text-faint"><a href="{% url 'campaigns:index' %}" class="hover:text-gold">{% translate "Campaign Command" %}</a> › <a href="{% url 'campaigns:detail' campaign.pk %}" class="hover:text-gold">{{ campaign.name|truncatechars:40 }}</a> › {% translate "Activity" %}</p>
-<h1 class="mt-1 mb-4 text-2xl font-bold text-ink">{% blocktranslate with name=campaign.name %}Activity — {{ name }}{% endblocktranslate %}</h1>
+<p class="eyebrow text-faint"><a href="{% url 'campaigns:index' %}" class="hover:text-gold">{% translate "Campaign Command" %}</a> › <a href="{% url 'campaigns:detail' campaign.pk %}" class="hover:text-gold">{{ campaign.name_i18n|truncatechars:40 }}</a> › {% translate "Activity" %}</p>
+<h1 class="mt-1 mb-4 text-2xl font-bold text-ink">{% blocktranslate with name=campaign.name_i18n %}Activity — {{ name }}{% endblocktranslate %}</h1>
 
 <section class="panel p-5">
   <div class="divide-y divide-line/40">

@@ -15,11 +15,11 @@
     {% for c in campaigns_panel.campaigns %}
       <div class="text-sm">
         <div class="flex flex-wrap items-center gap-2">
-          <a href="{% url 'campaigns:detail' c.pk %}" class="min-w-0 truncate font-medium text-cyan hover:underline">{{ c.name }}</a>
+          <a href="{% url 'campaigns:detail' c.pk %}" class="min-w-0 truncate font-medium text-cyan hover:underline">{{ c.name_i18n }}</a>
           {% include "campaigns/_status_chip.html" with status=c.status label=c.get_status_display %}
           {% include "campaigns/_health_chip.html" with health=c.health label=c.get_health_display reasons=c.health_reasons %}
         </div>
-        {% if c.rationale or c.summary %}<p class="mt-0.5 text-xs text-faint">{{ c.rationale|default:c.summary|truncatechars:120 }}</p>{% endif %}
+        {% if c.rationale or c.summary %}<p class="mt-0.5 text-xs text-faint">{{ c.rationale_i18n|default:c.summary_i18n|truncatechars:120 }}</p>{% endif %}
       </div>
     {% endfor %}
 
@@ -28,7 +28,7 @@
       <p class="eyebrow text-faint">{% translate "My part" %}</p>
       <div class="mt-1 space-y-1 text-sm">
         {% for o in campaigns_panel.my_objectives %}
-          <a href="{% url 'campaigns:objective_detail' o.pk %}" class="block truncate text-muted hover:text-gold">{% translate "objective:" %} {{ o.title }}</a>
+          <a href="{% url 'campaigns:objective_detail' o.pk %}" class="block truncate text-muted hover:text-gold">{% translate "objective:" %} {{ o.title_i18n }}</a>
         {% endfor %}
         {% for t in campaigns_panel.my_tasks %}
           <p class="truncate text-muted">{% translate "task:" %} {{ t.title }}{% if t.due_at %} <span class="text-xs text-faint">{% translate "due" %} {{ t.due_at|date:"d M" }}</span>{% endif %}</p>
@@ -43,7 +43,7 @@
       <div class="mt-1 space-y-1">
         {% for o in campaigns_panel.help_wanted %}
         <div class="flex flex-wrap items-center gap-2 text-sm">
-          <a href="{% url 'campaigns:objective_detail' o.pk %}" class="min-w-0 flex-1 truncate text-muted hover:text-gold">{{ o.title }}</a>
+          <a href="{% url 'campaigns:objective_detail' o.pk %}" class="min-w-0 flex-1 truncate text-muted hover:text-gold">{{ o.title_i18n }}</a>
           <form method="post" action="{% url 'campaigns:volunteer' o.pk %}">{% csrf_token %}<button class="btn-cyan shrink-0 !py-1 !text-xs">{% translate "I can help" %}</button></form>
         </div>
         {% endfor %}
@@ -56,7 +56,7 @@
       <p class="eyebrow text-faint">{% translate "Recognised for" %}</p>
       <div class="mt-1 space-y-1 text-sm">
         {% for r in campaigns_panel.recognition %}
-        <p class="text-muted">★ {{ r.category }}{% if r.points %} <span class="data text-gold">({{ r.points }})</span>{% endif %} — <span class="text-faint">{{ r.campaign.name|truncatechars:40 }}</span></p>
+        <p class="text-muted">★ {{ r.category }}{% if r.points %} <span class="data text-gold">({{ r.points }})</span>{% endif %} — <span class="text-faint">{{ r.campaign.name_i18n|truncatechars:40 }}</span></p>
         {% endfor %}
       </div>
     </div>

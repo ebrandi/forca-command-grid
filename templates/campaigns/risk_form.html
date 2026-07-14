@@ -2,7 +2,7 @@
 {% load i18n %}
 {% block title %}{% if editing %}{% translate "Edit risk" %}{% else %}{% translate "New risk" %}{% endif %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
-<p class="eyebrow text-faint"><a href="{% url 'campaigns:index' %}" class="hover:text-gold">{% translate "Campaign Command" %}</a> › <a href="{% url 'campaigns:detail' campaign.pk %}" class="hover:text-gold">{{ campaign.name|truncatechars:36 }}</a> › {% if editing %}{% translate "Edit risk" %}{% else %}{% translate "New risk" %}{% endif %}</p>
+<p class="eyebrow text-faint"><a href="{% url 'campaigns:index' %}" class="hover:text-gold">{% translate "Campaign Command" %}</a> › <a href="{% url 'campaigns:detail' campaign.pk %}" class="hover:text-gold">{{ campaign.name_i18n|truncatechars:36 }}</a> › {% if editing %}{% translate "Edit risk" %}{% else %}{% translate "New risk" %}{% endif %}</p>
 <h1 class="mt-1 mb-4 text-2xl font-bold text-ink">{% if editing %}{% translate "Edit risk" %}{% else %}{% translate "New risk" %}{% endif %}</h1>
 
 <form method="post" action="{% if editing %}{% url 'campaigns:risk_edit' risk.pk %}{% else %}{% url 'campaigns:risk_create' campaign.pk %}{% endif %}" class="space-y-4">
@@ -17,7 +17,7 @@
       <label class="block"><span class="label">{% translate "Owner" %}</span>
         <select name="owner" class="input-field mt-1 w-full"><option value="">—</option>{% for u in users %}<option value="{{ u.pk }}" {% if risk.owner_id == u.pk %}selected{% endif %}>{{ u.display_name }}</option>{% endfor %}</select></label>
       <label class="block"><span class="label">{% translate "Workstream" %}</span>
-        <select name="workstream" class="input-field mt-1 w-full"><option value="">—</option>{% for ws in workstreams %}<option value="{{ ws.pk }}" {% if risk.workstream_id == ws.pk %}selected{% endif %}>{{ ws.name }}</option>{% endfor %}</select></label>
+        <select name="workstream" class="input-field mt-1 w-full"><option value="">—</option>{% for ws in workstreams %}<option value="{{ ws.pk }}" {% if risk.workstream_id == ws.pk %}selected{% endif %}>{{ ws.name_i18n }}</option>{% endfor %}</select></label>
       <label class="block"><span class="label">{% translate "Status" %}</span>
         <select name="status" class="input-field mt-1 w-full">{% for value, label in statuses %}<option value="{{ value }}" {% if risk.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
       <label class="block"><span class="label">{% translate "Due" %}</span><input type="datetime-local" name="due_at" value="{{ due_at_local }}" class="input-field mt-1 w-full"></label>

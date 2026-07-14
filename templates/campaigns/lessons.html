@@ -32,7 +32,7 @@
   {% for c in page_obj.object_list %}
   <section class="panel p-5">
     <div class="flex flex-wrap items-center gap-2">
-      <a href="{% url 'campaigns:report' c.pk %}" class="min-w-0 flex-1 truncate font-display text-lg font-bold text-ink hover:text-gold">{{ c.name }}</a>
+      <a href="{% url 'campaigns:report' c.pk %}" class="min-w-0 flex-1 truncate font-display text-lg font-bold text-ink hover:text-gold">{{ c.name_i18n }}</a>
       {% include "campaigns/_status_chip.html" with status=c.status label=c.get_status_display %}
       <span class="chip text-faint border-line">{{ c.get_category_display }}</span>
     </div>

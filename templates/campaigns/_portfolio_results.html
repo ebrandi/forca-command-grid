@@ -9,7 +9,7 @@ flex-wrap. Empty states branch on whether filters are active.{% endcomment %}
       <a href="{% url 'campaigns:detail' row.c.pk %}" class="panel flex flex-wrap items-center gap-x-4 gap-y-2 p-4 transition hover:border-gold/40">
         <div class="min-w-0 flex-1">
           <div class="flex flex-wrap items-center gap-2">
-            <h2 class="truncate font-display font-semibold text-ink">{{ row.c.name }}</h2>
+            <h2 class="truncate font-display font-semibold text-ink">{{ row.c.name_i18n }}</h2>
             {% include "campaigns/_status_chip.html" with status=row.c.status label=row.c.get_status_display %}
             {% include "campaigns/_health_chip.html" with health=row.c.health label=row.c.get_health_display reasons=row.c.health_reasons %}
           </div>
@@ -26,7 +26,7 @@ flex-wrap. Empty states branch on whether filters are active.{% endcomment %}
         <div class="w-40 shrink-0 text-xs text-faint">
           {% if row.c.target_end_at %}<p>{% translate "Target" %} <span class="data text-muted">{{ row.c.target_end_at|date:"d M Y" }}</span></p>{% endif %}
           {% if row.next_milestone %}
-            <p class="mt-0.5">{% translate "Next:" %} <span class="truncate">{{ row.next_milestone.title }}</span>
+            <p class="mt-0.5">{% translate "Next:" %} <span class="truncate">{{ row.next_milestone.title_i18n }}</span>
               {% if row.next_milestone.due_at %}<span class="chip {% if row.ms_overdue %}text-loss border-loss/40{% elif row.ms_soon %}text-gold border-gold/40{% else %}text-faint border-line{% endif %}">{% translate "due" %} {{ row.next_milestone.due_at|date:"d M" }}</span>{% endif %}
             </p>
           {% endif %}

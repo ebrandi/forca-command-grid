@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% load i18n %}
-{% block title %}{% translate "How progress is computed" %} · {{ campaign.name|truncatechars:36 }} · [FORCA] Command Grid{% endblock %}
+{% block title %}{% translate "How progress is computed" %} · {{ campaign.name_i18n|truncatechars:36 }} · [FORCA] Command Grid{% endblock %}
 {% block content %}
-<p class="eyebrow text-faint"><a href="{% url 'campaigns:index' %}" class="hover:text-gold">{% translate "Campaign Command" %}</a> › <a href="{% url 'campaigns:detail' campaign.pk %}" class="hover:text-gold">{{ campaign.name|truncatechars:36 }}</a> › {% translate "Explanation" %}</p>
+<p class="eyebrow text-faint"><a href="{% url 'campaigns:index' %}" class="hover:text-gold">{% translate "Campaign Command" %}</a> › <a href="{% url 'campaigns:detail' campaign.pk %}" class="hover:text-gold">{{ campaign.name_i18n|truncatechars:36 }}</a> › {% translate "Explanation" %}</p>
 
 <section class="panel mt-2 p-5">
   <p class="eyebrow">{% translate "Progress method" %}</p>
@@ -37,7 +37,7 @@
       <tbody class="divide-y divide-line/40">
         {% for r in rows %}
         <tr>
-          <td class="py-2 pr-3"><a href="{% url 'campaigns:objective_detail' r.obj.pk %}" class="text-ink hover:text-gold">{{ r.obj.title }}</a>{% if r.obj.status == 'blocked' %} <span class="text-loss">{% translate "(blocked)" %}</span>{% endif %}</td>
+          <td class="py-2 pr-3"><a href="{% url 'campaigns:objective_detail' r.obj.pk %}" class="text-ink hover:text-gold">{{ r.obj.title_i18n }}</a>{% if r.obj.status == 'blocked' %} <span class="text-loss">{% translate "(blocked)" %}</span>{% endif %}</td>
           <td class="py-2 pr-3 text-right data text-muted">{% if r.value_visible %}{% if r.current is not None %}{{ r.current|floatformat:"-2" }}{% else %}—{% endif %} → {% if r.target is not None %}{{ r.target|floatformat:"-2" }}{% else %}—{% endif %}{% else %}<span class="text-faint">{% translate "restricted" %}</span>{% endif %}</td>
           <td class="py-2 pr-3 text-right data">{{ r.weight }}</td>
           <td class="py-2 pr-3 text-right data">{{ r.progress_pct }}%</td>

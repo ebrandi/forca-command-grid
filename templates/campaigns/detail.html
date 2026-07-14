@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load i18n %}
-{% block title %}{{ campaign.name|truncatechars:48 }} · {% translate "Campaign" %} · [FORCA] Command Grid{% endblock %}
+{% block title %}{{ campaign.name_i18n|truncatechars:48 }} · {% translate "Campaign" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <p class="eyebrow text-faint"><a href="{% url 'campaigns:index' %}" class="hover:text-gold">{% translate "Campaign Command" %}</a> › {{ campaign.get_category_display }}</p>
 
@@ -11,8 +11,8 @@
     {% include "campaigns/_health_chip.html" with health=campaign.health label=campaign.get_health_display reasons=campaign.health_reasons %}
     {% for tag in campaign.tags %}<span class="chip text-faint border-line">{{ tag }}</span>{% endfor %}
   </div>
-  <h1 class="mt-2 font-display text-2xl font-bold text-ink">{{ campaign.name }}</h1>
-  {% if campaign.summary %}<p class="mt-1 text-sm text-faint">{{ campaign.summary }}</p>{% endif %}
+  <h1 class="mt-2 font-display text-2xl font-bold text-ink">{{ campaign.name_i18n }}</h1>
+  {% if campaign.summary %}<p class="mt-1 text-sm text-faint">{{ campaign.summary_i18n }}</p>{% endif %}
 
   <div class="mt-3 max-w-md">
     {% include "campaigns/_progress_bar.html" with pct=campaign.progress_pct health=campaign.health %}
@@ -96,11 +96,11 @@
   {# ── Why this matters ─────────────────────────────────────────────────── #}
   <section class="panel p-5 lg:col-span-2">
     <p class="eyebrow">{% translate "Why this matters" %}</p>
-    {% if campaign.rationale %}<p class="mt-2 whitespace-pre-line text-sm text-muted">{{ campaign.rationale }}</p>{% else %}<p class="mt-2 text-sm text-faint">{% translate "No rationale recorded yet." %}</p>{% endif %}
-    {% if campaign.desired_outcome %}<p class="mt-3 text-sm"><span class="eyebrow text-faint">{% translate "Desired outcome" %}</span><br>{{ campaign.desired_outcome }}</p>{% endif %}
+    {% if campaign.rationale %}<p class="mt-2 whitespace-pre-line text-sm text-muted">{{ campaign.rationale_i18n }}</p>{% else %}<p class="mt-2 text-sm text-faint">{% translate "No rationale recorded yet." %}</p>{% endif %}
+    {% if campaign.desired_outcome %}<p class="mt-3 text-sm"><span class="eyebrow text-faint">{% translate "Desired outcome" %}</span><br>{{ campaign.desired_outcome_i18n }}</p>{% endif %}
     <div class="mt-3 grid gap-3 sm:grid-cols-2">
-      {% if campaign.success_criteria %}<div><span class="eyebrow text-faint">{% translate "Success criteria" %}</span><p class="mt-1 whitespace-pre-line text-sm text-muted">{{ campaign.success_criteria }}</p></div>{% endif %}
-      {% if campaign.failure_criteria %}<div><span class="eyebrow text-faint">{% translate "Failure criteria" %}</span><p class="mt-1 whitespace-pre-line text-sm text-muted">{{ campaign.failure_criteria }}</p></div>{% endif %}
+      {% if campaign.success_criteria %}<div><span class="eyebrow text-faint">{% translate "Success criteria" %}</span><p class="mt-1 whitespace-pre-line text-sm text-muted">{{ campaign.success_criteria_i18n }}</p></div>{% endif %}
+      {% if campaign.failure_criteria %}<div><span class="eyebrow text-faint">{% translate "Failure criteria" %}</span><p class="mt-1 whitespace-pre-line text-sm text-muted">{{ campaign.failure_criteria_i18n }}</p></div>{% endif %}
     </div>
     {% if staging_visible and campaign.staging_system_name %}<p class="mt-3 text-xs text-faint">{% translate "Staging:" %} <span class="text-muted">{{ campaign.staging_system_name }}</span></p>{% endif %}
   </section>
@@ -112,7 +112,7 @@
       {% for a in next_actions %}
         <li class="flex items-start gap-2">
           <span class="chip shrink-0 {% if a.kind == 'overdue' %}text-loss border-loss/40{% elif a.kind == 'blocked' %}text-loss border-loss/40{% else %}text-gold border-gold/40{% endif %}">{{ a.kind }}</span>
-          <a href="{% url 'campaigns:objective_detail' a.obj.pk %}" class="min-w-0 flex-1 text-muted hover:text-gold">{{ a.obj.title }}<span class="block text-xs text-faint">{{ a.note }}</span></a>
+          <a href="{% url 'campaigns:objective_detail' a.obj.pk %}" class="min-w-0 flex-1 text-muted hover:text-gold">{{ a.obj.title_i18n }}<span class="block text-xs text-faint">{{ a.note }}</span></a>
         </li>
       {% empty %}
         <li class="text-sm text-faint">{% translate "Nothing needs attention right now." %}</li>
@@ -133,16 +133,16 @@
     {% for group in grouped_objectives %}
       <div class="mt-4">
         {% if group.workstream %}
-          <p class="eyebrow text-faint">{{ group.workstream.name }} — {% if group.workstream.lead %}{% translate "lead:" %} {{ group.workstream.lead.display_name }}{% else %}<span class="text-gold">{% translate "unowned" %}</span>{% endif %}</p>
+          <p class="eyebrow text-faint">{{ group.workstream.name_i18n }} — {% if group.workstream.lead %}{% translate "lead:" %} {{ group.workstream.lead.display_name }}{% else %}<span class="text-gold">{% translate "unowned" %}</span>{% endif %}</p>
         {% else %}
           <p class="eyebrow text-faint">{% translate "Ungrouped" %}</p>
         {% endif %}
         <div class="mt-2 divide-y divide-line/40">
           {% for vm in group.objectives %}
             <div class="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
-              <a href="{% url 'campaigns:objective_detail' vm.obj.pk %}" class="min-w-0 flex-1 truncate text-sm text-ink hover:text-gold">{{ vm.obj.title }}</a>
+              <a href="{% url 'campaigns:objective_detail' vm.obj.pk %}" class="min-w-0 flex-1 truncate text-sm text-ink hover:text-gold">{{ vm.obj.title_i18n }}</a>
               {% if vm.value_visible %}
-                <span class="data shrink-0 text-xs text-muted">{% if vm.current is not None %}{{ vm.current|floatformat:"-2" }}{% else %}—{% endif %}{% if vm.target is not None %} / {{ vm.target|floatformat:"-2" }}{% endif %} {{ vm.obj.unit }}</span>
+                <span class="data shrink-0 text-xs text-muted">{% if vm.current is not None %}{{ vm.current|floatformat:"-2" }}{% else %}—{% endif %}{% if vm.target is not None %} / {{ vm.target|floatformat:"-2" }}{% endif %} {{ vm.obj.unit_i18n }}</span>
               {% else %}
                 <span class="chip shrink-0 text-faint border-line" title="{% translate 'Value restricted' %}">{% translate "— restricted" %}</span>
               {% endif %}
@@ -169,7 +169,7 @@
       {% for m in milestones %}
         <div class="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
           {% include "campaigns/_milestone_status_chip.html" with status=m.status label=m.get_status_display %}
-          <span class="min-w-0 flex-1 truncate text-sm text-ink" title="{{ m.title }}">{{ m.title }}</span>
+          <span class="min-w-0 flex-1 truncate text-sm text-ink" title="{{ m.title_i18n }}">{{ m.title_i18n }}</span>
           {% if m.due_at %}<span class="data shrink-0 text-xs text-faint">{{ m.due_at|date:"d M" }}</span>{% endif %}
           {% if can_manage and m.status == 'ready_for_review' %}
             <form method="post" action="{% url 'campaigns:milestone_set_status' m.pk %}" class="inline">{% csrf_token %}<input type="hidden" name="to" value="done"><button class="btn-cyan !py-1 !text-xs">{% translate "Approve" %}</button></form>
@@ -195,7 +195,7 @@
       {% for r in risks %}
         <div class="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
           <span class="chip shrink-0 {% if r.severity >= 9 %}text-loss border-loss/40{% elif r.severity >= 6 %}text-gold border-gold/40{% else %}text-muted border-line{% endif %}">{% translate "sev" %} {{ r.severity }}</span>
-          <span class="min-w-0 flex-1 truncate text-sm text-muted" title="{{ r.description }}">{{ r.description }}</span>
+          <span class="min-w-0 flex-1 truncate text-sm text-muted" title="{{ r.description_i18n }}">{{ r.description_i18n }}</span>
           {% if can_manage %}<a href="{% url 'campaigns:risk_edit' r.pk %}" class="text-xs text-faint hover:text-gold">{% translate "edit" %}</a>{% endif %}
         </div>
       {% empty %}
@@ -215,7 +215,7 @@
             <button type="button" class="btn-ghost !py-1 !text-xs" x-data @click="$refs.resolve{{ i.pk }}.classList.toggle('hidden')">{% translate "Resolve" %}</button>
             {% endif %}
           </div>
-          {% if i.objective_id %}<p class="mt-0.5 text-xs text-faint">{% translate "Blocking objective:" %} {{ i.objective.title }}</p>{% endif %}
+          {% if i.objective_id %}<p class="mt-0.5 text-xs text-faint">{% translate "Blocking objective:" %} {{ i.objective.title_i18n }}</p>{% endif %}
           {% if can_manage and i.status == 'open' %}
           <form method="post" action="{% url 'campaigns:issue_escalate' i.pk %}" x-ref="escalate{{ i.pk }}" class="mt-2 hidden">
             {% csrf_token %}

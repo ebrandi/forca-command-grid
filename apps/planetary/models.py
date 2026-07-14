@@ -20,7 +20,7 @@ from django.utils.translation import gettext_lazy as _
 
 from core.mixins import ProvenanceMixin, TimeStampedModel
 
-from . import constants
+from . import constants, static_data
 
 
 class PiTier(models.TextChoices):
@@ -69,6 +69,18 @@ class PiPlanetType(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+    # --- Render-time i18n seam (Seam A) ------------------------------------ #
+    # ``name`` is CCP game data and is NEVER translated. ``best_for``/``blurb`` are our
+    # own prose, seeded as English by ``load_pi_static``; they translate here, at render
+    # time, keyed on the stable ``slug``. See apps.planetary.static_data.planet_text.
+    @property
+    def best_for_i18n(self) -> str:
+        return static_data.planet_text(self.slug, "best_for", self.best_for)
+
+    @property
+    def blurb_i18n(self) -> str:
+        return static_data.planet_text(self.slug, "blurb", self.blurb)
 
     @property
     def resource_materials(self) -> list[PiMaterial]:

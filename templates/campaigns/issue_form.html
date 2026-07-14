@@ -2,7 +2,7 @@
 {% load i18n %}
 {% block title %}{% translate "Raise issue" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
-<p class="eyebrow text-faint"><a href="{% url 'campaigns:index' %}" class="hover:text-gold">{% translate "Campaign Command" %}</a> › <a href="{% url 'campaigns:detail' campaign.pk %}" class="hover:text-gold">{{ campaign.name|truncatechars:36 }}</a> › {% translate "Raise issue" %}</p>
+<p class="eyebrow text-faint"><a href="{% url 'campaigns:index' %}" class="hover:text-gold">{% translate "Campaign Command" %}</a> › <a href="{% url 'campaigns:detail' campaign.pk %}" class="hover:text-gold">{{ campaign.name_i18n|truncatechars:36 }}</a> › {% translate "Raise issue" %}</p>
 <h1 class="mt-1 mb-4 text-2xl font-bold text-ink">{% translate "Raise an issue" %}</h1>
 
 <form method="post" action="{% url 'campaigns:issue_create' campaign.pk %}" class="space-y-4">
@@ -12,7 +12,7 @@
       <label class="block sm:col-span-2"><span class="label">{% translate "What is blocking?" %} *</span><textarea name="description" rows="2" required class="input-field mt-1 w-full"></textarea></label>
       <label class="block sm:col-span-2"><span class="label">{% translate "Effect (what it stops)" %}</span><textarea name="effect" rows="2" class="input-field mt-1 w-full"></textarea></label>
       <label class="block"><span class="label">{% translate "Blocks objective" %}</span>
-        <select name="objective" class="input-field mt-1 w-full"><option value="">{% translate "— none —" %}</option>{% for o in objectives %}<option value="{{ o.pk }}">{{ o.title }}</option>{% endfor %}</select></label>
+        <select name="objective" class="input-field mt-1 w-full"><option value="">{% translate "— none —" %}</option>{% for o in objectives %}<option value="{{ o.pk }}">{{ o.title_i18n }}</option>{% endfor %}</select></label>
       <label class="block"><span class="label">{% translate "Owner" %}</span>
         <select name="owner" class="input-field mt-1 w-full"><option value="">—</option>{% for u in users %}<option value="{{ u.pk }}">{{ u.display_name }}</option>{% endfor %}</select></label>
       <label class="block"><span class="label">{% translate "Target resolution" %}</span><input type="datetime-local" name="target_resolution_at" class="input-field mt-1 w-full"></label>

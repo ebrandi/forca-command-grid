@@ -124,7 +124,7 @@
     <span class="eyebrow text-faint">{% translate "Category" %}</span>
     <select name="category" class="input-field mt-1">
       <option value="">{% translate "Any category" %}</option>
-      {% for c in categories %}<option value="{{ c.id }}" {% if f_category == c.id|stringformat:'s' %}selected{% endif %}>{{ c.label }}</option>{% endfor %}
+      {% for c in categories %}<option value="{{ c.id }}" {% if f_category == c.id|stringformat:'s' %}selected{% endif %}>{{ c.label_i18n }}</option>{% endfor %}
     </select>
   </label>
   <label class="block">

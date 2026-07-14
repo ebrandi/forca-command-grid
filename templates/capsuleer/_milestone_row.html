@@ -7,7 +7,7 @@
         {% if vm.milestone.status == 'done' %}<svg class="h-4 w-4 shrink-0 text-kill"><use href="#i-check"/></svg>
         {% elif vm.milestone.status == 'skipped' %}<span class="shrink-0 text-faint">—</span>
         {% else %}<span class="shrink-0 text-faint">○</span>{% endif %}
-        <span class="min-w-0 {% if vm.milestone.status == 'skipped' %}text-faint{% else %}text-ink{% endif %}">{{ vm.milestone.title }}</span>
+        <span class="min-w-0 {% if vm.milestone.status == 'skipped' %}text-faint{% else %}text-ink{% endif %}">{{ vm.milestone.title_i18n }}</span>
       </p>
       <div class="mt-1 flex flex-wrap items-center gap-1.5 pl-6">
         {% if vm.milestone.required %}<span class="chip text-muted border-line">{% translate "required" %}</span>{% else %}<span class="chip text-faint border-line">{% translate "optional" %}</span>{% endif %}

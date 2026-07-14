@@ -2,7 +2,7 @@
 {% load i18n %}
 {% block title %}{% if editing %}{% translate "Edit workstream" %}{% else %}{% translate "New workstream" %}{% endif %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
-<p class="eyebrow text-faint"><a href="{% url 'campaigns:index' %}" class="hover:text-gold">{% translate "Campaign Command" %}</a> › <a href="{% url 'campaigns:detail' campaign.pk %}" class="hover:text-gold">{{ campaign.name|truncatechars:36 }}</a> › {% if editing %}{% translate "Edit workstream" %}{% else %}{% translate "New workstream" %}{% endif %}</p>
+<p class="eyebrow text-faint"><a href="{% url 'campaigns:index' %}" class="hover:text-gold">{% translate "Campaign Command" %}</a> › <a href="{% url 'campaigns:detail' campaign.pk %}" class="hover:text-gold">{{ campaign.name_i18n|truncatechars:36 }}</a> › {% if editing %}{% translate "Edit workstream" %}{% else %}{% translate "New workstream" %}{% endif %}</p>
 <h1 class="mt-1 mb-4 text-2xl font-bold text-ink">{% if editing %}{% translate "Edit workstream" %}{% else %}{% translate "New workstream" %}{% endif %}</h1>
 
 <form method="post" action="{% if editing %}{% url 'campaigns:workstream_edit' workstream.pk %}{% else %}{% url 'campaigns:workstream_create' campaign.pk %}{% endif %}" class="space-y-4">

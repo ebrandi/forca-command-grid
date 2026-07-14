@@ -2357,7 +2357,9 @@ def _timeline_events(campaign) -> list[dict]:
     for ms in campaign.milestones.select_related("workstream").order_by("due_at", "id"):
         if ms.due_at:
             events.append({
-                "kind": "milestone", "date": ms.due_at, "title": ms.title,
+                # The timeline row is display-only, so it carries the seam's text (translated while
+                # the row still holds the shipped English, the officer's words once edited).
+                "kind": "milestone", "date": ms.due_at, "title": ms.title_i18n,
                 "status": ms.status, "status_label": ms.get_status_display(),
                 "overdue": ms.due_at < now and ms.status not in (
                     Milestone.MilestoneStatus.DONE, Milestone.MilestoneStatus.MISSED),
@@ -2368,7 +2370,7 @@ def _timeline_events(campaign) -> list[dict]:
     for o in campaign.objectives.order_by("due_at", "id"):
         if o.due_at:
             events.append({
-                "kind": "objective", "date": o.due_at, "title": o.title,
+                "kind": "objective", "date": o.due_at, "title": o.title_i18n,
                 "overdue": o.due_at < now and o.status not in obj_terminal,
                 "url": reverse("campaigns:objective_detail", args=[o.pk]),
             })

@@ -80,7 +80,7 @@ def career_quests_from_goals(goals) -> list[dict]:
         None,
     )
     if milestone is not None:
-        return [_row(goal, ref=f"m{milestone.pk}", title=milestone.title,
+        return [_row(goal, ref=f"m{milestone.pk}", title=milestone.title_i18n,
                      detail=gettext("Your next milestone on this goal."),
                      created_at=milestone.created_at)]
 
@@ -99,8 +99,10 @@ def _row(goal, *, ref, title, detail, created_at) -> dict:
         "icon": "#i-route",
         "corp_order": False,               # personal goals are never corp orders
         "title": title,
+        # ``title_i18n``: the quest row is display-only, so an unedited template goal names itself
+        # in the reader's locale while a pilot-written title stays verbatim (``templates_i18n``).
         "detail": gettext("%(detail)s (goal: %(title)s)") % {
-            "detail": detail, "title": goal.title
+            "detail": detail, "title": goal.title_i18n
         },
         "points": _QUEST_POINTS,
         "action_url": reverse("capsuleer:goal_detail", args=[goal.pk]),

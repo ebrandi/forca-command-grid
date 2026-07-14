@@ -20,7 +20,7 @@
       <span class="text-xs text-faint">{{ c.draw_at|date:"M j, Y" }}</span>
     </div>
     <h3 class="mt-2 font-display font-semibold text-ink group-hover:text-gold">{{ c.name }}</h3>
-    <p class="mt-1 text-xs text-faint">{{ c.objective|default:c.description|truncatewords:16 }}</p>
+    <p class="mt-1 text-xs text-faint">{{ c.objective_i18n|default:c.description|truncatewords:16 }}</p>
     <p class="mt-2 text-xs text-cyan group-hover:text-gold">{% translate "View winners & transparency" %} →</p>
   </a>
   {% endfor %}

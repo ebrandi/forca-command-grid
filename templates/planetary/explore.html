@@ -59,7 +59,7 @@
 <section class="panel mb-4 p-5">
   <div class="flex items-center gap-3">
     <img src="{% eve_type_render sp.planet.type_id 48 %}" alt="" class="h-11 w-11 rounded bg-space ring-1 ring-line">
-    <div><h2 class="text-lg font-semibold text-ink">{% blocktranslate with name=sp.planet.name %}{{ name }} planet{% endblocktranslate %}</h2><p class="text-xs text-faint">{{ sp.planet.blurb }}</p></div>
+    <div><h2 class="text-lg font-semibold text-ink">{% blocktranslate with name=sp.planet.name %}{{ name }} planet{% endblocktranslate %}</h2><p class="text-xs text-faint">{{ sp.planet.blurb_i18n }}</p></div>
   </div>
   <div class="mt-4 grid gap-4 sm:grid-cols-2">
     <div>

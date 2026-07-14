@@ -221,7 +221,10 @@ def _form_context(request, form, plan=None) -> dict:
     planet_types = list(PiPlanetType.objects.prefetch_related("resources__material"))
     # Serialisable catalogues for the Alpine planet builder.
     planet_catalogue = [
-        {"slug": p.slug, "name": p.name, "best_for": p.best_for,
+        # ``name`` and the resource names are CCP game data (English); ``best_for`` is our
+        # prose and goes through the render-time seam. The dict key stays ``best_for`` so
+        # the Alpine builder and its template are untouched.
+        {"slug": p.slug, "name": p.name, "best_for": p.best_for_i18n,
          "resources": [m.name for m in p.resource_materials]}
         for p in planet_types
     ]

@@ -32,7 +32,7 @@
       <span class="grid h-7 w-7 place-items-center rounded-full bg-panel2 text-xs font-bold text-gold">{{ w.prize.rank }}</span>
       {% if w.winner_character_id %}<img src="{% eve_portrait w.winner_character_id 32 %}" alt="" class="h-6 w-6 rounded-full ring-1 ring-line">{% endif %}
       <span class="min-w-0 flex-1 truncate text-ink">{{ w.winner_character_name }}</span>
-      <span class="text-sm text-gold">{{ w.prize.name }}</span>
+      <span class="text-sm text-gold">{{ w.prize.name_i18n }}</span>
       <span class="data text-xs text-faint">{% translate "ticket" %} #{{ w.winning_ticket_index }}</span>
     </div>
     {% empty %}<p class="px-4 py-8 text-center text-sm text-faint">{% translate "No eligible tickets were in the pool." %}</p>

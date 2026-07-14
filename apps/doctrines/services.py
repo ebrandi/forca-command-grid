@@ -5,10 +5,11 @@ from dataclasses import dataclass, field
 
 from apps.sde.models import SdeTypeSkill
 
+# The key + its shipped English label live in category_i18n (the render-time seam's
+# catalogue), so the seeded label and the msgid can never drift apart.
+from .category_i18n import BUILTIN_CATEGORY_LABELS, IMPORTED_CATEGORY_KEY
 from .fitparser import export_eft
 from .models import Doctrine, DoctrineCategory, DoctrineFit, SkillRequirement
-
-IMPORTED_CATEGORY_KEY = "imported"
 
 
 def match_doctrine_fit(ship_type_id: int) -> DoctrineFit | None:
@@ -96,7 +97,9 @@ def imported_category() -> DoctrineCategory:
     a migration; get_or_create here keeps the import robust if it was removed."""
     cat, _ = DoctrineCategory.objects.get_or_create(
         key=IMPORTED_CATEGORY_KEY,
-        defaults={"label": "IMPORTED", "sort_order": 100},
+        # Canonical ENGLISH in the column (the audit record + fallback); it is translated
+        # at render time by DoctrineCategory.label_i18n, keyed on ``key``.
+        defaults={"label": BUILTIN_CATEGORY_LABELS[IMPORTED_CATEGORY_KEY], "sort_order": 100},
     )
     return cat
 
@@ -426,12 +429,19 @@ _COVERAGE_TTL = 900  # 15 min — member skills sync at most every 12h.
 
 def _coverage_cache_key(characters) -> str:
     """Versioned on the members' latest-snapshot time + the active-doctrine set, so the
-    dashboard self-invalidates on a fresh sync, doctrine change or roster change."""
+    dashboard self-invalidates on a fresh sync, doctrine change or roster change.
+
+    Language-scoped (D17): the cached rows carry prose — the doctrine ``name`` and the
+    render-time-translated ``category`` label — so a German pilot's payload must not be
+    served to an English one. The key self-invalidates, so no cross-language sweep is
+    needed on write.
+    """
     import hashlib
 
     from django.db.models import Max
 
     from apps.characters.models import CharacterSkillSnapshot
+    from core.i18n import i18n_cache_key
 
     member_ids = sorted(c.character_id for c in characters)
     latest = CharacterSkillSnapshot.objects.filter(
@@ -441,8 +451,10 @@ def _coverage_cache_key(characters) -> str:
         Doctrine.objects.filter(status=Doctrine.Status.ACTIVE).values_list("id", flat=True)
     )
     sig = hashlib.sha256(f"{member_ids}|{doc_ids}".encode()).hexdigest()[:16]
-    ts = int(latest.timestamp() * 1_000_000) if latest else 0
-    return f"doctrines:coverage:{_COVERAGE_CACHE_VERSION}:{ts}:{sig}"
+    return i18n_cache_key(
+        f"doctrines:coverage:{_COVERAGE_CACHE_VERSION}:"
+        f"{int(latest.timestamp() * 1_000_000) if latest else 0}:{sig}"
+    )
 
 
 def corp_doctrine_coverage(characters) -> list[dict]:
@@ -484,7 +496,7 @@ def corp_doctrine_coverage(characters) -> list[dict]:
             "doctrine_id": doctrine.id,
             "name": doctrine.name,
             "priority": doctrine.priority or 0,
-            "category": doctrine.category.label if doctrine.category else "",
+            "category": doctrine.category.label_i18n if doctrine.category else "",
             **counts,
             "can_fly": counts["optimal"] + counts["viable"],
             "total": total,

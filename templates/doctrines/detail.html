@@ -7,7 +7,7 @@
   <div>
     <div class="flex items-center gap-2">
       <h1 class="text-2xl font-bold text-ink">{{ doctrine.name }}</h1>
-      {% if doctrine.category %}<span class="chip">{{ doctrine.category.label }}</span>{% endif %}
+      {% if doctrine.category %}<span class="chip">{{ doctrine.category.label_i18n }}</span>{% endif %}
     </div>
     <p class="mt-1 max-w-2xl text-sm text-muted">{{ doctrine.description }}</p>
   </div>

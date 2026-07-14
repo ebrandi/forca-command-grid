@@ -12,7 +12,7 @@
     <div>
       <p class="eyebrow text-gold">{% translate "Raffle contest" %}</p>
       <h1 class="mt-1 text-3xl font-bold text-ink">{{ contest.name }}</h1>
-      {% if contest.objective %}<p class="mt-1 max-w-2xl text-sm text-muted">{{ contest.objective }}</p>{% endif %}
+      {% if contest.objective %}<p class="mt-1 max-w-2xl text-sm text-muted">{{ contest.objective_i18n }}</p>{% endif %}
     </div>
     <div class="text-right">
       {% if contest.status == 'active' %}<span class="chip !border-kill/40 !text-kill">● {% translate "Live" %}</span>
@@ -124,7 +124,7 @@
         {% if row.prize.icon_type_id %}<img src="{% eve_type_icon row.prize.icon_type_id 64 %}" alt="" loading="lazy" class="h-10 w-10 rounded">{% else %}<span class="grid h-10 w-10 place-items-center rounded bg-panel2 text-gold"><svg class="h-5 w-5"><use href="#i-trophy"/></svg></span>{% endif %}
         <div class="min-w-0">
           <p class="eyebrow text-faint">#{{ row.prize.rank }} · {{ row.prize.get_prize_type_display }}</p>
-          <p class="truncate font-display font-semibold text-ink">{{ row.prize.name }}</p>
+          <p class="truncate font-display font-semibold text-ink">{{ row.prize.name_i18n }}</p>
         </div>
       </div>
       {% if row.prize.estimated_value %}
@@ -162,7 +162,7 @@
       <span class="grid h-7 w-7 place-items-center rounded-full bg-panel2 text-xs font-bold text-gold">{{ w.prize.rank }}</span>
       {% if w.winner_character_id %}<img src="{% eve_portrait w.winner_character_id 32 %}" alt="" class="h-6 w-6 rounded-full ring-1 ring-line">{% endif %}
       <span class="min-w-0 flex-1 truncate text-sm text-ink">{{ w.winner_character_name }}</span>
-      <span class="text-sm text-gold">{{ w.prize.name }}</span>
+      <span class="text-sm text-gold">{{ w.prize.name_i18n }}</span>
       {% if w.fulfil_status == 'delivered' %}<span class="chip !border-kill/40 !text-kill">{% translate "delivered" %}</span>{% endif %}
     </div>
     {% endfor %}

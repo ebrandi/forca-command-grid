@@ -2,7 +2,7 @@
 {% load i18n %}
 {% block title %}{% if editing %}{% translate "Edit milestone" %}{% else %}{% translate "New milestone" %}{% endif %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
-<p class="eyebrow text-faint"><a href="{% url 'campaigns:index' %}" class="hover:text-gold">{% translate "Campaign Command" %}</a> › <a href="{% url 'campaigns:detail' campaign.pk %}" class="hover:text-gold">{{ campaign.name|truncatechars:36 }}</a> › {% if editing %}{% translate "Edit milestone" %}{% else %}{% translate "New milestone" %}{% endif %}</p>
+<p class="eyebrow text-faint"><a href="{% url 'campaigns:index' %}" class="hover:text-gold">{% translate "Campaign Command" %}</a> › <a href="{% url 'campaigns:detail' campaign.pk %}" class="hover:text-gold">{{ campaign.name_i18n|truncatechars:36 }}</a> › {% if editing %}{% translate "Edit milestone" %}{% else %}{% translate "New milestone" %}{% endif %}</p>
 <h1 class="mt-1 mb-4 text-2xl font-bold text-ink">{% if editing %}{% translate "Edit milestone" %}{% else %}{% translate "New milestone" %}{% endif %}</h1>
 
 <form method="post" action="{% if editing %}{% url 'campaigns:milestone_edit' milestone.pk %}{% else %}{% url 'campaigns:milestone_create' campaign.pk %}{% endif %}" class="space-y-4">
@@ -12,7 +12,7 @@
       <label class="block sm:col-span-2"><span class="label">{% translate "Title" %} *</span><input type="text" name="title" value="{{ milestone.title }}" maxlength="200" required class="input-field mt-1 w-full"></label>
       <label class="block sm:col-span-2"><span class="label">{% translate "Description" %}</span><textarea name="description" rows="2" class="input-field mt-1 w-full">{{ milestone.description }}</textarea></label>
       <label class="block"><span class="label">{% translate "Workstream" %}</span>
-        <select name="workstream" class="input-field mt-1 w-full"><option value="">—</option>{% for ws in workstreams %}<option value="{{ ws.pk }}" {% if milestone.workstream_id == ws.pk %}selected{% endif %}>{{ ws.name }}</option>{% endfor %}</select></label>
+        <select name="workstream" class="input-field mt-1 w-full"><option value="">—</option>{% for ws in workstreams %}<option value="{{ ws.pk }}" {% if milestone.workstream_id == ws.pk %}selected{% endif %}>{{ ws.name_i18n }}</option>{% endfor %}</select></label>
       <label class="block"><span class="label">{% translate "Owner" %}</span>
         <select name="owner" class="input-field mt-1 w-full"><option value="">—</option>{% for u in users %}<option value="{{ u.pk }}" {% if milestone.owner_id == u.pk %}selected{% endif %}>{{ u.display_name }}</option>{% endfor %}</select></label>
       <label class="block"><span class="label">{% translate "Due" %}</span><input type="datetime-local" name="due_at" value="{{ due_at_local }}" class="input-field mt-1 w-full"></label>

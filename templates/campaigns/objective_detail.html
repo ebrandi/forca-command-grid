@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% load i18n %}
-{% block title %}{{ objective.title|truncatechars:48 }} · {% translate "Objective" %} · [FORCA] Command Grid{% endblock %}
+{% block title %}{{ objective.title_i18n|truncatechars:48 }} · {% translate "Objective" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
-<p class="eyebrow text-faint"><a href="{% url 'campaigns:index' %}" class="hover:text-gold">{% translate "Campaign Command" %}</a> › <a href="{% url 'campaigns:detail' campaign.pk %}" class="hover:text-gold">{{ campaign.name|truncatechars:36 }}</a> › {% translate "Objective" %}</p>
+<p class="eyebrow text-faint"><a href="{% url 'campaigns:index' %}" class="hover:text-gold">{% translate "Campaign Command" %}</a> › <a href="{% url 'campaigns:detail' campaign.pk %}" class="hover:text-gold">{{ campaign.name_i18n|truncatechars:36 }}</a> › {% translate "Objective" %}</p>
 
 {# ── Header ─────────────────────────────────────────────────────────────── #}
 <section class="panel mt-2 p-5">
@@ -13,12 +13,12 @@
     {% if objective.is_sensitive %}<span class="chip text-faint border-line">{% translate "sensitive" %}</span>{% endif %}
     {% if can_manage %}<a href="{% url 'campaigns:objective_edit' objective.pk %}" class="btn-ghost ml-auto text-xs">{% translate "Edit" %}</a>{% endif %}
   </div>
-  <h1 class="mt-2 font-display text-xl font-bold text-ink">{{ objective.title }}</h1>
-  {% if objective.description %}<p class="mt-1 whitespace-pre-line text-sm text-faint">{{ objective.description }}</p>{% endif %}
+  <h1 class="mt-2 font-display text-xl font-bold text-ink">{{ objective.title_i18n }}</h1>
+  {% if objective.description %}<p class="mt-1 whitespace-pre-line text-sm text-faint">{{ objective.description_i18n }}</p>{% endif %}
 
   <div class="mt-3 flex flex-wrap items-center gap-3">
     {% if vm.value_visible %}
-      <span class="data text-lg text-ink">{% if vm.current is not None %}{{ vm.current|floatformat:"-2" }}{% else %}—{% endif %}{% if vm.target is not None %} / {{ vm.target|floatformat:"-2" }}{% endif %} <span class="text-sm text-faint">{{ objective.unit }}</span></span>
+      <span class="data text-lg text-ink">{% if vm.current is not None %}{{ vm.current|floatformat:"-2" }}{% else %}—{% endif %}{% if vm.target is not None %} / {{ vm.target|floatformat:"-2" }}{% endif %} <span class="text-sm text-faint">{{ objective.unit_i18n }}</span></span>
       {% if vm.baseline is not None %}<span class="text-xs text-faint">{% blocktranslate with baseline=vm.baseline|floatformat:"-2" %}(baseline {{ baseline }}){% endblocktranslate %}</span>{% endif %}
       {% if vm.freshness %}<span class="chip {% if vm.manual %}text-cyan border-cyan/40{% else %}text-faint border-line{% endif %}">{% if vm.manual %}{% translate "manual" %}{% else %}⟳ {{ vm.freshness }}{% endif %}</span>{% endif %}
       {% if vm.paused %}<span class="chip text-gold border-gold/40" title="{% translate 'Automatic refresh is paused; a manual value stands' %}">{% translate "paused" %}</span>{% endif %}
@@ -45,11 +45,11 @@
       <div class="flex justify-between"><dt class="text-faint">{% translate "Source" %}</dt><dd class="text-muted">{% if source %}{{ source.label }}{% else %}{% translate "Manual entry" %}{% endif %}</dd></div>
       {% for p in params_summary %}<div class="flex justify-between"><dt class="text-faint">{{ p.label }}</dt><dd class="data text-muted">{{ p.value }}</dd></div>{% endfor %}
       <div class="flex justify-between"><dt class="text-faint">{% translate "Direction" %}</dt><dd class="text-muted">{{ objective.get_direction_display }}</dd></div>
-      <div class="flex justify-between"><dt class="text-faint">{% translate "Unit" %}</dt><dd class="text-muted">{{ objective.unit|default:"—" }}</dd></div>
+      <div class="flex justify-between"><dt class="text-faint">{% translate "Unit" %}</dt><dd class="text-muted">{{ objective.unit_i18n|default:"—" }}</dd></div>
       <div class="flex justify-between"><dt class="text-faint">{% translate "Last measured" %}</dt><dd class="text-muted">{% if vm.freshness %}{% if vm.is_stale %}<span class="text-loss">{{ vm.freshness }} · {% translate "stale" %}</span>{% else %}{{ vm.freshness }}{% endif %}{% else %}{% translate "never" %}{% endif %}</dd></div>
     </dl>
     {% if vm.value_visible and sparkline_values|length > 1 %}
-      <div class="mt-4">{% include "components/_sparkline.html" with values=sparkline_values unit=objective.unit %}</div>
+      <div class="mt-4">{% include "components/_sparkline.html" with values=sparkline_values unit=objective.unit_i18n %}</div>
     {% endif %}
     {% if vm.value_visible and samples %}
       <p class="eyebrow mt-4 text-faint">{% translate "Recent samples" %}</p>

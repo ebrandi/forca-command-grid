@@ -36,6 +36,8 @@ from django.utils.translation import gettext_lazy as _
 
 from core.mixins import TimeStampedModel
 
+from . import templates_i18n
+
 
 class MeasurementSource(models.TextChoices):
     """Provenance of a measured value — shared by ``Objective.measurement_source`` and
@@ -188,6 +190,14 @@ class Campaign(TimeStampedModel):
     closed_at = models.DateTimeField(null=True, blank=True)
     # Soft link to a command_intel improvement plan (ADR-0006); never a cross-app FK.
     intel_campaign_id = models.BigIntegerField(null=True, blank=True)
+    # Provenance back to the built-in blueprint this row's prose was copied from — the i18n
+    # "translate until edited" seam (``templates_i18n``): while a field still holds the shipped
+    # English, the seam renders the translated built-in string; the moment an officer edits it, it
+    # is their text and renders verbatim in every locale. Blank for a hand-made campaign.
+    # ``db_default`` (not just ``default``) keeps the empty-string default in the DATABASE: a plain
+    # AddField leaves the column NOT NULL with *no* DB default, which breaks INSERTs from older
+    # code during a rollback.
+    source_key = models.CharField(max_length=160, blank=True, default="", db_default="")
 
     class Meta:
         ordering = ["-priority", "target_end_at", "-created_at"]
@@ -208,6 +218,41 @@ class Campaign(TimeStampedModel):
 
     def __str__(self) -> str:
         return self.name
+
+    # --- Render-time i18n seam (translate-until-edited) --------------------- #
+    # One read-only ``*_i18n`` property per field the built-in catalogue carries prose for
+    # (``templates_i18n.BUILTIN_MSGIDS``). Each renders the *translated* built-in string while the
+    # column still holds the shipped English, and the officer's own words verbatim the moment they
+    # edit it. A hand-made campaign has an empty ``source_key`` and always renders verbatim.
+    # Templates render ``{{ campaign.name_i18n }}``; the raw column stays the audit record and is
+    # what forms, comparisons and lookups must keep using.
+    @property
+    def name_i18n(self) -> str:
+        return templates_i18n.text(self, "name")
+
+    @property
+    def summary_i18n(self) -> str:
+        return templates_i18n.text(self, "summary")
+
+    @property
+    def description_i18n(self) -> str:
+        return templates_i18n.text(self, "description")
+
+    @property
+    def rationale_i18n(self) -> str:
+        return templates_i18n.text(self, "rationale")
+
+    @property
+    def desired_outcome_i18n(self) -> str:
+        return templates_i18n.text(self, "desired_outcome")
+
+    @property
+    def success_criteria_i18n(self) -> str:
+        return templates_i18n.text(self, "success_criteria")
+
+    @property
+    def failure_criteria_i18n(self) -> str:
+        return templates_i18n.text(self, "failure_criteria")
 
 
 class Workstream(TimeStampedModel):
@@ -234,6 +279,8 @@ class Workstream(TimeStampedModel):
         max_length=16, choices=WorkstreamStatus.choices, default=WorkstreamStatus.OPEN
     )
     sort_order = models.IntegerField(default=0)
+    # Built-in blueprint provenance for the i18n translate-until-edited seam (see Campaign).
+    source_key = models.CharField(max_length=160, blank=True, default="", db_default="")
 
     class Meta:
         ordering = ["sort_order", "id"]
@@ -243,6 +290,16 @@ class Workstream(TimeStampedModel):
 
     def __str__(self) -> str:
         return self.name
+
+    # Render-time i18n seam — see Campaign. The lane ``key`` is a campaign-local slug and is never
+    # translated; only the prose copied from the blueprint is.
+    @property
+    def name_i18n(self) -> str:
+        return templates_i18n.text(self, "name")
+
+    @property
+    def description_i18n(self) -> str:
+        return templates_i18n.text(self, "description")
 
 
 class Objective(TimeStampedModel):
@@ -311,6 +368,8 @@ class Objective(TimeStampedModel):
     )
     verified_at = models.DateTimeField(null=True, blank=True)
     sort_order = models.IntegerField(default=0)
+    # Built-in blueprint provenance for the i18n translate-until-edited seam (see Campaign).
+    source_key = models.CharField(max_length=160, blank=True, default="", db_default="")
 
     # Soft-link execution: linked tasks carry related_type/related_id (ADR-0006). The
     # additional-task suffix (``{pk}:{n}``) lets one objective spawn several tasks while a
@@ -364,6 +423,20 @@ class Objective(TimeStampedModel):
 
     def __str__(self) -> str:
         return self.title
+
+    # Render-time i18n seam — see Campaign. ``unit`` is prose ("pilots", "ships", "sets") and is in
+    # the catalogue; ``metric_source``/``direction`` are identifiers and never translate.
+    @property
+    def title_i18n(self) -> str:
+        return templates_i18n.text(self, "title")
+
+    @property
+    def description_i18n(self) -> str:
+        return templates_i18n.text(self, "description")
+
+    @property
+    def unit_i18n(self) -> str:
+        return templates_i18n.text(self, "unit")
 
 
 class ObjectiveSample(TimeStampedModel):
@@ -425,6 +498,8 @@ class Milestone(TimeStampedModel):
         related_name="+",
     )
     sort_order = models.IntegerField(default=0)
+    # Built-in blueprint provenance for the i18n translate-until-edited seam (see Campaign).
+    source_key = models.CharField(max_length=160, blank=True, default="", db_default="")
 
     class Meta:
         ordering = ["sort_order", "id"]
@@ -435,6 +510,15 @@ class Milestone(TimeStampedModel):
 
     def __str__(self) -> str:
         return self.title
+
+    # Render-time i18n seam — see Campaign.
+    @property
+    def title_i18n(self) -> str:
+        return templates_i18n.text(self, "title")
+
+    @property
+    def description_i18n(self) -> str:
+        return templates_i18n.text(self, "description")
 
 
 class CampaignDependency(TimeStampedModel):
@@ -512,6 +596,8 @@ class Risk(TimeStampedModel):
     trigger = models.CharField(max_length=200, blank=True)
     due_at = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=16, choices=RiskStatus.choices, default=RiskStatus.OPEN)
+    # Built-in blueprint provenance for the i18n translate-until-edited seam (see Campaign).
+    source_key = models.CharField(max_length=160, blank=True, default="", db_default="")
 
     class Meta:
         ordering = ["-severity", "id"]
@@ -521,6 +607,24 @@ class Risk(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"{self.description[:60]} (sev {self.severity})"
+
+    # Render-time i18n seam — see Campaign. ``probability``/``impact`` are constrained tokens and
+    # never translate here (their labels come from the ``RiskLevel`` choices).
+    @property
+    def description_i18n(self) -> str:
+        return templates_i18n.text(self, "description")
+
+    @property
+    def mitigation_i18n(self) -> str:
+        return templates_i18n.text(self, "mitigation")
+
+    @property
+    def contingency_i18n(self) -> str:
+        return templates_i18n.text(self, "contingency")
+
+    @property
+    def trigger_i18n(self) -> str:
+        return templates_i18n.text(self, "trigger")
 
 
 class Issue(TimeStampedModel):
@@ -690,6 +794,17 @@ class CampaignTemplate(TimeStampedModel):
 
     def __str__(self) -> str:
         return self.name
+
+    # Render-time i18n seam — see Campaign. A blueprint row *is* the built-in, so its provenance is
+    # its own ``key`` (``templates_i18n.provenance_key``). A corp template's key is not in the
+    # catalogue, so its prose renders verbatim; an operator-renamed built-in does too.
+    @property
+    def name_i18n(self) -> str:
+        return templates_i18n.text(self, "name")
+
+    @property
+    def description_i18n(self) -> str:
+        return templates_i18n.text(self, "description")
 
 
 class CampaignOperation(TimeStampedModel):

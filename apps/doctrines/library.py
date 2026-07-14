@@ -109,7 +109,10 @@ def build_library(character=None, has_skills: bool = False) -> dict:
                         if sole:
                             unlocks[sid] += 1
 
-        category_label = d.category.label if d.category else _("Uncategorised")
+        # Display-only aggregation key (it feeds the "By category" doughnut's labels), so
+        # the translated label is correct here — nothing is ever looked up by it. The
+        # doctrine's own category is matched on ``category_id``, never on this text.
+        category_label = d.category.label_i18n if d.category else _("Uncategorised")
         category_counts[category_label] += 1
         if has_skills:
             readiness_counts[best_status] += 1
@@ -121,7 +124,7 @@ def build_library(character=None, has_skills: bool = False) -> dict:
             "roles": sorted(d_roles),
             "fit_count": len(fits),
             "category_id": d.category_id,
-            "category_label": d.category.label if d.category else "",
+            "category_label": d.category.label_i18n if d.category else "",
             "status": best_status if has_skills else None,
             # Fewest skills the pilot is missing on their closest fit (only when the
             # best they can do is "not ready"); drives the "closest to fly" ordering.

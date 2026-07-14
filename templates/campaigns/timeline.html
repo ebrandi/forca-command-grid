@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% load i18n %}
-{% block title %}{% translate "Timeline" %} · {{ campaign.name|truncatechars:40 }} · {% translate "Campaign Command" %}{% endblock %}
+{% block title %}{% translate "Timeline" %} · {{ campaign.name_i18n|truncatechars:40 }} · {% translate "Campaign Command" %}{% endblock %}
 {% block content %}
-<p class="eyebrow text-faint"><a href="{% url 'campaigns:index' %}" class="hover:text-gold">{% translate "Campaign Command" %}</a> › <a href="{% url 'campaigns:detail' campaign.pk %}" class="hover:text-gold">{{ campaign.name|truncatechars:40 }}</a> › {% translate "Timeline" %}</p>
-<h1 class="mt-1 mb-4 text-2xl font-bold text-ink">{% blocktranslate with name=campaign.name %}Timeline — {{ name }}{% endblocktranslate %}</h1>
+<p class="eyebrow text-faint"><a href="{% url 'campaigns:index' %}" class="hover:text-gold">{% translate "Campaign Command" %}</a> › <a href="{% url 'campaigns:detail' campaign.pk %}" class="hover:text-gold">{{ campaign.name_i18n|truncatechars:40 }}</a> › {% translate "Timeline" %}</p>
+<h1 class="mt-1 mb-4 text-2xl font-bold text-ink">{% blocktranslate with name=campaign.name_i18n %}Timeline — {{ name }}{% endblocktranslate %}</h1>
 
 {# Decorative window strip — desktop only, aria-hidden; the event list below is the canonical view. #}
 <section class="panel p-5">

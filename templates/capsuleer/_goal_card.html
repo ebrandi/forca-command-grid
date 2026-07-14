@@ -3,7 +3,7 @@
 <a href="{% url 'capsuleer:goal_detail' g.pk %}" class="block rounded-lg border border-line px-4 py-3 hover:bg-panel2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold">
   <div class="flex items-start justify-between gap-3">
     <div class="min-w-0">
-      <p class="truncate font-medium text-ink">{{ g.title }}</p>
+      <p class="truncate font-medium text-ink">{{ g.title_i18n }}</p>
       <div class="mt-1 flex flex-wrap items-center gap-1.5">
         {% if g.status == 'considering' %}<span class="chip text-muted border-line">{% translate "Considering" %}</span>
         {% elif g.status == 'active' %}<span class="chip !text-gold !border-gold/40">{% translate "Active" %}</span>
