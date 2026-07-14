@@ -169,7 +169,7 @@ def pilot_view(request: HttpRequest, character_id: int) -> HttpResponse:
     audit_log(request.user, "readiness.pilot.view", target_type="character",
               target_id=character.character_id, ip=client_ip(request))
     # Read-only: never persist from an officer's view (the pilot's own warm owns that).
-    payload = cache.get(cache_key(character.character_id))
+    payload = cache.get(cache_key(character.character_id, character.user_id))
     if payload is None:
         payload = compute_pilot(character, persist=False)
     facets = payload["facets"]

@@ -173,8 +173,13 @@ def unlink(user, character) -> None:
 
     # The last-pilot guard has to be atomic, or two unlink requests racing on a two-pilot account
     # can both read "2 remaining", both pass, and both detach — leaving the account with zero
-    # credentials and no way to sign in. Lock this account's pilots for the duration, count under
-    # the lock, and re-confirm the target is still ours (a concurrent unlink may have taken it).
+    # credentials and no way to sign in.
+    #
+    # It is not enough to count under the lock: the DETACH (the write the guard protects) must run
+    # inside the SAME transaction, so the row locks are held until it commits. If the lock is
+    # released after the count and the detach follows in autocommit, the second racer reads the
+    # still-linked rows before the first's detach lands, both pass, and the account is stranded.
+    # So the whole severance — count, token wipe, detach — lives in one atomic block.
     with transaction.atomic():
         owned = list(
             EveCharacter.objects.select_for_update()
@@ -186,27 +191,29 @@ def unlink(user, character) -> None:
         if len(owned) <= 1:
             raise LastPilotError
 
-    # Capture the refresh-token plaintexts BEFORE wiping the ciphertext.
-    active = list(AuthToken.objects.filter(character=character, revoked_at__isnull=True))
-    refresh_tokens = [rt for tok in active if (rt := tok.refresh_token)]
-    AuthToken.objects.filter(character=character, revoked_at__isnull=True).update(
-        revoked_at=timezone.now()
-    )
-    # Erase the ciphertext on EVERY row for this character, including already-revoked ones: a
-    # superseded row can still hold a decryptable refresh token, which would otherwise survive
-    # an explicit unlink and defeat the severance.
-    AuthToken.objects.filter(character=character).update(_refresh_token="", _access_token="")
-    character.scope_grants.update(active=False)
+        # Capture the refresh-token plaintexts BEFORE wiping the ciphertext.
+        active = list(AuthToken.objects.filter(character=character, revoked_at__isnull=True))
+        refresh_tokens = [rt for tok in active if (rt := tok.refresh_token)]
+        AuthToken.objects.filter(character=character, revoked_at__isnull=True).update(
+            revoked_at=timezone.now()
+        )
+        # Erase the ciphertext on EVERY row for this character, including already-revoked ones: a
+        # superseded row can still hold a decryptable refresh token, which would otherwise survive
+        # an explicit unlink and defeat the severance.
+        AuthToken.objects.filter(character=character).update(_refresh_token="", _access_token="")
+        character.scope_grants.update(active=False)
 
+        was_main = character.is_main
+        character.user = None
+        character.is_main = False
+        # A detached pilot carries no corp standing into anyone's authority ceiling (LP-4).
+        character.is_corp_director = False
+        character.save(update_fields=["user", "is_main", "is_corp_director"])
+
+    # The severance has committed; the row locks are released. The best-effort CCP revoke and the
+    # bookkeeping below are safe to run in autocommit — they touch nothing another unlink races on.
     if refresh_tokens:
         revoke_tokens_at_ccp.delay(refresh_tokens)
-
-    was_main = character.is_main
-    character.user = None
-    character.is_main = False
-    # A detached pilot carries no corp standing into anyone's authority ceiling (LP-4).
-    character.is_corp_director = False
-    character.save(update_fields=["user", "is_main", "is_corp_director"])
     # The roster memo still holds the pilot we just released.
     pilots.invalidate(user)
 

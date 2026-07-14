@@ -479,7 +479,7 @@ def _dashboard_context(request: HttpRequest) -> dict:
         # The beat (readiness.warm_pilots) owns persistence; a GET recomputes
         # read-only on cache miss EXCEPT the one-time seed for a brand-new main
         # (same contract the old /readiness/me/ view kept — never churn on GET).
-        payload = cache.get(rd_cache_key(main_character.character_id))
+        payload = cache.get(rd_cache_key(main_character.character_id, user.pk))
         if payload is None:
             # Cold cache (e.g. a pilot's first post-login visit, or after a deploy flush):
             # serve the last persisted snapshot — a single cheap read — instead of the full

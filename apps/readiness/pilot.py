@@ -31,8 +31,14 @@ _CACHE_TTL = 5400  # 90 min
 _MAX_RECOS = 12     # the quest log shows the strongest dozen, ranked by priority
 
 
-def cache_key(character_id) -> str:
-    return f"readiness:pilot:{character_id}"
+def cache_key(character_id, user_id) -> str:
+    """Cache key for a pilot's readiness payload, scoped to the OWNING account.
+
+    Owner-scoped, not character-only, so a character that is sold and re-linked to a new account
+    can never read the previous owner's warmed payload from the cache before the next recompute.
+    The DB snapshot read is already scoped by ``(character_id, user)`` for exactly this reason;
+    this brings the cache into line with it (LP-3)."""
+    return f"readiness:pilot:{user_id}:{character_id}"
 
 
 def _humanize_eta(seconds: int) -> str:
@@ -377,7 +383,9 @@ def compute_pilot(character, *, persist: bool = True) -> dict:
         overall - payload["trend"][max(0, len(payload["trend"]) - 8)]
         if len(payload["trend"]) >= 2 else None
     )
-    cache.set(cache_key(character.character_id), payload, _CACHE_TTL)
+    cache.set(
+        cache_key(character.character_id, getattr(user, "pk", None)), payload, _CACHE_TTL
+    )
     return payload
 
 

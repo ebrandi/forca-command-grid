@@ -175,11 +175,14 @@ def unlink_pilot(request: HttpRequest) -> HttpResponse:
         ip=client_ip(request),
     )
 
-    if was_active:
+    remaining = pilots.linked_pilots(request.user)
+    if was_active and remaining:
         # Do not leave the session pointing at a pilot the user no longer holds: resolve a new
         # one NOW rather than let the next request fall back, so the page they land on is
-        # already rendered as the pilot they are actually flying.
-        replacement = pilots.linked_pilots(request.user)[0]
+        # already rendered as the pilot they are actually flying. ``remaining`` is guarded
+        # because a concurrent unlink could, in principle, have taken the other pilot too — the
+        # service's atomic guard prevents the *last* one going, but the roster is re-read here.
+        replacement = remaining[0]
         pilots.select(request, replacement)
         messages.success(
             request,

@@ -262,6 +262,49 @@ def test_a_second_unlink_of_an_already_released_pilot_is_a_no_op(django_user_mod
     linking.unlink(user, a)          # no-op, no raise
     with pytest.raises(linking.LastPilotError):
         linking.unlink(user, b)
+
+
+@pytest.mark.django_db(transaction=True)
+def test_concurrent_unlink_cannot_strand_the_account(django_user_model):
+    """The race the security review walked: two threads unlink the two pilots of a two-pilot
+    account at the same instant. The severance (count, token wipe, detach) runs inside ONE
+    locked transaction, so the second thread blocks on the row lock until the first commits, then
+    re-reads one pilot and is refused. The account can never be left with zero credentials.
+
+    ``transaction=True`` gives each thread its own connection and real row locking — the default
+    single-transaction test would serialise them and hide the race entirely.
+    """
+    import threading
+
+    from django.db import connection
+
+    user = _account(django_user_model)
+    a = _pilot(user, 1, "A", main=True)
+    b = _pilot(user, 2, "B")
+
+    barrier = threading.Barrier(2)
+    errors: list[Exception] = []
+
+    def worker(character):
+        barrier.wait()  # line them up so both are inside unlink at once
+        try:
+            linking.unlink(user, character)
+        except linking.LastPilotError:
+            pass  # exactly one racer is expected to be refused
+        except Exception as exc:  # noqa: BLE001 - record anything unexpected for the assert
+            errors.append(exc)
+        finally:
+            connection.close()
+
+    threads = [threading.Thread(target=worker, args=(c,)) for c in (a, b)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+    assert not errors, f"unexpected errors during the race: {errors}"
+    # The invariant that matters: at least one pilot survived. Never zero.
+    assert user.characters.count() >= 1
     assert user.characters.count() == 1
 
 

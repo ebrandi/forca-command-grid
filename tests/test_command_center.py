@@ -61,7 +61,7 @@ def _prime(user, cid, *, directive=True, reco_kwargs=None):
             leverage=75, points=12, action_url="/skills/",
         )
     cache.set(ci_pilot.cache_key(cid), {"directives": []})
-    cache.set(rd_cache_key(cid), RD_PAYLOAD)
+    cache.set(rd_cache_key(cid, user.pk), RD_PAYLOAD)
     r = None
     if reco_kwargs is not None:
         reco_kwargs.setdefault("character_id", cid)
@@ -328,7 +328,7 @@ def test_readiness_trend_and_week_delta_render_from_the_cached_payload(
         client, django_user_model, sde):
     user = _member(django_user_model, "w", 7313)
     _prime(user, 7313, directive=False)
-    cache.set(rd_cache_key(7313), {**RD_PAYLOAD, "trend": [50, 52, 55, 58, 60, 61, 62, 64, 66, 68],
+    cache.set(rd_cache_key(7313, user.pk), {**RD_PAYLOAD, "trend": [50, 52, 55, 58, 60, 61, 62, 64, 66, 68],
                                    "week_delta": 6})
     client.force_login(user)
     html = client.get("/dashboard/").content.decode()
