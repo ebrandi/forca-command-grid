@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-13 20:01+0000\n"
+"POT-Creation-Date: 2026-07-14 01:40+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: es machine-assisted draft\n"
@@ -812,33 +812,85 @@ msgstr ""
 "Se desvinculó a %(who)s. El propietario podrá volver a vincularlo en su "
 "próximo inicio de sesión de EVE."
 
-#: apps/admin_audit/health.py templates/stockpile/assets.html
+#: apps/admin_audit/health.py apps/sso/scopes.py
+#: templates/stockpile/assets.html
 msgid "Corp assets"
 msgstr "Activos de la corp"
 
 #: apps/admin_audit/health.py
+msgid "Director token · esi-assets.read_corporation_assets.v1"
+msgstr "Token de Director · esi-assets.read_corporation_assets.v1"
+
+#: apps/admin_audit/health.py apps/readiness/dimensions/staging.py
+#: apps/readiness/dimensions/strategic.py
 msgid "Personal assets"
 msgstr "Activos personales"
+
+#: apps/admin_audit/health.py
+#, python-brace-format
+#| msgid "pilot(s)"
+msgid "{count} pilot(s)"
+msgstr "{count} piloto(s)"
+
+#: apps/admin_audit/health.py
+msgid "each pilot's own token"
+msgstr "token propio de cada piloto"
 
 #: apps/admin_audit/health.py
 msgid "Market history"
 msgstr "Historial de mercado"
 
 #: apps/admin_audit/health.py
+#| msgid "public"
+msgid "public ESI"
+msgstr "ESI público"
+
+#: apps/admin_audit/health.py
+#| msgid "Not required"
+msgid "no token required"
+msgstr "no requiere token"
+
+#: apps/admin_audit/health.py apps/corporation/compliance.py
 msgid "Killmails"
 msgstr "Killmails"
+
+#: apps/admin_audit/health.py
+msgid "char/corp tokens + zKill"
+msgstr "tokens de personaje/corp + zKill"
+
+#: apps/admin_audit/health.py
+msgid "discovery every 10m"
+msgstr "descubrimiento cada 10 min"
 
 #: apps/admin_audit/health.py templates/corporation/roster.html
 msgid "Member roster"
 msgstr "Lista de miembros"
 
 #: apps/admin_audit/health.py
+msgid "Director token · esi-corporations.track_members.v1"
+msgstr "Token de Director · esi-corporations.track_members.v1"
+
+#: apps/admin_audit/health.py
 msgid "Member skills"
 msgstr "Habilidades de miembros"
 
 #: apps/admin_audit/health.py
+#| msgid "Character age"
+msgid "character tokens"
+msgstr "tokens de personaje"
+
+#: apps/admin_audit/health.py
+msgid "sync every 12h"
+msgstr "sincronización cada 12 h"
+
+#: apps/admin_audit/health.py
 msgid "Market prices"
 msgstr "Precios de mercado"
+
+#: apps/admin_audit/health.py
+#| msgid "prices from"
+msgid "price import"
+msgstr "importación de precios"
 
 #: apps/admin_audit/health.py
 msgid "Market adjusted prices"
@@ -848,7 +900,7 @@ msgstr "Precios ajustados de mercado"
 msgid "Market Jita prices"
 msgstr "Precios de Jita en el mercado"
 
-#: apps/admin_audit/health.py
+#: apps/admin_audit/health.py apps/sso/scopes.py
 msgid "Jump network"
 msgstr "Red de saltos"
 
@@ -886,6 +938,18 @@ msgstr "Anonimizar"
 #: apps/admin_audit/models.py
 msgid "Retain"
 msgstr "Conservar"
+
+#: apps/buyback/forms.py
+msgid ""
+"Paste items from EVE, one per line:\n"
+"Tritanium  1000000\n"
+"Ferox  3\n"
+"Ischoten II x5"
+msgstr ""
+"Pega objetos desde EVE, uno por línea:\n"
+"Tritanium  1000000\n"
+"Ferox  3\n"
+"Ischoten II x5"
 
 #: apps/buyback/forms.py
 msgid "Where the items are (e.g. station / system)"
@@ -1028,8 +1092,8 @@ msgstr "Aprobado — a la espera del pago de la corp"
 msgid "Settled"
 msgstr "Liquidado"
 
-#: apps/buyback/models.py apps/killboard/models.py apps/mentorship/models.py
-#: apps/recruitment/models.py
+#: apps/buyback/models.py apps/identity/models.py apps/killboard/models.py
+#: apps/mentorship/models.py apps/recruitment/models.py
 msgid "Rejected"
 msgstr "Rechazado"
 
@@ -1143,6 +1207,193 @@ msgstr "Rechazado."
 msgid "Couldn't reject that request."
 msgstr "No se pudo rechazar esa solicitud."
 
+#: apps/campaigns/apps.py templates/_nav.html
+#: templates/campaigns/_dashboard_panel.html templates/campaigns/activity.html
+#: templates/campaigns/close.html templates/campaigns/detail.html
+#: templates/campaigns/explain.html templates/campaigns/form.html
+#: templates/campaigns/issue_form.html templates/campaigns/lessons.html
+#: templates/campaigns/milestone_form.html
+#: templates/campaigns/objective_detail.html
+#: templates/campaigns/objective_form.html templates/campaigns/portfolio.html
+#: templates/campaigns/recognition.html templates/campaigns/report.html
+#: templates/campaigns/risk_form.html templates/campaigns/template_picker.html
+#: templates/campaigns/timeline.html templates/campaigns/workspace.html
+#: templates/campaigns/workstream_form.html
+msgid "Campaign Command"
+msgstr "Mando de campañas"
+
+#: apps/campaigns/metrics/base.py
+#, python-format
+msgid "“%(label)s” is required for this metric source."
+msgstr "“%(label)s” es obligatorio para esta fuente de métrica."
+
+#: apps/campaigns/metrics/base.py
+#, python-format
+msgid "“%(label)s” is not one of the allowed options."
+msgstr "“%(label)s” no es una de las opciones permitidas."
+
+#: apps/campaigns/metrics/base.py
+#, python-format
+#| msgid "%(name)s must be a positive integer."
+msgid "“%(label)s” must be a whole number."
+msgstr "“%(label)s” debe ser un número entero."
+
+#: apps/campaigns/metrics/base.py
+#, python-format
+msgid "“%(label)s” must be a comma-separated list of whole numbers."
+msgstr ""
+"“%(label)s” debe ser una lista de números enteros separados por comas."
+
+#: apps/campaigns/metrics/doctrine.py
+msgid "Doctrine — qualified pilots"
+msgstr "Doctrine — pilotos cualificados"
+
+#: apps/campaigns/metrics/doctrine.py apps/capsuleer/models.py
+#: apps/onboarding/models.py apps/readiness/models.py apps/readiness/views.py
+#: templates/capsuleer/goal_form.html templates/capsuleer/path_detail.html
+msgid "Doctrine"
+msgstr "Doctrine"
+
+#: apps/campaigns/metrics/doctrine.py
+#| msgid "No active doctrines to report coverage for."
+msgid "Active doctrine to count fly-capable pilots for."
+msgstr "Doctrine activa de la que contar los pilotos capaces de volarla."
+
+#: apps/campaigns/metrics/doctrine.py
+#| msgid "Active days"
+msgid "Active within N days"
+msgstr "Activo en los últimos N días"
+
+#: apps/campaigns/metrics/doctrine.py
+msgid "Optional — only count pilots seen online in the last N days."
+msgstr ""
+"Opcional — contar solo los pilotos vistos en línea en los últimos N días."
+
+#: apps/campaigns/metrics/finance.py
+msgid "Finance — wallet division balance"
+msgstr "Finanzas — saldo de división de cartera"
+
+#: apps/campaigns/metrics/finance.py
+#| msgid "All divisions"
+msgid "Wallet division"
+msgstr "División de cartera"
+
+#: apps/campaigns/metrics/finance.py
+msgid "Corp wallet division to read the balance of."
+msgstr "División de la cartera de la corp cuyo saldo se leerá."
+
+#: apps/campaigns/metrics/industry.py
+msgid "Industry — deliveries in window"
+msgstr "Industria — entregas en la ventana"
+
+#: apps/campaigns/metrics/industry.py
+#| msgid "Output type id"
+msgid "Output items"
+msgstr "Objetos producidos"
+
+#: apps/campaigns/metrics/industry.py
+msgid "Built items to count deliveries of."
+msgstr "Objetos fabricados cuyas entregas se contarán."
+
+#: apps/campaigns/metrics/killboard.py
+msgid "Killboard — home-corp kills in window"
+msgstr "Killboard — kills de la corp base en la ventana"
+
+#: apps/campaigns/metrics/logistics.py
+msgid "Logistics — m³ hauled in window"
+msgstr "Logística — m³ transportados en la ventana"
+
+#: apps/campaigns/metrics/operations.py
+#| msgid "Counts — completed tasks per pilot"
+msgid "Operations — completed of type"
+msgstr "Operaciones — completadas por tipo"
+
+#: apps/campaigns/metrics/operations.py templates/operations/form.html
+msgid "Operation type"
+msgstr "Tipo de operación"
+
+#: apps/campaigns/metrics/operations.py
+msgid "Counts DONE operations of this type since the campaign started."
+msgstr ""
+"Cuenta las operaciones de este tipo en estado DONE desde el inicio de la "
+"campaña."
+
+#: apps/campaigns/metrics/operations.py
+#| msgid "Operations & defence"
+msgid "Operations — confirmed attendance"
+msgstr "Operaciones — asistencia confirmada"
+
+#: apps/campaigns/metrics/readiness.py
+#| msgid "Readiness dimension"
+msgid "Readiness — dimension score"
+msgstr "Preparación — puntuación de dimensión"
+
+#: apps/campaigns/metrics/readiness.py templates/readiness/alerts.html
+#: templates/readiness/findings.html
+msgid "Dimension"
+msgstr "Dimensión"
+
+#: apps/campaigns/metrics/readiness.py
+#| msgid "Unknown readiness dimension."
+msgid "Which readiness dimension score to track."
+msgstr "Qué puntuación de dimensión de preparación seguir."
+
+#: apps/campaigns/metrics/srp.py
+msgid "SRP — reserve (allocated − spent − exposure)"
+msgstr "SRP — reserva (asignado − gastado − exposición)"
+
+#: apps/campaigns/metrics/srp.py templates/mining/my_mining.html
+#: templates/srp/budget.html
+msgid "Period"
+msgstr "Periodo"
+
+#: apps/campaigns/metrics/srp.py
+msgid "Budget period; defaults to the current month."
+msgstr "Periodo de presupuesto; por defecto, el mes actual."
+
+#: apps/campaigns/metrics/stockpile.py
+msgid "Stockpile — effective on-hand"
+msgstr "Acopio — existencias efectivas"
+
+#: apps/campaigns/metrics/stockpile.py apps/campaigns/models.py
+#: templates/_nav.html templates/stockpile/dashboard.html
+msgid "Stockpile"
+msgstr "Acopio"
+
+#: apps/campaigns/metrics/stockpile.py
+msgid "The corp stockpile to reconcile against live ESI on-hand."
+msgstr ""
+"El acopio de la corp que se conciliará con las existencias reales de ESI."
+
+#: apps/campaigns/metrics/stockpile.py
+#| msgid "%(n)s item type"
+#| msgid_plural "%(n)s item types"
+msgid "Item type"
+msgstr "Tipo de objeto"
+
+#: apps/campaigns/metrics/stockpile.py
+msgid ""
+"Optional — a single item type; omitted sums every item in the stockpile."
+msgstr ""
+"Opcional — un único tipo de objeto; si se omite, suma todos los objetos del "
+"acopio."
+
+#: apps/campaigns/metrics/structures.py
+msgid "Structures — minimum fuel days"
+msgstr "Estructuras — mínimo de días de combustible"
+
+#: apps/campaigns/metrics/structures.py apps/corporation/finance_analytics.py
+#: templates/admin_audit/console/hub.html
+#: templates/corporation/structures.html
+msgid "Structures"
+msgstr "Estructuras"
+
+#: apps/campaigns/metrics/structures.py
+#| msgid ""
+#| "Fuel, state and reinforcement timers for every corp structure."
+msgid "Leave all unchecked to use every corp structure."
+msgstr "Déjalas todas sin marcar para usar todas las estructuras de la corp."
+
 #: apps/campaigns/models.py apps/capsuleer/models.py apps/raffle/models.py
 msgid "Automatic"
 msgstr "Automático"
@@ -1201,11 +1452,6 @@ msgstr "Reubicación"
 msgid "Defence Readiness"
 msgstr "Preparación defensiva"
 
-#: apps/campaigns/models.py templates/_nav.html
-#: templates/stockpile/dashboard.html
-msgid "Stockpile"
-msgstr "Acopio"
-
 #: apps/campaigns/models.py
 msgid "SRP Reserve"
 msgstr "Reserva de SRP"
@@ -1221,18 +1467,18 @@ msgid "Training"
 msgstr "Entrenamiento"
 
 #: apps/campaigns/models.py apps/capsuleer/taxonomy.py
-#: apps/readiness/models.py apps/recruitment/models.py
-#: templates/corporation/extractions.html templates/erp/board.html
-#: templates/industry/blueprints.html templates/industry/board.html
-#: templates/industry/calculator.html templates/industry/chain.html
-#: templates/industry/create.html templates/industry/demand.html
-#: templates/industry/detail.html templates/industry/invention.html
-#: templates/industry/jobs.html
+#: apps/corporation/finance_analytics.py apps/readiness/models.py
+#: apps/recruitment/models.py templates/corporation/extractions.html
+#: templates/erp/board.html templates/industry/blueprints.html
+#: templates/industry/board.html templates/industry/calculator.html
+#: templates/industry/chain.html templates/industry/create.html
+#: templates/industry/demand.html templates/industry/detail.html
+#: templates/industry/invention.html templates/industry/jobs.html
 msgid "Industry"
 msgstr "Industria"
 
 #: apps/campaigns/models.py apps/command_intel/models.py
-#: apps/pingboard/models.py apps/readiness/models.py
+#: apps/pingboard/models.py apps/readiness/models.py apps/readiness/views.py
 #: templates/logistics/corp_contracts.html templates/stockpile/logistics.html
 msgid "Logistics"
 msgstr "Logística"
@@ -1241,8 +1487,9 @@ msgstr "Logística"
 msgid "Coverage"
 msgstr "Cobertura"
 
-#: apps/campaigns/models.py apps/mentorship/models.py apps/raffle/models.py
-#: apps/readiness/models.py apps/stockpile/models.py apps/tasks/models.py
+#: apps/campaigns/models.py apps/corporation/finance_analytics.py
+#: apps/mentorship/models.py apps/raffle/models.py apps/readiness/models.py
+#: apps/stockpile/models.py apps/tasks/models.py
 msgid "Other"
 msgstr "Otro"
 
@@ -1259,8 +1506,8 @@ msgstr "Borrador"
 msgid "Proposed"
 msgstr "Propuesto"
 
-#: apps/campaigns/models.py apps/killboard/models.py apps/mentorship/models.py
-#: apps/raffle/models.py apps/srp/models.py
+#: apps/campaigns/models.py apps/identity/models.py apps/killboard/models.py
+#: apps/mentorship/models.py apps/raffle/models.py apps/srp/models.py
 msgid "Approved"
 msgstr "Aprobado"
 
@@ -1329,7 +1576,7 @@ msgid "Blocked"
 msgstr "Bloqueado"
 
 #: apps/campaigns/models.py apps/capsuleer/models.py apps/killboard/models.py
-#: templates/doctrines/my_readiness.html
+#: apps/stockpile/views.py templates/doctrines/my_readiness.html
 msgid "Unknown"
 msgstr "Desconocido"
 
@@ -1388,9 +1635,10 @@ msgid "Done"
 msgstr "Hecho"
 
 #: apps/campaigns/models.py apps/capsuleer/models.py
-#: apps/command_intel/models.py apps/killboard/models.py
-#: apps/mentorship/models.py apps/pingboard/models.py apps/raffle/models.py
-#: apps/skills/models.py templates/corporation/roster.html
+#: apps/command_intel/models.py apps/identity/models.py
+#: apps/killboard/models.py apps/mentorship/models.py apps/pingboard/models.py
+#: apps/raffle/models.py apps/skills/models.py
+#: templates/corporation/roster.html
 msgid "Pending"
 msgstr "Pendiente"
 
@@ -1465,6 +1713,26 @@ msgid "No such objective."
 msgstr "No existe ese objetivo."
 
 #: apps/campaigns/views.py
+#| msgid "Enter a valid quantity."
+msgid "Enter a valid date and time."
+msgstr "Introduce una fecha y hora válidas."
+
+#: apps/campaigns/views.py
+#| msgid "Enter a whole number."
+msgid "Enter a valid number."
+msgstr "Introduce un número válido."
+
+#: apps/campaigns/views.py
+#| msgid "A page needs a title."
+msgid "A campaign needs a name."
+msgstr "Una campaña necesita un nombre."
+
+#: apps/campaigns/views.py
+#| msgid "The start date can't be in the past."
+msgid "The target end date cannot be before the start date."
+msgstr "La fecha de fin objetivo no puede ser anterior a la de inicio."
+
+#: apps/campaigns/views.py
 msgid "You cannot create campaigns."
 msgstr "No puedes crear campañas."
 
@@ -1521,6 +1789,38 @@ msgid "Progress updated."
 msgstr "Progreso actualizado."
 
 #: apps/campaigns/views.py
+#| msgid "A page needs a title."
+msgid "An objective needs a title."
+msgstr "Un objetivo necesita un título."
+
+#: apps/campaigns/views.py
+#, python-format
+msgid "Division %(number)s"
+msgstr "División %(number)s"
+
+#: apps/campaigns/views.py
+#| msgid "Unknown system"
+msgid "unknown system"
+msgstr "sistema desconocido"
+
+#: apps/campaigns/views.py
+#, python-format
+#| msgid "Operation #%(id)s (removed)"
+msgid "id %(value)s (removed)"
+msgstr "id %(value)s (eliminado)"
+
+#: apps/campaigns/views.py
+#, python-format
+#| msgid "due %(d)s"
+msgid "type %(id)s"
+msgstr "tipo %(id)s"
+
+#: apps/campaigns/views.py
+#| msgid "All"
+msgid "all"
+msgstr "todos"
+
+#: apps/campaigns/views.py
 msgid "Objective added."
 msgstr "Objetivo añadido."
 
@@ -1553,6 +1853,11 @@ msgid "Objective status updated."
 msgstr "Estado del objetivo actualizado."
 
 #: apps/campaigns/views.py
+#| msgid "A page needs a title."
+msgid "A milestone needs a title."
+msgstr "Un hito necesita un título."
+
+#: apps/campaigns/views.py
 msgid "Milestone added."
 msgstr "Hito añadido."
 
@@ -1573,6 +1878,11 @@ msgid "Milestone status updated."
 msgstr "Estado del hito actualizado."
 
 #: apps/campaigns/views.py
+#| msgid "A task needs a title."
+msgid "A workstream needs a name."
+msgstr "Una línea de trabajo necesita un nombre."
+
+#: apps/campaigns/views.py
 msgid "Workstream added."
 msgstr "Línea de trabajo añadida."
 
@@ -1583,6 +1893,11 @@ msgstr "No existe esa línea de trabajo."
 #: apps/campaigns/views.py
 msgid "Workstream updated."
 msgstr "Línea de trabajo actualizada."
+
+#: apps/campaigns/views.py
+#| msgid "A task needs a title."
+msgid "A risk needs a description."
+msgstr "Un riesgo necesita una descripción."
 
 #: apps/campaigns/views.py
 msgid "You cannot add risks to this campaign."
@@ -1841,6 +2156,54 @@ msgstr "Campaña %(status)s"
 msgid "Target end"
 msgstr "Fin previsto"
 
+#: apps/capsuleer/briefing.py
+#| msgid "You're already on this path."
+msgid "Your next step on this goal."
+msgstr "Tu siguiente paso en este objetivo."
+
+#: apps/capsuleer/briefing.py
+#| msgid "You're already on this path."
+msgid "Your next milestone on this goal."
+msgstr "Tu próximo hito en este objetivo."
+
+#: apps/capsuleer/briefing.py apps/pingboard/models.py templates/_nav.html
+#: templates/admin_audit/console/hub.html
+#: templates/capsuleer/_dashboard_panel.html templates/capsuleer/compare.html
+#: templates/capsuleer/goal_detail.html templates/capsuleer/goal_form.html
+#: templates/capsuleer/home.html templates/capsuleer/leadership.html
+#: templates/capsuleer/path_detail.html templates/capsuleer/paths.html
+#: templates/capsuleer/profile.html templates/capsuleer/start.html
+msgid "Capsuleer Path"
+msgstr "Capsuleer Path"
+
+#: apps/capsuleer/briefing.py
+#, python-format
+msgid "%(detail)s (goal: %(title)s)"
+msgstr "%(detail)s (objetivo: %(title)s)"
+
+#: apps/capsuleer/config.py apps/comms_access/config.py
+#: apps/pingboard/config.py
+msgid "config document must be an object"
+msgstr "el documento de configuración debe ser un objeto"
+
+#: apps/capsuleer/config.py
+#, python-format
+#| msgid "%(name)s must be a positive integer."
+msgid "%(name)s must be a positive integer"
+msgstr "%(name)s debe ser un entero positivo"
+
+#: apps/capsuleer/config.py
+msgid "leadership.min_group must be at least 2"
+msgstr "leadership.min_group debe ser como mínimo 2"
+
+#: apps/capsuleer/config.py
+msgid "templates.disabled_keys must be a list of template keys"
+msgstr "templates.disabled_keys debe ser una lista de claves de plantilla"
+
+#: apps/capsuleer/config.py
+msgid "notifications.enabled must be an object of event → bool"
+msgstr "notifications.enabled debe ser un objeto de evento → bool"
+
 #: apps/capsuleer/models.py templates/capsuleer/profile.html
 #: templates/capsuleer/start.html
 msgid "Relaxed"
@@ -1896,11 +2259,6 @@ msgstr "Solo agregado"
 #: templates/operations/templates.html
 msgid "Template"
 msgstr "Plantilla"
-
-#: apps/capsuleer/models.py apps/onboarding/models.py
-#: templates/capsuleer/goal_form.html templates/capsuleer/path_detail.html
-msgid "Doctrine"
-msgstr "Doctrine"
 
 #: apps/capsuleer/models.py apps/command_intel/models.py
 #: apps/readiness/models.py templates/capsuleer/goal_form.html
@@ -2063,7 +2421,7 @@ msgstr "Incorrecto"
 msgid "Built-in"
 msgstr "Integrado"
 
-#: apps/capsuleer/models.py apps/stockpile/models.py
+#: apps/capsuleer/models.py apps/stockpile/models.py apps/stockpile/views.py
 msgid "Corp"
 msgstr "Corp"
 
@@ -2078,6 +2436,53 @@ msgstr "Grupo"
 #: apps/capsuleer/models.py templates/capsuleer/paths.html
 msgid "Mixed"
 msgstr "Mixto"
+
+#: apps/capsuleer/models.py
+#| msgid "By skills"
+msgid "your skills"
+msgstr "tus skills"
+
+#: apps/capsuleer/models.py
+#| msgid "Upcoming ops"
+msgid "upcoming ops"
+msgstr "próximas ops"
+
+#: apps/capsuleer/models.py
+#| msgid "Mentors"
+msgid "mentors"
+msgstr "mentores"
+
+#: apps/capsuleer/models.py
+#| msgid "Corp assets"
+msgid "your assets"
+msgstr "tus activos"
+
+#: apps/capsuleer/models.py
+#| msgid "Market prices"
+msgid "shipyard prices"
+msgstr "precios del astillero"
+
+#: apps/capsuleer/models.py
+#| msgid "campaign"
+msgid "campaigns"
+msgstr "campañas"
+
+#: apps/capsuleer/models.py
+#| msgid "My plans"
+msgid "your plan"
+msgstr "tu plan"
+
+#: apps/capsuleer/models.py
+#, python-format
+#| msgid "synced %(ago)s ago"
+msgid "%(source)s (%(age)s ago)"
+msgstr "%(source)s (hace %(age)s)"
+
+#: apps/capsuleer/models.py
+#, python-format
+#| msgid "Sources: %(sources)s."
+msgid "based on: %(sources)s"
+msgstr "basado en: %(sources)s"
 
 #: apps/capsuleer/params.py
 #, python-format
@@ -2174,6 +2579,34 @@ msgstr "Los hitos '%(kind)s' no pueden usar verificación automática."
 msgid "Unknown milestone kind: %(value)s."
 msgstr "Tipo de hito desconocido: %(value)s."
 
+#: apps/capsuleer/progress.py
+#| msgid "Skill queue"
+msgid "continuous skill queue"
+msgstr "cola de skills continua"
+
+#: apps/capsuleer/progress.py
+msgid "current neural attributes"
+msgstr "atributos neurales actuales"
+
+#: apps/capsuleer/progress.py
+msgid "no implants, boosters or accelerators modelled"
+msgstr "sin implantes, boosters ni aceleradores modelados"
+
+#: apps/capsuleer/progress.py
+#| msgid "In-game training queue"
+msgid "Omega training rates assumed"
+msgstr "Se asumen ritmos de entrenamiento Omega"
+
+#: apps/capsuleer/progress.py
+#| msgid "No plan yet."
+msgid "No skill plan yet."
+msgstr "Aún no hay plan de skills."
+
+#: apps/capsuleer/progress.py
+#| msgid "No doctrines set for this op yet."
+msgid "No training left on this plan."
+msgstr "No queda entrenamiento en este plan."
+
 #: apps/capsuleer/taxonomy.py
 msgid "Combat line (DPS)"
 msgstr "Línea de combate (DPS)"
@@ -2199,7 +2632,7 @@ msgid "Capitals"
 msgstr "Capitals"
 
 #: apps/capsuleer/taxonomy.py apps/mentorship/models.py
-#: apps/pingboard/models.py
+#: apps/pingboard/models.py apps/raffle/sources/pve.py
 msgid "Mining"
 msgstr "Minería"
 
@@ -2442,6 +2875,54 @@ msgstr "Escenario “%(name)s” guardado."
 msgid "Removed scenario “%(name)s”."
 msgstr "Escenario “%(name)s” eliminado."
 
+#: apps/comms_access/config.py
+#, python-format
+msgid "Unknown comms_access config domain: %(domain)r"
+msgstr "Dominio de configuración de comms_access desconocido: %(domain)r"
+
+#: apps/comms_access/config.py
+#| msgid "%(name)s must be a positive integer."
+msgid "general.revoke_grace_minutes must be a non-negative integer"
+msgstr "general.revoke_grace_minutes debe ser un entero no negativo"
+
+#: apps/comms_access/config.py
+#, python-format
+msgid "unknown platform %(platform)r"
+msgstr "plataforma desconocida %(platform)r"
+
+#: apps/comms_access/config.py
+#, python-format
+#| msgid "%(where)s params must be an object."
+msgid "platforms.%(platform)s must be an object"
+msgstr "platforms.%(platform)s debe ser un objeto"
+
+#: apps/comms_access/entitlements.py
+#| msgid "All corp members"
+msgid "Home-corp member"
+msgstr "Miembro de la corp base"
+
+#: apps/comms_access/entitlements.py
+#| msgid "Safer (prefer high-sec)"
+msgid "Officer (or higher)"
+msgstr "Oficial (o superior)"
+
+#: apps/comms_access/entitlements.py
+#| msgid "Director logged out"
+msgid "Director (or higher)"
+msgstr "Director (o superior)"
+
+#: apps/comms_access/entitlements.py
+msgid "Recruiter (recruitment.manage)"
+msgstr "Reclutador (recruitment.manage)"
+
+#: apps/comms_access/entitlements.py
+msgid "Fleet Commander (fleet.manage)"
+msgstr "Fleet Commander (fleet.manage)"
+
+#: apps/comms_access/entitlements.py
+msgid "Alliance / friendly-corp pilot (not a home member)"
+msgstr "Piloto de la alianza o de corp amiga (no es miembro de la corp base)"
+
 #: apps/comms_access/models.py
 msgid "Additive (grant only)"
 msgstr "Aditivo (solo conceder)"
@@ -2469,6 +2950,272 @@ msgstr "Aplicado"
 #: apps/comms_access/models.py
 msgid "Dry run (preview)"
 msgstr "Simulación (vista previa)"
+
+#: apps/comms_access/oauth.py
+#, python-format
+#| msgid "Test failed: %(error)s"
+msgid "token request failed: %(error)s"
+msgstr "falló la solicitud de token: %(error)s"
+
+#: apps/comms_access/oauth.py
+#, python-format
+msgid "token exchange returned http %(status)s"
+msgstr "el intercambio de token devolvió http %(status)s"
+
+#: apps/comms_access/oauth.py
+msgid "token response was not JSON"
+msgstr "la respuesta del token no era JSON"
+
+#: apps/comms_access/oauth.py
+msgid "token response missing access_token"
+msgstr "falta access_token en la respuesta del token"
+
+#: apps/comms_access/oauth.py
+#, python-format
+#| msgid "Test failed: %(error)s"
+msgid "identity request failed: %(error)s"
+msgstr "falló la solicitud de identidad: %(error)s"
+
+#: apps/comms_access/oauth.py
+#, python-format
+msgid "identity lookup returned http %(status)s"
+msgstr "la consulta de identidad devolvió http %(status)s"
+
+#: apps/comms_access/oauth.py
+msgid "identity response was not JSON"
+msgstr "la respuesta de identidad no era JSON"
+
+#: apps/comms_access/oauth.py
+msgid "identity response missing user id"
+msgstr "falta el id de usuario en la respuesta de identidad"
+
+#: apps/corporation/access.py
+#| msgid "Whole corporation"
+msgid "our corporation"
+msgstr "nuestra corporación"
+
+#: apps/corporation/admin.py
+msgid "Resolve alliance names from ESI"
+msgstr "Resolver nombres de alianza desde ESI"
+
+#: apps/corporation/admin.py
+#, python-format
+#| msgid "Test failed: %(error)s"
+msgid "ESI name lookup failed: %(error)s"
+msgstr "Falló la consulta de nombres en ESI: %(error)s"
+
+#: apps/corporation/admin.py
+#, python-format
+msgid "Resolved %(count)s alliance name(s)."
+msgstr "Se resolvieron %(count)s nombre(s) de alianza."
+
+#: apps/corporation/compliance.py apps/onboarding/models.py
+#: templates/identity/character.html
+msgid "Skills"
+msgstr "Habilidades"
+
+#: apps/corporation/compliance.py templates/identity/dashboard.html
+msgid "Skill queue"
+msgstr "Cola de skills"
+
+#: apps/corporation/compliance.py
+#| msgid "planet"
+msgid "Implants"
+msgstr "Implantes"
+
+#: apps/corporation/compliance.py
+#| msgid "Killmails"
+msgid "Corp killmails"
+msgstr "Killmails de la corp"
+
+#: apps/corporation/compliance.py
+#| msgid "Corp members only"
+msgid "Corp membership"
+msgstr "Pertenencia a la corp"
+
+#: apps/corporation/compliance.py
+#| msgid "Your role(s)"
+msgid "Corp roles"
+msgstr "Roles de la corp"
+
+#: apps/corporation/finance_analytics.py
+#| msgid "Settings"
+msgid "Ratting"
+msgstr "Ratting"
+
+#: apps/corporation/finance_analytics.py
+#| msgid "Sessions"
+msgid "Missions"
+msgstr "Misiones"
+
+#: apps/corporation/finance_analytics.py templates/mining/ledger.html
+#: templates/mining/my_mining.html templates/mining/payout.html
+msgid "Payouts"
+msgstr "Pagos"
+
+#: apps/corporation/finance_analytics.py
+msgid "Taxes"
+msgstr "Impuestos"
+
+#: apps/corporation/finance_analytics.py templates/_nav.html
+#: templates/market/dashboard.html
+msgid "Market"
+msgstr "Mercado"
+
+#: apps/corporation/finance_analytics.py apps/industry/models.py
+#: templates/logistics/rates.html
+msgid "Contracts"
+msgstr "Contratos"
+
+#: apps/corporation/finance_analytics.py
+#| msgid "Location"
+msgid "Donations"
+msgstr "Donaciones"
+
+#: apps/corporation/finance_analytics.py
+msgid "Transfers"
+msgstr "Transferencias"
+
+#: apps/corporation/finance_analytics.py
+msgid "Fees"
+msgstr "Comisiones"
+
+#: apps/corporation/finance_analytics.py
+msgid "SRP / Insurance"
+msgstr "SRP / Seguros"
+
+#: apps/corporation/finance_analytics.py templates/mining/ledger.html
+#: templates/store/supply_forecast.html
+msgid "7 days"
+msgstr "7 días"
+
+#: apps/corporation/finance_analytics.py templates/mining/ledger.html
+#: templates/mining/my_mining.html templates/store/supply_forecast.html
+msgid "30 days"
+msgstr "30 días"
+
+#: apps/corporation/finance_analytics.py templates/mining/ledger.html
+#: templates/mining/my_mining.html templates/store/supply_forecast.html
+msgid "90 days"
+msgstr "90 días"
+
+#: apps/corporation/finance_analytics.py
+#| msgid "/ month"
+msgid "12 months"
+msgstr "12 meses"
+
+#: apps/corporation/finance_analytics.py
+#| msgid "Target date"
+msgid "Year to date"
+msgstr "Año en curso"
+
+#: apps/corporation/finance_analytics.py templates/killboard/_feed.html
+msgid "All time"
+msgstr "Todo el tiempo"
+
+#: apps/corporation/finance_analytics.py
+#| msgid "/ month"
+msgid "End of month"
+msgstr "Fin de mes"
+
+#: apps/corporation/finance_analytics.py
+#| msgid "Net / day"
+msgid "Next 30 days"
+msgstr "Próximos 30 días"
+
+#: apps/corporation/finance_analytics.py
+#| msgid "Net / day"
+msgid "Next 60 days"
+msgstr "Próximos 60 días"
+
+#: apps/corporation/finance_analytics.py
+#| msgid "Net / day"
+msgid "Next 90 days"
+msgstr "Próximos 90 días"
+
+#: apps/corporation/infra.py
+#| msgid "Opt out of nudges"
+msgid "Out of fuel"
+msgstr "Sin combustible"
+
+#: apps/corporation/infra.py
+#| msgid "Pair inactive"
+msgid "timer active"
+msgstr "timer activo"
+
+#: apps/corporation/infra.py
+#, python-format
+#| msgid "Timeline — %(name)s"
+msgid "Reinforced — %(state)s"
+msgstr "Reforzada — %(state)s"
+
+#: apps/corporation/infra.py
+#, python-format
+msgid "%(days).1f days of fuel left"
+msgstr "Quedan %(days).1f días de combustible"
+
+#: apps/corporation/infra.py
+#, python-format
+msgid "%(days).1f days of fuel"
+msgstr "%(days).1f días de combustible"
+
+#: apps/corporation/infra.py
+#| msgid "unknown"
+msgid "Fuel unknown"
+msgstr "Combustible desconocido"
+
+#: apps/corporation/infra.py
+#, python-format
+msgid "ADM %(adm).1f — soft"
+msgstr "ADM %(adm).1f — blando"
+
+#: apps/corporation/infra.py
+#, python-format
+msgid "ADM %(adm).1f"
+msgstr "ADM %(adm).1f"
+
+#: apps/corporation/infra.py
+#, python-format
+msgid "%(type)s timer · %(side)s"
+msgstr "Timer de %(type)s · %(side)s"
+
+#: apps/corporation/models.py
+#, python-format
+#| msgid "%(count)s active"
+msgid "%(label)s (inactive)"
+msgstr "%(label)s (inactivo)"
+
+#: apps/corporation/models.py
+#, python-format
+msgid "Division %(division)s"
+msgstr "División %(division)s"
+
+#: apps/corporation/models.py
+#, python-format
+#| msgid "Structure type"
+msgid "Structure %(structure_id)s"
+msgstr "Estructura %(structure_id)s"
+
+#: apps/corporation/roster.py
+#| msgid "No home corporation configured."
+msgid "Home corporation id not configured."
+msgstr "El id de la corporación base no está configurado."
+
+#: apps/corporation/roster.py
+#| msgid "No director has granted the corp-contracts scope yet."
+msgid "No Director has granted member-tracking access."
+msgstr "Ningún Director ha concedido acceso al seguimiento de miembros."
+
+#: apps/corporation/roster.py
+#| msgid "Mentor available"
+msgid "Director token unavailable."
+msgstr "Token de Director no disponible."
+
+#: apps/corporation/roster.py
+#, python-format
+#| msgid "(%(count)s resolved)"
+msgid "%(count)s members synced."
+msgstr "%(count)s miembros sincronizados."
 
 #: apps/corporation/views.py
 #, python-format
@@ -2541,6 +3288,27 @@ msgstr ""
 msgid "Sync failed: %(message)s"
 msgstr "Falló la sincronización: %(message)s"
 
+#: apps/doctrines/fitparser.py
+msgid "EFT must start with '[ShipName, Fit name]'"
+msgstr "El EFT debe empezar por '[ShipName, Fit name]'"
+
+#: apps/doctrines/library.py
+#| msgid "Categories"
+msgid "Uncategorised"
+msgstr "Sin categoría"
+
+#: apps/doctrines/library.py
+#, python-format
+#| msgid "Skill points"
+msgid "Skill %(type_id)s"
+msgstr "Habilidad %(type_id)s"
+
+#: apps/doctrines/models.py
+#| msgid "%(doctrines)s doctrine"
+#| msgid_plural "%(doctrines)s doctrines"
+msgid "doctrine categories"
+msgstr "categorías de doctrine"
+
 #: apps/doctrines/models.py
 msgid "Corp-need weight for skill planning."
 msgstr "Peso de la necesidad de la corp para la planificación de habilidades."
@@ -2575,6 +3343,11 @@ msgid "Expired"
 msgstr "Caducado"
 
 #: apps/doctrines/models.py
+#| msgid "Doctrine fit value"
+msgid "doctrine import batches"
+msgstr "lotes de importación de doctrine"
+
+#: apps/doctrines/models.py
 #, python-format
 msgid ""
 "How many fittings one XML upload may contain (1–%(ceiling)s). %(ceiling)s is"
@@ -2585,6 +3358,11 @@ msgstr ""
 "práctica."
 
 #: apps/doctrines/models.py
+#| msgid "doctrines you can fly"
+msgid "doctrine import config"
+msgstr "configuración de importación de doctrine"
+
+#: apps/doctrines/models.py
 #, python-format
 msgid ""
 "Doctrines/ships shown per page on the Doctrines and Shipyard pages "
@@ -2592,6 +3370,18 @@ msgid ""
 msgstr ""
 "Doctrines/naves mostradas por página en las páginas de Doctrines y Astillero"
 " (%(min)s–%(max)s)."
+
+#: apps/doctrines/models.py
+#| msgid "Doctrine supply gap"
+msgid "doctrine display config"
+msgstr "configuración de visualización de doctrine"
+
+#: apps/doctrines/prep.py apps/doctrines/supply.py apps/erp/services.py
+#: apps/industry/chain.py apps/mining/moon_value.py apps/mining/services.py
+#: apps/navigation/system_info.py apps/stockpile/views.py
+#, python-format
+msgid "Type %(type_id)s"
+msgstr "Tipo %(type_id)s"
 
 #: apps/doctrines/views.py
 msgid "Incomplete supply line."
@@ -2604,6 +3394,138 @@ msgstr "Tarea creada — abierta para reclamar."
 #: apps/doctrines/views.py
 msgid "A task for that item is already open."
 msgstr "Ya hay una tarea abierta para ese objeto."
+
+#: apps/doctrines/xml_import.py apps/recommendations/models.py
+#: templates/campaigns/form.html templates/campaigns/template_picker.html
+msgid "New"
+msgstr "Nuevo"
+
+#: apps/doctrines/xml_import.py
+msgid "Identical — skip"
+msgstr "Idéntico — omitir"
+
+#: apps/doctrines/xml_import.py
+#| msgid "Sync conflict"
+msgid "Conflict"
+msgstr "Conflicto"
+
+#: apps/doctrines/xml_import.py
+msgid "Possible duplicate fit"
+msgstr "Posible fit duplicado"
+
+#: apps/doctrines/xml_import.py
+msgid "Name clash (different hull)"
+msgstr "Nombre repetido (hull distinto)"
+
+#: apps/doctrines/xml_import.py
+#| msgid "Valid"
+msgid "Invalid"
+msgstr "No válido"
+
+#: apps/doctrines/xml_import.py
+msgid "No file was uploaded."
+msgstr "No se subió ningún archivo."
+
+#: apps/doctrines/xml_import.py
+msgid "Only .xml files exported from the EVE client are accepted."
+msgstr "Solo se aceptan archivos .xml exportados desde el cliente de EVE."
+
+#: apps/doctrines/xml_import.py
+#, python-format
+msgid "The file is larger than the %(limit)s MB limit."
+msgstr "El archivo supera el límite de %(limit)s MB."
+
+#: apps/doctrines/xml_parser.py
+#, python-format
+msgid "unexpected attribute “%(attribute)s” on <%(element)s>"
+msgstr "atributo “%(attribute)s” inesperado en <%(element)s>"
+
+#: apps/doctrines/xml_parser.py
+#, python-format
+msgid "<%(element)s> must not contain child elements"
+msgstr "<%(element)s> no debe contener elementos hijos"
+
+#: apps/doctrines/xml_parser.py
+#, python-format
+msgid "XML nesting is too deep (limit %(limit)s)"
+msgstr "el anidamiento XML es demasiado profundo (límite %(limit)s)"
+
+#: apps/doctrines/xml_parser.py
+#, python-format
+msgid "file is larger than the %(limit)s MB limit"
+msgstr "el archivo supera el límite de %(limit)s MB"
+
+#: apps/doctrines/xml_parser.py
+msgid "the file is empty"
+msgstr "el archivo está vacío"
+
+#: apps/doctrines/xml_parser.py
+msgid "the file is not text (looks like a binary file)"
+msgstr "el archivo no es texto (parece un archivo binario)"
+
+#: apps/doctrines/xml_parser.py
+msgid "a DOCTYPE/DTD is not allowed"
+msgstr "no se permite un DOCTYPE/DTD"
+
+#: apps/doctrines/xml_parser.py
+msgid "entity definitions are not allowed"
+msgstr "no se permiten definiciones de entidades"
+
+#: apps/doctrines/xml_parser.py
+msgid "the XML declaration is not terminated"
+msgstr "la declaración XML no está terminada"
+
+#: apps/doctrines/xml_parser.py
+msgid "processing instructions are not allowed"
+msgstr "no se permiten instrucciones de procesamiento"
+
+#: apps/doctrines/xml_parser.py
+msgid "the file does not look like XML"
+msgstr "el archivo no parece ser XML"
+
+#: apps/doctrines/xml_parser.py
+msgid ""
+"the file uses an unsafe XML construct (DTD, entity or external reference)"
+msgstr ""
+"el archivo usa una construcción XML insegura (DTD, entidad o referencia "
+"externa)"
+
+#: apps/doctrines/xml_parser.py
+msgid "the file is not well-formed XML"
+msgstr "el archivo no es XML bien formado"
+
+#: apps/doctrines/xml_parser.py
+#| msgid "The briefing could not be generated."
+msgid "the file could not be parsed as XML"
+msgstr "no se pudo analizar el archivo como XML"
+
+#: apps/doctrines/xml_parser.py
+#, python-format
+msgid "a fitting has more than %(limit)s hardware entries"
+msgstr "un fitting tiene más de %(limit)s entradas de hardware"
+
+#: apps/doctrines/xml_parser.py
+#, python-format
+msgid "unexpected <%(element)s> inside a <fitting>"
+msgstr "<%(element)s> inesperado dentro de un <fitting>"
+
+#: apps/doctrines/xml_parser.py
+msgid "the root element must be <fittings>"
+msgstr "el elemento raíz debe ser <fittings>"
+
+#: apps/doctrines/xml_parser.py
+#, python-format
+msgid "unexpected <%(element)s> under <fittings>"
+msgstr "<%(element)s> inesperado dentro de <fittings>"
+
+#: apps/doctrines/xml_parser.py
+#, python-format
+msgid "the file contains more than %(limit)s fittings"
+msgstr "el archivo contiene más de %(limit)s fittings"
+
+#: apps/doctrines/xml_parser.py
+msgid "no <fitting> elements were found in the file"
+msgstr "no se encontraron elementos <fitting> en el archivo"
 
 #: apps/erp/models.py
 msgid "Building"
@@ -2762,6 +3684,15 @@ msgstr "Se necesita un ID de tipo de blueprint válido."
 msgid "Blueprint recorded."
 msgstr "Blueprint registrado."
 
+#: apps/identity/models.py
+msgid ""
+"Preferred UI language (a settings.LANGUAGES code, e.g. 'pt-br'); blank = "
+"auto-detect from the browser, then English."
+msgstr ""
+"Idioma preferido de la interfaz (un código de settings.LANGUAGES, p. ej. "
+"'pt-br'); en blanco = detección automática desde el navegador y, si no, "
+"inglés."
+
 #: apps/identity/views.py tests/test_i18n_formatting.py
 #, python-format
 msgid "%(n)d buyback offer awaiting a buyer or payout"
@@ -2824,6 +3755,62 @@ msgstr ""
 msgid "View-as ended — you're back on your own account."
 msgstr "«Ver como» finalizado — has vuelto a tu propia cuenta."
 
+#: apps/industry/calc.py
+#| msgid "No recipe — this item can only be bought."
+msgid ""
+"No blueprint / recipe for this item in the SDE — it can only be bought."
+msgstr ""
+"Sin blueprint / receta para este ítem en el SDE — solo se puede comprar."
+
+#: apps/industry/calc.py
+#, python-format
+msgid "Missing market price for type %(type_id)s — treated as 0 ISK."
+msgstr "Falta el precio de mercado del tipo %(type_id)s — se toma como 0 ISK."
+
+#: apps/industry/calc.py
+msgid "Missing market price for the product — revenue shown as 0."
+msgstr ""
+"Falta el precio de mercado del producto — los ingresos se muestran como 0."
+
+#: apps/industry/calc.py
+#| msgid ""
+#| "Our calculator estimates the fee from CCP adjusted prices × the cost index +"
+#| " facility tax. Structure and rig bonuses aren't modelled, so treat it as a "
+#| "close guide."
+msgid ""
+"Prices are Jita-sell estimates; job cost uses CCP adjusted prices × your "
+"system cost index + facility tax. A structure/rig material bonus is applied."
+" Manufacturing time skills are not modelled — treat as a guide, not a "
+"guarantee."
+msgstr ""
+"Los precios son estimaciones de venta en Jita; el coste del trabajo usa los "
+"precios ajustados de CCP × el índice de coste de tu sistema + el impuesto de"
+" la instalación. Se aplica un bonus de material de estructura/rig. No se "
+"modelan las habilidades de tiempo de fabricación — tómalo como una guía, no "
+"como una garantía."
+
+#: apps/industry/calc.py
+#| msgid ""
+#| "Our calculator estimates the fee from CCP adjusted prices × the cost index +"
+#| " facility tax. Structure and rig bonuses aren't modelled, so treat it as a "
+#| "close guide."
+msgid ""
+"Prices are Jita-sell estimates; job cost uses CCP adjusted prices × your "
+"system cost index + facility tax. Structure/rig material bonuses are not "
+"modelled. Manufacturing time skills are not modelled — treat as a guide, not"
+" a guarantee."
+msgstr ""
+"Los precios son estimaciones de venta en Jita; el coste del trabajo usa los "
+"precios ajustados de CCP × el índice de coste de tu sistema + el impuesto de"
+" la instalación. No se modelan los bonus de material de estructura/rig. No "
+"se modelan las habilidades de tiempo de fabricación — tómalo como una guía, "
+"no como una garantía."
+
+#: apps/industry/calc.py
+#| msgid "No reports yet."
+msgid "No recipe."
+msgstr "Sin receta."
+
 #: apps/industry/forms.py
 msgid "e.g. Build 5 Feroxes"
 msgstr "p. ej. Construye 5 Feroxes"
@@ -2835,6 +3822,15 @@ msgstr "La cantidad debe ser al menos 1."
 #: apps/industry/forms.py
 msgid "Material efficiency is between 0 and 10."
 msgstr "La eficiencia de material está entre 0 y 10."
+
+#: apps/industry/invention.py
+msgid ""
+"Probability uses the standard invention formula; skills and decryptor are "
+"your inputs. Datacore/decryptor prices are Jita-sell estimates."
+msgstr ""
+"La probabilidad usa la fórmula estándar de invención; las habilidades y el "
+"decryptor son tus datos de entrada. Los precios de datacores/decryptors son "
+"estimaciones de venta en Jita."
 
 #: apps/industry/models.py
 msgid "Private (owner + leadership)"
@@ -2852,17 +3848,13 @@ msgstr "Toda la corporación"
 msgid "Build"
 msgstr "Fabricar"
 
-#: apps/industry/models.py templates/store/board.html
+#: apps/industry/models.py apps/readiness/views.py templates/store/board.html
 msgid "Stock"
 msgstr "Stock"
 
 #: apps/industry/models.py
 msgid "Ammo"
 msgstr "Munición"
-
-#: apps/industry/models.py templates/logistics/rates.html
-msgid "Contracts"
-msgstr "Contratos"
 
 #: apps/industry/models.py
 msgid "Doctrine supply gap"
@@ -2937,6 +3929,47 @@ msgstr "Transportar"
 #: apps/industry/models.py templates/logistics/corp_contracts.html
 msgid "Contract"
 msgstr "Contratar"
+
+#: apps/industry/tools.py
+#| msgid "Pick an item from the search list."
+msgid "Pick a valid item from the demand list."
+msgstr "Elige un ítem válido de la lista de demanda."
+
+#: apps/industry/tools.py
+#, python-format
+#| msgid "Per cycle of %(qty)s× %(name)s:"
+msgid "Plan created for %(quantity)s× %(item)s."
+msgstr "Plan creado para %(quantity)s× %(item)s."
+
+#: apps/industry/tools.py
+#| msgid "Couldn't price that job."
+msgid "Couldn't resolve that job's product."
+msgstr "No se pudo resolver el producto de ese trabajo."
+
+#: apps/industry/tools.py
+#| msgid "NPC stations"
+msgid "NPC station (no bonus)"
+msgstr "Estación NPC (sin bonus)"
+
+#: apps/industry/tools.py
+msgid "Raitaru · T1 ME rig (highsec)"
+msgstr "Raitaru · rig de ME T1 (highsec)"
+
+#: apps/industry/tools.py
+msgid "Raitaru · T2 ME rig (highsec)"
+msgstr "Raitaru · rig de ME T2 (highsec)"
+
+#: apps/industry/tools.py
+msgid "Azbel/Sotiyo · T1 ME rig (lowsec)"
+msgstr "Azbel/Sotiyo · rig de ME T1 (lowsec)"
+
+#: apps/industry/tools.py
+msgid "Azbel/Sotiyo · T2 ME rig (lowsec)"
+msgstr "Azbel/Sotiyo · rig de ME T2 (lowsec)"
+
+#: apps/industry/tools.py
+msgid "Azbel/Sotiyo · T2 ME rig (null/WH)"
+msgstr "Azbel/Sotiyo · rig de ME T2 (null/WH)"
 
 #: apps/industry/views.py
 msgid "You can't see that plan."
@@ -3042,6 +4075,61 @@ msgstr "Liberadas %(n)s reserva(s) de vuelta al stock de la corp."
 #: apps/kb/models.py
 msgid "Public"
 msgstr "Público"
+
+#: apps/kb/services.py
+#| msgid "Train into doctrine"
+msgid "readiness: name a doctrine"
+msgstr "preparación: indica una doctrine"
+
+#: apps/kb/services.py
+#| msgid "Link an EVE character to see your readiness."
+msgid "link a character to see your readiness"
+msgstr "vincula un personaje para ver tu preparación"
+
+#: apps/kb/services.py
+#, python-format
+#| msgid "%(doctrines)s doctrine"
+#| msgid_plural "%(doctrines)s doctrines"
+msgid "unknown doctrine: %(doctrine)s"
+msgstr "doctrine desconocida: %(doctrine)s"
+
+#: apps/kb/services.py
+#, python-format
+#| msgid "You can fly this (optimal)"
+msgid "You can fly %(doctrine)s (optimal)"
+msgstr "Puedes volar %(doctrine)s (óptimo)"
+
+#: apps/kb/services.py
+#, python-format
+#| msgid "You can fly this"
+msgid "You can fly %(doctrine)s"
+msgstr "Puedes volar %(doctrine)s"
+
+#: apps/kb/services.py
+#, python-format
+#| msgid "You're closest to flying %(doctrine)s."
+msgid "You can't fly %(doctrine)s yet"
+msgstr "Aún no puedes volar %(doctrine)s"
+
+#: apps/kb/services.py
+#, python-format
+msgid "%(doctrine)s: import skills to check"
+msgstr "%(doctrine)s: importa habilidades para comprobarlo"
+
+#: apps/kb/services.py
+#, python-format
+msgid "You have %(count)s loss(es) eligible for SRP"
+msgstr "Tienes %(count)s pérdida(s) elegible(s) para SRP"
+
+#: apps/kb/services.py
+#| msgid "No claims yet."
+msgid "No SRP claims pending"
+msgstr "No hay reclamaciones de SRP pendientes"
+
+#: apps/kb/services.py
+#| msgid "You can't settle your own request."
+msgid "log in to see your own readiness"
+msgstr "inicia sesión para ver tu propia preparación"
 
 #: apps/kb/views.py
 msgid "A page needs a title."
@@ -3346,6 +4434,34 @@ msgstr "Prioridad urgente"
 msgid "Minimum reward"
 msgstr "Recompensa mínima"
 
+#: apps/logistics/routing.py
+msgid "Both systems are required."
+msgstr "Se requieren ambos sistemas."
+
+#: apps/logistics/routing.py
+msgid "No gate route between those systems."
+msgstr "No hay ruta por gate entre esos sistemas."
+
+#: apps/logistics/routing.py apps/navigation/models.py
+msgid "Safer (prefer high-sec)"
+msgstr "Más seguro (preferir high-sec)"
+
+#: apps/logistics/routing.py apps/navigation/models.py
+msgid "Shortest"
+msgstr "Más corto"
+
+#: apps/logistics/routing.py apps/navigation/models.py
+msgid "Less secure (prefer low/null)"
+msgstr "Menos seguro (preferir low/null)"
+
+#: apps/logistics/routing.py
+msgid "Need at least an origin and a destination."
+msgstr "Se necesita al menos un origen y un destino."
+
+#: apps/logistics/routing.py
+msgid "No jump route within range between those systems."
+msgstr "No hay ruta de salto dentro de alcance entre esos sistemas."
+
 #: apps/logistics/views.py
 msgid ""
 "Couldn't resolve one of those locations — pick from the list or enter jumps "
@@ -3436,6 +4552,10 @@ msgstr "Ningún director ha concedido aún el permiso de contratos de la corp."
 msgid "Contract sync failed; try again later."
 msgstr "Falló la sincronización de contratos; inténtalo de nuevo más tarde."
 
+#: apps/market/forms.py
+msgid "e.g. Amarr VIII (Oris)"
+msgstr "p. ej. Amarr VIII (Oris)"
+
 #: apps/market/forms.py templates/market/dashboard.html
 msgid "Region ID"
 msgstr "ID de región"
@@ -3468,6 +4588,20 @@ msgstr "Sistema"
 #: templates/navigation/roaming.html
 msgid "Region"
 msgstr "Región"
+
+#: apps/market/models.py
+#| msgid "Fair sell"
+msgid "Jita sell"
+msgstr "Venta en Jita"
+
+#: apps/market/models.py
+#| msgid "to buy"
+msgid "Jita buy"
+msgstr "Compra en Jita"
+
+#: apps/market/models.py
+msgid "CCP adjusted"
+msgstr "Ajustado por CCP"
 
 #: apps/market/views.py
 #, python-format
@@ -3511,6 +4645,11 @@ msgid ""
 msgstr ""
 "Actualización del historial de mercado en cola para %(count)s objetos — se "
 "actualizará en breve."
+
+#: apps/mentorship/apps.py templates/admin_audit/console/hub.html
+#: templates/mentorship/dashboard.html templates/mentorship/landing.html
+msgid "Mentorship Program"
+msgstr "Programa de mentoría"
 
 #: apps/mentorship/forms.py
 msgid "Areas you can mentor"
@@ -4113,6 +5252,19 @@ msgstr "Límite de recompensa alcanzado"
 msgid "Pair inactive"
 msgstr "Pareja inactiva"
 
+#: apps/mentorship/models.py
+msgid "0–100."
+msgstr "0–100."
+
+#: apps/mentorship/reporting.py
+#| msgid "Not started"
+msgid "Not yet paired"
+msgstr "Aún sin emparejar"
+
+#: apps/mentorship/reporting.py
+msgid "Paired but no tasks completed yet"
+msgstr "Emparejado pero aún sin tareas completadas"
+
 #: apps/mentorship/views.py
 msgid "The Mentorship Program is currently paused."
 msgstr "El programa de mentoría está pausado actualmente."
@@ -4295,6 +5447,11 @@ msgid "Mentorship cancelled."
 msgstr "Mentoría cancelada."
 
 #: apps/mining/models.py
+#, python-format
+msgid "Observer %(observer_id)s"
+msgstr "Observador %(observer_id)s"
+
+#: apps/mining/models.py
 msgid "By ISK value mined"
 msgstr "Por valor de ISK minado"
 
@@ -4360,21 +5517,343 @@ msgstr ""
 msgid "Payout finalised."
 msgstr "Reparto finalizado."
 
+#: apps/navigation/esi_sync.py apps/stockpile/assets.py
+msgid "No home corporation configured."
+msgstr "No hay una corporación base configurada."
+
+#: apps/navigation/esi_sync.py
+#| msgid ""
+#| "No Director has granted corp-asset access yet. A CEO/Director must re-"
+#| "authorise with the corp-assets scope."
+msgid ""
+"No Director has granted structure access yet. A CEO/Director (or a pilot "
+"with the Station Manager role) must authorise with the jump-network scope."
+msgstr ""
+"Ningún Director ha concedido acceso a las estructuras todavía. Un "
+"CEO/Director (o un piloto con el rol Station Manager) debe autorizar con el "
+"scope de red de saltos."
+
+#: apps/navigation/esi_sync.py
+#, python-format
+#| msgid "Could not read corp assets: %(error)s"
+msgid "Could not read corp structures: %(error)s"
+msgstr "No se pudieron leer las estructuras de la corp: %(error)s"
+
+#: apps/navigation/esi_sync.py
+#, python-format
+#| msgid ""
+#| "Imported %(types)s asset stacks across %(locations)s locations from "
+#| "%(character)s."
+msgid ""
+"Imported %(bridges)s jump bridge(s) and %(beacons)s cyno beacon(s) from "
+"%(character)s."
+msgstr ""
+"Importados %(bridges)s jump bridge(s) y %(beacons)s baliza(s) de cyno desde "
+"%(character)s."
+
+#: apps/navigation/esi_sync.py
+#, python-format
+msgid "%(count)s structure(s) couldn't be matched to systems by name."
+msgstr ""
+"%(count)s estructura(s) no se pudieron emparejar con sistemas por nombre."
+
+#: apps/navigation/highsec_exit.py
+msgid "No NPC station — no safe dock at the exit."
+msgstr "Sin estación NPC — no hay atraque seguro en la salida."
+
+#: apps/navigation/highsec_exit.py
+#, python-format
+msgid "%(jumps)s gate jumps to the high-sec endpoint."
+msgstr "%(jumps)s saltos por gate hasta el extremo en high-sec."
+
+#: apps/navigation/jump_service.py
+#, python-format
+#| msgid "System A"
+msgid "System %(id)s"
+msgstr "Sistema %(id)s"
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid "%(count)s low/null system(s) on the gate leg: %(systems)s"
+msgstr "%(count)s sistema(s) low/null en el tramo por gate: %(systems)s"
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid "(%(origin)s and %(dest)s are high-sec.)"
+msgstr "(%(origin)s y %(dest)s son high-sec.)"
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid "(%(system)s is high-sec.)"
+msgstr "(%(system)s es high-sec.)"
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid ""
+"Waypoint %(systems)s is high-sec — a cyno can't be lit there. Waypoints must"
+" be low-sec or null-sec."
+msgstr ""
+"El punto de ruta %(systems)s es high-sec — allí no se puede encender un "
+"cyno. Los puntos de ruta deben ser low-sec o null-sec."
+
+#: apps/navigation/jump_service.py
+msgid ""
+"No jump route within range — try a longer-range hull/JDC, fewer avoided "
+"systems/waypoints, or drop ‘dockable only’."
+msgstr ""
+"No hay ruta de salto dentro de alcance — prueba con un casco/JDC de mayor "
+"alcance, con menos sistemas/puntos de ruta evitados, o desactiva ‘solo "
+"acoplables’."
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid ""
+"No low-sec exit near %(dest)s is reachable by jump from %(origin)s. Try a "
+"longer-range hull/JDC, a different origin, or add a waypoint."
+msgstr ""
+"Ninguna salida en low-sec cerca de %(dest)s es alcanzable por salto desde "
+"%(origin)s. Prueba con un casco/JDC de mayor alcance, con otro origen, o "
+"añade un punto de ruta."
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid ""
+"No low-sec exit near %(dest)s is reachable by jump from %(origin)s with "
+"these filters. Try a longer-range hull/JDC, fewer avoided systems/waypoints,"
+" or dropping ‘dockable only’."
+msgstr ""
+"No hay ninguna salida low-sec cerca de %(dest)s alcanzable por salto desde "
+"%(origin)s con estos filtros. Prueba con un casco/JDC de mayor alcance, con "
+"menos sistemas/puntos de ruta evitados, o desactiva ‘solo acoplables’."
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid "Jump: %(origin)s → %(exit)s (low-sec exit)"
+msgstr "Salto: %(origin)s → %(exit)s (salida low-sec)"
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid "Gate: %(exit)s → %(dest)s (high-sec destination)"
+msgstr "Gate: %(exit)s → %(dest)s (destino high-sec)"
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid ""
+"%(exit)s (%(security)s) is your low-sec exit — light a cyno or use a beacon "
+"there, then take %(jumps)s gate(s) to %(dest)s."
+msgstr ""
+"%(exit)s (%(security)s) es tu salida low-sec — enciende un cyno o usa un "
+"beacon allí, y luego haz %(jumps)s salto(s) por gate hasta %(dest)s."
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid ""
+"No low-sec staging system near %(origin)s can jump to %(dest)s. Try a "
+"longer-range hull/JDC or a different destination."
+msgstr ""
+"Ningún sistema de staging low-sec cerca de %(origin)s puede saltar a "
+"%(dest)s. Prueba con un casco/JDC de mayor alcance o con otro destino."
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid ""
+"No low-sec staging system near %(origin)s can jump to %(dest)s with these "
+"filters. Try a longer-range hull/JDC, fewer avoided systems/waypoints, or "
+"dropping ‘dockable only’."
+msgstr ""
+"Ningún sistema de staging low-sec cerca de %(origin)s puede saltar a "
+"%(dest)s con estos filtros. Prueba con un casco/JDC de mayor alcance, con "
+"menos sistemas/puntos de ruta evitados, o desactiva ‘solo acoplables’."
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid "Gate: %(origin)s (high-sec) → %(entry)s"
+msgstr "Gate: %(origin)s (high-sec) → %(entry)s"
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid "Jump: %(entry)s → %(dest)s"
+msgstr "Salto: %(entry)s → %(dest)s"
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid ""
+"Gate out of %(origin)s to %(entry)s (%(security)s), light a cyno there, then"
+" jump."
+msgstr ""
+"Sal por gate de %(origin)s hacia %(entry)s (%(security)s), enciende un cyno "
+"allí y luego salta."
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid ""
+"Couldn't find a low-sec entry near %(origin)s that can jump to a low-sec "
+"exit near %(dest)s. The high-sec pockets may be too far apart for this "
+"hull's range."
+msgstr ""
+"No se encontró una entrada low-sec cerca de %(origin)s que pueda saltar a "
+"una salida low-sec cerca de %(dest)s. Puede que las bolsas de high-sec estén"
+" demasiado separadas para el alcance de este casco."
+
+#: apps/navigation/jump_service.py
+msgid "No jump route between the chosen entry and exit systems."
+msgstr "No hay ruta de salto entre los sistemas de entrada y salida elegidos."
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid "Jump: %(entry)s → %(exit)s"
+msgstr "Salto: %(entry)s → %(exit)s"
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid ""
+"Two gate legs: out of %(origin)s to %(entry)s, and from %(exit)s into "
+"%(dest)s. Fuel covers the jump between them only."
+msgstr ""
+"Dos tramos por gate: de %(origin)s a %(entry)s, y de %(exit)s a %(dest)s. El"
+" combustible cubre solo el salto entre ambos."
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid ""
+"Range %(range)s ly (%(ship)s, base %(base)s ly × JDC %(jdc)s). JDC affects "
+"range only."
+msgstr ""
+"Alcance %(range)s ly (%(ship)s, base %(base)s ly × JDC %(jdc)s). JDC solo "
+"afecta al alcance."
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid "Fuel %(base)s %(isotope)s/ly base, −10%%/level JFC (JFC %(jfc)s)."
+msgstr ""
+"Combustible %(base)s %(isotope)s/ly base, −10%%/nivel de JFC (JFC %(jfc)s)."
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid "Jump Freighters skill saves a further −10%%/level (JF %(jf)s)."
+msgstr "La habilidad Jump Freighters ahorra otro −10%%/nivel (JF %(jf)s)."
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid "%(rigs)s× Jump Drive Economizer rig fitted."
+msgstr "%(rigs)s× rig Jump Drive Economizer montado."
+
+#: apps/navigation/jump_service.py
+msgid ""
+"Fuel is rounded up per jump (never under-fuel) and covers jump legs only — "
+"gate legs burn no isotopes."
+msgstr ""
+"El combustible se redondea hacia arriba en cada salto (nunca se queda corto)"
+" y cubre solo los tramos de salto — los tramos por gate no consumen "
+"isótopos."
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid "Includes a %(pct)s%% fuel safety margin."
+msgstr "Incluye un margen de seguridad de combustible del %(pct)s%%."
+
+#: apps/navigation/jump_service.py
+msgid "No market price for the fuel isotope — ISK cost unavailable."
+msgstr ""
+"Sin precio de mercado para el isótopo de combustible — coste en ISK no "
+"disponible."
+
+#: apps/navigation/maps.py templates/navigation/gatecamp.html
+#: templates/navigation/roaming.html
+msgid "Security"
+msgstr "Seguridad"
+
+#: apps/navigation/maps.py
+#| msgid "%(n)s constellations"
+msgid "Constellation"
+msgstr "Constelación"
+
+#: apps/navigation/maps.py
+#| msgid "Activity"
+msgid "Our activity"
+msgstr "Nuestra actividad"
+
+#: apps/navigation/maps.py templates/navigation/roaming.html
+msgid "Traffic"
+msgstr "Tráfico"
+
+#: apps/navigation/maps.py templates/navigation/roaming.html
+msgid "Ship kills"
+msgstr "Bajas de naves"
+
+#: apps/navigation/maps.py templates/navigation/roaming.html
+msgid "NPC kills"
+msgstr "Bajas de NPC"
+
+#: apps/navigation/maps.py templates/admin_audit/console/hub.html
+#: templates/navigation/system_detail.html templates/operations/sov.html
+msgid "Sovereignty"
+msgstr "Soberanía"
+
+#: apps/navigation/maps.py
+#| msgid "Faction war:"
+msgid "Faction war"
+msgstr "Guerra de facciones"
+
+#: apps/navigation/maps.py
+#| msgid "Incursion active"
+msgid "Incursions"
+msgstr "Incursiones"
+
+#: apps/navigation/maps.py
+#, python-format
+#| msgid "%(skill_count)s skills"
+msgid "%(count)s kills"
+msgstr "%(count)s kills"
+
+#: apps/navigation/maps.py
+#, python-format
+#| msgid "%(c)s jump"
+#| msgid_plural "%(c)s jumps"
+msgid "%(count)s jumps/h"
+msgstr "%(count)s saltos/h"
+
+#: apps/navigation/maps.py
+#, python-format
+#| msgid "%(skill_count)s skills"
+msgid "%(count)s kills/h"
+msgstr "%(count)s kills/h"
+
+#: apps/navigation/maps.py
+#, python-format
+#| msgid "%(count)s open"
+msgid "%(count)s NPC/h"
+msgstr "%(count)s NPC/h"
+
+#: apps/navigation/maps.py
+#| msgid "unclaimed"
+msgid "Unclaimed"
+msgstr "Sin reclamar"
+
+#: apps/navigation/maps.py
+#| msgid "Unassigned"
+msgid "Unaligned"
+msgstr "Sin alineación"
+
+#: apps/navigation/maps.py
+#| msgid "Incursion active"
+msgid "Incursion"
+msgstr "Incursión"
+
+#: apps/navigation/maps.py templates/campaigns/lessons.html
+#: templates/campaigns/portfolio.html templates/doctrines/list.html
+msgid "Clear"
+msgstr "Limpiar"
+
+#: apps/navigation/maps.py
+#, python-format
+#| msgid "Avg security:"
+msgid "sec %(security)s"
+msgstr "sec %(security)s"
+
 #: apps/navigation/models.py
 msgid "ESI sync"
 msgstr "Sincronización ESI"
-
-#: apps/navigation/models.py
-msgid "Safer (prefer high-sec)"
-msgstr "Más seguro (preferir high-sec)"
-
-#: apps/navigation/models.py
-msgid "Shortest"
-msgstr "Más corto"
-
-#: apps/navigation/models.py
-msgid "Less secure (prefer low/null)"
-msgstr "Menos seguro (preferir low/null)"
 
 #: apps/navigation/models.py
 msgid "Jump planner config"
@@ -4391,13 +5870,125 @@ msgstr "Privado (solo yo)"
 msgid "Shared with leadership"
 msgstr "Compartido con la dirección"
 
+#: apps/navigation/route_mode.py templates/navigation/jump_planner.html
+msgid "Gate route"
+msgstr "Ruta por gate"
+
+#: apps/navigation/route_mode.py
+#| msgid "Jump here"
+msgid "Jump route"
+msgstr "Ruta de salto"
+
+#: apps/navigation/route_mode.py
+#| msgid "Black ops"
+msgid "Black Ops jump"
+msgstr "Salto Black Ops"
+
+#: apps/navigation/route_mode.py
+msgid "Jump + gate (high-sec exit)"
+msgstr "Salto + gate (salida high-sec)"
+
+#: apps/navigation/route_mode.py
+msgid "Gate + jump (high-sec start)"
+msgstr "Gate + salto (inicio en high-sec)"
+
+#: apps/navigation/route_mode.py
+#| msgid "Gate jumps"
+msgid "Gate + jump + gate"
+msgstr "Gate + salto + gate"
+
+#: apps/navigation/route_mode.py
+msgid "Invalid for this hull"
+msgstr "No válido para este casco"
+
+#: apps/navigation/route_mode.py
+#| msgid "Imported"
+msgid "Unsupported"
+msgstr "No soportado"
+
+#: apps/navigation/route_mode.py
+msgid "This hull has no jump drive — a normal stargate route."
+msgstr "Este casco no tiene jump drive — ruta normal por stargates."
+
+#: apps/navigation/route_mode.py
+#, python-format
+msgid "A %(ship)s can't reach a %(band)s system by stargate."
+msgstr "Un %(ship)s no puede llegar a un sistema %(band)s por stargate."
+
+#: apps/navigation/route_mode.py
+#, python-format
+msgid "Black Ops jump via %(cyno)s — covert legs, reduced jump fatigue."
+msgstr "Salto Black Ops vía %(cyno)s — tramos covert, menos jump fatigue."
+
+#: apps/navigation/route_mode.py
+#, python-format
+msgid "Direct jump-drive route via %(cyno)s."
+msgstr "Ruta directa por jump drive vía %(cyno)s."
+
+#: apps/navigation/route_mode.py
+#, python-format
+msgid ""
+"A %(ship)s can't enter high-sec (no stargate access and no cyno in high-"
+"sec), so neither the high-sec origin nor the high-sec destination can be "
+"reached. Choose a low-sec or null-sec system."
+msgstr ""
+"Un %(ship)s no puede entrar en high-sec (sin acceso por stargate y sin cyno "
+"en high-sec), así que no se puede alcanzar ni el origen high-sec ni el "
+"destino high-sec. Elige un sistema low-sec o null-sec."
+
+#: apps/navigation/route_mode.py
+#, python-format
+msgid ""
+"A %(ship)s can't enter high-sec (no stargate access and no cyno in high-"
+"sec), so the high-sec destination can't be reached. Choose a low-sec or "
+"null-sec system."
+msgstr ""
+"Un %(ship)s no puede entrar en high-sec (sin acceso por stargate y sin cyno "
+"en high-sec), así que no se puede alcanzar el destino high-sec. Elige un "
+"sistema low-sec o null-sec."
+
+#: apps/navigation/route_mode.py
+#, python-format
+msgid ""
+"A %(ship)s can't enter high-sec (no stargate access and no cyno in high-"
+"sec), so the high-sec origin can't be reached. Choose a low-sec or null-sec "
+"system."
+msgstr ""
+"Un %(ship)s no puede entrar en high-sec (sin acceso por stargate y sin cyno "
+"en high-sec), así que no se puede alcanzar el origen high-sec. Elige un "
+"sistema low-sec o null-sec."
+
+#: apps/navigation/route_mode.py
+#, python-format
+msgid ""
+"A %(ship)s can't cyno into or out of high-sec: gate out of the high-sec "
+"origin to a low-sec entry, jump, then gate to the high-sec destination."
+msgstr ""
+"Un %(ship)s no puede hacer cyno hacia ni desde high-sec: sal por gate del "
+"origen high-sec a una entrada low-sec, salta, y luego llega por gate al "
+"destino high-sec."
+
+#: apps/navigation/route_mode.py
+#, python-format
+msgid ""
+"A %(ship)s can't cyno directly into high-sec: jump to a low-sec exit near "
+"the destination, then take stargates the rest of the way."
+msgstr ""
+"Un %(ship)s no puede hacer cyno directamente a high-sec: salta a una salida "
+"low-sec cerca del destino y haz el resto del camino por stargates."
+
+#: apps/navigation/route_mode.py
+#, python-format
+msgid ""
+"A %(ship)s can't light a cyno in high-sec: gate out of the high-sec origin "
+"to a low-sec staging system, then jump from there."
+msgstr ""
+"Un %(ship)s no puede encender un cyno en high-sec: sal por gate del origen "
+"high-sec a un sistema de staging low-sec y salta desde allí."
+
 #: apps/onboarding/models.py templates/_nav.html
 msgid "Account"
 msgstr "Cuenta"
-
-#: apps/onboarding/models.py templates/identity/character.html
-msgid "Skills"
-msgstr "Habilidades"
 
 #: apps/onboarding/models.py
 msgid "To do"
@@ -4689,6 +6280,72 @@ msgstr ""
 "miembros (separados por comas). La página de Corp Finance muestra tus "
 "ref_types reales."
 
+#: apps/pilots/views.py core/features.py
+msgid "This feature is not enabled for this corporation."
+msgstr "Esta función no está habilitada para esta corporación."
+
+#: apps/pingboard/config.py
+#| msgid "%(where)s params must be an object."
+msgid "general.dispatch_floor must be an object"
+msgstr "general.dispatch_floor debe ser un objeto"
+
+#: apps/pingboard/config.py
+#, python-format
+msgid "general.dispatch_floor has unknown priority %(tier)r"
+msgstr "general.dispatch_floor tiene una prioridad desconocida: %(tier)r"
+
+#: apps/pingboard/config.py
+#, python-format
+msgid "general.dispatch_floor.%(tier)s invalid role %(role)r"
+msgstr "general.dispatch_floor.%(tier)s: rol no válido %(role)r"
+
+#: apps/pingboard/config.py
+#, python-format
+msgid "general.%(key)s invalid role %(role)r"
+msgstr "general.%(key)s: rol no válido %(role)r"
+
+#: apps/pingboard/config.py
+msgid "general.default_expiry_minutes must be a non-negative integer"
+msgstr "general.default_expiry_minutes debe ser un entero no negativo"
+
+#: apps/pingboard/config.py
+#, python-format
+#| msgid "%(name)s must be a positive integer."
+msgid "anti_abuse.%(key)s must be a non-negative integer"
+msgstr "anti_abuse.%(key)s debe ser un entero no negativo"
+
+#: apps/pingboard/config.py
+msgid "anti_abuse.approval_required_categories must be a list of strings"
+msgstr "anti_abuse.approval_required_categories debe ser una lista de cadenas"
+
+#: apps/pingboard/config.py
+#, python-format
+msgid "notifications.leadership_role invalid role %(role)r"
+msgstr "notifications.leadership_role: rol no válido %(role)r"
+
+#: apps/pingboard/config.py
+msgid "notifications.leadership_user_ids must be a list of integers"
+msgstr "notifications.leadership_user_ids debe ser una lista de enteros"
+
+#: apps/pingboard/config.py
+msgid "notifications.events must be an object"
+msgstr "notifications.events debe ser un objeto"
+
+#: apps/pingboard/config.py
+#, python-format
+msgid "notifications.events.%(key)s must be an object"
+msgstr "notifications.events.%(key)s debe ser un objeto"
+
+#: apps/pingboard/config.py
+#, python-format
+msgid "notifications.events.%(key)s.audience invalid %(audience)r"
+msgstr "notifications.events.%(key)s.audience: valor no válido %(audience)r"
+
+#: apps/pingboard/config.py
+#, python-format
+msgid "notifications.events.%(key)s.min_severity must be 0–100"
+msgstr "notifications.events.%(key)s.min_severity debe estar entre 0 y 100"
+
 #: apps/pingboard/messages.py
 #, python-brace-format
 msgid "“{operation_name}” form-up"
@@ -4754,16 +6411,6 @@ msgstr "Anuncio de corporación"
 #: apps/pingboard/models.py
 msgid "System notification"
 msgstr "Notificación del sistema"
-
-#: apps/pingboard/models.py templates/_nav.html
-#: templates/admin_audit/console/hub.html
-#: templates/capsuleer/_dashboard_panel.html templates/capsuleer/compare.html
-#: templates/capsuleer/goal_detail.html templates/capsuleer/goal_form.html
-#: templates/capsuleer/home.html templates/capsuleer/leadership.html
-#: templates/capsuleer/path_detail.html templates/capsuleer/paths.html
-#: templates/capsuleer/profile.html templates/capsuleer/start.html
-msgid "Capsuleer Path"
-msgstr "Capsuleer Path"
 
 #: apps/pingboard/models.py
 msgid "Normal"
@@ -4888,6 +6535,10 @@ msgstr ""
 " mercado, acumulación de transportes pendientes y pérdidas de combate "
 "repetidas (p. ej. “Se perdieron 6 × Capsule en los últimos 7 d”)."
 
+#: apps/pingboard/notifications.py
+msgid "Beat recommendations.run (every 30 min) → dispatch_alerts."
+msgstr "Beat recommendations.run (cada 30 min) → dispatch_alerts."
+
 #: apps/pingboard/notifications.py templates/_nav.html
 msgid "Readiness alerts"
 msgstr "Alertas de preparación"
@@ -4900,6 +6551,10 @@ msgstr ""
 " (dirigidos al responsable)."
 
 #: apps/pingboard/notifications.py
+msgid "Beat readiness.evaluate_alerts, over open findings."
+msgstr "Beat readiness.evaluate_alerts, sobre los hallazgos abiertos."
+
+#: apps/pingboard/notifications.py
 msgid "Weekly readiness report"
 msgstr "Informe semanal de preparación"
 
@@ -4909,6 +6564,10 @@ msgid ""
 msgstr ""
 "El resumen ejecutivo semanal de preparación — índice, mayores variaciones, "
 "principales riesgos."
+
+#: apps/pingboard/notifications.py
+msgid "Beat readiness.weekly_report (weekly)."
+msgstr "Beat readiness.weekly_report (semanal)."
 
 #: apps/pingboard/notifications.py
 msgid "Daily leadership briefing"
@@ -4924,6 +6583,10 @@ msgstr ""
 "máximo contribuidor."
 
 #: apps/pingboard/notifications.py
+msgid "Beat pilots.deliver_leadership_briefing (daily)."
+msgstr "Beat pilots.deliver_leadership_briefing (diario)."
+
+#: apps/pingboard/notifications.py
 msgid "Mentorship review notices"
 msgstr "Avisos de revisión de mentoría"
 
@@ -4937,6 +6600,13 @@ msgstr ""
 " oficiales/mentores."
 
 #: apps/pingboard/notifications.py
+msgid ""
+"Mentorship application/pairing events (when the programme arms Discord)."
+msgstr ""
+"Eventos de solicitud/emparejamiento de mentoría (cuando el programa activa "
+"Discord)."
+
+#: apps/pingboard/notifications.py
 msgid "Command-intelligence reports"
 msgstr "Informes de Command-Intelligence"
 
@@ -4948,6 +6618,10 @@ msgstr ""
 "Informes programados de Command-Intelligence. Se autoclasifica por informe y"
 " ya está controlado en el destino; se lista aquí por visibilidad y para el "
 "interruptor de encendido/apagado."
+
+#: apps/pingboard/notifications.py
+msgid "command_intel.deliver_report for a ready scheduled report."
+msgstr "command_intel.deliver_report para un informe programado ya listo."
 
 #: apps/pingboard/notifications.py
 msgid "Integration health & dependency alerts"
@@ -4966,6 +6640,13 @@ msgstr ""
 "contrario la corp acumularía datos obsoletos hasta que un director abra la "
 "página de salud. Se dispara una vez por cada conjunto de problemas distinto "
 "y se restablece cuando todo está sano."
+
+#: apps/pingboard/notifications.py
+msgid ""
+"Beat admin_audit.scan_integration_health (every 30 min), on state change."
+msgstr ""
+"Beat admin_audit.scan_integration_health (cada 30 min), al cambiar de "
+"estado."
 
 #: apps/pingboard/notifications.py
 msgid "SRP SLA & solvency alerts"
@@ -4987,6 +6668,11 @@ msgstr ""
 "conjunto de incumplimientos distinto y se restablece dentro del SLA."
 
 #: apps/pingboard/notifications.py
+msgid "Beat srp.scan_sla (every 2h), on breach-set change."
+msgstr ""
+"Beat srp.scan_sla (cada 2 h), al cambiar el conjunto de incumplimientos."
+
+#: apps/pingboard/notifications.py
 msgid "Ingestion-token liveness alerts"
 msgstr "Alertas de vigencia de tokens de ingesta"
 
@@ -5002,6 +6688,11 @@ msgstr ""
 "refresco más allá del límite de reintentos — para que los datos de la corp "
 "no queden obsoletos en silencio. Nombra al personaje y los datos en riesgo; "
 "se dispara una vez por muerte de token y se rearma al recuperarse."
+
+#: apps/pingboard/notifications.py
+msgid "Beat sso.scan_ingestion_tokens (every 30 min), one per token death."
+msgstr ""
+"Beat sso.scan_ingestion_tokens (cada 30 min), uno por cada token caído."
 
 #: apps/pingboard/notifications.py
 msgid "Structure fuel & sov-ADM alerts"
@@ -5023,6 +6714,14 @@ msgstr ""
 "distinto y se restablece cuando todo vuelve a estar por encima del umbral."
 
 #: apps/pingboard/notifications.py
+msgid ""
+"Beat corporation.scan_infrastructure_alerts (every 2h), on breach-set "
+"change."
+msgstr ""
+"Beat corporation.scan_infrastructure_alerts (cada 2 h), al cambiar el "
+"conjunto de incumplimientos."
+
+#: apps/pingboard/notifications.py
 msgid "Structure / war ESI alerts"
 msgstr "Alertas ESI de estructuras / guerra"
 
@@ -5039,6 +6738,13 @@ msgstr ""
 "oficiales."
 
 #: apps/pingboard/notifications.py
+msgid ""
+"Beat recommendations.sync_notifications (Director notifications token)."
+msgstr ""
+"Beat recommendations.sync_notifications (token de notificaciones de "
+"Director)."
+
+#: apps/pingboard/notifications.py
 msgid "Fleet & timer announcements"
 msgstr "Anuncios de flota y timers"
 
@@ -5048,6 +6754,10 @@ msgid ""
 msgstr ""
 "Llamadas de reunión de operaciones de flota y anuncios de timer de "
 "estructuras publicados por los oficiales."
+
+#: apps/pingboard/notifications.py
+msgid "Operations board announce / structure-timer announce."
+msgstr "Anuncio del tablón de operaciones / anuncio de timer de estructura."
 
 #: apps/pingboard/notifications.py templates/admin_audit/console/hub.html
 #: templates/killboard/killfeed_config.html
@@ -5061,6 +6771,11 @@ msgstr ""
 "configurados."
 
 #: apps/pingboard/notifications.py
+msgid "Beat killboard.run_kill_feed (kill-feed config must be enabled)."
+msgstr ""
+"Beat killboard.run_kill_feed (la config del kill-feed debe estar activada)."
+
+#: apps/pingboard/notifications.py
 msgid "Corp mail relay"
 msgstr "Retransmisión de correo de la corp"
 
@@ -5072,6 +6787,11 @@ msgstr ""
 "retransmitidas al chat."
 
 #: apps/pingboard/notifications.py
+msgid "Beat recommendations.relay_mail (mail-scoped token required)."
+msgstr ""
+"Beat recommendations.relay_mail (requiere un token con scope de correo)."
+
+#: apps/pingboard/notifications.py
 msgid "Raffle announcements"
 msgstr "Anuncios de rifas"
 
@@ -5080,6 +6800,12 @@ msgid "Raffle open/draw/winner announcements and per-pilot ticket/winner DMs."
 msgstr ""
 "Anuncios de apertura/sorteo/ganador de rifas y DMs por piloto de "
 "boleto/ganador."
+
+#: apps/pingboard/notifications.py
+msgid "Raffle lifecycle events (inert until channels are armed)."
+msgstr ""
+"Eventos del ciclo de vida del sorteo (inertes hasta que se activen los "
+"canales)."
 
 #: apps/pingboard/notifications.py
 msgid "Form-up reminders"
@@ -5094,6 +6820,13 @@ msgstr ""
 "Un recordatorio de cuenta atrás a un piloto que reservó una plaza, antes de "
 "que su operación de flota se forme. Dirigido a cada piloto (solo a quienes "
 "se apuntaron) — nunca un ping a toda la corp."
+
+#: apps/pingboard/notifications.py
+msgid ""
+"Beat operations.formup_reminders (every 5 min, inside the lead window)."
+msgstr ""
+"Beat operations.formup_reminders (cada 5 min, dentro de la ventana de aviso "
+"previo)."
 
 #: apps/pingboard/notifications.py
 msgid "Haul deadline & overdue nudges"
@@ -5115,6 +6848,10 @@ msgstr ""
 "están controladas."
 
 #: apps/pingboard/notifications.py
+msgid "Beat logistics.sweep_hauls (every 15 min)."
+msgstr "Beat logistics.sweep_hauls (cada 15 min)."
+
+#: apps/pingboard/notifications.py
 msgid "Corp Store order updates"
 msgstr "Actualizaciones de pedidos de Corp Store"
 
@@ -5128,6 +6865,10 @@ msgstr ""
 "(reclamado, en producción, listo, entregado, cancelado). Dirigido solo al "
 "comprador — nunca un ping a toda la corp — y como máximo uno por cada cambio"
 " de estado."
+
+#: apps/pingboard/notifications.py
+msgid "A member/officer advances, claims or cancels a store order."
+msgstr "Un miembro/oficial avanza, reclama o cancela un pedido de la tienda."
 
 #: apps/pingboard/notifications.py
 msgid "PI colony issue nudges"
@@ -5146,6 +6887,12 @@ msgstr ""
 "como máximo uno por cada conjunto de problemas detectado."
 
 #: apps/pingboard/notifications.py
+msgid "A colony ESI import surfaces a new issue for the enrolled owner."
+msgstr ""
+"Una importación ESI de colonias detecta una nueva incidencia para el "
+"propietario inscrito."
+
+#: apps/pingboard/notifications.py
 msgid "Raffle enrolment nudges"
 msgstr "Avisos de inscripción a rifas"
 
@@ -5159,6 +6906,13 @@ msgstr ""
 "potenciales, animándolo a inscribirse y reclamarlos. Activado por un oficial"
 " desde el informe de no elegibles; una vez por piloto por concurso, respeta "
 "una exclusión permanente."
+
+#: apps/pingboard/notifications.py
+msgid ""
+"An officer sends enrolment outreach from a contest's ineligible report."
+msgstr ""
+"Un oficial envía una invitación de inscripción desde el informe de no "
+"elegibles de un concurso."
 
 #: apps/pingboard/notifications.py
 msgid "Moon chunk-arrival reminders"
@@ -5175,6 +6929,12 @@ msgstr ""
 " una extracción lunar (por defecto 24 h y 1 h antes de la fractura), para "
 "que la corp se forme y no pierda la ventana. Como máximo uno por extracción "
 "por intervalo; inactivo hasta que la dirección active los canales."
+
+#: apps/pingboard/notifications.py
+msgid "The chunk-arrival sweep reaches a configured offset before a fracture."
+msgstr ""
+"El barrido de llegada de chunks alcanza un margen configurado antes de una "
+"fractura."
 
 #: apps/pingboard/notifications.py
 msgid "Watchlist activity tripwire"
@@ -5196,6 +6956,13 @@ msgstr ""
 " + canales."
 
 #: apps/pingboard/notifications.py
+msgid ""
+"The watchlist-activity sweep finds a watched entity on a recent killmail."
+msgstr ""
+"El barrido de actividad de la lista de vigilancia encuentra una entidad "
+"vigilada en un killmail reciente."
+
+#: apps/pingboard/notifications.py
 msgid "Saved-route camp / incursion push"
 msgstr "Aviso de camp / incursión en ruta guardada"
 
@@ -5210,6 +6977,12 @@ msgstr ""
 "un gate camp o una incursión en uno de sus sistemas — para que un "
 "transportista haga scout antes de salir de estación. Por ruta, solo ante un "
 "cambio en el conjunto de amenazas. Un indicador de riesgo, no una garantía."
+
+#: apps/pingboard/notifications.py
+msgid "The route-watch sweep finds a new camp/incursion on a watched route."
+msgstr ""
+"El barrido de vigilancia de rutas encuentra un nuevo camp/incursión en una "
+"ruta vigilada."
 
 #: apps/pingboard/notifications.py
 msgid "Idle skill-queue nudge"
@@ -5227,6 +7000,12 @@ msgstr ""
 "transición a vacía, dirigido a cada piloto — nunca un canal compartido."
 
 #: apps/pingboard/notifications.py
+msgid "Beat skills.notify_idle_queues (hourly, opted-in pilots only)."
+msgstr ""
+"Beat skills.notify_idle_queues (cada hora, solo pilotos que se han "
+"apuntado)."
+
+#: apps/pingboard/notifications.py
 msgid "Newbro combat milestones"
 msgstr "Hitos de combate de newbros"
 
@@ -5239,6 +7018,10 @@ msgstr ""
 "La celebración propia de un piloto nuevo por su 'primer kill / primer solo /"
 " primer final blow'. Se entrega a cada piloto, y solo por un primer logro "
 "reciente (nunca una felicitación retroactiva)."
+
+#: apps/pingboard/notifications.py
+msgid "Beat killboard.scan_milestones (nightly)."
+msgstr "Beat killboard.scan_milestones (cada noche)."
 
 #: apps/pingboard/notifications.py
 msgid "Combat rank-ups"
@@ -5256,6 +7039,12 @@ msgstr ""
 "compartido."
 
 #: apps/pingboard/notifications.py
+msgid "Beat killboard.notify_rank_ups (nightly, after the member rollup)."
+msgstr ""
+"Beat killboard.notify_rank_ups (cada noche, tras la consolidación de "
+"miembros)."
+
+#: apps/pingboard/notifications.py
 msgid "Campaign objective assigned"
 msgstr "Objetivo de campaña asignado"
 
@@ -5268,6 +7057,12 @@ msgstr ""
 "Un DM a un piloto cuando se le asigna como propietario de un objetivo de "
 "campaña, líder de flujo de trabajo, responsable de hito o comandante de una "
 "campaña. Dirigido solo al piloto recién asignado."
+
+#: apps/pingboard/notifications.py
+msgid "Owner/lead/commander set or changed to a user on create or edit."
+msgstr ""
+"Se asigna o cambia el propietario/responsable/comandante a un usuario al "
+"crear o editar."
 
 #: apps/pingboard/notifications.py
 msgid "Campaign deadline approaching"
@@ -5285,6 +7080,12 @@ msgstr ""
 "insistiendo cada hora."
 
 #: apps/pingboard/notifications.py
+msgid "Beat campaigns.sweep_deadlines (hourly) reaching a reminder bucket."
+msgstr ""
+"Beat campaigns.sweep_deadlines (cada hora) al alcanzar un tramo de "
+"recordatorio."
+
+#: apps/pingboard/notifications.py
 msgid "Campaign objective blocked"
 msgstr "Objetivo de campaña bloqueado"
 
@@ -5300,6 +7101,12 @@ msgstr ""
 " bloqueo."
 
 #: apps/pingboard/notifications.py
+#| msgid "Linking an objective blocks it until the issue is resolved."
+msgid "An objective becomes blocked via the issue-linkage rule."
+msgstr ""
+"Un objetivo pasa a bloqueado por la regla de vinculación de incidencias."
+
+#: apps/pingboard/notifications.py
 msgid "Campaign dependency completed"
 msgstr "Dependencia de campaña completada"
 
@@ -5311,6 +7118,14 @@ msgstr ""
 "Un DM a los propietarios de los elementos ahora desbloqueados (y al "
 "comandante) cuando un objetivo dependiente alcanza un estado terminal de "
 "completado y su vínculo se resuelve automáticamente."
+
+#: apps/pingboard/notifications.py
+msgid ""
+"A dependency target reaches met/dropped/done/completed and the edge "
+"resolves."
+msgstr ""
+"Un objetivo dependiente alcanza met/dropped/done/completed y la dependencia "
+"se resuelve."
 
 #: apps/pingboard/notifications.py
 msgid "Campaign health changed"
@@ -5330,6 +7145,13 @@ msgstr ""
 "fuera de canales masivos de bajo techo."
 
 #: apps/pingboard/notifications.py
+msgid ""
+"Campaign health recompute (write-path or beat) that changes the signature."
+msgstr ""
+"Recálculo de la salud de la campaña (en escritura o por beat) que cambia la "
+"firma."
+
+#: apps/pingboard/notifications.py
 msgid "Campaign approval required"
 msgstr "Aprobación de campaña requerida"
 
@@ -5341,6 +7163,11 @@ msgstr ""
 "Una alerta al director cuando se propone una campaña para aprobación; "
 "también se reutiliza para avisar a un comandante cuando un hito se marca "
 "como listo para revisión. Sensible."
+
+#: apps/pingboard/notifications.py
+msgid ""
+"A campaign transitions draft→proposed, or a milestone → ready_for_review."
+msgstr "Una campaña pasa de draft→proposed, o un hito → ready_for_review."
 
 #: apps/pingboard/notifications.py
 msgid "Campaign started"
@@ -5358,6 +7185,11 @@ msgstr ""
 "individualmente."
 
 #: apps/pingboard/notifications.py
+#| msgid "This campaign has no objectives."
+msgid "A campaign transitions approved→active."
+msgstr "Una campaña pasa de approved→active."
+
+#: apps/pingboard/notifications.py
 msgid "Campaign completed"
 msgstr "Campaña completada"
 
@@ -5370,6 +7202,10 @@ msgstr ""
 "Un anuncio para la corp cuando una campaña alcanza "
 "completada/fallida/cancelada (la audiencia refleja campaigns.started; las "
 "campañas restringidas siguen siendo solo para participantes)."
+
+#: apps/pingboard/notifications.py
+msgid "A campaign transitions active→completed/failed/cancelled."
+msgstr "Una campaña pasa de active→completed/failed/cancelled."
 
 #: apps/pingboard/notifications.py
 msgid "Campaign contribution recognised"
@@ -5386,6 +7222,13 @@ msgstr ""
 "reconocimiento público del piloto — es privado para él."
 
 #: apps/pingboard/notifications.py
+msgid ""
+"A CampaignRecognition row is created while recognition_mode is not none."
+msgstr ""
+"Se crea un registro CampaignRecognition mientras recognition_mode no es "
+"none."
+
+#: apps/pingboard/notifications.py
 msgid "Campaign metric needs manual update"
 msgstr "La métrica de campaña necesita actualización manual"
 
@@ -5398,6 +7241,12 @@ msgstr ""
 "Un aviso de baja prioridad al propietario de un objetivo con métrica manual "
 "cuando su valor ha quedado obsoleto más allá del intervalo de confirmación —"
 " como máximo uno por objetivo por semana."
+
+#: apps/pingboard/notifications.py
+msgid "Beat campaigns.sweep_deadlines finds a stale manual-metric objective."
+msgstr ""
+"Beat campaigns.sweep_deadlines encuentra un objetivo de métrica manual "
+"desactualizado."
 
 #: apps/pingboard/notifications.py
 msgid "Campaign issue escalated"
@@ -5413,6 +7262,11 @@ msgstr ""
 " fuera de canales masivos de bajo techo."
 
 #: apps/pingboard/notifications.py
+#| msgid "Campaign issue escalated"
+msgid "A campaign issue transitions open→escalated."
+msgstr "Una incidencia de campaña pasa de open→escalated."
+
+#: apps/pingboard/notifications.py
 msgid "Campaign approved"
 msgstr "Campaña aprobada"
 
@@ -5423,6 +7277,10 @@ msgid ""
 msgstr ""
 "Un DM al comandante/proponente cuando un director aprueba su campaña. "
 "Dirigido solo al individuo, nunca a una audiencia masiva."
+
+#: apps/pingboard/notifications.py
+msgid "A campaign transitions proposed→approved."
+msgstr "Una campaña pasa de proposed→approved."
 
 #: apps/pingboard/notifications.py
 msgid "Career milestone reached"
@@ -5440,6 +7298,14 @@ msgstr ""
 " del objetivo más allá de los títulos nunca sale de la app."
 
 #: apps/pingboard/notifications.py
+msgid ""
+"Milestone credit path (skill-import hook, hourly reconcile sweep, or manual "
+"confirm)."
+msgstr ""
+"Vía de acreditación de hitos (hook de importación de skills, barrido de "
+"reconciliación horario o confirmación manual)."
+
+#: apps/pingboard/notifications.py
 msgid "Career goal completed"
 msgstr "Objetivo de carrera completado"
 
@@ -5453,6 +7319,13 @@ msgstr ""
 "Dirigido solo al propietario; cualquier reconocimiento público es una "
 "superficie separada y voluntaria (opt-in) — este DM es privado en cualquier "
 "caso."
+
+#: apps/pingboard/notifications.py
+msgid ""
+"Goal status transition active→completed (owner action, lifecycle service)."
+msgstr ""
+"Transición de estado de la meta active→completed (acción del propietario, "
+"servicio de ciclo de vida)."
 
 #: apps/pingboard/notifications.py
 msgid "Career goal review nudge"
@@ -5469,6 +7342,10 @@ msgstr ""
 "mes; ignorarlo no tiene consecuencias — sin escalado, sin cambio de estado."
 
 #: apps/pingboard/notifications.py
+msgid "Beat capsuleer.housekeeping (nightly) sets review_due_at."
+msgstr "Beat capsuleer.housekeeping (cada noche) establece review_due_at."
+
+#: apps/pingboard/notifications.py
 msgid "Capsuleer Path suggestions"
 msgstr "Sugerencias de Capsuleer Path"
 
@@ -5482,6 +7359,215 @@ msgstr ""
 "esperando — solo un recuento y un enlace, nunca el contenido de las "
 "sugerencias. Como máximo uno por piloto por día, y solo cuando la generación"
 " diaria produjo nuevas filas abiertas."
+
+#: apps/pingboard/notifications.py
+msgid ""
+"Beat capsuleer.generate_suggestions (daily), when new rows were admitted."
+msgstr ""
+"Beat capsuleer.generate_suggestions (diario), cuando se admiten nuevos "
+"registros."
+
+#: apps/pingboard/providers/discord.py
+msgid "Webhook URL missing or not a valid Discord webhook"
+msgstr "Falta la URL del webhook o no es un webhook válido de Discord"
+
+#: apps/pingboard/providers/evemail.py
+#| msgid "No home corporation configured."
+msgid "No sender character configured"
+msgstr "No hay ningún personaje remitente configurado"
+
+#: apps/pingboard/providers/evemail.py
+#| msgid "No character has granted the corp-mining scope yet."
+msgid "Sender character has not granted the mail-send scope"
+msgstr "El personaje remitente no ha concedido el scope de envío de correo"
+
+#: apps/pingboard/providers/slack.py
+msgid "Slack bot token not configured"
+msgstr "El token del bot de Slack no está configurado"
+
+#: apps/pingboard/providers/telegram.py
+msgid "Bot token not set — add it on the channel"
+msgstr "Falta el token del bot — añádelo en el canal"
+
+#: apps/pingboard/providers/telegram.py
+#| msgid "Target date"
+msgid "Target chat id not set"
+msgstr "No se ha definido el ID del chat de destino"
+
+#: apps/pingboard/providers/whatsapp.py
+msgid "Meta access token / phone number id not set"
+msgstr "Falta el token de acceso de Meta o el ID del número de teléfono"
+
+#: apps/pingboard/providers/whatsapp.py
+msgid "Twilio SID / auth token / sender number not set"
+msgstr "Falta el SID de Twilio, el token de autenticación o el número emisor"
+
+#: apps/pingboard/providers/whatsapp.py
+msgid "Choose a WhatsApp backend (Meta or Twilio)"
+msgstr "Elige un backend de WhatsApp (Meta o Twilio)"
+
+#: apps/pingboard/rendering.py
+#, python-format
+msgid "disallowed field expression: %(field)r"
+msgstr "expresión de campo no permitida: %(field)r"
+
+#: apps/pingboard/rendering.py
+msgid "positional fields are not allowed in templates"
+msgstr "los campos posicionales no están permitidos en las plantillas"
+
+#: apps/pingboard/rendering.py
+#, python-format
+#| msgid "Invalid JSON: %(error)s"
+msgid "invalid template: %(error)s"
+msgstr "plantilla no válida: %(error)s"
+
+#: apps/pingboard/services.py
+#, python-format
+msgid "%(priority)s alerts require the %(role)s role."
+msgstr "Las alertas %(priority)s requieren el rol %(role)s."
+
+#: apps/pingboard/services.py
+#, python-format
+msgid "Corp-wide announcements require the %(role)s role."
+msgstr "Los anuncios a toda la corporación requieren el rol %(role)s."
+
+#: apps/pingboard/services.py
+msgid "Urgent and emergency alerts require a reason."
+msgstr "Las alertas urgentes y de emergencia requieren un motivo."
+
+#: apps/pingboard/services.py
+msgid "Urgent/emergency alerts require two-step confirmation."
+msgstr ""
+"Las alertas urgentes/de emergencia requieren confirmación en dos pasos."
+
+#: apps/pingboard/services.py
+#, python-format
+#| msgid ""
+#| "This alert reaches about <strong>%(n)s</strong> pilots. Tick the required "
+#| "confirmations below and resubmit."
+msgid ""
+"This alert reaches %(count)s pilots; large-audience confirmation is "
+"required."
+msgstr ""
+"Esta alerta llega a %(count)s pilotos; se requiere la confirmación de "
+"audiencia amplia."
+
+#: apps/planetary/constants.py
+#| msgid "P0 · Raw resource"
+msgid "Raw resource"
+msgstr "Recurso bruto"
+
+#: apps/planetary/constants.py
+msgid "Pulled straight from a planet by an Extractor Control Unit."
+msgstr "Extraído directamente de un planeta por una Extractor Control Unit."
+
+#: apps/planetary/constants.py
+msgid ""
+"The 15 raw materials. You never sell these — you refine them on-planet into "
+"P1. Extraction rate depends on your ECU program and the planet's resource "
+"hotspots, so it's the one number you should tune to your colony."
+msgstr ""
+"Las 15 materias primas. Nunca se venden: se refinan en el propio planeta "
+"hasta P1. La tasa de extracción depende de tu programa de ECU y de los "
+"puntos calientes de recursos del planeta, así que es la cifra que debes "
+"ajustar a tu colonia."
+
+#: apps/planetary/constants.py
+msgid "Extractor Control Unit (ECU) + extractor heads"
+msgstr "Extractor Control Unit (ECU) + cabezales extractores"
+
+#: apps/planetary/constants.py
+#| msgid "P1 · Processed material"
+msgid "Processed material"
+msgstr "Material procesado"
+
+#: apps/planetary/constants.py
+msgid "One P0 refined in a Basic Industry Facility."
+msgstr "Un P0 refinado en una Basic Industry Facility."
+
+#: apps/planetary/constants.py
+msgid ""
+"15 processed materials. A Basic Industry Facility turns 3,000 of one P0 into"
+" 20 P1 every 30 minutes. P1 is the first thing worth selling, and the "
+"feedstock for everything above it."
+msgstr ""
+"15 materiales procesados. Una Basic Industry Facility convierte 3.000 "
+"unidades de un P0 en 20 P1 cada 30 minutos. El P1 es lo primero que vale la "
+"pena vender, y la materia prima de todo lo que está por encima."
+
+#: apps/planetary/constants.py
+msgid "Basic Industry Facility (BIF)"
+msgstr "Basic Industry Facility (BIF)"
+
+#: apps/planetary/constants.py
+#| msgid "P2 · Refined commodity"
+msgid "Refined commodity"
+msgstr "Producto refinado"
+
+#: apps/planetary/constants.py
+msgid "Two P1 combined in an Advanced Industry Facility."
+msgstr "Dos P1 combinados en una Advanced Industry Facility."
+
+#: apps/planetary/constants.py
+msgid ""
+"Refined commodities combine two P1 inputs. These are the bread-and-butter of"
+" profitable PI — good ISK/m³ and steady demand (Coolant, Mechanical Parts, "
+"Consumer Electronics, Enriched Uranium…)."
+msgstr ""
+"Los productos refinados combinan dos insumos P1. Son el pan de cada día del "
+"PI rentable: buen ISK/m³ y demanda estable (Coolant, Mechanical Parts, "
+"Consumer Electronics, Enriched Uranium…)."
+
+#: apps/planetary/constants.py
+msgid "Advanced Industry Facility (AIF)"
+msgstr "Advanced Industry Facility (AIF)"
+
+#: apps/planetary/constants.py
+#| msgid "P3 · Specialised commodity"
+msgid "Specialised commodity"
+msgstr "Producto especializado"
+
+#: apps/planetary/constants.py
+msgid "Several P2 combined into a high-value good."
+msgstr "Varios P2 combinados en un bien de alto valor."
+
+#: apps/planetary/constants.py
+msgid ""
+"Specialised commodities (Robotics, Coolant→…, Guidance Systems, Transcranial"
+" Microcontrollers…). High value per unit but they need a multi-planet supply"
+" chain or a market to buy the P2 inputs."
+msgstr ""
+"Productos especializados (Robotics, Coolant→…, Guidance Systems, "
+"Transcranial Microcontrollers…). Alto valor por unidad, pero necesitan una "
+"cadena de suministro de varios planetas o un mercado donde comprar los "
+"insumos P2."
+
+#: apps/planetary/constants.py
+#| msgid "P4 · Advanced commodity"
+msgid "Advanced commodity"
+msgstr "Producto avanzado"
+
+#: apps/planetary/constants.py
+msgid "The end of the chain — mixes P3 (and some P1) into strategic goods."
+msgstr ""
+"El final de la cadena: mezcla P3 (y algo de P1) para obtener bienes "
+"estratégicos."
+
+#: apps/planetary/constants.py
+msgid ""
+"Advanced commodities (Nano-Factory, Broadcast Node, Self-Harmonising Power "
+"Core, Wetware Mainframe) feed sovereignty structures and capital "
+"construction. Only worth it with a dedicated multi-character operation."
+msgstr ""
+"Los productos avanzados (Nano-Factory, Broadcast Node, Self-Harmonising "
+"Power Core, Wetware Mainframe) alimentan las estructuras de soberanía y la "
+"construcción de naves capital. Solo compensan con una operación dedicada de "
+"varios personajes."
+
+#: apps/planetary/constants.py
+#| msgid "My production plans"
+msgid "High-Tech Production Plant"
+msgstr "High-Tech Production Plant"
 
 #: apps/planetary/forms.py
 msgid ""
@@ -5584,7 +7670,6 @@ msgstr ""
 "aplica solo cuando la estrategia de exportación es 'transportar al hub'."
 
 #: apps/planetary/forms.py
-#| msgid "If you use corp buyback, the % of Jita sell it pays."
 msgid "If you use corp buyback, the percent of Jita sell it pays."
 msgstr ""
 "Si usas el buyback de la corp, el % del precio de venta de Jita que paga."
@@ -5662,7 +7747,6 @@ msgid "Starting extraction assumption for new plans."
 msgstr "Suposición de extracción inicial para los nuevos planes."
 
 #: apps/planetary/forms.py
-#| msgid "% of Jita sell the corp buyback pays, for plans that use it."
 msgid "Percent of Jita sell the corp buyback pays, for plans that use it."
 msgstr ""
 "% del precio de venta de Jita que paga el buyback de la corp, para los "
@@ -5727,7 +7811,6 @@ msgid "ISK per m³ to move goods to the hub (0 = you self-haul)."
 msgstr "ISK por m³ para llevar mercancías al hub (0 = transportas tú mismo)."
 
 #: apps/planetary/models.py
-#| msgid "% of Jita sell the corp buyback pays."
 msgid "Percent of Jita sell the corp buyback pays."
 msgstr "% de la venta en Jita que paga el buyback de la corp."
 
@@ -5756,7 +7839,7 @@ msgstr "Procesamiento P0 → P1"
 msgid "P0 → P2 refined"
 msgstr "Refinado P0 → P2"
 
-#: apps/planetary/models.py
+#: apps/planetary/models.py apps/planetary/static_data.py
 msgid "Factory planet"
 msgstr "Planeta fábrica"
 
@@ -5784,7 +7867,7 @@ msgstr "Necesita revisión"
 msgid "Shared with corporation"
 msgstr "Compartido con la corporación"
 
-#: apps/planetary/models.py
+#: apps/planetary/models.py apps/planetary/recommend.py
 msgid "Low effort"
 msgstr "Bajo esfuerzo"
 
@@ -5843,6 +7926,326 @@ msgstr "Fábrica"
 #: apps/planetary/models.py
 msgid "Storage / staging"
 msgstr "Almacenamiento / staging"
+
+#: apps/planetary/recommend.py
+#, python-format
+msgid "An extraction planet self-refining into %(name)s (%(tier)s)"
+msgstr "Un planeta de extracción que se autorrefina hasta %(name)s (%(tier)s)"
+
+#: apps/planetary/recommend.py
+#, python-format
+msgid "A factory planet buying inputs to make %(name)s (%(tier)s)"
+msgstr ""
+"Un planeta fábrica que compra insumos para producir %(name)s (%(tier)s)"
+
+#: apps/planetary/recommend.py
+#, python-format
+msgid "nets about %(isk)s ISK/day per planet at current prices"
+msgstr "deja unos %(isk)s ISK/día por planeta a los precios actuales"
+
+#: apps/planetary/recommend.py
+#, python-format
+msgid "and you already have the planets for it (%(planets)s)"
+msgstr "y ya tienes los planetas para ello (%(planets)s)"
+
+#: apps/planetary/recommend.py
+#, python-format
+#| msgid "on track for %(date)s"
+msgid "if you can extract from %(planets)s"
+msgstr "si puedes extraer de %(planets)s"
+
+#: apps/planetary/recommend.py
+#| msgid "priority"
+msgid "Corp priority"
+msgstr "Prioridad de la corporación"
+
+#: apps/planetary/recommend.py
+#| msgid "Net profit"
+msgid "Best profit"
+msgstr "Mayor beneficio"
+
+#: apps/planetary/recommend.py
+#| msgid "recommended"
+msgid "Beginner recommended"
+msgstr "Recomendado para principiantes"
+
+#: apps/planetary/services.py
+msgid "No live colony of this type imported yet."
+msgstr "Aún no has importado ninguna colonia activa de este tipo."
+
+#: apps/planetary/services.py
+msgid "Your live colony is pulling a different product than the plan expects."
+msgstr ""
+"Tu colonia activa está extrayendo un producto distinto al que espera el "
+"plan."
+
+#: apps/planetary/static_data.py
+#| msgid "Extraction"
+msgid "Extraction planet"
+msgstr "Planeta de extracción"
+
+#: apps/planetary/static_data.py
+msgid ""
+"Pull one or two raw P0 resources and refine them on-site into P1 (or "
+"straight P2 if you have the feedstock)."
+msgstr ""
+"Extrae uno o dos recursos brutos P0 y refínalos allí mismo hasta P1 (o "
+"directamente a P2 si tienes los insumos)."
+
+#: apps/planetary/static_data.py
+msgid "1× Command Center (sets your power/CPU budget — upgrade it fully)."
+msgstr ""
+"1× Command Center (define tu presupuesto de energía/CPU: mejóralo al "
+"máximo)."
+
+#: apps/planetary/static_data.py
+msgid ""
+"1× Extractor Control Unit per resource, with as many extractor heads as "
+"CPU/PG allows (more heads = more yield, but shorter reach)."
+msgstr ""
+"1× Extractor Control Unit por recurso, con tantos cabezales extractores como"
+" permita la CPU/PG (más cabezales = más rendimiento, pero menos alcance)."
+
+#: apps/planetary/static_data.py
+msgid ""
+"Basic Industry Facilities to convert P0 → P1 (each does 3,000 P0 → 20 P1 "
+"every 30 min)."
+msgstr ""
+"Basic Industry Facilities para convertir P0 → P1 (cada una hace 3.000 P0 → "
+"20 P1 cada 30 min)."
+
+#: apps/planetary/static_data.py
+msgid "1× Launchpad as the export point and buffer storage."
+msgstr "1× Launchpad como punto de exportación y almacenamiento intermedio."
+
+#: apps/planetary/static_data.py
+msgid ""
+"Route extractor output → storage/launchpad → factories → launchpad. Keep the"
+" extracted P0 flowing into the BIFs and the finished P1 to the launchpad for"
+" export."
+msgstr ""
+"Rutea la salida del extractor → almacenamiento/launchpad → fábricas → "
+"launchpad. Mantén el P0 extraído fluyendo hacia las BIF y el P1 terminado "
+"hacia el launchpad para exportarlo."
+
+#: apps/planetary/static_data.py
+msgid "Export P1 (or P2) via the customs office. Import nothing."
+msgstr "Exporta P1 (o P2) por la aduana. No importes nada."
+
+#: apps/planetary/static_data.py
+msgid ""
+"Import cheaper lower-tier materials and refine them up a tier. No extraction"
+" — pure manufacturing throughput."
+msgstr ""
+"Importa materiales baratos de nivel inferior y refínalos un nivel más "
+"arriba. Sin extracción: puro rendimiento de fabricación."
+
+#: apps/planetary/static_data.py
+msgid "1× Command Center (upgrade fully for CPU/PG)."
+msgstr "1× Command Center (mejóralo al máximo para CPU/PG)."
+
+#: apps/planetary/static_data.py
+msgid "1× Launchpad to receive imports and hold exports."
+msgstr ""
+"1× Launchpad para recibir las importaciones y almacenar las exportaciones."
+
+#: apps/planetary/static_data.py
+msgid ""
+"As many Advanced Industry Facilities as your power/CPU allows (each does "
+"40+40 input → 5 output every hour for P2)."
+msgstr ""
+"Tantas Advanced Industry Facilities como permita tu energía/CPU (cada una "
+"hace 40+40 de entrada → 5 de salida cada hora para P2)."
+
+#: apps/planetary/static_data.py
+msgid "Storage facilities to buffer inputs between imports."
+msgstr ""
+"Instalaciones de almacenamiento para amortiguar los insumos entre "
+"importaciones."
+
+#: apps/planetary/static_data.py
+msgid ""
+"Import inputs to the launchpad → route to each factory → route finished "
+"goods back to the launchpad."
+msgstr ""
+"Importa los insumos al launchpad → rutéalos a cada fábrica → devuelve los "
+"productos terminados al launchpad."
+
+#: apps/planetary/static_data.py
+msgid "Import the P1/P2 inputs; export the higher-tier product."
+msgstr "Importa los insumos P1/P2; exporta el producto de nivel superior."
+
+#: apps/planetary/static_data.py
+#| msgid "Storage / staging"
+msgid "Storage / staging planet"
+msgstr "Planeta de almacenamiento / staging"
+
+#: apps/planetary/static_data.py
+msgid ""
+"A buffer or consolidation point. Rare for most pilots — usually a launchpad "
+"on another planet does the job."
+msgstr ""
+"Un punto de amortiguación o consolidación. Poco habitual para la mayoría de "
+"pilotos: normalmente un launchpad en otro planeta ya cumple esa función."
+
+#: apps/planetary/static_data.py
+#| msgid "Command Center"
+msgid "1× Command Center"
+msgstr "1× Command Center"
+
+#: apps/planetary/static_data.py
+msgid "1× Launchpad"
+msgstr "1× Launchpad"
+
+#: apps/planetary/static_data.py
+msgid "Storage facilities as needed."
+msgstr "Instalaciones de almacenamiento según haga falta."
+
+#: apps/planetary/static_data.py
+msgid "Consolidate goods here before a single haul out."
+msgstr "Consolida aquí las mercancías antes de un único transporte de salida."
+
+#: apps/planetary/static_data.py
+msgid "Export in bulk on your haul day."
+msgstr "Exporta todo de golpe el día de transporte."
+
+#: apps/planetary/static_data.py
+#| msgid "Your Command Center"
+msgid "Not upgrading the Command Center"
+msgstr "No mejorar el Command Center"
+
+#: apps/planetary/static_data.py
+msgid ""
+"Your Command Center level sets your entire CPU/PG budget. Upgrade it to "
+"level 5 before you place facilities, or you'll run out of power halfway "
+"through."
+msgstr ""
+"El nivel de tu Command Center define todo tu presupuesto de CPU/PG. Mejóralo"
+" a nivel 5 antes de colocar instalaciones o te quedarás sin energía a medio "
+"camino."
+
+#: apps/planetary/static_data.py
+msgid "Routing errors"
+msgstr "Errores de rutas"
+
+#: apps/planetary/static_data.py
+msgid ""
+"A facility with no inbound route sits idle; a route to the wrong storage "
+"stalls the chain. Follow every product from extractor → factory → launchpad."
+msgstr ""
+"Una instalación sin ruta de entrada se queda parada; una ruta al "
+"almacenamiento equivocado atasca la cadena. Sigue cada producto desde el "
+"extractor → la fábrica → el launchpad."
+
+#: apps/planetary/static_data.py
+#| msgid "Moon extractions"
+msgid "Too many extractor heads"
+msgstr "Demasiados cabezales de extracción"
+
+#: apps/planetary/static_data.py
+msgid ""
+"More heads raise yield but shorten the extraction radius and cost CPU/PG. "
+"Balance heads against the program length you actually want to run."
+msgstr ""
+"Más cabezales aumentan el rendimiento, pero reducen el radio de extracción y"
+" consumen CPU/PG. Equilibra los cabezales con la duración de programa que "
+"realmente quieres ejecutar."
+
+#: apps/planetary/static_data.py
+#| msgid "Insufficient data"
+msgid "Insufficient storage"
+msgstr "Almacenamiento insuficiente"
+
+#: apps/planetary/static_data.py
+msgid ""
+"If a launchpad or storage fills up, upstream facilities stop. Size storage "
+"for the time between your resets."
+msgstr ""
+"Si un launchpad o un almacén se llena, las instalaciones anteriores se "
+"detienen. Dimensiona el almacenamiento según el tiempo entre tus reinicios."
+
+#: apps/planetary/static_data.py
+msgid "Wrong schematic"
+msgstr "Esquema incorrecto"
+
+#: apps/planetary/static_data.py
+msgid ""
+"Setting a factory to the wrong schematic wastes materials. Double-check "
+"inputs match what you're actually routing in."
+msgstr ""
+"Poner el esquema equivocado en una fábrica desperdicia materiales. Comprueba"
+" que los insumos coincidan con lo que realmente estás enrutando."
+
+#: apps/planetary/static_data.py
+#| msgid "Building facts"
+msgid "Overbuilding factories"
+msgstr "Construir fábricas de más"
+
+#: apps/planetary/static_data.py
+msgid ""
+"Ten factories starved of feedstock earn less than three that run "
+"continuously. Match factory count to your extraction rate."
+msgstr ""
+"Diez fábricas sin materia prima rinden menos que tres funcionando sin parar."
+" Ajusta el número de fábricas a tu ritmo de extracción."
+
+#: apps/planetary/static_data.py
+#| msgid "Customs (POCO) tax"
+msgid "Ignoring customs (POCO) tax"
+msgstr "Ignorar el impuesto de aduana (POCO)"
+
+#: apps/planetary/static_data.py
+#| msgid ""
+#| "Customs office (POCO) tax on export, as a %. In hostile space this can be "
+#| "high — check the POCO before you commit."
+msgid ""
+"Export/import tax at the customs office is charged on every launch. In "
+"hostile space it can dwarf your margin — factor it in before you commit."
+msgstr ""
+"El impuesto de exportación/importación de la aduana se cobra en cada "
+"lanzamiento. En espacio hostil puede superar de largo tu margen: tenlo en "
+"cuenta antes de comprometerte."
+
+#: apps/planetary/static_data.py
+msgid "Train Command Center Upgrades to unlock the planet tiers you need."
+msgstr ""
+"Entrena la habilidad Command Center Upgrades para desbloquear los niveles de"
+" planeta que necesitas."
+
+#: apps/planetary/static_data.py
+msgid "Buy and deploy a Command Center on each planet, then upgrade it fully."
+msgstr ""
+"Compra y despliega un Command Center en cada planeta y mejóralo al máximo."
+
+#: apps/planetary/static_data.py
+msgid "On extraction planets: place the ECU, add heads, and start a program."
+msgstr ""
+"En los planetas de extracción: coloca la ECU, añade cabezales e inicia un "
+"programa."
+
+#: apps/planetary/static_data.py
+msgid "Place your factories and set the correct schematic on each."
+msgstr "Coloca tus fábricas y asigna el esquema correcto a cada una."
+
+#: apps/planetary/static_data.py
+msgid "Wire the routes: extractor → storage → factory → launchpad."
+msgstr "Conecta las rutas: extractor → almacenamiento → fábrica → launchpad."
+
+#: apps/planetary/static_data.py
+msgid "Confirm the customs office tax for your space and your standings."
+msgstr "Confirma el impuesto de la aduana para tu espacio y tus standings."
+
+#: apps/planetary/static_data.py
+msgid "Set a reset cadence that matches your extractor program length."
+msgstr ""
+"Fija una cadencia de reinicio acorde con la duración de tu programa de "
+"extracción."
+
+#: apps/planetary/static_data.py
+msgid "Haul exports to your chosen market hub (or hand to corp buyback)."
+msgstr ""
+"Transporta las exportaciones al hub de mercado que elijas (o entrégalas al "
+"buyback de la corp)."
 
 #: apps/planetary/views.py
 msgid "Missing planets"
@@ -5931,6 +8334,126 @@ msgid "Grant the Planetary Industry scope first, then sync your colonies."
 msgstr ""
 "Concede primero el scope de Planetary Industry y luego sincroniza tus "
 "colonias."
+
+#: apps/raffle/contest_templates.py
+msgid "PVP activity raffle"
+msgstr "Sorteo por actividad PVP"
+
+#: apps/raffle/contest_templates.py
+msgid ""
+"Reward everyone who undocks and gets on kills. Solo 100 · final blow 10 · "
+"participation 1."
+msgstr ""
+"Recompensa a todo el que desatraque y entre en kills. Solo 100 · golpe final"
+" 10 · participación 1."
+
+#: apps/raffle/contest_templates.py
+#| msgid "Solo kills"
+msgid "Solo kill challenge"
+msgstr "Desafío de kills en solitario"
+
+#: apps/raffle/contest_templates.py
+msgid ""
+"Heavily reward solo PvP prowess — solo kills are worth 10× a normal kill."
+msgstr ""
+"Recompensa con fuerza la destreza en PvP en solitario: los kills en "
+"solitario valen 10× un kill normal."
+
+#: apps/raffle/contest_templates.py
+#| msgid "Home defence"
+msgid "Home defence contest"
+msgstr "Concurso de defensa local"
+
+#: apps/raffle/contest_templates.py
+msgid ""
+"Reward kills defending home space. Set the home region/systems in the PVP "
+"filters."
+msgstr ""
+"Recompensa los kills en defensa del espacio propio. Define la "
+"región/sistemas de origen en los filtros de PVP."
+
+#: apps/raffle/contest_templates.py
+#| msgid "Mining tax"
+msgid "Mining month"
+msgstr "Mes de la minería"
+
+#: apps/raffle/contest_templates.py
+msgid "Reward ore mined from the corp mining ledger (X tickets per m³)."
+msgstr ""
+"Recompensa el mineral extraído según el registro de minería de la corp (X "
+"boletos por m³)."
+
+#: apps/raffle/contest_templates.py
+#| msgid "In production"
+msgid "Industry production drive"
+msgstr "Campaña de producción industrial"
+
+#: apps/raffle/contest_templates.py
+msgid ""
+"Recognise builders. Industry has no reliable per-pilot feed, so awards are "
+"officer-approved."
+msgstr ""
+"Reconoce a los constructores. La industria no tiene un feed fiable por "
+"piloto, así que los premios los aprueba un oficial."
+
+#: apps/raffle/contest_templates.py
+#| msgid "No such campaign."
+msgid "Logistics support campaign"
+msgstr "Campaña de apoyo logístico"
+
+#: apps/raffle/contest_templates.py
+msgid "Reward haulers for delivered courier contracts (officer-approved)."
+msgstr ""
+"Recompensa a los transportistas por los contratos de mensajería entregados "
+"(aprobado por un oficial)."
+
+#: apps/raffle/contest_templates.py
+#| msgid "No past contests yet"
+msgid "Newbro support contest"
+msgstr "Concurso de apoyo a newbros"
+
+#: apps/raffle/contest_templates.py
+msgid ""
+"Reward mentors and helpers. Mentorship completions + leadership grants."
+msgstr ""
+"Recompensa a mentores y ayudantes. Mentorías completadas + concesiones de "
+"liderazgo."
+
+#: apps/raffle/contest_templates.py
+msgid "Alliance deployment raffle"
+msgstr "Sorteo de despliegue de la alianza"
+
+#: apps/raffle/contest_templates.py
+msgid ""
+"PVP + fleet attendance during a deployment. Admits alliance / friendly "
+"pilots."
+msgstr ""
+"PVP + asistencia a flotas durante un despliegue. Admite pilotos de la "
+"alianza y aliados."
+
+#: apps/raffle/contest_templates.py
+msgid "Mixed activity engagement"
+msgstr "Participación por actividad mixta"
+
+#: apps/raffle/contest_templates.py
+msgid ""
+"A bit of everything — PVP, mining, fleet attendance and leadership grants."
+msgstr ""
+"Un poco de todo: PVP, minería, asistencia a flotas y concesiones de "
+"liderazgo."
+
+#: apps/raffle/contest_templates.py
+#| msgid "Edit campaign"
+msgid "ESI adoption campaign"
+msgstr "Campaña de adopción de ESI"
+
+#: apps/raffle/contest_templates.py
+msgid ""
+"Drive app enrolment — everyone who connects ESI and flies earns; big CTA on "
+"the dashboard."
+msgstr ""
+"Impulsa el registro en la app: todo el que conecte ESI y vuele gana; CTA "
+"destacado en el panel."
 
 #: apps/raffle/eligibility.py
 msgid "This pilot has no FORCA Command Grid account."
@@ -6077,6 +8600,11 @@ msgstr ""
 msgid "Valid PVP kills"
 msgstr "Kills PVP válidos"
 
+#: apps/raffle/metrics.py apps/raffle/sources/pvp.py
+#: templates/identity/dashboard.html
+msgid "kills"
+msgstr "bajas"
+
 #: apps/raffle/metrics.py
 msgid "ISK destroyed (PVP)"
 msgstr "ISK destruido (PVP)"
@@ -6085,13 +8613,27 @@ msgstr "ISK destruido (PVP)"
 msgid "Fleet attendances"
 msgstr "Asistencias a flotas"
 
+#: apps/raffle/metrics.py
+msgid "PAPs"
+msgstr "PAPs"
+
 #: apps/raffle/metrics.py templates/raffle/detail.html
 msgid "Tickets issued"
 msgstr "Tickets emitidos"
 
 #: apps/raffle/metrics.py
+#| msgid "ticket"
+msgid "tickets"
+msgstr "boletos"
+
+#: apps/raffle/metrics.py
 msgid "Participating pilots"
 msgstr "Pilotos participantes"
+
+#: apps/raffle/metrics.py
+#| msgid "pilot(s)"
+msgid "pilots"
+msgstr "pilotos"
 
 #: apps/raffle/models.py
 msgid "Closed (awaiting draw)"
@@ -6221,6 +8763,21 @@ msgstr ""
 #: apps/raffle/models.py
 msgid "In-game item"
 msgstr "Ítem del juego"
+
+#: apps/raffle/models.py
+#| msgid "Doctrines"
+msgid "Doctrine ship"
+msgstr "Nave de doctrine"
+
+#: apps/raffle/models.py
+#| msgid "Capitals"
+msgid "Capital ship"
+msgstr "Nave capital"
+
+#: apps/raffle/models.py
+#| msgid "Subcapital ships"
+msgid "Supercapital ship"
+msgstr "Nave supercapital"
 
 #: apps/raffle/models.py
 msgid "Custom reward"
@@ -6476,6 +9033,216 @@ msgstr[1] ""
 "\n"
 "¿Prefieres que no te avisemos? Cancela aquí: %(opt_out)s"
 
+#: apps/raffle/sources/manual.py
+#| msgid "Manual entry"
+msgid "Manual grants"
+msgstr "Concesiones manuales"
+
+#: apps/raffle/sources/manual.py
+msgid ""
+"Leadership grants for valuable but hard-to-measure work — FC, scouting, "
+"logistics, doctrine prep, helping newbros, diplomacy, emergency response."
+msgstr ""
+"Concesiones del liderazgo por trabajo valioso pero difícil de medir — FC, "
+"scouting, logística, preparación de doctrine, ayuda a newbros, diplomacia, "
+"respuesta de emergencia."
+
+#: apps/raffle/sources/manual.py
+#| msgid "Grant"
+msgid "grants"
+msgstr "concesiones"
+
+#: apps/raffle/sources/manual.py templates/_nav.html
+#: templates/admin_audit/console/hub.html templates/planetary/colonies.html
+#: templates/planetary/detail.html templates/planetary/explore.html
+#: templates/planetary/landing.html templates/planetary/learn.html
+#: templates/planetary/recommend.html templates/planetary/wizard.html
+msgid "Planetary Industry"
+msgstr "Industria planetaria"
+
+#: apps/raffle/sources/manual.py
+msgid ""
+"Tickets for PI contribution campaigns. Awarded by officer approval / manual "
+"grant until a reliable per-pilot PI feed exists."
+msgstr ""
+"Boletos por campañas de contribución de PI. Se otorgan por aprobación de un "
+"oficial / concesión manual hasta que exista un feed de PI fiable por piloto."
+
+#: apps/raffle/sources/manual.py
+msgid "Ratting / PVE combat"
+msgstr "Ratting / combate PVE"
+
+#: apps/raffle/sources/manual.py
+msgid ""
+"Tickets for taxable bounty contribution. No reliable per-pilot bounty feed "
+"exists, so awards are officer-approved / manual (e.g. X tickets per Y ISK "
+"taxed)."
+msgstr ""
+"Boletos por contribución de bounties gravables. No existe un feed de "
+"bounties fiable por piloto, así que se otorgan por aprobación de un oficial "
+"/ de forma manual (p. ej. X boletos por cada Y ISK gravados)."
+
+#: apps/raffle/sources/manual.py
+msgid "Buyback / market / economy"
+msgstr "Buyback / mercado / economía"
+
+#: apps/raffle/sources/manual.py
+msgid ""
+"Tickets for buyback, market seeding, doctrine production and stockpile "
+"contribution. Officer-approved / manual until verifiable."
+msgstr ""
+"Boletos por buyback, abastecimiento del mercado, producción de doctrine y "
+"contribución al acopio. Por aprobación de un oficial / manual hasta que sea "
+"verificable."
+
+#: apps/raffle/sources/pve.py
+msgid "Tickets for ore mined, from the corp mining ledger (X tickets per m³)."
+msgstr ""
+"Boletos por mineral extraído, según el registro de minería de la corp (X "
+"boletos por m³)."
+
+#: apps/raffle/sources/pve.py
+#| msgid "Max m³"
+msgid "m³"
+msgstr "m³"
+
+#: apps/raffle/sources/pve.py apps/readiness/dimensions/activity.py
+#| msgid "Fleet operation"
+msgid "Fleet participation"
+msgstr "Participación en flotas"
+
+#: apps/raffle/sources/pve.py
+msgid "Tickets for confirmed attendance (PAP) on scheduled operations."
+msgstr "Boletos por asistencia confirmada (PAP) en operaciones programadas."
+
+#: apps/raffle/sources/pve.py
+#| msgid "opens"
+msgid "ops"
+msgstr "ops"
+
+#: apps/raffle/sources/pve.py
+#| msgid "Post a hauling job"
+msgid "Logistics / hauling"
+msgstr "Logística / transporte"
+
+#: apps/raffle/sources/pve.py
+msgid "Tickets for completed courier contracts delivered by a pilot."
+msgstr ""
+"Boletos por contratos de mensajería completados y entregados por un piloto."
+
+#: apps/raffle/sources/pve.py
+#| msgid "delivered"
+msgid "deliveries"
+msgstr "entregas"
+
+#: apps/raffle/sources/pve.py
+#| msgid "Mentorship paused."
+msgid "Mentorship / academy"
+msgstr "Mentoría / academia"
+
+#: apps/raffle/sources/pve.py
+msgid ""
+"Tickets for completed, rewardable mentorship tasks (mentee and/or mentor)."
+msgstr ""
+"Boletos por tareas de mentoría completadas y recompensables (aprendiz y/o "
+"mentor)."
+
+#: apps/raffle/sources/pve.py
+#| msgid "task:"
+msgid "tasks"
+msgstr "tareas"
+
+#: apps/raffle/sources/pve.py
+#| msgid "Manufacturing & industry"
+msgid "Manufacturing / industry"
+msgstr "Fabricación / industria"
+
+#: apps/raffle/sources/pve.py
+msgid ""
+"Tickets for industry contribution. No reliable per-pilot completed-job feed "
+"exists, so awards are made by officer approval / manual grant."
+msgstr ""
+"Boletos por contribución a la industria. No existe un feed fiable de "
+"trabajos completados por piloto, así que se otorgan por aprobación de un "
+"oficial / concesión manual."
+
+#: apps/raffle/sources/pve.py
+#| msgid "My jobs"
+msgid "jobs"
+msgstr "trabajos"
+
+#: apps/raffle/sources/pve.py
+#| msgid "Exercise completed!"
+msgid "Directives completed"
+msgstr "Directivas completadas"
+
+#: apps/raffle/sources/pve.py
+msgid "Tickets for completing your ranked corp directives (the quest log)."
+msgstr ""
+"Boletos por completar tus directivas clasificadas de la corp (el registro de"
+" misiones)."
+
+#: apps/raffle/sources/pve.py
+#| msgid "Objectives"
+msgid "directives"
+msgstr "directivas"
+
+#: apps/raffle/sources/pvp.py
+#| msgid "NPC kills"
+msgid "PVP kills"
+msgstr "Kills PVP"
+
+#: apps/raffle/sources/pvp.py
+msgid ""
+"Tickets for participating in corp kills (solo 100 · final blow 10 · "
+"participation 1)."
+msgstr ""
+"Boletos por participar en kills de la corp (solo 100 · golpe final 10 · "
+"participación 1)."
+
+#: apps/raffle/stats.py
+#, python-format
+msgid ""
+"“%(source)s” drove the most tickets (%(tickets)s). Consider featuring it "
+"again."
+msgstr ""
+"“%(source)s” generó la mayor cantidad de boletos (%(tickets)s). Considera "
+"volver a destacarla."
+
+#: apps/raffle/stats.py
+#, python-format
+msgid ""
+"%(count)s active pilots earned no tickets because they aren't enrolled — a "
+"great outreach list to grow app adoption."
+msgstr ""
+"%(count)s pilotos activos no ganaron boletos porque no están inscritos — una"
+" gran lista de contacto para aumentar la adopción de la app."
+
+#: apps/raffle/stats.py
+#, python-format
+msgid ""
+"%(count)s enrolled pilots have an expired/revoked ESI token — nudge them to "
+"reconnect before the next contest."
+msgstr ""
+"%(count)s pilotos inscritos tienen un token ESI caducado o revocado — "
+"anímalos a reconectarlo antes del próximo concurso."
+
+#: apps/raffle/stats.py
+msgid ""
+"Under half of participants were eligible — the enrolment CTA is working; "
+"keep pushing it."
+msgstr ""
+"Menos de la mitad de los participantes eran elegibles — el CTA de "
+"inscripción funciona; sigue impulsándolo."
+
+#: apps/raffle/stats.py
+msgid ""
+"Healthy contest. Repeat the format and try a booster weekend to lift "
+"engagement."
+msgstr ""
+"Concurso saludable. Repite el formato y prueba un fin de semana con "
+"multiplicador para elevar la participación."
+
 #: apps/raffle/views.py
 msgid "Done — you won't be nudged about enrolling again."
 msgstr "Listo — no volveremos a recordarte que te inscribas."
@@ -6511,6 +9278,527 @@ msgstr ""
 "— FORCA Command Grid (automatizado). Gestiona las reglas de alerta en la "
 "consola de administración."
 
+#: apps/readiness/config.py
+#, python-format
+#| msgid "Unknown readiness dimension."
+msgid "Unknown readiness config domain: %(domain)r"
+msgstr "Dominio de configuración de preparación desconocido: %(domain)r"
+
+#: apps/readiness/config.py
+#| msgid "%(where)s params must be an object."
+msgid "Dimensions configuration must be an object."
+msgstr "La configuración de dimensiones debe ser un objeto."
+
+#: apps/readiness/config.py
+msgid "At least one dimension must be configured."
+msgstr "Debe configurarse al menos una dimensión."
+
+#: apps/readiness/config.py
+#, python-format
+#| msgid "%(where)s params must be an object."
+msgid "Dimension %(key)r must be an object."
+msgstr "La dimensión %(key)r debe ser un objeto."
+
+#: apps/readiness/config.py
+#, python-format
+msgid "%(key)s: weight must be a number."
+msgstr "%(key)s: el peso debe ser un número."
+
+#: apps/readiness/config.py
+#, python-format
+msgid "%(key)s: weight must be ≥ 0."
+msgstr "%(key)s: el peso debe ser ≥ 0."
+
+#: apps/readiness/config.py
+#, python-format
+msgid "%(key)s: amber and red must be whole numbers."
+msgstr "%(key)s: amber y red deben ser números enteros."
+
+#: apps/readiness/config.py
+#, python-format
+msgid ""
+"%(key)s: thresholds must satisfy 0 ≤ red < amber ≤ 100 (got red=%(red)s, "
+"amber=%(amber)s)."
+msgstr ""
+"%(key)s: los umbrales deben cumplir 0 ≤ red < amber ≤ 100 (se recibió "
+"red=%(red)s, amber=%(amber)s)."
+
+#: apps/readiness/config.py
+#| msgid "%(where)s params must be an object."
+msgid "Scoring configuration must be an object."
+msgstr "La configuración de puntuación debe ser un objeto."
+
+#: apps/readiness/config.py
+msgid "Unsupported index_method (only 'weighted_mean' is available)."
+msgstr "index_method no admitido (solo está disponible 'weighted_mean')."
+
+#: apps/readiness/config.py
+#| msgid "Pool ISK must be a number between 0 and 1e18."
+msgid "min_coverage_for_green must be a number between 0 and 1."
+msgstr "min_coverage_for_green debe ser un número entre 0 y 1."
+
+#: apps/readiness/config.py
+#| msgid "Insurance fraction must be between 0 and 1."
+msgid "min_coverage_for_green must be between 0 and 1."
+msgstr "min_coverage_for_green debe estar entre 0 y 1."
+
+#: apps/readiness/config.py
+msgid "default_forecast_window_days must be a whole number."
+msgstr "default_forecast_window_days debe ser un número entero."
+
+#: apps/readiness/config.py
+#| msgid "Safety margin must be between 0 and 100%."
+msgid "default_forecast_window_days must be between 1 and 90."
+msgstr "default_forecast_window_days debe estar entre 1 y 90."
+
+#: apps/readiness/config.py
+msgid "min_task_weight must be a number."
+msgstr "min_task_weight debe ser un número."
+
+#: apps/readiness/config.py
+msgid "min_task_weight must be ≥ 0."
+msgstr "min_task_weight debe ser ≥ 0."
+
+#: apps/readiness/config.py
+msgid "task_severity_floor must be info/warn/high/critical."
+msgstr "task_severity_floor debe ser info/warn/high/critical."
+
+#: apps/readiness/config.py
+#| msgid "Enter a whole number."
+msgid "max_tasks_per_run must be a whole number."
+msgstr "max_tasks_per_run debe ser un número entero."
+
+#: apps/readiness/config.py
+msgid "max_tasks_per_run must be ≥ 1."
+msgstr "max_tasks_per_run debe ser ≥ 1."
+
+#: apps/readiness/config.py
+msgid "Responsibilities configuration must be an object."
+msgstr "La configuración de responsabilidades debe ser un objeto."
+
+#: apps/readiness/config.py
+msgid "owner_tags, dimension_owner and kpi_owner must be objects."
+msgstr "owner_tags, dimension_owner y kpi_owner deben ser objetos."
+
+#: apps/readiness/config.py
+#, python-format
+msgid "Owner tag %(tag)r is referenced but not defined."
+msgstr ""
+"La etiqueta de responsable %(tag)r se referencia pero no está definida."
+
+#: apps/readiness/config.py
+#| msgid "%(where)s params must be an object."
+msgid "Alerts configuration must be an object."
+msgstr "La configuración de alertas debe ser un objeto."
+
+#: apps/readiness/config.py
+#| msgid "Booster end must be after its start."
+msgid "Alert rules must be a list."
+msgstr "Las reglas de alerta deben ser una lista."
+
+#: apps/readiness/config.py
+msgid "Each alert rule needs a unique key."
+msgstr "Cada regla de alerta necesita una clave única."
+
+#: apps/readiness/config.py
+#, python-format
+msgid "Duplicate alert rule key: %(key)r."
+msgstr "Clave de regla de alerta duplicada: %(key)r."
+
+#: apps/readiness/config.py
+#| msgid "Financial configuration"
+msgid "Financial configuration must be an object."
+msgstr "La configuración financiera debe ser un objeto."
+
+#: apps/readiness/config.py
+#, python-format
+msgid "%(key)s must be a number (ISK)."
+msgstr "%(key)s debe ser un número (ISK)."
+
+#: apps/readiness/config.py
+#, python-format
+msgid "%(key)s must be ≥ 0."
+msgstr "%(key)s debe ser ≥ 0."
+
+#: apps/readiness/config.py
+msgid "wallet_division_scope must be 'all' or a division id."
+msgstr "wallet_division_scope debe ser 'all' o un ID de división."
+
+#: apps/readiness/config.py
+#| msgid "%(where)s params must be an object."
+msgid "SRP configuration must be an object."
+msgstr "La configuración de SRP debe ser un objeto."
+
+#: apps/readiness/config.py
+#, python-format
+#| msgid "Enter a whole number."
+msgid "%(key)s must be a whole number."
+msgstr "%(key)s debe ser un número entero."
+
+#: apps/readiness/config.py
+#| msgid "%(where)s params must be an object."
+msgid "Recruitment configuration must be an object."
+msgstr "La configuración de reclutamiento debe ser un objeto."
+
+#: apps/readiness/config.py
+#| msgid "Pool ISK must be a number between 0 and 1e18."
+msgid "max_dormant_ratio must be a number between 0 and 1."
+msgstr "max_dormant_ratio debe ser un número entre 0 y 1."
+
+#: apps/readiness/config.py
+#| msgid "Insurance fraction must be between 0 and 1."
+msgid "max_dormant_ratio must be between 0 and 1."
+msgstr "max_dormant_ratio debe estar entre 0 y 1."
+
+#: apps/readiness/config.py
+#| msgid "%(where)s params must be an object."
+msgid "KPI configuration must be an object."
+msgstr "La configuración de KPI debe ser un objeto."
+
+#: apps/readiness/config.py
+#, python-format
+#| msgid "%(where)s params must be an object."
+msgid "KPI %(key)r must be an object."
+msgstr "El KPI %(key)r debe ser un objeto."
+
+#: apps/readiness/config.py
+msgid "Notifications configuration must be an object."
+msgstr "La configuración de notificaciones debe ser un objeto."
+
+#: apps/readiness/config.py
+msgid "EVE-mail sender must be a character id."
+msgstr "El remitente del EVE-mail debe ser un ID de personaje."
+
+#: apps/readiness/config.py
+#| msgid "%(name)s must be a positive integer."
+msgid "EVE-mail sender must be a positive character id."
+msgstr "El remitente del EVE-mail debe ser un ID de personaje positivo."
+
+#: apps/readiness/dimensions/activity.py
+#| msgid "Activity"
+msgid "Member Activity"
+msgstr "Actividad de los miembros"
+
+#: apps/readiness/dimensions/activity.py
+#| msgid "Operation type"
+msgid "Operation attendance"
+msgstr "Asistencia a operaciones"
+
+#: apps/readiness/dimensions/activity.py
+#| msgid "Contribution"
+msgid "Contribution ledger"
+msgstr "Registro de contribuciones"
+
+#: apps/readiness/dimensions/activity.py apps/readiness/dimensions/doctrine.py
+#: templates/_nav.html templates/navigation/system_detail.html
+msgid "Killboard"
+msgstr "Killboard"
+
+#: apps/readiness/dimensions/activity.py
+#| msgid "Activate"
+msgid "Active ratio"
+msgstr "Ratio de activos"
+
+#: apps/readiness/dimensions/activity.py
+#| msgid "Contribution weights"
+msgid "Contribution breadth"
+msgstr "Amplitud de contribución"
+
+#: apps/readiness/dimensions/doctrine.py
+#| msgid "Doctrine readiness"
+msgid "Doctrine Readiness"
+msgstr "Preparación de doctrine"
+
+#: apps/readiness/dimensions/doctrine.py templates/_nav.html
+#: templates/admin_audit/console/hub.html
+msgid "Doctrines"
+msgstr "Doctrines"
+
+#: apps/readiness/dimensions/doctrine.py apps/readiness/dimensions/staging.py
+#| msgid "Doctrine sets"
+msgid "Doctrine fits"
+msgstr "Fits de doctrine"
+
+#: apps/readiness/dimensions/doctrine.py
+#: apps/readiness/dimensions/fleet_comp.py
+#: apps/readiness/dimensions/support.py
+#| msgid "Character %(id)s"
+msgid "Character skills"
+msgstr "Habilidades del personaje"
+
+#: apps/readiness/dimensions/doctrine.py
+#| msgid "Coverage"
+msgid "Skill Coverage"
+msgstr "Cobertura de habilidades"
+
+#: apps/readiness/dimensions/financial.py
+#| msgid "Financial configuration"
+msgid "Financial Health"
+msgstr "Salud financiera"
+
+#: apps/readiness/dimensions/financial.py
+#| msgid "All divisions"
+msgid "Corp wallet divisions"
+msgstr "Divisiones de la cartera de la corp"
+
+#: apps/readiness/dimensions/financial.py
+#| msgid "Corp calendar"
+msgid "Corp wallet journal"
+msgstr "Diario de la cartera de la corp"
+
+#: apps/readiness/dimensions/financial.py
+#| msgid "Find targets"
+msgid "Finance targets"
+msgstr "Objetivos financieros"
+
+#: apps/readiness/dimensions/financial.py
+msgid "Wallet vs minimum"
+msgstr "Cartera vs mínimo"
+
+#: apps/readiness/dimensions/financial.py
+msgid "Runway (months)"
+msgstr "Autonomía (meses)"
+
+#: apps/readiness/dimensions/financial.py
+#| msgid "Reserve stock"
+msgid "Reserve cover"
+msgstr "Cobertura de reservas"
+
+#: apps/readiness/dimensions/financial.py
+#| msgid "vs target"
+msgid "Burn vs target"
+msgstr "Gasto vs objetivo"
+
+#: apps/readiness/dimensions/fleet_comp.py
+#| msgid "Fleet composition"
+msgid "Fleet Composition"
+msgstr "Composición de la flota"
+
+#: apps/readiness/dimensions/fleet_comp.py
+#: apps/readiness/dimensions/leadership.py
+#: apps/readiness/dimensions/strategic.py
+#| msgid "Strategic roles"
+msgid "Strategic role targets"
+msgstr "Objetivos de roles estratégicos"
+
+#: apps/readiness/dimensions/fleet_comp.py
+#| msgid "SRP coverage"
+msgid "Role coverage"
+msgstr "Cobertura de roles"
+
+#: apps/readiness/dimensions/fleet_comp.py
+#| msgid "High ratio"
+msgid "Logi ratio"
+msgstr "Ratio de logi"
+
+#: apps/readiness/dimensions/fleet_comp.py
+#: apps/readiness/dimensions/leadership.py
+msgid "FC bench"
+msgstr "Banquillo de FC"
+
+#: apps/readiness/dimensions/infrastructure.py
+#| msgid "Infrastructure board"
+msgid "Infrastructure Readiness"
+msgstr "Preparación de la infraestructura"
+
+#: apps/readiness/dimensions/infrastructure.py
+#| msgid "Structures"
+msgid "Corp structures"
+msgstr "Estructuras de la corp"
+
+#: apps/readiness/dimensions/infrastructure.py
+#| msgid "Sovereignty"
+msgid "Sovereignty structures"
+msgstr "Estructuras de soberanía"
+
+#: apps/readiness/dimensions/infrastructure.py
+#| msgid "Fuel cost"
+msgid "Fuel cover"
+msgstr "Cobertura de combustible"
+
+#: apps/readiness/dimensions/infrastructure.py
+#| msgid "Open exposure"
+msgid "Timer exposure"
+msgstr "Exposición a timers"
+
+#: apps/readiness/dimensions/infrastructure.py
+#| msgid "Provider health"
+msgid "Sov health"
+msgstr "Salud de la sov"
+
+#: apps/readiness/dimensions/leadership.py
+#| msgid "Leadership approval"
+msgid "Leadership Capacity"
+msgstr "Capacidad de liderazgo"
+
+#: apps/readiness/dimensions/leadership.py
+#: templates/admin_audit/console/hub.html
+msgid "Officer responsibilities"
+msgstr "Responsabilidades de oficiales"
+
+#: apps/readiness/dimensions/leadership.py
+#| msgid "Corp coverage"
+msgid "Officer coverage"
+msgstr "Cobertura de oficiales"
+
+#: apps/readiness/dimensions/leadership.py
+#| msgid "Corp coverage"
+msgid "Mentor coverage"
+msgstr "Cobertura de mentores"
+
+#: apps/readiness/dimensions/logistics.py
+#| msgid "Logistics event"
+msgid "Logistics Throughput"
+msgstr "Rendimiento logístico"
+
+#: apps/readiness/dimensions/logistics.py
+#| msgid "Hauling jobs"
+msgid "Hauling tasks"
+msgstr "Tareas de transporte"
+
+#: apps/readiness/dimensions/recruitment.py templates/_nav.html
+#: templates/recruitment/detail.html templates/recruitment/list.html
+#: templates/recruitment/oauth_begin.html
+msgid "Recruitment"
+msgstr "Reclutamiento"
+
+#: apps/readiness/dimensions/recruitment.py
+#| msgid "Corp members only"
+msgid "Corp members"
+msgstr "Miembros de la corp"
+
+#: apps/readiness/dimensions/recruitment.py
+#| msgid "Member roster"
+msgid "Member join dates"
+msgstr "Fechas de ingreso de los miembros"
+
+#: apps/readiness/dimensions/recruitment.py
+#| msgid "Activity mix"
+msgid "Activity signals"
+msgstr "Señales de actividad"
+
+#: apps/readiness/dimensions/recruitment.py
+#| msgid "vs target"
+msgid "Headcount vs target"
+msgstr "Efectivos vs objetivo"
+
+#: apps/readiness/dimensions/recruitment.py
+#| msgid "Make private"
+msgid "Intake rate"
+msgstr "Tasa de incorporación"
+
+#: apps/readiness/dimensions/recruitment.py
+#| msgid "Watch ratio"
+msgid "Dormant ratio"
+msgstr "Ratio de inactivos"
+
+#: apps/readiness/dimensions/srp.py
+#| msgid "Health"
+msgid "SRP Health"
+msgstr "Salud del SRP"
+
+#: apps/readiness/dimensions/srp.py
+#| msgid "My claims"
+msgid "SRP claims"
+msgstr "Reclamaciones de SRP"
+
+#: apps/readiness/dimensions/srp.py templates/admin_audit/console/hub.html
+msgid "SRP programme"
+msgstr "Programa de SRP"
+
+#: apps/readiness/dimensions/srp.py templates/admin_audit/console/hub.html
+#: templates/srp/budget.html
+msgid "SRP budget"
+msgstr "Presupuesto de SRP"
+
+#: apps/readiness/dimensions/srp.py templates/admin_audit/console/hub.html
+msgid "SRP thresholds"
+msgstr "Umbrales de SRP"
+
+#: apps/readiness/dimensions/srp.py
+#| msgid "Pending validation"
+msgid "Pending backlog"
+msgstr "Cola pendiente"
+
+#: apps/readiness/dimensions/srp.py
+#| msgid "Coverage"
+msgid "Average wait"
+msgstr "Espera media"
+
+#: apps/readiness/dimensions/srp.py
+#| msgid "Open to claim"
+msgid "Oldest claim"
+msgstr "Reclamación más antigua"
+
+#: apps/readiness/dimensions/srp.py
+#| msgid "budget alt"
+msgid "Budget health"
+msgstr "Salud del presupuesto"
+
+#: apps/readiness/dimensions/staging.py
+#| msgid "Lose staging"
+msgid "Asset Staging"
+msgstr "Activos en staging"
+
+#: apps/readiness/dimensions/staging.py templates/admin_audit/console/hub.html
+#: templates/campaigns/form.html templates/store/supply_forecast.html
+msgid "Staging system"
+msgstr "Sistema de staging"
+
+#: apps/readiness/dimensions/staging.py
+#| msgid "Doctrine hulls with no blueprint"
+msgid "Doctrine hulls at staging"
+msgstr "Cascos de doctrine en staging"
+
+#: apps/readiness/dimensions/stock.py
+#| msgid "Stockpile created."
+msgid "Stockpile Coverage"
+msgstr "Cobertura de acopio"
+
+#: apps/readiness/dimensions/stock.py
+#| msgid "No stockpiles yet."
+msgid "Corp stockpiles"
+msgstr "Acopios de la corp"
+
+#: apps/readiness/dimensions/stock.py
+#| msgid "Skill target"
+msgid "Stockpile targets"
+msgstr "Objetivos de acopio"
+
+#: apps/readiness/dimensions/strategic.py
+#| msgid "Strategic roles"
+msgid "Strategic Assets"
+msgstr "Activos estratégicos"
+
+#: apps/readiness/dimensions/strategic.py
+#: templates/admin_audit/console/hub.html
+msgid "Mandatory ships"
+msgstr "Naves obligatorias"
+
+#: apps/readiness/dimensions/strategic.py
+#| msgid "Mandatory ships"
+msgid "Mandatory ship coverage"
+msgstr "Cobertura de naves obligatorias"
+
+#: apps/readiness/dimensions/strategic.py
+#| msgid "Capitals"
+msgid "Capital bench"
+msgstr "Reserva de naves capital"
+
+#: apps/readiness/dimensions/strategic.py
+#| msgid "Corp coverage"
+msgid "Cyno / scout coverage"
+msgstr "Cobertura de cyno / scout"
+
+#: apps/readiness/dimensions/support.py
+#| msgid "Fleet support skills"
+msgid "Fleet Support"
+msgstr "Soporte de flota"
+
+#: apps/readiness/dimensions/support.py templates/admin_audit/console/hub.html
+msgid "Fleet support skills"
+msgstr "Habilidades de soporte de flota"
+
 #: apps/readiness/models.py apps/recommendations/models.py
 msgid "Acknowledged"
 msgstr "Reconocido"
@@ -6542,6 +9830,14 @@ msgid "Home defense"
 msgstr "Defensa local"
 
 #: apps/readiness/models.py
+msgid "Cyno"
+msgstr "Cyno"
+
+#: apps/readiness/models.py
+msgid "Scout"
+msgstr "Scout"
+
+#: apps/readiness/models.py
 msgid "Anywhere"
 msgstr "En cualquier lugar"
 
@@ -6561,7 +9857,8 @@ msgstr "Por habilidades"
 msgid "By asset"
 msgstr "Por activo"
 
-#: apps/readiness/models.py templates/skills/detail.html
+#: apps/readiness/models.py apps/readiness/views.py
+#: templates/skills/detail.html
 msgid "Skill"
 msgstr "Habilidad"
 
@@ -6692,11 +9989,6 @@ msgstr "Patrón de pérdidas en combate"
 #: apps/recommendations/models.py
 msgid "Officer action"
 msgstr "Acción de oficial"
-
-#: apps/recommendations/models.py templates/campaigns/form.html
-#: templates/campaigns/template_picker.html
-msgid "New"
-msgstr "Nuevo"
 
 #: apps/recommendations/models.py
 msgid "Actioned"
@@ -6879,6 +10171,28 @@ msgstr ""
 "Contactamos con EVE pero no pudimos leer tus datos — inténtalo de nuevo en "
 "breve."
 
+#: apps/skills/training.py
+msgid "Charisma"
+msgstr "Carisma"
+
+#: apps/skills/training.py
+#| msgid "Ask Intelligence"
+msgid "Intelligence"
+msgstr "Inteligencia"
+
+#: apps/skills/training.py
+msgid "Memory"
+msgstr "Memoria"
+
+#: apps/skills/training.py
+#| msgid "Production"
+msgid "Perception"
+msgstr "Percepción"
+
+#: apps/skills/training.py
+msgid "Willpower"
+msgstr "Fuerza de voluntad"
+
 #: apps/skills/views.py
 #, python-format
 msgid "Imported skills for %(count)d character."
@@ -7010,6 +10324,355 @@ msgstr "Denegado"
 msgid "e.g. 2026-06"
 msgstr "p. ej. 2026-06"
 
+#: apps/srp/services.py
+#| msgid "SRP is paused by leadership right now."
+msgid "SRP is currently paused by leadership."
+msgstr "La dirección tiene el SRP pausado ahora mismo."
+
+#: apps/srp/services.py
+#| msgid "Not your lot."
+msgid "Not a corp loss."
+msgstr "No es una pérdida de la corp."
+
+#: apps/srp/services.py
+msgid "Pod losses aren't covered."
+msgstr "Las pérdidas de pod no están cubiertas."
+
+#: apps/srp/services.py
+#| msgid "Only losses flying an active doctrine hull are eligible."
+msgid "Loss isn't an active doctrine hull."
+msgstr "La pérdida no es un hull de una doctrine activa."
+
+#: apps/srp/services.py
+#| msgid "No active goals."
+msgid "No active SRP rule."
+msgstr "No hay ninguna regla de SRP activa."
+
+#: apps/srp/services.py
+#| msgid "Only cover losses during a sanctioned fleet op"
+msgid "Loss wasn't on a sanctioned fleet op."
+msgstr "La pérdida no ocurrió en una op de flota sancionada."
+
+#: apps/sso/scopes.py
+#| msgid "Sync my assets"
+msgid "Track my assets"
+msgstr "Seguir mis activos"
+
+#: apps/sso/scopes.py
+msgid ""
+"Show your own assets and where they sit across stations and structures in "
+"the stockpile views."
+msgstr ""
+"Muestra tus propios activos y dónde están repartidos entre estaciones y "
+"estructuras en las vistas de acopio."
+
+#: apps/sso/scopes.py
+msgid "My industry jobs + blueprints"
+msgstr "Mis trabajos de industria + blueprints"
+
+#: apps/sso/scopes.py
+msgid ""
+"Read your own running industry jobs and owned blueprints, so the Industry "
+"Center can track your personal production and match it to your plans."
+msgstr ""
+"Lee tus trabajos de industria en curso y los blueprints que posees, para que"
+" el Centro de Industria pueda seguir tu producción personal y cruzarla con "
+"tus planes."
+
+#: apps/sso/scopes.py
+#| msgid "Market locations"
+msgid "Freight location search"
+msgstr "Búsqueda de ubicaciones de flete"
+
+#: apps/sso/scopes.py
+msgid ""
+"Search the player structures you can dock at when booking a courier "
+"contract, so a pickup or drop-off resolves to the exact station."
+msgstr ""
+"Busca las estructuras de jugador en las que puedes atracar al reservar un "
+"contrato de mensajería, para que la recogida o la entrega se resuelvan a la "
+"estación exacta."
+
+#: apps/sso/scopes.py
+msgid "Verify my hauls"
+msgstr "Verificar mis transportes"
+
+#: apps/sso/scopes.py
+msgid ""
+"Read your own contracts so the freight service can confirm a courier job you"
+" delivered actually completed in-game and credit you for it."
+msgstr ""
+"Lee tus propios contratos para que el servicio de flete pueda confirmar en "
+"el juego que el contrato de mensajería que entregaste se completó de verdad "
+"y abonártelo."
+
+#: apps/sso/scopes.py
+msgid "Verify corp hauls"
+msgstr "Verificar los transportes de la corp"
+
+#: apps/sso/scopes.py
+msgid ""
+"Read corp contracts to auto-verify every hauler's courier delivery in-game "
+"before crediting it — no per-pilot grant needed."
+msgstr ""
+"Lee los contratos de la corp para verificar automáticamente en el juego la "
+"entrega de mensajería de cada transportista antes de abonarla — sin "
+"necesidad de un permiso por piloto."
+
+#: apps/sso/scopes.py templates/_user_block.html
+#: templates/corporation/finance.html templates/identity/dashboard.html
+#: templates/impersonation/log.html
+msgid "Director"
+msgstr "Director"
+
+#: apps/sso/scopes.py
+msgid ""
+"Import the corporation's assets to power the stockpile and supply views."
+msgstr ""
+"Importa los activos de la corporación para alimentar las vistas de acopio y "
+"suministro."
+
+#: apps/sso/scopes.py
+#| msgid "Member roster"
+msgid "Member tracking"
+msgstr "Seguimiento de miembros"
+
+#: apps/sso/scopes.py
+msgid ""
+"Import the corp roster with each member's location, ship and last login for "
+"the readiness and roster tools."
+msgstr ""
+"Importa la lista de miembros de la corp con la ubicación, la nave y el "
+"último acceso de cada uno para las herramientas de preparación y de "
+"plantilla."
+
+#: apps/sso/scopes.py
+#| msgid "Corp assets"
+msgid "Corp wallet"
+msgstr "Cartera de la corp"
+
+#: apps/sso/scopes.py
+msgid "Import corp wallet balances and the journal for the finance page."
+msgstr ""
+"Importa los saldos de la cartera de la corp y el diario para la página de "
+"finanzas."
+
+#: apps/sso/scopes.py
+#| msgid "Account recovery"
+msgid "Accountant or Director"
+msgstr "Accountant o Director"
+
+#: apps/sso/scopes.py
+#| msgid "Corp stats"
+msgid "Corp standings"
+msgstr "Standings de la corp"
+
+#: apps/sso/scopes.py
+msgid ""
+"Import corp contacts to drive the member-facing blue/red standings board."
+msgstr ""
+"Importa los contactos de la corp para alimentar el tablón de standings "
+"azules/rojos que ven los miembros."
+
+#: apps/sso/scopes.py
+msgid ""
+"List the corp's Ansiblex jump bridges and cyno beacons to auto-build the "
+"jump map and route planner."
+msgstr ""
+"Lista los Ansiblex jump bridges y las balizas de cyno de la corp para "
+"construir automáticamente el mapa de saltos y el planificador de rutas."
+
+#: apps/sso/scopes.py
+msgid "Director or Station Manager"
+msgstr "Director o Station Manager"
+
+#: apps/sso/scopes.py
+#| msgid "Structure timer"
+msgid "Structure monitoring"
+msgstr "Monitorización de estructuras"
+
+#: apps/sso/scopes.py
+msgid ""
+"Monitor every corp structure — fuel remaining, online/low-power state and "
+"reinforcement timers — so nothing runs dry or comes out of reinforcement "
+"unwatched."
+msgstr ""
+"Monitoriza todas las estructuras de la corp — combustible restante, estado "
+"online/low-power y timers de refuerzo — para que ninguna se quede sin "
+"combustible ni salga de refuerzo sin vigilancia."
+
+#: apps/sso/scopes.py templates/corporation/extractions.html
+msgid "Moon extractions"
+msgstr "Extracciones de lunas"
+
+#: apps/sso/scopes.py
+msgid "Import scheduled moon extractions for the extraction calendar."
+msgstr ""
+"Importa las extracciones lunares programadas para el calendario de "
+"extracciones."
+
+#: apps/sso/scopes.py
+#| msgid "Veteran Mentor Directory"
+msgid "Station Manager or Director"
+msgstr "Station Manager o Director"
+
+#: apps/sso/scopes.py
+#| msgid "Corporation blueprint"
+msgid "Corp blueprints + jobs"
+msgstr "Blueprints + trabajos de la corp"
+
+#: apps/sso/scopes.py
+msgid ""
+"Import the corp's owned blueprints (ME/TE) and running industry jobs so "
+"blueprint coverage and build-or-buy reflect what the corp actually owns and "
+"has in production."
+msgstr ""
+"Importa los blueprints que posee la corp (ME/TE) y los trabajos de industria"
+" en curso, para que la cobertura de blueprints y el fabricar-o-comprar "
+"reflejen lo que la corp realmente tiene y está produciendo."
+
+#: apps/sso/scopes.py
+#| msgid "Director no longer authorised"
+msgid "Director or Factory Manager"
+msgstr "Director o Factory Manager"
+
+#: apps/sso/scopes.py
+#| msgid "Notifications"
+msgid "Notification relay"
+msgstr "Retransmisión de notificaciones"
+
+#: apps/sso/scopes.py
+#| msgid ""
+#| "Relayed ESI notifications — structure attacks, war declarations, sovereignty"
+#| " and moon extractions — pulled from a role-holder's token. Fresh red alerts "
+#| "also go to Discord."
+msgid ""
+"Relay in-game notifications — structure attacks, war declarations, "
+"sovereignty and moon pops — to the site and Discord."
+msgstr ""
+"Retransmite al sitio y a Discord las notificaciones del juego: ataques a "
+"estructuras, declaraciones de guerra, soberanía y detonaciones de lunas."
+
+#: apps/sso/scopes.py
+#| msgid "Director no longer authorised"
+msgid "Director or role-holder"
+msgstr "Director o titular del rol"
+
+#: apps/sso/scopes.py
+#| msgid "Corp mail relay"
+msgid "Mail relay"
+msgstr "Retransmisión de correo"
+
+#: apps/sso/scopes.py
+msgid ""
+"Relay your corp/alliance mailing-list mail to Discord, so announcements "
+"reach members who don't check in-game mail. Grant from the character "
+"subscribed to the lists."
+msgstr ""
+"Retransmite a Discord el correo de las listas de la corp/alianza, para que "
+"los anuncios lleguen a los miembros que no revisan el correo del juego. "
+"Concédelo desde el personaje suscrito a las listas."
+
+#: apps/sso/scopes.py
+#| msgid "Readiness index"
+msgid "Readiness mail sender"
+msgstr "Remitente del correo de preparación"
+
+#: apps/sso/scopes.py
+msgid ""
+"Let the platform send readiness alert e-mails in-game from this character. "
+"Grant from the director you select as the readiness mail sender on the Admin"
+" Console → Readiness → Alerts page."
+msgstr ""
+"Permite que la plataforma envíe EVE-mails de alerta de preparación desde "
+"este personaje. Concédelo desde el director que elijas como remitente del "
+"correo de preparación en la página Consola de administración → Preparación →"
+" Alertas."
+
+#: apps/sso/scopes.py
+#| msgid "Pingboard calendar →"
+msgid "Pingboard mail sender"
+msgstr "Remitente del correo de Pingboard"
+
+#: apps/sso/scopes.py
+msgid ""
+"Let Pingboard send corp alerts in-game from this character. Grant from the "
+"director you select as the Pingboard EVE-mail sender on the Admin Console → "
+"Pingboard → Channels page."
+msgstr ""
+"Permite que Pingboard envíe alertas de la corp dentro del juego desde este "
+"personaje. Concédelo desde el director que elijas como remitente de EVE-mail"
+" de Pingboard en la página Consola de administración → Pingboard → Canales."
+
+#: apps/sso/scopes.py
+#| msgid "Fleet operation"
+msgid "Fleet tracking"
+msgstr "Seguimiento de flota"
+
+#: apps/sso/scopes.py
+msgid ""
+"Let an FC pull the live fleet roster to auto-record everyone's participation"
+" (PAP) for an operation — no manual sign-in. Grant from the character that "
+"boss-fleets."
+msgstr ""
+"Permite que un FC obtenga la lista en vivo de la flota para registrar "
+"automáticamente la participación (PAP) de todos en una operación, sin "
+"fichaje manual. Concédelo desde el personaje que hace de boss de la flota."
+
+#: apps/sso/scopes.py
+#| msgid "A mentorship session is confirmed"
+msgid "Mentorship session check-in"
+msgstr "Registro de asistencia a la sesión de mentoría"
+
+#: apps/sso/scopes.py
+msgid ""
+"Optional: let the Mentorship Program confirm you were online and in the "
+"session's system during a scheduled mentoring session — the only way to "
+"corroborate 'we flew together', since EVE keeps no history of it. Off by "
+"default, polled only during a session you booked, and never stored beyond "
+"the check."
+msgstr ""
+"Opcional: permite que el Programa de mentoría confirme que estabas conectado"
+" y en el sistema de la sesión durante una sesión de mentoría programada; es "
+"la única forma de corroborar el “volamos juntos”, ya que EVE no guarda "
+"historial de ello. Desactivado por defecto, se consulta solo durante una "
+"sesión que hayas reservado y nunca se almacena más allá de la comprobación."
+
+#: apps/sso/scopes.py
+#| msgid "Imported"
+msgid "Import saved fits"
+msgstr "Importar fits guardados"
+
+#: apps/sso/scopes.py
+msgid ""
+"Read your own saved ship fittings so you can import them as corp doctrines "
+"(ESI has no corp-fittings endpoint, so doctrines are seeded from a "
+"director's personal fits)."
+msgstr ""
+"Lee tus propios fittings de nave guardados para que puedas importarlos como "
+"doctrines de la corp (ESI no tiene un endpoint de fittings de corp, así que "
+"las doctrines se siembran a partir de los fits personales de un director)."
+
+#: apps/sso/scopes.py
+#| msgid "Import per cycle:"
+msgid "Import PI colonies"
+msgstr "Importar colonias de PI"
+
+#: apps/sso/scopes.py
+msgid ""
+"Optional: let the Planetary Industry planner import your live colonies so it"
+" can show your real layouts, flag issues (idle extractors, missing routes) "
+"and estimate your current output. EVE only refreshes this when you open the "
+"colony in the client, so imports can be stale — the planner always says "
+"when."
+msgstr ""
+"Opcional: permite que el planificador de industria planetaria importe tus "
+"colonias en vivo para mostrar tus diseños reales, señalar problemas "
+"(extractores parados, rutas ausentes) y estimar tu producción actual. EVE "
+"solo actualiza estos datos cuando abres la colonia en el cliente, así que "
+"las importaciones pueden estar desactualizadas; el planificador siempre te "
+"indica cuándo."
+
 #: apps/sso/views.py
 msgid "Not available while viewing as another pilot."
 msgstr "No disponible mientras ves como otro piloto."
@@ -7074,10 +10737,6 @@ msgstr "Tu acceso está sincronizado.%(deep)s"
 #: apps/sso/views.py
 msgid "Not your character."
 msgstr "No es tu personaje."
-
-#: apps/stockpile/assets.py
-msgid "No home corporation configured."
-msgstr "No hay una corporación base configurada."
 
 #: apps/stockpile/assets.py
 msgid ""
@@ -7157,6 +10816,18 @@ msgstr "Reclamado"
 #: apps/stockpile/models.py templates/navigation/system_detail.html
 msgid "Solar system"
 msgstr "Sistema solar"
+
+#: apps/stockpile/models.py
+#, python-format
+#| msgid "Structure timer"
+msgid "Structure %(location_id)s"
+msgstr "Estructura %(location_id)s"
+
+#: apps/stockpile/models.py
+#, python-format
+#| msgid "Last location"
+msgid "Location %(location_id)s"
+msgstr "Ubicación %(location_id)s"
 
 #: apps/stockpile/views.py
 msgid "Stock updated."
@@ -7677,7 +11348,7 @@ msgstr ""
 "Un registro de auditoría inmutable y una política de retención de datos "
 "configurable"
 
-#: config/showcase_data.py
+#: config/showcase_data.py tests/test_i18n_showcase.py
 msgid "Your Command Center"
 msgstr "Tu Centro de Mando"
 
@@ -7699,7 +11370,7 @@ msgstr ""
 "Un registro de misiones priorizado te dice qué volar, entrenar o construir a"
 " continuación — y por qué lo necesita la corp"
 
-#: config/showcase_data.py
+#: config/showcase_data.py tests/test_i18n_showcase.py
 msgid "Combat rank, 7-day kills/losses and ISK destroyed, at a glance"
 msgstr ""
 "Rango de combate, kills y pérdidas de los últimos 7 días e ISK destruido, de"
@@ -8539,10 +12210,6 @@ msgid "Corp calendar"
 msgstr "Calendario de corp"
 
 #: core/features.py
-msgid "This feature is not enabled for this corporation."
-msgstr "Esta función no está habilitada para esta corporación."
-
-#: core/features.py
 msgid "This feature is not available."
 msgstr "Esta función no está disponible."
 
@@ -8613,10 +12280,6 @@ msgstr "Enviar alerta"
 msgid "Alert history"
 msgstr "Historial de alertas"
 
-#: templates/_nav.html templates/navigation/system_detail.html
-msgid "Killboard"
-msgstr "Killboard"
-
 #: templates/_nav.html templates/killboard/list.html
 #: templates/killboard/roster.html templates/killboard/stats.html
 msgid "Rankings"
@@ -8648,10 +12311,6 @@ msgstr "Base de conocimiento"
 #: templates/_nav.html
 msgid "Ships &amp; Doctrines"
 msgstr "Naves &amp; Doctrines"
-
-#: templates/_nav.html templates/admin_audit/console/hub.html
-msgid "Doctrines"
-msgstr "Doctrines"
 
 #: templates/_nav.html templates/doctrines/detail.html
 #: templates/doctrines/list.html templates/doctrines/ships.html
@@ -8726,14 +12385,6 @@ msgstr "Industria &amp; Economía"
 msgid "Industry Center"
 msgstr "Centro de industria"
 
-#: templates/_nav.html templates/admin_audit/console/hub.html
-#: templates/planetary/colonies.html templates/planetary/detail.html
-#: templates/planetary/explore.html templates/planetary/landing.html
-#: templates/planetary/learn.html templates/planetary/recommend.html
-#: templates/planetary/wizard.html
-msgid "Planetary Industry"
-msgstr "Industria planetaria"
-
 #: templates/_nav.html templates/industry/home.html
 #: templates/industry/jobs.html
 msgid "Job tracker"
@@ -8754,10 +12405,6 @@ msgstr "Registro de minería"
 #: templates/_nav.html templates/stockpile/assets.html
 msgid "Assets"
 msgstr "Activos"
-
-#: templates/_nav.html templates/market/dashboard.html
-msgid "Market"
-msgstr "Mercado"
 
 #: templates/_nav.html
 msgid "Corp Logistics"
@@ -8791,20 +12438,6 @@ msgstr "Tablón de construcción"
 #: templates/_nav.html templates/store/supply_forecast.html
 msgid "Supply Forecast"
 msgstr "Previsión de suministro"
-
-#: templates/_nav.html templates/campaigns/_dashboard_panel.html
-#: templates/campaigns/activity.html templates/campaigns/close.html
-#: templates/campaigns/detail.html templates/campaigns/explain.html
-#: templates/campaigns/form.html templates/campaigns/issue_form.html
-#: templates/campaigns/lessons.html templates/campaigns/milestone_form.html
-#: templates/campaigns/objective_detail.html
-#: templates/campaigns/objective_form.html templates/campaigns/portfolio.html
-#: templates/campaigns/recognition.html templates/campaigns/report.html
-#: templates/campaigns/risk_form.html templates/campaigns/template_picker.html
-#: templates/campaigns/timeline.html templates/campaigns/workspace.html
-#: templates/campaigns/workstream_form.html
-msgid "Campaign Command"
-msgstr "Mando de campañas"
 
 #: templates/_nav.html templates/campaigns/portfolio.html
 msgid "Campaigns"
@@ -8894,11 +12527,6 @@ msgstr "Impacto de pérdidas"
 msgid "Member Roster"
 msgstr "Lista de miembros"
 
-#: templates/_nav.html templates/recruitment/detail.html
-#: templates/recruitment/list.html templates/recruitment/oauth_begin.html
-msgid "Recruitment"
-msgstr "Reclutamiento"
-
 #: templates/_nav.html templates/operations/cancellations.html
 msgid "Cancellation analytics"
 msgstr "Analíticas de cancelaciones"
@@ -8940,11 +12568,6 @@ msgstr "Explorar"
 #: templates/_nav.html templates/base.html templates/showcase.html
 msgid "Features"
 msgstr "Funciones"
-
-#: templates/_user_block.html templates/corporation/finance.html
-#: templates/identity/dashboard.html templates/impersonation/log.html
-msgid "Director"
-msgstr "Director"
 
 #: templates/_user_block.html templates/identity/dashboard.html
 msgid "Member"
@@ -9281,11 +12904,6 @@ msgstr ""
 "Activa las notificaciones, ajusta los límites de sugerencias, la retención y"
 " el umbral mínimo de supresión de liderazgo."
 
-#: templates/admin_audit/console/hub.html templates/mentorship/dashboard.html
-#: templates/mentorship/landing.html
-msgid "Mentorship Program"
-msgstr "Programa de mentoría"
-
 #: templates/admin_audit/console/hub.html
 msgid "Overview"
 msgstr "Resumen"
@@ -9400,10 +13018,6 @@ msgstr ""
 "cada dimensión."
 
 #: templates/admin_audit/console/hub.html
-msgid "Mandatory ships"
-msgstr "Naves obligatorias"
-
-#: templates/admin_audit/console/hub.html
 msgid ""
 "The ships every pilot should own — feeds the Strategic Assets dimension."
 msgstr ""
@@ -9423,21 +13037,12 @@ msgstr ""
 "puntuaciones estratégica y de liderazgo."
 
 #: templates/admin_audit/console/hub.html
-msgid "Fleet support skills"
-msgstr "Habilidades de soporte de flota"
-
-#: templates/admin_audit/console/hub.html
 msgid ""
 "Booster / links / logi-support skills and their levels — feeds the Fleet "
 "Support dimension (disabled until set)."
 msgstr ""
 "Habilidades de Booster / links / logi-support y sus niveles — alimenta la "
 "dimensión de Soporte de Flota (desactivada hasta configurarse)."
-
-#: templates/admin_audit/console/hub.html templates/campaigns/form.html
-#: templates/store/supply_forecast.html
-msgid "Staging system"
-msgstr "Sistema de staging"
 
 #: templates/admin_audit/console/hub.html
 msgid ""
@@ -9459,18 +13064,10 @@ msgstr ""
 " — alimenta Salud Financiera."
 
 #: templates/admin_audit/console/hub.html
-msgid "SRP thresholds"
-msgstr "Umbrales de SRP"
-
-#: templates/admin_audit/console/hub.html
 msgid "Backlog, wait-time and oldest-claim bounds — feeds SRP Health."
 msgstr ""
 "Límites de pendientes, tiempo de espera y reclamación más antigua — alimenta"
 " Salud de SRP."
-
-#: templates/admin_audit/console/hub.html
-msgid "Officer responsibilities"
-msgstr "Responsabilidades de oficiales"
 
 #: templates/admin_audit/console/hub.html
 msgid ""
@@ -9592,16 +13189,8 @@ msgid "Tune how each contribution kind scores points."
 msgstr "Ajusta cómo cada tipo de contribución puntúa."
 
 #: templates/admin_audit/console/hub.html
-msgid "SRP programme"
-msgstr "Programa de SRP"
-
-#: templates/admin_audit/console/hub.html
 msgid "Payout mode, valuation and eligibility for ship replacement."
 msgstr "Modo de pago, valoración y elegibilidad para el reemplazo de naves."
-
-#: templates/admin_audit/console/hub.html templates/srp/budget.html
-msgid "SRP budget"
-msgstr "Presupuesto de SRP"
 
 #: templates/admin_audit/console/hub.html
 msgid "The monthly ISK spend cap and loss-impact view for ship replacement."
@@ -9743,11 +13332,6 @@ msgid "Structures &amp; assets"
 msgstr "Estructuras &amp; activos"
 
 #: templates/admin_audit/console/hub.html
-#: templates/corporation/structures.html
-msgid "Structures"
-msgstr "Estructuras"
-
-#: templates/admin_audit/console/hub.html
 msgid "Fuel, state and reinforcement timers for every corp structure."
 msgstr ""
 "Combustible, estado y temporizadores de refuerzo de cada estructura de la "
@@ -9800,11 +13384,6 @@ msgid "Every corp contract — item exchange, courier, auction — with status."
 msgstr ""
 "Todos los contratos de la corp — intercambio de objetos, mensajería, subasta"
 " — con su estado."
-
-#: templates/admin_audit/console/hub.html
-#: templates/navigation/system_detail.html templates/operations/sov.html
-msgid "Sovereignty"
-msgstr "Soberanía"
 
 #: templates/admin_audit/console/hub.html
 msgid ""
@@ -11660,11 +15239,6 @@ msgstr "etiqueta"
 #: templates/doctrines/ships.html templates/tasks/detail.html
 msgid "Apply"
 msgstr "Aplicar"
-
-#: templates/campaigns/lessons.html templates/campaigns/portfolio.html
-#: templates/doctrines/list.html
-msgid "Clear"
-msgstr "Limpiar"
 
 #: templates/campaigns/lessons.html
 msgid "Cmdr"
@@ -14730,10 +18304,6 @@ msgid "Back to search"
 msgstr "Volver a la búsqueda"
 
 #: templates/corporation/extractions.html
-msgid "Moon extractions"
-msgstr "Extracciones de lunas"
-
-#: templates/corporation/extractions.html
 msgid ""
 "When each moon chunk is ready to fracture, counting down in EVE (UTC) time."
 msgstr ""
@@ -16363,10 +19933,6 @@ msgid "Progression"
 msgstr "Progresión"
 
 #: templates/identity/dashboard.html
-msgid "kills"
-msgstr "bajas"
-
-#: templates/identity/dashboard.html
 msgid "reward"
 msgstr "recompensa"
 
@@ -16535,10 +20101,6 @@ msgid "%(n)s skill waiting"
 msgid_plural "%(n)s skills waiting"
 msgstr[0] "%(n)s skill en espera"
 msgstr[1] "%(n)s skills en espera"
-
-#: templates/identity/dashboard.html
-msgid "Skill queue"
-msgstr "Cola de skills"
 
 #: templates/identity/dashboard.html
 msgid "not synced yet"
@@ -18209,10 +21771,6 @@ msgstr "Escribe la primera →"
 #: templates/killboard/_feed.html
 msgid "Window:"
 msgstr "Ventana:"
-
-#: templates/killboard/_feed.html
-msgid "All time"
-msgstr "Todo el tiempo"
 
 #: templates/killboard/_feed.html
 msgid "Filter by alliance"
@@ -20731,28 +24289,9 @@ msgstr ""
 "tasa de la corp. Úsalo para seguir la participación y alimentar un reparto "
 "de beneficios."
 
-#: templates/mining/ledger.html templates/mining/my_mining.html
-#: templates/mining/payout.html
-msgid "Payouts"
-msgstr "Pagos"
-
-#: templates/mining/ledger.html templates/store/supply_forecast.html
-msgid "7 days"
-msgstr "7 días"
-
-#: templates/mining/ledger.html templates/mining/my_mining.html
-#: templates/store/supply_forecast.html
-msgid "30 days"
-msgstr "30 días"
-
 #: templates/mining/ledger.html templates/store/supply_forecast.html
 msgid "60 days"
 msgstr "60 días"
-
-#: templates/mining/ledger.html templates/mining/my_mining.html
-#: templates/store/supply_forecast.html
-msgid "90 days"
-msgstr "90 días"
 
 #: templates/mining/ledger.html
 #, python-format
@@ -20897,10 +24436,6 @@ msgstr "Adeudado"
 #: templates/mining/my_mining.html templates/mining/payout.html
 msgid "Payout"
 msgstr "Pago"
-
-#: templates/mining/my_mining.html templates/srp/budget.html
-msgid "Period"
-msgstr "Periodo"
 
 #: templates/mining/my_mining.html
 msgid "Your share"
@@ -21226,10 +24761,6 @@ msgstr ""
 " no una garantía — haz scout antes de comprometerte."
 
 #: templates/navigation/gatecamp.html templates/navigation/roaming.html
-msgid "Security"
-msgstr "Seguridad"
-
-#: templates/navigation/gatecamp.html templates/navigation/roaming.html
 msgid "Region (optional)"
 msgstr "Región (opcional)"
 
@@ -21487,10 +25018,6 @@ msgstr "Copiar:"
 #: templates/navigation/jump_planner.html
 msgid "Cyno waypoints"
 msgstr "Puntos de ruta cyno"
-
-#: templates/navigation/jump_planner.html
-msgid "Gate route"
-msgstr "Ruta por gate"
 
 #: templates/navigation/jump_planner.html
 msgid "Save this route"
@@ -21846,18 +25373,6 @@ msgstr[1] ""
 #: templates/navigation/roaming.html templates/readiness/dimension.html
 msgid "Score"
 msgstr "Puntuación"
-
-#: templates/navigation/roaming.html
-msgid "NPC kills"
-msgstr "Bajas de NPC"
-
-#: templates/navigation/roaming.html
-msgid "Ship kills"
-msgstr "Bajas de naves"
-
-#: templates/navigation/roaming.html
-msgid "Traffic"
-msgstr "Tráfico"
 
 #: templates/navigation/roaming.html
 msgid ""
@@ -23169,10 +26684,6 @@ msgstr "Detalles de la operación"
 #: templates/operations/form.html
 msgid "e.g. Home Defence — Saturday"
 msgstr "p. ej. Defensa local — sábado"
-
-#: templates/operations/form.html
-msgid "Operation type"
-msgstr "Tipo de operación"
 
 #: templates/operations/form.html
 msgid "Form-up date/time (EVE)"
@@ -25530,10 +29041,6 @@ msgstr ""
 #: templates/readiness/alerts.html
 msgid "Rule"
 msgstr "Regla"
-
-#: templates/readiness/alerts.html templates/readiness/findings.html
-msgid "Dimension"
-msgstr "Dimensión"
 
 #: templates/readiness/alerts.html
 msgid "State"

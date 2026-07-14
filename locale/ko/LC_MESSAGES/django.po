@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-13 20:01+0000\n"
+"POT-Creation-Date: 2026-07-14 01:40+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: ko machine-assisted draft\n"
@@ -772,33 +772,85 @@ msgid ""
 "Detached %(who)s. The owner can now re-link it at their next EVE login."
 msgstr "%(who)s을(를) 분리했습니다. 소유자는 다음 EVE 로그인 시 다시 연결할 수 있습니다."
 
-#: apps/admin_audit/health.py templates/stockpile/assets.html
+#: apps/admin_audit/health.py apps/sso/scopes.py
+#: templates/stockpile/assets.html
 msgid "Corp assets"
 msgstr "코퍼레이션 자산"
 
 #: apps/admin_audit/health.py
+msgid "Director token · esi-assets.read_corporation_assets.v1"
+msgstr "Director 토큰 · esi-assets.read_corporation_assets.v1"
+
+#: apps/admin_audit/health.py apps/readiness/dimensions/staging.py
+#: apps/readiness/dimensions/strategic.py
 msgid "Personal assets"
 msgstr "개인 자산"
+
+#: apps/admin_audit/health.py
+#, python-brace-format
+#| msgid "pilot(s)"
+msgid "{count} pilot(s)"
+msgstr "파일럿 {count}명"
+
+#: apps/admin_audit/health.py
+msgid "each pilot's own token"
+msgstr "각 파일럿 본인의 토큰"
 
 #: apps/admin_audit/health.py
 msgid "Market history"
 msgstr "마켓 내역"
 
 #: apps/admin_audit/health.py
+#| msgid "public"
+msgid "public ESI"
+msgstr "공개 ESI"
+
+#: apps/admin_audit/health.py
+#| msgid "Not required"
+msgid "no token required"
+msgstr "토큰 불필요"
+
+#: apps/admin_audit/health.py apps/corporation/compliance.py
 msgid "Killmails"
 msgstr "Killmails"
+
+#: apps/admin_audit/health.py
+msgid "char/corp tokens + zKill"
+msgstr "캐릭터/군단 토큰 + zKill"
+
+#: apps/admin_audit/health.py
+msgid "discovery every 10m"
+msgstr "10분마다 탐색"
 
 #: apps/admin_audit/health.py templates/corporation/roster.html
 msgid "Member roster"
 msgstr "멤버 명단"
 
 #: apps/admin_audit/health.py
+msgid "Director token · esi-corporations.track_members.v1"
+msgstr "Director 토큰 · esi-corporations.track_members.v1"
+
+#: apps/admin_audit/health.py
 msgid "Member skills"
 msgstr "멤버 스킬"
 
 #: apps/admin_audit/health.py
+#| msgid "Character age"
+msgid "character tokens"
+msgstr "캐릭터 토큰"
+
+#: apps/admin_audit/health.py
+msgid "sync every 12h"
+msgstr "12시간마다 동기화"
+
+#: apps/admin_audit/health.py
 msgid "Market prices"
 msgstr "마켓 가격"
+
+#: apps/admin_audit/health.py
+#| msgid "prices from"
+msgid "price import"
+msgstr "가격 가져오기"
 
 #: apps/admin_audit/health.py
 msgid "Market adjusted prices"
@@ -808,7 +860,7 @@ msgstr "마켓 조정 가격"
 msgid "Market Jita prices"
 msgstr "마켓 Jita 가격"
 
-#: apps/admin_audit/health.py
+#: apps/admin_audit/health.py apps/sso/scopes.py
 msgid "Jump network"
 msgstr "점프 네트워크"
 
@@ -846,6 +898,18 @@ msgstr "익명화"
 #: apps/admin_audit/models.py
 msgid "Retain"
 msgstr "보존"
+
+#: apps/buyback/forms.py
+msgid ""
+"Paste items from EVE, one per line:\n"
+"Tritanium  1000000\n"
+"Ferox  3\n"
+"Ischoten II x5"
+msgstr ""
+"EVE에서 아이템을 한 줄에 하나씩 붙여넣으세요:\n"
+"Tritanium  1000000\n"
+"Ferox  3\n"
+"Ischoten II x5"
 
 #: apps/buyback/forms.py
 msgid "Where the items are (e.g. station / system)"
@@ -984,8 +1048,8 @@ msgstr "승인됨 — 코퍼레이션 지급 대기 중"
 msgid "Settled"
 msgstr "정산됨"
 
-#: apps/buyback/models.py apps/killboard/models.py apps/mentorship/models.py
-#: apps/recruitment/models.py
+#: apps/buyback/models.py apps/identity/models.py apps/killboard/models.py
+#: apps/mentorship/models.py apps/recruitment/models.py
 msgid "Rejected"
 msgstr "거부됨"
 
@@ -1091,6 +1155,186 @@ msgstr "거부했습니다."
 msgid "Couldn't reject that request."
 msgstr "해당 요청을 거부하지 못했습니다."
 
+#: apps/campaigns/apps.py templates/_nav.html
+#: templates/campaigns/_dashboard_panel.html templates/campaigns/activity.html
+#: templates/campaigns/close.html templates/campaigns/detail.html
+#: templates/campaigns/explain.html templates/campaigns/form.html
+#: templates/campaigns/issue_form.html templates/campaigns/lessons.html
+#: templates/campaigns/milestone_form.html
+#: templates/campaigns/objective_detail.html
+#: templates/campaigns/objective_form.html templates/campaigns/portfolio.html
+#: templates/campaigns/recognition.html templates/campaigns/report.html
+#: templates/campaigns/risk_form.html templates/campaigns/template_picker.html
+#: templates/campaigns/timeline.html templates/campaigns/workspace.html
+#: templates/campaigns/workstream_form.html
+msgid "Campaign Command"
+msgstr "캠페인 지휘"
+
+#: apps/campaigns/metrics/base.py
+#, python-format
+msgid "“%(label)s” is required for this metric source."
+msgstr "이 지표 소스에는 “%(label)s”이(가) 필요합니다."
+
+#: apps/campaigns/metrics/base.py
+#, python-format
+msgid "“%(label)s” is not one of the allowed options."
+msgstr "“%(label)s”은(는) 허용된 옵션이 아닙니다."
+
+#: apps/campaigns/metrics/base.py
+#, python-format
+#| msgid "%(name)s must be a positive integer."
+msgid "“%(label)s” must be a whole number."
+msgstr "“%(label)s”은(는) 정수여야 합니다."
+
+#: apps/campaigns/metrics/base.py
+#, python-format
+msgid "“%(label)s” must be a comma-separated list of whole numbers."
+msgstr "“%(label)s”은(는) 쉼표로 구분된 정수 목록이어야 합니다."
+
+#: apps/campaigns/metrics/doctrine.py
+msgid "Doctrine — qualified pilots"
+msgstr "Doctrine — 자격 충족 파일럿"
+
+#: apps/campaigns/metrics/doctrine.py apps/capsuleer/models.py
+#: apps/onboarding/models.py apps/readiness/models.py apps/readiness/views.py
+#: templates/capsuleer/goal_form.html templates/capsuleer/path_detail.html
+msgid "Doctrine"
+msgstr "Doctrine"
+
+#: apps/campaigns/metrics/doctrine.py
+#| msgid "No active doctrines to report coverage for."
+msgid "Active doctrine to count fly-capable pilots for."
+msgstr "탑승 가능 파일럿을 집계할 활성 doctrine."
+
+#: apps/campaigns/metrics/doctrine.py
+#| msgid "Active days"
+msgid "Active within N days"
+msgstr "최근 N일 내 활동"
+
+#: apps/campaigns/metrics/doctrine.py
+msgid "Optional — only count pilots seen online in the last N days."
+msgstr "선택 — 최근 N일 내 접속한 파일럿만 집계합니다."
+
+#: apps/campaigns/metrics/finance.py
+msgid "Finance — wallet division balance"
+msgstr "재무 — 지갑 부서 잔액"
+
+#: apps/campaigns/metrics/finance.py
+#| msgid "All divisions"
+msgid "Wallet division"
+msgstr "지갑 부서"
+
+#: apps/campaigns/metrics/finance.py
+msgid "Corp wallet division to read the balance of."
+msgstr "잔액을 읽어올 군단 지갑 부서."
+
+#: apps/campaigns/metrics/industry.py
+msgid "Industry — deliveries in window"
+msgstr "산업 — 기간 내 납품량"
+
+#: apps/campaigns/metrics/industry.py
+#| msgid "Output type id"
+msgid "Output items"
+msgstr "산출 아이템"
+
+#: apps/campaigns/metrics/industry.py
+msgid "Built items to count deliveries of."
+msgstr "납품 수를 집계할 제작 아이템."
+
+#: apps/campaigns/metrics/killboard.py
+msgid "Killboard — home-corp kills in window"
+msgstr "Killboard — 기간 내 자체 군단 킬"
+
+#: apps/campaigns/metrics/logistics.py
+msgid "Logistics — m³ hauled in window"
+msgstr "물류 — 기간 내 운송량 m³"
+
+#: apps/campaigns/metrics/operations.py
+#| msgid "Counts — completed tasks per pilot"
+msgid "Operations — completed of type"
+msgstr "작전 — 유형별 완료 수"
+
+#: apps/campaigns/metrics/operations.py templates/operations/form.html
+msgid "Operation type"
+msgstr "작전 유형"
+
+#: apps/campaigns/metrics/operations.py
+msgid "Counts DONE operations of this type since the campaign started."
+msgstr "캠페인 시작 이후 이 유형의 DONE 작전 수를 집계합니다."
+
+#: apps/campaigns/metrics/operations.py
+#| msgid "Operations & defence"
+msgid "Operations — confirmed attendance"
+msgstr "작전 — 확정 참석 수"
+
+#: apps/campaigns/metrics/readiness.py
+#| msgid "Readiness dimension"
+msgid "Readiness — dimension score"
+msgstr "준비도 — 영역 점수"
+
+#: apps/campaigns/metrics/readiness.py templates/readiness/alerts.html
+#: templates/readiness/findings.html
+msgid "Dimension"
+msgstr "영역"
+
+#: apps/campaigns/metrics/readiness.py
+#| msgid "Unknown readiness dimension."
+msgid "Which readiness dimension score to track."
+msgstr "추적할 준비도 영역 점수."
+
+#: apps/campaigns/metrics/srp.py
+msgid "SRP — reserve (allocated − spent − exposure)"
+msgstr "SRP — 예비금 (배정 − 지출 − 노출)"
+
+#: apps/campaigns/metrics/srp.py templates/mining/my_mining.html
+#: templates/srp/budget.html
+msgid "Period"
+msgstr "기간"
+
+#: apps/campaigns/metrics/srp.py
+msgid "Budget period; defaults to the current month."
+msgstr "예산 기간. 기본값은 이번 달입니다."
+
+#: apps/campaigns/metrics/stockpile.py
+msgid "Stockpile — effective on-hand"
+msgstr "비축 — 실질 보유량"
+
+#: apps/campaigns/metrics/stockpile.py apps/campaigns/models.py
+#: templates/_nav.html templates/stockpile/dashboard.html
+msgid "Stockpile"
+msgstr "비축"
+
+#: apps/campaigns/metrics/stockpile.py
+msgid "The corp stockpile to reconcile against live ESI on-hand."
+msgstr "실시간 ESI 보유량과 대조할 군단 비축."
+
+#: apps/campaigns/metrics/stockpile.py
+#| msgid "%(n)s item type"
+#| msgid_plural "%(n)s item types"
+msgid "Item type"
+msgstr "아이템 유형"
+
+#: apps/campaigns/metrics/stockpile.py
+msgid ""
+"Optional — a single item type; omitted sums every item in the stockpile."
+msgstr "선택 — 단일 아이템 유형. 비워 두면 비축의 모든 아이템을 합산합니다."
+
+#: apps/campaigns/metrics/structures.py
+msgid "Structures — minimum fuel days"
+msgstr "구조물 — 최소 연료 일수"
+
+#: apps/campaigns/metrics/structures.py apps/corporation/finance_analytics.py
+#: templates/admin_audit/console/hub.html
+#: templates/corporation/structures.html
+msgid "Structures"
+msgstr "구조물"
+
+#: apps/campaigns/metrics/structures.py
+#| msgid ""
+#| "Fuel, state and reinforcement timers for every corp structure."
+msgid "Leave all unchecked to use every corp structure."
+msgstr "모두 선택하지 않으면 모든 군단 구조물을 사용합니다."
+
 #: apps/campaigns/models.py apps/capsuleer/models.py apps/raffle/models.py
 msgid "Automatic"
 msgstr "자동"
@@ -1149,11 +1393,6 @@ msgstr "이전"
 msgid "Defence Readiness"
 msgstr "방어 준비 태세"
 
-#: apps/campaigns/models.py templates/_nav.html
-#: templates/stockpile/dashboard.html
-msgid "Stockpile"
-msgstr "비축"
-
 #: apps/campaigns/models.py
 msgid "SRP Reserve"
 msgstr "SRP 예비금"
@@ -1169,18 +1408,18 @@ msgid "Training"
 msgstr "훈련"
 
 #: apps/campaigns/models.py apps/capsuleer/taxonomy.py
-#: apps/readiness/models.py apps/recruitment/models.py
-#: templates/corporation/extractions.html templates/erp/board.html
-#: templates/industry/blueprints.html templates/industry/board.html
-#: templates/industry/calculator.html templates/industry/chain.html
-#: templates/industry/create.html templates/industry/demand.html
-#: templates/industry/detail.html templates/industry/invention.html
-#: templates/industry/jobs.html
+#: apps/corporation/finance_analytics.py apps/readiness/models.py
+#: apps/recruitment/models.py templates/corporation/extractions.html
+#: templates/erp/board.html templates/industry/blueprints.html
+#: templates/industry/board.html templates/industry/calculator.html
+#: templates/industry/chain.html templates/industry/create.html
+#: templates/industry/demand.html templates/industry/detail.html
+#: templates/industry/invention.html templates/industry/jobs.html
 msgid "Industry"
 msgstr "산업"
 
 #: apps/campaigns/models.py apps/command_intel/models.py
-#: apps/pingboard/models.py apps/readiness/models.py
+#: apps/pingboard/models.py apps/readiness/models.py apps/readiness/views.py
 #: templates/logistics/corp_contracts.html templates/stockpile/logistics.html
 msgid "Logistics"
 msgstr "물류"
@@ -1189,8 +1428,9 @@ msgstr "물류"
 msgid "Coverage"
 msgstr "커버리지"
 
-#: apps/campaigns/models.py apps/mentorship/models.py apps/raffle/models.py
-#: apps/readiness/models.py apps/stockpile/models.py apps/tasks/models.py
+#: apps/campaigns/models.py apps/corporation/finance_analytics.py
+#: apps/mentorship/models.py apps/raffle/models.py apps/readiness/models.py
+#: apps/stockpile/models.py apps/tasks/models.py
 msgid "Other"
 msgstr "기타"
 
@@ -1207,8 +1447,8 @@ msgstr "초안"
 msgid "Proposed"
 msgstr "제안됨"
 
-#: apps/campaigns/models.py apps/killboard/models.py apps/mentorship/models.py
-#: apps/raffle/models.py apps/srp/models.py
+#: apps/campaigns/models.py apps/identity/models.py apps/killboard/models.py
+#: apps/mentorship/models.py apps/raffle/models.py apps/srp/models.py
 msgid "Approved"
 msgstr "승인됨"
 
@@ -1277,7 +1517,7 @@ msgid "Blocked"
 msgstr "차단됨"
 
 #: apps/campaigns/models.py apps/capsuleer/models.py apps/killboard/models.py
-#: templates/doctrines/my_readiness.html
+#: apps/stockpile/views.py templates/doctrines/my_readiness.html
 msgid "Unknown"
 msgstr "알 수 없음"
 
@@ -1336,9 +1576,10 @@ msgid "Done"
 msgstr "완료"
 
 #: apps/campaigns/models.py apps/capsuleer/models.py
-#: apps/command_intel/models.py apps/killboard/models.py
-#: apps/mentorship/models.py apps/pingboard/models.py apps/raffle/models.py
-#: apps/skills/models.py templates/corporation/roster.html
+#: apps/command_intel/models.py apps/identity/models.py
+#: apps/killboard/models.py apps/mentorship/models.py apps/pingboard/models.py
+#: apps/raffle/models.py apps/skills/models.py
+#: templates/corporation/roster.html
 msgid "Pending"
 msgstr "대기 중"
 
@@ -1413,6 +1654,26 @@ msgid "No such objective."
 msgstr "해당 목표가 없습니다."
 
 #: apps/campaigns/views.py
+#| msgid "Enter a valid quantity."
+msgid "Enter a valid date and time."
+msgstr "유효한 날짜와 시간을 입력하세요."
+
+#: apps/campaigns/views.py
+#| msgid "Enter a whole number."
+msgid "Enter a valid number."
+msgstr "유효한 숫자를 입력하세요."
+
+#: apps/campaigns/views.py
+#| msgid "A page needs a title."
+msgid "A campaign needs a name."
+msgstr "캠페인에는 이름이 필요합니다."
+
+#: apps/campaigns/views.py
+#| msgid "The start date can't be in the past."
+msgid "The target end date cannot be before the start date."
+msgstr "목표 종료일은 시작일보다 앞설 수 없습니다."
+
+#: apps/campaigns/views.py
 msgid "You cannot create campaigns."
 msgstr "캠페인을 생성할 수 없습니다."
 
@@ -1468,6 +1729,38 @@ msgid "Progress updated."
 msgstr "진행 상황을 업데이트했습니다."
 
 #: apps/campaigns/views.py
+#| msgid "A page needs a title."
+msgid "An objective needs a title."
+msgstr "목표에는 제목이 필요합니다."
+
+#: apps/campaigns/views.py
+#, python-format
+msgid "Division %(number)s"
+msgstr "부서 %(number)s"
+
+#: apps/campaigns/views.py
+#| msgid "Unknown system"
+msgid "unknown system"
+msgstr "알 수 없는 성계"
+
+#: apps/campaigns/views.py
+#, python-format
+#| msgid "Operation #%(id)s (removed)"
+msgid "id %(value)s (removed)"
+msgstr "id %(value)s (삭제됨)"
+
+#: apps/campaigns/views.py
+#, python-format
+#| msgid "due %(d)s"
+msgid "type %(id)s"
+msgstr "유형 %(id)s"
+
+#: apps/campaigns/views.py
+#| msgid "All"
+msgid "all"
+msgstr "전체"
+
+#: apps/campaigns/views.py
 msgid "Objective added."
 msgstr "목표를 추가했습니다."
 
@@ -1500,6 +1793,11 @@ msgid "Objective status updated."
 msgstr "목표 상태를 업데이트했습니다."
 
 #: apps/campaigns/views.py
+#| msgid "A page needs a title."
+msgid "A milestone needs a title."
+msgstr "마일스톤에는 제목이 필요합니다."
+
+#: apps/campaigns/views.py
 msgid "Milestone added."
 msgstr "마일스톤을 추가했습니다."
 
@@ -1520,6 +1818,11 @@ msgid "Milestone status updated."
 msgstr "마일스톤 상태를 업데이트했습니다."
 
 #: apps/campaigns/views.py
+#| msgid "A task needs a title."
+msgid "A workstream needs a name."
+msgstr "워크스트림에는 이름이 필요합니다."
+
+#: apps/campaigns/views.py
 msgid "Workstream added."
 msgstr "워크스트림을 추가했습니다."
 
@@ -1530,6 +1833,11 @@ msgstr "해당 워크스트림이 없습니다."
 #: apps/campaigns/views.py
 msgid "Workstream updated."
 msgstr "워크스트림을 업데이트했습니다."
+
+#: apps/campaigns/views.py
+#| msgid "A task needs a title."
+msgid "A risk needs a description."
+msgstr "리스크에는 설명이 필요합니다."
 
 #: apps/campaigns/views.py
 msgid "You cannot add risks to this campaign."
@@ -1783,6 +2091,54 @@ msgstr "캠페인 %(status)s"
 msgid "Target end"
 msgstr "목표 종료일"
 
+#: apps/capsuleer/briefing.py
+#| msgid "You're already on this path."
+msgid "Your next step on this goal."
+msgstr "이 목표에서 밟을 다음 단계입니다."
+
+#: apps/capsuleer/briefing.py
+#| msgid "You're already on this path."
+msgid "Your next milestone on this goal."
+msgstr "이 목표에서 밟을 다음 마일스톤입니다."
+
+#: apps/capsuleer/briefing.py apps/pingboard/models.py templates/_nav.html
+#: templates/admin_audit/console/hub.html
+#: templates/capsuleer/_dashboard_panel.html templates/capsuleer/compare.html
+#: templates/capsuleer/goal_detail.html templates/capsuleer/goal_form.html
+#: templates/capsuleer/home.html templates/capsuleer/leadership.html
+#: templates/capsuleer/path_detail.html templates/capsuleer/paths.html
+#: templates/capsuleer/profile.html templates/capsuleer/start.html
+msgid "Capsuleer Path"
+msgstr "Capsuleer Path"
+
+#: apps/capsuleer/briefing.py
+#, python-format
+msgid "%(detail)s (goal: %(title)s)"
+msgstr "%(detail)s (목표: %(title)s)"
+
+#: apps/capsuleer/config.py apps/comms_access/config.py
+#: apps/pingboard/config.py
+msgid "config document must be an object"
+msgstr "config 문서는 객체여야 합니다"
+
+#: apps/capsuleer/config.py
+#, python-format
+#| msgid "%(name)s must be a positive integer."
+msgid "%(name)s must be a positive integer"
+msgstr "%(name)s은(는) 양의 정수여야 합니다"
+
+#: apps/capsuleer/config.py
+msgid "leadership.min_group must be at least 2"
+msgstr "leadership.min_group은 최소 2 이상이어야 합니다"
+
+#: apps/capsuleer/config.py
+msgid "templates.disabled_keys must be a list of template keys"
+msgstr "templates.disabled_keys는 템플릿 키의 리스트여야 합니다"
+
+#: apps/capsuleer/config.py
+msgid "notifications.enabled must be an object of event → bool"
+msgstr "notifications.enabled는 event → bool 형태의 객체여야 합니다"
+
 #: apps/capsuleer/models.py templates/capsuleer/profile.html
 #: templates/capsuleer/start.html
 msgid "Relaxed"
@@ -1838,11 +2194,6 @@ msgstr "집계만"
 #: templates/operations/templates.html
 msgid "Template"
 msgstr "템플릿"
-
-#: apps/capsuleer/models.py apps/onboarding/models.py
-#: templates/capsuleer/goal_form.html templates/capsuleer/path_detail.html
-msgid "Doctrine"
-msgstr "Doctrine"
 
 #: apps/capsuleer/models.py apps/command_intel/models.py
 #: apps/readiness/models.py templates/capsuleer/goal_form.html
@@ -2005,7 +2356,7 @@ msgstr "부정확"
 msgid "Built-in"
 msgstr "기본 제공"
 
-#: apps/capsuleer/models.py apps/stockpile/models.py
+#: apps/capsuleer/models.py apps/stockpile/models.py apps/stockpile/views.py
 msgid "Corp"
 msgstr "Corp"
 
@@ -2020,6 +2371,53 @@ msgstr "그룹"
 #: apps/capsuleer/models.py templates/capsuleer/paths.html
 msgid "Mixed"
 msgstr "혼합"
+
+#: apps/capsuleer/models.py
+#| msgid "By skills"
+msgid "your skills"
+msgstr "내 스킬"
+
+#: apps/capsuleer/models.py
+#| msgid "Upcoming ops"
+msgid "upcoming ops"
+msgstr "예정된 작전"
+
+#: apps/capsuleer/models.py
+#| msgid "Mentors"
+msgid "mentors"
+msgstr "멘토"
+
+#: apps/capsuleer/models.py
+#| msgid "Corp assets"
+msgid "your assets"
+msgstr "내 자산"
+
+#: apps/capsuleer/models.py
+#| msgid "Market prices"
+msgid "shipyard prices"
+msgstr "조선소 가격"
+
+#: apps/capsuleer/models.py
+#| msgid "campaign"
+msgid "campaigns"
+msgstr "캠페인"
+
+#: apps/capsuleer/models.py
+#| msgid "My plans"
+msgid "your plan"
+msgstr "내 플랜"
+
+#: apps/capsuleer/models.py
+#, python-format
+#| msgid "synced %(ago)s ago"
+msgid "%(source)s (%(age)s ago)"
+msgstr "%(source)s (%(age)s 전)"
+
+#: apps/capsuleer/models.py
+#, python-format
+#| msgid "Sources: %(sources)s."
+msgid "based on: %(sources)s"
+msgstr "기준 데이터: %(sources)s"
 
 #: apps/capsuleer/params.py
 #, python-format
@@ -2112,6 +2510,34 @@ msgstr "'%(kind)s' 마일스톤은 자동 검증을 사용할 수 없습니다."
 msgid "Unknown milestone kind: %(value)s."
 msgstr "알 수 없는 마일스톤 종류: %(value)s."
 
+#: apps/capsuleer/progress.py
+#| msgid "Skill queue"
+msgid "continuous skill queue"
+msgstr "끊김 없는 스킬 큐"
+
+#: apps/capsuleer/progress.py
+msgid "current neural attributes"
+msgstr "현재 신경 속성"
+
+#: apps/capsuleer/progress.py
+msgid "no implants, boosters or accelerators modelled"
+msgstr "임플란트, 부스터, 액셀러레이터는 반영하지 않음"
+
+#: apps/capsuleer/progress.py
+#| msgid "In-game training queue"
+msgid "Omega training rates assumed"
+msgstr "Omega 훈련 속도를 가정함"
+
+#: apps/capsuleer/progress.py
+#| msgid "No plan yet."
+msgid "No skill plan yet."
+msgstr "아직 스킬 플랜이 없습니다."
+
+#: apps/capsuleer/progress.py
+#| msgid "No doctrines set for this op yet."
+msgid "No training left on this plan."
+msgstr "이 플랜에 남은 훈련이 없습니다."
+
 #: apps/capsuleer/taxonomy.py
 msgid "Combat line (DPS)"
 msgstr "전투 라인 (DPS)"
@@ -2137,7 +2563,7 @@ msgid "Capitals"
 msgstr "Capital 함선"
 
 #: apps/capsuleer/taxonomy.py apps/mentorship/models.py
-#: apps/pingboard/models.py
+#: apps/pingboard/models.py apps/raffle/sources/pve.py
 msgid "Mining"
 msgstr "채굴"
 
@@ -2371,6 +2797,54 @@ msgstr "시나리오 “%(name)s”을(를) 저장했습니다."
 msgid "Removed scenario “%(name)s”."
 msgstr "시나리오 “%(name)s”을(를) 삭제했습니다."
 
+#: apps/comms_access/config.py
+#, python-format
+msgid "Unknown comms_access config domain: %(domain)r"
+msgstr "알 수 없는 comms_access config 도메인: %(domain)r"
+
+#: apps/comms_access/config.py
+#| msgid "%(name)s must be a positive integer."
+msgid "general.revoke_grace_minutes must be a non-negative integer"
+msgstr "general.revoke_grace_minutes는 0 이상의 정수여야 합니다"
+
+#: apps/comms_access/config.py
+#, python-format
+msgid "unknown platform %(platform)r"
+msgstr "알 수 없는 플랫폼 %(platform)r"
+
+#: apps/comms_access/config.py
+#, python-format
+#| msgid "%(where)s params must be an object."
+msgid "platforms.%(platform)s must be an object"
+msgstr "platforms.%(platform)s는 객체여야 합니다"
+
+#: apps/comms_access/entitlements.py
+#| msgid "All corp members"
+msgid "Home-corp member"
+msgstr "본 군단 멤버"
+
+#: apps/comms_access/entitlements.py
+#| msgid "Safer (prefer high-sec)"
+msgid "Officer (or higher)"
+msgstr "임원 (또는 그 이상)"
+
+#: apps/comms_access/entitlements.py
+#| msgid "Director logged out"
+msgid "Director (or higher)"
+msgstr "디렉터 (또는 그 이상)"
+
+#: apps/comms_access/entitlements.py
+msgid "Recruiter (recruitment.manage)"
+msgstr "리크루터 (recruitment.manage)"
+
+#: apps/comms_access/entitlements.py
+msgid "Fleet Commander (fleet.manage)"
+msgstr "Fleet Commander (fleet.manage)"
+
+#: apps/comms_access/entitlements.py
+msgid "Alliance / friendly-corp pilot (not a home member)"
+msgstr "얼라이언스 / 우호 군단 파일럿 (본 군단 멤버 아님)"
+
 #: apps/comms_access/models.py
 msgid "Additive (grant only)"
 msgstr "추가형 (부여만)"
@@ -2398,6 +2872,272 @@ msgstr "적용됨"
 #: apps/comms_access/models.py
 msgid "Dry run (preview)"
 msgstr "모의 실행 (미리보기)"
+
+#: apps/comms_access/oauth.py
+#, python-format
+#| msgid "Test failed: %(error)s"
+msgid "token request failed: %(error)s"
+msgstr "토큰 요청 실패: %(error)s"
+
+#: apps/comms_access/oauth.py
+#, python-format
+msgid "token exchange returned http %(status)s"
+msgstr "토큰 교환이 http %(status)s을(를) 반환했습니다"
+
+#: apps/comms_access/oauth.py
+msgid "token response was not JSON"
+msgstr "토큰 응답이 JSON이 아닙니다"
+
+#: apps/comms_access/oauth.py
+msgid "token response missing access_token"
+msgstr "토큰 응답에 access_token이 없습니다"
+
+#: apps/comms_access/oauth.py
+#, python-format
+#| msgid "Test failed: %(error)s"
+msgid "identity request failed: %(error)s"
+msgstr "신원 요청 실패: %(error)s"
+
+#: apps/comms_access/oauth.py
+#, python-format
+msgid "identity lookup returned http %(status)s"
+msgstr "신원 조회가 http %(status)s을(를) 반환했습니다"
+
+#: apps/comms_access/oauth.py
+msgid "identity response was not JSON"
+msgstr "신원 응답이 JSON이 아닙니다"
+
+#: apps/comms_access/oauth.py
+msgid "identity response missing user id"
+msgstr "신원 응답에 사용자 ID가 없습니다"
+
+#: apps/corporation/access.py
+#| msgid "Whole corporation"
+msgid "our corporation"
+msgstr "우리 군단"
+
+#: apps/corporation/admin.py
+msgid "Resolve alliance names from ESI"
+msgstr "ESI에서 얼라이언스 이름 조회"
+
+#: apps/corporation/admin.py
+#, python-format
+#| msgid "Test failed: %(error)s"
+msgid "ESI name lookup failed: %(error)s"
+msgstr "ESI 이름 조회 실패: %(error)s"
+
+#: apps/corporation/admin.py
+#, python-format
+msgid "Resolved %(count)s alliance name(s)."
+msgstr "얼라이언스 이름 %(count)s건을 조회했습니다."
+
+#: apps/corporation/compliance.py apps/onboarding/models.py
+#: templates/identity/character.html
+msgid "Skills"
+msgstr "스킬"
+
+#: apps/corporation/compliance.py templates/identity/dashboard.html
+msgid "Skill queue"
+msgstr "스킬 큐"
+
+#: apps/corporation/compliance.py
+#| msgid "planet"
+msgid "Implants"
+msgstr "임플란트"
+
+#: apps/corporation/compliance.py
+#| msgid "Killmails"
+msgid "Corp killmails"
+msgstr "군단 killmails"
+
+#: apps/corporation/compliance.py
+#| msgid "Corp members only"
+msgid "Corp membership"
+msgstr "군단 멤버십"
+
+#: apps/corporation/compliance.py
+#| msgid "Your role(s)"
+msgid "Corp roles"
+msgstr "군단 역할"
+
+#: apps/corporation/finance_analytics.py
+#| msgid "Settings"
+msgid "Ratting"
+msgstr "Ratting"
+
+#: apps/corporation/finance_analytics.py
+#| msgid "Sessions"
+msgid "Missions"
+msgstr "미션"
+
+#: apps/corporation/finance_analytics.py templates/mining/ledger.html
+#: templates/mining/my_mining.html templates/mining/payout.html
+msgid "Payouts"
+msgstr "정산"
+
+#: apps/corporation/finance_analytics.py
+msgid "Taxes"
+msgstr "세금"
+
+#: apps/corporation/finance_analytics.py templates/_nav.html
+#: templates/market/dashboard.html
+msgid "Market"
+msgstr "마켓"
+
+#: apps/corporation/finance_analytics.py apps/industry/models.py
+#: templates/logistics/rates.html
+msgid "Contracts"
+msgstr "계약"
+
+#: apps/corporation/finance_analytics.py
+#| msgid "Location"
+msgid "Donations"
+msgstr "기부금"
+
+#: apps/corporation/finance_analytics.py
+msgid "Transfers"
+msgstr "이체"
+
+#: apps/corporation/finance_analytics.py
+msgid "Fees"
+msgstr "수수료"
+
+#: apps/corporation/finance_analytics.py
+msgid "SRP / Insurance"
+msgstr "SRP / 보험"
+
+#: apps/corporation/finance_analytics.py templates/mining/ledger.html
+#: templates/store/supply_forecast.html
+msgid "7 days"
+msgstr "7일"
+
+#: apps/corporation/finance_analytics.py templates/mining/ledger.html
+#: templates/mining/my_mining.html templates/store/supply_forecast.html
+msgid "30 days"
+msgstr "30일"
+
+#: apps/corporation/finance_analytics.py templates/mining/ledger.html
+#: templates/mining/my_mining.html templates/store/supply_forecast.html
+msgid "90 days"
+msgstr "90일"
+
+#: apps/corporation/finance_analytics.py
+#| msgid "/ month"
+msgid "12 months"
+msgstr "12개월"
+
+#: apps/corporation/finance_analytics.py
+#| msgid "Target date"
+msgid "Year to date"
+msgstr "연초부터 현재까지"
+
+#: apps/corporation/finance_analytics.py templates/killboard/_feed.html
+msgid "All time"
+msgstr "전체 기간"
+
+#: apps/corporation/finance_analytics.py
+#| msgid "/ month"
+msgid "End of month"
+msgstr "월말"
+
+#: apps/corporation/finance_analytics.py
+#| msgid "Net / day"
+msgid "Next 30 days"
+msgstr "향후 30일"
+
+#: apps/corporation/finance_analytics.py
+#| msgid "Net / day"
+msgid "Next 60 days"
+msgstr "향후 60일"
+
+#: apps/corporation/finance_analytics.py
+#| msgid "Net / day"
+msgid "Next 90 days"
+msgstr "향후 90일"
+
+#: apps/corporation/infra.py
+#| msgid "Opt out of nudges"
+msgid "Out of fuel"
+msgstr "연료 고갈"
+
+#: apps/corporation/infra.py
+#| msgid "Pair inactive"
+msgid "timer active"
+msgstr "타이머 진행 중"
+
+#: apps/corporation/infra.py
+#, python-format
+#| msgid "Timeline — %(name)s"
+msgid "Reinforced — %(state)s"
+msgstr "리인포스 — %(state)s"
+
+#: apps/corporation/infra.py
+#, python-format
+msgid "%(days).1f days of fuel left"
+msgstr "연료 %(days).1f일분 남음"
+
+#: apps/corporation/infra.py
+#, python-format
+msgid "%(days).1f days of fuel"
+msgstr "연료 %(days).1f일분"
+
+#: apps/corporation/infra.py
+#| msgid "unknown"
+msgid "Fuel unknown"
+msgstr "연료 알 수 없음"
+
+#: apps/corporation/infra.py
+#, python-format
+msgid "ADM %(adm).1f — soft"
+msgstr "ADM %(adm).1f — 취약"
+
+#: apps/corporation/infra.py
+#, python-format
+msgid "ADM %(adm).1f"
+msgstr "ADM %(adm).1f"
+
+#: apps/corporation/infra.py
+#, python-format
+msgid "%(type)s timer · %(side)s"
+msgstr "%(type)s 타이머 · %(side)s"
+
+#: apps/corporation/models.py
+#, python-format
+#| msgid "%(count)s active"
+msgid "%(label)s (inactive)"
+msgstr "%(label)s (비활성)"
+
+#: apps/corporation/models.py
+#, python-format
+msgid "Division %(division)s"
+msgstr "부서 %(division)s"
+
+#: apps/corporation/models.py
+#, python-format
+#| msgid "Structure type"
+msgid "Structure %(structure_id)s"
+msgstr "구조물 %(structure_id)s"
+
+#: apps/corporation/roster.py
+#| msgid "No home corporation configured."
+msgid "Home corporation id not configured."
+msgstr "본 군단 ID가 설정되지 않았습니다."
+
+#: apps/corporation/roster.py
+#| msgid "No director has granted the corp-contracts scope yet."
+msgid "No Director has granted member-tracking access."
+msgstr "멤버 트래킹 접근 권한을 부여한 디렉터가 없습니다."
+
+#: apps/corporation/roster.py
+#| msgid "Mentor available"
+msgid "Director token unavailable."
+msgstr "디렉터 토큰을 사용할 수 없습니다."
+
+#: apps/corporation/roster.py
+#, python-format
+#| msgid "(%(count)s resolved)"
+msgid "%(count)s members synced."
+msgstr "멤버 %(count)s명을 동기화했습니다."
 
 #: apps/corporation/views.py
 #, python-format
@@ -2465,6 +3205,27 @@ msgstr "ESI Scopes 페이지에서 “Grant member-tracking access”를 사용�
 msgid "Sync failed: %(message)s"
 msgstr "동기화 실패: %(message)s"
 
+#: apps/doctrines/fitparser.py
+msgid "EFT must start with '[ShipName, Fit name]'"
+msgstr "EFT는 '[ShipName, Fit name]' 형식으로 시작해야 합니다"
+
+#: apps/doctrines/library.py
+#| msgid "Categories"
+msgid "Uncategorised"
+msgstr "미분류"
+
+#: apps/doctrines/library.py
+#, python-format
+#| msgid "Skill points"
+msgid "Skill %(type_id)s"
+msgstr "스킬 %(type_id)s"
+
+#: apps/doctrines/models.py
+#| msgid "%(doctrines)s doctrine"
+#| msgid_plural "%(doctrines)s doctrines"
+msgid "doctrine categories"
+msgstr "doctrine 카테고리"
+
 #: apps/doctrines/models.py
 msgid "Corp-need weight for skill planning."
 msgstr "스킬 계획 시 Corp 수요 가중치."
@@ -2499,6 +3260,11 @@ msgid "Expired"
 msgstr "만료됨"
 
 #: apps/doctrines/models.py
+#| msgid "Doctrine fit value"
+msgid "doctrine import batches"
+msgstr "doctrine 가져오기 배치"
+
+#: apps/doctrines/models.py
 #, python-format
 msgid ""
 "How many fittings one XML upload may contain (1–%(ceiling)s). %(ceiling)s is"
@@ -2508,11 +3274,28 @@ msgstr ""
 "값으로 설정하면 사실상 제한이 없어집니다."
 
 #: apps/doctrines/models.py
+#| msgid "doctrines you can fly"
+msgid "doctrine import config"
+msgstr "doctrine 가져오기 설정"
+
+#: apps/doctrines/models.py
 #, python-format
 msgid ""
 "Doctrines/ships shown per page on the Doctrines and Shipyard pages "
 "(%(min)s–%(max)s)."
 msgstr "Doctrines 및 Shipyard 페이지에서 페이지당 표시되는 doctrine/함선 수 (%(min)s–%(max)s)."
+
+#: apps/doctrines/models.py
+#| msgid "Doctrine supply gap"
+msgid "doctrine display config"
+msgstr "doctrine 표시 설정"
+
+#: apps/doctrines/prep.py apps/doctrines/supply.py apps/erp/services.py
+#: apps/industry/chain.py apps/mining/moon_value.py apps/mining/services.py
+#: apps/navigation/system_info.py apps/stockpile/views.py
+#, python-format
+msgid "Type %(type_id)s"
+msgstr "타입 %(type_id)s"
 
 #: apps/doctrines/views.py
 msgid "Incomplete supply line."
@@ -2525,6 +3308,136 @@ msgstr "작업이 생성되었습니다 — 누구나 맡을 수 있습니다."
 #: apps/doctrines/views.py
 msgid "A task for that item is already open."
 msgstr "해당 아이템에 대한 작업이 이미 열려 있습니다."
+
+#: apps/doctrines/xml_import.py apps/recommendations/models.py
+#: templates/campaigns/form.html templates/campaigns/template_picker.html
+msgid "New"
+msgstr "신규"
+
+#: apps/doctrines/xml_import.py
+msgid "Identical — skip"
+msgstr "동일함 — 건너뜀"
+
+#: apps/doctrines/xml_import.py
+#| msgid "Sync conflict"
+msgid "Conflict"
+msgstr "충돌"
+
+#: apps/doctrines/xml_import.py
+msgid "Possible duplicate fit"
+msgstr "중복 피팅 가능성"
+
+#: apps/doctrines/xml_import.py
+msgid "Name clash (different hull)"
+msgstr "이름 충돌 (다른 함선)"
+
+#: apps/doctrines/xml_import.py
+#| msgid "Valid"
+msgid "Invalid"
+msgstr "유효하지 않음"
+
+#: apps/doctrines/xml_import.py
+msgid "No file was uploaded."
+msgstr "업로드된 파일이 없습니다."
+
+#: apps/doctrines/xml_import.py
+msgid "Only .xml files exported from the EVE client are accepted."
+msgstr "EVE 클라이언트에서 내보낸 .xml 파일만 허용됩니다."
+
+#: apps/doctrines/xml_import.py
+#, python-format
+msgid "The file is larger than the %(limit)s MB limit."
+msgstr "파일이 %(limit)s MB 제한을 초과합니다."
+
+#: apps/doctrines/xml_parser.py
+#, python-format
+msgid "unexpected attribute “%(attribute)s” on <%(element)s>"
+msgstr "<%(element)s>에 예상치 못한 속성 “%(attribute)s”이(가) 있습니다"
+
+#: apps/doctrines/xml_parser.py
+#, python-format
+msgid "<%(element)s> must not contain child elements"
+msgstr "<%(element)s>에는 하위 요소가 있을 수 없습니다"
+
+#: apps/doctrines/xml_parser.py
+#, python-format
+msgid "XML nesting is too deep (limit %(limit)s)"
+msgstr "XML 중첩이 너무 깊습니다 (제한 %(limit)s)"
+
+#: apps/doctrines/xml_parser.py
+#, python-format
+msgid "file is larger than the %(limit)s MB limit"
+msgstr "파일이 %(limit)s MB 제한을 초과합니다"
+
+#: apps/doctrines/xml_parser.py
+msgid "the file is empty"
+msgstr "파일이 비어 있습니다"
+
+#: apps/doctrines/xml_parser.py
+msgid "the file is not text (looks like a binary file)"
+msgstr "파일이 텍스트가 아닙니다 (바이너리 파일로 보입니다)"
+
+#: apps/doctrines/xml_parser.py
+msgid "a DOCTYPE/DTD is not allowed"
+msgstr "DOCTYPE/DTD는 허용되지 않습니다"
+
+#: apps/doctrines/xml_parser.py
+msgid "entity definitions are not allowed"
+msgstr "엔터티 정의는 허용되지 않습니다"
+
+#: apps/doctrines/xml_parser.py
+msgid "the XML declaration is not terminated"
+msgstr "XML 선언이 종료되지 않았습니다"
+
+#: apps/doctrines/xml_parser.py
+msgid "processing instructions are not allowed"
+msgstr "처리 명령(processing instruction)은 허용되지 않습니다"
+
+#: apps/doctrines/xml_parser.py
+msgid "the file does not look like XML"
+msgstr "파일이 XML로 보이지 않습니다"
+
+#: apps/doctrines/xml_parser.py
+msgid ""
+"the file uses an unsafe XML construct (DTD, entity or external reference)"
+msgstr "파일이 안전하지 않은 XML 구문(DTD, 엔터티 또는 외부 참조)을 사용합니다"
+
+#: apps/doctrines/xml_parser.py
+msgid "the file is not well-formed XML"
+msgstr "파일이 올바른 형식의 XML이 아닙니다"
+
+#: apps/doctrines/xml_parser.py
+#| msgid "The briefing could not be generated."
+msgid "the file could not be parsed as XML"
+msgstr "파일을 XML로 파싱할 수 없습니다"
+
+#: apps/doctrines/xml_parser.py
+#, python-format
+msgid "a fitting has more than %(limit)s hardware entries"
+msgstr "피팅의 하드웨어 항목이 %(limit)s개를 초과합니다"
+
+#: apps/doctrines/xml_parser.py
+#, python-format
+msgid "unexpected <%(element)s> inside a <fitting>"
+msgstr "<fitting> 안에 예상치 못한 <%(element)s>이(가) 있습니다"
+
+#: apps/doctrines/xml_parser.py
+msgid "the root element must be <fittings>"
+msgstr "루트 요소는 <fittings>여야 합니다"
+
+#: apps/doctrines/xml_parser.py
+#, python-format
+msgid "unexpected <%(element)s> under <fittings>"
+msgstr "<fittings> 아래에 예상치 못한 <%(element)s>가 있습니다"
+
+#: apps/doctrines/xml_parser.py
+#, python-format
+msgid "the file contains more than %(limit)s fittings"
+msgstr "파일에 피팅이 %(limit)s개를 초과해 들어 있습니다"
+
+#: apps/doctrines/xml_parser.py
+msgid "no <fitting> elements were found in the file"
+msgstr "파일에서 <fitting> 요소를 찾지 못했습니다"
 
 #: apps/erp/models.py
 msgid "Building"
@@ -2683,6 +3596,14 @@ msgstr "유효한 블루프린트 type id가 필요합니다."
 msgid "Blueprint recorded."
 msgstr "블루프린트가 기록되었습니다."
 
+#: apps/identity/models.py
+msgid ""
+"Preferred UI language (a settings.LANGUAGES code, e.g. 'pt-br'); blank = "
+"auto-detect from the browser, then English."
+msgstr ""
+"선호하는 UI 언어 (settings.LANGUAGES 코드, 예: 'pt-br'). 비워 두면 브라우저에서 자동 감지하고, 그다음 "
+"영어를 사용합니다."
+
 #: apps/identity/views.py tests/test_i18n_formatting.py
 #, python-format
 msgid "%(n)d buyback offer awaiting a buyer or payout"
@@ -2742,6 +3663,56 @@ msgstr ""
 msgid "View-as ended — you're back on your own account."
 msgstr "View-as가 종료되었습니다 — 본인 계정으로 돌아왔습니다."
 
+#: apps/industry/calc.py
+#| msgid "No recipe — this item can only be bought."
+msgid ""
+"No blueprint / recipe for this item in the SDE — it can only be bought."
+msgstr "SDE에 이 아이템의 블루프린트/레시피가 없습니다 — 구매만 가능합니다."
+
+#: apps/industry/calc.py
+#, python-format
+msgid "Missing market price for type %(type_id)s — treated as 0 ISK."
+msgstr "type %(type_id)s의 시장 가격이 없습니다 — 0 ISK로 처리합니다."
+
+#: apps/industry/calc.py
+msgid "Missing market price for the product — revenue shown as 0."
+msgstr "제품의 시장 가격이 없습니다 — 수익을 0으로 표시합니다."
+
+#: apps/industry/calc.py
+#| msgid ""
+#| "Our calculator estimates the fee from CCP adjusted prices × the cost index +"
+#| " facility tax. Structure and rig bonuses aren't modelled, so treat it as a "
+#| "close guide."
+msgid ""
+"Prices are Jita-sell estimates; job cost uses CCP adjusted prices × your "
+"system cost index + facility tax. A structure/rig material bonus is applied."
+" Manufacturing time skills are not modelled — treat as a guide, not a "
+"guarantee."
+msgstr ""
+"가격은 Jita 판매가 추정치이며, 작업 비용은 CCP adjusted price × 해당 시스템의 cost index + 시설 세금으로"
+" 계산합니다. structure/rig 재료 보너스는 반영되어 있습니다. 제조 시간 스킬은 반영되지 않으므로, 보장이 아닌 참고용으로 "
+"사용하세요."
+
+#: apps/industry/calc.py
+#| msgid ""
+#| "Our calculator estimates the fee from CCP adjusted prices × the cost index +"
+#| " facility tax. Structure and rig bonuses aren't modelled, so treat it as a "
+#| "close guide."
+msgid ""
+"Prices are Jita-sell estimates; job cost uses CCP adjusted prices × your "
+"system cost index + facility tax. Structure/rig material bonuses are not "
+"modelled. Manufacturing time skills are not modelled — treat as a guide, not"
+" a guarantee."
+msgstr ""
+"가격은 Jita 판매가 추정치이며, 작업 비용은 CCP adjusted price × 해당 시스템의 cost index + 시설 세금으로"
+" 계산합니다. structure/rig 재료 보너스는 반영되지 않습니다. 제조 시간 스킬도 반영되지 않으므로, 보장이 아닌 참고용으로 "
+"사용하세요."
+
+#: apps/industry/calc.py
+#| msgid "No reports yet."
+msgid "No recipe."
+msgstr "레시피 없음."
+
 #: apps/industry/forms.py
 msgid "e.g. Build 5 Feroxes"
 msgstr "예: Ferox 5척 제작"
@@ -2753,6 +3724,14 @@ msgstr "수량은 최소 1이어야 합니다."
 #: apps/industry/forms.py
 msgid "Material efficiency is between 0 and 10."
 msgstr "재료 효율은 0에서 10 사이입니다."
+
+#: apps/industry/invention.py
+msgid ""
+"Probability uses the standard invention formula; skills and decryptor are "
+"your inputs. Datacore/decryptor prices are Jita-sell estimates."
+msgstr ""
+"확률은 표준 인벤션 공식을 사용하며, 스킬과 decryptor는 직접 입력한 값입니다. Datacore/decryptor 가격은 Jita"
+" 판매가 추정치입니다."
 
 #: apps/industry/models.py
 msgid "Private (owner + leadership)"
@@ -2770,17 +3749,13 @@ msgstr "코퍼레이션 전체"
 msgid "Build"
 msgstr "제작"
 
-#: apps/industry/models.py templates/store/board.html
+#: apps/industry/models.py apps/readiness/views.py templates/store/board.html
 msgid "Stock"
 msgstr "재고"
 
 #: apps/industry/models.py
 msgid "Ammo"
 msgstr "탄약"
-
-#: apps/industry/models.py templates/logistics/rates.html
-msgid "Contracts"
-msgstr "계약"
 
 #: apps/industry/models.py
 msgid "Doctrine supply gap"
@@ -2855,6 +3830,47 @@ msgstr "운송"
 #: apps/industry/models.py templates/logistics/corp_contracts.html
 msgid "Contract"
 msgstr "계약"
+
+#: apps/industry/tools.py
+#| msgid "Pick an item from the search list."
+msgid "Pick a valid item from the demand list."
+msgstr "수요 목록에서 유효한 아이템을 선택하세요."
+
+#: apps/industry/tools.py
+#, python-format
+#| msgid "Per cycle of %(qty)s× %(name)s:"
+msgid "Plan created for %(quantity)s× %(item)s."
+msgstr "%(quantity)s× %(item)s 계획을 생성했습니다."
+
+#: apps/industry/tools.py
+#| msgid "Couldn't price that job."
+msgid "Couldn't resolve that job's product."
+msgstr "해당 작업의 제품을 확인할 수 없습니다."
+
+#: apps/industry/tools.py
+#| msgid "NPC stations"
+msgid "NPC station (no bonus)"
+msgstr "NPC 스테이션 (보너스 없음)"
+
+#: apps/industry/tools.py
+msgid "Raitaru · T1 ME rig (highsec)"
+msgstr "Raitaru · T1 ME rig (highsec)"
+
+#: apps/industry/tools.py
+msgid "Raitaru · T2 ME rig (highsec)"
+msgstr "Raitaru · T2 ME rig (highsec)"
+
+#: apps/industry/tools.py
+msgid "Azbel/Sotiyo · T1 ME rig (lowsec)"
+msgstr "Azbel/Sotiyo · T1 ME rig (lowsec)"
+
+#: apps/industry/tools.py
+msgid "Azbel/Sotiyo · T2 ME rig (lowsec)"
+msgstr "Azbel/Sotiyo · T2 ME rig (lowsec)"
+
+#: apps/industry/tools.py
+msgid "Azbel/Sotiyo · T2 ME rig (null/WH)"
+msgstr "Azbel/Sotiyo · T2 ME rig (null/WH)"
 
 #: apps/industry/views.py
 msgid "You can't see that plan."
@@ -2957,6 +3973,61 @@ msgstr "예약 %(n)s건을 Corp 재고로 반환했습니다."
 #: apps/kb/models.py
 msgid "Public"
 msgstr "공개"
+
+#: apps/kb/services.py
+#| msgid "Train into doctrine"
+msgid "readiness: name a doctrine"
+msgstr "준비도: doctrine 이름을 지정하세요"
+
+#: apps/kb/services.py
+#| msgid "Link an EVE character to see your readiness."
+msgid "link a character to see your readiness"
+msgstr "준비도를 보려면 캐릭터를 연결하세요"
+
+#: apps/kb/services.py
+#, python-format
+#| msgid "%(doctrines)s doctrine"
+#| msgid_plural "%(doctrines)s doctrines"
+msgid "unknown doctrine: %(doctrine)s"
+msgstr "알 수 없는 doctrine: %(doctrine)s"
+
+#: apps/kb/services.py
+#, python-format
+#| msgid "You can fly this (optimal)"
+msgid "You can fly %(doctrine)s (optimal)"
+msgstr "%(doctrine)s 조종 가능 (최적)"
+
+#: apps/kb/services.py
+#, python-format
+#| msgid "You can fly this"
+msgid "You can fly %(doctrine)s"
+msgstr "%(doctrine)s 조종 가능"
+
+#: apps/kb/services.py
+#, python-format
+#| msgid "You're closest to flying %(doctrine)s."
+msgid "You can't fly %(doctrine)s yet"
+msgstr "아직 %(doctrine)s을(를) 조종할 수 없습니다"
+
+#: apps/kb/services.py
+#, python-format
+msgid "%(doctrine)s: import skills to check"
+msgstr "%(doctrine)s: 확인하려면 스킬을 가져오세요"
+
+#: apps/kb/services.py
+#, python-format
+msgid "You have %(count)s loss(es) eligible for SRP"
+msgstr "SRP 대상 손실이 %(count)s건 있습니다"
+
+#: apps/kb/services.py
+#| msgid "No claims yet."
+msgid "No SRP claims pending"
+msgstr "대기 중인 SRP 청구 없음"
+
+#: apps/kb/services.py
+#| msgid "You can't settle your own request."
+msgid "log in to see your own readiness"
+msgstr "자신의 준비도를 보려면 로그인하세요"
 
 #: apps/kb/views.py
 msgid "A page needs a title."
@@ -3233,6 +4304,34 @@ msgstr "긴급 우선"
 msgid "Minimum reward"
 msgstr "최소 보상"
 
+#: apps/logistics/routing.py
+msgid "Both systems are required."
+msgstr "두 시스템 모두 입력해야 합니다."
+
+#: apps/logistics/routing.py
+msgid "No gate route between those systems."
+msgstr "해당 시스템 간 게이트 경로가 없습니다."
+
+#: apps/logistics/routing.py apps/navigation/models.py
+msgid "Safer (prefer high-sec)"
+msgstr "더 안전 (high-sec 선호)"
+
+#: apps/logistics/routing.py apps/navigation/models.py
+msgid "Shortest"
+msgstr "최단"
+
+#: apps/logistics/routing.py apps/navigation/models.py
+msgid "Less secure (prefer low/null)"
+msgstr "덜 안전 (low/null 선호)"
+
+#: apps/logistics/routing.py
+msgid "Need at least an origin and a destination."
+msgstr "최소한 출발지와 목적지가 필요합니다."
+
+#: apps/logistics/routing.py
+msgid "No jump route within range between those systems."
+msgstr "해당 시스템 간 사거리 내 점프 경로가 없습니다."
+
 #: apps/logistics/views.py
 msgid ""
 "Couldn't resolve one of those locations — pick from the list or enter jumps "
@@ -3319,6 +4418,10 @@ msgstr "아직 corp-contracts scope를 부여한 디렉터가 없습니다."
 msgid "Contract sync failed; try again later."
 msgstr "계약 동기화에 실패했습니다. 나중에 다시 시도하세요."
 
+#: apps/market/forms.py
+msgid "e.g. Amarr VIII (Oris)"
+msgstr "예: Amarr VIII (Oris)"
+
 #: apps/market/forms.py templates/market/dashboard.html
 msgid "Region ID"
 msgstr "리전 ID"
@@ -3351,6 +4454,20 @@ msgstr "시스템"
 #: templates/navigation/roaming.html
 msgid "Region"
 msgstr "리전"
+
+#: apps/market/models.py
+#| msgid "Fair sell"
+msgid "Jita sell"
+msgstr "Jita 판매가"
+
+#: apps/market/models.py
+#| msgid "to buy"
+msgid "Jita buy"
+msgstr "Jita 구매가"
+
+#: apps/market/models.py
+msgid "CCP adjusted"
+msgstr "CCP adjusted 가격"
 
 #: apps/market/views.py
 #, python-format
@@ -3390,6 +4507,11 @@ msgstr "아직 추적된 가격이 없습니다 — 먼저 가격 가져오기�
 msgid ""
 "Market history refresh queued for %(count)s items — it'll update shortly."
 msgstr "%(count)s개 아이템의 시장 이력 새로고침이 대기열에 추가되었습니다 — 곧 업데이트됩니다."
+
+#: apps/mentorship/apps.py templates/admin_audit/console/hub.html
+#: templates/mentorship/dashboard.html templates/mentorship/landing.html
+msgid "Mentorship Program"
+msgstr "멘토십 프로그램"
 
 #: apps/mentorship/forms.py
 msgid "Areas you can mentor"
@@ -3972,6 +5094,19 @@ msgstr "보상 한도 도달"
 msgid "Pair inactive"
 msgstr "페어 비활성"
 
+#: apps/mentorship/models.py
+msgid "0–100."
+msgstr "0–100."
+
+#: apps/mentorship/reporting.py
+#| msgid "Not started"
+msgid "Not yet paired"
+msgstr "아직 페어링되지 않음"
+
+#: apps/mentorship/reporting.py
+msgid "Paired but no tasks completed yet"
+msgstr "페어링됨 — 아직 완료한 과제 없음"
+
 #: apps/mentorship/views.py
 msgid "The Mentorship Program is currently paused."
 msgstr "멘토링 프로그램이 현재 일시 중지되었습니다."
@@ -4154,6 +5289,11 @@ msgid "Mentorship cancelled."
 msgstr "멘토링이 취소되었습니다."
 
 #: apps/mining/models.py
+#, python-format
+msgid "Observer %(observer_id)s"
+msgstr "Observer %(observer_id)s"
+
+#: apps/mining/models.py
 msgid "By ISK value mined"
 msgstr "채굴한 ISK 가치 기준"
 
@@ -4217,21 +5357,328 @@ msgstr "확정된 지급은 잠겨 있어 지급 상태를 변경할 수 없습�
 msgid "Payout finalised."
 msgstr "지급이 확정되었습니다."
 
+#: apps/navigation/esi_sync.py apps/stockpile/assets.py
+msgid "No home corporation configured."
+msgstr "홈 코퍼레이션이 구성되지 않았습니다."
+
+#: apps/navigation/esi_sync.py
+#| msgid ""
+#| "No Director has granted corp-asset access yet. A CEO/Director must re-"
+#| "authorise with the corp-assets scope."
+msgid ""
+"No Director has granted structure access yet. A CEO/Director (or a pilot "
+"with the Station Manager role) must authorise with the jump-network scope."
+msgstr ""
+"아직 구조물 접근 권한을 부여한 Director가 없습니다. CEO/Director(또는 Station Manager 역할을 가진 "
+"파일럿)가 jump-network scope로 인증해야 합니다."
+
+#: apps/navigation/esi_sync.py
+#, python-format
+#| msgid "Could not read corp assets: %(error)s"
+msgid "Could not read corp structures: %(error)s"
+msgstr "군단 구조물을 읽을 수 없습니다: %(error)s"
+
+#: apps/navigation/esi_sync.py
+#, python-format
+#| msgid ""
+#| "Imported %(types)s asset stacks across %(locations)s locations from "
+#| "%(character)s."
+msgid ""
+"Imported %(bridges)s jump bridge(s) and %(beacons)s cyno beacon(s) from "
+"%(character)s."
+msgstr ""
+"%(character)s(으)로부터 jump bridge %(bridges)s개와 cyno 비콘 %(beacons)s개를 가져왔습니다."
+
+#: apps/navigation/esi_sync.py
+#, python-format
+msgid "%(count)s structure(s) couldn't be matched to systems by name."
+msgstr "구조물 %(count)s개를 이름으로 시스템에 매칭하지 못했습니다."
+
+#: apps/navigation/highsec_exit.py
+msgid "No NPC station — no safe dock at the exit."
+msgstr "NPC 스테이션 없음 — 출구에 안전하게 도킹할 곳이 없습니다."
+
+#: apps/navigation/highsec_exit.py
+#, python-format
+msgid "%(jumps)s gate jumps to the high-sec endpoint."
+msgstr "high-sec 종점까지 게이트 점프 %(jumps)s회."
+
+#: apps/navigation/jump_service.py
+#, python-format
+#| msgid "System A"
+msgid "System %(id)s"
+msgstr "시스템 %(id)s"
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid "%(count)s low/null system(s) on the gate leg: %(systems)s"
+msgstr "게이트 구간에 low/null 시스템 %(count)s개: %(systems)s"
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid "(%(origin)s and %(dest)s are high-sec.)"
+msgstr "(%(origin)s과(와) %(dest)s은(는) high-sec 지역입니다.)"
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid "(%(system)s is high-sec.)"
+msgstr "(%(system)s은(는) high-sec 지역입니다.)"
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid ""
+"Waypoint %(systems)s is high-sec — a cyno can't be lit there. Waypoints must"
+" be low-sec or null-sec."
+msgstr ""
+"경유지 %(systems)s은(는) high-sec 지역이라 cyno 점화가 불가능합니다. 경유지는 low-sec 또는 null-sec "
+"지역이어야 합니다."
+
+#: apps/navigation/jump_service.py
+msgid ""
+"No jump route within range — try a longer-range hull/JDC, fewer avoided "
+"systems/waypoints, or drop ‘dockable only’."
+msgstr ""
+"사거리 내 점프 경로가 없습니다 — 사거리가 더 긴 함선/JDC, 회피 시스템/경유지 축소, 또는 ‘도킹 가능만’ 해제를 시도하세요."
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid ""
+"No low-sec exit near %(dest)s is reachable by jump from %(origin)s. Try a "
+"longer-range hull/JDC, a different origin, or add a waypoint."
+msgstr ""
+"%(origin)s에서 점프로 도달할 수 있는 %(dest)s 인근 low-sec 출구가 없습니다. 사거리가 더 긴 함선/JDC, 다른 "
+"출발지, 또는 웨이포인트 추가를 시도하세요."
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid ""
+"No low-sec exit near %(dest)s is reachable by jump from %(origin)s with "
+"these filters. Try a longer-range hull/JDC, fewer avoided systems/waypoints,"
+" or dropping ‘dockable only’."
+msgstr ""
+"이 필터로는 %(origin)s에서 점프로 도달할 수 있는 %(dest)s 근처의 low-sec 출구가 없습니다. 사거리가 더 긴 "
+"함선/JDC를 쓰거나, 회피 시스템/경유지를 줄이거나, ‘도킹 가능만’ 옵션을 해제해 보세요."
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid "Jump: %(origin)s → %(exit)s (low-sec exit)"
+msgstr "점프: %(origin)s → %(exit)s (low-sec 출구)"
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid "Gate: %(exit)s → %(dest)s (high-sec destination)"
+msgstr "게이트: %(exit)s → %(dest)s (high-sec 목적지)"
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid ""
+"%(exit)s (%(security)s) is your low-sec exit — light a cyno or use a beacon "
+"there, then take %(jumps)s gate(s) to %(dest)s."
+msgstr ""
+"%(exit)s(%(security)s)이(가) low-sec 출구입니다 — 그곳에서 cyno 점화 또는 비컨을 사용한 뒤, 게이트 "
+"%(jumps)s번을 타고 %(dest)s(으)로 가세요."
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid ""
+"No low-sec staging system near %(origin)s can jump to %(dest)s. Try a "
+"longer-range hull/JDC or a different destination."
+msgstr ""
+"%(origin)s 근처의 어떤 low-sec 스테이징 시스템에서도 %(dest)s(으)로 점프할 수 없습니다. 사거리가 더 긴 "
+"함선/JDC를 쓰거나 다른 목적지를 선택하세요."
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid ""
+"No low-sec staging system near %(origin)s can jump to %(dest)s with these "
+"filters. Try a longer-range hull/JDC, fewer avoided systems/waypoints, or "
+"dropping ‘dockable only’."
+msgstr ""
+"이 필터로는 %(origin)s 근처의 어떤 low-sec 스테이징 시스템에서도 %(dest)s(으)로 점프할 수 없습니다. 사거리가 더"
+" 긴 함선/JDC를 쓰거나, 회피 시스템/경유지를 줄이거나, ‘도킹 가능만’ 옵션을 해제해 보세요."
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid "Gate: %(origin)s (high-sec) → %(entry)s"
+msgstr "게이트: %(origin)s (high-sec) → %(entry)s"
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid "Jump: %(entry)s → %(dest)s"
+msgstr "점프: %(entry)s → %(dest)s"
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid ""
+"Gate out of %(origin)s to %(entry)s (%(security)s), light a cyno there, then"
+" jump."
+msgstr ""
+"%(origin)s에서 게이트로 %(entry)s(%(security)s)까지 나간 뒤, 그곳에서 cyno 점화 후 점프하세요."
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid ""
+"Couldn't find a low-sec entry near %(origin)s that can jump to a low-sec "
+"exit near %(dest)s. The high-sec pockets may be too far apart for this "
+"hull's range."
+msgstr ""
+"%(dest)s 근처의 low-sec 출구로 점프할 수 있는 %(origin)s 근처의 low-sec 진입점을 찾지 못했습니다. 두 "
+"high-sec 구역이 이 함선의 사거리에 비해 너무 멀리 떨어져 있을 수 있습니다."
+
+#: apps/navigation/jump_service.py
+msgid "No jump route between the chosen entry and exit systems."
+msgstr "선택한 진입 시스템과 출구 시스템 사이에 점프 경로가 없습니다."
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid "Jump: %(entry)s → %(exit)s"
+msgstr "점프: %(entry)s → %(exit)s"
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid ""
+"Two gate legs: out of %(origin)s to %(entry)s, and from %(exit)s into "
+"%(dest)s. Fuel covers the jump between them only."
+msgstr ""
+"게이트 구간 2개: %(origin)s에서 %(entry)s까지, 그리고 %(exit)s에서 %(dest)s까지. 연료는 그 사이의 점프"
+" 구간만 포함합니다."
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid ""
+"Range %(range)s ly (%(ship)s, base %(base)s ly × JDC %(jdc)s). JDC affects "
+"range only."
+msgstr ""
+"사거리 %(range)s ly (%(ship)s, 기본 %(base)s ly × JDC %(jdc)s). JDC는 사거리에만 영향을 "
+"줍니다."
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid "Fuel %(base)s %(isotope)s/ly base, −10%%/level JFC (JFC %(jfc)s)."
+msgstr "연료 기본 %(base)s %(isotope)s/ly, JFC 레벨당 −10%% (JFC %(jfc)s)."
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid "Jump Freighters skill saves a further −10%%/level (JF %(jf)s)."
+msgstr "Jump Freighters 스킬이 레벨당 −10%%를 추가로 절약합니다 (JF %(jf)s)."
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid "%(rigs)s× Jump Drive Economizer rig fitted."
+msgstr "Jump Drive Economizer 리그 %(rigs)s개 장착됨."
+
+#: apps/navigation/jump_service.py
+msgid ""
+"Fuel is rounded up per jump (never under-fuel) and covers jump legs only — "
+"gate legs burn no isotopes."
+msgstr ""
+"연료는 점프마다 올림 처리되며(연료가 모자라지 않도록) 점프 구간만 계산합니다 — 게이트 구간은 아이소토프를 소모하지 않습니다."
+
+#: apps/navigation/jump_service.py
+#, python-format
+msgid "Includes a %(pct)s%% fuel safety margin."
+msgstr "%(pct)s%% 연료 안전 마진이 포함되어 있습니다."
+
+#: apps/navigation/jump_service.py
+msgid "No market price for the fuel isotope — ISK cost unavailable."
+msgstr "연료 아이소토프의 시장 가격이 없습니다 — ISK 비용을 계산할 수 없습니다."
+
+#: apps/navigation/maps.py templates/navigation/gatecamp.html
+#: templates/navigation/roaming.html
+msgid "Security"
+msgstr "보안등급"
+
+#: apps/navigation/maps.py
+#| msgid "%(n)s constellations"
+msgid "Constellation"
+msgstr "성단"
+
+#: apps/navigation/maps.py
+#| msgid "Activity"
+msgid "Our activity"
+msgstr "우리 활동"
+
+#: apps/navigation/maps.py templates/navigation/roaming.html
+msgid "Traffic"
+msgstr "통행량"
+
+#: apps/navigation/maps.py templates/navigation/roaming.html
+msgid "Ship kills"
+msgstr "함선 격추"
+
+#: apps/navigation/maps.py templates/navigation/roaming.html
+msgid "NPC kills"
+msgstr "NPC 격추"
+
+#: apps/navigation/maps.py templates/admin_audit/console/hub.html
+#: templates/navigation/system_detail.html templates/operations/sov.html
+msgid "Sovereignty"
+msgstr "주권"
+
+#: apps/navigation/maps.py
+#| msgid "Faction war:"
+msgid "Faction war"
+msgstr "Faction war"
+
+#: apps/navigation/maps.py
+#| msgid "Incursion active"
+msgid "Incursions"
+msgstr "Incursion"
+
+#: apps/navigation/maps.py
+#, python-format
+#| msgid "%(skill_count)s skills"
+msgid "%(count)s kills"
+msgstr "킬 %(count)s건"
+
+#: apps/navigation/maps.py
+#, python-format
+#| msgid "%(c)s jump"
+#| msgid_plural "%(c)s jumps"
+msgid "%(count)s jumps/h"
+msgstr "시간당 점프 %(count)s회"
+
+#: apps/navigation/maps.py
+#, python-format
+#| msgid "%(skill_count)s skills"
+msgid "%(count)s kills/h"
+msgstr "시간당 킬 %(count)s건"
+
+#: apps/navigation/maps.py
+#, python-format
+#| msgid "%(count)s open"
+msgid "%(count)s NPC/h"
+msgstr "시간당 NPC %(count)s킬"
+
+#: apps/navigation/maps.py
+#| msgid "unclaimed"
+msgid "Unclaimed"
+msgstr "미점령"
+
+#: apps/navigation/maps.py
+#| msgid "Unassigned"
+msgid "Unaligned"
+msgstr "비동맹"
+
+#: apps/navigation/maps.py
+#| msgid "Incursion active"
+msgid "Incursion"
+msgstr "Incursion"
+
+#: apps/navigation/maps.py templates/campaigns/lessons.html
+#: templates/campaigns/portfolio.html templates/doctrines/list.html
+msgid "Clear"
+msgstr "지우기"
+
+#: apps/navigation/maps.py
+#, python-format
+#| msgid "Avg security:"
+msgid "sec %(security)s"
+msgstr "보안도 %(security)s"
+
 #: apps/navigation/models.py
 msgid "ESI sync"
 msgstr "ESI 동기화"
-
-#: apps/navigation/models.py
-msgid "Safer (prefer high-sec)"
-msgstr "더 안전 (high-sec 선호)"
-
-#: apps/navigation/models.py
-msgid "Shortest"
-msgstr "최단"
-
-#: apps/navigation/models.py
-msgid "Less secure (prefer low/null)"
-msgstr "덜 안전 (low/null 선호)"
 
 #: apps/navigation/models.py
 msgid "Jump planner config"
@@ -4248,13 +5695,121 @@ msgstr "비공개 (나만)"
 msgid "Shared with leadership"
 msgstr "리더십과 공유"
 
+#: apps/navigation/route_mode.py templates/navigation/jump_planner.html
+msgid "Gate route"
+msgstr "Gate 경로"
+
+#: apps/navigation/route_mode.py
+#| msgid "Jump here"
+msgid "Jump route"
+msgstr "점프 경로"
+
+#: apps/navigation/route_mode.py
+#| msgid "Black ops"
+msgid "Black Ops jump"
+msgstr "Black Ops 점프"
+
+#: apps/navigation/route_mode.py
+msgid "Jump + gate (high-sec exit)"
+msgstr "점프 + 게이트 (high-sec 출구)"
+
+#: apps/navigation/route_mode.py
+msgid "Gate + jump (high-sec start)"
+msgstr "게이트 + 점프 (high-sec 출발)"
+
+#: apps/navigation/route_mode.py
+#| msgid "Gate jumps"
+msgid "Gate + jump + gate"
+msgstr "게이트 + 점프 + 게이트"
+
+#: apps/navigation/route_mode.py
+msgid "Invalid for this hull"
+msgstr "이 함선에는 사용할 수 없음"
+
+#: apps/navigation/route_mode.py
+#| msgid "Imported"
+msgid "Unsupported"
+msgstr "지원되지 않음"
+
+#: apps/navigation/route_mode.py
+msgid "This hull has no jump drive — a normal stargate route."
+msgstr "이 함선에는 점프 드라이브가 없습니다 — 일반 스타게이트 경로입니다."
+
+#: apps/navigation/route_mode.py
+#, python-format
+msgid "A %(ship)s can't reach a %(band)s system by stargate."
+msgstr "%(ship)s은(는) 스타게이트로 %(band)s 시스템에 도달할 수 없습니다."
+
+#: apps/navigation/route_mode.py
+#, python-format
+msgid "Black Ops jump via %(cyno)s — covert legs, reduced jump fatigue."
+msgstr "%(cyno)s을(를) 통한 Black Ops 점프 — 은밀 구간, 점프 피로도 감소."
+
+#: apps/navigation/route_mode.py
+#, python-format
+msgid "Direct jump-drive route via %(cyno)s."
+msgstr "%(cyno)s을(를) 통한 직접 점프 드라이브 경로입니다."
+
+#: apps/navigation/route_mode.py
+#, python-format
+msgid ""
+"A %(ship)s can't enter high-sec (no stargate access and no cyno in high-"
+"sec), so neither the high-sec origin nor the high-sec destination can be "
+"reached. Choose a low-sec or null-sec system."
+msgstr ""
+"%(ship)s은(는) high-sec에 진입할 수 없어(스타게이트 통행 불가, high-sec에서 cyno 사용 불가) high-sec"
+" 출발지와 high-sec 목적지 모두 도달할 수 없습니다. low-sec 또는 null-sec 시스템을 선택하세요."
+
+#: apps/navigation/route_mode.py
+#, python-format
+msgid ""
+"A %(ship)s can't enter high-sec (no stargate access and no cyno in high-"
+"sec), so the high-sec destination can't be reached. Choose a low-sec or "
+"null-sec system."
+msgstr ""
+"%(ship)s은(는) high-sec에 진입할 수 없어(스타게이트 통행 불가, high-sec에서 cyno 사용 불가) high-sec"
+" 목적지에 도달할 수 없습니다. low-sec 또는 null-sec 시스템을 선택하세요."
+
+#: apps/navigation/route_mode.py
+#, python-format
+msgid ""
+"A %(ship)s can't enter high-sec (no stargate access and no cyno in high-"
+"sec), so the high-sec origin can't be reached. Choose a low-sec or null-sec "
+"system."
+msgstr ""
+"%(ship)s은(는) high-sec에 진입할 수 없어(스타게이트 통행 불가, high-sec에서 cyno 사용 불가) high-sec"
+" 출발지에 도달할 수 없습니다. low-sec 또는 null-sec 시스템을 선택하세요."
+
+#: apps/navigation/route_mode.py
+#, python-format
+msgid ""
+"A %(ship)s can't cyno into or out of high-sec: gate out of the high-sec "
+"origin to a low-sec entry, jump, then gate to the high-sec destination."
+msgstr ""
+"%(ship)s은(는) high-sec으로 들어가거나 나오는 cyno 점프를 할 수 없습니다: high-sec 출발지에서 게이트로 "
+"low-sec 진입점까지 나가 점프한 뒤, 게이트로 high-sec 목적지까지 가세요."
+
+#: apps/navigation/route_mode.py
+#, python-format
+msgid ""
+"A %(ship)s can't cyno directly into high-sec: jump to a low-sec exit near "
+"the destination, then take stargates the rest of the way."
+msgstr ""
+"%(ship)s은(는) high-sec 안으로 직접 cyno 점프할 수 없습니다: 목적지 근처의 low-sec 출구로 점프한 뒤, 남은 "
+"구간은 스타게이트로 이동하세요."
+
+#: apps/navigation/route_mode.py
+#, python-format
+msgid ""
+"A %(ship)s can't light a cyno in high-sec: gate out of the high-sec origin "
+"to a low-sec staging system, then jump from there."
+msgstr ""
+"%(ship)s은(는) high-sec 지역에서 cyno 점화가 불가능합니다: high-sec 출발지에서 게이트로 low-sec 스테이징"
+" 시스템까지 나간 뒤 그곳에서 점프하세요."
+
 #: apps/onboarding/models.py templates/_nav.html
 msgid "Account"
 msgstr "계정"
-
-#: apps/onboarding/models.py templates/identity/character.html
-msgid "Skills"
-msgstr "스킬"
 
 #: apps/onboarding/models.py
 msgid "To do"
@@ -4531,6 +6086,72 @@ msgstr ""
 "멤버의 PVE 수입으로 집계되는 군단 지갑 ref_types(쉼표로 구분). Corp Finance 페이지에서 실제 ref_types를 "
 "확인할 수 있습니다."
 
+#: apps/pilots/views.py core/features.py
+msgid "This feature is not enabled for this corporation."
+msgstr "이 코퍼레이션에서는 이 기능이 활성화되어 있지 않습니다."
+
+#: apps/pingboard/config.py
+#| msgid "%(where)s params must be an object."
+msgid "general.dispatch_floor must be an object"
+msgstr "general.dispatch_floor는 객체여야 합니다"
+
+#: apps/pingboard/config.py
+#, python-format
+msgid "general.dispatch_floor has unknown priority %(tier)r"
+msgstr "general.dispatch_floor에 알 수 없는 우선순위 %(tier)r이(가) 있습니다"
+
+#: apps/pingboard/config.py
+#, python-format
+msgid "general.dispatch_floor.%(tier)s invalid role %(role)r"
+msgstr "general.dispatch_floor.%(tier)s의 역할 %(role)r이(가) 잘못되었습니다"
+
+#: apps/pingboard/config.py
+#, python-format
+msgid "general.%(key)s invalid role %(role)r"
+msgstr "general.%(key)s의 역할 %(role)r이(가) 잘못되었습니다"
+
+#: apps/pingboard/config.py
+msgid "general.default_expiry_minutes must be a non-negative integer"
+msgstr "general.default_expiry_minutes는 0 이상의 정수여야 합니다"
+
+#: apps/pingboard/config.py
+#, python-format
+#| msgid "%(name)s must be a positive integer."
+msgid "anti_abuse.%(key)s must be a non-negative integer"
+msgstr "anti_abuse.%(key)s는 0 이상의 정수여야 합니다"
+
+#: apps/pingboard/config.py
+msgid "anti_abuse.approval_required_categories must be a list of strings"
+msgstr "anti_abuse.approval_required_categories는 문자열 리스트여야 합니다"
+
+#: apps/pingboard/config.py
+#, python-format
+msgid "notifications.leadership_role invalid role %(role)r"
+msgstr "notifications.leadership_role의 역할 %(role)r이(가) 잘못되었습니다"
+
+#: apps/pingboard/config.py
+msgid "notifications.leadership_user_ids must be a list of integers"
+msgstr "notifications.leadership_user_ids는 정수 리스트여야 합니다"
+
+#: apps/pingboard/config.py
+msgid "notifications.events must be an object"
+msgstr "notifications.events는 객체여야 합니다"
+
+#: apps/pingboard/config.py
+#, python-format
+msgid "notifications.events.%(key)s must be an object"
+msgstr "notifications.events.%(key)s는 객체여야 합니다"
+
+#: apps/pingboard/config.py
+#, python-format
+msgid "notifications.events.%(key)s.audience invalid %(audience)r"
+msgstr "notifications.events.%(key)s.audience의 %(audience)r이(가) 잘못되었습니다"
+
+#: apps/pingboard/config.py
+#, python-format
+msgid "notifications.events.%(key)s.min_severity must be 0–100"
+msgstr "notifications.events.%(key)s.min_severity는 0–100이어야 합니다"
+
 #: apps/pingboard/messages.py
 #, python-brace-format
 msgid "“{operation_name}” form-up"
@@ -4596,16 +6217,6 @@ msgstr "군단 공지"
 #: apps/pingboard/models.py
 msgid "System notification"
 msgstr "시스템 알림"
-
-#: apps/pingboard/models.py templates/_nav.html
-#: templates/admin_audit/console/hub.html
-#: templates/capsuleer/_dashboard_panel.html templates/capsuleer/compare.html
-#: templates/capsuleer/goal_detail.html templates/capsuleer/goal_form.html
-#: templates/capsuleer/home.html templates/capsuleer/leadership.html
-#: templates/capsuleer/path_detail.html templates/capsuleer/paths.html
-#: templates/capsuleer/profile.html templates/capsuleer/start.html
-msgid "Capsuleer Path"
-msgstr "Capsuleer Path"
 
 #: apps/pingboard/models.py
 msgid "Normal"
@@ -4728,6 +6339,10 @@ msgstr ""
 "고심각도 장교 추천 — 재고 부족, doctrine 준비 격차, 자체 건조 대 구매 판단, 시장 시딩, 운송 적체, 반복되는 전투 손실 "
 "(예: “최근 7d간 Capsule 6 × 손실”)."
 
+#: apps/pingboard/notifications.py
+msgid "Beat recommendations.run (every 30 min) → dispatch_alerts."
+msgstr "Beat recommendations.run (30분마다) → dispatch_alerts."
+
 #: apps/pingboard/notifications.py templates/_nav.html
 msgid "Readiness alerts"
 msgstr "준비 상태 경보"
@@ -4738,6 +6353,10 @@ msgid ""
 msgstr "설정된 경보 규칙을 초과하는 함대 준비 상태 발견 사항 (소유자 라우팅)."
 
 #: apps/pingboard/notifications.py
+msgid "Beat readiness.evaluate_alerts, over open findings."
+msgstr "Beat readiness.evaluate_alerts — 미해결 발견 사항 대상."
+
+#: apps/pingboard/notifications.py
 msgid "Weekly readiness report"
 msgstr "주간 준비 상태 보고서"
 
@@ -4745,6 +6364,10 @@ msgstr "주간 준비 상태 보고서"
 msgid ""
 "The weekly executive readiness digest — index, biggest movers, top risks."
 msgstr "주간 임원용 준비 상태 요약 — 지수, 주요 변동, 최상위 리스크."
+
+#: apps/pingboard/notifications.py
+msgid "Beat readiness.weekly_report (weekly)."
+msgstr "Beat readiness.weekly_report (주간)."
 
 #: apps/pingboard/notifications.py
 msgid "Daily leadership briefing"
@@ -4757,6 +6380,10 @@ msgid ""
 msgstr "일일 지휘 브리핑 — 준비 지수, 24시간 손실, 열린 작업/운송, 재고 부족, SRP 노출, 최고 기여자."
 
 #: apps/pingboard/notifications.py
+msgid "Beat pilots.deliver_leadership_briefing (daily)."
+msgstr "Beat pilots.deliver_leadership_briefing (매일)."
+
+#: apps/pingboard/notifications.py
 msgid "Mentorship review notices"
 msgstr "멘토링 검토 알림"
 
@@ -4765,6 +6392,11 @@ msgid ""
 "Mentor/cadet applications pending review, pairings awaiting approval and "
 "stalled-pair nudges — officer/mentor review traffic."
 msgstr "검토 대기 중인 멘토/훈련생 신청, 승인 대기 중인 페어링, 정체된 페어 알림 — 장교/멘토 검토 트래픽."
+
+#: apps/pingboard/notifications.py
+msgid ""
+"Mentorship application/pairing events (when the programme arms Discord)."
+msgstr "멘토십 지원/페어링 이벤트 (프로그램이 Discord를 활성화한 경우)."
 
 #: apps/pingboard/notifications.py
 msgid "Command-intelligence reports"
@@ -4777,6 +6409,10 @@ msgid ""
 msgstr ""
 "예약된 지휘 인텔리전스 보고서. 보고서별로 자체 분류되며 이미 싱크 단계에서 게이팅됩니다. 가시성과 켜기/끄기 스위치를 위해 여기에 "
 "나열됩니다."
+
+#: apps/pingboard/notifications.py
+msgid "command_intel.deliver_report for a ready scheduled report."
+msgstr "준비된 예약 보고서에 대한 command_intel.deliver_report."
 
 #: apps/pingboard/notifications.py
 msgid "Integration health & dependency alerts"
@@ -4792,6 +6428,11 @@ msgstr ""
 "백그라운드 동기화가 중단되거나, SDE 정적 데이터가 오래되거나, 의존성 취약점(CVE)이 발견될 때 중복 제거된 디렉터 경보 1건 — "
 "그렇지 않으면 디렉터가 상태 페이지를 열 때까지 군단이 오래된 데이터로 방치됩니다. 개별 문제 세트마다 한 번 발생하며 정상화되면 "
 "초기화됩니다."
+
+#: apps/pingboard/notifications.py
+msgid ""
+"Beat admin_audit.scan_integration_health (every 30 min), on state change."
+msgstr "Beat admin_audit.scan_integration_health (30분마다), 상태 변경 시."
 
 #: apps/pingboard/notifications.py
 msgid "SRP SLA & solvency alerts"
@@ -4810,6 +6451,10 @@ msgstr ""
 "SLA 이내에 초기화됩니다."
 
 #: apps/pingboard/notifications.py
+msgid "Beat srp.scan_sla (every 2h), on breach-set change."
+msgstr "Beat srp.scan_sla (2시간마다), 위반 집합 변경 시."
+
+#: apps/pingboard/notifications.py
 msgid "Ingestion-token liveness alerts"
 msgstr "수집 토큰 활성 경보"
 
@@ -4823,6 +6468,10 @@ msgstr ""
 "군단 수집 토큰(자산 / 지갑 / 로스터 / 구조물)이 사망할 때 — 취소되거나 재시도 한도를 초과해 갱신 실패 — 소유 디렉터에게 알림"
 " 1건, 군단 데이터가 조용히 오래되지 않도록 합니다. 위험에 처한 캐릭터와 데이터를 명시하며, 토큰 사망마다 한 번 발생하고 복구 시 "
 "재무장됩니다."
+
+#: apps/pingboard/notifications.py
+msgid "Beat sso.scan_ingestion_tokens (every 30 min), one per token death."
+msgstr "Beat sso.scan_ingestion_tokens (30분마다), 토큰 만료 건당 1회."
 
 #: apps/pingboard/notifications.py
 msgid "Structure fuel & sov-ADM alerts"
@@ -4841,6 +6490,12 @@ msgstr ""
 " 위로 복귀하면 초기화됩니다."
 
 #: apps/pingboard/notifications.py
+msgid ""
+"Beat corporation.scan_infrastructure_alerts (every 2h), on breach-set "
+"change."
+msgstr "Beat corporation.scan_infrastructure_alerts (2시간마다), 위반 집합 변경 시."
+
+#: apps/pingboard/notifications.py
 msgid "Structure / war ESI alerts"
 msgstr "구조물 / 전쟁 ESI 경보"
 
@@ -4854,6 +6509,11 @@ msgstr ""
 "군단 전체 대상이며, 구조물 타이머/연료 항목은 장교 라우팅 기본값을 따릅니다."
 
 #: apps/pingboard/notifications.py
+msgid ""
+"Beat recommendations.sync_notifications (Director notifications token)."
+msgstr "Beat recommendations.sync_notifications (디렉터 알림 토큰)."
+
+#: apps/pingboard/notifications.py
 msgid "Fleet & timer announcements"
 msgstr "함대 & 타이머 공지"
 
@@ -4861,6 +6521,10 @@ msgstr "함대 & 타이머 공지"
 msgid ""
 "Fleet-op rally calls and structure-timer announcements posted by officers."
 msgstr "장교가 게시한 함대 작전 소집과 구조물 타이머 공지."
+
+#: apps/pingboard/notifications.py
+msgid "Operations board announce / structure-timer announce."
+msgstr "작전 보드 공지 / 구조물 타이머 공지."
 
 #: apps/pingboard/notifications.py templates/admin_audit/console/hub.html
 #: templates/killboard/killfeed_config.html
@@ -4872,6 +6536,10 @@ msgid "Sizeable corp kills and losses above the configured ISK thresholds."
 msgstr "설정된 ISK 임계값을 넘는 상당한 규모의 군단 kill 및 손실."
 
 #: apps/pingboard/notifications.py
+msgid "Beat killboard.run_kill_feed (kill-feed config must be enabled)."
+msgstr "Beat killboard.run_kill_feed (kill-feed 설정이 활성화되어 있어야 함)."
+
+#: apps/pingboard/notifications.py
 msgid "Corp mail relay"
 msgstr "군단 메일 중계"
 
@@ -4881,12 +6549,20 @@ msgid ""
 msgstr "채팅으로 중계되는 신규 군단 / 얼라이언스 / 메일링 리스트 메일 헤더."
 
 #: apps/pingboard/notifications.py
+msgid "Beat recommendations.relay_mail (mail-scoped token required)."
+msgstr "Beat recommendations.relay_mail (메일 scope 토큰 필요)."
+
+#: apps/pingboard/notifications.py
 msgid "Raffle announcements"
 msgstr "추첨 공지"
 
 #: apps/pingboard/notifications.py
 msgid "Raffle open/draw/winner announcements and per-pilot ticket/winner DMs."
 msgstr "추첨 시작/추첨/당첨자 공지 및 파일럿별 티켓/당첨 DM."
+
+#: apps/pingboard/notifications.py
+msgid "Raffle lifecycle events (inert until channels are armed)."
+msgstr "추첨 수명주기 이벤트 (채널이 활성화되기 전까지는 동작하지 않음)."
 
 #: apps/pingboard/notifications.py
 msgid "Form-up reminders"
@@ -4900,6 +6576,11 @@ msgid ""
 msgstr ""
 "함대 작전이 집결하기 전에 자리를 확보한 파일럿에게 보내는 T-마이너스 알림. 파일럿별로 대상 지정(신청한 사람만) — 절대 군단 전체 "
 "핑이 아님."
+
+#: apps/pingboard/notifications.py
+msgid ""
+"Beat operations.formup_reminders (every 5 min, inside the lead window)."
+msgstr "Beat operations.formup_reminders (5분마다, 사전 알림 구간 내)."
 
 #: apps/pingboard/notifications.py
 msgid "Haul deadline & overdue nudges"
@@ -4917,6 +6598,10 @@ msgstr ""
 "운송자에게 보내는 알림. 파일럿별 대상 지정이며, 절대 군단 전체 핑이 아님. 자동 반환 자체는 무조건적이며, 이 알림만 게이팅됩니다."
 
 #: apps/pingboard/notifications.py
+msgid "Beat logistics.sweep_hauls (every 15 min)."
+msgstr "Beat logistics.sweep_hauls (15분마다)."
+
+#: apps/pingboard/notifications.py
 msgid "Corp Store order updates"
 msgstr "Corp Store 주문 업데이트"
 
@@ -4928,6 +6613,10 @@ msgid ""
 msgstr ""
 "구매자의 Corp Store 주문 상태가 변경될 때(청구됨, 생산 중, 준비됨, 배송됨, 취소됨) 구매자에게 보내는 DM. 구매자에게만 "
 "대상 지정 — 절대 군단 전체 핑이 아님 — 상태 변경당 최대 1건."
+
+#: apps/pingboard/notifications.py
+msgid "A member/officer advances, claims or cancels a store order."
+msgstr "멤버/임원이 상점 주문을 진행, 인수 또는 취소합니다."
 
 #: apps/pingboard/notifications.py
 msgid "PI colony issue nudges"
@@ -4944,6 +6633,10 @@ msgstr ""
 "않도록 보내는 DM. 소유자에게만 대상 지정, 감지된 문제 세트당 최대 1건."
 
 #: apps/pingboard/notifications.py
+msgid "A colony ESI import surfaces a new issue for the enrolled owner."
+msgstr "콜로니 ESI 가져오기에서 등록된 소유자의 새 문제가 발견됩니다."
+
+#: apps/pingboard/notifications.py
 msgid "Raffle enrolment nudges"
 msgstr "추첨 등록 알림"
 
@@ -4955,6 +6648,11 @@ msgid ""
 msgstr ""
 "추첨 티켓을 받을 자격이 있었지만 활동 중이면서 미등록 상태인 파일럿에게 등록하고 티켓을 받도록 유도하는 일회성 DM. 자격 미달 "
 "보고서에서 장교가 트리거하며, 콘테스트별 파일럿당 1회, 영구 수신 거부를 준수합니다."
+
+#: apps/pingboard/notifications.py
+msgid ""
+"An officer sends enrolment outreach from a contest's ineligible report."
+msgstr "임원이 콘테스트의 자격 미달 보고서에서 등록 안내를 발송합니다."
 
 #: apps/pingboard/notifications.py
 msgid "Moon chunk-arrival reminders"
@@ -4969,6 +6667,10 @@ msgid ""
 msgstr ""
 "달 채굴의 청크 도착에 앞서(기본값: 파쇄 24시간 전과 1시간 전) 군단이 집결해 기회를 놓치지 않도록 하는 옵트인 군단 알림. "
 "오프셋별 채굴당 최대 1건. 리더십이 채널을 활성화하기 전까지는 작동하지 않습니다."
+
+#: apps/pingboard/notifications.py
+msgid "The chunk-arrival sweep reaches a configured offset before a fracture."
+msgstr "청크 도달 스윕이 프랙처 이전의 설정된 오프셋에 도달합니다."
 
 #: apps/pingboard/notifications.py
 msgid "Watchlist activity tripwire"
@@ -4987,6 +6689,11 @@ msgstr ""
 " 리더십이 감시 목록과 채널을 설정하기 전까지는 작동하지 않습니다."
 
 #: apps/pingboard/notifications.py
+msgid ""
+"The watchlist-activity sweep finds a watched entity on a recent killmail."
+msgstr "관심 목록 활동 스윕이 최근 killmail 기록에서 감시 대상을 발견합니다."
+
+#: apps/pingboard/notifications.py
 msgid "Saved-route camp / incursion push"
 msgstr "저장된 경로 camp / incursion 푸시"
 
@@ -4999,6 +6706,10 @@ msgid ""
 msgstr ""
 "저장된 점프 경로의 성계 중 한 곳에 gate camp 나 인커전이 나타나면 그 경로의 소유자에게 발송되는 옵트인 DM — 하울러가 언독"
 " 전에 정찰할 수 있도록. 경로별로, 위협 목록이 바뀔 때만 발송됩니다. 보장이 아니라 위험 지표입니다."
+
+#: apps/pingboard/notifications.py
+msgid "The route-watch sweep finds a new camp/incursion on a watched route."
+msgstr "경로 감시 스윕이 감시 중인 경로에서 새 캠프/Incursion을 발견합니다."
 
 #: apps/pingboard/notifications.py
 msgid "Idle skill-queue nudge"
@@ -5014,6 +6725,10 @@ msgstr ""
 " 알림 1건, 파일럿별 대상 지정 — 절대 공유 채널이 아님."
 
 #: apps/pingboard/notifications.py
+msgid "Beat skills.notify_idle_queues (hourly, opted-in pilots only)."
+msgstr "Beat skills.notify_idle_queues (매시간, 수신 동의한 파일럿만)."
+
+#: apps/pingboard/notifications.py
 msgid "Newbro combat milestones"
 msgstr "새내기 전투 마일스톤"
 
@@ -5025,6 +6740,10 @@ msgid ""
 msgstr ""
 "신규 파일럿 자신의 '첫 kill / 첫 solo / 첫 final blow' 축하. 파일럿별로 전달되며, 최근 달성한 최초 기록에 "
 "대해서만(소급 축하는 없음)."
+
+#: apps/pingboard/notifications.py
+msgid "Beat killboard.scan_milestones (nightly)."
+msgstr "Beat killboard.scan_milestones (매일 밤)."
 
 #: apps/pingboard/notifications.py
 msgid "Combat rank-ups"
@@ -5040,6 +6759,10 @@ msgstr ""
 "파일럿별로 전달 — 절대 공유 채널에 게시되지 않음."
 
 #: apps/pingboard/notifications.py
+msgid "Beat killboard.notify_rank_ups (nightly, after the member rollup)."
+msgstr "Beat killboard.notify_rank_ups (매일 밤, 멤버 집계 이후)."
+
+#: apps/pingboard/notifications.py
 msgid "Campaign objective assigned"
 msgstr "캠페인 목표 배정됨"
 
@@ -5051,6 +6774,10 @@ msgid ""
 msgstr ""
 "파일럿이 캠페인 목표의 소유자, 워크스트림 리드, 마일스톤 소유자, 또는 캠페인의 지휘관으로 지정될 때 보내는 DM. 새로 배정된 "
 "파일럿에게만 대상 지정."
+
+#: apps/pingboard/notifications.py
+msgid "Owner/lead/commander set or changed to a user on create or edit."
+msgstr "생성 또는 편집 시 소유자/리드/지휘관이 특정 사용자로 지정되거나 변경됩니다."
 
 #: apps/pingboard/notifications.py
 msgid "Campaign deadline approaching"
@@ -5066,6 +6793,10 @@ msgstr ""
 " 대체 전달. (항목, 구간)당 1건, 매시간 잔소리는 없음."
 
 #: apps/pingboard/notifications.py
+msgid "Beat campaigns.sweep_deadlines (hourly) reaching a reminder bucket."
+msgstr "Beat campaigns.sweep_deadlines (매시간)가 알림 구간에 도달합니다."
+
+#: apps/pingboard/notifications.py
 msgid "Campaign objective blocked"
 msgstr "캠페인 목표 차단됨"
 
@@ -5079,6 +6810,11 @@ msgstr ""
 "변경될 때만 다시 알립니다."
 
 #: apps/pingboard/notifications.py
+#| msgid "Linking an objective blocks it until the issue is resolved."
+msgid "An objective becomes blocked via the issue-linkage rule."
+msgstr "이슈 연결 규칙에 따라 목표가 차단됩니다."
+
+#: apps/pingboard/notifications.py
 msgid "Campaign dependency completed"
 msgstr "캠페인 의존성 완료됨"
 
@@ -5088,6 +6824,12 @@ msgid ""
 "dependency target reaches a terminal-done state and its edge auto-resolves."
 msgstr ""
 "의존성 대상이 최종 완료 상태에 도달하고 그 엣지가 자동 해결될 때, 이제 차단 해제된 항목의 소유자(및 지휘관)에게 보내는 DM."
+
+#: apps/pingboard/notifications.py
+msgid ""
+"A dependency target reaches met/dropped/done/completed and the edge "
+"resolves."
+msgstr "의존성 대상이 met/dropped/done/completed에 도달하여 연결이 해소됩니다."
 
 #: apps/pingboard/notifications.py
 msgid "Campaign health changed"
@@ -5104,6 +6846,11 @@ msgstr ""
 "시그니처마다 한 번 발생하며, 복구 시 재무장됩니다. 민감: 수용 한도가 낮은 대량 채널에서는 제외됩니다."
 
 #: apps/pingboard/notifications.py
+msgid ""
+"Campaign health recompute (write-path or beat) that changes the signature."
+msgstr "시그니처를 변경하는 캠페인 상태 재계산 (쓰기 경로 또는 beat)."
+
+#: apps/pingboard/notifications.py
 msgid "Campaign approval required"
 msgstr "캠페인 승인 필요"
 
@@ -5113,6 +6860,11 @@ msgid ""
 "nudge a commander when a milestone is marked ready for review. Sensitive."
 msgstr ""
 "캠페인이 승인을 위해 제안될 때 보내는 디렉터 경보. 마일스톤이 검토 준비됨으로 표시될 때 지휘관에게 알리는 데에도 재사용됩니다. 민감."
+
+#: apps/pingboard/notifications.py
+msgid ""
+"A campaign transitions draft→proposed, or a milestone → ready_for_review."
+msgstr "캠페인이 draft→proposed로, 또는 마일스톤이 → ready_for_review로 전환됩니다."
 
 #: apps/pingboard/notifications.py
 msgid "Campaign started"
@@ -5128,6 +6880,11 @@ msgstr ""
 " 나열된 참가자에게만 공지합니다."
 
 #: apps/pingboard/notifications.py
+#| msgid "This campaign has no objectives."
+msgid "A campaign transitions approved→active."
+msgstr "캠페인이 approved→active로 전환됩니다."
+
+#: apps/pingboard/notifications.py
 msgid "Campaign completed"
 msgstr "캠페인 완료됨"
 
@@ -5139,6 +6896,10 @@ msgid ""
 msgstr ""
 "캠페인이 완료/실패/취소에 도달할 때 보내는 군단 공지(대상은 campaigns.started와 동일. 제한된 캠페인은 참가자 전용 "
 "유지)."
+
+#: apps/pingboard/notifications.py
+msgid "A campaign transitions active→completed/failed/cancelled."
+msgstr "캠페인이 active→completed/failed/cancelled로 전환됩니다."
 
 #: apps/pingboard/notifications.py
 msgid "Campaign contribution recognised"
@@ -5154,6 +6915,11 @@ msgstr ""
 "본인에게만 비공개입니다."
 
 #: apps/pingboard/notifications.py
+msgid ""
+"A CampaignRecognition row is created while recognition_mode is not none."
+msgstr "recognition_mode가 none이 아닌 상태에서 CampaignRecognition 행이 생성됩니다."
+
+#: apps/pingboard/notifications.py
 msgid "Campaign metric needs manual update"
 msgstr "캠페인 지표 수동 업데이트 필요"
 
@@ -5163,6 +6929,10 @@ msgid ""
 " gone stale past the confirmation interval — at most one per objective per "
 "week."
 msgstr "수동 지표 목표의 값이 확인 간격을 넘겨 오래되었을 때 소유자에게 보내는 낮은 우선순위 알림 — 목표당 주 최대 1건."
+
+#: apps/pingboard/notifications.py
+msgid "Beat campaigns.sweep_deadlines finds a stale manual-metric objective."
+msgstr "Beat campaigns.sweep_deadlines가 갱신되지 않은 수동 지표 목표를 발견합니다."
 
 #: apps/pingboard/notifications.py
 msgid "Campaign issue escalated"
@@ -5177,6 +6947,11 @@ msgstr ""
 "제외됩니다."
 
 #: apps/pingboard/notifications.py
+#| msgid "Campaign issue escalated"
+msgid "A campaign issue transitions open→escalated."
+msgstr "캠페인 이슈가 open→escalated로 전환됩니다."
+
+#: apps/pingboard/notifications.py
 msgid "Campaign approved"
 msgstr "캠페인 승인됨"
 
@@ -5185,6 +6960,10 @@ msgid ""
 "A DM to the commander/proposer when a director approves their campaign. "
 "Targeted at the individual only, never a mass audience."
 msgstr "디렉터가 캠페인을 승인할 때 지휘관/제안자에게 보내는 DM. 개인에게만 대상 지정하며, 절대 대량 대상이 아닙니다."
+
+#: apps/pingboard/notifications.py
+msgid "A campaign transitions proposed→approved."
+msgstr "캠페인이 proposed→approved로 전환됩니다."
 
 #: apps/pingboard/notifications.py
 msgid "Career milestone reached"
@@ -5200,6 +6979,12 @@ msgstr ""
 "채널이 아님. 제목을 제외한 목표 내용은 앱을 벗어나지 않습니다."
 
 #: apps/pingboard/notifications.py
+msgid ""
+"Milestone credit path (skill-import hook, hourly reconcile sweep, or manual "
+"confirm)."
+msgstr "마일스톤 인정 경로 (스킬 가져오기 훅, 매시간 대사 스윕 또는 수동 확인)."
+
+#: apps/pingboard/notifications.py
 msgid "Career goal completed"
 msgstr "커리어 목표 완료됨"
 
@@ -5211,6 +6996,11 @@ msgid ""
 msgstr ""
 "파일럿이 자신의 커리어 목표 중 하나를 완료할 때 보내는 DM. 소유자에게만 대상 지정. 공개 인정은 별도의 옵트인 방식이며 — 이 "
 "DM은 그와 무관하게 비공개입니다."
+
+#: apps/pingboard/notifications.py
+msgid ""
+"Goal status transition active→completed (owner action, lifecycle service)."
+msgstr "목표 상태가 active→completed로 전환 (소유자 조치, 수명주기 서비스)."
 
 #: apps/pingboard/notifications.py
 msgid "Career goal review nudge"
@@ -5226,6 +7016,10 @@ msgstr ""
 "아무 영향이 없습니다 — 에스컬레이션도, 상태 변경도 없음."
 
 #: apps/pingboard/notifications.py
+msgid "Beat capsuleer.housekeeping (nightly) sets review_due_at."
+msgstr "Beat capsuleer.housekeeping (매일 밤)가 review_due_at을 설정합니다."
+
+#: apps/pingboard/notifications.py
 msgid "Capsuleer Path suggestions"
 msgstr "Capsuleer Path 제안"
 
@@ -5237,6 +7031,200 @@ msgid ""
 msgstr ""
 "파일럿에게 새 커리어 제안이 대기 중임을 알리는 DM — 개수와 링크만, 제안 내용은 절대 아님. 파일럿당 하루 최대 1건, 일일 "
 "생성에서 새로운 열린 행이 생성된 경우에만."
+
+#: apps/pingboard/notifications.py
+msgid ""
+"Beat capsuleer.generate_suggestions (daily), when new rows were admitted."
+msgstr "Beat capsuleer.generate_suggestions (매일), 새 행이 등록된 경우."
+
+#: apps/pingboard/providers/discord.py
+msgid "Webhook URL missing or not a valid Discord webhook"
+msgstr "Webhook URL이 없거나 유효한 Discord webhook이 아닙니다"
+
+#: apps/pingboard/providers/evemail.py
+#| msgid "No home corporation configured."
+msgid "No sender character configured"
+msgstr "발신 캐릭터가 설정되지 않았습니다"
+
+#: apps/pingboard/providers/evemail.py
+#| msgid "No character has granted the corp-mining scope yet."
+msgid "Sender character has not granted the mail-send scope"
+msgstr "발신 캐릭터가 메일 발송 scope를 부여하지 않았습니다"
+
+#: apps/pingboard/providers/slack.py
+msgid "Slack bot token not configured"
+msgstr "Slack 봇 토큰이 설정되지 않았습니다"
+
+#: apps/pingboard/providers/telegram.py
+msgid "Bot token not set — add it on the channel"
+msgstr "봇 토큰이 설정되지 않았습니다 — 채널에서 추가하세요"
+
+#: apps/pingboard/providers/telegram.py
+#| msgid "Target date"
+msgid "Target chat id not set"
+msgstr "대상 채팅 ID가 설정되지 않았습니다"
+
+#: apps/pingboard/providers/whatsapp.py
+msgid "Meta access token / phone number id not set"
+msgstr "Meta 액세스 토큰 / 전화번호 ID가 설정되지 않았습니다"
+
+#: apps/pingboard/providers/whatsapp.py
+msgid "Twilio SID / auth token / sender number not set"
+msgstr "Twilio SID / 인증 토큰 / 발신 번호가 설정되지 않았습니다"
+
+#: apps/pingboard/providers/whatsapp.py
+msgid "Choose a WhatsApp backend (Meta or Twilio)"
+msgstr "WhatsApp 백엔드를 선택하세요 (Meta 또는 Twilio)"
+
+#: apps/pingboard/rendering.py
+#, python-format
+msgid "disallowed field expression: %(field)r"
+msgstr "허용되지 않는 필드 표현식: %(field)r"
+
+#: apps/pingboard/rendering.py
+msgid "positional fields are not allowed in templates"
+msgstr "템플릿에서는 위치 기반 필드를 사용할 수 없습니다"
+
+#: apps/pingboard/rendering.py
+#, python-format
+#| msgid "Invalid JSON: %(error)s"
+msgid "invalid template: %(error)s"
+msgstr "잘못된 템플릿: %(error)s"
+
+#: apps/pingboard/services.py
+#, python-format
+msgid "%(priority)s alerts require the %(role)s role."
+msgstr "%(priority)s 알림에는 %(role)s 역할이 필요합니다."
+
+#: apps/pingboard/services.py
+#, python-format
+msgid "Corp-wide announcements require the %(role)s role."
+msgstr "군단 전체 공지에는 %(role)s 역할이 필요합니다."
+
+#: apps/pingboard/services.py
+msgid "Urgent and emergency alerts require a reason."
+msgstr "긴급 및 비상 알림에는 사유가 필요합니다."
+
+#: apps/pingboard/services.py
+msgid "Urgent/emergency alerts require two-step confirmation."
+msgstr "긴급/비상 알림에는 2단계 확인이 필요합니다."
+
+#: apps/pingboard/services.py
+#, python-format
+#| msgid ""
+#| "This alert reaches about <strong>%(n)s</strong> pilots. Tick the required "
+#| "confirmations below and resubmit."
+msgid ""
+"This alert reaches %(count)s pilots; large-audience confirmation is "
+"required."
+msgstr "이 알림은 %(count)s명의 파일럿에게 도달합니다. 대규모 발송 확인이 필요합니다."
+
+#: apps/planetary/constants.py
+#| msgid "P0 · Raw resource"
+msgid "Raw resource"
+msgstr "원자원"
+
+#: apps/planetary/constants.py
+msgid "Pulled straight from a planet by an Extractor Control Unit."
+msgstr "Extractor Control Unit이 행성에서 직접 추출합니다."
+
+#: apps/planetary/constants.py
+msgid ""
+"The 15 raw materials. You never sell these — you refine them on-planet into "
+"P1. Extraction rate depends on your ECU program and the planet's resource "
+"hotspots, so it's the one number you should tune to your colony."
+msgstr ""
+"15종의 원자재입니다. 이것들은 판매하지 않고 행성에서 P1으로 정제합니다. 추출량은 ECU 프로그램과 행성의 자원 핫스팟에 따라 "
+"달라지므로, 자신의 콜로니에 맞게 조정해야 할 유일한 수치입니다."
+
+#: apps/planetary/constants.py
+msgid "Extractor Control Unit (ECU) + extractor heads"
+msgstr "Extractor Control Unit (ECU) + 추출 헤드"
+
+#: apps/planetary/constants.py
+#| msgid "P1 · Processed material"
+msgid "Processed material"
+msgstr "가공 자재"
+
+#: apps/planetary/constants.py
+msgid "One P0 refined in a Basic Industry Facility."
+msgstr "Basic Industry Facility에서 P0 한 종류를 정제한 결과물입니다."
+
+#: apps/planetary/constants.py
+msgid ""
+"15 processed materials. A Basic Industry Facility turns 3,000 of one P0 into"
+" 20 P1 every 30 minutes. P1 is the first thing worth selling, and the "
+"feedstock for everything above it."
+msgstr ""
+"15종의 가공 자재입니다. Basic Industry Facility는 30분마다 P0 3,000개를 P1 20개로 바꿉니다. P1은 "
+"판매할 가치가 있는 첫 단계이자, 그 위 모든 단계의 원료입니다."
+
+#: apps/planetary/constants.py
+msgid "Basic Industry Facility (BIF)"
+msgstr "기본 산업 시설 (Basic Industry Facility, BIF)"
+
+#: apps/planetary/constants.py
+#| msgid "P2 · Refined commodity"
+msgid "Refined commodity"
+msgstr "정제 상품"
+
+#: apps/planetary/constants.py
+msgid "Two P1 combined in an Advanced Industry Facility."
+msgstr "Advanced Industry Facility에서 P1 두 종류를 결합한 결과물입니다."
+
+#: apps/planetary/constants.py
+msgid ""
+"Refined commodities combine two P1 inputs. These are the bread-and-butter of"
+" profitable PI — good ISK/m³ and steady demand (Coolant, Mechanical Parts, "
+"Consumer Electronics, Enriched Uranium…)."
+msgstr ""
+"정제 상품은 P1 두 가지를 투입해 만듭니다. 수익성 있는 PI 운영의 기본기죠 — ISK/m³가 좋고 수요도 꾸준합니다 "
+"(Coolant, Mechanical Parts, Consumer Electronics, Enriched Uranium…)."
+
+#: apps/planetary/constants.py
+msgid "Advanced Industry Facility (AIF)"
+msgstr "고급 산업 시설 (Advanced Industry Facility, AIF)"
+
+#: apps/planetary/constants.py
+#| msgid "P3 · Specialised commodity"
+msgid "Specialised commodity"
+msgstr "특수 상품"
+
+#: apps/planetary/constants.py
+msgid "Several P2 combined into a high-value good."
+msgstr "여러 P2를 결합해 만드는 고부가가치 상품입니다."
+
+#: apps/planetary/constants.py
+msgid ""
+"Specialised commodities (Robotics, Coolant→…, Guidance Systems, Transcranial"
+" Microcontrollers…). High value per unit but they need a multi-planet supply"
+" chain or a market to buy the P2 inputs."
+msgstr ""
+"특수 상품입니다 (Robotics, Coolant→…, Guidance Systems, Transcranial "
+"Microcontrollers…). 단위당 가치는 높지만, 여러 행성에 걸친 공급망이나 P2 투입물을 살 수 있는 마켓이 필요합니다."
+
+#: apps/planetary/constants.py
+#| msgid "P4 · Advanced commodity"
+msgid "Advanced commodity"
+msgstr "고급 상품"
+
+#: apps/planetary/constants.py
+msgid "The end of the chain — mixes P3 (and some P1) into strategic goods."
+msgstr "체인의 종착점 — P3(그리고 일부 P1)를 조합해 전략 물자를 만듭니다."
+
+#: apps/planetary/constants.py
+msgid ""
+"Advanced commodities (Nano-Factory, Broadcast Node, Self-Harmonising Power "
+"Core, Wetware Mainframe) feed sovereignty structures and capital "
+"construction. Only worth it with a dedicated multi-character operation."
+msgstr ""
+"고급 상품(Nano-Factory, Broadcast Node, Self-Harmonising Power Core, Wetware "
+"Mainframe)은 소버린티 구조물과 capital 건조에 쓰입니다. 여러 캐릭터를 전담 투입할 때만 할 만합니다."
+
+#: apps/planetary/constants.py
+#| msgid "My production plans"
+msgid "High-Tech Production Plant"
+msgstr "첨단 생산 플랜트 (High-Tech Production Plant)"
 
 #: apps/planetary/forms.py
 msgid ""
@@ -5321,7 +7309,6 @@ msgid ""
 msgstr "허브로 물품을 옮기는 m³당 ISK. 직접 운송하면 0. 수출 전략이 'haul to hub'일 때만 적용됩니다."
 
 #: apps/planetary/forms.py
-#| msgid "If you use corp buyback, the % of Jita sell it pays."
 msgid "If you use corp buyback, the percent of Jita sell it pays."
 msgstr "군단 buyback 을 이용할 경우 지급되는 Jita 판매가 대비 %."
 
@@ -5391,7 +7378,6 @@ msgid "Starting extraction assumption for new plans."
 msgstr "새 계획의 시작 추출 가정."
 
 #: apps/planetary/forms.py
-#| msgid "% of Jita sell the corp buyback pays, for plans that use it."
 msgid "Percent of Jita sell the corp buyback pays, for plans that use it."
 msgstr "이를 사용하는 플랜에 적용되는 군단 buyback 지급률 (Jita 판매가 대비 %)."
 
@@ -5450,7 +7436,6 @@ msgid "ISK per m³ to move goods to the hub (0 = you self-haul)."
 msgstr "허브로 물자를 옮기는 m³당 ISK (0 = 직접 운송)."
 
 #: apps/planetary/models.py
-#| msgid "% of Jita sell the corp buyback pays."
 msgid "Percent of Jita sell the corp buyback pays."
 msgstr "군단 buyback 지급률 (Jita 판매가 대비 %)."
 
@@ -5478,7 +7463,7 @@ msgstr "P0 → P1 가공"
 msgid "P0 → P2 refined"
 msgstr "P0 → P2 정제"
 
-#: apps/planetary/models.py
+#: apps/planetary/models.py apps/planetary/static_data.py
 msgid "Factory planet"
 msgstr "공장 행성"
 
@@ -5506,7 +7491,7 @@ msgstr "검토 필요"
 msgid "Shared with corporation"
 msgstr "코퍼레이션과 공유됨"
 
-#: apps/planetary/models.py
+#: apps/planetary/models.py apps/planetary/recommend.py
 msgid "Low effort"
 msgstr "저노력"
 
@@ -5565,6 +7550,287 @@ msgstr "공장"
 #: apps/planetary/models.py
 msgid "Storage / staging"
 msgstr "보관 / 집결"
+
+#: apps/planetary/recommend.py
+#, python-format
+msgid "An extraction planet self-refining into %(name)s (%(tier)s)"
+msgstr "%(name)s(%(tier)s)까지 자체 정제하는 추출 행성"
+
+#: apps/planetary/recommend.py
+#, python-format
+msgid "A factory planet buying inputs to make %(name)s (%(tier)s)"
+msgstr "투입물을 사서 %(name)s(%(tier)s)를 만드는 공장 행성"
+
+#: apps/planetary/recommend.py
+#, python-format
+msgid "nets about %(isk)s ISK/day per planet at current prices"
+msgstr "현재 시세 기준 행성당 하루 약 %(isk)s ISK 순수익"
+
+#: apps/planetary/recommend.py
+#, python-format
+msgid "and you already have the planets for it (%(planets)s)"
+msgstr "게다가 필요한 행성을 이미 보유하고 있습니다 (%(planets)s)"
+
+#: apps/planetary/recommend.py
+#, python-format
+#| msgid "on track for %(date)s"
+msgid "if you can extract from %(planets)s"
+msgstr "%(planets)s에서 추출할 수 있다면"
+
+#: apps/planetary/recommend.py
+#| msgid "priority"
+msgid "Corp priority"
+msgstr "군단 우선순위"
+
+#: apps/planetary/recommend.py
+#| msgid "Net profit"
+msgid "Best profit"
+msgstr "최고 수익"
+
+#: apps/planetary/recommend.py
+#| msgid "recommended"
+msgid "Beginner recommended"
+msgstr "초보자 추천"
+
+#: apps/planetary/services.py
+msgid "No live colony of this type imported yet."
+msgstr "이 유형의 실제 콜로니를 아직 가져오지 않았습니다."
+
+#: apps/planetary/services.py
+msgid "Your live colony is pulling a different product than the plan expects."
+msgstr "실제 콜로니가 계획과 다른 산출물을 뽑고 있습니다."
+
+#: apps/planetary/static_data.py
+#| msgid "Extraction"
+msgid "Extraction planet"
+msgstr "추출 행성"
+
+#: apps/planetary/static_data.py
+msgid ""
+"Pull one or two raw P0 resources and refine them on-site into P1 (or "
+"straight P2 if you have the feedstock)."
+msgstr "P0 원자원을 한두 종류 추출해 현지에서 P1으로 정제합니다 (원료가 충분하면 곧바로 P2까지)."
+
+#: apps/planetary/static_data.py
+msgid "1× Command Center (sets your power/CPU budget — upgrade it fully)."
+msgstr "Command Center 1× (전력/CPU 예산을 결정합니다 — 최대까지 업그레이드하세요)."
+
+#: apps/planetary/static_data.py
+msgid ""
+"1× Extractor Control Unit per resource, with as many extractor heads as "
+"CPU/PG allows (more heads = more yield, but shorter reach)."
+msgstr ""
+"자원마다 Extractor Control Unit 1×, CPU/PG가 허용하는 만큼 추출 헤드를 붙이세요 (헤드가 많을수록 산출량은 "
+"늘지만 도달 범위는 짧아집니다)."
+
+#: apps/planetary/static_data.py
+msgid ""
+"Basic Industry Facilities to convert P0 → P1 (each does 3,000 P0 → 20 P1 "
+"every 30 min)."
+msgstr "P0 → P1 변환용 Basic Industry Facility (각각 30분마다 P0 3,000개 → P1 20개)."
+
+#: apps/planetary/static_data.py
+msgid "1× Launchpad as the export point and buffer storage."
+msgstr "수출 지점 겸 버퍼 저장고로 Launchpad 1×."
+
+#: apps/planetary/static_data.py
+msgid ""
+"Route extractor output → storage/launchpad → factories → launchpad. Keep the"
+" extracted P0 flowing into the BIFs and the finished P1 to the launchpad for"
+" export."
+msgstr ""
+"추출기 산출물 → 저장고/launchpad → 공장 → launchpad 순으로 라우팅하세요. 추출한 P0는 BIF로, 완성된 P1은 "
+"수출용 launchpad로 계속 흘려보내면 됩니다."
+
+#: apps/planetary/static_data.py
+msgid "Export P1 (or P2) via the customs office. Import nothing."
+msgstr "커스텀 오피스를 통해 P1(또는 P2)을 수출합니다. 수입은 없습니다."
+
+#: apps/planetary/static_data.py
+msgid ""
+"Import cheaper lower-tier materials and refine them up a tier. No extraction"
+" — pure manufacturing throughput."
+msgstr "값싼 하위 티어 자재를 수입해 한 단계 위로 정제합니다. 추출은 없고 순수 생산 처리량만 다룹니다."
+
+#: apps/planetary/static_data.py
+msgid "1× Command Center (upgrade fully for CPU/PG)."
+msgstr "Command Center 1× (CPU/PG 확보를 위해 최대까지 업그레이드)."
+
+#: apps/planetary/static_data.py
+msgid "1× Launchpad to receive imports and hold exports."
+msgstr "수입품을 받고 수출품을 보관할 Launchpad 1×."
+
+#: apps/planetary/static_data.py
+msgid ""
+"As many Advanced Industry Facilities as your power/CPU allows (each does "
+"40+40 input → 5 output every hour for P2)."
+msgstr ""
+"전력/CPU가 허용하는 만큼 Advanced Industry Facility를 짓습니다 (P2 기준 각각 시간당 투입 40+40 → 산출"
+" 5)."
+
+#: apps/planetary/static_data.py
+msgid "Storage facilities to buffer inputs between imports."
+msgstr "수입 사이에 투입물을 버퍼링할 저장 시설."
+
+#: apps/planetary/static_data.py
+msgid ""
+"Import inputs to the launchpad → route to each factory → route finished "
+"goods back to the launchpad."
+msgstr "투입물을 launchpad로 수입 → 각 공장으로 라우팅 → 완성품을 다시 launchpad로 라우팅."
+
+#: apps/planetary/static_data.py
+msgid "Import the P1/P2 inputs; export the higher-tier product."
+msgstr "P1/P2 투입물을 수입하고, 상위 티어 산출물을 수출합니다."
+
+#: apps/planetary/static_data.py
+#| msgid "Storage / staging"
+msgid "Storage / staging planet"
+msgstr "보관 / 집결 행성"
+
+#: apps/planetary/static_data.py
+msgid ""
+"A buffer or consolidation point. Rare for most pilots — usually a launchpad "
+"on another planet does the job."
+msgstr "완충 또는 집하 거점입니다. 대부분의 파일럿에게는 드문 선택으로, 보통 다른 행성의 launchpad 하나면 충분합니다."
+
+#: apps/planetary/static_data.py
+#| msgid "Command Center"
+msgid "1× Command Center"
+msgstr "Command Center 1×"
+
+#: apps/planetary/static_data.py
+msgid "1× Launchpad"
+msgstr "Launchpad 1×"
+
+#: apps/planetary/static_data.py
+msgid "Storage facilities as needed."
+msgstr "필요한 만큼의 보관 시설."
+
+#: apps/planetary/static_data.py
+msgid "Consolidate goods here before a single haul out."
+msgstr "한 번에 실어 내기 전에 여기에 물자를 모으세요."
+
+#: apps/planetary/static_data.py
+msgid "Export in bulk on your haul day."
+msgstr "운송하는 날에 한꺼번에 수출하세요."
+
+#: apps/planetary/static_data.py
+#| msgid "Your Command Center"
+msgid "Not upgrading the Command Center"
+msgstr "Command Center를 업그레이드하지 않기"
+
+#: apps/planetary/static_data.py
+msgid ""
+"Your Command Center level sets your entire CPU/PG budget. Upgrade it to "
+"level 5 before you place facilities, or you'll run out of power halfway "
+"through."
+msgstr ""
+"Command Center 레벨이 CPU/PG 예산 전체를 결정합니다. 시설을 배치하기 전에 레벨 5까지 업그레이드하세요. 그러지 않으면"
+" 중간에 전력이 바닥납니다."
+
+#: apps/planetary/static_data.py
+msgid "Routing errors"
+msgstr "라우팅 오류"
+
+#: apps/planetary/static_data.py
+msgid ""
+"A facility with no inbound route sits idle; a route to the wrong storage "
+"stalls the chain. Follow every product from extractor → factory → launchpad."
+msgstr ""
+"인바운드 루트가 없는 시설은 놀고, 잘못된 보관고로 향하는 루트는 체인을 멈춰 세웁니다. 모든 산출물을 extractor → 공장 → "
+"launchpad 순으로 끝까지 따라가 보세요."
+
+#: apps/planetary/static_data.py
+#| msgid "Moon extractions"
+msgid "Too many extractor heads"
+msgstr "extractor head 과다"
+
+#: apps/planetary/static_data.py
+msgid ""
+"More heads raise yield but shorten the extraction radius and cost CPU/PG. "
+"Balance heads against the program length you actually want to run."
+msgstr ""
+"head가 많으면 산출량은 오르지만 추출 반경이 줄고 CPU/PG를 잡아먹습니다. 실제로 돌릴 프로그램 길이에 맞춰 head 수를 "
+"조절하세요."
+
+#: apps/planetary/static_data.py
+#| msgid "Insufficient data"
+msgid "Insufficient storage"
+msgstr "보관 용량 부족"
+
+#: apps/planetary/static_data.py
+msgid ""
+"If a launchpad or storage fills up, upstream facilities stop. Size storage "
+"for the time between your resets."
+msgstr "launchpad나 보관고가 가득 차면 상위 시설이 멈춥니다. 리셋 주기 사이의 시간에 맞춰 보관 용량을 잡으세요."
+
+#: apps/planetary/static_data.py
+msgid "Wrong schematic"
+msgstr "잘못된 스키매틱"
+
+#: apps/planetary/static_data.py
+msgid ""
+"Setting a factory to the wrong schematic wastes materials. Double-check "
+"inputs match what you're actually routing in."
+msgstr "공장에 잘못된 스키매틱을 걸면 재료를 낭비합니다. 입력 재료가 실제로 라우팅해 넣는 것과 맞는지 다시 확인하세요."
+
+#: apps/planetary/static_data.py
+#| msgid "Building facts"
+msgid "Overbuilding factories"
+msgstr "공장 과잉 건설"
+
+#: apps/planetary/static_data.py
+msgid ""
+"Ten factories starved of feedstock earn less than three that run "
+"continuously. Match factory count to your extraction rate."
+msgstr "원료가 마른 공장 10개보다 쉬지 않고 돌아가는 공장 3개가 더 법니다. 공장 수를 추출량에 맞추세요."
+
+#: apps/planetary/static_data.py
+#| msgid "Customs (POCO) tax"
+msgid "Ignoring customs (POCO) tax"
+msgstr "세관(POCO) 세금 무시"
+
+#: apps/planetary/static_data.py
+#| msgid ""
+#| "Customs office (POCO) tax on export, as a %. In hostile space this can be "
+#| "high — check the POCO before you commit."
+msgid ""
+"Export/import tax at the customs office is charged on every launch. In "
+"hostile space it can dwarf your margin — factor it in before you commit."
+msgstr ""
+"세관의 수출/수입세는 발사할 때마다 부과됩니다. 적대 공간에서는 마진을 통째로 삼킬 수 있으니, 뛰어들기 전에 계산에 넣으세요."
+
+#: apps/planetary/static_data.py
+msgid "Train Command Center Upgrades to unlock the planet tiers you need."
+msgstr "필요한 행성 티어를 열려면 Command Center Upgrades를 훈련하세요."
+
+#: apps/planetary/static_data.py
+msgid "Buy and deploy a Command Center on each planet, then upgrade it fully."
+msgstr "각 행성에 Command Center를 구매해 배치한 뒤 끝까지 업그레이드하세요."
+
+#: apps/planetary/static_data.py
+msgid "On extraction planets: place the ECU, add heads, and start a program."
+msgstr "추출 행성에서는 ECU를 배치하고 head를 추가한 뒤 프로그램을 시작하세요."
+
+#: apps/planetary/static_data.py
+msgid "Place your factories and set the correct schematic on each."
+msgstr "공장을 배치하고 각각에 올바른 스키매틱을 설정하세요."
+
+#: apps/planetary/static_data.py
+msgid "Wire the routes: extractor → storage → factory → launchpad."
+msgstr "루트를 연결하세요: extractor → 보관고 → 공장 → launchpad."
+
+#: apps/planetary/static_data.py
+msgid "Confirm the customs office tax for your space and your standings."
+msgstr "본인 공간과 스탠딩에 적용되는 세관 세율을 확인하세요."
+
+#: apps/planetary/static_data.py
+msgid "Set a reset cadence that matches your extractor program length."
+msgstr "extractor 프로그램 길이에 맞는 리셋 주기를 정하세요."
+
+#: apps/planetary/static_data.py
+msgid "Haul exports to your chosen market hub (or hand to corp buyback)."
+msgstr "수출품을 원하는 마켓 허브로 운송하세요 (또는 군단 buyback 에 넘기세요)."
 
 #: apps/planetary/views.py
 msgid "Missing planets"
@@ -5643,6 +7909,106 @@ msgstr "%(count)s명의 파일럿에 대한 콜로니 동기화가 대기 중입
 #: apps/planetary/views.py
 msgid "Grant the Planetary Industry scope first, then sync your colonies."
 msgstr "먼저 Planetary Industry scope를 부여한 다음 콜로니를 동기화하세요."
+
+#: apps/raffle/contest_templates.py
+msgid "PVP activity raffle"
+msgstr "PVP 활동 추첨"
+
+#: apps/raffle/contest_templates.py
+msgid ""
+"Reward everyone who undocks and gets on kills. Solo 100 · final blow 10 · "
+"participation 1."
+msgstr "언독하고 킬에 이름을 올리는 모두에게 보상합니다. 솔로 100 · 파이널 블로우 10 · 참여 1."
+
+#: apps/raffle/contest_templates.py
+#| msgid "Solo kills"
+msgid "Solo kill challenge"
+msgstr "솔로 킬 챌린지"
+
+#: apps/raffle/contest_templates.py
+msgid ""
+"Heavily reward solo PvP prowess — solo kills are worth 10× a normal kill."
+msgstr "솔로 PvP 실력에 크게 보상합니다 — 솔로 킬은 일반 킬의 10× 가치입니다."
+
+#: apps/raffle/contest_templates.py
+#| msgid "Home defence"
+msgid "Home defence contest"
+msgstr "본거지 방어 콘테스트"
+
+#: apps/raffle/contest_templates.py
+msgid ""
+"Reward kills defending home space. Set the home region/systems in the PVP "
+"filters."
+msgstr "본거지 공간을 방어하는 킬에 보상합니다. PVP 필터에서 본거지 리전/성계를 설정하세요."
+
+#: apps/raffle/contest_templates.py
+#| msgid "Mining tax"
+msgid "Mining month"
+msgstr "채굴의 달"
+
+#: apps/raffle/contest_templates.py
+msgid "Reward ore mined from the corp mining ledger (X tickets per m³)."
+msgstr "군단 채굴 원장 기준으로 캔 광석에 보상합니다 (m³당 X 티켓)."
+
+#: apps/raffle/contest_templates.py
+#| msgid "In production"
+msgid "Industry production drive"
+msgstr "산업 생산 드라이브"
+
+#: apps/raffle/contest_templates.py
+msgid ""
+"Recognise builders. Industry has no reliable per-pilot feed, so awards are "
+"officer-approved."
+msgstr "제작자를 인정합니다. 산업에는 파일럿별로 믿을 만한 데이터가 없어 수여는 임원 승인으로 처리됩니다."
+
+#: apps/raffle/contest_templates.py
+#| msgid "No such campaign."
+msgid "Logistics support campaign"
+msgstr "물류 지원 캠페인"
+
+#: apps/raffle/contest_templates.py
+msgid "Reward haulers for delivered courier contracts (officer-approved)."
+msgstr "완료한 배송 계약에 대해 운송 파일럿에게 보상합니다 (임원 승인)."
+
+#: apps/raffle/contest_templates.py
+#| msgid "No past contests yet"
+msgid "Newbro support contest"
+msgstr "Newbro 지원 콘테스트"
+
+#: apps/raffle/contest_templates.py
+msgid ""
+"Reward mentors and helpers. Mentorship completions + leadership grants."
+msgstr "멘토와 도우미에게 보상합니다. 멘토십 완료 + 리더십 지급."
+
+#: apps/raffle/contest_templates.py
+msgid "Alliance deployment raffle"
+msgstr "얼라이언스 배치 추첨"
+
+#: apps/raffle/contest_templates.py
+msgid ""
+"PVP + fleet attendance during a deployment. Admits alliance / friendly "
+"pilots."
+msgstr "배치 기간 동안의 PVP + 함대 참석. 얼라이언스 / 우호 파일럿도 참가할 수 있습니다."
+
+#: apps/raffle/contest_templates.py
+msgid "Mixed activity engagement"
+msgstr "복합 활동 참여"
+
+#: apps/raffle/contest_templates.py
+msgid ""
+"A bit of everything — PVP, mining, fleet attendance and leadership grants."
+msgstr "조금씩 전부 — PVP, 채굴, 함대 참석 그리고 리더십 지급."
+
+#: apps/raffle/contest_templates.py
+#| msgid "Edit campaign"
+msgid "ESI adoption campaign"
+msgstr "ESI 도입 캠페인"
+
+#: apps/raffle/contest_templates.py
+msgid ""
+"Drive app enrolment — everyone who connects ESI and flies earns; big CTA on "
+"the dashboard."
+msgstr "앱 등록을 유도합니다 — ESI를 연결하고 출격하는 모두가 티켓을 얻습니다. 대시보드에 큰 CTA가 표시됩니다."
 
 #: apps/raffle/eligibility.py
 msgid "This pilot has no FORCA Command Grid account."
@@ -5785,6 +8151,11 @@ msgstr "긴급 override (Director 전용, config에서 활성화되어야 함)."
 msgid "Valid PVP kills"
 msgstr "유효한 PVP 킬"
 
+#: apps/raffle/metrics.py apps/raffle/sources/pvp.py
+#: templates/identity/dashboard.html
+msgid "kills"
+msgstr "킬"
+
 #: apps/raffle/metrics.py
 msgid "ISK destroyed (PVP)"
 msgstr "파괴한 ISK (PVP)"
@@ -5793,13 +8164,27 @@ msgstr "파괴한 ISK (PVP)"
 msgid "Fleet attendances"
 msgstr "함대 참석"
 
+#: apps/raffle/metrics.py
+msgid "PAPs"
+msgstr "PAP"
+
 #: apps/raffle/metrics.py templates/raffle/detail.html
 msgid "Tickets issued"
 msgstr "발급된 티켓"
 
 #: apps/raffle/metrics.py
+#| msgid "ticket"
+msgid "tickets"
+msgstr "티켓"
+
+#: apps/raffle/metrics.py
 msgid "Participating pilots"
 msgstr "참가 파일럿"
+
+#: apps/raffle/metrics.py
+#| msgid "pilot(s)"
+msgid "pilots"
+msgstr "파일럿"
 
 #: apps/raffle/models.py
 msgid "Closed (awaiting draw)"
@@ -5909,6 +8294,21 @@ msgstr "목표 달성 시 ISK/PLEX 상품 가치를 이 퍼센트만큼 boost합
 #: apps/raffle/models.py
 msgid "In-game item"
 msgstr "인게임 아이템"
+
+#: apps/raffle/models.py
+#| msgid "Doctrines"
+msgid "Doctrine ship"
+msgstr "Doctrine 함선"
+
+#: apps/raffle/models.py
+#| msgid "Capitals"
+msgid "Capital ship"
+msgstr "Capital 함선"
+
+#: apps/raffle/models.py
+#| msgid "Subcapital ships"
+msgid "Supercapital ship"
+msgstr "Supercapital 함선"
 
 #: apps/raffle/models.py
 msgid "Custom reward"
@@ -6148,6 +8548,191 @@ msgstr[0] ""
 "\n"
 "알림을 받지 않으시겠어요? 여기에서 수신 거부하세요: %(opt_out)s"
 
+#: apps/raffle/sources/manual.py
+#| msgid "Manual entry"
+msgid "Manual grants"
+msgstr "수동 지급"
+
+#: apps/raffle/sources/manual.py
+msgid ""
+"Leadership grants for valuable but hard-to-measure work — FC, scouting, "
+"logistics, doctrine prep, helping newbros, diplomacy, emergency response."
+msgstr ""
+"가치는 크지만 측정하기 어려운 활동에 대한 리더십 지급 — FC, 정찰, 물류, doctrine 준비, Newbro 지원, 외교, 비상 "
+"대응."
+
+#: apps/raffle/sources/manual.py
+#| msgid "Grant"
+msgid "grants"
+msgstr "지급"
+
+#: apps/raffle/sources/manual.py templates/_nav.html
+#: templates/admin_audit/console/hub.html templates/planetary/colonies.html
+#: templates/planetary/detail.html templates/planetary/explore.html
+#: templates/planetary/landing.html templates/planetary/learn.html
+#: templates/planetary/recommend.html templates/planetary/wizard.html
+msgid "Planetary Industry"
+msgstr "행성 산업"
+
+#: apps/raffle/sources/manual.py
+msgid ""
+"Tickets for PI contribution campaigns. Awarded by officer approval / manual "
+"grant until a reliable per-pilot PI feed exists."
+msgstr ""
+"PI 기여 캠페인에 대한 티켓. 파일럿별 PI 데이터를 신뢰할 수 있게 수집하기 전까지는 임원 승인 / 수동 지급으로 부여됩니다."
+
+#: apps/raffle/sources/manual.py
+msgid "Ratting / PVE combat"
+msgstr "Ratting / PVE 전투"
+
+#: apps/raffle/sources/manual.py
+msgid ""
+"Tickets for taxable bounty contribution. No reliable per-pilot bounty feed "
+"exists, so awards are officer-approved / manual (e.g. X tickets per Y ISK "
+"taxed)."
+msgstr ""
+"과세 대상 바운티 기여에 대한 티켓. 파일럿별 바운티 데이터를 신뢰할 수 없으므로 임원 승인 / 수동으로 부여합니다 (예: 과세 ISK "
+"Y당 티켓 X장)."
+
+#: apps/raffle/sources/manual.py
+msgid "Buyback / market / economy"
+msgstr "Buyback / 마켓 / 경제"
+
+#: apps/raffle/sources/manual.py
+msgid ""
+"Tickets for buyback, market seeding, doctrine production and stockpile "
+"contribution. Officer-approved / manual until verifiable."
+msgstr ""
+"buyback, 마켓 시딩, doctrine 생산, 비축 기여에 대한 티켓. 검증이 가능해질 때까지는 임원 승인 / 수동으로 부여합니다."
+
+#: apps/raffle/sources/pve.py
+msgid "Tickets for ore mined, from the corp mining ledger (X tickets per m³)."
+msgstr "군단 채굴 원장 기준, 채굴한 광석에 대한 티켓 (m³당 티켓 X장)."
+
+#: apps/raffle/sources/pve.py
+#| msgid "Max m³"
+msgid "m³"
+msgstr "m³"
+
+#: apps/raffle/sources/pve.py apps/readiness/dimensions/activity.py
+#| msgid "Fleet operation"
+msgid "Fleet participation"
+msgstr "함대 참여"
+
+#: apps/raffle/sources/pve.py
+msgid "Tickets for confirmed attendance (PAP) on scheduled operations."
+msgstr "예정된 작전의 참석 확인(PAP)에 대한 티켓."
+
+#: apps/raffle/sources/pve.py
+#| msgid "opens"
+msgid "ops"
+msgstr "작전"
+
+#: apps/raffle/sources/pve.py
+#| msgid "Post a hauling job"
+msgid "Logistics / hauling"
+msgstr "물류 / 운송"
+
+#: apps/raffle/sources/pve.py
+msgid "Tickets for completed courier contracts delivered by a pilot."
+msgstr "파일럿이 배송을 완료한 운송 계약에 대한 티켓."
+
+#: apps/raffle/sources/pve.py
+#| msgid "delivered"
+msgid "deliveries"
+msgstr "배송"
+
+#: apps/raffle/sources/pve.py
+#| msgid "Mentorship paused."
+msgid "Mentorship / academy"
+msgstr "멘토십 / 아카데미"
+
+#: apps/raffle/sources/pve.py
+msgid ""
+"Tickets for completed, rewardable mentorship tasks (mentee and/or mentor)."
+msgstr "완료된 보상 대상 멘토십 과제에 대한 티켓 (멘티 및/또는 멘토)."
+
+#: apps/raffle/sources/pve.py
+#| msgid "task:"
+msgid "tasks"
+msgstr "과제"
+
+#: apps/raffle/sources/pve.py
+#| msgid "Manufacturing & industry"
+msgid "Manufacturing / industry"
+msgstr "제조 / 산업"
+
+#: apps/raffle/sources/pve.py
+msgid ""
+"Tickets for industry contribution. No reliable per-pilot completed-job feed "
+"exists, so awards are made by officer approval / manual grant."
+msgstr "산업 기여에 대한 티켓. 파일럿별 완료 작업 데이터를 신뢰할 수 없으므로 임원 승인 / 수동 지급으로 부여합니다."
+
+#: apps/raffle/sources/pve.py
+#| msgid "My jobs"
+msgid "jobs"
+msgstr "작업"
+
+#: apps/raffle/sources/pve.py
+#| msgid "Exercise completed!"
+msgid "Directives completed"
+msgstr "완료한 지령"
+
+#: apps/raffle/sources/pve.py
+msgid "Tickets for completing your ranked corp directives (the quest log)."
+msgstr "등급별 군단 지령(퀘스트 로그)을 완료했을 때 받는 티켓."
+
+#: apps/raffle/sources/pve.py
+#| msgid "Objectives"
+msgid "directives"
+msgstr "지령"
+
+#: apps/raffle/sources/pvp.py
+#| msgid "NPC kills"
+msgid "PVP kills"
+msgstr "PVP 킬"
+
+#: apps/raffle/sources/pvp.py
+msgid ""
+"Tickets for participating in corp kills (solo 100 · final blow 10 · "
+"participation 1)."
+msgstr "군단 킬에 참여했을 때 받는 티켓 (솔로 100 · 파이널 블로우 10 · 참여 1)."
+
+#: apps/raffle/stats.py
+#, python-format
+msgid ""
+"“%(source)s” drove the most tickets (%(tickets)s). Consider featuring it "
+"again."
+msgstr ""
+"“%(source)s”이(가) 가장 많은 티켓(%(tickets)s장)을 만들어냈습니다. 다시 전면에 내세우는 것을 고려하세요."
+
+#: apps/raffle/stats.py
+#, python-format
+msgid ""
+"%(count)s active pilots earned no tickets because they aren't enrolled — a "
+"great outreach list to grow app adoption."
+msgstr ""
+"활동 중인 파일럿 %(count)s명이 등록하지 않아 티켓을 받지 못했습니다 — 앱 사용률을 높이기에 좋은 안내 대상 목록입니다."
+
+#: apps/raffle/stats.py
+#, python-format
+msgid ""
+"%(count)s enrolled pilots have an expired/revoked ESI token — nudge them to "
+"reconnect before the next contest."
+msgstr "등록된 파일럿 %(count)s명의 ESI 토큰이 만료/취소되었습니다 — 다음 콘테스트 전에 재연결하도록 안내하세요."
+
+#: apps/raffle/stats.py
+msgid ""
+"Under half of participants were eligible — the enrolment CTA is working; "
+"keep pushing it."
+msgstr "참가자의 절반 미만이 자격을 갖췄습니다 — 등록 유도(CTA)가 효과를 내고 있으니 계속 밀어붙이세요."
+
+#: apps/raffle/stats.py
+msgid ""
+"Healthy contest. Repeat the format and try a booster weekend to lift "
+"engagement."
+msgstr "건전한 콘테스트입니다. 같은 형식을 반복하고, 참여도를 높이기 위해 부스터 주말을 시도해 보세요."
+
 #: apps/raffle/views.py
 msgid "Done — you won't be nudged about enrolling again."
 msgstr "완료 — 등록에 대해 다시 알림을 받지 않습니다."
@@ -6181,6 +8766,526 @@ msgid ""
 "— FORCA Command Grid (automated). Manage alert rules in the Admin Console."
 msgstr "— FORCA Command Grid (자동). Admin Console에서 알림 규칙을 관리하세요."
 
+#: apps/readiness/config.py
+#, python-format
+#| msgid "Unknown readiness dimension."
+msgid "Unknown readiness config domain: %(domain)r"
+msgstr "알 수 없는 준비도 설정 도메인: %(domain)r"
+
+#: apps/readiness/config.py
+#| msgid "%(where)s params must be an object."
+msgid "Dimensions configuration must be an object."
+msgstr "dimensions 설정은 객체여야 합니다."
+
+#: apps/readiness/config.py
+msgid "At least one dimension must be configured."
+msgstr "최소 하나의 영역을 설정해야 합니다."
+
+#: apps/readiness/config.py
+#, python-format
+#| msgid "%(where)s params must be an object."
+msgid "Dimension %(key)r must be an object."
+msgstr "%(key)r 영역은 객체여야 합니다."
+
+#: apps/readiness/config.py
+#, python-format
+msgid "%(key)s: weight must be a number."
+msgstr "%(key)s: 가중치는 숫자여야 합니다."
+
+#: apps/readiness/config.py
+#, python-format
+msgid "%(key)s: weight must be ≥ 0."
+msgstr "%(key)s: 가중치는 0 이상이어야 합니다."
+
+#: apps/readiness/config.py
+#, python-format
+msgid "%(key)s: amber and red must be whole numbers."
+msgstr "%(key)s: amber와 red는 정수여야 합니다."
+
+#: apps/readiness/config.py
+#, python-format
+msgid ""
+"%(key)s: thresholds must satisfy 0 ≤ red < amber ≤ 100 (got red=%(red)s, "
+"amber=%(amber)s)."
+msgstr ""
+"%(key)s: 임계값은 0 ≤ red < amber ≤ 100을 만족해야 합니다 (입력값 red=%(red)s, "
+"amber=%(amber)s)."
+
+#: apps/readiness/config.py
+#| msgid "%(where)s params must be an object."
+msgid "Scoring configuration must be an object."
+msgstr "scoring 설정은 객체여야 합니다."
+
+#: apps/readiness/config.py
+msgid "Unsupported index_method (only 'weighted_mean' is available)."
+msgstr "지원하지 않는 index_method입니다 ('weighted_mean'만 사용할 수 있습니다)."
+
+#: apps/readiness/config.py
+#| msgid "Pool ISK must be a number between 0 and 1e18."
+msgid "min_coverage_for_green must be a number between 0 and 1."
+msgstr "min_coverage_for_green은 0과 1 사이의 숫자여야 합니다."
+
+#: apps/readiness/config.py
+#| msgid "Insurance fraction must be between 0 and 1."
+msgid "min_coverage_for_green must be between 0 and 1."
+msgstr "min_coverage_for_green은 0과 1 사이여야 합니다."
+
+#: apps/readiness/config.py
+msgid "default_forecast_window_days must be a whole number."
+msgstr "default_forecast_window_days는 정수여야 합니다."
+
+#: apps/readiness/config.py
+#| msgid "Safety margin must be between 0 and 100%."
+msgid "default_forecast_window_days must be between 1 and 90."
+msgstr "default_forecast_window_days는 1에서 90 사이여야 합니다."
+
+#: apps/readiness/config.py
+msgid "min_task_weight must be a number."
+msgstr "min_task_weight는 숫자여야 합니다."
+
+#: apps/readiness/config.py
+msgid "min_task_weight must be ≥ 0."
+msgstr "min_task_weight는 0 이상이어야 합니다."
+
+#: apps/readiness/config.py
+msgid "task_severity_floor must be info/warn/high/critical."
+msgstr "task_severity_floor는 info/warn/high/critical 중 하나여야 합니다."
+
+#: apps/readiness/config.py
+#| msgid "Enter a whole number."
+msgid "max_tasks_per_run must be a whole number."
+msgstr "max_tasks_per_run은 정수여야 합니다."
+
+#: apps/readiness/config.py
+msgid "max_tasks_per_run must be ≥ 1."
+msgstr "max_tasks_per_run은 1 이상이어야 합니다."
+
+#: apps/readiness/config.py
+msgid "Responsibilities configuration must be an object."
+msgstr "responsibilities 설정은 객체여야 합니다."
+
+#: apps/readiness/config.py
+msgid "owner_tags, dimension_owner and kpi_owner must be objects."
+msgstr "owner_tags, dimension_owner, kpi_owner는 객체여야 합니다."
+
+#: apps/readiness/config.py
+#, python-format
+msgid "Owner tag %(tag)r is referenced but not defined."
+msgstr "소유자 태그 %(tag)r이(가) 참조되었지만 정의되지 않았습니다."
+
+#: apps/readiness/config.py
+#| msgid "%(where)s params must be an object."
+msgid "Alerts configuration must be an object."
+msgstr "alerts 설정은 객체여야 합니다."
+
+#: apps/readiness/config.py
+#| msgid "Booster end must be after its start."
+msgid "Alert rules must be a list."
+msgstr "알림 규칙은 리스트여야 합니다."
+
+#: apps/readiness/config.py
+msgid "Each alert rule needs a unique key."
+msgstr "각 알림 규칙에는 고유한 키가 필요합니다."
+
+#: apps/readiness/config.py
+#, python-format
+msgid "Duplicate alert rule key: %(key)r."
+msgstr "중복된 알림 규칙 키: %(key)r."
+
+#: apps/readiness/config.py
+#| msgid "Financial configuration"
+msgid "Financial configuration must be an object."
+msgstr "재무 설정은 객체여야 합니다."
+
+#: apps/readiness/config.py
+#, python-format
+msgid "%(key)s must be a number (ISK)."
+msgstr "%(key)s은(는) 숫자(ISK)여야 합니다."
+
+#: apps/readiness/config.py
+#, python-format
+msgid "%(key)s must be ≥ 0."
+msgstr "%(key)s은(는) 0 이상이어야 합니다."
+
+#: apps/readiness/config.py
+msgid "wallet_division_scope must be 'all' or a division id."
+msgstr "wallet_division_scope는 'all' 또는 부서 ID여야 합니다."
+
+#: apps/readiness/config.py
+#| msgid "%(where)s params must be an object."
+msgid "SRP configuration must be an object."
+msgstr "SRP 설정은 객체여야 합니다."
+
+#: apps/readiness/config.py
+#, python-format
+#| msgid "Enter a whole number."
+msgid "%(key)s must be a whole number."
+msgstr "%(key)s은(는) 정수여야 합니다."
+
+#: apps/readiness/config.py
+#| msgid "%(where)s params must be an object."
+msgid "Recruitment configuration must be an object."
+msgstr "모집 설정은 객체여야 합니다."
+
+#: apps/readiness/config.py
+#| msgid "Pool ISK must be a number between 0 and 1e18."
+msgid "max_dormant_ratio must be a number between 0 and 1."
+msgstr "max_dormant_ratio는 0과 1 사이의 숫자여야 합니다."
+
+#: apps/readiness/config.py
+#| msgid "Insurance fraction must be between 0 and 1."
+msgid "max_dormant_ratio must be between 0 and 1."
+msgstr "max_dormant_ratio는 0과 1 사이여야 합니다."
+
+#: apps/readiness/config.py
+#| msgid "%(where)s params must be an object."
+msgid "KPI configuration must be an object."
+msgstr "KPI 설정은 객체여야 합니다."
+
+#: apps/readiness/config.py
+#, python-format
+#| msgid "%(where)s params must be an object."
+msgid "KPI %(key)r must be an object."
+msgstr "KPI %(key)r은(는) 객체여야 합니다."
+
+#: apps/readiness/config.py
+msgid "Notifications configuration must be an object."
+msgstr "알림 설정은 객체여야 합니다."
+
+#: apps/readiness/config.py
+msgid "EVE-mail sender must be a character id."
+msgstr "EVE-mail 발신자는 캐릭터 ID여야 합니다."
+
+#: apps/readiness/config.py
+#| msgid "%(name)s must be a positive integer."
+msgid "EVE-mail sender must be a positive character id."
+msgstr "EVE-mail 발신자는 양수인 캐릭터 ID여야 합니다."
+
+#: apps/readiness/dimensions/activity.py
+#| msgid "Activity"
+msgid "Member Activity"
+msgstr "멤버 활동"
+
+#: apps/readiness/dimensions/activity.py
+#| msgid "Operation type"
+msgid "Operation attendance"
+msgstr "작전 참여"
+
+#: apps/readiness/dimensions/activity.py
+#| msgid "Contribution"
+msgid "Contribution ledger"
+msgstr "기여 원장"
+
+#: apps/readiness/dimensions/activity.py apps/readiness/dimensions/doctrine.py
+#: templates/_nav.html templates/navigation/system_detail.html
+msgid "Killboard"
+msgstr "Killboard"
+
+#: apps/readiness/dimensions/activity.py
+#| msgid "Activate"
+msgid "Active ratio"
+msgstr "활동 비율"
+
+#: apps/readiness/dimensions/activity.py
+#| msgid "Contribution weights"
+msgid "Contribution breadth"
+msgstr "기여 범위"
+
+#: apps/readiness/dimensions/doctrine.py
+#| msgid "Doctrine readiness"
+msgid "Doctrine Readiness"
+msgstr "Doctrine 준비도"
+
+#: apps/readiness/dimensions/doctrine.py templates/_nav.html
+#: templates/admin_audit/console/hub.html
+msgid "Doctrines"
+msgstr "Doctrines"
+
+#: apps/readiness/dimensions/doctrine.py apps/readiness/dimensions/staging.py
+#| msgid "Doctrine sets"
+msgid "Doctrine fits"
+msgstr "Doctrine 피팅"
+
+#: apps/readiness/dimensions/doctrine.py
+#: apps/readiness/dimensions/fleet_comp.py
+#: apps/readiness/dimensions/support.py
+#| msgid "Character %(id)s"
+msgid "Character skills"
+msgstr "캐릭터 스킬"
+
+#: apps/readiness/dimensions/doctrine.py
+#| msgid "Coverage"
+msgid "Skill Coverage"
+msgstr "스킬 커버리지"
+
+#: apps/readiness/dimensions/financial.py
+#| msgid "Financial configuration"
+msgid "Financial Health"
+msgstr "재무 건전성"
+
+#: apps/readiness/dimensions/financial.py
+#| msgid "All divisions"
+msgid "Corp wallet divisions"
+msgstr "군단 지갑 부서"
+
+#: apps/readiness/dimensions/financial.py
+#| msgid "Corp calendar"
+msgid "Corp wallet journal"
+msgstr "군단 지갑 거래 내역"
+
+#: apps/readiness/dimensions/financial.py
+#| msgid "Find targets"
+msgid "Finance targets"
+msgstr "재무 목표"
+
+#: apps/readiness/dimensions/financial.py
+msgid "Wallet vs minimum"
+msgstr "지갑 대 최소치"
+
+#: apps/readiness/dimensions/financial.py
+msgid "Runway (months)"
+msgstr "가동 기간 (개월)"
+
+#: apps/readiness/dimensions/financial.py
+#| msgid "Reserve stock"
+msgid "Reserve cover"
+msgstr "예비금 커버리지"
+
+#: apps/readiness/dimensions/financial.py
+#| msgid "vs target"
+msgid "Burn vs target"
+msgstr "소모 대 목표"
+
+#: apps/readiness/dimensions/fleet_comp.py
+#| msgid "Fleet composition"
+msgid "Fleet Composition"
+msgstr "함대 편성"
+
+#: apps/readiness/dimensions/fleet_comp.py
+#: apps/readiness/dimensions/leadership.py
+#: apps/readiness/dimensions/strategic.py
+#| msgid "Strategic roles"
+msgid "Strategic role targets"
+msgstr "전략 역할 목표"
+
+#: apps/readiness/dimensions/fleet_comp.py
+#| msgid "SRP coverage"
+msgid "Role coverage"
+msgstr "역할 커버리지"
+
+#: apps/readiness/dimensions/fleet_comp.py
+#| msgid "High ratio"
+msgid "Logi ratio"
+msgstr "logi 비율"
+
+#: apps/readiness/dimensions/fleet_comp.py
+#: apps/readiness/dimensions/leadership.py
+msgid "FC bench"
+msgstr "FC 예비 인력"
+
+#: apps/readiness/dimensions/infrastructure.py
+#| msgid "Infrastructure board"
+msgid "Infrastructure Readiness"
+msgstr "인프라 준비도"
+
+#: apps/readiness/dimensions/infrastructure.py
+#| msgid "Structures"
+msgid "Corp structures"
+msgstr "군단 구조물"
+
+#: apps/readiness/dimensions/infrastructure.py
+#| msgid "Sovereignty"
+msgid "Sovereignty structures"
+msgstr "소버린티 구조물"
+
+#: apps/readiness/dimensions/infrastructure.py
+#| msgid "Fuel cost"
+msgid "Fuel cover"
+msgstr "연료 잔여량"
+
+#: apps/readiness/dimensions/infrastructure.py
+#| msgid "Open exposure"
+msgid "Timer exposure"
+msgstr "타이머 노출"
+
+#: apps/readiness/dimensions/infrastructure.py
+#| msgid "Provider health"
+msgid "Sov health"
+msgstr "sov 건전성"
+
+#: apps/readiness/dimensions/leadership.py
+#| msgid "Leadership approval"
+msgid "Leadership Capacity"
+msgstr "리더십 여력"
+
+#: apps/readiness/dimensions/leadership.py
+#: templates/admin_audit/console/hub.html
+msgid "Officer responsibilities"
+msgstr "오피서 책임"
+
+#: apps/readiness/dimensions/leadership.py
+#| msgid "Corp coverage"
+msgid "Officer coverage"
+msgstr "임원 커버리지"
+
+#: apps/readiness/dimensions/leadership.py
+#| msgid "Corp coverage"
+msgid "Mentor coverage"
+msgstr "멘토 커버리지"
+
+#: apps/readiness/dimensions/logistics.py
+#| msgid "Logistics event"
+msgid "Logistics Throughput"
+msgstr "물류 처리량"
+
+#: apps/readiness/dimensions/logistics.py
+#| msgid "Hauling jobs"
+msgid "Hauling tasks"
+msgstr "운송 작업"
+
+#: apps/readiness/dimensions/recruitment.py templates/_nav.html
+#: templates/recruitment/detail.html templates/recruitment/list.html
+#: templates/recruitment/oauth_begin.html
+msgid "Recruitment"
+msgstr "모집"
+
+#: apps/readiness/dimensions/recruitment.py
+#| msgid "Corp members only"
+msgid "Corp members"
+msgstr "군단 멤버"
+
+#: apps/readiness/dimensions/recruitment.py
+#| msgid "Member roster"
+msgid "Member join dates"
+msgstr "멤버 가입일"
+
+#: apps/readiness/dimensions/recruitment.py
+#| msgid "Activity mix"
+msgid "Activity signals"
+msgstr "활동 신호"
+
+#: apps/readiness/dimensions/recruitment.py
+#| msgid "vs target"
+msgid "Headcount vs target"
+msgstr "인원수 대 목표"
+
+#: apps/readiness/dimensions/recruitment.py
+#| msgid "Make private"
+msgid "Intake rate"
+msgstr "신규 유입률"
+
+#: apps/readiness/dimensions/recruitment.py
+#| msgid "Watch ratio"
+msgid "Dormant ratio"
+msgstr "휴면 비율"
+
+#: apps/readiness/dimensions/srp.py
+#| msgid "Health"
+msgid "SRP Health"
+msgstr "SRP 건전성"
+
+#: apps/readiness/dimensions/srp.py
+#| msgid "My claims"
+msgid "SRP claims"
+msgstr "SRP 청구"
+
+#: apps/readiness/dimensions/srp.py templates/admin_audit/console/hub.html
+msgid "SRP programme"
+msgstr "SRP 프로그램"
+
+#: apps/readiness/dimensions/srp.py templates/admin_audit/console/hub.html
+#: templates/srp/budget.html
+msgid "SRP budget"
+msgstr "SRP 예산"
+
+#: apps/readiness/dimensions/srp.py templates/admin_audit/console/hub.html
+msgid "SRP thresholds"
+msgstr "SRP 임계값"
+
+#: apps/readiness/dimensions/srp.py
+#| msgid "Pending validation"
+msgid "Pending backlog"
+msgstr "대기 중인 적체"
+
+#: apps/readiness/dimensions/srp.py
+#| msgid "Coverage"
+msgid "Average wait"
+msgstr "평균 대기 시간"
+
+#: apps/readiness/dimensions/srp.py
+#| msgid "Open to claim"
+msgid "Oldest claim"
+msgstr "가장 오래된 청구"
+
+#: apps/readiness/dimensions/srp.py
+#| msgid "budget alt"
+msgid "Budget health"
+msgstr "예산 건전성"
+
+#: apps/readiness/dimensions/staging.py
+#| msgid "Lose staging"
+msgid "Asset Staging"
+msgstr "자산 스테이징"
+
+#: apps/readiness/dimensions/staging.py templates/admin_audit/console/hub.html
+#: templates/campaigns/form.html templates/store/supply_forecast.html
+msgid "Staging system"
+msgstr "스테이징 시스템"
+
+#: apps/readiness/dimensions/staging.py
+#| msgid "Doctrine hulls with no blueprint"
+msgid "Doctrine hulls at staging"
+msgstr "스테이징의 doctrine 선체"
+
+#: apps/readiness/dimensions/stock.py
+#| msgid "Stockpile created."
+msgid "Stockpile Coverage"
+msgstr "비축 커버리지"
+
+#: apps/readiness/dimensions/stock.py
+#| msgid "No stockpiles yet."
+msgid "Corp stockpiles"
+msgstr "군단 비축"
+
+#: apps/readiness/dimensions/stock.py
+#| msgid "Skill target"
+msgid "Stockpile targets"
+msgstr "비축 목표"
+
+#: apps/readiness/dimensions/strategic.py
+#| msgid "Strategic roles"
+msgid "Strategic Assets"
+msgstr "전략 자산"
+
+#: apps/readiness/dimensions/strategic.py
+#: templates/admin_audit/console/hub.html
+msgid "Mandatory ships"
+msgstr "필수 함선"
+
+#: apps/readiness/dimensions/strategic.py
+#| msgid "Mandatory ships"
+msgid "Mandatory ship coverage"
+msgstr "필수 함선 커버리지"
+
+#: apps/readiness/dimensions/strategic.py
+#| msgid "Capitals"
+msgid "Capital bench"
+msgstr "Capital 예비 인력"
+
+#: apps/readiness/dimensions/strategic.py
+#| msgid "Corp coverage"
+msgid "Cyno / scout coverage"
+msgstr "Cyno / scout 커버리지"
+
+#: apps/readiness/dimensions/support.py
+#| msgid "Fleet support skills"
+msgid "Fleet Support"
+msgstr "함대 지원"
+
+#: apps/readiness/dimensions/support.py templates/admin_audit/console/hub.html
+msgid "Fleet support skills"
+msgstr "함대 지원 스킬"
+
 #: apps/readiness/models.py apps/recommendations/models.py
 msgid "Acknowledged"
 msgstr "확인됨"
@@ -6212,6 +9317,14 @@ msgid "Home defense"
 msgstr "본거지 방어"
 
 #: apps/readiness/models.py
+msgid "Cyno"
+msgstr "Cyno"
+
+#: apps/readiness/models.py
+msgid "Scout"
+msgstr "Scout"
+
+#: apps/readiness/models.py
 msgid "Anywhere"
 msgstr "어디서나"
 
@@ -6231,7 +9344,8 @@ msgstr "스킬별"
 msgid "By asset"
 msgstr "자산별"
 
-#: apps/readiness/models.py templates/skills/detail.html
+#: apps/readiness/models.py apps/readiness/views.py
+#: templates/skills/detail.html
 msgid "Skill"
 msgstr "스킬"
 
@@ -6362,11 +9476,6 @@ msgstr "전투 손실 패턴"
 #: apps/recommendations/models.py
 msgid "Officer action"
 msgstr "Officer 조치"
-
-#: apps/recommendations/models.py templates/campaigns/form.html
-#: templates/campaigns/template_picker.html
-msgid "New"
-msgstr "신규"
 
 #: apps/recommendations/models.py
 msgid "Actioned"
@@ -6533,6 +9642,28 @@ msgid ""
 "We reached EVE but could not read your data — please try again shortly."
 msgstr "EVE에 연결했지만 데이터를 읽을 수 없습니다 — 잠시 후 다시 시도해 주세요."
 
+#: apps/skills/training.py
+msgid "Charisma"
+msgstr "카리스마"
+
+#: apps/skills/training.py
+#| msgid "Ask Intelligence"
+msgid "Intelligence"
+msgstr "지능"
+
+#: apps/skills/training.py
+msgid "Memory"
+msgstr "기억력"
+
+#: apps/skills/training.py
+#| msgid "Production"
+msgid "Perception"
+msgstr "지각력"
+
+#: apps/skills/training.py
+msgid "Willpower"
+msgstr "의지력"
+
 #: apps/skills/views.py
 #, python-format
 msgid "Imported skills for %(count)d character."
@@ -6651,6 +9782,315 @@ msgstr "거부됨"
 msgid "e.g. 2026-06"
 msgstr "예: 2026-06"
 
+#: apps/srp/services.py
+#| msgid "SRP is paused by leadership right now."
+msgid "SRP is currently paused by leadership."
+msgstr "현재 리더십이 SRP 지급을 일시 중단한 상태입니다."
+
+#: apps/srp/services.py
+#| msgid "Not your lot."
+msgid "Not a corp loss."
+msgstr "군단 손실이 아닙니다."
+
+#: apps/srp/services.py
+msgid "Pod losses aren't covered."
+msgstr "pod 손실은 보장되지 않습니다."
+
+#: apps/srp/services.py
+#| msgid "Only losses flying an active doctrine hull are eligible."
+msgid "Loss isn't an active doctrine hull."
+msgstr "활성 doctrine 선체 손실이 아닙니다."
+
+#: apps/srp/services.py
+#| msgid "No active goals."
+msgid "No active SRP rule."
+msgstr "활성 SRP 규칙이 없습니다."
+
+#: apps/srp/services.py
+#| msgid "Only cover losses during a sanctioned fleet op"
+msgid "Loss wasn't on a sanctioned fleet op."
+msgstr "승인된 함대 작전 중의 손실이 아닙니다."
+
+#: apps/sso/scopes.py
+#| msgid "Sync my assets"
+msgid "Track my assets"
+msgstr "내 자산 추적"
+
+#: apps/sso/scopes.py
+msgid ""
+"Show your own assets and where they sit across stations and structures in "
+"the stockpile views."
+msgstr "비축 화면에서 본인 자산과 그 자산이 어느 스테이션·구조물에 있는지 표시합니다."
+
+#: apps/sso/scopes.py
+msgid "My industry jobs + blueprints"
+msgstr "내 산업 작업 + 블루프린트"
+
+#: apps/sso/scopes.py
+msgid ""
+"Read your own running industry jobs and owned blueprints, so the Industry "
+"Center can track your personal production and match it to your plans."
+msgstr ""
+"진행 중인 본인의 산업 작업과 보유 블루프린트를 읽어, Industry Center가 개인 생산을 추적하고 계획과 대조할 수 있게 "
+"합니다."
+
+#: apps/sso/scopes.py
+#| msgid "Market locations"
+msgid "Freight location search"
+msgstr "화물 운송 위치 검색"
+
+#: apps/sso/scopes.py
+msgid ""
+"Search the player structures you can dock at when booking a courier "
+"contract, so a pickup or drop-off resolves to the exact station."
+msgstr "운송 계약을 예약할 때 도킹 가능한 플레이어 구조물을 검색해, 수령지와 인도지가 정확한 스테이션으로 확정되게 합니다."
+
+#: apps/sso/scopes.py
+msgid "Verify my hauls"
+msgstr "내 운송 검증"
+
+#: apps/sso/scopes.py
+msgid ""
+"Read your own contracts so the freight service can confirm a courier job you"
+" delivered actually completed in-game and credit you for it."
+msgstr "본인 계약을 읽어, 배송한 운송 작업이 게임 내에서 실제로 완료됐는지 화물 서비스가 확인하고 실적을 반영합니다."
+
+#: apps/sso/scopes.py
+msgid "Verify corp hauls"
+msgstr "군단 운송 검증"
+
+#: apps/sso/scopes.py
+msgid ""
+"Read corp contracts to auto-verify every hauler's courier delivery in-game "
+"before crediting it — no per-pilot grant needed."
+msgstr "군단 계약을 읽어 모든 운송 담당자의 배송을 게임 내에서 자동 검증한 뒤 정산합니다 — 파일럿별 권한 부여가 필요 없습니다."
+
+#: apps/sso/scopes.py templates/_user_block.html
+#: templates/corporation/finance.html templates/identity/dashboard.html
+#: templates/impersonation/log.html
+msgid "Director"
+msgstr "디렉터"
+
+#: apps/sso/scopes.py
+msgid ""
+"Import the corporation's assets to power the stockpile and supply views."
+msgstr "군단 자산을 가져와 비축 및 보급 화면을 구동합니다."
+
+#: apps/sso/scopes.py
+#| msgid "Member roster"
+msgid "Member tracking"
+msgstr "멤버 추적"
+
+#: apps/sso/scopes.py
+msgid ""
+"Import the corp roster with each member's location, ship and last login for "
+"the readiness and roster tools."
+msgstr "각 멤버의 위치, 함선, 마지막 접속 정보를 담은 군단 명단을 가져와 준비도 및 명단 도구에 사용합니다."
+
+#: apps/sso/scopes.py
+#| msgid "Corp assets"
+msgid "Corp wallet"
+msgstr "군단 지갑"
+
+#: apps/sso/scopes.py
+msgid "Import corp wallet balances and the journal for the finance page."
+msgstr "재무 페이지용으로 군단 지갑 잔액과 거래 내역을 가져옵니다."
+
+#: apps/sso/scopes.py
+#| msgid "Account recovery"
+msgid "Accountant or Director"
+msgstr "회계 담당 또는 디렉터"
+
+#: apps/sso/scopes.py
+#| msgid "Corp stats"
+msgid "Corp standings"
+msgstr "군단 스탠딩"
+
+#: apps/sso/scopes.py
+msgid ""
+"Import corp contacts to drive the member-facing blue/red standings board."
+msgstr "군단 컨택트를 가져와 멤버용 블루/레드 스탠딩 보드를 구동합니다."
+
+#: apps/sso/scopes.py
+msgid ""
+"List the corp's Ansiblex jump bridges and cyno beacons to auto-build the "
+"jump map and route planner."
+msgstr "군단의 Ansiblex 점프 브리지와 cyno 비컨 목록을 가져와 점프 맵과 경로 플래너를 자동 구성합니다."
+
+#: apps/sso/scopes.py
+msgid "Director or Station Manager"
+msgstr "디렉터 또는 스테이션 매니저"
+
+#: apps/sso/scopes.py
+#| msgid "Structure timer"
+msgid "Structure monitoring"
+msgstr "구조물 모니터링"
+
+#: apps/sso/scopes.py
+msgid ""
+"Monitor every corp structure — fuel remaining, online/low-power state and "
+"reinforcement timers — so nothing runs dry or comes out of reinforcement "
+"unwatched."
+msgstr ""
+"모든 군단 구조물을 모니터링합니다 — 잔여 연료, 온라인/저전력 상태, 강화 타이머 — 연료가 바닥나거나 강화가 풀리는 순간을 놓치지 "
+"않도록."
+
+#: apps/sso/scopes.py templates/corporation/extractions.html
+msgid "Moon extractions"
+msgstr "달 채굴"
+
+#: apps/sso/scopes.py
+msgid "Import scheduled moon extractions for the extraction calendar."
+msgstr "추출 캘린더용으로 예약된 문 추출 작업을 가져옵니다."
+
+#: apps/sso/scopes.py
+#| msgid "Veteran Mentor Directory"
+msgid "Station Manager or Director"
+msgstr "스테이션 매니저 또는 디렉터"
+
+#: apps/sso/scopes.py
+#| msgid "Corporation blueprint"
+msgid "Corp blueprints + jobs"
+msgstr "군단 블루프린트 + 작업"
+
+#: apps/sso/scopes.py
+msgid ""
+"Import the corp's owned blueprints (ME/TE) and running industry jobs so "
+"blueprint coverage and build-or-buy reflect what the corp actually owns and "
+"has in production."
+msgstr ""
+"군단이 보유한 블루프린트(ME/TE)와 진행 중인 산업 작업을 가져와, 블루프린트 커버리지와 제작-구매 판단이 군단이 실제로 보유하고 "
+"생산 중인 내용을 반영하도록 합니다."
+
+#: apps/sso/scopes.py
+#| msgid "Director no longer authorised"
+msgid "Director or Factory Manager"
+msgstr "디렉터 또는 팩토리 매니저"
+
+#: apps/sso/scopes.py
+#| msgid "Notifications"
+msgid "Notification relay"
+msgstr "알림 릴레이"
+
+#: apps/sso/scopes.py
+#| msgid ""
+#| "Relayed ESI notifications — structure attacks, war declarations, sovereignty"
+#| " and moon extractions — pulled from a role-holder's token. Fresh red alerts "
+#| "also go to Discord."
+msgid ""
+"Relay in-game notifications — structure attacks, war declarations, "
+"sovereignty and moon pops — to the site and Discord."
+msgstr "인게임 알림 — 구조물 공격, 전쟁 선포, 주권 변동, 달 추출 완료 — 을 사이트와 Discord로 릴레이합니다."
+
+#: apps/sso/scopes.py
+#| msgid "Director no longer authorised"
+msgid "Director or role-holder"
+msgstr "디렉터 또는 역할 보유자"
+
+#: apps/sso/scopes.py
+#| msgid "Corp mail relay"
+msgid "Mail relay"
+msgstr "메일 릴레이"
+
+#: apps/sso/scopes.py
+msgid ""
+"Relay your corp/alliance mailing-list mail to Discord, so announcements "
+"reach members who don't check in-game mail. Grant from the character "
+"subscribed to the lists."
+msgstr ""
+"군단/얼라이언스 메일링 리스트 메일을 Discord로 릴레이해, 인게임 메일을 확인하지 않는 멤버에게도 공지가 전달되도록 합니다. 해당 "
+"리스트를 구독 중인 캐릭터로 승인하세요."
+
+#: apps/sso/scopes.py
+#| msgid "Readiness index"
+msgid "Readiness mail sender"
+msgstr "준비도 메일 발신자"
+
+#: apps/sso/scopes.py
+msgid ""
+"Let the platform send readiness alert e-mails in-game from this character. "
+"Grant from the director you select as the readiness mail sender on the Admin"
+" Console → Readiness → Alerts page."
+msgstr ""
+"이 캐릭터로 준비도 경보 메일을 인게임에서 발송할 수 있게 합니다. 관리자 콘솔 → 준비도 → 알림 페이지에서 준비도 메일 발신자로 "
+"지정한 디렉터로 승인하세요."
+
+#: apps/sso/scopes.py
+#| msgid "Pingboard calendar →"
+msgid "Pingboard mail sender"
+msgstr "Pingboard 메일 발신자"
+
+#: apps/sso/scopes.py
+msgid ""
+"Let Pingboard send corp alerts in-game from this character. Grant from the "
+"director you select as the Pingboard EVE-mail sender on the Admin Console → "
+"Pingboard → Channels page."
+msgstr ""
+"Pingboard가 이 캐릭터로 군단 알림을 인게임에서 발송할 수 있게 합니다. 관리자 콘솔 → Pingboard → 채널 페이지에서 "
+"Pingboard EVE-mail 발신자로 지정한 디렉터로 승인하세요."
+
+#: apps/sso/scopes.py
+#| msgid "Fleet operation"
+msgid "Fleet tracking"
+msgstr "함대 추적"
+
+#: apps/sso/scopes.py
+msgid ""
+"Let an FC pull the live fleet roster to auto-record everyone's participation"
+" (PAP) for an operation — no manual sign-in. Grant from the character that "
+"boss-fleets."
+msgstr ""
+"FC 가 실시간 함대 명단을 불러와 작전 참여(PAP)를 전원 자동으로 기록할 수 있게 합니다 — 수동 체크인이 필요 없습니다. 함대 "
+"보스를 맡는 캐릭터로 승인하세요."
+
+#: apps/sso/scopes.py
+#| msgid "A mentorship session is confirmed"
+msgid "Mentorship session check-in"
+msgstr "멘토십 세션 체크인"
+
+#: apps/sso/scopes.py
+msgid ""
+"Optional: let the Mentorship Program confirm you were online and in the "
+"session's system during a scheduled mentoring session — the only way to "
+"corroborate 'we flew together', since EVE keeps no history of it. Off by "
+"default, polled only during a session you booked, and never stored beyond "
+"the check."
+msgstr ""
+"선택 사항: 예약된 멘토링 세션 동안 접속 중이었고 세션 성계에 있었는지 멘토십 프로그램이 확인할 수 있게 합니다 — EVE 는 그 "
+"기록을 남기지 않으므로 '함께 비행했다'를 입증할 유일한 방법입니다. 기본값은 꺼짐이며, 직접 예약한 세션 중에만 조회하고, 확인 "
+"이후에는 저장하지 않습니다."
+
+#: apps/sso/scopes.py
+#| msgid "Imported"
+msgid "Import saved fits"
+msgstr "저장된 피팅 가져오기"
+
+#: apps/sso/scopes.py
+msgid ""
+"Read your own saved ship fittings so you can import them as corp doctrines "
+"(ESI has no corp-fittings endpoint, so doctrines are seeded from a "
+"director's personal fits)."
+msgstr ""
+"본인이 저장한 함선 피팅을 읽어 군단 doctrine 으로 가져올 수 있게 합니다 (ESI 에는 군단 피팅 엔드포인트가 없어, "
+"doctrine 은 디렉터의 개인 피팅에서 시작합니다)."
+
+#: apps/sso/scopes.py
+#| msgid "Import per cycle:"
+msgid "Import PI colonies"
+msgstr "PI 콜로니 가져오기"
+
+#: apps/sso/scopes.py
+msgid ""
+"Optional: let the Planetary Industry planner import your live colonies so it"
+" can show your real layouts, flag issues (idle extractors, missing routes) "
+"and estimate your current output. EVE only refreshes this when you open the "
+"colony in the client, so imports can be stale — the planner always says "
+"when."
+msgstr ""
+"선택 사항: 행성 산업 플래너가 실제 운영 중인 콜로니를 가져와 실제 배치를 보여주고, 문제(유휴 추출기, 누락된 라우트)를 표시하며, "
+"현재 산출량을 추정할 수 있게 합니다. EVE 는 클라이언트에서 콜로니를 열 때만 이 데이터를 갱신하므로 가져온 내용이 오래되었을 수 "
+"있습니다 — 플래너가 언제 갱신된 것인지 항상 알려줍니다."
+
 #: apps/sso/views.py
 msgid "Not available while viewing as another pilot."
 msgstr "다른 파일럿으로 보는 중에는 사용할 수 없습니다."
@@ -6709,10 +10149,6 @@ msgstr "접근 권한이 동기화되었습니다.%(deep)s"
 #: apps/sso/views.py
 msgid "Not your character."
 msgstr "본인의 캐릭터가 아닙니다."
-
-#: apps/stockpile/assets.py
-msgid "No home corporation configured."
-msgstr "홈 코퍼레이션이 구성되지 않았습니다."
 
 #: apps/stockpile/assets.py
 msgid ""
@@ -6788,6 +10224,18 @@ msgstr "확보됨"
 #: apps/stockpile/models.py templates/navigation/system_detail.html
 msgid "Solar system"
 msgstr "성계"
+
+#: apps/stockpile/models.py
+#, python-format
+#| msgid "Structure timer"
+msgid "Structure %(location_id)s"
+msgstr "구조물 %(location_id)s"
+
+#: apps/stockpile/models.py
+#, python-format
+#| msgid "Last location"
+msgid "Location %(location_id)s"
+msgstr "위치 %(location_id)s"
 
 #: apps/stockpile/views.py
 msgid "Stock updated."
@@ -7261,7 +10709,7 @@ msgstr "서비스별 공개 대상 제어 — 군단, 얼라이언스, 공개 �
 msgid "An immutable audit log and configurable data-retention policy"
 msgstr "변경 불가능한 감사 로그와 설정 가능한 데이터 보존 정책"
 
-#: config/showcase_data.py
+#: config/showcase_data.py tests/test_i18n_showcase.py
 msgid "Your Command Center"
 msgstr "당신의 지휘 본부"
 
@@ -7280,7 +10728,7 @@ msgid ""
 " the corp needs it"
 msgstr "우선순위가 매겨진 퀘스트 로그가 다음에 무엇을 타고, 훈련하고, 만들지 — 그리고 군단이 왜 그것을 필요로 하는지 알려줍니다"
 
-#: config/showcase_data.py
+#: config/showcase_data.py tests/test_i18n_showcase.py
 msgid "Combat rank, 7-day kills/losses and ISK destroyed, at a glance"
 msgstr "전투 랭크, 7일간의 킬/로스, 파괴한 ISK 를 한눈에"
 
@@ -8030,10 +11478,6 @@ msgid "Corp calendar"
 msgstr "군단 캘린더"
 
 #: core/features.py
-msgid "This feature is not enabled for this corporation."
-msgstr "이 코퍼레이션에서는 이 기능이 활성화되어 있지 않습니다."
-
-#: core/features.py
 msgid "This feature is not available."
 msgstr "이 기능은 사용할 수 없습니다."
 
@@ -8104,10 +11548,6 @@ msgstr "알림 보내기"
 msgid "Alert history"
 msgstr "알림 기록"
 
-#: templates/_nav.html templates/navigation/system_detail.html
-msgid "Killboard"
-msgstr "Killboard"
-
 #: templates/_nav.html templates/killboard/list.html
 #: templates/killboard/roster.html templates/killboard/stats.html
 msgid "Rankings"
@@ -8139,10 +11579,6 @@ msgstr "지식 베이스"
 #: templates/_nav.html
 msgid "Ships &amp; Doctrines"
 msgstr "함선 &amp; Doctrines"
-
-#: templates/_nav.html templates/admin_audit/console/hub.html
-msgid "Doctrines"
-msgstr "Doctrines"
 
 #: templates/_nav.html templates/doctrines/detail.html
 #: templates/doctrines/list.html templates/doctrines/ships.html
@@ -8217,14 +11653,6 @@ msgstr "산업 &amp; 경제"
 msgid "Industry Center"
 msgstr "산업 센터"
 
-#: templates/_nav.html templates/admin_audit/console/hub.html
-#: templates/planetary/colonies.html templates/planetary/detail.html
-#: templates/planetary/explore.html templates/planetary/landing.html
-#: templates/planetary/learn.html templates/planetary/recommend.html
-#: templates/planetary/wizard.html
-msgid "Planetary Industry"
-msgstr "행성 산업"
-
 #: templates/_nav.html templates/industry/home.html
 #: templates/industry/jobs.html
 msgid "Job tracker"
@@ -8245,10 +11673,6 @@ msgstr "채굴 원장"
 #: templates/_nav.html templates/stockpile/assets.html
 msgid "Assets"
 msgstr "자산"
-
-#: templates/_nav.html templates/market/dashboard.html
-msgid "Market"
-msgstr "마켓"
 
 #: templates/_nav.html
 msgid "Corp Logistics"
@@ -8282,20 +11706,6 @@ msgstr "제작 보드"
 #: templates/_nav.html templates/store/supply_forecast.html
 msgid "Supply Forecast"
 msgstr "공급 예측"
-
-#: templates/_nav.html templates/campaigns/_dashboard_panel.html
-#: templates/campaigns/activity.html templates/campaigns/close.html
-#: templates/campaigns/detail.html templates/campaigns/explain.html
-#: templates/campaigns/form.html templates/campaigns/issue_form.html
-#: templates/campaigns/lessons.html templates/campaigns/milestone_form.html
-#: templates/campaigns/objective_detail.html
-#: templates/campaigns/objective_form.html templates/campaigns/portfolio.html
-#: templates/campaigns/recognition.html templates/campaigns/report.html
-#: templates/campaigns/risk_form.html templates/campaigns/template_picker.html
-#: templates/campaigns/timeline.html templates/campaigns/workspace.html
-#: templates/campaigns/workstream_form.html
-msgid "Campaign Command"
-msgstr "캠페인 지휘"
 
 #: templates/_nav.html templates/campaigns/portfolio.html
 msgid "Campaigns"
@@ -8385,11 +11795,6 @@ msgstr "손실 영향"
 msgid "Member Roster"
 msgstr "멤버 명단"
 
-#: templates/_nav.html templates/recruitment/detail.html
-#: templates/recruitment/list.html templates/recruitment/oauth_begin.html
-msgid "Recruitment"
-msgstr "모집"
-
 #: templates/_nav.html templates/operations/cancellations.html
 msgid "Cancellation analytics"
 msgstr "취소 분석"
@@ -8431,11 +11836,6 @@ msgstr "둘러보기"
 #: templates/_nav.html templates/base.html templates/showcase.html
 msgid "Features"
 msgstr "기능"
-
-#: templates/_user_block.html templates/corporation/finance.html
-#: templates/identity/dashboard.html templates/impersonation/log.html
-msgid "Director"
-msgstr "디렉터"
 
 #: templates/_user_block.html templates/identity/dashboard.html
 msgid "Member"
@@ -8733,11 +12133,6 @@ msgid ""
 "suppression floor."
 msgstr "알림을 활성화하고, 제안 상한, 보존 기간 및 리더십 억제 하한선을 조정하세요."
 
-#: templates/admin_audit/console/hub.html templates/mentorship/dashboard.html
-#: templates/mentorship/landing.html
-msgid "Mentorship Program"
-msgstr "멘토십 프로그램"
-
 #: templates/admin_audit/console/hub.html
 msgid "Overview"
 msgstr "개요"
@@ -8842,10 +12237,6 @@ msgid "Enable, weight and re-band the individual KPIs inside each dimension."
 msgstr "각 차원 내 개별 KPI를 활성화하고, 가중치를 부여하고, 구간을 재설정하세요."
 
 #: templates/admin_audit/console/hub.html
-msgid "Mandatory ships"
-msgstr "필수 함선"
-
-#: templates/admin_audit/console/hub.html
 msgid ""
 "The ships every pilot should own — feeds the Strategic Assets dimension."
 msgstr "모든 파일럿이 보유해야 하는 함선 — 전략 자산 차원에 반영됩니다."
@@ -8861,19 +12252,10 @@ msgid ""
 msgstr "역할별 목표 인원 — 함대 구성, 전략 및 리더십 점수화에 반영됩니다."
 
 #: templates/admin_audit/console/hub.html
-msgid "Fleet support skills"
-msgstr "함대 지원 스킬"
-
-#: templates/admin_audit/console/hub.html
 msgid ""
 "Booster / links / logi-support skills and their levels — feeds the Fleet "
 "Support dimension (disabled until set)."
 msgstr "Booster / links / logi-support 스킬과 레벨 — 함대 지원 차원에 반영됩니다(설정 전까지 비활성화)."
-
-#: templates/admin_audit/console/hub.html templates/campaigns/form.html
-#: templates/store/supply_forecast.html
-msgid "Staging system"
-msgstr "스테이징 시스템"
 
 #: templates/admin_audit/console/hub.html
 msgid ""
@@ -8891,16 +12273,8 @@ msgid ""
 msgstr "월렛 하한선, 런웨이, 소진율 및 예비 목표 — 재무 건전성에 반영됩니다."
 
 #: templates/admin_audit/console/hub.html
-msgid "SRP thresholds"
-msgstr "SRP 임계값"
-
-#: templates/admin_audit/console/hub.html
 msgid "Backlog, wait-time and oldest-claim bounds — feeds SRP Health."
 msgstr "백로그, 대기 시간 및 최장 대기 클레임 한계 — SRP 건전성에 반영됩니다."
-
-#: templates/admin_audit/console/hub.html
-msgid "Officer responsibilities"
-msgstr "오피서 책임"
 
 #: templates/admin_audit/console/hub.html
 msgid ""
@@ -9005,16 +12379,8 @@ msgid "Tune how each contribution kind scores points."
 msgstr "각 기여 유형이 점수를 매기는 방식을 조정하세요."
 
 #: templates/admin_audit/console/hub.html
-msgid "SRP programme"
-msgstr "SRP 프로그램"
-
-#: templates/admin_audit/console/hub.html
 msgid "Payout mode, valuation and eligibility for ship replacement."
 msgstr "함선 교체의 지급 방식, 평가 및 자격."
-
-#: templates/admin_audit/console/hub.html templates/srp/budget.html
-msgid "SRP budget"
-msgstr "SRP 예산"
 
 #: templates/admin_audit/console/hub.html
 msgid "The monthly ISK spend cap and loss-impact view for ship replacement."
@@ -9138,11 +12504,6 @@ msgid "Structures &amp; assets"
 msgstr "구조물 &amp; 자산"
 
 #: templates/admin_audit/console/hub.html
-#: templates/corporation/structures.html
-msgid "Structures"
-msgstr "구조물"
-
-#: templates/admin_audit/console/hub.html
 msgid "Fuel, state and reinforcement timers for every corp structure."
 msgstr "모든 군단 구조물의 연료, 상태 및 리인포스 타이머."
 
@@ -9185,11 +12546,6 @@ msgstr "군단 컨트랙트"
 #: templates/admin_audit/console/hub.html
 msgid "Every corp contract — item exchange, courier, auction — with status."
 msgstr "모든 군단 컨트랙트 — 아이템 교환, 특송, 경매 — 상태 포함."
-
-#: templates/admin_audit/console/hub.html
-#: templates/navigation/system_detail.html templates/operations/sov.html
-msgid "Sovereignty"
-msgstr "주권"
 
 #: templates/admin_audit/console/hub.html
 msgid ""
@@ -10954,11 +14310,6 @@ msgstr "태그"
 #: templates/doctrines/ships.html templates/tasks/detail.html
 msgid "Apply"
 msgstr "적용"
-
-#: templates/campaigns/lessons.html templates/campaigns/portfolio.html
-#: templates/doctrines/list.html
-msgid "Clear"
-msgstr "지우기"
 
 #: templates/campaigns/lessons.html
 msgid "Cmdr"
@@ -13911,10 +17262,6 @@ msgid "Back to search"
 msgstr "검색으로 돌아가기"
 
 #: templates/corporation/extractions.html
-msgid "Moon extractions"
-msgstr "달 채굴"
-
-#: templates/corporation/extractions.html
 msgid ""
 "When each moon chunk is ready to fracture, counting down in EVE (UTC) time."
 msgstr "각 달 청크가 파쇄될 준비가 되는 시점을 EVE (UTC) 시간으로 카운트다운합니다."
@@ -15472,10 +18819,6 @@ msgid "Progression"
 msgstr "진행 상황"
 
 #: templates/identity/dashboard.html
-msgid "kills"
-msgstr "킬"
-
-#: templates/identity/dashboard.html
 msgid "reward"
 msgstr "보상"
 
@@ -15639,10 +18982,6 @@ msgstr "스킬 큐 일시정지됨"
 msgid "%(n)s skill waiting"
 msgid_plural "%(n)s skills waiting"
 msgstr[0] "%(n)s개 스킬 대기 중"
-
-#: templates/identity/dashboard.html
-msgid "Skill queue"
-msgstr "스킬 큐"
 
 #: templates/identity/dashboard.html
 msgid "not synced yet"
@@ -17216,10 +20555,6 @@ msgstr "첫 페이지를 작성하세요 →"
 #: templates/killboard/_feed.html
 msgid "Window:"
 msgstr "기간:"
-
-#: templates/killboard/_feed.html
-msgid "All time"
-msgstr "전체 기간"
 
 #: templates/killboard/_feed.html
 msgid "Filter by alliance"
@@ -19574,28 +22909,9 @@ msgstr ""
 "누가 무엇을 채굴했는지 Jita 시세로 평가하고, corp 세율로 부과된 세금을 함께 보여줍니다. 참여도를 추적하고 수익 분배 정산에 "
 "활용하세요."
 
-#: templates/mining/ledger.html templates/mining/my_mining.html
-#: templates/mining/payout.html
-msgid "Payouts"
-msgstr "정산"
-
-#: templates/mining/ledger.html templates/store/supply_forecast.html
-msgid "7 days"
-msgstr "7일"
-
-#: templates/mining/ledger.html templates/mining/my_mining.html
-#: templates/store/supply_forecast.html
-msgid "30 days"
-msgstr "30일"
-
 #: templates/mining/ledger.html templates/store/supply_forecast.html
 msgid "60 days"
 msgstr "60일"
-
-#: templates/mining/ledger.html templates/mining/my_mining.html
-#: templates/store/supply_forecast.html
-msgid "90 days"
-msgstr "90일"
 
 #: templates/mining/ledger.html
 #, python-format
@@ -19730,10 +23046,6 @@ msgstr "지급 예정"
 #: templates/mining/my_mining.html templates/mining/payout.html
 msgid "Payout"
 msgstr "정산"
-
-#: templates/mining/my_mining.html templates/srp/budget.html
-msgid "Period"
-msgstr "기간"
 
 #: templates/mining/my_mining.html
 msgid "Your share"
@@ -20042,10 +23354,6 @@ msgstr ""
 " 보장이 아니라 위험 지표입니다 — 뛰어들기 전에 scout 하세요."
 
 #: templates/navigation/gatecamp.html templates/navigation/roaming.html
-msgid "Security"
-msgstr "보안등급"
-
-#: templates/navigation/gatecamp.html templates/navigation/roaming.html
 msgid "Region (optional)"
 msgstr "Region (선택)"
 
@@ -20293,10 +23601,6 @@ msgstr "복사:"
 #: templates/navigation/jump_planner.html
 msgid "Cyno waypoints"
 msgstr "Cyno 경유지"
-
-#: templates/navigation/jump_planner.html
-msgid "Gate route"
-msgstr "Gate 경로"
 
 #: templates/navigation/jump_planner.html
 msgid "Save this route"
@@ -20621,18 +23925,6 @@ msgstr[0] "ratting 활동이 있는 system %(c)s개, 좋은 기회 순."
 #: templates/navigation/roaming.html templates/readiness/dimension.html
 msgid "Score"
 msgstr "점수"
-
-#: templates/navigation/roaming.html
-msgid "NPC kills"
-msgstr "NPC 격추"
-
-#: templates/navigation/roaming.html
-msgid "Ship kills"
-msgstr "함선 격추"
-
-#: templates/navigation/roaming.html
-msgid "Traffic"
-msgstr "통행량"
 
 #: templates/navigation/roaming.html
 msgid ""
@@ -21858,10 +25150,6 @@ msgstr "작전 세부 정보"
 #: templates/operations/form.html
 msgid "e.g. Home Defence — Saturday"
 msgstr "예: 홈 방어 — 토요일"
-
-#: templates/operations/form.html
-msgid "Operation type"
-msgstr "작전 유형"
 
 #: templates/operations/form.html
 msgid "Form-up date/time (EVE)"
@@ -24115,10 +27403,6 @@ msgstr "발동된 알림이 없습니다. 준비도 설정에서 알림 규칙(�
 #: templates/readiness/alerts.html
 msgid "Rule"
 msgstr "규칙"
-
-#: templates/readiness/alerts.html templates/readiness/findings.html
-msgid "Dimension"
-msgstr "영역"
 
 #: templates/readiness/alerts.html
 msgid "State"
