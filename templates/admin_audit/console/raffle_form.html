@@ -1,19 +1,20 @@
 {% extends "base.html" %}
 {% load eve %}
-{% block title %}{% if creating %}Create contest{% else %}Edit {{ contest.name }}{% endif %} · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% if creating %}{% translate "Create contest" %}{% else %}{% blocktranslate with name=contest.name %}Edit {{ name }}{% endblocktranslate %}{% endif %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <header class="mb-6 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <p class="eyebrow text-gold">Raffle · Leadership</p>
-    <h1 class="mt-1 text-2xl font-bold text-ink">{% if creating %}Create raffle contest{% else %}Edit {{ contest.name }}{% endif %}</h1>
-    <p class="mt-1 max-w-2xl text-sm text-faint">{% if creating %}Set the accrual window, eligibility policy and display options. You can pick a template to pre-fill sources and prizes — everything stays editable while the contest is a draft.{% else %}Change the contest configuration. Prizes and ticket sources are managed from their own pages.{% endif %}</p>
+    <p class="eyebrow text-gold">{% translate "Raffle · Leadership" %}</p>
+    <h1 class="mt-1 text-2xl font-bold text-ink">{% if creating %}{% translate "Create raffle contest" %}{% else %}{% blocktranslate with name=contest.name %}Edit {{ name }}{% endblocktranslate %}{% endif %}</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">{% if creating %}{% translate "Set the accrual window, eligibility policy and display options. You can pick a template to pre-fill sources and prizes — everything stays editable while the contest is a draft." %}{% else %}{% translate "Change the contest configuration. Prizes and ticket sources are managed from their own pages." %}{% endif %}</p>
   </div>
-  <a href="{% if creating %}{% url 'admin_audit:raffle_hub' %}{% else %}{% url 'admin_audit:raffle_detail' contest.pk %}{% endif %}" class="btn-ghost text-sm">← Back</a>
+  <a href="{% if creating %}{% url 'admin_audit:raffle_hub' %}{% else %}{% url 'admin_audit:raffle_detail' contest.pk %}{% endif %}" class="btn-ghost text-sm">← {% translate "Back" %}</a>
 </header>
 
 {% if warn_live %}
 <div class="panel mb-5 border-gold/40 bg-gold/10 px-4 py-3 text-sm text-gold">
-  <strong>Heads up:</strong> this contest has started accruing tickets, so its <strong>schedule, eligibility and draw rules are locked</strong> — those changes will be ignored. You can still edit the description, objective, rules text and display settings. (Before the accrual start time you can freely change the time box.)
+  {% blocktranslate %}<strong>Heads up:</strong> this contest has started accruing tickets, so its <strong>schedule, eligibility and draw rules are locked</strong> — those changes will be ignored. You can still edit the description, objective, rules text and display settings. (Before the accrual start time you can freely change the time box.){% endblocktranslate %}
 </div>
 {% endif %}
 
@@ -23,111 +24,111 @@
 
   {% if creating %}
   <section class="panel p-5">
-    <h2 class="eyebrow mb-3 text-gold">Start from a template</h2>
-    <label class="label">Template</label>
+    <h2 class="eyebrow mb-3 text-gold">{% translate "Start from a template" %}</h2>
+    <label class="label">{% translate "Template" %}</label>
     <select name="template_key" class="input-field">
-      <option value="">Start blank</option>
+      <option value="">{% translate "Start blank" %}</option>
       {% for t in templates %}<option value="{{ t.key }}">{{ t.name }}</option>{% endfor %}
     </select>
-    <p class="mt-1 text-[11px] text-faint">Pre-fills the objective, ticket sources and a default prize ladder. You can tweak everything afterwards.</p>
+    <p class="mt-1 text-[11px] text-faint">{% translate "Pre-fills the objective, ticket sources and a default prize ladder. You can tweak everything afterwards." %}</p>
   </section>
   {% endif %}
 
   <section class="panel p-5">
-    <h2 class="eyebrow mb-3 text-gold">Basics</h2>
+    <h2 class="eyebrow mb-3 text-gold">{% translate "Basics" %}</h2>
     <div class="space-y-4">
       <div>
-        <label class="label">Name</label>
+        <label class="label">{% translate "Name" %}</label>
         {{ form.name }}
         {% if form.name.errors %}<p class="mt-1 text-xs text-loss">{{ form.name.errors|join:" " }}</p>{% endif %}
       </div>
       <div>
-        <label class="label">Objective</label>
+        <label class="label">{% translate "Objective" %}</label>
         {{ form.objective }}
-        <p class="mt-1 text-[11px] text-faint">The engagement goal in one line — why this contest exists.</p>
+        <p class="mt-1 text-[11px] text-faint">{% translate "The engagement goal in one line — why this contest exists." %}</p>
         {% if form.objective.errors %}<p class="mt-1 text-xs text-loss">{{ form.objective.errors|join:" " }}</p>{% endif %}
       </div>
       <div>
-        <label class="label">Short pitch</label>
+        <label class="label">{% translate "Short pitch" %}</label>
         {{ form.description }}
-        <p class="mt-1 text-[11px] text-faint">Shown in the pilot-facing hero.</p>
+        <p class="mt-1 text-[11px] text-faint">{% translate "Shown in the pilot-facing hero." %}</p>
         {% if form.description.errors %}<p class="mt-1 text-xs text-loss">{{ form.description.errors|join:" " }}</p>{% endif %}
       </div>
       <div>
-        <label class="label">Public rules</label>
+        <label class="label">{% translate "Public rules" %}</label>
         {{ form.public_rules }}
-        <p class="mt-1 text-[11px] text-faint">Leadership-authored rules pilots can read.</p>
+        <p class="mt-1 text-[11px] text-faint">{% translate "Leadership-authored rules pilots can read." %}</p>
         {% if form.public_rules.errors %}<p class="mt-1 text-xs text-loss">{{ form.public_rules.errors|join:" " }}</p>{% endif %}
       </div>
       <div>
-        <label class="label">Admin notes</label>
+        <label class="label">{% translate "Admin notes" %}</label>
         {{ form.admin_notes }}
-        <p class="mt-1 text-[11px] text-faint">Internal — never shown to pilots.</p>
+        <p class="mt-1 text-[11px] text-faint">{% translate "Internal — never shown to pilots." %}</p>
         {% if form.admin_notes.errors %}<p class="mt-1 text-xs text-loss">{{ form.admin_notes.errors|join:" " }}</p>{% endif %}
       </div>
     </div>
   </section>
 
   <section class="panel p-5">
-    <h2 class="eyebrow mb-3 text-gold">Schedule</h2>
+    <h2 class="eyebrow mb-3 text-gold">{% translate "Schedule" %}</h2>
     <div class="grid gap-4 sm:grid-cols-3">
       <div>
-        <label class="label">Accrual opens</label>
+        <label class="label">{% translate "Accrual opens" %}</label>
         {{ form.start_at }}
         {% if form.start_at.errors %}<p class="mt-1 text-xs text-loss">{{ form.start_at.errors|join:" " }}</p>{% endif %}
       </div>
       <div>
-        <label class="label">Accrual closes</label>
+        <label class="label">{% translate "Accrual closes" %}</label>
         {{ form.end_at }}
         {% if form.end_at.errors %}<p class="mt-1 text-xs text-loss">{{ form.end_at.errors|join:" " }}</p>{% endif %}
       </div>
       <div>
-        <label class="label">Draw time</label>
+        <label class="label">{% translate "Draw time" %}</label>
         {{ form.draw_at }}
         {% if form.draw_at.errors %}<p class="mt-1 text-xs text-loss">{{ form.draw_at.errors|join:" " }}</p>{% endif %}
       </div>
     </div>
-    <p class="mt-2 text-[11px] text-faint">Tickets accrue only inside the window; the ledger freezes when the contest closes; winners are drawn at the draw time. <span class="text-muted">The start and end dates can only be changed <strong>before the contest starts accruing</strong>, and the start date can never be set in the past.</span></p>
+    <p class="mt-2 text-[11px] text-faint">{% blocktranslate %}Tickets accrue only inside the window; the ledger freezes when the contest closes; winners are drawn at the draw time. <span class="text-muted">The start and end dates can only be changed <strong>before the contest starts accruing</strong>, and the start date can never be set in the past.</span>{% endblocktranslate %}</p>
   </section>
 
   {# ---- Activity safeguards & prize booster ------------------------------ #}
   <section class="panel p-5">
-    <h2 class="eyebrow mb-1 text-gold">Activity safeguards &amp; prize booster</h2>
-    <p class="mb-4 text-[11px] text-faint">Protect the corp's ISK: require a minimum level of activity before an automatic draw, and reward engagement by boosting ISK/PLEX prize values when a goal is reached. Metrics are measured across the whole contest.</p>
+    <h2 class="eyebrow mb-1 text-gold">{% translate "Activity safeguards &amp; prize booster" %}</h2>
+    <p class="mb-4 text-[11px] text-faint">{% translate "Protect the corp's ISK: require a minimum level of activity before an automatic draw, and reward engagement by boosting ISK/PLEX prize values when a goal is reached. Metrics are measured across the whole contest." %}</p>
 
     <div class="grid gap-4 lg:grid-cols-2">
       <div class="rounded border border-line/60 p-3">
-        <p class="eyebrow text-faint">Minimum activity for a valid draw</p>
+        <p class="eyebrow text-faint">{% translate "Minimum activity for a valid draw" %}</p>
         <div class="mt-2 grid grid-cols-2 gap-2">
-          <div><label class="label">Metric</label>{{ form.min_activity_metric }}</div>
-          <div><label class="label">Minimum</label>{{ form.min_activity_threshold }}</div>
+          <div><label class="label">{% translate "Metric" %}</label>{{ form.min_activity_metric }}</div>
+          <div><label class="label">{% translate "Minimum" %}</label>{{ form.min_activity_threshold }}</div>
         </div>
         {% if form.min_activity_threshold.errors %}<p class="mt-1 text-xs text-loss">{{ form.min_activity_threshold.errors|join:" " }}</p>{% endif %}
-        <p class="mt-2 text-[11px] text-faint">Below this, the automatic draw is <strong>held</strong> — a Director can still draw manually. Leave the metric blank for no minimum.</p>
+        <p class="mt-2 text-[11px] text-faint">{% blocktranslate %}Below this, the automatic draw is <strong>held</strong> — a Director can still draw manually. Leave the metric blank for no minimum.{% endblocktranslate %}</p>
       </div>
 
       <div class="rounded border border-line/60 p-3">
-        <p class="eyebrow text-faint">Prize-value booster (ISK / PLEX prizes)</p>
+        <p class="eyebrow text-faint">{% translate "Prize-value booster (ISK / PLEX prizes)" %}</p>
         <div class="mt-2 grid grid-cols-3 gap-2">
-          <div><label class="label">Metric</label>{{ form.prize_booster_metric }}</div>
-          <div><label class="label">Goal</label>{{ form.prize_booster_goal }}</div>
-          <div><label class="label">Boost %</label>{{ form.prize_booster_percent }}</div>
+          <div><label class="label">{% translate "Metric" %}</label>{{ form.prize_booster_metric }}</div>
+          <div><label class="label">{% translate "Goal" %}</label>{{ form.prize_booster_goal }}</div>
+          <div><label class="label">{% translate "Boost %" %}</label>{{ form.prize_booster_percent }}</div>
         </div>
         {% if form.prize_booster_goal.errors %}<p class="mt-1 text-xs text-loss">{{ form.prize_booster_goal.errors|join:" " }}</p>{% endif %}
         {% if form.prize_booster_percent.errors %}<p class="mt-1 text-xs text-loss">{{ form.prize_booster_percent.errors|join:" " }}</p>{% endif %}
-        <p class="mt-2 text-[11px] text-faint">Reach the goal and every ISK/PLEX prize is worth this much more (e.g. 10%). Item/ship prizes are unaffected.</p>
+        <p class="mt-2 text-[11px] text-faint">{% translate "Reach the goal and every ISK/PLEX prize is worth this much more (e.g. 10%). Item/ship prizes are unaffected." %}</p>
       </div>
     </div>
 
     {% if kpi %}
     <div class="mt-4 rounded border border-cyan/30 bg-cyan/5 p-3">
-      <p class="eyebrow text-cyan">Corp KPIs — last 30 days {% if not creating and kpi.0.days %}· pro-rated to this {{ kpi.0.days }}-day contest{% endif %}</p>
-      <p class="mb-2 text-[11px] text-faint">Use these to pick values that require real engagement but stay achievable. A safe minimum is roughly half the pro-rated rate; a good booster goal is around the full rate.</p>
+      <p class="eyebrow text-cyan">{% translate "Corp KPIs — last 30 days" %} {% if not creating and kpi.0.days %}{% blocktranslate with days=kpi.0.days %}· pro-rated to this {{ days }}-day contest{% endblocktranslate %}{% endif %}</p>
+      <p class="mb-2 text-[11px] text-faint">{% translate "Use these to pick values that require real engagement but stay achievable. A safe minimum is roughly half the pro-rated rate; a good booster goal is around the full rate." %}</p>
       <div class="overflow-x-auto">
         <table class="w-full text-xs">
           <thead class="text-faint"><tr class="border-b border-line/60">
-            <th class="py-1 text-left">Metric</th><th class="py-1 text-right">30-day corp</th>
-            <th class="py-1 text-right">Pro-rated</th><th class="py-1 text-right">Suggested min</th><th class="py-1 text-right">Suggested goal</th>
+            <th class="py-1 text-left">{% translate "Metric" %}</th><th class="py-1 text-right">{% translate "30-day corp" %}</th>
+            <th class="py-1 text-right">{% translate "Pro-rated" %}</th><th class="py-1 text-right">{% translate "Suggested min" %}</th><th class="py-1 text-right">{% translate "Suggested goal" %}</th>
           </tr></thead>
           <tbody>
             {% for k in kpi %}
@@ -142,64 +143,64 @@
           </tbody>
         </table>
       </div>
-      {% if creating %}<p class="mt-1 text-[11px] text-faint">Pro-rated suggestions appear once the contest has a saved start/end — edit it after creating to fine-tune.</p>{% endif %}
+      {% if creating %}<p class="mt-1 text-[11px] text-faint">{% translate "Pro-rated suggestions appear once the contest has a saved start/end — edit it after creating to fine-tune." %}</p>{% endif %}
     </div>
     {% endif %}
   </section>
 
   <section class="panel p-5">
-    <h2 class="eyebrow mb-3 text-gold">Eligibility &amp; ESI</h2>
+    <h2 class="eyebrow mb-3 text-gold">{% translate "Eligibility &amp; ESI" %}</h2>
     <div class="space-y-2 text-sm text-muted">
-      <label class="flex items-center gap-2">{{ form.require_enrolled }} Only pilots enrolled in FORCA earn tickets <span class="text-[11px] text-faint">(strongly recommended)</span></label>
-      <label class="flex items-center gap-2">{{ form.require_valid_token }} Require a live, non-revoked ESI token <span class="text-[11px] text-faint">(recommended)</span></label>
-      <label class="flex items-center gap-2">{{ form.include_alliance }} Also admit registered alliance / friendly-corp pilots</label>
-      <label class="flex items-center gap-2">{{ form.retroactive_enabled }} Award back to the start date once a pilot enrols</label>
+      <label class="flex items-center gap-2">{{ form.require_enrolled }} {% translate "Only pilots enrolled in FORCA earn tickets" %} <span class="text-[11px] text-faint">{% translate "(strongly recommended)" %}</span></label>
+      <label class="flex items-center gap-2">{{ form.require_valid_token }} {% translate "Require a live, non-revoked ESI token" %} <span class="text-[11px] text-faint">{% translate "(recommended)" %}</span></label>
+      <label class="flex items-center gap-2">{{ form.include_alliance }} {% translate "Also admit registered alliance / friendly-corp pilots" %}</label>
+      <label class="flex items-center gap-2">{{ form.retroactive_enabled }} {% translate "Award back to the start date once a pilot enrols" %}</label>
     </div>
-    <p class="mt-2 text-[11px] text-faint">Activity by pilots who aren't enrolled with a valid token is recorded for outreach — never as a drawable ticket.</p>
+    <p class="mt-2 text-[11px] text-faint">{% translate "Activity by pilots who aren't enrolled with a valid token is recorded for outreach — never as a drawable ticket." %}</p>
     {% if form.require_enrolled.errors %}<p class="mt-1 text-xs text-loss">{{ form.require_enrolled.errors|join:" " }}</p>{% endif %}
     {% if form.require_valid_token.errors %}<p class="mt-1 text-xs text-loss">{{ form.require_valid_token.errors|join:" " }}</p>{% endif %}
   </section>
 
   <section class="panel p-5">
-    <h2 class="eyebrow mb-3 text-gold">Draw</h2>
+    <h2 class="eyebrow mb-3 text-gold">{% translate "Draw" %}</h2>
     <div class="space-y-2 text-sm text-muted">
-      <label class="flex items-center gap-2">{{ form.one_prize_per_pilot }} A pilot can win at most one prize <span class="text-[11px] text-faint">(spreads rewards)</span></label>
-      <label class="flex items-center gap-2">{{ form.auto_draw }} Draw automatically at the draw time <span class="text-[11px] text-faint">(else an officer runs it)</span></label>
+      <label class="flex items-center gap-2">{{ form.one_prize_per_pilot }} {% translate "A pilot can win at most one prize" %} <span class="text-[11px] text-faint">{% translate "(spreads rewards)" %}</span></label>
+      <label class="flex items-center gap-2">{{ form.auto_draw }} {% translate "Draw automatically at the draw time" %} <span class="text-[11px] text-faint">{% translate "(else an officer runs it)" %}</span></label>
     </div>
   </section>
 
   <section class="panel p-5">
-    <h2 class="eyebrow mb-3 text-gold">Display</h2>
+    <h2 class="eyebrow mb-3 text-gold">{% translate "Display" %}</h2>
     <div class="space-y-2 text-sm text-muted">
-      <label class="flex items-center gap-2">{{ form.leaderboard_visible }} Show a public leaderboard</label>
-      <label class="flex items-center gap-2">{{ form.show_odds }} Show each pilot their estimated chance of winning</label>
-      <label class="flex items-center gap-2">{{ form.show_recent_events }} Show a recent-ticket-events feed</label>
-      <label class="flex items-center gap-2">{{ form.show_ineligible_to_pilots }} Show pilots the tickets they <em>would</em> have earned before enrolling</label>
-      <label class="flex items-center gap-2">{{ form.archive_public }} Keep this contest in the public archive after completion</label>
+      <label class="flex items-center gap-2">{{ form.leaderboard_visible }} {% translate "Show a public leaderboard" %}</label>
+      <label class="flex items-center gap-2">{{ form.show_odds }} {% translate "Show each pilot their estimated chance of winning" %}</label>
+      <label class="flex items-center gap-2">{{ form.show_recent_events }} {% translate "Show a recent-ticket-events feed" %}</label>
+      <label class="flex items-center gap-2">{{ form.show_ineligible_to_pilots }} {% blocktranslate %}Show pilots the tickets they <em>would</em> have earned before enrolling{% endblocktranslate %}</label>
+      <label class="flex items-center gap-2">{{ form.archive_public }} {% translate "Keep this contest in the public archive after completion" %}</label>
     </div>
     <div class="mt-3 max-w-xs">
-      <label class="label">Leaderboard size</label>
+      <label class="label">{% translate "Leaderboard size" %}</label>
       {{ form.leaderboard_size }}
       {% if form.leaderboard_size.errors %}<p class="mt-1 text-xs text-loss">{{ form.leaderboard_size.errors|join:" " }}</p>{% endif %}
     </div>
   </section>
 
   <section class="panel p-5">
-    <h2 class="eyebrow mb-3 text-gold">Booster window</h2>
-    <p class="mb-3 text-[11px] text-faint">Multiply tickets earned inside an optional window — double-ticket weekends, strategic pushes. Leave the multiplier at 1 to switch it off; set both dates together.</p>
+    <h2 class="eyebrow mb-3 text-gold">{% translate "Booster window" %}</h2>
+    <p class="mb-3 text-[11px] text-faint">{% translate "Multiply tickets earned inside an optional window — double-ticket weekends, strategic pushes. Leave the multiplier at 1 to switch it off; set both dates together." %}</p>
     <div class="grid gap-4 sm:grid-cols-3">
       <div>
-        <label class="label">Multiplier</label>
+        <label class="label">{% translate "Multiplier" %}</label>
         {{ form.booster_multiplier }}
         {% if form.booster_multiplier.errors %}<p class="mt-1 text-xs text-loss">{{ form.booster_multiplier.errors|join:" " }}</p>{% endif %}
       </div>
       <div>
-        <label class="label">Booster starts</label>
+        <label class="label">{% translate "Booster starts" %}</label>
         {{ form.booster_start_at }}
         {% if form.booster_start_at.errors %}<p class="mt-1 text-xs text-loss">{{ form.booster_start_at.errors|join:" " }}</p>{% endif %}
       </div>
       <div>
-        <label class="label">Booster ends</label>
+        <label class="label">{% translate "Booster ends" %}</label>
         {{ form.booster_end_at }}
         {% if form.booster_end_at.errors %}<p class="mt-1 text-xs text-loss">{{ form.booster_end_at.errors|join:" " }}</p>{% endif %}
       </div>
@@ -207,8 +208,8 @@
   </section>
 
   <div class="flex justify-end gap-2">
-    <a href="{% if creating %}{% url 'admin_audit:raffle_hub' %}{% else %}{% url 'admin_audit:raffle_detail' contest.pk %}{% endif %}" class="btn-ghost">Cancel</a>
-    <button type="submit" class="btn-gold">{% if creating %}Create draft{% else %}Save changes{% endif %}</button>
+    <a href="{% if creating %}{% url 'admin_audit:raffle_hub' %}{% else %}{% url 'admin_audit:raffle_detail' contest.pk %}{% endif %}" class="btn-ghost">{% translate "Cancel" %}</a>
+    <button type="submit" class="btn-gold">{% if creating %}{% translate "Create draft" %}{% else %}{% translate "Save changes" %}{% endif %}</button>
   </div>
 </form>
 {% endblock %}

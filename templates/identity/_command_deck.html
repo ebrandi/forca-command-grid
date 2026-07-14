@@ -1,4 +1,5 @@
 {% load eve %}
+{% load i18n %}
 {% comment %}
 Officer command deck — the corp-level strip at the bottom of the Command Center.
 Renders for officers (ctx `officer`); the corp-metric tiles additionally ride
@@ -8,25 +9,25 @@ Tiles degrade to non-links when their feature is off.
 {% endcomment %}
 <section class="mt-10" id="deck">
   <div class="flex items-center gap-3">
-    <h2 class="eyebrow text-gold">Command deck</h2>
-    <span class="chip !border-gold/40 !text-gold">Officers only</span>
+    <h2 class="eyebrow text-gold">{% translate "Command deck" %}</h2>
+    <span class="chip !border-gold/40 !text-gold">{% translate "Officers only" %}</span>
     <div class="h-px flex-1 bg-line"></div>
   </div>
-  <p class="mt-1 text-sm text-faint">The corp at a glance. Everything above this line is what your pilots see — this is what you do about it.</p>
+  <p class="mt-1 text-sm text-faint">{% translate "The corp at a glance. Everything above this line is what your pilots see — this is what you do about it." %}</p>
 
   <div class="panel mt-4 overflow-hidden">
     {% if leadership %}
     <div class="grid grid-cols-2 gap-px bg-line/40 sm:grid-cols-3 lg:grid-cols-6">
-      {% if features.readiness %}<a href="{% url 'readiness:dashboard' %}" class="bg-panel p-4 hover:bg-panel2">{% else %}<div class="bg-panel p-4">{% endif %}<p class="eyebrow">Readiness</p><p class="mt-1 font-display text-2xl font-bold {% if leadership.index >= 75 %}text-kill{% elif leadership.index >= 50 %}text-gold{% else %}text-loss{% endif %}">{{ leadership.index }}</p>{% if features.readiness %}</a>{% else %}</div>{% endif %}
-      {% if features.srp %}<a href="{% url 'srp:queue' %}" class="bg-panel p-4 hover:bg-panel2">{% else %}<div class="bg-panel p-4">{% endif %}<p class="eyebrow">SRP exposure</p><p class="mt-1 font-display text-lg font-bold text-loss">{{ leadership.srp_exposure|isk }}</p>{% if features.srp %}</a>{% else %}</div>{% endif %}
-      {% if features.stockpile %}<a href="{% url 'stockpile:dashboard' %}" class="bg-panel p-4 hover:bg-panel2">{% else %}<div class="bg-panel p-4">{% endif %}<p class="eyebrow">Stock short</p><p class="mt-1 font-display text-2xl font-bold {% if leadership.stock_shortfalls %}text-loss{% else %}text-ink{% endif %}">{{ leadership.stock_shortfalls }}</p>{% if features.stockpile %}</a>{% else %}</div>{% endif %}
-      {% if features.tasks %}<a href="{% url 'tasks:board' %}" class="bg-panel p-4 hover:bg-panel2">{% else %}<div class="bg-panel p-4">{% endif %}<p class="eyebrow">Open tasks</p><p class="mt-1 font-display text-2xl font-bold text-gold">{{ leadership.open_tasks }}</p>{% if features.tasks %}</a>{% else %}</div>{% endif %}
-      {% if features.stockpile %}<a href="{% url 'stockpile:logistics' %}" class="bg-panel p-4 hover:bg-panel2">{% else %}<div class="bg-panel p-4">{% endif %}<p class="eyebrow">Open hauls</p><p class="mt-1 font-display text-2xl font-bold text-gold">{{ leadership.open_hauls }}</p>{% if features.stockpile %}</a>{% else %}</div>{% endif %}
-      {% if features.killboard %}<a href="{% url 'killboard:list' %}" class="bg-panel p-4 hover:bg-panel2">{% else %}<div class="bg-panel p-4">{% endif %}<p class="eyebrow">Losses 24h</p><p class="mt-1 font-display text-2xl font-bold text-loss">{{ leadership.losses_24h }}</p>{% if features.killboard %}</a>{% else %}</div>{% endif %}
+      {% if features.readiness %}<a href="{% url 'readiness:dashboard' %}" class="bg-panel p-4 hover:bg-panel2">{% else %}<div class="bg-panel p-4">{% endif %}<p class="eyebrow">{% translate "Readiness" %}</p><p class="mt-1 font-display text-2xl font-bold {% if leadership.index >= 75 %}text-kill{% elif leadership.index >= 50 %}text-gold{% else %}text-loss{% endif %}">{{ leadership.index }}</p>{% if features.readiness %}</a>{% else %}</div>{% endif %}
+      {% if features.srp %}<a href="{% url 'srp:queue' %}" class="bg-panel p-4 hover:bg-panel2">{% else %}<div class="bg-panel p-4">{% endif %}<p class="eyebrow">{% translate "SRP exposure" %}</p><p class="mt-1 font-display text-lg font-bold text-loss">{{ leadership.srp_exposure|isk }}</p>{% if features.srp %}</a>{% else %}</div>{% endif %}
+      {% if features.stockpile %}<a href="{% url 'stockpile:dashboard' %}" class="bg-panel p-4 hover:bg-panel2">{% else %}<div class="bg-panel p-4">{% endif %}<p class="eyebrow">{% translate "Stock short" %}</p><p class="mt-1 font-display text-2xl font-bold {% if leadership.stock_shortfalls %}text-loss{% else %}text-ink{% endif %}">{{ leadership.stock_shortfalls }}</p>{% if features.stockpile %}</a>{% else %}</div>{% endif %}
+      {% if features.tasks %}<a href="{% url 'tasks:board' %}" class="bg-panel p-4 hover:bg-panel2">{% else %}<div class="bg-panel p-4">{% endif %}<p class="eyebrow">{% translate "Open tasks" %}</p><p class="mt-1 font-display text-2xl font-bold text-gold">{{ leadership.open_tasks }}</p>{% if features.tasks %}</a>{% else %}</div>{% endif %}
+      {% if features.stockpile %}<a href="{% url 'stockpile:logistics' %}" class="bg-panel p-4 hover:bg-panel2">{% else %}<div class="bg-panel p-4">{% endif %}<p class="eyebrow">{% translate "Open hauls" %}</p><p class="mt-1 font-display text-2xl font-bold text-gold">{{ leadership.open_hauls }}</p>{% if features.stockpile %}</a>{% else %}</div>{% endif %}
+      {% if features.killboard %}<a href="{% url 'killboard:list' %}" class="bg-panel p-4 hover:bg-panel2">{% else %}<div class="bg-panel p-4">{% endif %}<p class="eyebrow">{% translate "Losses 24h" %}</p><p class="mt-1 font-display text-2xl font-bold text-loss">{{ leadership.losses_24h }}</p>{% if features.killboard %}</a>{% else %}</div>{% endif %}
     </div>
     {% if leadership.top_gaps %}
       <div class="border-t border-line px-4 py-3">
-        <p class="eyebrow mb-2">Top blocking gaps</p>
+        <p class="eyebrow mb-2">{% translate "Top blocking gaps" %}</p>
         <div class="flex flex-wrap gap-2">
           {% for g in leadership.top_gaps %}{% if features.readiness %}<a href="{% url 'readiness:dashboard' %}" class="chip">{{ g.label }}</a>{% else %}<span class="chip">{{ g.label }}</span>{% endif %}{% endfor %}
         </div>
@@ -34,7 +35,7 @@ Tiles degrade to non-links when their feature is off.
     {% endif %}
     {% if leadership.contrib_totals %}
       <div class="border-t border-line px-4 py-3">
-        <p class="eyebrow mb-2">Corp contribution <span class="text-faint">· this month</span></p>
+        <p class="eyebrow mb-2">{% translate "Corp contribution" %} <span class="text-faint">· {% translate "this month" %}</span></p>
         <div class="flex flex-wrap gap-2">
           {% for c in leadership.contrib_totals %}
             <span class="chip">{{ c.label }}: <span class="ml-1 text-gold">{% if c.unit == 'isk' %}{{ c.total|isk }}{% else %}{{ c.total|floatformat:"-2" }} {{ c.unit }}{% endif %}</span></span>
@@ -45,16 +46,16 @@ Tiles degrade to non-links when their feature is off.
     {% endif %}{# leadership metric strata — rides the 'briefing' key #}
     {% if officer %}
       <div class="border-t border-line px-4 py-3">
-        <p class="eyebrow mb-2">Command</p>
+        <p class="eyebrow mb-2">{% translate "Command" %}</p>
         <div class="flex flex-wrap gap-2 text-xs">
-          <a href="{% url 'corporation:roster' %}" class="chip hover:!border-gold/40">Roster{% if officer.roster_pending %} <span class="ml-1 text-loss">{{ officer.roster_pending }} to register</span>{% endif %}</a>
-          {% if features.recommendations %}<a href="{% url 'recommendations:officer' %}" class="chip hover:!border-gold/40">Officer actions{% if officer.open_recs %} <span class="ml-1 text-gold">{{ officer.open_recs }}</span>{% endif %}</a>{% endif %}
-          {% if features.skills %}<a href="{% url 'skills:gap' %}" class="chip hover:!border-gold/40">Skill gap</a>{% endif %}
-          {% if features.srp %}<a href="{% url 'srp:queue' %}" class="chip hover:!border-gold/40">SRP queue</a>{% endif %}
-          {% if features.tasks %}<a href="{% url 'tasks:board' %}" class="chip hover:!border-gold/40">Task board</a>{% endif %}
-          {% if features.industry %}<a href="{% url 'industry:board' %}" class="chip hover:!border-gold/40">Projects{% if officer.unclaimed_projects %} <span class="ml-1 text-gold">{{ officer.unclaimed_projects }} unled</span>{% endif %}</a>{% endif %}
-          {% if features.stockpile %}<a href="{% url 'stockpile:dashboard' %}" class="chip hover:!border-gold/40">Stock{% if officer.shortfalls %} <span class="ml-1 text-loss">{{ officer.shortfalls }} short</span>{% endif %}</a>{% endif %}
-          {% if integrations %}<a href="{% url 'admin_audit:health' %}" class="chip hover:!border-gold/40">Integrations {% if integrations.ok %}<span class="ml-1 text-kill">healthy</span>{% elif not integrations.has_asset_token %}<span class="ml-1 text-gold">token</span>{% else %}<span class="ml-1 text-loss">{{ integrations.stale|length }} stale</span>{% endif %}</a>{% endif %}
+          <a href="{% url 'corporation:roster' %}" class="chip hover:!border-gold/40">{% translate "Roster" %}{% if officer.roster_pending %} <span class="ml-1 text-loss">{% blocktranslate with n=officer.roster_pending %}{{ n }} to register{% endblocktranslate %}</span>{% endif %}</a>
+          {% if features.recommendations %}<a href="{% url 'recommendations:officer' %}" class="chip hover:!border-gold/40">{% translate "Officer actions" %}{% if officer.open_recs %} <span class="ml-1 text-gold">{{ officer.open_recs }}</span>{% endif %}</a>{% endif %}
+          {% if features.skills %}<a href="{% url 'skills:gap' %}" class="chip hover:!border-gold/40">{% translate "Skill gap" %}</a>{% endif %}
+          {% if features.srp %}<a href="{% url 'srp:queue' %}" class="chip hover:!border-gold/40">{% translate "SRP queue" %}</a>{% endif %}
+          {% if features.tasks %}<a href="{% url 'tasks:board' %}" class="chip hover:!border-gold/40">{% translate "Task board" %}</a>{% endif %}
+          {% if features.industry %}<a href="{% url 'industry:board' %}" class="chip hover:!border-gold/40">{% translate "Projects" %}{% if officer.unclaimed_projects %} <span class="ml-1 text-gold">{% blocktranslate with n=officer.unclaimed_projects %}{{ n }} unled{% endblocktranslate %}</span>{% endif %}</a>{% endif %}
+          {% if features.stockpile %}<a href="{% url 'stockpile:dashboard' %}" class="chip hover:!border-gold/40">{% translate "Stock" %}{% if officer.shortfalls %} <span class="ml-1 text-loss">{% blocktranslate with n=officer.shortfalls %}{{ n }} short{% endblocktranslate %}</span>{% endif %}</a>{% endif %}
+          {% if integrations %}<a href="{% url 'admin_audit:health' %}" class="chip hover:!border-gold/40">{% translate "Integrations" %} {% if integrations.ok %}<span class="ml-1 text-kill">{% translate "healthy" %}</span>{% elif not integrations.has_asset_token %}<span class="ml-1 text-gold">{% translate "token" %}</span>{% else %}<span class="ml-1 text-loss">{% blocktranslate with n=integrations.stale|length %}{{ n }} stale{% endblocktranslate %}</span>{% endif %}</a>{% endif %}
         </div>
       </div>
     {% endif %}
@@ -63,18 +64,18 @@ Tiles degrade to non-links when their feature is off.
   {% if leadership.leaderboard %}
   <div class="mt-4" x-data="{ open: false }">
     <button type="button" @click="open = !open" :aria-expanded="open" class="btn-ghost flex items-center gap-2">
-      <span x-show="!open">Expand full deck</span><span x-show="open" x-cloak>Collapse deck</span>
+      <span x-show="!open">{% translate "Expand full deck" %}</span><span x-show="open" x-cloak>{% translate "Collapse deck" %}</span>
       <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" class="h-3 w-3 transition-transform" :class="open && 'rotate-90'"><path d="M4 2.5l4 3.5-4 3.5"/></svg>
     </button>
     <div x-show="open" x-cloak x-transition.opacity class="mt-4">
       <section class="panel overflow-hidden lg:max-w-xl">
-        <div class="border-b border-line px-4 py-3"><h3 class="eyebrow text-gold">Contribution points <span class="text-faint">· this month</span></h3></div>
+        <div class="border-b border-line px-4 py-3"><h3 class="eyebrow text-gold">{% translate "Contribution points" %} <span class="text-faint">· {% translate "this month" %}</span></h3></div>
         <div class="divide-y divide-line/40 text-sm">
           {% for row in leadership.leaderboard %}
             <div class="flex items-center gap-3 px-4 py-2.5">
               <span class="w-6 text-center font-display text-faint">{{ forloop.counter }}</span>
               <span class="min-w-0 flex-1 truncate text-ink">{{ row.user.display_name }}</span>
-              <span class="data font-bold text-gold">{{ row.points }} pts</span>
+              <span class="data font-bold text-gold">{% blocktranslate with n=row.points %}{{ n }} pts{% endblocktranslate %}</span>
             </div>
           {% endfor %}
         </div>

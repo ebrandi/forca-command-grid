@@ -10,7 +10,7 @@ no AAR exists, else the AAR (which polls itself while the worker builds it). Off
 <header class="mb-6">
   <a href="{% url 'command_intel:battles' %}" class="text-xs text-faint hover:text-gold">← {% translate "Battle analysis" %}</a>
   <p class="mt-2 eyebrow text-gold">{% translate "Combat intelligence · after-action review" %}</p>
-  <h1 class="mt-1 font-display text-2xl font-bold text-ink">{{ battle.title|default:"Battle" }}</h1>
+  <h1 class="mt-1 font-display text-2xl font-bold text-ink">{% translate "Battle" as default_title %}{{ battle.title|default:default_title }}</h1>
   <p class="mt-1 text-sm text-faint">
     {{ battle.start_time|date:"d M Y H:i" }} → {{ battle.end_time|date:"H:i" }} · {{ battle.killmails.count }} killmails ·
     <a href="{% url 'killboard:battle_report_detail' battle.pk %}" class="text-cyan hover:underline">killboard report →</a>

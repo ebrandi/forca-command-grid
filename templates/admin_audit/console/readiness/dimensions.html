@@ -1,11 +1,12 @@
 {% extends "base.html" %}
-{% block title %}Readiness · Dimensions &amp; weights · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Readiness" %} · {% translate "Dimensions &amp; weights" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
-<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← {% translate "Admin console" %}</a>
 <header class="mt-2 mb-6">
-  <p class="eyebrow">Readiness configuration</p>
-  <h1 class="mt-1 text-3xl font-bold text-ink">Dimensions &amp; weights</h1>
-  <p class="mt-1 max-w-2xl text-sm text-faint">Tune which dimensions score, how heavily each one weighs in the overall readiness index, and its amber/red status bands. A disabled dimension is hidden from the dashboards and excluded from the index — never counted as a zero. Default weights are equal, so the index only moves once you change them.</p>
+  <p class="eyebrow">{% translate "Readiness configuration" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Dimensions &amp; weights" %}</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Tune which dimensions score, how heavily each one weighs in the overall readiness index, and its amber/red status bands. A disabled dimension is hidden from the dashboards and excluded from the index — never counted as a zero. Default weights are equal, so the index only moves once you change them." %}</p>
 </header>
 
 
@@ -13,7 +14,7 @@
   {% csrf_token %}
   <section class="panel overflow-hidden">
     <div class="hidden border-b border-line px-4 py-2.5 text-[11px] uppercase tracking-wide text-faint sm:grid sm:grid-cols-[1fr_4rem_5rem_5rem_5rem] sm:gap-3">
-      <span>Dimension</span><span class="text-center">On</span><span class="text-right">Weight</span><span class="text-right">Amber</span><span class="text-right">Red</span>
+      <span>{% translate "Dimension" %}</span><span class="text-center">{% translate "On" %}</span><span class="text-right">{% translate "Weight" %}</span><span class="text-right">{% translate "Amber" %}</span><span class="text-right">{% translate "Red" %}</span>
     </div>
     <div class="divide-y divide-line/40">
       {% for row in rows %}
@@ -23,21 +24,21 @@
           <span class="block font-mono text-[11px] text-faint">{{ row.key }}</span>
         </div>
         <label class="flex items-center justify-center sm:justify-center">
-          <span class="mr-2 text-xs text-faint sm:hidden">Enabled</span>
+          <span class="mr-2 text-xs text-faint sm:hidden">{% translate "Enabled" %}</span>
           <input type="checkbox" name="dim_{{ row.key }}_enabled" {% if row.enabled %}checked{% endif %}>
         </label>
         <label class="flex items-center gap-2 sm:block">
-          <span class="text-xs text-faint sm:hidden">Weight</span>
+          <span class="text-xs text-faint sm:hidden">{% translate "Weight" %}</span>
           <input type="number" step="0.1" min="0" name="dim_{{ row.key }}_weight" value="{{ row.weight }}"
                  class="input-field w-full text-right" inputmode="decimal" required>
         </label>
         <label class="flex items-center gap-2 sm:block">
-          <span class="text-xs text-faint sm:hidden">Amber</span>
+          <span class="text-xs text-faint sm:hidden">{% translate "Amber" %}</span>
           <input type="number" min="0" max="100" name="dim_{{ row.key }}_amber" value="{{ row.amber }}"
                  class="input-field w-full text-right" inputmode="numeric" required>
         </label>
         <label class="flex items-center gap-2 sm:block">
-          <span class="text-xs text-faint sm:hidden">Red</span>
+          <span class="text-xs text-faint sm:hidden">{% translate "Red" %}</span>
           <input type="number" min="0" max="100" name="dim_{{ row.key }}_red" value="{{ row.red }}"
                  class="input-field w-full text-right" inputmode="numeric" required>
         </label>
@@ -46,16 +47,16 @@
     </div>
     <div class="flex flex-wrap items-center justify-between gap-3 border-t border-line px-4 py-3">
       <p class="text-[11px] text-faint">
-        config v{{ meta.version }}{% if meta.by %} · last changed by {{ meta.by }}{% endif %}{% if meta.at %} · {{ meta.at|date:"j M Y H:i" }}{% endif %}
+        {% blocktranslate with version=meta.version %}config v{{ version }}{% endblocktranslate %}{% if meta.by %} · {% blocktranslate with by=meta.by %}last changed by {{ by }}{% endblocktranslate %}{% endif %}{% if meta.at %} · {{ meta.at|date:"j M Y H:i" }}{% endif %}
       </p>
-      <button class="btn-gold">Save changes</button>
+      <button class="btn-gold">{% translate "Save changes" %}</button>
     </div>
   </section>
 </form>
 
 <form method="post" action="{% url 'admin_audit:readiness_reset' 'dimensions' %}" class="mt-3">
   {% csrf_token %}
-  <button class="btn-ghost text-sm">Reset to defaults</button>
-  <span class="ml-2 text-[11px] text-faint">Restores every dimension's weight and bands to the shipped defaults.</span>
+  <button class="btn-ghost text-sm">{% translate "Reset to defaults" %}</button>
+  <span class="ml-2 text-[11px] text-faint">{% translate "Restores every dimension's weight and bands to the shipped defaults." %}</span>
 </form>
 {% endblock %}

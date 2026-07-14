@@ -1,100 +1,99 @@
 {% extends "base.html" %}
-{% block title %}Access governance · Admin{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Access governance" %} · {% translate "Admin" %}{% endblock %}
 {% block content %}
-<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← {% translate "Admin console" %}</a>
 <header class="mt-3 mb-6">
-  <p class="eyebrow">People &amp; roles</p>
-  <h1 class="mt-1 text-2xl font-bold text-ink">Access governance</h1>
-  <p class="mt-1 max-w-2xl text-sm text-faint">Grant the corp's alliance services — logistics, buyback and the
-    store — to pilots outside your own alliance. A registered partner alliance or friendly corporation is
-    treated exactly like your own alliance for service access (each service still honours its own audience).</p>
+  <p class="eyebrow">{% translate "People &amp; roles" %}</p>
+  <h1 class="mt-1 text-2xl font-bold text-ink">{% translate "Access governance" %}</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Grant the corp's alliance services — logistics, buyback and the store — to pilots outside your own alliance. A registered partner alliance or friendly corporation is treated exactly like your own alliance for service access (each service still honours its own audience)." %}</p>
 </header>
 
 <div class="max-w-3xl space-y-6">
 
   {# --- Partner alliances --- #}
   <section class="panel p-5">
-    <h2 class="eyebrow mb-4 text-gold">Partner alliances</h2>
+    <h2 class="eyebrow mb-4 text-gold">{% translate "Partner alliances" %}</h2>
     <div class="space-y-3">
       {% for pa in partner_alliances %}
       <form method="post" action="{% url 'admin_audit:access_partner_alliance_update' pa.alliance_id %}"
             class="grid items-end gap-2 border-b border-line/40 pb-3 sm:grid-cols-12">
         {% csrf_token %}
-        <div class="sm:col-span-3"><label class="label">Alliance id</label>
+        <div class="sm:col-span-3"><label class="label">{% translate "Alliance id" %}</label>
           <p class="data pt-2 text-sm text-muted">{{ pa.alliance_id }}</p></div>
-        <div class="sm:col-span-3"><label class="label" for="pa-name-{{ pa.alliance_id }}">Name</label>
+        <div class="sm:col-span-3"><label class="label" for="pa-name-{{ pa.alliance_id }}">{% translate "Name" %}</label>
           <input id="pa-name-{{ pa.alliance_id }}" name="name" value="{{ pa.name }}" class="input-field"></div>
-        <div class="sm:col-span-3"><label class="label" for="pa-note-{{ pa.alliance_id }}">Note</label>
+        <div class="sm:col-span-3"><label class="label" for="pa-note-{{ pa.alliance_id }}">{% translate "Note" %}</label>
           <input id="pa-note-{{ pa.alliance_id }}" name="note" value="{{ pa.note }}" class="input-field"></div>
         <label class="flex items-center gap-2 pb-2 text-sm text-muted sm:col-span-1">
-          <input type="checkbox" name="active" {% if pa.active %}checked{% endif %}> On</label>
+          <input type="checkbox" name="active" {% if pa.active %}checked{% endif %}> {% translate "On" %}</label>
         <div class="flex gap-2 sm:col-span-2">
-          <button type="submit" class="btn-gold text-xs">Save</button>
+          <button type="submit" class="btn-gold text-xs">{% translate "Save" %}</button>
         </div>
       </form>
       <form method="post" action="{% url 'admin_audit:access_partner_alliance_delete' pa.alliance_id %}"
-            data-confirm="Remove this partner alliance?" class="-mt-2">
+            data-confirm="{% translate 'Remove this partner alliance?' %}" class="-mt-2">
         {% csrf_token %}
-        <button type="submit" class="btn-ghost text-[11px] text-faint hover:text-loss">Remove {{ pa.name|default:pa.alliance_id }}</button>
+        <button type="submit" class="btn-ghost text-[11px] text-faint hover:text-loss">{% blocktranslate with name=pa.name|default:pa.alliance_id %}Remove {{ name }}{% endblocktranslate %}</button>
       </form>
       {% empty %}
-      <p class="text-sm text-faint">No partner alliances registered.</p>
+      <p class="text-sm text-faint">{% translate "No partner alliances registered." %}</p>
       {% endfor %}
     </div>
     <form method="post" action="{% url 'admin_audit:access_partner_alliance_create' %}"
           class="mt-4 grid items-end gap-2 border-t border-line/40 pt-4 sm:grid-cols-12">
       {% csrf_token %}
-      <div class="sm:col-span-3"><label class="label" for="pa-new-id">Alliance id</label>
+      <div class="sm:col-span-3"><label class="label" for="pa-new-id">{% translate "Alliance id" %}</label>
         <input id="pa-new-id" name="entity_id" type="number" class="input-field" placeholder="99000000"></div>
-      <div class="sm:col-span-3"><label class="label" for="pa-new-name">Name (optional)</label>
-        <input id="pa-new-name" name="name" class="input-field" placeholder="Auto-filled from ESI"></div>
-      <div class="sm:col-span-3"><label class="label" for="pa-new-note">Note</label>
+      <div class="sm:col-span-3"><label class="label" for="pa-new-name">{% translate "Name (optional)" %}</label>
+        <input id="pa-new-name" name="name" class="input-field" placeholder="{% translate 'Auto-filled from ESI' %}"></div>
+      <div class="sm:col-span-3"><label class="label" for="pa-new-note">{% translate "Note" %}</label>
         <input id="pa-new-note" name="note" class="input-field"></div>
       <label class="flex items-center gap-2 pb-2 text-sm text-muted sm:col-span-1">
-        <input type="checkbox" name="active" checked> On</label>
-      <div class="sm:col-span-2"><button type="submit" class="btn-gold text-xs">Add</button></div>
+        <input type="checkbox" name="active" checked> {% translate "On" %}</label>
+      <div class="sm:col-span-2"><button type="submit" class="btn-gold text-xs">{% translate "Add" %}</button></div>
     </form>
   </section>
 
   {# --- Friendly corporations --- #}
   <section class="panel p-5">
-    <h2 class="eyebrow mb-4 text-gold">Friendly corporations</h2>
+    <h2 class="eyebrow mb-4 text-gold">{% translate "Friendly corporations" %}</h2>
     <div class="space-y-3">
       {% for fc in friendly_corps %}
       <form method="post" action="{% url 'admin_audit:access_friendly_corp_update' fc.corporation_id %}"
             class="grid items-end gap-2 border-b border-line/40 pb-3 sm:grid-cols-12">
         {% csrf_token %}
-        <div class="sm:col-span-3"><label class="label">Corp id</label>
+        <div class="sm:col-span-3"><label class="label">{% translate "Corp id" %}</label>
           <p class="data pt-2 text-sm text-muted">{{ fc.corporation_id }}</p></div>
-        <div class="sm:col-span-3"><label class="label" for="fc-name-{{ fc.corporation_id }}">Name</label>
+        <div class="sm:col-span-3"><label class="label" for="fc-name-{{ fc.corporation_id }}">{% translate "Name" %}</label>
           <input id="fc-name-{{ fc.corporation_id }}" name="name" value="{{ fc.name }}" class="input-field"></div>
-        <div class="sm:col-span-3"><label class="label" for="fc-note-{{ fc.corporation_id }}">Note</label>
+        <div class="sm:col-span-3"><label class="label" for="fc-note-{{ fc.corporation_id }}">{% translate "Note" %}</label>
           <input id="fc-note-{{ fc.corporation_id }}" name="note" value="{{ fc.note }}" class="input-field"></div>
         <label class="flex items-center gap-2 pb-2 text-sm text-muted sm:col-span-1">
-          <input type="checkbox" name="active" {% if fc.active %}checked{% endif %}> On</label>
-        <div class="sm:col-span-2"><button type="submit" class="btn-gold text-xs">Save</button></div>
+          <input type="checkbox" name="active" {% if fc.active %}checked{% endif %}> {% translate "On" %}</label>
+        <div class="sm:col-span-2"><button type="submit" class="btn-gold text-xs">{% translate "Save" %}</button></div>
       </form>
       <form method="post" action="{% url 'admin_audit:access_friendly_corp_delete' fc.corporation_id %}"
-            data-confirm="Remove this friendly corporation?" class="-mt-2">
+            data-confirm="{% translate 'Remove this friendly corporation?' %}" class="-mt-2">
         {% csrf_token %}
-        <button type="submit" class="btn-ghost text-[11px] text-faint hover:text-loss">Remove {{ fc.name|default:fc.corporation_id }}</button>
+        <button type="submit" class="btn-ghost text-[11px] text-faint hover:text-loss">{% blocktranslate with name=fc.name|default:fc.corporation_id %}Remove {{ name }}{% endblocktranslate %}</button>
       </form>
       {% empty %}
-      <p class="text-sm text-faint">No friendly corporations registered.</p>
+      <p class="text-sm text-faint">{% translate "No friendly corporations registered." %}</p>
       {% endfor %}
     </div>
     <form method="post" action="{% url 'admin_audit:access_friendly_corp_create' %}"
           class="mt-4 grid items-end gap-2 border-t border-line/40 pt-4 sm:grid-cols-12">
       {% csrf_token %}
-      <div class="sm:col-span-3"><label class="label" for="fc-new-id">Corp id</label>
+      <div class="sm:col-span-3"><label class="label" for="fc-new-id">{% translate "Corp id" %}</label>
         <input id="fc-new-id" name="entity_id" type="number" class="input-field" placeholder="98000000"></div>
-      <div class="sm:col-span-3"><label class="label" for="fc-new-name">Name (optional)</label>
-        <input id="fc-new-name" name="name" class="input-field" placeholder="Auto-filled from ESI"></div>
-      <div class="sm:col-span-3"><label class="label" for="fc-new-note">Note</label>
+      <div class="sm:col-span-3"><label class="label" for="fc-new-name">{% translate "Name (optional)" %}</label>
+        <input id="fc-new-name" name="name" class="input-field" placeholder="{% translate 'Auto-filled from ESI' %}"></div>
+      <div class="sm:col-span-3"><label class="label" for="fc-new-note">{% translate "Note" %}</label>
         <input id="fc-new-note" name="note" class="input-field"></div>
       <label class="flex items-center gap-2 pb-2 text-sm text-muted sm:col-span-1">
-        <input type="checkbox" name="active" checked> On</label>
-      <div class="sm:col-span-2"><button type="submit" class="btn-gold text-xs">Add</button></div>
+        <input type="checkbox" name="active" checked> {% translate "On" %}</label>
+      <div class="sm:col-span-2"><button type="submit" class="btn-gold text-xs">{% translate "Add" %}</button></div>
     </form>
   </section>
 

@@ -1,64 +1,62 @@
 {% extends "base.html" %}
-{% block title %}Account recovery · Admin{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Account recovery" %} · {% translate "Admin" %}{% endblock %}
 {% block content %}
-<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← {% translate "Admin console" %}</a>
 <header class="mt-3 mb-6">
-  <p class="eyebrow">People &amp; roles</p>
-  <h1 class="mt-1 text-2xl font-bold text-ink">Account recovery</h1>
-  <p class="mt-1 max-w-2xl text-sm text-faint">When a pilot sells or transfers a character (or their character
-    predates owner-hash capture), login fails closed and tells them to contact an officer. Detaching a character
-    clears its owner hash, unlinks it from its account and revokes its tokens, so the true owner can re-link it at
-    their next EVE login. Every detach is audited.</p>
+  <p class="eyebrow">{% translate "People &amp; roles" %}</p>
+  <h1 class="mt-1 text-2xl font-bold text-ink">{% translate "Account recovery" %}</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "When a pilot sells or transfers a character (or their character predates owner-hash capture), login fails closed and tells them to contact an officer. Detaching a character clears its owner hash, unlinks it from its account and revokes its tokens, so the true owner can re-link it at their next EVE login. Every detach is audited." %}</p>
 </header>
 
 <div class="max-w-3xl space-y-6">
   <section class="panel p-5">
     <form method="get" action="{% url 'admin_audit:character_recovery' %}" class="flex items-end gap-2">
       <div class="flex-1">
-        <label class="label" for="q">Find a character (name or character id)</label>
-        <input id="q" name="q" value="{{ q }}" class="input-field" placeholder="e.g. Akusaa Ii or 90000001" autofocus>
+        <label class="label" for="q">{% translate "Find a character (name or character id)" %}</label>
+        <input id="q" name="q" value="{{ q }}" class="input-field" placeholder="{% translate 'e.g. Akusaa Ii or 90000001' %}" autofocus>
       </div>
-      <button type="submit" class="btn-gold text-sm">Search</button>
+      <button type="submit" class="btn-gold text-sm">{% translate "Search" %}</button>
     </form>
   </section>
 
   {% if q %}
   <section class="panel overflow-hidden">
-    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Matches for "{{ q }}"</h2></div>
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% blocktranslate with query=q %}Matches for "{{ query }}"{% endblocktranslate %}</h2></div>
     <table class="w-full text-sm">
       <thead class="text-faint text-left"><tr class="border-b border-line/60">
-        <th class="px-4 py-2 font-medium">Character</th><th class="px-4 py-2 font-medium">Linked to</th>
-        <th class="px-4 py-2 font-medium">Owner hash</th><th class="px-4 py-2 text-right font-medium">Tokens</th>
-        <th class="px-4 py-2 font-medium">Detach</th></tr></thead>
+        <th class="px-4 py-2 font-medium">{% translate "Character" %}</th><th class="px-4 py-2 font-medium">{% translate "Linked to" %}</th>
+        <th class="px-4 py-2 font-medium">{% translate "Owner hash" %}</th><th class="px-4 py-2 text-right font-medium">{% translate "Tokens" %}</th>
+        <th class="px-4 py-2 font-medium">{% translate "Detach" %}</th></tr></thead>
       <tbody>
         {% for r in rows %}
         <tr class="border-t border-line/40 align-top">
           <td class="px-4 py-2 text-ink">{{ r.name }}<span class="block text-xs text-faint data">{{ r.character_id }}</span></td>
           <td class="px-4 py-2">
-            {% if r.linked_to %}<span class="text-muted">{{ r.linked_to }}</span>{% if r.is_director_linked %} <span class="chip !border-gold/40 !text-gold">Director</span>{% endif %}
-            {% else %}<span class="text-faint">— unlinked</span>{% endif %}
+            {% if r.linked_to %}<span class="text-muted">{{ r.linked_to }}</span>{% if r.is_director_linked %} <span class="chip !border-gold/40 !text-gold">{% translate "Director" %}</span>{% endif %}
+            {% else %}<span class="text-faint">{% translate "— unlinked" %}</span>{% endif %}
           </td>
           <td class="px-4 py-2">
-            {% if r.has_owner_hash %}<span class="chip !border-kill/40 !text-kill">present</span>{% else %}<span class="chip !border-gold/40 !text-gold">missing</span>{% endif %}
+            {% if r.has_owner_hash %}<span class="chip !border-kill/40 !text-kill">{% translate "present" %}</span>{% else %}<span class="chip !border-gold/40 !text-gold">{% translate "missing" %}</span>{% endif %}
           </td>
           <td class="px-4 py-2 text-right data text-faint">{{ r.live_tokens }}</td>
           <td class="px-4 py-2">
             {% if r.is_director_linked and not is_director %}
-              <span class="text-xs text-faint">Director-linked — a Director must detach.</span>
+              <span class="text-xs text-faint">{% translate "Director-linked — a Director must detach." %}</span>
             {% else %}
               <form method="post" action="{% url 'admin_audit:character_detach' %}"
-                    data-confirm="Detach {{ r.name }}? This unlinks the account and revokes its tokens.">
+                    data-confirm="{% blocktranslate with name=r.name %}Detach {{ name }}? This unlinks the account and revokes its tokens.{% endblocktranslate %}">
                 {% csrf_token %}
                 <input type="hidden" name="character_id" value="{{ r.character_id }}">
                 <input type="hidden" name="q" value="{{ q }}">
-                <input name="reason" class="input-field mb-1 text-xs" placeholder="Reason (required, audited)" required>
-                <button type="submit" class="btn-ghost text-[11px] text-faint hover:text-loss">Detach character</button>
+                <input name="reason" class="input-field mb-1 text-xs" placeholder="{% translate 'Reason (required, audited)' %}" required>
+                <button type="submit" class="btn-ghost text-[11px] text-faint hover:text-loss">{% translate "Detach character" %}</button>
               </form>
             {% endif %}
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="5" class="px-4 py-6 text-center text-faint">No characters match "{{ q }}".</td></tr>
+        <tr><td colspan="5" class="px-4 py-6 text-center text-faint">{% blocktranslate with query=q %}No characters match "{{ query }}".{% endblocktranslate %}</td></tr>
         {% endfor %}
       </tbody>
     </table>

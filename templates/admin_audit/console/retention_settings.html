@@ -1,13 +1,14 @@
 {% extends "base.html" %}
-{% block title %}Data retention · Admin{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Data retention" %} · {% translate "Admin" %}{% endblock %}
 {% block content %}
-<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← {% translate "Admin console" %}</a>
 <header class="mt-3 mb-6">
-  <p class="eyebrow">Compliance</p>
-  <h1 class="mt-1 text-2xl font-bold text-ink">Data retention</h1>
-  <p class="mt-1 max-w-2xl text-sm text-faint">How long each class of data is kept before the nightly
+  <p class="eyebrow">{% translate "Compliance" %}</p>
+  <h1 class="mt-1 text-2xl font-bold text-ink">{% translate "Data retention" %}</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">{% blocktranslate %}How long each class of data is kept before the nightly
     housekeeping job prunes it, and what happens to a member's data when they leave. These drive the
-    daily retention task.</p>
+    daily retention task.{% endblocktranslate %}</p>
 </header>
 
 <form method="post" class="max-w-3xl space-y-5">
@@ -19,18 +20,18 @@
         <div class="sm:col-span-4">
           <p class="font-display text-sm font-semibold text-ink">{{ p.get_data_class_display }}</p>
           {% if p.enforced %}
-            <p class="mt-0.5 text-[11px] text-faint">Pruned nightly.</p>
+            <p class="mt-0.5 text-[11px] text-faint">{% translate "Pruned nightly." %}</p>
           {% else %}
-            <p class="mt-0.5 text-[11px] text-loss">Stored — enforcement not yet wired.</p>
+            <p class="mt-0.5 text-[11px] text-loss">{% translate "Stored — enforcement not yet wired." %}</p>
           {% endif %}
         </div>
         <div class="sm:col-span-3">
-          <label class="label" for="days-{{ p.data_class }}">Keep for (days)</label>
+          <label class="label" for="days-{{ p.data_class }}">{% translate "Keep for (days)" %}</label>
           <input id="days-{{ p.data_class }}" type="number" min="1" name="days:{{ p.data_class }}"
                  value="{{ p.retention_days }}" class="input-field">
         </div>
         <div class="sm:col-span-3">
-          <label class="label" for="leave-{{ p.data_class }}">On member leave</label>
+          <label class="label" for="leave-{{ p.data_class }}">{% translate "On member leave" %}</label>
           <select id="leave-{{ p.data_class }}" name="on_leave:{{ p.data_class }}" class="input-field">
             {% for value, text in on_leave_choices %}
             <option value="{{ value }}" {% if value == p.on_member_leave %}selected{% endif %}>{{ text }}</option>
@@ -39,40 +40,40 @@
         </div>
         <div class="sm:col-span-2">
           <label class="flex items-center gap-2 pb-2 text-sm text-muted">
-            <input type="checkbox" name="active:{{ p.data_class }}" {% if p.active %}checked{% endif %}> Enforced
+            <input type="checkbox" name="active:{{ p.data_class }}" {% if p.active %}checked{% endif %}> {% translate "Enforced" %}
           </label>
         </div>
       </div>
       {% endfor %}
     </div>
-    <p class="mt-4 text-[11px] text-faint">“On member leave” is applied by the daily sweep below to each class
+    <p class="mt-4 text-[11px] text-faint">{% blocktranslate %}“On member leave” is applied by the daily sweep below to each class
       set to <span class="text-ink">Delete</span> (Retain and Anonymise keep the data — these per-character
-      classes have no faithful anonymised form, so Anonymise is treated as Retain for now).</p>
+      classes have no faithful anonymised form, so Anonymise is treated as Retain for now).{% endblocktranslate %}</p>
   </section>
 
   <section class="panel p-5">
-    <h2 class="eyebrow mb-3 text-gold">On-member-leave enforcement</h2>
-    <p class="text-sm text-faint">A daily sweep applies the “on member leave” policy above to the data of pilots
+    <h2 class="eyebrow mb-3 text-gold">{% translate "On-member-leave enforcement" %}</h2>
+    <p class="text-sm text-faint">{% blocktranslate %}A daily sweep applies the “on member leave” policy above to the data of pilots
       whose whole account has left the corp. It is <span class="text-loss">destructive</span>, so it runs in
-      <span class="text-ink">report-only</span> mode until you arm it — review the projected impact below first.</p>
+      <span class="text-ink">report-only</span> mode until you arm it — review the projected impact below first.{% endblocktranslate %}</p>
     <label class="mt-4 flex items-center gap-2 text-sm text-muted">
       <input type="checkbox" name="on_leave_armed" {% if on_leave_armed %}checked{% endif %}>
-      Arm enforcement (actually delete departed members' data)
+      {% translate "Arm enforcement (actually delete departed members' data)" %}
     </label>
     {% if leave_report %}
     <div class="mt-4 rounded-lg bg-panel2/60 px-4 py-3 text-sm">
-      <p class="text-faint">Last sweep {{ leave_report.at|slice:":16" }} ·
-        {% if leave_report.dry_run %}<span class="text-gold">report-only</span>{% else %}<span class="text-loss">enforced</span>{% endif %} ·
-        {{ leave_report.departed_accounts }} departed account{{ leave_report.departed_accounts|pluralize }}</p>
+      <p class="text-faint">{% translate "Last sweep" %} {{ leave_report.at|slice:":16" }} ·
+        {% if leave_report.dry_run %}<span class="text-gold">{% translate "report-only" %}</span>{% else %}<span class="text-loss">{% translate "enforced" %}</span>{% endif %} ·
+        {% blocktranslate count accounts=leave_report.departed_accounts %}{{ accounts }} departed account{% plural %}{{ accounts }} departed accounts{% endblocktranslate %}</p>
       {% if leave_report.counts %}
         <ul class="mt-1 text-muted">
-          {% for cls, n in leave_report.counts.items %}<li class="data">{{ cls }}: {{ n }} row{{ n|pluralize }} {% if leave_report.dry_run %}would be{% else %}were{% endif %} deleted</li>{% endfor %}
+          {% for cls, n in leave_report.counts.items %}<li class="data">{% if leave_report.dry_run %}{% blocktranslate count rows=n %}{{ cls }}: {{ rows }} row would be deleted{% plural %}{{ cls }}: {{ rows }} rows would be deleted{% endblocktranslate %}{% else %}{% blocktranslate count rows=n %}{{ cls }}: {{ rows }} row were deleted{% plural %}{{ cls }}: {{ rows }} rows were deleted{% endblocktranslate %}{% endif %}</li>{% endfor %}
         </ul>
-      {% else %}<p class="mt-1 text-faint">Nothing to delete under the current policy.</p>{% endif %}
+      {% else %}<p class="mt-1 text-faint">{% translate "Nothing to delete under the current policy." %}</p>{% endif %}
     </div>
     {% endif %}
   </section>
 
-  <div><button type="submit" class="btn-gold">Save retention policy</button></div>
+  <div><button type="submit" class="btn-gold">{% translate "Save retention policy" %}</button></div>
 </form>
 {% endblock %}

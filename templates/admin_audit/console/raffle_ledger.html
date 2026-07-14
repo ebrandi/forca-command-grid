@@ -1,63 +1,65 @@
 {% extends "base.html" %}
 {% load eve %}
-{% block title %}Ticket ledger · {{ contest.name }} · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Ticket ledger" %} · {{ contest.name }} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <header class="mb-6 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <p class="eyebrow text-gold">Raffle · {{ contest.name }}</p>
-    <h1 class="mt-1 text-2xl font-bold text-ink">Ticket ledger</h1>
-    <p class="mt-1 text-sm text-faint">The append-only record of every ticket awarded, reversed or excluded. Corrections add a new row — nothing is ever edited in place.</p>
+    <p class="eyebrow text-gold">{% blocktranslate with name=contest.name %}Raffle · {{ name }}{% endblocktranslate %}</p>
+    <h1 class="mt-1 text-2xl font-bold text-ink">{% translate "Ticket ledger" %}</h1>
+    <p class="mt-1 text-sm text-faint">{% translate "The append-only record of every ticket awarded, reversed or excluded. Corrections add a new row — nothing is ever edited in place." %}</p>
   </div>
-  <a href="{% url 'admin_audit:raffle_detail' contest.pk %}" class="btn-ghost text-sm">← Back</a>
+  <a href="{% url 'admin_audit:raffle_detail' contest.pk %}" class="btn-ghost text-sm">{% translate "← Back" %}</a>
 </header>
 
 {% comment %}Filter bar (GET) — preserves the current selection; the export link carries the same filters.{% endcomment %}
 <section class="panel mb-4 p-4">
   <form method="get" action="{% url 'admin_audit:raffle_ledger' contest.pk %}" class="flex flex-wrap items-end gap-3">
     <div>
-      <label class="label">Source</label>
+      <label class="label">{% translate "Source" %}</label>
       <select name="source" class="input-field w-48">
-        <option value="">All sources</option>
+        <option value="">{% translate "All sources" %}</option>
         {% for s in sources %}
           <option value="{{ s.key }}"{% if cur.source == s.key %} selected{% endif %}>{{ s.label }}</option>
         {% endfor %}
       </select>
     </div>
     <div>
-      <label class="label">Status</label>
+      <label class="label">{% translate "Status" %}</label>
       <select name="status" class="input-field w-44">
-        <option value="">Any status</option>
+        <option value="">{% translate "Any status" %}</option>
         {% for value, label in statuses %}
           <option value="{{ value }}"{% if cur.status == value %} selected{% endif %}>{{ label }}</option>
         {% endfor %}
       </select>
     </div>
     <div class="min-w-[12rem] flex-1">
-      <label class="label">Search</label>
-      <input name="q" value="{{ cur.q }}" placeholder="Pilot name or event ref" class="input-field w-full">
+      <label class="label">{% translate "Search" %}</label>
+      {% translate "Pilot name or event ref" as ph_q %}
+      <input name="q" value="{{ cur.q }}" placeholder="{{ ph_q }}" class="input-field w-full">
     </div>
-    <button class="btn-gold text-sm">Filter</button>
-    <a href="{% url 'admin_audit:raffle_ledger' contest.pk %}" class="btn-ghost text-sm">Reset</a>
-    <a href="?export=csv&amp;source={{ cur.source|urlencode }}&amp;status={{ cur.status|urlencode }}&amp;q={{ cur.q|urlencode }}" class="btn-cyan text-sm">Export CSV</a>
+    <button class="btn-gold text-sm">{% translate "Filter" %}</button>
+    <a href="{% url 'admin_audit:raffle_ledger' contest.pk %}" class="btn-ghost text-sm">{% translate "Reset" %}</a>
+    <a href="?export=csv&amp;source={{ cur.source|urlencode }}&amp;status={{ cur.status|urlencode }}&amp;q={{ cur.q|urlencode }}" class="btn-cyan text-sm">{% translate "Export CSV" %}</a>
   </form>
 </section>
 
-<p class="mb-2 text-xs text-faint">Showing {{ entries|length }} of {{ total }} entr{{ total|pluralize:"y,ies" }}{% if total > entries|length %} · export the CSV for the full set{% endif %}.</p>
+<p class="mb-2 text-xs text-faint">{% blocktranslate count counter=total with shown=entries|length %}Showing {{ shown }} of {{ counter }} entry{% plural %}Showing {{ shown }} of {{ counter }} entries{% endblocktranslate %}{% if total > entries|length %} · {% translate "export the CSV for the full set" %}{% endif %}.</p>
 
 <section class="panel overflow-hidden">
   <div class="overflow-x-auto">
     <table class="w-full text-sm">
       <thead>
         <tr class="border-b border-line/60 text-left text-[11px] uppercase tracking-wide text-faint">
-          <th class="px-4 py-2 font-medium">When</th>
-          <th class="px-4 py-2 font-medium">Pilot</th>
-          <th class="px-4 py-2 font-medium">Source</th>
-          <th class="px-4 py-2 font-medium">Event ref</th>
-          <th class="px-4 py-2 text-right font-medium">Tickets</th>
-          <th class="px-4 py-2 font-medium">Status</th>
+          <th class="px-4 py-2 font-medium">{% translate "When" %}</th>
+          <th class="px-4 py-2 font-medium">{% translate "Pilot" %}</th>
+          <th class="px-4 py-2 font-medium">{% translate "Source" %}</th>
+          <th class="px-4 py-2 font-medium">{% translate "Event ref" %}</th>
+          <th class="px-4 py-2 text-right font-medium">{% translate "Tickets" %}</th>
+          <th class="px-4 py-2 font-medium">{% translate "Status" %}</th>
           <th class="px-4 py-2 font-medium">ESI</th>
-          <th class="px-4 py-2 font-medium">Reason</th>
-          <th class="px-4 py-2 font-medium">Action</th>
+          <th class="px-4 py-2 font-medium">{% translate "Reason" %}</th>
+          <th class="px-4 py-2 font-medium">{% translate "Action" %}</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-line/40">
@@ -79,21 +81,23 @@
             </td>
             <td class="px-4 py-2.5"><span class="text-[11px] text-faint">{{ e.reason|default:"—" }}</span></td>
             <td class="px-4 py-2.5">
-              <form method="post" action="{% url 'admin_audit:raffle_ledger_action' contest.pk e.pk %}" class="flex flex-wrap items-center gap-1.5" data-confirm="Apply this change to the ticket entry? Reversals and disqualifications are audited and can't be silently undone.">
+              {% translate "Apply this change to the ticket entry? Reversals and disqualifications are audited and can't be silently undone." as c_apply %}
+              {% translate "Reason" as ph_reason %}
+              <form method="post" action="{% url 'admin_audit:raffle_ledger_action' contest.pk e.pk %}" class="flex flex-wrap items-center gap-1.5" data-confirm="{{ c_apply }}">
                 {% csrf_token %}
                 <select name="action" class="input-field !py-1 !text-xs w-32">
-                  <option value="approved">Mark approved</option>
-                  <option value="excluded">Exclude</option>
-                  <option value="disqualified">Disqualify</option>
-                  <option value="reverse">Reverse</option>
+                  <option value="approved">{% translate "Mark approved" %}</option>
+                  <option value="excluded">{% translate "Exclude" %}</option>
+                  <option value="disqualified">{% translate "Disqualify" %}</option>
+                  <option value="reverse">{% translate "Reverse" %}</option>
                 </select>
-                <input name="reason" placeholder="Reason" class="input-field !py-1 !text-xs w-28">
-                <button class="btn-ghost !py-1 !text-xs">Apply</button>
+                <input name="reason" placeholder="{{ ph_reason }}" class="input-field !py-1 !text-xs w-28">
+                <button class="btn-ghost !py-1 !text-xs">{% translate "Apply" %}</button>
               </form>
             </td>
           </tr>
         {% empty %}
-          <tr><td colspan="9" class="px-4 py-10 text-center text-sm text-faint">No ledger entries match these filters.</td></tr>
+          <tr><td colspan="9" class="px-4 py-10 text-center text-sm text-faint">{% translate "No ledger entries match these filters." %}</td></tr>
         {% endfor %}
       </tbody>
     </table>

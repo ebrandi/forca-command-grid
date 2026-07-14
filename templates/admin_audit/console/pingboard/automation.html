@@ -1,42 +1,43 @@
 {% extends "base.html" %}
-{% block title %}Pingboard automation · Admin{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Pingboard automation" %} · {% translate "Admin" %}{% endblock %}
 {% block content %}
-<a href="{% url 'admin_audit:pingboard_settings' %}" class="text-sm text-faint hover:text-gold">← Pingboard settings</a>
-<header class="mb-6 mt-2"><p class="eyebrow text-gold">Pingboard</p>
-  <h1 class="text-3xl font-bold text-ink">Automation rules</h1>
-  <p class="text-sm text-faint">Rules ship <strong class="text-ink">disabled</strong> and are armed with the explicit toggle. A rule fires when its trigger source is invoked and its condition matches, honouring cooldown, per-window cap, window and expiry. Use <strong class="text-ink">dry-run</strong> to log without sending while you tune it.</p></header>
+<a href="{% url 'admin_audit:pingboard_settings' %}" class="text-sm text-faint hover:text-gold">← {% translate "Pingboard settings" %}</a>
+<header class="mb-6 mt-2"><p class="eyebrow text-gold">{% translate "Pingboard" %}</p>
+  <h1 class="text-3xl font-bold text-ink">{% translate "Automation rules" %}</h1>
+  <p class="text-sm text-faint">{% blocktranslate %}Rules ship <strong class="text-ink">disabled</strong> and are armed with the explicit toggle. A rule fires when its trigger source is invoked and its condition matches, honouring cooldown, per-window cap, window and expiry. Use <strong class="text-ink">dry-run</strong> to log without sending while you tune it.{% endblocktranslate %}</p></header>
 
 <div class="panel overflow-x-auto mb-6">
   <table class="w-full text-sm">
     <thead><tr class="text-[11px] uppercase text-faint">
-      <th class="px-4 py-2 text-left">Rule</th><th class="px-4 py-2 text-left">Trigger</th>
-      <th class="px-4 py-2 text-left">Category</th><th class="px-4 py-2 text-left">Window</th>
-      <th class="px-4 py-2 text-left">Last fired</th>
-      <th class="px-4 py-2 text-left">State</th><th class="px-4 py-2 text-right">Actions</th></tr></thead>
+      <th class="px-4 py-2 text-left">{% translate "Rule" %}</th><th class="px-4 py-2 text-left">{% translate "Trigger" %}</th>
+      <th class="px-4 py-2 text-left">{% translate "Category" %}</th><th class="px-4 py-2 text-left">{% translate "Window" %}</th>
+      <th class="px-4 py-2 text-left">{% translate "Last fired" %}</th>
+      <th class="px-4 py-2 text-left">{% translate "State" %}</th><th class="px-4 py-2 text-right">{% translate "Actions" %}</th></tr></thead>
     <tbody class="divide-y divide-line/50">
       {% for r in rules %}
       <tr class="hover:bg-panel2/40 {% if editing and editing.id == r.id %}bg-panel2/40{% endif %}">
-        <td class="px-4 py-2 text-ink">{{ r.label }} <span class="text-[11px] text-faint">{{ r.key }}</span>{% if r.dry_run %} <span class="chip border-gold/40 text-gold">dry-run</span>{% endif %}</td>
+        <td class="px-4 py-2 text-ink">{{ r.label }} <span class="text-[11px] text-faint">{{ r.key }}</span>{% if r.dry_run %} <span class="chip border-gold/40 text-gold">{% translate "dry-run" %}</span>{% endif %}</td>
         <td class="px-4 py-2 text-faint">{{ r.trigger_source }}</td>
         <td class="px-4 py-2 text-faint">{{ r.get_category_display }}</td>
         <td class="px-4 py-2 text-[11px] text-faint">{% if r.max_per_window %}{{ r.max_per_window }}/{{ r.window_minutes }}m{% else %}—{% endif %}{% if r.cooldown_minutes %} · cd {{ r.cooldown_minutes }}m{% endif %}</td>
         <td class="px-4 py-2 text-[11px] text-faint">{{ r.last_fired_at|date:"j M H:i"|default:"—" }}</td>
-        <td class="px-4 py-2">{% if r.enabled %}<span class="chip border-kill text-kill">on</span>{% else %}<span class="chip border-line text-faint">off</span>{% endif %}</td>
+        <td class="px-4 py-2">{% if r.enabled %}<span class="chip border-kill text-kill">{% translate "on" %}</span>{% else %}<span class="chip border-line text-faint">{% translate "off" %}</span>{% endif %}</td>
         <td class="px-4 py-2"><div class="flex justify-end gap-1">
-          <a href="?edit={{ r.id }}" class="btn-ghost">Edit</a>
-          <form method="post">{% csrf_token %}<input type="hidden" name="action" value="toggle"><input type="hidden" name="rule_id" value="{{ r.id }}"><button class="btn-ghost">{% if r.enabled %}Disable{% else %}Enable{% endif %}</button></form>
-          <form method="post" data-confirm="Delete this rule?">{% csrf_token %}<input type="hidden" name="action" value="delete"><input type="hidden" name="rule_id" value="{{ r.id }}"><button class="btn-danger">Delete</button></form>
+          <a href="?edit={{ r.id }}" class="btn-ghost">{% translate "Edit" %}</a>
+          <form method="post">{% csrf_token %}<input type="hidden" name="action" value="toggle"><input type="hidden" name="rule_id" value="{{ r.id }}"><button class="btn-ghost">{% if r.enabled %}{% translate "Disable" %}{% else %}{% translate "Enable" %}{% endif %}</button></form>
+          <form method="post" data-confirm="{% translate 'Delete this rule?' %}">{% csrf_token %}<input type="hidden" name="action" value="delete"><input type="hidden" name="rule_id" value="{{ r.id }}"><button class="btn-danger">{% translate "Delete" %}</button></form>
         </div></td>
       </tr>
-      {% empty %}<tr><td colspan="7" class="px-4 py-6 text-center text-faint">No automation rules yet.</td></tr>{% endfor %}
+      {% empty %}<tr><td colspan="7" class="px-4 py-6 text-center text-faint">{% translate "No automation rules yet." %}</td></tr>{% endfor %}
     </tbody>
   </table>
 </div>
 
 <section class="panel p-5">
   <div class="mb-3 flex items-center justify-between">
-    <h2 class="eyebrow text-gold">{% if editing %}Edit rule · {{ editing.label }}{% else %}New rule{% endif %}</h2>
-    {% if editing %}<a href="{% url 'admin_audit:pingboard_automation' %}" class="text-xs text-faint hover:text-gold">+ New rule instead</a>{% endif %}
+    <h2 class="eyebrow text-gold">{% if editing %}{% blocktranslate with label=editing.label %}Edit rule · {{ label }}{% endblocktranslate %}{% else %}{% translate "New rule" %}{% endif %}</h2>
+    {% if editing %}<a href="{% url 'admin_audit:pingboard_automation' %}" class="text-xs text-faint hover:text-gold">+ {% translate "New rule instead" %}</a>{% endif %}
   </div>
   <form method="post" class="grid gap-4 sm:grid-cols-2">
     {% csrf_token %}
@@ -44,26 +45,26 @@
     {% if editing %}<input type="hidden" name="rule_id" value="{{ editing.id }}">{% endif %}
     {% if form.non_field_errors %}<div class="sm:col-span-2 panel border-loss/40 bg-loss/10 px-3 py-2 text-sm text-loss">{{ form.non_field_errors }}</div>{% endif %}
 
-    <label class="label">Key{{ form.key }}{% if form.key.errors %}<span class="text-[11px] text-loss">{{ form.key.errors.0 }}</span>{% endif %}</label>
-    <label class="label">Label{{ form.label }}{% if form.label.errors %}<span class="text-[11px] text-loss">{{ form.label.errors.0 }}</span>{% endif %}</label>
-    <label class="label">Trigger source{{ form.trigger_source }}<span class="mt-1 block text-[11px] text-faint">e.g. srp.submitted, structure.fuel_low.</span></label>
-    <label class="label">Condition (JSON){{ form.condition }}{% if form.condition.errors %}<span class="text-[11px] text-loss">{{ form.condition.errors.0 }}</span>{% else %}<span class="mt-1 block text-[11px] text-faint">Field filters, e.g. <code class="text-faint">{"amount_gt": 1000000000}</code>. Operators: _lt / _gt / _eq.</span>{% endif %}</label>
-    <label class="label">Category{{ form.category }}</label>
-    <label class="label">Priority{{ form.priority }}</label>
-    <label class="label sm:col-span-2">Template (optional){{ form.template }}<span class="mt-1 block text-[11px] text-faint">Pick a template, or leave none and set the title/body below.</span></label>
-    <label class="label">Title{{ form.title }}</label>
-    <label class="label">Body{{ form.body }}</label>
-    <label class="label">Audience (JSON){{ form.audience }}{% if form.audience.errors %}<span class="text-[11px] text-loss">{{ form.audience.errors.0 }}</span>{% else %}<span class="mt-1 block text-[11px] text-faint"><code class="text-faint">{"kind": "officer"}</code> — corp / officer / director / member.</span>{% endif %}</label>
-    <label class="label">Channels (JSON){{ form.channels }}{% if form.channels.errors %}<span class="text-[11px] text-loss">{{ form.channels.errors.0 }}</span>{% else %}<span class="mt-1 block text-[11px] text-faint">Empty = all armed channels. e.g. <code class="text-faint">["in_app", "discord"]</code>.</span>{% endif %}</label>
-    <label class="label">Cooldown (minutes){{ form.cooldown_minutes }}</label>
-    <label class="label">Max per window{{ form.max_per_window }}<span class="mt-1 block text-[11px] text-faint">0 = unlimited.</span></label>
-    <label class="label">Window (minutes){{ form.window_minutes }}</label>
-    <label class="label">Expires at{{ form.expires_at }}<span class="mt-1 block text-[11px] text-faint">Blank = never.</span></label>
-    <label class="flex items-center gap-2 pt-2 text-sm text-muted sm:col-span-2">{{ form.dry_run }} Dry-run (log the alert, don't send — for tuning)</label>
+    <label class="label">{% translate "Key" %}{{ form.key }}{% if form.key.errors %}<span class="text-[11px] text-loss">{{ form.key.errors.0 }}</span>{% endif %}</label>
+    <label class="label">{% translate "Label" %}{{ form.label }}{% if form.label.errors %}<span class="text-[11px] text-loss">{{ form.label.errors.0 }}</span>{% endif %}</label>
+    <label class="label">{% translate "Trigger source" %}{{ form.trigger_source }}<span class="mt-1 block text-[11px] text-faint">{% translate "e.g. srp.submitted, structure.fuel_low." %}</span></label>
+    <label class="label">{% translate "Condition (JSON)" %}{{ form.condition }}{% if form.condition.errors %}<span class="text-[11px] text-loss">{{ form.condition.errors.0 }}</span>{% else %}<span class="mt-1 block text-[11px] text-faint">{% blocktranslate %}Field filters, e.g. <code class="text-faint">{"amount_gt": 1000000000}</code>. Operators: _lt / _gt / _eq.{% endblocktranslate %}</span>{% endif %}</label>
+    <label class="label">{% translate "Category" %}{{ form.category }}</label>
+    <label class="label">{% translate "Priority" %}{{ form.priority }}</label>
+    <label class="label sm:col-span-2">{% translate "Template (optional)" %}{{ form.template }}<span class="mt-1 block text-[11px] text-faint">{% translate "Pick a template, or leave none and set the title/body below." %}</span></label>
+    <label class="label">{% translate "Title" %}{{ form.title }}</label>
+    <label class="label">{% translate "Body" %}{{ form.body }}</label>
+    <label class="label">{% translate "Audience (JSON)" %}{{ form.audience }}{% if form.audience.errors %}<span class="text-[11px] text-loss">{{ form.audience.errors.0 }}</span>{% else %}<span class="mt-1 block text-[11px] text-faint">{% blocktranslate %}<code class="text-faint">{"kind": "officer"}</code> — corp / officer / director / member.{% endblocktranslate %}</span>{% endif %}</label>
+    <label class="label">{% translate "Channels (JSON)" %}{{ form.channels }}{% if form.channels.errors %}<span class="text-[11px] text-loss">{{ form.channels.errors.0 }}</span>{% else %}<span class="mt-1 block text-[11px] text-faint">{% blocktranslate %}Empty = all armed channels. e.g. <code class="text-faint">["in_app", "discord"]</code>.{% endblocktranslate %}</span>{% endif %}</label>
+    <label class="label">{% translate "Cooldown (minutes)" %}{{ form.cooldown_minutes }}</label>
+    <label class="label">{% translate "Max per window" %}{{ form.max_per_window }}<span class="mt-1 block text-[11px] text-faint">{% translate "0 = unlimited." %}</span></label>
+    <label class="label">{% translate "Window (minutes)" %}{{ form.window_minutes }}</label>
+    <label class="label">{% translate "Expires at" %}{{ form.expires_at }}<span class="mt-1 block text-[11px] text-faint">{% translate "Blank = never." %}</span></label>
+    <label class="flex items-center gap-2 pt-2 text-sm text-muted sm:col-span-2">{{ form.dry_run }} {% blocktranslate %}Dry-run (log the alert, don't send — for tuning){% endblocktranslate %}</label>
 
     <div class="sm:col-span-2 flex items-center gap-3">
-      <button type="submit" class="btn-gold">{% if editing %}Save changes{% else %}Create rule (disabled){% endif %}</button>
-      {% if editing %}<a href="{% url 'admin_audit:pingboard_automation' %}" class="btn-ghost">Cancel</a>{% endif %}
+      <button type="submit" class="btn-gold">{% if editing %}{% translate "Save changes" %}{% else %}{% translate "Create rule (disabled)" %}{% endif %}</button>
+      {% if editing %}<a href="{% url 'admin_audit:pingboard_automation' %}" class="btn-ghost">{% translate "Cancel" %}</a>{% endif %}
     </div>
   </form>
 </section>

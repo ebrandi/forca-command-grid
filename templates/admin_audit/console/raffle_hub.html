@@ -1,48 +1,49 @@
 {% extends "base.html" %}
 {% load eve %}
-{% block title %}Raffle contests · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Raffle contests" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <header class="mb-6 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <p class="eyebrow text-gold">Recognition &amp; rewards</p>
-    <h1 class="mt-1 text-2xl font-bold text-ink">Raffle contests</h1>
-    <p class="mt-1 max-w-2xl text-sm text-faint">Time-boxed engagement campaigns — pilots earn tickets from activity, and a fair commit-reveal draw picks winners. Only enrolled pilots with a live ESI token can earn tickets or win.</p>
+    <p class="eyebrow text-gold">{% translate "Recognition &amp; rewards" %}</p>
+    <h1 class="mt-1 text-2xl font-bold text-ink">{% translate "Raffle contests" %}</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Time-boxed engagement campaigns — pilots earn tickets from activity, and a fair commit-reveal draw picks winners. Only enrolled pilots with a live ESI token can earn tickets or win." %}</p>
   </div>
   <div class="flex items-center gap-2">
-    {% if is_director %}<a href="{% url 'admin_audit:raffle_config' %}" class="btn-ghost text-sm">Settings</a>{% endif %}
-    <a href="{% url 'admin_audit:raffle_create' %}" class="btn-gold text-sm">Create contest</a>
+    {% if is_director %}<a href="{% url 'admin_audit:raffle_config' %}" class="btn-ghost text-sm">{% translate "Settings" %}</a>{% endif %}
+    <a href="{% url 'admin_audit:raffle_create' %}" class="btn-gold text-sm">{% translate "Create contest" %}</a>
   </div>
 </header>
 
 {% comment %}Adoption funnel — the "grow the app" scoreboard that motivates the whole subsystem.{% endcomment %}
 <section class="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
   <div class="panel p-4">
-    <p class="eyebrow text-faint">Corp pilots</p>
+    <p class="eyebrow text-faint">{% translate "Corp pilots" %}</p>
     <p class="data mt-1 text-2xl font-bold text-gold">{{ adoption.active_pilots }}</p>
-    <p class="mt-1 text-[11px] text-faint">Recognised corp characters.</p>
+    <p class="mt-1 text-[11px] text-faint">{% translate "Recognised corp characters." %}</p>
   </div>
   <div class="panel p-4">
-    <p class="eyebrow text-faint">Enrolled</p>
+    <p class="eyebrow text-faint">{% translate "Enrolled" %}</p>
     <p class="data mt-1 text-2xl font-bold text-cyan">{{ adoption.enrolled }}</p>
-    <p class="mt-1 text-[11px] text-faint">{{ adoption.conversion_rate }}% of corp pilots signed up.</p>
+    <p class="mt-1 text-[11px] text-faint">{% blocktranslate with rate=adoption.conversion_rate %}{{ rate }}% of corp pilots signed up.{% endblocktranslate %}</p>
   </div>
   <div class="panel p-4">
-    <p class="eyebrow text-faint">Valid ESI token</p>
+    <p class="eyebrow text-faint">{% translate "Valid ESI token" %}</p>
     <p class="data mt-1 text-2xl font-bold text-kill">{{ adoption.with_valid_token }}</p>
-    <p class="mt-1 text-[11px] text-faint">{{ adoption.token_rate }}% can earn tickets right now.</p>
+    <p class="mt-1 text-[11px] text-faint">{% blocktranslate with rate=adoption.token_rate %}{{ rate }}% can earn tickets right now.{% endblocktranslate %}</p>
   </div>
   <div class="panel p-4">
-    <p class="eyebrow text-faint">Expired / revoked</p>
+    <p class="eyebrow text-faint">{% translate "Expired / revoked" %}</p>
     <p class="data mt-1 text-2xl font-bold text-loss">{{ adoption.expired_or_revoked }}</p>
-    <p class="mt-1 text-[11px] text-faint">Enrolled but need to reconnect ESI.</p>
+    <p class="mt-1 text-[11px] text-faint">{% translate "Enrolled but need to reconnect ESI." %}</p>
   </div>
 </section>
 
 {% comment %}Quick-start templates — informational; the picker itself lives on the create form.{% endcomment %}
 <section class="panel mb-6 overflow-hidden">
   <div class="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3">
-    <h2 class="eyebrow text-gold">Quick-start templates</h2>
-    <a href="{% url 'admin_audit:raffle_create' %}" class="text-xs text-cyan hover:underline">Start a contest from one →</a>
+    <h2 class="eyebrow text-gold">{% translate "Quick-start templates" %}</h2>
+    <a href="{% url 'admin_audit:raffle_create' %}" class="text-xs text-cyan hover:underline">{% translate "Start a contest from one →" %}</a>
   </div>
   <div class="grid gap-x-4 gap-y-2 px-4 py-3 sm:grid-cols-2">
     {% for t in templates %}
@@ -51,7 +52,7 @@
         <span class="min-w-0 flex-1 truncate text-[11px] text-faint">{{ t.description }}</span>
       </div>
     {% empty %}
-      <p class="text-sm text-faint">No built-in templates available.</p>
+      <p class="text-sm text-faint">{% translate "No built-in templates available." %}</p>
     {% endfor %}
   </div>
 </section>
@@ -69,9 +70,9 @@
             </div>
             {% if c.objective %}<p class="mt-1 line-clamp-2 text-xs text-faint">{{ c.objective }}</p>{% endif %}
             <dl class="mt-3 space-y-0.5 text-[11px] text-faint">
-              <div class="flex justify-between gap-2"><dt>Opens</dt><dd class="data text-muted">{{ c.start_at|date:"M j, H:i" }}</dd></div>
-              <div class="flex justify-between gap-2"><dt>Closes</dt><dd class="data text-muted">{{ c.end_at|date:"M j, H:i" }}</dd></div>
-              <div class="flex justify-between gap-2"><dt>Draws</dt><dd class="data text-muted">{{ c.draw_at|date:"M j, H:i" }}</dd></div>
+              <div class="flex justify-between gap-2"><dt>{% translate "Opens" %}</dt><dd class="data text-muted">{{ c.start_at|date:"M j, H:i" }}</dd></div>
+              <div class="flex justify-between gap-2"><dt>{% translate "Closes" %}</dt><dd class="data text-muted">{{ c.end_at|date:"M j, H:i" }}</dd></div>
+              <div class="flex justify-between gap-2"><dt>{% translate "Draws" %}</dt><dd class="data text-muted">{{ c.draw_at|date:"M j, H:i" }}</dd></div>
             </dl>
           </a>
         {% endfor %}
@@ -79,6 +80,6 @@
     </section>
   {% endif %}
 {% empty %}
-  <p class="panel px-4 py-10 text-center text-sm text-faint">No contests yet. <a href="{% url 'admin_audit:raffle_create' %}" class="text-gold hover:underline">Create your first raffle</a> to get pilots earning tickets.</p>
+  {% url 'admin_audit:raffle_create' as raffle_create_url %}<p class="panel px-4 py-10 text-center text-sm text-faint">{% blocktranslate with create_url=raffle_create_url %}No contests yet. <a href="{{ create_url }}" class="text-gold hover:underline">Create your first raffle</a> to get pilots earning tickets.{% endblocktranslate %}</p>
 {% endfor %}
 {% endblock %}

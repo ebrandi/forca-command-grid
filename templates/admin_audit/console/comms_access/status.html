@@ -1,44 +1,45 @@
 {% extends "base.html" %}
-{% block title %}Linked accounts &amp; ledger · Comms access · Admin{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Linked accounts &amp; ledger · Comms access · Admin" %}{% endblock %}
 {% block content %}
-<a href="{% url 'admin_audit:comms_access_settings' %}" class="text-sm text-faint hover:text-gold">← Access sync settings</a>
-<header class="mb-6 mt-2"><p class="eyebrow text-gold">External comms access</p>
-  <h1 class="text-3xl font-bold text-ink">Linked accounts &amp; ledger</h1></header>
+<a href="{% url 'admin_audit:comms_access_settings' %}" class="text-sm text-faint hover:text-gold">{% translate "← Access sync settings" %}</a>
+<header class="mb-6 mt-2"><p class="eyebrow text-gold">{% translate "External comms access" %}</p>
+  <h1 class="text-3xl font-bold text-ink">{% translate "Linked accounts &amp; ledger" %}</h1></header>
 
 <section class="panel p-5 mb-6">
-  <h2 class="eyebrow text-gold mb-3">Linked accounts</h2>
+  <h2 class="eyebrow text-gold mb-3">{% translate "Linked accounts" %}</h2>
   {% if accounts %}
   <div class="overflow-x-auto">
   <table class="w-full text-sm">
-    <thead><tr class="text-left text-faint"><th class="py-2 pr-3">Pilot</th><th class="pr-3">Platform</th>
-      <th class="pr-3">Handle</th><th class="pr-3">Verified</th><th class="pr-3">Pinned</th><th class="pr-3">Last synced</th></tr></thead>
+    <thead><tr class="text-left text-faint"><th class="py-2 pr-3">{% translate "Pilot" %}</th><th class="pr-3">{% translate "Platform" %}</th>
+      <th class="pr-3">{% translate "Handle" %}</th><th class="pr-3">{% translate "Verified" %}</th><th class="pr-3">{% translate "Pinned" %}</th><th class="pr-3">{% translate "Last synced" %}</th></tr></thead>
     <tbody>
     {% for a in accounts %}
       <tr class="border-t border-faint/15">
         <td class="py-2 pr-3">{{ a.user.display_name }}</td>
         <td class="pr-3 capitalize">{{ a.platform }}</td>
         <td class="pr-3">{{ a.external_handle|default:a.external_id|default:"—" }}</td>
-        <td class="pr-3">{% if a.verified %}yes{% else %}<span class="text-faint">no</span>{% endif %}</td>
-        <td class="pr-3">{% if a.pinned %}<span class="text-gold">exempt</span>{% else %}no{% endif %}</td>
-        <td class="pr-3 text-faint">{{ a.last_synced_at|default:"never" }}</td>
+        <td class="pr-3">{% if a.verified %}{% translate "yes" %}{% else %}<span class="text-faint">{% translate "no" %}</span>{% endif %}</td>
+        <td class="pr-3">{% if a.pinned %}<span class="text-gold">{% translate "exempt" %}</span>{% else %}{% translate "no" %}{% endif %}</td>
+        <td class="pr-3 text-faint">{{ a.last_synced_at|default:_("never") }}</td>
       </tr>
     {% endfor %}
     </tbody>
   </table>
   </div>
   {% else %}
-  <p class="text-sm text-faint">No pilots have linked an external comms account yet.</p>
+  <p class="text-sm text-faint">{% translate "No pilots have linked an external comms account yet." %}</p>
   {% endif %}
 </section>
 
 <section class="panel p-5">
-  <h2 class="eyebrow text-gold mb-3">Recent sync ledger</h2>
-  <p class="text-sm text-faint mb-3">Append-only record of every access change — applied and dry-run previews.</p>
+  <h2 class="eyebrow text-gold mb-3">{% translate "Recent sync ledger" %}</h2>
+  <p class="text-sm text-faint mb-3">{% translate "Append-only record of every access change — applied and dry-run previews." %}</p>
   {% if ledger %}
   <div class="overflow-x-auto">
   <table class="w-full text-sm">
-    <thead><tr class="text-left text-faint"><th class="py-2 pr-3">When</th><th class="pr-3">Pilot</th>
-      <th class="pr-3">Platform</th><th class="pr-3">Action</th><th class="pr-3">Target</th><th class="pr-3">Result</th></tr></thead>
+    <thead><tr class="text-left text-faint"><th class="py-2 pr-3">{% translate "When" %}</th><th class="pr-3">{% translate "Pilot" %}</th>
+      <th class="pr-3">{% translate "Platform" %}</th><th class="pr-3">{% translate "Action" %}</th><th class="pr-3">{% translate "Target" %}</th><th class="pr-3">{% translate "Result" %}</th></tr></thead>
     <tbody>
     {% for e in ledger %}
       <tr class="border-t border-faint/15">
@@ -47,14 +48,14 @@
         <td class="pr-3 capitalize">{{ e.platform }}</td>
         <td class="pr-3">{{ e.action }}</td>
         <td class="pr-3">{{ e.target_ref }}</td>
-        <td class="pr-3">{% if e.result == 'applied' %}<span class="text-gold">applied</span>{% elif e.result == 'failed' %}<span class="text-red-400">failed</span>{% else %}{{ e.result }}{% endif %}</td>
+        <td class="pr-3">{% if e.result == 'applied' %}<span class="text-gold">{% translate "applied" %}</span>{% elif e.result == 'failed' %}<span class="text-red-400">{% translate "failed" %}</span>{% else %}{{ e.result }}{% endif %}</td>
       </tr>
     {% endfor %}
     </tbody>
   </table>
   </div>
   {% else %}
-  <p class="text-sm text-faint">The ledger is empty — nothing has been reconciled yet.</p>
+  <p class="text-sm text-faint">{% translate "The ledger is empty — nothing has been reconciled yet." %}</p>
   {% endif %}
 </section>
 {% endblock %}

@@ -1,26 +1,27 @@
 {% extends "base.html" %}
-{% block title %}XML import settings · Admin{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "XML import settings · Admin" %}{% endblock %}
 {% block content %}
-<a href="{% url 'admin_audit:doctrine_xml_import' %}" class="text-xs text-faint hover:text-gold">← Import from EVE XML</a>
+<a href="{% url 'admin_audit:doctrine_xml_import' %}" class="text-xs text-faint hover:text-gold">{% translate "← Import from EVE XML" %}</a>
 <header class="mt-3 mb-6">
-  <p class="eyebrow">Operations</p>
-  <h1 class="mt-1 text-2xl font-bold text-ink">XML import settings</h1>
-  <p class="mt-1 max-w-2xl text-sm text-faint">Tune how the EVE-XML doctrine importer behaves.</p>
+  <p class="eyebrow">{% translate "Operations" %}</p>
+  <h1 class="mt-1 text-2xl font-bold text-ink">{% translate "XML import settings" %}</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Tune how the EVE-XML doctrine importer behaves." %}</p>
 </header>
 
 <form method="post" class="max-w-xl">
   {% csrf_token %}
   <section class="panel p-5">
-    <h2 class="eyebrow mb-3 text-gold">Upload limits</h2>
-    <label class="label" for="max_fittings">Maximum fittings per import</label>
+    <h2 class="eyebrow mb-3 text-gold">{% translate "Upload limits" %}</h2>
+    <label class="label" for="max_fittings">{% translate "Maximum fittings per import" %}</label>
     <div class="mt-1 flex items-center gap-2">
       <input id="max_fittings" name="max_fittings_per_import" type="number" min="1" max="{{ ceiling }}"
              value="{{ config.max_fittings_per_import }}" class="input-field w-40">
       <span class="text-xs text-faint">1–{{ ceiling }}</span>
     </div>
-    <p class="mt-2 text-[11px] text-faint">How many fittings a single XML upload may contain. <span class="text-ink">{{ ceiling }}</span> is the hard safety maximum — set it there to effectively remove the limit. Larger files are still bounded by the {{ config.max_fittings_per_import }}-fitting cap and the overall file-size limit.</p>
+    <p class="mt-2 text-[11px] text-faint">{% blocktranslate with cap=config.max_fittings_per_import %}How many fittings a single XML upload may contain. <span class="text-ink">{{ ceiling }}</span> is the hard safety maximum — set it there to effectively remove the limit. Larger files are still bounded by the {{ cap }}-fitting cap and the overall file-size limit.{% endblocktranslate %}</p>
     <div class="mt-4">
-      <button type="submit" class="btn-gold">Save</button>
+      <button type="submit" class="btn-gold">{% translate "Save" %}</button>
     </div>
   </section>
 </form>

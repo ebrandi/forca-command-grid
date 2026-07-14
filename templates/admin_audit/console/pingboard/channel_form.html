@@ -1,31 +1,32 @@
 {% extends "base.html" %}
-{% block title %}{% if prov %}Configure channel{% else %}Add a channel{% endif %} · Admin{% endblock %}
+{% load i18n %}
+{% block title %}{% if prov %}{% translate "Configure channel" %}{% else %}{% translate "Add a channel" %}{% endif %} · {% translate "Admin" %}{% endblock %}
 {% block content %}
-<a href="{% url 'admin_audit:pingboard_channels' %}" class="text-sm text-faint hover:text-gold">← Channels &amp; providers</a>
+<a href="{% url 'admin_audit:pingboard_channels' %}" class="text-sm text-faint hover:text-gold">← {% translate "Channels &amp; providers" %}</a>
 <header class="mb-6 mt-2">
   <p class="eyebrow text-gold">Pingboard</p>
-  <h1 class="text-3xl font-bold text-ink">{% if prov %}Configure {{ prov.get_kind_display }}{% else %}Add a channel{% endif %}</h1>
-  <p class="text-sm text-faint">Set everything this channel needs to send. Fields adapt to the channel type you pick.</p>
+  <h1 class="text-3xl font-bold text-ink">{% if prov %}{% blocktranslate with kind=prov.get_kind_display %}Configure {{ kind }}{% endblocktranslate %}{% else %}{% translate "Add a channel" %}{% endif %}</h1>
+  <p class="text-sm text-faint">{% translate "Set everything this channel needs to send. Fields adapt to the channel type you pick." %}</p>
 </header>
 
 {% if prov %}
 <div class="panel mb-4 flex flex-wrap items-center justify-between gap-3 p-4">
   <div class="text-sm">
     {% if ready_ok %}
-      <span class="chip border-kill text-kill">✓ Ready to send</span>
+      <span class="chip border-kill text-kill">✓ {% translate "Ready to send" %}</span>
     {% else %}
-      <span class="chip border-loss text-loss">⚠ Not operational</span>
+      <span class="chip border-loss text-loss">⚠ {% translate "Not operational" %}</span>
       <span class="ml-2 text-faint">{{ ready_why }}</span>
     {% endif %}
     <span class="ml-3 text-[12px] text-faint">
-      {% if prov.last_error %}last error: {{ prov.last_error }}
-      {% elif prov.last_ok_at %}last ok {{ prov.last_ok_at|date:"j M H:i" }} EVE
-      {% else %}never tested{% endif %}
+      {% if prov.last_error %}{% blocktranslate with error=prov.last_error %}last error: {{ error }}{% endblocktranslate %}
+      {% elif prov.last_ok_at %}{% blocktranslate with when=prov.last_ok_at|date:"j M H:i" %}last ok {{ when }} EVE{% endblocktranslate %}
+      {% else %}{% translate "never tested" %}{% endif %}
     </span>
   </div>
   <form method="post" action="{% url 'admin_audit:pingboard_channels' %}">
     {% csrf_token %}<input type="hidden" name="action" value="test"><input type="hidden" name="provider_id" value="{{ prov.id }}">
-    <button class="btn-ghost">Send test message</button>
+    <button class="btn-ghost">{% translate "Send test message" %}</button>
   </form>
 </div>
 {% endif %}
@@ -36,20 +37,20 @@
       class="grid gap-4 sm:grid-cols-2">
   {% csrf_token %}
 
-  <label class="label">Label
+  <label class="label">{% translate "Label" %}
     <input name="label" value="{{ prov.label|default:'' }}" required maxlength="100"
-           placeholder="e.g. Corp #alerts" class="input-field mt-1">
-    <span class="mt-1 block text-[11px] text-faint">A name for your reference only.</span>
+           placeholder="{% translate 'e.g. Corp #alerts' %}" class="input-field mt-1">
+    <span class="mt-1 block text-[11px] text-faint">{% translate "A name for your reference only." %}</span>
   </label>
 
   {% if prov %}
-  <div class="label">Channel type
+  <div class="label">{% translate "Channel type" %}
     <div class="input-field mt-1 bg-panel2/40 text-faint">{{ prov.get_kind_display }}</div>
     <input type="hidden" name="kind" value="{{ prov.kind }}">
-    <span class="mt-1 block text-[11px] text-faint">Type can't change after creation — delete and re-add to switch.</span>
+    <span class="mt-1 block text-[11px] text-faint">{% translate "Type can't change after creation — delete and re-add to switch." %}</span>
   </div>
   {% else %}
-  <label class="label">Channel type
+  <label class="label">{% translate "Channel type" %}
     <select name="kind" x-model="kind" class="input-field mt-1">
       {% for v, l in kinds %}<option value="{{ v }}">{{ l }}</option>{% endfor %}
     </select>
@@ -59,128 +60,128 @@
   <!-- ── Encrypted secret: webhook URL / bot token / access token ───────── -->
   <label class="label sm:col-span-2"
          x-show="kind === 'discord' || kind === 'slack' || kind === 'telegram' || kind === 'whatsapp'" x-cloak>
-    <span x-show="kind === 'discord'">Discord webhook URL</span>
-    <span x-show="kind === 'slack'">Slack incoming webhook URL <span class="text-faint/70">(optional if using a bot token)</span></span>
-    <span x-show="kind === 'telegram'">Telegram bot token</span>
+    <span x-show="kind === 'discord'">{% translate "Discord webhook URL" %}</span>
+    <span x-show="kind === 'slack'">{% blocktranslate %}Slack incoming webhook URL <span class="text-faint/70">(optional if using a bot token)</span>{% endblocktranslate %}</span>
+    <span x-show="kind === 'telegram'">{% translate "Telegram bot token" %}</span>
     <span x-show="kind === 'whatsapp'">
-      <span x-show="backend === 'twilio'">Twilio auth token</span>
-      <span x-show="backend !== 'twilio'">Meta access token</span>
+      <span x-show="backend === 'twilio'">{% translate "Twilio auth token" %}</span>
+      <span x-show="backend !== 'twilio'">{% translate "Meta access token" %}</span>
     </span>
     <input name="secret" type="text" autocomplete="off"
-           placeholder="{% if prov.has_secret %}•••••• stored — leave blank to keep{% else %}paste the value{% endif %}"
+           placeholder="{% if prov.has_secret %}{% translate '•••••• stored — leave blank to keep' %}{% else %}{% translate 'paste the value' %}{% endif %}"
            class="input-field mt-1 font-mono text-[12px]">
     <span class="mt-1 block text-[11px] text-faint">
-      Write&#8209;only. {% if prov.has_secret %}A secret is stored — leave blank to keep it, or paste a new one to replace.{% else %}Pasted once, encrypted at rest, never shown again.{% endif %}
+      {% translate "Write&#8209;only." %} {% if prov.has_secret %}{% translate "A secret is stored — leave blank to keep it, or paste a new one to replace." %}{% else %}{% translate "Pasted once, encrypted at rest, never shown again." %}{% endif %}
     </span>
     {% if prov.has_secret %}
     <label class="mt-2 inline-flex items-center gap-1 text-[11px] text-loss">
-      <input type="checkbox" name="clear_secret" class="align-middle"> Remove the stored secret
+      <input type="checkbox" name="clear_secret" class="align-middle"> {% translate "Remove the stored secret" %}
     </label>
     {% endif %}
   </label>
 
   <!-- ── Slack bot-mode channel ─────────────────────────────────────────── -->
-  <label class="label" x-show="kind === 'slack'" x-cloak>Slack channel <span class="text-faint/70">(bot-token mode)</span>
+  <label class="label" x-show="kind === 'slack'" x-cloak>{% blocktranslate %}Slack channel <span class="text-faint/70">(bot-token mode)</span>{% endblocktranslate %}
     <input name="routing_channel" value="{{ prov.routing.channel|default:'' }}"
-           placeholder="#alerts or C0123ABCD" class="input-field mt-1">
-    <span class="mt-1 block text-[11px] text-faint">Used when the workspace bot token is set in the environment. Ignored in webhook mode.</span>
+           placeholder="{% translate '#alerts or C0123ABCD' %}" class="input-field mt-1">
+    <span class="mt-1 block text-[11px] text-faint">{% translate "Used when the workspace bot token is set in the environment. Ignored in webhook mode." %}</span>
   </label>
 
   <!-- ── Telegram chat id ───────────────────────────────────────────────── -->
-  <label class="label" x-show="kind === 'telegram'" x-cloak>Telegram chat id
+  <label class="label" x-show="kind === 'telegram'" x-cloak>{% translate "Telegram chat id" %}
     <input name="routing_chat_id" value="{{ prov.routing.chat_id|default:'' }}"
            placeholder="-1001234567890" class="input-field mt-1">
-    <span class="mt-1 block text-[11px] text-faint">The group/channel id the bot posts to. The bot must be a member. Paste the bot token above — no server access needed.</span>
+    <span class="mt-1 block text-[11px] text-faint">{% translate "The group/channel id the bot posts to. The bot must be a member. Paste the bot token above — no server access needed." %}</span>
   </label>
 
   <!-- ── WhatsApp backend + destination ─────────────────────────────────── -->
-  <label class="label" x-show="kind === 'whatsapp'" x-cloak>WhatsApp backend
+  <label class="label" x-show="kind === 'whatsapp'" x-cloak>{% translate "WhatsApp backend" %}
     <select name="routing_backend" x-model="backend" class="input-field mt-1">
-      <option value="meta" {% if prov.routing.backend == 'meta' %}selected{% endif %}>Meta Cloud API</option>
+      <option value="meta" {% if prov.routing.backend == 'meta' %}selected{% endif %}>{% translate "Meta Cloud API" %}</option>
       <option value="twilio" {% if prov.routing.backend == 'twilio' %}selected{% endif %}>Twilio</option>
     </select>
-    <span class="mt-1 block text-[11px] text-faint">Pick your WhatsApp provider — the fields below adapt. No server access needed.</span>
+    <span class="mt-1 block text-[11px] text-faint">{% translate "Pick your WhatsApp provider — the fields below adapt. No server access needed." %}</span>
   </label>
-  <label class="label" x-show="kind === 'whatsapp'" x-cloak>Destination phone number
+  <label class="label" x-show="kind === 'whatsapp'" x-cloak>{% translate "Destination phone number" %}
     <input name="routing_to" value="{{ prov.routing.to|default:'' }}"
            placeholder="+15551234567" class="input-field mt-1">
-    <span class="mt-1 block text-[11px] text-faint">E.164 format. Leave blank if this channel only DMs linked pilots.</span>
+    <span class="mt-1 block text-[11px] text-faint">{% translate "E.164 format. Leave blank if this channel only DMs linked pilots." %}</span>
   </label>
 
   <!-- Meta Cloud API -->
-  <label class="label" x-show="kind === 'whatsapp' && backend === 'meta'" x-cloak>Meta phone number ID
+  <label class="label" x-show="kind === 'whatsapp' && backend === 'meta'" x-cloak>{% translate "Meta phone number ID" %}
     <input name="routing_meta_phone_id" value="{{ prov.routing.meta_phone_id|default:'' }}"
            placeholder="1029384756" class="input-field mt-1">
-    <span class="mt-1 block text-[11px] text-faint">From Meta Business → WhatsApp → API Setup (the <span class="font-mono">phone_number_id</span>).</span>
+    <span class="mt-1 block text-[11px] text-faint">{% blocktranslate %}From Meta Business → WhatsApp → API Setup (the <span class="font-mono">phone_number_id</span>).{% endblocktranslate %}</span>
   </label>
-  <label class="label" x-show="kind === 'whatsapp' && backend === 'meta'" x-cloak>Meta Graph API version
+  <label class="label" x-show="kind === 'whatsapp' && backend === 'meta'" x-cloak>{% translate "Meta Graph API version" %}
     <input name="routing_meta_api_version" value="{{ prov.routing.meta_api_version|default:'v21.0' }}"
            placeholder="v21.0" class="input-field mt-1">
-    <span class="mt-1 block text-[11px] text-faint">Defaults to <span class="font-mono">v21.0</span> if left as-is.</span>
+    <span class="mt-1 block text-[11px] text-faint">{% blocktranslate %}Defaults to <span class="font-mono">v21.0</span> if left as-is.{% endblocktranslate %}</span>
   </label>
 
   <!-- Twilio -->
-  <label class="label" x-show="kind === 'whatsapp' && backend === 'twilio'" x-cloak>Twilio Account SID
+  <label class="label" x-show="kind === 'whatsapp' && backend === 'twilio'" x-cloak>{% translate "Twilio Account SID" %}
     <input name="routing_twilio_sid" value="{{ prov.routing.twilio_sid|default:'' }}"
            placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" class="input-field mt-1 font-mono text-[12px]">
-    <span class="mt-1 block text-[11px] text-faint">From the Twilio Console dashboard.</span>
+    <span class="mt-1 block text-[11px] text-faint">{% translate "From the Twilio Console dashboard." %}</span>
   </label>
-  <label class="label" x-show="kind === 'whatsapp' && backend === 'twilio'" x-cloak>Twilio WhatsApp sender (From)
+  <label class="label" x-show="kind === 'whatsapp' && backend === 'twilio'" x-cloak>{% translate "Twilio WhatsApp sender (From)" %}
     <input name="routing_twilio_from" value="{{ prov.routing.twilio_from|default:'' }}"
            placeholder="+14155238886" class="input-field mt-1">
-    <span class="mt-1 block text-[11px] text-faint">Your Twilio WhatsApp-enabled number, E.164.</span>
+    <span class="mt-1 block text-[11px] text-faint">{% translate "Your Twilio WhatsApp-enabled number, E.164." %}</span>
   </label>
 
   <!-- ── EVE-mail sender character ──────────────────────────────────────── -->
-  <label class="label sm:col-span-2" x-show="kind === 'eve_mail'" x-cloak>Sender character
+  <label class="label sm:col-span-2" x-show="kind === 'eve_mail'" x-cloak>{% translate "Sender character" %}
     <select name="routing_sender_character_id" class="input-field mt-1">
-      <option value="">— choose a Director character —</option>
-      {% for s in senders %}<option value="{{ s.character_id }}" {% if s.character_id == current_sender %}selected{% endif %}>{{ s.name }}{% if not s.granted %} (mail scope not granted){% endif %}</option>{% endfor %}
+      <option value="">{% translate "— choose a Director character —" %}</option>
+      {% for s in senders %}<option value="{{ s.character_id }}" {% if s.character_id == current_sender %}selected{% endif %}>{{ s.name }}{% if not s.granted %} {% translate "(mail scope not granted)" %}{% endif %}</option>{% endfor %}
     </select>
-    <span class="mt-1 block text-[11px] text-faint">
-      In&#8209;game mail sends from this character. It must grant the mail-send scope on the
-      <a href="{% url 'sso:scopes' %}" class="text-cyan hover:underline">ESI scopes</a> page (feature: <span class="font-mono">Pingboard mail sender</span>).
-      {% if not senders %}<span class="text-loss">No Director characters are linked yet.</span>{% endif %}
+    <span class="mt-1 block text-[11px] text-faint">{% url 'sso:scopes' as scopes_url %}
+      {% blocktranslate %}In&#8209;game mail sends from this character. It must grant the mail-send scope on the
+      <a href="{{ scopes_url }}" class="text-cyan hover:underline">ESI scopes</a> page (feature: <span class="font-mono">Pingboard mail sender</span>).{% endblocktranslate %}
+      {% if not senders %}<span class="text-loss">{% translate "No Director characters are linked yet." %}</span>{% endif %}
     </span>
   </label>
 
   <!-- ── In-app: nothing to configure ───────────────────────────────────── -->
   <p class="sm:col-span-2 rounded-md border border-line/50 bg-panel2/30 p-3 text-[12px] text-faint"
      x-show="kind === 'in_app'" x-cloak>
-    In&#8209;app alerts need no configuration — they appear in every targeted pilot's Pingboard inbox automatically.
+    {% translate "In&#8209;app alerts need no configuration — they appear in every targeted pilot's Pingboard inbox automatically." %}
   </p>
 
   <!-- ── Per-kind help ──────────────────────────────────────────────────── -->
   <div class="sm:col-span-2 rounded-md border border-gold/20 bg-gold/5 p-3 text-[12px] text-faint">
-    <p class="mb-1 font-semibold text-gold">How to get this value</p>
-    <p x-show="kind === 'discord'" x-cloak>Discord → <span class="text-ink">Server Settings → Integrations → Webhooks → New Webhook</span>. Pick the target channel, <span class="text-ink">Copy Webhook URL</span>, and paste it above.</p>
-    <p x-show="kind === 'slack'" x-cloak>Easiest: create an <span class="text-ink">Incoming Webhook</span> at api.slack.com/apps → your app → <span class="text-ink">Incoming Webhooks</span>, and paste the <span class="font-mono">hooks.slack.com/services/…</span> URL. For DMs to pilots, set a bot token (<span class="font-mono">PINGBOARD_SLACK_BOT_TOKEN</span>) in the environment instead and give a channel id.</p>
-    <p x-show="kind === 'telegram'" x-cloak>Create a bot with <span class="font-mono">@BotFather</span> → <span class="font-mono">/newbot</span> and copy its token into <span class="text-ink">Telegram bot token</span> above. Add the bot to your group/channel, then read the chat id (e.g. via <span class="font-mono">@RawDataBot</span> or the Bot API <span class="font-mono">getUpdates</span>) and paste it. Everything is stored here — no server access needed.</p>
-    <p x-show="kind === 'whatsapp'" x-cloak>Pick <span class="text-ink">Meta Cloud API</span> or <span class="text-ink">Twilio</span> and paste that provider's credentials from its console — access/auth token above, ids/numbers in the fields. All stored here, encrypted; no server access needed. Note: outside a 24&#8209;hour user&#8209;initiated window both backends require a pre&#8209;approved message template.</p>
-    <p x-show="kind === 'eve_mail'" x-cloak>Any linked Director character can send. Have them open the ESI scopes page and grant <span class="text-ink">Pingboard mail sender</span>, then select them above.</p>
-    <p x-show="kind === 'in_app'" x-cloak>Nothing to fetch — just save and enable.</p>
-    <p class="mt-1">Full walkthrough: <span class="font-mono text-cyan">handbooks/administrator-handbook/console-overview.md</span></p>
+    <p class="mb-1 font-semibold text-gold">{% translate "How to get this value" %}</p>
+    <p x-show="kind === 'discord'" x-cloak>{% blocktranslate %}Discord → <span class="text-ink">Server Settings → Integrations → Webhooks → New Webhook</span>. Pick the target channel, <span class="text-ink">Copy Webhook URL</span>, and paste it above.{% endblocktranslate %}</p>
+    <p x-show="kind === 'slack'" x-cloak>{% blocktranslate %}Easiest: create an <span class="text-ink">Incoming Webhook</span> at api.slack.com/apps → your app → <span class="text-ink">Incoming Webhooks</span>, and paste the <span class="font-mono">hooks.slack.com/services/…</span> URL. For DMs to pilots, set a bot token (<span class="font-mono">PINGBOARD_SLACK_BOT_TOKEN</span>) in the environment instead and give a channel id.{% endblocktranslate %}</p>
+    <p x-show="kind === 'telegram'" x-cloak>{% blocktranslate %}Create a bot with <span class="font-mono">@BotFather</span> → <span class="font-mono">/newbot</span> and copy its token into <span class="text-ink">Telegram bot token</span> above. Add the bot to your group/channel, then read the chat id (e.g. via <span class="font-mono">@RawDataBot</span> or the Bot API <span class="font-mono">getUpdates</span>) and paste it. Everything is stored here — no server access needed.{% endblocktranslate %}</p>
+    <p x-show="kind === 'whatsapp'" x-cloak>{% blocktranslate %}Pick <span class="text-ink">Meta Cloud API</span> or <span class="text-ink">Twilio</span> and paste that provider's credentials from its console — access/auth token above, ids/numbers in the fields. All stored here, encrypted; no server access needed. Note: outside a 24&#8209;hour user&#8209;initiated window both backends require a pre&#8209;approved message template.{% endblocktranslate %}</p>
+    <p x-show="kind === 'eve_mail'" x-cloak>{% blocktranslate %}Any linked Director character can send. Have them open the ESI scopes page and grant <span class="text-ink">Pingboard mail sender</span>, then select them above.{% endblocktranslate %}</p>
+    <p x-show="kind === 'in_app'" x-cloak>{% translate "Nothing to fetch — just save and enable." %}</p>
+    <p class="mt-1">{% blocktranslate %}Full walkthrough: <span class="font-mono text-cyan">handbooks/administrator-handbook/console-overview.md</span>{% endblocktranslate %}</p>
   </div>
 
   <!-- ── Classification ceiling (broadcast chat channels) ───────────────── -->
   <label class="label sm:col-span-2"
          x-show="kind === 'discord' || kind === 'slack' || kind === 'telegram' || kind === 'whatsapp'" x-cloak>
-    Highest classification this channel may carry
+    {% translate "Highest classification this channel may carry" %}
     <select name="max_classification" class="input-field mt-1">
-      <option value="" {% if prov.max_classification != 'high_command' %}selected{% endif %}>Corp internal only (default)</option>
-      <option value="high_command" {% if prov.max_classification == 'high_command' %}selected{% endif %}>Officer-level (high command) and below</option>
+      <option value="" {% if prov.max_classification != 'high_command' %}selected{% endif %}>{% translate "Corp internal only (default)" %}</option>
+      <option value="high_command" {% if prov.max_classification == 'high_command' %}selected{% endif %}>{% translate "Officer-level (high command) and below" %}</option>
     </select>
-    <span class="mt-1 block text-[11px] text-faint">Caps Command&#8209;Intelligence broadcasts: a report classified above this tier skips this channel. Ordinary corp channels stay corp&#8209;internal; raise a <em>private officer</em> channel to carry officer&#8209;level intel. (Ordinary fleet/alert traffic is unaffected.)</span>
+    <span class="mt-1 block text-[11px] text-faint">{% blocktranslate %}Caps Command&#8209;Intelligence broadcasts: a report classified above this tier skips this channel. Ordinary corp channels stay corp&#8209;internal; raise a <em>private officer</em> channel to carry officer&#8209;level intel. (Ordinary fleet/alert traffic is unaffected.){% endblocktranslate %}</span>
   </label>
 
   <label class="chip cursor-pointer self-start sm:col-span-2">
     <input type="checkbox" name="enabled" class="mr-1 align-middle" {% if prov.enabled %}checked{% endif %}>
-    Enable this channel (alerts route here once enabled)
+    {% translate "Enable this channel (alerts route here once enabled)" %}
   </label>
 
   <div class="sm:col-span-2 flex gap-2">
-    <button class="btn-gold">{% if prov %}Save changes{% else %}Add channel{% endif %}</button>
-    <a href="{% url 'admin_audit:pingboard_channels' %}" class="btn-ghost self-center">Cancel</a>
+    <button class="btn-gold">{% if prov %}{% translate "Save changes" %}{% else %}{% translate "Add channel" %}{% endif %}</button>
+    <a href="{% url 'admin_audit:pingboard_channels' %}" class="btn-ghost self-center">{% translate "Cancel" %}</a>
   </div>
 </form>
 {% endblock %}

@@ -1,12 +1,13 @@
 {% extends "base.html" %}
 {% load static eve %}
-{% block title %}Programme settings · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Programme settings" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
-<a href="{% url 'admin_audit:mentorship_hub' %}" class="text-xs text-faint hover:text-gold">&larr; Mentorship</a>
+<a href="{% url 'admin_audit:mentorship_hub' %}" class="text-xs text-faint hover:text-gold">&larr; {% translate "Mentorship" %}</a>
 <header class="mt-2 mb-6">
-  <p class="eyebrow text-gold">Mentorship</p>
-  <h1 class="mt-1 text-3xl font-bold text-ink">Programme settings</h1>
-  <p class="mt-1 max-w-2xl text-sm text-faint">Set who can mentor, how cadets and pairs are approved, what earns a reward, and how the programme shows up for your pilots.</p>
+  <p class="eyebrow text-gold">{% translate "Mentorship" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Programme settings" %}</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Set who can mentor, how cadets and pairs are approved, what earns a reward, and how the programme shows up for your pilots." %}</p>
 </header>
 
 {% if form.non_field_errors %}
@@ -23,8 +24,8 @@ widget + help + errors. No inline handlers — CSP-safe. Widgets carry their own
 
   <!-- Eligibility -->
   <section class="panel p-5">
-    <h2 class="eyebrow mb-4 text-gold">Eligibility</h2>
-    <p class="mb-4 text-xs text-faint">Who qualifies to mentor, and which pilots still count as cadets.</p>
+    <h2 class="eyebrow mb-4 text-gold">{% translate "Eligibility" %}</h2>
+    <p class="mb-4 text-xs text-faint">{% translate "Who qualifies to mentor, and which pilots still count as cadets." %}</p>
     <div class="grid gap-x-5 gap-y-4 sm:grid-cols-2">
       <div>
         <label class="label" for="{{ form.mentor_min_character_age_days.id_for_label }}">{{ form.mentor_min_character_age_days.label }}</label>
@@ -60,8 +61,8 @@ widget + help + errors. No inline handlers — CSP-safe. Widgets carry their own
 
   <!-- Approvals & pairing -->
   <section class="panel p-5">
-    <h2 class="eyebrow mb-4 text-gold">Approvals &amp; pairing</h2>
-    <p class="mb-4 text-xs text-faint">Who signs off applications and pairings, and how long a pairing stays live.</p>
+    <h2 class="eyebrow mb-4 text-gold">{% translate "Approvals &amp; pairing" %}</h2>
+    <p class="mb-4 text-xs text-faint">{% translate "Who signs off applications and pairings, and how long a pairing stays live." %}</p>
     <div class="grid gap-x-5 gap-y-4 sm:grid-cols-2">
       <div>
         <label class="flex items-center gap-2 text-sm text-ink">{{ form.mentor_requires_approval }} <span>{{ form.mentor_requires_approval.label }}</span></label>
@@ -111,8 +112,8 @@ widget + help + errors. No inline handlers — CSP-safe. Widgets carry their own
 
   <!-- Rewards -->
   <section class="panel p-5">
-    <h2 class="eyebrow mb-4 text-gold">Rewards</h2>
-    <p class="mb-4 text-xs text-faint">Whether mentorship pays out, how it's validated, and the ISK ceilings on each side.</p>
+    <h2 class="eyebrow mb-4 text-gold">{% translate "Rewards" %}</h2>
+    <p class="mb-4 text-xs text-faint">{% translate "Whether mentorship pays out, how it's validated, and the ISK ceilings on each side." %}</p>
     <div class="grid gap-x-5 gap-y-4 sm:grid-cols-2">
       <div>
         <label class="flex items-center gap-2 text-sm text-ink">{{ form.rewards_enabled }} <span>{{ form.rewards_enabled.label }}</span></label>
@@ -158,8 +159,8 @@ widget + help + errors. No inline handlers — CSP-safe. Widgets carry their own
 
   <!-- Visibility & notifications -->
   <section class="panel p-5">
-    <h2 class="eyebrow mb-4 text-gold">Visibility &amp; notifications</h2>
-    <p class="mb-4 text-xs text-faint">How the programme appears to pilots, who sees profiles, and where updates are announced.</p>
+    <h2 class="eyebrow mb-4 text-gold">{% translate "Visibility &amp; notifications" %}</h2>
+    <p class="mb-4 text-xs text-faint">{% translate "How the programme appears to pilots, who sees profiles, and where updates are announced." %}</p>
     <div class="grid gap-x-5 gap-y-4 sm:grid-cols-2">
       <div>
         <label class="flex items-center gap-2 text-sm text-ink">{{ form.mentor_directory_visible }} <span>{{ form.mentor_directory_visible.label }}</span></label>
@@ -193,8 +194,8 @@ widget + help + errors. No inline handlers — CSP-safe. Widgets carry their own
   </section>
 
   <div class="flex items-center gap-3">
-    <button class="btn-gold">Save settings</button>
-    <a href="{% url 'admin_audit:mentorship_hub' %}" class="btn-ghost text-sm">Cancel</a>
+    <button class="btn-gold">{% translate "Save settings" %}</button>
+    <a href="{% url 'admin_audit:mentorship_hub' %}" class="btn-ghost text-sm">{% translate "Cancel" %}</a>
   </div>
 </form>
 {% endblock %}

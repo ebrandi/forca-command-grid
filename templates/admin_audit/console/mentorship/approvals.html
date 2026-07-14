@@ -1,12 +1,13 @@
 {% extends "base.html" %}
 {% load static eve %}
-{% block title %}Approvals · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Approvals" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
-<a href="{% url 'admin_audit:mentorship_hub' %}" class="text-xs text-faint hover:text-gold">&larr; Mentorship</a>
+<a href="{% url 'admin_audit:mentorship_hub' %}" class="text-xs text-faint hover:text-gold">&larr; {% translate "Mentorship" %}</a>
 <header class="mt-2 mb-6">
-  <p class="eyebrow text-gold">Mentorship</p>
-  <h1 class="mt-1 text-3xl font-bold text-ink">Approvals</h1>
-  <p class="mt-1 max-w-2xl text-sm text-faint">Sign off on Veteran Mentor and Cadet applications, and on the pairings waiting to fly. Eligibility is measured against your programme thresholds — you have the final call.</p>
+  <p class="eyebrow text-gold">{% translate "Mentorship" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Approvals" %}</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Sign off on Veteran Mentor and Cadet applications, and on the pairings waiting to fly. Eligibility is measured against your programme thresholds — you have the final call." %}</p>
 </header>
 
 {% comment %}Three queues: pending mentors, pending cadets, pending pairings.
@@ -16,8 +17,8 @@ Reject carries an optional reason input so the applicant gets context.{% endcomm
 <!-- Pending Veteran Mentors -->
 <section class="mb-8">
   <div class="mb-3 flex items-center justify-between">
-    <h2 class="eyebrow text-gold">Veteran Mentor applications</h2>
-    <span class="chip text-muted">{{ mentors|length }} waiting</span>
+    <h2 class="eyebrow text-gold">{% translate "Veteran Mentor applications" %}</h2>
+    <span class="chip text-muted">{% blocktranslate count n=mentors|length %}{{ n }} waiting{% plural %}{{ n }} waiting{% endblocktranslate %}</span>
   </div>
   <div class="space-y-3">
     {% for m in mentors %}
@@ -28,15 +29,15 @@ Reject carries an optional reason input so the applicant gets context.{% endcomm
           <div class="flex flex-wrap items-center gap-2">
             <h3 class="font-display text-base font-semibold text-ink">{{ m.user.display_name }}</h3>
             {% if m.eligibility.eligible %}
-            <span class="chip text-kill">Eligible</span>
+            <span class="chip text-kill">{% translate "Eligible" %}</span>
             {% else %}
-            <span class="chip text-gold">Not eligible per thresholds</span>
+            <span class="chip text-gold">{% translate "Not eligible per thresholds" %}</span>
             {% endif %}
-            {% if m.eligibility.confidence %}<span class="chip text-cyan">{{ m.eligibility.confidence }}% confidence</span>{% endif %}
+            {% if m.eligibility.confidence %}<span class="chip text-cyan">{% blocktranslate with pct=m.eligibility.confidence %}{{ pct }}% confidence{% endblocktranslate %}</span>{% endif %}
           </div>
           <p class="mt-1 text-[11px] text-faint">
-            <span class="data">{{ m.eligibility.character_age_days }}</span>d character age
-            &middot; <span class="data">{{ m.eligibility.corp_tenure_days }}</span>d corp tenure
+            {% blocktranslate with days=m.eligibility.character_age_days %}<span class="data">{{ days }}</span>d character age{% endblocktranslate %}
+            &middot; {% blocktranslate with days=m.eligibility.corp_tenure_days %}<span class="data">{{ days }}</span>d corp tenure{% endblocktranslate %}
             {% if m.timezone %}&middot; {{ m.timezone }}{% endif %}
             {% if m.languages %}&middot; {{ m.languages|join:", " }}{% endif %}
           </p>
@@ -59,23 +60,23 @@ Reject carries an optional reason input so the applicant gets context.{% endcomm
         <form method="post" action="{% url 'admin_audit:mentorship_mentor_decide' m.id %}">
           {% csrf_token %}
           <input type="hidden" name="decision" value="approve">
-          <button class="btn-gold !px-3 !py-1.5 text-xs">Approve mentor</button>
+          <button class="btn-gold !px-3 !py-1.5 text-xs">{% translate "Approve mentor" %}</button>
         </form>
         <form method="post" action="{% url 'admin_audit:mentorship_mentor_decide' m.id %}" class="flex items-end gap-2">
           {% csrf_token %}
           <input type="hidden" name="decision" value="reject">
           <div>
-            <label class="label" for="mreason-{{ m.id }}">Reason (optional)</label>
-            <input id="mreason-{{ m.id }}" name="reason" class="input-field w-56 text-xs" placeholder="Why not this time…">
+            <label class="label" for="mreason-{{ m.id }}">{% translate "Reason (optional)" %}</label>
+            <input id="mreason-{{ m.id }}" name="reason" class="input-field w-56 text-xs" placeholder="{% translate 'Why not this time…' %}">
           </div>
-          <button class="btn-danger !px-3 !py-1.5 text-xs">Reject</button>
+          <button class="btn-danger !px-3 !py-1.5 text-xs">{% translate "Reject" %}</button>
         </form>
       </div>
     </div>
     {% empty %}
     <div class="panel p-8 text-center">
       <svg class="mx-auto h-8 w-8 text-faint"><use href="#i-shield"/></svg>
-      <p class="mt-3 text-sm text-faint">No mentor applications waiting — nice and clear. New Veteran Mentors will land here to sign off.</p>
+      <p class="mt-3 text-sm text-faint">{% translate "No mentor applications waiting — nice and clear. New Veteran Mentors will land here to sign off." %}</p>
     </div>
     {% endfor %}
   </div>
@@ -84,8 +85,8 @@ Reject carries an optional reason input so the applicant gets context.{% endcomm
 <!-- Pending Cadets -->
 <section class="mb-8">
   <div class="mb-3 flex items-center justify-between">
-    <h2 class="eyebrow text-gold">Cadet applications</h2>
-    <span class="chip text-muted">{{ mentees|length }} waiting</span>
+    <h2 class="eyebrow text-gold">{% translate "Cadet applications" %}</h2>
+    <span class="chip text-muted">{% blocktranslate count n=mentees|length %}{{ n }} waiting{% plural %}{{ n }} waiting{% endblocktranslate %}</span>
   </div>
   <div class="space-y-3">
     {% for m in mentees %}
@@ -97,9 +98,9 @@ Reject carries an optional reason input so the applicant gets context.{% endcomm
             <h3 class="font-display text-base font-semibold text-ink">{{ m.user.display_name }}</h3>
             <span class="chip text-cyan">{{ m.get_experience_display }}</span>
             {% if m.eligibility.eligible %}
-            <span class="chip text-kill">Eligible</span>
+            <span class="chip text-kill">{% translate "Eligible" %}</span>
             {% elif m.eligibility %}
-            <span class="chip text-gold">Not eligible per thresholds</span>
+            <span class="chip text-gold">{% translate "Not eligible per thresholds" %}</span>
             {% endif %}
           </div>
           <p class="mt-1 text-[11px] text-faint">
@@ -118,23 +119,23 @@ Reject carries an optional reason input so the applicant gets context.{% endcomm
         <form method="post" action="{% url 'admin_audit:mentorship_mentee_decide' m.id %}">
           {% csrf_token %}
           <input type="hidden" name="decision" value="approve">
-          <button class="btn-gold !px-3 !py-1.5 text-xs">Approve cadet</button>
+          <button class="btn-gold !px-3 !py-1.5 text-xs">{% translate "Approve cadet" %}</button>
         </form>
         <form method="post" action="{% url 'admin_audit:mentorship_mentee_decide' m.id %}" class="flex items-end gap-2">
           {% csrf_token %}
           <input type="hidden" name="decision" value="reject">
           <div>
-            <label class="label" for="creason-{{ m.id }}">Reason (optional)</label>
-            <input id="creason-{{ m.id }}" name="reason" class="input-field w-56 text-xs" placeholder="Why not this time…">
+            <label class="label" for="creason-{{ m.id }}">{% translate "Reason (optional)" %}</label>
+            <input id="creason-{{ m.id }}" name="reason" class="input-field w-56 text-xs" placeholder="{% translate 'Why not this time…' %}">
           </div>
-          <button class="btn-danger !px-3 !py-1.5 text-xs">Reject</button>
+          <button class="btn-danger !px-3 !py-1.5 text-xs">{% translate "Reject" %}</button>
         </form>
       </div>
     </div>
     {% empty %}
     <div class="panel p-8 text-center">
       <svg class="mx-auto h-8 w-8 text-faint"><use href="#i-rookie"/></svg>
-      <p class="mt-3 text-sm text-faint">No cadet applications waiting — nice and clear. New pilots asking for a mentor will show up here.</p>
+      <p class="mt-3 text-sm text-faint">{% translate "No cadet applications waiting — nice and clear. New pilots asking for a mentor will show up here." %}</p>
     </div>
     {% endfor %}
   </div>
@@ -143,8 +144,8 @@ Reject carries an optional reason input so the applicant gets context.{% endcomm
 <!-- Pending Pairings -->
 <section class="mb-4">
   <div class="mb-3 flex items-center justify-between">
-    <h2 class="eyebrow text-gold">Pairings awaiting sign-off</h2>
-    <span class="chip text-muted">{{ pairings|length }} waiting</span>
+    <h2 class="eyebrow text-gold">{% translate "Pairings awaiting sign-off" %}</h2>
+    <span class="chip text-muted">{% blocktranslate count n=pairings|length %}{{ n }} waiting{% plural %}{{ n }} waiting{% endblocktranslate %}</span>
   </div>
   <div class="space-y-3">
     {% for p in pairings %}
@@ -153,11 +154,11 @@ Reject carries an optional reason input so the applicant gets context.{% endcomm
         <div class="min-w-0">
           <p class="text-sm text-ink">
             <span class="font-semibold">{{ p.mentor.user.display_name }}</span>
-            <span class="text-faint"> mentors </span>
+            <span class="text-faint"> {% translate "mentors" %} </span>
             <span class="font-semibold">{{ p.mentee.user.display_name }}</span>
           </p>
           <div class="mt-2 flex flex-wrap items-center gap-2">
-            <span class="chip text-cyan">Match {{ p.match_score|floatformat:0 }}</span>
+            <span class="chip text-cyan">{% blocktranslate with score=p.match_score|floatformat:0 %}Match {{ score }}{% endblocktranslate %}</span>
             <span class="chip text-muted">{{ p.get_initiated_by_display }}</span>
           </div>
           {% if p.match_reasons %}
@@ -173,23 +174,24 @@ Reject carries an optional reason input so the applicant gets context.{% endcomm
         <form method="post" action="{% url 'admin_audit:mentorship_pairing_decide' p.id %}">
           {% csrf_token %}
           <input type="hidden" name="decision" value="approve">
-          <button class="btn-gold !px-3 !py-1.5 text-xs">Approve &amp; activate</button>
+          <button class="btn-gold !px-3 !py-1.5 text-xs">{% translate "Approve &amp; activate" %}</button>
         </form>
         <form method="post" action="{% url 'admin_audit:mentorship_pairing_decide' p.id %}" class="flex items-end gap-2">
           {% csrf_token %}
           <input type="hidden" name="decision" value="reject">
           <div>
-            <label class="label" for="preason-{{ p.id }}">Reason (optional)</label>
-            <input id="preason-{{ p.id }}" name="reason" class="input-field w-56 text-xs" placeholder="Why not this pairing…">
+            <label class="label" for="preason-{{ p.id }}">{% translate "Reason (optional)" %}</label>
+            <input id="preason-{{ p.id }}" name="reason" class="input-field w-56 text-xs" placeholder="{% translate 'Why not this pairing…' %}">
           </div>
-          <button class="btn-danger !px-3 !py-1.5 text-xs">Reject</button>
+          <button class="btn-danger !px-3 !py-1.5 text-xs">{% translate "Reject" %}</button>
         </form>
       </div>
     </div>
     {% empty %}
     <div class="panel p-8 text-center">
       <svg class="mx-auto h-8 w-8 text-faint"><use href="#i-check"/></svg>
-      <p class="mt-3 text-sm text-faint">No pairings awaiting sign-off. Head to <a href="{% url 'admin_audit:mentorship_matching' %}" class="text-gold hover:underline">Matching</a> to pair a cadet with a mentor.</p>
+      {% url 'admin_audit:mentorship_matching' as matching_url %}
+      <p class="mt-3 text-sm text-faint">{% blocktranslate with url=matching_url %}No pairings awaiting sign-off. Head to <a href="{{ url }}" class="text-gold hover:underline">Matching</a> to pair a cadet with a mentor.{% endblocktranslate %}</p>
     </div>
     {% endfor %}
   </div>

@@ -1,21 +1,22 @@
 {% extends "base.html" %}
-{% block title %}Command Intelligence · Provider &amp; model · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Command Intelligence · Provider &amp; model · [FORCA] Command Grid" %}{% endblock %}
 {% block content %}
-<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">{% translate "← Admin console" %}</a>
 <header class="mt-2 mb-6">
-  <p class="eyebrow">Command Intelligence configuration</p>
-  <h1 class="mt-1 text-3xl font-bold text-ink">Provider &amp; model</h1>
-  <p class="mt-1 max-w-2xl text-sm text-faint">Pick the runtime model name, output sizing, budgets and call discipline. The <span class="text-cyan">API key</span> lives in the environment and is never shown, edited or stored here — only its presence flips the subsystem on.</p>
+  <p class="eyebrow">{% translate "Command Intelligence configuration" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Provider &amp; model" %}</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">{% blocktranslate %}Pick the runtime model name, output sizing, budgets and call discipline. The <span class="text-cyan">API key</span> lives in the environment and is never shown, edited or stored here — only its presence flips the subsystem on.{% endblocktranslate %}</p>
 </header>
 
 {% comment %} Read-only enablement state — sourced from settings.COMMAND_INTEL_ENABLED, never the secret itself. {% endcomment %}
 <div class="panel mb-4 flex items-center gap-3 px-4 py-3">
   {% if enabled %}
   <span class="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400"></span>
-  <span class="text-sm text-ink">Enabled — an <code class="text-faint">LLM_API_KEY</code> is present.</span>
+  <span class="text-sm text-ink">{% blocktranslate %}Enabled — an <code class="text-faint">LLM_API_KEY</code> is present.{% endblocktranslate %}</span>
   {% else %}
   <span class="inline-flex h-2.5 w-2.5 rounded-full bg-faint/60"></span>
-  <span class="text-sm text-ink">Disabled — set <code class="text-faint">LLM_API_KEY</code> in the environment to enable Command Intelligence.</span>
+  <span class="text-sm text-ink">{% blocktranslate %}Disabled — set <code class="text-faint">LLM_API_KEY</code> in the environment to enable Command Intelligence.{% endblocktranslate %}</span>
   {% endif %}
 </div>
 
@@ -25,70 +26,70 @@
     <div class="divide-y divide-line/40">
       <label class="grid grid-cols-1 items-center gap-2 px-4 py-3 hover:bg-panel2/40 sm:grid-cols-[1fr_16rem]">
         <div>
-          <span class="block text-sm font-medium text-ink">Model name</span>
-          <span class="block text-[11px] text-faint">The runtime model — overrides the env default (e.g. <code class="text-faint">MiniMax-M2.7</code> or <code class="text-faint">MiniMax-M3</code>).</span>
+          <span class="block text-sm font-medium text-ink">{% translate "Model name" %}</span>
+          <span class="block text-[11px] text-faint">{% blocktranslate %}The runtime model — overrides the env default (e.g. <code class="text-faint">MiniMax-M2.7</code> or <code class="text-faint">MiniMax-M3</code>).{% endblocktranslate %}</span>
         </div>
         <input type="text" name="model" value="{{ cfg.model }}" class="input-field w-full font-mono" required>
       </label>
       <label class="grid grid-cols-1 items-center gap-2 px-4 py-3 hover:bg-panel2/40 sm:grid-cols-[1fr_16rem]">
         <div>
-          <span class="block text-sm font-medium text-ink">Max output tokens</span>
-          <span class="block text-[11px] text-faint">Sized for reasoning plus the answer; raise on a length cut-off. Range 256–65536.</span>
+          <span class="block text-sm font-medium text-ink">{% translate "Max output tokens" %}</span>
+          <span class="block text-[11px] text-faint">{% translate "Sized for reasoning plus the answer; raise on a length cut-off. Range 256–65536." %}</span>
         </div>
         <input type="number" min="256" max="65536" name="max_output_tokens" value="{{ cfg.max_output_tokens }}"
                class="input-field w-full text-right font-mono" inputmode="numeric" required>
       </label>
       <label class="grid grid-cols-1 items-center gap-2 px-4 py-3 hover:bg-panel2/40 sm:grid-cols-[1fr_16rem]">
         <div>
-          <span class="block text-sm font-medium text-ink">Temperature</span>
-          <span class="block text-[11px] text-faint">Sampling temperature, 0–1. Lower is more deterministic.</span>
+          <span class="block text-sm font-medium text-ink">{% translate "Temperature" %}</span>
+          <span class="block text-[11px] text-faint">{% translate "Sampling temperature, 0–1. Lower is more deterministic." %}</span>
         </div>
         <input type="number" step="0.05" min="0" max="1" name="temperature" value="{{ cfg.temperature }}"
                class="input-field w-full text-right font-mono" inputmode="decimal" required>
       </label>
       <label class="grid grid-cols-1 items-center gap-2 px-4 py-3 hover:bg-panel2/40 sm:grid-cols-[1fr_16rem]">
         <div>
-          <span class="block text-sm font-medium text-ink">Token budget per report</span>
-          <span class="block text-[11px] text-faint">Hard cap on prompt + completion tokens for a single report.</span>
+          <span class="block text-sm font-medium text-ink">{% translate "Token budget per report" %}</span>
+          <span class="block text-[11px] text-faint">{% translate "Hard cap on prompt + completion tokens for a single report." %}</span>
         </div>
         <input type="number" min="0" name="token_budget_per_report" value="{{ cfg.token_budget_per_report }}"
                class="input-field w-full text-right font-mono" inputmode="numeric" required>
       </label>
       <label class="grid grid-cols-1 items-center gap-2 px-4 py-3 hover:bg-panel2/40 sm:grid-cols-[1fr_16rem]">
         <div>
-          <span class="block text-sm font-medium text-ink">Monthly token ceiling</span>
-          <span class="block text-[11px] text-faint">Safety cap on total tokens spent across all reports in a month.</span>
+          <span class="block text-sm font-medium text-ink">{% translate "Monthly token ceiling" %}</span>
+          <span class="block text-[11px] text-faint">{% translate "Safety cap on total tokens spent across all reports in a month." %}</span>
         </div>
         <input type="number" min="0" name="monthly_token_ceiling" value="{{ cfg.monthly_token_ceiling }}"
                class="input-field w-full text-right font-mono" inputmode="numeric" required>
       </label>
       <label class="grid grid-cols-1 items-center gap-2 px-4 py-3 hover:bg-panel2/40 sm:grid-cols-[1fr_16rem]">
         <div>
-          <span class="block text-sm font-medium text-ink">Rate limit / hour</span>
-          <span class="block text-[11px] text-faint">Reports per hour — backs the breaker counter.</span>
+          <span class="block text-sm font-medium text-ink">{% translate "Rate limit / hour" %}</span>
+          <span class="block text-[11px] text-faint">{% translate "Reports per hour — backs the breaker counter." %}</span>
         </div>
         <input type="number" min="1" name="rate_limit_per_hour" value="{{ cfg.rate_limit_per_hour }}"
                class="input-field w-full text-right font-mono" inputmode="numeric" required>
       </label>
       <label class="grid grid-cols-1 items-center gap-2 px-4 py-3 hover:bg-panel2/40 sm:grid-cols-[1fr_16rem]">
         <div>
-          <span class="block text-sm font-medium text-ink">Repair attempts</span>
-          <span class="block text-[11px] text-faint">Schema / grounding re-prompts on invalid structured output. Range 0–5.</span>
+          <span class="block text-sm font-medium text-ink">{% translate "Repair attempts" %}</span>
+          <span class="block text-[11px] text-faint">{% translate "Schema / grounding re-prompts on invalid structured output. Range 0–5." %}</span>
         </div>
         <input type="number" min="0" max="5" name="repair_attempts" value="{{ cfg.repair_attempts }}"
                class="input-field w-full text-right font-mono" inputmode="numeric" required>
       </label>
     </div>
     <div class="flex flex-wrap items-center justify-between gap-3 border-t border-line px-4 py-3">
-      <p class="text-[11px] text-faint">config v{{ meta.version }}{% if meta.by %} · last changed by {{ meta.by }}{% endif %}{% if meta.at %} · {{ meta.at|date:"j M Y H:i" }}{% endif %}</p>
-      <button class="btn-gold">Save changes</button>
+      <p class="text-[11px] text-faint">{% blocktranslate with version=meta.version %}config v{{ version }}{% endblocktranslate %}{% if meta.by %} · {% blocktranslate with by=meta.by %}last changed by {{ by }}{% endblocktranslate %}{% endif %}{% if meta.at %} · {{ meta.at|date:"j M Y H:i" }}{% endif %}</p>
+      <button class="btn-gold">{% translate "Save changes" %}</button>
     </div>
   </section>
 </form>
 
 <form method="post" action="{% url 'admin_audit:command_intel_reset' 'provider' %}" class="mt-3">
   {% csrf_token %}
-  <button class="btn-ghost text-sm">Reset to defaults</button>
-  <span class="ml-2 text-[11px] text-faint">Restores the model, budgets and call discipline to the shipped defaults.</span>
+  <button class="btn-ghost text-sm">{% translate "Reset to defaults" %}</button>
+  <span class="ml-2 text-[11px] text-faint">{% translate "Restores the model, budgets and call discipline to the shipped defaults." %}</span>
 </form>
 {% endblock %}

@@ -1,25 +1,28 @@
 {% extends "base.html" %}
 {% load eve %}
-{% block title %}Prizes · {{ contest.name }} · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Prizes" %} · {{ contest.name }} · [FORCA] Command Grid{% endblock %}
 {% block content %}
+{% translate "Close" as l_close %}
+{% translate "Edit" as l_edit %}
 <header class="mb-6 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <p class="eyebrow text-gold">Raffle · {{ contest.name }}</p>
-    <h1 class="mt-1 text-2xl font-bold text-ink">Prizes</h1>
-    <p class="mt-1 text-sm text-faint">The prize table for this contest, ranked from first prize down. Estimated value is for planning only — no ISK moves in the app; prizes are recorded and delivered by hand.</p>
+    <p class="eyebrow text-gold">{% translate "Raffle" %} · {{ contest.name }}</p>
+    <h1 class="mt-1 text-2xl font-bold text-ink">{% translate "Prizes" %}</h1>
+    <p class="mt-1 text-sm text-faint">{% translate "The prize table for this contest, ranked from first prize down. Estimated value is for planning only — no ISK moves in the app; prizes are recorded and delivered by hand." %}</p>
   </div>
-  <a href="{% url 'admin_audit:raffle_detail' contest.pk %}" class="btn-ghost text-sm">← Back to contest</a>
+  <a href="{% url 'admin_audit:raffle_detail' contest.pk %}" class="btn-ghost text-sm">← {% translate "Back to contest" %}</a>
 </header>
 
 {% if not contest.is_editable %}
-<div class="panel mb-4 border-loss/40 bg-loss/10 px-4 py-2 text-sm text-loss">This contest is no longer a draft — editing prizes now changes a live or closed contest. Take care.</div>
+<div class="panel mb-4 border-loss/40 bg-loss/10 px-4 py-2 text-sm text-loss">{% translate "This contest is no longer a draft — editing prizes now changes a live or closed contest. Take care." %}</div>
 {% endif %}
 
 {% comment %}Existing prizes — each row shows its summary plus an Alpine collapsible
 edit form that posts the same field names back to raffle_prize_update. A separate
 delete form (data-confirm) removes the prize.{% endcomment %}
 <section class="panel overflow-hidden">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Prize table</h2></div>
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "Prize table" %}</h2></div>
   <div class="divide-y divide-line/40">
     {% for prize in prizes %}
       <div class="px-4 py-3" x-data="{ open: false }">
@@ -31,41 +34,41 @@ delete form (data-confirm) removes the prize.{% endcomment %}
             <p class="text-xs text-faint">{{ prize.get_prize_type_display }}{% if prize.quantity > 1 %} · ×{{ prize.quantity }}{% endif %}</p>
           </div>
           <span class="data text-sm text-cyan">{{ prize.estimated_value|isk }}</span>
-          <button type="button" class="btn-ghost !py-1 !text-xs" @click="open = !open" x-text="open ? 'Close' : 'Edit'">Edit</button>
-          <form method="post" action="{% url 'admin_audit:raffle_prize_delete' contest.pk prize.pk %}" data-confirm="Remove prize “{{ prize.name }}” (rank {{ prize.rank }})? This can't be undone.">{% csrf_token %}<button class="text-faint hover:text-loss" title="Delete prize">✕</button></form>
+          <button type="button" class="btn-ghost !py-1 !text-xs" @click="open = !open" x-text="open ? '{{ l_close|escapejs }}' : '{{ l_edit|escapejs }}'">{% translate "Edit" %}</button>
+          <form method="post" action="{% url 'admin_audit:raffle_prize_delete' contest.pk prize.pk %}" data-confirm="{% blocktranslate with name=prize.name rank=prize.rank %}Remove prize “{{ name }}” (rank {{ rank }})? This can't be undone.{% endblocktranslate %}">{% csrf_token %}<button class="text-faint hover:text-loss" title="{% translate 'Delete prize' %}">✕</button></form>
         </div>
 
         <form method="post" action="{% url 'admin_audit:raffle_prize_update' contest.pk prize.pk %}" x-show="open" x-cloak class="mt-3 space-y-3 border-t border-line/40 pt-3">
           {% csrf_token %}
           <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <div><label class="label">Rank</label><input name="rank" type="number" min="1" value="{{ prize.rank }}" class="input-field"></div>
-            <div class="sm:col-span-2 lg:col-span-3"><label class="label">Name</label><input name="name" type="text" value="{{ prize.name }}" class="input-field"></div>
+            <div><label class="label">{% translate "Rank" %}</label><input name="rank" type="number" min="1" value="{{ prize.rank }}" class="input-field"></div>
+            <div class="sm:col-span-2 lg:col-span-3"><label class="label">{% translate "Name" %}</label><input name="name" type="text" value="{{ prize.name }}" class="input-field"></div>
             <div>
-              <label class="label">Type</label>
+              <label class="label">{% translate "Type" %}</label>
               <select name="prize_type" class="input-field">
                 <option value="isk" {% if prize.prize_type == 'isk' %}selected{% endif %}>ISK</option>
                 <option value="plex" {% if prize.prize_type == 'plex' %}selected{% endif %}>PLEX</option>
-                <option value="item" {% if prize.prize_type == 'item' %}selected{% endif %}>In-game item</option>
-                <option value="doctrine_ship" {% if prize.prize_type == 'doctrine_ship' %}selected{% endif %}>Doctrine ship</option>
-                <option value="capital" {% if prize.prize_type == 'capital' %}selected{% endif %}>Capital ship</option>
-                <option value="supercapital" {% if prize.prize_type == 'supercapital' %}selected{% endif %}>Supercapital ship</option>
-                <option value="custom" {% if prize.prize_type == 'custom' %}selected{% endif %}>Custom reward</option>
+                <option value="item" {% if prize.prize_type == 'item' %}selected{% endif %}>{% translate "In-game item" %}</option>
+                <option value="doctrine_ship" {% if prize.prize_type == 'doctrine_ship' %}selected{% endif %}>{% translate "Doctrine ship" %}</option>
+                <option value="capital" {% if prize.prize_type == 'capital' %}selected{% endif %}>{% translate "Capital ship" %}</option>
+                <option value="supercapital" {% if prize.prize_type == 'supercapital' %}selected{% endif %}>{% translate "Supercapital ship" %}</option>
+                <option value="custom" {% if prize.prize_type == 'custom' %}selected{% endif %}>{% translate "Custom reward" %}</option>
               </select>
             </div>
-            <div><label class="label">Icon type id</label><input name="icon_type_id" type="number" value="{{ prize.icon_type_id|default_if_none:'' }}" class="input-field"></div>
-            <div><label class="label">Quantity</label><input name="quantity" type="number" min="1" value="{{ prize.quantity }}" class="input-field"></div>
-            <div><label class="label">Estimated value (ISK)</label><input name="estimated_value" type="number" step="1" min="0" value="{{ prize.estimated_value }}" class="input-field"></div>
+            <div><label class="label">{% translate "Icon type id" %}</label><input name="icon_type_id" type="number" value="{{ prize.icon_type_id|default_if_none:'' }}" class="input-field"></div>
+            <div><label class="label">{% translate "Quantity" %}</label><input name="quantity" type="number" min="1" value="{{ prize.quantity }}" class="input-field"></div>
+            <div><label class="label">{% translate "Estimated value (ISK)" %}</label><input name="estimated_value" type="number" step="1" min="0" value="{{ prize.estimated_value }}" class="input-field"></div>
           </div>
           <div class="grid gap-3 sm:grid-cols-3">
-            <div><label class="label">Description</label><textarea name="description" rows="2" class="input-field">{{ prize.description }}</textarea></div>
-            <div><label class="label">Delivery instructions <span class="text-faint">(public)</span></label><textarea name="delivery_instructions" rows="2" class="input-field">{{ prize.delivery_instructions }}</textarea></div>
-            <div><label class="label">Internal notes <span class="text-faint">(leaders only)</span></label><textarea name="internal_notes" rows="2" class="input-field">{{ prize.internal_notes }}</textarea></div>
+            <div><label class="label">{% translate "Description" %}</label><textarea name="description" rows="2" class="input-field">{{ prize.description }}</textarea></div>
+            <div><label class="label">{% translate "Delivery instructions" %} <span class="text-faint">{% translate "(public)" %}</span></label><textarea name="delivery_instructions" rows="2" class="input-field">{{ prize.delivery_instructions }}</textarea></div>
+            <div><label class="label">{% translate "Internal notes" %} <span class="text-faint">{% translate "(leaders only)" %}</span></label><textarea name="internal_notes" rows="2" class="input-field">{{ prize.internal_notes }}</textarea></div>
           </div>
-          <div class="flex justify-end"><button class="btn-gold">Save changes</button></div>
+          <div class="flex justify-end"><button class="btn-gold">{% translate "Save changes" %}</button></div>
         </form>
       </div>
     {% empty %}
-      <p class="px-4 py-6 text-center text-sm text-faint">No prizes yet — add the first prize below.</p>
+      <p class="px-4 py-6 text-center text-sm text-faint">{% translate "No prizes yet — add the first prize below." %}</p>
     {% endfor %}
   </div>
 </section>
@@ -73,51 +76,51 @@ delete form (data-confirm) removes the prize.{% endcomment %}
 {% comment %}Add-prize form — bound RafflePrizeForm widgets carry the input-field
 class already, so render each field with its label.{% endcomment %}
 <section class="panel mt-6 overflow-hidden">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Add a prize</h2></div>
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "Add a prize" %}</h2></div>
   <form method="post" action="{% url 'admin_audit:raffle_prize_create' contest.pk %}" class="space-y-4 p-4">
     {% csrf_token %}
     <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       <div>
-        <label class="label">Rank</label>{{ form.rank }}
+        <label class="label">{% translate "Rank" %}</label>{{ form.rank }}
         {% if form.rank.errors %}<p class="mt-1 text-xs text-loss">{{ form.rank.errors|join:" " }}</p>{% endif %}
       </div>
       <div class="sm:col-span-2 lg:col-span-3">
-        <label class="label">Name</label>{{ form.name }}
+        <label class="label">{% translate "Name" %}</label>{{ form.name }}
         {% if form.name.errors %}<p class="mt-1 text-xs text-loss">{{ form.name.errors|join:" " }}</p>{% endif %}
       </div>
       <div>
-        <label class="label">Type</label>{{ form.prize_type }}
+        <label class="label">{% translate "Type" %}</label>{{ form.prize_type }}
         {% if form.prize_type.errors %}<p class="mt-1 text-xs text-loss">{{ form.prize_type.errors|join:" " }}</p>{% endif %}
       </div>
       <div>
-        <label class="label">Icon type id</label>{{ form.icon_type_id }}
-        <p class="mt-1 text-[11px] text-faint">EVE type id for the ship/item icon.</p>
+        <label class="label">{% translate "Icon type id" %}</label>{{ form.icon_type_id }}
+        <p class="mt-1 text-[11px] text-faint">{% translate "EVE type id for the ship/item icon." %}</p>
         {% if form.icon_type_id.errors %}<p class="mt-1 text-xs text-loss">{{ form.icon_type_id.errors|join:" " }}</p>{% endif %}
       </div>
       <div>
-        <label class="label">Quantity</label>{{ form.quantity }}
+        <label class="label">{% translate "Quantity" %}</label>{{ form.quantity }}
         {% if form.quantity.errors %}<p class="mt-1 text-xs text-loss">{{ form.quantity.errors|join:" " }}</p>{% endif %}
       </div>
       <div>
-        <label class="label">Estimated value (ISK)</label>{{ form.estimated_value }}
+        <label class="label">{% translate "Estimated value (ISK)" %}</label>{{ form.estimated_value }}
         {% if form.estimated_value.errors %}<p class="mt-1 text-xs text-loss">{{ form.estimated_value.errors|join:" " }}</p>{% endif %}
       </div>
     </div>
     <div class="grid gap-3 sm:grid-cols-3">
       <div>
-        <label class="label">Description</label>{{ form.description }}
+        <label class="label">{% translate "Description" %}</label>{{ form.description }}
         {% if form.description.errors %}<p class="mt-1 text-xs text-loss">{{ form.description.errors|join:" " }}</p>{% endif %}
       </div>
       <div>
-        <label class="label">Delivery instructions <span class="text-faint">(public)</span></label>{{ form.delivery_instructions }}
+        <label class="label">{% translate "Delivery instructions" %} <span class="text-faint">{% translate "(public)" %}</span></label>{{ form.delivery_instructions }}
         {% if form.delivery_instructions.errors %}<p class="mt-1 text-xs text-loss">{{ form.delivery_instructions.errors|join:" " }}</p>{% endif %}
       </div>
       <div>
-        <label class="label">Internal notes <span class="text-faint">(leaders only)</span></label>{{ form.internal_notes }}
+        <label class="label">{% translate "Internal notes" %} <span class="text-faint">{% translate "(leaders only)" %}</span></label>{{ form.internal_notes }}
         {% if form.internal_notes.errors %}<p class="mt-1 text-xs text-loss">{{ form.internal_notes.errors|join:" " }}</p>{% endif %}
       </div>
     </div>
-    <div class="flex justify-end"><button class="btn-gold">Add prize</button></div>
+    <div class="flex justify-end"><button class="btn-gold">{% translate "Add prize" %}</button></div>
   </form>
 </section>
 {% endblock %}

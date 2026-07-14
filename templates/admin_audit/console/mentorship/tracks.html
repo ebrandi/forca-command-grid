@@ -1,12 +1,13 @@
 {% extends "base.html" %}
 {% load static eve %}
-{% block title %}Tracks & field exercises · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Tracks & field exercises" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
-<a href="{% url 'admin_audit:mentorship_hub' %}" class="text-xs text-faint hover:text-gold">&larr; Mentorship</a>
+<a href="{% url 'admin_audit:mentorship_hub' %}" class="text-xs text-faint hover:text-gold">&larr; {% translate "Mentorship" %}</a>
 <header class="mt-2 mb-6">
-  <p class="eyebrow text-gold">Mentorship</p>
-  <h1 class="mt-1 text-3xl font-bold text-ink">Tracks &amp; field exercises</h1>
-  <p class="mt-1 max-w-2xl text-sm text-faint">Build the learning tracks your cadets fly through. Each track is a themed set of field exercises — open <span class="text-cyan">Build</span> to add and order the exercises inside it.</p>
+  <p class="eyebrow text-gold">{% translate "Mentorship" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Tracks &amp; field exercises" %}</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">{% blocktranslate %}Build the learning tracks your cadets fly through. Each track is a themed set of field exercises — open <span class="text-cyan">Build</span> to add and order the exercises inside it.{% endblocktranslate %}</p>
 </header>
 
 {% comment %}Existing tracks — one panel row each with an inline Edit disclosure so the
@@ -21,88 +22,88 @@ bound to each row is not passed in the context.{% endcomment %}
         <div class="flex flex-wrap items-center gap-2">
           <h2 class="font-display text-lg font-semibold text-ink">{{ track.title }}</h2>
           <span class="chip text-cyan">{{ track.get_category_display }}</span>
-          {% if track.is_core %}<span class="chip text-gold">Core path</span>{% endif %}
-          {% if track.active %}<span class="chip text-kill">Active</span>{% else %}<span class="chip text-muted">Inactive</span>{% endif %}
+          {% if track.is_core %}<span class="chip text-gold">{% translate "Core path" %}</span>{% endif %}
+          {% if track.active %}<span class="chip text-kill">{% translate "Active" %}</span>{% else %}<span class="chip text-muted">{% translate "Inactive" %}</span>{% endif %}
         </div>
         <p class="mt-1 text-xs text-faint">
-          <span class="data">{{ track.tasks.all|length }}</span> exercise{{ track.tasks.all|length|pluralize }}
-          · key <span class="data">{{ track.key }}</span>
-          · <span class="data">{{ track.estimated_sessions }}</span> session{{ track.estimated_sessions|pluralize }}
+          <span class="data">{{ track.tasks.all|length }}</span> {% blocktranslate count exercises=track.tasks.all|length %}exercise{% plural %}exercises{% endblocktranslate %}
+          · {% translate "key" %} <span class="data">{{ track.key }}</span>
+          · <span class="data">{{ track.estimated_sessions }}</span> {% blocktranslate count sessions=track.estimated_sessions %}session{% plural %}sessions{% endblocktranslate %}
         </p>
       </div>
       <div class="flex shrink-0 flex-wrap items-center gap-2">
-        <a href="{% url 'admin_audit:mentorship_track_builder' track.id %}" class="btn-cyan !px-3 !py-1.5 text-xs">Build</a>
+        <a href="{% url 'admin_audit:mentorship_track_builder' track.id %}" class="btn-cyan !px-3 !py-1.5 text-xs">{% translate "Build" %}</a>
         <form method="post" action="{% url 'admin_audit:mentorship_track_clone' track.id %}">
           {% csrf_token %}
-          <button class="btn-ghost !px-3 !py-1.5 text-xs">Clone</button>
+          <button class="btn-ghost !px-3 !py-1.5 text-xs">{% translate "Clone" %}</button>
         </form>
         <form method="post" action="{% url 'admin_audit:mentorship_track_delete' track.id %}"
-              data-confirm="Delete the track “{{ track.title }}” and all its field exercises? This cannot be undone.">
+              data-confirm="{% blocktranslate with title=track.title %}Delete the track “{{ title }}” and all its field exercises? This cannot be undone.{% endblocktranslate %}">
           {% csrf_token %}
-          <button class="btn-danger !px-3 !py-1.5 text-xs">Delete</button>
+          <button class="btn-danger !px-3 !py-1.5 text-xs">{% translate "Delete" %}</button>
         </form>
       </div>
     </div>
 
     <details class="mt-4 border-t border-line/40 pt-3">
-      <summary class="cursor-pointer text-xs font-medium text-faint hover:text-gold">Edit track details</summary>
+      <summary class="cursor-pointer text-xs font-medium text-faint hover:text-gold">{% translate "Edit track details" %}</summary>
       <form method="post" action="{% url 'admin_audit:mentorship_track_update' track.id %}" class="mt-3 grid gap-4 sm:grid-cols-2">
         {% csrf_token %}
         <div>
-          <label class="label">Key</label>
+          <label class="label">{% translate "Key" %}</label>
           <input name="key" value="{{ track.key }}" class="input-field w-full" required>
         </div>
         <div>
-          <label class="label">Title</label>
+          <label class="label">{% translate "Title" %}</label>
           <input name="title" value="{{ track.title }}" class="input-field w-full" required>
         </div>
         <div class="sm:col-span-2">
-          <label class="label">Summary</label>
+          <label class="label">{% translate "Summary" %}</label>
           <input name="summary" value="{{ track.summary }}" class="input-field w-full" maxlength="240">
         </div>
         <div class="sm:col-span-2">
-          <label class="label">Description</label>
+          <label class="label">{% translate "Description" %}</label>
           <textarea name="description" rows="3" class="input-field w-full">{{ track.description }}</textarea>
         </div>
         <div>
-          <label class="label">Category</label>
+          <label class="label">{% translate "Category" %}</label>
           {% comment %}MentorshipTrack.Category choices, inlined (no bound form per row).{% endcomment %}
           <select name="category" class="input-field w-full">
-            <option value="welcome"{% if track.category == "welcome" %} selected{% endif %}>Welcome to the corporation</option>
-            <option value="client"{% if track.category == "client" %} selected{% endif %}>EVE client &amp; overview</option>
-            <option value="travel"{% if track.category == "travel" %} selected{% endif %}>Travel, safety &amp; survival</option>
-            <option value="fitting"{% if track.category == "fitting" %} selected{% endif %}>Fitting &amp; doctrine basics</option>
-            <option value="ratting"{% if track.category == "ratting" %} selected{% endif %}>Ratting</option>
-            <option value="mining"{% if track.category == "mining" %} selected{% endif %}>Mining</option>
-            <option value="exploration"{% if track.category == "exploration" %} selected{% endif %}>Exploration</option>
-            <option value="pvp"{% if track.category == "pvp" %} selected{% endif %}>PvP basics</option>
-            <option value="fleet"{% if track.category == "fleet" %} selected{% endif %}>Fleet operations</option>
-            <option value="logistics"{% if track.category == "logistics" %} selected{% endif %}>Logistics &amp; buyback services</option>
-            <option value="industry"{% if track.category == "industry" %} selected{% endif %}>Manufacturing &amp; industry</option>
-            <option value="skills"{% if track.category == "skills" %} selected{% endif %}>Skill planning</option>
-            <option value="other"{% if track.category == "other" %} selected{% endif %}>Other</option>
+            <option value="welcome"{% if track.category == "welcome" %} selected{% endif %}>{% translate "Welcome to the corporation" %}</option>
+            <option value="client"{% if track.category == "client" %} selected{% endif %}>{% translate "EVE client &amp; overview" %}</option>
+            <option value="travel"{% if track.category == "travel" %} selected{% endif %}>{% translate "Travel, safety &amp; survival" %}</option>
+            <option value="fitting"{% if track.category == "fitting" %} selected{% endif %}>{% translate "Fitting &amp; doctrine basics" %}</option>
+            <option value="ratting"{% if track.category == "ratting" %} selected{% endif %}>{% translate "Ratting" %}</option>
+            <option value="mining"{% if track.category == "mining" %} selected{% endif %}>{% translate "Mining" %}</option>
+            <option value="exploration"{% if track.category == "exploration" %} selected{% endif %}>{% translate "Exploration" %}</option>
+            <option value="pvp"{% if track.category == "pvp" %} selected{% endif %}>{% translate "PvP basics" %}</option>
+            <option value="fleet"{% if track.category == "fleet" %} selected{% endif %}>{% translate "Fleet operations" %}</option>
+            <option value="logistics"{% if track.category == "logistics" %} selected{% endif %}>{% translate "Logistics &amp; buyback services" %}</option>
+            <option value="industry"{% if track.category == "industry" %} selected{% endif %}>{% translate "Manufacturing &amp; industry" %}</option>
+            <option value="skills"{% if track.category == "skills" %} selected{% endif %}>{% translate "Skill planning" %}</option>
+            <option value="other"{% if track.category == "other" %} selected{% endif %}>{% translate "Other" %}</option>
           </select>
         </div>
         <div>
-          <label class="label">Icon (sprite id)</label>
+          <label class="label">{% translate "Icon (sprite id)" %}</label>
           <input name="icon" value="{{ track.icon }}" class="input-field w-full" placeholder="i-rookie">
         </div>
         <div>
-          <label class="label">Estimated sessions</label>
+          <label class="label">{% translate "Estimated sessions" %}</label>
           <input type="number" min="0" name="estimated_sessions" value="{{ track.estimated_sessions }}" class="input-field w-full font-mono">
         </div>
         <div>
-          <label class="label">Sort order</label>
+          <label class="label">{% translate "Sort order" %}</label>
           <input type="number" name="sort_order" value="{{ track.sort_order }}" class="input-field w-full font-mono">
         </div>
         <label class="flex items-center gap-2 text-sm text-muted">
-          <input type="checkbox" name="is_core" value="1"{% if track.is_core %} checked{% endif %}> Part of the core cadet path
+          <input type="checkbox" name="is_core" value="1"{% if track.is_core %} checked{% endif %}> {% translate "Part of the core cadet path" %}
         </label>
         <label class="flex items-center gap-2 text-sm text-muted">
-          <input type="checkbox" name="active" value="1"{% if track.active %} checked{% endif %}> Active
+          <input type="checkbox" name="active" value="1"{% if track.active %} checked{% endif %}> {% translate "Active" %}
         </label>
         <div class="sm:col-span-2 flex justify-end">
-          <button class="btn-gold !px-4 !py-1.5 text-sm">Save track</button>
+          <button class="btn-gold !px-4 !py-1.5 text-sm">{% translate "Save track" %}</button>
         </div>
       </form>
     </details>
@@ -110,20 +111,20 @@ bound to each row is not passed in the context.{% endcomment %}
   {% empty %}
   <div class="panel p-8 text-center">
     <svg class="mx-auto h-8 w-8 text-faint"><use href="#i-map"/></svg>
-    <p class="mt-3 text-sm text-faint">No tracks yet. Chart the first leg of the cadet's journey below — a track is a themed set of field exercises.</p>
+    <p class="mt-3 text-sm text-faint">{% translate "No tracks yet. Chart the first leg of the cadet's journey below — a track is a themed set of field exercises." %}</p>
   </div>
   {% endfor %}
 </section>
 
 <!-- New track -->
 <section class="panel mt-6 p-5">
-  <h2 class="eyebrow mb-3 text-gold">New track</h2>
-  <p class="mb-4 text-xs text-faint">Give it a title and category to start; you can add field exercises from the track's <span class="text-cyan">Build</span> screen.</p>
+  <h2 class="eyebrow mb-3 text-gold">{% translate "New track" %}</h2>
+  <p class="mb-4 text-xs text-faint">{% blocktranslate %}Give it a title and category to start; you can add field exercises from the track's <span class="text-cyan">Build</span> screen.{% endblocktranslate %}</p>
   <form method="post" action="{% url 'admin_audit:mentorship_track_create' %}" class="space-y-4">
     {% csrf_token %}
     {{ track_form.as_p }}
     <div class="flex justify-end">
-      <button class="btn-gold">Create track</button>
+      <button class="btn-gold">{% translate "Create track" %}</button>
     </div>
   </form>
 </section>

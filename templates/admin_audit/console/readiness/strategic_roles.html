@@ -1,59 +1,60 @@
 {% extends "base.html" %}
-{% block title %}Readiness · Strategic roles · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Readiness" %} · {% translate "Strategic roles" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
-<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← {% translate "Admin console" %}</a>
 <header class="mt-2 mb-6">
-  <p class="eyebrow">Readiness configuration</p>
-  <h1 class="mt-1 text-3xl font-bold text-ink">Strategic roles</h1>
-  <p class="mt-1 max-w-2xl text-sm text-faint">Desired headcount per strategic role. The <span class="text-cyan">Fleet Composition</span>, <span class="text-cyan">Strategic Assets</span> and <span class="text-cyan">Leadership</span> dimensions score qualified pilots against these targets. For <span class="text-ink">By skills</span> detection, set params like <code class="text-faint">{"skills": {"3300": 5}}</code> (skill type id → level); <span class="text-ink">manual</span>/<span class="text-ink">asset</span> targets are tracked but not auto-counted yet.</p>
+  <p class="eyebrow">{% translate "Readiness configuration" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Strategic roles" %}</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">{% blocktranslate %}Desired headcount per strategic role. The <span class="text-cyan">Fleet Composition</span>, <span class="text-cyan">Strategic Assets</span> and <span class="text-cyan">Leadership</span> dimensions score qualified pilots against these targets. For <span class="text-ink">By skills</span> detection, set params like <code class="text-faint">{"skills": {"3300": 5}}</code> (skill type id → level); <span class="text-ink">manual</span>/<span class="text-ink">asset</span> targets are tracked but not auto-counted yet.{% endblocktranslate %}</p>
 </header>
 
 
 <section class="panel mb-6 overflow-hidden">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Role targets</h2></div>
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "Role targets" %}</h2></div>
   {% if not roles %}
-    <p class="px-4 py-8 text-center text-sm text-faint">No role targets yet. Add one below to start scoring fleet composition and leadership depth.</p>
+    <p class="px-4 py-8 text-center text-sm text-faint">{% translate "No role targets yet. Add one below to start scoring fleet composition and leadership depth." %}</p>
   {% else %}
   <div class="divide-y divide-line/50">
     {% for r in roles %}
     <form method="post" action="{% url 'admin_audit:readiness_strategic_role_update' r.id %}" class="grid grid-cols-2 items-end gap-3 px-4 py-3 sm:grid-cols-7">
       {% csrf_token %}
-      <div class="text-xs text-faint">Role<p class="mt-1 font-mono text-sm text-ink">{{ r.role_key }}</p></div>
-      <label class="text-xs text-faint">Label<input name="label" value="{{ r.label }}" class="input-field mt-1 w-full"></label>
-      <label class="text-xs text-faint">Desired<input name="desired_count" type="number" min="0" value="{{ r.desired_count }}" class="input-field mt-1 w-full"></label>
-      <label class="text-xs text-faint">Detection
+      <div class="text-xs text-faint">{% translate "Role" %}<p class="mt-1 font-mono text-sm text-ink">{{ r.role_key }}</p></div>
+      <label class="text-xs text-faint">{% translate "Label" %}<input name="label" value="{{ r.label }}" class="input-field mt-1 w-full"></label>
+      <label class="text-xs text-faint">{% translate "Desired" %}<input name="desired_count" type="number" min="0" value="{{ r.desired_count }}" class="input-field mt-1 w-full"></label>
+      <label class="text-xs text-faint">{% translate "Detection" %}
         <select name="detection" class="input-field mt-1 w-full">{% for v,l in detections %}<option value="{{ v }}" {% if r.detection == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
       </label>
-      <label class="col-span-2 text-xs text-faint">Params (JSON)<input name="detection_params" value="{{ r.params_json }}" class="input-field mt-1 w-full font-mono text-xs"></label>
+      <label class="col-span-2 text-xs text-faint">{% translate "Params (JSON)" %}<input name="detection_params" value="{{ r.params_json }}" class="input-field mt-1 w-full font-mono text-xs"></label>
       <div class="flex items-center gap-2">
-        <label class="flex items-center gap-1 text-xs text-faint"><input type="checkbox" name="active" {% if r.active %}checked{% endif %}> on</label>
-        <button class="btn-ghost !py-1 text-xs">Save</button>
+        <label class="flex items-center gap-1 text-xs text-faint"><input type="checkbox" name="active" {% if r.active %}checked{% endif %}> {% translate "on" %}</label>
+        <button class="btn-ghost !py-1 text-xs">{% translate "Save" %}</button>
       </div>
     </form>
-    <form method="post" action="{% url 'admin_audit:readiness_strategic_role_delete' r.id %}" class="px-4 pb-2 -mt-2">{% csrf_token %}<button class="text-[11px] text-faint hover:text-loss">Remove</button></form>
+    <form method="post" action="{% url 'admin_audit:readiness_strategic_role_delete' r.id %}" class="px-4 pb-2 -mt-2">{% csrf_token %}<button class="text-[11px] text-faint hover:text-loss">{% translate "Remove" %}</button></form>
     {% endfor %}
   </div>
   {% endif %}
 </section>
 
 <section class="panel overflow-hidden">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">Add a role target</h2></div>
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">{% translate "Add a role target" %}</h2></div>
   {% if available_keys %}
   <form method="post" action="{% url 'admin_audit:readiness_strategic_role_create' %}" class="grid grid-cols-2 items-end gap-3 p-4 sm:grid-cols-7">
     {% csrf_token %}
-    <label class="text-xs text-faint">Role
+    <label class="text-xs text-faint">{% translate "Role" %}
       <select name="role_key" class="input-field mt-1 w-full">{% for k in available_keys %}<option value="{{ k }}">{{ k }}</option>{% endfor %}</select>
     </label>
-    <label class="text-xs text-faint">Label<input name="label" placeholder="Logistics" class="input-field mt-1 w-full"></label>
-    <label class="text-xs text-faint">Desired<input name="desired_count" type="number" min="0" value="0" class="input-field mt-1 w-full"></label>
-    <label class="text-xs text-faint">Detection
+    <label class="text-xs text-faint">{% translate "Label" %}<input name="label" placeholder="{% translate 'Logistics' %}" class="input-field mt-1 w-full"></label>
+    <label class="text-xs text-faint">{% translate "Desired" %}<input name="desired_count" type="number" min="0" value="0" class="input-field mt-1 w-full"></label>
+    <label class="text-xs text-faint">{% translate "Detection" %}
       <select name="detection" class="input-field mt-1 w-full">{% for v,l in detections %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select>
     </label>
-    <label class="col-span-2 text-xs text-faint">Params (JSON)<input name="detection_params" placeholder='{"skills": {"3300": 5}}' class="input-field mt-1 w-full font-mono text-xs"></label>
-    <button class="btn-gold !py-1 text-sm">Add role</button>
+    <label class="col-span-2 text-xs text-faint">{% translate "Params (JSON)" %}<input name="detection_params" placeholder='{"skills": {"3300": 5}}' class="input-field mt-1 w-full font-mono text-xs"></label>
+    <button class="btn-gold !py-1 text-sm">{% translate "Add role" %}</button>
   </form>
   {% else %}
-  <p class="px-4 py-6 text-center text-sm text-faint">Every role in the catalogue already has a target — edit the rows above.</p>
+  <p class="px-4 py-6 text-center text-sm text-faint">{% translate "Every role in the catalogue already has a target — edit the rows above." %}</p>
   {% endif %}
 </section>
 {% endblock %}

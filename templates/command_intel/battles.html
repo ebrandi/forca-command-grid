@@ -22,7 +22,7 @@ Intelligence). Officer-gated; open one to generate/read its AAR.{% endcomment %}
     {% for row in rows %}
     <a href="{% url 'command_intel:battle_detail' row.battle.pk %}" class="flex items-center justify-between gap-3 px-4 py-3 hover:bg-panel2/40">
       <span class="min-w-0">
-        <span class="block truncate text-sm text-ink">{{ row.battle.title|default:"Battle" }}</span>
+        <span class="block truncate text-sm text-ink">{% translate "Battle" as default_title %}{{ row.battle.title|default:default_title }}</span>
         <span class="block text-[11px] text-faint">{{ row.battle.start_time|date:"d M Y H:i" }}</span>
       </span>
       <span class="shrink-0 text-xs">

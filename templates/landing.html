@@ -67,7 +67,7 @@
   <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
     {% for p in kb_public_pages %}
     <a href="{% url 'kb:detail' p.slug %}" class="panel group p-4 transition hover:border-gold/40">
-      <p class="eyebrow text-faint">{{ p.category|default:"General" }}</p>
+      <p class="eyebrow text-faint">{% translate "General" as default_category %}{{ p.category|default:default_category }}</p>
       <h3 class="mt-1 font-semibold text-ink group-hover:text-gold">{{ p.title }}</h3>
     </a>
     {% endfor %}

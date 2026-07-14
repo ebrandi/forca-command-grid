@@ -1,32 +1,33 @@
 {% extends "base.html" %}
 {% load eve %}
-{% block title %}Import fits · Admin{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Import fits · Admin" %}{% endblock %}
 {% block content %}
-<a href="{% url 'admin_audit:doctrines' %}" class="text-xs text-faint hover:text-gold">← Manage doctrines</a>
+<a href="{% url 'admin_audit:doctrines' %}" class="text-xs text-faint hover:text-gold">← {% translate "Manage doctrines" %}</a>
 <header class="mt-3 mb-6">
-  <p class="eyebrow">Operations</p>
-  <h1 class="mt-1 text-2xl font-bold text-ink">Import saved fits</h1>
-  <p class="mt-1 max-w-2xl text-sm text-faint">Tick the fits you want — each becomes its own doctrine under the <span class="chip">IMPORTED</span> category. Renaming is optional (blank keeps the saved name); you can edit the name, category and description, or remove a doctrine, afterwards. (EVE only exposes <em>personal</em> fits over ESI, so these come from your own saved fittings.)</p>
+  <p class="eyebrow">{% translate "Operations" %}</p>
+  <h1 class="mt-1 text-2xl font-bold text-ink">{% translate "Import saved fits" %}</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">{% blocktranslate %}Tick the fits you want — each becomes its own doctrine under the <span class="chip">IMPORTED</span> category. Renaming is optional (blank keeps the saved name); you can edit the name, category and description, or remove a doctrine, afterwards. (EVE only exposes <em>personal</em> fits over ESI, so these come from your own saved fittings.){% endblocktranslate %}</p>
 </header>
 
 
 {% if not has_scope %}
   <div class="panel p-6 text-center">
-    <p class="text-sm text-muted">To read your saved fits, grant the fittings scope on one of your characters.</p>
-    <a href="{% url 'sso:login' %}?feature=fittings" class="btn-gold mt-3 inline-flex">Grant fittings access</a>
-    <p class="mt-2 text-[11px] text-faint">You can also manage it on the <a href="{% url 'sso:scopes' %}" class="text-cyan hover:underline">ESI Scopes</a> page.</p>
+    <p class="text-sm text-muted">{% translate "To read your saved fits, grant the fittings scope on one of your characters." %}</p>
+    <a href="{% url 'sso:login' %}?feature=fittings" class="btn-gold mt-3 inline-flex">{% translate "Grant fittings access" %}</a>
+    <p class="mt-2 text-[11px] text-faint">{% url 'sso:scopes' as scopes_url %}{% blocktranslate with url=scopes_url %}You can also manage it on the <a href="{{ url }}" class="text-cyan hover:underline">ESI Scopes</a> page.{% endblocktranslate %}</p>
   </div>
 {% elif not fits %}
-  <div class="panel p-8 text-center text-sm text-faint">No saved fittings found on your characters. Save a fit in the EVE client (or a fitting tool), then refresh.</div>
+  <div class="panel p-8 text-center text-sm text-faint">{% translate "No saved fittings found on your characters. Save a fit in the EVE client (or a fitting tool), then refresh." %}</div>
 {% else %}
   <form method="post" action="{% url 'admin_audit:import_fits_apply' %}">
     {% csrf_token %}
     <section class="panel overflow-hidden">
       <div class="flex items-center justify-between border-b border-line px-4 py-3">
-        <h2 class="eyebrow text-gold">Your saved fits ({{ fits|length }})</h2>
+        <h2 class="eyebrow text-gold">{% blocktranslate with total=fits|length %}Your saved fits ({{ total }}){% endblocktranslate %}</h2>
         <label class="flex items-center gap-2 text-xs text-muted">
           <input type="checkbox" class="h-4 w-4" @change="document.querySelectorAll('input[name=select]').forEach(c => c.checked = $event.target.checked)">
-          Select all
+          {% translate "Select all" %}
         </label>
       </div>
       <div class="divide-y divide-line/40">
@@ -36,14 +37,14 @@
             <img src="{% eve_type_render f.ship_type_id 64 %}" alt="" loading="lazy" class="h-9 w-9 rounded-md bg-space object-cover ring-1 ring-line shrink-0">
             <div class="min-w-0 flex-1">
               <label for="fit{{ forloop.counter }}" class="block cursor-pointer truncate text-sm font-medium text-ink">{{ f.name }}</label>
-              <p class="text-xs text-faint">{{ f.ship_name }} · {{ f.item_count }} item{{ f.item_count|pluralize }} · from {{ f.character_name }}</p>
+              <p class="text-xs text-faint">{% blocktranslate with ship=f.ship_name items=f.item_count items_s=f.item_count|pluralize pilot=f.character_name %}{{ ship }} · {{ items }} item{{ items_s }} · from {{ pilot }}{% endblocktranslate %}</p>
             </div>
-            <input name="name:{{ f.character_id }}:{{ f.fitting_id }}" placeholder="Rename (optional)" class="input-field !py-1 !text-xs w-44 shrink-0">
+            <input name="name:{{ f.character_id }}:{{ f.fitting_id }}" placeholder="{% translate 'Rename (optional)' %}" class="input-field !py-1 !text-xs w-44 shrink-0">
           </div>
         {% endfor %}
       </div>
       <div class="border-t border-line px-4 py-3 text-right">
-        <button class="btn-gold">Import selected fits</button>
+        <button class="btn-gold">{% translate "Import selected fits" %}</button>
       </div>
     </section>
   </form>

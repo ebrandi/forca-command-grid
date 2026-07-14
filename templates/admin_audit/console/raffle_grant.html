@@ -1,91 +1,92 @@
 {% extends "base.html" %}
 {% load eve %}
-{% block title %}Manual grant · {{ contest.name }} · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% blocktranslate with name=contest.name %}Manual grant · {{ name }} · [FORCA] Command Grid{% endblocktranslate %}{% endblock %}
 {% block content %}
 <header class="mb-6 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <p class="eyebrow text-gold">Raffle · {{ contest.name }}</p>
-    <h1 class="mt-1 text-2xl font-bold text-ink">Manual grant desk</h1>
-    <p class="mt-1 max-w-2xl text-sm text-faint">Reward a pilot with tickets for something the automatic sources can't see — scouting, logi, FC duty. Every grant is audited and appended to the ledger.</p>
+    <p class="eyebrow text-gold">{% blocktranslate with name=contest.name %}Raffle · {{ name }}{% endblocktranslate %}</p>
+    <h1 class="mt-1 text-2xl font-bold text-ink">{% translate "Manual grant desk" %}</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Reward a pilot with tickets for something the automatic sources can't see — scouting, logi, FC duty. Every grant is audited and appended to the ledger." %}</p>
   </div>
-  <a href="{% url 'admin_audit:raffle_detail' contest.pk %}" class="btn-ghost text-sm">← Back to contest</a>
+  <a href="{% url 'admin_audit:raffle_detail' contest.pk %}" class="btn-ghost text-sm">{% translate "← Back to contest" %}</a>
 </header>
 
 <div class="panel mb-5 border-cyan/30 bg-cyan/5 px-4 py-3 text-sm text-muted">
-  Grants only land for <span class="text-ink">enrolled pilots with a valid ESI token</span>. If the character isn't enrolled the server rejects the grant — the pilot must connect their token first. The app never moves ISK; tickets are recorded, prizes delivered by hand.
+  {% blocktranslate %}Grants only land for <span class="text-ink">enrolled pilots with a valid ESI token</span>. If the character isn't enrolled the server rejects the grant — the pilot must connect their token first. The app never moves ISK; tickets are recorded, prizes delivered by hand.{% endblocktranslate %}
 </div>
 
 <div class="grid gap-6 lg:grid-cols-3">
   <section class="panel overflow-hidden lg:col-span-2">
-    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Grant tickets</h2></div>
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "Grant tickets" %}</h2></div>
     <form method="post" action="{% url 'admin_audit:raffle_grant' contest.pk %}" class="space-y-4 p-4">
       {% csrf_token %}
       {% if form.non_field_errors %}<div class="panel border-loss/40 bg-loss/10 px-3 py-2 text-sm text-loss">{{ form.non_field_errors }}</div>{% endif %}
       <div class="grid gap-4 sm:grid-cols-2">
         <div>
-          <label class="label">Character id</label>{{ form.character_id }}
-          <p class="mt-1 text-[11px] text-faint">The pilot's EVE character id (their main).</p>
+          <label class="label">{% translate "Character id" %}</label>{{ form.character_id }}
+          <p class="mt-1 text-[11px] text-faint">{% translate "The pilot's EVE character id (their main)." %}</p>
           {% if form.character_id.errors %}<p class="mt-1 text-xs text-loss">{{ form.character_id.errors|join:" " }}</p>{% endif %}
         </div>
         <div>
-          <label class="label">Amount (tickets)</label>{{ form.amount }}
+          <label class="label">{% translate "Amount (tickets)" %}</label>{{ form.amount }}
           {% if form.amount.errors %}<p class="mt-1 text-xs text-loss">{{ form.amount.errors|join:" " }}</p>{% endif %}
         </div>
       </div>
       <div>
-        <label class="label">Reason</label>{{ form.reason }}
-        <p class="mt-1 text-[11px] text-faint">Shown in the ledger — say what earned the tickets.</p>
+        <label class="label">{% translate "Reason" %}</label>{{ form.reason }}
+        <p class="mt-1 text-[11px] text-faint">{% translate "Shown in the ledger — say what earned the tickets." %}</p>
         {% if form.reason.errors %}<p class="mt-1 text-xs text-loss">{{ form.reason.errors|join:" " }}</p>{% endif %}
       </div>
       <div>
-        <label class="label">Category</label>{{ form.category }}
+        <label class="label">{% translate "Category" %}</label>{{ form.category }}
         {% if form.category.errors %}<p class="mt-1 text-xs text-loss">{{ form.category.errors|join:" " }}</p>{% endif %}
       </div>
       <div>
-        <label class="label">Internal notes <span class="text-faint">(leaders only)</span></label>{{ form.internal_notes }}
+        <label class="label">{% blocktranslate %}Internal notes <span class="text-faint">(leaders only)</span>{% endblocktranslate %}</label>{{ form.internal_notes }}
         {% if form.internal_notes.errors %}<p class="mt-1 text-xs text-loss">{{ form.internal_notes.errors|join:" " }}</p>{% endif %}
       </div>
 
       {% if override_enabled and is_director %}
       <div class="panel border-loss/40 bg-loss/10 p-3">
-        <label class="flex items-start gap-2 text-sm text-loss">{{ form.override }} <span><span class="font-semibold">Emergency override</span> — grant to a pilot who is not yet enrolled. Director-only, off by default, always audited. Use only when you truly must; the pilot still needs to enrol to win.</span></label>
+        <label class="flex items-start gap-2 text-sm text-loss">{{ form.override }} <span>{% blocktranslate %}<span class="font-semibold">Emergency override</span> — grant to a pilot who is not yet enrolled. Director-only, off by default, always audited. Use only when you truly must; the pilot still needs to enrol to win.{% endblocktranslate %}</span></label>
         {% if form.override.errors %}<p class="mt-1 text-xs text-loss">{{ form.override.errors|join:" " }}</p>{% endif %}
       </div>
       {% endif %}
 
-      <div class="flex justify-end"><button class="btn-gold">Grant tickets</button></div>
+      <div class="flex justify-end"><button class="btn-gold">{% translate "Grant tickets" %}</button></div>
     </form>
   </section>
 
   <section class="panel overflow-hidden">
-    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Example categories</h2></div>
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "Example categories" %}</h2></div>
     <div class="flex flex-wrap gap-2 p-4">
-      <span class="chip">Fleet command</span>
-      <span class="chip">Scouting</span>
-      <span class="chip">Logistics</span>
-      <span class="chip">Doctrine prep</span>
-      <span class="chip">Newbro help</span>
-      <span class="chip">SRP support</span>
-      <span class="chip">Market seeding</span>
-      <span class="chip">Hauling</span>
-      <span class="chip">Diplomacy</span>
-      <span class="chip">Emergency response</span>
+      <span class="chip">{% translate "Fleet command" %}</span>
+      <span class="chip">{% translate "Scouting" %}</span>
+      <span class="chip">{% translate "Logistics" %}</span>
+      <span class="chip">{% translate "Doctrine prep" %}</span>
+      <span class="chip">{% translate "Newbro help" %}</span>
+      <span class="chip">{% translate "SRP support" %}</span>
+      <span class="chip">{% translate "Market seeding" %}</span>
+      <span class="chip">{% translate "Hauling" %}</span>
+      <span class="chip">{% translate "Diplomacy" %}</span>
+      <span class="chip">{% translate "Emergency response" %}</span>
     </div>
-    <p class="border-t border-line/40 px-4 py-3 text-[11px] text-faint">Use a consistent category so the stats report can break grants down by the work they reward.</p>
+    <p class="border-t border-line/40 px-4 py-3 text-[11px] text-faint">{% translate "Use a consistent category so the stats report can break grants down by the work they reward." %}</p>
   </section>
 </div>
 
 <section class="panel mt-6 overflow-hidden">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Recent grants</h2></div>
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "Recent grants" %}</h2></div>
   <div class="overflow-x-auto">
     <table class="w-full min-w-[42rem] text-sm">
       <thead class="text-left text-[11px] uppercase tracking-wide text-faint">
         <tr class="border-b border-line/60">
-          <th class="px-4 py-2 font-medium">When</th>
-          <th class="px-4 py-2 font-medium">Pilot</th>
-          <th class="px-4 py-2 text-right font-medium">Tickets</th>
-          <th class="px-4 py-2 font-medium">Category</th>
-          <th class="px-4 py-2 font-medium">Granted by</th>
+          <th class="px-4 py-2 font-medium">{% translate "When" %}</th>
+          <th class="px-4 py-2 font-medium">{% translate "Pilot" %}</th>
+          <th class="px-4 py-2 text-right font-medium">{% translate "Tickets" %}</th>
+          <th class="px-4 py-2 font-medium">{% translate "Category" %}</th>
+          <th class="px-4 py-2 font-medium">{% translate "Granted by" %}</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-line/40">
@@ -94,14 +95,14 @@
             <td class="px-4 py-2 text-faint">{{ grant.created_at }}</td>
             <td class="px-4 py-2 text-ink">
               {{ grant.character_name|default:grant.character_id|default:"—" }}
-              {% if grant.override_used %}<span class="chip !border-loss/40 !text-loss ml-1">override</span>{% endif %}
+              {% if grant.override_used %}<span class="chip !border-loss/40 !text-loss ml-1">{% translate "override" %}</span>{% endif %}
             </td>
             <td class="px-4 py-2 text-right"><span class="data text-gold">{{ grant.amount }}</span></td>
             <td class="px-4 py-2 text-muted">{{ grant.category|default:"—" }}</td>
             <td class="px-4 py-2 text-faint">{% if grant.granted_by %}{{ grant.granted_by.display_name }}{% else %}—{% endif %}</td>
           </tr>
         {% empty %}
-          <tr><td colspan="5" class="px-4 py-6 text-center text-faint">No manual grants recorded yet.</td></tr>
+          <tr><td colspan="5" class="px-4 py-6 text-center text-faint">{% translate "No manual grants recorded yet." %}</td></tr>
         {% endfor %}
       </tbody>
     </table>

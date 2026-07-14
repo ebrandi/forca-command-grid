@@ -1,20 +1,21 @@
 {% extends "base.html" %}
-{% block title %}Command Intelligence · Scheduled reports &amp; delivery · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Command Intelligence · Scheduled reports &amp; delivery · [FORCA] Command Grid" %}{% endblock %}
 {% block content %}
-<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">{% translate "← Admin console" %}</a>
 <header class="mt-2 mb-6">
-  <p class="eyebrow">Command Intelligence configuration</p>
-  <h1 class="mt-1 text-3xl font-bold text-ink">Scheduled reports &amp; delivery</h1>
-  <p class="mt-1 max-w-2xl text-sm text-faint">The weekly briefing generates in the background; delivery is <span class="text-cyan">classification-aware</span> and ships <span class="text-gold">disarmed</span> — a director-eyes-only report can never be broadcast to a corp-wide Discord channel (the server refuses that pairing). Nothing leaves the server until you arm a channel and configure its target below.</p>
+  <p class="eyebrow">{% translate "Command Intelligence configuration" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Scheduled reports &amp; delivery" %}</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">{% blocktranslate %}The weekly briefing generates in the background; delivery is <span class="text-cyan">classification-aware</span> and ships <span class="text-gold">disarmed</span> — a director-eyes-only report can never be broadcast to a corp-wide Discord channel (the server refuses that pairing). Nothing leaves the server until you arm a channel and configure its target below.{% endblocktranslate %}</p>
 </header>
 
 <div class="panel mb-4 flex items-center gap-3 px-4 py-3">
   {% if enabled %}
   <span class="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400"></span>
-  <span class="text-sm text-ink">LLM enabled — scheduled briefings are narrated. (Without a key they still generate a deterministic report.)</span>
+  <span class="text-sm text-ink">{% translate "LLM enabled — scheduled briefings are narrated. (Without a key they still generate a deterministic report.)" %}</span>
   {% else %}
   <span class="inline-flex h-2.5 w-2.5 rounded-full bg-faint/60"></span>
-  <span class="text-sm text-ink">LLM disabled — scheduled briefings still generate the deterministic constraint picture.</span>
+  <span class="text-sm text-ink">{% translate "LLM disabled — scheduled briefings still generate the deterministic constraint picture." %}</span>
   {% endif %}
 </div>
 
@@ -22,18 +23,18 @@
   {% csrf_token %}
 
   <section class="panel mb-4 overflow-hidden">
-    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">Scheduled generation</h2></div>
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">{% translate "Scheduled generation" %}</h2></div>
     <label class="flex items-center justify-between gap-3 px-4 py-3 hover:bg-panel2/40">
       <span>
-        <span class="block text-sm font-medium text-ink">Generate a weekly briefing</span>
-        <span class="block text-[11px] text-faint">Monday 12:00 UTC. Deduped against a recent run so a retried beat never double-spends tokens.</span>
+        <span class="block text-sm font-medium text-ink">{% translate "Generate a weekly briefing" %}</span>
+        <span class="block text-[11px] text-faint">{% translate "Monday 12:00 UTC. Deduped against a recent run so a retried beat never double-spends tokens." %}</span>
       </span>
       <input type="checkbox" name="scheduled_enabled" {% if cfg.scheduled_enabled %}checked{% endif %} class="h-4 w-4">
     </label>
     <label class="grid grid-cols-1 items-center gap-2 border-t border-line/40 px-4 py-3 hover:bg-panel2/40 sm:grid-cols-[1fr_16rem]">
       <span>
-        <span class="block text-sm font-medium text-ink">Only announce when binding at/above</span>
-        <span class="block text-[11px] text-faint">Suppress delivery of a quiet report with no meaningful constraint.</span>
+        <span class="block text-sm font-medium text-ink">{% translate "Only announce when binding at/above" %}</span>
+        <span class="block text-[11px] text-faint">{% translate "Suppress delivery of a quiet report with no meaningful constraint." %}</span>
       </span>
       <select name="min_severity_to_deliver" class="input-field w-full">
         {% for s in severities %}<option value="{{ s }}" {% if cfg.min_severity_to_deliver == s %}selected{% endif %}>{{ s|capfirst }}</option>{% endfor %}
@@ -42,17 +43,17 @@
   </section>
 
   <section class="panel mb-4 overflow-hidden">
-    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">Discord (broadcast)</h2></div>
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">{% translate "Discord (broadcast)" %}</h2></div>
     <label class="flex items-center justify-between gap-3 px-4 py-3 hover:bg-panel2/40">
       <span>
-        <span class="block text-sm font-medium text-ink">Arm Discord delivery</span>
-        <span class="block text-[11px] text-faint">Posts a classification-safe summary to every active Discord webhook (configured under In-game Alerts).</span>
+        <span class="block text-sm font-medium text-ink">{% translate "Arm Discord delivery" %}</span>
+        <span class="block text-[11px] text-faint">{% translate "Posts a classification-safe summary to every active Discord webhook (configured under In-game Alerts)." %}</span>
       </span>
       <input type="checkbox" name="deliver_discord" {% if cfg.deliver_discord %}checked{% endif %} class="h-4 w-4">
     </label>
     <div class="border-t border-line/40 px-4 py-3">
-      <span class="block text-sm font-medium text-ink">Broadcast these classifications</span>
-      <span class="block text-[11px] text-faint">Only corp-shareable tiers can be broadcast; director/alliance tiers are never offered here.</span>
+      <span class="block text-sm font-medium text-ink">{% translate "Broadcast these classifications" %}</span>
+      <span class="block text-[11px] text-faint">{% translate "Only corp-shareable tiers can be broadcast; director/alliance tiers are never offered here." %}</span>
       <div class="mt-2 flex flex-wrap gap-4">
         {% for o in discord_options %}
         <label class="inline-flex items-center gap-2 text-sm text-muted"><input type="checkbox" name="discord_classifications" value="{{ o.value }}" {% if o.checked %}checked{% endif %} class="h-4 w-4">{{ o.label }}</label>
@@ -62,17 +63,17 @@
   </section>
 
   <section class="panel mb-4 overflow-hidden">
-    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">EVE-mail (targeted to leadership)</h2></div>
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">{% translate "EVE-mail (targeted to leadership)" %}</h2></div>
     <label class="flex items-center justify-between gap-3 px-4 py-3 hover:bg-panel2/40">
       <span>
-        <span class="block text-sm font-medium text-ink">Arm EVE-mail delivery</span>
-        <span class="block text-[11px] text-faint">Sends an in-game mail to the mains behind the owner tags below. Needs a sender character with the <code class="text-faint">esi-mail.send_mail.v1</code> scope.</span>
+        <span class="block text-sm font-medium text-ink">{% translate "Arm EVE-mail delivery" %}</span>
+        <span class="block text-[11px] text-faint">{% blocktranslate %}Sends an in-game mail to the mains behind the owner tags below. Needs a sender character with the <code class="text-faint">esi-mail.send_mail.v1</code> scope.{% endblocktranslate %}</span>
       </span>
       <input type="checkbox" name="deliver_evemail" {% if cfg.deliver_evemail %}checked{% endif %} class="h-4 w-4">
     </label>
     <div class="border-t border-line/40 px-4 py-3">
-      <span class="block text-sm font-medium text-ink">Mail these classifications</span>
-      <span class="block text-[11px] text-faint">Targeted mail may carry the sensitive tiers (it is not a broadcast).</span>
+      <span class="block text-sm font-medium text-ink">{% translate "Mail these classifications" %}</span>
+      <span class="block text-[11px] text-faint">{% translate "Targeted mail may carry the sensitive tiers (it is not a broadcast)." %}</span>
       <div class="mt-2 flex flex-wrap gap-4">
         {% for o in mail_options %}
         <label class="inline-flex items-center gap-2 text-sm text-muted"><input type="checkbox" name="evemail_classifications" value="{{ o.value }}" {% if o.checked %}checked{% endif %} class="h-4 w-4">{{ o.label }}</label>
@@ -81,28 +82,28 @@
     </div>
     <label class="grid grid-cols-1 items-center gap-2 border-t border-line/40 px-4 py-3 hover:bg-panel2/40 sm:grid-cols-[1fr_16rem]">
       <span>
-        <span class="block text-sm font-medium text-ink">Sender character id</span>
-        <span class="block text-[11px] text-faint">A corp character that granted the mail-send scope. Leave blank to disable.</span>
+        <span class="block text-sm font-medium text-ink">{% translate "Sender character id" %}</span>
+        <span class="block text-[11px] text-faint">{% translate "A corp character that granted the mail-send scope. Leave blank to disable." %}</span>
       </span>
       <input type="number" name="evemail_sender_character_id" value="{{ cfg.evemail_sender_character_id|default_if_none:'' }}" class="input-field w-full text-right font-mono" inputmode="numeric">
     </label>
     <label class="grid grid-cols-1 items-center gap-2 border-t border-line/40 px-4 py-3 hover:bg-panel2/40 sm:grid-cols-[1fr_16rem]">
       <span>
-        <span class="block text-sm font-medium text-ink">Recipient owner tags</span>
-        <span class="block text-[11px] text-faint">Space- or comma-separated (e.g. <code class="text-faint">strategic_director</code>). Their mains receive the mail.</span>
+        <span class="block text-sm font-medium text-ink">{% translate "Recipient owner tags" %}</span>
+        <span class="block text-[11px] text-faint">{% blocktranslate %}Space- or comma-separated (e.g. <code class="text-faint">strategic_director</code>). Their mains receive the mail.{% endblocktranslate %}</span>
       </span>
       <input type="text" name="evemail_owner_tags" value="{{ owner_tags_text }}" class="input-field w-full font-mono">
     </label>
   </section>
 
   <div class="flex items-center gap-3">
-    <button class="btn-gold">Save settings</button>
-    <span class="text-xs text-faint">config v{{ meta.version }}{% if meta.by %} · last by {{ meta.by }}{% endif %}</span>
+    <button class="btn-gold">{% translate "Save settings" %}</button>
+    <span class="text-xs text-faint">{% blocktranslate with version=meta.version %}config v{{ version }}{% endblocktranslate %}{% if meta.by %} · {% blocktranslate with by=meta.by %}last by {{ by }}{% endblocktranslate %}{% endif %}</span>
   </div>
 </form>
 
 <form method="post" action="{% url 'admin_audit:command_intel_reset' 'notifications' %}" class="mt-3">
   {% csrf_token %}
-  <button class="btn-ghost !py-1 text-xs text-faint">Reset to defaults</button>
+  <button class="btn-ghost !py-1 text-xs text-faint">{% translate "Reset to defaults" %}</button>
 </form>
 {% endblock %}

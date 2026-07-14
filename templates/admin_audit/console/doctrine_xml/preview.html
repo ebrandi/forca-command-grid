@@ -1,37 +1,38 @@
 {% extends "base.html" %}
 {% load eve %}
-{% block title %}Review XML import · Admin{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Review XML import" %} · {% translate "Admin" %}{% endblock %}
 {% block content %}
-<a href="{% url 'admin_audit:doctrine_xml_import' %}" class="text-xs text-faint hover:text-gold">← Upload another file</a>
+<a href="{% url 'admin_audit:doctrine_xml_import' %}" class="text-xs text-faint hover:text-gold">← {% translate "Upload another file" %}</a>
 <header class="mt-3 mb-5">
-  <p class="eyebrow">Operations</p>
-  <h1 class="mt-1 text-2xl font-bold text-ink">Review import</h1>
-  <p class="mt-1 text-sm text-faint">From <span class="text-ink">{{ batch.source_filename }}</span> · {{ counts.total|default:"0" }} fitting{{ counts.total|pluralize }} found. Nothing has changed yet — choose what to do, then confirm at the bottom.</p>
+  <p class="eyebrow">{% translate "Operations" %}</p>
+  <h1 class="mt-1 text-2xl font-bold text-ink">{% translate "Review import" %}</h1>
+  <p class="mt-1 text-sm text-faint">{% blocktranslate with filename=batch.source_filename n=counts.total|default:"0" count total=counts.total|default:0 %}From <span class="text-ink">{{ filename }}</span> · {{ n }} fitting found. Nothing has changed yet — choose what to do, then confirm at the bottom.{% plural %}From <span class="text-ink">{{ filename }}</span> · {{ n }} fittings found. Nothing has changed yet — choose what to do, then confirm at the bottom.{% endblocktranslate %}</p>
 </header>
 
 <div x-data="{f:'all'}">
   {# --- Summary cards double as status filters --- #}
   <div class="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-7">
-    <button type="button" @click="f='all'" :class="f==='all' && '!border-gold'" class="panel px-3 py-2 text-left"><p class="text-xl font-bold text-ink">{{ counts.total|default:"0" }}</p><p class="eyebrow text-faint">All</p></button>
-    <button type="button" @click="f='{{ S.new }}'" :class="f==='{{ S.new }}' && '!border-cyan'" class="panel px-3 py-2 text-left"><p class="text-xl font-bold text-cyan">{{ counts.new|default:"0" }}</p><p class="eyebrow text-faint">New</p></button>
-    <button type="button" @click="f='{{ S.identical }}'" :class="f==='{{ S.identical }}' && '!border-line'" class="panel px-3 py-2 text-left"><p class="text-xl font-bold text-faint">{{ counts.identical|default:"0" }}</p><p class="eyebrow text-faint">Identical</p></button>
-    <button type="button" @click="f='{{ S.conflict }}'" :class="f==='{{ S.conflict }}' && '!border-loss'" class="panel px-3 py-2 text-left"><p class="text-xl font-bold text-loss">{{ counts.conflict|default:"0" }}</p><p class="eyebrow text-faint">Conflicts</p></button>
-    <button type="button" @click="f='{{ S.duplicate_fit }}'" :class="f==='{{ S.duplicate_fit }}' && '!border-gold'" class="panel px-3 py-2 text-left"><p class="text-xl font-bold text-gold">{{ counts.duplicate_fit|default:"0" }}</p><p class="eyebrow text-faint">Dup. fit</p></button>
-    <button type="button" @click="f='{{ S.hull_conflict }}'" :class="f==='{{ S.hull_conflict }}' && '!border-gold'" class="panel px-3 py-2 text-left"><p class="text-xl font-bold text-gold">{{ counts.hull_conflict|default:"0" }}</p><p class="eyebrow text-faint">Name clash</p></button>
-    <button type="button" @click="f='{{ S.invalid }}'" :class="f==='{{ S.invalid }}' && '!border-line'" class="panel px-3 py-2 text-left"><p class="text-xl font-bold text-faint">{{ counts.invalid|default:"0" }}</p><p class="eyebrow text-faint">Invalid</p></button>
+    <button type="button" @click="f='all'" :class="f==='all' && '!border-gold'" class="panel px-3 py-2 text-left"><p class="text-xl font-bold text-ink">{{ counts.total|default:"0" }}</p><p class="eyebrow text-faint">{% translate "All" %}</p></button>
+    <button type="button" @click="f='{{ S.new }}'" :class="f==='{{ S.new }}' && '!border-cyan'" class="panel px-3 py-2 text-left"><p class="text-xl font-bold text-cyan">{{ counts.new|default:"0" }}</p><p class="eyebrow text-faint">{% translate "New" %}</p></button>
+    <button type="button" @click="f='{{ S.identical }}'" :class="f==='{{ S.identical }}' && '!border-line'" class="panel px-3 py-2 text-left"><p class="text-xl font-bold text-faint">{{ counts.identical|default:"0" }}</p><p class="eyebrow text-faint">{% translate "Identical" %}</p></button>
+    <button type="button" @click="f='{{ S.conflict }}'" :class="f==='{{ S.conflict }}' && '!border-loss'" class="panel px-3 py-2 text-left"><p class="text-xl font-bold text-loss">{{ counts.conflict|default:"0" }}</p><p class="eyebrow text-faint">{% translate "Conflicts" %}</p></button>
+    <button type="button" @click="f='{{ S.duplicate_fit }}'" :class="f==='{{ S.duplicate_fit }}' && '!border-gold'" class="panel px-3 py-2 text-left"><p class="text-xl font-bold text-gold">{{ counts.duplicate_fit|default:"0" }}</p><p class="eyebrow text-faint">{% translate "Dup. fit" %}</p></button>
+    <button type="button" @click="f='{{ S.hull_conflict }}'" :class="f==='{{ S.hull_conflict }}' && '!border-gold'" class="panel px-3 py-2 text-left"><p class="text-xl font-bold text-gold">{{ counts.hull_conflict|default:"0" }}</p><p class="eyebrow text-faint">{% translate "Name clash" %}</p></button>
+    <button type="button" @click="f='{{ S.invalid }}'" :class="f==='{{ S.invalid }}' && '!border-line'" class="panel px-3 py-2 text-left"><p class="text-xl font-bold text-faint">{{ counts.invalid|default:"0" }}</p><p class="eyebrow text-faint">{% translate "Invalid" %}</p></button>
   </div>
 
   <form method="post" action="{% url 'admin_audit:doctrine_xml_commit' batch.pk %}"
-        data-confirm="Apply these doctrine changes now? Any ‘replace’ will overwrite the existing fit.">
+        data-confirm="{% translate 'Apply these doctrine changes now? Any ‘replace’ will overwrite the existing fit.' %}">
     {% csrf_token %}
 
     {% if counts.conflict %}
     <div class="panel mb-3 flex flex-wrap items-center gap-3 p-3">
-      <span class="text-xs text-faint">For every conflict left on “Use bulk choice”:</span>
+      <span class="text-xs text-faint">{% translate "For every conflict left on “Use bulk choice”:" %}</span>
       <select name="bulk_conflict" class="input-field !py-1 !text-xs w-48">
-        <option value="skip">Skip (leave existing)</option>
-        <option value="rename">Rename &amp; import as new</option>
-        <option value="replace">Replace existing fit</option>
+        <option value="skip">{% translate "Skip (leave existing)" %}</option>
+        <option value="rename">{% translate "Rename &amp; import as new" %}</option>
+        <option value="replace">{% translate "Replace existing fit" %}</option>
       </select>
     </div>
     {% endif %}
@@ -42,71 +43,71 @@
         <div class="flex flex-wrap items-center gap-3 px-4 py-3">
           {% if row.ship_type_id %}<img src="{% eve_type_render row.ship_type_id 64 %}" alt="" loading="lazy" class="h-9 w-9 shrink-0 rounded-md bg-space object-cover ring-1 ring-line">{% else %}<span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-space text-faint ring-1 ring-line"><svg class="h-4 w-4"><use href="#i-cross"/></svg></span>{% endif %}
           <div class="min-w-0 flex-1">
-            <p class="truncate text-sm font-medium text-ink">{{ row.name|default:"(unnamed)" }}</p>
-            <p class="truncate text-xs text-faint">{{ row.ship_name|default:"—" }} · {{ row.item_count }} item{{ row.item_count|pluralize }}{% for w in row.warnings %} · {{ w }}{% endfor %}</p>
+            <p class="truncate text-sm font-medium text-ink">{{ row.name|default:_("(unnamed)") }}</p>
+            <p class="truncate text-xs text-faint">{{ row.ship_name|default:"—" }} · {% blocktranslate count items=row.item_count %}{{ items }} item{% plural %}{{ items }} items{% endblocktranslate %}{% for w in row.warnings %} · {{ w }}{% endfor %}</p>
           </div>
 
-          {% if row.status == S.new %}<span class="chip !border-cyan/40 !text-cyan">New</span>
-          {% elif row.status == S.identical %}<span class="chip !text-faint">Identical</span>
-          {% elif row.status == S.conflict %}<span class="chip !border-loss/40 !text-loss">Conflict</span>
-          {% elif row.status == S.duplicate_fit %}<span class="chip !border-gold/40 !text-gold">Dup. fit</span>
-          {% elif row.status == S.hull_conflict %}<span class="chip !border-gold/40 !text-gold">Name clash</span>
-          {% else %}<span class="chip !text-faint">Invalid</span>{% endif %}
+          {% if row.status == S.new %}<span class="chip !border-cyan/40 !text-cyan">{% translate "New" %}</span>
+          {% elif row.status == S.identical %}<span class="chip !text-faint">{% translate "Identical" %}</span>
+          {% elif row.status == S.conflict %}<span class="chip !border-loss/40 !text-loss">{% translate "Conflict" %}</span>
+          {% elif row.status == S.duplicate_fit %}<span class="chip !border-gold/40 !text-gold">{% translate "Dup. fit" %}</span>
+          {% elif row.status == S.hull_conflict %}<span class="chip !border-gold/40 !text-gold">{% translate "Name clash" %}</span>
+          {% else %}<span class="chip !text-faint">{% translate "Invalid" %}</span>{% endif %}
 
           {% if row.actionable %}
           <select name="action:{{ row.index }}" x-model="act" class="input-field !py-1 !text-xs w-40 shrink-0">
             {% if row.status == S.new or row.status == S.duplicate_fit %}
-              <option value="import">Import</option>
-              <option value="skip">Skip</option>
+              <option value="import">{% translate "Import" %}</option>
+              <option value="skip">{% translate "Skip" %}</option>
             {% elif row.status == S.conflict %}
-              <option value="">Use bulk choice</option>
-              <option value="skip">Skip</option>
-              <option value="rename">Rename &amp; import</option>
-              <option value="replace">Replace existing</option>
+              <option value="">{% translate "Use bulk choice" %}</option>
+              <option value="skip">{% translate "Skip" %}</option>
+              <option value="rename">{% translate "Rename &amp; import" %}</option>
+              <option value="replace">{% translate "Replace existing" %}</option>
             {% else %}{# hull_conflict #}
-              <option value="skip">Skip</option>
-              <option value="rename">Rename &amp; import</option>
-              <option value="import">Import anyway</option>
+              <option value="skip">{% translate "Skip" %}</option>
+              <option value="rename">{% translate "Rename &amp; import" %}</option>
+              <option value="import">{% translate "Import anyway" %}</option>
             {% endif %}
           </select>
           {% endif %}
 
-          <button type="button" @click="open=!open" class="btn-ghost !py-1 !text-xs shrink-0">Details</button>
+          <button type="button" @click="open=!open" class="btn-ghost !py-1 !text-xs shrink-0">{% translate "Details" %}</button>
         </div>
 
         {% if row.actionable %}
         <div x-show="act==='rename'" x-cloak class="px-4 pb-3">
           <input name="name:{{ row.index }}" value="" placeholder="{{ row.default_rename }}" maxlength="200" class="input-field !py-1 !text-xs w-full sm:w-96">
-          <span class="ml-2 text-[11px] text-faint">Blank uses “{{ row.default_rename }}”.</span>
+          <span class="ml-2 text-[11px] text-faint">{% blocktranslate with name=row.default_rename %}Blank uses “{{ name }}”.{% endblocktranslate %}</span>
         </div>
-        <template x-if="act==='replace'"><p class="px-4 pb-3 text-[11px] text-loss">This overwrites the existing “{{ row.existing.doctrine_name }}” fit in place.</p></template>
+        <template x-if="act==='replace'"><p class="px-4 pb-3 text-[11px] text-loss">{% blocktranslate with name=row.existing.doctrine_name %}This overwrites the existing “{{ name }}” fit in place.{% endblocktranslate %}</p></template>
         {% endif %}
 
         <div x-show="open" x-cloak class="border-t border-line/40 bg-space/40 px-4 py-3 text-xs">
           {% if row.reasons %}
-          <p class="mb-2 font-medium text-loss">Why this can't be imported</p>
+          <p class="mb-2 font-medium text-loss">{% translate "Why this can't be imported" %}</p>
           <ul class="mb-3 list-disc space-y-0.5 pl-4 text-faint">{% for r in row.reasons %}<li>{{ r }}</li>{% endfor %}</ul>
           {% endif %}
-          {% if row.existing %}<p class="mb-2 text-faint">Existing: <span class="text-ink">{{ row.existing.doctrine_name }}</span>{% if row.existing.hull_name %} · {{ row.existing.hull_name }}{% endif %}</p>{% endif %}
+          {% if row.existing %}<p class="mb-2 text-faint">{% translate "Existing:" %} <span class="text-ink">{{ row.existing.doctrine_name }}</span>{% if row.existing.hull_name %} · {{ row.existing.hull_name }}{% endif %}</p>{% endif %}
           {% if row.diff %}
-          <p class="mb-1 font-medium text-ink">Changes vs the existing fit</p>
+          <p class="mb-1 font-medium text-ink">{% translate "Changes vs the existing fit" %}</p>
           <ul class="mb-3 space-y-0.5 font-mono text-faint">{% for d in row.diff %}<li>{{ d }}</li>{% endfor %}</ul>
           {% endif %}
           {% if row.modules %}
-          <p class="mb-1 font-medium text-ink">Fitting ({{ row.modules|length }} line{{ row.modules|length|pluralize }})</p>
+          <p class="mb-1 font-medium text-ink">{% blocktranslate count lines=row.modules|length %}Fitting ({{ lines }} line){% plural %}Fitting ({{ lines }} lines){% endblocktranslate %}</p>
           <ul class="grid gap-x-6 gap-y-0.5 text-faint sm:grid-cols-2">{% for m in row.modules %}<li><span class="text-muted">{{ m.slot }}</span> · {{ m.name }}{% if m.quantity > 1 %} ×{{ m.quantity }}{% endif %}</li>{% endfor %}</ul>
-          {% else %}<p class="text-faint">No resolvable modules.</p>{% endif %}
+          {% else %}<p class="text-faint">{% translate "No resolvable modules." %}</p>{% endif %}
         </div>
       </div>
       {% empty %}
-      <p class="px-4 py-8 text-center text-sm text-faint">No fittings in this file.</p>
+      <p class="px-4 py-8 text-center text-sm text-faint">{% translate "No fittings in this file." %}</p>
       {% endfor %}
     </div>
 
     <div class="mt-4 flex flex-wrap items-center gap-3">
-      <button type="submit" class="btn-gold">Confirm import</button>
-      <a href="{% url 'admin_audit:doctrines' %}" class="btn-ghost">Cancel</a>
-      <p class="text-[11px] text-faint">Identical fittings are skipped automatically. Invalid fittings are never imported.</p>
+      <button type="submit" class="btn-gold">{% translate "Confirm import" %}</button>
+      <a href="{% url 'admin_audit:doctrines' %}" class="btn-ghost">{% translate "Cancel" %}</a>
+      <p class="text-[11px] text-faint">{% translate "Identical fittings are skipped automatically. Invalid fittings are never imported." %}</p>
     </div>
   </form>
 </div>

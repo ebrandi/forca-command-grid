@@ -1,50 +1,53 @@
 {% extends "base.html" %}
-{% block title %}Role mappings · Comms access · Admin{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Role mappings · Comms access · Admin" %}{% endblock %}
 {% block content %}
-<a href="{% url 'admin_audit:comms_access_settings' %}" class="text-sm text-faint hover:text-gold">← Access sync settings</a>
-<header class="mb-6 mt-2"><p class="eyebrow text-gold">External comms access</p>
-  <h1 class="text-3xl font-bold text-ink">Role mappings</h1>
-  <p class="mt-2 text-sm text-faint max-w-2xl">Each row maps a FORCA entitlement to one platform role/group.
+<a href="{% url 'admin_audit:comms_access_settings' %}" class="text-sm text-faint hover:text-gold">{% translate "← Access sync settings" %}</a>
+<header class="mb-6 mt-2"><p class="eyebrow text-gold">{% translate "External comms access" %}</p>
+  <h1 class="text-3xl font-bold text-ink">{% translate "Role mappings" %}</h1>
+  <p class="mt-2 text-sm text-faint max-w-2xl">{% blocktranslate %}Each row maps a FORCA entitlement to one platform role/group.
   <strong class="text-ink">This is the managed set</strong> — the sync only ever grants or removes roles listed here;
   anything else on the server is untouchable. A mapping grants when a pilot has the entitlement; it <em>removes</em>
-  on loss only when its mode is <strong class="text-ink">Authoritative</strong>. New mappings stay in dry-run until you confirm them.</p>
+  on loss only when its mode is <strong class="text-ink">Authoritative</strong>. New mappings stay in dry-run until you confirm them.{% endblocktranslate %}</p>
 </header>
 
 <section class="panel p-5 mb-6">
-  <h2 class="eyebrow text-gold mb-3">Add a mapping</h2>
+  <h2 class="eyebrow text-gold mb-3">{% translate "Add a mapping" %}</h2>
   <form method="post" action="{% url 'admin_audit:comms_access_mapping_create' %}" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
     {% csrf_token %}
-    <label class="label">Platform
+    <label class="label">{% translate "Platform" %}
       <select name="platform" class="input-field mt-1">
         {% for val, disp in platforms %}<option value="{{ val }}">{{ disp }}</option>{% endfor %}
       </select>
     </label>
-    <label class="label">Entitlement
+    <label class="label">{% translate "Entitlement" %}
       <select name="entitlement_key" class="input-field mt-1">
         {% for key, label in entitlements.items %}<option value="{{ key }}">{{ label }}</option>{% endfor %}
       </select>
     </label>
-    <label class="label">Target role id / name<input name="target_ref" class="input-field mt-1" placeholder="e.g. Discord role id" required></label>
-    <label class="label">Label (optional)<input name="target_label" class="input-field mt-1" placeholder="e.g. @Member"></label>
-    <label class="label">Mode
+    {% translate "e.g. Discord role id" as ph_target_ref %}
+    {% translate "e.g. @Member" as ph_target_label %}
+    <label class="label">{% translate "Target role id / name" %}<input name="target_ref" class="input-field mt-1" placeholder="{{ ph_target_ref }}" required></label>
+    <label class="label">{% translate "Label (optional)" %}<input name="target_label" class="input-field mt-1" placeholder="{{ ph_target_label }}"></label>
+    <label class="label">{% translate "Mode" %}
       <select name="mode" class="input-field mt-1">
         {% for val, disp in modes %}<option value="{{ val }}">{{ disp }}</option>{% endfor %}
       </select>
     </label>
-    <label class="chip cursor-pointer self-end"><input type="checkbox" name="dry_run" class="mr-1 align-middle" checked>Dry-run</label>
-    <label class="chip cursor-pointer self-end"><input type="checkbox" name="enabled" class="mr-1 align-middle" checked>Enabled</label>
-    <div class="self-end"><button class="btn-gold">Add mapping</button></div>
+    <label class="chip cursor-pointer self-end"><input type="checkbox" name="dry_run" class="mr-1 align-middle" checked>{% translate "Dry-run" %}</label>
+    <label class="chip cursor-pointer self-end"><input type="checkbox" name="enabled" class="mr-1 align-middle" checked>{% translate "Enabled" %}</label>
+    <div class="self-end"><button class="btn-gold">{% translate "Add mapping" %}</button></div>
   </form>
 </section>
 
 <section class="panel p-5">
-  <h2 class="eyebrow text-gold mb-3">Mappings</h2>
+  <h2 class="eyebrow text-gold mb-3">{% translate "Mappings" %}</h2>
   {% if mappings %}
   <div class="overflow-x-auto">
   <table class="w-full text-sm">
     <thead><tr class="text-left text-faint">
-      <th class="py-2 pr-3">Platform</th><th class="pr-3">Entitlement</th><th class="pr-3">Target</th>
-      <th class="pr-3">Mode</th><th class="pr-3">Dry-run</th><th class="pr-3">Enabled</th><th></th>
+      <th class="py-2 pr-3">{% translate "Platform" %}</th><th class="pr-3">{% translate "Entitlement" %}</th><th class="pr-3">{% translate "Target" %}</th>
+      <th class="pr-3">{% translate "Mode" %}</th><th class="pr-3">{% translate "Dry-run" %}</th><th class="pr-3">{% translate "Enabled" %}</th><th></th>
     </tr></thead>
     <tbody>
     {% for m in mappings %}
@@ -52,13 +55,14 @@
         <td class="py-2 pr-3 capitalize">{{ m.platform }}</td>
         <td class="pr-3">{{ m.entitlement_key }}</td>
         <td class="pr-3">{{ m.target_label|default:m.target_ref }} <span class="text-faint">({{ m.target_type }})</span></td>
-        <td class="pr-3">{% if m.mode == 'authoritative' %}<span class="text-gold">authoritative</span>{% else %}additive{% endif %}</td>
-        <td class="pr-3">{% if m.dry_run %}<span class="text-gold">yes</span>{% else %}no{% endif %}</td>
-        <td class="pr-3">{% if m.enabled %}yes{% else %}<span class="text-faint">no</span>{% endif %}</td>
+        <td class="pr-3">{% if m.mode == 'authoritative' %}<span class="text-gold">{% translate "authoritative" %}</span>{% else %}{% translate "additive" %}{% endif %}</td>
+        <td class="pr-3">{% if m.dry_run %}<span class="text-gold">{% translate "yes" %}</span>{% else %}{% translate "no" %}{% endif %}</td>
+        <td class="pr-3">{% if m.enabled %}{% translate "yes" %}{% else %}<span class="text-faint">{% translate "no" %}</span>{% endif %}</td>
         <td class="pr-3 text-right">
+          {% translate "Remove this mapping? The sync will stop managing that role." as c_del %}
           <form method="post" action="{% url 'admin_audit:comms_access_mapping_delete' m.pk %}" class="inline"
-                data-confirm="Remove this mapping? The sync will stop managing that role.">
-            {% csrf_token %}<button class="text-xs text-faint hover:text-red-400">Delete</button>
+                data-confirm="{{ c_del }}">
+            {% csrf_token %}<button class="text-xs text-faint hover:text-red-400">{% translate "Delete" %}</button>
           </form>
         </td>
       </tr>
@@ -67,7 +71,7 @@
   </table>
   </div>
   {% else %}
-  <p class="text-sm text-faint">No mappings yet. Until you add one, the sync manages nothing.</p>
+  <p class="text-sm text-faint">{% translate "No mappings yet. Until you add one, the sync manages nothing." %}</p>
   {% endif %}
 </section>
 {% endblock %}

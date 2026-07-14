@@ -1,12 +1,13 @@
 {% extends "base.html" %}
 {% load static eve %}
-{% block title %}Reward rules & badges · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Reward rules &amp; badges" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
-<a href="{% url 'admin_audit:mentorship_hub' %}" class="text-xs text-faint hover:text-gold">&larr; Mentorship</a>
+<a href="{% url 'admin_audit:mentorship_hub' %}" class="text-xs text-faint hover:text-gold">&larr; {% translate "Mentorship" %}</a>
 <header class="mt-2 mb-6">
-  <p class="eyebrow text-gold">Mentorship</p>
-  <h1 class="mt-1 text-3xl font-bold text-ink">Reward rules &amp; badges</h1>
-  <p class="mt-1 max-w-2xl text-sm text-faint">Decide what earns ISK, points and recognition as cadets and mentors progress. Rules fire on a trigger; badges are the recognition you can hand out.</p>
+  <p class="eyebrow text-gold">{% translate "Mentorship" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Reward rules &amp; badges" %}</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Decide what earns ISK, points and recognition as cadets and mentors progress. Rules fire on a trigger; badges are the recognition you can hand out." %}</p>
 </header>
 
 {% comment %}Section 1 — reward rules, each a panel row with an Edit disclosure and a
@@ -14,7 +15,7 @@ delete form. Section 2 — badges as a compact list plus a create form.{% endcom
 
 <!-- Reward rules -->
 <section>
-  <h2 class="eyebrow mb-3 text-gold">Reward rules</h2>
+  <h2 class="eyebrow mb-3 text-gold">{% translate "Reward rules" %}</h2>
   <div class="space-y-3">
     {% for rule in rules %}
     <div class="panel p-5">
@@ -22,61 +23,61 @@ delete form. Section 2 — badges as a compact list plus a create form.{% endcom
         <div class="min-w-0">
           <div class="flex flex-wrap items-center gap-2">
             <h3 class="font-display text-base font-semibold text-ink">{{ rule.label }}</h3>
-            {% if rule.active %}<span class="chip text-kill">Active</span>{% else %}<span class="chip text-muted">Off</span>{% endif %}
+            {% if rule.active %}<span class="chip text-kill">{% translate "Active" %}</span>{% else %}<span class="chip text-muted">{% translate "Off" %}</span>{% endif %}
           </div>
           <div class="mt-2 flex flex-wrap items-center gap-2">
             <span class="chip text-cyan">{{ rule.get_audience_display }}</span>
             <span class="chip">{{ rule.get_trigger_display }}{% if rule.trigger_ref %}: {{ rule.trigger_ref }}{% endif %}</span>
             <span class="chip text-gold">
-              {% if rule.reward_type == "isk" %}{{ rule.amount|floatformat:0 }} ISK
-              {% elif rule.reward_type == "points" %}{{ rule.points }} pts
-              {% elif rule.badge %}Badge · {{ rule.badge.label }}
+              {% if rule.reward_type == "isk" %}{% blocktranslate with amount=rule.amount|floatformat:0 %}{{ amount }} ISK{% endblocktranslate %}
+              {% elif rule.reward_type == "points" %}{% blocktranslate with points=rule.points %}{{ points }} pts{% endblocktranslate %}
+              {% elif rule.badge %}{% blocktranslate with label=rule.badge.label %}Badge · {{ label }}{% endblocktranslate %}
               {% else %}{{ rule.get_reward_type_display }}{% endif %}
             </span>
-            {% if rule.requires_leadership_approval %}<span class="chip text-gold">Approval</span>{% endif %}
-            {% if rule.requires_verification %}<span class="chip text-cyan">Verified-only</span>{% endif %}
+            {% if rule.requires_leadership_approval %}<span class="chip text-gold">{% translate "Approval" %}</span>{% endif %}
+            {% if rule.requires_verification %}<span class="chip text-cyan">{% translate "Verified-only" %}</span>{% endif %}
           </div>
         </div>
         <form method="post" action="{% url 'admin_audit:mentorship_reward_rule_delete' rule.id %}"
-              data-confirm="Delete the reward rule “{{ rule.label }}”?">
+              data-confirm="{% blocktranslate with label=rule.label %}Delete the reward rule “{{ label }}”?{% endblocktranslate %}">
           {% csrf_token %}
-          <button class="btn-danger !px-3 !py-1.5 text-xs">Delete</button>
+          <button class="btn-danger !px-3 !py-1.5 text-xs">{% translate "Delete" %}</button>
         </form>
       </div>
 
       <details class="mt-4 border-t border-line/40 pt-3">
-        <summary class="cursor-pointer text-xs font-medium text-faint hover:text-gold">Edit rule</summary>
+        <summary class="cursor-pointer text-xs font-medium text-faint hover:text-gold">{% translate "Edit rule" %}</summary>
         <form method="post" action="{% url 'admin_audit:mentorship_reward_rule_update' rule.id %}" class="mt-3 grid gap-4 sm:grid-cols-2">
           {% csrf_token %}
           <div class="sm:col-span-2">
-            <label class="label">Label</label>
+            <label class="label">{% translate "Label" %}</label>
             <input name="label" value="{{ rule.label }}" class="input-field w-full" required>
           </div>
           <div>
-            <label class="label">Trigger reference</label>
-            <input name="trigger_ref" value="{{ rule.trigger_ref }}" class="input-field w-full" placeholder="task key, track key…">
+            <label class="label">{% translate "Trigger reference" %}</label>
+            <input name="trigger_ref" value="{{ rule.trigger_ref }}" class="input-field w-full" placeholder="{% translate 'task key, track key…' %}">
           </div>
           <div>
-            <label class="label">ISK amount</label>
+            <label class="label">{% translate "ISK amount" %}</label>
             <input type="number" min="0" name="amount" value="{{ rule.amount }}" class="input-field w-full font-mono">
           </div>
           <div>
-            <label class="label">Points</label>
+            <label class="label">{% translate "Points" %}</label>
             <input type="number" min="0" name="points" value="{{ rule.points }}" class="input-field w-full font-mono">
           </div>
           <div class="sm:col-span-2 grid gap-2 sm:grid-cols-2">
             <label class="flex items-center gap-2 text-sm text-muted">
-              <input type="checkbox" name="requires_leadership_approval" value="1"{% if rule.requires_leadership_approval %} checked{% endif %}> Requires leadership approval
+              <input type="checkbox" name="requires_leadership_approval" value="1"{% if rule.requires_leadership_approval %} checked{% endif %}> {% translate "Requires leadership approval" %}
             </label>
             <label class="flex items-center gap-2 text-sm text-muted">
-              <input type="checkbox" name="requires_verification" value="1"{% if rule.requires_verification %} checked{% endif %}> Verified evidence only
+              <input type="checkbox" name="requires_verification" value="1"{% if rule.requires_verification %} checked{% endif %}> {% translate "Verified evidence only" %}
             </label>
             <label class="flex items-center gap-2 text-sm text-muted">
-              <input type="checkbox" name="active" value="1"{% if rule.active %} checked{% endif %}> Active
+              <input type="checkbox" name="active" value="1"{% if rule.active %} checked{% endif %}> {% translate "Active" %}
             </label>
           </div>
           <div class="sm:col-span-2 flex justify-end">
-            <button class="btn-gold !px-4 !py-1.5 text-sm">Save rule</button>
+            <button class="btn-gold !px-4 !py-1.5 text-sm">{% translate "Save rule" %}</button>
           </div>
         </form>
       </details>
@@ -84,18 +85,18 @@ delete form. Section 2 — badges as a compact list plus a create form.{% endcom
     {% empty %}
     <div class="panel p-8 text-center">
       <svg class="mx-auto h-8 w-8 text-faint"><use href="#i-trophy"/></svg>
-      <p class="mt-3 text-sm text-faint">No reward rules yet. Set up the first one below to start recognising cadet and mentor milestones.</p>
+      <p class="mt-3 text-sm text-faint">{% translate "No reward rules yet. Set up the first one below to start recognising cadet and mentor milestones." %}</p>
     </div>
     {% endfor %}
   </div>
 
   <div class="panel mt-4 p-5">
-    <h3 class="eyebrow mb-3 text-gold">New reward rule</h3>
+    <h3 class="eyebrow mb-3 text-gold">{% translate "New reward rule" %}</h3>
     <form method="post" action="{% url 'admin_audit:mentorship_reward_rule_create' %}" class="space-y-4">
       {% csrf_token %}
       {{ form.as_p }}
       <div class="flex justify-end">
-        <button class="btn-gold">Create rule</button>
+        <button class="btn-gold">{% translate "Create rule" %}</button>
       </div>
     </form>
   </div>
@@ -103,7 +104,7 @@ delete form. Section 2 — badges as a compact list plus a create form.{% endcom
 
 <!-- Badges -->
 <section class="mt-8">
-  <h2 class="eyebrow mb-3 text-gold">Badges</h2>
+  <h2 class="eyebrow mb-3 text-gold">{% translate "Badges" %}</h2>
   <div class="panel overflow-hidden">
     <div class="divide-y divide-line/40">
       {% for badge in badges %}
@@ -112,26 +113,26 @@ delete form. Section 2 — badges as a compact list plus a create form.{% endcom
         <span class="min-w-0 flex-1 text-sm text-ink">{{ badge.label }}</span>
         <span class="chip text-cyan">{{ badge.get_tier_display }}</span>
         <span class="chip text-muted">{{ badge.get_audience_display }}</span>
-        {% if badge.active %}<span class="chip text-kill">Active</span>{% else %}<span class="chip text-muted">Off</span>{% endif %}
+        {% if badge.active %}<span class="chip text-kill">{% translate "Active" %}</span>{% else %}<span class="chip text-muted">{% translate "Off" %}</span>{% endif %}
         <form method="post" action="{% url 'admin_audit:mentorship_badge_delete' badge.id %}"
-              data-confirm="Delete the badge “{{ badge.label }}”?">
+              data-confirm="{% blocktranslate with label=badge.label %}Delete the badge “{{ label }}”?{% endblocktranslate %}">
           {% csrf_token %}
-          <button class="text-faint hover:text-loss" title="Delete badge" aria-label="Delete badge">&#10005;</button>
+          <button class="text-faint hover:text-loss" title="{% translate 'Delete badge' %}" aria-label="{% translate 'Delete badge' %}">&#10005;</button>
         </form>
       </div>
       {% empty %}
-      <p class="px-4 py-6 text-center text-sm text-faint">No badges yet — create one below to give your cadets something to earn.</p>
+      <p class="px-4 py-6 text-center text-sm text-faint">{% translate "No badges yet — create one below to give your cadets something to earn." %}</p>
       {% endfor %}
     </div>
   </div>
 
   <div class="panel mt-4 p-5">
-    <h3 class="eyebrow mb-3 text-gold">New badge</h3>
+    <h3 class="eyebrow mb-3 text-gold">{% translate "New badge" %}</h3>
     <form method="post" action="{% url 'admin_audit:mentorship_badge_create' %}" class="space-y-4">
       {% csrf_token %}
       {{ badge_form.as_p }}
       <div class="flex justify-end">
-        <button class="btn-gold">Create badge</button>
+        <button class="btn-gold">{% translate "Create badge" %}</button>
       </div>
     </form>
   </div>

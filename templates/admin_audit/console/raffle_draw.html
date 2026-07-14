@@ -1,44 +1,45 @@
 {% extends "base.html" %}
 {% load eve %}
-{% block title %}Draw manager · {{ contest.name }} · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Draw manager" %} · {{ contest.name }} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <header class="mb-6 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <p class="eyebrow text-gold">Raffle · {{ contest.name }}</p>
-    <h1 class="mt-1 text-2xl font-bold text-ink">Draw manager</h1>
-    <p class="mt-1 max-w-2xl text-sm text-faint">Freeze the ledger, commit a public seed, then run a cryptographically-verifiable commit-reveal draw. Every step is audited; the seed is revealed afterwards so anyone can recompute the winners.</p>
+    <p class="eyebrow text-gold">{% translate "Raffle" %} · {{ contest.name }}</p>
+    <h1 class="mt-1 text-2xl font-bold text-ink">{% translate "Draw manager" %}</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Freeze the ledger, commit a public seed, then run a cryptographically-verifiable commit-reveal draw. Every step is audited; the seed is revealed afterwards so anyone can recompute the winners." %}</p>
   </div>
-  <a href="{% url 'admin_audit:raffle_detail' contest.pk %}" class="btn-ghost text-sm">← Back</a>
+  <a href="{% url 'admin_audit:raffle_detail' contest.pk %}" class="btn-ghost text-sm">← {% translate "Back" %}</a>
 </header>
 
 {% comment %}Readiness checklist — the pre-flight for a fair draw.{% endcomment %}
 <section class="panel mb-6 overflow-hidden">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Readiness</h2></div>
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "Readiness" %}</h2></div>
   <ul class="divide-y divide-line/40 text-sm">
     <li class="flex items-center gap-3 px-4 py-2.5">
       {% if readiness.closed %}<span class="text-kill">✓</span>{% else %}<span class="text-loss">✗</span>{% endif %}
-      <span class="flex-1 text-muted">Contest is closed (ledger frozen)</span>
-      {% if not readiness.closed %}<span class="text-[11px] text-faint">close it below first</span>{% endif %}
+      <span class="flex-1 text-muted">{% translate "Contest is closed (ledger frozen)" %}</span>
+      {% if not readiness.closed %}<span class="text-[11px] text-faint">{% translate "close it below first" %}</span>{% endif %}
     </li>
     <li class="flex items-center gap-3 px-4 py-2.5">
       {% if readiness.has_prizes %}<span class="text-kill">✓</span>{% else %}<span class="text-loss">✗</span>{% endif %}
-      <span class="flex-1 text-muted">Prize ladder configured</span>
-      {% if not readiness.has_prizes %}<a href="{% url 'admin_audit:raffle_prizes' contest.pk %}" class="text-[11px] text-cyan hover:underline">add prizes</a>{% endif %}
+      <span class="flex-1 text-muted">{% translate "Prize ladder configured" %}</span>
+      {% if not readiness.has_prizes %}<a href="{% url 'admin_audit:raffle_prizes' contest.pk %}" class="text-[11px] text-cyan hover:underline">{% translate "add prizes" %}</a>{% endif %}
     </li>
     <li class="flex items-center gap-3 px-4 py-2.5">
       {% if readiness.has_tickets %}<span class="text-kill">✓</span>{% else %}<span class="text-loss">✗</span>{% endif %}
-      <span class="flex-1 text-muted">Approved tickets in the pool</span>
+      <span class="flex-1 text-muted">{% translate "Approved tickets in the pool" %}</span>
       <span class="data text-xs text-cyan">{{ approved_tickets }}</span>
     </li>
     <li class="flex items-center gap-3 px-4 py-2.5">
       {% if readiness.draw_time_passed %}<span class="text-kill">✓</span>{% else %}<span class="text-loss">✗</span>{% endif %}
-      <span class="flex-1 text-muted">Scheduled draw time has passed</span>
+      <span class="flex-1 text-muted">{% translate "Scheduled draw time has passed" %}</span>
       <span class="data text-[11px] text-faint">{{ contest.draw_at|date:"M j, Y H:i" }}</span>
     </li>
     <li class="flex items-center gap-3 px-4 py-2.5">
       {% if readiness.open_flags %}<span class="text-loss">⚠</span>{% else %}<span class="text-kill">✓</span>{% endif %}
-      <span class="flex-1 text-muted">No open integrity flags</span>
-      {% if readiness.open_flags %}<a href="{% url 'admin_audit:raffle_flags' contest.pk %}" class="chip !border-loss/40 !text-loss">{{ readiness.open_flags }} open — review</a>{% else %}<span class="text-[11px] text-faint">clear</span>{% endif %}
+      <span class="flex-1 text-muted">{% translate "No open integrity flags" %}</span>
+      {% if readiness.open_flags %}<a href="{% url 'admin_audit:raffle_flags' contest.pk %}" class="chip !border-loss/40 !text-loss">{% blocktranslate with n=readiness.open_flags %}{{ n }} open — review{% endblocktranslate %}</a>{% else %}<span class="text-[11px] text-faint">{% translate "clear" %}</span>{% endif %}
     </li>
   </ul>
 </section>
@@ -46,22 +47,22 @@
 {% if not completed %}
 {% comment %}Pre-draw controls: close → commit seed → execute.{% endcomment %}
 <section class="panel mb-6 overflow-hidden">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Run the draw</h2></div>
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "Run the draw" %}</h2></div>
   <div class="space-y-5 px-4 py-4">
 
     <div class="flex flex-wrap items-center gap-3">
       <span class="chip !border-gold/40 !text-gold shrink-0">1</span>
       <div class="min-w-0 flex-1">
-        <p class="text-sm text-ink">Close the contest</p>
-        <p class="text-[11px] text-faint">Freezes the ledger — no more tickets can be earned. Required before drawing.</p>
+        <p class="text-sm text-ink">{% translate "Close the contest" %}</p>
+        <p class="text-[11px] text-faint">{% translate "Freezes the ledger — no more tickets can be earned. Required before drawing." %}</p>
       </div>
       {% if readiness.closed %}
-        <span class="chip !border-kill/40 !text-kill">Closed</span>
+        <span class="chip !border-kill/40 !text-kill">{% translate "Closed" %}</span>
       {% else %}
-        <form method="post" action="{% url 'admin_audit:raffle_draw_action' contest.pk %}" data-confirm="Close the contest and freeze the ledger? No more tickets can be earned after this.">
+        <form method="post" action="{% url 'admin_audit:raffle_draw_action' contest.pk %}" data-confirm="{% translate 'Close the contest and freeze the ledger? No more tickets can be earned after this.' %}">
           {% csrf_token %}
           <input type="hidden" name="action" value="close">
-          <button class="btn-ghost text-sm">Close &amp; freeze</button>
+          <button class="btn-ghost text-sm">{% translate "Close &amp; freeze" %}</button>
         </form>
       {% endif %}
     </div>
@@ -70,23 +71,23 @@
       <div class="flex flex-wrap items-start gap-3">
         <span class="chip !border-gold/40 !text-gold shrink-0">2</span>
         <div class="min-w-0 flex-1">
-          <p class="text-sm text-ink">Commit a seed</p>
-          <p class="text-[11px] text-faint">Publishes the sha256 of a secret seed before the draw. Optionally fold in a public source of entropy (e.g. a future block hash or EVE server tick) so no one can claim the seed was cherry-picked.</p>
+          <p class="text-sm text-ink">{% translate "Commit a seed" %}</p>
+          <p class="text-[11px] text-faint">{% translate "Publishes the sha256 of a secret seed before the draw. Optionally fold in a public source of entropy (e.g. a future block hash or EVE server tick) so no one can claim the seed was cherry-picked." %}</p>
           <form method="post" action="{% url 'admin_audit:raffle_draw_action' contest.pk %}" class="mt-2 flex flex-wrap items-end gap-2">
             {% csrf_token %}
             <input type="hidden" name="action" value="prepare">
             <div class="min-w-[14rem] flex-1">
-              <label class="label">External entropy (optional)</label>
-              <input name="external_entropy" placeholder="e.g. block hash / agreed public string" class="input-field w-full">
+              <label class="label">{% translate "External entropy (optional)" %}</label>
+              <input name="external_entropy" placeholder="{% translate 'e.g. block hash / agreed public string' %}" class="input-field w-full">
             </div>
-            <button class="btn-ghost text-sm">{% if committed %}Re-commit seed{% else %}Commit seed{% endif %}</button>
+            <button class="btn-ghost text-sm">{% if committed %}{% translate "Re-commit seed" %}{% else %}{% translate "Commit seed" %}{% endif %}</button>
           </form>
           {% if committed %}
             <div class="mt-3 panel border-cyan/40 bg-cyan/10 px-3 py-2">
-              <p class="eyebrow text-faint">Seed commitment (sha256)</p>
+              <p class="eyebrow text-faint">{% translate "Seed commitment (sha256)" %}</p>
               <p class="data mt-0.5 break-all text-xs text-cyan">{{ committed.seed_commitment }}</p>
-              {% if committed.external_entropy %}<p class="mt-1 text-[11px] text-faint">External entropy: <span class="text-muted">{{ committed.external_entropy }}</span></p>{% endif %}
-              <p class="mt-1 text-[11px] text-faint">Committed {{ committed.committed_at|date:"M j, Y H:i" }} — the secret seed is revealed only after the draw.</p>
+              {% if committed.external_entropy %}<p class="mt-1 text-[11px] text-faint">{% translate "External entropy:" %} <span class="text-muted">{{ committed.external_entropy }}</span></p>{% endif %}
+              <p class="mt-1 text-[11px] text-faint">{% blocktranslate with when=committed.committed_at|date:"M j, Y H:i" %}Committed {{ when }} — the secret seed is revealed only after the draw.{% endblocktranslate %}</p>
             </div>
           {% endif %}
         </div>
@@ -97,43 +98,43 @@
       {% if activity.configured %}
       <div class="mb-3 rounded border p-3 {% if activity.met %}border-kill/30 bg-kill/5{% else %}border-gold/40 bg-gold/10{% endif %}">
         <div class="flex items-center justify-between text-sm">
-          <span class="text-ink">Minimum activity for a valid draw: <strong>{{ activity.label }}</strong></span>
+          <span class="text-ink">{% blocktranslate with label=activity.label %}Minimum activity for a valid draw: <strong>{{ label }}</strong>{% endblocktranslate %}</span>
           <span class="data {% if activity.met %}text-kill{% else %}text-gold{% endif %}">{% if activity.money %}{{ activity.value|isk }} / {{ activity.threshold|isk }}{% else %}{{ activity.value|floatformat:0 }} / {{ activity.threshold|floatformat:0 }}{% endif %}</span>
         </div>
         <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-panel2"><div class="h-full rounded-full {% if activity.met %}bg-kill{% else %}bg-gold{% endif %}" style="width: {{ activity.pct }}%"></div></div>
-        <p class="mt-1 text-[11px] {% if activity.met %}text-faint{% else %}text-gold{% endif %}">{% if activity.met %}Minimum activity met — the draw can run normally.{% else %}Below minimum — the automatic draw is <strong>held</strong>. A Director can override below.{% endif %}</p>
+        <p class="mt-1 text-[11px] {% if activity.met %}text-faint{% else %}text-gold{% endif %}">{% if activity.met %}{% translate "Minimum activity met — the draw can run normally." %}{% else %}{% blocktranslate %}Below minimum — the automatic draw is <strong>held</strong>. A Director can override below.{% endblocktranslate %}{% endif %}</p>
       </div>
       {% endif %}
       {% if booster.configured %}
       <div class="mb-3 rounded border border-cyan/30 bg-cyan/5 p-3 text-sm">
-        <div class="flex items-center justify-between"><span class="text-ink">Prize-value booster: <strong>{{ booster.label }}</strong> → +{{ booster.percent|floatformat:0 }}%</span><span class="data {% if booster.achieved %}text-cyan{% else %}text-faint{% endif %}">{% if booster.money %}{{ booster.value|isk }} / {{ booster.goal|isk }}{% else %}{{ booster.value|floatformat:0 }} / {{ booster.goal|floatformat:0 }}{% endif %}</span></div>
-        <p class="mt-1 text-[11px] {% if booster.achieved %}text-cyan{% else %}text-faint{% endif %}">{% if booster.achieved %}Goal reached — ISK/PLEX prize values are boosted +{{ booster.percent|floatformat:0 }}% at the draw.{% else %}Not yet reached — ISK/PLEX prizes pay their base value.{% endif %}</p>
+        <div class="flex items-center justify-between"><span class="text-ink">{% blocktranslate with label=booster.label pct=booster.percent|floatformat:0 %}Prize-value booster: <strong>{{ label }}</strong> → +{{ pct }}%{% endblocktranslate %}</span><span class="data {% if booster.achieved %}text-cyan{% else %}text-faint{% endif %}">{% if booster.money %}{{ booster.value|isk }} / {{ booster.goal|isk }}{% else %}{{ booster.value|floatformat:0 }} / {{ booster.goal|floatformat:0 }}{% endif %}</span></div>
+        <p class="mt-1 text-[11px] {% if booster.achieved %}text-cyan{% else %}text-faint{% endif %}">{% if booster.achieved %}{% blocktranslate with pct=booster.percent|floatformat:0 %}Goal reached — ISK/PLEX prize values are boosted +{{ pct }}% at the draw.{% endblocktranslate %}{% else %}{% translate "Not yet reached — ISK/PLEX prizes pay their base value." %}{% endif %}</p>
       </div>
       {% endif %}
 
       <div class="flex flex-wrap items-center gap-3">
         <span class="chip !border-gold/40 !text-gold shrink-0">3</span>
         <div class="min-w-0 flex-1">
-          <p class="text-sm text-ink">Execute the draw</p>
-          <p class="text-[11px] text-faint">Reveals the seed and draws the winners. This is irreversible and moves the contest to Completed.</p>
+          <p class="text-sm text-ink">{% translate "Execute the draw" %}</p>
+          <p class="text-[11px] text-faint">{% translate "Reveals the seed and draws the winners. This is irreversible and moves the contest to Completed." %}</p>
         </div>
         {% if is_director %}
           {% if activity.configured and not activity.met %}
-          <form method="post" action="{% url 'admin_audit:raffle_draw_action' contest.pk %}" data-confirm="This contest is BELOW its minimum activity. Draw anyway? Prizes are distributed even though pilots did not reach the engagement target.">
+          <form method="post" action="{% url 'admin_audit:raffle_draw_action' contest.pk %}" data-confirm="{% translate 'This contest is BELOW its minimum activity. Draw anyway? Prizes are distributed even though pilots did not reach the engagement target.' %}">
             {% csrf_token %}
             <input type="hidden" name="action" value="execute">
             <input type="hidden" name="override" value="1">
-            <button class="btn-danger text-sm">Draw anyway (override)</button>
+            <button class="btn-danger text-sm">{% translate "Draw anyway (override)" %}</button>
           </form>
           {% else %}
-          <form method="post" action="{% url 'admin_audit:raffle_draw_action' contest.pk %}" data-confirm="Run the draw now? This reveals the seed, assigns prizes and completes the contest. It cannot be undone (only a redraw supersedes it).">
+          <form method="post" action="{% url 'admin_audit:raffle_draw_action' contest.pk %}" data-confirm="{% translate 'Run the draw now? This reveals the seed, assigns prizes and completes the contest. It cannot be undone (only a redraw supersedes it).' %}">
             {% csrf_token %}
             <input type="hidden" name="action" value="execute">
-            <button class="btn-gold text-sm">Run the draw</button>
+            <button class="btn-gold text-sm">{% translate "Run the draw" %}</button>
           </form>
           {% endif %}
         {% else %}
-          <span class="chip !border-gold/40 !text-gold">A Director must run the draw</span>
+          <span class="chip !border-gold/40 !text-gold">{% translate "A Director must run the draw" %}</span>
         {% endif %}
       </div>
     </div>
@@ -144,26 +145,26 @@
 {% else %}
 {% comment %}Post-draw: census, verification, revealed seed, results + fulfilment.{% endcomment %}
 <div class="panel mb-6 flex flex-wrap items-center gap-2 border-cyan/40 bg-cyan/10 px-4 py-3 text-sm">
-  <span class="chip !border-cyan/40 !text-cyan">Draw complete</span>
-  <span class="text-muted">{{ results|length }} winner{{ results|length|pluralize }} drawn {{ completed.completed_at|date:"M j, Y H:i" }}.</span>
-  <a href="{% url 'raffle:transparency' contest.slug %}" class="ml-auto text-cyan hover:underline">Public transparency report →</a>
+  <span class="chip !border-cyan/40 !text-cyan">{% translate "Draw complete" %}</span>
+  <span class="text-muted">{% blocktranslate count n=results|length with when=completed.completed_at|date:"M j, Y H:i" %}{{ n }} winner drawn {{ when }}.{% plural %}{{ n }} winners drawn {{ when }}.{% endblocktranslate %}</span>
+  <a href="{% url 'raffle:transparency' contest.slug %}" class="ml-auto text-cyan hover:underline">{% translate "Public transparency report" %} →</a>
 </div>
 
 <section class="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
   <div class="panel p-4">
-    <p class="eyebrow text-faint">Eligible tickets</p>
+    <p class="eyebrow text-faint">{% translate "Eligible tickets" %}</p>
     <p class="data mt-1 text-2xl font-bold text-cyan">{{ completed.total_eligible_tickets }}</p>
   </div>
   <div class="panel p-4">
-    <p class="eyebrow text-faint">Eligible pilots</p>
+    <p class="eyebrow text-faint">{% translate "Eligible pilots" %}</p>
     <p class="data mt-1 text-2xl font-bold text-kill">{{ completed.eligible_pilots }}</p>
   </div>
   <div class="panel p-4">
-    <p class="eyebrow text-faint">Excluded tickets</p>
+    <p class="eyebrow text-faint">{% translate "Excluded tickets" %}</p>
     <p class="data mt-1 text-2xl font-bold text-loss">{{ completed.total_excluded_tickets }}</p>
   </div>
   <div class="panel p-4">
-    <p class="eyebrow text-faint">Excluded pilots</p>
+    <p class="eyebrow text-faint">{% translate "Excluded pilots" %}</p>
     <p class="data mt-1 text-2xl font-bold text-muted">{{ completed.excluded_pilots }}</p>
   </div>
 </section>
@@ -171,53 +172,53 @@
 <div class="mb-6 grid gap-6 lg:grid-cols-2">
   {% comment %}Independent verification of the completed draw.{% endcomment %}
   <section class="panel overflow-hidden">
-    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Verification</h2></div>
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "Verification" %}</h2></div>
     <div class="px-4 py-3">
       {% if verification.verifiable %}
         <ul class="space-y-2 text-sm">
           <li class="flex items-center gap-3">
             {% if verification.commitment_ok %}<span class="text-kill">✓</span>{% else %}<span class="text-loss">✗</span>{% endif %}
-            <span class="text-muted">Seed matches the published commitment</span>
+            <span class="text-muted">{% translate "Seed matches the published commitment" %}</span>
           </li>
           <li class="flex items-center gap-3">
             {% if verification.values_ok %}<span class="text-kill">✓</span>{% else %}<span class="text-loss">✗</span>{% endif %}
-            <span class="text-muted">Random values recompute from the seed</span>
+            <span class="text-muted">{% translate "Random values recompute from the seed" %}</span>
           </li>
           <li class="flex items-center gap-3">
             {% if verification.winners_match %}<span class="text-kill">✓</span>{% else %}<span class="text-loss">✗</span>{% endif %}
-            <span class="text-muted">Winners match the recomputed draw</span>
+            <span class="text-muted">{% translate "Winners match the recomputed draw" %}</span>
           </li>
-          {% if verification.checked_draws %}<li class="text-[11px] text-faint">{{ verification.checked_draws }} draw{{ verification.checked_draws|pluralize }} checked.</li>{% endif %}
+          {% if verification.checked_draws %}<li class="text-[11px] text-faint">{% blocktranslate count n=verification.checked_draws %}{{ n }} draw checked.{% plural %}{{ n }} draws checked.{% endblocktranslate %}</li>{% endif %}
           {% if verification.reason %}<li class="text-[11px] text-faint">{{ verification.reason }}</li>{% endif %}
         </ul>
       {% else %}
-        <p class="text-sm text-faint">{% if verification.reason %}{{ verification.reason }}{% else %}This draw could not be independently verified.{% endif %}</p>
+        <p class="text-sm text-faint">{% if verification.reason %}{{ verification.reason }}{% else %}{% translate "This draw could not be independently verified." %}{% endif %}</p>
       {% endif %}
     </div>
   </section>
 
   {% comment %}Revealed seed + redraw.{% endcomment %}
   <section class="panel overflow-hidden">
-    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Revealed seed</h2></div>
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "Revealed seed" %}</h2></div>
     <div class="px-4 py-3">
-      <p class="eyebrow text-faint">Secret seed</p>
+      <p class="eyebrow text-faint">{% translate "Secret seed" %}</p>
       <p class="data mt-0.5 break-all text-xs text-ink">{{ completed.seed|default:"—" }}</p>
-      <p class="eyebrow mt-3 text-faint">Commitment (sha256)</p>
+      <p class="eyebrow mt-3 text-faint">{% translate "Commitment (sha256)" %}</p>
       <p class="data mt-0.5 break-all text-[11px] text-faint">{{ completed.seed_commitment }}</p>
-      {% if completed.external_entropy %}<p class="mt-2 text-[11px] text-faint">External entropy: <span class="text-muted">{{ completed.external_entropy }}</span></p>{% endif %}
-      {% if completed.skipped_draws %}<p class="mt-2 text-[11px] text-faint">{{ completed.skipped_draws|length }} draw slot(s) skipped (one-prize-per-pilot / no remaining tickets).</p>{% endif %}
+      {% if completed.external_entropy %}<p class="mt-2 text-[11px] text-faint">{% translate "External entropy:" %} <span class="text-muted">{{ completed.external_entropy }}</span></p>{% endif %}
+      {% if completed.skipped_draws %}<p class="mt-2 text-[11px] text-faint">{% blocktranslate with n=completed.skipped_draws|length %}{{ n }} draw slot(s) skipped (one-prize-per-pilot / no remaining tickets).{% endblocktranslate %}</p>{% endif %}
 
       {% if is_director %}
       <div class="mt-4 border-t border-line/60 pt-4">
-        <p class="eyebrow mb-2 text-faint">Redraw</p>
-        <form method="post" action="{% url 'admin_audit:raffle_draw_action' contest.pk %}" class="flex flex-wrap items-end gap-2" data-confirm="Redraw? This supersedes the current result with a fresh draw. The old draw is kept for audit but its winners no longer stand.">
+        <p class="eyebrow mb-2 text-faint">{% translate "Redraw" %}</p>
+        <form method="post" action="{% url 'admin_audit:raffle_draw_action' contest.pk %}" class="flex flex-wrap items-end gap-2" data-confirm="{% translate 'Redraw? This supersedes the current result with a fresh draw. The old draw is kept for audit but its winners no longer stand.' %}">
           {% csrf_token %}
           <input type="hidden" name="action" value="redraw">
           <div class="min-w-[12rem] flex-1">
-            <label class="label">Reason</label>
-            <input name="reason" placeholder="Why a redraw is needed" class="input-field w-full">
+            <label class="label">{% translate "Reason" %}</label>
+            <input name="reason" placeholder="{% translate 'Why a redraw is needed' %}" class="input-field w-full">
           </div>
-          <button class="btn-ghost text-sm !text-loss hover:!border-loss/40">Redraw</button>
+          <button class="btn-ghost text-sm !text-loss hover:!border-loss/40">{% translate "Redraw" %}</button>
         </form>
       </div>
       {% endif %}
@@ -226,7 +227,7 @@
 </div>
 
 <section class="panel overflow-hidden">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Winners &amp; fulfilment</h2></div>
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "Winners &amp; fulfilment" %}</h2></div>
   <div class="divide-y divide-line/40">
     {% for r in results %}
       <div class="px-4 py-3">
@@ -234,25 +235,25 @@
           <span class="chip !border-gold/40 !text-gold shrink-0">#{{ r.prize.rank }}</span>
           <img src="{% eve_portrait r.winner_character_id 32 %}" alt="" loading="lazy" class="h-8 w-8 rounded-full ring-1 ring-line">
           <div class="min-w-0 flex-1">
-            <span class="block truncate text-ink">{{ r.winner_character_name|default:r.winner_character_id|default:"(no eligible winner)" }}</span>
-            <span class="block truncate text-[11px] text-faint">won <span class="text-muted">{{ r.prize.name }}</span></span>
+            <span class="block truncate text-ink">{% translate "(no eligible winner)" as no_winner_label %}{{ r.winner_character_name|default:r.winner_character_id|default:no_winner_label }}</span>
+            <span class="block truncate text-[11px] text-faint">{% blocktranslate with prize=r.prize.name %}won <span class="text-muted">{{ prize }}</span>{% endblocktranslate %}</span>
           </div>
           <span class="chip shrink-0 {% if r.fulfil_status == 'delivered' %}!border-kill/40 !text-kill{% elif r.fulfil_status == 'cancelled' %}!border-loss/40 !text-loss{% elif r.fulfil_status == 'contacted' %}!border-cyan/40 !text-cyan{% else %}!border-gold/40 !text-gold{% endif %}">{{ r.get_fulfil_status_display }}</span>
         </div>
         <form method="post" action="{% url 'admin_audit:raffle_fulfil' contest.pk r.pk %}" class="mt-2 flex flex-wrap items-center gap-2">
           {% csrf_token %}
           <select name="status" class="input-field !py-1 !text-xs w-32">
-            <option value="pending"{% if r.fulfil_status == 'pending' %} selected{% endif %}>Pending</option>
-            <option value="contacted"{% if r.fulfil_status == 'contacted' %} selected{% endif %}>Contacted</option>
-            <option value="delivered"{% if r.fulfil_status == 'delivered' %} selected{% endif %}>Delivered</option>
-            <option value="cancelled"{% if r.fulfil_status == 'cancelled' %} selected{% endif %}>Cancelled</option>
+            <option value="pending"{% if r.fulfil_status == 'pending' %} selected{% endif %}>{% translate "Pending" %}</option>
+            <option value="contacted"{% if r.fulfil_status == 'contacted' %} selected{% endif %}>{% translate "Contacted" %}</option>
+            <option value="delivered"{% if r.fulfil_status == 'delivered' %} selected{% endif %}>{% translate "Delivered" %}</option>
+            <option value="cancelled"{% if r.fulfil_status == 'cancelled' %} selected{% endif %}>{% translate "Cancelled" %}</option>
           </select>
-          <input name="notes" value="{{ r.fulfilment_notes }}" placeholder="Fulfilment notes (internal)" class="input-field !py-1 !text-xs flex-1 min-w-[10rem]">
-          <button class="btn-ghost !py-1 !text-xs">Update</button>
+          <input name="notes" value="{{ r.fulfilment_notes }}" placeholder="{% translate 'Fulfilment notes (internal)' %}" class="input-field !py-1 !text-xs flex-1 min-w-[10rem]">
+          <button class="btn-ghost !py-1 !text-xs">{% translate "Update" %}</button>
         </form>
       </div>
     {% empty %}
-      <p class="px-4 py-10 text-center text-sm text-faint">No winners were drawn — there were no eligible tickets in the pool.</p>
+      <p class="px-4 py-10 text-center text-sm text-faint">{% translate "No winners were drawn — there were no eligible tickets in the pool." %}</p>
     {% endfor %}
   </div>
 </section>

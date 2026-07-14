@@ -1,17 +1,18 @@
 {% extends "base.html" %}
-{% block title %}Command Intelligence · Constraints &amp; thresholds · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Command Intelligence" %} · {% translate "Constraints &amp; thresholds" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
-<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← {% translate "Admin console" %}</a>
 <header class="mt-2 mb-6">
-  <p class="eyebrow">Command Intelligence configuration</p>
-  <h1 class="mt-1 text-3xl font-bold text-ink">Constraints &amp; thresholds</h1>
-  <p class="mt-1 max-w-2xl text-sm text-faint">Tune the global severity ratios, demand baselines and which constraint providers run. A threshold change re-colours severities on the <span class="text-cyan">next snapshot</span> with no deploy. A net-new provider stays disabled until you enable it here.</p>
+  <p class="eyebrow">{% translate "Command Intelligence configuration" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Constraints &amp; thresholds" %}</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">{% blocktranslate %}Tune the global severity ratios, demand baselines and which constraint providers run. A threshold change re-colours severities on the <span class="text-cyan">next snapshot</span> with no deploy. A net-new provider stays disabled until you enable it here.{% endblocktranslate %}</p>
 </header>
 
 <form method="post" action="{% url 'admin_audit:command_intel_constraints' %}">
   {% csrf_token %}
   <section class="panel overflow-hidden">
-    <div class="border-b border-line px-4 py-2.5 text-[11px] uppercase tracking-wide text-faint">Global severity ratios</div>
+    <div class="border-b border-line px-4 py-2.5 text-[11px] uppercase tracking-wide text-faint">{% translate "Global severity ratios" %}</div>
     <div class="divide-y divide-line/40">
       {% for row in ratios %}
       <label class="grid grid-cols-1 items-center gap-2 px-4 py-3 hover:bg-panel2/40 sm:grid-cols-[1fr_12rem]">
@@ -27,7 +28,7 @@
   </section>
 
   <section class="panel mt-4 overflow-hidden">
-    <div class="border-b border-line px-4 py-2.5 text-[11px] uppercase tracking-wide text-faint">Constraint providers</div>
+    <div class="border-b border-line px-4 py-2.5 text-[11px] uppercase tracking-wide text-faint">{% translate "Constraint providers" %}</div>
     <div class="divide-y divide-line/40">
       {% for p in providers %}
       <label class="grid grid-cols-[1fr_4rem] items-center gap-3 px-4 py-3 hover:bg-panel2/40">
@@ -40,27 +41,27 @@
         </span>
       </label>
       {% empty %}
-      <p class="px-4 py-3 text-sm text-faint">No constraint providers are registered.</p>
+      <p class="px-4 py-3 text-sm text-faint">{% translate "No constraint providers are registered." %}</p>
       {% endfor %}
     </div>
   </section>
 
   <section class="panel mt-4 overflow-hidden">
-    <div class="border-b border-line px-4 py-2.5 text-[11px] uppercase tracking-wide text-faint">Demand targets</div>
+    <div class="border-b border-line px-4 py-2.5 text-[11px] uppercase tracking-wide text-faint">{% translate "Demand targets" %}</div>
     <div class="px-4 py-3">
-      <p class="mb-2 text-[11px] text-faint">One per line as <code class="text-faint">key value</code> — e.g. <code class="text-faint">doctrine:ferox-fleet 22</code>. Leave empty to seed demand from data.</p>
+      <p class="mb-2 text-[11px] text-faint">{% blocktranslate %}One per line as <code class="text-faint">key value</code> — e.g. <code class="text-faint">doctrine:ferox-fleet 22</code>. Leave empty to seed demand from data.{% endblocktranslate %}</p>
       <textarea name="demand_targets" rows="4" class="input-field w-full font-mono text-sm" spellcheck="false">{{ demand_text }}</textarea>
     </div>
     <div class="flex flex-wrap items-center justify-between gap-3 border-t border-line px-4 py-3">
-      <p class="text-[11px] text-faint">config v{{ meta.version }}{% if meta.by %} · last changed by {{ meta.by }}{% endif %}{% if meta.at %} · {{ meta.at|date:"j M Y H:i" }}{% endif %}</p>
-      <button class="btn-gold">Save changes</button>
+      <p class="text-[11px] text-faint">{% blocktranslate with version=meta.version %}config v{{ version }}{% endblocktranslate %}{% if meta.by %} · {% blocktranslate with by=meta.by %}last changed by {{ by }}{% endblocktranslate %}{% endif %}{% if meta.at %} · {{ meta.at|date:"j M Y H:i" }}{% endif %}</p>
+      <button class="btn-gold">{% translate "Save changes" %}</button>
     </div>
   </section>
 </form>
 
 <form method="post" action="{% url 'admin_audit:command_intel_reset' 'constraints' %}" class="mt-3">
   {% csrf_token %}
-  <button class="btn-ghost text-sm">Reset to defaults</button>
-  <span class="ml-2 text-[11px] text-faint">Restores every ratio, provider flag and demand target to the shipped defaults.</span>
+  <button class="btn-ghost text-sm">{% translate "Reset to defaults" %}</button>
+  <span class="ml-2 text-[11px] text-faint">{% translate "Restores every ratio, provider flag and demand target to the shipped defaults." %}</span>
 </form>
 {% endblock %}

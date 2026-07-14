@@ -1,58 +1,59 @@
 {% extends "base.html" %}
-{% block title %}Capsuleer Path · Console · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Capsuleer Path" %} · {% translate "Console" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
-<p class="eyebrow text-faint">Admin console › Capsuleer Path</p>
-<h1 class="mb-4 text-2xl font-bold text-ink">Capsuleer Path settings</h1>
+<p class="eyebrow text-faint">{% translate "Admin console › Capsuleer Path" %}</p>
+<h1 class="mb-4 text-2xl font-bold text-ink">{% translate "Capsuleer Path settings" %}</h1>
 
 <form method="post" action="{% url 'admin_audit:capsuleer_save' %}" class="space-y-5">
   {% csrf_token %}
   <section class="panel px-4 py-4">
-    <h2 class="eyebrow">Background jobs</h2>
-    <label class="mt-2 flex items-center gap-2 text-sm"><input type="checkbox" name="reconcile_enabled" {% if reconcile.enabled %}checked{% endif %}> Reconcile evidence sweep enabled</label>
-    <label class="mt-1 flex items-center gap-2 text-sm"><input type="checkbox" name="suggestions_enabled" {% if suggestions.enabled %}checked{% endif %}> Suggestion generation enabled</label>
+    <h2 class="eyebrow">{% translate "Background jobs" %}</h2>
+    <label class="mt-2 flex items-center gap-2 text-sm"><input type="checkbox" name="reconcile_enabled" {% if reconcile.enabled %}checked{% endif %}> {% translate "Reconcile evidence sweep enabled" %}</label>
+    <label class="mt-1 flex items-center gap-2 text-sm"><input type="checkbox" name="suggestions_enabled" {% if suggestions.enabled %}checked{% endif %}> {% translate "Suggestion generation enabled" %}</label>
   </section>
 
   <section class="panel px-4 py-4">
-    <h2 class="eyebrow">Suggestions &amp; leadership</h2>
+    <h2 class="eyebrow">{% translate "Suggestions &amp; leadership" %}</h2>
     <div class="mt-2 grid gap-3 sm:grid-cols-2">
-      <label class="label">Max open suggestions per pilot <input type="number" name="max_open_per_user" min="1" value="{{ suggestions.max_open_per_user }}" class="input-field mt-1"></label>
-      <label class="label">Leadership min group (floor 2) <input type="number" name="min_group" min="2" value="{{ leadership.min_group }}" class="input-field mt-1"></label>
+      <label class="label">{% translate "Max open suggestions per pilot" %} <input type="number" name="max_open_per_user" min="1" value="{{ suggestions.max_open_per_user }}" class="input-field mt-1"></label>
+      <label class="label">{% translate "Leadership min group (floor 2)" %} <input type="number" name="min_group" min="2" value="{{ leadership.min_group }}" class="input-field mt-1"></label>
     </div>
   </section>
 
   <section class="panel px-4 py-4">
-    <h2 class="eyebrow">Retention (days)</h2>
+    <h2 class="eyebrow">{% translate "Retention (days)" %}</h2>
     <div class="mt-2 grid gap-3 sm:grid-cols-3">
-      <label class="label">Snapshots <input type="number" name="snapshots_days" min="1" value="{{ retention.snapshots_days }}" class="input-field mt-1"></label>
-      <label class="label">Closed suggestions <input type="number" name="suggestions_days" min="1" value="{{ retention.suggestions_days }}" class="input-field mt-1"></label>
-      <label class="label">Archived-goal activity <input type="number" name="activity_days" min="1" value="{{ retention.activity_days }}" class="input-field mt-1"></label>
+      <label class="label">{% translate "Snapshots" %} <input type="number" name="snapshots_days" min="1" value="{{ retention.snapshots_days }}" class="input-field mt-1"></label>
+      <label class="label">{% translate "Closed suggestions" %} <input type="number" name="suggestions_days" min="1" value="{{ retention.suggestions_days }}" class="input-field mt-1"></label>
+      <label class="label">{% translate "Archived-goal activity" %} <input type="number" name="activity_days" min="1" value="{{ retention.activity_days }}" class="input-field mt-1"></label>
     </div>
   </section>
 
   <section class="panel px-4 py-4">
-    <h2 class="eyebrow">Notifications (disarmed by default)</h2>
-    <p class="mt-1 text-xs text-faint">Arming an event here sends per-pilot DMs. Pingboard governance can still override.</p>
+    <h2 class="eyebrow">{% translate "Notifications (disarmed by default)" %}</h2>
+    <p class="mt-1 text-xs text-faint">{% translate "Arming an event here sends per-pilot DMs. Pingboard governance can still override." %}</p>
     <div class="mt-2 grid gap-1.5 sm:grid-cols-2">
       {% for ev in notification_events %}
-      <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="notify_{{ ev.key }}" {% if ev.armed %}checked{% endif %}> Arm {{ ev.key }}</label>
+      <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="notify_{{ ev.key }}" {% if ev.armed %}checked{% endif %}> {% blocktranslate with key=ev.key %}Arm {{ key }}{% endblocktranslate %}</label>
       {% endfor %}
     </div>
   </section>
 
   <section class="panel px-4 py-4">
-    <h2 class="eyebrow">Built-in templates</h2>
-    <p class="mt-1 text-xs text-faint">Ticked templates are hidden from the catalogue and wizard (never deleted).</p>
+    <h2 class="eyebrow">{% translate "Built-in templates" %}</h2>
+    <p class="mt-1 text-xs text-faint">{% translate "Ticked templates are hidden from the catalogue and wizard (never deleted)." %}</p>
     <div class="mt-2 grid gap-1.5 sm:grid-cols-2">
       {% for t in builtin_templates %}
-      <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="disabled_keys" value="{{ t.key }}" {% if t.key in templates_cfg.disabled_keys %}checked{% endif %}> Hide “{{ t.name }}”</label>
+      <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="disabled_keys" value="{{ t.key }}" {% if t.key in templates_cfg.disabled_keys %}checked{% endif %}> {% blocktranslate with name=t.name %}Hide “{{ name }}”{% endblocktranslate %}</label>
       {% endfor %}
     </div>
   </section>
 
   <div class="flex flex-wrap items-center gap-3">
-    <button class="btn-gold text-sm">Save settings</button>
-    <button name="action" value="reset" class="btn-ghost text-sm text-faint" data-confirm="Reset every Capsuleer Path setting to its shipped default?">Reset to defaults</button>
+    <button class="btn-gold text-sm">{% translate "Save settings" %}</button>
+    <button name="action" value="reset" class="btn-ghost text-sm text-faint" data-confirm="{% translate 'Reset every Capsuleer Path setting to its shipped default?' %}">{% translate "Reset to defaults" %}</button>
   </div>
-  {% if meta.at %}<p class="mt-3 text-[11px] text-faint">Config v{{ meta.version }}{% if meta.by %} · last changed by {{ meta.by }}{% endif %} · {{ meta.at|date:"d M Y H:i" }}</p>{% endif %}
+  {% if meta.at %}<p class="mt-3 text-[11px] text-faint">{% blocktranslate with version=meta.version %}Config v{{ version }}{% endblocktranslate %}{% if meta.by %} · {% blocktranslate with by=meta.by %}last changed by {{ by }}{% endblocktranslate %}{% endif %} · {{ meta.at|date:"d M Y H:i" }}</p>{% endif %}
 </form>
 {% endblock %}

@@ -57,7 +57,7 @@
             <svg class="h-4 w-4 shrink-0 text-faint transition-transform duration-200" :class="open && 'rotate-90'" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
             <svg class="h-5 w-5 text-faint"><use href="#i-box"/></svg>
             <div>
-              <h2 class="font-display font-semibold text-ink">{{ loc.name|default:"Unknown location" }}</h2>
+              <h2 class="font-display font-semibold text-ink">{% translate "Unknown location" as default_loc %}{{ loc.name|default:default_loc }}</h2>
               {% if loc.system_id %}<p class="text-xs text-faint">{% system_name loc.system_id %}{% if loc.kind_display %} · {{ loc.kind_display }}{% endif %}</p>{% endif %}
             </div>
           </div>

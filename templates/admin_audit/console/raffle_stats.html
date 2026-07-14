@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load eve static %}
-{% block title %}Statistics · {{ contest.name }} · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Statistics" %} · {{ contest.name }} · [FORCA] Command Grid{% endblock %}
 
 {% block extra_head %}
 <script defer src="{% static 'js/vendor/chart.umd.js' %}"></script>
@@ -9,74 +10,74 @@
 {% block content %}
 <header class="mb-6 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <p class="eyebrow text-gold">Raffle · {{ contest.name }}</p>
-    <h1 class="mt-1 text-2xl font-bold text-ink">Statistics &amp; report</h1>
-    <p class="mt-1 text-sm text-faint">Where the tickets came from, who took part, and how the contest grew app adoption.</p>
+    <p class="eyebrow text-gold">{% translate "Raffle" %} · {{ contest.name }}</p>
+    <h1 class="mt-1 text-2xl font-bold text-ink">{% translate "Statistics &amp; report" %}</h1>
+    <p class="mt-1 text-sm text-faint">{% translate "Where the tickets came from, who took part, and how the contest grew app adoption." %}</p>
   </div>
   <div class="flex items-center gap-2">
-    <a href="?export=json" class="btn-cyan text-sm">Export JSON</a>
-    <a href="{% url 'admin_audit:raffle_detail' contest.pk %}" class="btn-ghost text-sm">← Back</a>
+    <a href="?export=json" class="btn-cyan text-sm">{% translate "Export JSON" %}</a>
+    <a href="{% url 'admin_audit:raffle_detail' contest.pk %}" class="btn-ghost text-sm">← {% translate "Back" %}</a>
   </div>
 </header>
 
 <section class="mb-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
   <div class="panel p-4">
-    <p class="eyebrow text-faint">Tickets in the pool</p>
+    <p class="eyebrow text-faint">{% translate "Tickets in the pool" %}</p>
     <p class="data mt-1 text-2xl font-bold text-cyan">{{ stats.total_tickets }}</p>
   </div>
   <div class="panel p-4">
-    <p class="eyebrow text-faint">Participants</p>
+    <p class="eyebrow text-faint">{% translate "Participants" %}</p>
     <p class="data mt-1 text-2xl font-bold text-gold">{{ stats.participants }}</p>
   </div>
   <div class="panel p-4">
-    <p class="eyebrow text-faint">Eligible to win</p>
+    <p class="eyebrow text-faint">{% translate "Eligible to win" %}</p>
     <p class="data mt-1 text-2xl font-bold text-kill">{{ stats.eligible_participants }}</p>
   </div>
   <div class="panel p-4">
-    <p class="eyebrow text-faint">Prize pool</p>
+    <p class="eyebrow text-faint">{% translate "Prize pool" %}</p>
     <p class="data mt-1 text-2xl font-bold text-gold">{{ stats.prize_value|isk }}</p>
   </div>
 </section>
 <section class="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
   <div class="panel p-4">
-    <p class="eyebrow text-faint">Manual grants</p>
+    <p class="eyebrow text-faint">{% translate "Manual grants" %}</p>
     <p class="data mt-1 text-xl font-bold text-muted">{{ stats.manual_total }}</p>
   </div>
   <div class="panel p-4">
-    <p class="eyebrow text-faint">Kill value driven</p>
+    <p class="eyebrow text-faint">{% translate "Kill value driven" %}</p>
     <p class="data mt-1 text-xl font-bold text-muted">{{ stats.kill_value|isk }}</p>
   </div>
   <div class="panel p-4">
-    <p class="eyebrow text-faint">Ineligible events</p>
+    <p class="eyebrow text-faint">{% translate "Ineligible events" %}</p>
     <p class="data mt-1 text-xl font-bold text-loss">{{ stats.ineligible_events }}</p>
   </div>
   <div class="panel p-4">
-    <p class="eyebrow text-faint">Tickets / prize ISK</p>
+    <p class="eyebrow text-faint">{% translate "Tickets / prize ISK" %}</p>
     <p class="data mt-1 text-xl font-bold text-muted">{{ stats.tickets_per_prize_value }}</p>
-    <p class="mt-0.5 text-[11px] text-faint">pool size vs prize value</p>
+    <p class="mt-0.5 text-[11px] text-faint">{% translate "pool size vs prize value" %}</p>
   </div>
 </section>
 
 {% comment %}ESI-adoption funnel — the "grow the app" scoreboard.{% endcomment %}
 <section class="panel mb-6 overflow-hidden">
   <div class="border-b border-line px-4 py-3">
-    <h2 class="eyebrow text-gold">ESI adoption</h2>
-    <p class="mt-1 text-xs text-faint">Only enrolled pilots with a live ESI token earn tickets and can win. These figures are corp-wide.</p>
+    <h2 class="eyebrow text-gold">{% translate "ESI adoption" %}</h2>
+    <p class="mt-1 text-xs text-faint">{% translate "Only enrolled pilots with a live ESI token earn tickets and can win. These figures are corp-wide." %}</p>
   </div>
   <div class="grid gap-3 px-4 py-4 sm:grid-cols-3 lg:grid-cols-6">
-    <div><p class="eyebrow text-faint">Active pilots</p><p class="data mt-1 text-xl font-bold text-ink">{{ adoption.active_pilots }}</p></div>
-    <div><p class="eyebrow text-faint">Enrolled</p><p class="data mt-1 text-xl font-bold text-kill">{{ adoption.enrolled }}</p></div>
-    <div><p class="eyebrow text-faint">Valid token</p><p class="data mt-1 text-xl font-bold text-cyan">{{ adoption.with_valid_token }}</p></div>
-    <div><p class="eyebrow text-faint">Expired / revoked</p><p class="data mt-1 text-xl font-bold text-loss">{{ adoption.expired_or_revoked }}</p></div>
-    <div><p class="eyebrow text-faint">Conversion</p><p class="data mt-1 text-xl font-bold text-gold">{{ adoption.conversion_rate }}%</p></div>
-    <div><p class="eyebrow text-faint">Unenrolled w/ activity</p><p class="data mt-1 text-xl font-bold text-gold">{{ adoption.unenrolled_with_activity }}</p></div>
+    <div><p class="eyebrow text-faint">{% translate "Active pilots" %}</p><p class="data mt-1 text-xl font-bold text-ink">{{ adoption.active_pilots }}</p></div>
+    <div><p class="eyebrow text-faint">{% translate "Enrolled" %}</p><p class="data mt-1 text-xl font-bold text-kill">{{ adoption.enrolled }}</p></div>
+    <div><p class="eyebrow text-faint">{% translate "Valid token" %}</p><p class="data mt-1 text-xl font-bold text-cyan">{{ adoption.with_valid_token }}</p></div>
+    <div><p class="eyebrow text-faint">{% translate "Expired / revoked" %}</p><p class="data mt-1 text-xl font-bold text-loss">{{ adoption.expired_or_revoked }}</p></div>
+    <div><p class="eyebrow text-faint">{% translate "Conversion" %}</p><p class="data mt-1 text-xl font-bold text-gold">{{ adoption.conversion_rate }}%</p></div>
+    <div><p class="eyebrow text-faint">{% translate "Unenrolled w/ activity" %}</p><p class="data mt-1 text-xl font-bold text-gold">{{ adoption.unenrolled_with_activity }}</p></div>
   </div>
 </section>
 
 <div class="mb-6 grid gap-6 lg:grid-cols-2">
   {% comment %}Tickets by source — list + doughnut.{% endcomment %}
   <section class="panel overflow-hidden">
-    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Tickets by source</h2></div>
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "Tickets by source" %}</h2></div>
     {% if stats.by_source %}
     <div class="grid items-center gap-3 p-4 sm:grid-cols-[160px_1fr]">
       <div class="relative mx-auto h-40 w-40 skeleton"><canvas id="raffle-src-chart"></canvas></div>
@@ -90,18 +91,18 @@
       </ol>
     </div>
     {% else %}
-    <p class="px-4 py-10 text-center text-xs text-faint">No tickets awarded yet.</p>
+    <p class="px-4 py-10 text-center text-xs text-faint">{% translate "No tickets awarded yet." %}</p>
     {% endif %}
   </section>
 
   {% comment %}PVP contribution breakdown.{% endcomment %}
   <section class="panel overflow-hidden">
-    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">PVP contribution</h2></div>
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "PVP contribution" %}</h2></div>
     <div class="grid grid-cols-2 gap-3 p-4 sm:grid-cols-4">
-      <div><p class="eyebrow text-faint">Kills</p><p class="data mt-1 text-xl font-bold text-kill">{{ stats.pvp.kills }}</p></div>
-      <div><p class="eyebrow text-faint">Participation</p><p class="data mt-1 text-xl font-bold text-cyan">{{ stats.pvp.participation }}</p></div>
-      <div><p class="eyebrow text-faint">Final blows</p><p class="data mt-1 text-xl font-bold text-gold">{{ stats.pvp.final_blows }}</p></div>
-      <div><p class="eyebrow text-faint">Solo</p><p class="data mt-1 text-xl font-bold text-muted">{{ stats.pvp.solo }}</p></div>
+      <div><p class="eyebrow text-faint">{% translate "Kills" %}</p><p class="data mt-1 text-xl font-bold text-kill">{{ stats.pvp.kills }}</p></div>
+      <div><p class="eyebrow text-faint">{% translate "Participation" %}</p><p class="data mt-1 text-xl font-bold text-cyan">{{ stats.pvp.participation }}</p></div>
+      <div><p class="eyebrow text-faint">{% translate "Final blows" %}</p><p class="data mt-1 text-xl font-bold text-gold">{{ stats.pvp.final_blows }}</p></div>
+      <div><p class="eyebrow text-faint">{% translate "Solo" %}</p><p class="data mt-1 text-xl font-bold text-muted">{{ stats.pvp.solo }}</p></div>
     </div>
   </section>
 </div>
@@ -109,15 +110,15 @@
 <div class="mb-6 grid gap-6 lg:grid-cols-2">
   {% comment %}Top pilots by tickets.{% endcomment %}
   <section class="panel overflow-hidden">
-    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Top pilots</h2></div>
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "Top pilots" %}</h2></div>
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
         <thead>
           <tr class="border-b border-line/60 text-left text-[11px] uppercase tracking-wide text-faint">
             <th class="px-4 py-2 font-medium">#</th>
-            <th class="px-4 py-2 font-medium">Pilot</th>
-            <th class="px-4 py-2 text-right font-medium">Tickets</th>
-            <th class="px-4 py-2 text-right font-medium">PVP kills</th>
+            <th class="px-4 py-2 font-medium">{% translate "Pilot" %}</th>
+            <th class="px-4 py-2 text-right font-medium">{% translate "Tickets" %}</th>
+            <th class="px-4 py-2 text-right font-medium">{% translate "PVP kills" %}</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-line/40">
@@ -129,7 +130,7 @@
               <td class="px-4 py-2.5 text-right"><span class="data text-muted">{{ p.pvp_kills }}</span></td>
             </tr>
           {% empty %}
-            <tr><td colspan="4" class="px-4 py-10 text-center text-faint">No eligible participants yet.</td></tr>
+            <tr><td colspan="4" class="px-4 py-10 text-center text-faint">{% translate "No eligible participants yet." %}</td></tr>
           {% endfor %}
         </tbody>
       </table>
@@ -138,16 +139,16 @@
 
   {% comment %}Manual grants by category.{% endcomment %}
   <section class="panel overflow-hidden">
-    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Manual grants by category</h2></div>
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "Manual grants by category" %}</h2></div>
     <div class="divide-y divide-line/40">
-      {% for m in stats.manual_by_category %}
+      {% translate "(uncategorised)" as l_uncategorised %}{% for m in stats.manual_by_category %}
         <div class="flex items-center gap-3 px-4 py-2.5 text-sm">
-          <span class="min-w-0 flex-1 truncate text-ink">{{ m.category|default:"(uncategorised)" }}</span>
-          <span class="data shrink-0 text-xs text-faint">{{ m.c }} grant{{ m.c|pluralize }}</span>
-          <span class="data shrink-0 text-xs font-semibold text-gold">{{ m.n }} tickets</span>
+          <span class="min-w-0 flex-1 truncate text-ink">{{ m.category|default:l_uncategorised }}</span>
+          <span class="data shrink-0 text-xs text-faint">{% blocktranslate count c=m.c %}{{ c }} grant{% plural %}{{ c }} grants{% endblocktranslate %}</span>
+          <span class="data shrink-0 text-xs font-semibold text-gold">{% blocktranslate with n=m.n %}{{ n }} tickets{% endblocktranslate %}</span>
         </div>
       {% empty %}
-        <p class="px-4 py-10 text-center text-sm text-faint">No manual grants recorded.</p>
+        <p class="px-4 py-10 text-center text-sm text-faint">{% translate "No manual grants recorded." %}</p>
       {% endfor %}
     </div>
   </section>
@@ -155,7 +156,7 @@
 
 {% if recommendations %}
 <section class="panel overflow-hidden">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Recommendations for next time</h2></div>
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "Recommendations for next time" %}</h2></div>
   <ul class="space-y-2 px-4 py-3 text-sm text-muted">
     {% for rec in recommendations %}
       <li class="flex gap-2"><span class="text-gold">•</span><span>{{ rec }}</span></li>

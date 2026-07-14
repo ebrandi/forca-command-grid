@@ -16,7 +16,7 @@ report_detail.html) and as the htmx terminal fragment.
     {% if report.prompt_version %}· prompt v{{ report.prompt_version }}{% endif %}
     {% if report.latency_ms %}· {{ report.latency_ms }}ms{% endif %}
   </p>
-  <h1 class="mt-1 font-display text-2xl font-bold text-ink">{{ report.title|default:"Command Intelligence Report" }}</h1>
+  <h1 class="mt-1 font-display text-2xl font-bold text-ink">{% translate "Command Intelligence Report" as default_title %}{{ report.title|default:default_title }}</h1>
   <p class="mt-1 text-sm text-faint">
     {% if report.requested_by %}{% blocktranslate with user=report.requested_by.username %}Requested by {{ user }}{% endblocktranslate %} · {% endif %}
     {% if report.generated_at %}{% blocktranslate with date=report.generated_at|date:"d M Y H:i" %}generated {{ date }}{% endblocktranslate %} · {% endif %}

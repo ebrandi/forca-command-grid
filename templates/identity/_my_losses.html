@@ -1,4 +1,5 @@
 {% load eve %}
+{% load i18n %}
 {% comment %}
 "My recent losses" rows with the inline Claim-SRP form. Shared by two branches
 of the dashboard: inside the combat log (features.killboard) and as a standalone
@@ -8,22 +9,22 @@ plain text in that state so nothing dead-links.
 {% if my_losses %}
 <div class="{% if features.killboard %}border-t border-line{% endif %}">
   <div class="flex items-center justify-between px-4 pt-3">
-    <p class="eyebrow text-loss">My recent losses</p>
-    {% if features.srp %}<a href="{% url 'srp:mine' %}" class="text-xs text-faint hover:text-gold">My SRP →</a>{% endif %}
+    <p class="eyebrow text-loss">{% translate "My recent losses" %}</p>
+    {% if features.srp %}<a href="{% url 'srp:mine' %}" class="text-xs text-faint hover:text-gold">{% translate "My SRP" %} →</a>{% endif %}
   </div>
   <div class="divide-y divide-line/40">
     {% for row in my_losses %}
       <div class="flex items-center gap-3 px-4 py-2 text-sm">
         <img src="{% eve_type_icon row.km.victim_ship_type_id 32 %}" alt="" loading="lazy" class="h-6 w-6 rounded-sm">
-        {% if features.killboard %}<a href="{% url 'killboard:detail' row.km.killmail_id %}" class="min-w-0 flex-1 truncate text-muted hover:text-ink">{% else %}<span class="min-w-0 flex-1 truncate text-muted">{% endif %}{% type_name row.km.victim_ship_type_id %} <span class="text-faint">· {{ row.km.killmail_time|timesince }} ago</span>{% if features.killboard %}</a>{% else %}</span>{% endif %}
+        {% if features.killboard %}<a href="{% url 'killboard:detail' row.km.killmail_id %}" class="min-w-0 flex-1 truncate text-muted hover:text-ink">{% else %}<span class="min-w-0 flex-1 truncate text-muted">{% endif %}{% type_name row.km.victim_ship_type_id %} <span class="text-faint">· {% blocktranslate with ago=row.km.killmail_time|timesince %}{{ ago }} ago{% endblocktranslate %}</span>{% if features.killboard %}</a>{% else %}</span>{% endif %}
         {% if row.srp_claim %}
           {# The whole lifecycle, not just "claimed": pilots chase payouts. #}
-          {% if row.srp_claim.status == 'paid' %}<span class="chip !border-kill/40 !text-kill" title="paid {{ row.srp_claim.decided_at|timesince }} ago">SRP paid · {{ row.srp_claim.payout|isk }}</span>
-          {% elif row.srp_claim.status == 'approved' %}<span class="chip !border-cyan/40 !text-cyan" title="approved — payout on the way">SRP approved · {{ row.srp_claim.payout|isk }}</span>
-          {% elif row.srp_claim.status == 'denied' %}<span class="chip !border-loss/40 !text-loss"{% if row.srp_claim.reason %} title="{{ row.srp_claim.reason }}"{% endif %}>SRP denied</span>
-          {% else %}<span class="chip !border-gold/40 !text-gold" title="submitted — awaiting review">SRP pending</span>{% endif %}
+          {% if row.srp_claim.status == 'paid' %}<span class="chip !border-kill/40 !text-kill" title="{% blocktranslate with ago=row.srp_claim.decided_at|timesince %}paid {{ ago }} ago{% endblocktranslate %}">{% translate "SRP paid" %} · {{ row.srp_claim.payout|isk }}</span>
+          {% elif row.srp_claim.status == 'approved' %}<span class="chip !border-cyan/40 !text-cyan" title="{% translate 'approved — payout on the way' %}">{% translate "SRP approved" %} · {{ row.srp_claim.payout|isk }}</span>
+          {% elif row.srp_claim.status == 'denied' %}<span class="chip !border-loss/40 !text-loss"{% if row.srp_claim.reason %} title="{{ row.srp_claim.reason }}"{% endif %}>{% translate "SRP denied" %}</span>
+          {% else %}<span class="chip !border-gold/40 !text-gold" title="{% translate 'submitted — awaiting review' %}">{% translate "SRP pending" %}</span>{% endif %}
         {% elif row.srp_eligible and features.srp %}
-          <form method="post" action="{% url 'srp:claim' %}">{% csrf_token %}<input type="hidden" name="killmail_id" value="{{ row.km.killmail_id }}"><button class="btn-cyan !py-1 text-xs">Claim SRP{% if row.srp_payout %} · {{ row.srp_payout|isk }}{% endif %}</button></form>
+          <form method="post" action="{% url 'srp:claim' %}">{% csrf_token %}<input type="hidden" name="killmail_id" value="{{ row.km.killmail_id }}"><button class="btn-cyan !py-1 text-xs">{% translate "Claim SRP" %}{% if row.srp_payout %} · {{ row.srp_payout|isk }}{% endif %}</button></form>
         {% else %}<span class="data text-xs text-loss">−{{ row.km.total_value|isk }}</span>{% endif %}
       </div>
     {% endfor %}

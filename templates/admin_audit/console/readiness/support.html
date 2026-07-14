@@ -1,29 +1,30 @@
 {% extends "base.html" %}
-{% block title %}Readiness · Fleet support skills · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Readiness" %} · {% translate "Fleet support skills" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
-<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← {% translate "Admin console" %}</a>
 <header class="mt-2 mb-6">
-  <p class="eyebrow">Readiness configuration</p>
-  <h1 class="mt-1 text-3xl font-bold text-ink">Fleet support skills</h1>
-  <p class="mt-1 max-w-2xl text-sm text-faint">The skills that make a fleet survivable and boosted — warfare-link
+  <p class="eyebrow">{% translate "Readiness configuration" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Fleet support skills" %}</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">{% blocktranslate %}The skills that make a fleet survivable and boosted — warfare-link
     specialists, command bursts, logi cap-transfer, and the like. The <span class="text-cyan">Fleet Support</span>
     dimension scores the share of members trained to each one (at the level you set), averaged across the list.
-    <span class="text-ink">While this list is empty the dimension is unavailable</span> — it stays disabled until you add a skill.</p>
+    <span class="text-ink">While this list is empty the dimension is unavailable</span> — it stays disabled until you add a skill.{% endblocktranslate %}</p>
 </header>
 
 
 {% if skills %}
   {% if dimension_enabled %}
-    <p class="mb-4 text-xs text-faint">The Fleet Support dimension is <span class="text-cyan">enabled</span> and contributes to the readiness index. Adjust this on <a href="{% url 'admin_audit:readiness_dimensions' %}" class="text-gold hover:underline">Dimensions &amp; weights</a>.</p>
+    <p class="mb-4 text-xs text-faint">{% url 'admin_audit:readiness_dimensions' as dimensions_url %}{% blocktranslate with url=dimensions_url %}The Fleet Support dimension is <span class="text-cyan">enabled</span> and contributes to the readiness index. Adjust this on <a href="{{ url }}" class="text-gold hover:underline">Dimensions &amp; weights</a>.{% endblocktranslate %}</p>
   {% else %}
-    <p class="mb-4 text-xs text-faint">This dimension scores now but is <span class="text-ink">not yet in the index</span> — enable it on <a href="{% url 'admin_audit:readiness_dimensions' %}" class="text-gold hover:underline">Dimensions &amp; weights</a> when you're ready.</p>
+    <p class="mb-4 text-xs text-faint">{% url 'admin_audit:readiness_dimensions' as dimensions_url %}{% blocktranslate with url=dimensions_url %}This dimension scores now but is <span class="text-ink">not yet in the index</span> — enable it on <a href="{{ url }}" class="text-gold hover:underline">Dimensions &amp; weights</a> when you're ready.{% endblocktranslate %}</p>
   {% endif %}
 {% endif %}
 
 <section class="panel mb-6 overflow-hidden">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">Support skills</h2></div>
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "Support skills" %}</h2></div>
   {% if not skills %}
-    <p class="px-4 py-8 text-center text-sm text-faint">No support skills yet — add one below. Until you do, the Fleet Support dimension has nothing to score and stays unavailable.</p>
+    <p class="px-4 py-8 text-center text-sm text-faint">{% translate "No support skills yet — add one below. Until you do, the Fleet Support dimension has nothing to score and stays unavailable." %}</p>
   {% else %}
   <div class="divide-y divide-line/50">
     {% for s in skills %}
@@ -31,37 +32,37 @@
       {% csrf_token %}
       <input type="hidden" name="skill_type_id" value="{{ s.skill_type_id }}">
       <div class="col-span-2 sm:col-span-3">
-        <p class="text-xs text-faint">Skill</p>
+        <p class="text-xs text-faint">{% translate "Skill" %}</p>
         <p class="mt-1 font-display text-sm text-ink">{{ s.skill_name|default:s.skill_type_id }}</p>
       </div>
-      <label class="text-xs text-faint">Min level
+      <label class="text-xs text-faint">{% translate "Min level" %}
         <select name="min_level" class="input-field mt-1 w-full">{% for lvl in levels %}<option value="{{ lvl }}" {% if s.min_level == lvl %}selected{% endif %}>L{{ lvl }}</option>{% endfor %}</select>
       </label>
-      <label class="flex items-center gap-1 text-xs text-faint"><input type="checkbox" name="active" {% if s.active %}checked{% endif %}> active</label>
+      <label class="flex items-center gap-1 text-xs text-faint"><input type="checkbox" name="active" {% if s.active %}checked{% endif %}> {% translate "active" %}</label>
       <div class="flex items-center gap-3">
-        <button class="btn-ghost !py-1 text-xs">Save</button>
+        <button class="btn-ghost !py-1 text-xs">{% translate "Save" %}</button>
       </div>
     </form>
-    <form method="post" action="{% url 'admin_audit:readiness_support_skill_delete' s.id %}" class="px-4 pb-2 -mt-2">{% csrf_token %}<button class="text-[11px] text-faint hover:text-loss">Remove</button></form>
+    <form method="post" action="{% url 'admin_audit:readiness_support_skill_delete' s.id %}" class="px-4 pb-2 -mt-2">{% csrf_token %}<button class="text-[11px] text-faint hover:text-loss">{% translate "Remove" %}</button></form>
     {% endfor %}
   </div>
   {% endif %}
 </section>
 
 <section class="panel">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">Add a support skill</h2></div>
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">{% translate "Add a support skill" %}</h2></div>
   <form method="post" action="{% url 'admin_audit:readiness_support_skill_create' %}" class="grid grid-cols-2 items-end gap-3 p-4 sm:grid-cols-6">
     {% csrf_token %}
     {% url 'admin_audit:readiness_support_skill_search' as skill_search_url %}
     <div class="col-span-2 sm:col-span-3">
-      <p class="mb-1 text-xs text-faint">Skill</p>
-      {% include 'components/_type_picker.html' with field='skill_type_id' endpoint=skill_search_url placeholder='Search skills, e.g. Armored Command…' required=1 %}
+      <p class="mb-1 text-xs text-faint">{% translate "Skill" %}</p>
+      {% translate "Search skills, e.g. Armored Command…" as skill_search_ph %}{% include 'components/_type_picker.html' with field='skill_type_id' endpoint=skill_search_url placeholder=skill_search_ph required=1 %}
     </div>
-    <label class="text-xs text-faint">Min level
+    <label class="text-xs text-faint">{% translate "Min level" %}
       <select name="min_level" class="input-field mt-1 w-full">{% for lvl in levels %}<option value="{{ lvl }}" {% if lvl == 5 %}selected{% endif %}>L{{ lvl }}</option>{% endfor %}</select>
     </label>
-    <label class="flex items-center gap-1 text-xs text-faint"><input type="checkbox" name="active" checked> active</label>
-    <button class="btn-gold !py-1 text-sm">Add skill</button>
+    <label class="flex items-center gap-1 text-xs text-faint"><input type="checkbox" name="active" checked> {% translate "active" %}</label>
+    <button class="btn-gold !py-1 text-sm">{% translate "Add skill" %}</button>
   </form>
 </section>
 {% endblock %}

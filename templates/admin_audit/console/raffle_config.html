@@ -1,14 +1,15 @@
 {% extends "base.html" %}
 {% load eve %}
-{% block title %}Raffle settings · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Raffle settings" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <header class="mb-6 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <p class="eyebrow text-gold">Raffle · Leadership</p>
-    <h1 class="mt-1 text-2xl font-bold text-ink">Raffle settings</h1>
-    <p class="mt-1 max-w-2xl text-sm text-faint">Raffle-wide settings that sit above any single contest — the pilot-facing intro and the off-by-default emergency grant override.</p>
+    <p class="eyebrow text-gold">{% translate "Raffle · Leadership" %}</p>
+    <h1 class="mt-1 text-2xl font-bold text-ink">{% translate "Raffle settings" %}</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Raffle-wide settings that sit above any single contest — the pilot-facing intro and the off-by-default emergency grant override." %}</p>
   </div>
-  <a href="{% url 'admin_audit:raffle_hub' %}" class="btn-ghost text-sm">← Contests</a>
+  <a href="{% url 'admin_audit:raffle_hub' %}" class="btn-ghost text-sm">{% translate "← Contests" %}</a>
 </header>
 
 <form method="post" action="{% url 'admin_audit:raffle_config' %}" class="max-w-2xl space-y-5">
@@ -16,49 +17,49 @@
   {% if form.non_field_errors %}<div class="panel border-loss/40 bg-loss/10 px-4 py-2 text-sm text-loss">{{ form.non_field_errors }}</div>{% endif %}
 
   <section class="panel p-5">
-    <h2 class="eyebrow mb-3 text-gold">Pilot-facing intro</h2>
-    <label class="label">Intro text</label>
+    <h2 class="eyebrow mb-3 text-gold">{% translate "Pilot-facing intro" %}</h2>
+    <label class="label">{% translate "Intro text" %}</label>
     {{ form.intro_text }}
-    <p class="mt-1 text-[11px] text-faint">Shown at the top of the pilot's raffle pages — explain the deal and the enrol-with-ESI call to action in your own words.</p>
+    <p class="mt-1 text-[11px] text-faint">{% translate "Shown at the top of the pilot's raffle pages — explain the deal and the enrol-with-ESI call to action in your own words." %}</p>
     {% if form.intro_text.errors %}<p class="mt-1 text-xs text-loss">{{ form.intro_text.errors|join:" " }}</p>{% endif %}
   </section>
 
   <section class="panel p-5">
-    <h2 class="eyebrow mb-3 text-gold">Monthly prize budget</h2>
+    <h2 class="eyebrow mb-3 text-gold">{% translate "Monthly prize budget" %}</h2>
     <div class="grid gap-4 sm:grid-cols-2">
       <div>
-        <label class="label">Monthly ISK ceiling</label>
+        <label class="label">{% translate "Monthly ISK ceiling" %}</label>
         {{ form.monthly_prize_budget }}
-        <p class="mt-1 text-[11px] text-faint">Total prize value allowed per month (counted in the month a contest draws). 0 = no limit. New contests are held from going live once a month is committed past it.</p>
+        <p class="mt-1 text-[11px] text-faint">{% translate "Total prize value allowed per month (counted in the month a contest draws). 0 = no limit. New contests are held from going live once a month is committed past it." %}</p>
         {% if form.monthly_prize_budget.errors %}<p class="mt-1 text-xs text-loss">{{ form.monthly_prize_budget.errors|join:" " }}</p>{% endif %}
       </div>
       <div>
-        <label class="label">Warn at (% of ceiling)</label>
+        <label class="label">{% translate "Warn at (% of ceiling)" %}</label>
         {{ form.budget_warn_pct }}
         {% if form.budget_warn_pct.errors %}<p class="mt-1 text-xs text-loss">{{ form.budget_warn_pct.errors|join:" " }}</p>{% endif %}
       </div>
     </div>
     {% if budget.enabled %}
     <div class="mt-4 rounded-md border p-3 text-sm {% if budget.state == 'over' %}border-loss/40 bg-loss/10 text-loss{% elif budget.state == 'warn' %}border-gold/40 bg-gold/5 text-gold{% else %}border-line text-faint{% endif %}">
-      This month: <strong>{{ budget.spent|floatformat:0 }}</strong> / {{ budget.ceiling|floatformat:0 }} ISK committed ({{ budget.pct }}%){% if budget.state == 'over' %} — <strong>over budget</strong>; new contests are on hold{% elif budget.state == 'warn' %} — nearing the ceiling{% endif %}.
+      {% blocktranslate with spent=budget.spent|floatformat:0 ceiling=budget.ceiling|floatformat:0 pct=budget.pct %}This month: <strong>{{ spent }}</strong> / {{ ceiling }} ISK committed ({{ pct }}%){% endblocktranslate %}{% if budget.state == 'over' %} {% blocktranslate %}— <strong>over budget</strong>; new contests are on hold{% endblocktranslate %}{% elif budget.state == 'warn' %} {% translate "— nearing the ceiling" %}{% endif %}.
     </div>
     {% endif %}
   </section>
 
   <section class="panel border-loss/40 p-5">
     <div class="flex items-center gap-2">
-      <span class="chip !border-loss/40 !text-loss">Danger</span>
-      <h2 class="eyebrow text-loss">Emergency grant override</h2>
+      <span class="chip !border-loss/40 !text-loss">{% translate "Danger" %}</span>
+      <h2 class="eyebrow text-loss">{% translate "Emergency grant override" %}</h2>
     </div>
     <div class="mt-3 rounded-md border border-loss/40 bg-loss/10 p-3 text-sm text-loss">
-      <p><strong>Keep this OFF.</strong> When enabled, it lets a Director grant tickets to a pilot who is <strong>not enrolled in FORCA</strong> or has no valid ESI token — bypassing the core rule that only enrolled, ESI-connected pilots earn tickets and can win.</p>
-      <p class="mt-2">Every such grant is audited and still needs the Director role plus a per-grant confirmation. Turn it on only for a genuine, one-off emergency, then turn it straight back off.</p>
+      <p>{% blocktranslate %}<strong>Keep this OFF.</strong> When enabled, it lets a Director grant tickets to a pilot who is <strong>not enrolled in FORCA</strong> or has no valid ESI token — bypassing the core rule that only enrolled, ESI-connected pilots earn tickets and can win.{% endblocktranslate %}</p>
+      <p class="mt-2">{% translate "Every such grant is audited and still needs the Director role plus a per-grant confirmation. Turn it on only for a genuine, one-off emergency, then turn it straight back off." %}</p>
     </div>
-    <label class="mt-3 flex items-center gap-2 text-sm text-loss">{{ form.allow_manual_override }} Allow Director grants to non-enrolled pilots</label>
-    {% if config.allow_manual_override %}<p class="mt-2 text-xs text-loss">This override is currently <strong>ENABLED</strong>. Disable it as soon as you're done.</p>{% endif %}
+    <label class="mt-3 flex items-center gap-2 text-sm text-loss">{{ form.allow_manual_override }} {% translate "Allow Director grants to non-enrolled pilots" %}</label>
+    {% if config.allow_manual_override %}<p class="mt-2 text-xs text-loss">{% blocktranslate %}This override is currently <strong>ENABLED</strong>. Disable it as soon as you're done.{% endblocktranslate %}</p>{% endif %}
     {% if form.allow_manual_override.errors %}<p class="mt-1 text-xs text-loss">{{ form.allow_manual_override.errors|join:" " }}</p>{% endif %}
   </section>
 
-  <div class="flex justify-end"><button type="submit" class="btn-gold">Save settings</button></div>
+  <div class="flex justify-end"><button type="submit" class="btn-gold">{% translate "Save settings" %}</button></div>
 </form>
 {% endblock %}

@@ -1,11 +1,12 @@
 {% extends "base.html" %}
-{% block title %}Readiness · SRP thresholds · [FORCA] Command Grid{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Readiness" %} · {% translate "SRP thresholds" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
-<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← Admin console</a>
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">← {% translate "Admin console" %}</a>
 <header class="mt-2 mb-6">
-  <p class="eyebrow">Readiness configuration</p>
-  <h1 class="mt-1 text-3xl font-bold text-ink">SRP thresholds</h1>
-  <p class="mt-1 max-w-2xl text-sm text-faint">The bounds the <span class="text-cyan">SRP Health</span> dimension scores its backlog, wait-time and oldest-claim KPIs against. Leave a field blank to keep its current value.</p>
+  <p class="eyebrow">{% translate "Readiness configuration" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "SRP thresholds" %}</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">{% blocktranslate %}The bounds the <span class="text-cyan">SRP Health</span> dimension scores its backlog, wait-time and oldest-claim KPIs against. Leave a field blank to keep its current value.{% endblocktranslate %}</p>
 </header>
 
 
@@ -25,15 +26,15 @@
       {% endfor %}
     </div>
     <div class="flex flex-wrap items-center justify-between gap-3 border-t border-line px-4 py-3">
-      <p class="text-[11px] text-faint">config v{{ meta.version }}{% if meta.by %} · last changed by {{ meta.by }}{% endif %}{% if meta.at %} · {{ meta.at|date:"j M Y H:i" }}{% endif %}</p>
-      <button class="btn-gold">Save changes</button>
+      <p class="text-[11px] text-faint">{% blocktranslate with version=meta.version %}config v{{ version }}{% endblocktranslate %}{% if meta.by %} · {% blocktranslate with by=meta.by %}last changed by {{ by }}{% endblocktranslate %}{% endif %}{% if meta.at %} · {{ meta.at|date:"j M Y H:i" }}{% endif %}</p>
+      <button class="btn-gold">{% translate "Save changes" %}</button>
     </div>
   </section>
 </form>
 
 <form method="post" action="{% url 'admin_audit:readiness_reset' 'srp' %}" class="mt-3">
   {% csrf_token %}
-  <button class="btn-ghost text-sm">Reset to defaults</button>
-  <span class="ml-2 text-[11px] text-faint">Restores every SRP threshold to the shipped defaults.</span>
+  <button class="btn-ghost text-sm">{% translate "Reset to defaults" %}</button>
+  <span class="ml-2 text-[11px] text-faint">{% translate "Restores every SRP threshold to the shipped defaults." %}</span>
 </form>
 {% endblock %}

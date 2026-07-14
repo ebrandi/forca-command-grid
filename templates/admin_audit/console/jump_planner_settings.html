@@ -1,11 +1,12 @@
 {% extends "base.html" %}
-{% block title %}Jump Planner settings &middot; Admin{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Jump Planner settings" %} &middot; {% translate "Admin" %}{% endblock %}
 {% block content %}
-<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">&larr; Admin console</a>
+<a href="{% url 'admin_audit:console' %}" class="text-xs text-faint hover:text-gold">&larr; {% translate "Admin console" %}</a>
 <header class="mt-3 mb-6">
-  <p class="eyebrow">Operations</p>
-  <h1 class="mt-1 text-2xl font-bold text-ink">Jump Planner settings</h1>
-  <p class="mt-1 max-w-2xl text-sm text-faint">Defaults for the <a href="{% url 'navigation:jump_planner' %}" class="text-cyan hover:underline">Jump Planner</a> &mdash; pilots can override the skills and exit per plan; these set the starting point and the corp avoid-lists.</p>
+  <p class="eyebrow">{% translate "Operations" %}</p>
+  <h1 class="mt-1 text-2xl font-bold text-ink">{% translate "Jump Planner settings" %}</h1>
+  {% url 'navigation:jump_planner' as jump_planner_url %}<p class="mt-1 max-w-2xl text-sm text-faint">{% blocktranslate %}Defaults for the <a href="{{ jump_planner_url }}" class="text-cyan hover:underline">Jump Planner</a> &mdash; pilots can override the skills and exit per plan; these set the starting point and the corp avoid-lists.{% endblocktranslate %}</p>
 </header>
 
 <form method="post" class="max-w-2xl space-y-5">
@@ -18,48 +19,48 @@
   {% endif %}
 
   <section class="panel p-5">
-    <h2 class="eyebrow mb-3 text-gold">Availability</h2>
-    <label class="flex items-center gap-2 text-sm text-muted">{{ form.enabled }} Jump Planner enabled</label>
+    <h2 class="eyebrow mb-3 text-gold">{% translate "Availability" %}</h2>
+    <label class="flex items-center gap-2 text-sm text-muted">{{ form.enabled }} {% translate "Jump Planner enabled" %}</label>
   </section>
 
   <section class="panel p-5">
-    <h2 class="eyebrow mb-3 text-gold">Default skill assumptions</h2>
+    <h2 class="eyebrow mb-3 text-gold">{% translate "Default skill assumptions" %}</h2>
     <div class="grid gap-4 sm:grid-cols-3">
-      <div><label class="label" for="{{ form.default_jdc.id_for_label }}">Jump Drive Calibration</label>{{ form.default_jdc }}<p class="mt-1 text-[11px] text-faint">Sets jump range (+20%/level).</p></div>
-      <div><label class="label" for="{{ form.default_jfc.id_for_label }}">Jump Fuel Conservation</label>{{ form.default_jfc }}<p class="mt-1 text-[11px] text-faint">Cuts fuel 10%/level.</p></div>
-      <div><label class="label" for="{{ form.default_jf_skill.id_for_label }}">Jump Freighters skill</label>{{ form.default_jf_skill }}<p class="mt-1 text-[11px] text-faint">Cuts JF fuel 10%/level.</p></div>
+      <div><label class="label" for="{{ form.default_jdc.id_for_label }}">{% translate "Jump Drive Calibration" %}</label>{{ form.default_jdc }}<p class="mt-1 text-[11px] text-faint">{% translate "Sets jump range (+20%/level)." %}</p></div>
+      <div><label class="label" for="{{ form.default_jfc.id_for_label }}">{% translate "Jump Fuel Conservation" %}</label>{{ form.default_jfc }}<p class="mt-1 text-[11px] text-faint">{% translate "Cuts fuel 10%/level." %}</p></div>
+      <div><label class="label" for="{{ form.default_jf_skill.id_for_label }}">{% translate "Jump Freighters skill" %}</label>{{ form.default_jf_skill }}<p class="mt-1 text-[11px] text-faint">{% translate "Cuts JF fuel 10%/level." %}</p></div>
     </div>
   </section>
 
   <section class="panel p-5">
-    <h2 class="eyebrow mb-3 text-gold">Routing &amp; exit strategy</h2>
+    <h2 class="eyebrow mb-3 text-gold">{% translate "Routing &amp; exit strategy" %}</h2>
     <div class="grid gap-4 sm:grid-cols-2">
-      <div><label class="label" for="{{ form.default_preference.id_for_label }}">Default gate-leg preference</label>{{ form.default_preference }}<p class="mt-1 text-[11px] text-faint">Applied to the stargate legs (e.g. into a high-sec destination).</p></div>
-      <div><label class="label" for="{{ form.fuel_safety_margin_pct.id_for_label }}">Fuel safety margin (%)</label>{{ form.fuel_safety_margin_pct }}<p class="mt-1 text-[11px] text-faint">Padding added to the computed fuel so you never under-fuel.</p></div>
-      <div class="sm:col-span-2"><label class="flex items-center gap-2 text-sm text-muted">{{ form.prefer_stations }} Prefer low-sec exits with an NPC station (safe dock)</label></div>
-      <div class="sm:col-span-2"><label class="flex items-center gap-2 text-sm text-muted">{{ form.allow_pilot_exit_override }} Let pilots pick a different low-sec exit</label></div>
-      <div class="sm:col-span-2"><label class="flex items-center gap-2 text-sm text-muted">{{ form.allow_saved_routes }} Let pilots save &amp; share jump routes</label></div>
+      <div><label class="label" for="{{ form.default_preference.id_for_label }}">{% translate "Default gate-leg preference" %}</label>{{ form.default_preference }}<p class="mt-1 text-[11px] text-faint">{% translate "Applied to the stargate legs (e.g. into a high-sec destination)." %}</p></div>
+      <div><label class="label" for="{{ form.fuel_safety_margin_pct.id_for_label }}">{% translate "Fuel safety margin (%)" %}</label>{{ form.fuel_safety_margin_pct }}<p class="mt-1 text-[11px] text-faint">{% translate "Padding added to the computed fuel so you never under-fuel." %}</p></div>
+      <div class="sm:col-span-2"><label class="flex items-center gap-2 text-sm text-muted">{{ form.prefer_stations }} {% translate "Prefer low-sec exits with an NPC station (safe dock)" %}</label></div>
+      <div class="sm:col-span-2"><label class="flex items-center gap-2 text-sm text-muted">{{ form.allow_pilot_exit_override }} {% translate "Let pilots pick a different low-sec exit" %}</label></div>
+      <div class="sm:col-span-2"><label class="flex items-center gap-2 text-sm text-muted">{{ form.allow_saved_routes }} {% translate "Let pilots save &amp; share jump routes" %}</label></div>
     </div>
   </section>
 
   <section class="panel p-5">
-    <h2 class="eyebrow mb-3 text-gold">Corp avoid-lists</h2>
-    <p class="mb-3 text-[11px] text-faint">Comma-separated names, merged into every pilot's own avoid-list.</p>
+    <h2 class="eyebrow mb-3 text-gold">{% translate "Corp avoid-lists" %}</h2>
+    <p class="mb-3 text-[11px] text-faint">{% translate "Comma-separated names, merged into every pilot's own avoid-list." %}</p>
     <div class="grid gap-4 sm:grid-cols-2">
-      <div><label class="label" for="{{ form.avoid_systems.id_for_label }}">Avoid systems</label>{{ form.avoid_systems }}</div>
-      <div><label class="label" for="{{ form.avoid_regions.id_for_label }}">Avoid regions</label>{{ form.avoid_regions }}</div>
+      <div><label class="label" for="{{ form.avoid_systems.id_for_label }}">{% translate "Avoid systems" %}</label>{{ form.avoid_systems }}</div>
+      <div><label class="label" for="{{ form.avoid_regions.id_for_label }}">{% translate "Avoid regions" %}</label>{{ form.avoid_regions }}</div>
     </div>
   </section>
 
   <section class="panel p-5">
-    <h2 class="eyebrow mb-3 text-gold">High-sec exit warning</h2>
-    <label class="label" for="{{ form.highsec_exit_warning.id_for_label }}">Shown to pilots on mixed-mode routes</label>
+    <h2 class="eyebrow mb-3 text-gold">{% translate "High-sec exit warning" %}</h2>
+    <label class="label" for="{{ form.highsec_exit_warning.id_for_label }}">{% translate "Shown to pilots on mixed-mode routes" %}</label>
     {{ form.highsec_exit_warning }}
   </section>
 
   <div class="flex items-center gap-3">
-    <button class="btn-gold">Save settings</button>
-    <a href="{% url 'admin_audit:console' %}" class="btn-ghost">Cancel</a>
+    <button class="btn-gold">{% translate "Save settings" %}</button>
+    <a href="{% url 'admin_audit:console' %}" class="btn-ghost">{% translate "Cancel" %}</a>
   </div>
 </form>
 {% endblock %}
