@@ -13,7 +13,7 @@
       <input type="text" name="title" required maxlength="140" value="{{ goal.title|default:'' }}" class="input-field mt-1">
     </label>
     <label class="label mt-3 block">{% translate "Why (for you — write for yourself, not an audience)" %}
-      <textarea name="motivation" rows="2" class="input-field mt-1">{{ owner_motivation|default:goal.motivation|default:'' }}</textarea>
+      <textarea name="motivation" rows="2" class="input-field mt-1">{% if goal %}{{ goal.motivation }}{% endif %}</textarea>
     </label>
     <label class="label mt-3 block">{% translate "Character" %}
       <select name="character_id" class="input-field mt-1" {% if goal and goal.status != 'considering' %}disabled title="{% translate 'Locked after activation' %}"{% endif %}>
