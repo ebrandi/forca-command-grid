@@ -29,7 +29,7 @@ jobs:
     steps:
       # persist-credentials: false — this job only reads the repo, so don't leave the
       # checkout token in .git/config where a later step could reuse it.
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
