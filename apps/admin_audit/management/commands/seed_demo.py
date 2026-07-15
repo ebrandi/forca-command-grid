@@ -12,7 +12,7 @@ from apps.doctrines.fitparser import parse_eft
 from apps.doctrines.models import Doctrine, DoctrineCategory, DoctrineFit
 from apps.doctrines.services import derive_skill_requirements
 from apps.market.models import MarketLocation
-from apps.onboarding.models import GlossaryTerm, OnboardingMilestone
+from apps.onboarding.models import OnboardingMilestone
 from apps.sso.services import ensure_role
 from apps.stockpile.models import Stockpile
 from apps.stockpile.services import record_manual_stock
@@ -110,13 +110,10 @@ class Command(BaseCommand):
                 },
             )
 
-        for term, definition in [
-            ("Tackle", "A ship/role that holds enemies in place (warp scram/disruptor)."),
-            ("Doctrine", "An official corp fit everyone is expected to be able to fly."),
-            ("ISK", "EVE's currency."),
-            ("Highsec", "High-security space (0.5–1.0); CONCORD punishes aggression."),
-        ]:
-            GlossaryTerm.objects.update_or_create(term=term, defaults={"definition": definition})
+        # The glossary is owned by migrations 0003 (canonical seed) + 0004 (reconcile) and
+        # is fully translated; demo runs must NOT overwrite it. Re-seeding here with short
+        # demo text previously clobbered the canonical, catalogue-matched definitions and
+        # left Doctrine/ISK/Highsec/Tackle rendering untranslated in every locale.
 
         # A corp stockpile with a target so dashboards show a shortfall.
         stockpile, _ = Stockpile.objects.update_or_create(

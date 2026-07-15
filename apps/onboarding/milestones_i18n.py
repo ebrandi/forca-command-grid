@@ -17,15 +17,15 @@ for a known key, the translation is returned; a leader-edited value, or an unkno
 key, is returned verbatim in every locale. The stored value is always the floor,
 so this can never blank a milestone or a term.
 
-Two deliberate omissions from the marked catalogue:
+Two things to keep in mind when editing this catalogue:
 
 * Pure acronyms / EVE proper-noun headwords (ISK, FC, Jita, Cyno, ...) are not in
   :data:`GLOSSARY_TERMS` -- only the descriptive multiword phrases are prose. They
   fall back verbatim, which is by policy for game jargon.
-* One definition (``Tidi``) carries a bare ``%`` ("10% speed"); marking it would
-  make xgettext flag the msgid python-format and msgfmt would then demand the
-  directive in every locale (a fatal build error). It is left out of
-  :data:`GLOSSARY_DEFINITIONS` and renders verbatim English.
+* Keep every definition free of a bare ``%``: a literal percent (e.g. "10% speed")
+  makes xgettext flag the msgid python-format, and msgfmt then demands that directive
+  in every locale -- a fatal build error. ``Tidi`` is deliberately worded "a tenth of
+  normal speed" for exactly this reason.
 """
 from __future__ import annotations
 
@@ -74,6 +74,8 @@ GLOSSARY_DEFINITIONS: dict[str, str] = {
     'Podded': gettext_noop("If your ship is destroyed you're left floating in your pod (escape capsule); lose that too and you've been podded — you wake up in a fresh clone at your home station. Podding destroys any implants (skill- and stat-boosting plugs in your head), so keep your home station set somewhere useful and don't take an expensive head into big fights."),
     'Gate camp': gettext_noop("A group of hostiles parked at a stargate, waiting to kill whatever jumps through — in nullsec usually with bubbles so you can't just warp off. Check the intel channels before traveling alone; most newbro losses happen at camps."),
     'Bubble': gettext_noop("A warp disruption bubble — a large sphere that stops everyone inside it from warping and drags passing warps to its edge. Bubbles don't work in high- or low-security space — you'll meet them in nullsec, wormholes, and Pochven. They come from interdictor ships ('dictors') or anchorable deployables; they're the teeth of every nullsec gate camp."),
+    'Tidi': gettext_noop("Time dilation — when a massive battle overloads the server, EVE deliberately slows time in that system, sometimes to a tenth of normal speed, so it can process everything. Everything moves in slow motion for everyone equally; it's normal, so stay calm and follow orders."),
+    'Tackle': gettext_noop("Catching hostile ships so they can't warp away — a tackler pins a target in place with a warp scrambler or disruptor ('scram' or 'point') while the fleet kills it. It's one of the highest-impact jobs a newer pilot can fly: nothing dies if nothing is tackled."),
     'Cyno': gettext_noop('A cynosural field — a bright beacon a ship lights in space that lets capital ships (and some others) jump directly to it from light-years away, skipping gates entirely. Cynos power both our logistics, like jump freighters, and ambushes (see Hotdrop).'),
     'Hotdrop': gettext_noop("When hostiles light a cyno on your position and heavy ships pour in on top of you with no warning. It's why you never ignore a lone unknown pilot while ratting — they may be the beacon for an entire fleet."),
     'Gank': gettext_noop('Killing a target with overwhelming, unfair force — most famously suicide ganking in high-security space, where attackers happily let the NPC police (CONCORD) destroy their cheap ships because your cargo is worth more. Never haul more than you can afford to lose.'),
