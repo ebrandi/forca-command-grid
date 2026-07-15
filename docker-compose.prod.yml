@@ -74,7 +74,10 @@ services:
     # Defaults suit a 2-core / 4 GB box; a rule of thumb is workers = 2 x cores + 1.
     # max-requests recycles workers to bound any slow memory growth; the heartbeat
     # file lives on /dev/shm to avoid disk-stall worker timeouts.
-    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --worker-class gthread --workers ${GUNICORN_WORKERS:-3} --threads ${GUNICORN_THREADS:-4} --timeout 60 --max-requests 1200 --max-requests-jitter 150 --worker-tmp-dir /dev/shm
+    # --timeout is env-overridable: the heaviest killboard faceted aggregates over the
+    # multi-million-row participant table can exceed the old fixed 60s under concurrent
+    # load and get the worker SIGKILLed mid-request; the default is raised to 120s.
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --worker-class gthread --workers ${GUNICORN_WORKERS:-3} --threads ${GUNICORN_THREADS:-4} --timeout ${GUNICORN_TIMEOUT:-120} --max-requests 1200 --max-requests-jitter 150 --worker-tmp-dir /dev/shm
     # ~5 gthread workers ≈ 440 MB steady; the cap bounds a leak/spike (max-requests already recycles).
     mem_limit: ${WEB_MEM_LIMIT:-1g}
     expose:
@@ -94,7 +97,11 @@ services:
   worker:
     <<: *app
     # Concurrency defaults low for a small VM; raise CELERY_CONCURRENCY on a bigger host.
-    command: celery -A config worker -l info --concurrency ${CELERY_CONCURRENCY:-4}
+    # --max-tasks-per-child recycles each worker child after N tasks — the celery analogue
+    # of gunicorn's --max-requests. Without it the long-lived children accumulate RSS from
+    # the heaviest jobs (SDE/EveRef imports) with no ceiling, eventually breaching
+    # WORKER_MEM_LIMIT. Env-overridable; set to 0 to disable recycling.
+    command: celery -A config worker -l info --concurrency ${CELERY_CONCURRENCY:-4} --max-tasks-per-child ${CELERY_MAX_TASKS_PER_CHILD:-100}
     # ~600 MB steady; SDE/EveRef imports are the heaviest jobs, so allow more headroom.
     mem_limit: ${WORKER_MEM_LIMIT:-1536m}
     volumes:
@@ -122,18 +129,29 @@ services:
     # lying to it upward on a small box produces bad plans).
     #   4 GB host  → 1GB / 2GB      8 GB host  → 2GB / 4GB
     #  16 GB host  → 4GB / 8GB     32 GB host  → 8GB / 24GB
+    # random_page_cost / effective_io_concurrency default to SSD/NVMe values (1.1 / 200);
+    # on a spinning-disk (HDD/RAID) host override them in .env to ~4.0 / ~2-4 so the planner
+    # stops assuming cheap random I/O and issuing prefetch depths the spindles can't service.
+    # autovacuum_work_mem is pinned SEPARATELY from maintenance_work_mem so up to
+    # autovacuum_max_workers (3) concurrent autovacuums can't each grab the full
+    # maintenance_work_mem (which is also used by CREATE INDEX / migration rebuilds).
+    # pg_stat_statements is preloaded for query-level tuning — run `CREATE EXTENSION
+    # pg_stat_statements` once per database to expose the view.
     command: >
       postgres
       -c shared_buffers=${POSTGRES_SHARED_BUFFERS:-1GB}
       -c effective_cache_size=${POSTGRES_EFFECTIVE_CACHE_SIZE:-2GB}
       -c work_mem=${POSTGRES_WORK_MEM:-8MB}
       -c maintenance_work_mem=${POSTGRES_MAINTENANCE_WORK_MEM:-256MB}
+      -c autovacuum_work_mem=${POSTGRES_AUTOVACUUM_WORK_MEM:-256MB}
       -c max_connections=${POSTGRES_MAX_CONNECTIONS:-100}
-      -c random_page_cost=1.1
-      -c effective_io_concurrency=200
+      -c random_page_cost=${POSTGRES_RANDOM_PAGE_COST:-1.1}
+      -c effective_io_concurrency=${POSTGRES_EFFECTIVE_IO_CONCURRENCY:-200}
       -c max_parallel_workers_per_gather=${POSTGRES_PARALLEL_WORKERS:-2}
       -c checkpoint_completion_target=0.9
       -c wal_buffers=16MB
+      -c shared_preload_libraries=pg_stat_statements
+      -c pg_stat_statements.track=top
     # Parallel-query / hash segments use /dev/shm; the Docker default 64 MB is too
     # small once work_mem and parallel workers grow.
     shm_size: "${POSTGRES_SHM_SIZE:-512m}"
