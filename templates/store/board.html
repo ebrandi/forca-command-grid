@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load eve %}
 {% load i18n %}
-{% block title %}Build Board · [FORCA] Command Grid{% endblock %}
+{% block title %}{% translate "Build Board" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 
 <header class="mb-6 flex flex-wrap items-end justify-between gap-4">
@@ -27,7 +27,7 @@
       <img src="{% eve_type_render o.ship_type_id 64 %}" alt="" loading="lazy" class="h-10 w-10 rounded bg-space object-cover ring-1 ring-line">
       <div class="min-w-0 flex-1">
         <p class="font-medium text-ink">{{ o.ship_name }}{% if o.quantity > 1 %} ×{{ o.quantity }}{% endif %}</p>
-        <p class="text-xs text-faint">{{ o.get_kind_display }} · for {% if o.buyer_character_id %}{% eve_name o.buyer_character_id %}{% else %}{% translate "buyer" %}{% endif %}</p>
+        <p class="text-xs text-faint">{{ o.get_kind_display }} · {% translate "for" %} {% if o.buyer_character_id %}{% eve_name o.buyer_character_id %}{% else %}{% translate "buyer" %}{% endif %}</p>
       </div>
       <span class="chip !text-cyan">{{ o.get_status_display }}</span>
       <span class="data text-gold">{{ o.total_price|isk }}</span>
@@ -56,7 +56,7 @@
             <a href="{% url 'store:order' o.pk %}" class="flex items-center gap-2 font-medium text-ink hover:text-gold">
               <img src="{% eve_type_icon o.ship_type_id 32 %}" alt="" loading="lazy" class="h-6 w-6 rounded-sm">{{ o.ship_name }}
             </a>
-            <p class="mt-0.5 text-[11px] text-faint">{% if o.fit_name and o.kind == 'doctrine_fit' %}{{ o.fit_name }} · {% endif %}for {% if o.buyer_character_id %}{% eve_name o.buyer_character_id %}{% else %}{% translate "buyer" %}{% endif %}{% if o.location_name %} → {{ o.location_name }}{% endif %}</p>
+            <p class="mt-0.5 text-[11px] text-faint">{% if o.fit_name and o.kind == 'doctrine_fit' %}{{ o.fit_name }} · {% endif %}{% translate "for" %} {% if o.buyer_character_id %}{% eve_name o.buyer_character_id %}{% else %}{% translate "buyer" %}{% endif %}{% if o.location_name %} → {{ o.location_name }}{% endif %}</p>
           </td>
           <td class="px-4 py-2.5">
             <span class="chip {% if o.kind == 'hull' %}!text-gold{% endif %}">{% if o.kind == 'hull' %}{% translate "Build" %}{% else %}{% translate "Stock" %}{% endif %}</span>
@@ -84,7 +84,7 @@
     {% for o in done %}
     <a href="{% url 'store:order' o.pk %}" class="flex items-center gap-3 px-4 py-2 text-sm hover:bg-panel2/40">
       <span class="chip !text-kill">{% translate "Delivered" %}</span>
-      <span class="min-w-0 flex-1 truncate text-muted">{{ o.ship_name }} for {% if o.buyer_character_id %}{% eve_name o.buyer_character_id %}{% else %}{% translate "buyer" %}{% endif %}</span>
+      <span class="min-w-0 flex-1 truncate text-muted">{{ o.ship_name }} {% translate "for" %} {% if o.buyer_character_id %}{% eve_name o.buyer_character_id %}{% else %}{% translate "buyer" %}{% endif %}</span>
       <span class="data text-gold">{{ o.total_price|isk }}</span>
     </a>
     {% endfor %}

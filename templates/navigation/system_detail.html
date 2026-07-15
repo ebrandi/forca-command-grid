@@ -35,7 +35,7 @@
 <div class="panel mb-4 border-l-2 border-l-[#f0533f] px-4 py-3 text-sm text-muted"><span class="font-semibold text-[#f0533f]">{% translate "Incursion active" %}</span> — {% translate "a Sansha incursion is currently affecting this system." %}</div>
 {% endif %}
 {% if live.fw %}
-<div class="panel mb-4 border-l-2 px-4 py-3 text-sm text-muted {% if live.fw.contested == 'contested' or live.fw.contested == 'vulnerable' %}border-l-[#f0533f]{% else %}border-l-[#4a7ab5]{% endif %}"><span class="font-semibold text-ink">{% translate "Faction warfare" %}</span> — held by {{ live.fw.faction }} · {{ live.fw.contested }}{% if live.fw.pct %} ({{ live.fw.pct }}% contested){% endif %}.</div>
+<div class="panel mb-4 border-l-2 px-4 py-3 text-sm text-muted {% if live.fw.contested == 'contested' or live.fw.contested == 'vulnerable' %}border-l-[#f0533f]{% else %}border-l-[#4a7ab5]{% endif %}"><span class="font-semibold text-ink">{% translate "Faction warfare" %}</span> — {% blocktranslate with faction=live.fw.faction %}held by {{ faction }}{% endblocktranslate %} · {{ live.fw.contested }}{% if live.fw.pct %} ({{ live.fw.pct }}% {% translate "contested" %}){% endif %}.</div>
 {% endif %}
 
 <!-- Stat cards -->

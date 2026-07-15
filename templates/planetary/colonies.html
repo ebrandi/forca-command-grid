@@ -71,9 +71,9 @@
     </div>
     {% if s.extracting %}<p class="mt-2 text-xs text-faint">{% translate "Extracting:" %} <span class="text-ink">{% for e in s.extracting %}{{ e.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</span></p>{% endif %}
     {% if s.schematics %}<p class="mt-1 text-xs text-faint">{% translate "Producing:" %} <span class="text-ink">{% for sc in s.schematics %}{{ sc.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</span></p>{% endif %}
-    {% if s.issues %}
+    {% if col.issues_i18n %}
     <div class="mt-2 rounded border border-loss/30 bg-loss/5 p-2">
-      {% for issue in s.issues %}<p class="text-xs text-loss">⚠ {{ issue }}</p>{% endfor %}
+      {% for issue in col.issues_i18n %}<p class="text-xs text-loss">⚠ {{ issue }}</p>{% endfor %}
     </div>
     {% endif %}
     {% endwith %}

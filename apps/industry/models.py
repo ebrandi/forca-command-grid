@@ -184,6 +184,14 @@ class ProductionStep(models.Model):
     intermediates before the things that consume them.
     """
 
+    # Human labels for the SDE activity code. The stored ``activity`` stays the canonical
+    # code every branch compares against; only the rendered half is translated.
+    ACTIVITY_LABELS = {
+        "manufacturing": _("Manufacturing"),
+        "reaction": _("Reaction"),
+        "invention": _("Invention"),
+    }
+
     project_item = models.ForeignKey(
         IndustryProjectItem, on_delete=models.CASCADE, related_name="production_steps"
     )
@@ -197,6 +205,10 @@ class ProductionStep(models.Model):
 
     class Meta:
         ordering = ["-depth", "type_id"]
+
+    @property
+    def activity_label(self) -> str:
+        return self.ACTIVITY_LABELS.get(self.activity, self.activity)
 
 
 class Blueprint(ProvenanceMixin):

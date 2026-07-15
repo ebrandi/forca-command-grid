@@ -134,7 +134,7 @@ def build_library(character=None, has_skills: bool = False) -> dict:
     # --- Filter option lists ---
     present_classes = set(hull_counts)
     categories = [
-        {"id": d.category_id, "label": d.category.label}
+        {"id": d.category_id, "label": d.category.label_i18n}
         for d in doctrines
         if d.category_id
     ]

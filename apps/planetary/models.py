@@ -21,6 +21,7 @@ from django.utils.translation import gettext_lazy as _
 from core.mixins import ProvenanceMixin, TimeStampedModel
 
 from . import constants, static_data
+from .issues_i18n import issue_labels
 
 
 class PiTier(models.TextChoices):
@@ -350,3 +351,13 @@ class PiColony(TimeStampedModel, ProvenanceMixin):
 
     def __str__(self) -> str:
         return f"{self.planet_type_name or 'Planet'} colony ({self.character_id})"
+
+    @property
+    def issues_i18n(self) -> list[str]:
+        """Translated labels for the stored colony-issue codes (see esi._classify_pins).
+
+        ``summary['issues']`` stores stable CODES; the human label is resolved here, at
+        render time, so no locale is ever frozen into the JSON. Unknown codes render
+        verbatim. See apps.planetary.issues_i18n.
+        """
+        return issue_labels((self.summary or {}).get("issues") or [])

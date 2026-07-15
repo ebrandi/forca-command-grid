@@ -29,6 +29,7 @@ from django.db.models import Value
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
+from django.utils.translation import gettext, gettext_noop
 from django.utils.translation import gettext_lazy as _
 
 from core.mixins import TimeStampedModel
@@ -936,6 +937,18 @@ class RaffleContestTemplate(TimeStampedModel):
         ]
 
 
+# The shipped English intro shown to pilots on raffle/home.html. Kept a plain ``str`` so it
+# persists cleanly as the TextField default (a ``gettext_lazy`` proxy would freeze the seed
+# locale into the row); it is the canonical audit record + fallback. ``gettext_noop`` marks
+# it for extraction (makemessages passes --keyword=gettext_noop) and ``intro_text_i18n``
+# translates it at render time while the stored value is still this untouched English.
+DEFAULT_INTRO = gettext_noop(
+    "Fly with the corp, earn raffle tickets, win prizes. Connect your ESI "
+    "token and enrol in FORCA Command Grid to take part — only enrolled "
+    "pilots with a live ESI connection can earn tickets and win."
+)
+
+
 class RaffleConfig(TimeStampedModel):
     """Raffle-wide leadership settings (a singleton), separate from per-contest config."""
 
@@ -949,14 +962,7 @@ class RaffleConfig(TimeStampedModel):
         default=False,
         help_text=_("DANGER: allow Director grants to non-enrolled pilots (off by default)."),
     )
-    intro_text = models.TextField(
-        blank=True,
-        default=(
-            "Fly with the corp, earn raffle tickets, win prizes. Connect your ESI "
-            "token and enrol in FORCA Command Grid to take part — only enrolled "
-            "pilots with a live ESI connection can earn tickets and win."
-        ),
-    )
+    intro_text = models.TextField(blank=True, default=DEFAULT_INTRO)
 
     # RAF-5 (3.14): a monthly prize-spend ceiling (like SRP / Command Intelligence budgets).
     # 0 = off. Prize value is counted in the month a contest draws.
@@ -976,6 +982,16 @@ class RaffleConfig(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"RaffleConfig<{self.name}>"
+
+    # --- Render-time i18n seam (Seam A) ------------------------------------ #
+    @property
+    def intro_text_i18n(self) -> str:
+        """The intro to *display* on raffle/home.html — translated while the stored value is
+        still the shipped English default, else the officer's edited text verbatim. An empty
+        stored value stays empty (the field is ``blank=True``)."""
+        if self.intro_text and self.intro_text == DEFAULT_INTRO:
+            return gettext(self.intro_text)
+        return self.intro_text
 
 
 class RaffleEnrolmentOutreach(TimeStampedModel):

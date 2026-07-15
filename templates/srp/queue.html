@@ -121,7 +121,7 @@
     {% for c in recent %}
       <div class="flex items-center gap-3 px-4 py-2.5 text-sm">
         <span class="min-w-0 flex-1 truncate text-muted">{{ c.claimant.display_name }} · {% type_name c.killmail.victim_ship_type_id %}</span>
-        <span class="data text-xs text-faint">{% if c.is_replacement and c.status == 'paid' %}ship{% else %}{{ c.payout|isk }}{% endif %}</span>
+        <span class="data text-xs text-faint">{% if c.is_replacement and c.status == 'paid' %}{% translate "ship" %}{% else %}{{ c.payout|isk }}{% endif %}</span>
         <span class="chip {% if c.status == 'paid' %}!border-kill/40 !text-kill{% else %}!text-faint{% endif %}">{{ c.get_status_display }}</span>
       </div>
     {% endfor %}

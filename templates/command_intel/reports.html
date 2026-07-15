@@ -32,7 +32,7 @@
 
           <span class="shrink-0 text-xs text-faint">{{ r.created_at|date:"d M Y H:i" }}</span>
         </div>
-        {% if r.summary %}<p class="mt-1.5 text-sm text-muted">{{ r.summary|truncatewords:30 }}</p>{% endif %}
+        {% if r.summary_i18n %}<p class="mt-1.5 text-sm text-muted">{{ r.summary_i18n|truncatewords:30 }}</p>{% endif %}
         {% if r.requested_by %}<p class="mt-1 text-[11px] text-faint">{% blocktranslate with user=r.requested_by.username %}Requested by {{ user }}{% endblocktranslate %}</p>{% endif %}
       </a>
     {% empty %}

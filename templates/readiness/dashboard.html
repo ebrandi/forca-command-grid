@@ -101,7 +101,7 @@
             </form>
           </div>
           <div x-show="open" x-cloak x-transition.opacity class="mt-2 pl-[1.9rem] text-xs text-faint">
-            {% blocktranslate with title=g.task_title type=g.task_type %}Creating a task here queues <span class="text-muted">"{{ title }}"</span> as a <span class="text-muted">{{ type }}</span> quest you can claim and track.{% endblocktranslate %}
+            {% blocktranslate with title=g.task_title_i18n type=g.task_type %}Creating a task here queues <span class="text-muted">"{{ title }}"</span> as a <span class="text-muted">{{ type }}</span> quest you can claim and track.{% endblocktranslate %}
           </div>
         </div>
       {% empty %}

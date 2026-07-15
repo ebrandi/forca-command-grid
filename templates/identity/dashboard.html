@@ -218,7 +218,7 @@ GOVERNANCE (keep these or the merge erodes):
     <section class="panel overflow-hidden">
       <div class="flex items-center justify-between border-b border-line px-4 py-3">
         <h2 class="eyebrow">{% translate "Combat log" %} <span class="text-faint">· corp · 7d</span></h2>
-        <a href="{% url 'killboard:list' %}" class="text-xs text-faint hover:text-gold">Killboard →</a>
+        <a href="{% url 'killboard:list' %}" class="text-xs text-faint hover:text-gold">{% translate "Killboard" %} →</a>
       </div>
       <div class="grid grid-cols-2 gap-px bg-line/40 lg:grid-cols-4">
         <a href="{% url 'killboard:list' %}?kind=kills" class="bg-panel p-4 hover:bg-panel2"><p class="eyebrow">{% translate "Kills" %}</p><p class="mt-1 font-display text-2xl font-bold text-kill">{{ combat7.kills }}</p></a>
@@ -229,7 +229,7 @@ GOVERNANCE (keep these or the merge erodes):
       {% if combat_mine %}
       {# The corp tiles say how WE did; this line says how YOU did. #}
       <div class="flex items-center gap-2 border-t border-line px-4 py-2 text-xs text-muted">
-        <span class="min-w-0 flex-1">You this week: <span class="data text-kill">{{ combat_mine.kills }}</span> kill{{ combat_mine.kills|pluralize }} · <span class="data text-loss">{{ combat_mine.losses }}</span> loss{{ combat_mine.losses|pluralize:"es" }} · <span class="data text-gold">{{ combat_mine.isk_destroyed|isk }}</span> destroyed</span>
+        <span class="min-w-0 flex-1">{% translate "You this week:" %} {% blocktranslate count n=combat_mine.kills %}<span class="data text-kill">{{ n }}</span> kill{% plural %}<span class="data text-kill">{{ n }}</span> kills{% endblocktranslate %} · {% blocktranslate count n=combat_mine.losses %}<span class="data text-loss">{{ n }}</span> loss{% plural %}<span class="data text-loss">{{ n }}</span> losses{% endblocktranslate %} · {% blocktranslate with isk=combat_mine.isk_destroyed|isk %}<span class="data text-gold">{{ isk }}</span> destroyed{% endblocktranslate %}</span>
         <a href="{% url 'killboard:pilot' main_character.character_id %}" class="shrink-0 text-faint hover:text-gold">{% translate "My stats" %} →</a>
       </div>
       {% endif %}
@@ -408,7 +408,7 @@ GOVERNANCE (keep these or the merge erodes):
     <section class="panel overflow-hidden">
       <div class="flex items-start justify-between gap-3 border-b border-line px-4 py-3">
         <div class="min-w-0">
-          <h2 class="eyebrow">Doctrines</h2>
+          <h2 class="eyebrow">{% translate "Doctrines" %}</h2>
           <p class="mt-1 text-xs text-faint">{% translate "Status, not homework — anything worth training is already in your quest log." %}</p>
         </div>
         <a href="{% url 'doctrines:list' %}" class="shrink-0 text-xs text-faint hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold">{% translate "All doctrines" %} →</a>

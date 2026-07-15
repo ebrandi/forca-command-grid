@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load eve %}
 {% load i18n %}
-{% block title %}Supply Forecast · [FORCA] Command Grid{% endblock %}
+{% block title %}{% translate "Supply Forecast" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 
 <header class="mb-5 flex flex-wrap items-end justify-between gap-3">
@@ -70,7 +70,7 @@
             <img src="{% eve_type_icon r.ship_type_id 32 %}" alt="" loading="lazy" class="h-7 w-7 shrink-0 rounded-sm">
             <div class="min-w-0">
               <p class="truncate font-medium text-ink">{{ r.ship_name }}
-                {% if r.is_doctrine %}<span class="chip !border-gold/30 !py-0 !text-[10px] !text-gold">doctrine</span>{% endif %}</p>
+                {% if r.is_doctrine %}<span class="chip !border-gold/30 !py-0 !text-[10px] !text-gold">{% translate "doctrine" %}</span>{% endif %}</p>
               <p class="truncate text-[11px] text-faint">{{ r.hull_class }}{% if r.is_doctrine %} · {{ r.doctrine }}{% else %} · {% translate "import &amp; sell hull" %}{% endif %}{% if r.trend_pct is not None %} · <span class="{% if r.trend_pct > 0 %}text-win{% elif r.trend_pct < 0 %}text-loss{% else %}text-faint{% endif %}" title="{% translate 'Jita price change, last 30 days' %}">{% if r.trend_pct > 0 %}▲{% elif r.trend_pct < 0 %}▼{% else %}▬{% endif %}{{ r.trend_pct }}%</span>{% endif %}</p>
             </div>
           </div>
@@ -80,7 +80,7 @@
         <td class="px-3 py-2 text-right text-ink">{{ r.forecast_month }}</td>
         <td class="px-3 py-2 text-right">
           <span class="text-muted">{{ r.supply_cost|isk }}</span>
-          <span class="block text-[10px] {% if r.method == 'build' %}text-cyan{% else %}text-faint{% endif %}">{{ r.method }}{% if r.method == 'build' and r.build_source == 'estimate' %}<span title="{% translate "Local one-level estimate — EVE Ref couldn't price this build" %}">~est</span>{% endif %}{% if r.freight_unit %} · frt {{ r.freight_unit|isk }}{% endif %}</span>
+          <span class="block text-[10px] {% if r.method == 'build' %}text-cyan{% else %}text-faint{% endif %}">{% if r.method == 'build' %}{% translate "build" %}{% else %}{% translate "import" %}{% endif %}{% if r.method == 'build' and r.build_source == 'estimate' %}<span title="{% translate "Local one-level estimate — EVE Ref couldn't price this build" %}">~est</span>{% endif %}{% if r.freight_unit %} · frt {{ r.freight_unit|isk }}{% endif %}</span>
         </td>
         <td class="px-3 py-2 text-right text-muted">{{ r.sell_unit|isk }}</td>
         <td class="px-3 py-2 text-right {% if r.margin_unit > 0 %}text-win{% else %}text-loss{% endif %}">{{ r.margin_unit|isk }}</td>

@@ -16,7 +16,7 @@ from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-from django.utils.translation import gettext as _t
+from django.utils.translation import gettext
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
@@ -170,8 +170,8 @@ def calendar_event(request, pk):
 def compose(request):
     from .models import AlertTemplate
 
-    audiences = [("corp", _t("Whole corporation")), ("role:officer", _t("Officers")),
-                 ("role:director", _t("Directors"))]
+    audiences = [("corp", gettext("Whole corporation")), ("role:officer", gettext("Officers")),
+                 ("role:director", gettext("Directors"))]
     enabled_kinds = _enabled_channel_kinds()
     if request.method == "POST":
         return _compose_post(request, audiences, enabled_kinds)
@@ -224,12 +224,12 @@ def _compose_post(request, audiences, enabled_kinds):
         }
         return render(request, "pingboard/compose.html", ctx)
     if alert is None:
-        messages.warning(request, _t("Alert suppressed (duplicate or rate-limited)."))
+        messages.warning(request, gettext("Alert suppressed (duplicate or rate-limited)."))
         return redirect("pingboard:compose")
     audit_log(request.user, "pingboard.alert.dispatched", target_type="pingboard_alert",
               target_id=str(alert.id), metadata={"category": category, "priority": priority},
               ip=client_ip(request))
-    messages.success(request, _t("Alert '%(title)s' created (%(status)s).") % {
+    messages.success(request, gettext("Alert '%(title)s' created (%(status)s).") % {
         "title": alert.title, "status": alert.get_status_display()})
     return redirect("pingboard:alert_detail", pk=alert.id)
 
@@ -286,15 +286,15 @@ def alert_action(request, pk, action):
     alert = get_object_or_404(Alert, pk=pk)
     if action == "retry":
         services.retry_alert(alert.id, by=request.user)
-        messages.success(request, _t("Failed channels re-queued."))
+        messages.success(request, gettext("Failed channels re-queued."))
     elif action == "cancel":
         services.cancel_alert(alert.id, by=request.user)
-        messages.success(request, _t("Alert cancelled."))
+        messages.success(request, gettext("Alert cancelled."))
     elif action == "approve":
         if pcal.approve_alert(alert.id, by=request.user):
-            messages.success(request, _t("Alert approved and queued."))
+            messages.success(request, gettext("Alert approved and queued."))
         else:
-            messages.error(request, _t("Alert is not awaiting approval."))
+            messages.error(request, gettext("Alert is not awaiting approval."))
     else:
         raise PermissionDenied
     return redirect("pingboard:alert_detail", pk=alert.id)
@@ -309,7 +309,7 @@ def event_create(request):
     start_raw = request.POST.get("start_at", "")
     start = _parse_dt(start_raw)
     if start is None:
-        messages.error(request, _t("A valid start time is required."))
+        messages.error(request, gettext("A valid start time is required."))
         return redirect("pingboard:calendar")
     event_type = request.POST.get("event_type", CalendarEventType.CUSTOM)
 
@@ -325,7 +325,7 @@ def event_create(request):
 
         name = (request.POST.get("title") or "").strip()
         if not name:
-            messages.error(request, _t("A structure timer needs a name."))
+            messages.error(request, gettext("A structure timer needs a name."))
             return redirect("pingboard:calendar")
         timer = create_structure_timer(
             name=name, exits_at=start,
@@ -343,9 +343,9 @@ def event_create(request):
         if request.POST.get("announce") == "1":
             announce_structure_timer(timer, created_by=request.user)
         if event is None:
-            messages.success(request, _t("Structure timer added — it'll appear on the calendar shortly."))
+            messages.success(request, gettext("Structure timer added — it'll appear on the calendar shortly."))
             return redirect("pingboard:calendar")
-        messages.success(request, _t("Structure timer added — it's on the calendar and the timers board."))
+        messages.success(request, gettext("Structure timer added — it's on the calendar and the timers board."))
         return redirect("pingboard:calendar_event", pk=event.id)
 
     event = pcal.create_manual_event(
@@ -354,7 +354,7 @@ def event_create(request):
         start_at=start, description=request.POST.get("description", ""),
         visibility=request.POST.get("visibility", "member"), created_by=request.user,
     )
-    messages.success(request, _t("Calendar event created."))
+    messages.success(request, gettext("Calendar event created."))
     return redirect("pingboard:calendar_event", pk=event.id)
 
 
@@ -370,12 +370,12 @@ def event_action(request, pk, action):
         else:
             pcal.cancel_event(source_system=event.source_system,
                               source_object_id=event.source_object_id, by=request.user)
-        messages.success(request, _t("Event cancelled."))
+        messages.success(request, gettext("Event cancelled."))
     elif action == "reminder":
         off = _int(request.POST.get("offset_minutes_before"), 60)
         pcal.attach_alert_schedule(event, offset_minutes_before=off,
                                    channels=event.default_channels or None, by=request.user)
-        messages.success(request, _t("Reminder scheduled %(minutes)d min before.") % {"minutes": off})
+        messages.success(request, gettext("Reminder scheduled %(minutes)d min before.") % {"minutes": off})
     else:
         raise PermissionDenied
     return redirect("pingboard:calendar_event", pk=event.id)
@@ -417,12 +417,12 @@ def channel_prefs(request):
     kind = request.POST.get("kind", "")
     valid = {k for k, _ in PilotContactChannel.DM_KIND_CHOICES}
     if kind not in valid:
-        messages.error(request, _t("Unknown channel."))
+        messages.error(request, gettext("Unknown channel."))
         return redirect("pingboard:my_channels")
     keep = set(request.POST.getlist("deliver"))
     muted = [c.value for c in preferences.MUTABLE_ALERT_CATEGORIES if c.value not in keep]
     preferences.set_preferences(request.user, kind, muted)
-    messages.success(request, _t("Notification preferences saved."))
+    messages.success(request, gettext("Notification preferences saved."))
     return redirect("pingboard:my_channels")
 
 
@@ -434,13 +434,13 @@ def channel_link(request):
     handle = request.POST.get("handle", "").strip()
     valid = {k for k, _ in PilotContactChannel.DM_KIND_CHOICES}
     if kind not in valid:
-        messages.error(request, _t("Unknown channel."))
+        messages.error(request, gettext("Unknown channel."))
         return redirect("pingboard:my_channels")
     row = linking.start_link(request.user, kind, handle)
     if kind == "telegram":
-        messages.info(request, _t("Open the Telegram deep link below and press Start to verify."))
+        messages.info(request, gettext("Open the Telegram deep link below and press Start to verify."))
     else:
-        messages.info(request, _t("Verification code: %(code)s — confirm it below once received.") % {
+        messages.info(request, gettext("Verification code: %(code)s — confirm it below once received.") % {
             "code": row.verify_code})
     return redirect("pingboard:my_channels")
 
@@ -452,9 +452,9 @@ def channel_confirm(request):
     kind = request.POST.get("kind", "")
     code = request.POST.get("code", "").strip()
     if linking.confirm(request.user, kind, code):
-        messages.success(request, _t("Channel verified."))
+        messages.success(request, gettext("Channel verified."))
     else:
-        messages.error(request, _t("Wrong or expired code."))
+        messages.error(request, gettext("Wrong or expired code."))
     return redirect("pingboard:my_channels")
 
 
@@ -463,7 +463,7 @@ def channel_confirm(request):
 @require_POST
 def channel_unlink(request):
     linking.unlink(request.user, request.POST.get("kind", ""))
-    messages.success(request, _t("Channel removed."))
+    messages.success(request, gettext("Channel removed."))
     return redirect("pingboard:my_channels")
 
 

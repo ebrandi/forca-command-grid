@@ -85,7 +85,8 @@ def project_duplicate(request: HttpRequest, pk: int) -> HttpResponse:
     if not _can_see(request.user, source):
         raise PermissionDenied(_("You can't see that plan."))
     clone = IndustryProject.objects.create(
-        name=f"Copy of {source.name}"[:200], description=source.description,
+        name=(_("Copy of %(name)s") % {"name": source.name})[:200],
+        description=source.description,
         objective_type=source.objective_type, status=IndustryProject.Status.DRAFT,
         visibility=source.visibility, linked_doctrine=source.linked_doctrine,
         created_by=request.user, assigned_to=request.user, source=source.source,

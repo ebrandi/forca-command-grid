@@ -176,9 +176,9 @@ Every mutating action is a POST form with a hidden action/decision field.
 <div class="panel p-5">
   <div class="flex flex-wrap gap-2.5">
     {% for b in badges %}
-    <span class="inline-flex items-center gap-2 rounded-md border border-gold/30 bg-gold/10 px-3 py-1.5 text-sm text-gold" title="{{ b.reason }} · {{ b.created_at|date:"j M Y" }}">
+    <span class="inline-flex items-center gap-2 rounded-md border border-gold/30 bg-gold/10 px-3 py-1.5 text-sm text-gold" title="{{ b.reason_i18n }} · {{ b.created_at|date:"j M Y" }}">
       <svg class="h-4 w-4"><use href="{% if b.badge.icon %}#{{ b.badge.icon }}{% else %}#i-trophy{% endif %}"/></svg>
-      <span class="font-medium">{{ b.badge.label }}</span>
+      <span class="font-medium">{{ b.badge.label_i18n }}</span>
       <span class="text-[11px] text-gold/70">{{ b.badge.get_tier_display }}</span>
     </span>
     {% endfor %}

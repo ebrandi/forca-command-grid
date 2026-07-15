@@ -28,6 +28,11 @@ def infrastructure_board() -> list[dict]:
     fuel_days, adm_floor = StructureAlertConfig.thresholds()
     items: list[dict] = []
 
+    # ``kind`` stays a stable code (``==``-compared elsewhere); ``kind_label`` is a
+    # per-request translated display copy. Eager gettext is safe: this map is rebuilt
+    # on every request under the reader's locale.
+    kind_labels = {"structure": _("Structure"), "sov": _("Sovereignty"), "timer": _("Timer")}
+
     for s in CorpStructure.objects.all():
         days = s.fuel_days_left
         reinforced = s.is_reinforced
@@ -48,6 +53,7 @@ def infrastructure_board() -> list[dict]:
                       if days is not None else _("Fuel unknown"))
         items.append({
             "kind": "structure",
+            "kind_label": kind_labels["structure"],
             "name": s.name or f"Structure {s.structure_id}",
             "system": s.system_name,
             "severity": sev, "order": order, "detail": detail,
@@ -61,6 +67,7 @@ def infrastructure_board() -> list[dict]:
         soft = sov.adm < adm_floor
         items.append({
             "kind": "sov",
+            "kind_label": kind_labels["sov"],
             "name": sov.system_name or f"System {sov.solar_system_id}",
             "system": sov.system_name,
             "severity": "warning" if soft else "ok",
@@ -78,6 +85,7 @@ def infrastructure_board() -> list[dict]:
         secs = (t.exits_at - now).total_seconds()
         items.append({
             "kind": "timer",
+            "kind_label": kind_labels["timer"],
             "name": t.name,
             "system": t.system_name,
             "severity": "critical" if secs < 48 * 3600 else "warning",

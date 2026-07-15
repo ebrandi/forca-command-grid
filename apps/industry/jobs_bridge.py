@@ -19,14 +19,11 @@ def push_project_to_jobs(project: IndustryProject, user) -> int:
     (or already delivered). All-or-nothing (atomic). Returns the number of jobs created.
     """
     from apps.erp.models import BuildJob
-    from apps.erp.services import recheck_block
+    from apps.erp.services import plan_note_fields, recheck_block
 
-    # A non-corp plan's name is not surfaced on the corp-visible job board.
-    note = (
-        f"From plan: {project.name}"[:200]
-        if project.visibility == IndustryProject.Visibility.CORP
-        else "From a leadership plan"
-    )
+    # The note carries the ERP's Seam-B scaffold key + params (translated per reader locale
+    # on the corp job board) alongside the English prose — never a raw-English string here.
+    note_fields = plan_note_fields(project)
     created = 0
     for item in project.items.filter(build_or_buy=IndustryProjectItem.BuildOrBuy.BUILD):
         # An item with any non-cancelled job (open or delivered) is already on the board.
@@ -39,7 +36,7 @@ def push_project_to_jobs(project: IndustryProject, user) -> int:
             quantity=max(1, int(item.quantity or 1)),
             created_by=user,
             source_item=item,
-            note=note,
+            **note_fields,
         )
         recheck_block(job)  # flag BLOCKED immediately if corp stock can't cover the inputs
         created += 1

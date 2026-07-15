@@ -15,7 +15,7 @@ from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-from django.utils.translation import gettext_lazy as _t
+from django.utils.translation import gettext_lazy
 from django.utils.translation import ngettext
 from django.views.decorators.http import require_POST
 
@@ -72,10 +72,10 @@ def console_hub(request: HttpRequest) -> HttpResponse:
 # audience values are shared across the three services (apps.store.models.Audience);
 # we relabel them here service-neutrally so the one-stop page reads consistently.
 _SERVICE_AUDIENCE_CHOICES = [
-    ("disabled", _t("Off — hidden from everyone")),
-    ("corp", _t("Corp members only")),
-    ("alliance", _t("Corp & alliance members")),
-    ("public", _t("Public — anyone")),
+    ("disabled", gettext_lazy("Off — hidden from everyone")),
+    ("corp", gettext_lazy("Corp members only")),
+    ("alliance", gettext_lazy("Corp & alliance members")),
+    ("public", gettext_lazy("Public — anyone")),
 ]
 _VALID_AUDIENCE = {value for value, _ in _SERVICE_AUDIENCE_CHOICES}
 
@@ -91,11 +91,11 @@ def _member_services():
     from apps.store import services as store_services
 
     return [
-        ("freight", _t("Freight service"), "logistics:rates", logistics_services,
+        ("freight", gettext_lazy("Freight service"), "logistics:rates", logistics_services,
          logistics_services.active_rate_card),
-        ("buyback", _t("Buyback service"), "buyback:config", buyback_services,
+        ("buyback", gettext_lazy("Buyback service"), "buyback:config", buyback_services,
          buyback_services.active_config),
-        ("store", _t("Corp Store"), "store:config", store_services,
+        ("store", gettext_lazy("Corp Store"), "store:config", store_services,
          store_services.active_config),
     ]
 
@@ -156,7 +156,7 @@ def features(request: HttpRequest) -> HttpResponse:
                   metadata={"disabled": sorted(disabled),
                             "feature_audiences": audience_changes,
                             "services": service_changes})
-        messages.success(request, _t("Service & feature availability updated."))
+        messages.success(request, gettext_lazy("Service & feature availability updated."))
         return redirect("admin_audit:features")
 
     off = disabled_set()
@@ -256,7 +256,7 @@ def retention_settings(request: HttpRequest) -> HttpResponse:
             ip=client_ip(request),
             metadata={"classes": [p.data_class for p in policies], "on_leave_armed": armed},
         )
-        messages.success(request, _t("Data-retention policy saved."))
+        messages.success(request, gettext_lazy("Data-retention policy saved."))
         return redirect("admin_audit:retention_settings")
     for policy in policies:
         policy.enforced = policy.data_class in _RETENTION_ENFORCED
@@ -350,11 +350,11 @@ def _parse_expiry(raw: str):
         return None
     value = parse_datetime(raw)
     if value is None:
-        raise ValueError(_t("Couldn't read that expiry date."))
+        raise ValueError(gettext_lazy("Couldn't read that expiry date."))
     if timezone.is_naive(value):
         value = value.replace(tzinfo=_dt.UTC)
     if value <= timezone.now():
-        raise ValueError(_t("Expiry must be in the future — leave it blank for a permanent grant."))
+        raise ValueError(gettext_lazy("Expiry must be in the future — leave it blank for a permanent grant."))
     return value
 
 
@@ -381,7 +381,7 @@ def set_role(request: HttpRequest, user_id: int) -> HttpResponse:
     grant = "grant" in request.POST
     role_key = request.POST.get("grant") if grant else request.POST.get("revoke")
     if role_key not in _MANAGEABLE_ROLES:
-        raise PermissionDenied(_t("That role can't be managed here."))
+        raise PermissionDenied(gettext_lazy("That role can't be managed here."))
     try:
         expires_at = _parse_expiry(request.POST.get("expires_at", "")) if grant else None
     except ValueError as exc:
@@ -396,13 +396,13 @@ def set_role(request: HttpRequest, user_id: int) -> HttpResponse:
                       "reason": request.POST.get("reason", "")[:200]},
         )
         if not created:
-            messages.info(request, _t("A %(role)s grant for that pilot is already awaiting approval.") % {
+            messages.info(request, gettext_lazy("A %(role)s grant for that pilot is already awaiting approval.") % {
                 "role": role_key.title()})
             return redirect("admin_audit:members")
         audit_log(request.user, "role.grant_requested", target_type="user", target_id=str(target.id),
                   metadata={"role": role_key}, ip=client_ip(request))
         _notify_role_request(target, role_key, request.user)
-        messages.success(request, _t("%(role)s grant requested — a second director must approve it.") % {
+        messages.success(request, gettext_lazy("%(role)s grant requested — a second director must approve it.") % {
             "role": role_key.title()})
         return redirect("admin_audit:members")
 
@@ -421,14 +421,14 @@ def set_role(request: HttpRequest, user_id: int) -> HttpResponse:
                 .count()
             )
             if directors <= 1:
-                messages.error(request, _t("Can't remove the last Director — promote someone else first."))
+                messages.error(request, gettext_lazy("Can't remove the last Director — promote someone else first."))
                 return redirect("admin_audit:members")
         RoleAssignment.objects.filter(user=target, role__key=role_key).delete()
         action = "revoked"
 
     audit_log(request.user, f"role.{action}", target_type="user", target_id=str(target.id),
               metadata={"role": role_key}, ip=client_ip(request))
-    messages.success(request, _t("%(role)s %(action)s for %(name)s.") % {
+    messages.success(request, gettext_lazy("%(role)s %(action)s for %(name)s.") % {
         "role": role_key.title(), "action": action, "name": target.first_name or target.username})
     return redirect("admin_audit:members")
 
@@ -472,7 +472,7 @@ def role_request_decide(request: HttpRequest, pk: int) -> HttpResponse:
             pk=pk, status=RoleChangeRequest.Status.PENDING,
         )
         if approve and req.requested_by_id == request.user.id and not request.user.is_superuser:
-            messages.error(request, _t("You can't approve your own role request — another director must."))
+            messages.error(request, gettext_lazy("You can't approve your own role request — another director must."))
             return redirect("admin_audit:members")
         req.decided_by = request.user
         req.decided_at = timezone.now()
@@ -486,7 +486,7 @@ def role_request_decide(request: HttpRequest, pk: int) -> HttpResponse:
         req.save(update_fields=["status", "decided_by", "decided_at", "updated_at"])
     audit_log(request.user, f"role.request_{outcome}", target_type="user", target_id=str(req.target_id),
               metadata={"role": req.role_key, "request_id": req.id}, ip=client_ip(request))
-    messages.success(request, _t("%(role)s grant %(outcome)s for %(name)s.") % {
+    messages.success(request, gettext_lazy("%(role)s grant %(outcome)s for %(name)s.") % {
         "role": req.role_key.title(), "outcome": outcome,
         "name": req.target.first_name or req.target.username})
     return redirect("admin_audit:members")
@@ -517,7 +517,7 @@ def doctrine_settings(request: HttpRequest) -> HttpResponse:
         try:
             requested = int(raw)
         except ValueError:
-            messages.error(request, _t("Enter a whole number."))
+            messages.error(request, gettext_lazy("Enter a whole number."))
             return redirect("admin_audit:doctrine_settings")
         clamped = clamp_per_page(requested)
         config.per_page = clamped
@@ -525,10 +525,10 @@ def doctrine_settings(request: HttpRequest) -> HttpResponse:
         audit_log(request.user, "doctrine.display.config", target_type="doctrine_display_config",
                   target_id=str(config.id), metadata={"per_page": clamped}, ip=client_ip(request))
         if clamped != requested:
-            messages.info(request, _t("Page size set to %(clamped)s (kept within %(min)s–%(max)s).") % {
+            messages.info(request, gettext_lazy("Page size set to %(clamped)s (kept within %(min)s–%(max)s).") % {
                 "clamped": clamped, "min": MIN_PER_PAGE, "max": MAX_PER_PAGE})
         else:
-            messages.success(request, _t("Page size set to %(clamped)s per page.") % {"clamped": clamped})
+            messages.success(request, gettext_lazy("Page size set to %(clamped)s per page.") % {"clamped": clamped})
         return redirect("admin_audit:doctrine_settings")
     return render(request, "admin_audit/console/doctrine_settings.html", {
         "config": config, "min_per_page": MIN_PER_PAGE, "max_per_page": MAX_PER_PAGE,
@@ -541,7 +541,7 @@ def doctrine_settings(request: HttpRequest) -> HttpResponse:
 def doctrine_create(request: HttpRequest) -> HttpResponse:
     name = (request.POST.get("name") or "").strip()
     if not name:
-        messages.error(request, _t("Give the doctrine a name."))
+        messages.error(request, gettext_lazy("Give the doctrine a name."))
         return redirect("admin_audit:doctrines")
     category = DoctrineCategory.objects.filter(pk=request.POST.get("category")).first()
     doctrine = Doctrine.objects.create(
@@ -551,7 +551,7 @@ def doctrine_create(request: HttpRequest) -> HttpResponse:
     )
     audit_log(request.user, "doctrine.create", target_type="doctrine", target_id=str(doctrine.id),
               metadata={"name": name}, ip=client_ip(request))
-    messages.success(request, _t("Doctrine “%(name)s” created — add a fit below.") % {"name": name})
+    messages.success(request, gettext_lazy("Doctrine “%(name)s” created — add a fit below.") % {"name": name})
     return redirect("admin_audit:doctrine_edit", pk=doctrine.pk)
 
 
@@ -583,7 +583,7 @@ def doctrine_update(request: HttpRequest, pk: int) -> HttpResponse:
     category = request.POST.get("category")
     doctrine.category = DoctrineCategory.objects.filter(pk=category).first() if category else None
     doctrine.save()
-    messages.success(request, _t("Doctrine updated."))
+    messages.success(request, gettext_lazy("Doctrine updated."))
     return redirect("admin_audit:doctrine_edit", pk=pk)
 
 
@@ -595,7 +595,7 @@ def doctrine_delete(request: HttpRequest, pk: int) -> HttpResponse:
     audit_log(request.user, "doctrine.delete", target_type="doctrine", target_id=str(doctrine.id),
               metadata={"name": doctrine.name}, ip=client_ip(request))
     doctrine.delete()
-    messages.success(request, _t("Doctrine deleted."))
+    messages.success(request, gettext_lazy("Doctrine deleted."))
     return redirect("admin_audit:doctrines")
 
 
@@ -608,10 +608,10 @@ def fit_add(request: HttpRequest, pk: int) -> HttpResponse:
     try:
         parsed = parse_eft(eft)
     except ValueError as exc:
-        messages.error(request, _t("Couldn't parse the EFT: %(error)s") % {"error": exc})
+        messages.error(request, gettext_lazy("Couldn't parse the EFT: %(error)s") % {"error": exc})
         return redirect("admin_audit:doctrine_edit", pk=pk)
     if not parsed["ship_type_id"]:
-        messages.error(request, _t("Unknown ship “%(ship)s” — check the EFT header.") % {
+        messages.error(request, gettext_lazy("Unknown ship “%(ship)s” — check the EFT header.") % {
             "ship": parsed['ship_name']})
         return redirect("admin_audit:doctrine_edit", pk=pk)
     fit = create_fit(
@@ -621,11 +621,11 @@ def fit_add(request: HttpRequest, pk: int) -> HttpResponse:
     )
     reqs = fit.skill_requirements.count()
     if parsed["unresolved"]:
-        msg = _t("Fit “%(name)s” added (%(count)s skill requirements derived). "
+        msg = gettext_lazy("Fit “%(name)s” added (%(count)s skill requirements derived). "
                  "Unresolved lines: %(lines)s.") % {
             "name": fit.name, "count": reqs, "lines": ', '.join(parsed['unresolved'][:5])}
     else:
-        msg = _t("Fit “%(name)s” added (%(count)s skill requirements derived).") % {
+        msg = gettext_lazy("Fit “%(name)s” added (%(count)s skill requirements derived).") % {
             "name": fit.name, "count": reqs}
     messages.success(request, msg)
     return redirect("admin_audit:doctrine_edit", pk=pk)
@@ -638,7 +638,7 @@ def fit_delete(request: HttpRequest, fit_id: int) -> HttpResponse:
     fit = get_object_or_404(DoctrineFit, pk=fit_id)
     pk = fit.doctrine_id
     fit.delete()
-    messages.success(request, _t("Fit removed."))
+    messages.success(request, gettext_lazy("Fit removed."))
     return redirect("admin_audit:doctrine_edit", pk=pk)
 
 
@@ -652,7 +652,7 @@ def requirement_add(request: HttpRequest, fit_id: int) -> HttpResponse:
     fit = get_object_or_404(DoctrineFit, pk=fit_id)
     kind = request.POST.get("kind")
     if kind not in DoctrineRequirement.Kind.values:
-        messages.error(request, _t("Pick a valid requirement type."))
+        messages.error(request, gettext_lazy("Pick a valid requirement type."))
         return redirect("admin_audit:doctrine_edit", pk=fit.doctrine_id)
     type_id = None
     raw_type = (request.POST.get("type_id") or "").strip()
@@ -667,16 +667,16 @@ def requirement_add(request: HttpRequest, fit_id: int) -> HttpResponse:
             type_id = None
     text = (request.POST.get("text") or "").strip()
     if kind == DoctrineRequirement.Kind.NOTE and not text:
-        messages.error(request, _t("A note needs some text."))
+        messages.error(request, gettext_lazy("A note needs some text."))
         return redirect("admin_audit:doctrine_edit", pk=fit.doctrine_id)
     if kind != DoctrineRequirement.Kind.NOTE and type_id is None:
-        messages.error(request, _t("This requirement needs a type id (or record it as a note)."))
+        messages.error(request, gettext_lazy("This requirement needs a type id (or record it as a note)."))
         return redirect("admin_audit:doctrine_edit", pk=fit.doctrine_id)
     DoctrineRequirement.objects.create(
         fit=fit, kind=kind, type_id=type_id, text=text,
         is_recommended=request.POST.get("is_recommended") == "on",
     )
-    messages.success(request, _t("Requirement added."))
+    messages.success(request, gettext_lazy("Requirement added."))
     return redirect("admin_audit:doctrine_edit", pk=fit.doctrine_id)
 
 
@@ -689,7 +689,7 @@ def requirement_delete(request: HttpRequest, req_id: int) -> HttpResponse:
     req = get_object_or_404(DoctrineRequirement.objects.select_related("fit"), pk=req_id)
     pk = req.fit.doctrine_id
     req.delete()
-    messages.success(request, _t("Requirement removed."))
+    messages.success(request, gettext_lazy("Requirement removed."))
     return redirect("admin_audit:doctrine_edit", pk=pk)
 
 
@@ -728,7 +728,7 @@ def import_fits_apply(request: HttpRequest) -> HttpResponse:
     """
     selected = request.POST.getlist("select")
     if not selected:
-        messages.error(request, _t("Tick at least one fit to import."))
+        messages.error(request, gettext_lazy("Tick at least one fit to import."))
         return redirect("admin_audit:import_fits")
 
     category = imported_category()
@@ -777,14 +777,14 @@ def import_fits_apply(request: HttpRequest) -> HttpResponse:
             len(created)) % {"count": len(created)})
     if duplicates:
         names = ", ".join(f"“{n}”" for n in duplicates)
-        messages.info(request, _t("Already in the library (identical name and fit) — skipped: %(names)s.") % {
+        messages.info(request, gettext_lazy("Already in the library (identical name and fit) — skipped: %(names)s.") % {
             "names": names})
     if conflicts:
         names = ", ".join(f"“{n}”" for n in conflicts)
-        messages.error(request, _t("A doctrine with this name already exists but with a "
+        messages.error(request, gettext_lazy("A doctrine with this name already exists but with a "
                                    "different fit — rename it and import again: %(names)s.") % {"names": names})
     if not created and not duplicates and not conflicts:
-        messages.error(request, _t("Nothing imported — the selected fits couldn't be read."))
+        messages.error(request, gettext_lazy("Nothing imported — the selected fits couldn't be read."))
 
     # Stay on the import page when something needs renaming; otherwise move on.
     if conflicts or not created:
@@ -810,15 +810,15 @@ def doctrine_from_killmail(request: HttpRequest, killmail_id: int) -> HttpRespon
         name = (request.POST.get("name") or "").strip()
         eft = (request.POST.get("eft") or "").strip()
         if not name:
-            messages.error(request, _t("Give the doctrine a name."))
+            messages.error(request, gettext_lazy("Give the doctrine a name."))
             return redirect("admin_audit:doctrine_from_killmail", killmail_id=killmail_id)
         try:
             parsed = parse_eft(eft)
         except ValueError as exc:
-            messages.error(request, _t("Couldn't parse the fit: %(error)s") % {"error": exc})
+            messages.error(request, gettext_lazy("Couldn't parse the fit: %(error)s") % {"error": exc})
             return redirect("admin_audit:doctrine_from_killmail", killmail_id=killmail_id)
         if not parsed["ship_type_id"]:
-            messages.error(request, _t("Unknown ship “%(ship)s” — check the first line.") % {
+            messages.error(request, gettext_lazy("Unknown ship “%(ship)s” — check the first line.") % {
                 "ship": parsed['ship_name']})
             return redirect("admin_audit:doctrine_from_killmail", killmail_id=killmail_id)
         category = DoctrineCategory.objects.filter(pk=request.POST.get("category")).first()
@@ -837,11 +837,11 @@ def doctrine_from_killmail(request: HttpRequest, killmail_id: int) -> HttpRespon
                   ip=client_ip(request))
         count = fit.skill_requirements.count()
         if parsed["unresolved"]:
-            msg = _t("Doctrine “%(name)s” created from killmail (%(count)s skills derived). "
+            msg = gettext_lazy("Doctrine “%(name)s” created from killmail (%(count)s skills derived). "
                      "Unresolved: %(lines)s.") % {
                 "name": name, "count": count, "lines": ', '.join(parsed['unresolved'][:5])}
         else:
-            msg = _t("Doctrine “%(name)s” created from killmail (%(count)s skills derived).") % {
+            msg = gettext_lazy("Doctrine “%(name)s” created from killmail (%(count)s skills derived).") % {
                 "name": name, "count": count}
         messages.success(request, msg)
         return redirect("admin_audit:doctrine_edit", pk=doctrine.pk)
@@ -867,7 +867,7 @@ def category_create(request: HttpRequest) -> HttpResponse:
     key = (request.POST.get("key") or label.lower().replace(" ", "-")).strip()
     if label and key:
         DoctrineCategory.objects.get_or_create(key=key, defaults={"label": label})
-        messages.success(request, _t("Category “%(label)s” added.") % {"label": label})
+        messages.success(request, gettext_lazy("Category “%(label)s” added.") % {"label": label})
     return redirect("admin_audit:doctrines")
 
 
@@ -875,14 +875,14 @@ def category_create(request: HttpRequest) -> HttpResponse:
 # What the engine can verify by itself; anything else is checked off by the
 # pilot. Labels are what leaders read in the check-type dropdown.
 _MILESTONE_CHECKS = [
-    ("manual", _t("Manual — pilot checks it off")),
-    ("linked", _t("Auto — a character is linked")),
-    ("corp_member", _t("Auto — verified corp member")),
-    ("skills_imported", _t("Auto — skills imported")),
-    ("scopes", _t("Auto — ESI scopes granted")),
-    ("skill_min", _t("Auto — skill trained to level")),
-    ("doctrine_ready", _t("Auto — can fly a specific doctrine")),
-    ("doctrine_any", _t("Auto — can fly ANY active doctrine")),
+    ("manual", gettext_lazy("Manual — pilot checks it off")),
+    ("linked", gettext_lazy("Auto — a character is linked")),
+    ("corp_member", gettext_lazy("Auto — verified corp member")),
+    ("skills_imported", gettext_lazy("Auto — skills imported")),
+    ("scopes", gettext_lazy("Auto — ESI scopes granted")),
+    ("skill_min", gettext_lazy("Auto — skill trained to level")),
+    ("doctrine_ready", gettext_lazy("Auto — can fly a specific doctrine")),
+    ("doctrine_any", gettext_lazy("Auto — can fly ANY active doctrine")),
 ]
 
 
@@ -920,7 +920,7 @@ def milestone_save(request: HttpRequest, pk: int | None = None) -> HttpResponse:
 
     title = (request.POST.get("title") or "").strip()
     if not title:
-        messages.error(request, _t("A milestone needs a title."))
+        messages.error(request, gettext_lazy("A milestone needs a title."))
         return redirect("admin_audit:content")
 
     category = request.POST.get("category")
@@ -937,10 +937,10 @@ def milestone_save(request: HttpRequest, pk: int | None = None) -> HttpResponse:
         try:
             doctrine_id = int(request.POST.get("doctrine_id") or "")
         except ValueError:
-            messages.error(request, _t("Pick the doctrine this milestone checks."))
+            messages.error(request, gettext_lazy("Pick the doctrine this milestone checks."))
             return redirect("admin_audit:content")
         if not Doctrine.objects.filter(pk=doctrine_id).exists():
-            messages.error(request, _t("That doctrine no longer exists."))
+            messages.error(request, gettext_lazy("That doctrine no longer exists."))
             return redirect("admin_audit:content")
         criteria = {"type": "doctrine_ready", "doctrine_id": doctrine_id}
     elif check == "skill_min":
@@ -948,13 +948,13 @@ def milestone_save(request: HttpRequest, pk: int | None = None) -> HttpResponse:
             skill_type_id = int(request.POST.get("skill_type_id") or "")
             level = min(5, max(1, int(request.POST.get("skill_level") or "1")))
         except ValueError:
-            messages.error(request, _t("Skill milestones need a skill type id and a level (1–5)."))
+            messages.error(request, gettext_lazy("Skill milestones need a skill type id and a level (1–5)."))
             return redirect("admin_audit:content")
         criteria = {"type": "skill_min", "skill_type_id": skill_type_id, "level": level}
     elif check == "scopes":
         scopes = [s.strip() for s in (request.POST.get("scopes") or "").split(",") if s.strip()]
         if not scopes:
-            messages.error(request, _t("List at least one ESI scope (comma-separated)."))
+            messages.error(request, gettext_lazy("List at least one ESI scope (comma-separated)."))
             return redirect("admin_audit:content")
         criteria = {"type": "scopes", "scopes": scopes}
 
@@ -974,7 +974,7 @@ def milestone_save(request: HttpRequest, pk: int | None = None) -> HttpResponse:
     if pk:
         obj = OnboardingMilestone.objects.filter(pk=pk).first()
         if obj is None:
-            messages.error(request, _t("That milestone no longer exists."))
+            messages.error(request, gettext_lazy("That milestone no longer exists."))
             return redirect("admin_audit:content")
         for key, value in fields.items():
             setattr(obj, key, value)
@@ -989,7 +989,7 @@ def milestone_save(request: HttpRequest, pk: int | None = None) -> HttpResponse:
         action = "create"
     audit_log(request.user, f"onboarding.milestone.{action}",
               target_type="onboarding_milestone", target_id=str(obj.pk), ip=client_ip(request))
-    messages.success(request, _t("Milestone “%(title)s” saved.") % {"title": obj.title})
+    messages.success(request, gettext_lazy("Milestone “%(title)s” saved.") % {"title": obj.title})
     return redirect("admin_audit:content")
 
 
@@ -1002,7 +1002,7 @@ def milestone_delete(request: HttpRequest, pk: int) -> HttpResponse:
     get_object_or_404(OnboardingMilestone, pk=pk).delete()
     audit_log(request.user, "onboarding.milestone.delete",
               target_type="onboarding_milestone", target_id=str(pk), ip=client_ip(request))
-    messages.success(request, _t("Milestone removed — pilots' progress rows went with it."))
+    messages.success(request, gettext_lazy("Milestone removed — pilots' progress rows went with it."))
     return redirect("admin_audit:content")
 
 
@@ -1014,9 +1014,9 @@ def glossary_create(request: HttpRequest) -> HttpResponse:
     definition = (request.POST.get("definition") or "").strip()
     if term and definition:
         GlossaryTerm.objects.update_or_create(term=term, defaults={"definition": definition})
-        messages.success(request, _t("Glossary term “%(term)s” saved.") % {"term": term})
+        messages.success(request, gettext_lazy("Glossary term “%(term)s” saved.") % {"term": term})
     else:
-        messages.error(request, _t("Both term and definition are required."))
+        messages.error(request, gettext_lazy("Both term and definition are required."))
     return redirect("admin_audit:content")
 
 
@@ -1025,20 +1025,20 @@ def glossary_create(request: HttpRequest) -> HttpResponse:
 @require_POST
 def glossary_delete(request: HttpRequest, term_id: int) -> HttpResponse:
     get_object_or_404(GlossaryTerm, pk=term_id).delete()
-    messages.success(request, _t("Glossary term removed."))
+    messages.success(request, gettext_lazy("Glossary term removed."))
     return redirect("admin_audit:content")
 
 
 # --- Settings & maintenance --------------------------------------------------
 # Maintenance jobs a Director can trigger by name (enqueued on the worker).
 _MAINTENANCE_TASKS = {
-    "recommendations": ("recommendations.run", _t("Recommendation engine")),
-    "market_history": ("market.sync_history", _t("Market history refresh")),
-    "corp_assets": ("stockpile.sync_corp_assets", _t("Corp asset sync")),
-    "personal_assets": ("stockpile.sync_personal_assets", _t("Personal asset sync")),
-    "killmails": ("killboard.discover_all_member_killmails", _t("Killmail discovery")),
-    "skills": ("characters.sync_all_member_skills", _t("Member skill sync")),
-    "capsuleer_reconcile": ("capsuleer.reconcile_progress", _t("Capsuleer Path reconcile")),
+    "recommendations": ("recommendations.run", gettext_lazy("Recommendation engine")),
+    "market_history": ("market.sync_history", gettext_lazy("Market history refresh")),
+    "corp_assets": ("stockpile.sync_corp_assets", gettext_lazy("Corp asset sync")),
+    "personal_assets": ("stockpile.sync_personal_assets", gettext_lazy("Personal asset sync")),
+    "killmails": ("killboard.discover_all_member_killmails", gettext_lazy("Killmail discovery")),
+    "skills": ("characters.sync_all_member_skills", gettext_lazy("Member skill sync")),
+    "capsuleer_reconcile": ("capsuleer.reconcile_progress", gettext_lazy("Capsuleer Path reconcile")),
 }
 
 
@@ -1061,14 +1061,14 @@ def settings_view(request: HttpRequest) -> HttpResponse:
 def run_maintenance(request: HttpRequest, action: str) -> HttpResponse:
     entry = _MAINTENANCE_TASKS.get(action)
     if not entry:
-        raise PermissionDenied(_t("Unknown maintenance action."))
+        raise PermissionDenied(gettext_lazy("Unknown maintenance action."))
     task_name, label = entry
     from config.celery import app as celery_app
 
     celery_app.send_task(task_name)
     audit_log(request.user, "maintenance.run", target_type="task", target_id=task_name,
               ip=client_ip(request))
-    messages.success(request, _t("%(label)s queued — results appear under Integrations as they finish.") % {
+    messages.success(request, gettext_lazy("%(label)s queued — results appear under Integrations as they finish.") % {
         "label": label})
     return redirect("admin_audit:settings")
 
@@ -1097,7 +1097,7 @@ def contribution_weights(request: HttpRequest) -> HttpResponse:
             audit_log(request.user, "contribution.weights_update",
                       target_type="contribution_weights", target_id=str(weights.pk),
                       ip=client_ip(request))
-            messages.success(request, _t("Contribution weights updated."))
+            messages.success(request, gettext_lazy("Contribution weights updated."))
             return redirect("admin_audit:contribution_weights")
     else:
         form = ContributionWeightsForm(instance=weights)

@@ -21,13 +21,15 @@ from __future__ import annotations
 from collections import defaultdict
 from datetime import datetime
 
+from django.conf import settings
 from django.core.cache import cache
 from django.db.models import Count, Q, Sum
-from django.utils import formats, timezone
-from django.utils.translation import gettext_lazy as _t
+from django.utils import formats, timezone, translation
+from django.utils.translation import gettext_lazy
 
 from apps.pilots.models import ContributionEvent
 from apps.pilots.weights import points_for
+from core.i18n import i18n_cache_key
 
 _CACHE_TTL = 300
 _MAX_MONTHS = 24
@@ -37,8 +39,8 @@ CATEGORY_TOP = 5
 # Ordered categories shown on the page (ledger kinds + the two derived ones).
 CATEGORIES: list[tuple[str, str]] = [
     *ContributionEvent.Kind.choices,
-    ("pvp", _t("PvP kills")),
-    ("pve", _t("Ratting income")),
+    ("pvp", gettext_lazy("PvP kills")),
+    ("pve", gettext_lazy("Ratting income")),
 ]
 CATEGORY_LABELS = dict(CATEGORIES)
 
@@ -319,11 +321,19 @@ def _drop_opted_out(scores: dict) -> None:
         scores.pop(cid, None)
 
 
-def scoreboard(year: int, month: int) -> dict:
-    """Top-10 overall + top-5 per category for the given month (cached)."""
-    from django.conf import settings
+def _scoreboard_base_key(year: int, month: int) -> str:
+    return f"hof:{year:04d}-{month:02d}"
 
-    cache_key = f"hof:{year:04d}-{month:02d}"
+
+def scoreboard(year: int, month: int) -> dict:
+    """Top-10 overall + top-5 per category for the given month (cached).
+
+    The cached payload embeds *translated prose* — the month label, the category
+    titles/subtitles (``CATEGORY_LABELS``) and the ``category_how`` one-liners are all
+    rendered under the active locale — so the key is language-scoped (D17). A value built
+    in one language must never be served to a reader in another.
+    """
+    cache_key = i18n_cache_key(_scoreboard_base_key(year, month))
     cached = cache.get(cache_key)
     if cached is not None:
         return cached
@@ -382,5 +392,18 @@ def scoreboard(year: int, month: int) -> dict:
 
 
 def invalidate_cache() -> None:
-    """Drop cached scoreboards (call when weights change)."""
-    cache.delete_many([f"hof:{m['key']}" for m in available_months()])
+    """Drop cached scoreboards (call when weights change), in EVERY language.
+
+    Each board is cached per language (``i18n_cache_key``), but a weights change reshuffles
+    the numbers in all of them and the invalidator runs under one arbitrary locale. Busting
+    only that locale would leave every other one serving pre-change rankings for the rest of
+    the TTL. ``settings.LANGUAGES`` (the full framework set) is swept, not just the enabled
+    locales, so a locale disabled after it was cached cannot leave an orphaned entry behind
+    (mirrors ``killboard.aggregation.invalidate_period_cache``).
+    """
+    months = available_months()
+    keys: list[str] = []
+    for code, _label in settings.LANGUAGES:
+        with translation.override(code):
+            keys.extend(i18n_cache_key(_scoreboard_base_key(m["year"], m["month"])) for m in months)
+    cache.delete_many(keys)

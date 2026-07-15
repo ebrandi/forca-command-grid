@@ -26,7 +26,7 @@
   <div class="mb-3 flex items-center gap-2">
     <img src="{% eve_type_render stype.type_id 64 %}" alt="" class="h-10 w-10 rounded-md bg-space ring-1 ring-line">
     <div><h2 class="font-display font-semibold text-ink">{{ stype.name }}</h2><p class="text-xs text-faint">{{ recipe.estimate.activity }} · {{ recipe.estimate.output_per_run }}/run{% if recipe.invention %} · {% translate "Tech II (invented)" %}{% endif %}</p></div>
-    <a href="{% url 'industry:calculator' %}?type_id={{ stype.type_id }}" class="ml-auto btn-ghost !py-1 !text-xs">Cost it →</a>
+    <a href="{% url 'industry:calculator' %}?type_id={{ stype.type_id }}" class="ml-auto btn-ghost !py-1 !text-xs">{% translate "Cost it" %} →</a>
   </div>
   <div class="grid gap-1 sm:grid-cols-2">
     {% for m in recipe.estimate.materials %}

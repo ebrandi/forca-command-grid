@@ -13,7 +13,7 @@ POST forms with a hidden "action" input the views dispatch on.
 {% endcomment %}
 
 <header class="mb-6">
-  <p class="eyebrow text-gold">Mentorship</p>
+  <p class="eyebrow text-gold">{% translate "Mentorship" %}</p>
   <div class="mt-1 flex flex-wrap items-center gap-4">
     <div class="flex items-center -space-x-3">
       {% if pairing.mentor.user.main_character.character_id %}
@@ -88,8 +88,8 @@ POST forms with a hidden "action" input the views dispatch on.
       <div class="flex items-center gap-3 border-b border-line px-4 py-3">
         <span class="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-space {% if tr.pct == 100 %}text-kill{% else %}text-gold{% endif %}"><svg class="h-5 w-5"><use href="#{{ tr.track.icon|default:'i-target' }}"/></svg></span>
         <div class="min-w-0 flex-1">
-          <h3 class="font-display text-sm font-semibold uppercase tracking-wide text-ink">{{ tr.track.title }}</h3>
-          <div class="mt-1 h-2 overflow-hidden rounded-full bg-space" role="progressbar" aria-valuenow="{{ tr.pct }}" aria-valuemin="0" aria-valuemax="100" aria-label="{% blocktranslate with title=tr.track.title pct=tr.pct %}{{ title }} progress {{ pct }} percent{% endblocktranslate %}">
+          <h3 class="font-display text-sm font-semibold uppercase tracking-wide text-ink">{{ tr.track.title_i18n }}</h3>
+          <div class="mt-1 h-2 overflow-hidden rounded-full bg-space" role="progressbar" aria-valuenow="{{ tr.pct }}" aria-valuemin="0" aria-valuemax="100" aria-label="{% blocktranslate with title=tr.track.title_i18n pct=tr.pct %}{{ title }} progress {{ pct }} percent{% endblocktranslate %}">
             <div class="h-full rounded-full {% if tr.pct == 100 %}bg-kill{% else %}bg-gold{% endif %}" style="width:{{ tr.pct }}%"></div>
           </div>
         </div>
@@ -102,7 +102,7 @@ POST forms with a hidden "action" input the views dispatch on.
           <div class="flex flex-wrap items-center gap-2">
             <span class="chip !text-[10px]
               {% if a.task.difficulty >= 4 %}text-loss{% elif a.task.difficulty == 3 %}text-gold{% else %}text-cyan{% endif %}">{{ a.task.get_difficulty_display }}</span>
-            <span class="min-w-0 flex-1 font-medium text-ink">{{ a.task.title }}{% if a.repeat_index %} <span class="text-faint">#{{ a.repeat_index|add:1 }}</span>{% endif %}</span>
+            <span class="min-w-0 flex-1 font-medium text-ink">{{ a.task.title_i18n }}{% if a.repeat_index %} <span class="text-faint">#{{ a.repeat_index|add:1 }}</span>{% endif %}</span>
             <span class="chip !text-[10px]
               {% if a.status == 'completed' or a.status == 'completed_unrewardable' or a.status == 'waived' %}text-kill
               {% elif a.status == 'rejected' or a.status == 'expired' %}text-loss
@@ -124,12 +124,12 @@ POST forms with a hidden "action" input the views dispatch on.
           </div>
 
           {% if role == 'mentee' and a.task.mentee_instructions %}
-            <p class="mt-2 rounded-md border border-line/60 bg-space/40 px-3 py-2 text-xs text-muted"><span class="eyebrow mr-1 text-gold">{% translate "Your brief" %}</span>{{ a.task.mentee_instructions }}</p>
+            <p class="mt-2 rounded-md border border-line/60 bg-space/40 px-3 py-2 text-xs text-muted"><span class="eyebrow mr-1 text-gold">{% translate "Your brief" %}</span>{{ a.task.mentee_instructions_i18n }}</p>
           {% elif role == 'mentor' and a.task.mentor_instructions %}
-            <p class="mt-2 rounded-md border border-line/60 bg-space/40 px-3 py-2 text-xs text-muted"><span class="eyebrow mr-1 text-cyan">{% translate "Mentor brief" %}</span>{{ a.task.mentor_instructions }}</p>
+            <p class="mt-2 rounded-md border border-line/60 bg-space/40 px-3 py-2 text-xs text-muted"><span class="eyebrow mr-1 text-cyan">{% translate "Mentor brief" %}</span>{{ a.task.mentor_instructions_i18n }}</p>
           {% elif role == 'officer' %}
-            {% if a.task.mentee_instructions %}<p class="mt-2 rounded-md border border-line/60 bg-space/40 px-3 py-2 text-xs text-muted"><span class="eyebrow mr-1 text-gold">{% translate "Cadet brief" %}</span>{{ a.task.mentee_instructions }}</p>{% endif %}
-            {% if a.task.mentor_instructions %}<p class="mt-1.5 rounded-md border border-line/60 bg-space/40 px-3 py-2 text-xs text-muted"><span class="eyebrow mr-1 text-cyan">{% translate "Mentor brief" %}</span>{{ a.task.mentor_instructions }}</p>{% endif %}
+            {% if a.task.mentee_instructions %}<p class="mt-2 rounded-md border border-line/60 bg-space/40 px-3 py-2 text-xs text-muted"><span class="eyebrow mr-1 text-gold">{% translate "Cadet brief" %}</span>{{ a.task.mentee_instructions_i18n }}</p>{% endif %}
+            {% if a.task.mentor_instructions %}<p class="mt-1.5 rounded-md border border-line/60 bg-space/40 px-3 py-2 text-xs text-muted"><span class="eyebrow mr-1 text-cyan">{% translate "Mentor brief" %}</span>{{ a.task.mentor_instructions_i18n }}</p>{% endif %}
           {% endif %}
 
           {% if a.last_reason %}<p class="mt-2 text-xs text-muted"><span class="eyebrow mr-1">{% translate "Note" %}</span>{{ a.last_reason }}</p>{% endif %}
@@ -233,7 +233,7 @@ POST forms with a hidden "action" input the views dispatch on.
             <div><label class="label">{% translate "Track" %}</label>
               <select name="track_id" class="input-field">
                 <option value="">{% translate "— any —" %}</option>
-                {% for tr in progress %}<option value="{{ tr.track.id }}">{{ tr.track.title }}</option>{% endfor %}
+                {% for tr in progress %}<option value="{{ tr.track.id }}">{{ tr.track.title_i18n }}</option>{% endfor %}
               </select>
             </div>
           </div>
@@ -251,7 +251,7 @@ POST forms with a hidden "action" input the views dispatch on.
       <form method="post" action="{% url 'mentorship:enroll_track' pairing.id %}" class="flex flex-wrap items-end gap-2">
         {% csrf_token %}
         <select name="track_id" required class="input-field flex-1">
-          {% for t in enrollable_tracks %}<option value="{{ t.id }}">{{ t.title }}</option>{% endfor %}
+          {% for t in enrollable_tracks %}<option value="{{ t.id }}">{{ t.title_i18n }}</option>{% endfor %}
         </select>
         <button class="btn-ghost !px-3 !py-1.5 text-xs">{% translate "Enroll" %}</button>
       </form>
@@ -266,8 +266,8 @@ POST forms with a hidden "action" input the views dispatch on.
         {% for r in rewards %}
         <div class="flex items-start gap-3 px-4 py-2.5 text-sm">
           <div class="min-w-0 flex-1">
-            <p class="text-ink">{{ r.description }}</p>
-            <p class="mt-0.5 text-[11px] text-faint">{{ r.recipient.display_name }} · {{ r.recipient_role }} · {{ r.get_reward_type_display }}</p>
+            <p class="text-ink">{{ r.description_i18n }}</p>
+            <p class="mt-0.5 text-[11px] text-faint">{{ r.recipient.display_name }} · {{ r.get_recipient_role_display }} · {{ r.get_reward_type_display }}</p>
           </div>
           <div class="shrink-0 text-right">
             <p class="data text-xs text-gold">{% if r.reward_type == 'isk' %}{{ r.amount|isk }}{% else %}{{ r.points }} {% translate "pts" %}{% endif %}</p>

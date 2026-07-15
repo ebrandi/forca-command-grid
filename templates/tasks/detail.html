@@ -69,7 +69,7 @@
     <ol class="space-y-3 text-sm">
       {% for e in events %}
       <li class="border-l-2 border-line pl-3">
-        <p class="text-ink">{% if e.note %}{{ e.note }}{% else %}{{ e.from_status|default:"—" }} → {{ e.to_status }}{% endif %}</p>
+        <p class="text-ink">{% if e.note %}{{ e.note_i18n }}{% else %}{{ e.from_status_label|default:"—" }} → {{ e.to_status_label }}{% endif %}</p>
         <p class="text-[11px] text-faint">{{ e.actor.get_username|default:"system" }} · {{ e.at|date:"j M H:i" }}</p>
       </li>
       {% empty %}<li class="text-faint">{% translate "No history yet." %}</li>{% endfor %}

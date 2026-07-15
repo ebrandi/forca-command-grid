@@ -22,7 +22,7 @@
     <div class="min-w-0 flex-1">
       <div class="flex items-center gap-2">
         <span class="truncate font-medium text-ink">{{ i.name }}</span>
-        <span class="chip">{{ i.kind }}</span>
+        <span class="chip">{{ i.kind_label }}</span>
         {% if i.system %}<span class="hidden text-xs text-faint sm:inline">{{ i.system }}</span>{% endif %}
       </div>
       <p class="mt-0.5 text-xs {% if i.severity == 'critical' %}text-loss{% elif i.severity == 'warning' %}text-gold{% else %}text-faint{% endif %}">{{ i.detail }}</p>

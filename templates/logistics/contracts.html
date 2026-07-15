@@ -26,12 +26,12 @@
     <div class="panel flex flex-wrap items-center gap-x-5 gap-y-2 p-4 ring-1 ring-gold/20">
       <div class="min-w-0 flex-1">
         <p class="font-medium text-ink">{{ c.origin_name }} <span class="text-faint">→</span> {{ c.dest_name }}</p>
-        <p class="text-xs text-faint">{{ c.get_ship_class_display }} · {{ c.volume_m3|floatformat:0 }} m³ · {{ c.collateral|isk }} collateral · {{ c.jumps }} jumps{% if c.rush %} · <span class="text-gold">{% translate "RUSH" %}</span>{% endif %}{% if c.posted_as_name %} · for {{ c.posted_as_name }}{% endif %}</p>
+        <p class="text-xs text-faint">{{ c.get_ship_class_display }} · {{ c.volume_m3|floatformat:0 }} m³ · {% blocktranslate with collateral=c.collateral|isk %}{{ collateral }} collateral{% endblocktranslate %} · {% blocktranslate count jumps=c.jumps %}{{ jumps }} jump{% plural %}{{ jumps }} jumps{% endblocktranslate %}{% if c.rush %} · <span class="text-gold">{% translate "RUSH" %}</span>{% endif %}{% if c.posted_as_name %} · {% blocktranslate with name=c.posted_as_name %}for {{ name }}{% endblocktranslate %}{% endif %}</p>
         {% if c.dest_location_kind == 'structure' %}<p class="mt-0.5 text-[11px] text-cyan">{% translate "⚠ Drop-off is a player structure — confirm docking access before delivering, or you risk the collateral." %}</p>{% endif %}
       </div>
       <div class="text-right">
         <p class="data text-lg font-bold text-gold">{{ c.reward|isk }}</p>
-        {% if c.deadline %}<p class="text-[11px] text-faint">due {{ c.deadline|date:"M j, H:i" }}</p>{% endif %}
+        {% if c.deadline %}<p class="text-[11px] text-faint">{% blocktranslate with deadline=c.deadline|date:"M j, H:i" %}due {{ deadline }}{% endblocktranslate %}</p>{% endif %}
       </div>
       <form method="post" action="{% url 'logistics:transition_contract' c.pk %}" class="flex gap-1">
         {% csrf_token %}
@@ -70,14 +70,14 @@
               <span class="chip {% if c.sec_band == 'highsec' %}!text-kill{% elif c.sec_band == 'lowsec' %}!text-gold{% else %}!text-loss{% endif %}">{{ c.sec_band }}</span>
               {% if c.rush %}<span class="chip !text-gold">{% translate "RUSH" %}</span>{% endif %}
               {% if c.dest_location_kind == 'structure' %}<span class="chip !text-cyan" title="{% translate 'Drop-off is a player structure — confirm you have docking access before accepting, or you risk the collateral.' %}">{% translate "structure dest" %}</span>{% endif %}
-              {% if c.posted_as_name %}<span class="text-muted">by {{ c.posted_as_name }}</span>{% endif %}
+              {% if c.posted_as_name %}<span class="text-muted">{% blocktranslate with name=c.posted_as_name %}by {{ name }}{% endblocktranslate %}</span>{% endif %}
             </p>
           </td>
           <td class="px-4 py-2.5 text-muted">{{ c.get_ship_class_display }}</td>
           <td class="px-4 py-2.5 text-right data text-faint">{{ c.volume_m3|floatformat:0 }}</td>
           <td class="px-4 py-2.5 text-right data text-muted">{{ c.collateral|isk }}</td>
           <td class="px-4 py-2.5 text-right data text-faint">{{ c.jumps }}</td>
-          <td class="px-4 py-2.5 text-right data font-semibold text-gold">{{ c.reward|isk }}<br><span class="text-[10px] font-normal text-faint">{{ c.reward_per_jump|isk }}/jump</span></td>
+          <td class="px-4 py-2.5 text-right data font-semibold text-gold">{{ c.reward|isk }}<br><span class="text-[10px] font-normal text-faint">{% blocktranslate with reward=c.reward_per_jump|isk %}{{ reward }}/jump{% endblocktranslate %}</span></td>
           <td class="px-4 py-2.5 text-right">
             <form method="post" action="{% url 'logistics:claim_contract' c.pk %}" class="inline">{% csrf_token %}<button class="btn-gold !py-1 !text-xs">{% translate "Claim" %}</button></form>
             {% if is_officer %}<form method="post" action="{% url 'logistics:cancel_contract' c.pk %}" class="inline">{% csrf_token %}<button class="btn-ghost !py-1 !text-xs">✕</button></form>{% endif %}

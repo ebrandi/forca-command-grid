@@ -14,7 +14,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
-from django.utils.translation import gettext_lazy as _t
+from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 
 from apps.readiness import config
@@ -85,7 +85,7 @@ def _save_dimensions(request: HttpRequest) -> HttpResponse:
     audit_log(request.user, "readiness.config.update",
               target_type="readiness_config", target_id="dimensions",
               metadata={"domain": "dimensions"}, ip=client_ip(request))
-    messages.success(request, _t("Dimensions & weights saved."))
+    messages.success(request, gettext_lazy("Dimensions & weights saved."))
     return redirect("admin_audit:readiness_dimensions")
 
 
@@ -115,7 +115,7 @@ def readiness_reset(request: HttpRequest, domain: str) -> HttpResponse:
     audit_log(request.user, "readiness.config.reset",
               target_type="readiness_config", target_id=domain,
               metadata={"domain": domain}, ip=client_ip(request))
-    messages.success(request, _t("%(domain)s reset to defaults.") % {"domain": domain.title()})
+    messages.success(request, gettext_lazy("%(domain)s reset to defaults.") % {"domain": domain.title()})
     return redirect(back)
 
 
@@ -150,10 +150,10 @@ def readiness_mandatory_ship_save(request: HttpRequest, pk: int | None = None) -
     label = (request.POST.get("label") or "").strip()
     ship_type_id = _int_or(request.POST.get("ship_type_id"))
     if not label:
-        messages.error(request, _t("A mandatory ship needs a label."))
+        messages.error(request, gettext_lazy("A mandatory ship needs a label."))
         return redirect("admin_audit:readiness_mandatory_ships")
     if ship_type_id is None:
-        messages.error(request, _t("Enter the ship type id (the hull this requires)."))
+        messages.error(request, gettext_lazy("Enter the ship type id (the hull this requires)."))
         return redirect("admin_audit:readiness_mandatory_ships")
 
     category = request.POST.get("category")
@@ -178,7 +178,7 @@ def readiness_mandatory_ship_save(request: HttpRequest, pk: int | None = None) -
     if pk:
         obj = MandatoryShip.objects.filter(pk=pk).first()
         if obj is None:
-            messages.error(request, _t("That mandatory ship no longer exists."))
+            messages.error(request, gettext_lazy("That mandatory ship no longer exists."))
             return redirect("admin_audit:readiness_mandatory_ships")
         for key, value in fields.items():
             setattr(obj, key, value)
@@ -190,9 +190,9 @@ def readiness_mandatory_ship_save(request: HttpRequest, pk: int | None = None) -
     audit_log(request.user, f"readiness.mandatory_ship.{action}",
               target_type="mandatory_ship", target_id=str(obj.pk), ip=client_ip(request))
     if pk:
-        messages.success(request, _t("Mandatory ship updated: %(label)s.") % {"label": obj.label})
+        messages.success(request, gettext_lazy("Mandatory ship updated: %(label)s.") % {"label": obj.label})
     else:
-        messages.success(request, _t("Mandatory ship added: %(label)s.") % {"label": obj.label})
+        messages.success(request, gettext_lazy("Mandatory ship added: %(label)s.") % {"label": obj.label})
     return redirect("admin_audit:readiness_mandatory_ships")
 
 
@@ -205,7 +205,7 @@ def readiness_mandatory_ship_delete(request: HttpRequest, pk: int) -> HttpRespon
     MandatoryShip.objects.filter(pk=pk).delete()
     audit_log(request.user, "readiness.mandatory_ship.delete",
               target_type="mandatory_ship", target_id=str(pk), ip=client_ip(request))
-    messages.success(request, _t("Mandatory ship removed."))
+    messages.success(request, gettext_lazy("Mandatory ship removed."))
     return redirect("admin_audit:readiness_mandatory_ships")
 
 
@@ -256,7 +256,7 @@ def readiness_strategic_role_save(request: HttpRequest, pk: int | None = None) -
         if not isinstance(params, dict):
             raise ValueError
     except (ValueError, json.JSONDecodeError):
-        messages.error(request, _t("Detection params must be a JSON object, e.g. "
+        messages.error(request, gettext_lazy("Detection params must be a JSON object, e.g. "
                                    '{"skills": {"3300": 5}}.'))
         return redirect("admin_audit:readiness_strategic_roles")
 
@@ -270,7 +270,7 @@ def readiness_strategic_role_save(request: HttpRequest, pk: int | None = None) -
     if pk:
         obj = StrategicRoleTarget.objects.filter(pk=pk).first()
         if obj is None:
-            messages.error(request, _t("That strategic role no longer exists."))
+            messages.error(request, gettext_lazy("That strategic role no longer exists."))
             return redirect("admin_audit:readiness_strategic_roles")
         for key, value in fields.items():
             setattr(obj, key, value)
@@ -279,10 +279,10 @@ def readiness_strategic_role_save(request: HttpRequest, pk: int | None = None) -
     else:
         role_key = (request.POST.get("role_key") or "").strip().lower()
         if role_key not in _ROLE_CATALOGUE:
-            messages.error(request, _t("Pick a role from the catalogue."))
+            messages.error(request, gettext_lazy("Pick a role from the catalogue."))
             return redirect("admin_audit:readiness_strategic_roles")
         if StrategicRoleTarget.objects.filter(role_key=role_key).exists():
-            messages.error(request, _t("A target for '%(role)s' already exists — edit it instead.") % {
+            messages.error(request, gettext_lazy("A target for '%(role)s' already exists — edit it instead.") % {
                 "role": role_key})
             return redirect("admin_audit:readiness_strategic_roles")
         if not fields["label"]:
@@ -292,9 +292,9 @@ def readiness_strategic_role_save(request: HttpRequest, pk: int | None = None) -
     audit_log(request.user, f"readiness.strategic_role.{action}",
               target_type="strategic_role", target_id=str(obj.pk), ip=client_ip(request))
     if pk:
-        messages.success(request, _t("Strategic role updated: %(label)s.") % {"label": obj.label})
+        messages.success(request, gettext_lazy("Strategic role updated: %(label)s.") % {"label": obj.label})
     else:
-        messages.success(request, _t("Strategic role added: %(label)s.") % {"label": obj.label})
+        messages.success(request, gettext_lazy("Strategic role added: %(label)s.") % {"label": obj.label})
     return redirect("admin_audit:readiness_strategic_roles")
 
 
@@ -307,7 +307,7 @@ def readiness_strategic_role_delete(request: HttpRequest, pk: int) -> HttpRespon
     StrategicRoleTarget.objects.filter(pk=pk).delete()
     audit_log(request.user, "readiness.strategic_role.delete",
               target_type="strategic_role", target_id=str(pk), ip=client_ip(request))
-    messages.success(request, _t("Strategic role removed."))
+    messages.success(request, gettext_lazy("Strategic role removed."))
     return redirect("admin_audit:readiness_strategic_roles")
 
 
@@ -329,13 +329,13 @@ def _audited_set(request: HttpRequest, domain: str, doc: dict, *, ok_message: st
 
 # --- Financial configuration (config domain "finance"; doc 07 page 7) --------
 _FINANCE_ISK_FIELDS = [
-    ("min_wallet", _t("Minimum wallet balance"), _t("Floor the corp wallet should never drop below.")),
-    ("monthly_burn_target", _t("Monthly burn target"), _t("Expected ISK outflow per month.")),
-    ("srp_budget", _t("SRP budget"), _t("Monthly ISK set aside for ship replacement.")),
-    ("emergency_reserve", _t("Emergency reserve"), _t("Untouchable war-chest the runway scores against.")),
-    ("alliance_payments_monthly", _t("Alliance payments / mo"), _t("Dues owed upward each month.")),
-    ("sov_costs_monthly", _t("Sovereignty costs / mo"), _t("Bills/indices for held space.")),
-    ("infrastructure_costs_monthly", _t("Infrastructure costs / mo"), _t("Fuel, structures and services.")),
+    ("min_wallet", gettext_lazy("Minimum wallet balance"), gettext_lazy("Floor the corp wallet should never drop below.")),
+    ("monthly_burn_target", gettext_lazy("Monthly burn target"), gettext_lazy("Expected ISK outflow per month.")),
+    ("srp_budget", gettext_lazy("SRP budget"), gettext_lazy("Monthly ISK set aside for ship replacement.")),
+    ("emergency_reserve", gettext_lazy("Emergency reserve"), gettext_lazy("Untouchable war-chest the runway scores against.")),
+    ("alliance_payments_monthly", gettext_lazy("Alliance payments / mo"), gettext_lazy("Dues owed upward each month.")),
+    ("sov_costs_monthly", gettext_lazy("Sovereignty costs / mo"), gettext_lazy("Bills/indices for held space.")),
+    ("infrastructure_costs_monthly", gettext_lazy("Infrastructure costs / mo"), gettext_lazy("Fuel, structures and services.")),
 ]
 
 
@@ -352,7 +352,7 @@ def readiness_finance(request: HttpRequest) -> HttpResponse:
                 doc[key] = raw
         doc["wallet_division_scope"] = (request.POST.get("wallet_division_scope") or "all").strip() or "all"
         return _audited_set(request, "finance", doc,
-                            ok_message=_t("Financial targets saved."),
+                            ok_message=gettext_lazy("Financial targets saved."),
                             back="admin_audit:readiness_finance")
     cfg = config.get("finance")
     rows = [{"key": k, "label": label, "help": help_, "value": cfg.get(k, 0)}
@@ -366,9 +366,9 @@ def readiness_finance(request: HttpRequest) -> HttpResponse:
 
 # --- SRP thresholds (config domain "srp"; doc 07 page 8) ---------------------
 _SRP_FIELDS = [
-    ("max_pending_claims", _t("Max pending claims"), _t("Backlog above this scores red.")),
-    ("max_avg_wait_hours", _t("Max average wait (hours)"), _t("Mean approve time the KPI scores against.")),
-    ("max_claim_age_days", _t("Max claim age (days)"), _t("Oldest unresolved claim that's still acceptable.")),
+    ("max_pending_claims", gettext_lazy("Max pending claims"), gettext_lazy("Backlog above this scores red.")),
+    ("max_avg_wait_hours", gettext_lazy("Max average wait (hours)"), gettext_lazy("Mean approve time the KPI scores against.")),
+    ("max_claim_age_days", gettext_lazy("Max claim age (days)"), gettext_lazy("Oldest unresolved claim that's still acceptable.")),
 ]
 
 
@@ -384,7 +384,7 @@ def readiness_srp(request: HttpRequest) -> HttpResponse:
             if raw:
                 doc[key] = raw
         return _audited_set(request, "srp", doc,
-                            ok_message=_t("SRP thresholds saved."),
+                            ok_message=gettext_lazy("SRP thresholds saved."),
                             back="admin_audit:readiness_srp")
     cfg = config.get("srp")
     rows = [{"key": k, "label": label, "help": help_, "value": cfg.get(k, 0)}
@@ -462,14 +462,14 @@ def _save_responsibilities(request: HttpRequest) -> HttpResponse:
             dimension_owner[provider.key] = chosen
     doc = {"owner_tags": new_tags, "dimension_owner": dimension_owner, "kpi_owner": cfg.get("kpi_owner") or {}}
     return _audited_set(request, "responsibilities", doc,
-                        ok_message=_t("Officer responsibilities saved."),
+                        ok_message=gettext_lazy("Officer responsibilities saved."),
                         back="admin_audit:readiness_responsibilities")
 
 
 # --- Alerts rule editor (config domain "alerts"; doc 07 page 9) --------------
 _ALERT_SEVERITIES = ["info", "warn", "high", "critical"]
 _ALERT_CHANNELS = [("discord", "Discord"), ("eve_mail", "EVE-mail")]
-_ALERT_KINDS = [("", _t("Any")), ("risk", _t("Risk (current gap)")), ("forecast", _t("Forecast (predicted breach)"))]
+_ALERT_KINDS = [("", gettext_lazy("Any")), ("risk", gettext_lazy("Risk (current gap)")), ("forecast", gettext_lazy("Forecast (predicted breach)"))]
 
 
 @login_required
@@ -521,7 +521,7 @@ def readiness_mail_sender(request: HttpRequest) -> HttpResponse:
     return _audited_set(
         request, "notifications",
         {"eve_mail_sender_character_id": (request.POST.get("sender_character_id") or "").strip() or None},
-        ok_message=_t("EVE-mail sender saved."),
+        ok_message=gettext_lazy("EVE-mail sender saved."),
         back="admin_audit:readiness_alerts",
     )
 
@@ -567,7 +567,7 @@ def readiness_alert_save(request: HttpRequest) -> HttpResponse:
     key = (request.POST.get("key") or "").strip().lower()
     original_key = (request.POST.get("original_key") or "").strip().lower()
     if not key or not re.fullmatch(r"[a-z0-9][a-z0-9_-]{1,39}", key):
-        messages.error(request, _t("Rule key must be 2–40 chars: lowercase letters, digits, '-' or '_'."))
+        messages.error(request, gettext_lazy("Rule key must be 2–40 chars: lowercase letters, digits, '-' or '_'."))
         return redirect("admin_audit:readiness_alerts")
     rules = list(config.get("alerts").get("rules") or [])
     rule = _rule_from_post(request, key)
@@ -577,7 +577,7 @@ def readiness_alert_save(request: HttpRequest) -> HttpResponse:
     rules = [r for r in rules if (r.get("key") or "").strip().lower() not in drop]
     rules.append(rule)
     return _audited_set(request, "alerts", {"rules": rules},
-                        ok_message=_t("Alert rule '%(key)s' saved.") % {"key": key},
+                        ok_message=gettext_lazy("Alert rule '%(key)s' saved.") % {"key": key},
                         back="admin_audit:readiness_alerts")
 
 
@@ -588,7 +588,7 @@ def readiness_alert_delete(request: HttpRequest, key: str) -> HttpResponse:
     rules = [r for r in (config.get("alerts").get("rules") or [])
              if (r.get("key") or "").strip().lower() != key.strip().lower()]
     return _audited_set(request, "alerts", {"rules": rules},
-                        ok_message=_t("Alert rule removed."),
+                        ok_message=gettext_lazy("Alert rule removed."),
                         back="admin_audit:readiness_alerts")
 
 
@@ -658,7 +658,7 @@ def _save_kpis(request: HttpRequest) -> HttpResponse:
                 entry["thresholds"] = {"amber": amber, "red": red}
             doc[key] = entry
     return _audited_set(request, "kpis", doc,
-                        ok_message=_t("KPI configuration saved."),
+                        ok_message=gettext_lazy("KPI configuration saved."),
                         back="admin_audit:readiness_kpis")
 
 
@@ -711,7 +711,7 @@ def _save_doctrines(request: HttpRequest) -> HttpResponse:
             try:
                 retirement = dt.date.fromisoformat(ret_raw)
             except ValueError:
-                messages.error(request, _t("%(name)s: retirement date must be YYYY-MM-DD.") % {"name": d.name})
+                messages.error(request, gettext_lazy("%(name)s: retirement date must be YYYY-MM-DD.") % {"name": d.name})
                 return redirect("admin_audit:readiness_doctrines")
         min_pilots = _int_or(request.POST.get(f"doc_{d.id}_min"))
         if min_pilots is not None and min_pilots < 0:
@@ -728,7 +728,7 @@ def _save_doctrines(request: HttpRequest) -> HttpResponse:
         classified += 1
     audit_log(request.user, "readiness.doctrine_config.update",
               target_type="readiness_config", target_id="doctrines", ip=client_ip(request))
-    messages.success(request, _t("Doctrine readiness saved (%(count)s classified).") % {"count": classified})
+    messages.success(request, gettext_lazy("Doctrine readiness saved (%(count)s classified).") % {"count": classified})
     return redirect("admin_audit:readiness_doctrines")
 
 
@@ -769,11 +769,11 @@ def readiness_support_skill_save(request: HttpRequest, pk: int | None = None) ->
 
     skill_type_id = _int_or(request.POST.get("skill_type_id"))
     if skill_type_id is None:
-        messages.error(request, _t("Pick a skill from the search list."))
+        messages.error(request, gettext_lazy("Pick a skill from the search list."))
         return redirect("admin_audit:readiness_support")
     skill = SdeType.objects.filter(type_id=skill_type_id).first()
     if skill is None:
-        messages.error(request, _t("That skill isn't in the SDE — pick one from the search list."))
+        messages.error(request, gettext_lazy("That skill isn't in the SDE — pick one from the search list."))
         return redirect("admin_audit:readiness_support")
     min_level = _int_or(request.POST.get("min_level"), 5)
     min_level = min(5, max(1, min_level))
@@ -787,7 +787,7 @@ def readiness_support_skill_save(request: HttpRequest, pk: int | None = None) ->
     if pk:
         obj = FleetSupportSkill.objects.filter(pk=pk).first()
         if obj is None:
-            messages.error(request, _t("That support skill no longer exists."))
+            messages.error(request, gettext_lazy("That support skill no longer exists."))
             return redirect("admin_audit:readiness_support")
         for key, value in fields.items():
             setattr(obj, key, value)
@@ -795,7 +795,7 @@ def readiness_support_skill_save(request: HttpRequest, pk: int | None = None) ->
         action = "update"
     else:
         if FleetSupportSkill.objects.filter(skill_type_id=skill_type_id).exists():
-            messages.error(request, _t("%(name)s is already in the list — edit it instead.") % {
+            messages.error(request, gettext_lazy("%(name)s is already in the list — edit it instead.") % {
                 "name": skill.name})
             return redirect("admin_audit:readiness_support")
         obj = FleetSupportSkill.objects.create(**fields)
@@ -803,9 +803,9 @@ def readiness_support_skill_save(request: HttpRequest, pk: int | None = None) ->
     audit_log(request.user, f"readiness.support_skill.{action}",
               target_type="fleet_support_skill", target_id=str(obj.pk), ip=client_ip(request))
     if pk:
-        messages.success(request, _t("Support skill updated: %(name)s.") % {"name": obj.skill_name})
+        messages.success(request, gettext_lazy("Support skill updated: %(name)s.") % {"name": obj.skill_name})
     else:
-        messages.success(request, _t("Support skill added: %(name)s.") % {"name": obj.skill_name})
+        messages.success(request, gettext_lazy("Support skill added: %(name)s.") % {"name": obj.skill_name})
     return redirect("admin_audit:readiness_support")
 
 
@@ -818,7 +818,7 @@ def readiness_support_skill_delete(request: HttpRequest, pk: int) -> HttpRespons
     FleetSupportSkill.objects.filter(pk=pk).delete()
     audit_log(request.user, "readiness.support_skill.delete",
               target_type="fleet_support_skill", target_id=str(pk), ip=client_ip(request))
-    messages.success(request, _t("Support skill removed."))
+    messages.success(request, gettext_lazy("Support skill removed."))
     return redirect("admin_audit:readiness_support")
 
 
@@ -848,11 +848,11 @@ def _save_staging(request: HttpRequest) -> HttpResponse:
 
     system_id = _int_or(request.POST.get("system_id"))
     if system_id is None:
-        messages.error(request, _t("Search for and pick a staging system."))
+        messages.error(request, gettext_lazy("Search for and pick a staging system."))
         return redirect("admin_audit:readiness_staging")
     system = SdeSolarSystem.objects.filter(system_id=system_id).first()
     if system is None:
-        messages.error(request, _t("That system isn't in the SDE — pick one from the search list."))
+        messages.error(request, gettext_lazy("That system isn't in the SDE — pick one from the search list."))
         return redirect("admin_audit:readiness_staging")
     # Single active staging system: replace any previous one.
     StagingSystem.objects.all().delete()
@@ -860,7 +860,7 @@ def _save_staging(request: HttpRequest) -> HttpResponse:
         system_id=system_id, system_name=system.name[:120], active=True)
     audit_log(request.user, "readiness.staging.set",
               target_type="staging_system", target_id=str(obj.system_id), ip=client_ip(request))
-    messages.success(request, _t("Staging system set to %(name)s.") % {"name": obj.system_name})
+    messages.success(request, gettext_lazy("Staging system set to %(name)s.") % {"name": obj.system_name})
     return redirect("admin_audit:readiness_staging")
 
 
@@ -873,7 +873,7 @@ def readiness_staging_clear(request: HttpRequest) -> HttpResponse:
     StagingSystem.objects.all().delete()
     audit_log(request.user, "readiness.staging.clear",
               target_type="staging_system", target_id="", ip=client_ip(request))
-    messages.success(request, _t("Staging system cleared — the Asset Staging dimension is now unavailable."))
+    messages.success(request, gettext_lazy("Staging system cleared — the Asset Staging dimension is now unavailable."))
     return redirect("admin_audit:readiness_staging")
 
 
@@ -889,10 +889,10 @@ def readiness_wizard(request: HttpRequest) -> HttpResponse:
         if enable_dimension(key):
             audit_log(request.user, "readiness.dimension.enabled",
                       target_type="readiness_dimension", target_id=key, ip=client_ip(request))
-            messages.success(request, _t("Enabled the “%(key)s” dimension — it now scores in the index.") % {
+            messages.success(request, gettext_lazy("Enabled the “%(key)s” dimension — it now scores in the index.") % {
                 "key": key})
         else:
-            messages.error(request, _t("That dimension could not be enabled (unknown or already on)."))
+            messages.error(request, gettext_lazy("That dimension could not be enabled (unknown or already on)."))
         return redirect("admin_audit:readiness_wizard")
 
     return render(request, "admin_audit/console/readiness/wizard.html", {

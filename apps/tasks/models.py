@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from django.conf import settings
 from django.db import models
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext, gettext_lazy as _
 
 from core.mixins import TimeStampedModel
 
@@ -76,6 +76,16 @@ class Task(TimeStampedModel):
         return self.status in (self.Status.OPEN, self.Status.CLAIMED, self.Status.IN_PROGRESS)
 
 
+# The changed-field slugs stored inside an ``Edited:`` note map to translatable
+# labels. gettext_lazy is correct here (dict built once at import time); the join
+# in ``note_i18n`` coerces each proxy to str under the reader's request locale.
+_EDITED_FIELD_LABELS = {
+    "title": _("title"),
+    "priority": _("priority"),
+    "due_date": _("due date"),
+}
+
+
 class TaskEvent(models.Model):
     """Audit trail of a task's status transitions."""
 
@@ -85,9 +95,50 @@ class TaskEvent(models.Model):
     )
     from_status = models.CharField(max_length=12, blank=True)
     to_status = models.CharField(max_length=12)
-    # SDE-2 (3.7): a human note for non-status events (edit / reassign).
+    # SDE-2 (3.7): a note for non-status events (edit / reassign). Stored as a
+    # stable machine code — ``Edited:<slug,slug>`` / ``Unassigned`` /
+    # ``Reassigned:<username>`` — NOT display prose, so ``note_i18n`` can re-render
+    # it under each reader's locale instead of freezing the writer's English.
     note = models.CharField(max_length=200, blank=True, default="")
     at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["-at"]
+
+    @property
+    def note_i18n(self) -> str:
+        """Re-render the audit note under the reader's locale.
+
+        New rows store a machine code; legacy rows hold frozen English prose and
+        fall through to render verbatim (unknown format), so nothing goes blank.
+        """
+        note = self.note or ""
+        if not note:
+            return note
+        if note == "Unassigned":
+            return gettext("Unassigned")
+        if note.startswith("Edited:"):
+            slugs = [s for s in note[len("Edited:"):].split(",") if s]
+            fields = ", ".join(str(_EDITED_FIELD_LABELS.get(s, s)) for s in slugs)
+            return gettext("Edited %(fields)s") % {"fields": fields}
+        if note.startswith("Reassigned:"):
+            return gettext("Reassigned to %(user)s") % {"user": note[len("Reassigned:"):]}
+        return note  # legacy / unknown prose — render verbatim
+
+    @property
+    def from_status_label(self) -> str:
+        """Translated label for the originating status (blank if unset)."""
+        if not self.from_status:
+            return ""
+        try:
+            return Task.Status(self.from_status).label
+        except ValueError:
+            return self.from_status
+
+    @property
+    def to_status_label(self) -> str:
+        """Translated label for the destination status."""
+        try:
+            return Task.Status(self.to_status).label
+        except ValueError:
+            return self.to_status

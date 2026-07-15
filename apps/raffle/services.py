@@ -16,7 +16,7 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
-from django.utils.translation import gettext as _t
+from django.utils.translation import gettext
 from django.utils.translation import ngettext
 
 from core.audit import audit_log
@@ -202,12 +202,12 @@ def grant_manual_tickets(contest, actor, *, character_id=None, user=None, amount
     from core import rbac
 
     if amount is None or int(amount) <= 0:
-        raise GrantBlocked(_t("Ticket amount must be a positive number."))
+        raise GrantBlocked(gettext("Ticket amount must be a positive number."))
     amount = int(amount)
     if not reason or not reason.strip():
-        raise GrantBlocked(_t("A reason is required for every manual grant."))
+        raise GrantBlocked(gettext("A reason is required for every manual grant."))
     if contest.is_frozen:
-        raise GrantBlocked(_t("This contest's ledger is frozen — no new grants."))
+        raise GrantBlocked(gettext("This contest's ledger is frozen — no new grants."))
 
     character = None
     if user is not None and character_id is None:
@@ -222,7 +222,7 @@ def grant_manual_tickets(contest, actor, *, character_id=None, user=None, amount
     if (user is not None and actor is not None and user.pk == getattr(actor, "pk", None)
             and not rbac.has_role(actor, rbac.ROLE_DIRECTOR)
             and not getattr(actor, "is_superuser", False)):
-        raise GrantBlocked(_t("You can't grant raffle tickets to your own account."))
+        raise GrantBlocked(gettext("You can't grant raffle tickets to your own account."))
 
     e = (
         elig.for_character(contest, character) if character is not None
@@ -237,9 +237,9 @@ def grant_manual_tickets(contest, actor, *, character_id=None, user=None, amount
         )
         if not may_override:
             raise GrantBlocked(
-                _t("%(reason)s Ask them to enrol in FORCA Command Grid and connect their "
+                gettext("%(reason)s Ask them to enrol in FORCA Command Grid and connect their "
                    "ESI token first.")
-                % {"reason": e.message or _t("Pilot is not eligible.")}
+                % {"reason": e.message or gettext("Pilot is not eligible.")}
             )
         override_used = True
 
@@ -285,7 +285,7 @@ def grant_manual_tickets(contest, actor, *, character_id=None, user=None, amount
 def exclude_pilot(contest, actor, *, user=None, character_id=None, character_name: str = "",
                   reason: str) -> RaffleExclusion:
     if not reason.strip():
-        raise ValidationError(_t("An exclusion reason is required."))
+        raise ValidationError(gettext("An exclusion reason is required."))
     excl, _ = RaffleExclusion.objects.update_or_create(
         contest=contest,
         user=user if user is not None else None,
@@ -378,7 +378,7 @@ def run_draw(contest, actor=None, *, external_entropy: str = "", force: bool = F
     manual "draw anyway" action).
     """
     if contest.status not in (RaffleContest.Status.CLOSED, RaffleContest.Status.COMPLETED):
-        raise GrantBlocked(_t("The contest must be closed before drawing."))
+        raise GrantBlocked(gettext("The contest must be closed before drawing."))
     lock_key = f"raffle:draw:lock:{contest.pk}"
     if not cache.add(lock_key, "1", _DRAW_LOCK_TTL):
         return None
@@ -395,7 +395,7 @@ def run_draw(contest, actor=None, *, external_entropy: str = "", force: bool = F
         activity = boosters.min_activity_status(contest)
         if activity["configured"] and not activity["met"] and not force:
             raise ActivityNotMet(
-                _t("This contest hasn't reached its minimum activity "
+                gettext("This contest hasn't reached its minimum activity "
                    "(%(metric)s: %(value)s of %(threshold)s). "
                    "Use the manual override to draw anyway.")
                 % {

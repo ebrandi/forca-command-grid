@@ -12,10 +12,15 @@ import datetime as dt
 from django.conf import settings
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
+from django.utils.translation import gettext_lazy as _
 
 NOTIF_SCOPE = "esi-characters.read_notifications.v1"
 
 # ESI notification type -> (human label, alert-to-Discord?)
+# The label here stays RAW English on purpose: it feeds the frozen alert/audit path
+# (``_emit_corp_alert`` title/body and the JSON alert context), which is the documented
+# phased-migration exclusion. The member/officer-facing board renders ``DISPLAY_LABELS``
+# below instead, so its prose localises per reader locale.
 INTERESTING: dict[str, tuple[str, bool]] = {
     "StructureUnderAttack": ("Structure under attack", True),
     "StructureLostShields": ("Structure lost shields", True),
@@ -42,6 +47,38 @@ INTERESTING: dict[str, tuple[str, bool]] = {
     "MoonminingExtractionFinished": ("Moon extraction ready to fire", False),
     "MoonminingAutomaticFracture": ("Moon auto-fractured", False),
     "MoonminingLaserFired": ("Moon laser fired", False),
+}
+
+# Reader-locale display labels for the on-site notifications board — a parallel map so the
+# raw ``INTERESTING`` labels above stay byte-identical on the frozen alert/audit path. Each
+# value must mirror its ``INTERESTING`` label verbatim (gettext_lazy, since this is built at
+# import time). Unknown types fall back to the raw ESI type code in the view.
+DISPLAY_LABELS: dict[str, str] = {
+    "StructureUnderAttack": _("Structure under attack"),
+    "StructureLostShields": _("Structure lost shields"),
+    "StructureLostArmor": _("Structure lost armor"),
+    "StructureDestroyed": _("Structure destroyed"),
+    "StructureFuelAlert": _("Structure low on fuel"),
+    "StructureWentLowPower": _("Structure went low power"),
+    "StructureWentHighPower": _("Structure restored to high power"),
+    "StructureOnline": _("Structure onlined"),
+    "StructureAnchoring": _("Structure anchoring"),
+    "StructuresReinforcementChanged": _("Structure reinforcement window changed"),
+    "OwnershipTransferred": _("Structure ownership transferred"),
+    "WarDeclared": _("War declared"),
+    "CorpWarDeclaredV2": _("War declared"),
+    "AllWarDeclaredMsg": _("Alliance war declared"),
+    "CorpWarSurrenderMsg": _("War surrender"),
+    "WarRetractedByConcord": _("War retracted"),
+    "WarInvalid": _("War invalidated"),
+    "SovStructureReinforced": _("Sov structure reinforced"),
+    "SovCommandNodeEventStarted": _("Sov command nodes spawned"),
+    "SovStructureDestroyed": _("Sov structure destroyed"),
+    "EntosisCaptureStarted": _("Entosis capture started"),
+    "MoonminingExtractionStarted": _("Moon extraction started"),
+    "MoonminingExtractionFinished": _("Moon extraction ready to fire"),
+    "MoonminingAutomaticFracture": _("Moon auto-fractured"),
+    "MoonminingLaserFired": _("Moon laser fired"),
 }
 
 _ALERT_FRESH = dt.timedelta(hours=2)  # don't spam the corp with the backlog on first sync

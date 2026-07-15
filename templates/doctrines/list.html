@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% load eve static i18n %}
-{% block title %}Doctrines · [FORCA] Command Grid{% endblock %}
+{% block title %}{% translate "Doctrines" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <script defer src="{% static 'js/vendor/chart.umd.js' %}"></script>
 
 <header class="mb-6 flex flex-wrap items-end justify-between gap-3">
   <div>
     <p class="eyebrow">{% translate "Sanctioned fits" %}</p>
-    <h1 class="mt-1 text-3xl font-bold text-ink">Doctrines</h1>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Doctrines" %}</h1>
     <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "What the corp flies, and where to point your training to fly more of it." %}</p>
   </div>
   <div class="flex flex-wrap gap-2">
@@ -28,7 +28,7 @@
 <div class="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
   <div class="panel px-4 py-3">
     <p class="text-2xl font-bold text-ink">{{ headline.doctrines }}</p>
-    <p class="eyebrow text-faint">Doctrines</p>
+    <p class="eyebrow text-faint">{% translate "Doctrines" %}</p>
   </div>
   <div class="panel px-4 py-3">
     <p class="text-2xl font-bold text-ink">{{ headline.fits }}</p>
@@ -124,7 +124,7 @@
     <span class="eyebrow text-faint">{% translate "Category" %}</span>
     <select name="category" class="input-field mt-1">
       <option value="">{% translate "Any category" %}</option>
-      {% for c in categories %}<option value="{{ c.id }}" {% if f_category == c.id|stringformat:'s' %}selected{% endif %}>{{ c.label_i18n }}</option>{% endfor %}
+      {% for c in categories %}<option value="{{ c.id }}" {% if f_category == c.id|stringformat:'s' %}selected{% endif %}>{{ c.label }}</option>{% endfor %}
     </select>
   </label>
   <label class="block">

@@ -52,12 +52,12 @@
 <!-- Summary cards -->
 <section class="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
   <div class="panel p-4">
-    <p class="eyebrow text-faint">Kills</p>
+    <p class="eyebrow text-faint">{% translate "Kills" %}</p>
     <p class="data mt-1 text-2xl font-bold text-kill">{{ summary.kills }}</p>
     <p class="mt-0.5 text-[11px] text-faint">{{ summary.isk_destroyed|isk }} {% translate "destroyed" %}</p>
   </div>
   <div class="panel p-4">
-    <p class="eyebrow text-faint">Losses</p>
+    <p class="eyebrow text-faint">{% translate "Losses" %}</p>
     <p class="data mt-1 text-2xl font-bold text-loss">{{ summary.losses }}</p>
     <p class="mt-0.5 text-[11px] text-faint">{{ summary.isk_lost|isk }} {% translate "lost" %}</p>
   </div>
@@ -179,11 +179,11 @@
   {% if space.killed or space.lost %}
   <div class="grid gap-4 p-4 sm:grid-cols-2">
     <div>
-      <p class="eyebrow mb-2 text-center text-faint">Kills</p>
+      <p class="eyebrow mb-2 text-center text-faint">{% translate "Kills" %}</p>
       <div class="relative mx-auto h-40 w-40 skeleton"><canvas id="kb-space-killed"></canvas></div>
     </div>
     <div>
-      <p class="eyebrow mb-2 text-center text-faint">Losses</p>
+      <p class="eyebrow mb-2 text-center text-faint">{% translate "Losses" %}</p>
       <div class="relative mx-auto h-40 w-40 skeleton"><canvas id="kb-space-lost"></canvas></div>
     </div>
   </div>

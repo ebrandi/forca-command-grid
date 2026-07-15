@@ -104,7 +104,7 @@
     {% for p in plans %}
     <div class="rounded-lg border border-line p-4">
       <div class="flex items-center justify-between gap-2">
-        <a href="{% url 'skills:detail' p.plan.pk %}" class="font-display font-semibold text-ink hover:text-gold">{{ p.plan.name }}</a>
+        <a href="{% url 'skills:detail' p.plan.pk %}" class="font-display font-semibold text-ink hover:text-gold">{{ p.plan.name_i18n }}</a>
         <span class="chip">{{ p.plan.character.name }}</span>
       </div>
       <div class="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-space">

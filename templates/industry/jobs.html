@@ -111,7 +111,7 @@
         <div x-show="open" x-cloak class="mt-2 rounded-md bg-panel2/50 p-2">
           {% if q.mats.buildable %}<table class="w-full text-[11px]">
             {% for ln in q.mats.lines %}<tr class="{% if ln.short %}text-loss{% else %}text-faint{% endif %}"><td class="py-0.5">{{ ln.name }}</td><td class="py-0.5 text-right data">{% blocktranslate with have=ln.have need=ln.need %}have {{ have }} / need {{ need }}{% endblocktranslate %}</td></tr>{% endfor %}
-          </table>{% else %}<p class="text-[11px] text-faint">No recipe.</p>{% endif %}
+          </table>{% else %}<p class="text-[11px] text-faint">{% translate "No recipe." %}</p>{% endif %}
         </div>
       </li>
       {% endfor %}

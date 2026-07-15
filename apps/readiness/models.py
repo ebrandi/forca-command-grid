@@ -328,6 +328,14 @@ class PilotRecommendation(models.Model):
     category = models.CharField(max_length=12, choices=Category.choices)
     title = models.CharField(max_length=200)
     detail = models.TextField(blank=True)
+    # Seam B (see ``messages.py``): the quest log is written by a Celery beat with no reader and
+    # no locale, so the prose above can only ever be frozen English. These carry the scaffold key
+    # + its plain JSON params so ``title_i18n``/``detail_i18n`` re-render the sentence under the
+    # READER's locale. A keyless (legacy) row degrades to its stored English, never to blank.
+    title_key = models.CharField(max_length=60, blank=True, default="", db_default="")
+    title_params = models.JSONField(blank=True, default=dict, db_default=Value({}, JSONField()))
+    detail_key = models.CharField(max_length=60, blank=True, default="", db_default="")
+    detail_params = models.JSONField(blank=True, default=dict, db_default=Value({}, JSONField()))
     priority = models.IntegerField(default=0, db_index=True)
     points = models.IntegerField(default=0)
     action_url = models.CharField(max_length=300, blank=True)
@@ -356,6 +364,17 @@ class PilotRecommendation(models.Model):
 
     def __str__(self) -> str:
         return f"{self.category}:{self.title} ({self.state})"
+
+    # --- Seam B read side: resolve under the READER's locale, never the writer's ----------
+    # Each falls back to the stored English prose when the row carries no key (every legacy row)
+    # or the key is unknown to this deploy. They can never return blank.
+    @property
+    def title_i18n(self) -> str:
+        return render_text(self.title_key, self.title_params, self.title)
+
+    @property
+    def detail_i18n(self) -> str:
+        return render_text(self.detail_key, self.detail_params, self.detail)
 
 
 class FleetSupportSkill(models.Model):

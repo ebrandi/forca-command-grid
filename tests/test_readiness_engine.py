@@ -96,7 +96,13 @@ def test_engine_v2_equals_v1(django_user_model, sde):
     #     an additive ``kpis`` per-KPI breakdown (FR4) absent from the frozen v1 shape,
     #     so the golden equality is taken over v1's keys (``kpis`` is checked in the
     #     snapshot/KPI test instead).
-    assert {k: actual[k] for k in expected} == expected
+    # v2 gaps additionally carry the Seam-B render keys (label_key/label_params/
+    # task_title_key/task_title_params) so the dashboard can re-localise; _v1_reference
+    # strips its gaps to the six frozen v1 keys, so strip the engine's gaps the same way
+    # before the golden equality (mirrors the additive top-level ``kpis`` handling below).
+    _v1_gap_keys = ("kind", "ref_id", "label", "weight", "task_type", "task_title")
+    actual_cmp = {**actual, "gaps": [{k: g[k] for k in _v1_gap_keys} for g in actual["gaps"]]}
+    assert {k: actual_cmp[k] for k in expected} == expected
     assert set(actual) - set(expected) == {"kpis"}
 
     # (b) Independent oracle: numbers derived BY HAND from the v1 formulas (NOT from

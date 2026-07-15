@@ -16,12 +16,22 @@ from __future__ import annotations
 from decimal import Decimal
 
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from apps.market.models import MarketPrice
 from apps.market.pricing import price_for
 from apps.sde.models import SdeBlueprintActivityTime, SdeBlueprintMaterial, SdeType
 
 from . import bom
+
+# Human labels for the SDE activity code the estimate reports. The estimate stays a plain
+# dict; the value is a lazy proxy resolved in the reader's locale at render time (never a
+# stored/compared code — the recipe keeps the canonical ``manufacturing``/``reaction`` code).
+ACTIVITY_LABELS = {
+    "manufacturing": gettext_lazy("Manufacturing"),
+    "reaction": gettext_lazy("Reaction"),
+    "invention": gettext_lazy("Invention"),
+}
 
 # Sensible defaults; the admin config and the calculator UI can override all of them.
 DEFAULT_SYSTEM_COST_INDEX = Decimal("0.05")
@@ -162,7 +172,7 @@ def manufacturing_estimate(
         "runs": runs,
         "output_per_run": output_per_run,
         "total_units": total_units,
-        "activity": recipe.activity,
+        "activity": ACTIVITY_LABELS.get(recipe.activity, recipe.activity),
         "me": me,
         "te": te,
         "materials": materials,

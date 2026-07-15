@@ -19,6 +19,8 @@ from __future__ import annotations
 
 from decimal import ROUND_HALF_UP, Decimal
 
+from django.utils.translation import gettext as _
+
 from .chains import PiGraph, build_graph
 from .constants import DEFAULT_FACTORY_OUTPUT_PER_DAY, TIER_ORDER
 from .models import PiExportStrategy, PiPlanetRole
@@ -87,17 +89,22 @@ def planet_economics(plan, planet, graph: PiGraph, provider: PriceProvider) -> d
         "priced": True,
         "gross_day": 0.0, "input_cost_day": 0.0, "customs_day": 0.0,
         "hauling_day": 0.0, "fees_day": 0.0, "net_day": 0.0,
-        "unit_price": 0.0, "warnings": [],
+        # ``warnings`` is translated prose (rendered); ``missing_prices`` is the parallel
+        # machine-readable list of unpriced item names — the aggregate below keys off this,
+        # never off the (localised) warning text.
+        "unit_price": 0.0, "warnings": [], "missing_prices": [],
     }
     if mat is None:
-        row["warnings"].append("No product selected for this planet.")
+        row["warnings"].append(_("No product selected for this planet."))
         return row
 
     unit_price = provider.sell(mat.type_id)
     row["unit_price"] = _money(unit_price)
     row["priced"] = provider.is_priced(mat.type_id)
     if not row["priced"]:
-        row["warnings"].append(f"No market price for {mat.name} — revenue shown as 0.")
+        row["missing_prices"].append(mat.name)
+        row["warnings"].append(
+            _("No market price for %(product)s — revenue shown as 0.") % {"product": mat.name})
 
     gross = unit_price * daily
     strategy = plan.export_strategy
@@ -121,7 +128,10 @@ def planet_economics(plan, planet, graph: PiGraph, provider: PriceProvider) -> d
                 customs_import += provider.base_value(in_id) * units * _pct(plan.customs_import_tax)
                 if not provider.is_priced(in_id):
                     imat = graph.material(in_id)
-                    row["warnings"].append(f"No price for input {imat.name if imat else in_id}.")
+                    in_name = imat.name if imat else str(in_id)
+                    row["missing_prices"].append(in_name)
+                    row["warnings"].append(
+                        _("No price for input %(input)s.") % {"input": in_name})
 
     customs_export = provider.base_value(mat.type_id) * daily * _pct(plan.customs_export_tax)
     info = graph.material(mat.type_id)
@@ -159,34 +169,44 @@ def plan_economics(plan, graph: PiGraph | None = None, provider: PriceProvider |
     net = sum(Decimal(str(r["net_day"])) for r in rows)
 
     n_planets = len(rows) or 1
-    missing = sorted({w for r in rows for w in r["warnings"] if "No market price" in w or "No price" in w})
+    # Detect missing prices via the machine-readable per-row list — NEVER by substring-
+    # matching the (now-localised) warning prose, which would silently break for every
+    # non-English pilot. The names are EVE item nouns and stay raw.
+    missing = sorted({name for r in rows for name in r["missing_prices"]})
 
     warnings: list[str] = []
     if not planets:
-        warnings.append("Add at least one planet to estimate profit.")
+        warnings.append(_("Add at least one planet to estimate profit."))
     if missing:
-        warnings.append("Some products or inputs are unpriced — profit is understated. "
-                        "Refresh prices, or the daily market sync will fill them in.")
+        warnings.append(_("Some products or inputs are unpriced — profit is understated. "
+                          "Refresh prices, or the daily market sync will fill them in."))
     if net < 0 and planets:
-        warnings.append("This setup is currently unprofitable at these prices and taxes.")
+        warnings.append(_("This setup is currently unprofitable at these prices and taxes."))
     total_tax_pct = float(plan.customs_export_tax) + float(plan.sales_tax) + float(plan.broker_fee)
     if total_tax_pct >= 15:
-        warnings.append(f"High tax load ({total_tax_pct:.0f}% before hauling) — check your "
-                        f"customs standings and whether hauling to a cheaper hub helps.")
+        warnings.append(
+            _("High tax load (%(pct)s%% before hauling) — check your customs standings "
+              "and whether hauling to a cheaper hub helps.") % {"pct": f"{total_tax_pct:.0f}"})
 
     bases = {r["basis"] for r in rows}
     assumptions = [
-        f"Prices from {plan.market_region_name}; customs {plan.customs_export_tax}% export / "
-        f"{plan.customs_import_tax}% import; sales {plan.sales_tax}% + broker {plan.broker_fee}%.",
+        _("Prices from %(region)s; customs %(export)s%% export / %(import)s%% import; "
+          "sales %(sales)s%% + broker %(broker)s%%.") % {
+              "region": plan.market_region_name,
+              "export": plan.customs_export_tax,
+              "import": plan.customs_import_tax,
+              "sales": plan.sales_tax,
+              "broker": plan.broker_fee,
+          },
     ]
     if "extraction" in bases:
         assumptions.append(
-            f"Extraction planets assume a steady {plan.extraction_rate_per_hour:,}/hour per "
-            f"planet — tune this or enter your real output for accuracy.")
+            _("Extraction planets assume a steady %(rate)s/hour per planet — tune this or "
+              "enter your real output for accuracy.") % {"rate": f"{plan.extraction_rate_per_hour:,}"})
     if "factory_estimate" in bases:
         assumptions.append(
-            "Factory output uses a per-tier planning estimate; enter your measured units/day "
-            "on each factory planet to refine it.")
+            _("Factory output uses a per-tier planning estimate; enter your measured units/day "
+              "on each factory planet to refine it."))
 
     return {
         "region": {"id": plan.market_region_id, "name": plan.market_region_name},

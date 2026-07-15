@@ -98,7 +98,12 @@
 
   <!-- Fleet composition (Alpine builder) -->
   <section class="panel"
-           x-data="fleetBuilder('op-catalogue', 'op-slots', '{% url 'operations:ship_search' %}')">
+           x-data="fleetBuilder('op-catalogue', 'op-slots', '{% url 'operations:ship_search' %}')"
+           data-l-doctrine="{% translate 'Doctrine ·' %}"
+           data-l-add="{% translate 'add' %}"
+           data-l-added="{% translate 'added' %}"
+           data-l-custom-add="{% translate '+ Add a custom (non-doctrine) ship' %}"
+           data-l-custom-cancel="{% translate '− Cancel custom ship' %}">
     {{ catalogue|json_script:"op-catalogue" }}
     {{ slots_data|json_script:"op-slots" }}
     <div class="border-b border-line px-4 py-3">
@@ -121,7 +126,7 @@
                 <img :src="`{{ img_base }}/types/${s.ship_type_id}/icon?size=32`" alt="" class="h-6 w-6 rounded-sm" loading="lazy" x-show="s.ship_type_id">
                 <span class="font-medium text-ink" x-text="s.ship_name"></span>
                 <span class="chip !text-[9px]" x-text="s.role"></span>
-                <template x-if="s.kind === 'doctrine'"><span class="chip !text-[9px] !border-cyan/30 !text-cyan" x-text="'Doctrine · ' + s.doctrine"></span></template>
+                <template x-if="s.kind === 'doctrine'"><span class="chip !text-[9px] !border-cyan/30 !text-cyan" x-text="$root.dataset.lDoctrine + ' ' + s.doctrine"></span></template>
                 <template x-if="s.kind === 'custom' && s.eft"><span class="chip !text-[9px] text-faint">{% translate "custom fit" %}</span></template>
               </div>
             </div>
@@ -170,7 +175,7 @@
               <span class="text-[11px] text-faint" x-text="' · ' + f.doctrine + (f.role ? ' · ' + f.role : '')"></span>
             </div>
             <button type="button" @click="addDoctrine(f)" :disabled="hasFit(f.fit_id)"
-                    class="btn-ghost !py-1 !text-xs" x-text="hasFit(f.fit_id) ? 'added' : 'add'"></button>
+                    class="btn-ghost !py-1 !text-xs" x-text="hasFit(f.fit_id) ? $root.dataset.lAdded : $root.dataset.lAdd"></button>
           </div>
         </template>
         <p x-show="!filteredFits.length" class="px-3 py-4 text-center text-xs text-faint">{% translate "No matching doctrine ships." %}</p>
@@ -180,7 +185,7 @@
     <!-- Custom (non-doctrine) ship -->
     <div class="border-t border-line p-4">
       <button type="button" @click="customOpen = !customOpen" class="text-sm text-cyan hover:underline"
-              x-text="customOpen ? '− Cancel custom ship' : '+ Add a custom (non-doctrine) ship'"></button>
+              x-text="customOpen ? $root.dataset.lCustomCancel : $root.dataset.lCustomAdd"></button>
       <div x-show="customOpen" x-cloak class="mt-3 grid gap-3 sm:grid-cols-2">
         <div class="relative" @click.outside="cOpen=false">
           <label class="label">{% translate "Ship hull" %}</label>

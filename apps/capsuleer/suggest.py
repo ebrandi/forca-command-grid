@@ -1022,7 +1022,7 @@ def _accept(user, suggestion, now) -> dict:
             # the ``step_add`` guard (finding 53, doc 09 T-23).
             if goal is not None and goal.action_steps.count() < services.MAX_STEPS_PER_GOAL:
                 CareerActionStep.objects.create(
-                    goal=goal, title=suggestion.title[:140], source=StepSource.SUGGESTION,
+                    goal=goal, title=suggestion.title_i18n[:140], source=StepSource.SUGGESTION,
                 )
                 services.record_activity(goal, user, "suggestion.accepted",
                                          {"kind": suggestion.kind})

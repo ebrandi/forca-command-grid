@@ -126,8 +126,9 @@ def quote(
         rush_fee = card.rush_fee_jf if rush else 0
         gross = base + per_jump + coll_fee + rush_fee
         lines = [
-            # "Jump freighter" is an EVE ship-group proper noun — kept English, not wrapped.
-            {"label": "Jump freighter base", "isk": base},
+            # "Jump freighter" is an EVE ship-group proper noun kept verbatim in the
+            # target string; only "base" localises.
+            {"label": _("Jump freighter base"), "isk": base},
             {"label": _("Cyno jumps × %(hops)s") % {"hops": hops}, "isk": per_jump},
             {"label": _("Collateral fee"), "isk": coll_fee},
         ]

@@ -32,7 +32,7 @@
   <div class="mt-3 space-y-2 border-t border-line/60 pt-3">
     <div>
       <label class="label">{% translate "Waypoints" %} <span class="text-faint">{% translate "(in order, comma-separated)" %}</span></label>
-      <input id="lf_waypoints_1" type="text" name="waypoints" value="{{ waypoints_text }}" placeholder="force route through… e.g. Amamake, Rancer" autocomplete="off" class="input-field">
+      <input id="lf_waypoints_1" type="text" name="waypoints" value="{{ waypoints_text }}" placeholder="{% translate 'force route through… e.g. Amamake, Rancer' %}" autocomplete="off" class="input-field">
       {% if wp_unresolved %}<p class="mt-1 text-[11px] text-loss">{% blocktranslate with names=wp_unresolved|join:", " %}Couldn't find waypoint: {{ names }}{% endblocktranslate %}</p>{% endif %}
     </div>
     {% include "navigation/_avoid_controls.html" %}
@@ -47,10 +47,10 @@
 {% if camp.flagged %}
 <div class="panel mb-3 px-4 py-3 text-sm {% if camp.worst == 'danger' %}border-l-2 border-l-[#f0533f]{% else %}border-l-2 border-l-[#f4a52b]{% endif %}">
   <p class="font-semibold {% if camp.worst == 'danger' %}text-[#f0533f]{% else %}text-[#f4a52b]{% endif %}">
-    ⚠ Gate-camp activity on this route — {% if camp.danger %}{{ camp.danger }} danger{% endif %}{% if camp.danger and camp.caution %}, {% endif %}{% if camp.caution %}{{ camp.caution }} caution{% endif %}
+    ⚠ {% translate "Gate-camp activity on this route" %} — {% if camp.danger %}{% blocktranslate with n=camp.danger %}{{ n }} danger{% endblocktranslate %}{% endif %}{% if camp.danger and camp.caution %}, {% endif %}{% if camp.caution %}{% blocktranslate with n=camp.caution %}{{ n }} caution{% endblocktranslate %}{% endif %}
   </p>
   <ul class="mt-1 space-y-0.5 text-faint">
-    {% for f in camp.flagged %}<li><span class="font-medium {% if f.level == 'danger' %}text-[#f0533f]{% else %}text-[#f4a52b]{% endif %}">{{ f.name }}</span> <span class="text-[11px]">({{ f.level }}) — {{ f.reasons|join:", " }}</span></li>{% endfor %}
+    {% for f in camp.flagged %}<li><span class="font-medium {% if f.level == 'danger' %}text-[#f0533f]{% else %}text-[#f4a52b]{% endif %}">{{ f.name }}</span> <span class="text-[11px]">({{ f.level_label }}) — {{ f.reasons|join:", " }}</span></li>{% endfor %}
   </ul>
   <p class="mt-1.5 text-[11px] text-faint">{% translate "Last-hour public kill data, system-level. Scout these hops before committing a loaded ship." %} <a href="{% url 'navigation:gatecamp' %}" class="text-gold hover:underline">{% translate "Gate Camp Watch →" %}</a></p>
 </div>
@@ -67,7 +67,7 @@
       <span class="data w-6 shrink-0 text-right text-[11px] text-faint">{{ forloop.counter0 }}</span>
       <span class="data w-9 shrink-0 text-right font-semibold {{ s.security|sec_class }}">{{ s.security }}</span>
       <span class="min-w-0 flex-1 truncate text-muted">{{ s.name }}{% if forloop.first %} <span class="text-[10px] text-faint">· {% translate "start" %}</span>{% elif forloop.last %} <span class="text-[10px] text-faint">· {% translate "end" %}</span>{% endif %}</span>
-      {% if s.camp.level == 'danger' or s.camp.level == 'caution' %}<span class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase {% if s.camp.level == 'danger' %}bg-[#f0533f]/15 text-[#f0533f]{% else %}bg-[#f4a52b]/15 text-[#f4a52b]{% endif %}" title="{{ s.camp.reasons|join:', ' }}">{{ s.camp.level }}</span>{% endif %}
+      {% if s.camp.level == 'danger' or s.camp.level == 'caution' %}<span class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase {% if s.camp.level == 'danger' %}bg-[#f0533f]/15 text-[#f0533f]{% else %}bg-[#f4a52b]/15 text-[#f4a52b]{% endif %}" title="{{ s.camp.reasons|join:', ' }}">{{ s.camp.level_label }}</span>{% endif %}
       <span class="hidden truncate text-xs text-faint sm:block">{{ s.region }}</span>
     </li>
     {% endfor %}

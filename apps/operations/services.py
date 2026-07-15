@@ -4,6 +4,8 @@ from __future__ import annotations
 import datetime as dt
 import logging
 
+from django.utils.translation import gettext
+
 from apps.doctrines.services import character_readiness, doctrine_coverage
 
 log = logging.getLogger("forca.operations")
@@ -500,7 +502,11 @@ def doctrine_fit_catalogue() -> dict:
         "ship_type_id": r["ship_type_id"],
         "doctrine": r["doctrine"],
         "doctrine_id": r["doctrine_id"],
-        "category": cat.get(r["doctrine_id"]) or "Uncategorised",
+        # Eager ``gettext`` (this catalogue is built per-request and JSON-serialised,
+        # so a lazy proxy would not survive ``json_script``). Only the *fallback* is
+        # marked — real ``DoctrineCategory`` labels are corp/seeded prose handled by
+        # the doctrines app's own seam.
+        "category": cat.get(r["doctrine_id"]) or gettext("Uncategorised"),
         "hull_class": r["hull_class"],
         "role": r["role"] or "",
     } for r in rows]

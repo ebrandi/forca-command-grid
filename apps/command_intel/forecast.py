@@ -109,7 +109,7 @@ def forecast_findings(window_days: float | None = None, now=None) -> list[dict]:
         latest = series[-1]
         out.append({
             "key": key,
-            "label": latest.label,
+            "label": latest.label_i18n,
             "category": latest.category,
             "days_to_breach": round(days, 1),
             "breach_at": now + dt.timedelta(days=days),

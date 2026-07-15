@@ -64,12 +64,12 @@
 <!-- Summary cards -->
 <section class="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
   <div class="panel p-4">
-    <p class="eyebrow text-faint">Kills</p>
+    <p class="eyebrow text-faint">{% translate "Kills" %}</p>
     <p class="data mt-1 text-2xl font-bold text-kill">{{ card.kills }}</p>
     <p class="mt-0.5 text-[11px] text-faint">{{ card.isk_destroyed|isk }} {% translate "destroyed" %}</p>
   </div>
   <div class="panel p-4">
-    <p class="eyebrow text-faint">Losses</p>
+    <p class="eyebrow text-faint">{% translate "Losses" %}</p>
     <p class="data mt-1 text-2xl font-bold text-loss">{{ card.losses }}</p>
     <p class="mt-0.5 text-[11px] text-faint">{{ card.isk_lost|isk }} {% translate "lost" %}</p>
   </div>
@@ -81,7 +81,7 @@
     </div>
   </div>
   <div class="panel p-4">
-    <p class="eyebrow text-faint">Solo</p>
+    <p class="eyebrow text-faint">{% translate "Solo" %}</p>
     <p class="data mt-1 text-2xl font-bold text-cyan">{{ card.solo_kills }}</p>
     <p class="mt-0.5 text-[11px] text-faint">{{ card.solo_pct|floatformat:0 }}% of kills · {{ card.final_blows }} final blows</p>
   </div>

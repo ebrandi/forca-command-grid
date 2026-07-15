@@ -6,9 +6,9 @@ from django.contrib.auth.decorators import login_required
 from django.http import Http404, HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.utils import formats, timezone
+from django.utils import formats, timezone, translation
 from django.utils.dateparse import parse_datetime
-from django.utils.translation import gettext as _t
+from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy, ngettext
 from django.views.decorators.http import require_POST
 
@@ -129,14 +129,14 @@ def op_rsvp(request: HttpRequest, pk: int) -> HttpResponse:
     response = request.POST.get("response", "")
     char = _main_character(request.user)
     if services.set_rsvp(op, request.user, response, char) is None:
-        messages.error(request, _t("Pick coming, maybe or can't make it."))
+        messages.error(request, gettext("Pick coming, maybe or can't make it."))
         return redirect("operations:detail", pk=op.pk)
     if response == OperationRsvp.Response.NO:
         # Can't make it → drop any ship commitment so they're no longer counted.
         services.release_commitment(op, request.user)
-        messages.success(request, _t("Noted — you're marked as unavailable."))
+        messages.success(request, gettext("Noted — you're marked as unavailable."))
     else:
-        messages.success(request, _t("Thanks — your availability is recorded."))
+        messages.success(request, gettext("Thanks — your availability is recorded."))
     return redirect("operations:detail", pk=op.pk)
 
 
@@ -380,7 +380,7 @@ def _apply_op_form(request, op, slots):
     errors: dict[str, str] = {}
     name = (request.POST.get("name") or "").strip()
     if not name:
-        errors["name"] = _t("An operation needs a name.")
+        errors["name"] = gettext("An operation needs a name.")
 
     op_type = request.POST.get("type")
     if op_type not in Operation.Type.values:
@@ -404,7 +404,7 @@ def _apply_op_form(request, op, slots):
 
             rsvp_deadline = target_at - dt.timedelta(minutes=rsvp_offset)
     if rsvp_deadline and target_at and rsvp_deadline >= target_at:
-        errors["rsvp_deadline"] = _t("The sign-up deadline must be before form-up.")
+        errors["rsvp_deadline"] = gettext("The sign-up deadline must be before form-up.")
 
     def _intval(field, default=0):
         try:
@@ -418,7 +418,7 @@ def _apply_op_form(request, op, slots):
     slot_min_total = sum(s["min_pilots"] for s in slots)
     mismatch = bool(slots) and min_pilots and slot_min_total != min_pilots
     if mismatch and request.POST.get("confirm_mismatch") != "1":
-        errors["composition"] = _t(
+        errors["composition"] = gettext(
             "Your ship slots require %(slot_min_total)d pilots but the minimum is "
             "%(min_pilots)d. Adjust them, or tick “proceed anyway”."
         ) % {"slot_min_total": slot_min_total, "min_pilots": min_pilots}
@@ -492,8 +492,8 @@ def op_create(request: HttpRequest) -> HttpResponse:
                           _op_form_context(request, values=request.POST, errors=errors, slots=slots))
         if request.POST.get("announce") == "1" and op.status != Operation.Status.DRAFT:
             if not _announce_op(request, op):
-                messages.warning(request, _t("No Discord webhook configured — operation not announced."))
-        messages.success(request, _t("Operation created: %(name)s") % {"name": op.name})
+                messages.warning(request, gettext("No Discord webhook configured — operation not announced."))
+        messages.success(request, gettext("Operation created: %(name)s") % {"name": op.name})
         return redirect("operations:detail", pk=op.pk)
     return render(request, "operations/form.html", _op_form_context(request))
 
@@ -510,7 +510,7 @@ def op_edit(request: HttpRequest, pk: int) -> HttpResponse:
                 messages.error(request, msg)
             return render(request, "operations/form.html",
                           _op_form_context(request, op=op, values=request.POST, errors=errors, slots=slots))
-        messages.success(request, _t("Operation updated."))
+        messages.success(request, gettext("Operation updated."))
         return redirect("operations:detail", pk=op.pk)
     return render(request, "operations/form.html", _op_form_context(request, op=op))
 
@@ -532,8 +532,17 @@ def op_generate_tasks(request: HttpRequest, pk: int) -> HttpResponse:
             status__in=[Task.Status.OPEN, Task.Status.CLAIMED, Task.Status.IN_PROGRESS],
         ).exists():
             continue
+        # Persist the title as canonical English regardless of the generating
+        # officer's locale (``translation.override(None)`` makes ``_t`` return the
+        # msgid verbatim). The doctrine label and op name are proper nouns and stay
+        # interpolated raw; the sentence frame is a real ``%(param)s`` msgid so it is
+        # extractable, never a hidden f-string wrap.
+        with translation.override(None):
+            title = gettext("Prep %(doctrine)s for %(op)s") % {
+                "doctrine": gap["label"], "op": op.name,
+            }
         Task.objects.create(
-            type=Task.Type.PREPARE, title=f"Prep {gap['label']} for {op.name}",
+            type=Task.Type.PREPARE, title=title,
             is_open=True, status=Task.Status.OPEN, priority=12, created_by=request.user,
             related_type="operation", related_id=related_id,
         )
@@ -579,12 +588,12 @@ def sov_board(request: HttpRequest) -> HttpResponse:
             # Keep the literal "structure(s)" to match the original rendered English exactly.
             messages.success(
                 request,
-                _t("Sovereignty synced — %(count)d structure(s).") % {"count": result["count"]},
+                gettext("Sovereignty synced — %(count)d structure(s).") % {"count": result["count"]},
             )
         elif result["status"] == "no_alliance":
-            messages.warning(request, _t("The home corp isn't in an alliance, so it holds no sov."))
+            messages.warning(request, gettext("The home corp isn't in an alliance, so it holds no sov."))
         else:
-            messages.error(request, _t("Sovereignty sync failed; try again later."))
+            messages.error(request, gettext("Sovereignty sync failed; try again later."))
         return redirect("operations:sov")
 
     rows = list(SovStructure.objects.all())
@@ -604,7 +613,7 @@ def timer_add(request: HttpRequest) -> HttpResponse:
     name = (request.POST.get("name") or "").strip()
     exits_at = parse_datetime(request.POST.get("exits_at") or "")
     if not name or exits_at is None:
-        messages.error(request, _t("A timer needs a name and an exit time."))
+        messages.error(request, gettext("A timer needs a name and an exit time."))
         return redirect("operations:timers")
     channels = _selected_channels(request)
     announce = request.POST.get("announce") == "1"
@@ -625,7 +634,7 @@ def timer_add(request: HttpRequest) -> HttpResponse:
         announce=announce, channels=channels,
         created_by=request.user,
     )
-    messages.success(request, _t("Timer added."))
+    messages.success(request, gettext("Timer added."))
     return redirect("operations:timers")
 
 
@@ -638,7 +647,7 @@ def timer_remove(request: HttpRequest, pk: int) -> HttpResponse:
 
     StructureTimer.objects.filter(pk=pk).delete()
     unpublish_structure_timer(pk)  # retire its calendar mirror too
-    messages.success(request, _t("Timer removed."))
+    messages.success(request, gettext("Timer removed."))
     return redirect("operations:timers")
 
 
@@ -696,18 +705,18 @@ def op_announce(request: HttpRequest, pk: int) -> HttpResponse:
     op = get_object_or_404(Operation, pk=pk)
     channels = _selected_channels(request)
     if channels is not None and not channels:
-        messages.warning(request, _t("Pick at least one channel to announce to."))
+        messages.warning(request, gettext("Pick at least one channel to announce to."))
         return redirect("operations:detail", pk=op.pk)
     alert = _announce_op(request, op, channels=channels)
     if alert is None:
         messages.warning(
             request,
-            _t("Announcement not sent — alerting is disabled, no channel is armed, or it was "
+            gettext("Announcement not sent — alerting is disabled, no channel is armed, or it was "
                "suppressed as a duplicate. Arm a channel in the Admin Console → Pingboard."),
         )
     else:
-        labels = ", ".join(str(dict(_announce_channels()).get(k, k)) for k in alert.channels) or _t("no channel")
-        messages.success(request, _t("Announcement queued to: %(labels)s.") % {"labels": labels})
+        labels = ", ".join(str(dict(_announce_channels()).get(k, k)) for k in alert.channels) or gettext("no channel")
+        messages.success(request, gettext("Announcement queued to: %(labels)s.") % {"labels": labels})
     return redirect("operations:detail", pk=op.pk)
 
 
@@ -750,7 +759,7 @@ def op_attend(request: HttpRequest, pk: int) -> HttpResponse:
     # tickets on its own — credit follows FC/officer confirmation (or the ESI fleet-pull),
     # so the leaderboard and raffle stay fair. Crediting happens in op_attendance_action.
     messages.success(
-        request, _t("You're on the participation roster — an officer will confirm attendance.")
+        request, gettext("You're on the participation roster — an officer will confirm attendance.")
     )
     return redirect("operations:detail", pk=op.pk)
 
@@ -762,7 +771,7 @@ def op_unattend(request: HttpRequest, pk: int) -> HttpResponse:
     op = _visible_op_or_404(request, pk)
     OperationAttendance.objects.filter(operation=op, user=request.user).delete()
     _uncredit_fleet(request.user, op)
-    messages.success(request, _t("Removed you from the roster."))
+    messages.success(request, gettext("Removed you from the roster."))
     return redirect("operations:detail", pk=op.pk)
 
 
@@ -777,7 +786,7 @@ def op_pull_fleet(request: HttpRequest, pk: int) -> HttpResponse:
     char = next((c for c in request.user.characters.all() if c.is_main),
                 request.user.characters.first())
     if char is None:
-        messages.error(request, _t("Link a character first."))
+        messages.error(request, gettext("Link a character first."))
         return redirect("operations:detail", pk=op.pk)
 
     result = pull_fleet_attendance(op, char)
@@ -785,19 +794,19 @@ def op_pull_fleet(request: HttpRequest, pk: int) -> HttpResponse:
     if status == "ok":
         messages.success(
             request,
-            _t("Recorded %(recorded)d of %(fleet_size)d fleet members "
+            gettext("Recorded %(recorded)d of %(fleet_size)d fleet members "
                "(only those with a linked account).") % {
                 "recorded": result["recorded"], "fleet_size": result["fleet_size"],
             },
         )
     elif status == "no_token":
-        messages.warning(request, _t("Grant the fleet-tracking scope on the ESI Scopes page first."))
+        messages.warning(request, gettext("Grant the fleet-tracking scope on the ESI Scopes page first."))
     elif status == "not_in_fleet":
-        messages.warning(request, _t("You're not in a fleet right now."))
+        messages.warning(request, gettext("You're not in a fleet right now."))
     elif status == "not_boss":
-        messages.warning(request, _t("Only the fleet boss can read the fleet roster."))
+        messages.warning(request, gettext("Only the fleet boss can read the fleet roster."))
     else:
-        messages.error(request, _t("Couldn't read the fleet; try again."))
+        messages.error(request, gettext("Couldn't read the fleet; try again."))
     return redirect("operations:detail", pk=op.pk)
 
 
@@ -839,7 +848,7 @@ def op_status(request: HttpRequest, pk: int) -> HttpResponse:
             services.record_cancellation(op, OperationCancellation.Reason.MANUAL)
         op.status = to
         op.save(update_fields=["status", "updated_at"])
-        messages.success(request, _t("Operation marked %(status)s.") % {"status": op.get_status_display()})
+        messages.success(request, gettext("Operation marked %(status)s.") % {"status": op.get_status_display()})
     return redirect("operations:detail", pk=op.pk)
 
 
@@ -925,15 +934,15 @@ def op_commit(request: HttpRequest, pk: int) -> HttpResponse:
         coming = response != OperationCommitment.Response.MAYBE
         messages.success(
             request,
-            _t("You're down as coming — see you on the fleet.") if coming
-            else _t("Marked as a maybe — let the FC know if you firm up."),
+            gettext("You're down as coming — see you on the fleet.") if coming
+            else gettext("Marked as a maybe — let the FC know if you firm up."),
         )
     elif outcome == services.CLAIM_FULL:
-        messages.warning(request, _t("That ship is already full — pick another from the list."))
+        messages.warning(request, gettext("That ship is already full — pick another from the list."))
     elif outcome == services.CLAIM_CLOSED:
-        messages.warning(request, _t("Sign-ups for this operation are closed."))
+        messages.warning(request, gettext("Sign-ups for this operation are closed."))
     else:
-        messages.error(request, _t("Pick one of the requested ships first."))
+        messages.error(request, gettext("Pick one of the requested ships first."))
     return redirect("operations:detail", pk=op.pk)
 
 
@@ -943,10 +952,10 @@ def op_commit(request: HttpRequest, pk: int) -> HttpResponse:
 def op_uncommit(request: HttpRequest, pk: int) -> HttpResponse:
     op = _visible_op_or_404(request, pk)
     if not op.is_open_for_signup and op.status in Operation.CLOSED_STATUSES:
-        messages.warning(request, _t("This operation is closed; your commitment stands."))
+        messages.warning(request, gettext("This operation is closed; your commitment stands."))
         return redirect("operations:detail", pk=op.pk)
     services.release_commitment(op, request.user)
-    messages.success(request, _t("You've withdrawn from this operation."))
+    messages.success(request, gettext("You've withdrawn from this operation."))
     return redirect("operations:detail", pk=op.pk)
 
 
@@ -960,9 +969,9 @@ def op_override(request: HttpRequest, pk: int) -> HttpResponse:
     op.override_note = (request.POST.get("override_note") or "").strip()[:200]
     op.save(update_fields=["requirements_overridden", "override_note", "updated_at"])
     if op.requirements_overridden:
-        messages.success(request, _t("Override set — this op will run regardless of the minimum."))
+        messages.success(request, gettext("Override set — this op will run regardless of the minimum."))
     else:
-        messages.success(request, _t("Override cleared."))
+        messages.success(request, gettext("Override cleared."))
     return redirect("operations:detail", pk=op.pk)
 
 
@@ -1008,7 +1017,7 @@ def _apply_template(request, template) -> dict:
     errors: dict[str, str] = {}
     name = (p.get("name") or "").strip()
     if not name:
-        errors["name"] = _t("Give the template a name.")
+        errors["name"] = gettext("Give the template a name.")
 
     def _clamp(field, lo, hi, default):
         try:
@@ -1066,7 +1075,7 @@ def op_template_create(request: HttpRequest) -> HttpResponse:
                 messages.error(request, msg)
             return render(request, "operations/template_form.html",
                           _template_form_context(request, values=request.POST))
-        messages.success(request, _t("Template created: %(name)s") % {"name": template.name})
+        messages.success(request, gettext("Template created: %(name)s") % {"name": template.name})
         return redirect("operations:templates")
     return render(request, "operations/template_form.html", _template_form_context(request))
 
@@ -1082,7 +1091,7 @@ def op_template_edit(request: HttpRequest, pk: int) -> HttpResponse:
                 messages.error(request, msg)
             return render(request, "operations/template_form.html",
                           _template_form_context(request, template=template, values=request.POST))
-        messages.success(request, _t("Template updated."))
+        messages.success(request, gettext("Template updated."))
         return redirect("operations:templates")
     return render(request, "operations/template_form.html",
                   _template_form_context(request, template=template))
@@ -1097,7 +1106,7 @@ def op_template_toggle(request: HttpRequest, pk: int) -> HttpResponse:
     template.save(update_fields=["active", "updated_at"])
     messages.success(
         request,
-        _t("Template activated.") if template.active else _t("Template paused."),
+        gettext("Template activated.") if template.active else gettext("Template paused."),
     )
     return redirect("operations:templates")
 
@@ -1108,7 +1117,7 @@ def op_template_toggle(request: HttpRequest, pk: int) -> HttpResponse:
 def op_template_delete(request: HttpRequest, pk: int) -> HttpResponse:
     template = get_object_or_404(OperationTemplate, pk=pk)
     template.delete()  # spawned ops keep running (recurring_template SET_NULL)
-    messages.success(request, _t("Template deleted. Already-spawned operations are unaffected."))
+    messages.success(request, gettext("Template deleted. Already-spawned operations are unaffected."))
     return redirect("operations:templates")
 
 
@@ -1123,7 +1132,7 @@ def op_template_run(request: HttpRequest) -> HttpResponse:
     # Keep the literal "instance(s)" to match the original rendered English exactly.
     messages.success(
         request,
-        _t("Materialised %(count)d upcoming operation instance(s).") % {"count": n},
+        gettext("Materialised %(count)d upcoming operation instance(s).") % {"count": n},
     )
     return redirect("operations:templates")
 

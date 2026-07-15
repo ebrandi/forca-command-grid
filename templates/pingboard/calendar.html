@@ -68,10 +68,14 @@
 {% if is_officer %}
 <section class="panel mt-6 p-5">
   <h2 class="eyebrow text-gold mb-3">{% translate "Add a manual event" %}</h2>
-  <form method="post" action="{% url 'pingboard:event_create' %}" class="grid gap-3 sm:grid-cols-2" x-data="{etype: 'scheduled_alert'}">
+  {% translate "Exit time (EVE / UTC)" as l_exit_time %}
+  {% translate "Start (EVE / UTC)" as l_start_time %}
+  {% translate "Notes" as l_notes %}
+  {% translate "Description" as l_description %}
+  <form method="post" action="{% url 'pingboard:event_create' %}" class="grid gap-3 sm:grid-cols-2" x-data="{etype: 'scheduled_alert', L: {exitTime: '{{ l_exit_time|escapejs }}', startTime: '{{ l_start_time|escapejs }}', notes: '{{ l_notes|escapejs }}', description: '{{ l_description|escapejs }}'}}">
     {% csrf_token %}
     <label class="label">{% translate "Title" %}<input name="title" class="input-field mt-1" required></label>
-    <label class="label"><span x-text="etype === 'structure_timer' ? 'Exit time (EVE / UTC)' : 'Start (EVE / UTC)'">Start (EVE / UTC)</span><input type="datetime-local" name="start_at" class="input-field mt-1" required></label>
+    <label class="label"><span x-text="etype === 'structure_timer' ? L.exitTime : L.startTime">{% translate "Start (EVE / UTC)" %}</span><input type="datetime-local" name="start_at" class="input-field mt-1" required></label>
     <label class="label">{% translate "Type" %}
       <select name="event_type" class="input-field mt-1" x-model="etype">
         {% for val, lbl in event_types %}<option value="{{ val }}">{{ lbl }}</option>{% endfor %}
@@ -94,7 +98,7 @@
         <label class="chip cursor-pointer sm:col-span-2"><input type="checkbox" name="announce" value="1" class="mr-1 align-middle">{% translate "Announce now to armed channels" %}</label>
       </div>
     </template>
-    <label class="label sm:col-span-2"><span x-text="etype === 'structure_timer' ? 'Notes' : 'Description'">Description</span><textarea name="description" class="input-field mt-1" rows="2"></textarea></label>
+    <label class="label sm:col-span-2"><span x-text="etype === 'structure_timer' ? L.notes : L.description">{% translate "Description" %}</span><textarea name="description" class="input-field mt-1" rows="2"></textarea></label>
     <div class="sm:col-span-2"><button class="btn-gold">{% translate "Create event" %}</button></div>
   </form>
 </section>

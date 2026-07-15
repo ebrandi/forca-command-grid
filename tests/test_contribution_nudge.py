@@ -25,7 +25,9 @@ def _contrib(user, kind, n=3):
 
 
 def _constraint(category, key="", label="Logistics backlog"):
-    return SimpleNamespace(category=category, key=key, label=label)
+    # label_i18n mirrors the real command_intel constraint's render-time seam
+    # (contribution_nudge now displays the translated-or-verbatim label).
+    return SimpleNamespace(category=category, key=key, label=label, label_i18n=label)
 
 
 def _mock(monkeypatch, constraints):

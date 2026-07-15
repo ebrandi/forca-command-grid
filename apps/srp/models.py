@@ -12,6 +12,7 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext, gettext_noop
 from django.utils.translation import gettext_lazy as _
 
 from apps.doctrines.models import Doctrine
@@ -20,6 +21,15 @@ from core.mixins import TimeStampedModel
 # Capsule (pod) hull type ids — losses of these are only claimable when the
 # program explicitly opts in (most corps SRP ships, not pods).
 POD_TYPE_IDS = (670, 33328)
+
+# The shipped English explainer seeded into ``SrpProgram.intro_text`` (Seam A). Kept a plain
+# ``str`` so it can be the model default (a ``gettext_lazy`` proxy would be frozen into the
+# writer's locale on ``.save()``); ``gettext_noop`` marks it for extraction (makemessages passes
+# ``--keyword=gettext_noop``) while ``SrpProgram.intro_text_i18n`` translates it at render time.
+INTRO_TEXT_SEED = gettext_noop(
+    "Lose a doctrine ship on a fleet op and the corp helps you replace it. "
+    "Submit a claim from your eligible losses below and an officer reviews it."
+)
 
 
 class SrpProgram(TimeStampedModel):
@@ -108,13 +118,7 @@ class SrpProgram(TimeStampedModel):
     )
 
     # Leadership-authored explainer shown to pilots on the SRP page.
-    intro_text = models.TextField(
-        blank=True,
-        default=(
-            "Lose a doctrine ship on a fleet op and the corp helps you replace it. "
-            "Submit a claim from your eligible losses below and an officer reviews it."
-        ),
-    )
+    intro_text = models.TextField(blank=True, default=INTRO_TEXT_SEED)
 
     class Meta:
         ordering = ["-is_active", "-updated_at"]
@@ -129,6 +133,16 @@ class SrpProgram(TimeStampedModel):
     @property
     def is_topup(self) -> bool:
         return self.payout_mode == self.PayoutMode.ISK_INSURANCE_TOPUP
+
+    @property
+    def intro_text_i18n(self) -> str:
+        """The pilot-facing explainer to *display* (Seam A). Translated while the row still
+        holds the shipped English (or is blank — the seed is the floor), and returned verbatim
+        once leadership has edited it. Never blanks."""
+        stored = self.intro_text or ""
+        if not stored or stored == INTRO_TEXT_SEED:
+            return gettext(INTRO_TEXT_SEED)
+        return stored
 
 
 class SrpRule(TimeStampedModel):

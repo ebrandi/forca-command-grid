@@ -62,7 +62,7 @@ worker builds it, then renders the AAR narrative + the deterministic fact panels
     <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">{% translate "Our losses" %}</h2></div>
     <div class="divide-y divide-line/40">
       {% for l in analysis.facts.our_losses_detail %}
-      <div class="px-4 py-2 text-sm"><span class="text-ink">{{ l.ship }}</span> <span class="text-faint">· {{ l.pilot }}</span>{% if l.off_doctrine %} <span class="chip text-loss">off-doctrine</span>{% endif %}{% if l.killed_by %} <span class="text-[11px] text-faint">— to {{ l.killed_by }}{% if l.killed_by_ship %} ({{ l.killed_by_ship }}){% endif %}</span>{% endif %}</div>
+      <div class="px-4 py-2 text-sm"><span class="text-ink">{{ l.ship }}</span> <span class="text-faint">· {{ l.pilot }}</span>{% if l.off_doctrine %} <span class="chip text-loss">{% translate "off-doctrine" %}</span>{% endif %}{% if l.killed_by %} <span class="text-[11px] text-faint">{% blocktranslate with killed_by=l.killed_by %}— to {{ killed_by }}{% endblocktranslate %}{% if l.killed_by_ship %} ({{ l.killed_by_ship }}){% endif %}</span>{% endif %}</div>
       {% endfor %}
     </div>
   </section>

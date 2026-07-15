@@ -14,6 +14,9 @@ leaves the door open to rank on other stats later without touching callers.
 from __future__ import annotations
 
 from django.core.cache import cache
+from django.utils.translation import gettext_lazy as _
+
+from . import ranks_i18n
 
 CACHE_VERSION = 1
 LADDER_TTL = 600
@@ -111,9 +114,9 @@ def active_ladder(metric: str | None = None, *, use_cache: bool = True) -> list[
 # count key, display label). Kills stays the headline card; these give every playstyle
 # a rung. Labels frame them positively — none ranks a pilot on absence.
 _TRACK_METRICS = [
-    ("solo_kills", "solo_kills", "Solo kills"),
-    ("final_blows", "final_blows", "Final blows"),
-    ("active_days", "active_days", "Active days"),
+    ("solo_kills", "solo_kills", _("Solo kills")),
+    ("final_blows", "final_blows", _("Final blows")),
+    ("active_days", "active_days", _("Active days")),
 ]
 
 
@@ -195,8 +198,8 @@ def combat_rank(kills: int, ladder: list[dict] | None = None) -> dict:
     """
     ladder = ladder if ladder is not None else active_ladder()
     if not ladder:  # pragma: no cover - active_ladder always returns the fallback
-        return {"title": "Capsuleer", "color": "text-faint", "tier": 0, "max_tier": 0,
-                "min_kills": 0, "icon": "", "name": "Capsuleer"}
+        return {"title": ranks_i18n.rank_title_for("Capsuleer"), "color": "text-faint",
+                "tier": 0, "max_tier": 0, "min_kills": 0, "icon": "", "name": "Capsuleer"}
     current = ladder[0]
     for entry in ladder:
         if kills >= entry["min_kills"]:
@@ -204,7 +207,10 @@ def combat_rank(kills: int, ladder: list[dict] | None = None) -> dict:
         else:
             break
     return {
-        "title": current["name"],
+        # ``title`` is the rendered label (translated seed until a leader renames the rank);
+        # ``name`` stays the RAW English so write/audit paths (rank_notify, reward snapshots)
+        # never freeze a reader's locale into a stored row.
+        "title": ranks_i18n.rank_title_for(current["name"]),
         "name": current["name"],
         "color": current["color"],
         "icon": current["icon"],
@@ -237,8 +243,8 @@ def rank_progress(kills: int, ladder: list[dict] | None = None) -> dict:
 
     visible = [
         {
-            "name": e["name"], "min_kills": e["min_kills"], "color": e["color"],
-            "icon": e["icon"], "tier": e["tier"],
+            "name": ranks_i18n.rank_title_for(e["name"]), "min_kills": e["min_kills"],
+            "color": e["color"], "icon": e["icon"], "tier": e["tier"],
             "earned": kills >= e["min_kills"],
             "is_current": e["tier"] == tier,
             "grants_reward": e["grants_reward"], "reward_type": e["reward_type"],
@@ -255,7 +261,8 @@ def rank_progress(kills: int, ladder: list[dict] | None = None) -> dict:
     for e in ladder:
         if e["tier"] > tier and e.get("is_visible", True) and _reward_configured(e):
             next_reward = {
-                "title": e["name"], "name": e["name"], "min_kills": e["min_kills"],
+                "title": ranks_i18n.rank_title_for(e["name"]), "name": e["name"],
+                "min_kills": e["min_kills"],
                 "color": e["color"], "reward_type": e["reward_type"],
                 "reward_amount": e["reward_amount"], "reward_item_type_id": e["reward_item_type_id"],
                 "kills_away": max(0, e["min_kills"] - kills),
@@ -267,7 +274,8 @@ def rank_progress(kills: int, ladder: list[dict] | None = None) -> dict:
         "current": cur,
         "next": (
             {
-                "title": nxt["name"], "name": nxt["name"], "min_kills": nxt["min_kills"],
+                "title": ranks_i18n.rank_title_for(nxt["name"]), "name": nxt["name"],
+                "min_kills": nxt["min_kills"],
                 "color": nxt["color"], "icon": nxt["icon"], "grants_reward": nxt["grants_reward"],
                 "reward_type": nxt["reward_type"], "reward_amount": nxt["reward_amount"],
                 "reward_item_type_id": nxt["reward_item_type_id"],

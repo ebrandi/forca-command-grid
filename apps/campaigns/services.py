@@ -20,7 +20,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.utils import timezone
 from django.utils.text import slugify
-from django.utils.translation import gettext as _t
+from django.utils.translation import gettext
 
 from core import freshness
 from core.audit import audit_log
@@ -296,18 +296,18 @@ def set_status(campaign, to_status, user, reason="", *, via_closeout=False) -> b
     if locked.status == to_status:
         return True
     if not can_transition(locked, to_status, user):
-        raise ValidationError(_t("This status change is not allowed from the campaign's current state."))
+        raise ValidationError(gettext("This status change is not allowed from the campaign's current state."))
 
     edge = (locked.status, to_status)
     if not via_closeout and edge in (
         (status.ACTIVE, status.COMPLETED), (status.ACTIVE, status.FAILED)
     ):
         raise ValidationError(
-            _t("Complete or fail a campaign through the close-out flow, not a direct status change.")
+            gettext("Complete or fail a campaign through the close-out flow, not a direct status change.")
         )
     now = timezone.now()
     if edge in _REASON_REQUIRED and not (reason or "").strip():
-        raise ValidationError(_t("A reason is required for this status change."))
+        raise ValidationError(gettext("A reason is required for this status change."))
     if edge == (status.DRAFT, status.PROPOSED):
         _validate_propose(locked)
 
@@ -317,7 +317,7 @@ def set_status(campaign, to_status, user, reason="", *, via_closeout=False) -> b
         if blockers:
             if not (has_role(user, ROLE_DIRECTOR) and (reason or "").strip()):
                 raise ValidationError(
-                    _t("All mandatory objectives must be resolved and verified before completing, "
+                    gettext("All mandatory objectives must be resolved and verified before completing, "
                        "or a director must supply an override reason.")
                 )
             override_reason = reason
@@ -328,7 +328,7 @@ def set_status(campaign, to_status, user, reason="", *, via_closeout=False) -> b
             locked.start_at = now
             started_now = True
         if locked.target_end_at and locked.target_end_at <= now:
-            raise ValidationError(_t("The target end date must be in the future to start the campaign."))
+            raise ValidationError(gettext("The target end date must be in the future to start the campaign."))
 
     old = locked.status
     locked.status = to_status
@@ -396,12 +396,12 @@ def _schedule_status_effects(campaign, from_status, to_status) -> None:
 def _validate_propose(campaign) -> None:
     """T1 minimum-content gate: a proposal needs an outcome and at least one live objective."""
     if not (campaign.desired_outcome or "").strip():
-        raise ValidationError(_t("Set the desired outcome before proposing the campaign."))
+        raise ValidationError(gettext("Set the desired outcome before proposing the campaign."))
     if campaign.objectives.exclude(status=Objective.ObjectiveStatus.DROPPED).count() < 1:
-        raise ValidationError(_t("Add at least one objective before proposing the campaign."))
+        raise ValidationError(gettext("Add at least one objective before proposing the campaign."))
     if (campaign.target_end_at and campaign.start_at
             and campaign.target_end_at < campaign.start_at):
-        raise ValidationError(_t("The target end date cannot be before the start date."))
+        raise ValidationError(gettext("The target end date cannot be before the start date."))
 
 
 def _completion_blockers(campaign) -> list[str]:
@@ -438,11 +438,11 @@ def update_manual_value(objective, user, value, note):
     (doc 07 T14).
     """
     if not (note or "").strip():
-        raise ValidationError(_t("A note is required when entering a value manually."))
+        raise ValidationError(gettext("A note is required when entering a value manually."))
     try:
         value = Decimal(str(value))
     except (InvalidOperation, TypeError, ValueError) as exc:
-        raise ValidationError(_t("The value must be a number.")) from exc
+        raise ValidationError(gettext("The value must be a number.")) from exc
 
     campaign = objective.campaign
     now = timezone.now()
@@ -534,9 +534,9 @@ def set_objective_status(objective, user, to_status, reason="", note=""):
     """
     obj_status = Objective.ObjectiveStatus
     if to_status == obj_status.BLOCKED:
-        raise ValidationError(_t("Objectives become blocked only through a linked issue."))
+        raise ValidationError(gettext("Objectives become blocked only through a linked issue."))
     if to_status == obj_status.DROPPED and not (reason or "").strip():
-        raise ValidationError(_t("A reason is required to drop an objective."))
+        raise ValidationError(gettext("A reason is required to drop an objective."))
 
     campaign = objective.campaign
     # Lock the campaign row first, then re-fetch + re-validate the objective under it, so a
@@ -545,11 +545,11 @@ def set_objective_status(objective, user, to_status, reason="", note=""):
     locked_campaign = Campaign.objects.select_for_update().get(pk=campaign.pk)
     objective = locked_campaign.objectives.select_for_update().get(pk=objective.pk)
     if objective.status == obj_status.BLOCKED:
-        raise ValidationError(_t("Resolve the blocking issue before changing this objective's status."))
+        raise ValidationError(gettext("Resolve the blocking issue before changing this objective's status."))
     if to_status == objective.status:
         return objective
     if to_status not in _OBJECTIVE_TRANSITIONS.get(objective.status, set()):
-        raise ValidationError(_t("That objective status change is not allowed."))
+        raise ValidationError(gettext("That objective status change is not allowed."))
 
     old = objective.status
     objective.status = to_status
@@ -589,10 +589,10 @@ def verify_objective(objective, user):
     locked_campaign = Campaign.objects.select_for_update().get(pk=campaign.pk)
     objective = locked_campaign.objectives.select_for_update().get(pk=objective.pk)
     if objective.status != Objective.ObjectiveStatus.MET:
-        raise ValidationError(_t("Only a met objective can be verified."))
+        raise ValidationError(gettext("Only a met objective can be verified."))
     if not can_verify(user, objective):
         raise ValidationError(
-            _t("You cannot verify this objective — officer rank is required and the verifier must "
+            gettext("You cannot verify this objective — officer rank is required and the verifier must "
                "differ from the pilot who claimed it.")
         )
     now = timezone.now()
@@ -1069,11 +1069,11 @@ def create_objective_task(objective, user, *, title=None, assignee=None, due_at=
     related_id = next((c for c in candidates if c not in used), overflow)
     if objective.campaign.visibility == Campaign.Visibility.MEMBERS:
         task_title = (title or objective.title)[:200]
-        task_description = _t("Linked to campaign objective “%(title)s”.") % {"title": objective.title}
+        task_description = gettext("Linked to campaign objective “%(title)s”.") % {"title": objective.title}
         task_assignee = assignee
     else:
-        task_title = _t("Campaign follow-up task")
-        task_description = _t(
+        task_title = gettext("Campaign follow-up task")
+        task_description = gettext(
             "A campaign follow-up task is assigned to you — open Campaign Command for details."
         )
         task_assignee = assignee or (user if getattr(user, "pk", None) else objective.owner)
@@ -1154,13 +1154,13 @@ def set_manual_progress(campaign, user, pct, note):
     the stored ``progress_pct`` for manual mode, so the trailing ``recompute`` is a fixed point that
     keeps the value while refreshing health. Manage-gated in the view."""
     if campaign.progress_mode != Campaign.ProgressMode.MANUAL:
-        raise ValidationError(_t("Manual progress can only be set on a manual-progress campaign."))
+        raise ValidationError(gettext("Manual progress can only be set on a manual-progress campaign."))
     if not (note or "").strip():
-        raise ValidationError(_t("A note is required when setting progress manually."))
+        raise ValidationError(gettext("A note is required when setting progress manually."))
     try:
         value = _clamp_pct(int(pct))
     except (TypeError, ValueError) as exc:
-        raise ValidationError(_t("Progress must be a whole number between 0 and 100.")) from exc
+        raise ValidationError(gettext("Progress must be a whole number between 0 and 100.")) from exc
 
     before = campaign.progress_pct
     campaign.progress_note = note.strip()
@@ -1340,7 +1340,7 @@ def add_dependency(campaign, from_kind, from_id, to_kind, to_id=0, note="", user
     duplicate edge is an idempotent no-op returning the existing row (doc 07 T14)."""
     kind = DependencyKind
     if from_kind == kind.EXTERNAL:
-        raise ValidationError(_t("A dependency's source cannot be external."))
+        raise ValidationError(gettext("A dependency's source cannot be external."))
     from_id = int(from_id)
     # The source must belong to this campaign — never a free-typed bare pk into another campaign's
     # entities (doc 07 bare-PK + no-oracle rules, #4).
@@ -1348,11 +1348,11 @@ def add_dependency(campaign, from_kind, from_id, to_kind, to_id=0, note="", user
     if to_kind == kind.EXTERNAL:
         to_id = 0
         if not (note or "").strip():
-            raise ValidationError(_t("An external dependency needs a note describing it."))
+            raise ValidationError(gettext("An external dependency needs a note describing it."))
     else:
         to_id = int(to_id)
         if from_kind == to_kind and from_id == to_id:
-            raise ValidationError(_t("A dependency cannot point at itself."))
+            raise ValidationError(gettext("A dependency cannot point at itself."))
         # A non-external target must exist and be reachable, so auto-resolution never becomes an
         # existence/lifecycle oracle on a campaign the actor cannot see (#4).
         _require_dependency_target(campaign, to_kind, to_id, user)
@@ -1392,7 +1392,7 @@ def _require_dependency_source(campaign, from_kind, from_id) -> None:
     else:
         ok = False
     if not ok:
-        raise ValidationError(_t("The dependency's source must be part of this campaign."))
+        raise ValidationError(gettext("The dependency's source must be part of this campaign."))
 
 
 def _require_dependency_target(campaign, to_kind, to_id, user) -> None:
@@ -1411,7 +1411,7 @@ def _require_dependency_target(campaign, to_kind, to_id, user) -> None:
     else:
         ok = False
     if not ok:
-        raise ValidationError(_t("The blocking target must be an item of this campaign or a campaign you can view."))
+        raise ValidationError(gettext("The blocking target must be an item of this campaign or a campaign you can view."))
 
 
 def _reject_cycle(campaign, from_node, to_node, cap=_DEPENDENCY_DEPTH_CAP) -> None:
@@ -1430,9 +1430,9 @@ def _reject_cycle(campaign, from_node, to_node, cap=_DEPENDENCY_DEPTH_CAP) -> No
     while stack:
         node, depth = stack.pop()
         if node == from_node:
-            raise ValidationError(_t("This dependency would create a cycle."))
+            raise ValidationError(gettext("This dependency would create a cycle."))
         if depth >= cap:
-            raise ValidationError(_t("This dependency chain is too deep to add safely."))
+            raise ValidationError(gettext("This dependency chain is too deep to add safely."))
         if node in seen:
             continue
         seen.add(node)
@@ -1515,11 +1515,11 @@ def raise_issue(campaign, user, description, objective=None, effect="", owner=No
                 target_resolution_at=None):
     """Open an issue; if it is linked to an objective, block that objective (doc 04 §7)."""
     if not (description or "").strip():
-        raise ValidationError(_t("An issue needs a description."))
+        raise ValidationError(gettext("An issue needs a description."))
     # A terminal objective (met/missed/dropped) can't be blocked — blocking one would resurrect a
     # reason-audited resolution when the issue later clears (doc 04 §7, #13).
     if objective is not None and objective.status in _TERMINAL_OBJECTIVE:
-        raise ValidationError(_t("You can't raise a blocking issue against an already-resolved objective."))
+        raise ValidationError(gettext("You can't raise a blocking issue against an already-resolved objective."))
     issue = Issue.objects.create(
         campaign=campaign, objective=objective, description=description, effect=effect or "",
         owner=owner if getattr(owner, "pk", None) else None,
@@ -1553,9 +1553,9 @@ def escalate_issue(issue, user, reason):
     health (the escalated-issue rule → ``at_risk``), and DMs leadership. Idempotent — escalating
     an already-escalated issue is a no-op; a resolved issue cannot be escalated."""
     if not (reason or "").strip():
-        raise ValidationError(_t("A reason is required to escalate an issue."))
+        raise ValidationError(gettext("A reason is required to escalate an issue."))
     if issue.status == Issue.IssueStatus.RESOLVED:
-        raise ValidationError(_t("A resolved issue cannot be escalated."))
+        raise ValidationError(gettext("A resolved issue cannot be escalated."))
     if issue.status == Issue.IssueStatus.ESCALATED:
         return issue
     issue.status = Issue.IssueStatus.ESCALATED
@@ -1580,7 +1580,7 @@ def resolve_issue(issue, user, resolution_notes):
     """Resolve an issue; if it was the last open/escalated issue blocking its objective, restore
     that objective's pre-block status (the last-issue rule, doc 04 §7)."""
     if not (resolution_notes or "").strip():
-        raise ValidationError(_t("Resolution notes are required to resolve an issue."))
+        raise ValidationError(gettext("Resolution notes are required to resolve an issue."))
     issue.status = Issue.IssueStatus.RESOLVED
     issue.resolution_notes = resolution_notes
     issue.save(update_fields=["status", "resolution_notes", "updated_at"])
@@ -1654,7 +1654,7 @@ def save_workstream(workstream, user=None):
         live = workstream.objectives.exclude(status__in=_TERMINAL_OBJECTIVE)
         if live.exists():
             raise ValidationError(
-                _t("Finish or drop this lane's objectives before marking the workstream done.")
+                gettext("Finish or drop this lane's objectives before marking the workstream done.")
             )
     if not (workstream.key or "").strip():
         base = slugify(workstream.name)[:56] or "lane"
@@ -1728,21 +1728,21 @@ def set_milestone_status(milestone, user, to_status):
     """
     ms = Milestone.MilestoneStatus
     if to_status not in {ms.PENDING, ms.READY_FOR_REVIEW, ms.DONE, ms.MISSED}:
-        raise ValidationError(_t("Unknown milestone status."))
+        raise ValidationError(gettext("Unknown milestone status."))
     if to_status == milestone.status:
         return milestone
     if to_status not in _MILESTONE_TRANSITIONS.get(milestone.status, set()):
-        raise ValidationError(_t("That milestone status change is not allowed."))
+        raise ValidationError(gettext("That milestone status change is not allowed."))
     if to_status == ms.DONE and milestone.status == ms.READY_FOR_REVIEW:
         marker = _milestone_ready_marker(milestone)
         if (marker is not None and marker.pk == getattr(user, "pk", None)
                 and not has_role(user, ROLE_DIRECTOR)):
             raise ValidationError(
-                _t("Someone other than the pilot who marked this milestone ready must approve it.")
+                gettext("Someone other than the pilot who marked this milestone ready must approve it.")
             )
     if to_status == ms.MISSED and (milestone.due_at is None or milestone.due_at > timezone.now()):
         # A milestone is missed only once its due date has passed (doc 04 §5.4, #27).
-        raise ValidationError(_t("A milestone can only be marked missed after its due date has passed."))
+        raise ValidationError(gettext("A milestone can only be marked missed after its due date has passed."))
 
     old = milestone.status
     milestone.status = to_status
@@ -1810,7 +1810,7 @@ def resolve_dependency(dependency, user=None, reason=""):
     if dependency.is_resolved:
         return dependency
     if not (reason or "").strip():
-        raise ValidationError(_t("A reason is required to resolve a dependency by hand."))
+        raise ValidationError(gettext("A reason is required to resolve a dependency by hand."))
     dependency.is_resolved = True
     dependency.save(update_fields=["is_resolved", "updated_at"])
     record_activity(
@@ -1836,7 +1836,7 @@ def link_operation(campaign, user, operation_id, note=""):
     try:
         operation_id = int(operation_id)
     except (TypeError, ValueError) as exc:
-        raise ValidationError(_t("Choose a valid operation to link.")) from exc
+        raise ValidationError(gettext("Choose a valid operation to link.")) from exc
     link, created = CampaignOperation.objects.get_or_create(
         campaign=campaign, operation_id=operation_id,
         defaults={"note": (note or "")[:200],
@@ -1887,7 +1887,7 @@ def volunteer_for_objective(objective, user):
     if existing is not None:
         return existing
     task = create_objective_task(
-        objective, user, title=_t("Help: %(title)s") % {"title": objective.title},
+        objective, user, title=gettext("Help: %(title)s") % {"title": objective.title},
         assignee=user, due_at=objective.due_at,
     )
     record_activity(
@@ -2243,9 +2243,9 @@ def save_as_template(campaign, user, *, key, name, description=""):
     builtins are clone-to-custom only, never overwritten. Audited (``campaigns.template_saved``)."""
     key = slugify(key or name)[:64]
     if not key:
-        raise ValidationError(_t("A template needs a name to derive its key from."))
+        raise ValidationError(gettext("A template needs a name to derive its key from."))
     if CampaignTemplate.objects.filter(key=key).exists():
-        raise ValidationError(_t("A template with that key already exists — choose a different name."))
+        raise ValidationError(gettext("A template with that key already exists — choose a different name."))
     template = CampaignTemplate.objects.create(
         key=key, name=(name or campaign.name)[:120], description=(description or "").strip(),
         category=campaign.category, blueprint=_campaign_to_blueprint(campaign),
@@ -2275,13 +2275,13 @@ def award_recognition(campaign, user, awarded_by, *, category, points=0, reason)
     a correction is a compensating negative-``points`` entry, never an edit. Writes activity +
     ``audit_log("campaigns.recognition_adjusted")`` and DMs the recognised pilot (notify)."""
     if not (reason or "").strip():
-        raise ValidationError(_t("A reason is required to record recognition."))
+        raise ValidationError(gettext("A reason is required to record recognition."))
     uid = getattr(user, "pk", None)
     if uid is None:
-        raise ValidationError(_t("Recognition needs a pilot to recognise."))
+        raise ValidationError(gettext("Recognition needs a pilot to recognise."))
     if (getattr(awarded_by, "pk", None) == uid and not has_role(awarded_by, ROLE_DIRECTOR)):
         raise ValidationError(
-            _t("You can't record recognition for your own account unless you are a director.")
+            gettext("You can't record recognition for your own account unless you are a director.")
         )
     try:
         points = int(points)
@@ -2376,9 +2376,9 @@ def _participation_aggregate(campaign) -> dict:
 def _participation_rule_text(mode) -> str:
     """The prose counting rule shown on the panel — no opaque scores (req §5 contributions)."""
     if mode == Campaign.RecognitionMode.POINTS:
-        return _t("Points come from completed campaign-linked tasks (leadership-weighted) plus any "
+        return gettext("Points come from completed campaign-linked tasks (leadership-weighted) plus any "
                   "manual recognition awards. Manual awards show their reason and who gave them.")
-    return _t("Counts are completed campaign-linked tasks credited to each pilot, plus any manual "
+    return gettext("Counts are completed campaign-linked tasks credited to each pilot, plus any manual "
               "recognition. Manual awards show their reason and who gave them.")
 
 
@@ -2473,18 +2473,18 @@ def close_campaign(campaign, user, *, final_status, reason="", resolutions=None,
     Completing with open mandatory objectives still demands the director override reason enforced in
     :func:`set_status`. Any validation failure rolls the whole thing back — nothing partial."""
     if final_status not in _CLOSE_STATUSES:
-        raise ValidationError(_t("Choose a final status of completed, failed or cancelled."))
+        raise ValidationError(gettext("Choose a final status of completed, failed or cancelled."))
     # Lock the campaign row up front and validate ACTIVE on the *locked* row, so two overlapping
     # close POSTs (a double-click under multi-worker) can't both pass — the second finds the row
     # already terminal and loses cleanly (doc 07 T13, #15).
     locked = Campaign.objects.select_for_update().get(pk=campaign.pk)
     if locked.status != Campaign.Status.ACTIVE:
-        raise ValidationError(_t("Only an active campaign can be closed — resume a paused campaign first."))
+        raise ValidationError(gettext("Only an active campaign can be closed — resume a paused campaign first."))
     if not (outcome_summary or "").strip():
-        raise ValidationError(_t("Record an outcome summary before closing."))
+        raise ValidationError(gettext("Record an outcome summary before closing."))
     if final_status in (Campaign.Status.COMPLETED, Campaign.Status.FAILED) \
             and not (lessons_learned or "").strip():
-        raise ValidationError(_t("Lessons learned are required when completing or failing a campaign."))
+        raise ValidationError(gettext("Lessons learned are required when completing or failing a campaign."))
 
     # 1 · final-value corrections for manual objectives (before resolution so progress is current).
     for obj_id, (value, note) in (manual_values or {}).items():
@@ -2509,7 +2509,7 @@ def close_campaign(campaign, user, *, final_status, reason="", resolutions=None,
     unresolved = [o.pk for o in campaign.objectives.all() if o.status not in terminal]
     if unresolved and not (has_role(user, ROLE_DIRECTOR) and (reason or "").strip()):
         raise ValidationError(
-            _t("Resolve every objective to met, missed or dropped before closing (unresolved: %(ids)s).")
+            gettext("Resolve every objective to met, missed or dropped before closing (unresolved: %(ids)s).")
             % {"ids": ", ".join(str(pk) for pk in unresolved)}
         )
 
@@ -2521,9 +2521,9 @@ def close_campaign(campaign, user, *, final_status, reason="", resolutions=None,
         try:
             new_spent = Decimal(str(spent_isk))
         except (InvalidOperation, TypeError, ValueError) as exc:
-            raise ValidationError(_t("Enter a valid spent figure.")) from exc
+            raise ValidationError(gettext("Enter a valid spent figure.")) from exc
         if new_spent < 0:
-            raise ValidationError(_t("Spent ISK cannot be negative."))
+            raise ValidationError(gettext("Spent ISK cannot be negative."))
         if new_spent != (campaign.spent_isk or Decimal(0)):
             campaign.spent_isk = new_spent
             update_fields.append("spent_isk")
@@ -2548,7 +2548,7 @@ def close_campaign(campaign, user, *, final_status, reason="", resolutions=None,
         # The title stays translated (a human reads it on the task board); ``followup=True``
         # is what the close-out report selects on, so the report survives a non-English closer.
         task = create_objective_task(
-            obj, user, title=(_t("Follow-up: %(title)s") % {"title": obj.title})[:200],
+            obj, user, title=(gettext("Follow-up: %(title)s") % {"title": obj.title})[:200],
             followup=True,
         )
         followups.append(task)

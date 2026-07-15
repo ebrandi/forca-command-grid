@@ -27,7 +27,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _
-from django.utils.translation import gettext_lazy as _l
+from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 
 from core import rbac
@@ -685,13 +685,13 @@ def _campaign_form_ctx(request, campaign, *, template=None) -> dict:
 # close-out (the "Close out…" button → campaigns:close), never a one-click direct transition, so
 # the mandatory permanent record can never be bypassed (doc 04 T7/T8, #2).
 _TRANSITION_META = {
-    Campaign.Status.PROPOSED: (_l("Propose"), "btn-cyan", False),
-    Campaign.Status.APPROVED: (_l("Approve"), "btn-cyan", False),
-    Campaign.Status.ACTIVE: (_l("Start"), "btn-gold", False),
-    Campaign.Status.PAUSED: (_l("Pause"), "btn-ghost", True),
-    Campaign.Status.CANCELLED: (_l("Cancel"), "btn-danger", True),
-    Campaign.Status.DRAFT: (_l("Send back to draft"), "btn-ghost", False),
-    Campaign.Status.ARCHIVED: (_l("Archive"), "btn-ghost", True),
+    Campaign.Status.PROPOSED: (gettext_lazy("Propose"), "btn-cyan", False),
+    Campaign.Status.APPROVED: (gettext_lazy("Approve"), "btn-cyan", False),
+    Campaign.Status.ACTIVE: (gettext_lazy("Start"), "btn-gold", False),
+    Campaign.Status.PAUSED: (gettext_lazy("Pause"), "btn-ghost", True),
+    Campaign.Status.CANCELLED: (gettext_lazy("Cancel"), "btn-danger", True),
+    Campaign.Status.DRAFT: (gettext_lazy("Send back to draft"), "btn-ghost", False),
+    Campaign.Status.ARCHIVED: (gettext_lazy("Archive"), "btn-ghost", True),
 }
 _REASON_TARGETS = {
     Campaign.Status.DRAFT, Campaign.Status.PAUSED, Campaign.Status.FAILED, Campaign.Status.CANCELLED,
@@ -2299,10 +2299,10 @@ def campaign_report(request: HttpRequest, pk: int) -> HttpResponse:
 
 
 _LESSONS_OUTCOMES = [
-    (Campaign.Status.COMPLETED, _l("Completed")),
-    (Campaign.Status.FAILED, _l("Failed")),
-    (Campaign.Status.CANCELLED, _l("Cancelled")),
-    (Campaign.Status.ARCHIVED, _l("Archived")),
+    (Campaign.Status.COMPLETED, gettext_lazy("Completed")),
+    (Campaign.Status.FAILED, gettext_lazy("Failed")),
+    (Campaign.Status.CANCELLED, gettext_lazy("Cancelled")),
+    (Campaign.Status.ARCHIVED, gettext_lazy("Archived")),
 ]
 
 

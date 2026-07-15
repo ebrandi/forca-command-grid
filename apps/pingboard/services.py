@@ -12,7 +12,7 @@ import logging
 from django.db import transaction
 from django.utils import timezone, translation
 from django.utils.translation import gettext as _
-from django.utils.translation import gettext_lazy as _lazy
+from django.utils.translation import gettext_lazy
 
 from core.audit import audit_log
 from core.i18n import broadcast_locale
@@ -605,7 +605,7 @@ def _render_body(template, body, context) -> tuple[str, bool]:
             # Lazy: _render_body runs under translation.override(broadcast_locale()), but the
             # officer reads this via str(exc) in views after the override exits.
             raise ValueError(
-                _lazy("Missing required template variables: %(variables)s")
+                gettext_lazy("Missing required template variables: %(variables)s")
                 % {"variables": ", ".join(missing)}
             )
         return rendering.render(tpl.body, context), False

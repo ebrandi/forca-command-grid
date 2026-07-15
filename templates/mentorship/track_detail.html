@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load static eve i18n %}
-{% block title %}{{ track.title }} · [FORCA] Command Grid{% endblock %}
+{% block title %}{{ track.title_i18n }} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 <a href="{% url 'mentorship:tracks' %}" class="text-xs text-faint hover:text-gold">&larr; {% translate "Learning Tracks" %}</a>
 
@@ -11,7 +11,7 @@
     </span>
     <div class="min-w-0">
       <p class="eyebrow text-gold">{% translate "Mentorship" %}</p>
-      <h1 class="mt-0.5 text-3xl font-bold text-ink">{{ track.title }}</h1>
+      <h1 class="mt-0.5 text-3xl font-bold text-ink">{{ track.title_i18n }}</h1>
       <div class="mt-2 flex flex-wrap items-center gap-1.5">
         {% if track.is_core %}<span class="chip text-gold">{% translate "Core" %}</span>{% endif %}
         <span class="chip text-muted">{{ track.get_category_display }}</span>
@@ -19,7 +19,7 @@
       </div>
     </div>
   </div>
-  {% if track.summary %}<p class="mt-3 max-w-2xl text-sm text-muted">{{ track.summary }}</p>{% endif %}
+  {% if track.summary %}<p class="mt-3 max-w-2xl text-sm text-muted">{{ track.summary_i18n }}</p>{% endif %}
 </header>
 
 <h2 class="eyebrow mb-3 text-faint">{% translate "Field exercises" %}</h2>
@@ -30,7 +30,7 @@
         <span class="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-space font-display text-lg font-bold text-gold">{{ forloop.counter }}</span>
         <div class="min-w-0 flex-1">
           <div class="flex flex-wrap items-start justify-between gap-2">
-            <h3 class="font-display font-semibold text-ink">{{ task.title }}</h3>
+            <h3 class="font-display font-semibold text-ink">{{ task.title_i18n }}</h3>
             <div class="flex flex-wrap items-center gap-1.5">
               <span class="chip {% if task.difficulty == 'hard' %}text-loss{% elif task.difficulty == 'medium' %}text-gold{% else %}text-kill{% endif %}">{{ task.get_difficulty_display }}</span>
               {% if task.mandatory %}<span class="chip text-cyan">{% translate "Mandatory" %}</span>{% endif %}
@@ -49,7 +49,7 @@
           {% if task.mentee_instructions %}
             <div class="mt-3 rounded-md border-l-2 border-cyan/40 bg-panel2/50 px-3 py-2">
               <p class="eyebrow mb-1 text-cyan">{% translate "Cadet brief" %}</p>
-              <p class="text-sm text-faint">{{ task.mentee_instructions }}</p>
+              <p class="text-sm text-faint">{{ task.mentee_instructions_i18n }}</p>
             </div>
           {% endif %}
 
@@ -58,7 +58,7 @@
               <p class="mt-3 flex flex-wrap items-center gap-1.5 text-xs text-faint">
                 <svg class="h-4 w-4 text-gold"><use href="#i-lock"/></svg>
                 <span class="text-muted">{% translate "Requires:" %}</span>
-                {% for p in prereqs %}<span class="chip text-muted">{{ p.requires.title }}</span>{% endfor %}
+                {% for p in prereqs %}<span class="chip text-muted">{{ p.requires.title_i18n }}</span>{% endfor %}
               </p>
             {% endif %}
           {% endwith %}

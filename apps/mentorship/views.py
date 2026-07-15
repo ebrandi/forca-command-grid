@@ -543,7 +543,7 @@ def enroll_track(request: HttpRequest, pk: int) -> HttpResponse:
         return redirect("mentorship:pairing", pk=pk)
     track = get_object_or_404(MentorshipTrack, pk=request.POST.get("track_id"), active=True)
     services.enroll_track(pairing, track, actor=request.user)
-    messages.success(request, _("Enrolled in “%(title)s”.") % {"title": track.title})
+    messages.success(request, _("Enrolled in “%(title)s”.") % {"title": track.title_i18n})
     return redirect("mentorship:pairing", pk=pk)
 
 

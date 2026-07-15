@@ -26,7 +26,7 @@
         <div class="flex flex-wrap items-center gap-3 text-sm">
           <span class="min-w-0 flex-1">
             <span class="text-ink">{{ b.quoted_value|isk }}</span>
-            <span class="text-xs text-faint">· {{ b.seller.display_name|default:"—" }} · {{ b.item_count }} items · {{ b.volume_m3|floatformat:0 }} m³{% if b.location_name %} · {{ b.location_name }}{% endif %} · Jita {{ b.jita_value|isk }}</span>
+            <span class="text-xs text-faint">· {{ b.seller.display_name|default:"—" }} · {% blocktranslate with count=b.item_count vol=b.volume_m3|floatformat:0 %}{{ count }} items · {{ vol }} m³{% endblocktranslate %}{% if b.location_name %} · {{ b.location_name }}{% endif %} · Jita {{ b.jita_value|isk }}</span>
             {% if b.notes %}<span class="block text-[11px] text-faint">“{{ b.notes }}”</span>{% endif %}
           </span>
           {% if b.blocker %}

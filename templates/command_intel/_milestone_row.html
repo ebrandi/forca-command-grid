@@ -21,7 +21,14 @@ Params:
     <span class="data shrink-0 text-xs text-faint">○ {% translate "PENDING" %}</span>
   {% endif %}
 
-  <span class="min-w-0 flex-1 truncate text-sm text-ink" title="{{ m.title }}">{{ m.title }}</span>
+  {% comment %}Prefer the COA's re-rendered objective (translated in the reader's locale) over the
+  English title frozen at compose time; fall back to the stored title only when the COA was deleted
+  (SET_NULL), which keeps the audit fallback and never blanks the row.{% endcomment %}
+  {% if m.coa %}
+    <span class="min-w-0 flex-1 truncate text-sm text-ink" title="{{ m.coa.objective_i18n }}">{{ m.coa.objective_i18n }}</span>
+  {% else %}
+    <span class="min-w-0 flex-1 truncate text-sm text-ink" title="{{ m.title }}">{{ m.title }}</span>
+  {% endif %}
 
   {% if m.expected_value is not None %}
     <span class="data shrink-0 text-sm text-muted" title="{% translate 'Planned value at this step' %}">{% blocktranslate with val=m.expected_value|floatformat:"-2" %}exp {{ val }}{% endblocktranslate %}</span>
@@ -34,6 +41,6 @@ Params:
   {% endif %}
 
   {% if m.coa %}
-    <span class="chip shrink-0 text-faint" title="{{ m.coa.objective }}">{% blocktranslate with obj=m.coa.objective|truncatechars:28 %}COA · {{ obj }}{% endblocktranslate %}</span>
+    <span class="chip shrink-0 text-faint" title="{{ m.coa.objective_i18n }}">{% blocktranslate with obj=m.coa.objective_i18n|truncatechars:28 %}COA · {{ obj }}{% endblocktranslate %}</span>
   {% endif %}
 </div>

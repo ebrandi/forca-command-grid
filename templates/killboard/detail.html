@@ -15,7 +15,7 @@
       <div class="pb-1">
         <div class="flex items-center gap-2">
           <span class="h-2.5 w-2.5 rounded-full {% if killmail.home_corp_role == 'victim' %}bg-loss{% else %}bg-kill{% endif %}"></span>
-          <p class="eyebrow">{% if killmail.home_corp_role == 'victim' %}Loss{% else %}Kill{% endif %}</p>
+          <p class="eyebrow">{% if killmail.home_corp_role == 'victim' %}{% translate "Loss" %}{% else %}{% translate "Kill" %}{% endif %}</p>
         </div>
         <h1 class="mt-0.5 text-2xl font-bold text-ink">{% type_name killmail.victim_ship_type_id %}</h1>
         <p class="mt-0.5 text-xs text-faint">
@@ -38,11 +38,11 @@
 <div class="mt-5 grid gap-5 lg:grid-cols-2">
   <!-- Victim -->
   <section class="panel p-5">
-    <h2 class="eyebrow mb-3">Victim</h2>
+    <h2 class="eyebrow mb-3">{% translate "Victim" %}</h2>
     <div class="flex items-center gap-3">
       {% if killmail.victim_character_id %}<img src="{% eve_portrait killmail.victim_character_id 64 %}" alt="" class="h-12 w-12 rounded-full ring-1 ring-line">{% endif %}
       <div>
-        <p class="font-medium text-ink">{% if killmail.victim_character_id %}{% eve_name killmail.victim_character_id %}{% else %}Structure / NPC{% endif %}</p>
+        <p class="font-medium text-ink">{% if killmail.victim_character_id %}{% eve_name killmail.victim_character_id %}{% else %}{% translate "Structure / NPC" %}{% endif %}</p>
         <p class="flex items-center gap-1.5 text-xs text-faint">
           {% if killmail.victim_corporation_id %}<img src="{% eve_corp_logo killmail.victim_corporation_id 32 %}" alt="" class="h-4 w-4 rounded-sm">{% eve_name killmail.victim_corporation_id %}{% endif %}
         </p>
@@ -53,13 +53,13 @@
 
   <!-- Attackers -->
   <section class="panel p-5">
-    <h2 class="eyebrow mb-3">Attackers · {{ attackers|length }}</h2>
+    <h2 class="eyebrow mb-3">{% translate "Attackers" %} · {{ attackers|length }}</h2>
     <ul class="space-y-2 max-h-72 overflow-y-auto pr-1">
       {% for a in attackers %}
         <li class="flex items-center gap-2.5">
           {% if a.character_id %}<img src="{% eve_portrait a.character_id 32 %}" alt="" loading="lazy" class="h-7 w-7 rounded-full ring-1 ring-line">{% else %}<span class="h-7 w-7 rounded-full bg-panel2 ring-1 ring-line"></span>{% endif %}
           <div class="min-w-0 flex-1">
-            <p class="truncate text-sm text-ink">{% if a.character_id %}{% eve_name a.character_id %}{% else %}NPC{% endif %} {% if a.final_blow %}<span class="chip !text-gold !border-gold/40">final blow</span>{% endif %}</p>
+            <p class="truncate text-sm text-ink">{% if a.character_id %}{% eve_name a.character_id %}{% else %}NPC{% endif %} {% if a.final_blow %}<span class="chip !text-gold !border-gold/40">{% translate "final blow" %}</span>{% endif %}</p>
             <p class="truncate text-[11px] text-faint">{% type_name a.ship_type_id %}{% if a.weapon_type_id and a.weapon_type_id != a.ship_type_id %} · {% type_name a.weapon_type_id %}{% endif %}</p>
           </div>
           <span class="data text-xs text-muted">{{ a.damage_done }}</span>

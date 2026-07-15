@@ -11,6 +11,8 @@ from django.utils.translation import gettext_lazy as _
 from apps.doctrines.models import DoctrineFit
 from core.mixins import ProvenanceMixin, TimeStampedModel
 
+from . import ranks_i18n
+
 
 class SecBand(models.TextChoices):
     HIGHSEC = "highsec", "Highsec"
@@ -228,9 +230,9 @@ class Watchlist(TimeStampedModel):
 
 class WatchlistEntry(models.Model):
     class EntityType(models.TextChoices):
-        CHARACTER = "character", "Character"
-        CORPORATION = "corporation", "Corporation"
-        ALLIANCE = "alliance", "Alliance"
+        CHARACTER = "character", _("Character")
+        CORPORATION = "corporation", _("Corporation")
+        ALLIANCE = "alliance", _("Alliance")
 
     watchlist = models.ForeignKey(Watchlist, on_delete=models.CASCADE, related_name="entries")
     entity_type = models.CharField(max_length=12, choices=EntityType.choices)
@@ -425,6 +427,20 @@ class CombatRankTitle(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"{self.name} ({self.min_kills}+)"
+
+    @property
+    def name_i18n(self) -> str:
+        """``name`` for display: the seeded built-in title translated, else verbatim.
+
+        The column keeps canonical English (a lazy proxy would be frozen to str on save) —
+        see :mod:`apps.killboard.ranks_i18n`.
+        """
+        return ranks_i18n.rank_title_for(self.name)
+
+    @property
+    def description_i18n(self) -> str:
+        """``description`` for display: the seeded built-in text translated, else verbatim."""
+        return ranks_i18n.rank_description_for(self.description)
 
     @property
     def rewards_configured(self) -> bool:

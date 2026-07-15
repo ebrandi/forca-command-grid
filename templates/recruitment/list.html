@@ -15,7 +15,7 @@
     {% csrf_token %}
     <div class="sm:col-span-2">
       <label class="label" for="lf_name_1">{% translate "Pilot name" %}</label>
-      <input id="lf_name_1" name="name" required autocomplete="off" class="input-field" placeholder="e.g. Stromgren">
+      <input id="lf_name_1" name="name" required autocomplete="off" class="input-field" placeholder="{% translate 'e.g. Stromgren' %}">
     </div>
     <div class="flex items-end"><button class="btn-gold w-full">{% translate "Add &amp; gather evidence" %}</button></div>
   </form>

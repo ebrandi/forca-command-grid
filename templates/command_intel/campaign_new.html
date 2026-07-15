@@ -53,7 +53,7 @@
             <input id="coa-{{ coa.pk }}" type="checkbox" name="coa_ids" value="{{ coa.pk }}"
                    class="mt-1 h-4 w-4 shrink-0 rounded border-line bg-space text-gold focus:ring-gold">
             <span class="min-w-0 flex-1">
-              <span class="block text-sm text-ink">{{ coa.objective }}</span>
+              <span class="block text-sm text-ink">{{ coa.objective_i18n }}</span>
               <span class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
                 {% if coa.severity_if_ignored == 'critical' or coa.severity_if_ignored == 'high' %}
                   <span class="data text-loss">▼ {% blocktranslate with sev=coa.severity_if_ignored|upper %}{{ sev }} priority{% endblocktranslate %}</span>

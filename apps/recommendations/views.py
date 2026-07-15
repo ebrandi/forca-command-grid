@@ -56,12 +56,12 @@ def officer_dashboard(request: HttpRequest) -> HttpResponse:
 def notifications(request: HttpRequest) -> HttpResponse:
     """Relayed in-game ESI notifications: structure attacks, wars, sov, moons."""
     from .models import CorpNotification
-    from .notifications import INTERESTING
+    from .notifications import DISPLAY_LABELS, INTERESTING
 
     rows = []
     for n in CorpNotification.objects.all()[:150]:
-        label, alert = INTERESTING.get(n.type, (n.type, False))
-        rows.append({"n": n, "label": label, "alert": alert})
+        _label, alert = INTERESTING.get(n.type, (n.type, False))
+        rows.append({"n": n, "label": DISPLAY_LABELS.get(n.type, n.type), "alert": alert})
 
     # REC-1 (2.10): surface which character is the authoritative relay source.
     from .relay import designated_relay_character_id

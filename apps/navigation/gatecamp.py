@@ -10,6 +10,9 @@ See research/06-gate-camp-intel.md.
 """
 from __future__ import annotations
 
+from django.utils.translation import gettext, ngettext
+from django.utils.translation import gettext_lazy as _
+
 from apps.sde.models import SdeRegion, SdeSolarSystem, SdeSystemJump
 
 from .maps import security_band, security_colour
@@ -21,6 +24,16 @@ _BAND_RANK = {"highsec": 2, "lowsec": 1, "nullsec": 0}
 # clear < elevated < caution < danger
 LEVEL_RANK = {"clear": 0, "elevated": 1, "caution": 2, "danger": 3}
 _LEVEL_BY_RANK = {v: k for k, v in LEVEL_RANK.items()}
+
+# Human labels for the risk badge. The raw slug stays the code the templates
+# compare on ({% if level == 'danger' %}); this map only feeds the display
+# position. Mirrors route_mode.MODE_LABELS.
+LEVEL_LABELS = {
+    "clear": _("Clear"),
+    "elevated": _("Elevated"),
+    "caution": _("Caution"),
+    "danger": _("Danger"),
+}
 
 
 def assess(kills: dict, jumps: int = 0, *, chokepoint: bool = False) -> dict:
@@ -35,7 +48,8 @@ def assess(kills: dict, jumps: int = 0, *, chokepoint: bool = False) -> dict:
     n = kills.get("npc_kills", 0) if kills else 0
     pvp = s + p
     if pvp == 0:
-        return {"level": "clear", "score": 0, "reasons": []}
+        return {"level": "clear", "score": 0, "reasons": [],
+                "level_label": LEVEL_LABELS["clear"]}
 
     ratting = n > 3 * max(pvp, 1)
     base = p * 3 + s            # pods weigh 3× — the camp signature
@@ -45,15 +59,17 @@ def assess(kills: dict, jumps: int = 0, *, chokepoint: bool = False) -> dict:
 
     reasons: list[str] = []
     if p:
-        reasons.append(f"{p} pod{'s' if p != 1 else ''} killed")
+        reasons.append(ngettext("%(count)d pod killed", "%(count)d pods killed", p)
+                       % {"count": p})
     if s:
-        reasons.append(f"{s} ship{'s' if s != 1 else ''} killed")
+        reasons.append(ngettext("%(count)d ship killed", "%(count)d ships killed", s)
+                       % {"count": s})
     if chokepoint:
-        reasons.append("chokepoint (few gates)")
+        reasons.append(gettext("chokepoint (few gates)"))
     if ratting:
-        reasons.append("looks like ratting, not a camp")
+        reasons.append(gettext("looks like ratting, not a camp"))
     elif jumps <= 2 and pvp >= 1:
-        reasons.append("kills with almost no traffic — possible ambush")
+        reasons.append(gettext("kills with almost no traffic — possible ambush"))
 
     if ratting:
         level = "elevated"
@@ -63,7 +79,8 @@ def assess(kills: dict, jumps: int = 0, *, chokepoint: bool = False) -> dict:
         level = "caution"
     else:
         level = "elevated"
-    return {"level": level, "score": score, "reasons": reasons}
+    return {"level": level, "score": score, "reasons": reasons,
+            "level_label": LEVEL_LABELS[level]}
 
 
 def chokepoint_flags(system_ids: list[int]) -> dict[int, bool]:
@@ -151,7 +168,8 @@ def camp_watch(*, region_id: int | None = None, band: str = "all",
             "colour": security_colour(m["security"]),
             "region": region_names.get(m["region_id"], ""),
             "region_id": m["region_id"],
-            "level": a["level"], "score": a["score"], "reasons": a["reasons"],
+            "level": a["level"], "level_label": a["level_label"],
+            "score": a["score"], "reasons": a["reasons"],
             "pod_kills": k.get("pod_kills", 0), "ship_kills": k.get("ship_kills", 0),
             "traffic": jumps.get(sid, 0), "chokepoint": choke.get(sid, False),
         })
@@ -198,7 +216,8 @@ def route_camp_check(system_ids: list[int]) -> dict:
             caution += 1
         if LEVEL_RANK[a["level"]] >= LEVEL_RANK["caution"]:
             flagged.append({"system_id": sid, "name": names.get(sid, str(sid)),
-                            "level": a["level"], "reasons": a["reasons"]})
+                            "level": a["level"], "level_label": a["level_label"],
+                            "reasons": a["reasons"]})
 
     return {
         "by_id": by_id, "flagged": flagged,

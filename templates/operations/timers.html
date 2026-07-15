@@ -28,7 +28,7 @@
         <span class="block text-[10px] text-faint">{{ t.exits_at|date:"D j M · H:i" }} EVE</span>
       </span>
       {% if is_officer %}<form method="post" action="{% url 'operations:timer_remove' t.pk %}">{% csrf_token %}<button class="text-[11px] text-faint hover:text-loss">{% translate "remove" %}</button></form>{% endif %}
-      {% if t.notes %}<p class="w-full pl-6 text-xs text-faint">{{ t.notes }}</p>{% endif %}
+      {% if t.notes %}<p class="w-full pl-6 text-xs text-faint">{% if t.is_auto_imported %}{% translate "Auto-imported from structure monitoring." %}{% else %}{{ t.notes }}{% endif %}</p>{% endif %}
     </div>
   {% empty %}
     <p class="px-4 py-10 text-center text-sm text-faint">{% translate "No timers on the board." %}</p>

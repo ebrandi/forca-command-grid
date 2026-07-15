@@ -6,6 +6,8 @@ from django.utils.translation import gettext_lazy as _
 
 from apps.sso.models import EveCharacter
 
+from . import milestones_i18n
+
 
 class OnboardingMilestone(models.Model):
     class Category(models.TextChoices):
@@ -30,6 +32,14 @@ class OnboardingMilestone(models.Model):
 
     def __str__(self) -> str:
         return self.title
+
+    @property
+    def title_i18n(self) -> str:
+        return milestones_i18n.milestone_title_for(self.key, self.title)
+
+    @property
+    def description_i18n(self) -> str:
+        return milestones_i18n.milestone_description_for(self.key, self.description)
 
 
 class OnboardingProgress(models.Model):
@@ -63,3 +73,11 @@ class GlossaryTerm(models.Model):
 
     def __str__(self) -> str:
         return self.term
+
+    @property
+    def definition_i18n(self) -> str:
+        return milestones_i18n.glossary_definition_for(self.term, self.definition)
+
+    @property
+    def term_i18n(self) -> str:
+        return milestones_i18n.glossary_term_for(self.term, self.term)

@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% load i18n %}
-{% block title %}Corp Store · [FORCA] Command Grid{% endblock %}
+{% block title %}{% translate "Corp Store" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 
 <header class="mb-6 flex flex-wrap items-end justify-between gap-4">
   <div>
-    <p class="eyebrow">Forças Armadas · Corp Store</p>
+    <p class="eyebrow">Forças Armadas · {% translate "Corp Store" %}</p>
     <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Corp Store" %}</h1>
     <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Have any hull — up to capitals and supers — built to order. Corp members fulfil every order by contract." %}</p>
   </div>

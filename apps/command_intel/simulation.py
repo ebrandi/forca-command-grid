@@ -17,7 +17,7 @@ import copy
 
 from django.utils.translation import gettext_lazy as _
 
-from . import config
+from . import config, messages
 from .engine import pipeline
 from .engine.base import SEVERITY_ORDER
 from .snapshot import latest_snapshot
@@ -131,7 +131,9 @@ def _diff(before: list, after: list) -> list[dict]:
         before_sev = b.severity if b is not None else "info"
         worsened = SEVERITY_ORDER.get(a.severity, 0) > SEVERITY_ORDER.get(before_sev, 0)
         rows.append({
-            "key": key, "label": a.label, "category": a.category, "unit": a.unit,
+            "key": key,
+            "label": messages.render(a.label_key, a.label_params, a.label),
+            "category": a.category, "unit": a.unit,
             "before": before_metric, "after": after_metric, "delta": delta,
             "before_severity": before_sev, "after_severity": a.severity,
             "worsened": worsened, "headroom_after": a.headroom,

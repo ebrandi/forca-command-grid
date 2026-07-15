@@ -31,7 +31,7 @@ from decimal import Decimal
 
 from django.db import transaction
 from django.utils import timezone
-from django.utils.translation import gettext as _t
+from django.utils.translation import gettext
 
 from core.version import git_commit
 
@@ -316,13 +316,13 @@ def verify_draw(draw: RaffleDraw) -> dict:
     """
     if draw.status != RaffleDraw.Status.COMPLETED or not draw.seed:
         return {"verifiable": False,
-                "reason": _t("draw not completed / seed not revealed")}
+                "reason": gettext("draw not completed / seed not revealed")}
     commitment_ok = hashlib.sha256(draw.seed.encode()).hexdigest() == draw.seed_commitment
     pool = draw.manifest.get("pool", [])
     total = draw.manifest.get("total_eligible_tickets", 0)
     if not pool or total <= 0:
         return {"verifiable": commitment_ok, "commitment_ok": commitment_ok,
-                "winners_match": True, "reason": _t("no eligible tickets")}
+                "winners_match": True, "reason": gettext("no eligible tickets")}
     starts = [p["range_start"] for p in pool]
     effective_seed = _effective_seed(draw.seed, draw.external_entropy)
     recomputed = [

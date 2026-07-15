@@ -247,7 +247,7 @@
       <span class="min-w-0 flex-1 truncate text-ink">{{ e.character_name|default:anon_pilot }}</span>
       {# Officer-authored free-text (manual/reversal reasons) isn't shown corp-wide; #}
       {# non-officers see only a neutral per-source label. #}
-      <span class="text-xs text-faint">{% if is_officer %}{{ e.reason }}{% else %}{{ e.source_key }}{% endif %}</span>
+      <span class="text-xs text-faint">{% if is_officer %}{{ e.reason_i18n }}{% else %}{{ e.source_key }}{% endif %}</span>
       <span class="data text-gold">+{{ e.amount }}</span>
     </div>
     {% endfor %}

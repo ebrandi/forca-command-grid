@@ -87,7 +87,7 @@
             <span class="data w-6 text-faint">{{ forloop.counter }}.</span>
             <img src="{% eve_type_icon s.type_id 32 %}" alt="" loading="lazy" class="h-4 w-4 rounded-sm">
             <span class="text-muted">{% type_name s.type_id %}</span>
-            <span class="chip">{{ s.activity }}</span>
+            <span class="chip">{{ s.activity_label }}</span>
             <span class="data text-faint">{% blocktranslate count n=s.runs with produced=s.produced_quantity required=s.required_quantity %}{{ n }} run → {{ produced }} (need {{ required }}){% plural %}{{ n }} runs → {{ produced }} (need {{ required }}){% endblocktranslate %}</span>
           </li>
         {% endfor %}

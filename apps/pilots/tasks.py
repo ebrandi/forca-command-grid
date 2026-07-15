@@ -65,7 +65,10 @@ def warm_briefings() -> int:
                     for c in user.characters.all()
                     for action in next_actions(c, limit=2)
                 ]
-                cache.set(f"briefing:onboarding:{user.pk}", onboarding, 600)
+                # Language-scoped: next_actions() now returns translated milestone
+                # title/description, so a bare per-user key would freeze one reader's
+                # locale onto everyone (mirrors the digest key above, LP-3).
+                cache.set(i18n_cache_key(f"briefing:onboarding:{user.pk}"), onboarding, 600)
             if feature_enabled("operations"):
                 # The dashboard's pinned next-op row (readiness per doctrine
                 # fit ≈1s cold) — same delete-then-recompute idiom as digest.
@@ -86,13 +89,23 @@ def warm_hall_of_fame() -> str:
     The scoreboard aggregates millions of killmail-participant rows; with only a
     short read-cache, every few minutes one viewer would otherwise recompute it.
     Warming the current month (the one almost everyone views) keeps it instant.
+
+    The cached payload is language-scoped (it embeds the month label, the category
+    titles and the ``category_how`` one-liners), so the warm runs once per enabled locale
+    under ``translation.override``. Without that loop this task — which runs under the
+    default locale — would only ever fill the ``:en`` key and every non-English reader would
+    take the cold recompute on each request (mirrors ``killboard.analytics.warm_caches``).
     """
-    from django.utils import timezone
+    from django.utils import timezone, translation
+
+    from core.i18n import enabled_locales
 
     from .halloffame import scoreboard
 
     now = timezone.now()
-    scoreboard(now.year, now.month)
+    for code in enabled_locales():
+        with translation.override(code):
+            scoreboard(now.year, now.month)
     return f"{now.year}-{now.month:02d}"
 
 

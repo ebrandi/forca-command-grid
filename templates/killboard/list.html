@@ -20,12 +20,12 @@
 <section class="panel mb-4 flex flex-wrap items-stretch gap-x-6 gap-y-4 p-4">
   <div class="flex flex-1 flex-wrap gap-x-6 gap-y-3">
     <div>
-      <p class="eyebrow text-faint">Kills</p>
+      <p class="eyebrow text-faint">{% translate "Kills" %}</p>
       <p class="data text-2xl font-bold text-kill">{{ s.kills }}</p>
       <p class="text-[11px] text-faint">{{ s.isk_destroyed|isk }}</p>
     </div>
     <div>
-      <p class="eyebrow text-faint">Losses</p>
+      <p class="eyebrow text-faint">{% translate "Losses" %}</p>
       <p class="data text-2xl font-bold text-loss">{{ s.losses }}</p>
       <p class="text-[11px] text-faint">{{ s.isk_lost|isk }}</p>
     </div>

@@ -7,7 +7,7 @@
   <div>
     <p class="eyebrow text-gold">{% translate "Raffle contests" %}</p>
     <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Fly, earn tickets, win prizes" %}</h1>
-    <p class="mt-1 max-w-2xl text-sm text-faint">{{ config.intro_text }}</p>
+    <p class="mt-1 max-w-2xl text-sm text-faint">{{ config.intro_text_i18n }}</p>
   </div>
   {% if is_officer %}<a href="{% url 'admin_audit:raffle_hub' %}" class="btn-ghost text-sm">{% translate "Manage raffles" %} →</a>{% endif %}
 </header>

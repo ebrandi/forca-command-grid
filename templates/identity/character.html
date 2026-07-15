@@ -156,8 +156,16 @@
 {% endblock %}
 
 {% block scripts %}
+{% translate "completing…" as t_completing %}
+{% translate "Copied ✓" as t_copied %}
+{% translate "Copy failed" as t_copy_failed %}
 <script nonce="{{ csp_nonce }}">
 (function () {
+  var STR = {
+    completing: "{{ t_completing|escapejs }}",
+    copied: "{{ t_copied|escapejs }}",
+    copyFailed: "{{ t_copy_failed|escapejs }}"
+  };
   function fmt(ms) {
     if (ms <= 0) return "0m";
     var s = Math.floor(ms / 1000), d = Math.floor(s / 86400);
@@ -170,15 +178,15 @@
       fetch(btn.getAttribute("data-copy-url"), { credentials: "same-origin" })
         .then(function (r) { return r.text(); })
         .then(function (t) { return navigator.clipboard.writeText(t); })
-        .then(function () { var o = btn.textContent; btn.textContent = "Copied ✓";
+        .then(function () { var o = btn.textContent; btn.textContent = STR.copied;
           setTimeout(function () { btn.textContent = o; }, 1800); })
-        .catch(function () { btn.textContent = "Copy failed"; });
+        .catch(function () { btn.textContent = STR.copyFailed; });
     });
   });
   document.querySelectorAll("[data-train]").forEach(function (el) {
     var f = el.getAttribute("data-finish"); if (!f) return;
     var finish = new Date(f).getTime(), rem = el.querySelector("[data-train-remaining]");
-    function tick() { var left = finish - Date.now(); if (rem) rem.textContent = left > 0 ? fmt(left) : "completing…"; }
+    function tick() { var left = finish - Date.now(); if (rem) rem.textContent = left > 0 ? fmt(left) : STR.completing; }
     tick(); setInterval(tick, 30000);
   });
 })();

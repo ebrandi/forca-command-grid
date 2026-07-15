@@ -176,8 +176,12 @@ def _quest(obj, *, engine, category_key, rank, corp_order=False, now=None) -> di
         "category_label": obj.get_category_display(),
         "icon": "#i-command" if corp_order else _QUEST_ICONS.get(category_key, "#i-target"),
         "corp_order": corp_order,
-        "title": obj.title,
-        "detail": obj.detail,
+        # Display via the render-time i18n seam. Both objects _quest is ever called with —
+        # command_intel.PilotDirective and readiness.PilotRecommendation — define
+        # title_i18n/detail_i18n. The stored .title stays English, which is what the dedup
+        # in unified_quest_queue matches on, so localising the DISPLAY here cannot break it.
+        "title": obj.title_i18n,
+        "detail": obj.detail_i18n,
         "points": obj.points,
         "action_url": obj.action_url,
         "action_available": bool(obj.action_url) and action_feature_ok(obj.action_url),

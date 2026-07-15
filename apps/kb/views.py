@@ -25,7 +25,7 @@ def kb_list(request: HttpRequest) -> HttpResponse:
     pages = visible_pages(request.user).order_by("category", "title")
     by_cat: dict[str, list] = {}
     for page in pages:
-        by_cat.setdefault(page.category or "General", []).append(page)
+        by_cat.setdefault(page.category or _("General"), []).append(page)
     return render(
         request,
         "kb/list.html",

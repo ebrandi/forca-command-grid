@@ -5,7 +5,7 @@
 
 <header class="mb-5 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <p class="eyebrow">Doctrines</p>
+    <p class="eyebrow">{% translate "Doctrines" %}</p>
     <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Shipyard" %}</h1>
     <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Every sanctioned fit in one place. Filter by hull size, role, and whether you can fly it" %}{% if store_priced %}{% translate ", see the price, copy the EFT, or order it built" %}{% else %}{% blocktranslate %} — or sort by what you're closest to unlocking{% endblocktranslate %}{% endif %}.</p>
   </div>
@@ -54,7 +54,7 @@
       <option value="closest" {% if sort == 'closest' %}selected{% endif %}>{% translate "Closest to fly" %}</option>
       <option value="ready" {% if sort == 'ready' %}selected{% endif %}>{% translate "Most ready" %}</option>
       <option value="class" {% if sort == 'class' %}selected{% endif %}>{% translate "Hull class" %}</option>
-      <option value="name" {% if sort == 'name' %}selected{% endif %}>Doctrine</option>
+      <option value="name" {% if sort == 'name' %}selected{% endif %}>{% translate "Doctrine" %}</option>
     </select>
   </label>
   <button type="submit" class="btn-ghost text-sm">{% translate "Apply" %}</button>

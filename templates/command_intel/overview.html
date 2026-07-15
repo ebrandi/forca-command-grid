@@ -62,7 +62,7 @@
         <span class="text-sm font-medium text-ink">{% translate "Command Intelligence Report" as default_title %}{{ latest_report.title_i18n|default:default_title }}</span>
         {% if latest_report.generated_at %}<span class="text-xs text-faint">— {{ latest_report.generated_at|date:"d M Y" }}</span>{% endif %}
       </div>
-      {% if latest_report.summary %}<p class="mt-2 text-sm text-muted">{{ latest_report.summary|truncatewords:40 }}</p>{% endif %}
+      {% if latest_report.summary_i18n %}<p class="mt-2 text-sm text-muted">{{ latest_report.summary_i18n|truncatewords:40 }}</p>{% endif %}
       <span class="mt-2 inline-block text-xs text-cyan">{% translate "read briefing" %} →</span>
     </a>
   {% else %}

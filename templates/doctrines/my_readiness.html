@@ -2,7 +2,7 @@
 {% load eve i18n %}
 {% block title %}{% translate "My doctrine readiness" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
-<a href="{% url 'doctrines:list' %}" class="text-xs text-faint hover:text-gold">← Doctrines</a>
+<a href="{% url 'doctrines:list' %}" class="text-xs text-faint hover:text-gold">← {% translate "Doctrines" %}</a>
 <header class="mt-3 mb-6 flex flex-wrap items-end justify-between gap-3">
   <div>
     <p class="eyebrow">{% translate "Training" %}</p>

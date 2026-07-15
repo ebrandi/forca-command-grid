@@ -61,7 +61,9 @@ class Finding:
     detail_params: dict = field(default_factory=dict)
 
     def as_gap(self) -> dict:
-        """The v1 dashboard "gap" shape (kept byte-identical for backward compat)."""
+        """The v1 dashboard "gap" shape, plus the Seam-B keys so the dashboard view can
+        re-render ``label``/``task_title`` under the reader's locale (the prose fields stay the
+        frozen-English fallback for legacy/keyless findings)."""
         return {
             "kind": self.kind,
             "ref_id": self.ref_id,
@@ -69,6 +71,10 @@ class Finding:
             "weight": self.weight,
             "task_type": self.task_type,
             "task_title": self.task_title,
+            "label_key": self.label_key,
+            "label_params": self.label_params,
+            "task_title_key": self.task_title_key,
+            "task_title_params": self.task_title_params,
         }
 
 

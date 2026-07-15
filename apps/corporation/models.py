@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from django.db import models
 from django.utils.translation import gettext as _
-from django.utils.translation import gettext_lazy as _t
+from django.utils.translation import gettext_lazy
 
 from core.mixins import ProvenanceMixin, TimeStampedModel
 
@@ -29,15 +29,15 @@ class PartnerAlliance(ProvenanceMixin):
 
     alliance_id = models.BigIntegerField(primary_key=True)
     name = models.CharField(
-        max_length=200, blank=True, help_text=_t("Optional label; the id is what grants access.")
+        max_length=200, blank=True, help_text=gettext_lazy("Optional label; the id is what grants access.")
     )
     note = models.CharField(max_length=200, blank=True)
     active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["name", "alliance_id"]
-        verbose_name = _t("partner alliance")
-        verbose_name_plural = _t("partner alliances")
+        verbose_name = gettext_lazy("partner alliance")
+        verbose_name_plural = gettext_lazy("partner alliances")
 
     def __str__(self) -> str:
         label = self.name or str(self.alliance_id)
@@ -55,15 +55,15 @@ class FriendlyCorporation(ProvenanceMixin):
 
     corporation_id = models.BigIntegerField(primary_key=True)
     name = models.CharField(
-        max_length=200, blank=True, help_text=_t("Optional label; the id is what grants access.")
+        max_length=200, blank=True, help_text=gettext_lazy("Optional label; the id is what grants access.")
     )
     note = models.CharField(max_length=200, blank=True)
     active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["name", "corporation_id"]
-        verbose_name = _t("friendly corporation")
-        verbose_name_plural = _t("friendly corporations")
+        verbose_name = gettext_lazy("friendly corporation")
+        verbose_name_plural = gettext_lazy("friendly corporations")
 
     def __str__(self) -> str:
         label = self.name or str(self.corporation_id)
@@ -179,10 +179,10 @@ class Contact(ProvenanceMixin):
     """
 
     class ContactType(models.TextChoices):
-        CHARACTER = "character", _t("Character")
-        CORPORATION = "corporation", _t("Corporation")
-        ALLIANCE = "alliance", _t("Alliance")
-        FACTION = "faction", _t("Faction")
+        CHARACTER = "character", gettext_lazy("Character")
+        CORPORATION = "corporation", gettext_lazy("Corporation")
+        ALLIANCE = "alliance", gettext_lazy("Alliance")
+        FACTION = "faction", gettext_lazy("Faction")
 
     contact_id = models.BigIntegerField(primary_key=True)
     contact_type = models.CharField(max_length=12, choices=ContactType.choices)
@@ -266,10 +266,10 @@ class StructureAlertConfig(TimeStampedModel):
 
     is_active = models.BooleanField(default=True)
     fuel_alert_days = models.PositiveSmallIntegerField(
-        default=3, help_text=_t("A structure with fewer than this many days of fuel is low and alerts."),
+        default=3, help_text=gettext_lazy("A structure with fewer than this many days of fuel is low and alerts."),
     )
     adm_alert_floor = models.FloatField(
-        default=3.0, help_text=_t("A sovereignty system with an ADM below this is soft and alerts."),
+        default=3.0, help_text=gettext_lazy("A sovereignty system with an ADM below this is soft and alerts."),
     )
 
     _CACHE_KEY = "corp:structure_alert_cfg"

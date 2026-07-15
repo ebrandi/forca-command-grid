@@ -47,8 +47,8 @@ def onboarding_dashboard(request: HttpRequest) -> HttpResponse:
                 p = progress_by_id.get(m.id)
                 row = {
                     "id": m.id,
-                    "title": m.title,
-                    "description": m.description,
+                    "title": m.title_i18n,
+                    "description": m.description_i18n,
                     "url": m.url,
                     "done": bool(p and p.status == OnboardingProgress.Status.DONE),
                     "manual": is_manual(m.criteria),

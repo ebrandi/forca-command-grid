@@ -10,8 +10,8 @@ from django.db.models import Sum
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-from django.utils.translation import gettext as _t
-from django.utils.translation import gettext_lazy as _l
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy
 from django.utils.translation import ngettext
 from django.views.decorators.http import require_POST
 
@@ -140,8 +140,8 @@ def _reward_label(reward_type: str, amount, item_type_id) -> str:
             SdeType.objects.filter(type_id=item_type_id).values_list("name", flat=True).first()
             if item_type_id else None
         )
-        return name or _t("an item reward")
-    return _t("a special reward")  # manual / other
+        return name or gettext("an item reward")
+    return gettext("a special reward")  # manual / other
 
 
 def _kills_this_month(character_id: int) -> int:
@@ -337,13 +337,13 @@ def _next_op_payload(character) -> dict:
 # (``dashboard_layout["hidden"]``, a JSONField) and is string-compared in dashboard.html —
 # translating it would poison every saved layout.
 HIDEABLE_PANELS = (
-    ("raffle", _l("Raffle")),
-    ("combat_log", _l("Combat log")),
-    ("onboarding", _l("Getting started")),
-    ("pilot_stats", _l("Pilot stats")),
-    ("doctrines", _l("Doctrine readiness")),
-    ("campaigns", _l("Campaign Command")),
-    ("capsuleer", _l("Capsuleer Path")),
+    ("raffle", gettext_lazy("Raffle")),
+    ("combat_log", gettext_lazy("Combat log")),
+    ("onboarding", gettext_lazy("Getting started")),
+    ("pilot_stats", gettext_lazy("Pilot stats")),
+    ("doctrines", gettext_lazy("Doctrine readiness")),
+    ("campaigns", gettext_lazy("Campaign Command")),
+    ("capsuleer", gettext_lazy("Capsuleer Path")),
 )
 _HIDEABLE_KEYS = frozenset(k for k, _label in HIDEABLE_PANELS)
 
@@ -524,6 +524,13 @@ def _dashboard_context(request: HttpRequest) -> dict:
                 state=PilotRecommendation.State.OPEN,
             ).filter(Q(snoozed_until__isnull=True) | Q(snoozed_until__lte=tz.now()))
         )
+        # Seam B read side: the quest log was frozen in English by the readiness beat (no reader,
+        # no locale). Re-render each row under THIS reader's language from the persisted scaffold
+        # key before it feeds the unified quest queue. In-memory only — never saved, so the
+        # English audit column is untouched.
+        for r in recos:
+            r.title = r.title_i18n
+            r.detail = r.detail_i18n
 
     career = []
     hidden_panels = _hidden_panels(user)
@@ -583,7 +590,10 @@ def _dashboard_context(request: HttpRequest) -> dict:
     # Getting started — the cached all-characters variant the warmer maintains.
     onboarding: list = []
     if feature_enabled("onboarding") and main_character is not None:
-        onboarding_key = f"briefing:onboarding:{user.pk}"
+        from core.i18n import i18n_cache_key
+        # Language-scoped to match the warmer (pilots.tasks.warm_briefings) — next_actions()
+        # returns translated prose, so the key must carry the reader's language.
+        onboarding_key = i18n_cache_key(f"briefing:onboarding:{user.pk}")
         onboarding = cache.get(onboarding_key)
         if onboarding is None:
             onboarding = [
@@ -680,7 +690,7 @@ def _dashboard_context(request: HttpRequest) -> dict:
                 signals.append(
                     {
                         "kind": "srp",
-                        "text": _t(
+                        "text": gettext(
                             "SRP payout landed: %(isk)s ISK for your %(ship)s."
                         ) % {
                             "isk": _isk(c.payout),
@@ -880,7 +890,7 @@ def save_dashboard_layout(request: HttpRequest) -> HttpResponse:
     layout["hidden"] = hidden
     prefs.dashboard_layout = layout
     prefs.save(update_fields=["dashboard_layout", "updated_at"])
-    messages.success(request, _t("Dashboard layout saved."))
+    messages.success(request, gettext("Dashboard layout saved."))
     return redirect("identity:dashboard")
 
 
@@ -892,7 +902,7 @@ def _grouped_skills(snapshot) -> list[dict]:
     from apps.sde.models import SdeType
 
     meta = {
-        tid: (name, grp or _t("Other"))
+        tid: (name, grp or gettext("Other"))
         for tid, name, grp in SdeType.objects.filter(type_id__in=[int(k) for k in snapshot.skills])
         .select_related("group").values_list("type_id", "name", "group__name")
     }
@@ -900,7 +910,7 @@ def _grouped_skills(snapshot) -> list[dict]:
     for sid, info in snapshot.skills.items():
         name, grp = meta.get(
             int(sid),
-            (_t("Skill %(id)s") % {"id": sid}, _t("Other")),
+            (gettext("Skill %(id)s") % {"id": sid}, gettext("Other")),
         )
         groups.setdefault(grp, []).append(
             {"id": int(sid), "name": name, "level": int(info.get("trained_level", 0))}

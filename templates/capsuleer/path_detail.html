@@ -17,10 +17,10 @@
     <section class="panel overflow-hidden">
       <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">{% translate "What you'll do" %}</h2></div>
       <div class="divide-y divide-line/40">
-        {% for m in structure.milestones %}
+        {% for m in milestones %}
         <div class="flex items-center gap-3 px-4 py-2.5 text-sm">
           <span class="shrink-0 text-faint">{{ m.order }}</span>
-          <span class="min-w-0 flex-1 text-ink">{{ m.title }}</span>
+          <span class="min-w-0 flex-1 text-ink">{{ m.title_i18n }}</span>
           {% if m.required %}<span class="chip shrink-0 text-muted border-line">{% translate "required" %}</span>{% else %}<span class="chip shrink-0 text-faint border-line">{% translate "optional" %}</span>{% endif %}
         </div>
         {% endfor %}
@@ -46,8 +46,8 @@
     </section>
     {% endif %}
 
-    {% if structure.assumptions %}
-    <p class="text-[11px] text-faint">{% for a in structure.assumptions %}{{ a }}{% if not forloop.last %} · {% endif %}{% endfor %}</p>
+    {% if assumptions %}
+    <p class="text-[11px] text-faint">{% for a in assumptions %}{{ a }}{% if not forloop.last %} · {% endif %}{% endfor %}</p>
     {% endif %}
   </div>
 

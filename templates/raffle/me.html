@@ -36,10 +36,10 @@
 <section class="panel mb-6 p-5">
   <h2 class="eyebrow mb-3 text-gold">{% translate "PVP breakdown" %}</h2>
   <div class="grid gap-3 sm:grid-cols-4 text-center">
-    <div><p class="data text-xl text-ink">{{ perf.summary.pvp_kills }}</p><p class="text-[11px] text-faint">kills</p></div>
-    <div><p class="data text-xl text-gold">{{ perf.summary.pvp_solo }}</p><p class="text-[11px] text-faint">solo</p></div>
-    <div><p class="data text-xl text-cyan">{{ perf.summary.pvp_final_blows }}</p><p class="text-[11px] text-faint">final blows</p></div>
-    <div><p class="data text-xl text-muted">{{ perf.summary.pvp_participation }}</p><p class="text-[11px] text-faint">participation</p></div>
+    <div><p class="data text-xl text-ink">{{ perf.summary.pvp_kills }}</p><p class="text-[11px] text-faint">{% translate "kills" %}</p></div>
+    <div><p class="data text-xl text-gold">{{ perf.summary.pvp_solo }}</p><p class="text-[11px] text-faint">{% translate "solo" %}</p></div>
+    <div><p class="data text-xl text-cyan">{{ perf.summary.pvp_final_blows }}</p><p class="text-[11px] text-faint">{% translate "final blows" %}</p></div>
+    <div><p class="data text-xl text-muted">{{ perf.summary.pvp_participation }}</p><p class="text-[11px] text-faint">{% translate "participation" %}</p></div>
   </div>
   {% if perf.summary.tickets_by_source %}
   <div class="mt-4 flex flex-wrap gap-2">
@@ -55,7 +55,7 @@
     {% for e in perf.entries %}
     <div class="flex items-center gap-3 px-4 py-2 text-sm">
       <span class="text-xs text-faint">{{ e.created_at|date:"M j H:i" }}</span>
-      <span class="min-w-0 flex-1 truncate text-muted">{{ e.reason|default:e.source_key }}</span>
+      <span class="min-w-0 flex-1 truncate text-muted">{{ e.reason_i18n|default:e.source_key }}</span>
       {% if e.status == 'approved' %}<span class="data text-gold">+{{ e.amount }}</span>
       {% elif e.status == 'excluded' or e.status == 'disqualified' or e.status == 'reversed' %}<span class="chip !text-faint">{{ e.status }}</span>
       {% else %}<span class="chip !border-gold/40 !text-gold">{{ e.status }}</span>{% endif %}

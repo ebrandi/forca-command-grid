@@ -33,7 +33,7 @@ from __future__ import annotations
 
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
-from django.utils.translation import gettext_noop as _noop
+from django.utils.translation import gettext_noop
 
 # --- The 8 planet types (didactic) -----------------------------------------
 # type_ids are the canonical classic planets (the 5601x rows in the SDE are
@@ -42,36 +42,36 @@ from django.utils.translation import gettext_noop as _noop
 # marked with _noop (plain str, seeded verbatim), translated at render time.
 PLANET_TYPES = [
     {"type_id": 11, "slug": "temperate", "name": "Temperate", "order": 1,
-     "best_for": _noop("The all-rounder. Great first planet."),
-     "blurb": _noop("Balanced and forgiving — food, industrial and electronics feedstock. "
+     "best_for": gettext_noop("The all-rounder. Great first planet."),
+     "blurb": gettext_noop("Balanced and forgiving — food, industrial and electronics feedstock. "
                     "If you're new, start here.")},
     {"type_id": 2016, "slug": "barren", "name": "Barren", "order": 2,
-     "best_for": _noop("Robotics & electronics feedstock."),
-     "blurb": _noop("Reliable all-rounder rich in metals and organics. Backbone of most "
+     "best_for": gettext_noop("Robotics & electronics feedstock."),
+     "blurb": gettext_noop("Reliable all-rounder rich in metals and organics. Backbone of most "
                     "electronics and robotics chains.")},
     {"type_id": 2015, "slug": "lava", "name": "Lava", "order": 3,
-     "best_for": _noop("Construction metals & heavy industry."),
-     "blurb": _noop("Metals and magma — the source of construction materials and many "
+     "best_for": gettext_noop("Construction metals & heavy industry."),
+     "blurb": gettext_noop("Metals and magma — the source of construction materials and many "
                     "high-end refined commodities.")},
     {"type_id": 2063, "slug": "plasma", "name": "Plasma", "order": 4,
-     "best_for": _noop("High-end electronics & metals."),
-     "blurb": _noop("Harsh but valuable: heavy metals and non-CS crystals that feed "
+     "best_for": gettext_noop("High-end electronics & metals."),
+     "blurb": gettext_noop("Harsh but valuable: heavy metals and non-CS crystals that feed "
                     "advanced electronics and superconductors.")},
     {"type_id": 12, "slug": "ice", "name": "Ice", "order": 5,
-     "best_for": _noop("Coolant, life-support & fuels."),
-     "blurb": _noop("Cold storage of gases, water and microorganisms — coolant, oxygen "
+     "best_for": gettext_noop("Coolant, life-support & fuels."),
+     "blurb": gettext_noop("Cold storage of gases, water and microorganisms — coolant, oxygen "
                     "and biotech chains start here.")},
     {"type_id": 13, "slug": "gas", "name": "Gas", "order": 6,
-     "best_for": _noop("Fuels, oxidisers & industrials."),
-     "blurb": _noop("The only source of Reactive Gas. Gas planets drive oxidising "
+     "best_for": gettext_noop("Fuels, oxidisers & industrials."),
+     "blurb": gettext_noop("The only source of Reactive Gas. Gas planets drive oxidising "
                     "compounds, oxygen and fuel chains.")},
     {"type_id": 2014, "slug": "oceanic", "name": "Oceanic", "order": 7,
-     "best_for": _noop("Biotech & strong food chains."),
-     "blurb": _noop("Water-rich and organic — the best planet for biomass, proteins and "
+     "best_for": gettext_noop("Biotech & strong food chains."),
+     "blurb": gettext_noop("Water-rich and organic — the best planet for biomass, proteins and "
                     "the biotech P3/P4 lines.")},
     {"type_id": 2017, "slug": "storm", "name": "Storm", "order": 8,
-     "best_for": _noop("Electronics feedstock (plasmoids)."),
-     "blurb": _noop("Electrically charged: plasmoids, ionic solutions and noble gas for "
+     "best_for": gettext_noop("Electronics feedstock (plasmoids)."),
+     "blurb": gettext_noop("Electrically charged: plasmoids, ionic solutions and noble gas for "
                     "the electronics and superconductor chains.")},
 ]
 

@@ -35,6 +35,7 @@ from apps.sso.models import EveCharacter
 from core.mixins import TimeStampedModel
 
 from . import messages as msg
+from . import tracks_i18n
 
 # Seam B (see ``messages.py``): the prose columns below are written by one actor — usually a Celery
 # worker, which has no user and therefore no locale — and read back by *other* people under *their*
@@ -191,6 +192,11 @@ class MentorshipProgram(TimeStampedModel):
     def __str__(self) -> str:
         return f"MentorshipProgram<{self.name}{' active' if self.is_active else ''}>"
 
+    @property
+    def intro_text_i18n(self) -> str:
+        """``intro_text`` under the reader's locale while it still holds the shipped default."""
+        return tracks_i18n.program_intro(self.intro_text)
+
 
 class MentorshipCohort(TimeStampedModel):
     """A season / intake, e.g. "Q3 2026 Rookie Intake"."""
@@ -221,7 +227,7 @@ class MentorshipTrack(TimeStampedModel):
         CLIENT = "client", _("EVE client & overview")
         TRAVEL = "travel", _("Travel, safety & survival")
         FITTING = "fitting", _("Fitting & doctrine basics")
-        RATTING = "ratting", "Ratting"
+        RATTING = "ratting", _("Ratting")
         MINING = "mining", _("Mining")
         EXPLORATION = "exploration", _("Exploration")
         PVP = "pvp", _("PvP basics")
@@ -251,6 +257,16 @@ class MentorshipTrack(TimeStampedModel):
 
     def __str__(self) -> str:
         return self.title
+
+    @property
+    def title_i18n(self) -> str:
+        """``title`` under the reader's locale while it still holds the seeded English."""
+        return tracks_i18n.track_title(self.key, self.title)
+
+    @property
+    def summary_i18n(self) -> str:
+        """``summary`` under the reader's locale while it still holds the seeded English."""
+        return tracks_i18n.track_summary(self.key, self.summary)
 
 
 class MentorshipTask(TimeStampedModel):
@@ -349,6 +365,21 @@ class MentorshipTask(TimeStampedModel):
             self.Validation.AUTO_INTERNAL, self.Validation.HYBRID,
         }
 
+    @property
+    def title_i18n(self) -> str:
+        """``title`` under the reader's locale while it still holds the seeded English."""
+        return tracks_i18n.task_title(self.key, self.title)
+
+    @property
+    def mentee_instructions_i18n(self) -> str:
+        """``mentee_instructions`` under the reader's locale while unedited."""
+        return tracks_i18n.task_mentee_instructions(self.key, self.mentee_instructions)
+
+    @property
+    def mentor_instructions_i18n(self) -> str:
+        """``mentor_instructions`` under the reader's locale while unedited."""
+        return tracks_i18n.task_mentor_instructions(self.key, self.mentor_instructions)
+
 
 class MentorshipTaskPrerequisite(models.Model):
     """``task`` can't start until ``requires`` is completed (per pairing)."""
@@ -402,6 +433,11 @@ class MentorshipBadge(TimeStampedModel):
 
     def __str__(self) -> str:
         return self.label
+
+    @property
+    def label_i18n(self) -> str:
+        """``label`` under the reader's locale while it still holds the seeded English."""
+        return tracks_i18n.badge_label(self.key, self.label)
 
 
 class MentorshipRewardRule(TimeStampedModel):
@@ -1058,6 +1094,11 @@ class MentorshipRewardLedger(TimeStampedModel):
     def is_isk(self) -> bool:
         return self.reward_type == MentorshipRewardRule.RewardType.ISK
 
+    @property
+    def description_i18n(self) -> str:
+        """``description`` (a copied reward-rule label) under the reader's locale while unedited."""
+        return tracks_i18n.reward_label(self.rule_key, self.description)
+
 
 class MentorshipBadgeAward(models.Model):
     """A badge granted to a pilot (cosmetic recognition)."""
@@ -1085,6 +1126,11 @@ class MentorshipBadgeAward(models.Model):
 
     def __str__(self) -> str:
         return f"BadgeAward<{self.badge_id}:{self.user_id}>"
+
+    @property
+    def reason_i18n(self) -> str:
+        """``reason`` under the reader's locale while it still matches a shipped reward-rule label."""
+        return tracks_i18n.reward_reason(self.reason)
 
 
 # ---------------------------------------------------------------------------

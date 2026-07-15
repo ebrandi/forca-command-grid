@@ -113,11 +113,13 @@ def edit_task(task: Task, user, *, title: str, priority: int, due_at) -> bool:
         changed.append("priority")
     if due_at != locked.due_at:
         locked.due_at = due_at
-        changed.append("due date")
+        changed.append("due_date")
     if not changed:
         return False
     locked.save(update_fields=["title", "priority", "due_at", "updated_at"])
-    _record_event(locked, user, locked.status, locked.status, note="Edited " + ", ".join(changed))
+    # Store a stable machine code (slugs), not display prose — TaskEvent.note_i18n
+    # re-renders it per reader locale.
+    _record_event(locked, user, locked.status, locked.status, note="Edited:" + ",".join(changed))
     return True
 
 
@@ -141,7 +143,7 @@ def reassign(task: Task, user, new_assignee) -> bool:
         locked.is_open = False
         if locked.status == Task.Status.OPEN:
             locked.status = Task.Status.CLAIMED
-        note = f"Reassigned to {new_assignee.get_username()}"
+        note = f"Reassigned:{new_assignee.get_username()}"
     locked.save(update_fields=["assignee", "is_open", "status", "updated_at"])
     _record_event(locked, user, prev, locked.status, note=note)
     return True

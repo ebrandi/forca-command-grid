@@ -25,6 +25,8 @@ from __future__ import annotations
 
 import datetime as dt
 
+from .messages import english_text
+
 # Held LONGER than the warm_pilots beat cadence (every 30 min) so a warmed entry never
 # expires into a cold window — pilots read warm cache, not a 1–4 s in-request recompute.
 _CACHE_TTL = 5400  # 90 min
@@ -169,11 +171,14 @@ def _strategic(character, snap) -> tuple[int | None, list[dict]]:
         qc = qualified_count(t)
         if qc is None or qc >= t.desired_count:
             continue  # role already staffed — no shortage to fill
+        title_params = {"role": t.label}
+        detail_params = {"role": t.label, "qualified": qc, "desired": t.desired_count}
         recos.append({
             "category": "role", "ref_type": "role", "ref_id": t.role_key,
-            "title": f"Volunteer as {t.label}",
-            "detail": (f"The corp is short on {t.label} ({qc}/{t.desired_count}) and you already "
-                       "have the skills. Flying this role directly raises corp readiness."),
+            "title": english_text("pilot.volunteer_role_title", title_params),
+            "title_key": "pilot.volunteer_role_title", "title_params": title_params,
+            "detail": english_text("pilot.volunteer_role_detail", detail_params),
+            "detail_key": "pilot.volunteer_role_detail", "detail_params": detail_params,
             "priority": 95 - i, "points": 10, "action_url": "/operations/",
         })
     return facet, recos
@@ -198,11 +203,14 @@ def _ship_logistics(character) -> tuple[int | None, list[dict], list[dict]]:
         rows = owned.get(s.ship_type_id, [])
         total_qty = sum(r.quantity for r in rows)
         if total_qty < (s.required_quantity or 1):
+            title_params = {"ship": s.label}
+            detail_params = {"count": s.required_quantity, "ship": s.label}
             ship_recos.append({
                 "category": "ship", "ref_type": "mandatory_ship", "ref_id": str(s.id),
-                "title": f"Get your {s.label}",
-                "detail": (f"Every pilot should own {s.required_quantity}× {s.label}. "
-                           "Owning your mandatory hull keeps you ready to undock with the fleet."),
+                "title": english_text("pilot.get_ship_title", title_params),
+                "title_key": "pilot.get_ship_title", "title_params": title_params,
+                "detail": english_text("pilot.get_ship_detail", detail_params),
+                "detail_key": "pilot.get_ship_detail", "detail_params": detail_params,
                 "priority": 90 - i, "points": 8, "action_url": "/store/",
             })
             continue
@@ -212,11 +220,13 @@ def _ship_logistics(character) -> tuple[int | None, list[dict], list[dict]]:
             if here:
                 at_staging += 1
             else:
+                ship_params = {"ship": s.label}
                 logi_recos.append({
                     "category": "logistics", "ref_type": "mandatory_ship", "ref_id": str(s.id),
-                    "title": f"Move your {s.label} to staging",
-                    "detail": (f"Your {s.label} isn't at the staging system. Bringing it home means "
-                               "you can form up without a long haul first."),
+                    "title": english_text("pilot.move_ship_title", ship_params),
+                    "title_key": "pilot.move_ship_title", "title_params": ship_params,
+                    "detail": english_text("pilot.move_ship_detail", ship_params),
+                    "detail_key": "pilot.move_ship_detail", "detail_params": ship_params,
                     "priority": 70 - i, "points": 5, "action_url": "/freight/",
                 })
     logistics_facet = round(100 * at_staging / owned_located) if owned_located else None
@@ -230,14 +240,14 @@ def _skill_recommendations(character) -> list[dict]:
 
     recos = []
     for i, d in enumerate(closest_doctrines(character, limit=5)):
+        params = {"eta": _humanize_eta(d["seconds"]), "doctrine": d["doctrine"]}
+        title_params = {"doctrine": d["doctrine"]}
         recos.append({
             "category": "skill", "ref_type": "doctrine", "ref_id": str(d["doctrine_id"]),
-            "title": f"Train into {d['doctrine']}",
-            "detail": (
-                f"You're about {_humanize_eta(d['seconds'])} of training from flying "
-                f"{d['doctrine']} — one of the corp's doctrines. Closing this makes you "
-                "and the corp more ready."
-            ),
+            "title": english_text("pilot.train_into_title", title_params),
+            "title_key": "pilot.train_into_title", "title_params": title_params,
+            "detail": english_text("pilot.train_into_detail", params),
+            "detail_key": "pilot.train_into_detail", "detail_params": params,
             "priority": 100 - i * 10,
             "points": max(2, 12 - i * 2),
             "action_url": "/skills/",
@@ -268,11 +278,13 @@ def _industry(snap) -> list[dict]:
     for i, (tid, s) in enumerate(short.items()):
         if can_manufacture(snap, tid) is True:
             name = names.get(tid, f"Type {tid}")
+            params = {"item": name, "deficit": s["deficit"]}
             recos.append({
                 "category": "industry", "ref_type": "type", "ref_id": str(tid),
-                "title": f"Build {name} — corp is {s['deficit']} short",
-                "detail": (f"You already have the manufacturing skills to build {name}, and the corp "
-                           f"stockpile is {s['deficit']} below target. Building a few directly helps the corp."),
+                "title": english_text("pilot.build_industry_title", params),
+                "title_key": "pilot.build_industry_title", "title_params": params,
+                "detail": english_text("pilot.build_industry_detail", params),
+                "detail_key": "pilot.build_industry_detail", "detail_params": params,
                 "priority": 65 - i, "points": 8, "action_url": "/industry/",
             })
     return recos
@@ -312,16 +324,17 @@ def _asset_fit(character) -> list[dict]:
         if my_fits:
             best = max(my_fits, key=len)
             fit_name = min(fit_list, key=lambda fl: len(fl[1] - best))[0]
-            title = f"Finish your {name} fit"
-            detail = (f"Your {name} is missing modules for the {fit_name} doctrine fit — "
-                      "top it off so it's fleet-ready, not a half-built hull.")
+            title_key, title_params = "pilot.finish_fit_title", {"ship": name}
+            detail_key, detail_params = "pilot.finish_fit_detail", {"ship": name, "fit": fit_name}
         else:
-            title = f"Fit your {name}"
-            detail = (f"You own a {name} but it isn't fitted to a doctrine. Fit it (copy a "
-                      "doctrine fit from the Doctrines page) so you can undock ready.")
+            title_key, title_params = "pilot.fit_ship_title", {"ship": name}
+            detail_key, detail_params = "pilot.fit_ship_detail", {"ship": name}
         recos.append({
             "category": "asset", "ref_type": "type", "ref_id": str(hull_id),
-            "title": title, "detail": detail,
+            "title": english_text(title_key, title_params),
+            "title_key": title_key, "title_params": title_params,
+            "detail": english_text(detail_key, detail_params),
+            "detail_key": detail_key, "detail_params": detail_params,
             "priority": 78 - i, "points": 6, "action_url": "/doctrines/",
         })
     return recos
@@ -330,8 +343,10 @@ def _asset_fit(character) -> list[dict]:
 def _stay_current_reco() -> dict:
     return {
         "category": "role", "ref_type": "activity", "ref_id": "join_op",
-        "title": "Fly a fleet this week",
-        "detail": "You're on top of your readiness — keep your edge by joining an op.",
+        "title": english_text("pilot.stay_current_title"),
+        "title_key": "pilot.stay_current_title", "title_params": {},
+        "detail": english_text("pilot.stay_current_detail"),
+        "detail_key": "pilot.stay_current_detail", "detail_params": {},
         "priority": 40, "points": 4, "action_url": "/operations/",
     }
 
@@ -425,6 +440,10 @@ def _persist(user, character, overall, facets, recos) -> None:
         display = {
             "character_id": character.character_id,
             "title": r["title"], "detail": r["detail"],
+            # Seam B: persist the scaffold key + its plain JSON params beside the frozen English
+            # prose, so ``title_i18n``/``detail_i18n`` can re-render under the READER's locale.
+            "title_key": r.get("title_key", ""), "title_params": r.get("title_params", {}),
+            "detail_key": r.get("detail_key", ""), "detail_params": r.get("detail_params", {}),
             "priority": r["priority"], "points": r["points"], "action_url": r["action_url"],
         }
         obj, created = PilotRecommendation.objects.get_or_create(

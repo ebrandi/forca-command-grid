@@ -16,7 +16,7 @@ from django.http import Http404, HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.utils.translation import gettext as _t
+from django.utils.translation import gettext
 from django.views.decorators.http import require_POST
 
 from core.audit import audit_log, client_ip
@@ -208,7 +208,7 @@ def start_wizard(request: HttpRequest) -> HttpResponse:
         url = redirect(dest)
         if first:
             url["Location"] += f"?activity={first}"
-        messages.success(request, _t("Saved. Here are paths that fit."))
+        messages.success(request, gettext("Saved. Here are paths that fit."))
         return url
     return render(request, "capsuleer/start.html", {
         "taxonomy": [{"value": v, "label": lab} for v, lab in Activity.choices],
@@ -333,16 +333,33 @@ def _mentor_counts_for_categories(categories) -> dict:
 def path_detail(request: HttpRequest, key: str) -> HttpResponse:
     template = get_object_or_404(_active_templates(), key=key)
     from . import plan as plan_mod_local
+    from . import templates_i18n as t_i18n
 
-    resolver = (template.structure or {}).get("doctrine_resolver")
+    structure = template.structure or {}
+    resolver = structure.get("doctrine_resolver")
     doctrine = plan_mod_local.resolve_doctrine(resolver) if resolver else None
     existing = (
         CareerGoal.objects.filter(user=request.user, template_key=template.key)
         .filter(status__in=[GoalStatus.CONSIDERING, GoalStatus.ACTIVE, GoalStatus.PAUSED]).first()
     )
+    # Built-in milestone titles and assumptions live in the ``structure`` JSON verbatim (never a
+    # model column), so route each through the render-time seam under the reader's locale —
+    # translated while it still holds the shipped English, the officer's own words once edited.
+    milestones = [
+        {**m, "title_i18n": t_i18n.render(
+            t_i18n.milestone_key(template.key, m.get("order")), "title", m.get("title", "")
+        )}
+        for m in structure.get("milestones", [])
+    ]
+    assumptions = [
+        t_i18n.render(t_i18n.assumption_key(template.key, i), "text", a)
+        for i, a in enumerate(structure.get("assumptions", []))
+    ]
     ctx = {
         "template": template,
-        "structure": template.structure or {},
+        "structure": structure,
+        "milestones": milestones,
+        "assumptions": assumptions,
         "doctrine": doctrine,
         "doctrine_linked": bool(resolver),
         "existing_goal": existing,
@@ -373,11 +390,11 @@ def path_start(request: HttpRequest, key: str) -> HttpResponse:
         messages.error(request, "; ".join(exc.messages))
         return redirect("capsuleer:path_detail", key=key)
     if already:
-        messages.info(request, _t("You're already on «%(title)s».") % {"title": goal.title})
+        messages.info(request, gettext("You're already on «%(title)s».") % {"title": goal.title_i18n})
     elif activate:
-        messages.success(request, _t("Started «%(title)s».") % {"title": goal.title})
+        messages.success(request, gettext("Started «%(title)s».") % {"title": goal.title_i18n})
     else:
-        messages.success(request, _t("Saved «%(title)s» for later.") % {"title": goal.title})
+        messages.success(request, gettext("Saved «%(title)s» for later.") % {"title": goal.title_i18n})
     return redirect("capsuleer:goal_detail", pk=goal.pk)
 
 
@@ -392,7 +409,7 @@ def goal_new(request: HttpRequest) -> HttpResponse:
         except ValidationError as exc:
             messages.error(request, "; ".join(exc.messages))
             return render(request, "capsuleer/goal_form.html", _goal_form_ctx(request, None))
-        messages.success(request, _t("Created «%(title)s».") % {"title": goal.title})
+        messages.success(request, gettext("Created «%(title)s».") % {"title": goal.title})
         return redirect("capsuleer:goal_detail", pk=goal.pk)
     return render(request, "capsuleer/goal_form.html", _goal_form_ctx(request, None))
 
@@ -426,7 +443,7 @@ def goal_edit(request: HttpRequest, pk: int) -> HttpResponse:
         raise Http404("Archived goals are read-only.")
     if request.method == "POST":
         _apply_goal_edit(request, goal)
-        messages.success(request, _t("Saved."))
+        messages.success(request, gettext("Saved."))
         return redirect("capsuleer:goal_detail", pk=goal.pk)
     return render(request, "capsuleer/goal_form.html", _goal_form_ctx(request, goal))
 
@@ -613,16 +630,16 @@ def _evidence_summary(m) -> str:
     snap = m.evidence_snapshot or {}
     bits = []
     if snap.get("self_certified"):
-        bits.append(_t("self-certified"))
+        bits.append(gettext("self-certified"))
     elif snap.get("verifier_role"):
-        bits.append(_t("%(role)s-verified") % {"role": snap["verifier_role"]})
+        bits.append(gettext("%(role)s-verified") % {"role": snap["verifier_role"]})
     for key in ("summary", "label", "doctrine_name", "doctrine", "ship_name"):
         if snap.get(key):
             bits.append(str(snap[key]))
             break
     as_of = snap.get("as_of") or snap.get("at")
     if as_of:
-        bits.append(_t("as of %(date)s") % {"date": str(as_of)[:10]})
+        bits.append(gettext("as of %(date)s") % {"date": str(as_of)[:10]})
     return " · ".join(bits)
 
 
@@ -670,7 +687,7 @@ def goal_status(request: HttpRequest, pk: int) -> HttpResponse:
     to_status = request.POST.get("to")
     try:
         services.set_goal_status(goal, to_status, request.user, reason=request.POST.get("reason", ""))
-        messages.success(request, _t("Updated."))
+        messages.success(request, gettext("Updated."))
     except ValidationError as exc:
         messages.error(request, "; ".join(exc.messages))
     return redirect("capsuleer:goal_detail", pk=goal.pk)
@@ -682,7 +699,7 @@ def goal_share(request: HttpRequest, pk: int) -> HttpResponse:
     goal = _owned_goal(request, pk)
     try:
         services.set_goal_visibility(goal, request.user, request.POST.get("visibility"))
-        messages.success(request, _t("Sharing updated."))
+        messages.success(request, gettext("Sharing updated."))
     except ValidationError as exc:
         messages.error(request, "; ".join(exc.messages))
     return redirect("capsuleer:goal_detail", pk=goal.pk)
@@ -697,12 +714,12 @@ def goal_build_plan(request: HttpRequest, pk: int) -> HttpResponse:
     try:
         created = plan_mod.build_plan(goal)
         if created is not None:
-            messages.success(request, _t("Skill plan built."))
+            messages.success(request, gettext("Skill plan built."))
         else:
-            messages.info(request, _t("This goal has no skill targets to plan."))
+            messages.info(request, gettext("This goal has no skill targets to plan."))
     except Exception:  # noqa: BLE001 — a transient SDE/doctrine issue must not 500 the page
         messages.error(request,
-                       _t("Couldn't build a plan right now — try again after your next skill sync."))
+                       gettext("Couldn't build a plan right now — try again after your next skill sync."))
     return redirect("capsuleer:goal_detail", pk=goal.pk)
 
 
@@ -711,7 +728,7 @@ def goal_build_plan(request: HttpRequest, pk: int) -> HttpResponse:
 def goal_review(request: HttpRequest, pk: int) -> HttpResponse:
     goal = _owned_goal(request, pk)
     services.complete_review(goal, request.user, note=request.POST.get("note", ""))
-    messages.success(request, _t("Thanks — review noted."))
+    messages.success(request, gettext("Thanks — review noted."))
     return redirect("capsuleer:goal_detail", pk=goal.pk)
 
 
@@ -721,7 +738,7 @@ def goal_note(request: HttpRequest, pk: int) -> HttpResponse:
     goal = get_object_or_404(CareerGoal, pk=pk)
     try:
         services.add_mentor_note(goal, request.user, request.POST.get("text", ""))
-        messages.success(request, _t("Note added."))
+        messages.success(request, gettext("Note added."))
     except ValidationError:
         raise Http404("No such goal.")  # noqa: B904 — 404, never a permission oracle
     return redirect("capsuleer:goal_detail", pk=goal.pk)
@@ -736,7 +753,7 @@ def goal_endorse(request: HttpRequest, pk: int) -> HttpResponse:
     try:
         services.endorse_milestone(goal, milestone, request.user,
                                    note=request.POST.get("note", ""), ip=client_ip(request))
-        messages.success(request, _t("Endorsement recorded."))
+        messages.success(request, gettext("Endorsement recorded."))
     except ValidationError:
         raise Http404("No such goal.")  # noqa: B904
     return redirect("capsuleer:goal_detail", pk=goal.pk)
@@ -756,7 +773,7 @@ def milestone_add(request: HttpRequest, pk: int) -> HttpResponse:
         services.add_milestone(goal, request.user, kind=kind, title=request.POST.get("title", ""),
                                verification=verification, required=request.POST.get("required") == "on",
                                params=params)
-        messages.success(request, _t("Milestone added."))
+        messages.success(request, gettext("Milestone added."))
     except ValidationError as exc:
         messages.error(request, "; ".join(exc.messages))
     return redirect("capsuleer:goal_detail", pk=goal.pk)
@@ -783,17 +800,17 @@ def _milestone_params(request, kind):
 def milestone_update(request: HttpRequest, pk: int) -> HttpResponse:
     ms = _owned_milestone(request, pk)
     if ms.goal.status in services._TERMINAL_STATUSES:
-        messages.error(request, _t("This goal is finished — reopen it before editing its milestones."))
+        messages.error(request, gettext("This goal is finished — reopen it before editing its milestones."))
         return redirect("capsuleer:goal_detail", pk=ms.goal_id)
     if ms.status == MilestoneStatus.DONE:
-        messages.error(request, _t("A completed milestone's details can't be edited — reopen it first."))
+        messages.error(request, gettext("A completed milestone's details can't be edited — reopen it first."))
         return redirect("capsuleer:goal_detail", pk=ms.goal_id)
     ms.title = (request.POST.get("title") or ms.title).strip()[:140]
     ms.required = request.POST.get("required") == "on"
     ms.due_date = _date(request.POST.get("due_date"))
     ms.save(update_fields=["title", "required", "due_date", "updated_at"])
     services.recompute_progress(ms.goal)
-    messages.success(request, _t("Milestone updated."))
+    messages.success(request, gettext("Milestone updated."))
     return redirect("capsuleer:goal_detail", pk=ms.goal_id)
 
 
@@ -813,8 +830,8 @@ def milestone_status(request: HttpRequest, pk: int) -> HttpResponse:
         elif action == "reopen":
             services.reopen_milestone(ms.goal, ms, request.user)
         else:
-            raise ValidationError(_t("Unknown action."))
-        messages.success(request, _t("Milestone updated."))
+            raise ValidationError(gettext("Unknown action."))
+        messages.success(request, gettext("Milestone updated."))
     except ValidationError as exc:
         messages.error(request, "; ".join(exc.messages))
     return redirect("capsuleer:goal_detail", pk=ms.goal_id)
@@ -825,20 +842,20 @@ def milestone_status(request: HttpRequest, pk: int) -> HttpResponse:
 def step_add(request: HttpRequest, pk: int) -> HttpResponse:
     goal = _owned_goal(request, pk)
     if goal.status in services._TERMINAL_STATUSES:
-        messages.error(request, _t("This goal is finished — reopen it before adding steps."))
+        messages.error(request, gettext("This goal is finished — reopen it before adding steps."))
         return redirect("capsuleer:goal_detail", pk=goal.pk)
     if goal.action_steps.count() >= services.MAX_STEPS_PER_GOAL:
-        messages.error(request, _t("That goal already has the maximum number of steps."))
+        messages.error(request, gettext("That goal already has the maximum number of steps."))
         return redirect("capsuleer:goal_detail", pk=goal.pk)
     title = (request.POST.get("title") or "").strip()
     if not title:
-        messages.error(request, _t("A step needs a title."))
+        messages.error(request, gettext("A step needs a title."))
         return redirect("capsuleer:goal_detail", pk=goal.pk)
     CareerActionStep.objects.create(
         goal=goal, title=title[:140], note=(request.POST.get("note") or "")[:300],
         est_cost_isk=_dec(request.POST.get("est_cost_isk")), source="pilot",
     )
-    messages.success(request, _t("Step added."))
+    messages.success(request, gettext("Step added."))
     return redirect("capsuleer:goal_detail", pk=goal.pk)
 
 
@@ -847,7 +864,7 @@ def step_add(request: HttpRequest, pk: int) -> HttpResponse:
 def step_status(request: HttpRequest, pk: int) -> HttpResponse:
     step = _owned_step(request, pk)
     if step.goal.status in services._TERMINAL_STATUSES:
-        messages.error(request, _t("This goal is finished — reopen it before changing its steps."))
+        messages.error(request, gettext("This goal is finished — reopen it before changing its steps."))
         return redirect("capsuleer:goal_detail", pk=step.goal_id)
     action = request.POST.get("action")
     if action == "done":
@@ -861,7 +878,7 @@ def step_status(request: HttpRequest, pk: int) -> HttpResponse:
     else:
         raise Http404("Unknown action.")
     step.save(update_fields=["status", "completed_at", "updated_at"])
-    messages.success(request, _t("Step updated."))
+    messages.success(request, gettext("Step updated."))
     return redirect("capsuleer:goal_detail", pk=step.goal_id)
 
 
@@ -874,7 +891,7 @@ def step_task(request: HttpRequest, pk: int) -> HttpResponse:
             step.goal, step, request.user,
             title=request.POST.get("title") or None, description=request.POST.get("description", ""),
         )
-        messages.success(request, _t("Corp task created — it's visible to the whole corp."))
+        messages.success(request, gettext("Corp task created — it's visible to the whole corp."))
     except ValidationError as exc:
         messages.error(request, "; ".join(exc.messages))
     return redirect("capsuleer:goal_detail", pk=step.goal_id)
@@ -896,7 +913,7 @@ def profile(request: HttpRequest) -> HttpResponse:
         obj, _ = CareerProfile.objects.get_or_create(user=request.user)
     if request.method == "POST":
         _save_profile(request, obj)
-        messages.success(request, _t("Preferences saved."))
+        messages.success(request, gettext("Preferences saved."))
         return redirect("capsuleer:profile")
     return render(request, "capsuleer/profile.html", {
         "profile": obj,
@@ -1020,7 +1037,7 @@ def quest_action(request: HttpRequest, ref: str) -> HttpResponse:
             services.skip_milestone(ms.goal, ms, request.user)
         elif action == "snooze":
             # Milestones have no snooze state — give explicit feedback rather than a silent no-op.
-            messages.info(request, _t("Milestones can't be snoozed — mark it done when you're ready."))
+            messages.info(request, gettext("Milestones can't be snoozed — mark it done when you're ready."))
     except ValidationError as exc:
         messages.error(request, "; ".join(exc.messages))
     return _back(request, "identity:dashboard")

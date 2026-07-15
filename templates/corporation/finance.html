@@ -57,7 +57,7 @@
 <!-- Income vs expense bars -->
 <section class="panel mb-5 overflow-hidden">
   <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">{% translate "Income vs expense" %} <span class="text-faint">{% blocktranslate with g=d.granularity %}· by {{ g }}{% endblocktranslate %}</span></h2></div>
-  <div class="p-4"><div class="h-64 skeleton"><canvas id="fin-flow"></canvas></div></div>
+  <div class="p-4"><div class="h-64 skeleton"><canvas id="fin-flow" data-label-income="{% translate 'Income' %}" data-label-expense="{% translate 'Expense' %}" data-label-net="{% translate 'Net' %}"></canvas></div></div>
 </section>
 
 <!-- Forecast callout -->
@@ -191,9 +191,9 @@
         data: {
           labels: labels,
           datasets: [
-            { type: 'bar', label: 'Income', data: D.series.map(function (p) { return p.income; }), backgroundColor: 'rgba(63,185,80,.7)' },
-            { type: 'bar', label: 'Expense', data: D.series.map(function (p) { return -p.expense; }), backgroundColor: 'rgba(240,83,63,.7)' },
-            { type: 'line', label: 'Net', data: D.series.map(function (p) { return p.net; }), borderColor: C.cyan, pointRadius: 0, borderWidth: 2, tension: 0.25 },
+            { type: 'bar', label: flowEl.dataset.labelIncome, data: D.series.map(function (p) { return p.income; }), backgroundColor: 'rgba(63,185,80,.7)' },
+            { type: 'bar', label: flowEl.dataset.labelExpense, data: D.series.map(function (p) { return -p.expense; }), backgroundColor: 'rgba(240,83,63,.7)' },
+            { type: 'line', label: flowEl.dataset.labelNet, data: D.series.map(function (p) { return p.net; }), borderColor: C.cyan, pointRadius: 0, borderWidth: 2, tension: 0.25 },
           ],
         },
         options: { responsive: true, maintainAspectRatio: false,

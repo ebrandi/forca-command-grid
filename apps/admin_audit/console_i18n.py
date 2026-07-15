@@ -21,7 +21,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
-from django.utils.translation import gettext_lazy as _t
+from django.utils.translation import gettext_lazy
 from django.utils.translation import to_locale
 
 from core import rbac
@@ -73,7 +73,7 @@ def _coverage(code: str) -> dict | None:
 
 # Honest CCP game-data status: official names are not localised in-app yet; they will be
 # resolved at the SDE display seam in Phase 4 rather than shipped through a .po catalogue.
-_CCP_STATUS = _t(
+_CCP_STATUS = gettext_lazy(
     "Official CCP game-data names (ships, modules, systems) are not localised yet — they "
     "will be integrated at the SDE display seam (Phase 4)."
 )
@@ -133,9 +133,9 @@ def i18n_settings(request: HttpRequest) -> HttpResponse:
             },
         )
         if invalid:
-            messages.error(request, _t("Ignored unknown locale(s): %(codes)s.") % {
+            messages.error(request, gettext_lazy("Ignored unknown locale(s): %(codes)s.") % {
                 "codes": ", ".join(invalid)})
-        messages.success(request, _t("Localisation settings saved."))
+        messages.success(request, gettext_lazy("Localisation settings saved."))
         return redirect("admin_audit:i18n_settings")
 
     cfg = i18n_config.get_i18n_config()

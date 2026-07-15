@@ -101,7 +101,8 @@ def plan_from_demand(request: HttpRequest) -> HttpResponse:
     except (TypeError, ValueError):
         quantity = 1
     project = IndustryProject.objects.create(
-        name=f"Supply: {stype.name}"[:200], objective_type=IndustryProject.Objective.STOCK,
+        name=(_("Supply: %(item)s") % {"item": stype.name})[:200],
+        objective_type=IndustryProject.Objective.STOCK,
         status=IndustryProject.Status.ACTIVE, source=IndustryProject.Source.DOCTRINE_SUPPLY,
         created_by=request.user, assigned_to=request.user,
     )
@@ -141,7 +142,8 @@ def plan_from_job(request: HttpRequest) -> HttpResponse:
     output_per_run = recipe.output_quantity if recipe else 1
     quantity = runs * output_per_run
     project = IndustryProject.objects.create(
-        name=f"Build: {stype.name}"[:200], objective_type=IndustryProject.Objective.BUILD,
+        name=(_("Build: %(item)s") % {"item": stype.name})[:200],
+        objective_type=IndustryProject.Objective.BUILD,
         status=IndustryProject.Status.ACTIVE, source=IndustryProject.Source.ESI_JOB,
         created_by=request.user, assigned_to=request.user,
     )

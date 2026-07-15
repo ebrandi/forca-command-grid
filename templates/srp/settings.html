@@ -17,7 +17,7 @@
 
   <section class="panel p-5">
     <div class="flex items-center justify-between">
-      <h2 class="eyebrow text-gold">Programme</h2>
+      <h2 class="eyebrow text-gold">{% translate "Programme" %}</h2>
       <label class="flex items-center gap-2 text-sm text-muted">{{ form.enabled }} {% translate "Programme enabled" %}</label>
     </div>
     <p class="mt-1 text-xs text-faint">{% blocktranslate %}When disabled, pilots see the programme is paused and can't file new claims.{% endblocktranslate %}</p>
@@ -125,7 +125,7 @@
   <div class="border-t border-line px-4 py-3">
     <form method="post" action="{% url 'srp:rule_add' %}" class="flex flex-wrap items-end gap-2">
       {% csrf_token %}
-      <div><label class="label">Doctrine</label>{{ rule_form.doctrine }}</div>
+      <div><label class="label">{% translate "Doctrine" %}</label>{{ rule_form.doctrine }}</div>
       <div><label class="label">{% translate "Basis" %}</label>{{ rule_form.basis }}</div>
       <div><label class="label">{% translate "Fixed / cap (ISK)" %}</label>{{ rule_form.max_payout }}</div>
       <label class="flex items-center gap-1.5 pb-2 text-xs text-muted">{{ rule_form.active }} {% translate "active" %}</label>

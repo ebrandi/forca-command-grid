@@ -342,6 +342,6 @@ def contribution_nudge(user) -> dict | None:
                     "kind": k["kind"],
                     "kind_label": labels.get(k["kind"], k["kind"]),
                     "count_90d": k["n"],
-                    "constraint_label": c.label,
+                    "constraint_label": c.label_i18n,
                 }
     return None

@@ -108,8 +108,8 @@ def next_actions(character, limit: int = 3) -> list[dict]:
     )
     return [
         {
-            "title": p.milestone.title,
-            "description": p.milestone.description,
+            "title": p.milestone.title_i18n,
+            "description": p.milestone.description_i18n,
             "key": p.milestone.key,
             "id": p.milestone_id,
             "url": p.milestone.url,

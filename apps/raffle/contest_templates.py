@@ -31,17 +31,17 @@ from __future__ import annotations
 
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
-from django.utils.translation import gettext_noop as _noop
+from django.utils.translation import gettext_noop
 
 # The default prize-ladder rank names, persisted into ``config["prizes"][*]["name"]``
 # (and from there onto ``RafflePrize.name``). Plain strings — marked for extraction,
 # translated at render time by :func:`prize_name_for`.
 RANK_NAMES: list[str] = [
-    _noop("1st prize"),
-    _noop("2nd prize"),
-    _noop("3rd prize"),
-    _noop("4th prize"),
-    _noop("5th prize"),
+    gettext_noop("1st prize"),
+    gettext_noop("2nd prize"),
+    gettext_noop("3rd prize"),
+    gettext_noop("4th prize"),
+    gettext_noop("5th prize"),
 ]
 
 
@@ -58,7 +58,7 @@ BUILTIN: list[dict] = [
         "key": "pvp_activity", "name": _("PVP activity raffle"),
         "description": _("Reward everyone who undocks and gets on kills. Solo 100 · final blow 10 · participation 1."),
         "config": {
-            "contest": {"objective": _noop("Get pilots on more kills."),
+            "contest": {"objective": gettext_noop("Get pilots on more kills."),
                         "one_prize_per_pilot": True},
             "sources": {"pvp": {"enabled": True, "mode": "auto"},
                         "manual": {"enabled": True, "mode": "manual"}},
@@ -69,7 +69,7 @@ BUILTIN: list[dict] = [
         "key": "solo_kill", "name": _("Solo kill challenge"),
         "description": _("Heavily reward solo PvP prowess — solo kills are worth 10× a normal kill."),
         "config": {
-            "contest": {"objective": _noop("Crown the corp's best solo hunter.")},
+            "contest": {"objective": gettext_noop("Crown the corp's best solo hunter.")},
             "sources": {"pvp": {"enabled": True, "mode": "auto",
                                  "config": {"per_kill": 1, "final_blow": 5, "solo": 250}},
                         "manual": {"enabled": True, "mode": "manual"}},
@@ -80,7 +80,7 @@ BUILTIN: list[dict] = [
         "key": "home_defence", "name": _("Home defence contest"),
         "description": _("Reward kills defending home space. Set the home region/systems in the PVP filters."),
         "config": {
-            "contest": {"objective": _noop("Defend home — kills in our space earn tickets.")},
+            "contest": {"objective": gettext_noop("Defend home — kills in our space earn tickets.")},
             "sources": {"pvp": {"enabled": True, "mode": "auto",
                                  "filters": {"exclude_blue": True}},
                         "manual": {"enabled": True, "mode": "manual"}},
@@ -91,7 +91,7 @@ BUILTIN: list[dict] = [
         "key": "mining_month", "name": _("Mining month"),
         "description": _("Reward ore mined from the corp mining ledger (X tickets per m³)."),
         "config": {
-            "contest": {"objective": _noop("Fill the ore hangar — mine to earn tickets.")},
+            "contest": {"objective": gettext_noop("Fill the ore hangar — mine to earn tickets.")},
             "sources": {"mining": {"enabled": True, "mode": "auto",
                                     "config": {"basis": "m3", "per_ticket": 50000}},
                         "manual": {"enabled": True, "mode": "manual"}},
@@ -103,7 +103,7 @@ BUILTIN: list[dict] = [
         "description": _("Recognise builders. Industry has no reliable per-pilot feed, "
                          "so awards are officer-approved."),
         "config": {
-            "contest": {"objective": _noop("Keep the production lines running.")},
+            "contest": {"objective": gettext_noop("Keep the production lines running.")},
             "sources": {"industry": {"enabled": True, "mode": "officer_approved"},
                         "manual": {"enabled": True, "mode": "manual"}},
             "prizes": _prizes("800000000", "400000000", "200000000", "100000000", "50000000"),
@@ -113,7 +113,7 @@ BUILTIN: list[dict] = [
         "key": "logistics_campaign", "name": _("Logistics support campaign"),
         "description": _("Reward haulers for delivered courier contracts (officer-approved)."),
         "config": {
-            "contest": {"objective": _noop("Keep the supply lines moving.")},
+            "contest": {"objective": gettext_noop("Keep the supply lines moving.")},
             "sources": {"logistics": {"enabled": True, "mode": "officer_approved"},
                         "manual": {"enabled": True, "mode": "manual"}},
             "prizes": _prizes("500000000", "300000000", "150000000", "100000000", "50000000"),
@@ -123,7 +123,7 @@ BUILTIN: list[dict] = [
         "key": "newbro_support", "name": _("Newbro support contest"),
         "description": _("Reward mentors and helpers. Mentorship completions + leadership grants."),
         "config": {
-            "contest": {"objective": _noop("Help new pilots get flying.")},
+            "contest": {"objective": gettext_noop("Help new pilots get flying.")},
             "sources": {"mentorship": {"enabled": True, "mode": "officer_approved"},
                         "manual": {"enabled": True, "mode": "manual"}},
             "prizes": _prizes("500000000", "300000000", "150000000", "100000000", "50000000"),
@@ -133,7 +133,7 @@ BUILTIN: list[dict] = [
         "key": "alliance_deployment", "name": _("Alliance deployment raffle"),
         "description": _("PVP + fleet attendance during a deployment. Admits alliance / friendly pilots."),
         "config": {
-            "contest": {"objective": _noop("Show up and fight the deployment."),
+            "contest": {"objective": gettext_noop("Show up and fight the deployment."),
                         "include_alliance": True},
             "sources": {"pvp": {"enabled": True, "mode": "auto"},
                         "fleet": {"enabled": True, "mode": "auto", "config": {"per_op": 10}},
@@ -145,7 +145,7 @@ BUILTIN: list[dict] = [
         "key": "mixed_engagement", "name": _("Mixed activity engagement"),
         "description": _("A bit of everything — PVP, mining, fleet attendance and leadership grants."),
         "config": {
-            "contest": {"objective": _noop("Reward any way of contributing to the corp.")},
+            "contest": {"objective": gettext_noop("Reward any way of contributing to the corp.")},
             "sources": {"pvp": {"enabled": True, "mode": "auto"},
                         "mining": {"enabled": True, "mode": "auto"},
                         "fleet": {"enabled": True, "mode": "auto"},
@@ -157,7 +157,7 @@ BUILTIN: list[dict] = [
         "key": "esi_adoption", "name": _("ESI adoption campaign"),
         "description": _("Drive app enrolment — everyone who connects ESI and flies earns; big CTA on the dashboard."),
         "config": {
-            "contest": {"objective": _noop("Get the whole corp enrolled in FORCA Command Grid."),
+            "contest": {"objective": gettext_noop("Get the whole corp enrolled in FORCA Command Grid."),
                         "show_ineligible_to_pilots": True},
             "sources": {"pvp": {"enabled": True, "mode": "auto"},
                         "manual": {"enabled": True, "mode": "manual"}},

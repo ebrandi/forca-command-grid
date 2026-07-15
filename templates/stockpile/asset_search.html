@@ -10,7 +10,8 @@
 </header>
 
 <form method="get" class="mb-5 flex gap-2">
-  <input name="q" value="{{ q }}" placeholder="e.g. Megathron, Scourge Fury, Tritanium" class="input-field" autofocus>
+  {% translate "e.g. Megathron, Scourge Fury, Tritanium" as q_ph %}
+  <input name="q" value="{{ q }}" placeholder="{{ q_ph }}" class="input-field" autofocus>
   <button class="btn-gold">{% translate "Search" %}</button>
 </form>
 
@@ -27,7 +28,7 @@
           {% for r in rows %}
             <tr>
               <td class="px-4 py-2 text-ink">{{ r.type }}</td>
-              <td class="px-4 py-2">{% if r.is_corp %}<span class="chip !text-[10px]">Corp</span>{% else %}<span class="text-faint">{{ r.owner }}</span>{% endif %}</td>
+              <td class="px-4 py-2">{% if r.is_corp %}<span class="chip !text-[10px]">{% translate "Corp" %}</span>{% else %}<span class="text-faint">{{ r.owner }}</span>{% endif %}</td>
               <td class="px-4 py-2 text-xs text-faint">{{ r.location }}</td>
               <td class="px-4 py-2 text-right data">{{ r.quantity|intcomma }}</td>
             </tr>

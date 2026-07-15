@@ -13,7 +13,7 @@
       <span class="chip {% if offer.status == 'open' %}!text-gold{% elif offer.status == 'paid' %}!text-kill{% elif offer.status == 'cancelled' %}!text-faint{% else %}!text-cyan{% endif %}">{{ offer.get_status_display }}</span>
       <span class="chip {% if offer.sec_band == 'highsec' %}!text-kill{% elif offer.sec_band == 'lowsec' %}!text-gold{% else %}!text-loss{% endif %}">{{ offer.get_sec_band_display }}</span>
       {% blocktranslate with count=offer.item_count vol=offer.volume_m3|floatformat:0 %}{{ count }} items · {{ vol }} m³{% endblocktranslate %}
-      {% if offer.location_name %}· at {{ offer.location_name }}{% endif %}
+      {% if offer.location_name %}· {% blocktranslate with loc=offer.location_name %}at {{ loc }}{% endblocktranslate %}{% endif %}
     </p>
   </div>
   <div class="text-right">

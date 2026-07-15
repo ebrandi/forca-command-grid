@@ -18,7 +18,7 @@ surface a prominent notice and drop the register CTAs.
     <p class="eyebrow text-gold">{% translate "Mentorship Program" %}</p>
     <h1 class="mt-3 text-4xl font-bold leading-[1.1] text-ink sm:text-5xl">{% blocktranslate %}Every capsuleer flies better <span class="text-gold">with a wingman</span>.{% endblocktranslate %}</h1>
     {% if program.intro_text %}
-    <p class="mt-5 text-lg text-muted">{{ program.intro_text }}</p>
+    <p class="mt-5 text-lg text-muted">{{ program.intro_text_i18n }}</p>
     {% else %}
     <p class="mt-5 text-lg text-muted">{% translate "Pair up Cadets learning the ropes with Veteran Mentors who have already made every mistake worth making. Field Exercises, real debriefs, and recognition that means something — no spreadsheets, no lectures." %}</p>
     {% endif %}
@@ -166,9 +166,9 @@ surface a prominent notice and drop the register CTAs.
   <div class="panel flex flex-col p-5">
     <div class="flex items-center gap-2">
       <svg class="h-5 w-5 text-cyan"><use href="{% if t.icon %}#{{ t.icon }}{% else %}#i-map{% endif %}"/></svg>
-      <h3 class="font-display font-semibold text-ink">{{ t.title }}</h3>
+      <h3 class="font-display font-semibold text-ink">{{ t.title_i18n }}</h3>
     </div>
-    <p class="mt-2 flex-1 text-sm text-faint">{{ t.summary }}</p>
+    <p class="mt-2 flex-1 text-sm text-faint">{{ t.summary_i18n }}</p>
     <div class="mt-3 flex flex-wrap items-center gap-2">
       <span class="chip text-muted">{{ t.get_category_display }}</span>
       {% if t.is_core %}<span class="chip text-gold">{% translate "Core track" %}</span>{% endif %}

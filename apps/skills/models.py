@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from django.db import models
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext, gettext_lazy as _
 
 from apps.doctrines.models import Doctrine
 from apps.sso.models import EveCharacter
@@ -26,6 +26,21 @@ class SkillPlan(TimeStampedModel):
     estimated_total_seconds = models.BigIntegerField(null=True, blank=True)
 
     def __str__(self) -> str:
+        return self.name
+
+    @property
+    def name_i18n(self) -> str:
+        """The plan name to *display*, localised per reader locale.
+
+        Doctrine plans are auto-named ``"Fly <doctrine>"`` in the creator's locale at
+        generation time (:func:`apps.skills.services.generate_plan_for_doctrine`) and that
+        English is frozen into ``name``. Rebuild the label per reader from the still-stored
+        ``target_doctrine`` FK; the doctrine name itself is an EVE proper noun and stays
+        verbatim. Custom/newbro plans (and doctrine plans whose FK was cleared) carry
+        officer/system free text and are returned verbatim.
+        """
+        if self.goal == self.Goal.DOCTRINE and self.target_doctrine_id:
+            return gettext("Fly %(doctrine)s") % {"doctrine": self.target_doctrine.name}
         return self.name
 
 

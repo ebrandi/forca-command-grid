@@ -155,6 +155,7 @@ def reconcile_plan_colonies(plan) -> list[dict]:
     from collections import defaultdict
 
     from .esi import colonies_for_user
+    from .issues_i18n import issue_label
 
     colonies = list(colonies_for_user(plan.owner))
     if not colonies:
@@ -181,7 +182,7 @@ def reconcile_plan_colonies(plan) -> list[dict]:
         if colony is None:
             drift = _("No live colony of this type imported yet.")
         elif issues:
-            drift = issues[0]
+            drift = issue_label(issues[0])
         elif wrong_product:
             drift = _("Your live colony is pulling a different product than the plan expects.")
         else:

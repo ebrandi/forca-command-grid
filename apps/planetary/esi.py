@@ -18,6 +18,12 @@ from apps.sso.token_service import NoValidToken, get_valid_access_token
 from core.esi.client import ESIClient, ESIError
 from core.mixins import Source
 
+from .issues_i18n import (
+    EXTRACTOR_EXPIRED,
+    FACTORY_NO_SCHEMATIC,
+    NO_ROUTES,
+    issue_label,
+)
 from .models import PiColony, PiMaterial, PiPlanetType, PiSchematic
 
 # Opt-in pilot scope. Registered in settings.EVE_SSO_FEATURE_SCOPES + apps/sso/scopes.py.
@@ -52,7 +58,7 @@ def _classify_pins(pins: list[dict]) -> dict:
             if expiry:
                 dt = parse_datetime(expiry)
                 if dt and dt < now:
-                    issues.append("An extractor program has expired — restart it to keep pulling P0.")
+                    issues.append(EXTRACTOR_EXPIRED)
         elif schem_id:
             counts["factory"] += 1
             schematics[schem_id] = sch_names.get(schem_id, f"schematic {schem_id}")
@@ -60,7 +66,7 @@ def _classify_pins(pins: list[dict]) -> dict:
             counts["other"] += 1
 
     if counts["factory"] and not schematics:
-        issues.append("A factory has no schematic set — it isn't producing anything.")
+        issues.append(FACTORY_NO_SCHEMATIC)
     return {
         "facilities": counts,
         "extracting": [{"type_id": t, "name": n} for t, n in extracting.items()],
@@ -105,7 +111,10 @@ def _emit_colony_dm(colony, character, issues) -> bool:
     where = colony.solar_system_name or f"system {colony.solar_system_id}"
     planet = colony.planet_type_name or "planet"
     stamp = int(colony.fetched_at.timestamp()) if colony.fetched_at else 0
-    body = f"Your PI colony on a {planet} in {where} needs attention: " + "; ".join(issues[:3])
+    # ``issues`` are stable codes; resolve them to human labels for the DM (English in the
+    # Celery/audit context, verbatim for any unknown/legacy code).
+    detail = "; ".join(issue_label(i) for i in issues[:3])
+    body = f"Your PI colony on a {planet} in {where} needs attention: " + detail
     try:
         from apps.pingboard import services as pingboard
         from apps.pingboard.models import AlertCategory
@@ -116,7 +125,7 @@ def _emit_colony_dm(colony, character, issues) -> bool:
             # planet/system names and the issue list stay raw. ``body`` is the English audit column.
             template="planetary.colony_issue",
             context={"planet_type": planet, "system_name": where,
-                     "details": "; ".join(issues[:3])},
+                     "details": detail},
             audience={"kind": "user", "id": character.user_id},
             source_service="planetary", source_object_id=f"colony_issue:{colony.id}:{stamp}",
             idempotency_key=f"pi:colony_issue:{colony.id}:{stamp}",
@@ -165,8 +174,7 @@ def import_colonies(character, client: ESIClient | None = None) -> dict:
             summary["links"] = len(detail.get("links", []))
             summary["routes"] = len(detail.get("routes", []))
             if not summary["routes"]:
-                summary.setdefault("issues", []).append(
-                    "No routes configured — nothing will flow between facilities.")
+                summary.setdefault("issues", []).append(NO_ROUTES)
         except ESIError:
             summary["detail_error"] = True
 

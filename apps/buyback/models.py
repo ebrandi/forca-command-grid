@@ -156,6 +156,14 @@ class GuaranteedBuybackConfig(TimeStampedModel):
         ),
     )
 
+    @property
+    def intro_text_i18n(self) -> str:
+        """Member-facing intro: the translated seed while unedited, else the officer's text
+        verbatim. Keyed on the singleton's stable key — see :mod:`apps.buyback.templates_i18n`.
+        """
+        from . import templates_i18n
+        return templates_i18n.intro_text_for(templates_i18n.GUARANTEED_CONFIG_KEY, self.intro_text)
+
     @classmethod
     def get_solo(cls) -> GuaranteedBuybackConfig:
         obj = cls.objects.order_by("pk").first()

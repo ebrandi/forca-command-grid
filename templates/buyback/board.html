@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load eve %}
 {% load i18n %}
-{% block title %}Buyback Board · [FORCA] Command Grid{% endblock %}
+{% block title %}{% translate "Buyback Board" %} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 
 <header class="mb-6 flex flex-wrap items-end justify-between gap-4">
@@ -29,7 +29,7 @@
             <span class="chip {% if o.sec_band == 'highsec' %}!text-kill{% elif o.sec_band == 'lowsec' %}!text-gold{% else %}!text-loss{% endif %}">{{ o.get_sec_band_display }}</span>
             {% blocktranslate with count=o.item_count vol=o.volume_m3|floatformat:0 %}{{ count }} items · {{ vol }} m³{% endblocktranslate %}
           </p>
-          {% if o.location_name %}<p class="mt-0.5 truncate text-[11px] text-faint">at {{ o.location_name }}</p>{% endif %}
+          {% if o.location_name %}<p class="mt-0.5 truncate text-[11px] text-faint">{% blocktranslate with loc=o.location_name %}at {{ loc }}{% endblocktranslate %}</p>{% endif %}
         </div>
         <div class="shrink-0 text-right">
           <p class="data text-lg font-bold text-gold">{{ o.offer_total|isk }}</p>
@@ -77,7 +77,7 @@
     {% for o in bought %}
     <a href="{% url 'buyback:offer' o.pk %}" class="flex items-center gap-3 px-4 py-2 text-sm hover:bg-panel2/40">
       <span class="chip {% if o.status == 'paid' %}!text-kill{% else %}!text-cyan{% endif %}">{{ o.get_status_display }}</span>
-      <span class="min-w-0 flex-1 truncate text-muted">{% translate "Lot" %} #{{ o.pk }} from {% if o.seller_character_id %}{% eve_name o.seller_character_id %}{% else %}{% translate "corpmate" %}{% endif %}</span>
+      <span class="min-w-0 flex-1 truncate text-muted">{% translate "Lot" %} #{{ o.pk }} {% translate "from" %} {% if o.seller_character_id %}{% eve_name o.seller_character_id %}{% else %}{% translate "corpmate" %}{% endif %}</span>
       <span class="data text-gold">{{ o.offer_total|isk }}</span>
     </a>
     {% endfor %}

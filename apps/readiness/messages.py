@@ -119,6 +119,51 @@ SCAFFOLDS: dict[str, str] = {
     "forecast.breach_detail": _(
         "%(label)s trending toward its red band in ~%(days)sd"
     ),
+    # --- pilot quest log (per-pilot recommendations, apps/readiness/pilot.py) ------
+    # Written by the ``readiness.warm_pilots`` beat / ``warm_pilot_after_login`` — a Celery
+    # worker with no reader and no locale — so the ``PilotRecommendation.title``/``detail``
+    # prose can only ever be frozen English. The reco carries the key + its plain JSON params
+    # so ``title_i18n``/``detail_i18n`` re-render the sentence under the READER's locale.
+    # EVE/corp nouns (hull / doctrine / role names, the training ETA) stay raw inside params.
+    "pilot.train_into_title": _("Train into %(doctrine)s"),
+    "pilot.train_into_detail": _(
+        "You're about %(eta)s of training from flying %(doctrine)s — one of the corp's "
+        "doctrines. Closing this makes you and the corp more ready."
+    ),
+    "pilot.get_ship_title": _("Get your %(ship)s"),
+    "pilot.get_ship_detail": _(
+        "Every pilot should own %(count)s× %(ship)s. Owning your mandatory hull keeps you "
+        "ready to undock with the fleet."
+    ),
+    "pilot.move_ship_title": _("Move your %(ship)s to staging"),
+    "pilot.move_ship_detail": _(
+        "Your %(ship)s isn't at the staging system. Bringing it home means you can form up "
+        "without a long haul first."
+    ),
+    "pilot.volunteer_role_title": _("Volunteer as %(role)s"),
+    "pilot.volunteer_role_detail": _(
+        "The corp is short on %(role)s (%(qualified)s/%(desired)s) and you already have the "
+        "skills. Flying this role directly raises corp readiness."
+    ),
+    "pilot.build_industry_title": _("Build %(item)s — corp is %(deficit)s short"),
+    "pilot.build_industry_detail": _(
+        "You already have the manufacturing skills to build %(item)s, and the corp stockpile "
+        "is %(deficit)s below target. Building a few directly helps the corp."
+    ),
+    "pilot.finish_fit_title": _("Finish your %(ship)s fit"),
+    "pilot.finish_fit_detail": _(
+        "Your %(ship)s is missing modules for the %(fit)s doctrine fit — top it off so it's "
+        "fleet-ready, not a half-built hull."
+    ),
+    "pilot.fit_ship_title": _("Fit your %(ship)s"),
+    "pilot.fit_ship_detail": _(
+        "You own a %(ship)s but it isn't fitted to a doctrine. Fit it (copy a doctrine fit "
+        "from the Doctrines page) so you can undock ready."
+    ),
+    "pilot.stay_current_title": _("Fly a fleet this week"),
+    "pilot.stay_current_detail": _(
+        "You're on top of your readiness — keep your edge by joining an op."
+    ),
 }
 
 

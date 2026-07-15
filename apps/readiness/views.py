@@ -65,6 +65,26 @@ def dashboard(request: HttpRequest) -> HttpResponse:
         kind=ReadinessFinding.Kind.FORECAST, status=ReadinessFinding.Status.OPEN
     ).count()
 
+    # Seam B read side: the gaps carry the engine finding's scaffold key + params (as_gap), so
+    # re-render each under THIS reader's locale. A NEW list of dicts — never mutate result["gaps"]
+    # in place, as that dict is the shared, non-language-scoped compute_readiness cache entry.
+    # ``label`` is pure display, so it is localised. ``task_title`` stays RAW English: it is the
+    # hidden form value the legacy "Create task" persists into Task.title, and the tasks app owns
+    # no key seam — localising it would freeze the officer's locale into that shared task. The
+    # visible preview reads the separate ``task_title_i18n`` instead.
+    from .messages import render_text
+
+    gaps = [
+        {
+            **g,
+            "label": render_text(g.get("label_key", ""), g.get("label_params") or {}, g.get("label", "")),
+            "task_title_i18n": render_text(
+                g.get("task_title_key", ""), g.get("task_title_params") or {}, g.get("task_title", "")
+            ),
+        }
+        for g in result["gaps"]
+    ]
+
     return render(
         request,
         "readiness/dashboard.html",
@@ -72,7 +92,7 @@ def dashboard(request: HttpRequest) -> HttpResponse:
             "index": result["index"],
             "dimensions": dimensions,
             "preview_dimensions": preview,
-            "gaps": result["gaps"],
+            "gaps": gaps,
             "coverage": result["coverage"],
             "trend": index_trend(),
             "forecast_count": forecast_count,
@@ -186,6 +206,12 @@ def pilot_view(request: HttpRequest, character_id: int) -> HttpResponse:
                 state=PilotRecommendation.State.OPEN,
             ).filter(Q(snoozed_until__isnull=True) | Q(snoozed_until__lte=timezone.now()))
         )
+        # Seam B read side: the quest log was frozen in English by the readiness beat (no reader,
+        # no locale). Re-render each row under THIS reader's language from the persisted scaffold
+        # key. In-memory only — never saved, so the English audit column is untouched.
+        for r in recos:
+            r.title = r.title_i18n
+            r.detail = r.detail_i18n
     else:
         # Unlinked character — no DB-backed quest log to read; the facets still coach.
         recos = []
@@ -236,6 +262,13 @@ def dimension_detail(request: HttpRequest, key: str) -> HttpResponse:
             _kpi_status_override(k, kpi_cfg)
             kept.append(k)
         result.kpis = kept
+        # Seam B read side: the engine Finding dataclasses carry the scaffold key + params, so
+        # re-render each label under the reader's locale. In-memory only — compute_dimension is
+        # not cached, so this fresh result is never shared across readers.
+        from .messages import render_text
+
+        for f in result.findings:
+            f.label = render_text(f.label_key, f.label_params, f.label)
     return render(request, "readiness/dimension.html", {
         "key": key,
         "label": getattr(provider, "label", key.title()),
@@ -291,6 +324,10 @@ def kpi_detail(request: HttpRequest, key: str) -> HttpResponse:
             status__in=[ReadinessFinding.Status.OPEN, ReadinessFinding.Status.ACKNOWLEDGED],
         ).order_by("-weight")[:10]
     )
+    # Seam B read side: re-render each frozen-English finding title under the reader's locale
+    # (in-memory only — never saved), mirroring findings_register.
+    for f in findings:
+        f.title = f.title_i18n
     return render(request, "readiness/kpi.html", {
         "key": key,
         "dimension_key": dimension_key,

@@ -37,7 +37,7 @@
   {% for t in rows %}
   <div class="panel flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
     <span class="rounded px-2 py-0.5 text-xs font-semibold uppercase
-      {% if t.level == 'danger' %}bg-[#f0533f]/15 text-[#f0533f]{% else %}bg-[#f4a52b]/15 text-[#f4a52b]{% endif %}">{{ t.level }}</span>
+      {% if t.level == 'danger' %}bg-[#f0533f]/15 text-[#f0533f]{% else %}bg-[#f4a52b]/15 text-[#f4a52b]{% endif %}">{{ t.level_label }}</span>
     <a href="{% url 'navigation:system_detail' t.system_id %}" class="inline-flex items-center gap-1.5 font-semibold text-ink hover:text-gold">
       <span class="inline-block h-2 w-2 rounded-full" style="background:{{ t.colour }}"></span>{{ t.name }}
       <span class="font-mono text-xs" style="color:{{ t.colour }}">{{ t.security }}</span>
@@ -46,9 +46,9 @@
     {% if t.chokepoint %}<span class="chip !border-[#5fd0c4]/40 !text-[#5fd0c4]">{% translate "chokepoint" %}</span>{% endif %}
     <span class="text-sm text-faint">{{ t.reasons|join:" · " }}</span>
     <span class="ml-auto flex items-center gap-3 text-xs text-faint">
-      <span title="{% translate 'pods killed' %}"><span class="text-[#f0533f]">{{ t.pod_kills }}</span> pods</span>
-      <span title="{% translate 'ships killed' %}">{{ t.ship_kills }} ships</span>
-      <span title="{% translate 'ship jumps last hour' %}">{{ t.traffic }} traffic</span>
+      <span title="{% translate 'pods killed' %}"><span class="text-[#f0533f]">{{ t.pod_kills }}</span> {% translate "pods" %}</span>
+      <span title="{% translate 'ships killed' %}">{{ t.ship_kills }} {% translate "ships" %}</span>
+      <span title="{% translate 'ship jumps last hour' %}">{{ t.traffic }} {% translate "traffic" %}</span>
       <a href="{% url 'navigation:route_planner' %}?to={{ t.system_id }}&to_q={{ t.name|urlencode }}" class="hover:text-gold">{% translate "route →" %}</a>
     </span>
   </div>
