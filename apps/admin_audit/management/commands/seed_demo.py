@@ -12,7 +12,6 @@ from apps.doctrines.fitparser import parse_eft
 from apps.doctrines.models import Doctrine, DoctrineCategory, DoctrineFit
 from apps.doctrines.services import derive_skill_requirements
 from apps.market.models import MarketLocation
-from apps.onboarding.models import OnboardingMilestone
 from apps.sso.services import ensure_role
 from apps.stockpile.models import Stockpile
 from apps.stockpile.services import record_manual_stock
@@ -86,34 +85,12 @@ class Command(BaseCommand):
             },
         )
 
-        # Onboarding milestones (auto-detected from the criteria).
-        milestones = [
-            ("link-character", "Link your first character", {"type": "linked"}, "account", 1),
-            ("import-skills", "Import your skills", {"type": "skills_imported"}, "skills", 2),
-            (
-                "fly-newbro-tackle",
-                "Be able to fly the Newbro Tackle doctrine",
-                {"type": "doctrine_ready", "doctrine_id": doctrine.id},
-                "doctrine",
-                3,
-            ),
-        ]
-        for key, title, criteria, category, order in milestones:
-            OnboardingMilestone.objects.update_or_create(
-                key=key,
-                defaults={
-                    "title": title,
-                    "criteria": criteria,
-                    "category": category,
-                    "sort_order": order,
-                    "active": True,
-                },
-            )
-
-        # The glossary is owned by migrations 0003 (canonical seed) + 0004 (reconcile) and
-        # is fully translated; demo runs must NOT overwrite it. Re-seeding here with short
-        # demo text previously clobbered the canonical, catalogue-matched definitions and
-        # left Doctrine/ISK/Highsec/Tackle rendering untranslated in every locale.
+        # Onboarding milestones + glossary are owned by migrations 0003 (canonical seed),
+        # 0004 (glossary reconcile) and 0005 (milestone reconcile), and are fully translated.
+        # Demo runs must NOT re-seed them: update_or_create with short demo text previously
+        # clobbered the canonical, catalogue-matched content and left it rendering untranslated
+        # in every locale (Doctrine/ISK/Highsec/Tackle and the link-character/import-skills
+        # milestones). Onboarding content is seeded by migration, not by the demo command.
 
         # A corp stockpile with a target so dashboards show a shortfall.
         stockpile, _ = Stockpile.objects.update_or_create(
