@@ -29,9 +29,8 @@ locale. Nothing here ever returns blank.
 """
 from __future__ import annotations
 
-from django.utils.translation import gettext
+from django.utils.translation import gettext, gettext_noop
 from django.utils.translation import gettext_lazy as _
-from django.utils.translation import gettext_noop
 
 # The default prize-ladder rank names, persisted into ``config["prizes"][*]["name"]``
 # (and from there onto ``RafflePrize.name``). Plain strings — marked for extraction,

@@ -45,7 +45,13 @@ def job_materials(job: BuildJob) -> dict:
         if short:
             ready = False
         lines.append(
-            {"type_id": tid, "name": names.get(tid, _("Type %(type_id)s") % {"type_id": tid}), "need": need, "have": have, "short": short}
+            {
+                "type_id": tid,
+                "name": names.get(tid, _("Type %(type_id)s") % {"type_id": tid}),
+                "need": need,
+                "have": have,
+                "short": short,
+            }
         )
     return {"buildable": True, "lines": lines, "ready": ready}
 

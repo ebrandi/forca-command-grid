@@ -19,6 +19,10 @@ ignore = ["S101", "DJ008"]
 "tests/*" = ["S105", "S106"]
 "**/tests/*" = ["S105", "S106"]
 "*/settings/*" = ["S105"]
+# Seeded onboarding/glossary prose: the render-time i18n twin of migration 0003
+# (itself excluded). Each value is one long gettext_noop literal that must stay a
+# single msgid, so it can't be wrapped under 120 cols.
+"apps/onboarding/milestones_i18n.py" = ["E501"]
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings.test"

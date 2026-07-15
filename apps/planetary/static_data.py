@@ -31,9 +31,8 @@ the human prose *about* them is translatable.
 """
 from __future__ import annotations
 
-from django.utils.translation import gettext
+from django.utils.translation import gettext, gettext_noop
 from django.utils.translation import gettext_lazy as _
-from django.utils.translation import gettext_noop
 
 # --- The 8 planet types (didactic) -----------------------------------------
 # type_ids are the canonical classic planets (the 5601x rows in the SDE are

@@ -58,7 +58,9 @@ class Operation(TimeStampedModel):
     staging_location_id = models.BigIntegerField(null=True, blank=True)
     formup = models.CharField(max_length=200, blank=True, help_text=gettext_lazy("Form-up / staging location."))
     destination = models.CharField(max_length=200, blank=True, help_text=gettext_lazy("Destination or target area."))
-    comms = models.CharField(max_length=200, blank=True, help_text=gettext_lazy("Comms channel / Mumble / Discord voice."))
+    comms = models.CharField(
+        max_length=200, blank=True, help_text=gettext_lazy("Comms channel / Mumble / Discord voice.")
+    )
     link = models.CharField(max_length=500, blank=True, help_text=gettext_lazy("Doctrine, fitting or external link."))
     notes = models.TextField(blank=True)
 

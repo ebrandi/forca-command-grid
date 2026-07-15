@@ -1411,7 +1411,9 @@ def _require_dependency_target(campaign, to_kind, to_id, user) -> None:
     else:
         ok = False
     if not ok:
-        raise ValidationError(gettext("The blocking target must be an item of this campaign or a campaign you can view."))
+        raise ValidationError(
+            gettext("The blocking target must be an item of this campaign or a campaign you can view.")
+        )
 
 
 def _reject_cycle(campaign, from_node, to_node, cap=_DEPENDENCY_DEPTH_CAP) -> None:

@@ -16,8 +16,7 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
-from django.utils.translation import gettext
-from django.utils.translation import ngettext
+from django.utils.translation import gettext, ngettext
 
 from core.audit import audit_log
 

@@ -329,13 +329,16 @@ def _audited_set(request: HttpRequest, domain: str, doc: dict, *, ok_message: st
 
 # --- Financial configuration (config domain "finance"; doc 07 page 7) --------
 _FINANCE_ISK_FIELDS = [
-    ("min_wallet", gettext_lazy("Minimum wallet balance"), gettext_lazy("Floor the corp wallet should never drop below.")),
+    ("min_wallet", gettext_lazy("Minimum wallet balance"),
+     gettext_lazy("Floor the corp wallet should never drop below.")),
     ("monthly_burn_target", gettext_lazy("Monthly burn target"), gettext_lazy("Expected ISK outflow per month.")),
     ("srp_budget", gettext_lazy("SRP budget"), gettext_lazy("Monthly ISK set aside for ship replacement.")),
-    ("emergency_reserve", gettext_lazy("Emergency reserve"), gettext_lazy("Untouchable war-chest the runway scores against.")),
+    ("emergency_reserve", gettext_lazy("Emergency reserve"),
+     gettext_lazy("Untouchable war-chest the runway scores against.")),
     ("alliance_payments_monthly", gettext_lazy("Alliance payments / mo"), gettext_lazy("Dues owed upward each month.")),
     ("sov_costs_monthly", gettext_lazy("Sovereignty costs / mo"), gettext_lazy("Bills/indices for held space.")),
-    ("infrastructure_costs_monthly", gettext_lazy("Infrastructure costs / mo"), gettext_lazy("Fuel, structures and services.")),
+    ("infrastructure_costs_monthly", gettext_lazy("Infrastructure costs / mo"),
+     gettext_lazy("Fuel, structures and services.")),
 ]
 
 
@@ -367,8 +370,10 @@ def readiness_finance(request: HttpRequest) -> HttpResponse:
 # --- SRP thresholds (config domain "srp"; doc 07 page 8) ---------------------
 _SRP_FIELDS = [
     ("max_pending_claims", gettext_lazy("Max pending claims"), gettext_lazy("Backlog above this scores red.")),
-    ("max_avg_wait_hours", gettext_lazy("Max average wait (hours)"), gettext_lazy("Mean approve time the KPI scores against.")),
-    ("max_claim_age_days", gettext_lazy("Max claim age (days)"), gettext_lazy("Oldest unresolved claim that's still acceptable.")),
+    ("max_avg_wait_hours", gettext_lazy("Max average wait (hours)"),
+     gettext_lazy("Mean approve time the KPI scores against.")),
+    ("max_claim_age_days", gettext_lazy("Max claim age (days)"),
+     gettext_lazy("Oldest unresolved claim that's still acceptable.")),
 ]
 
 
@@ -469,7 +474,11 @@ def _save_responsibilities(request: HttpRequest) -> HttpResponse:
 # --- Alerts rule editor (config domain "alerts"; doc 07 page 9) --------------
 _ALERT_SEVERITIES = ["info", "warn", "high", "critical"]
 _ALERT_CHANNELS = [("discord", "Discord"), ("eve_mail", "EVE-mail")]
-_ALERT_KINDS = [("", gettext_lazy("Any")), ("risk", gettext_lazy("Risk (current gap)")), ("forecast", gettext_lazy("Forecast (predicted breach)"))]
+_ALERT_KINDS = [
+    ("", gettext_lazy("Any")),
+    ("risk", gettext_lazy("Risk (current gap)")),
+    ("forecast", gettext_lazy("Forecast (predicted breach)")),
+]
 
 
 @login_required
@@ -711,7 +720,10 @@ def _save_doctrines(request: HttpRequest) -> HttpResponse:
             try:
                 retirement = dt.date.fromisoformat(ret_raw)
             except ValueError:
-                messages.error(request, gettext_lazy("%(name)s: retirement date must be YYYY-MM-DD.") % {"name": d.name})
+                messages.error(
+                    request,
+                    gettext_lazy("%(name)s: retirement date must be YYYY-MM-DD.") % {"name": d.name},
+                )
                 return redirect("admin_audit:readiness_doctrines")
         min_pilots = _int_or(request.POST.get(f"doc_{d.id}_min"))
         if min_pilots is not None and min_pilots < 0:

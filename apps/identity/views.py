@@ -10,9 +10,7 @@ from django.db.models import Sum
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-from django.utils.translation import gettext
-from django.utils.translation import gettext_lazy
-from django.utils.translation import ngettext
+from django.utils.translation import gettext, gettext_lazy, ngettext
 from django.views.decorators.http import require_POST
 
 from apps.doctrines.services import readiness_summary_for_character
