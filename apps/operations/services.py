@@ -850,7 +850,7 @@ def _spawn_from_template(template, occurrence):
         op.ship_slots.create(
             ship_name=slot.ship_name, ship_type_id=slot.ship_type_id, role=slot.role,
             min_pilots=slot.min_pilots, max_pilots=(slot.max_pilots or None),
-            priority=slot.priority,
+            priority=slot.priority, doctrine_fit_id=slot.doctrine_fit_id,
         )
     _publish_op_calendar(op)
     return op

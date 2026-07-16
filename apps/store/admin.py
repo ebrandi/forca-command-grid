@@ -1,6 +1,9 @@
 from django.contrib import admin
 
 from .models import (
+    DemandConfig,
+    DemandLine,
+    DemandSnapshot,
     FitOffer,
     FitReservation,
     FitStock,
@@ -82,3 +85,25 @@ class FitSupplyNeedAdmin(admin.ModelAdmin):
                     "required_by", "industry_project", "build_job", "task")
     list_filter = ("status",)
     raw_id_fields = ("doctrine_fit", "industry_project", "build_job", "task")
+
+
+@admin.register(DemandConfig)
+class DemandConfigAdmin(admin.ModelAdmin):
+    list_display = ("__str__", "is_active", "history_weeks", "horizon_days",
+                    "service_level", "op_attrition_pct", "include_recurring_ops",
+                    "use_suggested_reorder_alerts")
+    list_filter = ("is_active",)
+
+
+@admin.register(DemandLine)
+class DemandLineAdmin(admin.ModelAdmin):
+    list_display = ("fit", "quantity", "needed_by", "status", "campaign_id",
+                    "created_by", "closed_by", "closed_at")
+    list_filter = ("status",)
+    search_fields = ("fit__name", "note")
+
+
+@admin.register(DemandSnapshot)
+class DemandSnapshotAdmin(admin.ModelAdmin):
+    list_display = ("fit", "week_start", "rate_week_mean", "rate_week_hi", "sigma_week")
+    list_filter = ("week_start",)

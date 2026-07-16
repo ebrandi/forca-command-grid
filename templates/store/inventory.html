@@ -71,7 +71,9 @@
       <option value="">{% translate "All" %}</option>
       <option value="stale" {% if f_alert == 'stale' %}selected{% endif %}>{% translate "Needs revalidation" %}</option>
       <option value="reorder" {% if f_alert == 'reorder' %}selected{% endif %}>{% translate "At reorder point" %}</option>
+      <option value="suggested" {% if f_alert == 'suggested' %}selected{% endif %}>{% translate "Below suggested reorder" %}</option>
       <option value="safety" {% if f_alert == 'safety' %}selected{% endif %}>{% translate "Below safety stock" %}</option>
+      <option value="no_location" {% if f_alert == 'no_location' %}selected{% endif %}>{% translate "No delivery location" %}</option>
     </select>
   </label>
   <label class="block">
@@ -104,6 +106,7 @@
         <th class="px-2 py-2 text-right">{% translate "Incoming" %}</th>
         <th class="px-2 py-2 text-right">{% translate "Backordered" %}</th>
         <th class="px-2 py-2 text-right">{% translate "Target" %}</th>
+        <th class="px-2 py-2 text-right" title="{% translate 'Composed weekly demand — losses, ops, targets and manual lines' %}">{% translate "Demand /wk" %}</th>
         <th class="px-2 py-2 text-right">{% translate "Cover (d)" %}</th>
         <th class="px-2 py-2 text-right">{% translate "Lead (d)" %}</th>
         <th class="px-2 py-2">{% translate "Alerts" %}</th>
@@ -134,18 +137,30 @@
           <td class="px-2 py-2 text-right data text-faint">{{ a.incoming }}</td>
           <td class="px-2 py-2 text-right data {% if r.backordered %}text-cyan{% else %}text-faint{% endif %}">{{ r.backordered }}</td>
           <td class="px-2 py-2 text-right data text-faint">{% if r.target_stock %}{{ r.target_stock }}{% else %}—{% endif %}</td>
-          <td class="px-2 py-2 text-right data text-faint">{% if r.days_cover is not None %}{{ r.days_cover }}{% else %}—{% endif %}</td>
+          <td class="px-2 py-2 text-right data text-faint">
+            {% if r.d.rate_week_mean or r.d.events %}
+              <span title="{% for s in r.d.sources %}{{ s.label }}: {% if s.rate_week %}{{ s.rate_week }}/wk{% else %}{{ s.units }}{% endif %}{% if not forloop.last %} · {% endif %}{% endfor %}">{{ r.d.rate_week_mean }}{% if r.d.has_band %} <span class="text-[10px]">±{{ r.d.sigma_week }}</span>{% endif %}</span>
+              {% if r.d.trend == 'rising' %}<span class="text-loss" title="{% translate 'Losses trending up' %}">↑</span>{% elif r.d.trend == 'falling' %}<span class="text-win" title="{% translate 'Losses trending down' %}">↓</span>{% endif %}
+            {% elif 'no_history' in r.d.flags %}<span title="{% blocktranslate with n=r.d.weeks_observed %}Insufficient history ({{ n }} wk){% endblocktranslate %}">…</span>
+            {% else %}<span class="text-faint" title="{% translate 'No demand from any source' %}">{% translate "none" %}</span>{% endif %}
+          </td>
+          <td class="px-2 py-2 text-right data text-faint">{% if r.days_cover is not None %}{{ r.days_cover|floatformat:1 }}{% if r.days_cover_lo is not None and r.days_cover_lo != r.days_cover %} <span class="text-[10px]" title="{% translate 'Cover at the service-level demand rate' %}">({{ r.days_cover_lo|floatformat:1 }})</span>{% endif %}{% else %}—{% endif %}</td>
           <td class="px-2 py-2 text-right data text-faint">{{ a.lead_days }}</td>
           <td class="px-2 py-2">
             {% if 'stale' in r.alerts %}<span class="chip !border-loss/40 !text-loss" title="{% translate 'Stock recorded against an older fit revision needs officer revalidation' %}">{% translate "revalidate" %}</span>{% endif %}
             {% if 'reorder' in r.alerts %}<span class="chip !border-gold/40 !text-gold" title="{% translate 'Available stock is at or below the reorder point' %}">{% translate "reorder" %}</span>{% endif %}
+            {% if 'suggested' in r.alerts %}<span class="chip !border-gold/40 !text-gold" title="{% translate 'Available stock is below the suggested reorder point' %}">{% translate "suggested" %}</span>{% endif %}
             {% if 'safety' in r.alerts %}<span class="chip !border-loss/40 !text-loss" title="{% translate 'Available stock is below the safety stock' %}">{% translate "safety" %}</span>{% endif %}
+            {% if 'no_location' in r.alerts %}<span class="chip" title="{% translate 'Stock exists but no delivery location is configured' %}">{% translate "no location" %}</span>{% endif %}
+            {% if 'obsolete' in r.d.flags %}<span class="chip !border-loss/40 !text-loss" title="{% translate 'Doctrine retired while stock remains' %}">{% translate "obsolete" %}</span>{% endif %}
+            {% if 'slow_mover' in r.d.flags %}<span class="chip" title="{% translate 'No demand from any source and stock untouched for the slow-mover window' %}">{% translate "slow mover" %}</span>{% endif %}
+            {% if 'upcoming' in r.d.flags %}<span class="chip !border-cyan/40 !text-cyan" title="{% translate 'Doctrine rollout in progress' %}">{% translate "upcoming" %}</span>{% endif %}
             {% if r.waitlisted %}<span class="chip" title="{% translate 'Pilots waiting for this ship' %}">{{ r.waitlisted }} ⌛</span>{% endif %}
           </td>
         </tr>
         {% endwith %}
         {% empty %}
-        <tr><td colspan="13" class="px-4 py-10 text-center text-sm text-faint">{% translate "No offers match these filters." %}</td></tr>
+        <tr><td colspan="14" class="px-4 py-10 text-center text-sm text-faint">{% translate "No offers match these filters." %}</td></tr>
         {% endfor %}
       </tbody>
     </table></div>

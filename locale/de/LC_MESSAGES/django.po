@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-16 20:11+0000\n"
+"POT-Creation-Date: 2026-07-16 21:44+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: de machine-assisted draft\n"
@@ -8077,6 +8077,11 @@ msgstr "BOM neu berechnet."
 #: apps/industry/views.py
 msgid "Shopping list generated."
 msgstr "Einkaufsliste erstellt."
+
+#: apps/industry/views.py
+msgid "This plan is closed — reopen it before reserving stock."
+msgstr ""
+"Dieser Plan ist geschlossen — vor dem Reservieren von Bestand wieder öffnen."
 
 #: apps/industry/views.py
 #, python-format
@@ -19967,6 +19972,42 @@ msgstr "Auftrag übernommen — fly safe."
 msgid "Not your job."
 msgstr "Nicht dein Auftrag."
 
+#: apps/store/demand.py
+msgid "Loss replacement"
+msgstr "Verlustersatz"
+
+#: apps/store/demand.py
+msgid "Untagged hull losses (allocated)"
+msgstr "Hull-Verluste ohne Tag (umgelegt)"
+
+#: apps/store/demand.py
+msgid "Fleet ops"
+msgstr "Flotten-Ops"
+
+#: apps/store/demand.py
+msgid "Target build-up"
+msgstr "Zielaufbau"
+
+#: apps/store/demand.py templates/store/inventory_fit.html
+msgid "Manual demand lines"
+msgstr "Manuelle Bedarfspositionen"
+
+#: apps/store/demand.py
+msgid "Slow mover"
+msgstr "Langsamdreher"
+
+#: apps/store/demand.py
+msgid "Obsolete"
+msgstr "Veraltet"
+
+#: apps/store/demand.py templates/admin_audit/console/readiness/doctrines.html
+msgid "Upcoming"
+msgstr "Bevorstehend"
+
+#: apps/store/demand.py
+msgid "Insufficient history"
+msgstr "Zu wenig Historie"
+
 #: apps/store/forms.py
 msgid "Delivery / staging system"
 msgstr "Liefer- / Staging-System"
@@ -19991,6 +20032,10 @@ msgstr "Warum der Bestand korrigiert wird"
 #: apps/store/forms.py
 msgid "What changed (shown to the buyer)"
 msgstr "Was sich geändert hat (dem Käufer angezeigt)"
+
+#: apps/store/forms.py
+msgid "The date must be today or later."
+msgstr "Das Datum muss heute oder später sein."
 
 #: apps/store/models.py
 msgid "Public — anyone can shop"
@@ -20229,6 +20274,77 @@ msgstr "Fit-Bestandseinträge"
 #: apps/store/models.py
 msgid "fit waitlist entries"
 msgstr "Fit-Wartelisteneinträge"
+
+#: apps/store/models.py
+msgid "Trailing weeks of loss history the demand rate is computed over."
+msgstr ""
+"Zurückliegende Wochen an Verlusthistorie, über die die Bedarfsrate berechnet "
+"wird."
+
+#: apps/store/models.py
+msgid "Days ahead that dated demand (fleet ops, manual lines) is planned for."
+msgstr ""
+"Tage im Voraus, für die terminierter Bedarf (Flotten-Ops, manuelle "
+"Positionen) geplant wird."
+
+#: apps/store/models.py
+msgid "Confidence level for demand bands and reorder suggestions."
+msgstr "Konfidenzniveau für Bedarfsbänder und Meldebestand-Vorschläge."
+
+#: apps/store/models.py
+msgid "Assumed percentage of a fleet op's pilots whose ship needs replacing."
+msgstr ""
+"Angenommener Prozentsatz der Piloten einer Flotten-Op, deren Schiff ersetzt "
+"werden muss."
+
+#: apps/store/models.py
+msgid ""
+"Days without demand or outbound stock before a stocked fit is flagged slow-"
+"moving."
+msgstr ""
+"Tage ohne Bedarf oder Bestandsabgang, bevor ein vorrätiges Fit als "
+"Langsamdreher markiert wird."
+
+#: apps/store/models.py
+msgid ""
+"Allocate hull losses without a doctrine-fit tag across that hull's offered "
+"fits."
+msgstr ""
+"Hull-Verluste ohne doctrine-Fit-Tag auf die angebotenen Fits dieses Hulls "
+"umlegen."
+
+#: apps/store/models.py
+msgid ""
+"Count recurring fleet ops as future demand. Off by default: their attrition "
+"is already inside the trailing loss history."
+msgstr ""
+"Wiederkehrende Flotten-Ops als künftigen Bedarf zählen. Standardmäßig aus: "
+"ihr Schwund steckt bereits in der zurückliegenden Verlusthistorie."
+
+#: apps/store/models.py
+msgid ""
+"Raise a console alert when available stock falls below the suggested reorder "
+"point (explicit reorder points always alert)."
+msgstr ""
+"Eine Konsolenwarnung auslösen, wenn der verfügbare Bestand unter den "
+"vorgeschlagenen Meldebestand fällt (explizite Meldebestände warnen immer)."
+
+#: apps/store/models.py
+msgid "demand planning config"
+msgstr "Bedarfsplanungs-Konfiguration"
+
+#: apps/store/models.py
+msgid "demand planning configs"
+msgstr "Bedarfsplanungs-Konfigurationen"
+
+#: apps/store/models.py templates/admin_audit/console/raffle_draw.html
+#: templates/store/inventory_fit.html
+msgid "Closed"
+msgstr "Geschlossen"
+
+#: apps/store/models.py
+msgid "Blank = undated; planned against the end of the demand horizon."
+msgstr "Leer = ohne Datum; wird auf das Ende des Bedarfshorizonts geplant."
 
 #: apps/store/pricing.py
 msgid "That fit has no hull or modules to price."
@@ -20525,6 +20641,19 @@ msgstr "ERP-Build-Job eingereiht und verknüpft."
 #: apps/store/views_inventory.py
 msgid "Claimable task created and linked."
 msgstr "Übernehmbare Aufgabe erstellt und verknüpft."
+
+#: apps/store/views_inventory.py
+#, python-format
+msgid "Demand line recorded: %(qty)s unit(s)."
+msgstr "Bedarfsposition erfasst: %(qty)s Einheit(en)."
+
+#: apps/store/views_inventory.py
+msgid "Demand line closed."
+msgstr "Bedarfsposition geschlossen."
+
+#: apps/store/views_inventory.py
+msgid "That demand line is already closed."
+msgstr "Diese Bedarfsposition ist bereits geschlossen."
 
 #: apps/tasks/models.py
 msgid "Build ships"
@@ -26659,6 +26788,7 @@ msgstr "Verwalten"
 
 #: templates/admin_audit/console/members.html
 #: templates/admin_audit/console/readiness/alerts.html
+#: templates/store/inventory.html templates/store/inventory_fit.html
 msgid "none"
 msgstr "keine"
 
@@ -29178,6 +29308,7 @@ msgstr "Losquellen"
 #: templates/admin_audit/console/raffle_preview.html
 #: templates/admin_audit/health.html templates/campaigns/explain.html
 #: templates/campaigns/objective_detail.html templates/pingboard/calendar.html
+#: templates/store/inventory_fit.html
 msgid "Source"
 msgstr "Quelle"
 
@@ -29327,10 +29458,6 @@ msgid ""
 msgstr ""
 "Friert das Journal ein — es können keine weiteren Lose mehr erworben werden. "
 "Vor der Ziehung erforderlich."
-
-#: templates/admin_audit/console/raffle_draw.html
-msgid "Closed"
-msgstr "Geschlossen"
 
 #: templates/admin_audit/console/raffle_draw.html
 msgid ""
@@ -30495,6 +30622,7 @@ msgstr ""
 "und starte den Lauf erneut."
 
 #: templates/admin_audit/console/raffle_prizes.html
+#: templates/store/inventory_fit.html
 msgid "Close"
 msgstr "Schließen"
 
@@ -30962,10 +31090,6 @@ msgid "Primary"
 msgstr "Primary"
 
 #: templates/admin_audit/console/readiness/doctrines.html
-msgid "Upcoming"
-msgstr "Bevorstehend"
-
-#: templates/admin_audit/console/readiness/doctrines.html
 msgid "Retires"
 msgstr "Ausmusterung"
 
@@ -31085,6 +31209,7 @@ msgstr ""
 #: templates/buyback/appraisal.html templates/buyback/offer.html
 #: templates/industry/detail.html templates/stockpile/asset_search.html
 #: templates/stockpile/logistics.html templates/store/board.html
+#: templates/store/inventory_fit.html
 msgid "Qty"
 msgstr "Menge"
 
@@ -33188,7 +33313,7 @@ msgstr "Noch keine Operationen verknüpft."
 msgid "Operation"
 msgstr "Operation"
 
-#: templates/campaigns/detail.html
+#: templates/campaigns/detail.html templates/store/inventory_fit.html
 msgid "Note (optional)"
 msgstr "Notiz (optional)"
 
@@ -39235,6 +39360,10 @@ msgid "Material to acquire"
 msgstr "Zu beschaffendes Material"
 
 #: templates/industry/detail.html
+msgid "Allocated from stock"
+msgstr "Aus Bestand zugeteilt"
+
+#: templates/industry/detail.html
 msgid "To acquire"
 msgstr "Zu beschaffen"
 
@@ -42583,6 +42712,7 @@ msgid "Tax owed @ %(rate)s%%"
 msgstr "Fällige Steuer @ %(rate)s%%"
 
 #: templates/mining/ledger.html templates/mining/my_mining.html
+#: templates/store/inventory_fit.html
 msgid "Units"
 msgstr "Einheiten"
 
@@ -45305,6 +45435,14 @@ msgstr "Notizen"
 #: templates/operations/template_form.html
 msgid "Composition (blank rows ignored)"
 msgstr "Zusammensetzung (leere Zeilen werden ignoriert)"
+
+#: templates/operations/template_form.html
+msgid "Doctrine fit (optional)"
+msgstr "Doctrine-Fit (optional)"
+
+#: templates/operations/template_form.html
+msgid "— custom ship —"
+msgstr "— eigenes Schiff —"
 
 #: templates/operations/template_form.html
 msgid "Save template"
@@ -49734,8 +49872,16 @@ msgid "At reorder point"
 msgstr "Am Meldebestand"
 
 #: templates/store/inventory.html
+msgid "Below suggested reorder"
+msgstr "Unter vorgeschlagenem Meldebestand"
+
+#: templates/store/inventory.html
 msgid "Below safety stock"
 msgstr "Unter Sicherheitsbestand"
+
+#: templates/store/inventory.html
+msgid "No delivery location"
+msgstr "Kein Lieferort"
 
 #: templates/store/inventory.html templates/store/inventory_fit.html
 msgid "Available to promise"
@@ -49769,6 +49915,15 @@ msgid "Incoming"
 msgstr "Im Zulauf"
 
 #: templates/store/inventory.html
+msgid "Composed weekly demand — losses, ops, targets and manual lines"
+msgstr ""
+"Zusammengesetzter Wochenbedarf — Verluste, Ops, Ziele und manuelle Positionen"
+
+#: templates/store/inventory.html
+msgid "Demand /wk"
+msgstr "Bedarf /Wo."
+
+#: templates/store/inventory.html
 msgid "Cover (d)"
 msgstr "Reichweite (T)"
 
@@ -49798,6 +49953,27 @@ msgid "Stocked against an older fit revision"
 msgstr "Gegen eine ältere Fit-Revision eingelagert"
 
 #: templates/store/inventory.html
+msgid "Losses trending up"
+msgstr "Verluste steigend"
+
+#: templates/store/inventory.html
+msgid "Losses trending down"
+msgstr "Verluste fallend"
+
+#: templates/store/inventory.html
+#, python-format
+msgid "Insufficient history (%(n)s wk)"
+msgstr "Zu wenig Historie (%(n)s Wo.)"
+
+#: templates/store/inventory.html
+msgid "No demand from any source"
+msgstr "Kein Bedarf aus irgendeiner Quelle"
+
+#: templates/store/inventory.html
+msgid "Cover at the service-level demand rate"
+msgstr "Reichweite bei der Bedarfsrate auf Servicegrad-Niveau"
+
+#: templates/store/inventory.html
 msgid "Stock recorded against an older fit revision needs officer revalidation"
 msgstr ""
 "Bestand, der gegen eine ältere Fit-Revision erfasst wurde, muss von einem "
@@ -49816,12 +49992,54 @@ msgid "reorder"
 msgstr "Meldebestand"
 
 #: templates/store/inventory.html
+msgid "Available stock is below the suggested reorder point"
+msgstr "Der verfügbare Bestand liegt unter dem vorgeschlagenen Meldebestand"
+
+#: templates/store/inventory.html
+msgid "suggested"
+msgstr "vorgeschlagen"
+
+#: templates/store/inventory.html
 msgid "Available stock is below the safety stock"
 msgstr "Der verfügbare Bestand liegt unter dem Sicherheitsbestand"
 
 #: templates/store/inventory.html
 msgid "safety"
 msgstr "Sicherheitsbestand"
+
+#: templates/store/inventory.html
+msgid "Stock exists but no delivery location is configured"
+msgstr "Bestand vorhanden, aber kein Lieferort konfiguriert"
+
+#: templates/store/inventory.html
+msgid "no location"
+msgstr "kein Standort"
+
+#: templates/store/inventory.html
+msgid "Doctrine retired while stock remains"
+msgstr "Doctrine ausgemustert, aber noch Bestand vorhanden"
+
+#: templates/store/inventory.html
+msgid "obsolete"
+msgstr "veraltet"
+
+#: templates/store/inventory.html
+msgid "No demand from any source and stock untouched for the slow-mover window"
+msgstr ""
+"Kein Bedarf aus irgendeiner Quelle und Bestand über das Langsamdreher-"
+"Fenster unangetastet"
+
+#: templates/store/inventory.html
+msgid "slow mover"
+msgstr "Langsamdreher"
+
+#: templates/store/inventory.html
+msgid "Doctrine rollout in progress"
+msgstr "Doctrine-Rollout läuft"
+
+#: templates/store/inventory.html
+msgid "upcoming"
+msgstr "bevorstehend"
 
 #: templates/store/inventory.html
 msgid "Pilots waiting for this ship"
@@ -50021,6 +50239,104 @@ msgstr ""
 #: templates/store/inventory_fit.html
 msgid "No open backorder demand for this fit."
 msgstr "Kein offener Nachlieferungsbedarf für dieses Fit."
+
+#: templates/store/inventory_fit.html
+msgid "Demand"
+msgstr "Bedarf"
+
+#: templates/store/inventory_fit.html
+msgid "Composed rate"
+msgstr "Zusammengesetzte Rate"
+
+#: templates/store/inventory_fit.html
+#, python-format
+msgid "Insufficient history (%(n)s wk) — no volatility band is shown."
+msgstr ""
+"Zu wenig Historie (%(n)s Wo.) — es wird kein Volatilitätsband angezeigt."
+
+#: templates/store/inventory_fit.html
+msgid "Losses trending up over the window."
+msgstr "Verluste im Zeitfenster steigend."
+
+#: templates/store/inventory_fit.html
+msgid "Losses trending down over the window."
+msgstr "Verluste im Zeitfenster fallend."
+
+#: templates/store/inventory_fit.html
+#, python-format
+msgid "Weekly losses, oldest first (%(n)s wk)"
+msgstr "Wöchentliche Verluste, älteste zuerst (%(n)s Wo.)"
+
+#: templates/store/inventory_fit.html
+msgid "Rate /wk"
+msgstr "Rate /Wo."
+
+#: templates/store/inventory_fit.html
+#, python-format
+msgid "(%(pct)s%% attrition assumed)"
+msgstr "(%(pct)s%% Schwund angenommen)"
+
+#: templates/store/inventory_fit.html
+#, python-format
+msgid "(share %(share)s)"
+msgstr "(Anteil %(share)s)"
+
+#: templates/store/inventory_fit.html
+msgid "Dated demand in horizon"
+msgstr "Terminierter Bedarf im Horizont"
+
+#: templates/store/inventory_fit.html
+msgid "Fleet op"
+msgstr "Flotten-Op"
+
+#: templates/store/inventory_fit.html
+msgid "Manual line"
+msgstr "Manuelle Position"
+
+#: templates/store/inventory_fit.html
+msgid "Suggested reorder point"
+msgstr "Vorgeschlagener Meldebestand"
+
+#: templates/store/inventory_fit.html
+msgid "Order up to"
+msgstr "Auffüllen bis"
+
+#: templates/store/inventory_fit.html
+msgid "Suggested order quantity"
+msgstr "Vorgeschlagene Bestellmenge"
+
+#: templates/store/inventory_fit.html
+#, python-format
+msgid ""
+"Based on %(mean)s/wk mean over %(weeks)s wk, σ = %(sigma)s, service level "
+"%(level)s, lead %(lead)s d, safety stock %(safety)s. Incoming supply offsets "
+"the quantity, never the cover."
+msgstr ""
+"Basierend auf %(mean)s/Wo. Mittelwert über %(weeks)s Wo., σ = %(sigma)s, "
+"Servicegrad %(level)s, Vorlauf %(lead)s T., Sicherheitsbestand %(safety)s. "
+"Eingehender Nachschub verrechnet sich mit der Menge, nie mit der Reichweite."
+
+#: templates/store/inventory_fit.html
+msgid "The officer-set reorder point overrides this suggestion for alerts."
+msgstr ""
+"Der vom Offizier gesetzte Meldebestand hat für Warnungen Vorrang vor diesem "
+"Vorschlag."
+
+#: templates/store/inventory_fit.html
+msgid "undated"
+msgstr "ohne Datum"
+
+#: templates/store/inventory_fit.html
+msgid "None recorded."
+msgstr "Keine erfasst."
+
+#: templates/store/inventory_fit.html
+msgid "Needed by (optional)"
+msgstr "Benötigt bis (optional)"
+
+#: templates/store/inventory_fit.html
+msgid "Add demand line"
+msgstr "Bedarfsposition hinzufügen"
 
 #: templates/store/inventory_fit.html
 msgid "Offer & stocking policy"
@@ -50760,6 +51076,10 @@ msgid "Jita price change, last 30 days"
 msgstr "Jita-Preisänderung, letzte 30 Tage"
 
 #: templates/store/supply_forecast.html
+msgid "Several fits share this hull — margin × demand is approximate"
+msgstr "Mehrere Fits teilen sich diesen Hull — Marge × Nachfrage ist ungefähr"
+
+#: templates/store/supply_forecast.html
 msgid "import"
 msgstr "Importieren"
 
@@ -50773,29 +51093,33 @@ msgstr "Bestand"
 
 #: templates/store/supply_forecast.html
 msgid ""
-"Demand = corp ship losses (killboard) over the window, projected to a weekly/"
-"monthly rate. Supply cost = cheaper of <span class=\"text-cyan\">build</"
-"span> (hull at EVE Ref's full job cost — ME-adjusted materials + install fee "
-"— or our local estimate when the API can't price it, marked <span "
-"class=\"text-cyan\">~est</span>; modules bought at Jita) or <span "
-"class=\"text-muted\">import</span> (full fit at Jita), plus jump-freight to "
-"staging priced off the corp rate card. Fair sell = the store's own price: "
-"Jita sell × markup for doctrine ships and sub-capital hulls, estimated build "
-"cost × the class markup for capital and supercapital hulls. Prices are as "
-"fresh as the last market sync; capital freight is approximate."
+"Demand for doctrine hulls = the composed per-fit demand (loss replacement, "
+"upcoming fleet ops, stock targets and manual lines, summed over the hull's "
+"fits — hover the rate for the breakdown); other hulls use raw window losses. "
+"Supply cost = cheaper of <span class=\"text-cyan\">build</span> (hull at EVE "
+"Ref's full job cost — ME-adjusted materials + install fee — or our local "
+"estimate when the API can't price it, marked <span class=\"text-cyan\">~est</"
+"span>; modules bought at Jita) or <span class=\"text-muted\">import</span> "
+"(full fit at Jita), plus jump-freight to staging priced off the corp rate "
+"card. Fair sell = the store's own price: Jita sell × markup for doctrine "
+"ships and sub-capital hulls, estimated build cost × the class markup for "
+"capital and supercapital hulls. Prices are as fresh as the last market sync; "
+"capital freight is approximate."
 msgstr ""
-"Nachfrage = Corp-Schiffsverluste (killboard) über das Zeitfenster, "
-"projiziert auf eine wöchentliche/monatliche Rate. Versorgungskosten = "
-"günstigeres von <span class=\"text-cyan\">Bau</span> (Hull zu den vollen Job-"
-"Kosten von EVE Ref — ME-angepasste Materialien + Installationsgebühr — oder "
-"unsere lokale Schätzung, wenn die API sie nicht bepreisen kann, markiert mit "
-"<span class=\"text-cyan\">~est</span>; Module zu Jita gekauft) oder <span "
-"class=\"text-muted\">Import</span> (voller Fit zu Jita), plus jump-freight "
-"zum Staging, bepreist nach der Corp-Ratenkarte. Fairer Verkauf = der eigene "
-"Preis des Stores: Jita-Verkauf × Aufschlag für doctrine-Schiffe und Sub-"
-"capital-Hulls, geschätzte Baukosten × Klassen-Aufschlag für capital- und "
-"Supercapital-Hulls. Die Preise sind so aktuell wie die letzte "
-"Marktsynchronisierung; Capital-Fracht ist ungefähr."
+"Nachfrage für doctrine-Hulls = der zusammengesetzte Bedarf pro Fit "
+"(Verlustersatz, bevorstehende Flotten-Ops, Bestandsziele und manuelle "
+"Positionen, summiert über die Fits des Hulls — für die Aufschlüsselung mit "
+"der Maus über die Rate fahren); andere Hulls nutzen rohe Verluste im "
+"Zeitfenster. Versorgungskosten = günstigeres von <span class=\"text-"
+"cyan\">Bau</span> (Hull zu den vollen Job-Kosten von EVE Ref — ME-angepasste "
+"Materialien + Installationsgebühr — oder unsere lokale Schätzung, wenn die "
+"API sie nicht bepreisen kann, markiert mit <span class=\"text-cyan\">~est</"
+"span>; Module zu Jita gekauft) oder <span class=\"text-muted\">Import</span> "
+"(voller Fit zu Jita), plus jump-freight zum Staging, bepreist nach der Corp-"
+"Ratenkarte. Fairer Verkauf = der eigene Preis des Stores: Jita-Verkauf × "
+"Aufschlag für doctrine-Schiffe und Sub-capital-Hulls, geschätzte Baukosten × "
+"Klassen-Aufschlag für capital- und Supercapital-Hulls. Die Preise sind so "
+"aktuell wie die letzte Marktsynchronisierung; Capital-Fracht ist ungefähr."
 
 #: templates/store/supply_forecast.html
 #, python-format
@@ -50926,9 +51250,22 @@ msgstr "— Zuweisung aufheben (zurück in den offenen Pool) —"
 msgid "This source string is intentionally never translated"
 msgstr "This source string is intentionally never translated"
 
-msgid "This plan is closed — reopen it before reserving stock."
+msgid ""
+"A per-type hull target also exists on this stockpile — a separate mechanism, "
+"reconciled by MRP netting in a later phase"
 msgstr ""
-"Dieser Plan ist geschlossen — vor dem Reservieren von Bestand wieder öffnen."
+"Für diesen Rumpf existiert außerdem ein Stücklisten-Ziel auf diesem Lager — "
+"ein separater Mechanismus, der in einer späteren Phase per MRP-Verrechnung "
+"zusammengeführt wird"
 
-msgid "Allocated from stock"
-msgstr "Aus Bestand zugeteilt"
+msgid "hull target %(target)s in %(name)s"
+msgstr "Rumpf-Ziel %(target)s in %(name)s"
+
+msgid "Linked campaign"
+msgstr "Verknüpfte Kampagne"
+
+msgid "Campaign ID (optional)"
+msgstr "Kampagnen-ID (optional)"
+
+msgid "Campaign ID"
+msgstr "Kampagnen-ID"

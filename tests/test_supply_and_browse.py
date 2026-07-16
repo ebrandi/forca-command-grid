@@ -254,12 +254,24 @@ def test_recent_losses(doctrine_world):
 
 @pytest.mark.django_db
 def test_supply_forecast_math(doctrine_world):
+    from datetime import datetime, timedelta
+    from datetime import time as dt_time
+
     from apps.store.forecast import supply_forecast
 
-    now = timezone.now()
+    # P2: demand for doctrine hulls is the composed per-fit rate over COMPLETE
+    # ISO weeks (the current partial week is excluded) — seed one loss into each
+    # of the last four complete weeks so the mean is exactly 1/wk regardless of
+    # which weekday the suite runs on.
+    today = timezone.localdate()
+    week_start = timezone.make_aware(
+        datetime.combine(today - timedelta(days=today.weekday()), dt_time.min)
+    )
     for i in range(4):
-        _loss(100 + i, 16227, now - timezone.timedelta(days=i * 2))
-    data = supply_forecast(window_days=28, staging_system_id=0, limit=10)
+        _loss(100 + i, 16227, week_start - timedelta(weeks=i + 1) + timedelta(hours=12))
+    # 60-day window so the raw `losses` count always sees all four seeds (the
+    # oldest sits up to ~34 days back depending on the weekday the suite runs).
+    data = supply_forecast(window_days=60, staging_system_id=0, limit=10)
     rows = {r.ship_name: r for r in data["rows"]}
     assert "Ferox" in rows
     fx = rows["Ferox"]
@@ -270,8 +282,9 @@ def test_supply_forecast_math(doctrine_world):
     assert fx.freight_unit == Decimal("0")       # no staging set
     assert fx.margin_unit == Decimal("4000000.00")
     assert fx.losses == 4 and fx.per_week == 1.0
-    assert fx.forecast_week == 1 and fx.forecast_month == 5  # ceil(1 × 4.345)
-    assert fx.profit_month == Decimal("20000000.00")
+    # Honest rounding, no floors: round(1) = 1/wk, round(1 × 4.345) = 4/month.
+    assert fx.forecast_week == 1 and fx.forecast_month == 4
+    assert fx.profit_month == Decimal("16000000.00")
 
 
 @pytest.mark.django_db

@@ -13,7 +13,7 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, Value
 from django.utils.translation import gettext_lazy as _
 
 from apps.doctrines.models import DoctrineFit
@@ -580,3 +580,135 @@ class FitWaitlistEntry(models.Model):
 
     def __str__(self) -> str:
         return f"FitWaitlistEntry<fit={self.fit_id} user={self.user_id}>"
+
+class ServiceLevel(models.TextChoices):
+    """Demand-planning service level (P2) — a fixed z-score menu, never a free float."""
+
+    P50 = "0.50", "50%"
+    P80 = "0.80", "80%"
+    P90 = "0.90", "90%"
+    P95 = "0.95", "95%"
+    P99 = "0.99", "99%"
+
+
+class DemandConfig(TimeStampedModel):
+    """Leadership-tunable demand-planning knobs (P2). Singleton via ``active()``."""
+
+    is_active = models.BooleanField(default=True, db_default=True)
+    history_weeks = models.PositiveIntegerField(
+        default=12, db_default=12,
+        help_text=_("Trailing weeks of loss history the demand rate is computed over."),
+    )
+    horizon_days = models.PositiveIntegerField(
+        default=28, db_default=28,
+        help_text=_("Days ahead that dated demand (fleet ops, manual lines) is planned for."),
+    )
+    service_level = models.CharField(
+        max_length=4, choices=ServiceLevel.choices,
+        default=ServiceLevel.P90, db_default=ServiceLevel.P90,
+        help_text=_("Confidence level for demand bands and reorder suggestions."),
+    )
+    op_attrition_pct = models.PositiveIntegerField(
+        default=10, db_default=10,
+        help_text=_("Assumed percentage of a fleet op's pilots whose ship needs replacing."),
+    )
+    slow_mover_days = models.PositiveIntegerField(
+        default=60, db_default=60,
+        help_text=_("Days without demand or outbound stock before a stocked fit is flagged slow-moving."),
+    )
+    include_untagged_losses = models.BooleanField(
+        default=True, db_default=True,
+        help_text=_("Allocate hull losses without a doctrine-fit tag across that hull's offered fits."),
+    )
+    include_recurring_ops = models.BooleanField(
+        default=False, db_default=False,
+        help_text=_("Count recurring fleet ops as future demand. Off by default: their "
+                    "attrition is already inside the trailing loss history."),
+    )
+    use_suggested_reorder_alerts = models.BooleanField(
+        default=False, db_default=False,
+        help_text=_("Raise a console alert when available stock falls below the suggested "
+                    "reorder point (explicit reorder points always alert)."),
+    )
+
+    class Meta:
+        ordering = ["-is_active", "-updated_at"]
+        verbose_name = _("demand planning config")
+        verbose_name_plural = _("demand planning configs")
+
+    def __str__(self) -> str:
+        return f"DemandConfig #{self.pk}{' active' if self.is_active else ''}"
+
+    @classmethod
+    def active(cls) -> DemandConfig:
+        cfg = cls.objects.filter(is_active=True).order_by("-updated_at").first()
+        if cfg is None:
+            cfg = cls.objects.create(is_active=True)
+        return cfg
+
+
+class DemandLine(TimeStampedModel):
+    """An officer-entered dated demand quantity ("40 × Ferox by the 28th") (P2).
+
+    Optionally soft-linked to a campaign by bare id (the house cross-app pattern —
+    dangling ids are expected and resolved defensively). ``note`` is verbatim
+    officer prose, never machine-translated.
+    """
+
+    class Status(models.TextChoices):
+        OPEN = "open", _("Open")
+        CLOSED = "closed", _("Closed")
+
+    fit = models.ForeignKey(DoctrineFit, on_delete=models.CASCADE, related_name="demand_lines")
+    quantity = models.PositiveIntegerField()
+    needed_by = models.DateField(
+        null=True, blank=True,
+        help_text=_("Blank = undated; planned against the end of the demand horizon."),
+    )
+    note = models.CharField(max_length=200, blank=True, default="", db_default="")
+    campaign_id = models.BigIntegerField(null=True, blank=True)
+    status = models.CharField(
+        max_length=8, choices=Status.choices, default=Status.OPEN,
+        db_default=Status.OPEN, db_index=True,
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
+    )
+    closed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
+    )
+    closed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["needed_by", "pk"]
+        indexes = [models.Index(fields=["fit", "status"])]
+
+    def __str__(self) -> str:
+        return f"DemandLine<fit={self.fit_id} qty={self.quantity} {self.status}>"
+
+
+class DemandSnapshot(models.Model):
+    """One weekly record of a fit's composed demand (P2) — the trend history.
+
+    Written by the ``store.snapshot_demand`` beat; 26 weeks retained. ``sources``
+    keeps the machine-keyed breakdown so later phases can decompose it.
+    """
+
+    fit = models.ForeignKey(DoctrineFit, on_delete=models.CASCADE, related_name="demand_snapshots")
+    week_start = models.DateField()
+    rate_week_mean = models.DecimalField(max_digits=12, decimal_places=4, null=True, blank=True)
+    rate_week_hi = models.DecimalField(max_digits=12, decimal_places=4, null=True, blank=True)
+    sigma_week = models.DecimalField(max_digits=12, decimal_places=4, null=True, blank=True)
+    sources = models.JSONField(
+        default=dict, blank=True, db_default=Value({}, models.JSONField())
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["week_start"]
+        constraints = [
+            models.UniqueConstraint(fields=["fit", "week_start"], name="uniq_demand_snapshot_week"),
+        ]
+
+    def __str__(self) -> str:
+        return f"DemandSnapshot<fit={self.fit_id} {self.week_start}>"

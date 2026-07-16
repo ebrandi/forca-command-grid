@@ -977,31 +977,67 @@ def op_override(request: HttpRequest, pk: int) -> HttpResponse:
 # --------------------------------------------------------------------------- #
 #  OPS-4 (3.12): recurring op templates (officer CRUD)
 # --------------------------------------------------------------------------- #
-def _parse_template_slots(request) -> list[dict]:
-    """Read composition rows from the template form (skips blank ship rows)."""
+def _parse_template_slots(request, template=None) -> list[dict]:
+    """Read composition rows from the template form (skips blank ship rows).
+
+    A row may reference a doctrine fit (``slot_fit_id``, P2 chain repair) — the
+    ship name/type then come from the fit and the materialised op slots carry the
+    fit link, so recurring fleets feed doctrine-fit demand planning. A row with a
+    ship name only stays a hull-only slot exactly as before (``max_pilots`` keeps
+    its template semantics: 0 = no cap).
+    """
+    from django.db.models import Q
+
+    from apps.doctrines.models import Doctrine, DoctrineFit
+    from apps.sde.models import SdeType
     from apps.sde.search import resolve_type
 
     ships = request.POST.getlist("slot_ship")
+    fit_ids = request.POST.getlist("slot_fit_id")
     roles = request.POST.getlist("slot_role")
     mins = request.POST.getlist("slot_min")
     maxes = request.POST.getlist("slot_max")
     prios = request.POST.getlist("slot_priority")
+
+    # Validate referenced doctrine fits in one query — active doctrines, plus
+    # whatever this template already links (editing an unrelated field must not
+    # silently drop a slot's fit link because its doctrine has since retired).
+    wanted = {f for f in fit_ids if f.isdigit()}
+    allowed = Q(doctrine__status=Doctrine.Status.ACTIVE)
+    if template is not None and template.pk:
+        allowed |= Q(id__in=template.slots.values("doctrine_fit_id"))
+    fits = {
+        str(f.id): f
+        for f in DoctrineFit.objects.filter(allowed, id__in=wanted)
+    }
+    fit_ship_names = dict(
+        SdeType.objects.filter(type_id__in={f.ship_type_id for f in fits.values()})
+        .values_list("type_id", "name")
+    )
+
     out = []
-    for i, ship in enumerate(ships[:50]):  # cap rows — a crafted POST shouldn't fan out inserts
-        ship = (ship or "").strip()
-        if not ship:
+    n = max(len(ships), len(fit_ids))
+    for i in range(min(n, 50)):  # cap rows — a crafted POST shouldn't fan out inserts
+        ship = (ships[i] if i < len(ships) else "").strip()
+        fit = fits.get(fit_ids[i] if i < len(fit_ids) else "")
+        if not ship and fit is None:
             continue
         def _int(seq, idx, default):
             try:
                 return max(0, int(seq[idx]))
             except (IndexError, ValueError):
                 return default
-        type_id = None
-        match = resolve_type(ship)
-        if match:
-            type_id, ship = match[0], match[1] or ship
+        if fit is not None:
+            ship = fit_ship_names.get(fit.ship_type_id) or fit.name
+            type_id = fit.ship_type_id
+        else:
+            type_id = None
+            match = resolve_type(ship)
+            if match:
+                type_id, ship = match[0], match[1] or ship
         out.append({
             "ship_name": ship[:200], "ship_type_id": type_id,
+            "doctrine_fit": fit,
             "role": roles[i] if i < len(roles) and roles[i] in
                     dict(OperationShipSlot.Role.choices) else OperationShipSlot.Role.DPS,
             "min_pilots": _int(mins, i, 1), "max_pilots": _int(maxes, i, 0),
@@ -1045,7 +1081,7 @@ def _apply_template(request, template) -> dict:
     if template.created_by_id is None:
         template.created_by = request.user
     template.save()
-    slots = _parse_template_slots(request)
+    slots = _parse_template_slots(request, template=template)
     template.slots.all().delete()
     for s in slots:
         OperationTemplateSlot.objects.create(template=template, **s)
@@ -1143,9 +1179,16 @@ _WEEKDAYS = [(0, gettext_lazy("Monday")), (1, gettext_lazy("Tuesday")),
 
 
 def _template_form_context(request, template=None, *, values=None):
+    from apps.doctrines.models import Doctrine, DoctrineFit
+
+    fit_choices = list(
+        DoctrineFit.objects.filter(doctrine__status=Doctrine.Status.ACTIVE)
+        .select_related("doctrine").order_by("doctrine__name", "name")
+    )
     return {
         "template": template, "values": values,
         "types": Operation.Type.choices, "srps": Operation.Srp.choices,
         "roles": OperationShipSlot.Role.choices, "weekdays": _WEEKDAYS,
         "hours": range(24), "slots": list(template.slots.all()) if template else [],
+        "fit_choices": fit_choices,
     }

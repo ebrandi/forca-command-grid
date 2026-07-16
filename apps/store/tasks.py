@@ -70,3 +70,49 @@ def expire_reservations() -> int:
     if processed:
         log.info("reservation expiry: %s order(s) processed", processed)
     return processed
+
+
+@shared_task(name="store.snapshot_demand")
+def snapshot_demand() -> int:
+    """Weekly composed-demand snapshot per fit (P2) + 26-week retention prune.
+
+    Ships ARMED — a deliberate, stated deviation from the inert-by-default beat
+    convention: this is pure internal data collection (one weekly write batch, no
+    member-visible effect, no notifications), and demand *history* only exists if
+    collection starts before anyone wants it. Everything officer-visible that P2
+    adds (the suggested-reorder alert) follows the convention and ships disarmed.
+    Idempotent per (fit, week): re-runs upsert the same rows.
+    """
+    from .availability import availability_for_fits
+    from .demand import demand_for_fits, planning_universe
+    from .models import DemandSnapshot, ShipyardPolicy
+
+    fits = planning_universe()
+    if not fits:
+        return 0
+    availability = availability_for_fits(fits, policy=ShipyardPolicy.active())
+    demand = demand_for_fits(fits, availability=availability)
+
+    today = timezone.localdate()
+    week_start = today - timedelta(days=today.weekday())
+    written = 0
+    for fit in fits:
+        d = demand[fit.id]
+        DemandSnapshot.objects.update_or_create(
+            fit=fit, week_start=week_start,
+            defaults={
+                "rate_week_mean": d.rate_week_mean,
+                "rate_week_hi": d.rate_week_hi,
+                "sigma_week": d.sigma_week,
+                "sources": {
+                    s.key: {"rate_week": str(s.rate_week), "units": str(s.units)}
+                    for s in d.sources
+                },
+            },
+        )
+        written += 1
+    pruned, _detail = DemandSnapshot.objects.filter(
+        week_start__lt=week_start - timedelta(weeks=26)
+    ).delete()
+    log.info("demand snapshot: %s fit(s) written, %s old row(s) pruned", written, pruned)
+    return written

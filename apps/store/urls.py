@@ -35,4 +35,9 @@ urlpatterns = [
          name="inventory_revalidate"),
     path("inventory/need/<int:need_id>/action/", views_inventory.supply_action,
          name="supply_action"),
+    # Demand planning (P2)
+    path("inventory/fit/<int:fit_id>/demand-line/", views_inventory.demand_line_add,
+         name="demand_line_add"),
+    path("inventory/demand-line/<int:line_id>/close/", views_inventory.demand_line_close,
+         name="demand_line_close"),
 ]

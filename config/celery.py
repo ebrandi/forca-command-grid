@@ -679,6 +679,16 @@ app.conf.beat_schedule = {
         "task": "store.expire_reservations",
         "schedule": crontab(minute=28),
     },
+    # Shipyard demand planning (P2): weekly composed-demand snapshot per fit +
+    # 26-week retention prune. Monday 05:35 UTC sits in the Monday-morning weekly
+    # block ahead of readiness (06:00) and clear of the 05:40-05:55 mentorship
+    # dailies — minute 35 at hour 5 is otherwise unclaimed. Pure internal data
+    # collection; deliberately armed (see the task docstring for the stated
+    # deviation from the inert-by-default convention).
+    "store-snapshot-demand": {
+        "task": "store.snapshot_demand",
+        "schedule": crontab(minute=35, hour=5, day_of_week=1),
+    },
 }
 
 

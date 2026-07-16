@@ -64,12 +64,13 @@
   <section class="panel space-y-2 p-5">
     <h2 class="eyebrow text-gold">{% translate "Composition (blank rows ignored)" %}</h2>
     <div class="grid grid-cols-12 gap-2 text-[11px] uppercase tracking-wide text-faint">
-      <span class="col-span-5">{% translate "Ship" %}</span><span class="col-span-3">{% translate "Role" %}</span><span class="col-span-1">{% translate "Min" %}</span><span class="col-span-1">{% translate "Max" %}</span><span class="col-span-2">{% translate "Priority" %}</span>
+      <span class="col-span-3">{% translate "Doctrine fit (optional)" %}</span><span class="col-span-3">{% translate "Ship" %}</span><span class="col-span-2">{% translate "Role" %}</span><span class="col-span-1">{% translate "Min" %}</span><span class="col-span-1">{% translate "Max" %}</span><span class="col-span-2">{% translate "Priority" %}</span>
     </div>
     {% for s in slots %}
     <div class="grid grid-cols-12 gap-2">
-      <input name="slot_ship" class="input col-span-5" value="{{ s.ship_name }}">
-      <select name="slot_role" class="input col-span-3">{% for v, label in roles %}<option value="{{ v }}" {% if v == s.role %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+      <select name="slot_fit_id" class="input col-span-3"><option value="">{% translate "— custom ship —" %}</option>{% for f in fit_choices %}<option value="{{ f.id }}" {% if f.id == s.doctrine_fit_id %}selected{% endif %}>{{ f.doctrine.name }} · {{ f.name }}</option>{% endfor %}</select>
+      <input name="slot_ship" class="input col-span-3" value="{{ s.ship_name }}">
+      <select name="slot_role" class="input col-span-2">{% for v, label in roles %}<option value="{{ v }}" {% if v == s.role %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
       <input name="slot_min" type="number" min="0" class="input col-span-1" value="{{ s.min_pilots }}">
       <input name="slot_max" type="number" min="0" class="input col-span-1" value="{{ s.max_pilots }}">
       <input name="slot_priority" type="number" min="1" class="input col-span-2" value="{{ s.priority }}">
@@ -77,8 +78,9 @@
     {% endfor %}
     {% for _ in "12345" %}
     <div class="grid grid-cols-12 gap-2">
-      <input name="slot_ship" class="input col-span-5" placeholder="e.g. Ferox">
-      <select name="slot_role" class="input col-span-3">{% for v, label in roles %}<option value="{{ v }}">{{ label }}</option>{% endfor %}</select>
+      <select name="slot_fit_id" class="input col-span-3"><option value="">{% translate "— custom ship —" %}</option>{% for f in fit_choices %}<option value="{{ f.id }}">{{ f.doctrine.name }} · {{ f.name }}</option>{% endfor %}</select>
+      <input name="slot_ship" class="input col-span-3" placeholder="e.g. Ferox">
+      <select name="slot_role" class="input col-span-2">{% for v, label in roles %}<option value="{{ v }}">{{ label }}</option>{% endfor %}</select>
       <input name="slot_min" type="number" min="0" class="input col-span-1" value="1">
       <input name="slot_max" type="number" min="0" class="input col-span-1" value="0">
       <input name="slot_priority" type="number" min="1" class="input col-span-2" value="1">

@@ -161,6 +161,83 @@
       {% endif %}
     </section>
 
+    <!-- Composed demand (P2) -->
+    <section class="panel p-4 text-sm">
+      <h2 class="eyebrow mb-2">{% translate "Demand" %}</h2>
+      <div class="flex items-center justify-between">
+        <span class="text-faint">{% translate "Composed rate" %}</span>
+        <span class="data text-xl font-bold text-ink">
+          {% if d.rate_week_mean or d.events %}{{ d.rate_week_mean }}{% if d.has_band %} <span class="text-sm text-faint">± {{ d.sigma_week }}</span>{% endif %} <span class="text-sm text-faint">/wk</span>
+          {% else %}<span class="text-faint">{% translate "none" %}</span>{% endif %}
+        </span>
+      </div>
+      {% if not d.has_band %}<p class="mt-1 text-[11px] text-faint">{% blocktranslate with n=d.weeks_observed %}Insufficient history ({{ n }} wk) — no volatility band is shown.{% endblocktranslate %}</p>{% endif %}
+      {% if hull_targets %}<p class="mt-1 text-[11px] text-faint">{% for name, target in hull_targets %}<span class="chip !py-0 !text-[10px]" title="{% translate 'A per-type hull target also exists on this stockpile — a separate mechanism, reconciled by MRP netting in a later phase' %}">{% blocktranslate with name=name target=target %}hull target {{ target }} in {{ name }}{% endblocktranslate %}</span> {% endfor %}</p>{% endif %}
+      {% if d.trend == 'rising' %}<p class="mt-1 text-[11px] text-loss">{% translate "Losses trending up over the window." %}</p>{% elif d.trend == 'falling' %}<p class="mt-1 text-[11px] text-win">{% translate "Losses trending down over the window." %}</p>{% endif %}
+
+      {% if d.buckets %}
+      <div class="mt-2 flex h-8 items-end gap-0.5 overflow-hidden" title="{% blocktranslate with n=d.weeks_observed %}Weekly losses, oldest first ({{ n }} wk){% endblocktranslate %}">
+        {% for b in d.buckets %}<span class="w-2 rounded-t bg-cyan/60" style="height:{% widthratio b 10 100 %}%; min-height:2px"></span>{% endfor %}
+      </div>
+      {% endif %}
+
+      {% if d.sources %}
+      <table class="mt-3 w-full text-[13px]">
+        <thead><tr class="text-left text-[11px] uppercase text-faint"><th class="py-1">{% translate "Source" %}</th><th class="py-1 text-right">{% translate "Rate /wk" %}</th><th class="py-1 text-right">{% translate "Units" %}</th></tr></thead>
+        <tbody>
+          {% for s in d.sources %}
+          <tr class="border-t border-line/40">
+            <td class="py-1">{{ s.label }}{% if s.key == 'ops' %} <span class="text-[10px] text-faint">{% blocktranslate with pct=s.detail.attrition_pct %}({{ pct }}% attrition assumed){% endblocktranslate %}</span>{% endif %}{% if s.key == 'loss_untagged' %} <span class="text-[10px] text-faint">{% blocktranslate with share=s.detail.share %}(share {{ share }}){% endblocktranslate %}</span>{% endif %}</td>
+            <td class="py-1 text-right data">{% if s.rate_week %}{{ s.rate_week }}{% else %}—{% endif %}</td>
+            <td class="py-1 text-right data">{% if s.units %}{{ s.units }}{% else %}—{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+
+      {% if d.events %}
+      <div class="mt-2 border-t border-line/50 pt-2">
+        <p class="text-[11px] uppercase text-faint">{% translate "Dated demand in horizon" %}</p>
+        {% for when, units, key in d.events %}
+        <div class="flex items-center justify-between text-[13px]"><span class="text-muted">{{ when|date:"j M" }} · {% if key == 'ops' %}{% translate "Fleet op" %}{% else %}{% translate "Manual line" %}{% endif %}</span><span class="data">{{ units }}</span></div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if d.suggested_reorder is not None %}
+      <div class="mt-2 border-t border-line/50 pt-2">
+        <div class="flex items-center justify-between"><span class="text-faint">{% translate "Suggested reorder point" %}</span><span class="data font-bold text-ink">{{ d.suggested_reorder }}</span></div>
+        <div class="flex items-center justify-between"><span class="text-faint">{% translate "Order up to" %}</span><span class="data text-muted">{{ d.order_up_to }}</span></div>
+        <div class="flex items-center justify-between"><span class="text-faint">{% translate "Suggested order quantity" %}</span><span class="data font-bold {% if d.suggested_order_qty %}text-gold{% else %}text-faint{% endif %}">{{ d.suggested_order_qty }}</span></div>
+        <p class="mt-1 text-[11px] text-faint">
+          {% blocktranslate with mean=d.rate_week_mean weeks=d.weeks_observed sigma=d.sigma_week|default:"—" level=demand_config.get_service_level_display lead=a.lead_days safety=offer.safety_stock|default:0 %}Based on {{ mean }}/wk mean over {{ weeks }} wk, σ = {{ sigma }}, service level {{ level }}, lead {{ lead }} d, safety stock {{ safety }}. Incoming supply offsets the quantity, never the cover.{% endblocktranslate %}
+          {% if offer.reorder_point %}{% translate "The officer-set reorder point overrides this suggestion for alerts." %}{% endif %}
+        </p>
+      </div>
+      {% endif %}
+
+      <div class="mt-3 border-t border-line/50 pt-2">
+        <p class="mb-1 text-[11px] uppercase text-faint">{% translate "Manual demand lines" %}</p>
+        {% for line in demand_lines %}
+        <div class="flex items-center justify-between gap-2 py-0.5 text-[13px] {% if line.status == 'closed' %}opacity-50{% endif %}">
+          <span class="text-muted">{{ line.quantity }} × {% if line.needed_by %}{{ line.needed_by|date:"j M" }}{% else %}{% translate "undated" %}{% endif %}{% if line.note %} · <span class="text-faint">{{ line.note }}</span>{% endif %}{% if line.campaign_id %} · <span class="chip !py-0 !text-[10px]" title="{% translate 'Linked campaign' %}">{% if line.campaign_name %}{{ line.campaign_name }}{% else %}#{{ line.campaign_id }}{% endif %}</span>{% endif %}</span>
+          {% if line.status == 'open' %}
+          <form method="post" action="{% url 'store:demand_line_close' line.pk %}">{% csrf_token %}<button class="btn-ghost text-[11px]">{% translate "Close" %}</button></form>
+          {% else %}<span class="chip">{% translate "Closed" %}</span>{% endif %}
+        </div>
+        {% empty %}<p class="text-[13px] text-faint">{% translate "None recorded." %}</p>{% endfor %}
+        <form method="post" action="{% url 'store:demand_line_add' fit.pk %}" class="mt-2 grid grid-cols-12 gap-2">
+          {% csrf_token %}
+          <input name="quantity" type="number" min="1" required placeholder="{% translate 'Qty' %}" class="input-field col-span-3" aria-label="{% translate 'Quantity' %}">
+          <input name="needed_by" type="date" class="input-field col-span-4" aria-label="{% translate 'Needed by (optional)' %}">
+          <input name="note" maxlength="200" placeholder="{% translate 'Note (optional)' %}" class="input-field col-span-5" aria-label="{% translate 'Note' %}">
+          <input name="campaign_id" type="number" min="1" placeholder="{% translate 'Campaign ID (optional)' %}" class="input-field col-span-12" aria-label="{% translate 'Campaign ID' %}">
+          <button class="btn-gold col-span-12 text-xs">{% translate "Add demand line" %}</button>
+        </form>
+      </div>
+    </section>
+
     <!-- Offer overrides -->
     <section class="panel p-4">
       <h2 class="eyebrow mb-2">{% translate "Offer & stocking policy" %}</h2>

@@ -14,7 +14,6 @@ Margin × forecast = the profit of supplying it. Pure reads; writes nothing.
 """
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass
 from datetime import timedelta
 from decimal import Decimal
@@ -49,7 +48,10 @@ class SupplyRow:
     is_doctrine: bool
     hull_class: str
     losses: int
-    per_week: float
+    per_week: float          # composed weekly demand (sum over the hull's fits)
+    demand_week_hi: float | None   # service-level band top (None = insufficient history)
+    mixed_fits: bool         # >1 fit contributes demand → margin×demand is approximate
+    demand_sources: list     # merged DemandSource lines for the breakdown
     forecast_week: int
     forecast_month: int
     jita_unit: Decimal       # fitted Jita sell (import basis, pre-freight; 0 = no reference)
@@ -149,6 +151,9 @@ def supply_forecast(*, window_days: int = 30, staging_system_id: int = 0,
     from apps.market.pricing import price_for
     from apps.sde.models import SdeType
 
+    from .availability import availability_for_fits
+    from .demand import DemandSource, demand_for_fits, planning_universe
+    from .models import ShipyardPolicy
     from .pricing import price_doctrine_fit, price_hull_order
     from .services import active_config
 
@@ -156,6 +161,17 @@ def supply_forecast(*, window_days: int = 30, staging_system_id: int = 0,
     losses = recent_losses(window_days)
     if not losses:
         return _empty(window_days, staging_system_id)
+
+    # Composed demand per fit (P2) — hull rows sum their fits' demand, which kills
+    # the old one-canonical-fit collapse for the demand half. Pricing stays the
+    # per-hull canonical lane below.
+    universe = planning_universe()
+    demand_avail = availability_for_fits(universe, policy=ShipyardPolicy.active())
+    composed = demand_for_fits(universe, availability=demand_avail)
+    fits_by_hull: dict[int, list] = {}
+    for f in universe:
+        if f.ship_type_id:
+            fits_by_hull.setdefault(f.ship_type_id, []).append(f)
 
     # Keep only real ship hulls (category 6, no pods); busiest first, capped.
     ship_groups = {
@@ -234,15 +250,43 @@ def supply_forecast(*, window_days: int = 30, staging_system_id: int = 0,
         else:
             continue  # no lane can actually supply it
 
-        per_week = float(Decimal(demand) / period_weeks)
-        fc_week = max(1, math.ceil(per_week))
-        fc_month = max(1, math.ceil(per_week * float(WEEKS_PER_MONTH)))
+        # Composed demand (P2): a doctrine hull's rate is the SUM over its fits —
+        # no floors, no false precision. A hull with no offered fits keeps the raw
+        # window-loss rate (there is no fit-grain signal to compose).
+        hull_demand = [composed[f.id] for f in fits_by_hull.get(tid, [])]
+        if hull_demand:
+            per_week = float(sum(d.rate_week_mean for d in hull_demand))
+            has_band = any(d.has_band for d in hull_demand)
+            demand_week_hi = (
+                float(sum(d.rate_week_hi for d in hull_demand)) if has_band else None
+            )
+            contributing = [d for d in hull_demand if d.rate_week_mean > 0 or d.events]
+            mixed = len(contributing) > 1
+            merged: dict[str, DemandSource] = {}
+            for d in hull_demand:
+                for s in d.sources:
+                    slot = merged.setdefault(
+                        s.key, DemandSource(key=s.key, rate_week=Decimal("0"),
+                                            units=Decimal("0")))
+                    slot.rate_week += s.rate_week
+                    slot.units += s.units
+            demand_sources = list(merged.values())
+        else:
+            per_week = float(Decimal(demand) / period_weeks)
+            demand_week_hi = None
+            mixed = False
+            demand_sources = []
+        # Honest rounded values — one loss in 180 days no longer forecasts ≥1/week.
+        fc_week = round(per_week)
+        fc_month = round(per_week * float(WEEKS_PER_MONTH))
         margin = (sell_unit - supply_cost).quantize(Decimal("0.01"))
 
         rows.append(SupplyRow(
             ship_type_id=tid, ship_name=priced.ship_name,
             doctrine=doctrine, fit_id=fit_id, fit_name=fit_name, is_doctrine=is_doctrine,
             hull_class=hull_class, losses=demand, per_week=round(per_week, 2),
+            demand_week_hi=round(demand_week_hi, 2) if demand_week_hi is not None else None,
+            mixed_fits=mixed, demand_sources=demand_sources,
             forecast_week=fc_week, forecast_month=fc_month,
             jita_unit=jita_unit, freight_unit=freight, import_cost=import_cost,
             build_cost=build_total, supply_cost=supply_cost, method=method,
@@ -255,12 +299,13 @@ def supply_forecast(*, window_days: int = 30, staging_system_id: int = 0,
     rows.sort(key=lambda r: r.profit_month, reverse=True)
     top = rows[:limit]
 
-    # 30-day Jita price trend for the shown rows (cheap: only the ones we return; needs
+    # 30-day Jita price trend for the shown rows in ONE batched query (needs
     # market history loaded — see import_everef_market_history).
     from apps.market.everef_history import THE_FORGE
-    from apps.market.services import price_trend
+    from apps.market.services import price_trends
+    trends = price_trends([r.ship_type_id for r in top], THE_FORGE, 30)
     for r in top:
-        pt = price_trend(r.ship_type_id, THE_FORGE, 30)
+        pt = trends.get(r.ship_type_id)
         if pt:
             r.trend_pct = round(pt["change_pct"], 1)
 

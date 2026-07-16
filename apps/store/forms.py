@@ -209,3 +209,20 @@ class ConfigForm(forms.ModelForm):
         self._check("supercap_markup", Decimal("1"), Decimal("10"))
         self._check("deposit_pct", Decimal("0"), Decimal("1"))
         return cleaned
+
+
+class DemandLineForm(forms.Form):
+    """Officer-entered manual demand line ("40 × Ferox by the 28th") (P2)."""
+
+    quantity = forms.IntegerField(min_value=1, max_value=100_000)
+    needed_by = forms.DateField(required=False)
+    note = forms.CharField(required=False, max_length=200)
+    campaign_id = forms.IntegerField(required=False, min_value=1)
+
+    def clean_needed_by(self):
+        from django.utils import timezone
+
+        value = self.cleaned_data.get("needed_by")
+        if value and value < timezone.localdate():
+            raise forms.ValidationError(_("The date must be today or later."))
+        return value

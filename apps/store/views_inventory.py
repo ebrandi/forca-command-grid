@@ -17,7 +17,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
-from apps.doctrines.models import Doctrine, DoctrineFit
+from apps.doctrines.models import DoctrineFit
 from core import rbac
 from core.audit import audit_log, client_ip
 from core.rbac import role_required
@@ -58,24 +58,25 @@ def _paginate(request: HttpRequest, items: list, per_page: int = 50):
 
 
 def _inventory_rows(policy: ShipyardPolicy) -> list[dict]:
-    """One row per active doctrine fit: availability + planning data + alerts.
+    """One row per planning-universe fit: availability + composed demand + alerts.
 
-    Constant query count: availability is the batched service; names, losses,
-    backorder/waitlist counts and stale flags are one grouped query each."""
+    The universe is ACTIVE-doctrine fits ∪ fits still holding stock — a retired
+    doctrine's stock must stay visible (flagged obsolete), not silently vanish.
+    Constant query count: availability and demand are the batched services;
+    names, backorder/waitlist counts and stale flags are one grouped query each."""
     from apps.sde.models import SdeType
 
-    from .forecast import recent_losses
+    from .demand import demand_for_fits, planning_universe
+    from .models import DemandConfig
 
-    fits = list(
-        DoctrineFit.objects.filter(doctrine__status=Doctrine.Status.ACTIVE)
-        .select_related("doctrine").order_by("doctrine__name", "name")
-    )
+    fits = planning_universe()
     avail = availability_for_fits(fits, policy=policy)
+    config = DemandConfig.active()
+    demand = demand_for_fits(fits, availability=avail, config=config)
     names = dict(
         SdeType.objects.filter(type_id__in={f.ship_type_id for f in fits})
         .values_list("type_id", "name")
     )
-    losses = recent_losses(30)
     backordered = {
         row["doctrine_fit"]: row["s"]
         for row in StoreOrder.objects.filter(
@@ -97,17 +98,27 @@ def _inventory_rows(policy: ShipyardPolicy) -> list[dict]:
     rows = []
     for fit in fits:
         a = avail[fit.id]
+        d = demand[fit.id]
         offer = a.offer
-        loss_rate = losses.get(fit.ship_type_id, 0) / 30.0  # est. losses/day (30d killboard)
-        days_cover = round(a.atp / loss_rate, 1) if loss_rate > 0 and a.atp > 0 else None
         reorder = offer.reorder_point if offer else None
         target = offer.target_stock if offer else None
         safety = offer.safety_stock if offer else 0
         alerts = []
         if a.stale_on_hand:
             alerts.append("stale")
-        if reorder is not None and a.atp <= reorder:
-            alerts.append("reorder")
+        # An explicit officer-set reorder point ALWAYS wins for alerting — the
+        # suggestion never fires while one exists (breached or not). It also only
+        # alerts when leadership arms the knob (inert by default), and its
+        # trigger is strict `<` — paired with S > s this can't churn.
+        if reorder is not None:
+            if a.atp <= reorder:
+                alerts.append("reorder")
+        elif (
+            config.use_suggested_reorder_alerts
+            and d.suggested_reorder is not None
+            and a.atp < d.suggested_reorder
+        ):
+            alerts.append("suggested")
         if safety and a.atp < safety:
             alerts.append("safety")
         if a.state in (OfferState.READY, OfferState.LIMITED) and a.location is None and a.on_hand:
@@ -116,10 +127,12 @@ def _inventory_rows(policy: ShipyardPolicy) -> list[dict]:
             "fit": fit,
             "ship_name": names.get(fit.ship_type_id, fit.name),
             "a": a,
+            "d": d,
             "offer": offer,
             "backordered": backordered.get(fit.id, 0),
             "waitlisted": waitlisted.get(fit.id, 0),
-            "days_cover": days_cover,
+            "days_cover": d.days_cover,
+            "days_cover_lo": d.days_cover_lo,
             "reorder_point": reorder,
             "target_stock": target,
             "safety_stock": safety,
@@ -194,17 +207,23 @@ def _export_csv(rows: list[dict]) -> HttpResponse:
     writer.writerow([
         "doctrine", "fit", "ship", "state", "location", "on_hand", "reserved",
         "atp", "stale", "incoming", "backordered", "waitlisted", "safety_stock",
-        "reorder_point", "target_stock", "lead_days", "days_cover", "priority",
-        "last_reconciled",
+        "reorder_point", "target_stock", "lead_days", "days_cover", "days_cover_lo",
+        "demand_week_mean", "demand_week_hi", "suggested_reorder",
+        "suggested_order_qty", "flags", "priority", "last_reconciled",
     ])
     for r in rows:
         a = r["a"]
+        d = r["d"]
         writer.writerow([
             r["fit"].doctrine.name, r["fit"].name, r["ship_name"], a.state,
             str(a.location) if a.location else "", a.on_hand, a.reserved, a.atp,
             a.stale_on_hand, a.incoming, r["backordered"], r["waitlisted"],
             r["safety_stock"], r["reorder_point"] or "", r["target_stock"] or "",
             a.lead_days, r["days_cover"] if r["days_cover"] is not None else "",
+            r["days_cover_lo"] if r["days_cover_lo"] is not None else "",
+            d.rate_week_mean, d.rate_week_hi if d.has_band else "",
+            d.suggested_reorder if d.suggested_reorder is not None else "",
+            d.suggested_order_qty, " ".join(d.flags),
             r["priority"],
             r["last_reconciled"].isoformat() if r["last_reconciled"] else "",
         ])
@@ -236,7 +255,46 @@ def inventory_fit(request: HttpRequest, fit_id: int) -> HttpResponse:
     else:
         form = FitOfferForm(instance=offer)
 
-    avail = availability_for_fits([fit], policy=policy)[fit.id]
+    from .demand import demand_for_fits, planning_universe
+    from .forms import DemandLineForm
+    from .models import DemandConfig, DemandLine
+
+    # Demand must be computed over the full planning universe even on a
+    # single-fit page: untagged hull losses are allocated across the fits in the
+    # call, so a single-fit call would hand this fit 100% of its hull's untagged
+    # losses and disagree with the console row.
+    universe = planning_universe()
+    if all(f.id != fit.id for f in universe):
+        universe.append(fit)
+    universe_avail = availability_for_fits(universe, policy=policy)
+    avail = universe_avail[fit.id]
+    demand_config = DemandConfig.active()
+    demand = demand_for_fits(universe, availability=universe_avail, config=demand_config)[fit.id]
+    demand_lines = list(
+        DemandLine.objects.filter(fit=fit).select_related("created_by", "closed_by")
+        .order_by("status", "needed_by", "pk")[:30]
+    )
+    # Resolve campaign soft-links defensively (bare ids; dangling is expected).
+    campaign_ids = {ln.campaign_id for ln in demand_lines if ln.campaign_id}
+    campaign_names = {}
+    if campaign_ids:
+        from apps.campaigns.models import Campaign
+
+        campaign_names = dict(
+            Campaign.objects.filter(pk__in=campaign_ids).values_list("pk", "name")
+        )
+    for ln in demand_lines:
+        ln.campaign_name = campaign_names.get(ln.campaign_id)
+    # Adjacent mechanism, disclosed rather than merged (P2 §1): per-type hull
+    # targets living on stockpiles. Reconciling the two target systems is P3's job.
+    from apps.stockpile.models import Stockpile, StockpileItem
+
+    hull_targets = list(
+        StockpileItem.objects.filter(
+            type_id=fit.ship_type_id, quantity_target__isnull=False,
+            stockpile__kind=Stockpile.Kind.CORP,
+        ).select_related("stockpile").values_list("stockpile__name", "quantity_target")
+    ) if fit.ship_type_id else []
     current_hash = manifest_hash(fit)
     stocks = list(
         FitStock.objects.filter(doctrine_fit=fit).select_related("location").order_by("id")
@@ -279,6 +337,8 @@ def inventory_fit(request: HttpRequest, fit_id: int) -> HttpResponse:
         "adjust_form": StockAdjustForm(),
         "esi": _esi_reconciliation(fit, avail.location),
         "waitlist_count": FitWaitlistEntry.objects.filter(fit=fit).count(),
+        "d": demand, "demand_config": demand_config, "demand_lines": demand_lines,
+        "demand_line_form": DemandLineForm(), "hull_targets": hull_targets,
     })
 
 
@@ -474,3 +534,59 @@ def supply_action(request: HttpRequest, need_id: int) -> HttpResponse:
     audit_log(request.user, "store.supply_vehicle", target_type="fit_supply_need",
               target_id=str(need.pk), metadata={"action": action}, ip=client_ip(request))
     return redirect("store:inventory_fit", fit_id=need.doctrine_fit_id)
+
+
+@login_required
+@role_required(rbac.ROLE_OFFICER)
+@require_POST
+def demand_line_add(request: HttpRequest, fit_id: int) -> HttpResponse:
+    """Record a manual demand line for a fit (officer-only, audited)."""
+    from .forms import DemandLineForm
+    from .models import DemandLine
+
+    fit = get_object_or_404(DoctrineFit, pk=fit_id)
+    form = DemandLineForm(request.POST)
+    if not form.is_valid():
+        for errors in form.errors.values():
+            for err in errors:
+                messages.error(request, err)
+        return redirect("store:inventory_fit", fit_id=fit.pk)
+    line = DemandLine.objects.create(
+        fit=fit,
+        quantity=form.cleaned_data["quantity"],
+        needed_by=form.cleaned_data.get("needed_by"),
+        note=form.cleaned_data.get("note") or "",
+        campaign_id=form.cleaned_data.get("campaign_id"),
+        created_by=request.user,
+    )
+    audit_log(request.user, "store.demand_line.add", target_type="doctrine_fit",
+              target_id=str(fit.pk),
+              metadata={"line": line.pk, "quantity": line.quantity,
+                        "needed_by": line.needed_by.isoformat() if line.needed_by else None,
+                        "campaign_id": line.campaign_id},
+              ip=client_ip(request))
+    messages.success(request, _("Demand line recorded: %(qty)s unit(s).") % {"qty": line.quantity})
+    return redirect("store:inventory_fit", fit_id=fit.pk)
+
+
+@login_required
+@role_required(rbac.ROLE_OFFICER)
+@require_POST
+def demand_line_close(request: HttpRequest, line_id: int) -> HttpResponse:
+    """Close a manual demand line (status-guarded; closing is closing)."""
+    from django.utils import timezone
+
+    from .models import DemandLine
+
+    line = get_object_or_404(DemandLine.objects.select_related("fit"), pk=line_id)
+    updated = DemandLine.objects.filter(pk=line.pk, status=DemandLine.Status.OPEN).update(
+        status=DemandLine.Status.CLOSED, closed_by=request.user, closed_at=timezone.now(),
+    )
+    if updated:
+        audit_log(request.user, "store.demand_line.close", target_type="doctrine_fit",
+                  target_id=str(line.fit_id), metadata={"line": line.pk},
+                  ip=client_ip(request))
+        messages.success(request, _("Demand line closed."))
+    else:
+        messages.info(request, _("That demand line is already closed."))
+    return redirect("store:inventory_fit", fit_id=line.fit_id)

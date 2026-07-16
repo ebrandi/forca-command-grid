@@ -500,6 +500,12 @@ class OperationTemplateSlot(models.Model):
         OperationTemplate, on_delete=models.CASCADE, related_name="slots")
     ship_name = models.CharField(max_length=200)
     ship_type_id = models.BigIntegerField(null=True, blank=True)
+    # P2 chain repair: without this, ops materialised from templates carry hulls
+    # only and recurring fleets are invisible to doctrine-fit demand planning.
+    doctrine_fit = models.ForeignKey(
+        "doctrines.DoctrineFit", on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
+        help_text=gettext_lazy("The doctrine fit this slot is for, if it's an official doctrine ship."),
+    )
     role = models.CharField(max_length=10, choices=OperationShipSlot.Role.choices,
                             default=OperationShipSlot.Role.DPS)
     min_pilots = models.PositiveIntegerField(default=1)

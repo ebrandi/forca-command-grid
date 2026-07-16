@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-16 20:11+0000\n"
+"POT-Creation-Date: 2026-07-16 21:44+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: ko machine-assisted draft\n"
@@ -7854,6 +7854,10 @@ msgstr "BOM을 다시 계산했습니다."
 #: apps/industry/views.py
 msgid "Shopping list generated."
 msgstr "쇼핑 목록이 생성되었습니다."
+
+#: apps/industry/views.py
+msgid "This plan is closed — reopen it before reserving stock."
+msgstr "이 계획은 종료되었습니다 — 재고를 예약하기 전에 다시 여세요."
 
 #: apps/industry/views.py
 #, python-format
@@ -19320,6 +19324,42 @@ msgstr "작업을 맡았습니다 — 안전 비행하세요."
 msgid "Not your job."
 msgstr "본인의 작업이 아닙니다."
 
+#: apps/store/demand.py
+msgid "Loss replacement"
+msgstr "손실 보충"
+
+#: apps/store/demand.py
+msgid "Untagged hull losses (allocated)"
+msgstr "태그 없는 선체 손실 (배분됨)"
+
+#: apps/store/demand.py
+msgid "Fleet ops"
+msgstr "함대 작전"
+
+#: apps/store/demand.py
+msgid "Target build-up"
+msgstr "목표 재고 확충"
+
+#: apps/store/demand.py templates/store/inventory_fit.html
+msgid "Manual demand lines"
+msgstr "수동 수요 항목"
+
+#: apps/store/demand.py
+msgid "Slow mover"
+msgstr "저회전"
+
+#: apps/store/demand.py
+msgid "Obsolete"
+msgstr "불용"
+
+#: apps/store/demand.py templates/admin_audit/console/readiness/doctrines.html
+msgid "Upcoming"
+msgstr "예정"
+
+#: apps/store/demand.py
+msgid "Insufficient history"
+msgstr "이력 부족"
+
 #: apps/store/forms.py
 msgid "Delivery / staging system"
 msgstr "배송 / 집결 성계"
@@ -19344,6 +19384,10 @@ msgstr "잔액을 보정하는 이유"
 #: apps/store/forms.py
 msgid "What changed (shown to the buyer)"
 msgstr "변경 내용 (구매자에게 표시)"
+
+#: apps/store/forms.py
+msgid "The date must be today or later."
+msgstr "날짜는 오늘이거나 그 이후여야 합니다."
 
 #: apps/store/models.py
 msgid "Public — anyone can shop"
@@ -19566,6 +19610,70 @@ msgstr "피팅 재고 항목"
 #: apps/store/models.py
 msgid "fit waitlist entries"
 msgstr "피팅 대기 목록 항목"
+
+#: apps/store/models.py
+msgid "Trailing weeks of loss history the demand rate is computed over."
+msgstr "수요율을 계산하는 최근 손실 이력의 주 수입니다."
+
+#: apps/store/models.py
+msgid "Days ahead that dated demand (fleet ops, manual lines) is planned for."
+msgstr "날짜 지정 수요(함대 작전, 수동 항목)를 계획하는 향후 일수입니다."
+
+#: apps/store/models.py
+msgid "Confidence level for demand bands and reorder suggestions."
+msgstr "수요 밴드와 재주문 제안에 사용하는 신뢰 수준입니다."
+
+#: apps/store/models.py
+msgid "Assumed percentage of a fleet op's pilots whose ship needs replacing."
+msgstr "함선 교체가 필요하다고 가정하는 함대 작전 파일럿의 비율입니다."
+
+#: apps/store/models.py
+msgid ""
+"Days without demand or outbound stock before a stocked fit is flagged slow-"
+"moving."
+msgstr ""
+"수요도 출고도 없이 이 일수가 지나면 재고 보유 피팅이 저회전으로 표시됩니다."
+
+#: apps/store/models.py
+msgid ""
+"Allocate hull losses without a doctrine-fit tag across that hull's offered "
+"fits."
+msgstr ""
+"doctrine fit 태그가 없는 선체 손실을 해당 선체의 판매 중인 피팅들에 배분합니"
+"다."
+
+#: apps/store/models.py
+msgid ""
+"Count recurring fleet ops as future demand. Off by default: their attrition "
+"is already inside the trailing loss history."
+msgstr ""
+"반복 함대 작전을 미래 수요로 집계합니다. 기본값은 꺼짐입니다: 해당 손실은 이"
+"미 최근 손실 이력에 포함되어 있습니다."
+
+#: apps/store/models.py
+msgid ""
+"Raise a console alert when available stock falls below the suggested reorder "
+"point (explicit reorder points always alert)."
+msgstr ""
+"가용 재고가 제안 재주문점 아래로 떨어지면 콘솔 알림을 발생시킵니다 (명시적 재"
+"주문점은 항상 알림)."
+
+#: apps/store/models.py
+msgid "demand planning config"
+msgstr "수요 계획 설정"
+
+#: apps/store/models.py
+msgid "demand planning configs"
+msgstr "수요 계획 설정"
+
+#: apps/store/models.py templates/admin_audit/console/raffle_draw.html
+#: templates/store/inventory_fit.html
+msgid "Closed"
+msgstr "종료됨"
+
+#: apps/store/models.py
+msgid "Blank = undated; planned against the end of the demand horizon."
+msgstr "비워두면 = 날짜 미지정; 수요 계획 기간의 끝을 기준으로 계획됩니다."
 
 #: apps/store/pricing.py
 msgid "That fit has no hull or modules to price."
@@ -19847,6 +19955,19 @@ msgstr "ERP 빌드 작업을 대기열에 추가하고 연결했습니다."
 #: apps/store/views_inventory.py
 msgid "Claimable task created and linked."
 msgstr "맡을 수 있는 작업을 생성하여 연결했습니다."
+
+#: apps/store/views_inventory.py
+#, python-format
+msgid "Demand line recorded: %(qty)s unit(s)."
+msgstr "수요 항목을 기록했습니다: %(qty)s척."
+
+#: apps/store/views_inventory.py
+msgid "Demand line closed."
+msgstr "수요 항목을 종료했습니다."
+
+#: apps/store/views_inventory.py
+msgid "That demand line is already closed."
+msgstr "해당 수요 항목은 이미 종료되었습니다."
 
 #: apps/tasks/models.py
 msgid "Build ships"
@@ -25760,6 +25881,7 @@ msgstr "관리"
 
 #: templates/admin_audit/console/members.html
 #: templates/admin_audit/console/readiness/alerts.html
+#: templates/store/inventory.html templates/store/inventory_fit.html
 msgid "none"
 msgstr "없음"
 
@@ -28219,6 +28341,7 @@ msgstr "티켓 출처"
 #: templates/admin_audit/console/raffle_preview.html
 #: templates/admin_audit/health.html templates/campaigns/explain.html
 #: templates/campaigns/objective_detail.html templates/pingboard/calendar.html
+#: templates/store/inventory_fit.html
 msgid "Source"
 msgstr "출처"
 
@@ -28367,10 +28490,6 @@ msgid ""
 msgstr ""
 "장부를 동결합니다 — 더 이상 티켓을 적립할 수 없습니다. 추첨 전에 반드시 필요"
 "합니다."
-
-#: templates/admin_audit/console/raffle_draw.html
-msgid "Closed"
-msgstr "종료됨"
 
 #: templates/admin_audit/console/raffle_draw.html
 msgid ""
@@ -29498,6 +29617,7 @@ msgstr ""
 "뒤 다시 실행하세요."
 
 #: templates/admin_audit/console/raffle_prizes.html
+#: templates/store/inventory_fit.html
 msgid "Close"
 msgstr "닫기"
 
@@ -29955,10 +30075,6 @@ msgid "Primary"
 msgstr "Primary"
 
 #: templates/admin_audit/console/readiness/doctrines.html
-msgid "Upcoming"
-msgstr "예정"
-
-#: templates/admin_audit/console/readiness/doctrines.html
 msgid "Retires"
 msgstr "퇴역일"
 
@@ -30072,6 +30188,7 @@ msgstr ""
 #: templates/buyback/appraisal.html templates/buyback/offer.html
 #: templates/industry/detail.html templates/stockpile/asset_search.html
 #: templates/stockpile/logistics.html templates/store/board.html
+#: templates/store/inventory_fit.html
 msgid "Qty"
 msgstr "수량"
 
@@ -32121,7 +32238,7 @@ msgstr "아직 연결된 작전이 없습니다."
 msgid "Operation"
 msgstr "작전"
 
-#: templates/campaigns/detail.html
+#: templates/campaigns/detail.html templates/store/inventory_fit.html
 msgid "Note (optional)"
 msgstr "메모 (선택)"
 
@@ -38052,6 +38169,10 @@ msgid "Material to acquire"
 msgstr "획득할 자재"
 
 #: templates/industry/detail.html
+msgid "Allocated from stock"
+msgstr "재고에서 할당됨"
+
+#: templates/industry/detail.html
 msgid "To acquire"
 msgstr "획득 필요"
 
@@ -41302,6 +41423,7 @@ msgid "Tax owed @ %(rate)s%%"
 msgstr "부과 세금 @ %(rate)s%%"
 
 #: templates/mining/ledger.html templates/mining/my_mining.html
+#: templates/store/inventory_fit.html
 msgid "Units"
 msgstr "수량"
 
@@ -43949,6 +44071,14 @@ msgstr "메모"
 #: templates/operations/template_form.html
 msgid "Composition (blank rows ignored)"
 msgstr "편성 (빈 행은 무시됨)"
+
+#: templates/operations/template_form.html
+msgid "Doctrine fit (optional)"
+msgstr "Doctrine fit (선택)"
+
+#: templates/operations/template_form.html
+msgid "— custom ship —"
+msgstr "— 커스텀 함선 —"
 
 #: templates/operations/template_form.html
 msgid "Save template"
@@ -48253,8 +48383,16 @@ msgid "At reorder point"
 msgstr "재주문점 도달"
 
 #: templates/store/inventory.html
+msgid "Below suggested reorder"
+msgstr "제안 재주문점 미만"
+
+#: templates/store/inventory.html
 msgid "Below safety stock"
 msgstr "안전 재고 미만"
+
+#: templates/store/inventory.html
+msgid "No delivery location"
+msgstr "전달 위치 없음"
 
 #: templates/store/inventory.html templates/store/inventory_fit.html
 msgid "Available to promise"
@@ -48287,6 +48425,14 @@ msgid "Incoming"
 msgstr "입고 예정"
 
 #: templates/store/inventory.html
+msgid "Composed weekly demand — losses, ops, targets and manual lines"
+msgstr "종합 주간 수요 — 손실, 작전, 목표 및 수동 항목"
+
+#: templates/store/inventory.html
+msgid "Demand /wk"
+msgstr "수요/주"
+
+#: templates/store/inventory.html
 msgid "Cover (d)"
 msgstr "커버(일)"
 
@@ -48316,6 +48462,27 @@ msgid "Stocked against an older fit revision"
 msgstr "이전 피팅 리비전 기준 재고"
 
 #: templates/store/inventory.html
+msgid "Losses trending up"
+msgstr "손실 증가 추세"
+
+#: templates/store/inventory.html
+msgid "Losses trending down"
+msgstr "손실 감소 추세"
+
+#: templates/store/inventory.html
+#, python-format
+msgid "Insufficient history (%(n)s wk)"
+msgstr "이력 부족 (%(n)s주)"
+
+#: templates/store/inventory.html
+msgid "No demand from any source"
+msgstr "어떤 출처에서도 수요 없음"
+
+#: templates/store/inventory.html
+msgid "Cover at the service-level demand rate"
+msgstr "서비스 수준 수요율 기준 커버"
+
+#: templates/store/inventory.html
 msgid "Stock recorded against an older fit revision needs officer revalidation"
 msgstr "이전 피팅 리비전 기준으로 기록된 재고는 임원의 재검증이 필요합니다"
 
@@ -48332,12 +48499,52 @@ msgid "reorder"
 msgstr "재주문"
 
 #: templates/store/inventory.html
+msgid "Available stock is below the suggested reorder point"
+msgstr "가용 재고가 제안 재주문점보다 적습니다"
+
+#: templates/store/inventory.html
+msgid "suggested"
+msgstr "제안"
+
+#: templates/store/inventory.html
 msgid "Available stock is below the safety stock"
 msgstr "가용 재고가 안전 재고보다 적습니다"
 
 #: templates/store/inventory.html
 msgid "safety"
 msgstr "안전"
+
+#: templates/store/inventory.html
+msgid "Stock exists but no delivery location is configured"
+msgstr "재고는 있으나 전달 위치가 설정되지 않았습니다"
+
+#: templates/store/inventory.html
+msgid "no location"
+msgstr "위치 없음"
+
+#: templates/store/inventory.html
+msgid "Doctrine retired while stock remains"
+msgstr "doctrine 은 퇴역했지만 재고가 남아 있음"
+
+#: templates/store/inventory.html
+msgid "obsolete"
+msgstr "불용"
+
+#: templates/store/inventory.html
+msgid "No demand from any source and stock untouched for the slow-mover window"
+msgstr "어떤 출처의 수요도 없고 저회전 기간 동안 재고 변동도 없음"
+
+#: templates/store/inventory.html
+msgid "slow mover"
+msgstr "저회전"
+
+#: templates/store/inventory.html
+msgid "Doctrine rollout in progress"
+msgstr "doctrine 롤아웃 진행 중"
+
+#: templates/store/inventory.html
+msgid "upcoming"
+msgstr "예정"
 
 #: templates/store/inventory.html
 msgid "Pilots waiting for this ship"
@@ -48530,6 +48737,101 @@ msgstr ""
 #: templates/store/inventory_fit.html
 msgid "No open backorder demand for this fit."
 msgstr "이 피팅에 대한 미결 백오더 수요가 없습니다."
+
+#: templates/store/inventory_fit.html
+msgid "Demand"
+msgstr "수요"
+
+#: templates/store/inventory_fit.html
+msgid "Composed rate"
+msgstr "종합 수요율"
+
+#: templates/store/inventory_fit.html
+#, python-format
+msgid "Insufficient history (%(n)s wk) — no volatility band is shown."
+msgstr "이력 부족 (%(n)s주) — 변동성 밴드를 표시하지 않습니다."
+
+#: templates/store/inventory_fit.html
+msgid "Losses trending up over the window."
+msgstr "기간 내 손실이 증가 추세입니다."
+
+#: templates/store/inventory_fit.html
+msgid "Losses trending down over the window."
+msgstr "기간 내 손실이 감소 추세입니다."
+
+#: templates/store/inventory_fit.html
+#, python-format
+msgid "Weekly losses, oldest first (%(n)s wk)"
+msgstr "주간 손실, 오래된 순 (%(n)s주)"
+
+#: templates/store/inventory_fit.html
+msgid "Rate /wk"
+msgstr "비율/주"
+
+#: templates/store/inventory_fit.html
+#, python-format
+msgid "(%(pct)s%% attrition assumed)"
+msgstr "(손실률 %(pct)s%% 가정)"
+
+#: templates/store/inventory_fit.html
+#, python-format
+msgid "(share %(share)s)"
+msgstr "(비중 %(share)s)"
+
+#: templates/store/inventory_fit.html
+msgid "Dated demand in horizon"
+msgstr "계획 기간 내 날짜 지정 수요"
+
+#: templates/store/inventory_fit.html
+msgid "Fleet op"
+msgstr "함대 작전"
+
+#: templates/store/inventory_fit.html
+msgid "Manual line"
+msgstr "수동 항목"
+
+#: templates/store/inventory_fit.html
+msgid "Suggested reorder point"
+msgstr "제안 재주문점"
+
+#: templates/store/inventory_fit.html
+msgid "Order up to"
+msgstr "주문 목표 수준"
+
+#: templates/store/inventory_fit.html
+msgid "Suggested order quantity"
+msgstr "제안 주문 수량"
+
+#: templates/store/inventory_fit.html
+#, python-format
+msgid ""
+"Based on %(mean)s/wk mean over %(weeks)s wk, σ = %(sigma)s, service level "
+"%(level)s, lead %(lead)s d, safety stock %(safety)s. Incoming supply offsets "
+"the quantity, never the cover."
+msgstr ""
+"최근 %(weeks)s주 동안 주당 평균 %(mean)s, σ = %(sigma)s, 서비스 수준 "
+"%(level)s, 리드 %(lead)s일, 안전 재고 %(safety)s 기준입니다. 입고 예정 물량"
+"은 수량만 상쇄하며 커버에는 영향을 주지 않습니다."
+
+#: templates/store/inventory_fit.html
+msgid "The officer-set reorder point overrides this suggestion for alerts."
+msgstr "알림에는 임원이 설정한 재주문점이 이 제안보다 우선 적용됩니다."
+
+#: templates/store/inventory_fit.html
+msgid "undated"
+msgstr "날짜 미지정"
+
+#: templates/store/inventory_fit.html
+msgid "None recorded."
+msgstr "기록된 항목이 없습니다."
+
+#: templates/store/inventory_fit.html
+msgid "Needed by (optional)"
+msgstr "필요 기한 (선택)"
+
+#: templates/store/inventory_fit.html
+msgid "Add demand line"
+msgstr "수요 항목 추가"
 
 #: templates/store/inventory_fit.html
 msgid "Offer & stocking policy"
@@ -49234,6 +49536,10 @@ msgid "Jita price change, last 30 days"
 msgstr "Jita 가격 변동, 최근 30일"
 
 #: templates/store/supply_forecast.html
+msgid "Several fits share this hull — margin × demand is approximate"
+msgstr "여러 피팅이 이 선체를 공유합니다 — 마진 × 수요는 근사치입니다"
+
+#: templates/store/supply_forecast.html
 msgid "import"
 msgstr "가져오기"
 
@@ -49247,19 +49553,23 @@ msgstr "재고"
 
 #: templates/store/supply_forecast.html
 msgid ""
-"Demand = corp ship losses (killboard) over the window, projected to a weekly/"
-"monthly rate. Supply cost = cheaper of <span class=\"text-cyan\">build</"
-"span> (hull at EVE Ref's full job cost — ME-adjusted materials + install fee "
-"— or our local estimate when the API can't price it, marked <span "
-"class=\"text-cyan\">~est</span>; modules bought at Jita) or <span "
-"class=\"text-muted\">import</span> (full fit at Jita), plus jump-freight to "
-"staging priced off the corp rate card. Fair sell = the store's own price: "
-"Jita sell × markup for doctrine ships and sub-capital hulls, estimated build "
-"cost × the class markup for capital and supercapital hulls. Prices are as "
-"fresh as the last market sync; capital freight is approximate."
+"Demand for doctrine hulls = the composed per-fit demand (loss replacement, "
+"upcoming fleet ops, stock targets and manual lines, summed over the hull's "
+"fits — hover the rate for the breakdown); other hulls use raw window losses. "
+"Supply cost = cheaper of <span class=\"text-cyan\">build</span> (hull at EVE "
+"Ref's full job cost — ME-adjusted materials + install fee — or our local "
+"estimate when the API can't price it, marked <span class=\"text-cyan\">~est</"
+"span>; modules bought at Jita) or <span class=\"text-muted\">import</span> "
+"(full fit at Jita), plus jump-freight to staging priced off the corp rate "
+"card. Fair sell = the store's own price: Jita sell × markup for doctrine "
+"ships and sub-capital hulls, estimated build cost × the class markup for "
+"capital and supercapital hulls. Prices are as fresh as the last market sync; "
+"capital freight is approximate."
 msgstr ""
-"수요 = 기간 내 군단 함선 손실(killboard)을 주간/월간 비율로 환산. 공급 비용 "
-"= <span class=\"text-cyan\">제작</span>(EVE Ref의 전체 작업 비용 기준 선체 — "
+"doctrine 선체의 수요 = 피팅별 종합 수요(손실 보충, 예정된 함대 작전, 재고 목"
+"표 및 수동 항목을 해당 선체의 피팅 전체에 대해 합산 — 비율 위에 마우스를 올리"
+"면 세부 내역 표시); 그 외 선체는 기간 내 원시 손실을 사용합니다. 공급 비용 = "
+"<span class=\"text-cyan\">제작</span>(EVE Ref의 전체 작업 비용 기준 선체 — "
 "ME 조정 재료 + 설치 수수료 — 또는 API가 가격을 산정할 수 없을 때 로컬 추정, "
 "<span class=\"text-cyan\">~est</span>로 표시; 모듈은 Jita에서 구매)과 <span "
 "class=\"text-muted\">수입</span>(Jita의 전체 피팅) 중 더 저렴한 쪽에, 군단 요"
@@ -49395,8 +49705,21 @@ msgstr "— 할당 해제 (오픈 풀로 반환) —"
 msgid "This source string is intentionally never translated"
 msgstr "This source string is intentionally never translated"
 
-msgid "This plan is closed — reopen it before reserving stock."
-msgstr "이 계획은 종료되었습니다 — 재고를 예약하기 전에 다시 여세요."
+msgid ""
+"A per-type hull target also exists on this stockpile — a separate mechanism, "
+"reconciled by MRP netting in a later phase"
+msgstr ""
+"이 비축고에는 유형별 선체 목표도 있습니다 — 별도의 메커니즘이며, 이후 단계의 "
+"MRP 상계로 통합됩니다"
 
-msgid "Allocated from stock"
-msgstr "재고에서 할당됨"
+msgid "hull target %(target)s in %(name)s"
+msgstr "%(name)s의 선체 목표 %(target)s"
+
+msgid "Linked campaign"
+msgstr "연결된 캠페인"
+
+msgid "Campaign ID (optional)"
+msgstr "캠페인 ID (선택)"
+
+msgid "Campaign ID"
+msgstr "캠페인 ID"

@@ -9,6 +9,28 @@ project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 
 ### Added
 
+- **Demand planning that merges signals (supply-chain P2)** — doctrine-ship demand is no
+  longer one number derived from raw 30-day hull losses. A composed, per-fit demand
+  service (`apps.store.demand`) merges four independently-visible sources: loss
+  replacement from the killboard's ingest-time doctrine-fit tags (untagged hull losses
+  allocated proportionally, as their own labelled line; NPC/awox losses count — the ship
+  is destroyed either way), upcoming **non-recurring** fleet ops with fit-linked slots
+  (a recurring CTA's attrition is already inside the loss history — an
+  `include_recurring_ops` knob exists for corps without that history), the stock-target
+  build-up gap, and officer-entered **manual demand lines** with dates and campaign
+  links (full CRUD on the fit page, audited). Rates carry a real volatility band
+  (mean ± σ at a leadership-set service level) — and no band at all below five weeks of
+  observed history, never a fabricated ±0. The officer console's days-of-cover is now a
+  **runout projection** (rate + dated events vs ATP) at fit grain — shared hulls no
+  longer double-count — with a demand column, source tooltips, trend arrows and
+  slow-mover / obsolete / upcoming / no-history chips; the CSV gains the demand,
+  cover-band and suggestion columns. **(s, S) reorder suggestions** honour lead time,
+  service level and safety stock, always keep the order-up-to strictly above the
+  trigger (no churn), and are offset by incoming supply (which still never counts as
+  available). A weekly snapshot task starts recording demand history for trends and
+  later phases. Recurring op templates can finally carry doctrine-fit links, so
+  materialised weekly fleets feed planning. All of it translated in the nine locales.
+
 - **One truthful per-type availability (supply-chain P1)** — the five competing
   definitions of "available stock" (manual-only, two manual+ESI double counts, a dead
   ESI-only module, and the BOM's private view) are replaced by a single authority in
@@ -91,6 +113,14 @@ project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 
 ### Changed
 
+- The Shipyard console's universe now includes fits of retired doctrines that still
+  hold stock (flagged obsolete) — that stock used to vanish from the console silently.
+  Days-of-cover values move: mostly up for fits that shared a hull (double count
+  removed), down where dated ops or manual demand pulls the runout in. The member
+  supply-forecast page shows composed demand with the band and breakdown, and stops
+  flooring forecasts at 1/week — slow-tail rows now show honest sub-unit rates and
+  smaller monthly totals. A new `suggested` reorder alert exists but ships **disarmed**
+  (`DemandConfig.use_suggested_reorder_alerts`).
 - **Corporation authority now follows the active pilot, not the account.** Previously a role
   was granted to the *account* if **any** of its characters qualified — so linking one Director
   alt made every pilot on that account a Director, including pilots in unrelated corporations.
