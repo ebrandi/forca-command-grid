@@ -142,9 +142,15 @@ def candidate_add(request: HttpRequest) -> HttpResponse:
 @require_POST
 def candidate_refresh(request: HttpRequest, pk: int) -> HttpResponse:
     candidate = get_object_or_404(Candidate, pk=pk)
+    from django.core.cache import cache
+
     from .tasks import refresh_candidate_evidence
 
-    refresh_candidate_evidence.delay(candidate.pk)
+    # Cooldown: at most one evidence-gathering task per candidate per 5 min. Without it a POST
+    # at the nginx rate would spam the ESI-gathering task. If a refresh is already in flight the
+    # message still holds (one is running), so no separate string is needed.
+    if cache.add(f"recruit:refresh:{candidate.pk}", "1", timeout=300):
+        refresh_candidate_evidence.delay(candidate.pk)
     messages.success(request, _("Refreshing public evidence."))
     return redirect("recruitment:detail", pk=candidate.pk)
 

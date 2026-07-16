@@ -17,6 +17,12 @@ from apps.sde.models import SdeType
 
 _QTY_RE = re.compile(r"\sx(\d+)\s*$", re.IGNORECASE)
 
+# Each parsed line does a DB lookup (_resolve). A real fit is well under 100 lines, so bound
+# the total to keep a pathological 10 MB paste from fanning out into that many SdeType queries.
+# Silent truncation (not an error) — nothing legitimate reaches this, and it avoids a new
+# user-facing string on a trusted-officer-only import path.
+_MAX_LINES = 500
+
 
 def _resolve(name: str) -> int | None:
     t = SdeType.objects.filter(name__iexact=name.strip()).values_list("type_id", flat=True).first()
@@ -25,7 +31,7 @@ def _resolve(name: str) -> int | None:
 
 def parse_eft(text: str) -> dict:
     """Parse EFT text into {ship_name, ship_type_id, fit_name, modules, unresolved}."""
-    lines = [ln.rstrip() for ln in text.strip().splitlines()]
+    lines = [ln.rstrip() for ln in text.strip().splitlines()][:_MAX_LINES]
     if not lines or not lines[0].startswith("["):
         raise ValueError(_("EFT must start with '[ShipName, Fit name]'"))
 

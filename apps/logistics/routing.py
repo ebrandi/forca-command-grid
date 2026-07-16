@@ -24,6 +24,13 @@ log = logging.getLogger("forca.logistics")
 
 _CACHE_TTL = 7 * 24 * 3600
 
+# A single planner request stitches one ESI /route call per leg, synchronously in the
+# request thread. The waypoint field is capped upstream (navigation.services._MAX_TOKENS),
+# but a route through dozens of systems still fans out to dozens of uncached ESI calls from
+# one (possibly anonymous) request — a worker-starvation amplifier. Bound the legs a single
+# multi-route may fetch; a legitimate hauling/roam route stays well under this.
+_MAX_ROUTE_LEGS = 24
+
 
 def security_band(security: float) -> str:
     rounded = round(security, 1)
@@ -62,8 +69,14 @@ def _fetch_route(origin: int, dest: int, client: ESIClient | None) -> dict:
     try:
         # Body-based POST /route: origin/destination in the path, the routing
         # preference in the body. "Safer" is the successor to the old flag=secure.
+        # NON-essential: this is a user-facing convenience lookup reachable from the
+        # anonymous route/freight planners, NOT infrastructure like token refresh or
+        # killmail ingest. Marking it essential would bypass the ESI error-budget floor
+        # (core.esi.ratelimit.can_call), so a flood of uncached route requests could burn
+        # the budget and freeze ESI app-wide. As non-essential it is shed cleanly under
+        # budget pressure (raises ESIRateLimited -> RouteUnavailable -> "no route" shown).
         resp = client.post(
-            f"/route/{origin}/{dest}/", json={"preference": "Safer"}, essential=True
+            f"/route/{origin}/{dest}/", json={"preference": "Safer"}, essential=False
         )
     except ESIError as exc:
         log.warning("route lookup failed %s→%s: %s", origin, dest, exc)
@@ -150,6 +163,11 @@ def route_plan_multi(system_ids: list[int], preference: str = "safer",
     points = [s for s in system_ids if s]
     if len(points) < 2:
         raise RouteUnavailable(_("Need at least an origin and a destination."))
+    # Bound the synchronous ESI fan-out per request (one /route call per leg).
+    if len(points) - 1 > _MAX_ROUTE_LEGS:
+        raise RouteUnavailable(
+            _("Too many waypoints — plan at most %(n)d legs at a time.") % {"n": _MAX_ROUTE_LEGS}
+        )
     systems: list[dict] = []
     total_jumps = 0
     for a, b in zip(points, points[1:], strict=False):
@@ -174,7 +192,9 @@ def _fetch_route_detail(origin: int, dest: int, pref_key: str, preference: str,
     if connections:
         body["connections"] = connections
     try:
-        resp = client.post(f"/route/{origin}/{dest}/", json=body, essential=True)
+        # Non-essential (see route_facts): user-facing planner lookup, shed under ESI
+        # budget pressure rather than allowed to burn the budget and freeze ESI app-wide.
+        resp = client.post(f"/route/{origin}/{dest}/", json=body, essential=False)
     except ESIError as exc:
         log.warning("route plan failed %s→%s: %s", origin, dest, exc)
         raise RouteUnavailable(_("No gate route between those systems.")) from exc

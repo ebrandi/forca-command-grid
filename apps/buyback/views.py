@@ -144,9 +144,12 @@ def board(request: HttpRequest) -> HttpResponse:
     if blocked:
         return blocked
 
+    # Bound the render like mine/bought below: the open board is self-limiting in practice, but
+    # an unbounded queryset to the template is a latent memory/DoS edge. 200 is far above any
+    # realistic simultaneous-open-lot count for a corp buyback board.
     open_offers = BuybackOffer.objects.filter(
         status=BuybackOffer.Status.OPEN
-    ).select_related("seller").order_by("-created_at")
+    ).select_related("seller").order_by("-created_at")[:200]
     mine = BuybackOffer.objects.filter(seller=request.user).order_by("-created_at")[:20]
     bought = BuybackOffer.objects.filter(buyer=request.user).order_by("-purchased_at")[:20]
     return render(request, "buyback/board.html", {

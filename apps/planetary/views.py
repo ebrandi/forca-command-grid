@@ -482,7 +482,19 @@ def colonies(request: HttpRequest) -> HttpResponse:
 @role_required(rbac.ROLE_MEMBER)
 @require_POST
 def colonies_sync(request: HttpRequest) -> HttpResponse:
+    from django.core.cache import cache
+
     from .tasks import sync_character_colonies
+
+    # Cooldown: one colony-sync fan-out per user per 5 min. Each POST enqueues one ESI-hitting
+    # task per PLANETS-scoped pilot; without this gate a member could POST at the nginx rate and
+    # flood the Celery queue / starve the worker pool (the task fan-out multiplier is not bounded
+    # by the per-request nginx limit). Mirrors the sso:reconcile cooldown (apps/sso/views.py).
+    if not cache.add(f"pi:colonies_sync:{request.user.pk}", "1", timeout=300):
+        messages.info(
+            request, _("A colony sync is already running — give it a minute before retrying.")
+        )
+        return redirect("planetary:colonies")
 
     queued = 0
     for char in request.user.characters.filter(

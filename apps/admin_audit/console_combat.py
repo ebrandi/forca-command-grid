@@ -349,6 +349,10 @@ def combat_reward_scan(request: HttpRequest) -> HttpResponse:
 # --------------------------------------------------------------------------- #
 _ACTIONS = {"approve", "reject", "paid", "cancel"}
 
+# Cap CSV exports so a filtered set can't buffer an unbounded number of rows into one in-memory
+# HttpResponse. Matches the audit-log export's deliberate 5000-row cap (apps/admin_audit/views.py).
+_CSV_EXPORT_MAX = 5000
+
 
 @login_required
 @role_required(rbac.ROLE_OFFICER)
@@ -408,7 +412,7 @@ def _export_csv(qs) -> HttpResponse:
     w.writerow(["character_id", "character", "rank", "kills_at_award", "achieved_at",
                 "reward_type", "reward_amount", "status", "approved_at", "paid_at",
                 "payment_reference"])
-    for e in qs.iterator():
+    for e in qs[:_CSV_EXPORT_MAX]:
         w.writerow(csv_safe_row([
             e.character_id, e.character_name, e.rank_name, e.kills_at_award,
             e.achieved_at.isoformat() if e.achieved_at else "", e.reward_type,
