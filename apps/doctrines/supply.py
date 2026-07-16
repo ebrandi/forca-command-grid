@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from django.db.models import Sum
 from django.utils.translation import gettext as _
 
 from apps.industry.bom import decide_build_or_buy
@@ -38,24 +37,17 @@ def _required_per_set(doctrine: Doctrine) -> dict[int, int]:
 
 
 def corp_on_hand(type_ids) -> dict[int, int]:
-    """On-hand per type: corp manual stockpile current + corp ESI assets."""
-    from apps.stockpile.models import Asset, Stockpile, StockpileItem
+    """Corp availability per type — delegates to the availability authority
+    (:mod:`apps.stockpile.availability`).
 
-    ids = list(type_ids)
-    on_hand: dict[int, int] = {}
-    for row in (
-        StockpileItem.objects.filter(stockpile__kind=Stockpile.Kind.CORP, type_id__in=ids)
-        .values("type_id")
-        .annotate(q=Sum("quantity_current"))
-    ):
-        on_hand[row["type_id"]] = (on_hand.get(row["type_id"], 0) or 0) + (row["q"] or 0)
-    for row in (
-        Asset.objects.filter(owner_type=Asset.Owner.CORPORATION, type_id__in=ids)
-        .values("type_id")
-        .annotate(q=Sum("quantity"))
-    ):
-        on_hand[row["type_id"]] = (on_hand.get(row["type_id"], 0) or 0) + (row["q"] or 0)
-    return on_hand
+    The old body summed manual stockpile + every corp's ESI assets: it double
+    counted anything tracked in both, ignored reservations, and missed the
+    home-corp owner filter. The unified numbers fix all three — reserved
+    materials are not free to fill doctrine sets.
+    """
+    from apps.stockpile.availability import available
+
+    return available(type_ids)
 
 
 def supply_plan(doctrine: Doctrine, sets: int) -> dict:

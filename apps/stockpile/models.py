@@ -42,6 +42,15 @@ class StockpileItem(ProvenanceMixin):
 
     class Meta:
         unique_together = ("stockpile", "type_id")
+        # unique_together only serves stockpile-led lookups; the availability
+        # aggregates are type-led.
+        indexes = [models.Index(fields=["type_id"])]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(quantity_current__gte=0),
+                name="stockpileitem_current_gte_0",
+            ),
+        ]
 
     @property
     def quantity_reserved(self) -> int:
@@ -73,6 +82,17 @@ class StockReservation(models.Model):
 
     class Meta:
         ordering = ["reserved_at"]  # FIFO
+        # Every hot query filters one of these pairs (availability, release, summary).
+        indexes = [
+            models.Index(fields=["status", "stockpile_item"]),
+            models.Index(fields=["project", "status"]),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(quantity_reserved__gte=1),
+                name="stockreservation_qty_gte_1",
+            ),
+        ]
 
 
 class HaulingTask(TimeStampedModel):

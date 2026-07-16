@@ -9,7 +9,7 @@ from apps.market.pricing import price_for
 from apps.stockpile.services import (
     available_quantities,
     available_quantity,
-    reserve_for_project,
+    reserve_for_project_bulk,
 )
 
 from . import bom
@@ -66,7 +66,8 @@ def compute_project_bom(project: IndustryProject) -> dict:
     # aggregate queries per distinct leaf material.
     plans: list[tuple[IndustryProjectItem, list[tuple[int, int, int, bool]], list | None]] = []
     needed_ids: set[int] = set()
-    for item in project.items.all():
+    # pk order pins the shared-pool allocation below (matches display order).
+    for item in project.items.order_by("pk"):
         MaterialRequirement.objects.filter(project_item=item).delete()
         ProductionStep.objects.filter(project_item=item).delete()
 
@@ -105,20 +106,26 @@ def compute_project_bom(project: IndustryProject) -> dict:
         needed_ids.update(result.leaves)
         plans.append((item, specs, result.steps))
 
-    # One batched availability lookup for every leaf material in the project.
-    availability = available_quantities(needed_ids)
+    # One batched availability lookup for every leaf material in the project,
+    # treated as a shared remaining-pool (P1 WS3): two lines sharing a material
+    # must not each net the full stock — each line takes what's left, in item
+    # order (deterministic: ``plans`` follows the project's item iteration).
+    pool = dict(available_quantities(needed_ids))
 
     # Pass 2: materialise the requirement + build/react step + invention rows.
     total_cost = Decimal("0")
     for item, specs, steps in plans:
         for type_id, qty, depth, force_buy in specs:
+            take = min(pool.get(type_id, 0), qty)
+            if take:
+                pool[type_id] -= take
             total_cost += _make_requirement(
                 item,
                 type_id,
                 qty,
                 depth=depth,
                 force_buy=force_buy,
-                available=availability.get(type_id, 0),
+                available=take,
             )
         if steps is not None:
             for node in steps:
@@ -211,8 +218,10 @@ def _make_requirement(
     force_buy: bool = False,
     available: int | None = None,
 ) -> Decimal:
-    # ``available`` is pre-resolved in one batch by ``compute_project_bom``; fall
-    # back to the single-id query for any other caller. Same value either way.
+    # ``available`` is the pool share ALLOCATED TO THIS LINE by
+    # ``compute_project_bom`` (not the corp-wide free total — lines sharing a
+    # material split the pool). The single-id fallback for any other caller reads
+    # the unified availability authority via the stockpile wrapper.
     if available is None:
         available = available_quantity(type_id)
     to_acquire = max(0, qty - available)
@@ -262,29 +271,59 @@ def generate_shopping_list(project: IndustryProject, location=None) -> ShoppingL
 def reserve_project_stock(project: IndustryProject) -> dict:
     """Earmark available corp stock for this project's materials (FIFO).
 
-    Reserves up to each material's required quantity from corp stock so other
-    projects/members don't consume it. Returns how many units were newly
-    reserved across how many material types.
+    Demand SUMS across lines — two lines needing 100 each reserve 200 (the old
+    MAX under-reserved multi-line projects). IDEMPOTENT under concurrency: the
+    netting against existing ACTIVE claims (and the truthful-availability cap)
+    happen inside :func:`reserve_for_project_bulk` UNDER the item locks, so two
+    racing Reserve POSTs serialize and the loser reserves nothing new.
+
+    The project row is locked FIRST (global lock order: BuildJob →
+    IndustryProject → StockpileItem → StockReservation) and a closed or archived
+    plan reserves nothing — a claim minted on a DONE/CANCELLED/archived plan
+    would be stranded forever (nothing consumes or releases it again).
+
+    Reservations cover ``quantity_required``, not the to_acquire-netted
+    remainder — a reservation means exactly "don't let others take what my BOM
+    needs from stock". Returns how many units were newly reserved across how
+    many material types (+ ``closed`` when the plan refused).
     """
+    locked = IndustryProject.objects.select_for_update().get(pk=project.pk)
+    if locked.is_archived or locked.status in (
+        IndustryProject.Status.DONE, IndustryProject.Status.CANCELLED
+    ):
+        return {"units": 0, "types": 0, "closed": True}
     needed: dict[int, int] = {}
-    for item in project.items.all():
+    for item in locked.items.all():
         for req in item.material_requirements.all():
-            needed[req.type_id] = max(needed.get(req.type_id, 0), req.quantity_required)
-    reserved_units, types = 0, 0
-    for type_id, qty in needed.items():
-        got = reserve_for_project(project, type_id, qty)
-        if got:
-            reserved_units += got
-            types += 1
-    return {"units": reserved_units, "types": types}
+            needed[req.type_id] = needed.get(req.type_id, 0) + req.quantity_required
+    got = reserve_for_project_bulk(locked, needed)
+    return {
+        "units": sum(got.values()),
+        "types": sum(1 for v in got.values() if v),
+        "closed": False,
+    }
 
 
+@transaction.atomic
 def release_project_stock(project: IndustryProject) -> int:
-    """Release every active reservation this project holds. Returns the count."""
+    """Release every active reservation this project holds. Returns the count.
+
+    Locks the rows in ascending pk before the status flip — a bare bulk UPDATE
+    locks in scan order, which can deadlock against the delivery path's ordered
+    multi-row reservation acquisition.
+    """
     from apps.stockpile.models import StockReservation
 
+    ids = list(
+        StockReservation.objects.select_for_update()
+        .filter(project=project, status=StockReservation.Status.ACTIVE)
+        .order_by("pk")
+        .values_list("pk", flat=True)
+    )
+    if not ids:
+        return 0
     return StockReservation.objects.filter(
-        project=project, status=StockReservation.Status.ACTIVE
+        pk__in=ids, status=StockReservation.Status.ACTIVE
     ).update(status=StockReservation.Status.RELEASED)
 
 

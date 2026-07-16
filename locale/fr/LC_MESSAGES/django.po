@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-16 14:46+0000\n"
+"POT-Creation-Date: 2026-07-16 20:11+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: fr machine-assisted draft\n"
@@ -7466,6 +7466,11 @@ msgstr "Issu du plan : %(plan)s"
 msgid "From a leadership plan"
 msgstr "Issu d'un plan du commandement"
 
+#: apps/erp/messages.py
+#, python-format
+msgid "Shipyard restock: %(fit_name)s"
+msgstr "Réapprovisionnement du Chantier naval : %(fit_name)s"
+
 #: apps/erp/models.py
 msgid "Building"
 msgstr "En production"
@@ -8022,6 +8027,11 @@ msgstr "Dupliqué dans « %(name)s »."
 #: apps/industry/views.py
 msgid "Not your project to manage."
 msgstr "Ce n'est pas votre projet à gérer."
+
+#: apps/industry/views.py
+#, python-format
+msgid "Released %(count)s reservation(s) held by this plan."
+msgstr "%(count)s réservation(s) détenue(s) par ce plan libérée(s)."
 
 #: apps/industry/views.py
 msgid "Plan restored."
@@ -13740,6 +13750,64 @@ msgstr "Commande mise à jour : Annulée"
 #, python-brace-format
 msgid "Your order for {ship_name} was cancelled."
 msgstr "Votre commande de {ship_name} a été annulée."
+
+#: apps/pingboard/messages.py
+msgid "Order update: New delivery estimate"
+msgstr "Commande mise à jour : Nouvelle estimation de livraison"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid "The estimated delivery for {ship_name} is now {eta_date}."
+msgstr "La livraison estimée pour {ship_name} est désormais le {eta_date}."
+
+#: apps/pingboard/messages.py
+msgid "Order update: Stock reserved"
+msgstr "Commande mise à jour : Stock réservé"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"{quantity}× {ship_name} from a new delivery is now reserved for your order."
+msgstr ""
+"{quantity}× {ship_name} d'une nouvelle livraison est désormais réservé pour "
+"votre commande."
+
+#: apps/pingboard/messages.py
+msgid "Order update: Reservation released"
+msgstr "Commande mise à jour : Réservation libérée"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"Your reserved {ship_name} was released after waiting unclaimed; the order is "
+"now backordered."
+msgstr ""
+"Votre {ship_name} réservé a été libéré après être resté non réclamé ; la "
+"commande est désormais différée."
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid "Back in stock: {ship_name}"
+msgstr "De retour en stock : {ship_name}"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid "{ship_name} can be ordered on the Shipyard again."
+msgstr "{ship_name} peut de nouveau être commandé sur le Chantier naval."
+
+#: apps/pingboard/messages.py
+msgid "Shipyard restock built"
+msgstr "Réapprovisionnement du Chantier naval construit"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"Production for {fit_name} finished. Assemble and fit the ships, then record "
+"the receipt on the Shipyard inventory console to release waiting backorders."
+msgstr ""
+"La production de {fit_name} est terminée. Assemblez les vaisseaux et montez "
+"le fit, puis enregistrez la réception sur la console d'inventaire du "
+"Chantier naval pour libérer les commandes différées en attente."
 
 #: apps/pingboard/messages.py
 #, python-brace-format
@@ -20041,6 +20109,18 @@ msgstr "Tout ce que le constructeur doit savoir"
 msgid "Must be between %(low)s and %(high)s."
 msgstr "Doit être compris entre %(low)s et %(high)s."
 
+#: apps/store/forms.py
+msgid "e.g. built from restock batch #12"
+msgstr "par ex. construit à partir du lot de réapprovisionnement #12"
+
+#: apps/store/forms.py
+msgid "Why the balance is being corrected"
+msgstr "Pourquoi le solde est corrigé"
+
+#: apps/store/forms.py
+msgid "What changed (shown to the buyer)"
+msgstr "Ce qui a changé (affiché à l'acheteur)"
+
 #: apps/store/models.py
 msgid "Public — anyone can shop"
 msgstr "Public — tout le monde peut acheter"
@@ -20052,6 +20132,59 @@ msgstr "Prix de vente Jita"
 #: apps/store/models.py
 msgid "Estimated build cost"
 msgstr "Coût de construction estimé"
+
+#: apps/store/models.py
+msgid "Ready for immediate delivery"
+msgstr "Prêt pour livraison immédiate"
+
+#: apps/store/models.py
+msgid "Limited stock"
+msgstr "Stock limité"
+
+#: apps/store/models.py
+msgid "Available on backorder"
+msgstr "Disponible en commande différée"
+
+#: apps/store/models.py templates/doctrines/ships.html
+msgid "Temporarily unavailable"
+msgstr "Temporairement indisponible"
+
+#: apps/store/models.py
+msgid "Not offered for sale"
+msgstr "Non proposé à la vente"
+
+#: apps/store/models.py templates/store/order.html
+msgid "Reserved from stock"
+msgstr "Réservé sur le stock"
+
+#: apps/store/models.py
+msgid "Partially reserved, remainder backordered"
+msgstr "Partiellement réservé, reliquat en différé"
+
+#: apps/store/models.py templates/store/inventory.html
+#: templates/store/order.html
+msgid "Backordered"
+msgstr "En différé"
+
+#: apps/store/models.py
+msgid "Use stocked ships"
+msgstr "Utiliser les vaisseaux en stock"
+
+#: apps/store/models.py
+msgid "Build locally"
+msgstr "Construire localement"
+
+#: apps/store/models.py
+msgid "Import from Jita"
+msgstr "Importer depuis Jita"
+
+#: apps/store/models.py
+msgid "Buy from an approved supplier"
+msgstr "Acheter auprès d'un fournisseur agréé"
+
+#: apps/store/models.py
+msgid "Choose build or buy automatically"
+msgstr "Choisir automatiquement entre construction et achat"
 
 #: apps/store/models.py
 msgid "Ready-to-fly doctrine ship"
@@ -20068,6 +20201,160 @@ msgstr "Acompte payé"
 #: apps/store/models.py templates/erp/board.html
 msgid "In production"
 msgstr "En production"
+
+#: apps/store/models.py
+msgid "Accept orders for doctrine ships that are not in stock."
+msgstr ""
+"Accepter les commandes de vaisseaux de doctrine qui ne sont pas en stock."
+
+#: apps/store/models.py
+msgid "Default estimated days to fulfil a backorder."
+msgstr "Nombre de jours estimé par défaut pour traiter une commande différée."
+
+#: apps/store/models.py
+msgid "Allow one order to combine reserved stock with a backordered remainder."
+msgstr ""
+"Autoriser une commande à combiner du stock réservé et un reliquat en différé."
+
+#: apps/store/models.py
+msgid ""
+"Release reservations of orders nobody has claimed after this many days (0 = "
+"never)."
+msgstr ""
+"Libérer les réservations des commandes que personne n'a réclamées après ce "
+"nombre de jours (0 = jamais)."
+
+#: apps/store/models.py
+msgid ""
+"Where doctrine ships are stocked and delivered unless a fit overrides it."
+msgstr ""
+"Où les vaisseaux de doctrine sont stockés et livrés, sauf si un fit le "
+"remplace."
+
+#: apps/store/models.py
+msgid "Most ships one order may request unless a fit overrides it."
+msgstr "Nombre maximal de vaisseaux par commande, sauf si un fit le remplace."
+
+#: apps/store/models.py
+msgid "Show 'Limited stock' when this many or fewer ships remain."
+msgstr ""
+"Afficher « Stock limité » quand il reste ce nombre de vaisseaux ou moins."
+
+#: apps/store/models.py
+msgid ""
+"Keep out-of-stock ships visible on the Shipyard (greyed out) instead of "
+"hiding them."
+msgstr ""
+"Garder les vaisseaux en rupture de stock visibles sur le Chantier naval "
+"(grisés) au lieu de les masquer."
+
+#: apps/store/models.py
+msgid "Open the Shipyard filtered to immediately available ships."
+msgstr ""
+"Ouvrir le Chantier naval filtré sur les vaisseaux immédiatement disponibles."
+
+#: apps/store/models.py
+msgid "Let pilots join a waitlist for ships that can't be ordered."
+msgstr ""
+"Permettre aux pilotes de rejoindre une liste d'attente pour les vaisseaux "
+"qui ne peuvent pas être commandés."
+
+#: apps/store/models.py
+msgid ""
+"When stock arrives, reserve it for waiting backorders automatically (oldest "
+"first)."
+msgstr ""
+"À l'arrivée du stock, le réserver automatiquement pour les commandes "
+"différées en attente (les plus anciennes d'abord)."
+
+#: apps/store/models.py
+msgid "shipyard policy"
+msgstr "politique du chantier naval"
+
+#: apps/store/models.py
+msgid "shipyard policies"
+msgstr "politiques du chantier naval"
+
+#: apps/store/models.py
+msgid "Offer this fit for sale on the Shipyard."
+msgstr "Proposer ce fit à la vente sur le Chantier naval."
+
+#: apps/store/models.py
+msgid "Override the corp-wide backorder policy for this fit."
+msgstr "Remplacer la politique de commandes différées de la corp pour ce fit."
+
+#: apps/store/models.py
+msgid "Override the default backorder lead time (days)."
+msgstr ""
+"Remplacer le délai d'approvisionnement par défaut des commandes différées "
+"(jours)."
+
+#: apps/store/models.py
+msgid "Override the default delivery location for this fit."
+msgstr "Remplacer l'emplacement de livraison par défaut pour ce fit."
+
+#: apps/store/models.py
+msgid "Most units allowed on backorder per order for this fit."
+msgstr "Nombre maximal d'unités en différé par commande pour ce fit."
+
+#: apps/store/models.py
+msgid "Override the maximum quantity per order."
+msgstr "Remplacer la quantité maximale par commande."
+
+#: apps/store/models.py
+msgid "Units held back from planning as a strategic reserve."
+msgstr "Unités exclues de la planification à titre de réserve stratégique."
+
+#: apps/store/models.py
+msgid "Flag this fit for restocking when available stock falls to this level."
+msgstr ""
+"Signaler ce fit pour réapprovisionnement quand le stock disponible tombe à "
+"ce niveau."
+
+#: apps/store/models.py
+msgid "How many complete ships the corp aims to keep stocked."
+msgstr "Nombre de vaisseaux complets que la corp vise à garder en stock."
+
+#: apps/store/models.py
+msgid "Shown to buyers on the Shipyard card."
+msgstr "Affiché aux acheteurs sur la carte du Chantier naval."
+
+#: apps/store/models.py
+msgid "Fulfilment notes visible to members and officers only."
+msgstr ""
+"Notes de traitement visibles uniquement par les membres et les officiers."
+
+#: apps/store/models.py
+msgid "Higher = restock sooner."
+msgstr "Plus élevé = réapprovisionnement plus tôt."
+
+#: apps/store/models.py
+msgid "Stock received"
+msgstr "Stock réceptionné"
+
+#: apps/store/models.py
+msgid "Manual adjustment"
+msgstr "Ajustement manuel"
+
+#: apps/store/models.py
+msgid "Delivered to buyer"
+msgstr "Livré à l'acheteur"
+
+#: apps/store/models.py
+msgid "Reconciliation"
+msgstr "Rapprochement"
+
+#: apps/store/models.py
+msgid "Fit revision revalidated"
+msgstr "Révision du fit revalidée"
+
+#: apps/store/models.py
+msgid "fit stock entries"
+msgstr "entrées de stock de fit"
+
+#: apps/store/models.py
+msgid "fit waitlist entries"
+msgstr "entrées de liste d'attente de fit"
 
 #: apps/store/pricing.py
 msgid "That fit has no hull or modules to price."
@@ -20090,6 +20377,46 @@ msgstr ""
 "le moment — réessayez plus tard."
 
 #: apps/store/services.py
+msgid "That ship is not offered for sale right now."
+msgstr "Ce vaisseau n'est pas proposé à la vente pour le moment."
+
+#: apps/store/services.py
+msgid "Pick a quantity of at least 1."
+msgstr "Choisissez une quantité d'au moins 1."
+
+#: apps/store/services.py
+#, python-format
+msgid "Orders for this ship are limited to %(max)s at a time."
+msgstr "Les commandes pour ce vaisseau sont limitées à %(max)s à la fois."
+
+#: apps/store/services.py
+#, python-format
+msgid ""
+"Only %(count)s can be delivered right now and backorders are closed for this "
+"ship."
+msgstr ""
+"Seuls %(count)s peuvent être livrés pour le moment et les commandes "
+"différées sont fermées pour ce vaisseau."
+
+#: apps/store/services.py
+msgid "That ship is out of stock and backorders are closed for it."
+msgstr ""
+"Ce vaisseau est en rupture de stock et ses commandes différées sont fermées."
+
+#: apps/store/services.py
+#, python-format
+msgid "At most %(max)s of this ship can be backordered per order."
+msgstr ""
+"Au maximum %(max)s de ce vaisseau peuvent être mis en différé par commande."
+
+#: apps/store/services.py
+msgid ""
+"No reliable price is available for that fit right now — try again later."
+msgstr ""
+"Aucun prix fiable n'est disponible pour ce fit pour le moment — réessayez "
+"plus tard."
+
+#: apps/store/services.py
 msgid "Confirm deposit paid"
 msgstr "Confirmer l'acompte payé"
 
@@ -20109,9 +20436,37 @@ msgstr "Marquer comme livré"
 msgid "Advance"
 msgstr "Faire avancer"
 
+#: apps/store/supply.py
+#, python-format
+msgid "Restock %(fit)s"
+msgstr "Réapprovisionner %(fit)s"
+
+#: apps/store/supply.py
+#, python-format
+msgid ""
+"Supply requirement from the Shipyard: %(count)s backordered order(s) for "
+"%(fit)s."
+msgstr ""
+"Besoin d'approvisionnement du Chantier naval : %(count)s commande(s) "
+"différée(s) pour %(fit)s."
+
+#: apps/store/supply.py
+#, python-format
+msgid "Supply %(count)s× %(fit)s for the Shipyard"
+msgstr "Fournir %(count)s× %(fit)s pour le Chantier naval"
+
 #: apps/store/views.py
 msgid "Could not place that order."
 msgstr "Impossible de passer cette commande."
+
+#: apps/store/views.py
+#, python-format
+msgid "Order placed — %(ready)s reserved now, %(back)s on backorder."
+msgstr "Commande passée — %(ready)s réservés maintenant, %(back)s en différé."
+
+#: apps/store/views.py
+msgid "Order placed — your ship is reserved from stock."
+msgstr "Commande passée — votre vaisseau est réservé sur le stock."
 
 #: apps/store/views.py
 msgid "Pick a hull and a quantity."
@@ -20122,6 +20477,36 @@ msgid "Build order placed — a corp member will claim it on the board."
 msgstr ""
 "Ordre de fabrication passé — un membre de la corp le prendra en charge sur "
 "le tableau."
+
+#: apps/store/views.py
+msgid "That order is closed."
+msgstr "Cette commande est clôturée."
+
+#: apps/store/views.py
+msgid "Pick a valid estimated delivery date."
+msgstr "Choisissez une date de livraison estimée valide."
+
+#: apps/store/views.py
+msgid "Estimated delivery updated — the buyer was notified."
+msgstr "Livraison estimée mise à jour — l'acheteur a été notifié."
+
+#: apps/store/views.py
+msgid "The waitlist is not enabled."
+msgstr "La liste d'attente n'est pas activée."
+
+#: apps/store/views.py
+#, python-format
+msgid "You left the waitlist for %(fit)s."
+msgstr "Vous avez quitté la liste d'attente pour %(fit)s."
+
+#: apps/store/views.py
+#, python-format
+msgid ""
+"You joined the waitlist for %(fit)s — you'll be pinged when it can be "
+"ordered."
+msgstr ""
+"Vous avez rejoint la liste d'attente pour %(fit)s — vous recevrez un ping "
+"quand il pourra être commandé."
 
 #: apps/store/views.py
 #, python-format
@@ -20150,6 +20535,10 @@ msgid "Nothing to advance."
 msgstr "Rien à faire avancer."
 
 #: apps/store/views.py
+msgid "That order just changed — review it and try again."
+msgstr "Cette commande vient de changer — vérifiez-la et réessayez."
+
+#: apps/store/views.py
 #, python-format
 msgid "Order moved to “%(status)s”."
 msgstr "Commande passée à “%(status)s”."
@@ -20173,6 +20562,95 @@ msgstr "Commande mise à jour."
 #: apps/store/views.py
 msgid "Store settings updated."
 msgstr "Paramètres de la boutique mis à jour."
+
+#: apps/store/views_inventory.py
+msgid "Offer settings saved."
+msgstr "Paramètres de l'offre enregistrés."
+
+#: apps/store/views_inventory.py
+msgid "Pick a location and a positive quantity."
+msgstr "Choisissez un emplacement et une quantité positive."
+
+#: apps/store/views_inventory.py
+#, python-format
+msgid "%(qty)s received — %(n)s backordered order(s) got stock reserved."
+msgstr ""
+"%(qty)s réceptionnés — du stock a été réservé pour %(n)s commande(s) "
+"différée(s)."
+
+#: apps/store/views_inventory.py
+#, python-format
+msgid "%(qty)s received into stock."
+msgstr "%(qty)s réceptionnés en stock."
+
+#: apps/store/views_inventory.py
+msgid "A corrected balance and a reason are required."
+msgstr "Un solde corrigé et un motif sont tous deux requis."
+
+#: apps/store/views_inventory.py
+msgid ""
+"That balance is below the actively reserved quantity — release or deliver "
+"the reservations first."
+msgstr ""
+"Ce solde est inférieur à la quantité activement réservée — libérez ou livrez "
+"d'abord les réservations."
+
+#: apps/store/views_inventory.py
+msgid "Invalid adjustment."
+msgstr "Ajustement invalide."
+
+#: apps/store/views_inventory.py
+msgid "Stock adjusted."
+msgstr "Stock ajusté."
+
+#: apps/store/views_inventory.py
+msgid "No change — balance already matched."
+msgstr "Aucun changement — le solde correspondait déjà."
+
+#: apps/store/views_inventory.py
+#, python-format
+msgid "%(n)s ship(s) revalidated against the current fit revision."
+msgstr ""
+"%(n)s vaisseau(x) revalidé(s) par rapport à la révision actuelle du fit."
+
+#: apps/store/views_inventory.py
+msgid "Nothing to revalidate on that row."
+msgstr "Rien à revalider sur cette ligne."
+
+#: apps/store/views_inventory.py
+msgid "Select at least one fit and a bulk action."
+msgstr "Sélectionnez au moins un fit et une action groupée."
+
+#: apps/store/views_inventory.py
+#, python-format
+msgid "%(n)s fit(s) are now offered for sale."
+msgstr "%(n)s fit(s) désormais proposés à la vente."
+
+#: apps/store/views_inventory.py
+#, python-format
+msgid "%(n)s fit(s) withdrawn from sale."
+msgstr "%(n)s fit(s) retirés de la vente."
+
+#: apps/store/views_inventory.py
+msgid "Shipyard policy updated."
+msgstr "Politique du Chantier naval mise à jour."
+
+#: apps/store/views_inventory.py
+msgid "That supply need is closed."
+msgstr "Ce besoin d'approvisionnement est clôturé."
+
+#: apps/store/views_inventory.py
+#, python-format
+msgid "Industry project “%(name)s” is linked."
+msgstr "Le projet d'industrie « %(name)s » est lié."
+
+#: apps/store/views_inventory.py
+msgid "ERP build job queued and linked."
+msgstr "Job de production ERP mis en file et lié."
+
+#: apps/store/views_inventory.py
+msgid "Claimable task created and linked."
+msgstr "Tâche réclamable créée et liée."
 
 #: apps/tasks/models.py
 msgid "Build ships"
@@ -21633,6 +22111,10 @@ msgstr "Tableau de fabrication"
 #: templates/_nav.html templates/store/supply_forecast.html
 msgid "Supply Forecast"
 msgstr "Prévisions d'approvisionnement"
+
+#: templates/_nav.html templates/store/inventory.html
+msgid "Shipyard Inventory"
+msgstr "Inventaire du Chantier naval"
 
 #: templates/_nav.html templates/campaigns/portfolio.html
 msgid "Campaigns"
@@ -25617,6 +26099,26 @@ msgstr "Paramètres de la boutique corpo"
 #: templates/admin_audit/console/hub.html
 msgid "Markup, build deposit and store audience."
 msgstr "Marge, acompte de fabrication et audience de la boutique."
+
+#: templates/admin_audit/console/hub.html
+msgid "Shipyard inventory"
+msgstr "Inventaire du Chantier naval"
+
+#: templates/admin_audit/console/hub.html
+msgid "Stocked doctrine ships, reservations, backorders and restock needs."
+msgstr ""
+"Vaisseaux de doctrine en stock, réservations, commandes différées et besoins "
+"de réapprovisionnement."
+
+#: templates/admin_audit/console/hub.html
+msgid "Shipyard fulfilment policy"
+msgstr "Politique de traitement du Chantier naval"
+
+#: templates/admin_audit/console/hub.html
+msgid "Backorders, lead times, reservations and order limits."
+msgstr ""
+"Commandes différées, délais d'approvisionnement, réservations et limites de "
+"commande."
 
 #: templates/admin_audit/console/hub.html
 msgid "Mining tax"
@@ -36925,12 +37427,38 @@ msgid "Close (≤3 skills)"
 msgstr "Proche (≤3 compétences)"
 
 #: templates/doctrines/ships.html
+msgid "Available now"
+msgstr "Disponible maintenant"
+
+#: templates/doctrines/ships.html templates/store/board.html
+#: templates/store/inventory.html templates/store/inventory_fit.html
+msgid "Backorder"
+msgstr "Commande différée"
+
+#: templates/doctrines/ships.html templates/store/inventory_fit.html
+#: templates/store/order_confirm.html
+msgid "Delivery location"
+msgstr "Emplacement de livraison"
+
+#: templates/doctrines/ships.html
+msgid "Any location"
+msgstr "Tout emplacement"
+
+#: templates/doctrines/ships.html
 msgid "Closest to fly"
 msgstr "Le plus proche à piloter"
 
 #: templates/doctrines/ships.html
 msgid "Most ready"
 msgstr "Le plus prêt"
+
+#: templates/doctrines/ships.html
+msgid "Fastest delivery"
+msgstr "Livraison la plus rapide"
+
+#: templates/doctrines/ships.html templates/store/order_confirm.html
+msgid "Price"
+msgstr "Prix"
 
 #: templates/doctrines/ships.html
 msgid "Hull class"
@@ -36961,6 +37489,38 @@ msgid "No skill data"
 msgstr "Aucune donnée de compétence"
 
 #: templates/doctrines/ships.html
+#, python-format
+msgid "%(n)s ready for delivery"
+msgid_plural "%(n)s ready for delivery"
+msgstr[0] "%(n)s prêt pour livraison"
+msgstr[1] "%(n)s prêts pour livraison"
+
+#: templates/doctrines/ships.html
+#, python-format
+msgid "Only %(n)s remaining"
+msgid_plural "Only %(n)s remaining"
+msgstr[0] "Plus que %(n)s restant"
+msgstr[1] "Plus que %(n)s restants"
+
+#: templates/doctrines/ships.html
+msgid "Backorder available"
+msgstr "Commande différée possible"
+
+#: templates/doctrines/ships.html
+#, python-format
+msgid "Estimated delivery by %(date)s"
+msgstr "Livraison estimée d'ici le %(date)s"
+
+#: templates/doctrines/ships.html
+msgid "Not currently offered"
+msgstr "Non proposé actuellement"
+
+#: templates/doctrines/ships.html
+#, python-format
+msgid "Delivers at %(name)s"
+msgstr "Livraison à %(name)s"
+
+#: templates/doctrines/ships.html
 msgid "View"
 msgstr "Voir"
 
@@ -36969,10 +37529,40 @@ msgid "Copy EFT"
 msgstr "Copier l'EFT"
 
 #: templates/doctrines/ships.html
+#, python-format
+msgid "%(n)s in stock ready now."
+msgid_plural "%(n)s in stock ready now."
+msgstr[0] "%(n)s en stock, prêt maintenant."
+msgstr[1] "%(n)s en stock, prêts maintenant."
+
+#: templates/doctrines/ships.html
+msgid ""
+"Anything beyond stock is a backorder — you'll see the split and the "
+"estimated delivery before confirming."
+msgstr ""
+"Tout ce qui dépasse le stock devient une commande différée — vous verrez la "
+"répartition et la livraison estimée avant de confirmer."
+
+#: templates/doctrines/ships.html
+#, python-format
+msgid "Up to %(m)s per order."
+msgid_plural "Up to %(m)s per order."
+msgstr[0] "Jusqu'à %(m)s par commande."
+msgstr[1] "Jusqu'à %(m)s par commande."
+
+#: templates/doctrines/ships.html
 msgid "Priced at Jita sell + corp markup. Lands on the build board."
 msgstr ""
 "Au prix de vente Jita + marge de la corp. Apparaît sur le tableau de "
 "production."
+
+#: templates/doctrines/ships.html
+msgid "Join waitlist"
+msgstr "Rejoindre la liste d'attente"
+
+#: templates/doctrines/ships.html
+msgid "Ordering closed"
+msgstr "Commandes fermées"
 
 #: templates/doctrines/ships.html
 msgid "No fits match these filters."
@@ -38881,10 +39471,6 @@ msgstr[1] "%(n)s cycles → %(produced)s (besoin de %(required)s)"
 #: templates/industry/detail.html
 msgid "Material to acquire"
 msgstr "Matériau à acquérir"
-
-#: templates/industry/detail.html
-msgid "In stock"
-msgstr "En stock"
 
 #: templates/industry/detail.html
 msgid "To acquire"
@@ -49186,6 +49772,17 @@ msgid "Shortfall"
 msgstr "Déficit"
 
 #: templates/stockpile/dashboard.html
+msgid "Claims exceed the effective on-hand — release or re-check reservations"
+msgstr ""
+"Les réservations dépassent le stock effectif — libérez ou revérifiez les "
+"réservations"
+
+#: templates/stockpile/dashboard.html
+#, python-format
+msgid "over by %(n)s"
+msgstr "dépassement de %(n)s"
+
+#: templates/stockpile/dashboard.html
 msgid "Empty — use “Update stock”."
 msgstr "Vide — utilisez « Mettre à jour le stock »."
 
@@ -49285,6 +49882,25 @@ msgstr "Commandes ouvertes"
 msgid "Deposit"
 msgstr "Acompte"
 
+#: templates/store/board.html templates/store/my_orders.html
+#, python-format
+msgid "%(n)s reserved"
+msgstr "%(n)s réservé(s)"
+
+#: templates/store/board.html
+#, python-format
+msgid "%(n)s to build"
+msgstr "%(n)s à construire"
+
+#: templates/store/board.html
+msgid "Reserved stock"
+msgstr "Stock réservé"
+
+#: templates/store/board.html
+#, python-format
+msgid "est. %(date)s"
+msgstr "est. %(date)s"
+
 #: templates/store/board.html
 msgid "No open orders right now."
 msgstr "Aucune commande ouverte pour le moment."
@@ -49365,6 +49981,450 @@ msgstr "1.10 = coût de construction estimé +10%%"
 msgid "Supercapital hull markup"
 msgstr "Marge sur les hulls supercapital"
 
+#: templates/store/inventory.html templates/store/shipyard_policy.html
+msgid "Shipyard · Leadership"
+msgstr "Chantier naval · Direction"
+
+#: templates/store/inventory.html templates/store/inventory_fit.html
+#: templates/store/shipyard_policy.html
+msgid "Inventory console"
+msgstr "Console d'inventaire"
+
+#: templates/store/inventory.html
+msgid ""
+"Complete fitted doctrine ships: what's stocked, reserved, promised and being "
+"restocked. Every number comes from the same availability service the "
+"Shipyard sells with."
+msgstr ""
+"Vaisseaux de doctrine complets et équipés : ce qui est en stock, réservé, "
+"promis et en cours de réapprovisionnement. Chaque chiffre provient du même "
+"service de disponibilité que celui avec lequel le Chantier naval vend."
+
+#: templates/store/inventory.html templates/store/shipyard_policy.html
+msgid "Fulfilment policy"
+msgstr "Politique de traitement"
+
+#: templates/store/inventory.html
+msgid "Open supply needs"
+msgstr "Besoins d'approvisionnement ouverts"
+
+#: templates/store/inventory.html
+msgid "Fit"
+msgstr "Fit"
+
+#: templates/store/inventory.html
+msgid "Needed"
+msgstr "Nécessaire"
+
+#: templates/store/inventory.html templates/store/inventory_fit.html
+msgid "Required by"
+msgstr "Requis avant"
+
+#: templates/store/inventory.html
+msgid "Vehicle"
+msgstr "Véhicule"
+
+#: templates/store/inventory.html
+msgid "Project"
+msgstr "Projet"
+
+#: templates/store/inventory.html
+msgid "Build job"
+msgstr "Job de production"
+
+#: templates/store/inventory.html
+msgid "none yet"
+msgstr "aucun pour l'instant"
+
+#: templates/store/inventory.html
+msgid "Fit, ship or doctrine"
+msgstr "Fit, vaisseau ou doctrine"
+
+#: templates/store/inventory.html
+msgid "Needs revalidation"
+msgstr "Revalidation requise"
+
+#: templates/store/inventory.html
+msgid "At reorder point"
+msgstr "Au seuil de réapprovisionnement"
+
+#: templates/store/inventory.html
+msgid "Below safety stock"
+msgstr "Sous le stock de sécurité"
+
+#: templates/store/inventory.html templates/store/inventory_fit.html
+msgid "Available to promise"
+msgstr "Disponible à promettre"
+
+#: templates/store/inventory.html
+msgid "Days of cover"
+msgstr "Jours de couverture"
+
+#: templates/store/inventory.html
+#, python-format
+msgid "%(n)s offer"
+msgid_plural "%(n)s offers"
+msgstr[0] "%(n)s offre"
+msgstr[1] "%(n)s offres"
+
+#: templates/store/inventory.html
+msgid "Select"
+msgstr "Sélectionner"
+
+#: templates/store/inventory.html templates/store/inventory_fit.html
+msgid "On hand"
+msgstr "En stock"
+
+#: templates/store/inventory.html templates/store/inventory_fit.html
+msgid "ATP"
+msgstr "ATP"
+
+#: templates/store/inventory.html templates/store/inventory_fit.html
+msgid "Incoming"
+msgstr "Attendu"
+
+#: templates/store/inventory.html
+msgid "Cover (d)"
+msgstr "Couverture (j)"
+
+#: templates/store/inventory.html
+msgid "Lead (d)"
+msgstr "Délai (j)"
+
+#: templates/store/inventory.html
+#, python-format
+msgid "Select %(name)s"
+msgstr "Sélectionner %(name)s"
+
+#: templates/store/inventory.html templates/store/inventory_fit.html
+msgid "Limited"
+msgstr "Limité"
+
+#: templates/store/inventory.html templates/store/inventory_fit.html
+msgid "Not offered"
+msgstr "Non proposé"
+
+#: templates/store/inventory.html
+msgid "No delivery location configured"
+msgstr "Aucun emplacement de livraison configuré"
+
+#: templates/store/inventory.html
+msgid "Stocked against an older fit revision"
+msgstr "Stocké sur une ancienne révision du fit"
+
+#: templates/store/inventory.html
+msgid "Stock recorded against an older fit revision needs officer revalidation"
+msgstr ""
+"Le stock enregistré sur une ancienne révision du fit nécessite une "
+"revalidation par un officier"
+
+#: templates/store/inventory.html
+msgid "revalidate"
+msgstr "revalider"
+
+#: templates/store/inventory.html
+msgid "Available stock is at or below the reorder point"
+msgstr "Le stock disponible est au seuil de réapprovisionnement ou en dessous"
+
+#: templates/store/inventory.html
+msgid "reorder"
+msgstr "réapprovisionner"
+
+#: templates/store/inventory.html
+msgid "Available stock is below the safety stock"
+msgstr "Le stock disponible est sous le stock de sécurité"
+
+#: templates/store/inventory.html
+msgid "safety"
+msgstr "sécurité"
+
+#: templates/store/inventory.html
+msgid "Pilots waiting for this ship"
+msgstr "Pilotes en attente de ce vaisseau"
+
+#: templates/store/inventory.html
+msgid "No offers match these filters."
+msgstr "Aucune offre ne correspond à ces filtres."
+
+#: templates/store/inventory.html
+msgid "With selected:"
+msgstr "Avec la sélection :"
+
+#: templates/store/inventory.html
+msgid "Offer for sale"
+msgstr "Proposer à la vente"
+
+#: templates/store/inventory.html
+msgid "Withdraw from sale"
+msgstr "Retirer de la vente"
+
+#: templates/store/inventory_fit.html
+msgid "Fit inventory"
+msgstr "Inventaire du fit"
+
+#: templates/store/inventory_fit.html
+msgid "Pilots on the waitlist"
+msgstr "Pilotes sur la liste d'attente"
+
+#: templates/store/inventory_fit.html
+msgid "Stocked complete ships"
+msgstr "Vaisseaux complets en stock"
+
+#: templates/store/inventory_fit.html
+msgid "Fit revision"
+msgstr "Révision du fit"
+
+#: templates/store/inventory_fit.html
+msgid "Last stocktake"
+msgstr "Dernier inventaire"
+
+#: templates/store/inventory_fit.html
+msgid "current"
+msgstr "actuelle"
+
+#: templates/store/inventory_fit.html
+msgid ""
+"Stocked before the fit was edited — not counted as available until "
+"revalidated"
+msgstr ""
+"Stocké avant la modification du fit — non compté comme disponible tant qu'il "
+"n'est pas revalidé"
+
+#: templates/store/inventory_fit.html
+msgid "older revision"
+msgstr "révision antérieure"
+
+#: templates/store/inventory_fit.html
+msgid "Adjust"
+msgstr "Ajuster"
+
+#: templates/store/inventory_fit.html
+msgid "Counted balance"
+msgstr "Solde constaté"
+
+#: templates/store/inventory_fit.html
+msgid "Apply stocktake"
+msgstr "Appliquer l'inventaire"
+
+#: templates/store/inventory_fit.html
+msgid "Confirm these ships match the current fit and count them again"
+msgstr ""
+"Confirmer que ces vaisseaux correspondent au fit actuel et les recompter"
+
+#: templates/store/inventory_fit.html
+msgid "Revalidate"
+msgstr "Revalider"
+
+#: templates/store/inventory_fit.html
+msgid "No complete ships recorded yet — use the receipt form to stock some."
+msgstr ""
+"Aucun vaisseau complet enregistré pour l'instant — utilisez le formulaire de "
+"réception pour en stocker."
+
+#: templates/store/inventory_fit.html
+msgid "Receive assembled ships"
+msgstr "Réceptionner des vaisseaux assemblés"
+
+#: templates/store/inventory_fit.html
+msgid "Receive"
+msgstr "Réceptionner"
+
+#: templates/store/inventory_fit.html
+msgid ""
+"Record complete, fitted ships only — hulls or loose modules belong in the "
+"stockpile, not here. Arrivals are reserved for waiting backorders "
+"automatically when the policy allows."
+msgstr ""
+"N'enregistrez que des vaisseaux complets et équipés — les hulls et les "
+"modules en vrac vont dans les stocks de la corp, pas ici. Les arrivages sont "
+"automatiquement réservés pour les commandes différées en attente quand la "
+"politique le permet."
+
+#: templates/store/inventory_fit.html
+msgid "ESI cross-check (advisory)"
+msgstr "Recoupement ESI (à titre indicatif)"
+
+#: templates/store/inventory_fit.html
+msgid "Recorded complete ships (all revisions)"
+msgstr "Vaisseaux complets enregistrés (toutes révisions)"
+
+#: templates/store/inventory_fit.html
+msgid "Hulls the corp asset mirror sees here"
+msgstr "Hulls vus ici par le miroir d'actifs de la corp"
+
+#: templates/store/inventory_fit.html
+msgid ""
+"Fewer hulls than recorded fitted ships — the manual count is probably stale. "
+"Run a stocktake."
+msgstr ""
+"Moins de hulls que de vaisseaux équipés enregistrés — le décompte manuel est "
+"probablement périmé. Faites un inventaire."
+
+#: templates/store/inventory_fit.html
+#, python-format
+msgid ""
+"ESI sees hull counts only — it cannot verify fittings, so it bounds the "
+"claim rather than proving it. Last asset sync %(when)s. Manual counts are "
+"never overwritten automatically."
+msgstr ""
+"L'ESI ne voit que le nombre de hulls — il ne peut pas vérifier les fittings, "
+"donc il borne le décompte annoncé sans le prouver. Dernière synchro des "
+"actifs %(when)s. Les décomptes manuels ne sont jamais écrasés "
+"automatiquement."
+
+#: templates/store/inventory_fit.html
+msgid ""
+"The corp asset mirror has no data for this location (no Director token or "
+"unreadable structure) — the manual stocktake is the only source of truth "
+"here."
+msgstr ""
+"Le miroir d'actifs de la corp n'a aucune donnée pour cet emplacement (pas de "
+"jeton Directeur ou structure illisible) — l'inventaire manuel est la seule "
+"source de vérité ici."
+
+#: templates/store/inventory_fit.html
+msgid "Adjustment history"
+msgstr "Historique des ajustements"
+
+#: templates/store/inventory_fit.html
+msgid "latest 50"
+msgstr "les 50 derniers"
+
+#: templates/store/inventory_fit.html
+msgid "Balance after"
+msgstr "Solde après"
+
+#: templates/store/inventory_fit.html
+msgid "No stock movements yet."
+msgstr "Aucun mouvement de stock pour l'instant."
+
+#: templates/store/inventory_fit.html
+msgid "Supply need"
+msgstr "Besoin d'approvisionnement"
+
+#: templates/store/inventory_fit.html
+msgid "Net requirement"
+msgstr "Besoin net"
+
+#: templates/store/inventory_fit.html
+msgid "Industry project"
+msgstr "Projet d'industrie"
+
+#: templates/store/inventory_fit.html
+msgid "ERP build job"
+msgstr "Job de production ERP"
+
+#: templates/store/inventory_fit.html
+msgid "Create industry project"
+msgstr "Créer un projet d'industrie"
+
+#: templates/store/inventory_fit.html
+msgid "Queue ERP build job"
+msgstr "Mettre un job de production ERP en file"
+
+#: templates/store/inventory_fit.html
+msgid "Create claimable task"
+msgstr "Créer une tâche réclamable"
+
+#: templates/store/inventory_fit.html
+msgid ""
+"Several orders consolidate into this one need — no duplicate projects or "
+"jobs are created."
+msgstr ""
+"Plusieurs commandes se regroupent dans ce seul besoin — aucun projet ni job "
+"en double n'est créé."
+
+#: templates/store/inventory_fit.html
+msgid "No open backorder demand for this fit."
+msgstr "Aucune demande de commande différée ouverte pour ce fit."
+
+#: templates/store/inventory_fit.html
+msgid "Offer & stocking policy"
+msgstr "Politique d'offre & de stockage"
+
+#: templates/store/inventory_fit.html
+msgid ""
+"Blank fields inherit the corp-wide fulfilment policy; a value here overrides "
+"it for this fit only."
+msgstr ""
+"Les champs vides héritent de la politique de traitement de la corp ; une "
+"valeur ici la remplace pour ce fit uniquement."
+
+#: templates/store/inventory_fit.html
+msgid "Offered for sale"
+msgstr "Proposé à la vente"
+
+#: templates/store/inventory_fit.html templates/store/shipyard_policy.html
+msgid "Backorders"
+msgstr "Commandes différées"
+
+#: templates/store/inventory_fit.html
+msgid "allowed,closed"
+msgstr "autorisées,fermées"
+
+#: templates/store/inventory_fit.html
+#, python-format
+msgid "Inherits: %(v)s"
+msgstr "Hérité : %(v)s"
+
+#: templates/store/inventory_fit.html
+msgid "Lead time (days)"
+msgstr "Délai d'approvisionnement (jours)"
+
+#: templates/store/inventory_fit.html
+msgid "Max per order"
+msgstr "Max par commande"
+
+#: templates/store/inventory_fit.html
+msgid "Max backorder per order"
+msgstr "Max en différé par commande"
+
+#: templates/store/inventory_fit.html
+msgid "Safety stock"
+msgstr "Stock de sécurité"
+
+#: templates/store/inventory_fit.html
+msgid "Reorder point"
+msgstr "Seuil de réapprovisionnement"
+
+#: templates/store/inventory_fit.html
+msgid "Target stock"
+msgstr "Stock cible"
+
+#: templates/store/inventory_fit.html
+msgid "Preferred fulfilment"
+msgstr "Traitement préféré"
+
+#: templates/store/inventory_fit.html
+msgid "Note shown to buyers"
+msgstr "Note affichée aux acheteurs"
+
+#: templates/store/inventory_fit.html
+msgid "Internal fulfilment note"
+msgstr "Note interne de traitement"
+
+#: templates/store/inventory_fit.html
+msgid "Save offer settings"
+msgstr "Enregistrer les paramètres de l'offre"
+
+#: templates/store/inventory_fit.html
+#, python-format
+msgid "Last changed by %(who)s · %(when)s"
+msgstr "Dernière modification par %(who)s · %(when)s"
+
+#: templates/store/inventory_fit.html
+msgid "Open orders for this fit"
+msgstr "Commandes ouvertes pour ce fit"
+
+#: templates/store/inventory_fit.html
+#, python-format
+msgid "%(n)s backordered"
+msgstr "%(n)s en différé"
+
+#: templates/store/inventory_fit.html
+msgid "No open orders."
+msgstr "Aucune commande ouverte."
+
 #: templates/store/my_orders.html templates/store/storefront.html
 msgid "My orders"
 msgstr "Mes commandes"
@@ -49386,6 +50446,16 @@ msgstr "constructeur"
 #: templates/store/my_orders.html
 msgid "awaiting a builder"
 msgstr "en attente d'un constructeur"
+
+#: templates/store/my_orders.html
+#, python-format
+msgid "%(n)s on backorder"
+msgstr "%(n)s en différé"
+
+#: templates/store/my_orders.html
+#, python-format
+msgid "estimated %(date)s"
+msgstr "estimé le %(date)s"
 
 #: templates/store/my_orders.html
 msgid "Waiting for a corp member to claim it."
@@ -49456,6 +50526,61 @@ msgid "Deliver to"
 msgstr "Livrer à"
 
 #: templates/store/order.html
+msgid "Availability at order time"
+msgstr "Disponibilité au moment de la commande"
+
+#: templates/store/order.html
+#, python-format
+msgid ""
+"Currently held in stock for this order: %(n)s (reservations change when "
+"stock arrives or holds expire)."
+msgstr ""
+"Actuellement retenu en stock pour cette commande : %(n)s (les réservations "
+"changent quand du stock arrive ou qu'elles expirent)."
+
+#: templates/store/order.html
+msgid "Estimated delivery (at order time)"
+msgstr "Livraison estimée (au moment de la commande)"
+
+#: templates/store/order.html
+msgid "Current estimate"
+msgstr "Estimation actuelle"
+
+#: templates/store/order.html
+msgid "Past the current estimate — awaiting an update from the fulfiller."
+msgstr ""
+"Estimation actuelle dépassée — en attente d'une mise à jour de la personne "
+"en charge."
+
+#: templates/store/order.html
+msgid "Ready since"
+msgstr "Prêt depuis"
+
+#: templates/store/order.html
+msgid "Revise the delivery estimate"
+msgstr "Réviser l'estimation de livraison"
+
+#: templates/store/order.html
+msgid "New estimated date"
+msgstr "Nouvelle date estimée"
+
+#: templates/store/order.html
+msgid "Reason (shown to the buyer)"
+msgstr "Motif (affiché à l'acheteur)"
+
+#: templates/store/order.html
+msgid "Update estimate"
+msgstr "Mettre à jour l'estimation"
+
+#: templates/store/order.html
+msgid ""
+"The original order-time estimate stays on record; the buyer is notified of "
+"the change."
+msgstr ""
+"L'estimation initiale au moment de la commande reste enregistrée ; "
+"l'acheteur est notifié du changement."
+
+#: templates/store/order.html
 #, python-format
 msgid ""
 "Pay the <span class=\"text-gold\">%(amount)s</span> deposit to the builder "
@@ -49476,6 +50601,243 @@ msgstr "Réserver &amp; traiter"
 #: templates/store/order.html
 msgid "Cancel order"
 msgstr "Annuler la commande"
+
+#: templates/store/order_confirm.html
+msgid "Confirm order"
+msgstr "Confirmer la commande"
+
+#: templates/store/order_confirm.html
+msgid "Back to the Shipyard"
+msgstr "Retour au Chantier naval"
+
+#: templates/store/order_confirm.html
+msgid "Confirm your order"
+msgstr "Confirmez votre commande"
+
+#: templates/store/order_confirm.html
+msgid "How this order will be fulfilled"
+msgstr "Comment cette commande sera traitée"
+
+#: templates/store/order_confirm.html
+msgid "Reserved from stock — ready now"
+msgstr "Réservé sur le stock — prêt maintenant"
+
+#: templates/store/order_confirm.html
+msgid "Backorder — built or sourced for you"
+msgstr "Commande différée — construit ou acheté pour vous"
+
+#: templates/store/order_confirm.html
+msgid "Estimated delivery"
+msgstr "Livraison estimée"
+
+#: templates/store/order_confirm.html
+#, python-format
+msgid "about %(n)s day"
+msgid_plural "about %(n)s days"
+msgstr[0] "environ %(n)s jour"
+msgstr[1] "environ %(n)s jours"
+
+#: templates/store/order_confirm.html
+msgid "each"
+msgstr "l'unité"
+
+#: templates/store/order_confirm.html
+msgid "None — you pay on delivery via in-game contract."
+msgstr "Aucun — vous payez à la livraison via un contrat en jeu."
+
+#: templates/store/order_confirm.html
+msgid "Delivery"
+msgstr "Livraison"
+
+#: templates/store/order_confirm.html
+msgid ""
+"One delivery, when the whole order is ready (the backordered part sets the "
+"date)."
+msgstr ""
+"Une seule livraison, quand toute la commande est prête (la partie en différé "
+"fixe la date)."
+
+#: templates/store/order_confirm.html
+msgid ""
+"Estimates are not guarantees. Quantities can shift if someone orders first — "
+"the split is re-checked the moment you confirm, and anything no longer in "
+"stock becomes part of the backorder."
+msgstr ""
+"Les estimations ne sont pas des garanties. Les quantités peuvent bouger si "
+"quelqu'un commande avant vous — la répartition est revérifiée au moment où "
+"vous confirmez, et tout ce qui n'est plus en stock rejoint la commande "
+"différée."
+
+#: templates/store/order_confirm.html
+#, python-format
+msgid ""
+"I understand %(n)s ship is a backorder with an estimated (not guaranteed) "
+"delivery date."
+msgid_plural ""
+"I understand %(n)s ships are backorders with an estimated (not guaranteed) "
+"delivery date."
+msgstr[0] ""
+"Je comprends que %(n)s vaisseau est une commande différée avec une date de "
+"livraison estimée (non garantie)."
+msgstr[1] ""
+"Je comprends que %(n)s vaisseaux sont des commandes différées avec une date "
+"de livraison estimée (non garantie)."
+
+#: templates/store/order_confirm.html
+#, python-format
+msgid "Confirm order of %(n)s"
+msgstr "Confirmer la commande de %(n)s"
+
+#: templates/store/order_confirm.html
+#, python-format
+msgid "Or take just the %(n)s that is ready now"
+msgid_plural "Or take just the %(n)s that are ready now"
+msgstr[0] "Ou prenez seulement le %(n)s qui est prêt maintenant"
+msgstr[1] "Ou prenez seulement les %(n)s qui sont prêts maintenant"
+
+#: templates/store/order_confirm.html
+msgid "Order ready stock only"
+msgstr "Commander uniquement le stock prêt"
+
+#: templates/store/order_confirm.html
+#, python-format
+msgid "%(n)s is available right now"
+msgid_plural "%(n)s are available right now"
+msgstr[0] "%(n)s est disponible dès maintenant"
+msgstr[1] "%(n)s sont disponibles dès maintenant"
+
+#: templates/store/order_confirm.html
+msgid "Order what's available"
+msgstr "Commander ce qui est disponible"
+
+#: templates/store/shipyard_policy.html
+msgid "Shipyard Policy"
+msgstr "Politique du Chantier naval"
+
+#: templates/store/shipyard_policy.html
+msgid ""
+"Corp-wide defaults for doctrine-ship availability: backorders, lead times, "
+"reservations, order limits and what buyers see. Individual fits can override "
+"any of these on the inventory console."
+msgstr ""
+"Valeurs par défaut de la corp pour la disponibilité des vaisseaux de "
+"doctrine : commandes différées, délais d'approvisionnement, réservations, "
+"limites de commande et ce que voient les acheteurs. Chaque fit peut "
+"remplacer n'importe laquelle d'entre elles sur la console d'inventaire."
+
+#: templates/store/shipyard_policy.html
+msgid "Accept backorders"
+msgstr "Accepter les commandes différées"
+
+#: templates/store/shipyard_policy.html
+msgid "Off: out-of-stock ships can't be ordered at all."
+msgstr ""
+"Désactivé : les vaisseaux en rupture de stock ne peuvent pas être commandés "
+"du tout."
+
+#: templates/store/shipyard_policy.html
+msgid "Default lead time (days)"
+msgstr "Délai d'approvisionnement par défaut (jours)"
+
+#: templates/store/shipyard_policy.html
+msgid "The estimated delivery shown for a fresh backorder."
+msgstr "La livraison estimée affichée pour une nouvelle commande différée."
+
+#: templates/store/shipyard_policy.html
+msgid "Allow split orders"
+msgstr "Autoriser les commandes fractionnées"
+
+#: templates/store/shipyard_policy.html
+msgid "One order may combine reserved stock with a backordered remainder."
+msgstr "Une commande peut combiner du stock réservé et un reliquat en différé."
+
+#: templates/store/shipyard_policy.html
+msgid "Stock & reservations"
+msgstr "Stock & réservations"
+
+#: templates/store/shipyard_policy.html
+msgid "Default delivery location"
+msgstr "Emplacement de livraison par défaut"
+
+#: templates/store/shipyard_policy.html
+msgid ""
+"Where doctrine ships are stocked and handed over, unless a fit overrides it."
+msgstr ""
+"Où les vaisseaux de doctrine sont stockés et remis, sauf si un fit le "
+"remplace."
+
+#: templates/store/shipyard_policy.html
+msgid "Reservation expiry (days)"
+msgstr "Expiration des réservations (jours)"
+
+#: templates/store/shipyard_policy.html
+msgid ""
+"Release the hold on orders nobody claimed after this many days. 0 keeps "
+"holds forever."
+msgstr ""
+"Libérer la réservation des commandes que personne n'a réclamées après ce "
+"nombre de jours. 0 conserve les réservations indéfiniment."
+
+#: templates/store/shipyard_policy.html
+msgid "Auto-allocate arrivals"
+msgstr "Allouer automatiquement les arrivages"
+
+#: templates/store/shipyard_policy.html
+msgid ""
+"New stock is reserved for waiting backorders automatically, oldest first."
+msgstr ""
+"Le nouveau stock est automatiquement réservé pour les commandes différées en "
+"attente, les plus anciennes d'abord."
+
+#: templates/store/shipyard_policy.html
+msgid "Shop front"
+msgstr "Vitrine"
+
+#: templates/store/shipyard_policy.html
+msgid "Maximum per order"
+msgstr "Maximum par commande"
+
+#: templates/store/shipyard_policy.html
+msgid "'Limited stock' threshold"
+msgstr "Seuil « Stock limité »"
+
+#: templates/store/shipyard_policy.html
+msgid "At or below this many remaining, cards warn about limited stock."
+msgstr ""
+"À ce nombre restant ou en dessous, les cartes signalent un stock limité."
+
+#: templates/store/shipyard_policy.html
+msgid "Show unavailable ships"
+msgstr "Afficher les vaisseaux indisponibles"
+
+#: templates/store/shipyard_policy.html
+msgid "Off hides ships that can't currently be ordered."
+msgstr ""
+"Désactivé : masque les vaisseaux qui ne peuvent pas être commandés "
+"actuellement."
+
+#: templates/store/shipyard_policy.html
+msgid "Default to available only"
+msgstr "Disponibles uniquement par défaut"
+
+#: templates/store/shipyard_policy.html
+msgid "Open the Shipyard pre-filtered to ships available now."
+msgstr ""
+"Ouvrir le Chantier naval préfiltré sur les vaisseaux disponibles maintenant."
+
+#: templates/store/shipyard_policy.html
+msgid "Waitlist"
+msgstr "Liste d'attente"
+
+#: templates/store/shipyard_policy.html
+msgid "Pilots can ask to be pinged when an unavailable ship returns."
+msgstr ""
+"Les pilotes peuvent demander à recevoir un ping quand un vaisseau "
+"indisponible revient."
+
+#: templates/store/shipyard_policy.html
+msgid "Save policy"
+msgstr "Enregistrer la politique"
 
 #: templates/store/storefront.html
 msgid ""
@@ -49885,1352 +51247,8 @@ msgstr "— Désassigner (retour au pool ouvert) —"
 msgid "This source string is intentionally never translated"
 msgstr "Cette chaîne source n'est intentionnellement jamais traduite"
 
-#: apps/erp/messages.py
-#, python-format
-msgid "Shipyard restock: %(fit_name)s"
-msgstr "Réapprovisionnement du Chantier naval : %(fit_name)s"
-
-#: apps/pingboard/messages.py
-#, python-brace-format
-msgid "The estimated delivery for {ship_name} is now {eta_date}."
-msgstr "La livraison estimée pour {ship_name} est désormais le {eta_date}."
-
-#: apps/pingboard/messages.py
-#, python-brace-format
-msgid ""
-"{quantity}× {ship_name} from a new delivery is now reserved for your order."
-msgstr ""
-"{quantity}× {ship_name} d'une nouvelle livraison est désormais réservé pour "
-"votre commande."
-
-#: apps/pingboard/messages.py
-#, python-brace-format
-msgid ""
-"Your reserved {ship_name} was released after waiting unclaimed; the order is "
-"now backordered."
-msgstr ""
-"Votre {ship_name} réservé a été libéré après être resté non réclamé ; la "
-"commande est désormais différée."
-
-#: apps/pingboard/messages.py
-#, python-brace-format
-msgid "Back in stock: {ship_name}"
-msgstr "De retour en stock : {ship_name}"
-
-#: apps/pingboard/messages.py
-#, python-brace-format
-msgid "{ship_name} can be ordered on the Shipyard again."
-msgstr "{ship_name} peut de nouveau être commandé sur le Chantier naval."
-
-#: apps/pingboard/messages.py
-msgid "Shipyard restock built"
-msgstr "Réapprovisionnement du Chantier naval construit"
-
-#: apps/pingboard/messages.py
-#, python-brace-format
-msgid ""
-"Production for {fit_name} finished. Assemble and fit the ships, then record "
-"the receipt on the Shipyard inventory console to release waiting backorders."
-msgstr ""
-"La production de {fit_name} est terminée. Assemblez les vaisseaux et montez "
-"le fit, puis enregistrez la réception sur la console d'inventaire du "
-"Chantier naval pour libérer les commandes différées en attente."
-
-#: apps/store/forms.py
-msgid "e.g. built from restock batch #12"
-msgstr "par ex. construit à partir du lot de réapprovisionnement #12"
-
-#: apps/store/models.py
-msgid "Ready for immediate delivery"
-msgstr "Prêt pour livraison immédiate"
-
-#: apps/store/models.py
-msgid "Partially reserved, remainder backordered"
-msgstr "Partiellement réservé, reliquat en différé"
-
-#: apps/store/models.py
-msgid "Buy from an approved supplier"
-msgstr "Acheter auprès d'un fournisseur agréé"
-
-#: apps/store/models.py
-msgid "Accept orders for doctrine ships that are not in stock."
-msgstr ""
-"Accepter les commandes de vaisseaux de doctrine qui ne sont pas en stock."
-
-#: apps/store/models.py
-msgid "Default estimated days to fulfil a backorder."
-msgstr "Nombre de jours estimé par défaut pour traiter une commande différée."
-
-#: apps/store/models.py
-msgid "Allow one order to combine reserved stock with a backordered remainder."
-msgstr ""
-"Autoriser une commande à combiner du stock réservé et un reliquat en différé."
-
-#: apps/store/models.py
-msgid ""
-"Release reservations of orders nobody has claimed after this many days (0 = "
-"never)."
-msgstr ""
-"Libérer les réservations des commandes que personne n'a réclamées après ce "
-"nombre de jours (0 = jamais)."
-
-#: apps/store/models.py
-msgid ""
-"Where doctrine ships are stocked and delivered unless a fit overrides it."
-msgstr ""
-"Où les vaisseaux de doctrine sont stockés et livrés, sauf si un fit le "
-"remplace."
-
-#: apps/store/models.py
-msgid "Most ships one order may request unless a fit overrides it."
-msgstr "Nombre maximal de vaisseaux par commande, sauf si un fit le remplace."
-
-#: apps/store/models.py
-msgid "Show 'Limited stock' when this many or fewer ships remain."
-msgstr ""
-"Afficher « Stock limité » quand il reste ce nombre de vaisseaux ou moins."
-
-#: apps/store/models.py
-msgid ""
-"Keep out-of-stock ships visible on the Shipyard (greyed out) instead of "
-"hiding them."
-msgstr ""
-"Garder les vaisseaux en rupture de stock visibles sur le Chantier naval "
-"(grisés) au lieu de les masquer."
-
-#: apps/store/models.py
-msgid "Open the Shipyard filtered to immediately available ships."
-msgstr ""
-"Ouvrir le Chantier naval filtré sur les vaisseaux immédiatement disponibles."
-
-#: apps/store/models.py
-msgid "Let pilots join a waitlist for ships that can't be ordered."
-msgstr ""
-"Permettre aux pilotes de rejoindre une liste d'attente pour les vaisseaux "
-"qui ne peuvent pas être commandés."
-
-#: apps/store/models.py
-msgid ""
-"When stock arrives, reserve it for waiting backorders automatically (oldest "
-"first)."
-msgstr ""
-"À l'arrivée du stock, le réserver automatiquement pour les commandes "
-"différées en attente (les plus anciennes d'abord)."
-
-#: apps/store/models.py
-msgid "Offer this fit for sale on the Shipyard."
-msgstr "Proposer ce fit à la vente sur le Chantier naval."
-
-#: apps/store/models.py
-msgid "Override the corp-wide backorder policy for this fit."
-msgstr "Remplacer la politique de commandes différées de la corp pour ce fit."
-
-#: apps/store/models.py
-msgid "Override the default backorder lead time (days)."
-msgstr ""
-"Remplacer le délai d'approvisionnement par défaut des commandes différées "
-"(jours)."
-
-#: apps/store/models.py
-msgid "Override the default delivery location for this fit."
-msgstr "Remplacer l'emplacement de livraison par défaut pour ce fit."
-
-#: apps/store/models.py
-msgid "Most units allowed on backorder per order for this fit."
-msgstr "Nombre maximal d'unités en différé par commande pour ce fit."
-
-#: apps/store/models.py
-msgid "Override the maximum quantity per order."
-msgstr "Remplacer la quantité maximale par commande."
-
-#: apps/store/models.py
-msgid "Units held back from planning as a strategic reserve."
-msgstr "Unités exclues de la planification à titre de réserve stratégique."
-
-#: apps/store/models.py
-msgid "Flag this fit for restocking when available stock falls to this level."
-msgstr ""
-"Signaler ce fit pour réapprovisionnement quand le stock disponible tombe à "
-"ce niveau."
-
-#: apps/store/models.py
-msgid "How many complete ships the corp aims to keep stocked."
-msgstr "Nombre de vaisseaux complets que la corp vise à garder en stock."
-
-#: apps/store/models.py
-msgid "Fulfilment notes visible to members and officers only."
-msgstr ""
-"Notes de traitement visibles uniquement par les membres et les officiers."
-
-#: apps/store/models.py
-msgid "fit stock entries"
-msgstr "entrées de stock de fit"
-
-#: apps/store/services.py
-msgid "That ship is not offered for sale right now."
-msgstr "Ce vaisseau n'est pas proposé à la vente pour le moment."
-
-#: apps/store/services.py
-#, python-format
-msgid "Orders for this ship are limited to %(max)s at a time."
-msgstr "Les commandes pour ce vaisseau sont limitées à %(max)s à la fois."
-
-#: apps/store/services.py
-#, python-format
-msgid ""
-"Only %(count)s can be delivered right now and backorders are closed for this "
-"ship."
-msgstr ""
-"Seuls %(count)s peuvent être livrés pour le moment et les commandes "
-"différées sont fermées pour ce vaisseau."
-
-#: apps/store/services.py
-msgid "That ship is out of stock and backorders are closed for it."
-msgstr ""
-"Ce vaisseau est en rupture de stock et ses commandes différées sont fermées."
-
-#: apps/store/services.py
-#, python-format
-msgid "At most %(max)s of this ship can be backordered per order."
-msgstr ""
-"Au maximum %(max)s de ce vaisseau peuvent être mis en différé par commande."
-
-#: apps/store/supply.py
-#, python-format
-msgid ""
-"Supply requirement from the Shipyard: %(count)s backordered order(s) for "
-"%(fit)s."
-msgstr ""
-"Besoin d'approvisionnement du Chantier naval : %(count)s commande(s) "
-"différée(s) pour %(fit)s."
-
-#: apps/store/supply.py
-#, python-format
-msgid "Supply %(count)s× %(fit)s for the Shipyard"
-msgstr "Fournir %(count)s× %(fit)s pour le Chantier naval"
-
-#: apps/store/views.py
-#, python-format
-msgid "Order placed — %(ready)s reserved now, %(back)s on backorder."
-msgstr "Commande passée — %(ready)s réservés maintenant, %(back)s en différé."
-
-#: apps/store/views.py
-msgid "Order placed — your ship is reserved from stock."
-msgstr "Commande passée — votre vaisseau est réservé sur le stock."
-
-#: apps/store/views.py
-#, python-format
-msgid "You left the waitlist for %(fit)s."
-msgstr "Vous avez quitté la liste d'attente pour %(fit)s."
-
-#: apps/store/views.py
-#, python-format
-msgid ""
-"You joined the waitlist for %(fit)s — you'll be pinged when it can be "
-"ordered."
-msgstr ""
-"Vous avez rejoint la liste d'attente pour %(fit)s — vous recevrez un ping "
-"quand il pourra être commandé."
-
-#: apps/store/views.py
-msgid "That order just changed — review it and try again."
-msgstr "Cette commande vient de changer — vérifiez-la et réessayez."
-
-#: apps/store/views_inventory.py
-#, python-format
-msgid "%(qty)s received — %(n)s backordered order(s) got stock reserved."
-msgstr ""
-"%(qty)s réceptionnés — du stock a été réservé pour %(n)s commande(s) "
-"différée(s)."
-
-#: apps/store/views_inventory.py
-#, python-format
-msgid "%(qty)s received into stock."
-msgstr "%(qty)s réceptionnés en stock."
-
-#: apps/store/views_inventory.py
-msgid ""
-"That balance is below the actively reserved quantity — release or deliver "
-"the reservations first."
-msgstr ""
-"Ce solde est inférieur à la quantité activement réservée — libérez ou livrez "
-"d'abord les réservations."
-
-#: apps/store/views_inventory.py
-msgid "No change — balance already matched."
-msgstr "Aucun changement — le solde correspondait déjà."
-
-#: apps/store/views_inventory.py
-#, python-format
-msgid "%(n)s ship(s) revalidated against the current fit revision."
-msgstr ""
-"%(n)s vaisseau(x) revalidé(s) par rapport à la révision actuelle du fit."
-
-#: apps/store/views_inventory.py
-#, python-format
-msgid "%(n)s fit(s) are now offered for sale."
-msgstr "%(n)s fit(s) désormais proposés à la vente."
-
-#: apps/store/views_inventory.py
-#, python-format
-msgid "%(n)s fit(s) withdrawn from sale."
-msgstr "%(n)s fit(s) retirés de la vente."
-
-#: apps/store/views_inventory.py
-msgid "ERP build job queued and linked."
-msgstr "Job de production ERP mis en file et lié."
-
-#: templates/admin_audit/console/hub.html
-msgid "Stocked doctrine ships, reservations, backorders and restock needs."
-msgstr ""
-"Vaisseaux de doctrine en stock, réservations, commandes différées et besoins "
-"de réapprovisionnement."
-
-#: templates/admin_audit/console/hub.html
-msgid "Shipyard fulfilment policy"
-msgstr "Politique de traitement du Chantier naval"
-
-#: templates/admin_audit/console/hub.html
-msgid "Backorders, lead times, reservations and order limits."
-msgstr ""
-"Commandes différées, délais d'approvisionnement, réservations et limites de "
-"commande."
-
-#: templates/doctrines/ships.html
-#, python-format
-msgid "Estimated delivery by %(date)s"
-msgstr "Livraison estimée d'ici le %(date)s"
-
-#: templates/doctrines/ships.html
-#, python-format
-msgid "%(n)s in stock ready now."
-msgid_plural "%(n)s in stock ready now."
-msgstr[0] "%(n)s en stock, prêt maintenant."
-msgstr[1] "%(n)s en stock, prêts maintenant."
-
-#: templates/doctrines/ships.html
-msgid ""
-"Anything beyond stock is a backorder — you'll see the split and the "
-"estimated delivery before confirming."
-msgstr ""
-"Tout ce qui dépasse le stock devient une commande différée — vous verrez la "
-"répartition et la livraison estimée avant de confirmer."
-
-#: templates/doctrines/ships.html
-#, python-format
-msgid "Up to %(m)s per order."
-msgid_plural "Up to %(m)s per order."
-msgstr[0] "Jusqu'à %(m)s par commande."
-msgstr[1] "Jusqu'à %(m)s par commande."
-
-#: templates/store/inventory.html
-msgid ""
-"Complete fitted doctrine ships: what's stocked, reserved, promised and being "
-"restocked. Every number comes from the same availability service the "
-"Shipyard sells with."
-msgstr ""
-"Vaisseaux de doctrine complets et équipés : ce qui est en stock, réservé, "
-"promis et en cours de réapprovisionnement. Chaque chiffre provient du même "
-"service de disponibilité que celui avec lequel le Chantier naval vend."
-
-#: templates/store/inventory.html
-msgid "Vehicle"
-msgstr "Véhicule"
-
-#: templates/store/inventory.html
-msgid "At reorder point"
-msgstr "Au seuil de réapprovisionnement"
-
-#: templates/store/inventory.html templates/store/inventory_fit.html
-msgid "ATP"
-msgstr "ATP"
-
-#: templates/store/inventory.html
-msgid "Stocked against an older fit revision"
-msgstr "Stocké sur une ancienne révision du fit"
-
-#: templates/store/inventory.html
-msgid "Stock recorded against an older fit revision needs officer revalidation"
-msgstr ""
-"Le stock enregistré sur une ancienne révision du fit nécessite une "
-"revalidation par un officier"
-
-#: templates/store/inventory.html
-msgid "Available stock is at or below the reorder point"
-msgstr "Le stock disponible est au seuil de réapprovisionnement ou en dessous"
-
-#: templates/store/inventory.html
-msgid "Available stock is below the safety stock"
-msgstr "Le stock disponible est sous le stock de sécurité"
-
-#: templates/store/inventory.html
-msgid "safety"
-msgstr "sécurité"
-
-#: templates/store/inventory.html
-msgid "Offer for sale"
-msgstr "Proposer à la vente"
-
-#: templates/store/inventory_fit.html
-msgid "Stocked complete ships"
-msgstr "Vaisseaux complets en stock"
-
-#: templates/store/inventory_fit.html
-msgid ""
-"Stocked before the fit was edited — not counted as available until "
-"revalidated"
-msgstr ""
-"Stocké avant la modification du fit — non compté comme disponible tant qu'il "
-"n'est pas revalidé"
-
-#: templates/store/inventory_fit.html
-msgid "Apply stocktake"
-msgstr "Appliquer l'inventaire"
-
-#: templates/store/inventory_fit.html
-msgid "Confirm these ships match the current fit and count them again"
-msgstr ""
-"Confirmer que ces vaisseaux correspondent au fit actuel et les recompter"
-
-#: templates/store/inventory_fit.html
-msgid "Receive assembled ships"
-msgstr "Réceptionner des vaisseaux assemblés"
-
-#: templates/store/inventory_fit.html
-msgid ""
-"Record complete, fitted ships only — hulls or loose modules belong in the "
-"stockpile, not here. Arrivals are reserved for waiting backorders "
-"automatically when the policy allows."
-msgstr ""
-"N'enregistrez que des vaisseaux complets et équipés — les hulls et les "
-"modules en vrac vont dans les stocks de la corp, pas ici. Les arrivages sont "
-"automatiquement réservés pour les commandes différées en attente quand la "
-"politique le permet."
-
-#: templates/store/inventory_fit.html
-msgid "ESI cross-check (advisory)"
-msgstr "Recoupement ESI (à titre indicatif)"
-
-#: templates/store/inventory_fit.html
-msgid "Recorded complete ships (all revisions)"
-msgstr "Vaisseaux complets enregistrés (toutes révisions)"
-
-#: templates/store/inventory_fit.html
-msgid "Hulls the corp asset mirror sees here"
-msgstr "Hulls vus ici par le miroir d'actifs de la corp"
-
-#: templates/store/inventory_fit.html
-msgid ""
-"Fewer hulls than recorded fitted ships — the manual count is probably stale. "
-"Run a stocktake."
-msgstr ""
-"Moins de hulls que de vaisseaux équipés enregistrés — le décompte manuel est "
-"probablement périmé. Faites un inventaire."
-
-#: templates/store/inventory_fit.html
-#, python-format
-msgid ""
-"ESI sees hull counts only — it cannot verify fittings, so it bounds the "
-"claim rather than proving it. Last asset sync %(when)s. Manual counts are "
-"never overwritten automatically."
-msgstr ""
-"L'ESI ne voit que le nombre de hulls — il ne peut pas vérifier les fittings, "
-"donc il borne le décompte annoncé sans le prouver. Dernière synchro des "
-"actifs %(when)s. Les décomptes manuels ne sont jamais écrasés "
-"automatiquement."
-
-#: templates/store/inventory_fit.html
-msgid "latest 50"
-msgstr "les 50 derniers"
-
-#: templates/store/inventory_fit.html
-msgid ""
-"Several orders consolidate into this one need — no duplicate projects or "
-"jobs are created."
-msgstr ""
-"Plusieurs commandes se regroupent dans ce seul besoin — aucun projet ni job "
-"en double n'est créé."
-
-#: templates/store/inventory_fit.html
-msgid "Offer & stocking policy"
-msgstr "Politique d'offre & de stockage"
-
-#: templates/store/inventory_fit.html
-msgid ""
-"Blank fields inherit the corp-wide fulfilment policy; a value here overrides "
-"it for this fit only."
-msgstr ""
-"Les champs vides héritent de la politique de traitement de la corp ; une "
-"valeur ici la remplace pour ce fit uniquement."
-
-#: templates/store/inventory_fit.html
-msgid "allowed,closed"
-msgstr "autorisées,fermées"
-
-#: templates/store/order.html
-#, python-format
-msgid ""
-"Currently held in stock for this order: %(n)s (reservations change when "
-"stock arrives or holds expire)."
-msgstr ""
-"Actuellement retenu en stock pour cette commande : %(n)s (les réservations "
-"changent quand du stock arrive ou qu'elles expirent)."
-
-#: templates/store/order.html
-msgid "Estimated delivery (at order time)"
-msgstr "Livraison estimée (au moment de la commande)"
-
-#: templates/store/order.html
-msgid "Past the current estimate — awaiting an update from the fulfiller."
-msgstr ""
-"Estimation actuelle dépassée — en attente d'une mise à jour de la personne "
-"en charge."
-
-#: templates/store/order.html
-msgid "Revise the delivery estimate"
-msgstr "Réviser l'estimation de livraison"
-
-#: templates/store/order.html
-msgid ""
-"The original order-time estimate stays on record; the buyer is notified of "
-"the change."
-msgstr ""
-"L'estimation initiale au moment de la commande reste enregistrée ; "
-"l'acheteur est notifié du changement."
-
-#: templates/store/order_confirm.html
-msgid "How this order will be fulfilled"
-msgstr "Comment cette commande sera traitée"
-
-#: templates/store/order_confirm.html
-msgid "Reserved from stock — ready now"
-msgstr "Réservé sur le stock — prêt maintenant"
-
-#: templates/store/order_confirm.html
-msgid "Backorder — built or sourced for you"
-msgstr "Commande différée — construit ou acheté pour vous"
-
-#: templates/store/order_confirm.html
-msgid "None — you pay on delivery via in-game contract."
-msgstr "Aucun — vous payez à la livraison via un contrat en jeu."
-
-#: templates/store/order_confirm.html
-msgid ""
-"One delivery, when the whole order is ready (the backordered part sets the "
-"date)."
-msgstr ""
-"Une seule livraison, quand toute la commande est prête (la partie en différé "
-"fixe la date)."
-
-#: templates/store/order_confirm.html
-msgid ""
-"Estimates are not guarantees. Quantities can shift if someone orders first — "
-"the split is re-checked the moment you confirm, and anything no longer in "
-"stock becomes part of the backorder."
-msgstr ""
-"Les estimations ne sont pas des garanties. Les quantités peuvent bouger si "
-"quelqu'un commande avant vous — la répartition est revérifiée au moment où "
-"vous confirmez, et tout ce qui n'est plus en stock rejoint la commande "
-"différée."
-
-#: templates/store/order_confirm.html
-#, python-format
-msgid ""
-"I understand %(n)s ship is a backorder with an estimated (not guaranteed) "
-"delivery date."
-msgid_plural ""
-"I understand %(n)s ships are backorders with an estimated (not guaranteed) "
-"delivery date."
-msgstr[0] ""
-"Je comprends que %(n)s vaisseau est une commande différée avec une date de "
-"livraison estimée (non garantie)."
-msgstr[1] ""
-"Je comprends que %(n)s vaisseaux sont des commandes différées avec une date "
-"de livraison estimée (non garantie)."
-
-#: templates/store/order_confirm.html
-#, python-format
-msgid "Or take just the %(n)s that is ready now"
-msgid_plural "Or take just the %(n)s that are ready now"
-msgstr[0] "Ou prenez seulement le %(n)s qui est prêt maintenant"
-msgstr[1] "Ou prenez seulement les %(n)s qui sont prêts maintenant"
-
-#: templates/store/order_confirm.html
-msgid "Order ready stock only"
-msgstr "Commander uniquement le stock prêt"
-
-#: templates/store/shipyard_policy.html
-msgid ""
-"Corp-wide defaults for doctrine-ship availability: backorders, lead times, "
-"reservations, order limits and what buyers see. Individual fits can override "
-"any of these on the inventory console."
-msgstr ""
-"Valeurs par défaut de la corp pour la disponibilité des vaisseaux de "
-"doctrine : commandes différées, délais d'approvisionnement, réservations, "
-"limites de commande et ce que voient les acheteurs. Chaque fit peut "
-"remplacer n'importe laquelle d'entre elles sur la console d'inventaire."
-
-#: templates/store/shipyard_policy.html
-msgid "Accept backorders"
-msgstr "Accepter les commandes différées"
-
-#: templates/store/shipyard_policy.html
-msgid "Off: out-of-stock ships can't be ordered at all."
-msgstr ""
-"Désactivé : les vaisseaux en rupture de stock ne peuvent pas être commandés "
-"du tout."
-
-#: templates/store/shipyard_policy.html
-msgid "The estimated delivery shown for a fresh backorder."
-msgstr "La livraison estimée affichée pour une nouvelle commande différée."
-
-#: templates/store/shipyard_policy.html
-msgid "Allow split orders"
-msgstr "Autoriser les commandes fractionnées"
-
-#: templates/store/shipyard_policy.html
-msgid "One order may combine reserved stock with a backordered remainder."
-msgstr "Une commande peut combiner du stock réservé et un reliquat en différé."
-
-#: templates/store/shipyard_policy.html
-msgid ""
-"Where doctrine ships are stocked and handed over, unless a fit overrides it."
-msgstr ""
-"Où les vaisseaux de doctrine sont stockés et remis, sauf si un fit le "
-"remplace."
-
-#: templates/store/shipyard_policy.html
-msgid ""
-"Release the hold on orders nobody claimed after this many days. 0 keeps "
-"holds forever."
-msgstr ""
-"Libérer la réservation des commandes que personne n'a réclamées après ce "
-"nombre de jours. 0 conserve les réservations indéfiniment."
-
-#: templates/store/shipyard_policy.html
-msgid "Auto-allocate arrivals"
-msgstr "Allouer automatiquement les arrivages"
-
-#: templates/store/shipyard_policy.html
-msgid ""
-"New stock is reserved for waiting backorders automatically, oldest first."
-msgstr ""
-"Le nouveau stock est automatiquement réservé pour les commandes différées en "
-"attente, les plus anciennes d'abord."
-
-#: templates/store/shipyard_policy.html
-msgid "'Limited stock' threshold"
-msgstr "Seuil « Stock limité »"
-
-#: templates/store/shipyard_policy.html
-msgid "At or below this many remaining, cards warn about limited stock."
-msgstr ""
-"À ce nombre restant ou en dessous, les cartes signalent un stock limité."
-
-#: templates/store/shipyard_policy.html
-msgid "Off hides ships that can't currently be ordered."
-msgstr ""
-"Désactivé : masque les vaisseaux qui ne peuvent pas être commandés "
-"actuellement."
-
-#: templates/store/shipyard_policy.html
-msgid "Open the Shipyard pre-filtered to ships available now."
-msgstr ""
-"Ouvrir le Chantier naval préfiltré sur les vaisseaux disponibles maintenant."
-
-#: templates/store/shipyard_policy.html
-msgid "Pilots can ask to be pinged when an unavailable ship returns."
-msgstr ""
-"Les pilotes peuvent demander à recevoir un ping quand un vaisseau "
-"indisponible revient."
-
-#: apps/pingboard/messages.py
-msgid "Order update: New delivery estimate"
-msgstr "Commande mise à jour : Nouvelle estimation de livraison"
-
-#: apps/pingboard/messages.py
-msgid "Order update: Stock reserved"
-msgstr "Commande mise à jour : Stock réservé"
-
-#: apps/pingboard/messages.py
-msgid "Order update: Reservation released"
-msgstr "Commande mise à jour : Réservation libérée"
-
-#: apps/store/forms.py
-msgid "Why the balance is being corrected"
-msgstr "Pourquoi le solde est corrigé"
-
-#: apps/store/forms.py
-msgid "What changed (shown to the buyer)"
-msgstr "Ce qui a changé (affiché à l'acheteur)"
-
-#: apps/store/models.py
-msgid "Limited stock"
-msgstr "Stock limité"
-
-#: apps/store/models.py
-msgid "Available on backorder"
-msgstr "Disponible en commande différée"
-
-#: apps/store/models.py templates/doctrines/ships.html
-msgid "Temporarily unavailable"
-msgstr "Temporairement indisponible"
-
-#: apps/store/models.py
-msgid "Not offered for sale"
-msgstr "Non proposé à la vente"
-
-#: apps/store/models.py templates/store/order.html
-msgid "Reserved from stock"
-msgstr "Réservé sur le stock"
-
-#: apps/store/models.py templates/store/inventory.html
-#: templates/store/order.html
-msgid "Backordered"
-msgstr "En différé"
-
-#: apps/store/models.py
-msgid "Use stocked ships"
-msgstr "Utiliser les vaisseaux en stock"
-
-#: apps/store/models.py
-msgid "Build locally"
-msgstr "Construire localement"
-
-#: apps/store/models.py
-msgid "Import from Jita"
-msgstr "Importer depuis Jita"
-
-#: apps/store/models.py
-msgid "Choose build or buy automatically"
-msgstr "Choisir automatiquement entre construction et achat"
-
-#: apps/store/models.py
-msgid "shipyard policy"
-msgstr "politique du chantier naval"
-
-#: apps/store/models.py
-msgid "shipyard policies"
-msgstr "politiques du chantier naval"
-
-#: apps/store/models.py
-msgid "Shown to buyers on the Shipyard card."
-msgstr "Affiché aux acheteurs sur la carte du Chantier naval."
-
-#: apps/store/models.py
-msgid "Higher = restock sooner."
-msgstr "Plus élevé = réapprovisionnement plus tôt."
-
-#: apps/store/models.py
-msgid "Stock received"
-msgstr "Stock réceptionné"
-
-#: apps/store/models.py
-msgid "Manual adjustment"
-msgstr "Ajustement manuel"
-
-#: apps/store/models.py
-msgid "Delivered to buyer"
-msgstr "Livré à l'acheteur"
-
-#: apps/store/models.py
-msgid "Reconciliation"
-msgstr "Rapprochement"
-
-#: apps/store/models.py
-msgid "Fit revision revalidated"
-msgstr "Révision du fit revalidée"
-
-#: apps/store/models.py
-msgid "fit waitlist entries"
-msgstr "entrées de liste d'attente de fit"
-
-#: apps/store/services.py
-msgid "Pick a quantity of at least 1."
-msgstr "Choisissez une quantité d'au moins 1."
-
-#: apps/store/services.py
-msgid ""
-"No reliable price is available for that fit right now — try again later."
-msgstr ""
-"Aucun prix fiable n'est disponible pour ce fit pour le moment — réessayez "
-"plus tard."
-
-#: apps/store/supply.py
-#, python-format
-msgid "Restock %(fit)s"
-msgstr "Réapprovisionner %(fit)s"
-
-#: apps/store/views.py
-msgid "That order is closed."
-msgstr "Cette commande est clôturée."
-
-#: apps/store/views.py
-msgid "Pick a valid estimated delivery date."
-msgstr "Choisissez une date de livraison estimée valide."
-
-#: apps/store/views.py
-msgid "Estimated delivery updated — the buyer was notified."
-msgstr "Livraison estimée mise à jour — l'acheteur a été notifié."
-
-#: apps/store/views.py
-msgid "The waitlist is not enabled."
-msgstr "La liste d'attente n'est pas activée."
-
-#: apps/store/views_inventory.py
-msgid "Offer settings saved."
-msgstr "Paramètres de l'offre enregistrés."
-
-#: apps/store/views_inventory.py
-msgid "Pick a location and a positive quantity."
-msgstr "Choisissez un emplacement et une quantité positive."
-
-#: apps/store/views_inventory.py
-msgid "A corrected balance and a reason are required."
-msgstr "Un solde corrigé et un motif sont tous deux requis."
-
-#: apps/store/views_inventory.py
-msgid "Invalid adjustment."
-msgstr "Ajustement invalide."
-
-#: apps/store/views_inventory.py
-msgid "Stock adjusted."
-msgstr "Stock ajusté."
-
-#: apps/store/views_inventory.py
-msgid "Nothing to revalidate on that row."
-msgstr "Rien à revalider sur cette ligne."
-
-#: apps/store/views_inventory.py
-msgid "Select at least one fit and a bulk action."
-msgstr "Sélectionnez au moins un fit et une action groupée."
-
-#: apps/store/views_inventory.py
-msgid "Shipyard policy updated."
-msgstr "Politique du Chantier naval mise à jour."
-
-#: apps/store/views_inventory.py
-msgid "That supply need is closed."
-msgstr "Ce besoin d'approvisionnement est clôturé."
-
-#: apps/store/views_inventory.py
-#, python-format
-msgid "Industry project “%(name)s” is linked."
-msgstr "Le projet d'industrie « %(name)s » est lié."
-
-#: apps/store/views_inventory.py
-msgid "Claimable task created and linked."
-msgstr "Tâche réclamable créée et liée."
-
-#: templates/admin_audit/console/hub.html
-msgid "Shipyard inventory"
-msgstr "Inventaire du Chantier naval"
-
-#: templates/doctrines/ships.html
-msgid "Available now"
-msgstr "Disponible maintenant"
-
-#: templates/doctrines/ships.html templates/store/board.html
-#: templates/store/inventory.html templates/store/inventory_fit.html
-msgid "Backorder"
-msgstr "Commande différée"
-
-#: templates/doctrines/ships.html templates/store/inventory_fit.html
-#: templates/store/order_confirm.html
-msgid "Delivery location"
-msgstr "Emplacement de livraison"
-
-#: templates/doctrines/ships.html
-msgid "Any location"
-msgstr "Tout emplacement"
-
-#: templates/doctrines/ships.html
-msgid "Fastest delivery"
-msgstr "Livraison la plus rapide"
-
-#: templates/doctrines/ships.html templates/store/order_confirm.html
-msgid "Price"
-msgstr "Prix"
-
-#: templates/doctrines/ships.html
-#, python-format
-msgid "%(n)s ready for delivery"
-msgid_plural "%(n)s ready for delivery"
-msgstr[0] "%(n)s prêt pour livraison"
-msgstr[1] "%(n)s prêts pour livraison"
-
-#: templates/doctrines/ships.html
-#, python-format
-msgid "Only %(n)s remaining"
-msgid_plural "Only %(n)s remaining"
-msgstr[0] "Plus que %(n)s restant"
-msgstr[1] "Plus que %(n)s restants"
-
-#: templates/doctrines/ships.html
-msgid "Backorder available"
-msgstr "Commande différée possible"
-
-#: templates/doctrines/ships.html
-msgid "Not currently offered"
-msgstr "Non proposé actuellement"
-
-#: templates/doctrines/ships.html
-#, python-format
-msgid "Delivers at %(name)s"
-msgstr "Livraison à %(name)s"
-
-#: templates/doctrines/ships.html
-msgid "Join waitlist"
-msgstr "Rejoindre la liste d'attente"
-
-#: templates/doctrines/ships.html
-msgid "Ordering closed"
-msgstr "Commandes fermées"
-
-#: templates/store/board.html templates/store/my_orders.html
-#, python-format
-msgid "%(n)s reserved"
-msgstr "%(n)s réservé(s)"
-
-#: templates/store/board.html
-#, python-format
-msgid "%(n)s to build"
-msgstr "%(n)s à construire"
-
-#: templates/store/board.html
-msgid "Reserved stock"
-msgstr "Stock réservé"
-
-#: templates/store/board.html
-#, python-format
-msgid "est. %(date)s"
-msgstr "est. %(date)s"
-
-#: templates/store/inventory.html
-msgid "Shipyard Inventory"
-msgstr "Inventaire du Chantier naval"
-
-#: templates/store/inventory.html templates/store/shipyard_policy.html
-msgid "Shipyard · Leadership"
-msgstr "Chantier naval · Direction"
-
-#: templates/store/inventory.html templates/store/inventory_fit.html
-#: templates/store/shipyard_policy.html
-msgid "Inventory console"
-msgstr "Console d'inventaire"
-
-#: templates/store/inventory.html templates/store/shipyard_policy.html
-msgid "Fulfilment policy"
-msgstr "Politique de traitement"
-
-#: templates/store/inventory.html
-msgid "Open supply needs"
-msgstr "Besoins d'approvisionnement ouverts"
-
-#: templates/store/inventory.html
-msgid "Fit"
-msgstr "Fit"
-
-#: templates/store/inventory.html
-msgid "Needed"
-msgstr "Nécessaire"
-
-#: templates/store/inventory.html templates/store/inventory_fit.html
-msgid "Required by"
-msgstr "Requis avant"
-
-#: templates/store/inventory.html
-msgid "Project"
-msgstr "Projet"
-
-#: templates/store/inventory.html
-msgid "Build job"
-msgstr "Job de production"
-
-#: templates/store/inventory.html
-msgid "none yet"
-msgstr "aucun pour l'instant"
-
-#: templates/store/inventory.html
-msgid "Fit, ship or doctrine"
-msgstr "Fit, vaisseau ou doctrine"
-
-#: templates/store/inventory.html
-msgid "Needs revalidation"
-msgstr "Revalidation requise"
-
-#: templates/store/inventory.html
-msgid "Below safety stock"
-msgstr "Sous le stock de sécurité"
-
-#: templates/store/inventory.html templates/store/inventory_fit.html
-msgid "Available to promise"
-msgstr "Disponible à promettre"
-
-#: templates/store/inventory.html
-msgid "Days of cover"
-msgstr "Jours de couverture"
-
-#: templates/store/inventory.html
-#, python-format
-msgid "%(n)s offer"
-msgid_plural "%(n)s offers"
-msgstr[0] "%(n)s offre"
-msgstr[1] "%(n)s offres"
-
-#: templates/store/inventory.html
-msgid "Select"
-msgstr "Sélectionner"
-
-#: templates/store/inventory.html templates/store/inventory_fit.html
-msgid "On hand"
-msgstr "En stock"
-
-#: templates/store/inventory.html templates/store/inventory_fit.html
-msgid "Incoming"
-msgstr "Attendu"
-
-#: templates/store/inventory.html
-msgid "Cover (d)"
-msgstr "Couverture (j)"
-
-#: templates/store/inventory.html
-msgid "Lead (d)"
-msgstr "Délai (j)"
-
-#: templates/store/inventory.html
-#, python-format
-msgid "Select %(name)s"
-msgstr "Sélectionner %(name)s"
-
-#: templates/store/inventory.html templates/store/inventory_fit.html
-msgid "Limited"
-msgstr "Limité"
-
-#: templates/store/inventory.html templates/store/inventory_fit.html
-msgid "Not offered"
-msgstr "Non proposé"
-
-#: templates/store/inventory.html
-msgid "No delivery location configured"
-msgstr "Aucun emplacement de livraison configuré"
-
-#: templates/store/inventory.html
-msgid "revalidate"
-msgstr "revalider"
-
-#: templates/store/inventory.html
-msgid "reorder"
-msgstr "réapprovisionner"
-
-#: templates/store/inventory.html
-msgid "Pilots waiting for this ship"
-msgstr "Pilotes en attente de ce vaisseau"
-
-#: templates/store/inventory.html
-msgid "No offers match these filters."
-msgstr "Aucune offre ne correspond à ces filtres."
-
-#: templates/store/inventory.html
-msgid "With selected:"
-msgstr "Avec la sélection :"
-
-#: templates/store/inventory.html
-msgid "Withdraw from sale"
-msgstr "Retirer de la vente"
-
-#: templates/store/inventory_fit.html
-msgid "Fit inventory"
-msgstr "Inventaire du fit"
-
-#: templates/store/inventory_fit.html
-msgid "Pilots on the waitlist"
-msgstr "Pilotes sur la liste d'attente"
-
-#: templates/store/inventory_fit.html
-msgid "Fit revision"
-msgstr "Révision du fit"
-
-#: templates/store/inventory_fit.html
-msgid "Last stocktake"
-msgstr "Dernier inventaire"
-
-#: templates/store/inventory_fit.html
-msgid "current"
-msgstr "actuelle"
-
-#: templates/store/inventory_fit.html
-msgid "older revision"
-msgstr "révision antérieure"
-
-#: templates/store/inventory_fit.html
-msgid "Adjust"
-msgstr "Ajuster"
-
-#: templates/store/inventory_fit.html
-msgid "Counted balance"
-msgstr "Solde constaté"
-
-#: templates/store/inventory_fit.html
-msgid "Revalidate"
-msgstr "Revalider"
-
-#: templates/store/inventory_fit.html
-msgid "No complete ships recorded yet — use the receipt form to stock some."
-msgstr ""
-"Aucun vaisseau complet enregistré pour l'instant — utilisez le formulaire de "
-"réception pour en stocker."
-
-#: templates/store/inventory_fit.html
-msgid "Receive"
-msgstr "Réceptionner"
-
-#: templates/store/inventory_fit.html
-msgid ""
-"The corp asset mirror has no data for this location (no Director token or "
-"unreadable structure) — the manual stocktake is the only source of truth "
-"here."
-msgstr ""
-"Le miroir d'actifs de la corp n'a aucune donnée pour cet emplacement (pas de "
-"jeton Directeur ou structure illisible) — l'inventaire manuel est la seule "
-"source de vérité ici."
-
-#: templates/store/inventory_fit.html
-msgid "Adjustment history"
-msgstr "Historique des ajustements"
-
-#: templates/store/inventory_fit.html
-msgid "Balance after"
-msgstr "Solde après"
-
-#: templates/store/inventory_fit.html
-msgid "No stock movements yet."
-msgstr "Aucun mouvement de stock pour l'instant."
-
-#: templates/store/inventory_fit.html
-msgid "Supply need"
-msgstr "Besoin d'approvisionnement"
-
-#: templates/store/inventory_fit.html
-msgid "Net requirement"
-msgstr "Besoin net"
-
-#: templates/store/inventory_fit.html
-msgid "Industry project"
-msgstr "Projet d'industrie"
-
-#: templates/store/inventory_fit.html
-msgid "ERP build job"
-msgstr "Job de production ERP"
-
-#: templates/store/inventory_fit.html
-msgid "Create industry project"
-msgstr "Créer un projet d'industrie"
-
-#: templates/store/inventory_fit.html
-msgid "Queue ERP build job"
-msgstr "Mettre un job de production ERP en file"
-
-#: templates/store/inventory_fit.html
-msgid "Create claimable task"
-msgstr "Créer une tâche réclamable"
-
-#: templates/store/inventory_fit.html
-msgid "No open backorder demand for this fit."
-msgstr "Aucune demande de commande différée ouverte pour ce fit."
-
-#: templates/store/inventory_fit.html
-msgid "Offered for sale"
-msgstr "Proposé à la vente"
-
-#: templates/store/inventory_fit.html templates/store/shipyard_policy.html
-msgid "Backorders"
-msgstr "Commandes différées"
-
-#: templates/store/inventory_fit.html
-#, python-format
-msgid "Inherits: %(v)s"
-msgstr "Hérité : %(v)s"
-
-#: templates/store/inventory_fit.html
-msgid "Lead time (days)"
-msgstr "Délai d'approvisionnement (jours)"
-
-#: templates/store/inventory_fit.html
-msgid "Max per order"
-msgstr "Max par commande"
-
-#: templates/store/inventory_fit.html
-msgid "Max backorder per order"
-msgstr "Max en différé par commande"
-
-#: templates/store/inventory_fit.html
-msgid "Safety stock"
-msgstr "Stock de sécurité"
-
-#: templates/store/inventory_fit.html
-msgid "Reorder point"
-msgstr "Seuil de réapprovisionnement"
-
-#: templates/store/inventory_fit.html
-msgid "Target stock"
-msgstr "Stock cible"
-
-#: templates/store/inventory_fit.html
-msgid "Preferred fulfilment"
-msgstr "Traitement préféré"
-
-#: templates/store/inventory_fit.html
-msgid "Note shown to buyers"
-msgstr "Note affichée aux acheteurs"
-
-#: templates/store/inventory_fit.html
-msgid "Internal fulfilment note"
-msgstr "Note interne de traitement"
-
-#: templates/store/inventory_fit.html
-msgid "Save offer settings"
-msgstr "Enregistrer les paramètres de l'offre"
-
-#: templates/store/inventory_fit.html
-#, python-format
-msgid "Last changed by %(who)s · %(when)s"
-msgstr "Dernière modification par %(who)s · %(when)s"
-
-#: templates/store/inventory_fit.html
-msgid "Open orders for this fit"
-msgstr "Commandes ouvertes pour ce fit"
-
-#: templates/store/inventory_fit.html
-#, python-format
-msgid "%(n)s backordered"
-msgstr "%(n)s en différé"
-
-#: templates/store/inventory_fit.html
-msgid "No open orders."
-msgstr "Aucune commande ouverte."
-
-#: templates/store/my_orders.html
-#, python-format
-msgid "%(n)s on backorder"
-msgstr "%(n)s en différé"
-
-#: templates/store/my_orders.html
-#, python-format
-msgid "estimated %(date)s"
-msgstr "estimé le %(date)s"
-
-#: templates/store/order.html
-msgid "Availability at order time"
-msgstr "Disponibilité au moment de la commande"
-
-#: templates/store/order.html
-msgid "Current estimate"
-msgstr "Estimation actuelle"
-
-#: templates/store/order.html
-msgid "Ready since"
-msgstr "Prêt depuis"
-
-#: templates/store/order.html
-msgid "New estimated date"
-msgstr "Nouvelle date estimée"
-
-#: templates/store/order.html
-msgid "Reason (shown to the buyer)"
-msgstr "Motif (affiché à l'acheteur)"
-
-#: templates/store/order.html
-msgid "Update estimate"
-msgstr "Mettre à jour l'estimation"
-
-#: templates/store/order_confirm.html
-msgid "Confirm order"
-msgstr "Confirmer la commande"
-
-#: templates/store/order_confirm.html
-msgid "Back to the Shipyard"
-msgstr "Retour au Chantier naval"
-
-#: templates/store/order_confirm.html
-msgid "Confirm your order"
-msgstr "Confirmez votre commande"
-
-#: templates/store/order_confirm.html
-msgid "Estimated delivery"
-msgstr "Livraison estimée"
-
-#: templates/store/order_confirm.html
-#, python-format
-msgid "about %(n)s day"
-msgid_plural "about %(n)s days"
-msgstr[0] "environ %(n)s jour"
-msgstr[1] "environ %(n)s jours"
-
-#: templates/store/order_confirm.html
-msgid "each"
-msgstr "l'unité"
-
-#: templates/store/order_confirm.html
-msgid "Delivery"
-msgstr "Livraison"
-
-#: templates/store/order_confirm.html
-#, python-format
-msgid "Confirm order of %(n)s"
-msgstr "Confirmer la commande de %(n)s"
-
-#: templates/store/order_confirm.html
-#, python-format
-msgid "%(n)s is available right now"
-msgid_plural "%(n)s are available right now"
-msgstr[0] "%(n)s est disponible dès maintenant"
-msgstr[1] "%(n)s sont disponibles dès maintenant"
-
-#: templates/store/order_confirm.html
-msgid "Order what's available"
-msgstr "Commander ce qui est disponible"
-
-#: templates/store/shipyard_policy.html
-msgid "Shipyard Policy"
-msgstr "Politique du Chantier naval"
-
-#: templates/store/shipyard_policy.html
-msgid "Default lead time (days)"
-msgstr "Délai d'approvisionnement par défaut (jours)"
-
-#: templates/store/shipyard_policy.html
-msgid "Stock & reservations"
-msgstr "Stock & réservations"
-
-#: templates/store/shipyard_policy.html
-msgid "Default delivery location"
-msgstr "Emplacement de livraison par défaut"
-
-#: templates/store/shipyard_policy.html
-msgid "Reservation expiry (days)"
-msgstr "Expiration des réservations (jours)"
-
-#: templates/store/shipyard_policy.html
-msgid "Shop front"
-msgstr "Vitrine"
-
-#: templates/store/shipyard_policy.html
-msgid "Maximum per order"
-msgstr "Maximum par commande"
-
-#: templates/store/shipyard_policy.html
-msgid "Show unavailable ships"
-msgstr "Afficher les vaisseaux indisponibles"
-
-#: templates/store/shipyard_policy.html
-msgid "Default to available only"
-msgstr "Disponibles uniquement par défaut"
-
-#: templates/store/shipyard_policy.html
-msgid "Waitlist"
-msgstr "Liste d'attente"
-
-#: templates/store/shipyard_policy.html
-msgid "Save policy"
-msgstr "Enregistrer la politique"
+msgid "This plan is closed — reopen it before reserving stock."
+msgstr "Ce plan est clôturé — rouvrez-le avant de réserver du stock."
+
+msgid "Allocated from stock"
+msgstr "Alloué depuis le stock"

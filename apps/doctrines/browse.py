@@ -90,7 +90,6 @@ def enriched_fits(character=None, price_markup=None, with_availability=False) ->
             "group_name": m.get("group_name", ""),
             "role": (f.role or "").strip(),
             "is_cheap_alt": f.is_cheap_alt,
-            "estimated_cost": f.estimated_cost,
             "unit_price": unit_price,
             "unit_jita": unit_jita,
             "availability": avail_map.get(f.id),

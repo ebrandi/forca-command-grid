@@ -34,8 +34,8 @@ class DoctrineFitInline(admin.StackedInline):
 
 @admin.register(Doctrine)
 class DoctrineAdmin(admin.ModelAdmin):
-    list_display = ("name", "category", "status", "is_public_preview", "priority")
-    list_filter = ("status", "is_public_preview", "category")
+    list_display = ("name", "category", "status", "priority")
+    list_filter = ("status", "category")
     search_fields = ("name",)
     inlines = [DoctrineFitInline]
 

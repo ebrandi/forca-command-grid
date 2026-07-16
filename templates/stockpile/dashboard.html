@@ -80,8 +80,8 @@
           <tr class="border-t border-line/40">
             <td class="px-4 py-2"><span class="flex items-center gap-2"><img src="{% eve_type_icon r.type_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">{% type_name r.type_id %} <span class="chip ml-1">{{ r.item.get_provenance_display }}</span></span></td>
             <td class="px-4 py-2 text-right data text-muted">{{ r.manual_current }}</td>
-            <td class="px-4 py-2 text-right data text-faint">{{ r.item.quantity_reserved }}</td>
-            <td class="px-4 py-2 text-right data text-ink">{{ r.item.quantity_available }}</td>
+            <td class="px-4 py-2 text-right data text-faint">{{ r.reserved }}{% if r.over_reserved %} <span class="chip border-loss/40 text-loss" title="{% translate 'Claims exceed the effective on-hand — release or re-check reservations' %}">{% blocktranslate with n=r.over_reserved %}over by {{ n }}{% endblocktranslate %}</span>{% endif %}</td>
+            <td class="px-4 py-2 text-right data text-ink">{{ r.available }}</td>
             <td class="px-4 py-2 text-right data {% if r.covered %}text-ink{% else %}text-faint{% endif %}">{% if r.covered %}{{ r.esi_on_hand|default:"0" }}{% else %}—{% endif %}</td>
             <td class="px-4 py-2 text-right data text-faint">{{ r.target|default:"—" }}</td>
             <td class="px-4 py-2 text-right data {% if r.shortfall %}text-loss{% else %}text-muted{% endif %}">{% if r.target %}{{ r.shortfall }}{% else %}—{% endif %}</td>

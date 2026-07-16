@@ -14,7 +14,7 @@ from decimal import Decimal
 
 import pytest
 
-from apps.industry import availability, calc, chain, invention
+from apps.industry import calc, chain, invention
 
 pytestmark = pytest.mark.django_db
 
@@ -173,20 +173,25 @@ def test_chain_tree_respects_on_hand(priced_sde):
 # ============================================================================
 # Availability
 # ============================================================================
-def test_availability_maps(sde):
+def test_availability_maps(sde, settings):
+    """The unified authority (apps.stockpile.availability) replaced the old
+    industry.availability module: home-corp ESI assets count, a foreign corp's
+    and characters' assets never do."""
+    from apps.stockpile.availability import available, available_detail
     from apps.stockpile.models import Asset, AssetLocation
 
     loc = AssetLocation.objects.create(location_id=60003760, name="Jita 4-4")
     Asset.objects.create(owner_type=Asset.Owner.CHARACTER, owner_id=1001, location=loc,
                          type_id=TRIT, quantity=5000)
-    Asset.objects.create(owner_type=Asset.Owner.CHARACTER, owner_id=1001, location=loc,
-                         type_id=PYERITE, quantity=200)
+    Asset.objects.create(
+        owner_type=Asset.Owner.CORPORATION, owner_id=settings.FORCA_HOME_CORP_ID,
+        location=loc, type_id=TRIT, quantity=100000,
+    )
     Asset.objects.create(owner_type=Asset.Owner.CORPORATION, owner_id=2002, location=loc,
-                         type_id=TRIT, quantity=100000)
+                         type_id=PYERITE, quantity=7777)  # foreign corp — never counts
 
-    assert availability.character_on_hand(1001) == {TRIT: 5000, PYERITE: 200}
-    assert availability.corp_on_hand(2002) == {TRIT: 100000}
-    combined = availability.combined_on_hand(character_id=1001, corp_id=2002)
-    assert combined[TRIT] == 105000 and combined[PYERITE] == 200
-    # Filtered by type_ids
-    assert availability.character_on_hand(1001, type_ids=[TRIT]) == {TRIT: 5000}
+    assert available([TRIT, PYERITE]) == {TRIT: 100000, PYERITE: 0}
+    detail = available_detail([TRIT])[TRIT]
+    assert detail["esi"] == 100000
+    assert detail["manual"] == 0 and detail["reserved"] == 0
+    assert detail["available"] == detail["effective"] == 100000

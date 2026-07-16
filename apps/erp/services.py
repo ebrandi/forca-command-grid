@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import F
 from django.utils.translation import gettext as _
 
 from apps.industry.bom import direct_materials
@@ -12,30 +12,20 @@ from .messages import english_text
 from .models import BuildJob, Delivery
 
 
-def _corp_on_hand(type_ids) -> dict[int, int]:
-    from apps.stockpile.models import Asset, Stockpile, StockpileItem
-
-    ids = list(type_ids)
-    on_hand: dict[int, int] = {}
-    for row in (
-        StockpileItem.objects.filter(stockpile__kind=Stockpile.Kind.CORP, type_id__in=ids)
-        .values("type_id").annotate(q=Sum("quantity_current"))
-    ):
-        on_hand[row["type_id"]] = (on_hand.get(row["type_id"], 0) or 0) + (row["q"] or 0)
-    for row in (
-        Asset.objects.filter(owner_type=Asset.Owner.CORPORATION, type_id__in=ids)
-        .values("type_id").annotate(q=Sum("quantity"))
-    ):
-        on_hand[row["type_id"]] = (on_hand.get(row["type_id"], 0) or 0) + (row["q"] or 0)
-    return on_hand
-
-
 def job_materials(job: BuildJob) -> dict:
-    """Materials a job needs, netted against corp on-hand, with a readiness flag."""
+    """Materials a job needs, netted against corp availability, with a readiness flag.
+
+    Availability comes from the unified authority (:mod:`apps.stockpile.availability`)
+    — reservation-netted, ESI-wins per location, home corp only. Jobs may flip
+    BLOCKED where the old manual+ESI double count hid a shortage: that is the
+    truthful state arriving.
+    """
+    from apps.stockpile.availability import available
+
     materials = direct_materials(job.output_type_id, runs=job.quantity)
     if not materials:
         return {"buildable": False, "lines": [], "ready": False}
-    on_hand = _corp_on_hand(materials)
+    on_hand = available(materials)
     names = dict(SdeType.objects.filter(type_id__in=list(materials)).values_list("type_id", "name"))
     lines = []
     ready = True
@@ -220,17 +210,37 @@ def deliver(job: BuildJob, user, quantity: int | None = None) -> Delivery | None
     qty = quantity or locked.quantity
     stockpile = locked.deliver_to or _default_corp_stockpile()
 
+    # Global lock order: BuildJob → IndustryProject → StockpileItem → StockReservation.
+    # A plan-linked delivery takes the plan lock up front so the reserve/release/close
+    # paths (which also lock the plan first) fully serialize with the consumption and
+    # the DONE-release below — a racing Reserve can never mint claims on a plan this
+    # delivery is about to close.
+    if locked.source_item_id:
+        from apps.industry.models import IndustryProject
+
+        IndustryProject.objects.select_for_update().get(pk=locked.source_item.project_id)
+
     from apps.stockpile.models import StockpileItem
 
     item, _created = StockpileItem.objects.get_or_create(
         stockpile=stockpile, type_id=locked.output_type_id
     )
-    item.quantity_current = (item.quantity_current or 0) + qty
-    item.save(update_fields=["quantity_current"])
 
     # IND-2 (3.4): decrement the inputs this build consumed so corp stock stays honest
-    # (opt-in; clamped so stock never goes negative). Same atomic txn as the stock add.
-    consumed = _consume_materials(locked, qty) if _consumption_enabled() else {}
+    # (opt-in). Same atomic txn as the stock add. The output row's pk rides along so
+    # every StockpileItem lock in this transaction is acquired in one pk-ascending
+    # statement — the global lock order.
+    consumed = (
+        _consume_materials(locked, qty, extra_lock_pks=(item.pk,))
+        if _consumption_enabled()
+        else {}
+    )
+
+    # Blind increment — no read-modify-write; the row is freshly created or already
+    # locked by the ordered acquisition above, and F() can't race a concurrent consume.
+    StockpileItem.objects.filter(pk=item.pk).update(
+        quantity_current=F("quantity_current") + qty
+    )
 
     locked.status = BuildJob.Status.DELIVERED
     locked.save(update_fields=["status", "updated_at"])
@@ -253,13 +263,14 @@ def deliver(job: BuildJob, user, quantity: int | None = None) -> Delivery | None
 
     # IND-1 (3.3): a plan-linked delivery flows back to the plan's status.
     if locked.source_item_id:
-        _reconcile_project_from_delivery(locked.source_item)
+        _reconcile_project_from_delivery(locked.source_item, user)
     return delivery
 
 
-def _reconcile_project_from_delivery(item) -> None:
+def _reconcile_project_from_delivery(item, user) -> None:
     """Mark the originating plan DONE once every BUILD line has a delivered job (IND-1 / 3.3).
-    Stock + builder credit are already handled by ``deliver``; this closes the plan loop."""
+    Stock + builder credit are already handled by ``deliver``; this closes the plan loop.
+    A DONE plan must hold no ACTIVE reservations (P1) — the remainder is released here."""
     from apps.industry.models import IndustryProject, IndustryProjectItem
 
     # Lock the project row (deliver() is atomic) so concurrent final deliveries serialize —
@@ -282,6 +293,16 @@ def _reconcile_project_from_delivery(item) -> None:
     if build_item_ids <= delivered_item_ids:
         project.status = IndustryProject.Status.DONE
         project.save(update_fields=["status", "updated_at"])
+        from apps.industry.services import release_project_stock
+        from core.audit import audit_log
+
+        released = release_project_stock(project)
+        if released:
+            audit_log(
+                user, "industry.release_stock", target_type="industry_project",
+                target_id=str(project.pk),
+                metadata={"released": released, "reason": "plan_done"},
+            )
 
 
 def _consumption_enabled() -> bool:
@@ -290,17 +311,33 @@ def _consumption_enabled() -> bool:
     return IndustryEconomyConfig.active().consume_materials_on_delivery
 
 
-def _consume_materials(job: BuildJob, qty: int) -> dict:
+def _consume_materials(job: BuildJob, qty: int, extra_lock_pks=()) -> dict:
     """Decrement a job's input materials from corp stockpiles on delivery (IND-2 / 3.4).
 
-    Only the tracked corp ``StockpileItem`` rows are decremented — never the read-only ESI
-    Asset mirror — and each is clamped so stock can never go negative. Returns
+    Order of operations per input type (P1 / WS2):
+
+    1. The plan's ACTIVE reservations for the type are consumed FIRST — the same
+       decrement as before, now attributed to the claim that predicted it — up to
+       the needed quantity. Transitions are status-guarded; a partially-needed
+       claim is split so the remainder stays ACTIVE (and auditable) instead of
+       silently dissolving.
+    2. Only the unreserved remainder comes off free stock, and "free" respects
+       every remaining ACTIVE claim — a delivery can no longer eat stock another
+       plan reserved (the old double-subtract).
+
+    Locking: every ``StockpileItem`` this delivery may touch (all input types plus
+    the output row via ``extra_lock_pks``) is acquired in ONE pk-ascending
+    ``select_for_update`` — the global lock order — and FIFO/priority is applied in
+    Python afterwards. Only tracked corp rows are decremented, never the read-only
+    ESI mirror; each take is capped so stock never goes negative. Returns
     ``{type_id: consumed}`` for the delivery's audit trail.
     """
     import math
 
+    from django.db.models import Q, Sum
+
     from apps.industry.bom import buildable_recipe, direct_materials
-    from apps.stockpile.models import Stockpile, StockpileItem
+    from apps.stockpile.models import Stockpile, StockpileItem, StockReservation
 
     # Convert delivered *units* → blueprint *runs* (a batch recipe like ammo/drones yields
     # many units per run), and use the plan line's ME when the job came from a plan — so a
@@ -313,21 +350,98 @@ def _consume_materials(job: BuildJob, qty: int) -> dict:
     needs = direct_materials(job.output_type_id, runs=runs, me=me)
     if not needs:
         return {}
+    project_id = job.source_item.project_id if job.source_item_id else None
+
+    lock_q = Q(stockpile__kind=Stockpile.Kind.CORP, type_id__in=list(needs))
+    if extra_lock_pks:
+        lock_q |= Q(pk__in=list(extra_lock_pks))
+    items = list(
+        StockpileItem.objects.select_for_update(of=("self",))
+        .select_related("stockpile")
+        .filter(lock_q)
+        .order_by("pk")
+    )
+    items_by_pk = {it.pk: it for it in items}
+    corp_rows = [it for it in items if it.type_id in needs and it.stockpile.kind == Stockpile.Kind.CORP]
+
+    # Live claims per row (all holders, ours included) — the free walk must not
+    # take them. Stable under our row locks: reservations are only written by
+    # transactions that hold the item lock.
+    claims: dict[int, int] = {
+        row["stockpile_item_id"]: int(row["s"] or 0)
+        for row in (
+            StockReservation.objects.filter(
+                stockpile_item_id__in=list(items_by_pk),
+                status=StockReservation.Status.ACTIVE,
+            )
+            .values("stockpile_item_id")
+            .annotate(s=Sum("quantity_reserved"))
+        )
+    }
+
+    # This plan's own claims, locked after the items (StockpileItem →
+    # StockReservation order) in ascending pk — the one multi-row order for
+    # reservation locks; FIFO (oldest first) is applied in Python afterwards.
+    my_reservations: list[StockReservation] = []
+    if project_id:
+        my_reservations = list(
+            StockReservation.objects.select_for_update(of=("self",))
+            .filter(
+                project_id=project_id,
+                status=StockReservation.Status.ACTIVE,
+                stockpile_item_id__in=[it.pk for it in corp_rows],
+            )
+            .order_by("pk")
+        )
+        my_reservations.sort(key=lambda r: (r.reserved_at, r.pk))
+    my_res_by_type: dict[int, list[StockReservation]] = {}
+    for res in my_reservations:
+        my_res_by_type.setdefault(items_by_pk[res.stockpile_item_id].type_id, []).append(res)
+
     consumed: dict[int, int] = {}
     for type_id, need in needs.items():
         remaining = int(need)
-        rows = (
-            StockpileItem.objects.select_for_update()
-            .filter(stockpile__kind=Stockpile.Kind.CORP, type_id=type_id, quantity_current__gt=0)
-            .order_by("-quantity_current")
-        )
-        for row in rows:
+
+        # (1) Consume the plan's claims first.
+        for res in my_res_by_type.get(type_id, ()):
             if remaining <= 0:
                 break
-            take = min(int(row.quantity_current), remaining)
+            row = items_by_pk[res.stockpile_item_id]
+            take = min(int(res.quantity_reserved), remaining, max(0, int(row.quantity_current)))
+            if take <= 0:
+                continue
+            leftover = int(res.quantity_reserved) - take
+            flipped = StockReservation.objects.filter(
+                pk=res.pk, status=StockReservation.Status.ACTIVE
+            ).update(status=StockReservation.Status.CONSUMED, quantity_reserved=take)
+            if not flipped:
+                continue
+            if leftover > 0:
+                # Split: the unneeded remainder stays a live, auditable claim.
+                StockReservation.objects.create(
+                    stockpile_item=row, project_id=project_id, quantity_reserved=leftover
+                )
             row.quantity_current = int(row.quantity_current) - take
             row.save(update_fields=["quantity_current"])
+            claims[row.pk] = claims.get(row.pk, 0) - take
             remaining -= take
+
+        # (2) The unreserved remainder off free stock — biggest rows first
+        #     (priority applied after locking, never in the lock order).
+        if remaining > 0:
+            for row in sorted(corp_rows, key=lambda r: -int(r.quantity_current)):
+                if remaining <= 0:
+                    break
+                if row.type_id != type_id:
+                    continue
+                free = int(row.quantity_current) - max(0, claims.get(row.pk, 0))
+                take = min(free, remaining)
+                if take <= 0:
+                    continue
+                row.quantity_current = int(row.quantity_current) - take
+                row.save(update_fields=["quantity_current"])
+                remaining -= take
+
         taken = int(need) - remaining
         if taken:
             consumed[type_id] = taken

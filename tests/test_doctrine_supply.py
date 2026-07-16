@@ -4,6 +4,7 @@ from __future__ import annotations
 from decimal import Decimal
 
 import pytest
+from django.conf import settings
 
 from apps.doctrines.models import Doctrine, DoctrineCategory, DoctrineFit
 from apps.doctrines.supply import supply_plan
@@ -34,7 +35,8 @@ def test_supply_plan_nets_on_hand_against_target(sde):
     MarketPrice.objects.create(type_id=AUTOCANNON, profile=MarketPrice.Profile.JITA_SELL, sell_min=Decimal("100000"))
     d = _doctrine()
     # Corp already holds 3 hulls.
-    Asset.objects.create(owner_type=Asset.Owner.CORPORATION, owner_id=1, type_id=RIFTER, quantity=3)
+    Asset.objects.create(owner_type=Asset.Owner.CORPORATION,
+                         owner_id=settings.FORCA_HOME_CORP_ID, type_id=RIFTER, quantity=3)
 
     plan = supply_plan(d, sets=10)
     by_type = {line["type_id"]: line for line in plan["lines"]}
@@ -50,8 +52,10 @@ def test_supply_plan_nets_on_hand_against_target(sde):
 @pytest.mark.django_db
 def test_supply_plan_ready_when_stocked(sde):
     d = _doctrine()
-    Asset.objects.create(owner_type=Asset.Owner.CORPORATION, owner_id=1, type_id=RIFTER, quantity=100)
-    Asset.objects.create(owner_type=Asset.Owner.CORPORATION, owner_id=1, type_id=AUTOCANNON, quantity=100)
+    Asset.objects.create(owner_type=Asset.Owner.CORPORATION,
+                         owner_id=settings.FORCA_HOME_CORP_ID, type_id=RIFTER, quantity=100)
+    Asset.objects.create(owner_type=Asset.Owner.CORPORATION,
+                         owner_id=settings.FORCA_HOME_CORP_ID, type_id=AUTOCANNON, quantity=100)
     plan = supply_plan(d, sets=10)
     assert plan["ready"] is True
     assert plan["short"] == []

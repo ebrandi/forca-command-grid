@@ -75,7 +75,9 @@ def test_stock_nets_off_requirements(priced_sde):
     compute_project_bom(project)
     trit_req = project.items.first().material_requirements.get(type_id=34)
     assert trit_req.quantity_required == 32000
-    assert trit_req.quantity_available == 50000
+    # P1: quantity_available is what the shared pool ALLOCATED to this line
+    # (capped at its requirement), no longer the corp-wide free total.
+    assert trit_req.quantity_available == 32000
     assert trit_req.quantity_to_acquire == 0  # fully covered by stock
 
 

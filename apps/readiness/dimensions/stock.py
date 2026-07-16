@@ -55,7 +55,7 @@ def _build_capacity() -> tuple[int | None, dict]:
     """
     from apps.characters.models import CharacterSkillSnapshot
     from apps.doctrines.models import DoctrineFit
-    from apps.industry.models import Blueprint
+    from apps.erp.models import Blueprint
     from apps.sde.models import SdeBlueprintSkill
 
     hull_ids = {h for h in DoctrineFit.objects.values_list("ship_type_id", flat=True) if h}
@@ -72,8 +72,13 @@ def _build_capacity() -> tuple[int | None, dict]:
     for product, bp, skill, level in rows:
         reqs.setdefault(product, []).append((skill, level))
         bp_of[product] = bp
-    corp_bps = set(Blueprint.objects.filter(
-        is_corp=True, type_id__in=set(bp_of.values())).values_list("type_id", flat=True))
+    # The ESI-synced ERP blueprint library (the dead industry.Blueprint twin is
+    # gone). Usable = an original, or a copy with runs left — a spent BPC
+    # (quantity -2, runs 0) doesn't cover a hull (same rule as blueprint_coverage).
+    corp_bps = set(
+        Blueprint.objects.filter(
+            owner_type=Blueprint.Owner.CORPORATION, type_id__in=set(bp_of.values())
+        ).exclude(quantity=-2, runs=0).values_list("type_id", flat=True))
     snaps = list(CharacterSkillSnapshot.objects.filter(
         is_latest=True, character__is_corp_member=True))
 

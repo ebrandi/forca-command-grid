@@ -101,7 +101,7 @@ def test_staging_scores_hulls_at_system():
 # --- B8: build_capacity KPI in the industrial (stock) dimension --------------
 @pytest.mark.django_db
 def test_build_capacity_kpi_owns_blueprint_and_skilled():
-    from apps.industry.models import Blueprint
+    from apps.erp.models import Blueprint
     from apps.sde.models import SdeBlueprintSkill
 
     _type(RIFTER, "Rifter", 6)
@@ -110,10 +110,30 @@ def test_build_capacity_kpi_owns_blueprint_and_skilled():
     SdeBlueprintSkill.objects.create(
         blueprint_type_id=BP, product_type_id=RIFTER, skill_type_id=GUNNERY,
         level=1, activity=SdeBlueprintSkill.MANUFACTURING)
-    Blueprint.objects.create(type_id=BP, is_corp=True, is_original=True)
+    # The ESI-synced ERP library is the one blueprint model; quantity -1 = a BPO.
+    Blueprint.objects.create(type_id=BP, owner_type=Blueprint.Owner.CORPORATION)
     _char(7401, {GUNNERY: 5})   # has the manufacturing skill
     kpis = {k.key: k.score for k in compute_dimension("stock").kpis}
     assert kpis.get("stock.build_capacity") == 100  # 1/1 hull buildable
+
+
+@pytest.mark.django_db
+def test_build_capacity_ignores_spent_bpc():
+    from apps.erp.models import Blueprint
+    from apps.sde.models import SdeBlueprintSkill
+
+    _type(RIFTER, "Rifter", 6)
+    _type(GUNNERY, "Industry", 16)
+    _doctrine_hull()
+    SdeBlueprintSkill.objects.create(
+        blueprint_type_id=BP, product_type_id=RIFTER, skill_type_id=GUNNERY,
+        level=1, activity=SdeBlueprintSkill.MANUFACTURING)
+    # A spent BPC (quantity -2, runs 0) can't build anything — not coverage.
+    Blueprint.objects.create(
+        type_id=BP, owner_type=Blueprint.Owner.CORPORATION, quantity=-2, runs=0)
+    _char(7402, {GUNNERY: 5})
+    kpis = {k.key: k.score for k in compute_dimension("stock").kpis}
+    assert kpis.get("stock.build_capacity") == 0
 
 
 @pytest.mark.django_db

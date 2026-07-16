@@ -132,7 +132,7 @@ class Command(BaseCommand):
         )
         ferox_doc, _ = Doctrine.objects.update_or_create(
             name="Ferox Railgun Fleet",
-            defaults={"category": cat, "status": Doctrine.Status.ACTIVE, "is_public_preview": True,
+            defaults={"category": cat, "status": Doctrine.Status.ACTIVE,
                       "priority": 80, "description": "Shield railgun battlecruiser fleet doctrine."},
         )
         parsed = parse_eft(FEROX_EFT)

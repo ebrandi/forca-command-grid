@@ -68,11 +68,16 @@ def stockpile_dashboard(request: HttpRequest) -> HttpResponse:
 def record_stock(request: HttpRequest) -> HttpResponse:
     form = StockEntryForm(request.POST)
     if form.is_valid() and SdeType.objects.filter(type_id=form.cleaned_data["type_id"]).exists():
+        # A blank target means "leave the target alone" — a count-only update must
+        # not wipe an existing target (set it to 0 to disable it explicitly).
+        kwargs = {}
+        if form.cleaned_data.get("quantity_target") is not None:
+            kwargs["quantity_target"] = form.cleaned_data["quantity_target"]
         record_manual_stock(
             form.cleaned_data["stockpile"],
             form.cleaned_data["type_id"],
             quantity_current=form.cleaned_data["quantity_current"],
-            quantity_target=form.cleaned_data.get("quantity_target"),
+            **kwargs,
         )
         audit_log(request.user, "stock.manual_update", target_type="type",
                   target_id=str(form.cleaned_data["type_id"]), ip=client_ip(request))

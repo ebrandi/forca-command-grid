@@ -46,7 +46,6 @@ class Doctrine(TimeStampedModel):
     )
     description = models.TextField(blank=True)
     status = models.CharField(max_length=12, choices=Status.choices, default=Status.ACTIVE)
-    is_public_preview = models.BooleanField(default=False)
     priority = models.IntegerField(default=0, help_text=_("Corp-need weight for skill planning."))
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True
@@ -65,7 +64,6 @@ class DoctrineFit(TimeStampedModel):
     # Normalised: list of {"type_id": int, "quantity": int, "slot": str}
     modules = models.JSONField(default=list, blank=True)
     is_cheap_alt = models.BooleanField(default=False)
-    estimated_cost = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
 
     class Meta:
         # Stable insertion order so same-hull, same-score fit matching (4.2) and the

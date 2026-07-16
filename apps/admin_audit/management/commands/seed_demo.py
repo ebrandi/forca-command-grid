@@ -48,7 +48,6 @@ class Command(BaseCommand):
                 "category": cat,
                 "description": "Cheap, fast tackle for new pilots.",
                 "status": Doctrine.Status.ACTIVE,
-                "is_public_preview": True,
                 "priority": 100,
             },
         )

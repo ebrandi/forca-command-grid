@@ -9,6 +9,32 @@ project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 
 ### Added
 
+- **One truthful per-type availability (supply-chain P1)** — the five competing
+  definitions of "available stock" (manual-only, two manual+ESI double counts, a dead
+  ESI-only module, and the BOM's private view) are replaced by a single authority in
+  `apps.stockpile.availability`: effective on-hand (ESI-wins per covered location,
+  counted once per asset location, home corp only) minus ACTIVE reservations, floored
+  at zero. Doctrine supply plans, command intel, the ERP job board and the industry BOM
+  engine all read the same number now. **Numbers visibly move**: planners may show
+  less (the double count and reserved stock are gone) or more (ESI-covered hangars now
+  count) — queued ERP jobs can flip BLOCKED at the first re-check after deploy; that is
+  the truthful state arriving. The stockpile dashboard shows per-row reserved,
+  available and over-reserved claims.
+- **Reservations finally have a lifecycle** — delivering a plan-linked build consumes
+  the plan's reservations first (status-guarded, exactly once, splitting a partially
+  needed claim); the free-stock remainder can no longer eat stock another plan
+  reserved; closing, cancelling or archiving a plan releases whatever it still holds
+  (audit-logged). A data migration releases the reservations historically stranded on
+  closed plans; `manage.py audit_stock_integrity` reports what will change before
+  migrating. Non-negative stock and ≥1-unit reservations are now database constraints,
+  and stockpile row locks follow one global order (ascending pk) proven by threaded
+  deadlock tests.
+- **BOM correctness** — two plan lines sharing a material now split the available pool
+  instead of each netting the full stock; *Reserve stock* sums demand across lines
+  (was: max), is idempotent under concurrent double-clicks, is capped at the truthful
+  availability (a stale manual count can't mint claims beyond real stock), and is
+  refused on a closed or archived plan.
+
 - **Shipyard availability, reservations and backorders** — the Shipyard no longer
   presents every doctrine ship as immediately available. Complete fitted ships are now
   tracked per fit and delivery location in a ledger-backed inventory (every movement is
@@ -55,6 +81,13 @@ project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html
   never blocks switching to another.
 - **Unlinking** — releases a pilot and destroys its ESI authorisation, keeping its historical
   records. The last remaining pilot cannot be unlinked (an EVE pilot is how you sign in).
+
+### Removed
+
+- The dead `industry.Blueprint` table (readiness build-capacity now reads the
+  ESI-synced ERP blueprint library), the unused `apps/industry/availability.py`
+  module, and the never-rendered `Doctrine.is_public_preview` /
+  `DoctrineFit.estimated_cost` fields (with their admin columns).
 
 ### Changed
 

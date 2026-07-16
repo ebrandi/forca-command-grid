@@ -119,8 +119,16 @@ def project_archive(request: HttpRequest, pk: int) -> HttpResponse:
     project.is_archived = not unarchive
     project.archived_at = None if unarchive else timezone.now()
     project.save(update_fields=["is_archived", "archived_at"])
+    # P1: archiving hides the plan from the board — never leave invisible ACTIVE
+    # claims on corp stock behind it.
+    released = release_project_stock(project) if project.is_archived else 0
+    if released:
+        messages.info(
+            request,
+            _("Released %(count)s reservation(s) held by this plan.") % {"count": released},
+        )
     audit_log(request.user, "industry.project.archive", target_type="industry_project",
-              target_id=str(project.id), metadata={"archived": project.is_archived},
+              target_id=str(project.id), metadata={"archived": project.is_archived, "released": released},
               ip=client_ip(request))
     if unarchive:
         messages.success(request, _("Plan restored."))
@@ -266,9 +274,20 @@ def project_status(request: HttpRequest, pk: int) -> HttpResponse:
         raise PermissionDenied(_("Invalid status."))
     project.status = new_status
     project.save(update_fields=["status"])
+    # P1: a closed plan holds no ACTIVE reservations — release the remainder here
+    # (delivery-driven DONE releases inside deliver(); this covers the manual flip).
+    released = 0
+    if new_status in (IndustryProject.Status.DONE, IndustryProject.Status.CANCELLED):
+        released = release_project_stock(project)
     audit_log(request.user, "industry.project.status", target_type="industry_project",
-              target_id=str(project.id), metadata={"status": new_status}, ip=client_ip(request))
+              target_id=str(project.id), metadata={"status": new_status, "released": released},
+              ip=client_ip(request))
     messages.success(request, _("Project marked %(status)s.") % {"status": project.get_status_display()})
+    if released:
+        messages.info(
+            request,
+            _("Released %(count)s reservation(s) held by this plan.") % {"count": released},
+        )
     return redirect("industry:detail", pk=pk)
 
 
@@ -336,7 +355,9 @@ def reserve_stock(request: HttpRequest, pk: int) -> HttpResponse:
     if not _can_manage(request.user, project):
         raise PermissionDenied(_("Not your project to manage."))
     result = reserve_project_stock(project)
-    if result["units"]:
+    if result.get("closed"):
+        messages.info(request, _("This plan is closed — reopen it before reserving stock."))
+    elif result["units"]:
         audit_log(request.user, "industry.reserve_stock", target_type="industry_project",
                   target_id=str(project.id), metadata=result, ip=client_ip(request))
         messages.success(

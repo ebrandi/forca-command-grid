@@ -9,7 +9,7 @@ from django.utils.translation import gettext_lazy as _
 
 from apps.doctrines.models import Doctrine
 from apps.market.models import MarketLocation
-from core.mixins import ProvenanceMixin, TimeStampedModel
+from core.mixins import TimeStampedModel
 
 
 class IndustryEconomyConfig(TimeStampedModel):
@@ -209,17 +209,6 @@ class ProductionStep(models.Model):
     @property
     def activity_label(self) -> str:
         return self.ACTIVITY_LABELS.get(self.activity, self.activity)
-
-
-class Blueprint(ProvenanceMixin):
-    type_id = models.IntegerField(db_index=True)
-    owner_character_id = models.BigIntegerField(null=True, blank=True)
-    is_corp = models.BooleanField(default=False)
-    me = models.PositiveSmallIntegerField(default=0)
-    te = models.PositiveSmallIntegerField(default=0)
-    runs = models.IntegerField(null=True, blank=True)
-    is_original = models.BooleanField(default=True)
-    quantity = models.IntegerField(default=1)
 
 
 class MaterialRequirement(models.Model):

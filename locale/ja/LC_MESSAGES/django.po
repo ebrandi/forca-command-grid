@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-16 14:46+0000\n"
+"POT-Creation-Date: 2026-07-16 20:11+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: ja machine-assisted draft\n"
@@ -7354,6 +7354,11 @@ msgstr "プラン由来: %(plan)s"
 msgid "From a leadership plan"
 msgstr "リーダーシップのプラン由来"
 
+#: apps/erp/messages.py
+#, python-format
+msgid "Shipyard restock: %(fit_name)s"
+msgstr "造船所の補充: %(fit_name)s"
+
 #: apps/erp/models.py
 msgid "Building"
 msgstr "製造中"
@@ -7900,6 +7905,11 @@ msgstr "「%(name)s」に複製しました。"
 #: apps/industry/views.py
 msgid "Not your project to manage."
 msgstr "あなたが管理するプロジェクトではありません。"
+
+#: apps/industry/views.py
+#, python-format
+msgid "Released %(count)s reservation(s) held by this plan."
+msgstr "このプランが保持していた予約 %(count)s 件を解放しました。"
 
 #: apps/industry/views.py
 msgid "Plan restored."
@@ -13490,6 +13500,62 @@ msgstr "注文の更新: キャンセル済み"
 #, python-brace-format
 msgid "Your order for {ship_name} was cancelled."
 msgstr "{ship_name} の注文はキャンセルされました。"
+
+#: apps/pingboard/messages.py
+msgid "Order update: New delivery estimate"
+msgstr "注文の更新: 新しい納品予定"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid "The estimated delivery for {ship_name} is now {eta_date}."
+msgstr "{ship_name} の納品予定は {eta_date} になりました。"
+
+#: apps/pingboard/messages.py
+msgid "Order update: Stock reserved"
+msgstr "注文の更新: 在庫予約済み"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"{quantity}× {ship_name} from a new delivery is now reserved for your order."
+msgstr ""
+"新規入荷分から {quantity}× {ship_name} があなたの注文用に予約されました。"
+
+#: apps/pingboard/messages.py
+msgid "Order update: Reservation released"
+msgstr "注文の更新: 予約解放済み"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"Your reserved {ship_name} was released after waiting unclaimed; the order is "
+"now backordered."
+msgstr ""
+"予約されていた {ship_name} は、受領されないまま期限を迎えたため解放されまし"
+"た。注文はバックオーダーになりました。"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid "Back in stock: {ship_name}"
+msgstr "再入荷: {ship_name}"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid "{ship_name} can be ordered on the Shipyard again."
+msgstr "{ship_name} が再び造船所で注文できるようになりました。"
+
+#: apps/pingboard/messages.py
+msgid "Shipyard restock built"
+msgstr "造船所の補充分の製造完了"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"Production for {fit_name} finished. Assemble and fit the ships, then record "
+"the receipt on the Shipyard inventory console to release waiting backorders."
+msgstr ""
+"{fit_name} の生産が完了しました。艦船を組み立ててフィッティングし、造船所の在"
+"庫コンソールで受け入れを記録して、待機中のバックオーダーを解放してください。"
 
 #: apps/pingboard/messages.py
 #, python-brace-format
@@ -19603,6 +19669,18 @@ msgstr "ビルダーが知っておくべきこと"
 msgid "Must be between %(low)s and %(high)s."
 msgstr "%(low)s から %(high)s の間でなければなりません。"
 
+#: apps/store/forms.py
+msgid "e.g. built from restock batch #12"
+msgstr "例: 補充バッチ #12 から製造"
+
+#: apps/store/forms.py
+msgid "Why the balance is being corrected"
+msgstr "残高を修正する理由"
+
+#: apps/store/forms.py
+msgid "What changed (shown to the buyer)"
+msgstr "変更内容（購入者に表示されます）"
+
 #: apps/store/models.py
 msgid "Public — anyone can shop"
 msgstr "公開 — 誰でも購入可能"
@@ -19614,6 +19692,59 @@ msgstr "Jita 売却価格"
 #: apps/store/models.py
 msgid "Estimated build cost"
 msgstr "推定ビルドコスト"
+
+#: apps/store/models.py
+msgid "Ready for immediate delivery"
+msgstr "即時納品可能"
+
+#: apps/store/models.py
+msgid "Limited stock"
+msgstr "残りわずか"
+
+#: apps/store/models.py
+msgid "Available on backorder"
+msgstr "バックオーダーで注文可能"
+
+#: apps/store/models.py templates/doctrines/ships.html
+msgid "Temporarily unavailable"
+msgstr "一時的に利用不可"
+
+#: apps/store/models.py
+msgid "Not offered for sale"
+msgstr "販売対象外"
+
+#: apps/store/models.py templates/store/order.html
+msgid "Reserved from stock"
+msgstr "在庫から予約済み"
+
+#: apps/store/models.py
+msgid "Partially reserved, remainder backordered"
+msgstr "一部予約済み、残りはバックオーダー"
+
+#: apps/store/models.py templates/store/inventory.html
+#: templates/store/order.html
+msgid "Backordered"
+msgstr "バックオーダー中"
+
+#: apps/store/models.py
+msgid "Use stocked ships"
+msgstr "在庫の艦船を使用"
+
+#: apps/store/models.py
+msgid "Build locally"
+msgstr "現地で製造"
+
+#: apps/store/models.py
+msgid "Import from Jita"
+msgstr "Jita から輸入"
+
+#: apps/store/models.py
+msgid "Buy from an approved supplier"
+msgstr "承認済みサプライヤーから購入"
+
+#: apps/store/models.py
+msgid "Choose build or buy automatically"
+msgstr "製造か購入かを自動で選択"
 
 #: apps/store/models.py
 msgid "Ready-to-fly doctrine ship"
@@ -19630,6 +19761,149 @@ msgstr "デポジット支払済み"
 #: apps/store/models.py templates/erp/board.html
 msgid "In production"
 msgstr "生産中"
+
+#: apps/store/models.py
+msgid "Accept orders for doctrine ships that are not in stock."
+msgstr "在庫にない doctrine 艦の注文を受け付けます。"
+
+#: apps/store/models.py
+msgid "Default estimated days to fulfil a backorder."
+msgstr "バックオーダーの履行にかかるデフォルトの推定日数。"
+
+#: apps/store/models.py
+msgid "Allow one order to combine reserved stock with a backordered remainder."
+msgstr ""
+"1 件の注文で予約済み在庫と残りのバックオーダー分を組み合わせることを許可しま"
+"す。"
+
+#: apps/store/models.py
+msgid ""
+"Release reservations of orders nobody has claimed after this many days (0 = "
+"never)."
+msgstr ""
+"この日数の間誰も受領しなかった注文の予約を解放します（0 = 解放しない）。"
+
+#: apps/store/models.py
+msgid ""
+"Where doctrine ships are stocked and delivered unless a fit overrides it."
+msgstr "フィット側で上書きされない限り doctrine 艦を在庫・納品する場所。"
+
+#: apps/store/models.py
+msgid "Most ships one order may request unless a fit overrides it."
+msgstr "フィット側で上書きされない限り、1 件の注文で依頼できる最大隻数。"
+
+#: apps/store/models.py
+msgid "Show 'Limited stock' when this many or fewer ships remain."
+msgstr "残りがこの隻数以下になったら「残りわずか」と表示します。"
+
+#: apps/store/models.py
+msgid ""
+"Keep out-of-stock ships visible on the Shipyard (greyed out) instead of "
+"hiding them."
+msgstr "在庫切れの艦船を非表示にせず、造船所にグレー表示のまま残します。"
+
+#: apps/store/models.py
+msgid "Open the Shipyard filtered to immediately available ships."
+msgstr "造船所を、即時利用可能な艦船で絞り込んだ状態で開きます。"
+
+#: apps/store/models.py
+msgid "Let pilots join a waitlist for ships that can't be ordered."
+msgstr ""
+"注文できない艦船について、パイロットがウェイトリストに参加できるようにしま"
+"す。"
+
+#: apps/store/models.py
+msgid ""
+"When stock arrives, reserve it for waiting backorders automatically (oldest "
+"first)."
+msgstr ""
+"在庫が入荷したら、待機中のバックオーダーに自動的に予約します（古い順）。"
+
+#: apps/store/models.py
+msgid "shipyard policy"
+msgstr "造船所ポリシー"
+
+#: apps/store/models.py
+msgid "shipyard policies"
+msgstr "造船所ポリシー"
+
+#: apps/store/models.py
+msgid "Offer this fit for sale on the Shipyard."
+msgstr "このフィットを造船所で販売します。"
+
+#: apps/store/models.py
+msgid "Override the corp-wide backorder policy for this fit."
+msgstr ""
+"このフィットについて、コーポ全体のバックオーダーポリシーを上書きします。"
+
+#: apps/store/models.py
+msgid "Override the default backorder lead time (days)."
+msgstr "デフォルトのバックオーダーのリードタイム（日）を上書きします。"
+
+#: apps/store/models.py
+msgid "Override the default delivery location for this fit."
+msgstr "このフィットのデフォルトの納品場所を上書きします。"
+
+#: apps/store/models.py
+msgid "Most units allowed on backorder per order for this fit."
+msgstr "このフィットで 1 件の注文あたりにバックオーダーできる最大数。"
+
+#: apps/store/models.py
+msgid "Override the maximum quantity per order."
+msgstr "注文あたりの最大数量を上書きします。"
+
+#: apps/store/models.py
+msgid "Units held back from planning as a strategic reserve."
+msgstr "戦略予備として計画から除外しておく数。"
+
+#: apps/store/models.py
+msgid "Flag this fit for restocking when available stock falls to this level."
+msgstr ""
+"利用可能な在庫がこの水準まで減ったら、このフィットに補充フラグを立てます。"
+
+#: apps/store/models.py
+msgid "How many complete ships the corp aims to keep stocked."
+msgstr "コーポが在庫として維持を目指す完成艦の数。"
+
+#: apps/store/models.py
+msgid "Shown to buyers on the Shipyard card."
+msgstr "造船所のカードで購入者に表示されます。"
+
+#: apps/store/models.py
+msgid "Fulfilment notes visible to members and officers only."
+msgstr "メンバーとオフィサーのみに表示される履行メモ。"
+
+#: apps/store/models.py
+msgid "Higher = restock sooner."
+msgstr "高いほど補充が早まります。"
+
+#: apps/store/models.py
+msgid "Stock received"
+msgstr "入庫"
+
+#: apps/store/models.py
+msgid "Manual adjustment"
+msgstr "手動調整"
+
+#: apps/store/models.py
+msgid "Delivered to buyer"
+msgstr "購入者へ納品"
+
+#: apps/store/models.py
+msgid "Reconciliation"
+msgstr "照合"
+
+#: apps/store/models.py
+msgid "Fit revision revalidated"
+msgstr "フィットリビジョン再検証"
+
+#: apps/store/models.py
+msgid "fit stock entries"
+msgstr "フィット在庫エントリ"
+
+#: apps/store/models.py
+msgid "fit waitlist entries"
+msgstr "フィットのウェイトリストエントリ"
 
 #: apps/store/pricing.py
 msgid "That fit has no hull or modules to price."
@@ -19652,6 +19926,45 @@ msgstr ""
 "い。"
 
 #: apps/store/services.py
+msgid "That ship is not offered for sale right now."
+msgstr "その艦船は現在販売されていません。"
+
+#: apps/store/services.py
+msgid "Pick a quantity of at least 1."
+msgstr "数量は 1 以上を選択してください。"
+
+#: apps/store/services.py
+#, python-format
+msgid "Orders for this ship are limited to %(max)s at a time."
+msgstr "この艦船は一度に %(max)s 隻まで注文できます。"
+
+#: apps/store/services.py
+#, python-format
+msgid ""
+"Only %(count)s can be delivered right now and backorders are closed for this "
+"ship."
+msgstr ""
+"現在納品できるのは %(count)s 隻のみで、この艦船のバックオーダーは受付終了して"
+"います。"
+
+#: apps/store/services.py
+msgid "That ship is out of stock and backorders are closed for it."
+msgstr "その艦船は在庫切れで、バックオーダーの受付も終了しています。"
+
+#: apps/store/services.py
+#, python-format
+msgid "At most %(max)s of this ship can be backordered per order."
+msgstr ""
+"この艦船をバックオーダーにできるのは、1 件の注文あたり最大 %(max)s 隻です。"
+
+#: apps/store/services.py
+msgid ""
+"No reliable price is available for that fit right now — try again later."
+msgstr ""
+"そのフィットの信頼できる価格が現在取得できません — 後でもう一度お試しくださ"
+"い。"
+
+#: apps/store/services.py
 msgid "Confirm deposit paid"
 msgstr "デポジット支払を確認"
 
@@ -19671,9 +19984,37 @@ msgstr "配送済みにする"
 msgid "Advance"
 msgstr "進める"
 
+#: apps/store/supply.py
+#, python-format
+msgid "Restock %(fit)s"
+msgstr "%(fit)s を補充する"
+
+#: apps/store/supply.py
+#, python-format
+msgid ""
+"Supply requirement from the Shipyard: %(count)s backordered order(s) for "
+"%(fit)s."
+msgstr "造船所からの供給要求: %(fit)s のバックオーダー注文が %(count)s 件。"
+
+#: apps/store/supply.py
+#, python-format
+msgid "Supply %(count)s× %(fit)s for the Shipyard"
+msgstr "造船所向けに %(count)s× %(fit)s を供給"
+
 #: apps/store/views.py
 msgid "Could not place that order."
 msgstr "その注文を発注できませんでした。"
+
+#: apps/store/views.py
+#, python-format
+msgid "Order placed — %(ready)s reserved now, %(back)s on backorder."
+msgstr ""
+"注文を確定しました — %(ready)s 隻を予約済み、%(back)s 隻はバックオーダーで"
+"す。"
+
+#: apps/store/views.py
+msgid "Order placed — your ship is reserved from stock."
+msgstr "注文を確定しました — 艦船は在庫から予約済みです。"
 
 #: apps/store/views.py
 msgid "Pick a hull and a quantity."
@@ -19682,6 +20023,35 @@ msgstr "船体と数量を選んでください。"
 #: apps/store/views.py
 msgid "Build order placed — a corp member will claim it on the board."
 msgstr "生産注文を発注しました — コープメンバーがボードで受領します。"
+
+#: apps/store/views.py
+msgid "That order is closed."
+msgstr "その注文はすでに終了しています。"
+
+#: apps/store/views.py
+msgid "Pick a valid estimated delivery date."
+msgstr "有効な納品予定日を選択してください。"
+
+#: apps/store/views.py
+msgid "Estimated delivery updated — the buyer was notified."
+msgstr "納品予定を更新しました — 購入者に通知しました。"
+
+#: apps/store/views.py
+msgid "The waitlist is not enabled."
+msgstr "ウェイトリストは有効になっていません。"
+
+#: apps/store/views.py
+#, python-format
+msgid "You left the waitlist for %(fit)s."
+msgstr "%(fit)s のウェイトリストから外れました。"
+
+#: apps/store/views.py
+#, python-format
+msgid ""
+"You joined the waitlist for %(fit)s — you'll be pinged when it can be "
+"ordered."
+msgstr ""
+"%(fit)s のウェイトリストに参加しました — 注文可能になったら通知が届きます。"
 
 #: apps/store/views.py
 #, python-format
@@ -19709,6 +20079,11 @@ msgid "Nothing to advance."
 msgstr "進めるものがありません。"
 
 #: apps/store/views.py
+msgid "That order just changed — review it and try again."
+msgstr ""
+"注文内容がたった今変更されました — 内容を確認してからもう一度お試しください。"
+
+#: apps/store/views.py
 #, python-format
 msgid "Order moved to “%(status)s”."
 msgstr "注文を “%(status)s” に移動しました。"
@@ -19732,6 +20107,94 @@ msgstr "注文を更新しました。"
 #: apps/store/views.py
 msgid "Store settings updated."
 msgstr "ストア設定を更新しました。"
+
+#: apps/store/views_inventory.py
+msgid "Offer settings saved."
+msgstr "オファー設定を保存しました。"
+
+#: apps/store/views_inventory.py
+msgid "Pick a location and a positive quantity."
+msgstr "ロケーションと正の数量を選択してください。"
+
+#: apps/store/views_inventory.py
+#, python-format
+msgid "%(qty)s received — %(n)s backordered order(s) got stock reserved."
+msgstr ""
+"%(qty)s 隻を受け入れました — バックオーダー中の注文 %(n)s 件に在庫を予約しま"
+"した。"
+
+#: apps/store/views_inventory.py
+#, python-format
+msgid "%(qty)s received into stock."
+msgstr "%(qty)s 隻を在庫に受け入れました。"
+
+#: apps/store/views_inventory.py
+msgid "A corrected balance and a reason are required."
+msgstr "修正後の残高と理由の両方が必要です。"
+
+#: apps/store/views_inventory.py
+msgid ""
+"That balance is below the actively reserved quantity — release or deliver "
+"the reservations first."
+msgstr ""
+"その残高は現在予約中の数量を下回っています — 先に予約を解放するか納品してくだ"
+"さい。"
+
+#: apps/store/views_inventory.py
+msgid "Invalid adjustment."
+msgstr "無効な調整です。"
+
+#: apps/store/views_inventory.py
+msgid "Stock adjusted."
+msgstr "在庫を調整しました。"
+
+#: apps/store/views_inventory.py
+msgid "No change — balance already matched."
+msgstr "変更なし — 残高はすでに一致しています。"
+
+#: apps/store/views_inventory.py
+#, python-format
+msgid "%(n)s ship(s) revalidated against the current fit revision."
+msgstr "現行のフィットリビジョンに対して %(n)s 隻を再検証しました。"
+
+#: apps/store/views_inventory.py
+msgid "Nothing to revalidate on that row."
+msgstr "その行には再検証するものがありません。"
+
+#: apps/store/views_inventory.py
+msgid "Select at least one fit and a bulk action."
+msgstr "フィットを 1 件以上と一括操作を選択してください。"
+
+#: apps/store/views_inventory.py
+#, python-format
+msgid "%(n)s fit(s) are now offered for sale."
+msgstr "%(n)s 件のフィットを販売対象にしました。"
+
+#: apps/store/views_inventory.py
+#, python-format
+msgid "%(n)s fit(s) withdrawn from sale."
+msgstr "%(n)s 件のフィットを販売から取り下げました。"
+
+#: apps/store/views_inventory.py
+msgid "Shipyard policy updated."
+msgstr "造船所ポリシーを更新しました。"
+
+#: apps/store/views_inventory.py
+msgid "That supply need is closed."
+msgstr "その供給ニーズはすでに終了しています。"
+
+#: apps/store/views_inventory.py
+#, python-format
+msgid "Industry project “%(name)s” is linked."
+msgstr "生産プロジェクト「%(name)s」をリンクしました。"
+
+#: apps/store/views_inventory.py
+msgid "ERP build job queued and linked."
+msgstr "ERP ビルドジョブをキューに追加し、リンクしました。"
+
+#: apps/store/views_inventory.py
+msgid "Claimable task created and linked."
+msgstr "受領可能なタスクを作成し、リンクしました。"
 
 #: apps/tasks/models.py
 msgid "Build ships"
@@ -21096,6 +21559,10 @@ msgstr "ビルドボード"
 #: templates/_nav.html templates/store/supply_forecast.html
 msgid "Supply Forecast"
 msgstr "供給予測"
+
+#: templates/_nav.html templates/store/inventory.html
+msgid "Shipyard Inventory"
+msgstr "造船所の在庫"
 
 #: templates/_nav.html templates/campaigns/portfolio.html
 msgid "Campaigns"
@@ -24995,6 +25462,22 @@ msgstr "コーポストア設定"
 #: templates/admin_audit/console/hub.html
 msgid "Markup, build deposit and store audience."
 msgstr "上乗せ率、製造デポジット、ストアの公開対象。"
+
+#: templates/admin_audit/console/hub.html
+msgid "Shipyard inventory"
+msgstr "造船所の在庫"
+
+#: templates/admin_audit/console/hub.html
+msgid "Stocked doctrine ships, reservations, backorders and restock needs."
+msgstr "在庫中の doctrine 艦、予約、バックオーダー、補充ニーズ。"
+
+#: templates/admin_audit/console/hub.html
+msgid "Shipyard fulfilment policy"
+msgstr "造船所の履行ポリシー"
+
+#: templates/admin_audit/console/hub.html
+msgid "Backorders, lead times, reservations and order limits."
+msgstr "バックオーダー、リードタイム、予約、注文の上限。"
 
 #: templates/admin_audit/console/hub.html
 msgid "Mining tax"
@@ -36091,12 +36574,38 @@ msgid "Close (≤3 skills)"
 msgstr "解除間近（スキル ≤3）"
 
 #: templates/doctrines/ships.html
+msgid "Available now"
+msgstr "今すぐ利用可能"
+
+#: templates/doctrines/ships.html templates/store/board.html
+#: templates/store/inventory.html templates/store/inventory_fit.html
+msgid "Backorder"
+msgstr "バックオーダー"
+
+#: templates/doctrines/ships.html templates/store/inventory_fit.html
+#: templates/store/order_confirm.html
+msgid "Delivery location"
+msgstr "納品場所"
+
+#: templates/doctrines/ships.html
+msgid "Any location"
+msgstr "すべてのロケーション"
+
+#: templates/doctrines/ships.html
 msgid "Closest to fly"
 msgstr "搭乗に最も近い"
 
 #: templates/doctrines/ships.html
 msgid "Most ready"
 msgstr "最も準備済み"
+
+#: templates/doctrines/ships.html
+msgid "Fastest delivery"
+msgstr "最短納品"
+
+#: templates/doctrines/ships.html templates/store/order_confirm.html
+msgid "Price"
+msgstr "価格"
 
 #: templates/doctrines/ships.html
 msgid "Hull class"
@@ -36126,6 +36635,36 @@ msgid "No skill data"
 msgstr "スキルデータなし"
 
 #: templates/doctrines/ships.html
+#, python-format
+msgid "%(n)s ready for delivery"
+msgid_plural "%(n)s ready for delivery"
+msgstr[0] "%(n)s 隻が納品可能"
+
+#: templates/doctrines/ships.html
+#, python-format
+msgid "Only %(n)s remaining"
+msgid_plural "Only %(n)s remaining"
+msgstr[0] "残り %(n)s 隻のみ"
+
+#: templates/doctrines/ships.html
+msgid "Backorder available"
+msgstr "バックオーダー可"
+
+#: templates/doctrines/ships.html
+#, python-format
+msgid "Estimated delivery by %(date)s"
+msgstr "%(date)s までに納品予定"
+
+#: templates/doctrines/ships.html
+msgid "Not currently offered"
+msgstr "現在は販売していません"
+
+#: templates/doctrines/ships.html
+#, python-format
+msgid "Delivers at %(name)s"
+msgstr "%(name)s で納品"
+
+#: templates/doctrines/ships.html
 msgid "View"
 msgstr "表示"
 
@@ -36134,8 +36673,36 @@ msgid "Copy EFT"
 msgstr "EFT をコピー"
 
 #: templates/doctrines/ships.html
+#, python-format
+msgid "%(n)s in stock ready now."
+msgid_plural "%(n)s in stock ready now."
+msgstr[0] "在庫 %(n)s 隻、今すぐ利用可能。"
+
+#: templates/doctrines/ships.html
+msgid ""
+"Anything beyond stock is a backorder — you'll see the split and the "
+"estimated delivery before confirming."
+msgstr ""
+"在庫を超える分はバックオーダーになります — 確定前に内訳と納品予定が表示されま"
+"す。"
+
+#: templates/doctrines/ships.html
+#, python-format
+msgid "Up to %(m)s per order."
+msgid_plural "Up to %(m)s per order."
+msgstr[0] "1 回の注文につき最大 %(m)s 隻。"
+
+#: templates/doctrines/ships.html
 msgid "Priced at Jita sell + corp markup. Lands on the build board."
 msgstr "価格は Jita 売り + コーポマークアップ。ビルドボードに反映されます。"
+
+#: templates/doctrines/ships.html
+msgid "Join waitlist"
+msgstr "ウェイトリストに参加"
+
+#: templates/doctrines/ships.html
+msgid "Ordering closed"
+msgstr "注文受付終了"
 
 #: templates/doctrines/ships.html
 msgid "No fits match these filters."
@@ -37999,10 +38566,6 @@ msgstr[0] "%(n)s 回実行 → %(produced)s（必要 %(required)s）"
 #: templates/industry/detail.html
 msgid "Material to acquire"
 msgstr "取得する材料"
-
-#: templates/industry/detail.html
-msgid "In stock"
-msgstr "在庫あり"
 
 #: templates/industry/detail.html
 msgid "To acquire"
@@ -48025,6 +48588,15 @@ msgid "Shortfall"
 msgstr "不足分"
 
 #: templates/stockpile/dashboard.html
+msgid "Claims exceed the effective on-hand — release or re-check reservations"
+msgstr "予約が実効在庫を超えています — 予約を解放するか再確認してください"
+
+#: templates/stockpile/dashboard.html
+#, python-format
+msgid "over by %(n)s"
+msgstr "%(n)s 超過"
+
+#: templates/stockpile/dashboard.html
 msgid "Empty — use “Update stock”."
 msgstr "空です — 「Update stock」を使用してください。"
 
@@ -48123,6 +48695,25 @@ msgstr "未処理の注文"
 msgid "Deposit"
 msgstr "デポジット"
 
+#: templates/store/board.html templates/store/my_orders.html
+#, python-format
+msgid "%(n)s reserved"
+msgstr "%(n)s 隻が予約済み"
+
+#: templates/store/board.html
+#, python-format
+msgid "%(n)s to build"
+msgstr "%(n)s 隻が製造待ち"
+
+#: templates/store/board.html
+msgid "Reserved stock"
+msgstr "予約済み在庫"
+
+#: templates/store/board.html
+#, python-format
+msgid "est. %(date)s"
+msgstr "予定 %(date)s"
+
 #: templates/store/board.html
 msgid "No open orders right now."
 msgstr "現在、未処理の注文はありません。"
@@ -48200,6 +48791,444 @@ msgstr "1.10 = 推定ビルドコスト +10%%"
 msgid "Supercapital hull markup"
 msgstr "Supercapital 船体のマークアップ"
 
+#: templates/store/inventory.html templates/store/shipyard_policy.html
+msgid "Shipyard · Leadership"
+msgstr "造船所 · リーダーシップ"
+
+#: templates/store/inventory.html templates/store/inventory_fit.html
+#: templates/store/shipyard_policy.html
+msgid "Inventory console"
+msgstr "在庫コンソール"
+
+#: templates/store/inventory.html
+msgid ""
+"Complete fitted doctrine ships: what's stocked, reserved, promised and being "
+"restocked. Every number comes from the same availability service the "
+"Shipyard sells with."
+msgstr ""
+"フィッティング済みの完成 doctrine 艦: 在庫、予約済み、引当済み、補充中の状"
+"況。すべての数値は、造船所の販売に使われているのと同じ在庫可用性サービスから"
+"取得しています。"
+
+#: templates/store/inventory.html templates/store/shipyard_policy.html
+msgid "Fulfilment policy"
+msgstr "履行ポリシー"
+
+#: templates/store/inventory.html
+msgid "Open supply needs"
+msgstr "未処理の供給ニーズ"
+
+#: templates/store/inventory.html
+msgid "Fit"
+msgstr "フィット"
+
+#: templates/store/inventory.html
+msgid "Needed"
+msgstr "必要数"
+
+#: templates/store/inventory.html templates/store/inventory_fit.html
+msgid "Required by"
+msgstr "必要期日"
+
+#: templates/store/inventory.html
+msgid "Vehicle"
+msgstr "手段"
+
+#: templates/store/inventory.html
+msgid "Project"
+msgstr "プロジェクト"
+
+#: templates/store/inventory.html
+msgid "Build job"
+msgstr "ビルドジョブ"
+
+#: templates/store/inventory.html
+msgid "none yet"
+msgstr "まだありません"
+
+#: templates/store/inventory.html
+msgid "Fit, ship or doctrine"
+msgstr "フィット、艦、または doctrine"
+
+#: templates/store/inventory.html
+msgid "Needs revalidation"
+msgstr "再検証が必要"
+
+#: templates/store/inventory.html
+msgid "At reorder point"
+msgstr "発注点に到達"
+
+#: templates/store/inventory.html
+msgid "Below safety stock"
+msgstr "安全在庫未満"
+
+#: templates/store/inventory.html templates/store/inventory_fit.html
+msgid "Available to promise"
+msgstr "引当可能数"
+
+#: templates/store/inventory.html
+msgid "Days of cover"
+msgstr "在庫カバー日数"
+
+#: templates/store/inventory.html
+#, python-format
+msgid "%(n)s offer"
+msgid_plural "%(n)s offers"
+msgstr[0] "オファー %(n)s 件"
+
+#: templates/store/inventory.html
+msgid "Select"
+msgstr "選択"
+
+#: templates/store/inventory.html templates/store/inventory_fit.html
+msgid "On hand"
+msgstr "手持ち"
+
+#: templates/store/inventory.html templates/store/inventory_fit.html
+msgid "ATP"
+msgstr "ATP"
+
+#: templates/store/inventory.html templates/store/inventory_fit.html
+msgid "Incoming"
+msgstr "入荷予定"
+
+#: templates/store/inventory.html
+msgid "Cover (d)"
+msgstr "カバー（日）"
+
+#: templates/store/inventory.html
+msgid "Lead (d)"
+msgstr "リード（日）"
+
+#: templates/store/inventory.html
+#, python-format
+msgid "Select %(name)s"
+msgstr "%(name)s を選択"
+
+#: templates/store/inventory.html templates/store/inventory_fit.html
+msgid "Limited"
+msgstr "残りわずか"
+
+#: templates/store/inventory.html templates/store/inventory_fit.html
+msgid "Not offered"
+msgstr "販売対象外"
+
+#: templates/store/inventory.html
+msgid "No delivery location configured"
+msgstr "納品場所が設定されていません"
+
+#: templates/store/inventory.html
+msgid "Stocked against an older fit revision"
+msgstr "旧フィットリビジョンで在庫記録済み"
+
+#: templates/store/inventory.html
+msgid "Stock recorded against an older fit revision needs officer revalidation"
+msgstr ""
+"旧フィットリビジョンで記録された在庫は、オフィサーによる再検証が必要です"
+
+#: templates/store/inventory.html
+msgid "revalidate"
+msgstr "再検証"
+
+#: templates/store/inventory.html
+msgid "Available stock is at or below the reorder point"
+msgstr "利用可能な在庫が発注点以下です"
+
+#: templates/store/inventory.html
+msgid "reorder"
+msgstr "要補充"
+
+#: templates/store/inventory.html
+msgid "Available stock is below the safety stock"
+msgstr "利用可能な在庫が安全在庫を下回っています"
+
+#: templates/store/inventory.html
+msgid "safety"
+msgstr "安全在庫"
+
+#: templates/store/inventory.html
+msgid "Pilots waiting for this ship"
+msgstr "この艦を待っているパイロット"
+
+#: templates/store/inventory.html
+msgid "No offers match these filters."
+msgstr "これらのフィルターに一致するオファーはありません。"
+
+#: templates/store/inventory.html
+msgid "With selected:"
+msgstr "選択した項目に対して:"
+
+#: templates/store/inventory.html
+msgid "Offer for sale"
+msgstr "販売対象にする"
+
+#: templates/store/inventory.html
+msgid "Withdraw from sale"
+msgstr "販売から取り下げる"
+
+#: templates/store/inventory_fit.html
+msgid "Fit inventory"
+msgstr "フィットの在庫"
+
+#: templates/store/inventory_fit.html
+msgid "Pilots on the waitlist"
+msgstr "ウェイトリストのパイロット"
+
+#: templates/store/inventory_fit.html
+msgid "Stocked complete ships"
+msgstr "在庫中の完成艦"
+
+#: templates/store/inventory_fit.html
+msgid "Fit revision"
+msgstr "フィットリビジョン"
+
+#: templates/store/inventory_fit.html
+msgid "Last stocktake"
+msgstr "最終棚卸し"
+
+#: templates/store/inventory_fit.html
+msgid "current"
+msgstr "現行"
+
+#: templates/store/inventory_fit.html
+msgid ""
+"Stocked before the fit was edited — not counted as available until "
+"revalidated"
+msgstr ""
+"フィット編集前に在庫登録されたもの — 再検証されるまで利用可能数には数えられま"
+"せん"
+
+#: templates/store/inventory_fit.html
+msgid "older revision"
+msgstr "旧リビジョン"
+
+#: templates/store/inventory_fit.html
+msgid "Adjust"
+msgstr "調整"
+
+#: templates/store/inventory_fit.html
+msgid "Counted balance"
+msgstr "実測残高"
+
+#: templates/store/inventory_fit.html
+msgid "Apply stocktake"
+msgstr "棚卸しを適用"
+
+#: templates/store/inventory_fit.html
+msgid "Confirm these ships match the current fit and count them again"
+msgstr "これらの艦船が現行フィットと一致することを確認し、再カウントします"
+
+#: templates/store/inventory_fit.html
+msgid "Revalidate"
+msgstr "再検証"
+
+#: templates/store/inventory_fit.html
+msgid "No complete ships recorded yet — use the receipt form to stock some."
+msgstr ""
+"完成艦はまだ記録されていません — 受入フォームで在庫を登録してください。"
+
+#: templates/store/inventory_fit.html
+msgid "Receive assembled ships"
+msgstr "組立済みの艦船を受け入れ"
+
+#: templates/store/inventory_fit.html
+msgid "Receive"
+msgstr "受け入れ"
+
+#: templates/store/inventory_fit.html
+msgid ""
+"Record complete, fitted ships only — hulls or loose modules belong in the "
+"stockpile, not here. Arrivals are reserved for waiting backorders "
+"automatically when the policy allows."
+msgstr ""
+"記録するのはフィッティング済みの完成艦のみです — 船体単体やバラのモジュールは"
+"ここではなく備蓄に登録してください。ポリシーで許可されている場合、入荷分は待"
+"機中のバックオーダーに自動的に予約されます。"
+
+#: templates/store/inventory_fit.html
+msgid "ESI cross-check (advisory)"
+msgstr "ESI クロスチェック（参考情報）"
+
+#: templates/store/inventory_fit.html
+msgid "Recorded complete ships (all revisions)"
+msgstr "記録済みの完成艦（全リビジョン）"
+
+#: templates/store/inventory_fit.html
+msgid "Hulls the corp asset mirror sees here"
+msgstr "コーポのアセットミラーがこの場所で確認できる船体数"
+
+#: templates/store/inventory_fit.html
+msgid ""
+"Fewer hulls than recorded fitted ships — the manual count is probably stale. "
+"Run a stocktake."
+msgstr ""
+"記録されたフィット済み艦より船体数が少なくなっています — 手動カウントが古く"
+"なっている可能性があります。棚卸しを実行してください。"
+
+#: templates/store/inventory_fit.html
+#, python-format
+msgid ""
+"ESI sees hull counts only — it cannot verify fittings, so it bounds the "
+"claim rather than proving it. Last asset sync %(when)s. Manual counts are "
+"never overwritten automatically."
+msgstr ""
+"ESI が確認できるのは船体数のみで、フィッティングは検証できません。そのため記"
+"録を証明するのではなく、上限の目安になります。最終アセット同期: %(when)s。手"
+"動カウントが自動的に上書きされることはありません。"
+
+#: templates/store/inventory_fit.html
+msgid ""
+"The corp asset mirror has no data for this location (no Director token or "
+"unreadable structure) — the manual stocktake is the only source of truth "
+"here."
+msgstr ""
+"このロケーションにはコーポのアセットミラーのデータがありません（Director トー"
+"クンなし、または読み取れないストラクチャ）— ここでは手動の棚卸しが唯一の信頼"
+"できる情報源です。"
+
+#: templates/store/inventory_fit.html
+msgid "Adjustment history"
+msgstr "調整履歴"
+
+#: templates/store/inventory_fit.html
+msgid "latest 50"
+msgstr "直近 50 件"
+
+#: templates/store/inventory_fit.html
+msgid "Balance after"
+msgstr "調整後残高"
+
+#: templates/store/inventory_fit.html
+msgid "No stock movements yet."
+msgstr "在庫の動きはまだありません。"
+
+#: templates/store/inventory_fit.html
+msgid "Supply need"
+msgstr "供給ニーズ"
+
+#: templates/store/inventory_fit.html
+msgid "Net requirement"
+msgstr "正味所要量"
+
+#: templates/store/inventory_fit.html
+msgid "Industry project"
+msgstr "生産プロジェクト"
+
+#: templates/store/inventory_fit.html
+msgid "ERP build job"
+msgstr "ERP ビルドジョブ"
+
+#: templates/store/inventory_fit.html
+msgid "Create industry project"
+msgstr "生産プロジェクトを作成"
+
+#: templates/store/inventory_fit.html
+msgid "Queue ERP build job"
+msgstr "ERP ビルドジョブをキューに追加"
+
+#: templates/store/inventory_fit.html
+msgid "Create claimable task"
+msgstr "受領可能なタスクを作成"
+
+#: templates/store/inventory_fit.html
+msgid ""
+"Several orders consolidate into this one need — no duplicate projects or "
+"jobs are created."
+msgstr ""
+"複数の注文がこの 1 件のニーズに集約されます — プロジェクトやジョブが重複して"
+"作成されることはありません。"
+
+#: templates/store/inventory_fit.html
+msgid "No open backorder demand for this fit."
+msgstr "このフィットに未処理のバックオーダー需要はありません。"
+
+#: templates/store/inventory_fit.html
+msgid "Offer & stocking policy"
+msgstr "オファーと在庫ポリシー"
+
+#: templates/store/inventory_fit.html
+msgid ""
+"Blank fields inherit the corp-wide fulfilment policy; a value here overrides "
+"it for this fit only."
+msgstr ""
+"空欄のフィールドはコーポ全体の履行ポリシーを継承します。ここで値を設定する"
+"と、このフィットに限り上書きされます。"
+
+#: templates/store/inventory_fit.html
+msgid "Offered for sale"
+msgstr "販売中"
+
+#: templates/store/inventory_fit.html templates/store/shipyard_policy.html
+msgid "Backorders"
+msgstr "バックオーダー"
+
+#: templates/store/inventory_fit.html
+msgid "allowed,closed"
+msgstr "許可,受付終了"
+
+#: templates/store/inventory_fit.html
+#, python-format
+msgid "Inherits: %(v)s"
+msgstr "継承: %(v)s"
+
+#: templates/store/inventory_fit.html
+msgid "Lead time (days)"
+msgstr "リードタイム（日）"
+
+#: templates/store/inventory_fit.html
+msgid "Max per order"
+msgstr "注文あたりの上限"
+
+#: templates/store/inventory_fit.html
+msgid "Max backorder per order"
+msgstr "注文あたりのバックオーダー上限"
+
+#: templates/store/inventory_fit.html
+msgid "Safety stock"
+msgstr "安全在庫"
+
+#: templates/store/inventory_fit.html
+msgid "Reorder point"
+msgstr "発注点"
+
+#: templates/store/inventory_fit.html
+msgid "Target stock"
+msgstr "目標在庫"
+
+#: templates/store/inventory_fit.html
+msgid "Preferred fulfilment"
+msgstr "優先する履行方法"
+
+#: templates/store/inventory_fit.html
+msgid "Note shown to buyers"
+msgstr "購入者に表示されるメモ"
+
+#: templates/store/inventory_fit.html
+msgid "Internal fulfilment note"
+msgstr "内部用の履行メモ"
+
+#: templates/store/inventory_fit.html
+msgid "Save offer settings"
+msgstr "オファー設定を保存"
+
+#: templates/store/inventory_fit.html
+#, python-format
+msgid "Last changed by %(who)s · %(when)s"
+msgstr "最終変更者 %(who)s · %(when)s"
+
+#: templates/store/inventory_fit.html
+msgid "Open orders for this fit"
+msgstr "このフィットの未処理の注文"
+
+#: templates/store/inventory_fit.html
+#, python-format
+msgid "%(n)s backordered"
+msgstr "%(n)s 隻がバックオーダー"
+
+#: templates/store/inventory_fit.html
+msgid "No open orders."
+msgstr "未処理の注文はありません。"
+
 #: templates/store/my_orders.html templates/store/storefront.html
 msgid "My orders"
 msgstr "自分の注文"
@@ -48220,6 +49249,16 @@ msgstr "ビルダー"
 #: templates/store/my_orders.html
 msgid "awaiting a builder"
 msgstr "ビルダーを待っています"
+
+#: templates/store/my_orders.html
+#, python-format
+msgid "%(n)s on backorder"
+msgstr "%(n)s 隻がバックオーダー"
+
+#: templates/store/my_orders.html
+#, python-format
+msgid "estimated %(date)s"
+msgstr "納品予定 %(date)s"
 
 #: templates/store/my_orders.html
 msgid "Waiting for a corp member to claim it."
@@ -48290,6 +49329,57 @@ msgid "Deliver to"
 msgstr "配送先"
 
 #: templates/store/order.html
+msgid "Availability at order time"
+msgstr "注文時点の在庫状況"
+
+#: templates/store/order.html
+#, python-format
+msgid ""
+"Currently held in stock for this order: %(n)s (reservations change when "
+"stock arrives or holds expire)."
+msgstr ""
+"この注文用に現在在庫から確保中: %(n)s（予約は在庫の入荷や確保の期限切れで変動"
+"します）。"
+
+#: templates/store/order.html
+msgid "Estimated delivery (at order time)"
+msgstr "納品予定（注文時点）"
+
+#: templates/store/order.html
+msgid "Current estimate"
+msgstr "現在の納品予定"
+
+#: templates/store/order.html
+msgid "Past the current estimate — awaiting an update from the fulfiller."
+msgstr "現在の予定日を過ぎています — 履行担当者からの更新待ちです。"
+
+#: templates/store/order.html
+msgid "Ready since"
+msgstr "準備完了日時"
+
+#: templates/store/order.html
+msgid "Revise the delivery estimate"
+msgstr "納品予定を修正"
+
+#: templates/store/order.html
+msgid "New estimated date"
+msgstr "新しい予定日"
+
+#: templates/store/order.html
+msgid "Reason (shown to the buyer)"
+msgstr "理由（購入者に表示されます）"
+
+#: templates/store/order.html
+msgid "Update estimate"
+msgstr "予定を更新"
+
+#: templates/store/order.html
+msgid ""
+"The original order-time estimate stays on record; the buyer is notified of "
+"the change."
+msgstr "注文時の当初予定は記録に残ります。変更は購入者に通知されます。"
+
+#: templates/store/order.html
 #, python-format
 msgid ""
 "Pay the <span class=\"text-gold\">%(amount)s</span> deposit to the builder "
@@ -48311,6 +49401,226 @@ msgstr "引き受け &amp; 履行"
 #: templates/store/order.html
 msgid "Cancel order"
 msgstr "注文をキャンセル"
+
+#: templates/store/order_confirm.html
+msgid "Confirm order"
+msgstr "注文を確定"
+
+#: templates/store/order_confirm.html
+msgid "Back to the Shipyard"
+msgstr "造船所に戻る"
+
+#: templates/store/order_confirm.html
+msgid "Confirm your order"
+msgstr "注文内容の確認"
+
+#: templates/store/order_confirm.html
+msgid "How this order will be fulfilled"
+msgstr "この注文の履行方法"
+
+#: templates/store/order_confirm.html
+msgid "Reserved from stock — ready now"
+msgstr "在庫から予約済み — 今すぐ利用可能"
+
+#: templates/store/order_confirm.html
+msgid "Backorder — built or sourced for you"
+msgstr "バックオーダー — あなた向けに製造または調達されます"
+
+#: templates/store/order_confirm.html
+msgid "Estimated delivery"
+msgstr "納品予定"
+
+#: templates/store/order_confirm.html
+#, python-format
+msgid "about %(n)s day"
+msgid_plural "about %(n)s days"
+msgstr[0] "約 %(n)s 日"
+
+#: templates/store/order_confirm.html
+msgid "each"
+msgstr "/ 隻"
+
+#: templates/store/order_confirm.html
+msgid "None — you pay on delivery via in-game contract."
+msgstr "なし — 支払いは納品時にゲーム内コントラクトで行います。"
+
+#: templates/store/order_confirm.html
+msgid "Delivery"
+msgstr "納品"
+
+#: templates/store/order_confirm.html
+msgid ""
+"One delivery, when the whole order is ready (the backordered part sets the "
+"date)."
+msgstr ""
+"納品は、注文全体がそろった時点で 1 回にまとめて行われます（日付はバックオー"
+"ダー分で決まります）。"
+
+#: templates/store/order_confirm.html
+msgid ""
+"Estimates are not guarantees. Quantities can shift if someone orders first — "
+"the split is re-checked the moment you confirm, and anything no longer in "
+"stock becomes part of the backorder."
+msgstr ""
+"予定は保証ではありません。先に他の注文が入ると数量は変わることがあります — 内"
+"訳は確定した瞬間に再チェックされ、在庫切れになった分はバックオーダーに回りま"
+"す。"
+
+#: templates/store/order_confirm.html
+#, python-format
+msgid ""
+"I understand %(n)s ship is a backorder with an estimated (not guaranteed) "
+"delivery date."
+msgid_plural ""
+"I understand %(n)s ships are backorders with an estimated (not guaranteed) "
+"delivery date."
+msgstr[0] ""
+"%(n)s 隻がバックオーダーであり、納品日は予定（保証なし）であることを理解しま"
+"した。"
+
+#: templates/store/order_confirm.html
+#, python-format
+msgid "Confirm order of %(n)s"
+msgstr "%(n)s 隻の注文を確定"
+
+#: templates/store/order_confirm.html
+#, python-format
+msgid "Or take just the %(n)s that is ready now"
+msgid_plural "Or take just the %(n)s that are ready now"
+msgstr[0] "または、今すぐ用意できる %(n)s 隻のみを受け取る"
+
+#: templates/store/order_confirm.html
+msgid "Order ready stock only"
+msgstr "即納在庫のみ注文"
+
+#: templates/store/order_confirm.html
+#, python-format
+msgid "%(n)s is available right now"
+msgid_plural "%(n)s are available right now"
+msgstr[0] "%(n)s 隻が今すぐ利用可能です"
+
+#: templates/store/order_confirm.html
+msgid "Order what's available"
+msgstr "利用可能な分のみ注文"
+
+#: templates/store/shipyard_policy.html
+msgid "Shipyard Policy"
+msgstr "造船所ポリシー"
+
+#: templates/store/shipyard_policy.html
+msgid ""
+"Corp-wide defaults for doctrine-ship availability: backorders, lead times, "
+"reservations, order limits and what buyers see. Individual fits can override "
+"any of these on the inventory console."
+msgstr ""
+"doctrine 艦の販売可否に関するコーポ全体のデフォルト設定: バックオーダー、リー"
+"ドタイム、予約、注文上限、購入者への表示内容。個々のフィットは在庫コンソール"
+"でこれらを上書きできます。"
+
+#: templates/store/shipyard_policy.html
+msgid "Accept backorders"
+msgstr "バックオーダーを受け付ける"
+
+#: templates/store/shipyard_policy.html
+msgid "Off: out-of-stock ships can't be ordered at all."
+msgstr "オフ: 在庫切れの艦船は一切注文できません。"
+
+#: templates/store/shipyard_policy.html
+msgid "Default lead time (days)"
+msgstr "デフォルトのリードタイム（日）"
+
+#: templates/store/shipyard_policy.html
+msgid "The estimated delivery shown for a fresh backorder."
+msgstr "新規バックオーダーに表示される納品予定。"
+
+#: templates/store/shipyard_policy.html
+msgid "Allow split orders"
+msgstr "分割注文を許可"
+
+#: templates/store/shipyard_policy.html
+msgid "One order may combine reserved stock with a backordered remainder."
+msgstr ""
+"1 件の注文で、予約済み在庫と残りのバックオーダー分を組み合わせられます。"
+
+#: templates/store/shipyard_policy.html
+msgid "Stock & reservations"
+msgstr "在庫と予約"
+
+#: templates/store/shipyard_policy.html
+msgid "Default delivery location"
+msgstr "デフォルトの納品場所"
+
+#: templates/store/shipyard_policy.html
+msgid ""
+"Where doctrine ships are stocked and handed over, unless a fit overrides it."
+msgstr "フィット側で上書きされない限り doctrine 艦を在庫・受け渡しする場所。"
+
+#: templates/store/shipyard_policy.html
+msgid "Reservation expiry (days)"
+msgstr "予約の有効期限（日）"
+
+#: templates/store/shipyard_policy.html
+msgid ""
+"Release the hold on orders nobody claimed after this many days. 0 keeps "
+"holds forever."
+msgstr ""
+"この日数の間誰も受領しなかった注文の確保を解放します。0 の場合は無期限に確保"
+"します。"
+
+#: templates/store/shipyard_policy.html
+msgid "Auto-allocate arrivals"
+msgstr "入荷分を自動割り当て"
+
+#: templates/store/shipyard_policy.html
+msgid ""
+"New stock is reserved for waiting backorders automatically, oldest first."
+msgstr "新しい在庫は、待機中のバックオーダーに古い順で自動的に予約されます。"
+
+#: templates/store/shipyard_policy.html
+msgid "Shop front"
+msgstr "ストアフロント"
+
+#: templates/store/shipyard_policy.html
+msgid "Maximum per order"
+msgstr "注文あたりの上限"
+
+#: templates/store/shipyard_policy.html
+msgid "'Limited stock' threshold"
+msgstr "「残りわずか」のしきい値"
+
+#: templates/store/shipyard_policy.html
+msgid "At or below this many remaining, cards warn about limited stock."
+msgstr "残りがこの数以下になると、カードに「残りわずか」の警告が表示されます。"
+
+#: templates/store/shipyard_policy.html
+msgid "Show unavailable ships"
+msgstr "利用不可の艦船を表示"
+
+#: templates/store/shipyard_policy.html
+msgid "Off hides ships that can't currently be ordered."
+msgstr "オフにすると、現在注文できない艦船を非表示にします。"
+
+#: templates/store/shipyard_policy.html
+msgid "Default to available only"
+msgstr "デフォルトで利用可能のみ表示"
+
+#: templates/store/shipyard_policy.html
+msgid "Open the Shipyard pre-filtered to ships available now."
+msgstr "造船所を、今すぐ利用可能な艦船で絞り込んだ状態で開きます。"
+
+#: templates/store/shipyard_policy.html
+msgid "Waitlist"
+msgstr "ウェイトリスト"
+
+#: templates/store/shipyard_policy.html
+msgid "Pilots can ask to be pinged when an unavailable ship returns."
+msgstr ""
+"利用できない艦船が再び注文可能になったときに、通知を受け取るようパイロットが"
+"登録できます。"
+
+#: templates/store/shipyard_policy.html
+msgid "Save policy"
+msgstr "ポリシーを保存"
 
 #: templates/store/storefront.html
 msgid ""
@@ -48708,1302 +50018,8 @@ msgstr "— 割り当て解除（オープンプールに戻す）—"
 msgid "This source string is intentionally never translated"
 msgstr "This source string is intentionally never translated"
 
-#: apps/erp/messages.py
-#, python-format
-msgid "Shipyard restock: %(fit_name)s"
-msgstr "造船所の補充: %(fit_name)s"
-
-#: apps/pingboard/messages.py
-#, python-brace-format
-msgid "The estimated delivery for {ship_name} is now {eta_date}."
-msgstr "{ship_name} の納品予定は {eta_date} になりました。"
-
-#: apps/pingboard/messages.py
-#, python-brace-format
-msgid ""
-"{quantity}× {ship_name} from a new delivery is now reserved for your order."
-msgstr ""
-"新規入荷分から {quantity}× {ship_name} があなたの注文用に予約されました。"
-
-#: apps/pingboard/messages.py
-#, python-brace-format
-msgid ""
-"Your reserved {ship_name} was released after waiting unclaimed; the order is "
-"now backordered."
-msgstr ""
-"予約されていた {ship_name} は、受領されないまま期限を迎えたため解放されまし"
-"た。注文はバックオーダーになりました。"
-
-#: apps/pingboard/messages.py
-#, python-brace-format
-msgid "Back in stock: {ship_name}"
-msgstr "再入荷: {ship_name}"
-
-#: apps/pingboard/messages.py
-#, python-brace-format
-msgid "{ship_name} can be ordered on the Shipyard again."
-msgstr "{ship_name} が再び造船所で注文できるようになりました。"
-
-#: apps/pingboard/messages.py
-msgid "Shipyard restock built"
-msgstr "造船所の補充分の製造完了"
-
-#: apps/pingboard/messages.py
-#, python-brace-format
-msgid ""
-"Production for {fit_name} finished. Assemble and fit the ships, then record "
-"the receipt on the Shipyard inventory console to release waiting backorders."
-msgstr ""
-"{fit_name} の生産が完了しました。艦船を組み立ててフィッティングし、造船所の在"
-"庫コンソールで受け入れを記録して、待機中のバックオーダーを解放してください。"
-
-#: apps/store/forms.py
-msgid "e.g. built from restock batch #12"
-msgstr "例: 補充バッチ #12 から製造"
-
-#: apps/store/models.py
-msgid "Ready for immediate delivery"
-msgstr "即時納品可能"
-
-#: apps/store/models.py
-msgid "Partially reserved, remainder backordered"
-msgstr "一部予約済み、残りはバックオーダー"
-
-#: apps/store/models.py
-msgid "Buy from an approved supplier"
-msgstr "承認済みサプライヤーから購入"
-
-#: apps/store/models.py
-msgid "Accept orders for doctrine ships that are not in stock."
-msgstr "在庫にない doctrine 艦の注文を受け付けます。"
-
-#: apps/store/models.py
-msgid "Default estimated days to fulfil a backorder."
-msgstr "バックオーダーの履行にかかるデフォルトの推定日数。"
-
-#: apps/store/models.py
-msgid "Allow one order to combine reserved stock with a backordered remainder."
-msgstr ""
-"1 件の注文で予約済み在庫と残りのバックオーダー分を組み合わせることを許可しま"
-"す。"
-
-#: apps/store/models.py
-msgid ""
-"Release reservations of orders nobody has claimed after this many days (0 = "
-"never)."
-msgstr ""
-"この日数の間誰も受領しなかった注文の予約を解放します（0 = 解放しない）。"
-
-#: apps/store/models.py
-msgid ""
-"Where doctrine ships are stocked and delivered unless a fit overrides it."
-msgstr "フィット側で上書きされない限り doctrine 艦を在庫・納品する場所。"
-
-#: apps/store/models.py
-msgid "Most ships one order may request unless a fit overrides it."
-msgstr "フィット側で上書きされない限り、1 件の注文で依頼できる最大隻数。"
-
-#: apps/store/models.py
-msgid "Show 'Limited stock' when this many or fewer ships remain."
-msgstr "残りがこの隻数以下になったら「残りわずか」と表示します。"
-
-#: apps/store/models.py
-msgid ""
-"Keep out-of-stock ships visible on the Shipyard (greyed out) instead of "
-"hiding them."
-msgstr "在庫切れの艦船を非表示にせず、造船所にグレー表示のまま残します。"
-
-#: apps/store/models.py
-msgid "Open the Shipyard filtered to immediately available ships."
-msgstr "造船所を、即時利用可能な艦船で絞り込んだ状態で開きます。"
-
-#: apps/store/models.py
-msgid "Let pilots join a waitlist for ships that can't be ordered."
-msgstr ""
-"注文できない艦船について、パイロットがウェイトリストに参加できるようにしま"
-"す。"
-
-#: apps/store/models.py
-msgid ""
-"When stock arrives, reserve it for waiting backorders automatically (oldest "
-"first)."
-msgstr ""
-"在庫が入荷したら、待機中のバックオーダーに自動的に予約します（古い順）。"
-
-#: apps/store/models.py
-msgid "Offer this fit for sale on the Shipyard."
-msgstr "このフィットを造船所で販売します。"
-
-#: apps/store/models.py
-msgid "Override the corp-wide backorder policy for this fit."
-msgstr ""
-"このフィットについて、コーポ全体のバックオーダーポリシーを上書きします。"
-
-#: apps/store/models.py
-msgid "Override the default backorder lead time (days)."
-msgstr "デフォルトのバックオーダーのリードタイム（日）を上書きします。"
-
-#: apps/store/models.py
-msgid "Override the default delivery location for this fit."
-msgstr "このフィットのデフォルトの納品場所を上書きします。"
-
-#: apps/store/models.py
-msgid "Most units allowed on backorder per order for this fit."
-msgstr "このフィットで 1 件の注文あたりにバックオーダーできる最大数。"
-
-#: apps/store/models.py
-msgid "Override the maximum quantity per order."
-msgstr "注文あたりの最大数量を上書きします。"
-
-#: apps/store/models.py
-msgid "Units held back from planning as a strategic reserve."
-msgstr "戦略予備として計画から除外しておく数。"
-
-#: apps/store/models.py
-msgid "Flag this fit for restocking when available stock falls to this level."
-msgstr ""
-"利用可能な在庫がこの水準まで減ったら、このフィットに補充フラグを立てます。"
-
-#: apps/store/models.py
-msgid "How many complete ships the corp aims to keep stocked."
-msgstr "コーポが在庫として維持を目指す完成艦の数。"
-
-#: apps/store/models.py
-msgid "Fulfilment notes visible to members and officers only."
-msgstr "メンバーとオフィサーのみに表示される履行メモ。"
-
-#: apps/store/models.py
-msgid "fit stock entries"
-msgstr "フィット在庫エントリ"
-
-#: apps/store/services.py
-msgid "That ship is not offered for sale right now."
-msgstr "その艦船は現在販売されていません。"
-
-#: apps/store/services.py
-#, python-format
-msgid "Orders for this ship are limited to %(max)s at a time."
-msgstr "この艦船は一度に %(max)s 隻まで注文できます。"
-
-#: apps/store/services.py
-#, python-format
-msgid ""
-"Only %(count)s can be delivered right now and backorders are closed for this "
-"ship."
-msgstr ""
-"現在納品できるのは %(count)s 隻のみで、この艦船のバックオーダーは受付終了して"
-"います。"
-
-#: apps/store/services.py
-msgid "That ship is out of stock and backorders are closed for it."
-msgstr "その艦船は在庫切れで、バックオーダーの受付も終了しています。"
-
-#: apps/store/services.py
-#, python-format
-msgid "At most %(max)s of this ship can be backordered per order."
-msgstr ""
-"この艦船をバックオーダーにできるのは、1 件の注文あたり最大 %(max)s 隻です。"
-
-#: apps/store/supply.py
-#, python-format
-msgid ""
-"Supply requirement from the Shipyard: %(count)s backordered order(s) for "
-"%(fit)s."
-msgstr "造船所からの供給要求: %(fit)s のバックオーダー注文が %(count)s 件。"
-
-#: apps/store/supply.py
-#, python-format
-msgid "Supply %(count)s× %(fit)s for the Shipyard"
-msgstr "造船所向けに %(count)s× %(fit)s を供給"
-
-#: apps/store/views.py
-#, python-format
-msgid "Order placed — %(ready)s reserved now, %(back)s on backorder."
-msgstr ""
-"注文を確定しました — %(ready)s 隻を予約済み、%(back)s 隻はバックオーダーで"
-"す。"
-
-#: apps/store/views.py
-msgid "Order placed — your ship is reserved from stock."
-msgstr "注文を確定しました — 艦船は在庫から予約済みです。"
-
-#: apps/store/views.py
-#, python-format
-msgid "You left the waitlist for %(fit)s."
-msgstr "%(fit)s のウェイトリストから外れました。"
-
-#: apps/store/views.py
-#, python-format
-msgid ""
-"You joined the waitlist for %(fit)s — you'll be pinged when it can be "
-"ordered."
-msgstr ""
-"%(fit)s のウェイトリストに参加しました — 注文可能になったら通知が届きます。"
-
-#: apps/store/views.py
-msgid "That order just changed — review it and try again."
-msgstr ""
-"注文内容がたった今変更されました — 内容を確認してからもう一度お試しください。"
-
-#: apps/store/views_inventory.py
-#, python-format
-msgid "%(qty)s received — %(n)s backordered order(s) got stock reserved."
-msgstr ""
-"%(qty)s 隻を受け入れました — バックオーダー中の注文 %(n)s 件に在庫を予約しま"
-"した。"
-
-#: apps/store/views_inventory.py
-#, python-format
-msgid "%(qty)s received into stock."
-msgstr "%(qty)s 隻を在庫に受け入れました。"
-
-#: apps/store/views_inventory.py
-msgid ""
-"That balance is below the actively reserved quantity — release or deliver "
-"the reservations first."
-msgstr ""
-"その残高は現在予約中の数量を下回っています — 先に予約を解放するか納品してくだ"
-"さい。"
-
-#: apps/store/views_inventory.py
-msgid "No change — balance already matched."
-msgstr "変更なし — 残高はすでに一致しています。"
-
-#: apps/store/views_inventory.py
-#, python-format
-msgid "%(n)s ship(s) revalidated against the current fit revision."
-msgstr "現行のフィットリビジョンに対して %(n)s 隻を再検証しました。"
-
-#: apps/store/views_inventory.py
-#, python-format
-msgid "%(n)s fit(s) are now offered for sale."
-msgstr "%(n)s 件のフィットを販売対象にしました。"
-
-#: apps/store/views_inventory.py
-#, python-format
-msgid "%(n)s fit(s) withdrawn from sale."
-msgstr "%(n)s 件のフィットを販売から取り下げました。"
-
-#: apps/store/views_inventory.py
-msgid "ERP build job queued and linked."
-msgstr "ERP ビルドジョブをキューに追加し、リンクしました。"
-
-#: templates/admin_audit/console/hub.html
-msgid "Stocked doctrine ships, reservations, backorders and restock needs."
-msgstr "在庫中の doctrine 艦、予約、バックオーダー、補充ニーズ。"
-
-#: templates/admin_audit/console/hub.html
-msgid "Shipyard fulfilment policy"
-msgstr "造船所の履行ポリシー"
-
-#: templates/admin_audit/console/hub.html
-msgid "Backorders, lead times, reservations and order limits."
-msgstr "バックオーダー、リードタイム、予約、注文の上限。"
-
-#: templates/doctrines/ships.html
-#, python-format
-msgid "Estimated delivery by %(date)s"
-msgstr "%(date)s までに納品予定"
-
-#: templates/doctrines/ships.html
-#, python-format
-msgid "%(n)s in stock ready now."
-msgid_plural "%(n)s in stock ready now."
-msgstr[0] "在庫 %(n)s 隻、今すぐ利用可能。"
-
-#: templates/doctrines/ships.html
-msgid ""
-"Anything beyond stock is a backorder — you'll see the split and the "
-"estimated delivery before confirming."
-msgstr ""
-"在庫を超える分はバックオーダーになります — 確定前に内訳と納品予定が表示されま"
-"す。"
-
-#: templates/doctrines/ships.html
-#, python-format
-msgid "Up to %(m)s per order."
-msgid_plural "Up to %(m)s per order."
-msgstr[0] "1 回の注文につき最大 %(m)s 隻。"
-
-#: templates/store/inventory.html
-msgid ""
-"Complete fitted doctrine ships: what's stocked, reserved, promised and being "
-"restocked. Every number comes from the same availability service the "
-"Shipyard sells with."
-msgstr ""
-"フィッティング済みの完成 doctrine 艦: 在庫、予約済み、引当済み、補充中の状"
-"況。すべての数値は、造船所の販売に使われているのと同じ在庫可用性サービスから"
-"取得しています。"
-
-#: templates/store/inventory.html
-msgid "Vehicle"
-msgstr "手段"
-
-#: templates/store/inventory.html
-msgid "At reorder point"
-msgstr "発注点に到達"
-
-#: templates/store/inventory.html templates/store/inventory_fit.html
-msgid "ATP"
-msgstr "ATP"
-
-#: templates/store/inventory.html
-msgid "Stocked against an older fit revision"
-msgstr "旧フィットリビジョンで在庫記録済み"
-
-#: templates/store/inventory.html
-msgid "Stock recorded against an older fit revision needs officer revalidation"
-msgstr ""
-"旧フィットリビジョンで記録された在庫は、オフィサーによる再検証が必要です"
-
-#: templates/store/inventory.html
-msgid "Available stock is at or below the reorder point"
-msgstr "利用可能な在庫が発注点以下です"
-
-#: templates/store/inventory.html
-msgid "Available stock is below the safety stock"
-msgstr "利用可能な在庫が安全在庫を下回っています"
-
-#: templates/store/inventory.html
-msgid "safety"
-msgstr "安全在庫"
-
-#: templates/store/inventory.html
-msgid "Offer for sale"
-msgstr "販売対象にする"
-
-#: templates/store/inventory_fit.html
-msgid "Stocked complete ships"
-msgstr "在庫中の完成艦"
-
-#: templates/store/inventory_fit.html
-msgid ""
-"Stocked before the fit was edited — not counted as available until "
-"revalidated"
-msgstr ""
-"フィット編集前に在庫登録されたもの — 再検証されるまで利用可能数には数えられま"
-"せん"
-
-#: templates/store/inventory_fit.html
-msgid "Apply stocktake"
-msgstr "棚卸しを適用"
-
-#: templates/store/inventory_fit.html
-msgid "Confirm these ships match the current fit and count them again"
-msgstr "これらの艦船が現行フィットと一致することを確認し、再カウントします"
-
-#: templates/store/inventory_fit.html
-msgid "Receive assembled ships"
-msgstr "組立済みの艦船を受け入れ"
-
-#: templates/store/inventory_fit.html
-msgid ""
-"Record complete, fitted ships only — hulls or loose modules belong in the "
-"stockpile, not here. Arrivals are reserved for waiting backorders "
-"automatically when the policy allows."
-msgstr ""
-"記録するのはフィッティング済みの完成艦のみです — 船体単体やバラのモジュールは"
-"ここではなく備蓄に登録してください。ポリシーで許可されている場合、入荷分は待"
-"機中のバックオーダーに自動的に予約されます。"
-
-#: templates/store/inventory_fit.html
-msgid "ESI cross-check (advisory)"
-msgstr "ESI クロスチェック（参考情報）"
-
-#: templates/store/inventory_fit.html
-msgid "Recorded complete ships (all revisions)"
-msgstr "記録済みの完成艦（全リビジョン）"
-
-#: templates/store/inventory_fit.html
-msgid "Hulls the corp asset mirror sees here"
-msgstr "コーポのアセットミラーがこの場所で確認できる船体数"
-
-#: templates/store/inventory_fit.html
-msgid ""
-"Fewer hulls than recorded fitted ships — the manual count is probably stale. "
-"Run a stocktake."
-msgstr ""
-"記録されたフィット済み艦より船体数が少なくなっています — 手動カウントが古く"
-"なっている可能性があります。棚卸しを実行してください。"
-
-#: templates/store/inventory_fit.html
-#, python-format
-msgid ""
-"ESI sees hull counts only — it cannot verify fittings, so it bounds the "
-"claim rather than proving it. Last asset sync %(when)s. Manual counts are "
-"never overwritten automatically."
-msgstr ""
-"ESI が確認できるのは船体数のみで、フィッティングは検証できません。そのため記"
-"録を証明するのではなく、上限の目安になります。最終アセット同期: %(when)s。手"
-"動カウントが自動的に上書きされることはありません。"
-
-#: templates/store/inventory_fit.html
-msgid "latest 50"
-msgstr "直近 50 件"
-
-#: templates/store/inventory_fit.html
-msgid ""
-"Several orders consolidate into this one need — no duplicate projects or "
-"jobs are created."
-msgstr ""
-"複数の注文がこの 1 件のニーズに集約されます — プロジェクトやジョブが重複して"
-"作成されることはありません。"
-
-#: templates/store/inventory_fit.html
-msgid "Offer & stocking policy"
-msgstr "オファーと在庫ポリシー"
-
-#: templates/store/inventory_fit.html
-msgid ""
-"Blank fields inherit the corp-wide fulfilment policy; a value here overrides "
-"it for this fit only."
-msgstr ""
-"空欄のフィールドはコーポ全体の履行ポリシーを継承します。ここで値を設定する"
-"と、このフィットに限り上書きされます。"
-
-#: templates/store/inventory_fit.html
-msgid "allowed,closed"
-msgstr "許可,受付終了"
-
-#: templates/store/order.html
-#, python-format
-msgid ""
-"Currently held in stock for this order: %(n)s (reservations change when "
-"stock arrives or holds expire)."
-msgstr ""
-"この注文用に現在在庫から確保中: %(n)s（予約は在庫の入荷や確保の期限切れで変動"
-"します）。"
-
-#: templates/store/order.html
-msgid "Estimated delivery (at order time)"
-msgstr "納品予定（注文時点）"
-
-#: templates/store/order.html
-msgid "Past the current estimate — awaiting an update from the fulfiller."
-msgstr "現在の予定日を過ぎています — 履行担当者からの更新待ちです。"
-
-#: templates/store/order.html
-msgid "Revise the delivery estimate"
-msgstr "納品予定を修正"
-
-#: templates/store/order.html
-msgid ""
-"The original order-time estimate stays on record; the buyer is notified of "
-"the change."
-msgstr "注文時の当初予定は記録に残ります。変更は購入者に通知されます。"
-
-#: templates/store/order_confirm.html
-msgid "How this order will be fulfilled"
-msgstr "この注文の履行方法"
-
-#: templates/store/order_confirm.html
-msgid "Reserved from stock — ready now"
-msgstr "在庫から予約済み — 今すぐ利用可能"
-
-#: templates/store/order_confirm.html
-msgid "Backorder — built or sourced for you"
-msgstr "バックオーダー — あなた向けに製造または調達されます"
-
-#: templates/store/order_confirm.html
-msgid "None — you pay on delivery via in-game contract."
-msgstr "なし — 支払いは納品時にゲーム内コントラクトで行います。"
-
-#: templates/store/order_confirm.html
-msgid ""
-"One delivery, when the whole order is ready (the backordered part sets the "
-"date)."
-msgstr ""
-"納品は、注文全体がそろった時点で 1 回にまとめて行われます（日付はバックオー"
-"ダー分で決まります）。"
-
-#: templates/store/order_confirm.html
-msgid ""
-"Estimates are not guarantees. Quantities can shift if someone orders first — "
-"the split is re-checked the moment you confirm, and anything no longer in "
-"stock becomes part of the backorder."
-msgstr ""
-"予定は保証ではありません。先に他の注文が入ると数量は変わることがあります — 内"
-"訳は確定した瞬間に再チェックされ、在庫切れになった分はバックオーダーに回りま"
-"す。"
-
-#: templates/store/order_confirm.html
-#, python-format
-msgid ""
-"I understand %(n)s ship is a backorder with an estimated (not guaranteed) "
-"delivery date."
-msgid_plural ""
-"I understand %(n)s ships are backorders with an estimated (not guaranteed) "
-"delivery date."
-msgstr[0] ""
-"%(n)s 隻がバックオーダーであり、納品日は予定（保証なし）であることを理解しま"
-"した。"
-
-#: templates/store/order_confirm.html
-#, python-format
-msgid "Or take just the %(n)s that is ready now"
-msgid_plural "Or take just the %(n)s that are ready now"
-msgstr[0] "または、今すぐ用意できる %(n)s 隻のみを受け取る"
-
-#: templates/store/order_confirm.html
-msgid "Order ready stock only"
-msgstr "即納在庫のみ注文"
-
-#: templates/store/shipyard_policy.html
-msgid ""
-"Corp-wide defaults for doctrine-ship availability: backorders, lead times, "
-"reservations, order limits and what buyers see. Individual fits can override "
-"any of these on the inventory console."
-msgstr ""
-"doctrine 艦の販売可否に関するコーポ全体のデフォルト設定: バックオーダー、リー"
-"ドタイム、予約、注文上限、購入者への表示内容。個々のフィットは在庫コンソール"
-"でこれらを上書きできます。"
-
-#: templates/store/shipyard_policy.html
-msgid "Accept backorders"
-msgstr "バックオーダーを受け付ける"
-
-#: templates/store/shipyard_policy.html
-msgid "Off: out-of-stock ships can't be ordered at all."
-msgstr "オフ: 在庫切れの艦船は一切注文できません。"
-
-#: templates/store/shipyard_policy.html
-msgid "The estimated delivery shown for a fresh backorder."
-msgstr "新規バックオーダーに表示される納品予定。"
-
-#: templates/store/shipyard_policy.html
-msgid "Allow split orders"
-msgstr "分割注文を許可"
-
-#: templates/store/shipyard_policy.html
-msgid "One order may combine reserved stock with a backordered remainder."
-msgstr ""
-"1 件の注文で、予約済み在庫と残りのバックオーダー分を組み合わせられます。"
-
-#: templates/store/shipyard_policy.html
-msgid ""
-"Where doctrine ships are stocked and handed over, unless a fit overrides it."
-msgstr "フィット側で上書きされない限り doctrine 艦を在庫・受け渡しする場所。"
-
-#: templates/store/shipyard_policy.html
-msgid ""
-"Release the hold on orders nobody claimed after this many days. 0 keeps "
-"holds forever."
-msgstr ""
-"この日数の間誰も受領しなかった注文の確保を解放します。0 の場合は無期限に確保"
-"します。"
-
-#: templates/store/shipyard_policy.html
-msgid "Auto-allocate arrivals"
-msgstr "入荷分を自動割り当て"
-
-#: templates/store/shipyard_policy.html
-msgid ""
-"New stock is reserved for waiting backorders automatically, oldest first."
-msgstr "新しい在庫は、待機中のバックオーダーに古い順で自動的に予約されます。"
-
-#: templates/store/shipyard_policy.html
-msgid "'Limited stock' threshold"
-msgstr "「残りわずか」のしきい値"
-
-#: templates/store/shipyard_policy.html
-msgid "At or below this many remaining, cards warn about limited stock."
-msgstr "残りがこの数以下になると、カードに「残りわずか」の警告が表示されます。"
-
-#: templates/store/shipyard_policy.html
-msgid "Off hides ships that can't currently be ordered."
-msgstr "オフにすると、現在注文できない艦船を非表示にします。"
-
-#: templates/store/shipyard_policy.html
-msgid "Open the Shipyard pre-filtered to ships available now."
-msgstr "造船所を、今すぐ利用可能な艦船で絞り込んだ状態で開きます。"
-
-#: templates/store/shipyard_policy.html
-msgid "Pilots can ask to be pinged when an unavailable ship returns."
-msgstr ""
-"利用できない艦船が再び注文可能になったときに、通知を受け取るようパイロットが"
-"登録できます。"
-
-#: apps/pingboard/messages.py
-msgid "Order update: New delivery estimate"
-msgstr "注文の更新: 新しい納品予定"
-
-#: apps/pingboard/messages.py
-msgid "Order update: Stock reserved"
-msgstr "注文の更新: 在庫予約済み"
-
-#: apps/pingboard/messages.py
-msgid "Order update: Reservation released"
-msgstr "注文の更新: 予約解放済み"
-
-#: apps/store/forms.py
-msgid "Why the balance is being corrected"
-msgstr "残高を修正する理由"
-
-#: apps/store/forms.py
-msgid "What changed (shown to the buyer)"
-msgstr "変更内容（購入者に表示されます）"
-
-#: apps/store/models.py
-msgid "Limited stock"
-msgstr "残りわずか"
-
-#: apps/store/models.py
-msgid "Available on backorder"
-msgstr "バックオーダーで注文可能"
-
-#: apps/store/models.py templates/doctrines/ships.html
-msgid "Temporarily unavailable"
-msgstr "一時的に利用不可"
-
-#: apps/store/models.py
-msgid "Not offered for sale"
-msgstr "販売対象外"
-
-#: apps/store/models.py templates/store/order.html
-msgid "Reserved from stock"
-msgstr "在庫から予約済み"
-
-#: apps/store/models.py templates/store/inventory.html
-#: templates/store/order.html
-msgid "Backordered"
-msgstr "バックオーダー中"
-
-#: apps/store/models.py
-msgid "Use stocked ships"
-msgstr "在庫の艦船を使用"
-
-#: apps/store/models.py
-msgid "Build locally"
-msgstr "現地で製造"
-
-#: apps/store/models.py
-msgid "Import from Jita"
-msgstr "Jita から輸入"
-
-#: apps/store/models.py
-msgid "Choose build or buy automatically"
-msgstr "製造か購入かを自動で選択"
-
-#: apps/store/models.py
-msgid "shipyard policy"
-msgstr "造船所ポリシー"
-
-#: apps/store/models.py
-msgid "shipyard policies"
-msgstr "造船所ポリシー"
-
-#: apps/store/models.py
-msgid "Shown to buyers on the Shipyard card."
-msgstr "造船所のカードで購入者に表示されます。"
-
-#: apps/store/models.py
-msgid "Higher = restock sooner."
-msgstr "高いほど補充が早まります。"
-
-#: apps/store/models.py
-msgid "Stock received"
-msgstr "入庫"
-
-#: apps/store/models.py
-msgid "Manual adjustment"
-msgstr "手動調整"
-
-#: apps/store/models.py
-msgid "Delivered to buyer"
-msgstr "購入者へ納品"
-
-#: apps/store/models.py
-msgid "Reconciliation"
-msgstr "照合"
-
-#: apps/store/models.py
-msgid "Fit revision revalidated"
-msgstr "フィットリビジョン再検証"
-
-#: apps/store/models.py
-msgid "fit waitlist entries"
-msgstr "フィットのウェイトリストエントリ"
-
-#: apps/store/services.py
-msgid "Pick a quantity of at least 1."
-msgstr "数量は 1 以上を選択してください。"
-
-#: apps/store/services.py
-msgid ""
-"No reliable price is available for that fit right now — try again later."
-msgstr ""
-"そのフィットの信頼できる価格が現在取得できません — 後でもう一度お試しくださ"
-"い。"
-
-#: apps/store/supply.py
-#, python-format
-msgid "Restock %(fit)s"
-msgstr "%(fit)s を補充する"
-
-#: apps/store/views.py
-msgid "That order is closed."
-msgstr "その注文はすでに終了しています。"
-
-#: apps/store/views.py
-msgid "Pick a valid estimated delivery date."
-msgstr "有効な納品予定日を選択してください。"
-
-#: apps/store/views.py
-msgid "Estimated delivery updated — the buyer was notified."
-msgstr "納品予定を更新しました — 購入者に通知しました。"
-
-#: apps/store/views.py
-msgid "The waitlist is not enabled."
-msgstr "ウェイトリストは有効になっていません。"
-
-#: apps/store/views_inventory.py
-msgid "Offer settings saved."
-msgstr "オファー設定を保存しました。"
-
-#: apps/store/views_inventory.py
-msgid "Pick a location and a positive quantity."
-msgstr "ロケーションと正の数量を選択してください。"
-
-#: apps/store/views_inventory.py
-msgid "A corrected balance and a reason are required."
-msgstr "修正後の残高と理由の両方が必要です。"
-
-#: apps/store/views_inventory.py
-msgid "Invalid adjustment."
-msgstr "無効な調整です。"
-
-#: apps/store/views_inventory.py
-msgid "Stock adjusted."
-msgstr "在庫を調整しました。"
-
-#: apps/store/views_inventory.py
-msgid "Nothing to revalidate on that row."
-msgstr "その行には再検証するものがありません。"
-
-#: apps/store/views_inventory.py
-msgid "Select at least one fit and a bulk action."
-msgstr "フィットを 1 件以上と一括操作を選択してください。"
-
-#: apps/store/views_inventory.py
-msgid "Shipyard policy updated."
-msgstr "造船所ポリシーを更新しました。"
-
-#: apps/store/views_inventory.py
-msgid "That supply need is closed."
-msgstr "その供給ニーズはすでに終了しています。"
-
-#: apps/store/views_inventory.py
-#, python-format
-msgid "Industry project “%(name)s” is linked."
-msgstr "生産プロジェクト「%(name)s」をリンクしました。"
-
-#: apps/store/views_inventory.py
-msgid "Claimable task created and linked."
-msgstr "受領可能なタスクを作成し、リンクしました。"
-
-#: templates/admin_audit/console/hub.html
-msgid "Shipyard inventory"
-msgstr "造船所の在庫"
-
-#: templates/doctrines/ships.html
-msgid "Available now"
-msgstr "今すぐ利用可能"
-
-#: templates/doctrines/ships.html templates/store/board.html
-#: templates/store/inventory.html templates/store/inventory_fit.html
-msgid "Backorder"
-msgstr "バックオーダー"
-
-#: templates/doctrines/ships.html templates/store/inventory_fit.html
-#: templates/store/order_confirm.html
-msgid "Delivery location"
-msgstr "納品場所"
-
-#: templates/doctrines/ships.html
-msgid "Any location"
-msgstr "すべてのロケーション"
-
-#: templates/doctrines/ships.html
-msgid "Fastest delivery"
-msgstr "最短納品"
-
-#: templates/doctrines/ships.html templates/store/order_confirm.html
-msgid "Price"
-msgstr "価格"
-
-#: templates/doctrines/ships.html
-#, python-format
-msgid "%(n)s ready for delivery"
-msgid_plural "%(n)s ready for delivery"
-msgstr[0] "%(n)s 隻が納品可能"
-
-#: templates/doctrines/ships.html
-#, python-format
-msgid "Only %(n)s remaining"
-msgid_plural "Only %(n)s remaining"
-msgstr[0] "残り %(n)s 隻のみ"
-
-#: templates/doctrines/ships.html
-msgid "Backorder available"
-msgstr "バックオーダー可"
-
-#: templates/doctrines/ships.html
-msgid "Not currently offered"
-msgstr "現在は販売していません"
-
-#: templates/doctrines/ships.html
-#, python-format
-msgid "Delivers at %(name)s"
-msgstr "%(name)s で納品"
-
-#: templates/doctrines/ships.html
-msgid "Join waitlist"
-msgstr "ウェイトリストに参加"
-
-#: templates/doctrines/ships.html
-msgid "Ordering closed"
-msgstr "注文受付終了"
-
-#: templates/store/board.html templates/store/my_orders.html
-#, python-format
-msgid "%(n)s reserved"
-msgstr "%(n)s 隻が予約済み"
-
-#: templates/store/board.html
-#, python-format
-msgid "%(n)s to build"
-msgstr "%(n)s 隻が製造待ち"
-
-#: templates/store/board.html
-msgid "Reserved stock"
-msgstr "予約済み在庫"
-
-#: templates/store/board.html
-#, python-format
-msgid "est. %(date)s"
-msgstr "予定 %(date)s"
-
-#: templates/store/inventory.html
-msgid "Shipyard Inventory"
-msgstr "造船所の在庫"
-
-#: templates/store/inventory.html templates/store/shipyard_policy.html
-msgid "Shipyard · Leadership"
-msgstr "造船所 · リーダーシップ"
-
-#: templates/store/inventory.html templates/store/inventory_fit.html
-#: templates/store/shipyard_policy.html
-msgid "Inventory console"
-msgstr "在庫コンソール"
-
-#: templates/store/inventory.html templates/store/shipyard_policy.html
-msgid "Fulfilment policy"
-msgstr "履行ポリシー"
-
-#: templates/store/inventory.html
-msgid "Open supply needs"
-msgstr "未処理の供給ニーズ"
-
-#: templates/store/inventory.html
-msgid "Fit"
-msgstr "フィット"
-
-#: templates/store/inventory.html
-msgid "Needed"
-msgstr "必要数"
-
-#: templates/store/inventory.html templates/store/inventory_fit.html
-msgid "Required by"
-msgstr "必要期日"
-
-#: templates/store/inventory.html
-msgid "Project"
-msgstr "プロジェクト"
-
-#: templates/store/inventory.html
-msgid "Build job"
-msgstr "ビルドジョブ"
-
-#: templates/store/inventory.html
-msgid "none yet"
-msgstr "まだありません"
-
-#: templates/store/inventory.html
-msgid "Fit, ship or doctrine"
-msgstr "フィット、艦、または doctrine"
-
-#: templates/store/inventory.html
-msgid "Needs revalidation"
-msgstr "再検証が必要"
-
-#: templates/store/inventory.html
-msgid "Below safety stock"
-msgstr "安全在庫未満"
-
-#: templates/store/inventory.html templates/store/inventory_fit.html
-msgid "Available to promise"
-msgstr "引当可能数"
-
-#: templates/store/inventory.html
-msgid "Days of cover"
-msgstr "在庫カバー日数"
-
-#: templates/store/inventory.html
-#, python-format
-msgid "%(n)s offer"
-msgid_plural "%(n)s offers"
-msgstr[0] "オファー %(n)s 件"
-
-#: templates/store/inventory.html
-msgid "Select"
-msgstr "選択"
-
-#: templates/store/inventory.html templates/store/inventory_fit.html
-msgid "On hand"
-msgstr "手持ち"
-
-#: templates/store/inventory.html templates/store/inventory_fit.html
-msgid "Incoming"
-msgstr "入荷予定"
-
-#: templates/store/inventory.html
-msgid "Cover (d)"
-msgstr "カバー（日）"
-
-#: templates/store/inventory.html
-msgid "Lead (d)"
-msgstr "リード（日）"
-
-#: templates/store/inventory.html
-#, python-format
-msgid "Select %(name)s"
-msgstr "%(name)s を選択"
-
-#: templates/store/inventory.html templates/store/inventory_fit.html
-msgid "Limited"
-msgstr "残りわずか"
-
-#: templates/store/inventory.html templates/store/inventory_fit.html
-msgid "Not offered"
-msgstr "販売対象外"
-
-#: templates/store/inventory.html
-msgid "No delivery location configured"
-msgstr "納品場所が設定されていません"
-
-#: templates/store/inventory.html
-msgid "revalidate"
-msgstr "再検証"
-
-#: templates/store/inventory.html
-msgid "reorder"
-msgstr "要補充"
-
-#: templates/store/inventory.html
-msgid "Pilots waiting for this ship"
-msgstr "この艦を待っているパイロット"
-
-#: templates/store/inventory.html
-msgid "No offers match these filters."
-msgstr "これらのフィルターに一致するオファーはありません。"
-
-#: templates/store/inventory.html
-msgid "With selected:"
-msgstr "選択した項目に対して:"
-
-#: templates/store/inventory.html
-msgid "Withdraw from sale"
-msgstr "販売から取り下げる"
-
-#: templates/store/inventory_fit.html
-msgid "Fit inventory"
-msgstr "フィットの在庫"
-
-#: templates/store/inventory_fit.html
-msgid "Pilots on the waitlist"
-msgstr "ウェイトリストのパイロット"
-
-#: templates/store/inventory_fit.html
-msgid "Fit revision"
-msgstr "フィットリビジョン"
-
-#: templates/store/inventory_fit.html
-msgid "Last stocktake"
-msgstr "最終棚卸し"
-
-#: templates/store/inventory_fit.html
-msgid "current"
-msgstr "現行"
-
-#: templates/store/inventory_fit.html
-msgid "older revision"
-msgstr "旧リビジョン"
-
-#: templates/store/inventory_fit.html
-msgid "Adjust"
-msgstr "調整"
-
-#: templates/store/inventory_fit.html
-msgid "Counted balance"
-msgstr "実測残高"
-
-#: templates/store/inventory_fit.html
-msgid "Revalidate"
-msgstr "再検証"
-
-#: templates/store/inventory_fit.html
-msgid "No complete ships recorded yet — use the receipt form to stock some."
-msgstr ""
-"完成艦はまだ記録されていません — 受入フォームで在庫を登録してください。"
-
-#: templates/store/inventory_fit.html
-msgid "Receive"
-msgstr "受け入れ"
-
-#: templates/store/inventory_fit.html
-msgid ""
-"The corp asset mirror has no data for this location (no Director token or "
-"unreadable structure) — the manual stocktake is the only source of truth "
-"here."
-msgstr ""
-"このロケーションにはコーポのアセットミラーのデータがありません（Director トー"
-"クンなし、または読み取れないストラクチャ）— ここでは手動の棚卸しが唯一の信頼"
-"できる情報源です。"
-
-#: templates/store/inventory_fit.html
-msgid "Adjustment history"
-msgstr "調整履歴"
-
-#: templates/store/inventory_fit.html
-msgid "Balance after"
-msgstr "調整後残高"
-
-#: templates/store/inventory_fit.html
-msgid "No stock movements yet."
-msgstr "在庫の動きはまだありません。"
-
-#: templates/store/inventory_fit.html
-msgid "Supply need"
-msgstr "供給ニーズ"
-
-#: templates/store/inventory_fit.html
-msgid "Net requirement"
-msgstr "正味所要量"
-
-#: templates/store/inventory_fit.html
-msgid "Industry project"
-msgstr "生産プロジェクト"
-
-#: templates/store/inventory_fit.html
-msgid "ERP build job"
-msgstr "ERP ビルドジョブ"
-
-#: templates/store/inventory_fit.html
-msgid "Create industry project"
-msgstr "生産プロジェクトを作成"
-
-#: templates/store/inventory_fit.html
-msgid "Queue ERP build job"
-msgstr "ERP ビルドジョブをキューに追加"
-
-#: templates/store/inventory_fit.html
-msgid "Create claimable task"
-msgstr "受領可能なタスクを作成"
-
-#: templates/store/inventory_fit.html
-msgid "No open backorder demand for this fit."
-msgstr "このフィットに未処理のバックオーダー需要はありません。"
-
-#: templates/store/inventory_fit.html
-msgid "Offered for sale"
-msgstr "販売中"
-
-#: templates/store/inventory_fit.html templates/store/shipyard_policy.html
-msgid "Backorders"
-msgstr "バックオーダー"
-
-#: templates/store/inventory_fit.html
-#, python-format
-msgid "Inherits: %(v)s"
-msgstr "継承: %(v)s"
-
-#: templates/store/inventory_fit.html
-msgid "Lead time (days)"
-msgstr "リードタイム（日）"
-
-#: templates/store/inventory_fit.html
-msgid "Max per order"
-msgstr "注文あたりの上限"
-
-#: templates/store/inventory_fit.html
-msgid "Max backorder per order"
-msgstr "注文あたりのバックオーダー上限"
-
-#: templates/store/inventory_fit.html
-msgid "Safety stock"
-msgstr "安全在庫"
-
-#: templates/store/inventory_fit.html
-msgid "Reorder point"
-msgstr "発注点"
-
-#: templates/store/inventory_fit.html
-msgid "Target stock"
-msgstr "目標在庫"
-
-#: templates/store/inventory_fit.html
-msgid "Preferred fulfilment"
-msgstr "優先する履行方法"
-
-#: templates/store/inventory_fit.html
-msgid "Note shown to buyers"
-msgstr "購入者に表示されるメモ"
-
-#: templates/store/inventory_fit.html
-msgid "Internal fulfilment note"
-msgstr "内部用の履行メモ"
-
-#: templates/store/inventory_fit.html
-msgid "Save offer settings"
-msgstr "オファー設定を保存"
-
-#: templates/store/inventory_fit.html
-#, python-format
-msgid "Last changed by %(who)s · %(when)s"
-msgstr "最終変更者 %(who)s · %(when)s"
-
-#: templates/store/inventory_fit.html
-msgid "Open orders for this fit"
-msgstr "このフィットの未処理の注文"
-
-#: templates/store/inventory_fit.html
-#, python-format
-msgid "%(n)s backordered"
-msgstr "%(n)s 隻がバックオーダー"
-
-#: templates/store/inventory_fit.html
-msgid "No open orders."
-msgstr "未処理の注文はありません。"
-
-#: templates/store/my_orders.html
-#, python-format
-msgid "%(n)s on backorder"
-msgstr "%(n)s 隻がバックオーダー"
-
-#: templates/store/my_orders.html
-#, python-format
-msgid "estimated %(date)s"
-msgstr "納品予定 %(date)s"
-
-#: templates/store/order.html
-msgid "Availability at order time"
-msgstr "注文時点の在庫状況"
-
-#: templates/store/order.html
-msgid "Current estimate"
-msgstr "現在の納品予定"
-
-#: templates/store/order.html
-msgid "Ready since"
-msgstr "準備完了日時"
-
-#: templates/store/order.html
-msgid "New estimated date"
-msgstr "新しい予定日"
-
-#: templates/store/order.html
-msgid "Reason (shown to the buyer)"
-msgstr "理由（購入者に表示されます）"
-
-#: templates/store/order.html
-msgid "Update estimate"
-msgstr "予定を更新"
-
-#: templates/store/order_confirm.html
-msgid "Confirm order"
-msgstr "注文を確定"
-
-#: templates/store/order_confirm.html
-msgid "Back to the Shipyard"
-msgstr "造船所に戻る"
-
-#: templates/store/order_confirm.html
-msgid "Confirm your order"
-msgstr "注文内容の確認"
-
-#: templates/store/order_confirm.html
-msgid "Estimated delivery"
-msgstr "納品予定"
-
-#: templates/store/order_confirm.html
-#, python-format
-msgid "about %(n)s day"
-msgid_plural "about %(n)s days"
-msgstr[0] "約 %(n)s 日"
-
-#: templates/store/order_confirm.html
-msgid "each"
-msgstr "/ 隻"
-
-#: templates/store/order_confirm.html
-msgid "Delivery"
-msgstr "納品"
-
-#: templates/store/order_confirm.html
-#, python-format
-msgid "Confirm order of %(n)s"
-msgstr "%(n)s 隻の注文を確定"
-
-#: templates/store/order_confirm.html
-#, python-format
-msgid "%(n)s is available right now"
-msgid_plural "%(n)s are available right now"
-msgstr[0] "%(n)s 隻が今すぐ利用可能です"
-
-#: templates/store/order_confirm.html
-msgid "Order what's available"
-msgstr "利用可能な分のみ注文"
-
-#: templates/store/shipyard_policy.html
-msgid "Shipyard Policy"
-msgstr "造船所ポリシー"
-
-#: templates/store/shipyard_policy.html
-msgid "Default lead time (days)"
-msgstr "デフォルトのリードタイム（日）"
-
-#: templates/store/shipyard_policy.html
-msgid "Stock & reservations"
-msgstr "在庫と予約"
-
-#: templates/store/shipyard_policy.html
-msgid "Default delivery location"
-msgstr "デフォルトの納品場所"
-
-#: templates/store/shipyard_policy.html
-msgid "Reservation expiry (days)"
-msgstr "予約の有効期限（日）"
-
-#: templates/store/shipyard_policy.html
-msgid "Shop front"
-msgstr "ストアフロント"
-
-#: templates/store/shipyard_policy.html
-msgid "Maximum per order"
-msgstr "注文あたりの上限"
-
-#: templates/store/shipyard_policy.html
-msgid "Show unavailable ships"
-msgstr "利用不可の艦船を表示"
-
-#: templates/store/shipyard_policy.html
-msgid "Default to available only"
-msgstr "デフォルトで利用可能のみ表示"
-
-#: templates/store/shipyard_policy.html
-msgid "Waitlist"
-msgstr "ウェイトリスト"
-
-#: templates/store/shipyard_policy.html
-msgid "Save policy"
-msgstr "ポリシーを保存"
+msgid "This plan is closed — reopen it before reserving stock."
+msgstr "このプランは終了しています — 在庫を予約する前に再開してください。"
+
+msgid "Allocated from stock"
+msgstr "在庫からの割当"

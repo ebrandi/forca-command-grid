@@ -220,7 +220,7 @@ def test_duplicate_expiry_runs_are_idempotent(rig):
 
 @pytest.mark.django_db(transaction=True)
 def test_concurrent_workers_collapse_onto_one_supply_need(rig):
-    fit, home, buyers = rig["fit"], rig["home"], rig["buyers"]
+    fit, buyers = rig["fit"], rig["buyers"]
 
     def order_backorder(user):
         def _run():

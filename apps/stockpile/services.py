@@ -19,119 +19,210 @@ from .models import (
 
 
 def available_quantity(type_id: int, kind: str = Stockpile.Kind.CORP) -> int:
-    """Total available (current minus active reservations) for a type.
+    """Available quantity of one type — thin wrapper over the availability
+    authority in :mod:`apps.stockpile.availability` (kept: the name is honest and
+    widely referenced). ESI-covered stock counts, reservations subtract, floored
+    at 0 — see the module docstring there for the full rules."""
+    from .availability import available
 
-    Two aggregate queries (not N+1): summing across the reservation join would
-    fan-out and inflate the current total, so they are computed separately.
-    """
-    current = (
-        StockpileItem.objects.filter(type_id=type_id, stockpile__kind=kind).aggregate(
-            s=Sum("quantity_current")
-        )["s"]
-        or 0
-    )
-    reserved = (
-        StockReservation.objects.filter(
-            stockpile_item__type_id=type_id,
-            stockpile_item__stockpile__kind=kind,
-            status=StockReservation.Status.ACTIVE,
-        ).aggregate(s=Sum("quantity_reserved"))["s"]
-        or 0
-    )
-    return current - reserved
+    return available([type_id], kind=kind)[type_id]
 
 
 def available_quantities(type_ids, kind: str = Stockpile.Kind.CORP) -> dict[int, int]:
-    """Batch of :func:`available_quantity`: available (current − active reservations)
-    for every type in ``type_ids``, in exactly two aggregate queries total (one for
-    stockpile current, one for active reservations) instead of two per type.
+    """Batch of :func:`available_quantity` — delegates to the availability
+    authority in :mod:`apps.stockpile.availability`. Ids with no stock map to 0."""
+    from .availability import available
 
-    Same separate-aggregate approach as :func:`available_quantity` — summing across
-    the reservation join would fan-out and inflate the current total, so the two
-    sums are grouped independently. For any given id the result is identical to
-    calling :func:`available_quantity`; ids with no stock/reservations map to 0.
-    """
-    ids = {int(t) for t in type_ids}
-    if not ids:
-        return {}
-    current = {
-        row["type_id"]: row["s"]
-        for row in (
-            StockpileItem.objects.filter(type_id__in=ids, stockpile__kind=kind)
-            .values("type_id")
-            .annotate(s=Sum("quantity_current"))
-        )
-    }
-    reserved = {
-        row["stockpile_item__type_id"]: row["s"]
-        for row in (
-            StockReservation.objects.filter(
-                stockpile_item__type_id__in=ids,
-                stockpile_item__stockpile__kind=kind,
-                status=StockReservation.Status.ACTIVE,
-            )
-            .values("stockpile_item__type_id")
-            .annotate(s=Sum("quantity_reserved"))
-        )
-    }
-    return {tid: (current.get(tid) or 0) - (reserved.get(tid) or 0) for tid in ids}
+    return available(type_ids, kind=kind)
+
+
+_TARGET_UNSET = object()
 
 
 def record_manual_stock(
-    stockpile: Stockpile, type_id: int, quantity_current: int, quantity_target: int | None = None
+    stockpile: Stockpile, type_id: int, quantity_current: int, quantity_target=_TARGET_UNSET
 ) -> StockpileItem:
+    """Record a manual stocktake count (and optionally a target) for one item.
+
+    ``quantity_target`` left at its sentinel means "don't touch the target" — a
+    count-only update must not silently wipe an existing target (the old
+    last-writer-wins behaviour). Pass an explicit value (or ``None``) to set or
+    clear it. Negative counts are rejected at the service edge, pairing with the
+    DB CheckConstraint.
+    """
+    if quantity_current < 0:
+        raise ValueError("negative stock")
+    defaults = {
+        "quantity_current": quantity_current,
+        "provenance": StockpileItem.Provenance.MANUAL,
+        "source": Source.MANUAL,
+    }
+    if quantity_target is not _TARGET_UNSET:
+        defaults["quantity_target"] = quantity_target
     item, _ = StockpileItem.objects.update_or_create(
         stockpile=stockpile,
         type_id=type_id,
-        defaults={
-            "quantity_current": quantity_current,
-            "quantity_target": quantity_target,
-            "provenance": StockpileItem.Provenance.MANUAL,
-            "source": Source.MANUAL,
-        },
+        defaults=defaults,
     )
     return item
 
 
-@transaction.atomic
-def reserve_for_project(project, type_id: int, quantity: int) -> int:
-    """Reserve up to ``quantity`` of a type for a project, FIFO across items.
+def _active_reserved_by_item(items: list[StockpileItem]) -> dict[int, int]:
+    """ACTIVE claim totals per item pk, in one aggregate (never the per-row property)."""
+    if not items:
+        return {}
+    return {
+        row["stockpile_item_id"]: int(row["s"] or 0)
+        for row in (
+            StockReservation.objects.filter(
+                stockpile_item_id__in=[i.pk for i in items],
+                status=StockReservation.Status.ACTIVE,
+            )
+            .values("stockpile_item_id")
+            .annotate(s=Sum("quantity_reserved"))
+        )
+    }
 
-    Returns the quantity actually reserved (may be < requested if short).
+
+def _reserve_from_items(
+    project, items: list[StockpileItem], quantity: int, reserved_by_item: dict[int, int]
+) -> int:
+    """Allocate reservations FIFO across already-locked items of one type.
+
+    ``items`` must be row-locked by the caller (acquired in ascending pk — the
+    global lock order). FIFO priority (stockpile age, then id) is applied here in
+    Python, *after* locking, so lock acquisition order never depends on mutable
+    values.
     """
     remaining = quantity
-    items = (
-        StockpileItem.objects.select_for_update()
-        .filter(type_id=type_id, stockpile__kind=Stockpile.Kind.CORP)
-        .order_by("stockpile__as_of", "id")  # FIFO by stockpile age
-    )
-    for item in items:
+    for item in sorted(items, key=lambda i: (i.stockpile.as_of, i.pk)):
         if remaining <= 0:
             break
-        free = item.quantity_available
+        free = item.quantity_current - reserved_by_item.get(item.pk, 0)
         if free <= 0:
             continue
         take = min(free, remaining)
         StockReservation.objects.create(
             stockpile_item=item, project=project, quantity_reserved=take
         )
+        reserved_by_item[item.pk] = reserved_by_item.get(item.pk, 0) + take
         remaining -= take
     return quantity - remaining
 
 
+@transaction.atomic
+def reserve_for_project(project, type_id: int, quantity: int) -> int:
+    """Reserve up to ``quantity`` of a type for a project, FIFO across items.
+
+    Returns the quantity actually reserved (may be < requested if short). Locks
+    ``StockpileItem`` rows in ascending pk (the one lock order); FIFO is applied
+    after locking. Capped at the availability authority's number — a stale manual
+    count at an ESI-covered location can't mint claims beyond the truthful stock.
+    Multi-type callers must use :func:`reserve_for_project_bulk` — never this in
+    a per-type loop, which would acquire locks in caller order and deadlock
+    against pk-ordered walkers.
+    """
+    from .availability import available
+
+    items = list(
+        StockpileItem.objects.select_for_update(of=("self",))
+        .select_related("stockpile")
+        .filter(type_id=type_id, stockpile__kind=Stockpile.Kind.CORP)
+        .order_by("pk")
+    )
+    quantity = min(quantity, available([type_id])[type_id])
+    return _reserve_from_items(project, items, quantity, _active_reserved_by_item(items))
+
+
+@transaction.atomic
+def reserve_for_project_bulk(project, needed: dict[int, int]) -> dict[int, int]:
+    """Reserve several types for a project in ONE pk-ordered lock acquisition.
+
+    Returns ``{type_id: newly reserved}``. All ``StockpileItem`` rows across every
+    requested type are locked in a single ascending-pk statement, then allocated
+    FIFO per type — per-type sequential locking would deadlock against any other
+    pk-ordered multi-row walker (delivery consumption, a rival reserve).
+
+    Both correctness reads happen UNDER the item locks (reservations are only
+    written by lock holders, so they are stable):
+
+    * demand is netted against the project's existing ACTIVE claims — concurrent
+      double-POSTs serialize on the locks and the loser reserves nothing new;
+    * each type is capped at the availability authority's number (effective
+      on-hand − every ACTIVE claim), so a stale manual count at an ESI-covered
+      location can't mint claims beyond the truthful stock.
+    """
+    from .availability import available
+
+    wanted = {int(t): int(q) for t, q in needed.items() if int(q) > 0}
+    if not wanted:
+        return {}
+    items = list(
+        StockpileItem.objects.select_for_update(of=("self",))
+        .select_related("stockpile")
+        .filter(type_id__in=list(wanted), stockpile__kind=Stockpile.Kind.CORP)
+        .order_by("pk")
+    )
+    held = {
+        row["stockpile_item__type_id"]: int(row["s"] or 0)
+        for row in (
+            StockReservation.objects.filter(
+                project=project,
+                status=StockReservation.Status.ACTIVE,
+                stockpile_item__stockpile__kind=Stockpile.Kind.CORP,
+            )
+            .values("stockpile_item__type_id")
+            .annotate(s=Sum("quantity_reserved"))
+        )
+    }
+    cap = available(list(wanted))
+    reserved_by_item = _active_reserved_by_item(items)
+    by_type: dict[int, list[StockpileItem]] = {}
+    for item in items:
+        by_type.setdefault(item.type_id, []).append(item)
+    out: dict[int, int] = {}
+    for tid, qty in wanted.items():
+        net = min(qty - held.get(tid, 0), cap.get(tid, 0))
+        out[tid] = (
+            _reserve_from_items(project, by_type.get(tid, []), net, reserved_by_item)
+            if net > 0
+            else 0
+        )
+    return out
+
+
 def release_reservation(reservation: StockReservation) -> None:
-    reservation.status = StockReservation.Status.RELEASED
-    reservation.save(update_fields=["status"])
+    """Release one reservation (status-guarded: only an ACTIVE row moves)."""
+    StockReservation.objects.filter(
+        pk=reservation.pk, status=StockReservation.Status.ACTIVE
+    ).update(status=StockReservation.Status.RELEASED)
+    reservation.refresh_from_db(fields=["status"])
 
 
 @transaction.atomic
 def consume_reservation(reservation: StockReservation) -> None:
-    """Consume a reservation: decrement the stockpile item's current quantity."""
+    """Consume one reservation: decrement its stockpile item's current quantity.
+
+    Status-guarded FIRST — a RELEASED/CONSUMED row is always a no-op, never
+    applied twice and never raising. An ACTIVE claim exceeding the item's stock
+    raises ``ValueError`` (fail loudly; the caller decides) instead of silently
+    clamping — the raise rolls this atomic block back, so the row stays ACTIVE.
+    Lock order: item row first (pk lock), then the reservation CAS.
+
+    This is the single-row primitive (admin/tooling). The delivery path uses its
+    own batched, split-aware consumption in ``erp.services._consume_materials``.
+    """
     item = StockpileItem.objects.select_for_update().get(pk=reservation.stockpile_item_id)
-    item.quantity_current = max(0, item.quantity_current - reservation.quantity_reserved)
+    claimed = StockReservation.objects.filter(
+        pk=reservation.pk, status=StockReservation.Status.ACTIVE
+    ).update(status=StockReservation.Status.CONSUMED)
+    if not claimed:
+        return
+    if item.quantity_current < reservation.quantity_reserved:
+        raise ValueError("insufficient stock")
+    item.quantity_current -= reservation.quantity_reserved
     item.save(update_fields=["quantity_current"])
     reservation.status = StockReservation.Status.CONSUMED
-    reservation.save(update_fields=["status"])
 
 
 def _volume_for(type_id: int) -> float:
@@ -254,21 +345,42 @@ def reconcile_stockpile(stockpile: Stockpile) -> dict:
     Each row carries the manual current, the ESI on-hand (when the location is covered), the
     *effective* on-hand used for the shortfall (ESI when covered, else the manual count), and
     the resulting shortfall. When ``covered`` is False, only manual entry is meaningful.
+
+    Rows also carry the ACTIVE reservation claims (``reserved``), the floored
+    ``available`` (effective − reserved, the same rule as
+    :mod:`apps.stockpile.availability`) and ``over_reserved`` — claims exceeding the
+    effective on-hand, surfaced here so officers can see and fix them. Reservations
+    are batched in one aggregate query (never per-row properties).
     """
     on_hand, covered = esi_on_hand_for(stockpile)
+    reserved_by_item = {
+        row["stockpile_item_id"]: int(row["s"] or 0)
+        for row in (
+            StockReservation.objects.filter(
+                stockpile_item__stockpile=stockpile,
+                status=StockReservation.Status.ACTIVE,
+            )
+            .values("stockpile_item_id")
+            .annotate(s=Sum("quantity_reserved"))
+        )
+    }
     rows = []
     for item in stockpile.items.all():
         esi = on_hand.get(item.type_id) if covered else None
-        effective = esi if covered else item.quantity_current
+        effective = (esi if covered else item.quantity_current) or 0
         target = item.quantity_target or 0
+        reserved = reserved_by_item.get(item.pk, 0)
         rows.append({
             "item": item,
             "type_id": item.type_id,
             "manual_current": item.quantity_current,
             "esi_on_hand": esi,
             "covered": covered,
-            "effective": effective or 0,
+            "effective": effective,
+            "reserved": reserved,
+            "available": max(0, effective - reserved),
+            "over_reserved": max(0, reserved - effective),
             "target": target,
-            "shortfall": max(0, target - (effective or 0)) if target else 0,
+            "shortfall": max(0, target - effective) if target else 0,
         })
     return {"covered": covered, "rows": rows}

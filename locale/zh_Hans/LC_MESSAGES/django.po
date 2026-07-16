@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-16 14:46+0000\n"
+"POT-Creation-Date: 2026-07-16 20:11+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: zh-hans machine-assisted draft\n"
@@ -7102,6 +7102,11 @@ msgstr "来自计划：%(plan)s"
 msgid "From a leadership plan"
 msgstr "来自一项领导层计划"
 
+#: apps/erp/messages.py
+#, python-format
+msgid "Shipyard restock: %(fit_name)s"
+msgstr "船坞补货：%(fit_name)s"
+
 #: apps/erp/models.py
 msgid "Building"
 msgstr "建造中"
@@ -7640,6 +7645,11 @@ msgstr "已复制为“%(name)s”。"
 #: apps/industry/views.py
 msgid "Not your project to manage."
 msgstr "这不是你可管理的项目。"
+
+#: apps/industry/views.py
+#, python-format
+msgid "Released %(count)s reservation(s) held by this plan."
+msgstr "已释放此计划持有的 %(count)s 项预留。"
 
 #: apps/industry/views.py
 msgid "Plan restored."
@@ -13092,6 +13102,60 @@ msgstr "订单更新：已取消"
 #, python-brace-format
 msgid "Your order for {ship_name} was cancelled."
 msgstr "你的 {ship_name} 订单已被取消。"
+
+#: apps/pingboard/messages.py
+msgid "Order update: New delivery estimate"
+msgstr "订单更新：新的预计交付日期"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid "The estimated delivery for {ship_name} is now {eta_date}."
+msgstr "{ship_name} 的预计交付时间现为 {eta_date}。"
+
+#: apps/pingboard/messages.py
+msgid "Order update: Stock reserved"
+msgstr "订单更新：库存已预留"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"{quantity}× {ship_name} from a new delivery is now reserved for your order."
+msgstr "新到货的 {quantity}× {ship_name} 已为你的订单预留。"
+
+#: apps/pingboard/messages.py
+msgid "Order update: Reservation released"
+msgstr "订单更新：预留已释放"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"Your reserved {ship_name} was released after waiting unclaimed; the order is "
+"now backordered."
+msgstr ""
+"你预留的 {ship_name} 因长时间无人领取已被释放；该订单现已转为缺货预订。"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid "Back in stock: {ship_name}"
+msgstr "重新到货：{ship_name}"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid "{ship_name} can be ordered on the Shipyard again."
+msgstr "{ship_name} 现在可以在船坞重新订购了。"
+
+#: apps/pingboard/messages.py
+msgid "Shipyard restock built"
+msgstr "船坞补货已建造完成"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"Production for {fit_name} finished. Assemble and fit the ships, then record "
+"the receipt on the Shipyard inventory console to release waiting backorders."
+msgstr ""
+"{fit_name} 的生产已完成。请组装并配装舰船，然后在船坞库存控制台记录收货，以释"
+"放等待中的缺货预订。"
 
 #: apps/pingboard/messages.py
 #, python-brace-format
@@ -18913,6 +18977,18 @@ msgstr "生产者需要了解的任何信息"
 msgid "Must be between %(low)s and %(high)s."
 msgstr "必须介于 %(low)s 和 %(high)s 之间。"
 
+#: apps/store/forms.py
+msgid "e.g. built from restock batch #12"
+msgstr "例如：由补货批次 #12 建造"
+
+#: apps/store/forms.py
+msgid "Why the balance is being corrected"
+msgstr "更正余额的原因"
+
+#: apps/store/forms.py
+msgid "What changed (shown to the buyer)"
+msgstr "变更内容（向买家显示）"
+
 #: apps/store/models.py
 msgid "Public — anyone can shop"
 msgstr "公开 — 任何人都可选购"
@@ -18924,6 +19000,59 @@ msgstr "Jita 卖价"
 #: apps/store/models.py
 msgid "Estimated build cost"
 msgstr "预估建造成本"
+
+#: apps/store/models.py
+msgid "Ready for immediate delivery"
+msgstr "可立即交付"
+
+#: apps/store/models.py
+msgid "Limited stock"
+msgstr "库存有限"
+
+#: apps/store/models.py
+msgid "Available on backorder"
+msgstr "可缺货预订"
+
+#: apps/store/models.py templates/doctrines/ships.html
+msgid "Temporarily unavailable"
+msgstr "暂时不可用"
+
+#: apps/store/models.py
+msgid "Not offered for sale"
+msgstr "未上架销售"
+
+#: apps/store/models.py templates/store/order.html
+msgid "Reserved from stock"
+msgstr "已从库存预留"
+
+#: apps/store/models.py
+msgid "Partially reserved, remainder backordered"
+msgstr "部分已预留，其余转为缺货预订"
+
+#: apps/store/models.py templates/store/inventory.html
+#: templates/store/order.html
+msgid "Backordered"
+msgstr "缺货预订中"
+
+#: apps/store/models.py
+msgid "Use stocked ships"
+msgstr "使用库存舰船"
+
+#: apps/store/models.py
+msgid "Build locally"
+msgstr "本地建造"
+
+#: apps/store/models.py
+msgid "Import from Jita"
+msgstr "从 Jita 进货"
+
+#: apps/store/models.py
+msgid "Buy from an approved supplier"
+msgstr "从认可的供应商处采购"
+
+#: apps/store/models.py
+msgid "Choose build or buy automatically"
+msgstr "自动选择建造或采购"
 
 #: apps/store/models.py
 msgid "Ready-to-fly doctrine ship"
@@ -18940,6 +19069,141 @@ msgstr "已付定金"
 #: apps/store/models.py templates/erp/board.html
 msgid "In production"
 msgstr "生产中"
+
+#: apps/store/models.py
+msgid "Accept orders for doctrine ships that are not in stock."
+msgstr "接受当前无库存的 doctrine 舰船订单。"
+
+#: apps/store/models.py
+msgid "Default estimated days to fulfil a backorder."
+msgstr "履行缺货预订的默认预计天数。"
+
+#: apps/store/models.py
+msgid "Allow one order to combine reserved stock with a backordered remainder."
+msgstr "允许一张订单同时包含已预留库存与缺货预订的剩余部分。"
+
+#: apps/store/models.py
+msgid ""
+"Release reservations of orders nobody has claimed after this many days (0 = "
+"never)."
+msgstr "在此天数后释放无人领取订单的预留（0 = 永不）。"
+
+#: apps/store/models.py
+msgid ""
+"Where doctrine ships are stocked and delivered unless a fit overrides it."
+msgstr "doctrine 舰船的默认备货与交付地点，除非某个配装另行覆盖。"
+
+#: apps/store/models.py
+msgid "Most ships one order may request unless a fit overrides it."
+msgstr "单张订单最多可订购的舰船数，除非某个配装另行覆盖。"
+
+#: apps/store/models.py
+msgid "Show 'Limited stock' when this many or fewer ships remain."
+msgstr "当剩余舰船不超过此数量时显示“库存有限”。"
+
+#: apps/store/models.py
+msgid ""
+"Keep out-of-stock ships visible on the Shipyard (greyed out) instead of "
+"hiding them."
+msgstr "让无库存的舰船在船坞上保持可见（置灰显示），而不是隐藏。"
+
+#: apps/store/models.py
+msgid "Open the Shipyard filtered to immediately available ships."
+msgstr "打开船坞时默认只筛选立即可用的舰船。"
+
+#: apps/store/models.py
+msgid "Let pilots join a waitlist for ships that can't be ordered."
+msgstr "允许飞行员为无法订购的舰船加入候补名单。"
+
+#: apps/store/models.py
+msgid ""
+"When stock arrives, reserve it for waiting backorders automatically (oldest "
+"first)."
+msgstr "库存到货时自动为等待中的缺货预订预留（最早的优先）。"
+
+#: apps/store/models.py
+msgid "shipyard policy"
+msgstr "船坞政策"
+
+#: apps/store/models.py
+msgid "shipyard policies"
+msgstr "船坞政策"
+
+#: apps/store/models.py
+msgid "Offer this fit for sale on the Shipyard."
+msgstr "在船坞上架销售此配装。"
+
+#: apps/store/models.py
+msgid "Override the corp-wide backorder policy for this fit."
+msgstr "为此配装覆盖全军团的缺货预订政策。"
+
+#: apps/store/models.py
+msgid "Override the default backorder lead time (days)."
+msgstr "覆盖默认的缺货预订交付周期（天）。"
+
+#: apps/store/models.py
+msgid "Override the default delivery location for this fit."
+msgstr "为此配装覆盖默认交付地点。"
+
+#: apps/store/models.py
+msgid "Most units allowed on backorder per order for this fit."
+msgstr "此配装每单允许缺货预订的最大数量。"
+
+#: apps/store/models.py
+msgid "Override the maximum quantity per order."
+msgstr "覆盖每单最大数量。"
+
+#: apps/store/models.py
+msgid "Units held back from planning as a strategic reserve."
+msgstr "作为战略储备、不计入计划的数量。"
+
+#: apps/store/models.py
+msgid "Flag this fit for restocking when available stock falls to this level."
+msgstr "当可用库存降至此水平时，将此配装标记为需要补货。"
+
+#: apps/store/models.py
+msgid "How many complete ships the corp aims to keep stocked."
+msgstr "军团计划保有的成品舰船数量。"
+
+#: apps/store/models.py
+msgid "Shown to buyers on the Shipyard card."
+msgstr "在船坞卡片上向买家显示。"
+
+#: apps/store/models.py
+msgid "Fulfilment notes visible to members and officers only."
+msgstr "仅成员和军官可见的履单备注。"
+
+#: apps/store/models.py
+msgid "Higher = restock sooner."
+msgstr "数值越高 = 越早补货。"
+
+#: apps/store/models.py
+msgid "Stock received"
+msgstr "收货入库"
+
+#: apps/store/models.py
+msgid "Manual adjustment"
+msgstr "手动调整"
+
+#: apps/store/models.py
+msgid "Delivered to buyer"
+msgstr "已交付给买家"
+
+#: apps/store/models.py
+msgid "Reconciliation"
+msgstr "对账"
+
+#: apps/store/models.py
+msgid "Fit revision revalidated"
+msgstr "配装版本已重新验证"
+
+#: apps/store/models.py
+msgid "fit stock entries"
+msgstr "配装库存条目"
+
+#: apps/store/models.py
+msgid "fit waitlist entries"
+msgstr "配装候补名单条目"
 
 #: apps/store/pricing.py
 msgid "That fit has no hull or modules to price."
@@ -18958,6 +19222,40 @@ msgid ""
 "No build-cost estimate is available for that hull right now — try again "
 "later."
 msgstr "目前无法获取该船体的建造成本预估 — 请稍后再试。"
+
+#: apps/store/services.py
+msgid "That ship is not offered for sale right now."
+msgstr "该舰船目前未上架销售。"
+
+#: apps/store/services.py
+msgid "Pick a quantity of at least 1."
+msgstr "请选择至少为 1 的数量。"
+
+#: apps/store/services.py
+#, python-format
+msgid "Orders for this ship are limited to %(max)s at a time."
+msgstr "该舰船每次最多只能订购 %(max)s 艘。"
+
+#: apps/store/services.py
+#, python-format
+msgid ""
+"Only %(count)s can be delivered right now and backorders are closed for this "
+"ship."
+msgstr "目前只能交付 %(count)s 艘，且该舰船已关闭缺货预订。"
+
+#: apps/store/services.py
+msgid "That ship is out of stock and backorders are closed for it."
+msgstr "该舰船已无库存，且已关闭缺货预订。"
+
+#: apps/store/services.py
+#, python-format
+msgid "At most %(max)s of this ship can be backordered per order."
+msgstr "该舰船每单最多可缺货预订 %(max)s 艘。"
+
+#: apps/store/services.py
+msgid ""
+"No reliable price is available for that fit right now — try again later."
+msgstr "目前无法为该配装获取可靠的价格 — 请稍后再试。"
 
 #: apps/store/services.py
 msgid "Confirm deposit paid"
@@ -18979,9 +19277,35 @@ msgstr "标记为已交付"
 msgid "Advance"
 msgstr "推进"
 
+#: apps/store/supply.py
+#, python-format
+msgid "Restock %(fit)s"
+msgstr "为 %(fit)s 补货"
+
+#: apps/store/supply.py
+#, python-format
+msgid ""
+"Supply requirement from the Shipyard: %(count)s backordered order(s) for "
+"%(fit)s."
+msgstr "来自船坞的补给需求：%(fit)s 有 %(count)s 个缺货预订订单。"
+
+#: apps/store/supply.py
+#, python-format
+msgid "Supply %(count)s× %(fit)s for the Shipyard"
+msgstr "为船坞补给 %(count)s× %(fit)s"
+
 #: apps/store/views.py
 msgid "Could not place that order."
 msgstr "无法下单。"
+
+#: apps/store/views.py
+#, python-format
+msgid "Order placed — %(ready)s reserved now, %(back)s on backorder."
+msgstr "订单已提交 — 已预留 %(ready)s 艘，缺货预订 %(back)s 艘。"
+
+#: apps/store/views.py
+msgid "Order placed — your ship is reserved from stock."
+msgstr "订单已提交 — 你的舰船已从库存预留。"
 
 #: apps/store/views.py
 msgid "Pick a hull and a quantity."
@@ -18990,6 +19314,34 @@ msgstr "请选择一个船体和数量。"
 #: apps/store/views.py
 msgid "Build order placed — a corp member will claim it on the board."
 msgstr "生产订单已提交 — 军团成员将在看板上认领。"
+
+#: apps/store/views.py
+msgid "That order is closed."
+msgstr "该订单已关闭。"
+
+#: apps/store/views.py
+msgid "Pick a valid estimated delivery date."
+msgstr "请选择一个有效的预计交付日期。"
+
+#: apps/store/views.py
+msgid "Estimated delivery updated — the buyer was notified."
+msgstr "预计交付已更新 — 已通知买家。"
+
+#: apps/store/views.py
+msgid "The waitlist is not enabled."
+msgstr "候补名单未启用。"
+
+#: apps/store/views.py
+#, python-format
+msgid "You left the waitlist for %(fit)s."
+msgstr "你已退出 %(fit)s 的候补名单。"
+
+#: apps/store/views.py
+#, python-format
+msgid ""
+"You joined the waitlist for %(fit)s — you'll be pinged when it can be "
+"ordered."
+msgstr "你已加入 %(fit)s 的候补名单 — 可以订购时会通知你。"
 
 #: apps/store/views.py
 #, python-format
@@ -19017,6 +19369,10 @@ msgid "Nothing to advance."
 msgstr "没有可推进的内容。"
 
 #: apps/store/views.py
+msgid "That order just changed — review it and try again."
+msgstr "该订单刚刚发生了变化 — 请核对后再试。"
+
+#: apps/store/views.py
 #, python-format
 msgid "Order moved to “%(status)s”."
 msgstr "订单已移至 “%(status)s”。"
@@ -19040,6 +19396,90 @@ msgstr "订单已更新。"
 #: apps/store/views.py
 msgid "Store settings updated."
 msgstr "商店设置已更新。"
+
+#: apps/store/views_inventory.py
+msgid "Offer settings saved."
+msgstr "上架设置已保存。"
+
+#: apps/store/views_inventory.py
+msgid "Pick a location and a positive quantity."
+msgstr "请选择地点并填写正数数量。"
+
+#: apps/store/views_inventory.py
+#, python-format
+msgid "%(qty)s received — %(n)s backordered order(s) got stock reserved."
+msgstr "已收货 %(qty)s 艘 — %(n)s 个缺货预订订单已获得库存预留。"
+
+#: apps/store/views_inventory.py
+#, python-format
+msgid "%(qty)s received into stock."
+msgstr "%(qty)s 艘已收货入库。"
+
+#: apps/store/views_inventory.py
+msgid "A corrected balance and a reason are required."
+msgstr "更正后的余额和原因均为必填。"
+
+#: apps/store/views_inventory.py
+msgid ""
+"That balance is below the actively reserved quantity — release or deliver "
+"the reservations first."
+msgstr "该余额低于当前已预留数量 — 请先释放或交付相关预留。"
+
+#: apps/store/views_inventory.py
+msgid "Invalid adjustment."
+msgstr "调整无效。"
+
+#: apps/store/views_inventory.py
+msgid "Stock adjusted."
+msgstr "库存已调整。"
+
+#: apps/store/views_inventory.py
+msgid "No change — balance already matched."
+msgstr "无变化 — 余额已一致。"
+
+#: apps/store/views_inventory.py
+#, python-format
+msgid "%(n)s ship(s) revalidated against the current fit revision."
+msgstr "已按当前配装版本重新验证 %(n)s 艘舰船。"
+
+#: apps/store/views_inventory.py
+msgid "Nothing to revalidate on that row."
+msgstr "该行没有需要重新验证的内容。"
+
+#: apps/store/views_inventory.py
+msgid "Select at least one fit and a bulk action."
+msgstr "请至少选择一个配装和一项批量操作。"
+
+#: apps/store/views_inventory.py
+#, python-format
+msgid "%(n)s fit(s) are now offered for sale."
+msgstr "%(n)s 个配装现已上架销售。"
+
+#: apps/store/views_inventory.py
+#, python-format
+msgid "%(n)s fit(s) withdrawn from sale."
+msgstr "已下架 %(n)s 个配装。"
+
+#: apps/store/views_inventory.py
+msgid "Shipyard policy updated."
+msgstr "船坞政策已更新。"
+
+#: apps/store/views_inventory.py
+msgid "That supply need is closed."
+msgstr "该补给需求已关闭。"
+
+#: apps/store/views_inventory.py
+#, python-format
+msgid "Industry project “%(name)s” is linked."
+msgstr "工业项目“%(name)s”已关联。"
+
+#: apps/store/views_inventory.py
+msgid "ERP build job queued and linked."
+msgstr "ERP 建造任务已加入队列并关联。"
+
+#: apps/store/views_inventory.py
+msgid "Claimable task created and linked."
+msgstr "已创建并关联可认领任务。"
 
 #: apps/tasks/models.py
 msgid "Build ships"
@@ -20367,6 +20807,10 @@ msgstr "建造看板"
 #: templates/_nav.html templates/store/supply_forecast.html
 msgid "Supply Forecast"
 msgstr "供应预测"
+
+#: templates/_nav.html templates/store/inventory.html
+msgid "Shipyard Inventory"
+msgstr "船坞库存"
 
 #: templates/_nav.html templates/campaigns/portfolio.html
 msgid "Campaigns"
@@ -24104,6 +24548,22 @@ msgstr "军团商店设置"
 #: templates/admin_audit/console/hub.html
 msgid "Markup, build deposit and store audience."
 msgstr "加价、建造押金和商店受众。"
+
+#: templates/admin_audit/console/hub.html
+msgid "Shipyard inventory"
+msgstr "船坞库存"
+
+#: templates/admin_audit/console/hub.html
+msgid "Stocked doctrine ships, reservations, backorders and restock needs."
+msgstr "已备货的 doctrine 舰船、预留、缺货预订与补货需求。"
+
+#: templates/admin_audit/console/hub.html
+msgid "Shipyard fulfilment policy"
+msgstr "船坞履单政策"
+
+#: templates/admin_audit/console/hub.html
+msgid "Backorders, lead times, reservations and order limits."
+msgstr "缺货预订、交付周期、预留与订单限制。"
 
 #: templates/admin_audit/console/hub.html
 msgid "Mining tax"
@@ -34819,12 +35279,38 @@ msgid "Close (≤3 skills)"
 msgstr "接近（≤3 项技能）"
 
 #: templates/doctrines/ships.html
+msgid "Available now"
+msgstr "当前可用"
+
+#: templates/doctrines/ships.html templates/store/board.html
+#: templates/store/inventory.html templates/store/inventory_fit.html
+msgid "Backorder"
+msgstr "缺货预订"
+
+#: templates/doctrines/ships.html templates/store/inventory_fit.html
+#: templates/store/order_confirm.html
+msgid "Delivery location"
+msgstr "交付地点"
+
+#: templates/doctrines/ships.html
+msgid "Any location"
+msgstr "任意地点"
+
+#: templates/doctrines/ships.html
 msgid "Closest to fly"
 msgstr "最接近可驾驶"
 
 #: templates/doctrines/ships.html
 msgid "Most ready"
 msgstr "就绪度最高"
+
+#: templates/doctrines/ships.html
+msgid "Fastest delivery"
+msgstr "最快交付"
+
+#: templates/doctrines/ships.html templates/store/order_confirm.html
+msgid "Price"
+msgstr "价格"
 
 #: templates/doctrines/ships.html
 msgid "Hull class"
@@ -34854,6 +35340,36 @@ msgid "No skill data"
 msgstr "无技能数据"
 
 #: templates/doctrines/ships.html
+#, python-format
+msgid "%(n)s ready for delivery"
+msgid_plural "%(n)s ready for delivery"
+msgstr[0] "%(n)s 艘可立即交付"
+
+#: templates/doctrines/ships.html
+#, python-format
+msgid "Only %(n)s remaining"
+msgid_plural "Only %(n)s remaining"
+msgstr[0] "仅剩 %(n)s 艘"
+
+#: templates/doctrines/ships.html
+msgid "Backorder available"
+msgstr "可缺货预订"
+
+#: templates/doctrines/ships.html
+#, python-format
+msgid "Estimated delivery by %(date)s"
+msgstr "预计 %(date)s 前交付"
+
+#: templates/doctrines/ships.html
+msgid "Not currently offered"
+msgstr "当前未上架"
+
+#: templates/doctrines/ships.html
+#, python-format
+msgid "Delivers at %(name)s"
+msgstr "在 %(name)s 交付"
+
+#: templates/doctrines/ships.html
 msgid "View"
 msgstr "查看"
 
@@ -34862,8 +35378,34 @@ msgid "Copy EFT"
 msgstr "复制 EFT"
 
 #: templates/doctrines/ships.html
+#, python-format
+msgid "%(n)s in stock ready now."
+msgid_plural "%(n)s in stock ready now."
+msgstr[0] "现货 %(n)s 艘，即刻可用。"
+
+#: templates/doctrines/ships.html
+msgid ""
+"Anything beyond stock is a backorder — you'll see the split and the "
+"estimated delivery before confirming."
+msgstr "超出库存的部分即为缺货预订 — 确认前你会看到数量拆分和预计交付时间。"
+
+#: templates/doctrines/ships.html
+#, python-format
+msgid "Up to %(m)s per order."
+msgid_plural "Up to %(m)s per order."
+msgstr[0] "每单最多 %(m)s 艘。"
+
+#: templates/doctrines/ships.html
 msgid "Priced at Jita sell + corp markup. Lands on the build board."
 msgstr "定价为 Jita 卖单价 + 军团加价。将进入建造面板。"
+
+#: templates/doctrines/ships.html
+msgid "Join waitlist"
+msgstr "加入候补名单"
+
+#: templates/doctrines/ships.html
+msgid "Ordering closed"
+msgstr "订购已关闭"
 
 #: templates/doctrines/ships.html
 msgid "No fits match these filters."
@@ -36685,10 +37227,6 @@ msgstr[0] "%(n)s 轮 → %(produced)s（需要 %(required)s）"
 #: templates/industry/detail.html
 msgid "Material to acquire"
 msgstr "需获取的材料"
-
-#: templates/industry/detail.html
-msgid "In stock"
-msgstr "库存中"
 
 #: templates/industry/detail.html
 msgid "To acquire"
@@ -46373,6 +46911,15 @@ msgid "Shortfall"
 msgstr "缺口"
 
 #: templates/stockpile/dashboard.html
+msgid "Claims exceed the effective on-hand — release or re-check reservations"
+msgstr "预留超出实际库存 — 请释放或重新核查预留"
+
+#: templates/stockpile/dashboard.html
+#, python-format
+msgid "over by %(n)s"
+msgstr "超出 %(n)s"
+
+#: templates/stockpile/dashboard.html
 msgid "Empty — use “Update stock”."
 msgstr "空 — 请使用“更新库存”。"
 
@@ -46465,6 +47012,25 @@ msgstr "未完成订单"
 msgid "Deposit"
 msgstr "定金"
 
+#: templates/store/board.html templates/store/my_orders.html
+#, python-format
+msgid "%(n)s reserved"
+msgstr "已预留 %(n)s 艘"
+
+#: templates/store/board.html
+#, python-format
+msgid "%(n)s to build"
+msgstr "待建造 %(n)s 艘"
+
+#: templates/store/board.html
+msgid "Reserved stock"
+msgstr "预留库存"
+
+#: templates/store/board.html
+#, python-format
+msgid "est. %(date)s"
+msgstr "预计 %(date)s"
+
 #: templates/store/board.html
 msgid "No open orders right now."
 msgstr "目前没有未完成订单。"
@@ -46541,6 +47107,430 @@ msgstr "1.10 = 预估建造成本 +10%%"
 msgid "Supercapital hull markup"
 msgstr "Supercapital 船体加价"
 
+#: templates/store/inventory.html templates/store/shipyard_policy.html
+msgid "Shipyard · Leadership"
+msgstr "船坞 · 领导层"
+
+#: templates/store/inventory.html templates/store/inventory_fit.html
+#: templates/store/shipyard_policy.html
+msgid "Inventory console"
+msgstr "库存控制台"
+
+#: templates/store/inventory.html
+msgid ""
+"Complete fitted doctrine ships: what's stocked, reserved, promised and being "
+"restocked. Every number comes from the same availability service the "
+"Shipyard sells with."
+msgstr ""
+"完整配装的 doctrine 舰船：已备货、已预留、已承诺与正在补货的数量。每个数字都"
+"来自船坞销售所用的同一可用性服务。"
+
+#: templates/store/inventory.html templates/store/shipyard_policy.html
+msgid "Fulfilment policy"
+msgstr "履单政策"
+
+#: templates/store/inventory.html
+msgid "Open supply needs"
+msgstr "未结补给需求"
+
+#: templates/store/inventory.html
+msgid "Fit"
+msgstr "配装"
+
+#: templates/store/inventory.html
+msgid "Needed"
+msgstr "需求量"
+
+#: templates/store/inventory.html templates/store/inventory_fit.html
+msgid "Required by"
+msgstr "需求截止"
+
+#: templates/store/inventory.html
+msgid "Vehicle"
+msgstr "载具"
+
+#: templates/store/inventory.html
+msgid "Project"
+msgstr "项目"
+
+#: templates/store/inventory.html
+msgid "Build job"
+msgstr "建造任务"
+
+#: templates/store/inventory.html
+msgid "none yet"
+msgstr "暂无"
+
+#: templates/store/inventory.html
+msgid "Fit, ship or doctrine"
+msgstr "配装、舰船或 doctrine"
+
+#: templates/store/inventory.html
+msgid "Needs revalidation"
+msgstr "需要重新验证"
+
+#: templates/store/inventory.html
+msgid "At reorder point"
+msgstr "已到补货点"
+
+#: templates/store/inventory.html
+msgid "Below safety stock"
+msgstr "低于安全库存"
+
+#: templates/store/inventory.html templates/store/inventory_fit.html
+msgid "Available to promise"
+msgstr "可承诺量"
+
+#: templates/store/inventory.html
+msgid "Days of cover"
+msgstr "覆盖天数"
+
+#: templates/store/inventory.html
+#, python-format
+msgid "%(n)s offer"
+msgid_plural "%(n)s offers"
+msgstr[0] "%(n)s 个上架项"
+
+#: templates/store/inventory.html
+msgid "Select"
+msgstr "选择"
+
+#: templates/store/inventory.html templates/store/inventory_fit.html
+msgid "On hand"
+msgstr "现有"
+
+#: templates/store/inventory.html templates/store/inventory_fit.html
+msgid "ATP"
+msgstr "ATP"
+
+#: templates/store/inventory.html templates/store/inventory_fit.html
+msgid "Incoming"
+msgstr "在途"
+
+#: templates/store/inventory.html
+msgid "Cover (d)"
+msgstr "覆盖（天）"
+
+#: templates/store/inventory.html
+msgid "Lead (d)"
+msgstr "周期（天）"
+
+#: templates/store/inventory.html
+#, python-format
+msgid "Select %(name)s"
+msgstr "选择 %(name)s"
+
+#: templates/store/inventory.html templates/store/inventory_fit.html
+msgid "Limited"
+msgstr "有限"
+
+#: templates/store/inventory.html templates/store/inventory_fit.html
+msgid "Not offered"
+msgstr "未上架"
+
+#: templates/store/inventory.html
+msgid "No delivery location configured"
+msgstr "未配置交付地点"
+
+#: templates/store/inventory.html
+msgid "Stocked against an older fit revision"
+msgstr "按旧配装版本入库"
+
+#: templates/store/inventory.html
+msgid "Stock recorded against an older fit revision needs officer revalidation"
+msgstr "按旧配装版本记录的库存需要军官重新验证"
+
+#: templates/store/inventory.html
+msgid "revalidate"
+msgstr "重新验证"
+
+#: templates/store/inventory.html
+msgid "Available stock is at or below the reorder point"
+msgstr "可用库存已达到或低于补货点"
+
+#: templates/store/inventory.html
+msgid "reorder"
+msgstr "补货"
+
+#: templates/store/inventory.html
+msgid "Available stock is below the safety stock"
+msgstr "可用库存低于安全库存"
+
+#: templates/store/inventory.html
+msgid "safety"
+msgstr "安全库存"
+
+#: templates/store/inventory.html
+msgid "Pilots waiting for this ship"
+msgstr "等待此舰船的飞行员"
+
+#: templates/store/inventory.html
+msgid "No offers match these filters."
+msgstr "没有上架项符合这些筛选条件。"
+
+#: templates/store/inventory.html
+msgid "With selected:"
+msgstr "对所选执行："
+
+#: templates/store/inventory.html
+msgid "Offer for sale"
+msgstr "上架销售"
+
+#: templates/store/inventory.html
+msgid "Withdraw from sale"
+msgstr "下架"
+
+#: templates/store/inventory_fit.html
+msgid "Fit inventory"
+msgstr "配装库存"
+
+#: templates/store/inventory_fit.html
+msgid "Pilots on the waitlist"
+msgstr "候补名单上的飞行员"
+
+#: templates/store/inventory_fit.html
+msgid "Stocked complete ships"
+msgstr "已入库的成品舰船"
+
+#: templates/store/inventory_fit.html
+msgid "Fit revision"
+msgstr "配装版本"
+
+#: templates/store/inventory_fit.html
+msgid "Last stocktake"
+msgstr "上次盘点"
+
+#: templates/store/inventory_fit.html
+msgid "current"
+msgstr "当前"
+
+#: templates/store/inventory_fit.html
+msgid ""
+"Stocked before the fit was edited — not counted as available until "
+"revalidated"
+msgstr "在配装被编辑前入库 — 重新验证前不计入可用"
+
+#: templates/store/inventory_fit.html
+msgid "older revision"
+msgstr "旧版本"
+
+#: templates/store/inventory_fit.html
+msgid "Adjust"
+msgstr "调整"
+
+#: templates/store/inventory_fit.html
+msgid "Counted balance"
+msgstr "清点后余额"
+
+#: templates/store/inventory_fit.html
+msgid "Apply stocktake"
+msgstr "应用盘点"
+
+#: templates/store/inventory_fit.html
+msgid "Confirm these ships match the current fit and count them again"
+msgstr "确认这些舰船与当前配装一致并重新计数"
+
+#: templates/store/inventory_fit.html
+msgid "Revalidate"
+msgstr "重新验证"
+
+#: templates/store/inventory_fit.html
+msgid "No complete ships recorded yet — use the receipt form to stock some."
+msgstr "尚未记录任何成品舰船 — 请使用收货表单入库。"
+
+#: templates/store/inventory_fit.html
+msgid "Receive assembled ships"
+msgstr "接收已组装舰船"
+
+#: templates/store/inventory_fit.html
+msgid "Receive"
+msgstr "收货"
+
+#: templates/store/inventory_fit.html
+msgid ""
+"Record complete, fitted ships only — hulls or loose modules belong in the "
+"stockpile, not here. Arrivals are reserved for waiting backorders "
+"automatically when the policy allows."
+msgstr ""
+"只记录完整且已配装的舰船 — 裸船体或散装模块应放入库存储备，而不是这里。政策允"
+"许时，到货会自动为等待中的缺货预订预留。"
+
+#: templates/store/inventory_fit.html
+msgid "ESI cross-check (advisory)"
+msgstr "ESI 交叉核对（仅供参考）"
+
+#: templates/store/inventory_fit.html
+msgid "Recorded complete ships (all revisions)"
+msgstr "已记录的成品舰船（所有版本）"
+
+#: templates/store/inventory_fit.html
+msgid "Hulls the corp asset mirror sees here"
+msgstr "军团资产镜像在此地点看到的船体"
+
+#: templates/store/inventory_fit.html
+msgid ""
+"Fewer hulls than recorded fitted ships — the manual count is probably stale. "
+"Run a stocktake."
+msgstr "船体数量少于已记录的配装舰船 — 手动计数可能已过期。请进行一次盘点。"
+
+#: templates/store/inventory_fit.html
+#, python-format
+msgid ""
+"ESI sees hull counts only — it cannot verify fittings, so it bounds the "
+"claim rather than proving it. Last asset sync %(when)s. Manual counts are "
+"never overwritten automatically."
+msgstr ""
+"ESI 只能看到船体数量 — 无法核验配装，因此它只能约束而不能证明该数字。上次资产"
+"同步：%(when)s。手动计数绝不会被自动覆盖。"
+
+#: templates/store/inventory_fit.html
+msgid ""
+"The corp asset mirror has no data for this location (no Director token or "
+"unreadable structure) — the manual stocktake is the only source of truth "
+"here."
+msgstr ""
+"军团资产镜像没有此地点的数据（无 Director 令牌或建筑不可读）— 此处以手动盘点"
+"为唯一依据。"
+
+#: templates/store/inventory_fit.html
+msgid "Adjustment history"
+msgstr "调整历史"
+
+#: templates/store/inventory_fit.html
+msgid "latest 50"
+msgstr "最近 50 条"
+
+#: templates/store/inventory_fit.html
+msgid "Balance after"
+msgstr "调整后余额"
+
+#: templates/store/inventory_fit.html
+msgid "No stock movements yet."
+msgstr "暂无库存变动。"
+
+#: templates/store/inventory_fit.html
+msgid "Supply need"
+msgstr "补给需求"
+
+#: templates/store/inventory_fit.html
+msgid "Net requirement"
+msgstr "净需求"
+
+#: templates/store/inventory_fit.html
+msgid "Industry project"
+msgstr "工业项目"
+
+#: templates/store/inventory_fit.html
+msgid "ERP build job"
+msgstr "ERP 建造任务"
+
+#: templates/store/inventory_fit.html
+msgid "Create industry project"
+msgstr "创建工业项目"
+
+#: templates/store/inventory_fit.html
+msgid "Queue ERP build job"
+msgstr "将 ERP 建造任务加入队列"
+
+#: templates/store/inventory_fit.html
+msgid "Create claimable task"
+msgstr "创建可认领任务"
+
+#: templates/store/inventory_fit.html
+msgid ""
+"Several orders consolidate into this one need — no duplicate projects or "
+"jobs are created."
+msgstr "多个订单合并为这一项需求 — 不会创建重复的项目或任务。"
+
+#: templates/store/inventory_fit.html
+msgid "No open backorder demand for this fit."
+msgstr "此配装没有未结的缺货预订需求。"
+
+#: templates/store/inventory_fit.html
+msgid "Offer & stocking policy"
+msgstr "上架 & 备货政策"
+
+#: templates/store/inventory_fit.html
+msgid ""
+"Blank fields inherit the corp-wide fulfilment policy; a value here overrides "
+"it for this fit only."
+msgstr "留空的字段继承全军团履单政策；此处填写的值仅对此配装生效。"
+
+#: templates/store/inventory_fit.html
+msgid "Offered for sale"
+msgstr "已上架销售"
+
+#: templates/store/inventory_fit.html templates/store/shipyard_policy.html
+msgid "Backorders"
+msgstr "缺货预订"
+
+#: templates/store/inventory_fit.html
+msgid "allowed,closed"
+msgstr "允许,关闭"
+
+#: templates/store/inventory_fit.html
+#, python-format
+msgid "Inherits: %(v)s"
+msgstr "继承：%(v)s"
+
+#: templates/store/inventory_fit.html
+msgid "Lead time (days)"
+msgstr "交付周期（天）"
+
+#: templates/store/inventory_fit.html
+msgid "Max per order"
+msgstr "每单上限"
+
+#: templates/store/inventory_fit.html
+msgid "Max backorder per order"
+msgstr "每单缺货预订上限"
+
+#: templates/store/inventory_fit.html
+msgid "Safety stock"
+msgstr "安全库存"
+
+#: templates/store/inventory_fit.html
+msgid "Reorder point"
+msgstr "补货点"
+
+#: templates/store/inventory_fit.html
+msgid "Target stock"
+msgstr "目标库存"
+
+#: templates/store/inventory_fit.html
+msgid "Preferred fulfilment"
+msgstr "首选履单方式"
+
+#: templates/store/inventory_fit.html
+msgid "Note shown to buyers"
+msgstr "向买家显示的备注"
+
+#: templates/store/inventory_fit.html
+msgid "Internal fulfilment note"
+msgstr "内部履单备注"
+
+#: templates/store/inventory_fit.html
+msgid "Save offer settings"
+msgstr "保存上架设置"
+
+#: templates/store/inventory_fit.html
+#, python-format
+msgid "Last changed by %(who)s · %(when)s"
+msgstr "上次由 %(who)s 修改 · %(when)s"
+
+#: templates/store/inventory_fit.html
+msgid "Open orders for this fit"
+msgstr "此配装的未完成订单"
+
+#: templates/store/inventory_fit.html
+#, python-format
+msgid "%(n)s backordered"
+msgstr "%(n)s 艘缺货预订"
+
+#: templates/store/inventory_fit.html
+msgid "No open orders."
+msgstr "没有未完成订单。"
+
 #: templates/store/my_orders.html templates/store/storefront.html
 msgid "My orders"
 msgstr "我的订单"
@@ -46561,6 +47551,16 @@ msgstr "建造者"
 #: templates/store/my_orders.html
 msgid "awaiting a builder"
 msgstr "等待建造者"
+
+#: templates/store/my_orders.html
+#, python-format
+msgid "%(n)s on backorder"
+msgstr "%(n)s 艘缺货预订中"
+
+#: templates/store/my_orders.html
+#, python-format
+msgid "estimated %(date)s"
+msgstr "预计 %(date)s"
 
 #: templates/store/my_orders.html
 msgid "Waiting for a corp member to claim it."
@@ -46629,6 +47629,56 @@ msgid "Deliver to"
 msgstr "交付至"
 
 #: templates/store/order.html
+msgid "Availability at order time"
+msgstr "下单时的可用性"
+
+#: templates/store/order.html
+#, python-format
+msgid ""
+"Currently held in stock for this order: %(n)s (reservations change when "
+"stock arrives or holds expire)."
+msgstr ""
+"当前为此订单持有的库存：%(n)s（库存到货或保留到期时，预留会发生变化）。"
+
+#: templates/store/order.html
+msgid "Estimated delivery (at order time)"
+msgstr "预计交付（下单时）"
+
+#: templates/store/order.html
+msgid "Current estimate"
+msgstr "当前预计"
+
+#: templates/store/order.html
+msgid "Past the current estimate — awaiting an update from the fulfiller."
+msgstr "已超过当前预计时间 — 等待履单人更新。"
+
+#: templates/store/order.html
+msgid "Ready since"
+msgstr "就绪于"
+
+#: templates/store/order.html
+msgid "Revise the delivery estimate"
+msgstr "修改交付预计"
+
+#: templates/store/order.html
+msgid "New estimated date"
+msgstr "新的预计日期"
+
+#: templates/store/order.html
+msgid "Reason (shown to the buyer)"
+msgstr "原因（向买家显示）"
+
+#: templates/store/order.html
+msgid "Update estimate"
+msgstr "更新预计"
+
+#: templates/store/order.html
+msgid ""
+"The original order-time estimate stays on record; the buyer is notified of "
+"the change."
+msgstr "下单时的原始预计会保留在记录中；买家会收到变更通知。"
+
+#: templates/store/order.html
 #, python-format
 msgid ""
 "Pay the <span class=\"text-gold\">%(amount)s</span> deposit to the builder "
@@ -46648,6 +47698,215 @@ msgstr "认领 &amp; 履单"
 #: templates/store/order.html
 msgid "Cancel order"
 msgstr "取消订单"
+
+#: templates/store/order_confirm.html
+msgid "Confirm order"
+msgstr "确认订单"
+
+#: templates/store/order_confirm.html
+msgid "Back to the Shipyard"
+msgstr "返回船坞"
+
+#: templates/store/order_confirm.html
+msgid "Confirm your order"
+msgstr "确认你的订单"
+
+#: templates/store/order_confirm.html
+msgid "How this order will be fulfilled"
+msgstr "此订单的履行方式"
+
+#: templates/store/order_confirm.html
+msgid "Reserved from stock — ready now"
+msgstr "已从库存预留 — 即刻可取"
+
+#: templates/store/order_confirm.html
+msgid "Backorder — built or sourced for you"
+msgstr "缺货预订 — 为你建造或采购"
+
+#: templates/store/order_confirm.html
+msgid "Estimated delivery"
+msgstr "预计交付"
+
+#: templates/store/order_confirm.html
+#, python-format
+msgid "about %(n)s day"
+msgid_plural "about %(n)s days"
+msgstr[0] "约 %(n)s 天"
+
+#: templates/store/order_confirm.html
+msgid "each"
+msgstr "每艘"
+
+#: templates/store/order_confirm.html
+msgid "None — you pay on delivery via in-game contract."
+msgstr "无 — 交付时通过游戏内合同付款。"
+
+#: templates/store/order_confirm.html
+msgid "Delivery"
+msgstr "交付"
+
+#: templates/store/order_confirm.html
+msgid ""
+"One delivery, when the whole order is ready (the backordered part sets the "
+"date)."
+msgstr "整单就绪后一次性交付（日期由缺货预订部分决定）。"
+
+#: templates/store/order_confirm.html
+msgid ""
+"Estimates are not guarantees. Quantities can shift if someone orders first — "
+"the split is re-checked the moment you confirm, and anything no longer in "
+"stock becomes part of the backorder."
+msgstr ""
+"预计并非保证。如果有人先下单，数量可能变化 — 在你确认的那一刻会重新核对拆分，"
+"任何不再有库存的部分都会转入缺货预订。"
+
+#: templates/store/order_confirm.html
+#, python-format
+msgid ""
+"I understand %(n)s ship is a backorder with an estimated (not guaranteed) "
+"delivery date."
+msgid_plural ""
+"I understand %(n)s ships are backorders with an estimated (not guaranteed) "
+"delivery date."
+msgstr[0] "我了解其中 %(n)s 艘舰船为缺货预订，交付日期为预计（并非保证）。"
+
+#: templates/store/order_confirm.html
+#, python-format
+msgid "Confirm order of %(n)s"
+msgstr "确认订购 %(n)s 艘"
+
+#: templates/store/order_confirm.html
+#, python-format
+msgid "Or take just the %(n)s that is ready now"
+msgid_plural "Or take just the %(n)s that are ready now"
+msgstr[0] "或仅订购当前已就绪的 %(n)s 艘"
+
+#: templates/store/order_confirm.html
+msgid "Order ready stock only"
+msgstr "仅订购现货"
+
+#: templates/store/order_confirm.html
+#, python-format
+msgid "%(n)s is available right now"
+msgid_plural "%(n)s are available right now"
+msgstr[0] "当前有 %(n)s 艘可用"
+
+#: templates/store/order_confirm.html
+msgid "Order what's available"
+msgstr "订购当前可用的部分"
+
+#: templates/store/shipyard_policy.html
+msgid "Shipyard Policy"
+msgstr "船坞政策"
+
+#: templates/store/shipyard_policy.html
+msgid ""
+"Corp-wide defaults for doctrine-ship availability: backorders, lead times, "
+"reservations, order limits and what buyers see. Individual fits can override "
+"any of these on the inventory console."
+msgstr ""
+"全军团的 doctrine 舰船可用性默认设置：缺货预订、交付周期、预留、订单限制以及"
+"买家可见的内容。各个配装可在库存控制台覆盖其中任意一项。"
+
+#: templates/store/shipyard_policy.html
+msgid "Accept backorders"
+msgstr "接受缺货预订"
+
+#: templates/store/shipyard_policy.html
+msgid "Off: out-of-stock ships can't be ordered at all."
+msgstr "关闭：无库存的舰船将完全无法订购。"
+
+#: templates/store/shipyard_policy.html
+msgid "Default lead time (days)"
+msgstr "默认交付周期（天）"
+
+#: templates/store/shipyard_policy.html
+msgid "The estimated delivery shown for a fresh backorder."
+msgstr "新建缺货预订所显示的预计交付时间。"
+
+#: templates/store/shipyard_policy.html
+msgid "Allow split orders"
+msgstr "允许拆分订单"
+
+#: templates/store/shipyard_policy.html
+msgid "One order may combine reserved stock with a backordered remainder."
+msgstr "一张订单可同时包含已预留库存与缺货预订的剩余部分。"
+
+#: templates/store/shipyard_policy.html
+msgid "Stock & reservations"
+msgstr "库存与预留"
+
+#: templates/store/shipyard_policy.html
+msgid "Default delivery location"
+msgstr "默认交付地点"
+
+#: templates/store/shipyard_policy.html
+msgid ""
+"Where doctrine ships are stocked and handed over, unless a fit overrides it."
+msgstr "doctrine 舰船的备货与交接地点，除非某个配装另行覆盖。"
+
+#: templates/store/shipyard_policy.html
+msgid "Reservation expiry (days)"
+msgstr "预留有效期（天）"
+
+#: templates/store/shipyard_policy.html
+msgid ""
+"Release the hold on orders nobody claimed after this many days. 0 keeps "
+"holds forever."
+msgstr "无人领取的订单在此天数后释放保留。0 表示永久保留。"
+
+#: templates/store/shipyard_policy.html
+msgid "Auto-allocate arrivals"
+msgstr "自动分配到货"
+
+#: templates/store/shipyard_policy.html
+msgid ""
+"New stock is reserved for waiting backorders automatically, oldest first."
+msgstr "新库存会自动为等待中的缺货预订预留，最早的优先。"
+
+#: templates/store/shipyard_policy.html
+msgid "Shop front"
+msgstr "店面"
+
+#: templates/store/shipyard_policy.html
+msgid "Maximum per order"
+msgstr "每单最大数量"
+
+#: templates/store/shipyard_policy.html
+msgid "'Limited stock' threshold"
+msgstr "“库存有限”阈值"
+
+#: templates/store/shipyard_policy.html
+msgid "At or below this many remaining, cards warn about limited stock."
+msgstr "剩余数量不超过此值时，卡片会提示库存有限。"
+
+#: templates/store/shipyard_policy.html
+msgid "Show unavailable ships"
+msgstr "显示不可用舰船"
+
+#: templates/store/shipyard_policy.html
+msgid "Off hides ships that can't currently be ordered."
+msgstr "关闭后将隐藏当前无法订购的舰船。"
+
+#: templates/store/shipyard_policy.html
+msgid "Default to available only"
+msgstr "默认仅显示可用"
+
+#: templates/store/shipyard_policy.html
+msgid "Open the Shipyard pre-filtered to ships available now."
+msgstr "打开船坞时预先筛选出当前可用的舰船。"
+
+#: templates/store/shipyard_policy.html
+msgid "Waitlist"
+msgstr "候补名单"
+
+#: templates/store/shipyard_policy.html
+msgid "Pilots can ask to be pinged when an unavailable ship returns."
+msgstr "飞行员可以请求在暂不可用的舰船恢复供应时收到通知。"
+
+#: templates/store/shipyard_policy.html
+msgid "Save policy"
+msgstr "保存政策"
 
 #: templates/store/storefront.html
 msgid ""
@@ -47030,1251 +48289,8 @@ msgstr "— 取消分配（退回开放池）—"
 msgid "This source string is intentionally never translated"
 msgstr "此源字符串刻意保持不翻译"
 
-#: apps/erp/messages.py
-#, python-format
-msgid "Shipyard restock: %(fit_name)s"
-msgstr "船坞补货：%(fit_name)s"
-
-#: apps/pingboard/messages.py
-#, python-brace-format
-msgid "The estimated delivery for {ship_name} is now {eta_date}."
-msgstr "{ship_name} 的预计交付时间现为 {eta_date}。"
-
-#: apps/pingboard/messages.py
-#, python-brace-format
-msgid ""
-"{quantity}× {ship_name} from a new delivery is now reserved for your order."
-msgstr "新到货的 {quantity}× {ship_name} 已为你的订单预留。"
-
-#: apps/pingboard/messages.py
-#, python-brace-format
-msgid ""
-"Your reserved {ship_name} was released after waiting unclaimed; the order is "
-"now backordered."
-msgstr ""
-"你预留的 {ship_name} 因长时间无人领取已被释放；该订单现已转为缺货预订。"
-
-#: apps/pingboard/messages.py
-#, python-brace-format
-msgid "Back in stock: {ship_name}"
-msgstr "重新到货：{ship_name}"
-
-#: apps/pingboard/messages.py
-#, python-brace-format
-msgid "{ship_name} can be ordered on the Shipyard again."
-msgstr "{ship_name} 现在可以在船坞重新订购了。"
-
-#: apps/pingboard/messages.py
-msgid "Shipyard restock built"
-msgstr "船坞补货已建造完成"
-
-#: apps/pingboard/messages.py
-#, python-brace-format
-msgid ""
-"Production for {fit_name} finished. Assemble and fit the ships, then record "
-"the receipt on the Shipyard inventory console to release waiting backorders."
-msgstr ""
-"{fit_name} 的生产已完成。请组装并配装舰船，然后在船坞库存控制台记录收货，以释"
-"放等待中的缺货预订。"
-
-#: apps/store/forms.py
-msgid "e.g. built from restock batch #12"
-msgstr "例如：由补货批次 #12 建造"
-
-#: apps/store/models.py
-msgid "Ready for immediate delivery"
-msgstr "可立即交付"
-
-#: apps/store/models.py
-msgid "Partially reserved, remainder backordered"
-msgstr "部分已预留，其余转为缺货预订"
-
-#: apps/store/models.py
-msgid "Buy from an approved supplier"
-msgstr "从认可的供应商处采购"
-
-#: apps/store/models.py
-msgid "Accept orders for doctrine ships that are not in stock."
-msgstr "接受当前无库存的 doctrine 舰船订单。"
-
-#: apps/store/models.py
-msgid "Default estimated days to fulfil a backorder."
-msgstr "履行缺货预订的默认预计天数。"
-
-#: apps/store/models.py
-msgid "Allow one order to combine reserved stock with a backordered remainder."
-msgstr "允许一张订单同时包含已预留库存与缺货预订的剩余部分。"
-
-#: apps/store/models.py
-msgid ""
-"Release reservations of orders nobody has claimed after this many days (0 = "
-"never)."
-msgstr "在此天数后释放无人领取订单的预留（0 = 永不）。"
-
-#: apps/store/models.py
-msgid ""
-"Where doctrine ships are stocked and delivered unless a fit overrides it."
-msgstr "doctrine 舰船的默认备货与交付地点，除非某个配装另行覆盖。"
-
-#: apps/store/models.py
-msgid "Most ships one order may request unless a fit overrides it."
-msgstr "单张订单最多可订购的舰船数，除非某个配装另行覆盖。"
-
-#: apps/store/models.py
-msgid "Show 'Limited stock' when this many or fewer ships remain."
-msgstr "当剩余舰船不超过此数量时显示“库存有限”。"
-
-#: apps/store/models.py
-msgid ""
-"Keep out-of-stock ships visible on the Shipyard (greyed out) instead of "
-"hiding them."
-msgstr "让无库存的舰船在船坞上保持可见（置灰显示），而不是隐藏。"
-
-#: apps/store/models.py
-msgid "Open the Shipyard filtered to immediately available ships."
-msgstr "打开船坞时默认只筛选立即可用的舰船。"
-
-#: apps/store/models.py
-msgid "Let pilots join a waitlist for ships that can't be ordered."
-msgstr "允许飞行员为无法订购的舰船加入候补名单。"
-
-#: apps/store/models.py
-msgid ""
-"When stock arrives, reserve it for waiting backorders automatically (oldest "
-"first)."
-msgstr "库存到货时自动为等待中的缺货预订预留（最早的优先）。"
-
-#: apps/store/models.py
-msgid "Offer this fit for sale on the Shipyard."
-msgstr "在船坞上架销售此配装。"
-
-#: apps/store/models.py
-msgid "Override the corp-wide backorder policy for this fit."
-msgstr "为此配装覆盖全军团的缺货预订政策。"
-
-#: apps/store/models.py
-msgid "Override the default backorder lead time (days)."
-msgstr "覆盖默认的缺货预订交付周期（天）。"
-
-#: apps/store/models.py
-msgid "Override the default delivery location for this fit."
-msgstr "为此配装覆盖默认交付地点。"
-
-#: apps/store/models.py
-msgid "Most units allowed on backorder per order for this fit."
-msgstr "此配装每单允许缺货预订的最大数量。"
-
-#: apps/store/models.py
-msgid "Override the maximum quantity per order."
-msgstr "覆盖每单最大数量。"
-
-#: apps/store/models.py
-msgid "Units held back from planning as a strategic reserve."
-msgstr "作为战略储备、不计入计划的数量。"
-
-#: apps/store/models.py
-msgid "Flag this fit for restocking when available stock falls to this level."
-msgstr "当可用库存降至此水平时，将此配装标记为需要补货。"
-
-#: apps/store/models.py
-msgid "How many complete ships the corp aims to keep stocked."
-msgstr "军团计划保有的成品舰船数量。"
-
-#: apps/store/models.py
-msgid "Fulfilment notes visible to members and officers only."
-msgstr "仅成员和军官可见的履单备注。"
-
-#: apps/store/models.py
-msgid "fit stock entries"
-msgstr "配装库存条目"
-
-#: apps/store/services.py
-msgid "That ship is not offered for sale right now."
-msgstr "该舰船目前未上架销售。"
-
-#: apps/store/services.py
-#, python-format
-msgid "Orders for this ship are limited to %(max)s at a time."
-msgstr "该舰船每次最多只能订购 %(max)s 艘。"
-
-#: apps/store/services.py
-#, python-format
-msgid ""
-"Only %(count)s can be delivered right now and backorders are closed for this "
-"ship."
-msgstr "目前只能交付 %(count)s 艘，且该舰船已关闭缺货预订。"
-
-#: apps/store/services.py
-msgid "That ship is out of stock and backorders are closed for it."
-msgstr "该舰船已无库存，且已关闭缺货预订。"
-
-#: apps/store/services.py
-#, python-format
-msgid "At most %(max)s of this ship can be backordered per order."
-msgstr "该舰船每单最多可缺货预订 %(max)s 艘。"
-
-#: apps/store/supply.py
-#, python-format
-msgid ""
-"Supply requirement from the Shipyard: %(count)s backordered order(s) for "
-"%(fit)s."
-msgstr "来自船坞的补给需求：%(fit)s 有 %(count)s 个缺货预订订单。"
-
-#: apps/store/supply.py
-#, python-format
-msgid "Supply %(count)s× %(fit)s for the Shipyard"
-msgstr "为船坞补给 %(count)s× %(fit)s"
-
-#: apps/store/views.py
-#, python-format
-msgid "Order placed — %(ready)s reserved now, %(back)s on backorder."
-msgstr "订单已提交 — 已预留 %(ready)s 艘，缺货预订 %(back)s 艘。"
-
-#: apps/store/views.py
-msgid "Order placed — your ship is reserved from stock."
-msgstr "订单已提交 — 你的舰船已从库存预留。"
-
-#: apps/store/views.py
-#, python-format
-msgid "You left the waitlist for %(fit)s."
-msgstr "你已退出 %(fit)s 的候补名单。"
-
-#: apps/store/views.py
-#, python-format
-msgid ""
-"You joined the waitlist for %(fit)s — you'll be pinged when it can be "
-"ordered."
-msgstr "你已加入 %(fit)s 的候补名单 — 可以订购时会通知你。"
-
-#: apps/store/views.py
-msgid "That order just changed — review it and try again."
-msgstr "该订单刚刚发生了变化 — 请核对后再试。"
-
-#: apps/store/views_inventory.py
-#, python-format
-msgid "%(qty)s received — %(n)s backordered order(s) got stock reserved."
-msgstr "已收货 %(qty)s 艘 — %(n)s 个缺货预订订单已获得库存预留。"
-
-#: apps/store/views_inventory.py
-#, python-format
-msgid "%(qty)s received into stock."
-msgstr "%(qty)s 艘已收货入库。"
-
-#: apps/store/views_inventory.py
-msgid ""
-"That balance is below the actively reserved quantity — release or deliver "
-"the reservations first."
-msgstr "该余额低于当前已预留数量 — 请先释放或交付相关预留。"
-
-#: apps/store/views_inventory.py
-msgid "No change — balance already matched."
-msgstr "无变化 — 余额已一致。"
-
-#: apps/store/views_inventory.py
-#, python-format
-msgid "%(n)s ship(s) revalidated against the current fit revision."
-msgstr "已按当前配装版本重新验证 %(n)s 艘舰船。"
-
-#: apps/store/views_inventory.py
-#, python-format
-msgid "%(n)s fit(s) are now offered for sale."
-msgstr "%(n)s 个配装现已上架销售。"
-
-#: apps/store/views_inventory.py
-#, python-format
-msgid "%(n)s fit(s) withdrawn from sale."
-msgstr "已下架 %(n)s 个配装。"
-
-#: apps/store/views_inventory.py
-msgid "ERP build job queued and linked."
-msgstr "ERP 建造任务已加入队列并关联。"
-
-#: templates/admin_audit/console/hub.html
-msgid "Stocked doctrine ships, reservations, backorders and restock needs."
-msgstr "已备货的 doctrine 舰船、预留、缺货预订与补货需求。"
-
-#: templates/admin_audit/console/hub.html
-msgid "Shipyard fulfilment policy"
-msgstr "船坞履单政策"
-
-#: templates/admin_audit/console/hub.html
-msgid "Backorders, lead times, reservations and order limits."
-msgstr "缺货预订、交付周期、预留与订单限制。"
-
-#: templates/doctrines/ships.html
-#, python-format
-msgid "Estimated delivery by %(date)s"
-msgstr "预计 %(date)s 前交付"
-
-#: templates/doctrines/ships.html
-#, python-format
-msgid "%(n)s in stock ready now."
-msgid_plural "%(n)s in stock ready now."
-msgstr[0] "现货 %(n)s 艘，即刻可用。"
-
-#: templates/doctrines/ships.html
-msgid ""
-"Anything beyond stock is a backorder — you'll see the split and the "
-"estimated delivery before confirming."
-msgstr "超出库存的部分即为缺货预订 — 确认前你会看到数量拆分和预计交付时间。"
-
-#: templates/doctrines/ships.html
-#, python-format
-msgid "Up to %(m)s per order."
-msgid_plural "Up to %(m)s per order."
-msgstr[0] "每单最多 %(m)s 艘。"
-
-#: templates/store/inventory.html
-msgid ""
-"Complete fitted doctrine ships: what's stocked, reserved, promised and being "
-"restocked. Every number comes from the same availability service the "
-"Shipyard sells with."
-msgstr ""
-"完整配装的 doctrine 舰船：已备货、已预留、已承诺与正在补货的数量。每个数字都"
-"来自船坞销售所用的同一可用性服务。"
-
-#: templates/store/inventory.html
-msgid "Vehicle"
-msgstr "载具"
-
-#: templates/store/inventory.html
-msgid "At reorder point"
-msgstr "已到补货点"
-
-#: templates/store/inventory.html templates/store/inventory_fit.html
-msgid "ATP"
-msgstr "ATP"
-
-#: templates/store/inventory.html
-msgid "Stocked against an older fit revision"
-msgstr "按旧配装版本入库"
-
-#: templates/store/inventory.html
-msgid "Stock recorded against an older fit revision needs officer revalidation"
-msgstr "按旧配装版本记录的库存需要军官重新验证"
-
-#: templates/store/inventory.html
-msgid "Available stock is at or below the reorder point"
-msgstr "可用库存已达到或低于补货点"
-
-#: templates/store/inventory.html
-msgid "Available stock is below the safety stock"
-msgstr "可用库存低于安全库存"
-
-#: templates/store/inventory.html
-msgid "safety"
-msgstr "安全库存"
-
-#: templates/store/inventory.html
-msgid "Offer for sale"
-msgstr "上架销售"
-
-#: templates/store/inventory_fit.html
-msgid "Stocked complete ships"
-msgstr "已入库的成品舰船"
-
-#: templates/store/inventory_fit.html
-msgid ""
-"Stocked before the fit was edited — not counted as available until "
-"revalidated"
-msgstr "在配装被编辑前入库 — 重新验证前不计入可用"
-
-#: templates/store/inventory_fit.html
-msgid "Apply stocktake"
-msgstr "应用盘点"
-
-#: templates/store/inventory_fit.html
-msgid "Confirm these ships match the current fit and count them again"
-msgstr "确认这些舰船与当前配装一致并重新计数"
-
-#: templates/store/inventory_fit.html
-msgid "Receive assembled ships"
-msgstr "接收已组装舰船"
-
-#: templates/store/inventory_fit.html
-msgid ""
-"Record complete, fitted ships only — hulls or loose modules belong in the "
-"stockpile, not here. Arrivals are reserved for waiting backorders "
-"automatically when the policy allows."
-msgstr ""
-"只记录完整且已配装的舰船 — 裸船体或散装模块应放入库存储备，而不是这里。政策允"
-"许时，到货会自动为等待中的缺货预订预留。"
-
-#: templates/store/inventory_fit.html
-msgid "ESI cross-check (advisory)"
-msgstr "ESI 交叉核对（仅供参考）"
-
-#: templates/store/inventory_fit.html
-msgid "Recorded complete ships (all revisions)"
-msgstr "已记录的成品舰船（所有版本）"
-
-#: templates/store/inventory_fit.html
-msgid "Hulls the corp asset mirror sees here"
-msgstr "军团资产镜像在此地点看到的船体"
-
-#: templates/store/inventory_fit.html
-msgid ""
-"Fewer hulls than recorded fitted ships — the manual count is probably stale. "
-"Run a stocktake."
-msgstr "船体数量少于已记录的配装舰船 — 手动计数可能已过期。请进行一次盘点。"
-
-#: templates/store/inventory_fit.html
-#, python-format
-msgid ""
-"ESI sees hull counts only — it cannot verify fittings, so it bounds the "
-"claim rather than proving it. Last asset sync %(when)s. Manual counts are "
-"never overwritten automatically."
-msgstr ""
-"ESI 只能看到船体数量 — 无法核验配装，因此它只能约束而不能证明该数字。上次资产"
-"同步：%(when)s。手动计数绝不会被自动覆盖。"
-
-#: templates/store/inventory_fit.html
-msgid "latest 50"
-msgstr "最近 50 条"
-
-#: templates/store/inventory_fit.html
-msgid ""
-"Several orders consolidate into this one need — no duplicate projects or "
-"jobs are created."
-msgstr "多个订单合并为这一项需求 — 不会创建重复的项目或任务。"
-
-#: templates/store/inventory_fit.html
-msgid "Offer & stocking policy"
-msgstr "上架 & 备货政策"
-
-#: templates/store/inventory_fit.html
-msgid ""
-"Blank fields inherit the corp-wide fulfilment policy; a value here overrides "
-"it for this fit only."
-msgstr "留空的字段继承全军团履单政策；此处填写的值仅对此配装生效。"
-
-#: templates/store/inventory_fit.html
-msgid "allowed,closed"
-msgstr "允许,关闭"
-
-#: templates/store/order.html
-#, python-format
-msgid ""
-"Currently held in stock for this order: %(n)s (reservations change when "
-"stock arrives or holds expire)."
-msgstr ""
-"当前为此订单持有的库存：%(n)s（库存到货或保留到期时，预留会发生变化）。"
-
-#: templates/store/order.html
-msgid "Estimated delivery (at order time)"
-msgstr "预计交付（下单时）"
-
-#: templates/store/order.html
-msgid "Past the current estimate — awaiting an update from the fulfiller."
-msgstr "已超过当前预计时间 — 等待履单人更新。"
-
-#: templates/store/order.html
-msgid "Revise the delivery estimate"
-msgstr "修改交付预计"
-
-#: templates/store/order.html
-msgid ""
-"The original order-time estimate stays on record; the buyer is notified of "
-"the change."
-msgstr "下单时的原始预计会保留在记录中；买家会收到变更通知。"
-
-#: templates/store/order_confirm.html
-msgid "How this order will be fulfilled"
-msgstr "此订单的履行方式"
-
-#: templates/store/order_confirm.html
-msgid "Reserved from stock — ready now"
-msgstr "已从库存预留 — 即刻可取"
-
-#: templates/store/order_confirm.html
-msgid "Backorder — built or sourced for you"
-msgstr "缺货预订 — 为你建造或采购"
-
-#: templates/store/order_confirm.html
-msgid "None — you pay on delivery via in-game contract."
-msgstr "无 — 交付时通过游戏内合同付款。"
-
-#: templates/store/order_confirm.html
-msgid ""
-"One delivery, when the whole order is ready (the backordered part sets the "
-"date)."
-msgstr "整单就绪后一次性交付（日期由缺货预订部分决定）。"
-
-#: templates/store/order_confirm.html
-msgid ""
-"Estimates are not guarantees. Quantities can shift if someone orders first — "
-"the split is re-checked the moment you confirm, and anything no longer in "
-"stock becomes part of the backorder."
-msgstr ""
-"预计并非保证。如果有人先下单，数量可能变化 — 在你确认的那一刻会重新核对拆分，"
-"任何不再有库存的部分都会转入缺货预订。"
-
-#: templates/store/order_confirm.html
-#, python-format
-msgid ""
-"I understand %(n)s ship is a backorder with an estimated (not guaranteed) "
-"delivery date."
-msgid_plural ""
-"I understand %(n)s ships are backorders with an estimated (not guaranteed) "
-"delivery date."
-msgstr[0] "我了解其中 %(n)s 艘舰船为缺货预订，交付日期为预计（并非保证）。"
-
-#: templates/store/order_confirm.html
-#, python-format
-msgid "Or take just the %(n)s that is ready now"
-msgid_plural "Or take just the %(n)s that are ready now"
-msgstr[0] "或仅订购当前已就绪的 %(n)s 艘"
-
-#: templates/store/order_confirm.html
-msgid "Order ready stock only"
-msgstr "仅订购现货"
-
-#: templates/store/shipyard_policy.html
-msgid ""
-"Corp-wide defaults for doctrine-ship availability: backorders, lead times, "
-"reservations, order limits and what buyers see. Individual fits can override "
-"any of these on the inventory console."
-msgstr ""
-"全军团的 doctrine 舰船可用性默认设置：缺货预订、交付周期、预留、订单限制以及"
-"买家可见的内容。各个配装可在库存控制台覆盖其中任意一项。"
-
-#: templates/store/shipyard_policy.html
-msgid "Accept backorders"
-msgstr "接受缺货预订"
-
-#: templates/store/shipyard_policy.html
-msgid "Off: out-of-stock ships can't be ordered at all."
-msgstr "关闭：无库存的舰船将完全无法订购。"
-
-#: templates/store/shipyard_policy.html
-msgid "The estimated delivery shown for a fresh backorder."
-msgstr "新建缺货预订所显示的预计交付时间。"
-
-#: templates/store/shipyard_policy.html
-msgid "Allow split orders"
-msgstr "允许拆分订单"
-
-#: templates/store/shipyard_policy.html
-msgid "One order may combine reserved stock with a backordered remainder."
-msgstr "一张订单可同时包含已预留库存与缺货预订的剩余部分。"
-
-#: templates/store/shipyard_policy.html
-msgid ""
-"Where doctrine ships are stocked and handed over, unless a fit overrides it."
-msgstr "doctrine 舰船的备货与交接地点，除非某个配装另行覆盖。"
-
-#: templates/store/shipyard_policy.html
-msgid ""
-"Release the hold on orders nobody claimed after this many days. 0 keeps "
-"holds forever."
-msgstr "无人领取的订单在此天数后释放保留。0 表示永久保留。"
-
-#: templates/store/shipyard_policy.html
-msgid "Auto-allocate arrivals"
-msgstr "自动分配到货"
-
-#: templates/store/shipyard_policy.html
-msgid ""
-"New stock is reserved for waiting backorders automatically, oldest first."
-msgstr "新库存会自动为等待中的缺货预订预留，最早的优先。"
-
-#: templates/store/shipyard_policy.html
-msgid "'Limited stock' threshold"
-msgstr "“库存有限”阈值"
-
-#: templates/store/shipyard_policy.html
-msgid "At or below this many remaining, cards warn about limited stock."
-msgstr "剩余数量不超过此值时，卡片会提示库存有限。"
-
-#: templates/store/shipyard_policy.html
-msgid "Off hides ships that can't currently be ordered."
-msgstr "关闭后将隐藏当前无法订购的舰船。"
-
-#: templates/store/shipyard_policy.html
-msgid "Open the Shipyard pre-filtered to ships available now."
-msgstr "打开船坞时预先筛选出当前可用的舰船。"
-
-#: templates/store/shipyard_policy.html
-msgid "Pilots can ask to be pinged when an unavailable ship returns."
-msgstr "飞行员可以请求在暂不可用的舰船恢复供应时收到通知。"
-
-#: apps/pingboard/messages.py
-msgid "Order update: New delivery estimate"
-msgstr "订单更新：新的预计交付日期"
-
-#: apps/pingboard/messages.py
-msgid "Order update: Stock reserved"
-msgstr "订单更新：库存已预留"
-
-#: apps/pingboard/messages.py
-msgid "Order update: Reservation released"
-msgstr "订单更新：预留已释放"
-
-#: apps/store/forms.py
-msgid "Why the balance is being corrected"
-msgstr "更正余额的原因"
-
-#: apps/store/forms.py
-msgid "What changed (shown to the buyer)"
-msgstr "变更内容（向买家显示）"
-
-#: apps/store/models.py
-msgid "Limited stock"
-msgstr "库存有限"
-
-#: apps/store/models.py
-msgid "Available on backorder"
-msgstr "可缺货预订"
-
-#: apps/store/models.py templates/doctrines/ships.html
-msgid "Temporarily unavailable"
-msgstr "暂时不可用"
-
-#: apps/store/models.py
-msgid "Not offered for sale"
-msgstr "未上架销售"
-
-#: apps/store/models.py templates/store/order.html
-msgid "Reserved from stock"
-msgstr "已从库存预留"
-
-#: apps/store/models.py templates/store/inventory.html
-#: templates/store/order.html
-msgid "Backordered"
-msgstr "缺货预订中"
-
-#: apps/store/models.py
-msgid "Use stocked ships"
-msgstr "使用库存舰船"
-
-#: apps/store/models.py
-msgid "Build locally"
-msgstr "本地建造"
-
-#: apps/store/models.py
-msgid "Import from Jita"
-msgstr "从 Jita 进货"
-
-#: apps/store/models.py
-msgid "Choose build or buy automatically"
-msgstr "自动选择建造或采购"
-
-#: apps/store/models.py
-msgid "shipyard policy"
-msgstr "船坞政策"
-
-#: apps/store/models.py
-msgid "shipyard policies"
-msgstr "船坞政策"
-
-#: apps/store/models.py
-msgid "Shown to buyers on the Shipyard card."
-msgstr "在船坞卡片上向买家显示。"
-
-#: apps/store/models.py
-msgid "Higher = restock sooner."
-msgstr "数值越高 = 越早补货。"
-
-#: apps/store/models.py
-msgid "Stock received"
-msgstr "收货入库"
-
-#: apps/store/models.py
-msgid "Manual adjustment"
-msgstr "手动调整"
-
-#: apps/store/models.py
-msgid "Delivered to buyer"
-msgstr "已交付给买家"
-
-#: apps/store/models.py
-msgid "Reconciliation"
-msgstr "对账"
-
-#: apps/store/models.py
-msgid "Fit revision revalidated"
-msgstr "配装版本已重新验证"
-
-#: apps/store/models.py
-msgid "fit waitlist entries"
-msgstr "配装候补名单条目"
-
-#: apps/store/services.py
-msgid "Pick a quantity of at least 1."
-msgstr "请选择至少为 1 的数量。"
-
-#: apps/store/services.py
-msgid ""
-"No reliable price is available for that fit right now — try again later."
-msgstr "目前无法为该配装获取可靠的价格 — 请稍后再试。"
-
-#: apps/store/supply.py
-#, python-format
-msgid "Restock %(fit)s"
-msgstr "为 %(fit)s 补货"
-
-#: apps/store/views.py
-msgid "That order is closed."
-msgstr "该订单已关闭。"
-
-#: apps/store/views.py
-msgid "Pick a valid estimated delivery date."
-msgstr "请选择一个有效的预计交付日期。"
-
-#: apps/store/views.py
-msgid "Estimated delivery updated — the buyer was notified."
-msgstr "预计交付已更新 — 已通知买家。"
-
-#: apps/store/views.py
-msgid "The waitlist is not enabled."
-msgstr "候补名单未启用。"
-
-#: apps/store/views_inventory.py
-msgid "Offer settings saved."
-msgstr "上架设置已保存。"
-
-#: apps/store/views_inventory.py
-msgid "Pick a location and a positive quantity."
-msgstr "请选择地点并填写正数数量。"
-
-#: apps/store/views_inventory.py
-msgid "A corrected balance and a reason are required."
-msgstr "更正后的余额和原因均为必填。"
-
-#: apps/store/views_inventory.py
-msgid "Invalid adjustment."
-msgstr "调整无效。"
-
-#: apps/store/views_inventory.py
-msgid "Stock adjusted."
-msgstr "库存已调整。"
-
-#: apps/store/views_inventory.py
-msgid "Nothing to revalidate on that row."
-msgstr "该行没有需要重新验证的内容。"
-
-#: apps/store/views_inventory.py
-msgid "Select at least one fit and a bulk action."
-msgstr "请至少选择一个配装和一项批量操作。"
-
-#: apps/store/views_inventory.py
-msgid "Shipyard policy updated."
-msgstr "船坞政策已更新。"
-
-#: apps/store/views_inventory.py
-msgid "That supply need is closed."
-msgstr "该补给需求已关闭。"
-
-#: apps/store/views_inventory.py
-#, python-format
-msgid "Industry project “%(name)s” is linked."
-msgstr "工业项目“%(name)s”已关联。"
-
-#: apps/store/views_inventory.py
-msgid "Claimable task created and linked."
-msgstr "已创建并关联可认领任务。"
-
-#: templates/admin_audit/console/hub.html
-msgid "Shipyard inventory"
-msgstr "船坞库存"
-
-#: templates/doctrines/ships.html
-msgid "Available now"
-msgstr "当前可用"
-
-#: templates/doctrines/ships.html templates/store/board.html
-#: templates/store/inventory.html templates/store/inventory_fit.html
-msgid "Backorder"
-msgstr "缺货预订"
-
-#: templates/doctrines/ships.html templates/store/inventory_fit.html
-#: templates/store/order_confirm.html
-msgid "Delivery location"
-msgstr "交付地点"
-
-#: templates/doctrines/ships.html
-msgid "Any location"
-msgstr "任意地点"
-
-#: templates/doctrines/ships.html
-msgid "Fastest delivery"
-msgstr "最快交付"
-
-#: templates/doctrines/ships.html templates/store/order_confirm.html
-msgid "Price"
-msgstr "价格"
-
-#: templates/doctrines/ships.html
-#, python-format
-msgid "%(n)s ready for delivery"
-msgid_plural "%(n)s ready for delivery"
-msgstr[0] "%(n)s 艘可立即交付"
-
-#: templates/doctrines/ships.html
-#, python-format
-msgid "Only %(n)s remaining"
-msgid_plural "Only %(n)s remaining"
-msgstr[0] "仅剩 %(n)s 艘"
-
-#: templates/doctrines/ships.html
-msgid "Backorder available"
-msgstr "可缺货预订"
-
-#: templates/doctrines/ships.html
-msgid "Not currently offered"
-msgstr "当前未上架"
-
-#: templates/doctrines/ships.html
-#, python-format
-msgid "Delivers at %(name)s"
-msgstr "在 %(name)s 交付"
-
-#: templates/doctrines/ships.html
-msgid "Join waitlist"
-msgstr "加入候补名单"
-
-#: templates/doctrines/ships.html
-msgid "Ordering closed"
-msgstr "订购已关闭"
-
-#: templates/store/board.html templates/store/my_orders.html
-#, python-format
-msgid "%(n)s reserved"
-msgstr "已预留 %(n)s 艘"
-
-#: templates/store/board.html
-#, python-format
-msgid "%(n)s to build"
-msgstr "待建造 %(n)s 艘"
-
-#: templates/store/board.html
-msgid "Reserved stock"
-msgstr "预留库存"
-
-#: templates/store/board.html
-#, python-format
-msgid "est. %(date)s"
-msgstr "预计 %(date)s"
-
-#: templates/store/inventory.html
-msgid "Shipyard Inventory"
-msgstr "船坞库存"
-
-#: templates/store/inventory.html templates/store/shipyard_policy.html
-msgid "Shipyard · Leadership"
-msgstr "船坞 · 领导层"
-
-#: templates/store/inventory.html templates/store/inventory_fit.html
-#: templates/store/shipyard_policy.html
-msgid "Inventory console"
-msgstr "库存控制台"
-
-#: templates/store/inventory.html templates/store/shipyard_policy.html
-msgid "Fulfilment policy"
-msgstr "履单政策"
-
-#: templates/store/inventory.html
-msgid "Open supply needs"
-msgstr "未结补给需求"
-
-#: templates/store/inventory.html
-msgid "Fit"
-msgstr "配装"
-
-#: templates/store/inventory.html
-msgid "Needed"
-msgstr "需求量"
-
-#: templates/store/inventory.html templates/store/inventory_fit.html
-msgid "Required by"
-msgstr "需求截止"
-
-#: templates/store/inventory.html
-msgid "Project"
-msgstr "项目"
-
-#: templates/store/inventory.html
-msgid "Build job"
-msgstr "建造任务"
-
-#: templates/store/inventory.html
-msgid "none yet"
-msgstr "暂无"
-
-#: templates/store/inventory.html
-msgid "Fit, ship or doctrine"
-msgstr "配装、舰船或 doctrine"
-
-#: templates/store/inventory.html
-msgid "Needs revalidation"
-msgstr "需要重新验证"
-
-#: templates/store/inventory.html
-msgid "Below safety stock"
-msgstr "低于安全库存"
-
-#: templates/store/inventory.html templates/store/inventory_fit.html
-msgid "Available to promise"
-msgstr "可承诺量"
-
-#: templates/store/inventory.html
-msgid "Days of cover"
-msgstr "覆盖天数"
-
-#: templates/store/inventory.html
-#, python-format
-msgid "%(n)s offer"
-msgid_plural "%(n)s offers"
-msgstr[0] "%(n)s 个上架项"
-
-#: templates/store/inventory.html
-msgid "Select"
-msgstr "选择"
-
-#: templates/store/inventory.html templates/store/inventory_fit.html
-msgid "On hand"
-msgstr "现有"
-
-#: templates/store/inventory.html templates/store/inventory_fit.html
-msgid "Incoming"
-msgstr "在途"
-
-#: templates/store/inventory.html
-msgid "Cover (d)"
-msgstr "覆盖（天）"
-
-#: templates/store/inventory.html
-msgid "Lead (d)"
-msgstr "周期（天）"
-
-#: templates/store/inventory.html
-#, python-format
-msgid "Select %(name)s"
-msgstr "选择 %(name)s"
-
-#: templates/store/inventory.html templates/store/inventory_fit.html
-msgid "Limited"
-msgstr "有限"
-
-#: templates/store/inventory.html templates/store/inventory_fit.html
-msgid "Not offered"
-msgstr "未上架"
-
-#: templates/store/inventory.html
-msgid "No delivery location configured"
-msgstr "未配置交付地点"
-
-#: templates/store/inventory.html
-msgid "revalidate"
-msgstr "重新验证"
-
-#: templates/store/inventory.html
-msgid "reorder"
-msgstr "补货"
-
-#: templates/store/inventory.html
-msgid "Pilots waiting for this ship"
-msgstr "等待此舰船的飞行员"
-
-#: templates/store/inventory.html
-msgid "No offers match these filters."
-msgstr "没有上架项符合这些筛选条件。"
-
-#: templates/store/inventory.html
-msgid "With selected:"
-msgstr "对所选执行："
-
-#: templates/store/inventory.html
-msgid "Withdraw from sale"
-msgstr "下架"
-
-#: templates/store/inventory_fit.html
-msgid "Fit inventory"
-msgstr "配装库存"
-
-#: templates/store/inventory_fit.html
-msgid "Pilots on the waitlist"
-msgstr "候补名单上的飞行员"
-
-#: templates/store/inventory_fit.html
-msgid "Fit revision"
-msgstr "配装版本"
-
-#: templates/store/inventory_fit.html
-msgid "Last stocktake"
-msgstr "上次盘点"
-
-#: templates/store/inventory_fit.html
-msgid "current"
-msgstr "当前"
-
-#: templates/store/inventory_fit.html
-msgid "older revision"
-msgstr "旧版本"
-
-#: templates/store/inventory_fit.html
-msgid "Adjust"
-msgstr "调整"
-
-#: templates/store/inventory_fit.html
-msgid "Counted balance"
-msgstr "清点后余额"
-
-#: templates/store/inventory_fit.html
-msgid "Revalidate"
-msgstr "重新验证"
-
-#: templates/store/inventory_fit.html
-msgid "No complete ships recorded yet — use the receipt form to stock some."
-msgstr "尚未记录任何成品舰船 — 请使用收货表单入库。"
-
-#: templates/store/inventory_fit.html
-msgid "Receive"
-msgstr "收货"
-
-#: templates/store/inventory_fit.html
-msgid ""
-"The corp asset mirror has no data for this location (no Director token or "
-"unreadable structure) — the manual stocktake is the only source of truth "
-"here."
-msgstr ""
-"军团资产镜像没有此地点的数据（无 Director 令牌或建筑不可读）— 此处以手动盘点"
-"为唯一依据。"
-
-#: templates/store/inventory_fit.html
-msgid "Adjustment history"
-msgstr "调整历史"
-
-#: templates/store/inventory_fit.html
-msgid "Balance after"
-msgstr "调整后余额"
-
-#: templates/store/inventory_fit.html
-msgid "No stock movements yet."
-msgstr "暂无库存变动。"
-
-#: templates/store/inventory_fit.html
-msgid "Supply need"
-msgstr "补给需求"
-
-#: templates/store/inventory_fit.html
-msgid "Net requirement"
-msgstr "净需求"
-
-#: templates/store/inventory_fit.html
-msgid "Industry project"
-msgstr "工业项目"
-
-#: templates/store/inventory_fit.html
-msgid "ERP build job"
-msgstr "ERP 建造任务"
-
-#: templates/store/inventory_fit.html
-msgid "Create industry project"
-msgstr "创建工业项目"
-
-#: templates/store/inventory_fit.html
-msgid "Queue ERP build job"
-msgstr "将 ERP 建造任务加入队列"
-
-#: templates/store/inventory_fit.html
-msgid "Create claimable task"
-msgstr "创建可认领任务"
-
-#: templates/store/inventory_fit.html
-msgid "No open backorder demand for this fit."
-msgstr "此配装没有未结的缺货预订需求。"
-
-#: templates/store/inventory_fit.html
-msgid "Offered for sale"
-msgstr "已上架销售"
-
-#: templates/store/inventory_fit.html templates/store/shipyard_policy.html
-msgid "Backorders"
-msgstr "缺货预订"
-
-#: templates/store/inventory_fit.html
-#, python-format
-msgid "Inherits: %(v)s"
-msgstr "继承：%(v)s"
-
-#: templates/store/inventory_fit.html
-msgid "Lead time (days)"
-msgstr "交付周期（天）"
-
-#: templates/store/inventory_fit.html
-msgid "Max per order"
-msgstr "每单上限"
-
-#: templates/store/inventory_fit.html
-msgid "Max backorder per order"
-msgstr "每单缺货预订上限"
-
-#: templates/store/inventory_fit.html
-msgid "Safety stock"
-msgstr "安全库存"
-
-#: templates/store/inventory_fit.html
-msgid "Reorder point"
-msgstr "补货点"
-
-#: templates/store/inventory_fit.html
-msgid "Target stock"
-msgstr "目标库存"
-
-#: templates/store/inventory_fit.html
-msgid "Preferred fulfilment"
-msgstr "首选履单方式"
-
-#: templates/store/inventory_fit.html
-msgid "Note shown to buyers"
-msgstr "向买家显示的备注"
-
-#: templates/store/inventory_fit.html
-msgid "Internal fulfilment note"
-msgstr "内部履单备注"
-
-#: templates/store/inventory_fit.html
-msgid "Save offer settings"
-msgstr "保存上架设置"
-
-#: templates/store/inventory_fit.html
-#, python-format
-msgid "Last changed by %(who)s · %(when)s"
-msgstr "上次由 %(who)s 修改 · %(when)s"
-
-#: templates/store/inventory_fit.html
-msgid "Open orders for this fit"
-msgstr "此配装的未完成订单"
-
-#: templates/store/inventory_fit.html
-#, python-format
-msgid "%(n)s backordered"
-msgstr "%(n)s 艘缺货预订"
-
-#: templates/store/inventory_fit.html
-msgid "No open orders."
-msgstr "没有未完成订单。"
-
-#: templates/store/my_orders.html
-#, python-format
-msgid "%(n)s on backorder"
-msgstr "%(n)s 艘缺货预订中"
-
-#: templates/store/my_orders.html
-#, python-format
-msgid "estimated %(date)s"
-msgstr "预计 %(date)s"
-
-#: templates/store/order.html
-msgid "Availability at order time"
-msgstr "下单时的可用性"
-
-#: templates/store/order.html
-msgid "Current estimate"
-msgstr "当前预计"
-
-#: templates/store/order.html
-msgid "Ready since"
-msgstr "就绪于"
-
-#: templates/store/order.html
-msgid "New estimated date"
-msgstr "新的预计日期"
-
-#: templates/store/order.html
-msgid "Reason (shown to the buyer)"
-msgstr "原因（向买家显示）"
-
-#: templates/store/order.html
-msgid "Update estimate"
-msgstr "更新预计"
-
-#: templates/store/order_confirm.html
-msgid "Confirm order"
-msgstr "确认订单"
-
-#: templates/store/order_confirm.html
-msgid "Back to the Shipyard"
-msgstr "返回船坞"
-
-#: templates/store/order_confirm.html
-msgid "Confirm your order"
-msgstr "确认你的订单"
-
-#: templates/store/order_confirm.html
-msgid "Estimated delivery"
-msgstr "预计交付"
-
-#: templates/store/order_confirm.html
-#, python-format
-msgid "about %(n)s day"
-msgid_plural "about %(n)s days"
-msgstr[0] "约 %(n)s 天"
-
-#: templates/store/order_confirm.html
-msgid "each"
-msgstr "每艘"
-
-#: templates/store/order_confirm.html
-msgid "Delivery"
-msgstr "交付"
-
-#: templates/store/order_confirm.html
-#, python-format
-msgid "Confirm order of %(n)s"
-msgstr "确认订购 %(n)s 艘"
-
-#: templates/store/order_confirm.html
-#, python-format
-msgid "%(n)s is available right now"
-msgid_plural "%(n)s are available right now"
-msgstr[0] "当前有 %(n)s 艘可用"
-
-#: templates/store/order_confirm.html
-msgid "Order what's available"
-msgstr "订购当前可用的部分"
-
-#: templates/store/shipyard_policy.html
-msgid "Shipyard Policy"
-msgstr "船坞政策"
-
-#: templates/store/shipyard_policy.html
-msgid "Default lead time (days)"
-msgstr "默认交付周期（天）"
-
-#: templates/store/shipyard_policy.html
-msgid "Stock & reservations"
-msgstr "库存与预留"
-
-#: templates/store/shipyard_policy.html
-msgid "Default delivery location"
-msgstr "默认交付地点"
-
-#: templates/store/shipyard_policy.html
-msgid "Reservation expiry (days)"
-msgstr "预留有效期（天）"
-
-#: templates/store/shipyard_policy.html
-msgid "Shop front"
-msgstr "店面"
-
-#: templates/store/shipyard_policy.html
-msgid "Maximum per order"
-msgstr "每单最大数量"
-
-#: templates/store/shipyard_policy.html
-msgid "Show unavailable ships"
-msgstr "显示不可用舰船"
-
-#: templates/store/shipyard_policy.html
-msgid "Default to available only"
-msgstr "默认仅显示可用"
-
-#: templates/store/shipyard_policy.html
-msgid "Waitlist"
-msgstr "候补名单"
-
-#: templates/store/shipyard_policy.html
-msgid "Save policy"
-msgstr "保存政策"
+msgid "This plan is closed — reopen it before reserving stock."
+msgstr "此计划已关闭 — 请先重新打开，再预留库存。"
+
+msgid "Allocated from stock"
+msgstr "从库存分配"

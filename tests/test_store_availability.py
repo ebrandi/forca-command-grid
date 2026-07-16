@@ -47,7 +47,6 @@ from apps.store.services import (
 from apps.store.supply import recompute_supply_need
 from core import rbac
 
-
 # --- fixtures ----------------------------------------------------------------
 
 
@@ -506,7 +505,7 @@ def test_supply_need_consolidates_and_closes(shipyard, django_user_model):
     a_ = _member(django_user_model, 9402, "A")
     b_ = _member(django_user_model, 9403, "B")
     o1 = place_fit_order(fit=fit, quantity=2, buyer=a_, acknowledged=True).order
-    place_fit_order(fit=fit, quantity=3, buyer=b_, acknowledged=True).order
+    place_fit_order(fit=fit, quantity=3, buyer=b_, acknowledged=True)
 
     need = FitSupplyNeed.objects.get()  # ONE consolidated need, not two
     assert need.quantity_required == 5
@@ -526,7 +525,7 @@ def test_vehicle_creation_is_idempotent_and_wires_the_links(shipyard, django_use
     from apps.erp.models import BuildJob
     from apps.industry.models import IndustryProject
 
-    fit, home = shipyard["fit"], shipyard["home"]
+    fit = shipyard["fit"]
     officer = _officer(django_user_model, 9404, "Quartermaster")
     buyer = _member(django_user_model, 9405, "Buyer")
     place_fit_order(fit=fit, quantity=4, buyer=buyer, acknowledged=True)
@@ -713,7 +712,7 @@ def test_officer_receipt_via_view_allocates_and_audits(client, django_user_model
 
 @pytest.mark.django_db
 def test_eta_revision_is_claimer_or_officer_only(client, django_user_model, shipyard):
-    fit, home = shipyard["fit"], shipyard["home"]
+    fit = shipyard["fit"]
     buyer = _member(django_user_model, 9607, "Buyer")
     order = place_fit_order(fit=fit, quantity=1, buyer=buyer, acknowledged=True).order
     stranger = _member(django_user_model, 9608, "Stranger")
