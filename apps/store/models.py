@@ -33,6 +33,13 @@ class HullClass(models.TextChoices):
     SUPERCAPITAL = "supercapital", "Supercapital"
 
 
+class PriceBasis(models.TextChoices):
+    """What a store price was computed from — frozen on the order."""
+
+    JITA = "jita", _("Jita sell price")
+    BUILD = "build", _("Estimated build cost")
+
+
 class StoreConfig(TimeStampedModel):
     """Markups, deposit, and audience for the store. One active row is used."""
 
@@ -40,11 +47,29 @@ class StoreConfig(TimeStampedModel):
     is_active = models.BooleanField(default=True)
     audience = models.CharField(max_length=10, choices=Audience.choices, default=Audience.ALLIANCE)
 
-    # Multipliers on the Jita sell price.
+    # Multipliers on the Jita sell price (doctrine fits and sub-capital hulls).
     doctrine_markup = models.DecimalField(max_digits=5, decimal_places=3, default=Decimal("1.100"))
     hull_markup = models.DecimalField(max_digits=5, decimal_places=3, default=Decimal("1.100"))
+    # Multipliers on the estimated production cost. Capital-class hulls aren't bought
+    # off the Jita market — they're manufactured to order — so leaders set the profit
+    # margin over build cost per class instead of a Jita markup.
+    # ``db_default`` is load-bearing for rollback safety: it keeps the column DEFAULT in
+    # the database, so pre-migration code INSERTing without these columns still works.
+    capital_markup = models.DecimalField(
+        max_digits=5, decimal_places=3, default=Decimal("1.100"), db_default=Decimal("1.100")
+    )
+    supercap_markup = models.DecimalField(
+        max_digits=5, decimal_places=3, default=Decimal("1.100"), db_default=Decimal("1.100")
+    )
     # Upfront deposit on a made-to-order build, as a fraction of the total price.
     deposit_pct = models.DecimalField(max_digits=4, decimal_places=3, default=Decimal("0.250"))
+
+    def markup_for_hull(self, hull_class: str) -> Decimal:
+        """The configured multiplier for a made-to-order hull of ``hull_class``."""
+        return {
+            HullClass.CAPITAL: self.capital_markup,
+            HullClass.SUPERCAPITAL: self.supercap_markup,
+        }.get(hull_class, self.hull_markup)
 
     class Meta:
         ordering = ["-is_active", "-updated_at"]
@@ -95,6 +120,16 @@ class StoreOrder(TimeStampedModel):
     unit_price = models.DecimalField(max_digits=20, decimal_places=2, default=0)
     total_price = models.DecimalField(max_digits=20, decimal_places=2, default=0)
     markup_pct = models.DecimalField(max_digits=5, decimal_places=3, default=Decimal("1.100"))
+    # What unit_price was computed from: Jita sell (subcaps, doctrine fits) or the
+    # estimated build cost (capital-class hulls). ``unit_cost`` freezes that estimate.
+    # ``db_default`` keeps the DB column DEFAULT so pre-migration code can still INSERT.
+    price_basis = models.CharField(
+        max_length=5, choices=PriceBasis.choices, default=PriceBasis.JITA,
+        db_default=PriceBasis.JITA,
+    )
+    unit_cost = models.DecimalField(
+        max_digits=20, decimal_places=2, default=0, db_default=Decimal("0")
+    )
     deposit_pct = models.DecimalField(max_digits=4, decimal_places=3, default=Decimal("0.000"))
     deposit_amount = models.DecimalField(max_digits=20, decimal_places=2, default=0)
     requires_build = models.BooleanField(default=False)

@@ -81,9 +81,10 @@
       <div>
         <p class="mb-1 font-display font-semibold text-ink">{% translate "Capitals &amp; supercapitals" %}</p>
         <ol class="space-y-1">
-          <li>{% blocktranslate %}<span class="text-ink">1.</span> A corp builder claims your order and sends you the <span class="text-ink">price and delivery time</span> in a private message.{% endblocktranslate %}</li>
-          <li>{% blocktranslate with deposit_pct=deposit_pct %}<span class="text-ink">2.</span> Pay a <span class="text-gold">{{ deposit_pct }}% deposit</span> to that builder <span class="text-ink">within 7 days</span> — that makes the order effective and starts production.{% endblocktranslate %}</li>
-          <li>{% blocktranslate %}<span class="text-ink">3.</span> When it's built they contract it to you; you pay the balance on pickup. If the deposit isn't paid within 7 days the order lapses.{% endblocktranslate %}</li>
+          <li>{% blocktranslate with capital_pct=capital_markup_pct supercap_pct=supercap_markup_pct %}<span class="text-ink">1.</span> Priced automatically at <span class="text-gold">estimated build cost +{{ capital_pct }}%</span> for capitals and <span class="text-gold">+{{ supercap_pct }}%</span> for supercapitals — never off Jita.{% endblocktranslate %}</li>
+          <li>{% blocktranslate %}<span class="text-ink">2.</span> A corp builder claims your order and confirms the <span class="text-ink">delivery time</span> in a private message.{% endblocktranslate %}</li>
+          <li>{% blocktranslate with deposit_pct=deposit_pct %}<span class="text-ink">3.</span> Pay a <span class="text-gold">{{ deposit_pct }}% deposit</span> to that builder <span class="text-ink">within 7 days</span> — that makes the order effective and starts production.{% endblocktranslate %}</li>
+          <li>{% blocktranslate %}<span class="text-ink">4.</span> When it's built they contract it to you; you pay the balance on pickup. If the deposit isn't paid within 7 days the order lapses.{% endblocktranslate %}</li>
         </ol>
       </div>
     </div>

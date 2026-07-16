@@ -45,6 +45,14 @@ def manufacturing_cost_per_unit(
     if _api_down():
         return None  # breaker open — don't touch the network this minute
 
+    # In-flight dedup: the store's order POST can now reach this on a user-driven
+    # path, and N concurrent callers for the same cold key must not fan out N
+    # parallel requests from our IP. One caller fetches; the rest fall back (None)
+    # until the cache is warm. Atomic on Redis; best-effort elsewhere.
+    guard = f"{key}:inflight"
+    if not cache.add(guard, 1, _TIMEOUT + 2):
+        return None
+
     params: dict[str, object] = {"product_id": product_id, "runs": runs, "me": me}
     if system_id:
         params["system_id"] = system_id
@@ -58,12 +66,21 @@ def manufacturing_cost_per_unit(
         if resp.status_code == 200:
             entry = (resp.json().get("manufacturing") or {}).get(str(product_id))
             if entry and entry.get("total_cost_per_unit") is not None:
-                value = Decimal(str(entry["total_cost_per_unit"])).quantize(Decimal("0.01"))
+                raw = Decimal(str(entry["total_cost_per_unit"]))
+                # JSON NaN/Infinity parse quietly into Decimal, and a zero or negative
+                # "cost" is as bogus — none of them may be cached or reach a caller
+                # that freezes the figure into an order.
+                if raw.is_finite() and raw > 0:
+                    value = raw.quantize(Decimal("0.01"))
     except requests.RequestException:
         _trip_breaker()
         return None  # don't cache a transient failure as "not manufacturable"
-    except (ValueError, KeyError, TypeError):
+    except (ValueError, KeyError, TypeError, ArithmeticError):
+        # ArithmeticError covers decimal.InvalidOperation (e.g. a non-numeric string),
+        # which is NOT a ValueError — without it a malformed payload 500s the caller.
         value = None  # malformed response → treat as not manufacturable
+    finally:
+        cache.delete(guard)
 
     # Cache both a real cost and a confirmed "not manufacturable" (empty) result.
     cache.set(key, str(value) if value is not None else "", _TTL)

@@ -9,6 +9,16 @@ project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 
 ### Added
 
+- **Per-class Corp Store pricing for capital hulls** — capital and supercapital
+  made-to-order hulls are no longer priced off Jita sell × markup (a basis that barely
+  exists for hulls that never trade in Jita). They are now priced off their **estimated
+  build cost** (EVE Ref's full job cost, falling back to the local SDE material estimate)
+  times a per-class profit multiplier leaders configure in **Store settings**
+  (`/store/settings/`): separate markups for sub-capital, capital and supercapital hulls.
+  Each order freezes its price basis and the build-cost estimate it was quoted from; when
+  no build-cost source can answer, a capital order is refused rather than silently quoted
+  off a misleading market reference. Sub-capital hulls and doctrine fits keep the classic
+  live-Jita-sell markup. Fully translated into all nine languages.
 - **Linked Pilots and pilot switching** — a pilot can link several EVE characters to one
   account and switch between them without logging out. New **Pilot → Linked Pilots** page
   (`/pilot/linked-pilots/`), a persistent pilot selector in the sidebar and the mobile drawer,

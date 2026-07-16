@@ -38,8 +38,10 @@ that option on the buyback page if your corp has it enabled.
 
 ## Corp Store
 
-`/store/` — Order a ready-to-fly doctrine fit (priced off live Jita sell, plus a modest
-markup) or a made-to-order hull up through capitals, secured with an upfront deposit. Your
+`/store/` — Order a ready-to-fly doctrine fit or a made-to-order hull up through capitals,
+secured with an upfront deposit. Doctrine fits and sub-capital hulls are priced off live
+Jita sell plus a modest markup; capital and supercapital hulls are priced off their
+estimated build cost plus a per-class profit margin leaders set in the store settings. Your
 order lands on the corp's fulfilment board, where a member (not you) claims it, builds or
 buys it, and delivers it to you by in-game contract. Track your own orders from
 `/store/orders/mine/`.

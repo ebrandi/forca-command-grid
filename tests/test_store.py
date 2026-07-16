@@ -10,8 +10,8 @@ from apps.identity.models import RoleAssignment
 from apps.market.models import MarketPrice
 from apps.sde.models import SdeCategory, SdeGroup, SdeType
 from apps.sso.services import ensure_role
-from apps.store.models import Audience, HullClass, StoreConfig, StoreOrder
-from apps.store.pricing import classify_hull, price_doctrine_fit, price_hull
+from apps.store.models import Audience, HullClass, PriceBasis, StoreConfig, StoreOrder
+from apps.store.pricing import classify_hull, price_doctrine_fit, price_hull, price_hull_order
 from apps.store.services import active_config, can_access, invalidate_audience_cache, next_status
 from core import rbac
 
@@ -132,6 +132,168 @@ def test_capital_and_supercapital_classification(ships):
     assert classify_hull(16227) == HullClass.SUBCAP        # Ferox
 
 
+# --- Per-class made-to-order pricing (capitals off build cost, never Jita) --
+@pytest.mark.django_db
+def test_subcap_hull_order_still_jita_plus_markup(ships, monkeypatch):
+    """The classic rule survives untouched for sub-capitals — and the build-cost
+    sources are never even consulted for them."""
+    def _never(*a, **kw):  # pragma: no cover - failure path
+        raise AssertionError("sub-capital pricing must not hit a build-cost source")
+    monkeypatch.setattr("apps.industry.everef_cost.manufacturing_cost_per_unit", _never)
+    monkeypatch.setattr("apps.industry.bom.build_cost", _never)
+
+    p = price_hull_order(16227, active_config())  # Ferox
+    assert p.ok
+    assert p.price_basis == PriceBasis.JITA
+    assert p.unit_price == Decimal("42900000.00")  # 39M ×1.10
+    assert p.unit_cost == Decimal("0")
+
+
+@pytest.mark.django_db
+def test_capital_hull_priced_off_build_cost_not_jita(ships, monkeypatch):
+    """A capital is estimated build cost × capital_markup; Jita is reference only."""
+    cfg = active_config()
+    cfg.capital_markup = Decimal("1.150")
+    cfg.supercap_markup = Decimal("1.300")
+    cfg.save()
+    monkeypatch.setattr(
+        "apps.industry.everef_cost.manufacturing_cost_per_unit",
+        lambda tid, **kw: Decimal("2000000000"),
+    )
+    p = price_hull_order(19720, cfg)  # Naglfar (dread)
+    assert p.ok
+    assert p.price_basis == PriceBasis.BUILD
+    assert p.hull_class == HullClass.CAPITAL
+    assert p.unit_cost == Decimal("2000000000.00")
+    assert p.unit_price == Decimal("2300000000.00")  # cost ×1.15, NOT Jita 2.5B ×1.15
+    assert p.unit_jita == Decimal("2500000000.00")   # kept, but only as a reference
+
+
+@pytest.mark.django_db
+def test_supercapital_uses_its_own_markup(ships, monkeypatch):
+    cfg = active_config()
+    cfg.capital_markup = Decimal("1.150")
+    cfg.supercap_markup = Decimal("1.300")
+    cfg.save()
+    monkeypatch.setattr(
+        "apps.industry.everef_cost.manufacturing_cost_per_unit",
+        lambda tid, **kw: Decimal("60000000000"),
+    )
+    p = price_hull_order(11567, cfg)  # Avatar (titan)
+    assert p.ok
+    assert p.hull_class == HullClass.SUPERCAPITAL
+    assert p.price_basis == PriceBasis.BUILD
+    assert p.unit_price == Decimal("78000000000.00")  # ×1.30, not the 1.15 capital markup
+
+
+@pytest.mark.django_db
+def test_capital_build_cost_falls_back_to_local_estimate(ships, monkeypatch):
+    """EVE Ref down → the local one-level SDE material estimate prices the build."""
+    monkeypatch.setattr(
+        "apps.industry.everef_cost.manufacturing_cost_per_unit", lambda tid, **kw: None
+    )
+    monkeypatch.setattr(
+        "apps.industry.bom.build_cost", lambda tid, **kw: Decimal("1800000000")
+    )
+    p = price_hull_order(19720, active_config())
+    assert p.ok
+    assert p.price_basis == PriceBasis.BUILD
+    assert p.unit_cost == Decimal("1800000000.00")
+    assert p.unit_price == Decimal("1980000000.00")  # ×1.10 default capital markup
+
+
+@pytest.mark.django_db
+def test_capital_refused_when_build_cost_is_zero(ships, monkeypatch):
+    """A 0 (or negative) estimate is as bogus as no estimate: the local fallback sums
+    price_for() over blueprint materials, and a cold market snapshot makes that 0 —
+    which must refuse, never freeze a 0.00-ISK capital order with a 0.00 deposit."""
+    monkeypatch.setattr(
+        "apps.industry.everef_cost.manufacturing_cost_per_unit", lambda tid, **kw: None
+    )
+    monkeypatch.setattr("apps.industry.bom.build_cost", lambda tid, **kw: Decimal("0"))
+    p = price_hull_order(19720, active_config())
+    assert p.ok is False and p.error
+
+
+@pytest.mark.django_db
+def test_capital_refused_when_no_build_cost_source(client, django_user_model, ships, monkeypatch):
+    """No cost source → the order is refused, never silently quoted off a market
+    reference that can be wildly wrong for hulls that never trade in Jita."""
+    monkeypatch.setattr(
+        "apps.industry.everef_cost.manufacturing_cost_per_unit", lambda tid, **kw: None
+    )
+    monkeypatch.setattr("apps.industry.bom.build_cost", lambda tid, **kw: None)
+
+    p = price_hull_order(19720, active_config())
+    assert p.ok is False and p.error
+
+    # And the order view surfaces the refusal instead of creating an order.
+    _set_audience(Audience.CORP)
+    from apps.sso.models import EveCharacter
+
+    buyer = django_user_model.objects.create(username="eve:9500")
+    RoleAssignment.objects.create(user=buyer, role=ensure_role(rbac.ROLE_MEMBER))
+    EveCharacter.objects.create(character_id=9500, user=buyer, name="B", is_main=True, is_corp_member=True)
+    client.force_login(buyer)
+    resp = client.post("/store/order/hull/", {"ship_type_id": 19720, "quantity": 1})
+    assert resp.status_code == 302
+    assert StoreOrder.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_order_page_shows_the_frozen_price_basis(client, django_user_model, ships, monkeypatch):
+    """A build-basis order page shows the estimated build cost; a Jita-basis one
+    keeps the classic Jita reference line."""
+    _set_audience(Audience.CORP)
+    from apps.sso.models import EveCharacter
+
+    monkeypatch.setattr(
+        "apps.industry.everef_cost.manufacturing_cost_per_unit",
+        lambda tid, **kw: Decimal("2000000000"),
+    )
+    buyer = django_user_model.objects.create(username="eve:9600")
+    RoleAssignment.objects.create(user=buyer, role=ensure_role(rbac.ROLE_MEMBER))
+    EveCharacter.objects.create(character_id=9600, user=buyer, name="B", is_main=True, is_corp_member=True)
+    client.force_login(buyer)
+
+    client.post("/store/order/hull/", {"ship_type_id": 19720, "quantity": 1})  # Naglfar
+    capital = StoreOrder.objects.get()
+    html = client.get(f"/store/orders/{capital.pk}/").content.decode()
+    assert "estimated build cost" in html
+    assert "each · Jita" not in html
+
+    client.post("/store/order/hull/", {"ship_type_id": 16227, "quantity": 1})  # Ferox
+    subcap = StoreOrder.objects.exclude(pk=capital.pk).get()
+    html = client.get(f"/store/orders/{subcap.pk}/").content.decode()
+    assert "estimated build cost" not in html
+    assert "Jita" in html
+
+
+@pytest.mark.django_db
+def test_config_form_bounds_for_class_markups():
+    from apps.store.forms import ConfigForm
+
+    base = {"name": "x", "audience": "alliance", "doctrine_markup": "1.1",
+            "hull_markup": "1.1", "deposit_pct": "0.25"}
+    ok = {**base, "capital_markup": "1.2", "supercap_markup": "1.25"}
+    assert ConfigForm(data=ok).is_valid()
+    assert not ConfigForm(data={**ok, "capital_markup": "0.9"}).is_valid()   # below cost
+    assert not ConfigForm(data={**ok, "supercap_markup": "12"}).is_valid()   # absurd markup
+
+
+@pytest.mark.django_db
+def test_storefront_shows_per_class_markups(client, ships):
+    _set_audience(Audience.PUBLIC)
+    cfg = active_config()
+    cfg.capital_markup = Decimal("1.150")
+    cfg.supercap_markup = Decimal("1.200")
+    cfg.save()
+    resp = client.get("/store/")
+    assert resp.status_code == 200
+    assert resp.context["capital_markup_pct"] == 15
+    assert resp.context["supercap_markup_pct"] == 20
+
+
 @pytest.mark.django_db
 def test_hull_rejects_non_ship(db):
     cat = SdeCategory.objects.create(category_id=4, name="Material")
@@ -213,10 +375,15 @@ def test_delivery_system_search_autocomplete(client, django_user_model):
 
 
 @pytest.mark.django_db
-def test_hull_order_creates_deposit_and_board_claim_flow(client, django_user_model, ships):
+def test_hull_order_creates_deposit_and_board_claim_flow(client, django_user_model, ships, monkeypatch):
     _set_audience(Audience.CORP)
     from apps.sso.models import EveCharacter
 
+    # Capitals are priced off the estimated build cost (frozen on the order).
+    monkeypatch.setattr(
+        "apps.industry.everef_cost.manufacturing_cost_per_unit",
+        lambda tid, **kw: Decimal("2000000000"),
+    )
     buyer = django_user_model.objects.create(username="eve:9100")
     RoleAssignment.objects.create(user=buyer, role=ensure_role(rbac.ROLE_MEMBER))
     EveCharacter.objects.create(character_id=9100, user=buyer, name="Buyer", is_main=True, is_corp_member=True)
@@ -229,9 +396,11 @@ def test_hull_order_creates_deposit_and_board_claim_flow(client, django_user_mod
     assert order.kind == StoreOrder.Kind.HULL
     assert order.hull_class == HullClass.CAPITAL
     assert order.requires_build is True
-    # 2.5B ×1.10 = 2.75B total; 25% deposit = 687.5M.
-    assert order.total_price == Decimal("2750000000.00")
-    assert order.deposit_amount == Decimal("687500000.00")
+    # Build cost 2B ×1.10 capital markup = 2.2B total; 25% deposit = 550M.
+    assert order.price_basis == PriceBasis.BUILD
+    assert order.unit_cost == Decimal("2000000000.00")
+    assert order.total_price == Decimal("2200000000.00")
+    assert order.deposit_amount == Decimal("550000000.00")
 
     # A corp member claims it on the board and walks the build flow.
     builder = django_user_model.objects.create(username="eve:9101")

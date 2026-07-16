@@ -43,12 +43,15 @@ class FitOrderForm(forms.Form):
 class ConfigForm(forms.ModelForm):
     class Meta:
         model = StoreConfig
-        fields = ["name", "audience", "doctrine_markup", "hull_markup", "deposit_pct"]
+        fields = ["name", "audience", "doctrine_markup", "hull_markup",
+                  "capital_markup", "supercap_markup", "deposit_pct"]
         widgets = {
             "name": forms.TextInput(attrs=_INPUT),
             "audience": forms.Select(attrs=_INPUT),
             "doctrine_markup": forms.NumberInput(attrs={**_INPUT, "step": "0.01", "min": "1"}),
             "hull_markup": forms.NumberInput(attrs={**_INPUT, "step": "0.01", "min": "1"}),
+            "capital_markup": forms.NumberInput(attrs={**_INPUT, "step": "0.01", "min": "1"}),
+            "supercap_markup": forms.NumberInput(attrs={**_INPUT, "step": "0.01", "min": "1"}),
             "deposit_pct": forms.NumberInput(attrs={**_INPUT, "step": "0.01", "min": "0", "max": "1"}),
         }
 
@@ -60,8 +63,11 @@ class ConfigForm(forms.ModelForm):
     def clean(self):
         cleaned = super().clean()
         # Server-side bounds (the widget min/max are advisory only): never sell
-        # below Jita, never an absurd markup, and a deposit is a fraction of price.
+        # below the price basis (Jita sell, or build cost for capital-class hulls),
+        # never an absurd markup, and a deposit is a fraction of price.
         self._check("doctrine_markup", Decimal("1"), Decimal("10"))
         self._check("hull_markup", Decimal("1"), Decimal("10"))
+        self._check("capital_markup", Decimal("1"), Decimal("10"))
+        self._check("supercap_markup", Decimal("1"), Decimal("10"))
         self._check("deposit_pct", Decimal("0"), Decimal("1"))
         return cleaned

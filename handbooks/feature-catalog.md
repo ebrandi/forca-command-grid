@@ -357,7 +357,10 @@ corporation offers to its members (and optionally allies or the public).
 - **Users:** members and, per audience, allies or the public.
 - **Purpose:** A built-to-suit ship ordering service. Pilots order ready-to-fly doctrine
   fits (priced off live Jita sell × markup) or made-to-order hulls up to capitals (built on
-  demand, secured by an upfront deposit). Orders land on a corp-only fulfilment board where
+  demand, secured by an upfront deposit). Sub-capital hulls price off live Jita sell ×
+  markup; capital and supercapital hulls price off their estimated build cost (EVE Ref job
+  cost, local SDE material estimate as fallback) × a per-class profit multiplier, each
+  configurable in the store settings. Orders land on a corp-only fulfilment board where
   members claim, build, and deliver them by in-game contract.
 - **Roles:** Storefront follows the audience; the fulfilment board is member (a buyer
   cannot fulfil their own order); markups/deposit are officer.

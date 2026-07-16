@@ -5,7 +5,8 @@ from .models import StoreConfig, StoreOrder
 
 @admin.register(StoreConfig)
 class StoreConfigAdmin(admin.ModelAdmin):
-    list_display = ("name", "is_active", "audience", "doctrine_markup", "hull_markup", "deposit_pct")
+    list_display = ("name", "is_active", "audience", "doctrine_markup", "hull_markup",
+                    "capital_markup", "supercap_markup", "deposit_pct")
     list_filter = ("is_active", "audience")
 
 

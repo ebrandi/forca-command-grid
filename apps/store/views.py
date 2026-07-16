@@ -21,7 +21,7 @@ from core.rbac import role_required
 
 from .forms import ConfigForm, FitOrderForm, HullOrderForm
 from .models import StoreOrder
-from .pricing import is_ship, price_doctrine_fit, price_hull
+from .pricing import is_ship, price_doctrine_fit, price_hull_order
 from .services import (
     active_config,
     advance_label,
@@ -57,6 +57,8 @@ def storefront(request: HttpRequest) -> HttpResponse:
     return render(request, "store/storefront.html", {
         "cfg": cfg,
         "hull_markup_pct": int(round((float(cfg.hull_markup) - 1) * 100)),
+        "capital_markup_pct": int(round((float(cfg.capital_markup) - 1) * 100)),
+        "supercap_markup_pct": int(round((float(cfg.supercap_markup) - 1) * 100)),
         "deposit_pct": int(round(float(cfg.deposit_pct) * 100)),
         "is_member": rbac.has_role(request.user, rbac.ROLE_MEMBER),
         "open_count": StoreOrder.objects.filter(status=StoreOrder.Status.OPEN).count(),
@@ -143,7 +145,7 @@ def order_hull(request: HttpRequest) -> HttpResponse:
     if not is_ship(type_id):
         messages.error(request, _("That isn't a ship hull."))
         return redirect("store:storefront")
-    priced = price_hull(type_id, cfg.hull_markup)
+    priced = price_hull_order(type_id, cfg)
     if not priced.ok:
         messages.error(request, priced.error)
         return redirect("store:storefront")

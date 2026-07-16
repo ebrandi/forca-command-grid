@@ -7,7 +7,7 @@
   <div>
     <p class="eyebrow">{% translate "Corp Store · Leadership" %}</p>
     <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Store settings" %}</h1>
-    <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Markups are multipliers on the live Jita sell price — 1.10 charges +10%. The deposit is the fraction of the total a buyer pays up front to start a made-to-order build." %}</p>
+    <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Markups are multipliers on the price basis — 1.10 charges +10%. Doctrine ships and sub-capital hulls are priced off the live Jita sell price; capital and supercapital hulls are priced off their estimated build cost. The deposit is the fraction of the total a buyer pays up front to start a made-to-order build." %}</p>
   </div>
   <a href="{% url 'store:board' %}" class="btn-ghost text-sm">← {% translate "Build board" %}</a>
 </header>
@@ -31,8 +31,10 @@
     <h2 class="eyebrow mb-3 text-gold">{% translate "Pricing" %}</h2>
     <div class="grid gap-3 sm:grid-cols-3">
       <div><label class="label">{% translate "Doctrine ship markup" %}</label>{{ form.doctrine_markup }}<p class="mt-1 text-[11px] text-faint">{% translate "1.10 = Jita sell +10%" %}</p></div>
-      <div><label class="label">{% translate "Made-to-order hull markup" %}</label>{{ form.hull_markup }}<p class="mt-1 text-[11px] text-faint">{% translate "1.10 = Jita sell +10%" %}</p></div>
+      <div><label class="label">{% translate "Sub-capital hull markup" %}</label>{{ form.hull_markup }}<p class="mt-1 text-[11px] text-faint">{% translate "1.10 = Jita sell +10%" %}</p></div>
       <div><label class="label">{% translate "Build-slot deposit" %}</label>{{ form.deposit_pct }}<p class="mt-1 text-[11px] text-faint">{% translate "0.25 = 25% up front" %}</p></div>
+      <div><label class="label">{% translate "Capital hull markup" %}</label>{{ form.capital_markup }}<p class="mt-1 text-[11px] text-faint">{% translate "1.10 = estimated build cost +10%" %}</p></div>
+      <div><label class="label">{% translate "Supercapital hull markup" %}</label>{{ form.supercap_markup }}<p class="mt-1 text-[11px] text-faint">{% translate "1.10 = estimated build cost +10%" %}</p></div>
     </div>
   </section>
 

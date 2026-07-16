@@ -293,6 +293,30 @@ def test_supply_forecast_uses_everef_build_cost(doctrine_world, monkeypatch):
 
 
 @pytest.mark.django_db
+def test_supply_forecast_keeps_build_priced_capitals_without_jita_reference(doctrine_world, monkeypatch):
+    """A lost capital with NO market reference at all (no Jita sell, no CCP adjusted —
+    exactly the hulls that never trade in Jita) still forecasts off its build-cost
+    store price; the import lane simply doesn't compete."""
+    from apps.store.forecast import supply_forecast
+
+    ship_cat = SdeCategory.objects.get(category_id=6)
+    dread = SdeGroup.objects.create(group_id=485, category=ship_cat, name="Dreadnought")
+    SdeType.objects.create(type_id=19720, group=dread, name="Naglfar", volume=18500000.0)
+    monkeypatch.setattr(
+        "apps.industry.everef_cost.manufacturing_cost_per_unit",
+        lambda tid, **k: Decimal("2000000000") if tid == 19720 else None,
+    )
+    _loss(401, 19720, timezone.now())
+    data = supply_forecast(window_days=28, staging_system_id=0, limit=10)
+    nag = {r.ship_name: r for r in data["rows"]}["Naglfar"]
+    assert nag.jita_unit == Decimal("0.00")             # no reference price exists
+    assert nag.sell_unit == Decimal("2200000000.00")    # build 2B × 1.10 capital markup
+    assert nag.method == "build" and nag.import_cost is None
+    assert nag.supply_cost == Decimal("2000000000.00")
+    assert nag.margin_unit == Decimal("200000000.00")
+
+
+@pytest.mark.django_db
 def test_supply_forecast_includes_non_doctrine_hulls(doctrine_world):
     """A lost hull with no doctrine fit is valued as a bare hull to import-and-sell."""
     from apps.store.forecast import supply_forecast

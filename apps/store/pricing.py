@@ -1,11 +1,16 @@
-"""Store pricing: value a doctrine fit or a bare hull off the Jita sell price.
+"""Store pricing: value a doctrine fit or a made-to-order hull.
 
 A ready-to-fly doctrine fit is priced as the sum of its hull and every fitted
-module at the Jita sell price, times the doctrine markup. A made-to-order hull is
-the hull's Jita sell price times the hull markup. Both surface the oldest price
-timestamp in the basket so a buyer can see how fresh the valuation is.
+module at the Jita sell price, times the doctrine markup. A made-to-order
+sub-capital hull is the hull's Jita sell price times the hull markup. Capital and
+supercapital hulls are never bought off the Jita market — they're manufactured to
+order — so they are priced at the estimated production cost (EVE Ref's full job
+cost, falling back to the local one-level material estimate) times the per-class
+profit multiplier leaders set in the store settings. Jita paths surface the oldest
+price timestamp in the basket so a buyer can see how fresh the valuation is.
 
-Pure: reads market/SDE data, writes nothing.
+Reads market/SDE data (plus the cached EVE Ref build-cost lookup for capital-class
+hulls), writes nothing.
 """
 from __future__ import annotations
 
@@ -17,7 +22,7 @@ from django.utils.translation import gettext as _
 from apps.market.pricing import price_maps
 from apps.sde.models import SdeType
 
-from .models import HullClass
+from .models import HullClass, PriceBasis
 
 # SDE ship group ids that mark capital hulls (stable EVE static-data values).
 SUPERCAP_GROUPS = {30, 659}  # Titan, Supercarrier
@@ -79,6 +84,10 @@ class Priced:
     markup: Decimal = Decimal("1")
     priced_as_of: object | None = None
     error: str = ""
+    # What unit_price was computed from; unit_cost is the per-unit build estimate
+    # when the basis is BUILD (0 on the Jita basis).
+    price_basis: str = PriceBasis.JITA
+    unit_cost: Decimal = Decimal("0")
 
 
 def _fit_required_quantities(fit) -> dict[int, int]:
@@ -186,4 +195,68 @@ def price_hull(ship_type_id: int, markup: Decimal) -> Priced:
         unit_price=_q(jita * markup),
         markup=markup,
         priced_as_of=as_of,
+    )
+
+
+def production_cost_per_unit(ship_type_id: int) -> Decimal | None:
+    """Estimated cost to manufacture one unit, or ``None`` when nothing can price it.
+
+    EVE Ref's full job cost first (ME-adjusted materials + install fee; cached, with a
+    circuit breaker), falling back to the local one-level material estimate off the SDE
+    blueprint when the API can't answer. Imports are lazy to mirror how the industry
+    helpers are consumed elsewhere (forecast) and keep this module import-light.
+    """
+    from apps.industry.bom import build_cost
+    from apps.industry.everef_cost import manufacturing_cost_per_unit
+
+    cost = manufacturing_cost_per_unit(ship_type_id)
+    if cost is None:
+        local = build_cost(ship_type_id)
+        cost = Decimal(local) if local is not None else None
+    return cost
+
+
+def price_hull_order(ship_type_id: int, cfg) -> Priced:
+    """Price a made-to-order hull under the store's per-class policy.
+
+    Sub-capitals keep the classic rule: Jita sell × ``cfg.hull_markup``. Capital and
+    supercapital hulls are priced at the estimated build cost × the class multiplier
+    (``cfg.capital_markup`` / ``cfg.supercap_markup``). When no build-cost source can
+    answer, the order is refused rather than silently quoted off a market reference
+    that can be wildly wrong for hulls that never trade in Jita.
+    """
+    hull_class = classify_hull(ship_type_id)
+    if hull_class == HullClass.SUBCAP:
+        return price_hull(ship_type_id, cfg.hull_markup)
+
+    sde = SdeType.objects.filter(type_id=ship_type_id).first()
+    if not sde:
+        return Priced(False, error=_("Unknown ship type."))
+    if not is_ship(ship_type_id):
+        return Priced(False, error=_("That isn't a ship hull."))
+    cost = production_cost_per_unit(ship_type_id)
+    # <= 0 is as bogus as None: the local estimate sums price_for() over the blueprint
+    # materials, and price_for returns 0 for every type missing from the market
+    # snapshot — a cold or partially-synced snapshot must refuse, never freeze a
+    # 0.00-ISK (or underquoted) capital order with a 0.00 deposit on the board.
+    if cost is None or cost <= 0:
+        return Priced(
+            False, ship_type_id=ship_type_id, ship_name=sde.name, hull_class=hull_class,
+            error=_("No build-cost estimate is available for that hull right now — try again later."),
+        )
+    cost = _q(cost)
+    markup = Decimal(cfg.markup_for_hull(hull_class))
+    unit, as_of = _price_and_asof(ship_type_id)  # Jita reference only, never the basis
+    return Priced(
+        ok=True,
+        ship_type_id=ship_type_id,
+        ship_name=sde.name,
+        hull_class=hull_class,
+        manifest=[{"type_id": ship_type_id, "name": sde.name, "quantity": 1, "unit_jita": str(_q(unit))}],
+        unit_jita=_q(unit),
+        unit_price=_q(cost * markup),
+        markup=markup,
+        priced_as_of=as_of,
+        price_basis=PriceBasis.BUILD,
+        unit_cost=cost,
     )

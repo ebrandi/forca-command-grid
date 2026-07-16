@@ -21,7 +21,11 @@
   </div>
   <div class="text-right">
     <p class="data text-3xl font-bold text-gold">{{ order.total_price|isk }}</p>
+    {% if order.price_basis == 'build' %}
+    <p class="text-xs text-faint">{% blocktranslate with unit=order.unit_price|isk cost=order.unit_cost|isk %}{{ unit }} each · estimated build cost {{ cost }}{% endblocktranslate %}</p>
+    {% else %}
     <p class="text-xs text-faint">{% blocktranslate with unit=order.unit_price|isk jita=order.unit_jita|isk %}{{ unit }} each · Jita {{ jita }}{% endblocktranslate %}</p>
+    {% endif %}
   </div>
 </header>
 
@@ -35,7 +39,8 @@
         <tr class="border-t border-line/40">
           <td class="px-4 py-2"><span class="flex items-center gap-2"><img src="{% eve_type_icon it.type_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">{{ it.name }}</span></td>
           <td class="px-4 py-2 text-right data text-faint">×{{ it.quantity }}</td>
-          <td class="px-4 py-2 text-right data text-muted">{{ it.unit_jita|isk }}</td>
+          {# Build-basis orders (capital hulls, single row) show the frozen build-cost estimate — the Jita reference is often 0 for hulls that never trade there. #}
+          <td class="px-4 py-2 text-right data text-muted">{% if order.price_basis == 'build' %}{{ order.unit_cost|isk }}{% else %}{{ it.unit_jita|isk }}{% endif %}</td>
         </tr>
         {% endfor %}
       </tbody>

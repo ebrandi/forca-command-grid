@@ -52,9 +52,9 @@ class SupplyRow:
     per_week: float
     forecast_week: int
     forecast_month: int
-    jita_unit: Decimal       # fitted Jita sell (import basis, pre-freight)
+    jita_unit: Decimal       # fitted Jita sell (import basis, pre-freight; 0 = no reference)
     freight_unit: Decimal
-    import_cost: Decimal
+    import_cost: Decimal | None   # None when there is no market reference to import at
     build_cost: Decimal | None
     supply_cost: Decimal
     method: str              # "build" | "import"
@@ -149,7 +149,7 @@ def supply_forecast(*, window_days: int = 30, staging_system_id: int = 0,
     from apps.market.pricing import price_for
     from apps.sde.models import SdeType
 
-    from .pricing import price_doctrine_fit, price_hull
+    from .pricing import price_doctrine_fit, price_hull_order
     from .services import active_config
 
     cfg = active_config()
@@ -192,18 +192,30 @@ def supply_forecast(*, window_days: int = 30, staging_system_id: int = 0,
             priced = price_doctrine_fit(fit, cfg.doctrine_markup)
             doctrine, fit_id, fit_name, is_doctrine = fit.doctrine.name, fit.id, fit.name, True
         else:
-            priced = price_hull(tid, cfg.hull_markup)
+            # The store's own hull pricer: sub-caps off Jita, capital-class hulls off
+            # the estimated build cost — so "fair sell price" matches what the store
+            # would actually charge (a capital with no cost source prices not-ok and
+            # is skipped, exactly like the order path refuses it).
+            priced = price_hull_order(tid, cfg)
             doctrine, fit_id, fit_name, is_doctrine = "—", 0, "hull only", False
-        if not priced.ok or priced.unit_jita <= 0:
+        # A build-priced capital can carry a valid sell price with NO Jita/adjusted
+        # reference at all (it never trades there) — keep it. Only rows with no
+        # usable sell price are dropped.
+        if not priced.ok or priced.unit_price <= 0:
             continue
 
         jita_unit = priced.unit_jita
         sell_unit = priced.unit_price
         freight = _freight_unit(card, hops, hull_class, jita_unit, packaged_vol=pkg_vols.get(tid))
-        import_cost = (jita_unit + freight).quantize(Decimal("0.01"))
+        # Importing is fiction without a real market reference, so the import lane
+        # only competes when one exists.
+        import_cost = (jita_unit + freight).quantize(Decimal("0.01")) if jita_unit > 0 else None
 
         # Build path: build the hull (EVE Ref's full job cost — materials + install
         # fee; falls back to our one-level estimate), buy any modules at Jita.
+        # Deliberately a separate lookup from the sell price above: the store quotes
+        # off the universe-average job cost (system-independent), while the
+        # build-vs-import decision costs the job at the pinned staging system.
         ev_cost = manufacturing_cost_per_unit(tid, system_id=staging_system_id or None)
         if ev_cost is not None:
             hull_build, build_source = ev_cost, "everef"
@@ -215,10 +227,12 @@ def supply_forecast(*, window_days: int = 30, staging_system_id: int = 0,
             modules_jita = jita_unit - price_for(tid)
             build_total = (hull_build + modules_jita + freight).quantize(Decimal("0.01"))
 
-        if build_total is not None and build_total < import_cost:
+        if build_total is not None and (import_cost is None or build_total < import_cost):
             supply_cost, method = build_total, "build"
-        else:
+        elif import_cost is not None:
             supply_cost, method = import_cost, "import"
+        else:
+            continue  # no lane can actually supply it
 
         per_week = float(Decimal(demand) / period_weeks)
         fc_week = max(1, math.ceil(per_week))

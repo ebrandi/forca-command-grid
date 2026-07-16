@@ -37,3 +37,48 @@ def test_timeout_trips_breaker_and_returns_none():
     # With the breaker open, a second call short-circuits without another request.
     assert manufacturing_cost_per_unit(587) is None
     assert len(responses.calls) == 1
+
+
+@responses.activate
+def test_zero_cost_is_not_a_price():
+    """A 0 (or negative) job cost is bogus, must not be returned, and must not be
+    cached as a real figure — the store would freeze it into an order."""
+    cache.clear()
+    responses.add(
+        responses.GET, everef_cost._API,
+        json={"manufacturing": {"16227": {"total_cost_per_unit": 0}}}, status=200,
+    )
+    assert manufacturing_cost_per_unit(16227) is None
+    # Cached as "not manufacturable" (empty), so a repeat stays None without a refetch.
+    assert manufacturing_cost_per_unit(16227) is None
+    assert len(responses.calls) == 1
+
+
+@responses.activate
+def test_malformed_and_nonfinite_costs_fall_back_instead_of_raising():
+    """decimal.InvalidOperation is NOT a ValueError — a garbage payload must degrade
+    to None (caller falls back to the local estimate), never 500 the order POST.
+    JSON NaN parses quietly into Decimal('NaN') and must be rejected too."""
+    cache.clear()
+    responses.add(
+        responses.GET, everef_cost._API,
+        json={"manufacturing": {"16227": {"total_cost_per_unit": "N/A"}}}, status=200,
+    )
+    assert manufacturing_cost_per_unit(16227) is None
+
+    cache.clear()
+    responses.replace(
+        responses.GET, everef_cost._API,
+        json={"manufacturing": {"16227": {"total_cost_per_unit": float("nan")}}}, status=200,
+    )
+    assert manufacturing_cost_per_unit(16227) is None
+
+
+@responses.activate
+def test_inflight_guard_dedupes_concurrent_fetches():
+    """While one caller is fetching a cold key, others fall back (None) instead of
+    piling parallel outbound requests onto EVE Ref from the server IP."""
+    cache.clear()
+    cache.add("everef:indcost:16227:10:1:0:inflight", 1, 10)
+    assert manufacturing_cost_per_unit(16227) is None
+    assert len(responses.calls) == 0  # never touched the network
