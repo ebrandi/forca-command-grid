@@ -168,3 +168,16 @@ def test_maintenance_enqueues_known_task(client, django_user_model, sde, monkeyp
     assert sent["name"] == "recommendations.run"
     # Unknown action is rejected.
     assert client.post("/ops/admin/maintenance/bogus/").status_code == 403
+
+
+@pytest.mark.django_db
+def test_hub_mining_tax_card_links_to_a_page_not_the_post_endpoint(client, django_user_model, sde):
+    """/mining/tax/ is a POST-only form action (405 on GET) — the hub card must
+    open the ledger page that hosts the tax form, never the endpoint itself
+    (clicking a plain link issues a GET; this was a live 405 on both servers)."""
+    client.force_login(_user(django_user_model, "director2", rbac.ROLE_DIRECTOR))
+    html = client.get("/ops/admin/").content.decode()
+    assert "/mining/tax/" not in html
+    assert 'href="/mining/"' in html  # the ledger page, which hosts the tax form
+    # And the endpoint itself is genuinely POST-only.
+    assert client.get("/mining/tax/").status_code == 405
