@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Demand Planning" %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+
+<header class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <p class="eyebrow">{% translate "Shipyard · Leadership" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Demand planning settings" %}</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "How composed demand is computed: the loss-history window, the planning horizon, the confidence level behind bands and reorder suggestions, and which optional signals are armed." %}</p>
+  </div>
+  <a href="{% url 'store:inventory' %}" class="btn-ghost text-sm">← {% translate "Inventory console" %}</a>
+</header>
+
+<form method="post" action="{% url 'store:demand_policy' %}" class="space-y-5">
+  {% csrf_token %}
+
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">{% translate "Statistics" %}</h2>
+    <div class="grid gap-3 sm:grid-cols-3">
+      <div><label class="label">{% translate "Loss history (weeks)" %}</label>{{ form.history_weeks }}<p class="mt-1 text-[11px] text-faint">{{ form.history_weeks.help_text }}</p></div>
+      <div><label class="label">{% translate "Planning horizon (days)" %}</label>{{ form.horizon_days }}<p class="mt-1 text-[11px] text-faint">{{ form.horizon_days.help_text }}</p></div>
+      <div><label class="label">{% translate "Service level" %}</label>{{ form.service_level }}<p class="mt-1 text-[11px] text-faint">{{ form.service_level.help_text }}</p></div>
+    </div>
+  </section>
+
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">{% translate "Signals & assumptions" %}</h2>
+    <div class="grid gap-3 sm:grid-cols-2">
+      <div><label class="label">{% translate "Fleet-op attrition (%)" %}</label>{{ form.op_attrition_pct }}<p class="mt-1 text-[11px] text-faint">{{ form.op_attrition_pct.help_text }}</p></div>
+      <div><label class="label">{% translate "Slow-mover window (days)" %}</label>{{ form.slow_mover_days }}<p class="mt-1 text-[11px] text-faint">{{ form.slow_mover_days.help_text }}</p></div>
+      <div><label class="label">{% translate "Allocate untagged losses" %}</label>{{ form.include_untagged_losses }}<p class="mt-1 text-[11px] text-faint">{{ form.include_untagged_losses.help_text }}</p></div>
+      <div><label class="label">{% translate "Count recurring fleet ops" %}</label>{{ form.include_recurring_ops }}<p class="mt-1 text-[11px] text-faint">{{ form.include_recurring_ops.help_text }}</p></div>
+      <div><label class="label">{% translate "Suggested-reorder alerts" %}</label>{{ form.use_suggested_reorder_alerts }}<p class="mt-1 text-[11px] text-faint">{{ form.use_suggested_reorder_alerts.help_text }}</p></div>
+    </div>
+  </section>
+
+  {% if form.errors %}
+  <div class="panel border-loss/40 p-4 text-sm text-loss">
+    {% for field in form %}{% for error in field.errors %}<p>{{ field.label }}: {{ error }}</p>{% endfor %}{% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="flex justify-end gap-3">
+    <a href="{% url 'store:inventory' %}" class="btn-ghost">{% translate "Cancel" %}</a>
+    <button type="submit" class="btn-gold">{% translate "Save settings" %}</button>
+  </div>
+</form>
+{% endblock %}

@@ -11,6 +11,7 @@
   </div>
   <div class="flex flex-wrap gap-2">
     <a href="{% url 'store:shipyard_policy' %}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-key"/></svg> {% translate "Fulfilment policy" %}</a>
+    <a href="{% url 'store:demand_policy' %}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-key"/></svg> {% translate "Demand planning" %}</a>
     <a href="?{{ base_qs }}{% if base_qs %}&{% endif %}export=csv" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-box"/></svg> {% translate "Export CSV" %}</a>
   </div>
 </header>

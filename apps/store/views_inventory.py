@@ -590,3 +590,29 @@ def demand_line_close(request: HttpRequest, line_id: int) -> HttpResponse:
     else:
         messages.info(request, _("That demand line is already closed."))
     return redirect("store:inventory_fit", fit_id=line.fit_id)
+
+
+@login_required
+@role_required(rbac.ROLE_OFFICER)
+def demand_policy(request: HttpRequest) -> HttpResponse:
+    """Corp-wide demand-planning knobs (P2) — the native console page for
+    DemandConfig (the stock Django admin is disabled on the servers)."""
+    from .forms import DemandConfigForm
+    from .models import DemandConfig
+
+    config = DemandConfig.active()
+    if request.method == "POST":
+        form = DemandConfigForm(request.POST, instance=config)
+        if form.is_valid():
+            form.save()
+            audit_log(request.user, "store.demand_config_update",
+                      target_type="demand_config", target_id=str(config.pk),
+                      metadata={"suggested_alerts": config.use_suggested_reorder_alerts,
+                                "recurring_ops": config.include_recurring_ops,
+                                "service_level": config.service_level},
+                      ip=client_ip(request))
+            messages.success(request, _("Demand planning settings updated."))
+            return redirect("store:demand_policy")
+    else:
+        form = DemandConfigForm(instance=config)
+    return render(request, "store/demand_policy.html", {"form": form, "config": config})

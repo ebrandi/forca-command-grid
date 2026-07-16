@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-16 21:44+0000\n"
+"POT-Creation-Date: 2026-07-16 22:16+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: de machine-assisted draft\n"
@@ -3640,7 +3640,8 @@ msgstr "Pausieren"
 #: templates/mentorship/pairing_detail.html
 #: templates/operations/template_form.html
 #: templates/pingboard/alert_detail.html templates/planetary/wizard.html
-#: templates/stockpile/dashboard.html templates/store/order_confirm.html
+#: templates/stockpile/dashboard.html templates/store/demand_policy.html
+#: templates/store/order_confirm.html
 msgid "Cancel"
 msgstr "Abbrechen"
 
@@ -22655,6 +22656,7 @@ msgstr "“%(name)s” ausblenden"
 #: templates/admin_audit/console/raffle_config.html
 #: templates/buyback/config.html templates/killboard/killfeed_config.html
 #: templates/srp/settings.html templates/store/config.html
+#: templates/store/demand_policy.html
 msgid "Save settings"
 msgstr "Einstellungen speichern"
 
@@ -29195,6 +29197,7 @@ msgstr "Ziehungsverwaltung"
 
 #: templates/admin_audit/console/raffle_detail.html
 #: templates/admin_audit/console/raffle_stats.html
+#: templates/store/demand_policy.html
 msgid "Statistics"
 msgstr "Statistiken"
 
@@ -49804,12 +49807,13 @@ msgstr "1.10 = geschätzte Baukosten +10%%"
 msgid "Supercapital hull markup"
 msgstr "Supercapital-Hull-Aufschlag"
 
-#: templates/store/inventory.html templates/store/shipyard_policy.html
+#: templates/store/demand_policy.html templates/store/inventory.html
+#: templates/store/shipyard_policy.html
 msgid "Shipyard · Leadership"
 msgstr "Werft · Führung"
 
-#: templates/store/inventory.html templates/store/inventory_fit.html
-#: templates/store/shipyard_policy.html
+#: templates/store/demand_policy.html templates/store/inventory.html
+#: templates/store/inventory_fit.html templates/store/shipyard_policy.html
 msgid "Inventory console"
 msgstr "Bestandskonsole"
 
@@ -50255,6 +50259,20 @@ msgstr ""
 "Zu wenig Historie (%(n)s Wo.) — es wird kein Volatilitätsband angezeigt."
 
 #: templates/store/inventory_fit.html
+msgid ""
+"A per-type hull target also exists on this stockpile — a separate mechanism, "
+"reconciled by MRP netting in a later phase"
+msgstr ""
+"Für diesen Rumpf existiert außerdem ein Stücklisten-Ziel auf diesem Lager — "
+"ein separater Mechanismus, der in einer späteren Phase per MRP-Verrechnung "
+"zusammengeführt wird"
+
+#: templates/store/inventory_fit.html
+#, python-format
+msgid "hull target %(target)s in %(name)s"
+msgstr "Rumpf-Ziel %(target)s in %(name)s"
+
+#: templates/store/inventory_fit.html
 msgid "Losses trending up over the window."
 msgstr "Verluste im Zeitfenster steigend."
 
@@ -50327,12 +50345,24 @@ msgid "undated"
 msgstr "ohne Datum"
 
 #: templates/store/inventory_fit.html
+msgid "Linked campaign"
+msgstr "Verknüpfte Kampagne"
+
+#: templates/store/inventory_fit.html
 msgid "None recorded."
 msgstr "Keine erfasst."
 
 #: templates/store/inventory_fit.html
 msgid "Needed by (optional)"
 msgstr "Benötigt bis (optional)"
+
+#: templates/store/inventory_fit.html
+msgid "Campaign ID (optional)"
+msgstr "Kampagnen-ID (optional)"
+
+#: templates/store/inventory_fit.html
+msgid "Campaign ID"
+msgstr "Kampagnen-ID"
 
 #: templates/store/inventory_fit.html
 msgid "Add demand line"
@@ -51251,21 +51281,49 @@ msgid "This source string is intentionally never translated"
 msgstr "This source string is intentionally never translated"
 
 msgid ""
-"A per-type hull target also exists on this stockpile — a separate mechanism, "
-"reconciled by MRP netting in a later phase"
+"How composed demand is computed: the loss-history window, the planning "
+"horizon, the confidence level behind bands and reorder suggestions, and "
+"which optional signals are armed."
 msgstr ""
-"Für diesen Rumpf existiert außerdem ein Stücklisten-Ziel auf diesem Lager — "
-"ein separater Mechanismus, der in einer späteren Phase per MRP-Verrechnung "
-"zusammengeführt wird"
+"Wie der zusammengesetzte Bedarf berechnet wird: das Verlusthistorien-"
+"Fenster, der Planungshorizont, das Konfidenzniveau hinter Bändern und "
+"Nachbestellvorschlägen sowie welche optionalen Signale aktiviert sind."
 
-msgid "hull target %(target)s in %(name)s"
-msgstr "Rumpf-Ziel %(target)s in %(name)s"
+msgid "Planning horizon (days)"
+msgstr "Planungshorizont (Tage)"
 
-msgid "Linked campaign"
-msgstr "Verknüpfte Kampagne"
+msgid "Demand planning settings updated."
+msgstr "Bedarfsplanungs-Einstellungen aktualisiert."
 
-msgid "Campaign ID (optional)"
-msgstr "Kampagnen-ID (optional)"
+msgid "Demand Planning"
+msgstr "Bedarfsplanung"
 
-msgid "Campaign ID"
-msgstr "Kampagnen-ID"
+msgid "Demand planning settings"
+msgstr "Bedarfsplanungs-Einstellungen"
+
+msgid "Loss history (weeks)"
+msgstr "Verlusthistorie (Wochen)"
+
+msgid "Service level"
+msgstr "Service-Level"
+
+msgid "Signals & assumptions"
+msgstr "Signale & Annahmen"
+
+msgid "Fleet-op attrition (%%)"
+msgstr "Flottenops-Abnutzung (%%)"
+
+msgid "Slow-mover window (days)"
+msgstr "Ladenhüter-Fenster (Tage)"
+
+msgid "Allocate untagged losses"
+msgstr "Ungetaggte Verluste zuordnen"
+
+msgid "Count recurring fleet ops"
+msgstr "Wiederkehrende Flottenops zählen"
+
+msgid "Suggested-reorder alerts"
+msgstr "Nachbestellvorschlag-Alarme"
+
+msgid "Demand planning"
+msgstr "Bedarfsplanung"

@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 
 from apps.market.models import MarketLocation
 
-from .models import FitOffer, ShipyardPolicy, StoreConfig
+from .models import DemandConfig, FitOffer, ShipyardPolicy, StoreConfig
 
 _INPUT = {"class": "input-field"}
 
@@ -226,3 +226,39 @@ class DemandLineForm(forms.Form):
         if value and value < timezone.localdate():
             raise forms.ValidationError(_("The date must be today or later."))
         return value
+
+
+class DemandConfigForm(forms.ModelForm):
+    """Leadership demand-planning knobs (P2) — served by the native console page
+    (the stock Django admin is disabled on the servers)."""
+
+    class Meta:
+        model = DemandConfig
+        fields = [
+            "history_weeks", "horizon_days", "service_level", "op_attrition_pct",
+            "slow_mover_days", "include_untagged_losses", "include_recurring_ops",
+            "use_suggested_reorder_alerts",
+        ]
+        widgets = {
+            "history_weeks": forms.NumberInput(attrs={**_INPUT, "min": 4, "max": 52}),
+            "horizon_days": forms.NumberInput(attrs={**_INPUT, "min": 7, "max": 120}),
+            "service_level": forms.Select(attrs=_INPUT),
+            "op_attrition_pct": forms.NumberInput(attrs={**_INPUT, "min": 0, "max": 100}),
+            "slow_mover_days": forms.NumberInput(attrs={**_INPUT, "min": 7, "max": 365}),
+        }
+
+    def _bound(self, name, low, high):
+        value = self.cleaned_data.get(name)
+        if value is not None and not (low <= value <= high):
+            self.add_error(name, _("Must be between %(low)s and %(high)s.") % {
+                "low": low, "high": high,
+            })
+
+    def clean(self):
+        cleaned = super().clean()
+        # Server-side bounds — the widget min/max are advisory only.
+        self._bound("history_weeks", 4, 52)
+        self._bound("horizon_days", 7, 120)
+        self._bound("op_attrition_pct", 0, 100)
+        self._bound("slow_mover_days", 7, 365)
+        return cleaned

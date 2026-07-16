@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-16 21:44+0000\n"
+"POT-Creation-Date: 2026-07-16 22:16+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: ko machine-assisted draft\n"
@@ -3521,7 +3521,8 @@ msgstr "일시중지"
 #: templates/mentorship/pairing_detail.html
 #: templates/operations/template_form.html
 #: templates/pingboard/alert_detail.html templates/planetary/wizard.html
-#: templates/stockpile/dashboard.html templates/store/order_confirm.html
+#: templates/stockpile/dashboard.html templates/store/demand_policy.html
+#: templates/store/order_confirm.html
 msgid "Cancel"
 msgstr "취소"
 
@@ -21892,6 +21893,7 @@ msgstr "“%(name)s” 숨기기"
 #: templates/admin_audit/console/raffle_config.html
 #: templates/buyback/config.html templates/killboard/killfeed_config.html
 #: templates/srp/settings.html templates/store/config.html
+#: templates/store/demand_policy.html
 msgid "Save settings"
 msgstr "설정 저장"
 
@@ -28233,6 +28235,7 @@ msgstr "추첨 관리"
 
 #: templates/admin_audit/console/raffle_detail.html
 #: templates/admin_audit/console/raffle_stats.html
+#: templates/store/demand_policy.html
 msgid "Statistics"
 msgstr "통계"
 
@@ -48316,12 +48319,13 @@ msgstr "1.10 = 예상 제작 비용 +10%%"
 msgid "Supercapital hull markup"
 msgstr "Supercapital 선체 마크업"
 
-#: templates/store/inventory.html templates/store/shipyard_policy.html
+#: templates/store/demand_policy.html templates/store/inventory.html
+#: templates/store/shipyard_policy.html
 msgid "Shipyard · Leadership"
 msgstr "조선소 · 리더십"
 
-#: templates/store/inventory.html templates/store/inventory_fit.html
-#: templates/store/shipyard_policy.html
+#: templates/store/demand_policy.html templates/store/inventory.html
+#: templates/store/inventory_fit.html templates/store/shipyard_policy.html
 msgid "Inventory console"
 msgstr "재고 콘솔"
 
@@ -48752,6 +48756,19 @@ msgid "Insufficient history (%(n)s wk) — no volatility band is shown."
 msgstr "이력 부족 (%(n)s주) — 변동성 밴드를 표시하지 않습니다."
 
 #: templates/store/inventory_fit.html
+msgid ""
+"A per-type hull target also exists on this stockpile — a separate mechanism, "
+"reconciled by MRP netting in a later phase"
+msgstr ""
+"이 비축고에는 유형별 선체 목표도 있습니다 — 별도의 메커니즘이며, 이후 단계의 "
+"MRP 상계로 통합됩니다"
+
+#: templates/store/inventory_fit.html
+#, python-format
+msgid "hull target %(target)s in %(name)s"
+msgstr "%(name)s의 선체 목표 %(target)s"
+
+#: templates/store/inventory_fit.html
 msgid "Losses trending up over the window."
 msgstr "기간 내 손실이 증가 추세입니다."
 
@@ -48822,12 +48839,24 @@ msgid "undated"
 msgstr "날짜 미지정"
 
 #: templates/store/inventory_fit.html
+msgid "Linked campaign"
+msgstr "연결된 캠페인"
+
+#: templates/store/inventory_fit.html
 msgid "None recorded."
 msgstr "기록된 항목이 없습니다."
 
 #: templates/store/inventory_fit.html
 msgid "Needed by (optional)"
 msgstr "필요 기한 (선택)"
+
+#: templates/store/inventory_fit.html
+msgid "Campaign ID (optional)"
+msgstr "캠페인 ID (선택)"
+
+#: templates/store/inventory_fit.html
+msgid "Campaign ID"
+msgstr "캠페인 ID"
 
 #: templates/store/inventory_fit.html
 msgid "Add demand line"
@@ -49706,20 +49735,48 @@ msgid "This source string is intentionally never translated"
 msgstr "This source string is intentionally never translated"
 
 msgid ""
-"A per-type hull target also exists on this stockpile — a separate mechanism, "
-"reconciled by MRP netting in a later phase"
+"How composed demand is computed: the loss-history window, the planning "
+"horizon, the confidence level behind bands and reorder suggestions, and "
+"which optional signals are armed."
 msgstr ""
-"이 비축고에는 유형별 선체 목표도 있습니다 — 별도의 메커니즘이며, 이후 단계의 "
-"MRP 상계로 통합됩니다"
+"합성 수요 계산 방식: 손실 이력 기간, 계획 기간, 밴드와 재주문 제안의 신뢰 수"
+"준, 그리고 활성화할 선택 신호."
 
-msgid "hull target %(target)s in %(name)s"
-msgstr "%(name)s의 선체 목표 %(target)s"
+msgid "Planning horizon (days)"
+msgstr "계획 기간 (일)"
 
-msgid "Linked campaign"
-msgstr "연결된 캠페인"
+msgid "Demand planning settings updated."
+msgstr "수요 계획 설정이 업데이트되었습니다."
 
-msgid "Campaign ID (optional)"
-msgstr "캠페인 ID (선택)"
+msgid "Demand Planning"
+msgstr "수요 계획"
 
-msgid "Campaign ID"
-msgstr "캠페인 ID"
+msgid "Demand planning settings"
+msgstr "수요 계획 설정"
+
+msgid "Loss history (weeks)"
+msgstr "손실 이력 (주)"
+
+msgid "Service level"
+msgstr "서비스 수준"
+
+msgid "Signals & assumptions"
+msgstr "신호 및 가정"
+
+msgid "Fleet-op attrition (%%)"
+msgstr "함대 작전 손실률 (%%)"
+
+msgid "Slow-mover window (days)"
+msgstr "저회전 기간 (일)"
+
+msgid "Allocate untagged losses"
+msgstr "태그 없는 손실 배분"
+
+msgid "Count recurring fleet ops"
+msgstr "반복 함대 작전 계상"
+
+msgid "Suggested-reorder alerts"
+msgstr "제안 재주문 경보"
+
+msgid "Demand planning"
+msgstr "수요 계획"

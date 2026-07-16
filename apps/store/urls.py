@@ -25,6 +25,7 @@ urlpatterns = [
     # Officer inventory console (SHIP-1)
     path("inventory/", views_inventory.inventory, name="inventory"),
     path("inventory/policy/", views_inventory.shipyard_policy, name="shipyard_policy"),
+    path("inventory/demand-policy/", views_inventory.demand_policy, name="demand_policy"),
     path("inventory/bulk/", views_inventory.inventory_bulk, name="inventory_bulk"),
     path("inventory/fit/<int:fit_id>/", views_inventory.inventory_fit, name="inventory_fit"),
     path("inventory/fit/<int:fit_id>/receipt/", views_inventory.inventory_receipt,

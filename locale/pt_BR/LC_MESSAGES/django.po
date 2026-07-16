@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-16 21:44+0000\n"
+"POT-Creation-Date: 2026-07-16 22:16+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: pt-br machine-assisted draft\n"
@@ -3617,7 +3617,8 @@ msgstr "Pausar"
 #: templates/mentorship/pairing_detail.html
 #: templates/operations/template_form.html
 #: templates/pingboard/alert_detail.html templates/planetary/wizard.html
-#: templates/stockpile/dashboard.html templates/store/order_confirm.html
+#: templates/stockpile/dashboard.html templates/store/demand_policy.html
+#: templates/store/order_confirm.html
 msgid "Cancel"
 msgstr "Cancelar"
 
@@ -22507,6 +22508,7 @@ msgstr "Ocultar “%(name)s”"
 #: templates/admin_audit/console/raffle_config.html
 #: templates/buyback/config.html templates/killboard/killfeed_config.html
 #: templates/srp/settings.html templates/store/config.html
+#: templates/store/demand_policy.html
 msgid "Save settings"
 msgstr "Salvar configurações"
 
@@ -29029,6 +29031,7 @@ msgstr "Gerenciador do sorteio"
 
 #: templates/admin_audit/console/raffle_detail.html
 #: templates/admin_audit/console/raffle_stats.html
+#: templates/store/demand_policy.html
 msgid "Statistics"
 msgstr "Estatísticas"
 
@@ -49536,12 +49539,13 @@ msgstr "1.10 = custo estimado de construção +10%%"
 msgid "Supercapital hull markup"
 msgstr "Markup de hull supercapital"
 
-#: templates/store/inventory.html templates/store/shipyard_policy.html
+#: templates/store/demand_policy.html templates/store/inventory.html
+#: templates/store/shipyard_policy.html
 msgid "Shipyard · Leadership"
 msgstr "Estaleiro · Liderança"
 
-#: templates/store/inventory.html templates/store/inventory_fit.html
-#: templates/store/shipyard_policy.html
+#: templates/store/demand_policy.html templates/store/inventory.html
+#: templates/store/inventory_fit.html templates/store/shipyard_policy.html
 msgid "Inventory console"
 msgstr "Console de inventário"
 
@@ -49985,6 +49989,19 @@ msgstr ""
 "Histórico insuficiente (%(n)s sem) — nenhuma banda de volatilidade é exibida."
 
 #: templates/store/inventory_fit.html
+msgid ""
+"A per-type hull target also exists on this stockpile — a separate mechanism, "
+"reconciled by MRP netting in a later phase"
+msgstr ""
+"Também existe uma meta de cascos por tipo neste estoque — um mecanismo "
+"separado, conciliado pelo netting de MRP em uma fase posterior"
+
+#: templates/store/inventory_fit.html
+#, python-format
+msgid "hull target %(target)s in %(name)s"
+msgstr "meta de cascos %(target)s em %(name)s"
+
+#: templates/store/inventory_fit.html
 msgid "Losses trending up over the window."
 msgstr "Perdas em alta ao longo da janela."
 
@@ -50057,12 +50074,24 @@ msgid "undated"
 msgstr "sem data"
 
 #: templates/store/inventory_fit.html
+msgid "Linked campaign"
+msgstr "Campanha vinculada"
+
+#: templates/store/inventory_fit.html
 msgid "None recorded."
 msgstr "Nada registrado."
 
 #: templates/store/inventory_fit.html
 msgid "Needed by (optional)"
 msgstr "Necessário até (opcional)"
+
+#: templates/store/inventory_fit.html
+msgid "Campaign ID (optional)"
+msgstr "ID da campanha (opcional)"
+
+#: templates/store/inventory_fit.html
+msgid "Campaign ID"
+msgstr "ID da campanha"
 
 #: templates/store/inventory_fit.html
 msgid "Add demand line"
@@ -50979,20 +51008,49 @@ msgid "This source string is intentionally never translated"
 msgstr "Esta string de origem intencionalmente nunca é traduzida"
 
 msgid ""
-"A per-type hull target also exists on this stockpile — a separate mechanism, "
-"reconciled by MRP netting in a later phase"
+"How composed demand is computed: the loss-history window, the planning "
+"horizon, the confidence level behind bands and reorder suggestions, and "
+"which optional signals are armed."
 msgstr ""
-"Também existe uma meta de cascos por tipo neste estoque — um mecanismo "
-"separado, conciliado pelo netting de MRP em uma fase posterior"
+"Como a demanda composta é calculada: a janela de histórico de perdas, o "
+"horizonte de planejamento, o nível de confiança por trás das bandas e "
+"sugestões de reposição, e quais sinais opcionais estão armados."
 
-msgid "hull target %(target)s in %(name)s"
-msgstr "meta de cascos %(target)s em %(name)s"
+msgid "Planning horizon (days)"
+msgstr "Horizonte de planejamento (dias)"
 
-msgid "Linked campaign"
-msgstr "Campanha vinculada"
+msgid "Demand planning settings updated."
+msgstr "Configurações de planejamento de demanda atualizadas."
 
-msgid "Campaign ID (optional)"
-msgstr "ID da campanha (opcional)"
+msgid "Demand Planning"
+msgstr "Planejamento de demanda"
 
-msgid "Campaign ID"
-msgstr "ID da campanha"
+msgid "Demand planning settings"
+msgstr "Configurações de planejamento de demanda"
+
+msgid "Loss history (weeks)"
+msgstr "Histórico de perdas (semanas)"
+
+msgid "Service level"
+msgstr "Nível de serviço"
+
+msgid "Signals & assumptions"
+msgstr "Sinais e premissas"
+
+msgid "Fleet-op attrition (%%)"
+msgstr "Atrito por op de frota (%%)"
+
+msgid "Slow-mover window (days)"
+msgstr "Janela de baixo giro (dias)"
+
+msgid "Allocate untagged losses"
+msgstr "Alocar perdas sem tag"
+
+msgid "Count recurring fleet ops"
+msgstr "Contar ops de frota recorrentes"
+
+msgid "Suggested-reorder alerts"
+msgstr "Alertas de reposição sugerida"
+
+msgid "Demand planning"
+msgstr "Planejamento de demanda"

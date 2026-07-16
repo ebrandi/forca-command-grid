@@ -599,3 +599,39 @@ def test_flag_labels_translate():
     assert label  # resolves; translated catalogues carry the localized label
     with translation.override("en"):
         assert str(FLAG_LABELS["slow_mover"]) == "Slow mover"
+
+
+def test_demand_policy_page_officer_only_and_audited(client, django_user_model):
+    """The native console page for DemandConfig — the stock Django admin is
+    disabled on the servers, so this is THE editing surface for the knobs."""
+    from apps.admin_audit.models import AuditLog
+
+    member = _member(django_user_model, 9910, "Pilot")
+    officer = _officer(django_user_model, 9911, "QM")
+
+    client.force_login(member)
+    assert client.get("/store/inventory/demand-policy/").status_code == 403
+
+    client.force_login(officer)
+    resp = client.get("/store/inventory/demand-policy/")
+    assert resp.status_code == 200
+
+    resp = client.post("/store/inventory/demand-policy/", {
+        "history_weeks": 16, "horizon_days": 45, "service_level": "0.95",
+        "op_attrition_pct": 15, "slow_mover_days": 90,
+        "include_untagged_losses": "on", "use_suggested_reorder_alerts": "on",
+    })
+    assert resp.status_code == 302
+    cfg = DemandConfig.active()
+    assert cfg.history_weeks == 16 and cfg.service_level == "0.95"
+    assert cfg.use_suggested_reorder_alerts is True
+    assert cfg.include_recurring_ops is False  # unchecked checkbox stays off
+    assert AuditLog.objects.filter(action="store.demand_config_update").exists()
+
+    # Out-of-bounds values are rejected server-side.
+    resp = client.post("/store/inventory/demand-policy/", {
+        "history_weeks": 2, "horizon_days": 45, "service_level": "0.95",
+        "op_attrition_pct": 15, "slow_mover_days": 90,
+    })
+    assert resp.status_code == 200  # re-rendered with errors
+    assert DemandConfig.active().history_weeks == 16  # unchanged
