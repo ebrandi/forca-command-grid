@@ -22,6 +22,7 @@ from collections import defaultdict
 from decimal import Decimal
 
 from django.core.exceptions import PermissionDenied
+from django.db import transaction
 from django.db.models import Sum
 from django.utils import timezone
 
@@ -278,48 +279,74 @@ def _deny_self_action(event: RankRewardEvent, actor) -> None:
         raise PermissionDenied("You can't approve or pay your own combat-rank reward.")
 
 
+# Each transition re-reads the row under ``select_for_update`` inside a transaction and
+# gates on the LOCKED status, so two concurrent officer POSTs can't both pass the guard and
+# both write a terminal status (which would fire duplicate ``combat.reward.*`` audit rows).
+# This mirrors the sibling reward workflows — SRP (services.decide/mark_paid), mentorship
+# (rewards.approve_reward/mark_reward_paid) — which already lock. The loser sees the locked
+# post-transition status and raises InvalidTransition, which the console catches (no audit).
+@transaction.atomic
 def approve(event: RankRewardEvent, actor) -> RankRewardEvent:
     _deny_self_action(event, actor)
-    if event.status != RankRewardEvent.Status.PENDING:
+    locked = RankRewardEvent.objects.select_for_update().get(pk=event.pk)
+    if locked.status != RankRewardEvent.Status.PENDING:
         raise InvalidTransition("Only pending rewards can be approved.")
-    event.status = RankRewardEvent.Status.APPROVED
-    event.approved_by = actor if getattr(actor, "pk", None) else None
-    event.approved_at = timezone.now()
-    event.save(update_fields=["status", "approved_by", "approved_at", "updated_at"])
-    return event
+    locked.status = RankRewardEvent.Status.APPROVED
+    locked.approved_by = actor if getattr(actor, "pk", None) else None
+    locked.approved_at = timezone.now()
+    locked.save(update_fields=["status", "approved_by", "approved_at", "updated_at"])
+    _sync_instance(event, locked)
+    return locked
 
 
+@transaction.atomic
 def mark_paid(event: RankRewardEvent, actor, *, reference: str = "") -> RankRewardEvent:
     _deny_self_action(event, actor)
-    if event.status not in (RankRewardEvent.Status.APPROVED, RankRewardEvent.Status.PENDING):
+    locked = RankRewardEvent.objects.select_for_update().get(pk=event.pk)
+    if locked.status not in (RankRewardEvent.Status.APPROVED, RankRewardEvent.Status.PENDING):
         raise InvalidTransition("Only pending/approved rewards can be marked paid.")
-    event.status = RankRewardEvent.Status.PAID
-    event.paid_by = actor if getattr(actor, "pk", None) else None
-    event.paid_at = timezone.now()
+    locked.status = RankRewardEvent.Status.PAID
+    locked.paid_by = actor if getattr(actor, "pk", None) else None
+    locked.paid_at = timezone.now()
     if reference:
-        event.payment_reference = reference
-    event.save(update_fields=["status", "paid_by", "paid_at", "payment_reference", "updated_at"])
-    return event
+        locked.payment_reference = reference
+    locked.save(update_fields=["status", "paid_by", "paid_at", "payment_reference", "updated_at"])
+    _sync_instance(event, locked)
+    return locked
 
 
+@transaction.atomic
 def reject(event: RankRewardEvent, actor, *, reason: str = "") -> RankRewardEvent:
-    if event.status in (RankRewardEvent.Status.PAID, RankRewardEvent.Status.CANCELLED):
+    locked = RankRewardEvent.objects.select_for_update().get(pk=event.pk)
+    if locked.status in (RankRewardEvent.Status.PAID, RankRewardEvent.Status.CANCELLED):
         raise InvalidTransition("A paid/cancelled reward can't be rejected.")
-    event.status = RankRewardEvent.Status.REJECTED
+    locked.status = RankRewardEvent.Status.REJECTED
     if reason:
-        event.notes = (event.notes + f"\nRejected: {reason}").strip()
-    event.save(update_fields=["status", "notes", "updated_at"])
-    return event
+        locked.notes = (locked.notes + f"\nRejected: {reason}").strip()
+    locked.save(update_fields=["status", "notes", "updated_at"])
+    _sync_instance(event, locked)
+    return locked
 
 
+@transaction.atomic
 def cancel(event: RankRewardEvent, actor, *, reason: str = "") -> RankRewardEvent:
-    if event.status == RankRewardEvent.Status.PAID:
+    locked = RankRewardEvent.objects.select_for_update().get(pk=event.pk)
+    if locked.status == RankRewardEvent.Status.PAID:
         raise InvalidTransition("A paid reward can't be cancelled.")
-    event.status = RankRewardEvent.Status.CANCELLED
+    locked.status = RankRewardEvent.Status.CANCELLED
     if reason:
-        event.notes = (event.notes + f"\nCancelled: {reason}").strip()
-    event.save(update_fields=["status", "notes", "updated_at"])
-    return event
+        locked.notes = (locked.notes + f"\nCancelled: {reason}").strip()
+    locked.save(update_fields=["status", "notes", "updated_at"])
+    _sync_instance(event, locked)
+    return locked
+
+
+def _sync_instance(event: RankRewardEvent, locked: RankRewardEvent) -> None:
+    """Copy the committed lifecycle fields back onto the caller's instance so any
+    post-call messaging/audit that reads ``event.status`` etc. sees the new state."""
+    for f in ("status", "approved_by_id", "approved_at", "paid_by_id", "paid_at",
+              "payment_reference", "notes"):
+        setattr(event, f, getattr(locked, f))
 
 
 # --------------------------------------------------------------------------- #
