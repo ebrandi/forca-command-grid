@@ -187,3 +187,38 @@ def test_detail_view_and_reassign_permission(client, django_user_model):
     assert client.get(f"/tasks/{task.pk}/").status_code == 200
     # Reassign is officer-only.
     assert client.post(f"/tasks/{task.pk}/reassign/", {"assignee": ""}).status_code == 403
+
+
+# --- AUTHZ-01 regression: task detail must not be a member-to-member IDOR ------
+@pytest.mark.django_db
+def test_detail_hides_other_members_task(client, django_user_model):
+    """A member must not read the detail (title, description, actor/history) of a task they
+    are not a party to. The board never lists another member's assigned task, and the detail
+    read must apply the same scoping — otherwise pk-enumeration leaks internal task notes."""
+    owner = _user(django_user_model, "owner_d", rbac.ROLE_MEMBER)
+    stranger = _user(django_user_model, "stranger_d", rbac.ROLE_MEMBER)
+    officer = _user(django_user_model, "fc_d", rbac.ROLE_OFFICER)
+    # Assigned to owner, NOT in the claimable pool → private to owner/creator/officers.
+    task = Task.objects.create(
+        title="Sensitive haul", description="stage at a secret POS",
+        assignee=owner, is_open=False, status=Task.Status.CLAIMED, created_by=officer,
+    )
+    # A member who is not a party gets 404 (no existence oracle), not the content.
+    client.force_login(stranger)
+    assert client.get(f"/tasks/{task.pk}/").status_code == 404
+    # The assignee can see their own task.
+    client.force_login(owner)
+    assert client.get(f"/tasks/{task.pk}/").status_code == 200
+    # An officer sees everything.
+    client.force_login(officer)
+    assert client.get(f"/tasks/{task.pk}/").status_code == 200
+
+
+@pytest.mark.django_db
+def test_detail_claimable_task_stays_visible_to_any_member(client, django_user_model):
+    """The fix must not over-restrict: a task in the claimable OPEN pool is shown on every
+    member's board, so its detail must stay readable to any member."""
+    stranger = _user(django_user_model, "stranger_c", rbac.ROLE_MEMBER)
+    task = Task.objects.create(title="Open one", is_open=True, status=Task.Status.OPEN)
+    client.force_login(stranger)
+    assert client.get(f"/tasks/{task.pk}/").status_code == 200

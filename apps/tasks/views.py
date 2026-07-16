@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import HttpRequest, HttpResponse
+from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _
@@ -166,6 +166,21 @@ def _can_edit(user, task, *, is_officer: bool) -> bool:
     return is_officer or task.created_by_id == user.id or task.assignee_id == user.id
 
 
+def _can_view(user, task, *, is_officer: bool) -> bool:
+    """Who may open a task's DETAIL (title, description, actor/history).
+
+    Mirrors the board's non-officer visibility so list and detail cannot drift: an
+    officer sees everything; a member sees a task they are assigned or created, or one
+    that is currently in the claimable pool. Anything else is not theirs to read —
+    without this a member could enumerate ``pk`` and read internal task notes/history
+    of work they are not a party to (IDOR)."""
+    if _can_edit(user, task, is_officer=is_officer):
+        return True
+    return bool(
+        task.is_open and task.assignee_id is None and task.status == Task.Status.OPEN
+    )
+
+
 @login_required
 @role_required(rbac.ROLE_MEMBER)
 def detail(request: HttpRequest, pk: int) -> HttpResponse:
@@ -174,6 +189,10 @@ def detail(request: HttpRequest, pk: int) -> HttpResponse:
         Task.objects.select_related("assignee", "created_by"), pk=pk
     )
     is_officer = rbac.has_role(request.user, rbac.ROLE_OFFICER)
+    # Object-level read scope: 404 (not 403) for a task this member isn't a party to,
+    # matching the no-existence-oracle convention used elsewhere (e.g. navigation routes).
+    if not _can_view(request.user, task, is_officer=is_officer):
+        raise Http404("No such task.")
     return render(request, "tasks/detail.html", {
         "task": task,
         "events": task.events.select_related("actor")[:50],
