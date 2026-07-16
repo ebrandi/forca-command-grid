@@ -23,6 +23,8 @@ import time
 import requests
 from django.conf import settings
 
+from core import netcap
+
 from ..client import LLMError, LLMRequest, LLMResult, LLMTruncated, LLMUnavailable
 
 # Redact any provider's bearer key: the wide sk- prefix (MiniMax sk-cp-, OpenAI sk- /
@@ -113,21 +115,32 @@ class MiniMaxAdapter:
         try:
             resp = requests.post(
                 url, json=body, headers=self._headers(),
-                timeout=self.timeout, allow_redirects=False,
+                timeout=self.timeout, allow_redirects=False, stream=True,
             )
+            # Read the body ONCE under a size cap: the provider host is allowlisted, but a
+            # compromised or self-hosted (localhost) LLM could otherwise return a multi-GB
+            # reply that requests would buffer whole into the worker's memory (OOM). See
+            # core.netcap.read_capped.
+            try:
+                raw = netcap.read_capped(resp)
+            finally:
+                resp.close()
+        except netcap.DataTooLarge as exc:
+            raise LLMUnavailable(f"oversized LLM response: {exc}") from exc
         except requests.RequestException as exc:
             raise LLMUnavailable(f"transport error: {_redact(str(exc), self.api_key)}") from exc
         latency_ms = int((time.monotonic() - started) * 1000)
+        text = raw.decode(resp.encoding or "utf-8", errors="replace")
 
         if resp.status_code == 429 or resp.status_code >= 500:
             raise LLMUnavailable(f"HTTP {resp.status_code}")
         if resp.status_code != 200:
-            raise LLMError(f"HTTP {resp.status_code}: {_redact(resp.text, self.api_key)[:200]}")
+            raise LLMError(f"HTTP {resp.status_code}: {_redact(text, self.api_key)[:200]}")
 
         try:
-            data = resp.json()
+            data = json.loads(text)
         except ValueError as exc:
-            raise LLMError(f"non-JSON response: {_redact(resp.text, self.api_key)[:200]}") from exc
+            raise LLMError(f"non-JSON response: {_redact(text, self.api_key)[:200]}") from exc
 
         base = data.get("base_resp") or {}
         code = base.get("status_code")
