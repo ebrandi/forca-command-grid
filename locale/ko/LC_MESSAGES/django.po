@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-16 11:44+0000\n"
+"POT-Creation-Date: 2026-07-16 14:46+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: ko machine-assisted draft\n"
@@ -485,7 +485,7 @@ msgstr "보상 스캔 완료 — 새 보상 이벤트 %(n)d개를 생성했습�
 
 #: apps/admin_audit/console_combat.py apps/buyback/views.py
 #: apps/capsuleer/views.py apps/logistics/views.py apps/stockpile/views.py
-#: apps/store/views.py
+#: apps/store/views.py apps/store/views_inventory.py
 msgid "Unknown action."
 msgstr "알 수 없는 작업입니다."
 
@@ -1878,6 +1878,7 @@ msgstr "Doctrine — 자격 충족 파일럿"
 #: templates/admin_audit/console/readiness/doctrines.html
 #: templates/capsuleer/goal_form.html templates/capsuleer/path_detail.html
 #: templates/doctrines/ships.html templates/srp/settings.html
+#: templates/store/inventory.html
 msgid "Doctrine"
 msgstr "Doctrine"
 
@@ -2133,7 +2134,7 @@ msgstr "승인됨"
 #: apps/impersonation/models.py apps/industry/models.py
 #: apps/mentorship/models.py apps/operations/models.py apps/pingboard/models.py
 #: apps/planetary/models.py apps/raffle/models.py apps/stockpile/models.py
-#: templates/admin_audit/console/mentorship/cohorts.html
+#: apps/store/models.py templates/admin_audit/console/mentorship/cohorts.html
 #: templates/admin_audit/console/mentorship/reward_rules.html
 #: templates/admin_audit/console/mentorship/track_builder.html
 #: templates/admin_audit/console/mentorship/tracks.html
@@ -2257,7 +2258,7 @@ msgstr "보류 중"
 #: apps/command_intel/models.py apps/industry/models.py
 #: apps/onboarding/models.py apps/readiness/models.py
 #: apps/recommendations/models.py apps/skills/models.py
-#: apps/stockpile/models.py apps/tasks/models.py
+#: apps/stockpile/models.py apps/store/models.py apps/tasks/models.py
 #: templates/capsuleer/goal_detail.html templates/stockpile/logistics.html
 msgid "Done"
 msgstr "완료"
@@ -3520,7 +3521,7 @@ msgstr "일시중지"
 #: templates/mentorship/pairing_detail.html
 #: templates/operations/template_form.html
 #: templates/pingboard/alert_detail.html templates/planetary/wizard.html
-#: templates/stockpile/dashboard.html
+#: templates/stockpile/dashboard.html templates/store/order_confirm.html
 msgid "Cancel"
 msgstr "취소"
 
@@ -6307,7 +6308,9 @@ msgstr "계산됨"
 msgid "Unknown (insufficient data)"
 msgstr "알 수 없음 (데이터 부족)"
 
-#: apps/command_intel/models.py templates/recruitment/oauth_begin.html
+#: apps/command_intel/models.py templates/doctrines/ships.html
+#: templates/recruitment/oauth_begin.html templates/store/inventory.html
+#: templates/store/inventory_fit.html
 msgid "Unavailable"
 msgstr "사용 불가"
 
@@ -6334,7 +6337,8 @@ msgstr "검증 중"
 
 #: apps/command_intel/models.py apps/store/models.py
 #: templates/command_intel/_generating.html templates/identity/dashboard.html
-#: templates/readiness/me.html
+#: templates/readiness/me.html templates/store/inventory.html
+#: templates/store/inventory_fit.html
 msgid "Ready"
 msgstr "준비됨"
 
@@ -6344,8 +6348,9 @@ msgstr "준비됨 (제한 모드 — 서술 없음)"
 
 #: apps/command_intel/models.py apps/logistics/models.py
 #: apps/mentorship/models.py apps/onboarding/models.py
-#: apps/recommendations/models.py apps/stockpile/models.py apps/tasks/models.py
-#: templates/command_intel/_coa_card.html templates/store/my_orders.html
+#: apps/recommendations/models.py apps/stockpile/models.py apps/store/models.py
+#: apps/tasks/models.py templates/command_intel/_coa_card.html
+#: templates/store/my_orders.html
 msgid "In progress"
 msgstr "진행 중"
 
@@ -6979,7 +6984,7 @@ msgstr "스킬 계획 시 Corp 수요 가중치."
 #: templates/admin_audit/console/access.html templates/campaigns/close.html
 #: templates/erp/board.html templates/killboard/watchlist_detail.html
 #: templates/mentorship/directory.html templates/mentorship/pairing_detail.html
-#: templates/navigation/beacons.html
+#: templates/navigation/beacons.html templates/store/inventory_fit.html
 msgid "Note"
 msgstr "메모"
 
@@ -7000,7 +7005,7 @@ msgid "Imported"
 msgstr "가져옴"
 
 #: apps/doctrines/models.py apps/mentorship/models.py apps/pingboard/models.py
-#: apps/raffle/models.py
+#: apps/raffle/models.py apps/store/models.py
 msgid "Expired"
 msgstr "만료됨"
 
@@ -7236,6 +7241,7 @@ msgstr "제작 완료"
 #: apps/raffle/models.py apps/store/models.py
 #: templates/admin_audit/console/raffle_draw.html
 #: templates/logistics/contracts.html templates/store/board.html
+#: templates/store/order.html
 msgid "Delivered"
 msgstr "전달됨"
 
@@ -19172,11 +19178,11 @@ msgstr "개인"
 msgid "Estimated"
 msgstr "추정"
 
-#: apps/stockpile/models.py
+#: apps/stockpile/models.py apps/store/models.py
 msgid "Consumed"
 msgstr "소비됨"
 
-#: apps/stockpile/models.py
+#: apps/stockpile/models.py apps/store/models.py
 msgid "Released"
 msgstr "해제됨"
 
@@ -19306,7 +19312,8 @@ msgstr "그것은 함선 선체가 아닙니다."
 msgid ""
 "No build-cost estimate is available for that hull right now — try again "
 "later."
-msgstr "지금은 해당 선체의 제작 비용 추정치가 없습니다 — 나중에 다시 시도하세요."
+msgstr ""
+"지금은 해당 선체의 제작 비용 추정치가 없습니다 — 나중에 다시 시도하세요."
 
 #: apps/store/services.py
 msgid "Confirm deposit paid"
@@ -19331,10 +19338,6 @@ msgstr "진행"
 #: apps/store/views.py
 msgid "Could not place that order."
 msgstr "해당 주문을 등록할 수 없습니다."
-
-#: apps/store/views.py
-msgid "Order placed — it's on the corp fulfilment board."
-msgstr "주문이 등록되었습니다 — corp 이행 보드에 있습니다."
 
 #: apps/store/views.py
 msgid "Pick a hull and a quantity."
@@ -20983,6 +20986,7 @@ msgstr "예: detach"
 #: templates/campaigns/_portfolio_results.html
 #: templates/campaigns/objective_form.html templates/campaigns/report.html
 #: templates/market/dashboard.html templates/stockpile/dashboard.html
+#: templates/store/inventory.html
 msgid "Target"
 msgstr "목표"
 
@@ -21014,6 +21018,7 @@ msgstr "필터"
 #: templates/admin_audit/console/combat_rewards.html
 #: templates/admin_audit/console/raffle_ineligible.html
 #: templates/admin_audit/console/raffle_ledger.html
+#: templates/store/inventory.html
 msgid "Export CSV"
 msgstr "CSV 내보내기"
 
@@ -21625,7 +21630,8 @@ msgstr "킬 ≥"
 #: templates/operations/templates.html templates/pingboard/alert_detail.html
 #: templates/pingboard/calendar.html templates/pingboard/history.html
 #: templates/readiness/dimension.html templates/readiness/simulator.html
-#: templates/stockpile/logistics.html templates/tasks/detail.html
+#: templates/stockpile/logistics.html templates/store/inventory.html
+#: templates/tasks/detail.html
 msgid "Status"
 msgstr "상태"
 
@@ -21800,7 +21806,7 @@ msgstr "올해 지급액"
 #: templates/doctrines/list.html templates/doctrines/ships.html
 #: templates/killboard/_feed.html templates/navigation/gatecamp.html
 #: templates/navigation/roaming.html templates/pingboard/history.html
-#: templates/showcase.html
+#: templates/showcase.html templates/store/inventory.html
 msgid "All"
 msgstr "전체"
 
@@ -21841,6 +21847,7 @@ msgstr "달성"
 #: templates/admin_audit/console/pingboard/channels.html
 #: templates/admin_audit/console/pingboard/templates.html
 #: templates/market/dashboard.html templates/skills/detail.html
+#: templates/store/inventory_fit.html
 msgid "Actions"
 msgstr "작업"
 
@@ -23010,7 +23017,8 @@ msgstr "비활성 임계값"
 #: templates/campaigns/lessons.html templates/campaigns/objective_detail.html
 #: templates/campaigns/portfolio.html templates/campaigns/template_picker.html
 #: templates/corporation/finance.html templates/doctrines/list.html
-#: templates/doctrines/ships.html templates/tasks/detail.html
+#: templates/doctrines/ships.html templates/store/inventory.html
+#: templates/tasks/detail.html
 msgid "Apply"
 msgstr "적용"
 
@@ -23130,6 +23138,7 @@ msgid "Completed when"
 msgstr "완료 조건"
 
 #: templates/admin_audit/console/content.html templates/doctrines/ships.html
+#: templates/store/inventory.html
 msgid "Sort"
 msgstr "정렬"
 
@@ -23312,6 +23321,7 @@ msgstr "세부 정보"
 #: templates/campaigns/form.html templates/capsuleer/goal_form.html
 #: templates/operations/form.html templates/operations/template_form.html
 #: templates/pingboard/compose.html templates/pingboard/history.html
+#: templates/store/inventory.html templates/store/inventory_fit.html
 #: templates/tasks/board.html templates/tasks/detail.html
 msgid "Priority"
 msgstr "우선순위"
@@ -25039,6 +25049,7 @@ msgstr ""
 "며, 여기서는 시작점과 Corp 회피 목록을 설정합니다."
 
 #: templates/admin_audit/console/jump_planner_settings.html
+#: templates/doctrines/ships.html templates/store/inventory.html
 msgid "Availability"
 msgstr "이용 가능 여부"
 
@@ -26584,7 +26595,7 @@ msgstr "마지막 발동"
 #: templates/admin_audit/console/pingboard/channels.html
 #: templates/admin_audit/console/pingboard/templates.html
 #: templates/admin_audit/console/raffle_detail.html
-#: templates/readiness/alerts.html
+#: templates/readiness/alerts.html templates/store/inventory.html
 msgid "State"
 msgstr "상태"
 
@@ -28852,6 +28863,7 @@ msgstr "모든 상태"
 #: templates/campaigns/portfolio.html templates/campaigns/template_picker.html
 #: templates/capsuleer/paths.html templates/doctrines/list.html
 #: templates/market/dashboard.html templates/stockpile/asset_search.html
+#: templates/store/inventory.html
 msgid "Search"
 msgstr "검색"
 
@@ -29055,7 +29067,8 @@ msgstr "아이콘 type id"
 
 #: templates/admin_audit/console/raffle_prizes.html templates/erp/board.html
 #: templates/industry/chain.html templates/industry/create.html
-#: templates/industry/jobs.html templates/store/storefront.html
+#: templates/industry/jobs.html templates/store/inventory_fit.html
+#: templates/store/storefront.html
 msgid "Quantity"
 msgstr "수량"
 
@@ -30018,6 +30031,7 @@ msgid "Detach %(name)s? This unlinks the account and revokes its tokens."
 msgstr "%(name)s을(를) 분리할까요? 계정 연결이 해제되고 토큰이 취소됩니다."
 
 #: templates/admin_audit/console/recovery.html
+#: templates/store/inventory_fit.html
 msgid "Reason (required, audited)"
 msgstr "사유 (필수, 감사 기록됨)"
 
@@ -35672,7 +35686,8 @@ msgstr "최저가 조합"
 msgid "Per-item plan"
 msgstr "항목별 계획"
 
-#: templates/doctrines/supply.html templates/tasks/detail.html
+#: templates/doctrines/supply.html templates/store/inventory.html
+#: templates/store/inventory_fit.html templates/tasks/detail.html
 msgid "Task"
 msgstr "작업"
 
@@ -38509,7 +38524,7 @@ msgid "Nothing off-doctrine."
 msgstr "off-doctrine 항목 없음."
 
 #: templates/killboard/killfeed_config.html templates/readiness/dashboard.html
-#: templates/recommendations/notifications.html
+#: templates/recommendations/notifications.html templates/store/inventory.html
 msgid "Alerts"
 msgstr "알림"
 
@@ -39715,7 +39730,8 @@ msgid "My watchlist"
 msgstr "내 관심 목록"
 
 #: templates/market/dashboard.html templates/stockpile/asset_search.html
-#: templates/stockpile/dashboard.html
+#: templates/stockpile/dashboard.html templates/store/inventory.html
+#: templates/store/inventory_fit.html
 msgid "Location"
 msgstr "위치"
 
@@ -47399,7 +47415,8 @@ msgstr "ESI 적용됨"
 msgid "No corp ESI coverage — manual count is authoritative"
 msgstr "군단 ESI 적용 없음 — 수동 집계가 기준"
 
-#: templates/stockpile/dashboard.html
+#: templates/stockpile/dashboard.html templates/store/inventory.html
+#: templates/store/inventory_fit.html
 msgid "Reserved"
 msgstr "예약됨"
 
@@ -47509,7 +47526,7 @@ msgstr "구매자"
 msgid "Open orders"
 msgstr "미결 주문"
 
-#: templates/store/board.html
+#: templates/store/board.html templates/store/order_confirm.html
 msgid "Deposit"
 msgstr "보증금"
 
@@ -47951,7 +47968,16 @@ msgid ""
 "Jita sell × markup for doctrine ships and sub-capital hulls, estimated build "
 "cost × the class markup for capital and supercapital hulls. Prices are as "
 "fresh as the last market sync; capital freight is approximate."
-msgstr "수요 = 기간 내 군단 함선 손실(killboard)을 주간/월간 비율로 환산. 공급 비용 = <span class=\"text-cyan\">제작</span>(EVE Ref의 전체 작업 비용 기준 선체 — ME 조정 재료 + 설치 수수료 — 또는 API가 가격을 산정할 수 없을 때 로컬 추정, <span class=\"text-cyan\">~est</span>로 표시; 모듈은 Jita에서 구매)과 <span class=\"text-muted\">수입</span>(Jita의 전체 피팅) 중 더 저렴한 쪽에, 군단 요율표 기준 스테이징까지의 jump-freight를 더한 값. 공정 판매가 = 상점 자체 가격: doctrine 함선과 sub-capital 선체는 Jita 판매가 × 마크업, capital 및 supercapital 선체는 추정 제작 비용 × 클래스별 마크업. 가격은 마지막 시장 동기화 시점 기준이며, capital 화물은 근사치입니다."
+msgstr ""
+"수요 = 기간 내 군단 함선 손실(killboard)을 주간/월간 비율로 환산. 공급 비용 "
+"= <span class=\"text-cyan\">제작</span>(EVE Ref의 전체 작업 비용 기준 선체 — "
+"ME 조정 재료 + 설치 수수료 — 또는 API가 가격을 산정할 수 없을 때 로컬 추정, "
+"<span class=\"text-cyan\">~est</span>로 표시; 모듈은 Jita에서 구매)과 <span "
+"class=\"text-muted\">수입</span>(Jita의 전체 피팅) 중 더 저렴한 쪽에, 군단 요"
+"율표 기준 스테이징까지의 jump-freight를 더한 값. 공정 판매가 = 상점 자체 가"
+"격: doctrine 함선과 sub-capital 선체는 Jita 판매가 × 마크업, capital 및 "
+"supercapital 선체는 추정 제작 비용 × 클래스별 마크업. 가격은 마지막 시장 동기"
+"화 시점 기준이며, capital 화물은 근사치입니다."
 
 #: templates/store/supply_forecast.html
 #, python-format
@@ -48079,3 +48105,1282 @@ msgstr "— 할당 해제 (오픈 풀로 반환) —"
 #: tests/test_i18n_activation.py
 msgid "This source string is intentionally never translated"
 msgstr "This source string is intentionally never translated"
+
+#: apps/erp/messages.py
+#, python-format
+msgid "Shipyard restock: %(fit_name)s"
+msgstr "조선소 재보급: %(fit_name)s"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid "The estimated delivery for {ship_name} is now {eta_date}."
+msgstr "{ship_name}의 예상 전달일이 이제 {eta_date}입니다."
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"{quantity}× {ship_name} from a new delivery is now reserved for your order."
+msgstr "새 입고분의 {ship_name} {quantity}척이 주문에 예약되었습니다."
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"Your reserved {ship_name} was released after waiting unclaimed; the order is "
+"now backordered."
+msgstr ""
+"예약된 {ship_name}이(가) 수령되지 않아 예약이 해제되었습니다. 주문은 이제 백"
+"오더 상태입니다."
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid "Back in stock: {ship_name}"
+msgstr "재입고: {ship_name}"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid "{ship_name} can be ordered on the Shipyard again."
+msgstr "{ship_name}을(를) 조선소에서 다시 주문할 수 있습니다."
+
+#: apps/pingboard/messages.py
+msgid "Shipyard restock built"
+msgstr "조선소 재보급 제작 완료"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"Production for {fit_name} finished. Assemble and fit the ships, then record "
+"the receipt on the Shipyard inventory console to release waiting backorders."
+msgstr ""
+"{fit_name} 생산이 완료되었습니다. 함선을 조립하고 피팅한 뒤, 조선소 재고 콘솔"
+"에 입고를 기록하여 대기 중인 백오더를 해소하세요."
+
+#: apps/store/forms.py
+msgid "e.g. built from restock batch #12"
+msgstr "예: 재보급 배치 #12에서 제작"
+
+#: apps/store/models.py
+msgid "Ready for immediate delivery"
+msgstr "즉시 전달 가능"
+
+#: apps/store/models.py
+msgid "Partially reserved, remainder backordered"
+msgstr "일부 예약됨, 나머지는 백오더"
+
+#: apps/store/models.py
+msgid "Buy from an approved supplier"
+msgstr "승인된 공급처에서 구매"
+
+#: apps/store/models.py
+msgid "Accept orders for doctrine ships that are not in stock."
+msgstr "재고가 없는 doctrine 함선의 주문을 접수합니다."
+
+#: apps/store/models.py
+msgid "Default estimated days to fulfil a backorder."
+msgstr "백오더 이행에 걸리는 기본 예상 일수입니다."
+
+#: apps/store/models.py
+msgid "Allow one order to combine reserved stock with a backordered remainder."
+msgstr ""
+"하나의 주문에서 예약된 재고와 백오더 잔여분을 함께 담을 수 있도록 허용합니다."
+
+#: apps/store/models.py
+msgid ""
+"Release reservations of orders nobody has claimed after this many days (0 = "
+"never)."
+msgstr ""
+"이 일수가 지나도록 아무도 수령하지 않은 주문의 예약을 해제합니다 (0 = 해제 "
+"안 함)."
+
+#: apps/store/models.py
+msgid ""
+"Where doctrine ships are stocked and delivered unless a fit overrides it."
+msgstr ""
+"피팅에서 재정의하지 않는 한 doctrine 함선을 보관하고 전달하는 위치입니다."
+
+#: apps/store/models.py
+msgid "Most ships one order may request unless a fit overrides it."
+msgstr ""
+"피팅에서 재정의하지 않는 한 주문 한 건이 요청할 수 있는 최대 함선 수입니다."
+
+#: apps/store/models.py
+msgid "Show 'Limited stock' when this many or fewer ships remain."
+msgstr "남은 함선이 이 수 이하일 때 '재고 한정'을 표시합니다."
+
+#: apps/store/models.py
+msgid ""
+"Keep out-of-stock ships visible on the Shipyard (greyed out) instead of "
+"hiding them."
+msgstr "재고가 없는 함선을 숨기는 대신 조선소에 (회색 처리로) 계속 표시합니다."
+
+#: apps/store/models.py
+msgid "Open the Shipyard filtered to immediately available ships."
+msgstr "조선소를 열 때 즉시 이용 가능한 함선만 필터링해 표시합니다."
+
+#: apps/store/models.py
+msgid "Let pilots join a waitlist for ships that can't be ordered."
+msgstr ""
+"주문할 수 없는 함선에 대해 파일럿이 대기 목록에 등록할 수 있도록 허용합니다."
+
+#: apps/store/models.py
+msgid ""
+"When stock arrives, reserve it for waiting backorders automatically (oldest "
+"first)."
+msgstr "재고가 입고되면 대기 중인 백오더에 자동으로 예약합니다 (오래된 순)."
+
+#: apps/store/models.py
+msgid "Offer this fit for sale on the Shipyard."
+msgstr "이 피팅을 조선소에서 판매합니다."
+
+#: apps/store/models.py
+msgid "Override the corp-wide backorder policy for this fit."
+msgstr "이 피팅에 대해 Corp 전체 백오더 정책을 재정의합니다."
+
+#: apps/store/models.py
+msgid "Override the default backorder lead time (days)."
+msgstr "기본 백오더 리드 타임을 재정의합니다 (일)."
+
+#: apps/store/models.py
+msgid "Override the default delivery location for this fit."
+msgstr "이 피팅의 기본 전달 위치를 재정의합니다."
+
+#: apps/store/models.py
+msgid "Most units allowed on backorder per order for this fit."
+msgstr "이 피팅에서 주문당 백오더로 허용되는 최대 수량입니다."
+
+#: apps/store/models.py
+msgid "Override the maximum quantity per order."
+msgstr "주문당 최대 수량을 재정의합니다."
+
+#: apps/store/models.py
+msgid "Units held back from planning as a strategic reserve."
+msgstr "전략 예비량으로 계획에서 제외해 두는 수량입니다."
+
+#: apps/store/models.py
+msgid "Flag this fit for restocking when available stock falls to this level."
+msgstr "가용 재고가 이 수준까지 떨어지면 이 피팅을 재보급 대상으로 표시합니다."
+
+#: apps/store/models.py
+msgid "How many complete ships the corp aims to keep stocked."
+msgstr "Corp가 재고로 유지하려는 완성 함선 수입니다."
+
+#: apps/store/models.py
+msgid "Fulfilment notes visible to members and officers only."
+msgstr "멤버와 임원에게만 표시되는 이행 메모입니다."
+
+#: apps/store/models.py
+msgid "fit stock entries"
+msgstr "피팅 재고 항목"
+
+#: apps/store/services.py
+msgid "That ship is not offered for sale right now."
+msgstr "해당 함선은 현재 판매 중이 아닙니다."
+
+#: apps/store/services.py
+#, python-format
+msgid "Orders for this ship are limited to %(max)s at a time."
+msgstr "이 함선은 한 번에 %(max)s척까지만 주문할 수 있습니다."
+
+#: apps/store/services.py
+#, python-format
+msgid ""
+"Only %(count)s can be delivered right now and backorders are closed for this "
+"ship."
+msgstr ""
+"지금은 %(count)s척만 전달할 수 있으며 이 함선의 백오더는 마감되었습니다."
+
+#: apps/store/services.py
+msgid "That ship is out of stock and backorders are closed for it."
+msgstr "해당 함선은 재고가 없고 백오더도 마감되었습니다."
+
+#: apps/store/services.py
+#, python-format
+msgid "At most %(max)s of this ship can be backordered per order."
+msgstr "이 함선은 주문당 최대 %(max)s척까지 백오더할 수 있습니다."
+
+#: apps/store/supply.py
+#, python-format
+msgid ""
+"Supply requirement from the Shipyard: %(count)s backordered order(s) for "
+"%(fit)s."
+msgstr "조선소의 보급 요구: %(fit)s에 대한 백오더 주문 %(count)s건."
+
+#: apps/store/supply.py
+#, python-format
+msgid "Supply %(count)s× %(fit)s for the Shipyard"
+msgstr "조선소에 %(fit)s %(count)s척 보급"
+
+#: apps/store/views.py
+#, python-format
+msgid "Order placed — %(ready)s reserved now, %(back)s on backorder."
+msgstr "주문 완료 — %(ready)s척 즉시 예약, %(back)s척 백오더."
+
+#: apps/store/views.py
+msgid "Order placed — your ship is reserved from stock."
+msgstr "주문 완료 — 함선이 재고에서 예약되었습니다."
+
+#: apps/store/views.py
+#, python-format
+msgid "You left the waitlist for %(fit)s."
+msgstr "%(fit)s 대기 목록에서 나왔습니다."
+
+#: apps/store/views.py
+#, python-format
+msgid ""
+"You joined the waitlist for %(fit)s — you'll be pinged when it can be "
+"ordered."
+msgstr "%(fit)s 대기 목록에 등록했습니다 — 주문 가능해지면 알림을 받게 됩니다."
+
+#: apps/store/views.py
+msgid "That order just changed — review it and try again."
+msgstr "주문이 방금 변경되었습니다 — 검토 후 다시 시도하세요."
+
+#: apps/store/views_inventory.py
+#, python-format
+msgid "%(qty)s received — %(n)s backordered order(s) got stock reserved."
+msgstr "%(qty)s척 입고됨 — 백오더 주문 %(n)s건에 재고가 예약되었습니다."
+
+#: apps/store/views_inventory.py
+#, python-format
+msgid "%(qty)s received into stock."
+msgstr "%(qty)s척이 재고로 입고되었습니다."
+
+#: apps/store/views_inventory.py
+msgid ""
+"That balance is below the actively reserved quantity — release or deliver "
+"the reservations first."
+msgstr ""
+"해당 잔액이 현재 예약 중인 수량보다 적습니다 — 먼저 예약을 해제하거나 전달하"
+"세요."
+
+#: apps/store/views_inventory.py
+msgid "No change — balance already matched."
+msgstr "변경 없음 — 잔액이 이미 일치합니다."
+
+#: apps/store/views_inventory.py
+#, python-format
+msgid "%(n)s ship(s) revalidated against the current fit revision."
+msgstr "함선 %(n)s척을 현재 피팅 리비전 기준으로 재검증했습니다."
+
+#: apps/store/views_inventory.py
+#, python-format
+msgid "%(n)s fit(s) are now offered for sale."
+msgstr "피팅 %(n)s개를 판매 등록했습니다."
+
+#: apps/store/views_inventory.py
+#, python-format
+msgid "%(n)s fit(s) withdrawn from sale."
+msgstr "피팅 %(n)s개를 판매에서 철회했습니다."
+
+#: apps/store/views_inventory.py
+msgid "ERP build job queued and linked."
+msgstr "ERP 빌드 작업을 대기열에 추가하고 연결했습니다."
+
+#: templates/admin_audit/console/hub.html
+msgid "Stocked doctrine ships, reservations, backorders and restock needs."
+msgstr "재고 doctrine 함선, 예약, 백오더 및 재보급 수요."
+
+#: templates/admin_audit/console/hub.html
+msgid "Shipyard fulfilment policy"
+msgstr "조선소 이행 정책"
+
+#: templates/admin_audit/console/hub.html
+msgid "Backorders, lead times, reservations and order limits."
+msgstr "백오더, 리드 타임, 예약 및 주문 제한."
+
+#: templates/doctrines/ships.html
+#, python-format
+msgid "Estimated delivery by %(date)s"
+msgstr "%(date)s까지 전달 예상"
+
+#: templates/doctrines/ships.html
+#, python-format
+msgid "%(n)s in stock ready now."
+msgid_plural "%(n)s in stock ready now."
+msgstr[0] "재고 %(n)s척, 즉시 준비됨."
+
+#: templates/doctrines/ships.html
+msgid ""
+"Anything beyond stock is a backorder — you'll see the split and the "
+"estimated delivery before confirming."
+msgstr ""
+"재고를 초과하는 수량은 백오더입니다 — 확정 전에 분할 내역과 예상 전달일을 확"
+"인할 수 있습니다."
+
+#: templates/doctrines/ships.html
+#, python-format
+msgid "Up to %(m)s per order."
+msgid_plural "Up to %(m)s per order."
+msgstr[0] "주문당 최대 %(m)s척."
+
+#: templates/store/inventory.html
+msgid ""
+"Complete fitted doctrine ships: what's stocked, reserved, promised and being "
+"restocked. Every number comes from the same availability service the "
+"Shipyard sells with."
+msgstr ""
+"피팅까지 완료된 doctrine 함선 현황: 재고, 예약, 약속된 수량, 재보급 진행. 모"
+"든 수치는 조선소 판매에 쓰이는 것과 동일한 가용성 서비스에서 나옵니다."
+
+#: templates/store/inventory.html
+msgid "Vehicle"
+msgstr "수단"
+
+#: templates/store/inventory.html
+msgid "At reorder point"
+msgstr "재주문점 도달"
+
+#: templates/store/inventory.html templates/store/inventory_fit.html
+msgid "ATP"
+msgstr "ATP"
+
+#: templates/store/inventory.html
+msgid "Stocked against an older fit revision"
+msgstr "이전 피팅 리비전 기준 재고"
+
+#: templates/store/inventory.html
+msgid "Stock recorded against an older fit revision needs officer revalidation"
+msgstr "이전 피팅 리비전 기준으로 기록된 재고는 임원의 재검증이 필요합니다"
+
+#: templates/store/inventory.html
+msgid "Available stock is at or below the reorder point"
+msgstr "가용 재고가 재주문점 이하입니다"
+
+#: templates/store/inventory.html
+msgid "Available stock is below the safety stock"
+msgstr "가용 재고가 안전 재고보다 적습니다"
+
+#: templates/store/inventory.html
+msgid "safety"
+msgstr "안전"
+
+#: templates/store/inventory.html
+msgid "Offer for sale"
+msgstr "판매 등록"
+
+#: templates/store/inventory_fit.html
+msgid "Stocked complete ships"
+msgstr "재고 완성 함선"
+
+#: templates/store/inventory_fit.html
+msgid ""
+"Stocked before the fit was edited — not counted as available until "
+"revalidated"
+msgstr ""
+"피팅이 수정되기 전에 입고됨 — 재검증 전까지는 가용 재고로 집계되지 않음"
+
+#: templates/store/inventory_fit.html
+msgid "Apply stocktake"
+msgstr "재고 실사 적용"
+
+#: templates/store/inventory_fit.html
+msgid "Confirm these ships match the current fit and count them again"
+msgstr "이 함선들이 현재 피팅과 일치하는지 확인하고 다시 집계합니다"
+
+#: templates/store/inventory_fit.html
+msgid "Receive assembled ships"
+msgstr "조립된 함선 입고"
+
+#: templates/store/inventory_fit.html
+msgid ""
+"Record complete, fitted ships only — hulls or loose modules belong in the "
+"stockpile, not here. Arrivals are reserved for waiting backorders "
+"automatically when the policy allows."
+msgstr ""
+"완성되어 피팅된 함선만 기록하세요 — 선체나 낱개 모듈은 여기가 아니라 비축에 "
+"속합니다. 정책이 허용하면 입고분은 대기 중인 백오더에 자동으로 예약됩니다."
+
+#: templates/store/inventory_fit.html
+msgid "ESI cross-check (advisory)"
+msgstr "ESI 교차 확인 (참고용)"
+
+#: templates/store/inventory_fit.html
+msgid "Recorded complete ships (all revisions)"
+msgstr "기록된 완성 함선 (전체 리비전)"
+
+#: templates/store/inventory_fit.html
+msgid "Hulls the corp asset mirror sees here"
+msgstr "Corp 자산 미러가 이 위치에서 확인한 선체 수"
+
+#: templates/store/inventory_fit.html
+msgid ""
+"Fewer hulls than recorded fitted ships — the manual count is probably stale. "
+"Run a stocktake."
+msgstr ""
+"기록된 피팅 함선보다 선체가 적습니다 — 수동 집계가 오래되었을 가능성이 큽니"
+"다. 재고 실사를 실행하세요."
+
+#: templates/store/inventory_fit.html
+#, python-format
+msgid ""
+"ESI sees hull counts only — it cannot verify fittings, so it bounds the "
+"claim rather than proving it. Last asset sync %(when)s. Manual counts are "
+"never overwritten automatically."
+msgstr ""
+"ESI 는 선체 수만 확인합니다 — 피팅은 검증할 수 없으므로 증명이 아니라 상한선 "
+"역할만 합니다. 마지막 자산 동기화: %(when)s. 수동 집계는 자동으로 덮어써지지 "
+"않습니다."
+
+#: templates/store/inventory_fit.html
+msgid "latest 50"
+msgstr "최근 50건"
+
+#: templates/store/inventory_fit.html
+msgid ""
+"Several orders consolidate into this one need — no duplicate projects or "
+"jobs are created."
+msgstr ""
+"여러 주문이 이 하나의 수요로 통합됩니다 — 중복된 프로젝트나 작업은 만들지 않"
+"습니다."
+
+#: templates/store/inventory_fit.html
+msgid "Offer & stocking policy"
+msgstr "판매 및 재고 정책"
+
+#: templates/store/inventory_fit.html
+msgid ""
+"Blank fields inherit the corp-wide fulfilment policy; a value here overrides "
+"it for this fit only."
+msgstr ""
+"빈 필드는 Corp 전체 이행 정책을 상속합니다. 여기에 값을 입력하면 이 피팅에만 "
+"재정의가 적용됩니다."
+
+#: templates/store/inventory_fit.html
+msgid "allowed,closed"
+msgstr "허용,마감"
+
+#: templates/store/order.html
+#, python-format
+msgid ""
+"Currently held in stock for this order: %(n)s (reservations change when "
+"stock arrives or holds expire)."
+msgstr ""
+"이 주문을 위해 현재 재고에서 확보된 수량: %(n)s (재고가 입고되거나 보류가 만"
+"료되면 예약은 변동됩니다)."
+
+#: templates/store/order.html
+msgid "Estimated delivery (at order time)"
+msgstr "예상 전달일 (주문 시점)"
+
+#: templates/store/order.html
+msgid "Past the current estimate — awaiting an update from the fulfiller."
+msgstr "현재 예상일이 지났습니다 — 이행 담당자의 업데이트를 기다리는 중입니다."
+
+#: templates/store/order.html
+msgid "Revise the delivery estimate"
+msgstr "전달 예상일 수정"
+
+#: templates/store/order.html
+msgid ""
+"The original order-time estimate stays on record; the buyer is notified of "
+"the change."
+msgstr ""
+"주문 시점의 원래 예상일은 기록에 남고, 변경 사항은 구매자에게 알립니다."
+
+#: templates/store/order_confirm.html
+msgid "How this order will be fulfilled"
+msgstr "이 주문의 이행 방식"
+
+#: templates/store/order_confirm.html
+msgid "Reserved from stock — ready now"
+msgstr "재고에서 예약됨 — 지금 바로 가능"
+
+#: templates/store/order_confirm.html
+msgid "Backorder — built or sourced for you"
+msgstr "백오더 — 제작 또는 조달해 드립니다"
+
+#: templates/store/order_confirm.html
+msgid "None — you pay on delivery via in-game contract."
+msgstr "없음 — 인게임 계약으로 전달 시 지불합니다."
+
+#: templates/store/order_confirm.html
+msgid ""
+"One delivery, when the whole order is ready (the backordered part sets the "
+"date)."
+msgstr ""
+"주문 전체가 준비되면 한 번에 전달합니다 (백오더 부분이 날짜를 결정합니다)."
+
+#: templates/store/order_confirm.html
+msgid ""
+"Estimates are not guarantees. Quantities can shift if someone orders first — "
+"the split is re-checked the moment you confirm, and anything no longer in "
+"stock becomes part of the backorder."
+msgstr ""
+"예상일은 보장이 아닙니다. 다른 사람이 먼저 주문하면 수량이 달라질 수 있습니"
+"다 — 확정하는 순간 분할 내역을 다시 확인하며, 재고가 소진된 수량은 백오더로 "
+"전환됩니다."
+
+#: templates/store/order_confirm.html
+#, python-format
+msgid ""
+"I understand %(n)s ship is a backorder with an estimated (not guaranteed) "
+"delivery date."
+msgid_plural ""
+"I understand %(n)s ships are backorders with an estimated (not guaranteed) "
+"delivery date."
+msgstr[0] "함선 %(n)s척이 백오더이며 전달일은 보장이 아닌 예상임을 이해합니다."
+
+#: templates/store/order_confirm.html
+#, python-format
+msgid "Or take just the %(n)s that is ready now"
+msgid_plural "Or take just the %(n)s that are ready now"
+msgstr[0] "또는 지금 준비된 %(n)s척만 받기"
+
+#: templates/store/order_confirm.html
+msgid "Order ready stock only"
+msgstr "준비된 재고만 주문"
+
+#: templates/store/shipyard_policy.html
+msgid ""
+"Corp-wide defaults for doctrine-ship availability: backorders, lead times, "
+"reservations, order limits and what buyers see. Individual fits can override "
+"any of these on the inventory console."
+msgstr ""
+"doctrine 함선 가용성에 대한 Corp 전체 기본값: 백오더, 리드 타임, 예약, 주문 "
+"제한 및 구매자에게 표시되는 내용. 개별 피팅은 재고 콘솔에서 이 값들을 재정의"
+"할 수 있습니다."
+
+#: templates/store/shipyard_policy.html
+msgid "Accept backorders"
+msgstr "백오더 접수"
+
+#: templates/store/shipyard_policy.html
+msgid "Off: out-of-stock ships can't be ordered at all."
+msgstr "끄면 재고가 없는 함선은 아예 주문할 수 없습니다."
+
+#: templates/store/shipyard_policy.html
+msgid "The estimated delivery shown for a fresh backorder."
+msgstr "새 백오더에 표시되는 예상 전달일입니다."
+
+#: templates/store/shipyard_policy.html
+msgid "Allow split orders"
+msgstr "분할 주문 허용"
+
+#: templates/store/shipyard_policy.html
+msgid "One order may combine reserved stock with a backordered remainder."
+msgstr "하나의 주문이 예약된 재고와 백오더 잔여분을 함께 담을 수 있습니다."
+
+#: templates/store/shipyard_policy.html
+msgid ""
+"Where doctrine ships are stocked and handed over, unless a fit overrides it."
+msgstr ""
+"피팅에서 재정의하지 않는 한 doctrine 함선을 보관하고 인도하는 위치입니다."
+
+#: templates/store/shipyard_policy.html
+msgid ""
+"Release the hold on orders nobody claimed after this many days. 0 keeps "
+"holds forever."
+msgstr ""
+"이 일수가 지나도록 아무도 수령하지 않은 주문의 보류를 해제합니다. 0이면 보류"
+"를 계속 유지합니다."
+
+#: templates/store/shipyard_policy.html
+msgid "Auto-allocate arrivals"
+msgstr "입고분 자동 배정"
+
+#: templates/store/shipyard_policy.html
+msgid ""
+"New stock is reserved for waiting backorders automatically, oldest first."
+msgstr "새 재고는 대기 중인 백오더에 오래된 순으로 자동 예약됩니다."
+
+#: templates/store/shipyard_policy.html
+msgid "'Limited stock' threshold"
+msgstr "'재고 한정' 임계값"
+
+#: templates/store/shipyard_policy.html
+msgid "At or below this many remaining, cards warn about limited stock."
+msgstr "남은 수량이 이 값 이하이면 카드에 재고 한정 경고가 표시됩니다."
+
+#: templates/store/shipyard_policy.html
+msgid "Off hides ships that can't currently be ordered."
+msgstr "끄면 현재 주문할 수 없는 함선을 숨깁니다."
+
+#: templates/store/shipyard_policy.html
+msgid "Open the Shipyard pre-filtered to ships available now."
+msgstr "조선소를 열 때 지금 이용 가능한 함선만 미리 필터링합니다."
+
+#: templates/store/shipyard_policy.html
+msgid "Pilots can ask to be pinged when an unavailable ship returns."
+msgstr ""
+"이용 불가한 함선이 다시 돌아오면 파일럿이 알림을 받도록 요청할 수 있습니다."
+
+#: apps/pingboard/messages.py
+msgid "Order update: New delivery estimate"
+msgstr "주문 업데이트: 새 전달 예상일"
+
+#: apps/pingboard/messages.py
+msgid "Order update: Stock reserved"
+msgstr "주문 업데이트: 재고 예약됨"
+
+#: apps/pingboard/messages.py
+msgid "Order update: Reservation released"
+msgstr "주문 업데이트: 예약 해제됨"
+
+#: apps/store/forms.py
+msgid "Why the balance is being corrected"
+msgstr "잔액을 보정하는 이유"
+
+#: apps/store/forms.py
+msgid "What changed (shown to the buyer)"
+msgstr "변경 내용 (구매자에게 표시)"
+
+#: apps/store/models.py
+msgid "Limited stock"
+msgstr "재고 한정"
+
+#: apps/store/models.py
+msgid "Available on backorder"
+msgstr "백오더로 주문 가능"
+
+#: apps/store/models.py templates/doctrines/ships.html
+msgid "Temporarily unavailable"
+msgstr "일시적으로 이용 불가"
+
+#: apps/store/models.py
+msgid "Not offered for sale"
+msgstr "판매하지 않음"
+
+#: apps/store/models.py templates/store/order.html
+msgid "Reserved from stock"
+msgstr "재고에서 예약됨"
+
+#: apps/store/models.py templates/store/inventory.html
+#: templates/store/order.html
+msgid "Backordered"
+msgstr "백오더 상태"
+
+#: apps/store/models.py
+msgid "Use stocked ships"
+msgstr "재고 함선 사용"
+
+#: apps/store/models.py
+msgid "Build locally"
+msgstr "현지 제작"
+
+#: apps/store/models.py
+msgid "Import from Jita"
+msgstr "Jita 시장에서 수입"
+
+#: apps/store/models.py
+msgid "Choose build or buy automatically"
+msgstr "제작 또는 구매 자동 선택"
+
+#: apps/store/models.py
+msgid "shipyard policy"
+msgstr "조선소 정책"
+
+#: apps/store/models.py
+msgid "shipyard policies"
+msgstr "조선소 정책"
+
+#: apps/store/models.py
+msgid "Shown to buyers on the Shipyard card."
+msgstr "조선소 카드에서 구매자에게 표시됩니다."
+
+#: apps/store/models.py
+msgid "Higher = restock sooner."
+msgstr "높을수록 = 더 빨리 재보급."
+
+#: apps/store/models.py
+msgid "Stock received"
+msgstr "재고 입고"
+
+#: apps/store/models.py
+msgid "Manual adjustment"
+msgstr "수동 조정"
+
+#: apps/store/models.py
+msgid "Delivered to buyer"
+msgstr "구매자에게 전달됨"
+
+#: apps/store/models.py
+msgid "Reconciliation"
+msgstr "잔액 보정"
+
+#: apps/store/models.py
+msgid "Fit revision revalidated"
+msgstr "피팅 리비전 재검증됨"
+
+#: apps/store/models.py
+msgid "fit waitlist entries"
+msgstr "피팅 대기 목록 항목"
+
+#: apps/store/services.py
+msgid "Pick a quantity of at least 1."
+msgstr "수량은 1 이상으로 선택하세요."
+
+#: apps/store/services.py
+msgid ""
+"No reliable price is available for that fit right now — try again later."
+msgstr ""
+"지금은 해당 피팅의 신뢰할 수 있는 가격이 없습니다 — 나중에 다시 시도하세요."
+
+#: apps/store/supply.py
+#, python-format
+msgid "Restock %(fit)s"
+msgstr "%(fit)s 재보급"
+
+#: apps/store/views.py
+msgid "That order is closed."
+msgstr "그 주문은 마감되었습니다."
+
+#: apps/store/views.py
+msgid "Pick a valid estimated delivery date."
+msgstr "유효한 예상 전달일을 선택하세요."
+
+#: apps/store/views.py
+msgid "Estimated delivery updated — the buyer was notified."
+msgstr "예상 전달일을 업데이트했습니다 — 구매자에게 알림을 보냈습니다."
+
+#: apps/store/views.py
+msgid "The waitlist is not enabled."
+msgstr "대기 목록이 활성화되지 않았습니다."
+
+#: apps/store/views_inventory.py
+msgid "Offer settings saved."
+msgstr "판매 설정을 저장했습니다."
+
+#: apps/store/views_inventory.py
+msgid "Pick a location and a positive quantity."
+msgstr "위치와 양수 수량을 선택하세요."
+
+#: apps/store/views_inventory.py
+msgid "A corrected balance and a reason are required."
+msgstr "보정할 잔액과 사유가 모두 필요합니다."
+
+#: apps/store/views_inventory.py
+msgid "Invalid adjustment."
+msgstr "유효하지 않은 조정입니다."
+
+#: apps/store/views_inventory.py
+msgid "Stock adjusted."
+msgstr "재고를 조정했습니다."
+
+#: apps/store/views_inventory.py
+msgid "Nothing to revalidate on that row."
+msgstr "해당 행에는 재검증할 항목이 없습니다."
+
+#: apps/store/views_inventory.py
+msgid "Select at least one fit and a bulk action."
+msgstr "피팅 하나 이상과 일괄 작업을 선택하세요."
+
+#: apps/store/views_inventory.py
+msgid "Shipyard policy updated."
+msgstr "조선소 정책을 업데이트했습니다."
+
+#: apps/store/views_inventory.py
+msgid "That supply need is closed."
+msgstr "해당 보급 수요는 마감되었습니다."
+
+#: apps/store/views_inventory.py
+#, python-format
+msgid "Industry project “%(name)s” is linked."
+msgstr "산업 프로젝트 “%(name)s”이(가) 연결되었습니다."
+
+#: apps/store/views_inventory.py
+msgid "Claimable task created and linked."
+msgstr "맡을 수 있는 작업을 생성하여 연결했습니다."
+
+#: templates/admin_audit/console/hub.html
+msgid "Shipyard inventory"
+msgstr "조선소 재고"
+
+#: templates/doctrines/ships.html
+msgid "Available now"
+msgstr "지금 이용 가능"
+
+#: templates/doctrines/ships.html templates/store/board.html
+#: templates/store/inventory.html templates/store/inventory_fit.html
+msgid "Backorder"
+msgstr "백오더"
+
+#: templates/doctrines/ships.html templates/store/inventory_fit.html
+#: templates/store/order_confirm.html
+msgid "Delivery location"
+msgstr "전달 위치"
+
+#: templates/doctrines/ships.html
+msgid "Any location"
+msgstr "모든 위치"
+
+#: templates/doctrines/ships.html
+msgid "Fastest delivery"
+msgstr "가장 빠른 전달"
+
+#: templates/doctrines/ships.html templates/store/order_confirm.html
+msgid "Price"
+msgstr "가격"
+
+#: templates/doctrines/ships.html
+#, python-format
+msgid "%(n)s ready for delivery"
+msgid_plural "%(n)s ready for delivery"
+msgstr[0] "%(n)s척 전달 준비 완료"
+
+#: templates/doctrines/ships.html
+#, python-format
+msgid "Only %(n)s remaining"
+msgid_plural "Only %(n)s remaining"
+msgstr[0] "%(n)s척만 남음"
+
+#: templates/doctrines/ships.html
+msgid "Backorder available"
+msgstr "백오더 가능"
+
+#: templates/doctrines/ships.html
+msgid "Not currently offered"
+msgstr "현재 판매하지 않음"
+
+#: templates/doctrines/ships.html
+#, python-format
+msgid "Delivers at %(name)s"
+msgstr "%(name)s에서 전달"
+
+#: templates/doctrines/ships.html
+msgid "Join waitlist"
+msgstr "대기 목록 등록"
+
+#: templates/doctrines/ships.html
+msgid "Ordering closed"
+msgstr "주문 마감"
+
+#: templates/store/board.html templates/store/my_orders.html
+#, python-format
+msgid "%(n)s reserved"
+msgstr "%(n)s척 예약됨"
+
+#: templates/store/board.html
+#, python-format
+msgid "%(n)s to build"
+msgstr "%(n)s척 제작 필요"
+
+#: templates/store/board.html
+msgid "Reserved stock"
+msgstr "예약된 재고"
+
+#: templates/store/board.html
+#, python-format
+msgid "est. %(date)s"
+msgstr "예상 %(date)s"
+
+#: templates/store/inventory.html
+msgid "Shipyard Inventory"
+msgstr "조선소 재고"
+
+#: templates/store/inventory.html templates/store/shipyard_policy.html
+msgid "Shipyard · Leadership"
+msgstr "조선소 · 리더십"
+
+#: templates/store/inventory.html templates/store/inventory_fit.html
+#: templates/store/shipyard_policy.html
+msgid "Inventory console"
+msgstr "재고 콘솔"
+
+#: templates/store/inventory.html templates/store/shipyard_policy.html
+msgid "Fulfilment policy"
+msgstr "이행 정책"
+
+#: templates/store/inventory.html
+msgid "Open supply needs"
+msgstr "미결 보급 수요"
+
+#: templates/store/inventory.html
+msgid "Fit"
+msgstr "피팅"
+
+#: templates/store/inventory.html
+msgid "Needed"
+msgstr "필요 수량"
+
+#: templates/store/inventory.html templates/store/inventory_fit.html
+msgid "Required by"
+msgstr "필요 기한"
+
+#: templates/store/inventory.html
+msgid "Project"
+msgstr "프로젝트"
+
+#: templates/store/inventory.html
+msgid "Build job"
+msgstr "빌드 작업"
+
+#: templates/store/inventory.html
+msgid "none yet"
+msgstr "아직 없음"
+
+#: templates/store/inventory.html
+msgid "Fit, ship or doctrine"
+msgstr "피팅, 함선 또는 doctrine"
+
+#: templates/store/inventory.html
+msgid "Needs revalidation"
+msgstr "재검증 필요"
+
+#: templates/store/inventory.html
+msgid "Below safety stock"
+msgstr "안전 재고 미만"
+
+#: templates/store/inventory.html templates/store/inventory_fit.html
+msgid "Available to promise"
+msgstr "약속 가능 수량"
+
+#: templates/store/inventory.html
+msgid "Days of cover"
+msgstr "커버 일수"
+
+#: templates/store/inventory.html
+#, python-format
+msgid "%(n)s offer"
+msgid_plural "%(n)s offers"
+msgstr[0] "판매 항목 %(n)s개"
+
+#: templates/store/inventory.html
+msgid "Select"
+msgstr "선택"
+
+#: templates/store/inventory.html templates/store/inventory_fit.html
+msgid "On hand"
+msgstr "보유"
+
+#: templates/store/inventory.html templates/store/inventory_fit.html
+msgid "Incoming"
+msgstr "입고 예정"
+
+#: templates/store/inventory.html
+msgid "Cover (d)"
+msgstr "커버(일)"
+
+#: templates/store/inventory.html
+msgid "Lead (d)"
+msgstr "리드(일)"
+
+#: templates/store/inventory.html
+#, python-format
+msgid "Select %(name)s"
+msgstr "%(name)s 선택"
+
+#: templates/store/inventory.html templates/store/inventory_fit.html
+msgid "Limited"
+msgstr "한정"
+
+#: templates/store/inventory.html templates/store/inventory_fit.html
+msgid "Not offered"
+msgstr "판매 안 함"
+
+#: templates/store/inventory.html
+msgid "No delivery location configured"
+msgstr "전달 위치가 설정되지 않음"
+
+#: templates/store/inventory.html
+msgid "revalidate"
+msgstr "재검증"
+
+#: templates/store/inventory.html
+msgid "reorder"
+msgstr "재주문"
+
+#: templates/store/inventory.html
+msgid "Pilots waiting for this ship"
+msgstr "이 함선을 기다리는 파일럿"
+
+#: templates/store/inventory.html
+msgid "No offers match these filters."
+msgstr "이 필터와 일치하는 판매 항목이 없습니다."
+
+#: templates/store/inventory.html
+msgid "With selected:"
+msgstr "선택 항목에 적용:"
+
+#: templates/store/inventory.html
+msgid "Withdraw from sale"
+msgstr "판매 철회"
+
+#: templates/store/inventory_fit.html
+msgid "Fit inventory"
+msgstr "피팅 재고"
+
+#: templates/store/inventory_fit.html
+msgid "Pilots on the waitlist"
+msgstr "대기 목록의 파일럿"
+
+#: templates/store/inventory_fit.html
+msgid "Fit revision"
+msgstr "피팅 리비전"
+
+#: templates/store/inventory_fit.html
+msgid "Last stocktake"
+msgstr "마지막 재고 실사"
+
+#: templates/store/inventory_fit.html
+msgid "current"
+msgstr "현재"
+
+#: templates/store/inventory_fit.html
+msgid "older revision"
+msgstr "이전 리비전"
+
+#: templates/store/inventory_fit.html
+msgid "Adjust"
+msgstr "조정"
+
+#: templates/store/inventory_fit.html
+msgid "Counted balance"
+msgstr "실사 잔액"
+
+#: templates/store/inventory_fit.html
+msgid "Revalidate"
+msgstr "재검증"
+
+#: templates/store/inventory_fit.html
+msgid "No complete ships recorded yet — use the receipt form to stock some."
+msgstr "아직 기록된 완성 함선이 없습니다 — 입고 양식으로 재고를 등록하세요."
+
+#: templates/store/inventory_fit.html
+msgid "Receive"
+msgstr "입고"
+
+#: templates/store/inventory_fit.html
+msgid ""
+"The corp asset mirror has no data for this location (no Director token or "
+"unreadable structure) — the manual stocktake is the only source of truth "
+"here."
+msgstr ""
+"Corp 자산 미러에 이 위치의 데이터가 없습니다 (디렉터 토큰 없음 또는 구조물 판"
+"독 불가) — 여기서는 수동 재고 실사가 유일한 기준입니다."
+
+#: templates/store/inventory_fit.html
+msgid "Adjustment history"
+msgstr "조정 기록"
+
+#: templates/store/inventory_fit.html
+msgid "Balance after"
+msgstr "변동 후 잔액"
+
+#: templates/store/inventory_fit.html
+msgid "No stock movements yet."
+msgstr "아직 재고 변동이 없습니다."
+
+#: templates/store/inventory_fit.html
+msgid "Supply need"
+msgstr "보급 수요"
+
+#: templates/store/inventory_fit.html
+msgid "Net requirement"
+msgstr "순 소요량"
+
+#: templates/store/inventory_fit.html
+msgid "Industry project"
+msgstr "산업 프로젝트"
+
+#: templates/store/inventory_fit.html
+msgid "ERP build job"
+msgstr "ERP 빌드 작업"
+
+#: templates/store/inventory_fit.html
+msgid "Create industry project"
+msgstr "산업 프로젝트 생성"
+
+#: templates/store/inventory_fit.html
+msgid "Queue ERP build job"
+msgstr "ERP 빌드 작업 대기열 추가"
+
+#: templates/store/inventory_fit.html
+msgid "Create claimable task"
+msgstr "맡을 수 있는 작업 생성"
+
+#: templates/store/inventory_fit.html
+msgid "No open backorder demand for this fit."
+msgstr "이 피팅에 대한 미결 백오더 수요가 없습니다."
+
+#: templates/store/inventory_fit.html
+msgid "Offered for sale"
+msgstr "판매 중"
+
+#: templates/store/inventory_fit.html templates/store/shipyard_policy.html
+msgid "Backorders"
+msgstr "백오더"
+
+#: templates/store/inventory_fit.html
+#, python-format
+msgid "Inherits: %(v)s"
+msgstr "상속: %(v)s"
+
+#: templates/store/inventory_fit.html
+msgid "Lead time (days)"
+msgstr "리드 타임 (일)"
+
+#: templates/store/inventory_fit.html
+msgid "Max per order"
+msgstr "주문당 최대"
+
+#: templates/store/inventory_fit.html
+msgid "Max backorder per order"
+msgstr "주문당 최대 백오더"
+
+#: templates/store/inventory_fit.html
+msgid "Safety stock"
+msgstr "안전 재고"
+
+#: templates/store/inventory_fit.html
+msgid "Reorder point"
+msgstr "재주문점"
+
+#: templates/store/inventory_fit.html
+msgid "Target stock"
+msgstr "목표 재고"
+
+#: templates/store/inventory_fit.html
+msgid "Preferred fulfilment"
+msgstr "선호 이행 방식"
+
+#: templates/store/inventory_fit.html
+msgid "Note shown to buyers"
+msgstr "구매자에게 표시되는 메모"
+
+#: templates/store/inventory_fit.html
+msgid "Internal fulfilment note"
+msgstr "내부 이행 메모"
+
+#: templates/store/inventory_fit.html
+msgid "Save offer settings"
+msgstr "판매 설정 저장"
+
+#: templates/store/inventory_fit.html
+#, python-format
+msgid "Last changed by %(who)s · %(when)s"
+msgstr "마지막 변경: %(who)s · %(when)s"
+
+#: templates/store/inventory_fit.html
+msgid "Open orders for this fit"
+msgstr "이 피팅의 미결 주문"
+
+#: templates/store/inventory_fit.html
+#, python-format
+msgid "%(n)s backordered"
+msgstr "%(n)s척 백오더"
+
+#: templates/store/inventory_fit.html
+msgid "No open orders."
+msgstr "미결 주문이 없습니다."
+
+#: templates/store/my_orders.html
+#, python-format
+msgid "%(n)s on backorder"
+msgstr "%(n)s척 백오더 중"
+
+#: templates/store/my_orders.html
+#, python-format
+msgid "estimated %(date)s"
+msgstr "예상 %(date)s"
+
+#: templates/store/order.html
+msgid "Availability at order time"
+msgstr "주문 시점 가용성"
+
+#: templates/store/order.html
+msgid "Current estimate"
+msgstr "현재 예상일"
+
+#: templates/store/order.html
+msgid "Ready since"
+msgstr "준비 완료 시점"
+
+#: templates/store/order.html
+msgid "New estimated date"
+msgstr "새 예상일"
+
+#: templates/store/order.html
+msgid "Reason (shown to the buyer)"
+msgstr "사유 (구매자에게 표시)"
+
+#: templates/store/order.html
+msgid "Update estimate"
+msgstr "예상일 업데이트"
+
+#: templates/store/order_confirm.html
+msgid "Confirm order"
+msgstr "주문 확정"
+
+#: templates/store/order_confirm.html
+msgid "Back to the Shipyard"
+msgstr "조선소로 돌아가기"
+
+#: templates/store/order_confirm.html
+msgid "Confirm your order"
+msgstr "주문을 확정하세요"
+
+#: templates/store/order_confirm.html
+msgid "Estimated delivery"
+msgstr "예상 전달일"
+
+#: templates/store/order_confirm.html
+#, python-format
+msgid "about %(n)s day"
+msgid_plural "about %(n)s days"
+msgstr[0] "약 %(n)s일"
+
+#: templates/store/order_confirm.html
+msgid "each"
+msgstr "척당"
+
+#: templates/store/order_confirm.html
+msgid "Delivery"
+msgstr "전달"
+
+#: templates/store/order_confirm.html
+#, python-format
+msgid "Confirm order of %(n)s"
+msgstr "%(n)s척 주문 확정"
+
+#: templates/store/order_confirm.html
+#, python-format
+msgid "%(n)s is available right now"
+msgid_plural "%(n)s are available right now"
+msgstr[0] "지금 %(n)s척 이용 가능"
+
+#: templates/store/order_confirm.html
+msgid "Order what's available"
+msgstr "가능한 수량만 주문"
+
+#: templates/store/shipyard_policy.html
+msgid "Shipyard Policy"
+msgstr "조선소 정책"
+
+#: templates/store/shipyard_policy.html
+msgid "Default lead time (days)"
+msgstr "기본 리드 타임 (일)"
+
+#: templates/store/shipyard_policy.html
+msgid "Stock & reservations"
+msgstr "재고 및 예약"
+
+#: templates/store/shipyard_policy.html
+msgid "Default delivery location"
+msgstr "기본 전달 위치"
+
+#: templates/store/shipyard_policy.html
+msgid "Reservation expiry (days)"
+msgstr "예약 만료 (일)"
+
+#: templates/store/shipyard_policy.html
+msgid "Shop front"
+msgstr "매장"
+
+#: templates/store/shipyard_policy.html
+msgid "Maximum per order"
+msgstr "주문당 최대 수량"
+
+#: templates/store/shipyard_policy.html
+msgid "Show unavailable ships"
+msgstr "이용 불가 함선 표시"
+
+#: templates/store/shipyard_policy.html
+msgid "Default to available only"
+msgstr "기본으로 이용 가능만 표시"
+
+#: templates/store/shipyard_policy.html
+msgid "Waitlist"
+msgstr "대기 목록"
+
+#: templates/store/shipyard_policy.html
+msgid "Save policy"
+msgstr "정책 저장"
