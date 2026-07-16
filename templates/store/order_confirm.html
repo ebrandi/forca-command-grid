@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% load eve i18n %}
+{% block title %}{% translate "Confirm order" %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+
+<a href="{% url 'doctrines:ships' %}" class="text-xs text-faint hover:text-gold">← {% translate "Back to the Shipyard" %}</a>
+
+<header class="mb-5 mt-3 flex items-center gap-3">
+  <img src="{% eve_type_render fit.ship_type_id 64 %}" alt="" class="h-14 w-14 rounded-md bg-space object-cover ring-1 ring-line">
+  <div>
+    <p class="eyebrow">{% translate "Confirm your order" %}</p>
+    <h1 class="text-2xl font-bold text-ink">{{ fit.name }} ×{{ quantity }}</h1>
+    <p class="text-sm text-faint">{{ fit.doctrine.name }}</p>
+  </div>
+</header>
+
+<div class="grid max-w-3xl gap-5">
+  <div class="panel p-4 text-sm">
+    <h2 class="eyebrow mb-3">{% translate "How this order will be fulfilled" %}</h2>
+
+    {% if placement.error %}
+    <div class="mb-3 rounded-md border border-loss/40 bg-loss/10 px-3 py-2 text-loss" role="alert">{{ placement.error }}</div>
+    {% endif %}
+
+    <div class="space-y-2">
+      {% if placement.ready_quantity > 0 and not placement.error %}
+      <div class="flex items-center justify-between rounded-md border border-win/30 bg-win/5 px-3 py-2">
+        <span class="inline-flex items-center gap-1.5 text-win"><svg class="h-4 w-4" aria-hidden="true"><use href="#i-check"/></svg> {% translate "Reserved from stock — ready now" %}</span>
+        <span class="data font-semibold text-ink">×{{ placement.ready_quantity }}</span>
+      </div>
+      {% endif %}
+      {% if placement.backordered_quantity > 0 %}
+      <div class="flex items-center justify-between rounded-md border border-cyan/30 bg-cyan/5 px-3 py-2">
+        <span class="inline-flex items-center gap-1.5 text-cyan"><svg class="h-4 w-4" aria-hidden="true"><use href="#i-calendar"/></svg> {% translate "Backorder — built or sourced for you" %}</span>
+        <span class="data font-semibold text-ink">×{{ placement.backordered_quantity }}</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <dl class="mt-4 space-y-1 text-sm">
+      {% if placement.backordered_quantity > 0 %}
+      <div class="flex justify-between"><dt class="text-faint">{% translate "Estimated delivery" %}</dt>
+        <dd class="text-muted">{% blocktranslate count n=placement.lead_days %}about {{ n }} day{% plural %}about {{ n }} days{% endblocktranslate %}</dd></div>
+      {% endif %}
+      {% if placement.location %}
+      <div class="flex justify-between"><dt class="text-faint">{% translate "Delivery location" %}</dt><dd class="text-muted">{{ placement.location.name }}</dd></div>
+      {% endif %}
+      {% if unit_price %}
+      <div class="flex justify-between"><dt class="text-faint">{% translate "Price" %}</dt>
+        <dd class="data text-gold">{{ unit_price|isk }} {% translate "each" %}</dd></div>
+      {% endif %}
+      <div class="flex justify-between"><dt class="text-faint">{% translate "Deposit" %}</dt><dd class="text-muted">{% translate "None — you pay on delivery via in-game contract." %}</dd></div>
+      {% if placement.ready_quantity > 0 and placement.backordered_quantity > 0 %}
+      <div class="flex justify-between"><dt class="text-faint">{% translate "Delivery" %}</dt><dd class="text-muted">{% translate "One delivery, when the whole order is ready (the backordered part sets the date)." %}</dd></div>
+      {% endif %}
+    </dl>
+
+    <p class="mt-3 text-[11px] text-faint">{% translate "Estimates are not guarantees. Quantities can shift if someone orders first — the split is re-checked the moment you confirm, and anything no longer in stock becomes part of the backorder." %}</p>
+  </div>
+
+  <div class="flex flex-wrap gap-2">
+    {% if placement.backordered_quantity > 0 and placement.backorders_allowed %}
+    <form method="post" action="{% url 'store:order_fit' %}" class="panel flex flex-1 flex-wrap items-center justify-between gap-3 p-4">
+      {% csrf_token %}
+      <input type="hidden" name="fit_id" value="{{ fit.pk }}">
+      <input type="hidden" name="quantity" value="{{ quantity }}">
+      <input type="hidden" name="notes" value="{{ notes }}">
+      {% if not placement.partial_allowed and placement.ready_quantity > 0 %}<input type="hidden" name="force_backorder" value="1">{% endif %}
+      <label class="flex items-start gap-2 text-sm text-muted">
+        <input type="checkbox" name="acknowledge_backorder" value="1" required class="mt-0.5">
+        <span>{% blocktranslate count n=placement.backordered_quantity %}I understand {{ n }} ship is a backorder with an estimated (not guaranteed) delivery date.{% plural %}I understand {{ n }} ships are backorders with an estimated (not guaranteed) delivery date.{% endblocktranslate %}</span>
+      </label>
+      <button type="submit" class="btn-gold">{% blocktranslate with n=quantity %}Confirm order of {{ n }}{% endblocktranslate %}</button>
+    </form>
+    {% endif %}
+    {% if placement.ready_quantity > 0 and placement.backordered_quantity > 0 %}
+    <form method="post" action="{% url 'store:order_fit' %}" class="panel flex items-center justify-between gap-3 p-4">
+      {% csrf_token %}
+      <input type="hidden" name="fit_id" value="{{ fit.pk }}">
+      <input type="hidden" name="quantity" value="{{ placement.ready_quantity }}">
+      <input type="hidden" name="notes" value="{{ notes }}">
+      <span class="text-sm text-muted">{% blocktranslate count n=placement.ready_quantity %}Or take just the {{ n }} that is ready now{% plural %}Or take just the {{ n }} that are ready now{% endblocktranslate %}</span>
+      <button type="submit" class="btn-ghost">{% translate "Order ready stock only" %}</button>
+    </form>
+    {% endif %}
+    {% if placement.error and placement.ready_quantity > 0 and not placement.backorders_allowed %}
+    <form method="post" action="{% url 'store:order_fit' %}" class="panel flex items-center justify-between gap-3 p-4">
+      {% csrf_token %}
+      <input type="hidden" name="fit_id" value="{{ fit.pk }}">
+      <input type="hidden" name="quantity" value="{{ placement.atp }}">
+      <input type="hidden" name="notes" value="{{ notes }}">
+      <span class="text-sm text-muted">{% blocktranslate count n=placement.atp %}{{ n }} is available right now{% plural %}{{ n }} are available right now{% endblocktranslate %}</span>
+      <button type="submit" class="btn-gold">{% translate "Order what's available" %}</button>
+    </form>
+    {% endif %}
+    <a href="{% url 'doctrines:ships' %}" class="btn-ghost self-center">{% translate "Cancel" %}</a>
+  </div>
+</div>
+{% endblock %}

@@ -9,6 +9,31 @@ project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 
 ### Added
 
+- **Shipyard availability, reservations and backorders** — the Shipyard no longer
+  presents every doctrine ship as immediately available. Complete fitted ships are now
+  tracked per fit and delivery location in a ledger-backed inventory (every movement is
+  an immutable, attributed entry), and each card shows an honest, accessible state:
+  ready for delivery (with the count), limited stock, available on backorder with an
+  estimated delivery date, temporarily unavailable, or not offered. Ordering reserves
+  real stock under database row locks — two pilots can never oversell the last ship —
+  and anything beyond stock becomes a backorder the buyer explicitly acknowledges on a
+  confirm page that disclosed the split and the estimate first. Order-time availability,
+  split quantities, delivery location, fit revision and the promised date are frozen on
+  the order for audit; cancellations release the hold, delivery consumes it exactly
+  once, and a leadership-configurable sweep can expire holds nobody claims. Backorders
+  consolidate into one supply need per fit and location, which officers turn into an
+  Industry Project (finally wiring the store→industry link), an ERP build job, or a
+  claimable task — production completion pings the officers to assemble and receipt the
+  ships, which auto-allocates them to waiting orders oldest-first and can notify a
+  waitlist. New officer surfaces: a **Shipyard inventory console**
+  (`/store/inventory/`) with search, filters, bulk offer control, CSV export, audited
+  stocktakes with mandatory reasons, an advisory ESI hull cross-check, and per-fit
+  policy overrides with visible inheritance; and a **Shipyard fulfilment policy** page
+  (`/store/inventory/policy/`) for backorders, lead times, reservation expiry, order
+  caps and shop-front visibility. Stock recorded against an older fit revision stops
+  counting until an officer revalidates it. New Shipyard filters (availability,
+  delivery location) and sorts (availability, fastest delivery, price). Fully
+  translated into all nine languages.
 - **Per-class Corp Store pricing for capital hulls** — capital and supercapital
   made-to-order hulls are no longer priced off Jita sell × markup (a basis that barely
   exists for hulls that never trade in Jita). They are now priced off their **estimated

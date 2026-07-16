@@ -30,6 +30,13 @@
           {% if o.is_capital %}· <span class="text-loss">{{ o.get_hull_class_display }}</span>{% endif %}
           {% if o.claimed_by_character_id %}· {% translate "builder" %} {% eve_name o.claimed_by_character_id %}{% else %}· {% translate "awaiting a builder" %}{% endif %}
         </p>
+        {% if o.quantity_backordered %}
+        <p class="mt-0.5 text-[11px]">
+          {% if o.quantity_reserved %}<span class="text-win">{% blocktranslate with n=o.quantity_reserved %}{{ n }} reserved{% endblocktranslate %}</span> · {% endif %}
+          <span class="text-cyan">{% blocktranslate with n=o.quantity_backordered %}{{ n }} on backorder{% endblocktranslate %}</span>
+          {% if o.current_eta %} · <span class="{% if o.is_overdue %}text-loss{% else %}text-faint{% endif %}">{% blocktranslate with date=o.current_eta|date:"j M" %}estimated {{ date }}{% endblocktranslate %}</span>{% endif %}
+        </p>
+        {% endif %}
       </div>
       <!-- Buyer's next action for this status -->
       <div class="min-w-44 text-xs text-faint">

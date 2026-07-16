@@ -58,6 +58,9 @@ SCAFFOLDS: dict[str, str] = {
     # A non-corp plan's name is deliberately not surfaced on the corp-visible board, so this
     # variant has no slot at all.
     "job.from_leadership_plan": _("From a leadership plan"),
+    # --- BuildJob.note (the Shipyard supply-need bridge) ---------------------
+    # ``%(fit_name)s`` is a corp-authored DoctrineFit name: raw, never translated.
+    "job.shipyard_restock": _("Shipyard restock: %(fit_name)s"),
 }
 
 

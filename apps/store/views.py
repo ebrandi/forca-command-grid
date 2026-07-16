@@ -19,8 +19,13 @@ from core import pilots, rbac
 from core.audit import audit_log, client_ip
 from core.rbac import role_required
 
-from .forms import ConfigForm, FitOrderForm, HullOrderForm
-from .models import StoreOrder
+from .forms import (
+    ConfigForm,
+    FitOrderForm,
+    HullOrderForm,
+    OrderEtaForm,
+)
+from .models import FitWaitlistEntry, ShipyardPolicy, StoreOrder
 from .pricing import is_ship, price_doctrine_fit, price_hull_order
 from .services import (
     active_config,
@@ -31,6 +36,9 @@ from .services import (
     invalidate_audience_cache,
     next_status,
     notify_order_status,
+    place_fit_order,
+    transition_order,
+    update_order_eta,
 )
 
 
@@ -100,33 +108,62 @@ def system_search(request: HttpRequest) -> JsonResponse:
 @login_required
 @require_POST
 def order_fit(request: HttpRequest) -> HttpResponse:
-    """Place an order for a ready-to-fly doctrine ship."""
+    """Place an order for a doctrine ship, availability-aware (SHIP-1).
+
+    The split between reserved stock and backorder, the price, the location and
+    the delivery estimate are all server-derived under row locks — the form
+    carries only (fit, quantity, notes, acknowledgement). When any part would be
+    a backorder that the buyer has not yet acknowledged, the request pauses on a
+    confirm page showing the authoritative split and estimated delivery."""
     blocked = _gate(request)
     if blocked:
         return blocked
-    cfg = active_config()
     form = FitOrderForm(request.POST)
     if not form.is_valid():
         messages.error(request, _("Could not place that order."))
-        return redirect("store:storefront")
+        return redirect("doctrines:ships")
     fit = get_object_or_404(DoctrineFit, pk=form.cleaned_data["fit_id"])
-    priced = price_doctrine_fit(fit, cfg.doctrine_markup)
-    if not priced.ok:
-        messages.error(request, priced.error)
-        return redirect("store:storefront")
 
-    order = create_order(
-        priced=priced, kind=StoreOrder.Kind.DOCTRINE_FIT,
-        quantity=form.cleaned_data["quantity"], cfg=cfg,
-        buyer=request.user, buyer_character_id=_main_char_id(request.user),
-        doctrine_fit=fit, fit_name=fit.name,
-        location_name=form.cleaned_data.get("location_name", ""),
+    placement = place_fit_order(
+        fit=fit,
+        quantity=form.cleaned_data["quantity"],
+        buyer=request.user,
+        buyer_character_id=_main_char_id(request.user),
         notes=form.cleaned_data.get("notes", ""),
+        acknowledged=form.cleaned_data.get("acknowledge_backorder", False),
+        force_backorder=form.cleaned_data.get("force_backorder", False),
     )
-    audit_log(request.user, "store.order", target_type="store_order",
-              target_id=str(order.id), ip=client_ip(request))
-    messages.success(request, _("Order placed — it's on the corp fulfilment board."))
-    return redirect("store:order", pk=order.pk)
+    if placement.order is not None:
+        audit_log(request.user, "store.order", target_type="store_order",
+                  target_id=str(placement.order.id),
+                  metadata={
+                      "reserved": placement.order.quantity_reserved,
+                      "backordered": placement.order.quantity_backordered,
+                  }, ip=client_ip(request))
+        if placement.order.has_backorder:
+            messages.success(request, _(
+                "Order placed — %(ready)s reserved now, %(back)s on backorder."
+            ) % {"ready": placement.order.quantity_reserved,
+                 "back": placement.order.quantity_backordered})
+        else:
+            messages.success(request, _("Order placed — your ship is reserved from stock."))
+        return redirect("store:order", pk=placement.order.pk)
+
+    if not placement.needs_confirm:
+        messages.error(request, placement.error or _("Could not place that order."))
+        return redirect("doctrines:ships")
+
+    # Confirm step: show the authoritative split + estimate; nothing is reserved yet.
+    cfg = active_config()
+    priced = price_doctrine_fit(fit, cfg.doctrine_markup)
+    return render(request, "store/order_confirm.html", {
+        "fit": fit,
+        "placement": placement,
+        "priced": priced,
+        "quantity": placement.quantity,
+        "notes": form.cleaned_data.get("notes", ""),
+        "unit_price": priced.unit_price if priced.ok else None,
+    })
 
 
 @login_required
@@ -183,15 +220,93 @@ def order_detail(request: HttpRequest, pk: int) -> HttpResponse:
             or (order.is_open and rbac.has_role(request.user, rbac.ROLE_MEMBER))):
         raise PermissionDenied
     is_member = rbac.has_role(request.user, rbac.ROLE_MEMBER)
+    is_officer = rbac.has_role(request.user, rbac.ROLE_OFFICER)
+    is_claimer = order.claimed_by_id == getattr(request.user, "id", None)
+    reservations = list(order.fit_reservations.select_related("stock__location"))
+    live_reserved = sum(
+        r.quantity for r in reservations if r.status == r.Status.ACTIVE
+    )
     return render(request, "store/order.html", {
         "order": order,
         "is_member": is_member,
-        "is_officer": rbac.has_role(request.user, rbac.ROLE_OFFICER),
+        "is_officer": is_officer,
         "is_buyer": order.buyer_id == getattr(request.user, "id", None),
-        "is_claimer": order.claimed_by_id == getattr(request.user, "id", None),
+        "is_claimer": is_claimer,
         "next_status": next_status(order),
         "advance_label": advance_label(order),
+        "reservations": reservations,
+        "live_reserved": live_reserved,
+        "eta_form": (
+            OrderEtaForm(initial={
+                "current_eta": order.current_eta.date() if order.current_eta else None,
+            })
+            if (is_claimer or is_officer) and order.has_backorder
+            and order.status not in (StoreOrder.Status.DELIVERED, StoreOrder.Status.CANCELLED)
+            else None
+        ),
     })
+
+
+@login_required
+@role_required(rbac.ROLE_MEMBER)
+@require_POST
+def order_eta(request: HttpRequest, pk: int) -> HttpResponse:
+    """Revise an order's living delivery estimate (claimer or officer only).
+
+    The order-time promise stays frozen; the revision, its author and reason are
+    tracked and the buyer is notified."""
+    order = get_object_or_404(StoreOrder, pk=pk)
+    if not (order.claimed_by_id == request.user.id
+            or rbac.has_role(request.user, rbac.ROLE_OFFICER)):
+        raise PermissionDenied
+    if order.status in (StoreOrder.Status.DELIVERED, StoreOrder.Status.CANCELLED):
+        messages.error(request, _("That order is closed."))
+        return redirect("store:order", pk=order.pk)
+    form = OrderEtaForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, _("Pick a valid estimated delivery date."))
+        return redirect("store:order", pk=order.pk)
+    from datetime import datetime, time
+
+    from django.utils import timezone as tz
+
+    new_eta = tz.make_aware(
+        datetime.combine(form.cleaned_data["current_eta"], time(20, 0))
+    )
+    update_order_eta(order, new_eta, actor=request.user,
+                     reason=form.cleaned_data.get("delay_reason", ""))
+    audit_log(request.user, "store.order_eta", target_type="store_order",
+              target_id=str(order.id),
+              metadata={"eta": new_eta.date().isoformat(),
+                        "reason": form.cleaned_data.get("delay_reason", "")[:100]},
+              ip=client_ip(request))
+    messages.success(request, _("Estimated delivery updated — the buyer was notified."))
+    return redirect("store:order", pk=order.pk)
+
+
+@login_required
+@require_POST
+def waitlist_toggle(request: HttpRequest, fit_id: int) -> HttpResponse:
+    """Join/leave the waitlist of a fit that can't currently be ordered."""
+    blocked = _gate(request)
+    if blocked:
+        return blocked
+    if not ShipyardPolicy.active().waitlist_enabled:
+        messages.error(request, _("The waitlist is not enabled."))
+        return redirect("doctrines:ships")
+    fit = get_object_or_404(DoctrineFit, pk=fit_id)
+    entry = FitWaitlistEntry.objects.filter(fit=fit, user=request.user).first()
+    if entry is not None:
+        entry.delete()
+        messages.info(request, _("You left the waitlist for %(fit)s.") % {"fit": fit.name})
+    else:
+        FitWaitlistEntry.objects.get_or_create(fit=fit, user=request.user)
+        messages.success(request, _(
+            "You joined the waitlist for %(fit)s — you'll be pinged when it can be ordered."
+        ) % {"fit": fit.name})
+    from core.redirects import safe_next
+
+    return redirect(safe_next(request, request.POST.get("next"), "doctrines:ships"))
 
 
 @login_required
@@ -324,9 +439,13 @@ def advance_order(request: HttpRequest, pk: int) -> HttpResponse:
     if not nxt:
         messages.error(request, _("Nothing to advance."))
         return redirect("store:order", pk=order.pk)
-    order.status = nxt
-    order.save(update_fields=["status"])
-    notify_order_status(order, actor=request.user)
+    # transition_order applies the availability side effects too: DELIVERED
+    # consumes the order's stock reservations exactly once and stamps the
+    # actual dates; READY stamps actual_ready_at. Compare-and-swap: if the
+    # order changed under us (a concurrent cancel), nothing is applied.
+    if not transition_order(order, nxt, actor=request.user):
+        messages.error(request, _("That order just changed — review it and try again."))
+        return redirect("store:order", pk=order.pk)
     audit_log(request.user, "store.advance", target_type="store_order",
               target_id=str(order.id), metadata={"to": nxt}, ip=client_ip(request))
     messages.success(request, _("Order moved to “%(status)s”.") % {"status": order.get_status_display()})
@@ -348,10 +467,13 @@ def order_action(request: HttpRequest, pk: int) -> HttpResponse:
         if not (is_claimer or is_officer) or order.status != StoreOrder.Status.CLAIMED:
             messages.error(request, _("Can only release a freshly claimed order."))
             return redirect("store:board")
-        order.status = StoreOrder.Status.OPEN
-        order.claimed_by = None
-        order.claimed_by_character_id = None
-        order.save(update_fields=["status", "claimed_by", "claimed_by_character_id"])
+        # Status-guarded like claim_order: only the CLAIMED→OPEN transition can win.
+        released = StoreOrder.objects.filter(
+            pk=order.pk, status=StoreOrder.Status.CLAIMED
+        ).update(status=StoreOrder.Status.OPEN, claimed_by=None, claimed_by_character_id=None)
+        if not released:
+            messages.error(request, _("That order just changed — review it and try again."))
+            return redirect("store:order", pk=order.pk)
     elif action == "cancel":
         if not (is_buyer or is_officer):
             messages.error(request, _("Only the buyer or an officer can cancel."))
@@ -359,9 +481,12 @@ def order_action(request: HttpRequest, pk: int) -> HttpResponse:
         if order.status in (StoreOrder.Status.DELIVERED, StoreOrder.Status.CANCELLED):
             messages.error(request, _("That order can't be cancelled."))
             return redirect("store:order", pk=order.pk)
-        order.status = StoreOrder.Status.CANCELLED
-        order.save(update_fields=["status"])
-        notify_order_status(order, actor=request.user)  # skips self-cancel by the buyer
+        # Releases the order's stock reservations and refreshes the supply need;
+        # the buyer isn't pinged about their own cancellation. CAS: a concurrent
+        # delivery wins and the cancel is refused instead of resurrecting it.
+        if not transition_order(order, StoreOrder.Status.CANCELLED, actor=request.user):
+            messages.error(request, _("That order just changed — review it and try again."))
+            return redirect("store:order", pk=order.pk)
     else:
         messages.error(request, _("Unknown action."))
         return redirect("store:order", pk=order.pk)

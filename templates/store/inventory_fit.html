@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% load eve i18n %}
+{% block title %}{% translate "Fit inventory" %} · {{ fit.name }} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+
+<a href="{% url 'store:inventory' %}" class="text-xs text-faint hover:text-gold">← {% translate "Inventory console" %}</a>
+
+<header class="mb-5 mt-3 flex flex-wrap items-center justify-between gap-4">
+  <div class="flex items-center gap-3">
+    <img src="{% eve_type_render fit.ship_type_id 64 %}" alt="" class="h-14 w-14 rounded-md bg-space object-cover ring-1 ring-line">
+    <div>
+      <h1 class="text-2xl font-bold text-ink">{{ fit.name }}</h1>
+      <p class="text-sm text-faint">{{ fit.doctrine.name }}
+        {% if a.state == 'ready' %}<span class="chip !border-win/40 !text-win">{% translate "Ready" %}</span>
+        {% elif a.state == 'limited' %}<span class="chip !border-gold/40 !text-gold">{% translate "Limited" %}</span>
+        {% elif a.state == 'backorder' %}<span class="chip !border-cyan/40 !text-cyan">{% translate "Backorder" %}</span>
+        {% elif a.state == 'unavailable' %}<span class="chip">{% translate "Unavailable" %}</span>
+        {% else %}<span class="chip !text-faint">{% translate "Not offered" %}</span>{% endif %}
+        {% if waitlist_count %}<span class="chip" title="{% translate 'Pilots on the waitlist' %}">⌛ {{ waitlist_count }}</span>{% endif %}
+      </p>
+    </div>
+  </div>
+  <dl class="flex gap-5 text-center text-sm">
+    <div><dt class="eyebrow text-faint">{% translate "On hand" %}</dt><dd class="data text-xl font-bold text-ink">{{ a.on_hand }}</dd></div>
+    <div><dt class="eyebrow text-faint">{% translate "Reserved" %}</dt><dd class="data text-xl font-bold text-faint">{{ a.reserved }}</dd></div>
+    <div><dt class="eyebrow text-faint" title="{% translate 'Available to promise' %}">{% translate "ATP" %}</dt><dd class="data text-xl font-bold {% if a.atp > 0 %}text-win{% else %}text-faint{% endif %}">{{ a.atp }}</dd></div>
+    <div><dt class="eyebrow text-faint">{% translate "Incoming" %}</dt><dd class="data text-xl font-bold text-cyan">{{ a.incoming }}</dd></div>
+  </dl>
+</header>
+
+<div class="grid gap-5 lg:grid-cols-[1.2fr_1fr]">
+  <div class="space-y-5">
+
+    <!-- Stock by location -->
+    <section class="panel overflow-hidden">
+      <div class="border-b border-line px-4 py-2"><h2 class="eyebrow">{% translate "Stocked complete ships" %}</h2></div>
+      <div class="overflow-x-auto"><table class="w-full text-sm">
+        <thead><tr class="text-left text-[11px] uppercase text-faint">
+          <th class="px-4 py-2">{% translate "Location" %}</th>
+          <th class="px-2 py-2">{% translate "Fit revision" %}</th>
+          <th class="px-2 py-2 text-right">{% translate "On hand" %}</th>
+          <th class="px-2 py-2 text-right">{% translate "Reserved" %}</th>
+          <th class="px-2 py-2">{% translate "Last stocktake" %}</th>
+          <th class="px-2 py-2"><span class="sr-only">{% translate "Actions" %}</span></th>
+        </tr></thead>
+        <tbody>
+          {% for s in stock_rows %}
+          <tr class="border-t border-line/40 {% if not s.is_current %}bg-loss/5{% endif %}">
+            <td class="px-4 py-2 text-ink">{{ s.stock.location.name }}</td>
+            <td class="px-2 py-2">
+              {% if s.is_current %}<span class="chip !border-win/40 !text-win">{% translate "current" %}</span>
+              {% else %}<span class="chip !border-loss/40 !text-loss" title="{% translate 'Stocked before the fit was edited — not counted as available until revalidated' %}">{% translate "older revision" %}</span>{% endif %}
+            </td>
+            <td class="px-2 py-2 text-right data">{{ s.stock.quantity_on_hand }}</td>
+            <td class="px-2 py-2 text-right data text-faint">{{ s.reserved }}</td>
+            <td class="px-2 py-2 text-faint">{% if s.stock.last_reconciled_at %}{{ s.stock.last_reconciled_at|date:"j M H:i" }}{% else %}—{% endif %}</td>
+            <td class="px-2 py-2">
+              <div x-data="{ open: false }" class="relative inline-block">
+                <button type="button" @click="open = !open" class="btn-ghost text-xs">{% translate "Adjust" %}</button>
+                <div x-show="open" x-cloak @click.outside="open = false" class="absolute right-0 z-20 mt-1 w-72 rounded-lg border border-line bg-panel2 p-3 shadow-xl">
+                  <form method="post" action="{% url 'store:inventory_adjust' s.stock.pk %}">
+                    {% csrf_token %}
+                    <label class="eyebrow text-faint" for="bal-{{ s.stock.pk }}">{% translate "Counted balance" %}</label>
+                    <input id="bal-{{ s.stock.pk }}" type="number" name="corrected_balance" value="{{ s.stock.quantity_on_hand }}" min="0" class="input-field mt-1 w-full" required>
+                    <label class="eyebrow mt-2 block text-faint" for="rsn-{{ s.stock.pk }}">{% translate "Reason (required, audited)" %}</label>
+                    <input id="rsn-{{ s.stock.pk }}" type="text" name="reason" maxlength="300" class="input-field mt-1 w-full" required>
+                    <button type="submit" class="btn-gold mt-2 w-full text-xs">{% translate "Apply stocktake" %}</button>
+                  </form>
+                </div>
+              </div>
+              {% if not s.is_current and s.stock.quantity_on_hand > 0 %}
+              <form method="post" action="{% url 'store:inventory_revalidate' s.stock.pk %}" class="mt-1 inline-block">
+                {% csrf_token %}
+                <button type="submit" class="btn-ghost text-xs" title="{% translate 'Confirm these ships match the current fit and count them again' %}">{% translate "Revalidate" %}</button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" class="px-4 py-8 text-center text-sm text-faint">{% translate "No complete ships recorded yet — use the receipt form to stock some." %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- Receipt -->
+    <section class="panel p-4">
+      <h2 class="eyebrow mb-2">{% translate "Receive assembled ships" %}</h2>
+      <form method="post" action="{% url 'store:inventory_receipt' fit.pk %}" class="flex flex-wrap items-end gap-2">
+        {% csrf_token %}
+        <label class="block"><span class="text-[11px] text-faint">{% translate "Location" %}</span>{{ receipt_form.location }}</label>
+        <label class="block"><span class="text-[11px] text-faint">{% translate "Quantity" %}</span>{{ receipt_form.quantity }}</label>
+        <label class="block flex-1 min-w-40"><span class="text-[11px] text-faint">{% translate "Note" %}</span>{{ receipt_form.reason }}</label>
+        <button type="submit" class="btn-gold">{% translate "Receive" %}</button>
+      </form>
+      <p class="mt-2 text-[11px] text-faint">{% translate "Record complete, fitted ships only — hulls or loose modules belong in the stockpile, not here. Arrivals are reserved for waiting backorders automatically when the policy allows." %}</p>
+    </section>
+
+    {% if esi %}
+    <section class="panel p-4 text-sm">
+      <h2 class="eyebrow mb-2">{% translate "ESI cross-check (advisory)" %}</h2>
+      {% if esi.covered %}
+      <div class="flex items-center justify-between"><span class="text-faint">{% translate "Recorded complete ships (all revisions)" %}</span><span class="data text-ink">{{ a.on_hand|add:a.stale_on_hand }}</span></div>
+      <div class="mt-1 flex items-center justify-between"><span class="text-faint">{% translate "Hulls the corp asset mirror sees here" %}</span><span class="data text-ink">{{ esi.esi_hulls }}</span></div>
+      {% if esi.esi_hulls < a.on_hand %}
+      <p class="mt-2 rounded-md border border-loss/40 bg-loss/10 px-2 py-1 text-[11px] text-loss">{% translate "Fewer hulls than recorded fitted ships — the manual count is probably stale. Run a stocktake." %}</p>
+      {% endif %}
+      <p class="mt-2 text-[11px] text-faint">{% blocktranslate with when=esi.last_sync|date:"j M H:i" %}ESI sees hull counts only — it cannot verify fittings, so it bounds the claim rather than proving it. Last asset sync {{ when }}. Manual counts are never overwritten automatically.{% endblocktranslate %}</p>
+      {% else %}
+      <p class="text-[11px] text-faint">{% translate "The corp asset mirror has no data for this location (no Director token or unreadable structure) — the manual stocktake is the only source of truth here." %}</p>
+      {% endif %}
+    </section>
+    {% endif %}
+
+    <!-- Ledger -->
+    <section class="panel overflow-hidden">
+      <div class="border-b border-line px-4 py-2"><h2 class="eyebrow">{% translate "Adjustment history" %} <span class="text-faint">· {% translate "latest 50" %}</span></h2></div>
+      <div class="overflow-x-auto"><table class="w-full text-sm">
+        <tbody>
+          {% for e in entries %}
+          <tr class="border-t border-line/40">
+            <td class="px-4 py-1.5 text-[11px] text-faint">{{ e.created_at|date:"j M H:i" }}</td>
+            <td class="px-2 py-1.5"><span class="chip">{{ e.get_kind_display }}</span></td>
+            <td class="px-2 py-1.5 text-right data {% if e.delta > 0 %}text-win{% elif e.delta < 0 %}text-loss{% endif %}">{{ e.delta }}</td>
+            <td class="px-2 py-1.5 text-right data text-faint" title="{% translate 'Balance after' %}">{{ e.balance_after }}</td>
+            <td class="px-2 py-1.5 text-faint">{{ e.stock.location.name }}</td>
+            <td class="px-2 py-1.5 text-faint">{% if e.actor %}{{ e.actor.first_name|default:e.actor.username }}{% endif %}{% if e.order %} · <a href="{% url 'store:order' e.order.pk %}" class="hover:text-gold">#{{ e.order.pk }}</a>{% endif %}</td>
+            <td class="px-2 py-1.5 text-muted">{{ e.reason }}</td>
+          </tr>
+          {% empty %}
+          <tr><td class="px-4 py-6 text-center text-sm text-faint">{% translate "No stock movements yet." %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table></div>
+    </section>
+  </div>
+
+  <div class="space-y-5">
+    <!-- Supply need -->
+    <section class="panel p-4 text-sm">
+      <h2 class="eyebrow mb-2">{% translate "Supply need" %}</h2>
+      {% if need %}
+      <div class="flex items-center justify-between"><span class="text-faint">{% translate "Net requirement" %}</span><span class="data text-xl font-bold text-ink">{{ need.quantity_required }}</span></div>
+      {% if need.required_by %}<div class="mt-1 flex items-center justify-between"><span class="text-faint">{% translate "Required by" %}</span><span class="text-muted">{{ need.required_by|date:"j M Y" }}</span></div>{% endif %}
+      <div class="mt-2 space-y-1 border-t border-line/50 pt-2">
+        {% if need.industry_project %}<p><a href="{% url 'industry:detail' need.industry_project.pk %}" class="text-cyan hover:underline">{% translate "Industry project" %}: {{ need.industry_project.name }}</a></p>{% endif %}
+        {% if need.build_job %}<p class="text-muted">{% translate "ERP build job" %} #{{ need.build_job.pk }} · {{ need.build_job.get_status_display }}</p>{% endif %}
+        {% if need.task %}<p class="text-muted">{% translate "Task" %} #{{ need.task.pk }} · {{ need.task.get_status_display }}</p>{% endif %}
+      </div>
+      {% if need.quantity_required > 0 %}
+      <form method="post" action="{% url 'store:supply_action' need.pk %}" class="mt-3 flex flex-wrap gap-2">
+        {% csrf_token %}
+        {% if not need.industry_project %}<button name="action" value="project" class="btn-ghost text-xs">{% translate "Create industry project" %}</button>{% endif %}
+        {% if not need.build_job %}<button name="action" value="build_job" class="btn-ghost text-xs">{% translate "Queue ERP build job" %}</button>{% endif %}
+        {% if not need.task %}<button name="action" value="task" class="btn-ghost text-xs">{% translate "Create claimable task" %}</button>{% endif %}
+      </form>
+      <p class="mt-2 text-[11px] text-faint">{% translate "Several orders consolidate into this one need — no duplicate projects or jobs are created." %}</p>
+      {% endif %}
+      {% else %}
+      <p class="text-faint">{% translate "No open backorder demand for this fit." %}</p>
+      {% endif %}
+    </section>
+
+    <!-- Offer overrides -->
+    <section class="panel p-4">
+      <h2 class="eyebrow mb-2">{% translate "Offer & stocking policy" %}</h2>
+      <p class="mb-3 text-[11px] text-faint">{% translate "Blank fields inherit the corp-wide fulfilment policy; a value here overrides it for this fit only." %}</p>
+      <form method="post" class="grid gap-3 sm:grid-cols-2">
+        {% csrf_token %}
+        <div><label class="label">{% translate "Offered for sale" %}</label>{{ form.is_offered }}</div>
+        <div><label class="label">{% translate "Backorders" %}</label>{{ form.backorders_allowed }}<p class="mt-1 text-[11px] text-faint">{% blocktranslate with v=policy.backorders_enabled|yesno:_("allowed,closed") %}Inherits: {{ v }}{% endblocktranslate %}</p></div>
+        <div><label class="label">{% translate "Lead time (days)" %}</label>{{ form.lead_days }}<p class="mt-1 text-[11px] text-faint">{% blocktranslate with v=policy.default_lead_days %}Inherits: {{ v }}{% endblocktranslate %}</p></div>
+        <div><label class="label">{% translate "Delivery location" %}</label>{{ form.delivery_location }}<p class="mt-1 text-[11px] text-faint">{% blocktranslate with v=policy.default_location|default:"—" %}Inherits: {{ v }}{% endblocktranslate %}</p></div>
+        <div><label class="label">{% translate "Max per order" %}</label>{{ form.max_per_order }}<p class="mt-1 text-[11px] text-faint">{% blocktranslate with v=policy.max_order_quantity %}Inherits: {{ v }}{% endblocktranslate %}</p></div>
+        <div><label class="label">{% translate "Max backorder per order" %}</label>{{ form.max_backorder_quantity }}</div>
+        <div><label class="label">{% translate "Safety stock" %}</label>{{ form.safety_stock }}</div>
+        <div><label class="label">{% translate "Reorder point" %}</label>{{ form.reorder_point }}</div>
+        <div><label class="label">{% translate "Target stock" %}</label>{{ form.target_stock }}</div>
+        <div><label class="label">{% translate "Preferred fulfilment" %}</label>{{ form.preferred_fulfilment }}</div>
+        <div><label class="label">{% translate "Priority" %}</label>{{ form.priority }}</div>
+        <div class="sm:col-span-2"><label class="label">{% translate "Note shown to buyers" %}</label>{{ form.buyer_notes }}</div>
+        <div class="sm:col-span-2"><label class="label">{% translate "Internal fulfilment note" %}</label>{{ form.internal_notes }}</div>
+        <div class="sm:col-span-2 flex justify-end"><button class="btn-gold">{% translate "Save offer settings" %}</button></div>
+      </form>
+      {% if offer and offer.updated_by %}<p class="mt-2 text-[11px] text-faint">{% blocktranslate with who=offer.updated_by.first_name|default:offer.updated_by.username when=offer.updated_at|date:"j M H:i" %}Last changed by {{ who }} · {{ when }}{% endblocktranslate %}</p>{% endif %}
+    </section>
+
+    <!-- Related orders -->
+    <section class="panel overflow-hidden">
+      <div class="border-b border-line px-4 py-2"><h2 class="eyebrow">{% translate "Open orders for this fit" %}</h2></div>
+      <div class="overflow-x-auto"><table class="w-full text-sm">
+        <tbody>
+          {% for o in orders %}
+          <tr class="border-t border-line/40">
+            <td class="px-4 py-1.5"><a href="{% url 'store:order' o.pk %}" class="text-ink hover:text-gold">#{{ o.pk }}</a></td>
+            <td class="px-2 py-1.5"><span class="chip">{{ o.get_status_display }}</span></td>
+            <td class="px-2 py-1.5 text-right data">×{{ o.quantity }}</td>
+            <td class="px-2 py-1.5 text-[11px] text-faint">{% if o.quantity_backordered %}{% blocktranslate with n=o.quantity_backordered %}{{ n }} backordered{% endblocktranslate %}{% endif %}</td>
+            <td class="px-2 py-1.5 text-[11px] {% if o.is_overdue %}text-loss{% else %}text-faint{% endif %}">{% if o.current_eta %}{{ o.current_eta|date:"j M" }}{% endif %}</td>
+          </tr>
+          {% empty %}
+          <tr><td class="px-4 py-6 text-center text-sm text-faint">{% translate "No open orders." %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table></div>
+    </section>
+  </div>
+</div>
+{% endblock %}

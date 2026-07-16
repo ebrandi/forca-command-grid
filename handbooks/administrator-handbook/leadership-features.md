@@ -21,6 +21,7 @@ books; a human always pulls the trigger in-game.
 - [SRP program](#srp-program)
 - [Mining payouts](#mining-payouts)
 - [Industry settings](#industry-settings)
+- [Shipyard inventory and fulfilment policy](#shipyard-inventory-and-fulfilment-policy)
 - [Mentorship program](#mentorship-program)
 - [Raffle contests](#raffle-contests)
 - [Recruitment desk](#recruitment-desk)
@@ -112,6 +113,25 @@ overlapping claims.
 Configure market, tax, fee, and facility defaults, plus governance toggles, for the
 Industry Center at `/ops/admin/industry/settings/`. This single settings page underpins
 the calculator, invention planner, chain explorer, and job tracker every member uses.
+
+## Shipyard inventory and fulfilment policy
+
+Control what the doctrine Shipyard actually promises. The **fulfilment policy**
+(`/store/inventory/policy/`) sets the corp-wide defaults: whether backorders are
+accepted, the default lead time, whether one order may mix reserved stock with a
+backordered remainder, the default delivery location, per-order caps, whether
+out-of-stock ships stay visible, the optional waitlist, and an optional expiry window
+that releases the holds of orders nobody claims (off by default). The **inventory
+console** (`/store/inventory/`) lists every offered fit with its on-hand complete
+ships, active reservations, available-to-promise, incoming production, open backorders,
+safety/reorder/target levels, estimated days of cover and alerts; per fit you can
+override any policy default (blank fields visibly inherit), receive newly assembled
+ships (which reserves them for waiting backorders oldest-first), run stocktakes
+(mandatory reason, immutable ledger, advisory ESI hull cross-check that never
+overwrites your count), revalidate stock stranded by a fit edit, and turn the
+consolidated supply need into an Industry Project, an ERP build job, or a claimable
+task without ever creating duplicates. Record only complete, fitted ships here — hulls
+and loose modules belong in the stockpile.
 
 ## Mentorship program
 

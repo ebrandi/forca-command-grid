@@ -430,12 +430,17 @@ def test_doctrine_order_has_no_deposit(client, django_user_model, ships):
     EveCharacter.objects.create(character_id=9200, user=user, name="P", is_main=True, is_corp_member=True)
     client.force_login(user)
 
-    client.post("/store/order/fit/", {"fit_id": fit.id, "quantity": 2})
+    # With no stock recorded, both units are a backorder — SHIP-1 requires the
+    # buyer to see and acknowledge that before the order exists.
+    client.post("/store/order/fit/", {
+        "fit_id": fit.id, "quantity": 2, "acknowledge_backorder": "1",
+    })
     order = StoreOrder.objects.get()
     assert order.kind == StoreOrder.Kind.DOCTRINE_FIT
     assert order.requires_build is False
     assert order.deposit_amount == Decimal("0.00")
     assert order.total_price == Decimal("85800000.00")  # 39M×1.10×2
+    assert order.quantity_backordered == 2  # honest split, frozen on the order
 
 
 @pytest.mark.django_db

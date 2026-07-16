@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Shipyard Policy" %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+
+<header class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <p class="eyebrow">{% translate "Shipyard · Leadership" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Fulfilment policy" %}</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Corp-wide defaults for doctrine-ship availability: backorders, lead times, reservations, order limits and what buyers see. Individual fits can override any of these on the inventory console." %}</p>
+  </div>
+  <a href="{% url 'store:inventory' %}" class="btn-ghost text-sm">← {% translate "Inventory console" %}</a>
+</header>
+
+<form method="post" action="{% url 'store:shipyard_policy' %}" class="space-y-5">
+  {% csrf_token %}
+
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">{% translate "Backorders" %}</h2>
+    <div class="grid gap-3 sm:grid-cols-3">
+      <div><label class="label">{% translate "Accept backorders" %}</label>{{ form.backorders_enabled }}<p class="mt-1 text-[11px] text-faint">{% translate "Off: out-of-stock ships can't be ordered at all." %}</p></div>
+      <div><label class="label">{% translate "Default lead time (days)" %}</label>{{ form.default_lead_days }}<p class="mt-1 text-[11px] text-faint">{% translate "The estimated delivery shown for a fresh backorder." %}</p></div>
+      <div><label class="label">{% translate "Allow split orders" %}</label>{{ form.allow_partial_fulfilment }}<p class="mt-1 text-[11px] text-faint">{% translate "One order may combine reserved stock with a backordered remainder." %}</p></div>
+    </div>
+  </section>
+
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">{% translate "Stock & reservations" %}</h2>
+    <div class="grid gap-3 sm:grid-cols-3">
+      <div><label class="label">{% translate "Default delivery location" %}</label>{{ form.default_location }}<p class="mt-1 text-[11px] text-faint">{% translate "Where doctrine ships are stocked and handed over, unless a fit overrides it." %}</p></div>
+      <div><label class="label">{% translate "Reservation expiry (days)" %}</label>{{ form.reservation_expiry_days }}<p class="mt-1 text-[11px] text-faint">{% translate "Release the hold on orders nobody claimed after this many days. 0 keeps holds forever." %}</p></div>
+      <div><label class="label">{% translate "Auto-allocate arrivals" %}</label>{{ form.auto_allocate_receipts }}<p class="mt-1 text-[11px] text-faint">{% translate "New stock is reserved for waiting backorders automatically, oldest first." %}</p></div>
+    </div>
+  </section>
+
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">{% translate "Shop front" %}</h2>
+    <div class="grid gap-3 sm:grid-cols-3">
+      <div><label class="label">{% translate "Maximum per order" %}</label>{{ form.max_order_quantity }}</div>
+      <div><label class="label">{% translate "'Limited stock' threshold" %}</label>{{ form.limited_stock_threshold }}<p class="mt-1 text-[11px] text-faint">{% translate "At or below this many remaining, cards warn about limited stock." %}</p></div>
+      <div><label class="label">{% translate "Show unavailable ships" %}</label>{{ form.show_unavailable }}<p class="mt-1 text-[11px] text-faint">{% translate "Off hides ships that can't currently be ordered." %}</p></div>
+      <div><label class="label">{% translate "Default to available only" %}</label>{{ form.available_only_default }}<p class="mt-1 text-[11px] text-faint">{% translate "Open the Shipyard pre-filtered to ships available now." %}</p></div>
+      <div><label class="label">{% translate "Waitlist" %}</label>{{ form.waitlist_enabled }}<p class="mt-1 text-[11px] text-faint">{% translate "Pilots can ask to be pinged when an unavailable ship returns." %}</p></div>
+    </div>
+  </section>
+
+  <div class="flex justify-end"><button class="btn-gold">{% translate "Save policy" %}</button></div>
+</form>
+{% endblock %}

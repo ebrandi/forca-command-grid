@@ -33,7 +33,7 @@ def readiness_sort_key(status: str | None, missing_count: int | None, tiebreak: 
     return (rank, miss, str(tiebreak).lower())
 
 
-def enriched_fits(character=None, price_markup=None) -> list[dict]:
+def enriched_fits(character=None, price_markup=None, with_availability=False) -> list[dict]:
     """Every active doctrine fit, enriched with hull class, role and (if a character
     is given) flyability + skill gap.
 
@@ -41,6 +41,11 @@ def enriched_fits(character=None, price_markup=None) -> list[dict]:
     each row is also priced at Jita sell × markup, reusing the store's pricing so
     the Shipyard is the single place to browse *and* buy a doctrine ship. When it is
     ``None`` the page is unchanged (no market lookups, no price shown).
+
+    ``with_availability`` additionally attaches each row's availability (SHIP-1) from
+    the store's ONE authoritative service — a constant number of batched queries for
+    the whole page, never one per card. Rows gain an ``availability`` object (state,
+    atp, eta, location, per-order maximum…) the template renders directly.
     """
     fits = list(
         DoctrineFit.objects.filter(doctrine__status=Doctrine.Status.ACTIVE)
@@ -60,6 +65,12 @@ def enriched_fits(character=None, price_markup=None) -> list[dict]:
         from apps.store.pricing import price_doctrine_fits_bulk
 
         priced_map = price_doctrine_fits_bulk(fits, price_markup)
+
+    avail_map = {}
+    if with_availability:
+        from apps.store.availability import availability_for_fits
+
+        avail_map = availability_for_fits(fits)
 
     # One snapshot fetch for the page instead of one per fit.
     snapshot = character.skill_snapshots.filter(is_latest=True).first() if character else None
@@ -82,6 +93,7 @@ def enriched_fits(character=None, price_markup=None) -> list[dict]:
             "estimated_cost": f.estimated_cost,
             "unit_price": unit_price,
             "unit_jita": unit_jita,
+            "availability": avail_map.get(f.id),
             "status": status,
             "can_fly": status in ("optimal", "viable"),
             "missing_count": len(r.missing_viable) if r else None,

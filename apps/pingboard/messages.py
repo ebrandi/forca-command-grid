@@ -480,6 +480,32 @@ SCAFFOLDS: dict[str, Scaffold] = {
         subject=_("Order update: Cancelled"),
         body=_("Your order for {ship_name} was cancelled."),
     ),
+    "store.order_eta_changed": Scaffold(
+        subject=_("Order update: New delivery estimate"),
+        body=_("The estimated delivery for {ship_name} is now {eta_date}."),
+    ),
+    "store.order_stock_allocated": Scaffold(
+        subject=_("Order update: Stock reserved"),
+        body=_("{quantity}× {ship_name} from a new delivery is now reserved for your order."),
+    ),
+    "store.order_reservation_expired": Scaffold(
+        subject=_("Order update: Reservation released"),
+        body=_(
+            "Your reserved {ship_name} was released after waiting unclaimed; "
+            "the order is now backordered."
+        ),
+    ),
+    "store.waitlist_available": Scaffold(
+        subject=_("Back in stock: {ship_name}"),
+        body=_("{ship_name} can be ordered on the Shipyard again."),
+    ),
+    "store.supply_need.built": Scaffold(
+        subject=_("Shipyard restock built"),
+        body=_(
+            "Production for {fit_name} finished. Assemble and fit the ships, then record "
+            "the receipt on the Shipyard inventory console to release waiting backorders."
+        ),
+    ),
 
     # --- sso ----------------------------------------------------------------
     "sso.token_death": Scaffold(

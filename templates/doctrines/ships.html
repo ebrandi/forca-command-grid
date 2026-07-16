@@ -48,11 +48,36 @@
       <option value="no" {% if fly == 'no' %}selected{% endif %}>{% blocktranslate %}Can't fly yet{% endblocktranslate %}</option>
     </select>
   </label>
+  {% if store_priced %}
+  <label class="block">
+    <span class="eyebrow text-faint">{% translate "Availability" %}</span>
+    <select name="avail" class="input-field mt-1" data-autosubmit>
+      <option value="">{% translate "All" %}</option>
+      <option value="now" {% if avail == 'now' %}selected{% endif %}>{% translate "Available now" %}</option>
+      <option value="backorder" {% if avail == 'backorder' %}selected{% endif %}>{% translate "Backorder" %}</option>
+      <option value="unavailable" {% if avail == 'unavailable' %}selected{% endif %}>{% translate "Unavailable" %}</option>
+    </select>
+  </label>
+  {% if locations %}
+  <label class="block">
+    <span class="eyebrow text-faint">{% translate "Delivery location" %}</span>
+    <select name="loc" class="input-field mt-1" data-autosubmit>
+      <option value="">{% translate "Any location" %}</option>
+      {% for l in locations %}<option value="{{ l.pk }}" {% if loc == l.pk|stringformat:'s' %}selected{% endif %}>{{ l.name }}</option>{% endfor %}
+    </select>
+  </label>
+  {% endif %}
+  {% endif %}
   <label class="block">
     <span class="eyebrow text-faint">{% translate "Sort" %}</span>
     <select name="sort" class="input-field mt-1" data-autosubmit>
       <option value="closest" {% if sort == 'closest' %}selected{% endif %}>{% translate "Closest to fly" %}</option>
       <option value="ready" {% if sort == 'ready' %}selected{% endif %}>{% translate "Most ready" %}</option>
+      {% if store_priced %}
+      <option value="availability" {% if sort == 'availability' %}selected{% endif %}>{% translate "Availability" %}</option>
+      <option value="fastest" {% if sort == 'fastest' %}selected{% endif %}>{% translate "Fastest delivery" %}</option>
+      <option value="price" {% if sort == 'price' %}selected{% endif %}>{% translate "Price" %}</option>
+      {% endif %}
       <option value="class" {% if sort == 'class' %}selected{% endif %}>{% translate "Hull class" %}</option>
       <option value="name" {% if sort == 'name' %}selected{% endif %}>{% translate "Doctrine" %}</option>
     </select>
@@ -90,6 +115,27 @@
       {% endif %}
     </div>
 
+    {% if store_priced and r.availability %}
+    {% with a=r.availability %}
+    <div class="text-sm" role="status">
+      {% if a.state == 'ready' %}
+        <span class="inline-flex items-center gap-1.5 font-medium text-win"><svg class="h-3.5 w-3.5" aria-hidden="true"><use href="#i-check"/></svg> {% blocktranslate count n=a.atp %}{{ n }} ready for delivery{% plural %}{{ n }} ready for delivery{% endblocktranslate %}</span>
+      {% elif a.state == 'limited' %}
+        <span class="inline-flex items-center gap-1.5 font-medium text-[#f4a52b]"><svg class="h-3.5 w-3.5" aria-hidden="true"><use href="#i-bolt"/></svg> {% blocktranslate count n=a.atp %}Only {{ n }} remaining{% plural %}Only {{ n }} remaining{% endblocktranslate %}</span>
+      {% elif a.state == 'backorder' %}
+        <span class="inline-flex items-center gap-1.5 font-medium text-cyan"><svg class="h-3.5 w-3.5" aria-hidden="true"><use href="#i-calendar"/></svg> {% translate "Backorder available" %}</span>
+        {% if a.eta %}<span class="block pl-5 text-[11px] text-faint">{% blocktranslate with date=a.eta|date:"j M" %}Estimated delivery by {{ date }}{% endblocktranslate %}</span>{% endif %}
+      {% elif a.state == 'unavailable' %}
+        <span class="inline-flex items-center gap-1.5 text-faint"><svg class="h-3.5 w-3.5" aria-hidden="true"><use href="#i-cross"/></svg> {% translate "Temporarily unavailable" %}</span>
+      {% else %}
+        <span class="inline-flex items-center gap-1.5 text-faint"><svg class="h-3.5 w-3.5" aria-hidden="true"><use href="#i-lock"/></svg> {% translate "Not currently offered" %}</span>
+      {% endif %}
+      {% if a.location %}<span class="block pl-5 text-[11px] text-faint">{% blocktranslate with name=a.location.name %}Delivers at {{ name }}{% endblocktranslate %}</span>{% endif %}
+      {% if a.buyer_notes %}<p class="mt-1 text-[11px] text-muted">{{ a.buyer_notes }}</p>{% endif %}
+    </div>
+    {% endwith %}
+    {% endif %}
+
     {% if store_priced and r.unit_price %}
     <div class="flex items-end justify-between border-t border-line/50 pt-2">
       <div>
@@ -102,22 +148,38 @@
     <div class="mt-auto flex flex-wrap items-center gap-2 pt-1">
       {% if is_member %}<a href="{% url 'doctrines:detail' r.doctrine_id %}" class="btn-ghost text-xs">{% translate "View" %}</a>{% endif %}
       <a href="{% url 'doctrines:fit_export' r.fit_id %}" class="btn-ghost text-xs" target="_blank" rel="noopener">{% translate "Copy EFT" %}</a>
-      {% if store_enabled %}
+      {% if store_enabled and r.availability %}
+      {% with a=r.availability %}
+      {% if a.can_order %}
       <div x-data="{ open: false }" class="relative ml-auto">
         <button type="button" @click="open = !open" class="btn-gold text-xs"><svg class="h-3.5 w-3.5"><use href="#i-cube"/></svg> {% translate "Order" %}</button>
-        <div x-show="open" x-cloak @click.outside="open = false" class="absolute right-0 z-20 mt-1 w-56 rounded-lg border border-line bg-panel2 p-3 shadow-xl">
+        <div x-show="open" x-cloak @click.outside="open = false" class="absolute right-0 z-20 mt-1 w-64 rounded-lg border border-line bg-panel2 p-3 shadow-xl">
           <form method="post" action="{% url 'store:order_fit' %}">
             {% csrf_token %}
             <input type="hidden" name="fit_id" value="{{ r.fit_id }}">
-            <label class="eyebrow text-faint">{% translate "How many?" %}</label>
+            <label class="eyebrow text-faint" for="qty-{{ r.fit_id }}">{% translate "How many?" %}</label>
             <div class="mt-1 flex items-center gap-2">
-              <input type="number" name="quantity" value="1" min="1" max="1000" class="input-field w-20" required>
+              <input id="qty-{{ r.fit_id }}" type="number" name="quantity" value="1" min="1" max="{{ a.max_orderable }}" class="input-field w-20" required>
               <button type="submit" class="btn-gold flex-1 text-xs">{% translate "Place order" %}</button>
             </div>
-            <p class="mt-2 text-[10px] text-faint">{% translate "Priced at Jita sell + corp markup. Lands on the build board." %}</p>
+            <p class="mt-2 text-[10px] text-faint">
+              {% if a.atp > 0 %}{% blocktranslate count n=a.atp %}{{ n }} in stock ready now.{% plural %}{{ n }} in stock ready now.{% endblocktranslate %}{% endif %}
+              {% if a.backorders_allowed %} {% translate "Anything beyond stock is a backorder — you'll see the split and the estimated delivery before confirming." %}{% elif a.atp > 0 %} {% blocktranslate count m=a.max_orderable %}Up to {{ m }} per order.{% plural %}Up to {{ m }} per order.{% endblocktranslate %}{% endif %}
+            </p>
+            <p class="mt-1 text-[10px] text-faint">{% translate "Priced at Jita sell + corp markup. Lands on the build board." %}</p>
           </form>
         </div>
       </div>
+      {% elif waitlist_enabled and a.state != 'not_offered' %}
+      <form method="post" action="{% url 'store:waitlist_toggle' r.fit_id %}" class="ml-auto">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <button type="submit" class="btn-ghost text-xs"><svg class="h-3.5 w-3.5"><use href="#i-bell"/></svg> {% translate "Join waitlist" %}</button>
+      </form>
+      {% else %}
+      <span class="ml-auto text-[11px] text-faint" aria-disabled="true">{% translate "Ordering closed" %}</span>
+      {% endif %}
+      {% endwith %}
       {% endif %}
     </div>
   </div>

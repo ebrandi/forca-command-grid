@@ -118,10 +118,11 @@
     <div data-acc-body class="space-y-1">
       {% if freight_enabled %}<a href="{% url 'logistics:calculator' %}" class="navlink {% if ns == 'logistics' and un != 'corp_contracts' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-truck"/></svg> {% translate "Freight Services" %}</a>{% endif %}
       {% if buyback_enabled %}<a href="{% url 'buyback:appraisal' %}" class="navlink {% if ns == 'buyback' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-coin"/></svg> {% translate "Buyback Services" %}</a>{% endif %}
-      {% if store_enabled %}<a href="{% url 'store:storefront' %}" class="navlink {% if ns == 'store' and un != 'board' and un != 'config' and un != 'my_orders' and un != 'supply_forecast' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-ship"/></svg> {% translate "Corp Store" %}</a>{% endif %}
+      {% if store_enabled %}<a href="{% url 'store:storefront' %}" class="navlink {% if ns == 'store' and un != 'board' and un != 'config' and un != 'my_orders' and un != 'supply_forecast' and un != 'inventory' and un != 'inventory_fit' and un != 'shipyard_policy' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-ship"/></svg> {% translate "Corp Store" %}</a>{% endif %}
       {% if store_enabled %}<a href="{% url 'store:my_orders' %}" class="navlink {% if un == 'my_orders' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-check"/></svg> {% translate "My Orders" %}</a>{% endif %}
       {% if store_enabled and is_member %}<a href="{% url 'store:board' %}" class="navlink {% if un == 'board' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-cube"/></svg> {% translate "Build Board" %}</a>{% endif %}
       {% if store_enabled and is_member %}<a href="{% url 'store:supply_forecast' %}" class="navlink {% if un == 'supply_forecast' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-coin"/></svg> {% translate "Supply Forecast" %}</a>{% endif %}
+      {% if store_enabled and is_officer %}<a href="{% url 'store:inventory' %}" class="navlink {% if un == 'inventory' or un == 'inventory_fit' or un == 'shipyard_policy' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-box"/></svg> {% translate "Shipyard Inventory" %}</a>{% endif %}
     </div>
   </div>
   {% endif %}

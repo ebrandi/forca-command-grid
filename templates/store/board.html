@@ -59,8 +59,20 @@
             <p class="mt-0.5 text-[11px] text-faint">{% if o.fit_name and o.kind == 'doctrine_fit' %}{{ o.fit_name }} · {% endif %}{% translate "for" %} {% if o.buyer_character_id %}{% eve_name o.buyer_character_id %}{% else %}{% translate "buyer" %}{% endif %}{% if o.location_name %} → {{ o.location_name }}{% endif %}</p>
           </td>
           <td class="px-4 py-2.5">
-            <span class="chip {% if o.kind == 'hull' %}!text-gold{% endif %}">{% if o.kind == 'hull' %}{% translate "Build" %}{% else %}{% translate "Stock" %}{% endif %}</span>
+            {% if o.kind == 'hull' %}
+              <span class="chip !text-gold">{% translate "Build" %}</span>
+            {% elif o.quantity_backordered and o.quantity_reserved %}
+              <span class="chip !border-win/40 !text-win">{% blocktranslate with n=o.quantity_reserved %}{{ n }} reserved{% endblocktranslate %}</span>
+              <span class="chip !border-cyan/40 !text-cyan">{% blocktranslate with n=o.quantity_backordered %}{{ n }} to build{% endblocktranslate %}</span>
+            {% elif o.quantity_backordered %}
+              <span class="chip !border-cyan/40 !text-cyan">{% translate "Backorder" %}</span>
+            {% elif o.availability_state %}
+              <span class="chip !border-win/40 !text-win">{% translate "Reserved stock" %}</span>
+            {% else %}
+              <span class="chip">{% translate "Stock" %}</span>
+            {% endif %}
             {% if o.is_capital %}<span class="chip !text-loss">{{ o.get_hull_class_display }}</span>{% endif %}
+            {% if o.current_eta %}<p class="mt-0.5 text-[11px] {% if o.is_overdue %}text-loss{% else %}text-faint{% endif %}">{% blocktranslate with date=o.current_eta|date:"j M" %}est. {{ date }}{% endblocktranslate %}</p>{% endif %}
           </td>
           <td class="px-4 py-2.5 text-right data text-faint">{{ o.quantity }}</td>
           <td class="px-4 py-2.5 text-right data text-muted">{% if o.requires_build %}{{ o.deposit_amount|isk }}{% else %}—{% endif %}</td>

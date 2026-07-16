@@ -367,6 +367,30 @@ corporation offers to its members (and optionally allies or the public).
 - **Integrations:** Reads synced pricing, doctrines, killboard loss demand, industry cost,
   and freight routing (for a supply forecast).
 
+### Shipyard availability & backorders
+
+- **Users:** shoppers see honest availability; officers manage inventory and policy.
+- **Purpose:** Every doctrine fit on the Shipyard carries a real, location-aware
+  availability state — ready for immediate delivery, limited stock, available on
+  backorder (with an estimated delivery date), temporarily unavailable, or not offered.
+  Complete fitted ships are tracked per fit and delivery location in a ledger-backed
+  inventory; placing an order reserves genuine stock under row locks (two pilots can
+  never oversell the last ship), cancellation releases the hold, delivery consumes it.
+  Anything beyond stock becomes an acknowledged backorder whose order-time estimate is
+  frozen for audit; backorders consolidate into one supply need per fit and location
+  that officers turn into an Industry Project, an ERP build job, or a claimable task.
+  Stock recorded against an older fit revision stops counting until an officer
+  revalidates it, so a fit edit never silently ships an outdated package.
+- **Roles:** Availability follows the store audience; the inventory console, fulfilment
+  policy, receipts, stocktakes and revalidations are officer, fully audited (mandatory
+  reasons, immutable ledger). Reservation expiry and per-fit overrides (backorders,
+  lead time, location, caps, safety/target stock) inherit from a corp-wide policy.
+- **Integrations:** Industry Projects, ERP build jobs, corp tasks, the contribution
+  ledger, Pingboard buyer notifications (per-recipient language), killboard demand
+  (days-of-cover), and the corp ESI asset mirror as an advisory stocktake cross-check.
+- **Background jobs:** Hourly reservation-expiry sweep (inert until leadership sets an
+  expiry window).
+
 ---
 
 ## Pilot tools

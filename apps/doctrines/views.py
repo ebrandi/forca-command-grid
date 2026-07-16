@@ -1,6 +1,7 @@
 """Doctrine views: library, detail, readiness, fit export."""
 from __future__ import annotations
 
+from datetime import UTC
 from decimal import Decimal
 
 from django.contrib import messages
@@ -159,26 +160,50 @@ def doctrine_ships(request: HttpRequest) -> HttpResponse:
     character = character or pilots.acting_pilot(request.user)
 
     # When the Corp Store is enabled the Shipyard also prices each fit (Jita sell ×
-    # doctrine markup), so it is the one place to browse and order a doctrine ship.
+    # doctrine markup) and derives its availability (SHIP-1), so it is the one place
+    # to browse and order a doctrine ship.
     from apps.store.services import current_audience
 
     store_enabled = current_audience() != "disabled"
     markup = None
     markup_pct = 0
+    policy = None
     if store_enabled:
+        from apps.store.models import ShipyardPolicy
         from apps.store.services import active_config
 
         cfg = active_config()
         markup = cfg.doctrine_markup
         markup_pct = int(round((float(cfg.doctrine_markup) - 1) * 100))
+        policy = ShipyardPolicy.active()
 
-    rows = enriched_fits(character, price_markup=markup)
+    rows = enriched_fits(character, price_markup=markup, with_availability=store_enabled)
     options = filter_options(rows)
 
     hull = request.GET.get("hull", "")
     role = request.GET.get("role", "")
     fly = request.GET.get("fly", "")
+    avail = request.GET.get("avail", "")
+    loc = request.GET.get("loc", "")
     sort = request.GET.get("sort", "closest" if character else "name")
+
+    # Delivery-location filter options (from availability, before filtering).
+    locations = []
+    if store_enabled:
+        seen = {}
+        for r in rows:
+            a = r["availability"]
+            if a is not None and a.location is not None:
+                seen[a.location.pk] = a.location
+        locations = sorted(seen.values(), key=lambda location: location.name.lower())
+
+    if store_enabled and policy is not None:
+        if not policy.show_unavailable:
+            # Leadership chose to hide what can't be had right now.
+            rows = [r for r in rows if r["availability"] is None
+                    or r["availability"].can_order]
+        if policy.available_only_default and "avail" not in request.GET:
+            avail = "now"
 
     if hull:
         rows = [r for r in rows if r["hull_class"] == hull]
@@ -190,6 +215,21 @@ def doctrine_ships(request: HttpRequest) -> HttpResponse:
         rows = [r for r in rows if r["status"] == "not_ready"]
     elif fly == "close":
         rows = [r for r in rows if r["status"] == "not_ready" and (r["missing_count"] or 0) <= 3]
+    if store_enabled and avail:
+        def _state(r):
+            return r["availability"].state if r["availability"] else ""
+        if avail == "now":
+            rows = [r for r in rows if _state(r) in ("ready", "limited")]
+        elif avail in ("ready", "limited", "backorder", "unavailable", "not_offered"):
+            rows = [r for r in rows if _state(r) == avail]
+    if store_enabled and loc:
+        rows = [
+            r for r in rows
+            if r["availability"] is not None and r["availability"].location is not None
+            and str(r["availability"].location.pk) == loc
+        ]
+
+    _avail_rank = {"ready": 0, "limited": 1, "backorder": 2, "unavailable": 3, "not_offered": 4}
 
     if sort == "closest":
         # Fly-optimal first, then fly-viable, then not-ready by fewest skills missing.
@@ -199,6 +239,30 @@ def doctrine_ships(request: HttpRequest) -> HttpResponse:
         rows.sort(key=lambda r: (CLASS_ORDER.index(r["hull_class"]), r["ship_name"]))
     elif sort == "ready":
         rows.sort(key=lambda r: (-STATUS_RANK[r["status"]], r["ship_name"]))
+    elif sort == "availability" and store_enabled:
+        rows.sort(key=lambda r: (
+            _avail_rank.get(r["availability"].state, 9) if r["availability"] else 9,
+            -(r["availability"].atp if r["availability"] else 0),
+            r["ship_name"],
+        ))
+    elif sort == "fastest" and store_enabled:
+        # In stock first (biggest ATP first), then backorders by soonest estimate.
+        from datetime import datetime
+
+        far = datetime(9999, 1, 1, tzinfo=UTC)
+
+        def _fastest(r):
+            a = r["availability"]
+            if a is None:
+                return (2, far, 0, r["ship_name"])
+            if a.atp > 0:
+                return (0, far, -a.atp, r["ship_name"])
+            if a.state == "backorder":
+                return (1, a.eta or far, 0, r["ship_name"])
+            return (2, far, 0, r["ship_name"])
+        rows.sort(key=_fastest)
+    elif sort == "price" and store_enabled:
+        rows.sort(key=lambda r: (r["unit_price"] is None, r["unit_price"] or 0, r["ship_name"]))
     else:
         rows.sort(key=lambda r: (r["doctrine"], r["fit_name"]))
 
@@ -211,9 +275,11 @@ def doctrine_ships(request: HttpRequest) -> HttpResponse:
         "characters": characters, "character": character,
         "hull_classes": options["hull_classes"], "roles": options["roles"],
         "hull": hull, "role": role, "fly": fly, "sort": sort,
+        "avail": avail, "loc": loc, "locations": locations,
         "has_character": character is not None,
         "store_priced": store_enabled and markup is not None,
         "doctrine_markup_pct": markup_pct,
+        "waitlist_enabled": bool(policy and policy.waitlist_enabled),
     })
 
 

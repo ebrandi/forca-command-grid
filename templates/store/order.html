@@ -64,6 +64,46 @@
       {% if order.location_name %}<div class="mt-2 flex items-center justify-between"><span class="text-faint">{% translate "Deliver to" %}</span><span class="text-muted">{{ order.location_name }}</span></div>{% endif %}
     </div>
 
+    {% if order.availability_state %}
+    <div class="panel p-4 text-sm">
+      <h2 class="eyebrow mb-2">{% translate "Availability at order time" %}</h2>
+      {% if order.quantity_reserved > 0 %}
+      <div class="flex items-center justify-between"><span class="inline-flex items-center gap-1.5 text-win"><svg class="h-4 w-4" aria-hidden="true"><use href="#i-check"/></svg> {% translate "Reserved from stock" %}</span><span class="data text-ink">×{{ order.quantity_reserved }}</span></div>
+      {% endif %}
+      {% if order.quantity_backordered > 0 %}
+      <div class="mt-1 flex items-center justify-between"><span class="inline-flex items-center gap-1.5 text-cyan"><svg class="h-4 w-4" aria-hidden="true"><use href="#i-calendar"/></svg> {% translate "Backordered" %}</span><span class="data text-ink">×{{ order.quantity_backordered }}</span></div>
+      {% endif %}
+      {% if live_reserved != order.quantity_reserved and order.status != 'delivered' and order.status != 'cancelled' %}
+      <p class="mt-2 border-t border-line/50 pt-2 text-[11px] text-faint">{% blocktranslate with n=live_reserved %}Currently held in stock for this order: {{ n }} (reservations change when stock arrives or holds expire).{% endblocktranslate %}</p>
+      {% endif %}
+      {% if order.promised_date %}
+      <div class="mt-2 flex items-center justify-between border-t border-line/50 pt-2"><span class="text-faint">{% translate "Estimated delivery (at order time)" %}</span><span class="text-muted">{{ order.promised_date|date:"j M Y" }}</span></div>
+      {% endif %}
+      {% if order.current_eta and order.current_eta != order.promised_date %}
+      <div class="mt-1 flex items-center justify-between"><span class="text-faint">{% translate "Current estimate" %}</span><span class="text-muted">{{ order.current_eta|date:"j M Y" }}</span></div>
+      {% endif %}
+      {% if order.is_overdue %}
+      <p class="mt-2 rounded-md border border-loss/40 bg-loss/10 px-2 py-1 text-[11px] text-loss" role="status">{% translate "Past the current estimate — awaiting an update from the fulfiller." %}</p>
+      {% endif %}
+      {% if order.delay_reason %}<p class="mt-2 text-[11px] text-muted">“{{ order.delay_reason }}”</p>{% endif %}
+      {% if order.actual_ready_at %}<div class="mt-1 flex items-center justify-between"><span class="text-faint">{% translate "Ready since" %}</span><span class="text-muted">{{ order.actual_ready_at|date:"j M Y H:i" }}</span></div>{% endif %}
+      {% if order.delivered_at %}<div class="mt-1 flex items-center justify-between"><span class="text-faint">{% translate "Delivered" %}</span><span class="text-muted">{{ order.delivered_at|date:"j M Y H:i" }}</span></div>{% endif %}
+    </div>
+    {% endif %}
+
+    {% if eta_form %}
+    <form method="post" action="{% url 'store:order_eta' order.pk %}" class="panel p-4 text-sm">
+      {% csrf_token %}
+      <h2 class="eyebrow mb-2">{% translate "Revise the delivery estimate" %}</h2>
+      <div class="flex flex-wrap items-end gap-2">
+        <label class="block"><span class="text-[11px] text-faint">{% translate "New estimated date" %}</span>{{ eta_form.current_eta }}</label>
+        <label class="block flex-1"><span class="text-[11px] text-faint">{% translate "Reason (shown to the buyer)" %}</span>{{ eta_form.delay_reason }}</label>
+        <button type="submit" class="btn-ghost">{% translate "Update estimate" %}</button>
+      </div>
+      <p class="mt-2 text-[11px] text-faint">{% translate "The original order-time estimate stays on record; the buyer is notified of the change." %}</p>
+    </form>
+    {% endif %}
+
     {% if order.notes %}<p class="panel px-4 py-2 text-sm text-muted">“{{ order.notes }}”</p>{% endif %}
 
     {% if order.requires_build and order.status == 'claimed' %}

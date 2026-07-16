@@ -46,6 +46,16 @@ order lands on the corp's fulfilment board, where a member (not you) claims it, 
 buys it, and delivers it to you by in-game contract. Track your own orders from
 `/store/orders/mine/`.
 
+Doctrine ships on the Shipyard (`/doctrines/ships/`) show their real availability before
+you order: how many complete fitted ships are ready for delivery right now (and where),
+when only a few remain, or the estimated delivery date if the ship would be built or
+sourced for you as a backorder. Ordering a ship that's in stock reserves it for you on the
+spot; if any part of your order is a backorder you'll see the exact split and the estimate
+on a confirmation page first, and nothing is promised until you accept it. Estimated dates
+are estimates, not guarantees — the fulfiller can revise them, and you'll be notified in
+your own language when the estimate changes, when arriving stock is reserved for your
+order, or when a ship you waitlisted becomes orderable again.
+
 ## Industry Center
 
 `/industry/` — The unified home for production planning: a manufacturing calculator, a T2

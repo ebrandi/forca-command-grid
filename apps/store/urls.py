@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from django.urls import path
 
-from . import views
+from . import views, views_inventory
 
 app_name = "store"
 
@@ -19,5 +19,20 @@ urlpatterns = [
     path("orders/<int:pk>/claim/", views.claim_order, name="claim_order"),
     path("orders/<int:pk>/advance/", views.advance_order, name="advance_order"),
     path("orders/<int:pk>/action/", views.order_action, name="order_action"),
+    path("orders/<int:pk>/eta/", views.order_eta, name="order_eta"),
+    path("waitlist/<int:fit_id>/", views.waitlist_toggle, name="waitlist_toggle"),
     path("settings/", views.config, name="config"),
+    # Officer inventory console (SHIP-1)
+    path("inventory/", views_inventory.inventory, name="inventory"),
+    path("inventory/policy/", views_inventory.shipyard_policy, name="shipyard_policy"),
+    path("inventory/bulk/", views_inventory.inventory_bulk, name="inventory_bulk"),
+    path("inventory/fit/<int:fit_id>/", views_inventory.inventory_fit, name="inventory_fit"),
+    path("inventory/fit/<int:fit_id>/receipt/", views_inventory.inventory_receipt,
+         name="inventory_receipt"),
+    path("inventory/stock/<int:stock_id>/adjust/", views_inventory.inventory_adjust,
+         name="inventory_adjust"),
+    path("inventory/stock/<int:stock_id>/revalidate/", views_inventory.inventory_revalidate,
+         name="inventory_revalidate"),
+    path("inventory/need/<int:need_id>/action/", views_inventory.supply_action,
+         name="supply_action"),
 ]

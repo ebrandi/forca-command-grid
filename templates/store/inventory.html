@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% load eve i18n %}
+{% block title %}{% translate "Shipyard Inventory" %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+
+<header class="mb-5 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow">{% translate "Shipyard · Leadership" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Inventory console" %}</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Complete fitted doctrine ships: what's stocked, reserved, promised and being restocked. Every number comes from the same availability service the Shipyard sells with." %}</p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <a href="{% url 'store:shipyard_policy' %}" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-key"/></svg> {% translate "Fulfilment policy" %}</a>
+    <a href="?{{ base_qs }}{% if base_qs %}&{% endif %}export=csv" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-box"/></svg> {% translate "Export CSV" %}</a>
+  </div>
+</header>
+
+{% if needs %}
+<section class="panel mb-5 overflow-hidden">
+  <div class="border-b border-line px-4 py-2"><h2 class="eyebrow">{% translate "Open supply needs" %} <span class="text-faint">· {{ needs|length }}</span></h2></div>
+  <div class="overflow-x-auto"><table class="w-full text-sm">
+    <thead><tr class="text-left text-[11px] uppercase text-faint">
+      <th class="px-4 py-2">{% translate "Fit" %}</th>
+      <th class="px-2 py-2 text-right">{% translate "Needed" %}</th>
+      <th class="px-2 py-2">{% translate "Required by" %}</th>
+      <th class="px-2 py-2">{% translate "Vehicle" %}</th>
+      <th class="px-2 py-2">{% translate "Status" %}</th>
+    </tr></thead>
+    <tbody>
+      {% for n in needs %}
+      <tr class="border-t border-line/40">
+        <td class="px-4 py-2"><a href="{% url 'store:inventory_fit' n.doctrine_fit_id %}" class="text-ink hover:text-gold">{{ n.doctrine_fit.name }}</a>{% if n.location %} <span class="text-[11px] text-faint">· {{ n.location.name }}</span>{% endif %}</td>
+        <td class="px-2 py-2 text-right data">{{ n.quantity_required }}</td>
+        <td class="px-2 py-2 text-faint">{% if n.required_by %}{{ n.required_by|date:"j M" }}{% else %}—{% endif %}</td>
+        <td class="px-2 py-2 text-faint">
+          {% if n.industry_project %}<span class="chip">{% translate "Project" %}</span>{% endif %}
+          {% if n.build_job %}<span class="chip">{% translate "Build job" %}</span>{% endif %}
+          {% if n.task %}<span class="chip">{% translate "Task" %}</span>{% endif %}
+          {% if not n.industry_project and not n.build_job and not n.task %}<span class="text-loss">{% translate "none yet" %}</span>{% endif %}
+        </td>
+        <td class="px-2 py-2"><span class="chip">{{ n.get_status_display }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+{% endif %}
+
+<form method="get" class="panel mb-4 flex flex-wrap items-end gap-3 px-4 py-3">
+  <label class="block flex-1 min-w-40">
+    <span class="eyebrow text-faint">{% translate "Search" %}</span>
+    <input type="search" name="q" value="{{ q }}" placeholder="{% translate 'Fit, ship or doctrine' %}" class="input-field mt-1 w-full">
+  </label>
+  <label class="block">
+    <span class="eyebrow text-faint">{% translate "State" %}</span>
+    <select name="state" class="input-field mt-1" data-autosubmit>
+      <option value="">{% translate "All" %}</option>
+      {% for value, label in states %}<option value="{{ value }}" {% if f_state == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </label>
+  <label class="block">
+    <span class="eyebrow text-faint">{% translate "Doctrine" %}</span>
+    <select name="doctrine" class="input-field mt-1" data-autosubmit>
+      <option value="">{% translate "All" %}</option>
+      {% for id, name in doctrines %}<option value="{{ id }}" {% if f_doctrine == id|stringformat:'s' %}selected{% endif %}>{{ name }}</option>{% endfor %}
+    </select>
+  </label>
+  <label class="block">
+    <span class="eyebrow text-faint">{% translate "Alerts" %}</span>
+    <select name="alert" class="input-field mt-1" data-autosubmit>
+      <option value="">{% translate "All" %}</option>
+      <option value="stale" {% if f_alert == 'stale' %}selected{% endif %}>{% translate "Needs revalidation" %}</option>
+      <option value="reorder" {% if f_alert == 'reorder' %}selected{% endif %}>{% translate "At reorder point" %}</option>
+      <option value="safety" {% if f_alert == 'safety' %}selected{% endif %}>{% translate "Below safety stock" %}</option>
+    </select>
+  </label>
+  <label class="block">
+    <span class="eyebrow text-faint">{% translate "Sort" %}</span>
+    <select name="sort" class="input-field mt-1" data-autosubmit>
+      <option value="doctrine" {% if sort == 'doctrine' %}selected{% endif %}>{% translate "Doctrine" %}</option>
+      <option value="state" {% if sort == 'state' %}selected{% endif %}>{% translate "Availability" %}</option>
+      <option value="atp" {% if sort == 'atp' %}selected{% endif %}>{% translate "Available to promise" %}</option>
+      <option value="cover" {% if sort == 'cover' %}selected{% endif %}>{% translate "Days of cover" %}</option>
+      <option value="priority" {% if sort == 'priority' %}selected{% endif %}>{% translate "Priority" %}</option>
+    </select>
+  </label>
+  <button type="submit" class="btn-ghost text-sm">{% translate "Apply" %}</button>
+</form>
+
+<p class="mb-2 text-sm text-faint">{% blocktranslate count n=total %}{{ n }} offer{% plural %}{{ n }} offers{% endblocktranslate %}</p>
+
+<form method="post" action="{% url 'store:inventory_bulk' %}">
+  {% csrf_token %}
+  <div class="panel overflow-hidden">
+    <div class="overflow-x-auto"><table class="w-full text-sm">
+      <thead><tr class="text-left text-[11px] uppercase text-faint">
+        <th class="px-3 py-2"><span class="sr-only">{% translate "Select" %}</span></th>
+        <th class="px-2 py-2">{% translate "Fit" %}</th>
+        <th class="px-2 py-2">{% translate "State" %}</th>
+        <th class="px-2 py-2">{% translate "Location" %}</th>
+        <th class="px-2 py-2 text-right">{% translate "On hand" %}</th>
+        <th class="px-2 py-2 text-right">{% translate "Reserved" %}</th>
+        <th class="px-2 py-2 text-right" title="{% translate 'Available to promise' %}">{% translate "ATP" %}</th>
+        <th class="px-2 py-2 text-right">{% translate "Incoming" %}</th>
+        <th class="px-2 py-2 text-right">{% translate "Backordered" %}</th>
+        <th class="px-2 py-2 text-right">{% translate "Target" %}</th>
+        <th class="px-2 py-2 text-right">{% translate "Cover (d)" %}</th>
+        <th class="px-2 py-2 text-right">{% translate "Lead (d)" %}</th>
+        <th class="px-2 py-2">{% translate "Alerts" %}</th>
+      </tr></thead>
+      <tbody>
+        {% for r in rows %}
+        {% with a=r.a %}
+        <tr class="border-t border-line/40 hover:bg-panel2/50">
+          <td class="px-3 py-2"><input type="checkbox" name="fit_ids" value="{{ r.fit.pk }}" aria-label="{% blocktranslate with name=r.fit.name %}Select {{ name }}{% endblocktranslate %}"></td>
+          <td class="px-2 py-2">
+            <a href="{% url 'store:inventory_fit' r.fit.pk %}" class="flex items-center gap-2 text-ink hover:text-gold">
+              <img src="{% eve_type_icon r.fit.ship_type_id 32 %}" alt="" loading="lazy" class="h-6 w-6 rounded-sm">
+              <span><span class="block truncate font-medium">{{ r.fit.name }}</span>
+              <span class="block text-[11px] text-faint">{{ r.fit.doctrine.name }} · {{ r.ship_name }}</span></span>
+            </a>
+          </td>
+          <td class="px-2 py-2">
+            {% if a.state == 'ready' %}<span class="chip !border-win/40 !text-win">{% translate "Ready" %}</span>
+            {% elif a.state == 'limited' %}<span class="chip !border-gold/40 !text-gold">{% translate "Limited" %}</span>
+            {% elif a.state == 'backorder' %}<span class="chip !border-cyan/40 !text-cyan">{% translate "Backorder" %}</span>
+            {% elif a.state == 'unavailable' %}<span class="chip">{% translate "Unavailable" %}</span>
+            {% else %}<span class="chip !text-faint">{% translate "Not offered" %}</span>{% endif %}
+          </td>
+          <td class="px-2 py-2 text-faint">{% if a.location %}{{ a.location.name }}{% else %}<span title="{% translate 'No delivery location configured' %}">—</span>{% endif %}</td>
+          <td class="px-2 py-2 text-right data">{{ a.on_hand }}{% if a.stale_on_hand %} <span class="text-[10px] text-loss" title="{% translate 'Stocked against an older fit revision' %}">+{{ a.stale_on_hand }}</span>{% endif %}</td>
+          <td class="px-2 py-2 text-right data text-faint">{{ a.reserved }}</td>
+          <td class="px-2 py-2 text-right data font-semibold {% if a.atp > 0 %}text-win{% else %}text-faint{% endif %}">{{ a.atp }}</td>
+          <td class="px-2 py-2 text-right data text-faint">{{ a.incoming }}</td>
+          <td class="px-2 py-2 text-right data {% if r.backordered %}text-cyan{% else %}text-faint{% endif %}">{{ r.backordered }}</td>
+          <td class="px-2 py-2 text-right data text-faint">{% if r.target_stock %}{{ r.target_stock }}{% else %}—{% endif %}</td>
+          <td class="px-2 py-2 text-right data text-faint">{% if r.days_cover is not None %}{{ r.days_cover }}{% else %}—{% endif %}</td>
+          <td class="px-2 py-2 text-right data text-faint">{{ a.lead_days }}</td>
+          <td class="px-2 py-2">
+            {% if 'stale' in r.alerts %}<span class="chip !border-loss/40 !text-loss" title="{% translate 'Stock recorded against an older fit revision needs officer revalidation' %}">{% translate "revalidate" %}</span>{% endif %}
+            {% if 'reorder' in r.alerts %}<span class="chip !border-gold/40 !text-gold" title="{% translate 'Available stock is at or below the reorder point' %}">{% translate "reorder" %}</span>{% endif %}
+            {% if 'safety' in r.alerts %}<span class="chip !border-loss/40 !text-loss" title="{% translate 'Available stock is below the safety stock' %}">{% translate "safety" %}</span>{% endif %}
+            {% if r.waitlisted %}<span class="chip" title="{% translate 'Pilots waiting for this ship' %}">{{ r.waitlisted }} ⌛</span>{% endif %}
+          </td>
+        </tr>
+        {% endwith %}
+        {% empty %}
+        <tr><td colspan="13" class="px-4 py-10 text-center text-sm text-faint">{% translate "No offers match these filters." %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+    <div class="flex flex-wrap items-center gap-2 border-t border-line px-4 py-2">
+      <span class="text-[11px] text-faint">{% translate "With selected:" %}</span>
+      <button name="action" value="enable" class="btn-ghost text-xs">{% translate "Offer for sale" %}</button>
+      <button name="action" value="disable" class="btn-ghost text-xs">{% translate "Withdraw from sale" %}</button>
+    </div>
+  </div>
+</form>
+
+{% include "doctrines/_pagination.html" %}
+{% endblock %}

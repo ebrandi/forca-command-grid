@@ -142,6 +142,7 @@ Each is a cheap logged no-op until a director grants the relevant scope.
 | `market.warm_dashboard` | Every 20 min (offset) | Keep market trade signals warm |
 | `stockpile.sync_corp_assets` | Every 6h (offset) | Corp assets (inert until scope granted) |
 | `stockpile.sync_personal_assets` | Every 6h (offset) | Personal assets (only pilots who granted the scope) |
+| `store.expire_reservations` | Hourly (:28) | Release Shipyard stock reservations of doctrine-fit orders nobody claimed within the leadership-set window (inert while the default of 0 days keeps expiry off) |
 | `erp.sync_blueprints` | Every 6h (offset) | Corp owned blueprints (ME/TE) |
 | `erp.sync_industry_jobs` | Every 3h (offset) | Corp industry jobs in production |
 | `erp.sync_character_industry` | Every 6h (offset) | Per-pilot industry jobs + blueprints (opt-in scope) |

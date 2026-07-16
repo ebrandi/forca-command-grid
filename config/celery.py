@@ -671,6 +671,14 @@ app.conf.beat_schedule = {
         "task": "capsuleer.housekeeping",
         "schedule": crontab(minute=10, hour=3),
     },
+    # Shipyard: release stock reservations of doctrine-fit orders nobody claimed within
+    # the leadership-set window. Inert (one policy read) while the shipped default of
+    # 0 days keeps the feature off. Hourly at minute 28 — a rung unused by the other
+    # recurring patterns.
+    "store-expire-reservations": {
+        "task": "store.expire_reservations",
+        "schedule": crontab(minute=28),
+    },
 }
 
 
