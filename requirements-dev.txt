@@ -1,5 +1,7 @@
 -r requirements.txt
-pytest>=8.3,<9.0
+# 9.0.3 is the first release clear of GHSA-6w46-j5rx-g56g (dev/test-only tool, not shipped in
+# the runtime image). Bumped off the 8.x line during the 2026-07 security QA.
+pytest>=9.0.3,<10.0
 pytest-django>=4.9,<5.0
 pytest-cov>=7.1.0,<8.0
 factory-boy>=3.3,<4.0
