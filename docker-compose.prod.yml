@@ -45,6 +45,20 @@ services:
     logging: *default-logging
     security_opt:
       - "no-new-privileges:true"
+    # Drop the full default capability bag and add back only what the alpine entrypoint
+    # needs (bind :80/:443, drop the workers to the nginx user, chown the cache dir). In
+    # particular this removes CAP_NET_RAW from the ONE internet-facing container, so a
+    # code-exec foothold in the edge can't craft raw packets / MITM the plaintext
+    # web<->postgres/redis traffic on the bridge network. Symmetry with the app services,
+    # which already cap_drop ALL via the *app anchor.
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - SETGID
+      - SETUID
+      - NET_BIND_SERVICE
     # Memory backstop. If the host has no swap, an unbounded container that leaks or
     # spikes can OOM-cascade the whole VM; each service is capped above its observed
     # working set so a runaway is contained to its own container instead of the host.
@@ -102,6 +116,10 @@ services:
     # the heaviest jobs (SDE/EveRef imports) with no ceiling, eventually breaching
     # WORKER_MEM_LIMIT. Env-overridable; set to 0 to disable recycling.
     command: celery -A config worker -l info --concurrency ${CELERY_CONCURRENCY:-4} --max-tasks-per-child ${CELERY_MAX_TASKS_PER_CHILD:-100}
+    # The image ships a web-oriented HEALTHCHECK (GET :8000/healthz); the worker serves no HTTP,
+    # so opt out rather than inherit-and-report-unhealthy. Liveness is via the celery process.
+    healthcheck:
+      disable: true
     # ~600 MB steady; SDE/EveRef imports are the heaviest jobs, so allow more headroom.
     mem_limit: ${WORKER_MEM_LIMIT:-1536m}
     volumes:
@@ -111,6 +129,9 @@ services:
   beat:
     <<: *app
     command: celery -A config beat -l info --schedule /tmp/celerybeat-schedule
+    # Opt out of the image's web HEALTHCHECK — beat serves no HTTP (see worker).
+    healthcheck:
+      disable: true
     # Scheduler only; ~100 MB. Small cap is plenty.
     mem_limit: ${BEAT_MEM_LIMIT:-384m}
 
@@ -121,6 +142,17 @@ services:
     logging: *default-logging
     security_opt:
       - "no-new-privileges:true"
+    # Match the app services' cap_drop ALL; add back only what the postgres-alpine
+    # entrypoint needs to chown PGDATA and su-exec down to the postgres user. Removes
+    # CAP_NET_RAW et al. so a DB-container compromise can't MITM the bridge network.
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
     # Postgres ships with tiny defaults; these raise them. The values below are sized
     # for the documented 4 GB minimum (see handbooks/operator-handbook/deployment.md)
     # and are env-overridable — a bigger host should raise them in .env rather than
@@ -173,6 +205,15 @@ services:
     logging: *default-logging
     security_opt:
       - "no-new-privileges:true"
+    # Match the app services' cap_drop ALL; add back only what the redis-alpine entrypoint
+    # needs to chown /data and gosu down to the redis user. Removes CAP_NET_RAW et al.
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - SETGID
+      - SETUID
     # Bound Redis so a transient spike evicts cold cache keys instead of growing until
     # the kernel OOM-kills the shared host. `volatile-lru` evicts ONLY keys that carry a
     # TTL — every cache.set() uses a bounded TTL, so those are shed first, while the
