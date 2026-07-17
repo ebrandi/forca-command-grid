@@ -78,6 +78,15 @@ class FulfilmentMethod(models.TextChoices):
     AUTO = "auto", _("Choose build or buy automatically")
 
 
+# The lanes an order can be STAMPED with once delivered — every ``FulfilmentMethod``
+# except AUTO (which is a leadership *preference* for how to source a fit, never a
+# recorded outcome). Reused verbatim on ``StoreOrder.fulfilment_method`` and the
+# margin grouping, so a new lane added to the enum flows through automatically.
+FULFILMENT_STAMP_CHOICES = [
+    (m.value, m.label) for m in FulfilmentMethod if m != FulfilmentMethod.AUTO
+]
+
+
 class StoreConfig(TimeStampedModel):
     """Markups, deposit, and audience for the store. One active row is used."""
 
@@ -218,6 +227,17 @@ class StoreOrder(TimeStampedModel):
     actual_ready_at = models.DateTimeField(null=True, blank=True)
     delivered_at = models.DateTimeField(null=True, blank=True)
 
+    # Which lane actually fulfilled this order — frozen at DELIVERED (auto-stamped from
+    # reservation-consumption evidence, claimer-confirmed otherwise). Reuses the
+    # ``FulfilmentMethod`` codes minus AUTO (AUTO is a preference, never an outcome).
+    # Blank = "legacy or unrecorded", NEVER reinterpreted as a lane — the same
+    # blank-legacy contract as ``availability_state``. No index: the margin query filters
+    # status + delivered_at first (the existing ``status`` index). ``db_default`` keeps a
+    # code-only rollback INSERT-safe.
+    fulfilment_method = models.CharField(
+        max_length=8, choices=FULFILMENT_STAMP_CHOICES, blank=True, default="", db_default="",
+    )
+
     class Meta:
         ordering = ["-created_at"]
         indexes = [
@@ -255,6 +275,16 @@ class StoreOrder(TimeStampedModel):
         ):
             return False
         return self.current_eta < timezone.now()
+
+    @property
+    def payment_token(self) -> str:
+        """The reference a buyer puts in the in-game transfer 'reason' so the wallet
+        reconciler matches THIS order's revenue precisely (never a coincidental
+        donation). The surrounding dashes make it collision-proof: ``SO-5-`` can't be a
+        substring of ``SO-50-``, so a longer order's token never falsely matches a
+        shorter one (the ``GuaranteedBuyout.payment_token`` shape). Purely advisory —
+        the app plans and evidences revenue; it never moves ISK."""
+        return f"SO-{self.pk}-"
 
 
 # --------------------------------------------------------------------------- #
@@ -445,6 +475,7 @@ class FitStockEntry(models.Model):
 
     class Kind(models.TextChoices):
         RECEIPT = "receipt", _("Stock received")
+        PO_RECEIPT = "po_receipt", _("Received from supplier")
         ADJUSTMENT = "adjustment", _("Manual adjustment")
         CONSUMED = "consumed", _("Delivered to buyer")
         RECONCILIATION = "reconciliation", _("Reconciliation")
@@ -545,6 +576,10 @@ class FitSupplyNeed(TimeStampedModel):
     )
     task = models.ForeignKey(
         "tasks.Task", on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
+    )
+    purchase_order = models.ForeignKey(
+        "procurement.PurchaseOrder", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="+",
     )
 
     class Meta:
@@ -712,3 +747,164 @@ class DemandSnapshot(models.Model):
 
     def __str__(self) -> str:
         return f"DemandSnapshot<fit={self.fit_id} {self.week_start}>"
+
+
+# --------------------------------------------------------------------------- #
+#  Cost & profitability (cross-cutting phase). Actual-vs-estimated margin per
+#  delivered order, and drift of a frozen quote whose basis moved. The frozen
+#  order columns are NEVER mutated — drift and settlement evidence live in their
+#  own leaf tables/columns beside the order, keyed by it.
+# --------------------------------------------------------------------------- #
+
+
+class MarginConfig(TimeStampedModel):
+    """Leadership-tunable margin & drift thresholds. Singleton via ``active()``.
+
+    Every beat this config gates ships INERT (both ``*_enabled`` flags default
+    False): arming is an explicit officer decision, and a disarmed beat is a single
+    config read. ``db_default`` on every column keeps a code-only rollback INSERT-safe.
+    """
+
+    is_active = models.BooleanField(default=True, db_default=True)
+    drift_threshold_pct = models.DecimalField(
+        max_digits=5, decimal_places=3, default=Decimal("0.100"), db_default=Decimal("0.100"),
+        help_text=_("Flag an open order when its re-estimated basis moves this fraction "
+                    "or more from the frozen value (0.100 = 10 percent)."),
+    )
+    drift_min_isk = models.DecimalField(
+        max_digits=20, decimal_places=2, default=Decimal("5000000"), db_default=Decimal("5000000"),
+        help_text=_("Also require this many ISK of absolute drift before flagging — stops "
+                    "penny noise on small hulls."),
+    )
+    drift_check_enabled = models.BooleanField(
+        default=False, db_default=False,
+        help_text=_("Run the nightly quote-drift check. Off: no drift is ever flagged."),
+    )
+    settlement_reconcile_enabled = models.BooleanField(
+        default=False, db_default=False,
+        help_text=_("Match delivered orders to corp-wallet revenue by payment token. Off: "
+                    "margin shows quoted revenue only."),
+    )
+    margin_window_days = models.PositiveIntegerField(
+        default=30, db_default=30,
+        help_text=_("Trailing days of delivered orders the margin summary covers."),
+    )
+    margin_alert_floor_pct = models.DecimalField(
+        max_digits=5, decimal_places=3, default=Decimal("0.050"), db_default=Decimal("0.050"),
+        help_text=_("Alert leadership when the window's evidenced-margin ratio drops below "
+                    "this fraction (0.050 = 5 percent)."),
+    )
+
+    class Meta:
+        ordering = ["-is_active", "-updated_at"]
+        verbose_name = _("margin config")
+        verbose_name_plural = _("margin configs")
+
+    def __str__(self) -> str:
+        return f"MarginConfig #{self.pk}{' active' if self.is_active else ''}"
+
+    @classmethod
+    def active(cls) -> MarginConfig:
+        cfg = cls.objects.filter(is_active=True).order_by("-updated_at").first()
+        if cfg is None:
+            cfg = cls.objects.create(is_active=True)
+        return cfg
+
+
+class OrderSettlement(models.Model):
+    """One evidence row for actual revenue received against an order.
+
+    Revenue is EVIDENCE, never inference: a corp-wallet journal line carrying the
+    order's ``payment_token`` (matched by a beat), or a ``CorpContract`` the officer
+    named by its bare ``contract_id`` at READY time (filled by a beat once the
+    contract completes). No evidence ⇒ the order stays "quoted, unevidenced" — never
+    a fabricated actual. The partial uniques make one wallet line / one contract
+    settle exactly one order, enforced by the database (racing matchers collapse).
+    """
+
+    class Kind(models.TextChoices):
+        JOURNAL = "journal", _("Wallet journal")
+        CONTRACT = "contract", _("Corp contract")
+
+    class MatchedBy(models.TextChoices):
+        TOKEN = "token", _("Payment token")
+        OFFICER = "officer", _("Officer-recorded")
+
+    order = models.ForeignKey(StoreOrder, on_delete=models.CASCADE, related_name="settlements")
+    kind = models.CharField(max_length=8, choices=Kind.choices)
+    # Bare ESI ids, copied on match — never FKs. The journal has a stable PK but we copy
+    # anyway so evidence survives any future retention policy; ``CorpContract`` is
+    # delete-all rebuilt every sync, so its id can only ever be a bare reference.
+    journal_entry_id = models.BigIntegerField(null=True, blank=True)
+    contract_id = models.BigIntegerField(null=True, blank=True)
+    amount = models.DecimalField(max_digits=20, decimal_places=2, default=0, db_default=Decimal("0"))
+    # NULL until copy-on-match completes — a pending officer-recorded contract link has
+    # no real timestamp yet, and a fabricated one would be exactly the "never a fabricated
+    # actual" sin. Renders "awaiting contract completion" while null.
+    occurred_at = models.DateTimeField(null=True, blank=True)
+    matched_by = models.CharField(max_length=8, choices=MatchedBy.choices)
+    recorded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
+    )
+    # Officer free text, rendered verbatim (never machine-translated).
+    note = models.CharField(max_length=200, blank=True, default="", db_default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["order_id", "occurred_at", "id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["journal_entry_id"], condition=Q(journal_entry_id__isnull=False),
+                name="uniq_settlement_journal_entry",
+            ),
+            models.UniqueConstraint(
+                fields=["contract_id"], condition=Q(contract_id__isnull=False),
+                name="uniq_settlement_contract",
+            ),
+        ]
+        indexes = [models.Index(fields=["order", "occurred_at"])]
+
+    def __str__(self) -> str:
+        return f"OrderSettlement<order={self.order_id} {self.kind} {self.amount}>"
+
+    @property
+    def is_pending(self) -> bool:
+        """A contract link recorded at READY whose contract hasn't completed yet."""
+        return self.occurred_at is None
+
+
+class OrderBasisDrift(models.Model):
+    """Persisted drift state for one order — written only by the drift beat.
+
+    The OneToOne IS the idempotency: the beat ``update_or_create``s and
+    compares-before-writing, so an unchanged re-run mutates nothing. Never cross-basis
+    (BUILD frozen vs BUILD re-estimate; JITA frozen vs JITA re-price). A ``None``
+    re-estimate (cost source down) writes ``basis_source="unknown"`` and flags nothing —
+    missing data is "unknown", never "no drift".
+    """
+
+    order = models.OneToOneField(StoreOrder, on_delete=models.CASCADE, related_name="basis_drift")
+    checked_at = models.DateTimeField(null=True, blank=True)
+    # Copy of the order's ``price_basis`` at check time, so the row self-explains.
+    basis = models.CharField(max_length=5, choices=PriceBasis.choices, blank=True, default="")
+    # Machine code (everef|estimate|jita|unknown); label via BASIS_SOURCE_LABELS at render.
+    basis_source = models.CharField(max_length=8, blank=True, default="")
+    frozen_value = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+    current_value = models.DecimalField(
+        max_digits=20, decimal_places=2, null=True, blank=True
+    )  # null = unknown (re-estimate unavailable)
+    drift_pct = models.DecimalField(max_digits=7, decimal_places=4, null=True, blank=True)
+    flagged = models.BooleanField(default=False, db_default=False)
+    # Ack watermark: re-flag only once drift moves another threshold step past this.
+    acknowledged_pct = models.DecimalField(max_digits=7, decimal_places=4, null=True, blank=True)
+    acknowledged_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
+    )
+    acknowledged_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-flagged", "-checked_at"]
+        indexes = [models.Index(fields=["flagged", "-checked_at"])]
+
+    def __str__(self) -> str:
+        return f"OrderBasisDrift<order={self.order_id} {'flagged' if self.flagged else 'ok'}>"

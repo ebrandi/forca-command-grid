@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Supply Command" %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <p class="eyebrow">{% translate "Leadership" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Supply Command" %}</h1>
+    <p class="mt-1 text-sm text-faint">
+      {% blocktranslate count reds=total_reds %}{{ reds }} problem needs attention.{% plural %}{{ reds }} problems need attention.{% endblocktranslate %}
+      <span class="text-muted">·</span>
+      {% blocktranslate with when=built_at|timesince %}Built {{ when }} ago{% endblocktranslate %}
+    </p>
+  </div>
+  <div class="flex items-center gap-2">
+    <a href="?export=csv" class="btn-ghost">{% translate "Export CSV" %}</a>
+    <form method="post" action="{% url 'supplyboard:refresh' %}">{% csrf_token %}
+      <button type="submit" class="btn-gold">{% translate "Refresh now" %}</button>
+    </form>
+  </div>
+</header>
+
+<div class="grid gap-4 lg:grid-cols-2">
+  {% for section in sections %}
+  <section class="panel overflow-hidden{% if section.role == 'director' %} border-l-2 border-l-gold/50{% endif %}">
+    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-2.5">
+      <div class="flex items-center gap-2">
+        <h2 class="eyebrow text-ink">{{ section.title }}</h2>
+        {% if section.role == 'director' %}<span class="chip !text-gold">{% translate "Director" %}</span>{% endif %}
+      </div>
+      <div class="flex items-center gap-2 text-[11px] text-faint">
+        {% if section.freshness %}<span title="{% translate 'Source data last synced' %}">{% blocktranslate with when=section.freshness|timesince %}data {{ when }} old{% endblocktranslate %}</span>{% endif %}
+        <a href="{{ section.source_url }}" class="hover:text-gold">{% translate "see all" %} →</a>
+      </div>
+    </div>
+    {% if section.unavailable %}
+    <p class="px-4 py-4 text-sm text-loss">{% translate "This section is temporarily unavailable." %}</p>
+    {% elif section.rows %}
+    <ul class="divide-y divide-line/40">
+      {% for row in section.rows %}
+      <li class="flex items-start gap-3 px-4 py-2.5 text-sm">
+        <span class="mt-0.5 h-2 w-2 shrink-0 rounded-full {% if row.severity == 'red' %}bg-loss{% elif row.severity == 'amber' %}bg-gold{% else %}bg-cyan{% endif %}" aria-hidden="true"></span>
+        <div class="min-w-0 flex-1">
+          <a href="{{ row.url }}" class="text-ink hover:text-gold">{{ row.label }}</a>
+          <p class="mt-0.5 text-[11px] text-faint">→ {{ row.action }}</p>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% if section.total > section.shown %}
+    <p class="border-t border-line/40 px-4 py-2 text-[11px] text-faint">
+      {% blocktranslate with shown=section.shown total=section.total %}Showing {{ shown }} of {{ total }}.{% endblocktranslate %}
+      <a href="{{ section.source_url }}" class="hover:text-gold">{% translate "Open the full list" %} →</a>
+    </p>
+    {% endif %}
+    {% else %}
+    <p class="px-4 py-4 text-sm text-win">✓ {% translate "All clear." %}</p>
+    {% endif %}
+  </section>
+  {% endfor %}
+</div>
+{% endblock %}

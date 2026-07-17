@@ -57,7 +57,7 @@ def _paginate(request: HttpRequest, items: list, per_page: int = 50):
     return page_obj, params.urlencode()
 
 
-def _inventory_rows(policy: ShipyardPolicy) -> list[dict]:
+def inventory_rows(policy: ShipyardPolicy) -> list[dict]:
     """One row per planning-universe fit: availability + composed demand + alerts.
 
     The universe is ACTIVE-doctrine fits ∪ fits still holding stock — a retired
@@ -143,12 +143,17 @@ def _inventory_rows(policy: ShipyardPolicy) -> list[dict]:
     return rows
 
 
+# Back-compat alias (kept one release): the private name is being retired in favour of the
+# public ``inventory_rows`` the Supply Command board consumes.
+_inventory_rows = inventory_rows
+
+
 @login_required
 @role_required(rbac.ROLE_OFFICER)
 def inventory(request: HttpRequest) -> HttpResponse:
     """The Shipyard inventory console: every offer's stock position at a glance."""
     policy = ShipyardPolicy.active()
-    rows = _inventory_rows(policy)
+    rows = inventory_rows(policy)
 
     q = (request.GET.get("q") or "").strip().lower()
     f_state = (request.GET.get("state") or "").strip()

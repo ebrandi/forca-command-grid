@@ -35,6 +35,7 @@ def _ship_level(row: NetRequirement) -> bool:
 
 def _rows_context(rows: list[NetRequirement]) -> list[dict]:
     from apps.doctrines.models import DoctrineFit
+    from apps.industry import capacity
     from apps.sde.models import SdeType
     from apps.store.models import FitSupplyNeed
 
@@ -60,6 +61,11 @@ def _rows_context(rows: list[NetRequirement]) -> list[dict]:
             "feasible_label": mrp.FEASIBLE_SOURCE_LABELS.get(
                 row.feasible_source, row.feasible_source
             ),
+            # P5: the binding constraint, when capacity is armed and a row carries one.
+            "bottleneck_label": (
+                capacity.bottleneck_label(row.bottleneck_code)
+                if row.bottleneck_code else ""
+            ),
             "fit_links": [
                 {"id": s["id"], "name": fit_names.get(s["id"], s["id"]), "qty": s["qty"]}
                 for s in (row.sources or []) if s.get("kind") == "fit_demand"
@@ -81,7 +87,8 @@ def mrp_board(request: HttpRequest) -> HttpResponse:
     config = MrpConfig.active()
     rows = list(
         NetRequirement.objects.filter(status__in=_LIVE)
-        .select_related("location", "industry_project", "build_job", "hauling_task", "task")
+        .select_related("location", "industry_project", "build_job", "hauling_task",
+                        "task", "freight_line")
         .order_by("depth", "type_id")
     )
     if request.GET.get("export") == "csv":
@@ -109,6 +116,7 @@ def mrp_board(request: HttpRequest) -> HttpResponse:
     return render(request, "industry/mrp.html", {
         "rows": ctx_rows,
         "config": config,
+        "capacity_armed": config.capacity_enabled,
         "runs": last_runs,
         "last_done": last_done,
         "beyond_window": (last_done.stats or {}).get("beyond_window", []) if last_done else [],
@@ -137,7 +145,7 @@ def _export_csv(rows) -> HttpResponse:
     writer.writerow([
         "type_id", "type_name", "location", "status", "depth", "gross", "available",
         "incoming", "net", "required_by", "feasible_at", "feasible_source",
-        "suggestion", "diverged",
+        "suggestion", "diverged", "bottleneck",
     ])
     for r in rows:
         writer.writerow([
@@ -146,7 +154,9 @@ def _export_csv(rows) -> HttpResponse:
             r.incoming_quantity, r.net_quantity,
             r.required_by.isoformat() if r.required_by else "",
             r.feasible_at.isoformat() if r.feasible_at else "",
-            r.feasible_source, r.suggestion, r.diverged,
+            # ``bottleneck`` is a trailing column: header-appending consumers are safe,
+            # positional consumers are the disclosed break (CHANGELOG §8).
+            r.feasible_source, r.suggestion, r.diverged, r.bottleneck_code,
         ])
     return response
 
@@ -189,15 +199,34 @@ def mrp_fan_out(request: HttpRequest, pk: int) -> HttpResponse:
         ))
         return redirect("industry:mrp")
     action = request.POST.get("action", "")
+    # One vehicle per lane of intent: a freight batch and the other vehicles are
+    # mutually exclusive — a row holding both a BUY task and a batch line reads as
+    # double cover (§12 trap). Re-clicking the same freight action is an idempotent
+    # no-op (the FK guard in the service handles it).
+    if action == "freight" and requirement.has_vehicle and not requirement.freight_line_id:
+        messages.error(request, _("This requirement already has a vehicle attached."))
+        return redirect("industry:mrp")
+    if action != "freight" and requirement.freight_line_id:
+        messages.error(request, _("This requirement is on a freight batch — remove it there first."))
+        return redirect("industry:mrp")
     if action == "project":
         vehicle = mrp.create_project_for_requirement(requirement, actor=request.user)
         messages.success(request, _("Industry plan “%(name)s” is linked.") % {"name": vehicle.name})
     elif action == "build_job":
         mrp.create_build_job_for_requirement(requirement, actor=request.user)
         messages.success(request, _("ERP build job queued and linked."))
-    elif action == "haul":
-        mrp.create_hauling_task_for_requirement(requirement, actor=request.user)
-        messages.success(request, _("Hauling job posted and linked."))
+    elif action == "freight":
+        from apps.logistics import freight
+        from apps.logistics.freight import FreightError
+
+        try:
+            freight.add_requirement_to_batch(
+                requirement, actor=request.user, ip=client_ip(request)
+            )
+        except FreightError as exc:
+            messages.error(request, str(exc))
+            return redirect("industry:mrp")
+        messages.success(request, _("Added to the freight batch for this lane."))
     elif action == "buy_task":
         mrp.create_buy_task_for_requirement(requirement, actor=request.user)
         messages.success(request, _("Claimable BUY task created and linked."))

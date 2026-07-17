@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "New agreement" %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-5">
+  <p class="eyebrow">{% translate "Procurement · Leadership" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Draft a supply agreement" %}</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Create the header, then add the per-type lines on the next page before submitting for approval." %}</p>
+</header>
+<form method="post" class="panel max-w-2xl space-y-4 p-5">
+  {% csrf_token %}
+  {% include "procurement/_form_fields.html" %}
+  <div class="flex gap-2">
+    <button type="submit" class="btn-gold">{% translate "Create draft" %}</button>
+    <a href="{% url 'procurement:agreements' %}" class="btn-ghost">{% translate "Cancel" %}</a>
+  </div>
+</form>
+{% endblock %}

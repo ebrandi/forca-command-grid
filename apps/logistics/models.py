@@ -13,6 +13,7 @@ from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from apps.market.models import MarketLocation
 from core.mixins import TimeStampedModel
 
 
@@ -195,6 +196,7 @@ class CorpContract(TimeStampedModel):
     type = models.CharField(max_length=20, blank=True)
     status = models.CharField(max_length=24, blank=True, db_index=True)
     issuer_id = models.BigIntegerField(null=True, blank=True)
+    issuer_corporation_id = models.BigIntegerField(null=True, blank=True)
     issuer_name = models.CharField(max_length=200, blank=True)
     assignee_id = models.BigIntegerField(null=True, blank=True)
     assignee_name = models.CharField(max_length=200, blank=True)
@@ -215,3 +217,239 @@ class CorpContract(TimeStampedModel):
     @property
     def is_open(self) -> bool:
         return self.status in ("outstanding", "in_progress")
+
+
+# --------------------------------------------------------------------------- #
+#  Freight pipeline & in-transit inventory (P6)
+# --------------------------------------------------------------------------- #
+class FreightConfig(TimeStampedModel):
+    """Leadership-tunable freight-pipeline knobs (P6). Singleton via ``active()``.
+
+    Mirrors the ``MrpConfig.active()`` shape: one active row, created on first read.
+    Every defaulted column carries ``default`` + ``db_default`` so the additive
+    migration is safe, and each knob has an implemented reader — no speculative
+    switches.
+    """
+
+    is_active = models.BooleanField(default=True, db_default=True)
+    default_ship_class = models.CharField(
+        max_length=12, choices=ShipClass.choices, default=ShipClass.JF, db_default=ShipClass.JF,
+        help_text=_("Ship class assumed when an officer assigns a batch to the courier flow."),
+    )
+    default_dispatch_days = models.PositiveSmallIntegerField(
+        default=2, db_default=2,
+        help_text=_("Assumed days from opening a batch to it departing — the default "
+                    "ETD offset when none is typed."),
+    )
+    default_transit_days = models.PositiveSmallIntegerField(
+        default=1, db_default=1,
+        help_text=_("Assumed days in transit (depart → arrive) — the default ETA when "
+                    "no arrival date is typed."),
+    )
+    eta_sweep_enabled = models.BooleanField(
+        default=False, db_default=False,
+        help_text=_("Run the hourly batch sweep: flip batches to arrived from a verified "
+                    "courier contract or a completed haul, and flag late ones. Off: the "
+                    "beat is a no-op and officers click “arrived” by hand (the v1 "
+                    "workflow)."),
+    )
+    late_grace_hours = models.PositiveSmallIntegerField(
+        default=6, db_default=6,
+        help_text=_("Hours past a batch's planned ETA before the sweep flags it late."),
+    )
+
+    class Meta:
+        ordering = ["-is_active", "-updated_at"]
+        verbose_name = _("freight config")
+        verbose_name_plural = _("freight configs")
+
+    def __str__(self) -> str:
+        return f"FreightConfig #{self.pk}{' active' if self.is_active else ''}"
+
+    @classmethod
+    def active(cls) -> FreightConfig:
+        cfg = cls.objects.filter(is_active=True).order_by("-updated_at").first()
+        if cfg is None:
+            cfg = cls.objects.create(is_active=True)
+        return cfg
+
+
+class FreightBatch(TimeStampedModel):
+    """One consolidation of purchase/import lines for a single lane and trip (P6).
+
+    A batch is (origin, destination) + typed lines; at most **one OPEN batch per
+    lane** (partial unique) so "add to the open batch" is deterministic. It links
+    to its execution vehicle — a ``CourierContract`` (our own table, safe to FK) or
+    a member ``HaulingTask`` — but is a distinct officer-managed object, never an
+    overload of the member haul board. The batch renders as "origin → destination
+    #pk" at read time; no prose is frozen.
+    """
+
+    class Status(models.TextChoices):
+        OPEN = "open", _("Open")
+        ASSIGNED = "assigned", _("Assigned")
+        IN_TRANSIT = "in_transit", _("In transit")
+        ARRIVED = "arrived", _("Arrived")
+        CLOSED = "closed", _("Closed")
+        CANCELLED = "cancelled", _("Cancelled")
+
+    origin = models.ForeignKey(
+        MarketLocation, on_delete=models.PROTECT, related_name="+",
+    )
+    destination = models.ForeignKey(
+        MarketLocation, on_delete=models.PROTECT, related_name="+",
+    )
+    status = models.CharField(
+        max_length=12, choices=Status.choices, default=Status.OPEN, db_default=Status.OPEN,
+        db_index=True,
+    )
+    ship_class = models.CharField(
+        max_length=12, choices=ShipClass.choices, default=ShipClass.JF, db_default=ShipClass.JF,
+    )
+    # Execution vehicle — one or the other, both nullable. Our own CourierContract is
+    # safe to FK (not snapshot-replaced like CorpContract).
+    courier_contract = models.ForeignKey(
+        CourierContract, on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
+    )
+    hauling_task = models.ForeignKey(
+        "stockpile.HaulingTask", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="+",
+    )
+    etd_planned = models.DateTimeField(null=True, blank=True)
+    eta_planned = models.DateTimeField(null=True, blank=True)
+    departed_at = models.DateTimeField(null=True, blank=True)
+    arrived_at = models.DateTimeField(null=True, blank=True)
+    # Frozen from the quote at assignment (the CourierContract.reward-freeze discipline).
+    freight_cost = models.DecimalField(max_digits=20, decimal_places=2, default=0, db_default=0)
+    freight_breakdown = models.JSONField(
+        blank=True, default=dict, db_default=models.Value({}, models.JSONField())
+    )
+    # Stamp-once (the reminder_sent_at precedent) so the late sweep flags each ETA once.
+    late_flagged_at = models.DateTimeField(null=True, blank=True)
+    notes = models.CharField(max_length=300, blank=True, default="", db_default="")
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="+",
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["origin", "destination"],
+                condition=models.Q(status="open"),
+                name="uniq_open_freightbatch_per_lane",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["status"]),
+            models.Index(fields=["destination", "status"]),
+        ]
+
+    def __str__(self) -> str:
+        return self.label
+
+    @property
+    def label(self) -> str:
+        """"origin → destination #pk" — derived at read time, never persisted."""
+        origin = self.origin.name if self.origin_id else "?"
+        dest = self.destination.name if self.destination_id else "?"
+        return f"{origin} → {dest} #{self.pk}"
+
+    @property
+    def is_terminal(self) -> bool:
+        return self.status in (self.Status.CLOSED, self.Status.CANCELLED)
+
+
+class FreightBatchLine(models.Model):
+    """One type on one batch (P6).
+
+    A line has two legitimate writers — officer line ops and the MRP fan-out — so
+    ``planned_quantity`` records the MRP-attributed share of ``quantity``: officer-
+    typed units are ``quantity − planned_quantity`` and reconciliation may only ever
+    move the planned share. ``unit_purchase_cost`` non-null is the freight analogue of
+    "claimed" (bought goods sitting at origin), which reconciliation must never
+    auto-shrink. ``purchase_ref`` is free evidence text today and the reserved P4 PO
+    join point.
+    """
+
+    batch = models.ForeignKey(FreightBatch, on_delete=models.CASCADE, related_name="lines")
+    type_id = models.IntegerField(db_index=True)
+    quantity = models.BigIntegerField()
+    planned_quantity = models.BigIntegerField(default=0, db_default=0)
+    quantity_received = models.BigIntegerField(default=0, db_default=0)
+    unit_purchase_cost = models.DecimalField(
+        max_digits=20, decimal_places=2, null=True, blank=True,
+    )
+    # Machine codes typed|snapshot; labels resolve at render (the DECISION_LABELS discipline).
+    cost_source = models.CharField(max_length=8, blank=True, default="", db_default="")
+    freight_share = models.DecimalField(max_digits=20, decimal_places=2, default=0, db_default=0)
+    purchase_ref = models.CharField(max_length=64, blank=True, default="", db_default="")
+    received_at = models.DateTimeField(null=True, blank=True)
+    received_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="+",
+    )
+
+    class Meta:
+        ordering = ["batch_id", "type_id"]
+        constraints = [
+            models.UniqueConstraint(fields=["batch", "type_id"], name="uniq_freightline_per_type"),
+            models.CheckConstraint(
+                condition=models.Q(quantity__gte=1), name="freightline_qty_gte_1",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(quantity_received__gte=0)
+                & models.Q(quantity_received__lte=models.F("quantity")),
+                name="freightline_received_in_range",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(planned_quantity__gte=0)
+                & models.Q(planned_quantity__lte=models.F("quantity")),
+                name="freightline_planned_in_range",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"line<{self.type_id}×{self.quantity} on batch {self.batch_id}>"
+
+    @property
+    def remaining(self) -> int:
+        """Unreceipted units — the in-transit remainder of this line."""
+        return max(0, int(self.quantity) - int(self.quantity_received))
+
+    @property
+    def officer_quantity(self) -> int:
+        """Units an officer typed directly (never the MRP-attributed planned share)."""
+        return max(0, int(self.quantity) - int(self.planned_quantity))
+
+
+class FreightReceipt(models.Model):
+    """Immutable arrival evidence for a receipted line quantity (P6).
+
+    The ``erp.Delivery`` shape: one row per receipt, never updated or deleted (the
+    FitStockEntry ledger discipline). ``unit_landed_cost`` is purchase + freight
+    share per unit, or null when no purchase cost was recorded — never a fabricated
+    0-as-cost.
+    """
+
+    line = models.ForeignKey(FreightBatchLine, on_delete=models.CASCADE, related_name="receipts")
+    stockpile = models.ForeignKey(
+        "stockpile.Stockpile", on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
+    )
+    quantity = models.BigIntegerField()
+    unit_landed_cost = models.DecimalField(
+        max_digits=20, decimal_places=2, null=True, blank=True,
+    )
+    received_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="+",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [models.Index(fields=["line"])]
+
+    def __str__(self) -> str:
+        return f"receipt<{self.quantity} of line {self.line_id}>"

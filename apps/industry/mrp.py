@@ -67,6 +67,9 @@ FEASIBLE_SOURCE_LABELS = {
     "esi_job": _("in-flight ESI job"),
     "build_time": _("build duration"),
     "lead_time": _("lead time"),
+    "po": _("purchase order"),
+    "capacity": _("committed capacity"),
+    "in_transit": _("in transit"),
     "unknown": _("unknown"),
 }
 
@@ -152,12 +155,16 @@ def _units_for_runs(type_id: int, runs: int) -> int:
 class _Incoming:
     """One unattributed supply lot, consumed greedily by (type, location) rows."""
 
-    kind: str            # esi_job | build_job | project_item
-    ref_id: int          # job_id for ESI (stable), pk otherwise
+    kind: str            # esi_job | build_job | project_item | po_line | in_transit | received_unsynced
+    ref_id: int          # job_id for ESI (stable), pk otherwise (line pk for freight — our own table)
     type_id: int
     remaining: int
     end_date: datetime | None = None
     project_id: int | None = None  # for project_item lots (self-feedback guard)
+    po_id: int | None = None       # for po_line lots (self-feedback + attribution)
+    # P6: destination-pinned lots (freight in-transit / received-unsynced) only cover a
+    # cell at the SAME location; None-pinned lots (all other kinds) stay corp-pooled.
+    location_id: int | None = None
 
 
 @dataclass
@@ -267,6 +274,39 @@ def _collect_incoming(config: MrpConfig) -> tuple[list[_Incoming], list[dict], s
             "type_id": item.type_id, "qty": int(item.quantity),
             "location_id": item.project.target_location_id,
         })
+
+    # Purchase orders (P4): each open line on a PO in a counted status is a supply
+    # lot for its type, sized by what has NOT yet been received. The lot shrinks by
+    # exactly what a receipt adds to the stock ledger (quantity_received), so the
+    # pair can never double-count. Bought goods have no component demand — no cascade.
+    from apps.procurement.models import PurchaseOrderLine
+    from apps.procurement.services import COUNTED_STATUSES
+
+    for line in (
+        PurchaseOrderLine.objects.filter(po__status__in=COUNTED_STATUSES)
+        .select_related("po")
+    ):
+        remaining = int(line.quantity_ordered) - int(line.quantity_received)
+        if remaining <= 0:
+            continue
+        pool.append(_Incoming(
+            kind="po_line", ref_id=line.pk, type_id=line.type_id,
+            remaining=remaining, end_date=line.po.promised_by, po_id=line.po_id,
+        ))
+
+    # Freight in-transit (P6): every unreceipted line quantity is a destination-pinned
+    # scheduled receipt (bought ≠ available, until receipted). At ESI-covered
+    # destinations a received-but-unsynced lot bridges the mirror lag so the requirement
+    # never reopens in the sync window. Read once, exactly where the pool is pluggable.
+    # In-transit goods are supply only — no cascade (the ISK is spent, not corp materials).
+    from apps.logistics.freight import in_transit
+
+    for lot in in_transit():
+        pool.append(_Incoming(
+            kind=lot.kind, ref_id=lot.line_id, type_id=lot.type_id,
+            remaining=lot.remaining, end_date=lot.eta, location_id=lot.destination_id,
+        ))
+
     return pool, cascade, matched_pks
 
 
@@ -346,12 +386,13 @@ def _execute(run: MrpRun) -> dict:  # noqa: PLR0915 — the run is one deliberat
     needs = list(
         FitSupplyNeed.objects.filter(
             status__in=(FitSupplyNeed.Status.OPEN, FitSupplyNeed.Status.IN_PROGRESS)
-        ).select_related("build_job", "industry_project")
+        ).select_related("build_job", "industry_project", "purchase_order")
     )
     needs_by_fit: dict[int, list] = {}
     beyond_window: list[dict] = []
     attributed_job_pks: set[int] = set()
     attributed_project_pks: set[int] = set()
+    attributed_po_ids: set[int] = set()
 
     # Beyond-window listing for manual demand lines (their quantities are already
     # excluded from P2's suggestion by the shared horizon above).
@@ -380,6 +421,8 @@ def _execute(run: MrpRun) -> dict:  # noqa: PLR0915 — the run is one deliberat
             attributed_job_pks.add(need.build_job_id)
         if need.industry_project_id:
             attributed_project_pks.add(need.industry_project_id)
+        if need.purchase_order_id:
+            attributed_po_ids.add(need.purchase_order_id)
 
     pool, cascade, _matched = _collect_incoming(config)
     # Attribution governs the SUPPLY side only: a need-linked vehicle's output is
@@ -400,6 +443,15 @@ def _execute(run: MrpRun) -> dict:  # noqa: PLR0915 — the run is one deliberat
         pool = [
             lot for lot in pool
             if not (lot.kind == "project_item" and lot.ref_id in attributed_items)
+        ]
+    # A need-linked PO's fit-level lot leaves the pool (it offsets its own need's
+    # depth-0 demand below, never the pool) — the build_job/project rule, keyed by
+    # need.purchase_order_id. Without this a pooled hull lot would silently cover
+    # some OTHER fit's ship-level demand (phantom coverage).
+    if attributed_po_ids:
+        pool = [
+            lot for lot in pool
+            if not (lot.kind == "po_line" and lot.po_id in attributed_po_ids)
         ]
 
     # ---- Step 2: explode fits to (type, location) cells ---------------------
@@ -430,6 +482,18 @@ def _execute(run: MrpRun) -> dict:  # noqa: PLR0915 — the run is one deliberat
             key = (pid, tid)
             project_hull_output[key] = project_hull_output.get(key, 0) + int(qty)
 
+    # Need-linked POs' fit-level output (remaining, in a counted status), batched.
+    po_fit_output: dict[int, int] = {}
+    if attributed_po_ids:
+        from apps.procurement.models import PurchaseOrderLine
+        from apps.procurement.services import COUNTED_STATUSES
+
+        for po_id, ordered, received in PurchaseOrderLine.objects.filter(
+            po_id__in=attributed_po_ids, doctrine_fit__isnull=False,
+            po__status__in=COUNTED_STATUSES,
+        ).values_list("po_id", "quantity_ordered", "quantity_received"):
+            po_fit_output[po_id] = po_fit_output.get(po_id, 0) + max(0, int(ordered) - int(received))
+
     for fit in fits:
         d = fit_demand[fit.id]
         loc = fit_avail[fit.id].location
@@ -448,6 +512,8 @@ def _execute(run: MrpRun) -> dict:  # noqa: PLR0915 — the run is one deliberat
                 vehicle_output += project_hull_output.get(
                     (need.industry_project_id, fit.ship_type_id), 0
                 )
+            if need.purchase_order_id:
+                vehicle_output += po_fit_output.get(need.purchase_order_id, 0)
             uncovered = max(0, int(need.quantity_required) - vehicle_output)
             need_units += uncovered
             if need.required_by and (earliest is None or need.required_by < earliest):
@@ -505,9 +571,9 @@ def _execute(run: MrpRun) -> dict:  # noqa: PLR0915 — the run is one deliberat
     # Jump-freight per unit for the import lane's landed-price comparison —
     # the forecaster's own primitives; degrades to 0 without a route/rate card.
     from apps.doctrines.hulls import hull_class_for_group
+    from apps.logistics.costing import _freight_unit, _staging_hops
     from apps.logistics.services import active_rate_card
     from apps.sde.models import SdeType
-    from apps.store.forecast import _freight_unit, _staging_hops
 
     card = active_rate_card()
     hops_by_loc: dict[int, int] = {}
@@ -586,10 +652,16 @@ def _execute(run: MrpRun) -> dict:  # noqa: PLR0915 — the run is one deliberat
             incoming_qty = 0
             incoming_refs: list[dict] = []
             esi_end = None
+            po_end = None
+            transit_end = None
             still_needed = max(0, c.gross - avail_qty)
             for lot in pool_by_type.get(tid, ()):
                 if still_needed - incoming_qty <= 0:
                     break
+                # Destination-pinned lots (freight in-transit / received-unsynced) cover
+                # only their own lane; None-pinned lots (all other kinds) stay corp-pooled.
+                if lot.location_id is not None and lot.location_id != loc_id:
+                    continue
                 take = min(lot.remaining, still_needed - incoming_qty)
                 if take <= 0:
                     continue
@@ -598,10 +670,19 @@ def _execute(run: MrpRun) -> dict:  # noqa: PLR0915 — the run is one deliberat
                 ref = {"kind": lot.kind, "id": lot.ref_id, "qty": take}
                 if lot.project_id:
                     ref["project_id"] = lot.project_id
+                if lot.po_id:
+                    ref["po_id"] = lot.po_id
                 incoming_refs.append(ref)
                 if lot.kind == "esi_job" and lot.end_date:
                     if esi_end is None or lot.end_date > esi_end:
                         esi_end = lot.end_date
+                if lot.kind == "po_line" and lot.end_date:
+                    if po_end is None or lot.end_date > po_end:
+                        po_end = lot.end_date
+                # in_transit lots carry the batch ETA; received_unsynced carry None.
+                if lot.kind == "in_transit" and lot.end_date:
+                    if transit_end is None or lot.end_date > transit_end:
+                        transit_end = lot.end_date
 
             net = max(0, c.gross - avail_qty - incoming_qty)
 
@@ -644,7 +725,8 @@ def _execute(run: MrpRun) -> dict:  # noqa: PLR0915 — the run is one deliberat
                 run=run, key=key, cell_data=c, avail_qty=avail_qty,
                 incoming_qty=incoming_qty, incoming_refs=incoming_refs, net=net,
                 suggestion=suggestion, depth=wave, esi_end=esi_end,
-                location=locations.get(loc_id), counters=counters,
+                location=locations.get(loc_id), counters=counters, po_end=po_end,
+                transit_end=transit_end,
             )
             row_by_key[key] = row
             visited_keys.add(key)
@@ -680,7 +762,7 @@ def _execute(run: MrpRun) -> dict:  # noqa: PLR0915 — the run is one deliberat
         wave += 1
 
     # ---- Step 4: feasible dates (children first — deepest wave upward) -------
-    _apply_feasible_dates(row_by_key, children_of, durations, config, now, counters)
+    _apply_feasible_dates(row_by_key, children_of, durations, config, now, counters, run=run)
 
     # ---- Step 4b: reconcile linked vehicles (self-feedback guard) -------------
     _reconcile_vehicles(row_by_key, counters)
@@ -711,7 +793,8 @@ def _execute(run: MrpRun) -> dict:  # noqa: PLR0915 — the run is one deliberat
 
 
 def _write_row(*, run, key, cell_data, avail_qty, incoming_qty, incoming_refs, net,
-               suggestion, depth, esi_end, location, counters) -> NetRequirement:
+               suggestion, depth, esi_end, location, counters, po_end=None,
+               transit_end=None) -> NetRequirement:
     """Create-or-update the live row for (type, location) — the
     ``recompute_supply_need`` locking pattern, value-compare before every write."""
     tid, loc_id = key
@@ -769,21 +852,92 @@ def _write_row(*, run, key, cell_data, avail_qty, incoming_qty, incoming_refs, n
             counters["rows_unchanged"] += 1
         # Stash for the feasible pass (no extra reads).
         live._esi_end = esi_end
+        live._po_end = po_end
+        live._transit_end = transit_end
         return live
 
 
-def _apply_feasible_dates(row_by_key, children_of, durations, config, now, counters) -> None:
+def _child_feasible_max(child_keys, row_by_key):
+    """Latest feasible date among a row's still-open children (net > 0, dated) — the
+    P3 child-max propagation, shared by the P3 build branch and the capacity pass."""
+    child_max = None
+    for child_key in child_keys:
+        child = row_by_key.get(child_key)
+        if child is not None and child.net_quantity > 0 and child.feasible_at:
+            if child_max is None or child.feasible_at > child_max:
+                child_max = child.feasible_at
+    return child_max
+
+
+def _any_child_refused(child_keys, row_by_key):
+    """True if any still-open child was REFUSED by the capacity pass this sweep
+    (net > 0, no feasible date, ``feasible_source="capacity"``). A parent build that
+    consumes a component with no honest date cannot be honestly promised — this is
+    read only on the capacity branch, so the P3 inert path is unaffected."""
+    for child_key in child_keys:
+        child = row_by_key.get(child_key)
+        if (
+            child is not None and child.net_quantity > 0
+            and child.feasible_at is None and child.feasible_source == "capacity"
+        ):
+            return True
+    return False
+
+
+def _apply_feasible_dates(row_by_key, children_of, durations, config, now, counters,
+                          run=None) -> None:
     """Deepest wave first, so a parent can look at its children's feasible dates.
 
-    Unconstrained-slots assumption throughout (P5 adds capacity); day-quantized
-    and excluded from the digest, so a same-day re-run writes nothing."""
-    for key, row in sorted(row_by_key.items(),
-                           key=lambda kv: kv[1].depth, reverse=True):
+    With ``config.capacity_enabled`` OFF this is the P3 unconstrained-slots pass,
+    byte-identical (the ``build`` branch below). ON, the ``build`` branch and every
+    own-vehicle row instead take their date from the finite-capacity scheduler
+    (:func:`apps.industry.capacity.schedule_feasible`), which may hold the date or
+    refuse it (``feasible_at=None``) and name the binding ``bottleneck_code``.
+    Day-quantized and excluded from the digest — a same-day re-run writes nothing.
+    """
+    scheduler = None
+    if config.capacity_enabled:
+        from apps.industry.capacity import CapacityScheduler, derive_resources
+
+        if run is not None:
+            _heartbeat(run)
+        # Refresh the resource ledger from current skills BEFORE any NetRequirement
+        # row is touched (its own writes; never inside a _write_row txn) — the officer
+        # "Re-derive now" POST calls the same idempotent path.
+        derive_resources(config)
+        scheduler = CapacityScheduler(config, now, row_by_key)
+
+    processed = 0
+    for key, row in sorted(
+        row_by_key.items(),
+        key=lambda kv: (-kv[1].depth, kv[1].type_id,
+                        kv[1].location_id if kv[1].location_id is not None else -1),
+    ):
         feasible = None
         source = "unknown"
+        bottleneck = ""
         esi_end = getattr(row, "_esi_end", None)
+        po_end = getattr(row, "_po_end", None)
+        transit_end = getattr(row, "_transit_end", None)
         if row.net_quantity <= 0 and esi_end is not None:
             feasible, source = _day(esi_end), "esi_job"
+        elif row.net_quantity <= 0 and po_end is not None:
+            # A PO covers this requirement — show its promised date, not a guess.
+            feasible, source = _day(po_end), "po"
+        elif row.net_quantity <= 0 and transit_end is not None:
+            # A freight batch covers this requirement — show its ETA (the batch's
+            # honest arrival), not the flat import lead time. 10 chars, fits max_length=12.
+            feasible, source = _day(transit_end), "in_transit"
+        elif scheduler is not None and scheduler.owns_row(row):
+            # Capacity owns every build row and every covered own-vehicle row when
+            # armed. ``child_max``/``child_refused`` read children already written this
+            # sweep (deepest first), exactly as the P3 build branch does below.
+            children = children_of.get(key, ())
+            child_max = _child_feasible_max(children, row_by_key)
+            child_refused = _any_child_refused(children, row_by_key)
+            feasible, source, bottleneck = scheduler.schedule_row(
+                row, child_max, durations.get(key), child_refused
+            )
         elif row.net_quantity > 0:
             if row.suggestion == "build":
                 duration = durations.get(key)
@@ -792,12 +946,7 @@ def _apply_feasible_dates(row_by_key, children_of, durations, config, now, count
                     # same-day re-run must not flip the feasible day just
                     # because now+duration crossed midnight later in the day.
                     base = _day(now) + timedelta(seconds=duration)
-                    child_max = None
-                    for child_key in children_of.get(key, ()):
-                        child = row_by_key.get(child_key)
-                        if child is not None and child.net_quantity > 0 and child.feasible_at:
-                            if child_max is None or child.feasible_at > child_max:
-                                child_max = child.feasible_at
+                    child_max = _child_feasible_max(children_of.get(key, ()), row_by_key)
                     if child_max is not None:
                         base += (child_max - _day(now))
                     feasible, source = _day(base), "build_time"
@@ -807,10 +956,22 @@ def _apply_feasible_dates(row_by_key, children_of, durations, config, now, count
             elif row.suggestion == "import":
                 feasible = _day(now + timedelta(days=int(config.import_lead_days)))
                 source = "lead_time"
-        if row.feasible_at != feasible or row.feasible_source != source:
+        # Compare-before-write. When capacity is OFF, ``bottleneck`` is always ""
+        # and every row's stored code is already "" — so this reduces byte-for-byte
+        # to the P3 save (feasible_at + feasible_source), the inert guarantee.
+        feasible_changed = row.feasible_at != feasible or row.feasible_source != source
+        bottleneck_changed = row.bottleneck_code != bottleneck
+        if feasible_changed or bottleneck_changed:
             row.feasible_at = feasible
             row.feasible_source = source
-            row.save(update_fields=["feasible_at", "feasible_source", "updated_at"])
+            fields = ["feasible_at", "feasible_source", "updated_at"]
+            if bottleneck_changed:
+                row.bottleneck_code = bottleneck
+                fields.append("bottleneck_code")
+            row.save(update_fields=fields)
+        processed += 1
+        if run is not None and processed % 200 == 0:
+            _heartbeat(run)
 
 
 def _sweep_stale_rows(run: MrpRun, visited_keys, counters) -> None:
@@ -853,15 +1014,38 @@ def _own_vehicle_output(row: NetRequirement) -> int:
     TARGET must exclude it, or every re-run would shrink the vehicle toward 0.
     """
     own = 0
+    freight_own = 0
     for ref in row.incoming_refs or []:
-        if ref.get("kind") == "build_job" and ref.get("id") == row.build_job_id:
+        kind = ref.get("kind")
+        if kind == "build_job" and ref.get("id") == row.build_job_id:
             own += int(ref.get("qty", 0))
         elif (
-            ref.get("kind") == "project_item"
+            kind == "project_item"
             and row.industry_project_id
             and ref.get("project_id") == row.industry_project_id
         ):
             own += int(ref.get("qty", 0))
+        elif (
+            kind == "po_line"
+            and row.purchase_order_id
+            and ref.get("po_id") == row.purchase_order_id
+        ):
+            own += int(ref.get("qty", 0))
+        elif (
+            kind in ("in_transit", "received_unsynced")
+            and row.freight_line_id
+            and ref.get("id") == row.freight_line_id
+        ):
+            freight_own += int(ref.get("qty", 0))
+    if freight_own and row.freight_line_id:
+        # A consolidated freight line also carries officer-typed units (third-party
+        # supply); only the MRP-attributed planned share is this row's own promised
+        # output. Crediting the whole merged lot would inflate _vehicle_target.
+        from apps.logistics.models import FreightBatchLine
+
+        planned = FreightBatchLine.objects.filter(pk=row.freight_line_id).values_list(
+            "planned_quantity", flat=True).first() or 0
+        own += min(freight_own, int(planned))
     return own
 
 
@@ -926,6 +1110,64 @@ def _reconcile_vehicles(row_by_key, counters) -> None:
             elif (haul.quantity or 0) != target:
                 diverged = True
 
+        if row.freight_line_id:
+            from apps.logistics.models import FreightBatch, FreightBatchLine
+
+            # A freight line has two writers (officer line ops + this reconcile) and the
+            # planned-share refresh is a read-modify-write on `quantity`. Lock the batch
+            # then the line (the global FreightBatch → FreightBatchLine order) and re-read
+            # the CURRENT quantity/cost/received under the lock, so a concurrent officer
+            # edit can never be clobbered by a stale delta (the two-writers-one-row rule).
+            with transaction.atomic():
+                # Fetch the (immutable) batch id unlocked, then acquire the locks in the
+                # global order: FreightBatch first, then the line. A line deleted in the
+                # gap leaves ``locked`` None → the FK-release branch below.
+                batch_id = (
+                    FreightBatchLine.objects.filter(pk=row.freight_line_id)
+                    .values_list("batch_id", flat=True).first()
+                )
+                locked = None
+                if batch_id is not None:
+                    FreightBatch.objects.select_for_update().filter(pk=batch_id).first()
+                    locked = (
+                        FreightBatchLine.objects.select_for_update()
+                        .select_related("batch").filter(pk=row.freight_line_id).first()
+                    )
+                if (
+                    locked is None
+                    or locked.batch.status in (
+                        FreightBatch.Status.CLOSED, FreightBatch.Status.CANCELLED,
+                    )
+                    or int(locked.quantity_received) >= int(locked.quantity)
+                ):
+                    # Line gone, batch terminal, or fully received → release the FK so the
+                    # row can close / re-offer fan-out. Safe at covered destinations: the
+                    # received_unsynced lot holds net at 0 until the mirror syncs, so the
+                    # row never re-offers fan-out in the window.
+                    row.freight_line = None
+                    row.save(update_fields=["freight_line", "updated_at"])
+                elif (
+                    locked.batch.status == FreightBatch.Status.OPEN
+                    and locked.unit_purchase_cost is None
+                    and int(locked.quantity_received) == 0
+                ):
+                    # Unclaimed line (batch OPEN, cost untyped, nothing received): refresh
+                    # ONLY the MRP-attributed planned share off the LOCKED quantity.
+                    # Officer-typed units (quantity − planned_quantity) are untouched.
+                    if int(locked.planned_quantity) != target:
+                        new_quantity = int(locked.quantity) + (target - int(locked.planned_quantity))
+                        if target > 0 and new_quantity >= 1:
+                            locked.quantity = new_quantity
+                            locked.planned_quantity = target
+                            locked.save(update_fields=["quantity", "planned_quantity"])
+                            audit_log(None, "industry.mrp.vehicle_refresh",
+                                      target_type="freight_line", target_id=str(locked.pk),
+                                      metadata={"requirement": row.pk, "quantity": target})
+                elif int(locked.planned_quantity) != target:
+                    # Claimed line (cost typed / partial receipt) or batch past OPEN with a
+                    # planned-share mismatch → flag; never auto-shrink a real purchase.
+                    diverged = True
+
         if row.task_id:
             task = Task.objects.filter(pk=row.task_id).first()
             active_task = task is not None and task.status in (
@@ -963,6 +1205,20 @@ def _reconcile_vehicles(row_by_key, counters) -> None:
                 row.industry_project = None
                 row.save(update_fields=["industry_project", "updated_at"])
 
+        if row.purchase_order_id:
+            from apps.procurement import services as _proc
+
+            # DRAFT: refresh the single line to the MOQ-rounded target (audited).
+            # SUBMITTED+: a committed PO that drifted is flagged, never silently
+            # rewritten. Terminal (cancelled/reconciled): release the FK so a new
+            # shortfall can fan out again.
+            outcome = _proc.reconcile_mrp_po(row.purchase_order_id, target)
+            if outcome == "released":
+                row.purchase_order = None
+                row.save(update_fields=["purchase_order", "updated_at"])
+            elif outcome == "diverged":
+                diverged = True
+
         if row.diverged != diverged:
             row.diverged = diverged
             row.save(update_fields=["diverged", "updated_at"])
@@ -973,22 +1229,13 @@ def _reconcile_vehicles(row_by_key, counters) -> None:
 # --------------------------------------------------------------------------- #
 def _packaged_volume(type_id: int) -> float:
     """Packaged m³ — NEVER the assembled volume (a Rifter is 27,289 m³ assembled
-    vs 2,500 m³ packaged; hauls move packaged hulls)."""
-    from apps.doctrines.hulls import hull_class_for_group
-    from apps.sde.models import SdeType
-    from apps.store.forecast import PACKAGED_VOL
+    vs 2,500 m³ packaged; hauls move packaged hulls).
 
-    row = SdeType.objects.filter(type_id=type_id).values(
-        "packaged_volume", "volume", "group_id"
-    ).first()
-    if not row:
-        return 0.0
-    if row["packaged_volume"]:
-        return float(row["packaged_volume"])
-    hull_class = hull_class_for_group(row["group_id"]) if row["group_id"] else "Other"
-    if hull_class in PACKAGED_VOL:
-        return float(PACKAGED_VOL[hull_class])
-    return float(row["volume"] or 0.0)
+    Thin delegator to the :mod:`apps.logistics.costing` authority (kept as a name so
+    ``apps.procurement.receipts`` and the reconcile path import it unchanged)."""
+    from apps.logistics.costing import packaged_volume
+
+    return packaged_volume(type_id)
 
 
 def _corp_stockpile_at(location_id: int | None):
@@ -1128,3 +1375,28 @@ def create_buy_task_for_requirement(requirement: NetRequirement, *, actor):
     locked.status = NetRequirement.Status.IN_PROGRESS
     locked.save(update_fields=["task", "status", "updated_at"])
     return task
+
+
+@transaction.atomic
+def create_purchase_order_for_requirement(requirement: NetRequirement, *, actor, supplier):
+    """Fan a buy/import requirement out to a DRAFT purchase order (idempotent via
+    the FK). A second officer action beside the BUY task — the board offers it first
+    when an active SupplierItem covers the type. The officer then submits/approves."""
+    from apps.procurement.services import create_draft_po
+    from apps.sde.models import SdeType
+
+    locked = NetRequirement.objects.select_for_update().get(pk=requirement.pk)
+    if locked.purchase_order_id:
+        return locked.purchase_order
+    target = _vehicle_target(locked)
+    name = SdeType.objects.filter(type_id=locked.type_id).values_list(
+        "name", flat=True).first() or str(locked.type_id)
+    po = create_draft_po(
+        supplier=supplier, location=locked.location, actor=actor,
+        lines=[{"type_id": locked.type_id, "quantity": max(1, target)}],
+        note_key="po.mrp_source", note_params={"item": name},
+    )
+    locked.purchase_order = po
+    locked.status = NetRequirement.Status.IN_PROGRESS
+    locked.save(update_fields=["purchase_order", "status", "updated_at"])
+    return po

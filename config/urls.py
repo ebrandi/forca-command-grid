@@ -42,6 +42,8 @@ urlpatterns = [
     path("freight/", include("apps.logistics.urls")),
     path("buyback/", include("apps.buyback.urls")),
     path("store/", include("apps.store.urls")),
+    path("procurement/", include("apps.procurement.urls")),
+    path("supply-board/", include("apps.supplyboard.urls")),
     path("tools/", include("apps.navigation.urls")),
     path("command/", include("apps.command_intel.urls")),
     path("campaigns/", include("apps.campaigns.urls")),

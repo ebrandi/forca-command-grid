@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load eve i18n %}
+{% block title %}{% translate "Suppliers" %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-5 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow">{% translate "Procurement · Leadership" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Suppliers" %}</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Pilots, corporations and market hubs the corp buys imports and third-party builds from. Business data only." %}</p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <a href="{% url 'procurement:agreements' %}" class="btn-ghost text-sm">{% translate "Agreements" %}</a>
+    <a href="{% url 'procurement:pos' %}" class="btn-ghost text-sm">{% translate "Purchase orders" %}</a>
+    <a href="{% url 'procurement:supplier_new' %}" class="btn-gold text-sm">{% translate "New supplier" %}</a>
+  </div>
+</header>
+
+<form method="get" class="panel mb-4 flex flex-wrap items-end gap-3 px-4 py-3">
+  <label class="block min-w-40 flex-1">
+    <span class="eyebrow text-faint">{% translate "Search" %}</span>
+    <input type="search" name="q" value="{{ q }}" placeholder="{% translate 'Supplier name' %}" class="input-field mt-1 w-full">
+  </label>
+  <label class="block">
+    <span class="eyebrow text-faint">{% translate "Kind" %}</span>
+    <select name="kind" class="input-field mt-1">
+      <option value="">{% translate "All" %}</option>
+      {% for value, label in kinds %}
+        <option value="{{ value }}" {% if f_kind == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label class="block">
+    <span class="eyebrow text-faint">{% translate "Status" %}</span>
+    <select name="status" class="input-field mt-1">
+      <option value="">{% translate "All" %}</option>
+      {% for value, label in statuses %}
+        <option value="{{ value }}" {% if f_status == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <button type="submit" class="btn-ghost text-sm">{% translate "Apply" %}</button>
+</form>
+
+<div class="panel overflow-x-auto">
+  <table class="w-full text-sm">
+    <thead><tr class="text-left text-[11px] uppercase text-faint">
+      <th class="px-4 py-2">{% translate "Supplier" %}</th>
+      <th class="px-4 py-2">{% translate "Kind" %}</th>
+      <th class="px-4 py-2">{% translate "Status" %}</th>
+      <th class="px-4 py-2">{% translate "Lead (days)" %}</th>
+      <th class="px-4 py-2">{% translate "On-time" %}</th>
+      <th class="px-4 py-2">{% translate "Fill" %}</th>
+      <th class="px-4 py-2">{% translate "Sample" %}</th>
+    </tr></thead>
+    <tbody>
+      {% for s in rows %}
+      <tr class="border-t border-line/40">
+        <td class="px-4 py-2">
+          <a href="{% url 'procurement:supplier_detail' s.pk %}" class="text-ink hover:text-gold">{{ s.display_name|default:s }}</a>
+        </td>
+        <td class="px-4 py-2 text-faint">{{ s.get_kind_display }}</td>
+        <td class="px-4 py-2">{{ s.get_status_display }}</td>
+        <td class="px-4 py-2 data">{{ s.lead_time_days }}</td>
+        <td class="px-4 py-2 data">{% if s.on_time_rate is not None %}{% widthratio s.on_time_rate 1 100 %}%{% else %}<span class="text-faint">—</span>{% endif %}</td>
+        <td class="px-4 py-2 data">{% if s.fill_rate is not None %}{% widthratio s.fill_rate 1 100 %}%{% else %}<span class="text-faint">—</span>{% endif %}</td>
+        <td class="px-4 py-2 data">{{ s.reliability_sample }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" class="px-4 py-6 text-center text-faint">{% translate "No suppliers match." %}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% include "doctrines/_pagination.html" %}
+{% endblock %}

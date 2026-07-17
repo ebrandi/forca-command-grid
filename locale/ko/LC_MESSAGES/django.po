@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-16 23:46+0000\n"
+"POT-Creation-Date: 2026-07-17 16:45+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: ko machine-assisted draft\n"
@@ -448,6 +448,7 @@ msgstr "등급 “%(name)s”을(를) 저장했습니다."
 #: apps/admin_audit/console_industry.py apps/admin_audit/console_mentorship.py
 #: apps/admin_audit/console_navigation.py apps/admin_audit/console_pingboard.py
 #: apps/admin_audit/console_planetary.py apps/admin_audit/console_raffle.py
+#: apps/industry/views_capacity.py apps/logistics/views_freight.py
 msgid "Please correct the errors below."
 msgstr "아래 오류를 수정해 주세요."
 
@@ -485,7 +486,8 @@ msgstr "보상 스캔 완료 — 새 보상 이벤트 %(n)d개를 생성했습�
 
 #: apps/admin_audit/console_combat.py apps/buyback/views.py
 #: apps/capsuleer/views.py apps/industry/views_mrp.py apps/logistics/views.py
-#: apps/stockpile/views.py apps/store/views.py apps/store/views_inventory.py
+#: apps/procurement/views.py apps/stockpile/views.py apps/store/views.py
+#: apps/store/views_inventory.py
 msgid "Unknown action."
 msgstr "알 수 없는 작업입니다."
 
@@ -1671,9 +1673,10 @@ msgid "Effective refine yield (skills + structure + rig) used to value ore."
 msgstr "광석 가치 산정에 사용되는 유효 정제 수율 (스킬 + 구조물 + rig)."
 
 #: apps/buyback/models.py apps/campaigns/models.py apps/capsuleer/models.py
-#: apps/command_intel/models.py apps/industry/models.py apps/raffle/models.py
-#: apps/readiness/models.py apps/recommendations/models.py
-#: apps/stockpile/models.py apps/store/models.py apps/tasks/models.py
+#: apps/command_intel/models.py apps/industry/models.py
+#: apps/logistics/models.py apps/raffle/models.py apps/readiness/models.py
+#: apps/recommendations/models.py apps/stockpile/models.py apps/store/models.py
+#: apps/tasks/models.py templates/logistics/freight.html
 #: templates/navigation/jump_routes.html
 msgid "Open"
 msgstr "열림"
@@ -1685,15 +1688,15 @@ msgstr "구매됨"
 #: apps/buyback/models.py apps/killboard/models.py apps/mentorship/models.py
 #: apps/srp/models.py templates/admin_audit/console/combat_rewards.html
 #: templates/mining/my_mining.html templates/mining/payout.html
-#: templates/srp/budget.html
+#: templates/procurement/po_detail.html templates/srp/budget.html
 msgid "Paid"
 msgstr "지급됨"
 
 #: apps/buyback/models.py apps/campaigns/models.py apps/campaigns/views.py
 #: apps/erp/models.py apps/industry/models.py apps/killboard/models.py
 #: apps/logistics/models.py apps/mentorship/models.py apps/pingboard/models.py
-#: apps/raffle/models.py apps/store/models.py apps/tasks/models.py
-#: templates/admin_audit/console/raffle_draw.html
+#: apps/procurement/models.py apps/raffle/models.py apps/store/models.py
+#: apps/tasks/models.py templates/admin_audit/console/raffle_draw.html
 #: templates/campaigns/close.html templates/operations/_posture.html
 #: templates/operations/cancellations.html
 msgid "Cancelled"
@@ -1713,7 +1716,8 @@ msgid "Settled"
 msgstr "정산됨"
 
 #: apps/buyback/models.py apps/identity/models.py apps/killboard/models.py
-#: apps/mentorship/models.py apps/recruitment/models.py
+#: apps/mentorship/models.py apps/procurement/models.py
+#: apps/recruitment/models.py
 msgid "Rejected"
 msgstr "거부됨"
 
@@ -2115,7 +2119,7 @@ msgstr "기타"
 #: apps/campaigns/models.py apps/command_intel/models.py
 #: apps/doctrines/models.py apps/industry/models.py apps/mentorship/models.py
 #: apps/mining/models.py apps/operations/models.py apps/pingboard/models.py
-#: apps/planetary/models.py apps/raffle/models.py
+#: apps/planetary/models.py apps/procurement/models.py apps/raffle/models.py
 #: templates/command_intel/campaigns.html templates/operations/_posture.html
 msgid "Draft"
 msgstr "초안"
@@ -2126,7 +2130,8 @@ msgid "Proposed"
 msgstr "제안됨"
 
 #: apps/campaigns/models.py apps/identity/models.py apps/killboard/models.py
-#: apps/mentorship/models.py apps/raffle/models.py apps/srp/models.py
+#: apps/mentorship/models.py apps/procurement/models.py apps/raffle/models.py
+#: apps/srp/models.py
 msgid "Approved"
 msgstr "승인됨"
 
@@ -2134,14 +2139,16 @@ msgstr "승인됨"
 #: apps/command_intel/models.py apps/doctrines/models.py
 #: apps/impersonation/models.py apps/industry/models.py
 #: apps/mentorship/models.py apps/operations/models.py apps/pingboard/models.py
-#: apps/planetary/models.py apps/raffle/models.py apps/stockpile/models.py
-#: apps/store/models.py templates/admin_audit/console/mentorship/cohorts.html
+#: apps/planetary/models.py apps/procurement/models.py apps/raffle/models.py
+#: apps/stockpile/models.py apps/store/models.py
+#: templates/admin_audit/console/mentorship/cohorts.html
 #: templates/admin_audit/console/mentorship/reward_rules.html
 #: templates/admin_audit/console/mentorship/track_builder.html
 #: templates/admin_audit/console/mentorship/tracks.html
 #: templates/campaigns/portfolio.html templates/capsuleer/_goal_card.html
 #: templates/capsuleer/goal_detail.html templates/command_intel/campaigns.html
 #: templates/market/dashboard.html templates/operations/_posture.html
+#: templates/procurement/supplier_detail.html
 msgid "Active"
 msgstr "활성"
 
@@ -2268,7 +2275,7 @@ msgstr "완료"
 #: apps/campaigns/models.py apps/capsuleer/models.py
 #: apps/command_intel/models.py apps/identity/models.py
 #: apps/killboard/models.py apps/mentorship/models.py apps/pingboard/models.py
-#: apps/raffle/models.py apps/skills/models.py
+#: apps/procurement/models.py apps/raffle/models.py apps/skills/models.py
 #: templates/admin_audit/console/combat_rewards.html
 #: templates/admin_audit/console/raffle_draw.html
 #: templates/corporation/roster.html
@@ -2327,6 +2334,7 @@ msgid "Realised"
 msgstr "발생함"
 
 #: apps/campaigns/models.py apps/doctrines/models.py apps/mentorship/models.py
+#: apps/procurement/models.py
 msgid "Retired"
 msgstr "종료됨"
 
@@ -2691,7 +2699,7 @@ msgstr "제조"
 msgid "Build and fit the mainline, logistics and replacement hulls."
 msgstr "주력, 로지스틱스, 교체 선체를 제조하고 피팅합니다."
 
-#: apps/campaigns/templates_i18n.py
+#: apps/campaigns/templates_i18n.py templates/admin_audit/console/hub.html
 msgid "Procurement"
 msgstr "조달"
 
@@ -3481,7 +3489,8 @@ msgstr "제안"
 #: templates/admin_audit/console/members.html
 #: templates/admin_audit/console/mentorship/rewards.html
 #: templates/buyback/guaranteed_queue.html templates/campaigns/detail.html
-#: templates/srp/queue.html
+#: templates/procurement/agreement_detail.html
+#: templates/procurement/po_detail.html templates/srp/queue.html
 msgid "Approve"
 msgstr "승인"
 
@@ -3493,7 +3502,8 @@ msgid "Start"
 msgstr "시작"
 
 #: apps/campaigns/views.py templates/capsuleer/goal_detail.html
-#: templates/mentorship/pairing_detail.html templates/operations/templates.html
+#: templates/industry/capacity.html templates/mentorship/pairing_detail.html
+#: templates/operations/templates.html
 msgid "Pause"
 msgstr "일시중지"
 
@@ -3523,8 +3533,9 @@ msgstr "일시중지"
 #: templates/mentorship/pairing_detail.html
 #: templates/operations/template_form.html
 #: templates/pingboard/alert_detail.html templates/planetary/wizard.html
-#: templates/stockpile/dashboard.html templates/store/demand_policy.html
-#: templates/store/order_confirm.html
+#: templates/procurement/agreement_form.html templates/procurement/po_form.html
+#: templates/procurement/supplier_form.html templates/stockpile/dashboard.html
+#: templates/store/demand_policy.html templates/store/order_confirm.html
 msgid "Cancel"
 msgstr "취소"
 
@@ -3807,7 +3818,8 @@ msgstr "증거를 삭제했습니다."
 msgid "The campaign workspace is for officers and campaign leads."
 msgstr "캠페인 작업 공간은 임원과 캠페인 리드를 위한 것입니다."
 
-#: apps/campaigns/views.py
+#: apps/campaigns/views.py apps/procurement/models.py
+#: templates/procurement/board.html
 msgid "Overdue"
 msgstr "기한 초과"
 
@@ -4274,7 +4286,7 @@ msgstr "함선"
 #: apps/capsuleer/models.py apps/onboarding/models.py
 #: templates/campaigns/activity.html templates/campaigns/detail.html
 #: templates/capsuleer/goal_form.html templates/capsuleer/paths.html
-#: templates/erp/board.html
+#: templates/erp/board.html templates/industry/capacity.html
 msgid "Activity"
 msgstr "활동"
 
@@ -4358,8 +4370,8 @@ msgstr "오래됨"
 msgid "Dismissed"
 msgstr "무시됨"
 
-#: apps/capsuleer/models.py config/showcase_data.py templates/_nav.html
-#: templates/admin_audit/console/combat_rewards.html
+#: apps/capsuleer/models.py apps/procurement/models.py config/showcase_data.py
+#: templates/_nav.html templates/admin_audit/console/combat_rewards.html
 #: templates/admin_audit/console/comms_access/status.html
 #: templates/admin_audit/console/compliance.html
 #: templates/admin_audit/console/raffle_grant.html
@@ -4368,10 +4380,10 @@ msgstr "무시됨"
 #: templates/admin_audit/console/raffle_stats.html
 #: templates/corporation/roster.html templates/doctrines/list.html
 #: templates/doctrines/ships.html templates/identity/linked_pilots.html
-#: templates/killboard/compare.html templates/killboard/roster.html
-#: templates/mining/ledger.html templates/mining/payout.html
-#: templates/operations/detail.html templates/pilots/contributions.html
-#: templates/raffle/detail.html
+#: templates/industry/capacity.html templates/killboard/compare.html
+#: templates/killboard/roster.html templates/mining/ledger.html
+#: templates/mining/payout.html templates/operations/detail.html
+#: templates/pilots/contributions.html templates/raffle/detail.html
 msgid "Pilot"
 msgstr "파일럿"
 
@@ -4412,7 +4424,7 @@ msgid "Review due"
 msgstr "검토 예정"
 
 #: apps/capsuleer/models.py apps/command_intel/models.py
-#: templates/command_intel/_coa_card.html
+#: apps/procurement/models.py templates/command_intel/_coa_card.html
 msgid "Accepted"
 msgstr "수락됨"
 
@@ -6846,7 +6858,8 @@ msgid "Character"
 msgstr "캐릭터"
 
 #: apps/corporation/models.py apps/erp/models.py apps/killboard/models.py
-#: apps/stockpile/models.py templates/killboard/battle_report.html
+#: apps/procurement/models.py apps/stockpile/models.py
+#: templates/killboard/battle_report.html
 msgid "Corporation"
 msgstr "코퍼레이션"
 
@@ -6987,7 +7000,8 @@ msgstr "스킬 계획 시 Corp 수요 가중치."
 #: templates/admin_audit/console/access.html templates/campaigns/close.html
 #: templates/erp/board.html templates/killboard/watchlist_detail.html
 #: templates/mentorship/directory.html templates/mentorship/pairing_detail.html
-#: templates/navigation/beacons.html templates/store/inventory_fit.html
+#: templates/navigation/beacons.html templates/procurement/po_detail.html
+#: templates/store/inventory_fit.html
 msgid "Note"
 msgstr "메모"
 
@@ -7008,7 +7022,7 @@ msgid "Imported"
 msgstr "가져옴"
 
 #: apps/doctrines/models.py apps/mentorship/models.py apps/pingboard/models.py
-#: apps/raffle/models.py apps/store/models.py
+#: apps/procurement/models.py apps/raffle/models.py apps/store/models.py
 msgid "Expired"
 msgstr "만료됨"
 
@@ -7065,7 +7079,8 @@ msgstr "준비 안 됨"
 
 #: apps/doctrines/services.py apps/industry/mrp.py
 #: templates/capsuleer/goal_detail.html templates/doctrines/coverage.html
-#: templates/identity/dashboard.html templates/mentorship/register_mentee.html
+#: templates/identity/dashboard.html templates/industry/capacity.html
+#: templates/mentorship/register_mentee.html
 #: templates/mentorship/register_mentor.html templates/readiness/dashboard.html
 msgid "unknown"
 msgstr "알 수 없음"
@@ -7237,6 +7252,36 @@ msgstr "리더십 계획에서 생성됨"
 msgid "Shipyard restock: %(fit_name)s"
 msgstr "조선소 재보급: %(fit_name)s"
 
+#: apps/erp/messages.py
+#, python-format
+msgid "Material plan restock: %(item)s"
+msgstr "자재 계획 재보급: %(item)s"
+
+#: apps/erp/messages.py
+#, python-format
+msgid "Material plan: %(quantity)s× %(item)s"
+msgstr "자재 계획: %(quantity)s× %(item)s"
+
+#: apps/erp/messages.py
+#, python-format
+msgid "Buy %(quantity)s× %(item)s for the material plan"
+msgstr "자재 계획을 위해 %(quantity)s× %(item)s 구매"
+
+#: apps/erp/messages.py
+#, python-format
+msgid "Raised from the material plan: %(item)s"
+msgstr "자재 계획에서 생성됨: %(item)s"
+
+#: apps/erp/messages.py
+#, python-format
+msgid "Receive purchase order %(reference)s from %(supplier)s"
+msgstr "%(supplier)s 의 구매 주문서 %(reference)s 입고"
+
+#: apps/erp/messages.py
+#, python-format
+msgid "Freight batch: %(origin)s → %(destination)s"
+msgstr "화물 묶음: %(origin)s → %(destination)s"
+
 #: apps/erp/models.py
 msgid "Building"
 msgstr "제작 중"
@@ -7246,7 +7291,7 @@ msgid "Built"
 msgstr "제작 완료"
 
 #: apps/erp/models.py apps/logistics/models.py apps/pingboard/models.py
-#: apps/raffle/models.py apps/store/models.py
+#: apps/procurement/models.py apps/raffle/models.py apps/store/models.py
 #: templates/admin_audit/console/raffle_draw.html
 #: templates/logistics/contracts.html templates/store/board.html
 #: templates/store/order.html
@@ -7380,6 +7425,32 @@ msgstr "유효한 블루프린트 type id가 필요합니다."
 #: apps/erp/views.py
 msgid "Blueprint recorded."
 msgstr "블루프린트가 기록되었습니다."
+
+#: apps/erp/views.py
+msgid "No matching in-game job found — enter its job ID."
+msgstr "일치하는 게임 내 작업을 찾지 못했습니다 — 해당 작업 ID를 입력하세요."
+
+#: apps/erp/views.py
+msgid "In-game job link removed."
+msgstr "게임 내 작업 연결을 해제했습니다."
+
+#: apps/erp/views.py
+#, python-format
+msgid "Linked to in-game job #%(id)s — it now carries the schedule."
+msgstr ""
+"게임 내 작업 #%(id)s에 연결했습니다 — 이제 일정은 해당 작업이 담당합니다."
+
+#: apps/erp/views.py
+msgid "That in-game job produces a different item."
+msgstr "그 게임 내 작업은 다른 아이템을 생산합니다."
+
+#: apps/erp/views.py
+msgid "That in-game job is already linked to another build job."
+msgstr "그 게임 내 작업은 이미 다른 제작 작업에 연결되어 있습니다."
+
+#: apps/erp/views.py
+msgid "Only an in-progress job can be linked."
+msgstr "진행 중인 작업만 연결할 수 있습니다."
 
 #: apps/identity/models.py
 msgid ""
@@ -7597,6 +7668,40 @@ msgstr ""
 msgid "No recipe."
 msgstr "레시피 없음."
 
+#: apps/industry/capacity.py templates/operations/detail.html
+msgid "slots"
+msgstr "슬롯"
+
+#: apps/industry/capacity.py templates/skills/plans.html
+msgid "skills"
+msgstr "스킬"
+
+#: apps/industry/capacity.py
+msgid "blueprint"
+msgstr "blueprint"
+
+#: apps/industry/capacity.py
+msgid "facility"
+msgstr "시설"
+
+#: apps/industry/capacity.py
+msgid "materials"
+msgstr "자재"
+
+#: apps/industry/capacity.py
+msgid "unmeasured"
+msgstr "미측정"
+
+#: apps/industry/capacity.py apps/stockpile/assets.py
+#: templates/stockpile/assets.html
+msgid "Unknown location"
+msgstr "알 수 없는 위치"
+
+#: apps/industry/capacity.py apps/stockpile/assets.py
+#, python-format
+msgid "Location %(id)s"
+msgstr "위치 %(id)s"
+
 #: apps/industry/forms.py
 msgid "e.g. Build 5 Feroxes"
 msgstr "예: Ferox 5척 제작"
@@ -7660,6 +7765,10 @@ msgid "Imported ESI job"
 msgstr "가져온 ESI 작업"
 
 #: apps/industry/models.py
+msgid "MRP planning run"
+msgstr "MRP 계획 실행"
+
+#: apps/industry/models.py
 msgid "Buy"
 msgstr "구매"
 
@@ -7714,20 +7823,134 @@ msgid "Haul"
 msgstr "운송"
 
 #: apps/industry/models.py templates/logistics/corp_contracts.html
+#: templates/logistics/freight_detail.html templates/procurement/po_detail.html
+#: templates/procurement/supplier_detail.html
 msgid "Contract"
 msgstr "계약"
+
+#: apps/industry/models.py
+msgid ""
+"Dated demand beyond this many days ahead is excluded from the plan and "
+"listed separately."
+msgstr ""
+"이 일수보다 더 먼 미래의 기한부 수요는 계획에서 제외되어 별도로 표시됩니다."
+
+#: apps/industry/models.py
+msgid "Assumed days to buy an item at the price-reference hub."
+msgstr "가격 기준 허브에서 아이템을 구매하는 데 걸린다고 가정하는 일수입니다."
+
+#: apps/industry/models.py
+msgid "Assumed days to buy at Jita and freight to the destination."
+msgstr "Jita 에서 구매해 목적지까지 운송하는 데 걸린다고 가정하는 일수입니다."
+
+#: apps/industry/models.py
+msgid ""
+"Count finished-but-undelivered ESI jobs (status \"ready\") as incoming "
+"supply."
+msgstr ""
+"완료되었지만 아직 인도되지 않은 ESI 작업(상태 \"ready\")을 입고 예정 보급으"
+"로 계산합니다."
+
+#: apps/industry/models.py
+msgid ""
+"Run the planning job automatically on its nightly schedule. Off: officers "
+"run it manually from the Material Plan page."
+msgstr ""
+"계획 작업을 야간 일정에 따라 자동으로 실행합니다. 끄면 오피서가 자재 계획 페"
+"이지에서 수동으로 실행합니다."
+
+#: apps/industry/models.py
+msgid ""
+"Hold build dates to committed manufacturing capacity (slots, skills, "
+"blueprints, facilities) and name the bottleneck. Off: dates assume unlimited "
+"industry slots (the P3 behaviour)."
+msgstr ""
+"제작일을 확정된 제조 생산 능력(슬롯, 스킬, blueprint , 시설)에 맞춰 고정하고 "
+"병목을 명시합니다. 끄면: 제작일이 무제한 산업 슬롯을 가정합니다 (P3 동작)."
+
+#: apps/industry/models.py
+msgid ""
+"A pilot's slots become \"unknown\" (excluded from measured capacity) when "
+"their skills snapshot is older than this. Unknown is never treated as zero."
+msgstr ""
+"파일럿의 스킬 스냅샷이 이 값보다 오래되면 해당 슬롯은 \"알 수 없음\"으로 처리"
+"되어 측정된 생산 능력에서 제외됩니다. 알 수 없음은 절대 0으로 간주되지 않습니"
+"다."
+
+#: apps/industry/models.py
+msgid "Material-efficiency assumed for every build level of the explosion."
+msgstr "전개의 모든 제작 레벨에 대해 가정하는 재료 효율입니다."
+
+#: apps/industry/models.py
+msgid "Deepest BOM level the explosion will recurse to."
+msgstr "전개가 재귀적으로 내려가는 최대 BOM 레벨입니다."
+
+#: apps/industry/models.py
+msgid "MRP config"
+msgstr "MRP 설정"
+
+#: apps/industry/models.py
+msgid "MRP configs"
+msgstr "MRP 설정"
 
 #: apps/industry/models.py apps/raffle/models.py
 msgid "Running"
 msgstr "실행 중"
 
+#: apps/industry/models.py
+msgid "Science"
+msgstr "과학"
+
+#: apps/industry/models.py
+msgid ""
+"Cap on finished units/week the scheduler will book onto this pilot — a crude "
+"cadence governor counted across all types, not a per-job ceiling. Blank "
+"means uncapped."
+msgstr ""
+"스케줄러가 이 파일럿에게 배정할 주당 완성 유닛 수 상한 — 모든 타입을 합산해 "
+"세는 대략적인 속도 조절 장치이며, 작업별 상한이 아닙니다. 비워 두면 무제한입"
+"니다."
+
+#: apps/industry/models.py
+msgid "Don't schedule new work onto this pilot."
+msgstr "이 파일럿에게 새 작업을 배정하지 마세요."
+
 #: apps/industry/mrp.py templates/store/supply_forecast.html
 msgid "import"
 msgstr "가져오기"
 
+#: apps/industry/mrp.py
+msgid "in-flight ESI job"
+msgstr "진행 중인 ESI 작업"
+
+#: apps/industry/mrp.py
+msgid "build duration"
+msgstr "제작 시간"
+
+#: apps/industry/mrp.py
+msgid "lead time"
+msgstr "리드 타임"
+
+#: apps/industry/mrp.py
+msgid "purchase order"
+msgstr "구매 주문서"
+
+#: apps/industry/mrp.py
+msgid "committed capacity"
+msgstr "확정 생산 능력"
+
+#: apps/industry/mrp.py templates/industry/mrp.html
+msgid "in transit"
+msgstr "운송 중"
+
 #: apps/industry/tools.py
 msgid "Pick a valid item from the demand list."
 msgstr "수요 목록에서 유효한 아이템을 선택하세요."
+
+#: apps/industry/tools.py
+#, python-format
+msgid "An active supply plan for %(item)s already exists."
+msgstr "%(item)s에 대한 활성 보급 계획이 이미 존재합니다."
 
 #: apps/industry/tools.py
 #, python-format
@@ -7884,9 +8107,67 @@ msgstr "예약된 항목이 없습니다 — 일치하는 Corp 재고가 없습�
 msgid "Released %(n)s reservation(s) back to corp stock."
 msgstr "예약 %(n)s건을 Corp 재고로 반환했습니다."
 
+#: apps/industry/views_capacity.py
+msgid "The maintenance window must end after it starts."
+msgstr "정비 기간은 시작 시각 이후에 종료되어야 합니다."
+
+#: apps/industry/views_capacity.py
+msgid "Capacity settings saved."
+msgstr "생산 능력 설정을 저장했습니다."
+
+#: apps/industry/views_capacity.py
+msgid "Capacity override saved."
+msgstr "생산 능력 수동 지정을 저장했습니다."
+
+#: apps/industry/views_capacity.py
+msgid "Capacity re-derived from current skills."
+msgstr "현재 스킬을 기준으로 생산 능력을 다시 산출했습니다."
+
+#: apps/industry/views_mrp.py
+msgid "A planning run is already in progress — try again shortly."
+msgstr "계획 실행이 이미 진행 중입니다 — 잠시 후 다시 시도하세요."
+
+#: apps/industry/views_mrp.py
+msgid "Planning run finished — no changes since the last run."
+msgstr "계획 실행이 완료되었습니다 — 지난 실행 이후 변경 사항이 없습니다."
+
+#: apps/industry/views_mrp.py
+#, python-format
+msgid "Planning run finished: %(written)s row(s) updated, %(closed)s closed."
+msgstr "계획 실행 완료: 행 %(written)s건 업데이트, %(closed)s건 마감."
+
+#: apps/industry/views_mrp.py
+msgid "That requirement is closed."
+msgstr "그 소요량은 마감되었습니다."
+
+#: apps/industry/views_mrp.py
+msgid "Ship-level demand is fulfilled from the Shipyard inventory console."
+msgstr "함선 단위 수요는 조선소 재고 콘솔에서 충족됩니다."
+
+#: apps/industry/views_mrp.py
+msgid "This requirement already has a vehicle attached."
+msgstr "이 소요 항목에는 이미 이행 수단이 연결되어 있습니다."
+
+#: apps/industry/views_mrp.py
+msgid "This requirement is on a freight batch — remove it there first."
+msgstr "이 소요 항목은 화물 묶음에 포함되어 있습니다 — 먼저 거기서 제거하세요."
+
+#: apps/industry/views_mrp.py
+#, python-format
+msgid "Industry plan “%(name)s” is linked."
+msgstr "산업 계획 “%(name)s”이(가) 연결되었습니다."
+
 #: apps/industry/views_mrp.py apps/store/views_inventory.py
 msgid "ERP build job queued and linked."
 msgstr "ERP 빌드 작업을 대기열에 추가하고 연결했습니다."
+
+#: apps/industry/views_mrp.py
+msgid "Added to the freight batch for this lane."
+msgstr "이 항로의 화물 묶음에 추가했습니다."
+
+#: apps/industry/views_mrp.py
+msgid "Claimable BUY task created and linked."
+msgstr "맡을 수 있는 BUY 작업을 생성하여 연결했습니다."
 
 #: apps/kb/models.py
 msgid "Public"
@@ -8168,7 +8449,11 @@ msgstr "보상 없음"
 #: apps/killboard/models.py templates/buyback/appraisal.html
 #: templates/buyback/offer.html templates/industry/chain.html
 #: templates/industry/create.html templates/industry/demand.html
-#: templates/industry/mrp.html templates/market/dashboard.html
+#: templates/industry/mrp.html templates/logistics/freight.html
+#: templates/logistics/freight_detail.html templates/market/dashboard.html
+#: templates/procurement/agreement_detail.html templates/procurement/board.html
+#: templates/procurement/po_detail.html
+#: templates/procurement/supplier_detail.html
 #: templates/stockpile/dashboard.html templates/stockpile/logistics.html
 msgid "Item"
 msgstr "아이템"
@@ -8420,7 +8705,8 @@ msgstr "방문객"
 msgid "Regular"
 msgstr "단골"
 
-#: apps/killboard/ranks_i18n.py
+#: apps/killboard/ranks_i18n.py templates/industry/capacity.html
+#: templates/procurement/board.html
 msgid "Committed"
 msgstr "헌신자"
 
@@ -8593,6 +8879,68 @@ msgstr "0보다 크고 2 이하여야 합니다."
 msgid "Can't be negative."
 msgstr "음수일 수 없습니다."
 
+#: apps/logistics/freight.py
+msgid "Lines can only change while the batch is open."
+msgstr "라인은 묶음이 열려 있는 동안에만 변경할 수 있습니다."
+
+#: apps/logistics/freight.py
+msgid "Enter a quantity of at least 1."
+msgstr "수량을 1개 이상 입력하세요."
+
+#: apps/logistics/freight.py
+#, python-format
+msgid "Quantity can't drop below the plan's %(n)s units."
+msgstr "수량은 계획의 %(n)s 개 미만으로 낮출 수 없습니다."
+
+#: apps/logistics/freight.py
+msgid "This requirement has no destination to freight to."
+msgstr "이 소요 항목에는 화물을 보낼 목적지가 없습니다."
+
+#: apps/logistics/freight.py
+msgid "No price-reference hub is configured to freight from."
+msgstr "화물을 보낼 가격 기준 허브가 설정되어 있지 않습니다."
+
+#: apps/logistics/freight.py apps/logistics/routing.py
+msgid "No jump route within range between those systems."
+msgstr "해당 시스템 간 사거리 내 점프 경로가 없습니다."
+
+#: apps/logistics/freight.py
+msgid "Only an open batch can be assigned."
+msgstr "열린 묶음만 배정할 수 있습니다."
+
+#: apps/logistics/freight.py
+msgid "Add at least one line before assigning."
+msgstr "배정하기 전에 라인을 하나 이상 추가하세요."
+
+#: apps/logistics/freight.py
+msgid "Only an assigned batch can be unassigned."
+msgstr "배정된 묶음만 배정 해제할 수 있습니다."
+
+#: apps/logistics/freight.py
+msgid "Only an assigned batch can depart."
+msgstr "배정된 묶음만 출발할 수 있습니다."
+
+#: apps/logistics/freight.py
+msgid "This batch is already closed."
+msgstr "이 묶음은 이미 종료되었습니다."
+
+#: apps/logistics/freight.py
+msgid "This batch can't be marked arrived."
+msgstr "이 묶음은 도착으로 표시할 수 없습니다."
+
+#: apps/logistics/freight.py
+msgid "This batch is not in transit."
+msgstr "이 묶음은 운송 중이 아닙니다."
+
+#: apps/logistics/freight.py
+#, python-format
+msgid "Enter a quantity between 1 and %(n)s."
+msgstr "1에서 %(n)s 사이의 수량을 입력하세요."
+
+#: apps/logistics/freight.py
+msgid "No corp stockpile exists at the destination — create one first."
+msgstr "목적지에 군단 비축고가 없습니다 — 먼저 하나를 만드세요."
+
 #: apps/logistics/models.py
 msgid "Public — anyone can get quotes"
 msgstr "공개 — 누구나 견적을 받을 수 있습니다"
@@ -8616,6 +8964,65 @@ msgstr "게임 내 확인됨"
 #: apps/logistics/models.py
 msgid "Failed in-game"
 msgstr "게임 내 실패"
+
+#: apps/logistics/models.py
+msgid "Ship class assumed when an officer assigns a batch to the courier flow."
+msgstr "임원이 묶음을 특송 흐름에 배정할 때 가정하는 함급."
+
+#: apps/logistics/models.py
+msgid ""
+"Assumed days from opening a batch to it departing — the default ETD offset "
+"when none is typed."
+msgstr ""
+"묶음을 연 뒤 출발까지 가정하는 일수 — 값을 입력하지 않았을 때의 기본 ETD 오프"
+"셋."
+
+#: apps/logistics/models.py
+msgid ""
+"Assumed days in transit (depart → arrive) — the default ETA when no arrival "
+"date is typed."
+msgstr ""
+"운송 중 가정 일수 (출발 → 도착) — 도착 날짜를 입력하지 않았을 때의 기본 ETA."
+
+#: apps/logistics/models.py
+msgid ""
+"Run the hourly batch sweep: flip batches to arrived from a verified courier "
+"contract or a completed haul, and flag late ones. Off: the beat is a no-op "
+"and officers click “arrived” by hand (the v1 workflow)."
+msgstr ""
+"매시간 묶음 스윕 실행: 확인된 특송 계약이나 완료된 운반을 근거로 묶음을 도착 "
+"상태로 전환하고, 지연된 묶음을 표시합니다. 끄면: 정기 작업이 아무 것도 하지 "
+"않으며 임원이 직접 “도착”을 손수 클릭합니다 (v1 워크플로)."
+
+#: apps/logistics/models.py
+msgid "Hours past a batch's planned ETA before the sweep flags it late."
+msgstr "묶음의 예정 ETA 를 지난 뒤 스윕이 지연으로 표시하기까지의 시간."
+
+#: apps/logistics/models.py
+msgid "freight config"
+msgstr "화물 설정"
+
+#: apps/logistics/models.py
+msgid "freight configs"
+msgstr "화물 설정"
+
+#: apps/logistics/models.py
+msgid "Assigned"
+msgstr "배정됨"
+
+#: apps/logistics/models.py templates/logistics/freight.html
+msgid "In transit"
+msgstr "운송 중"
+
+#: apps/logistics/models.py
+msgid "Arrived"
+msgstr "도착"
+
+#: apps/logistics/models.py apps/store/models.py
+#: templates/admin_audit/console/raffle_draw.html templates/industry/mrp.html
+#: templates/store/inventory_fit.html
+msgid "Closed"
+msgstr "종료됨"
 
 #: apps/logistics/pricing.py
 msgid "Enter a route (jumps) and a volume."
@@ -8690,10 +9097,6 @@ msgstr "최소한 출발지와 목적지가 필요합니다."
 #, python-format
 msgid "Too many waypoints — plan at most %(n)d legs at a time."
 msgstr "경유지가 너무 많습니다 — 한 번에 최대 %(n)d개 구간만 계획하세요."
-
-#: apps/logistics/routing.py
-msgid "No jump route within range between those systems."
-msgstr "해당 시스템 간 사거리 내 점프 경로가 없습니다."
 
 #: apps/logistics/views.py
 msgid ""
@@ -8784,6 +9187,86 @@ msgstr "아직 corp-contracts scope를 부여한 디렉터가 없습니다."
 #: apps/logistics/views.py
 msgid "Contract sync failed; try again later."
 msgstr "계약 동기화에 실패했습니다. 나중에 다시 시도하세요."
+
+#: apps/logistics/views_freight.py
+msgid "typed"
+msgstr "직접 입력"
+
+#: apps/logistics/views_freight.py
+msgid "from price snapshot"
+msgstr "가격 스냅샷에서"
+
+#: apps/logistics/views_freight.py
+msgid "Origin and destination must differ."
+msgstr "출발지와 목적지가 서로 달라야 합니다."
+
+#: apps/logistics/views_freight.py
+msgid "Freight settings saved."
+msgstr "화물 설정을 저장했습니다."
+
+#: apps/logistics/views_freight.py
+msgid "Pick two different locations."
+msgstr "서로 다른 두 위치를 선택하세요."
+
+#: apps/logistics/views_freight.py
+msgid "Pick an item and a quantity."
+msgstr "아이템과 수량을 선택하세요."
+
+#: apps/logistics/views_freight.py
+msgid "Line added."
+msgstr "라인을 추가했습니다."
+
+#: apps/logistics/views_freight.py
+msgid "Line updated."
+msgstr "라인을 수정했습니다."
+
+#: apps/logistics/views_freight.py
+msgid "Line removed."
+msgstr "라인을 제거했습니다."
+
+#: apps/logistics/views_freight.py
+msgid "Pick a ship class."
+msgstr "함급을 선택하세요."
+
+#: apps/logistics/views_freight.py
+msgid "Batch assigned to the courier flow."
+msgstr "묶음을 특송 흐름에 배정했습니다."
+
+#: apps/logistics/views_freight.py
+msgid "Batch posted to the member haul board."
+msgstr "묶음을 멤버 운반 게시판에 게시했습니다."
+
+#: apps/logistics/views_freight.py
+msgid "Batch unassigned."
+msgstr "묶음 배정을 해제했습니다."
+
+#: apps/logistics/views_freight.py
+msgid "Batch marked departed."
+msgstr "묶음을 출발로 표시했습니다."
+
+#: apps/logistics/views_freight.py
+msgid "Enter a valid ETA."
+msgstr "유효한 ETA 를 입력하세요."
+
+#: apps/logistics/views_freight.py
+msgid "ETA updated."
+msgstr "ETA 를 수정했습니다."
+
+#: apps/logistics/views_freight.py
+msgid "Batch marked arrived."
+msgstr "묶음을 도착으로 표시했습니다."
+
+#: apps/logistics/views_freight.py
+msgid "Enter a quantity to receive."
+msgstr "입고할 수량을 입력하세요."
+
+#: apps/logistics/views_freight.py
+msgid "Stock received."
+msgstr "재고를 입고했습니다."
+
+#: apps/logistics/views_freight.py
+msgid "Batch cancelled."
+msgstr "묶음을 취소했습니다."
 
 #: apps/market/forms.py
 msgid "e.g. Amarr VIII (Oris)"
@@ -9627,7 +10110,7 @@ msgstr "수령자별 이 규칙의 최대 총액 (0 = 제한 없음)."
 msgid "Only grant if the triggering task was auto-verified."
 msgstr "트리거된 작업이 자동 검증된 경우에만 지급."
 
-#: apps/mentorship/models.py apps/raffle/models.py
+#: apps/mentorship/models.py apps/procurement/models.py apps/raffle/models.py
 msgid "Pending approval"
 msgstr "승인 대기 중"
 
@@ -9670,6 +10153,7 @@ msgstr "제안됨"
 #: templates/recommendations/notifications.html templates/recruitment/list.html
 #: templates/skills/gap.html templates/srp/budget.html
 #: templates/srp/loss_impact.html templates/srp/queue.html
+#: templates/store/margin.html templates/supplyboard/board.html
 msgid "Leadership"
 msgstr "리더십"
 
@@ -9685,7 +10169,7 @@ msgstr "상태 변경"
 msgid "Not started"
 msgstr "시작 안 함"
 
-#: apps/mentorship/models.py apps/srp/models.py
+#: apps/mentorship/models.py apps/procurement/models.py apps/srp/models.py
 msgid "Submitted"
 msgstr "제출됨"
 
@@ -13370,6 +13854,85 @@ msgid "{ship_name} can be ordered on the Shipyard again."
 msgstr "{ship_name}을(를) 조선소에서 다시 주문할 수 있습니다."
 
 #: apps/pingboard/messages.py
+#, python-brace-format
+msgid "Material shortfall: {industry_job_name}"
+msgstr "자재 부족분: {industry_job_name}"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"The material plan needs {quantity}× {industry_job_name} by {eta_date}. "
+"Review the Material Plan: {link}"
+msgstr ""
+"자재 계획에 {eta_date}까지 {quantity}× {industry_job_name}이(가) 필요합니다. "
+"자재 계획을 확인하세요: {link}"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid "Capacity bottleneck: {industry_job_name}"
+msgstr "생산 능력 병목: {industry_job_name}"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"The plan can't build {quantity}× {industry_job_name} in time — no free "
+"manufacturing slots. Review the Production Capacity board: {link}"
+msgstr ""
+"계획이 {quantity}× {industry_job_name} 제작을 제때 완료하지 못합니다 — 사용 "
+"가능한 제조 슬롯이 없습니다. 생산 능력 현황판을 확인하세요: {link}"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"The plan can't build {quantity}× {industry_job_name} — no opted-in pilot has "
+"the manufacturing skills. Review the Production Capacity board: {link}"
+msgstr ""
+"계획이 {quantity}× {industry_job_name} 제작을 진행할 수 없습니다 — 참여 신청"
+"한 파일럿 중 제조 스킬을 갖춘 사람이 없습니다. 생산 능력 현황판을 확인하세"
+"요: {link}"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"The plan can't build {quantity}× {industry_job_name} — no usable blueprint "
+"is owned. Review the Production Capacity board: {link}"
+msgstr ""
+"계획이 {quantity}× {industry_job_name} 제작을 진행할 수 없습니다 — 사용 가능"
+"한 blueprint 를 보유하고 있지 않습니다. 생산 능력 현황판을 확인하세요: {link}"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"The plan can't build {quantity}× {industry_job_name} in time — the "
+"manufacturing facility is reinforced or out of fuel. Review the Production "
+"Capacity board: {link}"
+msgstr ""
+"계획이 {quantity}× {industry_job_name} 제작을 제때 완료하지 못합니다 — 제조 "
+"시설이 리인포스 상태이거나 연료가 소진되었습니다. 생산 능력 현황판을 확인하세"
+"요: {link}"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"The plan can't build {quantity}× {industry_job_name} in time — its "
+"components can't be ready soon enough. Review the Production Capacity board: "
+"{link}"
+msgstr ""
+"계획이 {quantity}× {industry_job_name} 제작을 제때 완료하지 못합니다 — 구성 "
+"부품을 충분히 빨리 준비할 수 없습니다. 생산 능력 현황판을 확인하세요: {link}"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"The plan can't promise {quantity}× {industry_job_name} — no measured pilot "
+"can be scheduled (capacity unknown). Review the Production Capacity board: "
+"{link}"
+msgstr ""
+"계획이 {quantity}× {industry_job_name} 제작을 보장할 수 없습니다 — 측정된 파"
+"일럿을 배정할 수 없습니다 (생산 능력 알 수 없음). 생산 능력 현황판을 확인하세"
+"요: {link}"
+
+#: apps/pingboard/messages.py
 msgid "Shipyard restock built"
 msgstr "조선소 재보급 제작 완료"
 
@@ -13546,6 +14109,45 @@ msgid ""
 msgstr ""
 "{origin_system} → {destination_system} 운송이 마감을 넘겨 공용 풀로 반환되었"
 "습니다."
+
+#: apps/pingboard/messages.py
+msgid "Freight batch arrived"
+msgstr "화물 묶음 도착"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"Freight batch {origin_system} → {destination_system} has arrived — receipt "
+"its lines to post the landed stock."
+msgstr ""
+"화물 묶음 {origin_system} → {destination_system} 이(가) 도착했습니다 — 라인"
+"을 입고 처리하여 도착 재고를 등록하세요."
+
+#: apps/pingboard/messages.py
+msgid "Freight batch overdue"
+msgstr "화물 묶음 기한 초과"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"Freight batch {origin_system} → {destination_system} is past its ETA "
+"({eta_date}) and has not arrived."
+msgstr ""
+"화물 묶음 {origin_system} → {destination_system} 이(가) ETA ({eta_date}) 를 "
+"지났지만 아직 도착하지 않았습니다."
+
+#: apps/pingboard/messages.py
+msgid "Freight batch delayed"
+msgstr "화물 묶음 지연"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"Freight batch {origin_system} → {destination_system} slipped its ETA to "
+"{eta_date}."
+msgstr ""
+"화물 묶음 {origin_system} → {destination_system} 의 ETA 가 {eta_date} 로 늦춰"
+"졌습니다."
 
 #: apps/pingboard/messages.py
 msgid "Moon chunk arriving soon"
@@ -14095,6 +14697,45 @@ msgstr "캠페인 «{campaign_name}» 상태가 차단됨으로 바뀌었습니�
 msgid "Campaign «{campaign_name}» is now Blocked — {details}. {link}"
 msgstr ""
 "캠페인 «{campaign_name}» 상태가 차단됨으로 바뀌었습니다 — {details}. {link}"
+
+#: apps/pingboard/messages.py
+msgid "Supply agreement awaiting approval"
+msgstr "승인 대기 중인 공급 계약"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"{actor_name} submitted a supply agreement with {supplier_name} that needs a "
+"second director's approval in the Procurement console."
+msgstr ""
+"{actor_name} 이(가) {supplier_name} 와(과) 공급 계약을 제출했으며, 조달 콘솔"
+"에서 두 번째 Director 의 승인이 필요합니다."
+
+#: apps/pingboard/messages.py
+msgid "Purchase order contract available"
+msgstr "구매 주문서 계약 사용 가능"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"{count} purchase order(s) from {supplier_name} matched an in-game contract "
+"and are ready to accept. Review them in the Procurement console: {link}"
+msgstr ""
+"{supplier_name} 의 구매 주문서 {count} 건이 인게임 계약과 일치하여 수락할 준"
+"비가 되었습니다. 조달 콘솔에서 검토하세요: {link}"
+
+#: apps/pingboard/messages.py
+msgid "Purchase order overdue"
+msgstr "구매 주문서 기한 초과"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"{count} purchase order(s) from {supplier_name} are overdue (promised by "
+"{eta_date}). Review them on the Procurement board."
+msgstr ""
+"{supplier_name} 의 구매 주문서 {count} 건이 기한을 초과했습니다 (약속일: "
+"{eta_date}). 조달 보드에서 검토하세요."
 
 #: apps/pingboard/models.py
 msgid "Emergency"
@@ -15632,7 +16273,7 @@ msgstr "일일 리셋"
 msgid "Every 2–3 days"
 msgstr "2~3일마다"
 
-#: apps/planetary/models.py
+#: apps/planetary/models.py apps/procurement/models.py
 msgid "Weekly"
 msgstr "주간"
 
@@ -16142,6 +16783,412 @@ msgstr ""
 #: apps/planetary/views.py
 msgid "Grant the Planetary Industry scope first, then sync your colonies."
 msgstr "먼저 Planetary Industry scope를 부여한 다음 콜로니를 동기화하세요."
+
+#: apps/procurement/contracts.py
+msgid "That contract is no longer in the snapshot."
+msgstr "해당 계약은 더 이상 스냅샷에 없습니다."
+
+#: apps/procurement/contracts.py
+msgid "That contract is not a valid match for this order."
+msgstr "해당 계약은 이 주문에 대한 유효한 일치 항목이 아닙니다."
+
+#: apps/procurement/forms.py
+msgid "The per-cycle quantity must be at least 1."
+msgstr "주기당 수량은 최소 1 이상이어야 합니다."
+
+#: apps/procurement/forms.py
+msgid "Order at least one unit."
+msgstr "최소 1개 이상 주문하세요."
+
+#: apps/procurement/models.py
+msgid ""
+"Estimated cycle value at or above which a supply agreement needs a second "
+"Director's approval."
+msgstr ""
+"추정 주기 금액이 이 값 이상일 때 공급 계약에 두 번째 Director 의 승인이 필요"
+"합니다."
+
+#: apps/procurement/models.py
+msgid ""
+"Total value at or above which a standalone purchase order (one not covered "
+"by an active agreement) needs Director approval."
+msgstr ""
+"총액이 이 값 이상일 때 (활성 공급 계약이 적용되지 않은) 독립 구매 주문서에 "
+"Director 승인이 필요합니다."
+
+#: apps/procurement/models.py
+msgid "Days past the promised date before a purchase order is flagged overdue."
+msgstr "구매 주문서가 기한 초과로 표시되기까지 약속일로부터 경과한 일수입니다."
+
+#: apps/procurement/models.py
+msgid ""
+"Complete weeks of closed purchase orders the reliability rollup looks back "
+"over."
+msgstr "신뢰도 집계가 소급 조회하는 마감된 구매 주문서의 완전한 주 수입니다."
+
+#: apps/procurement/models.py
+msgid ""
+"Arm the contract matcher (runs after the corp-contracts sync). Off: officers "
+"confirm contract matches by hand."
+msgstr ""
+"계약 매처를 활성화합니다 (corp 계약 동기화 후 실행). 꺼짐: 담당자가 계약 일치"
+"를 수동으로 확인합니다."
+
+#: apps/procurement/models.py
+msgid ""
+"Arm the wallet-journal payment reconcile. Off: officers confirm payments by "
+"hand."
+msgstr ""
+"wallet-journal 결제 정산을 활성화합니다. 꺼짐: 담당자가 결제를 수동으로 확인"
+"합니다."
+
+#: apps/procurement/models.py
+msgid "Arm the daily overdue sweep (also expires lapsed agreements)."
+msgstr ""
+"일일 기한 초과 스윕을 활성화합니다 (만료된 공급 계약도 함께 만료 처리)."
+
+#: apps/procurement/models.py
+msgid ""
+"Let a finished matched contract post its landed quantities as receipts "
+"automatically. Off: officers post receipts by hand."
+msgstr ""
+"완료되어 일치된 계약이 도착 수량을 입고로 자동 등록하도록 허용합니다. 꺼짐: "
+"담당자가 입고를 수동으로 등록합니다."
+
+#: apps/procurement/models.py
+msgid "Arm the nightly supplier-reliability rollup."
+msgstr "야간 공급업체 신뢰도 집계를 활성화합니다."
+
+#: apps/procurement/models.py
+msgid ""
+"Wallet-journal ref_types the payment reconcile treats as supplier payments. "
+"Enumerate from the real corp journal before arming."
+msgstr ""
+"결제 정산이 공급업체 결제로 처리하는 wallet-journal ref_types. 활성화하기 전"
+"에 실제 corp 저널에서 열거하세요."
+
+#: apps/procurement/models.py
+msgid "procurement config"
+msgstr "조달 설정"
+
+#: apps/procurement/models.py
+msgid "procurement configs"
+msgstr "조달 설정"
+
+#: apps/procurement/models.py
+msgid "Market hub"
+msgstr "마켓 hub"
+
+#: apps/procurement/models.py
+msgid "Probation"
+msgstr "관찰 대상"
+
+#: apps/procurement/models.py
+msgid "Suspended"
+msgstr "정지됨"
+
+#: apps/procurement/models.py
+msgid "Fixed price"
+msgstr "고정 가격"
+
+#: apps/procurement/models.py
+msgid "Jita-indexed + premium"
+msgstr "Jita 지수 연동 + 프리미엄"
+
+#: apps/procurement/models.py
+msgid "One-off"
+msgstr "일회성"
+
+#: apps/procurement/models.py
+msgid "Monthly"
+msgstr "월간"
+
+#: apps/procurement/models.py
+msgid "Prepaid"
+msgstr "선불"
+
+#: apps/procurement/models.py
+msgid "On delivery"
+msgstr "인도 시 결제"
+
+#: apps/procurement/models.py
+msgid "Net 7 days"
+msgstr "결제 기한 7일"
+
+#: apps/procurement/models.py
+msgid "Net 30 days"
+msgstr "결제 기한 30일"
+
+#: apps/procurement/models.py
+msgid "Contract expected"
+msgstr "계약 대기 중"
+
+#: apps/procurement/models.py
+msgid "Contract available"
+msgstr "계약 사용 가능"
+
+#: apps/procurement/models.py
+msgid "Partially delivered"
+msgstr "부분 배송됨"
+
+#: apps/procurement/models.py
+msgid "Reconciled"
+msgstr "정산됨"
+
+#: apps/procurement/models.py
+msgid "Disputed"
+msgstr "분쟁 중"
+
+#: apps/procurement/models.py
+msgid "Supplier delivers"
+msgstr "공급업체 배송"
+
+#: apps/procurement/models.py
+msgid "Hub pickup (corp hauls)"
+msgstr "Hub 픽업 (corp 운송)"
+
+#: apps/procurement/models.py
+msgid "Auto (contract landed)"
+msgstr "자동 (계약 도착)"
+
+#: apps/procurement/models.py
+msgid "Manual (officer attested)"
+msgstr "수동 (담당자 확인)"
+
+#: apps/procurement/payments.py
+msgid "That wallet entry no longer exists."
+msgstr "해당 wallet 항목이 더 이상 존재하지 않습니다."
+
+#: apps/procurement/payments.py
+msgid "That payment is already matched to another order."
+msgstr "해당 결제는 이미 다른 주문에 일치되어 있습니다."
+
+#: apps/procurement/payments.py
+msgid "This order is already settled."
+msgstr "이 주문은 이미 정산 완료되었습니다."
+
+#: apps/procurement/receipts.py
+msgid "This purchase order is not ready to receive deliveries."
+msgstr "이 구매 주문서는 아직 배송을 입고할 준비가 되지 않았습니다."
+
+#: apps/procurement/receipts.py
+msgid "This line is already fully received."
+msgstr "이 항목은 이미 전량 입고되었습니다."
+
+#: apps/procurement/receipts.py
+msgid "Receipt quantity must be positive."
+msgstr "입고 수량은 양수여야 합니다."
+
+#: apps/procurement/receipts.py
+msgid "Only a hub-pickup purchase order needs a corp haul."
+msgstr "Hub 픽업 구매 주문서만 corp 운송이 필요합니다."
+
+#: apps/procurement/receipts.py
+msgid "This purchase order is not ready to be hauled yet."
+msgstr "이 구매 주문서는 아직 운송할 준비가 되지 않았습니다."
+
+#: apps/procurement/services.py
+msgid "Only a draft agreement can be submitted."
+msgstr "초안 상태의 공급 계약만 제출할 수 있습니다."
+
+#: apps/procurement/services.py
+msgid "An approval request for this agreement is already open."
+msgstr "이 공급 계약에 대한 승인 요청이 이미 열려 있습니다."
+
+#: apps/procurement/services.py
+msgid "This approval is no longer pending."
+msgstr "이 승인은 더 이상 대기 중이 아닙니다."
+
+#: apps/procurement/services.py
+msgid "You can't approve your own agreement — another Director must."
+msgstr ""
+"본인의 공급 계약은 승인할 수 없습니다 — 다른 Director 가 승인해야 합니다."
+
+#: apps/procurement/services.py
+#, python-format
+msgid "Agreement %(outcome)s."
+msgstr "공급 계약이 %(outcome)s 되었습니다."
+
+#: apps/procurement/services.py
+msgid "Only a draft purchase order can be submitted."
+msgstr "초안 상태의 구매 주문서만 제출할 수 있습니다."
+
+#: apps/procurement/services.py
+msgid "A purchase order needs at least one line."
+msgstr "구매 주문서에는 최소 한 개의 항목이 필요합니다."
+
+#: apps/procurement/services.py
+msgid "The supplier does not sell every item on this order."
+msgstr "공급업체가 이 주문의 모든 품목을 판매하지는 않습니다."
+
+#: apps/procurement/services.py
+msgid "Only a submitted purchase order can be approved."
+msgstr "제출된 구매 주문서만 승인할 수 있습니다."
+
+#: apps/procurement/services.py
+msgid "You can't approve your own purchase order — another officer must."
+msgstr ""
+"본인의 구매 주문서는 승인할 수 없습니다 — 다른 담당자가 승인해야 합니다."
+
+#: apps/procurement/services.py
+msgid ""
+"A standalone purchase order at or above the Director threshold needs "
+"Director approval."
+msgstr ""
+"Director 기준값 이상의 독립 구매 주문서에는 Director 승인이 필요합니다."
+
+#: apps/procurement/services.py
+msgid "Only an approved purchase order can be marked contract-expected."
+msgstr "승인된 구매 주문서만 계약 대기로 표시할 수 있습니다."
+
+#: apps/procurement/services.py
+msgid "This purchase order is already closed."
+msgstr "이 구매 주문서는 이미 마감되었습니다."
+
+#: apps/procurement/services.py
+msgid "Only a Director can cancel a purchase order this far along."
+msgstr "이 단계까지 진행된 구매 주문서는 Director 만 취소할 수 있습니다."
+
+#: apps/procurement/services.py
+msgid "A dispute needs a reason."
+msgstr "분쟁에는 사유가 필요합니다."
+
+#: apps/procurement/services.py
+msgid "Only an in-flight purchase order can be disputed."
+msgstr "진행 중인 구매 주문서만 분쟁 처리할 수 있습니다."
+
+#: apps/procurement/services.py
+msgid "This purchase order is not under dispute."
+msgstr "이 구매 주문서는 분쟁 중이 아닙니다."
+
+#: apps/procurement/services.py
+msgid "Closing a dispute as reconciled needs a note."
+msgstr "분쟁을 정산으로 종료하려면 메모가 필요합니다."
+
+#: apps/procurement/services.py
+msgid "Only a Director can cancel a disputed purchase order."
+msgstr "분쟁 중인 구매 주문서는 Director 만 취소할 수 있습니다."
+
+#: apps/procurement/services.py
+msgid "Unknown dispute outcome."
+msgstr "알 수 없는 분쟁 결과입니다."
+
+#: apps/procurement/services.py
+msgid "Reconciling a purchase order needs a note."
+msgstr "구매 주문서를 정산하려면 메모가 필요합니다."
+
+#: apps/procurement/services.py
+msgid "Only a delivered purchase order can be reconciled."
+msgstr "배송된 구매 주문서만 정산할 수 있습니다."
+
+#: apps/procurement/views.py
+msgid "Supplier registered."
+msgstr "공급업체가 등록되었습니다."
+
+#: apps/procurement/views.py
+msgid "Supplier updated."
+msgstr "공급업체가 업데이트되었습니다."
+
+#: apps/procurement/views.py
+msgid "That item is already in this supplier's catalogue."
+msgstr "해당 품목은 이미 이 공급업체의 카탈로그에 있습니다."
+
+#: apps/procurement/views.py
+msgid "Catalogue item added."
+msgstr "카탈로그 품목이 추가되었습니다."
+
+#: apps/procurement/views.py
+msgid "Draft agreement created — add its lines next."
+msgstr "초안 공급 계약이 생성되었습니다 — 다음으로 항목을 추가하세요."
+
+#: apps/procurement/views.py
+msgid "Lines can only be changed while the agreement is a draft."
+msgstr "항목은 공급 계약이 초안 상태일 때만 변경할 수 있습니다."
+
+#: apps/procurement/views.py
+msgid "That type is already on this agreement."
+msgstr "해당 타입은 이미 이 공급 계약에 있습니다."
+
+#: apps/procurement/views.py
+msgid "Agreement line added."
+msgstr "공급 계약 항목이 추가되었습니다."
+
+#: apps/procurement/views.py
+msgid "Agreement submitted and activated."
+msgstr "공급 계약이 제출되어 활성화되었습니다."
+
+#: apps/procurement/views.py
+msgid "Agreement submitted for Director approval."
+msgstr "공급 계약이 Director 승인을 위해 제출되었습니다."
+
+#: apps/procurement/views.py
+msgid "Only a Director can decide an agreement approval."
+msgstr "공급 계약 승인은 Director 만 결정할 수 있습니다."
+
+#: apps/procurement/views.py
+msgid "There is no pending approval for this agreement."
+msgstr "이 공급 계약에는 대기 중인 승인이 없습니다."
+
+#: apps/procurement/views.py
+msgid "Draft purchase order created — add its lines next."
+msgstr "초안 구매 주문서가 생성되었습니다 — 다음으로 항목을 추가하세요."
+
+#: apps/procurement/views.py
+msgid "Lines can only be changed while the order is a draft."
+msgstr "항목은 주문이 초안 상태일 때만 변경할 수 있습니다."
+
+#: apps/procurement/views.py
+msgid "Order line added."
+msgstr "주문 항목이 추가되었습니다."
+
+#: apps/procurement/views.py
+msgid "Purchase order submitted."
+msgstr "구매 주문서가 제출되었습니다."
+
+#: apps/procurement/views.py
+msgid "Purchase order approved."
+msgstr "구매 주문서가 승인되었습니다."
+
+#: apps/procurement/views.py
+msgid "Marked contract-expected."
+msgstr "계약 대기로 표시되었습니다."
+
+#: apps/procurement/views.py
+msgid "Purchase order cancelled."
+msgstr "구매 주문서가 취소되었습니다."
+
+#: apps/procurement/views.py
+msgid "Purchase order marked disputed."
+msgstr "구매 주문서가 분쟁으로 표시되었습니다."
+
+#: apps/procurement/views.py
+msgid "Dispute resolved."
+msgstr "분쟁이 해결되었습니다."
+
+#: apps/procurement/views.py
+msgid "Purchase order reconciled."
+msgstr "구매 주문서가 정산되었습니다."
+
+#: apps/procurement/views.py
+msgid "Contract matched to this order."
+msgstr "계약이 이 주문에 일치되었습니다."
+
+#: apps/procurement/views.py
+msgid "Payment confirmed against this order."
+msgstr "이 주문에 대한 결제가 확인되었습니다."
+
+#: apps/procurement/views.py
+msgid "Choose a line to receive against."
+msgstr "입고할 항목을 선택하세요."
+
+#: apps/procurement/views.py
+msgid "Delivery recorded."
+msgstr "배송이 기록되었습니다."
+
+#: apps/procurement/views.py
+#, python-format
+msgid "%(n)s hauling task(s) created."
+msgstr "%(n)s 개의 운송 작업이 생성되었습니다."
 
 #: apps/raffle/contest_templates.py
 msgid "1st prize"
@@ -17926,6 +18973,7 @@ msgid "You're on top of your readiness — keep your edge by joining an op."
 msgstr "준비 상태가 최고입니다 — 작전에 참여해 우위를 유지하세요."
 
 #: apps/readiness/models.py apps/recommendations/models.py
+#: templates/store/margin.html
 msgid "Acknowledged"
 msgstr "확인됨"
 
@@ -18826,10 +19874,18 @@ msgstr "내 산업 작업 + 블루프린트"
 #: apps/sso/scopes.py
 msgid ""
 "Read your own running industry jobs and owned blueprints, so the Industry "
-"Center can track your personal production and match it to your plans."
+"Center can track your personal production and match it to your plans. While "
+"this is granted, corp officers also see your name, manufacturing slot counts "
+"and slot utilisation on the Production Capacity board — the capacity plan "
+"needs named pilots to schedule builds and name bottlenecks. Revoking this "
+"removes your named capacity on the next planning run."
 msgstr ""
-"진행 중인 본인의 산업 작업과 보유 블루프린트를 읽어, Industry Center가 개인 "
-"생산을 추적하고 계획과 대조할 수 있게 합니다."
+"진행 중인 본인의 산업 작업과 보유한 blueprint 를 읽어 들여, 산업 센터가 본인"
+"의 개인 생산을 추적하고 계획과 대조할 수 있도록 합니다. 이 권한이 부여된 동안"
+"에는 군단 임원도 생산 능력 현황판에서 본인의 이름, 제조 슬롯 수, 슬롯 사용률"
+"을 확인할 수 있습니다 — 생산 능력 계획은 제작을 배정하고 병목을 명시하려면 이"
+"름이 명시된 파일럿이 필요하기 때문입니다. 이 권한을 철회하면 다음 계획 실행 "
+"시 명시된 본인의 생산 능력이 사라집니다."
 
 #: apps/sso/scopes.py
 msgid "Freight location search"
@@ -18870,7 +19926,7 @@ msgstr ""
 #: apps/sso/scopes.py templates/_pilot_identity.html
 #: templates/admin_audit/console/recovery.html
 #: templates/corporation/finance.html templates/identity/dashboard.html
-#: templates/impersonation/log.html
+#: templates/impersonation/log.html templates/supplyboard/board.html
 msgid "Director"
 msgstr "디렉터"
 
@@ -19224,15 +20280,6 @@ msgstr "자산을 읽을 수 없습니다: %(error)s"
 #, python-format
 msgid "Imported %(types)s asset stacks across %(locations)s locations."
 msgstr "%(locations)s개 위치에 걸쳐 %(types)s개의 자산 스택을 가져왔습니다."
-
-#: apps/stockpile/assets.py templates/stockpile/assets.html
-msgid "Unknown location"
-msgstr "알 수 없는 위치"
-
-#: apps/stockpile/assets.py
-#, python-format
-msgid "Location %(id)s"
-msgstr "위치 %(id)s"
 
 #: apps/stockpile/forms.py
 msgid "— from —"
@@ -19599,6 +20646,10 @@ msgid "Stock received"
 msgstr "재고 입고"
 
 #: apps/store/models.py
+msgid "Received from supplier"
+msgstr "공급업체로부터 입고"
+
+#: apps/store/models.py
 msgid "Manual adjustment"
 msgstr "수동 조정"
 
@@ -19676,11 +20727,6 @@ msgstr "수요 계획 설정"
 #: apps/store/models.py
 msgid "demand planning configs"
 msgstr "수요 계획 설정"
-
-#: apps/store/models.py templates/admin_audit/console/raffle_draw.html
-#: templates/industry/mrp.html templates/store/inventory_fit.html
-msgid "Closed"
-msgstr "종료됨"
 
 #: apps/store/models.py
 msgid "Blank = undated; planned against the end of the demand horizon."
@@ -21582,14 +22628,14 @@ msgstr "목표"
 msgid "type / id"
 msgstr "유형 / ID"
 
-#: templates/admin_audit/audit.html templates/mining/payouts.html
-#: templates/navigation/jump_planner.html
+#: templates/admin_audit/audit.html templates/logistics/freight.html
+#: templates/mining/payouts.html templates/navigation/jump_planner.html
 #: templates/navigation/route_planner.html templates/stockpile/logistics.html
 msgid "From"
 msgstr "시작"
 
-#: templates/admin_audit/audit.html templates/mining/payouts.html
-#: templates/navigation/jump_planner.html
+#: templates/admin_audit/audit.html templates/logistics/freight.html
+#: templates/mining/payouts.html templates/navigation/jump_planner.html
 #: templates/navigation/route_planner.html templates/stockpile/logistics.html
 msgid "To"
 msgstr "종료"
@@ -21605,8 +22651,10 @@ msgstr "필터"
 #: templates/admin_audit/audit.html
 #: templates/admin_audit/console/combat_rewards.html
 #: templates/admin_audit/console/raffle_ineligible.html
-#: templates/admin_audit/console/raffle_ledger.html templates/industry/mrp.html
-#: templates/store/inventory.html
+#: templates/admin_audit/console/raffle_ledger.html
+#: templates/industry/capacity.html templates/industry/mrp.html
+#: templates/logistics/freight.html templates/procurement/pos.html
+#: templates/store/inventory.html templates/supplyboard/board.html
 msgid "Export CSV"
 msgstr "CSV 내보내기"
 
@@ -21620,7 +22668,7 @@ msgstr "필터 지우기"
 #: templates/admin_audit/console/raffle_grant.html
 #: templates/admin_audit/console/raffle_ledger.html
 #: templates/corporation/finance.html templates/mentorship/pairing_detail.html
-#: templates/pingboard/history.html
+#: templates/pingboard/history.html templates/procurement/po_detail.html
 msgid "When"
 msgstr "일시"
 
@@ -21628,7 +22676,7 @@ msgstr "일시"
 msgid "IP"
 msgstr "IP"
 
-#: templates/admin_audit/audit.html
+#: templates/admin_audit/audit.html templates/procurement/po_detail.html
 msgid "system"
 msgstr "시스템"
 
@@ -21757,9 +22805,10 @@ msgstr "켜짐"
 #: templates/admin_audit/console/readiness/mandatory_ships.html
 #: templates/admin_audit/console/readiness/strategic_roles.html
 #: templates/admin_audit/console/readiness/support.html
-#: templates/industry/jobs.html templates/market/dashboard.html
-#: templates/navigation/jump_planner.html templates/recruitment/detail.html
-#: templates/srp/budget.html templates/stockpile/dashboard.html
+#: templates/industry/capacity.html templates/industry/jobs.html
+#: templates/market/dashboard.html templates/navigation/jump_planner.html
+#: templates/recruitment/detail.html templates/srp/budget.html
+#: templates/stockpile/dashboard.html
 msgid "Save"
 msgstr "저장"
 
@@ -21789,7 +22838,8 @@ msgstr "ESI에서 자동으로 채워집니다"
 #: templates/admin_audit/console/doctrine_edit.html
 #: templates/admin_audit/console/doctrines.html templates/campaigns/detail.html
 #: templates/industry/detail.html templates/killboard/compare.html
-#: templates/killboard/watchlist_detail.html templates/market/dashboard.html
+#: templates/killboard/watchlist_detail.html
+#: templates/logistics/freight_detail.html templates/market/dashboard.html
 msgid "Add"
 msgstr "추가"
 
@@ -21902,7 +22952,8 @@ msgstr "“%(name)s” 숨기기"
 #: templates/admin_audit/console/mentorship/config.html
 #: templates/admin_audit/console/planetary/config.html
 #: templates/admin_audit/console/raffle_config.html
-#: templates/buyback/config.html templates/killboard/killfeed_config.html
+#: templates/buyback/config.html templates/industry/capacity.html
+#: templates/killboard/killfeed_config.html templates/logistics/freight.html
 #: templates/srp/settings.html templates/store/config.html
 #: templates/store/demand_policy.html
 msgid "Save settings"
@@ -22130,7 +23181,8 @@ msgstr "랭크 생성"
 #: templates/campaigns/form.html templates/campaigns/milestone_form.html
 #: templates/campaigns/objective_form.html templates/campaigns/risk_form.html
 #: templates/campaigns/workstream_form.html templates/operations/form.html
-#: templates/planetary/wizard.html templates/tasks/detail.html
+#: templates/planetary/wizard.html templates/procurement/supplier_detail.html
+#: templates/tasks/detail.html
 msgid "Save changes"
 msgstr "변경 사항 저장"
 
@@ -22214,13 +23266,15 @@ msgstr "킬 ≥"
 #: templates/admin_audit/health.html templates/campaigns/portfolio.html
 #: templates/campaigns/report.html templates/campaigns/risk_form.html
 #: templates/campaigns/workstream_form.html templates/industry/mrp.html
-#: templates/logistics/corp_contracts.html templates/market/dashboard.html
-#: templates/mining/my_mining.html templates/operations/form.html
-#: templates/operations/templates.html templates/pingboard/alert_detail.html
-#: templates/pingboard/calendar.html templates/pingboard/history.html
-#: templates/readiness/dimension.html templates/readiness/simulator.html
-#: templates/stockpile/logistics.html templates/store/inventory.html
-#: templates/tasks/detail.html
+#: templates/logistics/corp_contracts.html templates/logistics/freight.html
+#: templates/market/dashboard.html templates/mining/my_mining.html
+#: templates/operations/form.html templates/operations/templates.html
+#: templates/pingboard/alert_detail.html templates/pingboard/calendar.html
+#: templates/pingboard/history.html templates/procurement/agreements.html
+#: templates/procurement/pos.html templates/procurement/supplier_detail.html
+#: templates/procurement/suppliers.html templates/readiness/dimension.html
+#: templates/readiness/simulator.html templates/stockpile/logistics.html
+#: templates/store/inventory.html templates/tasks/detail.html
 msgid "Status"
 msgstr "상태"
 
@@ -22271,7 +23325,7 @@ msgstr "숨김"
 #: templates/kb/detail.html templates/kb/edit.html
 #: templates/market/dashboard.html templates/operations/form.html
 #: templates/operations/templates.html templates/planetary/detail.html
-#: templates/tasks/detail.html
+#: templates/procurement/supplier_detail.html templates/tasks/detail.html
 msgid "Edit"
 msgstr "편집"
 
@@ -22395,7 +23449,9 @@ msgstr "올해 지급액"
 #: templates/doctrines/list.html templates/doctrines/ships.html
 #: templates/killboard/_feed.html templates/navigation/gatecamp.html
 #: templates/navigation/roaming.html templates/pingboard/history.html
-#: templates/showcase.html templates/store/inventory.html
+#: templates/procurement/agreements.html templates/procurement/pos.html
+#: templates/procurement/suppliers.html templates/showcase.html
+#: templates/store/inventory.html
 msgid "All"
 msgstr "전체"
 
@@ -22435,7 +23491,8 @@ msgstr "달성"
 #: templates/admin_audit/console/pingboard/automation.html
 #: templates/admin_audit/console/pingboard/channels.html
 #: templates/admin_audit/console/pingboard/templates.html
-#: templates/market/dashboard.html templates/skills/detail.html
+#: templates/logistics/freight_detail.html templates/market/dashboard.html
+#: templates/procurement/po_detail.html templates/skills/detail.html
 #: templates/store/inventory_fit.html
 msgid "Actions"
 msgstr "작업"
@@ -22450,6 +23507,7 @@ msgstr "%(previous)s에서"
 #: templates/admin_audit/console/mentorship/approvals.html
 #: templates/admin_audit/console/mentorship/rewards.html
 #: templates/buyback/guaranteed_queue.html
+#: templates/procurement/agreement_detail.html
 msgid "Reject"
 msgstr "거부"
 
@@ -23530,6 +24588,7 @@ msgstr "제외됨"
 
 #: templates/admin_audit/console/comms_access/status.html
 #: templates/admin_audit/health.html templates/campaigns/objective_detail.html
+#: templates/industry/capacity.html
 msgid "never"
 msgstr "없음"
 
@@ -23606,8 +24665,9 @@ msgstr "비활성 임계값"
 #: templates/campaigns/lessons.html templates/campaigns/objective_detail.html
 #: templates/campaigns/portfolio.html templates/campaigns/template_picker.html
 #: templates/corporation/finance.html templates/doctrines/list.html
-#: templates/doctrines/ships.html templates/store/inventory.html
-#: templates/tasks/detail.html
+#: templates/doctrines/ships.html templates/procurement/agreements.html
+#: templates/procurement/pos.html templates/procurement/suppliers.html
+#: templates/store/inventory.html templates/tasks/detail.html
 msgid "Apply"
 msgstr "적용"
 
@@ -23772,7 +24832,8 @@ msgstr ""
 #: templates/admin_audit/console/readiness/strategic_roles.html
 #: templates/admin_audit/console/readiness/support.html
 #: templates/industry/detail.html templates/killboard/compare.html
-#: templates/killboard/watchlist_detail.html templates/navigation/beacons.html
+#: templates/killboard/watchlist_detail.html
+#: templates/logistics/freight_detail.html templates/navigation/beacons.html
 #: templates/navigation/jump_routes.html templates/pingboard/my_channels.html
 #: templates/skills/detail.html
 msgid "Remove"
@@ -23791,6 +24852,8 @@ msgid "Add / update a glossary term"
 msgstr "용어집 항목 추가 / 수정"
 
 #: templates/admin_audit/console/content.html
+#: templates/procurement/agreement_detail.html
+#: templates/procurement/agreements.html
 msgid "Term"
 msgstr "용어"
 
@@ -24736,6 +25799,32 @@ msgstr ""
 "마켓 허브, 비용 지수, 세금, 브로커/buyback, 운송, 계획 공개 범위, 그리고 /"
 "erp/ 리디렉션."
 
+#: templates/admin_audit/console/hub.html templates/logistics/freight.html
+#: templates/logistics/freight_detail.html
+msgid "Freight Pipeline"
+msgstr "화물 파이프라인"
+
+#: templates/admin_audit/console/hub.html
+msgid ""
+"Consolidate purchases and imports per lane, price and cap the leg, track ETD/"
+"ETA, and receipt landed stock. Bought goods are incoming until receipted."
+msgstr ""
+"항로별로 구매와 수입을 통합하고, 구간의 가격과 상한을 정하고, ETD/ETA 를 추적"
+"하며, 도착 재고를 입고 처리하세요. 구매한 물품은 입고 처리 전까지 입고 예정 "
+"상태입니다."
+
+#: templates/admin_audit/console/hub.html templates/procurement/board.html
+msgid "Procurement board"
+msgstr "조달 보드"
+
+#: templates/admin_audit/console/hub.html
+msgid ""
+"Open ISK obligations, due &amp; late purchase orders, agreement utilisation, "
+"supplier reliability and evidence-feed freshness."
+msgstr ""
+"미결제 ISK 채무, 예정 &amp; 지연 구매 주문서, 공급 계약 활용도, 공급업체 신뢰"
+"도, 증빙 피드 최신성."
+
 #: templates/admin_audit/console/hub.html
 #: templates/admin_audit/console/notifications.html
 msgid "Notifications"
@@ -24839,8 +25928,8 @@ msgstr ""
 #: templates/admin_audit/console/notifications.html
 #: templates/admin_audit/console/pingboard/settings.html
 #: templates/admin_audit/console/raffle_hub.html templates/buyback/board.html
-#: templates/buyback/guaranteed_queue.html templates/srp/queue.html
-#: templates/store/board.html
+#: templates/buyback/guaranteed_queue.html templates/industry/capacity.html
+#: templates/srp/queue.html templates/store/board.html
 msgid "Settings"
 msgstr "설정"
 
@@ -26642,6 +27731,7 @@ msgid "Rejection reason"
 msgstr "거부 사유"
 
 #: templates/admin_audit/console/mentorship/rewards.html
+#: templates/store/order.html
 msgid "Payment reference"
 msgstr "지급 참조"
 
@@ -27728,7 +28818,8 @@ msgstr "+ 채널 추가"
 
 #: templates/admin_audit/console/pingboard/channels.html
 #: templates/admin_audit/console/readiness/alerts.html
-#: templates/capsuleer/goal_detail.html templates/stockpile/dashboard.html
+#: templates/capsuleer/goal_detail.html templates/procurement/po_detail.html
+#: templates/procurement/suppliers.html templates/stockpile/dashboard.html
 msgid "Kind"
 msgstr "종류"
 
@@ -29147,6 +30238,7 @@ msgid "Booster ends"
 msgstr "부스터 종료"
 
 #: templates/admin_audit/console/raffle_form.html
+#: templates/procurement/agreement_form.html templates/procurement/po_form.html
 msgid "Create draft"
 msgstr "초안 생성"
 
@@ -29467,8 +30559,8 @@ msgstr "모든 상태"
 #: templates/admin_audit/console/recovery.html
 #: templates/campaigns/portfolio.html templates/campaigns/template_picker.html
 #: templates/capsuleer/paths.html templates/doctrines/list.html
-#: templates/market/dashboard.html templates/stockpile/asset_search.html
-#: templates/store/inventory.html
+#: templates/market/dashboard.html templates/procurement/suppliers.html
+#: templates/stockpile/asset_search.html templates/store/inventory.html
 msgid "Search"
 msgstr "검색"
 
@@ -29673,8 +30765,8 @@ msgstr "아이콘 type id"
 
 #: templates/admin_audit/console/raffle_prizes.html templates/erp/board.html
 #: templates/industry/chain.html templates/industry/create.html
-#: templates/industry/jobs.html templates/store/inventory_fit.html
-#: templates/store/storefront.html
+#: templates/industry/jobs.html templates/procurement/po_detail.html
+#: templates/store/inventory_fit.html templates/store/storefront.html
 msgid "Quantity"
 msgstr "수량"
 
@@ -30201,7 +31293,8 @@ msgstr ""
 
 #: templates/admin_audit/console/readiness/mandatory_ships.html
 #: templates/buyback/appraisal.html templates/buyback/offer.html
-#: templates/industry/detail.html templates/stockpile/asset_search.html
+#: templates/industry/detail.html templates/logistics/freight_detail.html
+#: templates/procurement/po_detail.html templates/stockpile/asset_search.html
 #: templates/stockpile/logistics.html templates/store/board.html
 #: templates/store/inventory_fit.html
 msgid "Qty"
@@ -30546,6 +31639,7 @@ msgstr "체크 해제된 평가기는 모든 실행에서 건너뜁니다."
 
 #: templates/admin_audit/console/recommendations_tuning.html
 #: templates/admin_audit/console/structure_alerts.html
+#: templates/store/margin.html
 msgid "Thresholds"
 msgstr "임계값"
 
@@ -30907,6 +32001,7 @@ msgstr ""
 "ADM 값이 이보다 낮은 주권 성계는 알림을 발생시킵니다. 1.0–6.0; 기본값 3.0."
 
 #: templates/admin_audit/console/structure_alerts.html
+#: templates/store/margin.html
 msgid "Save thresholds"
 msgstr "임계값 저장"
 
@@ -30974,7 +32069,8 @@ msgid "no data"
 msgstr "데이터 없음"
 
 #: templates/admin_audit/health.html templates/identity/dashboard.html
-#: templates/killboard/_feed.html templates/killboard/watchlist_detail.html
+#: templates/industry/capacity.html templates/killboard/_feed.html
+#: templates/killboard/watchlist_detail.html
 #: templates/pilots/contributions.html
 msgid "ago"
 msgstr "전"
@@ -31802,7 +32898,7 @@ msgstr ""
 "필수 목표가 아직 열려 있습니다 — 완료하려면 아래에 디렉터 재정의 사유가 필요"
 "합니다."
 
-#: templates/campaigns/close.html
+#: templates/campaigns/close.html templates/industry/capacity.html
 msgid "Override"
 msgstr "재정의"
 
@@ -32254,6 +33350,7 @@ msgid "Operation"
 msgstr "작전"
 
 #: templates/campaigns/detail.html templates/store/inventory_fit.html
+#: templates/store/margin.html
 msgid "Note (optional)"
 msgstr "메모 (선택)"
 
@@ -32263,6 +33360,7 @@ msgstr "참여 &amp; 표창"
 
 #: templates/campaigns/detail.html templates/campaigns/milestone_form.html
 #: templates/campaigns/objective_detail.html
+#: templates/logistics/freight_detail.html
 #: templates/mentorship/pairing_detail.html templates/recruitment/detail.html
 msgid "Evidence"
 msgstr "증거"
@@ -32529,7 +33627,7 @@ msgid "Any category"
 msgstr "모든 카테고리"
 
 #: templates/campaigns/lessons.html templates/campaigns/report.html
-#: templates/impersonation/log.html
+#: templates/impersonation/log.html templates/procurement/po_detail.html
 msgid "Outcome"
 msgstr "성과"
 
@@ -32588,7 +33686,8 @@ msgid "Automatic refresh is paused; a manual value stands"
 msgstr "자동 새로 고침이 일시 중지됨; 수동 값이 유지됩니다"
 
 #: templates/campaigns/objective_detail.html templates/identity/character.html
-#: templates/operations/templates.html templates/skills/plans.html
+#: templates/industry/capacity.html templates/operations/templates.html
+#: templates/skills/plans.html
 msgid "paused"
 msgstr "일시 중지됨"
 
@@ -32844,7 +33943,7 @@ msgstr "카테고리 (예: logistics, FC, 멘토링)"
 msgid "Points (optional)"
 msgstr "점수 (선택)"
 
-#: templates/campaigns/recognition.html
+#: templates/campaigns/recognition.html templates/procurement/po_detail.html
 msgid "Reason (required)"
 msgstr "사유 (필수)"
 
@@ -33500,6 +34599,7 @@ msgstr "목표 수정"
 
 #: templates/capsuleer/goal_detail.html
 #: templates/mentorship/pairing_detail.html
+#: templates/procurement/po_detail.html
 msgid "Complete"
 msgstr "완료"
 
@@ -35866,6 +36966,8 @@ msgid "Copied ✓"
 msgstr "복사됨 ✓"
 
 #: templates/doctrines/detail.html templates/doctrines/ships.html
+#: templates/procurement/board.html templates/procurement/po_detail.html
+#: templates/procurement/pos.html templates/procurement/supplier_detail.html
 #: templates/skills/detail.html templates/store/order.html
 msgid "Order"
 msgstr "주문"
@@ -37984,6 +39086,188 @@ msgstr "제작할 아이템을 선택하세요"
 msgid "Search above for anything with a manufacturing or reaction recipe."
 msgstr "제조 또는 반응 레시피가 있는 항목을 위에서 검색하세요."
 
+#: templates/industry/capacity.html templates/industry/mrp.html
+msgid "Production Capacity"
+msgstr "생산 능력"
+
+#: templates/industry/capacity.html templates/industry/mrp.html
+#: templates/mining/ledger.html templates/mining/payouts.html
+msgid "Industry · Leadership"
+msgstr "산업 · 리더십"
+
+#: templates/industry/capacity.html
+msgid ""
+"Measured manufacturing capacity: theoretical, committed and remaining slots "
+"by activity class, from opted-in pilots only. Figures are only as fresh as "
+"the syncs below and only as complete as the opt-in set — read this as "
+"measured capacity, never total corp capacity."
+msgstr ""
+"측정된 제조 생산 능력: 활동 분류별 이론상·확정·잔여 슬롯이며, 참여 신청한 파"
+"일럿만 집계합니다. 수치는 아래 동기화만큼만 최신이고 참여 신청 집합만큼만 완"
+"전합니다 — 이는 측정된 생산 능력이며, 결코 군단 전체 생산 능력이 아닙니다."
+
+#: templates/industry/capacity.html templates/industry/mrp.html
+msgid "Material Plan"
+msgstr "자재 계획"
+
+#: templates/industry/capacity.html
+msgid "Re-derive now"
+msgstr "지금 재산출"
+
+#: templates/industry/capacity.html
+msgid ""
+"Capacity planning is off — the Material Plan still assumes unconstrained "
+"slots. Arm it below to hold build dates to committed capacity."
+msgstr ""
+"생산 능력 계획이 꺼져 있습니다 — 자재 계획은 여전히 제약 없는 슬롯을 가정합니"
+"다. 제작일을 확정 생산 능력에 맞추려면 아래에서 활성화하세요."
+
+#: templates/industry/capacity.html
+msgid "Slots by activity class"
+msgstr "활동 분류별 슬롯"
+
+#: templates/industry/capacity.html
+msgid "Theoretical"
+msgstr "이론상"
+
+#: templates/industry/capacity.html templates/srp/budget.html
+msgid "Remaining"
+msgstr "남음"
+
+#: templates/industry/capacity.html
+#, python-format
+msgid "%(n)s job by a pilot whose capacity is unknown (not counted above)."
+msgid_plural ""
+"%(n)s jobs by pilots whose capacity is unknown (not counted above)."
+msgstr[0] "생산 능력을 알 수 없는 파일럿의 작업 %(n)s 건 (위 집계에 미포함)."
+
+#: templates/industry/capacity.html
+#, python-format
+msgid "%(n)s board job started or finished but not yet seen in ESI."
+msgid_plural "%(n)s board jobs started or finished but not yet seen in ESI."
+msgstr[0] ""
+"시작되었거나 완료되었지만 아직 ESI 에 반영되지 않은 보드 작업 %(n)s 건."
+
+#: templates/industry/capacity.html
+msgid "Hold build dates to committed capacity"
+msgstr "제작일을 확정 생산 능력에 맞춰 고정"
+
+#: templates/industry/capacity.html
+msgid "Skills stale after (days)"
+msgstr "스킬 만료 기준 (일)"
+
+#: templates/industry/capacity.html
+msgid ""
+"Skills show attention-stale at 7 days; slots stay measured until the "
+"threshold above (default 14), then become unknown."
+msgstr ""
+"스킬은 7일이 지나면 '주의 필요' 상태로 표시됩니다. 슬롯은 위 임계값(기본값 "
+"14)까지는 측정 상태를 유지하다가 이후 '알 수 없음'으로 전환됩니다."
+
+#: templates/industry/capacity.html
+msgid "As of"
+msgstr "기준 시점"
+
+#: templates/industry/capacity.html
+#, python-format
+msgid "corp jobs (every %(h)sh):"
+msgstr "군단 작업 (%(h)s 시간마다):"
+
+#: templates/industry/capacity.html
+#, python-format
+msgid "pilot jobs (every %(h)sh):"
+msgstr "파일럿 작업 (%(h)s 시간마다):"
+
+#: templates/industry/capacity.html
+#, python-format
+msgid "skills sync every %(h)sh"
+msgstr "스킬 동기화 %(h)s 시간마다"
+
+#: templates/industry/capacity.html
+#, python-format
+msgid "last plan %(ago)s ago"
+msgstr "마지막 계획 %(ago)s 전"
+
+#: templates/industry/capacity.html
+msgid "Per pilot"
+msgstr "파일럿별"
+
+#: templates/industry/capacity.html
+msgid "opted-in pilots only"
+msgstr "참여 신청 파일럿만"
+
+#: templates/industry/capacity.html
+msgid "Slots"
+msgstr "슬롯"
+
+#: templates/industry/capacity.html templates/procurement/board.html
+msgid "Used"
+msgstr "사용됨"
+
+#: templates/industry/capacity.html
+msgid "Free"
+msgstr "여유"
+
+#: templates/industry/capacity.html
+msgid "Next free"
+msgstr "다음 여유"
+
+#: templates/industry/capacity.html
+msgid "Skills as of"
+msgstr "스킬 기준 시점"
+
+#: templates/industry/capacity.html
+msgid "officer override"
+msgstr "임원 수동 지정"
+
+#: templates/industry/capacity.html
+msgid "Slots override"
+msgstr "슬롯 수동 지정"
+
+#: templates/industry/capacity.html
+msgid "Weekly cap"
+msgstr "주간 상한"
+
+#: templates/industry/capacity.html
+msgid "Unavailable from"
+msgstr "사용 불가 시작"
+
+#: templates/industry/capacity.html
+msgid "Unavailable until"
+msgstr "사용 불가 종료"
+
+#: templates/industry/capacity.html
+msgid ""
+"No opted-in pilots yet — a pilot grants the “My industry jobs + blueprints” "
+"scope, then re-derive."
+msgstr ""
+"아직 참여 신청한 파일럿이 없습니다 — 파일럿이 “My industry jobs + "
+"blueprints” 스코프를 부여한 뒤 재산출하세요."
+
+#: templates/industry/capacity.html
+msgid "Committed load by location"
+msgstr "위치별 확정 작업량"
+
+#: templates/industry/capacity.html
+#, python-format
+msgid "%(n)s job"
+msgid_plural "%(n)s jobs"
+msgstr[0] "작업 %(n)s 건"
+
+#: templates/industry/capacity.html
+msgid "No committed jobs."
+msgstr "확정된 작업이 없습니다."
+
+#: templates/industry/capacity.html
+msgid "Blocked work"
+msgstr "차단된 작업"
+
+#: templates/industry/capacity.html
+msgid "Nothing blocked — every live build has an honest date."
+msgstr ""
+"차단된 항목이 없습니다 — 모든 진행 중인 제작에 신뢰할 수 있는 완료일이 있습니"
+"다."
+
 #: templates/industry/chain.html templates/industry/home.html
 msgid "Production chain"
 msgstr "생산 체인"
@@ -38193,7 +39477,7 @@ msgstr "재고에서 할당됨"
 msgid "To acquire"
 msgstr "획득 필요"
 
-#: templates/industry/detail.html
+#: templates/industry/detail.html templates/store/margin.html
 msgid "Method"
 msgstr "방법"
 
@@ -38217,8 +39501,9 @@ msgstr ""
 msgid "Add another item"
 msgstr "다른 아이템 추가"
 
-#: templates/industry/detail.html templates/market/dashboard.html
-#: templates/stockpile/dashboard.html templates/stockpile/logistics.html
+#: templates/industry/detail.html templates/logistics/freight_detail.html
+#: templates/market/dashboard.html templates/stockpile/dashboard.html
+#: templates/stockpile/logistics.html
 msgid "Search an item…"
 msgstr "아이템 검색…"
 
@@ -38882,12 +40167,70 @@ msgid "Leadership hasn't queued any builds."
 msgstr "리더십이 대기열에 추가한 제작이 없습니다."
 
 #: templates/industry/jobs.html
+msgid ""
+"Linked to the in-game job — it carries the schedule and the supply count"
+msgstr "게임 내 작업에 연결됨 — 일정과 보급 수량은 해당 작업이 담당합니다"
+
+#: templates/industry/jobs.html
+#, python-format
+msgid "in game #%(id)s"
+msgstr "게임 내 #%(id)s"
+
+#: templates/industry/jobs.html
+msgid "ESI job ID"
+msgstr "ESI 작업 ID"
+
+#: templates/industry/jobs.html
+msgid "In-game job ID"
+msgstr "게임 내 작업 ID"
+
+#: templates/industry/jobs.html
+msgid ""
+"Record which in-game job this build became, so planning never counts it twice"
+msgstr ""
+"이 제작이 어떤 게임 내 작업이 되었는지 기록하여 계획이 이중으로 계산하지 않도"
+"록 합니다"
+
+#: templates/industry/jobs.html
+msgid "Confirm in-game match"
+msgstr "게임 내 일치 확인"
+
+#: templates/industry/jobs.html
+msgid "Started in game"
+msgstr "게임 내 시작됨"
+
+#: templates/industry/jobs.html
 msgid "Deliver"
 msgstr "납품"
 
 #: templates/industry/jobs.html
 msgid "You have no build jobs in progress. Claim one from the queue."
 msgstr "진행 중인 제작 작업이 없습니다. 대기열에서 하나를 맡으세요."
+
+#: templates/industry/jobs.html
+msgid "My capacity"
+msgstr "내 생산 능력"
+
+#: templates/industry/jobs.html
+msgid "slots unknown"
+msgstr "슬롯 알 수 없음"
+
+#: templates/industry/jobs.html
+msgid "free"
+msgstr "여유"
+
+#: templates/industry/jobs.html
+#, python-format
+msgid "next %(d)s"
+msgstr "다음 %(d)s"
+
+#: templates/industry/jobs.html
+msgid ""
+"Your own slots only. Officers see this on the Production Capacity board "
+"while the My industry scope is granted."
+msgstr ""
+"본인의 슬롯만 표시됩니다. My industry 스코프가 부여된 동안 임원이 생산 능력 "
+"현황판에서 이를 볼 수 있습니다."
 
 #: templates/industry/jobs.html
 msgid "Imported ESI jobs"
@@ -38935,10 +40278,58 @@ msgstr ""
 "class=\"text-gold hover:underline\">ESI Scopes</a> 페이지에서 <strong>Corp "
 "blueprints + jobs</strong>를 부여할 수 있습니다."
 
-#: templates/industry/mrp.html templates/mining/ledger.html
-#: templates/mining/payouts.html
-msgid "Industry · Leadership"
-msgstr "산업 · 리더십"
+#: templates/industry/mrp.html
+msgid ""
+"Corp-wide net requirements: every demand source exploded through the build "
+"tree and netted once against stock, reservations and in-flight work. Build "
+"dates are held to committed manufacturing capacity — slots, skills, "
+"blueprints and facilities — and the binding constraint is named. Figures are "
+"only as fresh as the syncs and as complete as the opt-in pilots: read this "
+"as measured capacity, never total corp capacity."
+msgstr ""
+"군단 전체 순소요량: 모든 수요 원천을 제작 트리로 전개하고 재고, 예약, 진행 "
+"중 작업과 한 번에 상계합니다. 제작일은 슬롯, 스킬, blueprint , 시설 등 확정"
+"된 제조 생산 능력에 맞춰 고정되며 구속 제약이 명시됩니다. 수치는 동기화만큼"
+"만 최신이고 참여 신청 파일럿만큼만 완전합니다: 이는 측정된 생산 능력이며, 결"
+"코 군단 전체 생산 능력이 아닙니다."
+
+#: templates/industry/mrp.html
+msgid ""
+"Corp-wide net requirements: every demand source exploded through the build "
+"tree and netted once against stock, reservations and in-flight work. Dates "
+"assume unconstrained industry slots — capacity planning comes in a later "
+"phase."
+msgstr ""
+"군단 전체 순 소요량: 모든 수요 출처를 제작 트리를 따라 전개한 뒤 재고·예약·진"
+"행 중 작업과 한 번씩 상계한 결과입니다. 날짜는 산업 슬롯 제약이 없다고 가정합"
+"니다 — 생산능력 계획은 이후 단계에서 제공됩니다."
+
+#: templates/industry/mrp.html
+msgid "Run planning now"
+msgstr "지금 계획 실행"
+
+#: templates/industry/mrp.html
+msgid ""
+"No changes — the latest run's inputs are identical to the previous run's."
+msgstr "변경 없음 — 최신 실행의 입력이 이전 실행과 동일합니다."
+
+#: templates/industry/mrp.html
+#, python-format
+msgid ""
+"No market price signal for: %(items)s — a 0 ISK buy line is a data gap, not "
+"a bargain."
+msgstr ""
+"%(items)s의 시장 가격 신호가 없습니다 — 0 ISK 구매 라인은 데이터 공백이지 헐"
+"값이 아닙니다."
+
+#: templates/industry/mrp.html
+msgid "Live requirements"
+msgstr "실시간 소요량"
+
+#: templates/industry/mrp.html
+#, python-format
+msgid "planning window: %(days)s days"
+msgstr "계획 기간: %(days)s일"
 
 #: templates/industry/mrp.html templates/market/dashboard.html
 #: templates/stockpile/asset_search.html templates/stockpile/dashboard.html
@@ -38965,9 +40356,82 @@ msgstr "입고 예정"
 msgid "Required by"
 msgstr "필요 기한"
 
+#: templates/industry/mrp.html
+msgid "Feasible"
+msgstr "실행 가능"
+
 #: templates/industry/mrp.html templates/store/inventory.html
 msgid "Vehicle"
 msgstr "수단"
+
+#: templates/industry/mrp.html
+#, python-format
+msgid "Level %(depth)s"
+msgstr "레벨 %(depth)s"
+
+#: templates/industry/mrp.html
+msgid "ships & fits — fulfilled from the Shipyard console"
+msgstr "함선 및 피팅 — 조선소 콘솔에서 충족"
+
+#: templates/industry/mrp.html
+msgid ""
+"The linked vehicle no longer matches the plan — planned quantity differs "
+"from what the vehicle says"
+msgstr ""
+"연결된 이행 수단이 더 이상 계획과 일치하지 않습니다 — 계획 수량이 수단에 기록"
+"된 수량과 다릅니다"
+
+#: templates/industry/mrp.html
+msgid "diverged"
+msgstr "불일치"
+
+#: templates/industry/mrp.html
+msgid "Demand sources"
+msgstr "수요 출처"
+
+#: templates/industry/mrp.html
+msgid "Fit demand"
+msgstr "피팅 수요"
+
+#: templates/industry/mrp.html
+msgid "Backorder need"
+msgstr "백오더 필요량"
+
+#: templates/industry/mrp.html
+msgid "Component of requirement"
+msgstr "소요량의 구성품"
+
+#: templates/industry/mrp.html
+msgid "Materials for promised build"
+msgstr "약속된 제작에 필요한 자재"
+
+#: templates/industry/mrp.html
+msgid "Incoming supply"
+msgstr "입고 예정 보급"
+
+#: templates/industry/mrp.html
+msgid "In-game job"
+msgstr "게임 내 작업"
+
+#: templates/industry/mrp.html
+msgid "Board job"
+msgstr "보드 작업"
+
+#: templates/industry/mrp.html
+msgid "Plan line"
+msgstr "계획 라인"
+
+#: templates/industry/mrp.html
+msgid "Covered by a freight batch in transit — ETA shown as the feasible date"
+msgstr "운송 중인 화물 묶음으로 충당됨 — ETA 는 실현 가능 날짜로 표시"
+
+#: templates/industry/mrp.html
+msgid "The binding constraint on this build date"
+msgstr "이 제작일의 구속 제약"
+
+#: templates/industry/mrp.html
+msgid "Shipyard console"
+msgstr "조선소 콘솔"
 
 #: templates/industry/mrp.html templates/store/inventory.html
 msgid "Project"
@@ -38976,6 +40440,70 @@ msgstr "프로젝트"
 #: templates/industry/mrp.html templates/store/inventory.html
 msgid "Build job"
 msgstr "빌드 작업"
+
+#: templates/industry/mrp.html
+msgid "On a freight batch"
+msgstr "화물 묶음에 포함됨"
+
+#: templates/industry/mrp.html templates/logistics/freight_detail.html
+msgid "Batch"
+msgstr "묶음"
+
+#: templates/industry/mrp.html
+msgid "Add to freight batch"
+msgstr "화물 묶음에 추가"
+
+#: templates/industry/mrp.html
+msgid "BUY task"
+msgstr "BUY 작업"
+
+#: templates/industry/mrp.html
+msgid "No open requirements — run planning to compute the current picture."
+msgstr "미결 소요량이 없습니다 — 계획을 실행하여 현재 상황을 계산하세요."
+
+#: templates/industry/mrp.html
+msgid "Multibuy (open buy & import lines)"
+msgstr "Multibuy (미결 구매 및 수입 라인)"
+
+#: templates/industry/mrp.html
+msgid "Paste into the in-game market Multibuy window."
+msgstr "게임 내 마켓 Multibuy 창에 붙여넣으세요."
+
+#: templates/industry/mrp.html
+msgid "Beyond the planning window"
+msgstr "계획 기간 이후"
+
+#: templates/industry/mrp.html
+msgid ""
+"Dated demand this far out is excluded from the current plan; it enters when "
+"the window reaches it."
+msgstr ""
+"이만큼 먼 기한부 수요는 현재 계획에서 제외되며, 계획 기간이 도달하면 포함됩니"
+"다."
+
+#: templates/industry/mrp.html
+msgid "Run history"
+msgstr "실행 이력"
+
+#: templates/industry/mrp.html
+msgid "Updated"
+msgstr "업데이트됨"
+
+#: templates/industry/mrp.html
+msgid "Input digest"
+msgstr "입력 다이제스트"
+
+#: templates/industry/mrp.html
+msgid "Triggered by"
+msgstr "트리거 주체"
+
+#: templates/industry/mrp.html
+msgid "schedule"
+msgstr "일정"
+
+#: templates/industry/mrp.html
+msgid "No runs yet."
+msgstr "아직 실행이 없습니다."
 
 #: templates/kb/detail.html templates/kb/edit.html
 msgid "← Knowledge base"
@@ -39854,6 +41382,7 @@ msgid "Freight Rates"
 msgstr "화물 운송 요금"
 
 #: templates/logistics/calculator.html templates/logistics/contracts.html
+#: templates/logistics/freight.html templates/logistics/freight_detail.html
 msgid "Freight"
 msgstr "화물 운송"
 
@@ -39878,7 +41407,7 @@ msgstr "화물 운송 보드"
 msgid "Get a quote"
 msgstr "견적 받기"
 
-#: templates/logistics/calculator.html
+#: templates/logistics/calculator.html templates/logistics/freight_detail.html
 msgid "Ship class"
 msgstr "함선 등급"
 
@@ -40132,7 +41661,8 @@ msgstr "경로"
 msgid "Class"
 msgstr "등급"
 
-#: templates/logistics/contracts.html
+#: templates/logistics/contracts.html templates/logistics/freight_detail.html
+#: templates/procurement/agreement_detail.html
 msgid "Collateral"
 msgstr "담보"
 
@@ -40216,6 +41746,240 @@ msgid ""
 msgstr ""
 "추적 중인 군단 계약이 없습니다. 디렉터가 corp-contracts scope를 부여한 뒤 동"
 "기화해야 합니다."
+
+#: templates/logistics/freight.html
+msgid "Logistics · Leadership"
+msgstr "물류 · 리더십"
+
+#: templates/logistics/freight.html
+msgid ""
+"Consolidate purchases and imports per lane, ship them through the courier "
+"flow or a member haul, and receipt landed stock. Goods on a batch are "
+"visibly incoming — never counted as available — until receipted at the "
+"destination."
+msgstr ""
+"항로별로 구매와 수입을 통합하고, 특송 흐름이나 멤버 운반으로 배송한 뒤, 도착 "
+"재고를 입고 처리하세요. 묶음에 실린 물품은 목적지에서 입고 처리되기 전까지 명"
+"확히 입고 예정으로 표시되며 — 절대 가용 재고로 계산되지 않습니다."
+
+#: templates/logistics/freight.html
+msgid "Open a batch for a lane"
+msgstr "항로에 묶음 열기"
+
+#: templates/logistics/freight.html
+msgid "Freight settings"
+msgstr "화물 설정"
+
+#: templates/logistics/freight.html
+msgid "Default ship class"
+msgstr "기본 함급"
+
+#: templates/logistics/freight.html
+msgid "Dispatch days"
+msgstr "발송 일수"
+
+#: templates/logistics/freight.html
+msgid "Transit days"
+msgstr "운송 일수"
+
+#: templates/logistics/freight.html
+msgid "Late grace (hours)"
+msgstr "지연 유예 (시간)"
+
+#: templates/logistics/freight.html
+msgid "Run the hourly batch sweep (arrival + late flags)"
+msgstr "매시간 묶음 스윕 실행 (도착 + 지연 표시)"
+
+#: templates/logistics/freight.html
+msgid "Batches"
+msgstr "묶음"
+
+#: templates/logistics/freight.html
+msgid "Lane"
+msgstr "항로"
+
+#: templates/logistics/freight.html templates/logistics/freight_detail.html
+#: templates/procurement/agreement_detail.html
+#: templates/procurement/po_detail.html
+msgid "Lines"
+msgstr "항목"
+
+#: templates/logistics/freight.html templates/procurement/board.html
+#: templates/procurement/suppliers.html
+msgid "Fill"
+msgstr "충족"
+
+#: templates/logistics/freight.html
+msgid "ETD"
+msgstr "ETD"
+
+#: templates/logistics/freight.html templates/logistics/freight_detail.html
+msgid "ETA"
+msgstr "ETA"
+
+#: templates/logistics/freight.html
+msgid "Past its planned ETA"
+msgstr "예정 ETA 초과"
+
+#: templates/logistics/freight.html
+msgid "late"
+msgstr "지연"
+
+#: templates/logistics/freight.html
+msgid ""
+"No freight batches yet — open one for a lane above, or fan an import "
+"requirement out from the Material Plan."
+msgstr ""
+"아직 화물 묶음이 없습니다 — 위에서 항로에 하나를 열거나 자재 계획에서 수입 소"
+"요 항목을 펼쳐 내보내세요."
+
+#: templates/logistics/freight.html templates/navigation/jump_planner.html
+msgid "Destination"
+msgstr "목적지"
+
+#: templates/logistics/freight.html
+msgid "Landed, unsynced"
+msgstr "도착, 미동기화"
+
+#: templates/logistics/freight.html
+msgid "Covering requirements"
+msgstr "충당 소요 항목"
+
+#: templates/logistics/freight.html
+msgid "Nothing is in transit right now."
+msgstr "현재 운송 중인 것이 없습니다."
+
+#: templates/logistics/freight_detail.html
+msgid "Freight batch"
+msgstr "화물 묶음"
+
+#: templates/logistics/freight_detail.html
+msgid "Cancel this batch?"
+msgstr "이 묶음을 취소할까요?"
+
+#: templates/logistics/freight_detail.html
+msgid "Cancel batch"
+msgstr "묶음 취소"
+
+#: templates/logistics/freight_detail.html templates/procurement/po_detail.html
+msgid "Received"
+msgstr "입고"
+
+#: templates/logistics/freight_detail.html
+msgid "Purchase"
+msgstr "구매"
+
+#: templates/logistics/freight_detail.html
+msgid "Freight share"
+msgstr "화물 분담"
+
+#: templates/logistics/freight_detail.html
+msgid "Landed unit"
+msgstr "도착 단가"
+
+#: templates/logistics/freight_detail.html
+msgid "MRP-planned share of this line"
+msgstr "이 라인의 MRP 계획 분량"
+
+#: templates/logistics/freight_detail.html
+#, python-format
+msgid "plan %(n)s"
+msgstr "계획 %(n)s"
+
+#: templates/logistics/freight_detail.html templates/procurement/po_detail.html
+#: templates/store/inventory_fit.html
+msgid "Receive"
+msgstr "입고"
+
+#: templates/logistics/freight_detail.html
+msgid "received"
+msgstr "입고됨"
+
+#: templates/logistics/freight_detail.html
+#: templates/procurement/agreement_detail.html
+#: templates/procurement/po_detail.html
+msgid "No lines yet."
+msgstr "아직 항목이 없습니다."
+
+#: templates/logistics/freight_detail.html
+msgid "Unit cost"
+msgstr "단가"
+
+#: templates/logistics/freight_detail.html
+msgid "bought by …"
+msgstr "구매자 …"
+
+#: templates/logistics/freight_detail.html
+msgid "Capacity fit"
+msgstr "적재 적합성"
+
+#: templates/logistics/freight_detail.html
+msgid "Packaged volume"
+msgstr "포장 부피"
+
+#: templates/logistics/freight_detail.html
+msgid ""
+"Over the cap for this ship class — split into a second batch or pick a "
+"bigger class."
+msgstr ""
+"이 함급의 상한을 초과했습니다 — 두 번째 묶음으로 분할하거나 더 큰 함급을 선택"
+"하세요."
+
+#: templates/logistics/freight_detail.html
+msgid "Rush"
+msgstr "긴급"
+
+#: templates/logistics/freight_detail.html
+msgid "Assign to courier flow"
+msgstr "특송 흐름에 배정"
+
+#: templates/logistics/freight_detail.html
+msgid "Post to member haul board"
+msgstr "멤버 운반 게시판에 게시"
+
+#: templates/logistics/freight_detail.html
+msgid "Mark departed"
+msgstr "출발로 표시"
+
+#: templates/logistics/freight_detail.html
+msgid "Mark arrived"
+msgstr "도착으로 표시"
+
+#: templates/logistics/freight_detail.html
+msgid "Unassign (back to open)"
+msgstr "배정 해제 (열림 상태로)"
+
+#: templates/logistics/freight_detail.html templates/mining/ledger.html
+msgid "Set"
+msgstr "설정"
+
+#: templates/logistics/freight_detail.html
+msgid "No actions available for this status."
+msgstr "이 상태에서 사용할 수 있는 작업이 없습니다."
+
+#: templates/logistics/freight_detail.html
+msgid "Landed cost vs forecast"
+msgstr "도착 원가 대비 예측"
+
+#: templates/logistics/freight_detail.html
+msgid "Forecast import"
+msgstr "예측 수입가"
+
+#: templates/logistics/freight_detail.html
+msgid "Delta"
+msgstr "차이"
+
+#: templates/logistics/freight_detail.html
+msgid "no cost recorded"
+msgstr "기록된 원가 없음"
+
+#: templates/logistics/freight_detail.html
+msgid ""
+"Landed = purchase + freight share per unit. Forecast import = the "
+"forecaster's Jita + jump-freight basis. Store order prices are never edited."
+msgstr ""
+"도착 원가 = 구매 + 단위당 화물 분담. 예측 수입가 = 예측기의 Jita + 점프 운송 "
+"기준. 스토어 주문 가격은 절대 수정되지 않습니다."
 
 #: templates/logistics/rates.html
 msgid "Freight · Leadership"
@@ -41458,10 +43222,6 @@ msgstr "60일"
 msgid "Mining tax %%"
 msgstr "채굴 세금 %%"
 
-#: templates/mining/ledger.html
-msgid "Set"
-msgstr "설정"
-
 #: templates/mining/ledger.html templates/mining/payout.html
 msgid "Value mined"
 msgstr "채굴 가치"
@@ -42114,10 +43874,6 @@ msgstr "시장 가격 없음"
 #: templates/navigation/jump_planner.html
 msgid "Origin"
 msgstr "출발지"
-
-#: templates/navigation/jump_planner.html
-msgid "Destination"
-msgstr "목적지"
 
 #: templates/navigation/jump_planner.html
 msgid "From &rarr; To"
@@ -43554,14 +45310,10 @@ msgid "Composition"
 msgstr "편성"
 
 #: templates/operations/detail.html
-msgid "slots"
-msgstr "슬롯"
-
-#: templates/operations/detail.html
 msgid "Viable"
 msgstr "성립 가능"
 
-#: templates/operations/detail.html
+#: templates/operations/detail.html templates/procurement/supplier_detail.html
 msgid "Yes"
 msgstr "예"
 
@@ -43569,7 +45321,7 @@ msgstr "예"
 msgid "(override)"
 msgstr "(강제)"
 
-#: templates/operations/detail.html
+#: templates/operations/detail.html templates/procurement/supplier_detail.html
 msgid "No"
 msgstr "아니오"
 
@@ -43898,10 +45650,12 @@ msgid "custom fit"
 msgstr "커스텀 핏"
 
 #: templates/operations/form.html templates/operations/template_form.html
+#: templates/procurement/agreement_detail.html
 msgid "Min"
 msgstr "최소"
 
 #: templates/operations/form.html templates/operations/template_form.html
+#: templates/procurement/agreement_detail.html
 msgid "Max"
 msgstr "최대"
 
@@ -44109,7 +45863,7 @@ msgid "RSVP deadline (min before form-up)"
 msgstr "RSVP 마감 (집결 몇 분 전)"
 
 #: templates/operations/template_form.html templates/operations/timers.html
-#: templates/pingboard/calendar.html
+#: templates/pingboard/calendar.html templates/procurement/po_detail.html
 msgid "Notes"
 msgstr "메모"
 
@@ -44580,7 +46334,7 @@ msgstr "재시도"
 msgid "Sync %(action)s: %(sys)s/%(oid)s"
 msgstr "동기화 %(action)s: %(sys)s/%(oid)s"
 
-#: templates/pingboard/dashboard.html
+#: templates/pingboard/dashboard.html templates/supplyboard/board.html
 msgid "All clear."
 msgstr "모두 정상."
 
@@ -44645,7 +46399,7 @@ msgstr "동기화 기록"
 msgid "Alert"
 msgstr "알림"
 
-#: templates/pingboard/history.html
+#: templates/pingboard/history.html templates/procurement/po_detail.html
 msgid "By"
 msgstr "작성자"
 
@@ -45473,6 +47227,517 @@ msgstr "5 · 전략 &amp; 공유"
 #: templates/planetary/wizard.html
 msgid "Create plan &amp; estimate profit"
 msgstr "플랜 생성 &amp; 수익 추정"
+
+#: templates/procurement/agreement_detail.html
+#: templates/procurement/agreements.html templates/procurement/board.html
+msgid "Agreement"
+msgstr "공급 계약"
+
+#: templates/procurement/agreement_detail.html
+msgid "Procurement · Agreement"
+msgstr "조달 · 공급 계약"
+
+#: templates/procurement/agreement_detail.html
+#: templates/procurement/po_detail.html
+#, python-format
+msgid "Agreement #%(n)s"
+msgstr "공급 계약 #%(n)s"
+
+#: templates/procurement/agreement_detail.html
+msgid "All agreements"
+msgstr "모든 공급 계약"
+
+#: templates/procurement/agreement_detail.html
+msgid "Estimated cycle value"
+msgstr "추정 주기 금액"
+
+#: templates/procurement/agreement_detail.html
+msgid "Submit for approval"
+msgstr "승인 요청 제출"
+
+#: templates/procurement/agreement_detail.html
+msgid ""
+"Below the Director threshold it activates immediately; at or above it, a "
+"second Director must approve."
+msgstr ""
+"Director 기준값 미만이면 즉시 활성화되며, 그 이상이면 두 번째 Director 가 승"
+"인해야 합니다."
+
+#: templates/procurement/agreement_detail.html
+#, python-format
+msgid "Submitted by %(who)s at %(value)s ISK — awaiting a second Director."
+msgstr "%(who)s 이(가) %(value)s ISK 로 제출 — 두 번째 Director 대기 중."
+
+#: templates/procurement/agreement_detail.html
+msgid "Only a Director can decide this approval."
+msgstr "이 승인은 Director 만 결정할 수 있습니다."
+
+#: templates/procurement/agreement_detail.html
+msgid "This agreement is closed to further lifecycle actions."
+msgstr "이 공급 계약은 더 이상 라이프사이클 작업을 진행할 수 없습니다."
+
+#: templates/procurement/agreement_detail.html
+#: templates/procurement/po_detail.html
+msgid "Add line"
+msgstr "항목 추가"
+
+#: templates/procurement/agreement_detail.html templates/procurement/board.html
+msgid "Per cycle"
+msgstr "주기당"
+
+#: templates/procurement/agreement_detail.html
+#: templates/procurement/supplier_detail.html
+msgid "Price model"
+msgstr "가격 모델"
+
+#: templates/procurement/agreement_form.html
+#: templates/procurement/agreements.html
+msgid "New agreement"
+msgstr "새 공급 계약"
+
+#: templates/procurement/agreement_form.html
+#: templates/procurement/agreements.html templates/procurement/po_form.html
+#: templates/procurement/pos.html templates/procurement/supplier_form.html
+#: templates/procurement/suppliers.html
+msgid "Procurement · Leadership"
+msgstr "조달 · 리더십"
+
+#: templates/procurement/agreement_form.html
+msgid "Draft a supply agreement"
+msgstr "공급 계약 초안 작성"
+
+#: templates/procurement/agreement_form.html
+msgid ""
+"Create the header, then add the per-type lines on the next page before "
+"submitting for approval."
+msgstr ""
+"헤더를 생성한 다음, 승인 요청을 제출하기 전에 다음 페이지에서 타입별 항목을 "
+"추가하세요."
+
+#: templates/procurement/agreements.html
+msgid "Supply agreements"
+msgstr "공급 계약"
+
+#: templates/procurement/agreements.html
+msgid ""
+"Standing commitments that pre-authorise purchase orders. Above the Director "
+"threshold an agreement needs a second Director's approval before it goes "
+"active."
+msgstr ""
+"구매 주문서를 사전 승인하는 상시 약정입니다. Director 기준값을 초과하는 공급 "
+"계약은 활성화되기 전에 두 번째 Director 의 승인이 필요합니다."
+
+#: templates/procurement/agreements.html templates/procurement/board.html
+#: templates/procurement/pos.html templates/procurement/suppliers.html
+msgid "Suppliers"
+msgstr "공급업체"
+
+#: templates/procurement/agreements.html templates/procurement/board.html
+#: templates/procurement/pos.html templates/procurement/suppliers.html
+msgid "Purchase orders"
+msgstr "구매 주문서"
+
+#: templates/procurement/agreements.html templates/procurement/board.html
+#: templates/procurement/pos.html templates/procurement/supplier_detail.html
+#: templates/procurement/suppliers.html
+msgid "Supplier"
+msgstr "공급업체"
+
+#: templates/procurement/agreements.html
+msgid "Cadence"
+msgstr "주기"
+
+#: templates/procurement/agreements.html
+msgid "Est. cycle value"
+msgstr "추정 주기 금액"
+
+#: templates/procurement/agreements.html
+msgid "No agreements match."
+msgstr "일치하는 공급 계약이 없습니다."
+
+#: templates/procurement/board.html
+msgid "Procurement · Directors"
+msgstr "조달 · Directors"
+
+#: templates/procurement/board.html
+msgid ""
+"Open commitments, what's due or late, how hard agreements are being worked, "
+"supplier reliability — and whether the evidence feeds are still fresh."
+msgstr ""
+"미결 약정, 예정 또는 지연 사항, 공급 계약이 얼마나 활발히 활용되는지, 공급업"
+"체 신뢰도 — 그리고 증빙 피드가 여전히 최신인지 여부."
+
+#: templates/procurement/board.html
+msgid "Evidence-feed freshness"
+msgstr "증빙 피드 최신성"
+
+#: templates/procurement/board.html
+#, python-format
+msgid "stale (%(when)s)"
+msgstr "오래됨 (%(when)s)"
+
+#: templates/procurement/board.html
+msgid "no run recorded"
+msgstr "실행 기록 없음"
+
+#: templates/procurement/board.html
+#, python-format
+msgid "fresh (%(when)s)"
+msgstr "최신 (%(when)s)"
+
+#: templates/procurement/board.html
+msgid "Open obligation (ISK)"
+msgstr "미결제 채무 (ISK)"
+
+#: templates/procurement/board.html
+msgid "Units outstanding"
+msgstr "미결 수량"
+
+#: templates/procurement/board.html templates/store/board.html
+msgid "Open orders"
+msgstr "미결 주문"
+
+#: templates/procurement/board.html
+msgid "Overdue since"
+msgstr "기한 초과 시점"
+
+#: templates/procurement/board.html
+msgid "Nothing overdue."
+msgstr "기한 초과 항목이 없습니다."
+
+#: templates/procurement/board.html
+msgid "Due within 7 days"
+msgstr "7일 이내 예정"
+
+#: templates/procurement/board.html templates/procurement/pos.html
+msgid "Promised"
+msgstr "약속일"
+
+#: templates/procurement/board.html
+msgid "Nothing due soon."
+msgstr "곧 예정된 항목이 없습니다."
+
+#: templates/procurement/board.html
+msgid "Agreement utilisation"
+msgstr "공급 계약 활용도"
+
+#: templates/procurement/board.html
+msgid "No active agreements."
+msgstr "활성 공급 계약이 없습니다."
+
+#: templates/procurement/board.html
+msgid "Supplier reliability"
+msgstr "공급업체 신뢰도"
+
+#: templates/procurement/board.html
+msgid "The nightly rollup's latest figures over the last complete weeks."
+msgstr "지난 완전한 주 동안의 야간 집계 최신 수치입니다."
+
+#: templates/procurement/board.html templates/procurement/suppliers.html
+msgid "On-time"
+msgstr "정시"
+
+#: templates/procurement/board.html templates/procurement/supplier_detail.html
+msgid "Price variance"
+msgstr "가격 편차"
+
+#: templates/procurement/board.html templates/procurement/supplier_detail.html
+#: templates/procurement/suppliers.html
+msgid "Sample"
+msgstr "표본"
+
+#: templates/procurement/board.html
+msgid "No suppliers yet."
+msgstr "아직 공급업체가 없습니다."
+
+#: templates/procurement/po_detail.html
+msgid "Procurement · Purchase order"
+msgstr "조달 · 구매 주문서"
+
+#: templates/procurement/po_detail.html
+#, python-format
+msgid "Order #%(n)s"
+msgstr "주문 #%(n)s"
+
+#: templates/procurement/po_detail.html
+msgid "All orders"
+msgstr "모든 주문"
+
+#: templates/procurement/po_detail.html
+msgid "Expected total"
+msgstr "예상 총액"
+
+#: templates/procurement/po_detail.html
+msgid "Promised by"
+msgstr "약속 기한"
+
+#: templates/procurement/po_detail.html
+#, python-format
+msgid "overdue since %(when)s"
+msgstr "%(when)s 이후 기한 초과"
+
+#: templates/procurement/po_detail.html
+msgid "Submit"
+msgstr "제출"
+
+#: templates/procurement/po_detail.html
+msgid "Promised by (optional)"
+msgstr "약속 기한 (선택 사항)"
+
+#: templates/procurement/po_detail.html
+msgid "Confirm approval"
+msgstr "승인 확인"
+
+#: templates/procurement/po_detail.html
+msgid "Mark contract-expected"
+msgstr "계약 대기로 표시"
+
+#: templates/procurement/po_detail.html
+msgid "Create haul"
+msgstr "운송 생성"
+
+#: templates/procurement/po_detail.html
+msgid "Reconcile"
+msgstr "정산"
+
+#: templates/procurement/po_detail.html
+msgid "Note (required)"
+msgstr "메모 (필수)"
+
+#: templates/procurement/po_detail.html
+msgid "Confirm reconcile"
+msgstr "정산 확인"
+
+#: templates/procurement/po_detail.html
+msgid "Dispute"
+msgstr "분쟁"
+
+#: templates/procurement/po_detail.html
+msgid "Mark disputed"
+msgstr "분쟁으로 표시"
+
+#: templates/procurement/po_detail.html
+msgid "Resolve dispute"
+msgstr "분쟁 해결"
+
+#: templates/procurement/po_detail.html
+msgid "Reconciled (close)"
+msgstr "정산됨 (종료)"
+
+#: templates/procurement/po_detail.html
+msgid "Resume (back to evidence state)"
+msgstr "재개 (증빙 상태로 복귀)"
+
+#: templates/procurement/po_detail.html
+msgid "Cancelled (Director)"
+msgstr "취소됨 (Director)"
+
+#: templates/procurement/po_detail.html
+msgid "Apply outcome"
+msgstr "결과 적용"
+
+#: templates/procurement/po_detail.html templates/store/order.html
+msgid "Cancel order"
+msgstr "주문 취소"
+
+#: templates/procurement/po_detail.html
+msgid "Candidate contracts"
+msgstr "후보 계약"
+
+#: templates/procurement/po_detail.html
+msgid ""
+"In-game item-exchange contracts from this supplier that could be this order. "
+"Confirm the right one."
+msgstr ""
+"이 주문일 수 있는, 이 공급업체의 인게임 아이템 교환 계약입니다. 올바른 것을 "
+"확인하세요."
+
+#: templates/procurement/po_detail.html
+msgid "Confirm match"
+msgstr "일치 확인"
+
+#: templates/procurement/po_detail.html
+msgid "Payment suggestions"
+msgstr "결제 제안"
+
+#: templates/procurement/po_detail.html
+msgid ""
+"Wallet-journal entries that could be this order's payment (no context id to "
+"auto-match). Confirm the right one."
+msgstr ""
+"이 주문의 결제일 수 있는 wallet-journal 항목입니다 (자동 일치할 context id 없"
+"음). 올바른 것을 확인하세요."
+
+#: templates/procurement/po_detail.html
+msgid "Confirm payment"
+msgstr "결제 확인"
+
+#: templates/procurement/po_detail.html
+msgid "Ordered"
+msgstr "주문"
+
+#: templates/procurement/po_detail.html
+msgid "Unit price"
+msgstr "단가"
+
+#: templates/procurement/po_detail.html
+msgid "Receipts"
+msgstr "입고 내역"
+
+#: templates/procurement/po_form.html
+msgid "New purchase order"
+msgstr "새 구매 주문서"
+
+#: templates/procurement/po_form.html
+msgid "Draft a purchase order"
+msgstr "구매 주문서 초안 작성"
+
+#: templates/procurement/po_form.html
+msgid ""
+"Create the header, then add the order lines on the next page before "
+"submitting for approval. Attaching an active agreement can pre-authorise the "
+"order."
+msgstr ""
+"헤더를 생성한 다음, 승인 요청을 제출하기 전에 다음 페이지에서 주문 항목을 추"
+"가하세요. 활성 공급 계약을 첨부하면 주문을 사전 승인할 수 있습니다."
+
+#: templates/procurement/pos.html
+msgid ""
+"Every order to a supplier, from draft to reconciled. The lifecycle is "
+"evidence-driven — the app plans and evidences; it never moves ISK."
+msgstr ""
+"초안부터 정산까지, 공급업체로 보내는 모든 주문입니다. 라이프사이클은 증빙 기"
+"반입니다 — 앱은 계획하고 증빙하며, 결코 ISK 를 이동시키지 않습니다."
+
+#: templates/procurement/pos.html templates/procurement/suppliers.html
+msgid "Agreements"
+msgstr "공급 계약"
+
+#: templates/procurement/pos.html
+msgid "New order"
+msgstr "새 주문"
+
+#: templates/procurement/pos.html templates/store/order_confirm.html
+msgid "Delivery"
+msgstr "전달"
+
+#: templates/procurement/pos.html templates/procurement/supplier_detail.html
+msgid "Expected"
+msgstr "예상"
+
+#: templates/procurement/pos.html
+msgid "No purchase orders match."
+msgstr "일치하는 구매 주문서가 없습니다."
+
+#: templates/procurement/supplier_detail.html
+msgid "Procurement · Supplier"
+msgstr "조달 · 공급업체"
+
+#: templates/procurement/supplier_detail.html
+msgid "All suppliers"
+msgstr "모든 공급업체"
+
+#: templates/procurement/supplier_detail.html
+msgid "On-time rate"
+msgstr "정시율"
+
+#: templates/procurement/supplier_detail.html
+msgid "Fill rate"
+msgstr "충족률"
+
+#: templates/procurement/supplier_detail.html templates/store/margin.html
+#, python-format
+msgid "as of %(when)s"
+msgstr "%(when)s 기준"
+
+#: templates/procurement/supplier_detail.html
+msgid "not yet computed"
+msgstr "아직 계산되지 않음"
+
+#: templates/procurement/supplier_detail.html
+msgid "Profile"
+msgstr "프로필"
+
+#: templates/procurement/supplier_detail.html
+msgid "Contact:"
+msgstr "연락처:"
+
+#: templates/procurement/supplier_detail.html
+msgid "Catalogue"
+msgstr "카탈로그"
+
+#: templates/procurement/supplier_detail.html
+msgid "Add item"
+msgstr "품목 추가"
+
+#: templates/procurement/supplier_detail.html
+msgid "Add to catalogue"
+msgstr "카탈로그에 추가"
+
+#: templates/procurement/supplier_detail.html
+msgid "MOQ"
+msgstr "MOQ"
+
+#: templates/procurement/supplier_detail.html
+msgid "No catalogue items yet."
+msgstr "아직 카탈로그 품목이 없습니다."
+
+#: templates/procurement/supplier_detail.html
+msgid "Contract history"
+msgstr "계약 이력"
+
+#: templates/procurement/supplier_detail.html
+msgid "Purchase orders from this supplier that matched an in-game contract."
+msgstr "이 공급업체의 인게임 계약과 일치한 구매 주문서입니다."
+
+#: templates/procurement/supplier_detail.html
+msgid "Matched"
+msgstr "일치됨"
+
+#: templates/procurement/supplier_detail.html
+msgid "No matched contracts yet."
+msgstr "아직 일치된 계약이 없습니다."
+
+#: templates/procurement/supplier_form.html
+#: templates/procurement/suppliers.html
+msgid "New supplier"
+msgstr "새 공급업체"
+
+#: templates/procurement/supplier_form.html
+msgid "Register a supplier"
+msgstr "공급업체 등록"
+
+#: templates/procurement/supplier_form.html
+msgid ""
+"Business data only — the entity id is the EVE character or corporation id "
+"(leave blank for an informal hub source)."
+msgstr ""
+"비즈니스 데이터 전용입니다 — 엔티티 id 는 EVE 캐릭터 또는 corporation id 입니"
+"다 (비공식 hub 소스는 비워 두세요)."
+
+#: templates/procurement/supplier_form.html
+msgid "Save supplier"
+msgstr "공급업체 저장"
+
+#: templates/procurement/suppliers.html
+msgid ""
+"Pilots, corporations and market hubs the corp buys imports and third-party "
+"builds from. Business data only."
+msgstr ""
+"corp 이(가) 수입품과 서드파티 제작물을 구매하는 파일럿, corporation, 마켓 "
+"hub 입니다. 비즈니스 데이터 전용입니다."
+
+#: templates/procurement/suppliers.html
+msgid "Supplier name"
+msgstr "공급업체명"
+
+#: templates/procurement/suppliers.html
+msgid "Lead (days)"
+msgstr "리드 타임 (일)"
+
+#: templates/procurement/suppliers.html
+msgid "No suppliers match."
+msgstr "일치하는 공급업체가 없습니다."
 
 #: templates/raffle/archive.html
 msgid "Raffle archive"
@@ -46692,7 +48957,7 @@ msgstr "신뢰도 %(conf)s"
 msgid "as of %(fresh)s"
 msgstr "%(fresh)s 기준"
 
-#: templates/recommendations/_rec_card.html
+#: templates/recommendations/_rec_card.html templates/store/margin.html
 msgid "Acknowledge"
 msgstr "확인"
 
@@ -47281,10 +49546,6 @@ msgid "total SP"
 msgstr "총 SP"
 
 #: templates/skills/plans.html
-msgid "skills"
-msgstr "스킬"
-
-#: templates/skills/plans.html
 msgid "at level V"
 msgstr "레벨 V"
 
@@ -47381,10 +49642,6 @@ msgstr ""
 #: templates/srp/budget.html
 msgid "Last 6 months"
 msgstr "최근 6개월"
-
-#: templates/srp/budget.html
-msgid "Remaining"
-msgstr "남음"
 
 #: templates/srp/budget.html
 msgid "Set a period’s allocation"
@@ -48209,6 +50466,12 @@ msgid "Post"
 msgstr "등록"
 
 #: templates/stockpile/logistics.html
+#, python-format
+msgid "batch · %(n)s item"
+msgid_plural "batch · %(n)s items"
+msgstr[0] "묶음 · 아이템 %(n)s 개"
+
+#: templates/stockpile/logistics.html
 msgid "multi-item"
 msgstr "다중 아이템"
 
@@ -48252,10 +50515,6 @@ msgstr "대상"
 #: templates/store/board.html
 msgid "buyer"
 msgstr "구매자"
-
-#: templates/store/board.html
-msgid "Open orders"
-msgstr "미결 주문"
 
 #: templates/store/board.html templates/store/order_confirm.html
 msgid "Deposit"
@@ -48710,10 +50969,6 @@ msgid "Receive assembled ships"
 msgstr "조립된 함선 입고"
 
 #: templates/store/inventory_fit.html
-msgid "Receive"
-msgstr "입고"
-
-#: templates/store/inventory_fit.html
 msgid ""
 "Record complete, fitted ships only — hulls or loose modules belong in the "
 "stockpile, not here. Arrivals are reserved for waiting backorders "
@@ -48817,6 +51072,10 @@ msgstr ""
 #: templates/store/inventory_fit.html
 msgid "No open backorder demand for this fit."
 msgstr "이 피팅에 대한 미결 백오더 수요가 없습니다."
+
+#: templates/store/inventory_fit.html
+msgid "Material Plan has requirements descending from this fit"
+msgstr "자재 계획에 이 피팅에서 파생된 소요량이 있습니다"
 
 #: templates/store/inventory_fit.html
 msgid "Demand"
@@ -49193,10 +51452,6 @@ msgstr "함선이 준비되었습니다. 게임 내 계약을 수락하고 잔�
 msgid "Claim &amp; fulfil"
 msgstr "맡기 &amp; 이행"
 
-#: templates/store/order.html
-msgid "Cancel order"
-msgstr "주문 취소"
-
 #: templates/store/order_confirm.html
 msgid "Confirm order"
 msgstr "주문 확정"
@@ -49238,10 +51493,6 @@ msgstr "척당"
 #: templates/store/order_confirm.html
 msgid "None — you pay on delivery via in-game contract."
 msgstr "없음 — 인게임 계약으로 전달 시 지불합니다."
-
-#: templates/store/order_confirm.html
-msgid "Delivery"
-msgstr "전달"
 
 #: templates/store/order_confirm.html
 msgid ""
@@ -49806,280 +52057,496 @@ msgstr "— 할당 해제 (오픈 풀로 반환) —"
 msgid "This source string is intentionally never translated"
 msgstr "This source string is intentionally never translated"
 
-msgid "No matching in-game job found — enter its job ID."
-msgstr "일치하는 게임 내 작업을 찾지 못했습니다 — 해당 작업 ID를 입력하세요."
+msgid "Matched by payment token %(token)s"
+msgstr "결제 토큰 %(token)s 으로 매칭됨"
 
-#, python-format
-msgid "Linked to in-game job #%(id)s — it now carries the schedule."
+msgid "Quote drift flagged: {ship_name}"
+msgstr "견적 편차 플래그됨: {ship_name}"
+
+msgid ""
+"The frozen quote for {ship_name} has drifted {percent} from its basis. "
+"Review it on the margin console: {link}"
 msgstr ""
-"게임 내 작업 #%(id)s에 연결했습니다 — 이제 일정은 해당 작업이 담당합니다."
+"{ship_name} 의 고정 견적이 기준값에서 {percent} 벗어났습니다. 마진 콘솔에서 "
+"검토하세요: {link}"
 
-msgid "That in-game job produces a different item."
-msgstr "그 게임 내 작업은 다른 아이템을 생산합니다."
+msgid "Margin erosion"
+msgstr "마진 잠식"
 
 msgid ""
-"Dated demand beyond this many days ahead is excluded from the plan and "
-"listed separately."
+"Corp Store margin is eroding ({details}, evidenced margin {percent}). Review "
+"the margin console: {link}"
 msgstr ""
-"이 일수보다 더 먼 미래의 기한부 수요는 계획에서 제외되어 별도로 표시됩니다."
+"Corp Store 마진이 잠식되고 있습니다 ({details}, 입증 마진 {percent}). 마진 콘"
+"솔에서 검토하세요: {link}"
 
-msgid "Assumed days to buy an item at the price-reference hub."
-msgstr "가격 기준 허브에서 아이템을 구매하는 데 걸린다고 가정하는 일수입니다."
-
-msgid "Assumed days to buy at Jita and freight to the destination."
-msgstr "Jita 에서 구매해 목적지까지 운송하는 데 걸린다고 가정하는 일수입니다."
+msgid "Supply Command: {count} open problem(s)"
+msgstr "Supply Command: 미해결 문제 {count} 건"
 
 msgid ""
-"Count finished-but-undelivered ESI jobs (status \"ready\") as incoming "
-"supply."
+"Supply Command has open problems needing attention: {details}. Review the "
+"board: {link}"
 msgstr ""
-"완료되었지만 아직 인도되지 않은 ESI 작업(상태 \"ready\")을 입고 예정 보급으"
-"로 계산합니다."
+"Supply Command 에 주의가 필요한 미해결 문제가 있습니다: {details}. 보드를 검"
+"토하세요: {link}"
+
+msgid "Supply Command digest"
+msgstr "Supply Command 요약"
 
 msgid ""
-"Run the planning job automatically on its nightly schedule. Off: officers "
-"run it manually from the Material Plan page."
+"One deduped officer digest of the Supply Command board's open problems — low "
+"stock, at-risk/overdue orders, material shortages, production bottlenecks, "
+"in-transit hauls and discrepancies. Fires once per distinct problem set and "
+"resets when everything is clear."
 msgstr ""
-"계획 작업을 야간 일정에 따라 자동으로 실행합니다. 끄면 오피서가 자재 계획 페"
-"이지에서 수동으로 실행합니다."
+"Supply Command 보드의 미해결 문제를 하나로 중복 제거한 오피서 요약 — 재고 부"
+"족, 위험/기한 초과 주문, 자재 부족, 생산 병목, 운송 중 화물, 불일치. 고유한 "
+"문제 집합마다 한 번 발송되며 모두 해결되면 초기화됩니다."
 
-msgid "Material-efficiency assumed for every build level of the explosion."
-msgstr "전개의 모든 제작 레벨에 대해 가정하는 재료 효율입니다."
+msgid "Beat supplyboard.sweep (every 20 min), on a red-set change."
+msgstr "Beat supplyboard.sweep (20분마다), 레드 셋 변경 시."
 
-msgid "Deepest BOM level the explosion will recurse to."
-msgstr "전개가 재귀적으로 내려가는 최대 BOM 레벨입니다."
+msgid "Corp Store quote drift"
+msgstr "Corp Store 견적 편차"
 
-msgid "MRP config"
-msgstr "MRP 설정"
-
-msgid "MRP configs"
-msgstr "MRP 설정"
-
-msgid "in-flight ESI job"
-msgstr "진행 중인 ESI 작업"
-
-#, python-format
-msgid "An active supply plan for %(item)s already exists."
-msgstr "%(item)s에 대한 활성 보급 계획이 이미 존재합니다."
-
-msgid "A planning run is already in progress — try again shortly."
-msgstr "계획 실행이 이미 진행 중입니다 — 잠시 후 다시 시도하세요."
-
-msgid "Planning run finished — no changes since the last run."
-msgstr "계획 실행이 완료되었습니다 — 지난 실행 이후 변경 사항이 없습니다."
-
-#, python-format
-msgid "Planning run finished: %(written)s row(s) updated, %(closed)s closed."
-msgstr "계획 실행 완료: 행 %(written)s건 업데이트, %(closed)s건 마감."
-
-msgid "Ship-level demand is fulfilled from the Shipyard inventory console."
-msgstr "함선 단위 수요는 조선소 재고 콘솔에서 충족됩니다."
-
-#, python-brace-format
-msgid "Material shortfall: {industry_job_name}"
-msgstr "자재 부족분: {industry_job_name}"
-
-#, python-brace-format
 msgid ""
-"The material plan needs {quantity}× {industry_job_name} by {eta_date}. "
-"Review the Material Plan: {link}"
+"An officer alert when an open store order's frozen basis drifts beyond the "
+"configured percent AND ISK floor. Quotes are member-visible prices, not corp "
+"P&L, so this is operations-routed; informational — no frozen price ever "
+"changes."
 msgstr ""
-"자재 계획에 {eta_date}까지 {quantity}× {industry_job_name}이(가) 필요합니다. "
-"자재 계획을 확인하세요: {link}"
+"미결 스토어 주문의 고정 기준값이 설정된 퍼센트 AND ISK 하한을 벗어날 때 발생"
+"하는 오피서 알림. 견적은 회원에게 보이는 가격이며 코프 P&L 이 아니므로 운영 "
+"부서로 라우팅됩니다; 정보성 — 고정 가격은 절대 변경되지 않습니다."
+
+msgid "Beat store.check_quote_drift (nightly), on a fresh flag."
+msgstr "Beat store.check_quote_drift (야간), 신규 플래그 발생 시."
+
+msgid "Corp Store margin erosion"
+msgstr "Corp Store 마진 잠식"
 
 msgid ""
-"Linked to the in-game job — it carries the schedule and the supply count"
-msgstr "게임 내 작업에 연결됨 — 일정과 보급 수량은 해당 작업이 담당합니다"
-
-msgid "ESI job ID"
-msgstr "ESI 작업 ID"
-
-msgid ""
-"Record which in-game job this build became, so planning never counts it twice"
+"A leadership alert when the delivered-order evidenced-margin ratio drops "
+"below the configured floor, or newly-flagged drift rows spike. ISK-"
+"sensitive: routes leadership-only via classification, so an undesignated "
+"mass channel drops it."
 msgstr ""
-"이 제작이 어떤 게임 내 작업이 되었는지 기록하여 계획이 이중으로 계산하지 않도"
-"록 합니다"
+"인도된 주문의 입증 마진 비율이 설정된 하한 아래로 떨어지거나 신규 플래그된 편"
+"차 행이 급증할 때 발생하는 리더십 알림. ISK 민감: 분류를 통해 리더십 전용으"
+"로 라우팅되므로 지정되지 않은 대량 채널에서는 전달되지 않습니다."
+
+msgid "Beat store.check_quote_drift tail (nightly), at most one per day."
+msgstr "Beat store.check_quote_drift tail (야간), 하루 최대 한 번."
+
+msgid "In-game contract id (optional)"
+msgstr "인게임 계약 ID (선택)"
+
+msgid "EVE Ref job cost"
+msgstr "EVE Ref 작업 비용"
+
+msgid "Local material estimate"
+msgstr "로컬 자재 추정값"
+
+msgid "Jita sell reference"
+msgstr "Jita 판매 참조값"
+
+msgid "Unknown — cost source unavailable"
+msgstr "알 수 없음 — 비용 출처 없음"
+
+msgid "Unrecorded"
+msgstr "미기록"
 
 msgid ""
-"Corp-wide net requirements: every demand source exploded through the build "
-"tree and netted once against stock, reservations and in-flight work. Dates "
-"assume unconstrained industry slots — capacity planning comes in a later "
-"phase."
+"Flag an open order when its re-estimated basis moves this fraction or more "
+"from the frozen value (0.100 = 10 percent)."
 msgstr ""
-"군단 전체 순 소요량: 모든 수요 출처를 제작 트리를 따라 전개한 뒤 재고·예약·진"
-"행 중 작업과 한 번씩 상계한 결과입니다. 날짜는 산업 슬롯 제약이 없다고 가정합"
-"니다 — 생산능력 계획은 이후 단계에서 제공됩니다."
+"재추정된 기준값이 고정값에서 이 비율 이상 움직이면 미결 주문을 플래그합니다 "
+"(0.100 = 10퍼센트)."
 
 msgid ""
-"No changes — the latest run's inputs are identical to the previous run's."
-msgstr "변경 없음 — 최신 실행의 입력이 이전 실행과 동일합니다."
-
-#, python-format
-msgid ""
-"No market price signal for: %(items)s — a 0 ISK buy line is a data gap, not "
-"a bargain."
+"Also require this many ISK of absolute drift before flagging — stops penny "
+"noise on small hulls."
 msgstr ""
-"%(items)s의 시장 가격 신호가 없습니다 — 0 ISK 구매 라인은 데이터 공백이지 헐"
-"값이 아닙니다."
+"플래그 전에 이만큼의 절대 ISK 편차도 요구합니다 — 소형 선체의 소액 노이즈를 "
+"방지합니다."
 
-msgid "Feasible"
-msgstr "실행 가능"
-
-msgid "ships & fits — fulfilled from the Shipyard console"
-msgstr "함선 및 피팅 — 조선소 콘솔에서 충족"
+msgid "Run the nightly quote-drift check. Off: no drift is ever flagged."
+msgstr "야간 견적 편차 점검을 실행합니다. 끔: 편차가 절대 플래그되지 않습니다."
 
 msgid ""
-"The linked vehicle no longer matches the plan — planned quantity differs "
-"from what the vehicle says"
+"Match delivered orders to corp-wallet revenue by payment token. Off: margin "
+"shows quoted revenue only."
 msgstr ""
-"연결된 이행 수단이 더 이상 계획과 일치하지 않습니다 — 계획 수량이 수단에 기록"
-"된 수량과 다릅니다"
+"결제 토큰으로 인도된 주문을 코프 지갑 매출과 매칭합니다. 끔: 마진은 견적 매출"
+"만 표시합니다."
 
-msgid "Materials for promised build"
-msgstr "약속된 제작에 필요한 자재"
-
-msgid "No open requirements — run planning to compute the current picture."
-msgstr "미결 소요량이 없습니다 — 계획을 실행하여 현재 상황을 계산하세요."
-
-msgid "Multibuy (open buy & import lines)"
-msgstr "Multibuy (미결 구매 및 수입 라인)"
+msgid "Trailing days of delivered orders the margin summary covers."
+msgstr "마진 요약이 포함하는 인도된 주문의 최근 일수."
 
 msgid ""
-"Dated demand this far out is excluded from the current plan; it enters when "
-"the window reaches it."
+"Alert leadership when the window's evidenced-margin ratio drops below this "
+"fraction (0.050 = 5 percent)."
 msgstr ""
-"이만큼 먼 기한부 수요는 현재 계획에서 제외되며, 계획 기간이 도달하면 포함됩니"
-"다."
+"기간의 입증 마진 비율이 이 비율 아래로 떨어지면 리더십에 알립니다 (0.050 = 5"
+"퍼센트)."
 
-msgid "Material Plan has requirements descending from this fit"
-msgstr "자재 계획에 이 피팅에서 파생된 소요량이 있습니다"
+msgid "margin config"
+msgstr "마진 설정"
 
-#, python-format
-msgid "Material plan restock: %(item)s"
-msgstr "자재 계획 재보급: %(item)s"
+msgid "margin configs"
+msgstr "마진 설정"
 
-#, python-format
-msgid "Material plan: %(quantity)s× %(item)s"
-msgstr "자재 계획: %(quantity)s× %(item)s"
+msgid "Wallet journal"
+msgstr "지갑 저널"
 
-#, python-format
-msgid "Buy %(quantity)s× %(item)s for the material plan"
-msgstr "자재 계획을 위해 %(quantity)s× %(item)s 구매"
+msgid "Corp contract"
+msgstr "코프 계약"
 
-msgid "In-game job link removed."
-msgstr "게임 내 작업 연결을 해제했습니다."
+msgid "Payment token"
+msgstr "결제 토큰"
 
-msgid "That in-game job is already linked to another build job."
-msgstr "그 게임 내 작업은 이미 다른 제작 작업에 연결되어 있습니다."
+msgid "Officer-recorded"
+msgstr "오피서 기록"
 
-msgid "Only an in-progress job can be linked."
-msgstr "진행 중인 작업만 연결할 수 있습니다."
+msgid "That contract id isn't valid."
+msgstr "해당 계약 ID가 유효하지 않습니다."
 
-msgid "MRP planning run"
-msgstr "MRP 계획 실행"
+msgid "Margin settings updated."
+msgstr "마진 설정이 업데이트되었습니다."
 
-msgid "build duration"
-msgstr "제작 시간"
+msgid "Drift acknowledged."
+msgstr "편차가 확인 처리되었습니다."
 
-msgid "lead time"
-msgstr "리드 타임"
+msgid "That drift was already acknowledged."
+msgstr "해당 편차는 이미 확인 처리되었습니다."
 
-msgid "That requirement is closed."
-msgstr "그 소요량은 마감되었습니다."
+msgid "Enter a valid order number."
+msgstr "유효한 주문 번호를 입력하세요."
 
-#, python-format
-msgid "Industry plan “%(name)s” is linked."
-msgstr "산업 계획 “%(name)s”이(가) 연결되었습니다."
+msgid "Settlement recorded — it fills once the contract completes."
+msgstr "정산이 기록되었습니다 — 계약이 완료되면 채워집니다."
 
-msgid "Hauling job posted and linked."
-msgstr "운송 작업을 게시하고 연결했습니다."
+msgid "That contract id is invalid or already linked to another order."
+msgstr "해당 계약 ID가 유효하지 않거나 이미 다른 주문에 연결되어 있습니다."
 
-msgid "Claimable BUY task created and linked."
-msgstr "맡을 수 있는 BUY 작업을 생성하여 연결했습니다."
+msgid ""
+"Warm the board cache and fire the officer problem-set digest on its "
+"schedule. Off: the board is still viewable on demand, but nothing pings."
+msgstr ""
+"보드 캐시를 예열하고 예약된 일정에 따라 오피서 문제 집합 요약을 발송합니다. "
+"끔: 보드는 필요 시 계속 볼 수 있지만 알림은 발송되지 않습니다."
 
-#, python-format
-msgid "in game #%(id)s"
-msgstr "게임 내 #%(id)s"
+msgid ""
+"Flag an order as at-risk when its estimate is within this many days (also "
+"the stalled-haul age)."
+msgstr ""
+"추정 시점이 이 일수 이내이면 주문을 위험으로 플래그합니다 (정체 운송 기준 일"
+"수도 동일)."
 
-msgid "In-game job ID"
-msgstr "게임 내 작업 ID"
+msgid "Surface a restock commitment when it is due within this many days."
+msgstr "재입고 약정 기한이 이 일수 이내이면 표시합니다."
 
-msgid "Confirm in-game match"
-msgstr "게임 내 일치 확인"
+msgid ""
+"Flag stocked fits not reconciled within this many days as a discrepancy."
+msgstr "이 일수 이내에 대사되지 않은 재고 핏을 불일치로 플래그합니다."
 
-msgid "Started in game"
-msgstr "게임 내 시작됨"
+msgid "board config"
+msgstr "보드 설정"
 
-msgid "Material Plan"
-msgstr "자재 계획"
+msgid "board configs"
+msgstr "보드 설정"
 
-msgid "Run planning now"
-msgstr "지금 계획 실행"
+msgid "Doctrine readiness & low stock"
+msgstr "Doctrine 준비도 & 재고 부족"
 
-msgid "Live requirements"
-msgstr "실시간 소요량"
+msgid "At-risk & overdue orders"
+msgstr "위험 & 기한 초과 주문"
 
-#, python-format
-msgid "planning window: %(days)s days"
-msgstr "계획 기간: %(days)s일"
+msgid "Material shortages"
+msgstr "자재 부족"
 
-#, python-format
-msgid "Level %(depth)s"
-msgstr "레벨 %(depth)s"
+msgid "Commitments due & late"
+msgstr "약정 도래 & 지연"
 
-msgid "diverged"
-msgstr "불일치"
+msgid "Production bottlenecks"
+msgstr "생산 병목"
 
-msgid "Demand sources"
-msgstr "수요 출처"
+msgid "In-transit hauls"
+msgstr "운송 중 화물"
 
-msgid "Fit demand"
-msgstr "피팅 수요"
+msgid "Stock discrepancies"
+msgstr "재고 불일치"
 
-msgid "Backorder need"
-msgstr "백오더 필요량"
+msgid "Obsolete & slow-moving stock"
+msgstr "구식 & 판매 부진 재고"
 
-msgid "Component of requirement"
-msgstr "소요량의 구성품"
+msgid "Margin erosion & drifted quotes"
+msgstr "마진 잠식 & 편차 발생 견적"
 
-msgid "Incoming supply"
-msgstr "입고 예정 보급"
+msgid "%(fit)s is at %(atp)s — at or below its reorder point %(reorder)s"
+msgstr "%(fit)s 재고가 %(atp)s — 재주문 시점 %(reorder)s 이하입니다"
 
-msgid "In-game job"
-msgstr "게임 내 작업"
+msgid "%(fit)s is at %(atp)s — below its safety stock %(safety)s"
+msgstr "%(fit)s 재고가 %(atp)s — 안전 재고 %(safety)s 미만입니다"
 
-msgid "Board job"
-msgstr "보드 작업"
+msgid "%(fit)s is at %(atp)s — below the suggested reorder point %(reorder)s"
+msgstr "%(fit)s 재고가 %(atp)s — 권장 재주문 시점 %(reorder)s 미만입니다"
 
-msgid "Plan line"
-msgstr "계획 라인"
+msgid "%(fit)s has stock but no delivery location set"
+msgstr "%(fit)s 재고는 있으나 인도 위치가 설정되지 않았습니다"
 
-msgid "Shipyard console"
-msgstr "조선소 콘솔"
+msgid "%(fit)s has stock stranded on an old fit revision"
+msgstr "%(fit)s 재고가 오래된 핏 리비전에 묶여 있습니다"
 
-msgid "BUY task"
-msgstr "BUY 작업"
+msgid "%(ship)s order is overdue (was due %(eta)s)"
+msgstr "%(ship)s 주문이 기한을 초과했습니다 (기한 %(eta)s)"
 
-msgid "Paste into the in-game market Multibuy window."
-msgstr "게임 내 마켓 Multibuy 창에 붙여넣으세요."
+msgid "%(ship)s order is due within %(days)s day(s) (%(eta)s)"
+msgstr "%(ship)s 주문 기한이 %(days)s 일 이내입니다 (%(eta)s)"
 
-msgid "Beyond the planning window"
-msgstr "계획 기간 이후"
+msgid "%(item)s — %(qty)s short, needed %(due)s"
+msgstr "%(item)s — %(qty)s 부족, 필요 시점 %(due)s"
 
-msgid "Run history"
-msgstr "실행 이력"
+msgid "%(item)s — %(qty)s short"
+msgstr "%(item)s — %(qty)s 부족"
 
-msgid "Updated"
-msgstr "업데이트됨"
+msgid "%(fit)s restock is overdue (was due %(due)s)"
+msgstr "%(fit)s 재입고가 기한을 초과했습니다 (기한 %(due)s)"
 
-msgid "Input digest"
-msgstr "입력 다이제스트"
+msgid "%(fit)s restock is due %(due)s"
+msgstr "%(fit)s 재입고 기한 %(due)s"
 
-msgid "Triggered by"
-msgstr "트리거 주체"
+msgid ""
+"%(item)s cannot be ready in time — feasible %(feasible)s, needed %(due)s"
+msgstr ""
+"%(item)s 을(를) 제때 준비할 수 없습니다 — 실현 가능 %(feasible)s, 필요 시점 %"
+"(due)s"
 
-msgid "schedule"
-msgstr "일정"
+msgid "Haul %(route)s is unclaimed and stalled"
+msgstr "운송 %(route)s 이(가) 미배정 상태로 정체되어 있습니다"
 
-msgid "No runs yet."
-msgstr "아직 실행이 없습니다."
+msgid "Haul %(route)s is in progress"
+msgstr "운송 %(route)s 이(가) 진행 중입니다"
+
+msgid "%(fit)s stock has not been reconciled in %(days)s+ days"
+msgstr "%(fit)s 재고가 %(days)s+ 일 동안 대사되지 않았습니다"
+
+msgid "%(item)s is over-reserved by %(qty)s"
+msgstr "%(item)s 이(가) %(qty)s 만큼 초과 예약되었습니다"
+
+msgid "%(fit)s is obsolete but still stocked"
+msgstr "%(fit)s 이(가) 구식이지만 아직 재고가 있습니다"
+
+msgid "%(fit)s is a slow mover"
+msgstr "%(fit)s 이(가) 판매 부진 항목입니다"
+
+msgid "Evidenced margin is %(pct)s over the last %(days)s days"
+msgstr "최근 %(days)s 일간 입증 마진 %(pct)s"
+
+msgid "%(ship)s quote drifted %(pct)s from its basis"
+msgstr "%(ship)s 견적이 기준값에서 %(pct)s 벗어났습니다"
+
+msgid "Receipt stock or fan out the need"
+msgstr "재고를 입고하거나 수요를 배분하세요"
+
+msgid "Advance or revise the ETA"
+msgstr "ETA 를 앞당기거나 수정하세요"
+
+msgid "Fan out a supply vehicle"
+msgstr "공급 수단을 배분하세요"
+
+msgid "Mint or refresh the vehicle"
+msgstr "수단을 새로 만들거나 갱신하세요"
+
+msgid "Expedite — fan out or adjust dates"
+msgstr "신속 처리 — 배분하거나 일정을 조정하세요"
+
+msgid "Claim, complete or cancel the haul"
+msgstr "운송을 인수, 완료 또는 취소하세요"
+
+msgid "Revalidate stock or review reconciliation"
+msgstr "재고를 재검증하거나 대사를 검토하세요"
+
+msgid "Retire the offer or redistribute stock"
+msgstr "오퍼를 종료하거나 재고를 재분배하세요"
+
+msgid "Acknowledge drift or record a settlement"
+msgstr "편차를 확인 처리하거나 정산을 기록하세요"
+
+msgid "Supply Command board refreshed."
+msgstr "Supply Command 보드가 새로고침되었습니다."
+
+msgid "Supply command"
+msgstr "Supply Command"
+
+msgid "Supply Command board"
+msgstr "Supply Command 보드"
+
+msgid ""
+"Every supply-chain problem in one place — low stock, at-risk orders, "
+"shortages, bottlenecks, in-transit hauls and discrepancies. Each row deep-"
+"links to the console that fixes it."
+msgstr ""
+"모든 공급망 문제를 한곳에 — 재고 부족, 위험 주문, 자재 부족, 병목, 운송 중 화"
+"물, 불일치. 각 행은 해당 문제를 해결하는 콘솔로 딥링크됩니다."
+
+msgid "Margin &amp; profitability"
+msgstr "마진 &amp; 수익성"
+
+msgid ""
+"Actual-vs-estimated margin by fulfilment method, revenue evidence and "
+"flagged quote drift, with every assumption shown inline."
+msgstr ""
+"이행 방식별 실제 대비 추정 마진, 매출 증빙, 플래그된 견적 편차를 모든 가정과 "
+"함께 인라인으로 표시합니다."
+
+msgid "Margin & profitability"
+msgstr "마진 & 수익성"
+
+msgid "Delivered orders over the last %(days)s days, by fulfilment method."
+msgstr "최근 %(days)s 일간 인도된 주문을 이행 방식별로 표시합니다."
+
+msgid "Margin by fulfilment method"
+msgstr "이행 방식별 마진"
+
+msgid "Orders"
+msgstr "주문"
+
+msgid "Quoted revenue"
+msgstr "견적 매출"
+
+msgid "Evidenced revenue"
+msgstr "입증 매출"
+
+msgid "Est. cost"
+msgstr "추정 비용"
+
+msgid "Est. margin"
+msgstr "추정 마진"
+
+msgid "Evidenced margin"
+msgstr "입증 마진"
+
+msgid "Cost is a Jita reference, not an actual cost"
+msgstr "비용은 Jita 참조값이며 실제 비용이 아닙니다"
+
+msgid "Orders with no revenue evidence yet"
+msgstr "아직 매출 증빙이 없는 주문"
+
+msgid "unevidenced"
+msgstr "미입증"
+
+msgid "No delivered orders in the window yet."
+msgstr "아직 해당 기간에 인도된 주문이 없습니다."
+
+msgid ""
+"Non-build lanes show the frozen Jita reference as a cost stand-in, not an "
+"actual cost. Supplier and landed-import actuals arrive with later phases."
+msgstr ""
+"비제조 경로는 실제 비용 대신 고정 Jita 참조값을 비용 대용값으로 표시합니다. "
+"공급사 및 반입 수입 실제값은 이후 단계에서 제공됩니다."
+
+msgid "Quote drift"
+msgstr "견적 편차"
+
+msgid "Frozen %(frozen)s → current %(current)s"
+msgstr "고정 %(frozen)s → 현재 %(current)s"
+
+msgid ""
+"Assumptions — sales tax, broker fee and system cost index defaults from "
+"Industry settings (%(tax)s / %(broker)s / %(idx)s as fractions). Drift never "
+"changes a frozen price."
+msgstr ""
+"가정 — 판매세, 중개 수수료, 시스템 비용 지수는 산업 설정의 기본값을 사용합니"
+"다 (%(tax)s / %(broker)s / %(idx)s, 소수 값). 편차는 고정 가격을 절대 변경하"
+"지 않습니다."
+
+msgid "No quotes flagged for drift."
+msgstr "편차로 플래그된 견적이 없습니다."
+
+msgid "Record settlement evidence"
+msgstr "정산 증빙 기록"
+
+msgid "Order number"
+msgstr "주문 번호"
+
+msgid "Completed contract id"
+msgstr "완료된 계약 ID"
+
+msgid "Link contract"
+msgstr "계약 연결"
+
+msgid ""
+"The amount and date fill automatically once the contract completes — never a "
+"fabricated actual."
+msgstr ""
+"계약이 완료되면 금액과 날짜가 자동으로 채워집니다 — 실제값을 조작하는 일은 없"
+"습니다."
+
+msgid "Recent settlements"
+msgstr "최근 정산"
+
+msgid "awaiting contract"
+msgstr "계약 대기 중"
+
+msgid "No settlements recorded yet."
+msgstr "아직 기록된 정산이 없습니다."
+
+msgid "Run the nightly quote-drift check"
+msgstr "야간 견적 편차 점검 실행"
+
+msgid "Match revenue by payment token"
+msgstr "결제 토큰으로 매출 매칭"
+
+msgid "Drift threshold (fraction)"
+msgstr "편차 임계값 (소수)"
+
+msgid "Minimum ISK drift"
+msgstr "최소 ISK 편차"
+
+msgid "Margin window (days)"
+msgstr "마진 기간 (일)"
+
+msgid "Margin alert floor (fraction)"
+msgstr "마진 경고 하한 (소수)"
+
+msgid ""
+"Put this in your ISK transfer reason so the payment is matched to this order."
+msgstr "이 값을 ISK 송금 사유에 입력하면 결제가 이 주문에 매칭됩니다."
+
+msgid "Fulfilling contract id (optional)"
+msgstr "이행 계약 ID (선택)"
+
+msgid "How was this fulfilled?"
+msgstr "어떻게 이행되었습니까?"
+
+msgid "Supply Command"
+msgstr "Supply Command"
+
+msgid "%(reds)s problem needs attention."
+msgid_plural "%(reds)s problems need attention."
+msgstr[0] "%(reds)s 건의 문제에 주의가 필요합니다."
+
+msgid "Built %(when)s ago"
+msgstr "%(when)s 전 생성됨"
+
+msgid "Refresh now"
+msgstr "지금 새로고침"
+
+msgid "Source data last synced"
+msgstr "소스 데이터 마지막 동기화"
+
+msgid "data %(when)s old"
+msgstr "데이터 %(when)s 경과"
+
+msgid "see all"
+msgstr "모두 보기"
+
+msgid "This section is temporarily unavailable."
+msgstr "이 섹션은 일시적으로 사용할 수 없습니다."
+
+msgid "Showing %(shown)s of %(total)s."
+msgstr "%(total)s 개 중 %(shown)s 개 표시 중."
+
+msgid "Open the full list"
+msgstr "전체 목록 열기"

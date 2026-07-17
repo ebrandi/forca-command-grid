@@ -56,7 +56,11 @@ FEATURES: list[Feature] = [
     Feature(
         "my_industry", _("My industry jobs + blueprints"),
         _("Read your own running industry jobs and owned blueprints, so the Industry "
-          "Center can track your personal production and match it to your plans."),
+          "Center can track your personal production and match it to your plans. "
+          "While this is granted, corp officers also see your name, manufacturing "
+          "slot counts and slot utilisation on the Production Capacity board — the "
+          "capacity plan needs named pilots to schedule builds and name bottlenecks. "
+          "Revoking this removes your named capacity on the next planning run."),
         PILOT,
     ),
     Feature(

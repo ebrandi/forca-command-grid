@@ -7,9 +7,14 @@
   <div>
     <p class="eyebrow">{% translate "Industry · Leadership" %}</p>
     <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Material Plan" %}</h1>
+    {% if capacity_armed %}
+    <p class="mt-1 max-w-3xl text-sm text-faint">{% translate "Corp-wide net requirements: every demand source exploded through the build tree and netted once against stock, reservations and in-flight work. Build dates are held to committed manufacturing capacity — slots, skills, blueprints and facilities — and the binding constraint is named. Figures are only as fresh as the syncs and as complete as the opt-in pilots: read this as measured capacity, never total corp capacity." %}</p>
+    {% else %}
     <p class="mt-1 max-w-3xl text-sm text-faint">{% translate "Corp-wide net requirements: every demand source exploded through the build tree and netted once against stock, reservations and in-flight work. Dates assume unconstrained industry slots — capacity planning comes in a later phase." %}</p>
+    {% endif %}
   </div>
   <div class="flex flex-wrap gap-2">
+    <a href="{% url 'industry:capacity' %}" class="btn-ghost text-sm">{% translate "Production Capacity" %}</a>
     <a href="?export=csv" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-box"/></svg> {% translate "Export CSV" %}</a>
     <form method="post" action="{% url 'industry:mrp_run' %}">{% csrf_token %}<button class="btn-gold text-sm">{% translate "Run planning now" %}</button></form>
   </div>
@@ -67,10 +72,10 @@
         <td class="px-2 py-2 text-faint">{% if r.location %}{{ r.location.name }}{% else %}—{% endif %}</td>
         <td class="px-2 py-2 text-right data text-muted">{{ r.gross_quantity }}</td>
         <td class="px-2 py-2 text-right data text-faint">{{ r.available_quantity }}</td>
-        <td class="px-2 py-2 text-right data text-cyan">{{ r.incoming_quantity }}</td>
+        <td class="px-2 py-2 text-right data text-cyan">{{ r.incoming_quantity }}{% if r.feasible_source == 'in_transit' %} <span class="chip !border-cyan/40 !text-cyan" title="{% translate 'Covered by a freight batch in transit — ETA shown as the feasible date' %}">{% translate "in transit" %}</span>{% endif %}</td>
         <td class="px-2 py-2 text-right data font-semibold {% if r.net_quantity %}text-gold{% else %}text-faint{% endif %}">{{ r.net_quantity }}</td>
         <td class="px-2 py-2 text-faint">{% if r.required_by %}{{ r.required_by|date:"j M" }}{% else %}—{% endif %}</td>
-        <td class="px-2 py-2 text-faint">{% if r.feasible_at %}{{ r.feasible_at|date:"j M" }} <span class="text-[10px]">({{ c.feasible_label }})</span>{% else %}—{% endif %}</td>
+        <td class="px-2 py-2 text-faint">{% if r.feasible_at %}{{ r.feasible_at|date:"j M" }} <span class="text-[10px]">({{ c.feasible_label }})</span>{% else %}—{% endif %}{% if c.bottleneck_label %} <span class="chip !border-loss/40 !text-loss" title="{% translate 'The binding constraint on this build date' %}">{{ c.bottleneck_label }}</span>{% endif %}</td>
         <td class="px-2 py-2">{% if r.net_quantity %}<span class="chip {% if r.suggestion == 'build' %}!border-cyan/40 !text-cyan{% endif %}">{{ c.suggestion_label }}</span>{% else %}<span class="text-faint">—</span>{% endif %}</td>
         <td class="px-2 py-2">
           {% if c.ship_level %}
@@ -78,6 +83,7 @@
           {% elif r.industry_project %}<a href="{% url 'industry:detail' r.industry_project.pk %}" class="chip">{% translate "Project" %}</a>
           {% elif r.build_job %}<span class="chip">{% translate "Build job" %} #{{ r.build_job.pk }}</span>
           {% elif r.hauling_task %}<span class="chip">{% translate "Haul" %} #{{ r.hauling_task.pk }}</span>
+          {% elif r.freight_line %}<a href="{% url 'logistics:freight_detail' r.freight_line.batch_id %}" class="chip" title="{% translate 'On a freight batch' %}">{% translate "Batch" %} #{{ r.freight_line.batch_id }}</a>
           {% elif r.task %}<span class="chip">{% translate "Task" %} #{{ r.task.pk }}</span>
           {% elif r.net_quantity %}
             <form method="post" action="{% url 'industry:mrp_fan_out' r.pk %}" class="flex flex-wrap gap-1">{% csrf_token %}
@@ -85,7 +91,7 @@
                 <button name="action" value="project" class="btn-ghost !py-0.5 !text-[11px]">{% translate "Plan" %}</button>
                 <button name="action" value="build_job" class="btn-ghost !py-0.5 !text-[11px]">{% translate "Build job" %}</button>
               {% elif r.suggestion == 'import' %}
-                <button name="action" value="haul" class="btn-ghost !py-0.5 !text-[11px]">{% translate "Haul" %}</button>
+                <button name="action" value="freight" class="btn-ghost !py-0.5 !text-[11px]">{% translate "Add to freight batch" %}</button>
                 <button name="action" value="buy_task" class="btn-ghost !py-0.5 !text-[11px]">{% translate "BUY task" %}</button>
               {% else %}
                 <button name="action" value="buy_task" class="btn-ghost !py-0.5 !text-[11px]">{% translate "BUY task" %}</button>

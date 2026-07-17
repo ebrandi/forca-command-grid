@@ -116,3 +116,33 @@ def snapshot_demand() -> int:
     ).delete()
     log.info("demand snapshot: %s fit(s) written, %s old row(s) pruned", written, pruned)
     return written
+
+
+@shared_task(name="store.reconcile_order_settlements")
+def reconcile_order_settlements() -> dict:
+    """Match delivered/ready orders to corp-wallet revenue (cost & profitability).
+
+    INERT behind ``MarginConfig.settlement_reconcile_enabled`` — one config read and exit
+    while disarmed. Trails the 6-hourly wallet sync so fresh journal lines match
+    same-cycle. Read-only against the wallet; never moves ISK."""
+    from .margin import reconcile_settlements
+
+    result = reconcile_settlements()
+    if result.get("status") != "disabled":
+        log.info("settlement reconcile: %s", result)
+    return result
+
+
+@shared_task(name="store.check_quote_drift")
+def check_quote_drift() -> dict:
+    """Flag open orders whose frozen basis drifted (cost & profitability).
+
+    INERT behind ``MarginConfig.drift_check_enabled`` — one config read and exit while
+    disarmed. Persisted snapshots only; never a live pricing call in a request, never a
+    mutation of a frozen order column."""
+    from .margin import check_quote_drift as run_drift
+
+    result = run_drift()
+    if result.get("status") != "disabled":
+        log.info("quote drift: %s", result)
+    return result

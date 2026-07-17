@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% load eve i18n %}
+{% block title %}{% translate "Agreement" %} #{{ agreement.pk }} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-5 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow">{% translate "Procurement · Agreement" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% blocktranslate with n=agreement.pk %}Agreement #{{ n }}{% endblocktranslate %}</h1>
+    <p class="mt-1 text-sm text-faint">{{ agreement.supplier.display_name|default:agreement.supplier }} ·
+      {{ agreement.get_status_display }} · {{ agreement.get_cadence_display }} · {{ agreement.get_payment_terms_display }}</p>
+  </div>
+  <a href="{% url 'procurement:agreements' %}" class="btn-ghost text-sm">{% translate "All agreements" %}</a>
+</header>
+
+<section class="mb-6 grid gap-3 sm:grid-cols-3">
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">{% translate "Estimated cycle value" %}</p>
+    <p class="mt-1 text-2xl font-bold text-ink data">{{ estimate|isk }}</p>
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">{% translate "Term" %}</p>
+    <p class="mt-1 text-ink">{{ agreement.term_start|default:"—" }} → {{ agreement.term_end|default:"—" }}</p>
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">{% translate "Collateral" %}</p>
+    <p class="mt-1 text-ink data">{{ agreement.collateral_isk|isk }}</p>
+  </div>
+</section>
+
+<!-- Lifecycle -->
+<section class="panel mb-6 flex flex-wrap items-center gap-3 p-5">
+  {% if is_draft %}
+  <form method="post" action="{% url 'procurement:agreement_action' agreement.pk %}">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="submit">
+    <button type="submit" class="btn-gold text-sm">{% translate "Submit for approval" %}</button>
+  </form>
+  <p class="text-sm text-faint">{% translate "Below the Director threshold it activates immediately; at or above it, a second Director must approve." %}</p>
+  {% elif is_pending %}
+    {% if approval %}
+    <div class="text-sm text-faint">{% blocktranslate with who=approval.requested_by value=approval.estimated_value_isk %}Submitted by {{ who }} at {{ value }} ISK — awaiting a second Director.{% endblocktranslate %}</div>
+    {% endif %}
+    {% if is_director %}
+    <form method="post" action="{% url 'procurement:agreement_action' agreement.pk %}">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="approve">
+      <button type="submit" class="btn-gold text-sm">{% translate "Approve" %}</button>
+    </form>
+    <form method="post" action="{% url 'procurement:agreement_action' agreement.pk %}">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="reject">
+      <button type="submit" class="btn-danger text-sm">{% translate "Reject" %}</button>
+    </form>
+    {% else %}
+    <p class="text-sm text-faint">{% translate "Only a Director can decide this approval." %}</p>
+    {% endif %}
+  {% else %}
+    <p class="text-sm text-faint">{% translate "This agreement is closed to further lifecycle actions." %}</p>
+  {% endif %}
+</section>
+
+<!-- Lines -->
+<section class="panel p-5" x-data="{ add: false }">
+  <div class="flex items-center justify-between">
+    <h2 class="font-display text-lg font-semibold text-ink">{% translate "Lines" %}</h2>
+    {% if is_draft %}<button type="button" class="btn-ghost text-xs" @click="add = !add">{% translate "Add line" %}</button>{% endif %}
+  </div>
+  {% if is_draft %}
+  <form method="post" action="{% url 'procurement:agreement_line_add' agreement.pk %}" class="mt-4 space-y-3" x-show="add" x-cloak>
+    {% csrf_token %}
+    {% include "procurement/_form_fields.html" with form=line_form %}
+    <button type="submit" class="btn-gold">{% translate "Add line" %}</button>
+  </form>
+  {% endif %}
+  <div class="mt-4 overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead><tr class="text-left text-[11px] uppercase text-faint">
+        <th class="py-2 pr-3">{% translate "Item" %}</th>
+        <th class="py-2 pr-3">{% translate "Per cycle" %}</th>
+        <th class="py-2 pr-3">{% translate "Min" %}</th>
+        <th class="py-2 pr-3">{% translate "Max" %}</th>
+        <th class="py-2 pr-3">{% translate "Price model" %}</th>
+      </tr></thead>
+      <tbody>
+        {% for line in lines %}
+        <tr class="border-t border-line/40">
+          <td class="py-2 pr-3">{% type_name line.type_id %}</td>
+          <td class="py-2 pr-3 data">{{ line.quantity_per_cycle }}</td>
+          <td class="py-2 pr-3 data">{{ line.min_qty|default:"—" }}</td>
+          <td class="py-2 pr-3 data">{{ line.max_qty|default:"—" }}</td>
+          <td class="py-2 pr-3 text-faint">{{ line.get_price_model_display }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="py-4 text-center text-faint">{% translate "No lines yet." %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

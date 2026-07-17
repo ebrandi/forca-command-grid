@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+{% load eve i18n %}
+{% block title %}{% translate "Order" %} #{{ po.pk }} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-5 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow">{% translate "Procurement · Purchase order" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% blocktranslate with n=po.pk %}Order #{{ n }}{% endblocktranslate %}</h1>
+    <p class="mt-1 text-sm text-faint">{{ po.supplier.display_name|default:po.supplier }} ·
+      {{ po.get_status_display }} · {{ po.get_delivery_mode_display }}
+      {% if po.location %}· {{ po.location }}{% endif %}
+      {% if po.agreement %}· <a href="{% url 'procurement:agreement_detail' po.agreement.pk %}" class="hover:text-gold">{% blocktranslate with n=po.agreement.pk %}Agreement #{{ n }}{% endblocktranslate %}</a>{% endif %}
+    </p>
+  </div>
+  <a href="{% url 'procurement:pos' %}" class="btn-ghost text-sm">{% translate "All orders" %}</a>
+</header>
+
+<section class="mb-6 grid gap-3 sm:grid-cols-4">
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">{% translate "Expected total" %}</p>
+    <p class="mt-1 text-2xl font-bold text-ink data">{{ po.expected_total_isk|isk }}</p>
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">{% translate "Promised by" %}</p>
+    <p class="mt-1 text-ink">{{ po.promised_by|default:"—" }}</p>
+    {% if po.overdue_since %}<p class="text-xs text-loss">{% blocktranslate with when=po.overdue_since %}overdue since {{ when }}{% endblocktranslate %}</p>{% endif %}
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">{% translate "Contract" %}</p>
+    <p class="mt-1 text-ink data">{% if po.contract_id %}{{ po.contract_id }}{% else %}—{% endif %}</p>
+    {% if po.contract_status %}<p class="text-xs text-faint">{{ po.contract_status }}</p>{% endif %}
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">{% translate "Paid" %}</p>
+    <p class="mt-1 text-ink data">{% if po.paid_amount_isk is not None %}{{ po.paid_amount_isk|isk }}{% else %}—{% endif %}</p>
+  </div>
+</section>
+
+{% if po.notes %}
+<section class="panel mb-6 p-4">
+  <p class="eyebrow text-faint">{% translate "Notes" %}</p>
+  <p class="mt-1 whitespace-pre-line text-sm text-ink">{{ po.notes }}</p>
+</section>
+{% endif %}
+
+<!-- Lifecycle actions -->
+<section class="panel mb-6 p-5">
+  <h2 class="font-display text-lg font-semibold text-ink">{% translate "Actions" %}</h2>
+  <div class="mt-3 flex flex-wrap items-start gap-3">
+    {% if is_draft %}
+    <form method="post" action="{% url 'procurement:po_action' po.pk %}">
+      {% csrf_token %}<input type="hidden" name="action" value="submit">
+      <button type="submit" class="btn-gold text-sm">{% translate "Submit" %}</button>
+    </form>
+    {% endif %}
+
+    {% if is_submitted %}
+    <div x-data="{ open: false }">
+      <button type="button" class="btn-gold text-sm" @click="open = !open">{% translate "Approve" %}</button>
+      <form method="post" action="{% url 'procurement:po_action' po.pk %}" class="mt-2 space-y-2" x-show="open" x-cloak>
+        {% csrf_token %}<input type="hidden" name="action" value="approve">
+        <label class="block">
+          <span class="eyebrow text-faint">{% translate "Promised by (optional)" %}</span>
+          <input type="date" name="promised_by" class="input-field mt-1">
+        </label>
+        <button type="submit" class="btn-gold text-sm">{% translate "Confirm approval" %}</button>
+      </form>
+    </div>
+    {% endif %}
+
+    {% if is_approved %}
+    <form method="post" action="{% url 'procurement:po_action' po.pk %}">
+      {% csrf_token %}<input type="hidden" name="action" value="contract_expected">
+      <button type="submit" class="btn-ghost text-sm">{% translate "Mark contract-expected" %}</button>
+    </form>
+    {% endif %}
+
+    {% if is_hub_pickup and receivable %}
+    <form method="post" action="{% url 'procurement:po_action' po.pk %}">
+      {% csrf_token %}<input type="hidden" name="action" value="haul">
+      <button type="submit" class="btn-ghost text-sm">{% translate "Create haul" %}</button>
+    </form>
+    {% endif %}
+
+    {% if is_delivered %}
+    <div x-data="{ open: false }">
+      <button type="button" class="btn-gold text-sm" @click="open = !open">{% translate "Reconcile" %}</button>
+      <form method="post" action="{% url 'procurement:po_action' po.pk %}" class="mt-2 space-y-2" x-show="open" x-cloak>
+        {% csrf_token %}<input type="hidden" name="action" value="reconcile">
+        <label class="block">
+          <span class="eyebrow text-faint">{% translate "Note (required)" %}</span>
+          <input type="text" name="note" class="input-field mt-1" required>
+        </label>
+        <button type="submit" class="btn-gold text-sm">{% translate "Confirm reconcile" %}</button>
+      </form>
+    </div>
+    {% endif %}
+
+    {% if can_dispute %}
+    <div x-data="{ open: false }">
+      <button type="button" class="btn-danger text-sm" @click="open = !open">{% translate "Dispute" %}</button>
+      <form method="post" action="{% url 'procurement:po_action' po.pk %}" class="mt-2 space-y-2" x-show="open" x-cloak>
+        {% csrf_token %}<input type="hidden" name="action" value="dispute">
+        <label class="block">
+          <span class="eyebrow text-faint">{% translate "Reason (required)" %}</span>
+          <input type="text" name="reason" class="input-field mt-1" required>
+        </label>
+        <button type="submit" class="btn-danger text-sm">{% translate "Mark disputed" %}</button>
+      </form>
+    </div>
+    {% endif %}
+
+    {% if is_disputed %}
+    <div x-data="{ open: false }">
+      <button type="button" class="btn-gold text-sm" @click="open = !open">{% translate "Resolve dispute" %}</button>
+      <form method="post" action="{% url 'procurement:po_action' po.pk %}" class="mt-2 space-y-2" x-show="open" x-cloak>
+        {% csrf_token %}<input type="hidden" name="action" value="resolve">
+        <label class="block">
+          <span class="eyebrow text-faint">{% translate "Outcome" %}</span>
+          <select name="outcome" class="input-field mt-1">
+            <option value="reconciled">{% translate "Reconciled (close)" %}</option>
+            <option value="resume">{% translate "Resume (back to evidence state)" %}</option>
+            <option value="cancelled">{% translate "Cancelled (Director)" %}</option>
+          </select>
+        </label>
+        <label class="block">
+          <span class="eyebrow text-faint">{% translate "Note" %}</span>
+          <input type="text" name="note" class="input-field mt-1">
+        </label>
+        <button type="submit" class="btn-gold text-sm">{% translate "Apply outcome" %}</button>
+      </form>
+    </div>
+    {% endif %}
+
+    {% if not is_terminal %}
+    <form method="post" action="{% url 'procurement:po_action' po.pk %}">
+      {% csrf_token %}<input type="hidden" name="action" value="cancel">
+      <button type="submit" class="btn-ghost text-sm">{% translate "Cancel order" %}</button>
+    </form>
+    {% endif %}
+  </div>
+</section>
+
+<!-- Candidate contracts -->
+{% if candidates %}
+<section class="panel mb-6 p-5">
+  <h2 class="font-display text-lg font-semibold text-ink">{% translate "Candidate contracts" %}</h2>
+  <p class="mt-1 text-sm text-faint">{% translate "In-game item-exchange contracts from this supplier that could be this order. Confirm the right one." %}</p>
+  <div class="mt-4 space-y-2">
+    {% for c in candidates %}
+    <div class="flex flex-wrap items-center justify-between gap-3 border-t border-line/40 pt-2">
+      <span class="text-sm text-ink data">{{ c.contract_id }} · {{ c.price|isk }} · {{ c.date_issued|default:"" }}</span>
+      <form method="post" action="{% url 'procurement:po_action' po.pk %}">
+        {% csrf_token %}<input type="hidden" name="action" value="confirm_match">
+        <input type="hidden" name="contract_id" value="{{ c.contract_id }}">
+        <button type="submit" class="btn-gold text-xs">{% translate "Confirm match" %}</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<!-- Payment suggestions -->
+{% if suggestions %}
+<section class="panel mb-6 p-5">
+  <h2 class="font-display text-lg font-semibold text-ink">{% translate "Payment suggestions" %}</h2>
+  <p class="mt-1 text-sm text-faint">{% translate "Wallet-journal entries that could be this order's payment (no context id to auto-match). Confirm the right one." %}</p>
+  <div class="mt-4 space-y-2">
+    {% for e in suggestions %}
+    <div class="flex flex-wrap items-center justify-between gap-3 border-t border-line/40 pt-2">
+      <span class="text-sm text-ink data">{{ e.entry_id }} · {{ e.amount|isk }} · {{ e.date|default:"" }}</span>
+      <form method="post" action="{% url 'procurement:po_action' po.pk %}">
+        {% csrf_token %}<input type="hidden" name="action" value="confirm_payment">
+        <input type="hidden" name="entry_id" value="{{ e.entry_id }}">
+        <button type="submit" class="btn-gold text-xs">{% translate "Confirm payment" %}</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<!-- Lines -->
+<section class="panel mb-6 p-5" x-data="{ add: false }">
+  <div class="flex items-center justify-between">
+    <h2 class="font-display text-lg font-semibold text-ink">{% translate "Lines" %}</h2>
+    {% if is_draft %}<button type="button" class="btn-ghost text-xs" @click="add = !add">{% translate "Add line" %}</button>{% endif %}
+  </div>
+  {% if is_draft %}
+  <form method="post" action="{% url 'procurement:po_line_add' po.pk %}" class="mt-4 space-y-3" x-show="add" x-cloak>
+    {% csrf_token %}
+    {% include "procurement/_form_fields.html" with form=line_form %}
+    <button type="submit" class="btn-gold">{% translate "Add line" %}</button>
+  </form>
+  {% endif %}
+  <div class="mt-4 overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead><tr class="text-left text-[11px] uppercase text-faint">
+        <th class="py-2 pr-3">{% translate "Item" %}</th>
+        <th class="py-2 pr-3">{% translate "Ordered" %}</th>
+        <th class="py-2 pr-3">{% translate "Received" %}</th>
+        <th class="py-2 pr-3">{% translate "Unit price" %}</th>
+        {% if receivable %}<th class="py-2 pr-3">{% translate "Receive" %}</th>{% endif %}
+      </tr></thead>
+      <tbody>
+        {% for line in lines %}
+        <tr class="border-t border-line/40">
+          <td class="py-2 pr-3">
+            {% type_name line.type_id %}
+            {% if line.doctrine_fit %}<span class="block text-[11px] text-faint">{{ line.doctrine_fit.name }}</span>{% endif %}
+          </td>
+          <td class="py-2 pr-3 data">{{ line.quantity_ordered }}</td>
+          <td class="py-2 pr-3 data">{{ line.quantity_received }}</td>
+          <td class="py-2 pr-3 data">{{ line.unit_price_isk|isk }}</td>
+          {% if receivable %}
+          <td class="py-2 pr-3">
+            {% if line.quantity_received < line.quantity_ordered %}
+            <form method="post" action="{% url 'procurement:po_action' po.pk %}" class="flex items-end gap-2">
+              {% csrf_token %}<input type="hidden" name="action" value="receipt">
+              <input type="hidden" name="line_id" value="{{ line.pk }}">
+              <input type="number" name="quantity" min="1" max="{{ line.quantity_ordered }}" class="input-field w-24" placeholder="{% translate 'Qty' %}" required>
+              <button type="submit" class="btn-ghost text-xs">{% translate "Receive" %}</button>
+            </form>
+            {% else %}<span class="chip !border-win/40 !text-win">{% translate "Complete" %}</span>{% endif %}
+          </td>
+          {% endif %}
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="py-4 text-center text-faint">{% translate "No lines yet." %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- Receipts (immutable evidence) -->
+{% if receipts %}
+<section class="panel p-5">
+  <h2 class="font-display text-lg font-semibold text-ink">{% translate "Receipts" %}</h2>
+  <div class="mt-4 overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead><tr class="text-left text-[11px] uppercase text-faint">
+        <th class="py-2 pr-3">{% translate "When" %}</th>
+        <th class="py-2 pr-3">{% translate "Item" %}</th>
+        <th class="py-2 pr-3">{% translate "Quantity" %}</th>
+        <th class="py-2 pr-3">{% translate "Kind" %}</th>
+        <th class="py-2 pr-3">{% translate "By" %}</th>
+      </tr></thead>
+      <tbody>
+        {% for r in receipts %}
+        <tr class="border-t border-line/40">
+          <td class="py-2 pr-3 text-faint">{{ r.created_at }}</td>
+          <td class="py-2 pr-3">{% type_name r.line.type_id %}</td>
+          <td class="py-2 pr-3 data">{{ r.quantity }}</td>
+          <td class="py-2 pr-3 text-faint">{{ r.get_kind_display }}</td>
+          <td class="py-2 pr-3 text-faint">{% if r.actor %}{{ r.actor.display_name }}{% else %}{% translate "system" %}{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

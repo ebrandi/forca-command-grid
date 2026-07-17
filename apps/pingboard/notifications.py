@@ -297,6 +297,44 @@ REGISTRY: tuple[Event, ...] = (
         audience="corp", sensitive=False,
         triggers=_("A member/officer advances, claims or cancels a store order."),
     ),
+    # --- cost & profitability + supply command (cross-cutting) ----------------
+    Event(
+        key="supplyboard.digest",
+        label=_("Supply Command digest"),
+        description=_(
+            "One deduped officer digest of the Supply Command board's open problems — low "
+            "stock, at-risk/overdue orders, material shortages, production bottlenecks, "
+            "in-transit hauls and discrepancies. Fires once per distinct problem set and "
+            "resets when everything is clear."
+        ),
+        group=GROUP_OPERATIONS, source_service="supplyboard",
+        audience="officer", sensitive=False,
+        triggers=_("Beat supplyboard.sweep (every 20 min), on a red-set change."),
+    ),
+    Event(
+        key="store.quote_drift",
+        label=_("Corp Store quote drift"),
+        description=_(
+            "An officer alert when an open store order's frozen basis drifts beyond the "
+            "configured percent AND ISK floor. Quotes are member-visible prices, not corp "
+            "P&L, so this is operations-routed; informational — no frozen price ever changes."
+        ),
+        group=GROUP_OPERATIONS, source_service="store",
+        audience="officer", sensitive=False,
+        triggers=_("Beat store.check_quote_drift (nightly), on a fresh flag."),
+    ),
+    Event(
+        key="store.margin_erosion",
+        label=_("Corp Store margin erosion"),
+        description=_(
+            "A leadership alert when the delivered-order evidenced-margin ratio drops below "
+            "the configured floor, or newly-flagged drift rows spike. ISK-sensitive: routes "
+            "leadership-only via classification, so an undesignated mass channel drops it."
+        ),
+        group=GROUP_LEADERSHIP, source_service="store",
+        audience="officer", sensitive=True,
+        triggers=_("Beat store.check_quote_drift tail (nightly), at most one per day."),
+    ),
     Event(
         key="planetary.colony_issue",
         label=_("PI colony issue nudges"),

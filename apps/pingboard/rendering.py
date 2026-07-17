@@ -105,8 +105,12 @@ VARIABLE_CATALOGUE = [
     "assignment_label", "health_label", "review_month",
     # Store / raffle / logistics
     "ship_name", "status_label", "contest_name", "ticket_count", "prize_name", "prize_rank",
+    # Procurement (P4): supplier is corp-authored / EVE data, kept raw
+    "supplier_name",
     # Shipyard availability (SHIP-1): backorder estimates, stock allocation, restock
     "eta_date", "quantity", "fit_name",
     # Generic scalars shared by many scaffolds
     "count", "minutes", "hours", "reason", "details", "scopes", "threat_count",
+    # Cost & profitability (cross-cutting): a pre-formatted percentage string (drift / margin)
+    "percent",
 ]

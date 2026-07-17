@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% load eve i18n %}
+{% block title %}{{ supplier.display_name|default:supplier }} · {% translate "Supplier" %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-5 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow">{% translate "Procurement · Supplier" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{{ supplier.display_name|default:supplier }}</h1>
+    <p class="mt-1 text-sm text-faint">{{ supplier.get_kind_display }} · {{ supplier.get_status_display }}
+      {% if supplier.default_location %}· {{ supplier.default_location }}{% endif %}</p>
+  </div>
+  <a href="{% url 'procurement:suppliers' %}" class="btn-ghost text-sm">{% translate "All suppliers" %}</a>
+</header>
+
+<!-- Reliability (written by the nightly rollup; never live-computed) -->
+<section class="mb-6 grid gap-3 sm:grid-cols-4">
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">{% translate "On-time rate" %}</p>
+    <p class="mt-1 text-2xl font-bold text-ink data">{% if supplier.on_time_rate is not None %}{% widthratio supplier.on_time_rate 1 100 %}%{% else %}—{% endif %}</p>
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">{% translate "Fill rate" %}</p>
+    <p class="mt-1 text-2xl font-bold text-ink data">{% if supplier.fill_rate is not None %}{% widthratio supplier.fill_rate 1 100 %}%{% else %}—{% endif %}</p>
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">{% translate "Price variance" %}</p>
+    <p class="mt-1 text-2xl font-bold text-ink data">{% if supplier.price_variance_pct is not None %}{% widthratio supplier.price_variance_pct 1 100 %}%{% else %}—{% endif %}</p>
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">{% translate "Sample" %}</p>
+    <p class="mt-1 text-2xl font-bold text-ink data">{{ supplier.reliability_sample }}</p>
+    <p class="text-xs text-faint">{% if supplier.reliability_computed_at %}{% blocktranslate with when=supplier.reliability_computed_at %}as of {{ when }}{% endblocktranslate %}{% else %}{% translate "not yet computed" %}{% endif %}</p>
+  </div>
+</section>
+
+<div class="grid gap-6 lg:grid-cols-2">
+  <!-- Profile -->
+  <section class="panel p-5" x-data="{ edit: false }">
+    <div class="flex items-center justify-between">
+      <h2 class="font-display text-lg font-semibold text-ink">{% translate "Profile" %}</h2>
+      <button type="button" class="btn-ghost text-xs" @click="edit = !edit">{% translate "Edit" %}</button>
+    </div>
+    {% if supplier.contact %}<p class="mt-2 text-sm text-faint">{% translate "Contact:" %} {{ supplier.contact }}</p>{% endif %}
+    {% if supplier.notes %}<p class="mt-2 whitespace-pre-line text-sm text-faint">{{ supplier.notes }}</p>{% endif %}
+    <form method="post" class="mt-4 space-y-4" x-show="edit" x-cloak>
+      {% csrf_token %}
+      {% include "procurement/_form_fields.html" %}
+      <button type="submit" class="btn-gold">{% translate "Save changes" %}</button>
+    </form>
+  </section>
+
+  <!-- Catalogue -->
+  <section class="panel p-5" x-data="{ add: false }">
+    <div class="flex items-center justify-between">
+      <h2 class="font-display text-lg font-semibold text-ink">{% translate "Catalogue" %}</h2>
+      <button type="button" class="btn-ghost text-xs" @click="add = !add">{% translate "Add item" %}</button>
+    </div>
+    <form method="post" action="{% url 'procurement:supplier_item_add' supplier.pk %}" class="mt-4 space-y-3" x-show="add" x-cloak>
+      {% csrf_token %}
+      {% include "procurement/_form_fields.html" with form=item_form %}
+      <button type="submit" class="btn-gold">{% translate "Add to catalogue" %}</button>
+    </form>
+    <div class="mt-4 overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead><tr class="text-left text-[11px] uppercase text-faint">
+          <th class="py-2 pr-3">{% translate "Item" %}</th>
+          <th class="py-2 pr-3">{% translate "MOQ" %}</th>
+          <th class="py-2 pr-3">{% translate "Price model" %}</th>
+          <th class="py-2 pr-3">{% translate "Active" %}</th>
+        </tr></thead>
+        <tbody>
+          {% for it in items %}
+          <tr class="border-t border-line/40">
+            <td class="py-2 pr-3">{% type_name it.type_id %}</td>
+            <td class="py-2 pr-3 data">{{ it.moq }}</td>
+            <td class="py-2 pr-3 text-faint">{{ it.get_price_model_display }}</td>
+            <td class="py-2 pr-3">{% if it.active %}<span class="chip !border-win/40 !text-win">{% translate "Yes" %}</span>{% else %}<span class="chip">{% translate "No" %}</span>{% endif %}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="py-4 text-center text-faint">{% translate "No catalogue items yet." %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<!-- Contract history (matched-PO evidence) -->
+<section class="panel mt-6 p-5">
+  <h2 class="font-display text-lg font-semibold text-ink">{% translate "Contract history" %}</h2>
+  <p class="mt-1 text-sm text-faint">{% translate "Purchase orders from this supplier that matched an in-game contract." %}</p>
+  <div class="mt-4 overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead><tr class="text-left text-[11px] uppercase text-faint">
+        <th class="py-2 pr-3">{% translate "Order" %}</th>
+        <th class="py-2 pr-3">{% translate "Status" %}</th>
+        <th class="py-2 pr-3">{% translate "Contract" %}</th>
+        <th class="py-2 pr-3">{% translate "Matched" %}</th>
+        <th class="py-2 pr-3">{% translate "Expected" %}</th>
+      </tr></thead>
+      <tbody>
+        {% for po in contract_history %}
+        <tr class="border-t border-line/40">
+          <td class="py-2 pr-3"><a href="{% url 'procurement:po_detail' po.pk %}" class="text-ink hover:text-gold">#{{ po.pk }}</a></td>
+          <td class="py-2 pr-3">{{ po.get_status_display }}</td>
+          <td class="py-2 pr-3 data">{{ po.contract_id }}</td>
+          <td class="py-2 pr-3 text-faint">{{ po.contract_matched_at|default:"—" }}</td>
+          <td class="py-2 pr-3 data">{{ po.expected_total_isk|isk }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="py-4 text-center text-faint">{% translate "No matched contracts yet." %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from django.urls import path
 
-from . import tools, views, views_mrp
+from . import tools, views, views_capacity, views_mrp
 
 app_name = "industry"
 
@@ -21,6 +21,11 @@ urlpatterns = [
     path("mrp/", views_mrp.mrp_board, name="mrp"),
     path("mrp/run/", views_mrp.mrp_run_now, name="mrp_run"),
     path("mrp/req/<int:pk>/action/", views_mrp.mrp_fan_out, name="mrp_fan_out"),
+    # Production Capacity (P5)
+    path("capacity/", views_capacity.capacity_board, name="capacity"),
+    path("capacity/settings/", views_capacity.capacity_settings, name="capacity_settings"),
+    path("capacity/resource/<int:pk>/", views_capacity.capacity_resource, name="capacity_resource"),
+    path("capacity/derive/", views_capacity.capacity_derive, name="capacity_derive"),
     path("jobs/plan-from-job/", tools.plan_from_job, name="plan_from_job"),
     # Production plans (the board keeps its `board` name for existing links).
     path("plans/", views.project_board, name="board"),

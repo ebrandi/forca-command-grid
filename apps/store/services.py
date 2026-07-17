@@ -13,6 +13,7 @@ from django.utils.translation import gettext as _
 from .models import (
     Audience,
     FitOffer,
+    FulfilmentMethod,
     OrderAvailability,
     ShipyardPolicy,
     StoreConfig,
@@ -320,15 +321,57 @@ def place_fit_order(*, fit, quantity: int, buyer, buyer_character_id=None,
     return result
 
 
-def transition_order(order: StoreOrder, to_status: str, *, actor) -> bool:
+# The lanes an order may be stamped with (every FulfilmentMethod except AUTO).
+_STAMP_METHODS = {m.value for m in FulfilmentMethod if m != FulfilmentMethod.AUTO}
+
+
+def _link_contract_settlement(order: StoreOrder, contract_id, *, actor) -> None:
+    """Record a *pending* contract settlement at READY (officer-named bare contract id).
+
+    Delegates to the shared margin helper — the reconcile beat fills ``amount``/
+    ``occurred_at`` once the matching ``CorpContract`` completes; a contract id already
+    settling another order collapses on the partial unique (surfaced on the console)."""
+    if not contract_id:
+        return
+    from .margin import record_contract_settlement
+
+    record_contract_settlement(
+        order, contract_id=contract_id, actor=actor, audit_action="store.settlement_link"
+    )
+
+
+def _stamp_fulfilment_method(order: StoreOrder, *, consumed: int, form_value: str) -> None:
+    """Freeze the fulfilment method exactly once — a write-once guarded UPDATE.
+
+    Full reservation consumption is unambiguous stock evidence → stamp ``stock``.
+    Partial/zero consumption falls to the claimer's deliver-form value (blank when the
+    transition is unattended). NEVER keyed on ``quantity_reserved`` — a fully-reserved
+    order whose holds EXPIRED before delivery consumed zero units and must not claim
+    stock. The ``fulfilment_method=""`` filter is the structural refuse-to-overwrite:
+    racing stampers and a re-advanced order collapse on it."""
+    if order.quantity > 0 and consumed >= order.quantity:
+        method = FulfilmentMethod.STOCK
+    elif form_value in _STAMP_METHODS:
+        method = form_value
+    else:
+        method = ""
+    if not method:
+        return
+    StoreOrder.objects.filter(pk=order.pk, fulfilment_method="").update(fulfilment_method=method)
+
+
+def transition_order(order: StoreOrder, to_status: str, *, actor,
+                     contract_id=None, fulfilment_method: str = "") -> bool:
     """Apply a status change plus its availability side effects, then notify.
 
     Compare-and-swap: the UPDATE only lands if the order still has the status
     the caller saw, so a cancel racing an advance can never resurrect a closed
     order — the loser gets ``False`` and re-reads. READY/DELIVERED stamp their
-    actual dates; DELIVERED consumes the order's reservations (exactly once);
-    CANCELLED releases them and refreshes the supply need. Always call this
-    instead of poking ``order.status``."""
+    actual dates; DELIVERED consumes the order's reservations (exactly once) and
+    stamps the fulfilment method from consumption evidence; READY optionally records
+    the fulfilling contract id; CANCELLED releases reservations and refreshes the
+    supply need. Every margin side effect runs AFTER the CAS wins, so a raced loser
+    never writes margin state. Always call this instead of poking ``order.status``."""
     from .inventory import consume_order_reservations, release_order_reservations
     from .supply import recompute_supply_need
 
@@ -343,8 +386,14 @@ def transition_order(order: StoreOrder, to_status: str, *, actor) -> bool:
         return False  # raced with another transition; caller re-reads and reports
     order.refresh_from_db()
 
-    if to_status == StoreOrder.Status.DELIVERED:
-        consume_order_reservations(order, actor=actor)
+    if to_status == StoreOrder.Status.READY:
+        _link_contract_settlement(order, contract_id, actor=actor)
+    elif to_status == StoreOrder.Status.DELIVERED:
+        # The method stamp is a second guarded UPDATE issued in the SAME transaction as
+        # consumption, so it reflects exactly what was consumed and racing stampers collapse.
+        with transaction.atomic():
+            consumed = consume_order_reservations(order, actor=actor)
+            _stamp_fulfilment_method(order, consumed=consumed, form_value=fulfilment_method)
     elif to_status == StoreOrder.Status.CANCELLED:
         release_order_reservations(order)
         if order.doctrine_fit_id:

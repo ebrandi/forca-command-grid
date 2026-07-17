@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "New supplier" %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-5">
+  <p class="eyebrow">{% translate "Procurement · Leadership" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Register a supplier" %}</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Business data only — the entity id is the EVE character or corporation id (leave blank for an informal hub source)." %}</p>
+</header>
+<form method="post" class="panel max-w-2xl space-y-4 p-5">
+  {% csrf_token %}
+  {% include "procurement/_form_fields.html" %}
+  <div class="flex gap-2">
+    <button type="submit" class="btn-gold">{% translate "Save supplier" %}</button>
+    <a href="{% url 'procurement:suppliers' %}" class="btn-ghost">{% translate "Cancel" %}</a>
+  </div>
+</form>
+{% endblock %}

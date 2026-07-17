@@ -23,7 +23,7 @@ from core.audit import audit_log, client_ip
 from core.rbac import role_required
 
 from . import calc, chain, invention
-from .models import IndustryProject, IndustryProjectItem
+from .models import IndustryProject, IndustryProjectItem, MrpConfig
 from .services import compute_project_bom, effective_rates
 
 
@@ -378,11 +378,18 @@ def job_tracker(request: HttpRequest) -> HttpResponse:
     has_my_industry = EveScopeGrant.objects.filter(
         character__character_id__in=char_ids, feature_key="my_industry"
     ).exists()
+    # P5 "my capacity" strip — the viewing pilot's OWN pools only (the same privacy
+    # gate as the own-jobs query above), never another pilot's numbers.
+    from apps.industry import capacity as _capacity
+    my_capacity = (
+        _capacity.my_capacity(request.user, MrpConfig.active()) if has_my_industry else []
+    )
     return render(request, "industry/jobs.html", {
         "queued": [_job_row(j) for j in queued],
         "my_builds": [_job_row(j) for j in my_builds],
         "is_officer": is_officer,
         "my_jobs": my_jobs, "corp_jobs": corp_jobs,
         "has_my_industry": has_my_industry,
+        "my_capacity": my_capacity,
         "unmatched": [j for j in my_jobs if not getattr(j, "matched", False) and j.is_active],
     })

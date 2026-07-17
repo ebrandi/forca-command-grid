@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-16 23:46+0000\n"
+"POT-Creation-Date: 2026-07-17 16:45+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: zh-hans machine-assisted draft\n"
@@ -436,6 +436,7 @@ msgstr "军衔“%(name)s”已保存。"
 #: apps/admin_audit/console_industry.py apps/admin_audit/console_mentorship.py
 #: apps/admin_audit/console_navigation.py apps/admin_audit/console_pingboard.py
 #: apps/admin_audit/console_planetary.py apps/admin_audit/console_raffle.py
+#: apps/industry/views_capacity.py apps/logistics/views_freight.py
 msgid "Please correct the errors below."
 msgstr "请更正下方的错误。"
 
@@ -473,7 +474,8 @@ msgstr "奖励扫描完成 —— 已创建 %(n)d 个新奖励事件。"
 
 #: apps/admin_audit/console_combat.py apps/buyback/views.py
 #: apps/capsuleer/views.py apps/industry/views_mrp.py apps/logistics/views.py
-#: apps/stockpile/views.py apps/store/views.py apps/store/views_inventory.py
+#: apps/procurement/views.py apps/stockpile/views.py apps/store/views.py
+#: apps/store/views_inventory.py
 msgid "Unknown action."
 msgstr "未知操作。"
 
@@ -1648,9 +1650,10 @@ msgid "Effective refine yield (skills + structure + rig) used to value ore."
 msgstr "用于估算矿石价值的有效精炼产出率（技能 + 建筑 + 改装件）。"
 
 #: apps/buyback/models.py apps/campaigns/models.py apps/capsuleer/models.py
-#: apps/command_intel/models.py apps/industry/models.py apps/raffle/models.py
-#: apps/readiness/models.py apps/recommendations/models.py
-#: apps/stockpile/models.py apps/store/models.py apps/tasks/models.py
+#: apps/command_intel/models.py apps/industry/models.py
+#: apps/logistics/models.py apps/raffle/models.py apps/readiness/models.py
+#: apps/recommendations/models.py apps/stockpile/models.py apps/store/models.py
+#: apps/tasks/models.py templates/logistics/freight.html
 #: templates/navigation/jump_routes.html
 msgid "Open"
 msgstr "开放中"
@@ -1662,15 +1665,15 @@ msgstr "已购买"
 #: apps/buyback/models.py apps/killboard/models.py apps/mentorship/models.py
 #: apps/srp/models.py templates/admin_audit/console/combat_rewards.html
 #: templates/mining/my_mining.html templates/mining/payout.html
-#: templates/srp/budget.html
+#: templates/procurement/po_detail.html templates/srp/budget.html
 msgid "Paid"
 msgstr "已支付"
 
 #: apps/buyback/models.py apps/campaigns/models.py apps/campaigns/views.py
 #: apps/erp/models.py apps/industry/models.py apps/killboard/models.py
 #: apps/logistics/models.py apps/mentorship/models.py apps/pingboard/models.py
-#: apps/raffle/models.py apps/store/models.py apps/tasks/models.py
-#: templates/admin_audit/console/raffle_draw.html
+#: apps/procurement/models.py apps/raffle/models.py apps/store/models.py
+#: apps/tasks/models.py templates/admin_audit/console/raffle_draw.html
 #: templates/campaigns/close.html templates/operations/_posture.html
 #: templates/operations/cancellations.html
 msgid "Cancelled"
@@ -1690,7 +1693,8 @@ msgid "Settled"
 msgstr "已结算"
 
 #: apps/buyback/models.py apps/identity/models.py apps/killboard/models.py
-#: apps/mentorship/models.py apps/recruitment/models.py
+#: apps/mentorship/models.py apps/procurement/models.py
+#: apps/recruitment/models.py
 msgid "Rejected"
 msgstr "已拒绝"
 
@@ -2086,7 +2090,7 @@ msgstr "其他"
 #: apps/campaigns/models.py apps/command_intel/models.py
 #: apps/doctrines/models.py apps/industry/models.py apps/mentorship/models.py
 #: apps/mining/models.py apps/operations/models.py apps/pingboard/models.py
-#: apps/planetary/models.py apps/raffle/models.py
+#: apps/planetary/models.py apps/procurement/models.py apps/raffle/models.py
 #: templates/command_intel/campaigns.html templates/operations/_posture.html
 msgid "Draft"
 msgstr "草稿"
@@ -2097,7 +2101,8 @@ msgid "Proposed"
 msgstr "已提议"
 
 #: apps/campaigns/models.py apps/identity/models.py apps/killboard/models.py
-#: apps/mentorship/models.py apps/raffle/models.py apps/srp/models.py
+#: apps/mentorship/models.py apps/procurement/models.py apps/raffle/models.py
+#: apps/srp/models.py
 msgid "Approved"
 msgstr "已批准"
 
@@ -2105,14 +2110,16 @@ msgstr "已批准"
 #: apps/command_intel/models.py apps/doctrines/models.py
 #: apps/impersonation/models.py apps/industry/models.py
 #: apps/mentorship/models.py apps/operations/models.py apps/pingboard/models.py
-#: apps/planetary/models.py apps/raffle/models.py apps/stockpile/models.py
-#: apps/store/models.py templates/admin_audit/console/mentorship/cohorts.html
+#: apps/planetary/models.py apps/procurement/models.py apps/raffle/models.py
+#: apps/stockpile/models.py apps/store/models.py
+#: templates/admin_audit/console/mentorship/cohorts.html
 #: templates/admin_audit/console/mentorship/reward_rules.html
 #: templates/admin_audit/console/mentorship/track_builder.html
 #: templates/admin_audit/console/mentorship/tracks.html
 #: templates/campaigns/portfolio.html templates/capsuleer/_goal_card.html
 #: templates/capsuleer/goal_detail.html templates/command_intel/campaigns.html
 #: templates/market/dashboard.html templates/operations/_posture.html
+#: templates/procurement/supplier_detail.html
 msgid "Active"
 msgstr "进行中"
 
@@ -2239,7 +2246,7 @@ msgstr "完成"
 #: apps/campaigns/models.py apps/capsuleer/models.py
 #: apps/command_intel/models.py apps/identity/models.py
 #: apps/killboard/models.py apps/mentorship/models.py apps/pingboard/models.py
-#: apps/raffle/models.py apps/skills/models.py
+#: apps/procurement/models.py apps/raffle/models.py apps/skills/models.py
 #: templates/admin_audit/console/combat_rewards.html
 #: templates/admin_audit/console/raffle_draw.html
 #: templates/corporation/roster.html
@@ -2298,6 +2305,7 @@ msgid "Realised"
 msgstr "已发生"
 
 #: apps/campaigns/models.py apps/doctrines/models.py apps/mentorship/models.py
+#: apps/procurement/models.py
 msgid "Retired"
 msgstr "已撤销"
 
@@ -2646,7 +2654,7 @@ msgstr "制造"
 msgid "Build and fit the mainline, logistics and replacement hulls."
 msgstr "建造并配装主力、后勤与替换船体。"
 
-#: apps/campaigns/templates_i18n.py
+#: apps/campaigns/templates_i18n.py templates/admin_audit/console/hub.html
 msgid "Procurement"
 msgstr "采购"
 
@@ -3413,7 +3421,8 @@ msgstr "提议"
 #: templates/admin_audit/console/members.html
 #: templates/admin_audit/console/mentorship/rewards.html
 #: templates/buyback/guaranteed_queue.html templates/campaigns/detail.html
-#: templates/srp/queue.html
+#: templates/procurement/agreement_detail.html
+#: templates/procurement/po_detail.html templates/srp/queue.html
 msgid "Approve"
 msgstr "批准"
 
@@ -3425,7 +3434,8 @@ msgid "Start"
 msgstr "开始"
 
 #: apps/campaigns/views.py templates/capsuleer/goal_detail.html
-#: templates/mentorship/pairing_detail.html templates/operations/templates.html
+#: templates/industry/capacity.html templates/mentorship/pairing_detail.html
+#: templates/operations/templates.html
 msgid "Pause"
 msgstr "暂停"
 
@@ -3455,8 +3465,9 @@ msgstr "暂停"
 #: templates/mentorship/pairing_detail.html
 #: templates/operations/template_form.html
 #: templates/pingboard/alert_detail.html templates/planetary/wizard.html
-#: templates/stockpile/dashboard.html templates/store/demand_policy.html
-#: templates/store/order_confirm.html
+#: templates/procurement/agreement_form.html templates/procurement/po_form.html
+#: templates/procurement/supplier_form.html templates/stockpile/dashboard.html
+#: templates/store/demand_policy.html templates/store/order_confirm.html
 msgid "Cancel"
 msgstr "取消"
 
@@ -3739,7 +3750,8 @@ msgstr "证据已移除。"
 msgid "The campaign workspace is for officers and campaign leads."
 msgstr "战役工作区仅供军官与战役负责人使用。"
 
-#: apps/campaigns/views.py
+#: apps/campaigns/views.py apps/procurement/models.py
+#: templates/procurement/board.html
 msgid "Overdue"
 msgstr "逾期"
 
@@ -4196,7 +4208,7 @@ msgstr "舰船"
 #: apps/capsuleer/models.py apps/onboarding/models.py
 #: templates/campaigns/activity.html templates/campaigns/detail.html
 #: templates/capsuleer/goal_form.html templates/capsuleer/paths.html
-#: templates/erp/board.html
+#: templates/erp/board.html templates/industry/capacity.html
 msgid "Activity"
 msgstr "活动"
 
@@ -4280,8 +4292,8 @@ msgstr "已过时"
 msgid "Dismissed"
 msgstr "已忽略"
 
-#: apps/capsuleer/models.py config/showcase_data.py templates/_nav.html
-#: templates/admin_audit/console/combat_rewards.html
+#: apps/capsuleer/models.py apps/procurement/models.py config/showcase_data.py
+#: templates/_nav.html templates/admin_audit/console/combat_rewards.html
 #: templates/admin_audit/console/comms_access/status.html
 #: templates/admin_audit/console/compliance.html
 #: templates/admin_audit/console/raffle_grant.html
@@ -4290,10 +4302,10 @@ msgstr "已忽略"
 #: templates/admin_audit/console/raffle_stats.html
 #: templates/corporation/roster.html templates/doctrines/list.html
 #: templates/doctrines/ships.html templates/identity/linked_pilots.html
-#: templates/killboard/compare.html templates/killboard/roster.html
-#: templates/mining/ledger.html templates/mining/payout.html
-#: templates/operations/detail.html templates/pilots/contributions.html
-#: templates/raffle/detail.html
+#: templates/industry/capacity.html templates/killboard/compare.html
+#: templates/killboard/roster.html templates/mining/ledger.html
+#: templates/mining/payout.html templates/operations/detail.html
+#: templates/pilots/contributions.html templates/raffle/detail.html
 msgid "Pilot"
 msgstr "飞行员"
 
@@ -4334,7 +4346,7 @@ msgid "Review due"
 msgstr "复核到期"
 
 #: apps/capsuleer/models.py apps/command_intel/models.py
-#: templates/command_intel/_coa_card.html
+#: apps/procurement/models.py templates/command_intel/_coa_card.html
 msgid "Accepted"
 msgstr "已接受"
 
@@ -6722,7 +6734,8 @@ msgid "Character"
 msgstr "角色"
 
 #: apps/corporation/models.py apps/erp/models.py apps/killboard/models.py
-#: apps/stockpile/models.py templates/killboard/battle_report.html
+#: apps/procurement/models.py apps/stockpile/models.py
+#: templates/killboard/battle_report.html
 msgid "Corporation"
 msgstr "军团"
 
@@ -6860,7 +6873,8 @@ msgstr "技能规划中的军团需求权重。"
 #: templates/admin_audit/console/access.html templates/campaigns/close.html
 #: templates/erp/board.html templates/killboard/watchlist_detail.html
 #: templates/mentorship/directory.html templates/mentorship/pairing_detail.html
-#: templates/navigation/beacons.html templates/store/inventory_fit.html
+#: templates/navigation/beacons.html templates/procurement/po_detail.html
+#: templates/store/inventory_fit.html
 msgid "Note"
 msgstr "备注"
 
@@ -6881,7 +6895,7 @@ msgid "Imported"
 msgstr "已导入"
 
 #: apps/doctrines/models.py apps/mentorship/models.py apps/pingboard/models.py
-#: apps/raffle/models.py apps/store/models.py
+#: apps/procurement/models.py apps/raffle/models.py apps/store/models.py
 msgid "Expired"
 msgstr "已过期"
 
@@ -6938,7 +6952,8 @@ msgstr "未就绪"
 
 #: apps/doctrines/services.py apps/industry/mrp.py
 #: templates/capsuleer/goal_detail.html templates/doctrines/coverage.html
-#: templates/identity/dashboard.html templates/mentorship/register_mentee.html
+#: templates/identity/dashboard.html templates/industry/capacity.html
+#: templates/mentorship/register_mentee.html
 #: templates/mentorship/register_mentor.html templates/readiness/dashboard.html
 msgid "unknown"
 msgstr "未知"
@@ -7110,6 +7125,36 @@ msgstr "来自一项领导层计划"
 msgid "Shipyard restock: %(fit_name)s"
 msgstr "船坞补货：%(fit_name)s"
 
+#: apps/erp/messages.py
+#, python-format
+msgid "Material plan restock: %(item)s"
+msgstr "材料计划补货：%(item)s"
+
+#: apps/erp/messages.py
+#, python-format
+msgid "Material plan: %(quantity)s× %(item)s"
+msgstr "材料计划：%(quantity)s× %(item)s"
+
+#: apps/erp/messages.py
+#, python-format
+msgid "Buy %(quantity)s× %(item)s for the material plan"
+msgstr "为材料计划购买 %(quantity)s× %(item)s"
+
+#: apps/erp/messages.py
+#, python-format
+msgid "Raised from the material plan: %(item)s"
+msgstr "源自材料计划： %(item)s"
+
+#: apps/erp/messages.py
+#, python-format
+msgid "Receive purchase order %(reference)s from %(supplier)s"
+msgstr "接收来自 %(supplier)s 的采购订单 %(reference)s"
+
+#: apps/erp/messages.py
+#, python-format
+msgid "Freight batch: %(origin)s → %(destination)s"
+msgstr "货运批次：%(origin)s → %(destination)s"
+
 #: apps/erp/models.py
 msgid "Building"
 msgstr "建造中"
@@ -7119,7 +7164,7 @@ msgid "Built"
 msgstr "已建造"
 
 #: apps/erp/models.py apps/logistics/models.py apps/pingboard/models.py
-#: apps/raffle/models.py apps/store/models.py
+#: apps/procurement/models.py apps/raffle/models.py apps/store/models.py
 #: templates/admin_audit/console/raffle_draw.html
 #: templates/logistics/contracts.html templates/store/board.html
 #: templates/store/order.html
@@ -7253,6 +7298,31 @@ msgstr "需要有效的蓝图 type id。"
 #: apps/erp/views.py
 msgid "Blueprint recorded."
 msgstr "蓝图已记录。"
+
+#: apps/erp/views.py
+msgid "No matching in-game job found — enter its job ID."
+msgstr "未找到匹配的游戏内作业 — 请输入其作业 ID。"
+
+#: apps/erp/views.py
+msgid "In-game job link removed."
+msgstr "游戏内作业关联已移除。"
+
+#: apps/erp/views.py
+#, python-format
+msgid "Linked to in-game job #%(id)s — it now carries the schedule."
+msgstr "已关联到游戏内作业 #%(id)s — 排期现由该作业承载。"
+
+#: apps/erp/views.py
+msgid "That in-game job produces a different item."
+msgstr "该游戏内作业生产的是另一种物品。"
+
+#: apps/erp/views.py
+msgid "That in-game job is already linked to another build job."
+msgstr "该游戏内作业已关联到另一个建造作业。"
+
+#: apps/erp/views.py
+msgid "Only an in-progress job can be linked."
+msgstr "只有进行中的作业才能关联。"
 
 #: apps/identity/models.py
 msgid ""
@@ -7464,6 +7534,40 @@ msgstr ""
 msgid "No recipe."
 msgstr "无配方。"
 
+#: apps/industry/capacity.py templates/operations/detail.html
+msgid "slots"
+msgstr "席位"
+
+#: apps/industry/capacity.py templates/skills/plans.html
+msgid "skills"
+msgstr "技能"
+
+#: apps/industry/capacity.py
+msgid "blueprint"
+msgstr "blueprint"
+
+#: apps/industry/capacity.py
+msgid "facility"
+msgstr "设施"
+
+#: apps/industry/capacity.py
+msgid "materials"
+msgstr "材料"
+
+#: apps/industry/capacity.py
+msgid "unmeasured"
+msgstr "未测量"
+
+#: apps/industry/capacity.py apps/stockpile/assets.py
+#: templates/stockpile/assets.html
+msgid "Unknown location"
+msgstr "未知地点"
+
+#: apps/industry/capacity.py apps/stockpile/assets.py
+#, python-format
+msgid "Location %(id)s"
+msgstr "地点 %(id)s"
+
 #: apps/industry/forms.py
 msgid "e.g. Build 5 Feroxes"
 msgstr "例如：建造 5 艘 Feroxes"
@@ -7527,6 +7631,10 @@ msgid "Imported ESI job"
 msgstr "导入的 ESI 作业"
 
 #: apps/industry/models.py
+msgid "MRP planning run"
+msgstr "MRP 规划运行"
+
+#: apps/industry/models.py
 msgid "Buy"
 msgstr "购买"
 
@@ -7581,20 +7689,127 @@ msgid "Haul"
 msgstr "运输"
 
 #: apps/industry/models.py templates/logistics/corp_contracts.html
+#: templates/logistics/freight_detail.html templates/procurement/po_detail.html
+#: templates/procurement/supplier_detail.html
 msgid "Contract"
 msgstr "合同"
+
+#: apps/industry/models.py
+msgid ""
+"Dated demand beyond this many days ahead is excluded from the plan and "
+"listed separately."
+msgstr "超出此天数的带日期需求将不纳入计划，并单独列出。"
+
+#: apps/industry/models.py
+msgid "Assumed days to buy an item at the price-reference hub."
+msgstr "在价格参考枢纽购买物品的假定天数。"
+
+#: apps/industry/models.py
+msgid "Assumed days to buy at Jita and freight to the destination."
+msgstr "在 Jita 购买并运送到目的地的假定天数。"
+
+#: apps/industry/models.py
+msgid ""
+"Count finished-but-undelivered ESI jobs (status \"ready\") as incoming "
+"supply."
+msgstr "将已完成但未交付的 ESI 作业（状态为“ready”）计为在途补给。"
+
+#: apps/industry/models.py
+msgid ""
+"Run the planning job automatically on its nightly schedule. Off: officers "
+"run it manually from the Material Plan page."
+msgstr "按每晚的排程自动运行规划任务。关闭时：由官员在材料计划页面手动运行。"
+
+#: apps/industry/models.py
+msgid ""
+"Hold build dates to committed manufacturing capacity (slots, skills, "
+"blueprints, facilities) and name the bottleneck. Off: dates assume unlimited "
+"industry slots (the P3 behaviour)."
+msgstr ""
+"将建造日期锁定到已承诺的制造产能（席位、技能、 blueprint 、设施），并指明瓶颈"
+"所在。关闭时：日期将假设工业席位无限（即 P3 行为）。"
+
+#: apps/industry/models.py
+msgid ""
+"A pilot's slots become \"unknown\" (excluded from measured capacity) when "
+"their skills snapshot is older than this. Unknown is never treated as zero."
+msgstr ""
+"当飞行员的技能快照早于此阈值时，其席位将变为“未知”（并从实测产能中排除）。“未"
+"知”绝不会被当作零处理。"
+
+#: apps/industry/models.py
+msgid "Material-efficiency assumed for every build level of the explosion."
+msgstr "展开的每个建造层级所假定的材料效率。"
+
+#: apps/industry/models.py
+msgid "Deepest BOM level the explosion will recurse to."
+msgstr "展开递归到的最深 BOM 层级。"
+
+#: apps/industry/models.py
+msgid "MRP config"
+msgstr "MRP 配置"
+
+#: apps/industry/models.py
+msgid "MRP configs"
+msgstr "MRP 配置"
 
 #: apps/industry/models.py apps/raffle/models.py
 msgid "Running"
 msgstr "运行中"
 
+#: apps/industry/models.py
+msgid "Science"
+msgstr "科研"
+
+#: apps/industry/models.py
+msgid ""
+"Cap on finished units/week the scheduler will book onto this pilot — a crude "
+"cadence governor counted across all types, not a per-job ceiling. Blank "
+"means uncapped."
+msgstr ""
+"调度器每周可安排给该飞行员的成品数量上限——一个粗略的节奏调节器，按所有类型合"
+"计计算，而非单个作业的上限。留空表示不设上限。"
+
+#: apps/industry/models.py
+msgid "Don't schedule new work onto this pilot."
+msgstr "不要向该飞行员安排新的作业。"
+
 #: apps/industry/mrp.py templates/store/supply_forecast.html
 msgid "import"
 msgstr "导入"
 
+#: apps/industry/mrp.py
+msgid "in-flight ESI job"
+msgstr "进行中的 ESI 作业"
+
+#: apps/industry/mrp.py
+msgid "build duration"
+msgstr "建造时长"
+
+#: apps/industry/mrp.py
+msgid "lead time"
+msgstr "前置时间"
+
+#: apps/industry/mrp.py
+msgid "purchase order"
+msgstr "采购订单"
+
+#: apps/industry/mrp.py
+msgid "committed capacity"
+msgstr "已承诺产能"
+
+#: apps/industry/mrp.py templates/industry/mrp.html
+msgid "in transit"
+msgstr "运输中"
+
 #: apps/industry/tools.py
 msgid "Pick a valid item from the demand list."
 msgstr "请从需求列表中选择一个有效物品。"
+
+#: apps/industry/tools.py
+#, python-format
+msgid "An active supply plan for %(item)s already exists."
+msgstr "%(item)s 已存在有效的补给计划。"
 
 #: apps/industry/tools.py
 #, python-format
@@ -7751,9 +7966,67 @@ msgstr "未预留任何内容 — 没有可用的匹配军团库存。"
 msgid "Released %(n)s reservation(s) back to corp stock."
 msgstr "已将 %(n)s 项预留释放回军团库存。"
 
+#: apps/industry/views_capacity.py
+msgid "The maintenance window must end after it starts."
+msgstr "维护窗口的结束时间必须晚于开始时间。"
+
+#: apps/industry/views_capacity.py
+msgid "Capacity settings saved."
+msgstr "产能设置已保存。"
+
+#: apps/industry/views_capacity.py
+msgid "Capacity override saved."
+msgstr "产能覆盖值已保存。"
+
+#: apps/industry/views_capacity.py
+msgid "Capacity re-derived from current skills."
+msgstr "已根据当前技能重新推导产能。"
+
+#: apps/industry/views_mrp.py
+msgid "A planning run is already in progress — try again shortly."
+msgstr "已有一次规划运行正在进行 — 请稍后再试。"
+
+#: apps/industry/views_mrp.py
+msgid "Planning run finished — no changes since the last run."
+msgstr "规划运行已完成 — 与上次运行相比无变化。"
+
+#: apps/industry/views_mrp.py
+#, python-format
+msgid "Planning run finished: %(written)s row(s) updated, %(closed)s closed."
+msgstr "规划运行已完成：已更新 %(written)s 行，关闭 %(closed)s 行。"
+
+#: apps/industry/views_mrp.py
+msgid "That requirement is closed."
+msgstr "该需求已关闭。"
+
+#: apps/industry/views_mrp.py
+msgid "Ship-level demand is fulfilled from the Shipyard inventory console."
+msgstr "舰船层级的需求由船坞库存控制台履行。"
+
+#: apps/industry/views_mrp.py
+msgid "This requirement already has a vehicle attached."
+msgstr "该需求已附加执行载具。"
+
+#: apps/industry/views_mrp.py
+msgid "This requirement is on a freight batch — remove it there first."
+msgstr "该需求已在某个货运批次上——请先在那里将其移除。"
+
+#: apps/industry/views_mrp.py
+#, python-format
+msgid "Industry plan “%(name)s” is linked."
+msgstr "工业计划“%(name)s”已关联。"
+
 #: apps/industry/views_mrp.py apps/store/views_inventory.py
 msgid "ERP build job queued and linked."
 msgstr "ERP 建造任务已加入队列并关联。"
+
+#: apps/industry/views_mrp.py
+msgid "Added to the freight batch for this lane."
+msgstr "已加入该航线的货运批次。"
+
+#: apps/industry/views_mrp.py
+msgid "Claimable BUY task created and linked."
+msgstr "已创建并关联可认领的 BUY 任务。"
 
 #: apps/kb/models.py
 msgid "Public"
@@ -8035,7 +8308,11 @@ msgstr "无奖励"
 #: apps/killboard/models.py templates/buyback/appraisal.html
 #: templates/buyback/offer.html templates/industry/chain.html
 #: templates/industry/create.html templates/industry/demand.html
-#: templates/industry/mrp.html templates/market/dashboard.html
+#: templates/industry/mrp.html templates/logistics/freight.html
+#: templates/logistics/freight_detail.html templates/market/dashboard.html
+#: templates/procurement/agreement_detail.html templates/procurement/board.html
+#: templates/procurement/po_detail.html
+#: templates/procurement/supplier_detail.html
 #: templates/stockpile/dashboard.html templates/stockpile/logistics.html
 msgid "Item"
 msgstr "物品"
@@ -8285,7 +8562,8 @@ msgstr "访客"
 msgid "Regular"
 msgstr "常客"
 
-#: apps/killboard/ranks_i18n.py
+#: apps/killboard/ranks_i18n.py templates/industry/capacity.html
+#: templates/procurement/board.html
 msgid "Committed"
 msgstr "尽责者"
 
@@ -8458,6 +8736,68 @@ msgstr "必须大于 0 且不超过 2。"
 msgid "Can't be negative."
 msgstr "不能为负。"
 
+#: apps/logistics/freight.py
+msgid "Lines can only change while the batch is open."
+msgstr "只有在批次开放时才能修改明细。"
+
+#: apps/logistics/freight.py
+msgid "Enter a quantity of at least 1."
+msgstr "请输入至少为 1 的数量。"
+
+#: apps/logistics/freight.py
+#, python-format
+msgid "Quantity can't drop below the plan's %(n)s units."
+msgstr "数量不能低于计划的 %(n)s 单位。"
+
+#: apps/logistics/freight.py
+msgid "This requirement has no destination to freight to."
+msgstr "该需求没有可运往的目的地。"
+
+#: apps/logistics/freight.py
+msgid "No price-reference hub is configured to freight from."
+msgstr "未配置可作为货运起点的价格参考枢纽。"
+
+#: apps/logistics/freight.py apps/logistics/routing.py
+msgid "No jump route within range between those systems."
+msgstr "这两个星系之间没有射程内的跳跃路线。"
+
+#: apps/logistics/freight.py
+msgid "Only an open batch can be assigned."
+msgstr "只有开放的批次才能指派。"
+
+#: apps/logistics/freight.py
+msgid "Add at least one line before assigning."
+msgstr "指派前请至少添加一条明细。"
+
+#: apps/logistics/freight.py
+msgid "Only an assigned batch can be unassigned."
+msgstr "只有已指派的批次才能取消指派。"
+
+#: apps/logistics/freight.py
+msgid "Only an assigned batch can depart."
+msgstr "只有已指派的批次才能启运。"
+
+#: apps/logistics/freight.py
+msgid "This batch is already closed."
+msgstr "该批次已关闭。"
+
+#: apps/logistics/freight.py
+msgid "This batch can't be marked arrived."
+msgstr "该批次无法标记为已送达。"
+
+#: apps/logistics/freight.py
+msgid "This batch is not in transit."
+msgstr "该批次不在运输中。"
+
+#: apps/logistics/freight.py
+#, python-format
+msgid "Enter a quantity between 1 and %(n)s."
+msgstr "请输入 1 到 %(n)s 之间的数量。"
+
+#: apps/logistics/freight.py
+msgid "No corp stockpile exists at the destination — create one first."
+msgstr "目的地没有军团库存点——请先创建一个。"
+
 #: apps/logistics/models.py
 msgid "Public — anyone can get quotes"
 msgstr "公开 — 任何人都可获取报价"
@@ -8481,6 +8821,62 @@ msgstr "已在游戏内验证"
 #: apps/logistics/models.py
 msgid "Failed in-game"
 msgstr "游戏内验证失败"
+
+#: apps/logistics/models.py
+msgid "Ship class assumed when an officer assigns a batch to the courier flow."
+msgstr "当管理员将批次指派给快递流程时假定的舰船级别。"
+
+#: apps/logistics/models.py
+msgid ""
+"Assumed days from opening a batch to it departing — the default ETD offset "
+"when none is typed."
+msgstr "从批次开放到启运假定的天数——未填写时默认的 ETD 偏移。"
+
+#: apps/logistics/models.py
+msgid ""
+"Assumed days in transit (depart → arrive) — the default ETA when no arrival "
+"date is typed."
+msgstr "运输途中假定的天数（启运 → 送达）——未填写送达日期时默认的 ETA。"
+
+#: apps/logistics/models.py
+msgid ""
+"Run the hourly batch sweep: flip batches to arrived from a verified courier "
+"contract or a completed haul, and flag late ones. Off: the beat is a no-op "
+"and officers click “arrived” by hand (the v1 workflow)."
+msgstr ""
+"运行每小时批次扫描：根据已核实的快递合同或已完成的运输将批次翻转为已送达，并"
+"标记逾期批次。关闭时：定时任务不执行任何操作，由管理员手动点击“已送达”（v1 工"
+"作流）。"
+
+#: apps/logistics/models.py
+msgid "Hours past a batch's planned ETA before the sweep flags it late."
+msgstr "批次超过计划 ETA 多少小时后扫描将其标记为逾期。"
+
+#: apps/logistics/models.py
+msgid "freight config"
+msgstr "货运配置"
+
+#: apps/logistics/models.py
+msgid "freight configs"
+msgstr "货运配置"
+
+#: apps/logistics/models.py
+msgid "Assigned"
+msgstr "已指派"
+
+#: apps/logistics/models.py templates/logistics/freight.html
+msgid "In transit"
+msgstr "运输中"
+
+#: apps/logistics/models.py
+msgid "Arrived"
+msgstr "已送达"
+
+#: apps/logistics/models.py apps/store/models.py
+#: templates/admin_audit/console/raffle_draw.html templates/industry/mrp.html
+#: templates/store/inventory_fit.html
+msgid "Closed"
+msgstr "已关闭"
 
 #: apps/logistics/pricing.py
 msgid "Enter a route (jumps) and a volume."
@@ -8555,10 +8951,6 @@ msgstr "至少需要一个起点和一个终点。"
 #, python-format
 msgid "Too many waypoints — plan at most %(n)d legs at a time."
 msgstr "途经点过多 — 每次最多规划 %(n)d 个航段。"
-
-#: apps/logistics/routing.py
-msgid "No jump route within range between those systems."
-msgstr "这两个星系之间没有射程内的跳跃路线。"
 
 #: apps/logistics/views.py
 msgid ""
@@ -8647,6 +9039,86 @@ msgstr "尚无董事授予 corp-contracts 权限范围。"
 #: apps/logistics/views.py
 msgid "Contract sync failed; try again later."
 msgstr "合同同步失败；请稍后重试。"
+
+#: apps/logistics/views_freight.py
+msgid "typed"
+msgstr "手动填写"
+
+#: apps/logistics/views_freight.py
+msgid "from price snapshot"
+msgstr "来自价格快照"
+
+#: apps/logistics/views_freight.py
+msgid "Origin and destination must differ."
+msgstr "起点和目的地必须不同。"
+
+#: apps/logistics/views_freight.py
+msgid "Freight settings saved."
+msgstr "货运设置已保存。"
+
+#: apps/logistics/views_freight.py
+msgid "Pick two different locations."
+msgstr "请选择两个不同的地点。"
+
+#: apps/logistics/views_freight.py
+msgid "Pick an item and a quantity."
+msgstr "请选择物品和数量。"
+
+#: apps/logistics/views_freight.py
+msgid "Line added."
+msgstr "明细已添加。"
+
+#: apps/logistics/views_freight.py
+msgid "Line updated."
+msgstr "明细已更新。"
+
+#: apps/logistics/views_freight.py
+msgid "Line removed."
+msgstr "明细已移除。"
+
+#: apps/logistics/views_freight.py
+msgid "Pick a ship class."
+msgstr "请选择舰船级别。"
+
+#: apps/logistics/views_freight.py
+msgid "Batch assigned to the courier flow."
+msgstr "批次已指派给快递流程。"
+
+#: apps/logistics/views_freight.py
+msgid "Batch posted to the member haul board."
+msgstr "批次已发布到成员运输板。"
+
+#: apps/logistics/views_freight.py
+msgid "Batch unassigned."
+msgstr "批次已取消指派。"
+
+#: apps/logistics/views_freight.py
+msgid "Batch marked departed."
+msgstr "批次已标记为已启运。"
+
+#: apps/logistics/views_freight.py
+msgid "Enter a valid ETA."
+msgstr "请输入有效的 ETA。"
+
+#: apps/logistics/views_freight.py
+msgid "ETA updated."
+msgstr "ETA 已更新。"
+
+#: apps/logistics/views_freight.py
+msgid "Batch marked arrived."
+msgstr "批次已标记为已送达。"
+
+#: apps/logistics/views_freight.py
+msgid "Enter a quantity to receive."
+msgstr "请输入要接收的数量。"
+
+#: apps/logistics/views_freight.py
+msgid "Stock received."
+msgstr "库存已接收。"
+
+#: apps/logistics/views_freight.py
+msgid "Batch cancelled."
+msgstr "批次已取消。"
 
 #: apps/market/forms.py
 msgid "e.g. Amarr VIII (Oris)"
@@ -9484,7 +9956,7 @@ msgstr "此规则对每位接收者的累计上限（0 = 无上限）。"
 msgid "Only grant if the triggering task was auto-verified."
 msgstr "仅当触发任务已自动验证时才授予。"
 
-#: apps/mentorship/models.py apps/raffle/models.py
+#: apps/mentorship/models.py apps/procurement/models.py apps/raffle/models.py
 msgid "Pending approval"
 msgstr "待批准"
 
@@ -9527,6 +9999,7 @@ msgstr "建议"
 #: templates/recommendations/notifications.html templates/recruitment/list.html
 #: templates/skills/gap.html templates/srp/budget.html
 #: templates/srp/loss_impact.html templates/srp/queue.html
+#: templates/store/margin.html templates/supplyboard/board.html
 msgid "Leadership"
 msgstr "领导层"
 
@@ -9542,7 +10015,7 @@ msgstr "状态变更"
 msgid "Not started"
 msgstr "未开始"
 
-#: apps/mentorship/models.py apps/srp/models.py
+#: apps/mentorship/models.py apps/procurement/models.py apps/srp/models.py
 msgid "Submitted"
 msgstr "已提交"
 
@@ -13164,6 +13637,82 @@ msgid "{ship_name} can be ordered on the Shipyard again."
 msgstr "{ship_name} 现在可以在船坞重新订购了。"
 
 #: apps/pingboard/messages.py
+#, python-brace-format
+msgid "Material shortfall: {industry_job_name}"
+msgstr "材料缺口：{industry_job_name}"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"The material plan needs {quantity}× {industry_job_name} by {eta_date}. "
+"Review the Material Plan: {link}"
+msgstr ""
+"材料计划需要在 {eta_date} 前获得 {quantity}× {industry_job_name}。请查看材料"
+"计划：{link}"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid "Capacity bottleneck: {industry_job_name}"
+msgstr "产能瓶颈: {industry_job_name}"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"The plan can't build {quantity}× {industry_job_name} in time — no free "
+"manufacturing slots. Review the Production Capacity board: {link}"
+msgstr ""
+"计划无法及时建造 {quantity}× {industry_job_name} ——没有空闲的制造席位。请查看"
+"产能看板: {link}"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"The plan can't build {quantity}× {industry_job_name} — no opted-in pilot has "
+"the manufacturing skills. Review the Production Capacity board: {link}"
+msgstr ""
+"计划无法建造 {quantity}× {industry_job_name} ——没有已选择加入的飞行员具备所需"
+"的制造技能。请查看产能看板: {link}"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"The plan can't build {quantity}× {industry_job_name} — no usable blueprint "
+"is owned. Review the Production Capacity board: {link}"
+msgstr ""
+"计划无法建造 {quantity}× {industry_job_name} ——未持有可用的 blueprint. 请查看"
+"产能看板: {link}"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"The plan can't build {quantity}× {industry_job_name} in time — the "
+"manufacturing facility is reinforced or out of fuel. Review the Production "
+"Capacity board: {link}"
+msgstr ""
+"计划无法及时建造 {quantity}× {industry_job_name} ——制造设施已被增强或燃料耗"
+"尽。请查看产能看板: {link}"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"The plan can't build {quantity}× {industry_job_name} in time — its "
+"components can't be ready soon enough. Review the Production Capacity board: "
+"{link}"
+msgstr ""
+"计划无法及时建造 {quantity}× {industry_job_name} ——其组件无法及时备齐。请查看"
+"产能看板: {link}"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"The plan can't promise {quantity}× {industry_job_name} — no measured pilot "
+"can be scheduled (capacity unknown). Review the Production Capacity board: "
+"{link}"
+msgstr ""
+"计划无法承诺 {quantity}× {industry_job_name} ——没有可调度的已测量飞行员（产能"
+"未知）。请查看产能看板: {link}"
+
+#: apps/pingboard/messages.py
 msgid "Shipyard restock built"
 msgstr "船坞补货已建造完成"
 
@@ -13334,6 +13883,44 @@ msgid ""
 msgstr ""
 "你的运输任务 {origin_system} → {destination_system} 已超过截止时间，已被释放"
 "回任务池。"
+
+#: apps/pingboard/messages.py
+msgid "Freight batch arrived"
+msgstr "货运批次已送达"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"Freight batch {origin_system} → {destination_system} has arrived — receipt "
+"its lines to post the landed stock."
+msgstr ""
+"货运批次 {origin_system} → {destination_system} 已送达——收货其明细以录入到货"
+"库存。"
+
+#: apps/pingboard/messages.py
+msgid "Freight batch overdue"
+msgstr "货运批次逾期"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"Freight batch {origin_system} → {destination_system} is past its ETA "
+"({eta_date}) and has not arrived."
+msgstr ""
+"货运批次 {origin_system} → {destination_system} 已超过其 ETA（{eta_date}）仍"
+"未送达。"
+
+#: apps/pingboard/messages.py
+msgid "Freight batch delayed"
+msgstr "货运批次延误"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"Freight batch {origin_system} → {destination_system} slipped its ETA to "
+"{eta_date}."
+msgstr ""
+"货运批次 {origin_system} → {destination_system} 的 ETA 已推迟至 {eta_date}。"
 
 #: apps/pingboard/messages.py
 msgid "Moon chunk arriving soon"
@@ -13851,6 +14438,45 @@ msgstr "战役 «{campaign_name}» 的健康度已转为“受阻”。{link}"
 #, python-brace-format
 msgid "Campaign «{campaign_name}» is now Blocked — {details}. {link}"
 msgstr "战役 «{campaign_name}» 的健康度已转为“受阻” — {details}。{link}"
+
+#: apps/pingboard/messages.py
+msgid "Supply agreement awaiting approval"
+msgstr "供应协议等待审批"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"{actor_name} submitted a supply agreement with {supplier_name} that needs a "
+"second director's approval in the Procurement console."
+msgstr ""
+"{actor_name} 提交了一份与 {supplier_name} 的供应协议，需要在采购控制台由第二"
+"位 Director 审批。"
+
+#: apps/pingboard/messages.py
+msgid "Purchase order contract available"
+msgstr "采购订单合同可用"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"{count} purchase order(s) from {supplier_name} matched an in-game contract "
+"and are ready to accept. Review them in the Procurement console: {link}"
+msgstr ""
+"来自 {supplier_name} 的 {count} 个采购订单已匹配到一份游戏内合同，可以接受。"
+"请在采购控制台中查看： {link}"
+
+#: apps/pingboard/messages.py
+msgid "Purchase order overdue"
+msgstr "采购订单逾期"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"{count} purchase order(s) from {supplier_name} are overdue (promised by "
+"{eta_date}). Review them on the Procurement board."
+msgstr ""
+"来自 {supplier_name} 的 {count} 个采购订单已逾期（承诺交付日期为 "
+"{eta_date} ）。请在采购看板中查看。"
 
 #: apps/pingboard/models.py
 msgid "Emergency"
@@ -15356,7 +15982,7 @@ msgstr "每日重置"
 msgid "Every 2–3 days"
 msgstr "每 2–3 天"
 
-#: apps/planetary/models.py
+#: apps/planetary/models.py apps/procurement/models.py
 msgid "Weekly"
 msgstr "每周"
 
@@ -15839,6 +16465,402 @@ msgstr "已为 %(count)s 名飞行员排队同步殖民地 — 请稍后刷新�
 #: apps/planetary/views.py
 msgid "Grant the Planetary Industry scope first, then sync your colonies."
 msgstr "请先授予 Planetary Industry scope，然后再同步你的殖民地。"
+
+#: apps/procurement/contracts.py
+msgid "That contract is no longer in the snapshot."
+msgstr "该合同已不在快照中。"
+
+#: apps/procurement/contracts.py
+msgid "That contract is not a valid match for this order."
+msgstr "该合同与此订单不匹配。"
+
+#: apps/procurement/forms.py
+msgid "The per-cycle quantity must be at least 1."
+msgstr "每周期数量至少为 1。"
+
+#: apps/procurement/forms.py
+msgid "Order at least one unit."
+msgstr "至少订购一个单位。"
+
+#: apps/procurement/models.py
+msgid ""
+"Estimated cycle value at or above which a supply agreement needs a second "
+"Director's approval."
+msgstr "供应协议的预计周期金额达到或超过此值时，需要第二位 Director 审批。"
+
+#: apps/procurement/models.py
+msgid ""
+"Total value at or above which a standalone purchase order (one not covered "
+"by an active agreement) needs Director approval."
+msgstr ""
+"独立采购订单（未被有效协议覆盖的订单）的总金额达到或超过此值时，需要 "
+"Director 审批。"
+
+#: apps/procurement/models.py
+msgid "Days past the promised date before a purchase order is flagged overdue."
+msgstr "采购订单被标记为逾期前，超过承诺日期的天数。"
+
+#: apps/procurement/models.py
+msgid ""
+"Complete weeks of closed purchase orders the reliability rollup looks back "
+"over."
+msgstr "可靠性汇总回溯的已关闭采购订单的完整周数。"
+
+#: apps/procurement/models.py
+msgid ""
+"Arm the contract matcher (runs after the corp-contracts sync). Off: officers "
+"confirm contract matches by hand."
+msgstr ""
+"启用合同匹配器（在 corp 合同同步后运行）。关闭：由官员手动确认合同匹配。"
+
+#: apps/procurement/models.py
+msgid ""
+"Arm the wallet-journal payment reconcile. Off: officers confirm payments by "
+"hand."
+msgstr "启用钱包日志付款对账。关闭：由官员手动确认付款。"
+
+#: apps/procurement/models.py
+msgid "Arm the daily overdue sweep (also expires lapsed agreements)."
+msgstr "启用每日逾期扫描（同时使已失效的协议过期）。"
+
+#: apps/procurement/models.py
+msgid ""
+"Let a finished matched contract post its landed quantities as receipts "
+"automatically. Off: officers post receipts by hand."
+msgstr ""
+"让已完成的匹配合同自动将其到货数量登记为收货记录。关闭：由官员手动登记收货。"
+
+#: apps/procurement/models.py
+msgid "Arm the nightly supplier-reliability rollup."
+msgstr "启用每晚的供应商可靠性汇总。"
+
+#: apps/procurement/models.py
+msgid ""
+"Wallet-journal ref_types the payment reconcile treats as supplier payments. "
+"Enumerate from the real corp journal before arming."
+msgstr ""
+"付款对账视为供应商付款的钱包日志 ref_types。启用前请从实际的 corp 日志中枚"
+"举。"
+
+#: apps/procurement/models.py
+msgid "procurement config"
+msgstr "采购配置"
+
+#: apps/procurement/models.py
+msgid "procurement configs"
+msgstr "采购配置"
+
+#: apps/procurement/models.py
+msgid "Market hub"
+msgstr "市场 hub"
+
+#: apps/procurement/models.py
+msgid "Probation"
+msgstr "试用期"
+
+#: apps/procurement/models.py
+msgid "Suspended"
+msgstr "已暂停"
+
+#: apps/procurement/models.py
+msgid "Fixed price"
+msgstr "固定价格"
+
+#: apps/procurement/models.py
+msgid "Jita-indexed + premium"
+msgstr "Jita 指数 + 溢价"
+
+#: apps/procurement/models.py
+msgid "One-off"
+msgstr "一次性"
+
+#: apps/procurement/models.py
+msgid "Monthly"
+msgstr "每月"
+
+#: apps/procurement/models.py
+msgid "Prepaid"
+msgstr "预付"
+
+#: apps/procurement/models.py
+msgid "On delivery"
+msgstr "货到付款"
+
+#: apps/procurement/models.py
+msgid "Net 7 days"
+msgstr "账期 7 天"
+
+#: apps/procurement/models.py
+msgid "Net 30 days"
+msgstr "账期 30 天"
+
+#: apps/procurement/models.py
+msgid "Contract expected"
+msgstr "等待合同"
+
+#: apps/procurement/models.py
+msgid "Contract available"
+msgstr "合同可用"
+
+#: apps/procurement/models.py
+msgid "Partially delivered"
+msgstr "部分交付"
+
+#: apps/procurement/models.py
+msgid "Reconciled"
+msgstr "已对账"
+
+#: apps/procurement/models.py
+msgid "Disputed"
+msgstr "争议中"
+
+#: apps/procurement/models.py
+msgid "Supplier delivers"
+msgstr "供应商送货"
+
+#: apps/procurement/models.py
+msgid "Hub pickup (corp hauls)"
+msgstr "hub 自提（由 corp 运输）"
+
+#: apps/procurement/models.py
+msgid "Auto (contract landed)"
+msgstr "自动（合同到货）"
+
+#: apps/procurement/models.py
+msgid "Manual (officer attested)"
+msgstr "手动（官员确认）"
+
+#: apps/procurement/payments.py
+msgid "That wallet entry no longer exists."
+msgstr "该钱包条目已不存在。"
+
+#: apps/procurement/payments.py
+msgid "That payment is already matched to another order."
+msgstr "该付款已匹配到另一笔订单。"
+
+#: apps/procurement/payments.py
+msgid "This order is already settled."
+msgstr "此订单已结清。"
+
+#: apps/procurement/receipts.py
+msgid "This purchase order is not ready to receive deliveries."
+msgstr "此采购订单尚未准备好接收交付。"
+
+#: apps/procurement/receipts.py
+msgid "This line is already fully received."
+msgstr "此明细行已全部收货。"
+
+#: apps/procurement/receipts.py
+msgid "Receipt quantity must be positive."
+msgstr "收货数量必须为正数。"
+
+#: apps/procurement/receipts.py
+msgid "Only a hub-pickup purchase order needs a corp haul."
+msgstr "只有 hub 自提的采购订单才需要 corp 运输。"
+
+#: apps/procurement/receipts.py
+msgid "This purchase order is not ready to be hauled yet."
+msgstr "此采购订单尚未准备好运输。"
+
+#: apps/procurement/services.py
+msgid "Only a draft agreement can be submitted."
+msgstr "只有草稿状态的协议才能提交。"
+
+#: apps/procurement/services.py
+msgid "An approval request for this agreement is already open."
+msgstr "此协议的审批请求已存在。"
+
+#: apps/procurement/services.py
+msgid "This approval is no longer pending."
+msgstr "此审批已不再处于待处理状态。"
+
+#: apps/procurement/services.py
+msgid "You can't approve your own agreement — another Director must."
+msgstr "您无法批准自己的协议——必须由另一位 Director 批准。"
+
+#: apps/procurement/services.py
+#, python-format
+msgid "Agreement %(outcome)s."
+msgstr "协议 %(outcome)s。"
+
+#: apps/procurement/services.py
+msgid "Only a draft purchase order can be submitted."
+msgstr "只有草稿状态的采购订单才能提交。"
+
+#: apps/procurement/services.py
+msgid "A purchase order needs at least one line."
+msgstr "采购订单至少需要一条明细行。"
+
+#: apps/procurement/services.py
+msgid "The supplier does not sell every item on this order."
+msgstr "该供应商并非出售此订单上的每一项商品。"
+
+#: apps/procurement/services.py
+msgid "Only a submitted purchase order can be approved."
+msgstr "只有已提交的采购订单才能被批准。"
+
+#: apps/procurement/services.py
+msgid "You can't approve your own purchase order — another officer must."
+msgstr "您无法批准自己的采购订单——必须由另一位官员批准。"
+
+#: apps/procurement/services.py
+msgid ""
+"A standalone purchase order at or above the Director threshold needs "
+"Director approval."
+msgstr "达到或超过 Director 阈值的独立采购订单需要 Director 审批。"
+
+#: apps/procurement/services.py
+msgid "Only an approved purchase order can be marked contract-expected."
+msgstr "只有已批准的采购订单才能标记为等待合同。"
+
+#: apps/procurement/services.py
+msgid "This purchase order is already closed."
+msgstr "此采购订单已关闭。"
+
+#: apps/procurement/services.py
+msgid "Only a Director can cancel a purchase order this far along."
+msgstr "只有 Director 才能取消处于此阶段的采购订单。"
+
+#: apps/procurement/services.py
+msgid "A dispute needs a reason."
+msgstr "争议需要填写理由。"
+
+#: apps/procurement/services.py
+msgid "Only an in-flight purchase order can be disputed."
+msgstr "只有进行中的采购订单才能被标记为争议。"
+
+#: apps/procurement/services.py
+msgid "This purchase order is not under dispute."
+msgstr "此采购订单不存在争议。"
+
+#: apps/procurement/services.py
+msgid "Closing a dispute as reconciled needs a note."
+msgstr "以已对账状态关闭争议需要填写备注。"
+
+#: apps/procurement/services.py
+msgid "Only a Director can cancel a disputed purchase order."
+msgstr "只有 Director 才能取消有争议的采购订单。"
+
+#: apps/procurement/services.py
+msgid "Unknown dispute outcome."
+msgstr "未知的争议处理结果。"
+
+#: apps/procurement/services.py
+msgid "Reconciling a purchase order needs a note."
+msgstr "对采购订单进行对账需要填写备注。"
+
+#: apps/procurement/services.py
+msgid "Only a delivered purchase order can be reconciled."
+msgstr "只有已交付的采购订单才能进行对账。"
+
+#: apps/procurement/views.py
+msgid "Supplier registered."
+msgstr "供应商已登记。"
+
+#: apps/procurement/views.py
+msgid "Supplier updated."
+msgstr "供应商已更新。"
+
+#: apps/procurement/views.py
+msgid "That item is already in this supplier's catalogue."
+msgstr "该商品已在此供应商的目录中。"
+
+#: apps/procurement/views.py
+msgid "Catalogue item added."
+msgstr "已添加目录商品。"
+
+#: apps/procurement/views.py
+msgid "Draft agreement created — add its lines next."
+msgstr "已创建草稿协议——接下来请添加其明细行。"
+
+#: apps/procurement/views.py
+msgid "Lines can only be changed while the agreement is a draft."
+msgstr "只有在协议为草稿状态时才能修改明细行。"
+
+#: apps/procurement/views.py
+msgid "That type is already on this agreement."
+msgstr "该类型已存在于此协议中。"
+
+#: apps/procurement/views.py
+msgid "Agreement line added."
+msgstr "已添加协议明细行。"
+
+#: apps/procurement/views.py
+msgid "Agreement submitted and activated."
+msgstr "协议已提交并激活。"
+
+#: apps/procurement/views.py
+msgid "Agreement submitted for Director approval."
+msgstr "协议已提交，等待 Director 审批。"
+
+#: apps/procurement/views.py
+msgid "Only a Director can decide an agreement approval."
+msgstr "只有 Director 才能裁定协议审批。"
+
+#: apps/procurement/views.py
+msgid "There is no pending approval for this agreement."
+msgstr "此协议没有待处理的审批。"
+
+#: apps/procurement/views.py
+msgid "Draft purchase order created — add its lines next."
+msgstr "已创建草稿采购订单——接下来请添加其明细行。"
+
+#: apps/procurement/views.py
+msgid "Lines can only be changed while the order is a draft."
+msgstr "只有在订单为草稿状态时才能修改明细行。"
+
+#: apps/procurement/views.py
+msgid "Order line added."
+msgstr "已添加订单明细行。"
+
+#: apps/procurement/views.py
+msgid "Purchase order submitted."
+msgstr "采购订单已提交。"
+
+#: apps/procurement/views.py
+msgid "Purchase order approved."
+msgstr "采购订单已批准。"
+
+#: apps/procurement/views.py
+msgid "Marked contract-expected."
+msgstr "已标记为等待合同。"
+
+#: apps/procurement/views.py
+msgid "Purchase order cancelled."
+msgstr "采购订单已取消。"
+
+#: apps/procurement/views.py
+msgid "Purchase order marked disputed."
+msgstr "采购订单已标记为争议。"
+
+#: apps/procurement/views.py
+msgid "Dispute resolved."
+msgstr "争议已解决。"
+
+#: apps/procurement/views.py
+msgid "Purchase order reconciled."
+msgstr "采购订单已对账。"
+
+#: apps/procurement/views.py
+msgid "Contract matched to this order."
+msgstr "合同已匹配到此订单。"
+
+#: apps/procurement/views.py
+msgid "Payment confirmed against this order."
+msgstr "已确认此订单的付款。"
+
+#: apps/procurement/views.py
+msgid "Choose a line to receive against."
+msgstr "请选择要收货的明细行。"
+
+#: apps/procurement/views.py
+msgid "Delivery recorded."
+msgstr "已记录交付。"
+
+#: apps/procurement/views.py
+#, python-format
+msgid "%(n)s hauling task(s) created."
+msgstr "已创建 %(n)s 项运输任务。"
 
 #: apps/raffle/contest_templates.py
 msgid "1st prize"
@@ -17597,6 +18619,7 @@ msgid "You're on top of your readiness — keep your edge by joining an op."
 msgstr "你的战备状态非常出色——参加一场行动，保持你的优势。"
 
 #: apps/readiness/models.py apps/recommendations/models.py
+#: templates/store/margin.html
 msgid "Acknowledged"
 msgstr "已确认"
 
@@ -18485,10 +19508,16 @@ msgstr "我的工业作业 + 蓝图"
 #: apps/sso/scopes.py
 msgid ""
 "Read your own running industry jobs and owned blueprints, so the Industry "
-"Center can track your personal production and match it to your plans."
+"Center can track your personal production and match it to your plans. While "
+"this is granted, corp officers also see your name, manufacturing slot counts "
+"and slot utilisation on the Production Capacity board — the capacity plan "
+"needs named pilots to schedule builds and name bottlenecks. Revoking this "
+"removes your named capacity on the next planning run."
 msgstr ""
-"读取你正在运行的工业作业和持有的蓝图，让工业中心能够追踪你的个人生产并与你的"
-"计划对应起来。"
+"读取你自己正在运行的工业作业和持有的 blueprint ，以便工业中心可以跟踪你的个人"
+"产量并将其与你的计划相匹配。在授予此权限期间，军团军官还会在产能看板上看到你"
+"的名字、制造席位数量和席位利用率——产能计划需要具名的飞行员来调度建造并指明瓶"
+"颈。撤销此权限后，你的具名产能将在下次计划运行时被移除。"
 
 #: apps/sso/scopes.py
 msgid "Freight location search"
@@ -18529,7 +19558,7 @@ msgstr ""
 #: apps/sso/scopes.py templates/_pilot_identity.html
 #: templates/admin_audit/console/recovery.html
 #: templates/corporation/finance.html templates/identity/dashboard.html
-#: templates/impersonation/log.html
+#: templates/impersonation/log.html templates/supplyboard/board.html
 msgid "Director"
 msgstr "董事"
 
@@ -18868,15 +19897,6 @@ msgstr "无法读取你的资产：%(error)s"
 #, python-format
 msgid "Imported %(types)s asset stacks across %(locations)s locations."
 msgstr "已导入 %(locations)s 个地点的 %(types)s 种资产堆叠。"
-
-#: apps/stockpile/assets.py templates/stockpile/assets.html
-msgid "Unknown location"
-msgstr "未知地点"
-
-#: apps/stockpile/assets.py
-#, python-format
-msgid "Location %(id)s"
-msgstr "地点 %(id)s"
 
 #: apps/stockpile/forms.py
 msgid "— from —"
@@ -19237,6 +20257,10 @@ msgid "Stock received"
 msgstr "收货入库"
 
 #: apps/store/models.py
+msgid "Received from supplier"
+msgstr "已从供应商收货"
+
+#: apps/store/models.py
 msgid "Manual adjustment"
 msgstr "手动调整"
 
@@ -19309,11 +20333,6 @@ msgstr "需求规划配置"
 #: apps/store/models.py
 msgid "demand planning configs"
 msgstr "需求规划配置"
-
-#: apps/store/models.py templates/admin_audit/console/raffle_draw.html
-#: templates/industry/mrp.html templates/store/inventory_fit.html
-msgid "Closed"
-msgstr "已关闭"
 
 #: apps/store/models.py
 msgid "Blank = undated; planned against the end of the demand horizon."
@@ -21194,14 +22213,14 @@ msgstr "目标"
 msgid "type / id"
 msgstr "类型 / id"
 
-#: templates/admin_audit/audit.html templates/mining/payouts.html
-#: templates/navigation/jump_planner.html
+#: templates/admin_audit/audit.html templates/logistics/freight.html
+#: templates/mining/payouts.html templates/navigation/jump_planner.html
 #: templates/navigation/route_planner.html templates/stockpile/logistics.html
 msgid "From"
 msgstr "从"
 
-#: templates/admin_audit/audit.html templates/mining/payouts.html
-#: templates/navigation/jump_planner.html
+#: templates/admin_audit/audit.html templates/logistics/freight.html
+#: templates/mining/payouts.html templates/navigation/jump_planner.html
 #: templates/navigation/route_planner.html templates/stockpile/logistics.html
 msgid "To"
 msgstr "到"
@@ -21217,8 +22236,10 @@ msgstr "筛选"
 #: templates/admin_audit/audit.html
 #: templates/admin_audit/console/combat_rewards.html
 #: templates/admin_audit/console/raffle_ineligible.html
-#: templates/admin_audit/console/raffle_ledger.html templates/industry/mrp.html
-#: templates/store/inventory.html
+#: templates/admin_audit/console/raffle_ledger.html
+#: templates/industry/capacity.html templates/industry/mrp.html
+#: templates/logistics/freight.html templates/procurement/pos.html
+#: templates/store/inventory.html templates/supplyboard/board.html
 msgid "Export CSV"
 msgstr "导出 CSV"
 
@@ -21232,7 +22253,7 @@ msgstr "清除筛选"
 #: templates/admin_audit/console/raffle_grant.html
 #: templates/admin_audit/console/raffle_ledger.html
 #: templates/corporation/finance.html templates/mentorship/pairing_detail.html
-#: templates/pingboard/history.html
+#: templates/pingboard/history.html templates/procurement/po_detail.html
 msgid "When"
 msgstr "时间"
 
@@ -21240,7 +22261,7 @@ msgstr "时间"
 msgid "IP"
 msgstr "IP"
 
-#: templates/admin_audit/audit.html
+#: templates/admin_audit/audit.html templates/procurement/po_detail.html
 msgid "system"
 msgstr "系统"
 
@@ -21368,9 +22389,10 @@ msgstr "开启"
 #: templates/admin_audit/console/readiness/mandatory_ships.html
 #: templates/admin_audit/console/readiness/strategic_roles.html
 #: templates/admin_audit/console/readiness/support.html
-#: templates/industry/jobs.html templates/market/dashboard.html
-#: templates/navigation/jump_planner.html templates/recruitment/detail.html
-#: templates/srp/budget.html templates/stockpile/dashboard.html
+#: templates/industry/capacity.html templates/industry/jobs.html
+#: templates/market/dashboard.html templates/navigation/jump_planner.html
+#: templates/recruitment/detail.html templates/srp/budget.html
+#: templates/stockpile/dashboard.html
 msgid "Save"
 msgstr "保存"
 
@@ -21400,7 +22422,8 @@ msgstr "由 ESI 自动填充"
 #: templates/admin_audit/console/doctrine_edit.html
 #: templates/admin_audit/console/doctrines.html templates/campaigns/detail.html
 #: templates/industry/detail.html templates/killboard/compare.html
-#: templates/killboard/watchlist_detail.html templates/market/dashboard.html
+#: templates/killboard/watchlist_detail.html
+#: templates/logistics/freight_detail.html templates/market/dashboard.html
 msgid "Add"
 msgstr "添加"
 
@@ -21512,7 +22535,8 @@ msgstr "隐藏“%(name)s”"
 #: templates/admin_audit/console/mentorship/config.html
 #: templates/admin_audit/console/planetary/config.html
 #: templates/admin_audit/console/raffle_config.html
-#: templates/buyback/config.html templates/killboard/killfeed_config.html
+#: templates/buyback/config.html templates/industry/capacity.html
+#: templates/killboard/killfeed_config.html templates/logistics/freight.html
 #: templates/srp/settings.html templates/store/config.html
 #: templates/store/demand_policy.html
 msgid "Save settings"
@@ -21740,7 +22764,8 @@ msgstr "创建军衔"
 #: templates/campaigns/form.html templates/campaigns/milestone_form.html
 #: templates/campaigns/objective_form.html templates/campaigns/risk_form.html
 #: templates/campaigns/workstream_form.html templates/operations/form.html
-#: templates/planetary/wizard.html templates/tasks/detail.html
+#: templates/planetary/wizard.html templates/procurement/supplier_detail.html
+#: templates/tasks/detail.html
 msgid "Save changes"
 msgstr "保存更改"
 
@@ -21823,13 +22848,15 @@ msgstr "击杀 ≥"
 #: templates/admin_audit/health.html templates/campaigns/portfolio.html
 #: templates/campaigns/report.html templates/campaigns/risk_form.html
 #: templates/campaigns/workstream_form.html templates/industry/mrp.html
-#: templates/logistics/corp_contracts.html templates/market/dashboard.html
-#: templates/mining/my_mining.html templates/operations/form.html
-#: templates/operations/templates.html templates/pingboard/alert_detail.html
-#: templates/pingboard/calendar.html templates/pingboard/history.html
-#: templates/readiness/dimension.html templates/readiness/simulator.html
-#: templates/stockpile/logistics.html templates/store/inventory.html
-#: templates/tasks/detail.html
+#: templates/logistics/corp_contracts.html templates/logistics/freight.html
+#: templates/market/dashboard.html templates/mining/my_mining.html
+#: templates/operations/form.html templates/operations/templates.html
+#: templates/pingboard/alert_detail.html templates/pingboard/calendar.html
+#: templates/pingboard/history.html templates/procurement/agreements.html
+#: templates/procurement/pos.html templates/procurement/supplier_detail.html
+#: templates/procurement/suppliers.html templates/readiness/dimension.html
+#: templates/readiness/simulator.html templates/stockpile/logistics.html
+#: templates/store/inventory.html templates/tasks/detail.html
 msgid "Status"
 msgstr "状态"
 
@@ -21880,7 +22907,7 @@ msgstr "已隐藏"
 #: templates/kb/detail.html templates/kb/edit.html
 #: templates/market/dashboard.html templates/operations/form.html
 #: templates/operations/templates.html templates/planetary/detail.html
-#: templates/tasks/detail.html
+#: templates/procurement/supplier_detail.html templates/tasks/detail.html
 msgid "Edit"
 msgstr "编辑"
 
@@ -21998,7 +23025,9 @@ msgstr "本年已支付"
 #: templates/doctrines/list.html templates/doctrines/ships.html
 #: templates/killboard/_feed.html templates/navigation/gatecamp.html
 #: templates/navigation/roaming.html templates/pingboard/history.html
-#: templates/showcase.html templates/store/inventory.html
+#: templates/procurement/agreements.html templates/procurement/pos.html
+#: templates/procurement/suppliers.html templates/showcase.html
+#: templates/store/inventory.html
 msgid "All"
 msgstr "全部"
 
@@ -22038,7 +23067,8 @@ msgstr "已达成"
 #: templates/admin_audit/console/pingboard/automation.html
 #: templates/admin_audit/console/pingboard/channels.html
 #: templates/admin_audit/console/pingboard/templates.html
-#: templates/market/dashboard.html templates/skills/detail.html
+#: templates/logistics/freight_detail.html templates/market/dashboard.html
+#: templates/procurement/po_detail.html templates/skills/detail.html
 #: templates/store/inventory_fit.html
 msgid "Actions"
 msgstr "操作"
@@ -22053,6 +23083,7 @@ msgstr "由 %(previous)s 晋升"
 #: templates/admin_audit/console/mentorship/approvals.html
 #: templates/admin_audit/console/mentorship/rewards.html
 #: templates/buyback/guaranteed_queue.html
+#: templates/procurement/agreement_detail.html
 msgid "Reject"
 msgstr "拒绝"
 
@@ -23093,6 +24124,7 @@ msgstr "豁免"
 
 #: templates/admin_audit/console/comms_access/status.html
 #: templates/admin_audit/health.html templates/campaigns/objective_detail.html
+#: templates/industry/capacity.html
 msgid "never"
 msgstr "从未"
 
@@ -23169,8 +24201,9 @@ msgstr "不活跃阈值"
 #: templates/campaigns/lessons.html templates/campaigns/objective_detail.html
 #: templates/campaigns/portfolio.html templates/campaigns/template_picker.html
 #: templates/corporation/finance.html templates/doctrines/list.html
-#: templates/doctrines/ships.html templates/store/inventory.html
-#: templates/tasks/detail.html
+#: templates/doctrines/ships.html templates/procurement/agreements.html
+#: templates/procurement/pos.html templates/procurement/suppliers.html
+#: templates/store/inventory.html templates/tasks/detail.html
 msgid "Apply"
 msgstr "应用"
 
@@ -23330,7 +24363,8 @@ msgstr "删除此里程碑？飞行员在该里程碑上的进度也会一并删
 #: templates/admin_audit/console/readiness/strategic_roles.html
 #: templates/admin_audit/console/readiness/support.html
 #: templates/industry/detail.html templates/killboard/compare.html
-#: templates/killboard/watchlist_detail.html templates/navigation/beacons.html
+#: templates/killboard/watchlist_detail.html
+#: templates/logistics/freight_detail.html templates/navigation/beacons.html
 #: templates/navigation/jump_routes.html templates/pingboard/my_channels.html
 #: templates/skills/detail.html
 msgid "Remove"
@@ -23349,6 +24383,8 @@ msgid "Add / update a glossary term"
 msgstr "添加 / 更新术语"
 
 #: templates/admin_audit/console/content.html
+#: templates/procurement/agreement_detail.html
+#: templates/procurement/agreements.html
 msgid "Term"
 msgstr "术语"
 
@@ -24259,6 +25295,31 @@ msgid ""
 msgstr ""
 "市场枢纽、成本指数、税率、经纪/buyback、运输、计划可见性，以及 /erp/ 重定向。"
 
+#: templates/admin_audit/console/hub.html templates/logistics/freight.html
+#: templates/logistics/freight_detail.html
+msgid "Freight Pipeline"
+msgstr "货运流水线"
+
+#: templates/admin_audit/console/hub.html
+msgid ""
+"Consolidate purchases and imports per lane, price and cap the leg, track ETD/"
+"ETA, and receipt landed stock. Bought goods are incoming until receipted."
+msgstr ""
+"按航线合并采购与进口，为该航段定价并限载，跟踪 ETD/ETA，并对到货库存收货入"
+"库。已购货物在收货前均视为在途。"
+
+#: templates/admin_audit/console/hub.html templates/procurement/board.html
+msgid "Procurement board"
+msgstr "采购看板"
+
+#: templates/admin_audit/console/hub.html
+msgid ""
+"Open ISK obligations, due &amp; late purchase orders, agreement utilisation, "
+"supplier reliability and evidence-feed freshness."
+msgstr ""
+"未结 ISK 义务、到期 &amp; 逾期的采购订单、协议利用率、供应商可靠性以及证据源"
+"新鲜度。"
+
 #: templates/admin_audit/console/hub.html
 #: templates/admin_audit/console/notifications.html
 msgid "Notifications"
@@ -24356,8 +25417,8 @@ msgstr ""
 #: templates/admin_audit/console/notifications.html
 #: templates/admin_audit/console/pingboard/settings.html
 #: templates/admin_audit/console/raffle_hub.html templates/buyback/board.html
-#: templates/buyback/guaranteed_queue.html templates/srp/queue.html
-#: templates/store/board.html
+#: templates/buyback/guaranteed_queue.html templates/industry/capacity.html
+#: templates/srp/queue.html templates/store/board.html
 msgid "Settings"
 msgstr "设置"
 
@@ -26088,6 +27149,7 @@ msgid "Rejection reason"
 msgstr "拒绝理由"
 
 #: templates/admin_audit/console/mentorship/rewards.html
+#: templates/store/order.html
 msgid "Payment reference"
 msgstr "付款参考编号"
 
@@ -27145,7 +28207,8 @@ msgstr "+ 添加频道"
 
 #: templates/admin_audit/console/pingboard/channels.html
 #: templates/admin_audit/console/readiness/alerts.html
-#: templates/capsuleer/goal_detail.html templates/stockpile/dashboard.html
+#: templates/capsuleer/goal_detail.html templates/procurement/po_detail.html
+#: templates/procurement/suppliers.html templates/stockpile/dashboard.html
 msgid "Kind"
 msgstr "类型"
 
@@ -28533,6 +29596,7 @@ msgid "Booster ends"
 msgstr "加成结束"
 
 #: templates/admin_audit/console/raffle_form.html
+#: templates/procurement/agreement_form.html templates/procurement/po_form.html
 msgid "Create draft"
 msgstr "创建草稿"
 
@@ -28846,8 +29910,8 @@ msgstr "任意状态"
 #: templates/admin_audit/console/recovery.html
 #: templates/campaigns/portfolio.html templates/campaigns/template_picker.html
 #: templates/capsuleer/paths.html templates/doctrines/list.html
-#: templates/market/dashboard.html templates/stockpile/asset_search.html
-#: templates/store/inventory.html
+#: templates/market/dashboard.html templates/procurement/suppliers.html
+#: templates/stockpile/asset_search.html templates/store/inventory.html
 msgid "Search"
 msgstr "搜索"
 
@@ -29047,8 +30111,8 @@ msgstr "图标类型 id"
 
 #: templates/admin_audit/console/raffle_prizes.html templates/erp/board.html
 #: templates/industry/chain.html templates/industry/create.html
-#: templates/industry/jobs.html templates/store/inventory_fit.html
-#: templates/store/storefront.html
+#: templates/industry/jobs.html templates/procurement/po_detail.html
+#: templates/store/inventory_fit.html templates/store/storefront.html
 msgid "Quantity"
 msgstr "数量"
 
@@ -29562,7 +30626,8 @@ msgstr ""
 
 #: templates/admin_audit/console/readiness/mandatory_ships.html
 #: templates/buyback/appraisal.html templates/buyback/offer.html
-#: templates/industry/detail.html templates/stockpile/asset_search.html
+#: templates/industry/detail.html templates/logistics/freight_detail.html
+#: templates/procurement/po_detail.html templates/stockpile/asset_search.html
 #: templates/stockpile/logistics.html templates/store/board.html
 #: templates/store/inventory_fit.html
 msgid "Qty"
@@ -29897,6 +30962,7 @@ msgstr "未勾选的评估器在每次运行时都会被跳过。"
 
 #: templates/admin_audit/console/recommendations_tuning.html
 #: templates/admin_audit/console/structure_alerts.html
+#: templates/store/margin.html
 msgid "Thresholds"
 msgstr "阈值"
 
@@ -30244,6 +31310,7 @@ msgid ""
 msgstr "ADM 低于此值的主权星系将触发警报。范围 1.0–6.0；默认 3.0。"
 
 #: templates/admin_audit/console/structure_alerts.html
+#: templates/store/margin.html
 msgid "Save thresholds"
 msgstr "保存阈值"
 
@@ -30308,7 +31375,8 @@ msgid "no data"
 msgstr "暂无数据"
 
 #: templates/admin_audit/health.html templates/identity/dashboard.html
-#: templates/killboard/_feed.html templates/killboard/watchlist_detail.html
+#: templates/industry/capacity.html templates/killboard/_feed.html
+#: templates/killboard/watchlist_detail.html
 #: templates/pilots/contributions.html
 msgid "ago"
 msgstr "前"
@@ -31113,7 +32181,7 @@ msgid ""
 "reason below."
 msgstr "强制目标仍未完成 —— 完成需要在下方填写总监的覆盖理由。"
 
-#: templates/campaigns/close.html
+#: templates/campaigns/close.html templates/industry/capacity.html
 msgid "Override"
 msgstr "覆盖"
 
@@ -31559,6 +32627,7 @@ msgid "Operation"
 msgstr "行动"
 
 #: templates/campaigns/detail.html templates/store/inventory_fit.html
+#: templates/store/margin.html
 msgid "Note (optional)"
 msgstr "备注（可选）"
 
@@ -31568,6 +32637,7 @@ msgstr "参与 &amp; 表彰"
 
 #: templates/campaigns/detail.html templates/campaigns/milestone_form.html
 #: templates/campaigns/objective_detail.html
+#: templates/logistics/freight_detail.html
 #: templates/mentorship/pairing_detail.html templates/recruitment/detail.html
 msgid "Evidence"
 msgstr "证据"
@@ -31825,7 +32895,7 @@ msgid "Any category"
 msgstr "任意类别"
 
 #: templates/campaigns/lessons.html templates/campaigns/report.html
-#: templates/impersonation/log.html
+#: templates/impersonation/log.html templates/procurement/po_detail.html
 msgid "Outcome"
 msgstr "成果"
 
@@ -31884,7 +32954,8 @@ msgid "Automatic refresh is paused; a manual value stands"
 msgstr "自动刷新已暂停；采用手动数值"
 
 #: templates/campaigns/objective_detail.html templates/identity/character.html
-#: templates/operations/templates.html templates/skills/plans.html
+#: templates/industry/capacity.html templates/operations/templates.html
+#: templates/skills/plans.html
 msgid "paused"
 msgstr "已暂停"
 
@@ -32140,7 +33211,7 @@ msgstr "类别（例如 logistics、FC、指导）"
 msgid "Points (optional)"
 msgstr "分数（可选）"
 
-#: templates/campaigns/recognition.html
+#: templates/campaigns/recognition.html templates/procurement/po_detail.html
 msgid "Reason (required)"
 msgstr "理由（必填）"
 
@@ -32786,6 +33857,7 @@ msgstr "编辑目标"
 
 #: templates/capsuleer/goal_detail.html
 #: templates/mentorship/pairing_detail.html
+#: templates/procurement/po_detail.html
 msgid "Complete"
 msgstr "完成"
 
@@ -35087,6 +36159,8 @@ msgid "Copied ✓"
 msgstr "已复制 ✓"
 
 #: templates/doctrines/detail.html templates/doctrines/ships.html
+#: templates/procurement/board.html templates/procurement/po_detail.html
+#: templates/procurement/pos.html templates/procurement/supplier_detail.html
 #: templates/skills/detail.html templates/store/order.html
 msgid "Order"
 msgstr "订购"
@@ -37159,6 +38233,185 @@ msgstr "选择要建造的物品"
 msgid "Search above for anything with a manufacturing or reaction recipe."
 msgstr "在上方搜索任何具有制造或反应配方的物品。"
 
+#: templates/industry/capacity.html templates/industry/mrp.html
+msgid "Production Capacity"
+msgstr "产能"
+
+#: templates/industry/capacity.html templates/industry/mrp.html
+#: templates/mining/ledger.html templates/mining/payouts.html
+msgid "Industry · Leadership"
+msgstr "工业 · 领导层"
+
+#: templates/industry/capacity.html
+msgid ""
+"Measured manufacturing capacity: theoretical, committed and remaining slots "
+"by activity class, from opted-in pilots only. Figures are only as fresh as "
+"the syncs below and only as complete as the opt-in set — read this as "
+"measured capacity, never total corp capacity."
+msgstr ""
+"实测的制造产能：按活动类别划分的理论、已占用和剩余席位，仅来自已选择加入的飞"
+"行员。数据的新鲜度仅取决于下方的同步，完整度仅取决于选择加入的范围——请将其理"
+"解为实测产能，而绝非军团总产能。"
+
+#: templates/industry/capacity.html templates/industry/mrp.html
+msgid "Material Plan"
+msgstr "材料计划"
+
+#: templates/industry/capacity.html
+msgid "Re-derive now"
+msgstr "立即重新推导"
+
+#: templates/industry/capacity.html
+msgid ""
+"Capacity planning is off — the Material Plan still assumes unconstrained "
+"slots. Arm it below to hold build dates to committed capacity."
+msgstr ""
+"产能规划已关闭——物料计划仍假设席位不受限制。在下方启用它，即可将建造日期锁定"
+"到已承诺产能。"
+
+#: templates/industry/capacity.html
+msgid "Slots by activity class"
+msgstr "按活动类别划分的席位"
+
+#: templates/industry/capacity.html
+msgid "Theoretical"
+msgstr "理论"
+
+#: templates/industry/capacity.html templates/srp/budget.html
+msgid "Remaining"
+msgstr "剩余"
+
+#: templates/industry/capacity.html
+#, python-format
+msgid "%(n)s job by a pilot whose capacity is unknown (not counted above)."
+msgid_plural ""
+"%(n)s jobs by pilots whose capacity is unknown (not counted above)."
+msgstr[0] "%(n)s 项作业来自产能未知的飞行员（未计入上方统计）。"
+
+#: templates/industry/capacity.html
+#, python-format
+msgid "%(n)s board job started or finished but not yet seen in ESI."
+msgid_plural "%(n)s board jobs started or finished but not yet seen in ESI."
+msgstr[0] "%(n)s 项看板作业已开始或已完成，但在 ESI 中尚未看到。"
+
+#: templates/industry/capacity.html
+msgid "Hold build dates to committed capacity"
+msgstr "将建造日期锁定到已承诺产能"
+
+#: templates/industry/capacity.html
+msgid "Skills stale after (days)"
+msgstr "技能过期阈值（天）"
+
+#: templates/industry/capacity.html
+msgid ""
+"Skills show attention-stale at 7 days; slots stay measured until the "
+"threshold above (default 14), then become unknown."
+msgstr ""
+"技能在 7 天后会显示为需要关注的过期状态；席位在达到上方阈值（默认 14）之前仍"
+"保持可测量，之后变为未知。"
+
+#: templates/industry/capacity.html
+msgid "As of"
+msgstr "截至"
+
+#: templates/industry/capacity.html
+#, python-format
+msgid "corp jobs (every %(h)sh):"
+msgstr "军团作业（每 %(h)s 小时）:"
+
+#: templates/industry/capacity.html
+#, python-format
+msgid "pilot jobs (every %(h)sh):"
+msgstr "飞行员作业（每 %(h)s 小时）:"
+
+#: templates/industry/capacity.html
+#, python-format
+msgid "skills sync every %(h)sh"
+msgstr "技能每 %(h)s 小时同步一次"
+
+#: templates/industry/capacity.html
+#, python-format
+msgid "last plan %(ago)s ago"
+msgstr "上次计划于 %(ago)s 前"
+
+#: templates/industry/capacity.html
+msgid "Per pilot"
+msgstr "各飞行员"
+
+#: templates/industry/capacity.html
+msgid "opted-in pilots only"
+msgstr "仅限已选择加入的飞行员"
+
+#: templates/industry/capacity.html
+msgid "Slots"
+msgstr "席位"
+
+#: templates/industry/capacity.html templates/procurement/board.html
+msgid "Used"
+msgstr "已用"
+
+#: templates/industry/capacity.html
+msgid "Free"
+msgstr "空闲"
+
+#: templates/industry/capacity.html
+msgid "Next free"
+msgstr "下次空闲"
+
+#: templates/industry/capacity.html
+msgid "Skills as of"
+msgstr "技能截至"
+
+#: templates/industry/capacity.html
+msgid "officer override"
+msgstr "军官覆盖值"
+
+#: templates/industry/capacity.html
+msgid "Slots override"
+msgstr "席位覆盖值"
+
+#: templates/industry/capacity.html
+msgid "Weekly cap"
+msgstr "每周上限"
+
+#: templates/industry/capacity.html
+msgid "Unavailable from"
+msgstr "不可用起始"
+
+#: templates/industry/capacity.html
+msgid "Unavailable until"
+msgstr "不可用截至"
+
+#: templates/industry/capacity.html
+msgid ""
+"No opted-in pilots yet — a pilot grants the “My industry jobs + blueprints” "
+"scope, then re-derive."
+msgstr ""
+"还没有已选择加入的飞行员——先由飞行员授予 \"My industry jobs + blueprints\" 权"
+"限范围，然后重新推导。"
+
+#: templates/industry/capacity.html
+msgid "Committed load by location"
+msgstr "各地点的已占用负载"
+
+#: templates/industry/capacity.html
+#, python-format
+msgid "%(n)s job"
+msgid_plural "%(n)s jobs"
+msgstr[0] "%(n)s 项作业"
+
+#: templates/industry/capacity.html
+msgid "No committed jobs."
+msgstr "没有已占用的作业。"
+
+#: templates/industry/capacity.html
+msgid "Blocked work"
+msgstr "受阻的作业"
+
+#: templates/industry/capacity.html
+msgid "Nothing blocked — every live build has an honest date."
+msgstr "没有受阻项——每个进行中的建造都有可靠的日期。"
+
 #: templates/industry/chain.html templates/industry/home.html
 msgid "Production chain"
 msgstr "生产链"
@@ -37365,7 +38618,7 @@ msgstr "从库存分配"
 msgid "To acquire"
 msgstr "需获取"
 
-#: templates/industry/detail.html
+#: templates/industry/detail.html templates/store/margin.html
 msgid "Method"
 msgstr "方式"
 
@@ -37387,8 +38640,9 @@ msgstr "这是一件 T2/T3 物品 —— 你还需要用这些 datacores 发明�
 msgid "Add another item"
 msgstr "添加另一件物品"
 
-#: templates/industry/detail.html templates/market/dashboard.html
-#: templates/stockpile/dashboard.html templates/stockpile/logistics.html
+#: templates/industry/detail.html templates/logistics/freight_detail.html
+#: templates/market/dashboard.html templates/stockpile/dashboard.html
+#: templates/stockpile/logistics.html
 msgid "Search an item…"
 msgstr "搜索物品…"
 
@@ -38033,12 +39287,68 @@ msgid "Leadership hasn't queued any builds."
 msgstr "领导层尚未排入任何建造。"
 
 #: templates/industry/jobs.html
+msgid ""
+"Linked to the in-game job — it carries the schedule and the supply count"
+msgstr "已关联到游戏内作业 — 排期与补给数量以其为准"
+
+#: templates/industry/jobs.html
+#, python-format
+msgid "in game #%(id)s"
+msgstr "游戏内 #%(id)s"
+
+#: templates/industry/jobs.html
+msgid "ESI job ID"
+msgstr "ESI 作业 ID"
+
+#: templates/industry/jobs.html
+msgid "In-game job ID"
+msgstr "游戏内作业 ID"
+
+#: templates/industry/jobs.html
+msgid ""
+"Record which in-game job this build became, so planning never counts it twice"
+msgstr "记录此建造对应的游戏内作业，避免规划重复计算"
+
+#: templates/industry/jobs.html
+msgid "Confirm in-game match"
+msgstr "确认游戏内匹配"
+
+#: templates/industry/jobs.html
+msgid "Started in game"
+msgstr "已在游戏内开始"
+
+#: templates/industry/jobs.html
 msgid "Deliver"
 msgstr "交付"
 
 #: templates/industry/jobs.html
 msgid "You have no build jobs in progress. Claim one from the queue."
 msgstr "你没有进行中的建造作业。请从队列中认领一项。"
+
+#: templates/industry/jobs.html
+msgid "My capacity"
+msgstr "我的产能"
+
+#: templates/industry/jobs.html
+msgid "slots unknown"
+msgstr "席位未知"
+
+#: templates/industry/jobs.html
+msgid "free"
+msgstr "空闲"
+
+#: templates/industry/jobs.html
+#, python-format
+msgid "next %(d)s"
+msgstr "下次 %(d)s"
+
+#: templates/industry/jobs.html
+msgid ""
+"Your own slots only. Officers see this on the Production Capacity board "
+"while the My industry scope is granted."
+msgstr ""
+"仅显示你自己的席位。在授予 My industry 权限范围期间，军官可在产能看板上看到此"
+"信息。"
 
 #: templates/industry/jobs.html
 msgid "Imported ESI jobs"
@@ -38086,10 +39396,55 @@ msgstr ""
 "gold hover:underline\">ESI Scopes</a> 页面授予 <strong>Corp blueprints + "
 "jobs</strong>。"
 
-#: templates/industry/mrp.html templates/mining/ledger.html
-#: templates/mining/payouts.html
-msgid "Industry · Leadership"
-msgstr "工业 · 领导层"
+#: templates/industry/mrp.html
+msgid ""
+"Corp-wide net requirements: every demand source exploded through the build "
+"tree and netted once against stock, reservations and in-flight work. Build "
+"dates are held to committed manufacturing capacity — slots, skills, "
+"blueprints and facilities — and the binding constraint is named. Figures are "
+"only as fresh as the syncs and as complete as the opt-in pilots: read this "
+"as measured capacity, never total corp capacity."
+msgstr ""
+"军团范围的净需求：每个需求来源都会沿建造树展开，并一次性对库存、预留和进行中"
+"的工作进行净额计算。建造日期锁定到已承诺的制造产能——席位、技能、 blueprint 与"
+"设施——并指明约束瓶颈。数据的新鲜度仅取决于同步，完整度仅取决于已选择加入的飞"
+"行员：请将其理解为实测产能，而绝非军团总产能。"
+
+#: templates/industry/mrp.html
+msgid ""
+"Corp-wide net requirements: every demand source exploded through the build "
+"tree and netted once against stock, reservations and in-flight work. Dates "
+"assume unconstrained industry slots — capacity planning comes in a later "
+"phase."
+msgstr ""
+"全军团净需求：每个需求来源都沿建造树展开，并与库存、预留和进行中的工作做一次"
+"净额抵扣。日期假定工业槽位不受限 — 产能规划将在后续阶段推出。"
+
+#: templates/industry/mrp.html
+msgid "Run planning now"
+msgstr "立即运行规划"
+
+#: templates/industry/mrp.html
+msgid ""
+"No changes — the latest run's inputs are identical to the previous run's."
+msgstr "无变化 — 最新一次运行的输入与上一次完全相同。"
+
+#: templates/industry/mrp.html
+#, python-format
+msgid ""
+"No market price signal for: %(items)s — a 0 ISK buy line is a data gap, not "
+"a bargain."
+msgstr ""
+"以下物品缺少市场价格信号：%(items)s — 0 ISK 的购买行是数据缺口，不是便宜货。"
+
+#: templates/industry/mrp.html
+msgid "Live requirements"
+msgstr "实时需求"
+
+#: templates/industry/mrp.html
+#, python-format
+msgid "planning window: %(days)s days"
+msgstr "规划窗口：%(days)s 天"
 
 #: templates/industry/mrp.html templates/market/dashboard.html
 #: templates/stockpile/asset_search.html templates/stockpile/dashboard.html
@@ -38116,9 +39471,80 @@ msgstr "在途"
 msgid "Required by"
 msgstr "需求截止"
 
+#: templates/industry/mrp.html
+msgid "Feasible"
+msgstr "可行"
+
 #: templates/industry/mrp.html templates/store/inventory.html
 msgid "Vehicle"
 msgstr "载具"
+
+#: templates/industry/mrp.html
+#, python-format
+msgid "Level %(depth)s"
+msgstr "层级 %(depth)s"
+
+#: templates/industry/mrp.html
+msgid "ships & fits — fulfilled from the Shipyard console"
+msgstr "舰船与配装 — 由船坞控制台履行"
+
+#: templates/industry/mrp.html
+msgid ""
+"The linked vehicle no longer matches the plan — planned quantity differs "
+"from what the vehicle says"
+msgstr "关联的载具与计划不再一致 — 计划数量与载具所示不同"
+
+#: templates/industry/mrp.html
+msgid "diverged"
+msgstr "已偏离"
+
+#: templates/industry/mrp.html
+msgid "Demand sources"
+msgstr "需求来源"
+
+#: templates/industry/mrp.html
+msgid "Fit demand"
+msgstr "配装需求"
+
+#: templates/industry/mrp.html
+msgid "Backorder need"
+msgstr "缺货预订需求"
+
+#: templates/industry/mrp.html
+msgid "Component of requirement"
+msgstr "上级需求的组件"
+
+#: templates/industry/mrp.html
+msgid "Materials for promised build"
+msgstr "承诺建造所需材料"
+
+#: templates/industry/mrp.html
+msgid "Incoming supply"
+msgstr "在途补给"
+
+#: templates/industry/mrp.html
+msgid "In-game job"
+msgstr "游戏内作业"
+
+#: templates/industry/mrp.html
+msgid "Board job"
+msgstr "看板作业"
+
+#: templates/industry/mrp.html
+msgid "Plan line"
+msgstr "计划行"
+
+#: templates/industry/mrp.html
+msgid "Covered by a freight batch in transit — ETA shown as the feasible date"
+msgstr "由运输中的货运批次覆盖——ETA 显示为可行日期"
+
+#: templates/industry/mrp.html
+msgid "The binding constraint on this build date"
+msgstr "该建造日期的约束瓶颈"
+
+#: templates/industry/mrp.html
+msgid "Shipyard console"
+msgstr "船坞控制台"
 
 #: templates/industry/mrp.html templates/store/inventory.html
 msgid "Project"
@@ -38127,6 +39553,68 @@ msgstr "项目"
 #: templates/industry/mrp.html templates/store/inventory.html
 msgid "Build job"
 msgstr "建造任务"
+
+#: templates/industry/mrp.html
+msgid "On a freight batch"
+msgstr "在货运批次上"
+
+#: templates/industry/mrp.html templates/logistics/freight_detail.html
+msgid "Batch"
+msgstr "批次"
+
+#: templates/industry/mrp.html
+msgid "Add to freight batch"
+msgstr "加入货运批次"
+
+#: templates/industry/mrp.html
+msgid "BUY task"
+msgstr "BUY 任务"
+
+#: templates/industry/mrp.html
+msgid "No open requirements — run planning to compute the current picture."
+msgstr "暂无未结需求 — 运行规划以计算当前状况。"
+
+#: templates/industry/mrp.html
+msgid "Multibuy (open buy & import lines)"
+msgstr "Multibuy（未结的购买与进口行）"
+
+#: templates/industry/mrp.html
+msgid "Paste into the in-game market Multibuy window."
+msgstr "粘贴到游戏内市场的 Multibuy 窗口。"
+
+#: templates/industry/mrp.html
+msgid "Beyond the planning window"
+msgstr "超出规划窗口"
+
+#: templates/industry/mrp.html
+msgid ""
+"Dated demand this far out is excluded from the current plan; it enters when "
+"the window reaches it."
+msgstr "这么远之后的带日期需求不纳入当前计划；待规划窗口到达时才会计入。"
+
+#: templates/industry/mrp.html
+msgid "Run history"
+msgstr "运行历史"
+
+#: templates/industry/mrp.html
+msgid "Updated"
+msgstr "已更新"
+
+#: templates/industry/mrp.html
+msgid "Input digest"
+msgstr "输入摘要"
+
+#: templates/industry/mrp.html
+msgid "Triggered by"
+msgstr "触发来源"
+
+#: templates/industry/mrp.html
+msgid "schedule"
+msgstr "定时"
+
+#: templates/industry/mrp.html
+msgid "No runs yet."
+msgstr "暂无运行记录。"
 
 #: templates/kb/detail.html templates/kb/edit.html
 msgid "← Knowledge base"
@@ -38988,6 +40476,7 @@ msgid "Freight Rates"
 msgstr "货运费率"
 
 #: templates/logistics/calculator.html templates/logistics/contracts.html
+#: templates/logistics/freight.html templates/logistics/freight_detail.html
 msgid "Freight"
 msgstr "货运"
 
@@ -39012,7 +40501,7 @@ msgstr "货运板"
 msgid "Get a quote"
 msgstr "获取报价"
 
-#: templates/logistics/calculator.html
+#: templates/logistics/calculator.html templates/logistics/freight_detail.html
 msgid "Ship class"
 msgstr "船级"
 
@@ -39261,7 +40750,8 @@ msgstr "路线"
 msgid "Class"
 msgstr "船级"
 
-#: templates/logistics/contracts.html
+#: templates/logistics/contracts.html templates/logistics/freight_detail.html
+#: templates/procurement/agreement_detail.html
 msgid "Collateral"
 msgstr "抵押金"
 
@@ -39343,6 +40833,236 @@ msgid ""
 "scope, then sync."
 msgstr ""
 "未跟踪任何军团合同。需要一位董事授予 corp-contracts 权限范围,然后同步。"
+
+#: templates/logistics/freight.html
+msgid "Logistics · Leadership"
+msgstr "后勤 · 领导层"
+
+#: templates/logistics/freight.html
+msgid ""
+"Consolidate purchases and imports per lane, ship them through the courier "
+"flow or a member haul, and receipt landed stock. Goods on a batch are "
+"visibly incoming — never counted as available — until receipted at the "
+"destination."
+msgstr ""
+"按航线合并采购与进口，通过快递流程或成员运输发运，并对到货库存收货入库。批次"
+"上的货物明确显示为在途——在目的地收货前绝不计入可用库存。"
+
+#: templates/logistics/freight.html
+msgid "Open a batch for a lane"
+msgstr "为航线开启批次"
+
+#: templates/logistics/freight.html
+msgid "Freight settings"
+msgstr "货运设置"
+
+#: templates/logistics/freight.html
+msgid "Default ship class"
+msgstr "默认舰船级别"
+
+#: templates/logistics/freight.html
+msgid "Dispatch days"
+msgstr "发运天数"
+
+#: templates/logistics/freight.html
+msgid "Transit days"
+msgstr "运输天数"
+
+#: templates/logistics/freight.html
+msgid "Late grace (hours)"
+msgstr "逾期宽限（小时）"
+
+#: templates/logistics/freight.html
+msgid "Run the hourly batch sweep (arrival + late flags)"
+msgstr "运行每小时批次扫描（送达 + 逾期标记）"
+
+#: templates/logistics/freight.html
+msgid "Batches"
+msgstr "批次"
+
+#: templates/logistics/freight.html
+msgid "Lane"
+msgstr "航线"
+
+#: templates/logistics/freight.html templates/logistics/freight_detail.html
+#: templates/procurement/agreement_detail.html
+#: templates/procurement/po_detail.html
+msgid "Lines"
+msgstr "明细行"
+
+#: templates/logistics/freight.html templates/procurement/board.html
+#: templates/procurement/suppliers.html
+msgid "Fill"
+msgstr "履约"
+
+#: templates/logistics/freight.html
+msgid "ETD"
+msgstr "ETD"
+
+#: templates/logistics/freight.html templates/logistics/freight_detail.html
+msgid "ETA"
+msgstr "ETA"
+
+#: templates/logistics/freight.html
+msgid "Past its planned ETA"
+msgstr "已超过计划 ETA"
+
+#: templates/logistics/freight.html
+msgid "late"
+msgstr "逾期"
+
+#: templates/logistics/freight.html
+msgid ""
+"No freight batches yet — open one for a lane above, or fan an import "
+"requirement out from the Material Plan."
+msgstr ""
+"尚无货运批次——请在上方为某条航线开启一个，或从物料计划中拆分出一个进口需求。"
+
+#: templates/logistics/freight.html templates/navigation/jump_planner.html
+msgid "Destination"
+msgstr "终点"
+
+#: templates/logistics/freight.html
+msgid "Landed, unsynced"
+msgstr "已到货，未同步"
+
+#: templates/logistics/freight.html
+msgid "Covering requirements"
+msgstr "覆盖的需求"
+
+#: templates/logistics/freight.html
+msgid "Nothing is in transit right now."
+msgstr "当前没有运输中的批次。"
+
+#: templates/logistics/freight_detail.html
+msgid "Freight batch"
+msgstr "货运批次"
+
+#: templates/logistics/freight_detail.html
+msgid "Cancel this batch?"
+msgstr "取消该批次？"
+
+#: templates/logistics/freight_detail.html
+msgid "Cancel batch"
+msgstr "取消批次"
+
+#: templates/logistics/freight_detail.html templates/procurement/po_detail.html
+msgid "Received"
+msgstr "已收货"
+
+#: templates/logistics/freight_detail.html
+msgid "Purchase"
+msgstr "采购"
+
+#: templates/logistics/freight_detail.html
+msgid "Freight share"
+msgstr "货运分摊"
+
+#: templates/logistics/freight_detail.html
+msgid "Landed unit"
+msgstr "到货单价"
+
+#: templates/logistics/freight_detail.html
+msgid "MRP-planned share of this line"
+msgstr "该明细中 MRP 计划的份额"
+
+#: templates/logistics/freight_detail.html
+#, python-format
+msgid "plan %(n)s"
+msgstr "计划 %(n)s"
+
+#: templates/logistics/freight_detail.html templates/procurement/po_detail.html
+#: templates/store/inventory_fit.html
+msgid "Receive"
+msgstr "收货"
+
+#: templates/logistics/freight_detail.html
+msgid "received"
+msgstr "已接收"
+
+#: templates/logistics/freight_detail.html
+#: templates/procurement/agreement_detail.html
+#: templates/procurement/po_detail.html
+msgid "No lines yet."
+msgstr "尚无明细行。"
+
+#: templates/logistics/freight_detail.html
+msgid "Unit cost"
+msgstr "单位成本"
+
+#: templates/logistics/freight_detail.html
+msgid "bought by …"
+msgstr "购买人 …"
+
+#: templates/logistics/freight_detail.html
+msgid "Capacity fit"
+msgstr "容量适配"
+
+#: templates/logistics/freight_detail.html
+msgid "Packaged volume"
+msgstr "打包体积"
+
+#: templates/logistics/freight_detail.html
+msgid ""
+"Over the cap for this ship class — split into a second batch or pick a "
+"bigger class."
+msgstr "超过该舰船级别的上限——请拆分为第二个批次或选择更大的级别。"
+
+#: templates/logistics/freight_detail.html
+msgid "Rush"
+msgstr "加急"
+
+#: templates/logistics/freight_detail.html
+msgid "Assign to courier flow"
+msgstr "指派给快递流程"
+
+#: templates/logistics/freight_detail.html
+msgid "Post to member haul board"
+msgstr "发布到成员运输板"
+
+#: templates/logistics/freight_detail.html
+msgid "Mark departed"
+msgstr "标记为已启运"
+
+#: templates/logistics/freight_detail.html
+msgid "Mark arrived"
+msgstr "标记为已送达"
+
+#: templates/logistics/freight_detail.html
+msgid "Unassign (back to open)"
+msgstr "取消指派（回到开放）"
+
+#: templates/logistics/freight_detail.html templates/mining/ledger.html
+msgid "Set"
+msgstr "设置"
+
+#: templates/logistics/freight_detail.html
+msgid "No actions available for this status."
+msgstr "该状态没有可用操作。"
+
+#: templates/logistics/freight_detail.html
+msgid "Landed cost vs forecast"
+msgstr "到货成本对比预测"
+
+#: templates/logistics/freight_detail.html
+msgid "Forecast import"
+msgstr "预测进口成本"
+
+#: templates/logistics/freight_detail.html
+msgid "Delta"
+msgstr "差额"
+
+#: templates/logistics/freight_detail.html
+msgid "no cost recorded"
+msgstr "未记录成本"
+
+#: templates/logistics/freight_detail.html
+msgid ""
+"Landed = purchase + freight share per unit. Forecast import = the "
+"forecaster's Jita + jump-freight basis. Store order prices are never edited."
+msgstr ""
+"到货 = 采购 + 每单位货运分摊。预测进口 = 预测器的 Jita + 跳跃货运基准。商店订"
+"单价格从不修改。"
 
 #: templates/logistics/rates.html
 msgid "Freight · Leadership"
@@ -40541,10 +42261,6 @@ msgstr "60 天"
 msgid "Mining tax %%"
 msgstr "采矿税 %%"
 
-#: templates/mining/ledger.html
-msgid "Set"
-msgstr "设置"
-
 #: templates/mining/ledger.html templates/mining/payout.html
 msgid "Value mined"
 msgstr "采矿价值"
@@ -41189,10 +42905,6 @@ msgstr "无市场价格"
 #: templates/navigation/jump_planner.html
 msgid "Origin"
 msgstr "起点"
-
-#: templates/navigation/jump_planner.html
-msgid "Destination"
-msgstr "终点"
 
 #: templates/navigation/jump_planner.html
 msgid "From &rarr; To"
@@ -42588,14 +44300,10 @@ msgid "Composition"
 msgstr "编成"
 
 #: templates/operations/detail.html
-msgid "slots"
-msgstr "席位"
-
-#: templates/operations/detail.html
 msgid "Viable"
 msgstr "可行"
 
-#: templates/operations/detail.html
+#: templates/operations/detail.html templates/procurement/supplier_detail.html
 msgid "Yes"
 msgstr "是"
 
@@ -42603,7 +44311,7 @@ msgstr "是"
 msgid "(override)"
 msgstr "（强制）"
 
-#: templates/operations/detail.html
+#: templates/operations/detail.html templates/procurement/supplier_detail.html
 msgid "No"
 msgstr "否"
 
@@ -42925,10 +44633,12 @@ msgid "custom fit"
 msgstr "自定义配装"
 
 #: templates/operations/form.html templates/operations/template_form.html
+#: templates/procurement/agreement_detail.html
 msgid "Min"
 msgstr "最低"
 
 #: templates/operations/form.html templates/operations/template_form.html
+#: templates/procurement/agreement_detail.html
 msgid "Max"
 msgstr "上限"
 
@@ -43133,7 +44843,7 @@ msgid "RSVP deadline (min before form-up)"
 msgstr "RSVP 截止（集结前分钟数）"
 
 #: templates/operations/template_form.html templates/operations/timers.html
-#: templates/pingboard/calendar.html
+#: templates/pingboard/calendar.html templates/procurement/po_detail.html
 msgid "Notes"
 msgstr "备注"
 
@@ -43594,7 +45304,7 @@ msgstr "重试"
 msgid "Sync %(action)s: %(sys)s/%(oid)s"
 msgstr "同步 %(action)s：%(sys)s/%(oid)s"
 
-#: templates/pingboard/dashboard.html
+#: templates/pingboard/dashboard.html templates/supplyboard/board.html
 msgid "All clear."
 msgstr "一切正常。"
 
@@ -43659,7 +45369,7 @@ msgstr "同步历史"
 msgid "Alert"
 msgstr "警报"
 
-#: templates/pingboard/history.html
+#: templates/pingboard/history.html templates/procurement/po_detail.html
 msgid "By"
 msgstr "操作人"
 
@@ -44458,6 +46168,510 @@ msgstr "5 · 策略 &amp; 分享"
 #: templates/planetary/wizard.html
 msgid "Create plan &amp; estimate profit"
 msgstr "创建计划 &amp; 估算利润"
+
+#: templates/procurement/agreement_detail.html
+#: templates/procurement/agreements.html templates/procurement/board.html
+msgid "Agreement"
+msgstr "协议"
+
+#: templates/procurement/agreement_detail.html
+msgid "Procurement · Agreement"
+msgstr "采购 · 协议"
+
+#: templates/procurement/agreement_detail.html
+#: templates/procurement/po_detail.html
+#, python-format
+msgid "Agreement #%(n)s"
+msgstr "协议 #%(n)s"
+
+#: templates/procurement/agreement_detail.html
+msgid "All agreements"
+msgstr "全部协议"
+
+#: templates/procurement/agreement_detail.html
+msgid "Estimated cycle value"
+msgstr "预计周期金额"
+
+#: templates/procurement/agreement_detail.html
+msgid "Submit for approval"
+msgstr "提交审批"
+
+#: templates/procurement/agreement_detail.html
+msgid ""
+"Below the Director threshold it activates immediately; at or above it, a "
+"second Director must approve."
+msgstr ""
+"低于 Director 阈值时立即激活；达到或超过时，必须由第二位 Director 批准。"
+
+#: templates/procurement/agreement_detail.html
+#, python-format
+msgid "Submitted by %(who)s at %(value)s ISK — awaiting a second Director."
+msgstr "由 %(who)s 提交，金额 %(value)s ISK —— 等待第二位 Director 审批。"
+
+#: templates/procurement/agreement_detail.html
+msgid "Only a Director can decide this approval."
+msgstr "只有 Director 才能裁定此审批。"
+
+#: templates/procurement/agreement_detail.html
+msgid "This agreement is closed to further lifecycle actions."
+msgstr "此协议已关闭，无法进行进一步的生命周期操作。"
+
+#: templates/procurement/agreement_detail.html
+#: templates/procurement/po_detail.html
+msgid "Add line"
+msgstr "添加明细行"
+
+#: templates/procurement/agreement_detail.html templates/procurement/board.html
+msgid "Per cycle"
+msgstr "每周期"
+
+#: templates/procurement/agreement_detail.html
+#: templates/procurement/supplier_detail.html
+msgid "Price model"
+msgstr "价格模型"
+
+#: templates/procurement/agreement_form.html
+#: templates/procurement/agreements.html
+msgid "New agreement"
+msgstr "新建协议"
+
+#: templates/procurement/agreement_form.html
+#: templates/procurement/agreements.html templates/procurement/po_form.html
+#: templates/procurement/pos.html templates/procurement/supplier_form.html
+#: templates/procurement/suppliers.html
+msgid "Procurement · Leadership"
+msgstr "采购 · 领导层"
+
+#: templates/procurement/agreement_form.html
+msgid "Draft a supply agreement"
+msgstr "起草供应协议"
+
+#: templates/procurement/agreement_form.html
+msgid ""
+"Create the header, then add the per-type lines on the next page before "
+"submitting for approval."
+msgstr "先创建头部信息，然后在下一页添加各类型的明细行，再提交审批。"
+
+#: templates/procurement/agreements.html
+msgid "Supply agreements"
+msgstr "供应协议"
+
+#: templates/procurement/agreements.html
+msgid ""
+"Standing commitments that pre-authorise purchase orders. Above the Director "
+"threshold an agreement needs a second Director's approval before it goes "
+"active."
+msgstr ""
+"预先授权采购订单的长期承诺。超过 Director 阈值的协议在生效前需要第二位 "
+"Director 审批。"
+
+#: templates/procurement/agreements.html templates/procurement/board.html
+#: templates/procurement/pos.html templates/procurement/suppliers.html
+msgid "Suppliers"
+msgstr "供应商"
+
+#: templates/procurement/agreements.html templates/procurement/board.html
+#: templates/procurement/pos.html templates/procurement/suppliers.html
+msgid "Purchase orders"
+msgstr "采购订单"
+
+#: templates/procurement/agreements.html templates/procurement/board.html
+#: templates/procurement/pos.html templates/procurement/supplier_detail.html
+#: templates/procurement/suppliers.html
+msgid "Supplier"
+msgstr "供应商"
+
+#: templates/procurement/agreements.html
+msgid "Cadence"
+msgstr "频率"
+
+#: templates/procurement/agreements.html
+msgid "Est. cycle value"
+msgstr "预计周期金额"
+
+#: templates/procurement/agreements.html
+msgid "No agreements match."
+msgstr "没有匹配的协议。"
+
+#: templates/procurement/board.html
+msgid "Procurement · Directors"
+msgstr "采购 · Director"
+
+#: templates/procurement/board.html
+msgid ""
+"Open commitments, what's due or late, how hard agreements are being worked, "
+"supplier reliability — and whether the evidence feeds are still fresh."
+msgstr ""
+"未结承诺、到期或逾期项、协议的使用强度、供应商可靠性——以及证据源是否仍然新"
+"鲜。"
+
+#: templates/procurement/board.html
+msgid "Evidence-feed freshness"
+msgstr "证据源新鲜度"
+
+#: templates/procurement/board.html
+#, python-format
+msgid "stale (%(when)s)"
+msgstr "陈旧 (%(when)s)"
+
+#: templates/procurement/board.html
+msgid "no run recorded"
+msgstr "无运行记录"
+
+#: templates/procurement/board.html
+#, python-format
+msgid "fresh (%(when)s)"
+msgstr "新鲜 (%(when)s)"
+
+#: templates/procurement/board.html
+msgid "Open obligation (ISK)"
+msgstr "未结义务 (ISK)"
+
+#: templates/procurement/board.html
+msgid "Units outstanding"
+msgstr "未结单位数"
+
+#: templates/procurement/board.html templates/store/board.html
+msgid "Open orders"
+msgstr "未完成订单"
+
+#: templates/procurement/board.html
+msgid "Overdue since"
+msgstr "逾期自"
+
+#: templates/procurement/board.html
+msgid "Nothing overdue."
+msgstr "没有逾期项。"
+
+#: templates/procurement/board.html
+msgid "Due within 7 days"
+msgstr "7 天内到期"
+
+#: templates/procurement/board.html templates/procurement/pos.html
+msgid "Promised"
+msgstr "承诺日期"
+
+#: templates/procurement/board.html
+msgid "Nothing due soon."
+msgstr "近期没有到期项。"
+
+#: templates/procurement/board.html
+msgid "Agreement utilisation"
+msgstr "协议利用率"
+
+#: templates/procurement/board.html
+msgid "No active agreements."
+msgstr "没有有效的协议。"
+
+#: templates/procurement/board.html
+msgid "Supplier reliability"
+msgstr "供应商可靠性"
+
+#: templates/procurement/board.html
+msgid "The nightly rollup's latest figures over the last complete weeks."
+msgstr "每晚汇总在最近几个完整周内的最新数据。"
+
+#: templates/procurement/board.html templates/procurement/suppliers.html
+msgid "On-time"
+msgstr "准时"
+
+#: templates/procurement/board.html templates/procurement/supplier_detail.html
+msgid "Price variance"
+msgstr "价格偏差"
+
+#: templates/procurement/board.html templates/procurement/supplier_detail.html
+#: templates/procurement/suppliers.html
+msgid "Sample"
+msgstr "样本"
+
+#: templates/procurement/board.html
+msgid "No suppliers yet."
+msgstr "尚无供应商。"
+
+#: templates/procurement/po_detail.html
+msgid "Procurement · Purchase order"
+msgstr "采购 · 采购订单"
+
+#: templates/procurement/po_detail.html
+#, python-format
+msgid "Order #%(n)s"
+msgstr "订单 #%(n)s"
+
+#: templates/procurement/po_detail.html
+msgid "All orders"
+msgstr "全部订单"
+
+#: templates/procurement/po_detail.html
+msgid "Expected total"
+msgstr "预计总额"
+
+#: templates/procurement/po_detail.html
+msgid "Promised by"
+msgstr "承诺交付日期"
+
+#: templates/procurement/po_detail.html
+#, python-format
+msgid "overdue since %(when)s"
+msgstr "自 %(when)s 起逾期"
+
+#: templates/procurement/po_detail.html
+msgid "Submit"
+msgstr "提交"
+
+#: templates/procurement/po_detail.html
+msgid "Promised by (optional)"
+msgstr "承诺交付日期（可选）"
+
+#: templates/procurement/po_detail.html
+msgid "Confirm approval"
+msgstr "确认批准"
+
+#: templates/procurement/po_detail.html
+msgid "Mark contract-expected"
+msgstr "标记为等待合同"
+
+#: templates/procurement/po_detail.html
+msgid "Create haul"
+msgstr "创建运输任务"
+
+#: templates/procurement/po_detail.html
+msgid "Reconcile"
+msgstr "对账"
+
+#: templates/procurement/po_detail.html
+msgid "Note (required)"
+msgstr "备注（必填）"
+
+#: templates/procurement/po_detail.html
+msgid "Confirm reconcile"
+msgstr "确认对账"
+
+#: templates/procurement/po_detail.html
+msgid "Dispute"
+msgstr "争议"
+
+#: templates/procurement/po_detail.html
+msgid "Mark disputed"
+msgstr "标记为争议"
+
+#: templates/procurement/po_detail.html
+msgid "Resolve dispute"
+msgstr "解决争议"
+
+#: templates/procurement/po_detail.html
+msgid "Reconciled (close)"
+msgstr "已对账（关闭）"
+
+#: templates/procurement/po_detail.html
+msgid "Resume (back to evidence state)"
+msgstr "恢复（返回证据状态）"
+
+#: templates/procurement/po_detail.html
+msgid "Cancelled (Director)"
+msgstr "已取消 (Director)"
+
+#: templates/procurement/po_detail.html
+msgid "Apply outcome"
+msgstr "应用处理结果"
+
+#: templates/procurement/po_detail.html templates/store/order.html
+msgid "Cancel order"
+msgstr "取消订单"
+
+#: templates/procurement/po_detail.html
+msgid "Candidate contracts"
+msgstr "候选合同"
+
+#: templates/procurement/po_detail.html
+msgid ""
+"In-game item-exchange contracts from this supplier that could be this order. "
+"Confirm the right one."
+msgstr "来自该供应商、可能对应此订单的游戏内物品交换合同。请确认正确的一个。"
+
+#: templates/procurement/po_detail.html
+msgid "Confirm match"
+msgstr "确认匹配"
+
+#: templates/procurement/po_detail.html
+msgid "Payment suggestions"
+msgstr "付款建议"
+
+#: templates/procurement/po_detail.html
+msgid ""
+"Wallet-journal entries that could be this order's payment (no context id to "
+"auto-match). Confirm the right one."
+msgstr ""
+"可能是此订单付款的钱包日志条目（无 context id 可用于自动匹配）。请确认正确的"
+"一个。"
+
+#: templates/procurement/po_detail.html
+msgid "Confirm payment"
+msgstr "确认付款"
+
+#: templates/procurement/po_detail.html
+msgid "Ordered"
+msgstr "订购"
+
+#: templates/procurement/po_detail.html
+msgid "Unit price"
+msgstr "单价"
+
+#: templates/procurement/po_detail.html
+msgid "Receipts"
+msgstr "收货记录"
+
+#: templates/procurement/po_form.html
+msgid "New purchase order"
+msgstr "新建采购订单"
+
+#: templates/procurement/po_form.html
+msgid "Draft a purchase order"
+msgstr "起草采购订单"
+
+#: templates/procurement/po_form.html
+msgid ""
+"Create the header, then add the order lines on the next page before "
+"submitting for approval. Attaching an active agreement can pre-authorise the "
+"order."
+msgstr ""
+"先创建头部信息，然后在下一页添加订单明细行，再提交审批。附加一份有效协议可以"
+"预先授权该订单。"
+
+#: templates/procurement/pos.html
+msgid ""
+"Every order to a supplier, from draft to reconciled. The lifecycle is "
+"evidence-driven — the app plans and evidences; it never moves ISK."
+msgstr ""
+"向供应商下达的每一笔订单，从草稿到对账。整个生命周期由证据驱动——应用负责规划"
+"并提供证据；但绝不会转移 ISK 资金。"
+
+#: templates/procurement/pos.html templates/procurement/suppliers.html
+msgid "Agreements"
+msgstr "协议"
+
+#: templates/procurement/pos.html
+msgid "New order"
+msgstr "新建订单"
+
+#: templates/procurement/pos.html templates/store/order_confirm.html
+msgid "Delivery"
+msgstr "交付"
+
+#: templates/procurement/pos.html templates/procurement/supplier_detail.html
+msgid "Expected"
+msgstr "预期"
+
+#: templates/procurement/pos.html
+msgid "No purchase orders match."
+msgstr "没有匹配的采购订单。"
+
+#: templates/procurement/supplier_detail.html
+msgid "Procurement · Supplier"
+msgstr "采购 · 供应商"
+
+#: templates/procurement/supplier_detail.html
+msgid "All suppliers"
+msgstr "全部供应商"
+
+#: templates/procurement/supplier_detail.html
+msgid "On-time rate"
+msgstr "准时率"
+
+#: templates/procurement/supplier_detail.html
+msgid "Fill rate"
+msgstr "履约率"
+
+#: templates/procurement/supplier_detail.html templates/store/margin.html
+#, python-format
+msgid "as of %(when)s"
+msgstr "截至 %(when)s"
+
+#: templates/procurement/supplier_detail.html
+msgid "not yet computed"
+msgstr "尚未计算"
+
+#: templates/procurement/supplier_detail.html
+msgid "Profile"
+msgstr "资料"
+
+#: templates/procurement/supplier_detail.html
+msgid "Contact:"
+msgstr "联系方式："
+
+#: templates/procurement/supplier_detail.html
+msgid "Catalogue"
+msgstr "目录"
+
+#: templates/procurement/supplier_detail.html
+msgid "Add item"
+msgstr "添加商品"
+
+#: templates/procurement/supplier_detail.html
+msgid "Add to catalogue"
+msgstr "添加到目录"
+
+#: templates/procurement/supplier_detail.html
+msgid "MOQ"
+msgstr "MOQ"
+
+#: templates/procurement/supplier_detail.html
+msgid "No catalogue items yet."
+msgstr "尚无目录商品。"
+
+#: templates/procurement/supplier_detail.html
+msgid "Contract history"
+msgstr "合同历史"
+
+#: templates/procurement/supplier_detail.html
+msgid "Purchase orders from this supplier that matched an in-game contract."
+msgstr "该供应商中已匹配到游戏内合同的采购订单。"
+
+#: templates/procurement/supplier_detail.html
+msgid "Matched"
+msgstr "已匹配"
+
+#: templates/procurement/supplier_detail.html
+msgid "No matched contracts yet."
+msgstr "尚无已匹配的合同。"
+
+#: templates/procurement/supplier_form.html
+#: templates/procurement/suppliers.html
+msgid "New supplier"
+msgstr "新建供应商"
+
+#: templates/procurement/supplier_form.html
+msgid "Register a supplier"
+msgstr "登记供应商"
+
+#: templates/procurement/supplier_form.html
+msgid ""
+"Business data only — the entity id is the EVE character or corporation id "
+"(leave blank for an informal hub source)."
+msgstr ""
+"仅业务数据 —— entity id 即 EVE 角色或军团的 id（非正式 hub 来源可留空）。"
+
+#: templates/procurement/supplier_form.html
+msgid "Save supplier"
+msgstr "保存供应商"
+
+#: templates/procurement/suppliers.html
+msgid ""
+"Pilots, corporations and market hubs the corp buys imports and third-party "
+"builds from. Business data only."
+msgstr ""
+"corp 会从飞行员、军团和市场 hub 处采购进口物资和第三方建造品。仅业务数据。"
+
+#: templates/procurement/suppliers.html
+msgid "Supplier name"
+msgstr "供应商名称"
+
+#: templates/procurement/suppliers.html
+msgid "Lead (days)"
+msgstr "提前期（天）"
+
+#: templates/procurement/suppliers.html
+msgid "No suppliers match."
+msgstr "没有匹配的供应商。"
 
 #: templates/raffle/archive.html
 msgid "Raffle archive"
@@ -45651,7 +47865,7 @@ msgstr "置信度 %(conf)s"
 msgid "as of %(fresh)s"
 msgstr "截至 %(fresh)s"
 
-#: templates/recommendations/_rec_card.html
+#: templates/recommendations/_rec_card.html templates/store/margin.html
 msgid "Acknowledge"
 msgstr "确认"
 
@@ -46223,10 +48437,6 @@ msgid "total SP"
 msgstr "总 SP"
 
 #: templates/skills/plans.html
-msgid "skills"
-msgstr "技能"
-
-#: templates/skills/plans.html
 msgid "at level V"
 msgstr "达到 V 级"
 
@@ -46319,10 +48529,6 @@ msgstr ""
 #: templates/srp/budget.html
 msgid "Last 6 months"
 msgstr "最近 6 个月"
-
-#: templates/srp/budget.html
-msgid "Remaining"
-msgstr "剩余"
 
 #: templates/srp/budget.html
 msgid "Set a period’s allocation"
@@ -47126,6 +49332,12 @@ msgid "Post"
 msgstr "发布"
 
 #: templates/stockpile/logistics.html
+#, python-format
+msgid "batch · %(n)s item"
+msgid_plural "batch · %(n)s items"
+msgstr[0] "批次 · %(n)s 件"
+
+#: templates/stockpile/logistics.html
 msgid "multi-item"
 msgstr "多物品"
 
@@ -47169,10 +49381,6 @@ msgstr "用于"
 #: templates/store/board.html
 msgid "buyer"
 msgstr "买家"
-
-#: templates/store/board.html
-msgid "Open orders"
-msgstr "未完成订单"
 
 #: templates/store/board.html templates/store/order_confirm.html
 msgid "Deposit"
@@ -47625,10 +49833,6 @@ msgid "Receive assembled ships"
 msgstr "接收已组装舰船"
 
 #: templates/store/inventory_fit.html
-msgid "Receive"
-msgstr "收货"
-
-#: templates/store/inventory_fit.html
 msgid ""
 "Record complete, fitted ships only — hulls or loose modules belong in the "
 "stockpile, not here. Arrivals are reserved for waiting backorders "
@@ -47727,6 +49931,10 @@ msgstr "多个订单合并为这一项需求 — 不会创建重复的项目或�
 #: templates/store/inventory_fit.html
 msgid "No open backorder demand for this fit."
 msgstr "此配装没有未结的缺货预订需求。"
+
+#: templates/store/inventory_fit.html
+msgid "Material Plan has requirements descending from this fit"
+msgstr "材料计划中有源自此配装的需求"
 
 #: templates/store/inventory_fit.html
 msgid "Demand"
@@ -48097,10 +50305,6 @@ msgstr "您的舰船已就绪。接受游戏内合同并支付余款。"
 msgid "Claim &amp; fulfil"
 msgstr "认领 &amp; 履单"
 
-#: templates/store/order.html
-msgid "Cancel order"
-msgstr "取消订单"
-
 #: templates/store/order_confirm.html
 msgid "Confirm order"
 msgstr "确认订单"
@@ -48142,10 +50346,6 @@ msgstr "每艘"
 #: templates/store/order_confirm.html
 msgid "None — you pay on delivery via in-game contract."
 msgstr "无 — 交付时通过游戏内合同付款。"
-
-#: templates/store/order_confirm.html
-msgid "Delivery"
-msgstr "交付"
 
 #: templates/store/order_confirm.html
 msgid ""
@@ -48695,253 +50895,483 @@ msgstr "— 取消分配（退回开放池）—"
 msgid "This source string is intentionally never translated"
 msgstr "此源字符串刻意保持不翻译"
 
-msgid "No matching in-game job found — enter its job ID."
-msgstr "未找到匹配的游戏内作业 — 请输入其作业 ID。"
+msgid "Matched by payment token %(token)s"
+msgstr "通过付款令牌 %(token)s 匹配"
 
-msgid "Linked to in-game job #%(id)s — it now carries the schedule."
-msgstr "已关联到游戏内作业 #%(id)s — 排期现由该作业承载。"
-
-msgid "That in-game job produces a different item."
-msgstr "该游戏内作业生产的是另一种物品。"
+msgid "Quote drift flagged: {ship_name}"
+msgstr "报价漂移已标记: {ship_name}"
 
 msgid ""
-"Dated demand beyond this many days ahead is excluded from the plan and "
-"listed separately."
-msgstr "超出此天数的带日期需求将不纳入计划，并单独列出。"
-
-msgid "Assumed days to buy an item at the price-reference hub."
-msgstr "在价格参考枢纽购买物品的假定天数。"
-
-msgid "Assumed days to buy at Jita and freight to the destination."
-msgstr "在 Jita 购买并运送到目的地的假定天数。"
-
-msgid ""
-"Count finished-but-undelivered ESI jobs (status \"ready\") as incoming "
-"supply."
-msgstr "将已完成但未交付的 ESI 作业（状态为“ready”）计为在途补给。"
-
-msgid ""
-"Run the planning job automatically on its nightly schedule. Off: officers "
-"run it manually from the Material Plan page."
-msgstr "按每晚的排程自动运行规划任务。关闭时：由官员在材料计划页面手动运行。"
-
-msgid "Material-efficiency assumed for every build level of the explosion."
-msgstr "展开的每个建造层级所假定的材料效率。"
-
-msgid "Deepest BOM level the explosion will recurse to."
-msgstr "展开递归到的最深 BOM 层级。"
-
-msgid "MRP config"
-msgstr "MRP 配置"
-
-msgid "MRP configs"
-msgstr "MRP 配置"
-
-msgid "in-flight ESI job"
-msgstr "进行中的 ESI 作业"
-
-msgid "An active supply plan for %(item)s already exists."
-msgstr "%(item)s 已存在有效的补给计划。"
-
-msgid "A planning run is already in progress — try again shortly."
-msgstr "已有一次规划运行正在进行 — 请稍后再试。"
-
-msgid "Planning run finished — no changes since the last run."
-msgstr "规划运行已完成 — 与上次运行相比无变化。"
-
-msgid "Planning run finished: %(written)s row(s) updated, %(closed)s closed."
-msgstr "规划运行已完成：已更新 %(written)s 行，关闭 %(closed)s 行。"
-
-msgid "Ship-level demand is fulfilled from the Shipyard inventory console."
-msgstr "舰船层级的需求由船坞库存控制台履行。"
-
-msgid "Material shortfall: {industry_job_name}"
-msgstr "材料缺口：{industry_job_name}"
-
-msgid ""
-"The material plan needs {quantity}× {industry_job_name} by {eta_date}. "
-"Review the Material Plan: {link}"
+"The frozen quote for {ship_name} has drifted {percent} from its basis. "
+"Review it on the margin console: {link}"
 msgstr ""
-"材料计划需要在 {eta_date} 前获得 {quantity}× {industry_job_name}。请查看材料"
-"计划：{link}"
+"{ship_name} 的冻结报价已较其基准漂移 {percent} ，请在利润率控制台查看: {link}"
+
+msgid "Margin erosion"
+msgstr "利润率侵蚀"
 
 msgid ""
-"Linked to the in-game job — it carries the schedule and the supply count"
-msgstr "已关联到游戏内作业 — 排期与补给数量以其为准"
-
-msgid "ESI job ID"
-msgstr "ESI 作业 ID"
-
-msgid ""
-"Record which in-game job this build became, so planning never counts it twice"
-msgstr "记录此建造对应的游戏内作业，避免规划重复计算"
-
-msgid ""
-"Corp-wide net requirements: every demand source exploded through the build "
-"tree and netted once against stock, reservations and in-flight work. Dates "
-"assume unconstrained industry slots — capacity planning comes in a later "
-"phase."
+"Corp Store margin is eroding ({details}, evidenced margin {percent}). Review "
+"the margin console: {link}"
 msgstr ""
-"全军团净需求：每个需求来源都沿建造树展开，并与库存、预留和进行中的工作做一次"
-"净额抵扣。日期假定工业槽位不受限 — 产能规划将在后续阶段推出。"
+"Corp Store 的利润率正在被侵蚀（ {details} ，实证利润率 {percent} ）。请查看利"
+"润率控制台: {link}"
+
+msgid "Supply Command: {count} open problem(s)"
+msgstr "Supply Command: {count} 个待处理问题"
 
 msgid ""
-"No changes — the latest run's inputs are identical to the previous run's."
-msgstr "无变化 — 最新一次运行的输入与上一次完全相同。"
+"Supply Command has open problems needing attention: {details}. Review the "
+"board: {link}"
+msgstr "Supply Command 有待处理的问题需要关注: {details} 。请查看看板: {link}"
+
+msgid "Supply Command digest"
+msgstr "Supply Command 摘要"
 
 msgid ""
-"No market price signal for: %(items)s — a 0 ISK buy line is a data gap, not "
-"a bargain."
+"One deduped officer digest of the Supply Command board's open problems — low "
+"stock, at-risk/overdue orders, material shortages, production bottlenecks, "
+"in-transit hauls and discrepancies. Fires once per distinct problem set and "
+"resets when everything is clear."
 msgstr ""
-"以下物品缺少市场价格信号：%(items)s — 0 ISK 的购买行是数据缺口，不是便宜货。"
+"一份去重后的官员摘要，汇总 Supply Command 看板上的待处理问题 — 低库存、有风"
+"险/逾期订单、物料短缺、生产瓶颈、在途运输与差异。每个不同的问题集合触发一次，"
+"并在全部清空后重置。"
 
-msgid "Feasible"
-msgstr "可行"
+msgid "Beat supplyboard.sweep (every 20 min), on a red-set change."
+msgstr "Beat supplyboard.sweep（每 20 分钟），在红色集合变化时触发。"
 
-msgid "ships & fits — fulfilled from the Shipyard console"
-msgstr "舰船与配装 — 由船坞控制台履行"
-
-msgid ""
-"The linked vehicle no longer matches the plan — planned quantity differs "
-"from what the vehicle says"
-msgstr "关联的载具与计划不再一致 — 计划数量与载具所示不同"
-
-msgid "Materials for promised build"
-msgstr "承诺建造所需材料"
-
-msgid "No open requirements — run planning to compute the current picture."
-msgstr "暂无未结需求 — 运行规划以计算当前状况。"
-
-msgid "Multibuy (open buy & import lines)"
-msgstr "Multibuy（未结的购买与进口行）"
+msgid "Corp Store quote drift"
+msgstr "Corp Store 报价漂移"
 
 msgid ""
-"Dated demand this far out is excluded from the current plan; it enters when "
-"the window reaches it."
-msgstr "这么远之后的带日期需求不纳入当前计划；待规划窗口到达时才会计入。"
+"An officer alert when an open store order's frozen basis drifts beyond the "
+"configured percent AND ISK floor. Quotes are member-visible prices, not corp "
+"P&L, so this is operations-routed; informational — no frozen price ever "
+"changes."
+msgstr ""
+"当某个未结店铺订单的冻结基准漂移超过所配置的百分比与 ISK 下限时，向官员发出的"
+"告警。报价是成员可见的价格，而非军团 P&L ，因此按运营渠道分发；仅供参考 — 任"
+"何冻结价格都不会改变。"
 
-msgid "Material Plan has requirements descending from this fit"
-msgstr "材料计划中有源自此配装的需求"
+msgid "Beat store.check_quote_drift (nightly), on a fresh flag."
+msgstr "Beat store.check_quote_drift（每晚），在出现新标记时触发。"
 
-msgid "Material plan restock: %(item)s"
-msgstr "材料计划补货：%(item)s"
+msgid "Corp Store margin erosion"
+msgstr "Corp Store 利润率侵蚀"
 
-msgid "Material plan: %(quantity)s× %(item)s"
-msgstr "材料计划：%(quantity)s× %(item)s"
+msgid ""
+"A leadership alert when the delivered-order evidenced-margin ratio drops "
+"below the configured floor, or newly-flagged drift rows spike. ISK-"
+"sensitive: routes leadership-only via classification, so an undesignated "
+"mass channel drops it."
+msgstr ""
+"当已交付订单的实证利润率比率跌破所配置的下限，或新标记的漂移条目激增时，向领"
+"导层发出的告警。ISK 敏感：通过分级仅路由至领导层，因此未指定的群发频道会将其"
+"丢弃。"
 
-msgid "Buy %(quantity)s× %(item)s for the material plan"
-msgstr "为材料计划购买 %(quantity)s× %(item)s"
+msgid "Beat store.check_quote_drift tail (nightly), at most one per day."
+msgstr "Beat store.check_quote_drift 尾段（每晚），每天最多一次。"
 
-msgid "In-game job link removed."
-msgstr "游戏内作业关联已移除。"
+msgid "In-game contract id (optional)"
+msgstr "游戏内合同 ID（可选）"
 
-msgid "That in-game job is already linked to another build job."
-msgstr "该游戏内作业已关联到另一个建造作业。"
+msgid "EVE Ref job cost"
+msgstr "EVE Ref 作业成本"
 
-msgid "Only an in-progress job can be linked."
-msgstr "只有进行中的作业才能关联。"
+msgid "Local material estimate"
+msgstr "本地物料估算"
 
-msgid "MRP planning run"
-msgstr "MRP 规划运行"
+msgid "Jita sell reference"
+msgstr "Jita 卖单参考价"
 
-msgid "build duration"
-msgstr "建造时长"
+msgid "Unknown — cost source unavailable"
+msgstr "未知 — 成本来源不可用"
 
-msgid "lead time"
-msgstr "前置时间"
+msgid "Unrecorded"
+msgstr "未记录"
 
-msgid "That requirement is closed."
-msgstr "该需求已关闭。"
+msgid ""
+"Flag an open order when its re-estimated basis moves this fraction or more "
+"from the frozen value (0.100 = 10 percent)."
+msgstr ""
+"当未结订单重新估算的基准相较冻结值变动达到或超过此比例时将其标记（0.100 = "
+"10%）。"
 
-msgid "Industry plan “%(name)s” is linked."
-msgstr "工业计划“%(name)s”已关联。"
+msgid ""
+"Also require this many ISK of absolute drift before flagging — stops penny "
+"noise on small hulls."
+msgstr ""
+"在标记前还要求达到这么多 ISK 的绝对漂移额 — 可避免小型舰船上的细碎噪声。"
 
-msgid "Hauling job posted and linked."
-msgstr "运输任务已发布并关联。"
+msgid "Run the nightly quote-drift check. Off: no drift is ever flagged."
+msgstr "运行每晚的报价漂移检查。关闭：将永不标记任何漂移。"
 
-msgid "Claimable BUY task created and linked."
-msgstr "已创建并关联可认领的 BUY 任务。"
+msgid ""
+"Match delivered orders to corp-wallet revenue by payment token. Off: margin "
+"shows quoted revenue only."
+msgstr "按付款令牌将已交付订单与军团钱包收入匹配。关闭：利润率仅显示报价收入。"
 
-msgid "in game #%(id)s"
-msgstr "游戏内 #%(id)s"
+msgid "Trailing days of delivered orders the margin summary covers."
+msgstr "利润率汇总所涵盖的已交付订单的回溯天数。"
 
-msgid "In-game job ID"
-msgstr "游戏内作业 ID"
+msgid ""
+"Alert leadership when the window's evidenced-margin ratio drops below this "
+"fraction (0.050 = 5 percent)."
+msgstr "当窗口期的实证利润率比率跌破此比例时告警领导层（0.050 = 5%）。"
 
-msgid "Confirm in-game match"
-msgstr "确认游戏内匹配"
+msgid "margin config"
+msgstr "利润率配置"
 
-msgid "Started in game"
-msgstr "已在游戏内开始"
+msgid "margin configs"
+msgstr "利润率配置"
 
-msgid "Material Plan"
-msgstr "材料计划"
+msgid "Wallet journal"
+msgstr "钱包日志"
 
-msgid "Run planning now"
-msgstr "立即运行规划"
+msgid "Corp contract"
+msgstr "军团合同"
 
-msgid "Live requirements"
-msgstr "实时需求"
+msgid "Payment token"
+msgstr "付款令牌"
 
-msgid "planning window: %(days)s days"
-msgstr "规划窗口：%(days)s 天"
+msgid "Officer-recorded"
+msgstr "官员记录"
 
-msgid "Level %(depth)s"
-msgstr "层级 %(depth)s"
+msgid "That contract id isn't valid."
+msgstr "该合同 ID 无效。"
 
-msgid "diverged"
-msgstr "已偏离"
+msgid "Margin settings updated."
+msgstr "利润率设置已更新。"
 
-msgid "Demand sources"
-msgstr "需求来源"
+msgid "Drift acknowledged."
+msgstr "漂移已确认。"
 
-msgid "Fit demand"
-msgstr "配装需求"
+msgid "That drift was already acknowledged."
+msgstr "该漂移已被确认过。"
 
-msgid "Backorder need"
-msgstr "缺货预订需求"
+msgid "Enter a valid order number."
+msgstr "请输入有效的订单编号。"
 
-msgid "Component of requirement"
-msgstr "上级需求的组件"
+msgid "Settlement recorded — it fills once the contract completes."
+msgstr "结算已记录 — 待合同完成后自动填充。"
 
-msgid "Incoming supply"
-msgstr "在途补给"
+msgid "That contract id is invalid or already linked to another order."
+msgstr "该合同 ID 无效，或已关联到另一笔订单。"
 
-msgid "In-game job"
-msgstr "游戏内作业"
+msgid ""
+"Warm the board cache and fire the officer problem-set digest on its "
+"schedule. Off: the board is still viewable on demand, but nothing pings."
+msgstr ""
+"预热看板缓存，并按计划发送官员问题集摘要。关闭：看板仍可随时查看，但不会有任"
+"何提醒。"
 
-msgid "Board job"
-msgstr "看板作业"
+msgid ""
+"Flag an order as at-risk when its estimate is within this many days (also "
+"the stalled-haul age)."
+msgstr ""
+"当订单的预计时间在这么多天以内时，将其标记为有风险（同时也是运输停滞的判定天"
+"数）。"
 
-msgid "Plan line"
-msgstr "计划行"
+msgid "Surface a restock commitment when it is due within this many days."
+msgstr "当补货承诺将在这么多天内到期时将其呈现。"
 
-msgid "Shipyard console"
-msgstr "船坞控制台"
+msgid ""
+"Flag stocked fits not reconciled within this many days as a discrepancy."
+msgstr "将在这么多天内未完成对账的库存配装标记为差异。"
 
-msgid "BUY task"
-msgstr "BUY 任务"
+msgid "board config"
+msgstr "看板配置"
 
-msgid "Paste into the in-game market Multibuy window."
-msgstr "粘贴到游戏内市场的 Multibuy 窗口。"
+msgid "board configs"
+msgstr "看板配置"
 
-msgid "Beyond the planning window"
-msgstr "超出规划窗口"
+msgid "Doctrine readiness & low stock"
+msgstr "Doctrine 就绪度 & 低库存"
 
-msgid "Run history"
-msgstr "运行历史"
+msgid "At-risk & overdue orders"
+msgstr "有风险 & 逾期订单"
 
-msgid "Updated"
-msgstr "已更新"
+msgid "Material shortages"
+msgstr "物料短缺"
 
-msgid "Input digest"
-msgstr "输入摘要"
+msgid "Commitments due & late"
+msgstr "到期 & 逾期的承诺"
 
-msgid "Triggered by"
-msgstr "触发来源"
+msgid "Production bottlenecks"
+msgstr "生产瓶颈"
 
-msgid "schedule"
-msgstr "定时"
+msgid "In-transit hauls"
+msgstr "在途运输"
 
-msgid "No runs yet."
-msgstr "暂无运行记录。"
+msgid "Stock discrepancies"
+msgstr "库存差异"
+
+msgid "Obsolete & slow-moving stock"
+msgstr "淘汰 & 滞销库存"
+
+msgid "Margin erosion & drifted quotes"
+msgstr "利润率侵蚀 & 漂移的报价"
+
+msgid "%(fit)s is at %(atp)s — at or below its reorder point %(reorder)s"
+msgstr "%(fit)s 现为 %(atp)s — 已达到或低于其再订货点 %(reorder)s"
+
+msgid "%(fit)s is at %(atp)s — below its safety stock %(safety)s"
+msgstr "%(fit)s 现为 %(atp)s — 低于其安全库存 %(safety)s"
+
+msgid "%(fit)s is at %(atp)s — below the suggested reorder point %(reorder)s"
+msgstr "%(fit)s 现为 %(atp)s — 低于建议的再订货点 %(reorder)s"
+
+msgid "%(fit)s has stock but no delivery location set"
+msgstr "%(fit)s 有库存但未设置交付地点"
+
+msgid "%(fit)s has stock stranded on an old fit revision"
+msgstr "%(fit)s 有库存滞留在旧的配装版本上"
+
+msgid "%(ship)s order is overdue (was due %(eta)s)"
+msgstr "%(ship)s 的订单已逾期（原定 %(eta)s ）"
+
+msgid "%(ship)s order is due within %(days)s day(s) (%(eta)s)"
+msgstr "%(ship)s 的订单将在 %(days)s 天内到期（ %(eta)s ）"
+
+msgid "%(item)s — %(qty)s short, needed %(due)s"
+msgstr "%(item)s — 短缺 %(qty)s ，需于 %(due)s 备齐"
+
+msgid "%(item)s — %(qty)s short"
+msgstr "%(item)s — 短缺 %(qty)s"
+
+msgid "%(fit)s restock is overdue (was due %(due)s)"
+msgstr "%(fit)s 的补货已逾期（原定 %(due)s ）"
+
+msgid "%(fit)s restock is due %(due)s"
+msgstr "%(fit)s 的补货将于 %(due)s 到期"
+
+msgid ""
+"%(item)s cannot be ready in time — feasible %(feasible)s, needed %(due)s"
+msgstr "%(item)s 无法按时就绪 — 最早可行 %(feasible)s ，需于 %(due)s"
+
+msgid "Haul %(route)s is unclaimed and stalled"
+msgstr "运输 %(route)s 无人认领且已停滞"
+
+msgid "Haul %(route)s is in progress"
+msgstr "运输 %(route)s 正在进行中"
+
+msgid "%(fit)s stock has not been reconciled in %(days)s+ days"
+msgstr "%(fit)s 的库存已 %(days)s+ 天未对账"
+
+msgid "%(item)s is over-reserved by %(qty)s"
+msgstr "%(item)s 超额预留 %(qty)s"
+
+msgid "%(fit)s is obsolete but still stocked"
+msgstr "%(fit)s 已淘汰但仍有库存"
+
+msgid "%(fit)s is a slow mover"
+msgstr "%(fit)s 是滞销品"
+
+msgid "Evidenced margin is %(pct)s over the last %(days)s days"
+msgstr "过去 %(days)s 天的实证利润率为 %(pct)s"
+
+msgid "%(ship)s quote drifted %(pct)s from its basis"
+msgstr "%(ship)s 的报价较基准漂移了 %(pct)s"
+
+msgid "Receipt stock or fan out the need"
+msgstr "登记入库，或将需求分发出去"
+
+msgid "Advance or revise the ETA"
+msgstr "提前或修订 ETA"
+
+msgid "Fan out a supply vehicle"
+msgstr "分发一个补给载具"
+
+msgid "Mint or refresh the vehicle"
+msgstr "创建或刷新该载具"
+
+msgid "Expedite — fan out or adjust dates"
+msgstr "加急 — 分发或调整日期"
+
+msgid "Claim, complete or cancel the haul"
+msgstr "认领、完成或取消该运输"
+
+msgid "Revalidate stock or review reconciliation"
+msgstr "重新校验库存或检查对账"
+
+msgid "Retire the offer or redistribute stock"
+msgstr "下架该报价或重新分配库存"
+
+msgid "Acknowledge drift or record a settlement"
+msgstr "确认漂移或记录一笔结算"
+
+msgid "Supply Command board refreshed."
+msgstr "Supply Command 看板已刷新。"
+
+msgid "Supply command"
+msgstr "Supply Command"
+
+msgid "Supply Command board"
+msgstr "Supply Command 看板"
+
+msgid ""
+"Every supply-chain problem in one place — low stock, at-risk orders, "
+"shortages, bottlenecks, in-transit hauls and discrepancies. Each row deep-"
+"links to the console that fixes it."
+msgstr ""
+"将每一个供应链问题集中呈现 — 低库存、有风险订单、短缺、瓶颈、在途运输与差异。"
+"每一行都深度链接到可解决该问题的控制台。"
+
+msgid "Margin &amp; profitability"
+msgstr "利润率 &amp; 盈利能力"
+
+msgid ""
+"Actual-vs-estimated margin by fulfilment method, revenue evidence and "
+"flagged quote drift, with every assumption shown inline."
+msgstr ""
+"按履约方式列出的实际与估算利润率对比、收入凭证以及已标记的报价漂移，并将每一"
+"项假设内联展示。"
+
+msgid "Margin & profitability"
+msgstr "利润率 & 盈利能力"
+
+msgid "Delivered orders over the last %(days)s days, by fulfilment method."
+msgstr "过去 %(days)s 天按履约方式列出的已交付订单。"
+
+msgid "Margin by fulfilment method"
+msgstr "按履约方式列出的利润率"
+
+msgid "Orders"
+msgstr "订单"
+
+msgid "Quoted revenue"
+msgstr "报价收入"
+
+msgid "Evidenced revenue"
+msgstr "实证收入"
+
+msgid "Est. cost"
+msgstr "预估成本"
+
+msgid "Est. margin"
+msgstr "预估利润率"
+
+msgid "Evidenced margin"
+msgstr "实证利润率"
+
+msgid "Cost is a Jita reference, not an actual cost"
+msgstr "成本为 Jita 参考价，而非实际成本"
+
+msgid "Orders with no revenue evidence yet"
+msgstr "尚无收入凭证的订单"
+
+msgid "unevidenced"
+msgstr "无凭证"
+
+msgid "No delivered orders in the window yet."
+msgstr "窗口期内尚无已交付订单。"
+
+msgid ""
+"Non-build lanes show the frozen Jita reference as a cost stand-in, not an "
+"actual cost. Supplier and landed-import actuals arrive with later phases."
+msgstr ""
+"非自建通道以冻结的 Jita 参考价作为成本替代值，而非实际成本。供应商与到岸进口"
+"的实际数据将在后续阶段提供。"
+
+msgid "Quote drift"
+msgstr "报价漂移"
+
+msgid "Frozen %(frozen)s → current %(current)s"
+msgstr "冻结 %(frozen)s → 当前 %(current)s"
+
+msgid ""
+"Assumptions — sales tax, broker fee and system cost index defaults from "
+"Industry settings (%(tax)s / %(broker)s / %(idx)s as fractions). Drift never "
+"changes a frozen price."
+msgstr ""
+"假设 — 销售税、经纪费与系统成本指数取自工业设置的默认值（ %(tax)s / %"
+"(broker)s / %(idx)s ，以小数表示）。漂移永远不会改变冻结价格。"
+
+msgid "No quotes flagged for drift."
+msgstr "没有被标记为漂移的报价。"
+
+msgid "Record settlement evidence"
+msgstr "记录结算凭证"
+
+msgid "Order number"
+msgstr "订单编号"
+
+msgid "Completed contract id"
+msgstr "已完成的合同 ID"
+
+msgid "Link contract"
+msgstr "关联合同"
+
+msgid ""
+"The amount and date fill automatically once the contract completes — never a "
+"fabricated actual."
+msgstr "金额与日期会在合同完成后自动填充 — 绝不会伪造实际数据。"
+
+msgid "Recent settlements"
+msgstr "近期结算"
+
+msgid "awaiting contract"
+msgstr "等待合同"
+
+msgid "No settlements recorded yet."
+msgstr "尚未记录任何结算。"
+
+msgid "Run the nightly quote-drift check"
+msgstr "运行每晚的报价漂移检查"
+
+msgid "Match revenue by payment token"
+msgstr "按付款令牌匹配收入"
+
+msgid "Drift threshold (fraction)"
+msgstr "漂移阈值（小数）"
+
+msgid "Minimum ISK drift"
+msgstr "最小 ISK 漂移额"
+
+msgid "Margin window (days)"
+msgstr "利润率窗口（天）"
+
+msgid "Margin alert floor (fraction)"
+msgstr "利润率告警下限（小数）"
+
+msgid ""
+"Put this in your ISK transfer reason so the payment is matched to this order."
+msgstr "请将此填入你的 ISK 转账事由，以便将付款匹配到此订单。"
+
+msgid "Fulfilling contract id (optional)"
+msgstr "履约合同 ID（可选）"
+
+msgid "How was this fulfilled?"
+msgstr "这是如何履约的？"
+
+msgid "Supply Command"
+msgstr "Supply Command"
+
+msgid "%(reds)s problem needs attention."
+msgid_plural "%(reds)s problems need attention."
+msgstr[0] "%(reds)s 个问题需要关注。"
+
+msgid "Built %(when)s ago"
+msgstr "构建于 %(when)s 前"
+
+msgid "Refresh now"
+msgstr "立即刷新"
+
+msgid "Source data last synced"
+msgstr "源数据上次同步"
+
+msgid "data %(when)s old"
+msgstr "数据已有 %(when)s"
+
+msgid "see all"
+msgstr "查看全部"
+
+msgid "This section is temporarily unavailable."
+msgstr "此部分暂时不可用。"
+
+msgid "Showing %(shown)s of %(total)s."
+msgstr "正在显示 %(total)s 项中的 %(shown)s 项。"
+
+msgid "Open the full list"
+msgstr "打开完整列表"

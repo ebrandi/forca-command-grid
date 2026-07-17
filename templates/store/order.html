@@ -62,6 +62,12 @@
       </div>
       {% endif %}
       {% if order.location_name %}<div class="mt-2 flex items-center justify-between"><span class="text-faint">{% translate "Deliver to" %}</span><span class="text-muted">{{ order.location_name }}</span></div>{% endif %}
+      {% if is_buyer or is_officer %}
+      <div class="mt-2 flex items-center justify-between border-t border-line/50 pt-2">
+        <span class="text-faint">{% translate "Payment reference" %}</span>
+        <span class="data text-muted" title="{% translate 'Put this in your ISK transfer reason so the payment is matched to this order.' %}">{{ order.payment_token }}</span>
+      </div>
+      {% endif %}
     </div>
 
     {% if order.availability_state %}
@@ -119,7 +125,14 @@
         <form method="post" action="{% url 'store:claim_order' order.pk %}">{% csrf_token %}<button class="btn-gold">{% translate "Claim &amp; fulfil" %}</button></form>
       {% endif %}
       {% if next_status and is_claimer or next_status and is_officer %}
-        <form method="post" action="{% url 'store:advance_order' order.pk %}">{% csrf_token %}<button class="btn-gold">{{ advance_label }}</button></form>
+        <form method="post" action="{% url 'store:advance_order' order.pk %}" class="flex flex-wrap items-end gap-2 {% if next_status == 'ready' or next_status == 'delivered' %}w-full{% endif %}">{% csrf_token %}
+          {% if next_status == 'ready' %}
+          <label class="block flex-1"><span class="text-[11px] text-faint">{% translate "Fulfilling contract id (optional)" %}</span>{{ advance_form.contract_id }}</label>
+          {% elif next_status == 'delivered' %}
+          <label class="block flex-1"><span class="text-[11px] text-faint">{% translate "How was this fulfilled?" %}</span>{{ advance_form.fulfilment_method }}</label>
+          {% endif %}
+          <button class="btn-gold">{{ advance_label }}</button>
+        </form>
       {% endif %}
       {% if order.status == 'claimed' and is_claimer %}
         <form method="post" action="{% url 'store:order_action' order.pk %}">{% csrf_token %}<button name="action" value="release" class="btn-ghost">{% translate "Release" %}</button></form>

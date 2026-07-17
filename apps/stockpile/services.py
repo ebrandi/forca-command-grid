@@ -233,6 +233,14 @@ def _volume_for(type_id: int) -> float:
 def generate_hauling_tasks(source_location, dest_location, kind: str = Stockpile.Kind.CORP) -> int:
     """Create hauling tasks to cover target shortfalls at the destination.
 
+    .. deprecated::
+        Superseded by the P6 freight pipeline (:mod:`apps.logistics.freight`), which
+        consolidates purchase/import lines per lane, prices and caps the leg against
+        the rate card, and receipts landed stock — this helper's stockpile-target
+        source double-counts across routes. It has zero production callers; kept one
+        release for safety, then removed. Use ``freight.add_requirement_to_batch`` /
+        ``freight.open_batch_for_lane`` for new work.
+
     Deficits are summed per type across stockpiles. Idempotent per
     (type, source, dest): an existing OPEN task is updated in place rather than
     duplicated, and the lookup tolerates duplicates without raising.

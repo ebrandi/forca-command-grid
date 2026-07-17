@@ -210,11 +210,12 @@ def deliver(job: BuildJob, user, quantity: int | None = None) -> Delivery | None
     qty = quantity or locked.quantity
     stockpile = locked.deliver_to or _default_corp_stockpile()
 
-    # Global lock order: BuildJob → IndustryProject → StockpileItem → StockReservation.
-    # A plan-linked delivery takes the plan lock up front so the reserve/release/close
-    # paths (which also lock the plan first) fully serialize with the consumption and
-    # the DONE-release below — a racing Reserve can never mint claims on a plan this
-    # delivery is about to close.
+    # Global lock order: BuildJob → IndustryProject → PurchaseOrder → StockpileItem →
+    # StockReservation (procurement/P4 inserts PurchaseOrder here; on the fit path the PO
+    # also precedes FitStock/StoreOrder). A plan-linked delivery takes the plan lock up
+    # front so the reserve/release/close paths (which also lock the plan first) fully
+    # serialize with the consumption and the DONE-release below — a racing Reserve can
+    # never mint claims on a plan this delivery is about to close.
     if locked.source_item_id:
         from apps.industry.models import IndustryProject
 

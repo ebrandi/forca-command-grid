@@ -100,13 +100,17 @@ def create_contract_from_quote(
     posted_as_id: int | None = None,
     posted_as_name: str = "",
     created_by=None,
+    notes: str = "",
 ) -> CourierContract:
     """Persist a priced quote as an outstanding contract pilots can claim.
 
     ``origin``/``dest`` are resolved location dicts ({kind,id,name,system_id}).
+    ``notes`` is free-text written verbatim to the contract (P6 passes the pinned-
+    English Seam-B batch-leg note here); the ``""`` default preserves every caller.
     """
     bd = quote.breakdown
     contract = CourierContract.objects.create(
+        notes=(notes or "")[:300],
         origin_name=(origin.get("name") or "").strip(),
         origin_system_id=origin.get("system_id"),
         origin_location_kind=origin.get("kind") or "system",

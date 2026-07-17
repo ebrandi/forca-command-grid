@@ -163,9 +163,21 @@ def availability_for_fits(fits, *, policy: ShipyardPolicy | None = None) -> dict
         FitSupplyNeed.objects.filter(
             doctrine_fit_id__in=fit_ids,
             status__in=(FitSupplyNeed.Status.OPEN, FitSupplyNeed.Status.IN_PROGRESS),
-        ).select_related("industry_project", "build_job")
+        ).select_related("industry_project", "build_job", "purchase_order")
     ):
         needs_by_fit.setdefault(n.doctrine_fit_id, []).append(n)
+
+    # A PO-linked need's incoming is its fit-level line remaining (batched, one query).
+    po_remaining: dict[int, int] = {}
+    _po_ids = [n.purchase_order_id for ns in needs_by_fit.values() for n in ns
+               if n.purchase_order_id]
+    if _po_ids:
+        from apps.procurement.models import PurchaseOrderLine
+
+        for po_id, ordered, received in PurchaseOrderLine.objects.filter(
+            po_id__in=_po_ids, doctrine_fit__isnull=False,
+        ).values_list("po_id", "quantity_ordered", "quantity_received"):
+            po_remaining[po_id] = po_remaining.get(po_id, 0) + max(0, int(ordered) - int(received))
 
     now = timezone.now()
     out: dict[int, Availability] = {}
@@ -211,6 +223,18 @@ def availability_for_fits(fits, *, policy: ShipyardPolicy | None = None) -> dict
                 if vehicle_due and vehicle_due > now and (eta is None or vehicle_due > eta):
                     eta = vehicle_due
                     eta_source = "production"
+            elif need.purchase_order_id and need.purchase_order is not None:
+                # An open PO on this need is incoming too — its fit-level line
+                # remaining, with the supplier's promised date. Suppresses P2 from
+                # re-suggesting goods already on order (the no-double-ordering rule).
+                from apps.procurement.services import COUNTED_STATUSES
+
+                if need.purchase_order.status in COUNTED_STATUSES:
+                    incoming += po_remaining.get(need.purchase_order_id, 0)
+                    promised = need.purchase_order.promised_by
+                    if promised and promised > now and (eta is None or promised > eta):
+                        eta = promised
+                        eta_source = "purchase"
 
         state = derive_state(
             is_offered=is_offered, atp=atp, backorders_allowed=backorders_allowed,

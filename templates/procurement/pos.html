@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% load eve i18n %}
+{% block title %}{% translate "Purchase orders" %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-5 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow">{% translate "Procurement · Leadership" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Purchase orders" %}</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Every order to a supplier, from draft to reconciled. The lifecycle is evidence-driven — the app plans and evidences; it never moves ISK." %}</p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <a href="{% url 'procurement:suppliers' %}" class="btn-ghost text-sm">{% translate "Suppliers" %}</a>
+    <a href="{% url 'procurement:agreements' %}" class="btn-ghost text-sm">{% translate "Agreements" %}</a>
+    <a href="?format=csv{% if base_qs %}&{{ base_qs }}{% endif %}" class="btn-ghost text-sm">{% translate "Export CSV" %}</a>
+    <a href="{% url 'procurement:po_new' %}" class="btn-gold text-sm">{% translate "New order" %}</a>
+  </div>
+</header>
+
+<form method="get" class="panel mb-4 flex flex-wrap items-end gap-3 px-4 py-3">
+  <label class="block">
+    <span class="eyebrow text-faint">{% translate "Status" %}</span>
+    <select name="status" class="input-field mt-1">
+      <option value="">{% translate "All" %}</option>
+      {% for value, label in statuses %}
+        <option value="{{ value }}" {% if f_status == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label class="block">
+    <span class="eyebrow text-faint">{% translate "Supplier" %}</span>
+    <select name="supplier" class="input-field mt-1">
+      <option value="">{% translate "All" %}</option>
+      {% for s in suppliers %}
+        <option value="{{ s.pk }}" {% if f_supplier == s.pk|stringformat:'s' %}selected{% endif %}>{{ s.display_name|default:s }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <button type="submit" class="btn-ghost text-sm">{% translate "Apply" %}</button>
+</form>
+
+<div class="panel overflow-x-auto">
+  <table class="w-full text-sm">
+    <thead><tr class="text-left text-[11px] uppercase text-faint">
+      <th class="px-4 py-2">{% translate "Order" %}</th>
+      <th class="px-4 py-2">{% translate "Supplier" %}</th>
+      <th class="px-4 py-2">{% translate "Status" %}</th>
+      <th class="px-4 py-2">{% translate "Delivery" %}</th>
+      <th class="px-4 py-2">{% translate "Promised" %}</th>
+      <th class="px-4 py-2">{% translate "Expected" %}</th>
+    </tr></thead>
+    <tbody>
+      {% for po in rows %}
+      <tr class="border-t border-line/40">
+        <td class="px-4 py-2"><a href="{% url 'procurement:po_detail' po.pk %}" class="text-ink hover:text-gold">#{{ po.pk }}</a></td>
+        <td class="px-4 py-2 text-faint">{{ po.supplier.display_name|default:po.supplier }}</td>
+        <td class="px-4 py-2">
+          {% if po.status == 'overdue' %}<span class="chip !border-loss/40 !text-loss">{{ po.get_status_display }}</span>
+          {% elif po.status == 'disputed' %}<span class="chip !border-gold/40 !text-gold">{{ po.get_status_display }}</span>
+          {% else %}{{ po.get_status_display }}{% endif %}
+        </td>
+        <td class="px-4 py-2 text-faint">{{ po.get_delivery_mode_display }}</td>
+        <td class="px-4 py-2 text-faint">{{ po.promised_by|default:"—" }}</td>
+        <td class="px-4 py-2 data">{{ po.expected_total_isk|isk }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" class="px-4 py-6 text-center text-faint">{% translate "No purchase orders match." %}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% include "doctrines/_pagination.html" %}
+{% endblock %}

@@ -76,6 +76,8 @@ INSTALLED_APPS = [
     "apps.impersonation",
     "apps.campaigns",
     "apps.capsuleer",
+    "apps.procurement",
+    "apps.supplyboard",
 ]
 
 MIDDLEWARE = [

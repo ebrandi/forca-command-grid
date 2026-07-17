@@ -129,6 +129,24 @@
   </section>
 </div>
 
+{% if my_capacity %}
+<section class="panel mt-6 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">{% translate "My capacity" %}</h2></div>
+  <div class="flex flex-wrap gap-2 p-3 text-xs">
+    {% for c in my_capacity %}
+    <div class="rounded-md bg-panel2/50 px-3 py-2">
+      <p class="text-muted">{{ c.name }} · {{ c.activity_label }}</p>
+      <p class="data mt-0.5">
+        {% if c.slots is None %}<span class="text-faint">{% translate "slots unknown" %}</span>{% else %}<span class="text-win">{{ c.remaining }}</span> / {{ c.slots }} {% translate "free" %}{% endif %}
+        {% if c.next_free_at %}· {% blocktranslate with d=c.next_free_at|date:"j M" %}next {{ d }}{% endblocktranslate %}{% endif %}
+      </p>
+    </div>
+    {% endfor %}
+  </div>
+  <p class="border-t border-line px-4 py-1 text-[11px] text-faint">{% translate "Your own slots only. Officers see this on the Production Capacity board while the My industry scope is granted." %}</p>
+</section>
+{% endif %}
+
 <h2 class="eyebrow mb-2 mt-6 text-gold">{% translate "Imported ESI jobs" %}</h2>
 <div class="grid gap-5 lg:grid-cols-2">
   <section class="panel overflow-hidden">

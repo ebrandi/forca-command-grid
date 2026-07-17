@@ -20,6 +20,7 @@ from core.audit import audit_log, client_ip
 from core.rbac import role_required
 
 from .forms import (
+    AdvanceOrderForm,
     ConfigForm,
     FitOrderForm,
     HullOrderForm,
@@ -226,14 +227,33 @@ def order_detail(request: HttpRequest, pk: int) -> HttpResponse:
     live_reserved = sum(
         r.quantity for r in reservations if r.status == r.Status.ACTIVE
     )
+    # Prefill the deliver-step fulfilment select from evidence: a linked build vehicle
+    # (or a made-to-order hull) ⇒ "build"; otherwise blank. Full reservation consumption
+    # auto-stamps "stock" server-side regardless, so this only pre-selects the partial /
+    # unattended case the officer confirms.
+    nxt = next_status(order)
+    deliver_method_default = ""
+    if nxt == StoreOrder.Status.DELIVERED:
+        if order.requires_build:
+            deliver_method_default = "build"
+        elif order.doctrine_fit_id:
+            from django.db.models import Q as _Q
+
+            from .models import FitSupplyNeed
+
+            if FitSupplyNeed.objects.filter(doctrine_fit_id=order.doctrine_fit_id).filter(
+                _Q(industry_project__isnull=False) | _Q(build_job__isnull=False)
+            ).exclude(status=FitSupplyNeed.Status.CANCELLED).exists():
+                deliver_method_default = "build"
     return render(request, "store/order.html", {
         "order": order,
         "is_member": is_member,
         "is_officer": is_officer,
         "is_buyer": order.buyer_id == getattr(request.user, "id", None),
         "is_claimer": is_claimer,
-        "next_status": next_status(order),
+        "next_status": nxt,
         "advance_label": advance_label(order),
+        "advance_form": AdvanceOrderForm(initial={"fulfilment_method": deliver_method_default}),
         "reservations": reservations,
         "live_reserved": live_reserved,
         "eta_form": (
@@ -439,11 +459,23 @@ def advance_order(request: HttpRequest, pk: int) -> HttpResponse:
     if not nxt:
         messages.error(request, _("Nothing to advance."))
         return redirect("store:order", pk=order.pk)
+    # Optional evidence riding the advance: a fulfilling contract id on the READY step,
+    # a fulfilment-method stamp on the DELIVERED step (both optional; a bad contract id
+    # is the only rejection).
+    form = AdvanceOrderForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, _("That contract id isn't valid."))
+        return redirect("store:order", pk=order.pk)
     # transition_order applies the availability side effects too: DELIVERED
-    # consumes the order's stock reservations exactly once and stamps the
-    # actual dates; READY stamps actual_ready_at. Compare-and-swap: if the
-    # order changed under us (a concurrent cancel), nothing is applied.
-    if not transition_order(order, nxt, actor=request.user):
+    # consumes the order's stock reservations exactly once, stamps the fulfilment
+    # method from that evidence, and stamps the actual dates; READY stamps
+    # actual_ready_at and links the contract id. Compare-and-swap: if the order
+    # changed under us (a concurrent cancel), nothing is applied.
+    if not transition_order(
+        order, nxt, actor=request.user,
+        contract_id=form.cleaned_data.get("contract_id"),
+        fulfilment_method=form.cleaned_data.get("fulfilment_method") or "",
+    ):
         messages.error(request, _("That order just changed — review it and try again."))
         return redirect("store:order", pk=order.pk)
     audit_log(request.user, "store.advance", target_type="store_order",

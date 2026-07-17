@@ -117,7 +117,8 @@ def recompute_supply_need(fit, *, location) -> FitSupplyNeed | None:
                 live.quantity_required = demand
                 live.required_by = required_by
                 live.save(update_fields=["quantity_required", "required_by", "updated_at"])
-        elif live.industry_project_id or live.build_job_id or live.task_id:
+        elif (live.industry_project_id or live.build_job_id or live.task_id
+              or live.purchase_order_id):
             if live.quantity_required != 0:
                 live.quantity_required = 0
                 live.save(update_fields=["quantity_required", "updated_at"])
@@ -247,6 +248,31 @@ def create_task_for_need(need: FitSupplyNeed, *, actor):
     return task
 
 
+@transaction.atomic
+def create_purchase_order_for_need(need: FitSupplyNeed, *, actor, supplier):
+    """Turn a need into a DRAFT purchase order for the assembled fit (idempotent via
+    the FK). The fit-level line means receipts post to fit inventory via
+    ``receive_stock`` — the fourth supply vehicle beside project/build/task."""
+    from apps.procurement.services import create_draft_po
+
+    locked = FitSupplyNeed.objects.select_for_update().get(pk=need.pk)
+    if locked.purchase_order_id:
+        return locked.purchase_order
+    fit = locked.doctrine_fit
+    po = create_draft_po(
+        supplier=supplier, location=locked.location, actor=actor,
+        lines=[{
+            "type_id": fit.ship_type_id,
+            "quantity": max(locked.quantity_required, 1),
+            "doctrine_fit": fit,
+        }],
+    )
+    locked.purchase_order = po
+    locked.status = FitSupplyNeed.Status.IN_PROGRESS
+    locked.save(update_fields=["purchase_order", "status", "updated_at"])
+    return po
+
+
 def notify_supply_ready(need: FitSupplyNeed, *, vehicle: str) -> None:
     """Tell the officers a need's production vehicle finished: assemble + receipt.
 
@@ -279,7 +305,7 @@ def notify_supply_ready(need: FitSupplyNeed, *, vehicle: str) -> None:
         )
 
 
-def on_vehicle_completed(*, build_job=None, industry_project=None) -> int:
+def on_vehicle_completed(*, build_job=None, industry_project=None, purchase_order=None) -> int:
     """Signal hook: a linked vehicle completed → flag needs + notify officers.
 
     Does NOT touch customer orders or stock — receipting the assembled ships is
@@ -292,6 +318,9 @@ def on_vehicle_completed(*, build_job=None, industry_project=None) -> int:
     if industry_project is not None:
         q = q | Q(industry_project=industry_project)
         vehicle = vehicle or "industry_project"
+    if purchase_order is not None:
+        q = q | Q(purchase_order=purchase_order)
+        vehicle = vehicle or "purchase_order"
     if not q:
         return 0
     count = 0

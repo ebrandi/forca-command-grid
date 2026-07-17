@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from django.urls import path
 
-from . import views, views_inventory
+from . import views, views_inventory, views_margin
 
 app_name = "store"
 
@@ -41,4 +41,9 @@ urlpatterns = [
          name="demand_line_add"),
     path("inventory/demand-line/<int:line_id>/close/", views_inventory.demand_line_close,
          name="demand_line_close"),
+    # Cost & profitability (cross-cutting) — Director margin console
+    path("margin/", views_margin.margin_console, name="margin"),
+    path("margin/config/", views_margin.margin_config, name="margin_config"),
+    path("margin/drift/<int:pk>/ack/", views_margin.drift_ack, name="drift_ack"),
+    path("margin/settlement/record/", views_margin.settlement_record, name="settlement_record"),
 ]

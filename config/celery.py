@@ -90,6 +90,17 @@ app.conf.beat_schedule = {
         "task": "logistics.sweep_hauls",
         "schedule": crontab(minute="7,22,37,52"),
     },
+    # P6: flip freight batches ARRIVED from a verified contract / completed haul and
+    # flag late ones. SHIPS INERT (FreightConfig.eta_sweep_enabled default False → one
+    # cheap config read per firing). Hourly at the least-contended rung: :29 shares only
+    # with the per-minute pingboard dispatch ticks + raffle-recompute-summaries
+    # (14-59/15), and is odd so it dodges the */2 pingboard retry. (The plan's earlier
+    # :49 suggestion is now taken by procurement-match-contracts — the beat ledger lies;
+    # re-scanned at implementation time.)
+    "logistics-sweep-freight-batches": {
+        "task": "logistics.sweep_freight_batches",
+        "schedule": crontab(minute=29),
+    },
     # Keep the public killboard caches (dashboard, killfeed, rankings) continuously
     # warm so visitors never trigger a cold full-table aggregation. Cadence is
     # below the 900s cache TTL so a warmed key never lapses between cycles.
@@ -699,6 +710,64 @@ app.conf.beat_schedule = {
     "store-snapshot-demand": {
         "task": "store.snapshot_demand",
         "schedule": crontab(minute=35, hour=5, day_of_week=1),
+    },
+    # Cost & profitability (cross-cutting). Both ship INERT behind MarginConfig flags —
+    # one config read until armed. Slots re-verified against the FULL crontab expansion at
+    # implementation time (incl. the uncommitted P4/P5/P6 beats), not HEAD:
+    #   :53/*/6 — trails the 6-hourly wallet sync (:45/*/6) so fresh journal lines match
+    #     same-cycle; the only recurring co-tenant is logistics-reconcile-courier-contracts
+    #     (13-59/20 → :53) plus the per-minute pingboard ticks. Odd minute → dodges the
+    #     */2 pingboard retry.
+    "store-reconcile-order-settlements": {
+        "task": "store.reconcile_order_settlements",
+        "schedule": crontab(minute=53, hour="*/6"),
+    },
+    #   04:21 daily — every hour-4 minute carries a recurring co-tenant, so this is the
+    #     least-contended, not free: raffle-refresh-adoption (:21,:51) and the P4 inert
+    #     procurement-reconcile-payments (1-59/20 → :21, a one-read no-op) share it, plus
+    #     the pingboard ticks. (The plan's draft claimed "only raffle" — the P4 beat was
+    #     added after; the ledger lies, re-scanned.) Trails the daily Jita sync so the
+    #     re-price snapshot is warm.
+    "store-check-quote-drift": {
+        "task": "store.check_quote_drift",
+        "schedule": crontab(minute=21, hour=4),
+    },
+    # Procurement (P4). All four ship INERT behind ProcurementConfig flags; the beat
+    # runs but each task is one config read until armed. Slots re-verified against the
+    # full crontab expansion:
+    #   :49 hourly — right behind the :48 corp-contracts snapshot so the matcher reads
+    #     a fresh snapshot with NO second contracts pull; the only recurring co-tenant
+    #     is readiness.evaluate_alerts (4-59/15 → :49), itself a cooldown-deduped inert scan.
+    "procurement-match-contracts": {
+        "task": "procurement.match_contracts",
+        "schedule": crontab(minute=49),
+    },
+    #   1-59/20 (:01/:21/:41) — a distinct phase from the buyback /20 cadences; co-tenants
+    #     are single-minute jobs (killboard.rebuild_stats :01, raffle.refresh_adoption :21,
+    #     capsuleer.reconcile_progress :41). A one-read no-op unless armed.
+    "procurement-reconcile-payments": {
+        "task": "procurement.reconcile_payments",
+        "schedule": crontab(minute="1-59/20"),
+    },
+    #   04:43 daily — the only recurring co-tenant is pilots.warm_hall_of_fame (3-59/4 → :43).
+    #     Sweep and reliability share the rung; both are independent no-ops unless armed.
+    "procurement-sweep-overdue": {
+        "task": "procurement.sweep_overdue",
+        "schedule": crontab(minute=43, hour=4),
+    },
+    "procurement-rollup-reliability": {
+        "task": "procurement.rollup_reliability",
+        "schedule": crontab(minute=43, hour=4),
+    },
+    # Supply Command board (cross-cutting): warm the cache + fire the officer problem-set
+    # digest. Ships INERT behind BoardConfig.sweep_enabled (one config read until armed).
+    # 16-59/20 (:16/:36/:56) — phase-shifted off warm-finance-dashboard's 15-59/20 (adjacent
+    # but never coincident); co-tenants re-verified against the full crontab (incl. P4/P5/P6):
+    # :16 refresh-monthly-ranking-stats (16,46) + rebuild-stats (1-59/15); :36 readiness-
+    # warm-pilots (6-59/30); :56 scan-rank-rewards (26,56). No P4/P5/P6 beat lands on these.
+    "supplyboard-sweep": {
+        "task": "supplyboard.sweep",
+        "schedule": crontab(minute="16-59/20"),
     },
 }
 

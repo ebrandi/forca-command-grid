@@ -8,7 +8,14 @@ from django.utils.translation import gettext_lazy as _
 
 from apps.market.models import MarketLocation
 
-from .models import DemandConfig, FitOffer, ShipyardPolicy, StoreConfig
+from .models import (
+    FULFILMENT_STAMP_CHOICES,
+    DemandConfig,
+    FitOffer,
+    MarginConfig,
+    ShipyardPolicy,
+    StoreConfig,
+)
 
 _INPUT = {"class": "input-field"}
 
@@ -168,6 +175,27 @@ class StockAdjustForm(forms.Form):
     )
 
 
+class AdvanceOrderForm(forms.Form):
+    """Optional evidence captured when advancing an order (cost & profitability phase).
+
+    ``contract_id`` is offered on the READY step (the fulfilling in-game contract id);
+    ``fulfilment_method`` on the DELIVERED step (which lane actually covered it). Both are
+    optional — skipping them is legal and nothing blocks the advance. The method select is
+    only honoured on partial/zero consumption; a fully-consumed reservation auto-stamps
+    ``stock`` regardless."""
+
+    contract_id = forms.IntegerField(
+        required=False, min_value=1, max_value=9_223_372_036_854_775_807,
+        widget=forms.NumberInput(attrs={
+            **_INPUT, "min": 1, "placeholder": _("In-game contract id (optional)"),
+        }),
+    )
+    fulfilment_method = forms.ChoiceField(
+        required=False, choices=[("", "—")] + list(FULFILMENT_STAMP_CHOICES),
+        widget=forms.Select(attrs=_INPUT),
+    )
+
+
 class OrderEtaForm(forms.Form):
     """Claimer/officer revision of the living delivery estimate."""
 
@@ -226,6 +254,39 @@ class DemandLineForm(forms.Form):
         if value and value < timezone.localdate():
             raise forms.ValidationError(_("The date must be today or later."))
         return value
+
+
+class MarginConfigForm(forms.ModelForm):
+    """Leadership margin & drift thresholds — the Director margin console."""
+
+    class Meta:
+        model = MarginConfig
+        fields = [
+            "drift_check_enabled", "drift_threshold_pct", "drift_min_isk",
+            "settlement_reconcile_enabled", "margin_window_days", "margin_alert_floor_pct",
+        ]
+        widgets = {
+            "drift_threshold_pct": forms.NumberInput(attrs={**_INPUT, "step": "0.001", "min": "0", "max": "5"}),
+            "drift_min_isk": forms.NumberInput(attrs={**_INPUT, "step": "1", "min": "0"}),
+            "margin_window_days": forms.NumberInput(attrs={**_INPUT, "min": "1", "max": "365"}),
+            "margin_alert_floor_pct": forms.NumberInput(attrs={**_INPUT, "step": "0.001", "min": "0", "max": "1"}),
+        }
+
+    def _bound(self, name, low, high):
+        value = self.cleaned_data.get(name)
+        if value is not None and not (low <= value <= high):
+            self.add_error(name, _("Must be between %(low)s and %(high)s.") % {
+                "low": low, "high": high,
+            })
+
+    def clean(self):
+        cleaned = super().clean()
+        # Server-side bounds — the widget min/max are advisory only.
+        self._bound("drift_threshold_pct", Decimal("0"), Decimal("5"))
+        self._bound("drift_min_isk", Decimal("0"), Decimal("1000000000000"))
+        self._bound("margin_window_days", 1, 365)
+        self._bound("margin_alert_floor_pct", Decimal("0"), Decimal("1"))
+        return cleaned
 
 
 class DemandConfigForm(forms.ModelForm):

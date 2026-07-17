@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% load eve i18n %}
+{% block title %}{% translate "Production Capacity" %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+
+<header class="mb-5 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow">{% translate "Industry · Leadership" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Production Capacity" %}</h1>
+    <p class="mt-1 max-w-3xl text-sm text-faint">{% translate "Measured manufacturing capacity: theoretical, committed and remaining slots by activity class, from opted-in pilots only. Figures are only as fresh as the syncs below and only as complete as the opt-in set — read this as measured capacity, never total corp capacity." %}</p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <a href="{% url 'industry:mrp' %}" class="btn-ghost text-sm">{% translate "Material Plan" %}</a>
+    <a href="?export=csv" class="btn-ghost text-sm">{% translate "Export CSV" %}</a>
+    <form method="post" action="{% url 'industry:capacity_derive' %}">{% csrf_token %}<button class="btn-ghost text-sm">{% translate "Re-derive now" %}</button></form>
+  </div>
+</header>
+
+{% if not config.capacity_enabled %}
+<div class="panel mb-4 border-gold/30 px-4 py-2 text-sm text-gold">{% translate "Capacity planning is off — the Material Plan still assumes unconstrained slots. Arm it below to hold build dates to committed capacity." %}</div>
+{% endif %}
+
+<div class="grid gap-4 lg:grid-cols-3">
+  <!-- Pool summary -------------------------------------------------------- -->
+  <section class="panel overflow-hidden lg:col-span-2">
+    <div class="border-b border-line px-4 py-2"><h2 class="eyebrow">{% translate "Slots by activity class" %}</h2></div>
+    <div class="overflow-x-auto"><table class="w-full text-sm">
+      <thead><tr class="text-left text-[11px] uppercase text-faint">
+        <th class="px-4 py-2">{% translate "Activity" %}</th>
+        <th class="px-2 py-2 text-right">{% translate "Theoretical" %}</th>
+        <th class="px-2 py-2 text-right">{% translate "Committed" %}</th>
+        <th class="px-2 py-2 text-right">{% translate "Remaining" %}</th>
+      </tr></thead>
+      <tbody>
+        {% for p in pool_summary %}
+        <tr class="border-t border-line/40">
+          <td class="px-4 py-2 text-ink">{{ p.activity_label }}</td>
+          <td class="px-2 py-2 text-right data text-muted">{{ p.theoretical }}</td>
+          <td class="px-2 py-2 text-right data text-cyan">{{ p.committed }}</td>
+          <td class="px-2 py-2 text-right data font-semibold {% if p.remaining %}text-win{% else %}text-faint{% endif %}">{{ p.remaining }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+    <div class="border-t border-line px-4 py-2 text-[12px] text-faint">
+      <p>{% blocktranslate count n=unmeasured_jobs %}{{ n }} job by a pilot whose capacity is unknown (not counted above).{% plural %}{{ n }} jobs by pilots whose capacity is unknown (not counted above).{% endblocktranslate %}</p>
+      {% if unmatched_board_jobs %}<p>{% blocktranslate count n=unmatched_board_jobs %}{{ n }} board job started or finished but not yet seen in ESI.{% plural %}{{ n }} board jobs started or finished but not yet seen in ESI.{% endblocktranslate %}</p>{% endif %}
+    </div>
+  </section>
+
+  <!-- Settings ------------------------------------------------------------ -->
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-2"><h2 class="eyebrow">{% translate "Settings" %}</h2></div>
+    <form method="post" action="{% url 'industry:capacity_settings' %}" class="space-y-3 p-4 text-sm">{% csrf_token %}
+      <label class="flex items-center gap-2">
+        {{ settings_form.capacity_enabled }}
+        <span class="text-ink">{% translate "Hold build dates to committed capacity" %}</span>
+      </label>
+      <div>
+        <label class="block text-[11px] uppercase text-faint" for="{{ settings_form.capacity_skill_stale_days.id_for_label }}">{% translate "Skills stale after (days)" %}</label>
+        {{ settings_form.capacity_skill_stale_days }}
+        {% if settings_form.capacity_skill_stale_days.errors %}<p class="text-[11px] text-loss">{{ settings_form.capacity_skill_stale_days.errors.0 }}</p>{% endif %}
+      </div>
+      <button class="btn-gold w-full text-sm">{% translate "Save settings" %}</button>
+    </form>
+    <div class="border-t border-line px-4 py-2 text-[11px] text-faint">
+      <p>{% translate "Skills show attention-stale at 7 days; slots stay measured until the threshold above (default 14), then become unknown." %}</p>
+    </div>
+  </section>
+</div>
+
+<!-- Sync freshness -------------------------------------------------------- -->
+<section class="panel mt-4 px-4 py-2 text-[12px] text-faint">
+  <span class="eyebrow">{% translate "As of" %}</span>
+  <span class="ml-2">{% blocktranslate with h=cadence_corp_jobs_h %}corp jobs (every {{ h }}h):{% endblocktranslate %}
+    {% if corp_jobs_as_of %}{{ corp_jobs_as_of|timesince }} {% translate "ago" %}{% else %}{% translate "never" %}{% endif %}</span>
+  <span class="ml-3">{% blocktranslate with h=cadence_char_jobs_h %}pilot jobs (every {{ h }}h):{% endblocktranslate %}
+    {% if char_jobs_as_of %}{{ char_jobs_as_of|timesince }} {% translate "ago" %}{% else %}{% translate "never" %}{% endif %}</span>
+  <span class="ml-3">{% blocktranslate with h=cadence_skills_h %}skills sync every {{ h }}h{% endblocktranslate %}</span>
+  {% if last_run %}<span class="ml-3">{% blocktranslate with ago=last_run.started_at|timesince %}last plan {{ ago }} ago{% endblocktranslate %}</span>{% endif %}
+</section>
+
+<!-- Per-pilot detail ------------------------------------------------------ -->
+<section class="panel mt-4 overflow-hidden">
+  <div class="border-b border-line px-4 py-2">
+    <h2 class="eyebrow">{% translate "Per pilot" %} <span class="text-faint">· {% translate "opted-in pilots only" %}</span></h2>
+  </div>
+  <div class="overflow-x-auto"><table class="w-full text-sm">
+    <thead><tr class="text-left text-[11px] uppercase text-faint">
+      <th class="px-4 py-2">{% translate "Pilot" %}</th>
+      <th class="px-2 py-2">{% translate "Activity" %}</th>
+      <th class="px-2 py-2 text-right">{% translate "Slots" %}</th>
+      <th class="px-2 py-2 text-right">{% translate "Used" %}</th>
+      <th class="px-2 py-2 text-right">{% translate "Free" %}</th>
+      <th class="px-2 py-2">{% translate "Next free" %}</th>
+      <th class="px-2 py-2">{% translate "Skills as of" %}</th>
+      <th class="px-2 py-2"></th>
+    </tr></thead>
+    <tbody>
+      {% for row in pilot_rows %}
+      {% with pool=row.pool %}
+      <tr class="border-t border-line/40" x-data="{edit:false}">
+        <td class="px-4 py-2 text-ink">{{ pool.name }}{% if pool.is_paused %} <span class="chip !border-loss/40 !text-loss">{% translate "paused" %}</span>{% endif %}</td>
+        <td class="px-2 py-2 text-faint">{{ row.activity_label }}</td>
+        <td class="px-2 py-2 text-right data">{% if pool.effective_slots is None %}<span class="text-faint">{% translate "unknown" %}</span>{% else %}{{ pool.effective_slots }}{% if pool.manual_override is not None %} <span class="text-[10px] text-gold" title="{% translate 'officer override' %}">*</span>{% endif %}{% endif %}</td>
+        <td class="px-2 py-2 text-right data text-cyan">{{ pool.used }}</td>
+        <td class="px-2 py-2 text-right data {% if pool.remaining %}text-win{% else %}text-faint{% endif %}">{% if pool.remaining is None %}<span class="text-faint">{% translate "unknown" %}</span>{% else %}{{ pool.remaining }}{% endif %}</td>
+        <td class="px-2 py-2 text-faint">{% if row.next_free_at %}{{ row.next_free_at|date:"j M" }}{% else %}—{% endif %}</td>
+        <td class="px-2 py-2 text-faint">{% if pool.as_of %}{{ pool.as_of|timesince }} {% translate "ago" %}{% else %}<span class="text-faint">{% translate "unknown" %}</span>{% endif %}</td>
+        <td class="px-2 py-2 text-right">{% if row.override_form %}<button type="button" @click="edit=!edit" class="btn-ghost !py-0.5 !text-[11px]">{% translate "Override" %}</button>{% endif %}</td>
+      </tr>
+      {% if row.override_form %}
+      <tr x-show="edit" x-cloak class="border-t border-line/20 bg-panel2/40">
+        <td colspan="8" class="px-4 py-3">
+          <form method="post" action="{% url 'industry:capacity_resource' pool.resource_id %}" class="flex flex-wrap items-end gap-3 text-[12px]">{% csrf_token %}
+            <div><label class="block text-[10px] uppercase text-faint">{% translate "Slots override" %}</label>{{ row.override_form.manual_slots_override }}</div>
+            <div><label class="block text-[10px] uppercase text-faint">{% translate "Weekly cap" %}</label>{{ row.override_form.max_weekly_output }}</div>
+            <div><label class="block text-[10px] uppercase text-faint">{% translate "Unavailable from" %}</label>{{ row.override_form.unavailable_from }}</div>
+            <div><label class="block text-[10px] uppercase text-faint">{% translate "Unavailable until" %}</label>{{ row.override_form.unavailable_until }}</div>
+            <label class="flex items-center gap-1">{{ row.override_form.is_paused }} <span>{% translate "Pause" %}</span></label>
+            <button class="btn-gold !py-0.5 !text-[11px]">{% translate "Save" %}</button>
+          </form>
+          {% if row.override_form.non_field_errors %}<p class="mt-1 text-[11px] text-loss">{{ row.override_form.non_field_errors.0 }}</p>{% endif %}
+        </td>
+      </tr>
+      {% endif %}
+      {% endwith %}
+      {% empty %}
+      <tr><td colspan="8" class="px-4 py-8 text-center text-sm text-faint">{% translate "No opted-in pilots yet — a pilot grants the “My industry jobs + blueprints” scope, then re-derive." %}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+
+<div class="mt-4 grid gap-4 lg:grid-cols-2">
+  <!-- Committed load by location ----------------------------------------- -->
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-2"><h2 class="eyebrow">{% translate "Committed load by location" %}</h2></div>
+    <div class="overflow-x-auto"><table class="w-full text-sm">
+      <tbody>
+        {% for loc in by_location %}
+        <tr class="border-t border-line/40">
+          <td class="px-4 py-2 text-ink">{{ loc.name }}</td>
+          <td class="px-2 py-2 text-right data text-cyan">{% blocktranslate count n=loc.jobs %}{{ n }} job{% plural %}{{ n }} jobs{% endblocktranslate %}</td>
+        </tr>
+        {% empty %}
+        <tr><td class="px-4 py-6 text-center text-faint">{% translate "No committed jobs." %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- Blocked work -------------------------------------------------------- -->
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-2"><h2 class="eyebrow">{% translate "Blocked work" %}</h2></div>
+    <div class="p-2 text-sm">
+      {% for group in blocked %}
+      <div class="mb-2">
+        <p class="eyebrow px-2 text-loss">{{ group.label }} <span class="text-faint">· {{ group.rows|length }}</span></p>
+        {% for item in group.rows %}
+        <p class="px-2 py-0.5"><a class="text-cyan hover:underline" href="{% url 'industry:mrp' %}#req-{{ item.row.pk }}">{{ item.name }}</a>{% if item.row.net_quantity %} <span class="data text-faint">×{{ item.row.net_quantity }}</span>{% endif %}</p>
+        {% endfor %}
+      </div>
+      {% empty %}
+      <p class="px-2 py-6 text-center text-faint">{% translate "Nothing blocked — every live build has an honest date." %}</p>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}

@@ -30,7 +30,7 @@
     <tbody>
       {% for t in tasks %}
         <tr class="border-t border-line/40">
-          <td class="px-4 py-2">{% if t.type_id %}<span class="flex items-center gap-2"><img src="{% eve_type_icon t.type_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">{% type_name t.type_id %}</span>{% else %}<span class="text-faint">{% translate "multi-item" %}</span>{% endif %}</td>
+          <td class="px-4 py-2">{% if t.type_id %}<span class="flex items-center gap-2"><img src="{% eve_type_icon t.type_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">{% type_name t.type_id %}</span>{% elif t.manifest %}<div x-data="{show:false}"><button @click="show=!show" class="text-xs text-cyan hover:underline">{% blocktranslate count n=t.manifest|length %}batch · {{ n }} item{% plural %}batch · {{ n }} items{% endblocktranslate %}</button><ul x-show="show" x-cloak class="mt-1 space-y-0.5 text-xs text-muted">{% for m in t.manifest %}<li class="flex items-center gap-1"><img src="{% eve_type_icon m.type_id 24 %}" alt="" class="h-4 w-4 rounded-sm">{% type_name m.type_id %} × {{ m.quantity }}</li>{% endfor %}</ul></div>{% else %}<span class="text-faint">{% translate "multi-item" %}</span>{% endif %}</td>
           <td class="px-4 py-2 text-right data text-muted">{{ t.quantity|default:"—" }}</td>
           <td class="px-4 py-2 text-right data text-faint">{{ t.volume_m3|floatformat:0 }}</td>
           <td class="px-4 py-2 text-muted">{{ t.source_location|default:"—" }}</td>

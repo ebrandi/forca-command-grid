@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% load eve i18n %}
+{% block title %}{% translate "Procurement board" %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-5 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow">{% translate "Procurement · Directors" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Procurement board" %}</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Open commitments, what's due or late, how hard agreements are being worked, supplier reliability — and whether the evidence feeds are still fresh." %}</p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <a href="{% url 'procurement:pos' %}" class="btn-ghost text-sm">{% translate "Purchase orders" %}</a>
+    <a href="{% url 'procurement:suppliers' %}" class="btn-ghost text-sm">{% translate "Suppliers" %}</a>
+  </div>
+</header>
+
+<!-- Freshness chips — never silently green -->
+<section class="mb-6">
+  <h2 class="eyebrow mb-2 text-faint">{% translate "Evidence-feed freshness" %}</h2>
+  <div class="flex flex-wrap gap-2">
+    {% for feed in freshness.values %}
+      {% if feed.stale %}
+      <span class="chip !border-loss/40 !text-loss">{{ feed.key }} · {% if feed.at %}{% blocktranslate with when=feed.at %}stale ({{ when }}){% endblocktranslate %}{% else %}{% translate "no run recorded" %}{% endif %}</span>
+      {% else %}
+      <span class="chip !border-win/40 !text-win">{{ feed.key }} · {% blocktranslate with when=feed.at %}fresh ({{ when }}){% endblocktranslate %}</span>
+      {% endif %}
+    {% endfor %}
+  </div>
+</section>
+
+<!-- Open obligations -->
+<section class="mb-6 grid gap-3 sm:grid-cols-3">
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">{% translate "Open obligation (ISK)" %}</p>
+    <p class="mt-1 text-2xl font-bold text-ink data">{{ obligations.isk|isk }}</p>
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">{% translate "Units outstanding" %}</p>
+    <p class="mt-1 text-2xl font-bold text-ink data">{{ obligations.units }}</p>
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">{% translate "Open orders" %}</p>
+    <p class="mt-1 text-2xl font-bold text-ink data">{{ obligations.count }}</p>
+  </div>
+</section>
+
+<div class="grid gap-6 lg:grid-cols-2">
+  <!-- Late -->
+  <section class="panel p-5">
+    <h2 class="font-display text-lg font-semibold text-ink">{% translate "Overdue" %}</h2>
+    <div class="mt-4 overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead><tr class="text-left text-[11px] uppercase text-faint">
+          <th class="py-2 pr-3">{% translate "Order" %}</th>
+          <th class="py-2 pr-3">{% translate "Supplier" %}</th>
+          <th class="py-2 pr-3">{% translate "Overdue since" %}</th>
+        </tr></thead>
+        <tbody>
+          {% for po in due.late %}
+          <tr class="border-t border-line/40">
+            <td class="py-2 pr-3"><a href="{% url 'procurement:po_detail' po.pk %}" class="text-ink hover:text-gold">#{{ po.pk }}</a></td>
+            <td class="py-2 pr-3 text-faint">{{ po.supplier.display_name|default:po.supplier }}</td>
+            <td class="py-2 pr-3 text-loss">{{ po.overdue_since|default:"—" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" class="py-4 text-center text-faint">{% translate "Nothing overdue." %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Due soon -->
+  <section class="panel p-5">
+    <h2 class="font-display text-lg font-semibold text-ink">{% translate "Due within 7 days" %}</h2>
+    <div class="mt-4 overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead><tr class="text-left text-[11px] uppercase text-faint">
+          <th class="py-2 pr-3">{% translate "Order" %}</th>
+          <th class="py-2 pr-3">{% translate "Supplier" %}</th>
+          <th class="py-2 pr-3">{% translate "Promised" %}</th>
+        </tr></thead>
+        <tbody>
+          {% for po in due.due_soon %}
+          <tr class="border-t border-line/40">
+            <td class="py-2 pr-3"><a href="{% url 'procurement:po_detail' po.pk %}" class="text-ink hover:text-gold">#{{ po.pk }}</a></td>
+            <td class="py-2 pr-3 text-faint">{{ po.supplier.display_name|default:po.supplier }}</td>
+            <td class="py-2 pr-3">{{ po.promised_by|default:"—" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" class="py-4 text-center text-faint">{% translate "Nothing due soon." %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<!-- Agreement utilisation -->
+<section class="panel mt-6 p-5">
+  <h2 class="font-display text-lg font-semibold text-ink">{% translate "Agreement utilisation" %}</h2>
+  <div class="mt-4 overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead><tr class="text-left text-[11px] uppercase text-faint">
+        <th class="py-2 pr-3">{% translate "Agreement" %}</th>
+        <th class="py-2 pr-3">{% translate "Item" %}</th>
+        <th class="py-2 pr-3">{% translate "Committed" %}</th>
+        <th class="py-2 pr-3">{% translate "Per cycle" %}</th>
+        <th class="py-2 pr-3">{% translate "Used" %}</th>
+      </tr></thead>
+      <tbody>
+        {% for row in utilisation %}
+        <tr class="border-t border-line/40">
+          <td class="py-2 pr-3"><a href="{% url 'procurement:agreement_detail' row.agreement.pk %}" class="text-ink hover:text-gold">#{{ row.agreement.pk }}</a></td>
+          <td class="py-2 pr-3">{% type_name row.type_id %}</td>
+          <td class="py-2 pr-3 data">{{ row.committed }}</td>
+          <td class="py-2 pr-3 data">{{ row.per_cycle }}</td>
+          <td class="py-2 pr-3 data">{% widthratio row.pct 1 100 %}%</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="py-4 text-center text-faint">{% translate "No active agreements." %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- Reliability -->
+<section class="panel mt-6 p-5">
+  <h2 class="font-display text-lg font-semibold text-ink">{% translate "Supplier reliability" %}</h2>
+  <p class="mt-1 text-sm text-faint">{% translate "The nightly rollup's latest figures over the last complete weeks." %}</p>
+  <div class="mt-4 overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead><tr class="text-left text-[11px] uppercase text-faint">
+        <th class="py-2 pr-3">{% translate "Supplier" %}</th>
+        <th class="py-2 pr-3">{% translate "On-time" %}</th>
+        <th class="py-2 pr-3">{% translate "Fill" %}</th>
+        <th class="py-2 pr-3">{% translate "Price variance" %}</th>
+        <th class="py-2 pr-3">{% translate "Sample" %}</th>
+      </tr></thead>
+      <tbody>
+        {% for s in reliability %}
+        <tr class="border-t border-line/40">
+          <td class="py-2 pr-3"><a href="{% url 'procurement:supplier_detail' s.pk %}" class="text-ink hover:text-gold">{{ s.display_name|default:s }}</a></td>
+          <td class="py-2 pr-3 data">{% if s.on_time_rate is not None %}{% widthratio s.on_time_rate 1 100 %}%{% else %}—{% endif %}</td>
+          <td class="py-2 pr-3 data">{% if s.fill_rate is not None %}{% widthratio s.fill_rate 1 100 %}%{% else %}—{% endif %}</td>
+          <td class="py-2 pr-3 data">{% if s.price_variance_pct is not None %}{% widthratio s.price_variance_pct 1 100 %}%{% else %}—{% endif %}</td>
+          <td class="py-2 pr-3 data">{{ s.reliability_sample }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="py-4 text-center text-faint">{% translate "No suppliers yet." %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

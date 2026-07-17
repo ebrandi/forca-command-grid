@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-16 23:46+0000\n"
+"POT-Creation-Date: 2026-07-17 16:45+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: pt-br machine-assisted draft\n"
@@ -454,6 +454,7 @@ msgstr "Patente “%(name)s” salva."
 #: apps/admin_audit/console_industry.py apps/admin_audit/console_mentorship.py
 #: apps/admin_audit/console_navigation.py apps/admin_audit/console_pingboard.py
 #: apps/admin_audit/console_planetary.py apps/admin_audit/console_raffle.py
+#: apps/industry/views_capacity.py apps/logistics/views_freight.py
 msgid "Please correct the errors below."
 msgstr "Corrija os erros abaixo."
 
@@ -493,7 +494,8 @@ msgstr ""
 
 #: apps/admin_audit/console_combat.py apps/buyback/views.py
 #: apps/capsuleer/views.py apps/industry/views_mrp.py apps/logistics/views.py
-#: apps/stockpile/views.py apps/store/views.py apps/store/views_inventory.py
+#: apps/procurement/views.py apps/stockpile/views.py apps/store/views.py
+#: apps/store/views_inventory.py
 msgid "Unknown action."
 msgstr "Ação desconhecida."
 
@@ -1702,9 +1704,10 @@ msgstr ""
 "precificar o minério."
 
 #: apps/buyback/models.py apps/campaigns/models.py apps/capsuleer/models.py
-#: apps/command_intel/models.py apps/industry/models.py apps/raffle/models.py
-#: apps/readiness/models.py apps/recommendations/models.py
-#: apps/stockpile/models.py apps/store/models.py apps/tasks/models.py
+#: apps/command_intel/models.py apps/industry/models.py
+#: apps/logistics/models.py apps/raffle/models.py apps/readiness/models.py
+#: apps/recommendations/models.py apps/stockpile/models.py apps/store/models.py
+#: apps/tasks/models.py templates/logistics/freight.html
 #: templates/navigation/jump_routes.html
 msgid "Open"
 msgstr "Aberto"
@@ -1716,15 +1719,15 @@ msgstr "Comprado"
 #: apps/buyback/models.py apps/killboard/models.py apps/mentorship/models.py
 #: apps/srp/models.py templates/admin_audit/console/combat_rewards.html
 #: templates/mining/my_mining.html templates/mining/payout.html
-#: templates/srp/budget.html
+#: templates/procurement/po_detail.html templates/srp/budget.html
 msgid "Paid"
 msgstr "Pago"
 
 #: apps/buyback/models.py apps/campaigns/models.py apps/campaigns/views.py
 #: apps/erp/models.py apps/industry/models.py apps/killboard/models.py
 #: apps/logistics/models.py apps/mentorship/models.py apps/pingboard/models.py
-#: apps/raffle/models.py apps/store/models.py apps/tasks/models.py
-#: templates/admin_audit/console/raffle_draw.html
+#: apps/procurement/models.py apps/raffle/models.py apps/store/models.py
+#: apps/tasks/models.py templates/admin_audit/console/raffle_draw.html
 #: templates/campaigns/close.html templates/operations/_posture.html
 #: templates/operations/cancellations.html
 msgid "Cancelled"
@@ -1744,7 +1747,8 @@ msgid "Settled"
 msgstr "Liquidado"
 
 #: apps/buyback/models.py apps/identity/models.py apps/killboard/models.py
-#: apps/mentorship/models.py apps/recruitment/models.py
+#: apps/mentorship/models.py apps/procurement/models.py
+#: apps/recruitment/models.py
 msgid "Rejected"
 msgstr "Rejeitado"
 
@@ -2148,7 +2152,7 @@ msgstr "Outro"
 #: apps/campaigns/models.py apps/command_intel/models.py
 #: apps/doctrines/models.py apps/industry/models.py apps/mentorship/models.py
 #: apps/mining/models.py apps/operations/models.py apps/pingboard/models.py
-#: apps/planetary/models.py apps/raffle/models.py
+#: apps/planetary/models.py apps/procurement/models.py apps/raffle/models.py
 #: templates/command_intel/campaigns.html templates/operations/_posture.html
 msgid "Draft"
 msgstr "Rascunho"
@@ -2159,7 +2163,8 @@ msgid "Proposed"
 msgstr "Proposto"
 
 #: apps/campaigns/models.py apps/identity/models.py apps/killboard/models.py
-#: apps/mentorship/models.py apps/raffle/models.py apps/srp/models.py
+#: apps/mentorship/models.py apps/procurement/models.py apps/raffle/models.py
+#: apps/srp/models.py
 msgid "Approved"
 msgstr "Aprovado"
 
@@ -2167,14 +2172,16 @@ msgstr "Aprovado"
 #: apps/command_intel/models.py apps/doctrines/models.py
 #: apps/impersonation/models.py apps/industry/models.py
 #: apps/mentorship/models.py apps/operations/models.py apps/pingboard/models.py
-#: apps/planetary/models.py apps/raffle/models.py apps/stockpile/models.py
-#: apps/store/models.py templates/admin_audit/console/mentorship/cohorts.html
+#: apps/planetary/models.py apps/procurement/models.py apps/raffle/models.py
+#: apps/stockpile/models.py apps/store/models.py
+#: templates/admin_audit/console/mentorship/cohorts.html
 #: templates/admin_audit/console/mentorship/reward_rules.html
 #: templates/admin_audit/console/mentorship/track_builder.html
 #: templates/admin_audit/console/mentorship/tracks.html
 #: templates/campaigns/portfolio.html templates/capsuleer/_goal_card.html
 #: templates/capsuleer/goal_detail.html templates/command_intel/campaigns.html
 #: templates/market/dashboard.html templates/operations/_posture.html
+#: templates/procurement/supplier_detail.html
 msgid "Active"
 msgstr "Ativo"
 
@@ -2301,7 +2308,7 @@ msgstr "Concluído"
 #: apps/campaigns/models.py apps/capsuleer/models.py
 #: apps/command_intel/models.py apps/identity/models.py
 #: apps/killboard/models.py apps/mentorship/models.py apps/pingboard/models.py
-#: apps/raffle/models.py apps/skills/models.py
+#: apps/procurement/models.py apps/raffle/models.py apps/skills/models.py
 #: templates/admin_audit/console/combat_rewards.html
 #: templates/admin_audit/console/raffle_draw.html
 #: templates/corporation/roster.html
@@ -2360,6 +2367,7 @@ msgid "Realised"
 msgstr "Materializado"
 
 #: apps/campaigns/models.py apps/doctrines/models.py apps/mentorship/models.py
+#: apps/procurement/models.py
 msgid "Retired"
 msgstr "Retirado"
 
@@ -2751,7 +2759,7 @@ msgid "Build and fit the mainline, logistics and replacement hulls."
 msgstr ""
 "Construir e fitar os hulls de linha principal, de logística e de reposição."
 
-#: apps/campaigns/templates_i18n.py
+#: apps/campaigns/templates_i18n.py templates/admin_audit/console/hub.html
 msgid "Procurement"
 msgstr "Aquisição"
 
@@ -3577,7 +3585,8 @@ msgstr "Propor"
 #: templates/admin_audit/console/members.html
 #: templates/admin_audit/console/mentorship/rewards.html
 #: templates/buyback/guaranteed_queue.html templates/campaigns/detail.html
-#: templates/srp/queue.html
+#: templates/procurement/agreement_detail.html
+#: templates/procurement/po_detail.html templates/srp/queue.html
 msgid "Approve"
 msgstr "Aprovar"
 
@@ -3589,7 +3598,8 @@ msgid "Start"
 msgstr "Início"
 
 #: apps/campaigns/views.py templates/capsuleer/goal_detail.html
-#: templates/mentorship/pairing_detail.html templates/operations/templates.html
+#: templates/industry/capacity.html templates/mentorship/pairing_detail.html
+#: templates/operations/templates.html
 msgid "Pause"
 msgstr "Pausar"
 
@@ -3619,8 +3629,9 @@ msgstr "Pausar"
 #: templates/mentorship/pairing_detail.html
 #: templates/operations/template_form.html
 #: templates/pingboard/alert_detail.html templates/planetary/wizard.html
-#: templates/stockpile/dashboard.html templates/store/demand_policy.html
-#: templates/store/order_confirm.html
+#: templates/procurement/agreement_form.html templates/procurement/po_form.html
+#: templates/procurement/supplier_form.html templates/stockpile/dashboard.html
+#: templates/store/demand_policy.html templates/store/order_confirm.html
 msgid "Cancel"
 msgstr "Cancelar"
 
@@ -3904,7 +3915,8 @@ msgid "The campaign workspace is for officers and campaign leads."
 msgstr ""
 "O espaço de trabalho da campanha é para oficiais e líderes de campanha."
 
-#: apps/campaigns/views.py
+#: apps/campaigns/views.py apps/procurement/models.py
+#: templates/procurement/board.html
 msgid "Overdue"
 msgstr "Atrasado"
 
@@ -4374,7 +4386,7 @@ msgstr "Nave"
 #: apps/capsuleer/models.py apps/onboarding/models.py
 #: templates/campaigns/activity.html templates/campaigns/detail.html
 #: templates/capsuleer/goal_form.html templates/capsuleer/paths.html
-#: templates/erp/board.html
+#: templates/erp/board.html templates/industry/capacity.html
 msgid "Activity"
 msgstr "Atividade"
 
@@ -4458,8 +4470,8 @@ msgstr "Desatualizado"
 msgid "Dismissed"
 msgstr "Dispensado"
 
-#: apps/capsuleer/models.py config/showcase_data.py templates/_nav.html
-#: templates/admin_audit/console/combat_rewards.html
+#: apps/capsuleer/models.py apps/procurement/models.py config/showcase_data.py
+#: templates/_nav.html templates/admin_audit/console/combat_rewards.html
 #: templates/admin_audit/console/comms_access/status.html
 #: templates/admin_audit/console/compliance.html
 #: templates/admin_audit/console/raffle_grant.html
@@ -4468,10 +4480,10 @@ msgstr "Dispensado"
 #: templates/admin_audit/console/raffle_stats.html
 #: templates/corporation/roster.html templates/doctrines/list.html
 #: templates/doctrines/ships.html templates/identity/linked_pilots.html
-#: templates/killboard/compare.html templates/killboard/roster.html
-#: templates/mining/ledger.html templates/mining/payout.html
-#: templates/operations/detail.html templates/pilots/contributions.html
-#: templates/raffle/detail.html
+#: templates/industry/capacity.html templates/killboard/compare.html
+#: templates/killboard/roster.html templates/mining/ledger.html
+#: templates/mining/payout.html templates/operations/detail.html
+#: templates/pilots/contributions.html templates/raffle/detail.html
 msgid "Pilot"
 msgstr "Piloto"
 
@@ -4512,7 +4524,7 @@ msgid "Review due"
 msgstr "Revisão pendente"
 
 #: apps/capsuleer/models.py apps/command_intel/models.py
-#: templates/command_intel/_coa_card.html
+#: apps/procurement/models.py templates/command_intel/_coa_card.html
 msgid "Accepted"
 msgstr "Aceito"
 
@@ -7002,7 +7014,8 @@ msgid "Character"
 msgstr "Personagem"
 
 #: apps/corporation/models.py apps/erp/models.py apps/killboard/models.py
-#: apps/stockpile/models.py templates/killboard/battle_report.html
+#: apps/procurement/models.py apps/stockpile/models.py
+#: templates/killboard/battle_report.html
 msgid "Corporation"
 msgstr "Corporação"
 
@@ -7145,7 +7158,8 @@ msgstr "Peso da necessidade da corp no planejamento de skills."
 #: templates/admin_audit/console/access.html templates/campaigns/close.html
 #: templates/erp/board.html templates/killboard/watchlist_detail.html
 #: templates/mentorship/directory.html templates/mentorship/pairing_detail.html
-#: templates/navigation/beacons.html templates/store/inventory_fit.html
+#: templates/navigation/beacons.html templates/procurement/po_detail.html
+#: templates/store/inventory_fit.html
 msgid "Note"
 msgstr "Nota"
 
@@ -7166,7 +7180,7 @@ msgid "Imported"
 msgstr "Importado"
 
 #: apps/doctrines/models.py apps/mentorship/models.py apps/pingboard/models.py
-#: apps/raffle/models.py apps/store/models.py
+#: apps/procurement/models.py apps/raffle/models.py apps/store/models.py
 msgid "Expired"
 msgstr "Expirado"
 
@@ -7224,7 +7238,8 @@ msgstr "não pronto"
 
 #: apps/doctrines/services.py apps/industry/mrp.py
 #: templates/capsuleer/goal_detail.html templates/doctrines/coverage.html
-#: templates/identity/dashboard.html templates/mentorship/register_mentee.html
+#: templates/identity/dashboard.html templates/industry/capacity.html
+#: templates/mentorship/register_mentee.html
 #: templates/mentorship/register_mentor.html templates/readiness/dashboard.html
 msgid "unknown"
 msgstr "desconhecido"
@@ -7398,6 +7413,36 @@ msgstr "De um plano da liderança"
 msgid "Shipyard restock: %(fit_name)s"
 msgstr "Reposição do Estaleiro: %(fit_name)s"
 
+#: apps/erp/messages.py
+#, python-format
+msgid "Material plan restock: %(item)s"
+msgstr "Reposição do plano de materiais: %(item)s"
+
+#: apps/erp/messages.py
+#, python-format
+msgid "Material plan: %(quantity)s× %(item)s"
+msgstr "Plano de materiais: %(quantity)s× %(item)s"
+
+#: apps/erp/messages.py
+#, python-format
+msgid "Buy %(quantity)s× %(item)s for the material plan"
+msgstr "Comprar %(quantity)s× %(item)s para o plano de materiais"
+
+#: apps/erp/messages.py
+#, python-format
+msgid "Raised from the material plan: %(item)s"
+msgstr "Gerado a partir do plano de materiais: %(item)s"
+
+#: apps/erp/messages.py
+#, python-format
+msgid "Receive purchase order %(reference)s from %(supplier)s"
+msgstr "Receber pedido de compra %(reference)s de %(supplier)s"
+
+#: apps/erp/messages.py
+#, python-format
+msgid "Freight batch: %(origin)s → %(destination)s"
+msgstr "Lote de frete: %(origin)s → %(destination)s"
+
 #: apps/erp/models.py
 msgid "Building"
 msgstr "Em produção"
@@ -7407,7 +7452,7 @@ msgid "Built"
 msgstr "Produzido"
 
 #: apps/erp/models.py apps/logistics/models.py apps/pingboard/models.py
-#: apps/raffle/models.py apps/store/models.py
+#: apps/procurement/models.py apps/raffle/models.py apps/store/models.py
 #: templates/admin_audit/console/raffle_draw.html
 #: templates/logistics/contracts.html templates/store/board.html
 #: templates/store/order.html
@@ -7541,6 +7586,31 @@ msgstr "Informe um type id de blueprint válido."
 #: apps/erp/views.py
 msgid "Blueprint recorded."
 msgstr "Blueprint registrado."
+
+#: apps/erp/views.py
+msgid "No matching in-game job found — enter its job ID."
+msgstr "Nenhum job correspondente encontrado no jogo — informe o ID do job."
+
+#: apps/erp/views.py
+msgid "In-game job link removed."
+msgstr "Vínculo com o job no jogo removido."
+
+#: apps/erp/views.py
+#, python-format
+msgid "Linked to in-game job #%(id)s — it now carries the schedule."
+msgstr "Vinculado ao job no jogo #%(id)s — agora ele carrega o cronograma."
+
+#: apps/erp/views.py
+msgid "That in-game job produces a different item."
+msgstr "Esse job no jogo produz um item diferente."
+
+#: apps/erp/views.py
+msgid "That in-game job is already linked to another build job."
+msgstr "Esse job no jogo já está vinculado a outro job de produção."
+
+#: apps/erp/views.py
+msgid "Only an in-progress job can be linked."
+msgstr "Apenas um job em andamento pode ser vinculado."
 
 #: apps/identity/models.py
 msgid ""
@@ -7762,6 +7832,40 @@ msgstr ""
 msgid "No recipe."
 msgstr "Sem receita."
 
+#: apps/industry/capacity.py templates/operations/detail.html
+msgid "slots"
+msgstr "slots"
+
+#: apps/industry/capacity.py templates/skills/plans.html
+msgid "skills"
+msgstr "skills"
+
+#: apps/industry/capacity.py
+msgid "blueprint"
+msgstr "blueprint"
+
+#: apps/industry/capacity.py
+msgid "facility"
+msgstr "instalação"
+
+#: apps/industry/capacity.py
+msgid "materials"
+msgstr "materiais"
+
+#: apps/industry/capacity.py
+msgid "unmeasured"
+msgstr "não medido"
+
+#: apps/industry/capacity.py apps/stockpile/assets.py
+#: templates/stockpile/assets.html
+msgid "Unknown location"
+msgstr "Localização desconhecida"
+
+#: apps/industry/capacity.py apps/stockpile/assets.py
+#, python-format
+msgid "Location %(id)s"
+msgstr "Localização %(id)s"
+
 #: apps/industry/forms.py
 msgid "e.g. Build 5 Feroxes"
 msgstr "ex.: Construir 5 Feroxes"
@@ -7826,6 +7930,10 @@ msgid "Imported ESI job"
 msgstr "Job ESI importado"
 
 #: apps/industry/models.py
+msgid "MRP planning run"
+msgstr "execução de planejamento MRP"
+
+#: apps/industry/models.py
 msgid "Buy"
 msgstr "Comprar"
 
@@ -7880,20 +7988,139 @@ msgid "Haul"
 msgstr "Transportar"
 
 #: apps/industry/models.py templates/logistics/corp_contracts.html
+#: templates/logistics/freight_detail.html templates/procurement/po_detail.html
+#: templates/procurement/supplier_detail.html
 msgid "Contract"
 msgstr "Contratar"
+
+#: apps/industry/models.py
+msgid ""
+"Dated demand beyond this many days ahead is excluded from the plan and "
+"listed separately."
+msgstr ""
+"Demanda datada além deste número de dias à frente fica fora do plano e é "
+"listada separadamente."
+
+#: apps/industry/models.py
+msgid "Assumed days to buy an item at the price-reference hub."
+msgstr "Dias presumidos para comprar um item no hub de referência de preços."
+
+#: apps/industry/models.py
+msgid "Assumed days to buy at Jita and freight to the destination."
+msgstr "Dias presumidos para comprar em Jita e fretar até o destino."
+
+#: apps/industry/models.py
+msgid ""
+"Count finished-but-undelivered ESI jobs (status \"ready\") as incoming "
+"supply."
+msgstr ""
+"Contar jobs ESI concluídos mas não entregues (status \"ready\") como "
+"suprimento a caminho."
+
+#: apps/industry/models.py
+msgid ""
+"Run the planning job automatically on its nightly schedule. Off: officers "
+"run it manually from the Material Plan page."
+msgstr ""
+"Executar o job de planejamento automaticamente no cronograma noturno. "
+"Desligado: os oficiais o executam manualmente na página do Plano de "
+"Materiais."
+
+#: apps/industry/models.py
+msgid ""
+"Hold build dates to committed manufacturing capacity (slots, skills, "
+"blueprints, facilities) and name the bottleneck. Off: dates assume unlimited "
+"industry slots (the P3 behaviour)."
+msgstr ""
+"Limita as datas de fabricação à capacidade de fabricação comprometida "
+"(slots, habilidades, blueprints, instalações) e identifica o gargalo. "
+"Desligado: as datas presumem slots de indústria ilimitados (o comportamento "
+"do P3)."
+
+#: apps/industry/models.py
+msgid ""
+"A pilot's slots become \"unknown\" (excluded from measured capacity) when "
+"their skills snapshot is older than this. Unknown is never treated as zero."
+msgstr ""
+"Os slots de um piloto passam a ficar \"desconhecidos\" (excluídos da "
+"capacidade medida) quando a captura de habilidades dele é mais antiga que "
+"este valor. Desconhecido nunca é tratado como zero."
+
+#: apps/industry/models.py
+msgid "Material-efficiency assumed for every build level of the explosion."
+msgstr ""
+"Eficiência de material presumida para cada nível de produção da explosão."
+
+#: apps/industry/models.py
+msgid "Deepest BOM level the explosion will recurse to."
+msgstr "Nível mais profundo do BOM até onde a explosão desce."
+
+#: apps/industry/models.py
+msgid "MRP config"
+msgstr "configuração de MRP"
+
+#: apps/industry/models.py
+msgid "MRP configs"
+msgstr "configurações de MRP"
 
 #: apps/industry/models.py apps/raffle/models.py
 msgid "Running"
 msgstr "Em execução"
 
+#: apps/industry/models.py
+msgid "Science"
+msgstr "Ciência"
+
+#: apps/industry/models.py
+msgid ""
+"Cap on finished units/week the scheduler will book onto this pilot — a crude "
+"cadence governor counted across all types, not a per-job ceiling. Blank "
+"means uncapped."
+msgstr ""
+"Limite de unidades finalizadas por semana que o agendador reservará para "
+"este piloto — um controle de cadência simples, contabilizado em todos os "
+"tipos, não um teto por job. Em branco significa sem limite."
+
+#: apps/industry/models.py
+msgid "Don't schedule new work onto this pilot."
+msgstr "Não agendar novos trabalhos para este piloto."
+
 #: apps/industry/mrp.py templates/store/supply_forecast.html
 msgid "import"
 msgstr "importar"
 
+#: apps/industry/mrp.py
+msgid "in-flight ESI job"
+msgstr "job ESI em andamento"
+
+#: apps/industry/mrp.py
+msgid "build duration"
+msgstr "duração da produção"
+
+#: apps/industry/mrp.py
+msgid "lead time"
+msgstr "lead time"
+
+#: apps/industry/mrp.py
+msgid "purchase order"
+msgstr "pedido de compra"
+
+#: apps/industry/mrp.py
+msgid "committed capacity"
+msgstr "capacidade comprometida"
+
+#: apps/industry/mrp.py templates/industry/mrp.html
+msgid "in transit"
+msgstr "em trânsito"
+
 #: apps/industry/tools.py
 msgid "Pick a valid item from the demand list."
 msgstr "Selecione um item válido da lista de demanda."
+
+#: apps/industry/tools.py
+#, python-format
+msgid "An active supply plan for %(item)s already exists."
+msgstr "Já existe um plano de suprimento ativo para %(item)s."
 
 #: apps/industry/tools.py
 #, python-format
@@ -8051,9 +8278,74 @@ msgstr "Nada reservado — não há estoque da corp correspondente disponível."
 msgid "Released %(n)s reservation(s) back to corp stock."
 msgstr "Liberada(s) %(n)s reserva(s) de volta ao estoque da corp."
 
+#: apps/industry/views_capacity.py
+msgid "The maintenance window must end after it starts."
+msgstr "A janela de manutenção deve terminar depois de começar."
+
+#: apps/industry/views_capacity.py
+msgid "Capacity settings saved."
+msgstr "Configurações de capacidade salvas."
+
+#: apps/industry/views_capacity.py
+msgid "Capacity override saved."
+msgstr "Substituição de capacidade salva."
+
+#: apps/industry/views_capacity.py
+msgid "Capacity re-derived from current skills."
+msgstr "Capacidade recalculada com base nas habilidades atuais."
+
+#: apps/industry/views_mrp.py
+msgid "A planning run is already in progress — try again shortly."
+msgstr ""
+"Uma execução de planejamento já está em andamento — tente novamente em "
+"instantes."
+
+#: apps/industry/views_mrp.py
+msgid "Planning run finished — no changes since the last run."
+msgstr ""
+"Execução de planejamento concluída — sem mudanças desde a última execução."
+
+#: apps/industry/views_mrp.py
+#, python-format
+msgid "Planning run finished: %(written)s row(s) updated, %(closed)s closed."
+msgstr ""
+"Execução de planejamento concluída: %(written)s linha(s) atualizada(s), "
+"%(closed)s encerrada(s)."
+
+#: apps/industry/views_mrp.py
+msgid "That requirement is closed."
+msgstr "Essa necessidade está encerrada."
+
+#: apps/industry/views_mrp.py
+msgid "Ship-level demand is fulfilled from the Shipyard inventory console."
+msgstr ""
+"A demanda no nível de naves é atendida pelo console de inventário do "
+"Estaleiro."
+
+#: apps/industry/views_mrp.py
+msgid "This requirement already has a vehicle attached."
+msgstr "Este requisito já tem um veículo anexado."
+
+#: apps/industry/views_mrp.py
+msgid "This requirement is on a freight batch — remove it there first."
+msgstr "Este requisito está em um lote de frete — remova-o de lá primeiro."
+
+#: apps/industry/views_mrp.py
+#, python-format
+msgid "Industry plan “%(name)s” is linked."
+msgstr "O plano de indústria “%(name)s” está vinculado."
+
 #: apps/industry/views_mrp.py apps/store/views_inventory.py
 msgid "ERP build job queued and linked."
 msgstr "Trabalho de produção do ERP enfileirado e vinculado."
+
+#: apps/industry/views_mrp.py
+msgid "Added to the freight batch for this lane."
+msgstr "Adicionado ao lote de frete desta rota."
+
+#: apps/industry/views_mrp.py
+msgid "Claimable BUY task created and linked."
+msgstr "Tarefa de COMPRA reivindicável criada e vinculada."
 
 #: apps/kb/models.py
 msgid "Public"
@@ -8340,7 +8632,11 @@ msgstr "Sem recompensa"
 #: apps/killboard/models.py templates/buyback/appraisal.html
 #: templates/buyback/offer.html templates/industry/chain.html
 #: templates/industry/create.html templates/industry/demand.html
-#: templates/industry/mrp.html templates/market/dashboard.html
+#: templates/industry/mrp.html templates/logistics/freight.html
+#: templates/logistics/freight_detail.html templates/market/dashboard.html
+#: templates/procurement/agreement_detail.html templates/procurement/board.html
+#: templates/procurement/po_detail.html
+#: templates/procurement/supplier_detail.html
 #: templates/stockpile/dashboard.html templates/stockpile/logistics.html
 msgid "Item"
 msgstr "Item"
@@ -8603,7 +8899,8 @@ msgstr "Visitante"
 msgid "Regular"
 msgstr "Frequentador"
 
-#: apps/killboard/ranks_i18n.py
+#: apps/killboard/ranks_i18n.py templates/industry/capacity.html
+#: templates/procurement/board.html
 msgid "Committed"
 msgstr "Comprometido"
 
@@ -8778,6 +9075,69 @@ msgstr "Deve ser maior que 0 e no máximo 2."
 msgid "Can't be negative."
 msgstr "Não pode ser negativo."
 
+#: apps/logistics/freight.py
+msgid "Lines can only change while the batch is open."
+msgstr "As linhas só podem mudar enquanto o lote estiver aberto."
+
+#: apps/logistics/freight.py
+msgid "Enter a quantity of at least 1."
+msgstr "Informe uma quantidade de pelo menos 1."
+
+#: apps/logistics/freight.py
+#, python-format
+msgid "Quantity can't drop below the plan's %(n)s units."
+msgstr "A quantidade não pode ficar abaixo das %(n)s unidades do plano."
+
+#: apps/logistics/freight.py
+msgid "This requirement has no destination to freight to."
+msgstr "Este requisito não tem destino para onde fretar."
+
+#: apps/logistics/freight.py
+msgid "No price-reference hub is configured to freight from."
+msgstr ""
+"Nenhum hub de referência de preço está configurado como origem de frete."
+
+#: apps/logistics/freight.py apps/logistics/routing.py
+msgid "No jump route within range between those systems."
+msgstr "Nenhuma rota de jump dentro do alcance entre esses sistemas."
+
+#: apps/logistics/freight.py
+msgid "Only an open batch can be assigned."
+msgstr "Somente um lote aberto pode ser atribuído."
+
+#: apps/logistics/freight.py
+msgid "Add at least one line before assigning."
+msgstr "Adicione pelo menos uma linha antes de atribuir."
+
+#: apps/logistics/freight.py
+msgid "Only an assigned batch can be unassigned."
+msgstr "Somente um lote atribuído pode ser desatribuído."
+
+#: apps/logistics/freight.py
+msgid "Only an assigned batch can depart."
+msgstr "Somente um lote atribuído pode partir."
+
+#: apps/logistics/freight.py
+msgid "This batch is already closed."
+msgstr "Este lote já está fechado."
+
+#: apps/logistics/freight.py
+msgid "This batch can't be marked arrived."
+msgstr "Este lote não pode ser marcado como chegado."
+
+#: apps/logistics/freight.py
+msgid "This batch is not in transit."
+msgstr "Este lote não está em trânsito."
+
+#: apps/logistics/freight.py
+#, python-format
+msgid "Enter a quantity between 1 and %(n)s."
+msgstr "Informe uma quantidade entre 1 e %(n)s."
+
+#: apps/logistics/freight.py
+msgid "No corp stockpile exists at the destination — create one first."
+msgstr "Não existe estoque da corp no destino — crie um primeiro."
+
 #: apps/logistics/models.py
 msgid "Public — anyone can get quotes"
 msgstr "Público — qualquer um pode obter cotações"
@@ -8801,6 +9161,71 @@ msgstr "Verificado no jogo"
 #: apps/logistics/models.py
 msgid "Failed in-game"
 msgstr "Falhou no jogo"
+
+#: apps/logistics/models.py
+msgid "Ship class assumed when an officer assigns a batch to the courier flow."
+msgstr ""
+"Classe de nave presumida quando um oficial atribui um lote ao fluxo de "
+"courier."
+
+#: apps/logistics/models.py
+msgid ""
+"Assumed days from opening a batch to it departing — the default ETD offset "
+"when none is typed."
+msgstr ""
+"Dias presumidos entre abrir um lote e sua partida — o deslocamento padrão de "
+"ETD quando nenhum é digitado."
+
+#: apps/logistics/models.py
+msgid ""
+"Assumed days in transit (depart → arrive) — the default ETA when no arrival "
+"date is typed."
+msgstr ""
+"Dias presumidos em trânsito (partida → chegada) — a ETA padrão quando "
+"nenhuma data de chegada é digitada."
+
+#: apps/logistics/models.py
+msgid ""
+"Run the hourly batch sweep: flip batches to arrived from a verified courier "
+"contract or a completed haul, and flag late ones. Off: the beat is a no-op "
+"and officers click “arrived” by hand (the v1 workflow)."
+msgstr ""
+"Executa a varredura horária de lotes: muda lotes para chegado a partir de um "
+"contrato de courier verificado ou de um transporte concluído, e sinaliza os "
+"atrasados. Desligado: o beat é um no-op e os oficiais clicam em “chegado” "
+"manualmente (o fluxo da v1)."
+
+#: apps/logistics/models.py
+msgid "Hours past a batch's planned ETA before the sweep flags it late."
+msgstr ""
+"Horas além da ETA planejada de um lote antes que a varredura o sinalize como "
+"atrasado."
+
+#: apps/logistics/models.py
+msgid "freight config"
+msgstr "configuração de frete"
+
+#: apps/logistics/models.py
+msgid "freight configs"
+msgstr "configurações de frete"
+
+#: apps/logistics/models.py
+msgid "Assigned"
+msgstr "Atribuído"
+
+#: apps/logistics/models.py templates/logistics/freight.html
+msgid "In transit"
+msgstr "Em trânsito"
+
+#: apps/logistics/models.py
+msgid "Arrived"
+msgstr "Chegado"
+
+#: apps/logistics/models.py apps/store/models.py
+#: templates/admin_audit/console/raffle_draw.html templates/industry/mrp.html
+#: templates/store/inventory_fit.html
+msgid "Closed"
+msgstr "Encerrado"
 
 #: apps/logistics/pricing.py
 msgid "Enter a route (jumps) and a volume."
@@ -8877,10 +9302,6 @@ msgstr "É preciso pelo menos uma origem e um destino."
 #, python-format
 msgid "Too many waypoints — plan at most %(n)d legs at a time."
 msgstr "Waypoints demais — planeje no máximo %(n)d trechos por vez."
-
-#: apps/logistics/routing.py
-msgid "No jump route within range between those systems."
-msgstr "Nenhuma rota de jump dentro do alcance entre esses sistemas."
 
 #: apps/logistics/views.py
 msgid ""
@@ -8971,6 +9392,86 @@ msgstr "Nenhum director concedeu o scope de corp-contracts ainda."
 #: apps/logistics/views.py
 msgid "Contract sync failed; try again later."
 msgstr "Falha ao sincronizar contratos; tente novamente mais tarde."
+
+#: apps/logistics/views_freight.py
+msgid "typed"
+msgstr "digitado"
+
+#: apps/logistics/views_freight.py
+msgid "from price snapshot"
+msgstr "do snapshot de preço"
+
+#: apps/logistics/views_freight.py
+msgid "Origin and destination must differ."
+msgstr "Origem e destino devem ser diferentes."
+
+#: apps/logistics/views_freight.py
+msgid "Freight settings saved."
+msgstr "Configurações de frete salvas."
+
+#: apps/logistics/views_freight.py
+msgid "Pick two different locations."
+msgstr "Escolha dois locais diferentes."
+
+#: apps/logistics/views_freight.py
+msgid "Pick an item and a quantity."
+msgstr "Escolha um item e uma quantidade."
+
+#: apps/logistics/views_freight.py
+msgid "Line added."
+msgstr "Linha adicionada."
+
+#: apps/logistics/views_freight.py
+msgid "Line updated."
+msgstr "Linha atualizada."
+
+#: apps/logistics/views_freight.py
+msgid "Line removed."
+msgstr "Linha removida."
+
+#: apps/logistics/views_freight.py
+msgid "Pick a ship class."
+msgstr "Escolha uma classe de nave."
+
+#: apps/logistics/views_freight.py
+msgid "Batch assigned to the courier flow."
+msgstr "Lote atribuído ao fluxo de courier."
+
+#: apps/logistics/views_freight.py
+msgid "Batch posted to the member haul board."
+msgstr "Lote publicado no quadro de transporte de membros."
+
+#: apps/logistics/views_freight.py
+msgid "Batch unassigned."
+msgstr "Lote desatribuído."
+
+#: apps/logistics/views_freight.py
+msgid "Batch marked departed."
+msgstr "Lote marcado como partido."
+
+#: apps/logistics/views_freight.py
+msgid "Enter a valid ETA."
+msgstr "Informe uma ETA válida."
+
+#: apps/logistics/views_freight.py
+msgid "ETA updated."
+msgstr "ETA atualizada."
+
+#: apps/logistics/views_freight.py
+msgid "Batch marked arrived."
+msgstr "Lote marcado como chegado."
+
+#: apps/logistics/views_freight.py
+msgid "Enter a quantity to receive."
+msgstr "Informe uma quantidade a receber."
+
+#: apps/logistics/views_freight.py
+msgid "Stock received."
+msgstr "Estoque recebido."
+
+#: apps/logistics/views_freight.py
+msgid "Batch cancelled."
+msgstr "Lote cancelado."
 
 #: apps/market/forms.py
 msgid "e.g. Amarr VIII (Oris)"
@@ -9836,7 +10337,7 @@ msgid "Only grant if the triggering task was auto-verified."
 msgstr ""
 "Conceder apenas se a tarefa que disparou foi verificada automaticamente."
 
-#: apps/mentorship/models.py apps/raffle/models.py
+#: apps/mentorship/models.py apps/procurement/models.py apps/raffle/models.py
 msgid "Pending approval"
 msgstr "Aguardando aprovação"
 
@@ -9879,6 +10380,7 @@ msgstr "Sugerido"
 #: templates/recommendations/notifications.html templates/recruitment/list.html
 #: templates/skills/gap.html templates/srp/budget.html
 #: templates/srp/loss_impact.html templates/srp/queue.html
+#: templates/store/margin.html templates/supplyboard/board.html
 msgid "Leadership"
 msgstr "Liderança"
 
@@ -9894,7 +10396,7 @@ msgstr "Mudança de status"
 msgid "Not started"
 msgstr "Não iniciado"
 
-#: apps/mentorship/models.py apps/srp/models.py
+#: apps/mentorship/models.py apps/procurement/models.py apps/srp/models.py
 msgid "Submitted"
 msgstr "Enviado"
 
@@ -13652,6 +14154,88 @@ msgid "{ship_name} can be ordered on the Shipyard again."
 msgstr "{ship_name} pode ser pedida novamente no Estaleiro."
 
 #: apps/pingboard/messages.py
+#, python-brace-format
+msgid "Material shortfall: {industry_job_name}"
+msgstr "Falta de material: {industry_job_name}"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"The material plan needs {quantity}× {industry_job_name} by {eta_date}. "
+"Review the Material Plan: {link}"
+msgstr ""
+"O plano de materiais precisa de {quantity}× {industry_job_name} até "
+"{eta_date}. Revise o Plano de Materiais: {link}"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid "Capacity bottleneck: {industry_job_name}"
+msgstr "Gargalo de capacidade: {industry_job_name}"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"The plan can't build {quantity}× {industry_job_name} in time — no free "
+"manufacturing slots. Review the Production Capacity board: {link}"
+msgstr ""
+"O plano não consegue fabricar {quantity}× {industry_job_name} a tempo — não "
+"há slots de fabricação livres. Consulte o quadro de Capacidade de Produção: "
+"{link}"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"The plan can't build {quantity}× {industry_job_name} — no opted-in pilot has "
+"the manufacturing skills. Review the Production Capacity board: {link}"
+msgstr ""
+"O plano não consegue fabricar {quantity}× {industry_job_name} — nenhum "
+"piloto participante tem as habilidades de fabricação. Consulte o quadro de "
+"Capacidade de Produção: {link}"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"The plan can't build {quantity}× {industry_job_name} — no usable blueprint "
+"is owned. Review the Production Capacity board: {link}"
+msgstr ""
+"O plano não consegue fabricar {quantity}× {industry_job_name} — a corp não "
+"possui nenhum blueprint utilizável. Consulte o quadro de Capacidade de "
+"Produção: {link}"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"The plan can't build {quantity}× {industry_job_name} in time — the "
+"manufacturing facility is reinforced or out of fuel. Review the Production "
+"Capacity board: {link}"
+msgstr ""
+"O plano não consegue fabricar {quantity}× {industry_job_name} a tempo — a "
+"instalação de fabricação está em reforço ou sem combustível. Consulte o "
+"quadro de Capacidade de Produção: {link}"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"The plan can't build {quantity}× {industry_job_name} in time — its "
+"components can't be ready soon enough. Review the Production Capacity board: "
+"{link}"
+msgstr ""
+"O plano não consegue fabricar {quantity}× {industry_job_name} a tempo — seus "
+"componentes não ficarão prontos a tempo. Consulte o quadro de Capacidade de "
+"Produção: {link}"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"The plan can't promise {quantity}× {industry_job_name} — no measured pilot "
+"can be scheduled (capacity unknown). Review the Production Capacity board: "
+"{link}"
+msgstr ""
+"O plano não pode prometer {quantity}× {industry_job_name} — nenhum piloto "
+"medido pode ser agendado (capacidade desconhecida). Consulte o quadro de "
+"Capacidade de Produção: {link}"
+
+#: apps/pingboard/messages.py
 msgid "Shipyard restock built"
 msgstr "Reposição do Estaleiro construída"
 
@@ -13831,6 +14415,45 @@ msgid ""
 msgstr ""
 "Seu transporte {origin_system} → {destination_system} passou do prazo e foi "
 "devolvido ao pool."
+
+#: apps/pingboard/messages.py
+msgid "Freight batch arrived"
+msgstr "Lote de frete chegado"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"Freight batch {origin_system} → {destination_system} has arrived — receipt "
+"its lines to post the landed stock."
+msgstr ""
+"O lote de frete {origin_system} → {destination_system} chegou — registre o "
+"recebimento de suas linhas para lançar o estoque desembarcado."
+
+#: apps/pingboard/messages.py
+msgid "Freight batch overdue"
+msgstr "Lote de frete atrasado"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"Freight batch {origin_system} → {destination_system} is past its ETA "
+"({eta_date}) and has not arrived."
+msgstr ""
+"O lote de frete {origin_system} → {destination_system} passou de sua ETA "
+"({eta_date}) e não chegou."
+
+#: apps/pingboard/messages.py
+msgid "Freight batch delayed"
+msgstr "Lote de frete adiado"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"Freight batch {origin_system} → {destination_system} slipped its ETA to "
+"{eta_date}."
+msgstr ""
+"O lote de frete {origin_system} → {destination_system} adiou sua ETA para "
+"{eta_date}."
 
 #: apps/pingboard/messages.py
 msgid "Moon chunk arriving soon"
@@ -14382,6 +15005,46 @@ msgstr "A campanha «{campaign_name}» agora está Bloqueada. {link}"
 #, python-brace-format
 msgid "Campaign «{campaign_name}» is now Blocked — {details}. {link}"
 msgstr "A campanha «{campaign_name}» agora está Bloqueada — {details}. {link}"
+
+#: apps/pingboard/messages.py
+msgid "Supply agreement awaiting approval"
+msgstr "Acordo de fornecimento aguardando aprovação"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"{actor_name} submitted a supply agreement with {supplier_name} that needs a "
+"second director's approval in the Procurement console."
+msgstr ""
+"{actor_name} enviou um acordo de fornecimento com {supplier_name} que "
+"precisa da aprovação de um segundo Director no console de Aquisição."
+
+#: apps/pingboard/messages.py
+msgid "Purchase order contract available"
+msgstr "Contrato de pedido de compra disponível"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"{count} purchase order(s) from {supplier_name} matched an in-game contract "
+"and are ready to accept. Review them in the Procurement console: {link}"
+msgstr ""
+"{count} pedido(s) de compra de {supplier_name} corresponderam a um contrato "
+"in-game e estão prontos para aceitar. Revise-os no console de Aquisição: "
+"{link}"
+
+#: apps/pingboard/messages.py
+msgid "Purchase order overdue"
+msgstr "Pedido de compra atrasado"
+
+#: apps/pingboard/messages.py
+#, python-brace-format
+msgid ""
+"{count} purchase order(s) from {supplier_name} are overdue (promised by "
+"{eta_date}). Review them on the Procurement board."
+msgstr ""
+"{count} pedido(s) de compra de {supplier_name} estão atrasados (prometidos "
+"para {eta_date}). Revise-os no painel de Aquisição."
 
 #: apps/pingboard/models.py
 msgid "Emergency"
@@ -16010,7 +16673,7 @@ msgstr "Reset diário"
 msgid "Every 2–3 days"
 msgstr "A cada 2–3 dias"
 
-#: apps/planetary/models.py
+#: apps/planetary/models.py apps/procurement/models.py
 msgid "Weekly"
 msgstr "Semanal"
 
@@ -16545,6 +17208,425 @@ msgid "Grant the Planetary Industry scope first, then sync your colonies."
 msgstr ""
 "Conceda o scope de Planetary Industry primeiro, depois sincronize suas "
 "colônias."
+
+#: apps/procurement/contracts.py
+msgid "That contract is no longer in the snapshot."
+msgstr "Esse contrato não está mais no snapshot."
+
+#: apps/procurement/contracts.py
+msgid "That contract is not a valid match for this order."
+msgstr "Esse contrato não é uma correspondência válida para este pedido."
+
+#: apps/procurement/forms.py
+msgid "The per-cycle quantity must be at least 1."
+msgstr "A quantidade por ciclo deve ser pelo menos 1."
+
+#: apps/procurement/forms.py
+msgid "Order at least one unit."
+msgstr "Peça pelo menos uma unidade."
+
+#: apps/procurement/models.py
+msgid ""
+"Estimated cycle value at or above which a supply agreement needs a second "
+"Director's approval."
+msgstr ""
+"Valor estimado do ciclo a partir do qual um acordo de fornecimento precisa "
+"da aprovação de um segundo Director."
+
+#: apps/procurement/models.py
+msgid ""
+"Total value at or above which a standalone purchase order (one not covered "
+"by an active agreement) needs Director approval."
+msgstr ""
+"Valor total a partir do qual um pedido de compra avulso (não coberto por um "
+"acordo ativo) precisa da aprovação de Director."
+
+#: apps/procurement/models.py
+msgid "Days past the promised date before a purchase order is flagged overdue."
+msgstr ""
+"Dias após a data prometida antes de um pedido de compra ser marcado como "
+"atrasado."
+
+#: apps/procurement/models.py
+msgid ""
+"Complete weeks of closed purchase orders the reliability rollup looks back "
+"over."
+msgstr ""
+"Semanas completas de pedidos de compra fechados que a consolidação de "
+"confiabilidade analisa."
+
+#: apps/procurement/models.py
+msgid ""
+"Arm the contract matcher (runs after the corp-contracts sync). Off: officers "
+"confirm contract matches by hand."
+msgstr ""
+"Ativar a correspondência de contratos (executa após a sincronização de "
+"contratos da corp). Desligado: os oficiais confirmam as correspondências "
+"manualmente."
+
+#: apps/procurement/models.py
+msgid ""
+"Arm the wallet-journal payment reconcile. Off: officers confirm payments by "
+"hand."
+msgstr ""
+"Ativar a conciliação de pagamentos do wallet-journal. Desligado: os oficiais "
+"confirmam os pagamentos manualmente."
+
+#: apps/procurement/models.py
+msgid "Arm the daily overdue sweep (also expires lapsed agreements)."
+msgstr "Ativar a varredura diária de atrasos (também expira acordos vencidos)."
+
+#: apps/procurement/models.py
+msgid ""
+"Let a finished matched contract post its landed quantities as receipts "
+"automatically. Off: officers post receipts by hand."
+msgstr ""
+"Permitir que um contrato correspondido e concluído registre suas quantidades "
+"recebidas como recebimentos automaticamente. Desligado: os oficiais "
+"registram os recebimentos manualmente."
+
+#: apps/procurement/models.py
+msgid "Arm the nightly supplier-reliability rollup."
+msgstr "Ativar a consolidação noturna de confiabilidade do fornecedor."
+
+#: apps/procurement/models.py
+msgid ""
+"Wallet-journal ref_types the payment reconcile treats as supplier payments. "
+"Enumerate from the real corp journal before arming."
+msgstr ""
+"ref_types do wallet-journal que a conciliação de pagamentos trata como "
+"pagamentos ao fornecedor. Enumere a partir do journal real da corp antes de "
+"ativar."
+
+#: apps/procurement/models.py
+msgid "procurement config"
+msgstr "configuração de aquisição"
+
+#: apps/procurement/models.py
+msgid "procurement configs"
+msgstr "configurações de aquisição"
+
+#: apps/procurement/models.py
+msgid "Market hub"
+msgstr "Hub de mercado"
+
+#: apps/procurement/models.py
+msgid "Probation"
+msgstr "Em observação"
+
+#: apps/procurement/models.py
+msgid "Suspended"
+msgstr "Suspenso"
+
+#: apps/procurement/models.py
+msgid "Fixed price"
+msgstr "Preço fixo"
+
+#: apps/procurement/models.py
+msgid "Jita-indexed + premium"
+msgstr "Indexado à Jita + prêmio"
+
+#: apps/procurement/models.py
+msgid "One-off"
+msgstr "Avulso"
+
+#: apps/procurement/models.py
+msgid "Monthly"
+msgstr "Mensal"
+
+#: apps/procurement/models.py
+msgid "Prepaid"
+msgstr "Pré-pago"
+
+#: apps/procurement/models.py
+msgid "On delivery"
+msgstr "Na entrega"
+
+#: apps/procurement/models.py
+msgid "Net 7 days"
+msgstr "A prazo 7 dias"
+
+#: apps/procurement/models.py
+msgid "Net 30 days"
+msgstr "A prazo 30 dias"
+
+#: apps/procurement/models.py
+msgid "Contract expected"
+msgstr "Contrato esperado"
+
+#: apps/procurement/models.py
+msgid "Contract available"
+msgstr "Contrato disponível"
+
+#: apps/procurement/models.py
+msgid "Partially delivered"
+msgstr "Entregue parcialmente"
+
+#: apps/procurement/models.py
+msgid "Reconciled"
+msgstr "Conciliado"
+
+#: apps/procurement/models.py
+msgid "Disputed"
+msgstr "Em disputa"
+
+#: apps/procurement/models.py
+msgid "Supplier delivers"
+msgstr "Fornecedor entrega"
+
+#: apps/procurement/models.py
+msgid "Hub pickup (corp hauls)"
+msgstr "Retirada no hub (a corp transporta)"
+
+#: apps/procurement/models.py
+msgid "Auto (contract landed)"
+msgstr "Automático (contrato recebido)"
+
+#: apps/procurement/models.py
+msgid "Manual (officer attested)"
+msgstr "Manual (atestado por oficial)"
+
+#: apps/procurement/payments.py
+msgid "That wallet entry no longer exists."
+msgstr "Essa entrada do wallet não existe mais."
+
+#: apps/procurement/payments.py
+msgid "That payment is already matched to another order."
+msgstr "Esse pagamento já está correspondido a outro pedido."
+
+#: apps/procurement/payments.py
+msgid "This order is already settled."
+msgstr "Este pedido já está liquidado."
+
+#: apps/procurement/receipts.py
+msgid "This purchase order is not ready to receive deliveries."
+msgstr "Este pedido de compra não está pronto para receber entregas."
+
+#: apps/procurement/receipts.py
+msgid "This line is already fully received."
+msgstr "Esta linha já foi totalmente recebida."
+
+#: apps/procurement/receipts.py
+msgid "Receipt quantity must be positive."
+msgstr "A quantidade recebida deve ser positiva."
+
+#: apps/procurement/receipts.py
+msgid "Only a hub-pickup purchase order needs a corp haul."
+msgstr ""
+"Apenas um pedido de compra com retirada no hub precisa de um transporte da "
+"corp."
+
+#: apps/procurement/receipts.py
+msgid "This purchase order is not ready to be hauled yet."
+msgstr "Este pedido de compra ainda não está pronto para ser transportado."
+
+#: apps/procurement/services.py
+msgid "Only a draft agreement can be submitted."
+msgstr "Apenas um acordo em rascunho pode ser enviado."
+
+#: apps/procurement/services.py
+msgid "An approval request for this agreement is already open."
+msgstr "Já existe uma solicitação de aprovação aberta para este acordo."
+
+#: apps/procurement/services.py
+msgid "This approval is no longer pending."
+msgstr "Esta aprovação não está mais pendente."
+
+#: apps/procurement/services.py
+msgid "You can't approve your own agreement — another Director must."
+msgstr ""
+"Você não pode aprovar seu próprio acordo — outro Director deve fazê-lo."
+
+#: apps/procurement/services.py
+#, python-format
+msgid "Agreement %(outcome)s."
+msgstr "Acordo %(outcome)s."
+
+#: apps/procurement/services.py
+msgid "Only a draft purchase order can be submitted."
+msgstr "Apenas um pedido de compra em rascunho pode ser enviado."
+
+#: apps/procurement/services.py
+msgid "A purchase order needs at least one line."
+msgstr "Um pedido de compra precisa de pelo menos uma linha."
+
+#: apps/procurement/services.py
+msgid "The supplier does not sell every item on this order."
+msgstr "O fornecedor não vende todos os itens deste pedido."
+
+#: apps/procurement/services.py
+msgid "Only a submitted purchase order can be approved."
+msgstr "Apenas um pedido de compra enviado pode ser aprovado."
+
+#: apps/procurement/services.py
+msgid "You can't approve your own purchase order — another officer must."
+msgstr ""
+"Você não pode aprovar seu próprio pedido de compra — outro oficial deve fazê-"
+"lo."
+
+#: apps/procurement/services.py
+msgid ""
+"A standalone purchase order at or above the Director threshold needs "
+"Director approval."
+msgstr ""
+"Um pedido de compra avulso a partir do limite de Director precisa da "
+"aprovação de Director."
+
+#: apps/procurement/services.py
+msgid "Only an approved purchase order can be marked contract-expected."
+msgstr ""
+"Apenas um pedido de compra aprovado pode ser marcado como contrato esperado."
+
+#: apps/procurement/services.py
+msgid "This purchase order is already closed."
+msgstr "Este pedido de compra já está fechado."
+
+#: apps/procurement/services.py
+msgid "Only a Director can cancel a purchase order this far along."
+msgstr "Apenas um Director pode cancelar um pedido de compra tão avançado."
+
+#: apps/procurement/services.py
+msgid "A dispute needs a reason."
+msgstr "Uma disputa precisa de um motivo."
+
+#: apps/procurement/services.py
+msgid "Only an in-flight purchase order can be disputed."
+msgstr "Apenas um pedido de compra em andamento pode ser colocado em disputa."
+
+#: apps/procurement/services.py
+msgid "This purchase order is not under dispute."
+msgstr "Este pedido de compra não está em disputa."
+
+#: apps/procurement/services.py
+msgid "Closing a dispute as reconciled needs a note."
+msgstr "Fechar uma disputa como conciliada precisa de uma nota."
+
+#: apps/procurement/services.py
+msgid "Only a Director can cancel a disputed purchase order."
+msgstr "Apenas um Director pode cancelar um pedido de compra em disputa."
+
+#: apps/procurement/services.py
+msgid "Unknown dispute outcome."
+msgstr "Resultado de disputa desconhecido."
+
+#: apps/procurement/services.py
+msgid "Reconciling a purchase order needs a note."
+msgstr "Conciliar um pedido de compra precisa de uma nota."
+
+#: apps/procurement/services.py
+msgid "Only a delivered purchase order can be reconciled."
+msgstr "Apenas um pedido de compra entregue pode ser conciliado."
+
+#: apps/procurement/views.py
+msgid "Supplier registered."
+msgstr "Fornecedor registrado."
+
+#: apps/procurement/views.py
+msgid "Supplier updated."
+msgstr "Fornecedor atualizado."
+
+#: apps/procurement/views.py
+msgid "That item is already in this supplier's catalogue."
+msgstr "Esse item já está no catálogo deste fornecedor."
+
+#: apps/procurement/views.py
+msgid "Catalogue item added."
+msgstr "Item do catálogo adicionado."
+
+#: apps/procurement/views.py
+msgid "Draft agreement created — add its lines next."
+msgstr "Acordo em rascunho criado — adicione as linhas a seguir."
+
+#: apps/procurement/views.py
+msgid "Lines can only be changed while the agreement is a draft."
+msgstr ""
+"As linhas só podem ser alteradas enquanto o acordo estiver em rascunho."
+
+#: apps/procurement/views.py
+msgid "That type is already on this agreement."
+msgstr "Esse tipo já está neste acordo."
+
+#: apps/procurement/views.py
+msgid "Agreement line added."
+msgstr "Linha do acordo adicionada."
+
+#: apps/procurement/views.py
+msgid "Agreement submitted and activated."
+msgstr "Acordo enviado e ativado."
+
+#: apps/procurement/views.py
+msgid "Agreement submitted for Director approval."
+msgstr "Acordo enviado para aprovação de Director."
+
+#: apps/procurement/views.py
+msgid "Only a Director can decide an agreement approval."
+msgstr "Apenas um Director pode decidir a aprovação de um acordo."
+
+#: apps/procurement/views.py
+msgid "There is no pending approval for this agreement."
+msgstr "Não há aprovação pendente para este acordo."
+
+#: apps/procurement/views.py
+msgid "Draft purchase order created — add its lines next."
+msgstr "Pedido de compra em rascunho criado — adicione as linhas a seguir."
+
+#: apps/procurement/views.py
+msgid "Lines can only be changed while the order is a draft."
+msgstr ""
+"As linhas só podem ser alteradas enquanto o pedido estiver em rascunho."
+
+#: apps/procurement/views.py
+msgid "Order line added."
+msgstr "Linha do pedido adicionada."
+
+#: apps/procurement/views.py
+msgid "Purchase order submitted."
+msgstr "Pedido de compra enviado."
+
+#: apps/procurement/views.py
+msgid "Purchase order approved."
+msgstr "Pedido de compra aprovado."
+
+#: apps/procurement/views.py
+msgid "Marked contract-expected."
+msgstr "Marcado como contrato esperado."
+
+#: apps/procurement/views.py
+msgid "Purchase order cancelled."
+msgstr "Pedido de compra cancelado."
+
+#: apps/procurement/views.py
+msgid "Purchase order marked disputed."
+msgstr "Pedido de compra marcado em disputa."
+
+#: apps/procurement/views.py
+msgid "Dispute resolved."
+msgstr "Disputa resolvida."
+
+#: apps/procurement/views.py
+msgid "Purchase order reconciled."
+msgstr "Pedido de compra conciliado."
+
+#: apps/procurement/views.py
+msgid "Contract matched to this order."
+msgstr "Contrato correspondido a este pedido."
+
+#: apps/procurement/views.py
+msgid "Payment confirmed against this order."
+msgstr "Pagamento confirmado para este pedido."
+
+#: apps/procurement/views.py
+msgid "Choose a line to receive against."
+msgstr "Escolha uma linha para registrar o recebimento."
+
+#: apps/procurement/views.py
+msgid "Delivery recorded."
+msgstr "Entrega registrada."
+
+#: apps/procurement/views.py
+#, python-format
+msgid "%(n)s hauling task(s) created."
+msgstr "%(n)s tarefa(s) de transporte criada(s)."
 
 #: apps/raffle/contest_templates.py
 msgid "1st prize"
@@ -18384,6 +19466,7 @@ msgstr ""
 "op."
 
 #: apps/readiness/models.py apps/recommendations/models.py
+#: templates/store/margin.html
 msgid "Acknowledged"
 msgstr "Reconhecido"
 
@@ -19302,11 +20385,20 @@ msgstr "Meus jobs de indústria + blueprints"
 #: apps/sso/scopes.py
 msgid ""
 "Read your own running industry jobs and owned blueprints, so the Industry "
-"Center can track your personal production and match it to your plans."
+"Center can track your personal production and match it to your plans. While "
+"this is granted, corp officers also see your name, manufacturing slot counts "
+"and slot utilisation on the Production Capacity board — the capacity plan "
+"needs named pilots to schedule builds and name bottlenecks. Revoking this "
+"removes your named capacity on the next planning run."
 msgstr ""
-"Lê seus jobs de indústria em andamento e os blueprints que você possui, para "
-"a Central de indústria acompanhar sua produção pessoal e cruzá-la com seus "
-"planos."
+"Ler os seus jobs de indústria em execução e os blueprints que você possui, "
+"para que a Central de Indústria possa acompanhar a sua produção pessoal e "
+"compará-la com os seus planos. Enquanto isso estiver concedido, os oficiais "
+"da corp também veem o seu nome, a contagem de slots de fabricação e a "
+"utilização de slots no quadro de Capacidade de Produção — o plano de "
+"capacidade precisa de pilotos identificados para agendar fabricações e "
+"apontar gargalos. Revogar isso remove a sua capacidade identificada na "
+"próxima execução de planejamento."
 
 #: apps/sso/scopes.py
 msgid "Freight location search"
@@ -19348,7 +20440,7 @@ msgstr ""
 #: apps/sso/scopes.py templates/_pilot_identity.html
 #: templates/admin_audit/console/recovery.html
 #: templates/corporation/finance.html templates/identity/dashboard.html
-#: templates/impersonation/log.html
+#: templates/impersonation/log.html templates/supplyboard/board.html
 msgid "Director"
 msgstr "Diretor"
 
@@ -19716,15 +20808,6 @@ msgstr "Não foi possível ler seus assets: %(error)s"
 #, python-format
 msgid "Imported %(types)s asset stacks across %(locations)s locations."
 msgstr "Importados %(types)s stacks de assets em %(locations)s locais."
-
-#: apps/stockpile/assets.py templates/stockpile/assets.html
-msgid "Unknown location"
-msgstr "Localização desconhecida"
-
-#: apps/stockpile/assets.py
-#, python-format
-msgid "Location %(id)s"
-msgstr "Localização %(id)s"
 
 #: apps/stockpile/forms.py
 msgid "— from —"
@@ -20102,6 +21185,10 @@ msgid "Stock received"
 msgstr "Estoque recebido"
 
 #: apps/store/models.py
+msgid "Received from supplier"
+msgstr "Recebido do fornecedor"
+
+#: apps/store/models.py
 msgid "Manual adjustment"
 msgstr "Ajuste manual"
 
@@ -20186,11 +21273,6 @@ msgstr "configuração de planejamento de demanda"
 #: apps/store/models.py
 msgid "demand planning configs"
 msgstr "configurações de planejamento de demanda"
-
-#: apps/store/models.py templates/admin_audit/console/raffle_draw.html
-#: templates/industry/mrp.html templates/store/inventory_fit.html
-msgid "Closed"
-msgstr "Encerrado"
 
 #: apps/store/models.py
 msgid "Blank = undated; planned against the end of the demand horizon."
@@ -22196,14 +23278,14 @@ msgstr "Meta"
 msgid "type / id"
 msgstr "tipo / id"
 
-#: templates/admin_audit/audit.html templates/mining/payouts.html
-#: templates/navigation/jump_planner.html
+#: templates/admin_audit/audit.html templates/logistics/freight.html
+#: templates/mining/payouts.html templates/navigation/jump_planner.html
 #: templates/navigation/route_planner.html templates/stockpile/logistics.html
 msgid "From"
 msgstr "De"
 
-#: templates/admin_audit/audit.html templates/mining/payouts.html
-#: templates/navigation/jump_planner.html
+#: templates/admin_audit/audit.html templates/logistics/freight.html
+#: templates/mining/payouts.html templates/navigation/jump_planner.html
 #: templates/navigation/route_planner.html templates/stockpile/logistics.html
 msgid "To"
 msgstr "Até"
@@ -22219,8 +23301,10 @@ msgstr "Filtrar"
 #: templates/admin_audit/audit.html
 #: templates/admin_audit/console/combat_rewards.html
 #: templates/admin_audit/console/raffle_ineligible.html
-#: templates/admin_audit/console/raffle_ledger.html templates/industry/mrp.html
-#: templates/store/inventory.html
+#: templates/admin_audit/console/raffle_ledger.html
+#: templates/industry/capacity.html templates/industry/mrp.html
+#: templates/logistics/freight.html templates/procurement/pos.html
+#: templates/store/inventory.html templates/supplyboard/board.html
 msgid "Export CSV"
 msgstr "Exportar CSV"
 
@@ -22234,7 +23318,7 @@ msgstr "Limpar filtros"
 #: templates/admin_audit/console/raffle_grant.html
 #: templates/admin_audit/console/raffle_ledger.html
 #: templates/corporation/finance.html templates/mentorship/pairing_detail.html
-#: templates/pingboard/history.html
+#: templates/pingboard/history.html templates/procurement/po_detail.html
 msgid "When"
 msgstr "Quando"
 
@@ -22242,7 +23326,7 @@ msgstr "Quando"
 msgid "IP"
 msgstr "IP"
 
-#: templates/admin_audit/audit.html
+#: templates/admin_audit/audit.html templates/procurement/po_detail.html
 msgid "system"
 msgstr "sistema"
 
@@ -22371,9 +23455,10 @@ msgstr "Ligado"
 #: templates/admin_audit/console/readiness/mandatory_ships.html
 #: templates/admin_audit/console/readiness/strategic_roles.html
 #: templates/admin_audit/console/readiness/support.html
-#: templates/industry/jobs.html templates/market/dashboard.html
-#: templates/navigation/jump_planner.html templates/recruitment/detail.html
-#: templates/srp/budget.html templates/stockpile/dashboard.html
+#: templates/industry/capacity.html templates/industry/jobs.html
+#: templates/market/dashboard.html templates/navigation/jump_planner.html
+#: templates/recruitment/detail.html templates/srp/budget.html
+#: templates/stockpile/dashboard.html
 msgid "Save"
 msgstr "Salvar"
 
@@ -22403,7 +23488,8 @@ msgstr "Preenchido automaticamente pela ESI"
 #: templates/admin_audit/console/doctrine_edit.html
 #: templates/admin_audit/console/doctrines.html templates/campaigns/detail.html
 #: templates/industry/detail.html templates/killboard/compare.html
-#: templates/killboard/watchlist_detail.html templates/market/dashboard.html
+#: templates/killboard/watchlist_detail.html
+#: templates/logistics/freight_detail.html templates/market/dashboard.html
 msgid "Add"
 msgstr "Adicionar"
 
@@ -22517,7 +23603,8 @@ msgstr "Ocultar “%(name)s”"
 #: templates/admin_audit/console/mentorship/config.html
 #: templates/admin_audit/console/planetary/config.html
 #: templates/admin_audit/console/raffle_config.html
-#: templates/buyback/config.html templates/killboard/killfeed_config.html
+#: templates/buyback/config.html templates/industry/capacity.html
+#: templates/killboard/killfeed_config.html templates/logistics/freight.html
 #: templates/srp/settings.html templates/store/config.html
 #: templates/store/demand_policy.html
 msgid "Save settings"
@@ -22747,7 +23834,8 @@ msgstr "Criar patente"
 #: templates/campaigns/form.html templates/campaigns/milestone_form.html
 #: templates/campaigns/objective_form.html templates/campaigns/risk_form.html
 #: templates/campaigns/workstream_form.html templates/operations/form.html
-#: templates/planetary/wizard.html templates/tasks/detail.html
+#: templates/planetary/wizard.html templates/procurement/supplier_detail.html
+#: templates/tasks/detail.html
 msgid "Save changes"
 msgstr "Salvar alterações"
 
@@ -22832,13 +23920,15 @@ msgstr "Kills ≥"
 #: templates/admin_audit/health.html templates/campaigns/portfolio.html
 #: templates/campaigns/report.html templates/campaigns/risk_form.html
 #: templates/campaigns/workstream_form.html templates/industry/mrp.html
-#: templates/logistics/corp_contracts.html templates/market/dashboard.html
-#: templates/mining/my_mining.html templates/operations/form.html
-#: templates/operations/templates.html templates/pingboard/alert_detail.html
-#: templates/pingboard/calendar.html templates/pingboard/history.html
-#: templates/readiness/dimension.html templates/readiness/simulator.html
-#: templates/stockpile/logistics.html templates/store/inventory.html
-#: templates/tasks/detail.html
+#: templates/logistics/corp_contracts.html templates/logistics/freight.html
+#: templates/market/dashboard.html templates/mining/my_mining.html
+#: templates/operations/form.html templates/operations/templates.html
+#: templates/pingboard/alert_detail.html templates/pingboard/calendar.html
+#: templates/pingboard/history.html templates/procurement/agreements.html
+#: templates/procurement/pos.html templates/procurement/supplier_detail.html
+#: templates/procurement/suppliers.html templates/readiness/dimension.html
+#: templates/readiness/simulator.html templates/stockpile/logistics.html
+#: templates/store/inventory.html templates/tasks/detail.html
 msgid "Status"
 msgstr "Status"
 
@@ -22889,7 +23979,7 @@ msgstr "oculto"
 #: templates/kb/detail.html templates/kb/edit.html
 #: templates/market/dashboard.html templates/operations/form.html
 #: templates/operations/templates.html templates/planetary/detail.html
-#: templates/tasks/detail.html
+#: templates/procurement/supplier_detail.html templates/tasks/detail.html
 msgid "Edit"
 msgstr "Editar"
 
@@ -23020,7 +24110,9 @@ msgstr "Pago este ano"
 #: templates/doctrines/list.html templates/doctrines/ships.html
 #: templates/killboard/_feed.html templates/navigation/gatecamp.html
 #: templates/navigation/roaming.html templates/pingboard/history.html
-#: templates/showcase.html templates/store/inventory.html
+#: templates/procurement/agreements.html templates/procurement/pos.html
+#: templates/procurement/suppliers.html templates/showcase.html
+#: templates/store/inventory.html
 msgid "All"
 msgstr "Todos"
 
@@ -23060,7 +24152,8 @@ msgstr "Alcançado"
 #: templates/admin_audit/console/pingboard/automation.html
 #: templates/admin_audit/console/pingboard/channels.html
 #: templates/admin_audit/console/pingboard/templates.html
-#: templates/market/dashboard.html templates/skills/detail.html
+#: templates/logistics/freight_detail.html templates/market/dashboard.html
+#: templates/procurement/po_detail.html templates/skills/detail.html
 #: templates/store/inventory_fit.html
 msgid "Actions"
 msgstr "Ações"
@@ -23075,6 +24168,7 @@ msgstr "de %(previous)s"
 #: templates/admin_audit/console/mentorship/approvals.html
 #: templates/admin_audit/console/mentorship/rewards.html
 #: templates/buyback/guaranteed_queue.html
+#: templates/procurement/agreement_detail.html
 msgid "Reject"
 msgstr "Rejeitar"
 
@@ -24192,6 +25286,7 @@ msgstr "isento"
 
 #: templates/admin_audit/console/comms_access/status.html
 #: templates/admin_audit/health.html templates/campaigns/objective_detail.html
+#: templates/industry/capacity.html
 msgid "never"
 msgstr "nunca"
 
@@ -24272,8 +25367,9 @@ msgstr "Limite de inatividade"
 #: templates/campaigns/lessons.html templates/campaigns/objective_detail.html
 #: templates/campaigns/portfolio.html templates/campaigns/template_picker.html
 #: templates/corporation/finance.html templates/doctrines/list.html
-#: templates/doctrines/ships.html templates/store/inventory.html
-#: templates/tasks/detail.html
+#: templates/doctrines/ships.html templates/procurement/agreements.html
+#: templates/procurement/pos.html templates/procurement/suppliers.html
+#: templates/store/inventory.html templates/tasks/detail.html
 msgid "Apply"
 msgstr "Aplicar"
 
@@ -24438,7 +25534,8 @@ msgstr "Excluir este marco? O progresso dos pilotos nele também será removido.
 #: templates/admin_audit/console/readiness/strategic_roles.html
 #: templates/admin_audit/console/readiness/support.html
 #: templates/industry/detail.html templates/killboard/compare.html
-#: templates/killboard/watchlist_detail.html templates/navigation/beacons.html
+#: templates/killboard/watchlist_detail.html
+#: templates/logistics/freight_detail.html templates/navigation/beacons.html
 #: templates/navigation/jump_routes.html templates/pingboard/my_channels.html
 #: templates/skills/detail.html
 msgid "Remove"
@@ -24459,6 +25556,8 @@ msgid "Add / update a glossary term"
 msgstr "Adicionar / atualizar um termo do glossário"
 
 #: templates/admin_audit/console/content.html
+#: templates/procurement/agreement_detail.html
+#: templates/procurement/agreements.html
 msgid "Term"
 msgstr "Termo"
 
@@ -25428,6 +26527,33 @@ msgstr ""
 "Hub de mercado, índice de custo, taxas, broker/buyback, transporte, "
 "visibilidade de planos e o redirecionamento /erp/."
 
+#: templates/admin_audit/console/hub.html templates/logistics/freight.html
+#: templates/logistics/freight_detail.html
+msgid "Freight Pipeline"
+msgstr "Pipeline de Frete"
+
+#: templates/admin_audit/console/hub.html
+msgid ""
+"Consolidate purchases and imports per lane, price and cap the leg, track ETD/"
+"ETA, and receipt landed stock. Bought goods are incoming until receipted."
+msgstr ""
+"Consolide compras e importações por rota, precifique e limite o trecho, "
+"acompanhe ETD/ETA e registre o recebimento do estoque desembarcado. Bens "
+"comprados ficam a caminho até o recebimento ser registrado."
+
+#: templates/admin_audit/console/hub.html templates/procurement/board.html
+msgid "Procurement board"
+msgstr "Painel de Aquisição"
+
+#: templates/admin_audit/console/hub.html
+msgid ""
+"Open ISK obligations, due &amp; late purchase orders, agreement utilisation, "
+"supplier reliability and evidence-feed freshness."
+msgstr ""
+"Obrigações em ISK em aberto, pedidos de compra a vencer &amp; atrasados, "
+"utilização de acordos, confiabilidade do fornecedor e atualidade do feed de "
+"evidências."
+
 #: templates/admin_audit/console/hub.html
 #: templates/admin_audit/console/notifications.html
 msgid "Notifications"
@@ -25536,8 +26662,8 @@ msgstr ""
 #: templates/admin_audit/console/notifications.html
 #: templates/admin_audit/console/pingboard/settings.html
 #: templates/admin_audit/console/raffle_hub.html templates/buyback/board.html
-#: templates/buyback/guaranteed_queue.html templates/srp/queue.html
-#: templates/store/board.html
+#: templates/buyback/guaranteed_queue.html templates/industry/capacity.html
+#: templates/srp/queue.html templates/store/board.html
 msgid "Settings"
 msgstr "Configurações"
 
@@ -27411,6 +28537,7 @@ msgid "Rejection reason"
 msgstr "Motivo da rejeição"
 
 #: templates/admin_audit/console/mentorship/rewards.html
+#: templates/store/order.html
 msgid "Payment reference"
 msgstr "Referência do pagamento"
 
@@ -28516,7 +29643,8 @@ msgstr "+ Adicionar um canal"
 
 #: templates/admin_audit/console/pingboard/channels.html
 #: templates/admin_audit/console/readiness/alerts.html
-#: templates/capsuleer/goal_detail.html templates/stockpile/dashboard.html
+#: templates/capsuleer/goal_detail.html templates/procurement/po_detail.html
+#: templates/procurement/suppliers.html templates/stockpile/dashboard.html
 msgid "Kind"
 msgstr "Tipo"
 
@@ -29963,6 +31091,7 @@ msgid "Booster ends"
 msgstr "Fim do booster"
 
 #: templates/admin_audit/console/raffle_form.html
+#: templates/procurement/agreement_form.html templates/procurement/po_form.html
 msgid "Create draft"
 msgstr "Criar rascunho"
 
@@ -30293,8 +31422,8 @@ msgstr "Qualquer status"
 #: templates/admin_audit/console/recovery.html
 #: templates/campaigns/portfolio.html templates/campaigns/template_picker.html
 #: templates/capsuleer/paths.html templates/doctrines/list.html
-#: templates/market/dashboard.html templates/stockpile/asset_search.html
-#: templates/store/inventory.html
+#: templates/market/dashboard.html templates/procurement/suppliers.html
+#: templates/stockpile/asset_search.html templates/store/inventory.html
 msgid "Search"
 msgstr "Buscar"
 
@@ -30502,8 +31631,8 @@ msgstr "Type id do ícone"
 
 #: templates/admin_audit/console/raffle_prizes.html templates/erp/board.html
 #: templates/industry/chain.html templates/industry/create.html
-#: templates/industry/jobs.html templates/store/inventory_fit.html
-#: templates/store/storefront.html
+#: templates/industry/jobs.html templates/procurement/po_detail.html
+#: templates/store/inventory_fit.html templates/store/storefront.html
 msgid "Quantity"
 msgstr "Quantidade"
 
@@ -31043,7 +32172,8 @@ msgstr ""
 
 #: templates/admin_audit/console/readiness/mandatory_ships.html
 #: templates/buyback/appraisal.html templates/buyback/offer.html
-#: templates/industry/detail.html templates/stockpile/asset_search.html
+#: templates/industry/detail.html templates/logistics/freight_detail.html
+#: templates/procurement/po_detail.html templates/stockpile/asset_search.html
 #: templates/stockpile/logistics.html templates/store/board.html
 #: templates/store/inventory_fit.html
 msgid "Qty"
@@ -31398,6 +32528,7 @@ msgstr "Avaliadores desmarcados são ignorados em todas as execuções."
 
 #: templates/admin_audit/console/recommendations_tuning.html
 #: templates/admin_audit/console/structure_alerts.html
+#: templates/store/margin.html
 msgid "Thresholds"
 msgstr "Limites"
 
@@ -31768,6 +32899,7 @@ msgstr ""
 "3.0."
 
 #: templates/admin_audit/console/structure_alerts.html
+#: templates/store/margin.html
 msgid "Save thresholds"
 msgstr "Salvar limites"
 
@@ -31835,7 +32967,8 @@ msgid "no data"
 msgstr "sem dados"
 
 #: templates/admin_audit/health.html templates/identity/dashboard.html
-#: templates/killboard/_feed.html templates/killboard/watchlist_detail.html
+#: templates/industry/capacity.html templates/killboard/_feed.html
+#: templates/killboard/watchlist_detail.html
 #: templates/pilots/contributions.html
 msgid "ago"
 msgstr "atrás"
@@ -32675,7 +33808,7 @@ msgstr ""
 "Objetivos obrigatórios ainda estão em aberto — concluir exige um motivo de "
 "sobreposição do diretor abaixo."
 
-#: templates/campaigns/close.html
+#: templates/campaigns/close.html templates/industry/capacity.html
 msgid "Override"
 msgstr "Sobrepor"
 
@@ -33135,6 +34268,7 @@ msgid "Operation"
 msgstr "Operação"
 
 #: templates/campaigns/detail.html templates/store/inventory_fit.html
+#: templates/store/margin.html
 msgid "Note (optional)"
 msgstr "Nota (opcional)"
 
@@ -33144,6 +34278,7 @@ msgstr "Participação &amp; reconhecimento"
 
 #: templates/campaigns/detail.html templates/campaigns/milestone_form.html
 #: templates/campaigns/objective_detail.html
+#: templates/logistics/freight_detail.html
 #: templates/mentorship/pairing_detail.html templates/recruitment/detail.html
 msgid "Evidence"
 msgstr "Evidência"
@@ -33417,7 +34552,7 @@ msgid "Any category"
 msgstr "Qualquer categoria"
 
 #: templates/campaigns/lessons.html templates/campaigns/report.html
-#: templates/impersonation/log.html
+#: templates/impersonation/log.html templates/procurement/po_detail.html
 msgid "Outcome"
 msgstr "Resultado"
 
@@ -33476,7 +34611,8 @@ msgid "Automatic refresh is paused; a manual value stands"
 msgstr "A atualização automática está pausada; um valor manual prevalece"
 
 #: templates/campaigns/objective_detail.html templates/identity/character.html
-#: templates/operations/templates.html templates/skills/plans.html
+#: templates/industry/capacity.html templates/operations/templates.html
+#: templates/skills/plans.html
 msgid "paused"
 msgstr "pausado"
 
@@ -33738,7 +34874,7 @@ msgstr "Categoria (ex.: logistics, FC, mentoria)"
 msgid "Points (optional)"
 msgstr "Pontos (opcional)"
 
-#: templates/campaigns/recognition.html
+#: templates/campaigns/recognition.html templates/procurement/po_detail.html
 msgid "Reason (required)"
 msgstr "Motivo (obrigatório)"
 
@@ -34397,6 +35533,7 @@ msgstr "Editar meta"
 
 #: templates/capsuleer/goal_detail.html
 #: templates/mentorship/pairing_detail.html
+#: templates/procurement/po_detail.html
 msgid "Complete"
 msgstr "Concluir"
 
@@ -36802,6 +37939,8 @@ msgid "Copied ✓"
 msgstr "Copiado ✓"
 
 #: templates/doctrines/detail.html templates/doctrines/ships.html
+#: templates/procurement/board.html templates/procurement/po_detail.html
+#: templates/procurement/pos.html templates/procurement/supplier_detail.html
 #: templates/skills/detail.html templates/store/order.html
 msgid "Order"
 msgstr "Encomendar"
@@ -38954,6 +40093,198 @@ msgstr "Escolha um item para construir"
 msgid "Search above for anything with a manufacturing or reaction recipe."
 msgstr "Busque acima por qualquer coisa com receita de fabricação ou reação."
 
+#: templates/industry/capacity.html templates/industry/mrp.html
+msgid "Production Capacity"
+msgstr "Capacidade de Produção"
+
+#: templates/industry/capacity.html templates/industry/mrp.html
+#: templates/mining/ledger.html templates/mining/payouts.html
+msgid "Industry · Leadership"
+msgstr "Indústria · Liderança"
+
+#: templates/industry/capacity.html
+msgid ""
+"Measured manufacturing capacity: theoretical, committed and remaining slots "
+"by activity class, from opted-in pilots only. Figures are only as fresh as "
+"the syncs below and only as complete as the opt-in set — read this as "
+"measured capacity, never total corp capacity."
+msgstr ""
+"Capacidade de fabricação medida: slots teóricos, comprometidos e restantes "
+"por classe de atividade, apenas de pilotos participantes. Os números são tão "
+"atuais quanto as sincronizações abaixo e tão completos quanto o conjunto de "
+"participantes — entenda isto como capacidade medida, nunca a capacidade "
+"total da corp."
+
+#: templates/industry/capacity.html templates/industry/mrp.html
+msgid "Material Plan"
+msgstr "Plano de Materiais"
+
+#: templates/industry/capacity.html
+msgid "Re-derive now"
+msgstr "Recalcular agora"
+
+#: templates/industry/capacity.html
+msgid ""
+"Capacity planning is off — the Material Plan still assumes unconstrained "
+"slots. Arm it below to hold build dates to committed capacity."
+msgstr ""
+"O planejamento de capacidade está desligado — o Plano de Materiais ainda "
+"presume slots irrestritos. Ative-o abaixo para limitar as datas de "
+"fabricação à capacidade comprometida."
+
+#: templates/industry/capacity.html
+msgid "Slots by activity class"
+msgstr "Slots por classe de atividade"
+
+#: templates/industry/capacity.html
+msgid "Theoretical"
+msgstr "Teórico"
+
+#: templates/industry/capacity.html templates/srp/budget.html
+msgid "Remaining"
+msgstr "Restante"
+
+#: templates/industry/capacity.html
+#, python-format
+msgid "%(n)s job by a pilot whose capacity is unknown (not counted above)."
+msgid_plural ""
+"%(n)s jobs by pilots whose capacity is unknown (not counted above)."
+msgstr[0] ""
+"%(n)s job de um piloto cuja capacidade é desconhecida (não contabilizado "
+"acima)."
+msgstr[1] ""
+"%(n)s jobs de pilotos cuja capacidade é desconhecida (não contabilizados "
+"acima)."
+
+#: templates/industry/capacity.html
+#, python-format
+msgid "%(n)s board job started or finished but not yet seen in ESI."
+msgid_plural "%(n)s board jobs started or finished but not yet seen in ESI."
+msgstr[0] ""
+"%(n)s job do quadro iniciado ou finalizado, mas ainda não visto no ESI."
+msgstr[1] ""
+"%(n)s jobs do quadro iniciados ou finalizados, mas ainda não vistos no ESI."
+
+#: templates/industry/capacity.html
+msgid "Hold build dates to committed capacity"
+msgstr "Limitar datas de fabricação à capacidade comprometida"
+
+#: templates/industry/capacity.html
+msgid "Skills stale after (days)"
+msgstr "Habilidades desatualizadas após (dias)"
+
+#: templates/industry/capacity.html
+msgid ""
+"Skills show attention-stale at 7 days; slots stay measured until the "
+"threshold above (default 14), then become unknown."
+msgstr ""
+"As habilidades ficam marcadas como desatualizadas aos 7 dias; os slots "
+"permanecem medidos até o limite acima (padrão 14), depois passam a "
+"desconhecidos."
+
+#: templates/industry/capacity.html
+msgid "As of"
+msgstr "Atualizado em"
+
+#: templates/industry/capacity.html
+#, python-format
+msgid "corp jobs (every %(h)sh):"
+msgstr "jobs da corp (a cada %(h)sh):"
+
+#: templates/industry/capacity.html
+#, python-format
+msgid "pilot jobs (every %(h)sh):"
+msgstr "jobs de pilotos (a cada %(h)sh):"
+
+#: templates/industry/capacity.html
+#, python-format
+msgid "skills sync every %(h)sh"
+msgstr "sincronização de habilidades a cada %(h)sh"
+
+#: templates/industry/capacity.html
+#, python-format
+msgid "last plan %(ago)s ago"
+msgstr "último plano há %(ago)s"
+
+#: templates/industry/capacity.html
+msgid "Per pilot"
+msgstr "Por piloto"
+
+#: templates/industry/capacity.html
+msgid "opted-in pilots only"
+msgstr "apenas pilotos participantes"
+
+#: templates/industry/capacity.html
+msgid "Slots"
+msgstr "Slots"
+
+#: templates/industry/capacity.html templates/procurement/board.html
+msgid "Used"
+msgstr "Utilizado"
+
+#: templates/industry/capacity.html
+msgid "Free"
+msgstr "Livres"
+
+#: templates/industry/capacity.html
+msgid "Next free"
+msgstr "Próximo livre"
+
+#: templates/industry/capacity.html
+msgid "Skills as of"
+msgstr "Habilidades em"
+
+#: templates/industry/capacity.html
+msgid "officer override"
+msgstr "substituição do oficial"
+
+#: templates/industry/capacity.html
+msgid "Slots override"
+msgstr "Substituição de slots"
+
+#: templates/industry/capacity.html
+msgid "Weekly cap"
+msgstr "Limite semanal"
+
+#: templates/industry/capacity.html
+msgid "Unavailable from"
+msgstr "Indisponível a partir de"
+
+#: templates/industry/capacity.html
+msgid "Unavailable until"
+msgstr "Indisponível até"
+
+#: templates/industry/capacity.html
+msgid ""
+"No opted-in pilots yet — a pilot grants the “My industry jobs + blueprints” "
+"scope, then re-derive."
+msgstr ""
+"Nenhum piloto participante ainda — um piloto concede o escopo “My industry "
+"jobs + blueprints” e depois recalcule."
+
+#: templates/industry/capacity.html
+msgid "Committed load by location"
+msgstr "Carga comprometida por local"
+
+#: templates/industry/capacity.html
+#, python-format
+msgid "%(n)s job"
+msgid_plural "%(n)s jobs"
+msgstr[0] "%(n)s job"
+msgstr[1] "%(n)s jobs"
+
+#: templates/industry/capacity.html
+msgid "No committed jobs."
+msgstr "Nenhum job comprometido."
+
+#: templates/industry/capacity.html
+msgid "Blocked work"
+msgstr "Trabalho bloqueado"
+
+#: templates/industry/capacity.html
+msgid "Nothing blocked — every live build has an honest date."
+msgstr "Nada bloqueado — toda fabricação ativa tem uma data realista."
+
 #: templates/industry/chain.html templates/industry/home.html
 msgid "Production chain"
 msgstr "Cadeia de produção"
@@ -39176,7 +40507,7 @@ msgstr "Alocado do estoque"
 msgid "To acquire"
 msgstr "A adquirir"
 
-#: templates/industry/detail.html
+#: templates/industry/detail.html templates/store/margin.html
 msgid "Method"
 msgstr "Método"
 
@@ -39200,8 +40531,9 @@ msgstr ""
 msgid "Add another item"
 msgstr "Adicionar outro item"
 
-#: templates/industry/detail.html templates/market/dashboard.html
-#: templates/stockpile/dashboard.html templates/stockpile/logistics.html
+#: templates/industry/detail.html templates/logistics/freight_detail.html
+#: templates/market/dashboard.html templates/stockpile/dashboard.html
+#: templates/stockpile/logistics.html
 msgid "Search an item…"
 msgstr "Busque um item…"
 
@@ -39887,12 +41219,72 @@ msgid "Leadership hasn't queued any builds."
 msgstr "A liderança não enfileirou nenhuma construção."
 
 #: templates/industry/jobs.html
+msgid ""
+"Linked to the in-game job — it carries the schedule and the supply count"
+msgstr ""
+"Vinculado ao job no jogo — ele carrega o cronograma e a contagem de "
+"suprimento"
+
+#: templates/industry/jobs.html
+#, python-format
+msgid "in game #%(id)s"
+msgstr "no jogo #%(id)s"
+
+#: templates/industry/jobs.html
+msgid "ESI job ID"
+msgstr "ID do job ESI"
+
+#: templates/industry/jobs.html
+msgid "In-game job ID"
+msgstr "ID do job no jogo"
+
+#: templates/industry/jobs.html
+msgid ""
+"Record which in-game job this build became, so planning never counts it twice"
+msgstr ""
+"Registre em qual job no jogo esta produção se tornou, para o planejamento "
+"nunca contá-la duas vezes"
+
+#: templates/industry/jobs.html
+msgid "Confirm in-game match"
+msgstr "Confirmar correspondência no jogo"
+
+#: templates/industry/jobs.html
+msgid "Started in game"
+msgstr "Iniciado no jogo"
+
+#: templates/industry/jobs.html
 msgid "Deliver"
 msgstr "Entregar"
 
 #: templates/industry/jobs.html
 msgid "You have no build jobs in progress. Claim one from the queue."
 msgstr "Você não tem jobs de construção em andamento. Assuma um da fila."
+
+#: templates/industry/jobs.html
+msgid "My capacity"
+msgstr "Minha capacidade"
+
+#: templates/industry/jobs.html
+msgid "slots unknown"
+msgstr "slots desconhecidos"
+
+#: templates/industry/jobs.html
+msgid "free"
+msgstr "livres"
+
+#: templates/industry/jobs.html
+#, python-format
+msgid "next %(d)s"
+msgstr "próximo %(d)s"
+
+#: templates/industry/jobs.html
+msgid ""
+"Your own slots only. Officers see this on the Production Capacity board "
+"while the My industry scope is granted."
+msgstr ""
+"Apenas os seus próprios slots. Os oficiais veem isto no quadro de Capacidade "
+"de Produção enquanto o escopo My industry estiver concedido."
 
 #: templates/industry/jobs.html
 msgid "Imported ESI jobs"
@@ -39940,10 +41332,63 @@ msgstr ""
 "blueprints + jobs</strong> na página <a href=\"/auth/eve/scopes/\" "
 "class=\"text-gold hover:underline\">ESI Scopes</a>."
 
-#: templates/industry/mrp.html templates/mining/ledger.html
-#: templates/mining/payouts.html
-msgid "Industry · Leadership"
-msgstr "Indústria · Liderança"
+#: templates/industry/mrp.html
+msgid ""
+"Corp-wide net requirements: every demand source exploded through the build "
+"tree and netted once against stock, reservations and in-flight work. Build "
+"dates are held to committed manufacturing capacity — slots, skills, "
+"blueprints and facilities — and the binding constraint is named. Figures are "
+"only as fresh as the syncs and as complete as the opt-in pilots: read this "
+"as measured capacity, never total corp capacity."
+msgstr ""
+"Necessidades líquidas de toda a corp: cada fonte de demanda é expandida pela "
+"árvore de fabricação e compensada uma vez contra estoque, reservas e "
+"trabalho em andamento. As datas de fabricação são limitadas à capacidade de "
+"fabricação comprometida — slots, habilidades, blueprints e instalações — e a "
+"restrição limitante é identificada. Os números são tão atuais quanto as "
+"sincronizações e tão completos quanto os pilotos participantes: entenda isto "
+"como capacidade medida, nunca a capacidade total da corp."
+
+#: templates/industry/mrp.html
+msgid ""
+"Corp-wide net requirements: every demand source exploded through the build "
+"tree and netted once against stock, reservations and in-flight work. Dates "
+"assume unconstrained industry slots — capacity planning comes in a later "
+"phase."
+msgstr ""
+"Necessidades líquidas de toda a corp: cada fonte de demanda explodida pela "
+"árvore de produção e abatida uma única vez contra estoque, reservas e "
+"trabalho em andamento. As datas assumem slots de indústria sem restrição — o "
+"planejamento de capacidade vem em uma fase posterior."
+
+#: templates/industry/mrp.html
+msgid "Run planning now"
+msgstr "Executar planejamento agora"
+
+#: templates/industry/mrp.html
+msgid ""
+"No changes — the latest run's inputs are identical to the previous run's."
+msgstr ""
+"Sem mudanças — os insumos da última execução são idênticos aos da execução "
+"anterior."
+
+#: templates/industry/mrp.html
+#, python-format
+msgid ""
+"No market price signal for: %(items)s — a 0 ISK buy line is a data gap, not "
+"a bargain."
+msgstr ""
+"Sem sinal de preço de mercado para: %(items)s — uma linha de compra a 0 ISK "
+"é uma lacuna de dados, não uma pechincha."
+
+#: templates/industry/mrp.html
+msgid "Live requirements"
+msgstr "Necessidades ao vivo"
+
+#: templates/industry/mrp.html
+#, python-format
+msgid "planning window: %(days)s days"
+msgstr "janela de planejamento: %(days)s dias"
 
 #: templates/industry/mrp.html templates/market/dashboard.html
 #: templates/stockpile/asset_search.html templates/stockpile/dashboard.html
@@ -39970,9 +41415,83 @@ msgstr "A caminho"
 msgid "Required by"
 msgstr "Necessário até"
 
+#: templates/industry/mrp.html
+msgid "Feasible"
+msgstr "Viável"
+
 #: templates/industry/mrp.html templates/store/inventory.html
 msgid "Vehicle"
 msgstr "Veículo"
+
+#: templates/industry/mrp.html
+#, python-format
+msgid "Level %(depth)s"
+msgstr "Nível %(depth)s"
+
+#: templates/industry/mrp.html
+msgid "ships & fits — fulfilled from the Shipyard console"
+msgstr "naves e fits — atendidos pelo console do Estaleiro"
+
+#: templates/industry/mrp.html
+msgid ""
+"The linked vehicle no longer matches the plan — planned quantity differs "
+"from what the vehicle says"
+msgstr ""
+"O veículo vinculado não corresponde mais ao plano — a quantidade planejada "
+"difere do que o veículo indica"
+
+#: templates/industry/mrp.html
+msgid "diverged"
+msgstr "divergente"
+
+#: templates/industry/mrp.html
+msgid "Demand sources"
+msgstr "Fontes de demanda"
+
+#: templates/industry/mrp.html
+msgid "Fit demand"
+msgstr "Demanda de fits"
+
+#: templates/industry/mrp.html
+msgid "Backorder need"
+msgstr "Necessidade de encomendas"
+
+#: templates/industry/mrp.html
+msgid "Component of requirement"
+msgstr "Componente de necessidade"
+
+#: templates/industry/mrp.html
+msgid "Materials for promised build"
+msgstr "Materiais para a produção prometida"
+
+#: templates/industry/mrp.html
+msgid "Incoming supply"
+msgstr "Suprimento a caminho"
+
+#: templates/industry/mrp.html
+msgid "In-game job"
+msgstr "Job no jogo"
+
+#: templates/industry/mrp.html
+msgid "Board job"
+msgstr "Job do quadro"
+
+#: templates/industry/mrp.html
+msgid "Plan line"
+msgstr "Linha do plano"
+
+#: templates/industry/mrp.html
+msgid "Covered by a freight batch in transit — ETA shown as the feasible date"
+msgstr ""
+"Coberto por um lote de frete em trânsito — ETA exibida como a data viável"
+
+#: templates/industry/mrp.html
+msgid "The binding constraint on this build date"
+msgstr "A restrição limitante desta data de fabricação"
+
+#: templates/industry/mrp.html
+msgid "Shipyard console"
+msgstr "Console do Estaleiro"
 
 #: templates/industry/mrp.html templates/store/inventory.html
 msgid "Project"
@@ -39981,6 +41500,72 @@ msgstr "Projeto"
 #: templates/industry/mrp.html templates/store/inventory.html
 msgid "Build job"
 msgstr "Trabalho de produção"
+
+#: templates/industry/mrp.html
+msgid "On a freight batch"
+msgstr "Em um lote de frete"
+
+#: templates/industry/mrp.html templates/logistics/freight_detail.html
+msgid "Batch"
+msgstr "Lote"
+
+#: templates/industry/mrp.html
+msgid "Add to freight batch"
+msgstr "Adicionar ao lote de frete"
+
+#: templates/industry/mrp.html
+msgid "BUY task"
+msgstr "Tarefa de COMPRA"
+
+#: templates/industry/mrp.html
+msgid "No open requirements — run planning to compute the current picture."
+msgstr ""
+"Nenhuma necessidade em aberto — execute o planejamento para calcular o "
+"panorama atual."
+
+#: templates/industry/mrp.html
+msgid "Multibuy (open buy & import lines)"
+msgstr "Multibuy (linhas de compra e importação em aberto)"
+
+#: templates/industry/mrp.html
+msgid "Paste into the in-game market Multibuy window."
+msgstr "Cole na janela Multibuy do mercado no jogo."
+
+#: templates/industry/mrp.html
+msgid "Beyond the planning window"
+msgstr "Além da janela de planejamento"
+
+#: templates/industry/mrp.html
+msgid ""
+"Dated demand this far out is excluded from the current plan; it enters when "
+"the window reaches it."
+msgstr ""
+"Demanda datada tão distante fica fora do plano atual; ela entra quando a "
+"janela a alcança."
+
+#: templates/industry/mrp.html
+msgid "Run history"
+msgstr "Histórico de execuções"
+
+#: templates/industry/mrp.html
+msgid "Updated"
+msgstr "Atualizado"
+
+#: templates/industry/mrp.html
+msgid "Input digest"
+msgstr "Digest dos insumos"
+
+#: templates/industry/mrp.html
+msgid "Triggered by"
+msgstr "Acionado por"
+
+#: templates/industry/mrp.html
+msgid "schedule"
+msgstr "cronograma"
+
+#: templates/industry/mrp.html
+msgid "No runs yet."
+msgstr "Ainda não há execuções."
 
 #: templates/kb/detail.html templates/kb/edit.html
 msgid "← Knowledge base"
@@ -40878,6 +42463,7 @@ msgid "Freight Rates"
 msgstr "Tarifas de Frete"
 
 #: templates/logistics/calculator.html templates/logistics/contracts.html
+#: templates/logistics/freight.html templates/logistics/freight_detail.html
 msgid "Freight"
 msgstr "Frete"
 
@@ -40902,7 +42488,7 @@ msgstr "Quadro de frete"
 msgid "Get a quote"
 msgstr "Obter cotação"
 
-#: templates/logistics/calculator.html
+#: templates/logistics/calculator.html templates/logistics/freight_detail.html
 msgid "Ship class"
 msgstr "Classe de nave"
 
@@ -41159,7 +42745,8 @@ msgstr "Rota"
 msgid "Class"
 msgstr "Classe"
 
-#: templates/logistics/contracts.html
+#: templates/logistics/contracts.html templates/logistics/freight_detail.html
+#: templates/procurement/agreement_detail.html
 msgid "Collateral"
 msgstr "Colateral"
 
@@ -41246,6 +42833,243 @@ msgid ""
 msgstr ""
 "Nenhum contrato da corp rastreado. Um diretor precisa conceder o escopo corp-"
 "contracts e depois sincronizar."
+
+#: templates/logistics/freight.html
+msgid "Logistics · Leadership"
+msgstr "Logística · Liderança"
+
+#: templates/logistics/freight.html
+msgid ""
+"Consolidate purchases and imports per lane, ship them through the courier "
+"flow or a member haul, and receipt landed stock. Goods on a batch are "
+"visibly incoming — never counted as available — until receipted at the "
+"destination."
+msgstr ""
+"Consolide compras e importações por rota, envie-as pelo fluxo de courier ou "
+"por um transporte de membro, e registre o recebimento do estoque "
+"desembarcado. Os bens em um lote ficam visivelmente a caminho — nunca "
+"contados como disponíveis — até o recebimento no destino."
+
+#: templates/logistics/freight.html
+msgid "Open a batch for a lane"
+msgstr "Abrir um lote para uma rota"
+
+#: templates/logistics/freight.html
+msgid "Freight settings"
+msgstr "Configurações de frete"
+
+#: templates/logistics/freight.html
+msgid "Default ship class"
+msgstr "Classe de nave padrão"
+
+#: templates/logistics/freight.html
+msgid "Dispatch days"
+msgstr "Dias de despacho"
+
+#: templates/logistics/freight.html
+msgid "Transit days"
+msgstr "Dias de trânsito"
+
+#: templates/logistics/freight.html
+msgid "Late grace (hours)"
+msgstr "Tolerância de atraso (horas)"
+
+#: templates/logistics/freight.html
+msgid "Run the hourly batch sweep (arrival + late flags)"
+msgstr ""
+"Executar a varredura horária de lotes (chegada + sinalizações de atraso)"
+
+#: templates/logistics/freight.html
+msgid "Batches"
+msgstr "Lotes"
+
+#: templates/logistics/freight.html
+msgid "Lane"
+msgstr "Rota"
+
+#: templates/logistics/freight.html templates/logistics/freight_detail.html
+#: templates/procurement/agreement_detail.html
+#: templates/procurement/po_detail.html
+msgid "Lines"
+msgstr "Linhas"
+
+#: templates/logistics/freight.html templates/procurement/board.html
+#: templates/procurement/suppliers.html
+msgid "Fill"
+msgstr "Atendimento"
+
+#: templates/logistics/freight.html
+msgid "ETD"
+msgstr "ETD"
+
+#: templates/logistics/freight.html templates/logistics/freight_detail.html
+msgid "ETA"
+msgstr "ETA"
+
+#: templates/logistics/freight.html
+msgid "Past its planned ETA"
+msgstr "Passou da ETA planejada"
+
+#: templates/logistics/freight.html
+msgid "late"
+msgstr "atrasado"
+
+#: templates/logistics/freight.html
+msgid ""
+"No freight batches yet — open one for a lane above, or fan an import "
+"requirement out from the Material Plan."
+msgstr ""
+"Nenhum lote de frete ainda — abra um para uma rota acima, ou distribua um "
+"requisito de importação a partir do Plano de Material."
+
+#: templates/logistics/freight.html templates/navigation/jump_planner.html
+msgid "Destination"
+msgstr "Destino"
+
+#: templates/logistics/freight.html
+msgid "Landed, unsynced"
+msgstr "Desembarcado, não sincronizado"
+
+#: templates/logistics/freight.html
+msgid "Covering requirements"
+msgstr "Requisitos cobertos"
+
+#: templates/logistics/freight.html
+msgid "Nothing is in transit right now."
+msgstr "Nada em trânsito no momento."
+
+#: templates/logistics/freight_detail.html
+msgid "Freight batch"
+msgstr "Lote de frete"
+
+#: templates/logistics/freight_detail.html
+msgid "Cancel this batch?"
+msgstr "Cancelar este lote?"
+
+#: templates/logistics/freight_detail.html
+msgid "Cancel batch"
+msgstr "Cancelar lote"
+
+#: templates/logistics/freight_detail.html templates/procurement/po_detail.html
+msgid "Received"
+msgstr "Recebido"
+
+#: templates/logistics/freight_detail.html
+msgid "Purchase"
+msgstr "Compra"
+
+#: templates/logistics/freight_detail.html
+msgid "Freight share"
+msgstr "Rateio de frete"
+
+#: templates/logistics/freight_detail.html
+msgid "Landed unit"
+msgstr "Custo desembarcado"
+
+#: templates/logistics/freight_detail.html
+msgid "MRP-planned share of this line"
+msgstr "Parcela desta linha planejada pelo MRP"
+
+#: templates/logistics/freight_detail.html
+#, python-format
+msgid "plan %(n)s"
+msgstr "plano %(n)s"
+
+#: templates/logistics/freight_detail.html templates/procurement/po_detail.html
+#: templates/store/inventory_fit.html
+msgid "Receive"
+msgstr "Receber"
+
+#: templates/logistics/freight_detail.html
+msgid "received"
+msgstr "recebido"
+
+#: templates/logistics/freight_detail.html
+#: templates/procurement/agreement_detail.html
+#: templates/procurement/po_detail.html
+msgid "No lines yet."
+msgstr "Nenhuma linha ainda."
+
+#: templates/logistics/freight_detail.html
+msgid "Unit cost"
+msgstr "Custo unitário"
+
+#: templates/logistics/freight_detail.html
+msgid "bought by …"
+msgstr "comprado por …"
+
+#: templates/logistics/freight_detail.html
+msgid "Capacity fit"
+msgstr "Encaixe de capacidade"
+
+#: templates/logistics/freight_detail.html
+msgid "Packaged volume"
+msgstr "Volume empacotado"
+
+#: templates/logistics/freight_detail.html
+msgid ""
+"Over the cap for this ship class — split into a second batch or pick a "
+"bigger class."
+msgstr ""
+"Acima do limite para esta classe de nave — divida em um segundo lote ou "
+"escolha uma classe maior."
+
+#: templates/logistics/freight_detail.html
+msgid "Rush"
+msgstr "Urgente"
+
+#: templates/logistics/freight_detail.html
+msgid "Assign to courier flow"
+msgstr "Atribuir ao fluxo de courier"
+
+#: templates/logistics/freight_detail.html
+msgid "Post to member haul board"
+msgstr "Publicar no quadro de transporte de membros"
+
+#: templates/logistics/freight_detail.html
+msgid "Mark departed"
+msgstr "Marcar como partido"
+
+#: templates/logistics/freight_detail.html
+msgid "Mark arrived"
+msgstr "Marcar como chegado"
+
+#: templates/logistics/freight_detail.html
+msgid "Unassign (back to open)"
+msgstr "Desatribuir (voltar para aberto)"
+
+#: templates/logistics/freight_detail.html templates/mining/ledger.html
+msgid "Set"
+msgstr "Definir"
+
+#: templates/logistics/freight_detail.html
+msgid "No actions available for this status."
+msgstr "Nenhuma ação disponível para este status."
+
+#: templates/logistics/freight_detail.html
+msgid "Landed cost vs forecast"
+msgstr "Custo desembarcado vs. previsão"
+
+#: templates/logistics/freight_detail.html
+msgid "Forecast import"
+msgstr "Importação prevista"
+
+#: templates/logistics/freight_detail.html
+msgid "Delta"
+msgstr "Delta"
+
+#: templates/logistics/freight_detail.html
+msgid "no cost recorded"
+msgstr "nenhum custo registrado"
+
+#: templates/logistics/freight_detail.html
+msgid ""
+"Landed = purchase + freight share per unit. Forecast import = the "
+"forecaster's Jita + jump-freight basis. Store order prices are never edited."
+msgstr ""
+"Desembarcado = compra + rateio de frete por unidade. Importação prevista = a "
+"base Jita + jump-freight do previsor. Os preços dos pedidos da loja nunca "
+"são editados."
 
 #: templates/logistics/rates.html
 msgid "Freight · Leadership"
@@ -42519,10 +44343,6 @@ msgstr "60 dias"
 msgid "Mining tax %%"
 msgstr "Imposto de mineração %%"
 
-#: templates/mining/ledger.html
-msgid "Set"
-msgstr "Definir"
-
 #: templates/mining/ledger.html templates/mining/payout.html
 msgid "Value mined"
 msgstr "Valor minerado"
@@ -43185,10 +45005,6 @@ msgstr "sem preço de mercado"
 #: templates/navigation/jump_planner.html
 msgid "Origin"
 msgstr "Origem"
-
-#: templates/navigation/jump_planner.html
-msgid "Destination"
-msgstr "Destino"
 
 #: templates/navigation/jump_planner.html
 msgid "From &rarr; To"
@@ -44662,14 +46478,10 @@ msgid "Composition"
 msgstr "Composição"
 
 #: templates/operations/detail.html
-msgid "slots"
-msgstr "slots"
-
-#: templates/operations/detail.html
 msgid "Viable"
 msgstr "Viável"
 
-#: templates/operations/detail.html
+#: templates/operations/detail.html templates/procurement/supplier_detail.html
 msgid "Yes"
 msgstr "Sim"
 
@@ -44677,7 +46489,7 @@ msgstr "Sim"
 msgid "(override)"
 msgstr "(override)"
 
-#: templates/operations/detail.html
+#: templates/operations/detail.html templates/procurement/supplier_detail.html
 msgid "No"
 msgstr "Não"
 
@@ -45009,10 +46821,12 @@ msgid "custom fit"
 msgstr "fit custom"
 
 #: templates/operations/form.html templates/operations/template_form.html
+#: templates/procurement/agreement_detail.html
 msgid "Min"
 msgstr "Mín"
 
 #: templates/operations/form.html templates/operations/template_form.html
+#: templates/procurement/agreement_detail.html
 msgid "Max"
 msgstr "Máx"
 
@@ -45222,7 +47036,7 @@ msgid "RSVP deadline (min before form-up)"
 msgstr "Prazo de RSVP (min antes do form-up)"
 
 #: templates/operations/template_form.html templates/operations/timers.html
-#: templates/pingboard/calendar.html
+#: templates/pingboard/calendar.html templates/procurement/po_detail.html
 msgid "Notes"
 msgstr "Notas"
 
@@ -45697,7 +47511,7 @@ msgstr "tentar novamente"
 msgid "Sync %(action)s: %(sys)s/%(oid)s"
 msgstr "Sync %(action)s: %(sys)s/%(oid)s"
 
-#: templates/pingboard/dashboard.html
+#: templates/pingboard/dashboard.html templates/supplyboard/board.html
 msgid "All clear."
 msgstr "Tudo limpo."
 
@@ -45762,7 +47576,7 @@ msgstr "Histórico de sincronização"
 msgid "Alert"
 msgstr "Alerta"
 
-#: templates/pingboard/history.html
+#: templates/pingboard/history.html templates/procurement/po_detail.html
 msgid "By"
 msgstr "Por"
 
@@ -46606,6 +48420,524 @@ msgstr "5 · Estratégia &amp; compartilhamento"
 #: templates/planetary/wizard.html
 msgid "Create plan &amp; estimate profit"
 msgstr "Criar plano &amp; estimar lucro"
+
+#: templates/procurement/agreement_detail.html
+#: templates/procurement/agreements.html templates/procurement/board.html
+msgid "Agreement"
+msgstr "Acordo"
+
+#: templates/procurement/agreement_detail.html
+msgid "Procurement · Agreement"
+msgstr "Aquisição · Acordo"
+
+#: templates/procurement/agreement_detail.html
+#: templates/procurement/po_detail.html
+#, python-format
+msgid "Agreement #%(n)s"
+msgstr "Acordo #%(n)s"
+
+#: templates/procurement/agreement_detail.html
+msgid "All agreements"
+msgstr "Todos os acordos"
+
+#: templates/procurement/agreement_detail.html
+msgid "Estimated cycle value"
+msgstr "Valor estimado do ciclo"
+
+#: templates/procurement/agreement_detail.html
+msgid "Submit for approval"
+msgstr "Enviar para aprovação"
+
+#: templates/procurement/agreement_detail.html
+msgid ""
+"Below the Director threshold it activates immediately; at or above it, a "
+"second Director must approve."
+msgstr ""
+"Abaixo do limite de Director, é ativado imediatamente; a partir dele, um "
+"segundo Director deve aprovar."
+
+#: templates/procurement/agreement_detail.html
+#, python-format
+msgid "Submitted by %(who)s at %(value)s ISK — awaiting a second Director."
+msgstr "Enviado por %(who)s a %(value)s ISK — aguardando um segundo Director."
+
+#: templates/procurement/agreement_detail.html
+msgid "Only a Director can decide this approval."
+msgstr "Apenas um Director pode decidir esta aprovação."
+
+#: templates/procurement/agreement_detail.html
+msgid "This agreement is closed to further lifecycle actions."
+msgstr "Este acordo está fechado para novas ações de ciclo de vida."
+
+#: templates/procurement/agreement_detail.html
+#: templates/procurement/po_detail.html
+msgid "Add line"
+msgstr "Adicionar linha"
+
+#: templates/procurement/agreement_detail.html templates/procurement/board.html
+msgid "Per cycle"
+msgstr "Por ciclo"
+
+#: templates/procurement/agreement_detail.html
+#: templates/procurement/supplier_detail.html
+msgid "Price model"
+msgstr "Modelo de preço"
+
+#: templates/procurement/agreement_form.html
+#: templates/procurement/agreements.html
+msgid "New agreement"
+msgstr "Novo acordo"
+
+#: templates/procurement/agreement_form.html
+#: templates/procurement/agreements.html templates/procurement/po_form.html
+#: templates/procurement/pos.html templates/procurement/supplier_form.html
+#: templates/procurement/suppliers.html
+msgid "Procurement · Leadership"
+msgstr "Aquisição · Liderança"
+
+#: templates/procurement/agreement_form.html
+msgid "Draft a supply agreement"
+msgstr "Rascunhar um acordo de fornecimento"
+
+#: templates/procurement/agreement_form.html
+msgid ""
+"Create the header, then add the per-type lines on the next page before "
+"submitting for approval."
+msgstr ""
+"Crie o cabeçalho e depois adicione as linhas por tipo na próxima página "
+"antes de enviar para aprovação."
+
+#: templates/procurement/agreements.html
+msgid "Supply agreements"
+msgstr "Acordos de fornecimento"
+
+#: templates/procurement/agreements.html
+msgid ""
+"Standing commitments that pre-authorise purchase orders. Above the Director "
+"threshold an agreement needs a second Director's approval before it goes "
+"active."
+msgstr ""
+"Compromissos permanentes que pré-autorizam pedidos de compra. Acima do "
+"limite de Director, um acordo precisa da aprovação de um segundo Director "
+"antes de entrar em vigor."
+
+#: templates/procurement/agreements.html templates/procurement/board.html
+#: templates/procurement/pos.html templates/procurement/suppliers.html
+msgid "Suppliers"
+msgstr "Fornecedores"
+
+#: templates/procurement/agreements.html templates/procurement/board.html
+#: templates/procurement/pos.html templates/procurement/suppliers.html
+msgid "Purchase orders"
+msgstr "Pedidos de compra"
+
+#: templates/procurement/agreements.html templates/procurement/board.html
+#: templates/procurement/pos.html templates/procurement/supplier_detail.html
+#: templates/procurement/suppliers.html
+msgid "Supplier"
+msgstr "Fornecedor"
+
+#: templates/procurement/agreements.html
+msgid "Cadence"
+msgstr "Cadência"
+
+#: templates/procurement/agreements.html
+msgid "Est. cycle value"
+msgstr "Valor est. do ciclo"
+
+#: templates/procurement/agreements.html
+msgid "No agreements match."
+msgstr "Nenhum acordo corresponde."
+
+#: templates/procurement/board.html
+msgid "Procurement · Directors"
+msgstr "Aquisição · Directors"
+
+#: templates/procurement/board.html
+msgid ""
+"Open commitments, what's due or late, how hard agreements are being worked, "
+"supplier reliability — and whether the evidence feeds are still fresh."
+msgstr ""
+"Compromissos em aberto, o que está a vencer ou atrasado, o quanto os acordos "
+"estão sendo usados, a confiabilidade do fornecedor — e se os feeds de "
+"evidências ainda estão atualizados."
+
+#: templates/procurement/board.html
+msgid "Evidence-feed freshness"
+msgstr "Atualidade do feed de evidências"
+
+#: templates/procurement/board.html
+#, python-format
+msgid "stale (%(when)s)"
+msgstr "desatualizado (%(when)s)"
+
+#: templates/procurement/board.html
+msgid "no run recorded"
+msgstr "nenhuma execução registrada"
+
+#: templates/procurement/board.html
+#, python-format
+msgid "fresh (%(when)s)"
+msgstr "atual (%(when)s)"
+
+#: templates/procurement/board.html
+msgid "Open obligation (ISK)"
+msgstr "Obrigação em aberto (ISK)"
+
+#: templates/procurement/board.html
+msgid "Units outstanding"
+msgstr "Unidades pendentes"
+
+#: templates/procurement/board.html templates/store/board.html
+msgid "Open orders"
+msgstr "Pedidos em aberto"
+
+#: templates/procurement/board.html
+msgid "Overdue since"
+msgstr "Atrasado desde"
+
+#: templates/procurement/board.html
+msgid "Nothing overdue."
+msgstr "Nada atrasado."
+
+#: templates/procurement/board.html
+msgid "Due within 7 days"
+msgstr "A vencer em 7 dias"
+
+#: templates/procurement/board.html templates/procurement/pos.html
+msgid "Promised"
+msgstr "Prometido"
+
+#: templates/procurement/board.html
+msgid "Nothing due soon."
+msgstr "Nada a vencer em breve."
+
+#: templates/procurement/board.html
+msgid "Agreement utilisation"
+msgstr "Utilização do acordo"
+
+#: templates/procurement/board.html
+msgid "No active agreements."
+msgstr "Nenhum acordo ativo."
+
+#: templates/procurement/board.html
+msgid "Supplier reliability"
+msgstr "Confiabilidade do fornecedor"
+
+#: templates/procurement/board.html
+msgid "The nightly rollup's latest figures over the last complete weeks."
+msgstr ""
+"Os números mais recentes da consolidação noturna sobre as últimas semanas "
+"completas."
+
+#: templates/procurement/board.html templates/procurement/suppliers.html
+msgid "On-time"
+msgstr "No prazo"
+
+#: templates/procurement/board.html templates/procurement/supplier_detail.html
+msgid "Price variance"
+msgstr "Variação de preço"
+
+#: templates/procurement/board.html templates/procurement/supplier_detail.html
+#: templates/procurement/suppliers.html
+msgid "Sample"
+msgstr "Amostra"
+
+#: templates/procurement/board.html
+msgid "No suppliers yet."
+msgstr "Nenhum fornecedor ainda."
+
+#: templates/procurement/po_detail.html
+msgid "Procurement · Purchase order"
+msgstr "Aquisição · Pedido de compra"
+
+#: templates/procurement/po_detail.html
+#, python-format
+msgid "Order #%(n)s"
+msgstr "Pedido #%(n)s"
+
+#: templates/procurement/po_detail.html
+msgid "All orders"
+msgstr "Todos os pedidos"
+
+#: templates/procurement/po_detail.html
+msgid "Expected total"
+msgstr "Total esperado"
+
+#: templates/procurement/po_detail.html
+msgid "Promised by"
+msgstr "Prometido para"
+
+#: templates/procurement/po_detail.html
+#, python-format
+msgid "overdue since %(when)s"
+msgstr "atrasado desde %(when)s"
+
+#: templates/procurement/po_detail.html
+msgid "Submit"
+msgstr "Enviar"
+
+#: templates/procurement/po_detail.html
+msgid "Promised by (optional)"
+msgstr "Prometido para (opcional)"
+
+#: templates/procurement/po_detail.html
+msgid "Confirm approval"
+msgstr "Confirmar aprovação"
+
+#: templates/procurement/po_detail.html
+msgid "Mark contract-expected"
+msgstr "Marcar como contrato esperado"
+
+#: templates/procurement/po_detail.html
+msgid "Create haul"
+msgstr "Criar transporte"
+
+#: templates/procurement/po_detail.html
+msgid "Reconcile"
+msgstr "Conciliar"
+
+#: templates/procurement/po_detail.html
+msgid "Note (required)"
+msgstr "Nota (obrigatória)"
+
+#: templates/procurement/po_detail.html
+msgid "Confirm reconcile"
+msgstr "Confirmar conciliação"
+
+#: templates/procurement/po_detail.html
+msgid "Dispute"
+msgstr "Disputa"
+
+#: templates/procurement/po_detail.html
+msgid "Mark disputed"
+msgstr "Marcar em disputa"
+
+#: templates/procurement/po_detail.html
+msgid "Resolve dispute"
+msgstr "Resolver disputa"
+
+#: templates/procurement/po_detail.html
+msgid "Reconciled (close)"
+msgstr "Conciliado (fechar)"
+
+#: templates/procurement/po_detail.html
+msgid "Resume (back to evidence state)"
+msgstr "Retomar (voltar ao estado de evidência)"
+
+#: templates/procurement/po_detail.html
+msgid "Cancelled (Director)"
+msgstr "Cancelado (Director)"
+
+#: templates/procurement/po_detail.html
+msgid "Apply outcome"
+msgstr "Aplicar resultado"
+
+#: templates/procurement/po_detail.html templates/store/order.html
+msgid "Cancel order"
+msgstr "Cancelar pedido"
+
+#: templates/procurement/po_detail.html
+msgid "Candidate contracts"
+msgstr "Contratos candidatos"
+
+#: templates/procurement/po_detail.html
+msgid ""
+"In-game item-exchange contracts from this supplier that could be this order. "
+"Confirm the right one."
+msgstr ""
+"Contratos item-exchange in-game deste fornecedor que podem ser este pedido. "
+"Confirme o correto."
+
+#: templates/procurement/po_detail.html
+msgid "Confirm match"
+msgstr "Confirmar correspondência"
+
+#: templates/procurement/po_detail.html
+msgid "Payment suggestions"
+msgstr "Sugestões de pagamento"
+
+#: templates/procurement/po_detail.html
+msgid ""
+"Wallet-journal entries that could be this order's payment (no context id to "
+"auto-match). Confirm the right one."
+msgstr ""
+"Entradas do wallet-journal que podem ser o pagamento deste pedido (sem "
+"context id para correspondência automática). Confirme a correta."
+
+#: templates/procurement/po_detail.html
+msgid "Confirm payment"
+msgstr "Confirmar pagamento"
+
+#: templates/procurement/po_detail.html
+msgid "Ordered"
+msgstr "Encomendado"
+
+#: templates/procurement/po_detail.html
+msgid "Unit price"
+msgstr "Preço unitário"
+
+#: templates/procurement/po_detail.html
+msgid "Receipts"
+msgstr "Recebimentos"
+
+#: templates/procurement/po_form.html
+msgid "New purchase order"
+msgstr "Novo pedido de compra"
+
+#: templates/procurement/po_form.html
+msgid "Draft a purchase order"
+msgstr "Rascunhar um pedido de compra"
+
+#: templates/procurement/po_form.html
+msgid ""
+"Create the header, then add the order lines on the next page before "
+"submitting for approval. Attaching an active agreement can pre-authorise the "
+"order."
+msgstr ""
+"Crie o cabeçalho e depois adicione as linhas do pedido na próxima página "
+"antes de enviar para aprovação. Anexar um acordo ativo pode pré-autorizar o "
+"pedido."
+
+#: templates/procurement/pos.html
+msgid ""
+"Every order to a supplier, from draft to reconciled. The lifecycle is "
+"evidence-driven — the app plans and evidences; it never moves ISK."
+msgstr ""
+"Todo pedido a um fornecedor, do rascunho à conciliação. O ciclo de vida é "
+"orientado por evidências — o app planeja e registra evidências; nunca "
+"movimenta ISK."
+
+#: templates/procurement/pos.html templates/procurement/suppliers.html
+msgid "Agreements"
+msgstr "Acordos"
+
+#: templates/procurement/pos.html
+msgid "New order"
+msgstr "Novo pedido"
+
+#: templates/procurement/pos.html templates/store/order_confirm.html
+msgid "Delivery"
+msgstr "Entrega"
+
+#: templates/procurement/pos.html templates/procurement/supplier_detail.html
+msgid "Expected"
+msgstr "Esperado"
+
+#: templates/procurement/pos.html
+msgid "No purchase orders match."
+msgstr "Nenhum pedido de compra corresponde."
+
+#: templates/procurement/supplier_detail.html
+msgid "Procurement · Supplier"
+msgstr "Aquisição · Fornecedor"
+
+#: templates/procurement/supplier_detail.html
+msgid "All suppliers"
+msgstr "Todos os fornecedores"
+
+#: templates/procurement/supplier_detail.html
+msgid "On-time rate"
+msgstr "Taxa no prazo"
+
+#: templates/procurement/supplier_detail.html
+msgid "Fill rate"
+msgstr "Taxa de atendimento"
+
+#: templates/procurement/supplier_detail.html templates/store/margin.html
+#, python-format
+msgid "as of %(when)s"
+msgstr "em %(when)s"
+
+#: templates/procurement/supplier_detail.html
+msgid "not yet computed"
+msgstr "ainda não calculado"
+
+#: templates/procurement/supplier_detail.html
+msgid "Profile"
+msgstr "Perfil"
+
+#: templates/procurement/supplier_detail.html
+msgid "Contact:"
+msgstr "Contato:"
+
+#: templates/procurement/supplier_detail.html
+msgid "Catalogue"
+msgstr "Catálogo"
+
+#: templates/procurement/supplier_detail.html
+msgid "Add item"
+msgstr "Adicionar item"
+
+#: templates/procurement/supplier_detail.html
+msgid "Add to catalogue"
+msgstr "Adicionar ao catálogo"
+
+#: templates/procurement/supplier_detail.html
+msgid "MOQ"
+msgstr "MOQ"
+
+#: templates/procurement/supplier_detail.html
+msgid "No catalogue items yet."
+msgstr "Nenhum item no catálogo ainda."
+
+#: templates/procurement/supplier_detail.html
+msgid "Contract history"
+msgstr "Histórico de contratos"
+
+#: templates/procurement/supplier_detail.html
+msgid "Purchase orders from this supplier that matched an in-game contract."
+msgstr ""
+"Pedidos de compra deste fornecedor que corresponderam a um contrato in-game."
+
+#: templates/procurement/supplier_detail.html
+msgid "Matched"
+msgstr "Correspondido"
+
+#: templates/procurement/supplier_detail.html
+msgid "No matched contracts yet."
+msgstr "Nenhum contrato correspondido ainda."
+
+#: templates/procurement/supplier_form.html
+#: templates/procurement/suppliers.html
+msgid "New supplier"
+msgstr "Novo fornecedor"
+
+#: templates/procurement/supplier_form.html
+msgid "Register a supplier"
+msgstr "Registrar um fornecedor"
+
+#: templates/procurement/supplier_form.html
+msgid ""
+"Business data only — the entity id is the EVE character or corporation id "
+"(leave blank for an informal hub source)."
+msgstr ""
+"Apenas dados comerciais — o entity id é o id de personagem ou corporação do "
+"EVE (deixe em branco para uma fonte hub informal)."
+
+#: templates/procurement/supplier_form.html
+msgid "Save supplier"
+msgstr "Salvar fornecedor"
+
+#: templates/procurement/suppliers.html
+msgid ""
+"Pilots, corporations and market hubs the corp buys imports and third-party "
+"builds from. Business data only."
+msgstr ""
+"Pilotos, corporações e market hubs de quem a corp compra importações e "
+"builds de terceiros. Apenas dados comerciais."
+
+#: templates/procurement/suppliers.html
+msgid "Supplier name"
+msgstr "Nome do fornecedor"
+
+#: templates/procurement/suppliers.html
+msgid "Lead (days)"
+msgstr "Lead (dias)"
+
+#: templates/procurement/suppliers.html
+msgid "No suppliers match."
+msgstr "Nenhum fornecedor corresponde."
 
 #: templates/raffle/archive.html
 msgid "Raffle archive"
@@ -47863,7 +50195,7 @@ msgstr "confiança %(conf)s"
 msgid "as of %(fresh)s"
 msgstr "atualizado em %(fresh)s"
 
-#: templates/recommendations/_rec_card.html
+#: templates/recommendations/_rec_card.html templates/store/margin.html
 msgid "Acknowledge"
 msgstr "Reconhecer"
 
@@ -48472,10 +50804,6 @@ msgid "total SP"
 msgstr "SP total"
 
 #: templates/skills/plans.html
-msgid "skills"
-msgstr "skills"
-
-#: templates/skills/plans.html
 msgid "at level V"
 msgstr "no nível V"
 
@@ -48573,10 +50901,6 @@ msgstr ""
 #: templates/srp/budget.html
 msgid "Last 6 months"
 msgstr "Últimos 6 meses"
-
-#: templates/srp/budget.html
-msgid "Remaining"
-msgstr "Restante"
 
 #: templates/srp/budget.html
 msgid "Set a period’s allocation"
@@ -49426,6 +51750,13 @@ msgid "Post"
 msgstr "Publicar"
 
 #: templates/stockpile/logistics.html
+#, python-format
+msgid "batch · %(n)s item"
+msgid_plural "batch · %(n)s items"
+msgstr[0] "lote · %(n)s item"
+msgstr[1] "lote · %(n)s itens"
+
+#: templates/stockpile/logistics.html
 msgid "multi-item"
 msgstr "vários itens"
 
@@ -49469,10 +51800,6 @@ msgstr "para"
 #: templates/store/board.html
 msgid "buyer"
 msgstr "comprador"
-
-#: templates/store/board.html
-msgid "Open orders"
-msgstr "Pedidos em aberto"
 
 #: templates/store/board.html templates/store/order_confirm.html
 msgid "Deposit"
@@ -49941,10 +52268,6 @@ msgid "Receive assembled ships"
 msgstr "Receber naves montadas"
 
 #: templates/store/inventory_fit.html
-msgid "Receive"
-msgstr "Receber"
-
-#: templates/store/inventory_fit.html
 msgid ""
 "Record complete, fitted ships only — hulls or loose modules belong in the "
 "stockpile, not here. Arrivals are reserved for waiting backorders "
@@ -50050,6 +52373,10 @@ msgstr ""
 #: templates/store/inventory_fit.html
 msgid "No open backorder demand for this fit."
 msgstr "Nenhuma demanda de encomenda em aberto para este fit."
+
+#: templates/store/inventory_fit.html
+msgid "Material Plan has requirements descending from this fit"
+msgstr "O Plano de Materiais tem necessidades descendentes deste fit"
 
 #: templates/store/inventory_fit.html
 msgid "Demand"
@@ -50432,10 +52759,6 @@ msgstr "Sua nave está pronta. Aceite o contrato no jogo e pague o restante."
 msgid "Claim &amp; fulfil"
 msgstr "Assumir &amp; atender"
 
-#: templates/store/order.html
-msgid "Cancel order"
-msgstr "Cancelar pedido"
-
 #: templates/store/order_confirm.html
 msgid "Confirm order"
 msgstr "Confirmar pedido"
@@ -50478,10 +52801,6 @@ msgstr "cada"
 #: templates/store/order_confirm.html
 msgid "None — you pay on delivery via in-game contract."
 msgstr "Nenhum — você paga na entrega via contrato no jogo."
-
-#: templates/store/order_confirm.html
-msgid "Delivery"
-msgstr "Entrega"
 
 #: templates/store/order_confirm.html
 msgid ""
@@ -51080,283 +53399,517 @@ msgstr "— Desatribuir (retornar ao pool aberto) —"
 msgid "This source string is intentionally never translated"
 msgstr "Esta string de origem intencionalmente nunca é traduzida"
 
-msgid "No matching in-game job found — enter its job ID."
-msgstr "Nenhum job correspondente encontrado no jogo — informe o ID do job."
+msgid "Matched by payment token %(token)s"
+msgstr "Correspondido pelo token de pagamento %(token)s"
 
-msgid "Linked to in-game job #%(id)s — it now carries the schedule."
-msgstr "Vinculado ao job no jogo #%(id)s — agora ele carrega o cronograma."
-
-msgid "That in-game job produces a different item."
-msgstr "Esse job no jogo produz um item diferente."
+msgid "Quote drift flagged: {ship_name}"
+msgstr "Desvio de cotação sinalizado: {ship_name}"
 
 msgid ""
-"Dated demand beyond this many days ahead is excluded from the plan and "
-"listed separately."
+"The frozen quote for {ship_name} has drifted {percent} from its basis. "
+"Review it on the margin console: {link}"
 msgstr ""
-"Demanda datada além deste número de dias à frente fica fora do plano e é "
-"listada separadamente."
+"A cotação congelada de {ship_name} desviou {percent} da sua base. Revise-a "
+"no console de margem: {link}"
 
-msgid "Assumed days to buy an item at the price-reference hub."
-msgstr "Dias presumidos para comprar um item no hub de referência de preços."
-
-msgid "Assumed days to buy at Jita and freight to the destination."
-msgstr "Dias presumidos para comprar em Jita e fretar até o destino."
+msgid "Margin erosion"
+msgstr "Erosão de margem"
 
 msgid ""
-"Count finished-but-undelivered ESI jobs (status \"ready\") as incoming "
-"supply."
+"Corp Store margin is eroding ({details}, evidenced margin {percent}). Review "
+"the margin console: {link}"
 msgstr ""
-"Contar jobs ESI concluídos mas não entregues (status \"ready\") como "
-"suprimento a caminho."
+"A margem da Corp Store está corroendo ({details}, margem comprovada "
+"{percent}). Revise o console de margem: {link}"
+
+msgid "Supply Command: {count} open problem(s)"
+msgstr "Supply Command: {count} problema(s) em aberto"
 
 msgid ""
-"Run the planning job automatically on its nightly schedule. Off: officers "
-"run it manually from the Material Plan page."
+"Supply Command has open problems needing attention: {details}. Review the "
+"board: {link}"
 msgstr ""
-"Executar o job de planejamento automaticamente no cronograma noturno. "
-"Desligado: os oficiais o executam manualmente na página do Plano de "
-"Materiais."
+"O Supply Command tem problemas em aberto que precisam de atenção: {details}. "
+"Revise o painel: {link}"
 
-msgid "Material-efficiency assumed for every build level of the explosion."
-msgstr ""
-"Eficiência de material presumida para cada nível de produção da explosão."
-
-msgid "Deepest BOM level the explosion will recurse to."
-msgstr "Nível mais profundo do BOM até onde a explosão desce."
-
-msgid "MRP config"
-msgstr "configuração de MRP"
-
-msgid "MRP configs"
-msgstr "configurações de MRP"
-
-msgid "in-flight ESI job"
-msgstr "job ESI em andamento"
-
-msgid "An active supply plan for %(item)s already exists."
-msgstr "Já existe um plano de suprimento ativo para %(item)s."
-
-msgid "A planning run is already in progress — try again shortly."
-msgstr ""
-"Uma execução de planejamento já está em andamento — tente novamente em "
-"instantes."
-
-msgid "Planning run finished — no changes since the last run."
-msgstr ""
-"Execução de planejamento concluída — sem mudanças desde a última execução."
-
-msgid "Planning run finished: %(written)s row(s) updated, %(closed)s closed."
-msgstr ""
-"Execução de planejamento concluída: %(written)s linha(s) atualizada(s), %"
-"(closed)s encerrada(s)."
-
-msgid "Ship-level demand is fulfilled from the Shipyard inventory console."
-msgstr ""
-"A demanda no nível de naves é atendida pelo console de inventário do "
-"Estaleiro."
-
-msgid "Material shortfall: {industry_job_name}"
-msgstr "Falta de material: {industry_job_name}"
+msgid "Supply Command digest"
+msgstr "Resumo do Supply Command"
 
 msgid ""
-"The material plan needs {quantity}× {industry_job_name} by {eta_date}. "
-"Review the Material Plan: {link}"
+"One deduped officer digest of the Supply Command board's open problems — low "
+"stock, at-risk/overdue orders, material shortages, production bottlenecks, "
+"in-transit hauls and discrepancies. Fires once per distinct problem set and "
+"resets when everything is clear."
 msgstr ""
-"O plano de materiais precisa de {quantity}× {industry_job_name} até "
-"{eta_date}. Revise o Plano de Materiais: {link}"
+"Um único resumo consolidado, para oficiais, dos problemas em aberto do "
+"painel do Supply Command — estoque baixo, pedidos em risco/atrasados, faltas "
+"de material, gargalos de produção, transportes em trânsito e divergências. "
+"Dispara uma vez por conjunto distinto de problemas e reinicia quando tudo "
+"está resolvido."
+
+msgid "Beat supplyboard.sweep (every 20 min), on a red-set change."
+msgstr ""
+"Beat supplyboard.sweep (a cada 20 min), em uma alteração do conjunto "
+"vermelho."
+
+msgid "Corp Store quote drift"
+msgstr "Desvio de cotação da Corp Store"
 
 msgid ""
-"Linked to the in-game job — it carries the schedule and the supply count"
+"An officer alert when an open store order's frozen basis drifts beyond the "
+"configured percent AND ISK floor. Quotes are member-visible prices, not corp "
+"P&L, so this is operations-routed; informational — no frozen price ever "
+"changes."
 msgstr ""
-"Vinculado ao job no jogo — ele carrega o cronograma e a contagem de "
-"suprimento"
+"Um alerta para oficiais quando a base congelada de um pedido de loja em "
+"aberto desvia além do percentual configurado E do piso de ISK. Cotações são "
+"preços visíveis aos membros, não P&L da corporação, então é roteado para "
+"operações; informativo — nenhum preço congelado muda."
 
-msgid "ESI job ID"
-msgstr "ID do job ESI"
+msgid "Beat store.check_quote_drift (nightly), on a fresh flag."
+msgstr "Beat store.check_quote_drift (noturno), em uma nova sinalização."
+
+msgid "Corp Store margin erosion"
+msgstr "Erosão de margem da Corp Store"
 
 msgid ""
-"Record which in-game job this build became, so planning never counts it twice"
+"A leadership alert when the delivered-order evidenced-margin ratio drops "
+"below the configured floor, or newly-flagged drift rows spike. ISK-"
+"sensitive: routes leadership-only via classification, so an undesignated "
+"mass channel drops it."
 msgstr ""
-"Registre em qual job no jogo esta produção se tornou, para o planejamento "
-"nunca contá-la duas vezes"
+"Um alerta para a liderança quando a razão de margem comprovada dos pedidos "
+"entregues cai abaixo do piso configurado, ou quando linhas de desvio recém-"
+"sinalizadas disparam. Sensível a ISK: roteado apenas para a liderança via "
+"classificação, então um canal de massa não designado o descarta."
+
+msgid "Beat store.check_quote_drift tail (nightly), at most one per day."
+msgstr "Beat store.check_quote_drift tail (noturno), no máximo um por dia."
+
+msgid "In-game contract id (optional)"
+msgstr "ID de contrato no jogo (opcional)"
+
+msgid "EVE Ref job cost"
+msgstr "Custo de trabalho do EVE Ref"
+
+msgid "Local material estimate"
+msgstr "Estimativa de material local"
+
+msgid "Jita sell reference"
+msgstr "Referência de venda em Jita"
+
+msgid "Unknown — cost source unavailable"
+msgstr "Desconhecido — fonte de custo indisponível"
+
+msgid "Unrecorded"
+msgstr "Não registrado"
 
 msgid ""
-"Corp-wide net requirements: every demand source exploded through the build "
-"tree and netted once against stock, reservations and in-flight work. Dates "
-"assume unconstrained industry slots — capacity planning comes in a later "
-"phase."
+"Flag an open order when its re-estimated basis moves this fraction or more "
+"from the frozen value (0.100 = 10 percent)."
 msgstr ""
-"Necessidades líquidas de toda a corp: cada fonte de demanda explodida pela "
-"árvore de produção e abatida uma única vez contra estoque, reservas e "
-"trabalho em andamento. As datas assumem slots de indústria sem restrição — o "
-"planejamento de capacidade vem em uma fase posterior."
+"Sinaliza um pedido em aberto quando sua base reestimada se move esta fração "
+"ou mais em relação ao valor congelado (0.100 = 10 por cento)."
 
 msgid ""
-"No changes — the latest run's inputs are identical to the previous run's."
+"Also require this many ISK of absolute drift before flagging — stops penny "
+"noise on small hulls."
 msgstr ""
-"Sem mudanças — os insumos da última execução são idênticos aos da execução "
-"anterior."
+"Também exige esta quantidade de ISK de desvio absoluto antes de sinalizar — "
+"evita ruído de centavos em cascos pequenos."
+
+msgid "Run the nightly quote-drift check. Off: no drift is ever flagged."
+msgstr ""
+"Executa a verificação noturna de desvio de cotação. Desligado: nenhum desvio "
+"é sinalizado."
 
 msgid ""
-"No market price signal for: %(items)s — a 0 ISK buy line is a data gap, not "
-"a bargain."
+"Match delivered orders to corp-wallet revenue by payment token. Off: margin "
+"shows quoted revenue only."
 msgstr ""
-"Sem sinal de preço de mercado para: %(items)s — uma linha de compra a 0 ISK "
-"é uma lacuna de dados, não uma pechincha."
+"Correlaciona pedidos entregues à receita da carteira da corporação por token "
+"de pagamento. Desligado: a margem mostra apenas a receita cotada."
 
-msgid "Feasible"
-msgstr "Viável"
-
-msgid "ships & fits — fulfilled from the Shipyard console"
-msgstr "naves e fits — atendidos pelo console do Estaleiro"
+msgid "Trailing days of delivered orders the margin summary covers."
+msgstr "Dias retroativos de pedidos entregues que o resumo de margem cobre."
 
 msgid ""
-"The linked vehicle no longer matches the plan — planned quantity differs "
-"from what the vehicle says"
+"Alert leadership when the window's evidenced-margin ratio drops below this "
+"fraction (0.050 = 5 percent)."
 msgstr ""
-"O veículo vinculado não corresponde mais ao plano — a quantidade planejada "
-"difere do que o veículo indica"
+"Alerta a liderança quando a razão de margem comprovada da janela cai abaixo "
+"desta fração (0.050 = 5 por cento)."
 
-msgid "Materials for promised build"
-msgstr "Materiais para a produção prometida"
+msgid "margin config"
+msgstr "configuração de margem"
 
-msgid "No open requirements — run planning to compute the current picture."
-msgstr ""
-"Nenhuma necessidade em aberto — execute o planejamento para calcular o "
-"panorama atual."
+msgid "margin configs"
+msgstr "configurações de margem"
 
-msgid "Multibuy (open buy & import lines)"
-msgstr "Multibuy (linhas de compra e importação em aberto)"
+msgid "Wallet journal"
+msgstr "Diário da carteira"
+
+msgid "Corp contract"
+msgstr "Contrato da corporação"
+
+msgid "Payment token"
+msgstr "Token de pagamento"
+
+msgid "Officer-recorded"
+msgstr "Registrado por oficial"
+
+msgid "That contract id isn't valid."
+msgstr "Esse ID de contrato não é válido."
+
+msgid "Margin settings updated."
+msgstr "Configurações de margem atualizadas."
+
+msgid "Drift acknowledged."
+msgstr "Desvio reconhecido."
+
+msgid "That drift was already acknowledged."
+msgstr "Esse desvio já havia sido reconhecido."
+
+msgid "Enter a valid order number."
+msgstr "Insira um número de pedido válido."
+
+msgid "Settlement recorded — it fills once the contract completes."
+msgstr "Liquidação registrada — é preenchida assim que o contrato é concluído."
+
+msgid "That contract id is invalid or already linked to another order."
+msgstr "Esse ID de contrato é inválido ou já está vinculado a outro pedido."
 
 msgid ""
-"Dated demand this far out is excluded from the current plan; it enters when "
-"the window reaches it."
+"Warm the board cache and fire the officer problem-set digest on its "
+"schedule. Off: the board is still viewable on demand, but nothing pings."
 msgstr ""
-"Demanda datada tão distante fica fora do plano atual; ela entra quando a "
-"janela a alcança."
+"Aquece o cache do painel e dispara o resumo do conjunto de problemas para "
+"oficiais em seu horário. Desligado: o painel ainda pode ser visualizado sob "
+"demanda, mas nada notifica."
 
-msgid "Material Plan has requirements descending from this fit"
-msgstr "O Plano de Materiais tem necessidades descendentes deste fit"
+msgid ""
+"Flag an order as at-risk when its estimate is within this many days (also "
+"the stalled-haul age)."
+msgstr ""
+"Sinaliza um pedido como em risco quando sua estimativa está dentro deste "
+"número de dias (também a idade de transporte parado)."
 
-msgid "Material plan restock: %(item)s"
-msgstr "Reposição do plano de materiais: %(item)s"
+msgid "Surface a restock commitment when it is due within this many days."
+msgstr ""
+"Destaca um compromisso de reposição quando ele vence dentro deste número de "
+"dias."
 
-msgid "Material plan: %(quantity)s× %(item)s"
-msgstr "Plano de materiais: %(quantity)s× %(item)s"
+msgid ""
+"Flag stocked fits not reconciled within this many days as a discrepancy."
+msgstr ""
+"Sinaliza como divergência os fits em estoque não reconciliados dentro deste "
+"número de dias."
 
-msgid "Buy %(quantity)s× %(item)s for the material plan"
-msgstr "Comprar %(quantity)s× %(item)s para o plano de materiais"
+msgid "board config"
+msgstr "configuração de painel"
 
-msgid "In-game job link removed."
-msgstr "Vínculo com o job no jogo removido."
+msgid "board configs"
+msgstr "configurações de painel"
 
-msgid "That in-game job is already linked to another build job."
-msgstr "Esse job no jogo já está vinculado a outro job de produção."
+msgid "Doctrine readiness & low stock"
+msgstr "Prontidão de Doctrine & estoque baixo"
 
-msgid "Only an in-progress job can be linked."
-msgstr "Apenas um job em andamento pode ser vinculado."
+msgid "At-risk & overdue orders"
+msgstr "Pedidos em risco & atrasados"
 
-msgid "MRP planning run"
-msgstr "execução de planejamento MRP"
+msgid "Material shortages"
+msgstr "Faltas de material"
 
-msgid "build duration"
-msgstr "duração da produção"
+msgid "Commitments due & late"
+msgstr "Compromissos a vencer & atrasados"
 
-msgid "lead time"
-msgstr "lead time"
+msgid "Production bottlenecks"
+msgstr "Gargalos de produção"
 
-msgid "That requirement is closed."
-msgstr "Essa necessidade está encerrada."
+msgid "In-transit hauls"
+msgstr "Transportes em trânsito"
 
-msgid "Industry plan “%(name)s” is linked."
-msgstr "O plano de indústria “%(name)s” está vinculado."
+msgid "Stock discrepancies"
+msgstr "Divergências de estoque"
 
-msgid "Hauling job posted and linked."
-msgstr "Trabalho de transporte publicado e vinculado."
+msgid "Obsolete & slow-moving stock"
+msgstr "Estoque obsoleto & de baixa rotatividade"
 
-msgid "Claimable BUY task created and linked."
-msgstr "Tarefa de COMPRA reivindicável criada e vinculada."
+msgid "Margin erosion & drifted quotes"
+msgstr "Erosão de margem & cotações desviadas"
 
-msgid "in game #%(id)s"
-msgstr "no jogo #%(id)s"
+msgid "%(fit)s is at %(atp)s — at or below its reorder point %(reorder)s"
+msgstr ""
+"%(fit)s está em %(atp)s — no ponto de reposição %(reorder)s ou abaixo dele"
 
-msgid "In-game job ID"
-msgstr "ID do job no jogo"
+msgid "%(fit)s is at %(atp)s — below its safety stock %(safety)s"
+msgstr "%(fit)s está em %(atp)s — abaixo do estoque de segurança %(safety)s"
 
-msgid "Confirm in-game match"
-msgstr "Confirmar correspondência no jogo"
+msgid "%(fit)s is at %(atp)s — below the suggested reorder point %(reorder)s"
+msgstr ""
+"%(fit)s está em %(atp)s — abaixo do ponto de reposição sugerido %(reorder)s"
 
-msgid "Started in game"
-msgstr "Iniciado no jogo"
+msgid "%(fit)s has stock but no delivery location set"
+msgstr "%(fit)s tem estoque, mas nenhum local de entrega definido"
 
-msgid "Material Plan"
-msgstr "Plano de Materiais"
+msgid "%(fit)s has stock stranded on an old fit revision"
+msgstr "%(fit)s tem estoque preso em uma revisão de fit antiga"
 
-msgid "Run planning now"
-msgstr "Executar planejamento agora"
+msgid "%(ship)s order is overdue (was due %(eta)s)"
+msgstr "O pedido de %(ship)s está atrasado (venceu em %(eta)s)"
 
-msgid "Live requirements"
-msgstr "Necessidades ao vivo"
+msgid "%(ship)s order is due within %(days)s day(s) (%(eta)s)"
+msgstr "O pedido de %(ship)s vence em %(days)s dia(s) (%(eta)s)"
 
-msgid "planning window: %(days)s days"
-msgstr "janela de planejamento: %(days)s dias"
+msgid "%(item)s — %(qty)s short, needed %(due)s"
+msgstr "%(item)s — faltam %(qty)s, necessário em %(due)s"
 
-msgid "Level %(depth)s"
-msgstr "Nível %(depth)s"
+msgid "%(item)s — %(qty)s short"
+msgstr "%(item)s — faltam %(qty)s"
 
-msgid "diverged"
-msgstr "divergente"
+msgid "%(fit)s restock is overdue (was due %(due)s)"
+msgstr "A reposição de %(fit)s está atrasada (venceu em %(due)s)"
 
-msgid "Demand sources"
-msgstr "Fontes de demanda"
+msgid "%(fit)s restock is due %(due)s"
+msgstr "A reposição de %(fit)s vence em %(due)s"
 
-msgid "Fit demand"
-msgstr "Demanda de fits"
+msgid ""
+"%(item)s cannot be ready in time — feasible %(feasible)s, needed %(due)s"
+msgstr ""
+"%(item)s não pode ficar pronto a tempo — viável %(feasible)s, necessário %"
+"(due)s"
 
-msgid "Backorder need"
-msgstr "Necessidade de encomendas"
+msgid "Haul %(route)s is unclaimed and stalled"
+msgstr "O transporte %(route)s está sem responsável e parado"
 
-msgid "Component of requirement"
-msgstr "Componente de necessidade"
+msgid "Haul %(route)s is in progress"
+msgstr "O transporte %(route)s está em andamento"
 
-msgid "Incoming supply"
-msgstr "Suprimento a caminho"
+msgid "%(fit)s stock has not been reconciled in %(days)s+ days"
+msgstr "O estoque de %(fit)s não é reconciliado há %(days)s+ dias"
 
-msgid "In-game job"
-msgstr "Job no jogo"
+msgid "%(item)s is over-reserved by %(qty)s"
+msgstr "%(item)s está reservado em excesso em %(qty)s"
 
-msgid "Board job"
-msgstr "Job do quadro"
+msgid "%(fit)s is obsolete but still stocked"
+msgstr "%(fit)s está obsoleto, mas ainda em estoque"
 
-msgid "Plan line"
-msgstr "Linha do plano"
+msgid "%(fit)s is a slow mover"
+msgstr "%(fit)s tem baixa rotatividade"
 
-msgid "Shipyard console"
-msgstr "Console do Estaleiro"
+msgid "Evidenced margin is %(pct)s over the last %(days)s days"
+msgstr "A margem comprovada é %(pct)s nos últimos %(days)s dias"
 
-msgid "BUY task"
-msgstr "Tarefa de COMPRA"
+msgid "%(ship)s quote drifted %(pct)s from its basis"
+msgstr "A cotação de %(ship)s desviou %(pct)s da sua base"
 
-msgid "Paste into the in-game market Multibuy window."
-msgstr "Cole na janela Multibuy do mercado no jogo."
+msgid "Receipt stock or fan out the need"
+msgstr "Dar entrada no estoque ou distribuir a necessidade"
 
-msgid "Beyond the planning window"
-msgstr "Além da janela de planejamento"
+msgid "Advance or revise the ETA"
+msgstr "Antecipar ou revisar a ETA"
 
-msgid "Run history"
-msgstr "Histórico de execuções"
+msgid "Fan out a supply vehicle"
+msgstr "Distribuir um veículo de suprimento"
 
-msgid "Updated"
-msgstr "Atualizado"
+msgid "Mint or refresh the vehicle"
+msgstr "Criar ou atualizar o veículo"
 
-msgid "Input digest"
-msgstr "Digest dos insumos"
+msgid "Expedite — fan out or adjust dates"
+msgstr "Agilizar — distribuir ou ajustar datas"
 
-msgid "Triggered by"
-msgstr "Acionado por"
+msgid "Claim, complete or cancel the haul"
+msgstr "Assumir, concluir ou cancelar o transporte"
 
-msgid "schedule"
-msgstr "cronograma"
+msgid "Revalidate stock or review reconciliation"
+msgstr "Revalidar o estoque ou revisar a reconciliação"
 
-msgid "No runs yet."
-msgstr "Ainda não há execuções."
+msgid "Retire the offer or redistribute stock"
+msgstr "Aposentar a oferta ou redistribuir o estoque"
+
+msgid "Acknowledge drift or record a settlement"
+msgstr "Reconhecer o desvio ou registrar uma liquidação"
+
+msgid "Supply Command board refreshed."
+msgstr "Painel do Supply Command atualizado."
+
+msgid "Supply command"
+msgstr "Supply Command"
+
+msgid "Supply Command board"
+msgstr "Painel do Supply Command"
+
+msgid ""
+"Every supply-chain problem in one place — low stock, at-risk orders, "
+"shortages, bottlenecks, in-transit hauls and discrepancies. Each row deep-"
+"links to the console that fixes it."
+msgstr ""
+"Todos os problemas da cadeia de suprimentos em um só lugar — estoque baixo, "
+"pedidos em risco, faltas, gargalos, transportes em trânsito e divergências. "
+"Cada linha leva diretamente ao console que o resolve."
+
+msgid "Margin &amp; profitability"
+msgstr "Margem &amp; lucratividade"
+
+msgid ""
+"Actual-vs-estimated margin by fulfilment method, revenue evidence and "
+"flagged quote drift, with every assumption shown inline."
+msgstr ""
+"Margem real vs. estimada por método de cumprimento, evidência de receita e "
+"desvio de cotação sinalizado, com cada premissa exibida inline."
+
+msgid "Margin & profitability"
+msgstr "Margem & lucratividade"
+
+msgid "Delivered orders over the last %(days)s days, by fulfilment method."
+msgstr ""
+"Pedidos entregues nos últimos %(days)s dias, por método de cumprimento."
+
+msgid "Margin by fulfilment method"
+msgstr "Margem por método de cumprimento"
+
+msgid "Orders"
+msgstr "Pedidos"
+
+msgid "Quoted revenue"
+msgstr "Receita cotada"
+
+msgid "Evidenced revenue"
+msgstr "Receita comprovada"
+
+msgid "Est. cost"
+msgstr "Custo est."
+
+msgid "Est. margin"
+msgstr "Margem est."
+
+msgid "Evidenced margin"
+msgstr "Margem comprovada"
+
+msgid "Cost is a Jita reference, not an actual cost"
+msgstr "O custo é uma referência de Jita, não um custo real"
+
+msgid "Orders with no revenue evidence yet"
+msgstr "Pedidos ainda sem evidência de receita"
+
+msgid "unevidenced"
+msgstr "sem comprovação"
+
+msgid "No delivered orders in the window yet."
+msgstr "Ainda não há pedidos entregues na janela."
+
+msgid ""
+"Non-build lanes show the frozen Jita reference as a cost stand-in, not an "
+"actual cost. Supplier and landed-import actuals arrive with later phases."
+msgstr ""
+"As vias que não são de construção mostram a referência congelada de Jita "
+"como substituto de custo, não um custo real. Valores reais de fornecedor e "
+"de importação chegam em fases posteriores."
+
+msgid "Quote drift"
+msgstr "Desvio de cotação"
+
+msgid "Frozen %(frozen)s → current %(current)s"
+msgstr "Congelado %(frozen)s → atual %(current)s"
+
+msgid ""
+"Assumptions — sales tax, broker fee and system cost index defaults from "
+"Industry settings (%(tax)s / %(broker)s / %(idx)s as fractions). Drift never "
+"changes a frozen price."
+msgstr ""
+"Premissas — imposto de venda, taxa de corretagem e índice de custo do "
+"sistema, padrões das configurações de Indústria (%(tax)s / %(broker)s / %"
+"(idx)s como frações). O desvio nunca altera um preço congelado."
+
+msgid "No quotes flagged for drift."
+msgstr "Nenhuma cotação sinalizada por desvio."
+
+msgid "Record settlement evidence"
+msgstr "Registrar evidência de liquidação"
+
+msgid "Order number"
+msgstr "Número do pedido"
+
+msgid "Completed contract id"
+msgstr "ID do contrato concluído"
+
+msgid "Link contract"
+msgstr "Vincular contrato"
+
+msgid ""
+"The amount and date fill automatically once the contract completes — never a "
+"fabricated actual."
+msgstr ""
+"O valor e a data são preenchidos automaticamente assim que o contrato é "
+"concluído — nunca um valor real fabricado."
+
+msgid "Recent settlements"
+msgstr "Liquidações recentes"
+
+msgid "awaiting contract"
+msgstr "aguardando contrato"
+
+msgid "No settlements recorded yet."
+msgstr "Nenhuma liquidação registrada ainda."
+
+msgid "Run the nightly quote-drift check"
+msgstr "Executar a verificação noturna de desvio de cotação"
+
+msgid "Match revenue by payment token"
+msgstr "Correlacionar receita por token de pagamento"
+
+msgid "Drift threshold (fraction)"
+msgstr "Limiar de desvio (fração)"
+
+msgid "Minimum ISK drift"
+msgstr "Desvio mínimo de ISK"
+
+msgid "Margin window (days)"
+msgstr "Janela de margem (dias)"
+
+msgid "Margin alert floor (fraction)"
+msgstr "Piso de alerta de margem (fração)"
+
+msgid ""
+"Put this in your ISK transfer reason so the payment is matched to this order."
+msgstr ""
+"Coloque isto no motivo da sua transferência de ISK para que o pagamento seja "
+"correlacionado a este pedido."
+
+msgid "Fulfilling contract id (optional)"
+msgstr "ID do contrato de cumprimento (opcional)"
+
+msgid "How was this fulfilled?"
+msgstr "Como isso foi cumprido?"
+
+msgid "Supply Command"
+msgstr "Supply Command"
+
+msgid "%(reds)s problem needs attention."
+msgid_plural "%(reds)s problems need attention."
+msgstr[0] "%(reds)s problema precisa de atenção."
+msgstr[1] "%(reds)s problemas precisam de atenção."
+
+msgid "Built %(when)s ago"
+msgstr "Gerado há %(when)s"
+
+msgid "Refresh now"
+msgstr "Atualizar agora"
+
+msgid "Source data last synced"
+msgstr "Última sincronização dos dados de origem"
+
+msgid "data %(when)s old"
+msgstr "dados de %(when)s atrás"
+
+msgid "see all"
+msgstr "ver tudo"
+
+msgid "This section is temporarily unavailable."
+msgstr "Esta seção está temporariamente indisponível."
+
+msgid "Showing %(shown)s of %(total)s."
+msgstr "Exibindo %(shown)s de %(total)s."
+
+msgid "Open the full list"
+msgstr "Abrir a lista completa"

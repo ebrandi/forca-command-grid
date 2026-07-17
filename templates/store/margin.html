@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% load eve %}
+{% load i18n %}
+{% block title %}{% translate "Margin & profitability" %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-6">
+  <p class="eyebrow">{% translate "Leadership" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Margin &amp; profitability" %}</h1>
+  <p class="mt-1 text-sm text-faint">{% blocktranslate with days=summary.window_days %}Delivered orders over the last {{ days }} days, by fulfilment method.{% endblocktranslate %}</p>
+</header>
+
+<!-- Margin by method -->
+<section class="panel mb-6 overflow-hidden">
+  <div class="border-b border-line px-4 py-2"><h2 class="eyebrow">{% translate "Margin by fulfilment method" %}</h2></div>
+  <div class="overflow-x-auto"><table class="w-full text-sm">
+    <thead class="text-[11px] uppercase tracking-wide text-faint">
+      <tr>
+        <th class="px-4 py-2 text-left">{% translate "Method" %}</th>
+        <th class="px-4 py-2 text-right">{% translate "Orders" %}</th>
+        <th class="px-4 py-2 text-right">{% translate "Quoted revenue" %}</th>
+        <th class="px-4 py-2 text-right">{% translate "Evidenced revenue" %}</th>
+        <th class="px-4 py-2 text-right">{% translate "Est. cost" %}</th>
+        <th class="px-4 py-2 text-right">{% translate "Est. margin" %}</th>
+        <th class="px-4 py-2 text-right">{% translate "Evidenced margin" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for m in summary.methods %}
+      <tr class="border-t border-line/40">
+        <td class="px-4 py-2 text-ink">{{ m.label }}{% if m.has_reference_cost %} <span class="text-gold" title="{% translate 'Cost is a Jita reference, not an actual cost' %}">*</span>{% endif %}</td>
+        <td class="px-4 py-2 text-right data text-faint">{{ m.order_count }}{% if m.unevidenced_count %} <span class="text-muted" title="{% translate 'Orders with no revenue evidence yet' %}">({{ m.unevidenced_count }} {% translate "unevidenced" %})</span>{% endif %}</td>
+        <td class="px-4 py-2 text-right data text-ink">{{ m.quoted_revenue|isk }}</td>
+        <td class="px-4 py-2 text-right data text-ink">{{ m.evidenced_revenue|isk }}</td>
+        <td class="px-4 py-2 text-right data text-muted">{{ m.estimate_cost|isk }}</td>
+        <td class="px-4 py-2 text-right data {% if m.estimate_margin < 0 %}text-loss{% else %}text-win{% endif %}">{{ m.estimate_margin|isk }}</td>
+        <td class="px-4 py-2 text-right data">{% if m.evidence_margin is not None %}<span class="{% if m.evidence_margin < 0 %}text-loss{% else %}text-win{% endif %}">{{ m.evidence_margin|isk }}</span>{% else %}<span class="text-faint">—</span>{% endif %}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" class="px-4 py-4 text-center text-faint">{% translate "No delivered orders in the window yet." %}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  {% if summary.has_reference_cost %}
+  <p class="border-t border-line/40 px-4 py-2 text-[11px] text-faint">* {% translate "Non-build lanes show the frozen Jita reference as a cost stand-in, not an actual cost. Supplier and landed-import actuals arrive with later phases." %}</p>
+  {% endif %}
+</section>
+
+<div class="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
+  <!-- Drifted quotes -->
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-2"><h2 class="eyebrow">{% translate "Quote drift" %}</h2></div>
+    {% if drifts %}
+    <ul class="divide-y divide-line/40">
+      {% for d in drifts %}
+      <li class="px-4 py-3 text-sm">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <a href="{% url 'store:order' d.order_id %}" class="font-medium text-ink hover:text-gold">
+            {% if d.flagged %}<span class="mr-1 text-loss">●</span>{% endif %}{{ d.order.ship_name|default:d.order.fit_name }} #{{ d.order_id }}
+          </a>
+          {% if d.flagged %}
+          <form method="post" action="{% url 'store:drift_ack' d.pk %}">{% csrf_token %}<button class="btn-ghost text-xs">{% translate "Acknowledge" %}</button></form>
+          {% elif d.acknowledged_at %}
+          <span class="chip !text-faint">{% translate "Acknowledged" %}</span>
+          {% endif %}
+        </div>
+        <!-- Inline assumptions (the calculator idiom): frozen vs current, basis, source, as-of -->
+        <p class="mt-1 text-[11px] text-faint">
+          {% blocktranslate with frozen=d.frozen_value|isk current=d.current_value|isk %}Frozen {{ frozen }} → current {{ current }}{% endblocktranslate %}
+          · {% widthratio d.drift_pct 1 100 %}%
+          · {{ d.get_basis_display }} ({{ d.source_label }})
+          {% if d.checked_at %}· {% blocktranslate with when=d.checked_at|date:"j M H:i" %}as of {{ when }}{% endblocktranslate %}{% endif %}
+        </p>
+      </li>
+      {% endfor %}
+    </ul>
+    <p class="border-t border-line/40 px-4 py-2 text-center text-[11px] text-faint">{% blocktranslate with tax=econ.default_sales_tax|floatformat:1 broker=econ.default_broker_fee|floatformat:1 idx=econ.default_system_cost_index|floatformat:1 %}Assumptions — sales tax, broker fee and system cost index defaults from Industry settings ({{ tax }} / {{ broker }} / {{ idx }} as fractions). Drift never changes a frozen price.{% endblocktranslate %}</p>
+    {% else %}
+    <p class="px-4 py-6 text-center text-sm text-win">✓ {% translate "No quotes flagged for drift." %}</p>
+    {% endif %}
+  </section>
+
+  <!-- Settlement evidence + config -->
+  <div class="space-y-6">
+    <!-- Record a settlement -->
+    <section class="panel p-4">
+      <h2 class="eyebrow mb-2">{% translate "Record settlement evidence" %}</h2>
+      <form method="post" action="{% url 'store:settlement_record' %}" class="space-y-2 text-sm">{% csrf_token %}
+        <label class="block"><span class="text-[11px] text-faint">{% translate "Order number" %}</span><input type="number" name="order_id" min="1" class="input-field" required></label>
+        <label class="block"><span class="text-[11px] text-faint">{% translate "Completed contract id" %}</span><input type="number" name="contract_id" min="1" class="input-field" required></label>
+        <label class="block"><span class="text-[11px] text-faint">{% translate "Note (optional)" %}</span><input type="text" name="note" maxlength="200" class="input-field"></label>
+        <button type="submit" class="btn-gold w-full">{% translate "Link contract" %}</button>
+      </form>
+      <p class="mt-2 text-[11px] text-faint">{% translate "The amount and date fill automatically once the contract completes — never a fabricated actual." %}</p>
+    </section>
+
+    <!-- Recent settlements -->
+    <section class="panel overflow-hidden">
+      <div class="border-b border-line px-4 py-2"><h2 class="eyebrow">{% translate "Recent settlements" %}</h2></div>
+      {% if settlements %}
+      <ul class="divide-y divide-line/40 text-sm">
+        {% for s in settlements %}
+        <li class="px-4 py-2">
+          <div class="flex items-center justify-between">
+            <a href="{% url 'store:order' s.order_id %}" class="text-ink hover:text-gold">#{{ s.order_id }}</a>
+            <span class="flex items-center gap-2">
+              {% if s.is_pending %}<span class="chip !text-faint">{% translate "awaiting contract" %}</span>{% else %}<span class="data text-win">{{ s.amount|isk }}</span>{% endif %}
+              <span class="chip">{{ s.get_matched_by_display }}</span>
+            </span>
+          </div>
+          {% if s.note %}<p class="mt-0.5 text-[11px] text-faint">{{ s.note }}</p>{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="px-4 py-4 text-center text-sm text-faint">{% translate "No settlements recorded yet." %}</p>
+      {% endif %}
+    </section>
+
+    <!-- Thresholds -->
+    <section class="panel p-4">
+      <h2 class="eyebrow mb-3">{% translate "Thresholds" %}</h2>
+      <form method="post" action="{% url 'store:margin_config' %}" class="space-y-3 text-sm">{% csrf_token %}
+        <label class="flex items-center gap-2">{{ form.drift_check_enabled }}<span class="text-muted">{% translate "Run the nightly quote-drift check" %}</span></label>
+        <label class="flex items-center gap-2">{{ form.settlement_reconcile_enabled }}<span class="text-muted">{% translate "Match revenue by payment token" %}</span></label>
+        <label class="block"><span class="text-[11px] text-faint">{% translate "Drift threshold (fraction)" %}</span>{{ form.drift_threshold_pct }}</label>
+        <label class="block"><span class="text-[11px] text-faint">{% translate "Minimum ISK drift" %}</span>{{ form.drift_min_isk }}</label>
+        <label class="block"><span class="text-[11px] text-faint">{% translate "Margin window (days)" %}</span>{{ form.margin_window_days }}</label>
+        <label class="block"><span class="text-[11px] text-faint">{% translate "Margin alert floor (fraction)" %}</span>{{ form.margin_alert_floor_pct }}</label>
+        <button type="submit" class="btn-gold w-full">{% translate "Save thresholds" %}</button>
+      </form>
+    </section>
+  </div>
+</div>
+{% endblock %}

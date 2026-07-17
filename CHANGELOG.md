@@ -9,6 +9,159 @@ project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 
 ### Added
 
+- **Cost & profitability + Supply Command board (cross-cutting)** — the supply-chain
+  phases now roll up into one leadership surface and one honest margin story. A new
+  **Supply Command board** (`/supply-board/`, on the /ops/ hub) composes, from persisted
+  rows only, every family that needs attention — doctrine readiness & low stock, at-risk
+  and overdue orders, material shortages, production bottlenecks, restock commitments,
+  in-transit hauls, stock discrepancies, obsolete/slow-moving stock, and (Director-only)
+  margin erosion & drifted quotes. Every row deep-links to the console that fixes it and
+  names the clearing action — no metric without an action. It aggregates and links; it
+  never re-implements netting, availability or margin math. One page, section-gated
+  **server-side** (ISK-bearing sections render only for Directors, filtered in the view —
+  not merely hidden in the template); cached and beat-warmed, so a warm view is a cache
+  read. A new Director **Margin & profitability** console (`/store/margin/`) shows
+  actual-vs-estimated margin per delivered order by fulfilment method, with every
+  assumption inline (basis, source, as-of, fee/index defaults) and revenue shown as
+  **evidence** — a payment-token-matched wallet line or an officer-recorded completed
+  contract — never a fabricated actual. Fully translated in the nine locales.
+
+  - **Fulfilment method is now recorded per delivered order.** A delivery whose
+    reservations fully consume the ordered quantity auto-stamps `stock` (consumption
+    evidence, not the frozen reservation promise — a fully-reserved order whose holds
+    *expired* before delivery consumed nothing and is never mislabelled). Otherwise the
+    claimer's DELIVERED form carries an optional method select (prefilled from evidence);
+    an unattended transition leaves it blank. **Every pre-phase order stays blank and
+    reports "unrecorded" — never guessed or backfilled.**
+  - **The claimer's READY form gains an optional contract-id field** and the DELIVERED
+    form the method select. Both optional — skipping them is legal; nothing blocks the
+    advance. A **payment token** (`SO-{order}-`) now appears on order surfaces so a
+    buyer's ISK transfer can be matched to the order. Purely advisory — the app plans and
+    evidences; it never moves ISK.
+  - **Quote drift is flagged from persisted nightly snapshots**, never a live pricing call
+    in a request. An open order whose frozen basis drifts beyond a configurable percent
+    **and** ISK floor is flagged (against the same frozen basis, never cross-basis); a
+    missing re-estimate is "unknown", not "no drift". Drift is **informational** — no
+    auto-cancel, no auto-requote, and **no frozen price is ever changed**; drift and
+    settlement live in their own tables beside the order.
+  - **Three inert beats** (settlement reconcile, quote drift, board sweep/digest) ship
+    disabled behind their config flags — arming each is an explicit officer/Director
+    decision. Alerts are all **registered governance events**: an officer supply-digest
+    and quote-drift alert, plus a leadership-classified **margin-erosion** alert that can
+    never reach an undesignated mass channel.
+  - `_inventory_rows` was promoted to the public `inventory_rows` (the board consumes the
+    exact low-stock alert composition); the private alias is kept one release.
+
+- **Freight pipeline & in-transit inventory (supply-chain P6)** — a Jita purchase is now
+  visibly *incoming*, never *available*, until it is receipted at the destination. A new
+  officer **Freight Pipeline** page (`/freight/pipeline/`, also on the /ops/ hub) lets
+  leadership consolidate purchase/import lines per lane into a **freight batch**, fit and
+  price the leg against the corp's own rate card, assign it to the existing courier flow
+  (one `CourierContract`, hauler alert fires) or to a member haul, track ETD/ETA, and
+  **receipt** landed stock one deliberate, audited transaction per line — writing an
+  immutable evidence row that carries the **landed unit cost** (purchase + freight share)
+  and posting real stock at the destination. Between the ISK leaving the wallet and the
+  goods landing, every unreceipted line quantity feeds the Material Plan (MRP) as a
+  destination-pinned scheduled receipt, so the plan stops re-demanding bought goods and
+  officers stop double-buying. The freight-share split, the capacity fit and the landed
+  cost all reuse the existing rate-card/quote authorities — no second pricing engine.
+  A second tab shows the derived (type, destination) in-transit bucket with each line's
+  covering requirement, and the batch detail reports actual landed cost next to the
+  forecaster's import basis. Fully translated in the nine locales.
+
+  - **In-transit never counts as available.** P1's availability rule ("incoming supply
+    never counts") is untouched; arrival flips availability solely by posting real stock
+    at the destination. Import requirements covered by a batch show the batch **ETA** as
+    their feasible date (`feasible_source = "in_transit"`); uncovered ones keep the flat
+    import lead time.
+  - **Material Plan change:** the one-click standalone import haul is replaced by
+    **“Add to freight batch”** on import rows (legacy linked hauls keep working until they
+    drain). A row on a freight batch shows an *in transit* chip and a batch link; the CSV
+    is unchanged. A requirement can hold a freight batch **or** a BUY task, never both.
+  - **Member-posted hauls now book *packaged* volume** (`create_haul`), not assembled — a
+    Rifter is 2,500 m³, not 27,289 m³. The old numbers were wrong, not the new ones.
+  - **Covered-destination receipts:** at an ESI-covered location a receipt is *evidence*,
+    and `available()` reflects it only after the next corp-asset sync (≤6 h); the receipt
+    screen says so. During that window the receipted units stay in the MRP pool as a
+    bridge lot, so the requirement never reopens and no double-buy is re-offered. At an
+    uncovered location the receipt is the truth immediately.
+  - **Ships inert.** A new hourly batch sweep (flip to *arrived* from a verified contract
+    or a completed haul, flag late batches) is **disarmed by default**
+    (`FreightConfig.eta_sweep_enabled` off); manual “arrived” clicks are the v1 workflow.
+    Three officer pingboard scaffolds (`logistics.batch_arrived` / `batch_late` /
+    `batch_delayed`) are event-gated and idempotent. No stock is ever auto-moved — the
+    receipt is always the deliberate human step.
+
+- **Manufacturing capacity — honest build dates (supply-chain P5)** — the Material Plan
+  can now refuse to promise a date the corp cannot hit, and name the bottleneck. A new
+  officer **Production Capacity** board (`/industry/capacity/`) shows theoretical vs
+  committed vs remaining manufacturing/reaction/science slots by activity class, committed
+  load by location, per-pilot detail, an unmeasured-work aggregate and a blocked-work
+  panel — every figure carrying an as-of label from the underlying sync cadence (skills
+  12 h, corp jobs 3 h, pilot jobs 6 h). Capacity is derived from **opted-in pilots only**
+  (an active `my_industry` grant plus home-corp membership): slots come from the Mass
+  Production / Mass Reactions / Laboratory Operation skill lines, committed load is every
+  in-flight ESI job deduped by `job_id` and counted once, and officers can override a
+  pilot's slot count, set a weekly-output cap, mark a maintenance window or pause a pilot.
+  When armed, a build row's earliest-feasible date is held to committed capacity and, when
+  no honest date exists (no measured capacity, no qualified pilot, no usable blueprint, a
+  reinforced or unfuelled facility), the row **refuses** (`feasible = unknown`) and carries
+  a translated bottleneck chip (`slots` / `skills` / `blueprint` / `facility` / `materials`
+  / `unmeasured`) on the Material Plan, the board, the CSV and the officer ping. The
+  planning run never starts, pauses or delivers an in-game job — it schedules promises, not
+  work. Fully translated in the nine locales.
+
+  - **Ships inert.** `capacity_enabled` defaults **off**; with it off the feasible pass,
+    the input digest, the Material Plan and the beat are byte-for-byte identical to the
+    previous (unconstrained-slots) behaviour. No new background beat is added — the
+    existing nightly planning run computes capacity for free.
+  - **When armed**, build-row feasible dates move later (or to *unknown*) to reflect
+    committed capacity; `feasible_source = "capacity"` and bottleneck chips appear; and the
+    Material Plan CSV gains a **trailing `bottleneck` column** — consumers that append by
+    header are safe; positional CSV consumers are the disclosed break. The armed shortfall
+    beat's build lane switches from an import-lead stand-in to real feasibility lateness,
+    and a new officer-only `industry.capacity_bottleneck` ping exists (idempotent per
+    requirement/day/code; manual runs never ping).
+  - **Consent-surface change (please read):** officers now see **named** per-pilot capacity
+    (name, slot counts, used/free, next-slot-frees-at) for any pilot holding an active
+    `my_industry` grant — data that was owner-only before P5. The feature's consent text is
+    rewritten to say so; pilots who granted under the old wording are informed here, and
+    revoking the grant removes the named rows on the next planning run.
+  - **Operator note:** capacity figures are only as fresh as the syncs and only as complete
+    as the opt-in set — read them as *measured* capacity, never *total corp* capacity. A
+    skills snapshot shows attention-stale at 7 days while the pilot's slots stay measured
+    until `capacity_skill_stale_days` (default 14), then become *unknown* (excluded), never
+    zero. Both thresholds are stated on the page.
+
+- **Suppliers, agreements and purchase orders (supply-chain P4)** — imports and
+  third-party builds are now tracked commitments instead of tribal knowledge. A new
+  **Procurement** area (`/procurement/`) holds supplier profiles (pilot/corp/hub, with a
+  per-item catalogue: MOQ, fixed or Jita-indexed price, lead time) and their computed
+  reliability. **Supply agreements** carry a term, per-cycle lines and payment terms;
+  one whose estimated cycle value crosses the Director threshold needs a **second
+  Director's approval** (the buyback separation-of-duties posture — the requester can
+  never approve their own, superuser included), and a purchase order only claims an
+  agreement's pre-authorisation when its lines genuinely fit the agreement's catalogue,
+  volumes, prices and current term. **Purchase orders** run a full evidence-driven
+  lifecycle — draft → submitted → approved → contract-expected → contract-available →
+  accepted → partially/ fully delivered → reconciled, plus cancelled/disputed/overdue —
+  where everything right of "approved" is read-only observation: the app **plans and
+  evidences, it never moves ISK and never creates in-game contracts or jobs**. A matcher
+  soft-links a PO to the hourly corp-contracts snapshot by bare contract id (copying the
+  price, status, dates and, once, the landed item list onto the PO so the evidence
+  survives the snapshot's hourly rebuild); a payment reconcile settles a PO only on an
+  exact wallet-journal `context_id` == contract-id match; receipts post landed
+  quantities through the one type-level stock authority or the one fit-inventory ledger,
+  never a parallel counter. Raising a PO is a **fourth supply vehicle** on both the
+  Material Plan and the Shipyard, counted exactly once as incoming (and it stops counting
+  the moment its receipt posts) so goods already on order are never re-suggested. A
+  Director **procurement board** surfaces open ISK/item obligations, due and late
+  deliveries, agreement utilisation and supplier reliability, with sync-freshness shown
+  honestly (a dead director token reads as a stale chip, never silently green). All four
+  background jobs — contract matcher, payment reconcile, overdue sweep and reliability
+  rollup — ship **disarmed** behind config flags; manual officer workflows are the v1
+  path. Fully translated in the nine locales.
+
 - **MRP v1 — the corp-wide Material Plan (supply-chain P3)** — one planning run now
   answers "what does the corp actually need to build, buy or import?" It merges every
   demand signal (P2's composed per-fit demand plus live Shipyard backorder needs),

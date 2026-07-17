@@ -22,20 +22,21 @@ from django.conf import settings
 from django.db.models import Count
 from django.utils import timezone
 
-JITA_SYSTEM_ID = 30000142
+# The freight-costing primitives now live in apps.logistics.costing (one authority,
+# also consumed by the MRP import lane and the P6 freight pipeline). Re-exported here
+# so existing ``from apps.store.forecast import PACKAGED_VOL`` callers keep working.
+from apps.logistics.costing import (  # noqa: F401
+    JITA_SYSTEM_ID,
+    PACKAGED_VOL,
+    _freight_unit,
+    _staging_hops,
+)
+
 WEEKS_PER_MONTH = Decimal("4.345")
 SHIP_CATEGORY_ID = 6
 CAPSULE_GROUPS = {29, 1380}  # Capsule, Capsule - Genolution — pods, not worth stocking
 # Price at most this many distinct hulls (busiest first) to bound the work.
 _MAX_CANDIDATES = 80
-
-# EVE's fixed repackaged ship volumes (m³) by broad hull class — used to amortise a
-# jump-freighter load across how many hulls fit in it.
-PACKAGED_VOL = {
-    "Frigate": 2_500, "Destroyer": 5_000, "Cruiser": 10_000, "Battlecruiser": 15_000,
-    "Battleship": 50_000, "Industrial": 20_000, "Capital": 1_300_000,
-    "Freighter": 1_300_000, "Other": 10_000,
-}
 
 
 @dataclass
@@ -83,46 +84,6 @@ def recent_losses(window_days: int) -> dict[int, int]:
         .annotate(n=Count("killmail_id"))
     )
     return {r["victim_ship_type_id"]: r["n"] for r in rows}
-
-
-def _staging_hops(staging_system_id: int) -> int:
-    """Cyno hops from Jita to the staging system at a JDC V jump-freighter range."""
-    if not staging_system_id:
-        return 0
-    from apps.logistics.jumps import SHIPS_BY_KEY, effective_range
-    from apps.logistics.routing import jf_route_facts
-
-    rng = effective_range(SHIPS_BY_KEY["jf"]["range"], 5)
-    try:
-        return jf_route_facts(JITA_SYSTEM_ID, staging_system_id, rng)["jumps"]
-    except Exception:  # noqa: BLE001 - no route / no coords → treat as no jump legs
-        return 0
-
-
-def _freight_unit(card, hops: int, hull_class: str, unit_value: Decimal,
-                  *, packaged_vol: float | None = None) -> Decimal:
-    """Per-hull jump-freight cost Jita→staging, off the corp's own JF rate card.
-
-    Uses the real repackaged volume when we have it (EVE Ref reference-data), falling
-    back to a per-class approximation otherwise.
-    """
-    if hops <= 0:
-        return Decimal("0")
-    from apps.logistics.models import ShipClass
-    from apps.logistics.pricing import caps_for, quote
-
-    vol = packaged_vol or PACKAGED_VOL.get(hull_class, 10_000)
-    max_m3, max_coll = caps_for(card, ShipClass.JF)
-    by_vol = int(max_m3 // vol) if vol else 1
-    by_coll = int(max_coll // unit_value) if unit_value > 0 else by_vol
-    units = max(1, min(by_vol or 1, by_coll or 1))
-    q = quote(
-        card, ship_class=ShipClass.JF, jumps=hops, jump_hops=hops,
-        volume_m3=vol * units, collateral=float(unit_value) * units, sec_band="nullsec",
-    )
-    if not q.ok:
-        return Decimal("0")
-    return (Decimal(q.reward) / units).quantize(Decimal("0.01"))
 
 
 def _home_alliance_id() -> int | None:

@@ -9,7 +9,8 @@ from django.utils.translation import gettext_lazy as _
 
 from apps.doctrines.models import Doctrine
 from apps.market.models import MarketLocation
-from core.mixins import TimeStampedModel
+from apps.sso.models import EveCharacter
+from core.mixins import ProvenanceMixin, TimeStampedModel
 
 
 class IndustryEconomyConfig(TimeStampedModel):
@@ -283,6 +284,21 @@ class MrpConfig(TimeStampedModel):
         help_text=_("Run the planning job automatically on its nightly schedule. "
                     "Off: officers run it manually from the Material Plan page."),
     )
+    # P5 (manufacturing capacity). Ships inert: off, the feasible pass is byte-identical
+    # to P3 (unconstrained industry slots). On, build dates are held to committed
+    # capacity and the bottleneck is named — never a promise the corp cannot hit.
+    capacity_enabled = models.BooleanField(
+        default=False, db_default=False,
+        help_text=_("Hold build dates to committed manufacturing capacity (slots, "
+                    "skills, blueprints, facilities) and name the bottleneck. Off: "
+                    "dates assume unlimited industry slots (the P3 behaviour)."),
+    )
+    capacity_skill_stale_days = models.PositiveSmallIntegerField(
+        default=14, db_default=14,
+        help_text=_("A pilot's slots become \"unknown\" (excluded from measured "
+                    "capacity) when their skills snapshot is older than this. Unknown "
+                    "is never treated as zero."),
+    )
     default_me = models.PositiveSmallIntegerField(
         default=0, db_default=0,
         help_text=_("Material-efficiency assumed for every build level of the explosion."),
@@ -386,6 +402,10 @@ class NetRequirement(TimeStampedModel):
     suggestion = models.CharField(max_length=8, blank=True, default="", db_default="")
     feasible_at = models.DateTimeField(null=True, blank=True)
     feasible_source = models.CharField(max_length=12, blank=True, default="", db_default="")
+    # P5: which constraint governs this row's capacity-armed date — a machine code
+    # (slots|skills|blueprint|facility|materials|unmeasured|""), rendered through
+    # BOTTLENECK_LABELS. Empty on every pre-capacity row and when nothing binds.
+    bottleneck_code = models.CharField(max_length=12, blank=True, default="", db_default="")
     depth = models.PositiveSmallIntegerField(default=0, db_default=0)
     sources = models.JSONField(
         blank=True, default=list, db_default=models.Value([], models.JSONField())
@@ -410,6 +430,16 @@ class NetRequirement(TimeStampedModel):
     task = models.ForeignKey(
         "tasks.Task", on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
     )
+    purchase_order = models.ForeignKey(
+        "procurement.PurchaseOrder", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="+",
+    )
+    # P6: the freight-batch line consolidating this row's import/buy demand — one
+    # more vehicle in the fan-out lattice. Joins ``has_vehicle`` and the fan-out guards.
+    freight_line = models.ForeignKey(
+        "logistics.FreightBatchLine", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="+",
+    )
 
     class Meta:
         ordering = ["depth", "type_id"]
@@ -433,5 +463,73 @@ class NetRequirement(TimeStampedModel):
     def has_vehicle(self) -> bool:
         return bool(
             self.industry_project_id or self.build_job_id
-            or self.hauling_task_id or self.task_id
+            or self.hauling_task_id or self.task_id or self.purchase_order_id
+            or self.freight_line_id
         )
+
+
+class ProductionResource(ProvenanceMixin):
+    """One (pilot, activity class) manufacturing-capacity row — the P5 resource ledger.
+
+    Deliberately NOT per location: EVE industry slots are pilot-global (the Mass
+    Production line skills), so a per-(pilot, location) pool would double-count a
+    pilot running jobs in two systems — location is an attribute of the *load*,
+    never of the pool.
+
+    Derived fields (``slots_total``, ``as_of``) come from the pilot's latest skill
+    snapshot and are rewritten on each derivation (only when changed). Officer-entered
+    fields (override, weekly cap, window, pause) are preserved across derivations —
+    they are the human's governor over the measurement.
+
+    Rows have no status lifecycle: a resource is deleted when the pilot stops
+    qualifying (grant revoked / left corp), never soft-closed — hence a plain unique
+    constraint, no partial-unique one-live-row pattern.
+    """
+
+    class ActivityClass(models.TextChoices):
+        MANUFACTURING = "manufacturing", _("Manufacturing")
+        REACTION = "reaction", _("Reaction")
+        SCIENCE = "science", _("Science")
+
+    character = models.ForeignKey(
+        EveCharacter, on_delete=models.CASCADE, related_name="production_resources"
+    )
+    activity_class = models.CharField(max_length=13, choices=ActivityClass.choices)
+    # Derived from skills: 1 + base line skill + advanced line skill. NULL means
+    # *unknown* (no/stale snapshot), which is never treated as zero (honest-data rule).
+    slots_total = models.PositiveSmallIntegerField(null=True, blank=True)
+    # Officer overrides — preserved across re-derivation.
+    manual_slots_override = models.PositiveSmallIntegerField(null=True, blank=True)
+    max_weekly_output = models.PositiveIntegerField(
+        null=True, blank=True,
+        help_text=_("Cap on finished units/week the scheduler will book onto this "
+                    "pilot — a crude cadence governor counted across all types, not a "
+                    "per-job ceiling. Blank means uncapped."),
+    )
+    unavailable_from = models.DateTimeField(null=True, blank=True)
+    unavailable_until = models.DateTimeField(null=True, blank=True)
+    is_paused = models.BooleanField(
+        default=False, db_default=False,
+        help_text=_("Don't schedule new work onto this pilot."),
+    )
+
+    class Meta:
+        ordering = ["character_id", "activity_class"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["character", "activity_class"],
+                name="uniq_resource_per_char_activity",
+            ),
+        ]
+        indexes = [models.Index(fields=["activity_class"])]
+
+    def __str__(self) -> str:
+        return f"resource<{self.character_id}:{self.activity_class} slots={self.effective_slots}>"
+
+    @property
+    def effective_slots(self) -> int | None:
+        """The slot count the scheduler books against: the officer override when set,
+        else the derived total. ``None`` = unknown (never bookable, never zero)."""
+        if self.manual_slots_override is not None:
+            return self.manual_slots_override
+        return self.slots_total

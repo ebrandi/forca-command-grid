@@ -66,6 +66,19 @@ SCAFFOLDS: dict[str, str] = {
     "job.mrp_restock": _("Material plan restock: %(item)s"),
     "plan.mrp_requirement": _("Material plan: %(quantity)s× %(item)s"),
     "task.mrp_buy": _("Buy %(quantity)s× %(item)s for the material plan"),
+    # --- Procurement fan-out (P4) --------------------------------------------
+    # ``%(item)s`` is an SdeType name; ``%(reference)s``/``%(supplier)s`` are a PO
+    # id and a supplier's display name (corp-authored / EVE data) — raw by policy.
+    "po.mrp_source": _("Raised from the material plan: %(item)s"),
+    "task.po_receive": _("Receive purchase order %(reference)s from %(supplier)s"),
+    # --- Freight batch leg (P6) ----------------------------------------------
+    # Written into ``CourierContract.notes`` at batch assignment. ``%(origin)s`` /
+    # ``%(destination)s`` are MarketLocation names (corp/EVE data), raw by policy.
+    "freight.batch_leg": _("Freight batch: %(origin)s → %(destination)s"),
+    # --- Order settlement note (cross-cutting) -------------------------------
+    # Written into ``OrderSettlement.note`` by the reconcile beat on a token match.
+    # ``%(token)s`` is the order's payment token (an ``SO-{pk}-`` reference), raw.
+    "order.settlement_matched": _("Matched by payment token %(token)s"),
 }
 
 

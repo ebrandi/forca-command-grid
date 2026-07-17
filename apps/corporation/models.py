@@ -159,6 +159,11 @@ class CorpWalletJournalEntry(models.Model):
     description = models.CharField(max_length=255, blank=True)
     reason = models.CharField(max_length=255, blank=True)
     tax = models.DecimalField(max_digits=24, decimal_places=2, null=True, blank=True)
+    # ESI's context_id/context_id_type for the entry — for contract payments the
+    # context id is the contract id, the strongest evidence the procurement payment
+    # reconcile has. New rows only; historical rows stay null (no ESI backfill).
+    context_id = models.BigIntegerField(null=True, blank=True)
+    context_id_type = models.CharField(max_length=32, blank=True)
 
     class Meta:
         ordering = ["-date"]

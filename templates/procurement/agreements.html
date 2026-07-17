@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load eve i18n %}
+{% block title %}{% translate "Supply agreements" %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-5 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow">{% translate "Procurement · Leadership" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Supply agreements" %}</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Standing commitments that pre-authorise purchase orders. Above the Director threshold an agreement needs a second Director's approval before it goes active." %}</p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <a href="{% url 'procurement:suppliers' %}" class="btn-ghost text-sm">{% translate "Suppliers" %}</a>
+    <a href="{% url 'procurement:pos' %}" class="btn-ghost text-sm">{% translate "Purchase orders" %}</a>
+    <a href="{% url 'procurement:agreement_new' %}" class="btn-gold text-sm">{% translate "New agreement" %}</a>
+  </div>
+</header>
+
+<form method="get" class="panel mb-4 flex flex-wrap items-end gap-3 px-4 py-3">
+  <label class="block">
+    <span class="eyebrow text-faint">{% translate "Status" %}</span>
+    <select name="status" class="input-field mt-1">
+      <option value="">{% translate "All" %}</option>
+      {% for value, label in statuses %}
+        <option value="{{ value }}" {% if f_status == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <button type="submit" class="btn-ghost text-sm">{% translate "Apply" %}</button>
+</form>
+
+<div class="panel overflow-x-auto">
+  <table class="w-full text-sm">
+    <thead><tr class="text-left text-[11px] uppercase text-faint">
+      <th class="px-4 py-2">{% translate "Agreement" %}</th>
+      <th class="px-4 py-2">{% translate "Supplier" %}</th>
+      <th class="px-4 py-2">{% translate "Status" %}</th>
+      <th class="px-4 py-2">{% translate "Cadence" %}</th>
+      <th class="px-4 py-2">{% translate "Term" %}</th>
+      <th class="px-4 py-2">{% translate "Est. cycle value" %}</th>
+    </tr></thead>
+    <tbody>
+      {% for ag in rows %}
+      <tr class="border-t border-line/40">
+        <td class="px-4 py-2"><a href="{% url 'procurement:agreement_detail' ag.pk %}" class="text-ink hover:text-gold">#{{ ag.pk }}</a></td>
+        <td class="px-4 py-2 text-faint">{{ ag.supplier.display_name|default:ag.supplier }}</td>
+        <td class="px-4 py-2">{{ ag.get_status_display }}</td>
+        <td class="px-4 py-2 text-faint">{{ ag.get_cadence_display }}</td>
+        <td class="px-4 py-2 text-faint">{{ ag.term_start|default:"—" }} → {{ ag.term_end|default:"—" }}</td>
+        <td class="px-4 py-2 data">{{ ag.estimated_cycle_value_isk|isk }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" class="px-4 py-6 text-center text-faint">{% translate "No agreements match." %}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% include "doctrines/_pagination.html" %}
+{% endblock %}

@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% load eve i18n %}
+{% block title %}{% translate "Freight batch" %} #{{ batch.pk }} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+
+<header class="mb-5 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow"><a href="{% url 'logistics:freight_board' %}" class="hover:underline">{% translate "Freight Pipeline" %}</a> · {% translate "Batch" %} #{{ batch.pk }}</p>
+    <h1 class="mt-1 text-2xl font-bold text-ink">{{ batch.origin.name }} → {{ batch.destination.name }}</h1>
+    <p class="mt-1 text-sm text-faint">
+      <span class="chip">{{ batch.get_status_display }}</span>
+      <span class="ml-2">{% translate "Ship class" %}: {{ batch.get_ship_class_display }}</span>
+      {% if batch.freight_cost %}<span class="ml-2">{% translate "Freight" %}: {{ batch.freight_cost|floatformat:0 }} ISK</span>{% endif %}
+      {% if batch.courier_contract %}<a href="{% url 'logistics:contracts' %}" class="ml-2 text-cyan hover:underline">{% translate "Contract" %} →</a>{% endif %}
+    </p>
+  </div>
+  {% if not batch.is_terminal %}
+  <form method="post" action="{% url 'logistics:freight_cancel' batch.pk %}" x-data @submit.prevent="if(confirm('{% translate "Cancel this batch?" %}')) $el.submit()">{% csrf_token %}<button class="btn-danger text-sm">{% translate "Cancel batch" %}</button></form>
+  {% endif %}
+</header>
+
+<div class="grid gap-4 lg:grid-cols-3">
+  <!-- Lines --------------------------------------------------------------- -->
+  <section class="panel overflow-hidden lg:col-span-2">
+    <div class="border-b border-line px-4 py-2"><h2 class="eyebrow">{% translate "Lines" %}</h2></div>
+    <div class="overflow-x-auto"><table class="w-full text-sm">
+      <thead><tr class="text-left text-[11px] uppercase text-faint">
+        <th class="px-4 py-2">{% translate "Item" %}</th>
+        <th class="px-2 py-2 text-right">{% translate "Qty" %}</th>
+        <th class="px-2 py-2 text-right">{% translate "Received" %}</th>
+        <th class="px-2 py-2 text-right">{% translate "Purchase" %}</th>
+        <th class="px-2 py-2 text-right">{% translate "Freight share" %}</th>
+        <th class="px-2 py-2 text-right">{% translate "Landed unit" %}</th>
+        <th class="px-2 py-2"></th>
+      </tr></thead>
+      <tbody>
+        {% for lr in line_rows %}
+        <tr class="border-t border-line/40 align-top">
+          <td class="px-4 py-2"><span class="flex items-center gap-2"><img src="{% eve_type_icon lr.line.type_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">{{ lr.name }}</span>
+            {% if lr.line.planned_quantity %}<span class="ml-1 text-[10px] text-faint" title="{% translate 'MRP-planned share of this line' %}">{% blocktranslate with n=lr.line.planned_quantity %}plan {{ n }}{% endblocktranslate %}</span>{% endif %}
+            {% if lr.line.purchase_ref %}<div class="text-[10px] text-faint">{{ lr.line.purchase_ref }}</div>{% endif %}
+          </td>
+          <td class="px-2 py-2 text-right data text-muted">{{ lr.line.quantity }}</td>
+          <td class="px-2 py-2 text-right data {% if lr.remaining %}text-cyan{% else %}text-win{% endif %}">{{ lr.line.quantity_received }}</td>
+          <td class="px-2 py-2 text-right data text-faint">{% if lr.line.unit_purchase_cost != None %}{{ lr.line.unit_purchase_cost|floatformat:0 }}<span class="text-[10px]"> {{ lr.cost_source_label }}</span>{% else %}—{% endif %}</td>
+          <td class="px-2 py-2 text-right data text-faint">{% if lr.line.freight_share %}{{ lr.line.freight_share|floatformat:0 }}{% else %}—{% endif %}</td>
+          <td class="px-2 py-2 text-right data text-muted">{% if lr.landed_unit != None %}{{ lr.landed_unit|floatformat:0 }}{% else %}—{% endif %}</td>
+          <td class="px-2 py-2 text-right">
+            {% if batch.status == 'open' %}
+              <form method="post" action="{% url 'logistics:freight_line_remove' lr.line.pk %}" class="inline">{% csrf_token %}<button class="btn-ghost !py-0.5 !text-[11px]">{% translate "Remove" %}</button></form>
+            {% elif batch.status == 'in_transit' or batch.status == 'arrived' %}
+              {% if lr.remaining %}
+              <form method="post" action="{% url 'logistics:freight_receive' lr.line.pk %}" class="inline-flex items-center gap-1">{% csrf_token %}
+                <input type="number" name="quantity" min="1" max="{{ lr.remaining }}" value="{{ lr.remaining }}" class="input-field !w-20 !py-0.5 text-xs">
+                <button class="btn-gold !py-0.5 !text-[11px]">{% translate "Receive" %}</button>
+              </form>
+              {% else %}<span class="chip !border-win/40 !text-win">{% translate "received" %}</span>{% endif %}
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="px-4 py-6 text-center text-faint">{% translate "No lines yet." %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+
+    {% if batch.status == 'open' %}
+    <div class="border-t border-line p-4">
+      <form method="post" action="{% url 'logistics:freight_line_add' batch.pk %}" class="grid items-end gap-3 sm:grid-cols-[1fr_auto_auto_1fr_auto]">
+        {% csrf_token %}
+        <div><label class="label">{% translate "Item" %}</label>{% translate "Search an item…" as ph %}{% include "components/_type_picker.html" with field="type_id" placeholder=ph required=1 %}</div>
+        <div><label class="label">{% translate "Qty" %}</label><input type="number" name="quantity" min="1" value="1" class="input-field !w-24"></div>
+        <div><label class="label">{% translate "Unit cost" %}</label><input type="text" name="unit_purchase_cost" inputmode="decimal" class="input-field !w-28" placeholder="—"></div>
+        <div><label class="label">{% translate "Evidence" %}</label><input type="text" name="purchase_ref" maxlength="64" class="input-field" placeholder="{% translate 'bought by …' %}"></div>
+        <button class="btn-gold">{% translate "Add" %}</button>
+      </form>
+    </div>
+    {% endif %}
+  </section>
+
+  <!-- Capacity fit + actions ---------------------------------------------- -->
+  <div class="space-y-4">
+    {% if fit %}
+    <section class="panel p-4 text-sm">
+      <h2 class="eyebrow mb-2">{% translate "Capacity fit" %}</h2>
+      <p class="text-faint">{% translate "Packaged volume" %}: <span class="data text-ink">{{ fit.volume_m3|floatformat:0 }}</span> / {{ fit.max_m3 }} m³ ({{ fit.fill_pct }}%)</p>
+      <p class="mt-1 text-faint">{% translate "Collateral" %}: <span class="data text-ink">{{ fit.collateral|floatformat:0 }}</span> / {{ fit.max_collateral }} ISK</p>
+      {% if fit.over_cap %}<p class="mt-2 text-loss">{% translate "Over the cap for this ship class — split into a second batch or pick a bigger class." %}</p>{% endif %}
+    </section>
+    {% endif %}
+
+    <section class="panel p-4 text-sm space-y-3">
+      <h2 class="eyebrow">{% translate "Actions" %}</h2>
+      {% if batch.status == 'open' %}
+        <form method="post" action="{% url 'logistics:freight_assign' batch.pk %}" class="space-y-2">{% csrf_token %}
+          <label class="label">{% translate "Ship class" %}</label>{{ assign_form.ship_class }}
+          <label class="flex items-center gap-2 text-faint">{{ assign_form.rush }} {% translate "Rush" %}</label>
+          <button class="btn-gold w-full">{% translate "Assign to courier flow" %}</button>
+        </form>
+        <form method="post" action="{% url 'logistics:freight_assign_haul' batch.pk %}">{% csrf_token %}<button class="btn-ghost w-full">{% translate "Post to member haul board" %}</button></form>
+      {% elif batch.status == 'assigned' %}
+        <form method="post" action="{% url 'logistics:freight_depart' batch.pk %}">{% csrf_token %}<button class="btn-gold w-full">{% translate "Mark departed" %}</button></form>
+        <form method="post" action="{% url 'logistics:freight_arrive' batch.pk %}">{% csrf_token %}<button class="btn-ghost w-full">{% translate "Mark arrived" %}</button></form>
+        <form method="post" action="{% url 'logistics:freight_unassign' batch.pk %}">{% csrf_token %}<button class="btn-ghost w-full">{% translate "Unassign (back to open)" %}</button></form>
+      {% elif batch.status == 'in_transit' %}
+        <form method="post" action="{% url 'logistics:freight_eta' batch.pk %}" class="flex items-end gap-2">{% csrf_token %}
+          <div class="flex-1"><label class="label">{% translate "ETA" %}</label><input type="datetime-local" name="eta" class="input-field"></div>
+          <button class="btn-ghost">{% translate "Set" %}</button>
+        </form>
+        <form method="post" action="{% url 'logistics:freight_arrive' batch.pk %}">{% csrf_token %}<button class="btn-gold w-full">{% translate "Mark arrived" %}</button></form>
+      {% else %}
+        <p class="text-faint">{% translate "No actions available for this status." %}</p>
+      {% endif %}
+    </section>
+  </div>
+</div>
+
+<!-- Landed vs forecast ---------------------------------------------------- -->
+{% if landed_rows %}
+<section class="panel mt-4 overflow-hidden">
+  <div class="border-b border-line px-4 py-2"><h2 class="eyebrow">{% translate "Landed cost vs forecast" %}</h2></div>
+  <div class="overflow-x-auto"><table class="w-full text-sm">
+    <thead><tr class="text-left text-[11px] uppercase text-faint">
+      <th class="px-4 py-2">{% translate "Item" %}</th>
+      <th class="px-2 py-2 text-right">{% translate "Received" %}</th>
+      <th class="px-2 py-2 text-right">{% translate "Landed unit" %}</th>
+      <th class="px-2 py-2 text-right">{% translate "Forecast import" %}</th>
+      <th class="px-2 py-2 text-right">{% translate "Delta" %}</th>
+    </tr></thead>
+    <tbody>
+      {% for lr in landed_rows %}
+      <tr class="border-t border-line/40">
+        <td class="px-4 py-2 text-ink">{% type_name lr.type_id %}</td>
+        <td class="px-2 py-2 text-right data text-muted">{{ lr.received }}</td>
+        <td class="px-2 py-2 text-right data">{% if lr.landed_unit != None %}{{ lr.landed_unit|floatformat:0 }}{% else %}<span class="text-faint">{% translate "no cost recorded" %}</span>{% endif %}</td>
+        <td class="px-2 py-2 text-right data text-faint">{% if lr.forecast_import != None %}{{ lr.forecast_import|floatformat:0 }}{% else %}—{% endif %}</td>
+        <td class="px-2 py-2 text-right data {% if lr.delta and lr.delta > 0 %}text-loss{% elif lr.delta and lr.delta < 0 %}text-win{% else %}text-faint{% endif %}">{% if lr.delta != None %}{{ lr.delta|floatformat:0 }}{% else %}—{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  <div class="border-t border-line px-4 py-2 text-[11px] text-faint">{% translate "Landed = purchase + freight share per unit. Forecast import = the forecaster's Jita + jump-freight basis. Store order prices are never edited." %}</div>
+</section>
+{% endif %}
+{% endblock %}

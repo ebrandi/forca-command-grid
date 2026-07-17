@@ -1,0 +1,16 @@
+{% load i18n %}
+{% comment %}Renders every field of `form` with the house label/error styling. Widget
+classes (input-field) are set on the form itself, so this stays presentation-only.{% endcomment %}
+{% if form.non_field_errors %}
+  <div class="rounded-md border border-loss/40 bg-loss/10 px-3 py-2 text-sm text-loss">
+    {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+  </div>
+{% endif %}
+{% for field in form %}
+<label class="block">
+  <span class="eyebrow text-faint">{{ field.label }}</span>
+  {{ field }}
+  {% if field.help_text %}<span class="mt-1 block text-xs text-faint">{{ field.help_text }}</span>{% endif %}
+  {% for error in field.errors %}<span class="mt-1 block text-xs text-loss">{{ error }}</span>{% endfor %}
+</label>
+{% endfor %}

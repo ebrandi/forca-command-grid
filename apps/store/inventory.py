@@ -230,9 +230,14 @@ def allocate_backorders(fit, *, location, policy: ShipyardPolicy | None = None) 
 @transaction.atomic
 def receive_stock(fit, *, location, quantity: int, actor, reason: str = "",
                   order: StoreOrder | None = None,
-                  policy: ShipyardPolicy | None = None) -> ReceiptResult:
+                  policy: ShipyardPolicy | None = None,
+                  kind: str = FitStockEntry.Kind.RECEIPT) -> ReceiptResult:
     """Record newly assembled/imported complete ships at a location, then (per
-    policy) allocate them to waiting backorders oldest-first."""
+    policy) allocate them to waiting backorders oldest-first.
+
+    ``kind`` distinguishes the ledger provenance — internal assembly
+    (``RECEIPT``, the default) versus a supplier delivery (``PO_RECEIPT``) — so
+    ledger analytics and the audit trail can separate the two."""
     if quantity <= 0:
         raise ValueError("receipt quantity must be positive")
     policy = policy or ShipyardPolicy.active()
@@ -243,7 +248,7 @@ def receive_stock(fit, *, location, quantity: int, actor, reason: str = "",
     )
     stock.quantity_on_hand += quantity
     stock.save(update_fields=["quantity_on_hand", "updated_at"])
-    _entry(stock, FitStockEntry.Kind.RECEIPT, quantity, actor=actor, order=order, reason=reason)
+    _entry(stock, kind, quantity, actor=actor, order=order, reason=reason)
 
     allocations: list[AllocationResult] = []
     if policy.auto_allocate_receipts:

@@ -198,22 +198,37 @@ def price_hull(ship_type_id: int, markup: Decimal) -> Priced:
     )
 
 
-def production_cost_per_unit(ship_type_id: int) -> Decimal | None:
-    """Estimated cost to manufacture one unit, or ``None`` when nothing can price it.
+def production_cost_detail(ship_type_id: int) -> dict | None:
+    """Estimated per-unit manufacturing cost WITH its provenance, or ``None``.
 
-    EVE Ref's full job cost first (ME-adjusted materials + install fee; cached, with a
-    circuit breaker), falling back to the local one-level material estimate off the SDE
-    blueprint when the API can't answer. Imports are lazy to mirror how the industry
+    Returns ``{"cost": Decimal, "source": "everef" | "estimate"}``. EVE Ref's full job
+    cost first (ME-adjusted materials + install fee; 12h-cached, circuit-broken —
+    source ``everef``), falling back to the local one-level material estimate off the
+    SDE blueprint when the API can't answer (source ``estimate``). ``None`` when nothing
+    can price it — the drift check treats that as ``basis_source="unknown"`` and flags
+    nothing (missing data is not zero drift). Imports are lazy to mirror how the industry
     helpers are consumed elsewhere (forecast) and keep this module import-light.
     """
     from apps.industry.bom import build_cost
     from apps.industry.everef_cost import manufacturing_cost_per_unit
 
     cost = manufacturing_cost_per_unit(ship_type_id)
-    if cost is None:
-        local = build_cost(ship_type_id)
-        cost = Decimal(local) if local is not None else None
-    return cost
+    if cost is not None:
+        return {"cost": cost, "source": "everef"}
+    local = build_cost(ship_type_id)
+    if local is not None:
+        return {"cost": Decimal(local), "source": "estimate"}
+    return None
+
+
+def production_cost_per_unit(ship_type_id: int) -> Decimal | None:
+    """Estimated cost to manufacture one unit, or ``None`` when nothing can price it.
+
+    Thin wrapper over :func:`production_cost_detail` — the provenance-free number the
+    made-to-order hull pricer freezes. Zero behaviour change for existing callers.
+    """
+    detail = production_cost_detail(ship_type_id)
+    return detail["cost"] if detail is not None else None
 
 
 def price_hull_order(ship_type_id: int, cfg) -> Priced:

@@ -82,6 +82,8 @@ def sync_corp_wallets(corp_id: int | None = None, client=None) -> dict:
                 first_party_id=r.get("first_party_id"), second_party_id=r.get("second_party_id"),
                 description=(r.get("description") or "")[:255], reason=(r.get("reason") or "")[:255],
                 tax=_dec(r["tax"]) if r.get("tax") is not None else None,
+                context_id=r.get("context_id"),
+                context_id_type=(r.get("context_id_type") or "")[:32],
             ))
         CorpWalletJournalEntry.objects.bulk_create(objs, ignore_conflicts=True)
         entries += len(objs)

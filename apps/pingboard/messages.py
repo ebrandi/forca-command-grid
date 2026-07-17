@@ -499,6 +499,29 @@ SCAFFOLDS: dict[str, Scaffold] = {
         subject=_("Back in stock: {ship_name}"),
         body=_("{ship_name} can be ordered on the Shipyard again."),
     ),
+    # --- cost & profitability + supply command (cross-cutting) ----------------
+    # ``{percent}`` is a pre-formatted percentage string; ``{ship_name}`` is EVE data, raw.
+    "store.quote_drift": Scaffold(
+        subject=_("Quote drift flagged: {ship_name}"),
+        body=_(
+            "The frozen quote for {ship_name} has drifted {percent} from its basis. "
+            "Review it on the margin console: {link}"
+        ),
+    ),
+    "store.margin_erosion": Scaffold(
+        subject=_("Margin erosion"),
+        body=_(
+            "Corp Store margin is eroding ({details}, evidenced margin {percent}). Review the "
+            "margin console: {link}"
+        ),
+    ),
+    "supplyboard.digest": Scaffold(
+        subject=_("Supply Command: {count} open problem(s)"),
+        body=_(
+            "Supply Command has open problems needing attention: {details}. Review the "
+            "board: {link}"
+        ),
+    ),
     # --- industry (MRP v1, P3) ------------------------------------------------
     # ``{industry_job_name}`` is an SdeType name — EVE game data, raw by policy.
     "industry.mrp_shortfall": Scaffold(
@@ -506,6 +529,55 @@ SCAFFOLDS: dict[str, Scaffold] = {
         body=_(
             "The material plan needs {quantity}× {industry_job_name} by {eta_date}. "
             "Review the Material Plan: {link}"
+        ),
+    ),
+    # --- industry capacity (P5) ----------------------------------------------
+    # One key per bottleneck CODE (the campaigns.health_changed.<code> pattern): the
+    # named constraint lives INSIDE each translated msgid, never in a slot. No
+    # {eta_date} slot — a bottlenecked row's feasible date may be unknown (refused).
+    "industry.capacity_bottleneck.slots": Scaffold(
+        subject=_("Capacity bottleneck: {industry_job_name}"),
+        body=_(
+            "The plan can't build {quantity}× {industry_job_name} in time — no free "
+            "manufacturing slots. Review the Production Capacity board: {link}"
+        ),
+    ),
+    "industry.capacity_bottleneck.skills": Scaffold(
+        subject=_("Capacity bottleneck: {industry_job_name}"),
+        body=_(
+            "The plan can't build {quantity}× {industry_job_name} — no opted-in pilot "
+            "has the manufacturing skills. Review the Production Capacity board: {link}"
+        ),
+    ),
+    "industry.capacity_bottleneck.blueprint": Scaffold(
+        subject=_("Capacity bottleneck: {industry_job_name}"),
+        body=_(
+            "The plan can't build {quantity}× {industry_job_name} — no usable blueprint "
+            "is owned. Review the Production Capacity board: {link}"
+        ),
+    ),
+    "industry.capacity_bottleneck.facility": Scaffold(
+        subject=_("Capacity bottleneck: {industry_job_name}"),
+        body=_(
+            "The plan can't build {quantity}× {industry_job_name} in time — the "
+            "manufacturing facility is reinforced or out of fuel. Review the Production "
+            "Capacity board: {link}"
+        ),
+    ),
+    "industry.capacity_bottleneck.materials": Scaffold(
+        subject=_("Capacity bottleneck: {industry_job_name}"),
+        body=_(
+            "The plan can't build {quantity}× {industry_job_name} in time — its "
+            "components can't be ready soon enough. Review the Production Capacity "
+            "board: {link}"
+        ),
+    ),
+    "industry.capacity_bottleneck.unmeasured": Scaffold(
+        subject=_("Capacity bottleneck: {industry_job_name}"),
+        body=_(
+            "The plan can't promise {quantity}× {industry_job_name} — no measured pilot "
+            "can be scheduled (capacity unknown). Review the Production Capacity board: "
+            "{link}"
         ),
     ),
     "store.supply_need.built": Scaffold(
@@ -609,6 +681,29 @@ SCAFFOLDS: dict[str, Scaffold] = {
         body=_(
             "Your haul {origin_system} → {destination_system} passed its deadline and was "
             "released back to the pool."
+        ),
+    ),
+    # Freight batch pipeline (P6) — officer-audience, event-gated. Slots come strictly
+    # from VARIABLE_CATALOGUE (origin_system / destination_system / eta_date).
+    "logistics.batch_arrived": Scaffold(
+        subject=_("Freight batch arrived"),
+        body=_(
+            "Freight batch {origin_system} → {destination_system} has arrived — receipt "
+            "its lines to post the landed stock."
+        ),
+    ),
+    "logistics.batch_late": Scaffold(
+        subject=_("Freight batch overdue"),
+        body=_(
+            "Freight batch {origin_system} → {destination_system} is past its ETA "
+            "({eta_date}) and has not arrived."
+        ),
+    ),
+    "logistics.batch_delayed": Scaffold(
+        subject=_("Freight batch delayed"),
+        body=_(
+            "Freight batch {origin_system} → {destination_system} slipped its ETA to "
+            "{eta_date}."
         ),
     ),
 
@@ -908,6 +1003,30 @@ SCAFFOLDS: dict[str, Scaffold] = {
     "campaigns.health_changed.blocked.reasons": Scaffold(
         subject=_("Campaign health Blocked: «{campaign_name}»"),
         body=_("Campaign «{campaign_name}» is now Blocked — {details}. {link}"),
+    ),
+
+    # --- procurement (P4) ----------------------------------------------------
+    # ``{supplier_name}`` is a corp-authored / EVE display name — raw by policy.
+    "procurement.agreement_pending": Scaffold(
+        subject=_("Supply agreement awaiting approval"),
+        body=_(
+            "{actor_name} submitted a supply agreement with {supplier_name} that needs "
+            "a second director's approval in the Procurement console."
+        ),
+    ),
+    "procurement.contract_available": Scaffold(
+        subject=_("Purchase order contract available"),
+        body=_(
+            "{count} purchase order(s) from {supplier_name} matched an in-game contract "
+            "and are ready to accept. Review them in the Procurement console: {link}"
+        ),
+    ),
+    "procurement.po_overdue": Scaffold(
+        subject=_("Purchase order overdue"),
+        body=_(
+            "{count} purchase order(s) from {supplier_name} are overdue "
+            "(promised by {eta_date}). Review them on the Procurement board."
+        ),
     ),
 }
 

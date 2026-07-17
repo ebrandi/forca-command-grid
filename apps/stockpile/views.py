@@ -245,9 +245,12 @@ def logistics_board(request: HttpRequest) -> HttpResponse:
 def create_haul(request: HttpRequest) -> HttpResponse:
     form = HaulingTaskForm(request.POST)
     if form.is_valid() and SdeType.objects.filter(type_id=form.cleaned_data["type_id"]).exists():
+        from apps.logistics.costing import packaged_volume
+
         task = form.save(commit=False)
-        sde = SdeType.objects.filter(type_id=task.type_id).first()
-        task.volume_m3 = (sde.volume if sde else 0.0) * (task.quantity or 0)
+        # Book PACKAGED volume — hauls move repackaged hulls (a Rifter is 2,500 m³
+        # packaged, not 27,289 m³ assembled). The old assembled number was wrong.
+        task.volume_m3 = packaged_volume(task.type_id) * (task.quantity or 0)
         task.status = HaulingTask.Status.OPEN
         task.save()
         messages.success(request, _("Hauling job posted."))
