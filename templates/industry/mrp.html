@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% load eve i18n %}
+{% block title %}{% translate "Material Plan" %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+
+<header class="mb-5 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow">{% translate "Industry · Leadership" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Material Plan" %}</h1>
+    <p class="mt-1 max-w-3xl text-sm text-faint">{% translate "Corp-wide net requirements: every demand source exploded through the build tree and netted once against stock, reservations and in-flight work. Dates assume unconstrained industry slots — capacity planning comes in a later phase." %}</p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <a href="?export=csv" class="btn-ghost text-sm"><svg class="h-4 w-4"><use href="#i-box"/></svg> {% translate "Export CSV" %}</a>
+    <form method="post" action="{% url 'industry:mrp_run' %}">{% csrf_token %}<button class="btn-gold text-sm">{% translate "Run planning now" %}</button></form>
+  </div>
+</header>
+
+{% if no_changes %}
+<div class="panel mb-4 border-win/30 px-4 py-2 text-sm text-win">{% translate "No changes — the latest run's inputs are identical to the previous run's." %}</div>
+{% endif %}
+
+{% if unpriced %}
+<div class="panel mb-4 border-gold/30 px-4 py-2 text-sm text-gold">{% blocktranslate with items=unpriced|join:", " %}No market price signal for: {{ items }} — a 0 ISK buy line is a data gap, not a bargain.{% endblocktranslate %}</div>
+{% endif %}
+
+<section class="panel overflow-hidden">
+  <div class="border-b border-line px-4 py-2 flex items-center justify-between">
+    <h2 class="eyebrow">{% translate "Live requirements" %} <span class="text-faint">· {{ rows|length }}</span></h2>
+    <span class="text-[11px] text-faint">{% blocktranslate with days=config.consolidation_window_days %}planning window: {{ days }} days{% endblocktranslate %}</span>
+  </div>
+  <div class="overflow-x-auto"><table class="w-full text-sm">
+    <thead><tr class="text-left text-[11px] uppercase text-faint">
+      <th class="px-4 py-2">{% translate "Item" %}</th>
+      <th class="px-2 py-2">{% translate "Location" %}</th>
+      <th class="px-2 py-2 text-right">{% translate "Gross" %}</th>
+      <th class="px-2 py-2 text-right">{% translate "Available" %}</th>
+      <th class="px-2 py-2 text-right">{% translate "Incoming" %}</th>
+      <th class="px-2 py-2 text-right">{% translate "Net" %}</th>
+      <th class="px-2 py-2">{% translate "Required by" %}</th>
+      <th class="px-2 py-2">{% translate "Feasible" %}</th>
+      <th class="px-2 py-2">{% translate "Suggestion" %}</th>
+      <th class="px-2 py-2">{% translate "Vehicle" %}</th>
+    </tr></thead>
+    <tbody>
+      {% for c in rows %}
+      {% with r=c.row %}
+      {% ifchanged r.depth %}<tr class="border-t border-line bg-panel2/40"><td colspan="10" class="px-4 py-1 text-[11px] uppercase text-faint">{% blocktranslate with depth=r.depth %}Level {{ depth }}{% endblocktranslate %}{% if r.depth == 0 %} · {% translate "ships & fits — fulfilled from the Shipyard console" %}{% endif %}</td></tr>{% endifchanged %}
+      <tr class="border-t border-line/40 hover:bg-panel2/50" x-data="{open:false}" id="req-{{ r.pk }}">
+        <td class="px-4 py-2">
+          <button type="button" @click="open=!open" class="flex items-center gap-2 text-left text-ink hover:text-gold">
+            <img src="{% eve_type_icon r.type_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">
+            <span>{{ c.name }}</span>
+            {% if r.diverged %}<span class="chip !border-loss/40 !text-loss" title="{% translate 'The linked vehicle no longer matches the plan — planned quantity differs from what the vehicle says' %}">{% translate "diverged" %}</span>{% endif %}
+          </button>
+          <div x-show="open" x-cloak class="mt-2 rounded-md bg-panel2/50 p-2 text-[12px]">
+            <p class="eyebrow text-faint">{% translate "Demand sources" %}</p>
+            {% for f in c.fit_links %}<p><a class="text-cyan hover:underline" href="{% url 'store:inventory_fit' f.id %}">{% translate "Fit demand" %} · {{ f.name }}</a> <span class="data">×{{ f.qty }}</span></p>{% endfor %}
+            {% for n in c.need_links %}<p>{% if n.fit_id %}<a class="text-cyan hover:underline" href="{% url 'store:inventory_fit' n.fit_id %}">{% translate "Backorder need" %} #{{ n.id }}</a>{% else %}{% translate "Backorder need" %} #{{ n.id }}{% endif %} <span class="data">×{{ n.qty }}</span></p>{% endfor %}
+            {% for p in c.parent_links %}<p><a class="text-cyan hover:underline" href="#req-{{ p.id }}">{% translate "Component of requirement" %} #{{ p.id }}</a> <span class="data">×{{ p.qty }}</span></p>{% endfor %}
+            {% for v in c.vehicle_sources %}<p>{% translate "Materials for promised build" %} ({{ v.vehicle }} #{{ v.id }}) <span class="data">×{{ v.qty }}</span></p>{% endfor %}
+            {% if r.incoming_refs %}
+            <p class="eyebrow mt-1 text-faint">{% translate "Incoming supply" %}</p>
+            {% for i in r.incoming_refs %}<p>{% if i.kind == 'esi_job' %}{% translate "In-game job" %} #{{ i.id }}{% elif i.kind == 'build_job' %}{% translate "Board job" %} #{{ i.id }}{% else %}{% translate "Plan line" %} #{{ i.id }}{% endif %} <span class="data">×{{ i.qty }}</span></p>{% endfor %}
+            {% endif %}
+          </div>
+        </td>
+        <td class="px-2 py-2 text-faint">{% if r.location %}{{ r.location.name }}{% else %}—{% endif %}</td>
+        <td class="px-2 py-2 text-right data text-muted">{{ r.gross_quantity }}</td>
+        <td class="px-2 py-2 text-right data text-faint">{{ r.available_quantity }}</td>
+        <td class="px-2 py-2 text-right data text-cyan">{{ r.incoming_quantity }}</td>
+        <td class="px-2 py-2 text-right data font-semibold {% if r.net_quantity %}text-gold{% else %}text-faint{% endif %}">{{ r.net_quantity }}</td>
+        <td class="px-2 py-2 text-faint">{% if r.required_by %}{{ r.required_by|date:"j M" }}{% else %}—{% endif %}</td>
+        <td class="px-2 py-2 text-faint">{% if r.feasible_at %}{{ r.feasible_at|date:"j M" }} <span class="text-[10px]">({{ c.feasible_label }})</span>{% else %}—{% endif %}</td>
+        <td class="px-2 py-2">{% if r.net_quantity %}<span class="chip {% if r.suggestion == 'build' %}!border-cyan/40 !text-cyan{% endif %}">{{ c.suggestion_label }}</span>{% else %}<span class="text-faint">—</span>{% endif %}</td>
+        <td class="px-2 py-2">
+          {% if c.ship_level %}
+            {% if c.fit_links %}<a href="{% url 'store:inventory_fit' c.fit_links.0.id %}" class="text-xs text-cyan hover:underline">{% translate "Shipyard console" %} →</a>{% elif c.need_links and c.need_links.0.fit_id %}<a href="{% url 'store:inventory_fit' c.need_links.0.fit_id %}" class="text-xs text-cyan hover:underline">{% translate "Shipyard console" %} →</a>{% else %}<span class="text-faint text-xs">{% translate "Shipyard" %}</span>{% endif %}
+          {% elif r.industry_project %}<a href="{% url 'industry:detail' r.industry_project.pk %}" class="chip">{% translate "Project" %}</a>
+          {% elif r.build_job %}<span class="chip">{% translate "Build job" %} #{{ r.build_job.pk }}</span>
+          {% elif r.hauling_task %}<span class="chip">{% translate "Haul" %} #{{ r.hauling_task.pk }}</span>
+          {% elif r.task %}<span class="chip">{% translate "Task" %} #{{ r.task.pk }}</span>
+          {% elif r.net_quantity %}
+            <form method="post" action="{% url 'industry:mrp_fan_out' r.pk %}" class="flex flex-wrap gap-1">{% csrf_token %}
+              {% if r.suggestion == 'build' %}
+                <button name="action" value="project" class="btn-ghost !py-0.5 !text-[11px]">{% translate "Plan" %}</button>
+                <button name="action" value="build_job" class="btn-ghost !py-0.5 !text-[11px]">{% translate "Build job" %}</button>
+              {% elif r.suggestion == 'import' %}
+                <button name="action" value="haul" class="btn-ghost !py-0.5 !text-[11px]">{% translate "Haul" %}</button>
+                <button name="action" value="buy_task" class="btn-ghost !py-0.5 !text-[11px]">{% translate "BUY task" %}</button>
+              {% else %}
+                <button name="action" value="buy_task" class="btn-ghost !py-0.5 !text-[11px]">{% translate "BUY task" %}</button>
+              {% endif %}
+            </form>
+          {% else %}<span class="text-faint text-xs">—</span>{% endif %}
+        </td>
+      </tr>
+      {% endwith %}
+      {% empty %}
+      <tr><td colspan="10" class="px-4 py-10 text-center text-sm text-faint">{% translate "No open requirements — run planning to compute the current picture." %}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+
+{% if multibuy %}
+<section class="panel mt-4 p-4">
+  <h2 class="eyebrow mb-2">{% translate "Multibuy (open buy & import lines)" %}</h2>
+  <textarea readonly rows="4" class="input-field w-full font-mono text-xs" x-data @click="$el.select()">{{ multibuy }}</textarea>
+  <p class="mt-1 text-[11px] text-faint">{% translate "Paste into the in-game market Multibuy window." %}</p>
+</section>
+{% endif %}
+
+{% if beyond_window %}
+<section class="panel mt-4 overflow-hidden">
+  <div class="border-b border-line px-4 py-2"><h2 class="eyebrow">{% translate "Beyond the planning window" %} <span class="text-faint">· {{ beyond_window|length }}</span></h2></div>
+  <div class="p-4 text-sm text-faint">
+    {% for b in beyond_window %}
+    <p>{% translate "Backorder need" %} #{{ b.id }} · ×{{ b.qty }} · {{ b.required_by }}</p>
+    {% endfor %}
+    <p class="mt-1 text-[11px]">{% translate "Dated demand this far out is excluded from the current plan; it enters when the window reaches it." %}</p>
+  </div>
+</section>
+{% endif %}
+
+<section class="panel mt-4 overflow-hidden">
+  <div class="border-b border-line px-4 py-2"><h2 class="eyebrow">{% translate "Run history" %}</h2></div>
+  <div class="overflow-x-auto"><table class="w-full text-sm">
+    <thead><tr class="text-left text-[11px] uppercase text-faint">
+      <th class="px-4 py-2">{% translate "Started" %}</th><th class="px-2 py-2">{% translate "Status" %}</th>
+      <th class="px-2 py-2 text-right">{% translate "Updated" %}</th><th class="px-2 py-2 text-right">{% translate "Closed" %}</th>
+      <th class="px-2 py-2">{% translate "Input digest" %}</th><th class="px-2 py-2">{% translate "Triggered by" %}</th>
+    </tr></thead>
+    <tbody>
+      {% for run in runs %}
+      <tr class="border-t border-line/40">
+        <td class="px-4 py-2 text-faint">{{ run.started_at|date:"j M H:i" }}</td>
+        <td class="px-2 py-2"><span class="chip {% if run.status == 'failed' %}!border-loss/40 !text-loss{% endif %}">{{ run.get_status_display }}</span></td>
+        <td class="px-2 py-2 text-right data text-faint">{{ run.stats.rows_written|default:"—" }}</td>
+        <td class="px-2 py-2 text-right data text-faint">{{ run.stats.rows_closed|default:"—" }}</td>
+        <td class="px-2 py-2 font-mono text-[10px] text-faint">{{ run.inputs_digest|slice:":12" }}</td>
+        <td class="px-2 py-2 text-faint">{% if run.triggered_by %}{{ run.triggered_by.get_username }}{% else %}{% translate "schedule" %}{% endif %}</td>
+      </tr>
+      {% empty %}<tr><td colspan="6" class="px-4 py-4 text-center text-faint">{% translate "No runs yet." %}</td></tr>{% endfor %}
+    </tbody>
+  </table></div>
+</section>
+{% endblock %}

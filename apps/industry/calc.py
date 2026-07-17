@@ -72,10 +72,28 @@ def production_seconds(product_type_id: int, runs: int, te: int = 0) -> int | No
         .values_list("time", flat=True)
         .first()
     )
-    if not base:
+    # ``is None``, not falsy: a legitimate 0-second row means "instant", not "unknown".
+    if base is None:
         return None
     te = max(0, min(20, te))
     return int(base * max(1, runs) * (100 - te) / 100)
+
+
+def reaction_seconds(product_type_id: int, runs: int) -> int | None:
+    """Base reaction time x runs (no TE — reactions have no time research).
+    ``None`` if unknown. Sibling of :func:`production_seconds` reading the same
+    imported ``SdeBlueprintActivityTime`` table."""
+    base = (
+        SdeBlueprintActivityTime.objects.filter(
+            product_type_id=product_type_id,
+            activity=SdeBlueprintActivityTime.REACTION,
+        )
+        .values_list("time", flat=True)
+        .first()
+    )
+    if base is None:
+        return None
+    return int(base * max(1, runs))
 
 
 def _volume_map(type_ids) -> dict[int, float]:

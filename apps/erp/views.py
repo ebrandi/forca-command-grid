@@ -184,3 +184,47 @@ def add_blueprint(request: HttpRequest) -> HttpResponse:
     )
     messages.success(request, _("Blueprint recorded."))
     return redirect("erp:board")
+
+
+@login_required
+@role_required(rbac.ROLE_MEMBER)
+@require_POST
+def link_esi(request: HttpRequest, pk: int) -> HttpResponse:
+    """Link a claimed board job to the in-game ESI job it became (P3 ESI-wins dedup).
+
+    An empty id uses the auto-suggested match; ``action=unlink`` clears the link.
+    """
+    job = get_object_or_404(BuildJob, pk=pk)
+    is_officer = rbac.has_role(request.user, rbac.ROLE_OFFICER)
+    if not services.can_act(request.user, job, is_officer=is_officer):
+        messages.error(request, _("You can only update your own jobs."))
+        return redirect("industry:jobs")
+    if request.POST.get("action") == "unlink":
+        ok, code = services.link_esi_job(job, None)
+    else:
+        raw = (request.POST.get("esi_job_id") or "").strip()
+        esi_id = int(raw) if raw.isdigit() and int(raw) > 0 else None
+        if esi_id is None:
+            suggestion = services.suggest_esi_matches([job]).get(job.pk)
+            if suggestion is None:
+                messages.error(request, _("No matching in-game job found — enter its job ID."))
+                return redirect("industry:jobs")
+            esi_id = suggestion.job_id
+        ok, code = services.link_esi_job(job, esi_id)
+    if ok:
+        from core.audit import audit_log, client_ip
+        audit_log(request.user, "erp.job.esi_link", target_type="build_job",
+                  target_id=str(job.pk), metadata={"esi_job_id": job.esi_job_id, "result": code},
+                  ip=client_ip(request))
+        if code == "unlinked":
+            messages.success(request, _("In-game job link removed."))
+        else:
+            messages.success(request, _("Linked to in-game job #%(id)s — it now carries the schedule.")
+                             % {"id": job.esi_job_id})
+    elif code == "mismatch":
+        messages.error(request, _("That in-game job produces a different item."))
+    elif code == "taken":
+        messages.error(request, _("That in-game job is already linked to another build job."))
+    else:
+        messages.error(request, _("Only an in-progress job can be linked."))
+    return redirect("industry:jobs")

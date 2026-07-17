@@ -12,5 +12,6 @@ urlpatterns = [
     path("jobs/<int:pk>/deliver/", views.deliver, name="deliver"),
     path("jobs/<int:pk>/cancel/", views.cancel_job, name="cancel"),
     path("jobs/<int:pk>/edit/", views.edit_job, name="edit"),
+    path("jobs/<int:pk>/esi-link/", views.link_esi, name="esi_link"),
     path("blueprints/add/", views.add_blueprint, name="add_blueprint"),
 ]

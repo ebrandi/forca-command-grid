@@ -100,6 +100,24 @@ def plan_from_demand(request: HttpRequest) -> HttpResponse:
         quantity = max(1, int(request.POST.get("quantity") or 1))
     except (TypeError, ValueError):
         quantity = 1
+    # Idempotency (P3 precondition): a double-POST of the demand button used to
+    # mint twin projects. An existing live supply plan for the same type is the
+    # answer, not a duplicate.
+    existing = (
+        IndustryProject.objects.filter(
+            source=IndustryProject.Source.DOCTRINE_SUPPLY,
+            is_archived=False,
+            status__in=(
+                IndustryProject.Status.DRAFT, IndustryProject.Status.ACTIVE,
+                IndustryProject.Status.BLOCKED,
+            ),
+            items__type_id=stype.type_id,
+        ).order_by("pk").first()
+    )
+    if existing:
+        messages.info(request, _("An active supply plan for %(item)s already exists.")
+                      % {"item": stype.name})
+        return redirect("industry:detail", pk=existing.pk)
     project = IndustryProject.objects.create(
         name=(_("Supply: %(item)s") % {"item": stype.name})[:200],
         objective_type=IndustryProject.Objective.STOCK,
@@ -335,11 +353,14 @@ def job_tracker(request: HttpRequest) -> HttpResponse:
         )
     )
 
+    esi_suggestions = erp_services.suggest_esi_matches(my_builds)
+
     def _job_row(j):
         return {
             "job": j,
             "mats": erp_services.job_materials(j),
             "can_manage": erp_services.can_manage(request.user, j, is_officer=is_officer),
+            "esi_suggestion": esi_suggestions.get(j.pk),
         }
 
     char_ids = list(request.user.characters.values_list("character_id", flat=True))

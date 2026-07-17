@@ -61,6 +61,11 @@ SCAFFOLDS: dict[str, str] = {
     # --- BuildJob.note (the Shipyard supply-need bridge) ---------------------
     # ``%(fit_name)s`` is a corp-authored DoctrineFit name: raw, never translated.
     "job.shipyard_restock": _("Shipyard restock: %(fit_name)s"),
+    # --- MRP fan-out (P3) -----------------------------------------------------
+    # ``%(item)s`` is an SdeType name — EVE game data, raw and English by policy.
+    "job.mrp_restock": _("Material plan restock: %(item)s"),
+    "plan.mrp_requirement": _("Material plan: %(quantity)s× %(item)s"),
+    "task.mrp_buy": _("Buy %(quantity)s× %(item)s for the material plan"),
 }
 
 

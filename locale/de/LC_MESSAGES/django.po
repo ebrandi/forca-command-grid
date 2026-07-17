@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-16 22:16+0000\n"
+"POT-Creation-Date: 2026-07-16 23:46+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: de machine-assisted draft\n"
@@ -499,8 +499,8 @@ msgstr ""
 "Belohnungs-Scan abgeschlossen — %(n)d neue(s) Belohnungs-Event(s) erstellt."
 
 #: apps/admin_audit/console_combat.py apps/buyback/views.py
-#: apps/capsuleer/views.py apps/logistics/views.py apps/stockpile/views.py
-#: apps/store/views.py apps/store/views_inventory.py
+#: apps/capsuleer/views.py apps/industry/views_mrp.py apps/logistics/views.py
+#: apps/stockpile/views.py apps/store/views.py apps/store/views_inventory.py
 msgid "Unknown action."
 msgstr "Unbekannte Aktion."
 
@@ -1721,9 +1721,10 @@ msgstr ""
 "Erz verwendet wird."
 
 #: apps/buyback/models.py apps/campaigns/models.py apps/capsuleer/models.py
-#: apps/command_intel/models.py apps/raffle/models.py apps/readiness/models.py
-#: apps/recommendations/models.py apps/stockpile/models.py apps/store/models.py
-#: apps/tasks/models.py templates/navigation/jump_routes.html
+#: apps/command_intel/models.py apps/industry/models.py apps/raffle/models.py
+#: apps/readiness/models.py apps/recommendations/models.py
+#: apps/stockpile/models.py apps/store/models.py apps/tasks/models.py
+#: templates/navigation/jump_routes.html
 msgid "Open"
 msgstr "Offen"
 
@@ -2218,8 +2219,9 @@ msgstr "Abgeschlossen"
 
 #: apps/campaigns/models.py apps/campaigns/views.py
 #: apps/command_intel/models.py apps/comms_access/models.py
-#: apps/logistics/models.py apps/pingboard/models.py apps/raffle/models.py
-#: templates/campaigns/close.html templates/logistics/contracts.html
+#: apps/industry/models.py apps/logistics/models.py apps/pingboard/models.py
+#: apps/raffle/models.py templates/campaigns/close.html
+#: templates/logistics/contracts.html
 msgid "Failed"
 msgstr "Fehlgeschlagen"
 
@@ -4496,7 +4498,7 @@ msgstr "Verworfen"
 msgid "Pilot"
 msgstr "Pilot"
 
-#: apps/capsuleer/models.py
+#: apps/capsuleer/models.py templates/industry/mrp.html
 msgid "Suggestion"
 msgstr "Vorschlag"
 
@@ -6549,8 +6551,8 @@ msgstr "Bereit"
 msgid "Ready (degraded — no narrative)"
 msgstr "Bereit (eingeschränkt — keine Erzählung)"
 
-#: apps/command_intel/models.py apps/logistics/models.py
-#: apps/mentorship/models.py apps/onboarding/models.py
+#: apps/command_intel/models.py apps/industry/models.py
+#: apps/logistics/models.py apps/mentorship/models.py apps/onboarding/models.py
 #: apps/recommendations/models.py apps/stockpile/models.py apps/store/models.py
 #: apps/tasks/models.py templates/command_intel/_coa_card.html
 #: templates/store/my_orders.html
@@ -7272,9 +7274,9 @@ msgstr "machbar"
 msgid "not ready"
 msgstr "nicht bereit"
 
-#: apps/doctrines/services.py templates/capsuleer/goal_detail.html
-#: templates/doctrines/coverage.html templates/identity/dashboard.html
-#: templates/mentorship/register_mentee.html
+#: apps/doctrines/services.py apps/industry/mrp.py
+#: templates/capsuleer/goal_detail.html templates/doctrines/coverage.html
+#: templates/identity/dashboard.html templates/mentorship/register_mentee.html
 #: templates/mentorship/register_mentor.html templates/readiness/dashboard.html
 msgid "unknown"
 msgstr "unbekannt"
@@ -7759,12 +7761,12 @@ msgstr ""
 msgid "View-as ended — you're back on your own account."
 msgstr "View-as beendet — du bist zurück auf deinem eigenen Konto."
 
-#: apps/industry/bom.py templates/base.html templates/doctrines/supply.html
-#: templates/store/supply_forecast.html
+#: apps/industry/bom.py apps/industry/mrp.py templates/base.html
+#: templates/doctrines/supply.html templates/store/supply_forecast.html
 msgid "build"
 msgstr "Build"
 
-#: apps/industry/bom.py templates/doctrines/supply.html
+#: apps/industry/bom.py apps/industry/mrp.py templates/doctrines/supply.html
 msgid "buy"
 msgstr "kaufen"
 
@@ -7928,13 +7930,21 @@ msgstr "Reagieren"
 msgid "Invent"
 msgstr "Inventen"
 
-#: apps/industry/models.py
+#: apps/industry/models.py templates/industry/mrp.html
 msgid "Haul"
 msgstr "Transportieren"
 
 #: apps/industry/models.py templates/logistics/corp_contracts.html
 msgid "Contract"
 msgstr "Vertrag"
+
+#: apps/industry/models.py apps/raffle/models.py
+msgid "Running"
+msgstr "Läuft"
+
+#: apps/industry/mrp.py templates/store/supply_forecast.html
+msgid "import"
+msgstr "Importieren"
 
 #: apps/industry/tools.py
 msgid "Pick a valid item from the demand list."
@@ -8099,6 +8109,10 @@ msgstr "Nichts reserviert — kein passender Corp-Bestand verfügbar."
 #, python-format
 msgid "Released %(n)s reservation(s) back to corp stock."
 msgstr "%(n)s Reservierung(en) an den Corp-Bestand zurückgegeben."
+
+#: apps/industry/views_mrp.py apps/store/views_inventory.py
+msgid "ERP build job queued and linked."
+msgstr "ERP-Build-Job eingereiht und verknüpft."
 
 #: apps/kb/models.py
 msgid "Public"
@@ -8386,8 +8400,8 @@ msgstr "Keine Belohnung"
 #: apps/killboard/models.py templates/buyback/appraisal.html
 #: templates/buyback/offer.html templates/industry/chain.html
 #: templates/industry/create.html templates/industry/demand.html
-#: templates/market/dashboard.html templates/stockpile/dashboard.html
-#: templates/stockpile/logistics.html
+#: templates/industry/mrp.html templates/market/dashboard.html
+#: templates/stockpile/dashboard.html templates/stockpile/logistics.html
 msgid "Item"
 msgstr "Gegenstand"
 
@@ -17367,10 +17381,6 @@ msgid "Seed committed"
 msgstr "Seed festgeschrieben"
 
 #: apps/raffle/models.py
-msgid "Running"
-msgstr "Läuft"
-
-#: apps/raffle/models.py
 msgid "git commit at draw time."
 msgstr "git commit zum Ziehungszeitpunkt."
 
@@ -20339,7 +20349,7 @@ msgid "demand planning configs"
 msgstr "Bedarfsplanungs-Konfigurationen"
 
 #: apps/store/models.py templates/admin_audit/console/raffle_draw.html
-#: templates/store/inventory_fit.html
+#: templates/industry/mrp.html templates/store/inventory_fit.html
 msgid "Closed"
 msgstr "Geschlossen"
 
@@ -20636,10 +20646,6 @@ msgid "Industry project “%(name)s” is linked."
 msgstr "Industrie-Projekt “%(name)s” ist verknüpft."
 
 #: apps/store/views_inventory.py
-msgid "ERP build job queued and linked."
-msgstr "ERP-Build-Job eingereiht und verknüpft."
-
-#: apps/store/views_inventory.py
 msgid "Claimable task created and linked."
 msgstr "Übernehmbare Aufgabe erstellt und verknüpft."
 
@@ -20655,6 +20661,10 @@ msgstr "Bedarfsposition geschlossen."
 #: apps/store/views_inventory.py
 msgid "That demand line is already closed."
 msgstr "Diese Bedarfsposition ist bereits geschlossen."
+
+#: apps/store/views_inventory.py
+msgid "Demand planning settings updated."
+msgstr "Bedarfsplanungs-Einstellungen aktualisiert."
 
 #: apps/tasks/models.py
 msgid "Build ships"
@@ -21953,6 +21963,7 @@ msgstr "Schiffe &amp; Doctrines"
 
 #: templates/_nav.html templates/doctrines/detail.html
 #: templates/doctrines/list.html templates/doctrines/ships.html
+#: templates/industry/mrp.html
 msgid "Shipyard"
 msgstr "Werft"
 
@@ -22356,7 +22367,7 @@ msgstr "Filter"
 #: templates/admin_audit/audit.html
 #: templates/admin_audit/console/combat_rewards.html
 #: templates/admin_audit/console/raffle_ineligible.html
-#: templates/admin_audit/console/raffle_ledger.html
+#: templates/admin_audit/console/raffle_ledger.html templates/industry/mrp.html
 #: templates/store/inventory.html
 msgid "Export CSV"
 msgstr "CSV exportieren"
@@ -22970,7 +22981,7 @@ msgstr "Kills ≥"
 #: templates/admin_audit/console/raffle_ledger.html
 #: templates/admin_audit/health.html templates/campaigns/portfolio.html
 #: templates/campaigns/report.html templates/campaigns/risk_form.html
-#: templates/campaigns/workstream_form.html
+#: templates/campaigns/workstream_form.html templates/industry/mrp.html
 #: templates/logistics/corp_contracts.html templates/market/dashboard.html
 #: templates/mining/my_mining.html templates/operations/form.html
 #: templates/operations/templates.html templates/pingboard/alert_detail.html
@@ -29008,6 +29019,7 @@ msgstr "Geteilte Pläne"
 
 #: templates/admin_audit/console/planetary/hub.html
 #: templates/industry/demand.html templates/industry/jobs.html
+#: templates/industry/mrp.html
 msgid "Plan"
 msgstr "Planen"
 
@@ -36478,6 +36490,7 @@ msgid "Unlink your Discord account?"
 msgstr "Dein Discord-Konto trennen?"
 
 #: templates/comms_access/connect.html templates/identity/linked_pilots.html
+#: templates/industry/jobs.html
 msgid "Unlink"
 msgstr "Trennen"
 
@@ -36586,8 +36599,8 @@ msgstr "Alle Abteilungen"
 msgid "Balance"
 msgstr "Kontostand"
 
-#: templates/corporation/finance.html templates/mining/my_mining.html
-#: templates/mining/payout.html
+#: templates/corporation/finance.html templates/industry/mrp.html
+#: templates/mining/my_mining.html templates/mining/payout.html
 msgid "Net"
 msgstr "Netto"
 
@@ -37510,8 +37523,9 @@ msgstr "Günstigster Mix"
 msgid "Per-item plan"
 msgstr "Plan pro Artikel"
 
-#: templates/doctrines/supply.html templates/store/inventory.html
-#: templates/store/inventory_fit.html templates/tasks/detail.html
+#: templates/doctrines/supply.html templates/industry/mrp.html
+#: templates/store/inventory.html templates/store/inventory_fit.html
+#: templates/tasks/detail.html
 msgid "Task"
 msgstr "Aufgabe"
 
@@ -38875,7 +38889,7 @@ msgstr "Jetzt aktiv · %(n)s"
 msgid "Viewing as"
 msgstr "Betrachtet als"
 
-#: templates/impersonation/log.html
+#: templates/impersonation/log.html templates/industry/mrp.html
 msgid "Started"
 msgstr "Gestartet"
 
@@ -40133,6 +40147,48 @@ msgstr ""
 "Keine Corp-Jobs importiert. Ein Director kann <strong>Corp blueprints + "
 "jobs</strong> auf der Seite <a href=\"/auth/eve/scopes/\" class=\"text-gold "
 "hover:underline\">ESI Scopes</a> gewähren."
+
+#: templates/industry/mrp.html templates/mining/ledger.html
+#: templates/mining/payouts.html
+msgid "Industry · Leadership"
+msgstr "Industrie · Leitung"
+
+#: templates/industry/mrp.html templates/market/dashboard.html
+#: templates/stockpile/asset_search.html templates/stockpile/dashboard.html
+#: templates/store/inventory.html templates/store/inventory_fit.html
+msgid "Location"
+msgstr "Standort"
+
+#: templates/industry/mrp.html templates/mining/payout.html
+#: templates/planetary/detail.html
+msgid "Gross"
+msgstr "Brutto"
+
+#: templates/industry/mrp.html templates/stockpile/dashboard.html
+msgid "Available"
+msgstr "Verfügbar"
+
+#: templates/industry/mrp.html templates/store/inventory.html
+#: templates/store/inventory_fit.html
+msgid "Incoming"
+msgstr "Im Zulauf"
+
+#: templates/industry/mrp.html templates/store/inventory.html
+#: templates/store/inventory_fit.html
+msgid "Required by"
+msgstr "Benötigt bis"
+
+#: templates/industry/mrp.html templates/store/inventory.html
+msgid "Vehicle"
+msgstr "Umsetzung"
+
+#: templates/industry/mrp.html templates/store/inventory.html
+msgid "Project"
+msgstr "Projekt"
+
+#: templates/industry/mrp.html templates/store/inventory.html
+msgid "Build job"
+msgstr "Build-Job"
 
 #: templates/kb/detail.html templates/kb/edit.html
 msgid "← Knowledge base"
@@ -41646,12 +41702,6 @@ msgstr "Keine nennenswerten Spreads in den erfassten Preisen."
 msgid "My watchlist"
 msgstr "Meine Watchlist"
 
-#: templates/market/dashboard.html templates/stockpile/asset_search.html
-#: templates/stockpile/dashboard.html templates/store/inventory.html
-#: templates/store/inventory_fit.html
-msgid "Location"
-msgstr "Standort"
-
 #: templates/market/dashboard.html
 msgid "30d trend"
 msgstr "30T-Trend"
@@ -42675,10 +42725,6 @@ msgstr ""
 "Es sind noch keine Lernpfade geöffnet. Deine Leitung erstellt noch den "
 "Lehrplan — schau bald wieder vorbei und mach dich bereit zum Undocken."
 
-#: templates/mining/ledger.html templates/mining/payouts.html
-msgid "Industry · Leadership"
-msgstr "Industrie · Leitung"
-
 #: templates/mining/ledger.html
 msgid "Mining ledger"
 msgstr "Mining-Journal"
@@ -42885,10 +42931,6 @@ msgstr[1] "%(n)s Teilnehmer"
 #: templates/mining/payout.html
 msgid "pool"
 msgstr "Pool"
-
-#: templates/mining/payout.html templates/planetary/detail.html
-msgid "Gross"
-msgstr "Brutto"
 
 #: templates/mining/payout.html
 msgid "Tax kept"
@@ -49587,10 +49629,6 @@ msgid "Reserved"
 msgstr "Reserviert"
 
 #: templates/stockpile/dashboard.html
-msgid "Available"
-msgstr "Verfügbar"
-
-#: templates/stockpile/dashboard.html
 msgid "ESI on-hand"
 msgstr "ESI-Bestand"
 
@@ -49807,15 +49845,70 @@ msgstr "1.10 = geschätzte Baukosten +10%%"
 msgid "Supercapital hull markup"
 msgstr "Supercapital-Hull-Aufschlag"
 
+#: templates/store/demand_policy.html
+msgid "Demand Planning"
+msgstr "Bedarfsplanung"
+
 #: templates/store/demand_policy.html templates/store/inventory.html
 #: templates/store/shipyard_policy.html
 msgid "Shipyard · Leadership"
 msgstr "Werft · Führung"
 
+#: templates/store/demand_policy.html
+msgid "Demand planning settings"
+msgstr "Bedarfsplanungs-Einstellungen"
+
+#: templates/store/demand_policy.html
+msgid ""
+"How composed demand is computed: the loss-history window, the planning "
+"horizon, the confidence level behind bands and reorder suggestions, and "
+"which optional signals are armed."
+msgstr ""
+"Wie der zusammengesetzte Bedarf berechnet wird: das Verlusthistorien-"
+"Fenster, der Planungshorizont, das Konfidenzniveau hinter Bändern und "
+"Nachbestellvorschlägen sowie welche optionalen Signale aktiviert sind."
+
 #: templates/store/demand_policy.html templates/store/inventory.html
 #: templates/store/inventory_fit.html templates/store/shipyard_policy.html
 msgid "Inventory console"
 msgstr "Bestandskonsole"
+
+#: templates/store/demand_policy.html
+msgid "Loss history (weeks)"
+msgstr "Verlusthistorie (Wochen)"
+
+#: templates/store/demand_policy.html
+msgid "Planning horizon (days)"
+msgstr "Planungshorizont (Tage)"
+
+#: templates/store/demand_policy.html
+msgid "Service level"
+msgstr "Service-Level"
+
+#: templates/store/demand_policy.html
+msgid "Signals & assumptions"
+msgstr "Signale & Annahmen"
+
+#: templates/store/demand_policy.html
+#, python-format
+msgid "Fleet-op attrition (%%)"
+msgstr "Flottenops-Abnutzung (%%)"
+
+#: templates/store/demand_policy.html
+msgid "Slow-mover window (days)"
+msgstr "Ladenhüter-Fenster (Tage)"
+
+#: templates/store/demand_policy.html
+msgid "Allocate untagged losses"
+msgstr "Ungetaggte Verluste zuordnen"
+
+#: templates/store/demand_policy.html
+msgid "Count recurring fleet ops"
+msgstr "Wiederkehrende Flottenops zählen"
+
+#: templates/store/demand_policy.html
+msgid "Suggested-reorder alerts"
+msgstr "Nachbestellvorschlag-Alarme"
 
 #: templates/store/inventory.html
 msgid ""
@@ -49832,6 +49925,10 @@ msgid "Fulfilment policy"
 msgstr "Abwicklungsrichtlinie"
 
 #: templates/store/inventory.html
+msgid "Demand planning"
+msgstr "Bedarfsplanung"
+
+#: templates/store/inventory.html
 msgid "Open supply needs"
 msgstr "Offener Versorgungsbedarf"
 
@@ -49842,22 +49939,6 @@ msgstr "Fit"
 #: templates/store/inventory.html
 msgid "Needed"
 msgstr "Benötigt"
-
-#: templates/store/inventory.html templates/store/inventory_fit.html
-msgid "Required by"
-msgstr "Benötigt bis"
-
-#: templates/store/inventory.html
-msgid "Vehicle"
-msgstr "Umsetzung"
-
-#: templates/store/inventory.html
-msgid "Project"
-msgstr "Projekt"
-
-#: templates/store/inventory.html
-msgid "Build job"
-msgstr "Build-Job"
 
 #: templates/store/inventory.html
 msgid "none yet"
@@ -49913,10 +49994,6 @@ msgstr "Vorrätig"
 #: templates/store/inventory.html templates/store/inventory_fit.html
 msgid "ATP"
 msgstr "ATP"
-
-#: templates/store/inventory.html templates/store/inventory_fit.html
-msgid "Incoming"
-msgstr "Im Zulauf"
 
 #: templates/store/inventory.html
 msgid "Composed weekly demand — losses, ops, targets and manual lines"
@@ -51110,10 +51187,6 @@ msgid "Several fits share this hull — margin × demand is approximate"
 msgstr "Mehrere Fits teilen sich diesen Hull — Marge × Nachfrage ist ungefähr"
 
 #: templates/store/supply_forecast.html
-msgid "import"
-msgstr "Importieren"
-
-#: templates/store/supply_forecast.html
 msgid "Local one-level estimate — EVE Ref couldn't price this build"
 msgstr "Lokale One-Level-Schätzung — EVE Ref konnte diesen Bau nicht bepreisen"
 
@@ -51280,50 +51353,277 @@ msgstr "— Zuweisung aufheben (zurück in den offenen Pool) —"
 msgid "This source string is intentionally never translated"
 msgstr "This source string is intentionally never translated"
 
+msgid "No matching in-game job found — enter its job ID."
+msgstr "Kein passender In-Game-Job gefunden — gib seine Job-ID ein."
+
+msgid "Linked to in-game job #%(id)s — it now carries the schedule."
+msgstr "Mit In-Game-Job #%(id)s verknüpft — er trägt jetzt den Zeitplan."
+
+msgid "That in-game job produces a different item."
+msgstr "Dieser In-Game-Job produziert ein anderes Item."
+
 msgid ""
-"How composed demand is computed: the loss-history window, the planning "
-"horizon, the confidence level behind bands and reorder suggestions, and "
-"which optional signals are armed."
+"Dated demand beyond this many days ahead is excluded from the plan and "
+"listed separately."
 msgstr ""
-"Wie der zusammengesetzte Bedarf berechnet wird: das Verlusthistorien-"
-"Fenster, der Planungshorizont, das Konfidenzniveau hinter Bändern und "
-"Nachbestellvorschlägen sowie welche optionalen Signale aktiviert sind."
+"Terminierter Bedarf, der weiter als diese Anzahl Tage voraus liegt, wird aus "
+"dem Plan ausgeschlossen und separat aufgeführt."
 
-msgid "Planning horizon (days)"
-msgstr "Planungshorizont (Tage)"
+msgid "Assumed days to buy an item at the price-reference hub."
+msgstr "Angenommene Tage, um ein Item am Preisreferenz-Hub zu kaufen."
 
-msgid "Demand planning settings updated."
-msgstr "Bedarfsplanungs-Einstellungen aktualisiert."
+msgid "Assumed days to buy at Jita and freight to the destination."
+msgstr "Angenommene Tage für den Kauf in Jita und die Fracht zum Zielort."
 
-msgid "Demand Planning"
-msgstr "Bedarfsplanung"
+msgid ""
+"Count finished-but-undelivered ESI jobs (status \"ready\") as incoming "
+"supply."
+msgstr ""
+"Fertige, aber noch nicht ausgelieferte ESI-Jobs (Status \"ready\") als "
+"Zulauf zählen."
 
-msgid "Demand planning settings"
-msgstr "Bedarfsplanungs-Einstellungen"
+msgid ""
+"Run the planning job automatically on its nightly schedule. Off: officers "
+"run it manually from the Material Plan page."
+msgstr ""
+"Den Planungsjob automatisch nach seinem nächtlichen Zeitplan ausführen. Aus: "
+"Offiziere starten ihn manuell auf der Materialplan-Seite."
 
-msgid "Loss history (weeks)"
-msgstr "Verlusthistorie (Wochen)"
+msgid "Material-efficiency assumed for every build level of the explosion."
+msgstr ""
+"Materialeffizienz, die für jede Baustufe der Stücklistenauflösung angenommen "
+"wird."
 
-msgid "Service level"
-msgstr "Service-Level"
+msgid "Deepest BOM level the explosion will recurse to."
+msgstr "Tiefste BOM-Ebene, bis zu der die Auflösung rekursiv absteigt."
 
-msgid "Signals & assumptions"
-msgstr "Signale & Annahmen"
+msgid "MRP config"
+msgstr "MRP-Konfiguration"
 
-msgid "Fleet-op attrition (%%)"
-msgstr "Flottenops-Abnutzung (%%)"
+msgid "MRP configs"
+msgstr "MRP-Konfigurationen"
 
-msgid "Slow-mover window (days)"
-msgstr "Ladenhüter-Fenster (Tage)"
+msgid "in-flight ESI job"
+msgstr "laufender ESI-Job"
 
-msgid "Allocate untagged losses"
-msgstr "Ungetaggte Verluste zuordnen"
+msgid "An active supply plan for %(item)s already exists."
+msgstr "Für %(item)s existiert bereits ein aktiver Versorgungsplan."
 
-msgid "Count recurring fleet ops"
-msgstr "Wiederkehrende Flottenops zählen"
+msgid "A planning run is already in progress — try again shortly."
+msgstr "Ein Planungslauf läuft bereits — versuche es gleich noch einmal."
 
-msgid "Suggested-reorder alerts"
-msgstr "Nachbestellvorschlag-Alarme"
+msgid "Planning run finished — no changes since the last run."
+msgstr "Planungslauf abgeschlossen — keine Änderungen seit dem letzten Lauf."
 
-msgid "Demand planning"
-msgstr "Bedarfsplanung"
+msgid "Planning run finished: %(written)s row(s) updated, %(closed)s closed."
+msgstr ""
+"Planungslauf abgeschlossen: %(written)s Zeile(n) aktualisiert, %(closed)s "
+"geschlossen."
+
+msgid "Ship-level demand is fulfilled from the Shipyard inventory console."
+msgstr "Bedarf auf Schiffsebene wird über die Werft-Bestandskonsole erfüllt."
+
+msgid "Material shortfall: {industry_job_name}"
+msgstr "Materialengpass: {industry_job_name}"
+
+msgid ""
+"The material plan needs {quantity}× {industry_job_name} by {eta_date}. "
+"Review the Material Plan: {link}"
+msgstr ""
+"Der Materialplan benötigt {quantity}× {industry_job_name} bis {eta_date}. "
+"Prüfe den Materialplan: {link}"
+
+msgid ""
+"Linked to the in-game job — it carries the schedule and the supply count"
+msgstr ""
+"Mit dem In-Game-Job verknüpft — er trägt den Zeitplan und die Zulaufmenge"
+
+msgid "ESI job ID"
+msgstr "ESI-Job-ID"
+
+msgid ""
+"Record which in-game job this build became, so planning never counts it twice"
+msgstr ""
+"Halte fest, welcher In-Game-Job aus diesem Build wurde, damit die Planung "
+"ihn nie doppelt zählt"
+
+msgid ""
+"Corp-wide net requirements: every demand source exploded through the build "
+"tree and netted once against stock, reservations and in-flight work. Dates "
+"assume unconstrained industry slots — capacity planning comes in a later "
+"phase."
+msgstr ""
+"Corpweiter Nettobedarf: jede Bedarfsquelle wird durch den Baubaum aufgelöst "
+"und einmal gegen Bestand, Reservierungen und laufende Arbeiten verrechnet. "
+"Die Termine gehen von unbegrenzten Industrie-Slots aus — Kapazitätsplanung "
+"folgt in einer späteren Phase."
+
+msgid ""
+"No changes — the latest run's inputs are identical to the previous run's."
+msgstr ""
+"Keine Änderungen — die Inputs des letzten Laufs sind mit denen des "
+"vorherigen identisch."
+
+msgid ""
+"No market price signal for: %(items)s — a 0 ISK buy line is a data gap, not "
+"a bargain."
+msgstr ""
+"Kein Marktpreissignal für: %(items)s — eine Kaufzeile über 0 ISK ist eine "
+"Datenlücke, kein Schnäppchen."
+
+msgid "Feasible"
+msgstr "Machbar"
+
+msgid "ships & fits — fulfilled from the Shipyard console"
+msgstr "Schiffe & Fits — erfüllt über die Werft-Konsole"
+
+msgid ""
+"The linked vehicle no longer matches the plan — planned quantity differs "
+"from what the vehicle says"
+msgstr ""
+"Das verknüpfte Element passt nicht mehr zum Plan — die geplante Menge weicht "
+"von der Angabe des Elements ab"
+
+msgid "Materials for promised build"
+msgstr "Material für zugesagten Build"
+
+msgid "No open requirements — run planning to compute the current picture."
+msgstr ""
+"Keine offenen Bedarfe — führe die Planung aus, um das aktuelle Bild zu "
+"berechnen."
+
+msgid "Multibuy (open buy & import lines)"
+msgstr "Multibuy (offene Kauf- & Import-Zeilen)"
+
+msgid ""
+"Dated demand this far out is excluded from the current plan; it enters when "
+"the window reaches it."
+msgstr ""
+"So weit voraus terminierter Bedarf ist aus dem aktuellen Plan "
+"ausgeschlossen; er fließt ein, sobald das Fenster ihn erreicht."
+
+msgid "Material Plan has requirements descending from this fit"
+msgstr "Der Materialplan enthält Bedarfe, die von diesem Fit abstammen"
+
+msgid "Material plan restock: %(item)s"
+msgstr "Materialplan-Nachschub: %(item)s"
+
+msgid "Material plan: %(quantity)s× %(item)s"
+msgstr "Materialplan: %(quantity)s× %(item)s"
+
+msgid "Buy %(quantity)s× %(item)s for the material plan"
+msgstr "%(quantity)s× %(item)s für den Materialplan kaufen"
+
+msgid "In-game job link removed."
+msgstr "In-Game-Job-Verknüpfung entfernt."
+
+msgid "That in-game job is already linked to another build job."
+msgstr "Dieser In-Game-Job ist bereits mit einem anderen Build-Job verknüpft."
+
+msgid "Only an in-progress job can be linked."
+msgstr "Nur ein laufender Job kann verknüpft werden."
+
+msgid "MRP planning run"
+msgstr "MRP-Planungslauf"
+
+msgid "build duration"
+msgstr "Bauzeit"
+
+msgid "lead time"
+msgstr "Vorlaufzeit"
+
+msgid "That requirement is closed."
+msgstr "Dieser Bedarf ist geschlossen."
+
+msgid "Industry plan “%(name)s” is linked."
+msgstr "Industrie-Plan “%(name)s” ist verknüpft."
+
+msgid "Hauling job posted and linked."
+msgstr "Transportauftrag veröffentlicht und verknüpft."
+
+msgid "Claimable BUY task created and linked."
+msgstr "Übernehmbare BUY-Aufgabe erstellt und verknüpft."
+
+msgid "in game #%(id)s"
+msgstr "im Spiel #%(id)s"
+
+msgid "In-game job ID"
+msgstr "In-Game-Job-ID"
+
+msgid "Confirm in-game match"
+msgstr "In-Game-Zuordnung bestätigen"
+
+msgid "Started in game"
+msgstr "Im Spiel gestartet"
+
+msgid "Material Plan"
+msgstr "Materialplan"
+
+msgid "Run planning now"
+msgstr "Planung jetzt ausführen"
+
+msgid "Live requirements"
+msgstr "Live-Bedarfe"
+
+msgid "planning window: %(days)s days"
+msgstr "Planungsfenster: %(days)s Tage"
+
+msgid "Level %(depth)s"
+msgstr "Ebene %(depth)s"
+
+msgid "diverged"
+msgstr "abweichend"
+
+msgid "Demand sources"
+msgstr "Bedarfsquellen"
+
+msgid "Fit demand"
+msgstr "Fit-Bedarf"
+
+msgid "Backorder need"
+msgstr "Nachlieferungsbedarf"
+
+msgid "Component of requirement"
+msgstr "Komponente von Bedarf"
+
+msgid "Incoming supply"
+msgstr "Zulauf"
+
+msgid "In-game job"
+msgstr "In-Game-Job"
+
+msgid "Board job"
+msgstr "Board-Job"
+
+msgid "Plan line"
+msgstr "Planzeile"
+
+msgid "Shipyard console"
+msgstr "Werft-Konsole"
+
+msgid "BUY task"
+msgstr "BUY-Aufgabe"
+
+msgid "Paste into the in-game market Multibuy window."
+msgstr "In das Multibuy-Fenster des In-Game-Markts einfügen."
+
+msgid "Beyond the planning window"
+msgstr "Außerhalb des Planungsfensters"
+
+msgid "Run history"
+msgstr "Laufhistorie"
+
+msgid "Updated"
+msgstr "Aktualisiert"
+
+msgid "Input digest"
+msgstr "Input-Digest"
+
+msgid "Triggered by"
+msgstr "Ausgelöst durch"
+
+msgid "schedule"
+msgstr "Zeitplan"
+
+msgid "No runs yet."
+msgstr "Noch keine Läufe."

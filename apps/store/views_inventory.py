@@ -295,6 +295,20 @@ def inventory_fit(request: HttpRequest, fit_id: int) -> HttpResponse:
             stockpile__kind=Stockpile.Kind.CORP,
         ).select_related("stockpile").values_list("stockpile__name", "quantity_target")
     ) if fit.ship_type_id else []
+    # P3 tie-in: link to the Material Plan when MRP has live requirements
+    # descending from THIS fit — provenance-keyed (jsonb containment), so an
+    # unrelated build of the same hull doesn't light the link.
+    from django.db.models import Q as _Q
+
+    from apps.industry.models import NetRequirement
+
+    _mrp_q = _Q(sources__contains=[{"kind": "fit_demand", "id": fit.id}])
+    for _need_pk in FitSupplyNeed.objects.filter(doctrine_fit=fit).values_list("pk", flat=True):
+        _mrp_q |= _Q(sources__contains=[{"kind": "supply_need", "id": _need_pk}])
+    has_mrp_rows = NetRequirement.objects.filter(
+        _mrp_q,
+        status__in=(NetRequirement.Status.OPEN, NetRequirement.Status.IN_PROGRESS),
+    ).exists()
     current_hash = manifest_hash(fit)
     stocks = list(
         FitStock.objects.filter(doctrine_fit=fit).select_related("location").order_by("id")
@@ -339,6 +353,7 @@ def inventory_fit(request: HttpRequest, fit_id: int) -> HttpResponse:
         "waitlist_count": FitWaitlistEntry.objects.filter(fit=fit).count(),
         "d": demand, "demand_config": demand_config, "demand_lines": demand_lines,
         "demand_line_form": DemandLineForm(), "hull_targets": hull_targets,
+        "has_mrp_rows": has_mrp_rows,
     })
 
 

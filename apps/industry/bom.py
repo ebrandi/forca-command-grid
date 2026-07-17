@@ -153,26 +153,44 @@ def direct_materials(product_type_id: int, runs: int = 1, me: int = 0) -> dict[i
     }
 
 
-def build_cost(product_type_id: int, quantity: int = 1, me: int = 0) -> Decimal | None:
-    """Cost to build ``quantity`` units (one level), or None if not buildable."""
-    materials = direct_materials(product_type_id, runs=quantity, me=me)
-    if not materials:
+def build_cost(product_type_id: int, quantity: int = 1, me: int = 0, *,
+               price=None) -> Decimal | None:
+    """Cost to build ``quantity`` units (one level), or None if not buildable.
+
+    Batch-safe (P3): units are converted to whole blueprint runs
+    (``ceil(quantity / output_quantity)``) before costing — the old form passed
+    units straight through as runs, overcosting batch recipes (ammo, drones,
+    reactions' feedstock) by the batch factor. ``price`` optionally pins a
+    price callable so a planning run's snapshot can't flip mid-run when the
+    price-cache TTL rolls over; default is the live :func:`price_for`.
+    """
+    price = price or price_for
+    recipe = buildable_recipe(product_type_id)
+    if recipe is None or recipe.activity != SdeBlueprintMaterial.MANUFACTURING:
         return None
-    return sum((price_for(tid) * qty for tid, qty in materials.items()), start=Decimal("0"))
+    runs = math.ceil(max(1, quantity) / max(1, recipe.output_quantity))
+    return sum(
+        (price(tid) * material_quantity(base, runs, me)
+         for tid, base in recipe.materials.items()),
+        start=Decimal("0"),
+    )
 
 
-def buy_cost(product_type_id: int, quantity: int = 1) -> Decimal:
-    return price_for(product_type_id) * quantity
+def buy_cost(product_type_id: int, quantity: int = 1, *, price=None) -> Decimal:
+    return (price or price_for)(product_type_id) * quantity
 
 
-def decide_build_or_buy(product_type_id: int, quantity: int = 1, me: int = 0) -> dict:
+def decide_build_or_buy(product_type_id: int, quantity: int = 1, me: int = 0, *,
+                        price=None) -> dict:
     """Compare building vs buying (one level). Returns decision + both costs.
 
     If the item is not buildable (no blueprint/materials in the SDE), the
-    decision is always ``buy``.
+    decision is always ``buy``. Build cost covers whole runs — building 50
+    units of a 100-per-run recipe costs one full run (the honest cost of
+    covering the need).
     """
-    b_cost = build_cost(product_type_id, quantity, me)
-    p_cost = buy_cost(product_type_id, quantity)
+    b_cost = build_cost(product_type_id, quantity, me, price=price)
+    p_cost = buy_cost(product_type_id, quantity, price=price)
     if b_cost is None:
         return {"decision": "buy", "build_cost": None, "buy_cost": p_cost, "buildable": False}
     decision = "build" if b_cost < p_cost else "buy"
@@ -252,17 +270,19 @@ class BomResult:
         )
 
 
-def _should_build(type_id: int, quantity: int, recipe: Recipe, strategy: str, me: int) -> bool:
+def _should_build(type_id: int, quantity: int, recipe: Recipe, strategy: str, me: int,
+                  price=None) -> bool:
     if strategy == STRATEGY_BUILD_TO_MINERALS:
         return True
+    price = price or price_for
     # build_vs_buy: build only when one-level build is cheaper than buying.
     runs = math.ceil(quantity / max(1, recipe.output_quantity))
     eff_me = me if recipe.activity == SdeBlueprintMaterial.MANUFACTURING else 0
     one_level = sum(
-        (price_for(mat) * material_quantity(base, runs, eff_me) for mat, base in recipe.materials.items()),
+        (price(mat) * material_quantity(base, runs, eff_me) for mat, base in recipe.materials.items()),
         start=Decimal("0"),
     )
-    return one_level < buy_cost(type_id, quantity)
+    return one_level < buy_cost(type_id, quantity, price=price)
 
 
 def expand(

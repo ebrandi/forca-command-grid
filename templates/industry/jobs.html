@@ -100,6 +100,15 @@
           <img src="{% eve_type_icon q.job.output_type_id 32 %}" alt="" class="h-5 w-5 shrink-0 rounded-sm">
           <button type="button" @click="open=!open" class="min-w-0 flex-1 truncate text-left text-muted hover:text-ink">{% type_name q.job.output_type_id %} <span class="data text-xs text-faint">×{{ q.job.quantity }}</span></button>
           <span class="chip !py-0.5 !text-[10px]">{{ q.job.get_status_display }}</span>
+          {% if q.job.esi_job_id %}
+            <span class="chip !py-0.5 !text-[10px] !border-cyan/40 !text-cyan" title="{% translate 'Linked to the in-game job — it carries the schedule and the supply count' %}">{% blocktranslate with id=q.job.esi_job_id %}in game #{{ id }}{% endblocktranslate %}</span>
+            <form method="post" action="{% url 'erp:esi_link' q.job.pk %}">{% csrf_token %}<input type="hidden" name="action" value="unlink"><button class="btn-ghost !py-1 !text-xs">{% translate "Unlink" %}</button></form>
+          {% elif q.job.status == 'building' or q.job.status == 'built' %}
+            <form method="post" action="{% url 'erp:esi_link' q.job.pk %}" class="flex items-center gap-1">{% csrf_token %}
+              <input name="esi_job_id" type="number" min="1" placeholder="{% if q.esi_suggestion %}#{{ q.esi_suggestion.job_id }}{% else %}{% translate 'ESI job ID' %}{% endif %}" class="input-field !w-28 !py-1 !text-xs" aria-label="{% translate 'In-game job ID' %}">
+              <button class="btn-ghost !py-1 !text-xs" title="{% translate 'Record which in-game job this build became, so planning never counts it twice' %}">{% if q.esi_suggestion %}{% translate "Confirm in-game match" %}{% else %}{% translate "Started in game" %}{% endif %}</button>
+            </form>
+          {% endif %}
           {% if q.job.status == 'building' %}
             <form method="post" action="{% url 'erp:status' q.job.pk %}">{% csrf_token %}<input type="hidden" name="status" value="built"><button class="btn-ghost !py-1 !text-xs">{% translate "Mark built" %}</button></form>
             <form method="post" action="{% url 'erp:deliver' q.job.pk %}">{% csrf_token %}<button class="btn-gold !py-1 !text-xs">{% translate "Deliver" %}</button></form>

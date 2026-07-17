@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from django.urls import path
 
-from . import tools, views
+from . import tools, views, views_mrp
 
 app_name = "industry"
 
@@ -17,6 +17,10 @@ urlpatterns = [
     path("jobs/", tools.job_tracker, name="jobs"),
     path("demand/", tools.corp_demand, name="demand"),
     path("demand/create/", tools.plan_from_demand, name="plan_from_demand"),
+    # MRP v1 (P3): the Material Plan
+    path("mrp/", views_mrp.mrp_board, name="mrp"),
+    path("mrp/run/", views_mrp.mrp_run_now, name="mrp_run"),
+    path("mrp/req/<int:pk>/action/", views_mrp.mrp_fan_out, name="mrp_fan_out"),
     path("jobs/plan-from-job/", tools.plan_from_job, name="plan_from_job"),
     # Production plans (the board keeps its `board` name for existing links).
     path("plans/", views.project_board, name="board"),

@@ -679,6 +679,17 @@ app.conf.beat_schedule = {
         "task": "store.expire_reservations",
         "schedule": crontab(minute=28),
     },
+    # MRP v1 (P3): nightly corp-wide net-requirements planning run. INERT until
+    # leadership arms MrpConfig.auto_run_enabled (one config read per firing —
+    # the store-expire-reservations precedent); manual runs from the Material
+    # Plan page are the v1 workflow. 04:05 UTC: the nightly-ladder neighbours
+    # are the every-6-hour syncs at 00:05/06:05 — 04:50 and 04:35 LOOK free but
+    # are not (market.ensure_history_fresh at :50/*/4 and killboard
+    # resolve_names at :35/*/2 both fire in hour 4).
+    "industry-run-mrp": {
+        "task": "industry.run_mrp",
+        "schedule": crontab(minute=5, hour=4),
+    },
     # Shipyard demand planning (P2): weekly composed-demand snapshot per fit +
     # 26-week retention prune. Monday 05:35 UTC sits in the Monday-morning weekly
     # block ahead of readiness (06:00) and clear of the 05:40-05:55 mentorship

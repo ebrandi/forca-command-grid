@@ -1,7 +1,7 @@
 """ERP services: material readiness, job lifecycle, blueprint coverage."""
 from __future__ import annotations
 
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import F
 from django.utils.translation import gettext as _
 
@@ -505,3 +505,92 @@ def in_production(limit: int = 50) -> list[dict]:
             "ends": j.end_date,
         })
     return out
+
+
+# --- P3: BuildJob ↔ ESI-job linking (the ESI-wins dedup) ----------------------
+def suggest_esi_matches(jobs) -> dict:
+    """Best-guess ``CorpIndustryJob`` per claimed board job, in ONE query.
+
+    A match is the same product, installed by one of the job owner's characters,
+    started after the board job was created, still active-ish, and not already
+    linked to another BuildJob. Advisory only — the builder confirms; MRP applies
+    the same heuristic conservatively at read time until they do.
+    """
+    from .models import CorpIndustryJob
+
+    candidates = [
+        j for j in jobs
+        if j.owner_id and not j.esi_job_id
+        and j.status in (BuildJob.Status.BUILDING, BuildJob.Status.BUILT)
+    ]
+    if not candidates:
+        return {}
+    owner_chars: dict[int, set[int]] = {}
+    for job in candidates:
+        if job.owner_id not in owner_chars:
+            owner_chars[job.owner_id] = set(
+                job.owner.characters.values_list("character_id", flat=True)
+            )
+    linked_ids = set(
+        BuildJob.objects.filter(esi_job_id__isnull=False)
+        .values_list("esi_job_id", flat=True)
+    )
+    esi_rows = list(
+        CorpIndustryJob.objects.filter(
+            product_type_id__in={j.output_type_id for j in candidates},
+            status__in=("active", "paused", "ready"),
+            activity_id__in=(1, 9),
+        ).order_by("start_date")
+    )
+    out: dict[int, CorpIndustryJob] = {}
+    for job in candidates:
+        for row in esi_rows:
+            if row.job_id in linked_ids or row.job_id in {
+                r.job_id for r in out.values()
+            }:
+                continue
+            if row.product_type_id != job.output_type_id:
+                continue
+            if row.installer_id not in owner_chars[job.owner_id]:
+                continue
+            if row.start_date and row.start_date < job.created_at:
+                continue
+            out[job.pk] = row
+            break
+    return out
+
+
+@transaction.atomic
+def link_esi_job(job: BuildJob, esi_job_id: int | None) -> tuple[bool, str]:
+    """Link (or unlink, ``None``) a board job to the in-game ESI job it became.
+
+    A linked job is excluded from MRP incoming — the ESI row carries the supply
+    and the real end date (one physical build, one count). Returns (ok, code):
+    codes ``linked``/``unlinked``/``bad_status``/``mismatch``/``taken``.
+    """
+    from .models import CorpIndustryJob
+
+    locked = BuildJob.objects.select_for_update().get(pk=job.pk)
+    if locked.status not in (BuildJob.Status.BUILDING, BuildJob.Status.BUILT):
+        return False, "bad_status"
+    if esi_job_id is None:
+        locked.esi_job_id = None
+        locked.save(update_fields=["esi_job_id", "updated_at"])
+        job.esi_job_id = None
+        return True, "unlinked"
+    esi_row = CorpIndustryJob.objects.filter(job_id=esi_job_id).first()
+    if esi_row and esi_row.product_type_id and esi_row.product_type_id != locked.output_type_id:
+        return False, "mismatch"
+    if BuildJob.objects.filter(esi_job_id=esi_job_id).exclude(pk=locked.pk).exists():
+        return False, "taken"
+    locked.esi_job_id = esi_job_id
+    try:
+        # The partial unique (uniq_buildjob_esi_job_id) closes the race the
+        # pre-check above cannot — two links to one in-game job would exclude
+        # both board jobs from incoming while only one ESI lot supplies.
+        with transaction.atomic():
+            locked.save(update_fields=["esi_job_id", "updated_at"])
+    except IntegrityError:
+        return False, "taken"
+    job.esi_job_id = esi_job_id
+    return True, "linked"

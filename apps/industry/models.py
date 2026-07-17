@@ -81,6 +81,7 @@ class IndustryProject(TimeStampedModel):
         STORE_ORDER = "store_order", _("Corp Store order")
         STORE_GAP = "store_gap", _("Corp Store stock gap")
         ESI_JOB = "esi_job", _("Imported ESI job")
+        MRP = "mrp", _("MRP planning run")
 
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True)
@@ -251,3 +252,186 @@ class ShoppingListItem(models.Model):
     type_id = models.IntegerField()
     quantity = models.BigIntegerField(default=1)
     estimated_unit_price = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
+
+
+# --------------------------------------------------------------------------- #
+#  MRP v1 (P3) — corp-wide net requirements
+# --------------------------------------------------------------------------- #
+class MrpConfig(TimeStampedModel):
+    """Leadership-tunable MRP knobs (P3). Singleton via ``active()``."""
+
+    is_active = models.BooleanField(default=True, db_default=True)
+    consolidation_window_days = models.PositiveIntegerField(
+        default=28, db_default=28,
+        help_text=_("Dated demand beyond this many days ahead is excluded from the "
+                    "plan and listed separately."),
+    )
+    buy_lead_days = models.PositiveIntegerField(
+        default=3, db_default=3,
+        help_text=_("Assumed days to buy an item at the price-reference hub."),
+    )
+    import_lead_days = models.PositiveIntegerField(
+        default=5, db_default=5,
+        help_text=_("Assumed days to buy at Jita and freight to the destination."),
+    )
+    include_ready_jobs = models.BooleanField(
+        default=True, db_default=True,
+        help_text=_("Count finished-but-undelivered ESI jobs (status \"ready\") as incoming supply."),
+    )
+    auto_run_enabled = models.BooleanField(
+        default=False, db_default=False,
+        help_text=_("Run the planning job automatically on its nightly schedule. "
+                    "Off: officers run it manually from the Material Plan page."),
+    )
+    default_me = models.PositiveSmallIntegerField(
+        default=0, db_default=0,
+        help_text=_("Material-efficiency assumed for every build level of the explosion."),
+    )
+    max_depth = models.PositiveSmallIntegerField(
+        default=8, db_default=8,
+        help_text=_("Deepest BOM level the explosion will recurse to."),
+    )
+
+    class Meta:
+        ordering = ["-is_active", "-updated_at"]
+        verbose_name = _("MRP config")
+        verbose_name_plural = _("MRP configs")
+
+    def __str__(self) -> str:
+        return f"MrpConfig #{self.pk}{' active' if self.is_active else ''}"
+
+    @classmethod
+    def active(cls) -> MrpConfig:
+        cfg = cls.objects.filter(is_active=True).order_by("-updated_at").first()
+        if cfg is None:
+            cfg = cls.objects.create(is_active=True)
+        return cfg
+
+
+class MrpRun(models.Model):
+    """One planning run: the single-flight guard, the stats and the input digest.
+
+    At most one row may be ``running`` (partial unique). A crashed run is
+    recovered precisely: a new trigger finding a ``running`` row whose
+    ``heartbeat_at`` is stale flips it to ``failed`` and claims its own row in
+    the same transaction — the constraint makes exactly one claimant win.
+    """
+
+    class Status(models.TextChoices):
+        RUNNING = "running", _("Running")
+        DONE = "done", _("Done")
+        FAILED = "failed", _("Failed")
+
+    status = models.CharField(
+        max_length=8, choices=Status.choices, default=Status.RUNNING,
+        db_default=Status.RUNNING, db_index=True,
+    )
+    started_at = models.DateTimeField(auto_now_add=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+    heartbeat_at = models.DateTimeField(null=True, blank=True)
+    triggered_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="+",
+    )
+    stats = models.JSONField(
+        blank=True, default=dict, db_default=models.Value({}, models.JSONField())
+    )
+    inputs_digest = models.CharField(max_length=64, blank=True, default="", db_default="")
+
+    class Meta:
+        ordering = ["-started_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["status"],
+                condition=models.Q(status="running"),
+                name="uniq_running_mrp_run",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"MrpRun #{self.pk} {self.status}"
+
+
+class NetRequirement(TimeStampedModel):
+    """One live netted material requirement per (type, location) — the
+    ``FitSupplyNeed`` pattern generalised to arbitrary types.
+
+    Quantities are FINISHED UNITS, always — blueprint runs never leave the BOM
+    layer. ``sources`` is demand provenance (fit_demand/supply_need/parent/
+    vehicle refs), ``incoming_refs`` is supply provenance (esi_job/build_job/
+    project_item refs; ESI jobs by ``job_id``, never pk — the table is
+    snapshot-replaced). Together they make every displayed number decomposable.
+    """
+
+    class Status(models.TextChoices):
+        OPEN = "open", _("Open")
+        IN_PROGRESS = "in_progress", _("In progress")
+        DONE = "done", _("Done")
+        CANCELLED = "cancelled", _("Cancelled")
+
+    type_id = models.IntegerField(db_index=True)
+    location = models.ForeignKey(
+        MarketLocation, on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
+    )
+    status = models.CharField(
+        max_length=12, choices=Status.choices, default=Status.OPEN,
+        db_default=Status.OPEN, db_index=True,
+    )
+    net_quantity = models.BigIntegerField(default=0, db_default=0)
+    gross_quantity = models.BigIntegerField(default=0, db_default=0)
+    available_quantity = models.BigIntegerField(default=0, db_default=0)
+    incoming_quantity = models.BigIntegerField(default=0, db_default=0)
+    required_by = models.DateTimeField(null=True, blank=True)
+    # Codes stay machine-English; labels resolve at render time (SUGGESTION_LABELS).
+    suggestion = models.CharField(max_length=8, blank=True, default="", db_default="")
+    feasible_at = models.DateTimeField(null=True, blank=True)
+    feasible_source = models.CharField(max_length=12, blank=True, default="", db_default="")
+    depth = models.PositiveSmallIntegerField(default=0, db_default=0)
+    sources = models.JSONField(
+        blank=True, default=list, db_default=models.Value([], models.JSONField())
+    )
+    incoming_refs = models.JSONField(
+        blank=True, default=list, db_default=models.Value([], models.JSONField())
+    )
+    diverged = models.BooleanField(default=False, db_default=False)
+    last_run = models.ForeignKey(
+        MrpRun, on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
+    )
+    industry_project = models.ForeignKey(
+        IndustryProject, on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
+    )
+    build_job = models.ForeignKey(
+        "erp.BuildJob", on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
+    )
+    hauling_task = models.ForeignKey(
+        "stockpile.HaulingTask", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="+",
+    )
+    task = models.ForeignKey(
+        "tasks.Task", on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
+    )
+
+    class Meta:
+        ordering = ["depth", "type_id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["type_id", "location"],
+                condition=models.Q(status__in=("open", "in_progress")),
+                nulls_distinct=False,
+                name="uniq_live_netrequirement_per_type_location",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["status", "suggestion"]),
+            models.Index(fields=["status", "depth"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"NetRequirement<{self.type_id}@{self.location_id} net={self.net_quantity} {self.status}>"
+
+    @property
+    def has_vehicle(self) -> bool:
+        return bool(
+            self.industry_project_id or self.build_job_id
+            or self.hauling_task_id or self.task_id
+        )

@@ -499,6 +499,15 @@ SCAFFOLDS: dict[str, Scaffold] = {
         subject=_("Back in stock: {ship_name}"),
         body=_("{ship_name} can be ordered on the Shipyard again."),
     ),
+    # --- industry (MRP v1, P3) ------------------------------------------------
+    # ``{industry_job_name}`` is an SdeType name — EVE game data, raw by policy.
+    "industry.mrp_shortfall": Scaffold(
+        subject=_("Material shortfall: {industry_job_name}"),
+        body=_(
+            "The material plan needs {quantity}× {industry_job_name} by {eta_date}. "
+            "Review the Material Plan: {link}"
+        ),
+    ),
     "store.supply_need.built": Scaffold(
         subject=_("Shipyard restock built"),
         body=_(

@@ -43,6 +43,12 @@ class BuildJob(TimeStampedModel):
         "industry.IndustryProjectItem", on_delete=models.SET_NULL, null=True, blank=True,
         related_name="build_jobs",
     )
+    # P3 (ESI-wins dedup): the ESI ``CorpIndustryJob.job_id`` this board job was
+    # started as in game. A linked job is EXCLUDED from MRP's incoming supply —
+    # its ESI row carries the output and the real end date, so one physical build
+    # never counts twice. A bare id, never an FK: the ESI table is
+    # snapshot-replaced every sync and its PKs churn.
+    esi_job_id = models.BigIntegerField(null=True, blank=True, db_index=True)
     due_at = models.DateTimeField(null=True, blank=True)
     # The prose columns stay: they are the English fallback AND the audit record of what the
     # board actually said, and they are what legacy rows (written before the *_key columns
@@ -68,6 +74,15 @@ class BuildJob(TimeStampedModel):
 
     class Meta:
         ordering = ["-created_at"]
+        constraints = [
+            # One board job per in-game job — the ESI-wins dedup depends on it
+            # (two links would exclude both from incoming while one lot supplies).
+            models.UniqueConstraint(
+                fields=["esi_job_id"],
+                condition=models.Q(esi_job_id__isnull=False),
+                name="uniq_buildjob_esi_job_id",
+            ),
+        ]
 
     def __str__(self) -> str:
         return f"build {self.quantity}× {self.output_type_id}"

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-16 22:16+0000\n"
+"POT-Creation-Date: 2026-07-16 23:46+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: zh-hans machine-assisted draft\n"
@@ -472,8 +472,8 @@ msgid "Reward scan complete — %(n)d new reward event(s) created."
 msgstr "奖励扫描完成 —— 已创建 %(n)d 个新奖励事件。"
 
 #: apps/admin_audit/console_combat.py apps/buyback/views.py
-#: apps/capsuleer/views.py apps/logistics/views.py apps/stockpile/views.py
-#: apps/store/views.py apps/store/views_inventory.py
+#: apps/capsuleer/views.py apps/industry/views_mrp.py apps/logistics/views.py
+#: apps/stockpile/views.py apps/store/views.py apps/store/views_inventory.py
 msgid "Unknown action."
 msgstr "未知操作。"
 
@@ -1648,9 +1648,10 @@ msgid "Effective refine yield (skills + structure + rig) used to value ore."
 msgstr "用于估算矿石价值的有效精炼产出率（技能 + 建筑 + 改装件）。"
 
 #: apps/buyback/models.py apps/campaigns/models.py apps/capsuleer/models.py
-#: apps/command_intel/models.py apps/raffle/models.py apps/readiness/models.py
-#: apps/recommendations/models.py apps/stockpile/models.py apps/store/models.py
-#: apps/tasks/models.py templates/navigation/jump_routes.html
+#: apps/command_intel/models.py apps/industry/models.py apps/raffle/models.py
+#: apps/readiness/models.py apps/recommendations/models.py
+#: apps/stockpile/models.py apps/store/models.py apps/tasks/models.py
+#: templates/navigation/jump_routes.html
 msgid "Open"
 msgstr "开放中"
 
@@ -2134,8 +2135,9 @@ msgstr "已完成"
 
 #: apps/campaigns/models.py apps/campaigns/views.py
 #: apps/command_intel/models.py apps/comms_access/models.py
-#: apps/logistics/models.py apps/pingboard/models.py apps/raffle/models.py
-#: templates/campaigns/close.html templates/logistics/contracts.html
+#: apps/industry/models.py apps/logistics/models.py apps/pingboard/models.py
+#: apps/raffle/models.py templates/campaigns/close.html
+#: templates/logistics/contracts.html
 msgid "Failed"
 msgstr "已失败"
 
@@ -4295,7 +4297,7 @@ msgstr "已忽略"
 msgid "Pilot"
 msgstr "飞行员"
 
-#: apps/capsuleer/models.py
+#: apps/capsuleer/models.py templates/industry/mrp.html
 msgid "Suggestion"
 msgstr "建议"
 
@@ -6225,8 +6227,8 @@ msgstr "就绪"
 msgid "Ready (degraded — no narrative)"
 msgstr "就绪（降级 — 无叙述）"
 
-#: apps/command_intel/models.py apps/logistics/models.py
-#: apps/mentorship/models.py apps/onboarding/models.py
+#: apps/command_intel/models.py apps/industry/models.py
+#: apps/logistics/models.py apps/mentorship/models.py apps/onboarding/models.py
 #: apps/recommendations/models.py apps/stockpile/models.py apps/store/models.py
 #: apps/tasks/models.py templates/command_intel/_coa_card.html
 #: templates/store/my_orders.html
@@ -6934,9 +6936,9 @@ msgstr "可行"
 msgid "not ready"
 msgstr "未就绪"
 
-#: apps/doctrines/services.py templates/capsuleer/goal_detail.html
-#: templates/doctrines/coverage.html templates/identity/dashboard.html
-#: templates/mentorship/register_mentee.html
+#: apps/doctrines/services.py apps/industry/mrp.py
+#: templates/capsuleer/goal_detail.html templates/doctrines/coverage.html
+#: templates/identity/dashboard.html templates/mentorship/register_mentee.html
 #: templates/mentorship/register_mentor.html templates/readiness/dashboard.html
 msgid "unknown"
 msgstr "未知"
@@ -7410,12 +7412,12 @@ msgstr ""
 msgid "View-as ended — you're back on your own account."
 msgstr "view-as 已结束 — 你已回到自己的账户。"
 
-#: apps/industry/bom.py templates/base.html templates/doctrines/supply.html
-#: templates/store/supply_forecast.html
+#: apps/industry/bom.py apps/industry/mrp.py templates/base.html
+#: templates/doctrines/supply.html templates/store/supply_forecast.html
 msgid "build"
 msgstr "构建"
 
-#: apps/industry/bom.py templates/doctrines/supply.html
+#: apps/industry/bom.py apps/industry/mrp.py templates/doctrines/supply.html
 msgid "buy"
 msgstr "购买"
 
@@ -7574,13 +7576,21 @@ msgstr "反应"
 msgid "Invent"
 msgstr "发明"
 
-#: apps/industry/models.py
+#: apps/industry/models.py templates/industry/mrp.html
 msgid "Haul"
 msgstr "运输"
 
 #: apps/industry/models.py templates/logistics/corp_contracts.html
 msgid "Contract"
 msgstr "合同"
+
+#: apps/industry/models.py apps/raffle/models.py
+msgid "Running"
+msgstr "运行中"
+
+#: apps/industry/mrp.py templates/store/supply_forecast.html
+msgid "import"
+msgstr "导入"
 
 #: apps/industry/tools.py
 msgid "Pick a valid item from the demand list."
@@ -7740,6 +7750,10 @@ msgstr "未预留任何内容 — 没有可用的匹配军团库存。"
 #, python-format
 msgid "Released %(n)s reservation(s) back to corp stock."
 msgstr "已将 %(n)s 项预留释放回军团库存。"
+
+#: apps/industry/views_mrp.py apps/store/views_inventory.py
+msgid "ERP build job queued and linked."
+msgstr "ERP 建造任务已加入队列并关联。"
 
 #: apps/kb/models.py
 msgid "Public"
@@ -8021,8 +8035,8 @@ msgstr "无奖励"
 #: apps/killboard/models.py templates/buyback/appraisal.html
 #: templates/buyback/offer.html templates/industry/chain.html
 #: templates/industry/create.html templates/industry/demand.html
-#: templates/market/dashboard.html templates/stockpile/dashboard.html
-#: templates/stockpile/logistics.html
+#: templates/industry/mrp.html templates/market/dashboard.html
+#: templates/stockpile/dashboard.html templates/stockpile/logistics.html
 msgid "Item"
 msgstr "物品"
 
@@ -16488,10 +16502,6 @@ msgid "Seed committed"
 msgstr "种子已提交"
 
 #: apps/raffle/models.py
-msgid "Running"
-msgstr "运行中"
-
-#: apps/raffle/models.py
 msgid "git commit at draw time."
 msgstr "抽奖时的 git commit。"
 
@@ -19301,7 +19311,7 @@ msgid "demand planning configs"
 msgstr "需求规划配置"
 
 #: apps/store/models.py templates/admin_audit/console/raffle_draw.html
-#: templates/store/inventory_fit.html
+#: templates/industry/mrp.html templates/store/inventory_fit.html
 msgid "Closed"
 msgstr "已关闭"
 
@@ -19578,10 +19588,6 @@ msgid "Industry project “%(name)s” is linked."
 msgstr "工业项目“%(name)s”已关联。"
 
 #: apps/store/views_inventory.py
-msgid "ERP build job queued and linked."
-msgstr "ERP 建造任务已加入队列并关联。"
-
-#: apps/store/views_inventory.py
 msgid "Claimable task created and linked."
 msgstr "已创建并关联可认领任务。"
 
@@ -19597,6 +19603,10 @@ msgstr "需求条目已关闭。"
 #: apps/store/views_inventory.py
 msgid "That demand line is already closed."
 msgstr "该需求条目已关闭。"
+
+#: apps/store/views_inventory.py
+msgid "Demand planning settings updated."
+msgstr "需求规划设置已更新。"
 
 #: apps/tasks/models.py
 msgid "Build ships"
@@ -20805,6 +20815,7 @@ msgstr "舰船 &amp; Doctrines"
 
 #: templates/_nav.html templates/doctrines/detail.html
 #: templates/doctrines/list.html templates/doctrines/ships.html
+#: templates/industry/mrp.html
 msgid "Shipyard"
 msgstr "船坞"
 
@@ -21206,7 +21217,7 @@ msgstr "筛选"
 #: templates/admin_audit/audit.html
 #: templates/admin_audit/console/combat_rewards.html
 #: templates/admin_audit/console/raffle_ineligible.html
-#: templates/admin_audit/console/raffle_ledger.html
+#: templates/admin_audit/console/raffle_ledger.html templates/industry/mrp.html
 #: templates/store/inventory.html
 msgid "Export CSV"
 msgstr "导出 CSV"
@@ -21811,7 +21822,7 @@ msgstr "击杀 ≥"
 #: templates/admin_audit/console/raffle_ledger.html
 #: templates/admin_audit/health.html templates/campaigns/portfolio.html
 #: templates/campaigns/report.html templates/campaigns/risk_form.html
-#: templates/campaigns/workstream_form.html
+#: templates/campaigns/workstream_form.html templates/industry/mrp.html
 #: templates/logistics/corp_contracts.html templates/market/dashboard.html
 #: templates/mining/my_mining.html templates/operations/form.html
 #: templates/operations/templates.html templates/pingboard/alert_detail.html
@@ -27465,6 +27476,7 @@ msgstr "共享计划"
 
 #: templates/admin_audit/console/planetary/hub.html
 #: templates/industry/demand.html templates/industry/jobs.html
+#: templates/industry/mrp.html
 msgid "Plan"
 msgstr "计划"
 
@@ -34591,6 +34603,7 @@ msgid "Unlink your Discord account?"
 msgstr "解除关联你的 Discord 账号？"
 
 #: templates/comms_access/connect.html templates/identity/linked_pilots.html
+#: templates/industry/jobs.html
 msgid "Unlink"
 msgstr "解除关联"
 
@@ -34691,8 +34704,8 @@ msgstr "所有部门"
 msgid "Balance"
 msgstr "余额"
 
-#: templates/corporation/finance.html templates/mining/my_mining.html
-#: templates/mining/payout.html
+#: templates/corporation/finance.html templates/industry/mrp.html
+#: templates/mining/my_mining.html templates/mining/payout.html
 msgid "Net"
 msgstr "净额"
 
@@ -35570,8 +35583,9 @@ msgstr "最省组合"
 msgid "Per-item plan"
 msgstr "逐项计划"
 
-#: templates/doctrines/supply.html templates/store/inventory.html
-#: templates/store/inventory_fit.html templates/tasks/detail.html
+#: templates/doctrines/supply.html templates/industry/mrp.html
+#: templates/store/inventory.html templates/store/inventory_fit.html
+#: templates/tasks/detail.html
 msgid "Task"
 msgstr "任务"
 
@@ -36879,7 +36893,7 @@ msgstr "当前活跃 · %(n)s"
 msgid "Viewing as"
 msgstr "正在以此身份查看"
 
-#: templates/impersonation/log.html
+#: templates/impersonation/log.html templates/industry/mrp.html
 msgid "Started"
 msgstr "开始时间"
 
@@ -38071,6 +38085,48 @@ msgstr ""
 "尚未导入军团作业。Director 可在 <a href=\"/auth/eve/scopes/\" class=\"text-"
 "gold hover:underline\">ESI Scopes</a> 页面授予 <strong>Corp blueprints + "
 "jobs</strong>。"
+
+#: templates/industry/mrp.html templates/mining/ledger.html
+#: templates/mining/payouts.html
+msgid "Industry · Leadership"
+msgstr "工业 · 领导层"
+
+#: templates/industry/mrp.html templates/market/dashboard.html
+#: templates/stockpile/asset_search.html templates/stockpile/dashboard.html
+#: templates/store/inventory.html templates/store/inventory_fit.html
+msgid "Location"
+msgstr "地点"
+
+#: templates/industry/mrp.html templates/mining/payout.html
+#: templates/planetary/detail.html
+msgid "Gross"
+msgstr "总额"
+
+#: templates/industry/mrp.html templates/stockpile/dashboard.html
+msgid "Available"
+msgstr "可用"
+
+#: templates/industry/mrp.html templates/store/inventory.html
+#: templates/store/inventory_fit.html
+msgid "Incoming"
+msgstr "在途"
+
+#: templates/industry/mrp.html templates/store/inventory.html
+#: templates/store/inventory_fit.html
+msgid "Required by"
+msgstr "需求截止"
+
+#: templates/industry/mrp.html templates/store/inventory.html
+msgid "Vehicle"
+msgstr "载具"
+
+#: templates/industry/mrp.html templates/store/inventory.html
+msgid "Project"
+msgstr "项目"
+
+#: templates/industry/mrp.html templates/store/inventory.html
+msgid "Build job"
+msgstr "建造任务"
 
 #: templates/kb/detail.html templates/kb/edit.html
 msgid "← Knowledge base"
@@ -39527,12 +39583,6 @@ msgstr "跟踪的价格中没有明显的价差。"
 msgid "My watchlist"
 msgstr "我的监视列表"
 
-#: templates/market/dashboard.html templates/stockpile/asset_search.html
-#: templates/stockpile/dashboard.html templates/store/inventory.html
-#: templates/store/inventory_fit.html
-msgid "Location"
-msgstr "地点"
-
 #: templates/market/dashboard.html
 msgid "30d trend"
 msgstr "30天趋势"
@@ -40470,10 +40520,6 @@ msgstr ""
 "目前还没有开放的学习路线。你的领导层仍在规划教学大纲——请稍后再来查看，并做好"
 "出站准备。"
 
-#: templates/mining/ledger.html templates/mining/payouts.html
-msgid "Industry · Leadership"
-msgstr "工业 · 领导层"
-
 #: templates/mining/ledger.html
 msgid "Mining ledger"
 msgstr "采矿账本"
@@ -40673,10 +40719,6 @@ msgstr[0] "%(n)s 名参与者"
 #: templates/mining/payout.html
 msgid "pool"
 msgstr "资金池"
-
-#: templates/mining/payout.html templates/planetary/detail.html
-msgid "Gross"
-msgstr "总额"
 
 #: templates/mining/payout.html
 msgid "Tax kept"
@@ -47027,10 +47069,6 @@ msgid "Reserved"
 msgstr "已预留"
 
 #: templates/stockpile/dashboard.html
-msgid "Available"
-msgstr "可用"
-
-#: templates/stockpile/dashboard.html
 msgid "ESI on-hand"
 msgstr "ESI 现有量"
 
@@ -47235,15 +47273,69 @@ msgstr "1.10 = 预估建造成本 +10%%"
 msgid "Supercapital hull markup"
 msgstr "Supercapital 船体加价"
 
+#: templates/store/demand_policy.html
+msgid "Demand Planning"
+msgstr "需求规划"
+
 #: templates/store/demand_policy.html templates/store/inventory.html
 #: templates/store/shipyard_policy.html
 msgid "Shipyard · Leadership"
 msgstr "船坞 · 领导层"
 
+#: templates/store/demand_policy.html
+msgid "Demand planning settings"
+msgstr "需求规划设置"
+
+#: templates/store/demand_policy.html
+msgid ""
+"How composed demand is computed: the loss-history window, the planning "
+"horizon, the confidence level behind bands and reorder suggestions, and "
+"which optional signals are armed."
+msgstr ""
+"合成需求的计算方式：损失历史窗口、规划期限、区间与再订购建议背后的置信水平，"
+"以及启用哪些可选信号。"
+
 #: templates/store/demand_policy.html templates/store/inventory.html
 #: templates/store/inventory_fit.html templates/store/shipyard_policy.html
 msgid "Inventory console"
 msgstr "库存控制台"
+
+#: templates/store/demand_policy.html
+msgid "Loss history (weeks)"
+msgstr "损失历史（周）"
+
+#: templates/store/demand_policy.html
+msgid "Planning horizon (days)"
+msgstr "规划期限（天）"
+
+#: templates/store/demand_policy.html
+msgid "Service level"
+msgstr "服务水平"
+
+#: templates/store/demand_policy.html
+msgid "Signals & assumptions"
+msgstr "信号与假设"
+
+#: templates/store/demand_policy.html
+#, python-format
+msgid "Fleet-op attrition (%%)"
+msgstr "舰队行动损耗率（%%）"
+
+#: templates/store/demand_policy.html
+msgid "Slow-mover window (days)"
+msgstr "滞销窗口（天）"
+
+#: templates/store/demand_policy.html
+msgid "Allocate untagged losses"
+msgstr "分摊未标记损失"
+
+#: templates/store/demand_policy.html
+msgid "Count recurring fleet ops"
+msgstr "计入周期性舰队行动"
+
+#: templates/store/demand_policy.html
+msgid "Suggested-reorder alerts"
+msgstr "建议再订购警报"
 
 #: templates/store/inventory.html
 msgid ""
@@ -47259,6 +47351,10 @@ msgid "Fulfilment policy"
 msgstr "履单政策"
 
 #: templates/store/inventory.html
+msgid "Demand planning"
+msgstr "需求规划"
+
+#: templates/store/inventory.html
 msgid "Open supply needs"
 msgstr "未结补给需求"
 
@@ -47269,22 +47365,6 @@ msgstr "配装"
 #: templates/store/inventory.html
 msgid "Needed"
 msgstr "需求量"
-
-#: templates/store/inventory.html templates/store/inventory_fit.html
-msgid "Required by"
-msgstr "需求截止"
-
-#: templates/store/inventory.html
-msgid "Vehicle"
-msgstr "载具"
-
-#: templates/store/inventory.html
-msgid "Project"
-msgstr "项目"
-
-#: templates/store/inventory.html
-msgid "Build job"
-msgstr "建造任务"
 
 #: templates/store/inventory.html
 msgid "none yet"
@@ -47339,10 +47419,6 @@ msgstr "现有"
 #: templates/store/inventory.html templates/store/inventory_fit.html
 msgid "ATP"
 msgstr "ATP"
-
-#: templates/store/inventory.html templates/store/inventory_fit.html
-msgid "Incoming"
-msgstr "在途"
 
 #: templates/store/inventory.html
 msgid "Composed weekly demand — losses, ops, targets and manual lines"
@@ -48461,10 +48537,6 @@ msgid "Several fits share this hull — margin × demand is approximate"
 msgstr "多个配装共用此船体 —— 利润 × 需求为近似值"
 
 #: templates/store/supply_forecast.html
-msgid "import"
-msgstr "导入"
-
-#: templates/store/supply_forecast.html
 msgid "Local one-level estimate — EVE Ref couldn't price this build"
 msgstr "本地单层估算 — EVE Ref 无法为此建造定价"
 
@@ -48623,49 +48695,253 @@ msgstr "— 取消分配（退回开放池）—"
 msgid "This source string is intentionally never translated"
 msgstr "此源字符串刻意保持不翻译"
 
+msgid "No matching in-game job found — enter its job ID."
+msgstr "未找到匹配的游戏内作业 — 请输入其作业 ID。"
+
+msgid "Linked to in-game job #%(id)s — it now carries the schedule."
+msgstr "已关联到游戏内作业 #%(id)s — 排期现由该作业承载。"
+
+msgid "That in-game job produces a different item."
+msgstr "该游戏内作业生产的是另一种物品。"
+
 msgid ""
-"How composed demand is computed: the loss-history window, the planning "
-"horizon, the confidence level behind bands and reorder suggestions, and "
-"which optional signals are armed."
+"Dated demand beyond this many days ahead is excluded from the plan and "
+"listed separately."
+msgstr "超出此天数的带日期需求将不纳入计划，并单独列出。"
+
+msgid "Assumed days to buy an item at the price-reference hub."
+msgstr "在价格参考枢纽购买物品的假定天数。"
+
+msgid "Assumed days to buy at Jita and freight to the destination."
+msgstr "在 Jita 购买并运送到目的地的假定天数。"
+
+msgid ""
+"Count finished-but-undelivered ESI jobs (status \"ready\") as incoming "
+"supply."
+msgstr "将已完成但未交付的 ESI 作业（状态为“ready”）计为在途补给。"
+
+msgid ""
+"Run the planning job automatically on its nightly schedule. Off: officers "
+"run it manually from the Material Plan page."
+msgstr "按每晚的排程自动运行规划任务。关闭时：由官员在材料计划页面手动运行。"
+
+msgid "Material-efficiency assumed for every build level of the explosion."
+msgstr "展开的每个建造层级所假定的材料效率。"
+
+msgid "Deepest BOM level the explosion will recurse to."
+msgstr "展开递归到的最深 BOM 层级。"
+
+msgid "MRP config"
+msgstr "MRP 配置"
+
+msgid "MRP configs"
+msgstr "MRP 配置"
+
+msgid "in-flight ESI job"
+msgstr "进行中的 ESI 作业"
+
+msgid "An active supply plan for %(item)s already exists."
+msgstr "%(item)s 已存在有效的补给计划。"
+
+msgid "A planning run is already in progress — try again shortly."
+msgstr "已有一次规划运行正在进行 — 请稍后再试。"
+
+msgid "Planning run finished — no changes since the last run."
+msgstr "规划运行已完成 — 与上次运行相比无变化。"
+
+msgid "Planning run finished: %(written)s row(s) updated, %(closed)s closed."
+msgstr "规划运行已完成：已更新 %(written)s 行，关闭 %(closed)s 行。"
+
+msgid "Ship-level demand is fulfilled from the Shipyard inventory console."
+msgstr "舰船层级的需求由船坞库存控制台履行。"
+
+msgid "Material shortfall: {industry_job_name}"
+msgstr "材料缺口：{industry_job_name}"
+
+msgid ""
+"The material plan needs {quantity}× {industry_job_name} by {eta_date}. "
+"Review the Material Plan: {link}"
 msgstr ""
-"合成需求的计算方式：损失历史窗口、规划期限、区间与再订购建议背后的置信水平，"
-"以及启用哪些可选信号。"
+"材料计划需要在 {eta_date} 前获得 {quantity}× {industry_job_name}。请查看材料"
+"计划：{link}"
 
-msgid "Planning horizon (days)"
-msgstr "规划期限（天）"
+msgid ""
+"Linked to the in-game job — it carries the schedule and the supply count"
+msgstr "已关联到游戏内作业 — 排期与补给数量以其为准"
 
-msgid "Demand planning settings updated."
-msgstr "需求规划设置已更新。"
+msgid "ESI job ID"
+msgstr "ESI 作业 ID"
 
-msgid "Demand Planning"
-msgstr "需求规划"
+msgid ""
+"Record which in-game job this build became, so planning never counts it twice"
+msgstr "记录此建造对应的游戏内作业，避免规划重复计算"
 
-msgid "Demand planning settings"
-msgstr "需求规划设置"
+msgid ""
+"Corp-wide net requirements: every demand source exploded through the build "
+"tree and netted once against stock, reservations and in-flight work. Dates "
+"assume unconstrained industry slots — capacity planning comes in a later "
+"phase."
+msgstr ""
+"全军团净需求：每个需求来源都沿建造树展开，并与库存、预留和进行中的工作做一次"
+"净额抵扣。日期假定工业槽位不受限 — 产能规划将在后续阶段推出。"
 
-msgid "Loss history (weeks)"
-msgstr "损失历史（周）"
+msgid ""
+"No changes — the latest run's inputs are identical to the previous run's."
+msgstr "无变化 — 最新一次运行的输入与上一次完全相同。"
 
-msgid "Service level"
-msgstr "服务水平"
+msgid ""
+"No market price signal for: %(items)s — a 0 ISK buy line is a data gap, not "
+"a bargain."
+msgstr ""
+"以下物品缺少市场价格信号：%(items)s — 0 ISK 的购买行是数据缺口，不是便宜货。"
 
-msgid "Signals & assumptions"
-msgstr "信号与假设"
+msgid "Feasible"
+msgstr "可行"
 
-msgid "Fleet-op attrition (%%)"
-msgstr "舰队行动损耗率（%%）"
+msgid "ships & fits — fulfilled from the Shipyard console"
+msgstr "舰船与配装 — 由船坞控制台履行"
 
-msgid "Slow-mover window (days)"
-msgstr "滞销窗口（天）"
+msgid ""
+"The linked vehicle no longer matches the plan — planned quantity differs "
+"from what the vehicle says"
+msgstr "关联的载具与计划不再一致 — 计划数量与载具所示不同"
 
-msgid "Allocate untagged losses"
-msgstr "分摊未标记损失"
+msgid "Materials for promised build"
+msgstr "承诺建造所需材料"
 
-msgid "Count recurring fleet ops"
-msgstr "计入周期性舰队行动"
+msgid "No open requirements — run planning to compute the current picture."
+msgstr "暂无未结需求 — 运行规划以计算当前状况。"
 
-msgid "Suggested-reorder alerts"
-msgstr "建议再订购警报"
+msgid "Multibuy (open buy & import lines)"
+msgstr "Multibuy（未结的购买与进口行）"
 
-msgid "Demand planning"
-msgstr "需求规划"
+msgid ""
+"Dated demand this far out is excluded from the current plan; it enters when "
+"the window reaches it."
+msgstr "这么远之后的带日期需求不纳入当前计划；待规划窗口到达时才会计入。"
+
+msgid "Material Plan has requirements descending from this fit"
+msgstr "材料计划中有源自此配装的需求"
+
+msgid "Material plan restock: %(item)s"
+msgstr "材料计划补货：%(item)s"
+
+msgid "Material plan: %(quantity)s× %(item)s"
+msgstr "材料计划：%(quantity)s× %(item)s"
+
+msgid "Buy %(quantity)s× %(item)s for the material plan"
+msgstr "为材料计划购买 %(quantity)s× %(item)s"
+
+msgid "In-game job link removed."
+msgstr "游戏内作业关联已移除。"
+
+msgid "That in-game job is already linked to another build job."
+msgstr "该游戏内作业已关联到另一个建造作业。"
+
+msgid "Only an in-progress job can be linked."
+msgstr "只有进行中的作业才能关联。"
+
+msgid "MRP planning run"
+msgstr "MRP 规划运行"
+
+msgid "build duration"
+msgstr "建造时长"
+
+msgid "lead time"
+msgstr "前置时间"
+
+msgid "That requirement is closed."
+msgstr "该需求已关闭。"
+
+msgid "Industry plan “%(name)s” is linked."
+msgstr "工业计划“%(name)s”已关联。"
+
+msgid "Hauling job posted and linked."
+msgstr "运输任务已发布并关联。"
+
+msgid "Claimable BUY task created and linked."
+msgstr "已创建并关联可认领的 BUY 任务。"
+
+msgid "in game #%(id)s"
+msgstr "游戏内 #%(id)s"
+
+msgid "In-game job ID"
+msgstr "游戏内作业 ID"
+
+msgid "Confirm in-game match"
+msgstr "确认游戏内匹配"
+
+msgid "Started in game"
+msgstr "已在游戏内开始"
+
+msgid "Material Plan"
+msgstr "材料计划"
+
+msgid "Run planning now"
+msgstr "立即运行规划"
+
+msgid "Live requirements"
+msgstr "实时需求"
+
+msgid "planning window: %(days)s days"
+msgstr "规划窗口：%(days)s 天"
+
+msgid "Level %(depth)s"
+msgstr "层级 %(depth)s"
+
+msgid "diverged"
+msgstr "已偏离"
+
+msgid "Demand sources"
+msgstr "需求来源"
+
+msgid "Fit demand"
+msgstr "配装需求"
+
+msgid "Backorder need"
+msgstr "缺货预订需求"
+
+msgid "Component of requirement"
+msgstr "上级需求的组件"
+
+msgid "Incoming supply"
+msgstr "在途补给"
+
+msgid "In-game job"
+msgstr "游戏内作业"
+
+msgid "Board job"
+msgstr "看板作业"
+
+msgid "Plan line"
+msgstr "计划行"
+
+msgid "Shipyard console"
+msgstr "船坞控制台"
+
+msgid "BUY task"
+msgstr "BUY 任务"
+
+msgid "Paste into the in-game market Multibuy window."
+msgstr "粘贴到游戏内市场的 Multibuy 窗口。"
+
+msgid "Beyond the planning window"
+msgstr "超出规划窗口"
+
+msgid "Run history"
+msgstr "运行历史"
+
+msgid "Updated"
+msgstr "已更新"
+
+msgid "Input digest"
+msgstr "输入摘要"
+
+msgid "Triggered by"
+msgstr "触发来源"
+
+msgid "schedule"
+msgstr "定时"
+
+msgid "No runs yet."
+msgstr "暂无运行记录。"

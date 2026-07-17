@@ -9,6 +9,28 @@ project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 
 ### Added
 
+- **MRP v1 — the corp-wide Material Plan (supply-chain P3)** — one planning run now
+  answers "what does the corp actually need to build, buy or import?" It merges every
+  demand signal (P2's composed per-fit demand plus live Shipyard backorder needs),
+  explodes it through the build tree, and nets **each material exactly once at its
+  deepest BOM level** against truthful availability, reservations and in-flight work —
+  two doctrine restocks sharing components produce one netted requirement whose
+  provenance lists both. Incoming supply counts exactly once, with the right rules:
+  corp ESI jobs (active/paused, finished-but-undelivered behind a knob), board build
+  jobs and plan lines — never character jobs, never invention, and never the same
+  physical build twice (a claimed board job can be linked to the in-game job it became
+  via a new "started in game" action; the ESI side then carries the schedule). A
+  promised-but-unstarted internal build also demands its own materials, so the plan
+  never eats its own shopping list. The officer **Material Plan** page
+  (`/industry/mrp/`) shows every requirement with a full drill-down (which fits, needs,
+  parents and jobs produced each number), required-by and earliest-feasible dates
+  (honestly labelled — no capacity model yet), one-click idempotent fan-out to an
+  industry plan, build job, hauling job or claimable BUY task (with an inline multibuy
+  block), a re-run that provably changes nothing when nothing changed (input digest),
+  and CSV export. Re-runs refresh unclaimed vehicles in place and flag claimed ones
+  that drifted instead of minting duplicates. The nightly planning beat ships
+  **disarmed**; manual runs are the v1 workflow. Fully translated in the nine locales.
+
 - **Demand planning that merges signals (supply-chain P2)** — doctrine-ship demand is no
   longer one number derived from raw 30-day hull losses. A composed, per-fit demand
   service (`apps.store.demand`) merges four independently-visible sources: loss
@@ -141,6 +163,14 @@ project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 
 ### Fixed
 
+- Build-vs-buy maths no longer treats units as blueprint runs for batch recipes
+  (ammo, drones, reaction feedstock) — building 100 units of a 100-per-run item is
+  now costed at one run, not one hundred. This corrects doctrine supply lines,
+  recommendations and the store's capital-pricing fallback, which may flip
+  build↔buy for batch items: the corrected maths is the truth arriving. A
+  legitimate zero-second build time is no longer treated as unknown, and reaction
+  durations are now readable for scheduling. Creating a supply plan from the corp
+  demand page twice no longer mints twin projects.
 - The pilot digest cache (`briefing:pilot:*`) was keyed by account while holding one pilot's
   prose, and was not language-keyed — so it served the Celery warmer's English to every
   non-English reader for the life of the entry.

@@ -159,6 +159,7 @@
       {% else %}
       <p class="text-faint">{% translate "No open backorder demand for this fit." %}</p>
       {% endif %}
+      {% if has_mrp_rows %}<p class="mt-2 border-t border-line/50 pt-2 text-[11px]"><a href="{% url 'industry:mrp' %}" class="text-cyan hover:underline">{% translate "Material Plan has requirements descending from this fit" %} →</a></p>{% endif %}
     </section>
 
     <!-- Composed demand (P2) -->
