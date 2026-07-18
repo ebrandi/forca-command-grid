@@ -323,6 +323,23 @@ def export_eft(request, pk):
 
 @login_required
 @feature_required("tochas_lab")
+def training_export(request, pk):
+    """The fit's missing skills for the selected pilot as an EVE skill-planner paste."""
+    fit = get_object_or_404(Fit.objects.select_related("current_revision"), pk=pk)
+    if not fit.can_view(request.user):
+        raise Http404
+    rev = fit.current_revision
+    skills = _skill_profile(request, request.GET.get("skills"))
+    telemetry = services.evaluate(fit.ship_type_id, rev.items if rev else [], skills)
+    text = services.training_plan_text(telemetry.get("missing_skills", []))
+    resp = HttpResponse(text or "# This pilot can already fly this fit.",
+                        content_type="text/plain; charset=utf-8")
+    resp["Content-Disposition"] = f'attachment; filename="fit-{fit.pk}-skills.txt"'
+    return resp
+
+
+@login_required
+@feature_required("tochas_lab")
 def compare(request, pk):
     fit = get_object_or_404(Fit.objects.select_related("current_revision"), pk=pk)
     if not fit.can_view(request.user):

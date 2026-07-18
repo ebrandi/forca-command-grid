@@ -24,6 +24,7 @@ urlpatterns = [
     path("<int:pk>/unshare/", views.unshare, name="unshare"),
     path("<int:pk>/delete/", views.delete, name="delete"),
     path("<int:pk>/export.eft", views.export_eft, name="export_eft"),
+    path("<int:pk>/training.txt", views.training_export, name="training_export"),
     path("<int:pk>/compare/", views.compare, name="compare"),
     path("<int:pk>/promote/", views.promote, name="promote"),
     path("s/<str:token>/", views.shared, name="shared"),

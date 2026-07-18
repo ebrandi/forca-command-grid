@@ -313,6 +313,22 @@ def _type_names(type_ids) -> dict[int, str]:
     return dict(SdeType.objects.filter(type_id__in=list(type_ids)).values_list("type_id", "name"))
 
 
+def training_plan_text(missing_skills: list[dict]) -> str:
+    """The fit's missing skills, expanded to their full prerequisite closure and ordered,
+    as an EVE skill-planner clipboard paste (``Skill Name <level>`` per line).
+
+    Reuses the skills app's prerequisite expansion + topological ordering (the same code
+    the doctrine skill plans use); Tocha's Lab does not re-walk the skill graph."""
+    from apps.skills.prereqs import expand_prerequisites, order_by_prereqs
+
+    targets = {int(m["skill_type_id"]): int(m["required_level"]) for m in (missing_skills or [])}
+    if not targets:
+        return ""
+    ordered = order_by_prereqs(expand_prerequisites(targets))
+    names = _type_names([sid for sid, _ in ordered])
+    return "\n".join(f"{names.get(sid, f'Skill {sid}')} {lvl}" for sid, lvl in ordered)
+
+
 def items_from_esi_fitting(esi: dict) -> tuple[int, list[dict]]:
     """Convert an ESI-shaped fitting ({ship_type_id, items:[{flag,quantity,type_id}]}) —
     e.g. from apps.killboard.fitrender.esi_fitting — into a Tocha's Lab loadout."""

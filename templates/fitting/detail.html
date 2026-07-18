@@ -32,6 +32,7 @@
         <button type="submit" class="btn-ghost">{% translate "Fork" %}</button></form>
       <a href="{% url 'fitting:export_eft' fit.pk %}" class="btn-ghost">{% translate "Export EFT" %}</a>
       <a href="{% url 'fitting:compare' fit.pk %}" class="btn-ghost">{% translate "Compare" %}</a>
+      <a href="{% url 'fitting:training_export' fit.pk %}?skills={{ request.GET.skills|default:'pilot' }}" class="btn-ghost">{% translate "Skill plan" %}</a>
     </div>
   </header>
 

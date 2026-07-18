@@ -278,6 +278,18 @@ def test_brand_localised_to_pt_br():
     assert m and m.group(1) == "Laboratório do Tocha"
 
 
+def test_training_export(client, owner, dogma):
+    client.force_login(owner)
+    parsed = services.import_eft(EFT)
+    fit = services.create_fit(owner, name="R", ship_type_id=RIFTER, items=parsed["items"])
+    resp = client.get(reverse("fitting:training_export", args=[fit.pk]) + "?skills=none")
+    assert resp.status_code == 200
+    assert resp["Content-Type"].startswith("text/plain")
+    body = resp.content.decode()
+    # untrained pilot -> the fit's required skills appear as an EVE skill-planner paste
+    assert "Gunnery 1" in body or "Minmatar Frigate 1" in body
+
+
 def test_search_endpoints(client, owner, dogma):
     client.force_login(owner)
     hulls = client.get(reverse("fitting:search_hulls"), {"q": "Rif"})
