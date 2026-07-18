@@ -258,6 +258,18 @@ def test_export_eft_view(client, owner, dogma):
     assert resp.content.startswith(b"[Rifter,")
 
 
+def test_brand_localised_to_pt_br():
+    """pt-BR must render the mandated 'Laboratório do Tocha'; other locales keep the
+    brand 'Tocha's Lab' (English fallback). 'Tocha' is a proper name, never translated."""
+    import re
+    from pathlib import Path
+    from django.conf import settings
+    po = Path(settings.BASE_DIR) / "locale" / "pt_BR" / "LC_MESSAGES" / "django.po"
+    text = po.read_text(encoding="utf-8")
+    m = re.search(r'msgid "Tocha\'s Lab"\s*\nmsgstr "([^"]*)"', text)
+    assert m and m.group(1) == "Laboratório do Tocha"
+
+
 def test_search_endpoints(client, owner, dogma):
     client.force_login(owner)
     hulls = client.get(reverse("fitting:search_hulls"), {"q": "Rif"})
