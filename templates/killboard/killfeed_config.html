@@ -27,6 +27,73 @@
     <input name="min_kill_value" type="number" min="0" step="1000000" value="{{ cfg.min_kill_value|floatformat:0 }}" class="input-field">
     <p class="mt-1 text-xs text-faint">{% translate "Post a corp kill at or above this value. 0 = off." %}</p>
   </div>
+
+  <!-- KB-24: require/exclude rule clauses (all optional; empty = no extra filtering) -->
+  <fieldset class="space-y-3 border-t border-line pt-4">
+    <legend class="eyebrow text-faint">{% translate "Rules (optional)" %}</legend>
+    <p class="text-xs text-faint">{% translate "Extra require/exclude filters, applied on top of the value thresholds. Leave everything blank to post every kill above the ISK bar." %}</p>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="eyebrow mb-1 block text-faint">{% translate "Min attackers" %}</label>
+        <input name="min_attackers" type="number" min="0" value="{{ cfg.min_attackers }}" class="input-field">
+      </div>
+      <div>
+        <label class="eyebrow mb-1 block text-faint">{% translate "Max attackers" %}</label>
+        <input name="max_attackers" type="number" min="0" value="{{ cfg.max_attackers }}" class="input-field">
+      </div>
+    </div>
+
+    <div>
+      <label class="eyebrow mb-1 block text-faint">{% translate "Within N jumps of staging" %}</label>
+      <input name="max_jumps_from_staging" type="number" min="0" max="16" value="{{ cfg.max_jumps_from_staging }}" class="input-field">
+      <p class="mt-1 text-xs text-faint">{% translate "0 = off. Needs an active staging system configured." %}</p>
+    </div>
+
+    <div>
+      <p class="eyebrow mb-1 text-faint">{% translate "Security bands (none = all)" %}</p>
+      <div class="flex flex-wrap gap-x-4 gap-y-1">
+        {% for value, label in sec_bands %}
+        <label class="flex items-center gap-1.5 text-sm">
+          <input type="checkbox" name="sec_bands" value="{{ value }}" {% if value in cfg.sec_bands %}checked{% endif %}>
+          <span class="text-ink">{{ label }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div>
+      <p class="eyebrow mb-1 text-faint">{% translate "Victim ship classes (none = all)" %}</p>
+      <div class="flex flex-wrap gap-x-4 gap-y-1">
+        {% for cls in ship_classes %}
+        <label class="flex items-center gap-1.5 text-sm">
+          <input type="checkbox" name="ship_classes" value="{{ cls }}" {% if cls in cfg.ship_classes %}checked{% endif %}>
+          <span class="text-ink">{{ cls }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="space-y-1.5">
+      <label class="flex items-center gap-2 text-sm">
+        <input type="checkbox" name="require_solo" value="1" {% if cfg.require_solo %}checked{% endif %}>
+        <span class="text-ink">{% translate "Solo kills only" %}</span>
+      </label>
+      <label class="flex items-center gap-2 text-sm">
+        <input type="checkbox" name="exclude_npc" value="1" {% if cfg.exclude_npc %}checked{% endif %}>
+        <span class="text-ink">{% translate "Exclude NPC-only kills" %}</span>
+      </label>
+      <label class="flex items-center gap-2 text-sm">
+        <input type="checkbox" name="exclude_awox" value="1" {% if cfg.exclude_awox %}checked{% endif %}>
+        <span class="text-ink">{% translate "Exclude awox kills" %}</span>
+      </label>
+      <label class="flex items-center gap-2 text-sm">
+        <input type="checkbox" name="losses_deviated_only" value="1" {% if cfg.losses_deviated_only %}checked{% endif %}>
+        <span class="text-ink">{% translate "Losses: only those that deviated from doctrine" %}</span>
+      </label>
+    </div>
+  </fieldset>
+
   <button class="btn-gold">{% translate "Save settings" %}</button>
 </form>
 

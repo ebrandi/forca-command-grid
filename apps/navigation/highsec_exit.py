@@ -73,6 +73,15 @@ def _gate_distances(start_id: int) -> dict[int, int]:
     return dist
 
 
+def gate_distances(origin_system_id: int) -> dict[int, int]:
+    """Public: ``{system_id: gate_hops}`` from ``origin`` over the local stargate graph.
+
+    Bounded to ~16 hops (systems farther out are simply absent from the map). Memoised
+    adjacency; call :func:`clear_gate_cache` after loading a custom graph in tests.
+    """
+    return _gate_distances(origin_system_id)
+
+
 def nearest_lowsec(highsec_system_id: int, *, avoid: set[int] | None = None,
                    require_stations: bool = False, prefer_stations: bool = True,
                    limit: int = 24) -> list[dict]:

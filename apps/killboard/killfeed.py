@@ -46,25 +46,37 @@ def run_kill_feed(client_post=None) -> dict:
         from apps.recommendations.notify import broadcast_discord
         post = broadcast_discord
 
+    from django.db.models import Count, Q
+
+    from . import killfeed_rules
+
     since = timezone.now() - _FRESH
     already = set(KillFeedPing.objects.values_list("killmail_id", flat=True))
     candidates = list(
         Killmail.objects.filter(involves_home_corp=True, killmail_time__gte=since)
         .exclude(killmail_id__in=already)
+        .annotate(attacker_count=Count("participants", filter=Q(participants__role="attacker")))
         .order_by("killmail_time")
     )
+    hull_ids = {k.victim_ship_type_id for k in candidates}
     ship_names = dict(
-        SdeType.objects.filter(
-            type_id__in={k.victim_ship_type_id for k in candidates}
-        ).values_list("type_id", "name")
+        SdeType.objects.filter(type_id__in=hull_ids).values_list("type_id", "name")
     )
+    # KB-24: batch the rule inputs once, then evaluate each mail against the require/exclude
+    # clauses. All-default rules reduce this to the original ISK-threshold check.
+    ship_classes = killfeed_rules.ship_classes_for(hull_ids)
+    staging_distance = killfeed_rules.staging_distances(cfg)
 
     posted = 0
     for km in candidates:
+        if not killfeed_rules.evaluate(
+            km, cfg,
+            attacker_count=km.attacker_count,
+            ship_class=ship_classes.get(km.victim_ship_type_id, "Other"),
+            staging_distance=staging_distance,
+        ):
+            continue  # blocked by a rule — leave unmarked, the window bounds re-checks
         is_loss = km.home_corp_role == Killmail.HomeRole.VICTIM
-        threshold = cfg.min_loss_value if is_loss else cfg.min_kill_value
-        if threshold <= 0 or km.total_value < threshold:
-            continue  # below the bar — leave unmarked, the window bounds re-checks
         ship = ship_names.get(km.victim_ship_type_id, f"Type {km.victim_ship_type_id}")
         verb = "💥 **Loss**" if is_loss else "🔫 **Kill**"
         post(f"{verb}: {ship} ({_isk(km.total_value)} ISK) — {_ZKILL.format(km.killmail_id)}")

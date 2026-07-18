@@ -290,6 +290,36 @@ class KillFeedConfig(TimeStampedModel):
         max_digits=20, decimal_places=2, default=Decimal("500000000"),
         help_text=_("Post a corp kill when its value is at least this (0 = off)."),
     )
+    # KB-24 rule engine: additional require/exclude clauses, AND-combined with the ISK floor
+    # above. Every field defaults to "off/no filter" so an existing feed is unchanged until an
+    # officer configures rules.
+    exclude_npc = models.BooleanField(
+        default=False, help_text=_("Skip kills with no player attackers (NPC/ratting deaths).")
+    )
+    exclude_awox = models.BooleanField(
+        default=False, help_text=_("Skip awox kills (a corp member on the victim's own corp).")
+    )
+    require_solo = models.BooleanField(default=False, help_text=_("Post solo kills only."))
+    min_attackers = models.PositiveIntegerField(
+        default=0, help_text=_("Require at least this many attackers (0 = off).")
+    )
+    max_attackers = models.PositiveIntegerField(
+        default=0, help_text=_("Require at most this many attackers (0 = off).")
+    )
+    sec_bands = models.JSONField(
+        default=list, blank=True,
+        help_text=_("Only these security bands (empty = all)."),
+    )
+    ship_classes = models.JSONField(
+        default=list, blank=True,
+        help_text=_("Only these victim ship classes (empty = all)."),
+    )
+    max_jumps_from_staging = models.PositiveIntegerField(
+        default=0, help_text=_("Only within this many jumps of the staging system (0 = off)."),
+    )
+    losses_deviated_only = models.BooleanField(
+        default=False, help_text=_("For losses, post only those that deviated from doctrine."),
+    )
 
     @classmethod
     def load(cls) -> KillFeedConfig:

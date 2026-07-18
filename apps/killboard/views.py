@@ -786,13 +786,41 @@ def killfeed_config(request: HttpRequest) -> HttpResponse:
             except InvalidOperation:
                 return current
 
+        def _int(field):
+            raw = (request.POST.get(field) or "").strip()
+            return int(raw) if raw.isdigit() else 0
+
         cfg.min_loss_value = _dec("min_loss_value", cfg.min_loss_value)
         cfg.min_kill_value = _dec("min_kill_value", cfg.min_kill_value)
-        cfg.save(update_fields=["enabled", "min_loss_value", "min_kill_value", "updated_at"])
+
+        # KB-24 rule clauses — validate the multi-selects against the known vocabularies.
+        from . import killfeed_rules
+        valid_bands = {v for v, _label in killfeed_rules.SEC_BANDS}
+        valid_classes = set(killfeed_rules.SHIP_CLASSES)
+        cfg.exclude_npc = request.POST.get("exclude_npc") == "1"
+        cfg.exclude_awox = request.POST.get("exclude_awox") == "1"
+        cfg.require_solo = request.POST.get("require_solo") == "1"
+        cfg.min_attackers = _int("min_attackers")
+        cfg.max_attackers = _int("max_attackers")
+        cfg.sec_bands = [b for b in request.POST.getlist("sec_bands") if b in valid_bands]
+        cfg.ship_classes = [c for c in request.POST.getlist("ship_classes") if c in valid_classes]
+        cfg.max_jumps_from_staging = _int("max_jumps_from_staging")
+        cfg.losses_deviated_only = request.POST.get("losses_deviated_only") == "1"
+        cfg.save(update_fields=[
+            "enabled", "min_loss_value", "min_kill_value",
+            "exclude_npc", "exclude_awox", "require_solo", "min_attackers", "max_attackers",
+            "sec_bands", "ship_classes", "max_jumps_from_staging", "losses_deviated_only",
+            "updated_at",
+        ])
         messages.success(request, gettext("Kill-feed settings saved."))
         return redirect("killboard:killfeed_config")
+    from . import killfeed_rules
     return render(
         request,
         "killboard/killfeed_config.html",
-        {"cfg": cfg, "ks": ks, "ingest": ingest_status()},
+        {
+            "cfg": cfg, "ks": ks, "ingest": ingest_status(),
+            "sec_bands": killfeed_rules.SEC_BANDS,
+            "ship_classes": killfeed_rules.SHIP_CLASSES,
+        },
     )
