@@ -161,9 +161,27 @@
       <img src="{% eve_type_render wheel.hull_type_id 256 %}" alt="{% type_name wheel.hull_type_id %}"
            style="position:absolute;left:50%;top:50%;width:{{ wheel.ship_pct }}%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:9999px;object-fit:cover;z-index:1">
       <svg viewBox="0 0 398 398" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none">
-        <circle cx="199" cy="199" r="164" fill="none" stroke="rgb(19,26,37)" stroke-width="72"/>
-        <circle cx="199" cy="199" r="199" fill="none" stroke="rgba(150,170,190,.45)" stroke-width="2"/>
-        <circle cx="199" cy="199" r="129" fill="none" stroke="rgba(150,170,190,.35)" stroke-width="2"/>
+        <!-- inner frame hugging the hull -->
+        <circle cx="199" cy="199" r="129" fill="none" stroke="rgba(120,140,164,.28)" stroke-width="1.5"/>
+        <!-- rack bands: one arc per rack, separated by gaps (the boundaries between racks) -->
+        <path d="M 75.98 92.06 A 163 163 0 0 1 308.07 77.87" fill="none" stroke="rgb(21,29,42)" stroke-width="62"/>
+        <path d="M 342.92 122.48 A 163 163 0 0 1 218.86 360.79" fill="none" stroke="rgb(21,29,42)" stroke-width="62"/>
+        <path d="M 148.63 354.02 A 163 163 0 0 1 52.5 127.55" fill="none" stroke="rgb(21,29,42)" stroke-width="62"/>
+        <path d="M 245.5 279.54 A 93 93 0 0 1 127.76 258.78" fill="none" stroke="rgb(21,29,42)" stroke-width="46"/>
+        <!-- bright outer + inner edge rims per rack -->
+        <path d="M 52.59 71.72 A 194 194 0 0 1 328.81 54.83" fill="none" stroke="rgba(150,172,196,.5)" stroke-width="1.5"/>
+        <path d="M 99.38 112.4 A 132 132 0 0 1 287.33 100.9" fill="none" stroke="rgba(120,140,164,.4)" stroke-width="1.5"/>
+        <path d="M 370.29 107.92 A 194 194 0 0 1 222.64 391.55" fill="none" stroke="rgba(150,172,196,.5)" stroke-width="1.5"/>
+        <path d="M 315.55 137.03 A 132 132 0 0 1 215.09 330.02" fill="none" stroke="rgba(120,140,164,.4)" stroke-width="1.5"/>
+        <path d="M 139.05 383.5 A 194 194 0 0 1 24.63 113.96" fill="none" stroke="rgba(150,172,196,.5)" stroke-width="1.5"/>
+        <path d="M 158.21 324.54 A 132 132 0 0 1 80.36 141.14" fill="none" stroke="rgba(120,140,164,.4)" stroke-width="1.5"/>
+        <path d="M 257.0 299.46 A 116 116 0 0 1 110.14 273.56" fill="none" stroke="rgba(150,172,196,.5)" stroke-width="1.5"/>
+        <path d="M 234.0 259.62 A 70 70 0 0 1 145.38 244.0" fill="none" stroke="rgba(120,140,164,.4)" stroke-width="1.5"/>
+        <!-- rack labels (between the hull and the modules) -->
+        <text x="190.6" y="65" text-anchor="middle" style="font:600 8.5px sans-serif;fill:rgba(184,200,218,.65);letter-spacing:.6px">HIGH</text>
+        <text x="320.5" y="265" text-anchor="middle" style="font:600 8.5px sans-serif;fill:rgba(184,200,218,.65);letter-spacing:.6px">LOW</text>
+        <text x="72.8" y="255" text-anchor="middle" style="font:600 8.5px sans-serif;fill:rgba(184,200,218,.65);letter-spacing:.6px">MED</text>
+        <text x="178.5" y="318" text-anchor="middle" style="font:600 8.5px sans-serif;fill:rgba(184,200,218,.65);letter-spacing:.6px">RIG</text>
       </svg>
       {% for s in wheel.slots %}
       <div style="position:absolute;left:{{ s.x }}%;top:{{ s.y }}%;width:{{ wheel.mod_pct }}%;aspect-ratio:1;transform:translate(-50%,-50%);z-index:3">
