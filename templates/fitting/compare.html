@@ -9,7 +9,7 @@
   </div>
   <form method="get" class="flex items-center gap-2">
     <label class="sr-only" for="rev">{% translate "Base revision" %}</label>
-    <select id="rev" name="rev" class="input-field" onchange="this.form.submit()">
+    <select id="rev" name="rev" class="input-field" data-autosubmit>
       {% for r in revisions %}<option value="{{ r.revision_number }}" {% if rev_a and r.revision_number == rev_a.revision_number %}selected{% endif %}>{% translate "rev" %} {{ r.revision_number }}</option>{% endfor %}
     </select>
     <span class="text-faint text-sm">→ {% translate "current rev" %} {{ rev_b.revision_number }}</span>

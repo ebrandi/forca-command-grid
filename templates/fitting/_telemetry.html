@@ -1,7 +1,7 @@
 {% load eve i18n %}
-{# Server-rendered ship telemetry. Shared by the editor (live recompute), the read-only
-   detail view and the public share page — one renderer, so they can never disagree.
-   Colours that aren't in the prebuilt CSS are inlined (see prebuilt-Tailwind note). #}
+{% comment %}Server-rendered ship telemetry. Shared by the editor (live recompute), the
+read-only detail view and the public share page — one renderer, so they can never disagree.
+Colours that aren't in the prebuilt CSS are inlined (see the prebuilt-Tailwind note).{% endcomment %}
 <div class="grid gap-4" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr));">
 
   <section class="rounded-lg border border-line bg-panel p-4">

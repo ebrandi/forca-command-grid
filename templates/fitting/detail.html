@@ -18,7 +18,7 @@
     <div class="flex flex-wrap items-center gap-2">
       <form method="get" class="contents">
         <label class="sr-only" for="skills">{% translate "Skills" %}</label>
-        <select id="skills" name="skills" class="input-field" data-autosubmit onchange="this.form.submit()">
+        <select id="skills" name="skills" class="input-field" data-autosubmit>
           <option value="pilot" {% if skill_label != 'All V' %}selected{% endif %}>{% translate "My skills" %}</option>
           <option value="allv" {% if skill_label == 'All V' %}selected{% endif %}>{% translate "All V" %}</option>
           <option value="none">{% translate "Untrained" %}</option>
