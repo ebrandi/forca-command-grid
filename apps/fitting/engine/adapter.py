@@ -50,7 +50,14 @@ class ORMDataProvider:
     """A :class:`~apps.fitting.engine.dogma.DataProvider` backed by the SDE tables."""
 
     def __init__(self):
+        # Per-evaluation memoization: a provider is built fresh for each engine
+        # evaluation, so caching here bounds queries by DISTINCT type (a fit with six
+        # identical guns reads that gun's attrs/skills once, not six times) with no
+        # cross-request staleness risk.
         self._rows: dict[int, dict | None] = {}
+        self._attrs: dict[int, dict[int, float]] = {}
+        self._skills: dict[int, list[tuple[int, int]]] = {}
+        self._bonuses: dict[int, list[BonusSpec]] = {}
         self.data_version = self._resolve_data_version()
 
     @staticmethod
@@ -87,6 +94,8 @@ class ORMDataProvider:
                 "category_id": row["group__category_id"]}
 
     def attrs(self, type_id: int) -> dict[int, float]:
+        if type_id in self._attrs:
+            return self._attrs[type_id]
         from apps.sde.models import SdeTypeAttribute
 
         d = {
@@ -100,18 +109,25 @@ class ORMDataProvider:
             for column, attr in _SLOT_COLUMN_ATTR.items():
                 if attr not in d and row.get(column) is not None:
                     d[attr] = float(row[column])
+        self._attrs[type_id] = d
         return d
 
     def required_skills(self, type_id: int) -> list[tuple[int, int]]:
+        if type_id in self._skills:
+            return self._skills[type_id]
         from apps.sde.models import SdeTypeSkill
 
-        return [
+        skills = [
             (int(sid), int(lvl))
             for sid, lvl in SdeTypeSkill.objects.filter(type_id=type_id)
             .values_list("skill_type_id", "level")
         ]
+        self._skills[type_id] = skills
+        return skills
 
     def ship_bonuses(self, ship_type_id: int) -> list[BonusSpec]:
+        if ship_type_id in self._bonuses:
+            return self._bonuses[ship_type_id]
         from apps.sde.models import SdeShipBonus
 
         specs: list[BonusSpec] = []
@@ -124,6 +140,7 @@ class ORMDataProvider:
                 match_attr_present=b.match_attr_present, penalised=b.penalised,
                 op=Op.MULTIPLY, label=b.label or b.key,
             ))
+        self._bonuses[ship_type_id] = specs
         return specs
 
 

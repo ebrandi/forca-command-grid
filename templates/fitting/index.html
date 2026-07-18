@@ -18,7 +18,8 @@
       <input id="ship" name="ship" class="input-field" list="hull-list" placeholder="{% translate 'Ship hull (e.g. Rifter)' %}" required
              autocomplete="off" x-data @input.debounce.250ms="fetch('{% url 'fitting:search_hulls' %}?q='+encodeURIComponent($event.target.value)).then(r=>r.json()).then(d=>{document.getElementById('hull-list').innerHTML=d.results.map(x=>'<option value=\''+x.name+'\'>').join('')})">
       <datalist id="hull-list"></datalist>
-      <input name="name" class="input-field" placeholder="{% translate 'Fit name (optional)' %}">
+      <label class="sr-only" for="fit-name">{% translate "Fit name" %}</label>
+      <input id="fit-name" name="name" class="input-field" placeholder="{% translate 'Fit name (optional)' %}">
       <button type="submit" class="btn-gold">{% translate "Create fit" %}</button>
     </form>
   </section>
