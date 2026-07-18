@@ -13,7 +13,6 @@ viewers) off-doctrine markers.
 """
 from __future__ import annotations
 
-import math
 from decimal import Decimal
 
 from django.utils.translation import gettext_lazy as _
@@ -143,67 +142,114 @@ def build_fit(killmail, deviation=None) -> dict:
     return {"sections": sections, "has_slot_data": has_slot_data}
 
 
-# Radial layout of the in-game fitting window: each module rack sits on an arc around the
-# centred ship render. (rack key → (centre angle clockwise-from-top in degrees, ring radius %)).
-# High=top, Mid=left, Low=bottom, Rigs=right, Subsystems=inner-bottom — the recognisable
-# EVE fitting-screen arrangement, drawn entirely in-house.
-_RACK_GEOMETRY: dict[str, tuple[float, float]] = {
-    "high": (0.0, 39.0),
-    "med": (270.0, 39.0),
-    "low": (180.0, 39.0),
-    "rig": (90.0, 34.0),
-    "subsystem": (180.0, 22.0),
+# zKillboard-exact fitting-wheel geometry: a fixed 398x398 box (rendered responsively via
+# percentages) with the hull centred and each module at the hard-coded position for its EVE
+# inventory flag — High across the top, Mid down the left, Low down the right, Rigs an inner
+# arc at the bottom, Subsystems an inner arc at the top. Coordinates are the top-left of each
+# icon inside the 398 box, from zKillboard's fitting_wheel component; the ring frame and empty
+# sockets are drawn with our own CSS/SVG (no external assets).
+_WHEEL_BOX = 398
+_MOD_PX = 32   # module icon size
+_CHG_PX = 24   # loaded-charge icon (nested inward from its module)
+
+# EVE inventory flag -> module icon top-left (px in the 398 box).
+_MOD_XY: dict[int, tuple[int, int]] = {
+    27: (73, 60), 28: (102, 42), 29: (134, 27), 30: (169, 21),
+    31: (203, 22), 32: (238, 30), 33: (270, 45), 34: (295, 64),            # high (top)
+    19: (26, 140), 20: (24, 176), 21: (23, 212), 22: (30, 245),
+    23: (46, 278), 24: (69, 304), 25: (100, 328), 26: (133, 342),          # mid (left)
+    11: (344, 143), 12: (350, 178), 13: (349, 213), 14: (340, 246),
+    15: (323, 277), 16: (300, 304), 17: (268, 324), 18: (234, 338),        # low (right)
+    92: (148, 259), 93: (185, 267), 94: (221, 259),                        # rig (inner bottom)
+    125: (117, 131), 126: (147, 108), 127: (184, 98), 128: (221, 107), 129: (250, 131),  # sub
 }
-_SLOT_STEP_DEG = 19.0   # angular gap between adjacent slots on a rack's arc
-_SLOT_SPREAD_MAX = 150.0  # cap so a full 8-slot rack doesn't wrap past its quadrant
+# EVE inventory flag -> loaded-charge icon top-left (px).
+_CHG_XY: dict[int, tuple[int, int]] = {
+    27: (94, 88), 28: (119, 70), 29: (146, 58), 30: (175, 52),
+    31: (204, 52), 32: (232, 60), 33: (258, 72), 34: (280, 91),            # high
+    19: (59, 154), 20: (54, 182), 21: (56, 210), 22: (62, 238),
+    23: (76, 265), 24: (94, 288), 25: (118, 305), 26: (146, 318),          # mid
+    11: (315, 150), 12: (319, 179), 13: (318, 206), 14: (310, 234),
+    15: (297, 261), 16: (275, 283), 17: (251, 300), 18: (225, 310),        # low
+}
+# Flags of each rack in slot order; the SdeType field with the hull's slot count; and the
+# build_fit section key (subsystems bucket under "subsystem").
+_RACK_FLAGS: dict[str, list[int]] = {
+    "high": [27, 28, 29, 30, 31, 32, 33, 34],
+    "med": [19, 20, 21, 22, 23, 24, 25, 26],
+    "low": [11, 12, 13, 14, 15, 16, 17, 18],
+    "rig": [92, 93, 94],
+    "sub": [125, 126, 127, 128, 129],
+}
+_RACK_COUNT_FIELD = {"high": "hi_slots", "med": "med_slots", "low": "low_slots", "rig": "rig_slots"}
+_RACK_SECTION = {"high": "high", "med": "med", "low": "low", "rig": "rig", "sub": "subsystem"}
 
 
-def _slot_positions(center_deg: float, n: int, radius: float) -> list[tuple[float, float]]:
-    """``n`` evenly-spaced ``(x%, y%)`` points on an arc centred at ``center_deg`` (a rack)."""
-    if n <= 0:
-        return []
-    step = _SLOT_STEP_DEG if n == 1 else min(_SLOT_STEP_DEG, _SLOT_SPREAD_MAX / (n - 1))
-    start = center_deg - step * (n - 1) / 2
-    pts = []
-    for i in range(n):
-        a = math.radians(start + step * i)
-        pts.append((round(50.0 + radius * math.sin(a), 2), round(50.0 - radius * math.cos(a), 2)))
-    return pts
+def _pct(left: int, top: int, size: int) -> tuple[float, float]:
+    """Icon centre as (x%, y%) of the 398 box, for responsive absolute positioning."""
+    return (round((left + size / 2) / _WHEEL_BOX * 100, 3),
+            round((top + size / 2) / _WHEEL_BOX * 100, 3))
 
 
 def build_fit_wheel(killmail, deviation=None) -> dict:
-    """The fit as a radial fitting-window layout (KB-21b): the fitted module racks placed on
-    arcs around the hull, plus the leftover holds (drones/cargo/implants) as ``extras``.
+    """The fit as zKillboard's radial fitting window (KB-21b).
 
-    Builds on :func:`build_fit` (bucketing, empty-slot padding, off-doctrine markers). A
-    loaded charge shares its module's slot flag, so it is folded into that module's tooltip
-    (``charges``) instead of taking a slot of its own.
+    Each module renders at the fixed position for its EVE inventory flag; available-but-empty
+    slots (up to the hull's slot count) render as sockets; a loaded charge renders as a
+    smaller icon nested inward from its module. Drones are NOT on the wheel (they go to
+    ``extras`` with cargo/implants), matching zKill. Builds on :func:`build_fit` for
+    names/values/off-doctrine markers.
     """
     fit = build_fit(killmail, deviation)
     sections = {s["key"]: s for s in fit["sections"]}
 
-    slots = []
-    for key, (center, radius) in _RACK_GEOMETRY.items():
-        sec = sections.get(key)
-        if not sec:
-            continue
-        placed, charges_by_flag = [], {}
-        for it in sec["items"]:
-            if not it["empty"] and it.get("category_id") == _CHARGE_CATEGORY:
-                charges_by_flag.setdefault(it["flag"], []).append(it["name"])
-            else:
-                placed.append(it)
-        for (x, y), it in zip(_slot_positions(center, len(placed), radius), placed, strict=True):
-            slots.append({
-                **it, "x": x, "y": y, "rack": key,
-                "charges": [] if it["empty"] else charges_by_flag.get(it["flag"], []),
-            })
+    by_flag: dict[int, list[dict]] = {}   # a module + its loaded charge share a flag
+    for section_key in _RACK_SECTION.values():
+        sec = sections.get(section_key)
+        if sec:
+            for it in sec["items"]:
+                if not it["empty"]:
+                    by_flag.setdefault(it["flag"], []).append(it)
+
+    hull = (
+        SdeType.objects.filter(type_id=killmail.victim_ship_type_id)
+        .values(*_CAPACITY_FIELDS).first() or {}
+    )
+
+    def _module(flag):
+        return next((i for i in by_flag.get(flag, []) if i.get("category_id") != _CHARGE_CATEGORY), None)
+
+    def _charge(flag):
+        return next((i for i in by_flag.get(flag, []) if i.get("category_id") == _CHARGE_CATEGORY), None)
+
+    slots, charges = [], []
+    for rack, flags in _RACK_FLAGS.items():
+        cnt_field = _RACK_COUNT_FIELD.get(rack)
+        if rack == "sub":
+            count = sum(1 for f in flags if _module(f))   # subs: only as many as are fitted
+        else:
+            count = hull.get(cnt_field) if cnt_field else None
+        available = set(flags[:count]) if count else set()
+        fitted = {f for f in flags if _module(f)}
+        for f in sorted(available | fitted, key=flags.index):
+            x, y = _pct(*_MOD_XY[f], _MOD_PX)
+            module = _module(f)
+            slots.append({**module, "x": x, "y": y, "empty": False, "rack": rack}
+                         if module else {"x": x, "y": y, "empty": True, "rack": rack})
+            charge = _charge(f)
+            if charge and f in _CHG_XY:
+                cx, cy = _pct(*_CHG_XY[f], _CHG_PX)
+                charges.append({**charge, "x": cx, "y": cy})
 
     extras = [s for s in fit["sections"] if s["key"] in ("drone", "implant", "cargo", "other")]
     return {
         "hull_type_id": killmail.victim_ship_type_id,
         "slots": slots,
+        "charges": charges,
         "extras": extras,
+        "mod_pct": round(_MOD_PX / _WHEEL_BOX * 100, 3),
+        "chg_pct": round(_CHG_PX / _WHEEL_BOX * 100, 3),
+        "ship_pct": round(256 / _WHEEL_BOX * 100, 3),
         "has_slot_data": fit["has_slot_data"],
     }
 

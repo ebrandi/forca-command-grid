@@ -143,12 +143,13 @@ def test_build_fit_off_doctrine_marker_only_with_deviation(sde):
     assert flagged == {484}
 
 
-# --- build_fit_wheel (radial layout) -----------------------------------------
-def test_slot_positions_on_arc():
-    pts = fitrender._slot_positions(0.0, 4, 39.0)   # high rack, centred at the top
-    assert len(pts) == 4
-    assert all(0 <= x <= 100 and 0 <= y <= 100 for x, y in pts)  # inside the box
-    assert all(y < 50 for x, y in pts)              # a top arc sits above centre
+# --- build_fit_wheel (zKillboard-style fixed-coordinate wheel) ----------------
+def test_pct_centres_icon_in_box():
+    # module top-left (73,60), size 32 -> centre (89,76) as a % of the 398 box
+    x, y = fitrender._pct(73, 60, 32)
+    assert x == round(89 / 398 * 100, 3)
+    assert y == round(76 / 398 * 100, 3)
+    assert 0 < x < 100 and 0 < y < 100     # inside the box
 
 
 @pytest.mark.django_db
@@ -168,9 +169,9 @@ def test_build_fit_wheel_places_racks_and_extras(sde):
 
 
 @pytest.mark.django_db
-def test_build_fit_wheel_folds_loaded_charges(sde):
-    # A gun (484, module) + its ammo (192, charge) in the SAME high slot (flag 27): the
-    # charge folds into the module's slot rather than taking a slot of its own.
+def test_build_fit_wheel_charge_is_separate_nested_icon(sde):
+    # A gun (484, module) + its ammo (192, charge) in the SAME high slot (flag 27): the gun
+    # takes the slot; the charge renders as a separate nested icon (like zKill), not a slot.
     body = {
         "killmail_id": 100002, "killmail_time": "2026-06-20T12:00:00Z",
         "solar_system_id": 30002053,
@@ -183,10 +184,12 @@ def test_build_fit_wheel_folds_loaded_charges(sde):
                        "final_blow": True, "damage_done": 10}],
     }
     km = ingest_killmail(100002, "h2", body=body)
-    highs = [s for s in fitrender.build_fit_wheel(km)["slots"] if s["rack"] == "high"]
+    wheel = fitrender.build_fit_wheel(km)
+    highs = [s for s in wheel["slots"] if s["rack"] == "high"]
     occupied = [s for s in highs if not s["empty"]]
-    assert len(occupied) == 1 and occupied[0]["type_id"] == 484   # one slot, the gun
-    assert "Fusion S" in occupied[0]["charges"]                   # ammo folded in
+    assert len(occupied) == 1 and occupied[0]["type_id"] == 484   # the gun takes the slot
+    charge_tids = {c["type_id"] for c in wheel["charges"]}
+    assert 192 in charge_tids                                     # ammo = a separate nested icon
 
 
 # --- esi_fitting --------------------------------------------------------------
@@ -211,10 +214,10 @@ def test_detail_page_renders_radial_fit(client, sde):
     ingest_killmail(100001, "h1", body=BODY)
     html = client.get("/killboard/100001/").content
 
-    assert b">High<" in html and b">Mid<" in html   # rack labels around the wheel
-    assert b"left:" in html                          # radially-positioned slots
-    assert b"200mm AutoCannon I" in html             # module name (slot tooltip)
-    assert b"empty" in html                          # empty-slot legend (Rifter has capacity)
+    assert b"viewBox=\"0 0 398 398\"" in html         # the zKill-style ring frame (SVG)
+    assert b"left:" in html                           # per-flag positioned slots
+    assert b"200mm AutoCannon I" in html              # module name (slot tooltip)
+    assert b"empty" in html                           # empty-slot legend (Rifter has capacity)
     assert b"Copy EFT" in html
     assert b"Copy ESI" in html
 
