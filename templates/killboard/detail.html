@@ -118,8 +118,8 @@
 </section>
 {% endif %}
 
-<!-- Fitting / cargo (KB-21): our own per-slot render — no external component, no off-site link -->
-{% if fit.sections %}
+<!-- Fitting (KB-21b): in-house radial fitting-window render — no external component, no off-site link -->
+{% if wheel.slots or wheel.extras %}
 <section class="panel mt-5 p-5">
   <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
     <div class="flex flex-wrap items-center gap-2">
@@ -153,35 +153,51 @@
       {% if is_director %}<a href="{% url 'admin_audit:doctrine_from_killmail' killmail.killmail_id %}" class="btn-ghost !py-1 !text-xs"><svg class="h-3.5 w-3.5"><use href="#i-ship"/></svg> {% translate "Import as doctrine" %}</a>{% endif %}
     </div>
   </div>
-  <div class="space-y-4">
-    {% for section in fit.sections %}
-    <div>
-      <div class="mb-1.5 flex items-center gap-2">
-        <p class="eyebrow text-faint">{{ section.label }}</p>
-        {% if section.capacity %}<span class="data text-[11px] text-muted">{{ section.filled }}/{{ section.capacity }}</span>{% else %}<span class="data text-[11px] text-muted">{{ section.count }}</span>{% endif %}
-        {% if section.value %}<span class="data ml-auto text-[11px] text-faint">{{ section.value|isk }}</span>{% endif %}
+  <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_14rem] lg:items-start">
+    <!-- Radial fitting window: hull centred, module racks on arcs (High top / Mid left / Low bottom / Rig right) -->
+    <div class="relative mx-auto aspect-square w-full max-w-sm">
+      <span class="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 eyebrow text-[10px] text-faint">{% translate "High" %}</span>
+      <span class="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 eyebrow text-[10px] text-faint">{% translate "Low" %}</span>
+      <span class="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 eyebrow text-[10px] text-faint">{% translate "Mid" %}</span>
+      <span class="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 eyebrow text-[10px] text-faint">{% translate "Rig" %}</span>
+      <img src="{% eve_type_render wheel.hull_type_id 256 %}" alt="{% type_name wheel.hull_type_id %}" class="absolute left-1/2 top-1/2 h-[34%] w-[34%] -translate-x-1/2 -translate-y-1/2 rounded-full object-cover opacity-90 shadow-lg ring-1 ring-line">
+      {% for s in wheel.slots %}
+      <div class="absolute -translate-x-1/2 -translate-y-1/2" style="left:{{ s.x }}%;top:{{ s.y }}%">
+        {% if s.empty %}
+        <span class="block h-9 w-9 rounded-full border border-dashed border-line/50 bg-panel2/20"></span>
+        {% else %}
+        <span class="relative block h-9 w-9 rounded-full ring-2 {% if s.destroyed %}ring-loss/70{% else %}ring-cyan/60{% endif %}" title="{% type_name s.type_id %}{% for c in s.charges %} + {{ c }}{% endfor %}{% if s.value %} · {{ s.value|isk }}{% endif %}">
+          <img src="{% eve_type_icon s.type_id 32 %}" alt="" loading="lazy" class="h-full w-full rounded-full object-cover">
+          {% if s.off_doctrine %}<span class="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-cyan ring-1 ring-space" title="{% translate 'Off-doctrine' %}"></span>{% endif %}
+        </span>
+        {% endif %}
       </div>
-      <div class="grid gap-1.5 sm:grid-cols-2">
-        {% for item in section.items %}
-          {% if item.empty %}
-          <div class="flex items-center gap-2.5 rounded border border-dashed border-line/40 px-2.5 py-1.5">
-            <span class="h-6 w-6 rounded-sm bg-panel2/30 ring-1 ring-line/30"></span>
-            <span class="text-xs italic text-faint">{% translate "empty" %}</span>
-          </div>
-          {% else %}
-          <div class="flex items-center gap-2.5 rounded border px-2.5 py-1.5 {% if item.off_doctrine %}border-cyan/50 bg-cyan/5{% else %}border-line/60 bg-panel2/40{% endif %}">
-            <img src="{% eve_type_icon item.type_id 32 %}" alt="" loading="lazy" class="h-6 w-6 rounded-sm">
-            <span class="min-w-0 flex-1 truncate text-sm text-muted" title="{% type_name item.type_id %}">{% type_name item.type_id %}</span>
-            {% if item.off_doctrine %}<span class="chip !text-cyan" title="{% translate 'Off-doctrine' %}">◇</span>{% endif %}
-            {% if item.value %}<span class="data text-[11px] text-faint">{{ item.value|isk }}</span>{% endif %}
+      {% endfor %}
+    </div>
+
+    <!-- Legend + the holds that aren't fitted slots (drones / cargo / implants) -->
+    <div class="space-y-3">
+      <div class="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-faint">
+        <span class="flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-full ring-2 ring-loss/70"></span>{% translate "destroyed" %}</span>
+        <span class="flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-full ring-2 ring-cyan/60"></span>{% translate "dropped" %}</span>
+        {% if wheel.has_slot_data %}<span class="flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-full border border-dashed border-line/60"></span>{% translate "empty" %}</span>{% endif %}
+      </div>
+      {% for section in wheel.extras %}
+      <div>
+        <p class="eyebrow mb-1 text-faint">{{ section.label }} · {{ section.count }}</p>
+        <div class="space-y-1">
+          {% for item in section.items %}{% if not item.empty %}
+          <div class="flex items-center gap-2 text-sm">
+            <img src="{% eve_type_icon item.type_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">
+            <span class="min-w-0 flex-1 truncate text-muted" title="{% type_name item.type_id %}">{% type_name item.type_id %}</span>
             {% if item.destroyed %}<span class="chip !text-loss">×{{ item.destroyed }}</span>{% endif %}
             {% if item.dropped %}<span class="chip !text-cyan">↧{{ item.dropped }}</span>{% endif %}
           </div>
-          {% endif %}
-        {% endfor %}
+          {% endif %}{% endfor %}
+        </div>
       </div>
+      {% endfor %}
     </div>
-    {% endfor %}
   </div>
 </section>
 {% endif %}

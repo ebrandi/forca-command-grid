@@ -13,11 +13,14 @@ viewers) off-doctrine markers.
 """
 from __future__ import annotations
 
+import math
 from decimal import Decimal
 
 from django.utils.translation import gettext_lazy as _
 
 from apps.sde.models import SdeType
+
+_CHARGE_CATEGORY = 8  # SDE category for ammo/charges — loaded into a module, not its own slot
 
 
 def slot_bucket(flag: int) -> str:
@@ -69,6 +72,7 @@ def _empty_row() -> dict:
     return {
         "type_id": None, "name": "", "flag": None, "destroyed": 0, "dropped": 0,
         "qty": 0, "value": Decimal("0"), "off_doctrine": False, "empty": True,
+        "category_id": None,
     }
 
 
@@ -80,10 +84,12 @@ def build_fit(killmail, deviation=None) -> dict:
     view already gates it to the loss owner + officers — so peers never get the overlay.
     """
     items = list(killmail.items.all())
-    names = dict(
-        SdeType.objects.filter(type_id__in={it.item_type_id for it in items})
-        .values_list("type_id", "name")
-    )
+    meta = {
+        tid: (name, cat)
+        for tid, name, cat in SdeType.objects.filter(
+            type_id__in={it.item_type_id for it in items}
+        ).values_list("type_id", "name", "group__category_id")
+    }
     off_doctrine: set[int] = set()
     if deviation is not None:
         off_doctrine = {int(e["type_id"]) for e in (deviation.extra or [])}
@@ -99,9 +105,10 @@ def build_fit(killmail, deviation=None) -> dict:
     buckets: dict[str, list[dict]] = {key: [] for key, _label, _cap in _SLOT_META}
     for it in items:
         qty = (it.quantity_destroyed or 0) + (it.quantity_dropped or 0)
+        name, category_id = meta.get(it.item_type_id, (None, None))
         buckets[slot_bucket(it.flag)].append({
             "type_id": it.item_type_id,
-            "name": names.get(it.item_type_id) or f"Type {it.item_type_id}",
+            "name": name or f"Type {it.item_type_id}",
             "flag": it.flag,
             "destroyed": it.quantity_destroyed or 0,
             "dropped": it.quantity_dropped or 0,
@@ -109,6 +116,7 @@ def build_fit(killmail, deviation=None) -> dict:
             "value": (it.unit_value or Decimal("0")) * qty,
             "off_doctrine": it.item_type_id in off_doctrine,
             "empty": False,
+            "category_id": category_id,
         })
 
     sections = []
@@ -133,6 +141,71 @@ def build_fit(killmail, deviation=None) -> dict:
             "value": sum((r["value"] for r in rows), Decimal("0")),
         })
     return {"sections": sections, "has_slot_data": has_slot_data}
+
+
+# Radial layout of the in-game fitting window: each module rack sits on an arc around the
+# centred ship render. (rack key → (centre angle clockwise-from-top in degrees, ring radius %)).
+# High=top, Mid=left, Low=bottom, Rigs=right, Subsystems=inner-bottom — the recognisable
+# EVE fitting-screen arrangement, drawn entirely in-house.
+_RACK_GEOMETRY: dict[str, tuple[float, float]] = {
+    "high": (0.0, 39.0),
+    "med": (270.0, 39.0),
+    "low": (180.0, 39.0),
+    "rig": (90.0, 34.0),
+    "subsystem": (180.0, 22.0),
+}
+_SLOT_STEP_DEG = 19.0   # angular gap between adjacent slots on a rack's arc
+_SLOT_SPREAD_MAX = 150.0  # cap so a full 8-slot rack doesn't wrap past its quadrant
+
+
+def _slot_positions(center_deg: float, n: int, radius: float) -> list[tuple[float, float]]:
+    """``n`` evenly-spaced ``(x%, y%)`` points on an arc centred at ``center_deg`` (a rack)."""
+    if n <= 0:
+        return []
+    step = _SLOT_STEP_DEG if n == 1 else min(_SLOT_STEP_DEG, _SLOT_SPREAD_MAX / (n - 1))
+    start = center_deg - step * (n - 1) / 2
+    pts = []
+    for i in range(n):
+        a = math.radians(start + step * i)
+        pts.append((round(50.0 + radius * math.sin(a), 2), round(50.0 - radius * math.cos(a), 2)))
+    return pts
+
+
+def build_fit_wheel(killmail, deviation=None) -> dict:
+    """The fit as a radial fitting-window layout (KB-21b): the fitted module racks placed on
+    arcs around the hull, plus the leftover holds (drones/cargo/implants) as ``extras``.
+
+    Builds on :func:`build_fit` (bucketing, empty-slot padding, off-doctrine markers). A
+    loaded charge shares its module's slot flag, so it is folded into that module's tooltip
+    (``charges``) instead of taking a slot of its own.
+    """
+    fit = build_fit(killmail, deviation)
+    sections = {s["key"]: s for s in fit["sections"]}
+
+    slots = []
+    for key, (center, radius) in _RACK_GEOMETRY.items():
+        sec = sections.get(key)
+        if not sec:
+            continue
+        placed, charges_by_flag = [], {}
+        for it in sec["items"]:
+            if not it["empty"] and it.get("category_id") == _CHARGE_CATEGORY:
+                charges_by_flag.setdefault(it["flag"], []).append(it["name"])
+            else:
+                placed.append(it)
+        for (x, y), it in zip(_slot_positions(center, len(placed), radius), placed, strict=True):
+            slots.append({
+                **it, "x": x, "y": y, "rack": key,
+                "charges": [] if it["empty"] else charges_by_flag.get(it["flag"], []),
+            })
+
+    extras = [s for s in fit["sections"] if s["key"] in ("drone", "implant", "cargo", "other")]
+    return {
+        "hull_type_id": killmail.victim_ship_type_id,
+        "slots": slots,
+        "extras": extras,
+        "has_slot_data": fit["has_slot_data"],
+    }
 
 
 def esi_fitting(killmail) -> dict:

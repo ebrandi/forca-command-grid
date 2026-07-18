@@ -143,6 +143,52 @@ def test_build_fit_off_doctrine_marker_only_with_deviation(sde):
     assert flagged == {484}
 
 
+# --- build_fit_wheel (radial layout) -----------------------------------------
+def test_slot_positions_on_arc():
+    pts = fitrender._slot_positions(0.0, 4, 39.0)   # high rack, centred at the top
+    assert len(pts) == 4
+    assert all(0 <= x <= 100 and 0 <= y <= 100 for x, y in pts)  # inside the box
+    assert all(y < 50 for x, y in pts)              # a top arc sits above centre
+
+
+@pytest.mark.django_db
+def test_build_fit_wheel_places_racks_and_extras(sde):
+    km = ingest_killmail(100001, "h1", body=BODY)
+    wheel = fitrender.build_fit_wheel(km)
+
+    assert wheel["hull_type_id"] == 587
+    assert wheel["has_slot_data"] is True
+    assert {"high", "med", "low", "rig"} <= {s["rack"] for s in wheel["slots"]}
+    assert all("x" in s and "y" in s for s in wheel["slots"])   # every slot positioned
+    highs = [s for s in wheel["slots"] if s["rack"] == "high"]
+    assert len(highs) == 4                          # 2 modules + 2 empty (Rifter has 4 high)
+    assert sum(1 for s in highs if s["empty"]) == 2
+    extra_keys = {s["key"] for s in wheel["extras"]}
+    assert "drone" in extra_keys and "cargo" in extra_keys   # holds are extras, not slots
+
+
+@pytest.mark.django_db
+def test_build_fit_wheel_folds_loaded_charges(sde):
+    # A gun (484, module) + its ammo (192, charge) in the SAME high slot (flag 27): the
+    # charge folds into the module's slot rather than taking a slot of its own.
+    body = {
+        "killmail_id": 100002, "killmail_time": "2026-06-20T12:00:00Z",
+        "solar_system_id": 30002053,
+        "victim": {"character_id": 2001, "corporation_id": HOME, "ship_type_id": 587,
+                   "damage_taken": 10, "items": [
+                       {"item_type_id": 484, "flag": 27, "quantity_destroyed": 1},
+                       {"item_type_id": 192, "flag": 27, "quantity_destroyed": 100},
+                   ]},
+        "attackers": [{"character_id": 3001, "corporation_id": 99, "ship_type_id": 587,
+                       "final_blow": True, "damage_done": 10}],
+    }
+    km = ingest_killmail(100002, "h2", body=body)
+    highs = [s for s in fitrender.build_fit_wheel(km)["slots"] if s["rack"] == "high"]
+    occupied = [s for s in highs if not s["empty"]]
+    assert len(occupied) == 1 and occupied[0]["type_id"] == 484   # one slot, the gun
+    assert "Fusion S" in occupied[0]["charges"]                   # ammo folded in
+
+
 # --- esi_fitting --------------------------------------------------------------
 @pytest.mark.django_db
 def test_esi_fitting_shape(sde):
@@ -160,15 +206,15 @@ def test_esi_fitting_shape(sde):
 
 # --- detail page + export endpoints ------------------------------------------
 @pytest.mark.django_db
-def test_detail_page_renders_per_slot_fit(client, sde):
+def test_detail_page_renders_radial_fit(client, sde):
     _seed_prices({587: 380000, 484: 12000, 2046: 8000, 192: 5})
     ingest_killmail(100001, "h1", body=BODY)
     html = client.get("/killboard/100001/").content
 
-    assert b"High slots" in html
-    assert b"Mid slots" in html
-    assert b"200mm AutoCannon I" in html
-    assert b"empty" in html          # empty-slot outlines rendered (Rifter has capacity)
+    assert b">High<" in html and b">Mid<" in html   # rack labels around the wheel
+    assert b"left:" in html                          # radially-positioned slots
+    assert b"200mm AutoCannon I" in html             # module name (slot tooltip)
+    assert b"empty" in html                          # empty-slot legend (Rifter has capacity)
     assert b"Copy EFT" in html
     assert b"Copy ESI" in html
 

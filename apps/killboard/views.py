@@ -533,9 +533,9 @@ def killmail_detail(request: HttpRequest, killmail_id: int) -> HttpResponse:
             "attackers": breakdown["rows"],
             "parties": breakdown["parties"],
             "deviation": deviation,
-            # Per-slot fit render (KB-21). ``deviation`` is already gated to owner/officer,
-            # so passing it here keeps the off-doctrine overlay private to permitted viewers.
-            "fit": fitrender.build_fit(killmail, deviation),
+            # Radial fitting-window render (KB-21b). ``deviation`` is already gated to
+            # owner/officer, so the off-doctrine overlay stays private to permitted viewers.
+            "wheel": fitrender.build_fit_wheel(killmail, deviation),
             # KB-22 detail-anatomy polish.
             "srp": srp,
             "value_tier": anatomy.value_tier(killmail.total_value),
