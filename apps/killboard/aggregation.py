@@ -245,14 +245,14 @@ def refresh_current_months(n_months: int = 2) -> int:
 # --------------------------------------------------------------------------- #
 #  Cache invalidation
 # --------------------------------------------------------------------------- #
-def _hist_base_key(year: int, month: int | None) -> str:
-    return f"kb:hist:{CACHE_VERSION}:{_home()}:{year}:{month or 0}"
+def _hist_base_key(year: int, month: int | None, *, by_main: bool = False) -> str:
+    return f"kb:hist:{CACHE_VERSION}:{_home()}:{year}:{month or 0}{':main' if by_main else ''}"
 
 
-def _hist_key(year: int, month: int | None) -> str:
+def _hist_key(year: int, month: int | None, *, by_main: bool = False) -> str:
     """Language-scoped: a historical board embeds prose (the period label with its month
     name, the eight category titles/subtitles, each row's caption)."""
-    return i18n_cache_key(_hist_base_key(year, month))
+    return i18n_cache_key(_hist_base_key(year, month, by_main=by_main))
 
 
 def invalidate_period_cache(year: int, month: int | None = None) -> None:
@@ -271,8 +271,9 @@ def invalidate_period_cache(year: int, month: int | None = None) -> None:
     keys = []
     for code, _label in settings.LANGUAGES:
         with translation.override(code):
-            keys.append(_hist_key(year, month))
-            keys.append(_hist_key(year, None))  # the year-total board always changes too
+            for by_main in (False, True):  # KB-23: by-char + by-main variants both go stale
+                keys.append(_hist_key(year, month, by_main=by_main))
+                keys.append(_hist_key(year, None, by_main=by_main))  # year-total changes too
     keys.append(f"kb:hist_years:{CACHE_VERSION}:{_home()}")
     cache.delete_many(keys)
 
@@ -356,11 +357,14 @@ def _period_label(year: int, month: int | None) -> str:
 
 
 def historical_leaderboards(
-    year: int, month: int | None = None, *, use_cache: bool = True, refresh: bool = False
+    year: int, month: int | None = None, *, use_cache: bool = True, refresh: bool = False,
+    by_main: bool = False,
 ) -> dict:
     """The same eight boards as the live rankings, for a past calendar month or a
     whole year, read fast from ``MonthlyPilotKillStat``. Same payload shape as
     ``leaderboards.leaderboards`` so the template renders it unchanged.
+
+    ``by_main=True`` rolls a person's alts up under their main (KB-23), cached separately.
 
     The boards and their category cards are built by the shared ``leaderboards`` helpers, so
     the prose (titles, subtitles, row captions) is marked and resolved in exactly one place.
@@ -369,17 +373,20 @@ def historical_leaderboards(
         EFFICIENCY_MIN_FIGHTS,
         Window,
         _most_valuable_kills,
+        _rollup_by_main,
         build_boards,
         categories_payload,
     )
 
-    key = _hist_key(year, month)
+    key = _hist_key(year, month, by_main=by_main)
     if use_cache and not refresh:
         cached = cache.get(key)
         if cached is not None:
             return cached
 
     pilots = _merge_period_pilots(year, month)
+    if by_main:
+        pilots = _rollup_by_main(pilots)
     categories = categories_payload(build_boards(pilots))
 
     # Biggest single kills in the period — small bounded query on the raw mails.

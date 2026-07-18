@@ -269,6 +269,42 @@ def _merge_pilots(window: Window) -> dict[int, dict]:
     return pilots
 
 
+def _rollup_by_main(pilots: list[dict]) -> list[dict]:
+    """Collapse per-character pilot dicts into one dict per person's MAIN (KB-23).
+
+    Sums the additive stat fields across a person's alts and recomputes the derived
+    engagements + efficiency, re-keying ``character_id`` to the main so a row renders the
+    main's name/portrait (``eve_name`` resolves the id at render). Unlinked pilots map to
+    themselves and pass through unchanged.
+
+    Semantics: the per-character stats are already *per-participation* — a kill counts for
+    every attacker on the mail — so summing gives "everything this person's pilots did",
+    counting a mail once per alt that was on it (the common case, one pilot per mail, is
+    exact). This matches how the board already treats participation and how aa-killstats
+    aggregates by main; it is not distinct-by-killmail. ``active_days`` likewise sums, so a
+    main and an alt both active on the same day nudge the "Most Active" board up slightly.
+    Summing keeps the live and historical (per-character-count-only) paths consistent.
+    """
+    from core.pilots import mains_for
+
+    main_map = mains_for([p["character_id"] for p in pilots])
+    merged: dict[int, dict] = {}
+    for p in pilots:
+        mid = main_map.get(p["character_id"], p["character_id"])
+        m = merged.get(mid)
+        if m is None:
+            merged[mid] = {**p, "character_id": mid}
+            continue
+        for f in ("kills", "final_blows", "solo_kills", "isk_destroyed",
+                  "points", "losses", "isk_lost", "active_days"):
+            m[f] = m.get(f, 0) + p.get(f, 0)
+    for m in merged.values():
+        m["engagements"] = m["kills"] + m["losses"]
+        denom = float(m["isk_destroyed"]) + float(m["isk_lost"])
+        m["efficiency"] = (float(m["isk_destroyed"]) / denom * 100.0) if denom else 0.0
+    return list(merged.values())
+
+
 def _rank(pilots, value_key, *, predicate=None, secondary=None, limit=TOP_N):
     """Top-N rows sorted by ``value_key`` desc, dropping zero/ineligible rows."""
     rows = [p for p in pilots if (predicate(p) if predicate else p.get(value_key, 0) > 0)]
@@ -388,9 +424,11 @@ def build_boards(pilots: list[dict]) -> dict:
     }
 
 
-def _build(window_key: str) -> dict:
+def _build(window_key: str, *, by_main: bool = False) -> dict:
     window = window_for(window_key)
     pilots = list(_merge_pilots(window).values())
+    if by_main:
+        pilots = _rollup_by_main(pilots)
     return {
         "window": {"key": window.key, "label": str(window.label)},
         "categories": categories_payload(build_boards(pilots)),
@@ -400,10 +438,13 @@ def _build(window_key: str) -> dict:
     }
 
 
-def leaderboards(window_key: str, *, use_cache: bool = True, refresh: bool = False) -> dict:
+def leaderboards(
+    window_key: str, *, use_cache: bool = True, refresh: bool = False, by_main: bool = False
+) -> dict:
     """Full rankings payload for a window (memoized in the cache).
 
     ``refresh=True`` rebuilds and re-caches even on a hit — used by the warmer.
+    ``by_main=True`` rolls a person's alts up under their main (KB-23), cached separately.
 
     Language-scoped key: the payload carries prose (the window label with its month name,
     the eight category titles/subtitles, each row's secondary caption, the danger labels).
@@ -411,11 +452,12 @@ def leaderboards(window_key: str, *, use_cache: bool = True, refresh: bool = Fal
     if window_key not in WINDOW_KEYS:
         window_key = "30d"
     if not use_cache:
-        return _build(window_key)
-    key = i18n_cache_key(f"kb:lb:{CACHE_VERSION}:{_home()}:{window_key}")
+        return _build(window_key, by_main=by_main)
+    suffix = ":main" if by_main else ""
+    key = i18n_cache_key(f"kb:lb:{CACHE_VERSION}:{_home()}:{window_key}{suffix}")
     payload = None if refresh else cache.get(key)
     if payload is None:
-        payload = _build(window_key)
+        payload = _build(window_key, by_main=by_main)
         cache.set(key, payload, CACHE_TTL)
     return payload
 

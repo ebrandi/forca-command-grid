@@ -53,6 +53,33 @@ _ACTIVE_RESOLVED = "_active_pilot_resolved"
 _ROSTER_MEMO = "_linked_pilots_cache"
 
 
+def mains_for(character_ids) -> dict[int, int]:
+    """Map each character_id to the MAIN character_id of the same person (KB-23).
+
+    Built for rolling per-character stats up by person. A character linked to no account
+    (an external/enemy pilot) — and a linked character whose account has no main flagged —
+    maps to ITSELF, so a by-main view still ranks it under its own name rather than dropping
+    it. Two indexed queries, no per-character lookups.
+
+    This is a read-only grouping key for aggregate views; nothing about a pilot is ever
+    merged with another (LP-3).
+    """
+    from apps.sso.models import EveCharacter
+
+    wanted = {int(c) for c in character_ids if c}
+    if not wanted:
+        return {}
+    char_to_user = dict(
+        EveCharacter.objects.filter(character_id__in=wanted).values_list("character_id", "user_id")
+    )
+    user_ids = {uid for uid in char_to_user.values() if uid is not None}
+    user_to_main = dict(
+        EveCharacter.objects.filter(user_id__in=user_ids, is_main=True)
+        .values_list("user_id", "character_id")
+    )
+    return {cid: user_to_main.get(char_to_user.get(cid), cid) for cid in wanted}
+
+
 def linked_pilots(user, *, with_tokens: bool = False):
     """Every pilot linked to ``user``, ordered for the selector.
 

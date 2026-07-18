@@ -17,13 +17,27 @@
 <div class="mb-3 flex flex-wrap items-center gap-2 text-xs">
   <span class="text-faint">{% translate "Period:" %}</span>
   {% for key, label in windows %}
-    <a href="?window={{ key }}" class="chip {% if not historical and window.key == key %}!border-gold/50 !text-gold{% else %}hover:text-ink{% endif %}">{{ label }}</a>
+    <a href="?window={{ key }}{% if by_main %}&by=main{% endif %}" class="chip {% if not historical and window.key == key %}!border-gold/50 !text-gold{% else %}hover:text-ink{% endif %}">{{ label }}</a>
   {% endfor %}
+</div>
+
+<!-- KB-23: roll a person's alts up under their main -->
+<div class="mb-3 flex flex-wrap items-center gap-2 text-xs">
+  <span class="text-faint">{% translate "Aggregate:" %}</span>
+  {% if historical %}
+    <a href="?year={{ sel_year }}{% if sel_month %}&month={{ sel_month }}{% endif %}" class="chip {% if not by_main %}!border-gold/50 !text-gold{% else %}hover:text-ink{% endif %}">{% translate "By pilot" %}</a>
+    <a href="?year={{ sel_year }}{% if sel_month %}&month={{ sel_month }}{% endif %}&by=main" class="chip {% if by_main %}!border-gold/50 !text-gold{% else %}hover:text-ink{% endif %}">{% translate "By main (+ alts)" %}</a>
+  {% else %}
+    <a href="?window={{ window.key }}" class="chip {% if not by_main %}!border-gold/50 !text-gold{% else %}hover:text-ink{% endif %}">{% translate "By pilot" %}</a>
+    <a href="?window={{ window.key }}&by=main" class="chip {% if by_main %}!border-gold/50 !text-gold{% else %}hover:text-ink{% endif %}">{% translate "By main (+ alts)" %}</a>
+  {% endif %}
+  {% if by_main %}<span class="text-[10px] text-faint">{% translate "alts counted under each pilot's main" %}</span>{% endif %}
 </div>
 
 <!-- Historical filter (month / year) -->
 <div class="mb-5 flex flex-wrap items-center gap-3 text-xs">
   <form method="get" class="flex flex-wrap items-center gap-2">
+    {% if by_main %}<input type="hidden" name="by" value="main">{% endif %}
     <span class="text-faint">{% translate "History:" %}</span>
     <select name="year" class="input-field !w-auto !py-1 !text-xs" data-autosubmit>
       <option value="">{% translate "— year —" %}</option>
@@ -38,9 +52,9 @@
   </form>
   {% if historical %}
   <span class="text-line">|</span>
-  {% if prev_period %}<a href="?year={{ prev_period.year }}{% if prev_period.month %}&month={{ prev_period.month }}{% endif %}" class="chip hover:text-ink">← {{ prev_period.label }}</a>{% endif %}
+  {% if prev_period %}<a href="?year={{ prev_period.year }}{% if prev_period.month %}&month={{ prev_period.month }}{% endif %}{% if by_main %}&by=main{% endif %}" class="chip hover:text-ink">← {{ prev_period.label }}</a>{% endif %}
   <span class="chip !border-gold/50 !text-gold">{{ window.label }}</span>
-  {% if next_period %}<a href="?year={{ next_period.year }}{% if next_period.month %}&month={{ next_period.month }}{% endif %}" class="chip hover:text-ink">{{ next_period.label }} →</a>{% endif %}
+  {% if next_period %}<a href="?year={{ next_period.year }}{% if next_period.month %}&month={{ next_period.month }}{% endif %}{% if by_main %}&by=main{% endif %}" class="chip hover:text-ink">{{ next_period.label }} →</a>{% endif %}
   <a href="{% url 'killboard:rankings' %}" class="chip text-faint hover:text-loss">{% translate "Reset" %}</a>
   {% endif %}
 </div>

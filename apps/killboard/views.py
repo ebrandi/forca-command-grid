@@ -288,6 +288,9 @@ def killboard_rankings(request: HttpRequest) -> HttpResponse:
     # raises ValueError/OverflowError and 500s this public page.
     min_rank_year = 2003
 
+    # KB-23: roll a person's alts up under their main across all the boards.
+    by_main = request.GET.get("by") == "main"
+
     year_raw = (request.GET.get("year") or "").strip()
     month_raw = (request.GET.get("month") or "").strip()
     historical = year_raw.isdigit() and min_rank_year <= int(year_raw) <= now_year
@@ -298,7 +301,7 @@ def killboard_rankings(request: HttpRequest) -> HttpResponse:
         sel_year = int(year_raw)
         if month_raw.isdigit() and 1 <= int(month_raw) <= 12:
             sel_month = int(month_raw)
-        data = aggregation.historical_leaderboards(sel_year, sel_month)
+        data = aggregation.historical_leaderboards(sel_year, sel_month, by_main=by_main)
         # Previous / next period for the nav — clamped to the valid range so a
         # boundary click can never produce an out-of-range year.
         if sel_month:
@@ -315,7 +318,7 @@ def killboard_rankings(request: HttpRequest) -> HttpResponse:
                 next_period = {"year": sel_year + 1, "month": "", "label": str(sel_year + 1)}
     else:
         window_key = request.GET.get("window", "month")
-        data = leaderboards(window_key)
+        data = leaderboards(window_key, by_main=by_main)
 
     # A logged-in member sees their own all-time standing up top — a personal hook.
     my_card = None
@@ -339,6 +342,7 @@ def killboard_rankings(request: HttpRequest) -> HttpResponse:
                 {**e, "name": ranks_i18n.rank_title_for(e["name"])} for e in active_ladder()
             ],
             "historical": historical,
+            "by_main": by_main,
             "sel_year": sel_year,
             "sel_month": sel_month,
             "available_years": aggregation.available_years(),
