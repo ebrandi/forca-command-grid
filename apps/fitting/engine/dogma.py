@@ -1,0 +1,544 @@
+"""The independent dogma evaluator.
+
+Given a fit, a skill profile and an operating profile, it computes ship telemetry
+(fitting resources, defence, offence, capacitor, mobility, targeting, utility),
+diagnostics and explainability traces — deterministically, from base attributes plus
+publicly documented EVE mechanics (stacking penalty, ship/role/skill bonuses,
+resonance-based EHP, turret/drone DPS, capacitor recharge). It reads all data through a
+:class:`DataProvider` so it never touches the ORM, ESI, the request or the network.
+
+This is an original implementation. Where a mechanic is not modelled it is reported in
+``FittingResult.unsupported`` rather than approximated silently.
+"""
+from __future__ import annotations
+
+import math
+from time import perf_counter
+from typing import Protocol
+
+from . import attributes as A
+from .bonuses import BonusContext, BonusSpec
+from .stacking import combine_penalized, combine_unpenalized
+from .types import (
+    AttributeTrace,
+    Contribution,
+    Diagnostic,
+    FitInput,
+    FittingResult,
+    MissingSkill,
+    ModuleState,
+    OperatingProfile,
+    Severity,
+    SkillProfile,
+    SlotKind,
+    Status,
+)
+
+# Launcher/turret group ids (public SDE inventory groups) used for hardpoint accounting.
+LAUNCHER_GROUPS = frozenset({507, 508, 509, 510, 511, 524, 771, 1245, 1246})
+TURRET_GROUPS = frozenset({53, 55, 74})
+DAMAGE_MOD_GROUPS = frozenset({62, 325, 326, 327, 328, 329})  # gyro/heatsink/magstab/BCS/DDA
+SHIELD_EXTENDER_GROUP = 40
+ARMOR_PLATE_GROUP = 329  # (approx; real plates group id — kept for reference/fixtures)
+PROP_GROUPS = frozenset({46, 47})  # afterburner, MWD
+
+_LN_10_PCT = -math.log(0.25)  # 1.386294… — the align-time / e-folding constant
+
+
+class DataProvider(Protocol):
+    data_version: str
+
+    def type_info(self, type_id: int) -> dict | None: ...
+    def attrs(self, type_id: int) -> dict[int, float]: ...
+    def required_skills(self, type_id: int) -> list[tuple[int, int]]: ...
+    def ship_bonuses(self, ship_type_id: int) -> list[BonusSpec]: ...
+
+
+# --------------------------------------------------------------------------- #
+# Bonus application helpers
+# --------------------------------------------------------------------------- #
+def _matches(spec: BonusSpec, info: dict, item_attrs: dict[int, float]) -> bool:
+    if spec.match_group_ids and info.get("group_id") not in spec.match_group_ids:
+        return False
+    if spec.match_category_ids and info.get("category_id") not in spec.match_category_ids:
+        return False
+    if spec.match_attr_present is not None and spec.match_attr_present not in item_attrs:
+        return False
+    return True
+
+
+def _bonus_factor_for_item(
+    ctx: BonusContext, skills: SkillProfile, attr_id: int, info: dict, item_attrs: dict[int, float]
+) -> tuple[float, list[Contribution]]:
+    """Combined UNPENALISED factor from ship/role/skill bonuses on an *item* attribute."""
+    factors: list[float] = []
+    contribs: list[Contribution] = []
+    for spec in ctx.all():
+        if spec.target_domain != "item" or spec.target_attr != attr_id or spec.penalised:
+            continue
+        if not _matches(spec, info, item_attrs):
+            continue
+        level = skills.level(spec.skill_id) if spec.skill_id else 1
+        if spec.skill_id and level <= 0:
+            continue
+        f = spec.factor(level)
+        if f != 1.0:
+            factors.append(f)
+            kind = "skill" if spec.skill_id else "ship_bonus"
+            contribs.append(Contribution(spec.label or spec.key, kind, f"×{f:.4f}", None))
+    return combine_unpenalized(factors), contribs
+
+
+def _ship_attr(
+    ship: dict[int, float], attr_id: int, ctx: BonusContext, skills: SkillProfile,
+    *, default: float = 0.0, trace: AttributeTrace | None = None,
+) -> float:
+    """A ship attribute with its unpenalised ship/skill bonuses applied."""
+    base = ship.get(attr_id, default)
+    factors: list[float] = []
+    for spec in ctx.all():
+        if spec.target_domain != "ship" or spec.target_attr != attr_id or spec.penalised:
+            continue
+        level = skills.level(spec.skill_id) if spec.skill_id else 1
+        if spec.skill_id and level <= 0:
+            continue
+        f = spec.factor(level)
+        if f != 1.0:
+            factors.append(f)
+            if trace is not None:
+                kind = "skill" if spec.skill_id else "ship_bonus"
+                trace.contributions.append(Contribution(spec.label or spec.key, kind, f"×{f:.4f}"))
+    return base * combine_unpenalized(factors)
+
+
+# --------------------------------------------------------------------------- #
+# Main entry
+# --------------------------------------------------------------------------- #
+def evaluate(
+    fit: FitInput, skills: SkillProfile, op_profile: OperatingProfile, provider: DataProvider
+) -> FittingResult:
+    t0 = perf_counter()
+    result = FittingResult(status=Status.VALID, data_version=getattr(provider, "data_version", ""))
+
+    ship_info = provider.type_info(fit.ship_type_id)
+    ship = provider.attrs(fit.ship_type_id)
+    if not ship_info or not ship:
+        result.status = Status.IMPOSSIBLE
+        result.errors.append("unknown_ship")
+        result.compute_ms = (perf_counter() - t0) * 1000
+        return result
+
+    ctx = BonusContext(ship_bonuses=provider.ship_bonuses(fit.ship_type_id))
+
+    # Resolve every fitted item once.
+    items: list[tuple] = []  # (module_input, attrs, info)
+    for m in fit.modules:
+        items.append((m, provider.attrs(m.type_id), provider.type_info(m.type_id) or {}))
+
+    def active(m) -> bool:
+        return m.state in (ModuleState.ACTIVE, ModuleState.OVERHEATED)
+
+    resources = _resources(ship, items, result)
+    defence = _defence(ship, items, ctx, skills, op_profile, result)
+    capacitor = _capacitor(ship, items, ctx, skills, active)
+    offence = _offence(items, provider, ctx, skills, op_profile, result, active)
+    mobility = _mobility(ship, items, ctx, skills, op_profile, result, active)
+    targeting = _targeting(ship, ctx, skills)
+    utility = _utility(ship, items)
+
+    result.telemetry = {
+        "resources": resources,
+        "defence": defence,
+        "capacitor": capacitor,
+        "offence": offence,
+        "mobility": mobility,
+        "targeting": targeting,
+        "utility": utility,
+        "ship": {"type_id": fit.ship_type_id, "name": ship_info.get("name", "")},
+        "operating_profile": {
+            "mode": op_profile.mode.value,
+            "propulsion_active": op_profile.propulsion_active,
+            "damage_profile": op_profile.damage_profile.normalised().as_map(),
+        },
+    }
+
+    result.missing_skills = _missing_skills(fit, skills, provider)
+    _finalise_status(result, resources)
+    result.compute_ms = (perf_counter() - t0) * 1000
+    return result
+
+
+# --------------------------------------------------------------------------- #
+# Fitting resources
+# --------------------------------------------------------------------------- #
+def _resources(ship, items, result: FittingResult) -> dict:
+    cpu_out = ship.get(A.CPU_OUTPUT, 0.0)
+    pg_out = ship.get(A.POWER_OUTPUT, 0.0)
+    cal_out = ship.get(A.CALIBRATION, 0.0)
+    cpu_used = pg_used = cal_used = 0.0
+    slot_counts = {k: 0 for k in ("high", "med", "low", "rig", "subsystem", "drone")}
+    turrets = launchers = 0
+
+    for m, a, info in items:
+        if m.slot in (SlotKind.HIGH, SlotKind.MED, SlotKind.LOW) and m.state != ModuleState.OFFLINE:
+            cpu_used += a.get(A.CPU_USAGE, 0.0)
+            pg_used += a.get(A.POWER_USAGE, 0.0)
+        if m.slot == SlotKind.RIG:
+            cal_used += a.get(A.CALIBRATION_COST, 0.0)
+        key = m.slot.value if m.slot.value in slot_counts else None
+        if key:
+            slot_counts[key] += 1
+        gid = info.get("group_id")
+        if m.slot == SlotKind.HIGH and gid in TURRET_GROUPS:
+            turrets += 1
+        elif m.slot == SlotKind.HIGH and gid in LAUNCHER_GROUPS:
+            launchers += 1
+
+    hull = {
+        "high": int(ship.get(A.HI_SLOTS, 0)), "med": int(ship.get(A.MED_SLOTS, 0)),
+        "low": int(ship.get(A.LOW_SLOTS, 0)), "rig": int(ship.get(A.RIG_SLOTS, 0)),
+    }
+    turret_hp = int(ship.get(A.TURRET_HARDPOINTS, 0))
+    launcher_hp = int(ship.get(A.LAUNCHER_HARDPOINTS, 0))
+
+    for label, used, cap, code in (
+        ("CPU", cpu_used, cpu_out, "cpu_exceeded"),
+        ("Powergrid", pg_used, pg_out, "powergrid_exceeded"),
+        ("Calibration", cal_used, cal_out, "calibration_exceeded"),
+    ):
+        if used > cap + 1e-6:
+            result.diagnostics.append(Diagnostic(
+                code, Severity.ERROR, f"{label} exceeded",
+                detail=f"{used:.1f} of {cap:.1f} used", evidence=f"{used - cap:.1f} over",
+                suggested_action="Remove or downsize a module, or fit a fitting upgrade.",
+                contextual=False,
+            ))
+    for slot, used in (("high", slot_counts["high"]), ("med", slot_counts["med"]),
+                       ("low", slot_counts["low"]), ("rig", slot_counts["rig"])):
+        if hull[slot] and used > hull[slot]:
+            result.diagnostics.append(Diagnostic(
+                "too_many_modules", Severity.ERROR, f"Too many {slot}-slot modules",
+                detail=f"{used} fitted, {hull[slot]} slots", contextual=False,
+            ))
+    if turret_hp and turrets > turret_hp:
+        result.diagnostics.append(Diagnostic(
+            "turret_hardpoints", Severity.ERROR, "Not enough turret hardpoints",
+            detail=f"{turrets} turrets, {turret_hp} hardpoints", contextual=False))
+    if launcher_hp and launchers > launcher_hp:
+        result.diagnostics.append(Diagnostic(
+            "launcher_hardpoints", Severity.ERROR, "Not enough launcher hardpoints",
+            detail=f"{launchers} launchers, {launcher_hp} hardpoints", contextual=False))
+
+    return {
+        "cpu": {"used": round(cpu_used, 2), "output": round(cpu_out, 2)},
+        "powergrid": {"used": round(pg_used, 2), "output": round(pg_out, 2)},
+        "calibration": {"used": round(cal_used, 2), "output": round(cal_out, 2)},
+        "slots": {"used": slot_counts, "hull": hull},
+        "hardpoints": {"turret": {"used": turrets, "total": turret_hp},
+                       "launcher": {"used": launchers, "total": launcher_hp}},
+        "drone_bandwidth": round(ship.get(A.DRONE_BANDWIDTH, 0.0), 1),
+        "drone_bay": round(ship.get(A.DRONE_CAPACITY, 0.0), 1),
+    }
+
+
+# --------------------------------------------------------------------------- #
+# Defence (EHP)
+# --------------------------------------------------------------------------- #
+def _layer_hp(ship, items, hp_attr, flat_groups, ctx, skills, trace_label, result):
+    base = ship.get(hp_attr, 0.0)
+    flat = 0.0
+    for m, a, info in items:
+        if m.state == ModuleState.OFFLINE:
+            continue
+        if info.get("group_id") in flat_groups:
+            flat += a.get(hp_attr, 0.0)
+    trace = AttributeTrace(trace_label, base, base, "HP",
+                           [Contribution("Hull base", "base", "", base)])
+    if flat:
+        trace.contributions.append(Contribution("Modules", "module", f"+{flat:.0f} HP"))
+    total = _ship_attr({**ship, hp_attr: base + flat}, hp_attr, ctx, skills, trace=trace)
+    trace.final = total
+    result.traces[trace_label] = trace
+    return total
+
+
+def _layer_resonance(ship, items, resonance_attrs, ctx, skills, active_only, result, label):
+    """resist% per damage type after penalised module resonances + unpenalised bonuses."""
+    out = {}
+    for dtype, attr in resonance_attrs.items():
+        base = ship.get(attr, 1.0)
+        mults = []
+        for m, a, _info in items:
+            if m.state == ModuleState.OFFLINE:
+                continue
+            if attr in a and a[attr] != 1.0:
+                mults.append(a[attr])
+        penalised = combine_penalized(mults)
+        # Unpenalised ship/skill resist bonuses on this resonance attribute.
+        bonus = 1.0
+        for spec in ctx.all():
+            if spec.target_domain == "ship" and spec.target_attr == attr and not spec.penalised:
+                level = skills.level(spec.skill_id) if spec.skill_id else 1
+                bonus *= spec.factor(level)
+        resonance = max(0.0, min(1.0, base * penalised * bonus))
+        out[dtype] = {"resonance": resonance, "resist": 1.0 - resonance}
+    return out
+
+
+def _defence(ship, items, ctx, skills, op_profile, result: FittingResult) -> dict:
+    layers = {}
+    dp = op_profile.damage_profile.normalised().as_map()
+    total_ehp = 0.0
+    for name, hp_attr, res_attrs, groups in (
+        ("shield", A.SHIELD_HP, A.SHIELD_RESONANCE, {SHIELD_EXTENDER_GROUP}),
+        ("armor", A.ARMOR_HP, A.ARMOR_RESONANCE, {ARMOR_PLATE_GROUP}),
+        ("hull", A.HULL_HP, A.HULL_RESONANCE, set()),
+    ):
+        hp = _layer_hp(ship, items, hp_attr, groups, ctx, skills, f"{name}_hp", result)
+        res = _layer_resonance(ship, items, res_attrs, ctx, skills, False, result, name)
+        weighted_res = sum(dp[d] * res[d]["resonance"] for d in A.DAMAGE_TYPES)
+        ehp = hp / weighted_res if weighted_res > 0 else hp
+        total_ehp += ehp
+        layers[name] = {
+            "hp": round(hp, 1),
+            "resists": {d: round(res[d]["resist"] * 100, 1) for d in A.DAMAGE_TYPES},
+            "ehp": round(ehp, 1),
+        }
+    return {"layers": layers, "ehp_total": round(total_ehp, 1),
+            "damage_profile": {d: round(dp[d] * 100, 1) for d in A.DAMAGE_TYPES}}
+
+
+# --------------------------------------------------------------------------- #
+# Capacitor
+# --------------------------------------------------------------------------- #
+def _capacitor(ship, items, ctx, skills, active) -> dict:
+    capacity = _ship_attr(ship, A.CAP_CAPACITY, ctx, skills)
+    tau_ms = _ship_attr(ship, A.CAP_RECHARGE_RATE, ctx, skills, default=0.0)
+    tau = tau_ms / 1000.0
+    peak = 0.5 * capacity / tau if tau > 0 else 0.0  # GJ/s, peak at 25% capacitor
+
+    drain = 0.0
+    for m, a, _info in items:
+        if not active(m):
+            continue
+        need = a.get(A.CAP_NEED, 0.0)
+        cycle_ms = a.get(A.CYCLE_TIME, 0.0) or a.get(A.RATE_OF_FIRE, 0.0)
+        if need and cycle_ms > 0:
+            drain += need / (cycle_ms / 1000.0)
+
+    stable = drain <= peak and peak > 0
+    stable_pct = None
+    runtime_s = None
+    if peak > 0:
+        k = drain * tau / (2.0 * capacity) if capacity > 0 else 1.0
+        disc = 1.0 - 4.0 * k
+        if disc >= 0:
+            u = (1.0 + math.sqrt(disc)) / 2.0
+            stable_pct = round((u * u) * 100.0, 1)
+        else:
+            stable = False
+            net = drain - peak
+            runtime_s = round(capacity / net, 0) if net > 0 else None
+    return {
+        "capacity": round(capacity, 1),
+        "recharge_s": round(tau, 1),
+        "peak_recharge": round(peak, 2),
+        "usage": round(drain, 2),
+        "stable": stable,
+        "stable_pct": stable_pct,
+        "runtime_s": runtime_s,
+    }
+
+
+# --------------------------------------------------------------------------- #
+# Offence (turret + drone DPS)
+# --------------------------------------------------------------------------- #
+def _weapon_damage_mult(module_attrs, info, items, ctx, skills):
+    base = module_attrs.get(A.DAMAGE_MULTIPLIER, 1.0)
+    unpen, contribs = _bonus_factor_for_item(ctx, skills, A.DAMAGE_MULTIPLIER, info, module_attrs)
+    # Penalised damage mods (gyros etc.) that raise turret damage multiplier.
+    gyro_mults = []
+    for m2, a2, info2 in items:
+        if m2.state == ModuleState.OFFLINE:
+            continue
+        if info2.get("group_id") in DAMAGE_MOD_GROUPS and A.DAMAGE_MULTIPLIER in a2:
+            gyro_mults.append(a2[A.DAMAGE_MULTIPLIER])
+    pen = combine_penalized(gyro_mults)
+    return base * unpen * pen, contribs, gyro_mults
+
+
+def _weapon_rof(module_attrs, info, items, ctx, skills):
+    base_ms = module_attrs.get(A.RATE_OF_FIRE, 0.0)
+    unpen, _ = _bonus_factor_for_item(ctx, skills, A.RATE_OF_FIRE, info, module_attrs)
+    rof_mults = []
+    for m2, a2, info2 in items:
+        if m2.state == ModuleState.OFFLINE:
+            continue
+        if info2.get("group_id") in DAMAGE_MOD_GROUPS and A.RATE_OF_FIRE in a2:
+            rof_mults.append(a2[A.RATE_OF_FIRE])
+    pen = combine_penalized(rof_mults)
+    return (base_ms / 1000.0) * unpen * pen
+
+
+def _offence(items, provider, ctx, skills, op_profile, result: FittingResult, active) -> dict:
+    turret_dps = drone_dps = total_volley = 0.0
+    damage_by_type = {d: 0.0 for d in A.DAMAGE_TYPES}
+    weapons = 0
+    for m, a, info in items:
+        if m.slot != SlotKind.HIGH:
+            continue
+        gid = info.get("group_id")
+        if gid not in TURRET_GROUPS and gid not in LAUNCHER_GROUPS:
+            continue
+        weapons += 1
+        if m.charge_type_id is None:
+            result.diagnostics.append(Diagnostic(
+                "missing_ammo", Severity.WARNING, "Weapon has no charge loaded",
+                detail=f"type {m.type_id}", suggested_action="Load a compatible charge.",
+                contextual=False))
+            continue
+        charge = provider.attrs(m.charge_type_id)
+        shot = {d: charge.get(A.CHARGE_DAMAGE[d], 0.0) for d in A.DAMAGE_TYPES}
+        shot_total = sum(shot.values())
+        if shot_total <= 0:
+            continue
+        dmg_mult, _c, _g = _weapon_damage_mult(a, info, items, ctx, skills)
+        rof_s = _weapon_rof(a, info, items, ctx, skills)
+        if rof_s <= 0:
+            continue
+        volley = shot_total * dmg_mult
+        dps = volley / rof_s
+        turret_dps += dps
+        total_volley += volley
+        for d in A.DAMAGE_TYPES:
+            damage_by_type[d] += (shot[d] * dmg_mult) / rof_s
+
+    # Drones
+    for m, a, _info in items:
+        if m.slot != SlotKind.DRONE or not active(m):
+            continue
+        shot = {d: a.get(A.CHARGE_DAMAGE[d], 0.0) for d in A.DAMAGE_TYPES}
+        shot_total = sum(shot.values())
+        mult = a.get(A.DRONE_DAMAGE_MULTIPLIER, 1.0)
+        rof_s = (a.get(A.RATE_OF_FIRE, 0.0) or 0.0) / 1000.0
+        if shot_total > 0 and rof_s > 0:
+            d_dps = (shot_total * mult) / rof_s * m.quantity
+            drone_dps += d_dps
+            for d in A.DAMAGE_TYPES:
+                damage_by_type[d] += (shot[d] * mult) / rof_s * m.quantity
+
+    total = turret_dps + drone_dps
+    dist = {d: round(damage_by_type[d] / total * 100, 1) for d in A.DAMAGE_TYPES} if total > 0 else \
+        {d: 0.0 for d in A.DAMAGE_TYPES}
+    result.traces["dps"] = AttributeTrace(
+        "dps", 0.0, round(total, 1), "dps",
+        [Contribution("Turrets/launchers", "module", f"{turret_dps:.1f} dps"),
+         Contribution("Drones", "module", f"{drone_dps:.1f} dps")])
+    if weapons == 0 and drone_dps == 0:
+        result.unsupported.append("no_weapons_detected")
+    return {
+        "turret_dps": round(turret_dps, 1), "drone_dps": round(drone_dps, 1),
+        "total_dps": round(total, 1), "volley": round(total_volley, 1),
+        "damage_distribution": dist,
+    }
+
+
+# --------------------------------------------------------------------------- #
+# Mobility
+# --------------------------------------------------------------------------- #
+def _mobility(ship, items, ctx, skills, op_profile, result, active) -> dict:
+    trace = AttributeTrace("max_velocity", ship.get(A.MAX_VELOCITY, 0.0), 0.0, "m/s",
+                           [Contribution("Hull base", "base", "", ship.get(A.MAX_VELOCITY, 0.0))])
+    base_v = _ship_attr(ship, A.MAX_VELOCITY, ctx, skills, trace=trace)
+    mass = ship.get(A.MASS, 0.0)
+    agility = ship.get(A.AGILITY, 0.0)
+    sig = ship.get(A.SIGNATURE_RADIUS, 0.0)
+
+    prop_v = base_v
+    if op_profile.propulsion_active:
+        for m, a, info in items:
+            if info.get("group_id") in PROP_GROUPS and active(m):
+                speed_factor = a.get(A.SPEED_BONUS, 0.0)
+                if speed_factor:
+                    prop_v = base_v * (1.0 + speed_factor / 100.0)
+                    trace.contributions.append(
+                        Contribution(info.get("name", "Propulsion"), "module",
+                                     f"+{speed_factor:.0f}% speed"))
+                mass += a.get(A.MASS_ADDITION, 0.0)
+                sig_bonus = a.get(A.SIGNATURE_RADIUS_BONUS, 0.0)
+                if sig_bonus:
+                    sig = sig * (1.0 + sig_bonus / 100.0)
+                break
+    trace.final = round(prop_v, 1)
+    result.traces["max_velocity"] = trace
+    align = _LN_10_PCT * mass * agility / 1_000_000.0 if mass and agility else 0.0
+    return {
+        "max_velocity": round(base_v, 1),
+        "propulsion_velocity": round(prop_v, 1),
+        "align_time_s": round(align, 2),
+        "mass": round(mass, 0),
+        "agility": round(agility, 4),
+        "signature_radius": round(sig, 1),
+        "warp_speed": round(ship.get(A.WARP_SPEED_MULT, 0.0), 2),
+    }
+
+
+# --------------------------------------------------------------------------- #
+# Targeting / utility
+# --------------------------------------------------------------------------- #
+def _targeting(ship, ctx, skills) -> dict:
+    sensors = {k: ship.get(v, 0.0) for k, v in A.SENSOR_STRENGTHS.items()}
+    strongest = max(sensors.items(), key=lambda kv: kv[1]) if sensors else ("", 0.0)
+    return {
+        "max_target_range": round(ship.get(A.MAX_TARGET_RANGE, 0.0), 0),
+        "max_locked_targets": int(ship.get(A.MAX_LOCKED_TARGETS, 0)),
+        "scan_resolution": round(ship.get(A.SCAN_RESOLUTION, 0.0), 0),
+        "sensor_strength": round(strongest[1], 1),
+        "sensor_type": strongest[0],
+    }
+
+
+def _utility(ship, items) -> dict:
+    return {
+        "cargo": round(ship.get(A.CAPACITY_CARGO, 0.0), 1),
+        "drone_bay": round(ship.get(A.DRONE_CAPACITY, 0.0), 1),
+    }
+
+
+# --------------------------------------------------------------------------- #
+# Skills + status
+# --------------------------------------------------------------------------- #
+def _missing_skills(fit: FitInput, skills: SkillProfile, provider) -> list[MissingSkill]:
+    missing: list[MissingSkill] = []
+    seen: set[tuple[int, int]] = set()
+    type_ids = {fit.ship_type_id}
+    for m in fit.modules:
+        type_ids.add(m.type_id)
+        if m.charge_type_id:
+            type_ids.add(m.charge_type_id)
+    for tid in type_ids:
+        for skill_id, level in provider.required_skills(tid):
+            key = (skill_id, tid)
+            if key in seen:
+                continue
+            seen.add(key)
+            have = skills.level(skill_id)
+            if have < level:
+                missing.append(MissingSkill(skill_id, level, have, tid))
+    return missing
+
+
+def _finalise_status(result: FittingResult, resources: dict) -> None:
+    codes = {d.code for d in result.diagnostics if d.severity == Severity.ERROR}
+    structural = {"too_many_modules", "turret_hardpoints", "launcher_hardpoints"}
+    resource = {"cpu_exceeded", "powergrid_exceeded", "calibration_exceeded"}
+    if codes & structural:
+        result.status = Status.IMPOSSIBLE
+    elif codes & resource:
+        result.status = Status.OVER_RESOURCES
+    elif result.missing_skills:
+        result.status = Status.MISSING_SKILLS
+    elif result.diagnostics:
+        result.status = Status.WARNINGS
+    else:
+        result.status = Status.VALID

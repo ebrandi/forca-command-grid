@@ -78,6 +78,7 @@ INSTALLED_APPS = [
     "apps.capsuleer",
     "apps.procurement",
     "apps.supplyboard",
+    "apps.fitting",
 ]
 
 MIDDLEWARE = [
