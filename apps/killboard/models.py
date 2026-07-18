@@ -181,6 +181,31 @@ class FitDeviation(TimeStampedModel):
         return not self.missing and not self.extra
 
 
+class KillmailComment(models.Model):
+    """A member's short note on a killmail (KB-22).
+
+    Corp-private discussion on a kill/loss — members post, the author or an officer
+    removes. Attribution is snapshotted (``author_name`` / ``author_character_id``) at
+    post time so a later pilot-switch or account change doesn't rewrite history, while the
+    ``author`` FK is kept for the delete-permission check.
+    """
+
+    killmail = models.ForeignKey(Killmail, on_delete=models.CASCADE, related_name="comments")
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    author_name = models.CharField(max_length=120, blank=True)
+    author_character_id = models.BigIntegerField(null=True, blank=True)
+    body = models.TextField(max_length=2000)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+
+    def __str__(self) -> str:
+        return f"comment on {self.killmail_id} by {self.author_name}"
+
+
 class BattleReport(TimeStampedModel):
     title = models.CharField(max_length=200, blank=True)
     system_ids = models.JSONField(default=list)

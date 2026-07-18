@@ -9,6 +9,7 @@ from django.core.cache import cache
 from django.core.paginator import Page, Paginator
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils.translation import gettext
 from django.views.decorators.http import require_POST
 
@@ -18,11 +19,18 @@ from core import pilots, rbac
 from core.audit import audit_log, client_ip
 from core.rbac import role_required
 
-from . import fitrender
+from . import anatomy, fitrender
 from .battle import generate_battle_report
 from .forms import BattleReportForm, WatchlistEntryForm, WatchlistForm
 from .intel import watchlist_overview
-from .models import BattleReport, Killmail, KillmailParticipant, Watchlist, WatchlistEntry
+from .models import (
+    BattleReport,
+    Killmail,
+    KillmailComment,
+    KillmailParticipant,
+    Watchlist,
+    WatchlistEntry,
+)
 
 # Location/ship drill-down filters: keyed on the killmail's own columns, so they
 # are side-independent. Value is (Killmail column, chip label, name kind).
@@ -492,31 +500,88 @@ def killmail_detail(request: HttpRequest, killmail_id: int) -> HttpResponse:
         Killmail.objects.select_related("doctrine_fit").prefetch_related("items"),
         killmail_id=killmail_id,
     )
-    # Fit deviation is sensitive (it implies a mistake): show it only to the pilot
-    # who lost the ship or to an officer — never to peers (SECURITY / PRD §B5).
+    # Owner/officer are the only viewers allowed the sensitive panels below. Computed once
+    # and reused by both the fit deviation and the SRP chip (SECURITY / PRD §B5).
+    viewer_is_owner = bool(
+        request.user.is_authenticated
+        and killmail.victim_character_id
+        and request.user.characters.filter(character_id=killmail.victim_character_id).exists()
+    )
+    can_see_private = viewer_is_owner or rbac.has_role(request.user, rbac.ROLE_OFFICER)
+
+    # Fit deviation is sensitive (it implies a mistake): owner or officer only.
     deviation = getattr(killmail, "fit_deviation", None)
-    if deviation is not None and not deviation.is_clean:
-        viewer_is_owner = (
-            request.user.is_authenticated
-            and killmail.victim_character_id
-            and request.user.characters.filter(character_id=killmail.victim_character_id).exists()
-        )
-        if not (viewer_is_owner or rbac.has_role(request.user, rbac.ROLE_OFFICER)):
-            deviation = None
-    else:
+    if deviation is None or deviation.is_clean or not can_see_private:
         deviation = None
+
+    # SRP status is sensitive too (payout ISK, denial reason): owner or officer only.
+    srp = killmail.srp_claims.first() if can_see_private else None
+
+    attackers = list(killmail.participants.filter(role="attacker").order_by("-damage_done"))
+    breakdown = anatomy.attacker_breakdown(
+        killmail, attackers, _home(), anatomy.doctrine_hull_ids()
+    )
     return render(
         request,
         "killboard/detail.html",
         {
             "killmail": killmail,
-            "attackers": killmail.participants.filter(role="attacker").order_by("-damage_done"),
+            "attackers": breakdown["rows"],
+            "parties": breakdown["parties"],
             "deviation": deviation,
             # Per-slot fit render (KB-21). ``deviation`` is already gated to owner/officer,
             # so passing it here keeps the off-doctrine overlay private to permitted viewers.
             "fit": fitrender.build_fit(killmail, deviation),
+            # KB-22 detail-anatomy polish.
+            "srp": srp,
+            "value_tier": anatomy.value_tier(killmail.total_value),
+            "related": anatomy.related_killmails(killmail),
+            "battles": list(killmail.battle_reports.all()),
+            "comments": list(killmail.comments.all()),
         },
     )
+
+
+@login_required
+@role_required(rbac.ROLE_MEMBER)
+@require_POST
+def killmail_comment_create(request: HttpRequest, killmail_id: int) -> HttpResponse:
+    """Post a member comment on a killmail (KB-22). Corp-private discussion."""
+    killmail = get_object_or_404(Killmail, killmail_id=killmail_id)
+    body = (request.POST.get("body") or "").strip()
+    if not body:
+        messages.error(request, gettext("A comment can’t be empty."))
+        return redirect("killboard:detail", killmail_id=killmail_id)
+    pilot = pilots.acting_pilot(request.user)
+    comment = KillmailComment.objects.create(
+        killmail=killmail,
+        author=request.user,
+        author_name=pilot.name if pilot else request.user.get_username(),
+        author_character_id=pilot.character_id if pilot else None,
+        body=body[:2000],
+    )
+    audit_log(
+        request.user, "killmail_comment.create", target_type="killmail",
+        target_id=str(killmail_id), metadata={"comment_id": comment.id}, ip=client_ip(request),
+    )
+    return redirect(f"{reverse('killboard:detail', args=[killmail_id])}#comments")
+
+
+@login_required
+@role_required(rbac.ROLE_MEMBER)
+@require_POST
+def killmail_comment_delete(request: HttpRequest, killmail_id: int, comment_id: int) -> HttpResponse:
+    """Remove a comment — the author or an officer only (KB-22)."""
+    comment = get_object_or_404(KillmailComment, id=comment_id, killmail_id=killmail_id)
+    if comment.author_id == request.user.id or rbac.has_role(request.user, rbac.ROLE_OFFICER):
+        comment.delete()
+        audit_log(
+            request.user, "killmail_comment.delete", target_type="killmail",
+            target_id=str(killmail_id), metadata={"comment_id": comment_id}, ip=client_ip(request),
+        )
+    else:
+        messages.error(request, gettext("You can’t remove that comment."))
+    return redirect(f"{reverse('killboard:detail', args=[killmail_id])}#comments")
 
 
 def killmail_eft(request: HttpRequest, killmail_id: int) -> HttpResponse:
