@@ -51,6 +51,15 @@ else
 fi
 ok "SDE loaded."
 
+# 1b. Dogma reference data ---------------------------------------------------
+# Attributes/effects/ship-bonuses the Tocha's Lab fitting simulation evaluates.
+# Idempotent and staged. The bundled sample covers the demo Rifter loadout; a full
+# per-type dogma projection (from the SDE FSD) is a follow-on data-pipeline step —
+# until then, ships outside the sample evaluate from their slot-count columns only.
+log "Loading dogma reference data for the fitting simulation ..."
+web load_dogma
+ok "Dogma reference data loaded."
+
 # 2. Planetary Industry ------------------------------------------------------
 log "Loading Planetary Industry rulebook ..."
 web load_pi_static
