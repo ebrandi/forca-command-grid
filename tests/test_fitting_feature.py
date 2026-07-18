@@ -14,7 +14,7 @@ from django.urls import reverse
 from apps.fitting import services
 from apps.fitting.engine import attributes as A
 from apps.fitting.engine.types import SkillProfile
-from apps.fitting.models import Fit, FitRevision, Visibility
+from apps.fitting.models import Fit
 from apps.sso.models import EveCharacter
 
 RIFTER, AC, FUSION, DC = 587, 484, 192, 2046
@@ -26,7 +26,13 @@ def dogma(db):
     from apps.admin_audit.models import AppSetting
     from apps.market.models import MarketPrice
     from apps.sde.models import (
-        SdeCategory, SdeGroup, SdeShipBonus, SdeType, SdeTypeAttribute, SdeTypeEffect, SdeTypeSkill,
+        SdeCategory,
+        SdeGroup,
+        SdeShipBonus,
+        SdeType,
+        SdeTypeAttribute,
+        SdeTypeEffect,
+        SdeTypeSkill,
     )
     R, AR, HR = A.SHIELD_RESONANCE, A.ARMOR_RESONANCE, A.HULL_RESONANCE
     for cid, name in [(6, "Ship"), (7, "Module"), (8, "Charge"), (16, "Skill")]:
@@ -87,7 +93,8 @@ def _member(username, char_id, name, role=None):
     from core import rbac
     User = get_user_model()
     u = User.objects.create(username=username, first_name=name)
-    u.set_unusable_password(); u.save()
+    u.set_unusable_password()
+    u.save()
     EveCharacter.objects.create(character_id=char_id, user=u, name=name, is_main=True,
                                 is_corp_member=True, is_corp_director=(role == rbac.ROLE_DIRECTOR))
     RoleAssignment.objects.create(user=u, role=ensure_role(rbac.ROLE_MEMBER))
@@ -243,8 +250,8 @@ def test_idor_private_fit_not_viewable(client, owner, other, dogma):
 
 
 def test_shared_view_requires_valid_token(client, owner, dogma):
-    fit = services.create_fit(owner, name="R", ship_type_id=RIFTER, items=[])
-    # never shared -> token guessing fails
+    services.create_fit(owner, name="R", ship_type_id=RIFTER, items=[])  # exists but never shared
+    # a guessed token resolves nothing
     assert client.get(reverse("fitting:shared", args=["deadbeefdeadbeef"])).status_code == 404
 
 
@@ -263,6 +270,7 @@ def test_brand_localised_to_pt_br():
     brand 'Tocha's Lab' (English fallback). 'Tocha' is a proper name, never translated."""
     import re
     from pathlib import Path
+
     from django.conf import settings
     po = Path(settings.BASE_DIR) / "locale" / "pt_BR" / "LC_MESSAGES" / "django.po"
     text = po.read_text(encoding="utf-8")
