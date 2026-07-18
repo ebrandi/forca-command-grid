@@ -63,6 +63,7 @@
     <div data-acc-body class="space-y-1">
       <a href="{% url 'doctrines:list' %}" class="navlink {% if ns == 'doctrines' and un != 'ships' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-ship"/></svg> {% translate "Doctrines" %}</a>
       <a href="{% url 'doctrines:ships' %}" class="navlink {% if un == 'ships' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-ship"/></svg> {% translate "Shipyard" %}</a>
+      {% if features.tochas_lab %}<a href="{% url 'fitting:index' %}" class="navlink {% if ns == 'fitting' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-target"/></svg> {% translate "Tocha's Lab" %}</a>{% endif %}
     </div>
   </div>
   {% endif %}
@@ -236,6 +237,7 @@
     <div data-acc-body class="space-y-1">
       <a href="{% url 'doctrines:list' %}" class="navlink {% if ns == 'doctrines' and un != 'ships' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-ship"/></svg> {% translate "Doctrines" %}</a>
       <a href="{% url 'doctrines:ships' %}" class="navlink {% if un == 'ships' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-ship"/></svg> {% translate "Shipyard" %}</a>
+      {% if features.tochas_lab %}<a href="{% url 'fitting:index' %}" class="navlink {% if ns == 'fitting' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-target"/></svg> {% translate "Tocha's Lab" %}</a>{% endif %}
     </div>
   </div>
   {% endif %}

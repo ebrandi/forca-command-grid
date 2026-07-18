@@ -50,6 +50,9 @@ FEATURES: list[Feature] = [
             "Engagement raffles: pilots earn tickets from PVP and other activity, leaders run "
             "fair commit-reveal draws, and the dashboard drives ESI enrolment.", "Community & intel"),
     Feature("doctrines", "Doctrines & Shipyard", "Doctrine library, readiness and ship ordering.", "Ships & doctrines"),
+    Feature("tochas_lab", "Tocha's Lab",
+            "The ship-fitting workspace: build, simulate, compare and price fits, apply "
+            "pilot skills, and promote candidates to doctrines.", "Ships & doctrines"),
     Feature("operations", "Fleet operations", "Operations planner, timers, RSVP and PAP.", "Fleet & combat"),
     Feature("intel", "Intel tools", "Watchlists, roaming targets and gate-camp watch.", "Fleet & combat"),
     Feature("standings", "Standings board", "The blue/red contacts standings board.", "Fleet & combat"),
@@ -275,6 +278,8 @@ _NAMESPACE_FEATURE = {
     "onboarding": "onboarding",
     "mentorship": "mentorship",
     "doctrines": "doctrines",
+    # Tocha's Lab: the whole /lab/ namespace (app_name "fitting") is one feature.
+    "fitting": "tochas_lab",
     "operations": "operations",
     "srp": "srp",
     "stockpile": "stockpile",

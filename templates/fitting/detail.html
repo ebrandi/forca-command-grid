@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% load eve i18n %}
+{% block title %}{{ fit.name }} · {{ brand }} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+{{ items|json_script:"lab-items" }}
+<div x-data="labEditor()" x-init="init()">
+
+  <header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+    <div>
+      <p class="eyebrow">{{ brand }} · {{ ship_name }}</p>
+      <h1 class="mt-1 text-3xl font-bold text-ink">{{ fit.name }}</h1>
+      <p class="mt-1 text-sm text-faint">
+        {% translate "Revision" %} {{ revision.revision_number|default:"—" }} ·
+        {% translate "engine" %} {{ telemetry.engine_version }} · {% translate "data" %} {{ telemetry.data_version }}
+        {% if fit.origin %}· {{ fit.origin }}{% endif %}
+      </p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+      <form method="get" class="contents">
+        <label class="sr-only" for="skills">{% translate "Skills" %}</label>
+        <select id="skills" name="skills" class="input-field" data-autosubmit onchange="this.form.submit()">
+          <option value="pilot" {% if skill_label != 'All V' %}selected{% endif %}>{% translate "My skills" %}</option>
+          <option value="allv" {% if skill_label == 'All V' %}selected{% endif %}>{% translate "All V" %}</option>
+          <option value="none">{% translate "Untrained" %}</option>
+          {% for p in linked_pilots %}<option value="{{ p.character_id }}">{{ p.name }}</option>{% endfor %}
+        </select>
+      </form>
+      {% if editable %}
+      <button type="button" class="btn-gold" @click="save()" x-text="dirty ? '{% translate "Save *" %}' : '{% translate "Save" %}'">{% translate "Save" %}</button>
+      {% endif %}
+      <form method="post" action="{% url 'fitting:fork' fit.pk %}" class="contents">{% csrf_token %}
+        <button type="submit" class="btn-ghost">{% translate "Fork" %}</button></form>
+      <a href="{% url 'fitting:export_eft' fit.pk %}" class="btn-ghost">{% translate "Export EFT" %}</a>
+      <a href="{% url 'fitting:compare' fit.pk %}" class="btn-ghost">{% translate "Compare" %}</a>
+    </div>
+  </header>
+
+  <div class="grid gap-6" style="grid-template-columns:minmax(0,340px) minmax(0,1fr);">
+    {# ---- Composition / editor ---- #}
+    <div>
+      <section class="rounded-lg border border-line bg-panel p-4">
+        <p class="eyebrow">{% translate "Loadout" %}</p>
+        {% if editable %}
+        <div class="mt-2" style="position:relative;">
+          <input type="text" class="input-field w-full" x-model="query" @input.debounce.250ms="searchModules()"
+                 placeholder="{% translate 'Add module or ship item…' %}" aria-label="{% translate 'Search modules' %}">
+          <ul x-show="results.length" style="position:absolute;z-index:20;left:0;right:0;max-height:240px;overflow:auto;" class="rounded-lg border border-line bg-panel2">
+            <template x-for="r in results" :key="r.type_id">
+              <li><button type="button" class="w-full text-left px-3 py-2 text-sm text-ink" style="background:transparent;" @click="addModule(r)" x-text="r.name"></button></li>
+            </template>
+          </ul>
+        </div>
+        {% endif %}
+        <ul class="mt-3 space-y-1">
+          <template x-for="(it, idx) in items" :key="idx">
+            <li class="flex items-center justify-between gap-2 rounded px-2 py-1 text-sm" style="background:#1b1f27;">
+              <span class="text-ink" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                <span x-text="it.name"></span>
+                <span class="text-faint" x-show="it.charge_name" x-text="' · ' + it.charge_name"></span>
+                <span class="text-faint" style="font-size:11px;" x-text="'[' + it.slot + ']'"></span>
+              </span>
+              <span class="flex items-center gap-1" x-show="editable">
+                <select class="input-field" style="padding:1px 4px;font-size:11px;" x-model="it.state" @change="recompute()">
+                  <option value="active">{% translate "on" %}</option>
+                  <option value="offline">{% translate "off" %}</option>
+                  <option value="overheated">{% translate "heat" %}</option>
+                </select>
+                <button type="button" @click="removeItem(idx)" class="text-faint" aria-label="{% translate 'Remove' %}">✕</button>
+              </span>
+            </li>
+          </template>
+          <li x-show="!items.length" class="text-sm text-faint">{% translate "No modules fitted yet." %}</li>
+        </ul>
+      </section>
+
+      {# ---- Supply overlay: price + stock ---- #}
+      <section class="mt-4 rounded-lg border border-line bg-panel p-4">
+        <p class="eyebrow">{% translate "Cost & supply" %}</p>
+        <p class="mt-1 text-lg font-bold text-ink">{{ price.total|isk }}</p>
+        <p class="text-xs text-faint">
+          {% if price.as_of %}{% blocktranslate with ts=price.as_of|date:"Y-m-d H:i" %}Jita price as of {{ ts }}{% endblocktranslate %}{% else %}{% translate "Price unavailable" %}{% endif %}
+          {% if price.unpriced %}· {% blocktranslate count n=price.unpriced|length %}{{ n }} item unpriced{% plural %}{{ n }} items unpriced{% endblocktranslate %}{% endif %}
+        </p>
+        {% if stock.missing %}
+          <p class="mt-2 text-sm" style="color:#e0a955;">{% blocktranslate count n=stock.missing|length %}{{ n }} component not in corp stock{% plural %}{{ n }} components not in corp stock{% endblocktranslate %}</p>
+          <ul class="mt-1 space-y-1 text-xs text-faint">
+            {% for m in stock.missing %}<li>{{ m.name }} × {{ m.short }}</li>{% endfor %}
+          </ul>
+        {% else %}
+          <p class="mt-2 text-sm" style="color:#4ade80;">{% translate "All components available from corp stock." %}</p>
+        {% endif %}
+      </section>
+
+      {% if can_promote and editable %}
+      <section class="mt-4 rounded-lg border border-line bg-panel p-4">
+        <p class="eyebrow">{% translate "Doctrine candidate" %}</p>
+        <form method="post" action="{% url 'fitting:promote' fit.pk %}" class="mt-2 flex flex-col gap-2">{% csrf_token %}
+          <select name="doctrine" class="input-field" required aria-label="{% translate 'Doctrine' %}">
+            <option value="">{% translate "Choose a doctrine…" %}</option>
+            {% for d in doctrines %}<option value="{{ d.pk }}">{{ d.name }}</option>{% endfor %}
+          </select>
+          <button type="submit" class="btn-ghost">{% translate "Publish to doctrine" %}</button>
+        </form>
+        <p class="mt-1 text-xs text-faint">{% translate "Saving never publishes — this is a deliberate, audited action." %}</p>
+      </section>
+      {% endif %}
+
+      <section class="mt-4 rounded-lg border border-line bg-panel p-4">
+        <p class="eyebrow">{% translate "Share" %}</p>
+        {% if fit.public_link_active %}
+          <p class="mt-1 text-xs text-faint break-all">{{ request.scheme }}://{{ request.get_host }}{% url 'fitting:shared' fit.share_token %}</p>
+          <form method="post" action="{% url 'fitting:unshare' fit.pk %}" class="mt-2">{% csrf_token %}<button class="btn-ghost">{% translate "Revoke link" %}</button></form>
+        {% elif editable %}
+          <form method="post" action="{% url 'fitting:share' fit.pk %}" class="mt-2">{% csrf_token %}<button class="btn-ghost">{% translate "Create public link" %}</button></form>
+        {% endif %}
+      </section>
+    </div>
+
+    {# ---- Telemetry ---- #}
+    <div id="telemetry-panel">
+      {% include "fitting/_telemetry.html" with show_skills=True %}
+    </div>
+  </div>
+
+  <input type="hidden" id="lab-csrf" value="{{ csrf_token }}">
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script nonce="{{ csp_nonce }}">
+function labEditor() {
+  return {
+    items: [], results: [], query: "", dirty: false, editable: {{ editable|yesno:"true,false" }},
+    shipTypeId: {{ fit.ship_type_id }},
+    skills: new URLSearchParams(window.location.search).get("skills") || "pilot",
+    init() { this.items = JSON.parse(document.getElementById("lab-items").textContent || "[]"); },
+    _csrf() { return document.getElementById("lab-csrf").value; },
+    async searchModules() {
+      if (this.query.length < 2) { this.results = []; return; }
+      const r = await fetch("{% url 'fitting:search_modules' %}?q=" + encodeURIComponent(this.query));
+      this.results = r.ok ? (await r.json()).results : [];
+    },
+    addModule(r) {
+      this.items.push({ type_id: r.type_id, name: r.name, slot: "low", state: "active", charge_type_id: null, charge_name: "", quantity: 1 });
+      this.query = ""; this.results = []; this.markDirty();
+    },
+    removeItem(i) { this.items.splice(i, 1); this.markDirty(); },
+    markDirty() { this.dirty = true; this.recompute(); },
+    _payload() {
+      return this.items.map(it => ({ type_id: it.type_id, slot: it.slot, state: it.state,
+        charge_type_id: it.charge_type_id, quantity: it.quantity }));
+    },
+    async recompute() {
+      const body = new URLSearchParams();
+      body.set("ship_type_id", this.shipTypeId);
+      body.set("items", JSON.stringify(this._payload()));
+      body.set("skills", this.skills);
+      const r = await fetch("{% url 'fitting:telemetry' %}", { method: "POST",
+        headers: { "X-CSRFToken": this._csrf(), "X-Requested-With": "XMLHttpRequest" }, body });
+      if (r.ok) document.getElementById("telemetry-panel").innerHTML = await r.text();
+    },
+    async save() {
+      const body = new URLSearchParams();
+      body.set("ship_type_id", this.shipTypeId);
+      body.set("items", JSON.stringify(this._payload()));
+      const r = await fetch("{% url 'fitting:save' fit.pk %}", { method: "POST",
+        headers: { "X-CSRFToken": this._csrf(), "X-Requested-With": "XMLHttpRequest" }, body });
+      if (r.ok) { this.dirty = false; }
+    },
+  };
+}
+</script>
+{% endblock %}

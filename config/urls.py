@@ -17,6 +17,7 @@ urlpatterns = [
     path("", include("apps.identity.urls")),
     path("killboard/", include("apps.killboard.urls")),
     path("doctrines/", include("apps.doctrines.urls")),
+    path("lab/", include("apps.fitting.urls")),  # Tocha's Lab (ship fitting)
     path("industry/pi/", include("apps.planetary.urls")),
     path("industry/", include("apps.industry.urls")),
     path("skills/", include("apps.skills.urls")),

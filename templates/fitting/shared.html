@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load eve i18n %}
+{% block title %}{{ fit.name }} · {{ brand }}{% endblock %}
+{% block content %}
+<header class="mb-6">
+  <p class="eyebrow">{{ brand }} · {% translate "Shared fit" %} · {{ ship_name }}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{{ fit.name }}</h1>
+  <p class="mt-1 text-sm text-faint">{% translate "Read-only public view. Telemetry shown at All V skills." %}</p>
+</header>
+
+<div class="grid gap-6" style="grid-template-columns:minmax(0,280px) minmax(0,1fr);">
+  <section class="rounded-lg border border-line bg-panel p-4">
+    <p class="eyebrow">{% translate "Loadout" %}</p>
+    <ul class="mt-2 space-y-1 text-sm">
+      {% for it in items %}
+      <li class="text-ink">{{ it.name }}{% if it.charge_name %} <span class="text-faint">· {{ it.charge_name }}</span>{% endif %}
+        <span class="text-faint" style="font-size:11px;">[{{ it.slot }}]</span></li>
+      {% empty %}
+      <li class="text-faint">{% translate "Empty fit." %}</li>
+      {% endfor %}
+    </ul>
+  </section>
+  <div>{% include "fitting/_telemetry.html" with show_skills=False %}</div>
+</div>
+{% endblock %}

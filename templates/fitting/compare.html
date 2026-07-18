@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load eve i18n %}
+{% block title %}{% translate "Compare" %} · {{ fit.name }} · {{ brand }}{% endblock %}
+{% block content %}
+<header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow">{{ brand }} · {% translate "Compare revisions" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{{ fit.name }}</h1>
+  </div>
+  <form method="get" class="flex items-center gap-2">
+    <label class="sr-only" for="rev">{% translate "Base revision" %}</label>
+    <select id="rev" name="rev" class="input-field" onchange="this.form.submit()">
+      {% for r in revisions %}<option value="{{ r.revision_number }}" {% if rev_a and r.revision_number == rev_a.revision_number %}selected{% endif %}>{% translate "rev" %} {{ r.revision_number }}</option>{% endfor %}
+    </select>
+    <span class="text-faint text-sm">→ {% translate "current rev" %} {{ rev_b.revision_number }}</span>
+  </form>
+</header>
+
+{% if diff %}
+<div class="grid gap-6" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr);">
+  <section class="rounded-lg border border-line bg-panel p-4">
+    <p class="eyebrow">{% translate "Module changes" %}</p>
+    <ul class="mt-2 space-y-1 text-sm">
+      {% for a in diff.added %}<li style="color:#4ade80;">+ {{ a.name }} × {{ a.qty }}</li>{% endfor %}
+      {% for r in diff.removed %}<li style="color:#e0555a;">− {{ r.name }} × {{ r.qty }}</li>{% endfor %}
+      {% if not diff.added and not diff.removed %}<li class="text-faint">{% translate "No module differences." %}</li>{% endif %}
+    </ul>
+  </section>
+  <section class="rounded-lg border border-line bg-panel p-4">
+    <p class="eyebrow">{% translate "Telemetry deltas" %}</p>
+    <table class="mt-2 w-full text-sm">
+      <tbody>
+      {% for m in diff.metrics %}
+      <tr>
+        <td class="text-faint">{{ m.key }}</td>
+        <td class="text-ink" style="text-align:right;color:{% if m.delta == 0 %}#8a91a0{% elif m.higher_better and m.delta > 0 or not m.higher_better and m.delta < 0 %}#4ade80{% else %}#e0555a{% endif %};">
+          {% if m.delta > 0 %}+{% endif %}{{ m.delta }}
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <p class="mt-2 text-xs text-faint">{% translate "Green = better for this metric (higher DPS/EHP is good; higher align/signature is not)." %}</p>
+  </section>
+</div>
+{% else %}
+<p class="text-sm text-faint">{% translate "Need at least two revisions to compare. Save a change first." %}</p>
+{% endif %}
+{% endblock %}
