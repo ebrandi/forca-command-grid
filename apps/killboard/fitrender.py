@@ -241,12 +241,27 @@ def build_fit_wheel(killmail, deviation=None) -> dict:
                 cx, cy = _pct(*_CHG_XY[f], _CHG_PX)
                 charges.append({**charge, "x": cx, "y": cy})
 
-    extras = [s for s in fit["sections"] if s["key"] in ("drone", "implant", "cargo", "other")]
+    # Full itemised breakdown for the table below the wheel (zKill's Item(s) list): every
+    # slot group with its real items. The ship hull is added as its own row in the template.
+    table = [
+        {"key": s["key"], "label": s["label"],
+         "items": [it for it in s["items"] if not it["empty"]]}
+        for s in fit["sections"]
+    ]
+    table = [g for g in table if g["items"]]
+    item_total = sum(
+        (it["value"] for g in table for it in g["items"]), Decimal("0")
+    )
+    hull_value = None
+    if killmail.total_value is not None:
+        remainder = Decimal(killmail.total_value) - item_total
+        hull_value = remainder if remainder > 0 else None
     return {
         "hull_type_id": killmail.victim_ship_type_id,
         "slots": slots,
         "charges": charges,
-        "extras": extras,
+        "table": table,
+        "hull_value": hull_value,
         "mod_pct": round(_MOD_PX / _WHEEL_BOX * 100, 3),
         "chg_pct": round(_CHG_PX / _WHEEL_BOX * 100, 3),
         "ship_pct": round(256 / _WHEEL_BOX * 100, 3),

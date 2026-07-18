@@ -164,8 +164,10 @@ def test_build_fit_wheel_places_racks_and_extras(sde):
     highs = [s for s in wheel["slots"] if s["rack"] == "high"]
     assert len(highs) == 4                          # 2 modules + 2 empty (Rifter has 4 high)
     assert sum(1 for s in highs if s["empty"]) == 2
-    extra_keys = {s["key"] for s in wheel["extras"]}
-    assert "drone" in extra_keys and "cargo" in extra_keys   # holds are extras, not slots
+    # The item table lists every group incl. the fitted slots AND the holds (drones/cargo).
+    table_keys = {g["key"] for g in wheel["table"]}
+    assert {"high", "drone", "cargo"} <= table_keys
+    assert all(not it["empty"] for g in wheel["table"] for it in g["items"])  # real items only
 
 
 @pytest.mark.django_db
@@ -216,8 +218,11 @@ def test_detail_page_renders_radial_fit(client, sde):
 
     assert b"viewBox=\"0 0 398 398\"" in html         # the zKill-style ring frame (SVG)
     assert b"left:" in html                           # per-flag positioned slots
-    assert b"200mm AutoCannon I" in html              # module name (slot tooltip)
+    assert b"200mm AutoCannon I" in html              # module name (slot tooltip + table)
     assert b"empty" in html                           # empty-slot legend (Rifter has capacity)
+    # the itemised breakdown table (like zKill's Item(s) list)
+    assert b">Qty<" in html and b">Value<" in html    # table header
+    assert b">Ship<" in html                          # the destroyed hull listed as a row
     assert b"Copy EFT" in html
     assert b"Copy ESI" in html
 

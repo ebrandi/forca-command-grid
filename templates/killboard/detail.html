@@ -191,26 +191,36 @@
       {% if wheel.has_slot_data %}<span class="flex items-center gap-1"><span style="display:inline-block;width:11px;height:11px;border-radius:1px;border:1px solid rgba(120,140,160,.4)"></span>{% translate "empty" %}</span>{% endif %}
     </div>
 
-    <!-- Holds that aren't fitted slots: drones / cargo / implants (never on the wheel, like zKill) -->
-    {% if wheel.extras %}
-    <div class="mt-4 grid gap-4 sm:grid-cols-2">
-      {% for section in wheel.extras %}
-      <div>
-        <p class="eyebrow mb-1 text-faint">{{ section.label }} · {{ section.count }}</p>
-        <div class="space-y-1">
-          {% for item in section.items %}{% if not item.empty %}
-          <div class="flex items-center gap-2 text-sm">
-            <img src="{% eve_type_icon item.type_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">
-            <span class="min-w-0 flex-1 truncate text-muted" title="{% type_name item.type_id %}">{% type_name item.type_id %}</span>
-            {% if item.destroyed %}<span class="chip !text-loss">×{{ item.destroyed }}</span>{% endif %}
-            {% if item.dropped %}<span class="chip !text-cyan">↧{{ item.dropped }}</span>{% endif %}
-          </div>
-          {% endif %}{% endfor %}
-        </div>
+    <!-- Itemised breakdown (like zKill's Item(s) list): the ship hull + every slot group,
+         with quantity, value and a destroyed/dropped mark. Complements the wheel above. -->
+    <div class="mt-5 overflow-hidden rounded-lg border border-line/60">
+      <div class="flex items-center gap-3 border-b border-line/60 px-3 py-1.5 text-faint" style="background:rgba(22,29,41,.5);font-size:10px;text-transform:uppercase;letter-spacing:.05em">
+        <span class="flex-1">{% translate "Item" %}</span>
+        <span class="w-10 text-right">{% translate "Qty" %}</span>
+        <span class="w-20 text-right">{% translate "Value" %}</span>
+      </div>
+
+      <div class="px-3 py-1 text-faint" style="background:rgba(16,21,31,.55);font-size:10px;text-transform:uppercase;letter-spacing:.05em">{% translate "Ship" %}</div>
+      <div class="flex items-center gap-3 px-3 py-1.5 text-sm">
+        <img src="{% eve_type_icon wheel.hull_type_id 32 %}" alt="" class="h-6 w-6 shrink-0 rounded-sm">
+        <span class="min-w-0 flex-1 truncate text-ink">{% type_name wheel.hull_type_id %} <span class="chip !text-loss" title="{% translate 'destroyed' %}">×</span></span>
+        <span class="data w-10 text-right text-xs text-muted">1</span>
+        <span class="data w-20 text-right text-xs text-faint">{% if wheel.hull_value %}{{ wheel.hull_value|isk }}{% endif %}</span>
+      </div>
+
+      {% for group in wheel.table %}
+      <div class="border-t border-line/60 px-3 py-1 text-faint" style="background:rgba(16,21,31,.55);font-size:10px;text-transform:uppercase;letter-spacing:.05em">{{ group.label }}</div>
+      {% for item in group.items %}
+      <div class="flex items-center gap-3 px-3 py-1.5 text-sm">
+        <img src="{% eve_type_icon item.type_id 32 %}" alt="" loading="lazy" class="h-6 w-6 shrink-0 rounded-sm">
+        <span class="min-w-0 flex-1 truncate {% if item.off_doctrine %}text-cyan{% else %}text-muted{% endif %}" title="{% type_name item.type_id %}">{% type_name item.type_id %}
+          {% if item.destroyed %}<span class="chip !text-loss" title="{% translate 'destroyed' %}">×</span>{% endif %}{% if item.dropped %}<span class="chip !text-cyan" title="{% translate 'dropped' %}">↧</span>{% endif %}</span>
+        <span class="data w-10 text-right text-xs text-muted">{{ item.qty }}</span>
+        <span class="data w-20 text-right text-xs text-faint">{% if item.value %}{{ item.value|isk }}{% endif %}</span>
       </div>
       {% endfor %}
+      {% endfor %}
     </div>
-    {% endif %}
   </div>
 </section>
 {% endif %}
