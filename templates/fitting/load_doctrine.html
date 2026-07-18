@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load eve i18n %}
+{% block title %}{% translate "Load a doctrine" %} · {{ brand }} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow">{{ brand }}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Load a doctrine into the simulator" %}</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Open any corp doctrine fit in the Lab — apply your skills, compare variants, and measure changes before proposing a revision." %}</p>
+  </div>
+  <a href="{% url 'fitting:index' %}" class="btn-ghost">{% translate "Back to my fits" %}</a>
+</header>
+
+{% if no_access %}
+  <div class="rounded-lg border border-line bg-panel px-4 py-16 text-center">
+    <p class="text-sm text-faint">{% translate "Doctrines are not available to you." %}</p>
+  </div>
+{% else %}
+{# ---- Filters (same fields as the doctrine library) ---- #}
+<form method="get" class="rounded-lg border border-line bg-panel mb-4 flex flex-wrap items-end gap-3 px-4 py-3" id="filters"
+      hx-get="{% url 'fitting:load_doctrine' %}" hx-target="#dc-results" hx-swap="outerHTML" hx-push-url="true" hx-trigger="submit, change from:select">
+  {% if character %}<input type="hidden" name="character_id" value="{{ character.character_id }}">{% endif %}
+  <label class="block min-w-[12rem] flex-1">
+    <span class="eyebrow text-faint">{% translate "Search" %}</span>
+    <input type="search" name="q" value="{{ q }}" placeholder="{% translate 'Doctrine name or notes…' %}" class="input-field mt-1 w-full">
+  </label>
+  <label class="block">
+    <span class="eyebrow text-faint">{% translate "Category" %}</span>
+    <select name="category" class="input-field mt-1">
+      <option value="">{% translate "Any category" %}</option>
+      {% for c in categories %}<option value="{{ c.id }}" {% if f_category == c.id|stringformat:'s' %}selected{% endif %}>{{ c.label }}</option>{% endfor %}
+    </select>
+  </label>
+  <label class="block">
+    <span class="eyebrow text-faint">{% translate "Hull" %}</span>
+    <select name="hull" class="input-field mt-1">
+      <option value="">{% translate "Any hull" %}</option>
+      {% for c in hull_classes %}<option value="{{ c }}" {% if f_hull == c %}selected{% endif %}>{{ c }}</option>{% endfor %}
+    </select>
+  </label>
+  {% if roles %}
+  <label class="block">
+    <span class="eyebrow text-faint">{% translate "Role" %}</span>
+    <select name="role" class="input-field mt-1">
+      <option value="">{% translate "Any role" %}</option>
+      {% for r in roles %}<option value="{{ r }}" {% if f_role == r %}selected{% endif %}>{{ r }}</option>{% endfor %}
+    </select>
+  </label>
+  {% endif %}
+  {% if has_skills %}
+  <label class="block">
+    <span class="eyebrow text-faint">{% translate "Flyable" %}</span>
+    <select name="fly" class="input-field mt-1">
+      <option value="">{% translate "All" %}</option>
+      <option value="yes" {% if f_fly == 'yes' %}selected{% endif %}>{% translate "Can fly now" %}</option>
+      <option value="no" {% if f_fly == 'no' %}selected{% endif %}>{% blocktranslate %}Can't fly yet{% endblocktranslate %}</option>
+    </select>
+  </label>
+  {% endif %}
+  <button type="submit" class="btn-ghost text-sm">{% translate "Apply" %}</button>
+  {% if active_filters %}<a href="?{% if character %}character_id={{ character.character_id }}{% endif %}" class="btn-ghost text-sm">{% translate "Clear" %}</a>{% endif %}
+</form>
+
+{% include "fitting/_load_doctrine_results.html" %}
+{% endif %}
+{% endblock %}

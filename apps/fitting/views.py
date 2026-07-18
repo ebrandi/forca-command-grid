@@ -12,6 +12,7 @@ import json
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.core.paginator import Paginator
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.translation import gettext as _
@@ -112,6 +113,7 @@ def _item_display(items: list[dict]) -> list[dict]:
 @login_required
 @feature_required("tochas_lab")
 def index(request):
+    from core.features import feature_visible_to
     active = list(Fit.objects.filter(owner=request.user, is_archived=False)
                   .select_related("current_revision")[:100])
     archived = list(Fit.objects.filter(owner=request.user, is_archived=True)
@@ -120,24 +122,63 @@ def index(request):
     for f in [*active, *archived]:
         f.ship_name = ship_names.get(f.ship_type_id, f"Type {f.ship_type_id}")
     return render(request, "fitting/index.html", {
-        "fits": active, "archived": archived, "doctrines": _loadable_doctrines(request.user),
+        "fits": active, "archived": archived,
+        "can_load_doctrines": feature_visible_to("doctrines", request.user),
         "brand": _("Tocha's Lab")})
 
 
-def _loadable_doctrines(user) -> list[dict]:
-    """Active doctrines (+ their fits) the user may load into the simulator, honouring the
-    doctrines feature/audience so nobody loads a doctrine they cannot otherwise see."""
-    from apps.doctrines.models import Doctrine
+@login_required
+@feature_required("tochas_lab")
+def load_doctrine(request):
+    """A paginated, filterable picker of doctrine fits to load into the simulator.
+
+    Uses the same library, filters and pagination as the doctrine library page
+    (``apps.doctrines``) — so every active doctrine is reachable, not an arbitrary first
+    N — and honours the same "Ships & doctrines" audience, so nobody loads a doctrine they
+    could not otherwise see. Returns just the results fragment for htmx filter requests."""
+    from apps.doctrines.browse import filter_library_rows, readiness_sort_key
+    from apps.doctrines.library import build_library
+    from apps.doctrines.models import DoctrineDisplayConfig
     from core.features import feature_visible_to
-    if not feature_visible_to("doctrines", user):
-        return []
-    out = []
-    for d in (Doctrine.objects.filter(status=Doctrine.Status.ACTIVE)
-              .prefetch_related("fits").order_by("name")[:60]):
-        fits = [{"id": f.pk, "name": f.name} for f in d.fits.all()]
-        if fits:
-            out.append({"name": d.name, "fits": fits})
-    return out
+
+    if not feature_visible_to("doctrines", request.user):
+        return render(request, "fitting/load_doctrine.html",
+                      {"rows": [], "no_access": True, "brand": _("Tocha's Lab")})
+
+    characters = list(request.user.characters.all())
+    char_id = request.GET.get("character_id")
+    character = next((c for c in characters if str(c.character_id) == char_id), None) if char_id else None
+    character = character or pilots.acting_pilot(request.user)
+    has_skills = bool(character and character.skill_snapshots.filter(is_latest=True).exists())
+
+    lib = build_library(character, has_skills=has_skills)
+    q = (request.GET.get("q") or "").strip()
+    f_category = (request.GET.get("category") or "").strip()
+    f_hull = (request.GET.get("hull") or "").strip()
+    f_role = (request.GET.get("role") or "").strip()
+    f_fly = (request.GET.get("fly") or "").strip()
+    filtered = filter_library_rows(lib["rows"], q=q, category=f_category, hull=f_hull,
+                                   role=f_role, fly=f_fly)
+    if has_skills:
+        filtered.sort(key=lambda r: readiness_sort_key(
+            r["status"], r.get("missing_count"), r["doctrine"].name))
+
+    per_page = DoctrineDisplayConfig.active().effective_per_page()
+    page_obj = Paginator(filtered, per_page).get_page(request.GET.get("page"))
+    params = request.GET.copy()
+    params.pop("page", None)
+
+    template = ("fitting/_load_doctrine_results.html"
+                if request.headers.get("HX-Request") else "fitting/load_doctrine.html")
+    return render(request, template, {
+        "rows": page_obj.object_list, "page_obj": page_obj, "base_qs": params.urlencode(),
+        "total_shown": len(filtered), "total_all": len(lib["rows"]),
+        "characters": characters, "character": character, "has_skills": has_skills,
+        "categories": lib["categories"], "hull_classes": lib["hull_classes"], "roles": lib["roles"],
+        "q": q, "f_category": f_category, "f_hull": f_hull, "f_role": f_role, "f_fly": f_fly,
+        "active_filters": any([q, f_category, f_hull, f_role, f_fly]),
+        "brand": _("Tocha's Lab"),
+    })
 
 
 @login_required

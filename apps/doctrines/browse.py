@@ -33,6 +33,35 @@ def readiness_sort_key(status: str | None, missing_count: int | None, tiebreak: 
     return (rank, miss, str(tiebreak).lower())
 
 
+def filter_library_rows(rows: list[dict], *, q: str = "", category: str = "",
+                        hull: str = "", role: str = "", fly: str = "") -> list[dict]:
+    """Apply the doctrine-library filters (search, category, hull, role, flyability) to
+    :func:`apps.doctrines.library.build_library` rows.
+
+    Shared by the doctrine library page and Tocha's Lab's doctrine picker so both filter
+    identically. An empty filter is a no-op; ``fly`` needs a skill snapshot to mean
+    anything (rows carry ``status`` only then)."""
+    ql = (q or "").strip().lower()
+
+    def keep(r: dict) -> bool:
+        d = r["doctrine"]
+        if ql and ql not in d.name.lower() and ql not in (d.description or "").lower():
+            return False
+        if category and str(r["category_id"]) != category:
+            return False
+        if hull and hull not in r["hull_classes"]:
+            return False
+        if role and role not in r["roles"]:
+            return False
+        if fly == "yes" and r["status"] not in ("optimal", "viable"):
+            return False
+        if fly == "no" and r["status"] != "not_ready":
+            return False
+        return True
+
+    return [r for r in rows if keep(r)]
+
+
 def enriched_fits(character=None, price_markup=None, with_availability=False) -> list[dict]:
     """Every active doctrine fit, enriched with hull class, role and (if a character
     is given) flyability + skill gap.

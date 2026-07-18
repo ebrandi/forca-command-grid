@@ -217,12 +217,46 @@ def test_load_doctrine_into_simulator(client, owner, dogma):
         doctrine=doc, name="Rifter Tackle", ship_type_id=RIFTER,
         modules=[{"type_id": AC, "quantity": 3, "slot": "high"}])
     client.force_login(owner)
-    assert b"Test Doctrine" in client.get(reverse("fitting:index")).content    # listed to a member
+    # the Lab home points a member at the doctrine picker
+    assert b"Browse doctrines" in client.get(reverse("fitting:index")).content
+    # the picker lists the doctrine and its fit
+    page = client.get(reverse("fitting:load_doctrine"))
+    assert page.status_code == 200
+    assert b"Test Doctrine" in page.content and b"Rifter Tackle" in page.content
+    # loading a fit opens it in the simulator
     resp = client.post(reverse("fitting:import_doctrine", args=[dfit.pk]))
     assert resp.status_code == 302
     loaded = Fit.objects.filter(owner=owner, origin="doctrine").first()
     assert loaded and loaded.ship_type_id == RIFTER
     assert any(it["type_id"] == AC for it in loaded.current_revision.items)
+
+
+def test_load_doctrine_paginates_and_filters(client, owner, dogma):
+    """Every active doctrine is reachable via pagination + search — no arbitrary cap."""
+    from apps.doctrines.models import Doctrine, DoctrineDisplayConfig, DoctrineFit
+    cfg = DoctrineDisplayConfig.active()
+    cfg.per_page = 6           # the floor; 8 doctrines then span 2 pages
+    cfg.save()
+    for i in range(8):
+        d = Doctrine.objects.create(name=f"Doctrine {i:02d}", status=Doctrine.Status.ACTIVE)
+        DoctrineFit.objects.create(doctrine=d, name=f"Fit {i:02d}", ship_type_id=RIFTER,
+                                   modules=[{"type_id": AC, "quantity": 1, "slot": "high"}])
+    client.force_login(owner)
+
+    p1 = client.get(reverse("fitting:load_doctrine"))
+    assert p1.status_code == 200
+    assert p1.context["page_obj"].paginator.num_pages == 2
+    assert len(p1.context["rows"]) == 6 and p1.context["total_all"] == 8
+
+    p2 = client.get(reverse("fitting:load_doctrine") + "?page=2")
+    assert len(p2.context["rows"]) == 2
+
+    narrowed = client.get(reverse("fitting:load_doctrine"), {"q": "Doctrine 03"})
+    assert narrowed.context["total_shown"] == 1 and b"Doctrine 03" in narrowed.content
+
+    # an htmx filter request returns only the results fragment, not the whole page
+    frag = client.get(reverse("fitting:load_doctrine"), HTTP_HX_REQUEST="true")
+    assert b'id="dc-results"' in frag.content and b"<html" not in frag.content.lower()
 
 
 def test_shared_view_requires_valid_token(client, owner, dogma):

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-18 21:24+0000\n"
+"POT-Creation-Date: 2026-07-18 21:46+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: es machine-assisted draft\n"
@@ -6593,8 +6593,8 @@ msgstr "Reemplazado"
 #: templates/admin_audit/console/readiness/mandatory_ships.html
 #: templates/admin_audit/console/readiness/strategic_roles.html
 #: templates/doctrines/list.html templates/doctrines/ships.html
-#: templates/operations/form.html templates/operations/template_form.html
-#: templates/readiness/simulator.html
+#: templates/fitting/load_doctrine.html templates/operations/form.html
+#: templates/operations/template_form.html templates/readiness/simulator.html
 msgid "Role"
 msgstr "Rol"
 
@@ -7692,18 +7692,15 @@ msgid "Only an in-progress job can be linked."
 msgstr "Solo se puede vincular un trabajo en curso."
 
 #: apps/fitting/models.py
-#| msgid "Public"
 msgid "Public link"
 msgstr ""
 
 #: apps/fitting/models.py
-#| msgid "Doctrine compliance"
 msgid "Doctrine-managed"
 msgstr ""
 
 #: apps/fitting/supply.py
 #, python-format
-#| msgid "You left the waitlist for %(fit)s."
 msgid "Source components for %(fit)s"
 msgstr ""
 
@@ -7714,7 +7711,6 @@ msgstr ""
 
 #: apps/fitting/supply.py
 #, python-format
-#| msgid "Stocked complete ships"
 msgid "Stock components for %(fit)s"
 msgstr ""
 
@@ -7724,12 +7720,10 @@ msgid "Missing-from-stock components for the Tocha's Lab fit “%(fit)s”."
 msgstr ""
 
 #: apps/fitting/views.py templates/fitting/detail.html
-#| msgid "All set"
 msgid "All V"
 msgstr ""
 
 #: apps/fitting/views.py templates/fitting/detail.html
-#| msgid "trained"
 msgid "Untrained"
 msgstr ""
 
@@ -7743,7 +7737,6 @@ msgid "Tocha's Lab"
 msgstr ""
 
 #: apps/fitting/views.py
-#| msgid "Pick a hull and a quantity."
 msgid "Pick a ship hull to start a fit."
 msgstr ""
 
@@ -7752,12 +7745,10 @@ msgid "Could not recognise the ship hull in that fit."
 msgstr ""
 
 #: apps/fitting/views.py
-#| msgid "Insufficient permission."
 msgid "Insufficient role for this supply action."
 msgstr ""
 
 #: apps/fitting/views.py
-#| msgid "Claimable task created and linked."
 msgid "Claimable task created for the missing components."
 msgstr ""
 
@@ -7767,7 +7758,6 @@ msgstr ""
 
 #: apps/fitting/views.py
 #, python-format
-#| msgid "Contest “%(name)s” created as a draft."
 msgid "Industry project “%(name)s” created as a draft."
 msgstr ""
 
@@ -7777,7 +7767,6 @@ msgstr ""
 
 #: apps/fitting/views.py
 #, python-format
-#| msgid "Draft purchase order created — add its lines next."
 msgid "Draft purchase order #%(pk)s created for review."
 msgstr ""
 
@@ -8610,17 +8599,14 @@ msgid "1B+"
 msgstr ""
 
 #: apps/killboard/fitrender.py
-#| msgid "slots"
 msgid "High slots"
 msgstr ""
 
 #: apps/killboard/fitrender.py
-#| msgid "Min pilots"
 msgid "Mid slots"
 msgstr ""
 
 #: apps/killboard/fitrender.py
-#| msgid "slots"
 msgid "Low slots"
 msgstr ""
 
@@ -8629,7 +8615,6 @@ msgid "Rigs"
 msgstr ""
 
 #: apps/killboard/fitrender.py
-#| msgid "system"
 msgid "Subsystems"
 msgstr ""
 
@@ -8666,12 +8651,10 @@ msgid "Optional title"
 msgstr "Título opcional"
 
 #: apps/killboard/ingest_health.py
-#| msgid "Director audit"
 msgid "ESI Director feed"
 msgstr ""
 
 #: apps/killboard/ingest_health.py
-#| msgid "Killboard"
 msgid "zKillboard query poll"
 msgstr ""
 
@@ -8680,7 +8663,6 @@ msgid "Realtime fallback (R2Z2)"
 msgstr ""
 
 #: apps/killboard/killfeed_rules.py
-#| msgid "Highsec"
 msgid "High-sec"
 msgstr ""
 
@@ -8689,12 +8671,10 @@ msgid "Low-sec"
 msgstr ""
 
 #: apps/killboard/killfeed_rules.py
-#| msgid "Nullsec / WH"
 msgid "Null-sec"
 msgstr ""
 
 #: apps/killboard/killfeed_rules.py
-#| msgid "Wormholes"
 msgid "Wormhole"
 msgstr ""
 
@@ -8858,7 +8838,6 @@ msgid "Skip awox kills (a corp member on the victim's own corp)."
 msgstr ""
 
 #: apps/killboard/models.py
-#| msgid "First solo kill"
 msgid "Post solo kills only."
 msgstr ""
 
@@ -9333,12 +9312,10 @@ msgid "Ships lost"
 msgstr "Naves perdidas"
 
 #: apps/killboard/views.py
-#| msgid "A rank title can't be empty."
 msgid "A comment can’t be empty."
 msgstr ""
 
 #: apps/killboard/views.py
-#| msgid "You can't remove that route."
 msgid "You can’t remove that comment."
 msgstr ""
 
@@ -9388,7 +9365,6 @@ msgid "Battle report generated."
 msgstr "Informe de batalla generado."
 
 #: apps/killboard/views.py
-#| msgid "Raffle settings saved."
 msgid "Real-time fallback setting saved."
 msgstr ""
 
@@ -11954,7 +11930,7 @@ msgstr ""
 #: apps/navigation/gatecamp.py apps/navigation/maps.py
 #: templates/admin_audit/console/readiness/staging.html
 #: templates/campaigns/lessons.html templates/campaigns/portfolio.html
-#: templates/doctrines/list.html
+#: templates/doctrines/list.html templates/fitting/load_doctrine.html
 msgid "Clear"
 msgstr "Limpiar"
 
@@ -24244,6 +24220,7 @@ msgstr "Exportar CSV"
 #: templates/admin_audit/audit.html
 #: templates/campaigns/_portfolio_results.html
 #: templates/doctrines/_list_results.html templates/doctrines/ships.html
+#: templates/fitting/_load_doctrine_results.html
 msgid "Clear filters"
 msgstr "Limpiar filtros"
 
@@ -25051,11 +25028,11 @@ msgstr "Pagado este año"
 #: templates/admin_audit/console/combat_rewards.html
 #: templates/admin_audit/console/doctrine_xml/preview.html
 #: templates/doctrines/list.html templates/doctrines/ships.html
-#: templates/killboard/_feed.html templates/navigation/gatecamp.html
-#: templates/navigation/roaming.html templates/pingboard/history.html
-#: templates/procurement/agreements.html templates/procurement/pos.html
-#: templates/procurement/suppliers.html templates/showcase.html
-#: templates/store/inventory.html
+#: templates/fitting/load_doctrine.html templates/killboard/_feed.html
+#: templates/navigation/gatecamp.html templates/navigation/roaming.html
+#: templates/pingboard/history.html templates/procurement/agreements.html
+#: templates/procurement/pos.html templates/procurement/suppliers.html
+#: templates/showcase.html templates/store/inventory.html
 msgid "All"
 msgstr "Todos"
 
@@ -26283,9 +26260,10 @@ msgstr "Umbral de inactividad"
 #: templates/campaigns/lessons.html templates/campaigns/objective_detail.html
 #: templates/campaigns/portfolio.html templates/campaigns/template_picker.html
 #: templates/corporation/finance.html templates/doctrines/list.html
-#: templates/doctrines/ships.html templates/procurement/agreements.html
-#: templates/procurement/pos.html templates/procurement/suppliers.html
-#: templates/store/inventory.html templates/tasks/detail.html
+#: templates/doctrines/ships.html templates/fitting/load_doctrine.html
+#: templates/procurement/agreements.html templates/procurement/pos.html
+#: templates/procurement/suppliers.html templates/store/inventory.html
+#: templates/tasks/detail.html
 msgid "Apply"
 msgstr "Aplicar"
 
@@ -26397,8 +26375,8 @@ msgstr "Aún no hay hitos — añade el primero abajo."
 #: templates/campaigns/form.html templates/campaigns/lessons.html
 #: templates/campaigns/portfolio.html templates/campaigns/template_picker.html
 #: templates/corporation/finance.html templates/doctrines/list.html
-#: templates/kb/edit.html templates/pingboard/compose.html
-#: templates/pingboard/history.html
+#: templates/fitting/load_doctrine.html templates/kb/edit.html
+#: templates/pingboard/compose.html templates/pingboard/history.html
 msgid "Category"
 msgstr "Categoría"
 
@@ -32393,8 +32371,9 @@ msgstr "Cualquier estado"
 #: templates/admin_audit/console/recovery.html
 #: templates/campaigns/portfolio.html templates/campaigns/template_picker.html
 #: templates/capsuleer/paths.html templates/doctrines/list.html
-#: templates/market/dashboard.html templates/procurement/suppliers.html
-#: templates/stockpile/asset_search.html templates/store/inventory.html
+#: templates/fitting/load_doctrine.html templates/market/dashboard.html
+#: templates/procurement/suppliers.html templates/stockpile/asset_search.html
+#: templates/store/inventory.html
 msgid "Search"
 msgstr "Buscar"
 
@@ -35515,6 +35494,7 @@ msgstr ""
 
 #: templates/campaigns/lessons.html templates/campaigns/portfolio.html
 #: templates/campaigns/template_picker.html templates/doctrines/list.html
+#: templates/fitting/load_doctrine.html
 msgid "Any category"
 msgstr "Cualquier categoría"
 
@@ -38827,6 +38807,7 @@ msgstr ""
 "sincronizar."
 
 #: templates/doctrines/_list_results.html
+#: templates/fitting/_load_doctrine_results.html
 #, python-format
 msgid "%(shown)s of %(total_all)s doctrine match."
 msgid_plural "%(shown)s of %(total_all)s doctrines match."
@@ -38834,6 +38815,7 @@ msgstr[0] "%(shown)s de %(total_all)s doctrine coincide."
 msgstr[1] "%(shown)s de %(total_all)s doctrine coinciden."
 
 #: templates/doctrines/_list_results.html
+#: templates/fitting/_load_doctrine_results.html
 #, python-format
 msgid "%(shown)s of %(total_all)s doctrine."
 msgid_plural "%(shown)s of %(total_all)s doctrines."
@@ -38841,18 +38823,22 @@ msgstr[0] "%(shown)s de %(total_all)s doctrine."
 msgstr[1] "%(shown)s de %(total_all)s doctrine."
 
 #: templates/doctrines/_list_results.html templates/doctrines/ships.html
+#: templates/fitting/_load_doctrine_results.html
 msgid "Can fly"
 msgstr "Puede volar"
 
 #: templates/doctrines/_list_results.html
+#: templates/fitting/_load_doctrine_results.html
 msgid "Train"
 msgstr "Entrenar"
 
 #: templates/doctrines/_list_results.html
+#: templates/fitting/_load_doctrine_results.html
 msgid "No doctrines match these filters."
 msgstr "Ningún doctrine coincide con estos filtros."
 
 #: templates/doctrines/_list_results.html
+#: templates/fitting/_load_doctrine_results.html
 msgid "No doctrines published yet."
 msgstr "Aún no se ha publicado ningún doctrine."
 
@@ -39060,32 +39046,38 @@ msgstr "Por categoría"
 msgid "Doctrines grouped by purpose."
 msgstr "Doctrines agrupados por propósito."
 
-#: templates/doctrines/list.html
+#: templates/doctrines/list.html templates/fitting/load_doctrine.html
 msgid "Doctrine name or notes…"
 msgstr "Nombre de doctrine o notas…"
 
 #: templates/doctrines/list.html templates/doctrines/ships.html
-#: templates/fitting/_telemetry.html templates/store/order.html
+#: templates/fitting/_telemetry.html templates/fitting/load_doctrine.html
+#: templates/store/order.html
 msgid "Hull"
 msgstr "Casco"
 
 #: templates/doctrines/list.html templates/doctrines/ships.html
+#: templates/fitting/load_doctrine.html
 msgid "Any hull"
 msgstr "Cualquier casco"
 
 #: templates/doctrines/list.html templates/doctrines/ships.html
+#: templates/fitting/load_doctrine.html
 msgid "Any role"
 msgstr "Cualquier rol"
 
 #: templates/doctrines/list.html templates/doctrines/ships.html
+#: templates/fitting/load_doctrine.html
 msgid "Flyable"
 msgstr "Pilotable"
 
 #: templates/doctrines/list.html templates/doctrines/ships.html
+#: templates/fitting/load_doctrine.html
 msgid "Can fly now"
 msgstr "Puedo volar ahora"
 
 #: templates/doctrines/list.html templates/doctrines/ships.html
+#: templates/fitting/load_doctrine.html
 msgid "Can't fly yet"
 msgstr "Aún no puedo volar"
 
@@ -39224,6 +39216,7 @@ msgid "Ready to fly."
 msgstr "Listo para volar."
 
 #: templates/doctrines/readiness.html
+#: templates/fitting/_load_doctrine_results.html
 msgid "No fits in this doctrine yet."
 msgstr "Aún no hay fits en este doctrine."
 
@@ -39594,8 +39587,11 @@ msgstr ""
 "No hay trabajos de industria de la corp registrados. Se importan desde ESI una vez que un\n"
 "        Director concede el scope “Corp blueprints + jobs”."
 
+#: templates/fitting/_load_doctrine_results.html
+msgid "Load into the Lab"
+msgstr ""
+
 #: templates/fitting/_telemetry.html
-#| msgid "Ratting"
 msgid "Fitting"
 msgstr ""
 
@@ -39608,12 +39604,10 @@ msgid "Powergrid"
 msgstr ""
 
 #: templates/fitting/_telemetry.html
-#| msgid "Localisation"
 msgid "Calibration"
 msgstr ""
 
 #: templates/fitting/_telemetry.html
-#| msgid "Current value"
 msgid "Turret / Launcher"
 msgstr ""
 
@@ -39622,7 +39616,6 @@ msgid "Slots H/M/L/R"
 msgstr ""
 
 #: templates/fitting/_telemetry.html
-#| msgid "Difference"
 msgid "Offence"
 msgstr ""
 
@@ -39639,7 +39632,6 @@ msgid "Volley"
 msgstr ""
 
 #: templates/fitting/_telemetry.html
-#| msgid "Applied"
 msgid "Applied missiles"
 msgstr ""
 
@@ -39649,7 +39641,6 @@ msgid "EM/Th/Kin/Exp %%"
 msgstr ""
 
 #: templates/fitting/_telemetry.html
-#| msgid "Defense"
 msgid "Defence"
 msgstr ""
 
@@ -39658,7 +39649,6 @@ msgid "EHP"
 msgstr ""
 
 #: templates/fitting/_telemetry.html
-#| msgid "the field"
 msgid "Shield"
 msgstr ""
 
@@ -39667,22 +39657,18 @@ msgid "HP"
 msgstr ""
 
 #: templates/fitting/_telemetry.html
-#| msgid "Capacity fit"
 msgid "Capacitor"
 msgstr ""
 
 #: templates/fitting/_telemetry.html
-#| msgid "viable"
 msgid "Stable"
 msgstr ""
 
 #: templates/fitting/_telemetry.html
-#| msgid "Enable"
 msgid "Unstable"
 msgstr ""
 
 #: templates/fitting/_telemetry.html
-#| msgid "Capacity fit"
 msgid "Capacity"
 msgstr ""
 
@@ -39691,7 +39677,6 @@ msgid "Peak recharge / use"
 msgstr ""
 
 #: templates/fitting/_telemetry.html
-#| msgid "Probability"
 msgid "Mobility"
 msgstr ""
 
@@ -39704,7 +39689,6 @@ msgid "With prop"
 msgstr ""
 
 #: templates/fitting/_telemetry.html
-#| msgid "All time"
 msgid "Align time"
 msgstr ""
 
@@ -39717,22 +39701,18 @@ msgid "Warp speed"
 msgstr ""
 
 #: templates/fitting/_telemetry.html
-#| msgid "Target"
 msgid "Targeting"
 msgstr ""
 
 #: templates/fitting/_telemetry.html
-#| msgid "Range:"
 msgid "Range"
 msgstr ""
 
 #: templates/fitting/_telemetry.html
-#| msgid "Stockpile targets"
 msgid "Locked targets"
 msgstr ""
 
 #: templates/fitting/_telemetry.html
-#| msgid "Target resolution"
 msgid "Scan resolution"
 msgstr ""
 
@@ -39741,22 +39721,18 @@ msgid "Sensor strength"
 msgstr ""
 
 #: templates/fitting/_telemetry.html
-#| msgid "Faction warfare"
 msgid "Electronic warfare"
 msgstr ""
 
 #: templates/fitting/_telemetry.html
-#| msgid "Fit deviation"
 msgid "Fit diagnostics"
 msgstr ""
 
 #: templates/fitting/_telemetry.html
-#| msgid "Open orders for this fit"
 msgid "Not modelled for this fit:"
 msgstr ""
 
 #: templates/fitting/_telemetry.html
-#| msgid "Your readiness"
 msgid "Pilot readiness"
 msgstr ""
 
@@ -39768,33 +39744,27 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: templates/fitting/_telemetry.html
-#| msgid "You can fly this"
 msgid "This pilot can fly this fit."
 msgstr ""
 
 #: templates/fitting/compare.html
-#| msgid "older revision"
 msgid "Compare revisions"
 msgstr ""
 
 #: templates/fitting/compare.html
-#| msgid "older revision"
 msgid "Base revision"
 msgstr ""
 
 #: templates/fitting/compare.html templates/fitting/detail.html
 #: templates/fitting/index.html
-#| msgid "Prev"
 msgid "rev"
 msgstr ""
 
 #: templates/fitting/compare.html
-#| msgid "current"
 msgid "current rev"
 msgstr ""
 
 #: templates/fitting/compare.html
-#| msgid "Save changes"
 msgid "Module changes"
 msgstr ""
 
@@ -39817,27 +39787,22 @@ msgid "Need at least two revisions to compare. Save a change first."
 msgstr ""
 
 #: templates/fitting/detail.html
-#| msgid "Fit revision"
 msgid "Revision"
 msgstr ""
 
 #: templates/fitting/detail.html
-#| msgid "engine off"
 msgid "engine"
 msgstr ""
 
 #: templates/fitting/detail.html
-#| msgid "no data"
 msgid "data"
 msgstr ""
 
 #: templates/fitting/detail.html
-#| msgid "By skills"
 msgid "My skills"
 msgstr ""
 
 #: templates/fitting/detail.html
-#| msgid "Save"
 msgid "Save *"
 msgstr ""
 
@@ -39846,22 +39811,18 @@ msgid "Fork"
 msgstr ""
 
 #: templates/fitting/detail.html
-#| msgid "Export:"
 msgid "Export EFT"
 msgstr ""
 
 #: templates/fitting/detail.html templates/fitting/shared.html
-#| msgid "Loaded"
 msgid "Loadout"
 msgstr ""
 
 #: templates/fitting/detail.html
-#| msgid "Add a corp member…"
 msgid "Add module or ship item…"
 msgstr ""
 
 #: templates/fitting/detail.html
-#| msgid "Buy modules"
 msgid "Search modules"
 msgstr ""
 
@@ -39870,12 +39831,10 @@ msgid "heat"
 msgstr ""
 
 #: templates/fitting/detail.html
-#| msgid "No milestones yet."
 msgid "No modules fitted yet."
 msgstr ""
 
 #: templates/fitting/detail.html
-#| msgid "Market price"
 msgid "Target profile"
 msgstr ""
 
@@ -39884,7 +39843,6 @@ msgid "Set a target to see applied missile damage vs its signature and speed."
 msgstr ""
 
 #: templates/fitting/detail.html
-#| msgid "Target date"
 msgid "Target signature (m)"
 msgstr ""
 
@@ -39901,25 +39859,20 @@ msgid "Vel (m/s)"
 msgstr ""
 
 #: templates/fitting/detail.html
-#| msgid "Cost a build"
 msgid "Cost & supply"
 msgstr ""
 
 #: templates/fitting/detail.html
 #, python-format
-#| msgid "Stale price after (hours)"
 msgid "Jita price as of %(ts)s"
 msgstr ""
 
 #: templates/fitting/detail.html
-#| msgid "Likely available"
 msgid "Price unavailable"
 msgstr ""
 
 #: templates/fitting/detail.html
 #, python-format
-#| msgid "%(n)s item type"
-#| msgid_plural "%(n)s item types"
 msgid "%(n)s item unpriced"
 msgid_plural "%(n)s items unpriced"
 msgstr[0] ""
@@ -39937,7 +39890,6 @@ msgid "All components available from corp stock."
 msgstr ""
 
 #: templates/fitting/detail.html
-#| msgid "Avg pilot shortfall"
 msgid "Supply the shortfall"
 msgstr ""
 
@@ -39951,12 +39903,10 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: templates/fitting/detail.html
-#| msgid "Earmark available corp stock for this project"
 msgid "Create a claimable corp task for the missing components?"
 msgstr ""
 
 #: templates/fitting/detail.html
-#| msgid "Shopping list"
 msgid "Shopping task"
 msgstr ""
 
@@ -39976,12 +39926,10 @@ msgid "Supplier"
 msgstr "Proveedor"
 
 #: templates/fitting/detail.html
-#| msgid "Supplier"
 msgid "Supplier…"
 msgstr ""
 
 #: templates/fitting/detail.html
-#| msgid "Draft"
 msgid "Draft PO"
 msgstr ""
 
@@ -39996,17 +39944,14 @@ msgid ""
 msgstr ""
 
 #: templates/fitting/detail.html
-#| msgid "Doctrine updated."
 msgid "Doctrine candidate"
 msgstr ""
 
 #: templates/fitting/detail.html
-#| msgid "Choose a blocker…"
 msgid "Choose a doctrine…"
 msgstr ""
 
 #: templates/fitting/detail.html
-#| msgid "Fit, ship or doctrine"
 msgid "Publish to doctrine"
 msgstr ""
 
@@ -40019,22 +39964,18 @@ msgid "Share"
 msgstr "Parte"
 
 #: templates/fitting/detail.html
-#| msgid "Revoke"
 msgid "Revoke link"
 msgstr ""
 
 #: templates/fitting/detail.html
-#| msgid "Create intake"
 msgid "Create public link"
 msgstr ""
 
 #: templates/fitting/detail.html templates/fitting/index.html
-#| msgid "Pilot name"
 msgid "Fit name"
 msgstr ""
 
 #: templates/fitting/detail.html
-#| msgid "Model name"
 msgid "Rename"
 msgstr ""
 
@@ -40044,17 +39985,14 @@ msgid "Duplicate"
 msgstr "Duplicar"
 
 #: templates/fitting/detail.html templates/fitting/index.html
-#| msgid "Delete permanently"
 msgid "Delete this fit permanently?"
 msgstr ""
 
 #: templates/fitting/detail.html
-#| msgid "Duplicate window (min)"
 msgid "Duplicate to my fits"
 msgstr ""
 
 #: templates/fitting/detail.html
-#| msgid "Run history"
 msgid "Revision history"
 msgstr ""
 
@@ -40064,7 +40002,6 @@ msgid "Restore"
 msgstr "Restaurar"
 
 #: templates/fitting/index.html
-#| msgid "Fitting basics"
 msgid "Fitting workspace"
 msgstr ""
 
@@ -40075,7 +40012,6 @@ msgid ""
 msgstr ""
 
 #: templates/fitting/index.html
-#| msgid "Start blank instead"
 msgid "Start a new fit"
 msgstr ""
 
@@ -40084,27 +40020,22 @@ msgid "Ship hull (e.g. Rifter)"
 msgstr ""
 
 #: templates/fitting/index.html
-#| msgid "Rename (optional)"
 msgid "Fit name (optional)"
 msgstr ""
 
 #: templates/fitting/index.html
-#| msgid "Create draft"
 msgid "Create fit"
 msgstr ""
 
 #: templates/fitting/index.html
-#| msgid "Copy fit (EFT)"
 msgid "Import a fit (EFT)"
 msgstr ""
 
 #: templates/fitting/index.html
-#| msgid "EFT fit"
 msgid "EFT text"
 msgstr ""
 
 #: templates/fitting/index.html
-#| msgid "Your lots"
 msgid "Your fits"
 msgstr ""
 
@@ -40114,27 +40045,37 @@ msgid ""
 "below."
 msgstr ""
 
-#: templates/fitting/index.html
-#| msgid "No doctrines match these filters."
+#: templates/fitting/index.html templates/fitting/load_doctrine.html
 msgid "Load a doctrine into the simulator"
 msgstr ""
 
-#: templates/fitting/index.html
+#: templates/fitting/index.html templates/fitting/load_doctrine.html
 msgid ""
 "Open any corp doctrine fit in the Lab — apply your skills, compare variants,"
 " and measure changes before proposing a revision."
 msgstr ""
 
 #: templates/fitting/index.html
-msgid "Load into Tocha"
+#| msgid "New doctrines"
+msgid "Browse doctrines"
 msgstr ""
 
-#: templates/fitting/index.html
-msgid "s Lab"
+#: templates/fitting/load_doctrine.html
+#| msgid "on doctrine"
+msgid "Load a doctrine"
+msgstr ""
+
+#: templates/fitting/load_doctrine.html
+#| msgid "Back to contest"
+msgid "Back to my fits"
+msgstr ""
+
+#: templates/fitting/load_doctrine.html
+#| msgid "This feature is not available."
+msgid "Doctrines are not available to you."
 msgstr ""
 
 #: templates/fitting/shared.html
-#| msgid "Share"
 msgid "Shared fit"
 msgstr ""
 
@@ -40143,7 +40084,6 @@ msgid "Read-only public view. Telemetry shown at All V skills."
 msgstr ""
 
 #: templates/fitting/shared.html
-#| msgid "Capacity fit"
 msgid "Empty fit."
 msgstr ""
 
@@ -43335,13 +43275,11 @@ msgstr "daño recibido"
 
 #: templates/killboard/detail.html
 #, python-format
-#| msgid "SRP paid"
 msgid "SRP paid · %(v)s"
 msgstr ""
 
 #: templates/killboard/detail.html
 #, python-format
-#| msgid "SRP approved"
 msgid "SRP approved · %(v)s"
 msgstr ""
 
@@ -43362,17 +43300,14 @@ msgid "Top damage"
 msgstr ""
 
 #: templates/killboard/detail.html
-#| msgid "Doctrine unlock"
 msgid "Doctrine hull"
 msgstr ""
 
 #: templates/killboard/detail.html
-#| msgid "our corporation"
 msgid "By corporation"
 msgstr ""
 
 #: templates/killboard/detail.html
-#| msgid "unknown"
 msgid "NPC / unknown"
 msgstr ""
 
@@ -43392,7 +43327,6 @@ msgid "This loss matched a doctrine fit"
 msgstr "Esta pérdida coincidió con un fit de doctrine"
 
 #: templates/killboard/detail.html
-#| msgid "Copy EFT"
 msgid "Copy ESI"
 msgstr ""
 
@@ -43401,7 +43335,6 @@ msgid "Copy the canonical doctrine fit to refit in-game"
 msgstr ""
 
 #: templates/killboard/detail.html
-#| msgid "Edit doctrine"
 msgid "Refit to doctrine"
 msgstr ""
 
@@ -43415,17 +43348,14 @@ msgid "destroyed"
 msgstr "destruido"
 
 #: templates/killboard/detail.html
-#| msgid "Dropped"
 msgid "dropped"
 msgstr ""
 
 #: templates/killboard/detail.html
-#| msgid "off-doctrine"
 msgid "Off-doctrine"
 msgstr ""
 
 #: templates/killboard/detail.html
-#| msgid "exempt"
 msgid "empty"
 msgstr ""
 
@@ -43455,36 +43385,29 @@ msgid "Nothing off-doctrine."
 msgstr "Nada fuera de doctrine."
 
 #: templates/killboard/detail.html
-#| msgid "Settled"
 msgid "Same battle"
 msgstr ""
 
 #: templates/killboard/detail.html
-#| msgid "Battle report"
 msgid "View battle report"
 msgstr ""
 
 #: templates/killboard/detail.html
-#| msgid "Watchlists &amp; battle reports"
 msgid "This kill is part of a battle report."
 msgstr ""
 
 #: templates/killboard/detail.html
 #, python-format
-#| msgid "%(n)s event"
-#| msgid_plural "%(n)s events"
 msgid "%(n)s comment"
 msgid_plural "%(n)s comments"
 msgstr[0] ""
 msgstr[1] ""
 
 #: templates/killboard/detail.html
-#| msgid "No accounts yet."
 msgid "No comments yet."
 msgstr ""
 
 #: templates/killboard/detail.html
-#| msgid "Add a corp member…"
 msgid "Add a comment…"
 msgstr ""
 
@@ -43535,7 +43458,6 @@ msgstr ""
 "Publica una baja de la corp igual o superior a este valor. 0 = desactivado."
 
 #: templates/killboard/killfeed_config.html
-#| msgid "Reason (optional)"
 msgid "Rules (optional)"
 msgstr ""
 
@@ -43546,17 +43468,14 @@ msgid ""
 msgstr ""
 
 #: templates/killboard/killfeed_config.html
-#| msgid "Attackers"
 msgid "Min attackers"
 msgstr ""
 
 #: templates/killboard/killfeed_config.html
-#| msgid "Attackers"
 msgid "Max attackers"
 msgstr ""
 
 #: templates/killboard/killfeed_config.html
-#| msgid "Within %(n)s jumps of %(origin)s"
 msgid "Within N jumps of staging"
 msgstr ""
 
@@ -43565,7 +43484,6 @@ msgid "0 = off. Needs an active staging system configured."
 msgstr ""
 
 #: templates/killboard/killfeed_config.html
-#| msgid "Security status: %(value)s"
 msgid "Security bands (none = all)"
 msgstr ""
 
@@ -43574,7 +43492,6 @@ msgid "Victim ship classes (none = all)"
 msgstr ""
 
 #: templates/killboard/killfeed_config.html
-#| msgid "Solo kills"
 msgid "Solo kills only"
 msgstr ""
 
@@ -43583,7 +43500,6 @@ msgid "Exclude NPC-only kills"
 msgstr ""
 
 #: templates/killboard/killfeed_config.html
-#| msgid "Exclude a pilot"
 msgid "Exclude awox kills"
 msgstr ""
 
@@ -43592,7 +43508,6 @@ msgid "Losses: only those that deviated from doctrine"
 msgstr ""
 
 #: templates/killboard/killfeed_config.html
-#| msgid "Input digest"
 msgid "Ingest"
 msgstr ""
 
@@ -43619,12 +43534,10 @@ msgid "Cursor at sequence %(seq)s · %(n)s ingested last run."
 msgstr ""
 
 #: templates/killboard/killfeed_config.html
-#| msgid "Budget health"
 msgid "Ingest health"
 msgstr ""
 
 #: templates/killboard/killfeed_config.html
-#| msgid "Primary"
 msgid "primary"
 msgstr ""
 
@@ -43634,12 +43547,10 @@ msgstr ""
 
 #: templates/killboard/killfeed_config.html
 #, python-format
-#| msgid "Built %(when)s ago"
 msgid "%(when)s ago"
 msgstr ""
 
 #: templates/killboard/killfeed_config.html
-#| msgid "Cooldown"
 msgid "down"
 msgstr ""
 
@@ -43649,7 +43560,6 @@ msgstr ""
 
 #: templates/killboard/killfeed_config.html
 #, python-format
-#| msgid "%(n)s constellations"
 msgid "%(n)s consecutive failures"
 msgstr ""
 
@@ -43802,12 +43712,10 @@ msgid "Period:"
 msgstr "Periodo:"
 
 #: templates/killboard/rankings.html
-#| msgid "Aggregate only"
 msgid "Aggregate:"
 msgstr ""
 
 #: templates/killboard/rankings.html
-#| msgid "A pilot"
 msgid "By pilot"
 msgstr ""
 

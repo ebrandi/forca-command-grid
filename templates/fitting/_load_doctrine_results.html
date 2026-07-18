@@ -1,0 +1,43 @@
+{% load eve i18n %}
+{% comment %}The filtered doctrine results fragment (count + cards). The view returns just
+   this for htmx requests, so filtering/paging swaps only #dc-results. Each doctrine lists
+   its fits as one-click "Load into the Lab" buttons.{% endcomment %}
+<div id="dc-results">
+  <p class="mb-3 text-sm text-faint">{% if active_filters %}{% blocktranslate count total_all=total_all with shown=total_shown %}{{ shown }} of {{ total_all }} doctrine match.{% plural %}{{ shown }} of {{ total_all }} doctrines match.{% endblocktranslate %}{% else %}{% blocktranslate count total_all=total_all with shown=total_shown %}{{ shown }} of {{ total_all }} doctrine.{% plural %}{{ shown }} of {{ total_all }} doctrines.{% endblocktranslate %}{% endif %}</p>
+
+  <div class="grid gap-3 sm:grid-cols-2">
+    {% for r in rows %}
+      <div class="rounded-lg border border-line bg-panel p-4">
+        <div class="flex items-start gap-3">
+          {% if r.thumb %}<img src="{% eve_type_icon r.thumb 48 %}" alt="" loading="lazy" width="48" height="48" style="border-radius:6px;flex:none;">{% endif %}
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2">
+              <h2 class="truncate font-semibold text-ink">{{ r.doctrine.name }}</h2>
+              {% if r.category_label %}<span class="chip shrink-0">{{ r.category_label }}</span>{% endif %}
+              {% if r.status == 'optimal' or r.status == 'viable' %}<span class="shrink-0 text-xs" style="color:#4ade80;">● {% translate "Can fly" %}</span>{% elif r.status == 'not_ready' %}<span class="shrink-0 text-xs" style="color:#e0a955;">● {% translate "Train" %}</span>{% endif %}
+            </div>
+            <div class="mt-1 flex flex-wrap items-center gap-1">
+              {% for h in r.hull_classes %}<span class="chip">{{ h }}</span>{% endfor %}
+              {% for role in r.roles %}<span class="chip">{{ role }}</span>{% endfor %}
+            </div>
+          </div>
+        </div>
+        <div class="mt-3 flex flex-wrap gap-1">
+          {% for df in r.doctrine.fits.all %}
+          <form method="post" action="{% url 'fitting:import_doctrine' df.pk %}" class="contents">{% csrf_token %}
+            <button class="btn-ghost !py-1 !text-xs" title="{% translate 'Load into the Lab' %}">{{ df.name }} ↗</button>
+          </form>
+          {% empty %}
+          <span class="text-xs text-faint">{% translate "No fits in this doctrine yet." %}</span>
+          {% endfor %}
+        </div>
+      </div>
+    {% empty %}
+      <div class="rounded-lg border border-line bg-panel col-span-full px-4 py-16 text-center">
+        <p class="text-sm text-faint">{% if active_filters %}{% translate "No doctrines match these filters." %} <a href="?{% if character %}character_id={{ character.character_id }}{% endif %}" style="color:#e0a955;">{% translate "Clear filters" %}</a>{% else %}{% translate "No doctrines published yet." %}{% endif %}</p>
+      </div>
+    {% endfor %}
+  </div>
+
+  {% include "doctrines/_pagination.html" with htmx=True %}
+</div>

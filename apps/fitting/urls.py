@@ -13,6 +13,7 @@ urlpatterns = [
     path("new/", views.create, name="create"),
     path("import/eft/", views.import_eft, name="import_eft"),
     path("import/killmail/<int:killmail_id>/", views.import_killmail, name="import_killmail"),
+    path("doctrines/", views.load_doctrine, name="load_doctrine"),
     path("import/doctrine/<int:fit_id>/", views.import_doctrine, name="import_doctrine"),
     path("telemetry/", views.telemetry, name="telemetry"),
     path("search/modules/", views.search_modules, name="search_modules"),

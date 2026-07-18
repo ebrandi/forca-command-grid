@@ -63,25 +63,10 @@ def doctrine_list(request: HttpRequest) -> HttpResponse:
     f_hull = (request.GET.get("hull") or "").strip()
     f_role = (request.GET.get("role") or "").strip()
     f_fly = (request.GET.get("fly") or "").strip()
-    ql = q.lower()
 
-    def keep(r: dict) -> bool:
-        d = r["doctrine"]
-        if ql and ql not in d.name.lower() and ql not in (d.description or "").lower():
-            return False
-        if f_category and str(r["category_id"]) != f_category:
-            return False
-        if f_hull and f_hull not in r["hull_classes"]:
-            return False
-        if f_role and f_role not in r["roles"]:
-            return False
-        if f_fly == "yes" and r["status"] not in ("optimal", "viable"):
-            return False
-        if f_fly == "no" and r["status"] != "not_ready":
-            return False
-        return True
-
-    filtered = [r for r in rows if keep(r)]
+    from .browse import filter_library_rows
+    filtered = filter_library_rows(
+        rows, q=q, category=f_category, hull=f_hull, role=f_role, fly=f_fly)
 
     # Default order: what this pilot can fly first, then closest to flying. Without
     # a skill snapshot keep the library's priority/name order (build_library's sort).
