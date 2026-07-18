@@ -331,3 +331,132 @@ class SdeBlueprintActivityTime(models.Model):
                 fields=("blueprint_type_id", "activity"), name="uniq_bp_activity_time"
             ),
         ]
+
+
+# ---------------------------------------------------------------------------
+# Dogma reference data (KB-Tocha) — the attribute/effect layer that the ship
+# fitting simulation (Tocha's Lab, apps/fitting) evaluates. This is a faithful
+# relational subset of the CCP SDE dogma tables (dgmAttributeTypes / dgmEffects /
+# dgmTypeAttributes / dgmTypeEffects), loaded by ``manage.py load_dogma`` from the
+# same authoritative Static Data Export the rest of the SDE comes from. It is NOT
+# derived from any third-party fitting engine's generated data; see
+# docs/architecture/decisions/tochas-lab-fitting-engine.md for provenance.
+# ---------------------------------------------------------------------------
+
+
+class SdeDogmaAttribute(models.Model):
+    """A dogma attribute definition (dgmAttributeTypes).
+
+    ``stackable`` False means the attribute's modifiers suffer the stacking penalty
+    (resistances, tracking bonuses, etc.); True means they combine at full strength
+    (capacitor, capacity, …). ``high_is_good`` records the natural "better" direction
+    so comparisons can colour a change correctly (None when it is context-dependent).
+    """
+
+    attribute_id = models.IntegerField(primary_key=True)
+    name = models.CharField(max_length=200, db_index=True)
+    display_name = models.CharField(max_length=200, blank=True)
+    unit_id = models.IntegerField(null=True, blank=True)
+    stackable = models.BooleanField(default=True)
+    high_is_good = models.BooleanField(null=True, blank=True)
+    default_value = models.FloatField(default=0.0)
+    published = models.BooleanField(default=True)
+
+    def __str__(self) -> str:
+        return self.display_name or self.name
+
+
+class SdeDogmaEffect(models.Model):
+    """A dogma effect definition (dgmEffects) plus its modifier graph.
+
+    ``effect_category`` is the SDE effect category (0 passive, 1 active, 2 target,
+    3 area, 4 online, 5 overload, …); it decides when an effect contributes (a passive
+    resist bonus always applies; an active hardener only when the module is running).
+    ``modifier_info`` carries the SDE ``modifierInfo`` list verbatim so a future full
+    dogma evaluator can consume it; the current evaluator uses the structured fields
+    it needs plus a documented handler set (see apps/fitting/engine/effects.py).
+    """
+
+    effect_id = models.IntegerField(primary_key=True)
+    name = models.CharField(max_length=200, db_index=True)
+    effect_category = models.IntegerField(default=0)
+    is_offensive = models.BooleanField(default=False)
+    is_assistance = models.BooleanField(default=False)
+    discharge_attribute_id = models.IntegerField(null=True, blank=True)
+    duration_attribute_id = models.IntegerField(null=True, blank=True)
+    range_attribute_id = models.IntegerField(null=True, blank=True)
+    falloff_attribute_id = models.IntegerField(null=True, blank=True)
+    tracking_attribute_id = models.IntegerField(null=True, blank=True)
+    modifier_info = models.JSONField(default=list, blank=True)
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class SdeTypeAttribute(models.Model):
+    """The value of one dogma attribute on one type (dgmTypeAttributes).
+
+    This is the base (pre-fit, pre-skill) value; the fitting engine layers ship, role,
+    skill, module, rig and environment modifiers on top. Loaded only for the types the
+    feature needs (ships, modules, charges, drones, skills), keeping the table bounded.
+    """
+
+    type = models.ForeignKey(SdeType, on_delete=models.CASCADE, related_name="dogma_attributes")
+    attribute_id = models.IntegerField()
+    value = models.FloatField(default=0.0)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["type", "attribute_id"], name="uniq_type_attribute"),
+        ]
+        indexes = [models.Index(fields=["attribute_id"])]
+
+
+class SdeTypeEffect(models.Model):
+    """An effect present on a type (dgmTypeEffects). ``is_default`` marks the default
+    effect (the one a module runs when simply activated)."""
+
+    type = models.ForeignKey(SdeType, on_delete=models.CASCADE, related_name="dogma_effects")
+    effect_id = models.IntegerField()
+    is_default = models.BooleanField(default=False)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["type", "effect_id"], name="uniq_type_effect"),
+        ]
+        indexes = [models.Index(fields=["effect_id"])]
+
+
+class SdeShipBonus(models.Model):
+    """A structured ship / role bonus for a hull (the Tocha's Lab fitting engine input).
+
+    EVE hull bonuses ("+5% Small Projectile damage per level of Minmatar Frigate") are
+    expressed in the SDE as dogma effects with a modifier graph and, in the client, as
+    trait text. This table is FORCA's normalised form of that bonus: which attribute it
+    changes, on which fitted items (by group/category), by how much, and which skill (if
+    any) scales it. ``load_dogma`` populates it; the engine turns each row into a
+    :class:`apps.fitting.engine.bonuses.BonusSpec`. Absence of rows for a hull means the
+    engine applies skill bonuses only (an honest partial, surfaced in the UI).
+    """
+
+    ship_type = models.ForeignKey(SdeType, on_delete=models.CASCADE, related_name="ship_bonuses")
+    key = models.CharField(max_length=64)
+    target_attribute_id = models.IntegerField()
+    amount = models.FloatField(default=0.0)          # percent (per level if per_level)
+    per_level = models.BooleanField(default=False)
+    skill_type_id = models.IntegerField(null=True, blank=True)  # None => role bonus (always on)
+    target_domain = models.CharField(max_length=8, default="item")  # "item" | "ship"
+    match_group_ids = models.JSONField(default=list, blank=True)
+    match_category_ids = models.JSONField(default=list, blank=True)
+    match_attr_present = models.IntegerField(null=True, blank=True)
+    penalised = models.BooleanField(default=False)
+    label = models.CharField(max_length=128, blank=True)
+
+    class Meta:
+        indexes = [models.Index(fields=["ship_type"])]
+        constraints = [
+            models.UniqueConstraint(fields=["ship_type", "key"], name="uniq_ship_bonus_key"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.ship_type_id}:{self.key}"
