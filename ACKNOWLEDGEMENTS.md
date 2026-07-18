@@ -36,6 +36,14 @@ licence identifiers there are collected on a best-effort basis; see
 [handbooks/reference/licence-review.md](./handbooks/reference/licence-review.md) for the
 maintainer review notes.
 
+## Evaluated open-source projects
+
+We thank the **EVEShipFit** project for its open (MIT) EVE ship-fitting work, which we
+evaluated as a reference and validation source while building Tocha's Lab. FORCA Command
+Grid ships an independent, server-side fitting engine and does not include EVEShipFit code or
+data; the evaluation, decision and attribution are recorded in
+[`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md).
+
 ## AI-assisted development
 
 [FORCA] Command Grid development was assisted by AI coding tools, including Claude Code using

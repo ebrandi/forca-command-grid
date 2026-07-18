@@ -46,6 +46,14 @@ carry weak-copyleft or specific terms that are worth noting:
 - **certifi (MPL-2.0):** MPL is file-level copyleft; certifi is consumed unmodified as a CA
   bundle. No project source is derived from it.
 - **cryptography:** dual-licensed Apache-2.0 OR BSD-3-Clause — either applies.
+- **EVEShipFit (evaluated, not adopted):** for the Tocha's Lab fitting engine the EVEShipFit
+  projects (`dogma-engine`, `data`, `react`, `sde`, `eveship.fit`, `preview-renderer`,
+  `static-data-viewer`, `demonstrator`) were evaluated. All are **MIT** (the EVE *data* they
+  process is CCP-owned under the CCP Developer Licence). None is a build or runtime dependency
+  and no code, tests, fixtures or data were copied — an independent server-side engine was
+  built instead. This imposes no MIT notice obligation on the shipped product; the attribution
+  is recorded transparently in [`THIRD_PARTY_NOTICES.md`](../../THIRD_PARTY_NOTICES.md) and the
+  decision in `docs/architecture/decisions/tochas-lab-fitting-engine.md`.
 
 ## Items requiring maintainer review
 

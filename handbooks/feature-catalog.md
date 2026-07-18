@@ -139,6 +139,29 @@ Access terms used below: **public** (anyone), **member** (home-corp pilot),
   corp-fittings endpoint, so doctrines are seeded from a director's own saved fits; fits
   can also be imported from a killmail or EVE-client XML.
 
+### Tocha's Lab (ship fitting)
+
+- **Users:** members (build/simulate/save/share); officers to promote a fit to a doctrine.
+- **Purpose:** An advanced ship-fitting workspace and simulator on `/lab/`. Build a fit
+  from scratch or import one (EFT paste, a killmail, or a doctrine), apply a pilot's real
+  skills or an All-V/untrained profile, and see server-computed telemetry — fitting
+  resources, EHP and resists, DPS, capacitor, mobility and targeting — with fit
+  diagnostics, a skill-readiness overlay, an estimated cost and corp-stock coverage.
+- **Workflows:** Create/import a fit; add/remove modules with live recompute; switch skill
+  profile; compare revisions; export EFT; create/revoke an unguessable public share link;
+  fork any visible fit; an officer promotes a revision into a doctrine (deliberate, audited).
+- **Roles:** Own fits are private by default; corp/alliance/public visibility is opt-in;
+  editing is owner-only; doctrine promotion is officer-gated and audited. The feature is
+  leader-toggleable (`tochas_lab`).
+- **Engine:** An independent, server-side dogma evaluator (`apps/fitting/engine`) behind a
+  FORCA-owned adapter — no third-party engine or WASM. See
+  [reference/tochas-lab-mechanics.md](reference/tochas-lab-mechanics.md) for the supported
+  and unsupported mechanics, and the localised name `Laboratório do Tocha` (pt-BR).
+- **Data:** Fits + immutable revisions + damage profiles; dogma reference tables in the SDE,
+  loaded by `manage.py load_dogma`. Derived telemetry is never stored as authoritative state.
+- **Integrations:** Reuses the market pricing, stockpile availability, skills/readiness and
+  doctrine authorities; imports from killmails, doctrines and EVE-client EFT.
+
 ### Skill plans
 
 - **Users:** members; officers for corp gap analysis.

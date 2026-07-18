@@ -9,6 +9,20 @@ project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 
 ### Added
 
+- **Tocha's Lab (ship fitting & simulation)** — a new fitting workspace on `/lab/`
+  (`Laboratório do Tocha` in Brazilian Portuguese). Build a fit from scratch or import one
+  (EFT paste, a killmail, or a doctrine), apply a pilot's real skills or an All-V/untrained
+  profile, and read server-computed telemetry: fitting resources (CPU/PG/calibration/slots/
+  hardpoints), EHP and resists with stacking penalties, turret and drone DPS with ship/skill/
+  module bonuses, capacitor stability, mobility and targeting — plus fit diagnostics, a
+  skill-readiness overlay with training estimates, an estimated cost (from the market
+  authority, with an "as of" stamp) and corp-stock coverage. Save immutable revisions, fork,
+  compare, export EFT, and share via an unguessable, revocable public link; officers can
+  promote a revision into a doctrine (deliberate and audited). The calculation engine is an
+  **independent, server-side dogma evaluator** derived from documented EVE mechanics and
+  sourced from the CCP SDE (no third-party engine, WASM or JS framework); the EVEShipFit
+  projects were evaluated and not adopted (see `THIRD_PARTY_NOTICES.md`). New dogma reference
+  tables in the SDE are loaded by `manage.py load_dogma`.
 - **Cost & profitability + Supply Command board (cross-cutting)** — the supply-chain
   phases now roll up into one leadership surface and one honest margin story. A new
   **Supply Command board** (`/supply-board/`, on the /ops/ hub) composes, from persisted

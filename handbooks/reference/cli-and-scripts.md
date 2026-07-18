@@ -81,6 +81,7 @@ are idempotent (they upsert and skip existing rows/files).
 |---|---|
 | `import_sde_fuzzwork` | Import the full Static Data Export from a Fuzzwork dump. Supports scoped flags (e.g. `--blueprints-only`, `--coords-only`, `--skill-attrs-only`). |
 | `load_sde` | Load the tiny bundled sample SDE fixture (dev/CI). |
+| `load_dogma` | Load dogma reference data (attributes/effects/type values/ship bonuses) for Tocha's Lab from a CCP-SDE-derived JSON. Idempotent and staged; stamps a `dogma_data_version`. Run after `load_sde`. |
 | `load_pi_static` | Load the Planetary Industry rulebook. |
 | `import_everef_reference_data` | Backfill reference data (e.g. packaged volumes) from EveRef. |
 | `mirror_type_images` | Mirror EVE type icons/renders to the local nginx-served directory (`--referenced-only` for the fast path). |
