@@ -113,6 +113,12 @@ def other(dogma):
     return _member("eve:2002", 2002, "Other Pilot")
 
 
+@pytest.fixture
+def officer(dogma):
+    from core import rbac
+    return _member("eve:2003", 2003, "Officer Pilot", role=rbac.ROLE_OFFICER)
+
+
 EFT = "[Rifter, Test Rifter]\n200mm AutoCannon I, Fusion S\n200mm AutoCannon I, Fusion S\n\nDamage Control I"
 
 
@@ -350,3 +356,81 @@ def test_search_endpoints(client, owner, dogma):
     assert hulls.status_code == 200 and any(r["type_id"] == RIFTER for r in hulls.json()["results"])
     mods = client.get(reverse("fitting:search_modules"), {"q": "AutoCannon"})
     assert any(r["type_id"] == AC for r in mods.json()["results"])
+
+
+# --------------------------------------------------------------------------- #
+# Supply / industry actions
+# --------------------------------------------------------------------------- #
+def _rifter_fit(owner):
+    parsed = services.import_eft(EFT)
+    return services.create_fit(owner, name="Supply Rifter", ship_type_id=RIFTER,
+                               items=parsed["items"])
+
+
+def test_shortfall_reads_the_stock_overlay(owner, dogma):
+    """With no corp stock, every fit component is short — the same list the page shows."""
+    from apps.fitting import supply
+    fit = _rifter_fit(owner)
+    short = supply.fit_shortfall(fit.ship_type_id, fit.current_revision.items)
+    type_ids = {m["type_id"] for m in short}
+    assert RIFTER in type_ids and AC in type_ids            # hull + modules are short
+    assert all(m["short"] > 0 for m in short)
+
+
+def test_supply_task_is_member_action_and_idempotent(client, owner, dogma):
+    from apps.tasks.models import Task
+    fit = _rifter_fit(owner)
+    client.force_login(owner)
+    resp = client.post(reverse("fitting:supply_task", args=[fit.pk]))
+    assert resp.status_code == 302
+    task = Task.objects.get(related_type="tochaslab_fit", related_id=str(fit.pk))
+    assert task.type == Task.Type.BUY and task.is_open
+    # a repeat click dedupes to the same open task (no spam)
+    client.post(reverse("fitting:supply_task", args=[fit.pk]))
+    assert Task.objects.filter(related_type="tochaslab_fit", related_id=str(fit.pk)).count() == 1
+
+
+def test_supply_project_creates_draft_with_shortfall_items(client, owner, dogma):
+    from apps.industry.models import IndustryProject
+    fit = _rifter_fit(owner)
+    client.force_login(owner)
+    resp = client.post(reverse("fitting:supply_project", args=[fit.pk]))
+    assert resp.status_code == 302
+    project = IndustryProject.objects.filter(source=IndustryProject.Source.MANUAL).latest("pk")
+    assert project.status == IndustryProject.Status.DRAFT
+    item_type_ids = set(project.items.values_list("type_id", flat=True))
+    assert RIFTER in item_type_ids and AC in item_type_ids
+
+
+def test_supply_po_requires_officer_and_supplier(client, owner, officer, dogma):
+    from apps.procurement.models import PurchaseOrder, Supplier
+
+    # A plain member cannot draft a PO even for their own fit → 403 (viewable, wrong role).
+    fit = _rifter_fit(owner)
+    client.force_login(owner)
+    assert client.post(reverse("fitting:supply_po", args=[fit.pk]),
+                       {"supplier": 1}).status_code == 403
+
+    # The officer acts on a fit they own — a viewer can only supply a fit they can see.
+    off_fit = _rifter_fit(officer)
+    client.force_login(officer)
+    # No/invalid supplier → bounced back with an error, no PO minted.
+    assert client.post(reverse("fitting:supply_po", args=[off_fit.pk])).status_code == 302
+    assert PurchaseOrder.objects.count() == 0
+
+    # With an active supplier, a DRAFT PO is drafted for the shortfall.
+    supplier = Supplier.objects.create(kind=Supplier.Kind.HUB, display_name="Jita Seller",
+                                       status=Supplier.Status.ACTIVE)
+    resp = client.post(reverse("fitting:supply_po", args=[off_fit.pk]), {"supplier": supplier.pk})
+    assert resp.status_code == 302
+    po = PurchaseOrder.objects.get()
+    assert po.supplier_id == supplier.pk and po.status == PurchaseOrder.Status.DRAFT
+    assert {ln.type_id for ln in po.lines.all()} >= {RIFTER, AC}
+
+
+def test_supply_action_needs_view_access(client, owner, other, dogma):
+    """A member who cannot even view a private fit gets 404 from a supply action."""
+    fit = _rifter_fit(owner)
+    client.force_login(other)
+    assert client.post(reverse("fitting:supply_task", args=[fit.pk])).status_code == 404
+    assert client.post(reverse("fitting:supply_project", args=[fit.pk])).status_code == 404

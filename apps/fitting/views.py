@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import json
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.translation import gettext as _
@@ -216,11 +218,20 @@ def detail(request, pk):
         "missing_skills": _enrich_skills(telemetry.get("missing_skills", [])),
         "show_skills": True,
         "revisions": list(fit.revisions.all()[:30]),
+        # Supply actions: any corp member may raise a task/project; drafting a PO is
+        # leadership. The buttons only render when the fit has a real stock shortfall.
+        "can_supply": rbac.has_role(request.user, rbac.ROLE_MEMBER),
+        "can_draft_po": rbac.has_role(request.user, rbac.ROLE_OFFICER),
     }
     if context["can_promote"]:
         from apps.doctrines.models import Doctrine
         context["doctrines"] = list(
             Doctrine.objects.filter(status=Doctrine.Status.ACTIVE).order_by("name")[:200]
+        )
+    if context["can_draft_po"]:
+        from apps.procurement.models import Supplier
+        context["suppliers"] = list(
+            Supplier.objects.filter(status=Supplier.Status.ACTIVE).order_by("display_name", "pk")[:100]
         )
     return render(request, "fitting/detail.html", context)
 
@@ -438,6 +449,78 @@ def promote(request, pk):
     if not doctrine or not fit.current_revision:
         return redirect("fitting:detail", pk=fit.pk)
     services.promote_to_doctrine(fit, fit.current_revision, doctrine, request.user)
+    return redirect("fitting:detail", pk=fit.pk)
+
+
+# --------------------------------------------------------------------------- #
+# Supply / industry actions — turn a fit's stock shortfall into a supply vehicle
+# --------------------------------------------------------------------------- #
+def _supply_target(request, pk, *, min_role) -> Fit:
+    """Resolve a fit the actor may act on for supply: viewable + holding ``min_role``.
+
+    A viewable fit the actor lacks the role for is a 403 (honest — they can see it but
+    not raise this vehicle), never a silent no-op."""
+    fit = get_object_or_404(Fit.objects.select_related("current_revision"), pk=pk)
+    if not fit.can_view(request.user):
+        raise Http404
+    if not rbac.has_role(request.user, min_role):
+        raise PermissionDenied(_("Insufficient role for this supply action."))
+    if not fit.current_revision:
+        raise Http404
+    return fit
+
+
+@login_required
+@feature_required("tochas_lab")
+@require_POST
+def supply_task(request, pk):
+    """Create a claimable corp task for the fit's missing components (member+)."""
+    from . import supply
+    fit = _supply_target(request, pk, min_role=rbac.ROLE_MEMBER)
+    task = supply.create_shopping_task(fit, fit.current_revision, request.user)
+    if task:
+        messages.success(request, _("Claimable task created for the missing components."))
+    else:
+        messages.info(request, _("Every component is already covered by corp stock."))
+    return redirect("fitting:detail", pk=fit.pk)
+
+
+@login_required
+@feature_required("tochas_lab")
+@require_POST
+def supply_project(request, pk):
+    """Open an Industry Center project to stock the fit's missing components (member+)."""
+    from . import supply
+    fit = _supply_target(request, pk, min_role=rbac.ROLE_MEMBER)
+    project = supply.create_industry_project(fit, fit.current_revision, request.user)
+    if project:
+        messages.success(request, _("Industry project “%(name)s” created as a draft.") % {
+            "name": project.name})
+    else:
+        messages.info(request, _("Every component is already covered by corp stock."))
+    return redirect("fitting:detail", pk=fit.pk)
+
+
+@login_required
+@feature_required("tochas_lab")
+@require_POST
+def supply_po(request, pk):
+    """Draft a purchase order to a supplier for the fit's missing components (officer+)."""
+    from apps.procurement.models import Supplier
+
+    from . import supply
+    fit = _supply_target(request, pk, min_role=rbac.ROLE_OFFICER)
+    supplier = Supplier.objects.filter(
+        pk=request.POST.get("supplier"), status=Supplier.Status.ACTIVE).first()
+    if not supplier:
+        messages.error(request, _("Choose an active supplier to draft a purchase order."))
+        return redirect("fitting:detail", pk=fit.pk)
+    po = supply.create_purchase_order(fit, fit.current_revision, request.user, supplier)
+    if po:
+        messages.success(request, _("Draft purchase order #%(pk)s created for review.") % {
+            "pk": po.pk})
+    else:
+        messages.info(request, _("Every component is already covered by corp stock."))
     return redirect("fitting:detail", pk=fit.pk)
 
 

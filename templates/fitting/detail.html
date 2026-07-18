@@ -92,6 +92,35 @@
         {% endif %}
       </section>
 
+      {% if stock.missing and can_supply %}
+      {# ---- Supply the shortfall: one-click, permission-aware supply vehicles ---- #}
+      <section class="mt-4 rounded-lg border border-line bg-panel p-4">
+        <p class="eyebrow">{% translate "Supply the shortfall" %}</p>
+        <p class="mt-1 text-xs text-faint">{% blocktranslate count n=stock.missing|length %}Raise a supply vehicle for the {{ n }} component corp stock cannot cover.{% plural %}Raise a supply vehicle for the {{ n }} components corp stock cannot cover.{% endblocktranslate %}</p>
+        <div class="mt-2 flex flex-wrap gap-1">
+          <form method="post" action="{% url 'fitting:supply_task' fit.pk %}" class="contents">{% csrf_token %}
+            <button class="btn-ghost !py-1 !text-xs" data-confirm="{% translate 'Create a claimable corp task for the missing components?' %}">{% translate "Shopping task" %}</button></form>
+          <form method="post" action="{% url 'fitting:supply_project' fit.pk %}" class="contents">{% csrf_token %}
+            <button class="btn-ghost !py-1 !text-xs" data-confirm="{% translate 'Open an Industry Center project for the missing components?' %}">{% translate "Industry project" %}</button></form>
+        </div>
+        {% if can_draft_po %}
+          {% if suppliers %}
+          <form method="post" action="{% url 'fitting:supply_po' fit.pk %}" class="mt-2 flex gap-1">{% csrf_token %}
+            <label class="sr-only" for="po-supplier">{% translate "Supplier" %}</label>
+            <select id="po-supplier" name="supplier" class="input-field" style="flex:1;min-width:0;" required>
+              <option value="">{% translate "Supplier…" %}</option>
+              {% for s in suppliers %}<option value="{{ s.pk }}">{{ s }}</option>{% endfor %}
+            </select>
+            <button class="btn-ghost !py-1 !text-xs">{% translate "Draft PO" %}</button>
+          </form>
+          {% else %}
+          <p class="mt-2 text-xs text-faint">{% translate "Add an active supplier to draft a purchase order." %}</p>
+          {% endif %}
+        {% endif %}
+        <p class="mt-2 text-xs text-faint">{% translate "Actions serve the corp and are audited; each targets only the missing components." %}</p>
+      </section>
+      {% endif %}
+
       {% if can_promote and editable %}
       <section class="mt-4 rounded-lg border border-line bg-panel p-4">
         <p class="eyebrow">{% translate "Doctrine candidate" %}</p>
