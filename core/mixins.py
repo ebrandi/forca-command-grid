@@ -18,6 +18,7 @@ class Source(models.TextChoices):
     ESI_CORP = "esi_corp", "ESI (corporation/Director token)"
     MANUAL = "manual", "Manual entry"
     ZKILL = "zkill", "zKillboard"
+    KILLSTREAM = "killstream", "zKillboard R2Z2 (realtime fallback)"
     EVEREF = "everef", "EVE Ref"
     SDE = "sde", "Static Data Export"
     ESTIMATED = "estimated", "Estimated"

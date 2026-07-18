@@ -122,6 +122,14 @@ app.conf.beat_schedule = {
         "task": "killboard.auto_cluster_battles",
         "schedule": crontab(minute="11-59/20"),
     },
+    # KB-20: OPTIONAL realtime killmail fallback (zKillboard R2Z2). Safe to always
+    # schedule — the task no-ops instantly (one DB read, zero HTTP) unless leadership has
+    # enabled it. The authoritative ESI/zKill-query/EVE Ref feeds keep the board current
+    # regardless; this only lowers latency for recent home-corp kills when switched on.
+    "consume-killstream": {
+        "task": "killboard.consume_killstream",
+        "schedule": crontab(minute="*"),
+    },
     # Incrementally refresh the per-pilot monthly ranking aggregate (current +
     # previous calendar month) so /killboard/rankings/ historical filters stay live
     # as new kills arrive. The full 15-year history is filled once by the

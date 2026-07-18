@@ -665,13 +665,24 @@ def battle_report_create(request: HttpRequest) -> HttpResponse:
 @login_required
 @role_required(rbac.ROLE_OFFICER)
 def killfeed_config(request: HttpRequest) -> HttpResponse:
-    """Officer settings for the Discord kill feed: enable + value thresholds."""
+    """Officer settings: the Discord kill feed + the optional realtime ingest fallback (KB-20)."""
     from decimal import Decimal, InvalidOperation
 
-    from .models import KillFeedConfig
+    from .ingest_health import ingest_status
+    from .models import KillFeedConfig, KillstreamState
 
     cfg = KillFeedConfig.load()
+    ks = KillstreamState.load()
     if request.method == "POST":
+        # The realtime-fallback toggle is a separate form on the same page; a run in
+        # flight never writes ``enabled`` (see killstream._STATE_FIELDS), so this is the
+        # only writer of it.
+        if request.POST.get("section") == "killstream":
+            ks.enabled = request.POST.get("killstream_enabled") == "1"
+            ks.save(update_fields=["enabled", "updated_at"])
+            messages.success(request, gettext("Real-time fallback setting saved."))
+            return redirect("killboard:killfeed_config")
+
         cfg.enabled = request.POST.get("enabled") == "1"
 
         def _dec(field, current):
@@ -686,4 +697,8 @@ def killfeed_config(request: HttpRequest) -> HttpResponse:
         cfg.save(update_fields=["enabled", "min_loss_value", "min_kill_value", "updated_at"])
         messages.success(request, gettext("Kill-feed settings saved."))
         return redirect("killboard:killfeed_config")
-    return render(request, "killboard/killfeed_config.html", {"cfg": cfg})
+    return render(
+        request,
+        "killboard/killfeed_config.html",
+        {"cfg": cfg, "ks": ks, "ingest": ingest_status()},
+    )

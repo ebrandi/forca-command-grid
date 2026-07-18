@@ -171,10 +171,15 @@ def import_home_corp_from_zkill() -> int:
     home = getattr(settings, "FORCA_HOME_CORP_ID", 0)
     if not home:
         return 0
+    from .models import IngestSourceHealth
+
     try:
-        return import_from_zkill("corporation", home)
+        n = import_from_zkill("corporation", home)
+        IngestSourceHealth.record("zkill_query", count=n)  # KB-20: observability only
+        return n
     except Exception as exc:  # noqa: BLE001 - a zKill blip must not fail the beat cycle
         log.warning("periodic zKill corp import failed: %s", exc)
+        IngestSourceHealth.record("zkill_query", error=str(exc))
         return 0
 
 
@@ -195,7 +200,27 @@ def discover_home_corp_killmails() -> int:
     if not director:
         log.info("corp killmail discovery: no corp token with the killmails scope")
         return 0
-    return discover_corporation_killmails(home, director.character_id)
+    from .models import IngestSourceHealth
+
+    # KB-20: record health on the primary's own return WITHOUT altering its behaviour — the
+    # discovery call keeps propagating any unexpected error exactly as before (it already
+    # swallows ESIError/NoValidToken internally and returns a count).
+    n = discover_corporation_killmails(home, director.character_id)
+    IngestSourceHealth.record("esi_corp", count=n)
+    return n
+
+
+@shared_task(name="killboard.consume_killstream")
+def consume_killstream() -> dict:
+    """KB-20: OPTIONAL realtime killmail fallback via zKillboard's R2Z2 sequence feed.
+
+    A no-op unless leadership has enabled it (dark-launched off). The authoritative feeds
+    (ESI Director corp feed, the zKill query poll, EVE Ref archives) always run regardless;
+    this only lowers latency for recent home-corp kills when switched on.
+    """
+    from .killstream import consume_killstream as _consume
+
+    return _consume()
 
 
 @shared_task(name="killboard.resolve_names")

@@ -1,6 +1,7 @@
 """Killboard: killmails, participants, items, battle reports, watchlist."""
 from __future__ import annotations
 
+import logging
 from decimal import Decimal
 
 from django.conf import settings
@@ -664,3 +665,98 @@ class MonthlyPilotKillStat(models.Model):
 
     def __str__(self) -> str:
         return f"{self.character_id} {self.year}-{self.month:02d}: {self.kills}k/{self.losses}l"
+
+
+# --------------------------------------------------------------------------- #
+#  KB-20 — real-time ingest fallback (R2Z2 killstream) + source health
+# --------------------------------------------------------------------------- #
+class KillstreamState(TimeStampedModel):
+    """State for the OPTIONAL real-time killmail fallback (KB-20).
+
+    zKillboard's R2Z2 sequence feed can be tapped for near-real-time home-corp kills, but
+    it is a **supplementary fallback, never a replacement** for the authoritative feeds
+    (the ESI Director corp feed, the zKillboard query-API poll, and the EVE Ref archives),
+    which always run. This singleton holds the master switch (dark-launched **OFF**) and
+    the resumable sequence cursor, plus light run stats. Because it is off by default and
+    ingestion is idempotent, enabling/disabling it or letting it fall behind never loses a
+    killmail — the primaries + EVE Ref remain the completeness backstop.
+    """
+
+    enabled = models.BooleanField(
+        default=False,
+        help_text=_(
+            "Optional real-time fallback feed (zKillboard R2Z2). The primary sources "
+            "(ESI Director feed, the zKill query poll and EVE Ref archives) always run; "
+            "turn this on only for lower-latency ingest or as a supplementary source."
+        ),
+    )
+    last_sequence = models.BigIntegerField(
+        null=True, blank=True,
+        help_text=_("The last R2Z2 sequence number consumed — the resumable cursor."),
+    )
+    last_run_at = models.DateTimeField(null=True, blank=True)
+    last_success_at = models.DateTimeField(null=True, blank=True)
+    last_error = models.CharField(max_length=300, blank=True)
+    last_error_at = models.DateTimeField(null=True, blank=True)
+    last_run_scanned = models.IntegerField(default=0)
+    last_run_ingested = models.IntegerField(default=0)
+    ingested_total = models.BigIntegerField(default=0)
+
+    @classmethod
+    def load(cls) -> KillstreamState:
+        return cls.objects.first() or cls.objects.create()
+
+    def __str__(self) -> str:
+        return f"killstream @ {self.last_sequence} ({'on' if self.enabled else 'off'})"
+
+
+class IngestSourceHealth(models.Model):
+    """Per-source killmail-ingest health for the source-precedence / freshness check (KB-20).
+
+    One row per feed (``zkill_query``, ``esi_corp``, ``killstream``, …). Each discovery
+    path records the outcome of its last run so leadership can see, at a glance, which
+    feeds are healthy and how fresh the board is — and so a silent feed outage (like the
+    historic "tasks existed but were never scheduled" bug) is visible instead of invisible.
+    Purely observational: it never gates ingestion.
+    """
+
+    source = models.CharField(max_length=32, unique=True)
+    last_run_at = models.DateTimeField(null=True, blank=True)
+    last_success_at = models.DateTimeField(null=True, blank=True)
+    last_count = models.IntegerField(default=0)
+    last_error = models.CharField(max_length=300, blank=True)
+    last_error_at = models.DateTimeField(null=True, blank=True)
+    consecutive_failures = models.IntegerField(default=0)
+
+    def __str__(self) -> str:
+        if self.last_success_at:
+            return f"{self.source}: {self.last_count} @ {self.last_success_at:%Y-%m-%d %H:%M}"
+        return self.source
+
+    @classmethod
+    def record(cls, source: str, *, count: int | None = None, error: str | None = None) -> None:
+        """Record a run outcome for ``source`` (idempotent upsert).
+
+        A success (``error`` falsy) stamps ``last_success_at``, sets ``last_count`` and
+        clears the failure streak; a failure stamps ``last_error``/``last_error_at`` and
+        increments ``consecutive_failures``. Never raises into the caller — health
+        recording must not break an ingest task.
+        """
+        now = timezone.now()
+        try:
+            row, _created = cls.objects.get_or_create(source=source)
+            row.last_run_at = now
+            if error:
+                row.last_error = str(error)[:300]
+                row.last_error_at = now
+                row.consecutive_failures += 1
+            else:
+                row.last_success_at = now
+                row.last_count = int(count or 0)
+                row.last_error = ""
+                row.consecutive_failures = 0
+            row.save()
+        except Exception:  # noqa: BLE001 — observability must never break ingestion
+            logging.getLogger("forca.killboard").debug(
+                "ingest health record failed for %s", source, exc_info=True
+            )

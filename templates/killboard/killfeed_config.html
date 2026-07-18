@@ -12,6 +12,7 @@
 
 <form method="post" class="panel max-w-lg space-y-4 p-5">
   {% csrf_token %}
+  <input type="hidden" name="section" value="killfeed">
   <label class="flex items-center gap-2 text-sm">
     <input type="checkbox" name="enabled" value="1" {% if cfg.enabled %}checked{% endif %}>
     <span class="text-ink">{% translate "Enable the kill feed" %}</span>
@@ -28,4 +29,55 @@
   </div>
   <button class="btn-gold">{% translate "Save settings" %}</button>
 </form>
+
+<!-- KB-20: optional real-time ingest fallback + source-health panel -->
+<section class="mt-8 max-w-lg space-y-4">
+  <header>
+    <p class="eyebrow">{% translate "Ingest" %}</p>
+    <h2 class="mt-1 text-xl font-bold text-ink">{% translate "Real-time fallback" %}</h2>
+    <p class="mt-1 text-sm text-faint">{% translate "The authoritative feeds (ESI Director feed, the zKillboard query poll and the EVE Ref archives) always keep the board current. This optional fallback taps zKillboard's R2Z2 realtime feed so recent corp kills appear within about a minute instead of up to fifteen. It never replaces the primary feeds — leave it off unless you want lower latency." %}</p>
+  </header>
+
+  <form method="post" class="panel space-y-3 p-5">
+    {% csrf_token %}
+    <input type="hidden" name="section" value="killstream">
+    <label class="flex items-center gap-2 text-sm">
+      <input type="checkbox" name="killstream_enabled" value="1" {% if ks.enabled %}checked{% endif %}>
+      <span class="text-ink">{% translate "Enable the real-time fallback (R2Z2)" %}</span>
+    </label>
+    {% if ks.enabled and ks.last_sequence %}
+    <p class="text-xs text-faint">{% blocktranslate with seq=ks.last_sequence n=ks.last_run_ingested %}Cursor at sequence {{ seq }} · {{ n }} ingested last run.{% endblocktranslate %}</p>
+    {% endif %}
+    {% if ks.last_error %}<p class="text-xs text-loss">{{ ks.last_error }}</p>{% endif %}
+    <button class="btn-gold">{% translate "Save" %}</button>
+  </form>
+
+  <!-- Source health -->
+  <div class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-2.5">
+      <h3 class="eyebrow text-faint">{% translate "Ingest health" %}</h3>
+    </div>
+    <ul class="divide-y divide-line/40">
+      {% for s in ingest.sources %}
+      <li class="px-4 py-2.5 text-sm">
+        <div class="flex items-center gap-3">
+          <span class="min-w-0 flex-1">
+            <span class="text-ink">{{ s.label }}</span>
+            {% if s.primary %}<span class="chip !text-cyan">{% translate "primary" %}</span>{% else %}<span class="chip !text-faint">{% translate "fallback" %}</span>{% endif %}
+          </span>
+          {% if s.last_success_at %}<span class="text-xs text-faint">{% blocktranslate with when=s.last_success_at|timesince %}{{ when }} ago{% endblocktranslate %}</span>{% endif %}
+          {% if s.verdict == 'fresh' %}<span class="chip !text-kill">{% translate "fresh" %}</span>
+          {% elif s.verdict == 'down' %}<span class="chip !text-loss">{% translate "down" %}</span>
+          {% elif s.verdict == 'stale' %}<span class="chip !text-gold">{% translate "stale" %}</span>
+          {% elif s.verdict == 'off' %}<span class="chip !text-faint">{% translate "off" %}</span>
+          {% else %}<span class="chip !text-muted">{% translate "idle" %}</span>{% endif %}
+        </div>
+        {% if s.verdict == 'down' and s.last_error %}
+        <p class="mt-1 truncate text-[11px] text-loss">{% blocktranslate with n=s.consecutive_failures %}{{ n }} consecutive failures{% endblocktranslate %} · {{ s.last_error }}</p>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
 {% endblock %}
