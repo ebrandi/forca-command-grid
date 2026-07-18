@@ -153,22 +153,25 @@
       {% if is_director %}<a href="{% url 'admin_audit:doctrine_from_killmail' killmail.killmail_id %}" class="btn-ghost !py-1 !text-xs"><svg class="h-3.5 w-3.5"><use href="#i-ship"/></svg> {% translate "Import as doctrine" %}</a>{% endif %}
     </div>
   </div>
-  <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_14rem] lg:items-start">
-    <!-- Radial fitting window: hull centred, module racks on arcs (High top / Mid left / Low bottom / Rig right) -->
-    <div class="relative mx-auto aspect-square w-full max-w-sm">
-      <span class="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 eyebrow text-[10px] text-faint">{% translate "High" %}</span>
-      <span class="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 eyebrow text-[10px] text-faint">{% translate "Low" %}</span>
-      <span class="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 eyebrow text-[10px] text-faint">{% translate "Mid" %}</span>
-      <span class="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 eyebrow text-[10px] text-faint">{% translate "Rig" %}</span>
-      <img src="{% eve_type_render wheel.hull_type_id 256 %}" alt="{% type_name wheel.hull_type_id %}" class="absolute left-1/2 top-1/2 h-[34%] w-[34%] -translate-x-1/2 -translate-y-1/2 rounded-full object-cover opacity-90 shadow-lg ring-1 ring-line">
+  <div class="grid gap-6 md:grid-cols-2 md:items-start">
+    <!-- Radial fitting window: hull centred, racks on arcs (High top / Mid left / Low bottom / Rig right).
+         All geometry is INLINE — the app ships a prebuilt Tailwind CSS that isn't recompiled on deploy,
+         so new utility classes (aspect-square, arbitrary sizes, opacity modifiers) don't exist. -->
+    <div style="position:relative;width:100%;max-width:20rem;margin:0 auto;aspect-ratio:1/1">
+      <span class="eyebrow text-faint" style="position:absolute;left:50%;top:0;transform:translateX(-50%);font-size:10px">{% translate "High" %}</span>
+      <span class="eyebrow text-faint" style="position:absolute;left:50%;bottom:0;transform:translateX(-50%);font-size:10px">{% translate "Low" %}</span>
+      <span class="eyebrow text-faint" style="position:absolute;left:0;top:50%;transform:translateY(-50%);font-size:10px">{% translate "Mid" %}</span>
+      <span class="eyebrow text-faint" style="position:absolute;right:0;top:50%;transform:translateY(-50%);font-size:10px">{% translate "Rig" %}</span>
+      <img src="{% eve_type_render wheel.hull_type_id 256 %}" alt="{% type_name wheel.hull_type_id %}"
+           style="position:absolute;left:50%;top:50%;width:32%;height:32%;transform:translate(-50%,-50%);border-radius:9999px;object-fit:cover;box-shadow:0 0 0 1px rgb(34,45,62),0 8px 20px rgba(0,0,0,.5)">
       {% for s in wheel.slots %}
-      <div class="absolute -translate-x-1/2 -translate-y-1/2" style="left:{{ s.x }}%;top:{{ s.y }}%">
+      <div style="position:absolute;left:{{ s.x }}%;top:{{ s.y }}%;transform:translate(-50%,-50%);width:2.25rem;height:2.25rem">
         {% if s.empty %}
-        <span class="block h-9 w-9 rounded-full border border-dashed border-line/50 bg-panel2/20"></span>
+        <span style="display:block;width:100%;height:100%;border-radius:9999px;border:1px dashed rgb(34,45,62);background:rgba(22,29,41,.4)"></span>
         {% else %}
-        <span class="relative block h-9 w-9 rounded-full ring-2 {% if s.destroyed %}ring-loss/70{% else %}ring-cyan/60{% endif %}" title="{% type_name s.type_id %}{% for c in s.charges %} + {{ c }}{% endfor %}{% if s.value %} · {{ s.value|isk }}{% endif %}">
-          <img src="{% eve_type_icon s.type_id 32 %}" alt="" loading="lazy" class="h-full w-full rounded-full object-cover">
-          {% if s.off_doctrine %}<span class="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-cyan ring-1 ring-space" title="{% translate 'Off-doctrine' %}"></span>{% endif %}
+        <span style="position:relative;display:block;width:100%;height:100%;border-radius:9999px;box-shadow:0 0 0 2px {% if s.destroyed %}rgb(240,83,63){% else %}rgb(70,207,224){% endif %}" title="{% type_name s.type_id %}{% for c in s.charges %} + {{ c }}{% endfor %}{% if s.value %} · {{ s.value|isk }}{% endif %}">
+          <img src="{% eve_type_icon s.type_id 32 %}" alt="" loading="lazy" style="display:block;width:100%;height:100%;border-radius:9999px;object-fit:cover">
+          {% if s.off_doctrine %}<span title="{% translate 'Off-doctrine' %}" style="position:absolute;right:-2px;top:-2px;width:9px;height:9px;border-radius:9999px;background:rgb(70,207,224);box-shadow:0 0 0 1px rgb(10,14,22)"></span>{% endif %}
         </span>
         {% endif %}
       </div>
@@ -177,10 +180,10 @@
 
     <!-- Legend + the holds that aren't fitted slots (drones / cargo / implants) -->
     <div class="space-y-3">
-      <div class="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-faint">
-        <span class="flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-full ring-2 ring-loss/70"></span>{% translate "destroyed" %}</span>
-        <span class="flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-full ring-2 ring-cyan/60"></span>{% translate "dropped" %}</span>
-        {% if wheel.has_slot_data %}<span class="flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-full border border-dashed border-line/60"></span>{% translate "empty" %}</span>{% endif %}
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-faint" style="font-size:10px">
+        <span class="flex items-center gap-1"><span style="display:inline-block;width:10px;height:10px;border-radius:9999px;box-shadow:0 0 0 2px rgb(240,83,63)"></span>{% translate "destroyed" %}</span>
+        <span class="flex items-center gap-1"><span style="display:inline-block;width:10px;height:10px;border-radius:9999px;box-shadow:0 0 0 2px rgb(70,207,224)"></span>{% translate "dropped" %}</span>
+        {% if wheel.has_slot_data %}<span class="flex items-center gap-1"><span style="display:inline-block;width:10px;height:10px;border-radius:9999px;border:1px dashed rgb(34,45,62)"></span>{% translate "empty" %}</span>{% endif %}
       </div>
       {% for section in wheel.extras %}
       <div>
