@@ -27,6 +27,7 @@ from .engine.types import (
     OperatingProfile,
     SkillProfile,
     SlotKind,
+    TargetProfile,
 )
 from .models import Fit, FitRevision, Visibility
 
@@ -79,13 +80,21 @@ def fit_input_from_items(ship_type_id: int, items: list[dict]) -> FitInput:
 
 
 def operating_profile(mode: str = "all_active", propulsion: bool = True,
-                      damage: dict | None = None) -> OperatingProfile:
+                      damage: dict | None = None,
+                      target: dict | None = None) -> OperatingProfile:
     dp = DamageProfileInput(**damage) if damage else DamageProfileInput()
     try:
         m = OperatingMode(mode)
     except ValueError:
         m = OperatingMode.ALL_ACTIVE
-    return OperatingProfile(mode=m, propulsion_active=propulsion, damage_profile=dp)
+    tgt = None
+    if target and (target.get("signature_radius") or target.get("velocity")):
+        tgt = TargetProfile(
+            signature_radius=max(0.0, float(target.get("signature_radius") or 0)),
+            velocity=max(0.0, float(target.get("velocity") or 0)),
+            label=str(target.get("label", ""))[:60],
+        )
+    return OperatingProfile(mode=m, propulsion_active=propulsion, damage_profile=dp, target=tgt)
 
 
 def evaluate(ship_type_id: int, items: list[dict], skills: SkillProfile,

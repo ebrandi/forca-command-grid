@@ -274,6 +274,19 @@ def test_search_endpoints(client, owner, dogma):
     assert any(r["type_id"] == AC for r in mods.json()["results"])
 
 
+def test_telemetry_endpoint_accepts_a_target_profile(client, owner, dogma):
+    """A target profile posted to the live recompute reaches the engine: an all-turret fit
+    measured against a target honestly flags that turret application is not modelled."""
+    client.force_login(owner)
+    items = [{"type_id": AC, "slot": "high", "state": "active",
+              "charge_type_id": FUSION, "quantity": 1}]
+    resp = client.post(reverse("fitting:telemetry"), {
+        "ship_type_id": RIFTER, "items": json.dumps(items), "skills": "none",
+        "tgt_sig": "40", "tgt_vel": "300"})
+    assert resp.status_code == 200
+    assert b"turret_application_not_modelled" in resp.content
+
+
 # --------------------------------------------------------------------------- #
 # Supply / industry actions
 # --------------------------------------------------------------------------- #

@@ -46,7 +46,43 @@ SHIELD_EXTENDER_GROUP = 40
 ARMOR_PLATE_GROUP = 329  # armor reinforcer / plates (flat armour HP)
 PROP_GROUPS = frozenset({46, 47})  # afterburner, MWD
 
+# Electronic-warfare inventory groups (public SDE group ids), used for the EWAR readout.
+EWAR_ECM = 201
+EWAR_SENSOR_DAMP = 208
+EWAR_TARGET_PAINTER = 209
+EWAR_WEAPON_DISRUPTOR = 213
+EWAR_STASIS_WEB = 65
+EWAR_WARP_SCRAMBLER = 52
+EWAR_ENERGY_NEUT = 71
+EWAR_ENERGY_NOS = 68
+EWAR_GROUPS = frozenset({
+    EWAR_ECM, EWAR_SENSOR_DAMP, EWAR_TARGET_PAINTER, EWAR_WEAPON_DISRUPTOR,
+    EWAR_STASIS_WEB, EWAR_WARP_SCRAMBLER, EWAR_ENERGY_NEUT, EWAR_ENERGY_NOS,
+})
+
 _LN_10_PCT = -math.log(0.25)  # 1.386294… — the align-time / e-folding constant
+
+
+def missile_application(target_sig: float, target_vel: float, explosion_radius: float,
+                        explosion_velocity: float, drf: float, drs: float) -> float:
+    """Fraction (0..1) of a missile's damage applied to a target of the given signature
+    radius and velocity — the standard EVE missile application formula:
+
+        min(1, S/Er, ((S/Er)·(Ev/Vt))^(ln(DRF)/ln(DRS)))
+
+    with S = target signature, Er/Ev the missile's explosion radius/velocity, and DRF/DRS
+    the charge's ``aoeDamageReductionFactor``/``aoeDamageReductionSensitivity``. A target no
+    faster than the explosion velocity (or stationary) takes full, signature-limited damage.
+    Degrades to the size term when the reduction attributes are absent."""
+    if explosion_radius <= 0:
+        return 1.0
+    size_term = target_sig / explosion_radius
+    if (target_vel <= 0 or explosion_velocity <= 0
+            or drf <= 0 or drs <= 0 or drs == 1.0):
+        return min(1.0, size_term)
+    exponent = math.log(drf) / math.log(drs)
+    speed_term = (size_term * (explosion_velocity / target_vel)) ** exponent
+    return min(1.0, size_term, speed_term)
 
 
 class DataProvider(Protocol):
@@ -149,6 +185,7 @@ def evaluate(
     mobility = _mobility(ship, items, ctx, skills, op_profile, result, active)
     targeting = _targeting(ship, ctx, skills)
     utility = _utility(ship, items)
+    ewar = _ewar(items, active)
 
     result.telemetry = {
         "resources": resources,
@@ -158,6 +195,7 @@ def evaluate(
         "mobility": mobility,
         "targeting": targeting,
         "utility": utility,
+        "ewar": ewar,
         "ship": {"type_id": fit.ship_type_id, "name": ship_info.get("name", "")},
         "operating_profile": {
             "mode": op_profile.mode.value,
@@ -385,9 +423,10 @@ def _weapon_rof(module_attrs, info, items, ctx, skills, mod_groups):
 
 
 def _offence(items, provider, ctx, skills, op_profile, result: FittingResult, active) -> dict:
-    turret_dps = missile_dps = drone_dps = total_volley = 0.0
+    turret_dps = missile_dps = missile_dps_applied = drone_dps = total_volley = 0.0
     damage_by_type = {d: 0.0 for d in A.DAMAGE_TYPES}
-    weapons = 0
+    weapons = has_turret = 0
+    target = op_profile.target
     for m, a, info in items:
         if m.slot != SlotKind.HIGH:
             continue
@@ -418,8 +457,17 @@ def _offence(items, provider, ctx, skills, op_profile, result: FittingResult, ac
         dps = volley / rof_s
         if is_launcher:
             missile_dps += dps
+            applied = dps
+            if target is not None:
+                applied = dps * missile_application(
+                    target.signature_radius, target.velocity,
+                    charge.get(A.AOE_CLOUD_SIZE, 0.0), charge.get(A.AOE_VELOCITY, 0.0),
+                    charge.get(A.AOE_DAMAGE_REDUCTION_FACTOR, 0.0),
+                    charge.get(A.AOE_DAMAGE_REDUCTION_SENSITIVITY, 0.0))
+            missile_dps_applied += applied
         else:
             turret_dps += dps
+            has_turret = 1
         total_volley += volley
         for d in A.DAMAGE_TYPES:
             damage_by_type[d] += (shot[d] * dmg_mult) / rof_s
@@ -448,12 +496,24 @@ def _offence(items, provider, ctx, skills, op_profile, result: FittingResult, ac
          Contribution("Drones", "module", f"{drone_dps:.1f} dps")])
     if weapons == 0 and drone_dps == 0:
         result.unsupported.append("no_weapons_detected")
-    return {
+    out = {
         "turret_dps": round(turret_dps, 1), "missile_dps": round(missile_dps, 1),
         "drone_dps": round(drone_dps, 1),
         "total_dps": round(total, 1), "volley": round(total_volley, 1),
         "damage_distribution": dist,
     }
+    if target is not None:
+        # Missiles get true application vs the target profile; turrets/drones are reported
+        # at full output (turret tracking is not modelled yet — flagged, never faked).
+        out["missile_dps_applied"] = round(missile_dps_applied, 1)
+        out["missile_application"] = (round(missile_dps_applied / missile_dps, 3)
+                                      if missile_dps > 0 else None)
+        out["applied_total_dps"] = round(turret_dps + missile_dps_applied + drone_dps, 1)
+        out["target"] = {"signature_radius": target.signature_radius,
+                         "velocity": target.velocity, "label": target.label}
+        if has_turret:
+            result.unsupported.append("turret_application_not_modelled")
+    return out
 
 
 # --------------------------------------------------------------------------- #
@@ -516,6 +576,50 @@ def _utility(ship, items) -> dict:
         "cargo": round(ship.get(A.CAPACITY_CARGO, 0.0), 1),
         "drone_bay": round(ship.get(A.DRONE_CAPACITY, 0.0), 1),
     }
+
+
+def _ewar(items, active) -> dict:
+    """Strength + engagement range of fitted electronic-warfare modules, grouped by their
+    CCP inventory group. Reports each module's own strength attribute and range honestly;
+    where the engine does not yet apply a scaling skill/bonus, the base module value stands
+    (never inflated). Modules that are offline are excluded."""
+    entries: list[dict] = []
+    for m, a, info in items:
+        gid = info.get("group_id")
+        if gid not in EWAR_GROUPS or not active(m):
+            continue
+        e = {"type_id": m.type_id, "name": info.get("name", f"Type {m.type_id}"),
+             "group_id": gid, "optimal_m": round(a.get(A.OPTIMAL_RANGE, 0.0), 0),
+             "falloff_m": round(a.get(A.FALLOFF, 0.0), 0)}
+        if gid == EWAR_WARP_SCRAMBLER:
+            e.update(kind="warp_disruption",
+                     strength=round(a.get(A.WARP_SCRAMBLE_STRENGTH, 0.0), 1), unit="points")
+        elif gid == EWAR_STASIS_WEB:
+            e.update(kind="stasis_web",
+                     strength=round(abs(a.get(A.SPEED_BONUS, 0.0)), 1), unit="% speed")
+        elif gid in (EWAR_ENERGY_NEUT, EWAR_ENERGY_NOS):
+            is_neut = gid == EWAR_ENERGY_NEUT
+            amt = a.get(A.ENERGY_NEUTRALISER_AMOUNT if is_neut else A.POWER_TRANSFER_AMOUNT, 0.0)
+            cyc = (a.get(A.CYCLE_TIME, 0.0) or 0.0) / 1000.0
+            e.update(kind="energy_neutraliser" if is_neut else "nosferatu",
+                     strength=round(amt, 1), unit="GJ/cycle",
+                     per_second=round(amt / cyc, 1) if cyc > 0 else 0.0)
+        elif gid == EWAR_TARGET_PAINTER:
+            e.update(kind="target_painter",
+                     strength=round(a.get(A.SIGNATURE_RADIUS_BONUS_ATTR, 0.0), 1), unit="% sig")
+        elif gid == EWAR_SENSOR_DAMP:
+            e.update(kind="sensor_dampener", unit="%",
+                     lock_range_bonus=round(a.get(A.MAX_TARGET_RANGE_BONUS, 0.0), 1),
+                     scan_res_bonus=round(a.get(A.SCAN_RESOLUTION_BONUS, 0.0), 1))
+        elif gid == EWAR_ECM:
+            strengths = {k: a.get(v, 0.0) for k, v in A.ECM_STRENGTH.items()}
+            best = max(strengths.items(), key=lambda kv: kv[1]) if strengths else ("", 0.0)
+            e.update(kind="ecm", strength=round(best[1], 1), unit="points", jam_type=best[0],
+                     jam_strengths={k: round(v, 1) for k, v in strengths.items()})
+        elif gid == EWAR_WEAPON_DISRUPTOR:
+            e.update(kind="weapon_disruptor", strength=0.0, unit="")
+        entries.append(e)
+    return {"modules": entries, "count": len(entries)}
 
 
 # --------------------------------------------------------------------------- #

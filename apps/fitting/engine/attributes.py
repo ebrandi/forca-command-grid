@@ -75,6 +75,23 @@ OPTIMAL_RANGE = 54           # maxRange
 FALLOFF = 158
 TRACKING_SPEED = 160
 
+# --- Missile application (attributes live on the missile CHARGE) -------------
+AOE_CLOUD_SIZE = 654          # explosion radius (m)
+AOE_VELOCITY = 653            # explosion velocity (m/s)
+AOE_DAMAGE_REDUCTION_FACTOR = 655       # DRF
+AOE_DAMAGE_REDUCTION_SENSITIVITY = 1353  # DRS
+
+# --- Electronic warfare (module strengths, for the utility/EWAR readout) -----
+WARP_SCRAMBLE_STRENGTH = 504            # points of warp core strength neutralised
+ENERGY_NEUTRALISER_AMOUNT = 97          # GJ removed per cycle
+POWER_TRANSFER_AMOUNT = 90              # GJ drained per cycle (nosferatu)
+ECM_STRENGTH = {                        # racial ECM jam strength modifiers
+    "gravimetric": 238, "ladar": 239, "magnetometric": 240, "radar": 241,
+}
+MAX_TARGET_RANGE_BONUS = 309            # remote sensor damp: lock-range reduction (%)
+SCAN_RESOLUTION_BONUS = 337             # remote sensor damp: scan-res reduction (%)
+SIGNATURE_RADIUS_BONUS_ATTR = 554       # target painter: target sig increase (%)
+
 # --- Mobility / signature ---------------------------------------------------
 MASS = 4
 AGILITY = 70                 # inertiaModifier

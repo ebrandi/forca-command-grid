@@ -23,6 +23,8 @@ modelled for this fit: …"); it is never silently approximated.
 | Stacking penalty | `S(i) = exp(-(i/2.67)²)`, reproducing EVE's 1.00 / 0.869 / 0.571 / 0.283 / 0.106 / 0.030 table; order-independent. |
 | EHP & resists | Shield/armor/hull HP (with flat module HP and %-based skill/ship bonuses), resonance per damage type after stacking-penalised hardeners, EHP weighted by the damage profile. |
 | Offence | Turret, **missile** and drone DPS and volley from charge damage × damage multiplier ÷ rate of fire, with ship/role bonuses, skill bonuses (Surgical Strike, Rapid Firing, Warhead Upgrades) and stacking-penalised damage mods of the correct class (gyros→turrets, Ballistic Control→missiles, never cross-boosting); damage-type distribution; missing-ammo diagnostic. |
+| Missile application | When a **target profile** (signature radius + velocity) is supplied, applied missile DPS via the standard formula `min(1, S/Er, ((S/Er)·(Ev/Vt))^(ln(DRF)/ln(DRS)))` from the charge's explosion radius/velocity and damage-reduction attributes. Turrets/drones are reported at full output and flagged `turret_application_not_modelled` — never silently "applied". |
+| Electronic warfare | Strength + engagement range of fitted EWAR by CCP group: stasis web (% slow), warp scrambler/disruptor (points), energy neutraliser & nosferatu (GJ/cycle and GJ/s), target painter (% sig), remote sensor dampener (lock-range/scan-res %), ECM (racial jam strengths + strongest type). Offline modules excluded. |
 | Capacitor | Capacity, recharge time, peak recharge (`0.5·C/τ`), module drain, stability (with stable %) or unstable runtime. |
 | Mobility | Max velocity (+ Navigation), afterburner/MWD velocity, align time (`ln(4)·mass·agility/1e6`), signature, warp speed; MWD mass/signature penalties. |
 | Targeting | Targeting range, locked targets, scan resolution, sensor strength. |
@@ -32,11 +34,13 @@ modelled for this fit: …"); it is never silently approximated.
 
 ## Not yet modelled (reported as unsupported)
 
-Missile *application* (explosion radius/velocity vs target signature/speed); turret tracking hit-quality; fighters and fighter tubes; command
-bursts / fleet effects; projected and remote effects (reps, cap transfer, EWAR strength);
-Tech III subsystem bonuses; overheating effects beyond state handling. Each is surfaced
-honestly rather than approximated, and each is a documented extension point:
-`apps/fitting/engine/effects.py` (module effects) and `bonuses.py` (ship/skill bonuses).
+Turret tracking hit-quality (transversal/angular vs a target — `turret_application_not_modelled`);
+fighters and fighter tubes; command bursts / fleet effects; remote assistance (armour/shield
+reps, cap transfer); Tech III subsystem bonuses; overheating effects beyond state handling.
+Each is surfaced honestly rather than approximated, and each is a documented extension point:
+`apps/fitting/engine/effects.py` (module effects) and `bonuses.py` (ship/skill bonuses). The
+EWAR readout reports each module's own strength attribute; scaling those by the appropriate
+skill/target bonuses (e.g. ECM skills, target sensor strength) is a further refinement.
 
 ## Data pipeline
 

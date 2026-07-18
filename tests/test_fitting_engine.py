@@ -14,7 +14,7 @@ from apps.fitting.engine import attributes as A
 from apps.fitting.engine import stacking
 from apps.fitting.engine.adapter import FittingEngine, ORMDataProvider, slot_from_effects
 from apps.fitting.engine.bonuses import BonusSpec
-from apps.fitting.engine.dogma import evaluate
+from apps.fitting.engine.dogma import evaluate, missile_application
 from apps.fitting.engine.memory import MemoryDataProvider
 from apps.fitting.engine.types import (
     DamageProfileInput,
@@ -25,11 +25,13 @@ from apps.fitting.engine.types import (
     SkillProfile,
     SlotKind,
     Status,
+    TargetProfile,
 )
 
 # --- ids (original fixture) --------------------------------------------------
 SHIP, AC, FUSION, GYRO, EXT, HARD, AB, DRONE = 900001, 900010, 900020, 900030, 900040, 900050, 900060, 900070
 LAUNCHER, ROCKET, BCS = 900080, 900090, 900100
+WEB, SCRAM, NEUT, ECM_M = 900110, 900120, 900130, 900140
 S_MINFRIG, S_GUNNERY, S_SPT, S_SURGICAL, S_RAPID, S_SHIELDMGMT, S_NAV = 3331, 3300, 3320, 3315, 3310, 3419, 3449
 S_WARHEAD, S_CALMISSILE = 3317, 3330  # Warhead Upgrades, a Caldari-Frigate-like missile hull skill
 
@@ -79,10 +81,27 @@ def _types() -> dict:
         LAUNCHER: {"name": "Test Rocket Launcher", "group_id": 507, "category_id": 7,
                    "attrs": {A.CPU_USAGE: 4, A.POWER_USAGE: 2, A.RATE_OF_FIRE: 3000}},
         ROCKET: {"name": "Test Rocket", "group_id": 507, "category_id": 8,
-                 "attrs": {A.KINETIC_DAMAGE: 20.0}},
+                 "attrs": {A.KINETIC_DAMAGE: 20.0,
+                           A.AOE_CLOUD_SIZE: 50.0, A.AOE_VELOCITY: 100.0,
+                           A.AOE_DAMAGE_REDUCTION_FACTOR: 0.85,
+                           A.AOE_DAMAGE_REDUCTION_SENSITIVITY: 0.70}},
         BCS: {"name": "Test Ballistic Control", "group_id": 367, "category_id": 7,
               "attrs": {A.CPU_USAGE: 18, A.POWER_USAGE: 1, A.DAMAGE_MULTIPLIER: 1.10,
                         A.RATE_OF_FIRE: 0.90}},
+        WEB: {"name": "Test Stasis Webifier", "group_id": 65, "category_id": 7,
+              "attrs": {A.CPU_USAGE: 3, A.POWER_USAGE: 1, A.SPEED_BONUS: -60.0,
+                        A.OPTIMAL_RANGE: 10000.0, A.FALLOFF: 5000.0}},
+        SCRAM: {"name": "Test Warp Scrambler", "group_id": 52, "category_id": 7,
+                "attrs": {A.CPU_USAGE: 5, A.POWER_USAGE: 1, A.WARP_SCRAMBLE_STRENGTH: 2.0,
+                          A.OPTIMAL_RANGE: 9000.0}},
+        NEUT: {"name": "Test Energy Neutralizer", "group_id": 71, "category_id": 7,
+               "attrs": {A.CPU_USAGE: 20, A.POWER_USAGE: 5,
+                         A.ENERGY_NEUTRALISER_AMOUNT: 48.0, A.CYCLE_TIME: 12000.0,
+                         A.OPTIMAL_RANGE: 6000.0}},
+        ECM_M: {"name": "Test Multispectral ECM", "group_id": 201, "category_id": 7,
+                "attrs": {A.CPU_USAGE: 22, A.POWER_USAGE: 1, A.OPTIMAL_RANGE: 24000.0,
+                          A.ECM_STRENGTH["gravimetric"]: 2.0, A.ECM_STRENGTH["radar"]: 3.0,
+                          A.ECM_STRENGTH["ladar"]: 2.0, A.ECM_STRENGTH["magnetometric"]: 2.0}},
     }
 
 
@@ -348,3 +367,87 @@ def test_engine_cache_roundtrip(orm_dogma):
     assert first == second
     assert first["engine_version"] == engine.engine_version
     assert first["data_version"] == "orm-1"
+
+
+# --------------------------------------------------------------------------- #
+# Missile application vs a target profile
+# --------------------------------------------------------------------------- #
+def test_missile_application_formula_matches_hand_value():
+    # size=40/50=0.8 ; vel ratio=100/200=0.5 ; exp=ln(0.85)/ln(0.70)=0.4556
+    # (0.8*0.5)^0.4556 = 0.4^0.4556 = 0.6587 -> min(1, 0.8, 0.6587) = 0.6587
+    got = missile_application(target_sig=40, target_vel=200, explosion_radius=50,
+                              explosion_velocity=100, drf=0.85, drs=0.70)
+    assert got == pytest.approx(0.6587, abs=1e-3)
+
+
+def test_missile_application_edges_and_monotonicity():
+    def f(sig, vel):
+        return missile_application(sig, vel, 50, 100, 0.85, 0.70)
+    assert f(1000, 0) == 1.0                     # huge, stationary target → full application
+    assert f(40, 0) == pytest.approx(0.8)        # small but slow → signature-limited (40/50)
+    assert f(40, 400) < f(40, 100)               # a faster target takes less
+    assert f(80, 200) > f(40, 200)               # a bigger target takes more
+    assert 0.0 <= f(5, 5000) <= 1.0              # always a clean fraction
+
+
+def test_missile_applied_dps_tracks_the_target():
+    prov = _provider()
+    fit = FitInput(SHIP, (ModuleInput(LAUNCHER, SlotKind.HIGH, ModuleState.ACTIVE,
+                                      charge_type_id=ROCKET),))
+    # No target → applied fields absent, raw missile_dps only.
+    raw = evaluate(fit, SkillProfile.omniscient(), OperatingProfile(), prov)
+    assert "missile_dps_applied" not in raw.telemetry["offence"]
+    missile_dps = raw.telemetry["offence"]["missile_dps"]
+    assert missile_dps > 0
+
+    # A small, fast target: missiles under-apply.
+    fast = evaluate(fit, SkillProfile.omniscient(),
+                    OperatingProfile(target=TargetProfile(40, 200, "frig")), prov)
+    off = fast.telemetry["offence"]
+    assert off["missile_dps_applied"] == pytest.approx(missile_dps * 0.6587, abs=0.1)
+    assert 0 < off["missile_application"] < 1
+    assert off["target"]["signature_radius"] == 40
+
+    # A huge, stationary target: full application.
+    slow = evaluate(fit, SkillProfile.omniscient(),
+                    OperatingProfile(target=TargetProfile(2000, 0, "structure")), prov)
+    assert slow.telemetry["offence"]["missile_dps_applied"] == pytest.approx(missile_dps, abs=0.05)
+    assert slow.telemetry["offence"]["missile_application"] == 1.0
+
+
+def test_turret_application_is_flagged_not_faked():
+    """A turret fit measured against a target reports turrets as unsupported for application
+    (never silently 'applied'), keeping the engine honest about what it does not model."""
+    prov = _provider()
+    fit = FitInput(SHIP, (ModuleInput(AC, SlotKind.HIGH, ModuleState.ACTIVE, charge_type_id=FUSION),))
+    r = evaluate(fit, _all5(), OperatingProfile(target=TargetProfile(40, 200)), prov)
+    assert "turret_application_not_modelled" in r.unsupported
+
+
+# --------------------------------------------------------------------------- #
+# Electronic-warfare readout
+# --------------------------------------------------------------------------- #
+def test_ewar_reports_web_scram_neut_and_ecm():
+    prov = _provider()
+    fit = FitInput(SHIP, (
+        ModuleInput(WEB, SlotKind.MED, ModuleState.ACTIVE),
+        ModuleInput(SCRAM, SlotKind.MED, ModuleState.ACTIVE),
+        ModuleInput(NEUT, SlotKind.HIGH, ModuleState.ACTIVE),
+        ModuleInput(ECM_M, SlotKind.MED, ModuleState.ACTIVE),
+    ))
+    ew = evaluate(fit, _all5(), OperatingProfile(), prov).telemetry["ewar"]
+    assert ew["count"] == 4
+    by_kind = {e["kind"]: e for e in ew["modules"]}
+    assert by_kind["stasis_web"]["strength"] == 60.0              # |−60%|
+    assert by_kind["stasis_web"]["optimal_m"] == 10000
+    assert by_kind["warp_disruption"]["strength"] == 2.0          # points
+    neut = by_kind["energy_neutraliser"]
+    assert neut["strength"] == 48.0 and neut["per_second"] == pytest.approx(4.0)  # 48 / 12s
+    ecm = by_kind["ecm"]
+    assert ecm["jam_type"] == "radar" and ecm["strength"] == 3.0  # strongest racial
+
+
+def test_ewar_excludes_offline_modules():
+    prov = _provider()
+    fit = FitInput(SHIP, (ModuleInput(WEB, SlotKind.MED, ModuleState.OFFLINE),))
+    assert evaluate(fit, _all5(), OperatingProfile(), prov).telemetry["ewar"]["count"] == 0

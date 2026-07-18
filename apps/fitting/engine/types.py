@@ -151,15 +151,29 @@ class DamageProfileInput:
 
 
 @dataclass(frozen=True)
+class TargetProfile:
+    """The target a fit is measured against, for damage application (missiles) and, later,
+    turret tracking. ``None`` on the operating profile means "report raw output"."""
+    signature_radius: float = 0.0   # metres
+    velocity: float = 0.0           # m/s (transversal is assumed = velocity for missiles)
+    label: str = ""
+
+    def hash(self) -> str:
+        return f"{self.signature_radius:.1f}:{self.velocity:.1f}"
+
+
+@dataclass(frozen=True)
 class OperatingProfile:
     mode: OperatingMode = OperatingMode.ALL_ACTIVE
     propulsion_active: bool = True
     damage_profile: DamageProfileInput = field(default_factory=DamageProfileInput)
+    target: TargetProfile | None = None
 
     def hash(self) -> str:
         d = self.damage_profile.normalised()
         dp = f"{d.em:.3f}:{d.thermal:.3f}:{d.kinetic:.3f}:{d.explosive:.3f}"
-        return f"{self.mode.value}:{int(self.propulsion_active)}:{dp}"
+        tgt = self.target.hash() if self.target else "none"
+        return f"{self.mode.value}:{int(self.propulsion_active)}:{dp}:{tgt}"
 
 
 # --------------------------------------------------------------------------- #

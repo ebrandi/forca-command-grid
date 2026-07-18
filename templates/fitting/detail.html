@@ -74,6 +74,20 @@
         </ul>
       </section>
 
+      {# ---- Target profile: drives applied missile damage ---- #}
+      <section class="mt-4 rounded-lg border border-line bg-panel p-4">
+        <p class="eyebrow">{% translate "Target profile" %}</p>
+        <p class="mt-1 text-xs text-faint">{% translate "Set a target to see applied missile damage vs its signature and speed." %}</p>
+        <div class="mt-2 flex gap-2">
+          <label class="sr-only" for="tgt-sig">{% translate "Target signature (m)" %}</label>
+          <input id="tgt-sig" type="number" min="0" step="1" class="input-field" style="min-width:0;flex:1;"
+                 placeholder="{% translate 'Sig (m)' %}" x-model.number="targetSig" @input.debounce.300ms="recompute()">
+          <label class="sr-only" for="tgt-vel">{% translate "Target velocity (m/s)" %}</label>
+          <input id="tgt-vel" type="number" min="0" step="1" class="input-field" style="min-width:0;flex:1;"
+                 placeholder="{% translate 'Vel (m/s)' %}" x-model.number="targetVel" @input.debounce.300ms="recompute()">
+        </div>
+      </section>
+
       {# ---- Supply overlay: price + stock ---- #}
       <section class="mt-4 rounded-lg border border-line bg-panel p-4">
         <p class="eyebrow">{% translate "Cost & supply" %}</p>
@@ -197,6 +211,7 @@ function labEditor() {
   return {
     items: [], results: [], query: "", dirty: false, editable: {{ editable|yesno:"true,false" }},
     shipTypeId: {{ fit.ship_type_id }},
+    targetSig: null, targetVel: null,
     skills: new URLSearchParams(window.location.search).get("skills") || "pilot",
     init() { this.items = JSON.parse(document.getElementById("lab-items").textContent || "[]"); },
     _csrf() { return document.getElementById("lab-csrf").value; },
@@ -220,6 +235,8 @@ function labEditor() {
       body.set("ship_type_id", this.shipTypeId);
       body.set("items", JSON.stringify(this._payload()));
       body.set("skills", this.skills);
+      if (this.targetSig) body.set("tgt_sig", this.targetSig);
+      if (this.targetVel) body.set("tgt_vel", this.targetVel);
       const r = await fetch("{% url 'fitting:telemetry' %}", { method: "POST",
         headers: { "X-CSRFToken": this._csrf(), "X-Requested-With": "XMLHttpRequest" }, body });
       if (r.ok) document.getElementById("telemetry-panel").innerHTML = await r.text();

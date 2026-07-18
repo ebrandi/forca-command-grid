@@ -58,7 +58,15 @@ def _op_profile(request):
             dmg = {k: float(data.get(f"dmg_{k}", 25)) for k in ("em", "thermal", "kinetic", "explosive")}
         except (TypeError, ValueError):
             dmg = None
-    return services.operating_profile(mode=mode, propulsion=prop, damage=dmg)
+    target = None
+    if data.get("tgt_sig") or data.get("tgt_vel"):
+        try:
+            target = {"signature_radius": float(data.get("tgt_sig") or 0),
+                      "velocity": float(data.get("tgt_vel") or 0),
+                      "label": data.get("tgt_label", "")}
+        except (TypeError, ValueError):
+            target = None
+    return services.operating_profile(mode=mode, propulsion=prop, damage=dmg, target=target)
 
 
 def _parse_items(raw: str) -> list[dict]:
