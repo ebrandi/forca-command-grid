@@ -135,6 +135,26 @@ string back into a `Set-Cookie`, and redirects only to a same-origin `next` thro
 stored `User.language` is validated against the allow-list before it is activated, so a raw
 locale value never reaches the filesystem (`apps/pingboard/dispatch.py`).
 
+## Tocha's Lab (ship fitting)
+
+### TL1 — An independent server-side fitting engine, not an upstream WASM dependency
+
+The Tocha's Lab calculation engine (`apps/fitting/engine`) is an original Python
+implementation derived from publicly documented EVE mechanics, sourcing dogma data from the
+CCP SDE we already import. The EVEShipFit organisation was evaluated in full (all repos MIT,
+but Rust→WASM/browser-first, token-gated data, no in-repo tests; EVE data is CCP-owned, not
+MIT) and **not adopted** — it is retained only as an optional black-box validation oracle.
+Provenance and attribution are in [`THIRD_PARTY_NOTICES.md`](../../THIRD_PARTY_NOTICES.md);
+the full analysis is in `docs/architecture/decisions/tochas-lab-fitting-engine.md`.
+
+### TL2 — Derived telemetry is never authoritative state
+
+A saved fit stores only its immutable `FitRevision` content plus the engine + data versions.
+Every number is recomputed from (revision + skill profile + operating/damage profile +
+engine/data version), so a historical fit never silently changes and a data refresh is safe.
+The engine is reached only through the `FittingEngine` adapter boundary; nothing else calls
+the evaluator, so the implementation can be replaced without touching the feature.
+
 ## Where the old documents went
 
 | Comment reference | Read instead |
