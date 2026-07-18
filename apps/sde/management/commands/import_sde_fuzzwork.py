@@ -127,6 +127,7 @@ class Command(BaseCommand):
                     self._load_dogma_skills(con)
                     self._load_skill_ranks(con)
                     self._load_skill_attributes(con)
+                    self._load_ship_slots(con)
             finally:
                 con.close()
         finally:
@@ -698,6 +699,31 @@ class Command(BaseCommand):
                     )
                 )
         return rows
+
+    def _load_ship_slots(self, con) -> None:
+        """Fitting slot counts for hulls (dogma 14=hi / 13=med / 12=low / 1137=rig).
+
+        Drives the KB-21 fit render's empty-slot outlines. Subsystem slots are not read
+        (T3 losses always carry their subsystems). Values are integers stored as floats in
+        dgmTypeAttributes, so prefer valueInt then round valueFloat.
+        """
+        attr_to_field = {14: "hi_slots", 13: "med_slots", 12: "low_slots", 1137: "rig_slots"}
+        valid = set(SdeType.objects.values_list("type_id", flat=True))
+        per_type: dict[int, dict[str, int]] = {}
+        for tid, attr, vint, vfloat in self._q(
+            con,
+            "SELECT typeID, attributeID, valueInt, valueFloat FROM dgmTypeAttributes "  # noqa: S608
+            "WHERE attributeID IN (14, 13, 12, 1137)",
+        ):
+            val = vint if vint is not None else (round(vfloat) if vfloat is not None else None)
+            if tid in valid and val is not None:
+                per_type.setdefault(tid, {})[attr_to_field[attr]] = int(val)
+        updates = [SdeType(type_id=tid, **fields) for tid, fields in per_type.items()]
+        with transaction.atomic():
+            SdeType.objects.bulk_update(
+                updates, ["hi_slots", "med_slots", "low_slots", "rig_slots"], batch_size=2000
+            )
+        self.stdout.write(f"  ship slots: {len(updates)}")
 
     def _load_skill_ranks(self, con) -> None:
         """Skill training multiplier (dogma attr 275 = skillTimeConstant)."""

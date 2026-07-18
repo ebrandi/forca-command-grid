@@ -67,6 +67,10 @@ class Command(BaseCommand):
                     "base_price": t.get("base_price"),
                     "published": t.get("published", True),
                     "rank": t.get("rank"),
+                    "hi_slots": t.get("hi_slots"),
+                    "med_slots": t.get("med_slots"),
+                    "low_slots": t.get("low_slots"),
+                    "rig_slots": t.get("rig_slots"),
                 },
             )
         for r in data.get("regions", []):

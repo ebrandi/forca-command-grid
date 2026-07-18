@@ -49,6 +49,15 @@ class SdeType(models.Model):
     # Only set for skill types; drives the attribute-aware training-time estimate.
     primary_attribute_id = models.PositiveSmallIntegerField(null=True, blank=True)
     secondary_attribute_id = models.PositiveSmallIntegerField(null=True, blank=True)
+    # Fitting slot counts (dogma attrs 14=hiSlots / 13=medSlots / 12=lowSlots /
+    # 1137=rigSlots). Only meaningful for ship hulls, and only populated by a full SDE
+    # (re)import that reads dogma. Null means "unknown" — the KB-21 fit render then draws
+    # the loss's occupied slots without empty-slot outlines. Subsystem slots are not
+    # imported (a T3 loss always carries its subsystems, so empty outlines are moot).
+    hi_slots = models.PositiveSmallIntegerField(null=True, blank=True)
+    med_slots = models.PositiveSmallIntegerField(null=True, blank=True)
+    low_slots = models.PositiveSmallIntegerField(null=True, blank=True)
+    rig_slots = models.PositiveSmallIntegerField(null=True, blank=True)
 
     class Meta:
         # Trigram GIN so the member-facing autocomplete (search_types/ships/skills, all

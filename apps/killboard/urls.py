@@ -24,5 +24,8 @@ urlpatterns = [
     path("battles/create/", views.battle_report_create, name="battle_report_create"),
     path("battles/<int:pk>/", views.battle_report_detail, name="battle_report_detail"),
     path("killfeed/settings/", views.killfeed_config, name="killfeed_config"),
+    # Fit exports — keep above the <int:killmail_id> single-segment catch-all.
+    path("<int:killmail_id>/eft/", views.killmail_eft, name="eft"),
+    path("<int:killmail_id>/fit.json", views.killmail_fit_esi, name="fit_esi"),
     path("<int:killmail_id>/", views.killmail_detail, name="detail"),
 ]

@@ -69,24 +69,69 @@
   </section>
 </div>
 
-<!-- Fitting / cargo -->
-{% if killmail.items.all %}
+<!-- Fitting / cargo (KB-21): our own per-slot render — no external component, no off-site link -->
+{% if fit.sections %}
 <section class="panel mt-5 p-5">
-  <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+  <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
     <div class="flex flex-wrap items-center gap-2">
       <h2 class="eyebrow">{% translate "Fitting &amp; cargo" %}</h2>
       {% if killmail.doctrine_fit %}<a href="{% url 'doctrines:detail' killmail.doctrine_fit.doctrine_id %}" class="chip !border-gold/40 !text-gold" title="{% translate 'This loss matched a doctrine fit' %}">◆ {{ killmail.doctrine_fit.name }}</a>{% endif %}
     </div>
-    {% if is_director %}<a href="{% url 'admin_audit:doctrine_from_killmail' killmail.killmail_id %}" class="btn-ghost !py-1 !text-xs"><svg class="h-3.5 w-3.5"><use href="#i-ship"/></svg> {% translate "Import as doctrine" %}</a>{% endif %}
-  </div>
-  <div class="grid gap-1.5 sm:grid-cols-2">
-    {% for item in killmail.items.all %}
-      <div class="flex items-center gap-2.5 rounded border border-line/60 bg-panel2/40 px-2.5 py-1.5">
-        <img src="{% eve_type_icon item.item_type_id 32 %}" alt="" loading="lazy" class="h-6 w-6 rounded-sm">
-        <span class="min-w-0 flex-1 truncate text-sm text-muted">{% type_name item.item_type_id %}</span>
-        {% if item.quantity_destroyed %}<span class="chip !text-loss">×{{ item.quantity_destroyed }}</span>{% endif %}
-        {% if item.quantity_dropped %}<span class="chip !text-cyan">↧{{ item.quantity_dropped }}</span>{% endif %}
+    <div class="flex flex-wrap items-center gap-2">
+      <div x-data="{copied:false}">
+        <button type="button"
+          @click="fetch('{% url 'killboard:eft' killmail.killmail_id %}').then(r=>r.text()).then(t=>{navigator.clipboard.writeText(t);copied=true;setTimeout(()=>copied=false,2000)})"
+          class="btn-ghost !py-1 !text-xs">
+          <span x-show="!copied">{% translate "Copy EFT" %}</span><span x-show="copied" x-cloak class="text-kill">{% translate "Copied ✓" %}</span>
+        </button>
       </div>
+      <div x-data="{copied:false}">
+        <button type="button"
+          @click="fetch('{% url 'killboard:fit_esi' killmail.killmail_id %}').then(r=>r.text()).then(t=>{navigator.clipboard.writeText(t);copied=true;setTimeout(()=>copied=false,2000)})"
+          class="btn-ghost !py-1 !text-xs">
+          <span x-show="!copied">{% translate "Copy ESI" %}</span><span x-show="copied" x-cloak class="text-kill">{% translate "Copied ✓" %}</span>
+        </button>
+      </div>
+      {% if killmail.doctrine_fit and is_member %}
+      <div x-data="{copied:false}">
+        <button type="button" title="{% translate 'Copy the canonical doctrine fit to refit in-game' %}"
+          @click="fetch('{% url 'doctrines:fit_export' killmail.doctrine_fit.id %}').then(r=>r.text()).then(t=>{navigator.clipboard.writeText(t);copied=true;setTimeout(()=>copied=false,2000)})"
+          class="btn-ghost !py-1 !text-xs !text-gold">
+          <span x-show="!copied">{% translate "Refit to doctrine" %}</span><span x-show="copied" x-cloak class="text-kill">{% translate "Copied ✓" %}</span>
+        </button>
+      </div>
+      {% endif %}
+      {% if is_director %}<a href="{% url 'admin_audit:doctrine_from_killmail' killmail.killmail_id %}" class="btn-ghost !py-1 !text-xs"><svg class="h-3.5 w-3.5"><use href="#i-ship"/></svg> {% translate "Import as doctrine" %}</a>{% endif %}
+    </div>
+  </div>
+  <div class="space-y-4">
+    {% for section in fit.sections %}
+    <div>
+      <div class="mb-1.5 flex items-center gap-2">
+        <p class="eyebrow text-faint">{{ section.label }}</p>
+        {% if section.capacity %}<span class="data text-[11px] text-muted">{{ section.filled }}/{{ section.capacity }}</span>{% else %}<span class="data text-[11px] text-muted">{{ section.count }}</span>{% endif %}
+        {% if section.value %}<span class="data ml-auto text-[11px] text-faint">{{ section.value|isk }}</span>{% endif %}
+      </div>
+      <div class="grid gap-1.5 sm:grid-cols-2">
+        {% for item in section.items %}
+          {% if item.empty %}
+          <div class="flex items-center gap-2.5 rounded border border-dashed border-line/40 px-2.5 py-1.5">
+            <span class="h-6 w-6 rounded-sm bg-panel2/30 ring-1 ring-line/30"></span>
+            <span class="text-xs italic text-faint">{% translate "empty" %}</span>
+          </div>
+          {% else %}
+          <div class="flex items-center gap-2.5 rounded border px-2.5 py-1.5 {% if item.off_doctrine %}border-cyan/50 bg-cyan/5{% else %}border-line/60 bg-panel2/40{% endif %}">
+            <img src="{% eve_type_icon item.type_id 32 %}" alt="" loading="lazy" class="h-6 w-6 rounded-sm">
+            <span class="min-w-0 flex-1 truncate text-sm text-muted" title="{% type_name item.type_id %}">{% type_name item.type_id %}</span>
+            {% if item.off_doctrine %}<span class="chip !text-cyan" title="{% translate 'Off-doctrine' %}">◇</span>{% endif %}
+            {% if item.value %}<span class="data text-[11px] text-faint">{{ item.value|isk }}</span>{% endif %}
+            {% if item.destroyed %}<span class="chip !text-loss">×{{ item.destroyed }}</span>{% endif %}
+            {% if item.dropped %}<span class="chip !text-cyan">↧{{ item.dropped }}</span>{% endif %}
+          </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
     {% endfor %}
   </div>
 </section>

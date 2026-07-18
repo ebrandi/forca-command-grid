@@ -18,6 +18,7 @@ from core import pilots, rbac
 from core.audit import audit_log, client_ip
 from core.rbac import role_required
 
+from . import fitrender
 from .battle import generate_battle_report
 from .forms import BattleReportForm, WatchlistEntryForm, WatchlistForm
 from .intel import watchlist_overview
@@ -511,8 +512,32 @@ def killmail_detail(request: HttpRequest, killmail_id: int) -> HttpResponse:
             "killmail": killmail,
             "attackers": killmail.participants.filter(role="attacker").order_by("-damage_done"),
             "deviation": deviation,
+            # Per-slot fit render (KB-21). ``deviation`` is already gated to owner/officer,
+            # so passing it here keeps the off-doctrine overlay private to permitted viewers.
+            "fit": fitrender.build_fit(killmail, deviation),
         },
     )
+
+
+def killmail_eft(request: HttpRequest, killmail_id: int) -> HttpResponse:
+    """The loss's fit as EFT text (copy straight into the game / Pyfa). Generated locally.
+
+    Public like the detail page itself — the items are already shown there; this just
+    reformats them. Gating still follows the killboard feature audience (middleware).
+    """
+    killmail = get_object_or_404(
+        Killmail.objects.prefetch_related("items"), killmail_id=killmail_id
+    )
+    from apps.doctrines.killmail_import import eft_from_killmail
+    return HttpResponse(eft_from_killmail(killmail), content_type="text/plain; charset=utf-8")
+
+
+def killmail_fit_esi(request: HttpRequest, killmail_id: int) -> JsonResponse:
+    """The loss's fit as an ESI-shaped fitting JSON. Generated locally, nothing leaves the box."""
+    killmail = get_object_or_404(
+        Killmail.objects.prefetch_related("items"), killmail_id=killmail_id
+    )
+    return JsonResponse(fitrender.esi_fitting(killmail))
 
 
 @login_required
