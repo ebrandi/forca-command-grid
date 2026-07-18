@@ -249,6 +249,60 @@ def test_idor_private_fit_not_viewable(client, owner, other, dogma):
                        {"items": "[]", "ship_type_id": RIFTER}).status_code == 404
 
 
+def test_manage_rename_duplicate_archive_restore_delete(client, owner, dogma):
+    client.force_login(owner)
+    fit = services.create_fit(owner, name="Orig", ship_type_id=RIFTER, items=[])
+    client.post(reverse("fitting:rename", args=[fit.pk]), {"name": "Renamed"})
+    fit.refresh_from_db()
+    assert fit.name == "Renamed"
+    client.post(reverse("fitting:duplicate", args=[fit.pk]))
+    assert Fit.objects.filter(owner=owner, origin="duplicate").exists()
+    client.post(reverse("fitting:archive", args=[fit.pk]))
+    fit.refresh_from_db()
+    assert fit.is_archived
+    client.post(reverse("fitting:restore", args=[fit.pk]))
+    fit.refresh_from_db()
+    assert not fit.is_archived
+    client.post(reverse("fitting:delete", args=[fit.pk]))
+    assert not Fit.objects.filter(pk=fit.pk).exists()  # hard delete
+
+
+def test_restore_revision_appends_a_new_revision(client, owner, dogma):
+    client.force_login(owner)
+    parsed = services.import_eft(EFT)
+    fit = services.create_fit(owner, name="R", ship_type_id=RIFTER, items=parsed["items"])   # rev1
+    services.save_revision(fit, ship_type_id=RIFTER, items=parsed["items"][:1], user=owner)  # rev2
+    fit.refresh_from_db()
+    assert len(fit.current_revision.items) == 1
+    client.post(reverse("fitting:restore_revision", args=[fit.pk, 1]))
+    fit.refresh_from_db()
+    assert fit.current_revision.revision_number == 3                       # append-only history
+    assert len(fit.current_revision.items) == len(parsed["items"])         # rev3 content == rev1
+
+
+def test_management_is_owner_only(client, owner, other, dogma):
+    fit = services.create_fit(owner, name="Secret", ship_type_id=RIFTER, items=[])
+    client.force_login(other)
+    assert client.post(reverse("fitting:rename", args=[fit.pk]), {"name": "x"}).status_code == 404
+    assert client.post(reverse("fitting:delete", args=[fit.pk])).status_code == 404
+    assert Fit.objects.filter(pk=fit.pk).exists()
+
+
+def test_load_doctrine_into_simulator(client, owner, dogma):
+    from apps.doctrines.models import Doctrine, DoctrineFit
+    doc = Doctrine.objects.create(name="Test Doctrine", status=Doctrine.Status.ACTIVE)
+    dfit = DoctrineFit.objects.create(
+        doctrine=doc, name="Rifter Tackle", ship_type_id=RIFTER,
+        modules=[{"type_id": AC, "quantity": 3, "slot": "high"}])
+    client.force_login(owner)
+    assert b"Test Doctrine" in client.get(reverse("fitting:index")).content    # listed to a member
+    resp = client.post(reverse("fitting:import_doctrine", args=[dfit.pk]))
+    assert resp.status_code == 302
+    loaded = Fit.objects.filter(owner=owner, origin="doctrine").first()
+    assert loaded and loaded.ship_type_id == RIFTER
+    assert any(it["type_id"] == AC for it in loaded.current_revision.items)
+
+
 def test_shared_view_requires_valid_token(client, owner, dogma):
     services.create_fit(owner, name="R", ship_type_id=RIFTER, items=[])  # exists but never shared
     # a guessed token resolves nothing

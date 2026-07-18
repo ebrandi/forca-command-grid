@@ -102,12 +102,32 @@ def _item_display(items: list[dict]) -> list[dict]:
 @login_required
 @feature_required("tochas_lab")
 def index(request):
-    fits = list(Fit.objects.filter(owner=request.user, is_archived=False)
-                .select_related("current_revision")[:100])
-    ship_names = services._type_names({f.ship_type_id for f in fits})
-    for f in fits:
+    active = list(Fit.objects.filter(owner=request.user, is_archived=False)
+                  .select_related("current_revision")[:100])
+    archived = list(Fit.objects.filter(owner=request.user, is_archived=True)
+                    .select_related("current_revision")[:50])
+    ship_names = services._type_names({f.ship_type_id for f in [*active, *archived]})
+    for f in [*active, *archived]:
         f.ship_name = ship_names.get(f.ship_type_id, f"Type {f.ship_type_id}")
-    return render(request, "fitting/index.html", {"fits": fits, "brand": _("Tocha's Lab")})
+    return render(request, "fitting/index.html", {
+        "fits": active, "archived": archived, "doctrines": _loadable_doctrines(request.user),
+        "brand": _("Tocha's Lab")})
+
+
+def _loadable_doctrines(user) -> list[dict]:
+    """Active doctrines (+ their fits) the user may load into the simulator, honouring the
+    doctrines feature/audience so nobody loads a doctrine they cannot otherwise see."""
+    from apps.doctrines.models import Doctrine
+    from core.features import feature_visible_to
+    if not feature_visible_to("doctrines", user):
+        return []
+    out = []
+    for d in (Doctrine.objects.filter(status=Doctrine.Status.ACTIVE)
+              .prefetch_related("fits").order_by("name")[:60]):
+        fits = [{"id": f.pk, "name": f.name} for f in d.fits.all()]
+        if fits:
+            out.append({"name": d.name, "fits": fits})
+    return out
 
 
 @login_required
@@ -195,6 +215,7 @@ def detail(request, pk):
         "stock": services.stock_coverage(fit.ship_type_id, rev.items if rev else []),
         "missing_skills": _enrich_skills(telemetry.get("missing_skills", [])),
         "show_skills": True,
+        "revisions": list(fit.revisions.all()[:30]),
     }
     if context["can_promote"]:
         from apps.doctrines.models import Doctrine
@@ -299,12 +320,61 @@ def unshare(request, pk):
 @login_required
 @feature_required("tochas_lab")
 @require_POST
-def delete(request, pk):
+def rename(request, pk):
     fit = _require_owner(request, pk)
-    fit.is_archived = True
-    fit.save(update_fields=["is_archived", "updated_at"])
-    audit_log(request.user, "tochaslab.fit.archived", target_type="fitting.Fit",
-              target_id=fit.pk, ip=client_ip(request))
+    services.rename_fit(fit, request.POST.get("name", ""), actor=request.user)
+    return redirect("fitting:detail", pk=fit.pk)
+
+
+@login_required
+@feature_required("tochas_lab")
+@require_POST
+def duplicate(request, pk):
+    fit = get_object_or_404(Fit.objects.select_related("current_revision"), pk=pk)
+    if not fit.can_view(request.user) or not fit.current_revision:
+        raise Http404
+    dup = services.duplicate_fit(fit, fit.current_revision, request.user)
+    return redirect("fitting:detail", pk=dup.pk)
+
+
+@login_required
+@feature_required("tochas_lab")
+@require_POST
+def archive(request, pk):
+    fit = _require_owner(request, pk)
+    services.set_archived(fit, True, actor=request.user)
+    return redirect("fitting:index")
+
+
+@login_required
+@feature_required("tochas_lab")
+@require_POST
+def restore(request, pk):
+    fit = _require_owner(request, pk)
+    services.set_archived(fit, False, actor=request.user)
+    return redirect("fitting:detail", pk=fit.pk)
+
+
+@login_required
+@feature_required("tochas_lab")
+@require_POST
+def restore_revision(request, pk, rev):
+    fit = _require_owner(request, pk)
+    revision = get_object_or_404(fit.revisions, revision_number=rev)
+    services.restore_revision(fit, revision, request.user)
+    return redirect("fitting:detail", pk=fit.pk)
+
+
+@login_required
+@feature_required("tochas_lab")
+@require_POST
+def delete(request, pk):
+    """Permanent delete. A promoted doctrine fit is a separate row and is NOT removed, so a
+    published doctrine never breaks (only this simulation and its revisions are deleted)."""
+    fit = _require_owner(request, pk)
+    audit_log(request.user, "tochaslab.fit.deleted", target_type="fitting.Fit",
+              target_id=fit.pk, ip=client_ip(request), metadata={"name": fit.name})
+    fit.delete()
     return redirect("fitting:index")
 
 

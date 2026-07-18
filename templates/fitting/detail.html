@@ -115,6 +115,41 @@
           <form method="post" action="{% url 'fitting:share' fit.pk %}" class="mt-2">{% csrf_token %}<button class="btn-ghost">{% translate "Create public link" %}</button></form>
         {% endif %}
       </section>
+
+      <section class="mt-4 rounded-lg border border-line bg-panel p-4">
+        <p class="eyebrow">{% translate "Manage" %}</p>
+        {% if editable %}
+        <form method="post" action="{% url 'fitting:rename' fit.pk %}" class="mt-2 flex gap-1">{% csrf_token %}
+          <input name="name" value="{{ fit.name }}" class="input-field" style="flex:1;min-width:0;" maxlength="200" aria-label="{% translate 'Fit name' %}">
+          <button class="btn-ghost">{% translate "Rename" %}</button>
+        </form>
+        <div class="mt-2 flex flex-wrap gap-1">
+          <form method="post" action="{% url 'fitting:duplicate' fit.pk %}" class="contents">{% csrf_token %}<button class="btn-ghost !py-1 !text-xs">{% translate "Duplicate" %}</button></form>
+          <form method="post" action="{% url 'fitting:archive' fit.pk %}" class="contents">{% csrf_token %}<button class="btn-ghost !py-1 !text-xs">{% translate "Archive" %}</button></form>
+          <form method="post" action="{% url 'fitting:delete' fit.pk %}" class="contents">{% csrf_token %}<button class="btn-ghost !py-1 !text-xs" data-confirm="{% translate 'Delete this fit permanently?' %}">{% translate "Delete" %}</button></form>
+        </div>
+        {% else %}
+        <form method="post" action="{% url 'fitting:duplicate' fit.pk %}" class="mt-2">{% csrf_token %}<button class="btn-ghost">{% translate "Duplicate to my fits" %}</button></form>
+        {% endif %}
+      </section>
+
+      {% if revisions|length > 1 %}
+      <section class="mt-4 rounded-lg border border-line bg-panel p-4">
+        <p class="eyebrow">{% translate "Revision history" %}</p>
+        <ul class="mt-2 space-y-1 text-sm">
+          {% for rv in revisions %}
+          <li class="flex items-center justify-between gap-2">
+            <span class="text-faint">{% translate "rev" %} {{ rv.revision_number }} · {{ rv.created_at|date:"m-d H:i" }}{% if rv.change_summary %} · {{ rv.change_summary }}{% endif %}</span>
+            {% if rv.revision_number == fit.current_revision.revision_number %}
+            <span style="font-size:11px;color:#4ade80;">{% translate "current" %}</span>
+            {% elif editable %}
+            <form method="post" action="{% url 'fitting:restore_revision' fit.pk rv.revision_number %}" class="contents">{% csrf_token %}<button class="btn-ghost !py-1 !text-xs">{% translate "Restore" %}</button></form>
+            {% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+      </section>
+      {% endif %}
     </div>
 
     {# ---- Telemetry ---- #}

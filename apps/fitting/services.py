@@ -158,6 +158,47 @@ def fork_fit(source: Fit, revision: FitRevision, user, name: str | None = None) 
     return fork
 
 
+def rename_fit(fit: Fit, name: str, actor=None) -> Fit:
+    fit.name = (name or fit.name).strip()[:200] or fit.name
+    fit.save(update_fields=["name", "updated_at"])
+    audit_log(actor, "tochaslab.fit.renamed", target_type="fitting.Fit", target_id=fit.pk)
+    return fit
+
+
+@transaction.atomic
+def duplicate_fit(source: Fit, revision: FitRevision, user, name: str | None = None) -> Fit:
+    """An independent copy the user owns (no fork lineage — unlike :func:`fork_fit`)."""
+    dup = create_fit(
+        user, name=name or f"{source.name} (copy)", ship_type_id=revision.ship_type_id,
+        items=revision.items, visibility=Visibility.PRIVATE, origin="duplicate",
+        description=source.description,
+    )
+    audit_log(user, "tochaslab.fit.duplicated", target_type="fitting.Fit", target_id=dup.pk,
+              metadata={"from_fit": source.pk})
+    return dup
+
+
+def set_archived(fit: Fit, archived: bool, actor=None) -> Fit:
+    fit.is_archived = archived
+    fit.save(update_fields=["is_archived", "updated_at"])
+    audit_log(actor, "tochaslab.fit.archived" if archived else "tochaslab.fit.restored",
+              target_type="fitting.Fit", target_id=fit.pk)
+    return fit
+
+
+@transaction.atomic
+def restore_revision(fit: Fit, revision: FitRevision, user) -> FitRevision:
+    """Bring back an earlier revision by appending its content as a NEW revision (history
+    stays append-only — nothing is rewritten)."""
+    rev = save_revision(
+        fit, ship_type_id=revision.ship_type_id, items=revision.items, user=user,
+        change_summary=f"Restored from revision {revision.revision_number}",
+    )
+    audit_log(user, "tochaslab.fit.revision_restored", target_type="fitting.Fit",
+              target_id=fit.pk, metadata={"from_revision": revision.revision_number})
+    return rev
+
+
 def create_share_link(fit: Fit, actor=None) -> str:
     from .models import new_share_token
     if not fit.share_token:
