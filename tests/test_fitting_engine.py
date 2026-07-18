@@ -29,7 +29,9 @@ from apps.fitting.engine.types import (
 
 # --- ids (original fixture) --------------------------------------------------
 SHIP, AC, FUSION, GYRO, EXT, HARD, AB, DRONE = 900001, 900010, 900020, 900030, 900040, 900050, 900060, 900070
+LAUNCHER, ROCKET, BCS = 900080, 900090, 900100
 S_MINFRIG, S_GUNNERY, S_SPT, S_SURGICAL, S_RAPID, S_SHIELDMGMT, S_NAV = 3331, 3300, 3320, 3315, 3310, 3419, 3449
+S_WARHEAD, S_CALMISSILE = 3317, 3330  # Warhead Upgrades, a Caldari-Frigate-like missile hull skill
 
 
 def _types() -> dict:
@@ -41,7 +43,7 @@ def _types() -> dict:
                "attrs": {
                    A.CPU_OUTPUT: 125, A.POWER_OUTPUT: 42, A.CALIBRATION: 400,
                    A.HI_SLOTS: 4, A.MED_SLOTS: 3, A.LOW_SLOTS: 3, A.RIG_SLOTS: 3,
-                   A.TURRET_HARDPOINTS: 3, A.LAUNCHER_HARDPOINTS: 0,
+                   A.TURRET_HARDPOINTS: 3, A.LAUNCHER_HARDPOINTS: 1,
                    A.SHIELD_HP: 450, A.ARMOR_HP: 400, A.HULL_HP: 350,
                    R["em"]: 1.0, R["thermal"]: 0.8, R["kinetic"]: 0.6, R["explosive"]: 0.5,
                    AR["em"]: 0.5, AR["thermal"]: 0.65, AR["kinetic"]: 0.75, AR["explosive"]: 0.9,
@@ -74,6 +76,13 @@ def _types() -> dict:
         DRONE: {"name": "Test Warrior", "group_id": 100, "category_id": 18,
                 "attrs": {A.EXPLOSIVE_DAMAGE: 5.0, A.DRONE_DAMAGE_MULTIPLIER: 1.0,
                           A.RATE_OF_FIRE: 2000}},
+        LAUNCHER: {"name": "Test Rocket Launcher", "group_id": 507, "category_id": 7,
+                   "attrs": {A.CPU_USAGE: 4, A.POWER_USAGE: 2, A.RATE_OF_FIRE: 3000}},
+        ROCKET: {"name": "Test Rocket", "group_id": 507, "category_id": 8,
+                 "attrs": {A.KINETIC_DAMAGE: 20.0}},
+        BCS: {"name": "Test Ballistic Control", "group_id": 367, "category_id": 7,
+              "attrs": {A.CPU_USAGE: 18, A.POWER_USAGE: 1, A.DAMAGE_MULTIPLIER: 1.10,
+                        A.RATE_OF_FIRE: 0.90}},
     }
 
 
@@ -81,6 +90,8 @@ def _provider() -> MemoryDataProvider:
     prov = MemoryDataProvider(_types(), data_version="fixture-1")
     prov.add_ship_bonus(SHIP, BonusSpec("minfrig_dmg", A.DAMAGE_MULTIPLIER, 5.0, skill_id=S_MINFRIG,
                                         per_level=True, match_group_ids=(55,), label="Minmatar Frigate"))
+    prov.add_ship_bonus(SHIP, BonusSpec("calfrig_missile", A.DAMAGE_MULTIPLIER, 5.0, skill_id=S_CALMISSILE,
+                                        per_level=True, match_group_ids=(507,), label="Caldari Frigate"))
     return prov
 
 
@@ -166,6 +177,36 @@ def test_capacitor_stability():
     assert cap["peak_recharge"] == pytest.approx(0.93, abs=0.02)
     assert cap["usage"] == pytest.approx(0.8, abs=0.01)
     assert cap["stable"] is True
+
+
+def test_missile_dps_with_launcher_bcs_and_bonuses():
+    prov = _provider()
+    fit = FitInput(SHIP, (
+        ModuleInput(LAUNCHER, SlotKind.HIGH, ModuleState.ACTIVE, charge_type_id=ROCKET),
+        ModuleInput(BCS, SlotKind.LOW, ModuleState.ACTIVE),
+    ))
+    r = evaluate(fit, SkillProfile.omniscient(), OperatingProfile(), prov)
+    off = r.telemetry["offence"]
+    # dmg = 1.0 * warhead(1.10) * caldari(1.25) * BCS penalised(1.10); rof = 3.0 * BCS(0.90)
+    expected = 20 * (1.0 * 1.10 * 1.25 * 1.10) / (3.0 * 0.90)
+    assert off["missile_dps"] == pytest.approx(expected, abs=0.05)
+    assert off["turret_dps"] == 0.0                       # gyro/rapid-firing never touch missiles
+    assert off["damage_distribution"]["kinetic"] == 100.0
+    assert r.status == Status.VALID
+
+
+def test_bcs_does_not_boost_turrets_and_gyro_does_not_boost_missiles():
+    prov = _provider()
+    # A turret with only a BCS fitted: BCS must NOT raise turret DPS.
+    turret_only_bcs = evaluate(
+        FitInput(SHIP, (ModuleInput(AC, SlotKind.HIGH, ModuleState.ACTIVE, charge_type_id=FUSION),
+                        ModuleInput(BCS, SlotKind.LOW, ModuleState.ACTIVE))),
+        SkillProfile.omniscient(), OperatingProfile(), prov)
+    turret_no_mod = evaluate(
+        FitInput(SHIP, (ModuleInput(AC, SlotKind.HIGH, ModuleState.ACTIVE, charge_type_id=FUSION),)),
+        SkillProfile.omniscient(), OperatingProfile(), prov)
+    assert turret_only_bcs.telemetry["offence"]["turret_dps"] == \
+        pytest.approx(turret_no_mod.telemetry["offence"]["turret_dps"])
 
 
 def test_drone_dps():

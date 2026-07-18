@@ -37,9 +37,13 @@ from .types import (
 # Launcher/turret group ids (public SDE inventory groups) used for hardpoint accounting.
 LAUNCHER_GROUPS = frozenset({507, 508, 509, 510, 511, 524, 771, 1245, 1246})
 TURRET_GROUPS = frozenset({53, 55, 74})
-DAMAGE_MOD_GROUPS = frozenset({62, 325, 326, 327, 328, 329})  # gyro/heatsink/magstab/BCS/DDA
+# Damage-mod groups per weapon class, so a Ballistic Control boosts only missiles and a
+# gyrostabiliser only turrets (they never cross-boost).
+TURRET_DAMAGE_MOD_GROUPS = frozenset({62, 326, 327})     # gyro / magstab / heat sink
+LAUNCHER_DAMAGE_MOD_GROUPS = frozenset({367})            # ballistic control system
+DRONE_DAMAGE_MOD_GROUPS = frozenset({640})               # drone damage amplifier
 SHIELD_EXTENDER_GROUP = 40
-ARMOR_PLATE_GROUP = 329  # (approx; real plates group id — kept for reference/fixtures)
+ARMOR_PLATE_GROUP = 329  # armor reinforcer / plates (flat armour HP)
 PROP_GROUPS = frozenset({46, 47})  # afterburner, MWD
 
 _LN_10_PCT = -math.log(0.25)  # 1.386294… — the align-time / e-folding constant
@@ -353,42 +357,44 @@ def _capacitor(ship, items, ctx, skills, active) -> dict:
 # --------------------------------------------------------------------------- #
 # Offence (turret + drone DPS)
 # --------------------------------------------------------------------------- #
-def _weapon_damage_mult(module_attrs, info, items, ctx, skills):
+def _weapon_damage_mult(module_attrs, info, items, ctx, skills, mod_groups):
+    """Effective damage multiplier: the weapon's own multiplier (1.0 for launchers, which
+    take all their damage from the charge) × unpenalised ship/role/skill bonuses × the
+    stacking-penalised damage mods of the RIGHT class (``mod_groups``)."""
     base = module_attrs.get(A.DAMAGE_MULTIPLIER, 1.0)
     unpen, contribs = _bonus_factor_for_item(ctx, skills, A.DAMAGE_MULTIPLIER, info, module_attrs)
-    # Penalised damage mods (gyros etc.) that raise turret damage multiplier.
-    gyro_mults = []
+    mod_mults = []
     for m2, a2, info2 in items:
         if m2.state == ModuleState.OFFLINE:
             continue
-        if info2.get("group_id") in DAMAGE_MOD_GROUPS and A.DAMAGE_MULTIPLIER in a2:
-            gyro_mults.append(a2[A.DAMAGE_MULTIPLIER])
-    pen = combine_penalized(gyro_mults)
-    return base * unpen * pen, contribs, gyro_mults
+        if info2.get("group_id") in mod_groups and A.DAMAGE_MULTIPLIER in a2:
+            mod_mults.append(a2[A.DAMAGE_MULTIPLIER])
+    return base * unpen * combine_penalized(mod_mults), contribs, mod_mults
 
 
-def _weapon_rof(module_attrs, info, items, ctx, skills):
+def _weapon_rof(module_attrs, info, items, ctx, skills, mod_groups):
     base_ms = module_attrs.get(A.RATE_OF_FIRE, 0.0)
     unpen, _ = _bonus_factor_for_item(ctx, skills, A.RATE_OF_FIRE, info, module_attrs)
     rof_mults = []
     for m2, a2, info2 in items:
         if m2.state == ModuleState.OFFLINE:
             continue
-        if info2.get("group_id") in DAMAGE_MOD_GROUPS and A.RATE_OF_FIRE in a2:
+        if info2.get("group_id") in mod_groups and A.RATE_OF_FIRE in a2:
             rof_mults.append(a2[A.RATE_OF_FIRE])
-    pen = combine_penalized(rof_mults)
-    return (base_ms / 1000.0) * unpen * pen
+    return (base_ms / 1000.0) * unpen * combine_penalized(rof_mults)
 
 
 def _offence(items, provider, ctx, skills, op_profile, result: FittingResult, active) -> dict:
-    turret_dps = drone_dps = total_volley = 0.0
+    turret_dps = missile_dps = drone_dps = total_volley = 0.0
     damage_by_type = {d: 0.0 for d in A.DAMAGE_TYPES}
     weapons = 0
     for m, a, info in items:
         if m.slot != SlotKind.HIGH:
             continue
         gid = info.get("group_id")
-        if gid not in TURRET_GROUPS and gid not in LAUNCHER_GROUPS:
+        is_turret = gid in TURRET_GROUPS
+        is_launcher = gid in LAUNCHER_GROUPS
+        if not (is_turret or is_launcher):
             continue
         weapons += 1
         if m.charge_type_id is None:
@@ -402,13 +408,18 @@ def _offence(items, provider, ctx, skills, op_profile, result: FittingResult, ac
         shot_total = sum(shot.values())
         if shot_total <= 0:
             continue
-        dmg_mult, _c, _g = _weapon_damage_mult(a, info, items, ctx, skills)
-        rof_s = _weapon_rof(a, info, items, ctx, skills)
+        # Only the matching damage-mod class boosts this weapon (BCS→missiles, gyro→turrets).
+        mod_groups = LAUNCHER_DAMAGE_MOD_GROUPS if is_launcher else TURRET_DAMAGE_MOD_GROUPS
+        dmg_mult, _c, _g = _weapon_damage_mult(a, info, items, ctx, skills, mod_groups)
+        rof_s = _weapon_rof(a, info, items, ctx, skills, mod_groups)
         if rof_s <= 0:
             continue
         volley = shot_total * dmg_mult
         dps = volley / rof_s
-        turret_dps += dps
+        if is_launcher:
+            missile_dps += dps
+        else:
+            turret_dps += dps
         total_volley += volley
         for d in A.DAMAGE_TYPES:
             damage_by_type[d] += (shot[d] * dmg_mult) / rof_s
@@ -427,17 +438,19 @@ def _offence(items, provider, ctx, skills, op_profile, result: FittingResult, ac
             for d in A.DAMAGE_TYPES:
                 damage_by_type[d] += (shot[d] * mult) / rof_s * m.quantity
 
-    total = turret_dps + drone_dps
+    total = turret_dps + missile_dps + drone_dps
     dist = {d: round(damage_by_type[d] / total * 100, 1) for d in A.DAMAGE_TYPES} if total > 0 else \
         {d: 0.0 for d in A.DAMAGE_TYPES}
     result.traces["dps"] = AttributeTrace(
         "dps", 0.0, round(total, 1), "dps",
-        [Contribution("Turrets/launchers", "module", f"{turret_dps:.1f} dps"),
+        [Contribution("Turrets", "module", f"{turret_dps:.1f} dps"),
+         Contribution("Missiles", "module", f"{missile_dps:.1f} dps"),
          Contribution("Drones", "module", f"{drone_dps:.1f} dps")])
     if weapons == 0 and drone_dps == 0:
         result.unsupported.append("no_weapons_detected")
     return {
-        "turret_dps": round(turret_dps, 1), "drone_dps": round(drone_dps, 1),
+        "turret_dps": round(turret_dps, 1), "missile_dps": round(missile_dps, 1),
+        "drone_dps": round(drone_dps, 1),
         "total_dps": round(total, 1), "volley": round(total_volley, 1),
         "damage_distribution": dist,
     }

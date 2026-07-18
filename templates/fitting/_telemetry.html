@@ -24,7 +24,7 @@ Colours that aren't in the prebuilt CSS are inlined (see the prebuilt-Tailwind n
     {% with o=telemetry.offence %}
     <p class="mt-1 text-2xl font-bold text-ink">{{ o.total_dps }} <span class="text-sm font-normal text-faint">{% translate "DPS" %}</span></p>
     <div class="mt-2 space-y-1 text-sm">
-      <div class="flex justify-between"><span class="text-faint">{% translate "Turret / drone" %}</span><span class="text-ink">{{ o.turret_dps }} / {{ o.drone_dps }}</span></div>
+      <div class="flex justify-between"><span class="text-faint">{% translate "Turret / missile / drone" %}</span><span class="text-ink">{{ o.turret_dps }} / {{ o.missile_dps }} / {{ o.drone_dps }}</span></div>
       <div class="flex justify-between"><span class="text-faint">{% translate "Volley" %}</span><span class="text-ink">{{ o.volley }}</span></div>
       <div class="flex justify-between"><span class="text-faint">{% translate "EM/Th/Kin/Exp %" %}</span><span class="text-ink">{{ o.damage_distribution.em }}·{{ o.damage_distribution.thermal }}·{{ o.damage_distribution.kinetic }}·{{ o.damage_distribution.explosive }}</span></div>
     </div>

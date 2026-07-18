@@ -47,12 +47,15 @@ SKILL_MECHANICS = 3392            # +5% structure HP / level
 SKILL_NAVIGATION = 3449           # +5% max velocity / level
 SKILL_CAP_MANAGEMENT = 3418       # +5% capacitor capacity / level
 SKILL_CAP_SYSTEMS_OP = 3417       # -5% capacitor recharge time / level
+SKILL_WARHEAD_UPGRADES = 3317     # +2% missile (kinetic/thermal/em/explosive) damage / level
 
 # Group ids used by the standard bonuses (public SDE group ids).
 GROUP_PROJECTILE_TURRET = 55
 GROUP_HYBRID_TURRET = 74
 GROUP_ENERGY_TURRET = 53
 TURRET_GROUPS = (GROUP_PROJECTILE_TURRET, GROUP_HYBRID_TURRET, GROUP_ENERGY_TURRET)
+# Missile launcher groups (rocket/light/heavy/cruise/torpedo/rapid variants).
+LAUNCHER_GROUPS = (507, 508, 509, 510, 511, 524, 771, 1245, 1246)
 
 
 # The curated, engine-supported standard skill bonuses. Each is validated by a test that
@@ -60,8 +63,14 @@ TURRET_GROUPS = (GROUP_PROJECTILE_TURRET, GROUP_HYBRID_TURRET, GROUP_ENERGY_TURR
 STANDARD_SKILL_BONUSES: tuple[BonusSpec, ...] = (
     BonusSpec("surgical_strike", A.DAMAGE_MULTIPLIER, 3.0, skill_id=SKILL_SURGICAL_STRIKE,
               per_level=True, match_attr_present=A.DAMAGE_MULTIPLIER, label="Surgical Strike"),
+    # Missiles take all damage from the charge (launchers have no damageMultiplier attr), so
+    # match by launcher group instead of the turret-only damageMultiplier presence.
+    BonusSpec("warhead_upgrades", A.DAMAGE_MULTIPLIER, 2.0, skill_id=SKILL_WARHEAD_UPGRADES,
+              per_level=True, match_group_ids=LAUNCHER_GROUPS, label="Warhead Upgrades"),
+    # Rapid Firing is a Gunnery skill — turrets only (launchers also carry a rate-of-fire
+    # attr, so match by turret group, not by attr presence).
     BonusSpec("rapid_firing", A.RATE_OF_FIRE, -4.0, skill_id=SKILL_RAPID_FIRING,
-              per_level=True, match_attr_present=A.RATE_OF_FIRE, label="Rapid Firing"),
+              per_level=True, match_group_ids=TURRET_GROUPS, label="Rapid Firing"),
     BonusSpec("shield_management", A.SHIELD_HP, 5.0, target_domain="ship",
               skill_id=SKILL_SHIELD_MANAGEMENT, per_level=True, label="Shield Management"),
     BonusSpec("hull_upgrades", A.ARMOR_HP, 5.0, target_domain="ship",
