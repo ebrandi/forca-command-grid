@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-18 21:46+0000\n"
+"POT-Creation-Date: 2026-07-18 22:29+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: ru machine-assisted draft\n"
@@ -7621,6 +7621,90 @@ msgstr ""
 #: apps/erp/views.py
 msgid "Only an in-progress job can be linked."
 msgstr "Привязать можно только выполняемое задание."
+
+#: apps/fitting/diagnostics.py
+msgid "CPU exceeded"
+msgstr "Превышен CPU"
+
+#: apps/fitting/diagnostics.py
+#| msgid "Powergrid"
+msgid "Powergrid exceeded"
+msgstr "Превышен Powergrid"
+
+#: apps/fitting/diagnostics.py
+#| msgid "Calibration"
+msgid "Calibration exceeded"
+msgstr "Превышена Калибровка"
+
+#: apps/fitting/diagnostics.py
+msgid "Too many high-slot modules"
+msgstr "Слишком много модулей в высоких слотах"
+
+#: apps/fitting/diagnostics.py
+msgid "Too many mid-slot modules"
+msgstr "Слишком много модулей в средних слотах"
+
+#: apps/fitting/diagnostics.py
+msgid "Too many low-slot modules"
+msgstr "Слишком много модулей в низких слотах"
+
+#: apps/fitting/diagnostics.py
+msgid "Too many rig-slot modules"
+msgstr "Слишком много модулей в риговых слотах"
+
+#: apps/fitting/diagnostics.py
+msgid "No weapons or drones detected"
+msgstr "Оружие или дроны не обнаружены"
+
+#: apps/fitting/diagnostics.py
+msgid "Turret tracking is not modelled (turrets shown at full damage)"
+msgstr ""
+"Сопровождение турелей не моделируется (турели показаны с полным уроном)"
+
+#: apps/fitting/diagnostics.py
+#, python-format
+msgid "%(used)s of %(cap)s used"
+msgstr "Использовано %(used)s из %(cap)s"
+
+#: apps/fitting/diagnostics.py
+msgid "Remove or downsize a module, or fit a fitting upgrade."
+msgstr ""
+"Снимите модуль или уменьшите его размер, либо установите модуль улучшения "
+"фиттинга."
+
+#: apps/fitting/diagnostics.py
+#, python-format
+#| msgid "Your saved fits (%(total)s)"
+msgid "%(used)s fitted, %(total)s slots"
+msgstr "%(used)s установлено, %(total)s слотов"
+
+#: apps/fitting/diagnostics.py
+#| msgid "Not enough snapshots yet"
+msgid "Not enough turret hardpoints"
+msgstr "Недостаточно точек крепления турелей"
+
+#: apps/fitting/diagnostics.py
+#, python-format
+msgid "%(have)s turrets, %(cap)s hardpoints"
+msgstr "%(have)s турелей, %(cap)s точек крепления"
+
+#: apps/fitting/diagnostics.py
+#| msgid "Not enough snapshots yet"
+msgid "Not enough launcher hardpoints"
+msgstr "Недостаточно точек крепления пусковых установок"
+
+#: apps/fitting/diagnostics.py
+#, python-format
+msgid "%(have)s launchers, %(cap)s hardpoints"
+msgstr "%(have)s пусковых установок, %(cap)s точек крепления"
+
+#: apps/fitting/diagnostics.py
+msgid "Weapon has no charge loaded"
+msgstr "В оружие не загружен заряд"
+
+#: apps/fitting/diagnostics.py
+msgid "Load a compatible charge."
+msgstr "Загрузите совместимый заряд."
 
 #: apps/fitting/models.py
 msgid "Public link"
@@ -39781,22 +39865,18 @@ msgstr ""
 "версию."
 
 #: templates/fitting/index.html
-#| msgid "New doctrines"
 msgid "Browse doctrines"
 msgstr "Просмотреть doctrines"
 
 #: templates/fitting/load_doctrine.html
-#| msgid "on doctrine"
 msgid "Load a doctrine"
 msgstr "Загрузить doctrine"
 
 #: templates/fitting/load_doctrine.html
-#| msgid "Back to contest"
 msgid "Back to my fits"
 msgstr "Назад к моим фитам"
 
 #: templates/fitting/load_doctrine.html
-#| msgid "This feature is not available."
 msgid "Doctrines are not available to you."
 msgstr "Doctrines вам недоступны."
 

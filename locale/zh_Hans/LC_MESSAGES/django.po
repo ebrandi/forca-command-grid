@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-18 21:46+0000\n"
+"POT-Creation-Date: 2026-07-18 22:29+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: zh-hans machine-assisted draft\n"
@@ -7265,6 +7265,87 @@ msgstr "该游戏内作业已关联到另一个建造作业。"
 #: apps/erp/views.py
 msgid "Only an in-progress job can be linked."
 msgstr "只有进行中的作业才能关联。"
+
+#: apps/fitting/diagnostics.py
+msgid "CPU exceeded"
+msgstr "CPU 超载"
+
+#: apps/fitting/diagnostics.py
+#| msgid "Powergrid"
+msgid "Powergrid exceeded"
+msgstr "电网超载"
+
+#: apps/fitting/diagnostics.py
+#| msgid "Calibration"
+msgid "Calibration exceeded"
+msgstr "校准超载"
+
+#: apps/fitting/diagnostics.py
+msgid "Too many high-slot modules"
+msgstr "高槽模块过多"
+
+#: apps/fitting/diagnostics.py
+msgid "Too many mid-slot modules"
+msgstr "中槽模块过多"
+
+#: apps/fitting/diagnostics.py
+msgid "Too many low-slot modules"
+msgstr "低槽模块过多"
+
+#: apps/fitting/diagnostics.py
+msgid "Too many rig-slot modules"
+msgstr "改装槽模块过多"
+
+#: apps/fitting/diagnostics.py
+msgid "No weapons or drones detected"
+msgstr "未检测到武器或无人机"
+
+#: apps/fitting/diagnostics.py
+msgid "Turret tracking is not modelled (turrets shown at full damage)"
+msgstr "未模拟炮台跟踪（炮台以满额伤害显示）"
+
+#: apps/fitting/diagnostics.py
+#, python-format
+msgid "%(used)s of %(cap)s used"
+msgstr "已使用 %(used)s / %(cap)s"
+
+#: apps/fitting/diagnostics.py
+msgid "Remove or downsize a module, or fit a fitting upgrade."
+msgstr "请移除或改用更小的模块，或加装配装升级模块。"
+
+#: apps/fitting/diagnostics.py
+#, python-format
+#| msgid "Your saved fits (%(total)s)"
+msgid "%(used)s fitted, %(total)s slots"
+msgstr "已装配 %(used)s，共 %(total)s 个槽位"
+
+#: apps/fitting/diagnostics.py
+#| msgid "Not enough snapshots yet"
+msgid "Not enough turret hardpoints"
+msgstr "炮台挂点不足"
+
+#: apps/fitting/diagnostics.py
+#, python-format
+msgid "%(have)s turrets, %(cap)s hardpoints"
+msgstr "%(have)s 门炮台，%(cap)s 个挂点"
+
+#: apps/fitting/diagnostics.py
+#| msgid "Not enough snapshots yet"
+msgid "Not enough launcher hardpoints"
+msgstr "发射器挂点不足"
+
+#: apps/fitting/diagnostics.py
+#, python-format
+msgid "%(have)s launchers, %(cap)s hardpoints"
+msgstr "%(have)s 具发射器，%(cap)s 个挂点"
+
+#: apps/fitting/diagnostics.py
+msgid "Weapon has no charge loaded"
+msgstr "武器未装填弹药"
+
+#: apps/fitting/diagnostics.py
+msgid "Load a compatible charge."
+msgstr "请装填兼容的弹药。"
 
 #: apps/fitting/models.py
 msgid "Public link"
@@ -37187,22 +37268,18 @@ msgid ""
 msgstr "在 Lab 中打开任意军团 doctrine 配装 — 套用你的技能、比较不同方案，并在提出修订前评估变化。"
 
 #: templates/fitting/index.html
-#| msgid "New doctrines"
 msgid "Browse doctrines"
 msgstr "浏览 doctrine"
 
 #: templates/fitting/load_doctrine.html
-#| msgid "on doctrine"
 msgid "Load a doctrine"
 msgstr "载入 doctrine"
 
 #: templates/fitting/load_doctrine.html
-#| msgid "Back to contest"
 msgid "Back to my fits"
 msgstr "返回我的配装"
 
 #: templates/fitting/load_doctrine.html
-#| msgid "This feature is not available."
 msgid "Doctrines are not available to you."
 msgstr "你目前无法使用 doctrine。"
 

@@ -213,6 +213,9 @@ class Diagnostic:
     evidence: str = ""
     suggested_action: str = ""
     contextual: bool = True     # advisory (depends on doctrine/intent), not an objective defect
+    # Structured values behind the English title/detail, so the Django-side presentation
+    # layer can re-render them in the reader's language (the engine stays i18n-free).
+    params: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
         return {**self.__dict__, "severity": self.severity.value}

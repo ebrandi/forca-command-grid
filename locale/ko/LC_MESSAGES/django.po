@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-18 21:46+0000\n"
+"POT-Creation-Date: 2026-07-18 22:29+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: ko machine-assisted draft\n"
@@ -7313,6 +7313,87 @@ msgstr "그 게임 내 작업은 이미 다른 제작 작업에 연결되어 있
 #: apps/erp/views.py
 msgid "Only an in-progress job can be linked."
 msgstr "진행 중인 작업만 연결할 수 있습니다."
+
+#: apps/fitting/diagnostics.py
+msgid "CPU exceeded"
+msgstr "CPU 초과"
+
+#: apps/fitting/diagnostics.py
+#| msgid "Powergrid"
+msgid "Powergrid exceeded"
+msgstr "파워그리드 초과"
+
+#: apps/fitting/diagnostics.py
+#| msgid "Calibration"
+msgid "Calibration exceeded"
+msgstr "캘리브레이션 초과"
+
+#: apps/fitting/diagnostics.py
+msgid "Too many high-slot modules"
+msgstr "하이 슬롯 모듈이 너무 많음"
+
+#: apps/fitting/diagnostics.py
+msgid "Too many mid-slot modules"
+msgstr "미드 슬롯 모듈이 너무 많음"
+
+#: apps/fitting/diagnostics.py
+msgid "Too many low-slot modules"
+msgstr "로우 슬롯 모듈이 너무 많음"
+
+#: apps/fitting/diagnostics.py
+msgid "Too many rig-slot modules"
+msgstr "리그 슬롯 모듈이 너무 많음"
+
+#: apps/fitting/diagnostics.py
+msgid "No weapons or drones detected"
+msgstr "무기 또는 드론이 감지되지 않음"
+
+#: apps/fitting/diagnostics.py
+msgid "Turret tracking is not modelled (turrets shown at full damage)"
+msgstr "터렛 트래킹은 반영되지 않음 (터렛은 최대 데미지로 표시됨)"
+
+#: apps/fitting/diagnostics.py
+#, python-format
+msgid "%(used)s of %(cap)s used"
+msgstr "%(cap)s 중 %(used)s 사용"
+
+#: apps/fitting/diagnostics.py
+msgid "Remove or downsize a module, or fit a fitting upgrade."
+msgstr "모듈을 제거하거나 크기를 줄이거나, 피팅 업그레이드를 장착하세요."
+
+#: apps/fitting/diagnostics.py
+#, python-format
+#| msgid "Your saved fits (%(total)s)"
+msgid "%(used)s fitted, %(total)s slots"
+msgstr "%(used)s개 장착 / 총 %(total)s 슬롯"
+
+#: apps/fitting/diagnostics.py
+#| msgid "Not enough snapshots yet"
+msgid "Not enough turret hardpoints"
+msgstr "터렛 하드포인트가 부족함"
+
+#: apps/fitting/diagnostics.py
+#, python-format
+msgid "%(have)s turrets, %(cap)s hardpoints"
+msgstr "터렛 %(have)s개, 하드포인트 %(cap)s개"
+
+#: apps/fitting/diagnostics.py
+#| msgid "Not enough snapshots yet"
+msgid "Not enough launcher hardpoints"
+msgstr "런처 하드포인트가 부족함"
+
+#: apps/fitting/diagnostics.py
+#, python-format
+msgid "%(have)s launchers, %(cap)s hardpoints"
+msgstr "런처 %(have)s개, 하드포인트 %(cap)s개"
+
+#: apps/fitting/diagnostics.py
+msgid "Weapon has no charge loaded"
+msgstr "무기에 장전된 차지가 없음"
+
+#: apps/fitting/diagnostics.py
+msgid "Load a compatible charge."
+msgstr "호환되는 차지를 장전하세요."
 
 #: apps/fitting/models.py
 msgid "Public link"
@@ -37695,22 +37776,18 @@ msgstr ""
 "Lab에서 군단 doctrine 피팅을 열어보세요 — 스킬을 적용하고, 변형을 비교하고, 리비전을 제안하기 전에 변화를 측정하세요."
 
 #: templates/fitting/index.html
-#| msgid "New doctrines"
 msgid "Browse doctrines"
 msgstr "doctrine 둘러보기"
 
 #: templates/fitting/load_doctrine.html
-#| msgid "on doctrine"
 msgid "Load a doctrine"
 msgstr "doctrine 불러오기"
 
 #: templates/fitting/load_doctrine.html
-#| msgid "Back to contest"
 msgid "Back to my fits"
 msgstr "내 피팅으로 돌아가기"
 
 #: templates/fitting/load_doctrine.html
-#| msgid "This feature is not available."
 msgid "Doctrines are not available to you."
 msgstr "Doctrine을 이용할 수 없습니다."
 

@@ -254,6 +254,7 @@ def _resources(ship, items, result: FittingResult) -> dict:
                 detail=f"{used:.1f} of {cap:.1f} used", evidence=f"{used - cap:.1f} over",
                 suggested_action="Remove or downsize a module, or fit a fitting upgrade.",
                 contextual=False,
+                params={"used": round(used, 1), "cap": round(cap, 1), "over": round(used - cap, 1)},
             ))
     for slot, used in (("high", slot_counts["high"]), ("med", slot_counts["med"]),
                        ("low", slot_counts["low"]), ("rig", slot_counts["rig"])):
@@ -261,15 +262,18 @@ def _resources(ship, items, result: FittingResult) -> dict:
             result.diagnostics.append(Diagnostic(
                 "too_many_modules", Severity.ERROR, f"Too many {slot}-slot modules",
                 detail=f"{used} fitted, {hull[slot]} slots", contextual=False,
+                params={"slot": slot, "used": used, "total": hull[slot]},
             ))
     if turret_hp and turrets > turret_hp:
         result.diagnostics.append(Diagnostic(
             "turret_hardpoints", Severity.ERROR, "Not enough turret hardpoints",
-            detail=f"{turrets} turrets, {turret_hp} hardpoints", contextual=False))
+            detail=f"{turrets} turrets, {turret_hp} hardpoints", contextual=False,
+            params={"have": turrets, "cap": turret_hp}))
     if launcher_hp and launchers > launcher_hp:
         result.diagnostics.append(Diagnostic(
             "launcher_hardpoints", Severity.ERROR, "Not enough launcher hardpoints",
-            detail=f"{launchers} launchers, {launcher_hp} hardpoints", contextual=False))
+            detail=f"{launchers} launchers, {launcher_hp} hardpoints", contextual=False,
+            params={"have": launchers, "cap": launcher_hp}))
 
     return {
         "cpu": {"used": round(cpu_used, 2), "output": round(cpu_out, 2)},
@@ -440,7 +444,7 @@ def _offence(items, provider, ctx, skills, op_profile, result: FittingResult, ac
             result.diagnostics.append(Diagnostic(
                 "missing_ammo", Severity.WARNING, "Weapon has no charge loaded",
                 detail=f"type {m.type_id}", suggested_action="Load a compatible charge.",
-                contextual=False))
+                contextual=False, params={"type_id": m.type_id}))
             continue
         charge = provider.attrs(m.charge_type_id)
         shot = {d: charge.get(A.CHARGE_DAMAGE[d], 0.0) for d in A.DAMAGE_TYPES}

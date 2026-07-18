@@ -318,7 +318,28 @@ def test_telemetry_endpoint_accepts_a_target_profile(client, owner, dogma):
         "ship_type_id": RIFTER, "items": json.dumps(items), "skills": "none",
         "tgt_sig": "40", "tgt_vel": "300"})
     assert resp.status_code == 200
-    assert b"turret_application_not_modelled" in resp.content
+    # the raw engine code is rendered as a readable, localised label (not a snake_case token)
+    assert b"turret_application_not_modelled" not in resp.content
+    assert b"Turret tracking is not modelled" in resp.content
+
+
+def test_diagnostics_are_localised(owner, dogma):
+    """Engine diagnostics/unsupported reach the template as human labels, not raw codes,
+    while the stable code + structured params are preserved for logic."""
+    from apps.fitting.diagnostics import localise_diagnostics, localise_unsupported
+    # 5 low-slot modules on a Rifter (3 low slots) → too_many_modules diagnostic.
+    items = [{"type_id": DC, "slot": "low", "state": "active",
+              "charge_type_id": None, "quantity": 1} for _ in range(5)]
+    tel = services.evaluate(RIFTER, items, SkillProfile.from_dict({}), cached=False)
+    tm = next(d for d in tel["diagnostics"] if d["code"] == "too_many_modules")
+    assert tm["title"] == "Too many low-slot modules"          # English (default test locale)
+    assert "fitted" in tm["detail"]
+    assert tm["params"] == {"slot": "low", "used": 5, "total": 3}   # structured params survive
+
+    # direct unit: known codes get a label, unknown codes de-slug (never a raw token)
+    assert localise_unsupported(["no_weapons_detected"]) == ["No weapons or drones detected"]
+    assert localise_unsupported(["some_new_code"]) == ["some new code"]
+    assert localise_diagnostics([]) == []
 
 
 # --------------------------------------------------------------------------- #

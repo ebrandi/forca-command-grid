@@ -105,11 +105,17 @@ def evaluate(ship_type_id: int, items: list[dict], skills: SkillProfile,
     ``telemetry`` key alongside diagnostics/versions; the workspace template and the
     comparison want them flattened into one namespace, so lift the groups up a level and
     merge the metadata (diagnostics, missing_skills, engine/data version, status)."""
+    from .diagnostics import localise_diagnostics, localise_unsupported
+
     engine = FittingEngine()
     fit = fit_input_from_items(ship_type_id, items)
     result = engine.evaluate_cached(fit, skills, op) if cached else engine.evaluate(fit, skills, op).to_dict()
     flat = dict(result.get("telemetry", {}))
     flat.update({k: v for k, v in result.items() if k != "telemetry"})
+    # The engine is Django-free and emits English + codes; render them in the reader's
+    # language here (never mutates the cached dict — localise_* returns fresh lists).
+    flat["diagnostics"] = localise_diagnostics(flat.get("diagnostics"))
+    flat["unsupported"] = localise_unsupported(flat.get("unsupported"))
     return flat
 
 
