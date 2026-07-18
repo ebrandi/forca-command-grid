@@ -13,7 +13,7 @@ from decimal import Decimal
 
 from django.db import transaction
 
-from apps.sde.models import SdeType, SdeTypeEffect
+from apps.sde.models import SdeType, SdeTypeAttribute, SdeTypeEffect
 from core.audit import audit_log
 
 from .engine import attributes as A
@@ -276,6 +276,55 @@ def infer_slots(type_ids) -> dict[int, str]:
         else:
             out[tid] = "low"
     return out
+
+
+def charge_takers(type_ids) -> set[int]:
+    """Of ``type_ids``, those that accept a charge (they declare at least one accepted
+    charge group) — i.e. the modules the editor should offer an ammo loader for."""
+    type_ids = {int(t) for t in type_ids}
+    if not type_ids:
+        return set()
+    return set(
+        SdeTypeAttribute.objects.filter(
+            type_id__in=type_ids, attribute_id__in=A.CHARGE_GROUP_ATTRS,
+        ).values_list("type_id", flat=True)
+    )
+
+
+def compatible_charges(weapon_type_id: int, query: str, limit: int = 20) -> list[dict]:
+    """Charges that fit ``weapon_type_id`` and whose name matches ``query`` — filtered to
+    the weapon's accepted charge groups and matching charge size (the same rules EVE uses),
+    so a pilot only loads ammo the weapon can actually fire. If the weapon declares no
+    accepted groups (unexpected for a real weapon), fall back to any charge by name."""
+    query = (query or "").strip()
+    if len(query) < 2:
+        return []
+    attrs = dict(
+        SdeTypeAttribute.objects.filter(
+            type_id=int(weapon_type_id),
+            attribute_id__in=(*A.CHARGE_GROUP_ATTRS, A.CHARGE_SIZE),
+        ).values_list("attribute_id", "value")
+    )
+    group_ids = {int(attrs[a]) for a in A.CHARGE_GROUP_ATTRS if a in attrs}
+    weapon_size = attrs.get(A.CHARGE_SIZE)
+
+    qs = SdeType.objects.filter(name__icontains=query, published=True)
+    qs = qs.filter(group_id__in=group_ids) if group_ids else \
+        qs.filter(group__category_id=_CATEGORY_CHARGE)
+    rows = list(qs.values("type_id", "name")[: limit * 4])
+
+    if weapon_size is not None and rows:
+        # Keep charges whose size matches the weapon (or that declare no size).
+        sizes = dict(
+            SdeTypeAttribute.objects.filter(
+                type_id__in=[r["type_id"] for r in rows], attribute_id=A.CHARGE_SIZE,
+            ).values_list("type_id", "value")
+        )
+        rows = [r for r in rows if sizes.get(r["type_id"], weapon_size) == weapon_size]
+
+    low = query.lower()
+    rows.sort(key=lambda r: (not r["name"].lower().startswith(low), r["name"]))
+    return rows[:limit]
 
 
 def import_eft(text: str) -> dict:

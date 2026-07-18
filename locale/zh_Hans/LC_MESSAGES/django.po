@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-18 22:29+0000\n"
+"POT-Creation-Date: 2026-07-18 23:25+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: zh-hans machine-assisted draft\n"
@@ -7271,12 +7271,10 @@ msgid "CPU exceeded"
 msgstr "CPU 超载"
 
 #: apps/fitting/diagnostics.py
-#| msgid "Powergrid"
 msgid "Powergrid exceeded"
 msgstr "电网超载"
 
 #: apps/fitting/diagnostics.py
-#| msgid "Calibration"
 msgid "Calibration exceeded"
 msgstr "校准超载"
 
@@ -7315,12 +7313,10 @@ msgstr "请移除或改用更小的模块，或加装配装升级模块。"
 
 #: apps/fitting/diagnostics.py
 #, python-format
-#| msgid "Your saved fits (%(total)s)"
 msgid "%(used)s fitted, %(total)s slots"
 msgstr "已装配 %(used)s，共 %(total)s 个槽位"
 
 #: apps/fitting/diagnostics.py
-#| msgid "Not enough snapshots yet"
 msgid "Not enough turret hardpoints"
 msgstr "炮台挂点不足"
 
@@ -7330,7 +7326,6 @@ msgid "%(have)s turrets, %(cap)s hardpoints"
 msgstr "%(have)s 门炮台，%(cap)s 个挂点"
 
 #: apps/fitting/diagnostics.py
-#| msgid "Not enough snapshots yet"
 msgid "Not enough launcher hardpoints"
 msgstr "发射器挂点不足"
 
@@ -37042,8 +37037,36 @@ msgid "Search modules"
 msgstr "搜索模块"
 
 #: templates/fitting/detail.html
+#| msgid "Loadout"
+msgid "Load ammo"
+msgstr "装填弹药"
+
+#: templates/fitting/detail.html
+msgid "ammo"
+msgstr "弹药"
+
+#: templates/fitting/detail.html
+#| msgid "Module changes"
+msgid "Module state"
+msgstr "模块状态"
+
+#: templates/fitting/detail.html
 msgid "heat"
 msgstr "过热"
+
+#: templates/fitting/detail.html
+#| msgid "Search pilots…"
+msgid "Search compatible ammo…"
+msgstr "搜索兼容弹药…"
+
+#: templates/fitting/detail.html
+#| msgid "Search modules"
+msgid "Search ammo"
+msgstr "搜索弹药"
+
+#: templates/fitting/detail.html
+msgid "Unload ammo"
+msgstr "卸载弹药"
 
 #: templates/fitting/detail.html
 msgid "No modules fitted yet."

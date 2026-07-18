@@ -17,6 +17,7 @@ urlpatterns = [
     path("import/doctrine/<int:fit_id>/", views.import_doctrine, name="import_doctrine"),
     path("telemetry/", views.telemetry, name="telemetry"),
     path("search/modules/", views.search_modules, name="search_modules"),
+    path("search/charges/", views.search_charges, name="search_charges"),
     path("search/hulls/", views.search_hulls, name="search_hulls"),
     path("<int:pk>/", views.detail, name="detail"),
     path("<int:pk>/save/", views.save, name="save"),

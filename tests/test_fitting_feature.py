@@ -305,7 +305,38 @@ def test_search_endpoints(client, owner, dogma):
     hulls = client.get(reverse("fitting:search_hulls"), {"q": "Rif"})
     assert hulls.status_code == 200 and any(r["type_id"] == RIFTER for r in hulls.json()["results"])
     mods = client.get(reverse("fitting:search_modules"), {"q": "AutoCannon"})
-    assert any(r["type_id"] == AC for r in mods.json()["results"])
+    ac = next(r for r in mods.json()["results"] if r["type_id"] == AC)
+    # a searched-in turret carries its rack (high, not low) + the ammo flag, so it fires
+    assert ac["slot"] == "high" and ac["takes_charge"] is True
+
+
+def test_compatible_charges_and_ammo_loading(owner, dogma):
+    """A weapon accepts only ammo of its charge group/size, and loading it produces DPS."""
+    from apps.fitting.engine.types import SkillProfile
+    # service-level: the autocannon takes charges; Fusion S is compatible
+    assert services.charge_takers({AC, DC}) == {AC}         # the gun, not the damage control
+    charges = services.compatible_charges(AC, "Fusion")
+    assert any(c["type_id"] == FUSION for c in charges)
+
+    gun = {"type_id": AC, "slot": "high", "state": "active", "quantity": 1}
+    # no ammo → the engine flags it and turret DPS is zero
+    empty = services.evaluate(RIFTER, [{**gun, "charge_type_id": None}],
+                              SkillProfile.omniscient(), cached=False)
+    assert empty["offence"]["turret_dps"] == 0
+    assert any(d["code"] == "missing_ammo" for d in empty["diagnostics"])
+    # load the ammo → DPS appears
+    loaded = services.evaluate(RIFTER, [{**gun, "charge_type_id": FUSION}],
+                               SkillProfile.omniscient(), cached=False)
+    assert loaded["offence"]["turret_dps"] > 0
+
+
+def test_search_charges_endpoint(client, owner, dogma):
+    client.force_login(owner)
+    resp = client.get(reverse("fitting:search_charges"), {"weapon": AC, "q": "Fus"})
+    assert resp.status_code == 200
+    assert any(c["type_id"] == FUSION for c in resp.json()["results"])
+    # a module that takes no charge yields nothing sensible; a bad weapon id is handled
+    assert client.get(reverse("fitting:search_charges"), {"weapon": "x", "q": "Fus"}).json()["results"] == []
 
 
 def test_telemetry_endpoint_accepts_a_target_profile(client, owner, dogma):

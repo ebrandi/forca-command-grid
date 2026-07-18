@@ -100,10 +100,12 @@ def _require_owner(request, pk) -> Fit:
 def _item_display(items: list[dict]) -> list[dict]:
     ids = {int(i["type_id"]) for i in items} | {int(i["charge_type_id"]) for i in items if i.get("charge_type_id")}
     names = services._type_names(ids)
+    takers = services.charge_takers({int(i["type_id"]) for i in items})
     out = []
     for it in items:
         out.append({**it, "name": names.get(int(it["type_id"]), f"Type {it['type_id']}"),
-                    "charge_name": names.get(int(it["charge_type_id"]), "") if it.get("charge_type_id") else ""})
+                    "charge_name": names.get(int(it["charge_type_id"]), "") if it.get("charge_type_id") else "",
+                    "takes_charge": int(it["type_id"]) in takers})
     return out
 
 
@@ -579,7 +581,28 @@ def supply_po(request, pk):
 @login_required
 @feature_required("tochas_lab")
 def search_modules(request):
-    return JsonResponse({"results": search_types(request.GET.get("q", ""), limit=20)})
+    """Module search for the editor. Each result carries its inferred fitting rack (so a
+    turret lands in a high slot, not low) and whether it accepts ammo (so the editor can
+    offer an ammo loader)."""
+    results = search_types(request.GET.get("q", ""), limit=20)
+    ids = {r["type_id"] for r in results}
+    slots = services.infer_slots(ids)
+    takers = services.charge_takers(ids)
+    for r in results:
+        r["slot"] = slots.get(r["type_id"], "low")
+        r["takes_charge"] = r["type_id"] in takers
+    return JsonResponse({"results": results})
+
+
+@login_required
+@feature_required("tochas_lab")
+def search_charges(request):
+    """Ammo/charges compatible with a given weapon (``?weapon=<type_id>&q=<name>``)."""
+    try:
+        weapon = int(request.GET.get("weapon", 0))
+    except (TypeError, ValueError):
+        return JsonResponse({"results": []})
+    return JsonResponse({"results": services.compatible_charges(weapon, request.GET.get("q", ""))})
 
 
 @login_required

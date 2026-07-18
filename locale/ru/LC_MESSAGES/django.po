@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-18 22:29+0000\n"
+"POT-Creation-Date: 2026-07-18 23:25+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: ru machine-assisted draft\n"
@@ -7627,12 +7627,10 @@ msgid "CPU exceeded"
 msgstr "Превышен CPU"
 
 #: apps/fitting/diagnostics.py
-#| msgid "Powergrid"
 msgid "Powergrid exceeded"
 msgstr "Превышен Powergrid"
 
 #: apps/fitting/diagnostics.py
-#| msgid "Calibration"
 msgid "Calibration exceeded"
 msgstr "Превышена Калибровка"
 
@@ -7674,12 +7672,10 @@ msgstr ""
 
 #: apps/fitting/diagnostics.py
 #, python-format
-#| msgid "Your saved fits (%(total)s)"
 msgid "%(used)s fitted, %(total)s slots"
 msgstr "%(used)s установлено, %(total)s слотов"
 
 #: apps/fitting/diagnostics.py
-#| msgid "Not enough snapshots yet"
 msgid "Not enough turret hardpoints"
 msgstr "Недостаточно точек крепления турелей"
 
@@ -7689,7 +7685,6 @@ msgid "%(have)s turrets, %(cap)s hardpoints"
 msgstr "%(have)s турелей, %(cap)s точек крепления"
 
 #: apps/fitting/diagnostics.py
-#| msgid "Not enough snapshots yet"
 msgid "Not enough launcher hardpoints"
 msgstr "Недостаточно точек крепления пусковых установок"
 
@@ -39611,8 +39606,36 @@ msgid "Search modules"
 msgstr "Поиск модулей"
 
 #: templates/fitting/detail.html
+#| msgid "Loadout"
+msgid "Load ammo"
+msgstr "Загрузить боеприпасы"
+
+#: templates/fitting/detail.html
+msgid "ammo"
+msgstr "боеприпасы"
+
+#: templates/fitting/detail.html
+#| msgid "Module changes"
+msgid "Module state"
+msgstr "Состояние модуля"
+
+#: templates/fitting/detail.html
 msgid "heat"
 msgstr "нагрев"
+
+#: templates/fitting/detail.html
+#| msgid "Search pilots…"
+msgid "Search compatible ammo…"
+msgstr "Поиск совместимых боеприпасов…"
+
+#: templates/fitting/detail.html
+#| msgid "Search modules"
+msgid "Search ammo"
+msgstr "Поиск боеприпасов"
+
+#: templates/fitting/detail.html
+msgid "Unload ammo"
+msgstr "Выгрузить боеприпасы"
 
 #: templates/fitting/detail.html
 msgid "No modules fitted yet."

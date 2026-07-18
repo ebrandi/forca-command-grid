@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-18 22:29+0000\n"
+"POT-Creation-Date: 2026-07-18 23:25+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: es machine-assisted draft\n"
@@ -7696,12 +7696,10 @@ msgid "CPU exceeded"
 msgstr "CPU excedida"
 
 #: apps/fitting/diagnostics.py
-#| msgid "Powergrid"
 msgid "Powergrid exceeded"
 msgstr "Red eléctrica excedida"
 
 #: apps/fitting/diagnostics.py
-#| msgid "Calibration"
 msgid "Calibration exceeded"
 msgstr "Calibración excedida"
 
@@ -7742,12 +7740,10 @@ msgstr "Quita un módulo o reduce su tamaño, o instala una mejora de fitting."
 
 #: apps/fitting/diagnostics.py
 #, python-format
-#| msgid "Your saved fits (%(total)s)"
 msgid "%(used)s fitted, %(total)s slots"
 msgstr "%(used)s instalados, %(total)s ranuras"
 
 #: apps/fitting/diagnostics.py
-#| msgid "Not enough snapshots yet"
 msgid "Not enough turret hardpoints"
 msgstr "Puntos de anclaje de torreta insuficientes"
 
@@ -7757,7 +7753,6 @@ msgid "%(have)s turrets, %(cap)s hardpoints"
 msgstr "%(have)s torretas, %(cap)s puntos de anclaje"
 
 #: apps/fitting/diagnostics.py
-#| msgid "Not enough snapshots yet"
 msgid "Not enough launcher hardpoints"
 msgstr "Puntos de anclaje de lanzador insuficientes"
 
@@ -39916,8 +39911,36 @@ msgid "Search modules"
 msgstr "Buscar módulos"
 
 #: templates/fitting/detail.html
+#| msgid "Loadout"
+msgid "Load ammo"
+msgstr "Cargar munición"
+
+#: templates/fitting/detail.html
+msgid "ammo"
+msgstr "munición"
+
+#: templates/fitting/detail.html
+#| msgid "Module changes"
+msgid "Module state"
+msgstr "Estado del módulo"
+
+#: templates/fitting/detail.html
 msgid "heat"
 msgstr "calor"
+
+#: templates/fitting/detail.html
+#| msgid "Search pilots…"
+msgid "Search compatible ammo…"
+msgstr "Buscar munición compatible…"
+
+#: templates/fitting/detail.html
+#| msgid "Search modules"
+msgid "Search ammo"
+msgstr "Buscar munición"
+
+#: templates/fitting/detail.html
+msgid "Unload ammo"
+msgstr "Descargar munición"
 
 #: templates/fitting/detail.html
 msgid "No modules fitted yet."

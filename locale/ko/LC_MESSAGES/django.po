@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-18 22:29+0000\n"
+"POT-Creation-Date: 2026-07-18 23:25+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: ko machine-assisted draft\n"
@@ -7319,12 +7319,10 @@ msgid "CPU exceeded"
 msgstr "CPU 초과"
 
 #: apps/fitting/diagnostics.py
-#| msgid "Powergrid"
 msgid "Powergrid exceeded"
 msgstr "파워그리드 초과"
 
 #: apps/fitting/diagnostics.py
-#| msgid "Calibration"
 msgid "Calibration exceeded"
 msgstr "캘리브레이션 초과"
 
@@ -7363,12 +7361,10 @@ msgstr "모듈을 제거하거나 크기를 줄이거나, 피팅 업그레이드
 
 #: apps/fitting/diagnostics.py
 #, python-format
-#| msgid "Your saved fits (%(total)s)"
 msgid "%(used)s fitted, %(total)s slots"
 msgstr "%(used)s개 장착 / 총 %(total)s 슬롯"
 
 #: apps/fitting/diagnostics.py
-#| msgid "Not enough snapshots yet"
 msgid "Not enough turret hardpoints"
 msgstr "터렛 하드포인트가 부족함"
 
@@ -7378,7 +7374,6 @@ msgid "%(have)s turrets, %(cap)s hardpoints"
 msgstr "터렛 %(have)s개, 하드포인트 %(cap)s개"
 
 #: apps/fitting/diagnostics.py
-#| msgid "Not enough snapshots yet"
 msgid "Not enough launcher hardpoints"
 msgstr "런처 하드포인트가 부족함"
 
@@ -37547,8 +37542,36 @@ msgid "Search modules"
 msgstr "모듈 검색"
 
 #: templates/fitting/detail.html
+#| msgid "Loadout"
+msgid "Load ammo"
+msgstr "탄약 장전"
+
+#: templates/fitting/detail.html
+msgid "ammo"
+msgstr "탄약"
+
+#: templates/fitting/detail.html
+#| msgid "Module changes"
+msgid "Module state"
+msgstr "모듈 상태"
+
+#: templates/fitting/detail.html
 msgid "heat"
 msgstr "히트"
+
+#: templates/fitting/detail.html
+#| msgid "Search pilots…"
+msgid "Search compatible ammo…"
+msgstr "호환되는 탄약 검색…"
+
+#: templates/fitting/detail.html
+#| msgid "Search modules"
+msgid "Search ammo"
+msgstr "탄약 검색"
+
+#: templates/fitting/detail.html
+msgid "Unload ammo"
+msgstr "탄약 제거"
 
 #: templates/fitting/detail.html
 msgid "No modules fitted yet."

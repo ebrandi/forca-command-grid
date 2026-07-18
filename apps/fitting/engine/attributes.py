@@ -75,6 +75,12 @@ OPTIMAL_RANGE = 54           # maxRange
 FALLOFF = 158
 TRACKING_SPEED = 160
 
+# --- Charge compatibility (which ammo a weapon accepts) ---------------------
+# A weapon lists the charge GROUPS it accepts (chargeGroup1..5) and a charge SIZE
+# (small/medium/large/…); a charge fits when its group is accepted and its size matches.
+CHARGE_GROUP_ATTRS = (604, 605, 606, 609, 610)   # chargeGroup1..chargeGroup5
+CHARGE_SIZE = 128                                 # chargeSize (weapon + charge)
+
 # --- Missile application (attributes live on the missile CHARGE) -------------
 AOE_CLOUD_SIZE = 654          # explosion radius (m)
 AOE_VELOCITY = 653            # explosion velocity (m/s)

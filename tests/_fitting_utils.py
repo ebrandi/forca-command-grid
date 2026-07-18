@@ -50,8 +50,9 @@ def seed_dogma():
             A.SENSOR_STRENGTHS["gravimetric"]: 11, A.CAPACITY_CARGO: 140,
         }),
         AC: ("200mm AutoCannon I", 55, {A.CPU_USAGE: 3, A.POWER_USAGE: 6, A.DAMAGE_MULTIPLIER: 1.0,
-             A.RATE_OF_FIRE: 2475, A.OPTIMAL_RANGE: 1200, A.FALLOFF: 7500, A.TRACKING_SPEED: 0.198}),
-        FUSION: ("Fusion S", 83, {A.EXPLOSIVE_DAMAGE: 8.8}),
+             A.RATE_OF_FIRE: 2475, A.OPTIMAL_RANGE: 1200, A.FALLOFF: 7500, A.TRACKING_SPEED: 0.198,
+             A.CHARGE_GROUP_ATTRS[0]: 83, A.CHARGE_SIZE: 1}),   # accepts group 83 (Ammo), small
+        FUSION: ("Fusion S", 83, {A.EXPLOSIVE_DAMAGE: 8.8, A.CHARGE_SIZE: 1}),
         DC: ("Damage Control I", 60, {A.CPU_USAGE: 5, A.POWER_USAGE: 1,
              R["em"]: 0.875, R["thermal"]: 0.875, R["kinetic"]: 0.875, R["explosive"]: 0.875,
              AR["em"]: 0.85, AR["thermal"]: 0.85, AR["kinetic"]: 0.85, AR["explosive"]: 0.85,
