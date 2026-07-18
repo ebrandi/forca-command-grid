@@ -30,6 +30,8 @@ from apps.sde.models import (
     SdeCelestial,
     SdeConstellation,
     SdeDecryptor,
+    SdeDogmaAttribute,
+    SdeDogmaEffect,
     SdeGroup,
     SdeInventionProduct,
     SdeRegion,
@@ -37,9 +39,17 @@ from apps.sde.models import (
     SdeStation,
     SdeSystemJump,
     SdeType,
+    SdeTypeAttribute,
+    SdeTypeEffect,
     SdeTypeMaterial,
     SdeTypeSkill,
 )
+
+# Categories whose types the fitting simulation (Tocha's Lab) needs dogma attributes for:
+# ships, modules, charges, drones, implants, subsystems, fighters. Bounding the
+# per-type dogma tables to these keeps them at a few hundred thousand rows instead of
+# every attribute of every type in the game.
+_FITTABLE_CATEGORY_IDS = (6, 7, 8, 18, 20, 32, 87)
 
 # Decryptor invention modifiers live in dogma type attributes.
 _DECRYPTOR_GROUP_ID = 1304
@@ -91,6 +101,12 @@ class Command(BaseCommand):
             help="Only (re)load reprocessing yields (invTypeMaterials) + refresh portion_size "
                  "on existing types — for the ore-buyback valuation (4.9). No full rebuild.",
         )
+        parser.add_argument(
+            "--dogma-only", action="store_true",
+            help="Only (re)load the dogma tables (attributes/effects/type-attributes/"
+                 "type-effects) the Tocha's Lab fitting simulation evaluates, on top of "
+                 "existing types — no full SDE rebuild.",
+        )
 
     def handle(self, *args, **options) -> None:
         db_path = self._download_db()
@@ -115,6 +131,9 @@ class Command(BaseCommand):
                 if options["type_materials_only"]:
                     self._load_type_materials(con)
                     return
+                if options["dogma_only"]:
+                    self._load_dogma_reference(con)
+                    return
                 self._load_categories(con)
                 self._load_groups(con)
                 self._load_types(con)
@@ -128,6 +147,7 @@ class Command(BaseCommand):
                     self._load_skill_ranks(con)
                     self._load_skill_attributes(con)
                     self._load_ship_slots(con)
+                    self._load_dogma_reference(con)
             finally:
                 con.close()
         finally:
@@ -767,6 +787,107 @@ class Command(BaseCommand):
                 updates, ["primary_attribute_id", "secondary_attribute_id"], batch_size=2000
             )
         self.stdout.write(f"  skill attributes: {len(updates)}")
+
+    def _load_dogma_reference(self, con) -> None:
+        """Load the dogma attribute/effect layer the Tocha's Lab fitting engine evaluates.
+
+        Four tables from the SDE's dogma data: attribute + effect *definitions* (all of
+        them), and the per-type attribute *values* + effects (bounded to fittable
+        categories so the per-type tables stay a few hundred thousand rows). Ship trait
+        bonuses (SdeShipBonus) are NOT sourced here — they need the FSD modifier graph the
+        Fuzzwork SQLite does not carry — so they remain a curated projection (load_dogma).
+        Staged: definitions upsert; the per-type tables are replaced wholesale.
+        """
+        self._load_dogma_attributes(con)
+        self._load_dogma_effects(con)
+        self._load_type_attributes(con)
+        self._load_type_effects(con)
+        AppSetting.objects.update_or_create(
+            key="dogma_data_version",
+            defaults={"value": {"version": "fuzzwork-" + timezone.now().strftime("%Y%m%d")}},
+        )
+
+    def _load_dogma_attributes(self, con) -> None:
+        rows = list(self._q(
+            con,
+            "SELECT attributeID, attributeName, unitID, stackable, highIsGood, "
+            "defaultValue, published FROM dgmAttributeTypes",
+        ))
+        objs = [
+            SdeDogmaAttribute(
+                attribute_id=aid, name=name or "", display_name="", unit_id=unit,
+                stackable=bool(stack) if stack is not None else True,
+                high_is_good=(bool(hig) if hig is not None else None),
+                default_value=float(dv) if dv is not None else 0.0,
+                published=bool(pub) if pub is not None else True,
+            )
+            for aid, name, unit, stack, hig, dv, pub in rows
+        ]
+        with transaction.atomic():
+            SdeDogmaAttribute.objects.all().delete()
+            SdeDogmaAttribute.objects.bulk_create(objs, batch_size=2000)
+        self.stdout.write(f"  dogma attributes: {len(objs)}")
+
+    def _load_dogma_effects(self, con) -> None:
+        rows = list(self._q(
+            con,
+            "SELECT effectID, effectName, effectCategory, isOffensive, isAssistance, "
+            "dischargeAttributeID, durationAttributeID, rangeAttributeID, "
+            "falloffAttributeID, trackingSpeedAttributeID FROM dgmEffects",
+        ))
+        objs = [
+            SdeDogmaEffect(
+                effect_id=eid, name=name or "", effect_category=cat or 0,
+                is_offensive=bool(off) if off is not None else False,
+                is_assistance=bool(asst) if asst is not None else False,
+                discharge_attribute_id=disc, duration_attribute_id=dur,
+                range_attribute_id=rng, falloff_attribute_id=fall, tracking_attribute_id=trk,
+                modifier_info=[],
+            )
+            for eid, name, cat, off, asst, disc, dur, rng, fall, trk in rows
+        ]
+        with transaction.atomic():
+            SdeDogmaEffect.objects.all().delete()
+            SdeDogmaEffect.objects.bulk_create(objs, batch_size=2000)
+        self.stdout.write(f"  dogma effects: {len(objs)}")
+
+    def _fittable_type_ids(self) -> set[int]:
+        return set(
+            SdeType.objects.filter(group__category_id__in=_FITTABLE_CATEGORY_IDS)
+            .values_list("type_id", flat=True)
+        )
+
+    def _load_type_attributes(self, con) -> None:
+        valid = self._fittable_type_ids()
+        objs = []
+        for tid, attr, vint, vfloat in self._q(
+            con, "SELECT typeID, attributeID, valueInt, valueFloat FROM dgmTypeAttributes",
+        ):
+            if tid not in valid:
+                continue
+            val = vint if vint is not None else vfloat
+            if val is None:
+                continue
+            objs.append(SdeTypeAttribute(type_id=tid, attribute_id=attr, value=float(val)))
+        with transaction.atomic():
+            SdeTypeAttribute.objects.all().delete()
+            SdeTypeAttribute.objects.bulk_create(objs, batch_size=5000, ignore_conflicts=True)
+        self.stdout.write(f"  type attributes: {len(objs)} (over {len(valid)} fittable types)")
+
+    def _load_type_effects(self, con) -> None:
+        valid = self._fittable_type_ids()
+        objs = []
+        for tid, eid, is_default in self._q(
+            con, "SELECT typeID, effectID, isDefault FROM dgmTypeEffects",
+        ):
+            if tid not in valid:
+                continue
+            objs.append(SdeTypeEffect(
+                type_id=tid, effect_id=eid, is_default=bool(is_default) if is_default else False))
+        with transaction.atomic():
+            SdeTypeEffect.objects.all().delete()
+            SdeTypeEffect.objects.bulk_create(objs, batch_size=5000, ignore_conflicts=True)
+        self.stdout.write(f"  type effects: {len(objs)}")
 
     def _load_dogma_skills(self, con) -> None:
         rows = self._q(
