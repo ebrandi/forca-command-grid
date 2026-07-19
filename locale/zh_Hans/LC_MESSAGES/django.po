@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-18 23:25+0000\n"
+"POT-Creation-Date: 2026-07-19 00:35+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: zh-hans machine-assisted draft\n"
@@ -3427,10 +3427,10 @@ msgstr "暂停"
 #: templates/campaigns/issue_form.html templates/campaigns/milestone_form.html
 #: templates/campaigns/objective_form.html templates/campaigns/risk_form.html
 #: templates/campaigns/workstream_form.html templates/capsuleer/goal_form.html
-#: templates/command_intel/campaign_new.html templates/industry/create.html
-#: templates/industry/jobs.html templates/kb/edit.html
-#: templates/killboard/watchlists.html templates/market/dashboard.html
-#: templates/mentorship/pairing_detail.html
+#: templates/command_intel/campaign_new.html templates/fitting/detail.html
+#: templates/industry/create.html templates/industry/jobs.html
+#: templates/kb/edit.html templates/killboard/watchlists.html
+#: templates/market/dashboard.html templates/mentorship/pairing_detail.html
 #: templates/operations/template_form.html
 #: templates/pingboard/alert_detail.html templates/planetary/wizard.html
 #: templates/procurement/agreement_form.html
@@ -8206,9 +8206,9 @@ msgstr ""
 msgid "Low slots"
 msgstr ""
 
-#: apps/killboard/fitrender.py
+#: apps/killboard/fitrender.py templates/fitting/detail.html
 msgid "Rigs"
-msgstr ""
+msgstr "改装件"
 
 #: apps/killboard/fitrender.py
 msgid "Subsystems"
@@ -29993,9 +29993,9 @@ msgstr "任意状态"
 #: templates/admin_audit/console/recovery.html
 #: templates/campaigns/portfolio.html templates/campaigns/template_picker.html
 #: templates/capsuleer/paths.html templates/doctrines/list.html
-#: templates/fitting/load_doctrine.html templates/market/dashboard.html
-#: templates/procurement/suppliers.html templates/stockpile/asset_search.html
-#: templates/store/inventory.html
+#: templates/fitting/detail.html templates/fitting/load_doctrine.html
+#: templates/market/dashboard.html templates/procurement/suppliers.html
+#: templates/stockpile/asset_search.html templates/store/inventory.html
 msgid "Search"
 msgstr "搜索"
 
@@ -36803,6 +36803,35 @@ msgid "Load into the Lab"
 msgstr "载入 Lab"
 
 #: templates/fitting/_telemetry.html
+#| msgid "Simulator"
+msgid "Simulation result"
+msgstr "模拟结果"
+
+#: templates/fitting/_telemetry.html
+msgid "Skill levels applied to this simulation"
+msgstr "应用于本次模拟的技能等级"
+
+#: templates/fitting/_telemetry.html
+msgid "DPS"
+msgstr "DPS"
+
+#: templates/fitting/_telemetry.html
+msgid "fit weapons + ammo"
+msgstr "装配武器 + 弹药"
+
+#: templates/fitting/_telemetry.html
+msgid "EHP"
+msgstr "EHP"
+
+#: templates/fitting/_telemetry.html
+msgid "m/s"
+msgstr "m/s"
+
+#: templates/fitting/_telemetry.html
+msgid "Capacitor"
+msgstr "电容"
+
+#: templates/fitting/_telemetry.html templates/fitting/detail.html
 msgid "Fitting"
 msgstr "配装"
 
@@ -36831,10 +36860,6 @@ msgid "Offence"
 msgstr "进攻"
 
 #: templates/fitting/_telemetry.html
-msgid "DPS"
-msgstr "DPS"
-
-#: templates/fitting/_telemetry.html
 msgid "Turret / missile / drone"
 msgstr "炮台 / 导弹 / 无人机"
 
@@ -36856,20 +36881,12 @@ msgid "Defence"
 msgstr "防御"
 
 #: templates/fitting/_telemetry.html
-msgid "EHP"
-msgstr "EHP"
-
-#: templates/fitting/_telemetry.html
 msgid "Shield"
 msgstr "护盾"
 
 #: templates/fitting/_telemetry.html
 msgid "HP"
 msgstr "HP"
-
-#: templates/fitting/_telemetry.html
-msgid "Capacitor"
-msgstr "电容"
 
 #: templates/fitting/_telemetry.html
 msgid "Stable"
@@ -36944,8 +36961,15 @@ msgid "Not modelled for this fit:"
 msgstr "此配装未建模的项目："
 
 #: templates/fitting/_telemetry.html
-msgid "Pilot readiness"
-msgstr "飞行员就绪度"
+#| msgid "Most kills landed"
+msgid "Pilot skills applied"
+msgstr "已应用的飞行员技能"
+
+#: templates/fitting/_telemetry.html
+msgid ""
+"These skills drive the numbers above, at this pilot's trained level. Change "
+"the pilot to compare."
+msgstr "上方的数值由这些技能按该飞行员已训练的等级计算得出。切换飞行员即可对比。"
 
 #: templates/fitting/_telemetry.html
 #, python-format
@@ -37009,6 +37033,10 @@ msgid "data"
 msgstr "数据"
 
 #: templates/fitting/detail.html
+msgid "Whose skills to simulate — the numbers update live"
+msgstr "选择用谁的技能来模拟 — 数值实时更新"
+
+#: templates/fitting/detail.html
 msgid "My skills"
 msgstr "我的技能"
 
@@ -37024,29 +37052,11 @@ msgstr "复刻"
 msgid "Export EFT"
 msgstr "导出 EFT"
 
-#: templates/fitting/detail.html templates/fitting/shared.html
-msgid "Loadout"
-msgstr "装备"
+#: templates/fitting/detail.html
+msgid "Click a slot to fit · ⚠ = load ammo"
+msgstr "点击槽位进行装配 · ⚠ = 装填弹药"
 
 #: templates/fitting/detail.html
-msgid "Add module or ship item…"
-msgstr "添加模块或舰船物品…"
-
-#: templates/fitting/detail.html
-msgid "Search modules"
-msgstr "搜索模块"
-
-#: templates/fitting/detail.html
-#| msgid "Loadout"
-msgid "Load ammo"
-msgstr "装填弹药"
-
-#: templates/fitting/detail.html
-msgid "ammo"
-msgstr "弹药"
-
-#: templates/fitting/detail.html
-#| msgid "Module changes"
 msgid "Module state"
 msgstr "模块状态"
 
@@ -37055,12 +37065,14 @@ msgid "heat"
 msgstr "过热"
 
 #: templates/fitting/detail.html
-#| msgid "Search pilots…"
+msgid "Load ammo"
+msgstr "装填弹药"
+
+#: templates/fitting/detail.html
 msgid "Search compatible ammo…"
 msgstr "搜索兼容弹药…"
 
 #: templates/fitting/detail.html
-#| msgid "Search modules"
 msgid "Search ammo"
 msgstr "搜索弹药"
 
@@ -37069,8 +37081,32 @@ msgid "Unload ammo"
 msgstr "卸载弹药"
 
 #: templates/fitting/detail.html
-msgid "No modules fitted yet."
-msgstr "尚未装配任何模块。"
+#| msgid "No fittings in this file."
+msgid "No slots on this hull."
+msgstr "此舰船没有槽位。"
+
+#: templates/fitting/detail.html
+msgid "Drones"
+msgstr "无人机"
+
+#: templates/fitting/detail.html
+#| msgid "Add role"
+msgid "Add drone"
+msgstr "添加无人机"
+
+#: templates/fitting/detail.html
+msgid "Search modules"
+msgstr "搜索模块"
+
+#: templates/fitting/detail.html
+#| msgid "Load ammo"
+msgid "takes ammo"
+msgstr "需弹药"
+
+#: templates/fitting/detail.html
+#| msgid "Not modelled for this fit:"
+msgid "No matching module for this slot."
+msgstr "没有匹配此槽位的模块。"
 
 #: templates/fitting/detail.html
 msgid "Target profile"
@@ -37236,6 +37272,44 @@ msgstr "版本历史"
 msgid "Restore"
 msgstr "恢复"
 
+#: templates/fitting/detail.html
+#| msgid "Willpower"
+msgid "High power"
+msgstr "高能量槽"
+
+#: templates/fitting/detail.html
+#| msgid "Willpower"
+msgid "Mid power"
+msgstr "中能量槽"
+
+#: templates/fitting/detail.html
+#| msgid "Low effort"
+msgid "Low power"
+msgstr "低能量槽"
+
+#: templates/fitting/detail.html
+msgid "high slot"
+msgstr "高槽"
+
+#: templates/fitting/detail.html
+#| msgid "slots"
+msgid "mid slot"
+msgstr "中槽"
+
+#: templates/fitting/detail.html
+#| msgid "slots"
+msgid "low slot"
+msgstr "低槽"
+
+#: templates/fitting/detail.html
+#| msgid "Bridge"
+msgid "rig"
+msgstr "改装件"
+
+#: templates/fitting/detail.html
+msgid "drone"
+msgstr "无人机"
+
 #: templates/fitting/index.html
 msgid "Fitting workspace"
 msgstr "配装工作台"
@@ -37313,6 +37387,10 @@ msgstr "共享配装"
 #: templates/fitting/shared.html
 msgid "Read-only public view. Telemetry shown at All V skills."
 msgstr "只读公开视图。遥测数据按全 V 技能显示。"
+
+#: templates/fitting/shared.html
+msgid "Loadout"
+msgstr "装备"
 
 #: templates/fitting/shared.html
 msgid "Empty fit."

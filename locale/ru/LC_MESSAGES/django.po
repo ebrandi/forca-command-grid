@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-18 23:25+0000\n"
+"POT-Creation-Date: 2026-07-19 00:35+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: ru machine-assisted draft\n"
@@ -3623,10 +3623,10 @@ msgstr "Приостановить"
 #: templates/campaigns/issue_form.html templates/campaigns/milestone_form.html
 #: templates/campaigns/objective_form.html templates/campaigns/risk_form.html
 #: templates/campaigns/workstream_form.html templates/capsuleer/goal_form.html
-#: templates/command_intel/campaign_new.html templates/industry/create.html
-#: templates/industry/jobs.html templates/kb/edit.html
-#: templates/killboard/watchlists.html templates/market/dashboard.html
-#: templates/mentorship/pairing_detail.html
+#: templates/command_intel/campaign_new.html templates/fitting/detail.html
+#: templates/industry/create.html templates/industry/jobs.html
+#: templates/kb/edit.html templates/killboard/watchlists.html
+#: templates/market/dashboard.html templates/mentorship/pairing_detail.html
 #: templates/operations/template_form.html
 #: templates/pingboard/alert_detail.html templates/planetary/wizard.html
 #: templates/procurement/agreement_form.html
@@ -8613,9 +8613,9 @@ msgstr ""
 msgid "Low slots"
 msgstr ""
 
-#: apps/killboard/fitrender.py
+#: apps/killboard/fitrender.py templates/fitting/detail.html
 msgid "Rigs"
-msgstr ""
+msgstr "Риги"
 
 #: apps/killboard/fitrender.py
 msgid "Subsystems"
@@ -32152,9 +32152,9 @@ msgstr "Любой статус"
 #: templates/admin_audit/console/recovery.html
 #: templates/campaigns/portfolio.html templates/campaigns/template_picker.html
 #: templates/capsuleer/paths.html templates/doctrines/list.html
-#: templates/fitting/load_doctrine.html templates/market/dashboard.html
-#: templates/procurement/suppliers.html templates/stockpile/asset_search.html
-#: templates/store/inventory.html
+#: templates/fitting/detail.html templates/fitting/load_doctrine.html
+#: templates/market/dashboard.html templates/procurement/suppliers.html
+#: templates/stockpile/asset_search.html templates/store/inventory.html
 msgid "Search"
 msgstr "Поиск"
 
@@ -39367,6 +39367,35 @@ msgid "Load into the Lab"
 msgstr "Загрузить в Lab"
 
 #: templates/fitting/_telemetry.html
+#| msgid "Simulator"
+msgid "Simulation result"
+msgstr "Результат симуляции"
+
+#: templates/fitting/_telemetry.html
+msgid "Skill levels applied to this simulation"
+msgstr "Уровни навыков, применённые в этой симуляции"
+
+#: templates/fitting/_telemetry.html
+msgid "DPS"
+msgstr "DPS"
+
+#: templates/fitting/_telemetry.html
+msgid "fit weapons + ammo"
+msgstr "установите оружие и боеприпасы"
+
+#: templates/fitting/_telemetry.html
+msgid "EHP"
+msgstr "EHP"
+
+#: templates/fitting/_telemetry.html
+msgid "m/s"
+msgstr "m/s"
+
+#: templates/fitting/_telemetry.html
+msgid "Capacitor"
+msgstr "Конденсатор"
+
+#: templates/fitting/_telemetry.html templates/fitting/detail.html
 msgid "Fitting"
 msgstr "Фиттинг"
 
@@ -39395,10 +39424,6 @@ msgid "Offence"
 msgstr "Атака"
 
 #: templates/fitting/_telemetry.html
-msgid "DPS"
-msgstr "DPS"
-
-#: templates/fitting/_telemetry.html
 msgid "Turret / missile / drone"
 msgstr "Турель / ракета / дрон"
 
@@ -39420,20 +39445,12 @@ msgid "Defence"
 msgstr "Оборона"
 
 #: templates/fitting/_telemetry.html
-msgid "EHP"
-msgstr "EHP"
-
-#: templates/fitting/_telemetry.html
 msgid "Shield"
 msgstr "Щит"
 
 #: templates/fitting/_telemetry.html
 msgid "HP"
 msgstr "HP"
-
-#: templates/fitting/_telemetry.html
-msgid "Capacitor"
-msgstr "Конденсатор"
 
 #: templates/fitting/_telemetry.html
 msgid "Stable"
@@ -39508,8 +39525,17 @@ msgid "Not modelled for this fit:"
 msgstr "Не смоделировано для этого фита:"
 
 #: templates/fitting/_telemetry.html
-msgid "Pilot readiness"
-msgstr "Готовность пилота"
+#| msgid "Most kills landed"
+msgid "Pilot skills applied"
+msgstr "Применённые навыки пилота"
+
+#: templates/fitting/_telemetry.html
+msgid ""
+"These skills drive the numbers above, at this pilot's trained level. Change "
+"the pilot to compare."
+msgstr ""
+"Эти навыки определяют показатели выше — на уровне подготовки этого пилота. "
+"Смените пилота для сравнения."
 
 #: templates/fitting/_telemetry.html
 #, python-format
@@ -39578,6 +39604,10 @@ msgid "data"
 msgstr "данные"
 
 #: templates/fitting/detail.html
+msgid "Whose skills to simulate — the numbers update live"
+msgstr "Чьи навыки симулировать — показатели обновляются в реальном времени"
+
+#: templates/fitting/detail.html
 msgid "My skills"
 msgstr "Мои навыки"
 
@@ -39593,29 +39623,11 @@ msgstr "Форк"
 msgid "Export EFT"
 msgstr "Экспорт EFT"
 
-#: templates/fitting/detail.html templates/fitting/shared.html
-msgid "Loadout"
-msgstr "Снаряжение"
+#: templates/fitting/detail.html
+msgid "Click a slot to fit · ⚠ = load ammo"
+msgstr "Нажмите на слот, чтобы установить модуль · ⚠ = загрузить боеприпасы"
 
 #: templates/fitting/detail.html
-msgid "Add module or ship item…"
-msgstr "Добавить модуль или предмет корабля…"
-
-#: templates/fitting/detail.html
-msgid "Search modules"
-msgstr "Поиск модулей"
-
-#: templates/fitting/detail.html
-#| msgid "Loadout"
-msgid "Load ammo"
-msgstr "Загрузить боеприпасы"
-
-#: templates/fitting/detail.html
-msgid "ammo"
-msgstr "боеприпасы"
-
-#: templates/fitting/detail.html
-#| msgid "Module changes"
 msgid "Module state"
 msgstr "Состояние модуля"
 
@@ -39624,12 +39636,14 @@ msgid "heat"
 msgstr "нагрев"
 
 #: templates/fitting/detail.html
-#| msgid "Search pilots…"
+msgid "Load ammo"
+msgstr "Загрузить боеприпасы"
+
+#: templates/fitting/detail.html
 msgid "Search compatible ammo…"
 msgstr "Поиск совместимых боеприпасов…"
 
 #: templates/fitting/detail.html
-#| msgid "Search modules"
 msgid "Search ammo"
 msgstr "Поиск боеприпасов"
 
@@ -39638,8 +39652,32 @@ msgid "Unload ammo"
 msgstr "Выгрузить боеприпасы"
 
 #: templates/fitting/detail.html
-msgid "No modules fitted yet."
-msgstr "Модули ещё не установлены."
+#| msgid "No fittings in this file."
+msgid "No slots on this hull."
+msgstr "У этого корпуса нет слотов."
+
+#: templates/fitting/detail.html
+msgid "Drones"
+msgstr "Дроны"
+
+#: templates/fitting/detail.html
+#| msgid "Add role"
+msgid "Add drone"
+msgstr "Добавить дрон"
+
+#: templates/fitting/detail.html
+msgid "Search modules"
+msgstr "Поиск модулей"
+
+#: templates/fitting/detail.html
+#| msgid "Load ammo"
+msgid "takes ammo"
+msgstr "нужны боеприпасы"
+
+#: templates/fitting/detail.html
+#| msgid "Not modelled for this fit:"
+msgid "No matching module for this slot."
+msgstr "Нет подходящего модуля для этого слота."
 
 #: templates/fitting/detail.html
 msgid "Target profile"
@@ -39825,6 +39863,44 @@ msgstr "История версий"
 msgid "Restore"
 msgstr "Восстановить"
 
+#: templates/fitting/detail.html
+#| msgid "Willpower"
+msgid "High power"
+msgstr "Высокие слоты"
+
+#: templates/fitting/detail.html
+#| msgid "Willpower"
+msgid "Mid power"
+msgstr "Средние слоты"
+
+#: templates/fitting/detail.html
+#| msgid "Low effort"
+msgid "Low power"
+msgstr "Низкие слоты"
+
+#: templates/fitting/detail.html
+msgid "high slot"
+msgstr "высокий слот"
+
+#: templates/fitting/detail.html
+#| msgid "slots"
+msgid "mid slot"
+msgstr "средний слот"
+
+#: templates/fitting/detail.html
+#| msgid "slots"
+msgid "low slot"
+msgstr "низкий слот"
+
+#: templates/fitting/detail.html
+#| msgid "Bridge"
+msgid "rig"
+msgstr "риг"
+
+#: templates/fitting/detail.html
+msgid "drone"
+msgstr "дрон"
+
 #: templates/fitting/index.html
 msgid "Fitting workspace"
 msgstr "Рабочее пространство фиттинга"
@@ -39912,6 +39988,10 @@ msgid "Read-only public view. Telemetry shown at All V skills."
 msgstr ""
 "Публичный просмотр только для чтения. Телеметрия показана для навыков «Все "
 "V»."
+
+#: templates/fitting/shared.html
+msgid "Loadout"
+msgstr "Снаряжение"
 
 #: templates/fitting/shared.html
 msgid "Empty fit."

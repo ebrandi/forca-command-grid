@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-18 23:25+0000\n"
+"POT-Creation-Date: 2026-07-19 00:35+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: fr machine-assisted draft\n"
@@ -3682,10 +3682,10 @@ msgstr "Mettre en pause"
 #: templates/campaigns/issue_form.html templates/campaigns/milestone_form.html
 #: templates/campaigns/objective_form.html templates/campaigns/risk_form.html
 #: templates/campaigns/workstream_form.html templates/capsuleer/goal_form.html
-#: templates/command_intel/campaign_new.html templates/industry/create.html
-#: templates/industry/jobs.html templates/kb/edit.html
-#: templates/killboard/watchlists.html templates/market/dashboard.html
-#: templates/mentorship/pairing_detail.html
+#: templates/command_intel/campaign_new.html templates/fitting/detail.html
+#: templates/industry/create.html templates/industry/jobs.html
+#: templates/kb/edit.html templates/killboard/watchlists.html
+#: templates/market/dashboard.html templates/mentorship/pairing_detail.html
 #: templates/operations/template_form.html
 #: templates/pingboard/alert_detail.html templates/planetary/wizard.html
 #: templates/procurement/agreement_form.html
@@ -8729,9 +8729,9 @@ msgstr ""
 msgid "Low slots"
 msgstr ""
 
-#: apps/killboard/fitrender.py
+#: apps/killboard/fitrender.py templates/fitting/detail.html
 msgid "Rigs"
-msgstr ""
+msgstr "Rigs"
 
 #: apps/killboard/fitrender.py
 msgid "Subsystems"
@@ -32640,9 +32640,9 @@ msgstr "Tout statut"
 #: templates/admin_audit/console/recovery.html
 #: templates/campaigns/portfolio.html templates/campaigns/template_picker.html
 #: templates/capsuleer/paths.html templates/doctrines/list.html
-#: templates/fitting/load_doctrine.html templates/market/dashboard.html
-#: templates/procurement/suppliers.html templates/stockpile/asset_search.html
-#: templates/store/inventory.html
+#: templates/fitting/detail.html templates/fitting/load_doctrine.html
+#: templates/market/dashboard.html templates/procurement/suppliers.html
+#: templates/stockpile/asset_search.html templates/store/inventory.html
 msgid "Search"
 msgstr "Rechercher"
 
@@ -39894,6 +39894,35 @@ msgid "Load into the Lab"
 msgstr "Charger dans le Lab"
 
 #: templates/fitting/_telemetry.html
+#| msgid "Simulator"
+msgid "Simulation result"
+msgstr "Résultat de la simulation"
+
+#: templates/fitting/_telemetry.html
+msgid "Skill levels applied to this simulation"
+msgstr "Niveaux de compétence appliqués à cette simulation"
+
+#: templates/fitting/_telemetry.html
+msgid "DPS"
+msgstr "DPS"
+
+#: templates/fitting/_telemetry.html
+msgid "fit weapons + ammo"
+msgstr "montez armes + munitions"
+
+#: templates/fitting/_telemetry.html
+msgid "EHP"
+msgstr "EHP"
+
+#: templates/fitting/_telemetry.html
+msgid "m/s"
+msgstr "m/s"
+
+#: templates/fitting/_telemetry.html
+msgid "Capacitor"
+msgstr "Capaciteur"
+
+#: templates/fitting/_telemetry.html templates/fitting/detail.html
 msgid "Fitting"
 msgstr "Fitting"
 
@@ -39922,10 +39951,6 @@ msgid "Offence"
 msgstr "Attaque"
 
 #: templates/fitting/_telemetry.html
-msgid "DPS"
-msgstr "DPS"
-
-#: templates/fitting/_telemetry.html
 msgid "Turret / missile / drone"
 msgstr "Tourelle / missile / drone"
 
@@ -39947,20 +39972,12 @@ msgid "Defence"
 msgstr "Défense"
 
 #: templates/fitting/_telemetry.html
-msgid "EHP"
-msgstr "EHP"
-
-#: templates/fitting/_telemetry.html
 msgid "Shield"
 msgstr "Bouclier"
 
 #: templates/fitting/_telemetry.html
 msgid "HP"
 msgstr "HP"
-
-#: templates/fitting/_telemetry.html
-msgid "Capacitor"
-msgstr "Capaciteur"
 
 #: templates/fitting/_telemetry.html
 msgid "Stable"
@@ -40035,8 +40052,17 @@ msgid "Not modelled for this fit:"
 msgstr "Non modélisé pour ce fit :"
 
 #: templates/fitting/_telemetry.html
-msgid "Pilot readiness"
-msgstr "Préparation du pilote"
+#| msgid "Most kills landed"
+msgid "Pilot skills applied"
+msgstr "Compétences du pilote appliquées"
+
+#: templates/fitting/_telemetry.html
+msgid ""
+"These skills drive the numbers above, at this pilot's trained level. Change "
+"the pilot to compare."
+msgstr ""
+"Ces compétences déterminent les chiffres ci-dessus, au niveau atteint par ce"
+" pilote. Changez de pilote pour comparer."
 
 #: templates/fitting/_telemetry.html
 #, python-format
@@ -40105,6 +40131,12 @@ msgid "data"
 msgstr "données"
 
 #: templates/fitting/detail.html
+msgid "Whose skills to simulate — the numbers update live"
+msgstr ""
+"Compétences de quel pilote simuler — les chiffres se mettent à jour en "
+"direct"
+
+#: templates/fitting/detail.html
 msgid "My skills"
 msgstr "Mes compétences"
 
@@ -40120,29 +40152,11 @@ msgstr "Fork"
 msgid "Export EFT"
 msgstr "Exporter en EFT"
 
-#: templates/fitting/detail.html templates/fitting/shared.html
-msgid "Loadout"
-msgstr "Configuration"
+#: templates/fitting/detail.html
+msgid "Click a slot to fit · ⚠ = load ammo"
+msgstr "Cliquez sur un emplacement pour fitter · ⚠ = charger les munitions"
 
 #: templates/fitting/detail.html
-msgid "Add module or ship item…"
-msgstr "Ajouter un module ou un objet du vaisseau…"
-
-#: templates/fitting/detail.html
-msgid "Search modules"
-msgstr "Rechercher des modules"
-
-#: templates/fitting/detail.html
-#| msgid "Loadout"
-msgid "Load ammo"
-msgstr "Charger les munitions"
-
-#: templates/fitting/detail.html
-msgid "ammo"
-msgstr "munitions"
-
-#: templates/fitting/detail.html
-#| msgid "Module changes"
 msgid "Module state"
 msgstr "État du module"
 
@@ -40151,12 +40165,14 @@ msgid "heat"
 msgstr "surchauffe"
 
 #: templates/fitting/detail.html
-#| msgid "Search pilots…"
+msgid "Load ammo"
+msgstr "Charger les munitions"
+
+#: templates/fitting/detail.html
 msgid "Search compatible ammo…"
 msgstr "Rechercher des munitions compatibles…"
 
 #: templates/fitting/detail.html
-#| msgid "Search modules"
 msgid "Search ammo"
 msgstr "Rechercher des munitions"
 
@@ -40165,8 +40181,32 @@ msgid "Unload ammo"
 msgstr "Décharger les munitions"
 
 #: templates/fitting/detail.html
-msgid "No modules fitted yet."
-msgstr "Aucun module fitté pour le moment."
+#| msgid "No fittings in this file."
+msgid "No slots on this hull."
+msgstr "Aucun emplacement sur cette coque."
+
+#: templates/fitting/detail.html
+msgid "Drones"
+msgstr "Drones"
+
+#: templates/fitting/detail.html
+#| msgid "Add role"
+msgid "Add drone"
+msgstr "Ajouter un drone"
+
+#: templates/fitting/detail.html
+msgid "Search modules"
+msgstr "Rechercher des modules"
+
+#: templates/fitting/detail.html
+#| msgid "Load ammo"
+msgid "takes ammo"
+msgstr "utilise des munitions"
+
+#: templates/fitting/detail.html
+#| msgid "Not modelled for this fit:"
+msgid "No matching module for this slot."
+msgstr "Aucun module correspondant pour cet emplacement."
 
 #: templates/fitting/detail.html
 msgid "Target profile"
@@ -40344,6 +40384,44 @@ msgstr "Historique des révisions"
 msgid "Restore"
 msgstr "Restaurer"
 
+#: templates/fitting/detail.html
+#| msgid "Willpower"
+msgid "High power"
+msgstr "Haute puissance"
+
+#: templates/fitting/detail.html
+#| msgid "Willpower"
+msgid "Mid power"
+msgstr "Moyenne puissance"
+
+#: templates/fitting/detail.html
+#| msgid "Low effort"
+msgid "Low power"
+msgstr "Basse puissance"
+
+#: templates/fitting/detail.html
+msgid "high slot"
+msgstr "emplacement haut"
+
+#: templates/fitting/detail.html
+#| msgid "slots"
+msgid "mid slot"
+msgstr "emplacement médian"
+
+#: templates/fitting/detail.html
+#| msgid "slots"
+msgid "low slot"
+msgstr "emplacement bas"
+
+#: templates/fitting/detail.html
+#| msgid "Bridge"
+msgid "rig"
+msgstr "rig"
+
+#: templates/fitting/detail.html
+msgid "drone"
+msgstr "drone"
+
 #: templates/fitting/index.html
 msgid "Fitting workspace"
 msgstr "Espace de fitting"
@@ -40430,6 +40508,10 @@ msgstr "Fit partagé"
 msgid "Read-only public view. Telemetry shown at All V skills."
 msgstr ""
 "Vue publique en lecture seule. Télémétrie affichée avec compétences Tout V."
+
+#: templates/fitting/shared.html
+msgid "Loadout"
+msgstr "Configuration"
 
 #: templates/fitting/shared.html
 msgid "Empty fit."
