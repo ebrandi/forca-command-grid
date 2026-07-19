@@ -117,7 +117,10 @@ class FitRevision(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     # Provenance for safe recalculation after EVE data updates (§10).
     engine_version = models.CharField(max_length=16, blank=True)
-    data_version = models.CharField(max_length=32, blank=True)
+    # Composite data version: base sde/dogma + "+sb"(ship bonus) + "+dg"(dogma graph) +
+    # "+gs1"(graph-skills flag). Each token is ~17 chars, so this outgrew the original 32; 128
+    # leaves headroom for future version components without another migration.
+    data_version = models.CharField(max_length=128, blank=True)
 
     class Meta:
         ordering = ["-revision_number"]

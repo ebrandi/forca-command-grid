@@ -519,3 +519,22 @@ def test_supply_action_needs_view_access(client, owner, other, dogma):
     client.force_login(other)
     assert client.post(reverse("fitting:supply_task", args=[fit.pk])).status_code == 404
     assert client.post(reverse("fitting:supply_project", args=[fit.pk])).status_code == 404
+
+
+def test_create_fit_stores_long_composite_data_version(owner, dogma):
+    """Regression: a revision must persist even when the engine's composite data version is
+    long. The version grew tokens (+sb/+dg/+gs1) past the original CharField(32), so creating
+    or importing a fit raised `DataError: value too long for type character varying(32)`
+    (prod 500 on /lab/import/doctrine/...). The column is now 128."""
+    from apps.admin_audit.models import AppSetting
+
+    for key in ("dogma_data_version", "ship_bonus_data_version", "dogma_graph_version"):
+        AppSetting.objects.update_or_create(key=key, defaults={"value": {"version": "20260719125912"}})
+
+    fit = services.create_fit(owner, name="Doctrine candidate", ship_type_id=RIFTER,
+                              items=[], origin="doctrine")
+
+    rev = fit.current_revision
+    assert rev is not None
+    assert len(rev.data_version) > 32          # would have overflowed the old varchar(32)
+    assert rev.data_version.startswith("20260719125912")
