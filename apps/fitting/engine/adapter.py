@@ -90,7 +90,7 @@ class ORMDataProvider:
         row = (
             SdeType.objects.filter(type_id=type_id)
             .values("type_id", "name", "group_id", "group__category_id",
-                    "hi_slots", "med_slots", "low_slots", "rig_slots")
+                    "hi_slots", "med_slots", "low_slots", "rig_slots", "mass")
             .first()
         )
         self._rows[type_id] = row
@@ -119,6 +119,10 @@ class ORMDataProvider:
             for column, attr in _SLOT_COLUMN_ATTR.items():
                 if attr not in d and row.get(column) is not None:
                     d[attr] = float(row[column])
+            # Mass (dogma attr 4) is absent from the Fuzzwork dogma export — bridge the
+            # invTypes.mass column so mobility (align time / MWD velocity) has a real base.
+            if A.MASS not in d and row.get("mass"):
+                d[A.MASS] = float(row["mass"])
         self._attrs[type_id] = d
         return d
 

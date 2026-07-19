@@ -102,6 +102,9 @@ class Command(BaseCommand):
                  "on existing types — for the ore-buyback valuation (4.9). No full rebuild.",
         )
         parser.add_argument(
+            "--masses-only", action="store_true",
+            help="Backfill only invTypes.mass onto existing types (non-destructive).")
+        parser.add_argument(
             "--dogma-only", action="store_true",
             help="Only (re)load the dogma tables (attributes/effects/type-attributes/"
                  "type-effects) the Tocha's Lab fitting simulation evaluates, on top of "
@@ -130,6 +133,9 @@ class Command(BaseCommand):
                     return
                 if options["type_materials_only"]:
                     self._load_type_materials(con)
+                    return
+                if options["masses_only"]:
+                    self._load_masses(con)
                     return
                 if options["dogma_only"]:
                     self._load_dogma_reference(con)
@@ -239,10 +245,10 @@ class Command(BaseCommand):
         valid = set(SdeGroup.objects.values_list("group_id", flat=True))
         rows = self._q(
             con,
-            "SELECT typeID, groupID, typeName, volume, basePrice, published, portionSize FROM invTypes",
+            "SELECT typeID, groupID, typeName, volume, mass, basePrice, published, portionSize FROM invTypes",
         )
         objs = []
-        for tid, gid, name, volume, base, published, portion in rows:
+        for tid, gid, name, volume, mass, base, published, portion in rows:
             if tid is None or gid not in valid:
                 continue
             objs.append(
@@ -251,6 +257,7 @@ class Command(BaseCommand):
                     group_id=gid,
                     name=name or f"Type {tid}",
                     volume=volume or 0.0,
+                    mass=mass,
                     base_price=base,
                     published=bool(published),
                     portion_size=portion or 1,
@@ -260,6 +267,18 @@ class Command(BaseCommand):
             SdeType.objects.all().delete()
             SdeType.objects.bulk_create(objs, batch_size=2000, ignore_conflicts=True)
         self.stdout.write(f"  types: {len(objs)}")
+
+    def _load_masses(self, con) -> None:
+        """Non-destructive backfill of invTypes.mass onto existing SdeType rows (dogma attr 4
+        is absent from the Fuzzwork dogma export). Safe to run on top of a populated DB."""
+        have = set(SdeType.objects.values_list("type_id", flat=True))
+        updates = [
+            SdeType(type_id=tid, mass=mass)
+            for tid, mass in self._q(con, "SELECT typeID, mass FROM invTypes WHERE mass IS NOT NULL")
+            if tid in have
+        ]
+        SdeType.objects.bulk_update(updates, ["mass"], batch_size=2000)
+        self.stdout.write(f"  masses backfilled: {len(updates)}")
 
     def _load_type_materials(self, con) -> None:
         """Reprocessing yields (invTypeMaterials) + a portion_size refresh on existing types.

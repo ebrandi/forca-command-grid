@@ -33,6 +33,10 @@ class SdeType(models.Model):
     group = models.ForeignKey(SdeGroup, on_delete=models.CASCADE, related_name="types")
     name = models.CharField(max_length=200, db_index=True)
     volume = models.FloatField(default=0.0)
+    # Assembled mass (kg) from invTypes.mass — dogma attribute 4 is NOT in the Fuzzwork dogma
+    # export, so the fitting engine bridges this column in when attr 4 is missing (needed for
+    # align time and the mass-dependent MWD/AB velocity formula). Null means "unknown".
+    mass = models.FloatField(null=True, blank=True)
     # Repackaged volume (m³) — much smaller than assembled ``volume`` for ships and
     # containers. Populated from EVE Ref reference-data; used for freight sizing.
     packaged_volume = models.FloatField(null=True, blank=True)
