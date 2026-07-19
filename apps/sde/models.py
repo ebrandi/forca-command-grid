@@ -397,6 +397,51 @@ class SdeDogmaEffect(models.Model):
         return self.name
 
 
+class SdeModifier(models.Model):
+    """One modifier from an effect's SDE ``modifierInfo`` graph (Tocha's Lab dogma engine).
+
+    Fuzzwork's export carries *which* effects a type has (``SdeTypeEffect``) but never *what
+    they do*; the "what" lives in CCP's FSD ``dogmaEffects.yaml`` as each effect's
+    ``modifierInfo`` list. This table is the normalised form of that list — one row per
+    modifier — so the fitting engine can apply every module / skill / charge / ship /
+    subsystem effect generically from data instead of a hand-coded handler per class.
+
+    A modifier reads: "change attribute ``modified_attribute_id`` on the targets selected by
+    ``func`` by the value of attribute ``modifying_attribute_id`` (read off the source item /
+    skill), using ``operation``" (0 preAssign · 1 preMul · 2 modAdd · 3 modSub · 4 postMul ·
+    5 postDiv · 6 postPercent · 7 postAssign). ``func`` is one of ``ItemModifier`` /
+    ``LocationModifier`` / ``LocationGroupModifier`` / ``LocationRequiredSkillModifier`` /
+    ``OwnerRequiredSkillModifier``; ``group_id`` scopes a ``LocationGroupModifier`` and
+    ``skill_type_id`` scopes the RequiredSkill funcs. ``effect_id`` is a plain indexed integer
+    (not a FK) — deliberately, to mirror ``SdeTypeEffect.effect_id`` and to survive a Fuzzwork
+    effects re-import (which fully replaces ``SdeDogmaEffect`` but preserves effect ids) without
+    a cascade wiping the graph or an FK-integrity failure on an effect we happen not to carry.
+
+    Populated by ``manage.py import_dogma_graph`` (a full replace) from the same authoritative
+    CCP SDE the hull bonuses come from; nothing here derives from a third-party fitting engine.
+    """
+
+    effect_id = models.IntegerField()
+    func = models.CharField(max_length=64)
+    modified_attribute_id = models.IntegerField(null=True, blank=True)
+    modifying_attribute_id = models.IntegerField(null=True, blank=True)
+    operation = models.SmallIntegerField(null=True, blank=True)
+    group_id = models.IntegerField(null=True, blank=True)
+    skill_type_id = models.IntegerField(null=True, blank=True)
+    # The modifier's SDE domain ("shipID" / "charID" / "targetID" / "otherID" / …) — kept
+    # verbatim so the applicator can distinguish e.g. a charge-domain missile-damage modifier.
+    domain = models.CharField(max_length=32, blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["effect_id"]),
+            models.Index(fields=["modified_attribute_id"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.effect_id}:{self.func}:{self.modified_attribute_id}"
+
+
 class SdeTypeAttribute(models.Model):
     """The value of one dogma attribute on one type (dgmTypeAttributes).
 

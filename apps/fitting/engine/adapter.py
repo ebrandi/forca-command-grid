@@ -68,7 +68,8 @@ class ORMDataProvider:
 
             # One query for all version keys (query-neutral vs the old per-key reads).
             rows = dict(AppSetting.objects.filter(
-                key__in=("dogma_data_version", "sde_version", "ship_bonus_data_version")
+                key__in=("dogma_data_version", "sde_version", "ship_bonus_data_version",
+                         "dogma_graph_version")
             ).values_list("key", "value"))
 
             def ver(key):
@@ -78,7 +79,15 @@ class ORMDataProvider:
             # Fold in the ship-bonus catalogue version so re-importing hull bonuses busts the
             # eval cache — otherwise warm entries serve pre-import DPS until the TTL expires.
             bonus = ver("ship_bonus_data_version")
-            return f"{base}+sb{bonus}" if bonus else base
+            if bonus:
+                base = f"{base}+sb{bonus}"
+            # Fold in the dogma-graph version too (import_dogma_graph): re-importing the modifier
+            # graph / skill dogma must bust the cache once the generic applicator reads it. Harmless
+            # now (Phase 1 is data-only — the engine doesn't consume the graph yet).
+            graph = ver("dogma_graph_version")
+            if graph:
+                base = f"{base}+dg{graph}"
+            return base
         except Exception:  # noqa: BLE001 - version is advisory; never break a calc over it
             return "unknown"
 
