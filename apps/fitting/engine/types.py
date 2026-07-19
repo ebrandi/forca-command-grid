@@ -15,7 +15,9 @@ from enum import Enum
 
 # Bumped whenever a calculation changes in a way that could move a saved fit's numbers.
 # Stored on every FitRevision + cache key so historical results never silently drift.
-ENGINE_VERSION = "1.1.0"
+# 1.2.0 — Phase 2: data-driven skill catalogue from the imported dogma graph (opt-in via the
+# FITTING_GRAPH_SKILLS flag, which additionally folds into the cache key).
+ENGINE_VERSION = "1.2.0"
 
 
 class SlotKind(str, Enum):

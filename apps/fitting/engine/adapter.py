@@ -45,6 +45,22 @@ _SLOT_COLUMN_ATTR = {
     "low_slots": A.LOW_SLOTS, "rig_slots": A.RIG_SLOTS,
 }
 
+_SKILL_CATEGORY = 16
+_OP_POSTPERCENT = 6
+# The full data-driven skill catalogue (hand-coded + graph-derived) is static until the dogma
+# graph is re-imported, so build it once and memoise by data version (which folds the graph
+# version). Module-level so it is shared across the per-evaluation provider instances.
+_SKILL_CATALOGUE_CACHE: dict[str, list[BonusSpec]] = {}
+
+
+def _graph_skills_enabled() -> bool:
+    """Whether to data-drive the skill catalogue from the dogma graph (Phase 2 cutover flag)."""
+    try:
+        from django.conf import settings
+        return bool(getattr(settings, "FITTING_GRAPH_SKILLS", False))
+    except Exception:  # noqa: BLE001 - a missing/ broken setting must never break a calc
+        return False
+
 
 class ORMDataProvider:
     """A :class:`~apps.fitting.engine.dogma.DataProvider` backed by the SDE tables."""
@@ -82,11 +98,15 @@ class ORMDataProvider:
             if bonus:
                 base = f"{base}+sb{bonus}"
             # Fold in the dogma-graph version too (import_dogma_graph): re-importing the modifier
-            # graph / skill dogma must bust the cache once the generic applicator reads it. Harmless
-            # now (Phase 1 is data-only — the engine doesn't consume the graph yet).
+            # graph / skill dogma busts the cache once the generic applicator reads it.
             graph = ver("dogma_graph_version")
             if graph:
                 base = f"{base}+dg{graph}"
+            # Fold in the graph-skills flag (Phase 2): toggling FITTING_GRAPH_SKILLS changes the
+            # computed numbers, so it must change the cache key or warm entries would serve the
+            # pre-cutover values until the TTL expires.
+            if _graph_skills_enabled():
+                base = f"{base}+gs1"
             return base
         except Exception:  # noqa: BLE001 - version is advisory; never break a calc over it
             return "unknown"
@@ -177,6 +197,65 @@ class ORMDataProvider:
             ))
         self._bonuses[ship_type_id] = specs
         return specs
+
+    def skill_bonuses_all(self) -> list[BonusSpec] | None:
+        """The skill-bonus catalogue the evaluator should use.
+
+        Returns ``None`` (→ the evaluator falls back to the hand-coded ``STANDARD_SKILL_BONUSES``)
+        when the Phase-2 flag is off or the dogma graph is not imported. When on, returns the
+        hand-coded set MERGED with graph-derived specs for every *other* skill — so all trained
+        skills apply, with zero change to the skills the hand-coded set already covers. Built once
+        and memoised by data version (see ``_SKILL_CATALOGUE_CACHE``)."""
+        if not _graph_skills_enabled():
+            return None
+        cached = _SKILL_CATALOGUE_CACHE.get(self.data_version)
+        if cached is not None:
+            return cached
+        specs = self._build_skill_catalogue()
+        _SKILL_CATALOGUE_CACHE[self.data_version] = specs
+        return specs
+
+    @staticmethod
+    def _build_skill_catalogue() -> list[BonusSpec]:
+        from apps.sde.models import SdeModifier, SdeType, SdeTypeAttribute, SdeTypeEffect
+
+        from .bonuses import STANDARD_SKILL_BONUSES
+        from .modifiers import build_skill_bonus_specs
+
+        skill_ids = list(
+            SdeType.objects.filter(group__category_id=_SKILL_CATEGORY)
+            .values_list("type_id", flat=True)
+        )
+        if not skill_ids:                       # graph/skill dogma not imported → hand-coded only
+            return list(STANDARD_SKILL_BONUSES)
+
+        skill_attrs: dict[int, dict[int, float]] = {}
+        for tid, aid, val in (
+            SdeTypeAttribute.objects.filter(type_id__in=skill_ids)
+            .values_list("type_id", "attribute_id", "value")
+        ):
+            skill_attrs.setdefault(int(tid), {})[int(aid)] = float(val)
+
+        effect_ids_by_skill: dict[int, list[int]] = {}
+        effect_ids: set[int] = set()
+        for tid, eid in (
+            SdeTypeEffect.objects.filter(type_id__in=skill_ids)
+            .values_list("type_id", "effect_id")
+        ):
+            effect_ids_by_skill.setdefault(int(tid), []).append(int(eid))
+            effect_ids.add(int(eid))
+
+        modifiers_by_effect: dict[int, list] = {}
+        for m in SdeModifier.objects.filter(effect_id__in=effect_ids, operation=_OP_POSTPERCENT):
+            modifiers_by_effect.setdefault(m.effect_id, []).append(m)
+
+        labels = dict(
+            SdeType.objects.filter(type_id__in=skill_ids).values_list("type_id", "name")
+        )
+        exclude = frozenset(s.skill_id for s in STANDARD_SKILL_BONUSES if s.skill_id)
+        data_specs = build_skill_bonus_specs(
+            skill_attrs, effect_ids_by_skill, modifiers_by_effect, labels, exclude)
+        return [*STANDARD_SKILL_BONUSES, *data_specs]
 
 
 class FittingEngine:

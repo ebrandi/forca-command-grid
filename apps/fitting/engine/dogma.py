@@ -229,7 +229,16 @@ def evaluate(
         return result
 
     # Copy the bonus list (subsystems extend it below) so the provider's cache isn't mutated.
-    ctx = BonusContext(ship_bonuses=list(provider.ship_bonuses(fit.ship_type_id)))
+    # Skill bonuses come from the provider when it can data-drive them from the imported dogma
+    # graph (Phase 2); otherwise BonusContext defaults to the hand-coded STANDARD_SKILL_BONUSES
+    # (the test providers, and any DB without the graph, keep the original behaviour).
+    skill_getter = getattr(provider, "skill_bonuses_all", None)
+    skill_specs = skill_getter() if skill_getter is not None else None
+    if skill_specs:
+        ctx = BonusContext(ship_bonuses=list(provider.ship_bonuses(fit.ship_type_id)),
+                           skill_bonuses=list(skill_specs))
+    else:
+        ctx = BonusContext(ship_bonuses=list(provider.ship_bonuses(fit.ship_type_id)))
 
     # Resolve every fitted item once. ``info`` carries the module's dogma effects so weapon
     # detection (turret/launcher) is effect-based, not tied to a hand-listed set of groups.
