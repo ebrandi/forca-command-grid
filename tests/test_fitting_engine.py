@@ -361,6 +361,67 @@ def test_offline_module_does_not_consume_cpu():
     assert off.telemetry["resources"]["cpu"]["used"] == pytest.approx(0.0)
 
 
+# --- Engineering / fitting skills (CPU-PG output + weapon fitting cost) ------
+# Skill ids: CPU Management 3426, Power Grid Management 3413, Weapon Upgrades 3318,
+# Advanced Weapon Upgrades 11207.
+def test_fitting_output_scales_with_engineering_skills():
+    """CPU/PG output must reflect the pilot's engineering skills; without them a real fit
+    reads as over-capacity against the untrained hull base (the reported bug)."""
+    prov = _provider()
+    fit = FitInput(SHIP, ())
+    base = evaluate(fit, SkillProfile.from_dict({}), OperatingProfile(), prov)
+    trained = evaluate(fit, SkillProfile.from_dict({3426: 5, 3413: 5}), OperatingProfile(), prov)
+    r0, r5 = base.telemetry["resources"], trained.telemetry["resources"]
+    assert r0["cpu"]["output"] == pytest.approx(125.0)        # untrained hull base
+    assert r0["powergrid"]["output"] == pytest.approx(42.0)
+    assert r5["cpu"]["output"] == pytest.approx(156.25)       # 125 * 1.25 (CPU Management V)
+    assert r5["powergrid"]["output"] == pytest.approx(52.5)   # 42 * 1.25 (Power Grid Management V)
+
+
+def test_weapon_upgrades_reduce_weapon_fitting_cost():
+    """Weapon Upgrades cuts a weapon's CPU, Advanced Weapon Upgrades its powergrid."""
+    prov = _provider()
+    fit = FitInput(SHIP, (ModuleInput(AC, SlotKind.HIGH, ModuleState.ACTIVE, charge_type_id=FUSION),))
+    none = evaluate(fit, SkillProfile.from_dict({}), OperatingProfile(), prov)
+    trained = evaluate(fit, SkillProfile.from_dict({3318: 5, 11207: 5}), OperatingProfile(), prov)
+    assert none.telemetry["resources"]["cpu"]["used"] == pytest.approx(8.0)
+    assert none.telemetry["resources"]["powergrid"]["used"] == pytest.approx(6.0)
+    assert trained.telemetry["resources"]["cpu"]["used"] == pytest.approx(6.0)      # 8 * 0.75
+    assert trained.telemetry["resources"]["powergrid"]["used"] == pytest.approx(5.4)  # 6 * 0.90
+
+
+def test_weapon_upgrades_ignore_non_weapon_modules():
+    """A gyrostabiliser is not a weapon, so Weapon Upgrades must not cut its CPU."""
+    prov = _provider()
+    fit = FitInput(SHIP, (ModuleInput(GYRO, SlotKind.LOW, ModuleState.ACTIVE),))
+    trained = evaluate(fit, SkillProfile.from_dict({3318: 5}), OperatingProfile(), prov)
+    assert trained.telemetry["resources"]["cpu"]["used"] == pytest.approx(18.0)   # unchanged
+
+
+def test_online_state_uses_fitting_but_not_capacitor():
+    """The Online/Active distinction: an online module consumes CPU/PG but draws no
+    capacitor (only active modules do); offline frees the fitting entirely."""
+    prov = _provider()
+
+    def res(state):
+        r = evaluate(FitInput(SHIP, (ModuleInput(AB, SlotKind.MED, state),)),
+                     _all5(), OperatingProfile(), prov)
+        return r.telemetry["resources"], r.telemetry["capacitor"]
+
+    on_res, on_cap = res(ModuleState.ACTIVE)
+    idle_res, idle_cap = res(ModuleState.ONLINE)
+    off_res, off_cap = res(ModuleState.OFFLINE)
+    # Online consumes the same CPU/PG as active…
+    assert idle_res["cpu"]["used"] == on_res["cpu"]["used"] == pytest.approx(15.0)
+    assert idle_res["powergrid"]["used"] == pytest.approx(10.0)
+    # …but draws no capacitor, while active does.
+    assert on_cap["usage"] > 0
+    assert idle_cap["usage"] == pytest.approx(0.0)
+    # Offline frees the fitting entirely.
+    assert off_res["cpu"]["used"] == pytest.approx(0.0)
+    assert off_res["powergrid"]["used"] == pytest.approx(0.0)
+
+
 def test_result_is_json_serialisable():
     import json
     prov = _provider()

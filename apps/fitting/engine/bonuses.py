@@ -50,6 +50,14 @@ SKILL_NAVIGATION = 3449           # +5% max velocity / level
 SKILL_CAP_MANAGEMENT = 3418       # +5% capacitor capacity / level
 SKILL_CAP_SYSTEMS_OP = 3417       # -5% capacitor recharge time / level
 SKILL_WARHEAD_UPGRADES = 3317     # +2% missile (kinetic/thermal/em/explosive) damage / level
+# Engineering / fitting skills — these decide whether a loadout actually FITS. Without them
+# every fit is checked against the untrained hull's base CPU/PG, so real (skilled) fits read
+# as over-capacity. CPU/PG Management raise the ship's output; the Weapon Upgrades pair lower
+# a weapon's fitting cost.
+SKILL_CPU_MANAGEMENT = 3426       # +5% ship CPU output / level
+SKILL_POWER_GRID_MANAGEMENT = 3413  # +5% ship powergrid output / level
+SKILL_WEAPON_UPGRADES = 3318      # -5% CPU need of turrets & launchers / level
+SKILL_ADVANCED_WEAPON_UPGRADES = 11207  # -2% powergrid need of turrets & launchers / level
 
 # Group ids used by the standard bonuses (public SDE group ids).
 GROUP_PROJECTILE_TURRET = 55
@@ -85,6 +93,23 @@ STANDARD_SKILL_BONUSES: tuple[BonusSpec, ...] = (
               skill_id=SKILL_CAP_MANAGEMENT, per_level=True, label="Capacitor Management"),
     BonusSpec("cap_systems_op", A.CAP_RECHARGE_RATE, -5.0, target_domain="ship",
               skill_id=SKILL_CAP_SYSTEMS_OP, per_level=True, label="Capacitor Systems Operation"),
+    # Fitting output: CPU Management / Power Grid Management raise the hull's own CPU / PG
+    # output by 5% per level (a ship-domain bonus on the ship's cpuOutput / powerOutput).
+    BonusSpec("cpu_management", A.CPU_OUTPUT, 5.0, target_domain="ship",
+              skill_id=SKILL_CPU_MANAGEMENT, per_level=True, label="CPU Management"),
+    BonusSpec("power_grid_management", A.POWER_OUTPUT, 5.0, target_domain="ship",
+              skill_id=SKILL_POWER_GRID_MANAGEMENT, per_level=True, label="Power Grid Management"),
+    # Fitting cost: Weapon Upgrades cuts a weapon's CPU need, Advanced Weapon Upgrades its
+    # powergrid need. Both apply to turrets AND launchers, so each is matched by the two
+    # weapon-defining effects (targetAttack / useMissiles) — one spec per effect.
+    BonusSpec("weapon_upgrades_turret", A.CPU_USAGE, -5.0, skill_id=SKILL_WEAPON_UPGRADES,
+              per_level=True, match_effect_id=A.EFFECT_TURRET, label="Weapon Upgrades"),
+    BonusSpec("weapon_upgrades_launcher", A.CPU_USAGE, -5.0, skill_id=SKILL_WEAPON_UPGRADES,
+              per_level=True, match_effect_id=A.EFFECT_LAUNCHER, label="Weapon Upgrades"),
+    BonusSpec("adv_weapon_upgrades_turret", A.POWER_USAGE, -2.0, skill_id=SKILL_ADVANCED_WEAPON_UPGRADES,
+              per_level=True, match_effect_id=A.EFFECT_TURRET, label="Advanced Weapon Upgrades"),
+    BonusSpec("adv_weapon_upgrades_launcher", A.POWER_USAGE, -2.0, skill_id=SKILL_ADVANCED_WEAPON_UPGRADES,
+              per_level=True, match_effect_id=A.EFFECT_LAUNCHER, label="Advanced Weapon Upgrades"),
 )
 
 

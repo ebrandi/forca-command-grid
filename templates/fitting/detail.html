@@ -59,9 +59,12 @@
                   <div class="flex items-center justify-between gap-2">
                     <span class="text-ink" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" x-text="row.it.name"></span>
                     <span class="flex items-center gap-1" x-show="editable">
-                      <select class="input-field" style="padding:0 3px;font-size:11px;" x-model="row.it.state" @change="recompute()" aria-label="{% translate 'Module state' %}">
-                        <option value="active">{% translate "on" %}</option>
-                        <option value="offline">{% translate "off" %}</option>
+                      <select class="input-field" style="padding:0 3px;font-size:11px;" x-model="row.it.state" @change="recompute()"
+                              aria-label="{% translate 'Module state' %}"
+                              title="{% translate 'Active: running (uses CPU/PG + capacitor). Online: powered but idle (uses CPU/PG, no cap). Offline: unfitted (frees CPU/PG). Heat: overloaded.' %}">
+                        <option value="active">{% translate "active" %}</option>
+                        <option value="online">{% translate "online" %}</option>
+                        <option value="offline">{% translate "offline" %}</option>
                         <option value="overheated">{% translate "heat" %}</option>
                       </select>
                       <button type="button" @click="removeItem(row.idx)" class="text-faint" aria-label="{% translate 'Remove' %}">✕</button>

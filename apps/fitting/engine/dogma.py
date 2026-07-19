@@ -207,7 +207,7 @@ def evaluate(
     def active(m) -> bool:
         return m.state in (ModuleState.ACTIVE, ModuleState.OVERHEATED)
 
-    resources = _resources(ship, items, result)
+    resources = _resources(ship, items, ctx, skills, result)
     defence = _defence(ship, items, ctx, skills, op_profile, result)
     capacitor = _capacitor(ship, items, ctx, skills, active)
     offence = _offence(items, provider, ctx, skills, op_profile, result, active)
@@ -242,18 +242,32 @@ def evaluate(
 # --------------------------------------------------------------------------- #
 # Fitting resources
 # --------------------------------------------------------------------------- #
-def _resources(ship, items, result: FittingResult) -> dict:
-    cpu_out = ship.get(A.CPU_OUTPUT, 0.0)
-    pg_out = ship.get(A.POWER_OUTPUT, 0.0)
-    cal_out = ship.get(A.CALIBRATION, 0.0)
+def _resources(ship, items, ctx, skills, result: FittingResult) -> dict:
+    # Fitting OUTPUT scales with the pilot's engineering skills (CPU Management / Power Grid
+    # Management) and any hull role bonus to CPU/PG — apply them like any other ship-attribute
+    # bonus so the check uses the pilot's real capacity, not the untrained hull base.
+    cpu_trace = AttributeTrace("cpu_output", ship.get(A.CPU_OUTPUT, 0.0), 0.0, "tf",
+                               [Contribution("Hull base", "base", "", ship.get(A.CPU_OUTPUT, 0.0))])
+    pg_trace = AttributeTrace("pg_output", ship.get(A.POWER_OUTPUT, 0.0), 0.0, "MW",
+                              [Contribution("Hull base", "base", "", ship.get(A.POWER_OUTPUT, 0.0))])
+    cpu_out = _ship_attr(ship, A.CPU_OUTPUT, ctx, skills, trace=cpu_trace)
+    pg_out = _ship_attr(ship, A.POWER_OUTPUT, ctx, skills, trace=pg_trace)
+    cal_out = _ship_attr(ship, A.CALIBRATION, ctx, skills)  # no skill affects calibration today
+    cpu_trace.final, pg_trace.final = round(cpu_out, 2), round(pg_out, 2)
+    result.traces["cpu_output"], result.traces["pg_output"] = cpu_trace, pg_trace
+
     cpu_used = pg_used = cal_used = 0.0
     slot_counts = {k: 0 for k in ("high", "med", "low", "rig", "subsystem", "drone")}
     turrets = launchers = 0
 
     for m, a, info in items:
         if m.slot in (SlotKind.HIGH, SlotKind.MED, SlotKind.LOW) and m.state != ModuleState.OFFLINE:
-            cpu_used += a.get(A.CPU_USAGE, 0.0)
-            pg_used += a.get(A.POWER_USAGE, 0.0)
+            # A module's CPU/PG cost is reduced by fitting skills (Weapon Upgrades cuts turret/
+            # launcher CPU, Advanced Weapon Upgrades their PG); non-matching modules get ×1.0.
+            cpu_factor, _c = _bonus_factor_for_item(ctx, skills, A.CPU_USAGE, info, a)
+            pg_factor, _p = _bonus_factor_for_item(ctx, skills, A.POWER_USAGE, info, a)
+            cpu_used += a.get(A.CPU_USAGE, 0.0) * cpu_factor
+            pg_used += a.get(A.POWER_USAGE, 0.0) * pg_factor
         if m.slot == SlotKind.RIG:
             cal_used += a.get(A.CALIBRATION_COST, 0.0)
         key = m.slot.value if m.slot.value in slot_counts else None
