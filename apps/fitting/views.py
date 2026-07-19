@@ -103,7 +103,12 @@ def _item_display(items: list[dict]) -> list[dict]:
     takers = services.charge_takers({int(i["type_id"]) for i in items})
     out = []
     for it in items:
-        out.append({**it, "name": names.get(int(it["type_id"]), f"Type {it['type_id']}"),
+        # Normalise the slot to a canonical rack token so the editor's slot racks render a
+        # module in the right place even for a fit stored before slots were canonicalised
+        # (a doctrine loaded with display-label slots like "High 0"). Unknown → leave as-is.
+        slot = services.canonical_slot(it.get("slot")) or it.get("slot")
+        out.append({**it, "slot": slot,
+                    "name": names.get(int(it["type_id"]), f"Type {it['type_id']}"),
                     "charge_name": names.get(int(it["charge_type_id"]), "") if it.get("charge_type_id") else "",
                     "takes_charge": int(it["type_id"]) in takers})
     return out

@@ -88,12 +88,49 @@ def skill_readout(ship_type_id: int, items: list[dict], skills: SkillProfile,
 _SLOT_BY_VALUE = {s.value: s for s in SlotKind}
 _STATE_BY_VALUE = {s.value: s for s in ModuleState}
 
+# Doctrine fits persist their slot as a human display label ("High 0", "Mid 1", "Drone
+# Bay", "Cargo"; see apps.doctrines.xml_import._slot_display), not the engine's rack token.
+# Map any label, raw slot category, or EFT-style "hi slot 0" onto a canonical SlotKind
+# value. Longest/most-specific prefixes first so "subsystem"/"service" never collide.
+_SLOT_ALIAS_PREFIXES = (
+    ("subsystem", "subsystem"),
+    ("service", "service"),
+    ("fighter", "fighter"),
+    ("drone", "drone"),
+    ("cargo", "cargo"),
+    ("high", "high"), ("hi", "high"),
+    ("med", "med"), ("mid", "med"),
+    ("low", "low"),
+    ("rig", "rig"),
+)
+_RACKED_SLOTS = ("high", "med", "low", "rig")
+
+
+def canonical_slot(value) -> str | None:
+    """Normalise a slot label/category to a canonical engine token, or ``None`` if unknown.
+
+    Doctrine fits speak labels ("High 0", "Drone Bay"); the editor racks and engine speak
+    tokens ("high", "drone"). An unrecognised value returns ``None`` so callers can fall
+    back to SDE inference rather than silently mis-slotting a module. Deliberately rack/
+    hold-oriented: implant/booster never arrive as labels here, so they map to ``None``."""
+    s = str(value or "").strip().lower()
+    if not s:
+        return None
+    for prefix, token in _SLOT_ALIAS_PREFIXES:
+        if s.startswith(prefix):
+            return token
+    return None
+
 
 def fit_input_from_items(ship_type_id: int, items: list[dict]) -> FitInput:
     """Build the engine's :class:`FitInput` from a revision's canonical ``items`` list."""
     modules = []
     for it in items or []:
-        slot = _SLOT_BY_VALUE.get(it.get("slot"), SlotKind.LOW)
+        raw = it.get("slot")
+        # Trust an already-canonical token; otherwise canonicalise a display label, falling
+        # back to LOW. (Explicit membership test, so no reliance on enum truthiness.)
+        slot = _SLOT_BY_VALUE[raw] if raw in _SLOT_BY_VALUE \
+            else _SLOT_BY_VALUE.get(canonical_slot(raw), SlotKind.LOW)
         state = _STATE_BY_VALUE.get(it.get("state"), ModuleState.ACTIVE)
         modules.append(ModuleInput(
             type_id=int(it["type_id"]), slot=slot, state=state,
@@ -479,17 +516,24 @@ def items_from_esi_fitting(esi: dict) -> tuple[int, list[dict]]:
 
 
 def items_from_doctrine_fit(doctrine_fit) -> tuple[int, list[dict]]:
-    """Convert a DoctrineFit (.modules [{type_id,quantity,slot}]) into a loadout."""
+    """Convert a DoctrineFit (.modules [{type_id,quantity,slot}]) into a loadout.
+
+    A doctrine persists its slots as display labels ("High 0"); canonicalise each to an
+    engine rack token so the loaded fit drops every module into the correct slot, with
+    SDE-inferred slots as the fallback when a label isn't recognisable. Racked modules are
+    expanded one-per-slot (five turrets → five high-slot entries) so the editor's slot racks
+    fill as a pilot expects; drones/cargo stay a single stacked entry."""
     module_ids = {int(m["type_id"]) for m in (doctrine_fit.modules or [])}
     slots = infer_slots(module_ids)
     items = []
     for m in doctrine_fit.modules or []:
         tid = int(m["type_id"])
-        slot = m.get("slot") or slots.get(tid, "low")
-        for _ in range(int(m.get("quantity", 1)) if slot in ("high", "med", "low", "rig") else 1):
+        slot = canonical_slot(m.get("slot")) or slots.get(tid, "low")
+        qty = max(1, int(m.get("quantity", 1) or 1))
+        racked = slot in _RACKED_SLOTS
+        for _ in range(qty if racked else 1):
             items.append({"type_id": tid, "slot": slot, "state": "active",
-                          "charge_type_id": None, "quantity": 1
-                          if slot in ("high", "med", "low", "rig") else int(m.get("quantity", 1))})
+                          "charge_type_id": None, "quantity": 1 if racked else qty})
     return int(doctrine_fit.ship_type_id), items
 
 

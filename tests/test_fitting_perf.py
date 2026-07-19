@@ -81,7 +81,9 @@ def test_warm_recompute_is_cheap(client, pilot):
 
     with CaptureQueriesContext(connection) as ctx:
         assert _post_telemetry(client, 3).status_code == 200
-    assert len(ctx.captured_queries) <= 12, (
+    # Budget covers the cache-warmed recompute plus the "Pilot skills applied" readout, whose
+    # skill-name resolution is a single bounded IN query (N+1-safe), not per-module.
+    assert len(ctx.captured_queries) <= 13, (
         f"warm recompute took {len(ctx.captured_queries)} queries; expected a cache hit")
 
 

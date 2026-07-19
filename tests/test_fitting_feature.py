@@ -231,6 +231,76 @@ def test_load_doctrine_into_simulator(client, owner, dogma):
     assert any(it["type_id"] == AC for it in loaded.current_revision.items)
 
 
+def test_canonical_slot_maps_labels():
+    """Doctrine display labels, raw categories and EFT-style names all collapse to tokens."""
+    cases = {
+        "High 0": "high", "Mid 1": "med", "Low 2": "low", "Rig 0": "rig",
+        "Drone Bay": "drone", "Cargo": "cargo", "Subsystem": "subsystem",
+        "hi slot 0": "high", "medium": "med", "med": "med", "mid": "med",
+        "high": "high", "rig": "rig",
+    }
+    for label, token in cases.items():
+        assert services.canonical_slot(label) == token, label
+    assert services.canonical_slot("") is None
+    assert services.canonical_slot(None) is None
+    assert services.canonical_slot("nonsense") is None
+
+
+def test_load_doctrine_with_display_label_slots(client, owner, dogma):
+    """The real bug: a doctrine stores slots as display labels ('High 0'), not tokens.
+
+    Loading it must still drop every module into the correct rack — and expand a racked
+    module one-per-slot — so the editor shows a fitted hull, not an empty one."""
+    from apps.doctrines.models import Doctrine, DoctrineFit
+    doc = Doctrine.objects.create(name="Label Doctrine", status=Doctrine.Status.ACTIVE)
+    dfit = DoctrineFit.objects.create(
+        doctrine=doc, name="Rifter Guns", ship_type_id=RIFTER,
+        modules=[{"type_id": AC, "quantity": 3, "slot": "High 0"},   # real label form
+                 {"type_id": DC, "quantity": 1, "slot": "Low 0"}])
+    # service-level: labels canonicalised, racked guns expanded one-per-slot
+    ship_type_id, items = services.items_from_doctrine_fit(dfit)
+    assert ship_type_id == RIFTER
+    highs = [it for it in items if it["slot"] == "high"]
+    assert len(highs) == 3 and all(it["type_id"] == AC for it in highs)   # 3 discrete high slots
+    assert [it for it in items if it["slot"] == "low"][0]["type_id"] == DC
+    assert not any(it["slot"] in ("High 0", "Low 0") for it in items)     # no raw labels leak
+
+    # view-level: the loaded fit persists canonical, racked-out items
+    client.force_login(owner)
+    resp = client.post(reverse("fitting:import_doctrine", args=[dfit.pk]))
+    assert resp.status_code == 302
+    loaded = Fit.objects.filter(owner=owner, origin="doctrine").order_by("-pk").first()
+    stored = loaded.current_revision.items
+    assert sum(1 for it in stored if it["slot"] == "high") == 3
+    assert all(services.canonical_slot(it["slot"]) == it["slot"] for it in stored)
+
+
+def test_heal_fitting_slots_command(owner, dogma):
+    """The heal command rewrites legacy label slots to tokens (+ expands), idempotently."""
+    from django.core.management import call_command
+
+    fit = services.create_fit(owner, name="Legacy", ship_type_id=RIFTER, items=[])
+    rev = fit.current_revision
+    rev.items = [{"type_id": AC, "slot": "High 0", "state": "active",
+                  "charge_type_id": None, "quantity": 3},           # legacy: unexpanded, labelled
+                 {"type_id": DC, "slot": "Low 1", "state": "active",
+                  "charge_type_id": None, "quantity": 1}]
+    rev.save(update_fields=["items"])
+
+    call_command("heal_fitting_slots")
+    rev.refresh_from_db()
+    highs = [it for it in rev.items if it["slot"] == "high"]
+    assert len(highs) == 3 and all(it["quantity"] == 1 for it in highs)   # canonical + expanded
+    assert [it for it in rev.items if it["slot"] == "low"][0]["type_id"] == DC
+    assert not any(it["slot"] in ("High 0", "Low 1") for it in rev.items)
+
+    # idempotent: a second run leaves the (already canonical) data untouched
+    before = list(rev.items)
+    call_command("heal_fitting_slots")
+    rev.refresh_from_db()
+    assert rev.items == before
+
+
 def test_load_doctrine_paginates_and_filters(client, owner, dogma):
     """Every active doctrine is reachable via pagination + search — no arbitrary cap."""
     from apps.doctrines.models import Doctrine, DoctrineDisplayConfig, DoctrineFit
