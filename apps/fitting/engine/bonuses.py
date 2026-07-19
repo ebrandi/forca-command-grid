@@ -55,6 +55,7 @@ SKILL_WARHEAD_UPGRADES = 20315    # +2% missile (all types) damage / level (was 
 SKILL_HEAVY_MISSILES = 3324       # +5% heavy-missile damage / level
 SKILL_MISSILE_LAUNCHER_OP = 3319  # base missile skill (every missile charge requires it)
 SKILL_RAPID_LAUNCH = 21071        # -3% missile launcher rate-of-fire time / level
+SKILL_HEAVY_MISSILE_SPEC = 20211  # -2% heavy missile launcher rate-of-fire time / level (T2)
 # Engineering / fitting skills — these decide whether a loadout actually FITS. Without them
 # every fit is checked against the untrained hull's base CPU/PG, so real (skilled) fits read
 # as over-capacity. CPU/PG Management raise the ship's output; the Weapon Upgrades pair lower
@@ -191,6 +192,8 @@ STANDARD_SKILL_BONUSES: tuple[BonusSpec, ...] = (
     ),
     BonusSpec("rapid_launch", A.RATE_OF_FIRE, -3.0, skill_id=SKILL_RAPID_LAUNCH, per_level=True,
               match_effect_id=A.EFFECT_LAUNCHER, label="Rapid Launch"),
+    BonusSpec("heavy_missile_spec", A.RATE_OF_FIRE, -2.0, skill_id=SKILL_HEAVY_MISSILE_SPEC,
+              per_level=True, match_required_skill_id=SKILL_HEAVY_MISSILE_SPEC, label="Heavy Missile Specialization"),
 
     # --- Navigation / targeting / shield-fitting ------------------------------------------
     BonusSpec("evasive_maneuvering", A.AGILITY, -5.0, target_domain="ship",
