@@ -47,6 +47,31 @@ HULL_RESONANCE = {
 }
 DAMAGE_TYPES = ("em", "thermal", "kinetic", "explosive")
 
+# --- Module bonus SOURCE attributes -----------------------------------------
+# Real SDE modules carry their bonus on a SEPARATE attribute applied to the ship's layer via a
+# dogma effect — NOT on the layer attribute itself. The engine must read these source ids, not
+# the target id, or the bonus reads as zero.
+SHIELD_EXTENDER_HP_BONUS = 72   # capacityBonus — flat shield HP add (Shield Extenders)
+ARMOR_PLATE_HP_BONUS = 1159     # armorHPBonus — flat armour HP add (plates)
+SHIELD_RIG_HP_BONUS = 337       # shieldCapacityBonus (%) — Core Defense Field Extender rigs
+STRUCTURE_HP_MULTIPLIER = 150   # structureHPMultiplier (<1 = penalty, e.g. nanofibers)
+SIG_RADIUS_ADD = 983            # signatureRadiusAdd — flat sig add (Shield Extenders)
+# Damage Control / Assault DCU store HULL (structure) resonance on their OWN attr ids, distinct
+# from the ship's structure resonance (109/110/111/113).
+HULL_RESONANCE_MODULE = {"em": 974, "explosive": 975, "kinetic": 976, "thermal": 977}
+RESISTANCE_MULTIPLIER = 2746    # Assault DCU overload: uniform resonance multiplier when active
+# Mobility module modifiers.
+AGILITY_MULTIPLIER = 169        # agilityMultiplier (%) — nanofibers etc. (stacking penalised)
+VELOCITY_BONUS_MOD = 1076       # velocity % bonus from nanofibers (stacking penalised)
+MWD_SIG_ROLE_BONUS = 1803       # hull role bonus reducing the MWD signature penalty (%)
+
+# --- Module bonus effect ids (dgmEffects) — used to classify a module's effect ---------------
+EFFECT_SHIELD_EXTENDER = 21     # shieldCapacityBonusOnline
+EFFECT_CDFE_RIG = 446           # shield-extender rig postPercent
+EFFECT_STRUCTURE_HP = 60        # structureHPMultiply (nanofiber)
+EFFECT_DAMAGE_CONTROL = 2302    # damageControl (DCU family, resonance stacking-exempt)
+EFFECT_ASSAULT_DCU = 7012       # moduleBonusAssaultDamageControl
+
 # --- Capacitor --------------------------------------------------------------
 CAP_CAPACITY = 482
 CAP_RECHARGE_RATE = 55   # ms for a full recharge
@@ -61,6 +86,10 @@ CYCLE_TIME = 73              # duration (ms)
 # --- Offence ----------------------------------------------------------------
 DAMAGE_MULTIPLIER = 64       # turret/launcher damage multiplier
 RATE_OF_FIRE = 51            # speed (ms between cycles)
+# A damage-mod module (gyro/magstab/heat sink/BCS) carries its RATE-OF-FIRE bonus on a
+# SEPARATE attribute (speedMultiplier, <1 = faster) — NOT on attr 51. Reading attr 51 off the
+# mod finds nothing, so the RoF bonus is silently dropped unless this attribute is used.
+ROF_MULTIPLIER = 204         # speedMultiplier (damage-mod rate-of-fire bonus)
 DRONE_DAMAGE_MULTIPLIER = 64
 # charge / projectile damage components
 EM_DAMAGE = 114
@@ -102,7 +131,7 @@ ECM_STRENGTH = {                        # racial ECM jam strength modifiers
     "gravimetric": 238, "ladar": 239, "magnetometric": 240, "radar": 241,
 }
 MAX_TARGET_RANGE_BONUS = 309            # remote sensor damp: lock-range reduction (%)
-SCAN_RESOLUTION_BONUS = 337             # remote sensor damp: scan-res reduction (%)
+SCAN_RESOLUTION_BONUS = 565             # remote sensor damp: scan-res reduction (%) (was mislabelled 337)
 SIGNATURE_RADIUS_BONUS_ATTR = 554       # target painter: target sig increase (%)
 
 # --- Mobility / signature ---------------------------------------------------

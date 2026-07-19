@@ -59,6 +59,32 @@ SKILL_POWER_GRID_MANAGEMENT = 3413  # +5% ship powergrid output / level
 SKILL_WEAPON_UPGRADES = 3318      # -5% CPU need of turrets & launchers / level
 SKILL_ADVANCED_WEAPON_UPGRADES = 11207  # -2% powergrid need of turrets & launchers / level
 
+# Gunnery support (turrets — matched by the turret effect or a specific required-skill id).
+SKILL_GUNNERY = 3300              # -2% turret rate-of-fire time / level
+SKILL_MOTION_PREDICTION = 3312    # +5% turret tracking / level
+SKILL_SHARPSHOOTER = 3311         # +5% turret optimal range / level
+SKILL_TRAJECTORY_ANALYSIS = 3317  # +5% turret falloff / level
+# Base turret damage skills (+5% dmg/level) and specialisations (+2% dmg/level). Each is scoped
+# to weapons that REQUIRE it, so a gun only receives the skills that gate it.
+SKILL_SMALL_PROJECTILE = 3302
+SKILL_MEDIUM_PROJECTILE = 3305
+SKILL_LARGE_PROJECTILE = 3308
+SKILL_MEDIUM_AC_SPEC = 12208
+# Drones (damage): Drone Interfacing scales ALL drones; the size/racial skills scope by req-skill.
+SKILL_DRONE_INTERFACING = 3442    # +10% drone damage / level (all drones)
+SKILL_LIGHT_DRONE_OP = 24241      # +5% light drone damage / level
+SKILL_MINMATAR_DRONE_SPEC = 12485  # +2% Minmatar drone damage / level
+# Navigation / targeting / shield-fitting.
+SKILL_EVASIVE_MANEUVERING = 3453  # -5% ship agility (inertia) / level
+SKILL_SPACESHIP_COMMAND = 3327    # -2% ship agility (inertia) / level
+SKILL_ACCELERATION_CONTROL = 3452  # +5% AB/MWD velocity factor / level
+SKILL_LONG_RANGE_TARGETING = 3428  # +5% max targeting range / level
+SKILL_SIGNATURE_ANALYSIS = 3431   # +5% scan resolution / level
+SKILL_SHIELD_UPGRADES = 3425      # -5% powergrid need of shield modules / level
+
+# Prop-module (afterburner / MWD) inventory groups, for the velocity-factor skill match.
+PROP_GROUPS = (46, 47)
+
 # Group ids used by the standard bonuses (public SDE group ids).
 GROUP_PROJECTILE_TURRET = 55
 GROUP_HYBRID_TURRET = 74
@@ -71,8 +97,11 @@ LAUNCHER_GROUPS = (507, 508, 509, 510, 511, 524, 771, 1245, 1246)
 # The curated, engine-supported standard skill bonuses. Each is validated by a test that
 # hand-computes the expected number; see tests/test_fitting_engine.py.
 STANDARD_SKILL_BONUSES: tuple[BonusSpec, ...] = (
+    # Surgical Strike is a GUNNERY skill — turrets only. Scope it by the turret effect so it
+    # cannot leak onto drones (category 18, which also carry attr 64) now that the drone loop
+    # routes through the bonus engine.
     BonusSpec("surgical_strike", A.DAMAGE_MULTIPLIER, 3.0, skill_id=SKILL_SURGICAL_STRIKE,
-              per_level=True, match_attr_present=A.DAMAGE_MULTIPLIER, label="Surgical Strike"),
+              per_level=True, match_effect_id=A.EFFECT_TURRET, label="Surgical Strike"),
     # Missiles take all damage from the charge (launchers have no damageMultiplier attr), so
     # match every launcher by its useMissiles effect — robust across cruise/rapid/XL/… groups.
     BonusSpec("warhead_upgrades", A.DAMAGE_MULTIPLIER, 2.0, skill_id=SKILL_WARHEAD_UPGRADES,
@@ -110,6 +139,40 @@ STANDARD_SKILL_BONUSES: tuple[BonusSpec, ...] = (
               per_level=True, match_effect_id=A.EFFECT_TURRET, label="Advanced Weapon Upgrades"),
     BonusSpec("adv_weapon_upgrades_launcher", A.POWER_USAGE, -2.0, skill_id=SKILL_ADVANCED_WEAPON_UPGRADES,
               per_level=True, match_effect_id=A.EFFECT_LAUNCHER, label="Advanced Weapon Upgrades"),
+
+    # --- Gunnery: rate-of-fire, base turret damage, specialisations -----------------------
+    BonusSpec("gunnery", A.RATE_OF_FIRE, -2.0, skill_id=SKILL_GUNNERY, per_level=True,
+              match_effect_id=A.EFFECT_TURRET, label="Gunnery"),
+    BonusSpec("small_projectile", A.DAMAGE_MULTIPLIER, 5.0, skill_id=SKILL_SMALL_PROJECTILE,
+              per_level=True, match_required_skill_id=SKILL_SMALL_PROJECTILE, label="Small Projectile Turret"),
+    BonusSpec("medium_projectile", A.DAMAGE_MULTIPLIER, 5.0, skill_id=SKILL_MEDIUM_PROJECTILE,
+              per_level=True, match_required_skill_id=SKILL_MEDIUM_PROJECTILE, label="Medium Projectile Turret"),
+    BonusSpec("large_projectile", A.DAMAGE_MULTIPLIER, 5.0, skill_id=SKILL_LARGE_PROJECTILE,
+              per_level=True, match_required_skill_id=SKILL_LARGE_PROJECTILE, label="Large Projectile Turret"),
+    BonusSpec("medium_ac_spec", A.DAMAGE_MULTIPLIER, 2.0, skill_id=SKILL_MEDIUM_AC_SPEC,
+              per_level=True, match_required_skill_id=SKILL_MEDIUM_AC_SPEC, label="Medium Autocannon Specialization"),
+
+    # --- Drones (damage): Drone Interfacing scales all drones; size/racial scope by req-skill --
+    BonusSpec("drone_interfacing", A.DRONE_DAMAGE_MULTIPLIER, 10.0, skill_id=SKILL_DRONE_INTERFACING,
+              per_level=True, match_category_ids=(A.CATEGORY_DRONE,), label="Drone Interfacing"),
+    BonusSpec("light_drone_op", A.DRONE_DAMAGE_MULTIPLIER, 5.0, skill_id=SKILL_LIGHT_DRONE_OP,
+              per_level=True, match_required_skill_id=SKILL_LIGHT_DRONE_OP, label="Light Drone Operation"),
+    BonusSpec("minmatar_drone_spec", A.DRONE_DAMAGE_MULTIPLIER, 2.0, skill_id=SKILL_MINMATAR_DRONE_SPEC,
+              per_level=True, match_required_skill_id=SKILL_MINMATAR_DRONE_SPEC, label="Minmatar Drone Specialization"),
+
+    # --- Navigation / targeting / shield-fitting ------------------------------------------
+    BonusSpec("evasive_maneuvering", A.AGILITY, -5.0, target_domain="ship",
+              skill_id=SKILL_EVASIVE_MANEUVERING, per_level=True, label="Evasive Maneuvering"),
+    BonusSpec("spaceship_command", A.AGILITY, -2.0, target_domain="ship",
+              skill_id=SKILL_SPACESHIP_COMMAND, per_level=True, label="Spaceship Command"),
+    BonusSpec("acceleration_control", A.SPEED_BONUS, 5.0, skill_id=SKILL_ACCELERATION_CONTROL,
+              per_level=True, match_group_ids=PROP_GROUPS, label="Acceleration Control"),
+    BonusSpec("long_range_targeting", A.MAX_TARGET_RANGE, 5.0, target_domain="ship",
+              skill_id=SKILL_LONG_RANGE_TARGETING, per_level=True, label="Long Range Targeting"),
+    BonusSpec("signature_analysis", A.SCAN_RESOLUTION, 5.0, target_domain="ship",
+              skill_id=SKILL_SIGNATURE_ANALYSIS, per_level=True, label="Signature Analysis"),
+    BonusSpec("shield_upgrades", A.POWER_USAGE, -5.0, skill_id=SKILL_SHIELD_UPGRADES,
+              per_level=True, match_required_skill_id=SKILL_SHIELD_UPGRADES, label="Shield Upgrades"),
 )
 
 

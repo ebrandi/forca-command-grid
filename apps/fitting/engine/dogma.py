@@ -39,7 +39,7 @@ LAUNCHER_GROUPS = frozenset({507, 508, 509, 510, 511, 524, 771, 1245, 1246})
 TURRET_GROUPS = frozenset({53, 55, 74})
 # Damage-mod groups per weapon class, so a Ballistic Control boosts only missiles and a
 # gyrostabiliser only turrets (they never cross-boost).
-TURRET_DAMAGE_MOD_GROUPS = frozenset({62, 326, 327})     # gyro / magstab / heat sink
+TURRET_DAMAGE_MOD_GROUPS = frozenset({59, 326, 327})     # gyrostabilizer(59) / magstab / heat sink
 LAUNCHER_DAMAGE_MOD_GROUPS = frozenset({367})            # ballistic control system
 DRONE_DAMAGE_MOD_GROUPS = frozenset({640})               # drone damage amplifier
 SHIELD_EXTENDER_GROUP = 40
@@ -332,43 +332,81 @@ def _resources(ship, items, ctx, skills, result: FittingResult) -> dict:
 # --------------------------------------------------------------------------- #
 # Defence (EHP)
 # --------------------------------------------------------------------------- #
-def _layer_hp(ship, items, hp_attr, flat_groups, ctx, skills, trace_label, result):
+def _layer_hp(ship, items, hp_attr, flat_attr, pct_attr, mult_attr, ctx, skills, trace_label, result):
+    """Layer HP = (base + flat module adds) × structure multipliers × rig %HP, then × the
+    skill bonus. A module carries its HP bonus on a SOURCE attr distinct from the layer attr:
+    shield extenders on attr 72, armour plates on 1159 (flat); shield-extender rigs on 337
+    (multiplicative %, NOT stacking-penalised); nanofibers on 150 (structure HP multiplier)."""
     base = ship.get(hp_attr, 0.0)
     flat = 0.0
-    for m, a, info in items:
+    pct_factor = 1.0     # rig %HP — multiplicative, stacking-EXEMPT (shield extender rigs)
+    mult_factor = 1.0    # structure HP multiplier (nanofibers) — multiplicative
+    for m, a, _info in items:
         if m.state == ModuleState.OFFLINE:
             continue
-        if info.get("group_id") in flat_groups:
-            flat += a.get(hp_attr, 0.0)
+        if flat_attr and flat_attr in a:
+            flat += a.get(flat_attr, 0.0)
+        if pct_attr and pct_attr in a:
+            pct_factor *= 1.0 + a[pct_attr] / 100.0
+        if mult_attr and mult_attr in a:
+            mult_factor *= a[mult_attr]
+    subtotal = (base + flat) * mult_factor * pct_factor
     trace = AttributeTrace(trace_label, base, base, "HP",
                            [Contribution("Hull base", "base", "", base)])
     if flat:
         trace.contributions.append(Contribution("Modules", "module", f"+{flat:.0f} HP"))
-    total = _ship_attr({**ship, hp_attr: base + flat}, hp_attr, ctx, skills, trace=trace)
+    if mult_factor != 1.0:
+        trace.contributions.append(Contribution("Structure multiplier", "module", f"×{mult_factor:.3f}"))
+    if pct_factor != 1.0:
+        trace.contributions.append(Contribution("Rigs", "rig", f"×{pct_factor:.3f}"))
+    total = _ship_attr({**ship, hp_attr: subtotal}, hp_attr, ctx, skills, trace=trace)
     trace.final = total
     result.traces[trace_label] = trace
     return total
 
 
-def _layer_resonance(ship, items, resonance_attrs, ctx, skills, active_only, result, label):
-    """resist% per damage type after penalised module resonances + unpenalised bonuses."""
+def _layer_resonance(ship, items, resonance_attrs, module_attrs, ctx, skills, result, label):
+    """resist% per damage type. Normal hardeners stack-penalise; the Damage-Control family
+    (detected by its dogma effect) is stacking-EXEMPT. Modules may store a layer's resonance
+    on a DIFFERENT attr than the ship (a Damage Control keeps HULL resonance on 974-977, not
+    the ship's 109-113) — ``module_attrs`` maps each damage type to the module source attr. An
+    OVERHEATED Assault DCU applies its uniform ``resistanceMultiplier`` (attr 2746) in place of
+    its passive per-layer resonance."""
+    def is_dcu(info):
+        effs = info.get("effects", ())
+        return A.EFFECT_DAMAGE_CONTROL in effs or A.EFFECT_ASSAULT_DCU in effs
+
+    # A single overheated damage-control replaces its per-layer resonance with a flat multiplier.
+    dcu_overheat = None
+    for m, a, info in items:
+        if m.state == ModuleState.OVERHEATED and is_dcu(info) and A.RESISTANCE_MULTIPLIER in a:
+            dcu_overheat = a[A.RESISTANCE_MULTIPLIER]
+
     out = {}
     for dtype, attr in resonance_attrs.items():
         base = ship.get(attr, 1.0)
-        mults = []
-        for m, a, _info in items:
+        mod_attr = module_attrs[dtype]
+        pen_mults, dcu_mults = [], []
+        for m, a, info in items:
             if m.state == ModuleState.OFFLINE:
                 continue
-            if attr in a and a[attr] != 1.0:
-                mults.append(a[attr])
-        penalised = combine_penalized(mults)
+            val = a.get(mod_attr)
+            if is_dcu(info):
+                if dcu_overheat is None and val is not None and val != 1.0:
+                    dcu_mults.append(val)          # active DCU: per-layer, stacking-exempt
+            elif val is not None and val != 1.0:
+                pen_mults.append(val)              # normal hardener: stacking-penalised
+        resonance = base * combine_penalized(pen_mults)
+        for dm in dcu_mults:
+            resonance *= dm
+        if dcu_overheat is not None:
+            resonance *= dcu_overheat              # overheated Assault DCU: uniform multiplier
         # Unpenalised ship/skill resist bonuses on this resonance attribute.
-        bonus = 1.0
         for spec in ctx.all():
             if spec.target_domain == "ship" and spec.target_attr == attr and not spec.penalised:
                 level = skills.level(spec.skill_id) if spec.skill_id else 1
-                bonus *= spec.factor(level)
-        resonance = max(0.0, min(1.0, base * penalised * bonus))
+                resonance *= spec.factor(level)
+        resonance = max(0.0, min(1.0, resonance))
         out[dtype] = {"resonance": resonance, "resist": 1.0 - resonance}
     return out
 
@@ -377,13 +415,17 @@ def _defence(ship, items, ctx, skills, op_profile, result: FittingResult) -> dic
     layers = {}
     dp = op_profile.damage_profile.normalised().as_map()
     total_ehp = 0.0
-    for name, hp_attr, res_attrs, groups in (
-        ("shield", A.SHIELD_HP, A.SHIELD_RESONANCE, {SHIELD_EXTENDER_GROUP}),
-        ("armor", A.ARMOR_HP, A.ARMOR_RESONANCE, {ARMOR_PLATE_GROUP}),
-        ("hull", A.HULL_HP, A.HULL_RESONANCE, set()),
+    for name, hp_attr, res_attrs, mod_res, flat_attr, pct_attr, mult_attr in (
+        ("shield", A.SHIELD_HP, A.SHIELD_RESONANCE, A.SHIELD_RESONANCE,
+         A.SHIELD_EXTENDER_HP_BONUS, A.SHIELD_RIG_HP_BONUS, None),
+        ("armor", A.ARMOR_HP, A.ARMOR_RESONANCE, A.ARMOR_RESONANCE,
+         A.ARMOR_PLATE_HP_BONUS, None, None),
+        ("hull", A.HULL_HP, A.HULL_RESONANCE, A.HULL_RESONANCE_MODULE,
+         None, None, A.STRUCTURE_HP_MULTIPLIER),
     ):
-        hp = _layer_hp(ship, items, hp_attr, groups, ctx, skills, f"{name}_hp", result)
-        res = _layer_resonance(ship, items, res_attrs, ctx, skills, False, result, name)
+        hp = _layer_hp(ship, items, hp_attr, flat_attr, pct_attr, mult_attr,
+                       ctx, skills, f"{name}_hp", result)
+        res = _layer_resonance(ship, items, res_attrs, mod_res, ctx, skills, result, name)
         weighted_res = sum(dp[d] * res[d]["resonance"] for d in A.DAMAGE_TYPES)
         ehp = hp / weighted_res if weighted_res > 0 else hp
         total_ehp += ehp
@@ -463,8 +505,10 @@ def _weapon_rof(module_attrs, info, items, ctx, skills, mod_groups):
     for m2, a2, info2 in items:
         if m2.state == ModuleState.OFFLINE:
             continue
-        if info2.get("group_id") in mod_groups and A.RATE_OF_FIRE in a2:
-            rof_mults.append(a2[A.RATE_OF_FIRE])
+        # A damage mod carries its RoF bonus on speedMultiplier (attr 204, <1 = faster) — NOT
+        # on the weapon's rate-of-fire attr (51), which the mod does not have.
+        if info2.get("group_id") in mod_groups and A.ROF_MULTIPLIER in a2:
+            rof_mults.append(a2[A.ROF_MULTIPLIER])
     return (base_ms / 1000.0) * unpen * combine_penalized(rof_mults)
 
 
@@ -532,13 +576,21 @@ def _offence(items, provider, ctx, skills, op_profile, result: FittingResult, ac
         for d in A.DAMAGE_TYPES:
             damage_by_type[d] += (shot[d] * dmg_mult) / rof_s
 
-    # Drones
-    for m, a, _info in items:
+    # Drones — damage scales with the drone-damage skills (Drone Interfacing + racial/size),
+    # applied through the SAME unpenalised bonus engine as turrets (matched to category 18);
+    # the drone loop previously read the raw multiplier and applied no skills at all.
+    for m, a, info in items:
         if m.slot != SlotKind.DRONE or not active(m):
             continue
         shot = {d: a.get(A.CHARGE_DAMAGE[d], 0.0) for d in A.DAMAGE_TYPES}
         shot_total = sum(shot.values())
-        mult = a.get(A.DRONE_DAMAGE_MULTIPLIER, 1.0)
+        base_mult = a.get(A.DRONE_DAMAGE_MULTIPLIER, 1.0)
+        skill_factor, _c = _bonus_factor_for_item(ctx, skills, A.DRONE_DAMAGE_MULTIPLIER, info, a)
+        # Drone Damage Amplifiers (group 640) stack-penalise among themselves.
+        amp_mults = [a2[A.DRONE_DAMAGE_MULTIPLIER] for m2, a2, info2 in items
+                     if info2.get("group_id") in DRONE_DAMAGE_MOD_GROUPS
+                     and m2.state != ModuleState.OFFLINE and A.DRONE_DAMAGE_MULTIPLIER in a2]
+        mult = base_mult * skill_factor * combine_penalized(amp_mults)
         rof_s = (a.get(A.RATE_OF_FIRE, 0.0) or 0.0) / 1000.0
         if shot_total > 0 and rof_s > 0:
             d_dps = (shot_total * mult) / rof_s * m.quantity
@@ -583,24 +635,49 @@ def _mobility(ship, items, ctx, skills, op_profile, result, active) -> dict:
     trace = AttributeTrace("max_velocity", ship.get(A.MAX_VELOCITY, 0.0), 0.0, "m/s",
                            [Contribution("Hull base", "base", "", ship.get(A.MAX_VELOCITY, 0.0))])
     base_v = _ship_attr(ship, A.MAX_VELOCITY, ctx, skills, trace=trace)
+    # Nanofibers/inertia mods carry velocity & agility MULTIPLIERS (stacking-penalised).
+    vel_mults = [1.0 + a.get(A.VELOCITY_BONUS_MOD, 0.0) / 100.0
+                 for m, a, _i in items if m.state != ModuleState.OFFLINE and A.VELOCITY_BONUS_MOD in a]
+    base_v *= combine_penalized(vel_mults)
+
+    agility = _ship_attr(ship, A.AGILITY, ctx, skills)  # Evasive Maneuvering + Spaceship Command
+    agi_mults = [1.0 + a.get(A.AGILITY_MULTIPLIER, 0.0) / 100.0
+                 for m, a, _i in items if m.state != ModuleState.OFFLINE and A.AGILITY_MULTIPLIER in a]
+    agility *= combine_penalized(agi_mults)
+
     mass = ship.get(A.MASS, 0.0)
-    agility = ship.get(A.AGILITY, 0.0)
     sig = ship.get(A.SIGNATURE_RADIUS, 0.0)
+    # Shield extenders add a FLAT signature penalty (regardless of propulsion state).
+    sig += sum(a.get(A.SIG_RADIUS_ADD, 0.0) for m, a, _i in items if m.state != ModuleState.OFFLINE)
+    mwd_sig_role = ship.get(A.MWD_SIG_ROLE_BONUS, 0.0)  # hull role reducing the MWD sig penalty
 
     prop_v = base_v
     if op_profile.propulsion_active:
         for m, a, info in items:
             if info.get("group_id") in PROP_GROUPS and active(m):
-                speed_factor = a.get(A.SPEED_BONUS, 0.0)
-                if speed_factor:
-                    prop_v = base_v * (1.0 + speed_factor / 100.0)
-                    trace.contributions.append(
-                        Contribution(info.get("name", "Propulsion"), "module",
-                                     f"+{speed_factor:.0f}% speed"))
                 mass += a.get(A.MASS_ADDITION, 0.0)
+                # Real mass-dependent thrust: boost = (speedFactor·accel-skill/100)·(thrust/mass).
+                sf_value = a.get(A.SPEED_BONUS, 0.0)
+                accel_factor, _c = _bonus_factor_for_item(ctx, skills, A.SPEED_BONUS, info, a)
+                sf = sf_value * accel_factor
+                thrust = a.get(A.SPEED_BOOST_FACTOR, 0.0)
+                hull_mass = ship.get(A.MASS, 0.0)
+                if sf and thrust and hull_mass > 0:
+                    boost = (sf / 100.0) * (thrust / mass)   # exact mass-dependent thrust
+                elif sf:
+                    # Fallback when the hull's base mass is unavailable (SDE lacks attr 4):
+                    # treat the speed factor as a flat % so velocity never explodes.
+                    boost = sf / 100.0
+                    result.unsupported.append("prop_velocity_approx_no_mass")
+                else:
+                    boost = 0.0
+                if boost:
+                    prop_v = base_v * (1.0 + boost)
+                    trace.contributions.append(
+                        Contribution(info.get("name", "Propulsion"), "module", f"+{boost * 100:.0f}% speed"))
                 sig_bonus = a.get(A.SIGNATURE_RADIUS_BONUS, 0.0)
-                if sig_bonus:
-                    sig = sig * (1.0 + sig_bonus / 100.0)
+                if sig_bonus:  # MWD sig penalty, reduced by any hull role bonus (attr 1803)
+                    sig = sig * (1.0 + (sig_bonus / 100.0) * (1.0 + mwd_sig_role / 100.0))
                 break
     trace.final = round(prop_v, 1)
     result.traces["max_velocity"] = trace
@@ -620,12 +697,14 @@ def _mobility(ship, items, ctx, skills, op_profile, result, active) -> dict:
 # Targeting / utility
 # --------------------------------------------------------------------------- #
 def _targeting(ship, ctx, skills) -> dict:
+    # Max targeting range and scan resolution scale with pilot skills (Long Range Targeting,
+    # Signature Analysis); this function previously read the raw hull attrs and ignored skills.
     sensors = {k: ship.get(v, 0.0) for k, v in A.SENSOR_STRENGTHS.items()}
     strongest = max(sensors.items(), key=lambda kv: kv[1]) if sensors else ("", 0.0)
     return {
-        "max_target_range": round(ship.get(A.MAX_TARGET_RANGE, 0.0), 0),
+        "max_target_range": round(_ship_attr(ship, A.MAX_TARGET_RANGE, ctx, skills), 0),
         "max_locked_targets": int(ship.get(A.MAX_LOCKED_TARGETS, 0)),
-        "scan_resolution": round(ship.get(A.SCAN_RESOLUTION, 0.0), 0),
+        "scan_resolution": round(_ship_attr(ship, A.SCAN_RESOLUTION, ctx, skills), 0),
         "sensor_strength": round(strongest[1], 1),
         "sensor_type": strongest[0],
     }

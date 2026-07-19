@@ -15,7 +15,7 @@ from enum import Enum
 
 # Bumped whenever a calculation changes in a way that could move a saved fit's numbers.
 # Stored on every FitRevision + cache key so historical results never silently drift.
-ENGINE_VERSION = "1.0.0"
+ENGINE_VERSION = "1.1.0"
 
 
 class SlotKind(str, Enum):

@@ -63,18 +63,18 @@ def _types() -> dict:
                        A.TRACKING_SPEED: 0.2}},
         FUSION: {"name": "Test Fusion S", "group_id": 83, "category_id": 8,
                  "attrs": {A.EXPLOSIVE_DAMAGE: 9.0}},
-        GYRO: {"name": "Test Gyrostabilizer", "group_id": 62, "category_id": 7,
+        GYRO: {"name": "Test Gyrostabilizer", "group_id": 59, "category_id": 7,
                "attrs": {A.CPU_USAGE: 18, A.POWER_USAGE: 1, A.DAMAGE_MULTIPLIER: 1.10,
-                         A.RATE_OF_FIRE: 0.90}},
+                         A.ROF_MULTIPLIER: 0.90}},
         EXT: {"name": "Test Shield Extender", "group_id": 40, "category_id": 7,
-              "attrs": {A.CPU_USAGE: 20, A.POWER_USAGE: 12, A.SHIELD_HP: 268}},
+              "attrs": {A.CPU_USAGE: 20, A.POWER_USAGE: 12, A.SHIELD_EXTENDER_HP_BONUS: 268}},
         HARD: {"name": "Test Shield Amplifier", "group_id": 295, "category_id": 7,
                "attrs": {A.CPU_USAGE: 18, A.POWER_USAGE: 1,
                          A.SHIELD_RESONANCE["em"]: 0.70, A.SHIELD_RESONANCE["thermal"]: 0.70,
                          A.SHIELD_RESONANCE["kinetic"]: 0.70, A.SHIELD_RESONANCE["explosive"]: 0.70}},
         AB: {"name": "Test 1MN Afterburner", "group_id": 46, "category_id": 7,
              "attrs": {A.CPU_USAGE: 15, A.POWER_USAGE: 10, A.SPEED_BONUS: 135, A.CAP_NEED: 8,
-                       A.CYCLE_TIME: 10000}},
+                       A.CYCLE_TIME: 10000, A.SPEED_BOOST_FACTOR: 1200000}},
         DRONE: {"name": "Test Warrior", "group_id": 100, "category_id": 18,
                 "attrs": {A.EXPLOSIVE_DAMAGE: 5.0, A.DRONE_DAMAGE_MULTIPLIER: 1.0,
                           A.RATE_OF_FIRE: 2000}},
@@ -88,7 +88,7 @@ def _types() -> dict:
                            A.AOE_DAMAGE_REDUCTION_SENSITIVITY: 0.70}},
         BCS: {"name": "Test Ballistic Control", "group_id": 367, "category_id": 7,
               "attrs": {A.CPU_USAGE: 18, A.POWER_USAGE: 1, A.DAMAGE_MULTIPLIER: 1.10,
-                        A.RATE_OF_FIRE: 0.90}},
+                        A.ROF_MULTIPLIER: 0.90}},
         WEB: {"name": "Test Stasis Webifier", "group_id": 65, "category_id": 7,
               "attrs": {A.CPU_USAGE: 3, A.POWER_USAGE: 1, A.SPEED_BONUS: -60.0,
                         A.OPTIMAL_RANGE: 10000.0, A.FALLOFF: 5000.0}},
@@ -148,8 +148,9 @@ def test_dps_with_ship_and_skill_and_module_bonuses():
         ModuleInput(GYRO, SlotKind.LOW, ModuleState.ACTIVE),
     ))
     r = evaluate(fit, _all5(), OperatingProfile(), prov)
-    # dmg_mult = 1.0 * (1.25 minfrig * 1.15 surgical) * 1.10 gyro ; rof = 2.5*0.80*0.90
-    expected = 9 * (1.0 * 1.25 * 1.15 * 1.10) / (2.5 * 0.80 * 0.90)
+    # dmg_mult = 1.0 * (1.25 minfrig * 1.15 surgical) * 1.10 gyro
+    # rof = 2.5 * 0.80 rapid-firing * 0.90 gunnery * 0.90 gyro
+    expected = 9 * (1.0 * 1.25 * 1.15 * 1.10) / (2.5 * 0.80 * 0.90 * 0.90)
     assert r.telemetry["offence"]["total_dps"] == pytest.approx(expected, abs=0.05)
     assert r.telemetry["offence"]["damage_distribution"]["explosive"] == 100.0
     assert r.status == Status.VALID
@@ -490,7 +491,7 @@ def test_orm_adapter_matches_memory_engine(orm_dogma):
         ModuleInput(GYRO, SlotKind.LOW, ModuleState.ACTIVE),
     ))
     r = engine.evaluate(fit, _all5(), OperatingProfile())
-    expected = 9 * (1.0 * 1.25 * 1.15 * 1.10) / (2.5 * 0.80 * 0.90)
+    expected = 9 * (1.0 * 1.25 * 1.15 * 1.10) / (2.5 * 0.80 * 0.90 * 0.90)
     assert r.telemetry["offence"]["total_dps"] == pytest.approx(expected, abs=0.05)
     # slot-count bridge: hull slots come through even though we stored them as dogma attrs
     assert r.telemetry["resources"]["slots"]["hull"]["high"] == 4
