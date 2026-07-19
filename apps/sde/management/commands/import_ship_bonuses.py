@@ -33,10 +33,10 @@ from apps.admin_audit.models import AppSetting
 from apps.sde.models import SdeShipBonus, SdeType
 from core.netcap import CappedReader
 
-try:  # libyaml — ~8x faster on the 25MB typeDogma.yaml
-    _YAML_LOADER = yaml.CSafeLoader
-except AttributeError:  # pragma: no cover - environment without libyaml
-    _YAML_LOADER = yaml.SafeLoader
+# libyaml's CSafeLoader is ~8x faster on the 25MB typeDogma.yaml; both it and the pure-python
+# SafeLoader are *safe* loaders (they never instantiate arbitrary objects, unlike Loader /
+# FullLoader) — the branch below keeps the Loader argument a literal so the linter can see that.
+_HAVE_CLOADER = hasattr(yaml, "CSafeLoader")
 
 SDE_URL = "https://eve-static-data-export.s3-eu-west-1.amazonaws.com/tranquility/sde.zip"
 _FSD = ("fsd/dogmaAttributes.yaml", "fsd/typeDogma.yaml", "fsd/dogmaEffects.yaml")
@@ -113,7 +113,9 @@ class Command(BaseCommand):
         def load(zf, name):
             with zf.open(name) as raw:
                 data = CappedReader(raw, _MAX_MEMBER).read()
-            return yaml.load(data, Loader=_YAML_LOADER)
+            if _HAVE_CLOADER:
+                return yaml.load(data, Loader=yaml.CSafeLoader)
+            return yaml.safe_load(data)
         try:
             with zipfile.ZipFile(zip_path) as zf:
                 names = set(zf.namelist())
