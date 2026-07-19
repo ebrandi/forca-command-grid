@@ -58,6 +58,30 @@ def pilot_skill_profile(character, label: str = "current") -> SkillProfile:
     return SkillProfile.from_dict(levels, label=label)
 
 
+def skill_readout(ship_type_id: int, items: list[dict], skills: SkillProfile,
+                  limit: int = 14) -> list[dict]:
+    """The skills that actually drive this fit's numbers, each with the active profile's
+    trained level — so a pilot can see WHICH skills are being applied (and at what level),
+    not just which are missing. Relevant skills = the hull's + every fitted module's
+    prerequisites, plus the engine's standard damage/tank/navigation bonus skills."""
+    from .engine.adapter import ORMDataProvider
+    from .engine.bonuses import STANDARD_SKILL_BONUSES
+
+    prov = ORMDataProvider()
+    ids = {sid for sid, _ in prov.required_skills(int(ship_type_id))}
+    for it in items or []:
+        ids |= {sid for sid, _ in prov.required_skills(int(it["type_id"]))}
+    ids |= {b.skill_id for b in STANDARD_SKILL_BONUSES if b.skill_id}
+    if not ids:
+        return []
+    names = _type_names(ids)
+    out = [{"skill_type_id": sid, "name": names.get(sid, f"Skill {sid}"),
+            "level": skills.level(sid)} for sid in ids]
+    # Trained-highest first, then by name — the pilot sees their strongest relevant skills up top.
+    out.sort(key=lambda s: (-s["level"], s["name"]))
+    return out[:limit]
+
+
 # --------------------------------------------------------------------------- #
 # Fit input construction
 # --------------------------------------------------------------------------- #

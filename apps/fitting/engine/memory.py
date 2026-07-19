@@ -34,6 +34,9 @@ class MemoryDataProvider:
     def attrs(self, type_id: int) -> dict[int, float]:
         return dict(self._types.get(type_id, {}).get("attrs", {}))
 
+    def effects(self, type_id: int) -> frozenset[int]:
+        return frozenset(self._types.get(type_id, {}).get("effects", ()))
+
     def required_skills(self, type_id: int) -> list[tuple[int, int]]:
         return list(self._types.get(type_id, {}).get("skills", []))
 

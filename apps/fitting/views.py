@@ -267,6 +267,8 @@ def detail(request, pk):
         "price": services.price_fit(fit.ship_type_id, rev.items if rev else []),
         "stock": services.stock_coverage(fit.ship_type_id, rev.items if rev else []),
         "missing_skills": _enrich_skills(telemetry.get("missing_skills", [])),
+        "applied_skills": services.skill_readout(fit.ship_type_id, rev.items if rev else [], skills),
+        "hull_slots": _hull_slots(telemetry),
         "show_skills": True,
         "revisions": list(fit.revisions.all()[:30]),
         # Supply actions: any corp member may raise a task/project; drafting a PO is
@@ -285,6 +287,12 @@ def detail(request, pk):
             Supplier.objects.filter(status=Supplier.Status.ACTIVE).order_by("display_name", "pk")[:100]
         )
     return render(request, "fitting/detail.html", context)
+
+
+def _hull_slots(telemetry: dict) -> dict:
+    """The hull's slot capacity per rack (for drawing empty slots in the editor)."""
+    hull = (telemetry.get("resources", {}).get("slots", {}) or {}).get("hull", {}) or {}
+    return {k: int(hull.get(k, 0) or 0) for k in ("high", "med", "low", "rig")}
 
 
 def _enrich_skills(missing: list[dict]) -> list[dict]:
@@ -324,6 +332,7 @@ def telemetry(request):
     return render(request, "fitting/_telemetry.html", {
         "telemetry": result, "show_skills": True, "skill_label": skills.label,
         "missing_skills": _enrich_skills(result.get("missing_skills", [])),
+        "applied_skills": services.skill_readout(ship_type_id, items, skills),
     })
 
 
@@ -581,10 +590,15 @@ def supply_po(request, pk):
 @login_required
 @feature_required("tochas_lab")
 def search_modules(request):
-    """Module search for the editor. Each result carries its inferred fitting rack (so a
-    turret lands in a high slot, not low) and whether it accepts ammo (so the editor can
-    offer an ammo loader)."""
-    results = search_types(request.GET.get("q", ""), limit=20)
+    """Module search for the editor. Restricted to things that fit a slot — modules, drones,
+    subsystems — so ammo (loaded into weapons) and ships never show up as fittable items.
+    Each result carries its inferred rack (a turret lands in a high slot) and whether it
+    accepts ammo (so the editor can offer an ammo loader)."""
+    from apps.sde.models import SdeType
+    results = search_types(request.GET.get("q", ""), limit=40)
+    cats = dict(SdeType.objects.filter(type_id__in={r["type_id"] for r in results})
+                .values_list("type_id", "group__category_id"))
+    results = [r for r in results if cats.get(r["type_id"]) in (7, 18, 32)][:20]  # module/drone/subsystem
     ids = {r["type_id"] for r in results}
     slots = services.infer_slots(ids)
     takers = services.charge_takers(ids)

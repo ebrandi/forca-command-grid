@@ -3,6 +3,7 @@
 {% block title %}{{ fit.name }} · {{ brand }} · [FORCA] Command Grid{% endblock %}
 {% block content %}
 {{ items|json_script:"lab-items" }}
+{{ hull_slots|json_script:"lab-hullslots" }}
 <div x-data="labEditor()" x-init="init()">
 
   <header class="mb-6 flex flex-wrap items-end justify-between gap-3">
@@ -16,15 +17,14 @@
       </p>
     </div>
     <div class="flex flex-wrap items-center gap-2">
-      <form method="get" class="contents">
-        <label class="sr-only" for="skills">{% translate "Skills" %}</label>
-        <select id="skills" name="skills" class="input-field" data-autosubmit>
-          <option value="pilot" {% if skill_label != 'All V' %}selected{% endif %}>{% translate "My skills" %}</option>
-          <option value="allv" {% if skill_label == 'All V' %}selected{% endif %}>{% translate "All V" %}</option>
-          <option value="none">{% translate "Untrained" %}</option>
-          {% for p in linked_pilots %}<option value="{{ p.character_id }}">{{ p.name }}</option>{% endfor %}
-        </select>
-      </form>
+      <label class="sr-only" for="skills">{% translate "Skills" %}</label>
+      <select id="skills" class="input-field" x-model="skills" @change="onSkillChange()"
+              title="{% translate 'Whose skills to simulate — the numbers update live' %}">
+        <option value="pilot">{% translate "My skills" %}</option>
+        <option value="allv">{% translate "All V" %}</option>
+        <option value="none">{% translate "Untrained" %}</option>
+        {% for p in linked_pilots %}<option value="{{ p.character_id }}">{{ p.name }}</option>{% endfor %}
+      </select>
       {% if editable %}
       <button type="button" class="btn-gold" @click="save()" x-text="dirty ? '{% translate "Save *" %}' : '{% translate "Save" %}'">{% translate "Save" %}</button>
       {% endif %}
@@ -40,55 +40,95 @@
     {# ---- Composition / editor ---- #}
     <div>
       <section class="rounded-lg border border-line bg-panel p-4">
-        <p class="eyebrow">{% translate "Loadout" %}</p>
-        {% if editable %}
-        <div class="mt-2" style="position:relative;">
+        <div class="flex items-center justify-between">
+          <p class="eyebrow">{% translate "Fitting" %}</p>
+          <p class="text-[11px] text-faint" x-show="editable">{% translate "Click a slot to fit · ⚠ = load ammo" %}</p>
+        </div>
+
+        {# ---- Slot racks (High / Mid / Low / Rig) ---- #}
+        <template x-for="kind in ['high','med','low','rig']" :key="kind">
+          <div class="mt-3">
+            <div class="flex items-baseline justify-between">
+              <span class="text-[11px] font-semibold uppercase tracking-wide text-faint" x-text="slotLabel(kind)"></span>
+              <span class="text-[11px] text-faint" x-text="rack(kind).length + '/' + (hullSlots[kind]||0)"></span>
+            </div>
+            <div class="mt-1 space-y-1">
+              <template x-for="row in rack(kind)" :key="row.idx">
+                <div class="rounded border px-2 py-1 text-sm"
+                     :style="(row.it.takes_charge && !row.it.charge_name) ? 'background:#241f17;border-color:#e0a955;' : 'background:#1b1f27;border-color:#2a2f3a;'">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-ink" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" x-text="row.it.name"></span>
+                    <span class="flex items-center gap-1" x-show="editable">
+                      <select class="input-field" style="padding:0 3px;font-size:11px;" x-model="row.it.state" @change="recompute()" aria-label="{% translate 'Module state' %}">
+                        <option value="active">{% translate "on" %}</option>
+                        <option value="offline">{% translate "off" %}</option>
+                        <option value="overheated">{% translate "heat" %}</option>
+                      </select>
+                      <button type="button" @click="removeItem(row.idx)" class="text-faint" aria-label="{% translate 'Remove' %}">✕</button>
+                    </span>
+                  </div>
+                  {# ammo line — prominent for weapons #}
+                  <template x-if="row.it.takes_charge">
+                    <div class="mt-1">
+                      <button type="button" x-show="editable || row.it.charge_name" @click="toggleAmmo(row.idx)"
+                              style="cursor:pointer;background:transparent;font-size:12px;"
+                              :style="row.it.charge_name ? 'color:#7fb2e8;' : 'color:#e0a955;font-weight:600;'"
+                              x-text="row.it.charge_name ? ('◈ ' + row.it.charge_name) : '⚠ {% translate "Load ammo" %}'"></button>
+                      <div x-show="editable && ammoIdx === row.idx" class="mt-1" style="position:relative;">
+                        <input type="text" class="input-field w-full" style="font-size:12px;" x-model="ammoQuery"
+                               @input.debounce.250ms="searchCharges(row.idx)" placeholder="{% translate 'Search compatible ammo…' %}"
+                               aria-label="{% translate 'Search ammo' %}">
+                        <ul x-show="ammoResults.length" style="position:absolute;z-index:30;left:0;right:0;max-height:200px;overflow:auto;" class="rounded-lg border border-line bg-panel2">
+                          <template x-for="c in ammoResults" :key="c.type_id">
+                            <li><button type="button" class="w-full text-left px-3 py-1 text-sm text-ink" style="background:transparent;" @click="setCharge(row.idx, c)" x-text="c.name"></button></li>
+                          </template>
+                        </ul>
+                        <button type="button" x-show="row.it.charge_type_id" @click="clearCharge(row.idx)" class="mt-1 text-faint" style="font-size:11px;">{% translate "Unload ammo" %}</button>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </template>
+              <template x-for="n in emptySlots(kind)" :key="kind + '-e-' + n">
+                <button type="button" x-show="editable" @click="openAdd(kind)"
+                        class="w-full rounded border border-dashed px-2 py-1.5 text-left text-xs text-faint hover:text-ink"
+                        style="border-color:#333a47;background:transparent;">＋ <span x-text="addLabel(kind)"></span></button>
+              </template>
+              <p x-show="editable && !(hullSlots[kind]) && rack(kind).length===0" class="text-[11px] text-faint">{% translate "No slots on this hull." %}</p>
+            </div>
+          </div>
+        </template>
+
+        {# ---- Drones ---- #}
+        <div class="mt-3">
+          <span class="text-[11px] font-semibold uppercase tracking-wide text-faint">{% translate "Drones" %}</span>
+          <div class="mt-1 space-y-1">
+            <template x-for="row in rack('drone')" :key="row.idx">
+              <div class="rounded border border-line px-2 py-1 text-sm flex items-center justify-between" style="background:#1b1f27;">
+                <span class="text-ink" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" x-text="row.it.name"></span>
+                <button type="button" x-show="editable" @click="removeItem(row.idx)" class="text-faint" aria-label="{% translate 'Remove' %}">✕</button>
+              </div>
+            </template>
+            <button type="button" x-show="editable" @click="openAdd('drone')"
+                    class="w-full rounded border border-dashed px-2 py-1.5 text-left text-xs text-faint hover:text-ink"
+                    style="border-color:#333a47;background:transparent;">＋ {% translate "Add drone" %}</button>
+          </div>
+        </div>
+
+        {# ---- Add-module search (opens when a slot's ＋ is clicked) ---- #}
+        <div x-show="editable && addKind !== null" class="mt-3" style="position:relative;">
           <input type="text" class="input-field w-full" x-model="query" @input.debounce.250ms="searchModules()"
-                 placeholder="{% translate 'Add module or ship item…' %}" aria-label="{% translate 'Search modules' %}">
-          <ul x-show="results.length" style="position:absolute;z-index:20;left:0;right:0;max-height:240px;overflow:auto;" class="rounded-lg border border-line bg-panel2">
+                 x-ref="addSearch" :placeholder="addPlaceholder()" aria-label="{% translate 'Search modules' %}">
+          <ul x-show="results.length" style="position:absolute;z-index:30;left:0;right:0;max-height:240px;overflow:auto;" class="rounded-lg border border-line bg-panel2">
             <template x-for="r in results" :key="r.type_id">
-              <li><button type="button" class="w-full text-left px-3 py-2 text-sm text-ink" style="background:transparent;" @click="addModule(r)" x-text="r.name"></button></li>
+              <li><button type="button" class="w-full text-left px-3 py-2 text-sm text-ink" style="background:transparent;" @click="addModule(r)"><span x-text="r.name"></span><span class="text-faint" x-show="r.takes_charge"> · {% translate "takes ammo" %}</span></button></li>
             </template>
           </ul>
+          <div class="mt-1 flex justify-between text-[11px]">
+            <span class="text-faint" x-show="query.length>=2 && !results.length">{% translate "No matching module for this slot." %}</span>
+            <button type="button" @click="closeAdd()" class="text-faint">{% translate "Cancel" %}</button>
+          </div>
         </div>
-        {% endif %}
-        <ul class="mt-3 space-y-1">
-          <template x-for="(it, idx) in items" :key="idx">
-            <li class="rounded px-2 py-1 text-sm" style="background:#1b1f27;">
-              <div class="flex items-center justify-between gap-2">
-                <span class="text-ink" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-                  <span x-text="it.name"></span>
-                  <span class="text-faint" x-show="it.charge_name" x-text="' · ' + it.charge_name"></span>
-                  <span class="text-faint" style="font-size:11px;" x-text="'[' + it.slot + ']'"></span>
-                </span>
-                <span class="flex items-center gap-1" x-show="editable">
-                  <button type="button" x-show="it.takes_charge" @click="toggleAmmo(idx)"
-                          class="text-faint" style="font-size:11px;white-space:nowrap;"
-                          title="{% translate 'Load ammo' %}"
-                          x-text="(it.charge_name ? '⟳ ' : '＋ ') + '{% translate "ammo" %}'"></button>
-                  <select class="input-field" style="padding:1px 4px;font-size:11px;" x-model="it.state" @change="recompute()" aria-label="{% translate 'Module state' %}">
-                    <option value="active">{% translate "on" %}</option>
-                    <option value="offline">{% translate "off" %}</option>
-                    <option value="overheated">{% translate "heat" %}</option>
-                  </select>
-                  <button type="button" @click="removeItem(idx)" class="text-faint" aria-label="{% translate 'Remove' %}">✕</button>
-                </span>
-              </div>
-              <div x-show="editable && ammoIdx === idx" class="mt-1" style="position:relative;">
-                <input type="text" class="input-field w-full" style="font-size:12px;" x-model="ammoQuery"
-                       @input.debounce.250ms="searchCharges(idx)" placeholder="{% translate 'Search compatible ammo…' %}"
-                       aria-label="{% translate 'Search ammo' %}">
-                <ul x-show="ammoResults.length" style="position:absolute;z-index:20;left:0;right:0;max-height:200px;overflow:auto;" class="rounded-lg border border-line bg-panel2">
-                  <template x-for="c in ammoResults" :key="c.type_id">
-                    <li><button type="button" class="w-full text-left px-3 py-1 text-sm text-ink" style="background:transparent;" @click="setCharge(idx, c)" x-text="c.name"></button></li>
-                  </template>
-                </ul>
-                <button type="button" x-show="it.charge_type_id" @click="clearCharge(idx)" class="mt-1 text-faint" style="font-size:11px;">{% translate "Unload ammo" %}</button>
-              </div>
-            </li>
-          </template>
-          <li x-show="!items.length" class="text-sm text-faint">{% translate "No modules fitted yet." %}</li>
-        </ul>
       </section>
 
       {# ---- Target profile: drives applied missile damage ---- #}
@@ -227,21 +267,34 @@
 function labEditor() {
   return {
     items: [], results: [], query: "", dirty: false, editable: {{ editable|yesno:"true,false" }},
-    shipTypeId: {{ fit.ship_type_id }},
+    shipTypeId: {{ fit.ship_type_id }}, hullSlots: {}, addKind: null,
     ammoIdx: null, ammoQuery: "", ammoResults: [],
     targetSig: null, targetVel: null,
     skills: new URLSearchParams(window.location.search).get("skills") || "pilot",
-    init() { this.items = JSON.parse(document.getElementById("lab-items").textContent || "[]"); },
+    init() {
+      this.items = JSON.parse(document.getElementById("lab-items").textContent || "[]");
+      this.hullSlots = JSON.parse(document.getElementById("lab-hullslots").textContent || "{}");
+    },
     _csrf() { return document.getElementById("lab-csrf").value; },
+    slotLabel(k) { return {high:"{% translate 'High power' %}",med:"{% translate 'Mid power' %}",low:"{% translate 'Low power' %}",rig:"{% translate 'Rigs' %}"}[k] || k; },
+    addLabel(k) { return {high:"{% translate 'high slot' %}",med:"{% translate 'mid slot' %}",low:"{% translate 'low slot' %}",rig:"{% translate 'rig' %}",drone:"{% translate 'drone' %}"}[k] || k; },
+    addPlaceholder() { return "{% translate 'Search' %} " + this.addLabel(this.addKind) + "…"; },
+    rack(k) { const o = []; this.items.forEach((it, idx) => { if (it.slot === k) o.push({ it, idx }); }); return o; },
+    emptySlots(k) { return Math.max(0, (this.hullSlots[k] || 0) - this.rack(k).length); },
+    openAdd(k) { this.addKind = k; this.query = ""; this.results = []; this.$nextTick(() => { if (this.$refs.addSearch) this.$refs.addSearch.focus(); }); },
+    closeAdd() { this.addKind = null; this.query = ""; this.results = []; },
     async searchModules() {
       if (this.query.length < 2) { this.results = []; return; }
       const r = await fetch("{% url 'fitting:search_modules' %}?q=" + encodeURIComponent(this.query));
-      this.results = r.ok ? (await r.json()).results : [];
+      let res = r.ok ? (await r.json()).results : [];
+      if (this.addKind) res = res.filter(x => x.slot === this.addKind);   // only what fits this slot
+      this.results = res;
     },
     addModule(r) {
-      this.items.push({ type_id: r.type_id, name: r.name, slot: r.slot || "low", state: "active",
+      const slot = this.addKind || r.slot || "low";
+      this.items.push({ type_id: r.type_id, name: r.name, slot, state: "active",
                         charge_type_id: null, charge_name: "", quantity: 1, takes_charge: !!r.takes_charge });
-      this.query = ""; this.results = []; this.markDirty();
+      this.closeAdd(); this.markDirty();
     },
     removeItem(i) { if (this.ammoIdx === i) this.ammoIdx = null; this.items.splice(i, 1); this.markDirty(); },
     toggleAmmo(idx) {
@@ -261,6 +314,11 @@ function labEditor() {
     },
     clearCharge(idx) {
       this.items[idx].charge_type_id = null; this.items[idx].charge_name = ""; this.markDirty();
+    },
+    onSkillChange() {
+      const u = new URL(window.location); u.searchParams.set("skills", this.skills);
+      history.replaceState({}, "", u);   // keep the URL shareable, recompute live
+      this.recompute();
     },
     markDirty() { this.dirty = true; this.recompute(); },
     _payload() {

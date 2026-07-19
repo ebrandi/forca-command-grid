@@ -56,6 +56,7 @@ class ORMDataProvider:
         # cross-request staleness risk.
         self._rows: dict[int, dict | None] = {}
         self._attrs: dict[int, dict[int, float]] = {}
+        self._effects: dict[int, frozenset[int]] = {}
         self._skills: dict[int, list[tuple[int, int]]] = {}
         self._bonuses: dict[int, list[BonusSpec]] = {}
         self.data_version = self._resolve_data_version()
@@ -111,6 +112,17 @@ class ORMDataProvider:
                     d[attr] = float(row[column])
         self._attrs[type_id] = d
         return d
+
+    def effects(self, type_id: int) -> frozenset[int]:
+        if type_id in self._effects:
+            return self._effects[type_id]
+        from apps.sde.models import SdeTypeEffect
+
+        effs = frozenset(
+            SdeTypeEffect.objects.filter(type_id=type_id).values_list("effect_id", flat=True)
+        )
+        self._effects[type_id] = effs
+        return effs
 
     def required_skills(self, type_id: int) -> list[tuple[int, int]]:
         if type_id in self._skills:

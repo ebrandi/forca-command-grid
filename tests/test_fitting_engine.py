@@ -57,7 +57,7 @@ def _types() -> dict:
                    A.DRONE_BANDWIDTH: 5, A.DRONE_CAPACITY: 5,
                }},
         AC: {"name": "Test 200mm AutoCannon", "group_id": 55, "category_id": 7,
-             "skills": [(S_GUNNERY, 1), (S_SPT, 1)],
+             "skills": [(S_GUNNERY, 1), (S_SPT, 1)], "effects": [A.EFFECT_TURRET],
              "attrs": {A.CPU_USAGE: 8, A.POWER_USAGE: 6, A.DAMAGE_MULTIPLIER: 1.0,
                        A.RATE_OF_FIRE: 2500, A.OPTIMAL_RANGE: 1200, A.FALLOFF: 7500,
                        A.TRACKING_SPEED: 0.2}},
@@ -79,6 +79,7 @@ def _types() -> dict:
                 "attrs": {A.EXPLOSIVE_DAMAGE: 5.0, A.DRONE_DAMAGE_MULTIPLIER: 1.0,
                           A.RATE_OF_FIRE: 2000}},
         LAUNCHER: {"name": "Test Rocket Launcher", "group_id": 507, "category_id": 7,
+                   "effects": [A.EFFECT_LAUNCHER],
                    "attrs": {A.CPU_USAGE: 4, A.POWER_USAGE: 2, A.RATE_OF_FIRE: 3000}},
         ROCKET: {"name": "Test Rocket", "group_id": 507, "category_id": 8,
                  "attrs": {A.KINETIC_DAMAGE: 20.0,
@@ -317,6 +318,7 @@ def orm_dogma(db):
         SdeShipBonus,
         SdeType,
         SdeTypeAttribute,
+        SdeTypeEffect,
         SdeTypeSkill,
     )
 
@@ -334,6 +336,9 @@ def orm_dogma(db):
         SdeTypeAttribute.objects.bulk_create(
             [SdeTypeAttribute(type_id=tid, attribute_id=aid, value=val)
              for aid, val in meta["attrs"].items()], ignore_conflicts=True)
+        SdeTypeEffect.objects.bulk_create(
+            [SdeTypeEffect(type_id=tid, effect_id=eid) for eid in meta.get("effects", [])],
+            ignore_conflicts=True)
         for sid, lvl in meta.get("skills", []):
             SdeType.objects.get_or_create(type_id=sid, defaults={"group_id": 349, "name": f"Skill {sid}"})
             SdeTypeSkill.objects.get_or_create(type_id=tid, skill_type_id=sid, defaults={"level": lvl})

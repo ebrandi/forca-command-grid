@@ -2,6 +2,27 @@
 {% comment %}Server-rendered ship telemetry. Shared by the editor (live recompute), the
 read-only detail view and the public share page — one renderer, so they can never disagree.
 Colours that aren't in the prebuilt CSS are inlined (see the prebuilt-Tailwind note).{% endcomment %}
+
+{# ---- Hero band: the four numbers that matter, + the active skill profile ---- #}
+{% with o=telemetry.offence d=telemetry.defence m=telemetry.mobility c=telemetry.capacitor %}
+<div class="mb-4 rounded-lg border border-line bg-panel2 p-4">
+  <div class="flex flex-wrap items-center justify-between gap-2">
+    <p class="eyebrow">{% translate "Simulation result" %}</p>
+    {% if skill_label %}<span class="chip" title="{% translate 'Skill levels applied to this simulation' %}">🧠 {{ skill_label }}</span>{% endif %}
+  </div>
+  <div class="mt-3 grid gap-3" style="grid-template-columns:repeat(auto-fit,minmax(96px,1fr));">
+    <div><p class="text-3xl font-bold" style="color:#e0555a;line-height:1.1;">{{ o.total_dps }}</p>
+      <p class="text-xs text-faint">{% translate "DPS" %}{% if not o.total_dps %} · {% translate "fit weapons + ammo" %}{% endif %}</p></div>
+    <div><p class="text-3xl font-bold" style="color:#4a90d9;line-height:1.1;">{{ d.ehp_total }}</p>
+      <p class="text-xs text-faint">{% translate "EHP" %}</p></div>
+    <div><p class="text-3xl font-bold text-ink" style="line-height:1.1;">{{ m.propulsion_velocity|default:m.max_velocity }}</p>
+      <p class="text-xs text-faint">{% translate "m/s" %}</p></div>
+    <div><p class="text-3xl font-bold" style="line-height:1.1;color:{% if c.stable %}#4ade80{% else %}#e0a955{% endif %};">{% if c.stable %}{{ c.stable_pct }}%{% else %}{{ c.runtime_s|duration }}{% endif %}</p>
+      <p class="text-xs text-faint">{% translate "Capacitor" %}</p></div>
+  </div>
+</div>
+{% endwith %}
+
 <div class="grid gap-4" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr));">
 
   <section class="rounded-lg border border-line bg-panel p-4">
@@ -119,16 +140,27 @@ Colours that aren't in the prebuilt CSS are inlined (see the prebuilt-Tailwind n
 
 {% if show_skills %}
 <section class="mt-4 rounded-lg border border-line bg-panel p-4" id="skill-overlay">
-  <p class="eyebrow">{% translate "Pilot readiness" %} — {{ skill_label }}</p>
+  <p class="eyebrow">{% translate "Pilot skills applied" %} — {{ skill_label }}</p>
+  {% if applied_skills %}
+    <p class="mt-1 text-xs text-faint">{% translate "These skills drive the numbers above, at this pilot's trained level. Change the pilot to compare." %}</p>
+    <div class="mt-2 grid gap-1" style="grid-template-columns:repeat(auto-fill,minmax(148px,1fr));">
+      {% for s in applied_skills %}
+      <div class="flex items-center justify-between rounded px-2 py-1" style="background:#1b1f27;font-size:11px;">
+        <span class="text-ink" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ s.name }}</span>
+        <span style="flex:none;font-weight:700;color:{% if s.level >= 4 %}#4ade80{% elif s.level >= 1 %}#e0a955{% else %}#e0555a{% endif %};">{{ s.level }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  {% endif %}
   {% if missing_skills %}
-    <p class="mt-1 text-sm" style="color:#e0a955;">{% blocktranslate count n=missing_skills|length %}{{ n }} skill missing to fly this fit.{% plural %}{{ n }} skills missing to fly this fit.{% endblocktranslate %}</p>
-    <ul class="mt-2 space-y-1 text-sm">
+    <p class="mt-3 text-sm" style="color:#e0a955;">{% blocktranslate count n=missing_skills|length %}{{ n }} skill missing to fly this fit.{% plural %}{{ n }} skills missing to fly this fit.{% endblocktranslate %}</p>
+    <ul class="mt-1 space-y-1 text-sm">
       {% for s in missing_skills %}
       <li class="flex justify-between"><span class="text-ink">{{ s.name }} <span class="text-faint">{{ s.have_level }} → {{ s.required_level }}</span></span><span class="text-faint">{{ s.seconds|duration }}</span></li>
       {% endfor %}
     </ul>
-  {% else %}
-    <p class="mt-1 text-sm" style="color:#4ade80;">{% translate "This pilot can fly this fit." %}</p>
+  {% elif applied_skills %}
+    <p class="mt-3 text-sm" style="color:#4ade80;">{% translate "This pilot can fly this fit." %}</p>
   {% endif %}
 </section>
 {% endif %}

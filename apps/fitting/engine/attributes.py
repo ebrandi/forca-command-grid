@@ -75,6 +75,13 @@ OPTIMAL_RANGE = 54           # maxRange
 FALLOFF = 158
 TRACKING_SPEED = 160
 
+# --- Weapon-identifying effects (robust across all weapon groups) -----------
+# Every turret carries the targetAttack effect; every missile launcher carries useMissiles.
+# Detecting weapons by these effects (not a hand-maintained group list) means new launcher
+# groups — cruise, rapid, XL, … — are recognised automatically.
+EFFECT_TURRET = 34            # targetAttack
+EFFECT_LAUNCHER = 101         # useMissiles
+
 # --- Charge compatibility (which ammo a weapon accepts) ---------------------
 # A weapon lists the charge GROUPS it accepts (chargeGroup1..5) and a charge SIZE
 # (small/medium/large/…); a charge fits when its group is accepted and its size matches.

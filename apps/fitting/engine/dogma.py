@@ -90,6 +90,7 @@ class DataProvider(Protocol):
 
     def type_info(self, type_id: int) -> dict | None: ...
     def attrs(self, type_id: int) -> dict[int, float]: ...
+    def effects(self, type_id: int) -> frozenset[int]: ...
     def required_skills(self, type_id: int) -> list[tuple[int, int]]: ...
     def ship_bonuses(self, ship_type_id: int) -> list[BonusSpec]: ...
 
@@ -104,7 +105,21 @@ def _matches(spec: BonusSpec, info: dict, item_attrs: dict[int, float]) -> bool:
         return False
     if spec.match_attr_present is not None and spec.match_attr_present not in item_attrs:
         return False
+    if spec.match_effect_id is not None and spec.match_effect_id not in info.get("effects", ()):
+        return False
     return True
+
+
+def _weapon_kind(info: dict) -> str | None:
+    """Classify a module as a weapon by its dogma effects — 'turret', 'launcher' or None.
+    Effect-based so every launcher group (cruise, rapid, XL, …) is recognised, not just an
+    enumerated few."""
+    effects = info.get("effects", ())
+    if A.EFFECT_LAUNCHER in effects:
+        return "launcher"
+    if A.EFFECT_TURRET in effects:
+        return "turret"
+    return None
 
 
 def _bonus_factor_for_item(
@@ -170,10 +185,13 @@ def evaluate(
 
     ctx = BonusContext(ship_bonuses=provider.ship_bonuses(fit.ship_type_id))
 
-    # Resolve every fitted item once.
+    # Resolve every fitted item once. ``info`` carries the module's dogma effects so weapon
+    # detection (turret/launcher) is effect-based, not tied to a hand-listed set of groups.
     items: list[tuple] = []  # (module_input, attrs, info)
     for m in fit.modules:
-        items.append((m, provider.attrs(m.type_id), provider.type_info(m.type_id) or {}))
+        info = dict(provider.type_info(m.type_id) or {})
+        info["effects"] = frozenset(provider.effects(m.type_id))
+        items.append((m, provider.attrs(m.type_id), info))
 
     def active(m) -> bool:
         return m.state in (ModuleState.ACTIVE, ModuleState.OVERHEATED)
@@ -230,11 +248,10 @@ def _resources(ship, items, result: FittingResult) -> dict:
         key = m.slot.value if m.slot.value in slot_counts else None
         if key:
             slot_counts[key] += 1
-        gid = info.get("group_id")
-        if m.slot == SlotKind.HIGH and gid in TURRET_GROUPS:
-            turrets += 1
-        elif m.slot == SlotKind.HIGH and gid in LAUNCHER_GROUPS:
-            launchers += 1
+        if m.slot == SlotKind.HIGH:
+            kind = _weapon_kind(info)
+            turrets += kind == "turret"
+            launchers += kind == "launcher"
 
     hull = {
         "high": int(ship.get(A.HI_SLOTS, 0)), "med": int(ship.get(A.MED_SLOTS, 0)),
@@ -434,9 +451,9 @@ def _offence(items, provider, ctx, skills, op_profile, result: FittingResult, ac
     for m, a, info in items:
         if m.slot != SlotKind.HIGH:
             continue
-        gid = info.get("group_id")
-        is_turret = gid in TURRET_GROUPS
-        is_launcher = gid in LAUNCHER_GROUPS
+        kind = _weapon_kind(info)
+        is_turret = kind == "turret"
+        is_launcher = kind == "launcher"
         if not (is_turret or is_launcher):
             continue
         weapons += 1

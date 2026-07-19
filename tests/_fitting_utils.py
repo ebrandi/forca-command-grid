@@ -68,6 +68,7 @@ def seed_dogma():
             defaults={"sell_min": 1000})
     SdeTypeEffect.objects.bulk_create([
         SdeTypeEffect(type_id=AC, effect_id=A.EFFECT_HI_POWER, is_default=True),
+        SdeTypeEffect(type_id=AC, effect_id=A.EFFECT_TURRET),   # marks it a turret (DPS)
         SdeTypeEffect(type_id=DC, effect_id=A.EFFECT_LO_POWER, is_default=True),
     ], ignore_conflicts=True)
     for sid, name in [(MINFRIG, "Minmatar Frigate"), (GUNNERY, "Gunnery"), (SPT, "Small Projectile Turret")]:

@@ -28,6 +28,7 @@ class BonusSpec:
     match_group_ids: tuple[int, ...] = ()
     match_category_ids: tuple[int, ...] = ()
     match_attr_present: int | None = None
+    match_effect_id: int | None = None   # module must carry this dogma effect (weapon detection)
     penalised: bool = False
     op: Op = Op.MULTIPLY
     label: str = ""
@@ -64,13 +65,13 @@ STANDARD_SKILL_BONUSES: tuple[BonusSpec, ...] = (
     BonusSpec("surgical_strike", A.DAMAGE_MULTIPLIER, 3.0, skill_id=SKILL_SURGICAL_STRIKE,
               per_level=True, match_attr_present=A.DAMAGE_MULTIPLIER, label="Surgical Strike"),
     # Missiles take all damage from the charge (launchers have no damageMultiplier attr), so
-    # match by launcher group instead of the turret-only damageMultiplier presence.
+    # match every launcher by its useMissiles effect — robust across cruise/rapid/XL/… groups.
     BonusSpec("warhead_upgrades", A.DAMAGE_MULTIPLIER, 2.0, skill_id=SKILL_WARHEAD_UPGRADES,
-              per_level=True, match_group_ids=LAUNCHER_GROUPS, label="Warhead Upgrades"),
-    # Rapid Firing is a Gunnery skill — turrets only (launchers also carry a rate-of-fire
-    # attr, so match by turret group, not by attr presence).
+              per_level=True, match_effect_id=A.EFFECT_LAUNCHER, label="Warhead Upgrades"),
+    # Rapid Firing is a Gunnery skill — turrets only, matched by the targetAttack effect
+    # (launchers also carry a rate-of-fire attr, so an attr-presence match would over-apply).
     BonusSpec("rapid_firing", A.RATE_OF_FIRE, -4.0, skill_id=SKILL_RAPID_FIRING,
-              per_level=True, match_group_ids=TURRET_GROUPS, label="Rapid Firing"),
+              per_level=True, match_effect_id=A.EFFECT_TURRET, label="Rapid Firing"),
     BonusSpec("shield_management", A.SHIELD_HP, 5.0, target_domain="ship",
               skill_id=SKILL_SHIELD_MANAGEMENT, per_level=True, label="Shield Management"),
     BonusSpec("hull_upgrades", A.ARMOR_HP, 5.0, target_domain="ship",
