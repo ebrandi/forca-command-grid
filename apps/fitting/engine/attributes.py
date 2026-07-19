@@ -45,6 +45,10 @@ ARMOR_RESONANCE = {
 HULL_RESONANCE = {
     "em": 113, "thermal": 110, "kinetic": 109, "explosive": 111,
 }
+# Active shield hardeners carry their resist as a percentage RESISTANCE BONUS (e.g. -32.5%)
+# on dedicated attrs, applied postPercent to the ship's shield resonance — NOT as a resonance
+# value on 271-274. (val<0 improves the resist: factor = 1 + val/100.)
+SHIELD_RESIST_BONUS = {"em": 984, "explosive": 985, "kinetic": 986, "thermal": 987}
 DAMAGE_TYPES = ("em", "thermal", "kinetic", "explosive")
 
 # --- Module bonus SOURCE attributes -----------------------------------------
@@ -64,6 +68,18 @@ RESISTANCE_MULTIPLIER = 2746    # Assault DCU overload: uniform resonance multip
 AGILITY_MULTIPLIER = 169        # agilityMultiplier (%) — nanofibers etc. (stacking penalised)
 VELOCITY_BONUS_MOD = 1076       # velocity % bonus from nanofibers (stacking penalised)
 MWD_SIG_ROLE_BONUS = 1803       # hull role bonus reducing the MWD signature penalty (%)
+
+# --- T3 subsystem contributions (a fitted subsystem ADDS these to the hull) -----------------
+# Strategic-cruiser subsystems carry CPU/PG output on the normal output attrs (48/11) and add
+# slots/hardpoints/structure-HP via dedicated modifier attrs.
+SUB_HI_SLOT_MOD = 1374          # hiSlotModifier
+SUB_MED_SLOT_MOD = 1375         # medSlotModifier
+SUB_LOW_SLOT_MOD = 1376         # lowSlotModifier
+SUB_TURRET_HP_MOD = 1368        # turretHardPointModifier
+SUB_LAUNCHER_HP_MOD = 1369      # launcherHardPointModifier
+SUB_STRUCTURE_HP_ADD = 2688     # structureHPBonusAdd
+SUB_DRONE_BANDWIDTH_ADD = 1271  # droneBandwidth (added passively)
+SUB_DRONE_CAPACITY_ADD = 283    # droneCapacity (added passively)
 
 # --- Module bonus effect ids (dgmEffects) — used to classify a module's effect ---------------
 EFFECT_SHIELD_EXTENDER = 21     # shieldCapacityBonusOnline
@@ -91,6 +107,9 @@ RATE_OF_FIRE = 51            # speed (ms between cycles)
 # mod finds nothing, so the RoF bonus is silently dropped unless this attribute is used.
 ROF_MULTIPLIER = 204         # speedMultiplier (damage-mod rate-of-fire bonus)
 DRONE_DAMAGE_MULTIPLIER = 64
+# A Ballistic Control System boosts MISSILE damage via a dedicated bonus attribute (missiles
+# take damage from the charge, so a launcher/BCS has no plain damageMultiplier attr 64).
+MISSILE_DAMAGE_MULT_BONUS = 213   # missileDamageMultiplierBonus (BCS)
 # charge / projectile damage components
 EM_DAMAGE = 114
 EXPLOSIVE_DAMAGE = 116

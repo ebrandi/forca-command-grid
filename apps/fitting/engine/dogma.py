@@ -181,6 +181,37 @@ def _ship_attr(
 
 
 # --------------------------------------------------------------------------- #
+# T3 strategic-cruiser subsystem assembly
+# --------------------------------------------------------------------------- #
+# A fitted subsystem ADDS each of these to the hull (ship attr <- subsystem source attr).
+_SUBSYSTEM_ADD = {
+    A.CPU_OUTPUT: A.CPU_OUTPUT, A.POWER_OUTPUT: A.POWER_OUTPUT,
+    A.HI_SLOTS: A.SUB_HI_SLOT_MOD, A.MED_SLOTS: A.SUB_MED_SLOT_MOD, A.LOW_SLOTS: A.SUB_LOW_SLOT_MOD,
+    A.TURRET_HARDPOINTS: A.SUB_TURRET_HP_MOD, A.LAUNCHER_HARDPOINTS: A.SUB_LAUNCHER_HP_MOD,
+    A.HULL_HP: A.SUB_STRUCTURE_HP_ADD,
+    A.DRONE_BANDWIDTH: A.SUB_DRONE_BANDWIDTH_ADD, A.DRONE_CAPACITY: A.SUB_DRONE_CAPACITY_ADD,
+}
+
+
+def _assemble_subsystems(ship, items, ctx, provider):
+    """Fold every fitted subsystem's stat additions into the hull and append its bonuses to
+    the context. A strategic cruiser is the hull + its subsystems; without this the engine
+    sees only the bare hull (too little CPU/PG, too few slots, no structure HP or bonuses)."""
+    subs = [(m, a) for m, a, _i in items
+            if m.slot == SlotKind.SUBSYSTEM and m.state != ModuleState.OFFLINE]
+    if not subs:
+        return ship
+    ship = dict(ship)
+    for m, a in subs:
+        for ship_attr, sub_attr in _SUBSYSTEM_ADD.items():
+            add = a.get(sub_attr, 0.0)
+            if add:
+                ship[ship_attr] = ship.get(ship_attr, 0.0) + add
+        ctx.ship_bonuses.extend(provider.ship_bonuses(m.type_id))
+    return ship
+
+
+# --------------------------------------------------------------------------- #
 # Main entry
 # --------------------------------------------------------------------------- #
 def evaluate(
@@ -197,7 +228,8 @@ def evaluate(
         result.compute_ms = (perf_counter() - t0) * 1000
         return result
 
-    ctx = BonusContext(ship_bonuses=provider.ship_bonuses(fit.ship_type_id))
+    # Copy the bonus list (subsystems extend it below) so the provider's cache isn't mutated.
+    ctx = BonusContext(ship_bonuses=list(provider.ship_bonuses(fit.ship_type_id)))
 
     # Resolve every fitted item once. ``info`` carries the module's dogma effects so weapon
     # detection (turret/launcher) is effect-based, not tied to a hand-listed set of groups.
@@ -209,6 +241,11 @@ def evaluate(
         # turret/missile bonuses), not just group/category.
         info["req_skills"] = frozenset(sid for sid, _ in provider.required_skills(m.type_id))
         items.append((m, provider.attrs(m.type_id), info))
+
+    # T3 strategic-cruiser subsystems ASSEMBLE the ship: each adds CPU/PG output, slots,
+    # hardpoints, structure HP and drone bay to the bare hull, and contributes its own
+    # per-subsystem-skill bonuses. Fold both in before any calculation runs.
+    ship = _assemble_subsystems(ship, items, ctx, provider)
 
     def active(m) -> bool:
         return m.state in (ModuleState.ACTIVE, ModuleState.OVERHEATED)
@@ -371,7 +408,8 @@ def _layer_hp(ship, items, hp_attr, flat_attr, pct_attr, mult_attr, ctx, skills,
     return total
 
 
-def _layer_resonance(ship, items, resonance_attrs, module_attrs, ctx, skills, result, label):
+def _layer_resonance(ship, items, resonance_attrs, module_attrs, resist_bonus_attrs,
+                     ctx, skills, result, label):
     """resist% per damage type. Normal hardeners stack-penalise; the Damage-Control family
     (detected by its dogma effect) is stacking-EXEMPT. Modules may store a layer's resonance
     on a DIFFERENT attr than the ship (a Damage Control keeps HULL resonance on 974-977, not
@@ -394,6 +432,7 @@ def _layer_resonance(ship, items, resonance_attrs, module_attrs, ctx, skills, re
     for dtype, attr in resonance_attrs.items():
         base = ship.get(attr, 1.0)
         mod_attr = module_attrs[dtype]
+        rb_attr = resist_bonus_attrs.get(dtype) if resist_bonus_attrs else None
         pen_mults, dcu_mults = [], []
         for m, a, info in items:
             if m.state == ModuleState.OFFLINE or m.slot not in HULL_FITTED_SLOTS:
@@ -402,8 +441,14 @@ def _layer_resonance(ship, items, resonance_attrs, module_attrs, ctx, skills, re
             if is_dcu(info):
                 if dcu_overheat is None and val is not None and val != 1.0:
                     dcu_mults.append(val)          # active DCU: per-layer, stacking-exempt
-            elif val is not None and val != 1.0:
-                pen_mults.append(val)              # normal hardener: stacking-penalised
+            else:
+                if val is not None and val != 1.0:
+                    pen_mults.append(val)          # hardener with a resonance value attr
+                # Active hardeners carry the resist as a % bonus on a dedicated attr instead.
+                if rb_attr is not None:
+                    rb = a.get(rb_attr)
+                    if rb:
+                        pen_mults.append(1.0 + rb / 100.0)
         resonance = base * combine_penalized(pen_mults)
         for dm in dcu_mults:
             resonance *= dm
@@ -423,17 +468,18 @@ def _defence(ship, items, ctx, skills, op_profile, result: FittingResult) -> dic
     layers = {}
     dp = op_profile.damage_profile.normalised().as_map()
     total_ehp = 0.0
-    for name, hp_attr, res_attrs, mod_res, flat_attr, pct_attr, mult_attr in (
-        ("shield", A.SHIELD_HP, A.SHIELD_RESONANCE, A.SHIELD_RESONANCE,
+    for name, hp_attr, res_attrs, mod_res, resist_bonus, flat_attr, pct_attr, mult_attr in (
+        ("shield", A.SHIELD_HP, A.SHIELD_RESONANCE, A.SHIELD_RESONANCE, A.SHIELD_RESIST_BONUS,
          A.SHIELD_EXTENDER_HP_BONUS, A.SHIELD_RIG_HP_BONUS, None),
-        ("armor", A.ARMOR_HP, A.ARMOR_RESONANCE, A.ARMOR_RESONANCE,
+        ("armor", A.ARMOR_HP, A.ARMOR_RESONANCE, A.ARMOR_RESONANCE, None,
          A.ARMOR_PLATE_HP_BONUS, None, None),
-        ("hull", A.HULL_HP, A.HULL_RESONANCE, A.HULL_RESONANCE_MODULE,
+        ("hull", A.HULL_HP, A.HULL_RESONANCE, A.HULL_RESONANCE_MODULE, None,
          None, None, A.STRUCTURE_HP_MULTIPLIER),
     ):
         hp = _layer_hp(ship, items, hp_attr, flat_attr, pct_attr, mult_attr,
                        ctx, skills, f"{name}_hp", result)
-        res = _layer_resonance(ship, items, res_attrs, mod_res, ctx, skills, result, name)
+        res = _layer_resonance(ship, items, res_attrs, mod_res, resist_bonus,
+                               ctx, skills, result, name)
         weighted_res = sum(dp[d] * res[d]["resonance"] for d in A.DAMAGE_TYPES)
         ehp = hp / weighted_res if weighted_res > 0 else hp
         total_ehp += ehp
@@ -501,8 +547,12 @@ def _weapon_damage_mult(module_attrs, info, items, ctx, skills, mod_groups):
     for m2, a2, info2 in items:
         if m2.state == ModuleState.OFFLINE:
             continue
-        if info2.get("group_id") in mod_groups and A.DAMAGE_MULTIPLIER in a2:
-            mod_mults.append(a2[A.DAMAGE_MULTIPLIER])
+        # A turret damage mod carries attr 64; a Ballistic Control System carries its MISSILE
+        # damage bonus on attr 213 instead (launchers/BCS have no attr 64).
+        if info2.get("group_id") in mod_groups:
+            mv = a2.get(A.DAMAGE_MULTIPLIER) or a2.get(A.MISSILE_DAMAGE_MULT_BONUS)
+            if mv:
+                mod_mults.append(mv)
     return base * unpen * combine_penalized(mod_mults), contribs, mod_mults
 
 

@@ -44,6 +44,7 @@ _MAX_ZIP = 512 * 1024**2          # compressed ceiling (the zip is ~110MB)
 _MAX_MEMBER = 256 * 1024**2       # per-extracted-YAML ceiling
 
 _SHIP_CATEGORY = 6
+_SUBSYSTEM_CATEGORY = 32  # T3 strategic-cruiser subsystems carry per-subsystem-skill bonuses too
 _MIN_HULLS = 300          # a healthy import covers ~480 hulls; refuse a degraded parse below this
 _REQ_SKILL1, _REQ_SKILL2 = 182, 183      # ship dogma attrs: primary / secondary required skill
 _OP_POSTPERCENT = 6
@@ -129,8 +130,9 @@ class Command(BaseCommand):
 
     # -- mapping ------------------------------------------------------------ #
     def _build_rows(self, attrs, type_dogma, effects) -> list[dict]:
-        ship_ids = set(SdeType.objects.filter(group__category_id=_SHIP_CATEGORY)
-                       .values_list("type_id", flat=True))
+        ship_ids = set(SdeType.objects.filter(
+            group__category_id__in=(_SHIP_CATEGORY, _SUBSYSTEM_CATEGORY)
+        ).values_list("type_id", flat=True))
 
         def aname(i):
             return (attrs.get(i) or {}).get("name", "")
@@ -176,6 +178,10 @@ class Command(BaseCommand):
             per_level, skill = True, av.get(_REQ_SKILL1)
         elif name.startswith("eliteBonus"):
             per_level, skill = True, av.get(_REQ_SKILL2)
+        elif name.startswith("subsystemBonus"):
+            # A T3 subsystem's per-level bonus scales by the subsystem's own required skill
+            # (the racial subsystem skill, reqSkill1) — e.g. the Loki launcher-RoF bonus.
+            per_level, skill = True, av.get(_REQ_SKILL1)
         else:
             return None                          # not a recognised hull-bonus attribute
         if per_level and not skill:

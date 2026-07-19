@@ -49,7 +49,12 @@ SKILL_MECHANICS = 3392            # +5% structure HP / level
 SKILL_NAVIGATION = 3449           # +5% max velocity / level
 SKILL_CAP_MANAGEMENT = 3418       # +5% capacitor capacity / level
 SKILL_CAP_SYSTEMS_OP = 3417       # -5% capacitor recharge time / level
-SKILL_WARHEAD_UPGRADES = 3317     # +2% missile (kinetic/thermal/em/explosive) damage / level
+SKILL_WARHEAD_UPGRADES = 20315    # +2% missile (all types) damage / level (was wrongly 3317)
+# Missile damage/RoF skills. Damage skills modify the CHARGE's damage attributes (missiles take
+# all damage from the charge), scoped to charges requiring the skill; Rapid Launch cuts launcher RoF.
+SKILL_HEAVY_MISSILES = 3324       # +5% heavy-missile damage / level
+SKILL_MISSILE_LAUNCHER_OP = 3319  # base missile skill (every missile charge requires it)
+SKILL_RAPID_LAUNCH = 21071        # -3% missile launcher rate-of-fire time / level
 # Engineering / fitting skills — these decide whether a loadout actually FITS. Without them
 # every fit is checked against the untrained hull's base CPU/PG, so real (skilled) fits read
 # as over-capacity. CPU/PG Management raise the ship's output; the Weapon Upgrades pair lower
@@ -72,8 +77,15 @@ SKILL_LARGE_PROJECTILE = 3308
 SKILL_MEDIUM_AC_SPEC = 12208
 # Drones (damage): Drone Interfacing scales ALL drones; the size/racial skills scope by req-skill.
 SKILL_DRONE_INTERFACING = 3442    # +10% drone damage / level (all drones)
-SKILL_LIGHT_DRONE_OP = 24241      # +5% light drone damage / level
-SKILL_MINMATAR_DRONE_SPEC = 12485  # +2% Minmatar drone damage / level
+# Size drone-operation skills (+5% damage/level, scoped by the drone's required size skill).
+SKILL_LIGHT_DRONE_OP = 24241
+SKILL_MEDIUM_DRONE_OP = 33699
+SKILL_HEAVY_DRONE_OP = 3441
+# Racial drone specialisations (+2% damage/level, scoped by required skill).
+SKILL_AMARR_DRONE_SPEC = 12484
+SKILL_MINMATAR_DRONE_SPEC = 12485
+SKILL_GALLENTE_DRONE_SPEC = 12486
+SKILL_CALDARI_DRONE_SPEC = 12487
 # Navigation / targeting / shield-fitting.
 SKILL_EVASIVE_MANEUVERING = 3453  # -5% ship agility (inertia) / level
 SKILL_SPACESHIP_COMMAND = 3327    # -2% ship agility (inertia) / level
@@ -102,10 +114,6 @@ STANDARD_SKILL_BONUSES: tuple[BonusSpec, ...] = (
     # routes through the bonus engine.
     BonusSpec("surgical_strike", A.DAMAGE_MULTIPLIER, 3.0, skill_id=SKILL_SURGICAL_STRIKE,
               per_level=True, match_effect_id=A.EFFECT_TURRET, label="Surgical Strike"),
-    # Missiles take all damage from the charge (launchers have no damageMultiplier attr), so
-    # match every launcher by its useMissiles effect — robust across cruise/rapid/XL/… groups.
-    BonusSpec("warhead_upgrades", A.DAMAGE_MULTIPLIER, 2.0, skill_id=SKILL_WARHEAD_UPGRADES,
-              per_level=True, match_effect_id=A.EFFECT_LAUNCHER, label="Warhead Upgrades"),
     # Rapid Firing is a Gunnery skill — turrets only, matched by the targetAttack effect
     # (launchers also carry a rate-of-fire attr, so an attr-presence match would over-apply).
     BonusSpec("rapid_firing", A.RATE_OF_FIRE, -4.0, skill_id=SKILL_RAPID_FIRING,
@@ -157,8 +165,32 @@ STANDARD_SKILL_BONUSES: tuple[BonusSpec, ...] = (
               per_level=True, match_category_ids=(A.CATEGORY_DRONE,), label="Drone Interfacing"),
     BonusSpec("light_drone_op", A.DRONE_DAMAGE_MULTIPLIER, 5.0, skill_id=SKILL_LIGHT_DRONE_OP,
               per_level=True, match_required_skill_id=SKILL_LIGHT_DRONE_OP, label="Light Drone Operation"),
+    BonusSpec("medium_drone_op", A.DRONE_DAMAGE_MULTIPLIER, 5.0, skill_id=SKILL_MEDIUM_DRONE_OP,
+              per_level=True, match_required_skill_id=SKILL_MEDIUM_DRONE_OP, label="Medium Drone Operation"),
+    BonusSpec("heavy_drone_op", A.DRONE_DAMAGE_MULTIPLIER, 5.0, skill_id=SKILL_HEAVY_DRONE_OP,
+              per_level=True, match_required_skill_id=SKILL_HEAVY_DRONE_OP, label="Heavy Drone Operation"),
+    BonusSpec("amarr_drone_spec", A.DRONE_DAMAGE_MULTIPLIER, 2.0, skill_id=SKILL_AMARR_DRONE_SPEC,
+              per_level=True, match_required_skill_id=SKILL_AMARR_DRONE_SPEC, label="Amarr Drone Specialization"),
     BonusSpec("minmatar_drone_spec", A.DRONE_DAMAGE_MULTIPLIER, 2.0, skill_id=SKILL_MINMATAR_DRONE_SPEC,
               per_level=True, match_required_skill_id=SKILL_MINMATAR_DRONE_SPEC, label="Minmatar Drone Specialization"),
+    BonusSpec("gallente_drone_spec", A.DRONE_DAMAGE_MULTIPLIER, 2.0, skill_id=SKILL_GALLENTE_DRONE_SPEC,
+              per_level=True, match_required_skill_id=SKILL_GALLENTE_DRONE_SPEC, label="Gallente Drone Specialization"),
+    BonusSpec("caldari_drone_spec", A.DRONE_DAMAGE_MULTIPLIER, 2.0, skill_id=SKILL_CALDARI_DRONE_SPEC,
+              per_level=True, match_required_skill_id=SKILL_CALDARI_DRONE_SPEC, label="Caldari Drone Specialization"),
+    # Missiles: damage skills modify the CHARGE (one spec per damage type, scoped by the charge's
+    # required skill); Rapid Launch cuts launcher rate-of-fire.
+    *tuple(
+        BonusSpec(f"heavy_missiles_{d}", attr, 5.0, skill_id=SKILL_HEAVY_MISSILES, per_level=True,
+                  target_domain="charge", match_required_skill_id=SKILL_HEAVY_MISSILES, label="Heavy Missiles")
+        for d, attr in A.CHARGE_DAMAGE.items()
+    ),
+    *tuple(
+        BonusSpec(f"warhead_upgrades_{d}", attr, 2.0, skill_id=SKILL_WARHEAD_UPGRADES, per_level=True,
+                  target_domain="charge", match_required_skill_id=SKILL_MISSILE_LAUNCHER_OP, label="Warhead Upgrades")
+        for d, attr in A.CHARGE_DAMAGE.items()
+    ),
+    BonusSpec("rapid_launch", A.RATE_OF_FIRE, -3.0, skill_id=SKILL_RAPID_LAUNCH, per_level=True,
+              match_effect_id=A.EFFECT_LAUNCHER, label="Rapid Launch"),
 
     # --- Navigation / targeting / shield-fitting ------------------------------------------
     BonusSpec("evasive_maneuvering", A.AGILITY, -5.0, target_domain="ship",

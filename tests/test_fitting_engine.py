@@ -82,6 +82,7 @@ def _types() -> dict:
                    "effects": [A.EFFECT_LAUNCHER],
                    "attrs": {A.CPU_USAGE: 4, A.POWER_USAGE: 2, A.RATE_OF_FIRE: 3000}},
         ROCKET: {"name": "Test Rocket", "group_id": 507, "category_id": 8,
+                 "skills": [(3319, 1)],   # requires Missile Launcher Operation -> Warhead Upgrades applies
                  "attrs": {A.KINETIC_DAMAGE: 20.0,
                            A.AOE_CLOUD_SIZE: 50.0, A.AOE_VELOCITY: 100.0,
                            A.AOE_DAMAGE_REDUCTION_FACTOR: 0.85,
@@ -279,8 +280,9 @@ def test_missile_dps_with_launcher_bcs_and_bonuses():
     ))
     r = evaluate(fit, SkillProfile.omniscient(), OperatingProfile(), prov)
     off = r.telemetry["offence"]
-    # dmg = 1.0 * warhead(1.10) * caldari(1.25) * BCS penalised(1.10); rof = 3.0 * BCS(0.90)
-    expected = 20 * (1.0 * 1.10 * 1.25 * 1.10) / (3.0 * 0.90)
+    # dmg = charge * warhead-on-charge(1.10) * caldari(1.25) * BCS penalised(1.10)
+    # rof = 3.0 * BCS(0.90) * rapid-launch(0.85)
+    expected = 20 * (1.0 * 1.10 * 1.25 * 1.10) / (3.0 * 0.90 * 0.85)
     assert off["missile_dps"] == pytest.approx(expected, abs=0.05)
     assert off["turret_dps"] == 0.0                       # gyro/rapid-firing never touch missiles
     assert off["damage_distribution"]["kinetic"] == 100.0
