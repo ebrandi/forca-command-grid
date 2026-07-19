@@ -445,10 +445,12 @@ class SdeShipBonus(models.Model):
     amount = models.FloatField(default=0.0)          # percent (per level if per_level)
     per_level = models.BooleanField(default=False)
     skill_type_id = models.IntegerField(null=True, blank=True)  # None => role bonus (always on)
-    target_domain = models.CharField(max_length=8, default="item")  # "item" | "ship"
+    target_domain = models.CharField(max_length=8, default="item")  # "item" | "ship" | "charge"
     match_group_ids = models.JSONField(default=list, blank=True)
     match_category_ids = models.JSONField(default=list, blank=True)
     match_attr_present = models.IntegerField(null=True, blank=True)
+    # Item/charge must REQUIRE this skill (how EVE scopes most turret/missile hull bonuses).
+    match_required_skill_id = models.IntegerField(null=True, blank=True)
     penalised = models.BooleanField(default=False)
     label = models.CharField(max_length=128, blank=True)
 

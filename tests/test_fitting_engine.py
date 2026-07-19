@@ -155,6 +155,77 @@ def test_dps_with_ship_and_skill_and_module_bonuses():
     assert r.status == Status.VALID
 
 
+# --------------------------------------------------------------------------- #
+# Hull trait bonuses imported from FSD modifierInfo: requires-skill + charge domain
+# --------------------------------------------------------------------------- #
+def test_hull_bonus_scoped_by_required_skill():
+    """A turret-damage hull bonus scoped to items REQUIRING a skill (the FSD
+    LocationRequiredSkillModifier) lifts a turret that requires it, and scales by the hull
+    skill's level — contributing nothing when that hull skill is untrained."""
+    prov = MemoryDataProvider(_types(), data_version="rs")
+    prov.add_ship_bonus(SHIP, BonusSpec(
+        "hull_spt_dmg", A.DAMAGE_MULTIPLIER, 5.0, skill_id=S_MINFRIG, per_level=True,
+        match_required_skill_id=S_SPT, label="Hull: Small Projectile damage"))  # AC requires S_SPT
+    fit = FitInput(SHIP, (ModuleInput(AC, SlotKind.HIGH, ModuleState.ACTIVE, charge_type_id=FUSION),))
+    trained = SkillProfile.from_dict({S_MINFRIG: 4, S_GUNNERY: 5, S_SPT: 5})
+    untrained = SkillProfile.from_dict({S_MINFRIG: 0, S_GUNNERY: 5, S_SPT: 5})
+    hi = evaluate(fit, trained, OperatingProfile(), prov).telemetry["offence"]["total_dps"]
+    lo = evaluate(fit, untrained, OperatingProfile(), prov).telemetry["offence"]["total_dps"]
+    assert lo > 0
+    assert hi == pytest.approx(lo * 1.20, abs=0.05)          # +5% × 4 levels
+
+
+def test_hull_bonus_missile_rof_by_group():
+    """A missile rate-of-fire hull bonus matched by launcher group (the Caracal pattern):
+    faster cycle → more DPS, scaled by the hull skill."""
+    prov = MemoryDataProvider(_types(), data_version="rof")
+    prov.add_ship_bonus(SHIP, BonusSpec(
+        "hull_missile_rof", A.RATE_OF_FIRE, -5.0, skill_id=S_MINFRIG, per_level=True,
+        match_group_ids=(507,), label="Hull: launcher ROF"))
+    fit = FitInput(SHIP, (ModuleInput(LAUNCHER, SlotKind.HIGH, ModuleState.ACTIVE, charge_type_id=ROCKET),))
+    hi = evaluate(fit, SkillProfile.from_dict({S_MINFRIG: 4}), OperatingProfile(), prov)\
+        .telemetry["offence"]["total_dps"]
+    lo = evaluate(fit, SkillProfile.from_dict({S_MINFRIG: 0}), OperatingProfile(), prov)\
+        .telemetry["offence"]["total_dps"]
+    assert lo > 0
+    assert hi == pytest.approx(lo / 0.80, abs=0.1)           # -5% × 4 = ROF ×0.80 → DPS ÷0.80
+
+
+def test_hull_bonus_on_missile_charge_by_type():
+    """A per-type missile-damage hull bonus lands on the loaded charge (FSD RequiredSkill
+    modifier on the missile's kineticDamage), lifting only that damage type."""
+    types = _types()
+    types[ROCKET] = {**types[ROCKET], "skills": [(S_CALMISSILE, 1)]}   # the missile requires the missile skill
+    prov = MemoryDataProvider(types, data_version="cd")
+    prov.add_ship_bonus(SHIP, BonusSpec(
+        "hull_kin_missile", A.KINETIC_DAMAGE, 5.0, skill_id=S_MINFRIG, per_level=True,
+        target_domain="charge", match_required_skill_id=S_CALMISSILE, label="Hull: kinetic missile"))
+    fit = FitInput(SHIP, (ModuleInput(LAUNCHER, SlotKind.HIGH, ModuleState.ACTIVE, charge_type_id=ROCKET),))
+    hi = evaluate(fit, SkillProfile.from_dict({S_MINFRIG: 4, S_CALMISSILE: 5}), OperatingProfile(), prov)\
+        .telemetry["offence"]["total_dps"]
+    lo = evaluate(fit, SkillProfile.from_dict({S_MINFRIG: 0, S_CALMISSILE: 5}), OperatingProfile(), prov)\
+        .telemetry["offence"]["total_dps"]
+    assert lo > 0
+    assert hi == pytest.approx(lo * 1.20, abs=0.05)          # kinetic +5% × 4 (rocket is kinetic-only)
+
+
+def test_hull_charge_bonus_ignores_unmatched_missile():
+    """The charge-domain bonus does nothing when the loaded missile does not require the
+    scoped skill — no silent over-application."""
+    types = _types()
+    types[ROCKET] = {**types[ROCKET], "skills": [(S_CALMISSILE, 1)]}
+    prov = MemoryDataProvider(types, data_version="cd2")
+    prov.add_ship_bonus(SHIP, BonusSpec(
+        "hull_kin_other", A.KINETIC_DAMAGE, 5.0, skill_id=S_MINFRIG, per_level=True,
+        target_domain="charge", match_required_skill_id=S_WARHEAD, label="Hull: mismatched"))  # rocket lacks S_WARHEAD
+    fit = FitInput(SHIP, (ModuleInput(LAUNCHER, SlotKind.HIGH, ModuleState.ACTIVE, charge_type_id=ROCKET),))
+    hi = evaluate(fit, SkillProfile.from_dict({S_MINFRIG: 5, S_CALMISSILE: 5}), OperatingProfile(), prov)\
+        .telemetry["offence"]["total_dps"]
+    lo = evaluate(fit, SkillProfile.from_dict({S_MINFRIG: 0, S_CALMISSILE: 5}), OperatingProfile(), prov)\
+        .telemetry["offence"]["total_dps"]
+    assert hi == pytest.approx(lo, abs=0.001)                # unmatched → identical
+
+
 def test_missing_ammo_is_flagged_and_zero_dps():
     prov = _provider()
     fit = FitInput(SHIP, (ModuleInput(AC, SlotKind.HIGH, ModuleState.ACTIVE),))  # no charge

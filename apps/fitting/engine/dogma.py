@@ -107,6 +107,9 @@ def _matches(spec: BonusSpec, info: dict, item_attrs: dict[int, float]) -> bool:
         return False
     if spec.match_effect_id is not None and spec.match_effect_id not in info.get("effects", ()):
         return False
+    if spec.match_required_skill_id is not None \
+            and spec.match_required_skill_id not in info.get("req_skills", ()):
+        return False
     return True
 
 
@@ -123,13 +126,18 @@ def _weapon_kind(info: dict) -> str | None:
 
 
 def _bonus_factor_for_item(
-    ctx: BonusContext, skills: SkillProfile, attr_id: int, info: dict, item_attrs: dict[int, float]
+    ctx: BonusContext, skills: SkillProfile, attr_id: int, info: dict, item_attrs: dict[int, float],
+    domain: str = "item",
 ) -> tuple[float, list[Contribution]]:
-    """Combined UNPENALISED factor from ship/role/skill bonuses on an *item* attribute."""
+    """Combined UNPENALISED factor from ship/role/skill bonuses on an item/charge attribute.
+
+    ``domain`` selects which bonuses apply: "item" (a fitted module's attribute) or "charge"
+    (the loaded ammo's attribute — e.g. a hull's per-type missile-damage bonus lands on the
+    missile, not the launcher)."""
     factors: list[float] = []
     contribs: list[Contribution] = []
     for spec in ctx.all():
-        if spec.target_domain != "item" or spec.target_attr != attr_id or spec.penalised:
+        if spec.target_domain != domain or spec.target_attr != attr_id or spec.penalised:
             continue
         if not _matches(spec, info, item_attrs):
             continue
@@ -191,6 +199,9 @@ def evaluate(
     for m in fit.modules:
         info = dict(provider.type_info(m.type_id) or {})
         info["effects"] = frozenset(provider.effects(m.type_id))
+        # Required skills let a hull bonus filter on "requires skill X" (how EVE scopes most
+        # turret/missile bonuses), not just group/category.
+        info["req_skills"] = frozenset(sid for sid, _ in provider.required_skills(m.type_id))
         items.append((m, provider.attrs(m.type_id), info))
 
     def active(m) -> bool:
@@ -464,7 +475,21 @@ def _offence(items, provider, ctx, skills, op_profile, result: FittingResult, ac
                 contextual=False, params={"type_id": m.type_id}))
             continue
         charge = provider.attrs(m.charge_type_id)
-        shot = {d: charge.get(A.CHARGE_DAMAGE[d], 0.0) for d in A.DAMAGE_TYPES}
+        # A hull's per-type ammo-damage bonus (e.g. "+5% kinetic missile damage / level")
+        # modifies the *charge's* damage attribute, scoped to charges requiring a given
+        # skill — so apply matching charge-domain bonuses to each damage type here.
+        charge_info = dict(provider.type_info(m.charge_type_id) or {})
+        charge_info["effects"] = frozenset(provider.effects(m.charge_type_id))
+        charge_info["req_skills"] = frozenset(
+            sid for sid, _ in provider.required_skills(m.charge_type_id))
+        shot = {}
+        for d in A.DAMAGE_TYPES:
+            base = charge.get(A.CHARGE_DAMAGE[d], 0.0)
+            if base:
+                cf, _ = _bonus_factor_for_item(
+                    ctx, skills, A.CHARGE_DAMAGE[d], charge_info, charge, domain="charge")
+                base *= cf
+            shot[d] = base
         shot_total = sum(shot.values())
         if shot_total <= 0:
             continue

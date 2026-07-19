@@ -109,6 +109,7 @@ class Command(BaseCommand):
                 match_group_ids=r.get("match_group_ids", []),
                 match_category_ids=r.get("match_category_ids", []),
                 match_attr_present=r.get("match_attr_present"),
+                match_required_skill_id=r.get("match_required_skill_id"),
                 penalised=r.get("penalised", False), label=r.get("label", ""),
             )
             for r in bonus_rows

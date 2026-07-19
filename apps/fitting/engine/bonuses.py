@@ -29,6 +29,7 @@ class BonusSpec:
     match_category_ids: tuple[int, ...] = ()
     match_attr_present: int | None = None
     match_effect_id: int | None = None   # module must carry this dogma effect (weapon detection)
+    match_required_skill_id: int | None = None  # item/charge must REQUIRE this skill (hull bonus filter)
     penalised: bool = False
     op: Op = Op.MULTIPLY
     label: str = ""

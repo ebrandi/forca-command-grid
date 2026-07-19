@@ -66,10 +66,19 @@ class ORMDataProvider:
         try:
             from apps.admin_audit.models import AppSetting
 
-            dogma = (AppSetting.get("dogma_data_version", {}) or {}).get("version")
-            if dogma:
-                return str(dogma)
-            return str((AppSetting.get("sde_version", {}) or {}).get("version", "") or "unknown")
+            # One query for all version keys (query-neutral vs the old per-key reads).
+            rows = dict(AppSetting.objects.filter(
+                key__in=("dogma_data_version", "sde_version", "ship_bonus_data_version")
+            ).values_list("key", "value"))
+
+            def ver(key):
+                return (rows.get(key) or {}).get("version")
+
+            base = str(ver("dogma_data_version") or ver("sde_version") or "unknown")
+            # Fold in the ship-bonus catalogue version so re-importing hull bonuses busts the
+            # eval cache — otherwise warm entries serve pre-import DPS until the TTL expires.
+            bonus = ver("ship_bonus_data_version")
+            return f"{base}+sb{bonus}" if bonus else base
         except Exception:  # noqa: BLE001 - version is advisory; never break a calc over it
             return "unknown"
 
@@ -149,8 +158,9 @@ class ORMDataProvider:
                 target_domain=b.target_domain, skill_id=b.skill_type_id, per_level=b.per_level,
                 match_group_ids=tuple(b.match_group_ids or ()),
                 match_category_ids=tuple(b.match_category_ids or ()),
-                match_attr_present=b.match_attr_present, penalised=b.penalised,
-                op=Op.MULTIPLY, label=b.label or b.key,
+                match_attr_present=b.match_attr_present,
+                match_required_skill_id=b.match_required_skill_id,
+                penalised=b.penalised, op=Op.MULTIPLY, label=b.label or b.key,
             ))
         self._bonuses[ship_type_id] = specs
         return specs
