@@ -537,7 +537,7 @@ def _capacitor(ship, items, ctx, skills, active) -> dict:
 # --------------------------------------------------------------------------- #
 # Offence (turret + drone DPS)
 # --------------------------------------------------------------------------- #
-def _weapon_damage_mult(module_attrs, info, items, ctx, skills, mod_groups):
+def _weapon_damage_mult(module_attrs, info, items, ctx, skills, mod_groups, overheated=False):
     """Effective damage multiplier: the weapon's own multiplier (1.0 for launchers, which
     take all their damage from the charge) × unpenalised ship/role/skill bonuses × the
     stacking-penalised damage mods of the RIGHT class (``mod_groups``)."""
@@ -553,10 +553,11 @@ def _weapon_damage_mult(module_attrs, info, items, ctx, skills, mod_groups):
             mv = a2.get(A.DAMAGE_MULTIPLIER) or a2.get(A.MISSILE_DAMAGE_MULT_BONUS)
             if mv:
                 mod_mults.append(mv)
-    return base * unpen * combine_penalized(mod_mults), contribs, mod_mults
+    overload = 1.0 + module_attrs.get(A.OVERLOAD_DAMAGE_BONUS, 0.0) / 100.0 if overheated else 1.0
+    return base * unpen * combine_penalized(mod_mults) * overload, contribs, mod_mults
 
 
-def _weapon_rof(module_attrs, info, items, ctx, skills, mod_groups):
+def _weapon_rof(module_attrs, info, items, ctx, skills, mod_groups, overheated=False):
     base_ms = module_attrs.get(A.RATE_OF_FIRE, 0.0)
     unpen, _ = _bonus_factor_for_item(ctx, skills, A.RATE_OF_FIRE, info, module_attrs)
     rof_mults = []
@@ -567,7 +568,8 @@ def _weapon_rof(module_attrs, info, items, ctx, skills, mod_groups):
         # on the weapon's rate-of-fire attr (51), which the mod does not have.
         if info2.get("group_id") in mod_groups and A.ROF_MULTIPLIER in a2:
             rof_mults.append(a2[A.ROF_MULTIPLIER])
-    return (base_ms / 1000.0) * unpen * combine_penalized(rof_mults)
+    overload = 1.0 + module_attrs.get(A.OVERLOAD_ROF_BONUS, 0.0) / 100.0 if overheated else 1.0
+    return (base_ms / 1000.0) * unpen * combine_penalized(rof_mults) * overload
 
 
 def _offence(items, provider, ctx, skills, op_profile, result: FittingResult, active) -> dict:
@@ -611,8 +613,9 @@ def _offence(items, provider, ctx, skills, op_profile, result: FittingResult, ac
             continue
         # Only the matching damage-mod class boosts this weapon (BCS→missiles, gyro→turrets).
         mod_groups = LAUNCHER_DAMAGE_MOD_GROUPS if is_launcher else TURRET_DAMAGE_MOD_GROUPS
-        dmg_mult, _c, _g = _weapon_damage_mult(a, info, items, ctx, skills, mod_groups)
-        rof_s = _weapon_rof(a, info, items, ctx, skills, mod_groups)
+        oh = m.state == ModuleState.OVERHEATED
+        dmg_mult, _c, _g = _weapon_damage_mult(a, info, items, ctx, skills, mod_groups, overheated=oh)
+        rof_s = _weapon_rof(a, info, items, ctx, skills, mod_groups, overheated=oh)
         if rof_s <= 0:
             continue
         volley = shot_total * dmg_mult

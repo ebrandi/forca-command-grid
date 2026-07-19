@@ -122,6 +122,9 @@ CHARGE_DAMAGE = {
 OPTIMAL_RANGE = 54           # maxRange
 FALLOFF = 158
 TRACKING_SPEED = 160
+# Overload (overheat) bonuses applied only when a weapon is in the OVERHEATED state.
+OVERLOAD_ROF_BONUS = 1205    # overloadRofBonus (turret & launcher, negative = faster)
+OVERLOAD_DAMAGE_BONUS = 1210  # overloadDamageModifier (turrets)
 
 # --- Weapon-identifying effects (robust across all weapon groups) -----------
 # Every turret carries the targetAttack effect; every missile launcher carries useMissiles.
