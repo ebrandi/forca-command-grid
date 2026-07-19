@@ -45,6 +45,12 @@ DRONE_DAMAGE_MOD_GROUPS = frozenset({640})               # drone damage amplifie
 SHIELD_EXTENDER_GROUP = 40
 ARMOR_PLATE_GROUP = 329  # armor reinforcer / plates (flat armour HP)
 PROP_GROUPS = frozenset({46, 47})  # afterburner, MWD
+# Slots whose modules are physically fitted to the HULL and so contribute to the ship's own HP
+# and resonance. Drones/fighters/cargo/implants are separate entities that carry their OWN hp
+# and resonance attributes — those must never leak into the ship's layers.
+HULL_FITTED_SLOTS = frozenset({
+    SlotKind.HIGH, SlotKind.MED, SlotKind.LOW, SlotKind.RIG, SlotKind.SUBSYSTEM,
+})
 
 # Electronic-warfare inventory groups (public SDE group ids), used for the EWAR readout.
 EWAR_ECM = 201
@@ -342,7 +348,7 @@ def _layer_hp(ship, items, hp_attr, flat_attr, pct_attr, mult_attr, ctx, skills,
     pct_factor = 1.0     # rig %HP — multiplicative, stacking-EXEMPT (shield extender rigs)
     mult_factor = 1.0    # structure HP multiplier (nanofibers) — multiplicative
     for m, a, _info in items:
-        if m.state == ModuleState.OFFLINE:
+        if m.state == ModuleState.OFFLINE or m.slot not in HULL_FITTED_SLOTS:
             continue
         if flat_attr and flat_attr in a:
             flat += a.get(flat_attr, 0.0)
@@ -379,6 +385,8 @@ def _layer_resonance(ship, items, resonance_attrs, module_attrs, ctx, skills, re
     # A single overheated damage-control replaces its per-layer resonance with a flat multiplier.
     dcu_overheat = None
     for m, a, info in items:
+        if m.slot not in HULL_FITTED_SLOTS:
+            continue
         if m.state == ModuleState.OVERHEATED and is_dcu(info) and A.RESISTANCE_MULTIPLIER in a:
             dcu_overheat = a[A.RESISTANCE_MULTIPLIER]
 
@@ -388,7 +396,7 @@ def _layer_resonance(ship, items, resonance_attrs, module_attrs, ctx, skills, re
         mod_attr = module_attrs[dtype]
         pen_mults, dcu_mults = [], []
         for m, a, info in items:
-            if m.state == ModuleState.OFFLINE:
+            if m.state == ModuleState.OFFLINE or m.slot not in HULL_FITTED_SLOTS:
                 continue
             val = a.get(mod_attr)
             if is_dcu(info):

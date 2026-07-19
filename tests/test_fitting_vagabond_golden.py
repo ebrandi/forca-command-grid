@@ -59,7 +59,11 @@ def _types() -> dict:
                "effects": [89, 92], "attrs": {64: 1.1, 204: 0.895}},
         WARRIOR: {"name": "Warrior II", "group_id": 100, "category_id": 18, "effects": [10],
                   "skills": [(S_LIGHT_DRONE, 5), (S_MIN_DRONE_SPEC, 1), (S_DRONES, 5)],
-                  "attrs": {64: 1.56, 116: 20.0, 51: 4000}},
+                  # A drone is an entity carrying its OWN hp + resonances; these must NOT leak
+                  # into the ship's shield/armour layers (regression guard for that bug).
+                  "attrs": {64: 1.56, 116: 20.0, 51: 4000, 263: 120.0, 265: 108.0,
+                            271: 1.0, 272: 0.5, 273: 0.6, 274: 0.8,
+                            267: 0.4, 268: 0.9, 269: 0.75, 270: 0.65}},
         LSE: {"name": "Large Shield Extender II", "group_id": 40, "category_id": 7,
               "effects": [21], "attrs": {72: 2600.0, 983: 25.0}},
         ADCU: {"name": "Assault Damage Control II", "group_id": 60, "category_id": 7,
