@@ -486,17 +486,24 @@ def orm_dogma(db):
 
 
 def test_orm_adapter_matches_memory_engine(orm_dogma):
+    """ORM wiring test. The hand-computed bonus chain belongs to the v1 curated
+    engine (this fixture seeds SdeShipBonus, which only v1 reads) — asserted via
+    evaluate_v1, the differential baseline. The v2 production path is exercised for
+    the ORM wiring itself (slot bridge, data version); its NUMBERS are covered by
+    the golden suite against real graph fixtures (tests/test_fitting_golden_*)."""
     engine = FittingEngine(provider=ORMDataProvider())
     assert engine.data_version == "orm-1"
     fit = FitInput(SHIP, (
         ModuleInput(AC, SlotKind.HIGH, ModuleState.ACTIVE, charge_type_id=FUSION),
         ModuleInput(GYRO, SlotKind.LOW, ModuleState.ACTIVE),
     ))
-    r = engine.evaluate(fit, _all5(), OperatingProfile())
+    r = engine.evaluate_v1(fit, _all5(), OperatingProfile())
     expected = 9 * (1.0 * 1.25 * 1.15 * 1.10) / (2.5 * 0.80 * 0.90 * 0.90)
     assert r.telemetry["offence"]["total_dps"] == pytest.approx(expected, abs=0.05)
     # slot-count bridge: hull slots come through even though we stored them as dogma attrs
     assert r.telemetry["resources"]["slots"]["hull"]["high"] == 4
+    r2 = engine.evaluate(fit, _all5(), OperatingProfile())
+    assert r2.telemetry["resources"]["slots"]["hull"]["high"] == 4
 
 
 def test_engine_cache_roundtrip(orm_dogma):

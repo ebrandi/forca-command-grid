@@ -140,10 +140,15 @@ CHARGE_GROUP_ATTRS = (604, 605, 606, 609, 610)   # chargeGroup1..chargeGroup5
 CHARGE_SIZE = 128                                 # chargeSize (weapon + charge)
 
 # --- Missile application (attributes live on the missile CHARGE) -------------
+# Verified against the live dgmAttributeTypes names: 655 is aoeFALLOFF (a range, ~1500m
+# on every missile — the previous constants misread it as the DRF), and since the 2015
+# missile rework attr 1353 aoeDamageReductionFactor holds the application EXPONENT
+# directly (~0.5-1.0); 1354 (sensitivity) is legacy, default 1.0.
 AOE_CLOUD_SIZE = 654          # explosion radius (m)
 AOE_VELOCITY = 653            # explosion velocity (m/s)
-AOE_DAMAGE_REDUCTION_FACTOR = 655       # DRF
-AOE_DAMAGE_REDUCTION_SENSITIVITY = 1353  # DRS
+AOE_FALLOFF = 655
+AOE_DAMAGE_REDUCTION_FACTOR = 1353       # the application exponent itself
+AOE_DAMAGE_REDUCTION_SENSITIVITY = 1354  # legacy (pre-rework), unused by the formula
 
 # --- Electronic warfare (module strengths, for the utility/EWAR readout) -----
 WARP_SCRAMBLE_STRENGTH = 504            # points of warp core strength neutralised

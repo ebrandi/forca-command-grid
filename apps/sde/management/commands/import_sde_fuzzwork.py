@@ -900,9 +900,18 @@ class Command(BaseCommand):
         # modAdd 4). Synthesise the missing rows so every fittable type carries them;
         # without this, cargo reads 0.0 and drone-bay/magazine maths have no volumes.
         synth = 0
-        for tid, mass, capacity, volume in self._q(
-            con, "SELECT typeID, mass, capacity, volume FROM invTypes",
-        ):
+        try:
+            inv_rows = list(self._q(
+                con, "SELECT typeID, mass, capacity, volume FROM invTypes"))
+        except sqlite3.OperationalError:
+            # A partial source without invTypes (only the dogma-table fixtures do
+            # this). Warn loudly — fitting_data_check fails if ships end up without
+            # cargo capacity — and continue with the dgm rows alone.
+            self.stdout.write(self.style.WARNING(
+                "  invTypes absent from this SDE source — mass/capacity/volume "
+                "attribute synthesis skipped"))
+            inv_rows = []
+        for tid, mass, capacity, volume in inv_rows:
             if tid not in valid:
                 continue
             for attr, val in ((4, mass), (38, capacity), (161, volume)):

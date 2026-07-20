@@ -422,14 +422,16 @@ def _cap_runtime(capacity: float, tau: float, net_drain: float) -> float | None:
 # --------------------------------------------------------------------------- #
 # Offence
 # --------------------------------------------------------------------------- #
-def _missile_application(target_sig, target_vel, er, ev_, drf, drs) -> float:
+def _missile_application(target_sig, target_vel, er, ev_, drf) -> float:
+    """min(1, S/Er, ((S/Er)·(Ev/Vt))^DRF) — post-2015 formula: attr 1353
+    (aoeDamageReductionFactor) IS the exponent (verified against live data; the old
+    ln(drf)/ln(drs) form belongs to the pre-rework attributes)."""
     if er <= 0:
         return 1.0
     size_term = target_sig / er
-    if target_vel <= 0 or ev_ <= 0 or drf <= 0 or drs <= 0 or drs == 1.0:
+    if target_vel <= 0 or ev_ <= 0 or drf <= 0:
         return min(1.0, size_term)
-    exponent = math.log(drf) / math.log(drs)
-    return min(1.0, size_term, (size_term * (ev_ / target_vel)) ** exponent)
+    return min(1.0, size_term, (size_term * (ev_ / target_vel)) ** drf)
 
 
 def _offence(ev: EvaluatedFit, provider, op_profile: OperatingProfile, result) -> dict:
@@ -490,8 +492,7 @@ def _offence(ev: EvaluatedFit, provider, op_profile: OperatingProfile, result) -
                 applied = dps * _missile_application(
                     target.signature_radius, target.velocity,
                     ev.value(ch, A.AOE_CLOUD_SIZE), ev.value(ch, A.AOE_VELOCITY),
-                    ev.value(ch, A.AOE_DAMAGE_REDUCTION_FACTOR),
-                    ev.value(ch, A.AOE_DAMAGE_REDUCTION_SENSITIVITY))
+                    ev.value(ch, A.AOE_DAMAGE_REDUCTION_FACTOR))
             missile_dps_applied += applied
         total_volley += volley
         ranges.append(entry)
