@@ -215,11 +215,12 @@ def build_entities(fit: FitInput, skills: SkillProfile, provider,
                       implants=[], _provider=provider)
 
     for sid in (skill_ids or []):
-        level = skills.level(sid)
-        if level <= 0:
-            continue
+        # Materialise EVERY candidate skill, including level 0: per-level bonuses are
+        # encoded in data as a pre-multiplication of the bonus attribute by attr 280,
+        # so an untrained skill must exist (with 280 = 0) to zero its bonus. Without
+        # the entity, a hull trait would apply at its raw (level-1) strength untrained.
         s = _new_entity(provider, sid, "skill", STATE_OVERLOADED)
-        s.base[ATTR_SKILL_LEVEL] = float(level)
+        s.base[ATTR_SKILL_LEVEL] = float(skills.level(sid))
         ev.skills.append(s)
 
     for m in fit.modules:
