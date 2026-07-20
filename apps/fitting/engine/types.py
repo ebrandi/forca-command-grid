@@ -15,9 +15,11 @@ from enum import Enum
 
 # Bumped whenever a calculation changes in a way that could move a saved fit's numbers.
 # Stored on every FitRevision + cache key so historical results never silently drift.
-# 1.2.0 — Phase 2: data-driven skill catalogue from the imported dogma graph (opt-in via the
-# FITTING_GRAPH_SKILLS flag, which additionally folds into the cache key).
-ENGINE_VERSION = "1.2.0"
+# 2.0.0 — remediation: generic dogma-graph evaluator (passes 1-3 in graph.py, telemetry
+# in evaluator.py) replaces the curated per-mechanic engine; corrected capacitor peak
+# (2.5·C/τ), active/passive tank, ranges, drone bandwidth gating, charge/rig/group
+# validation, implants. See docs/architecture/decisions/tochas-lab-calculation-engine.md.
+ENGINE_VERSION = "2.0.0"
 
 
 class SlotKind(str, Enum):

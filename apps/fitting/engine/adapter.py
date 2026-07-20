@@ -20,6 +20,7 @@ from . import attributes as A
 from . import dogma
 from .bonuses import BonusSpec
 from .effects import Op
+from .graph import AttributeDef, EffectDef, ModifierDef
 from .types import ENGINE_VERSION, FitInput, FittingResult, OperatingProfile, SkillProfile
 
 log = logging.getLogger("forca.fitting")
@@ -62,8 +63,15 @@ def _graph_skills_enabled() -> bool:
         return False
 
 
+# Attribute definitions (default/stackable/highIsGood) are global, small (~2,900 rows)
+# and static until a data re-import: cache them once per data version, shared across
+# per-evaluation provider instances (same pattern as the skill catalogue).
+_ATTR_DEF_CACHE: dict[str, dict[int, AttributeDef]] = {}
+
+
 class ORMDataProvider:
-    """A :class:`~apps.fitting.engine.dogma.DataProvider` backed by the SDE tables."""
+    """A :class:`~apps.fitting.engine.dogma.DataProvider` (and
+    :class:`~apps.fitting.engine.graph.GraphDataProvider`) backed by the SDE tables."""
 
     def __init__(self):
         # Per-evaluation memoization: a provider is built fresh for each engine
@@ -75,6 +83,7 @@ class ORMDataProvider:
         self._effects: dict[int, frozenset[int]] = {}
         self._skills: dict[int, list[tuple[int, int]]] = {}
         self._bonuses: dict[int, list[BonusSpec]] = {}
+        self._effect_defs: dict[int, EffectDef | None] = {}
         self.data_version = self._resolve_data_version()
 
     @staticmethod
@@ -179,6 +188,71 @@ class ORMDataProvider:
         self._skills[type_id] = skills
         return skills
 
+    # -- GraphDataProvider (engine v2 core) --------------------------------- #
+    def attr_def(self, attribute_id: int) -> AttributeDef:
+        defs = _ATTR_DEF_CACHE.get(self.data_version)
+        if defs is None:
+            from apps.sde.models import SdeDogmaAttribute
+
+            defs = {
+                int(r["attribute_id"]): AttributeDef(
+                    default=float(r["default_value"] or 0.0),
+                    stackable=bool(r["stackable"]),
+                    # high_is_good is nullable (context-dependent); treat unknown as
+                    # "high is good", the dominant convention in the data.
+                    high_is_good=bool(r["high_is_good"]) if r["high_is_good"] is not None
+                    else True,
+                )
+                for r in SdeDogmaAttribute.objects.values(
+                    "attribute_id", "default_value", "stackable", "high_is_good")
+            }
+            _ATTR_DEF_CACHE[self.data_version] = defs
+        return defs.get(attribute_id, AttributeDef())
+
+    def effect_def(self, effect_id: int) -> EffectDef | None:
+        if effect_id in self._effect_defs:
+            return self._effect_defs[effect_id]
+        from apps.sde.models import SdeDogmaEffect, SdeModifier
+
+        row = (SdeDogmaEffect.objects.filter(effect_id=effect_id)
+               .values("effect_id", "effect_category", "duration_attribute_id",
+                       "discharge_attribute_id", "range_attribute_id",
+                       "falloff_attribute_id", "tracking_attribute_id")
+               .first())
+        if row is None:
+            self._effect_defs[effect_id] = None
+            return None
+        mods = tuple(
+            ModifierDef(
+                func=m["func"], domain=m["domain"], operation=m["operation"],
+                modified_attribute_id=m["modified_attribute_id"],
+                modifying_attribute_id=m["modifying_attribute_id"],
+                group_id=m["group_id"], skill_type_id=m["skill_type_id"],
+            )
+            for m in SdeModifier.objects.filter(effect_id=effect_id)
+            .values("func", "domain", "operation", "modified_attribute_id",
+                    "modifying_attribute_id", "group_id", "skill_type_id")
+        )
+        edef = EffectDef(
+            effect_id=effect_id, category=int(row["effect_category"] or 0),
+            modifiers=mods,
+            duration_attribute_id=row["duration_attribute_id"],
+            discharge_attribute_id=row["discharge_attribute_id"],
+            range_attribute_id=row["range_attribute_id"],
+            falloff_attribute_id=row["falloff_attribute_id"],
+            tracking_attribute_id=row["tracking_attribute_id"],
+        )
+        self._effect_defs[effect_id] = edef
+        return edef
+
+    def trained_skill_ids(self) -> list[int]:
+        """Every skill type id in the DB (category 16) — the candidate set the graph
+        engine materialises as skill entities (filtered by the profile's level>0)."""
+        from apps.sde.models import SdeType
+
+        return list(SdeType.objects.filter(group__category_id=_SKILL_CATEGORY)
+                    .values_list("type_id", flat=True))
+
     def ship_bonuses(self, ship_type_id: int) -> list[BonusSpec]:
         if ship_type_id in self._bonuses:
             return self._bonuses[ship_type_id]
@@ -275,7 +349,19 @@ class FittingEngine:
     def evaluate(
         self, fit: FitInput, skills: SkillProfile, op_profile: OperatingProfile | None = None
     ) -> FittingResult:
-        """Compute a fit's telemetry (uncached — deterministic; used by services/tests)."""
+        """Compute a fit's telemetry (uncached — deterministic; used by services/tests).
+
+        Engine v2: the generic graph evaluator (see the calculation-engine ADR). The
+        v1 curated path (dogma.evaluate) remains importable for the differential
+        harness only — it is no longer a production calculation path."""
+        from . import evaluator
+
+        return evaluator.evaluate(fit, skills, op_profile or OperatingProfile(), self.provider)
+
+    def evaluate_v1(
+        self, fit: FitInput, skills: SkillProfile, op_profile: OperatingProfile | None = None
+    ) -> FittingResult:
+        """The pre-remediation curated engine — differential-harness baseline ONLY."""
         return dogma.evaluate(fit, skills, op_profile or OperatingProfile(), self.provider)
 
     def _cache_key(self, fit: FitInput, skills: SkillProfile, op: OperatingProfile) -> str:
