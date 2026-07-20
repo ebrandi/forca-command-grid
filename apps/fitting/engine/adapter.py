@@ -67,6 +67,12 @@ def _graph_skills_enabled() -> bool:
 # and static until a data re-import: cache them once per data version, shared across
 # per-evaluation provider instances (same pattern as the skill catalogue).
 _ATTR_DEF_CACHE: dict[str, dict[int, AttributeDef]] = {}
+# The graph engine materialises EVERY skill (≈590) per evaluation; their type rows,
+# attributes and effect lists are static per data version. Prefetching them once per
+# process (3 bulk queries) turns a ~1.5 s cold evaluation into ~10 ms.
+_SKILL_DATA_CACHE: dict[str, tuple[list[int], dict, dict, dict]] = {}
+# EffectDefs (categories + modifier lists) — likewise static per data version.
+_EFFECT_DEF_CACHE: dict[str, dict[int, "EffectDef"]] = {}
 
 
 class ORMDataProvider:
@@ -135,6 +141,9 @@ class ORMDataProvider:
         return row
 
     def type_info(self, type_id: int) -> dict | None:
+        info = getattr(self, "_skill_infos", {}).get(type_id)
+        if info is not None:
+            return info
         row = self._row(type_id)
         if not row:
             return None
@@ -210,48 +219,69 @@ class ORMDataProvider:
         return defs.get(attribute_id, AttributeDef())
 
     def effect_def(self, effect_id: int) -> EffectDef | None:
-        if effect_id in self._effect_defs:
-            return self._effect_defs[effect_id]
-        from apps.sde.models import SdeDogmaEffect, SdeModifier
+        defs = _EFFECT_DEF_CACHE.get(self.data_version)
+        if defs is None:
+            from apps.sde.models import SdeDogmaEffect, SdeModifier
 
-        row = (SdeDogmaEffect.objects.filter(effect_id=effect_id)
-               .values("effect_id", "effect_category", "duration_attribute_id",
-                       "discharge_attribute_id", "range_attribute_id",
-                       "falloff_attribute_id", "tracking_attribute_id")
-               .first())
-        if row is None:
-            self._effect_defs[effect_id] = None
-            return None
-        mods = tuple(
-            ModifierDef(
-                func=m["func"], domain=m["domain"], operation=m["operation"],
-                modified_attribute_id=m["modified_attribute_id"],
-                modifying_attribute_id=m["modifying_attribute_id"],
-                group_id=m["group_id"], skill_type_id=m["skill_type_id"],
-            )
-            for m in SdeModifier.objects.filter(effect_id=effect_id)
-            .values("func", "domain", "operation", "modified_attribute_id",
-                    "modifying_attribute_id", "group_id", "skill_type_id")
-        )
-        edef = EffectDef(
-            effect_id=effect_id, category=int(row["effect_category"] or 0),
-            modifiers=mods,
-            duration_attribute_id=row["duration_attribute_id"],
-            discharge_attribute_id=row["discharge_attribute_id"],
-            range_attribute_id=row["range_attribute_id"],
-            falloff_attribute_id=row["falloff_attribute_id"],
-            tracking_attribute_id=row["tracking_attribute_id"],
-        )
-        self._effect_defs[effect_id] = edef
-        return edef
+            # Bulk-load the whole effect layer once per data version (~3.4k effects +
+            # ~5.2k modifiers in two queries); per-effect lazy loads cost ~0.5 s per
+            # request-scoped provider otherwise.
+            mods_by_effect: dict[int, list[ModifierDef]] = {}
+            for m in SdeModifier.objects.values(
+                    "effect_id", "func", "domain", "operation", "modified_attribute_id",
+                    "modifying_attribute_id", "group_id", "skill_type_id"):
+                mods_by_effect.setdefault(int(m["effect_id"]), []).append(ModifierDef(
+                    func=m["func"], domain=m["domain"], operation=m["operation"],
+                    modified_attribute_id=m["modified_attribute_id"],
+                    modifying_attribute_id=m["modifying_attribute_id"],
+                    group_id=m["group_id"], skill_type_id=m["skill_type_id"]))
+            defs = {}
+            for row in SdeDogmaEffect.objects.values(
+                    "effect_id", "effect_category", "duration_attribute_id",
+                    "discharge_attribute_id", "range_attribute_id",
+                    "falloff_attribute_id", "tracking_attribute_id"):
+                eid = int(row["effect_id"])
+                defs[eid] = EffectDef(
+                    effect_id=eid, category=int(row["effect_category"] or 0),
+                    modifiers=tuple(mods_by_effect.get(eid, ())),
+                    duration_attribute_id=row["duration_attribute_id"],
+                    discharge_attribute_id=row["discharge_attribute_id"],
+                    range_attribute_id=row["range_attribute_id"],
+                    falloff_attribute_id=row["falloff_attribute_id"],
+                    tracking_attribute_id=row["tracking_attribute_id"])
+            _EFFECT_DEF_CACHE[self.data_version] = defs
+        return defs.get(effect_id)
 
     def trained_skill_ids(self) -> list[int]:
         """Every skill type id in the DB (category 16) — the candidate set the graph
-        engine materialises as skill entities (filtered by the profile's level>0)."""
-        from apps.sde.models import SdeType
+        engine materialises as skill entities. Bulk-prefetched (with each skill's
+        info/attrs/effects) once per data version and seeded into this provider's
+        per-instance caches, so a fresh per-request provider stays fast."""
+        cached = _SKILL_DATA_CACHE.get(self.data_version)
+        if cached is None:
+            from apps.sde.models import SdeType, SdeTypeAttribute, SdeTypeEffect
 
-        return list(SdeType.objects.filter(group__category_id=_SKILL_CATEGORY)
-                    .values_list("type_id", flat=True))
+            rows = list(SdeType.objects.filter(group__category_id=_SKILL_CATEGORY)
+                        .values("type_id", "name", "group_id", "group__category_id"))
+            ids = [r["type_id"] for r in rows]
+            infos = {r["type_id"]: {"name": r["name"], "group_id": r["group_id"],
+                                    "category_id": r["group__category_id"]} for r in rows}
+            attrs: dict[int, dict[int, float]] = {i: {} for i in ids}
+            for tid, aid, val in SdeTypeAttribute.objects.filter(type_id__in=ids) \
+                    .values_list("type_id", "attribute_id", "value"):
+                attrs[tid][int(aid)] = float(val)
+            effs: dict[int, set] = {i: set() for i in ids}
+            for tid, eid in SdeTypeEffect.objects.filter(type_id__in=ids) \
+                    .values_list("type_id", "effect_id"):
+                effs[tid].add(int(eid))
+            cached = (ids, infos, attrs, {t: frozenset(s) for t, s in effs.items()})
+            _SKILL_DATA_CACHE[self.data_version] = cached
+        ids, infos, attrs, effs = cached
+        for tid in ids:
+            self._attrs.setdefault(tid, attrs[tid])
+            self._effects.setdefault(tid, effs[tid])
+        self._skill_infos = infos                # consulted by type_info() first
+        return list(ids)
 
     def ship_bonuses(self, ship_type_id: int) -> list[BonusSpec]:
         if ship_type_id in self._bonuses:
