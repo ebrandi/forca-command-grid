@@ -2,8 +2,9 @@
 
 Fuzzwork's SQLite (``import_sde_fuzzwork``) carries *which* effects a type has but never *what
 they do*: the ``modifierInfo`` graph and skill dogma are absent. This command sources all three
-from CCP's authoritative ``sde.zip`` (``dogmaAttributes.yaml`` / ``typeDogma.yaml`` /
-``dogmaEffects.yaml``) in a single download+parse, then does an idempotent full replace of:
+from CCP's authoritative SDE at developers.eveonline.com/static-data (the post-2025-redesign
+distribution; ``dogmaAttributes.yaml`` / ``typeDogma.yaml`` / ``dogmaEffects.yaml``, stored flat
+in the current zip) in a single download+parse, then does an idempotent full replace of:
 
   1. ``SdeShipBonus`` — normalised per-hull trait bonuses ("+5% Medium Hybrid Turret damage per
      Caldari Battlecruiser level"), which the current fitting engine turns into ``BonusSpec``s.
@@ -57,9 +58,18 @@ from core.netcap import CappedReader
 # FullLoader) — the branch below keeps the Loader argument a literal so the linter can see that.
 _HAVE_CLOADER = hasattr(yaml, "CSafeLoader")
 
-SDE_URL = "https://eve-static-data-export.s3-eu-west-1.amazonaws.com/tranquility/sde.zip"
-_FSD = ("fsd/dogmaAttributes.yaml", "fsd/typeDogma.yaml", "fsd/dogmaEffects.yaml")
-_MAX_ZIP = 512 * 1024**2          # compressed ceiling (the zip is ~110MB)
+# The CURRENT official SDE distribution (developers.eveonline.com/static-data). The legacy
+# S3 sde.zip (eve-static-data-export.s3-eu-west-1.amazonaws.com) was frozen on 2025-07-07
+# when CCP redesigned the SDE; importing from it silently serves year-old dogma (hulls and
+# skills added since then get NO bonus/modifier rows — see the Tocha's Lab remediation audit).
+SDE_URL = "https://developers.eveonline.com/static-data/eve-online-static-data-latest-yaml.zip"
+# Build metadata for the latest SDE (buildNumber + releaseDate) — recorded as the data version.
+SDE_META_URL = "https://developers.eveonline.com/static-data/tranquility/latest.jsonl"
+# Member basenames we consume. The current zip stores them flat at the root; the legacy
+# zip nested them under fsd/. _parse() accepts either layout so an archived --zip (and the
+# offline test fixtures) keep working.
+_FSD_NAMES = ("dogmaAttributes.yaml", "typeDogma.yaml", "dogmaEffects.yaml")
+_MAX_ZIP = 512 * 1024**2          # compressed ceiling (the zip is ~100MB)
 _MAX_MEMBER = 256 * 1024**2       # per-extracted-YAML ceiling
 
 _SHIP_CATEGORY = 6
@@ -93,10 +103,13 @@ class Command(BaseCommand):
         work = None
         try:
             zip_path = options["zip_path"]
+            build_meta = None
             if not zip_path:
                 work = tempfile.mkdtemp(prefix="forca_fsd_")
+                build_meta = self._fetch_build_meta()
                 zip_path = self._download(work)
             attrs, type_dogma, effects = self._parse(zip_path)
+            self._build_meta = build_meta
 
             rows = self._build_rows(attrs, type_dogma, effects)
             if not rows:
@@ -149,10 +162,33 @@ class Command(BaseCommand):
                 shutil.rmtree(work, ignore_errors=True)
 
     # -- source ------------------------------------------------------------- #
+    def _fetch_build_meta(self) -> dict | None:
+        """The current SDE build metadata ({'buildNumber': int, 'releaseDate': str}).
+
+        Best-effort: the import must not fail because the metadata endpoint hiccuped —
+        the data version then falls back to an import timestamp (still monotonic, still
+        cache-busting), and the missing build number is visible in the AppSetting."""
+        try:
+            headers = {"User-Agent": settings.ESI_USER_AGENT}
+            resp = requests.get(SDE_META_URL, timeout=30, headers=headers)
+            resp.raise_for_status()
+            import json
+
+            for line in resp.text.splitlines():
+                row = json.loads(line)
+                if row.get("_key") == "sde":
+                    return {"buildNumber": row.get("buildNumber"),
+                            "releaseDate": row.get("releaseDate")}
+        except Exception:  # noqa: BLE001 - advisory metadata only
+            self.stdout.write(self.style.WARNING(
+                "  could not read SDE build metadata (latest.jsonl); "
+                "falling back to a timestamp version"))
+        return None
+
     def _download(self, work: str) -> str:
         headers = {"User-Agent": settings.ESI_USER_AGENT}
         zip_path = os.path.join(work, "sde.zip")
-        self.stdout.write("  downloading CCP FSD SDE …")
+        self.stdout.write("  downloading CCP SDE (developers.eveonline.com/static-data) …")
         downloaded = 0
         with requests.get(SDE_URL, stream=True, timeout=900, headers=headers) as resp:
             resp.raise_for_status()
@@ -165,7 +201,11 @@ class Command(BaseCommand):
         return zip_path
 
     def _parse(self, zip_path: str):
-        """Extract + YAML-parse only the 3 dogma members (never the 150MB types.yaml)."""
+        """Extract + YAML-parse only the 3 dogma members (never the 150MB types.yaml).
+
+        The current official zip stores members flat at the root (dogmaAttributes.yaml);
+        the pre-2025-redesign zip nested them under fsd/. Resolve each member by basename
+        in either layout, so both the live download and an archived --zip parse."""
         def load(zf, name):
             with zf.open(name) as raw:
                 data = CappedReader(raw, _MAX_MEMBER).read()
@@ -175,10 +215,17 @@ class Command(BaseCommand):
         try:
             with zipfile.ZipFile(zip_path) as zf:
                 names = set(zf.namelist())
-                missing = [n for n in _FSD if n not in names]
+                members, missing = [], []
+                for base in _FSD_NAMES:
+                    if base in names:
+                        members.append(base)
+                    elif f"fsd/{base}" in names:
+                        members.append(f"fsd/{base}")
+                    else:
+                        missing.append(base)
                 if missing:
                     raise CommandError(f"SDE zip missing expected members: {missing}")
-                attrs, type_dogma, effects = (load(zf, n) for n in _FSD)
+                attrs, type_dogma, effects = (load(zf, n) for n in members)
         except zipfile.BadZipFile as exc:
             raise CommandError(f"Corrupt SDE zip: {exc}") from exc
         return attrs, type_dogma, effects
@@ -202,7 +249,8 @@ class Command(BaseCommand):
             for e in entry.get("dogmaEffects", []):
                 eid = e["effectID"]
                 eff = effects.get(eid) or {}
-                ename = eff.get("effectName") or str(eid)
+                # The 2025 SDE redesign renamed effectName → name; accept both.
+                ename = eff.get("effectName") or eff.get("name") or str(eid)
                 for idx, m in enumerate(eff.get("modifierInfo") or []):
                     row = self._row_from_modifier(tid, ename, m, av, aname)
                     if row is None:
@@ -276,16 +324,50 @@ class Command(BaseCommand):
     def _int_or_none(v):
         return int(v) if v is not None else None
 
+    # Documented data patch (see the audit's patch-equivalence matrix): these effects are
+    # applied by the EVE client OUTSIDE dogma — CCP ships them with EMPTY modifierInfo.
+    # Without the equivalent modifiers the missile-damage skills (racial/size, via attr 292
+    # damageMultiplierBonus), the Missile Launcher Operation self-RoF (attr 293 rofBonus)
+    # and Drone Interfacing (attr 292 → drone damageMultiplier 64) apply nothing. The
+    # transformation mirrors the mechanic the client implements; skillTypeID -1 means
+    # "whatever requires the skill carrying this effect" (resolved at evaluation time).
+    _CLIENT_INTERNAL_EFFECTS: dict[str, list[dict]] = {
+        "missileEMDmgBonus": [dict(func="OwnerRequiredSkillModifier", domain="charID",
+                                   operation=6, modified=114, modifying=292, skill=-1)],
+        "missileExplosiveDmgBonus": [dict(func="OwnerRequiredSkillModifier", domain="charID",
+                                          operation=6, modified=116, modifying=292, skill=-1)],
+        "missileKineticDmgBonus2": [dict(func="OwnerRequiredSkillModifier", domain="charID",
+                                         operation=6, modified=117, modifying=292, skill=-1)],
+        "missileThermalDmgBonus": [dict(func="OwnerRequiredSkillModifier", domain="charID",
+                                        operation=6, modified=118, modifying=292, skill=-1)],
+        "selfRof": [dict(func="LocationRequiredSkillModifier", domain="shipID",
+                         operation=6, modified=51, modifying=293, skill=-1)],
+        "droneDmgBonus": [dict(func="OwnerRequiredSkillModifier", domain="charID",
+                               operation=6, modified=64, modifying=292, skill=-1)],
+    }
+
     def _build_modifiers(self, effects) -> list[dict]:
         """Every effect's every ``modifierInfo`` entry → a normalised SdeModifier row.
 
         Unlike the ship-bonus mapping this is verbatim and unfiltered — all funcs, all
         operations — because ``SdeModifier`` is the authoritative graph the generic applicator
-        will consume; interpretation happens at apply time, not import time.
+        will consume; interpretation happens at apply time, not import time. Effects the
+        client applies internally (empty ``modifierInfo``; see ``_CLIENT_INTERNAL_EFFECTS``)
+        get their documented equivalent rows appended.
         """
         rows: list[dict] = []
         for eid, eff in effects.items():
-            for m in (eff or {}).get("modifierInfo") or []:
+            info = (eff or {}).get("modifierInfo") or []
+            if not info:
+                ename = (eff or {}).get("effectName") or (eff or {}).get("name") or ""
+                for p in self._CLIENT_INTERNAL_EFFECTS.get(ename, ()):
+                    rows.append({
+                        "effect_id": int(eid), "func": p["func"], "domain": p["domain"],
+                        "operation": p["operation"], "modified_attribute_id": p["modified"],
+                        "modifying_attribute_id": p["modifying"], "group_id": None,
+                        "skill_type_id": p["skill"],
+                    })
+            for m in info:
                 if not isinstance(m, dict):
                     continue
                 func = m.get("func")
@@ -359,8 +441,7 @@ class Command(BaseCommand):
             ], batch_size=5000, ignore_conflicts=True)
 
         AppSetting.objects.update_or_create(
-            key="dogma_graph_version",
-            defaults={"value": {"version": timezone.now().strftime("%Y%m%d%H%M%S")}})
+            key="dogma_graph_version", defaults={"value": self._version_stamp()})
 
     # -- write -------------------------------------------------------------- #
     @transaction.atomic
@@ -376,5 +457,15 @@ class Command(BaseCommand):
             ) for r in rows
         ], batch_size=2000)
         AppSetting.objects.update_or_create(
-            key="ship_bonus_data_version",
-            defaults={"value": {"version": timezone.now().strftime("%Y%m%d%H%M%S")}})
+            key="ship_bonus_data_version", defaults={"value": self._version_stamp()})
+
+    def _version_stamp(self) -> dict:
+        """The data-version payload for AppSetting: the CCP SDE build number when known
+        (traceable to an exact game-data release), a timestamp otherwise, plus the raw
+        build metadata for the audit trail."""
+        meta = getattr(self, "_build_meta", None) or {}
+        build = meta.get("buildNumber")
+        version = str(build) if build else timezone.now().strftime("%Y%m%d%H%M%S")
+        return {"version": version, "build": build,
+                "release_date": meta.get("releaseDate"),
+                "imported_at": timezone.now().isoformat()}
