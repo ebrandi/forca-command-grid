@@ -176,7 +176,11 @@ SENSOR_STRENGTHS = {
 }
 
 # --- Requirements (skills to use a type) ------------------------------------
-REQUIRED_SKILLS = [(182, 277), (183, 278), (184, 279), (1285, 1286), (1289, 1290), (1290, 1287)]
+# (requiredSkillN, requiredSkillNLevel) attribute-id pairs, verified against the live
+# dgmAttributeTypes names: skill5's level is 1287 and skill6's is 1288 (the previous
+# pairs (1289,1290)/(1290,1287) mis-read skill6's TYPE id as skill5's level).
+REQUIRED_SKILLS = [(182, 277), (183, 278), (184, 279), (1285, 1286), (1289, 1287), (1290, 1288)]
+REQUIRED_SKILL_ATTRS = tuple(sid for sid, _lvl in REQUIRED_SKILLS)
 
 # Attributes whose module modifiers suffer the stacking penalty when several apply
 # to the same target attribute. Resonances (resists), tracking and speed bonuses are

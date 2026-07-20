@@ -59,7 +59,11 @@ _ATTR_ME_MOD = 1113        # inventionMEModifier
 _ATTR_TE_MOD = 1114        # inventionTEModifier
 
 BASE = "https://www.fuzzwork.co.uk/dump/latest"
-_REQUIRED_SKILL_ATTRS = {182: 277, 183: 278, 184: 279}  # skill-id attr -> level attr
+# (requiredSkillN → requiredSkillNLevel) dogma attribute pairs — all SIX slots. The SDE
+# uses 1285/1286, 1289/1287 and 1290/1288 for skills 4-6 (note the non-obvious level ids,
+# verified against dgmAttributeTypes names); importing only 1-3 dropped the extra
+# requirements some T2/T3 and capital types declare.
+_REQUIRED_SKILL_ATTRS = {182: 277, 183: 278, 184: 279, 1285: 1286, 1289: 1287, 1290: 1288}
 
 # The Fuzzwork SDE is large but bounded (compressed ~100-200 MB, decompressed
 # ~1.5-2 GB). These ceilings sit well above the real artefact yet stop a
@@ -879,6 +883,7 @@ class Command(BaseCommand):
     def _load_type_attributes(self, con) -> None:
         valid = self._fittable_type_ids()
         objs = []
+        seen: set[tuple[int, int]] = set()
         for tid, attr, vint, vfloat in self._q(
             con, "SELECT typeID, attributeID, valueInt, valueFloat FROM dgmTypeAttributes",
         ):
@@ -887,11 +892,30 @@ class Command(BaseCommand):
             val = vint if vint is not None else vfloat
             if val is None:
                 continue
+            seen.add((tid, attr))
             objs.append(SdeTypeAttribute(type_id=tid, attribute_id=attr, value=float(val)))
+        # Mass (4), capacity (38), volume (161) and radius (162) live on invTypes in the
+        # SDE, not in dgmTypeAttributes — but the dogma engine (and the game's own dogma)
+        # treats them as attributes (cargo bonuses multiply 38, drone bay sums 161, plates
+        # modAdd 4). Synthesise the missing rows so every fittable type carries them;
+        # without this, cargo reads 0.0 and drone-bay/magazine maths have no volumes.
+        synth = 0
+        for tid, mass, capacity, volume in self._q(
+            con, "SELECT typeID, mass, capacity, volume FROM invTypes",
+        ):
+            if tid not in valid:
+                continue
+            for attr, val in ((4, mass), (38, capacity), (161, volume)):
+                if val is None or (tid, attr) in seen:
+                    continue
+                objs.append(SdeTypeAttribute(type_id=tid, attribute_id=attr,
+                                             value=float(val)))
+                synth += 1
         with transaction.atomic():
             SdeTypeAttribute.objects.all().delete()
             SdeTypeAttribute.objects.bulk_create(objs, batch_size=5000, ignore_conflicts=True)
-        self.stdout.write(f"  type attributes: {len(objs)} (over {len(valid)} fittable types)")
+        self.stdout.write(f"  type attributes: {len(objs)} (over {len(valid)} fittable "
+                          f"types; {synth} synthesised from invTypes mass/capacity/volume)")
 
     def _load_type_effects(self, con) -> None:
         valid = self._fittable_type_ids()
@@ -912,7 +936,7 @@ class Command(BaseCommand):
         rows = self._q(
             con,
             "SELECT typeID, attributeID, valueInt, valueFloat FROM dgmTypeAttributes "
-            "WHERE attributeID IN (182,183,184,277,278,279)",
+            "WHERE attributeID IN (182,183,184,277,278,279,1285,1286,1289,1287,1290,1288)",
         )
         per_type: dict[int, dict[int, int]] = {}
         for tid, attr, vint, vfloat in rows:
