@@ -54,6 +54,16 @@ ATTR_RIG_SIZE = 1547
 ATTR_DRONE_BANDWIDTH_USED = 1272
 ATTR_CAP_BOOSTER_BONUS = 67
 ATTR_RELOAD_TIME = 1795
+# Reload-aware sustained DPS (magazine + frequency-crystal wear). Ids verified against
+# the SDE (scout-data §B): capacity 38 / volume 161 give the magazine size, chargeRate
+# 56 the charges consumed per cycle; crystalsGetDamaged 786 flags a depleting lens whose
+# expected life is governed by crystalVolatilityChance 783 / crystalVolatilityDamage 784
+# and the crystal's hp (9).
+ATTR_CHARGE_RATE = 56
+ATTR_CRYSTALS_GET_DAMAGED = 786
+ATTR_CRYSTAL_VOL_CHANCE = 783
+ATTR_CRYSTAL_VOL_DAMAGE = 784
+ATTR_CHARGE_HP = 9
 ATTR_MISSILE_VELOCITY = 37
 ATTR_EXPLOSION_DELAY = 281
 ATTR_SHIELD_RECHARGE = 479
@@ -434,8 +444,91 @@ def _missile_application(target_sig, target_vel, er, ev_, drf) -> float:
     return min(1.0, size_term, (size_term * (ev_ / target_vel)) ** drf)
 
 
+def _unerr(value: float) -> float:
+    """Kill float-division error before flooring a magazine size — ``int(0.4/0.0025)``
+    is 159, not 160, without this. Rounds to ~7 significant figures (the standard
+    round-to-significant-digits correction)."""
+    if value <= 0 or not math.isfinite(value):
+        return value
+    return round(value, 7 - math.ceil(math.log10(value)))
+
+
+def _magazine_shots(ev: EvaluatedFit, m: Entity):
+    """Shots a weapon fires before it must reload; 0 when it never depletes; None when
+    the magazine cannot be determined from the data.
+
+    Semantics mirror EVE's own, studied for BEHAVIOUR ONLY in pyfa's GPL eos
+    (saveddata/module.py:196-302 — no code reused):
+    * Ammo weapons carry chargeRate (56). The magazine holds
+      ``floor(capacity(38) / charge volume(161))`` rounds and fires
+      ``floor(rounds / chargeRate)`` shots before reloading. capacity/volume are read
+      as BASE attributes (a fit does not modify them); chargeRate is evaluated.
+    * Frequency crystals carry no chargeRate; depletion is governed by the CHARGE's
+      crystalsGetDamaged (786). ==1 -> the lens wears out after an expected
+      ``floor(rounds × hp(9) / (crystalVolatilityDamage(784) × crystalVolatilityChance(783)))``
+      shots; otherwise (T1 lenses and every lens the SDE flags 0) it never depletes.
+    """
+    ch = m.charge
+    if ch is None:
+        return None
+    capacity = m.base.get(ATTR_CAPACITY)
+    volume = ch.base.get(ATTR_VOLUME)
+    if not capacity or not volume or volume <= 0:
+        return None
+    rounds = int(_unerr(capacity / volume))
+    if rounds <= 0:
+        return None
+    if ATTR_CHARGE_RATE in m.base:
+        rate = ev.value(m, ATTR_CHARGE_RATE)
+        return math.floor(rounds / rate) if rate > 0 else None
+    if ATTR_CRYSTALS_GET_DAMAGED in ch.base:
+        if ev.value(ch, ATTR_CRYSTALS_GET_DAMAGED) != 1:
+            return 0                        # permanent crystal — never reloads
+        hp = ev.value(ch, ATTR_CHARGE_HP) if ATTR_CHARGE_HP in ch.base else 0.0
+        chance = (ev.value(ch, ATTR_CRYSTAL_VOL_CHANCE)
+                  if ATTR_CRYSTAL_VOL_CHANCE in ch.base else 0.0)
+        dmg = (ev.value(ch, ATTR_CRYSTAL_VOL_DAMAGE)
+               if ATTR_CRYSTAL_VOL_DAMAGE in ch.base else 0.0)
+        denom = dmg * chance
+        if hp <= 0 or denom <= 0:
+            return None
+        return math.floor(rounds * hp / denom)
+    return 0                                # no depletion mechanism — non-depleting
+
+
+def _sustained_entry(ev: EvaluatedFit, m: Entity, volley: float, dps: float,
+                     rof_s: float):
+    """Reload-aware sustained DPS for one weapon.
+
+    Returns ``(telemetry fields, dps for the fit's sustained total)`` where the dps is
+    None when it cannot be computed. A finite magazine of N shots fires for
+    ``N × cycle`` then pays reloadTime(1795) before firing again, so the long-run rate
+    is ``magazine_damage / (time_to_empty + reload)`` — strictly below burst. A
+    non-depleting weapon (permanent crystal) never reloads, so sustained == burst; its
+    magazine/time/reload fields are null to say so. When the magazine is indeterminate
+    (missing/zero capacity or charge volume) the sustained figure is null with a reason
+    rather than a computed-looking zero.
+    """
+    shots = _magazine_shots(ev, m)
+    if shots is None:
+        return {"sustained_dps": None,
+                "sustained_reason": "magazine_indeterminate"}, None
+    if shots == 0:
+        return {"magazine_shots": None, "time_to_empty_s": None, "reload_s": None,
+                "sustained_dps": round(dps, 1)}, dps
+    reload_s = ev.value(m, ATTR_RELOAD_TIME) / 1000.0
+    time_to_empty_s = shots * rof_s
+    span = time_to_empty_s + reload_s
+    sustained = (shots * volley) / span if span > 0 else 0.0
+    return {"magazine_shots": shots,
+            "time_to_empty_s": round(time_to_empty_s, 1),
+            "reload_s": round(reload_s, 1),
+            "sustained_dps": round(sustained, 1)}, sustained
+
+
 def _offence(ev: EvaluatedFit, provider, op_profile: OperatingProfile, result) -> dict:
     turret_dps = missile_dps = missile_dps_applied = drone_dps = total_volley = 0.0
+    sustained_weapon_dps = 0.0
     damage_by_type = {d: 0.0 for d in A.DAMAGE_TYPES}
     weapons = has_turret = 0
     ranges: list[dict] = []
@@ -494,6 +587,10 @@ def _offence(ev: EvaluatedFit, provider, op_profile: OperatingProfile, result) -
                     ev.value(ch, A.AOE_CLOUD_SIZE), ev.value(ch, A.AOE_VELOCITY),
                     ev.value(ch, A.AOE_DAMAGE_REDUCTION_FACTOR))
             missile_dps_applied += applied
+        sustained_fields, sustained_dps = _sustained_entry(ev, m, volley, dps, rof_s)
+        entry.update(sustained_fields)
+        if sustained_dps is not None:
+            sustained_weapon_dps += sustained_dps
         total_volley += volley
         ranges.append(entry)
         for d in A.DAMAGE_TYPES:
@@ -541,6 +638,8 @@ def _offence(ev: EvaluatedFit, provider, op_profile: OperatingProfile, result) -
         "turret_dps": round(turret_dps, 1), "missile_dps": round(missile_dps, 1),
         "drone_dps": round(drone_dps, 1),
         "total_dps": round(total, 1), "volley": round(total_volley, 1),
+        # Drones fire continuously (no magazine), so they sustain by definition.
+        "total_sustained_dps": round(sustained_weapon_dps + drone_dps, 1),
         "damage_distribution": dist,
         "weapons": ranges,
     }

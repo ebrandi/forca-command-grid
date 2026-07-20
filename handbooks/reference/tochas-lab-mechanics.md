@@ -32,6 +32,7 @@ sample calculation) and exits non-zero on failure.
 | Active & passive tank | Shield boost / armor repair / hull repair HP/s from evaluated amount ÷ cycle (ancillary charge multipliers included); passive shield regen peak `2.5·shield/τ` and EHP/s. |
 | Offence | Turret (hybrid/projectile/**energy**), missile and drone DPS/volley from evaluated attributes — damage mods, weapon rigs, T2 spec skills, hull traits per level, all data-driven; per-weapon optimal/falloff/tracking incl. ammo modifiers; missile velocity/flight time/range; damage-type distribution; bandwidth-gated drone flights. |
 | Missile application | With a target profile: `min(1, S/Er, ((S/Er)·(Ev/Vt))^DRF)` — post-Aegis formula; attr 1353 is the exponent. Turrets/drones are reported at full output and flagged `turret_application_not_modelled`. |
+| Sustained DPS (reload) | Per weapon: magazine `floor(floor(capacity/volume)/chargeRate)`, `time_to_empty = shots·cycle`, `reload_s`, and `sustained_dps = magazine_damage/(time_to_empty + reload)` — the long-run rate once reloads are paid. Frequency crystals with `crystalsGetDamaged=0` never deplete (sustained == burst, magazine fields null); `=1` lenses wear out after `floor(rounds·hp/(volatilityDamage·volatilityChance))` shots. Drones carry no magazine, so they sustain fully. Fit total `total_sustained_dps` alongside the untouched burst `total_dps`. |
 | Capacitor | Capacity, recharge τ, **peak `2.5·C/τ`**, per-module drain from evaluated costs and cycles, cap-booster injection (reload-aware), stability % from the √x-equilibrium quadratic, ODE-integrated depletion time when unstable. |
 | Mobility | Evaluated velocity/agility/mass (armor-plate mass included), AB/MWD thrust `(speedFactor/100)·(thrust/mass)`, mass addition and MWD signature bloom, align `ln(4)·mass·agility/1e6`, warp speed. |
 | Targeting | Range/scan resolution/sensor strength from evaluated attributes (sensor boosters with scripts apply). |
@@ -42,7 +43,7 @@ sample calculation) and exits non-zero on failure.
 
 Fighters and fighter tubes; tactical destroyer / bastion / siege modes; projected and
 environmental effects (incoming ewar, remote assistance, command bursts); turret
-hit-quality vs a target; reload-aware sustained DPS; smartbombs, mining yield and
+hit-quality vs a target; smartbombs, mining yield and
 DoT (breacher-pod) weapons; ship-type fitting restrictions (`canFitShipType`);
 booster side-effects. The full matrix with per-mechanic status lives in
 `docs/fitting/tochas-lab-mechanics-matrix.md`.
