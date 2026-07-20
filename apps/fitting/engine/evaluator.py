@@ -174,9 +174,9 @@ def _resources(ev: EvaluatedFit, provider, result: FittingResult, sub_add) -> di
         if key:
             slot_counts[key] += 1
         if m.slot == SlotKind.HIGH:
-            if A.EFFECT_TURRET in m.effect_ids or (
+            if (A.TURRET_EFFECTS & m.effect_ids) or (
                     m.module_state == ModuleState.OFFLINE
-                    and A.EFFECT_TURRET in provider.effects(m.type_id)):
+                    and A.TURRET_EFFECTS & provider.effects(m.type_id)):
                 turrets += 1
             elif A.EFFECT_LAUNCHER in m.effect_ids or (
                     m.module_state == ModuleState.OFFLINE
@@ -444,7 +444,7 @@ def _offence(ev: EvaluatedFit, provider, op_profile: OperatingProfile, result) -
     for m in ev.modules:
         if m.slot != SlotKind.HIGH or m.module_state == ModuleState.OFFLINE:
             continue
-        is_turret = A.EFFECT_TURRET in m.effect_ids
+        is_turret = bool(A.TURRET_EFFECTS & m.effect_ids)
         is_launcher = A.EFFECT_LAUNCHER in m.effect_ids
         if not (is_turret or is_launcher):
             continue

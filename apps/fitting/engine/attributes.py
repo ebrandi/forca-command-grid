@@ -127,10 +127,13 @@ OVERLOAD_ROF_BONUS = 1205    # overloadRofBonus (turret & launcher, negative = f
 OVERLOAD_DAMAGE_BONUS = 1210  # overloadDamageModifier (turrets)
 
 # --- Weapon-identifying effects (robust across all weapon groups) -----------
-# Every turret carries the targetAttack effect; every missile launcher carries useMissiles.
-# Detecting weapons by these effects (not a hand-maintained group list) means new launcher
-# groups — cruise, rapid, XL, … — are recognised automatically.
-EFFECT_TURRET = 34            # targetAttack
+# Verified against live dgmEffects names: effect 34 is projectileFired (hybrid +
+# projectile turrets) and effect 10 is targetAttack (ENERGY turrets — lasers). The
+# previous single constant (34, mislabelled "targetAttack") missed lasers entirely,
+# so every laser fit computed zero DPS. Missile launchers carry useMissiles.
+EFFECT_TURRET = 34            # projectileFired (hybrids + projectiles)
+EFFECT_LASER = 10             # targetAttack (energy turrets)
+TURRET_EFFECTS = frozenset({EFFECT_TURRET, EFFECT_LASER})
 EFFECT_LAUNCHER = 101         # useMissiles
 
 # --- Charge compatibility (which ammo a weapon accepts) ---------------------
