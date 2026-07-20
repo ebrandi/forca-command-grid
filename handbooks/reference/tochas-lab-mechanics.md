@@ -1,64 +1,69 @@
-# Tocha's Lab — supported mechanics & data pipeline
+# Tocha's Lab — supported mechanics & data pipeline (engine v2)
 
-The fitting engine (`apps/fitting/engine`) is an independent, server-side dogma evaluator.
-It is reached only through the `FittingEngine` adapter boundary and reads all data through a
-data provider, so it never touches the ORM, ESI, the request or the network directly. This
-page is the living support matrix. See
-`docs/architecture/decisions/tochas-lab-fitting-engine.md` for the architecture decision and
-`THIRD_PARTY_NOTICES.md` for provenance.
+The fitting engine (`apps/fitting/engine`) is a server-side **generic dogma evaluator**:
+it computes every fitted entity's attributes from the imported CCP modifier graph
+(`SdeModifier` + per-attribute `stackable`/default flags + per-effect categories) in
+three passes — entity construction (character + every skill, hull, modules with
+charges, drones, implants), effect collection gated by module state, and lazy
+recursive attribute resolution with canonical operator ordering — then derives the
+displayed telemetry from the evaluated attributes. It is reached only through the
+`FittingEngine` adapter boundary. See
+`docs/architecture/decisions/tochas-lab-calculation-engine.md` for the architecture
+decision and provenance notes.
 
 ## Correctness policy
 
-Every headline number is verified in `tests/test_fitting_engine.py` against a value computed
-**by hand from documented EVE mechanics** — never against another engine's output. A mechanic
-that is not modelled is reported in `FittingResult.unsupported` and shown in the UI ("Not
-modelled for this fit: …"); it is never silently approximated.
+Golden-fit tests (`tests/test_fitting_golden_*.py`) evaluate real CCP data slices
+through the production path and compare against values **derived in the test from the
+slice's base attributes plus documented EVE mechanics** — never against the engine's
+own output. A mechanic that is not modelled is reported in
+`FittingResult.unsupported` and shown in the UI; it is never silently approximated.
+`manage.py fitting_data_check` validates the dataset (presence, referential
+integrity, unknown modifier funcs/operations, the documented data patches, a live
+sample calculation) and exits non-zero on failure.
 
 ## Supported and tested
 
 | Area | Details |
 | --- | --- |
-| Fitting resources | CPU, powergrid, calibration (used vs output); high/med/low/rig slot counts; turret & launcher hardpoints; drone bandwidth & bay. Offline modules consume no CPU/PG. |
-| Slot & hardpoint limits | Over-slot and over-hardpoint fits are diagnosed and marked *impossible*. |
-| Stacking penalty | `S(i) = exp(-(i/2.67)²)`, reproducing EVE's 1.00 / 0.869 / 0.571 / 0.283 / 0.106 / 0.030 table; order-independent. |
-| EHP & resists | Shield/armor/hull HP (with flat module HP and %-based skill/ship bonuses), resonance per damage type after stacking-penalised hardeners, EHP weighted by the damage profile. |
-| Offence | Turret, **missile** and drone DPS and volley from charge damage × damage multiplier ÷ rate of fire, with ship/role bonuses, skill bonuses (Surgical Strike, Rapid Firing, Warhead Upgrades) and stacking-penalised damage mods of the correct class (gyros→turrets, Ballistic Control→missiles, never cross-boosting); damage-type distribution; missing-ammo diagnostic. |
-| Missile application | When a **target profile** (signature radius + velocity) is supplied, applied missile DPS via the standard formula `min(1, S/Er, ((S/Er)·(Ev/Vt))^(ln(DRF)/ln(DRS)))` from the charge's explosion radius/velocity and damage-reduction attributes. Turrets/drones are reported at full output and flagged `turret_application_not_modelled` — never silently "applied". |
-| Electronic warfare | Strength + engagement range of fitted EWAR by CCP group: stasis web (% slow), warp scrambler/disruptor (points), energy neutraliser & nosferatu (GJ/cycle and GJ/s), target painter (% sig), remote sensor dampener (lock-range/scan-res %), ECM (racial jam strengths + strongest type). Offline modules excluded. |
-| Capacitor | Capacity, recharge time, peak recharge (`0.5·C/τ`), module drain, stability (with stable %) or unstable runtime. |
-| Mobility | Max velocity (+ Navigation), afterburner/MWD velocity, align time (`ln(4)·mass·agility/1e6`), signature, warp speed; MWD mass/signature penalties. |
-| Targeting | Targeting range, locked targets, scan resolution, sensor strength. |
-| Skills | A pilot's real skills (from the latest snapshot), All-V, and untrained profiles; missing-skill detection with training-time estimates (reusing `apps.skills`). |
-| Profiles | Selectable incoming damage profile and operating mode; the profile in use is recorded in the result. |
-| Explainability | Per-attribute contribution traces (base → ship/role/skill/module/stacking → final). |
+| Fitting resources | CPU/PG/calibration used vs output — outputs include module and skill multipliers (Reactor Control, Power Diagnostics, Co-Processors, implants) via the graph; slot counts; turret & launcher hardpoints (energy turrets included); rig-size, charge-group/size, and max-group-fitted validation; drone bandwidth and bay validation. Offline modules apply nothing and consume no CPU/PG. |
+| Stacking penalty | `S(i) = exp(-(i/2.67)²)` driven by each attribute's `stackable` flag, applied per (attribute, operator) with positive and negative chains penalised separately; ship/charge/skill/implant/subsystem sources are exempt (as in the game data model). |
+| EHP & resists | Layer HP and per-type resonance fully graph-evaluated (plates, extenders, trimarks and other rigs, hardeners on the correct layer, Damage Controls, skills, hull bonuses), EHP weighted by the selected damage profile. |
+| Active & passive tank | Shield boost / armor repair / hull repair HP/s from evaluated amount ÷ cycle (ancillary charge multipliers included); passive shield regen peak `2.5·shield/τ` and EHP/s. |
+| Offence | Turret (hybrid/projectile/**energy**), missile and drone DPS/volley from evaluated attributes — damage mods, weapon rigs, T2 spec skills, hull traits per level, all data-driven; per-weapon optimal/falloff/tracking incl. ammo modifiers; missile velocity/flight time/range; damage-type distribution; bandwidth-gated drone flights. |
+| Missile application | With a target profile: `min(1, S/Er, ((S/Er)·(Ev/Vt))^DRF)` — post-Aegis formula; attr 1353 is the exponent. Turrets/drones are reported at full output and flagged `turret_application_not_modelled`. |
+| Capacitor | Capacity, recharge τ, **peak `2.5·C/τ`**, per-module drain from evaluated costs and cycles, cap-booster injection (reload-aware), stability % from the √x-equilibrium quadratic, ODE-integrated depletion time when unstable. |
+| Mobility | Evaluated velocity/agility/mass (armor-plate mass included), AB/MWD thrust `(speedFactor/100)·(thrust/mass)`, mass addition and MWD signature bloom, align `ln(4)·mass·agility/1e6`, warp speed. |
+| Targeting | Range/scan resolution/sensor strength from evaluated attributes (sensor boosters with scripts apply). |
+| Skills | Real pilot snapshots, All-V, untrained; per-level bonuses scale from data (skill-level pre-multiplication); missing-skill detection over all six required-skill slots. |
+| Explainability | Stable diagnostic codes with structured params, localised at the presentation layer. |
 
-## Not yet modelled (reported as unsupported)
+## Not modelled (reported honestly, never faked)
 
-Turret tracking hit-quality (transversal/angular vs a target — `turret_application_not_modelled`);
-fighters and fighter tubes; command bursts / fleet effects; remote assistance (armour/shield
-reps, cap transfer); Tech III subsystem bonuses; overheating effects beyond state handling.
-Each is surfaced honestly rather than approximated, and each is a documented extension point:
-`apps/fitting/engine/effects.py` (module effects) and `bonuses.py` (ship/skill bonuses). The
-EWAR readout reports each module's own strength attribute; scaling those by the appropriate
-skill/target bonuses (e.g. ECM skills, target sensor strength) is a further refinement.
+Fighters and fighter tubes; tactical destroyer / bastion / siege modes; projected and
+environmental effects (incoming ewar, remote assistance, command bursts); turret
+hit-quality vs a target; reload-aware sustained DPS; smartbombs, mining yield and
+DoT (breacher-pod) weapons; ship-type fitting restrictions (`canFitShipType`);
+booster side-effects. The full matrix with per-mechanic status lives in
+`docs/fitting/tochas-lab-mechanics-matrix.md`.
 
 ## Data pipeline
 
-The SDE subset gained dogma reference tables — `SdeDogmaAttribute`, `SdeDogmaEffect`,
-`SdeTypeAttribute`, `SdeTypeEffect`, `SdeShipBonus` — populated by:
+Two coordinated imports populate the dogma layer:
 
 ```
-manage.py load_dogma [--file path/to/dogma.json] [--dogma-version YYYYMMDD]
+manage.py import_sde_fuzzwork              # types/groups/attribute defs/type dogma (Fuzzwork, daily)
+manage.py import_dogma_graph               # modifier graph + ship traits + skill dogma (CCP official SDE)
+manage.py fitting_data_check               # deploy gate — non-zero exit on critical failure
 ```
 
-The JSON is a relational projection of the CCP SDE FSD dogma files (`dogmaAttributes.yaml`,
-`dogmaEffects.yaml`, `typeDogma.yaml`) plus a FORCA-authored `ship_bonuses` projection of hull
-traits. The import is idempotent and staged (delete-then-load per touched type inside one
-transaction), so a partial run never leaves the engine reading half-updated data. It records
-a `dogma_data_version` in `AppSetting`; that version is folded into every calculation's cache
-key, so a data refresh transparently invalidates stale results. A hull with no `SdeShipBonus`
-rows still evaluates correctly for everything except its hull-specific bonuses (the UI shows
-skill-only readiness); populating the full hull catalogue is a staged data task.
-
-Until a full `load_dogma` runs against a complete SDE, only the types present in the loaded
-dogma data have attributes; others evaluate from their base slot-count columns only.
+`import_dogma_graph` reads the **current** official distribution at
+developers.eveonline.com/static-data (the legacy S3 `sde.zip` was frozen in July
+2025) and records the CCP build number as the data version. It also synthesises the
+six documented client-internal effects (missile damage skills, `selfRof`, Drone
+Interfacing) that CCP ships with empty `modifierInfo`. Fuzzwork's import synthesises
+mass/capacity/volume attributes from `invTypes` and imports all six required-skill
+slots. **Order matters**: a full Fuzzwork run cascade-clears the graph tables —
+always run `import_dogma_graph` after it; `fitting_data_check` fails loudly on the
+in-between state. Every data version is folded into the calculation cache key, so a
+refresh transparently invalidates stale results.
