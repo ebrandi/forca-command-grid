@@ -408,8 +408,10 @@ class SdeModifier(models.Model):
 
     A modifier reads: "change attribute ``modified_attribute_id`` on the targets selected by
     ``func`` by the value of attribute ``modifying_attribute_id`` (read off the source item /
-    skill), using ``operation``" (0 preAssign · 1 preMul · 2 modAdd · 3 modSub · 4 postMul ·
-    5 postDiv · 6 postPercent · 7 postAssign). ``func`` is one of ``ItemModifier`` /
+    skill), using ``operation``" (-1 preAssign · 0 preMul · 1 preDiv · 2 modAdd · 3 modSub ·
+    4 postMul · 5 postDiv · 6 postPercent · 7 postAssign · 9 skill-level bookkeeping —
+    verified against live data: e.g. effect 146 pre-MULTIPLIES attr 292 by 280, operation 0).
+    ``func`` is one of ``ItemModifier`` /
     ``LocationModifier`` / ``LocationGroupModifier`` / ``LocationRequiredSkillModifier`` /
     ``OwnerRequiredSkillModifier``; ``group_id`` scopes a ``LocationGroupModifier`` and
     ``skill_type_id`` scopes the RequiredSkill funcs. ``effect_id`` is a plain indexed integer
