@@ -510,7 +510,10 @@ def items_from_esi_fitting(esi: dict) -> tuple[int, list[dict]]:
         bucket = slot_bucket(int(i["flag"]))
         slot = bucket if bucket in ("high", "med", "low", "rig", "subsystem", "drone", "cargo") \
             else slots.get(tid, "cargo")
-        items.append({"type_id": tid, "slot": slot, "state": "active",
+        # Cargo (killmail loot) must never influence telemetry — import it inert, the
+        # same way EFT import does. Racked modules and drones start active.
+        state = "offline" if slot == "cargo" else "active"
+        items.append({"type_id": tid, "slot": slot, "state": state,
                       "charge_type_id": None, "quantity": int(i.get("quantity", 1))})
     return ship_type_id, items
 

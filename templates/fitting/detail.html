@@ -256,6 +256,8 @@
     </div>
 
     {# ---- Telemetry ---- #}
+    <p x-show="telemetryError" x-cloak style="background:#3a1f22;border:1px solid #e0555a;color:#f0b4b7;border-radius:6px;padding:6px 10px;margin-bottom:8px;font-size:0.85rem;">{% translate "Simulation update failed — the numbers shown are stale. Retry by changing the fit or reloading." %}</p>
+    <p x-show="saveError" x-cloak style="background:#3a1f22;border:1px solid #e0555a;color:#f0b4b7;border-radius:6px;padding:6px 10px;margin-bottom:8px;font-size:0.85rem;">{% translate "Saving failed — your changes are NOT stored yet." %}</p>
     <div id="telemetry-panel">
       {% include "fitting/_telemetry.html" with show_skills=True %}
     </div>
@@ -270,6 +272,7 @@
 function labEditor() {
   return {
     items: [], results: [], query: "", dirty: false, editable: {{ editable|yesno:"true,false" }},
+    _seq: 0, telemetryError: false, saveError: false,
     shipTypeId: {{ fit.ship_type_id }}, hullSlots: {}, addKind: null,
     ammoIdx: null, ammoQuery: "", ammoResults: [],
     targetSig: null, targetVel: null,
@@ -329,23 +332,30 @@ function labEditor() {
         charge_type_id: it.charge_type_id, quantity: it.quantity }));
     },
     async recompute() {
+      const seq = ++this._seq;   // stale-response guard: only the newest request may render
       const body = new URLSearchParams();
       body.set("ship_type_id", this.shipTypeId);
       body.set("items", JSON.stringify(this._payload()));
       body.set("skills", this.skills);
       if (this.targetSig) body.set("tgt_sig", this.targetSig);
       if (this.targetVel) body.set("tgt_vel", this.targetVel);
-      const r = await fetch("{% url 'fitting:telemetry' %}", { method: "POST",
-        headers: { "X-CSRFToken": this._csrf(), "X-Requested-With": "XMLHttpRequest" }, body });
-      if (r.ok) document.getElementById("telemetry-panel").innerHTML = await r.text();
+      try {
+        const r = await fetch("{% url 'fitting:telemetry' %}", { method: "POST",
+          headers: { "X-CSRFToken": this._csrf(), "X-Requested-With": "XMLHttpRequest" }, body });
+        if (seq !== this._seq) return;          // a newer recompute superseded this one
+        if (r.ok) { document.getElementById("telemetry-panel").innerHTML = await r.text(); this.telemetryError = false; }
+        else { this.telemetryError = true; }
+      } catch (e) { if (seq === this._seq) this.telemetryError = true; }
     },
     async save() {
       const body = new URLSearchParams();
       body.set("ship_type_id", this.shipTypeId);
       body.set("items", JSON.stringify(this._payload()));
-      const r = await fetch("{% url 'fitting:save' fit.pk %}", { method: "POST",
-        headers: { "X-CSRFToken": this._csrf(), "X-Requested-With": "XMLHttpRequest" }, body });
-      if (r.ok) { this.dirty = false; }
+      try {
+        const r = await fetch("{% url 'fitting:save' fit.pk %}", { method: "POST",
+          headers: { "X-CSRFToken": this._csrf(), "X-Requested-With": "XMLHttpRequest" }, body });
+        if (r.ok) { this.dirty = false; this.saveError = false; } else { this.saveError = true; }
+      } catch (e) { this.saveError = true; }
     },
   };
 }

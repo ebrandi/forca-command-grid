@@ -3,6 +3,20 @@
 read-only detail view and the public share page — one renderer, so they can never disagree.
 Colours that aren't in the prebuilt CSS are inlined (see the prebuilt-Tailwind note).{% endcomment %}
 
+{% if telemetry.errors %}
+<div class="mb-4 rounded-lg p-3" style="background:#3a1f22;border:1px solid #e0555a;">
+  <p class="text-sm" style="color:#f0b4b7;">{% translate "The simulation could not run:" %} {{ telemetry.errors|join:", " }}</p>
+</div>
+{% endif %}
+{% if telemetry.status == "impossible" %}
+<div class="mb-4 rounded-lg p-3" style="background:#3a1f22;border:1px solid #e0555a;">
+  <p class="text-sm" style="color:#f0b4b7;">{% translate "This fit is structurally impossible — see the diagnostics below. Numbers are shown for reference only." %}</p>
+</div>
+{% elif telemetry.status == "over_resources" %}
+<div class="mb-4 rounded-lg p-3" style="background:#3a2f1f;border:1px solid #e0a955;">
+  <p class="text-sm" style="color:#f0d9b4;">{% translate "This fit exceeds the ship's fitting resources — see the diagnostics below." %}</p>
+</div>
+{% endif %}
 {# ---- Hero band: the four numbers that matter, + the active skill profile ---- #}
 {% with o=telemetry.offence d=telemetry.defence m=telemetry.mobility c=telemetry.capacitor %}
 <div class="mb-4 rounded-lg border border-line bg-panel2 p-4">
@@ -35,6 +49,7 @@ Colours that aren't in the prebuilt CSS are inlined (see the prebuilt-Tailwind n
         <div style="height:4px;background:#2a2f3a;border-radius:2px;overflow:hidden;"><div style="height:100%;max-width:100%;width:{% widthratio r.powergrid.used r.powergrid.output 100 %}%;background:{% if r.powergrid.used > r.powergrid.output %}#e0555a{% else %}#4a90d9{% endif %};"></div></div></div>
       <div class="flex justify-between"><span class="text-faint">{% translate "Calibration" %}</span><span class="text-ink">{{ r.calibration.used }} / {{ r.calibration.output }}</span></div>
       <div class="flex justify-between"><span class="text-faint">{% translate "Turret / Launcher" %}</span><span class="text-ink">{{ r.hardpoints.turret.used }}/{{ r.hardpoints.turret.total }} · {{ r.hardpoints.launcher.used }}/{{ r.hardpoints.launcher.total }}</span></div>
+      <div class="flex justify-between"><span class="text-faint">{% translate "Drone bandwidth / bay" %}</span><span class="text-ink">{{ r.drone_bandwidth_used|default:0 }}/{{ r.drone_bandwidth }} Mbit · {{ r.drone_bay_used|default:0 }}/{{ r.drone_bay }} m³</span></div>
       <div class="flex justify-between"><span class="text-faint">{% translate "Slots H/M/L/R" %}</span><span class="text-ink">{{ r.slots.used.high }}/{{ r.slots.hull.high }} · {{ r.slots.used.med }}/{{ r.slots.hull.med }} · {{ r.slots.used.low }}/{{ r.slots.hull.low }} · {{ r.slots.used.rig }}/{{ r.slots.hull.rig }}</span></div>
     </div>
     {% endwith %}

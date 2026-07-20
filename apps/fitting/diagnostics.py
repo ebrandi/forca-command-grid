@@ -60,6 +60,32 @@ def localise_diagnostic(d: dict) -> dict:
         title = _("Weapon has no charge loaded")
         detail = ""   # the raw type id is not user-facing
         action = _("Load a compatible charge.")
+    elif code == "rig_size_mismatch":
+        title = _("Rig size does not fit this hull")
+        detail = ""
+        action = _("Fit a rig of this hull's size class.")
+    elif code == "max_group_fitted":
+        title = _("Too many modules of this group fitted")
+        detail = _("At most %(max)s allowed") % {"max": p.get("max")}
+    elif code == "incompatible_charge":
+        title = _("Charge not accepted by this module")
+        detail = ""
+        action = _("Load a charge from a group this module accepts.")
+    elif code == "charge_size_mismatch":
+        title = _("Charge size does not match the module")
+        detail = ""
+        action = _("Load a charge of the matching size.")
+    elif code == "drone_bandwidth_exceeded":
+        title = _("Drone bandwidth exceeded")
+        detail = _("%(used)s of %(cap)s Mbit/s") % {"used": p.get("used"), "cap": p.get("cap")}
+        action = _("Recall a drone or field smaller drones.")
+    elif code == "drone_bay_exceeded":
+        title = _("Drone bay volume exceeded")
+        detail = _("%(used)s of %(cap)s m3") % {"used": p.get("used"), "cap": p.get("cap")}
+    elif code == "drones_over_bandwidth":
+        title = _("Not all drones fit in bandwidth")
+        detail = _("%(counted)s of %(requested)s counted in the simulation") % {
+            "counted": p.get("counted"), "requested": p.get("requested")}
 
     return {**d, "title": title, "detail": detail, "suggested_action": action}
 

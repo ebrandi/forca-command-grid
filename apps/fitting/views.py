@@ -240,7 +240,13 @@ def import_killmail(request, killmail_id: int):
 @feature_required("tochas_lab")
 @require_POST
 def import_doctrine(request, fit_id: int):
+    from core.features import feature_visible_to
+
     from apps.doctrines.models import DoctrineFit
+    # Same audience gate the doctrine picker enforces — the POST endpoint must not be
+    # a side door to doctrine content the user cannot browse.
+    if not feature_visible_to("doctrines", request.user):
+        raise Http404
     dfit = get_object_or_404(DoctrineFit, pk=fit_id)
     ship_type_id, items = services.items_from_doctrine_fit(dfit)
     fit = services.create_fit(request.user, name=f"{dfit.name} (candidate)",
@@ -329,7 +335,7 @@ def telemetry(request):
     ship_type_id = int(request.POST.get("ship_type_id", 0))
     try:
         items = _parse_items(request.POST.get("items", "[]"))
-    except (ValueError, json.JSONDecodeError):
+    except (TypeError, ValueError, json.JSONDecodeError):
         return JsonResponse({"error": "invalid_items"}, status=400)
     skills = _skill_profile(request, request.POST.get("skills"))
     op = _op_profile(request)
@@ -348,7 +354,7 @@ def save(request, pk):
     fit = _require_owner(request, pk)
     try:
         items = _parse_items(request.POST.get("items", "[]"))
-    except (ValueError, json.JSONDecodeError):
+    except (TypeError, ValueError, json.JSONDecodeError):
         return JsonResponse({"error": "invalid_items"}, status=400)
     ship_type_id = int(request.POST.get("ship_type_id") or fit.ship_type_id)
     if request.POST.get("name"):
