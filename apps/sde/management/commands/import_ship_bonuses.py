@@ -331,6 +331,21 @@ class Command(BaseCommand):
     # and Drone Interfacing (attr 292 → drone damageMultiplier 64) apply nothing. The
     # transformation mirrors the mechanic the client implements; skillTypeID -1 means
     # "whatever requires the skill carrying this effect" (resolved at evaluation time).
+    #
+    # WS-6 (projected ewar): web / target-painter / sensor-dampener DEFAULT effects also
+    # ship EMPTY modifierInfo in CCP's own SDE (scout-data §D — verified [] on
+    # SdeDogmaEffect.modifier_info, 0 SdeModifier rows). They are effect-category 2
+    # (target) with domain ``targetID``, so they only ever apply to a PROJECTED source's
+    # target (our ship); the graph's projected pass reads these rows (graph._collect_
+    # projected) and applies them with normal stacking. The synthesised modifiers mirror
+    # pyfa's hand-written handlers exactly (eos/effects.py Effect6426/6425/6422: a
+    # boostItemAttr of the module's bonus attribute onto the target attribute, i.e.
+    # postPercent). ECM (remoteECMFalloff) is chance-based — NO stat modifier (WS-10);
+    # neut/nos numbers are self-contained on the module — NO dogma modifier (the evaluator
+    # reads energyNeutralizerAmount/powerTransferAmount directly). Attribute ids verified
+    # live 2026-07-21: speedFactor 20 → maxVelocity 37; signatureRadiusBonus 554 →
+    # signatureRadius 552; maxTargetRangeBonus 309 → maxTargetRange 76; scanResolutionBonus
+    # 566 → scanResolution 564.
     _CLIENT_INTERNAL_EFFECTS: dict[str, list[dict]] = {
         "missileEMDmgBonus": [dict(func="OwnerRequiredSkillModifier", domain="charID",
                                    operation=6, modified=114, modifying=292, skill=-1)],
@@ -344,6 +359,16 @@ class Command(BaseCommand):
                          operation=6, modified=51, modifying=293, skill=-1)],
         "droneDmgBonus": [dict(func="OwnerRequiredSkillModifier", domain="charID",
                                operation=6, modified=64, modifying=292, skill=-1)],
+        "remoteWebifierFalloff": [dict(func="ItemModifier", domain="targetID",
+                                       operation=6, modified=37, modifying=20, skill=None)],
+        "remoteTargetPaintFalloff": [dict(func="ItemModifier", domain="targetID",
+                                          operation=6, modified=552, modifying=554, skill=None)],
+        "remoteSensorDampFalloff": [
+            dict(func="ItemModifier", domain="targetID", operation=6,
+                 modified=76, modifying=309, skill=None),
+            dict(func="ItemModifier", domain="targetID", operation=6,
+                 modified=564, modifying=566, skill=None),
+        ],
     }
 
     def _build_modifiers(self, effects) -> list[dict]:

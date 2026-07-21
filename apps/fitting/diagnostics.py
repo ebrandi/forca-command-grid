@@ -100,6 +100,10 @@ def localise_diagnostic(d: dict) -> dict:
         title = _("Tactical mode does not belong to this hull")
         detail = ""
         action = _("Select one of this hull's own tactical modes.")
+    elif code == "projected_module_inert":
+        title = _("Projected module has no effect on this ship")
+        detail = ""
+        action = _("Project an EWAR, energy-warfare or remote-assistance module instead.")
     elif code == "incompatible_charge":
         title = _("Charge not accepted by this module")
         detail = ""

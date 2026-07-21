@@ -24,6 +24,7 @@ from .engine.types import (
     ModuleInput,
     ModuleState,
     OperatingProfile,
+    ProjectedInput,
     SkillProfile,
     SlotKind,
     TargetProfile,
@@ -107,11 +108,25 @@ _RACKED_SLOTS = ("high", "med", "low", "rig")
 # rack module). This keeps persistence symmetric — the same list the client posts and the
 # revision stores — while the engine reads it as FitInput.mode_type_id.
 _MODE_SLOT = "mode"
+# A projected hostile module (WS-6) rides the items blob as a slot="projected" entry — like
+# the mode marker, it is not a fitted rack module. It is excluded from EFT export, pricing,
+# stock coverage and doctrine promotion (it is not a purchasable/stockable part of the fit).
+_PROJECTED_SLOT = "projected"
 
 
 def is_mode_item(it: dict) -> bool:
     """Whether an items entry is the tactical-mode marker (not a fitted rack module)."""
     return str((it or {}).get("slot", "")).strip().lower() == _MODE_SLOT
+
+
+def is_projected_item(it: dict) -> bool:
+    """Whether an items entry is a projected hostile module (not fitted to our ship)."""
+    return str((it or {}).get("slot", "")).strip().lower() == _PROJECTED_SLOT
+
+
+def is_extra_item(it: dict) -> bool:
+    """Whether an items entry is a non-fitted marker (tactical mode or projected module)."""
+    return is_mode_item(it) or is_projected_item(it)
 
 
 def canonical_slot(value) -> str | None:
@@ -138,10 +153,18 @@ def fit_input_from_items(ship_type_id: int, items: list[dict],
     rack module (so the engine sees it as :attr:`FitInput.mode_type_id`). An explicit
     ``mode_type_id`` argument (the live-editor API key) takes precedence over the blob."""
     modules = []
+    projected = []
     for it in items or []:
         if is_mode_item(it):
             if mode_type_id is None:
                 mode_type_id = int(it["type_id"])
+            continue
+        if is_projected_item(it):
+            projected.append(ProjectedInput(
+                type_id=int(it["type_id"]),
+                state=_STATE_BY_VALUE.get(it.get("state"), ModuleState.ACTIVE),
+                quantity=int(it.get("quantity", 1)),
+            ))
             continue
         raw = it.get("slot")
         # Trust an already-canonical token; otherwise canonicalise a display label, falling
@@ -155,7 +178,8 @@ def fit_input_from_items(ship_type_id: int, items: list[dict],
             quantity=int(it.get("quantity", 1)),
         ))
     return FitInput(ship_type_id=int(ship_type_id), modules=tuple(modules),
-                    mode_type_id=(int(mode_type_id) if mode_type_id else None))
+                    mode_type_id=(int(mode_type_id) if mode_type_id else None),
+                    projected=tuple(projected))
 
 
 def operating_profile(propulsion: bool = True,
@@ -484,9 +508,9 @@ def export_eft(ship_type_id: int, items: list[dict], fit_name: str = "Fit") -> s
                         | {int(i["charge_type_id"]) for i in items if i.get("charge_type_id")})
     ship = names.get(int(ship_type_id), f"TypeID:{ship_type_id}")
     order = {"low": 0, "med": 1, "high": 2, "rig": 3, "subsystem": 4, "drone": 5, "cargo": 6}
-    # The tactical-mode marker is not an EFT line (EFT carries no modes) — skip it so the
-    # export round-trips cleanly.
-    items = [it for it in items if not is_mode_item(it)]
+    # The tactical-mode marker and projected hostile modules are not EFT lines (EFT carries
+    # neither) — skip them so the export round-trips cleanly.
+    items = [it for it in items if not is_extra_item(it)]
     lines = [f"[{ship}, {fit_name}]"]
     last_slot = None
     for it in sorted(items, key=lambda i: (order.get(i.get("slot"), 9), int(i["type_id"]))):
@@ -582,8 +606,8 @@ def price_fit(ship_type_id: int, items: list[dict]) -> dict:
     lookup = build_price_index()
     counts: dict[int, int] = {int(ship_type_id): 1}
     for it in items:
-        if is_mode_item(it):
-            continue                            # a mode is not a purchasable item
+        if is_extra_item(it):
+            continue                            # a mode / projected module is not purchasable
         counts[int(it["type_id"])] = counts.get(int(it["type_id"]), 0) + int(it.get("quantity", 1))
         if it.get("charge_type_id"):
             cid = int(it["charge_type_id"])
@@ -612,8 +636,8 @@ def stock_coverage(ship_type_id: int, items: list[dict]) -> dict:
 
     counts: dict[int, int] = {int(ship_type_id): 1}
     for it in items:
-        if is_mode_item(it):
-            continue                            # a mode is not a stockable item
+        if is_extra_item(it):
+            continue                            # a mode / projected module is not stockable
         counts[int(it["type_id"])] = counts.get(int(it["type_id"]), 0) + int(it.get("quantity", 1))
     have = available(list(counts))
     names = _type_names(counts)
@@ -684,8 +708,8 @@ def promote_to_doctrine(fit: Fit, revision: FitRevision, doctrine, actor, *,
 
     modules = []
     for it in revision.items:
-        if it.get("slot") == "cargo" or is_mode_item(it):
-            continue                            # cargo loot / tactical mode are not doctrine modules
+        if it.get("slot") == "cargo" or is_extra_item(it):
+            continue                            # cargo loot / mode / projected are not doctrine modules
         modules.append({"type_id": int(it["type_id"]), "quantity": int(it.get("quantity", 1)),
                         "slot": it.get("slot", "")})
     doctrine_fit = create_doctrine_fit(

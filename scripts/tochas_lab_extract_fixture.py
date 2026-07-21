@@ -28,6 +28,11 @@ from apps.sde.models import (  # noqa: E402
 )
 
 SKILL_LEVEL_SCALER_ATTRS = (275, 276, 280)
+# WS-6: incoming-EWAR resistance attributes (all default 1.0). They are read off the victim
+# hull when a projected effect applies, but are not referenced by any modifier in a slice,
+# so force their attribute definitions in — otherwise a projected web/painter/damp would
+# read resistance 0.0 (unknown attr) and zero the target attribute.
+EWAR_RESISTANCE_ATTRS = (2112, 2113, 2114, 2115, 2116, 2045, 2253)
 
 
 def main(names: list[str]) -> None:
@@ -74,6 +79,7 @@ def main(names: list[str]) -> None:
             if v:
                 attr_ids.add(v)
     attr_ids.update(SKILL_LEVEL_SCALER_ATTRS)
+    attr_ids.update(EWAR_RESISTANCE_ATTRS)
 
     group_ids = set(SdeType.objects.filter(type_id__in=type_ids)
                     .values_list("group_id", flat=True))

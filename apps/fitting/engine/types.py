@@ -76,6 +76,25 @@ class ModuleInput:
 
 
 @dataclass(frozen=True)
+class ProjectedInput:
+    """A hostile module applied TO this fit (incoming ewar / neut / remote reps).
+
+    Rides the persisted items blob as a ``slot="projected"`` entry (see
+    apps.fitting.services.fit_input_from_items), mirroring how a tactical mode rides it.
+    ``quantity`` expands to that many independent sources so a stacking-penalised chain
+    (e.g. two webs) is evaluated correctly. A projected module is never fitted to our
+    ship, priced, stocked or exported — it only measures pressure against the fit.
+    """
+    type_id: int
+    state: ModuleState = ModuleState.ACTIVE
+    quantity: int = 1
+
+    def canonical(self) -> dict:
+        return {"type_id": self.type_id, "state": self.state.value,
+                "quantity": self.quantity}
+
+
+@dataclass(frozen=True)
 class FitInput:
     ship_type_id: int
     modules: tuple[ModuleInput, ...] = ()
@@ -83,12 +102,17 @@ class FitInput:
     # rack module: persisted in the fit's items blob as a slot="mode" entry (see
     # apps.fitting.services.fit_input_from_items) and folded into the hash below.
     mode_type_id: int | None = None
+    # Hostile modules projected ONTO this fit (WS-6): incoming webs/painters/dampeners,
+    # neut/nos pressure, remote reps. Persisted in the items blob as slot="projected"
+    # entries; never fitted, priced, stocked or exported.
+    projected: tuple[ProjectedInput, ...] = ()
 
     def canonical(self) -> dict:
         return {
             "ship_type_id": self.ship_type_id,
             "modules": [m.canonical() for m in self.modules],
             "mode_type_id": self.mode_type_id,
+            "projected": [p.canonical() for p in self.projected],
         }
 
     def hash(self) -> str:

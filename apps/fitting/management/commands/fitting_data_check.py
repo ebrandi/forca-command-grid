@@ -26,7 +26,12 @@ _SHIP_CATEGORY = 6
 _MAX_HULLS_WITHOUT_BONUS = 45
 _PATCH_EFFECT_NAMES = ("selfRof", "missileEMDmgBonus", "missileExplosiveDmgBonus",
                        "missileKineticDmgBonus2", "missileThermalDmgBonus",
-                       "droneDmgBonus")
+                       "droneDmgBonus",
+                       # WS-6 projected-ewar synthesised modifiers (see
+                       # import_ship_bonuses._CLIENT_INTERNAL_EFFECTS): web / painter /
+                       # sensor-damp default effects ship empty modifierInfo in CCP's SDE.
+                       "remoteWebifierFalloff", "remoteTargetPaintFalloff",
+                       "remoteSensorDampFalloff")
 
 
 class Command(BaseCommand):

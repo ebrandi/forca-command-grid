@@ -71,6 +71,37 @@ ATTR_SHIELD_BOOST = 68
 ATTR_ARMOR_REPAIR = 84
 ATTR_HULL_REPAIR = 87           # structureDamageAmount (hull repairers)
 ATTR_DURATION = 73
+
+# --- WS-6 projected effects (incoming neut/nos pressure + remote reps) --------------
+# Verified live 2026-07-21. neut/nos amounts and remote-rep amounts are self-contained on
+# the projecting module (no dogma modifier), so the evaluator reads them directly and
+# scales by the hull's evaluated resistance. Detection is by the module's DEFAULT effect id
+# (unambiguous across metalevels): energyNeutralizerFalloff 6187 / energyNosferatuFalloff
+# 6197 / shipModuleRemoteShieldBooster 6186 / shipModuleRemoteArmorRepairer 6188 /
+# shipModuleRemoteHullRepairer 6185.
+EFFECT_PROJ_WEB = 6426          # remoteWebifierFalloff    (stat via graph: maxVelocity)
+EFFECT_PROJ_PAINT = 6425        # remoteTargetPaintFalloff (stat via graph: signatureRadius)
+EFFECT_PROJ_DAMP = 6422         # remoteSensorDampFalloff  (stat via graph: range/scanRes)
+EFFECT_PROJ_SCRAM = 5934        # warpScrambleBlockMWDWithNPCEffect (real graph)
+EFFECT_PROJ_NEUT = 6187
+EFFECT_PROJ_NOS = 6197
+EFFECT_PROJ_RSB = 6186          # remote shield booster  → shieldBonus 68
+EFFECT_PROJ_RAR = 6188          # remote armor repairer  → armorDamageAmount 84
+EFFECT_PROJ_RHR = 6185          # remote hull repairer   → structureDamageAmount 83
+ATTR_SPEED_FACTOR = 20          # web: % max-velocity bonus (negative)
+ATTR_SIG_RADIUS_BONUS = 554     # painter: % signature bonus
+ATTR_MAX_TGT_RANGE_BONUS = 309  # damp: % lock-range bonus (negative)
+ATTR_SCAN_RES_BONUS = 566       # damp: % scan-resolution bonus (negative) — 566 not 565
+ATTR_WARP_SCRAMBLE_STRENGTH = 105
+ATTR_ENERGY_NEUT_AMOUNT = 97
+ATTR_POWER_TRANSFER_AMOUNT = 90
+ATTR_STRUCTURE_DAMAGE_AMOUNT = 83   # remote HULL repair per cycle (87 is shieldTransferRange)
+ATTR_ENERGY_WARFARE_RESIST = 2045   # hull energyWarfareResistance (neut/nos; default 1.0)
+ATTR_REMOTE_REP_IMPEDANCE = 2116    # hull remoteRepairImpedance (remote reps; default 1.0)
+# The projected remote-rep layers: (telemetry layer, default effect id, per-cycle attr).
+_PROJ_REP_LAYERS = (("shield", EFFECT_PROJ_RSB, ATTR_SHIELD_BOOST),
+                    ("armor", EFFECT_PROJ_RAR, ATTR_ARMOR_REPAIR),
+                    ("hull", EFFECT_PROJ_RHR, ATTR_STRUCTURE_DAMAGE_AMOUNT))
 _RECHARGE_PEAK = 2.5            # peak dC/dt = 2.5·Cmax/τ, at 25% charge
 AU_METERS = 149_597_870_700    # one astronomical unit in metres (CCP's warp-maths unit)
 _DRONE_MOBILE_MIN_SPEED = 1.0  # maxVelocity above this = a chasing (mobile) drone, not a
@@ -130,8 +161,10 @@ def evaluate(fit: FitInput, skills: SkillProfile, op_profile: OperatingProfile,
     utility = {"cargo": round(ev.ship_value(ATTR_CAPACITY), 1),
                "drone_bay": round(ev.ship_value(A.DRONE_CAPACITY), 1)}
     ewar = _ewar(ev)
+    projected = _projected(ev, provider)
     _validate_restrictions(ev, provider, result)
     _validate_mode(ev, provider, result)
+    _validate_projected(ev, provider, result)
 
     ship_section = {"type_id": fit.ship_type_id, "name": ship_info.get("name", "")}
     if ev.mode is not None:
@@ -143,7 +176,7 @@ def evaluate(fit: FitInput, skills: SkillProfile, op_profile: OperatingProfile,
     result.telemetry = {
         "resources": resources, "defence": defence, "capacitor": capacitor,
         "offence": offence, "mobility": mobility, "targeting": targeting,
-        "utility": utility, "ewar": ewar,
+        "utility": utility, "ewar": ewar, "projected": projected,
         "ship": ship_section,
         "operating_profile": {
             "propulsion_active": op_profile.propulsion_active,
@@ -497,6 +530,23 @@ def _defence(ev: EvaluatedFit, op_profile: OperatingProfile, result) -> dict:
             if amount:
                 reps[layer] += amount / (cycle / 1000.0)
 
+    # WS-6: friendly remote reps projected ONTO us add incoming HP/s per layer, reported
+    # SEPARATELY from our own active tank (never folded in silently). Each remote booster's
+    # per-cycle amount (shieldBonus 68 / armorDamageAmount 84 / structureDamageAmount 83) is
+    # read directly off the projecting module and scaled by our remoteRepairImpedance (2116;
+    # default 1.0, driven far below 1 by a siege module for the "cannot be remote-repped"
+    # rule). This is incoming assistance, so it is not resistance-reduced like damage.
+    rep_impedance = max(0.0, ev.ship_value(ATTR_REMOTE_REP_IMPEDANCE))
+    incoming_rep = {"shield": 0.0, "armor": 0.0, "hull": 0.0}
+    for p in ev.projected:
+        for layer, eff, attr in _PROJ_REP_LAYERS:
+            if eff not in p.effect_ids:
+                continue
+            cyc = ev.value(p, ATTR_DURATION)
+            amt = ev.value(p, attr)
+            if cyc > 0 and amt:
+                incoming_rep[layer] += (amt / (cyc / 1000.0)) * rep_impedance
+
     dp_weighted = sum(dp[d] * max(0.0, min(1.0, ev.ship_value(A.SHIELD_RESONANCE[d])))
                       for d in A.DAMAGE_TYPES)
     return {
@@ -512,6 +562,12 @@ def _defence(ev: EvaluatedFit, op_profile: OperatingProfile, result) -> dict:
             "armor_hps": round(reps["armor"], 1),
             "hull_hps": round(reps["hull"], 1),
             "total_hps": round(sum(reps.values()), 1),
+        },
+        "incoming_rep": {
+            "shield_hps": round(incoming_rep["shield"], 1),
+            "armor_hps": round(incoming_rep["armor"], 1),
+            "hull_hps": round(incoming_rep["hull"], 1),
+            "total_hps": round(sum(incoming_rep.values()), 1),
         },
     }
 
@@ -543,7 +599,26 @@ def _capacitor(ev: EvaluatedFit, result) -> dict:
             if bonus and eff_cycle > 0:
                 injection += bonus / (eff_cycle / 1000.0)
 
-    net_drain = drain - injection
+    # WS-6: projected energy neutralizers / nosferatus drain us. Both are read directly off
+    # the projecting module (energyNeutralizerAmount 97 / powerTransferAmount 90 per cycle)
+    # and scaled by our evaluated energyWarfareResistance (2045; a fitted cap battery lowers
+    # it via effect 6487). NOS is a v1 simplification: modelled as pure incoming drain (its
+    # real "only while attacker cap < target cap" peak-balance rule is noted in the matrix).
+    ew_resist = max(0.0, ev.ship_value(ATTR_ENERGY_WARFARE_RESIST))
+    incoming_pressure = 0.0
+    for p in ev.projected:
+        if EFFECT_PROJ_NEUT in p.effect_ids:
+            amt_attr = ATTR_ENERGY_NEUT_AMOUNT
+        elif EFFECT_PROJ_NOS in p.effect_ids:
+            amt_attr = ATTR_POWER_TRANSFER_AMOUNT
+        else:
+            continue
+        cyc = ev.value(p, ATTR_DURATION)
+        amt = ev.value(p, amt_attr)
+        if cyc > 0 and amt:
+            incoming_pressure += (amt / (cyc / 1000.0)) * ew_resist
+
+    net_drain = drain - injection + incoming_pressure
     # Equilibrium: net_drain = (10·C/τ)·(√x − x). Let s=√x: s(1−s) = net·τ/(10·C).
     stable = peak > 0 and net_drain <= peak
     stable_pct = None
@@ -566,6 +641,7 @@ def _capacitor(ev: EvaluatedFit, result) -> dict:
         "peak_recharge": round(peak, 2),
         "usage": round(drain, 2),
         "injection": round(injection, 2),
+        "incoming_pressure": round(incoming_pressure, 2),
         "stable": stable,
         "stable_pct": stable_pct,
         "runtime_s": runtime_s,
@@ -1109,6 +1185,87 @@ def _ewar(ev: EvaluatedFit) -> dict:
                      falloff_bonus=round(ev.value(m, 349) if 349 in m.base else 0.0, 1))
         entries.append(e)
     return {"modules": entries, "count": len(entries)}
+
+
+# --------------------------------------------------------------------------- #
+# Projected effects (WS-6): what hostile modules are pressuring this fit
+# --------------------------------------------------------------------------- #
+def _projected_summary(ev: EvaluatedFit, p: Entity) -> str:
+    """A short human description of what one projected module does to us, from its own
+    evaluated (base) attributes."""
+    eff = p.effect_ids
+    cyc = ev.value(p, ATTR_DURATION)
+    if EFFECT_PROJ_WEB in eff:
+        return f"{ev.value(p, ATTR_SPEED_FACTOR):.0f}% max velocity"
+    if EFFECT_PROJ_PAINT in eff:
+        return f"+{ev.value(p, ATTR_SIG_RADIUS_BONUS):.0f}% signature radius"
+    if EFFECT_PROJ_DAMP in eff:
+        return (f"{ev.value(p, ATTR_MAX_TGT_RANGE_BONUS):.0f}% lock range, "
+                f"{ev.value(p, ATTR_SCAN_RES_BONUS):.0f}% scan resolution")
+    if EFFECT_PROJ_SCRAM in eff:
+        return f"{ev.value(p, ATTR_WARP_SCRAMBLE_STRENGTH):.0f} warp scramble strength"
+    if EFFECT_PROJ_NEUT in eff or EFFECT_PROJ_NOS in eff:
+        is_neut = EFFECT_PROJ_NEUT in eff
+        amt = ev.value(p, ATTR_ENERGY_NEUT_AMOUNT if is_neut else ATTR_POWER_TRANSFER_AMOUNT)
+        gjs = amt / (cyc / 1000.0) if cyc > 0 else 0.0
+        return f"{'neutralises' if is_neut else 'nosferatu drains'} {gjs:.1f} GJ/s"
+    for layer, e, attr in _PROJ_REP_LAYERS:
+        if e in eff:
+            hps = ev.value(p, attr) / (cyc / 1000.0) if cyc > 0 else 0.0
+            return f"remote {layer} rep {hps:.0f} HP/s"
+    return "no modelled projected effect"
+
+
+def _projected(ev: EvaluatedFit, provider) -> dict:
+    """Telemetry list of the hostile modules projected onto this fit. Quantity-N inputs are
+    materialised as N sources (for stacking); collapse them back to one row per (type,
+    state) with a count so the UI shows "Stasis Webifier II ×2"."""
+    groups: dict[tuple, dict] = {}
+    order: list[tuple] = []
+    for p in ev.projected:
+        key = (p.type_id, p.module_state)
+        g = groups.get(key)
+        if g is None:
+            g = groups[key] = {"entity": p, "count": 0}
+            order.append(key)
+        g["count"] += 1
+    modules = []
+    for key in order:
+        p = groups[key]["entity"]
+        info = provider.type_info(p.type_id) or {}
+        modules.append({
+            "type_id": p.type_id,
+            "name": info.get("name", ""),
+            "state": p.module_state.value if p.module_state else "active",
+            "quantity": groups[key]["count"],
+            "effect_summary": _projected_summary(ev, p),
+        })
+    return {"modules": modules, "count": len(modules)}
+
+
+def _validate_projected(ev: EvaluatedFit, provider, result: FittingResult) -> None:
+    """A projected module carrying NO target (category-2) effect cannot pressure this fit
+    (e.g. a Gyrostabilizer dragged into the projected slot). Flag it — advisory WARNING, not
+    a structural error — so a mis-picked module is visible rather than silently ignored."""
+    seen: set[int] = set()
+    for p in ev.projected:
+        if p.type_id in seen:
+            continue
+        seen.add(p.type_id)
+        has_target = False
+        for eid in p.effect_ids:
+            edef = provider.effect_def(eid)
+            if edef is not None and edef.category == 2:
+                has_target = True
+                break
+        if has_target:
+            continue
+        info = provider.type_info(p.type_id) or {}
+        result.diagnostics.append(Diagnostic(
+            "projected_module_inert", Severity.WARNING,
+            "Projected module has no effect on this ship",
+            detail=f"type {p.type_id}", contextual=True,
+            params={"type_id": p.type_id, "name": info.get("name", "")}))
 
 
 # --------------------------------------------------------------------------- #

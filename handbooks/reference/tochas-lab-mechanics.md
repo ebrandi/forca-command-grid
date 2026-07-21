@@ -39,14 +39,17 @@ sample calculation) and exits non-zero on failure.
 | Capacitor | Capacity, recharge τ, **peak `2.5·C/τ`**, per-module drain from evaluated costs and cycles, cap-booster injection (reload-aware), stability % from the √x-equilibrium quadratic, ODE-integrated depletion time when unstable. |
 | Mobility | Evaluated velocity/agility/mass (armor-plate mass included), AB/MWD thrust `(speedFactor/100)·(thrust/mass)`, mass addition and MWD signature bloom, align `ln(4)·mass·agility/1e6`, warp speed, and **warp time** over a requested distance (default 10 AU) via the CCP "Warp Drive Active" accel/cruise/decel model (accel k = warp AU/s, decel `min(k/3, 2)`, drop-out `min(subwarp/2, 100)` m/s using the propulsion-off subwarp speed). |
 | Targeting | Range/scan resolution/sensor strength from evaluated attributes (sensor boosters with scripts apply); with a target signature, **lock time** `min(40000/scanRes/asinh(sig)², 30 min)`. |
+| Projected effects (incoming ewar / neut-nos / remote reps) | Hostile modules projected **onto** the fit (`FitInput.projected`; persisted as `slot="projected"` items entries, quantity-expanded into independent stacking sources). Web, target painter and sensor dampener are synthesised `targetID` postPercent modifiers (their CCP default effects ship empty `modifierInfo`, mirrored from pyfa's handlers) applied through the graph with normal stacking: web `maxVelocity ×(1+speedFactor/100)`, painter `signatureRadius ×1.30`, dampener `maxTargetRange`/`scanResolution` cut (lock time rises). The warp scrambler uses its real graph (`warpScrambleStatus += strength`). Neut/nos add GJ/s drain to the capacitor model (nos modelled as pure drain in v1); remote shield/armor/hull reps add `incoming_rep` HP/s per layer, reported **separately** from your own active tank. Incoming values are scaled by the hull's evaluated resistance for the family (web `stasisWebifierResistance`, painter `targetPainterResistance`, damp `sensorDampenerResistance`, neut/nos `energyWarfareResistance` — a fitted cap battery lowers it —, reps `remoteRepairImpedance`; all default 1.0). Documented v1 simplifications: full strength **at optimal** (range/falloff ignored) and an **unbonused attacker** (module evaluated at base attributes). A projected module with no target effect is flagged `projected_module_inert` (advisory). Listed in `telemetry.projected`; excluded from EFT export, pricing, stock and doctrine promotion. |
 | Skills | Real pilot snapshots, All-V, untrained; per-level bonuses scale from data (skill-level pre-multiplication); missing-skill detection over all six required-skill slots. |
 | Explainability | Stable diagnostic codes with structured params, localised at the presentation layer. |
 
 ## Not modelled (reported honestly, never faked)
 
-Fighters and fighter tubes; projected and environmental effects (incoming ewar, remote
-assistance, command bursts); smartbombs, mining yield and DoT (breacher-pod) weapons;
-booster side-effects. There is no global "operating mode of operation" fit input — the
+Fighters and fighter tubes; environmental effects and command bursts; projected ECM (its
+jam roll is chance-based — detected but not yet applied); smartbombs, mining yield and DoT
+(breacher-pod) weapons; booster side-effects. (Incoming ewar, neut/nos pressure and remote
+reps *are* now modelled — see "Projected effects" above.) There is no global "operating
+mode of operation" fit input — the
 engine evaluates every module in its own fitted state, so damage/tank output is not gated
 by a mode-of-operation selector (a tactical destroyer's *tactical* mode is a supported,
 separate mechanic — see above). The full matrix with per-mechanic status lives in

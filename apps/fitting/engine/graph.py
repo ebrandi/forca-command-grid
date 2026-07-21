@@ -35,7 +35,7 @@ import math
 from dataclasses import dataclass, field
 from typing import Protocol
 
-from .types import FitInput, ModuleState, SkillProfile, SlotKind
+from .types import FitInput, ModuleState, ProjectedInput, SkillProfile, SlotKind
 
 # ---------------------------------------------------------------------------
 # Constants (CCP dogma data model)
@@ -80,6 +80,26 @@ _PENALTY_FACTOR = math.exp(-((1.0 / 2.67) ** 2))
 _FUNCS = ("ItemModifier", "LocationModifier", "LocationGroupModifier",
           "LocationRequiredSkillModifier", "OwnerRequiredSkillModifier")
 _FUNC_EFFECT_STOPPER = "EffectStopper"        # gates onlining, changes no attribute
+
+# WS-6 projected effects. A hostile module projected onto our ship applies its
+# effect-category-2 (target) modifiers whose domain is ``targetID`` onto the hull. The
+# effect category at which a projected source is considered running:
+_STATE_TARGET = 2                             # SDE effectCategory 2 = target (projected)
+# Incoming-EWAR resistance: which of the TARGET's (our hull's) resistance attributes
+# scales each projected stat effect. Keyed by the family's default effect id; values are
+# CCP dogma attribute ids (verified live 2026-07-21, all default 1.0 — a no-op for an
+# unresisted victim, and CCP uses ~1e-6, never exactly 0, for full immunity). CCP also
+# ships resistanceAttributeID on the effect, but inconsistently (pyfa reads it only for
+# neut/nos/ECM — eos/modifiedAttributeDict.py getResistance); this documented map keyed by
+# the family's default effect id is the authoritative, DB-verified source. neut/nos and
+# remote-rep resistances are applied in the evaluator (evaluator._capacitor / _defence),
+# not here, because those families carry no dogma modifier — their numbers are read
+# directly off the module.
+_PROJECTED_RESISTANCE_BY_EFFECT = {
+    6426: 2115,  # remoteWebifierFalloff    → stasisWebifierResistance
+    6425: 2114,  # remoteTargetPaintFalloff → targetPainterResistance
+    6422: 2112,  # remoteSensorDampFalloff  → sensorDampenerResistance
+}
 
 
 # ---------------------------------------------------------------------------
@@ -137,6 +157,10 @@ class _Application:
     source_attr: int
     min_state: int                 # source must be in >= this state
     penalisable_source: bool       # source category NOT exempt from stacking
+    # WS-6: when set, this is a PROJECTED application and the source attribute value is
+    # scaled by the target hull's resistance attribute (this id) before the operator runs
+    # — modelling incoming-ewar resistance. None for every normal (self) application.
+    resistance_attr: int | None = None
 
 
 @dataclass
@@ -170,6 +194,10 @@ class EvaluatedFit:
     # like an always-on module; its effects apply only when it is valid for the hull.
     mode: "Entity | None" = None
     mode_valid: bool = True
+    # WS-6: hostile modules projected ONTO this ship (one entity per unit; a quantity-N
+    # projected input expands to N sources so a stacking chain is evaluated correctly).
+    # These are never on our ship — they are pure sources whose target is the hull.
+    projected: list[Entity] = field(default_factory=list)
     diagnostics: list[str] = field(default_factory=list)
     _provider: GraphDataProvider | None = None
     _stack: list[tuple[int, int]] = field(default_factory=list)
@@ -288,6 +316,17 @@ def build_entities(fit: FitInput, skills: SkillProfile, provider,
     if fit.mode_type_id:
         ev.mode = _new_entity(provider, fit.mode_type_id, "mode", STATE_ACTIVE)
         ev.mode_valid = mode_valid_for_ship(provider, fit.ship_type_id, fit.mode_type_id)
+
+    # WS-6: materialise each projected hostile module as a bare source entity (its own
+    # BASE attributes only — an "unbonused attacker": no skills, ship bonuses, overheat or
+    # rigs of the attacker are modelled; documented simplification). A quantity-N input
+    # expands to N independent sources so a stacking-penalised chain (e.g. two webs) is
+    # evaluated by the normal pass-3 machinery. Overloaded is treated as active for gating.
+    for p in fit.projected:
+        rank = STATE_OVERLOADED if p.state == ModuleState.OVERHEATED else STATE_ACTIVE
+        for _ in range(max(1, p.quantity)):
+            ev.projected.append(_new_entity(provider, p.type_id, "projected", rank,
+                                            module_state=p.state))
     return ev
 
 
@@ -366,6 +405,8 @@ def collect_effects(ev: EvaluatedFit, provider) -> None:
             for mod in edef.modifiers:
                 _collect_one(ev, src, edef, mod, min_state, exempt)
 
+    _collect_projected(ev, provider)
+
 
 def _collect_one(ev: EvaluatedFit, src: Entity, edef: EffectDef, mod: ModifierDef,
                  min_state: int, exempt: bool) -> None:
@@ -428,6 +469,42 @@ def _collect_one(ev: EvaluatedFit, src: Entity, edef: EffectDef, mod: ModifierDe
             _add_application(ent, tgt_attr, app)
 
 
+def _collect_projected(ev: EvaluatedFit, provider) -> None:
+    """WS-6: attach each projected hostile module's target-domain modifiers onto the hull.
+
+    A projected source contributes only its effect-category-2 (target) effects, and within
+    those only ``ItemModifier`` rows whose domain is ``targetID`` / ``target`` — the ones
+    that write onto the target ship (us). This is where the synthesised web / painter /
+    dampener modifiers (import_ship_bonuses._CLIENT_INTERNAL_EFFECTS) and the warp
+    scrambler's real graph land. Other modifier funcs on a projected effect
+    (LocationRequiredSkillModifier / EffectStopper — e.g. the scrambler's MWD-block) act on
+    the attacker's fleet or gate onlining and have no target-side meaning in v1, so they are
+    skipped. Range/falloff are ignored: v1 applies full strength (as-if at optimal). Each
+    application carries the family's resistance attribute (``_PROJECTED_RESISTANCE_BY_
+    EFFECT``) so pass 3 scales the incoming value by our evaluated resistance. A projected
+    source is category 7 (Module) → NOT stacking-exempt, so multiple of the same module
+    penalise exactly like fitted modules would.
+    """
+    for src in ev.projected:
+        for eid in src.effect_ids:
+            edef = provider.effect_def(eid)
+            if edef is None or edef.category != _STATE_TARGET:
+                continue                       # only target (projected) effects apply to us
+            resist_attr = _PROJECTED_RESISTANCE_BY_EFFECT.get(edef.effect_id)
+            for mod in edef.modifiers:
+                if mod.func != "ItemModifier" or mod.domain not in ("targetID", "target"):
+                    continue
+                op = mod.operation
+                tgt_attr = mod.modified_attribute_id
+                src_attr = mod.modifying_attribute_id
+                if op not in OPERATOR_ORDER or tgt_attr is None or src_attr is None:
+                    continue
+                _add_application(ev.ship, tgt_attr, _Application(
+                    operation=op, source=src, source_attr=src_attr,
+                    min_state=STATE_ACTIVE, penalisable_source=True,
+                    resistance_attr=resist_attr))
+
+
 def _resolve_domain(ev: EvaluatedFit, src: Entity, domain: str) -> Entity | None:
     if domain == "shipID":
         return ev.ship
@@ -473,6 +550,12 @@ def _calculate(ev: EvaluatedFit, entity: Entity, attribute_id: int) -> float:
                 if app.source.state < app.min_state:
                     continue
                 raw = ev.value(app.source, app.source_attr)
+                if app.resistance_attr is not None:
+                    # WS-6 projected effect: the incoming value is reduced by the target
+                    # hull's resistance for this family (default 1.0 → no-op). Scaling the
+                    # source value scales the operator's delta correctly for the postPercent
+                    # families this path carries (web/painter/damp).
+                    raw *= ev.value(ev.ship, app.resistance_attr)
                 if op in (OP_PRE_ASSIGN, OP_POST_ASSIGN):
                     assigns.append(raw)
                     continue
