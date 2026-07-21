@@ -518,11 +518,16 @@ def test_realistic_nano_mwd_stabber_no_skills(capmob):
         * (1 + _attr(nano, A.AGILITY_MULTIPLIER) / 100.0 * S1)
     assert mob["align_time_s"] == pytest.approx(_align_s(mass, agility), rel=2e-3)
 
-    # Signature: istab +11% (graph), then the MWD bloom multiplies on top.
+    # Signature: the MWD bloom (+475%) and the istab penalty (+11%) share ONE stacking-
+    # penalised chain on signatureRadius (552, non-stackable), sorted by magnitude — the MWD
+    # (strongest) at full, the weaker istab penalised by S1. Before the WS-15 sigfix the MWD
+    # was multiplied on SEPARATELY, escaping the penalty (100×1.11×5.75 = 638); the correct
+    # joint chain gives ~630 (matches pyfa, which groups them).
+    mwd_sig = _attr(mwd, A.SIGNATURE_RADIUS_BONUS) / 100.0        # +4.75 (strongest → S0)
+    istab_sig = _attr(istab, A.SIGNATURE_RADIUS_BONUS) / 100.0    # +0.11 (weaker → S1)
     sig = _attr(stabber, A.SIGNATURE_RADIUS) \
-        * (1 + _attr(istab, A.SIGNATURE_RADIUS_BONUS) / 100.0) \
-        * (1 + _attr(mwd, A.SIGNATURE_RADIUS_BONUS) / 100.0)
-    assert mob["signature_radius"] == pytest.approx(sig, rel=2e-3)    # ~638 m
+        * (1 + mwd_sig) * (1 + istab_sig * S1)
+    assert mob["signature_radius"] == pytest.approx(sig, rel=2e-3)    # ~630 m
 
 
 # --------------------------------------------------------------------------- #

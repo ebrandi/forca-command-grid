@@ -798,6 +798,32 @@ def _calculate(ev: EvaluatedFit, entity: Entity, attribute_id: int) -> float:
     return current
 
 
+def inject_penalised_percent(ev: EvaluatedFit, target: Entity, attribute_id: int,
+                             source: Entity, percent: float,
+                             min_state: int = STATE_ACTIVE) -> None:
+    """Add a synthetic postPercent modifier of ``percent`` (500.0 == +500%) onto
+    ``attribute_id`` of ``target``, stacking-penalised like any fitted/projected percentage
+    modifier — then let :func:`_calculate` combine it.
+
+    This exists for CCP's *client-internal* module bonuses: the ones shipped with an EMPTY
+    ``modifierInfo`` so the ordinary pass-2 collection never sees them. The MWD signature
+    bloom (``moduleBonusMicrowarpdrive`` / effect 6730 — no modifiers) is the motivating case:
+    the caller (evaluator._mobility) computes the effective bloom percent, but it MUST join
+    the same stacking-penalised chain the graph already applies to every other percentage
+    modifier of the (non-stackable) ``signatureRadius`` — rig sig penalties, a projected
+    painter, … — instead of being multiplied on separately (which escapes the penalty and
+    understates a MWD-plus-rig fit's signature). Feeding it in as a real application means
+    ``_calculate`` does the joint sort-and-penalise in pass 3 with NO second penalty
+    implementation. The value is carried literally (it is already the effective, evaluated
+    percent), so ``source`` is used only for the state gate. Any cached value of the target
+    attribute is invalidated so the next read recomputes with the injected source.
+    """
+    _add_application(target, attribute_id, _Application(
+        operation=OP_POST_PERCENT, source=source, source_attr=0,
+        min_state=min_state, penalisable_source=True, literal_value=float(percent)))
+    target.values.pop(attribute_id, None)
+
+
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------

@@ -30,6 +30,7 @@ from .graph import (
     Entity,
     EvaluatedFit,
     evaluate_attributes,
+    inject_penalised_percent,
 )
 from .types import (
     AttributeTrace,
@@ -1619,8 +1620,21 @@ def _mobility(ev: EvaluatedFit, op_profile: OperatingProfile, result) -> dict:
     base_v = ev.ship_value(A.MAX_VELOCITY)   # graph applies overdrives/nanos/skills
     agility = ev.ship_value(A.AGILITY)
     mass = ev.ship_value(A.MASS)             # plates' massAddition arrives via modAdd
-    sig = ev.ship_value(A.SIGNATURE_RADIUS)
 
+    # An active propulsion module's velocity boost and signature bloom are BOTH client-internal
+    # in CCP's data — moduleBonusMicrowarpdrive (effect 6730) ships an EMPTY modifierInfo, so
+    # the graph never sees them and they are applied here. The two halves are NOT symmetric:
+    #  * velocity is a standalone factor, reported as propulsion_velocity distinct from the
+    #    prop-off max_velocity (existing goldens pin this — behaviour unchanged below);
+    #  * signature is a percentage modifier of the NON-STACKABLE signatureRadius (552). It MUST
+    #    share the stacking-penalised chain with every OTHER sig % modifier (shield/hyperspatial
+    #    rigs, a projected painter, …). Applying it as a separate multiplier on top of the
+    #    graph-evaluated sig (which was the old code here) penalised the rigs among themselves
+    #    and then multiplied the MWD on OUTSIDE that chain — double-counting the bloom and
+    #    understating the penalty (a MWD Caracal with two shield rigs read 1150.4 vs the correct
+    #    1126.9). The fix injects the bloom as a synthetic penalised postPercent source and lets
+    #    graph._calculate fold it into the one sorted chain (see graph.inject_penalised_percent);
+    #    signatureRadius is therefore read AFTER the injection, below.
     prop_v = base_v
     if op_profile.propulsion_active:
         mwd_sig_role = ev.ship.base.get(A.MWD_SIG_ROLE_BONUS, 0.0)
@@ -1639,8 +1653,14 @@ def _mobility(ev: EvaluatedFit, op_profile: OperatingProfile, result) -> dict:
             sig_bonus = ev.value(m, A.SIGNATURE_RADIUS_BONUS) \
                 if A.SIGNATURE_RADIUS_BONUS in m.base else 0.0
             if sig_bonus:
-                sig *= 1.0 + (sig_bonus / 100.0) * (1.0 + mwd_sig_role / 100.0)
+                # Effective bloom = base bonus reduced by the hull's MWD-sig role bonus (attr
+                # 1803, e.g. interceptors' reduced signature penalty). pyfa applies that ship
+                # bonus to the module's 554 BEFORE it penalises against the ship's sig, so the
+                # reduced percent is exactly what enters the chain.
+                inject_penalised_percent(ev, ev.ship, A.SIGNATURE_RADIUS, m,
+                                         sig_bonus * (1.0 + mwd_sig_role / 100.0))
             break
+    sig = ev.ship_value(A.SIGNATURE_RADIUS)
     align = _LN_ALIGN * mass * agility / 1_000_000.0 if mass and agility else 0.0
     # Warp-time estimate over the requested distance. Warp speed (AU/s) = baseWarpSpeed ×
     # warpSpeedMultiplier; subwarp = the propulsion-off max velocity (prop can't run in
