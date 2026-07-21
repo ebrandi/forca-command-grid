@@ -72,6 +72,9 @@ ATTR_ARMOR_REPAIR = 84
 ATTR_HULL_REPAIR = 87           # structureDamageAmount (hull repairers)
 ATTR_DURATION = 73
 _RECHARGE_PEAK = 2.5            # peak dC/dt = 2.5·Cmax/τ, at 25% charge
+AU_METERS = 149_597_870_700    # one astronomical unit in metres (CCP's warp-maths unit)
+_DRONE_MOBILE_MIN_SPEED = 1.0  # maxVelocity above this = a chasing (mobile) drone, not a
+#                                sentry (pyfa's `droneSpeed > 1` sentry/mobile split)
 
 _RACKED = (SlotKind.HIGH, SlotKind.MED, SlotKind.LOW, SlotKind.RIG, SlotKind.SUBSYSTEM)
 
@@ -123,7 +126,7 @@ def evaluate(fit: FitInput, skills: SkillProfile, op_profile: OperatingProfile,
     capacitor = _capacitor(ev, result)
     offence = _offence(ev, provider, op_profile, result)
     mobility = _mobility(ev, op_profile, result)
-    targeting = _targeting(ev)
+    targeting = _targeting(ev, op_profile)
     utility = {"cargo": round(ev.ship_value(ATTR_CAPACITY), 1),
                "drone_bay": round(ev.ship_value(A.DRONE_CAPACITY), 1)}
     ewar = _ewar(ev)
@@ -430,6 +433,107 @@ def _cap_runtime(capacity: float, tau: float, net_drain: float) -> float | None:
 
 
 # --------------------------------------------------------------------------- #
+# Turret / drone application (hit-quality maths)
+# --------------------------------------------------------------------------- #
+# Studied for BEHAVIOUR ONLY in pyfa's GPL eos — no code reused. Citations are file:line
+# in the pyfa clone (graphs/data/fitDamageStats/calc/application.py, eos/calc.py):
+#
+# * Chance-to-hit factors multiply (application.py:381-393):
+#     CTH = rangeFactor × trackingFactor
+#   rangeFactor (eos/calc.py:53-65, turrets pass restrictedRange=False so it never zeroes):
+#     0.5 ** ((max(0, distance − optimal) / falloff) ** 2)
+#   trackingFactor (application.py:411-413):
+#     0.5 ** (((angular × optimalSigRadius) / (tracking × targetSig)) ** 2)
+#   Since both are 0.5**x, the product is 0.5 ** (rangeExp + trackExp) — the community-
+#   documented closed form (EVE University "Turret mechanics#Hit Math").
+#
+# * Expected per-shot damage multiplier from CTH (application.py:365-378). The EVE roll
+#   model draws x ~ U[0,1): the shot hits iff x < CTH; a hit with x < 0.01 is a *wrecking*
+#   shot dealing 3× base, otherwise a normal hit dealing (0.49 + x)× base. Taking the
+#   expectation over x:
+#       E[mult] = ∫₀^min(CTH,0.01) 3 dx  +  ∫_0.01^CTH (0.49 + x) dx      (CTH > 0.01)
+#               = min(CTH,0.01)·3  +  (CTH − 0.01)·((0.01 + CTH)/2 + 0.49)
+#     and for CTH ≤ 0.01 the whole hit region is wrecking: E[mult] = CTH·3.
+#   This is exactly pyfa's `_calcTurretMult`. Note E[mult](1.0) = 1.01505 > 1: a perfect
+#   shot averages slightly above paper DPS because of the wrecking bonus.
+#
+# * Baseline convention (DECISION — documented in the mechanics matrix): pyfa multiplies
+#   nominal DPS by E[mult] directly, so its DPS-vs-range graph shows that ~1.5% wrecking
+#   overshoot at point-blank. We instead NORMALISE by E[mult](1.0) so a perfect-application
+#   shot reports applied == raw and application never exceeds 1.0 — matching the convention
+#   our missile path already uses (`_missile_application` returns min(1, …)). This keeps a
+#   single "application %" meaning across turrets, drones and missiles.
+def _expected_turret_mult(cth: float) -> float:
+    """Expected turret damage multiplier (incl. wrecking shots) for a chance-to-hit."""
+    wrecking = min(cth, 0.01) * 3.0
+    normal_chance = cth - min(cth, 0.01)
+    if normal_chance > 0:
+        return normal_chance * ((0.01 + cth) / 2.0 + 0.49) + wrecking
+    return wrecking
+
+
+_PERFECT_TURRET_MULT = _expected_turret_mult(1.0)   # 1.01505 — the normalisation baseline
+
+
+def _turret_cth(tracking: float, optimal_sig: float, optimal: float, falloff: float,
+                angular: float, target_sig: float, distance: float) -> float:
+    """Chance to hit = rangeFactor × trackingFactor (both 0.5**exponent, so exponents add)."""
+    if falloff > 0:
+        range_exp = (max(0.0, distance - optimal) / falloff) ** 2
+    else:
+        range_exp = 0.0 if distance <= optimal else math.inf
+    if tracking > 0 and target_sig > 0:
+        track_exp = ((angular * optimal_sig) / (tracking * target_sig)) ** 2
+    else:
+        track_exp = 0.0
+    return 0.5 ** (range_exp + track_exp)
+
+
+def _applied_turret_multiplier(cth: float) -> float:
+    """Normalised application factor (≤ 1.0 in practice; 1.0 at perfect application)."""
+    return _expected_turret_mult(cth) / _PERFECT_TURRET_MULT
+
+
+def _lock_time_s(scan_res: float, target_sig: float) -> float | None:
+    """Time to lock a target of ``target_sig`` (m) at ``scan_res`` mm (scanResolution 564):
+    ``40000 / scanRes / asinh(sig)²`` seconds, capped at 30 min (CCP/EVE-Uni targeting
+    formula; pyfa eos/calc.py:68-71). ``None`` when either input is missing."""
+    if scan_res <= 0 or target_sig <= 0:
+        return None
+    return min(40000.0 / scan_res / (math.asinh(target_sig) ** 2), 30 * 60.0)
+
+
+def _warp_time_s(warp_speed_au_s: float, subwarp_speed: float,
+                 warp_distance_au: float) -> float | None:
+    """Total time in warp over ``warp_distance_au`` AU (CCP dev blog "Warp Drive Active",
+    2014 acceleration rework; pyfa graphs/data/fitWarpTime/getter.py:50-77).
+
+    Acceleration k = warp speed (AU/s); deceleration j = min(k/3, 2) AU/s. The ship exits
+    warp at min(subwarp/2, 100) m/s (``subwarp`` is the propulsion-off max velocity, since
+    prop mods can't run in warp). Accel covers 1 AU, decel covers v_max/j; if the trip is
+    shorter than accel+decel the peak speed never reaches v_max (solved from the two
+    exponential legs), otherwise the remainder is spent cruising."""
+    if warp_speed_au_s <= 0 or warp_distance_au <= 0:
+        return None
+    dropout = min(subwarp_speed / 2.0, 100.0)
+    if dropout <= 0:
+        return None
+    warp_dist = warp_distance_au * AU_METERS
+    k_accel = warp_speed_au_s
+    k_decel = min(warp_speed_au_s / 3.0, 2.0)
+    max_ms = warp_speed_au_s * AU_METERS
+    minimum_dist = AU_METERS + max_ms / k_decel        # accel_dist + decel_dist
+    cruise_time = 0.0
+    if minimum_dist > warp_dist:
+        max_ms = warp_dist * k_accel * k_decel / (k_accel + k_decel)
+    else:
+        cruise_time = (warp_dist - minimum_dist) / max_ms
+    accel_time = math.log(max_ms / k_accel) / k_accel
+    decel_time = math.log(max_ms / dropout) / k_decel
+    return cruise_time + accel_time + decel_time
+
+
+# --------------------------------------------------------------------------- #
 # Offence
 # --------------------------------------------------------------------------- #
 def _missile_application(target_sig, target_vel, er, ev_, drf) -> float:
@@ -528,11 +632,20 @@ def _sustained_entry(ev: EvaluatedFit, m: Entity, volley: float, dps: float,
 
 def _offence(ev: EvaluatedFit, provider, op_profile: OperatingProfile, result) -> dict:
     turret_dps = missile_dps = missile_dps_applied = drone_dps = total_volley = 0.0
+    turret_dps_applied = drone_dps_applied = 0.0
     sustained_weapon_dps = 0.0
     damage_by_type = {d: 0.0 for d in A.DAMAGE_TYPES}
-    weapons = has_turret = 0
+    weapons = 0
     ranges: list[dict] = []
     target = op_profile.target
+    # Turret/drone application needs a distance (range term) and an angular speed (tracking
+    # term). Missiles need only sig/velocity, so they apply whenever a target is set.
+    angular = target.effective_angular() if target is not None else None
+    turret_complete = bool(
+        target is not None and target.signature_radius > 0
+        and target.target_distance_m is not None and target.target_distance_m > 0
+        and angular is not None)
+    applied_complete = True
 
     for m in ev.modules:
         if m.slot != SlotKind.HIGH or m.module_state == ModuleState.OFFLINE:
@@ -562,7 +675,6 @@ def _offence(ev: EvaluatedFit, provider, op_profile: OperatingProfile, result) -
         dps = volley / rof_s
         entry = {"type_id": m.type_id, "volley": round(volley, 1), "dps": round(dps, 1)}
         if is_turret:
-            has_turret = 1
             turret_dps += dps
             entry.update(
                 kind="turret",
@@ -570,6 +682,21 @@ def _offence(ev: EvaluatedFit, provider, op_profile: OperatingProfile, result) -
                 falloff_m=round(ev.value(m, A.FALLOFF), 0),
                 tracking=round(ev.value(m, A.TRACKING_SPEED), 4),
             )
+            if target is not None:
+                if turret_complete:
+                    cth = _turret_cth(
+                        ev.value(m, A.TRACKING_SPEED),
+                        ev.value(m, A.OPTIMAL_SIG_RADIUS),
+                        ev.value(m, A.OPTIMAL_RANGE), ev.value(m, A.FALLOFF),
+                        angular, target.signature_radius, target.target_distance_m)
+                    amult = _applied_turret_multiplier(cth)
+                    entry["applied_dps"] = round(dps * amult, 1)
+                    entry["applied_multiplier"] = round(amult, 3)
+                    turret_dps_applied += dps * amult
+                else:
+                    entry["applied_dps"] = None
+                    entry["applied_reason"] = "target_profile_incomplete"
+                    applied_complete = False
         else:
             missile_dps += dps
             vel = ev.value(ch, ATTR_MISSILE_VELOCITY)
@@ -582,10 +709,13 @@ def _offence(ev: EvaluatedFit, provider, op_profile: OperatingProfile, result) -
             )
             applied = dps
             if target is not None:
-                applied = dps * _missile_application(
+                factor = _missile_application(
                     target.signature_radius, target.velocity,
                     ev.value(ch, A.AOE_CLOUD_SIZE), ev.value(ch, A.AOE_VELOCITY),
                     ev.value(ch, A.AOE_DAMAGE_REDUCTION_FACTOR))
+                applied = dps * factor
+                entry["applied_dps"] = round(applied, 1)
+                entry["applied_multiplier"] = round(factor, 3)
             missile_dps_applied += applied
         sustained_fields, sustained_dps = _sustained_entry(ev, m, volley, dps, rof_s)
         entry.update(sustained_fields)
@@ -623,6 +753,13 @@ def _offence(ev: EvaluatedFit, provider, op_profile: OperatingProfile, result) -
             drone_dps += d_dps
             for d in A.DAMAGE_TYPES:
                 damage_by_type[d] += (shot[d] * mult) / rof_s * qty_launchable
+            if target is not None:
+                d_applied = _drone_applied(ev, dr, d_dps, target, angular,
+                                           turret_complete)
+                if d_applied is None:
+                    applied_complete = False
+                else:
+                    drone_dps_applied += d_applied
 
     total = turret_dps + missile_dps + drone_dps
     dist = ({d: round(damage_by_type[d] / total * 100, 1) for d in A.DAMAGE_TYPES}
@@ -647,13 +784,50 @@ def _offence(ev: EvaluatedFit, provider, op_profile: OperatingProfile, result) -
         out["missile_dps_applied"] = round(missile_dps_applied, 1)
         out["missile_application"] = (round(missile_dps_applied / missile_dps, 3)
                                       if missile_dps > 0 else None)
+        out["turret_dps_applied"] = round(turret_dps_applied, 1)
+        out["turret_application"] = (round(turret_dps_applied / turret_dps, 3)
+                                     if turret_dps > 0 else None)
+        out["drone_dps_applied"] = round(drone_dps_applied, 1)
+        out["drone_application"] = (round(drone_dps_applied / drone_dps, 3)
+                                    if drone_dps > 0 else None)
+        # Applied total sums only the classes we could compute; a weapon excluded because
+        # the target profile was incomplete flips applied_complete to False (never faked).
+        out["total_applied_dps"] = round(
+            turret_dps_applied + missile_dps_applied + drone_dps_applied, 1)
+        out["applied_complete"] = applied_complete
+        # Legacy field (pre-WS-2): only missiles applied, turrets/drones raw. Kept so older
+        # saved renders never KeyError; superseded by total_applied_dps above.
         out["applied_total_dps"] = round(
             turret_dps + missile_dps_applied + drone_dps, 1)
         out["target"] = {"signature_radius": target.signature_radius,
-                         "velocity": target.velocity, "label": target.label}
-        if has_turret:
-            result.unsupported.append("turret_application_not_modelled")
+                         "velocity": target.velocity, "label": target.label,
+                         "distance_m": target.target_distance_m, "angular": angular}
     return out
+
+
+def _drone_applied(ev: EvaluatedFit, dr: Entity, d_dps: float, target, angular,
+                   turret_complete: bool) -> float | None:
+    """Applied DPS for one drone entity, or ``None`` when the target profile is too
+    incomplete to compute it (same honesty as the turret path).
+
+    Model (pyfa getDroneMult, application.py:273-314, studied not copied): a mobile drone
+    at least as fast as the target chases it down and applies in full (cth = 1); a sentry
+    (maxVelocity≈0) or a mobile drone slower than the target is treated as a stationary
+    turret tracking the target's transversal. We omit ship/drone radii and treat the
+    attacker as stationary — the conservative simplification, matching pyfa's stationary-
+    attacker behaviour where a slow drone at ship centre tracks the full target angular."""
+    max_vel = ev.value(dr, A.MAX_VELOCITY) if A.MAX_VELOCITY in dr.base else 0.0
+    if max_vel > _DRONE_MOBILE_MIN_SPEED and max_vel >= target.velocity:
+        return d_dps
+    if not turret_complete:
+        return None
+    cth = _turret_cth(
+        ev.value(dr, A.TRACKING_SPEED) if A.TRACKING_SPEED in dr.base else 0.0,
+        ev.value(dr, A.OPTIMAL_SIG_RADIUS) if A.OPTIMAL_SIG_RADIUS in dr.base else 0.0,
+        ev.value(dr, A.OPTIMAL_RANGE) if A.OPTIMAL_RANGE in dr.base else 0.0,
+        ev.value(dr, A.FALLOFF) if A.FALLOFF in dr.base else 0.0,
+        angular, target.signature_radius, target.target_distance_m)
+    return d_dps * _applied_turret_multiplier(cth)
 
 
 # --------------------------------------------------------------------------- #
@@ -689,6 +863,12 @@ def _mobility(ev: EvaluatedFit, op_profile: OperatingProfile, result) -> dict:
                 sig *= 1.0 + (sig_bonus / 100.0) * (1.0 + mwd_sig_role / 100.0)
             break
     align = _LN_ALIGN * mass * agility / 1_000_000.0 if mass and agility else 0.0
+    # Warp-time estimate over the requested distance. Warp speed (AU/s) = baseWarpSpeed ×
+    # warpSpeedMultiplier; subwarp = the propulsion-off max velocity (prop can't run in
+    # warp), which is exactly base_v here since prop is applied only to prop_v above.
+    warp_speed_au = ev.ship_value(A.WARP_SPEED_MULT) * (
+        ev.ship.base.get(A.BASE_WARP_SPEED, 1.0) or 1.0)
+    warp_time = _warp_time_s(warp_speed_au, base_v, op_profile.warp_distance_au)
     return {
         "max_velocity": round(base_v, 1),
         "propulsion_velocity": round(prop_v, 1),
@@ -697,18 +877,25 @@ def _mobility(ev: EvaluatedFit, op_profile: OperatingProfile, result) -> dict:
         "agility": round(agility, 4),
         "signature_radius": round(sig, 1),
         "warp_speed": round(ev.ship_value(A.WARP_SPEED_MULT), 2),
+        "warp_distance_au": round(op_profile.warp_distance_au, 1),
+        "warp_time_s": round(warp_time, 1) if warp_time is not None else None,
     }
 
 
-def _targeting(ev: EvaluatedFit) -> dict:
+def _targeting(ev: EvaluatedFit, op_profile: OperatingProfile) -> dict:
     sensors = {k: ev.ship_value(v) for k, v in A.SENSOR_STRENGTHS.items()}
     strongest = max(sensors.items(), key=lambda kv: kv[1]) if sensors else ("", 0.0)
+    scan_res = ev.ship_value(A.SCAN_RESOLUTION)
+    lock_time = None
+    if op_profile.target is not None and op_profile.target.signature_radius > 0:
+        lock_time = _lock_time_s(scan_res, op_profile.target.signature_radius)
     return {
         "max_target_range": round(ev.ship_value(A.MAX_TARGET_RANGE), 0),
         "max_locked_targets": int(ev.ship_value(A.MAX_LOCKED_TARGETS)),
-        "scan_resolution": round(ev.ship_value(A.SCAN_RESOLUTION), 0),
+        "scan_resolution": round(scan_res, 0),
         "sensor_strength": round(strongest[1], 1),
         "sensor_type": strongest[0],
+        "lock_time_s": round(lock_time, 2) if lock_time is not None else None,
     }
 
 

@@ -156,14 +156,38 @@ class DamageProfileInput:
 
 @dataclass(frozen=True)
 class TargetProfile:
-    """The target a fit is measured against, for damage application (missiles) and, later,
-    turret tracking. ``None`` on the operating profile means "report raw output"."""
+    """The target a fit is measured against, for damage application (missiles, turrets and
+    drones). ``None`` on the operating profile means "report raw output".
+
+    ``target_distance_m`` and ``target_angular`` are optional (``None`` = not supplied, so
+    pre-WS-2 callers keep working unchanged): turret/drone hit-quality needs a distance
+    (for the range term) and an angular velocity (for the tracking term). When the angular
+    speed is not given explicitly it is derived under an orbit assumption — the target's
+    whole velocity is treated as transversal at ``target_distance_m`` (``angular =
+    velocity / distance``), the standard fitting-tool convention (pyfa places a slow drone
+    at ship centre and tracks the target's full transversal the same way).
+    """
     signature_radius: float = 0.0   # metres
     velocity: float = 0.0           # m/s (transversal is assumed = velocity for missiles)
     label: str = ""
+    target_distance_m: float | None = None   # range to target (m); None = not supplied
+    target_angular: float | None = None      # rad/s; None = derive from velocity/distance
+
+    def effective_angular(self) -> float | None:
+        """Angular velocity (rad/s) to use for turret/drone tracking, or ``None`` when it
+        cannot be determined. An explicit ``target_angular`` always wins; otherwise it is
+        derived as ``velocity / distance`` (orbit assumption) when a positive distance is
+        known — a still target (velocity 0) correctly yields 0."""
+        if self.target_angular is not None:
+            return self.target_angular
+        if self.target_distance_m and self.target_distance_m > 0:
+            return self.velocity / self.target_distance_m
+        return None
 
     def hash(self) -> str:
-        return f"{self.signature_radius:.1f}:{self.velocity:.1f}"
+        d = "n" if self.target_distance_m is None else f"{self.target_distance_m:.1f}"
+        a = "n" if self.target_angular is None else f"{self.target_angular:.5f}"
+        return f"{self.signature_radius:.1f}:{self.velocity:.1f}:{d}:{a}"
 
 
 @dataclass(frozen=True)
@@ -172,12 +196,14 @@ class OperatingProfile:
     propulsion_active: bool = True
     damage_profile: DamageProfileInput = field(default_factory=DamageProfileInput)
     target: TargetProfile | None = None
+    warp_distance_au: float = 10.0   # distance for the reported warp-time estimate (AU)
 
     def hash(self) -> str:
         d = self.damage_profile.normalised()
         dp = f"{d.em:.3f}:{d.thermal:.3f}:{d.kinetic:.3f}:{d.explosive:.3f}"
         tgt = self.target.hash() if self.target else "none"
-        return f"{self.mode.value}:{int(self.propulsion_active)}:{dp}:{tgt}"
+        return (f"{self.mode.value}:{int(self.propulsion_active)}:{dp}:{tgt}"
+                f":{self.warp_distance_au:.1f}")
 
 
 # --------------------------------------------------------------------------- #

@@ -142,20 +142,28 @@ def fit_input_from_items(ship_type_id: int, items: list[dict]) -> FitInput:
 
 def operating_profile(mode: str = "all_active", propulsion: bool = True,
                       damage: dict | None = None,
-                      target: dict | None = None) -> OperatingProfile:
+                      target: dict | None = None,
+                      warp_distance_au: float | None = None) -> OperatingProfile:
     dp = DamageProfileInput(**damage) if damage else DamageProfileInput()
     try:
         m = OperatingMode(mode)
     except ValueError:
         m = OperatingMode.ALL_ACTIVE
     tgt = None
-    if target and (target.get("signature_radius") or target.get("velocity")):
+    if target and (target.get("signature_radius") or target.get("velocity")
+                   or target.get("distance_m")):
+        dist = target.get("distance_m")
+        ang = target.get("angular")
         tgt = TargetProfile(
             signature_radius=max(0.0, float(target.get("signature_radius") or 0)),
             velocity=max(0.0, float(target.get("velocity") or 0)),
             label=str(target.get("label", ""))[:60],
+            target_distance_m=max(0.0, float(dist)) if dist is not None else None,
+            target_angular=max(0.0, float(ang)) if ang is not None else None,
         )
-    return OperatingProfile(mode=m, propulsion_active=propulsion, damage_profile=dp, target=tgt)
+    warp = 10.0 if warp_distance_au is None else max(0.0, float(warp_distance_au))
+    return OperatingProfile(mode=m, propulsion_active=propulsion, damage_profile=dp,
+                            target=tgt, warp_distance_au=warp)
 
 
 def evaluate(ship_type_id: int, items: list[dict], skills: SkillProfile,

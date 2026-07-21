@@ -122,6 +122,13 @@ CHARGE_DAMAGE = {
 OPTIMAL_RANGE = 54           # maxRange
 FALLOFF = 158
 TRACKING_SPEED = 160
+# Turret/drone application (hit-quality maths). optimalSigRadius (620) is the gun's
+# "signature resolution": the target sig at which tracking is perfect — verified as the
+# canonical name (there is NO attribute called signatureResolution). entityCruiseSpeed
+# (508) is a drone's autonomous cruise speed; a value of 0 (alongside maxVelocity≈0)
+# marks a sentry drone, which applies like a stationary turret rather than chasing.
+OPTIMAL_SIG_RADIUS = 620
+ENTITY_CRUISE_SPEED = 508
 # Overload (overheat) bonuses applied only when a weapon is in the OVERHEATED state.
 OVERLOAD_ROF_BONUS = 1205    # overloadRofBonus (turret & launcher, negative = faster)
 OVERLOAD_DAMAGE_BONUS = 1210  # overloadDamageModifier (turrets)
@@ -170,6 +177,7 @@ AGILITY = 70                 # inertiaModifier
 MAX_VELOCITY = 37
 SIGNATURE_RADIUS = 552
 WARP_SPEED_MULT = 600        # warpSpeedMultiplier
+BASE_WARP_SPEED = 1281       # baseWarpSpeed (AU/s = baseWarpSpeed × warpSpeedMultiplier)
 SPEED_BONUS = 20             # afterburner/MWD speedFactor (% velocity bonus)
 SPEED_BOOST_FACTOR = 567     # speedBoostFactor
 SIGNATURE_RADIUS_BONUS = 554

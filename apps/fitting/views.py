@@ -60,14 +60,25 @@ def _op_profile(request):
         except (TypeError, ValueError):
             dmg = None
     target = None
-    if data.get("tgt_sig") or data.get("tgt_vel"):
+    if data.get("tgt_sig") or data.get("tgt_vel") or data.get("tgt_distance"):
         try:
             target = {"signature_radius": float(data.get("tgt_sig") or 0),
                       "velocity": float(data.get("tgt_vel") or 0),
                       "label": data.get("tgt_label", "")}
+            if data.get("tgt_distance"):
+                target["distance_m"] = float(data.get("tgt_distance"))
+            if data.get("tgt_angular"):
+                target["angular"] = float(data.get("tgt_angular"))
         except (TypeError, ValueError):
             target = None
-    return services.operating_profile(mode=mode, propulsion=prop, damage=dmg, target=target)
+    warp_au = None
+    if data.get("warp_distance_au"):
+        try:
+            warp_au = float(data.get("warp_distance_au"))
+        except (TypeError, ValueError):
+            warp_au = None
+    return services.operating_profile(mode=mode, propulsion=prop, damage=dmg,
+                                      target=target, warp_distance_au=warp_au)
 
 
 def _parse_items(raw: str) -> list[dict]:

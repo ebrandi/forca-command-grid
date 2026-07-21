@@ -410,18 +410,28 @@ def test_search_charges_endpoint(client, owner, dogma):
 
 
 def test_telemetry_endpoint_accepts_a_target_profile(client, owner, dogma):
-    """A target profile posted to the live recompute reaches the engine: an all-turret fit
-    measured against a target honestly flags that turret application is not modelled."""
+    """A target profile (signature, velocity, distance) posted to the live recompute reaches
+    the engine and drives applied DPS — turret application is now modelled (WS-2), so the
+    old 'not modelled' flag is gone and the engine returns a per-weapon applied number."""
     client.force_login(owner)
     items = [{"type_id": AC, "slot": "high", "state": "active",
               "charge_type_id": FUSION, "quantity": 1}]
     resp = client.post(reverse("fitting:telemetry"), {
         "ship_type_id": RIFTER, "items": json.dumps(items), "skills": "none",
-        "tgt_sig": "40", "tgt_vel": "300"})
+        "tgt_sig": "40", "tgt_vel": "300", "tgt_distance": "5000"})
     assert resp.status_code == 200
-    # the raw engine code is rendered as a readable, localised label (not a snake_case token)
+    # Turrets are modelled now: neither the raw code nor its old localised label appears.
     assert b"turret_application_not_modelled" not in resp.content
-    assert b"Turret tracking is not modelled" in resp.content
+    assert b"Turret tracking is not modelled" not in resp.content
+    # The engine actually computed the applied figure (verified directly, template UI is WS-13).
+    tel = services.evaluate(RIFTER, items, SkillProfile.from_dict({}), cached=False,
+                            op=services.operating_profile(
+                                target={"signature_radius": 40, "velocity": 300,
+                                        "distance_m": 5000}))
+    off = tel["offence"]
+    assert off["turret_dps_applied"] is not None
+    assert 0 < off["turret_dps_applied"] <= off["turret_dps"]
+    assert off["applied_complete"] is True
 
 
 def test_diagnostics_are_localised(owner, dogma):
