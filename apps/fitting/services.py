@@ -22,6 +22,7 @@ from .engine.adapter import FittingEngine
 from .engine.types import (
     BoostInput,
     DamageProfileInput,
+    FighterInput,
     FitInput,
     ModuleInput,
     ModuleState,
@@ -37,6 +38,7 @@ _MAX_LINES = 500  # mirrors apps/doctrines/fitparser — bound a pathological pa
 _QTY_RE = re.compile(r"\sx(\d+)\s*$", re.IGNORECASE)
 _CATEGORY_CHARGE = 8
 _CATEGORY_DRONE = 18
+_CATEGORY_FIGHTER = 87
 
 # WS-11 mutated (abyssal) modules — EFT interchange (pyfa's mutation-block syntax).
 # --------------------------------------------------------------------------------
@@ -257,10 +259,20 @@ def fit_input_from_items(ship_type_id: int, items: list[dict],
     modules = []
     projected = []
     boosts = []
+    fighters = []
     for it in items or []:
         if is_mode_item(it):
             if mode_type_id is None:
                 mode_type_id = int(it["type_id"])
+            continue
+        _raw = it.get("slot")
+        _slot = _SLOT_BY_VALUE[_raw] if _raw in _SLOT_BY_VALUE \
+            else _SLOT_BY_VALUE.get(canonical_slot(_raw))
+        if _slot == SlotKind.FIGHTER:
+            # WS-12: a fighter squadron rides the blob as a slot="fighter" entry with
+            # quantity = squadron count. Lifted into FitInput.fighters (not a rack module).
+            fighters.append(FighterInput(type_id=int(it["type_id"]),
+                                         count=max(1, int(it.get("quantity", 1)))))
             continue
         if is_projected_item(it):
             projected.append(ProjectedInput(
@@ -292,7 +304,8 @@ def fit_input_from_items(ship_type_id: int, items: list[dict],
         ))
     return FitInput(ship_type_id=int(ship_type_id), modules=tuple(modules),
                     mode_type_id=(int(mode_type_id) if mode_type_id else None),
-                    projected=tuple(projected), boosts=tuple(boosts))
+                    projected=tuple(projected), boosts=tuple(boosts),
+                    fighters=tuple(fighters))
 
 
 def operating_profile(propulsion: bool = True,
@@ -503,6 +516,8 @@ def infer_slots(type_ids) -> dict[int, str]:
             out[tid] = by_effect[tid]
         elif cats.get(tid) == _CATEGORY_DRONE:
             out[tid] = "drone"
+        elif cats.get(tid) == _CATEGORY_FIGHTER:
+            out[tid] = "fighter"
         elif cats.get(tid) == _CATEGORY_CHARGE:
             out[tid] = "charge"
         else:
@@ -683,6 +698,12 @@ def import_eft(text: str) -> dict:
             if ov_blob:
                 item["attr_overrides"] = ov_blob
             items.append(item)
+        elif slot == "fighter":
+            # WS-12: EFT renders a squadron as "Templar II x6" (same "Name xN" form as a
+            # drone); the quantity is the squadron count. pyfa distinguishes the two by the
+            # item's category on import — here infer_slots already mapped category 87 → fighter.
+            items.append({"type_id": tid, "slot": "fighter", "state": "active",
+                          "charge_type_id": None, "quantity": qty})
         elif slot == "charge":
             # A bare charge line = cargo; not loaded into a module.
             items.append({"type_id": tid, "slot": "cargo", "state": "offline",
@@ -709,7 +730,8 @@ def export_eft(ship_type_id: int, items: list[dict], fit_name: str = "Fit") -> s
     names = _type_names({ship_type_id} | {int(i["type_id"]) for i in items}
                         | {int(i["charge_type_id"]) for i in items if i.get("charge_type_id")})
     ship = names.get(int(ship_type_id), f"TypeID:{ship_type_id}")
-    order = {"low": 0, "med": 1, "high": 2, "rig": 3, "subsystem": 4, "drone": 5, "cargo": 6}
+    order = {"low": 0, "med": 1, "high": 2, "rig": 3, "subsystem": 4, "drone": 5,
+             "fighter": 6, "cargo": 7}
     # The tactical-mode marker and projected hostile modules are not EFT lines (EFT carries
     # neither) — skip them so the export round-trips cleanly.
     items = [it for it in items if not is_extra_item(it)]
@@ -744,7 +766,7 @@ def export_eft(ship_type_id: int, items: list[dict], fit_name: str = "Fit") -> s
                 f"[{ref}] {name}\n  {_MUTAPLASMID_PLACEHOLDER}\n  {rendered}")
             suffix = f" [{ref}]"
             ref += 1
-        if slot == "drone":
+        if slot in ("drone", "fighter"):
             lines.append(f"{name} x{it.get('quantity', 1)}{suffix}")
         elif it.get("charge_type_id"):
             lines.append(

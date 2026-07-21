@@ -133,6 +133,24 @@ class ProjectedInput:
 
 
 @dataclass(frozen=True)
+class FighterInput:
+    """A fighter squadron launched by this fit (WS-12 fighters).
+
+    ``type_id`` is the fighter type (e.g. Templar II); ``count`` is the number of fighters
+    in the squadron (capped at the type's fighterSquadronMaxSize by validation, not here).
+    Rides the persisted items blob as a ``slot="fighter"`` entry with ``quantity=count`` (see
+    apps.fitting.services.fit_input_from_items), mirroring how drones ride it — and, unlike a
+    mode/projected/boost marker, a squadron IS a real, purchasable part of the fit (priced,
+    stocked and exported to EFT as ``Templar II x6``).
+    """
+    type_id: int
+    count: int = 1
+
+    def canonical(self) -> dict:
+        return {"type_id": self.type_id, "count": self.count}
+
+
+@dataclass(frozen=True)
 class BoostInput:
     """A friendly fleet command burst boosting THIS fit (WS-7 fleet boosts).
 
@@ -166,15 +184,23 @@ class FitInput:
     # Friendly fleet command bursts boosting this fit (WS-7). Persisted in the items blob
     # as slot="boost" entries; never fitted, priced, stocked or exported.
     boosts: tuple[BoostInput, ...] = ()
+    # Fighter squadrons launched by this fit (WS-12). Persisted in the items blob as
+    # slot="fighter" entries (quantity = squadron count); a real, fitted part of the loadout.
+    fighters: tuple[FighterInput, ...] = ()
 
     def canonical(self) -> dict:
-        return {
+        d = {
             "ship_type_id": self.ship_type_id,
             "modules": [m.canonical() for m in self.modules],
             "mode_type_id": self.mode_type_id,
             "projected": [p.canonical() for p in self.projected],
             "boosts": [b.canonical() for b in self.boosts],
         }
+        # Only emit the key when the fit has squadrons, so a fighterless fit's hash is
+        # unchanged from before WS-12 (existing saved fits keep their identity).
+        if self.fighters:
+            d["fighters"] = [f.canonical() for f in self.fighters]
+        return d
 
     def hash(self) -> str:
         return hashlib.sha256(

@@ -131,6 +131,31 @@ def localise_diagnostic(d: dict) -> dict:
         title = _("Not all drones fit in bandwidth")
         detail = _("%(counted)s of %(requested)s counted in the simulation") % {
             "counted": p.get("counted"), "requested": p.get("requested")}
+    elif code == "fighter_tubes_exceeded":
+        title = _("Not enough fighter tubes")
+        detail = _("%(used)s squadrons, %(cap)s tubes") % {
+            "used": p.get("used"), "cap": p.get("cap")}
+        action = _("Launch fewer squadrons.")
+    elif code == "fighter_role_slots_exceeded":
+        title = _("Not enough fighter slots for this role")
+        detail = _("%(used)s of %(cap)s") % {"used": p.get("used"), "cap": p.get("cap")}
+        action = _("Launch fewer squadrons of this role.")
+    elif code == "fighter_squadron_oversized":
+        title = _("Fighter squadron too large")
+        detail = _("%(count)s of max %(max)s") % {"count": p.get("count"), "max": p.get("max")}
+        action = _("Reduce the squadron to its maximum size.")
+    elif code == "fighter_bay_exceeded":
+        title = _("Fighter bay volume exceeded")
+        detail = _("%(used)s of %(cap)s m3") % {"used": p.get("used"), "cap": p.get("cap")}
+        action = _("Carry fewer or smaller fighters.")
+    elif code == "fighter_on_non_carrier":
+        title = _("This hull cannot field fighters")
+        detail = ""
+        action = _("Field fighters from a carrier or supercarrier.")
+    elif code == "fighter_invalid_type":
+        title = _("Not a valid fighter")
+        detail = ""
+        action = _("Choose a real fighter squadron.")
 
     return {**d, "title": title, "detail": detail, "suggested_action": action}
 

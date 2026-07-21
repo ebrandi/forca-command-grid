@@ -192,6 +192,48 @@ _SENSOR_TYPES = ("radar", "ladar", "magnetometric", "gravimetric")
 # (current *= 1 + v·factor^(i²), penalising by |v| descending). Kept inline like _LN_ALIGN.
 _EWAR_PENALTY = math.exp(-((1.0 / 2.67) ** 2))
 
+# --- WS-12 fighters (carrier / supercarrier squadrons) --------------------------------
+# Verified live 2026-07-21 (scout-data §G + full type/effect/modifier dumps). A fighter
+# squadron rides the fit as a graph entity (graph.build_entities) and is one of the ship's
+# "located" items, so the carrier's fighter-damage hull trait and the fighter skills
+# (Fighters, racial Fighter Specialization, Heavy Fighters, Drone Interfacing) apply to its
+# damage multipliers through the ordinary OwnerRequiredSkillModifier pipeline — all 82 such
+# modifier rows filter on a fighter's required skill (e.g. Fighters 23069), so NO fighter-
+# specific modifier code is needed here. Only the DPS read-out and structural validation live
+# in pass 4. Ship-side slot attrs default 0.0, so a non-carrier reads 0 tubes/slots/bay.
+ATTR_FIGHTER_TUBES = 2216
+ATTR_FIGHTER_LIGHT_SLOTS = 2217
+ATTR_FIGHTER_SUPPORT_SLOTS = 2218
+ATTR_FIGHTER_HEAVY_SLOTS = 2219
+ATTR_FIGHTER_CAPACITY = 2055           # fighter bay volume (m3)
+ATTR_FIGHTER_SQUADRON_MAX_SIZE = 2215  # on the FIGHTER type; the per-squadron count cap
+# Standard-attack ability families. Every shipped fighter's default attack is the missile-
+# style AttackM (fighterAbilityAttackMissile*, effect 6465): duration 2233, damage 2227-2230,
+# multiplier 2226 (the attr the skill/hull damage bonuses postPercent). The turret family
+# (2171-2178) exists in the dogma schema but no shipped fighter carries it (0 types have 2171)
+# — kept for robustness/forward-compat. The fighter's SPECIAL long-range volley
+# (fighterAbilityMissiles*, effect 6431, non-default) and its utility abilities (web/neut/MWD)
+# are NOT counted in v1 (documented gap: they are separately-toggled abilities, off by default
+# in pyfa too — eos/saveddata/fighter.py activates only fighterAbilityAttackM).
+ATTR_FA_ATK_MISSILE_MULT = 2226
+ATTR_FA_ATK_MISSILE_DMG = {"em": 2227, "thermal": 2228, "kinetic": 2229, "explosive": 2230}
+ATTR_FA_ATK_MISSILE_DURATION = 2233
+ATTR_FA_ATK_TURRET_MULT = 2178
+ATTR_FA_ATK_TURRET_DMG = {"em": 2171, "thermal": 2172, "kinetic": 2173, "explosive": 2174}
+ATTR_FA_ATK_TURRET_DURATION = 2177
+CATEGORY_FIGHTER = 87
+# Fighter GROUP → (role token, the hull attribute counting that role's tubes). Structure
+# fighter groups (4777/4778/4779) map to no standard-ship slot (only Upwell structures carry
+# them), so a structure fighter on a ship gets 0 role slots → rejected.
+_FIGHTER_GROUP_ROLE = {
+    1652: ("light", ATTR_FIGHTER_LIGHT_SLOTS),
+    1537: ("support", ATTR_FIGHTER_SUPPORT_SLOTS),
+    1653: ("heavy", ATTR_FIGHTER_HEAVY_SLOTS),
+    4777: ("structure_light", None),
+    4778: ("structure_support", None),
+    4779: ("structure_heavy", None),
+}
+
 _RACKED = (SlotKind.HIGH, SlotKind.MED, SlotKind.LOW, SlotKind.RIG, SlotKind.SUBSYSTEM)
 
 _SUBSYSTEM_ADD = {
@@ -245,7 +287,11 @@ def evaluate(fit: FitInput, skills: SkillProfile, op_profile: OperatingProfile,
     # threaded into _offence (which keeps the raw-profile totals as *_unassisted) and into
     # the ewar section (as ewar_on_target).
     ewar_adjusted, ewar_on_target = _ewar_target_adjustment(ev, op_profile)
-    offence = _offence(ev, provider, op_profile, result, ewar_adjusted)
+    # WS-12: fighter squadrons are computed first so their DPS folds into the offence totals
+    # (raw output only — applied DPS is not modelled for fighters in v1). The section itself is
+    # exposed separately below.
+    fighters_section, fighter_agg = _fighters(ev, provider, result)
+    offence = _offence(ev, provider, op_profile, result, ewar_adjusted, fighter_agg)
     mobility = _mobility(ev, op_profile, result)
     targeting = _targeting(ev, op_profile)
     utility = {"cargo": round(ev.ship_value(ATTR_CAPACITY), 1),
@@ -270,7 +316,7 @@ def evaluate(fit: FitInput, skills: SkillProfile, op_profile: OperatingProfile,
         "resources": resources, "defence": defence, "capacitor": capacitor,
         "offence": offence, "mobility": mobility, "targeting": targeting,
         "utility": utility, "ewar": ewar, "projected": projected, "boosts": boosts,
-        "ship": ship_section,
+        "fighters": fighters_section, "ship": ship_section,
         "operating_profile": {
             "propulsion_active": op_profile.propulsion_active,
             "damage_profile": op_profile.damage_profile.normalised().as_map(),
@@ -955,7 +1001,8 @@ def _sustained_entry(ev: EvaluatedFit, m: Entity, volley: float, dps: float,
 
 
 def _offence(ev: EvaluatedFit, provider, op_profile: OperatingProfile, result,
-             applied_target: TargetProfile | None = None) -> dict:
+             applied_target: TargetProfile | None = None,
+             fighter_agg: dict | None = None) -> dict:
     turret_dps = missile_dps = missile_dps_applied = drone_dps = total_volley = 0.0
     turret_dps_applied = drone_dps_applied = 0.0
     # WS-10: parallel "unassisted" applied totals measured against the RAW target (no ewar
@@ -1178,10 +1225,26 @@ def _offence(ev: EvaluatedFit, provider, op_profile: OperatingProfile, result,
     breacher_applied = max((b["applied"] for b in breacher_entries), default=0.0)
     breacher_sustained = max((b["sustained"] for b in breacher_entries), default=0.0)
 
-    # Typed damage (turrets/missiles/drones/smartbombs/vorton) drives the damage-type mix;
-    # breacher DoT is typeless (bypasses resists) so it is excluded from the distribution but
-    # still counted into total_dps.
-    typed_total = (turret_dps + missile_dps + drone_dps + smartbomb_dps + vorton_dps)
+    # WS-12: fighter squadrons (computed in _fighters) fold into the fit's damage exactly like
+    # a weapon — typed damage into the mix + totals, volley into the fit volley, and they
+    # sustain at their DPS (fighter rearm timing needs data CCP does not ship — pyfa hardcodes
+    # NUM_SHOTS/REARM mappings; v1 reports the un-rearmed figure, a documented gap).
+    fighter_dps = fighter_agg["dps"] if fighter_agg else 0.0
+    if fighter_agg:
+        for d in A.DAMAGE_TYPES:
+            damage_by_type[d] += fighter_agg["by_type"][d]
+        total_volley += fighter_agg["volley"]
+        sustained_weapon_dps += fighter_agg["sustained"]
+        # A carrier's applied DPS cannot include its fighters in v1 (own tracking model), so a
+        # target-set fit with damaging squadrons is honestly reported as applied-incomplete.
+        if target is not None and fighter_agg["has_damage"]:
+            applied_complete = False
+
+    # Typed damage (turrets/missiles/drones/smartbombs/vorton/fighters) drives the damage-type
+    # mix; breacher DoT is typeless (bypasses resists) so it is excluded from the distribution
+    # but still counted into total_dps.
+    typed_total = (turret_dps + missile_dps + drone_dps + smartbomb_dps + vorton_dps
+                   + fighter_dps)
     total = typed_total + breacher_dps
     dist = ({d: round(damage_by_type[d] / typed_total * 100, 1) for d in A.DAMAGE_TYPES}
             if typed_total > 0 else {d: 0.0 for d in A.DAMAGE_TYPES})
@@ -1192,14 +1255,15 @@ def _offence(ev: EvaluatedFit, provider, op_profile: OperatingProfile, result,
          Contribution("Drones", "module", f"{drone_dps:.1f} dps"),
          Contribution("Smartbombs", "module", f"{smartbomb_dps:.1f} dps"),
          Contribution("Vorton", "module", f"{vorton_dps:.1f} dps"),
-         Contribution("Breacher", "module", f"{breacher_dps:.1f} dps")])
-    if weapons == 0 and drone_dps == 0:
+         Contribution("Breacher", "module", f"{breacher_dps:.1f} dps"),
+         Contribution("Fighters", "fighter", f"{fighter_dps:.1f} dps")])
+    if weapons == 0 and drone_dps == 0 and fighter_dps == 0:
         result.unsupported.append("no_weapons_detected")
     out = {
         "turret_dps": round(turret_dps, 1), "missile_dps": round(missile_dps, 1),
         "drone_dps": round(drone_dps, 1),
         "smartbomb_dps": round(smartbomb_dps, 1), "vorton_dps": round(vorton_dps, 1),
-        "breacher_dps": round(breacher_dps, 1),
+        "breacher_dps": round(breacher_dps, 1), "fighter_dps": round(fighter_dps, 1),
         "total_dps": round(total, 1), "volley": round(total_volley, 1),
         # Drones fire continuously (no magazine), so they sustain by definition. Smartbombs
         # have no magazine (sustained == dps); vorton reloads like a turret; a breacher's DoT
@@ -1273,6 +1337,156 @@ def _drone_applied(ev: EvaluatedFit, dr: Entity, d_dps: float, target, angular,
         ev.value(dr, A.FALLOFF) if A.FALLOFF in dr.base else 0.0,
         angular, target.signature_radius, target.target_distance_m)
     return d_dps * _applied_turret_multiplier(cth)
+
+
+# --------------------------------------------------------------------------- #
+# Fighters (WS-12): carrier / supercarrier squadrons
+# --------------------------------------------------------------------------- #
+def _fighter_unit_dps(ev: EvaluatedFit, f: Entity):
+    """Standard-attack output for ONE fighter of squadron ``f``: (per-fighter volley,
+    per-type volley dict, cycle seconds, ability kind). A fighter with no standard attack
+    (a pure support/tackle fighter, e.g. Dromi) returns a zero volley and ``None`` kind.
+
+    The multiplier attribute (2226 / 2178) already carries every skill + carrier-hull damage
+    bonus, folded in by the graph's OwnerRequiredSkillModifier pass — so reading its evaluated
+    value here is all that is needed. Mirrors pyfa's fighterAbility volley (amount ×
+    damage × multiplier / duration; eos/saveddata/fighterAbility.py:117-142, studied not
+    copied) but evaluates the squadron count once at the squadron level."""
+    if ATTR_FA_ATK_MISSILE_MULT in f.base:
+        dmg_attrs, mult_attr, dur_attr = (
+            ATTR_FA_ATK_MISSILE_DMG, ATTR_FA_ATK_MISSILE_MULT, ATTR_FA_ATK_MISSILE_DURATION)
+    elif ATTR_FA_ATK_TURRET_MULT in f.base:
+        dmg_attrs, mult_attr, dur_attr = (
+            ATTR_FA_ATK_TURRET_DMG, ATTR_FA_ATK_TURRET_MULT, ATTR_FA_ATK_TURRET_DURATION)
+    else:
+        return 0.0, {d: 0.0 for d in A.DAMAGE_TYPES}, 0.0, None
+    mult = ev.value(f, mult_attr)
+    by_type = {d: (ev.value(f, dmg_attrs[d]) if dmg_attrs[d] in f.base else 0.0) * mult
+               for d in A.DAMAGE_TYPES}
+    cycle_s = ev.value(f, dur_attr) / 1000.0
+    return sum(by_type.values()), by_type, cycle_s, "standard_attack"
+
+
+def _fighters(ev: EvaluatedFit, provider, result: FittingResult):
+    """Pass-4 fighter telemetry + structural validation.
+
+    Returns ``(section, agg)``: ``section`` is the ``fighters`` telemetry block (per-squadron
+    detail + fit totals); ``agg`` feeds _offence so a squadron's DPS folds into the fit's
+    total DPS / volley / damage-mix exactly like a weapon. Applied (tracking-adjusted) DPS is
+    NOT modelled in v1 — a fighter carries its own explosion/tracking attrs, so every squadron
+    reports ``applied_dps=None`` with a reason (documented gap in the mechanics matrix)."""
+    squadrons: list[dict] = []
+    fighter_dps = fighter_volley_total = bay_used = 0.0
+    by_type_total = {d: 0.0 for d in A.DAMAGE_TYPES}
+    is_carrier = ATTR_FIGHTER_TUBES in ev.ship.base
+    tubes_cap = ev.ship_value(ATTR_FIGHTER_TUBES)
+    bay_cap = ev.ship_value(ATTR_FIGHTER_CAPACITY)
+    role_used: dict[str, int] = {}
+    role_cap: dict[str, float] = {}
+    tubes_used = 0
+
+    for f in ev.fighters:
+        info = provider.type_info(f.type_id) or {}
+        name = info.get("name", "")
+        count = f.quantity
+        # Reject a placeholder scaffold row or a non-fighter type outright (the UI filters
+        # placeholders, but the engine stays honest if one arrives). It contributes nothing.
+        if "PLACEHOLDER" in name.upper() or f.category_id != CATEGORY_FIGHTER:
+            result.diagnostics.append(Diagnostic(
+                "fighter_invalid_type", Severity.ERROR, "Not a valid fighter",
+                detail=f"type {f.type_id}", contextual=False,
+                suggested_action="Choose a real fighter squadron.",
+                params={"type_id": f.type_id, "name": name}))
+            continue
+
+        role, role_attr = _FIGHTER_GROUP_ROLE.get(f.group_id, (None, None))
+        max_size = ev.value(f, ATTR_FIGHTER_SQUADRON_MAX_SIZE)
+        volume = f.base.get(ATTR_VOLUME, 0.0)
+        squad_bay = volume * count
+        bay_used += squad_bay
+        tubes_used += 1
+        if role is not None:
+            role_used[role] = role_used.get(role, 0) + 1
+            role_cap[role] = ev.ship_value(role_attr) if role_attr is not None else 0.0
+
+        unit_volley, unit_by_type, cycle_s, kind = _fighter_unit_dps(ev, f)
+        unit_dps = unit_volley / cycle_s if cycle_s > 0 else 0.0
+        squadron_dps = unit_dps * count
+        squadron_volley = unit_volley * count
+        fighter_dps += squadron_dps
+        fighter_volley_total += squadron_volley
+        for d in A.DAMAGE_TYPES:
+            by_type_total[d] += (unit_by_type[d] * count / cycle_s) if cycle_s > 0 else 0.0
+
+        abilities = []
+        if kind is not None:
+            abilities.append({
+                "kind": kind, "volley": round(squadron_volley, 1),
+                "dps": round(squadron_dps, 1), "cycle_s": round(cycle_s, 2),
+                "damage": {d: round(unit_by_type[d] * count, 1) for d in A.DAMAGE_TYPES}})
+
+        # Per-squadron structural check: more fighters than the (evaluated) squadron cap.
+        if max_size > 0 and count > max_size:
+            result.diagnostics.append(Diagnostic(
+                "fighter_squadron_oversized", Severity.ERROR, "Fighter squadron too large",
+                detail=f"{name}: {count} of max {int(max_size)}", contextual=False,
+                suggested_action="Reduce the squadron to its maximum size.",
+                params={"type_id": f.type_id, "name": name, "count": count,
+                        "max": int(max_size)}))
+
+        squadrons.append({
+            "type_id": f.type_id, "name": name, "role": role, "count": count,
+            "max_squadron_size": int(max_size), "unit_dps": round(unit_dps, 1),
+            "squadron_dps": round(squadron_dps, 1), "bay_m3": round(squad_bay, 1),
+            "abilities": abilities,
+            # Applied DPS is not modelled for fighters in v1 (own tracking/explosion attrs).
+            "applied_dps": None, "applied_reason": "fighter_application_not_modelled"})
+
+    # --- fit-level structural validation ---------------------------------------
+    if squadrons and not is_carrier:
+        # Fighters on a hull that has no fighter tubes at all: nothing else to check.
+        result.diagnostics.append(Diagnostic(
+            "fighter_on_non_carrier", Severity.ERROR, "This hull cannot field fighters",
+            detail=f"{len(squadrons)} squadron(s) on a hull with no fighter tubes",
+            contextual=False, suggested_action="Field fighters from a carrier or supercarrier.",
+            params={"squadrons": len(squadrons)}))
+    elif squadrons:
+        if tubes_used > tubes_cap:
+            result.diagnostics.append(Diagnostic(
+                "fighter_tubes_exceeded", Severity.ERROR, "Not enough fighter tubes",
+                detail=f"{tubes_used} squadrons, {int(tubes_cap)} tubes", contextual=False,
+                suggested_action="Launch fewer squadrons.",
+                params={"used": tubes_used, "cap": int(tubes_cap)}))
+        for r, used in sorted(role_used.items()):
+            cap = role_cap.get(r, 0.0)
+            if used > cap:
+                result.diagnostics.append(Diagnostic(
+                    "fighter_role_slots_exceeded", Severity.ERROR,
+                    "Not enough fighter slots for this role",
+                    detail=f"{r}: {used} of {int(cap)}", contextual=False,
+                    suggested_action="Launch fewer squadrons of this role.",
+                    params={"role": r, "used": used, "cap": int(cap)}))
+    if squadrons and is_carrier and bay_used > bay_cap:
+        result.diagnostics.append(Diagnostic(
+            "fighter_bay_exceeded", Severity.ERROR, "Fighter bay volume exceeded",
+            detail=f"{round(bay_used, 1)} of {round(bay_cap, 1)} m3", contextual=False,
+            suggested_action="Carry fewer or smaller fighters.",
+            params={"used": round(bay_used, 1), "cap": round(bay_cap, 1)}))
+
+    section = {
+        "squadrons": squadrons,
+        "totals": {
+            "fighter_dps": round(fighter_dps, 1),
+            "volley": round(fighter_volley_total, 1),
+            "tubes_used": tubes_used, "tubes_total": int(tubes_cap),
+            "bay_used_m3": round(bay_used, 1), "bay_capacity_m3": round(bay_cap, 1),
+            "role_slots": {r: {"used": role_used[r], "total": int(role_cap.get(r, 0.0))}
+                           for r in sorted(role_used)},
+        },
+    }
+    agg = {"dps": fighter_dps, "volley": fighter_volley_total, "by_type": by_type_total,
+           "sustained": fighter_dps, "has_damage": fighter_dps > 0}
+    return section, agg
 
 
 # --------------------------------------------------------------------------- #
@@ -1912,6 +2126,8 @@ def _missing_skills(fit: FitInput, skills: SkillProfile, provider) -> list[Missi
         type_ids.add(m.type_id)
         if m.charge_type_id:
             type_ids.add(m.charge_type_id)
+    for f in fit.fighters:
+        type_ids.add(f.type_id)   # Fighters / Light|Heavy Fighters / racial spec skills
     for tid in type_ids:
         for skill_id, level in provider.required_skills(tid):
             key = (skill_id, tid)
@@ -1932,7 +2148,10 @@ def _finalise_status(result: FittingResult) -> None:
                   "ship_restriction_violated", "max_group_active_exceeded",
                   "max_group_online_exceeded", "subsystem_slot_conflict",
                   "subsystem_count_invalid", "implant_slot_conflict",
-                  "booster_slot_conflict", "mode_invalid_for_ship"}
+                  "booster_slot_conflict", "mode_invalid_for_ship",
+                  "fighter_tubes_exceeded", "fighter_role_slots_exceeded",
+                  "fighter_squadron_oversized", "fighter_bay_exceeded",
+                  "fighter_on_non_carrier", "fighter_invalid_type"}
     resource = {"cpu_exceeded", "powergrid_exceeded", "calibration_exceeded",
                 "drone_bandwidth_exceeded"}
     if codes & structural:

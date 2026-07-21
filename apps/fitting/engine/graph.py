@@ -240,6 +240,11 @@ class EvaluatedFit:
     modules: list[Entity]          # racked modules incl. subsystems/rigs (not drones)
     drones: list[Entity]
     implants: list[Entity]
+    # WS-12: fighter squadrons launched by this fit (one entity per squadron; quantity =
+    # squadron count). Materialised exactly like drones and included in the "located on the
+    # ship" set so carrier hull traits + fighter skills (all OwnerRequiredSkillModifier rows
+    # onto the Fighters skill) reach them through the ordinary pass-2/3 machinery.
+    fighters: list[Entity] = field(default_factory=list)
     # A tactical destroyer's active mode (T3D "Ship Modifiers" type), or None. Materialised
     # like an always-on module; its effects apply only when it is valid for the hull.
     mode: "Entity | None" = None
@@ -379,7 +384,19 @@ def build_entities(fit: FitInput, skills: SkillProfile, provider,
             imp = _new_entity(provider, m.type_id, "implant", STATE_OVERLOADED,
                               slot=m.slot, module_state=m.state)
             ev.implants.append(imp)
-        # CARGO / FIGHTER: inert for attribute evaluation (fighters unsupported v2.0).
+        # CARGO: inert. A stray slot="fighter" ModuleInput is also ignored here — real
+        # squadrons ride fit.fighters (materialised below), not the module list.
+
+    # WS-12: materialise each fighter squadron as an ACTIVE entity (like a drone), carrying
+    # the squadron count as ``quantity``. It joins the "located on the ship" set (see
+    # _location_entities) so the carrier's fighter-damage hull trait and the Fighters /
+    # racial-fighter / Drone-Interfacing skills — all OwnerRequiredSkillModifier rows filtered
+    # by a fighter's required skill — apply to its fighterAbility* damage multipliers through
+    # the ordinary pass-2/3 pipeline, with no fighter-specific modifier code.
+    for f in fit.fighters:
+        ev.fighters.append(_new_entity(provider, f.type_id, "fighter", STATE_ACTIVE,
+                                       quantity=max(1, f.count), slot=SlotKind.FIGHTER,
+                                       module_state=ModuleState.ACTIVE))
 
     # A tactical destroyer's mode is materialised as an always-on entity (ACTIVE covers its
     # passive/online/active effect categories). Its effects are plain dogma (ItemModifier /
@@ -430,13 +447,14 @@ _CHAR_BUILTIN_EFFECTS = (
     ),
 )
 def _location_entities(ev: EvaluatedFit) -> list[Entity]:
-    """Entities "located on the ship": hull, modules, charges and drones."""
+    """Entities "located on the ship": hull, modules, charges, drones and fighters."""
     out = [ev.ship]
     for m in ev.modules:
         out.append(m)
         if m.charge is not None:
             out.append(m.charge)
     out.extend(ev.drones)
+    out.extend(ev.fighters)
     return out
 
 
@@ -453,7 +471,7 @@ def _required_skill_matches(entity: Entity, skill_type_id: int) -> bool:
 
 def collect_effects(ev: EvaluatedFit, provider) -> None:
     """Pass 2: attach every applicable modifier to its target attribute."""
-    sources: list[Entity] = [ev.ship, *ev.skills, *ev.implants, *ev.drones]
+    sources: list[Entity] = [ev.ship, *ev.skills, *ev.implants, *ev.drones, *ev.fighters]
     for m in ev.modules:
         sources.append(m)
         if m.charge is not None:
