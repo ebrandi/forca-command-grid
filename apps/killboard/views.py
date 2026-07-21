@@ -603,6 +603,14 @@ def killmail_detail(request: HttpRequest, killmail_id: int) -> HttpResponse:
             "related": anatomy.related_killmails(killmail),
             "battles": list(killmail.battle_reports.all()),
             "comments": list(killmail.comments.all()),
+            # KB-33: entity names link to adversary pages (non-home) or the pilot page (home).
+            # Only for members — the public detail page keeps plain names for anonymous viewers.
+            "intel_links": rbac.has_role(request.user, rbac.ROLE_MEMBER),
+            "home_corp_id": _home(),
+            "victim_is_home": bool(
+                killmail.victim_corporation_id
+                and killmail.victim_corporation_id == _home()
+            ),
         },
     )
 
@@ -999,6 +1007,112 @@ def subscription_feed(request: HttpRequest, rss_token: str) -> HttpResponse:
     return HttpResponse(feed.writeString("utf-8"), content_type="application/atom+xml; charset=utf-8")
 
 
+# --- KB-33 adversary entity pages (WS-C3) -------------------------------------
+# Member-gated intel: a profile of a NON-home character/corp/alliance built ONLY from our own
+# killmail history (apps/killboard/adversary.py) — never universal, every figure relative to
+# us. An entity with zero history against us renders an honest empty page (200, not 404): the
+# URL space is our own history, so "no engagements with us" is a valid answer, not a missing
+# resource. Reuses the member/alliance-pilot audience of the analytics dashboard.
+def _adversary_page(request: HttpRequest, kind: str, entity_id: int) -> HttpResponse:
+    from apps.corporation.models import EveName
+
+    from . import adversary
+    from .models import WatchlistEntry
+
+    if not _can_view_stats(request.user):
+        return render(request, "killboard/adversary.html", {"denied": True}, status=403)
+
+    profile = adversary.adversary_profile(kind, entity_id)
+    name = (
+        EveName.objects.filter(entity_id=entity_id).values_list("name", flat=True).first()
+        or f"#{entity_id}"
+    )
+    # Watchlist integration: which watchlists already carry this entity (every member sees the
+    # "watched" state); officers additionally get the add-to-watchlist control, since watchlist
+    # management is officer-tier (matching watchlist_add_entry).
+    watched_in = list(
+        WatchlistEntry.objects.filter(entity_type=kind, entity_id=entity_id)
+        .values_list("watchlist__name", flat=True)
+    )
+    is_officer = rbac.has_role(request.user, rbac.ROLE_OFFICER)
+    return render(request, "killboard/adversary.html", {
+        "denied": False,
+        "kind": kind,
+        "entity_id": entity_id,
+        "entity_name": name,
+        "profile": profile,
+        "summary": profile["summary"],
+        "recent": adversary.recent_engagements(kind, entity_id),
+        "watched_in": watched_in,
+        "is_watched": bool(watched_in),
+        "can_manage": is_officer,
+        "watchlists": list(Watchlist.objects.order_by("name").values("id", "name"))
+        if is_officer else [],
+        "home_corp_id": _home(),
+        # Members viewing intel: entity names on this page (and the detail/battle pages) may
+        # resolve to adversary/pilot links. See killboard/_entity_link.html.
+        "intel_links": True,
+    })
+
+
+# The GET pages mirror the analytics dashboard audience (corp members + registered alliance
+# pilots), gated by ``_can_view_stats`` inside ``_adversary_page`` — not a strict member-role,
+# so an alliance pilot sees the intel too. The watch action below stays officer-tier.
+@login_required
+def adversary_character(request: HttpRequest, entity_id: int) -> HttpResponse:
+    return _adversary_page(request, "character", entity_id)
+
+
+@login_required
+def adversary_corporation(request: HttpRequest, entity_id: int) -> HttpResponse:
+    return _adversary_page(request, "corporation", entity_id)
+
+
+@login_required
+def adversary_alliance(request: HttpRequest, entity_id: int) -> HttpResponse:
+    return _adversary_page(request, "alliance", entity_id)
+
+
+@login_required
+@role_required(rbac.ROLE_OFFICER)
+@require_POST
+def adversary_watch(request: HttpRequest, kind: str, entity_id: int) -> HttpResponse:
+    """Officer: add this adversary entity to a watchlist (reuses the WatchlistEntry model).
+
+    Adds to the chosen existing watchlist (or the first one, creating a default if the corp
+    has none yet), then returns to the adversary page. Officer-tier, matching the existing
+    watchlist add/remove views — members see only the "watched" state, not this action.
+    """
+    from . import adversary
+    from .models import WatchlistEntry
+
+    if not adversary.is_valid_kind(kind):
+        raise Http404("Unknown entity kind.")
+    raw = (request.POST.get("watchlist_id") or "").strip()
+    watchlist = Watchlist.objects.filter(pk=int(raw)).first() if raw.isdigit() else None
+    if watchlist is None:
+        watchlist = (
+            Watchlist.objects.order_by("name").first()
+            or Watchlist.objects.create(name=gettext("Watchlist"))
+        )
+    _entry, created = WatchlistEntry.objects.get_or_create(
+        watchlist=watchlist, entity_type=kind, entity_id=entity_id
+    )
+    if created:
+        audit_log(request.user, "watchlist.add_entry", target_type="watchlist",
+                  target_id=str(watchlist.pk),
+                  metadata={"entity_type": kind, "entity_id": entity_id, "via": "adversary"},
+                  ip=client_ip(request))
+        messages.success(
+            request, gettext("Added to watchlist “%(name)s”.") % {"name": watchlist.name}
+        )
+    else:
+        messages.info(
+            request, gettext("Already on watchlist “%(name)s”.") % {"name": watchlist.name}
+        )
+    return redirect(f"killboard:adversary_{kind}", entity_id=entity_id)
+
+
 # --- Intel: watchlists --------------------------------------------------------
 @login_required
 @role_required(rbac.ROLE_MEMBER)
@@ -1028,6 +1142,9 @@ def watchlist_detail(request: HttpRequest, pk: int) -> HttpResponse:
             "overview": watchlist_overview(watchlist, per_entry=5),
             "can_manage": rbac.has_role(request.user, rbac.ROLE_OFFICER),
             "entry_form": WatchlistEntryForm(),
+            # KB-33: each watched entity links to its adversary page (members only).
+            "intel_links": True,
+            "home_corp_id": _home(),
         },
     )
 
@@ -1140,6 +1257,11 @@ def _battle_report_context(request: HttpRequest, report: BattleReport, *, public
                 "name": entity_names.get(m.entity_id) or f"{m.entity_type} {m.entity_id}",
                 "kills": m.kills, "losses": m.losses, "isk_lost": m.isk_lost,
                 "is_manual": m.is_manual,
+                # KB-33: the home corporation itself is "us" (no adversary link); everyone
+                # else on any side links to their adversary page.
+                "is_home": bool(
+                    m.entity_type == "corporation" and m.entity_id == _home()
+                ),
             }
             for m in s.members.all()
         ]
@@ -1174,6 +1296,10 @@ def _battle_report_context(request: HttpRequest, report: BattleReport, *, public
             reverse("killboard:battle_report_public", args=[report.slug])
         ),
         "brevetools_url": battle_sides.brevetools_url(report),
+        # KB-33: side members link to adversary pages — but only for members, and never on the
+        # public share page (an anonymous permalink viewer keeps plain names).
+        "intel_links": bool(not public and rbac.has_role(request.user, rbac.ROLE_MEMBER)),
+        "home_corp_id": _home(),
     }
 
 

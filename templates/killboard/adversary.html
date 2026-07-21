@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+{% load eve static %}
+{% load i18n %}
+{% block title %}{{ entity_name }} · {% translate "Adversary intel" %} · [FORCA] Command Grid{% endblock %}
+
+{% block extra_head %}
+{% if not denied %}
+<style>
+  .hm-cell { width: 100%; aspect-ratio: 1 / 1; border-radius: 2px; }
+  .hm-0 { background: rgba(34,45,62,.35); }
+  .hm-1 { background: rgba(224,96,96,.22); }
+  .hm-2 { background: rgba(224,96,96,.42); }
+  .hm-3 { background: rgba(224,96,96,.70); }
+  .hm-4 { background: rgba(224,96,96,1); }
+</style>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+{% if denied %}
+  <div class="panel px-4 py-16 text-center">
+    <svg class="mx-auto h-8 w-8 text-faint"><use href="#i-lock"/></svg>
+    <p class="mt-3 font-display text-lg text-muted">{% translate "Adversary intel is corp &amp; alliance only" %}</p>
+    <p class="mt-1 text-sm text-faint">{% translate "Available to corporation members and registered alliance pilots." %}</p>
+    <a href="{% url 'killboard:list' %}" class="btn-ghost mt-4 text-sm">← {% translate "Back to the killfeed" %}</a>
+  </div>
+{% else %}
+
+<header class="mb-5 flex flex-wrap items-end justify-between gap-4">
+  <div class="flex items-center gap-4">
+    {% if kind == 'character' %}<img src="{% eve_portrait entity_id 64 %}" alt="" class="h-14 w-14 rounded-lg ring-1 ring-line">
+    {% elif kind == 'corporation' %}<img src="{% eve_corp_logo entity_id 64 %}" alt="" class="h-14 w-14 rounded-lg ring-1 ring-line">
+    {% else %}<img src="{% eve_alliance_logo entity_id 64 %}" alt="" class="h-14 w-14 rounded-lg ring-1 ring-line">{% endif %}
+    <div>
+      <p class="eyebrow">{% if kind == 'character' %}{% translate "Adversary · pilot" %}{% elif kind == 'corporation' %}{% translate "Adversary · corporation" %}{% else %}{% translate "Adversary · alliance" %}{% endif %}</p>
+      <h1 class="mt-0.5 text-2xl font-bold text-ink">{{ entity_name }}</h1>
+      <p class="mt-0.5 flex flex-wrap items-center gap-2">
+        <span class="font-display text-sm font-bold {{ summary.danger.color }}" title="{% translate 'How dangerous this entity is to us, from our shared fights' %}">{% translate "Threat:" %} {{ summary.danger.label }}</span>
+        {% include "killboard/_ext_entity_links.html" with kind=kind eid=entity_id %}
+      </p>
+    </div>
+  </div>
+  <div class="flex flex-wrap items-center gap-2">
+    {% if is_watched %}
+      <span class="chip !text-gold !border-gold/40" title="{{ watched_in|join:', ' }}">★ {% translate "Watched" %}</span>
+    {% endif %}
+    {% if can_manage %}
+      <form method="post" action="{% url 'killboard:adversary_watch' kind entity_id %}" class="flex items-center gap-1.5">
+        {% csrf_token %}
+        {% if watchlists %}
+        <select name="watchlist_id" class="rounded border border-line bg-panel2 px-2 py-1 text-xs text-muted">
+          {% for w in watchlists %}<option value="{{ w.id }}">{{ w.name }}</option>{% endfor %}
+        </select>
+        {% endif %}
+        <button type="submit" class="btn-ghost text-sm">{% if is_watched %}+ {% translate "Watch again" %}{% else %}+ {% translate "Add to watchlist" %}{% endif %}</button>
+      </form>
+    {% endif %}
+    <a href="{% url 'killboard:list' %}?{{ kind }}_id={{ entity_id }}&side=attacker" class="btn-ghost text-sm">{% translate "Killmails" %}</a>
+  </div>
+</header>
+
+{% comment %}Honest empty state — the URL space is our own history, so "no engagements with us"
+   is a valid 200 answer, not a 404.{% endcomment %}
+{% if not profile.has_history %}
+  <div class="panel px-4 py-16 text-center">
+    <p class="font-display text-lg text-muted">{% translate "No engagements with us" %}</p>
+    <p class="mt-1 text-sm text-faint">{% translate "We have never fought this entity — nothing in our killmail history involves them. Everything here is relative to our own fights, never a universal record." %}</p>
+  </div>
+{% else %}
+
+<!-- Engagement summary (all relative to us) -->
+<section class="panel mb-6 overflow-hidden">
+  <div class="grid grid-cols-2 gap-2 px-4 py-4 text-center sm:grid-cols-3 lg:grid-cols-6">
+    <div><div class="data text-2xl text-loss">{{ summary.kills_vs_us }}</div><div class="text-xs text-faint">{% translate "kills vs us" %}</div></div>
+    <div><div class="data text-2xl text-kill">{{ summary.losses_to_us }}</div><div class="text-xs text-faint">{% translate "losses to us" %}</div></div>
+    <div><div class="data text-lg text-loss">{{ summary.isk_we_lost|isk }}</div><div class="text-xs text-faint">{% translate "ISK we lost" %}</div></div>
+    <div><div class="data text-lg text-gold">{{ summary.isk_we_took|isk }}</div><div class="text-xs text-faint">{% translate "ISK we took" %}</div></div>
+    <div><div class="data text-2xl text-ink">{{ summary.engagements }}</div><div class="text-xs text-faint">{% translate "engagements" %}</div></div>
+    <div><div class="data text-sm text-muted">{% if summary.first_seen %}{{ summary.first_seen|date:"M j, Y" }}{% else %}—{% endif %}</div><div class="text-xs text-faint">{% translate "first seen" %} · {% if summary.last_seen %}{{ summary.last_seen|date:"M j, Y" }}{% else %}—{% endif %}</div></div>
+  </div>
+</section>
+
+<div class="mb-6 grid gap-5 lg:grid-cols-2">
+  <!-- Hulls they bring against us -->
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-loss">{% translate "Hulls they bring against us" %}</h2></div>
+    <div class="divide-y divide-line/40">
+      {% for h in profile.hulls %}
+        <div class="flex items-center gap-2.5 px-4 py-2 text-sm">
+          <img src="{% eve_type_icon h.ship_type_id 32 %}" alt="" loading="lazy" class="h-6 w-6 rounded bg-space ring-1 ring-line">
+          <span class="min-w-0 flex-1 truncate text-muted">{{ h.name }}</span>
+          <span class="data shrink-0 text-xs font-semibold text-ink">×{{ h.count }}</span>
+        </div>
+      {% empty %}
+        <div class="px-4 py-8 text-center text-sm text-faint">{% translate "They have never killed us, so we have seen no hulls." %}</div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- Who they fly with against us -->
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "Who they fly with against us" %}</h2></div>
+    <div class="divide-y divide-line/40">
+      {% for c in profile.co_attackers.corporations %}
+        <div class="flex items-center gap-2.5 px-4 py-2 text-sm">
+          <img src="{% eve_corp_logo c.entity_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">
+          <a href="{% url 'killboard:adversary_corporation' c.entity_id %}" class="min-w-0 flex-1 truncate text-muted hover:text-gold transition">{{ c.name }}</a>
+          <span class="data shrink-0 text-xs text-faint">{{ c.count }}</span>
+        </div>
+      {% endfor %}
+      {% for c in profile.co_attackers.characters %}
+        <div class="flex items-center gap-2.5 px-4 py-2 text-sm">
+          <img src="{% eve_portrait c.entity_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-full">
+          <a href="{% url 'killboard:adversary_character' c.entity_id %}" class="min-w-0 flex-1 truncate text-muted hover:text-gold transition">{{ c.name }}</a>
+          <span class="data shrink-0 text-xs text-faint">{{ c.count }}</span>
+        </div>
+      {% empty %}
+      {% if not profile.co_attackers.corporations %}
+        <div class="px-4 py-8 text-center text-sm text-faint">{% translate "No co-attackers recorded." %}</div>
+      {% endif %}
+      {% endfor %}
+    </div>
+  </section>
+</div>
+
+<div class="mb-6 grid gap-5 lg:grid-cols-2">
+  <!-- Where they fight us -->
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-cyan">{% translate "Where they fight us" %}</h2></div>
+    {% if profile.systems %}
+    <ol class="divide-y divide-line/40">
+      {% with max=profile.systems.0.count %}
+      {% for r in profile.systems %}
+      <li class="px-4 py-2">
+        <div class="mb-1 flex items-center gap-2 text-sm">
+          <a href="{% url 'killboard:list' %}?system_id={{ r.system_id }}" class="min-w-0 flex-1 truncate text-muted hover:text-gold transition">{{ r.name }}</a>
+          <span class="data shrink-0 text-xs font-semibold text-ink">{{ r.count }}</span>
+        </div>
+        <div class="h-1 w-full overflow-hidden rounded-full bg-panel2">
+          <div class="h-full rounded-full bg-cyan/60" style="width: {% widthratio r.count max 100 %}%"></div>
+        </div>
+      </li>
+      {% endfor %}
+      {% endwith %}
+    </ol>
+    {% else %}<p class="px-4 py-8 text-center text-sm text-faint">{% translate "No systems recorded." %}</p>{% endif %}
+  </section>
+
+  <!-- Regions -->
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">{% translate "Regions" %}</h2></div>
+    {% if profile.regions %}
+    <div class="divide-y divide-line/40">
+      {% for r in profile.regions %}
+      <div class="flex items-center gap-2.5 px-4 py-2 text-sm">
+        <span class="min-w-0 flex-1 truncate text-muted">{{ r.name }}</span>
+        <span class="data shrink-0 text-xs text-faint">{{ r.count }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}<p class="px-4 py-8 text-center text-sm text-faint">{% translate "No regions recorded." %}</p>{% endif %}
+  </section>
+</div>
+
+<!-- Timezone: when they engage us -->
+<section class="panel mb-6 overflow-hidden">
+  <div class="flex items-center gap-2 border-b border-line px-4 py-3">
+    <svg class="h-4 w-4 text-loss"><use href="#i-grid"/></svg>
+    <h2 class="font-display text-sm font-semibold text-ink">{% translate "When they engage us" %}</h2>
+    <span class="ml-auto text-[11px] text-faint">{% translate "EVE time (UTC)" %}</span>
+  </div>
+  {% if profile.heatmap.total %}
+  <div class="overflow-x-auto p-4">
+    <div class="min-w-[640px]">
+      <div class="mb-1 grid grid-cols-[34px_repeat(24,1fr)] gap-0.5">
+        <span></span>
+        {% for h in profile.heatmap.rows.0 %}
+          <span class="text-center text-[9px] text-faint">{% if forloop.counter0|divisibleby:3 %}{{ forloop.counter0 }}{% endif %}</span>
+        {% endfor %}
+      </div>
+      {% for row in profile.heatmap.cells %}
+      <div class="mb-0.5 grid grid-cols-[34px_repeat(24,1fr)] items-center gap-0.5">
+        <span class="text-[10px] font-medium text-faint">{{ row.label }}</span>
+        {% for c in row.hours %}
+          <div class="hm-cell hm-{{ c.level }}" title="{% blocktranslate with day=row.label hour=c.hour count n=c.n %}{{ day }} {{ hour }}:00 — {{ n }} engagement{% plural %}{{ day }} {{ hour }}:00 — {{ n }} engagements{% endblocktranslate %}"></div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% else %}<p class="px-4 py-10 text-center text-xs text-faint">{% translate "Not enough activity to chart." %}</p>{% endif %}
+</section>
+
+{% if kind != 'character' and profile.pilots %}
+<!-- Their pilots seen vs us (corp/alliance pages) -->
+<section class="panel mb-6 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "Their pilots we have seen" %}</h2></div>
+  <div class="grid gap-x-4 sm:grid-cols-2">
+    {% for p in profile.pilots %}
+    <div class="flex items-center gap-2.5 px-4 py-2 text-sm">
+      <img src="{% eve_portrait p.character_id 32 %}" alt="" loading="lazy" class="h-6 w-6 rounded-full ring-1 ring-line">
+      <a href="{% url 'killboard:adversary_character' p.character_id %}" class="min-w-0 flex-1 truncate text-muted hover:text-gold transition">{{ p.name }}</a>
+      <span class="data shrink-0 text-xs text-faint">{{ p.count }}</span>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<!-- Recent engagements (reuses the public killfeed row) -->
+<section>
+  <h2 class="eyebrow text-gold mb-3">{% translate "Recent engagements" %}</h2>
+  <div class="panel divide-y divide-line/70 overflow-hidden">
+    {% for km in recent %}
+      {% include "killboard/_feed_row.html" with km=km %}
+    {% empty %}
+      <div class="px-4 py-12 text-center text-sm text-faint">{% translate "No recent engagements." %}</div>
+    {% endfor %}
+  </div>
+</section>
+
+{% endif %}{# has_history #}
+{% endif %}{# denied #}
+{% endblock %}

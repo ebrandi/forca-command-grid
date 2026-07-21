@@ -1,0 +1,7 @@
+{% load eve %}{% comment %}KB-33 entity-name link swap. Params: kind = character|corporation|alliance ;
+eid = entity id ; home = truthy when this entity is the home corp / a home-corp participant.
+Reads `intel_links` from the parent context: only members viewing intel get links — the public
+detail/battle pages fall back to a plain resolved name. A home-corp CHARACTER links to the
+internal pilot analytics page; the home corp/alliance itself stays plain text ("us"); everyone
+else links to their adversary page. Kept inline so the same swap works on detail, battle and
+watchlist pages.{% endcomment %}{% if not eid %}{% elif not intel_links %}{% eve_name eid %}{% elif home %}{% if kind == 'character' %}<a href="{% url 'killboard:pilot' eid %}" class="hover:text-gold transition">{% eve_name eid %}</a>{% else %}{% eve_name eid %}{% endif %}{% elif kind == 'character' %}<a href="{% url 'killboard:adversary_character' eid %}" class="hover:text-gold transition">{% eve_name eid %}</a>{% elif kind == 'corporation' %}<a href="{% url 'killboard:adversary_corporation' eid %}" class="hover:text-gold transition">{% eve_name eid %}</a>{% elif kind == 'alliance' %}<a href="{% url 'killboard:adversary_alliance' eid %}" class="hover:text-gold transition">{% eve_name eid %}</a>{% else %}{% eve_name eid %}{% endif %}

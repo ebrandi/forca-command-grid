@@ -73,7 +73,7 @@
               {% if m.entity_type == "character" %}<img src="{% eve_portrait m.entity_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">
               {% elif m.entity_type == "alliance" %}<img src="{% eve_alliance_logo m.entity_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">
               {% else %}<img src="{% eve_corp_logo m.entity_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">{% endif %}
-              <span class="flex-1 truncate text-muted">{{ m.name }}{% if m.is_manual %} <span class="text-xs text-faint" title="{% translate 'Manually reassigned' %}">✎</span>{% endif %}</span>
+              <span class="flex-1 truncate text-muted">{% include "killboard/_entity_link.html" with kind=m.entity_type eid=m.entity_id home=m.is_home %}{% if m.is_manual %} <span class="text-xs text-faint" title="{% translate 'Manually reassigned' %}">✎</span>{% endif %}</span>
               <span class="data text-xs text-kill" title="{% translate 'kills' %}">{{ m.kills }}</span>
               <span class="data text-xs text-loss" title="{% translate 'losses' %}">{{ m.losses }}</span>
               {% if can_reassign %}

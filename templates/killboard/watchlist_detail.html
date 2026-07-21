@@ -40,7 +40,7 @@
           <img src="{% eve_alliance_logo row.entry.entity_id 64 %}" alt="" class="h-9 w-9 rounded ring-1 ring-line">
         {% endif %}
         <div class="min-w-0 flex-1">
-          <h3 class="font-display font-semibold text-ink">{% eve_name row.entry.entity_id %}</h3>
+          <h3 class="font-display font-semibold text-ink">{% include "killboard/_entity_link.html" with kind=row.entry.entity_type eid=row.entry.entity_id %}</h3>
           <p class="text-xs text-faint">{{ row.entry.get_entity_type_display }}{% if row.entry.note %} · {{ row.entry.note }}{% endif %}</p>
         </div>
         <div class="text-right text-xs">

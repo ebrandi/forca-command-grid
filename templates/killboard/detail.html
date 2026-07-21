@@ -45,9 +45,9 @@
     <div class="flex items-center gap-3">
       {% if killmail.victim_character_id %}<img src="{% eve_portrait killmail.victim_character_id 64 %}" alt="" class="h-12 w-12 rounded-full ring-1 ring-line">{% endif %}
       <div class="min-w-0">
-        <p class="font-medium text-ink">{% if killmail.victim_character_id %}{% eve_name killmail.victim_character_id %}{% else %}{% translate "Structure / NPC" %}{% endif %}</p>
+        <p class="font-medium text-ink">{% if killmail.victim_character_id %}{% include "killboard/_entity_link.html" with kind="character" eid=killmail.victim_character_id home=victim_is_home %}{% else %}{% translate "Structure / NPC" %}{% endif %}</p>
         <p class="flex items-center gap-1.5 text-xs text-faint">
-          {% if killmail.victim_corporation_id %}<img src="{% eve_corp_logo killmail.victim_corporation_id 32 %}" alt="" class="h-4 w-4 rounded-sm">{% eve_name killmail.victim_corporation_id %}{% endif %}
+          {% if killmail.victim_corporation_id %}<img src="{% eve_corp_logo killmail.victim_corporation_id 32 %}" alt="" class="h-4 w-4 rounded-sm">{% include "killboard/_entity_link.html" with kind="corporation" eid=killmail.victim_corporation_id home=victim_is_home %}{% endif %}
         </p>
         {# KB-22: outbound zkill/EveWho references for the victim's entities. #}
         <p class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
@@ -100,7 +100,7 @@
           <div class="flex items-center gap-2.5">
             {% if a.character_id %}<img src="{% eve_portrait a.character_id 32 %}" alt="" loading="lazy" class="h-7 w-7 rounded-full ring-1 ring-line">{% else %}<span class="h-7 w-7 rounded-full bg-panel2 ring-1 ring-line"></span>{% endif %}
             <div class="min-w-0 flex-1">
-              <p class="truncate text-sm text-ink">{% if a.character_id %}{% eve_name a.character_id %}{% else %}NPC{% endif %}
+              <p class="truncate text-sm text-ink">{% if a.character_id %}{% include "killboard/_entity_link.html" with kind="character" eid=a.character_id home=a.is_home %}{% else %}NPC{% endif %}
                 {% if a.final_blow %}<span class="chip !text-gold !border-gold/40">{% translate "final blow" %}</span>{% endif %}
                 {% if a.is_top %}<span class="chip !text-gold" title="{% translate 'Top damage' %}">★</span>{% endif %}
                 {% if a.doctrine_hull %}<span class="chip !text-cyan" title="{% translate 'Doctrine hull' %}">◆</span>{% endif %}
@@ -131,8 +131,8 @@
       <div class="flex items-center gap-2">
         {% if p.corporation_id %}<img src="{% eve_corp_logo p.corporation_id 32 %}" alt="" loading="lazy" class="h-6 w-6 rounded-sm">{% endif %}
         <div class="min-w-0 flex-1">
-          <p class="truncate text-sm text-ink">{% if p.corporation_id %}{% eve_name p.corporation_id %}{% else %}{% translate "NPC / unknown" %}{% endif %}</p>
-          {% if p.alliance_id %}<p class="truncate text-[11px] text-faint">{% eve_name p.alliance_id %}</p>{% endif %}
+          <p class="truncate text-sm text-ink">{% if p.corporation_id %}{% include "killboard/_entity_link.html" with kind="corporation" eid=p.corporation_id home=p.is_home %}{% else %}{% translate "NPC / unknown" %}{% endif %}</p>
+          {% if p.alliance_id %}<p class="truncate text-[11px] text-faint">{% include "killboard/_entity_link.html" with kind="alliance" eid=p.alliance_id home=p.is_home %}</p>{% endif %}
           {# KB-22: outbound reference links for this attacker-side corporation / alliance. #}
           {% if p.corporation_id or p.alliance_id %}
           <p class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">

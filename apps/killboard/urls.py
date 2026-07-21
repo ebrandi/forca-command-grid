@@ -35,6 +35,13 @@ urlpatterns = [
     path("campaigns/<int:pk>/", views.combat_campaign_detail, name="campaign_detail"),
     path("campaigns/<int:pk>/edit/", views.combat_campaign_edit, name="campaign_edit"),
     path("campaigns/<int:pk>/delete/", views.combat_campaign_delete, name="campaign_delete"),
+    # KB-33 adversary entity pages (WS-C3) — member-gated intel, built from OUR history only.
+    # Static "adversary/" prefix, well above the <int:killmail_id> single-segment catch-all.
+    path("adversary/character/<int:entity_id>/", views.adversary_character, name="adversary_character"),
+    path("adversary/corporation/<int:entity_id>/", views.adversary_corporation,
+         name="adversary_corporation"),
+    path("adversary/alliance/<int:entity_id>/", views.adversary_alliance, name="adversary_alliance"),
+    path("adversary/<str:kind>/<int:entity_id>/watch/", views.adversary_watch, name="adversary_watch"),
     path("killfeed/settings/", views.killfeed_config, name="killfeed_config"),
     # KB-29 live feed: server-rendered single row the live JS prepends. Above the
     # <int:killmail_id> single-segment catch-all.

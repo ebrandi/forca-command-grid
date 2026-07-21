@@ -65,6 +65,9 @@ def attacker_breakdown(killmail: Killmail, attackers, home_corp_id: int, hull_id
             "damage_pct": round(pct, 1),
             "final_blow": a.final_blow,
             "is_top": i == 0 and a.damage_done > 0,
+            # KB-33: a home-corp participant links to the internal pilot page, everyone else
+            # to their adversary page (killboard/_entity_link.html reads this flag).
+            "is_home": bool(home_corp_id and a.corporation_id == home_corp_id),
             "doctrine_hull": bool(
                 home_corp_id and a.corporation_id == home_corp_id and a.ship_type_id in hull_ids
             ),
@@ -74,6 +77,7 @@ def attacker_breakdown(killmail: Killmail, attackers, home_corp_id: int, hull_id
     for a in attackers:
         p = parties.setdefault(a.corporation_id, {
             "corporation_id": a.corporation_id, "alliance_id": a.alliance_id,
+            "is_home": bool(home_corp_id and a.corporation_id == home_corp_id),
             "pilots": 0, "damage": 0, "ships": {},
         })
         p["pilots"] += 1
