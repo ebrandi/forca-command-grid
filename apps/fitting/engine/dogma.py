@@ -279,7 +279,6 @@ def evaluate(
         "ewar": ewar,
         "ship": {"type_id": fit.ship_type_id, "name": ship_info.get("name", "")},
         "operating_profile": {
-            "mode": op_profile.mode.value,
             "propulsion_active": op_profile.propulsion_active,
             "damage_profile": op_profile.damage_profile.normalised().as_map(),
         },

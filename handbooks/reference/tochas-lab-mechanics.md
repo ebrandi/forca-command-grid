@@ -26,7 +26,8 @@ sample calculation) and exits non-zero on failure.
 
 | Area | Details |
 | --- | --- |
-| Fitting resources | CPU/PG/calibration used vs output — outputs include module and skill multipliers (Reactor Control, Power Diagnostics, Co-Processors, implants) via the graph; slot counts; turret & launcher hardpoints (energy turrets included); rig-size, charge-group/size, and max-group-fitted validation; drone bandwidth and bay validation. Offline modules apply nothing and consume no CPU/PG. |
+| Fitting resources | CPU/PG/calibration used vs output — outputs include module and skill multipliers (Reactor Control, Power Diagnostics, Co-Processors, implants) via the graph; slot counts; turret & launcher hardpoints (energy turrets included); rig-size and charge-group/size validation; drone bandwidth and bay validation. Offline modules apply nothing and consume no CPU/PG. |
+| Fit legality | Per-group caps — `maxGroupFitted` (fitted), `maxGroupActive` (active/overloaded), `maxGroupOnline` (online); hull fitting restrictions (`canFitShipGroup*`/`canFitShipType*`/`fitsToShipType`, passing if the ship's group **or** type is whitelisted); implant (`implantness`) and booster (`boosterness`) slot conflicts; and T3C subsystems — one per `subSystemSlot` and a complete set (required count = the hull's distinct subsystem slots, **not** the stale `maxSubSystems` attribute). Each fires only when the governing attribute is present and marks the fit structurally impossible. |
 | Stacking penalty | `S(i) = exp(-(i/2.67)²)` driven by each attribute's `stackable` flag, applied per (attribute, operator) with positive and negative chains penalised separately; ship/charge/skill/implant/subsystem sources are exempt (as in the game data model). |
 | EHP & resists | Layer HP and per-type resonance fully graph-evaluated (plates, extenders, trimarks and other rigs, hardeners on the correct layer, Damage Controls, skills, hull bonuses), EHP weighted by the selected damage profile. |
 | Active & passive tank | Shield boost / armor repair / hull repair HP/s from evaluated amount ÷ cycle (ancillary charge multipliers included); passive shield regen peak `2.5·shield/τ` and EHP/s. |
@@ -43,9 +44,10 @@ sample calculation) and exits non-zero on failure.
 
 Fighters and fighter tubes; tactical destroyer / bastion / siege modes; projected and
 environmental effects (incoming ewar, remote assistance, command bursts); smartbombs,
-mining yield and DoT (breacher-pod) weapons; ship-type fitting restrictions
-(`canFitShipType`); booster side-effects. The full matrix with per-mechanic status lives
-in `docs/fitting/tochas-lab-mechanics-matrix.md`.
+mining yield and DoT (breacher-pod) weapons; booster side-effects. There is no
+"operating mode" fit input — the engine evaluates every module in its own fitted state,
+so damage/tank output is not gated by a global mode selector. The full matrix with
+per-mechanic status lives in `docs/fitting/tochas-lab-mechanics-matrix.md`.
 
 ## Data pipeline
 

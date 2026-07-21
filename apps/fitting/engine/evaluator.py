@@ -130,6 +130,7 @@ def evaluate(fit: FitInput, skills: SkillProfile, op_profile: OperatingProfile,
     utility = {"cargo": round(ev.ship_value(ATTR_CAPACITY), 1),
                "drone_bay": round(ev.ship_value(A.DRONE_CAPACITY), 1)}
     ewar = _ewar(ev)
+    _validate_restrictions(ev, provider, result)
 
     result.telemetry = {
         "resources": resources, "defence": defence, "capacitor": capacitor,
@@ -137,7 +138,6 @@ def evaluate(fit: FitInput, skills: SkillProfile, op_profile: OperatingProfile,
         "utility": utility, "ewar": ewar,
         "ship": {"type_id": fit.ship_type_id, "name": ship_info.get("name", "")},
         "operating_profile": {
-            "mode": op_profile.mode.value,
             "propulsion_active": op_profile.propulsion_active,
             "damage_profile": op_profile.damage_profile.normalised().as_map(),
         },
@@ -296,6 +296,133 @@ def _validate_charge(ev: EvaluatedFit, m: Entity, result: FittingResult) -> None
             detail=f"module {m.type_id} charge {m.charge.type_id}", contextual=False,
             params={"type_id": m.type_id, "charge_type_id": m.charge.type_id,
                     "module_size": wsize, "charge_size": csize}))
+
+
+# --------------------------------------------------------------------------- #
+# Fit-legality validation (WS-3): group active/online caps, hull restrictions,
+# implant/booster/subsystem slot integrity. Every rule fires only when the entity
+# actually carries the governing attribute — absence means "unrestricted", never a
+# violation. Semantics studied for BEHAVIOUR ONLY in pyfa's GPL eos (no code reused):
+#   * hull restriction  — eos/saveddata/fit.py:490-512 (Fit.canFit): fitsToShipType is
+#     folded into the TYPE whitelist alongside canFitShipType*, and a module with BOTH a
+#     group and a type list fits if EITHER matches (the whitelists union, ship passes if
+#     its group OR its type is listed).
+#   * maxGroupActive/Online — eos/saveddata/module.py:766-791 (canHaveState): count the
+#     modules of a group in state ≥ ACTIVE / ≥ ONLINE, violation when the count exceeds
+#     the cap (strict >). maxGroupFitted is handled separately in _resources.
+#   * subsystem slot uniqueness — module.py:694-700: two subsystems may not share a
+#     subSystemSlot.
+# All of these make a fit structurally IMPOSSIBLE (see _finalise_status), mirroring the
+# existing max_group_fitted severity.
+# --------------------------------------------------------------------------- #
+def _validate_restrictions(ev: EvaluatedFit, provider, result: FittingResult) -> None:
+    ship_group = ev.ship.group_id
+    ship_type = ev.ship.type_id
+    active_by_group: dict[int, int] = {}
+    online_by_group: dict[int, int] = {}
+    subs: list[Entity] = []
+
+    for m in ev.modules:
+        if m.slot == SlotKind.SUBSYSTEM:
+            subs.append(m)
+        _validate_ship_restriction(m, ship_group, ship_type, result)
+        if m.group_id is None:
+            continue
+        online = m.module_state != ModuleState.OFFLINE
+        active = m.module_state in (ModuleState.ACTIVE, ModuleState.OVERHEATED)
+        if online:
+            online_by_group[m.group_id] = online_by_group.get(m.group_id, 0) + 1
+            max_online = m.base.get(A.MAX_GROUP_ONLINE)
+            if max_online and online_by_group[m.group_id] > int(max_online):
+                result.diagnostics.append(Diagnostic(
+                    "max_group_online_exceeded", Severity.ERROR,
+                    "Too many modules of this group online",
+                    detail=f"group {m.group_id}", contextual=False,
+                    params={"group_id": m.group_id, "max": int(max_online)}))
+        if active:
+            active_by_group[m.group_id] = active_by_group.get(m.group_id, 0) + 1
+            max_active = m.base.get(A.MAX_GROUP_ACTIVE)
+            if max_active and active_by_group[m.group_id] > int(max_active):
+                result.diagnostics.append(Diagnostic(
+                    "max_group_active_exceeded", Severity.ERROR,
+                    "Too many modules of this group active",
+                    detail=f"group {m.group_id}", contextual=False,
+                    params={"group_id": m.group_id, "max": int(max_active)}))
+
+    _validate_slot_conflicts(ev, result)
+    _validate_subsystems(subs, ev, provider, result)
+
+
+def _validate_ship_restriction(m: Entity, ship_group: int | None, ship_type: int,
+                               result: FittingResult) -> None:
+    fits_group = {int(m.base[a]) for a in A.CAN_FIT_SHIP_GROUP_ATTRS if m.base.get(a)}
+    fits_type = {int(m.base[a]) for a in A.CAN_FIT_SHIP_TYPE_ATTRS if m.base.get(a)}
+    if m.base.get(A.FITS_TO_SHIP_TYPE):
+        fits_type.add(int(m.base[A.FITS_TO_SHIP_TYPE]))
+    if not (fits_group or fits_type):
+        return                                  # module carries no hull restriction
+    if ship_group in fits_group or ship_type in fits_type:
+        return                                  # ship group OR type is whitelisted
+    result.diagnostics.append(Diagnostic(
+        "ship_restriction_violated", Severity.ERROR,
+        "Module cannot be fitted to this hull",
+        detail=f"type {m.type_id}", contextual=False,
+        params={"type_id": m.type_id, "ship_group_id": ship_group,
+                "allowed_groups": sorted(fits_group), "allowed_types": sorted(fits_type)}))
+
+
+def _validate_slot_conflicts(ev: EvaluatedFit, result: FittingResult) -> None:
+    """Two implants sharing an implantness slot, or two boosters sharing a boosterness
+    slot, cannot coexist (the second occupant conflicts)."""
+    for kind, slot, attr, code in (
+        ("implant", SlotKind.IMPLANT, A.IMPLANTNESS, "implant_slot_conflict"),
+        ("booster", SlotKind.BOOSTER, A.BOOSTERNESS, "booster_slot_conflict"),
+    ):
+        seen: dict[int, int] = {}
+        for imp in ev.implants:
+            if imp.slot != slot or imp.base.get(attr) is None:
+                continue
+            key = int(imp.base[attr])
+            if key in seen:
+                result.diagnostics.append(Diagnostic(
+                    code, Severity.ERROR, f"Two {kind}s occupy the same slot",
+                    detail=f"slot {key}", contextual=False,
+                    params={"slot": key, "type_id": imp.type_id,
+                            "conflicts_with": seen[key]}))
+            else:
+                seen[key] = imp.type_id
+
+
+def _validate_subsystems(subs: list[Entity], ev: EvaluatedFit, provider,
+                         result: FittingResult) -> None:
+    seen: dict[int, int] = {}
+    for s in subs:
+        slot = s.base.get(A.SUBSYSTEM_SLOT)
+        if slot is None:
+            continue
+        key = int(slot)
+        if key in seen:
+            result.diagnostics.append(Diagnostic(
+                "subsystem_slot_conflict", Severity.ERROR,
+                "Two subsystems occupy the same slot",
+                detail=f"slot {key}", contextual=False,
+                params={"slot": key, "type_id": s.type_id, "conflicts_with": seen[key]}))
+        else:
+            seen[key] = s.type_id
+
+    # A Strategic Cruiser (hull carries maxSubSystems) is only a valid ship with one
+    # subsystem in every slot. The required count comes from the subsystem catalogue, not
+    # the stale maxSubSystems value (see adapter.subsystem_slots_for_hull).
+    if A.MAX_SUBSYSTEMS not in ev.ship.base:
+        return
+    slot_count = getattr(provider, "subsystem_slots_for_hull", None)
+    required = slot_count(ev.ship.type_id) if slot_count else 0
+    if required and len(subs) != required:
+        result.diagnostics.append(Diagnostic(
+            "subsystem_count_invalid", Severity.ERROR,
+            "Incomplete subsystem configuration",
+            detail=f"{len(subs)} of {required} subsystems", contextual=False,
+            params={"fitted": len(subs), "required": required}))
 
 
 # --------------------------------------------------------------------------- #
@@ -986,7 +1113,11 @@ def _finalise_status(result: FittingResult) -> None:
     codes = {d.code for d in result.diagnostics if d.severity == Severity.ERROR}
     structural = {"too_many_modules", "turret_hardpoints", "launcher_hardpoints",
                   "rig_size_mismatch", "max_group_fitted", "incompatible_charge",
-                  "charge_size_mismatch", "drone_bay_exceeded"}
+                  "charge_size_mismatch", "drone_bay_exceeded",
+                  "ship_restriction_violated", "max_group_active_exceeded",
+                  "max_group_online_exceeded", "subsystem_slot_conflict",
+                  "subsystem_count_invalid", "implant_slot_conflict",
+                  "booster_slot_conflict"}
     resource = {"cpu_exceeded", "powergrid_exceeded", "calibration_exceeded",
                 "drone_bandwidth_exceeded"}
     if codes & structural:

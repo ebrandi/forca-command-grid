@@ -140,6 +140,19 @@ def test_telemetry_endpoint_renders_server_side(client, owner, dogma):
     assert b"DPS" in resp.content and b"EHP" in resp.content
 
 
+def test_legacy_operating_mode_payload_is_ignored(client, owner, dogma):
+    """WS-4: the removed operating-mode selector left the API tolerant — a payload still
+    carrying a legacy ``mode`` key evaluates with status 200 and produces byte-identical
+    telemetry to the same payload without it (mode was always inert, echo-only)."""
+    client.force_login(owner)
+    parsed = services.import_eft(EFT)
+    base = {"ship_type_id": RIFTER, "items": json.dumps(parsed["items"]), "skills": "allv"}
+    without = client.post(reverse("fitting:telemetry"), base)
+    with_mode = client.post(reverse("fitting:telemetry"), {**base, "mode": "max_damage"})
+    assert without.status_code == with_mode.status_code == 200
+    assert without.content == with_mode.content
+
+
 def test_telemetry_rejects_oversized_payload(client, owner, dogma):
     client.force_login(owner)
     huge = json.dumps([{"type_id": AC} for _ in range(400)])  # over the 300 item cap

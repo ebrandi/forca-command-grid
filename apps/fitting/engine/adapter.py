@@ -90,6 +90,7 @@ class ORMDataProvider:
         self._skills: dict[int, list[tuple[int, int]]] = {}
         self._bonuses: dict[int, list[BonusSpec]] = {}
         self._effect_defs: dict[int, EffectDef | None] = {}
+        self._subsys_slots: dict[int, int] = {}
         self.data_version = self._resolve_data_version()
 
     @staticmethod
@@ -251,6 +252,32 @@ class ORMDataProvider:
                     tracking_attribute_id=row["tracking_attribute_id"])
             _EFFECT_DEF_CACHE[self.data_version] = defs
         return defs.get(effect_id)
+
+    def subsystem_slots_for_hull(self, hull_type_id: int) -> int:
+        """The number of distinct subsystem slots a Strategic Cruiser hull exposes — i.e.
+        how many subsystems a complete T3C requires. Derived as the count of distinct
+        ``subSystemSlot`` (1366) values across the subsystem types that declare
+        compatibility with this hull via ``fitsToShipType`` (1380).
+
+        CCP's ``maxSubSystems`` (1367) hull attribute is NOT used: it still reads 5 in the
+        SDE (the pre-2016 five-subsystem era) even though every T3C has had exactly four
+        subsystem slots since the subsystem consolidation, so trusting it would flag every
+        correctly-fitted T3C as invalid. Returns 0 for a hull with no compatible subsystem
+        catalogue (e.g. a non-T3C, or a fixture slice that omits the subsystems), which the
+        validator treats as "cannot determine — do not flag"."""
+        cached = self._subsys_slots.get(hull_type_id)
+        if cached is not None:
+            return cached
+        from apps.sde.models import SdeTypeAttribute
+
+        compatible = list(SdeTypeAttribute.objects.filter(
+            attribute_id=A.FITS_TO_SHIP_TYPE, value=float(hull_type_id)
+        ).values_list("type_id", flat=True))
+        slots = set(SdeTypeAttribute.objects.filter(
+            attribute_id=A.SUBSYSTEM_SLOT, type_id__in=compatible
+        ).values_list("value", flat=True)) if compatible else set()
+        self._subsys_slots[hull_type_id] = len(slots)
+        return len(slots)
 
     def trained_skill_ids(self) -> list[int]:
         """Every skill type id in the DB (category 16) — the candidate set the graph

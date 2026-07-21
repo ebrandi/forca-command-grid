@@ -51,7 +51,8 @@ def _skill_profile(request, source: str | None):
 
 def _op_profile(request):
     data = request.POST if request.method == "POST" else request.GET
-    mode = data.get("mode", "all_active")
+    # A legacy "mode" key (the removed operating-mode selector) is simply not read here,
+    # so older payloads carrying it still evaluate — the API stays tolerant of it.
     prop = data.get("prop", "1") not in ("0", "false", "")
     dmg = None
     if data.get("dmg_em") is not None:
@@ -77,7 +78,7 @@ def _op_profile(request):
             warp_au = float(data.get("warp_distance_au"))
         except (TypeError, ValueError):
             warp_au = None
-    return services.operating_profile(mode=mode, propulsion=prop, damage=dmg,
+    return services.operating_profile(propulsion=prop, damage=dmg,
                                       target=target, warp_distance_au=warp_au)
 
 

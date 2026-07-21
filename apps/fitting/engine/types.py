@@ -43,13 +43,6 @@ class ModuleState(str, Enum):
     OVERHEATED = "overheated"
 
 
-class OperatingMode(str, Enum):
-    ALL_ACTIVE = "all_active"
-    SUSTAINABLE = "sustainable"
-    MAX_DAMAGE = "max_damage"
-    MAX_TANK = "max_tank"
-
-
 class Status(str, Enum):
     IMPOSSIBLE = "impossible"          # structurally invalid (wrong slot, hull restriction)
     OVER_RESOURCES = "over_resources"  # valid layout, exceeds CPU/PG/calibration
@@ -192,7 +185,6 @@ class TargetProfile:
 
 @dataclass(frozen=True)
 class OperatingProfile:
-    mode: OperatingMode = OperatingMode.ALL_ACTIVE
     propulsion_active: bool = True
     damage_profile: DamageProfileInput = field(default_factory=DamageProfileInput)
     target: TargetProfile | None = None
@@ -202,7 +194,7 @@ class OperatingProfile:
         d = self.damage_profile.normalised()
         dp = f"{d.em:.3f}:{d.thermal:.3f}:{d.kinetic:.3f}:{d.explosive:.3f}"
         tgt = self.target.hash() if self.target else "none"
-        return (f"{self.mode.value}:{int(self.propulsion_active)}:{dp}:{tgt}"
+        return (f"{int(self.propulsion_active)}:{dp}:{tgt}"
                 f":{self.warp_distance_au:.1f}")
 
 

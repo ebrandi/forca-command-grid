@@ -67,6 +67,35 @@ def localise_diagnostic(d: dict) -> dict:
     elif code == "max_group_fitted":
         title = _("Too many modules of this group fitted")
         detail = _("At most %(max)s allowed") % {"max": p.get("max")}
+    elif code == "max_group_active_exceeded":
+        title = _("Too many modules of this group active")
+        detail = _("At most %(max)s may be active at once") % {"max": p.get("max")}
+        action = _("Set one of them offline or online.")
+    elif code == "max_group_online_exceeded":
+        title = _("Too many modules of this group online")
+        detail = _("At most %(max)s may be online at once") % {"max": p.get("max")}
+        action = _("Set one of them offline.")
+    elif code == "ship_restriction_violated":
+        title = _("Module cannot be fitted to this hull")
+        detail = ""
+        action = _("Fit this module to a compatible hull.")
+    elif code == "implant_slot_conflict":
+        title = _("Two implants occupy the same slot")
+        detail = ""
+        action = _("Remove one of the conflicting implants.")
+    elif code == "booster_slot_conflict":
+        title = _("Two boosters occupy the same slot")
+        detail = ""
+        action = _("Remove one of the conflicting boosters.")
+    elif code == "subsystem_slot_conflict":
+        title = _("Two subsystems occupy the same slot")
+        detail = ""
+        action = _("Fit one subsystem per slot.")
+    elif code == "subsystem_count_invalid":
+        title = _("Incomplete subsystem configuration")
+        detail = _("%(fitted)s of %(required)s subsystems fitted") % {
+            "fitted": p.get("fitted"), "required": p.get("required")}
+        action = _("Fit one subsystem in every slot.")
     elif code == "incompatible_charge":
         title = _("Charge not accepted by this module")
         detail = ""

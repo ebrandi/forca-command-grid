@@ -23,7 +23,6 @@ from .engine.types import (
     FitInput,
     ModuleInput,
     ModuleState,
-    OperatingMode,
     OperatingProfile,
     SkillProfile,
     SlotKind,
@@ -140,15 +139,11 @@ def fit_input_from_items(ship_type_id: int, items: list[dict]) -> FitInput:
     return FitInput(ship_type_id=int(ship_type_id), modules=tuple(modules))
 
 
-def operating_profile(mode: str = "all_active", propulsion: bool = True,
+def operating_profile(propulsion: bool = True,
                       damage: dict | None = None,
                       target: dict | None = None,
                       warp_distance_au: float | None = None) -> OperatingProfile:
     dp = DamageProfileInput(**damage) if damage else DamageProfileInput()
-    try:
-        m = OperatingMode(mode)
-    except ValueError:
-        m = OperatingMode.ALL_ACTIVE
     tgt = None
     if target and (target.get("signature_radius") or target.get("velocity")
                    or target.get("distance_m")):
@@ -162,7 +157,7 @@ def operating_profile(mode: str = "all_active", propulsion: bool = True,
             target_angular=max(0.0, float(ang)) if ang is not None else None,
         )
     warp = 10.0 if warp_distance_au is None else max(0.0, float(warp_distance_au))
-    return OperatingProfile(mode=m, propulsion_active=propulsion, damage_profile=dp,
+    return OperatingProfile(propulsion_active=propulsion, damage_profile=dp,
                             target=tgt, warp_distance_au=warp)
 
 

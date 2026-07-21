@@ -208,6 +208,25 @@ STACKING_PENALISED_ATTRIBUTES = frozenset(
     | {MAX_VELOCITY, TRACKING_SPEED, SIGNATURE_RADIUS, SCAN_RESOLUTION}
 )
 
+# --- Fit-validation restriction attributes (WS-3) ---------------------------
+# Verified live against dgmAttributeTypes (scout-data §A). Modules carry these to
+# constrain where/how many can be fitted; absence of an attribute means "unrestricted".
+MAX_GROUP_ACTIVE = 763       # most modules of this group that may be ACTIVE at once
+MAX_GROUP_ONLINE = 978       # most modules of this group that may be ONLINE at once
+MAX_GROUP_FITTED = 1544      # most modules of this group that may be FITTED at all
+FITS_TO_SHIP_TYPE = 1380     # module fits ONLY this exact hull type
+IMPLANTNESS = 331            # the head slot an implant occupies (two sharing it conflict)
+BOOSTERNESS = 1087           # the slot a combat booster occupies (two sharing it conflict)
+SUBSYSTEM_SLOT = 1366        # the subsystem slot a T3C subsystem occupies
+MAX_SUBSYSTEMS = 1367        # hull attr present ⇒ a Strategic Cruiser (value is STALE — see
+#                              adapter.subsystem_slots_for_hull for the real slot count)
+# canFitShipGroup01..20 (zero-padded names) — hull GROUP whitelist. Non-contiguous ids.
+CAN_FIT_SHIP_GROUP_ATTRS = (1298, 1299, 1300, 1301, 1872, 1879, 1880, 1881, 2065, 2396,
+                            2476, 2477, 2478, 2479, 2480, 2481, 2482, 2483, 2484, 2485)
+# canFitShipType1..12 (NOT zero-padded) — hull TYPE whitelist. Non-contiguous ids.
+CAN_FIT_SHIP_TYPE_ATTRS = (1302, 1303, 1304, 1305, 1944, 2103, 2463, 2486, 2487, 2488,
+                           2758, 5948)
+
 # --- Slot-defining effects (dgmEffects) — which rack a module occupies --------
 EFFECT_LO_POWER = 11
 EFFECT_HI_POWER = 12
