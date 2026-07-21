@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% if editing %}{% translate "Edit campaign" %}{% else %}{% translate "New campaign" %}{% endif %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<a href="{% if editing %}{% url 'killboard:campaign_detail' campaign.pk %}{% else %}{% url 'killboard:campaigns' %}{% endif %}" class="text-xs text-faint hover:text-gold">← {% translate "Campaigns" %}</a>
+<header class="mt-2 mb-6">
+  <p class="eyebrow">{% translate "Intel" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% if editing %}{% translate "Edit campaign" %}{% else %}{% translate "New combat campaign" %}{% endif %}</h1>
+  <p class="mt-1 text-sm text-faint">{% translate "A campaign auto-aggregates every home-corp killmail that falls in the window AND matches every scope filter you set. Leave a filter blank to match everything on that dimension." %}</p>
+</header>
+
+<form method="post" action="{% if editing %}{% url 'killboard:campaign_edit' campaign.pk %}{% else %}{% url 'killboard:campaign_create' %}{% endif %}" class="panel max-w-2xl space-y-5 p-5">
+  {% csrf_token %}
+
+  <div>
+    <label class="eyebrow mb-1 block text-faint">{% translate "Name" %} *</label>
+    <input name="name" type="text" required maxlength="200" value="{{ campaign.name|default:'' }}" class="input-field">
+  </div>
+  <div>
+    <label class="eyebrow mb-1 block text-faint">{% translate "Description" %}</label>
+    <textarea name="description" rows="2" class="input-field">{{ campaign.description|default:'' }}</textarea>
+  </div>
+
+  <div class="grid grid-cols-2 gap-3">
+    <div>
+      <label class="eyebrow mb-1 block text-faint">{% translate "Start" %} *</label>
+      <input name="start_time" type="datetime-local" required value="{{ campaign.start_time|date:'Y-m-d\TH:i' }}" class="input-field">
+    </div>
+    <div>
+      <label class="eyebrow mb-1 block text-faint">{% translate "End (blank = ongoing)" %}</label>
+      <input name="end_time" type="datetime-local" value="{{ campaign.end_time|date:'Y-m-d\TH:i' }}" class="input-field">
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 gap-3">
+    <div>
+      <label class="eyebrow mb-1 block text-faint">{% translate "Visibility" %}</label>
+      <select name="visibility" class="input-field">
+        {% for value, label in visibility_choices %}
+          <option value="{{ value }}" {% if campaign.visibility == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <label class="flex items-center gap-2 self-end pb-2 text-sm">
+      <input type="checkbox" name="is_active" value="1" {% if not editing or campaign.is_active %}checked{% endif %}>
+      <span class="text-ink">{% translate "Active" %}</span>
+    </label>
+  </div>
+
+  <!-- Scope -->
+  <fieldset class="space-y-3 border-t border-line pt-4">
+    <legend class="eyebrow text-gold">{% translate "Scope" %}</legend>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="eyebrow mb-1 block text-faint">{% translate "Direction" %}</label>
+        {% with cur_dir=scope.direction|default:'both' %}
+        <select name="direction" class="input-field">
+          {% for value, label in directions %}<option value="{{ value }}" {% if cur_dir == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+        {% endwith %}
+      </div>
+      <div>
+        <label class="eyebrow mb-1 block text-faint">{% translate "Match adversary as" %}</label>
+        {% with cur_side=scope.entity_side|default:'either' %}
+        <select name="entity_side" class="input-field">
+          {% for value, label in entity_sides %}<option value="{{ value }}" {% if cur_side == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+        {% endwith %}
+      </div>
+    </div>
+
+    <div class="grid grid-cols-3 gap-3">
+      <div>
+        <label class="eyebrow mb-1 block text-faint">{% translate "Character IDs" %}</label>
+        <input name="character_ids" type="text" value="{{ scope.character_ids|join:', ' }}" placeholder="{% translate 'comma-separated' %}" class="input-field">
+      </div>
+      <div>
+        <label class="eyebrow mb-1 block text-faint">{% translate "Corporation IDs" %}</label>
+        <input name="corporation_ids" type="text" value="{{ scope.corporation_ids|join:', ' }}" placeholder="{% translate 'comma-separated' %}" class="input-field">
+      </div>
+      <div>
+        <label class="eyebrow mb-1 block text-faint">{% translate "Alliance IDs" %}</label>
+        <input name="alliance_ids" type="text" value="{{ scope.alliance_ids|join:', ' }}" placeholder="{% translate 'comma-separated' %}" class="input-field">
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="eyebrow mb-1 block text-faint">{% translate "System IDs" %}</label>
+        <input name="system_ids" type="text" value="{{ scope.system_ids|join:', ' }}" placeholder="{% translate 'comma-separated' %}" class="input-field">
+      </div>
+      <div>
+        <label class="eyebrow mb-1 block text-faint">{% translate "Region IDs" %}</label>
+        <input name="region_ids" type="text" value="{{ scope.region_ids|join:', ' }}" placeholder="{% translate 'comma-separated' %}" class="input-field">
+      </div>
+    </div>
+
+    <div>
+      <p class="eyebrow mb-1 text-faint">{% translate "Security bands (none = all)" %}</p>
+      <div class="flex flex-wrap gap-x-4 gap-y-1">
+        {% for value, label in sec_bands %}
+        <label class="flex items-center gap-1.5 text-sm">
+          <input type="checkbox" name="sec_bands" value="{{ value }}" {% if value in scope.sec_bands %}checked{% endif %}>
+          <span class="text-ink">{{ label }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    {% if doctrines %}
+    <div>
+      <label class="eyebrow mb-1 block text-faint">{% translate "Doctrines (none = all)" %}</label>
+      <select name="doctrine_ids" multiple size="4" class="input-field">
+        {% for d in doctrines %}<option value="{{ d.id }}" {% if d.id in scope.doctrine_ids %}selected{% endif %}>{{ d.name }}</option>{% endfor %}
+      </select>
+    </div>
+    {% endif %}
+  </fieldset>
+
+  <!-- Ops ties -->
+  <fieldset class="space-y-3 border-t border-line pt-4">
+    <legend class="eyebrow text-gold">{% translate "Ops ties (optional)" %}</legend>
+    <div>
+      <label class="eyebrow mb-1 block text-faint">{% translate "Linked fleet op" %}</label>
+      <select name="operation" class="input-field">
+        <option value="">{% translate "— none —" %}</option>
+        {% for op in operations %}<option value="{{ op.id }}" {% if campaign.operation_id == op.id %}selected{% endif %}>{{ op.name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="eyebrow mb-1 block text-faint">{% translate "SRP budget (ISK)" %}</label>
+        <input name="srp_budget_isk" type="number" min="0" step="1000000" value="{{ campaign.srp_budget_isk|default:'' }}" class="input-field">
+      </div>
+      <div>
+        <label class="eyebrow mb-1 block text-faint">{% translate "Doctrine target (%)" %}</label>
+        <input name="doctrine_target_pct" type="number" min="0" max="100" value="{{ campaign.doctrine_target_pct|default:'' }}" class="input-field">
+      </div>
+    </div>
+  </fieldset>
+
+  <div class="flex items-center gap-3 border-t border-line pt-4">
+    <button type="submit" class="btn-primary">{% if editing %}{% translate "Save changes" %}{% else %}{% translate "Create campaign" %}{% endif %}</button>
+    <a href="{% if editing %}{% url 'killboard:campaign_detail' campaign.pk %}{% else %}{% url 'killboard:campaigns' %}{% endif %}" class="btn-ghost">{% translate "Cancel" %}</a>
+  </div>
+</form>
+{% endblock %}

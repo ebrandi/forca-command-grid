@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% load eve %}
+{% load i18n %}
+{% block title %}{{ campaign.name }} · {% translate "Combat campaign" %}{% endblock %}
+{% block content %}
+{% if not public %}<a href="{% url 'killboard:campaigns' %}" class="text-xs text-faint hover:text-gold">← {% translate "Campaigns" %}</a>{% endif %}
+<header class="mt-3 mb-6">
+  <p class="eyebrow">{% translate "Combat campaign" %}</p>
+  <h1 class="mt-1 text-2xl font-bold text-ink">{{ campaign.name }}</h1>
+  <p class="mt-1 flex flex-wrap items-center gap-2 text-sm text-faint">
+    <span>{{ campaign.start_time|date:"M j, Y" }} –
+      {% if campaign.end_time %}{{ campaign.end_time|date:"M j, Y" }}{% else %}<span class="text-gold/80">{% translate "ongoing" %}</span>{% endif %}
+    </span>
+    {% if campaign.is_public %}<span class="chip" style="color:#3fb950">{% translate "Public" %}</span>{% endif %}
+    {% if not campaign.is_active %}<span class="chip !text-faint">{% translate "Archived" %}</span>{% endif %}
+  </p>
+  {% if campaign.description %}<p class="mt-2 max-w-2xl text-sm text-muted">{{ campaign.description }}</p>{% endif %}
+  <div class="mt-3 flex flex-wrap items-center gap-3 text-xs">
+    {% if campaign.is_public %}
+      <span class="text-faint">{% translate "Permalink:" %} <a href="{{ permalink }}" class="text-gold hover:underline break-all">{{ permalink }}</a></span>
+    {% endif %}
+    {% if operation %}
+      <a href="{% url 'operations:detail' operation.id %}" class="chip hover:text-gold" style="color:#46cfe0">⚑ {% translate "Fleet op:" %} {{ operation.name }}</a>
+    {% endif %}
+    {% if can_manage %}
+      <a href="{% url 'killboard:campaign_edit' campaign.pk %}" class="text-faint hover:text-gold">✎ {% translate "Edit" %}</a>
+      <form method="post" action="{% url 'killboard:campaign_delete' campaign.pk %}" class="inline" onsubmit="return confirm('{% translate "Delete this campaign?" %}');">{% csrf_token %}
+        <button type="submit" class="text-faint hover:text-loss">🗑 {% translate "Delete" %}</button>
+      </form>
+    {% endif %}
+  </div>
+</header>
+
+<!-- Core scoreboard (public) -->
+<section class="panel mb-6 overflow-hidden">
+  <div class="grid grid-cols-2 gap-2 px-4 py-4 text-center sm:grid-cols-3 lg:grid-cols-6">
+    <div><div class="data text-2xl text-kill">{{ stats.kills }}</div><div class="text-xs text-faint">{% translate "kills" %}</div></div>
+    <div><div class="data text-2xl text-loss">{{ stats.losses }}</div><div class="text-xs text-faint">{% translate "losses" %}</div></div>
+    <div><div class="data text-2xl text-ink">{{ stats.efficiency|floatformat:0 }}%</div><div class="text-xs text-faint">{% translate "efficiency" %}</div></div>
+    <div><div class="data text-lg text-gold">{{ stats.isk_destroyed|isk }}</div><div class="text-xs text-faint">{% translate "ISK destroyed" %}</div></div>
+    <div><div class="data text-lg text-loss">{{ stats.isk_lost|isk }}</div><div class="text-xs text-faint">{% translate "ISK lost" %}</div></div>
+    <div><div class="data text-2xl text-ink">{{ stats.participants }}</div><div class="text-xs text-faint">{% translate "pilots" %}</div></div>
+  </div>
+</section>
+
+{% comment %}Sensitive overlays (SRP budget/spend + doctrine compliance) — the view passes
+   srp/compliance only to officers, so this block never renders below officer.{% endcomment %}
+{% if srp or compliance %}
+<section class="panel mb-6 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">{% translate "Officer overlay" %}</h2></div>
+  <div class="grid gap-4 px-4 py-4 sm:grid-cols-2">
+    {% if srp %}
+    <div>
+      <div class="eyebrow mb-1 text-faint">{% translate "SRP spend" %}</div>
+      <div class="flex items-baseline gap-2">
+        <span class="data text-xl {% if srp.over_budget %}text-loss{% else %}text-gold{% endif %}">{{ srp.spend|isk }}</span>
+        {% if srp.budget is not None %}<span class="text-sm text-faint">/ {{ srp.budget|isk }} {% translate "budget" %}</span>{% endif %}
+      </div>
+      {% if srp.pct is not None %}
+        <div class="mt-1.5 h-1.5 overflow-hidden rounded bg-panel2">
+          <div class="h-full {% if srp.over_budget %}bg-loss{% else %}bg-gold{% endif %}" style="width:{% if srp.pct > 100 %}100{% else %}{{ srp.pct|floatformat:0 }}{% endif %}%"></div>
+        </div>
+        <div class="mt-1 text-xs text-faint">{{ srp.pct|floatformat:0 }}% {% translate "of budget" %}{% if srp.over_budget %} · <span class="text-loss">{% translate "over budget" %}</span>{% endif %}</div>
+      {% endif %}
+      <div class="mt-1 text-xs text-faint">
+        {{ srp.losses }} {% translate "covered loss(es)" %}
+        {% if srp.basis == "actual" %}· <span title="{% translate 'From filed SRP claims' %}">{% translate "actual claims" %}</span>
+        {% elif srp.basis == "estimate" %}· <span title="{% translate 'Estimated from SRP eligibility (no claims filed yet)' %}">{% translate "estimated" %}</span>
+        {% elif srp.basis == "mixed" %}· <span title="{% translate 'Mix of filed claims and eligibility estimates' %}">{{ srp.actual_claims }} {% translate "claimed" %}, {{ srp.estimated }} {% translate "estimated" %}</span>{% endif %}
+      </div>
+    </div>
+    {% endif %}
+    {% if compliance %}
+    <div>
+      <div class="eyebrow mb-1 text-faint">{% translate "Doctrine compliance" %}</div>
+      <div class="flex items-baseline gap-2">
+        <span class="data text-xl text-ink">{{ compliance.percent }}%</span>
+        {% if doctrine_target_pct is not None %}<span class="text-sm text-faint">/ {{ doctrine_target_pct }}% {% translate "target" %}</span>{% endif %}
+      </div>
+      {% if compliance_delta is not None %}
+        <div class="mt-1 text-xs {% if compliance_delta < 0 %}text-loss{% else %}text-kill{% endif %}">
+          {% if compliance_delta < 0 %}▼ {{ compliance_delta }}{% else %}▲ +{{ compliance_delta }}{% endif %} {% translate "pts vs target" %}
+        </div>
+      {% endif %}
+      <div class="mt-1 text-xs text-faint">{{ compliance.clean }}/{{ compliance.tagged }} {% translate "doctrine losses on-fit" %}</div>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
+
+<div class="mb-6 grid gap-5 lg:grid-cols-2">
+  <!-- Top pilots (rolled up by main) -->
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "Top pilots" %}</h2></div>
+    <div class="divide-y divide-line/40">
+      {% for p in top_pilots %}
+        <div class="flex items-center gap-2.5 px-4 py-2 text-sm">
+          <span class="w-5 text-right text-xs text-faint">{{ forloop.counter }}</span>
+          <img src="{% eve_portrait p.character_id 32 %}" alt="" loading="lazy" class="h-6 w-6 rounded-full ring-1 ring-line">
+          <span class="flex-1 truncate text-muted">{% eve_name p.character_id %}</span>
+          <span class="data text-xs text-kill" title="{% translate 'kills' %}">{{ p.kills }}</span>
+          <span class="data text-xs text-loss" title="{% translate 'losses' %}">{{ p.losses }}</span>
+          <span class="data w-16 text-right text-xs text-gold">{{ p.isk_destroyed|isk }}</span>
+        </div>
+      {% empty %}
+        <div class="px-4 py-8 text-center text-sm text-faint">{% translate "No participants yet." %}</div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- Ships destroyed -->
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">{% translate "Ships destroyed" %}</h2></div>
+    <div class="divide-y divide-line/40">
+      {% for s in top_ships %}
+        <div class="flex items-center gap-2.5 px-4 py-2 text-sm">
+          <img src="{% eve_type_icon s.ship_type_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">
+          <span class="flex-1 truncate text-muted">{% type_name s.ship_type_id %}</span>
+          <span class="data text-faint">×{{ s.count }}</span>
+        </div>
+      {% empty %}
+        <div class="px-4 py-8 text-center text-sm text-faint">{% translate "No kills yet." %}</div>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+
+<!-- Recent matching killmails (reuses the public killfeed row) -->
+<section>
+  <h2 class="eyebrow text-gold mb-3">{% translate "Recent activity" %}</h2>
+  <div class="panel divide-y divide-line/70 overflow-hidden">
+    {% for km in recent %}
+      {% include "killboard/_feed_row.html" with km=km %}
+    {% empty %}
+      <div class="px-4 py-12 text-center text-sm text-faint">{% translate "No killmails match this campaign's scope yet." %}</div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

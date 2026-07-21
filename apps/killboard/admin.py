@@ -4,6 +4,7 @@ from django.contrib import admin
 
 from .models import (
     BattleReport,
+    CombatCampaign,
     IngestSourceHealth,
     KillboardSubscription,
     Killmail,
@@ -41,6 +42,14 @@ class WatchlistAdmin(admin.ModelAdmin):
 
 
 admin.site.register(BattleReport)
+
+
+@admin.register(CombatCampaign)
+class CombatCampaignAdmin(admin.ModelAdmin):
+    list_display = ("name", "start_time", "end_time", "visibility", "is_active", "operation")
+    list_filter = ("visibility", "is_active")
+    search_fields = ("name", "slug")
+    raw_id_fields = ("operation", "created_by")
 
 
 @admin.register(KillstreamState)

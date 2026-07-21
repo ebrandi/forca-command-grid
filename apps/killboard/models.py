@@ -312,6 +312,79 @@ class BattleReportSideOverride(models.Model):
         unique_together = ("report", "entity_type", "entity_id")
 
 
+class CombatCampaign(TimeStampedModel):
+    """KB-32 — a named, date-ranged, scoped combat campaign (WS-C2).
+
+    An ops-integrated campaign, not a saved filter: a name + window + a scope over
+    entities/systems/regions/sec-bands/doctrines + a kills|losses|both direction that
+    auto-aggregates every matching killmail on the home-corp board into a shareable
+    scoreboard. It can be tied to a scheduled operation, an SRP-budget figure, and a
+    doctrine-compliance target so the report carries the ops context a saved filter
+    cannot (see ``combat_campaigns.py`` for the matcher + aggregation).
+
+    Distinct from ``apps.campaigns`` (the OKR/delivery-tracking app) — this lives in the
+    killboard and is named ``CombatCampaign`` to avoid confusion.
+
+    ``scope`` is a JSON dict; every key is optional and an absent/empty dimension is a
+    wildcard. Recognised keys (validated on save by the officer form):
+      * ``direction``: ``"kills"`` | ``"losses"`` | ``"both"`` (default both)
+      * ``system_ids`` / ``region_ids``: lists of int
+      * ``sec_bands``: list of ``SecBand`` values
+      * ``doctrine_ids``: list of ``Doctrine`` ids (matches the loss/kill's doctrine fit)
+      * ``entity_side``: ``"victim"`` | ``"attacker"`` | ``"either"`` (default either)
+      * ``character_ids`` / ``corporation_ids`` / ``alliance_ids``: adversary lists,
+        matched on the ``entity_side`` the way the feed's entity filters do.
+    """
+
+    class Visibility(models.TextChoices):
+        MEMBER = "member", _("Members only")
+        PUBLIC = "public", _("Public (shareable link)")
+
+    name = models.CharField(max_length=200)
+    # KB-32: stable, unguessable permalink for a public campaign (WS-C1 slug pattern).
+    # Populated on first save; unique=True already indexes it, and we deliberately do NOT
+    # add db_index=True — a unique CharField needs no extra varchar_pattern_ops ``_like``
+    # index (we only ever look it up by exact match), which would just be write overhead.
+    slug = models.CharField(max_length=22, unique=True, blank=True)
+    description = models.TextField(blank=True)
+    start_time = models.DateTimeField()
+    # Open-ended when null: an ongoing campaign keeps matching fresh kills.
+    end_time = models.DateTimeField(null=True, blank=True)
+    visibility = models.CharField(
+        max_length=8, choices=Visibility.choices, default=Visibility.MEMBER
+    )
+    scope = models.JSONField(default=dict, blank=True)
+    is_active = models.BooleanField(default=True)
+    # Optional ops ties (the moat overlays).
+    operation = models.ForeignKey(
+        "operations.Operation", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="+",
+    )
+    srp_budget_isk = models.DecimalField(
+        max_digits=20, decimal_places=2, null=True, blank=True
+    )
+    doctrine_target_pct = models.PositiveSmallIntegerField(null=True, blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="+",
+    )
+
+    class Meta:
+        ordering = ["-is_active", "-start_time", "-created_at"]
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = _new_battle_slug()
+        super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return self.name
+
+    @property
+    def is_public(self) -> bool:
+        return self.visibility == self.Visibility.PUBLIC
+
+
 class CombatMetric(ProvenanceMixin):
     class EntityType(models.TextChoices):
         CHARACTER = "character", "Character"

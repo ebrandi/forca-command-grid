@@ -1263,6 +1263,288 @@ def battle_report_create(request: HttpRequest) -> HttpResponse:
     return redirect("killboard:battle_report_detail", pk=report.pk)
 
 
+# --- KB-32 combat campaigns (WS-C2) ------------------------------------------
+# Access map. List + detail (pk): member-gated. Public slug page: anonymous when the
+# campaign is PUBLIC (core scoreboard only). Create/edit/delete: officer-gated + audited.
+# The public list stays MEMBER-only on purpose — a public campaign is reachable by its
+# shareable slug link, not by being enumerated to anonymous visitors.
+def _parse_campaign_scope(request: HttpRequest) -> dict:
+    """A validated scope dict from the officer campaign form's fields.
+
+    Multi-value inputs mirror killfeed_config (sec-band checkboxes, id lists); entity
+    id lists accept comma/space-separated integers. Unknown tokens are dropped so a
+    hand-typed field can't inject junk into the stored scope.
+    """
+    from apps.doctrines.models import Doctrine
+
+    from . import killfeed_rules
+
+    def _ids(field: str) -> list[int]:
+        raw = (request.POST.get(field) or "").replace(",", " ").split()
+        return [int(tok) for tok in raw if tok.isdigit()]
+
+    direction = request.POST.get("direction")
+    if direction not in ("kills", "losses", "both"):
+        direction = "both"
+    entity_side = request.POST.get("entity_side")
+    if entity_side not in ("victim", "attacker", "either"):
+        entity_side = "either"
+
+    valid_bands = {v for v, _label in killfeed_rules.SEC_BANDS}
+    doctrine_ids = [int(d) for d in request.POST.getlist("doctrine_ids") if d.isdigit()]
+    valid_docs = set(
+        Doctrine.objects.filter(id__in=doctrine_ids).values_list("id", flat=True)
+    )
+    return {
+        "direction": direction,
+        "entity_side": entity_side,
+        "system_ids": _ids("system_ids"),
+        "region_ids": _ids("region_ids"),
+        "sec_bands": [b for b in request.POST.getlist("sec_bands") if b in valid_bands],
+        "doctrine_ids": [d for d in doctrine_ids if d in valid_docs],
+        "character_ids": _ids("character_ids"),
+        "corporation_ids": _ids("corporation_ids"),
+        "alliance_ids": _ids("alliance_ids"),
+    }
+
+
+def _parse_dt(raw: str | None):
+    from django.utils import timezone
+    from django.utils.dateparse import parse_datetime
+
+    raw = (raw or "").strip()
+    if not raw:
+        return None
+    dt = parse_datetime(raw)
+    if dt is None:
+        return None
+    if timezone.is_naive(dt):
+        dt = timezone.make_aware(dt, timezone.get_current_timezone())
+    return dt
+
+
+def _apply_campaign_post(request: HttpRequest, campaign) -> str | None:
+    """Validate + apply the campaign form POST onto ``campaign``. Returns an error
+    string on failure (nothing persisted), or ``None`` on success (caller saves)."""
+    from decimal import Decimal, InvalidOperation
+
+    from apps.operations.models import Operation
+
+    from .models import CombatCampaign
+
+    name = (request.POST.get("name") or "").strip()
+    if not name:
+        return gettext("Give the campaign a name.")
+    start = _parse_dt(request.POST.get("start_time"))
+    if start is None:
+        return gettext("Pick a valid start date and time.")
+    end = _parse_dt(request.POST.get("end_time"))
+    if end is not None and end < start:
+        return gettext("The end must be on or after the start (leave it blank for an ongoing campaign).")
+
+    visibility = request.POST.get("visibility")
+    if visibility not in CombatCampaign.Visibility.values:
+        visibility = CombatCampaign.Visibility.MEMBER
+
+    budget = None
+    raw_budget = (request.POST.get("srp_budget_isk") or "").replace(",", "").strip()
+    if raw_budget:
+        try:
+            budget = max(Decimal("0"), Decimal(raw_budget))
+        except InvalidOperation:
+            return gettext("Enter the SRP budget as a number, or leave it blank.")
+
+    target = None
+    raw_target = (request.POST.get("doctrine_target_pct") or "").strip()
+    if raw_target:
+        if not raw_target.isdigit() or int(raw_target) > 100:
+            return gettext("The doctrine target must be a whole percentage from 0 to 100.")
+        target = int(raw_target)
+
+    operation = None
+    raw_op = (request.POST.get("operation") or "").strip()
+    if raw_op.isdigit():
+        operation = Operation.objects.filter(pk=int(raw_op)).first()
+
+    campaign.name = name
+    campaign.description = (request.POST.get("description") or "").strip()
+    campaign.start_time = start
+    campaign.end_time = end
+    campaign.visibility = visibility
+    campaign.is_active = request.POST.get("is_active") == "1"
+    campaign.srp_budget_isk = budget
+    campaign.doctrine_target_pct = target
+    campaign.operation = operation
+    campaign.scope = _parse_campaign_scope(request)
+    return None
+
+
+def _campaign_form_context(request: HttpRequest, campaign) -> dict:
+    from apps.doctrines.models import Doctrine
+    from apps.operations.models import Operation
+
+    from . import killfeed_rules
+    from .models import CombatCampaign
+
+    return {
+        "campaign": campaign,
+        "editing": bool(campaign and campaign.pk),
+        "scope": (campaign.scope if campaign else {}) or {},
+        "visibility_choices": CombatCampaign.Visibility.choices,
+        "sec_bands": killfeed_rules.SEC_BANDS,
+        "doctrines": list(Doctrine.objects.order_by("name").values("id", "name")),
+        "operations": list(
+            Operation.objects.filter(target_at__isnull=False)
+            .exclude(status__in=[Operation.Status.DRAFT])
+            .order_by("-target_at")
+            .values("id", "name")[:100]
+        ),
+        "directions": [
+            ("both", gettext("Kills & losses")),
+            ("kills", gettext("Kills only")),
+            ("losses", gettext("Losses only")),
+        ],
+        "entity_sides": [
+            ("either", gettext("Either side")),
+            ("victim", gettext("As victim (our kills against them)")),
+            ("attacker", gettext("As attacker (their gang, our losses)")),
+        ],
+    }
+
+
+def _campaign_context(request: HttpRequest, campaign, *, public: bool) -> dict:
+    """Shared render context for the member (pk) and public (slug) campaign pages.
+
+    The SRP budget/spend and doctrine-compliance overlays are FitDeviation/SRP-derived
+    (sensitive), so they are exposed only to officers — an anonymous/public or a
+    below-officer member viewer never receives them. The core scoreboard (kills, losses,
+    ISK, efficiency, top pilots/ships, participation, recent feed) is public.
+    """
+    from . import combat_campaigns
+
+    is_officer = rbac.has_role(request.user, rbac.ROLE_OFFICER)
+    stats = combat_campaigns.campaign_stats(campaign)
+    return {
+        "campaign": campaign,
+        "public": public,
+        "stats": stats,
+        "top_pilots": stats["top_pilots_by_main"],
+        "top_ships": stats["top_ships"],
+        "recent": combat_campaigns.recent_matches(campaign),
+        "srp": stats["srp"] if is_officer else None,
+        "compliance": stats["compliance"] if is_officer else None,
+        "compliance_delta": stats["compliance_delta"] if is_officer else None,
+        "doctrine_target_pct": stats["doctrine_target_pct"] if is_officer else None,
+        "is_officer": is_officer,
+        "can_manage": is_officer and not public,
+        "operation": campaign.operation,
+        "permalink": request.build_absolute_uri(
+            reverse("killboard:campaign_public", args=[campaign.slug])
+        ),
+    }
+
+
+@login_required
+@role_required(rbac.ROLE_MEMBER)
+def combat_campaigns_list(request: HttpRequest) -> HttpResponse:
+    """Member list of every combat campaign (public ones are also here for members;
+    anonymous visitors reach a public campaign by its slug link, not this list)."""
+    from . import combat_campaigns
+    from .models import CombatCampaign
+
+    rows = []
+    for c in CombatCampaign.objects.all():
+        s = combat_campaigns.campaign_stats(c)
+        rows.append({
+            "campaign": c, "kills": s["kills"], "losses": s["losses"],
+            "isk_destroyed": s["isk_destroyed"], "isk_lost": s["isk_lost"],
+            "efficiency": round(s["efficiency"]),
+        })
+    return render(request, "killboard/campaigns.html", {"rows": rows})
+
+
+@login_required
+@role_required(rbac.ROLE_MEMBER)
+def combat_campaign_detail(request: HttpRequest, pk: int) -> HttpResponse:
+    from .models import CombatCampaign
+
+    campaign = get_object_or_404(CombatCampaign, pk=pk)
+    return render(request, "killboard/campaign_detail.html",
+                  _campaign_context(request, campaign, public=False))
+
+
+def combat_campaign_public(request: HttpRequest, slug: str) -> HttpResponse:
+    """Anonymous-viewable permalink for a PUBLIC campaign.
+
+    A member-only campaign 404s here so its existence isn't leaked; members reach it at
+    the member-gated pk URL instead. Officer overlays stay suppressed for anyone below
+    officer (an anon viewer always is), so the shared page carries no SRP/compliance data.
+    """
+    from .models import CombatCampaign
+
+    campaign = get_object_or_404(
+        CombatCampaign, slug=slug, visibility=CombatCampaign.Visibility.PUBLIC
+    )
+    return render(request, "killboard/campaign_detail.html",
+                  _campaign_context(request, campaign, public=True))
+
+
+@login_required
+@role_required(rbac.ROLE_OFFICER)
+def combat_campaign_create(request: HttpRequest) -> HttpResponse:
+    from .models import CombatCampaign
+
+    if request.method == "POST":
+        campaign = CombatCampaign(created_by=request.user)
+        err = _apply_campaign_post(request, campaign)
+        if err:
+            messages.error(request, err)
+            return redirect("killboard:campaign_create")
+        campaign.save()
+        audit_log(request.user, "combat_campaign.create", target_type="combat_campaign",
+                  target_id=str(campaign.pk), metadata={"name": campaign.name},
+                  ip=client_ip(request))
+        messages.success(request, gettext("Campaign created."))
+        return redirect("killboard:campaign_detail", pk=campaign.pk)
+    return render(request, "killboard/campaign_form.html",
+                  _campaign_form_context(request, None))
+
+
+@login_required
+@role_required(rbac.ROLE_OFFICER)
+def combat_campaign_edit(request: HttpRequest, pk: int) -> HttpResponse:
+    from .models import CombatCampaign
+
+    campaign = get_object_or_404(CombatCampaign, pk=pk)
+    if request.method == "POST":
+        err = _apply_campaign_post(request, campaign)
+        if err:
+            messages.error(request, err)
+            return redirect("killboard:campaign_edit", pk=pk)
+        campaign.save()
+        audit_log(request.user, "combat_campaign.edit", target_type="combat_campaign",
+                  target_id=str(campaign.pk), metadata={"name": campaign.name},
+                  ip=client_ip(request))
+        messages.success(request, gettext("Campaign updated."))
+        return redirect("killboard:campaign_detail", pk=pk)
+    return render(request, "killboard/campaign_form.html",
+                  _campaign_form_context(request, campaign))
+
+
+@login_required
+@role_required(rbac.ROLE_OFFICER)
+@require_POST
+def combat_campaign_delete(request: HttpRequest, pk: int) -> HttpResponse:
+    from .models import CombatCampaign
+
+    campaign = get_object_or_404(CombatCampaign, pk=pk)
+    audit_log(request.user, "combat_campaign.delete", target_type="combat_campaign",
+              target_id=str(pk), metadata={"name": campaign.name}, ip=client_ip(request))
+    campaign.delete()
+    messages.success(request, gettext("Campaign deleted."))
+    return redirect("killboard:campaigns")
+
+
 @login_required
 @role_required(rbac.ROLE_OFFICER)
 def killfeed_config(request: HttpRequest) -> HttpResponse:

@@ -27,6 +27,14 @@ urlpatterns = [
     path("battles/<int:pk>/", views.battle_report_detail, name="battle_report_detail"),
     path("battles/<int:pk>/recompute/", views.battle_report_recompute, name="battle_report_recompute"),
     path("battles/<int:pk>/side/move/", views.battle_report_side_move, name="battle_report_side_move"),
+    # KB-32 combat campaigns — static prefixes above the <int:killmail_id> catch-all;
+    # "campaigns/create" + "campaigns/r/<slug>" resolve before the <int:pk> routes.
+    path("campaigns/", views.combat_campaigns_list, name="campaigns"),
+    path("campaigns/create/", views.combat_campaign_create, name="campaign_create"),
+    path("campaigns/r/<str:slug>/", views.combat_campaign_public, name="campaign_public"),
+    path("campaigns/<int:pk>/", views.combat_campaign_detail, name="campaign_detail"),
+    path("campaigns/<int:pk>/edit/", views.combat_campaign_edit, name="campaign_edit"),
+    path("campaigns/<int:pk>/delete/", views.combat_campaign_delete, name="campaign_delete"),
     path("killfeed/settings/", views.killfeed_config, name="killfeed_config"),
     # KB-29 live feed: server-rendered single row the live JS prepends. Above the
     # <int:killmail_id> single-segment catch-all.
@@ -41,7 +49,8 @@ urlpatterns = [
     path("subscriptions/<int:sub_id>/toggle/", views.subscription_toggle, name="subscription_toggle"),
     path("subscriptions/<int:sub_id>/delete/", views.subscription_delete, name="subscription_delete"),
     path("subscriptions/<int:sub_id>/test/", views.subscription_test, name="subscription_test"),
-    path("subscriptions/<int:sub_id>/rss/regenerate/", views.subscription_rss_regenerate, name="subscription_rss_regenerate"),
+    path("subscriptions/<int:sub_id>/rss/regenerate/", views.subscription_rss_regenerate,
+         name="subscription_rss_regenerate"),
     # The token-authed RSS feed (no session). Static prefix, so it never shadows the catch-all.
     path("subscriptions/feed/<str:rss_token>/", views.subscription_feed, name="subscription_feed"),
     # Fit exports + comments — keep above the <int:killmail_id> single-segment catch-all.

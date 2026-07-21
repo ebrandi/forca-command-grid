@@ -513,25 +513,18 @@ def srp_liability(report: BattleReport, side: BattleReportSide) -> dict:
     return {"total": total, "eligible": eligible, "losses": losses}
 
 
-def doctrine_compliance(report: BattleReport, side: BattleReportSide) -> dict | None:
-    """Doctrine-compliance % for the home side's tagged losses (officer overlay).
+def compliance_over_losses(loss_queryset) -> dict | None:
+    """Doctrine-compliance % over a queryset of OUR losses (shared overlay core).
 
-    Compliant = a doctrine-tagged loss whose fit did not deviate; the ratio is
-    over TAGGED losses only (an untagged loss isn't a doctrine ship, so it can't be
-    off-doctrine). Returns ``None`` when this isn't the home side or nothing was
-    doctrine-tagged. Derived from FitDeviation, which is officer/owner-sensitive,
-    so the caller gates this to officers.
+    Compliant = a doctrine-tagged loss whose fit did not deviate; the ratio is over
+    TAGGED losses only (an untagged loss isn't a doctrine ship, so it can't be
+    off-doctrine). Returns ``None`` when nothing in the queryset was doctrine-tagged.
+    Derived from ``FitDeviation``, which is officer/owner-sensitive, so every caller
+    gates this to officers. Reused by KB-31 battle reports and KB-32 combat campaigns.
     """
-    home = _home_corp()
-    member_ids = {m.entity_id for m in side.members.all() if m.entity_type == _CORP}
-    if home not in member_ids:
-        return None
     tagged = 0
     clean = 0
-    for km in report.killmails.filter(
-        involves_home_corp=True, home_corp_role=Killmail.HomeRole.VICTIM,
-        victim_corporation_id=home, doctrine_fit__isnull=False,
-    ).select_related("fit_deviation"):
+    for km in loss_queryset.filter(doctrine_fit__isnull=False).select_related("fit_deviation"):
         tagged += 1
         dev = getattr(km, "fit_deviation", None)
         if dev is None or dev.is_clean:
@@ -539,6 +532,21 @@ def doctrine_compliance(report: BattleReport, side: BattleReportSide) -> dict | 
     if not tagged:
         return None
     return {"tagged": tagged, "clean": clean, "percent": round(clean / tagged * 100)}
+
+
+def doctrine_compliance(report: BattleReport, side: BattleReportSide) -> dict | None:
+    """Doctrine-compliance % for the home side's tagged losses (officer overlay).
+
+    Returns ``None`` when this isn't the home side or nothing was doctrine-tagged.
+    """
+    home = _home_corp()
+    member_ids = {m.entity_id for m in side.members.all() if m.entity_type == _CORP}
+    if home not in member_ids:
+        return None
+    return compliance_over_losses(report.killmails.filter(
+        involves_home_corp=True, home_corp_role=Killmail.HomeRole.VICTIM,
+        victim_corporation_id=home,
+    ))
 
 
 def op_overlap(report: BattleReport):

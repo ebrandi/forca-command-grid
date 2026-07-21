@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load eve %}
+{% load i18n %}
+{% block title %}{% translate "Combat campaigns" %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mt-2 mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow">{% translate "Intel" %}</p>
+    <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Combat campaigns" %}</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Named, date-ranged operations that auto-aggregate every matching kill and loss into one scoreboard — tied to a fleet op, an SRP budget, and a doctrine-compliance target." %}</p>
+  </div>
+  {% if is_officer %}
+    <a href="{% url 'killboard:campaign_create' %}" class="btn-primary shrink-0">＋ {% translate "New campaign" %}</a>
+  {% endif %}
+</header>
+
+<div class="grid gap-4 sm:grid-cols-2">
+  {% for row in rows %}
+    {% with c=row.campaign %}
+    <a href="{% url 'killboard:campaign_detail' c.pk %}" class="panel block overflow-hidden transition hover:border-gold/40">
+      <div class="border-b border-line px-4 py-3">
+        <div class="flex items-start justify-between gap-2">
+          <h2 class="font-semibold text-ink">{{ c.name }}</h2>
+          <div class="flex shrink-0 items-center gap-1.5">
+            {% if c.is_public %}<span class="chip" style="color:#3fb950">{% translate "Public" %}</span>{% else %}<span class="chip">{% translate "Members" %}</span>{% endif %}
+            {% if not c.is_active %}<span class="chip !text-faint">{% translate "Archived" %}</span>{% endif %}
+          </div>
+        </div>
+        <p class="mt-1 text-xs text-faint">
+          {{ c.start_time|date:"M j, Y" }} –
+          {% if c.end_time %}{{ c.end_time|date:"M j, Y" }}{% else %}<span class="text-gold/80">{% translate "ongoing" %}</span>{% endif %}
+        </p>
+        {% if c.description %}<p class="mt-1.5 line-clamp-2 text-xs text-muted">{{ c.description }}</p>{% endif %}
+      </div>
+      <div class="grid grid-cols-3 gap-2 px-4 py-3 text-center">
+        <div><div class="data text-lg text-kill">{{ row.kills }}</div><div class="text-xs text-faint">{% translate "kills" %}</div></div>
+        <div><div class="data text-lg text-loss">{{ row.losses }}</div><div class="text-xs text-faint">{% translate "losses" %}</div></div>
+        <div><div class="data text-lg text-ink">{{ row.efficiency }}%</div><div class="text-xs text-faint">{% translate "efficiency" %}</div></div>
+      </div>
+      {% if c.operation_id %}
+        <div class="border-t border-line/60 px-4 py-2 text-xs text-faint">⚑ {% translate "Linked to a fleet op" %}</div>
+      {% endif %}
+    </a>
+    {% endwith %}
+  {% empty %}
+    <div class="panel col-span-full px-4 py-16 text-center">
+      <p class="font-display text-lg text-muted">{% translate "No campaigns yet" %}</p>
+      <p class="mt-1 text-sm text-faint">{% if is_officer %}{% translate "Create one to start tracking a deployment, war, or home-defence push." %}{% else %}{% translate "Officers create campaigns to track deployments and wars." %}{% endif %}</p>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}
