@@ -1,4 +1,4 @@
-{% load eve i18n %}
+{% load eve i18n fitting_fmt %}
 {% comment %}Server-rendered ship telemetry. Shared by the editor (live recompute), the
 read-only detail view and the public share page — one renderer, so they can never disagree.
 Colours that aren't in the prebuilt CSS are inlined (see the prebuilt-Tailwind note).{% endcomment %}
@@ -25,11 +25,11 @@ Colours that aren't in the prebuilt CSS are inlined (see the prebuilt-Tailwind n
     {% if skill_label %}<span class="chip" title="{% translate 'Skill levels applied to this simulation' %}">🧠 {{ skill_label }}</span>{% endif %}
   </div>
   <div class="mt-3 grid gap-3" style="grid-template-columns:repeat(auto-fit,minmax(96px,1fr));">
-    <div><p class="text-3xl font-bold" style="color:#e0555a;line-height:1.1;">{{ o.total_dps }}</p>
+    <div><p class="text-3xl font-bold" style="color:#e0555a;line-height:1.1;">{{ o.total_dps|num }}</p>
       <p class="text-xs text-faint">{% translate "DPS" %}{% if not o.total_dps %} · {% translate "fit weapons + ammo" %}{% endif %}</p></div>
-    <div><p class="text-3xl font-bold" style="color:#4a90d9;line-height:1.1;">{{ d.ehp_total }}</p>
+    <div><p class="text-3xl font-bold" style="color:#4a90d9;line-height:1.1;">{{ d.ehp_total|num }}</p>
       <p class="text-xs text-faint">{% translate "EHP" %}</p></div>
-    <div><p class="text-3xl font-bold text-ink" style="line-height:1.1;">{{ m.propulsion_velocity|default:m.max_velocity }}</p>
+    <div><p class="text-3xl font-bold text-ink" style="line-height:1.1;">{{ m.propulsion_velocity|default:m.max_velocity|num }}</p>
       <p class="text-xs text-faint">{% translate "m/s" %}</p></div>
     <div><p class="text-3xl font-bold" style="line-height:1.1;color:{% if c.stable %}#4ade80{% else %}#e0a955{% endif %};">{% if c.stable %}{{ c.stable_pct }}%{% else %}{{ c.runtime_s|duration }}{% endif %}</p>
       <p class="text-xs text-faint">{% translate "Capacitor" %}</p></div>
@@ -58,28 +58,70 @@ Colours that aren't in the prebuilt CSS are inlined (see the prebuilt-Tailwind n
   <section class="rounded-lg border border-line bg-panel p-4">
     <p class="eyebrow">{% translate "Offence" %}</p>
     {% with o=telemetry.offence %}
-    <p class="mt-1 text-2xl font-bold text-ink">{{ o.total_dps }} <span class="text-sm font-normal text-faint">{% translate "DPS" %}</span></p>
+    <p class="mt-1 text-2xl font-bold text-ink">{{ o.total_dps|num }} <span class="text-sm font-normal text-faint">{% translate "DPS" %}</span></p>
     <div class="mt-2 space-y-1 text-sm">
-      <div class="flex justify-between"><span class="text-faint">{% translate "Turret / missile / drone" %}</span><span class="text-ink">{{ o.turret_dps }} / {{ o.missile_dps }} / {{ o.drone_dps }}</span></div>
-      <div class="flex justify-between"><span class="text-faint">{% translate "Volley" %}</span><span class="text-ink">{{ o.volley }}</span></div>
-      {% if o.target and o.missile_dps %}
-      <div class="flex justify-between"><span class="text-faint">{% translate "Applied missiles" %}{% if o.target.label %} · {{ o.target.label }}{% endif %}</span><span class="text-ink">{{ o.missile_dps_applied }} <span class="text-faint">({{ o.missile_application }}×)</span></span></div>
+      <div class="flex justify-between"><span class="text-faint">{% translate "Turret / missile / drone" %}</span><span class="text-ink">{{ o.turret_dps|num }} / {{ o.missile_dps|num }} / {{ o.drone_dps|num }}</span></div>
+      <div class="flex justify-between"><span class="text-faint">{% translate "Volley" %}</span><span class="text-ink">{{ o.volley|num }}</span></div>
+      {# ---- Burst / sustained / applied totals (WS-1/WS-2) ---- #}
+      {% if o.total_sustained_dps or o.total_sustained_dps == 0 %}
+      <div class="flex justify-between"><span class="text-faint" title="{% translate 'Long-run DPS once weapon reloads are paid.' %}">{% translate "Sustained" %}</span><span class="text-ink">{{ o.total_sustained_dps|num }}</span></div>
+      {% endif %}
+      {% if o.target %}
+      <div class="flex justify-between">
+        <span class="text-faint" title="{% translate 'DPS actually landing on the target profile (tracking, signature, range).' %}">{% translate "Applied" %}{% if not o.applied_complete %} *{% endif %}</span>
+        <span class="text-ink">{{ o.total_applied_dps|num }}{% if o.total_applied_dps_unassisted and o.total_applied_dps_unassisted != o.total_applied_dps %} <span class="text-faint" title="{% translate 'Without your painter/web assistance' %}">({% translate "unassisted" %} {{ o.total_applied_dps_unassisted|num }})</span>{% endif %}</span>
+      </div>
+      {% if not o.applied_complete %}
+      <p class="text-[11px] text-faint">{% translate "* Some weapons need a fuller target profile (distance / signature) to compute applied DPS." %}</p>
+      {% endif %}
       {% endif %}
       <div class="flex justify-between"><span class="text-faint">{% translate "EM/Th/Kin/Exp %" %}</span><span class="text-ink">{{ o.damage_distribution.em }}·{{ o.damage_distribution.thermal }}·{{ o.damage_distribution.kinetic }}·{{ o.damage_distribution.explosive }}</span></div>
     </div>
+    {# ---- Per-weapon breakdown: raw / sustained / applied ---- #}
+    {% if o.weapons %}
+    <table class="mt-3 w-full text-xs">
+      <thead><tr class="text-faint" style="text-align:left;">
+        <th>{% translate "Weapon" %}</th><th style="text-align:right;">{% translate "DPS" %}</th>
+        <th style="text-align:right;">{% translate "Sust." %}</th>
+        {% if o.target %}<th style="text-align:right;">{% translate "Applied" %}</th>{% endif %}
+      </tr></thead>
+      <tbody>
+        {% for w in o.weapons %}
+        <tr>
+          <td class="text-ink" style="max-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{% type_name w.type_id %}</td>
+          <td class="text-ink" style="text-align:right;">{{ w.dps|num }}</td>
+          <td class="text-faint" style="text-align:right;">{% if w.sustained_dps or w.sustained_dps == 0 %}{{ w.sustained_dps|num }}{% else %}—{% endif %}</td>
+          {% if o.target %}
+          <td style="text-align:right;">
+            {% if w.applied_dps or w.applied_dps == 0 %}<span class="text-ink">{{ w.applied_dps|num }}</span>{% if w.applied_multiplier %} <span class="text-faint">({{ w.applied_multiplier }}×)</span>{% endif %}
+            {% else %}<span class="text-faint" title="{% if w.applied_reason == 'target_profile_incomplete' %}{% translate 'Needs target distance + signature' %}{% elif w.applied_reason == 'target_hp_unknown' %}{% translate 'Needs target HP' %}{% elif w.applied_reason == 'fighter_application_not_modelled' %}{% translate 'Fighter application not modelled' %}{% else %}{{ w.applied_reason }}{% endif %}">—</span>{% endif %}
+          </td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
     {% endwith %}
   </section>
 
   <section class="rounded-lg border border-line bg-panel p-4">
     <p class="eyebrow">{% translate "Defence" %}</p>
     {% with d=telemetry.defence %}
-    <p class="mt-1 text-2xl font-bold text-ink">{{ d.ehp_total }} <span class="text-sm font-normal text-faint">{% translate "EHP" %}</span></p>
+    <p class="mt-1 text-2xl font-bold text-ink">{{ d.ehp_total|num }} <span class="text-sm font-normal text-faint">{% translate "EHP" %}</span></p>
     <table class="mt-2 w-full text-sm"><thead><tr class="text-faint" style="text-align:left;"><th></th><th>EM</th><th>Th</th><th>Kin</th><th>Exp</th></tr></thead><tbody>
       <tr><td class="text-faint">{% translate "Shield" %}</td><td class="text-ink">{{ d.layers.shield.resists.em }}</td><td class="text-ink">{{ d.layers.shield.resists.thermal }}</td><td class="text-ink">{{ d.layers.shield.resists.kinetic }}</td><td class="text-ink">{{ d.layers.shield.resists.explosive }}</td></tr>
       <tr><td class="text-faint">{% translate "Armor" %}</td><td class="text-ink">{{ d.layers.armor.resists.em }}</td><td class="text-ink">{{ d.layers.armor.resists.thermal }}</td><td class="text-ink">{{ d.layers.armor.resists.kinetic }}</td><td class="text-ink">{{ d.layers.armor.resists.explosive }}</td></tr>
       <tr><td class="text-faint">{% translate "Hull" %}</td><td class="text-ink">{{ d.layers.hull.resists.em }}</td><td class="text-ink">{{ d.layers.hull.resists.thermal }}</td><td class="text-ink">{{ d.layers.hull.resists.kinetic }}</td><td class="text-ink">{{ d.layers.hull.resists.explosive }}</td></tr>
     </tbody></table>
-    <p class="mt-1 text-xs text-faint">{% translate "HP" %}: {{ d.layers.shield.hp }} · {{ d.layers.armor.hp }} · {{ d.layers.hull.hp }}</p>
+    <p class="mt-1 text-xs text-faint">{% translate "HP" %}: {{ d.layers.shield.hp|num }} · {{ d.layers.armor.hp|num }} · {{ d.layers.hull.hp|num }}</p>
+    {% if d.active_tank.total_hps %}
+    <p class="mt-1 text-xs text-faint">{% translate "Active rep" %}: <span class="text-ink">{{ d.active_tank.total_hps|num }} {% translate "HP/s" %}</span></p>
+    {% endif %}
+    {% if d.incoming_rep.total_hps %}
+    <p class="mt-1 text-xs" style="color:#4ade80;">{% translate "Incoming remote rep" %}: {{ d.incoming_rep.total_hps|num }} {% translate "HP/s" %}
+      <span class="text-faint">({{ d.incoming_rep.shield_hps|num }}/{{ d.incoming_rep.armor_hps|num }}/{{ d.incoming_rep.hull_hps|num }})</span></p>
+    {% endif %}
     {% endwith %}
   </section>
 
@@ -89,8 +131,11 @@ Colours that aren't in the prebuilt CSS are inlined (see the prebuilt-Tailwind n
     <p class="mt-1 text-lg font-bold" style="color:{% if c.stable %}#4ade80{% else %}#e0a955{% endif %};">
       {% if c.stable %}{% translate "Stable" %} {{ c.stable_pct }}%{% else %}{% translate "Unstable" %}{% if c.runtime_s %} · {{ c.runtime_s|duration }}{% endif %}{% endif %}</p>
     <div class="mt-2 space-y-1 text-sm">
-      <div class="flex justify-between"><span class="text-faint">{% translate "Capacity" %}</span><span class="text-ink">{{ c.capacity }} GJ</span></div>
-      <div class="flex justify-between"><span class="text-faint">{% translate "Peak recharge / use" %}</span><span class="text-ink">{{ c.peak_recharge }} / {{ c.usage }} GJ/s</span></div>
+      <div class="flex justify-between"><span class="text-faint">{% translate "Capacity" %}</span><span class="text-ink">{{ c.capacity|num }} GJ</span></div>
+      <div class="flex justify-between"><span class="text-faint">{% translate "Peak recharge / use" %}</span><span class="text-ink">{{ c.peak_recharge|num }} / {{ c.usage|num }} GJ/s</span></div>
+      {% if c.incoming_pressure %}
+      <div class="flex justify-between"><span class="text-faint" title="{% translate 'Capacitor drained by projected neuts/nos' %}">{% translate "Incoming neut" %}</span><span style="color:#e0555a;">{{ c.incoming_pressure|num }} GJ/s</span></div>
+      {% endif %}
     </div>
     {% endwith %}
   </section>
@@ -99,11 +144,14 @@ Colours that aren't in the prebuilt CSS are inlined (see the prebuilt-Tailwind n
     <p class="eyebrow">{% translate "Mobility" %}</p>
     {% with m=telemetry.mobility %}
     <div class="mt-2 space-y-1 text-sm">
-      <div class="flex justify-between"><span class="text-faint">{% translate "Max velocity" %}</span><span class="text-ink">{{ m.max_velocity }} m/s</span></div>
-      <div class="flex justify-between"><span class="text-faint">{% translate "With prop" %}</span><span class="text-ink">{{ m.propulsion_velocity }} m/s</span></div>
-      <div class="flex justify-between"><span class="text-faint">{% translate "Align time" %}</span><span class="text-ink">{{ m.align_time_s }} s</span></div>
-      <div class="flex justify-between"><span class="text-faint">{% translate "Signature" %}</span><span class="text-ink">{{ m.signature_radius }} m</span></div>
-      <div class="flex justify-between"><span class="text-faint">{% translate "Warp speed" %}</span><span class="text-ink">{{ m.warp_speed }} AU/s</span></div>
+      <div class="flex justify-between"><span class="text-faint">{% translate "Max velocity" %}</span><span class="text-ink">{{ m.max_velocity|num }} m/s</span></div>
+      <div class="flex justify-between"><span class="text-faint">{% translate "With prop" %}</span><span class="text-ink">{{ m.propulsion_velocity|num }} m/s</span></div>
+      <div class="flex justify-between"><span class="text-faint">{% translate "Align time" %}</span><span class="text-ink">{{ m.align_time_s|num:2 }} s</span></div>
+      <div class="flex justify-between"><span class="text-faint">{% translate "Signature" %}</span><span class="text-ink">{{ m.signature_radius|num }} m</span></div>
+      <div class="flex justify-between"><span class="text-faint">{% translate "Warp speed" %}</span><span class="text-ink">{{ m.warp_speed|num:2 }} AU/s</span></div>
+      {% if m.warp_time_s %}
+      <div class="flex justify-between"><span class="text-faint" title="{% translate 'Time to align and cross the set warp distance' %}">{% translate "Warp time" %}{% if m.warp_distance_au %} · {{ m.warp_distance_au|num }} AU{% endif %}</span><span class="text-ink">{{ m.warp_time_s|num }} s</span></div>
+      {% endif %}
     </div>
     {% endwith %}
   </section>
@@ -112,13 +160,25 @@ Colours that aren't in the prebuilt CSS are inlined (see the prebuilt-Tailwind n
     <p class="eyebrow">{% translate "Targeting" %}</p>
     {% with t=telemetry.targeting %}
     <div class="mt-2 space-y-1 text-sm">
-      <div class="flex justify-between"><span class="text-faint">{% translate "Range" %}</span><span class="text-ink">{{ t.max_target_range }} m</span></div>
+      <div class="flex justify-between"><span class="text-faint">{% translate "Range" %}</span><span class="text-ink">{{ t.max_target_range|rangem }}</span></div>
       <div class="flex justify-between"><span class="text-faint">{% translate "Locked targets" %}</span><span class="text-ink">{{ t.max_locked_targets }}</span></div>
-      <div class="flex justify-between"><span class="text-faint">{% translate "Scan resolution" %}</span><span class="text-ink">{{ t.scan_resolution }} mm</span></div>
-      <div class="flex justify-between"><span class="text-faint">{% translate "Sensor strength" %}</span><span class="text-ink">{{ t.sensor_strength }}</span></div>
+      <div class="flex justify-between"><span class="text-faint">{% translate "Scan resolution" %}</span><span class="text-ink">{{ t.scan_resolution|num }} mm</span></div>
+      <div class="flex justify-between"><span class="text-faint">{% translate "Sensor strength" %}</span><span class="text-ink">{{ t.sensor_strength|num }}</span></div>
+      {% if t.lock_time_s %}
+      <div class="flex justify-between"><span class="text-faint" title="{% translate 'Time to lock the target profile' %}">{% translate "Lock time" %}</span><span class="text-ink">{{ t.lock_time_s|num:2 }} s</span></div>
+      {% endif %}
     </div>
     {% endwith %}
   </section>
+
+  {% if telemetry.ship.mode %}
+  <section class="rounded-lg border border-line bg-panel p-4">
+    <p class="eyebrow">{% translate "Configuration" %}</p>
+    <div class="mt-2 space-y-1 text-sm">
+      <div class="flex justify-between gap-2"><span class="text-faint">{% translate "Tactical mode" %}</span><span class="text-ink" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ telemetry.ship.mode.name }}</span></div>
+    </div>
+  </section>
+  {% endif %}
 
   {% if telemetry.ewar.count %}
   <section class="rounded-lg border border-line bg-panel p-4">
@@ -127,7 +187,92 @@ Colours that aren't in the prebuilt CSS are inlined (see the prebuilt-Tailwind n
       {% for e in telemetry.ewar.modules %}
       <li class="flex justify-between gap-2">
         <span class="text-ink" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ e.name }}</span>
-        <span class="text-faint" style="flex:none;">{% if e.per_second %}{{ e.per_second }} GJ/s{% elif e.kind == 'sensor_dampener' %}−{{ e.lock_range_bonus }}/{{ e.scan_res_bonus }}%{% elif e.kind == 'ecm' %}{{ e.strength }} ({{ e.jam_type }}){% else %}{{ e.strength }} {{ e.unit }}{% endif %}{% if e.optimal_m %} · {{ e.optimal_m }}m{% endif %}</span>
+        <span class="text-faint" style="flex:none;text-align:right;">
+          {% if e.per_second %}{{ e.per_second|num }} GJ/s{% elif e.kind == 'sensor_dampener' %}−{{ e.strengths.lock_range_bonus|num }}/{{ e.strengths.scan_res_bonus|num }}%{% elif e.kind == 'target_painter' %}+{{ e.strengths.signature_bonus|num }}%{% elif e.kind == 'stasis_web' %}{{ e.strengths.speed_bonus|num }}%{% elif e.kind == 'warp_disruption' %}{{ e.strengths.warp_scramble_strength|num }} {% translate "pts" %}{% elif e.kind == 'tracking_disruptor' %}{{ e.strengths.tracking_bonus|num }}% {% translate "track" %}{% elif e.kind == 'guidance_disruptor' %}{{ e.strengths.explosion_velocity_bonus|num }}% {% translate "expl vel" %}{% elif e.kind == 'ecm' or e.kind == 'ecm_burst' %}{% if e.jam_chance != None %}{{ e.jam_chance|floatformat:"-2" }} {% translate "jam" %}{% else %}{% translate "ECM" %}{% endif %}{% endif %}{% if e.optimal_m %} · {{ e.optimal_m|rangem }}{% elif e.burst_range_m %} · {{ e.burst_range_m|rangem }}{% endif %}
+        </span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% if telemetry.ewar.jam %}
+      {% if telemetry.ewar.jam.combined_chance != None %}
+      <p class="mt-2 text-xs" style="color:#e0a955;">{% translate "Combined jam chance / cycle" %}: {{ telemetry.ewar.jam.combined_chance|floatformat:"-2" }} <span class="text-faint">({{ telemetry.ewar.jam.jammer_count }} {% translate "jammers" %})</span></p>
+      {% else %}
+      <p class="mt-2 text-xs text-faint">{% translate "Set a target sensor strength and type to compute jam chance." %}</p>
+      {% endif %}
+    {% endif %}
+    {% with ot=telemetry.ewar.ewar_on_target %}
+    {% if ot %}{% if ot.painter_sig_pct or ot.web_velocity_pct %}
+    <p class="mt-2 text-xs text-faint">{% translate "On target" %}:
+      {% if ot.painter_sig_pct %}<span class="text-ink">+{{ ot.painter_sig_pct|num }}% {% translate "sig" %}</span> ({{ ot.base.signature|num }}→{{ ot.adjusted.signature|num }} m){% endif %}
+      {% if ot.web_velocity_pct %} · <span class="text-ink">{{ ot.web_velocity_pct|num }}% {% translate "vel" %}</span> ({{ ot.base.velocity|num }}→{{ ot.adjusted.velocity|num }} m/s){% endif %}
+    </p>
+    {% endif %}{% endif %}
+    {% endwith %}
+  </section>
+  {% endif %}
+
+  {% if telemetry.industry %}
+  <section class="rounded-lg border border-line bg-panel p-4">
+    <p class="eyebrow">{% translate "Mining" %}</p>
+    <p class="mt-1 text-2xl font-bold text-ink">{{ telemetry.industry.m3_per_hour_total|num }} <span class="text-sm font-normal text-faint">{% translate "m³/hour" %}</span></p>
+    <table class="mt-2 w-full text-xs">
+      <thead><tr class="text-faint" style="text-align:left;"><th>{% translate "Module" %}</th><th style="text-align:right;">{% translate "m³/cycle" %}</th><th style="text-align:right;">{% translate "m³/hour" %}</th></tr></thead>
+      <tbody>
+        {% for mod in telemetry.industry.modules %}
+        <tr>
+          <td class="text-ink" style="max-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ mod.name }}{% if mod.quantity %} ×{{ mod.quantity }}{% endif %}</td>
+          <td class="text-faint" style="text-align:right;">{{ mod.yield_per_cycle|num }}</td>
+          <td class="text-ink" style="text-align:right;">{{ mod.m3_per_hour|num }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+  {% endif %}
+
+  {% if telemetry.projected.count %}
+  <section class="rounded-lg border border-line bg-panel p-4">
+    <p class="eyebrow">{% translate "Projected on us" %}</p>
+    <ul class="mt-2 space-y-1 text-sm">
+      {% for p in telemetry.projected.modules %}
+      <li class="flex justify-between gap-2">
+        <span class="text-ink" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ p.name }}{% if p.quantity > 1 %} ×{{ p.quantity }}{% endif %}</span>
+        <span class="text-faint" style="flex:none;text-align:right;">{{ p.effect_summary }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {% if telemetry.boosts.count %}
+  <section class="rounded-lg border border-line bg-panel p-4">
+    <p class="eyebrow">{% translate "Fleet boosts" %}</p>
+    <ul class="mt-2 space-y-1 text-sm">
+      {% for b in telemetry.boosts.boosts %}
+      <li>
+        <span class="text-ink" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">{{ b.name }}</span>
+        <span class="text-faint text-xs">{% for buff in b.buffs %}{{ buff.strength_pct|num }}%{% if not buff.applied %} ⚠{% endif %}{% if not forloop.last %} · {% endif %}{% endfor %}</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {% if telemetry.fighters.squadrons %}
+  <section class="rounded-lg border border-line bg-panel p-4">
+    <p class="eyebrow">{% translate "Fighters" %}</p>
+    {% with ft=telemetry.fighters.totals %}
+    <p class="mt-1 text-2xl font-bold text-ink">{{ ft.fighter_dps|num }} <span class="text-sm font-normal text-faint">{% translate "DPS" %}</span></p>
+    <div class="mt-2 space-y-1 text-sm">
+      <div class="flex justify-between"><span class="text-faint">{% translate "Tubes" %}</span><span class="text-ink">{{ ft.tubes_used }}/{{ ft.tubes_total }}</span></div>
+      <div class="flex justify-between"><span class="text-faint">{% translate "Bay" %}</span><span class="text-ink">{{ ft.bay_used_m3|num }}/{{ ft.bay_capacity_m3|num }} m³</span></div>
+    </div>
+    {% endwith %}
+    <ul class="mt-2 space-y-1 text-sm">
+      {% for sq in telemetry.fighters.squadrons %}
+      <li class="flex justify-between gap-2">
+        <span class="text-ink" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ sq.name }} ×{{ sq.count }}{% if sq.role %} <span class="text-faint">· {{ sq.role }}</span>{% endif %}</span>
+        <span class="text-faint" style="flex:none;">{{ sq.squadron_dps|num }} {% translate "DPS" %}</span>
       </li>
       {% endfor %}
     </ul>

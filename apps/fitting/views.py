@@ -275,6 +275,12 @@ def import_eft(request):
     fit = services.create_fit(request.user, name=parsed["fit_name"],
                               ship_type_id=parsed["ship_type_id"], items=parsed["items"],
                               origin="eft")
+    # API-5: surface names/attributes the importer could not resolve (renamed/removed items,
+    # unknown mutated-attribute names) so a silently-truncated fit is not passed off as clean.
+    # Carried across the redirect in the session, keyed to this fit, shown once on the editor.
+    unresolved = parsed.get("unresolved") or []
+    if unresolved:
+        request.session["fit_import_unresolved"] = {"fit": fit.pk, "names": unresolved[:50]}
     return redirect("fitting:detail", pk=fit.pk)
 
 
@@ -323,6 +329,11 @@ def detail(request, pk):
     skills = _skill_profile(request, request.GET.get("skills"))
     op = _op_profile(request)
     telemetry = services.evaluate(fit.ship_type_id, rev.items if rev else [], skills, op)
+    # API-5: a one-shot import-warning banner (unresolved EFT names / mutated attrs), consumed
+    # from the session so it shows once for the fit it belongs to and never sticks.
+    import_warning = request.session.pop("fit_import_unresolved", None)
+    import_unresolved = (import_warning or {}).get("names") if \
+        (import_warning or {}).get("fit") == fit.pk else None
     context = {
         "fit": fit, "revision": rev, "items": items, "telemetry": telemetry,
         "editable": fit.can_edit(request.user),
@@ -336,6 +347,11 @@ def detail(request, pk):
         "applied_skills": services.skill_readout(fit.ship_type_id, rev.items if rev else [], skills),
         "hull_slots": _hull_slots(telemetry),
         "show_skills": True,
+        "import_unresolved": import_unresolved,
+        # Tactical-destroyer modes for this hull (empty for any other ship) + the fleet-boost
+        # charge catalogue, both server-rendered so the editor needs no extra round-trip.
+        "ship_modes": services.ship_tactical_modes(fit.ship_type_id),
+        "burst_charges": services.command_burst_charges(),
         "revisions": list(fit.revisions.all()[:30]),
         # Supply actions: any corp member may raise a task/project; drafting a PO is
         # leadership. The buttons only render when the fit has a real stock shortfall.
@@ -415,10 +431,14 @@ def save(request, pk):
     if request.POST.get("name"):
         fit.name = request.POST["name"][:200]
         fit.save(update_fields=["name", "updated_at"])
-    services.save_revision(fit, ship_type_id=ship_type_id, items=items, user=request.user,
-                           change_summary=request.POST.get("summary", "")[:280])
+    before = fit.current_revision_id
+    rev = services.save_revision(fit, ship_type_id=ship_type_id, items=items, user=request.user,
+                                 change_summary=request.POST.get("summary", "")[:280], dedup=True)
+    # API-10: an identical payload short-circuits to the current revision (no duplicate row).
+    changed = rev.pk != before
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-        return JsonResponse({"ok": True, "fit": fit.pk})
+        return JsonResponse({"ok": True, "fit": fit.pk, "changed": changed,
+                             "revision": rev.revision_number})
     return redirect("fitting:detail", pk=fit.pk)
 
 
@@ -653,25 +673,69 @@ def supply_po(request, pk):
 # --------------------------------------------------------------------------- #
 # Search + public share
 # --------------------------------------------------------------------------- #
+# Which SDE categories each editor rack draws from. The default racks (high/med/low/rig/drone)
+# share the module/drone/subsystem pool and narrow client-side by inferred slot; the extra racks
+# widen to their own categories (implants/boosters live in category 20; cargo may hold ammo).
+_SEARCH_CATEGORIES = {
+    "subsystem": (32,),
+    "implant": (20,),
+    "booster": (20,),
+    "fighter": (87,),                    # fighter squadrons (carriers/supers)
+    "cargo": (7, 8, 18),                 # spare modules / ammo / drones a pilot stows in cargo
+}
+_SEARCH_DEFAULT_CATEGORIES = (7, 18, 32)  # module / drone / subsystem
+
+
 @login_required
 @feature_required("tochas_lab")
 def search_modules(request):
     """Module search for the editor. Restricted to things that fit a slot — modules, drones,
-    subsystems — so ammo (loaded into weapons) and ships never show up as fittable items.
-    Each result carries its inferred rack (a turret lands in a high slot) and whether it
-    accepts ammo (so the editor can offer an ammo loader)."""
+    subsystems (and, when a rack asks, implants/boosters/cargo) — so ships never show up as
+    fittable items. Each result carries its inferred rack (a turret lands in a high slot) and
+    whether it accepts ammo (so the editor can offer an ammo loader).
+
+    An optional ``slot`` names the rack being filled; for the extra racks (subsystem/implant/
+    booster/cargo) it both widens the category filter and stamps the result's slot to that rack
+    (their SDE slot inference does not name these racks), so the client can add them directly."""
     from apps.sde.models import SdeType
+    slot = (request.GET.get("slot") or "").strip().lower()
+    categories = _SEARCH_CATEGORIES.get(slot, _SEARCH_DEFAULT_CATEGORIES)
     results = search_types(request.GET.get("q", ""), limit=40)
     cats = dict(SdeType.objects.filter(type_id__in={r["type_id"] for r in results})
                 .values_list("type_id", "group__category_id"))
-    results = [r for r in results if cats.get(r["type_id"]) in (7, 18, 32)][:20]  # module/drone/subsystem
+    results = [r for r in results if cats.get(r["type_id"]) in categories][:20]
     ids = {r["type_id"] for r in results}
     slots = services.infer_slots(ids)
     takers = services.charge_takers(ids)
+    force_slot = slot if slot in _SEARCH_CATEGORIES else None
     for r in results:
-        r["slot"] = slots.get(r["type_id"], "low")
+        r["slot"] = force_slot or slots.get(r["type_id"], "low")
         r["takes_charge"] = r["type_id"] in takers
     return JsonResponse({"results": results})
+
+
+@login_required
+@feature_required("tochas_lab")
+def search_projected(request):
+    """Modules valid to PROJECT onto a fit (ewar / energy warfare / remote assistance) — the
+    projected-effects panel's picker. Scoped server-side to target-effect modules so a
+    non-projecting module (a Gyrostabilizer) is never offered."""
+    results = services.search_projected_modules(request.GET.get("q", ""))
+    for r in results:
+        r["slot"] = "projected"
+    return JsonResponse({"results": results})
+
+
+@login_required
+@feature_required("tochas_lab")
+def module_attrs(request):
+    """A module's own dogma attributes (id, name, base value) for the mutated-attribute editor
+    (``?type_id=<id>``). A mutation only re-rolls an attribute the base type carries."""
+    try:
+        type_id = int(request.GET.get("type_id", 0))
+    except (TypeError, ValueError):
+        return JsonResponse({"results": []})
+    return JsonResponse({"results": services.module_attribute_defs(type_id)})
 
 
 @login_required

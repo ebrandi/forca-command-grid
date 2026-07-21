@@ -372,10 +372,35 @@ def _next_revision_number(fit: Fit) -> int:
     return (last or 0) + 1
 
 
+def _revision_matches(rev: FitRevision | None, ship_type_id: int, items: list[dict]) -> bool:
+    """Whether a stored revision is the SAME loadout as ``(ship_type_id, items)`` — a canonical,
+    order-independent comparison via :meth:`FitInput.hash` (the same sha256 the engine cache
+    keys on). Used for save-dedup (API-10): the hash folds every engine-relevant field (slot,
+    state, charge, quantity, mutated overrides, mode/projected/boost/fighter markers), so a
+    re-save with no real change short-circuits instead of appending an identical revision."""
+    if rev is None:
+        return False
+    if int(rev.ship_type_id) != int(ship_type_id):
+        return False
+    try:
+        return (fit_input_from_items(rev.ship_type_id, rev.items or []).hash()
+                == fit_input_from_items(ship_type_id, items or []).hash())
+    except (KeyError, TypeError, ValueError):
+        return False
+
+
 @transaction.atomic
 def save_revision(fit: Fit, *, ship_type_id: int, items: list[dict], user,
-                  change_summary: str = "", notes: str = "") -> FitRevision:
-    """Append a new immutable revision and point the fit at it. Never mutates history."""
+                  change_summary: str = "", notes: str = "",
+                  dedup: bool = False) -> FitRevision:
+    """Append a new immutable revision and point the fit at it. Never mutates history.
+
+    With ``dedup=True`` (the interactive Save button), a payload identical to the fit's current
+    revision returns that revision unchanged instead of appending a duplicate — so repeatedly
+    clicking Save, or a no-op edit, never inflates the revision history. Import/fork/restore
+    callers keep ``dedup=False`` (they always intend a new revision)."""
+    if dedup and _revision_matches(fit.current_revision, ship_type_id, items):
+        return fit.current_revision
     engine = FittingEngine()
     rev = FitRevision.objects.create(
         fit=fit, revision_number=_next_revision_number(fit), ship_type_id=int(ship_type_id),
@@ -574,6 +599,87 @@ def compatible_charges(weapon_type_id: int, query: str, limit: int = 20) -> list
     return rows[:limit]
 
 
+# --------------------------------------------------------------------------- #
+# Editor catalogues — modes, fleet-boost charges, mutated-attr defs, projected search
+# --------------------------------------------------------------------------- #
+# A tactical destroyer's three modes are SdeTypes in the "Ship Modifiers" group, named for
+# the hull ("Svipul Defense Mode" …). Data-driven — no per-hull table.
+_SHIP_MODIFIERS_GROUP = "Ship Modifiers"
+
+
+def ship_tactical_modes(ship_type_id: int) -> list[dict]:
+    """The tactical-destroyer modes selectable for a hull, or ``[]`` for any other ship.
+
+    Modes live in the "Ship Modifiers" group and are named after the hull, so match by the
+    hull's own name — nothing hard-coded per hull. Each entry is ``{type_id, name}``; the UI
+    renders them as a dropdown and writes the choice as a ``slot="mode"`` items entry."""
+    hull = SdeType.objects.filter(type_id=int(ship_type_id)).values_list("name", flat=True).first()
+    if not hull:
+        return []
+    rows = (SdeType.objects
+            .filter(group__name=_SHIP_MODIFIERS_GROUP, name__istartswith=hull)
+            .values("type_id", "name").order_by("name"))
+    return [{"type_id": r["type_id"], "name": r["name"]} for r in rows]
+
+
+def command_burst_charges() -> list[dict]:
+    """The fleet command-burst charges a pilot can simulate being boosted by, grouped by burst
+    family (Shield/Armor/Skirmish/Information/Mining). Each charge names the warfare buff(s) it
+    grants; the UI toggles one per family and writes a ``slot="boost"`` items entry. Data-driven
+    — every published charge whose group is a "… Burst Charges" group."""
+    rows = (SdeType.objects
+            .filter(published=True, group__name__icontains="Burst Charge")
+            .values("type_id", "name", "group__name").order_by("group__name", "name"))
+    return [{"type_id": r["type_id"], "name": r["name"], "group": r["group__name"]} for r in rows]
+
+
+def module_attribute_defs(type_id: int) -> list[dict]:
+    """A module's own dogma attributes (id, name, base value) for the mutated-attribute editor.
+
+    A mutation only ever re-rolls an attribute the base type already carries, so the editor
+    offers exactly those. Returns ``[]`` for an unknown type."""
+    attrs = dict(SdeTypeAttribute.objects.filter(type_id=int(type_id))
+                 .values_list("attribute_id", "value"))
+    if not attrs:
+        return []
+    names = dict(SdeDogmaAttribute.objects.filter(attribute_id__in=list(attrs))
+                 .values_list("attribute_id", "name"))
+    out = [{"attribute_id": aid, "name": names.get(aid, str(aid)), "value": val}
+           for aid, val in attrs.items() if aid in names]
+    out.sort(key=lambda a: a["name"])
+    return out
+
+
+# Modules that can be meaningfully PROJECTED onto a fit carry an offensive or assistance
+# effect (ewar, energy warfare, remote reps) — the same category-2 "target" effects the
+# engine's projected evaluator honours. Search is scoped to those so the projected picker
+# never offers a Gyrostabilizer.
+def search_projected_modules(query: str, limit: int = 20) -> list[dict]:
+    """Modules valid to project onto a fit — those carrying an offensive/assistance (target)
+    effect: ewar, neut/nos, remote reps. Name-matched, category-7 modules only."""
+    from apps.sde.models import SdeDogmaEffect, SdeTypeEffect
+
+    query = (query or "").strip()
+    if len(query) < 2:
+        return []
+    cand = list(SdeType.objects.filter(
+        name__icontains=query, published=True, group__category_id=7,
+    ).values("type_id", "name")[: limit * 4])
+    if not cand:
+        return []
+    ids = [c["type_id"] for c in cand]
+    target_effects = set(SdeDogmaEffect.objects.filter(
+        is_offensive=True).values_list("effect_id", flat=True)) | set(
+        SdeDogmaEffect.objects.filter(is_assistance=True).values_list("effect_id", flat=True))
+    has_target = set(SdeTypeEffect.objects.filter(
+        type_id__in=ids, effect_id__in=list(target_effects),
+    ).values_list("type_id", flat=True))
+    low = query.lower()
+    out = [c for c in cand if c["type_id"] in has_target]
+    out.sort(key=lambda r: (not r["name"].lower().startswith(low), r["name"]))
+    return out[:limit]
+
+
 def _extract_mutations(lines: list[str]) -> tuple[list[str], dict[int, dict[int, float]], list[str]]:
     """WS-11: pull pyfa-style mutation blocks out of an EFT body, returning the remaining
     (rack) lines, a ``{ref: {attr_id: value}}`` map, and any unresolved attribute names.
@@ -768,6 +874,12 @@ def export_eft(ship_type_id: int, items: list[dict], fit_name: str = "Fit") -> s
             ref += 1
         if slot in ("drone", "fighter"):
             lines.append(f"{name} x{it.get('quantity', 1)}{suffix}")
+        elif slot == "cargo":
+            # Cargo items carry a real stack quantity (spare ammo/modules/scripts). pyfa renders
+            # each cargo line as "Name xN"; mirror it so the count round-trips through import_eft
+            # (which reads the trailing xN via _QTY_RE). A single item stays a bare name.
+            qty = int(it.get("quantity", 1) or 1)
+            lines.append(f"{name} x{qty}{suffix}" if qty > 1 else f"{name}{suffix}")
         elif it.get("charge_type_id"):
             lines.append(
                 f"{name}, {names.get(int(it['charge_type_id']), '')}".rstrip(", ") + suffix)
@@ -813,10 +925,15 @@ def items_from_esi_fitting(esi: dict) -> tuple[int, list[dict]]:
     for i in raw:
         tid = int(i["type_id"])
         bucket = slot_bucket(int(i["flag"]))
-        slot = bucket if bucket in ("high", "med", "low", "rig", "subsystem", "drone", "cargo") \
+        # "implant" (ESI flag 89) must survive as an implant, not fall through to SDE slot
+        # inference — implants carry no slot-defining effect, so infer_slots would mis-file
+        # one as a low-slot module (a killmail-imported implant then silently buffs the ship
+        # as if fitted low). The engine evaluates implants as their own kind, so keep the bucket.
+        slot = bucket if bucket in ("high", "med", "low", "rig", "subsystem", "drone",
+                                    "cargo", "implant") \
             else slots.get(tid, "cargo")
         # Cargo (killmail loot) must never influence telemetry — import it inert, the
-        # same way EFT import does. Racked modules and drones start active.
+        # same way EFT import does. Racked modules, drones and implants start active.
         state = "offline" if slot == "cargo" else "active"
         items.append({"type_id": tid, "slot": slot, "state": state,
                       "charge_type_id": None, "quantity": int(i.get("quantity", 1))})
@@ -891,6 +1008,13 @@ def stock_coverage(ship_type_id: int, items: list[dict]) -> dict:
         if is_extra_item(it):
             continue                            # a mode / projected module is not stockable
         counts[int(it["type_id"])] = counts.get(int(it["type_id"]), 0) + int(it.get("quantity", 1))
+        # Charges/ammo count toward stock too (mirrors price_fit): a hull+modules fit with no
+        # corp ammo must NOT read "all components available". A charge is counted once per
+        # loaded module (the launcher/turret count), matching how pricing counts it. Fighter
+        # squadrons are ordinary items above (quantity = squadron size) so they are covered.
+        if it.get("charge_type_id"):
+            cid = int(it["charge_type_id"])
+            counts[cid] = counts.get(cid, 0) + 1
     have = available(list(counts))
     names = _type_names(counts)
     rows, missing = [], []

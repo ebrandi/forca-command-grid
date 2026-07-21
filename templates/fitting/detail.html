@@ -27,6 +27,7 @@
       </select>
       {% if editable %}
       <button type="button" class="btn-gold" @click="save()" x-text="dirty ? '{% translate "Save *" %}' : '{% translate "Save" %}'">{% translate "Save" %}</button>
+      <span x-show="saveNote" x-cloak x-text="saveNote" class="text-xs text-faint"></span>
       {% endif %}
       <form method="post" action="{% url 'fitting:fork' fit.pk %}" class="contents">{% csrf_token %}
         <button type="submit" class="btn-ghost">{% translate "Fork" %}</button></form>
@@ -36,13 +37,29 @@
     </div>
   </header>
 
+  {% if import_unresolved %}
+  {# API-5: one-shot warning banner for EFT lines / mutated attributes the importer dropped #}
+  <div x-data="{ show: true }" x-show="show" x-cloak class="mb-4 rounded-lg p-3"
+       style="background:#3a2f1f;border:1px solid #e0a955;">
+    <div class="flex items-start justify-between gap-3">
+      <div>
+        <p class="text-sm" style="color:#f0d9b4;">{% blocktranslate count n=import_unresolved|length %}{{ n }} line from the imported fit could not be resolved and was skipped:{% plural %}{{ n }} lines from the imported fit could not be resolved and were skipped:{% endblocktranslate %}</p>
+        <ul class="mt-1 text-xs" style="color:#e0c99a;">
+          {% for name in import_unresolved %}<li>· {{ name }}</li>{% endfor %}
+        </ul>
+      </div>
+      <button type="button" @click="show=false" class="text-faint" style="flex:none;" aria-label="{% translate 'Dismiss' %}">✕</button>
+    </div>
+  </div>
+  {% endif %}
+
   <div class="grid gap-6" style="grid-template-columns:minmax(0,340px) minmax(0,1fr);">
     {# ---- Composition / editor ---- #}
     <div>
       <section class="rounded-lg border border-line bg-panel p-4">
         <div class="flex items-center justify-between">
           <p class="eyebrow">{% translate "Fitting" %}</p>
-          <p class="text-[11px] text-faint" x-show="editable">{% translate "Click a slot to fit · ⚠ = load ammo" %}</p>
+          <p class="text-[11px] text-faint" x-show="editable">{% translate "Click a slot to fit · ⚠ = load ammo · ✦ = mutate" %}</p>
         </div>
 
         {# ---- Slot racks (High / Mid / Low / Rig) ---- #}
@@ -59,7 +76,7 @@
                   <div class="flex items-center justify-between gap-2">
                     <span class="text-ink" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" x-text="row.it.name"></span>
                     <span class="flex items-center gap-1" x-show="editable">
-                      <select class="input-field" style="padding:0 3px;font-size:11px;" x-model="row.it.state" @change="recompute()"
+                      <select class="input-field" style="padding:0 3px;font-size:11px;" x-model="row.it.state" @change="markDirty()"
                               aria-label="{% translate 'Module state' %}"
                               title="{% translate 'Active: running (uses CPU/PG + capacitor). Online: powered but idle (uses CPU/PG, no cap). Offline: unfitted (frees CPU/PG). Heat: overloaded.' %}">
                         <option value="active">{% translate "active" %}</option>
@@ -87,6 +104,36 @@
                           </template>
                         </ul>
                         <button type="button" x-show="row.it.charge_type_id" @click="clearCharge(row.idx)" class="mt-1 text-faint" style="font-size:11px;">{% translate "Unload ammo" %}</button>
+                      </div>
+                    </div>
+                  </template>
+                  {# mutated (abyssal) attribute overrides — WS-11 #}
+                  <template x-if="editable">
+                    <div class="mt-1">
+                      <button type="button" @click="toggleMut(row.idx)"
+                              style="cursor:pointer;background:transparent;font-size:11px;"
+                              :style="hasOverrides(row.it) ? 'color:#c084fc;' : 'color:#6b7280;'"
+                              aria-label="{% translate 'Mutated attributes' %}"
+                              x-text="hasOverrides(row.it) ? ('✦ ' + overrideCount(row.it) + ' {% translate "mutated" %}') : '✦ {% translate "Mutate" %}'"></button>
+                      <div x-show="mutIdx === row.idx" class="mt-1 rounded border p-2" style="border-color:#3a2f4a;background:#1a1520;">
+                        <template x-for="pair in overridePairs(row.it)" :key="pair.aid">
+                          <div class="flex items-center gap-1" style="margin-bottom:2px;">
+                            <span class="text-faint" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;" x-text="mutAttrName(pair.aid)"></span>
+                            <input type="number" step="any" class="input-field" style="width:74px;font-size:11px;" :value="pair.val"
+                                   @input="setOverride(row.idx, pair.aid, $event.target.value)" aria-label="{% translate 'Mutated value' %}">
+                            <button type="button" @click="removeOverride(row.idx, pair.aid)" class="text-faint" style="font-size:11px;" aria-label="{% translate 'Remove override' %}">✕</button>
+                          </div>
+                        </template>
+                        <div class="mt-1" style="position:relative;">
+                          <input type="text" class="input-field w-full" style="font-size:11px;" x-model="mutQuery"
+                                 @input.debounce.250ms="searchMutAttrs(row.idx)" placeholder="{% translate 'Add attribute…' %}"
+                                 aria-label="{% translate 'Search attribute' %}">
+                          <ul x-show="mutResults.length" style="position:absolute;z-index:30;left:0;right:0;max-height:160px;overflow:auto;" class="rounded border border-line bg-panel2">
+                            <template x-for="a in mutResults" :key="a.attribute_id">
+                              <li><button type="button" class="w-full text-left px-2 py-1" style="background:transparent;font-size:11px;" @click="addOverride(row.idx, a)"><span class="text-ink" x-text="a.name"></span> <span class="text-faint" x-text="a.value"></span></button></li>
+                            </template>
+                          </ul>
+                        </div>
                       </div>
                     </div>
                   </template>
@@ -118,6 +165,48 @@
           </div>
         </div>
 
+        {# ---- Fighters ---- #}
+        <div class="mt-3" x-show="editable || rack('fighter').length">
+          <span class="text-[11px] font-semibold uppercase tracking-wide text-faint">{% translate "Fighters" %}</span>
+          <div class="mt-1 space-y-1">
+            <template x-for="row in rack('fighter')" :key="row.idx">
+              <div class="rounded border border-line px-2 py-1 text-sm flex items-center justify-between gap-2" style="background:#1b1f27;">
+                <span class="text-ink" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" x-text="row.it.name"></span>
+                <span class="flex items-center gap-1" x-show="editable" style="flex:none;">
+                  <input type="number" min="1" step="1" class="input-field" style="width:52px;padding:0 4px;font-size:11px;"
+                         x-model.number="row.it.quantity" @change="markDirty()" aria-label="{% translate 'Squadron size' %}">
+                  <button type="button" @click="removeItem(row.idx)" class="text-faint" aria-label="{% translate 'Remove' %}">✕</button>
+                </span>
+              </div>
+            </template>
+            <button type="button" x-show="editable" @click="openAdd('fighter')"
+                    class="w-full rounded border border-dashed px-2 py-1.5 text-left text-xs text-faint hover:text-ink"
+                    style="border-color:#333a47;background:transparent;">＋ {% translate "Add fighter squadron" %}</button>
+          </div>
+        </div>
+
+        {# ---- Subsystems / Implants / Boosters / Cargo ---- #}
+        <template x-for="kind in ['subsystem','implant','booster','cargo']" :key="kind">
+          <div class="mt-3" x-show="editable || rack(kind).length">
+            <span class="text-[11px] font-semibold uppercase tracking-wide text-faint" x-text="extraLabel(kind)"></span>
+            <div class="mt-1 space-y-1">
+              <template x-for="row in rack(kind)" :key="row.idx">
+                <div class="rounded border border-line px-2 py-1 text-sm flex items-center justify-between gap-2" style="background:#1b1f27;">
+                  <span class="text-ink" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" x-text="row.it.name"></span>
+                  <span class="flex items-center gap-1" x-show="editable" style="flex:none;">
+                    <input x-show="kind==='cargo'" type="number" min="1" step="1" class="input-field" style="width:56px;padding:0 4px;font-size:11px;"
+                           x-model.number="row.it.quantity" @change="markDirty()" aria-label="{% translate 'Quantity' %}">
+                    <button type="button" @click="removeItem(row.idx)" class="text-faint" aria-label="{% translate 'Remove' %}">✕</button>
+                  </span>
+                </div>
+              </template>
+              <button type="button" x-show="editable" @click="openAdd(kind)"
+                      class="w-full rounded border border-dashed px-2 py-1.5 text-left text-xs text-faint hover:text-ink"
+                      style="border-color:#333a47;background:transparent;">＋ <span x-text="addLabel(kind)"></span></button>
+            </div>
+          </div>
+        </template>
+
         {# ---- Add-module search (opens when a slot's ＋ is clicked) ---- #}
         <div x-show="editable && addKind !== null" class="mt-3" style="position:relative;">
           <input type="text" class="input-field w-full" x-model="query" @input.debounce.250ms="searchModules()"
@@ -128,25 +217,123 @@
             </template>
           </ul>
           <div class="mt-1 flex justify-between text-[11px]">
-            <span class="text-faint" x-show="query.length>=2 && !results.length">{% translate "No matching module for this slot." %}</span>
+            <span class="text-faint" x-show="query.length>=2 && !results.length">{% translate "No matching item for this slot." %}</span>
             <button type="button" @click="closeAdd()" class="text-faint">{% translate "Cancel" %}</button>
           </div>
         </div>
       </section>
 
-      {# ---- Target profile: drives applied missile damage ---- #}
+      {% if ship_modes %}
+      {# ---- Tactical mode (T3 destroyers) ---- #}
+      <section class="mt-4 rounded-lg border border-line bg-panel p-4">
+        <p class="eyebrow">{% translate "Tactical mode" %}</p>
+        <label class="sr-only" for="tactical-mode">{% translate "Tactical mode" %}</label>
+        <select id="tactical-mode" class="input-field mt-2 w-full" x-model="currentMode" @change="setMode()" {% if not editable %}disabled{% endif %}>
+          <option value="">{% translate "No mode" %}</option>
+          {% for md in ship_modes %}<option value="{{ md.type_id }}">{{ md.name }}</option>{% endfor %}
+        </select>
+      </section>
+      {% endif %}
+
+      {# ---- Target profile: drives applied damage, tracking, lock/warp times ---- #}
       <section class="mt-4 rounded-lg border border-line bg-panel p-4">
         <p class="eyebrow">{% translate "Target profile" %}</p>
-        <p class="mt-1 text-xs text-faint">{% translate "Set a target to see applied missile damage vs its signature and speed." %}</p>
-        <div class="mt-2 flex gap-2">
-          <label class="sr-only" for="tgt-sig">{% translate "Target signature (m)" %}</label>
-          <input id="tgt-sig" type="number" min="0" step="1" class="input-field" style="min-width:0;flex:1;"
-                 placeholder="{% translate 'Sig (m)' %}" x-model.number="targetSig" @input.debounce.300ms="recompute()">
-          <label class="sr-only" for="tgt-vel">{% translate "Target velocity (m/s)" %}</label>
-          <input id="tgt-vel" type="number" min="0" step="1" class="input-field" style="min-width:0;flex:1;"
-                 placeholder="{% translate 'Vel (m/s)' %}" x-model.number="targetVel" @input.debounce.300ms="recompute()">
+        <p class="mt-1 text-xs text-faint">{% translate "Describe a target to see applied DPS, tracking, jam and lock time. Saved in this browser only." %}</p>
+        <div class="mt-2 grid gap-2" style="grid-template-columns:1fr 1fr;">
+          <div><label class="text-[11px] text-faint" for="tgt-sig">{% translate "Signature (m)" %}</label>
+            <input id="tgt-sig" type="number" min="0" step="1" class="input-field w-full" x-model.number="targetSig" @input.debounce.300ms="onProfileChange()"></div>
+          <div><label class="text-[11px] text-faint" for="tgt-vel">{% translate "Velocity (m/s)" %}</label>
+            <input id="tgt-vel" type="number" min="0" step="1" class="input-field w-full" x-model.number="targetVel" @input.debounce.300ms="onProfileChange()"></div>
+          <div><label class="text-[11px] text-faint" for="tgt-dist">{% translate "Distance (m)" %}</label>
+            <input id="tgt-dist" type="number" min="0" step="1" class="input-field w-full" x-model.number="targetDist" @input.debounce.300ms="onProfileChange()"></div>
+          <div><label class="text-[11px] text-faint" for="tgt-ang">{% translate "Angular (rad/s)" %}</label>
+            <input id="tgt-ang" type="number" min="0" step="0.001" class="input-field w-full" x-model.number="targetAngular" @input.debounce.300ms="onProfileChange()"></div>
+          <div><label class="text-[11px] text-faint" for="tgt-ss">{% translate "Sensor strength" %}</label>
+            <input id="tgt-ss" type="number" min="0" step="1" class="input-field w-full" x-model.number="targetSS" @input.debounce.300ms="onProfileChange()"></div>
+          <div><label class="text-[11px] text-faint" for="tgt-sensor">{% translate "Sensor type" %}</label>
+            <select id="tgt-sensor" class="input-field w-full" x-model="targetSensor" @change="onProfileChange()">
+              <option value="">{% translate "—" %}</option>
+              <option value="radar">{% translate "Radar" %}</option>
+              <option value="magnetometric">{% translate "Magnetometric" %}</option>
+              <option value="ladar">{% translate "Ladar" %}</option>
+              <option value="gravimetric">{% translate "Gravimetric" %}</option>
+            </select></div>
+          <div><label class="text-[11px] text-faint" for="tgt-hp">{% translate "Target HP" %}</label>
+            <input id="tgt-hp" type="number" min="0" step="1" class="input-field w-full" x-model.number="targetHP" @input.debounce.300ms="onProfileChange()"></div>
+          <div><label class="text-[11px] text-faint" for="warp-au">{% translate "Warp distance (AU)" %}</label>
+            <input id="warp-au" type="number" min="0" step="0.1" class="input-field w-full" x-model.number="warpAU" @input.debounce.300ms="onProfileChange()"></div>
+        </div>
+        <div class="mt-2">
+          <label class="text-[11px] text-faint" for="dmg-preset">{% translate "Damage profile" %}</label>
+          <select id="dmg-preset" class="input-field w-full" x-model="dmgPreset" @change="setDmgPreset()">
+            <option value="uniform">{% translate "Uniform" %}</option>
+            <option value="em">{% translate "EM" %}</option>
+            <option value="thermal">{% translate "Thermal" %}</option>
+            <option value="kinetic">{% translate "Kinetic" %}</option>
+            <option value="explosive">{% translate "Explosive" %}</option>
+            <option value="custom">{% translate "Custom…" %}</option>
+          </select>
+          <div class="mt-2 grid gap-1" style="grid-template-columns:repeat(4,1fr);" x-show="dmgPreset==='custom'">
+            <div><label class="text-[11px] text-faint" for="dmg-em">{% translate "EM" %}</label>
+              <input id="dmg-em" type="number" min="0" step="1" class="input-field w-full" x-model.number="dmgEm" @input.debounce.300ms="onProfileChange()"></div>
+            <div><label class="text-[11px] text-faint" for="dmg-th">{% translate "Th" %}</label>
+              <input id="dmg-th" type="number" min="0" step="1" class="input-field w-full" x-model.number="dmgTh" @input.debounce.300ms="onProfileChange()"></div>
+            <div><label class="text-[11px] text-faint" for="dmg-kin">{% translate "Kin" %}</label>
+              <input id="dmg-kin" type="number" min="0" step="1" class="input-field w-full" x-model.number="dmgKin" @input.debounce.300ms="onProfileChange()"></div>
+            <div><label class="text-[11px] text-faint" for="dmg-exp">{% translate "Exp" %}</label>
+              <input id="dmg-exp" type="number" min="0" step="1" class="input-field w-full" x-model.number="dmgExp" @input.debounce.300ms="onProfileChange()"></div>
+          </div>
         </div>
       </section>
+
+      {# ---- Projected effects: hostile modules pressuring this fit ---- #}
+      <section class="mt-4 rounded-lg border border-line bg-panel p-4">
+        <p class="eyebrow">{% translate "Projected on us" %}</p>
+        <p class="mt-1 text-xs text-faint">{% translate "Add hostile EWAR / energy warfare / remote-rep modules to see their pressure." %}</p>
+        <div class="mt-2 space-y-1">
+          <template x-for="row in rack('projected')" :key="row.idx">
+            <div class="rounded border border-line px-2 py-1 text-sm flex items-center justify-between gap-2" style="background:#1b1f27;">
+              <span class="text-ink" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" x-text="row.it.name"></span>
+              <span class="flex items-center gap-1" x-show="editable" style="flex:none;">
+                <input type="number" min="1" step="1" class="input-field" style="width:48px;padding:0 4px;font-size:11px;"
+                       x-model.number="row.it.quantity" @change="markDirty()" aria-label="{% translate 'Quantity' %}">
+                <button type="button" @click="removeItem(row.idx)" class="text-faint" aria-label="{% translate 'Remove' %}">✕</button>
+              </span>
+            </div>
+          </template>
+        </div>
+        <div x-show="editable" class="mt-2" style="position:relative;">
+          <input type="text" class="input-field w-full" style="font-size:12px;" x-model="projQuery" x-ref="projSearch"
+                 @input.debounce.250ms="searchProjected()" placeholder="{% translate 'Add projected module…' %}"
+                 aria-label="{% translate 'Search projected module' %}">
+          <ul x-show="projResults.length" style="position:absolute;z-index:30;left:0;right:0;max-height:200px;overflow:auto;" class="rounded-lg border border-line bg-panel2">
+            <template x-for="r in projResults" :key="r.type_id">
+              <li><button type="button" class="w-full text-left px-3 py-1 text-sm text-ink" style="background:transparent;" @click="addProjected(r)" x-text="r.name"></button></li>
+            </template>
+          </ul>
+        </div>
+      </section>
+
+      {% if burst_charges %}
+      {# ---- Fleet boosts: friendly command bursts ---- #}
+      <section class="mt-4 rounded-lg border border-line bg-panel p-4">
+        <p class="eyebrow">{% translate "Fleet boosts" %}</p>
+        <p class="mt-1 text-xs text-faint">{% translate "Simulate being boosted by friendly command bursts. Set a strength % for a fully-skilled command ship." %}</p>
+        <div class="mt-2 space-y-1">
+          {% for c in burst_charges %}
+          <div class="flex items-center gap-2 text-sm">
+            <input type="checkbox" id="boost-{{ c.type_id }}" :checked="isBoostOn({{ c.type_id }})"
+                   @change="toggleBoost({{ c.type_id }}, '{{ c.name|escapejs }}')" {% if not editable %}disabled{% endif %}>
+            <label for="boost-{{ c.type_id }}" class="text-ink" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ c.name }}</label>
+            <input type="number" min="-100" max="1000" step="1" class="input-field" style="width:64px;padding:0 4px;font-size:11px;"
+                   x-show="isBoostOn({{ c.type_id }})" :value="boostStrength({{ c.type_id }})"
+                   @input="setBoostStrength({{ c.type_id }}, $event.target.value)"
+                   aria-label="{% blocktranslate with name=c.name %}Strength % for {{ name }}{% endblocktranslate %}" placeholder="%">
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+      {% endif %}
 
       {# ---- Supply overlay: price + stock ---- #}
       <section class="mt-4 rounded-lg border border-line bg-panel p-4">
@@ -272,18 +459,31 @@
 function labEditor() {
   return {
     items: [], results: [], query: "", dirty: false, editable: {{ editable|yesno:"true,false" }},
-    _seq: 0, telemetryError: false, saveError: false,
+    _seq: 0, telemetryError: false, saveError: false, saveNote: "",
     shipTypeId: {{ fit.ship_type_id }}, hullSlots: {}, addKind: null,
     ammoIdx: null, ammoQuery: "", ammoResults: [],
-    targetSig: null, targetVel: null,
+    // Mutated (abyssal) attribute editor
+    mutIdx: null, mutQuery: "", mutResults: [], mutDefs: {}, mutNames: {},
+    // Projected effects
+    projQuery: "", projResults: [],
+    // Tactical mode (T3 destroyers)
+    currentMode: "",
+    // Target / operating profile (persisted per-fit in localStorage, not in the fit payload)
+    targetSig: null, targetVel: null, targetDist: null, targetAngular: null,
+    targetSS: null, targetSensor: "", targetHP: null, warpAU: null,
+    dmgPreset: "uniform", dmgEm: 25, dmgTh: 25, dmgKin: 25, dmgExp: 25,
     skills: new URLSearchParams(window.location.search).get("skills") || "pilot",
     init() {
       this.items = JSON.parse(document.getElementById("lab-items").textContent || "[]");
       this.hullSlots = JSON.parse(document.getElementById("lab-hullslots").textContent || "{}");
+      const md = this.items.find(it => it.slot === "mode");
+      this.currentMode = md ? String(md.type_id) : "";
+      this.loadProfile();
     },
     _csrf() { return document.getElementById("lab-csrf").value; },
     slotLabel(k) { return {high:"{% translate 'High power' %}",med:"{% translate 'Mid power' %}",low:"{% translate 'Low power' %}",rig:"{% translate 'Rigs' %}"}[k] || k; },
-    addLabel(k) { return {high:"{% translate 'high slot' %}",med:"{% translate 'mid slot' %}",low:"{% translate 'low slot' %}",rig:"{% translate 'rig' %}",drone:"{% translate 'drone' %}"}[k] || k; },
+    addLabel(k) { return {high:"{% translate 'high slot' %}",med:"{% translate 'mid slot' %}",low:"{% translate 'low slot' %}",rig:"{% translate 'rig' %}",drone:"{% translate 'drone' %}",fighter:"{% translate 'fighter squadron' %}",subsystem:"{% translate 'subsystem' %}",implant:"{% translate 'implant' %}",booster:"{% translate 'booster' %}",cargo:"{% translate 'cargo item' %}"}[k] || k; },
+    extraLabel(k) { return {subsystem:"{% translate 'Subsystems' %}",implant:"{% translate 'Implants' %}",booster:"{% translate 'Boosters' %}",cargo:"{% translate 'Cargo' %}"}[k] || k; },
     addPlaceholder() { return "{% translate 'Search' %} " + this.addLabel(this.addKind) + "…"; },
     rack(k) { const o = []; this.items.forEach((it, idx) => { if (it.slot === k) o.push({ it, idx }); }); return o; },
     emptySlots(k) { return Math.max(0, (this.hullSlots[k] || 0) - this.rack(k).length); },
@@ -291,18 +491,22 @@ function labEditor() {
     closeAdd() { this.addKind = null; this.query = ""; this.results = []; },
     async searchModules() {
       if (this.query.length < 2) { this.results = []; return; }
-      const r = await fetch("{% url 'fitting:search_modules' %}?q=" + encodeURIComponent(this.query));
+      const k = this.addKind || "";
+      const r = await fetch("{% url 'fitting:search_modules' %}?q=" + encodeURIComponent(this.query) + (k ? "&slot=" + encodeURIComponent(k) : ""));
       let res = r.ok ? (await r.json()).results : [];
-      if (this.addKind) res = res.filter(x => x.slot === this.addKind);   // only what fits this slot
+      // Rack slots share the module/drone pool and narrow client-side; the extra racks are
+      // already scoped + slot-stamped by the server, so leave them as returned.
+      if (["high","med","low","rig","drone"].includes(k)) res = res.filter(x => x.slot === k);
       this.results = res;
     },
     addModule(r) {
       const slot = this.addKind || r.slot || "low";
-      this.items.push({ type_id: r.type_id, name: r.name, slot, state: "active",
+      this.items.push({ type_id: r.type_id, name: r.name, slot,
+                        state: slot === "cargo" ? "offline" : "active",
                         charge_type_id: null, charge_name: "", quantity: 1, takes_charge: !!r.takes_charge });
       this.closeAdd(); this.markDirty();
     },
-    removeItem(i) { if (this.ammoIdx === i) this.ammoIdx = null; this.items.splice(i, 1); this.markDirty(); },
+    removeItem(i) { if (this.ammoIdx === i) this.ammoIdx = null; if (this.mutIdx === i) this.mutIdx = null; this.items.splice(i, 1); this.markDirty(); },
     toggleAmmo(idx) {
       if (this.ammoIdx === idx) { this.ammoIdx = null; this.ammoResults = []; return; }
       this.ammoIdx = idx; this.ammoQuery = ""; this.ammoResults = [];
@@ -321,6 +525,114 @@ function labEditor() {
     clearCharge(idx) {
       this.items[idx].charge_type_id = null; this.items[idx].charge_name = ""; this.markDirty();
     },
+    // ---- Mutated (abyssal) attribute overrides -------------------------------
+    hasOverrides(it) { return !!(it.attr_overrides && Object.keys(it.attr_overrides).length); },
+    overrideCount(it) { return it.attr_overrides ? Object.keys(it.attr_overrides).length : 0; },
+    overridePairs(it) { return it.attr_overrides ? Object.keys(it.attr_overrides).map(aid => ({ aid, val: it.attr_overrides[aid] })) : []; },
+    mutAttrName(aid) { return this.mutNames[aid] || ("#" + aid); },
+    async toggleMut(idx) {
+      if (this.mutIdx === idx) { this.mutIdx = null; this.mutResults = []; return; }
+      this.mutIdx = idx; this.mutQuery = ""; this.mutResults = [];
+      const tid = this.items[idx].type_id;
+      if (!this.mutDefs[tid]) {
+        const r = await fetch("{% url 'fitting:module_attrs' %}?type_id=" + tid);
+        this.mutDefs[tid] = r.ok ? (await r.json()).results : [];
+        this.mutDefs[tid].forEach(a => { this.mutNames[a.attribute_id] = a.name; });
+      }
+    },
+    searchMutAttrs(idx) {
+      const defs = this.mutDefs[this.items[idx].type_id] || [];
+      const q = this.mutQuery.toLowerCase();
+      this.mutResults = q.length < 1 ? [] : defs.filter(a => a.name.toLowerCase().includes(q)).slice(0, 20);
+    },
+    addOverride(idx, a) {
+      const ov = Object.assign({}, this.items[idx].attr_overrides || {});
+      ov[a.attribute_id] = a.value;
+      this.items[idx].attr_overrides = ov;
+      this.mutNames[a.attribute_id] = a.name;
+      this.mutQuery = ""; this.mutResults = []; this.markDirty();
+    },
+    setOverride(idx, aid, value) {
+      const v = parseFloat(value);
+      if (isNaN(v)) return;
+      const ov = Object.assign({}, this.items[idx].attr_overrides || {});
+      ov[aid] = v; this.items[idx].attr_overrides = ov; this.markDirty();
+    },
+    removeOverride(idx, aid) {
+      const ov = Object.assign({}, this.items[idx].attr_overrides || {});
+      delete ov[aid];
+      this.items[idx].attr_overrides = Object.keys(ov).length ? ov : undefined;
+      this.markDirty();
+    },
+    // ---- Projected effects ---------------------------------------------------
+    async searchProjected() {
+      if (this.projQuery.length < 2) { this.projResults = []; return; }
+      const r = await fetch("{% url 'fitting:search_projected' %}?q=" + encodeURIComponent(this.projQuery));
+      this.projResults = r.ok ? (await r.json()).results : [];
+    },
+    addProjected(r) {
+      this.items.push({ type_id: r.type_id, name: r.name, slot: "projected", state: "active",
+                        charge_type_id: null, quantity: 1 });
+      this.projQuery = ""; this.projResults = []; this.markDirty();
+    },
+    // ---- Tactical mode -------------------------------------------------------
+    setMode() {
+      this.items = this.items.filter(it => it.slot !== "mode");
+      if (this.currentMode) {
+        this.items.push({ type_id: parseInt(this.currentMode), name: "", slot: "mode",
+                          state: "active", charge_type_id: null, quantity: 1 });
+      }
+      this.markDirty();
+    },
+    // ---- Fleet boosts --------------------------------------------------------
+    isBoostOn(cid) { return this.items.some(it => it.slot === "boost" && it.type_id === cid); },
+    toggleBoost(cid, name) {
+      const i = this.items.findIndex(it => it.slot === "boost" && it.type_id === cid);
+      if (i >= 0) { this.items.splice(i, 1); }
+      else { this.items.push({ type_id: cid, name: name || "", slot: "boost", state: "active",
+                               charge_type_id: null, quantity: 1 }); }
+      this.markDirty();
+    },
+    boostStrength(cid) { const b = this.items.find(it => it.slot === "boost" && it.type_id === cid); return b && b.strength_pct != null ? b.strength_pct : ""; },
+    setBoostStrength(cid, val) {
+      const b = this.items.find(it => it.slot === "boost" && it.type_id === cid);
+      if (!b) return;
+      if (val === "" || val == null) { delete b.strength_pct; } else { b.strength_pct = parseFloat(val); }
+      this.markDirty();
+    },
+    // ---- Target / operating profile (localStorage) ---------------------------
+    _profileKey() { return "tochalab:profile:{{ fit.pk }}"; },
+    loadProfile() {
+      try {
+        const raw = localStorage.getItem(this._profileKey());
+        if (!raw) return;
+        const p = JSON.parse(raw);
+        ["targetSig","targetVel","targetDist","targetAngular","targetSS","targetHP","warpAU",
+         "dmgEm","dmgTh","dmgKin","dmgExp"].forEach(k => { if (p[k] != null) this[k] = p[k]; });
+        if (p.targetSensor != null) this.targetSensor = p.targetSensor;
+        if (p.dmgPreset) this.dmgPreset = p.dmgPreset;
+        if (this.hasTargetProfile() || this.dmgPreset !== "uniform") this.recompute();
+      } catch (e) {}
+    },
+    saveProfile() {
+      try {
+        localStorage.setItem(this._profileKey(), JSON.stringify({
+          targetSig:this.targetSig, targetVel:this.targetVel, targetDist:this.targetDist,
+          targetAngular:this.targetAngular, targetSS:this.targetSS, targetSensor:this.targetSensor,
+          targetHP:this.targetHP, warpAU:this.warpAU, dmgPreset:this.dmgPreset,
+          dmgEm:this.dmgEm, dmgTh:this.dmgTh, dmgKin:this.dmgKin, dmgExp:this.dmgExp }));
+      } catch (e) {}
+    },
+    hasTargetProfile() { return !!(this.targetSig || this.targetVel || this.targetDist || this.targetSS || this.targetHP || this.warpAU); },
+    onProfileChange() { this.saveProfile(); this.recompute(); },
+    setDmgPreset() {
+      const P = { uniform:[25,25,25,25], em:[100,0,0,0], thermal:[0,100,0,0], kinetic:[0,0,100,0], explosive:[0,0,0,100] };
+      if (this.dmgPreset !== "custom" && P[this.dmgPreset]) {
+        this.dmgEm = P[this.dmgPreset][0]; this.dmgTh = P[this.dmgPreset][1];
+        this.dmgKin = P[this.dmgPreset][2]; this.dmgExp = P[this.dmgPreset][3];
+      }
+      this.onProfileChange();
+    },
     onSkillChange() {
       const u = new URL(window.location); u.searchParams.set("skills", this.skills);
       history.replaceState({}, "", u);   // keep the URL shareable, recompute live
@@ -328,8 +640,27 @@ function labEditor() {
     },
     markDirty() { this.dirty = true; this.recompute(); },
     _payload() {
-      return this.items.map(it => ({ type_id: it.type_id, slot: it.slot, state: it.state,
-        charge_type_id: it.charge_type_id, quantity: it.quantity }));
+      return this.items.map(it => {
+        const o = { type_id: it.type_id, slot: it.slot, state: it.state,
+          charge_type_id: it.charge_type_id, quantity: it.quantity };
+        if (it.attr_overrides && Object.keys(it.attr_overrides).length) o.attr_overrides = it.attr_overrides;
+        if (it.strength_pct !== undefined && it.strength_pct !== null && it.strength_pct !== "") o.strength_pct = it.strength_pct;
+        return o;
+      });
+    },
+    _profileBody(body) {
+      if (this.targetSig) body.set("tgt_sig", this.targetSig);
+      if (this.targetVel) body.set("tgt_vel", this.targetVel);
+      if (this.targetDist) body.set("tgt_distance", this.targetDist);
+      if (this.targetAngular) body.set("tgt_angular", this.targetAngular);
+      if (this.targetSS) body.set("tgt_ss", this.targetSS);
+      if (this.targetSensor) body.set("tgt_sensor", this.targetSensor);
+      if (this.targetHP) body.set("tgt_hp", this.targetHP);
+      if (this.warpAU) body.set("warp_distance_au", this.warpAU);
+      if (this.dmgPreset && this.dmgPreset !== "uniform") {
+        body.set("dmg_em", this.dmgEm); body.set("dmg_thermal", this.dmgTh);
+        body.set("dmg_kinetic", this.dmgKin); body.set("dmg_explosive", this.dmgExp);
+      }
     },
     async recompute() {
       const seq = ++this._seq;   // stale-response guard: only the newest request may render
@@ -337,8 +668,7 @@ function labEditor() {
       body.set("ship_type_id", this.shipTypeId);
       body.set("items", JSON.stringify(this._payload()));
       body.set("skills", this.skills);
-      if (this.targetSig) body.set("tgt_sig", this.targetSig);
-      if (this.targetVel) body.set("tgt_vel", this.targetVel);
+      this._profileBody(body);
       try {
         const r = await fetch("{% url 'fitting:telemetry' %}", { method: "POST",
           headers: { "X-CSRFToken": this._csrf(), "X-Requested-With": "XMLHttpRequest" }, body });
@@ -354,7 +684,11 @@ function labEditor() {
       try {
         const r = await fetch("{% url 'fitting:save' fit.pk %}", { method: "POST",
           headers: { "X-CSRFToken": this._csrf(), "X-Requested-With": "XMLHttpRequest" }, body });
-        if (r.ok) { this.dirty = false; this.saveError = false; } else { this.saveError = true; }
+        if (r.ok) {
+          this.dirty = false; this.saveError = false;
+          try { const j = await r.json(); this.saveNote = j.changed ? "" : "{% translate 'No changes to save' %}"; } catch (e) { this.saveNote = ""; }
+          if (this.saveNote) { const n = this.saveNote; setTimeout(() => { if (this.saveNote === n) this.saveNote = ""; }, 3000); }
+        } else { this.saveError = true; }
       } catch (e) { this.saveError = true; }
     },
   };
