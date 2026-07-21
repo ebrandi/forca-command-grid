@@ -521,6 +521,24 @@ def killmail_detail(request: HttpRequest, killmail_id: int) -> HttpResponse:
     # SRP status is sensitive too (payout ISK, denial reason): owner or officer only.
     srp = killmail.srp_claims.first() if can_see_private else None
 
+    # KB-25: let the loss owner file an SRP claim straight from the detail page. Only when the
+    # viewer owns the loss (same ownership seam apps/srp uses), no claim exists yet, and it's a
+    # corp loss. The SRP eligibility/payout is computed by apps/srp — never duplicated here; the
+    # POST goes to the existing srp:claim view. Ineligible losses surface the honest reason.
+    srp_request = None
+    if viewer_is_owner and srp is None and killmail.home_corp_role == Killmail.HomeRole.VICTIM:
+        from apps.srp import services as srp_services
+
+        info = srp_services.eligibility(killmail)
+        srp_request = {
+            "eligible": bool(info.get("eligible")),
+            "payout": info.get("payout"),
+            "payout_mode": info.get("payout_mode"),
+            "loss_value": info.get("loss_value"),
+            "doctrine": info.get("doctrine"),
+            "explanation": info.get("explanation") or info.get("reason"),
+        }
+
     attackers = list(killmail.participants.filter(role="attacker").order_by("-damage_done"))
     breakdown = anatomy.attacker_breakdown(
         killmail, attackers, _home(), anatomy.doctrine_hull_ids()
@@ -538,6 +556,7 @@ def killmail_detail(request: HttpRequest, killmail_id: int) -> HttpResponse:
             "wheel": fitrender.build_fit_wheel(killmail, deviation),
             # KB-22 detail-anatomy polish.
             "srp": srp,
+            "srp_request": srp_request,  # KB-25: owner-only "Request SRP" affordance.
             "value_tier": anatomy.value_tier(killmail.total_value),
             "related": anatomy.related_killmails(killmail),
             "battles": list(killmail.battle_reports.all()),

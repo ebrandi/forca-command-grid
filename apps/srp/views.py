@@ -10,6 +10,7 @@ from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext
 from django.views.decorators.http import require_POST
 
@@ -32,6 +33,17 @@ def _parse_isk(raw: str | None) -> Decimal | None:
     except (InvalidOperation, ValueError):
         return None
     return value if value >= 0 else None
+
+
+def _safe_next(request: HttpRequest) -> str | None:
+    """A same-site ``next`` POST target (e.g. back to the killmail detail page for KB-25),
+    or None when absent/unsafe. Guards against open-redirects."""
+    nxt = (request.POST.get("next") or "").strip()
+    if nxt and url_has_allowed_host_and_scheme(
+        nxt, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        return nxt
+    return None
 
 
 @login_required
@@ -73,7 +85,9 @@ def submit_claim(request: HttpRequest) -> HttpResponse:
             "amount": f"{claim.computed_payout:,.0f}"})
     else:
         messages.error(request, gettext("That loss isn't eligible, or a claim already exists."))
-    return redirect("srp:mine")
+    # KB-25: honour a same-site ``next`` (the killmail detail page) so the button returns there;
+    # the /srp/mine list posts no ``next`` and keeps its original destination.
+    return redirect(_safe_next(request) or "srp:mine")
 
 
 @login_required

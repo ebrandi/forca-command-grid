@@ -17,6 +17,8 @@
           <span class="h-2.5 w-2.5 rounded-full {% if killmail.home_corp_role == 'victim' %}bg-loss{% else %}bg-kill{% endif %}"></span>
           <p class="eyebrow">{% if killmail.home_corp_role == 'victim' %}{% translate "Loss" %}{% else %}{% translate "Kill" %}{% endif %}</p>
           {% if value_tier %}<span class="chip !border-gold/40 !text-gold" title="{% translate 'High-value kill' %}">{{ value_tier }}</span>{% endif %}
+          {# KB-22: outbound reference link for the killmail itself (zKillboard) — a new tab, never an embed. #}
+          <a href="https://zkillboard.com/kill/{{ killmail.killmail_id }}/" target="_blank" rel="noopener noreferrer" class="chip !text-faint hover:!text-gold" title="{% translate 'View this killmail on zKillboard (opens in a new tab)' %}">zKillboard ↗</a>
         </div>
         <h1 class="mt-0.5 text-2xl font-bold text-ink">{% type_name killmail.victim_ship_type_id %}</h1>
         <p class="mt-0.5 text-xs text-faint">
@@ -42,15 +44,22 @@
     <h2 class="eyebrow mb-3">{% translate "Victim" %}</h2>
     <div class="flex items-center gap-3">
       {% if killmail.victim_character_id %}<img src="{% eve_portrait killmail.victim_character_id 64 %}" alt="" class="h-12 w-12 rounded-full ring-1 ring-line">{% endif %}
-      <div>
+      <div class="min-w-0">
         <p class="font-medium text-ink">{% if killmail.victim_character_id %}{% eve_name killmail.victim_character_id %}{% else %}{% translate "Structure / NPC" %}{% endif %}</p>
         <p class="flex items-center gap-1.5 text-xs text-faint">
           {% if killmail.victim_corporation_id %}<img src="{% eve_corp_logo killmail.victim_corporation_id 32 %}" alt="" class="h-4 w-4 rounded-sm">{% eve_name killmail.victim_corporation_id %}{% endif %}
         </p>
+        {# KB-22: outbound zkill/EveWho references for the victim's entities. #}
+        <p class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+          {% if killmail.victim_character_id %}{% include "killboard/_ext_entity_links.html" with kind="character" eid=killmail.victim_character_id %}{% endif %}
+          {% if killmail.victim_corporation_id %}{% include "killboard/_ext_entity_links.html" with kind="corporation" eid=killmail.victim_corporation_id %}{% endif %}
+          {% if killmail.victim_alliance_id %}{% include "killboard/_ext_entity_links.html" with kind="alliance" eid=killmail.victim_alliance_id %}{% endif %}
+        </p>
       </div>
       <span class="data ml-auto chip">{{ killmail.damage_taken }} {% translate "dmg taken" %}</span>
     </div>
-    {% if srp and features.srp %}
+    {% if features.srp %}
+    {% if srp %}
     <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-line pt-3">
       {% if srp.status == 'paid' %}<span class="chip !text-kill">{% blocktranslate with v=srp.payout|isk %}SRP paid · {{ v }}{% endblocktranslate %}</span>
       {% elif srp.status == 'approved' %}<span class="chip !text-cyan">{% blocktranslate with v=srp.payout|isk %}SRP approved · {{ v }}{% endblocktranslate %}</span>
@@ -58,6 +67,27 @@
       {% else %}<span class="chip !text-gold">{% translate "SRP pending" %}</span>{% endif %}
       <span class="text-[11px] text-faint">{% translate "only you and officers see this" %}</span>
     </div>
+    {% elif srp_request %}
+    {# KB-25: the loss owner can file an SRP claim straight from here (reuses apps/srp — no
+       duplicated claim logic). Officers/peers with no claim still see nothing. #}
+    <div class="mt-3 border-t border-line pt-3">
+      {% if srp_request.eligible %}
+      <div class="flex flex-wrap items-center gap-2">
+        <form method="post" action="{% url 'srp:claim' %}">
+          {% csrf_token %}
+          <input type="hidden" name="killmail_id" value="{{ killmail.killmail_id }}">
+          <input type="hidden" name="next" value="{{ request.path }}">
+          <button class="btn-cyan !py-1 !text-xs">{% translate "Request SRP" %}</button>
+        </form>
+        <span class="data text-xs text-cyan">{% if srp_request.payout_mode == 'replacement' %}{% translate "Replacement" %} · ≈ {{ srp_request.loss_value|isk }}{% else %}{{ srp_request.payout|isk }}{% endif %}</span>
+        <span class="chip !text-faint">{% if srp_request.doctrine %}◆ {{ srp_request.doctrine.name }}{% else %}{% translate "Non-doctrine loss" %}{% endif %}</span>
+      </div>
+      <p class="mt-1.5 text-[11px] text-faint">{% translate "Auto-valued from this loss — an officer reviews it. Only you and officers see this." %}</p>
+      {% else %}
+      <p class="text-xs text-faint">{% blocktranslate with why=srp_request.explanation %}Not eligible for SRP: {{ why }}{% endblocktranslate %}</p>
+      {% endif %}
+    </div>
+    {% endif %}
     {% endif %}
   </section>
 
@@ -76,6 +106,8 @@
                 {% if a.doctrine_hull %}<span class="chip !text-cyan" title="{% translate 'Doctrine hull' %}">◆</span>{% endif %}
               </p>
               <p class="truncate text-[11px] text-faint">{% type_name a.ship_type_id %}{% if a.weapon_type_id and a.weapon_type_id != a.ship_type_id %} · {% type_name a.weapon_type_id %}{% endif %}</p>
+              {# KB-22: outbound reference links for the attacker pilot. #}
+              {% if a.character_id %}<p class="mt-0.5">{% include "killboard/_ext_entity_links.html" with kind="character" eid=a.character_id %}</p>{% endif %}
             </div>
             <div class="text-right leading-tight">
               <span class="data block text-xs text-muted">{{ a.damage_done }}</span>
@@ -101,6 +133,13 @@
         <div class="min-w-0 flex-1">
           <p class="truncate text-sm text-ink">{% if p.corporation_id %}{% eve_name p.corporation_id %}{% else %}{% translate "NPC / unknown" %}{% endif %}</p>
           {% if p.alliance_id %}<p class="truncate text-[11px] text-faint">{% eve_name p.alliance_id %}</p>{% endif %}
+          {# KB-22: outbound reference links for this attacker-side corporation / alliance. #}
+          {% if p.corporation_id or p.alliance_id %}
+          <p class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+            {% if p.corporation_id %}{% include "killboard/_ext_entity_links.html" with kind="corporation" eid=p.corporation_id %}{% endif %}
+            {% if p.alliance_id %}{% include "killboard/_ext_entity_links.html" with kind="alliance" eid=p.alliance_id %}{% endif %}
+          </p>
+          {% endif %}
         </div>
         <div class="text-right leading-tight">
           <span class="data block text-xs text-muted">{% blocktranslate count n=p.pilots %}{{ n }} pilot{% plural %}{{ n }} pilots{% endblocktranslate %}</span>
@@ -118,7 +157,9 @@
 </section>
 {% endif %}
 
-<!-- Fitting (KB-21b): in-house radial fitting-window render — no external component, no off-site link -->
+<!-- Fitting (KB-21b): in-house radial fitting-window render — no external component and no
+     off-site embed HERE (the KB-22 zkill/EveWho reference links live outside this window, on
+     the victim / attacker / party blocks above). The fit itself stays fully native. -->
 {% if wheel.slots or wheel.extras %}
 <section class="panel mt-5 p-5">
   <div class="mb-4 flex flex-wrap items-center justify-between gap-3">

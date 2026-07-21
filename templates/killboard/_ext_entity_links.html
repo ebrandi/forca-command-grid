@@ -1,0 +1,8 @@
+{% load i18n %}{% comment %}KB-22 outbound reference links for one EVE entity.
+Params: kind = character|corporation|alliance (zKillboard + EveWho) ; eid = entity id.
+Kept tasteful: a compact "zkill · who" pair, faint until hovered. Every link opens in a
+new tab and is rel="noopener noreferrer". Intentionally OUTSIDE the native fit window.{% endcomment %}<span class="inline-flex items-center gap-1 align-middle" style="font-size:10px;line-height:1">
+  <a href="https://zkillboard.com/{{ kind }}/{{ eid }}/" target="_blank" rel="noopener noreferrer" class="text-faint hover:text-gold" title="{% translate 'View on zKillboard (opens in a new tab)' %}">zkill</a>
+  <span class="text-faint">·</span>
+  <a href="https://evewho.com/{{ kind }}/{{ eid }}" target="_blank" rel="noopener noreferrer" class="text-faint hover:text-gold" title="{% translate 'View on EveWho (opens in a new tab)' %}">who</a>
+</span>
