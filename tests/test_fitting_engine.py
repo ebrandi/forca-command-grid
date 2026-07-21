@@ -1,31 +1,27 @@
-"""Tocha's Lab engine unit + adapter tests.
+"""Tocha's Lab engine unit + ORM-adapter wiring tests.
 
-Every headline number is checked against a value computed by hand in the test from
-documented EVE mechanics — never against another engine's output. The fixture data is
-original (invented type ids in the 90000x range), not copied from any external source.
+The pure stacking-penalty maths and the ``slot_from_effects`` helper are checked here
+against hand-computed values; the ORM provider's data-version resolution and its bridging
+of the hull's legacy slot-count columns are exercised through the real SDE tables. The
+headline calculation numbers (DPS, EHP, mobility, capacitor, EWAR, missile application)
+are checked against hand-derived values in the golden suite (tests/test_fitting_golden_*),
+which drives the v2 graph evaluator with full dogma-graph fixtures. The fixture data here
+is original (invented type ids in the 90000x range), not copied from any external source.
 """
 from __future__ import annotations
-
-import math
 
 import pytest
 
 from apps.fitting.engine import attributes as A
 from apps.fitting.engine import stacking
 from apps.fitting.engine.adapter import FittingEngine, ORMDataProvider, slot_from_effects
-from apps.fitting.engine.bonuses import BonusSpec
-from apps.fitting.engine.dogma import evaluate, missile_application
-from apps.fitting.engine.memory import MemoryDataProvider
 from apps.fitting.engine.types import (
-    DamageProfileInput,
     FitInput,
     ModuleInput,
     ModuleState,
     OperatingProfile,
     SkillProfile,
     SlotKind,
-    Status,
-    TargetProfile,
 )
 
 # --- ids (original fixture) --------------------------------------------------
@@ -33,7 +29,6 @@ SHIP, AC, FUSION, GYRO, EXT, HARD, AB, DRONE = 900001, 900010, 900020, 900030, 9
 LAUNCHER, ROCKET, BCS = 900080, 900090, 900100
 WEB, SCRAM, NEUT, ECM_M = 900110, 900120, 900130, 900140
 S_MINFRIG, S_GUNNERY, S_SPT, S_SURGICAL, S_RAPID, S_SHIELDMGMT, S_NAV = 3331, 3300, 3320, 3315, 3310, 3419, 3449
-S_WARHEAD, S_CALMISSILE = 3317, 3330  # Warhead Upgrades, a Caldari-Frigate-like missile hull skill
 
 
 def _types() -> dict:
@@ -107,15 +102,6 @@ def _types() -> dict:
     }
 
 
-def _provider() -> MemoryDataProvider:
-    prov = MemoryDataProvider(_types(), data_version="fixture-1")
-    prov.add_ship_bonus(SHIP, BonusSpec("minfrig_dmg", A.DAMAGE_MULTIPLIER, 5.0, skill_id=S_MINFRIG,
-                                        per_level=True, match_group_ids=(55,), label="Minmatar Frigate"))
-    prov.add_ship_bonus(SHIP, BonusSpec("calfrig_missile", A.DAMAGE_MULTIPLIER, 5.0, skill_id=S_CALMISSILE,
-                                        per_level=True, match_group_ids=(507,), label="Caldari Frigate"))
-    return prov
-
-
 def _all5() -> SkillProfile:
     return SkillProfile.from_dict({S_MINFRIG: 5, S_GUNNERY: 5, S_SPT: 5, S_SURGICAL: 5,
                                    S_RAPID: 5, S_SHIELDMGMT: 5, S_NAV: 5})
@@ -140,300 +126,8 @@ def test_three_identical_hardeners():
 
 
 # --------------------------------------------------------------------------- #
-# Full evaluation (memory provider)
+# Adapter helpers
 # --------------------------------------------------------------------------- #
-def test_dps_with_ship_and_skill_and_module_bonuses():
-    prov = _provider()
-    fit = FitInput(SHIP, (
-        ModuleInput(AC, SlotKind.HIGH, ModuleState.ACTIVE, charge_type_id=FUSION),
-        ModuleInput(GYRO, SlotKind.LOW, ModuleState.ACTIVE),
-    ))
-    r = evaluate(fit, _all5(), OperatingProfile(), prov)
-    # dmg_mult = 1.0 * (1.25 minfrig * 1.15 surgical) * 1.10 gyro
-    # rof = 2.5 * 0.80 rapid-firing * 0.90 gunnery * 0.90 gyro
-    expected = 9 * (1.0 * 1.25 * 1.15 * 1.10) / (2.5 * 0.80 * 0.90 * 0.90)
-    assert r.telemetry["offence"]["total_dps"] == pytest.approx(expected, abs=0.05)
-    assert r.telemetry["offence"]["damage_distribution"]["explosive"] == 100.0
-    assert r.status == Status.VALID
-
-
-# --------------------------------------------------------------------------- #
-# Hull trait bonuses imported from FSD modifierInfo: requires-skill + charge domain
-# --------------------------------------------------------------------------- #
-def test_hull_bonus_scoped_by_required_skill():
-    """A turret-damage hull bonus scoped to items REQUIRING a skill (the FSD
-    LocationRequiredSkillModifier) lifts a turret that requires it, and scales by the hull
-    skill's level — contributing nothing when that hull skill is untrained."""
-    prov = MemoryDataProvider(_types(), data_version="rs")
-    prov.add_ship_bonus(SHIP, BonusSpec(
-        "hull_spt_dmg", A.DAMAGE_MULTIPLIER, 5.0, skill_id=S_MINFRIG, per_level=True,
-        match_required_skill_id=S_SPT, label="Hull: Small Projectile damage"))  # AC requires S_SPT
-    fit = FitInput(SHIP, (ModuleInput(AC, SlotKind.HIGH, ModuleState.ACTIVE, charge_type_id=FUSION),))
-    trained = SkillProfile.from_dict({S_MINFRIG: 4, S_GUNNERY: 5, S_SPT: 5})
-    untrained = SkillProfile.from_dict({S_MINFRIG: 0, S_GUNNERY: 5, S_SPT: 5})
-    hi = evaluate(fit, trained, OperatingProfile(), prov).telemetry["offence"]["total_dps"]
-    lo = evaluate(fit, untrained, OperatingProfile(), prov).telemetry["offence"]["total_dps"]
-    assert lo > 0
-    assert hi == pytest.approx(lo * 1.20, abs=0.05)          # +5% × 4 levels
-
-
-def test_hull_bonus_missile_rof_by_group():
-    """A missile rate-of-fire hull bonus matched by launcher group (the Caracal pattern):
-    faster cycle → more DPS, scaled by the hull skill."""
-    prov = MemoryDataProvider(_types(), data_version="rof")
-    prov.add_ship_bonus(SHIP, BonusSpec(
-        "hull_missile_rof", A.RATE_OF_FIRE, -5.0, skill_id=S_MINFRIG, per_level=True,
-        match_group_ids=(507,), label="Hull: launcher ROF"))
-    fit = FitInput(SHIP, (ModuleInput(LAUNCHER, SlotKind.HIGH, ModuleState.ACTIVE, charge_type_id=ROCKET),))
-    hi = evaluate(fit, SkillProfile.from_dict({S_MINFRIG: 4}), OperatingProfile(), prov)\
-        .telemetry["offence"]["total_dps"]
-    lo = evaluate(fit, SkillProfile.from_dict({S_MINFRIG: 0}), OperatingProfile(), prov)\
-        .telemetry["offence"]["total_dps"]
-    assert lo > 0
-    assert hi == pytest.approx(lo / 0.80, abs=0.1)           # -5% × 4 = ROF ×0.80 → DPS ÷0.80
-
-
-def test_hull_bonus_on_missile_charge_by_type():
-    """A per-type missile-damage hull bonus lands on the loaded charge (FSD RequiredSkill
-    modifier on the missile's kineticDamage), lifting only that damage type."""
-    types = _types()
-    types[ROCKET] = {**types[ROCKET], "skills": [(S_CALMISSILE, 1)]}   # the missile requires the missile skill
-    prov = MemoryDataProvider(types, data_version="cd")
-    prov.add_ship_bonus(SHIP, BonusSpec(
-        "hull_kin_missile", A.KINETIC_DAMAGE, 5.0, skill_id=S_MINFRIG, per_level=True,
-        target_domain="charge", match_required_skill_id=S_CALMISSILE, label="Hull: kinetic missile"))
-    fit = FitInput(SHIP, (ModuleInput(LAUNCHER, SlotKind.HIGH, ModuleState.ACTIVE, charge_type_id=ROCKET),))
-    hi = evaluate(fit, SkillProfile.from_dict({S_MINFRIG: 4, S_CALMISSILE: 5}), OperatingProfile(), prov)\
-        .telemetry["offence"]["total_dps"]
-    lo = evaluate(fit, SkillProfile.from_dict({S_MINFRIG: 0, S_CALMISSILE: 5}), OperatingProfile(), prov)\
-        .telemetry["offence"]["total_dps"]
-    assert lo > 0
-    assert hi == pytest.approx(lo * 1.20, abs=0.05)          # kinetic +5% × 4 (rocket is kinetic-only)
-
-
-def test_hull_charge_bonus_ignores_unmatched_missile():
-    """The charge-domain bonus does nothing when the loaded missile does not require the
-    scoped skill — no silent over-application."""
-    types = _types()
-    types[ROCKET] = {**types[ROCKET], "skills": [(S_CALMISSILE, 1)]}
-    prov = MemoryDataProvider(types, data_version="cd2")
-    prov.add_ship_bonus(SHIP, BonusSpec(
-        "hull_kin_other", A.KINETIC_DAMAGE, 5.0, skill_id=S_MINFRIG, per_level=True,
-        target_domain="charge", match_required_skill_id=S_WARHEAD, label="Hull: mismatched"))  # rocket lacks S_WARHEAD
-    fit = FitInput(SHIP, (ModuleInput(LAUNCHER, SlotKind.HIGH, ModuleState.ACTIVE, charge_type_id=ROCKET),))
-    hi = evaluate(fit, SkillProfile.from_dict({S_MINFRIG: 5, S_CALMISSILE: 5}), OperatingProfile(), prov)\
-        .telemetry["offence"]["total_dps"]
-    lo = evaluate(fit, SkillProfile.from_dict({S_MINFRIG: 0, S_CALMISSILE: 5}), OperatingProfile(), prov)\
-        .telemetry["offence"]["total_dps"]
-    assert hi == pytest.approx(lo, abs=0.001)                # unmatched → identical
-
-
-def test_missing_ammo_is_flagged_and_zero_dps():
-    prov = _provider()
-    fit = FitInput(SHIP, (ModuleInput(AC, SlotKind.HIGH, ModuleState.ACTIVE),))  # no charge
-    r = evaluate(fit, _all5(), OperatingProfile(), prov)
-    assert r.telemetry["offence"]["total_dps"] == 0.0
-    assert any(d.code == "missing_ammo" for d in r.diagnostics)
-
-
-def test_ehp_and_stacked_resist():
-    prov = _provider()
-    fit = FitInput(SHIP, (
-        ModuleInput(EXT, SlotKind.MED, ModuleState.ACTIVE),
-        ModuleInput(HARD, SlotKind.MED, ModuleState.ACTIVE),
-        ModuleInput(HARD, SlotKind.MED, ModuleState.ACTIVE),
-    ))
-    r = evaluate(fit, _all5(), OperatingProfile(damage_profile=DamageProfileInput(1, 1, 1, 1)), prov)
-    shield = r.telemetry["defence"]["layers"]["shield"]
-    assert shield["hp"] == pytest.approx((450 + 268) * 1.25, abs=0.2)  # Shield Management V
-    expected_therm = (1 - 0.8 * stacking.combine_penalized([0.7, 0.7])) * 100
-    assert shield["resists"]["thermal"] == pytest.approx(expected_therm, abs=0.2)
-    assert r.telemetry["defence"]["ehp_total"] > shield["hp"]  # resists raise EHP above raw HP
-
-
-def test_mobility_and_align():
-    prov = _provider()
-    fit = FitInput(SHIP, (ModuleInput(AB, SlotKind.MED, ModuleState.ACTIVE),))
-    r = evaluate(fit, _all5(), OperatingProfile(propulsion_active=True), prov)
-    mob = r.telemetry["mobility"]
-    assert mob["max_velocity"] == pytest.approx(350 * 1.25, abs=0.2)      # Navigation V
-    assert mob["propulsion_velocity"] == pytest.approx(350 * 1.25 * 2.35, abs=0.5)  # +135% AB
-    assert mob["align_time_s"] == pytest.approx(math.log(4) * 1_200_000 * 3.0 / 1e6, abs=0.02)
-
-
-def test_capacitor_stability():
-    prov = _provider()
-    fit = FitInput(SHIP, (ModuleInput(AB, SlotKind.MED, ModuleState.ACTIVE),))
-    r = evaluate(fit, _all5(), OperatingProfile(), prov)
-    cap = r.telemetry["capacitor"]
-    # peak = 0.5 * 350 / 187.5 = 0.933 GJ/s ; AB drain = 8 / 10 = 0.8 GJ/s -> stable
-    assert cap["peak_recharge"] == pytest.approx(0.93, abs=0.02)
-    assert cap["usage"] == pytest.approx(0.8, abs=0.01)
-    assert cap["stable"] is True
-
-
-def test_missile_dps_with_launcher_bcs_and_bonuses():
-    prov = _provider()
-    fit = FitInput(SHIP, (
-        ModuleInput(LAUNCHER, SlotKind.HIGH, ModuleState.ACTIVE, charge_type_id=ROCKET),
-        ModuleInput(BCS, SlotKind.LOW, ModuleState.ACTIVE),
-    ))
-    r = evaluate(fit, SkillProfile.omniscient(), OperatingProfile(), prov)
-    off = r.telemetry["offence"]
-    # dmg = charge * warhead-on-charge(1.10) * caldari(1.25) * BCS penalised(1.10)
-    # rof = 3.0 * BCS(0.90) * rapid-launch(0.85)
-    expected = 20 * (1.0 * 1.10 * 1.25 * 1.10) / (3.0 * 0.90 * 0.85)
-    assert off["missile_dps"] == pytest.approx(expected, abs=0.05)
-    assert off["turret_dps"] == 0.0                       # gyro/rapid-firing never touch missiles
-    assert off["damage_distribution"]["kinetic"] == 100.0
-    assert r.status == Status.VALID
-
-
-def test_bcs_does_not_boost_turrets_and_gyro_does_not_boost_missiles():
-    prov = _provider()
-    # A turret with only a BCS fitted: BCS must NOT raise turret DPS.
-    turret_only_bcs = evaluate(
-        FitInput(SHIP, (ModuleInput(AC, SlotKind.HIGH, ModuleState.ACTIVE, charge_type_id=FUSION),
-                        ModuleInput(BCS, SlotKind.LOW, ModuleState.ACTIVE))),
-        SkillProfile.omniscient(), OperatingProfile(), prov)
-    turret_no_mod = evaluate(
-        FitInput(SHIP, (ModuleInput(AC, SlotKind.HIGH, ModuleState.ACTIVE, charge_type_id=FUSION),)),
-        SkillProfile.omniscient(), OperatingProfile(), prov)
-    assert turret_only_bcs.telemetry["offence"]["turret_dps"] == \
-        pytest.approx(turret_no_mod.telemetry["offence"]["turret_dps"])
-
-
-def test_drone_dps():
-    prov = _provider()
-    fit = FitInput(SHIP, (ModuleInput(DRONE, SlotKind.DRONE, ModuleState.ACTIVE, quantity=1),))
-    r = evaluate(fit, _all5(), OperatingProfile(), prov)
-    # 5 dmg * 1.0 / (2000/1000) = 2.5 dps
-    assert r.telemetry["offence"]["drone_dps"] == pytest.approx(2.5, abs=0.01)
-
-
-def test_missing_skills_and_status():
-    prov = _provider()
-    fit = FitInput(SHIP, (ModuleInput(AC, SlotKind.HIGH, ModuleState.ACTIVE, charge_type_id=FUSION),))
-    r = evaluate(fit, SkillProfile.from_dict({}), OperatingProfile(), prov)
-    ids = {m.skill_type_id for m in r.missing_skills}
-    assert {S_MINFRIG, S_GUNNERY, S_SPT} <= ids
-    assert r.status == Status.MISSING_SKILLS
-
-
-def test_over_resources_status():
-    prov = _provider()
-    # 8 autocannons: 4 fit the 4 highs but 3 turret hardpoints -> structural; drop to test CPU only
-    fit = FitInput(SHIP, tuple(
-        ModuleInput(EXT, SlotKind.MED, ModuleState.ACTIVE) for _ in range(3)
-    ) + (ModuleInput(EXT, SlotKind.LOW, ModuleState.ACTIVE),))  # 4x20 CPU = 80 < 125 ok; push more
-    # Force CPU over by fitting many gyros (18 CPU each) in lows
-    fit = FitInput(SHIP, tuple(
-        ModuleInput(GYRO, SlotKind.LOW, ModuleState.ACTIVE) for _ in range(3)
-    ) + tuple(ModuleInput(EXT, SlotKind.MED, ModuleState.ACTIVE) for _ in range(3)))
-    r = evaluate(fit, _all5(), OperatingProfile(), prov)
-    # 3*18 + 3*20 = 114 < 125 -> still ok; assert resources compute correctly instead
-    assert r.telemetry["resources"]["cpu"]["used"] == pytest.approx(114.0, abs=0.1)
-
-
-def test_turret_hardpoint_limit_makes_impossible():
-    prov = _provider()
-    fit = FitInput(SHIP, tuple(
-        ModuleInput(AC, SlotKind.HIGH, ModuleState.ACTIVE, charge_type_id=FUSION) for _ in range(4)
-    ))  # 4 turrets, only 3 hardpoints
-    r = evaluate(fit, _all5(), OperatingProfile(), prov)
-    assert any(d.code == "turret_hardpoints" for d in r.diagnostics)
-    assert r.status == Status.IMPOSSIBLE
-
-
-def test_all_v_beats_current_dps():
-    prov = _provider()
-    fit = FitInput(SHIP, (ModuleInput(AC, SlotKind.HIGH, ModuleState.ACTIVE, charge_type_id=FUSION),))
-    low = evaluate(fit, SkillProfile.from_dict({S_MINFRIG: 1, S_GUNNERY: 1, S_SPT: 1}),
-                   OperatingProfile(), prov)
-    allv = evaluate(fit, SkillProfile.omniscient(), OperatingProfile(), prov)
-    assert allv.telemetry["offence"]["total_dps"] > low.telemetry["offence"]["total_dps"]
-
-
-def test_offline_module_does_not_consume_cpu():
-    prov = _provider()
-    on = evaluate(FitInput(SHIP, (ModuleInput(GYRO, SlotKind.LOW, ModuleState.ACTIVE),)),
-                  _all5(), OperatingProfile(), prov)
-    off = evaluate(FitInput(SHIP, (ModuleInput(GYRO, SlotKind.LOW, ModuleState.OFFLINE),)),
-                   _all5(), OperatingProfile(), prov)
-    assert on.telemetry["resources"]["cpu"]["used"] == pytest.approx(18.0)
-    assert off.telemetry["resources"]["cpu"]["used"] == pytest.approx(0.0)
-
-
-# --- Engineering / fitting skills (CPU-PG output + weapon fitting cost) ------
-# Skill ids: CPU Management 3426, Power Grid Management 3413, Weapon Upgrades 3318,
-# Advanced Weapon Upgrades 11207.
-def test_fitting_output_scales_with_engineering_skills():
-    """CPU/PG output must reflect the pilot's engineering skills; without them a real fit
-    reads as over-capacity against the untrained hull base (the reported bug)."""
-    prov = _provider()
-    fit = FitInput(SHIP, ())
-    base = evaluate(fit, SkillProfile.from_dict({}), OperatingProfile(), prov)
-    trained = evaluate(fit, SkillProfile.from_dict({3426: 5, 3413: 5}), OperatingProfile(), prov)
-    r0, r5 = base.telemetry["resources"], trained.telemetry["resources"]
-    assert r0["cpu"]["output"] == pytest.approx(125.0)        # untrained hull base
-    assert r0["powergrid"]["output"] == pytest.approx(42.0)
-    assert r5["cpu"]["output"] == pytest.approx(156.25)       # 125 * 1.25 (CPU Management V)
-    assert r5["powergrid"]["output"] == pytest.approx(52.5)   # 42 * 1.25 (Power Grid Management V)
-
-
-def test_weapon_upgrades_reduce_weapon_fitting_cost():
-    """Weapon Upgrades cuts a weapon's CPU, Advanced Weapon Upgrades its powergrid."""
-    prov = _provider()
-    fit = FitInput(SHIP, (ModuleInput(AC, SlotKind.HIGH, ModuleState.ACTIVE, charge_type_id=FUSION),))
-    none = evaluate(fit, SkillProfile.from_dict({}), OperatingProfile(), prov)
-    trained = evaluate(fit, SkillProfile.from_dict({3318: 5, 11207: 5}), OperatingProfile(), prov)
-    assert none.telemetry["resources"]["cpu"]["used"] == pytest.approx(8.0)
-    assert none.telemetry["resources"]["powergrid"]["used"] == pytest.approx(6.0)
-    assert trained.telemetry["resources"]["cpu"]["used"] == pytest.approx(6.0)      # 8 * 0.75
-    assert trained.telemetry["resources"]["powergrid"]["used"] == pytest.approx(5.4)  # 6 * 0.90
-
-
-def test_weapon_upgrades_ignore_non_weapon_modules():
-    """A gyrostabiliser is not a weapon, so Weapon Upgrades must not cut its CPU."""
-    prov = _provider()
-    fit = FitInput(SHIP, (ModuleInput(GYRO, SlotKind.LOW, ModuleState.ACTIVE),))
-    trained = evaluate(fit, SkillProfile.from_dict({3318: 5}), OperatingProfile(), prov)
-    assert trained.telemetry["resources"]["cpu"]["used"] == pytest.approx(18.0)   # unchanged
-
-
-def test_online_state_uses_fitting_but_not_capacitor():
-    """The Online/Active distinction: an online module consumes CPU/PG but draws no
-    capacitor (only active modules do); offline frees the fitting entirely."""
-    prov = _provider()
-
-    def res(state):
-        r = evaluate(FitInput(SHIP, (ModuleInput(AB, SlotKind.MED, state),)),
-                     _all5(), OperatingProfile(), prov)
-        return r.telemetry["resources"], r.telemetry["capacitor"]
-
-    on_res, on_cap = res(ModuleState.ACTIVE)
-    idle_res, idle_cap = res(ModuleState.ONLINE)
-    off_res, off_cap = res(ModuleState.OFFLINE)
-    # Online consumes the same CPU/PG as active…
-    assert idle_res["cpu"]["used"] == on_res["cpu"]["used"] == pytest.approx(15.0)
-    assert idle_res["powergrid"]["used"] == pytest.approx(10.0)
-    # …but draws no capacitor, while active does.
-    assert on_cap["usage"] > 0
-    assert idle_cap["usage"] == pytest.approx(0.0)
-    # Offline frees the fitting entirely.
-    assert off_res["cpu"]["used"] == pytest.approx(0.0)
-    assert off_res["powergrid"]["used"] == pytest.approx(0.0)
-
-
-def test_result_is_json_serialisable():
-    import json
-    prov = _provider()
-    fit = FitInput(SHIP, (ModuleInput(AC, SlotKind.HIGH, ModuleState.ACTIVE, charge_type_id=FUSION),))
-    r = evaluate(fit, _all5(), OperatingProfile(), prov)
-    json.dumps(r.to_dict())  # must not raise
-    assert r.to_dict()["engine_version"]
-
-
 def test_slot_from_effects():
     assert slot_from_effects([A.EFFECT_HI_POWER]) == "high"
     assert slot_from_effects([A.EFFECT_RIG_SLOT]) == "rig"
@@ -445,7 +139,7 @@ def test_slot_from_effects():
 # --------------------------------------------------------------------------- #
 @pytest.fixture
 def orm_dogma(db):
-    """Build the same fixture through the real SDE tables so the ORM provider is exercised."""
+    """Build the fixture through the real SDE tables so the ORM provider is exercised."""
     from apps.admin_audit.models import AppSetting
     from apps.sde.models import (
         SdeCategory,
@@ -485,25 +179,21 @@ def orm_dogma(db):
     return True
 
 
-def test_orm_adapter_matches_memory_engine(orm_dogma):
-    """ORM wiring test. The hand-computed bonus chain belongs to the v1 curated
-    engine (this fixture seeds SdeShipBonus, which only v1 reads) — asserted via
-    evaluate_v1, the differential baseline. The v2 production path is exercised for
-    the ORM wiring itself (slot bridge, data version); its NUMBERS are covered by
-    the golden suite against real graph fixtures (tests/test_fitting_golden_*)."""
+def test_orm_adapter_wiring(orm_dogma):
+    """ORM-provider wiring: the adapter resolves the data version and bridges the hull's
+    legacy slot-count columns into the v2 evaluator, even though this fixture stores the
+    slots as dogma attributes and deliberately omits the full modifier graph. The bonus
+    *numbers* are covered against real graph fixtures by the golden suite
+    (tests/test_fitting_golden_*)."""
     engine = FittingEngine(provider=ORMDataProvider())
     assert engine.data_version == "orm-1"
     fit = FitInput(SHIP, (
         ModuleInput(AC, SlotKind.HIGH, ModuleState.ACTIVE, charge_type_id=FUSION),
         ModuleInput(GYRO, SlotKind.LOW, ModuleState.ACTIVE),
     ))
-    r = engine.evaluate_v1(fit, _all5(), OperatingProfile())
-    expected = 9 * (1.0 * 1.25 * 1.15 * 1.10) / (2.5 * 0.80 * 0.90 * 0.90)
-    assert r.telemetry["offence"]["total_dps"] == pytest.approx(expected, abs=0.05)
+    r = engine.evaluate(fit, _all5(), OperatingProfile())
     # slot-count bridge: hull slots come through even though we stored them as dogma attrs
     assert r.telemetry["resources"]["slots"]["hull"]["high"] == 4
-    r2 = engine.evaluate(fit, _all5(), OperatingProfile())
-    assert r2.telemetry["resources"]["slots"]["hull"]["high"] == 4
 
 
 def test_engine_cache_roundtrip(orm_dogma):
@@ -514,87 +204,3 @@ def test_engine_cache_roundtrip(orm_dogma):
     assert first == second
     assert first["engine_version"] == engine.engine_version
     assert first["data_version"] == "orm-1"
-
-
-# --------------------------------------------------------------------------- #
-# Missile application vs a target profile
-# --------------------------------------------------------------------------- #
-def test_missile_application_formula_matches_hand_value():
-    # size=40/50=0.8 ; vel ratio=100/200=0.5 ; exp=ln(0.85)/ln(0.70)=0.4556
-    # (0.8*0.5)^0.4556 = 0.4^0.4556 = 0.6587 -> min(1, 0.8, 0.6587) = 0.6587
-    got = missile_application(target_sig=40, target_vel=200, explosion_radius=50,
-                              explosion_velocity=100, drf=0.85, drs=0.70)
-    assert got == pytest.approx(0.6587, abs=1e-3)
-
-
-def test_missile_application_edges_and_monotonicity():
-    def f(sig, vel):
-        return missile_application(sig, vel, 50, 100, 0.85, 0.70)
-    assert f(1000, 0) == 1.0                     # huge, stationary target → full application
-    assert f(40, 0) == pytest.approx(0.8)        # small but slow → signature-limited (40/50)
-    assert f(40, 400) < f(40, 100)               # a faster target takes less
-    assert f(80, 200) > f(40, 200)               # a bigger target takes more
-    assert 0.0 <= f(5, 5000) <= 1.0              # always a clean fraction
-
-
-def test_missile_applied_dps_tracks_the_target():
-    prov = _provider()
-    fit = FitInput(SHIP, (ModuleInput(LAUNCHER, SlotKind.HIGH, ModuleState.ACTIVE,
-                                      charge_type_id=ROCKET),))
-    # No target → applied fields absent, raw missile_dps only.
-    raw = evaluate(fit, SkillProfile.omniscient(), OperatingProfile(), prov)
-    assert "missile_dps_applied" not in raw.telemetry["offence"]
-    missile_dps = raw.telemetry["offence"]["missile_dps"]
-    assert missile_dps > 0
-
-    # A small, fast target: missiles under-apply.
-    fast = evaluate(fit, SkillProfile.omniscient(),
-                    OperatingProfile(target=TargetProfile(40, 200, "frig")), prov)
-    off = fast.telemetry["offence"]
-    assert off["missile_dps_applied"] == pytest.approx(missile_dps * 0.6587, abs=0.1)
-    assert 0 < off["missile_application"] < 1
-    assert off["target"]["signature_radius"] == 40
-
-    # A huge, stationary target: full application.
-    slow = evaluate(fit, SkillProfile.omniscient(),
-                    OperatingProfile(target=TargetProfile(2000, 0, "structure")), prov)
-    assert slow.telemetry["offence"]["missile_dps_applied"] == pytest.approx(missile_dps, abs=0.05)
-    assert slow.telemetry["offence"]["missile_application"] == 1.0
-
-
-def test_turret_application_is_flagged_not_faked():
-    """A turret fit measured against a target reports turrets as unsupported for application
-    (never silently 'applied'), keeping the engine honest about what it does not model."""
-    prov = _provider()
-    fit = FitInput(SHIP, (ModuleInput(AC, SlotKind.HIGH, ModuleState.ACTIVE, charge_type_id=FUSION),))
-    r = evaluate(fit, _all5(), OperatingProfile(target=TargetProfile(40, 200)), prov)
-    assert "turret_application_not_modelled" in r.unsupported
-
-
-# --------------------------------------------------------------------------- #
-# Electronic-warfare readout
-# --------------------------------------------------------------------------- #
-def test_ewar_reports_web_scram_neut_and_ecm():
-    prov = _provider()
-    fit = FitInput(SHIP, (
-        ModuleInput(WEB, SlotKind.MED, ModuleState.ACTIVE),
-        ModuleInput(SCRAM, SlotKind.MED, ModuleState.ACTIVE),
-        ModuleInput(NEUT, SlotKind.HIGH, ModuleState.ACTIVE),
-        ModuleInput(ECM_M, SlotKind.MED, ModuleState.ACTIVE),
-    ))
-    ew = evaluate(fit, _all5(), OperatingProfile(), prov).telemetry["ewar"]
-    assert ew["count"] == 4
-    by_kind = {e["kind"]: e for e in ew["modules"]}
-    assert by_kind["stasis_web"]["strength"] == 60.0              # |−60%|
-    assert by_kind["stasis_web"]["optimal_m"] == 10000
-    assert by_kind["warp_disruption"]["strength"] == 2.0          # points
-    neut = by_kind["energy_neutraliser"]
-    assert neut["strength"] == 48.0 and neut["per_second"] == pytest.approx(4.0)  # 48 / 12s
-    ecm = by_kind["ecm"]
-    assert ecm["jam_type"] == "radar" and ecm["strength"] == 3.0  # strongest racial
-
-
-def test_ewar_excludes_offline_modules():
-    prov = _provider()
-    fit = FitInput(SHIP, (ModuleInput(WEB, SlotKind.MED, ModuleState.OFFLINE),))
-    assert evaluate(fit, _all5(), OperatingProfile(), prov).telemetry["ewar"]["count"] == 0

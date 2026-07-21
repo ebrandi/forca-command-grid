@@ -25,8 +25,6 @@ _SLOT_TITLES = {
 }
 _UNSUPPORTED_LABELS = {
     "no_weapons_detected": lambda: _("No weapons or drones detected"),
-    "turret_application_not_modelled":
-        lambda: _("Turret tracking is not modelled (turrets shown at full damage)"),
 }
 
 

@@ -11,7 +11,7 @@ bonuses are added here, the single documented place, never inline in the evaluat
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from . import attributes as A
 from .effects import Op
@@ -209,13 +209,3 @@ STANDARD_SKILL_BONUSES: tuple[BonusSpec, ...] = (
     BonusSpec("shield_upgrades", A.POWER_USAGE, -5.0, skill_id=SKILL_SHIELD_UPGRADES,
               per_level=True, match_required_skill_id=SKILL_SHIELD_UPGRADES, label="Shield Upgrades"),
 )
-
-
-@dataclass
-class BonusContext:
-    """All bonuses in play for one evaluation: ship/role (data-provided) + skills."""
-    ship_bonuses: list[BonusSpec] = field(default_factory=list)
-    skill_bonuses: list[BonusSpec] = field(default_factory=lambda: list(STANDARD_SKILL_BONUSES))
-
-    def all(self) -> list[BonusSpec]:
-        return [*self.ship_bonuses, *self.skill_bonuses]

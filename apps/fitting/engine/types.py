@@ -19,7 +19,12 @@ from enum import Enum
 # in evaluator.py) replaces the curated per-mechanic engine; corrected capacitor peak
 # (2.5·C/τ), active/passive tank, ranges, drone bandwidth gating, charge/rig/group
 # validation, implants. See docs/architecture/decisions/tochas-lab-calculation-engine.md.
-ENGINE_VERSION = "2.0.0"
+# 2.1.0 — completion pass: sustained/applied DPS, fit validations, tactical modes,
+# projected modules, warfare-buff boosts, mining yield, exotic weapons, EWAR readout,
+# mutated modules, fighter squadrons, MWD signature-bloom stacking fix; the legacy v1
+# curated engine (dogma.py) is removed and v2 is the sole calculation path. Bumping
+# invalidates every telemetry cache entry on deploy by design.
+ENGINE_VERSION = "2.1.0"
 
 
 class SlotKind(str, Enum):
