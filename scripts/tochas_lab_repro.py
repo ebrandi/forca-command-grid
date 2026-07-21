@@ -8,7 +8,6 @@ exercise mechanics suspected wrong/absent. Read-only; touches no application sta
 """
 import json
 import os
-import sys
 
 import django
 
@@ -17,7 +16,12 @@ django.setup()
 
 from apps.fitting.engine.adapter import FittingEngine  # noqa: E402
 from apps.fitting.engine.types import (  # noqa: E402
-    FitInput, ModuleInput, ModuleState, OperatingProfile, SkillProfile, SlotKind,
+    FitInput,
+    ModuleInput,
+    ModuleState,
+    OperatingProfile,
+    SkillProfile,
+    SlotKind,
 )
 from apps.sde.models import SdeType  # noqa: E402
 

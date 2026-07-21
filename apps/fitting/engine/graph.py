@@ -35,7 +35,7 @@ import math
 from dataclasses import dataclass, field
 from typing import Protocol
 
-from .types import BoostInput, FitInput, ModuleState, ProjectedInput, SkillProfile, SlotKind
+from .types import BoostInput, FitInput, ModuleState, SkillProfile, SlotKind
 
 # ---------------------------------------------------------------------------
 # Constants (CCP dogma data model)
@@ -188,7 +188,7 @@ class GraphDataProvider(Protocol):
     def effects(self, type_id: int) -> frozenset[int]: ...
     def attr_def(self, attribute_id: int) -> AttributeDef: ...
     def effect_def(self, effect_id: int) -> EffectDef | None: ...
-    def dbuff(self, buff_id: int) -> "DbuffDef | None": ...
+    def dbuff(self, buff_id: int) -> DbuffDef | None: ...
 
 
 # ---------------------------------------------------------------------------
@@ -198,7 +198,7 @@ class GraphDataProvider(Protocol):
 class _Application:
     """One collected modifier application onto (target entity, target attribute)."""
     operation: int
-    source: "Entity"
+    source: Entity
     source_attr: int
     min_state: int                 # source must be in >= this state
     penalisable_source: bool       # source category NOT exempt from stacking
@@ -224,8 +224,8 @@ class Entity:
     base: dict[int, float] = field(default_factory=dict)
     applications: dict[int, list[_Application]] = field(default_factory=dict)
     values: dict[int, float] = field(default_factory=dict)
-    parent: "Entity | None" = None  # charge -> its module
-    charge: "Entity | None" = None  # module -> its charge
+    parent: Entity | None = None  # charge -> its module
+    charge: Entity | None = None  # module -> its charge
     effect_ids: frozenset[int] = frozenset()
     slot: SlotKind | None = None
     module_state: ModuleState | None = None
@@ -247,7 +247,7 @@ class EvaluatedFit:
     fighters: list[Entity] = field(default_factory=list)
     # A tactical destroyer's active mode (T3D "Ship Modifiers" type), or None. Materialised
     # like an always-on module; its effects apply only when it is valid for the hull.
-    mode: "Entity | None" = None
+    mode: Entity | None = None
     mode_valid: bool = True
     # WS-6: hostile modules projected ONTO this ship (one entity per unit; a quantity-N
     # projected input expands to N sources so a stacking chain is evaluated correctly).
@@ -616,7 +616,7 @@ def _boost_strengths(charge_attrs: dict[int, float],
     secondaries then keep their own defaults.
     """
     slots: list[tuple[int, float]] = []
-    for id_attr, mul_attr in zip(_BUFF_ID_ATTRS, _BUFF_MULTIPLIER_ATTRS):
+    for id_attr, mul_attr in zip(_BUFF_ID_ATTRS, _BUFF_MULTIPLIER_ATTRS, strict=True):
         buff_id = int(charge_attrs.get(id_attr, 0) or 0)
         if buff_id <= 0:
             continue

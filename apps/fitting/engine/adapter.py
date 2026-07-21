@@ -56,9 +56,9 @@ _ATTR_DEF_CACHE: dict[str, dict[int, AttributeDef]] = {}
 # process (3 bulk queries) turns a ~1.5 s cold evaluation into ~10 ms.
 _SKILL_DATA_CACHE: dict[str, tuple[list[int], dict, dict, dict]] = {}
 # EffectDefs (categories + modifier lists) — likewise static per data version.
-_EFFECT_DEF_CACHE: dict[str, dict[int, "EffectDef"]] = {}
+_EFFECT_DEF_CACHE: dict[str, dict[int, EffectDef]] = {}
 # WS-7 warfare buffs (dbuffCollections) — small (~271 buffs) and static per data version.
-_DBUFF_CACHE: dict[str, dict[int, "DbuffDef"]] = {}
+_DBUFF_CACHE: dict[str, dict[int, DbuffDef]] = {}
 
 
 class ORMDataProvider:

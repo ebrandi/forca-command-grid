@@ -31,7 +31,7 @@ import math
 import pytest
 
 from apps.fitting.engine import attributes as A
-from apps.fitting.engine.types import ModuleInput, ModuleState, SkillProfile, SlotKind
+from apps.fitting.engine.types import ModuleInput, SkillProfile, SlotKind
 
 from ._fitting_graph_utils import evaluate_fit, load_graph_fixture
 
@@ -179,7 +179,6 @@ def test_rapid_light_launcher_long_reload_dominates(missile_ids):
 
     volley = _attr(ammo, A.KINETIC_DAMAGE)
     cycle_s = _attr(rlml, A.RATE_OF_FIRE) / 1000.0
-    burst = volley / cycle_s
     shots = _magazine_shots(rlml, ammo)                     # floor(0.3/0.015) = 20
     reload_s = _attr(rlml, ATTR_RELOAD_TIME) / 1000.0       # 35 s
     time_to_empty = shots * cycle_s

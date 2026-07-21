@@ -23,8 +23,17 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.dev")
 django.setup()
 
 from apps.sde.models import (  # noqa: E402
-    SdeCategory, SdeDbuff, SdeDbuffModifier, SdeDogmaAttribute, SdeDogmaEffect, SdeGroup,
-    SdeModifier, SdeType, SdeTypeAttribute, SdeTypeEffect, SdeTypeSkill,
+    SdeCategory,
+    SdeDbuff,
+    SdeDbuffModifier,
+    SdeDogmaAttribute,
+    SdeDogmaEffect,
+    SdeGroup,
+    SdeModifier,
+    SdeType,
+    SdeTypeAttribute,
+    SdeTypeEffect,
+    SdeTypeSkill,
 )
 
 SKILL_LEVEL_SCALER_ATTRS = (275, 276, 280)
@@ -58,7 +67,7 @@ def main(names: list[str]) -> None:
     frontier = set(type_ids)
     while frontier:
         new: set[int] = set()
-        for tid, sid in SdeTypeSkill.objects.filter(type_id__in=frontier).values_list(
+        for _tid, sid in SdeTypeSkill.objects.filter(type_id__in=frontier).values_list(
                 "type_id", "skill_type_id"):
             if sid not in type_ids:
                 new.add(sid)

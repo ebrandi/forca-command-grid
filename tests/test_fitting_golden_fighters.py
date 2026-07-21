@@ -30,10 +30,8 @@ from apps.fitting.engine.adapter import FittingEngine
 from apps.fitting.engine.types import (
     FighterInput,
     FitInput,
-    ModuleInput,
     OperatingProfile,
     SkillProfile,
-    SlotKind,
     TargetProfile,
 )
 

@@ -66,8 +66,12 @@ class Command(BaseCommand):
     # ------------------------------------------------------------------ #
     def _check_presence(self):
         from apps.sde.models import (
-            SdeDogmaAttribute, SdeDogmaEffect, SdeModifier, SdeShipBonus,
-            SdeType, SdeTypeAttribute, SdeTypeEffect,
+            SdeDogmaAttribute,
+            SdeDogmaEffect,
+            SdeModifier,
+            SdeShipBonus,
+            SdeTypeAttribute,
+            SdeTypeEffect,
         )
 
         for label, qs, minimum in (
@@ -80,9 +84,10 @@ class Command(BaseCommand):
         ):
             n = qs.count()
             if n < minimum:
+                graph_owned = "modifier" in label or "bonus" in label
+                remedy = "run import_dogma_graph" if graph_owned else "run import_sde_fuzzwork"
                 self.failures.append(
-                    f"{label}: {n} rows (expected >= {minimum}) — "
-                    f"{'run import_dogma_graph' if 'modifier' in label or 'bonus' in label else 'run import_sde_fuzzwork'}")
+                    f"{label}: {n} rows (expected >= {minimum}) — {remedy}")
         skills_with_dogma = (
             SdeTypeAttribute.objects.filter(
                 type__group__category_id=_SKILL_CATEGORY)
@@ -106,7 +111,10 @@ class Command(BaseCommand):
 
     def _check_references(self):
         from apps.sde.models import (
-            SdeDogmaAttribute, SdeDogmaEffect, SdeModifier, SdeTypeAttribute,
+            SdeDogmaAttribute,
+            SdeDogmaEffect,
+            SdeModifier,
+            SdeTypeAttribute,
             SdeTypeEffect,
         )
 

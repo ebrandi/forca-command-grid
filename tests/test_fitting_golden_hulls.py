@@ -40,7 +40,6 @@ import pytest
 from apps.fitting.engine import attributes as A
 from apps.fitting.engine.types import (
     BoostInput,
-    DamageProfileInput,
     ModuleInput,
     ModuleState,
     OperatingProfile,

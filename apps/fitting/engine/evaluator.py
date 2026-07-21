@@ -26,7 +26,6 @@ from time import perf_counter
 
 from . import attributes as A
 from .graph import (
-    STATE_ACTIVE,
     Entity,
     EvaluatedFit,
     evaluate_attributes,

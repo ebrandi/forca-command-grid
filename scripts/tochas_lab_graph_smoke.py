@@ -14,7 +14,11 @@ from apps.fitting.engine import attributes as A  # noqa: E402
 from apps.fitting.engine.adapter import ORMDataProvider  # noqa: E402
 from apps.fitting.engine.graph import evaluate_attributes  # noqa: E402
 from apps.fitting.engine.types import (  # noqa: E402
-    FitInput, ModuleInput, ModuleState, SkillProfile, SlotKind,
+    FitInput,
+    ModuleInput,
+    ModuleState,
+    SkillProfile,
+    SlotKind,
 )
 from apps.sde.models import SdeType  # noqa: E402
 

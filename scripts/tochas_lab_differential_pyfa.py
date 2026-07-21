@@ -45,14 +45,16 @@ import textwrap
 from collections import Counter
 
 # --------------------------------------------------------------------------- #
-# Local-setup defaults. These point at the WS-15a scratchpad and MUST be set up
-# by hand (they are intentionally outside the repo — pyfa is GPL and its SDE is
-# large). The harness fails loudly with instructions if they are missing.
+# Local-setup defaults. The pyfa clone + venv MUST be set up by hand (they are
+# intentionally outside the repo — pyfa is GPL and its SDE is large); see
+# docs/fitting/pyfa-differential-setup.md. Override with PYFA_ROOT / PYFA_VENV,
+# or place both under ~/.cache/tochas-lab (the default). The harness fails
+# loudly with instructions if they are missing.
 # --------------------------------------------------------------------------- #
-_SCRATCH = ("/tmp/claude-1000/-home-ebrandi-projects-forca-command-grid/"
-            "ade3d10a-23de-4818-ab00-bc662e12a6d4/scratchpad")
-DEFAULT_PYFA_ROOT = os.environ.get("PYFA_ROOT", os.path.join(_SCRATCH, "pyfa"))
-DEFAULT_PYFA_VENV = os.environ.get("PYFA_VENV", os.path.join(_SCRATCH, "pyfa-venv"))
+_CACHE_HOME = os.path.join(
+    os.environ.get("XDG_CACHE_HOME", os.path.expanduser("~/.cache")), "tochas-lab")
+DEFAULT_PYFA_ROOT = os.environ.get("PYFA_ROOT", os.path.join(_CACHE_HOME, "pyfa"))
+DEFAULT_PYFA_VENV = os.environ.get("PYFA_VENV", os.path.join(_CACHE_HOME, "pyfa-venv"))
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -106,11 +108,8 @@ FITS = [
         "ship": "Caracal",
         "damage_pattern": [25, 25, 25, 25],
         "our_items": [
-            {"name": "Heavy Missile Launcher II", "slot": "high", "charge": "Scourge Fury Heavy Missile", "state": "active"},
-            {"name": "Heavy Missile Launcher II", "slot": "high", "charge": "Scourge Fury Heavy Missile", "state": "active"},
-            {"name": "Heavy Missile Launcher II", "slot": "high", "charge": "Scourge Fury Heavy Missile", "state": "active"},
-            {"name": "Heavy Missile Launcher II", "slot": "high", "charge": "Scourge Fury Heavy Missile", "state": "active"},
-            {"name": "Heavy Missile Launcher II", "slot": "high", "charge": "Scourge Fury Heavy Missile", "state": "active"},
+            *[{"name": "Heavy Missile Launcher II", "slot": "high",
+               "charge": "Scourge Fury Heavy Missile", "state": "active"}] * 5,
             {"name": "50MN Y-T8 Compact Microwarpdrive", "slot": "med", "state": "active"},
             {"name": "Large Shield Extender II", "slot": "med", "state": "online"},
             {"name": "Large Shield Extender II", "slot": "med", "state": "online"},
@@ -159,11 +158,8 @@ FITS = [
         "ship": "Omen",
         "damage_pattern": [25, 25, 25, 25],
         "our_items": [
-            {"name": "Heavy Pulse Laser II", "slot": "high", "charge": "Imperial Navy Multifrequency M", "state": "active"},
-            {"name": "Heavy Pulse Laser II", "slot": "high", "charge": "Imperial Navy Multifrequency M", "state": "active"},
-            {"name": "Heavy Pulse Laser II", "slot": "high", "charge": "Imperial Navy Multifrequency M", "state": "active"},
-            {"name": "Heavy Pulse Laser II", "slot": "high", "charge": "Imperial Navy Multifrequency M", "state": "active"},
-            {"name": "Heavy Pulse Laser II", "slot": "high", "charge": "Imperial Navy Multifrequency M", "state": "active"},
+            *[{"name": "Heavy Pulse Laser II", "slot": "high",
+               "charge": "Imperial Navy Multifrequency M", "state": "active"}] * 5,
             {"name": "10MN Afterburner II", "slot": "med", "state": "active"},
             {"name": "Cap Recharger II", "slot": "med", "state": "online"},
             {"name": "Cap Recharger II", "slot": "med", "state": "online"},
@@ -203,9 +199,8 @@ FITS = [
         "ship": "Vexor",
         "damage_pattern": [25, 25, 25, 25],
         "our_items": [
-            {"name": "200mm Railgun II", "slot": "high", "charge": "Federation Navy Antimatter Charge M", "state": "active"},
-            {"name": "200mm Railgun II", "slot": "high", "charge": "Federation Navy Antimatter Charge M", "state": "active"},
-            {"name": "200mm Railgun II", "slot": "high", "charge": "Federation Navy Antimatter Charge M", "state": "active"},
+            *[{"name": "200mm Railgun II", "slot": "high",
+               "charge": "Federation Navy Antimatter Charge M", "state": "active"}] * 3,
             {"name": "10MN Afterburner II", "slot": "med", "state": "active"},
             {"name": "Cap Recharger II", "slot": "med", "state": "online"},
             {"name": "Cap Recharger II", "slot": "med", "state": "online"},
@@ -242,9 +237,8 @@ FITS = [
         "ship": "Punisher",
         "damage_pattern": [25, 25, 25, 25],
         "our_items": [
-            {"name": "Dual Light Pulse Laser II", "slot": "high", "charge": "Imperial Navy Multifrequency S", "state": "active"},
-            {"name": "Dual Light Pulse Laser II", "slot": "high", "charge": "Imperial Navy Multifrequency S", "state": "active"},
-            {"name": "Dual Light Pulse Laser II", "slot": "high", "charge": "Imperial Navy Multifrequency S", "state": "active"},
+            *[{"name": "Dual Light Pulse Laser II", "slot": "high",
+               "charge": "Imperial Navy Multifrequency S", "state": "active"}] * 3,
             {"name": "1MN Afterburner II", "slot": "med", "state": "active"},
             {"name": "Cap Recharger II", "slot": "med", "state": "online"},
             {"name": "1600mm Steel Plates II", "slot": "low", "state": "online"},
@@ -661,7 +655,8 @@ def ensure_pyfa(pyfa_root, pyfa_venv):
             sys.modules["config"] = s
             import db_update; db_update.update_db()
         """)
-        r = subprocess.run([py, "-c", builder], capture_output=True, text=True)
+        r = subprocess.run(  # noqa: S603 — interpreter path + repo-constant code, no untrusted input
+            [py, "-c", builder], capture_output=True, text=True)
         if r.returncode != 0 or not os.path.isfile(eve_db):
             _die(2, "pyfa eve.db build failed:\n" + r.stdout + "\n" + r.stderr)
     return py
@@ -674,8 +669,9 @@ def run_pyfa(py, pyfa_root, fits):
         specs.append({"key": fit["key"], "ship": fit["ship"],
                       "damage_pattern": fit.get("damage_pattern", [25, 25, 25, 25]),
                       "modules": mods, "drones": drones})
-    r = subprocess.run([py, "-c", PYFA_DRIVER, pyfa_root],
-                       input=json.dumps(specs), capture_output=True, text=True)
+    r = subprocess.run(  # noqa: S603 — interpreter path + repo-constant driver, no untrusted input
+        [py, "-c", PYFA_DRIVER, pyfa_root],
+        input=json.dumps(specs), capture_output=True, text=True)
     payload = _extract("PYFA_JSON_START", "PYFA_JSON_END", r.stdout)
     if payload is None:
         _die(2, "pyfa side failed:\nSTDOUT:\n" + r.stdout + "\nSTDERR:\n" + r.stderr)
@@ -689,7 +685,8 @@ def run_ours(fits):
     env = dict(os.environ, FIT_JSON=fit_json)
     cmd = ["docker", "compose", "run", "--rm", "-T", "-e", "FIT_JSON",
            "web", "python", "manage.py", "shell", "-c", OUR_EVAL]
-    r = subprocess.run(cmd, cwd=REPO_ROOT, env=env, capture_output=True, text=True)
+    r = subprocess.run(  # noqa: S603 — fixed docker-compose argv, no untrusted input
+        cmd, cwd=REPO_ROOT, env=env, capture_output=True, text=True)
     payload = _extract("OUR_JSON_START", "OUR_JSON_END", r.stdout)
     if payload is None:
         _die(2, "FORCA side failed (is the web container up? `docker compose ps`):\n"
@@ -752,7 +749,7 @@ def _fmt(v):
         return "-"
     if isinstance(v, bool):
         return "T" if v else "F"
-    if isinstance(v, (int, float)):
+    if isinstance(v, int | float):
         return f"{v:.3f}"
     return str(v)
 
@@ -782,7 +779,7 @@ def print_table(fit, results):
     print(f"  {'stat':<22}{'ours':>13}{'pyfa':>13}{'delta':>12}  verdict")
     print("  " + "-" * 72)
     for label, ov, pv, verdict, reason in results:
-        if isinstance(ov, (int, float)) and isinstance(pv, (int, float)) \
+        if isinstance(ov, int | float) and isinstance(pv, int | float) \
                 and not isinstance(ov, bool):
             delta = f"{abs(float(ov) - float(pv)):.3f}"
         else:

@@ -25,8 +25,17 @@ def load_graph_fixture(name: str, with_skills: bool = True) -> dict:
 def _load_one(name: str) -> dict:
     from apps.admin_audit.models import AppSetting
     from apps.sde.models import (
-        SdeCategory, SdeDbuff, SdeDbuffModifier, SdeDogmaAttribute, SdeDogmaEffect, SdeGroup,
-        SdeModifier, SdeType, SdeTypeAttribute, SdeTypeEffect, SdeTypeSkill,
+        SdeCategory,
+        SdeDbuff,
+        SdeDbuffModifier,
+        SdeDogmaAttribute,
+        SdeDogmaEffect,
+        SdeGroup,
+        SdeModifier,
+        SdeType,
+        SdeTypeAttribute,
+        SdeTypeEffect,
+        SdeTypeSkill,
     )
 
     data = json.loads((FIXTURES / f"{name}.json").read_text())

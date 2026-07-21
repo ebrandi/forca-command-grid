@@ -43,7 +43,6 @@ def owner(dogma):
 def _seed_extra_types():
     """Seed the special SDE types WS-13 panels need: an implant, a subsystem, a fighter, a
     fleet-boost charge, a tactical mode and a projectable EWAR module."""
-    from apps.fitting.engine import attributes as A
     from apps.sde.models import (
         SdeCategory,
         SdeDogmaEffect,

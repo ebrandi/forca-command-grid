@@ -301,9 +301,8 @@ def import_killmail(request, killmail_id: int):
 @feature_required("tochas_lab")
 @require_POST
 def import_doctrine(request, fit_id: int):
-    from core.features import feature_visible_to
-
     from apps.doctrines.models import DoctrineFit
+    from core.features import feature_visible_to
     # Same audience gate the doctrine picker enforces — the POST endpoint must not be
     # a side door to doctrine content the user cannot browse.
     if not feature_visible_to("doctrines", request.user):
