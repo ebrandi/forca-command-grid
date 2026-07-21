@@ -37,7 +37,8 @@ class KillboardTokenAuthentication(authentication.BaseAuthentication):
         try:
             raw = header[1].decode()
         except UnicodeError:
-            raise exceptions.AuthenticationFailed(_("Invalid token header. Token string contains invalid characters."))
+            raise exceptions.AuthenticationFailed(
+                _("Invalid token header. Token string contains invalid characters.")) from None
         return self._authenticate_credentials(raw)
 
     def _authenticate_credentials(self, raw: str):

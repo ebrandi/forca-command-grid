@@ -14,7 +14,7 @@ from django.test import override_settings
 from django.utils import timezone
 
 from apps.killboard.ingest import ingest_killmail
-from apps.killboard.models import Killmail, KillboardApiToken
+from apps.killboard.models import KillboardApiToken
 from apps.market.models import MarketPrice
 
 AJSON = {"HTTP_ACCEPT": "application/json"}
