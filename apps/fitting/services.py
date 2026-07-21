@@ -626,9 +626,12 @@ def command_burst_charges() -> list[dict]:
     """The fleet command-burst charges a pilot can simulate being boosted by, grouped by burst
     family (Shield/Armor/Skirmish/Information/Mining). Each charge names the warfare buff(s) it
     grants; the UI toggles one per family and writes a ``slot="boost"`` items entry. Data-driven
-    — every published charge whose group is a "… Burst Charges" group."""
+    — a burst charge is any published type that carries warfareBuff1ID (2468); the group-name
+    filter alone also matches the charges' blueprint groups (seen live on the test server)."""
+    buff_carriers = SdeTypeAttribute.objects.filter(attribute_id=2468).values("type_id")
     rows = (SdeType.objects
-            .filter(published=True, group__name__icontains="Burst Charge")
+            .filter(published=True, group__name__icontains="Burst Charge",
+                    type_id__in=buff_carriers)
             .values("type_id", "name", "group__name").order_by("group__name", "name"))
     return [{"type_id": r["type_id"], "name": r["name"], "group": r["group__name"]} for r in rows]
 

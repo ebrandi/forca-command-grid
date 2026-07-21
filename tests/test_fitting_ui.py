@@ -74,6 +74,13 @@ def _seed_extra_types():
     SdeDogmaEffect.objects.get_or_create(
         effect_id=9901, defaults={"name": "ecmTest", "is_offensive": True})
     SdeTypeEffect.objects.get_or_create(type_id=81005, effect_id=9901, defaults={"is_default": True})
+    # A burst charge is defined by carrying warfareBuff1ID (2468) — command_burst_charges
+    # filters on it so the charges' blueprint types never appear in the panel.
+    from apps.sde.models import SdeTypeAttribute
+    SdeTypeAttribute.objects.get_or_create(type_id=81003, attribute_id=2468,
+                                           defaults={"value": 10.0})
+    SdeType.objects.get_or_create(type_id=81006, defaults={
+        "group_id": 704, "name": "Shield Harmonizing Charge Blueprint"})
     return True
 
 
@@ -355,6 +362,8 @@ def test_command_burst_charges_service_and_editor(client, owner, dogma):
     _seed_extra_types()
     charges = services.command_burst_charges()
     assert any(c["type_id"] == 81003 for c in charges)
+    # Blueprints share the group-name pattern but carry no warfareBuff1ID — excluded.
+    assert not any(c["name"].endswith("Blueprint") for c in charges)
     fit = services.create_fit(owner, name="Boost", ship_type_id=RIFTER, items=[])
     client.force_login(owner)
     body = client.get(reverse("fitting:detail", args=[fit.pk])).content.decode()
