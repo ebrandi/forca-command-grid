@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-20 19:45+0000\n"
+"POT-Creation-Date: 2026-07-21 13:49+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: ko machine-assisted draft\n"
@@ -4796,6 +4796,7 @@ msgstr "Capital 함선"
 #: apps/mentorship/tracks_i18n.py apps/pingboard/models.py
 #: apps/raffle/sources/pve.py
 #: templates/admin_audit/console/mentorship/tracks.html
+#: templates/fitting/_telemetry.html
 msgid "Mining"
 msgstr "채굴"
 
@@ -6554,7 +6555,7 @@ msgstr "회수"
 msgid "Kick"
 msgstr "추방"
 
-#: apps/comms_access/models.py
+#: apps/comms_access/models.py templates/fitting/_telemetry.html
 msgid "Applied"
 msgstr "적용됨"
 
@@ -6660,6 +6661,7 @@ msgid "Skill queue"
 msgstr "스킬 큐"
 
 #: apps/corporation/compliance.py apps/killboard/fitrender.py
+#: templates/fitting/detail.html
 msgid "Implants"
 msgstr "임플란트"
 
@@ -7494,10 +7496,6 @@ msgid "No weapons or drones detected"
 msgstr "무기 또는 드론이 감지되지 않음"
 
 #: apps/fitting/diagnostics.py
-msgid "Turret tracking is not modelled (turrets shown at full damage)"
-msgstr "터렛 트래킹은 반영되지 않음 (터렛은 최대 데미지로 표시됨)"
-
-#: apps/fitting/diagnostics.py
 #, python-format
 msgid "%(used)s of %(cap)s used"
 msgstr "%(cap)s 중 %(used)s 사용"
@@ -7538,25 +7536,132 @@ msgid "Load a compatible charge."
 msgstr "호환되는 차지를 장전하세요."
 
 #: apps/fitting/diagnostics.py
-#, fuzzy
-#| msgid "No slots on this hull."
 msgid "Rig size does not fit this hull"
-msgstr "이 선체에는 슬롯이 없습니다."
+msgstr "리그 크기가 이 선체에 맞지 않습니다"
 
 #: apps/fitting/diagnostics.py
 msgid "Fit a rig of this hull's size class."
 msgstr "이 선체의 크기 등급에 맞는 리그를 장착하세요."
 
 #: apps/fitting/diagnostics.py
-#, fuzzy
-#| msgid "No matching module for this slot."
 msgid "Too many modules of this group fitted"
-msgstr "이 슬롯에 맞는 모듈이 없습니다."
+msgstr "이 그룹의 모듈이 너무 많이 장착됨"
 
 #: apps/fitting/diagnostics.py
 #, python-format
 msgid "At most %(max)s allowed"
 msgstr "최대 %(max)s개까지 허용"
+
+#: apps/fitting/diagnostics.py
+msgid "Too many modules of this group active"
+msgstr "이 그룹의 활성 모듈이 너무 많음"
+
+#: apps/fitting/diagnostics.py
+#, python-format
+msgid "At most %(max)s may be active at once"
+msgstr "한 번에 최대 %(max)s개만 활성화할 수 있습니다"
+
+#: apps/fitting/diagnostics.py
+msgid "Set one of them offline or online."
+msgstr "그중 하나를 오프라인 또는 온라인으로 전환하세요."
+
+#: apps/fitting/diagnostics.py
+msgid "Too many modules of this group online"
+msgstr "이 그룹의 온라인 모듈이 너무 많음"
+
+#: apps/fitting/diagnostics.py
+#, python-format
+msgid "At most %(max)s may be online at once"
+msgstr "한 번에 최대 %(max)s개만 온라인일 수 있습니다"
+
+#: apps/fitting/diagnostics.py
+msgid "Set one of them offline."
+msgstr "그중 하나를 오프라인으로 전환하세요."
+
+#: apps/fitting/diagnostics.py
+msgid "Module cannot be fitted to this hull"
+msgstr "이 모듈은 이 선체에 장착할 수 없습니다"
+
+#: apps/fitting/diagnostics.py
+msgid "Fit this module to a compatible hull."
+msgstr "이 모듈은 호환되는 선체에 장착하세요."
+
+#: apps/fitting/diagnostics.py
+msgid "Two implants occupy the same slot"
+msgstr "임플란트 두 개가 같은 슬롯을 차지합니다"
+
+#: apps/fitting/diagnostics.py
+msgid "Remove one of the conflicting implants."
+msgstr "충돌하는 임플란트 중 하나를 제거하세요."
+
+#: apps/fitting/diagnostics.py
+msgid "Two boosters occupy the same slot"
+msgstr "부스터 두 개가 같은 슬롯을 차지합니다"
+
+#: apps/fitting/diagnostics.py
+msgid "Remove one of the conflicting boosters."
+msgstr "충돌하는 부스터 중 하나를 제거하세요."
+
+#: apps/fitting/diagnostics.py
+msgid "Two subsystems occupy the same slot"
+msgstr "서브시스템 두 개가 같은 슬롯을 차지합니다"
+
+#: apps/fitting/diagnostics.py
+msgid "Fit one subsystem per slot."
+msgstr "슬롯당 서브시스템 하나를 장착하세요."
+
+#: apps/fitting/diagnostics.py
+msgid "Incomplete subsystem configuration"
+msgstr "서브시스템 구성이 불완전합니다"
+
+#: apps/fitting/diagnostics.py
+#, python-format
+msgid "%(fitted)s of %(required)s subsystems fitted"
+msgstr "서브시스템 %(required)s개 중 %(fitted)s개 장착됨"
+
+#: apps/fitting/diagnostics.py
+msgid "Fit one subsystem in every slot."
+msgstr "모든 슬롯에 서브시스템을 장착하세요."
+
+#: apps/fitting/diagnostics.py
+msgid "Tactical mode does not belong to this hull"
+msgstr "이 전술 모드는 이 선체의 것이 아닙니다"
+
+#: apps/fitting/diagnostics.py
+msgid "Select one of this hull's own tactical modes."
+msgstr "이 선체 고유의 전술 모드 중 하나를 선택하세요."
+
+#: apps/fitting/diagnostics.py
+msgid "Projected module has no effect on this ship"
+msgstr "투사된 모듈은 이 함선에 효과가 없습니다"
+
+#: apps/fitting/diagnostics.py
+msgid "Project an EWAR, energy-warfare or remote-assistance module instead."
+msgstr "대신 EWAR ・에너지전・원격 지원 모듈을 투사하세요."
+
+#: apps/fitting/diagnostics.py
+msgid "Command burst references an unknown warfare buff"
+msgstr "커맨드 버스트가 알 수 없는 워페어 버프를 참조합니다"
+
+#: apps/fitting/diagnostics.py
+msgid ""
+"Re-run the SDE import (import_dogma_graph) to load the warfare-buff table."
+msgstr ""
+"워페어 버프 테이블을 로드하려면 SDE 임포트(import_dogma_graph)를 다시 실행하"
+"세요."
+
+#: apps/fitting/diagnostics.py
+msgid "Mutated module — rolled attributes unknown"
+msgstr "변이 모듈 — 굴림 속성 알 수 없음"
+
+#: apps/fitting/diagnostics.py
+msgid ""
+"The stats shown are this module's base-roll values, not its mutated ones."
+msgstr "표시된 수치는 이 모듈의 기본 값이며 변이된 값이 아닙니다."
+
+#: apps/fitting/diagnostics.py
+msgid "Enter the mutated attribute values to see this module's real stats."
+msgstr "이 모듈의 실제 수치를 보려면 변이된 속성 값을 입력하세요."
 
 #: apps/fitting/diagnostics.py
 msgid "Charge not accepted by this module"
@@ -7575,16 +7680,13 @@ msgid "Load a charge of the matching size."
 msgstr "맞는 크기의 탄약을 장전하세요."
 
 #: apps/fitting/diagnostics.py
-#, fuzzy
-#| msgid "Powergrid exceeded"
 msgid "Drone bandwidth exceeded"
-msgstr "파워그리드 초과"
+msgstr "드론 대역폭 초과"
 
 #: apps/fitting/diagnostics.py
-#, fuzzy, python-format
-#| msgid "%(used)s of %(cap)s used"
+#, python-format
 msgid "%(used)s of %(cap)s Mbit/s"
-msgstr "%(cap)s 중 %(used)s 사용"
+msgstr "%(cap)s Mbit/s 중 %(used)s"
 
 #: apps/fitting/diagnostics.py
 msgid "Recall a drone or field smaller drones."
@@ -7595,10 +7697,9 @@ msgid "Drone bay volume exceeded"
 msgstr "드론 격납고 용량 초과"
 
 #: apps/fitting/diagnostics.py
-#, fuzzy, python-format
-#| msgid "%(used)s of %(cap)s used"
+#, python-format
 msgid "%(used)s of %(cap)s m3"
-msgstr "%(cap)s 중 %(used)s 사용"
+msgstr "%(cap)s m³ 중 %(used)s"
 
 #: apps/fitting/diagnostics.py
 msgid "Not all drones fit in bandwidth"
@@ -7608,6 +7709,69 @@ msgstr "모든 드론이 대역폭에 들어가지 않습니다"
 #, python-format
 msgid "%(counted)s of %(requested)s counted in the simulation"
 msgstr "시뮬레이션에 %(requested)s개 중 %(counted)s개 반영됨"
+
+#: apps/fitting/diagnostics.py
+msgid "Not enough fighter tubes"
+msgstr "파이터 발사관이 부족합니다"
+
+#: apps/fitting/diagnostics.py
+#, python-format
+msgid "%(used)s squadrons, %(cap)s tubes"
+msgstr "편대 %(used)s개, 발사관 %(cap)s개"
+
+#: apps/fitting/diagnostics.py
+msgid "Launch fewer squadrons."
+msgstr "편대를 더 적게 발진시키세요."
+
+#: apps/fitting/diagnostics.py
+msgid "Not enough fighter slots for this role"
+msgstr "이 역할에 필요한 파이터 슬롯이 부족합니다"
+
+#: apps/fitting/diagnostics.py
+#, python-format
+msgid "%(used)s of %(cap)s"
+msgstr "%(cap)s 중 %(used)s"
+
+#: apps/fitting/diagnostics.py
+msgid "Launch fewer squadrons of this role."
+msgstr "이 역할의 편대를 더 적게 발진시키세요."
+
+#: apps/fitting/diagnostics.py
+msgid "Fighter squadron too large"
+msgstr "파이터 편대가 너무 큽니다"
+
+#: apps/fitting/diagnostics.py
+#, python-format
+msgid "%(count)s of max %(max)s"
+msgstr "최대 %(max)s 중 %(count)s"
+
+#: apps/fitting/diagnostics.py
+msgid "Reduce the squadron to its maximum size."
+msgstr "편대를 최대 규모로 줄이세요."
+
+#: apps/fitting/diagnostics.py
+msgid "Fighter bay volume exceeded"
+msgstr "파이터 격납고 용량 초과"
+
+#: apps/fitting/diagnostics.py
+msgid "Carry fewer or smaller fighters."
+msgstr "파이터를 더 적게 싣거나 더 작은 파이터를 실으세요."
+
+#: apps/fitting/diagnostics.py
+msgid "This hull cannot field fighters"
+msgstr "이 선체는 파이터를 운용할 수 없습니다"
+
+#: apps/fitting/diagnostics.py
+msgid "Field fighters from a carrier or supercarrier."
+msgstr "파이터는 carrier 또는 supercarrier 에서 운용하세요."
+
+#: apps/fitting/diagnostics.py
+msgid "Not a valid fighter"
+msgstr "유효한 파이터가 아닙니다"
+
+#: apps/fitting/diagnostics.py
+msgid "Choose a real fighter squadron."
+msgstr "실제 파이터 편대를 선택하세요."
 
 #: apps/fitting/models.py
 msgid "Public link"
@@ -8475,43 +8639,43 @@ msgstr "페이지가 삭제되었습니다."
 
 #: apps/killboard/anatomy.py
 msgid "100B+"
-msgstr ""
+msgstr "1000억+"
 
 #: apps/killboard/anatomy.py
 msgid "10B+"
-msgstr ""
+msgstr "100억+"
 
 #: apps/killboard/anatomy.py
 msgid "1B+"
-msgstr ""
+msgstr "10억+"
 
 #: apps/killboard/fitrender.py
 msgid "High slots"
-msgstr ""
+msgstr "하이 슬롯"
 
 #: apps/killboard/fitrender.py
 msgid "Mid slots"
-msgstr ""
+msgstr "미드 슬롯"
 
 #: apps/killboard/fitrender.py
 msgid "Low slots"
-msgstr ""
+msgstr "로우 슬롯"
 
 #: apps/killboard/fitrender.py templates/fitting/detail.html
 msgid "Rigs"
 msgstr "리그"
 
-#: apps/killboard/fitrender.py
+#: apps/killboard/fitrender.py templates/fitting/detail.html
 msgid "Subsystems"
-msgstr ""
+msgstr "서브시스템"
 
 #: apps/killboard/fitrender.py
 msgid "Drone bay"
-msgstr ""
+msgstr "드론 격납고"
 
 #: apps/killboard/fitrender.py
 msgid "Cargo hold"
-msgstr ""
+msgstr "화물칸"
 
 #: apps/killboard/forms.py
 msgid "e.g. Local gate campers"
@@ -8539,39 +8703,39 @@ msgstr "선택 제목"
 
 #: apps/killboard/ingest_health.py
 msgid "ESI Director feed"
-msgstr ""
+msgstr "ESI 디렉터 피드"
 
 #: apps/killboard/ingest_health.py
 msgid "zKillboard query poll"
-msgstr ""
+msgstr "zKillboard 쿼리 폴링"
 
 #: apps/killboard/ingest_health.py
 msgid "Realtime fallback (R2Z2)"
-msgstr ""
+msgstr "실시간 폴백 (R2Z2)"
 
 #: apps/killboard/killfeed_rules.py
 msgid "High-sec"
-msgstr ""
+msgstr "High-sec"
 
 #: apps/killboard/killfeed_rules.py
 msgid "Low-sec"
-msgstr ""
+msgstr "Low-sec"
 
 #: apps/killboard/killfeed_rules.py
 msgid "Null-sec"
-msgstr ""
+msgstr "Null-sec"
 
 #: apps/killboard/killfeed_rules.py
 msgid "Wormhole"
-msgstr ""
+msgstr "웜홀"
 
 #: apps/killboard/killfeed_rules.py
 msgid "Abyssal"
-msgstr ""
+msgstr "어비셜"
 
 #: apps/killboard/killfeed_rules.py
 msgid "Pochven"
-msgstr ""
+msgstr "Pochven"
 
 #: apps/killboard/leaderboards.py
 msgid "Last 7 days"
@@ -8714,39 +8878,39 @@ msgstr "킬 가치가 이 값 이상일 때 Corp 킬을 게시합니다 (0 = 끄
 
 #: apps/killboard/models.py
 msgid "Skip kills with no player attackers (NPC/ratting deaths)."
-msgstr ""
+msgstr "플레이어 공격자가 없는 킬은 건너뜁니다(NPC / ratting 사망)."
 
 #: apps/killboard/models.py
 msgid "Skip awox kills (a corp member on the victim's own corp)."
-msgstr ""
+msgstr "awox 킬은 건너뜁니다(피해자 본인 corp 소속 멤버에 의한 킬)."
 
 #: apps/killboard/models.py
 msgid "Post solo kills only."
-msgstr ""
+msgstr "솔로 킬만 게시합니다."
 
 #: apps/killboard/models.py
 msgid "Require at least this many attackers (0 = off)."
-msgstr ""
+msgstr "최소 이 인원 이상의 공격자를 요구합니다(0 = 끄기)."
 
 #: apps/killboard/models.py
 msgid "Require at most this many attackers (0 = off)."
-msgstr ""
+msgstr "최대 이 인원 이하의 공격자를 요구합니다(0 = 끄기)."
 
 #: apps/killboard/models.py
 msgid "Only these security bands (empty = all)."
-msgstr ""
+msgstr "이 보안등급 대역만(비어 있음 = 전체)."
 
 #: apps/killboard/models.py
 msgid "Only these victim ship classes (empty = all)."
-msgstr ""
+msgstr "이 피해자 함선 등급만(비어 있음 = 전체)."
 
 #: apps/killboard/models.py
 msgid "Only within this many jumps of the staging system (0 = off)."
-msgstr ""
+msgstr "스테이징 시스템에서 이 점프 수 이내만(0 = 끄기)."
 
 #: apps/killboard/models.py
 msgid "For losses, post only those that deviated from doctrine."
-msgstr ""
+msgstr "로스의 경우 doctrine 에서 벗어난 것만 게시합니다."
 
 #: apps/killboard/models.py
 msgid ""
@@ -8909,10 +9073,13 @@ msgid ""
 "Director feed, the zKill query poll and EVE Ref archives) always run; turn "
 "this on only for lower-latency ingest or as a supplementary source."
 msgstr ""
+"선택적 실시간 폴백 피드(zKillboard R2Z2). primary 소스(ESI 디렉터 피드, "
+"zKill 쿼리 폴링, EVE Ref 아카이브)는 항상 동작합니다. 지연이 더 낮은 수집이"
+"나 보조 소스로 쓸 때만 켜세요."
 
 #: apps/killboard/models.py
 msgid "The last R2Z2 sequence number consumed — the resumable cursor."
-msgstr ""
+msgstr "마지막으로 소비한 R2Z2 시퀀스 번호 — 재개 가능한 커서."
 
 #: apps/killboard/ranks_i18n.py
 msgid "Dockside Recruit"
@@ -9175,11 +9342,11 @@ msgstr "잃은 함선"
 
 #: apps/killboard/views.py
 msgid "A comment can’t be empty."
-msgstr ""
+msgstr "댓글은 비워 둘 수 없습니다."
 
 #: apps/killboard/views.py
 msgid "You can’t remove that comment."
-msgstr ""
+msgstr "해당 댓글은 삭제할 수 없습니다."
 
 #: apps/killboard/views.py
 #, python-format
@@ -9228,7 +9395,7 @@ msgstr "전투 보고서가 생성되었습니다."
 
 #: apps/killboard/views.py
 msgid "Real-time fallback setting saved."
-msgstr ""
+msgstr "실시간 폴백 설정을 저장했습니다."
 
 #: apps/killboard/views.py
 msgid "Kill-feed settings saved."
@@ -29921,6 +30088,7 @@ msgstr ""
 
 #: templates/admin_audit/console/planetary/config.html
 #: templates/admin_audit/console/planetary/hub.html
+#: templates/fitting/_telemetry.html
 msgid "Module"
 msgstr "모듈"
 
@@ -31596,9 +31764,10 @@ msgid "Icon type id"
 msgstr "아이콘 type id"
 
 #: templates/admin_audit/console/raffle_prizes.html templates/erp/board.html
-#: templates/industry/chain.html templates/industry/create.html
-#: templates/industry/jobs.html templates/procurement/po_detail.html
-#: templates/store/inventory_fit.html templates/store/storefront.html
+#: templates/fitting/detail.html templates/industry/chain.html
+#: templates/industry/create.html templates/industry/jobs.html
+#: templates/procurement/po_detail.html templates/store/inventory_fit.html
+#: templates/store/storefront.html
 msgid "Quantity"
 msgstr "수량"
 
@@ -33620,9 +33789,9 @@ msgstr "이 캠페인에서는 표창이 꺼져 있습니다."
 msgid "Unknown pilot"
 msgstr "알 수 없는 파일럿"
 
-#: templates/campaigns/_participation.html templates/identity/dashboard.html
-#: templates/mentorship/pairing_detail.html templates/pilots/_quest_row.html
-#: templates/pilots/contributions.html
+#: templates/campaigns/_participation.html templates/fitting/_telemetry.html
+#: templates/identity/dashboard.html templates/mentorship/pairing_detail.html
+#: templates/pilots/_quest_row.html templates/pilots/contributions.html
 msgid "pts"
 msgstr "점"
 
@@ -35134,7 +35303,7 @@ msgstr "수락 →"
 msgid "Remind me later"
 msgstr "나중에 다시 알림"
 
-#: templates/capsuleer/_suggestion_row.html
+#: templates/capsuleer/_suggestion_row.html templates/fitting/detail.html
 #: templates/recommendations/_rec_card.html
 msgid "Dismiss"
 msgstr "무시"
@@ -38491,7 +38660,9 @@ msgstr "시뮬레이션을 실행할 수 없습니다:"
 msgid ""
 "This fit is structurally impossible — see the diagnostics below. Numbers are "
 "shown for reference only."
-msgstr "이 피팅은 구조적으로 불가능합니다 — 아래 진단을 확인하세요. 수치는 참고용입니다."
+msgstr ""
+"이 피팅은 구조적으로 불가능합니다 — 아래 진단을 확인하세요. 수치는 참고용입니"
+"다."
 
 #: templates/fitting/_telemetry.html
 msgid ""
@@ -38567,13 +38738,58 @@ msgid "Volley"
 msgstr "볼리"
 
 #: templates/fitting/_telemetry.html
-msgid "Applied missiles"
-msgstr "적용 미사일"
+msgid "Long-run DPS once weapon reloads are paid."
+msgstr "무기 재장전을 반영한 장기 DPS ."
+
+#: templates/fitting/_telemetry.html
+msgid "Sustained"
+msgstr "지속"
+
+#: templates/fitting/_telemetry.html
+msgid ""
+"DPS actually landing on the target profile (tracking, signature, range)."
+msgstr "타겟 프로파일에 실제로 명중하는 DPS （추적, 시그니처, 사거리）."
+
+#: templates/fitting/_telemetry.html
+msgid "Without your painter/web assistance"
+msgstr "자신의 painter/web 지원 없이"
+
+#: templates/fitting/_telemetry.html
+msgid "unassisted"
+msgstr "지원 없음"
+
+#: templates/fitting/_telemetry.html
+msgid ""
+"* Some weapons need a fuller target profile (distance / signature) to "
+"compute applied DPS."
+msgstr ""
+"* 일부 무기는 적용 DPS 를 계산하려면 더 완전한 타겟 프로파일(거리 / 시그니처)"
+"이 필요합니다."
 
 #: templates/fitting/_telemetry.html
 #, python-format
 msgid "EM/Th/Kin/Exp %%"
 msgstr "EM/Th/Kin/Exp %%"
+
+#: templates/fitting/_telemetry.html
+msgid "Weapon"
+msgstr "무기"
+
+#: templates/fitting/_telemetry.html
+msgid "Sust."
+msgstr "지속"
+
+#: templates/fitting/_telemetry.html
+msgid "Needs target distance + signature"
+msgstr "타겟 거리 + 시그니처 필요"
+
+#: templates/fitting/_telemetry.html
+msgid "Needs target HP"
+msgstr "타겟 HP 필요"
+
+#: templates/fitting/_telemetry.html
+msgid "Fighter application not modelled"
+msgstr "파이터 적용은 모델링되지 않음"
 
 #: templates/fitting/_telemetry.html
 msgid "Defence"
@@ -38586,6 +38802,18 @@ msgstr "실드"
 #: templates/fitting/_telemetry.html
 msgid "HP"
 msgstr "HP"
+
+#: templates/fitting/_telemetry.html
+msgid "Active rep"
+msgstr "액티브 리페어"
+
+#: templates/fitting/_telemetry.html
+msgid "HP/s"
+msgstr "HP/s"
+
+#: templates/fitting/_telemetry.html
+msgid "Incoming remote rep"
+msgstr "수신 원격 수리"
 
 #: templates/fitting/_telemetry.html
 msgid "Stable"
@@ -38602,6 +38830,14 @@ msgstr "용량"
 #: templates/fitting/_telemetry.html
 msgid "Peak recharge / use"
 msgstr "최대 재충전 / 소모"
+
+#: templates/fitting/_telemetry.html
+msgid "Capacitor drained by projected neuts/nos"
+msgstr "투사된 neuts/nos 로 인한 캐패시터 소모"
+
+#: templates/fitting/_telemetry.html
+msgid "Incoming neut"
+msgstr "수신 neut"
 
 #: templates/fitting/_telemetry.html
 msgid "Mobility"
@@ -38628,6 +38864,14 @@ msgid "Warp speed"
 msgstr "워프 속도"
 
 #: templates/fitting/_telemetry.html
+msgid "Time to align and cross the set warp distance"
+msgstr "정렬 후 설정한 워프 거리를 이동하는 데 걸리는 시간"
+
+#: templates/fitting/_telemetry.html
+msgid "Warp time"
+msgstr "워프 시간"
+
+#: templates/fitting/_telemetry.html
 msgid "Targeting"
 msgstr "타겟팅"
 
@@ -38643,13 +38887,97 @@ msgstr "타겟 락온 수"
 msgid "Scan resolution"
 msgstr "스캔 해상도"
 
-#: templates/fitting/_telemetry.html
+#: templates/fitting/_telemetry.html templates/fitting/detail.html
 msgid "Sensor strength"
 msgstr "센서 강도"
 
 #: templates/fitting/_telemetry.html
+msgid "Time to lock the target profile"
+msgstr "타겟 프로파일을 락하는 데 걸리는 시간"
+
+#: templates/fitting/_telemetry.html
+msgid "Lock time"
+msgstr "락 시간"
+
+#: templates/fitting/_telemetry.html
+msgid "Configuration"
+msgstr "구성"
+
+#: templates/fitting/_telemetry.html templates/fitting/detail.html
+msgid "Tactical mode"
+msgstr "전술 모드"
+
+#: templates/fitting/_telemetry.html
 msgid "Electronic warfare"
 msgstr "전자전"
+
+#: templates/fitting/_telemetry.html
+msgid "track"
+msgstr "추적"
+
+#: templates/fitting/_telemetry.html
+msgid "expl vel"
+msgstr "폭발 속도"
+
+#: templates/fitting/_telemetry.html
+msgid "jam"
+msgstr "재밍"
+
+#: templates/fitting/_telemetry.html
+msgid "ECM"
+msgstr "ECM"
+
+#: templates/fitting/_telemetry.html
+msgid "Combined jam chance / cycle"
+msgstr "통합 재밍 확률 / 사이클"
+
+#: templates/fitting/_telemetry.html
+msgid "jammers"
+msgstr "재머"
+
+#: templates/fitting/_telemetry.html
+msgid "Set a target sensor strength and type to compute jam chance."
+msgstr "재밍 확률을 계산하려면 타겟 센서 강도와 유형을 설정하세요."
+
+#: templates/fitting/_telemetry.html
+msgid "On target"
+msgstr "명중"
+
+#: templates/fitting/_telemetry.html
+msgid "sig"
+msgstr "시그"
+
+#: templates/fitting/_telemetry.html
+msgid "vel"
+msgstr "속도"
+
+#: templates/fitting/_telemetry.html
+msgid "m³/hour"
+msgstr "m³/시간"
+
+#: templates/fitting/_telemetry.html
+msgid "m³/cycle"
+msgstr "m³/사이클"
+
+#: templates/fitting/_telemetry.html templates/fitting/detail.html
+msgid "Projected on us"
+msgstr "아군에게 투사됨"
+
+#: templates/fitting/_telemetry.html templates/fitting/detail.html
+msgid "Fleet boosts"
+msgstr "플릿 부스트"
+
+#: templates/fitting/_telemetry.html templates/fitting/detail.html
+msgid "Fighters"
+msgstr "파이터"
+
+#: templates/fitting/_telemetry.html
+msgid "Tubes"
+msgstr "발사관"
+
+#: templates/fitting/_telemetry.html
+msgid "Bay"
+msgstr "격납고"
 
 #: templates/fitting/_telemetry.html
 msgid "Fit diagnostics"
@@ -38755,8 +39083,15 @@ msgid "Export EFT"
 msgstr "EFT 내보내기"
 
 #: templates/fitting/detail.html
-msgid "Click a slot to fit · ⚠ = load ammo"
-msgstr "슬롯을 클릭하여 장착 · ⚠ = 탄약 장전"
+#, python-format
+msgid "%(n)s line from the imported fit could not be resolved and was skipped:"
+msgid_plural ""
+"%(n)s lines from the imported fit could not be resolved and were skipped:"
+msgstr[0] "가져온 핏의 %(n)s개 행을 해석할 수 없어 건너뛰었습니다:"
+
+#: templates/fitting/detail.html
+msgid "Click a slot to fit · ⚠ = load ammo · ✦ = mutate"
+msgstr "슬롯을 클릭해 장착 · ⚠ = 탄약 장전 · ✦ = 변이"
 
 #: templates/fitting/detail.html
 msgid "Module state"
@@ -38766,19 +39101,17 @@ msgstr "모듈 상태"
 msgid ""
 "Active: running (uses CPU/PG + capacitor). Online: powered but idle (uses "
 "CPU/PG, no cap). Offline: unfitted (frees CPU/PG). Heat: overloaded."
-msgstr "활성: 작동 중 (CPU/PG + 캐패시터 사용). 온라인: 전원은 켜져 있으나 대기 (CPU/PG 사용, 캐패시터 미사용). 오프라인: 미장착 상태 (CPU/PG 해제). 열: 과부하."
+msgstr ""
+"활성: 작동 중 (CPU/PG + 캐패시터 사용). 온라인: 전원은 켜져 있으나 대기 (CPU/"
+"PG 사용, 캐패시터 미사용). 오프라인: 미장착 상태 (CPU/PG 해제). 열: 과부하."
 
 #: templates/fitting/detail.html
-#, fuzzy
-#| msgid "unlink"
 msgid "online"
-msgstr "연결 해제"
+msgstr "온라인"
 
 #: templates/fitting/detail.html
-#, fuzzy
-#| msgid "Provider offline"
 msgid "offline"
-msgstr "제공자 오프라인"
+msgstr "오프라인"
 
 #: templates/fitting/detail.html
 msgid "heat"
@@ -38801,6 +39134,34 @@ msgid "Unload ammo"
 msgstr "탄약 제거"
 
 #: templates/fitting/detail.html
+msgid "Mutated attributes"
+msgstr "변이된 속성"
+
+#: templates/fitting/detail.html
+msgid "mutated"
+msgstr "변이됨"
+
+#: templates/fitting/detail.html
+msgid "Mutate"
+msgstr "변이"
+
+#: templates/fitting/detail.html
+msgid "Mutated value"
+msgstr "변이된 값"
+
+#: templates/fitting/detail.html
+msgid "Remove override"
+msgstr "재정의 제거"
+
+#: templates/fitting/detail.html
+msgid "Add attribute…"
+msgstr "속성 추가…"
+
+#: templates/fitting/detail.html
+msgid "Search attribute"
+msgstr "속성 검색"
+
+#: templates/fitting/detail.html
 msgid "No slots on this hull."
 msgstr "이 선체에는 슬롯이 없습니다."
 
@@ -38813,6 +39174,14 @@ msgid "Add drone"
 msgstr "드론 추가"
 
 #: templates/fitting/detail.html
+msgid "Squadron size"
+msgstr "편대 규모"
+
+#: templates/fitting/detail.html
+msgid "Add fighter squadron"
+msgstr "파이터 편대 추가"
+
+#: templates/fitting/detail.html
 msgid "Search modules"
 msgstr "모듈 검색"
 
@@ -38821,34 +39190,141 @@ msgid "takes ammo"
 msgstr "탄약 필요"
 
 #: templates/fitting/detail.html
-msgid "No matching module for this slot."
-msgstr "이 슬롯에 맞는 모듈이 없습니다."
+msgid "No matching item for this slot."
+msgstr "이 슬롯에 맞는 아이템이 없습니다."
+
+#: templates/fitting/detail.html
+msgid "No mode"
+msgstr "모드 없음"
 
 #: templates/fitting/detail.html
 msgid "Target profile"
 msgstr "타겟 프로필"
 
 #: templates/fitting/detail.html
-msgid "Set a target to see applied missile damage vs its signature and speed."
+msgid ""
+"Describe a target to see applied DPS, tracking, jam and lock time. Saved in "
+"this browser only."
 msgstr ""
-"타겟을 설정하면 시그니처와 속도에 따른 적용 미사일 피해량을 확인할 수 있습니"
+"적용 DPS , 추적, 재밍, 락 시간을 보려면 타겟을 설정하세요. 이 브라우저에만 저"
+"장됩니다."
+
+#: templates/fitting/detail.html
+msgid "Signature (m)"
+msgstr "시그니처 (m)"
+
+#: templates/fitting/detail.html
+msgid "Velocity (m/s)"
+msgstr "속도 (m/s)"
+
+#: templates/fitting/detail.html
+msgid "Distance (m)"
+msgstr "거리 (m)"
+
+#: templates/fitting/detail.html
+msgid "Angular (rad/s)"
+msgstr "각속도 (rad/s)"
+
+#: templates/fitting/detail.html
+msgid "Sensor type"
+msgstr "센서 유형"
+
+#: templates/fitting/detail.html
+msgid "—"
+msgstr "—"
+
+#: templates/fitting/detail.html
+msgid "Radar"
+msgstr "레이더"
+
+#: templates/fitting/detail.html
+msgid "Magnetometric"
+msgstr "자기"
+
+#: templates/fitting/detail.html
+msgid "Ladar"
+msgstr "라다"
+
+#: templates/fitting/detail.html
+msgid "Gravimetric"
+msgstr "중력"
+
+#: templates/fitting/detail.html
+msgid "Target HP"
+msgstr "타겟 HP"
+
+#: templates/fitting/detail.html
+msgid "Warp distance (AU)"
+msgstr "워프 거리 (AU)"
+
+#: templates/fitting/detail.html
+msgid "Damage profile"
+msgstr "피해 프로파일"
+
+#: templates/fitting/detail.html
+msgid "Uniform"
+msgstr "균일"
+
+#: templates/fitting/detail.html
+msgid "EM"
+msgstr "EM"
+
+#: templates/fitting/detail.html
+msgid "Thermal"
+msgstr "열"
+
+#: templates/fitting/detail.html
+msgid "Kinetic"
+msgstr "운동"
+
+#: templates/fitting/detail.html
+msgid "Explosive"
+msgstr "폭발"
+
+#: templates/fitting/detail.html
+msgid "Custom…"
+msgstr "사용자 지정…"
+
+#: templates/fitting/detail.html
+msgid "Th"
+msgstr "열"
+
+#: templates/fitting/detail.html
+msgid "Kin"
+msgstr "운동"
+
+#: templates/fitting/detail.html
+msgid "Exp"
+msgstr "폭발"
+
+#: templates/fitting/detail.html
+msgid ""
+"Add hostile EWAR / energy warfare / remote-rep modules to see their pressure."
+msgstr ""
+"적의 EWAR / 에너지전 / 원격 수리 모듈을 추가하면 그 압박을 확인할 수 있습니"
 "다."
 
 #: templates/fitting/detail.html
-msgid "Target signature (m)"
-msgstr "타겟 시그니처 (m)"
+msgid "Add projected module…"
+msgstr "투사 모듈 추가…"
 
 #: templates/fitting/detail.html
-msgid "Sig (m)"
-msgstr "시그 (m)"
+msgid "Search projected module"
+msgstr "투사 모듈 검색"
 
 #: templates/fitting/detail.html
-msgid "Target velocity (m/s)"
-msgstr "타겟 속도 (m/s)"
+#, python-format
+msgid ""
+"Simulate being boosted by friendly command bursts. Set a strength %% for a "
+"fully-skilled command ship."
+msgstr ""
+"아군 커맨드 버스트로 부스트받는 상황을 시뮬레이션합니다. 풀 스킬 지휘함 기준 "
+"강도를 %% 로 설정하세요."
 
 #: templates/fitting/detail.html
-msgid "Vel (m/s)"
-msgstr "속도 (m/s)"
+#, python-format
+msgid "Strength %% for %(name)s"
+msgstr "%(name)s 강도 %%"
 
 #: templates/fitting/detail.html
 msgid "Cost & supply"
@@ -38998,7 +39474,9 @@ msgstr "복원"
 msgid ""
 "Simulation update failed — the numbers shown are stale. Retry by changing "
 "the fit or reloading."
-msgstr "시뮬레이션 업데이트 실패 — 표시된 수치는 오래된 값입니다. 피팅을 변경하거나 새로고침하세요."
+msgstr ""
+"시뮬레이션 업데이트 실패 — 표시된 수치는 오래된 값입니다. 피팅을 변경하거나 "
+"새로고침하세요."
 
 #: templates/fitting/detail.html
 msgid "Saving failed — your changes are NOT stored yet."
@@ -39035,6 +39513,38 @@ msgstr "리그"
 #: templates/fitting/detail.html
 msgid "drone"
 msgstr "드론"
+
+#: templates/fitting/detail.html
+msgid "fighter squadron"
+msgstr "파이터 편대"
+
+#: templates/fitting/detail.html
+msgid "subsystem"
+msgstr "서브시스템"
+
+#: templates/fitting/detail.html
+msgid "implant"
+msgstr "임플란트"
+
+#: templates/fitting/detail.html templates/raffle/detail.html
+msgid "booster"
+msgstr "부스터"
+
+#: templates/fitting/detail.html
+msgid "cargo item"
+msgstr "화물 아이템"
+
+#: templates/fitting/detail.html
+msgid "Boosters"
+msgstr "부스터"
+
+#: templates/fitting/detail.html
+msgid "Cargo"
+msgstr "화물"
+
+#: templates/fitting/detail.html
+msgid "No changes to save"
+msgstr "저장할 변경 사항이 없습니다"
 
 #: templates/fitting/index.html
 msgid "Fitting workspace"
@@ -42215,7 +42725,7 @@ msgstr "킬"
 
 #: templates/killboard/detail.html
 msgid "High-value kill"
-msgstr ""
+msgstr "고가치 킬"
 
 #: templates/killboard/detail.html
 msgid "Destroyed"
@@ -42236,12 +42746,12 @@ msgstr "받은 피해"
 #: templates/killboard/detail.html
 #, python-format
 msgid "SRP paid · %(v)s"
-msgstr ""
+msgstr "SRP 지급됨 · %(v)s"
 
 #: templates/killboard/detail.html
 #, python-format
 msgid "SRP approved · %(v)s"
-msgstr ""
+msgstr "SRP 승인됨 · %(v)s"
 
 #: templates/killboard/detail.html
 msgid "only you and officers see this"
@@ -42257,19 +42767,19 @@ msgstr "최종 타격"
 
 #: templates/killboard/detail.html
 msgid "Top damage"
-msgstr ""
+msgstr "최대 피해"
 
 #: templates/killboard/detail.html
 msgid "Doctrine hull"
-msgstr ""
+msgstr "doctrine 선체"
 
 #: templates/killboard/detail.html
 msgid "By corporation"
-msgstr ""
+msgstr "코퍼레이션별"
 
 #: templates/killboard/detail.html
 msgid "NPC / unknown"
-msgstr ""
+msgstr "NPC / 알 수 없음"
 
 #: templates/killboard/detail.html templates/operations/detail.html
 #, python-format
@@ -42287,15 +42797,15 @@ msgstr "이 손실은 doctrine 피팅과 일치했습니다"
 
 #: templates/killboard/detail.html
 msgid "Copy ESI"
-msgstr ""
+msgstr "ESI 복사"
 
 #: templates/killboard/detail.html
 msgid "Copy the canonical doctrine fit to refit in-game"
-msgstr ""
+msgstr "게임 내에서 다시 장착하도록 정규 doctrine 핏을 복사합니다"
 
 #: templates/killboard/detail.html
 msgid "Refit to doctrine"
-msgstr ""
+msgstr "doctrine 로 재장착"
 
 #: templates/killboard/detail.html
 msgid "Import as doctrine"
@@ -42308,15 +42818,15 @@ msgstr "파괴함"
 
 #: templates/killboard/detail.html
 msgid "dropped"
-msgstr ""
+msgstr "드롭됨"
 
 #: templates/killboard/detail.html
 msgid "Off-doctrine"
-msgstr ""
+msgstr "doctrine 이탈"
 
 #: templates/killboard/detail.html
 msgid "empty"
-msgstr ""
+msgstr "비어 있음"
 
 #: templates/killboard/detail.html templates/logistics/corp_contracts.html
 #: templates/mining/ledger.html templates/store/board.html
@@ -42345,29 +42855,29 @@ msgstr "off-doctrine 항목 없음."
 
 #: templates/killboard/detail.html
 msgid "Same battle"
-msgstr ""
+msgstr "같은 전투"
 
 #: templates/killboard/detail.html
 msgid "View battle report"
-msgstr ""
+msgstr "전투 보고서 보기"
 
 #: templates/killboard/detail.html
 msgid "This kill is part of a battle report."
-msgstr ""
+msgstr "이 킬은 전투 보고서의 일부입니다."
 
 #: templates/killboard/detail.html
 #, python-format
 msgid "%(n)s comment"
 msgid_plural "%(n)s comments"
-msgstr[0] ""
+msgstr[0] "댓글 %(n)s개"
 
 #: templates/killboard/detail.html
 msgid "No comments yet."
-msgstr ""
+msgstr "아직 댓글이 없습니다."
 
 #: templates/killboard/detail.html
 msgid "Add a comment…"
-msgstr ""
+msgstr "댓글 추가…"
 
 #: templates/killboard/detail.html templates/stockpile/logistics.html
 msgid "Post"
@@ -42414,61 +42924,63 @@ msgstr "이 가치 이상의 군단 킬을 게시합니다. 0 = 끄기."
 
 #: templates/killboard/killfeed_config.html
 msgid "Rules (optional)"
-msgstr ""
+msgstr "규칙(선택)"
 
 #: templates/killboard/killfeed_config.html
 msgid ""
 "Extra require/exclude filters, applied on top of the value thresholds. Leave "
 "everything blank to post every kill above the ISK bar."
 msgstr ""
+"가치 임계값에 더해 적용되는 추가 포함/제외 필터입니다. ISK 기준을 넘는 모든 "
+"킬을 게시하려면 전부 비워 두세요."
 
 #: templates/killboard/killfeed_config.html
 msgid "Min attackers"
-msgstr ""
+msgstr "최소 공격자"
 
 #: templates/killboard/killfeed_config.html
 msgid "Max attackers"
-msgstr ""
+msgstr "최대 공격자"
 
 #: templates/killboard/killfeed_config.html
 msgid "Within N jumps of staging"
-msgstr ""
+msgstr "스테이징에서 N 점프 이내"
 
 #: templates/killboard/killfeed_config.html
 msgid "0 = off. Needs an active staging system configured."
-msgstr ""
+msgstr "0 = 끄기. 활성 스테이징 시스템 설정이 필요합니다."
 
 #: templates/killboard/killfeed_config.html
 msgid "Security bands (none = all)"
-msgstr ""
+msgstr "보안등급 대역(없음 = 전체)"
 
 #: templates/killboard/killfeed_config.html
 msgid "Victim ship classes (none = all)"
-msgstr ""
+msgstr "피해자 함선 등급(없음 = 전체)"
 
 #: templates/killboard/killfeed_config.html
 msgid "Solo kills only"
-msgstr ""
+msgstr "솔로 킬만"
 
 #: templates/killboard/killfeed_config.html
 msgid "Exclude NPC-only kills"
-msgstr ""
+msgstr "NPC 전용 킬 제외"
 
 #: templates/killboard/killfeed_config.html
 msgid "Exclude awox kills"
-msgstr ""
+msgstr "awox 킬 제외"
 
 #: templates/killboard/killfeed_config.html
 msgid "Losses: only those that deviated from doctrine"
-msgstr ""
+msgstr "로스: doctrine 에서 벗어난 것만"
 
 #: templates/killboard/killfeed_config.html
 msgid "Ingest"
-msgstr ""
+msgstr "수집"
 
 #: templates/killboard/killfeed_config.html
 msgid "Real-time fallback"
-msgstr ""
+msgstr "실시간 폴백"
 
 #: templates/killboard/killfeed_config.html
 msgid ""
@@ -42478,45 +42990,50 @@ msgid ""
 "about a minute instead of up to fifteen. It never replaces the primary feeds "
 "— leave it off unless you want lower latency."
 msgstr ""
+"권위 있는 피드(ESI 디렉터 피드, zKillboard 쿼리 폴링, EVE Ref 아카이브)가 항"
+"상 보드를 최신 상태로 유지합니다. 이 선택적 폴백은 zKillboard 의 R2Z2 실시간 "
+"피드를 활용하여 최근 corp 킬이 최대 15분이 아니라 약 1분 내에 표시되도록 합니"
+"다. primary 피드를 대체하지 않습니다. 더 낮은 지연이 필요하지 않다면 꺼 두세"
+"요."
 
 #: templates/killboard/killfeed_config.html
 msgid "Enable the real-time fallback (R2Z2)"
-msgstr ""
+msgstr "실시간 폴백 활성화 (R2Z2)"
 
 #: templates/killboard/killfeed_config.html
 #, python-format
 msgid "Cursor at sequence %(seq)s · %(n)s ingested last run."
-msgstr ""
+msgstr "커서는 시퀀스 %(seq)s · 지난 실행에서 %(n)s건 수집됨."
 
 #: templates/killboard/killfeed_config.html
 msgid "Ingest health"
-msgstr ""
+msgstr "수집 상태"
 
 #: templates/killboard/killfeed_config.html
 msgid "primary"
-msgstr ""
+msgstr "primary"
 
 #: templates/killboard/killfeed_config.html
 msgid "fallback"
-msgstr ""
+msgstr "폴백"
 
 #: templates/killboard/killfeed_config.html
 #, python-format
 msgid "%(when)s ago"
-msgstr ""
+msgstr "%(when)s 전"
 
 #: templates/killboard/killfeed_config.html
 msgid "down"
-msgstr ""
+msgstr "중단"
 
 #: templates/killboard/killfeed_config.html
 msgid "idle"
-msgstr ""
+msgstr "유휴"
 
 #: templates/killboard/killfeed_config.html
 #, python-format
 msgid "%(n)s consecutive failures"
-msgstr ""
+msgstr "연속 %(n)s회 실패"
 
 #: templates/killboard/list.html
 msgid "Combat record"
@@ -42663,19 +43180,19 @@ msgstr "기간:"
 
 #: templates/killboard/rankings.html
 msgid "Aggregate:"
-msgstr ""
+msgstr "집계:"
 
 #: templates/killboard/rankings.html
 msgid "By pilot"
-msgstr ""
+msgstr "파일럿별"
 
 #: templates/killboard/rankings.html
 msgid "By main (+ alts)"
-msgstr ""
+msgstr "메인별(+ alts)"
 
 #: templates/killboard/rankings.html
 msgid "alts counted under each pilot's main"
-msgstr ""
+msgstr "alts 는 각 파일럿의 메인에 합산됩니다"
 
 #: templates/killboard/rankings.html
 msgid "History:"
@@ -49464,10 +49981,6 @@ msgstr "진행 중"
 #: templates/raffle/detail.html
 msgid "Awaiting draw"
 msgstr "추첨 대기 중"
-
-#: templates/raffle/detail.html
-msgid "booster"
-msgstr "부스터"
 
 #: templates/raffle/detail.html
 msgid "You're in the raffle"

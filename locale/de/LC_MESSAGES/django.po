@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-20 19:45+0000\n"
+"POT-Creation-Date: 2026-07-21 13:49+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: de machine-assisted draft\n"
@@ -4940,6 +4940,7 @@ msgstr "Capitals"
 #: apps/mentorship/tracks_i18n.py apps/pingboard/models.py
 #: apps/raffle/sources/pve.py
 #: templates/admin_audit/console/mentorship/tracks.html
+#: templates/fitting/_telemetry.html
 msgid "Mining"
 msgstr "Mining"
 
@@ -6760,7 +6761,7 @@ msgstr "Entziehen"
 msgid "Kick"
 msgstr "Rauswerfen"
 
-#: apps/comms_access/models.py
+#: apps/comms_access/models.py templates/fitting/_telemetry.html
 msgid "Applied"
 msgstr "Angewendet"
 
@@ -6868,6 +6869,7 @@ msgid "Skill queue"
 msgstr "Skill-Queue"
 
 #: apps/corporation/compliance.py apps/killboard/fitrender.py
+#: templates/fitting/detail.html
 msgid "Implants"
 msgstr "Implantate"
 
@@ -7709,12 +7711,6 @@ msgid "No weapons or drones detected"
 msgstr "Keine Waffen oder Drohnen erkannt"
 
 #: apps/fitting/diagnostics.py
-msgid "Turret tracking is not modelled (turrets shown at full damage)"
-msgstr ""
-"Geschütz-Tracking wird nicht modelliert (Geschütze werden mit vollem Schaden "
-"angezeigt)"
-
-#: apps/fitting/diagnostics.py
 #, python-format
 msgid "%(used)s of %(cap)s used"
 msgstr "%(used)s von %(cap)s genutzt"
@@ -7756,25 +7752,138 @@ msgid "Load a compatible charge."
 msgstr "Lade eine kompatible Ladung."
 
 #: apps/fitting/diagnostics.py
-#, fuzzy
-#| msgid "No slots on this hull."
 msgid "Rig size does not fit this hull"
-msgstr "Keine Slots an diesem Hull."
+msgstr "Rig-Größe passt nicht zu diesem Rumpf"
 
 #: apps/fitting/diagnostics.py
 msgid "Fit a rig of this hull's size class."
 msgstr "Setze ein Rig der passenden Größenklasse ein."
 
 #: apps/fitting/diagnostics.py
-#, fuzzy
-#| msgid "No matching module for this slot."
 msgid "Too many modules of this group fitted"
-msgstr "Kein passendes Modul für diesen Slot."
+msgstr "Zu viele Module dieser Gruppe verbaut"
 
 #: apps/fitting/diagnostics.py
 #, python-format
 msgid "At most %(max)s allowed"
 msgstr "Höchstens %(max)s erlaubt"
+
+#: apps/fitting/diagnostics.py
+msgid "Too many modules of this group active"
+msgstr "Zu viele Module dieser Gruppe aktiv"
+
+#: apps/fitting/diagnostics.py
+#, python-format
+msgid "At most %(max)s may be active at once"
+msgstr "Höchstens %(max)s dürfen gleichzeitig aktiv sein"
+
+#: apps/fitting/diagnostics.py
+msgid "Set one of them offline or online."
+msgstr "Schalte eines davon offline oder online."
+
+#: apps/fitting/diagnostics.py
+msgid "Too many modules of this group online"
+msgstr "Zu viele Module dieser Gruppe online"
+
+#: apps/fitting/diagnostics.py
+#, python-format
+msgid "At most %(max)s may be online at once"
+msgstr "Höchstens %(max)s dürfen gleichzeitig online sein"
+
+#: apps/fitting/diagnostics.py
+msgid "Set one of them offline."
+msgstr "Schalte eines davon offline."
+
+#: apps/fitting/diagnostics.py
+msgid "Module cannot be fitted to this hull"
+msgstr "Modul kann nicht an diesem Rumpf verbaut werden"
+
+#: apps/fitting/diagnostics.py
+msgid "Fit this module to a compatible hull."
+msgstr "Verbaue dieses Modul an einem kompatiblen Rumpf."
+
+#: apps/fitting/diagnostics.py
+msgid "Two implants occupy the same slot"
+msgstr "Zwei Implantate belegen denselben Slot"
+
+#: apps/fitting/diagnostics.py
+msgid "Remove one of the conflicting implants."
+msgstr "Entferne eines der kollidierenden Implantate."
+
+#: apps/fitting/diagnostics.py
+msgid "Two boosters occupy the same slot"
+msgstr "Zwei Booster belegen denselben Slot"
+
+#: apps/fitting/diagnostics.py
+msgid "Remove one of the conflicting boosters."
+msgstr "Entferne einen der kollidierenden Booster."
+
+#: apps/fitting/diagnostics.py
+msgid "Two subsystems occupy the same slot"
+msgstr "Zwei Subsysteme belegen denselben Slot"
+
+#: apps/fitting/diagnostics.py
+msgid "Fit one subsystem per slot."
+msgstr "Verbaue ein Subsystem pro Slot."
+
+#: apps/fitting/diagnostics.py
+msgid "Incomplete subsystem configuration"
+msgstr "Unvollständige Subsystem-Konfiguration"
+
+#: apps/fitting/diagnostics.py
+#, python-format
+msgid "%(fitted)s of %(required)s subsystems fitted"
+msgstr "%(fitted)s von %(required)s Subsystemen verbaut"
+
+#: apps/fitting/diagnostics.py
+msgid "Fit one subsystem in every slot."
+msgstr "Verbaue in jedem Slot ein Subsystem."
+
+#: apps/fitting/diagnostics.py
+msgid "Tactical mode does not belong to this hull"
+msgstr "Taktischer Modus gehört nicht zu diesem Rumpf"
+
+#: apps/fitting/diagnostics.py
+msgid "Select one of this hull's own tactical modes."
+msgstr "Wähle einen der eigenen taktischen Modi dieses Rumpfs."
+
+#: apps/fitting/diagnostics.py
+msgid "Projected module has no effect on this ship"
+msgstr "Projiziertes Modul hat keine Wirkung auf dieses Schiff"
+
+#: apps/fitting/diagnostics.py
+msgid "Project an EWAR, energy-warfare or remote-assistance module instead."
+msgstr ""
+"Projiziere stattdessen ein EWAR -, Energiekriegs- oder "
+"Fernunterstützungsmodul."
+
+#: apps/fitting/diagnostics.py
+msgid "Command burst references an unknown warfare buff"
+msgstr "Kommando-Burst verweist auf einen unbekannten Kriegs-Buff"
+
+#: apps/fitting/diagnostics.py
+msgid ""
+"Re-run the SDE import (import_dogma_graph) to load the warfare-buff table."
+msgstr ""
+"Führe den SDE-Import (import_dogma_graph) erneut aus, um die Kriegs-Buff-"
+"Tabelle zu laden."
+
+#: apps/fitting/diagnostics.py
+msgid "Mutated module — rolled attributes unknown"
+msgstr "Mutiertes Modul — gewürfelte Attribute unbekannt"
+
+#: apps/fitting/diagnostics.py
+msgid ""
+"The stats shown are this module's base-roll values, not its mutated ones."
+msgstr ""
+"Die angezeigten Werte sind die Basiswerte dieses Moduls, nicht seine "
+"mutierten."
+
+#: apps/fitting/diagnostics.py
+msgid "Enter the mutated attribute values to see this module's real stats."
+msgstr ""
+"Gib die mutierten Attributwerte ein, um die echten Werte dieses Moduls zu "
+"sehen."
 
 #: apps/fitting/diagnostics.py
 msgid "Charge not accepted by this module"
@@ -7793,16 +7902,13 @@ msgid "Load a charge of the matching size."
 msgstr "Lade eine Ladung der passenden Größe."
 
 #: apps/fitting/diagnostics.py
-#, fuzzy
-#| msgid "Powergrid exceeded"
 msgid "Drone bandwidth exceeded"
-msgstr "Powergrid überschritten"
+msgstr "Drohnen-Bandbreite überschritten"
 
 #: apps/fitting/diagnostics.py
-#, fuzzy, python-format
-#| msgid "%(used)s of %(cap)s used"
+#, python-format
 msgid "%(used)s of %(cap)s Mbit/s"
-msgstr "%(used)s von %(cap)s genutzt"
+msgstr "%(used)s von %(cap)s Mbit/s"
 
 #: apps/fitting/diagnostics.py
 msgid "Recall a drone or field smaller drones."
@@ -7813,10 +7919,9 @@ msgid "Drone bay volume exceeded"
 msgstr "Drohnenhangar-Volumen überschritten"
 
 #: apps/fitting/diagnostics.py
-#, fuzzy, python-format
-#| msgid "%(used)s of %(cap)s used"
+#, python-format
 msgid "%(used)s of %(cap)s m3"
-msgstr "%(used)s von %(cap)s genutzt"
+msgstr "%(used)s von %(cap)s m³"
 
 #: apps/fitting/diagnostics.py
 msgid "Not all drones fit in bandwidth"
@@ -7826,6 +7931,69 @@ msgstr "Nicht alle Drohnen passen in die Bandbreite"
 #, python-format
 msgid "%(counted)s of %(requested)s counted in the simulation"
 msgstr "%(counted)s von %(requested)s in der Simulation berücksichtigt"
+
+#: apps/fitting/diagnostics.py
+msgid "Not enough fighter tubes"
+msgstr "Nicht genug Jäger-Röhren"
+
+#: apps/fitting/diagnostics.py
+#, python-format
+msgid "%(used)s squadrons, %(cap)s tubes"
+msgstr "%(used)s Staffeln, %(cap)s Röhren"
+
+#: apps/fitting/diagnostics.py
+msgid "Launch fewer squadrons."
+msgstr "Starte weniger Staffeln."
+
+#: apps/fitting/diagnostics.py
+msgid "Not enough fighter slots for this role"
+msgstr "Nicht genug Jäger-Slots für diese Rolle"
+
+#: apps/fitting/diagnostics.py
+#, python-format
+msgid "%(used)s of %(cap)s"
+msgstr "%(used)s von %(cap)s"
+
+#: apps/fitting/diagnostics.py
+msgid "Launch fewer squadrons of this role."
+msgstr "Starte weniger Staffeln dieser Rolle."
+
+#: apps/fitting/diagnostics.py
+msgid "Fighter squadron too large"
+msgstr "Jägerstaffel zu groß"
+
+#: apps/fitting/diagnostics.py
+#, python-format
+msgid "%(count)s of max %(max)s"
+msgstr "%(count)s von max. %(max)s"
+
+#: apps/fitting/diagnostics.py
+msgid "Reduce the squadron to its maximum size."
+msgstr "Reduziere die Staffel auf ihre maximale Größe."
+
+#: apps/fitting/diagnostics.py
+msgid "Fighter bay volume exceeded"
+msgstr "Jägerhangar-Volumen überschritten"
+
+#: apps/fitting/diagnostics.py
+msgid "Carry fewer or smaller fighters."
+msgstr "Führe weniger oder kleinere Jäger mit."
+
+#: apps/fitting/diagnostics.py
+msgid "This hull cannot field fighters"
+msgstr "Dieser Rumpf kann keine Jäger einsetzen"
+
+#: apps/fitting/diagnostics.py
+msgid "Field fighters from a carrier or supercarrier."
+msgstr "Setze Jäger von einem carrier oder Supercarrier aus ein."
+
+#: apps/fitting/diagnostics.py
+msgid "Not a valid fighter"
+msgstr "Kein gültiger Jäger"
+
+#: apps/fitting/diagnostics.py
+msgid "Choose a real fighter squadron."
+msgstr "Wähle eine echte Jägerstaffel."
 
 #: apps/fitting/models.py
 msgid "Public link"
@@ -8710,43 +8878,43 @@ msgstr "Seite gelöscht."
 
 #: apps/killboard/anatomy.py
 msgid "100B+"
-msgstr ""
+msgstr "100 Mrd.+"
 
 #: apps/killboard/anatomy.py
 msgid "10B+"
-msgstr ""
+msgstr "10 Mrd.+"
 
 #: apps/killboard/anatomy.py
 msgid "1B+"
-msgstr ""
+msgstr "1 Mrd.+"
 
 #: apps/killboard/fitrender.py
 msgid "High slots"
-msgstr ""
+msgstr "Hohe Slots"
 
 #: apps/killboard/fitrender.py
 msgid "Mid slots"
-msgstr ""
+msgstr "Mittlere Slots"
 
 #: apps/killboard/fitrender.py
 msgid "Low slots"
-msgstr ""
+msgstr "Niedrige Slots"
 
 #: apps/killboard/fitrender.py templates/fitting/detail.html
 msgid "Rigs"
 msgstr "Rigs"
 
-#: apps/killboard/fitrender.py
+#: apps/killboard/fitrender.py templates/fitting/detail.html
 msgid "Subsystems"
-msgstr ""
+msgstr "Subsysteme"
 
 #: apps/killboard/fitrender.py
 msgid "Drone bay"
-msgstr ""
+msgstr "Drohnenbucht"
 
 #: apps/killboard/fitrender.py
 msgid "Cargo hold"
-msgstr ""
+msgstr "Frachtraum"
 
 #: apps/killboard/forms.py
 msgid "e.g. Local gate campers"
@@ -8774,39 +8942,39 @@ msgstr "Optionaler Titel"
 
 #: apps/killboard/ingest_health.py
 msgid "ESI Director feed"
-msgstr ""
+msgstr "ESI-Director-Feed"
 
 #: apps/killboard/ingest_health.py
 msgid "zKillboard query poll"
-msgstr ""
+msgstr "zKillboard-Abfrage-Poll"
 
 #: apps/killboard/ingest_health.py
 msgid "Realtime fallback (R2Z2)"
-msgstr ""
+msgstr "Echtzeit-Fallback (R2Z2)"
 
 #: apps/killboard/killfeed_rules.py
 msgid "High-sec"
-msgstr ""
+msgstr "High-sec"
 
 #: apps/killboard/killfeed_rules.py
 msgid "Low-sec"
-msgstr ""
+msgstr "Low-sec"
 
 #: apps/killboard/killfeed_rules.py
 msgid "Null-sec"
-msgstr ""
+msgstr "Null-sec"
 
 #: apps/killboard/killfeed_rules.py
 msgid "Wormhole"
-msgstr ""
+msgstr "Wurmloch"
 
 #: apps/killboard/killfeed_rules.py
 msgid "Abyssal"
-msgstr ""
+msgstr "Abyssal"
 
 #: apps/killboard/killfeed_rules.py
 msgid "Pochven"
-msgstr ""
+msgstr "Pochven"
 
 #: apps/killboard/leaderboards.py
 msgid "Last 7 days"
@@ -8951,39 +9119,40 @@ msgstr ""
 
 #: apps/killboard/models.py
 msgid "Skip kills with no player attackers (NPC/ratting deaths)."
-msgstr ""
+msgstr "Kills ohne Spieler-Angreifer überspringen (NPC-/ratting-Tode)."
 
 #: apps/killboard/models.py
 msgid "Skip awox kills (a corp member on the victim's own corp)."
 msgstr ""
+"Awox-Kills überspringen (ein Corp-Mitglied auf die eigene Corp des Opfers)."
 
 #: apps/killboard/models.py
 msgid "Post solo kills only."
-msgstr ""
+msgstr "Nur Solo-Kills posten."
 
 #: apps/killboard/models.py
 msgid "Require at least this many attackers (0 = off)."
-msgstr ""
+msgstr "Mindestens so viele Angreifer erforderlich (0 = aus)."
 
 #: apps/killboard/models.py
 msgid "Require at most this many attackers (0 = off)."
-msgstr ""
+msgstr "Höchstens so viele Angreifer zulassen (0 = aus)."
 
 #: apps/killboard/models.py
 msgid "Only these security bands (empty = all)."
-msgstr ""
+msgstr "Nur diese Sicherheitsstufen (leer = alle)."
 
 #: apps/killboard/models.py
 msgid "Only these victim ship classes (empty = all)."
-msgstr ""
+msgstr "Nur diese Schiffsklassen der Opfer (leer = alle)."
 
 #: apps/killboard/models.py
 msgid "Only within this many jumps of the staging system (0 = off)."
-msgstr ""
+msgstr "Nur innerhalb dieser Anzahl Sprünge vom Staging-System (0 = aus)."
 
 #: apps/killboard/models.py
 msgid "For losses, post only those that deviated from doctrine."
-msgstr ""
+msgstr "Bei Verlusten nur solche posten, die von der doctrine abwichen."
 
 #: apps/killboard/models.py
 msgid ""
@@ -9164,10 +9333,14 @@ msgid ""
 "Director feed, the zKill query poll and EVE Ref archives) always run; turn "
 "this on only for lower-latency ingest or as a supplementary source."
 msgstr ""
+"Optionaler Echtzeit-Fallback-Feed (zKillboard R2Z2). Die primary Quellen "
+"(ESI-Director-Feed, der zKill-Abfrage-Poll und die EVE-Ref-Archive) laufen "
+"immer; aktiviere dies nur für latenzärmere Aufnahme oder als ergänzende "
+"Quelle."
 
 #: apps/killboard/models.py
 msgid "The last R2Z2 sequence number consumed — the resumable cursor."
-msgstr ""
+msgstr "Die zuletzt verarbeitete R2Z2-Sequenznummer — der fortsetzbare Cursor."
 
 #: apps/killboard/ranks_i18n.py
 msgid "Dockside Recruit"
@@ -9430,11 +9603,11 @@ msgstr "Verlorene Schiffe"
 
 #: apps/killboard/views.py
 msgid "A comment can’t be empty."
-msgstr ""
+msgstr "Ein Kommentar darf nicht leer sein."
 
 #: apps/killboard/views.py
 msgid "You can’t remove that comment."
-msgstr ""
+msgstr "Du kannst diesen Kommentar nicht entfernen."
 
 #: apps/killboard/views.py
 #, python-format
@@ -9483,7 +9656,7 @@ msgstr "Battle Report erstellt."
 
 #: apps/killboard/views.py
 msgid "Real-time fallback setting saved."
-msgstr ""
+msgstr "Echtzeit-Fallback-Einstellung gespeichert."
 
 #: apps/killboard/views.py
 msgid "Kill-feed settings saved."
@@ -30943,6 +31116,7 @@ msgstr ""
 
 #: templates/admin_audit/console/planetary/config.html
 #: templates/admin_audit/console/planetary/hub.html
+#: templates/fitting/_telemetry.html
 msgid "Module"
 msgstr "Modul"
 
@@ -32670,9 +32844,10 @@ msgid "Icon type id"
 msgstr "Symbol-Type-ID"
 
 #: templates/admin_audit/console/raffle_prizes.html templates/erp/board.html
-#: templates/industry/chain.html templates/industry/create.html
-#: templates/industry/jobs.html templates/procurement/po_detail.html
-#: templates/store/inventory_fit.html templates/store/storefront.html
+#: templates/fitting/detail.html templates/industry/chain.html
+#: templates/industry/create.html templates/industry/jobs.html
+#: templates/procurement/po_detail.html templates/store/inventory_fit.html
+#: templates/store/storefront.html
 msgid "Quantity"
 msgstr "Menge"
 
@@ -34754,9 +34929,9 @@ msgstr "Anerkennung ist für diese Kampagne deaktiviert."
 msgid "Unknown pilot"
 msgstr "Unbekannter Pilot"
 
-#: templates/campaigns/_participation.html templates/identity/dashboard.html
-#: templates/mentorship/pairing_detail.html templates/pilots/_quest_row.html
-#: templates/pilots/contributions.html
+#: templates/campaigns/_participation.html templates/fitting/_telemetry.html
+#: templates/identity/dashboard.html templates/mentorship/pairing_detail.html
+#: templates/pilots/_quest_row.html templates/pilots/contributions.html
 msgid "pts"
 msgstr "Pkt"
 
@@ -36289,7 +36464,7 @@ msgstr "Annehmen →"
 msgid "Remind me later"
 msgstr "Später erinnern"
 
-#: templates/capsuleer/_suggestion_row.html
+#: templates/capsuleer/_suggestion_row.html templates/fitting/detail.html
 #: templates/recommendations/_rec_card.html
 msgid "Dismiss"
 msgstr "Verwerfen"
@@ -39707,12 +39882,16 @@ msgstr "Die Simulation konnte nicht ausgeführt werden:"
 msgid ""
 "This fit is structurally impossible — see the diagnostics below. Numbers are "
 "shown for reference only."
-msgstr "Diese Ausrüstung ist strukturell unmöglich — siehe Diagnose unten. Werte nur zur Orientierung."
+msgstr ""
+"Diese Ausrüstung ist strukturell unmöglich — siehe Diagnose unten. Werte nur "
+"zur Orientierung."
 
 #: templates/fitting/_telemetry.html
 msgid ""
 "This fit exceeds the ship's fitting resources — see the diagnostics below."
-msgstr "Diese Ausrüstung überschreitet die Ausrüstungsressourcen des Schiffs — siehe Diagnose unten."
+msgstr ""
+"Diese Ausrüstung überschreitet die Ausrüstungsressourcen des Schiffs — siehe "
+"Diagnose unten."
 
 #: templates/fitting/_telemetry.html
 msgid "Simulation result"
@@ -39783,13 +39962,59 @@ msgid "Volley"
 msgstr "Volley"
 
 #: templates/fitting/_telemetry.html
-msgid "Applied missiles"
-msgstr "Angewandte Raketen"
+msgid "Long-run DPS once weapon reloads are paid."
+msgstr "Langfristiger DPS , sobald Waffen-Nachladezeiten eingerechnet sind."
+
+#: templates/fitting/_telemetry.html
+msgid "Sustained"
+msgstr "Anhaltend"
+
+#: templates/fitting/_telemetry.html
+msgid ""
+"DPS actually landing on the target profile (tracking, signature, range)."
+msgstr ""
+"DPS , der tatsächlich das Zielprofil trifft (Tracking, Signatur, Reichweite)."
+
+#: templates/fitting/_telemetry.html
+msgid "Without your painter/web assistance"
+msgstr "Ohne Unterstützung durch deinen Painter/web"
+
+#: templates/fitting/_telemetry.html
+msgid "unassisted"
+msgstr "ohne Unterstützung"
+
+#: templates/fitting/_telemetry.html
+msgid ""
+"* Some weapons need a fuller target profile (distance / signature) to "
+"compute applied DPS."
+msgstr ""
+"* Manche Waffen brauchen ein vollständigeres Zielprofil (Distanz / "
+"Signatur), um den angewandten DPS zu berechnen."
 
 #: templates/fitting/_telemetry.html
 #, python-format
 msgid "EM/Th/Kin/Exp %%"
 msgstr "EM/Th/Kin/Exp %%"
+
+#: templates/fitting/_telemetry.html
+msgid "Weapon"
+msgstr "Waffe"
+
+#: templates/fitting/_telemetry.html
+msgid "Sust."
+msgstr "Anh."
+
+#: templates/fitting/_telemetry.html
+msgid "Needs target distance + signature"
+msgstr "Braucht Zieldistanz + Signatur"
+
+#: templates/fitting/_telemetry.html
+msgid "Needs target HP"
+msgstr "Braucht Ziel-HP"
+
+#: templates/fitting/_telemetry.html
+msgid "Fighter application not modelled"
+msgstr "Jäger-Anwendung nicht modelliert"
 
 #: templates/fitting/_telemetry.html
 msgid "Defence"
@@ -39802,6 +40027,18 @@ msgstr "Schild"
 #: templates/fitting/_telemetry.html
 msgid "HP"
 msgstr "HP"
+
+#: templates/fitting/_telemetry.html
+msgid "Active rep"
+msgstr "Aktive Rep"
+
+#: templates/fitting/_telemetry.html
+msgid "HP/s"
+msgstr "HP/s"
+
+#: templates/fitting/_telemetry.html
+msgid "Incoming remote rep"
+msgstr "Eingehende Fernreparatur"
 
 #: templates/fitting/_telemetry.html
 msgid "Stable"
@@ -39818,6 +40055,14 @@ msgstr "Kapazität"
 #: templates/fitting/_telemetry.html
 msgid "Peak recharge / use"
 msgstr "Max. Aufladung / Verbrauch"
+
+#: templates/fitting/_telemetry.html
+msgid "Capacitor drained by projected neuts/nos"
+msgstr "Kapazitor durch projizierte neuts/nos entleert"
+
+#: templates/fitting/_telemetry.html
+msgid "Incoming neut"
+msgstr "Eingehender neut"
 
 #: templates/fitting/_telemetry.html
 msgid "Mobility"
@@ -39844,6 +40089,14 @@ msgid "Warp speed"
 msgstr "Warpgeschwindigkeit"
 
 #: templates/fitting/_telemetry.html
+msgid "Time to align and cross the set warp distance"
+msgstr "Zeit zum Ausrichten und Überbrücken der eingestellten Warp-Distanz"
+
+#: templates/fitting/_telemetry.html
+msgid "Warp time"
+msgstr "Warp-Zeit"
+
+#: templates/fitting/_telemetry.html
 msgid "Targeting"
 msgstr "Zielerfassung"
 
@@ -39859,13 +40112,98 @@ msgstr "Verriegelte Ziele"
 msgid "Scan resolution"
 msgstr "Scan-Auflösung"
 
-#: templates/fitting/_telemetry.html
+#: templates/fitting/_telemetry.html templates/fitting/detail.html
 msgid "Sensor strength"
 msgstr "Sensorstärke"
 
 #: templates/fitting/_telemetry.html
+msgid "Time to lock the target profile"
+msgstr "Zeit, um das Zielprofil zu erfassen"
+
+#: templates/fitting/_telemetry.html
+msgid "Lock time"
+msgstr "Erfassungszeit"
+
+#: templates/fitting/_telemetry.html
+msgid "Configuration"
+msgstr "Konfiguration"
+
+#: templates/fitting/_telemetry.html templates/fitting/detail.html
+msgid "Tactical mode"
+msgstr "Taktischer Modus"
+
+#: templates/fitting/_telemetry.html
 msgid "Electronic warfare"
 msgstr "Elektronische Kriegsführung"
+
+#: templates/fitting/_telemetry.html
+msgid "track"
+msgstr "Track"
+
+#: templates/fitting/_telemetry.html
+msgid "expl vel"
+msgstr "Expl.-Geschw."
+
+#: templates/fitting/_telemetry.html
+msgid "jam"
+msgstr "Jam"
+
+#: templates/fitting/_telemetry.html
+msgid "ECM"
+msgstr "ECM"
+
+#: templates/fitting/_telemetry.html
+msgid "Combined jam chance / cycle"
+msgstr "Kombinierte Jam-Chance / Zyklus"
+
+#: templates/fitting/_telemetry.html
+msgid "jammers"
+msgstr "Störsender"
+
+#: templates/fitting/_telemetry.html
+msgid "Set a target sensor strength and type to compute jam chance."
+msgstr ""
+"Lege Sensorstärke und -typ des Ziels fest, um die Jam-Chance zu berechnen."
+
+#: templates/fitting/_telemetry.html
+msgid "On target"
+msgstr "Auf Ziel"
+
+#: templates/fitting/_telemetry.html
+msgid "sig"
+msgstr "Sig"
+
+#: templates/fitting/_telemetry.html
+msgid "vel"
+msgstr "Geschw."
+
+#: templates/fitting/_telemetry.html
+msgid "m³/hour"
+msgstr "m³/Stunde"
+
+#: templates/fitting/_telemetry.html
+msgid "m³/cycle"
+msgstr "m³/Zyklus"
+
+#: templates/fitting/_telemetry.html templates/fitting/detail.html
+msgid "Projected on us"
+msgstr "Auf uns projiziert"
+
+#: templates/fitting/_telemetry.html templates/fitting/detail.html
+msgid "Fleet boosts"
+msgstr "Flotten-Boosts"
+
+#: templates/fitting/_telemetry.html templates/fitting/detail.html
+msgid "Fighters"
+msgstr "Jäger"
+
+#: templates/fitting/_telemetry.html
+msgid "Tubes"
+msgstr "Röhren"
+
+#: templates/fitting/_telemetry.html
+msgid "Bay"
+msgstr "Bucht"
 
 #: templates/fitting/_telemetry.html
 msgid "Fit diagnostics"
@@ -39974,8 +40312,20 @@ msgid "Export EFT"
 msgstr "EFT exportieren"
 
 #: templates/fitting/detail.html
-msgid "Click a slot to fit · ⚠ = load ammo"
-msgstr "Slot anklicken zum Fitten · ⚠ = Munition laden"
+#, python-format
+msgid "%(n)s line from the imported fit could not be resolved and was skipped:"
+msgid_plural ""
+"%(n)s lines from the imported fit could not be resolved and were skipped:"
+msgstr[0] ""
+"%(n)s Zeile des importierten Fits konnte nicht aufgelöst werden und wurde "
+"übersprungen:"
+msgstr[1] ""
+"%(n)s Zeilen des importierten Fits konnten nicht aufgelöst werden und wurden "
+"übersprungen:"
+
+#: templates/fitting/detail.html
+msgid "Click a slot to fit · ⚠ = load ammo · ✦ = mutate"
+msgstr "Slot anklicken zum Verbauen · ⚠ = Munition laden · ✦ = mutieren"
 
 #: templates/fitting/detail.html
 msgid "Module state"
@@ -39985,19 +40335,18 @@ msgstr "Modulstatus"
 msgid ""
 "Active: running (uses CPU/PG + capacitor). Online: powered but idle (uses "
 "CPU/PG, no cap). Offline: unfitted (frees CPU/PG). Heat: overloaded."
-msgstr "Aktiv: läuft (nutzt CPU/PG + Kapazitor). Online: versorgt, aber untätig (nutzt CPU/PG, kein Kapazitor). Offline: deaktiviert (gibt CPU/PG frei). Hitze: überladen."
+msgstr ""
+"Aktiv: läuft (nutzt CPU/PG + Kapazitor). Online: versorgt, aber untätig "
+"(nutzt CPU/PG, kein Kapazitor). Offline: deaktiviert (gibt CPU/PG frei). "
+"Hitze: überladen."
 
 #: templates/fitting/detail.html
-#, fuzzy
-#| msgid "unlink"
 msgid "online"
-msgstr "Verknüpfung aufheben"
+msgstr "online"
 
 #: templates/fitting/detail.html
-#, fuzzy
-#| msgid "Provider offline"
 msgid "offline"
-msgstr "Anbieter offline"
+msgstr "offline"
 
 #: templates/fitting/detail.html
 msgid "heat"
@@ -40020,6 +40369,34 @@ msgid "Unload ammo"
 msgstr "Munition entladen"
 
 #: templates/fitting/detail.html
+msgid "Mutated attributes"
+msgstr "Mutierte Attribute"
+
+#: templates/fitting/detail.html
+msgid "mutated"
+msgstr "mutiert"
+
+#: templates/fitting/detail.html
+msgid "Mutate"
+msgstr "Mutieren"
+
+#: templates/fitting/detail.html
+msgid "Mutated value"
+msgstr "Mutierter Wert"
+
+#: templates/fitting/detail.html
+msgid "Remove override"
+msgstr "Override entfernen"
+
+#: templates/fitting/detail.html
+msgid "Add attribute…"
+msgstr "Attribut hinzufügen…"
+
+#: templates/fitting/detail.html
+msgid "Search attribute"
+msgstr "Attribut suchen"
+
+#: templates/fitting/detail.html
 msgid "No slots on this hull."
 msgstr "Keine Slots an diesem Hull."
 
@@ -40032,6 +40409,14 @@ msgid "Add drone"
 msgstr "Drohne hinzufügen"
 
 #: templates/fitting/detail.html
+msgid "Squadron size"
+msgstr "Staffelgröße"
+
+#: templates/fitting/detail.html
+msgid "Add fighter squadron"
+msgstr "Jägerstaffel hinzufügen"
+
+#: templates/fitting/detail.html
 msgid "Search modules"
 msgstr "Module suchen"
 
@@ -40040,34 +40425,141 @@ msgid "takes ammo"
 msgstr "benötigt Munition"
 
 #: templates/fitting/detail.html
-msgid "No matching module for this slot."
-msgstr "Kein passendes Modul für diesen Slot."
+msgid "No matching item for this slot."
+msgstr "Kein passendes Item für diesen Slot."
+
+#: templates/fitting/detail.html
+msgid "No mode"
+msgstr "Kein Modus"
 
 #: templates/fitting/detail.html
 msgid "Target profile"
 msgstr "Zielprofil"
 
 #: templates/fitting/detail.html
-msgid "Set a target to see applied missile damage vs its signature and speed."
+msgid ""
+"Describe a target to see applied DPS, tracking, jam and lock time. Saved in "
+"this browser only."
 msgstr ""
-"Lege ein Ziel fest, um den angewandten Raketenschaden im Verhältnis zu "
-"dessen Signatur und Geschwindigkeit zu sehen."
+"Beschreibe ein Ziel, um angewandten DPS , Tracking, Jam und Erfassungszeit "
+"zu sehen. Nur in diesem Browser gespeichert."
 
 #: templates/fitting/detail.html
-msgid "Target signature (m)"
-msgstr "Zielsignatur (m)"
+msgid "Signature (m)"
+msgstr "Signatur (m)"
 
 #: templates/fitting/detail.html
-msgid "Sig (m)"
-msgstr "Sig (m)"
+msgid "Velocity (m/s)"
+msgstr "Geschwindigkeit (m/s)"
 
 #: templates/fitting/detail.html
-msgid "Target velocity (m/s)"
-msgstr "Zielgeschwindigkeit (m/s)"
+msgid "Distance (m)"
+msgstr "Distanz (m)"
 
 #: templates/fitting/detail.html
-msgid "Vel (m/s)"
-msgstr "Geschw. (m/s)"
+msgid "Angular (rad/s)"
+msgstr "Winkelgeschw. (rad/s)"
+
+#: templates/fitting/detail.html
+msgid "Sensor type"
+msgstr "Sensortyp"
+
+#: templates/fitting/detail.html
+msgid "—"
+msgstr "—"
+
+#: templates/fitting/detail.html
+msgid "Radar"
+msgstr "Radar"
+
+#: templates/fitting/detail.html
+msgid "Magnetometric"
+msgstr "Magnetometrisch"
+
+#: templates/fitting/detail.html
+msgid "Ladar"
+msgstr "Ladar"
+
+#: templates/fitting/detail.html
+msgid "Gravimetric"
+msgstr "Gravimetrisch"
+
+#: templates/fitting/detail.html
+msgid "Target HP"
+msgstr "Ziel-HP"
+
+#: templates/fitting/detail.html
+msgid "Warp distance (AU)"
+msgstr "Warp-Distanz (AE)"
+
+#: templates/fitting/detail.html
+msgid "Damage profile"
+msgstr "Schadensprofil"
+
+#: templates/fitting/detail.html
+msgid "Uniform"
+msgstr "Gleichmäßig"
+
+#: templates/fitting/detail.html
+msgid "EM"
+msgstr "EM"
+
+#: templates/fitting/detail.html
+msgid "Thermal"
+msgstr "Thermisch"
+
+#: templates/fitting/detail.html
+msgid "Kinetic"
+msgstr "Kinetisch"
+
+#: templates/fitting/detail.html
+msgid "Explosive"
+msgstr "Explosiv"
+
+#: templates/fitting/detail.html
+msgid "Custom…"
+msgstr "Benutzerdefiniert…"
+
+#: templates/fitting/detail.html
+msgid "Th"
+msgstr "Therm."
+
+#: templates/fitting/detail.html
+msgid "Kin"
+msgstr "Kin."
+
+#: templates/fitting/detail.html
+msgid "Exp"
+msgstr "Expl."
+
+#: templates/fitting/detail.html
+msgid ""
+"Add hostile EWAR / energy warfare / remote-rep modules to see their pressure."
+msgstr ""
+"Füge feindliche EWAR -/Energiekriegs-/Fernreparatur-Module hinzu, um deren "
+"Druck zu sehen."
+
+#: templates/fitting/detail.html
+msgid "Add projected module…"
+msgstr "Projiziertes Modul hinzufügen…"
+
+#: templates/fitting/detail.html
+msgid "Search projected module"
+msgstr "Projiziertes Modul suchen"
+
+#: templates/fitting/detail.html
+#, python-format
+msgid ""
+"Simulate being boosted by friendly command bursts. Set a strength %% for a "
+"fully-skilled command ship."
+msgstr ""
+"Simuliere, von befreundeten Command Bursts geboostet zu werden. Lege einen "
+"Stärkewert in %% für ein voll geskilltes Kommandoschiff fest."
+
+#: templates/fitting/detail.html
+#, python-format
+msgid "Strength %% for %(name)s"
+msgstr "Stärke in %% für %(name)s"
 
 #: templates/fitting/detail.html
 msgid "Cost & supply"
@@ -40223,11 +40715,14 @@ msgstr "Wiederherstellen"
 msgid ""
 "Simulation update failed — the numbers shown are stale. Retry by changing "
 "the fit or reloading."
-msgstr "Simulationsaktualisierung fehlgeschlagen — die angezeigten Werte sind veraltet. Ändere die Ausrüstung oder lade die Seite neu."
+msgstr ""
+"Simulationsaktualisierung fehlgeschlagen — die angezeigten Werte sind "
+"veraltet. Ändere die Ausrüstung oder lade die Seite neu."
 
 #: templates/fitting/detail.html
 msgid "Saving failed — your changes are NOT stored yet."
-msgstr "Speichern fehlgeschlagen — deine Änderungen sind NOCH NICHT gespeichert."
+msgstr ""
+"Speichern fehlgeschlagen — deine Änderungen sind NOCH NICHT gespeichert."
 
 #: templates/fitting/detail.html
 msgid "High power"
@@ -40260,6 +40755,38 @@ msgstr "Rig"
 #: templates/fitting/detail.html
 msgid "drone"
 msgstr "Drohne"
+
+#: templates/fitting/detail.html
+msgid "fighter squadron"
+msgstr "Jägerstaffel"
+
+#: templates/fitting/detail.html
+msgid "subsystem"
+msgstr "Subsystem"
+
+#: templates/fitting/detail.html
+msgid "implant"
+msgstr "Implantat"
+
+#: templates/fitting/detail.html templates/raffle/detail.html
+msgid "booster"
+msgstr "Booster"
+
+#: templates/fitting/detail.html
+msgid "cargo item"
+msgstr "Frachtgut"
+
+#: templates/fitting/detail.html
+msgid "Boosters"
+msgstr "Booster"
+
+#: templates/fitting/detail.html
+msgid "Cargo"
+msgstr "Fracht"
+
+#: templates/fitting/detail.html
+msgid "No changes to save"
+msgstr "Keine Änderungen zum Speichern"
 
 #: templates/fitting/index.html
 msgid "Fitting workspace"
@@ -43527,7 +44054,7 @@ msgstr "Kill"
 
 #: templates/killboard/detail.html
 msgid "High-value kill"
-msgstr ""
+msgstr "Hochwertiger Kill"
 
 #: templates/killboard/detail.html
 msgid "Destroyed"
@@ -43548,12 +44075,12 @@ msgstr "erlittener Schaden"
 #: templates/killboard/detail.html
 #, python-format
 msgid "SRP paid · %(v)s"
-msgstr ""
+msgstr "SRP ausgezahlt · %(v)s"
 
 #: templates/killboard/detail.html
 #, python-format
 msgid "SRP approved · %(v)s"
-msgstr ""
+msgstr "SRP genehmigt · %(v)s"
 
 #: templates/killboard/detail.html
 msgid "only you and officers see this"
@@ -43569,19 +44096,19 @@ msgstr "letzter Schlag"
 
 #: templates/killboard/detail.html
 msgid "Top damage"
-msgstr ""
+msgstr "Höchster Schaden"
 
 #: templates/killboard/detail.html
 msgid "Doctrine hull"
-msgstr ""
+msgstr "Doctrine-Rumpf"
 
 #: templates/killboard/detail.html
 msgid "By corporation"
-msgstr ""
+msgstr "Nach Corporation"
 
 #: templates/killboard/detail.html
 msgid "NPC / unknown"
-msgstr ""
+msgstr "NPC / unbekannt"
 
 #: templates/killboard/detail.html templates/operations/detail.html
 #, python-format
@@ -43600,15 +44127,15 @@ msgstr "Dieser Verlust entsprach einem doctrine-Fit"
 
 #: templates/killboard/detail.html
 msgid "Copy ESI"
-msgstr ""
+msgstr "ESI kopieren"
 
 #: templates/killboard/detail.html
 msgid "Copy the canonical doctrine fit to refit in-game"
-msgstr ""
+msgstr "Kopiere den kanonischen doctrine-Fit zum Umrüsten im Spiel"
 
 #: templates/killboard/detail.html
 msgid "Refit to doctrine"
-msgstr ""
+msgstr "Auf doctrine umrüsten"
 
 #: templates/killboard/detail.html
 msgid "Import as doctrine"
@@ -43621,15 +44148,15 @@ msgstr "zerstört"
 
 #: templates/killboard/detail.html
 msgid "dropped"
-msgstr ""
+msgstr "gedroppt"
 
 #: templates/killboard/detail.html
 msgid "Off-doctrine"
-msgstr ""
+msgstr "Abweichend von doctrine"
 
 #: templates/killboard/detail.html
 msgid "empty"
-msgstr ""
+msgstr "leer"
 
 #: templates/killboard/detail.html templates/logistics/corp_contracts.html
 #: templates/mining/ledger.html templates/store/board.html
@@ -43658,30 +44185,30 @@ msgstr "Nichts off-doctrine."
 
 #: templates/killboard/detail.html
 msgid "Same battle"
-msgstr ""
+msgstr "Gleiche Schlacht"
 
 #: templates/killboard/detail.html
 msgid "View battle report"
-msgstr ""
+msgstr "Gefechtsbericht ansehen"
 
 #: templates/killboard/detail.html
 msgid "This kill is part of a battle report."
-msgstr ""
+msgstr "Dieser Kill ist Teil eines Gefechtsberichts."
 
 #: templates/killboard/detail.html
 #, python-format
 msgid "%(n)s comment"
 msgid_plural "%(n)s comments"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(n)s Kommentar"
+msgstr[1] "%(n)s Kommentare"
 
 #: templates/killboard/detail.html
 msgid "No comments yet."
-msgstr ""
+msgstr "Noch keine Kommentare."
 
 #: templates/killboard/detail.html
 msgid "Add a comment…"
-msgstr ""
+msgstr "Kommentar hinzufügen…"
 
 #: templates/killboard/detail.html templates/stockpile/logistics.html
 msgid "Post"
@@ -43728,61 +44255,63 @@ msgstr "Poste einen Corp-Kill ab diesem Wert. 0 = aus."
 
 #: templates/killboard/killfeed_config.html
 msgid "Rules (optional)"
-msgstr ""
+msgstr "Regeln (optional)"
 
 #: templates/killboard/killfeed_config.html
 msgid ""
 "Extra require/exclude filters, applied on top of the value thresholds. Leave "
 "everything blank to post every kill above the ISK bar."
 msgstr ""
+"Zusätzliche Einschluss-/Ausschlussfilter, zusätzlich zu den Wertschwellen "
+"angewendet. Lasse alles leer, um jeden Kill über der ISK-Grenze zu posten."
 
 #: templates/killboard/killfeed_config.html
 msgid "Min attackers"
-msgstr ""
+msgstr "Min. Angreifer"
 
 #: templates/killboard/killfeed_config.html
 msgid "Max attackers"
-msgstr ""
+msgstr "Max. Angreifer"
 
 #: templates/killboard/killfeed_config.html
 msgid "Within N jumps of staging"
-msgstr ""
+msgstr "Innerhalb von N Sprüngen vom Staging"
 
 #: templates/killboard/killfeed_config.html
 msgid "0 = off. Needs an active staging system configured."
-msgstr ""
+msgstr "0 = aus. Erfordert ein konfiguriertes aktives Staging-System."
 
 #: templates/killboard/killfeed_config.html
 msgid "Security bands (none = all)"
-msgstr ""
+msgstr "Sicherheitsstufen (keine = alle)"
 
 #: templates/killboard/killfeed_config.html
 msgid "Victim ship classes (none = all)"
-msgstr ""
+msgstr "Schiffsklassen der Opfer (keine = alle)"
 
 #: templates/killboard/killfeed_config.html
 msgid "Solo kills only"
-msgstr ""
+msgstr "Nur Solo-Kills"
 
 #: templates/killboard/killfeed_config.html
 msgid "Exclude NPC-only kills"
-msgstr ""
+msgstr "Reine NPC-Kills ausschließen"
 
 #: templates/killboard/killfeed_config.html
 msgid "Exclude awox kills"
-msgstr ""
+msgstr "Awox-Kills ausschließen"
 
 #: templates/killboard/killfeed_config.html
 msgid "Losses: only those that deviated from doctrine"
-msgstr ""
+msgstr "Verluste: nur solche, die von der doctrine abwichen"
 
 #: templates/killboard/killfeed_config.html
 msgid "Ingest"
-msgstr ""
+msgstr "Aufnahme"
 
 #: templates/killboard/killfeed_config.html
 msgid "Real-time fallback"
-msgstr ""
+msgstr "Echtzeit-Fallback"
 
 #: templates/killboard/killfeed_config.html
 msgid ""
@@ -43792,45 +44321,50 @@ msgid ""
 "about a minute instead of up to fifteen. It never replaces the primary feeds "
 "— leave it off unless you want lower latency."
 msgstr ""
+"Die maßgeblichen Feeds (ESI-Director-Feed, der zKillboard-Abfrage-Poll und "
+"die EVE-Ref-Archive) halten das Board stets aktuell. Dieser optionale "
+"Fallback zapft zKillboards R2Z2-Echtzeit-Feed an, sodass aktuelle Corp-Kills "
+"in etwa einer Minute statt bis zu fünfzehn erscheinen. Er ersetzt die "
+"primary Feeds nie — lass ihn aus, sofern du keine geringere Latenz willst."
 
 #: templates/killboard/killfeed_config.html
 msgid "Enable the real-time fallback (R2Z2)"
-msgstr ""
+msgstr "Echtzeit-Fallback aktivieren (R2Z2)"
 
 #: templates/killboard/killfeed_config.html
 #, python-format
 msgid "Cursor at sequence %(seq)s · %(n)s ingested last run."
-msgstr ""
+msgstr "Cursor bei Sequenz %(seq)s · %(n)s beim letzten Lauf aufgenommen."
 
 #: templates/killboard/killfeed_config.html
 msgid "Ingest health"
-msgstr ""
+msgstr "Aufnahme-Zustand"
 
 #: templates/killboard/killfeed_config.html
 msgid "primary"
-msgstr ""
+msgstr "primary"
 
 #: templates/killboard/killfeed_config.html
 msgid "fallback"
-msgstr ""
+msgstr "Fallback"
 
 #: templates/killboard/killfeed_config.html
 #, python-format
 msgid "%(when)s ago"
-msgstr ""
+msgstr "vor %(when)s"
 
 #: templates/killboard/killfeed_config.html
 msgid "down"
-msgstr ""
+msgstr "ausgefallen"
 
 #: templates/killboard/killfeed_config.html
 msgid "idle"
-msgstr ""
+msgstr "inaktiv"
 
 #: templates/killboard/killfeed_config.html
 #, python-format
 msgid "%(n)s consecutive failures"
-msgstr ""
+msgstr "%(n)s aufeinanderfolgende Fehler"
 
 #: templates/killboard/list.html
 msgid "Combat record"
@@ -43979,19 +44513,19 @@ msgstr "Zeitraum:"
 
 #: templates/killboard/rankings.html
 msgid "Aggregate:"
-msgstr ""
+msgstr "Gesamt:"
 
 #: templates/killboard/rankings.html
 msgid "By pilot"
-msgstr ""
+msgstr "Nach Pilot"
 
 #: templates/killboard/rankings.html
 msgid "By main (+ alts)"
-msgstr ""
+msgstr "Nach Main (+ Alts)"
 
 #: templates/killboard/rankings.html
 msgid "alts counted under each pilot's main"
-msgstr ""
+msgstr "Alts werden dem Main jedes Piloten zugerechnet"
 
 #: templates/killboard/rankings.html
 msgid "History:"
@@ -50964,10 +51498,6 @@ msgstr "Live"
 #: templates/raffle/detail.html
 msgid "Awaiting draw"
 msgstr "Warten auf Ziehung"
-
-#: templates/raffle/detail.html
-msgid "booster"
-msgstr "Booster"
 
 #: templates/raffle/detail.html
 msgid "You're in the raffle"

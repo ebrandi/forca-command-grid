@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-20 19:45+0000\n"
+"POT-Creation-Date: 2026-07-21 13:49+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: zh-hans machine-assisted draft\n"
@@ -4715,6 +4715,7 @@ msgstr "Capitals"
 #: apps/mentorship/tracks_i18n.py apps/pingboard/models.py
 #: apps/raffle/sources/pve.py
 #: templates/admin_audit/console/mentorship/tracks.html
+#: templates/fitting/_telemetry.html
 msgid "Mining"
 msgstr "采矿"
 
@@ -6430,7 +6431,7 @@ msgstr "撤销"
 msgid "Kick"
 msgstr "踢出"
 
-#: apps/comms_access/models.py
+#: apps/comms_access/models.py templates/fitting/_telemetry.html
 msgid "Applied"
 msgstr "已应用"
 
@@ -6536,6 +6537,7 @@ msgid "Skill queue"
 msgstr "技能队列"
 
 #: apps/corporation/compliance.py apps/killboard/fitrender.py
+#: templates/fitting/detail.html
 msgid "Implants"
 msgstr "植入体"
 
@@ -7366,10 +7368,6 @@ msgid "No weapons or drones detected"
 msgstr "未检测到武器或无人机"
 
 #: apps/fitting/diagnostics.py
-msgid "Turret tracking is not modelled (turrets shown at full damage)"
-msgstr "未模拟炮台跟踪（炮台以满额伤害显示）"
-
-#: apps/fitting/diagnostics.py
 #, python-format
 msgid "%(used)s of %(cap)s used"
 msgstr "已使用 %(used)s / %(cap)s"
@@ -7410,25 +7408,130 @@ msgid "Load a compatible charge."
 msgstr "请装填兼容的弹药。"
 
 #: apps/fitting/diagnostics.py
-#, fuzzy
-#| msgid "No slots on this hull."
 msgid "Rig size does not fit this hull"
-msgstr "此舰船没有槽位。"
+msgstr "改装件尺寸不适合此船体"
 
 #: apps/fitting/diagnostics.py
 msgid "Fit a rig of this hull's size class."
 msgstr "请安装与该船体尺寸等级相符的改装件。"
 
 #: apps/fitting/diagnostics.py
-#, fuzzy
-#| msgid "No matching module for this slot."
 msgid "Too many modules of this group fitted"
-msgstr "没有匹配此槽位的模块。"
+msgstr "该组模块装配过多"
 
 #: apps/fitting/diagnostics.py
 #, python-format
 msgid "At most %(max)s allowed"
 msgstr "最多允许 %(max)s 个"
+
+#: apps/fitting/diagnostics.py
+msgid "Too many modules of this group active"
+msgstr "该组激活的模块过多"
+
+#: apps/fitting/diagnostics.py
+#, python-format
+msgid "At most %(max)s may be active at once"
+msgstr "最多可同时激活 %(max)s 个"
+
+#: apps/fitting/diagnostics.py
+msgid "Set one of them offline or online."
+msgstr "将其中一个设为离线或在线。"
+
+#: apps/fitting/diagnostics.py
+msgid "Too many modules of this group online"
+msgstr "该组在线的模块过多"
+
+#: apps/fitting/diagnostics.py
+#, python-format
+msgid "At most %(max)s may be online at once"
+msgstr "最多可同时在线 %(max)s 个"
+
+#: apps/fitting/diagnostics.py
+msgid "Set one of them offline."
+msgstr "将其中一个设为离线。"
+
+#: apps/fitting/diagnostics.py
+msgid "Module cannot be fitted to this hull"
+msgstr "该模块无法装配到此船体"
+
+#: apps/fitting/diagnostics.py
+msgid "Fit this module to a compatible hull."
+msgstr "请将该模块装配到兼容的船体上。"
+
+#: apps/fitting/diagnostics.py
+msgid "Two implants occupy the same slot"
+msgstr "两个植入体占用同一槽位"
+
+#: apps/fitting/diagnostics.py
+msgid "Remove one of the conflicting implants."
+msgstr "移除其中一个冲突的植入体。"
+
+#: apps/fitting/diagnostics.py
+msgid "Two boosters occupy the same slot"
+msgstr "两个增效剂占用同一槽位"
+
+#: apps/fitting/diagnostics.py
+msgid "Remove one of the conflicting boosters."
+msgstr "移除其中一个冲突的增效剂。"
+
+#: apps/fitting/diagnostics.py
+msgid "Two subsystems occupy the same slot"
+msgstr "两个子系统占用同一槽位"
+
+#: apps/fitting/diagnostics.py
+msgid "Fit one subsystem per slot."
+msgstr "每个槽位装配一个子系统。"
+
+#: apps/fitting/diagnostics.py
+msgid "Incomplete subsystem configuration"
+msgstr "子系统配置不完整"
+
+#: apps/fitting/diagnostics.py
+#, python-format
+msgid "%(fitted)s of %(required)s subsystems fitted"
+msgstr "已装配 %(required)s 个子系统中的 %(fitted)s 个"
+
+#: apps/fitting/diagnostics.py
+msgid "Fit one subsystem in every slot."
+msgstr "在每个槽位都装配一个子系统。"
+
+#: apps/fitting/diagnostics.py
+msgid "Tactical mode does not belong to this hull"
+msgstr "该战术模式不属于此船体"
+
+#: apps/fitting/diagnostics.py
+msgid "Select one of this hull's own tactical modes."
+msgstr "请选择此船体自身的战术模式之一。"
+
+#: apps/fitting/diagnostics.py
+msgid "Projected module has no effect on this ship"
+msgstr "投射的模块对此舰船无效"
+
+#: apps/fitting/diagnostics.py
+msgid "Project an EWAR, energy-warfare or remote-assistance module instead."
+msgstr "请改为投射 EWAR 、能量战或远程支援模块。"
+
+#: apps/fitting/diagnostics.py
+msgid "Command burst references an unknown warfare buff"
+msgstr "指挥爆发引用了未知的战争增益"
+
+#: apps/fitting/diagnostics.py
+msgid ""
+"Re-run the SDE import (import_dogma_graph) to load the warfare-buff table."
+msgstr "重新运行 SDE 导入 (import_dogma_graph) 以加载战争增益表。"
+
+#: apps/fitting/diagnostics.py
+msgid "Mutated module — rolled attributes unknown"
+msgstr "变异模块 — 掷出的属性未知"
+
+#: apps/fitting/diagnostics.py
+msgid ""
+"The stats shown are this module's base-roll values, not its mutated ones."
+msgstr "显示的数值是该模块的基础数值，而非变异后的数值。"
+
+#: apps/fitting/diagnostics.py
+msgid "Enter the mutated attribute values to see this module's real stats."
+msgstr "输入变异后的属性值以查看该模块的真实数值。"
 
 #: apps/fitting/diagnostics.py
 msgid "Charge not accepted by this module"
@@ -7447,16 +7550,13 @@ msgid "Load a charge of the matching size."
 msgstr "请装填尺寸相符的弹药。"
 
 #: apps/fitting/diagnostics.py
-#, fuzzy
-#| msgid "Powergrid exceeded"
 msgid "Drone bandwidth exceeded"
-msgstr "电网超载"
+msgstr "无人机带宽超载"
 
 #: apps/fitting/diagnostics.py
-#, fuzzy, python-format
-#| msgid "%(used)s of %(cap)s used"
+#, python-format
 msgid "%(used)s of %(cap)s Mbit/s"
-msgstr "已使用 %(used)s / %(cap)s"
+msgstr "%(cap)s Mbit/s 中的 %(used)s"
 
 #: apps/fitting/diagnostics.py
 msgid "Recall a drone or field smaller drones."
@@ -7467,10 +7567,9 @@ msgid "Drone bay volume exceeded"
 msgstr "无人机舱容量超出"
 
 #: apps/fitting/diagnostics.py
-#, fuzzy, python-format
-#| msgid "%(used)s of %(cap)s used"
+#, python-format
 msgid "%(used)s of %(cap)s m3"
-msgstr "已使用 %(used)s / %(cap)s"
+msgstr "%(cap)s m³ 中的 %(used)s"
 
 #: apps/fitting/diagnostics.py
 msgid "Not all drones fit in bandwidth"
@@ -7480,6 +7579,69 @@ msgstr "并非所有无人机都能纳入带宽"
 #, python-format
 msgid "%(counted)s of %(requested)s counted in the simulation"
 msgstr "模拟中计入 %(requested)s 架中的 %(counted)s 架"
+
+#: apps/fitting/diagnostics.py
+msgid "Not enough fighter tubes"
+msgstr "舰载机发射管不足"
+
+#: apps/fitting/diagnostics.py
+#, python-format
+msgid "%(used)s squadrons, %(cap)s tubes"
+msgstr "%(used)s 个中队，%(cap)s 个发射管"
+
+#: apps/fitting/diagnostics.py
+msgid "Launch fewer squadrons."
+msgstr "减少出击的中队数量。"
+
+#: apps/fitting/diagnostics.py
+msgid "Not enough fighter slots for this role"
+msgstr "该角色的舰载机槽位不足"
+
+#: apps/fitting/diagnostics.py
+#, python-format
+msgid "%(used)s of %(cap)s"
+msgstr "%(cap)s 中的 %(used)s"
+
+#: apps/fitting/diagnostics.py
+msgid "Launch fewer squadrons of this role."
+msgstr "减少该角色出击的中队数量。"
+
+#: apps/fitting/diagnostics.py
+msgid "Fighter squadron too large"
+msgstr "舰载机中队规模过大"
+
+#: apps/fitting/diagnostics.py
+#, python-format
+msgid "%(count)s of max %(max)s"
+msgstr "最多 %(max)s 中的 %(count)s"
+
+#: apps/fitting/diagnostics.py
+msgid "Reduce the squadron to its maximum size."
+msgstr "将中队缩减至其最大规模。"
+
+#: apps/fitting/diagnostics.py
+msgid "Fighter bay volume exceeded"
+msgstr "舰载机机库容量超载"
+
+#: apps/fitting/diagnostics.py
+msgid "Carry fewer or smaller fighters."
+msgstr "减少搭载的舰载机数量或改用更小的舰载机。"
+
+#: apps/fitting/diagnostics.py
+msgid "This hull cannot field fighters"
+msgstr "此船体无法搭载舰载机"
+
+#: apps/fitting/diagnostics.py
+msgid "Field fighters from a carrier or supercarrier."
+msgstr "请从 carrier 或 supercarrier 上运用舰载机。"
+
+#: apps/fitting/diagnostics.py
+msgid "Not a valid fighter"
+msgstr "不是有效的舰载机"
+
+#: apps/fitting/diagnostics.py
+msgid "Choose a real fighter squadron."
+msgstr "请选择一个真实的舰载机中队。"
 
 #: apps/fitting/models.py
 msgid "Public link"
@@ -8334,43 +8496,43 @@ msgstr "页面已删除。"
 
 #: apps/killboard/anatomy.py
 msgid "100B+"
-msgstr ""
+msgstr "1000亿+"
 
 #: apps/killboard/anatomy.py
 msgid "10B+"
-msgstr ""
+msgstr "100亿+"
 
 #: apps/killboard/anatomy.py
 msgid "1B+"
-msgstr ""
+msgstr "10亿+"
 
 #: apps/killboard/fitrender.py
 msgid "High slots"
-msgstr ""
+msgstr "高槽"
 
 #: apps/killboard/fitrender.py
 msgid "Mid slots"
-msgstr ""
+msgstr "中槽"
 
 #: apps/killboard/fitrender.py
 msgid "Low slots"
-msgstr ""
+msgstr "低槽"
 
 #: apps/killboard/fitrender.py templates/fitting/detail.html
 msgid "Rigs"
 msgstr "改装件"
 
-#: apps/killboard/fitrender.py
+#: apps/killboard/fitrender.py templates/fitting/detail.html
 msgid "Subsystems"
-msgstr ""
+msgstr "子系统"
 
 #: apps/killboard/fitrender.py
 msgid "Drone bay"
-msgstr ""
+msgstr "无人机舱"
 
 #: apps/killboard/fitrender.py
 msgid "Cargo hold"
-msgstr ""
+msgstr "货舱"
 
 #: apps/killboard/forms.py
 msgid "e.g. Local gate campers"
@@ -8398,39 +8560,39 @@ msgstr "可选标题"
 
 #: apps/killboard/ingest_health.py
 msgid "ESI Director feed"
-msgstr ""
+msgstr "ESI 董事数据源"
 
 #: apps/killboard/ingest_health.py
 msgid "zKillboard query poll"
-msgstr ""
+msgstr "zKillboard 查询轮询"
 
 #: apps/killboard/ingest_health.py
 msgid "Realtime fallback (R2Z2)"
-msgstr ""
+msgstr "实时回退源 (R2Z2)"
 
 #: apps/killboard/killfeed_rules.py
 msgid "High-sec"
-msgstr ""
+msgstr "High-sec"
 
 #: apps/killboard/killfeed_rules.py
 msgid "Low-sec"
-msgstr ""
+msgstr "Low-sec"
 
 #: apps/killboard/killfeed_rules.py
 msgid "Null-sec"
-msgstr ""
+msgstr "Null-sec"
 
 #: apps/killboard/killfeed_rules.py
 msgid "Wormhole"
-msgstr ""
+msgstr "虫洞"
 
 #: apps/killboard/killfeed_rules.py
 msgid "Abyssal"
-msgstr ""
+msgstr "深渊"
 
 #: apps/killboard/killfeed_rules.py
 msgid "Pochven"
-msgstr ""
+msgstr "Pochven"
 
 #: apps/killboard/leaderboards.py
 msgid "Last 7 days"
@@ -8573,39 +8735,39 @@ msgstr "当军团击杀价值达到此值时发布（0 = 关闭）。"
 
 #: apps/killboard/models.py
 msgid "Skip kills with no player attackers (NPC/ratting deaths)."
-msgstr ""
+msgstr "跳过没有玩家攻击者的击杀（NPC / ratting 死亡）。"
 
 #: apps/killboard/models.py
 msgid "Skip awox kills (a corp member on the victim's own corp)."
-msgstr ""
+msgstr "跳过 awox 击杀（受害者本方 corp 成员所为）。"
 
 #: apps/killboard/models.py
 msgid "Post solo kills only."
-msgstr ""
+msgstr "仅发布单人击杀。"
 
 #: apps/killboard/models.py
 msgid "Require at least this many attackers (0 = off)."
-msgstr ""
+msgstr "要求至少这么多攻击者（0 = 关闭）。"
 
 #: apps/killboard/models.py
 msgid "Require at most this many attackers (0 = off)."
-msgstr ""
+msgstr "要求最多这么多攻击者（0 = 关闭）。"
 
 #: apps/killboard/models.py
 msgid "Only these security bands (empty = all)."
-msgstr ""
+msgstr "仅限这些安全等级区间（留空 = 全部）。"
 
 #: apps/killboard/models.py
 msgid "Only these victim ship classes (empty = all)."
-msgstr ""
+msgstr "仅限这些受害者船级（留空 = 全部）。"
 
 #: apps/killboard/models.py
 msgid "Only within this many jumps of the staging system (0 = off)."
-msgstr ""
+msgstr "仅限距集结点系统这么多跳以内（0 = 关闭）。"
 
 #: apps/killboard/models.py
 msgid "For losses, post only those that deviated from doctrine."
-msgstr ""
+msgstr "对于损失，仅发布偏离 doctrine 的部分。"
 
 #: apps/killboard/models.py
 msgid ""
@@ -8766,10 +8928,13 @@ msgid ""
 "Director feed, the zKill query poll and EVE Ref archives) always run; turn "
 "this on only for lower-latency ingest or as a supplementary source."
 msgstr ""
+"可选的实时回退数据源（zKillboard R2Z2）。 primary 数据源（ESI 董事数据源、"
+"zKill 查询轮询和 EVE Ref 归档）始终运行；仅在需要更低延迟的采集或作为补充数据"
+"源时才开启。"
 
 #: apps/killboard/models.py
 msgid "The last R2Z2 sequence number consumed — the resumable cursor."
-msgstr ""
+msgstr "最后消费的 R2Z2 序列号 — 可续传游标。"
 
 #: apps/killboard/ranks_i18n.py
 msgid "Dockside Recruit"
@@ -9032,11 +9197,11 @@ msgstr "损失的舰船"
 
 #: apps/killboard/views.py
 msgid "A comment can’t be empty."
-msgstr ""
+msgstr "评论不能为空。"
 
 #: apps/killboard/views.py
 msgid "You can’t remove that comment."
-msgstr ""
+msgstr "你无法删除该评论。"
 
 #: apps/killboard/views.py
 #, python-format
@@ -9085,7 +9250,7 @@ msgstr "战报已生成。"
 
 #: apps/killboard/views.py
 msgid "Real-time fallback setting saved."
-msgstr ""
+msgstr "已保存实时回退设置。"
 
 #: apps/killboard/views.py
 msgid "Kill-feed settings saved."
@@ -29297,6 +29462,7 @@ msgstr ""
 
 #: templates/admin_audit/console/planetary/config.html
 #: templates/admin_audit/console/planetary/hub.html
+#: templates/fitting/_telemetry.html
 msgid "Module"
 msgstr "模块"
 
@@ -30932,9 +31098,10 @@ msgid "Icon type id"
 msgstr "图标类型 id"
 
 #: templates/admin_audit/console/raffle_prizes.html templates/erp/board.html
-#: templates/industry/chain.html templates/industry/create.html
-#: templates/industry/jobs.html templates/procurement/po_detail.html
-#: templates/store/inventory_fit.html templates/store/storefront.html
+#: templates/fitting/detail.html templates/industry/chain.html
+#: templates/industry/create.html templates/industry/jobs.html
+#: templates/procurement/po_detail.html templates/store/inventory_fit.html
+#: templates/store/storefront.html
 msgid "Quantity"
 msgstr "数量"
 
@@ -32897,9 +33064,9 @@ msgstr "此战役已关闭表彰功能。"
 msgid "Unknown pilot"
 msgstr "未知飞行员"
 
-#: templates/campaigns/_participation.html templates/identity/dashboard.html
-#: templates/mentorship/pairing_detail.html templates/pilots/_quest_row.html
-#: templates/pilots/contributions.html
+#: templates/campaigns/_participation.html templates/fitting/_telemetry.html
+#: templates/identity/dashboard.html templates/mentorship/pairing_detail.html
+#: templates/pilots/_quest_row.html templates/pilots/contributions.html
 msgid "pts"
 msgstr "分"
 
@@ -34386,7 +34553,7 @@ msgstr "接受 →"
 msgid "Remind me later"
 msgstr "稍后提醒我"
 
-#: templates/capsuleer/_suggestion_row.html
+#: templates/capsuleer/_suggestion_row.html templates/fitting/detail.html
 #: templates/recommendations/_rec_card.html
 msgid "Dismiss"
 msgstr "忽略"
@@ -37735,13 +37902,56 @@ msgid "Volley"
 msgstr "齐射"
 
 #: templates/fitting/_telemetry.html
-msgid "Applied missiles"
-msgstr "导弹实际伤害"
+msgid "Long-run DPS once weapon reloads are paid."
+msgstr "计入武器装填后的长期 DPS 。"
+
+#: templates/fitting/_telemetry.html
+msgid "Sustained"
+msgstr "持续"
+
+#: templates/fitting/_telemetry.html
+msgid ""
+"DPS actually landing on the target profile (tracking, signature, range)."
+msgstr "实际命中目标轮廓的 DPS （追踪、特征半径、射程）。"
+
+#: templates/fitting/_telemetry.html
+msgid "Without your painter/web assistance"
+msgstr "没有你的 painter/web 辅助"
+
+#: templates/fitting/_telemetry.html
+msgid "unassisted"
+msgstr "无辅助"
+
+#: templates/fitting/_telemetry.html
+msgid ""
+"* Some weapons need a fuller target profile (distance / signature) to "
+"compute applied DPS."
+msgstr "* 部分武器需要更完整的目标轮廓（距离 / 特征半径）才能计算实际 DPS 。"
 
 #: templates/fitting/_telemetry.html
 #, python-format
 msgid "EM/Th/Kin/Exp %%"
 msgstr "EM/Th/Kin/Exp %%"
+
+#: templates/fitting/_telemetry.html
+msgid "Weapon"
+msgstr "武器"
+
+#: templates/fitting/_telemetry.html
+msgid "Sust."
+msgstr "持续"
+
+#: templates/fitting/_telemetry.html
+msgid "Needs target distance + signature"
+msgstr "需要目标距离 + 特征半径"
+
+#: templates/fitting/_telemetry.html
+msgid "Needs target HP"
+msgstr "需要目标 HP"
+
+#: templates/fitting/_telemetry.html
+msgid "Fighter application not modelled"
+msgstr "舰载机命中应用未建模"
 
 #: templates/fitting/_telemetry.html
 msgid "Defence"
@@ -37754,6 +37964,18 @@ msgstr "护盾"
 #: templates/fitting/_telemetry.html
 msgid "HP"
 msgstr "HP"
+
+#: templates/fitting/_telemetry.html
+msgid "Active rep"
+msgstr "主动维修"
+
+#: templates/fitting/_telemetry.html
+msgid "HP/s"
+msgstr "HP/s"
+
+#: templates/fitting/_telemetry.html
+msgid "Incoming remote rep"
+msgstr "接收的远程维修"
 
 #: templates/fitting/_telemetry.html
 msgid "Stable"
@@ -37770,6 +37992,14 @@ msgstr "容量"
 #: templates/fitting/_telemetry.html
 msgid "Peak recharge / use"
 msgstr "峰值回充 / 消耗"
+
+#: templates/fitting/_telemetry.html
+msgid "Capacitor drained by projected neuts/nos"
+msgstr "被投射的 neuts/nos 消耗的电容"
+
+#: templates/fitting/_telemetry.html
+msgid "Incoming neut"
+msgstr "接收的 neut"
 
 #: templates/fitting/_telemetry.html
 msgid "Mobility"
@@ -37796,6 +38026,14 @@ msgid "Warp speed"
 msgstr "跃迁速度"
 
 #: templates/fitting/_telemetry.html
+msgid "Time to align and cross the set warp distance"
+msgstr "对齐并跨越设定跃迁距离所需的时间"
+
+#: templates/fitting/_telemetry.html
+msgid "Warp time"
+msgstr "跃迁时间"
+
+#: templates/fitting/_telemetry.html
 msgid "Targeting"
 msgstr "索敌"
 
@@ -37811,13 +38049,97 @@ msgstr "可锁定目标数"
 msgid "Scan resolution"
 msgstr "扫描分辨率"
 
-#: templates/fitting/_telemetry.html
+#: templates/fitting/_telemetry.html templates/fitting/detail.html
 msgid "Sensor strength"
 msgstr "感应强度"
 
 #: templates/fitting/_telemetry.html
+msgid "Time to lock the target profile"
+msgstr "锁定目标轮廓所需的时间"
+
+#: templates/fitting/_telemetry.html
+msgid "Lock time"
+msgstr "锁定时间"
+
+#: templates/fitting/_telemetry.html
+msgid "Configuration"
+msgstr "配置"
+
+#: templates/fitting/_telemetry.html templates/fitting/detail.html
+msgid "Tactical mode"
+msgstr "战术模式"
+
+#: templates/fitting/_telemetry.html
 msgid "Electronic warfare"
 msgstr "电子战"
+
+#: templates/fitting/_telemetry.html
+msgid "track"
+msgstr "追踪"
+
+#: templates/fitting/_telemetry.html
+msgid "expl vel"
+msgstr "爆炸速度"
+
+#: templates/fitting/_telemetry.html
+msgid "jam"
+msgstr "干扰"
+
+#: templates/fitting/_telemetry.html
+msgid "ECM"
+msgstr "ECM"
+
+#: templates/fitting/_telemetry.html
+msgid "Combined jam chance / cycle"
+msgstr "合计干扰几率 / 循环"
+
+#: templates/fitting/_telemetry.html
+msgid "jammers"
+msgstr "干扰器"
+
+#: templates/fitting/_telemetry.html
+msgid "Set a target sensor strength and type to compute jam chance."
+msgstr "设定目标的感应强度和类型以计算干扰几率。"
+
+#: templates/fitting/_telemetry.html
+msgid "On target"
+msgstr "命中"
+
+#: templates/fitting/_telemetry.html
+msgid "sig"
+msgstr "特征"
+
+#: templates/fitting/_telemetry.html
+msgid "vel"
+msgstr "速度"
+
+#: templates/fitting/_telemetry.html
+msgid "m³/hour"
+msgstr "m³/小时"
+
+#: templates/fitting/_telemetry.html
+msgid "m³/cycle"
+msgstr "m³/循环"
+
+#: templates/fitting/_telemetry.html templates/fitting/detail.html
+msgid "Projected on us"
+msgstr "投射到我方"
+
+#: templates/fitting/_telemetry.html templates/fitting/detail.html
+msgid "Fleet boosts"
+msgstr "舰队增益"
+
+#: templates/fitting/_telemetry.html templates/fitting/detail.html
+msgid "Fighters"
+msgstr "舰载机"
+
+#: templates/fitting/_telemetry.html
+msgid "Tubes"
+msgstr "发射管"
+
+#: templates/fitting/_telemetry.html
+msgid "Bay"
+msgstr "机库"
 
 #: templates/fitting/_telemetry.html
 msgid "Fit diagnostics"
@@ -37920,8 +38242,15 @@ msgid "Export EFT"
 msgstr "导出 EFT"
 
 #: templates/fitting/detail.html
-msgid "Click a slot to fit · ⚠ = load ammo"
-msgstr "点击槽位进行装配 · ⚠ = 装填弹药"
+#, python-format
+msgid "%(n)s line from the imported fit could not be resolved and was skipped:"
+msgid_plural ""
+"%(n)s lines from the imported fit could not be resolved and were skipped:"
+msgstr[0] "导入的配装中有 %(n)s 行无法解析，已跳过："
+
+#: templates/fitting/detail.html
+msgid "Click a slot to fit · ⚠ = load ammo · ✦ = mutate"
+msgstr "点击槽位进行装配 · ⚠ = 装填弹药 · ✦ = 变异"
 
 #: templates/fitting/detail.html
 msgid "Module state"
@@ -37931,19 +38260,17 @@ msgstr "模块状态"
 msgid ""
 "Active: running (uses CPU/PG + capacitor). Online: powered but idle (uses "
 "CPU/PG, no cap). Offline: unfitted (frees CPU/PG). Heat: overloaded."
-msgstr "启用：运行中（占用 CPU/PG + 电容）。在线：通电但闲置（占用 CPU/PG，不耗电容）。离线：未装配（释放 CPU/PG）。过热：超载。"
+msgstr ""
+"启用：运行中（占用 CPU/PG + 电容）。在线：通电但闲置（占用 CPU/PG，不耗电"
+"容）。离线：未装配（释放 CPU/PG）。过热：超载。"
 
 #: templates/fitting/detail.html
-#, fuzzy
-#| msgid "unlink"
 msgid "online"
-msgstr "取消关联"
+msgstr "在线"
 
 #: templates/fitting/detail.html
-#, fuzzy
-#| msgid "Provider offline"
 msgid "offline"
-msgstr "提供方离线"
+msgstr "离线"
 
 #: templates/fitting/detail.html
 msgid "heat"
@@ -37966,6 +38293,34 @@ msgid "Unload ammo"
 msgstr "卸载弹药"
 
 #: templates/fitting/detail.html
+msgid "Mutated attributes"
+msgstr "变异属性"
+
+#: templates/fitting/detail.html
+msgid "mutated"
+msgstr "已变异"
+
+#: templates/fitting/detail.html
+msgid "Mutate"
+msgstr "变异"
+
+#: templates/fitting/detail.html
+msgid "Mutated value"
+msgstr "变异值"
+
+#: templates/fitting/detail.html
+msgid "Remove override"
+msgstr "移除覆盖值"
+
+#: templates/fitting/detail.html
+msgid "Add attribute…"
+msgstr "添加属性…"
+
+#: templates/fitting/detail.html
+msgid "Search attribute"
+msgstr "搜索属性"
+
+#: templates/fitting/detail.html
 msgid "No slots on this hull."
 msgstr "此舰船没有槽位。"
 
@@ -37978,6 +38333,14 @@ msgid "Add drone"
 msgstr "添加无人机"
 
 #: templates/fitting/detail.html
+msgid "Squadron size"
+msgstr "中队规模"
+
+#: templates/fitting/detail.html
+msgid "Add fighter squadron"
+msgstr "添加舰载机中队"
+
+#: templates/fitting/detail.html
 msgid "Search modules"
 msgstr "搜索模块"
 
@@ -37986,32 +38349,136 @@ msgid "takes ammo"
 msgstr "需弹药"
 
 #: templates/fitting/detail.html
-msgid "No matching module for this slot."
-msgstr "没有匹配此槽位的模块。"
+msgid "No matching item for this slot."
+msgstr "没有适合该槽位的物品。"
+
+#: templates/fitting/detail.html
+msgid "No mode"
+msgstr "无模式"
 
 #: templates/fitting/detail.html
 msgid "Target profile"
 msgstr "目标参数"
 
 #: templates/fitting/detail.html
-msgid "Set a target to see applied missile damage vs its signature and speed."
-msgstr "设置目标后可查看导弹伤害相对其特征半径与速度的应用效果。"
+msgid ""
+"Describe a target to see applied DPS, tracking, jam and lock time. Saved in "
+"this browser only."
+msgstr ""
+"描述一个目标即可查看实际 DPS 、追踪、干扰和锁定时间。仅保存在此浏览器中。"
 
 #: templates/fitting/detail.html
-msgid "Target signature (m)"
-msgstr "目标特征半径（m）"
+msgid "Signature (m)"
+msgstr "特征半径（m）"
 
 #: templates/fitting/detail.html
-msgid "Sig (m)"
-msgstr "特征（m）"
-
-#: templates/fitting/detail.html
-msgid "Target velocity (m/s)"
-msgstr "目标速度（m/s）"
-
-#: templates/fitting/detail.html
-msgid "Vel (m/s)"
+msgid "Velocity (m/s)"
 msgstr "速度（m/s）"
+
+#: templates/fitting/detail.html
+msgid "Distance (m)"
+msgstr "距离（m）"
+
+#: templates/fitting/detail.html
+msgid "Angular (rad/s)"
+msgstr "角速度（rad/s）"
+
+#: templates/fitting/detail.html
+msgid "Sensor type"
+msgstr "感应类型"
+
+#: templates/fitting/detail.html
+msgid "—"
+msgstr "—"
+
+#: templates/fitting/detail.html
+msgid "Radar"
+msgstr "雷达"
+
+#: templates/fitting/detail.html
+msgid "Magnetometric"
+msgstr "磁力"
+
+#: templates/fitting/detail.html
+msgid "Ladar"
+msgstr "激光"
+
+#: templates/fitting/detail.html
+msgid "Gravimetric"
+msgstr "重力"
+
+#: templates/fitting/detail.html
+msgid "Target HP"
+msgstr "目标 HP"
+
+#: templates/fitting/detail.html
+msgid "Warp distance (AU)"
+msgstr "跃迁距离（AU）"
+
+#: templates/fitting/detail.html
+msgid "Damage profile"
+msgstr "伤害配置"
+
+#: templates/fitting/detail.html
+msgid "Uniform"
+msgstr "均衡"
+
+#: templates/fitting/detail.html
+msgid "EM"
+msgstr "电磁"
+
+#: templates/fitting/detail.html
+msgid "Thermal"
+msgstr "热能"
+
+#: templates/fitting/detail.html
+msgid "Kinetic"
+msgstr "动能"
+
+#: templates/fitting/detail.html
+msgid "Explosive"
+msgstr "爆炸"
+
+#: templates/fitting/detail.html
+msgid "Custom…"
+msgstr "自定义…"
+
+#: templates/fitting/detail.html
+msgid "Th"
+msgstr "热"
+
+#: templates/fitting/detail.html
+msgid "Kin"
+msgstr "动"
+
+#: templates/fitting/detail.html
+msgid "Exp"
+msgstr "爆"
+
+#: templates/fitting/detail.html
+msgid ""
+"Add hostile EWAR / energy warfare / remote-rep modules to see their pressure."
+msgstr "添加敌方 EWAR / 能量战 / 远程维修模块以查看其压力。"
+
+#: templates/fitting/detail.html
+msgid "Add projected module…"
+msgstr "添加投射模块…"
+
+#: templates/fitting/detail.html
+msgid "Search projected module"
+msgstr "搜索投射模块"
+
+#: templates/fitting/detail.html
+#, python-format
+msgid ""
+"Simulate being boosted by friendly command bursts. Set a strength %% for a "
+"fully-skilled command ship."
+msgstr "模拟受到友方指挥爆发的增益。为满技能指挥舰设定一个 %% 强度值。"
+
+#: templates/fitting/detail.html
+#, python-format
+msgid "Strength %% for %(name)s"
+msgstr "%(name)s 的强度 %%"
 
 #: templates/fitting/detail.html
 msgid "Cost & supply"
@@ -38193,6 +38660,38 @@ msgstr "改装件"
 #: templates/fitting/detail.html
 msgid "drone"
 msgstr "无人机"
+
+#: templates/fitting/detail.html
+msgid "fighter squadron"
+msgstr "舰载机中队"
+
+#: templates/fitting/detail.html
+msgid "subsystem"
+msgstr "子系统"
+
+#: templates/fitting/detail.html
+msgid "implant"
+msgstr "植入体"
+
+#: templates/fitting/detail.html templates/raffle/detail.html
+msgid "booster"
+msgstr "加成"
+
+#: templates/fitting/detail.html
+msgid "cargo item"
+msgstr "货物"
+
+#: templates/fitting/detail.html
+msgid "Boosters"
+msgstr "增效剂"
+
+#: templates/fitting/detail.html
+msgid "Cargo"
+msgstr "货舱"
+
+#: templates/fitting/detail.html
+msgid "No changes to save"
+msgstr "没有可保存的更改"
 
 #: templates/fitting/index.html
 msgid "Fitting workspace"
@@ -41302,7 +41801,7 @@ msgstr "击杀"
 
 #: templates/killboard/detail.html
 msgid "High-value kill"
-msgstr ""
+msgstr "高价值击杀"
 
 #: templates/killboard/detail.html
 msgid "Destroyed"
@@ -41323,12 +41822,12 @@ msgstr "承受伤害"
 #: templates/killboard/detail.html
 #, python-format
 msgid "SRP paid · %(v)s"
-msgstr ""
+msgstr "SRP 已支付 · %(v)s"
 
 #: templates/killboard/detail.html
 #, python-format
 msgid "SRP approved · %(v)s"
-msgstr ""
+msgstr "SRP 已批准 · %(v)s"
 
 #: templates/killboard/detail.html
 msgid "only you and officers see this"
@@ -41344,19 +41843,19 @@ msgstr "最后一击"
 
 #: templates/killboard/detail.html
 msgid "Top damage"
-msgstr ""
+msgstr "最高伤害"
 
 #: templates/killboard/detail.html
 msgid "Doctrine hull"
-msgstr ""
+msgstr "doctrine 舰船"
 
 #: templates/killboard/detail.html
 msgid "By corporation"
-msgstr ""
+msgstr "按军团"
 
 #: templates/killboard/detail.html
 msgid "NPC / unknown"
-msgstr ""
+msgstr "NPC / 未知"
 
 #: templates/killboard/detail.html templates/operations/detail.html
 #, python-format
@@ -41374,15 +41873,15 @@ msgstr "这次损失匹配了一个 doctrine 装配"
 
 #: templates/killboard/detail.html
 msgid "Copy ESI"
-msgstr ""
+msgstr "复制 ESI"
 
 #: templates/killboard/detail.html
 msgid "Copy the canonical doctrine fit to refit in-game"
-msgstr ""
+msgstr "复制标准 doctrine 配装以便在游戏中重新装配"
 
 #: templates/killboard/detail.html
 msgid "Refit to doctrine"
-msgstr ""
+msgstr "改装为 doctrine 配装"
 
 #: templates/killboard/detail.html
 msgid "Import as doctrine"
@@ -41395,15 +41894,15 @@ msgstr "摧毁"
 
 #: templates/killboard/detail.html
 msgid "dropped"
-msgstr ""
+msgstr "掉落"
 
 #: templates/killboard/detail.html
 msgid "Off-doctrine"
-msgstr ""
+msgstr "偏离 doctrine"
 
 #: templates/killboard/detail.html
 msgid "empty"
-msgstr ""
+msgstr "空"
 
 #: templates/killboard/detail.html templates/logistics/corp_contracts.html
 #: templates/mining/ledger.html templates/store/board.html
@@ -41432,29 +41931,29 @@ msgstr "没有非 doctrine 的。"
 
 #: templates/killboard/detail.html
 msgid "Same battle"
-msgstr ""
+msgstr "同一战斗"
 
 #: templates/killboard/detail.html
 msgid "View battle report"
-msgstr ""
+msgstr "查看战报"
 
 #: templates/killboard/detail.html
 msgid "This kill is part of a battle report."
-msgstr ""
+msgstr "此击杀属于某份战报。"
 
 #: templates/killboard/detail.html
 #, python-format
 msgid "%(n)s comment"
 msgid_plural "%(n)s comments"
-msgstr[0] ""
+msgstr[0] "%(n)s 条评论"
 
 #: templates/killboard/detail.html
 msgid "No comments yet."
-msgstr ""
+msgstr "暂无评论。"
 
 #: templates/killboard/detail.html
 msgid "Add a comment…"
-msgstr ""
+msgstr "添加评论…"
 
 #: templates/killboard/detail.html templates/stockpile/logistics.html
 msgid "Post"
@@ -41500,61 +41999,63 @@ msgstr "达到或超过此价值时发布军团击杀。0 = 关闭。"
 
 #: templates/killboard/killfeed_config.html
 msgid "Rules (optional)"
-msgstr ""
+msgstr "规则（可选）"
 
 #: templates/killboard/killfeed_config.html
 msgid ""
 "Extra require/exclude filters, applied on top of the value thresholds. Leave "
 "everything blank to post every kill above the ISK bar."
 msgstr ""
+"在价值阈值之上再应用的额外包含/排除筛选。全部留空则发布所有高于 ISK 阈值的击"
+"杀。"
 
 #: templates/killboard/killfeed_config.html
 msgid "Min attackers"
-msgstr ""
+msgstr "最少攻击者"
 
 #: templates/killboard/killfeed_config.html
 msgid "Max attackers"
-msgstr ""
+msgstr "最多攻击者"
 
 #: templates/killboard/killfeed_config.html
 msgid "Within N jumps of staging"
-msgstr ""
+msgstr "距集结点 N 跳以内"
 
 #: templates/killboard/killfeed_config.html
 msgid "0 = off. Needs an active staging system configured."
-msgstr ""
+msgstr "0 = 关闭。需要配置一个启用的集结点系统。"
 
 #: templates/killboard/killfeed_config.html
 msgid "Security bands (none = all)"
-msgstr ""
+msgstr "安全等级区间（无 = 全部）"
 
 #: templates/killboard/killfeed_config.html
 msgid "Victim ship classes (none = all)"
-msgstr ""
+msgstr "受害者船级（无 = 全部）"
 
 #: templates/killboard/killfeed_config.html
 msgid "Solo kills only"
-msgstr ""
+msgstr "仅单人击杀"
 
 #: templates/killboard/killfeed_config.html
 msgid "Exclude NPC-only kills"
-msgstr ""
+msgstr "排除纯 NPC 击杀"
 
 #: templates/killboard/killfeed_config.html
 msgid "Exclude awox kills"
-msgstr ""
+msgstr "排除 awox 击杀"
 
 #: templates/killboard/killfeed_config.html
 msgid "Losses: only those that deviated from doctrine"
-msgstr ""
+msgstr "损失：仅限偏离 doctrine 的"
 
 #: templates/killboard/killfeed_config.html
 msgid "Ingest"
-msgstr ""
+msgstr "采集"
 
 #: templates/killboard/killfeed_config.html
 msgid "Real-time fallback"
-msgstr ""
+msgstr "实时回退"
 
 #: templates/killboard/killfeed_config.html
 msgid ""
@@ -41564,45 +42065,49 @@ msgid ""
 "about a minute instead of up to fifteen. It never replaces the primary feeds "
 "— leave it off unless you want lower latency."
 msgstr ""
+"权威数据源（ESI 董事数据源、zKillboard 查询轮询和 EVE Ref 归档）始终让看板保"
+"持最新。此可选回退会接入 zKillboard 的 R2Z2 实时数据源，使近期的 corp 击杀在"
+"约一分钟内（而非最长十五分钟）出现。它绝不会取代 primary 数据源 —— 除非你想要"
+"更低延迟，否则请保持关闭。"
 
 #: templates/killboard/killfeed_config.html
 msgid "Enable the real-time fallback (R2Z2)"
-msgstr ""
+msgstr "启用实时回退 (R2Z2)"
 
 #: templates/killboard/killfeed_config.html
 #, python-format
 msgid "Cursor at sequence %(seq)s · %(n)s ingested last run."
-msgstr ""
+msgstr "游标位于序列 %(seq)s · 上次运行采集了 %(n)s 条。"
 
 #: templates/killboard/killfeed_config.html
 msgid "Ingest health"
-msgstr ""
+msgstr "采集健康状况"
 
 #: templates/killboard/killfeed_config.html
 msgid "primary"
-msgstr ""
+msgstr "primary"
 
 #: templates/killboard/killfeed_config.html
 msgid "fallback"
-msgstr ""
+msgstr "回退"
 
 #: templates/killboard/killfeed_config.html
 #, python-format
 msgid "%(when)s ago"
-msgstr ""
+msgstr "%(when)s前"
 
 #: templates/killboard/killfeed_config.html
 msgid "down"
-msgstr ""
+msgstr "停机"
 
 #: templates/killboard/killfeed_config.html
 msgid "idle"
-msgstr ""
+msgstr "空闲"
 
 #: templates/killboard/killfeed_config.html
 #, python-format
 msgid "%(n)s consecutive failures"
-msgstr ""
+msgstr "连续失败 %(n)s 次"
 
 #: templates/killboard/list.html
 msgid "Combat record"
@@ -41747,19 +42252,19 @@ msgstr "时段:"
 
 #: templates/killboard/rankings.html
 msgid "Aggregate:"
-msgstr ""
+msgstr "汇总："
 
 #: templates/killboard/rankings.html
 msgid "By pilot"
-msgstr ""
+msgstr "按飞行员"
 
 #: templates/killboard/rankings.html
 msgid "By main (+ alts)"
-msgstr ""
+msgstr "按主角色（+ 小号）"
 
 #: templates/killboard/rankings.html
 msgid "alts counted under each pilot's main"
-msgstr ""
+msgstr "小号计入每位飞行员的主角色名下"
 
 #: templates/killboard/rankings.html
 msgid "History:"
@@ -48376,10 +48881,6 @@ msgstr "进行中"
 #: templates/raffle/detail.html
 msgid "Awaiting draw"
 msgstr "等待开奖"
-
-#: templates/raffle/detail.html
-msgid "booster"
-msgstr "加成"
 
 #: templates/raffle/detail.html
 msgid "You're in the raffle"

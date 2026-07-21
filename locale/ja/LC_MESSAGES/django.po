@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-20 19:45+0000\n"
+"POT-Creation-Date: 2026-07-21 13:49+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: ja machine-assisted draft\n"
@@ -4880,6 +4880,7 @@ msgstr "Capitals"
 #: apps/mentorship/tracks_i18n.py apps/pingboard/models.py
 #: apps/raffle/sources/pve.py
 #: templates/admin_audit/console/mentorship/tracks.html
+#: templates/fitting/_telemetry.html
 msgid "Mining"
 msgstr "採掘"
 
@@ -6678,7 +6679,7 @@ msgstr "取り消し"
 msgid "Kick"
 msgstr "追放"
 
-#: apps/comms_access/models.py
+#: apps/comms_access/models.py templates/fitting/_telemetry.html
 msgid "Applied"
 msgstr "適用済み"
 
@@ -6784,6 +6785,7 @@ msgid "Skill queue"
 msgstr "スキルキュー"
 
 #: apps/corporation/compliance.py apps/killboard/fitrender.py
+#: templates/fitting/detail.html
 msgid "Implants"
 msgstr "インプラント"
 
@@ -7622,11 +7624,6 @@ msgid "No weapons or drones detected"
 msgstr "武器・ドローンが検出されません"
 
 #: apps/fitting/diagnostics.py
-msgid "Turret tracking is not modelled (turrets shown at full damage)"
-msgstr ""
-"タレットのトラッキングは計算に含まれません（タレットは最大ダメージで表示）"
-
-#: apps/fitting/diagnostics.py
 #, python-format
 msgid "%(used)s of %(cap)s used"
 msgstr "%(cap)s 中 %(used)s 使用"
@@ -7669,25 +7666,133 @@ msgid "Load a compatible charge."
 msgstr "対応するチャージを装填してください。"
 
 #: apps/fitting/diagnostics.py
-#, fuzzy
-#| msgid "No slots on this hull."
 msgid "Rig size does not fit this hull"
-msgstr "このハルにはスロットがありません。"
+msgstr "リグのサイズがこの船体に合いません"
 
 #: apps/fitting/diagnostics.py
 msgid "Fit a rig of this hull's size class."
 msgstr "この船体のサイズクラスに合ったリグを装着してください。"
 
 #: apps/fitting/diagnostics.py
-#, fuzzy
-#| msgid "No matching module for this slot."
 msgid "Too many modules of this group fitted"
-msgstr "このスロットに一致するモジュールがありません。"
+msgstr "このグループのモジュールを取り付けすぎています"
 
 #: apps/fitting/diagnostics.py
 #, python-format
 msgid "At most %(max)s allowed"
 msgstr "最大 %(max)s 個まで"
+
+#: apps/fitting/diagnostics.py
+msgid "Too many modules of this group active"
+msgstr "このグループのモジュールがアクティブすぎます"
+
+#: apps/fitting/diagnostics.py
+#, python-format
+msgid "At most %(max)s may be active at once"
+msgstr "同時にアクティブにできるのは最大 %(max)s 個です"
+
+#: apps/fitting/diagnostics.py
+msgid "Set one of them offline or online."
+msgstr "いずれかをオフラインまたはオンラインにしてください。"
+
+#: apps/fitting/diagnostics.py
+msgid "Too many modules of this group online"
+msgstr "このグループのオンラインのモジュールが多すぎます"
+
+#: apps/fitting/diagnostics.py
+#, python-format
+msgid "At most %(max)s may be online at once"
+msgstr "同時にオンラインにできるのは最大 %(max)s 個です"
+
+#: apps/fitting/diagnostics.py
+msgid "Set one of them offline."
+msgstr "いずれかをオフラインにしてください。"
+
+#: apps/fitting/diagnostics.py
+msgid "Module cannot be fitted to this hull"
+msgstr "このモジュールはこの船体に取り付けられません"
+
+#: apps/fitting/diagnostics.py
+msgid "Fit this module to a compatible hull."
+msgstr "このモジュールは対応する船体に取り付けてください。"
+
+#: apps/fitting/diagnostics.py
+msgid "Two implants occupy the same slot"
+msgstr "2 つのインプラントが同じスロットを占有しています"
+
+#: apps/fitting/diagnostics.py
+msgid "Remove one of the conflicting implants."
+msgstr "競合するインプラントのいずれかを取り外してください。"
+
+#: apps/fitting/diagnostics.py
+msgid "Two boosters occupy the same slot"
+msgstr "2 つのブースターが同じスロットを占有しています"
+
+#: apps/fitting/diagnostics.py
+msgid "Remove one of the conflicting boosters."
+msgstr "競合するブースターのいずれかを取り外してください。"
+
+#: apps/fitting/diagnostics.py
+msgid "Two subsystems occupy the same slot"
+msgstr "2 つのサブシステムが同じスロットを占有しています"
+
+#: apps/fitting/diagnostics.py
+msgid "Fit one subsystem per slot."
+msgstr "スロットごとにサブシステムを 1 つ取り付けてください。"
+
+#: apps/fitting/diagnostics.py
+msgid "Incomplete subsystem configuration"
+msgstr "サブシステムの構成が不完全です"
+
+#: apps/fitting/diagnostics.py
+#, python-format
+msgid "%(fitted)s of %(required)s subsystems fitted"
+msgstr "%(required)s 個中 %(fitted)s 個のサブシステムを取り付け済み"
+
+#: apps/fitting/diagnostics.py
+msgid "Fit one subsystem in every slot."
+msgstr "すべてのスロットにサブシステムを取り付けてください。"
+
+#: apps/fitting/diagnostics.py
+msgid "Tactical mode does not belong to this hull"
+msgstr "この戦術モードはこの船体のものではありません"
+
+#: apps/fitting/diagnostics.py
+msgid "Select one of this hull's own tactical modes."
+msgstr "この船体固有の戦術モードのいずれかを選択してください。"
+
+#: apps/fitting/diagnostics.py
+msgid "Projected module has no effect on this ship"
+msgstr "投射モジュールはこの艦に効果がありません"
+
+#: apps/fitting/diagnostics.py
+msgid "Project an EWAR, energy-warfare or remote-assistance module instead."
+msgstr "代わりに EWAR ・エネルギー戦・遠隔支援モジュールを投射してください。"
+
+#: apps/fitting/diagnostics.py
+msgid "Command burst references an unknown warfare buff"
+msgstr "コマンドバーストが不明な戦争バフを参照しています"
+
+#: apps/fitting/diagnostics.py
+msgid ""
+"Re-run the SDE import (import_dogma_graph) to load the warfare-buff table."
+msgstr ""
+"戦争バフのテーブルを読み込むには SDE インポート (import_dogma_graph) を再実行"
+"してください。"
+
+#: apps/fitting/diagnostics.py
+msgid "Mutated module — rolled attributes unknown"
+msgstr "変異モジュール — ロールされた属性は不明"
+
+#: apps/fitting/diagnostics.py
+msgid ""
+"The stats shown are this module's base-roll values, not its mutated ones."
+msgstr ""
+"表示されているのはこのモジュールの基本値であり、変異後の値ではありません。"
+
+#: apps/fitting/diagnostics.py
+msgid "Enter the mutated attribute values to see this module's real stats."
+msgstr "このモジュールの実際の値を見るには、変異した属性値を入力してください。"
 
 #: apps/fitting/diagnostics.py
 msgid "Charge not accepted by this module"
@@ -7706,16 +7811,13 @@ msgid "Load a charge of the matching size."
 msgstr "適合するサイズの弾薬を装填してください。"
 
 #: apps/fitting/diagnostics.py
-#, fuzzy
-#| msgid "Powergrid exceeded"
 msgid "Drone bandwidth exceeded"
-msgstr "パワーグリッド超過"
+msgstr "ドローン帯域幅を超過しました"
 
 #: apps/fitting/diagnostics.py
-#, fuzzy, python-format
-#| msgid "%(used)s of %(cap)s used"
+#, python-format
 msgid "%(used)s of %(cap)s Mbit/s"
-msgstr "%(cap)s 中 %(used)s 使用"
+msgstr "%(cap)s Mbit/s 中 %(used)s"
 
 #: apps/fitting/diagnostics.py
 msgid "Recall a drone or field smaller drones."
@@ -7726,10 +7828,9 @@ msgid "Drone bay volume exceeded"
 msgstr "ドローンベイ容量を超過しています"
 
 #: apps/fitting/diagnostics.py
-#, fuzzy, python-format
-#| msgid "%(used)s of %(cap)s used"
+#, python-format
 msgid "%(used)s of %(cap)s m3"
-msgstr "%(cap)s 中 %(used)s 使用"
+msgstr "%(cap)s m³ 中 %(used)s"
 
 #: apps/fitting/diagnostics.py
 msgid "Not all drones fit in bandwidth"
@@ -7739,6 +7840,69 @@ msgstr "帯域内にすべてのドローンが収まりません"
 #, python-format
 msgid "%(counted)s of %(requested)s counted in the simulation"
 msgstr "シミュレーションでは %(requested)s 機中 %(counted)s 機を計上"
+
+#: apps/fitting/diagnostics.py
+msgid "Not enough fighter tubes"
+msgstr "戦闘機の発進チューブが足りません"
+
+#: apps/fitting/diagnostics.py
+#, python-format
+msgid "%(used)s squadrons, %(cap)s tubes"
+msgstr "%(used)s 個の飛行隊、%(cap)s 本のチューブ"
+
+#: apps/fitting/diagnostics.py
+msgid "Launch fewer squadrons."
+msgstr "発進させる飛行隊を減らしてください。"
+
+#: apps/fitting/diagnostics.py
+msgid "Not enough fighter slots for this role"
+msgstr "この役割に対して戦闘機スロットが足りません"
+
+#: apps/fitting/diagnostics.py
+#, python-format
+msgid "%(used)s of %(cap)s"
+msgstr "%(cap)s 中 %(used)s"
+
+#: apps/fitting/diagnostics.py
+msgid "Launch fewer squadrons of this role."
+msgstr "この役割の飛行隊を減らして発進させてください。"
+
+#: apps/fitting/diagnostics.py
+msgid "Fighter squadron too large"
+msgstr "戦闘機の飛行隊が大きすぎます"
+
+#: apps/fitting/diagnostics.py
+#, python-format
+msgid "%(count)s of max %(max)s"
+msgstr "最大 %(max)s 中 %(count)s"
+
+#: apps/fitting/diagnostics.py
+msgid "Reduce the squadron to its maximum size."
+msgstr "飛行隊を最大サイズまで減らしてください。"
+
+#: apps/fitting/diagnostics.py
+msgid "Fighter bay volume exceeded"
+msgstr "戦闘機ベイの容量を超過しました"
+
+#: apps/fitting/diagnostics.py
+msgid "Carry fewer or smaller fighters."
+msgstr "搭載する戦闘機を減らすか、より小型のものにしてください。"
+
+#: apps/fitting/diagnostics.py
+msgid "This hull cannot field fighters"
+msgstr "この船体は戦闘機を運用できません"
+
+#: apps/fitting/diagnostics.py
+msgid "Field fighters from a carrier or supercarrier."
+msgstr "戦闘機は carrier または supercarrier から運用してください。"
+
+#: apps/fitting/diagnostics.py
+msgid "Not a valid fighter"
+msgstr "有効な戦闘機ではありません"
+
+#: apps/fitting/diagnostics.py
+msgid "Choose a real fighter squadron."
+msgstr "実在する戦闘機の飛行隊を選んでください。"
 
 #: apps/fitting/models.py
 msgid "Public link"
@@ -8618,43 +8782,43 @@ msgstr "ページを削除しました。"
 
 #: apps/killboard/anatomy.py
 msgid "100B+"
-msgstr ""
+msgstr "1000億+"
 
 #: apps/killboard/anatomy.py
 msgid "10B+"
-msgstr ""
+msgstr "100億+"
 
 #: apps/killboard/anatomy.py
 msgid "1B+"
-msgstr ""
+msgstr "10億+"
 
 #: apps/killboard/fitrender.py
 msgid "High slots"
-msgstr ""
+msgstr "ハイスロット"
 
 #: apps/killboard/fitrender.py
 msgid "Mid slots"
-msgstr ""
+msgstr "ミッドスロット"
 
 #: apps/killboard/fitrender.py
 msgid "Low slots"
-msgstr ""
+msgstr "ロースロット"
 
 #: apps/killboard/fitrender.py templates/fitting/detail.html
 msgid "Rigs"
 msgstr "リグ"
 
-#: apps/killboard/fitrender.py
+#: apps/killboard/fitrender.py templates/fitting/detail.html
 msgid "Subsystems"
-msgstr ""
+msgstr "サブシステム"
 
 #: apps/killboard/fitrender.py
 msgid "Drone bay"
-msgstr ""
+msgstr "ドローンベイ"
 
 #: apps/killboard/fitrender.py
 msgid "Cargo hold"
-msgstr ""
+msgstr "カーゴホールド"
 
 #: apps/killboard/forms.py
 msgid "e.g. Local gate campers"
@@ -8682,39 +8846,39 @@ msgstr "任意のタイトル"
 
 #: apps/killboard/ingest_health.py
 msgid "ESI Director feed"
-msgstr ""
+msgstr "ESI ディレクター フィード"
 
 #: apps/killboard/ingest_health.py
 msgid "zKillboard query poll"
-msgstr ""
+msgstr "zKillboard クエリポーリング"
 
 #: apps/killboard/ingest_health.py
 msgid "Realtime fallback (R2Z2)"
-msgstr ""
+msgstr "リアルタイム フォールバック (R2Z2)"
 
 #: apps/killboard/killfeed_rules.py
 msgid "High-sec"
-msgstr ""
+msgstr "High-sec"
 
 #: apps/killboard/killfeed_rules.py
 msgid "Low-sec"
-msgstr ""
+msgstr "Low-sec"
 
 #: apps/killboard/killfeed_rules.py
 msgid "Null-sec"
-msgstr ""
+msgstr "Null-sec"
 
 #: apps/killboard/killfeed_rules.py
 msgid "Wormhole"
-msgstr ""
+msgstr "ワームホール"
 
 #: apps/killboard/killfeed_rules.py
 msgid "Abyssal"
-msgstr ""
+msgstr "アビサル"
 
 #: apps/killboard/killfeed_rules.py
 msgid "Pochven"
-msgstr ""
+msgstr "Pochven"
 
 #: apps/killboard/leaderboards.py
 msgid "Last 7 days"
@@ -8858,38 +9022,39 @@ msgstr "コーポのキル額がこの値以上のときに投稿します (0 = 
 #: apps/killboard/models.py
 msgid "Skip kills with no player attackers (NPC/ratting deaths)."
 msgstr ""
+"プレイヤーの攻撃者がいないキルをスキップする（NPC / ratting による撃墜）。"
 
 #: apps/killboard/models.py
 msgid "Skip awox kills (a corp member on the victim's own corp)."
-msgstr ""
+msgstr "awox キルをスキップする（被害者自身の corp のメンバーによるもの）。"
 
 #: apps/killboard/models.py
 msgid "Post solo kills only."
-msgstr ""
+msgstr "ソロキルのみを投稿する。"
 
 #: apps/killboard/models.py
 msgid "Require at least this many attackers (0 = off)."
-msgstr ""
+msgstr "少なくともこの人数の攻撃者を必須とする（0 = オフ）。"
 
 #: apps/killboard/models.py
 msgid "Require at most this many attackers (0 = off)."
-msgstr ""
+msgstr "多くともこの人数までの攻撃者を必須とする（0 = オフ）。"
 
 #: apps/killboard/models.py
 msgid "Only these security bands (empty = all)."
-msgstr ""
+msgstr "これらのセキュリティ帯のみ（空 = すべて）。"
 
 #: apps/killboard/models.py
 msgid "Only these victim ship classes (empty = all)."
-msgstr ""
+msgstr "これらの被害者シップクラスのみ（空 = すべて）。"
 
 #: apps/killboard/models.py
 msgid "Only within this many jumps of the staging system (0 = off)."
-msgstr ""
+msgstr "ステージングシステムからこのジャンプ数以内のみ（0 = オフ）。"
 
 #: apps/killboard/models.py
 msgid "For losses, post only those that deviated from doctrine."
-msgstr ""
+msgstr "ロスについては、 doctrine から外れたもののみを投稿する。"
 
 #: apps/killboard/models.py
 msgid ""
@@ -9056,10 +9221,14 @@ msgid ""
 "Director feed, the zKill query poll and EVE Ref archives) always run; turn "
 "this on only for lower-latency ingest or as a supplementary source."
 msgstr ""
+"任意のリアルタイム フォールバック フィード（zKillboard R2Z2）。 primary ソー"
+"ス（ESI ディレクター フィード、zKill クエリポーリング、EVE Ref アーカイブ）は"
+"常に稼働します。低遅延な取り込みや補助ソースとして使う場合のみ有効にしてくだ"
+"さい。"
 
 #: apps/killboard/models.py
 msgid "The last R2Z2 sequence number consumed — the resumable cursor."
-msgstr ""
+msgstr "最後に消費した R2Z2 シーケンス番号 — 再開可能なカーソル。"
 
 #: apps/killboard/ranks_i18n.py
 msgid "Dockside Recruit"
@@ -9322,11 +9491,11 @@ msgstr "失った艦船"
 
 #: apps/killboard/views.py
 msgid "A comment can’t be empty."
-msgstr ""
+msgstr "コメントは空にできません。"
 
 #: apps/killboard/views.py
 msgid "You can’t remove that comment."
-msgstr ""
+msgstr "そのコメントは削除できません。"
 
 #: apps/killboard/views.py
 #, python-format
@@ -9375,7 +9544,7 @@ msgstr "戦闘レポートを生成しました。"
 
 #: apps/killboard/views.py
 msgid "Real-time fallback setting saved."
-msgstr ""
+msgstr "リアルタイム フォールバックの設定を保存しました。"
 
 #: apps/killboard/views.py
 msgid "Kill-feed settings saved."
@@ -30402,6 +30571,7 @@ msgstr ""
 
 #: templates/admin_audit/console/planetary/config.html
 #: templates/admin_audit/console/planetary/hub.html
+#: templates/fitting/_telemetry.html
 msgid "Module"
 msgstr "モジュール"
 
@@ -32088,9 +32258,10 @@ msgid "Icon type id"
 msgstr "アイコンの type id"
 
 #: templates/admin_audit/console/raffle_prizes.html templates/erp/board.html
-#: templates/industry/chain.html templates/industry/create.html
-#: templates/industry/jobs.html templates/procurement/po_detail.html
-#: templates/store/inventory_fit.html templates/store/storefront.html
+#: templates/fitting/detail.html templates/industry/chain.html
+#: templates/industry/create.html templates/industry/jobs.html
+#: templates/procurement/po_detail.html templates/store/inventory_fit.html
+#: templates/store/storefront.html
 msgid "Quantity"
 msgstr "数量"
 
@@ -34125,9 +34296,9 @@ msgstr "このキャンペーンでは表彰が無効になっています。"
 msgid "Unknown pilot"
 msgstr "不明なパイロット"
 
-#: templates/campaigns/_participation.html templates/identity/dashboard.html
-#: templates/mentorship/pairing_detail.html templates/pilots/_quest_row.html
-#: templates/pilots/contributions.html
+#: templates/campaigns/_participation.html templates/fitting/_telemetry.html
+#: templates/identity/dashboard.html templates/mentorship/pairing_detail.html
+#: templates/pilots/_quest_row.html templates/pilots/contributions.html
 msgid "pts"
 msgstr "pt"
 
@@ -35647,7 +35818,7 @@ msgstr "承諾 →"
 msgid "Remind me later"
 msgstr "後で通知"
 
-#: templates/capsuleer/_suggestion_row.html
+#: templates/capsuleer/_suggestion_row.html templates/fitting/detail.html
 #: templates/recommendations/_rec_card.html
 msgid "Dismiss"
 msgstr "却下"
@@ -39026,12 +39197,16 @@ msgstr "シミュレーションを実行できませんでした:"
 msgid ""
 "This fit is structurally impossible — see the diagnostics below. Numbers are "
 "shown for reference only."
-msgstr "このフィットは構造的に不可能です — 下の診断を参照してください。数値は参考値です。"
+msgstr ""
+"このフィットは構造的に不可能です — 下の診断を参照してください。数値は参考値で"
+"す。"
 
 #: templates/fitting/_telemetry.html
 msgid ""
 "This fit exceeds the ship's fitting resources — see the diagnostics below."
-msgstr "このフィットは艦のフィッティングリソースを超えています — 下の診断を参照してください。"
+msgstr ""
+"このフィットは艦のフィッティングリソースを超えています — 下の診断を参照してく"
+"ださい。"
 
 #: templates/fitting/_telemetry.html
 msgid "Simulation result"
@@ -39102,13 +39277,59 @@ msgid "Volley"
 msgstr "ボレー"
 
 #: templates/fitting/_telemetry.html
-msgid "Applied missiles"
-msgstr "適用ミサイル"
+msgid "Long-run DPS once weapon reloads are paid."
+msgstr "武器のリロードを織り込んだ長期的な DPS 。"
+
+#: templates/fitting/_telemetry.html
+msgid "Sustained"
+msgstr "持続"
+
+#: templates/fitting/_telemetry.html
+msgid ""
+"DPS actually landing on the target profile (tracking, signature, range)."
+msgstr ""
+"ターゲットプロファイルに実際に命中する DPS （追尾・シグネチャ・射程）。"
+
+#: templates/fitting/_telemetry.html
+msgid "Without your painter/web assistance"
+msgstr "自分の painter/web の支援なし"
+
+#: templates/fitting/_telemetry.html
+msgid "unassisted"
+msgstr "支援なし"
+
+#: templates/fitting/_telemetry.html
+msgid ""
+"* Some weapons need a fuller target profile (distance / signature) to "
+"compute applied DPS."
+msgstr ""
+"* 一部の武器では、適用 DPS を計算するためにより詳細なターゲットプロファイル"
+"（距離／シグネチャ）が必要です。"
 
 #: templates/fitting/_telemetry.html
 #, python-format
 msgid "EM/Th/Kin/Exp %%"
 msgstr "EM/Th/Kin/Exp %%"
+
+#: templates/fitting/_telemetry.html
+msgid "Weapon"
+msgstr "兵装"
+
+#: templates/fitting/_telemetry.html
+msgid "Sust."
+msgstr "持続"
+
+#: templates/fitting/_telemetry.html
+msgid "Needs target distance + signature"
+msgstr "ターゲットの距離とシグネチャが必要です"
+
+#: templates/fitting/_telemetry.html
+msgid "Needs target HP"
+msgstr "ターゲットの HP が必要です"
+
+#: templates/fitting/_telemetry.html
+msgid "Fighter application not modelled"
+msgstr "戦闘機の適用は未モデル化です"
 
 #: templates/fitting/_telemetry.html
 msgid "Defence"
@@ -39121,6 +39342,18 @@ msgstr "シールド"
 #: templates/fitting/_telemetry.html
 msgid "HP"
 msgstr "HP"
+
+#: templates/fitting/_telemetry.html
+msgid "Active rep"
+msgstr "アクティブ修理"
+
+#: templates/fitting/_telemetry.html
+msgid "HP/s"
+msgstr "HP/s"
+
+#: templates/fitting/_telemetry.html
+msgid "Incoming remote rep"
+msgstr "被リモート修理"
 
 #: templates/fitting/_telemetry.html
 msgid "Stable"
@@ -39137,6 +39370,14 @@ msgstr "容量"
 #: templates/fitting/_telemetry.html
 msgid "Peak recharge / use"
 msgstr "最大回復 / 消費"
+
+#: templates/fitting/_telemetry.html
+msgid "Capacitor drained by projected neuts/nos"
+msgstr "投射された neuts/nos によるキャパシタ消耗"
+
+#: templates/fitting/_telemetry.html
+msgid "Incoming neut"
+msgstr "被 neut"
 
 #: templates/fitting/_telemetry.html
 msgid "Mobility"
@@ -39163,6 +39404,14 @@ msgid "Warp speed"
 msgstr "ワープ速度"
 
 #: templates/fitting/_telemetry.html
+msgid "Time to align and cross the set warp distance"
+msgstr "整列して設定したワープ距離を移動するまでの時間"
+
+#: templates/fitting/_telemetry.html
+msgid "Warp time"
+msgstr "ワープ時間"
+
+#: templates/fitting/_telemetry.html
 msgid "Targeting"
 msgstr "ターゲティング"
 
@@ -39178,13 +39427,98 @@ msgstr "ロック数"
 msgid "Scan resolution"
 msgstr "スキャン分解能"
 
-#: templates/fitting/_telemetry.html
+#: templates/fitting/_telemetry.html templates/fitting/detail.html
 msgid "Sensor strength"
 msgstr "センサー強度"
 
 #: templates/fitting/_telemetry.html
+msgid "Time to lock the target profile"
+msgstr "ターゲットプロファイルをロックするまでの時間"
+
+#: templates/fitting/_telemetry.html
+msgid "Lock time"
+msgstr "ロック時間"
+
+#: templates/fitting/_telemetry.html
+msgid "Configuration"
+msgstr "構成"
+
+#: templates/fitting/_telemetry.html templates/fitting/detail.html
+msgid "Tactical mode"
+msgstr "戦術モード"
+
+#: templates/fitting/_telemetry.html
 msgid "Electronic warfare"
 msgstr "電子戦"
+
+#: templates/fitting/_telemetry.html
+msgid "track"
+msgstr "追尾"
+
+#: templates/fitting/_telemetry.html
+msgid "expl vel"
+msgstr "爆発速度"
+
+#: templates/fitting/_telemetry.html
+msgid "jam"
+msgstr "妨害"
+
+#: templates/fitting/_telemetry.html
+msgid "ECM"
+msgstr "ECM"
+
+#: templates/fitting/_telemetry.html
+msgid "Combined jam chance / cycle"
+msgstr "合計妨害確率 / サイクル"
+
+#: templates/fitting/_telemetry.html
+msgid "jammers"
+msgstr "妨害器"
+
+#: templates/fitting/_telemetry.html
+msgid "Set a target sensor strength and type to compute jam chance."
+msgstr ""
+"妨害確率を計算するには、ターゲットのセンサー強度とタイプを設定してください。"
+
+#: templates/fitting/_telemetry.html
+msgid "On target"
+msgstr "命中"
+
+#: templates/fitting/_telemetry.html
+msgid "sig"
+msgstr "シグ"
+
+#: templates/fitting/_telemetry.html
+msgid "vel"
+msgstr "速度"
+
+#: templates/fitting/_telemetry.html
+msgid "m³/hour"
+msgstr "m³/時間"
+
+#: templates/fitting/_telemetry.html
+msgid "m³/cycle"
+msgstr "m³/サイクル"
+
+#: templates/fitting/_telemetry.html templates/fitting/detail.html
+msgid "Projected on us"
+msgstr "自艦への投射"
+
+#: templates/fitting/_telemetry.html templates/fitting/detail.html
+msgid "Fleet boosts"
+msgstr "フリートブースト"
+
+#: templates/fitting/_telemetry.html templates/fitting/detail.html
+msgid "Fighters"
+msgstr "戦闘機"
+
+#: templates/fitting/_telemetry.html
+msgid "Tubes"
+msgstr "チューブ"
+
+#: templates/fitting/_telemetry.html
+msgid "Bay"
+msgstr "ベイ"
 
 #: templates/fitting/_telemetry.html
 msgid "Fit diagnostics"
@@ -39291,8 +39625,15 @@ msgid "Export EFT"
 msgstr "EFTをエクスポート"
 
 #: templates/fitting/detail.html
-msgid "Click a slot to fit · ⚠ = load ammo"
-msgstr "スロットをクリックして装備 · ⚠ = 弾薬を装填"
+#, python-format
+msgid "%(n)s line from the imported fit could not be resolved and was skipped:"
+msgid_plural ""
+"%(n)s lines from the imported fit could not be resolved and were skipped:"
+msgstr[0] "インポートしたフィットの %(n)s 行を解決できず、スキップしました:"
+
+#: templates/fitting/detail.html
+msgid "Click a slot to fit · ⚠ = load ammo · ✦ = mutate"
+msgstr "スロットをクリックして取り付け · ⚠ = 弾薬を装填 · ✦ = 変異"
 
 #: templates/fitting/detail.html
 msgid "Module state"
@@ -39302,19 +39643,18 @@ msgstr "モジュール状態"
 msgid ""
 "Active: running (uses CPU/PG + capacitor). Online: powered but idle (uses "
 "CPU/PG, no cap). Offline: unfitted (frees CPU/PG). Heat: overloaded."
-msgstr "アクティブ: 稼働中（CPU/PG + キャパシタを使用）。オンライン: 通電中で待機（CPU/PGを使用、キャパシタ不使用）。オフライン: 未装備扱い（CPU/PGを解放）。ヒート: オーバーロード。"
+msgstr ""
+"アクティブ: 稼働中（CPU/PG + キャパシタを使用）。オンライン: 通電中で待機"
+"（CPU/PGを使用、キャパシタ不使用）。オフライン: 未装備扱い（CPU/PGを解放）。"
+"ヒート: オーバーロード。"
 
 #: templates/fitting/detail.html
-#, fuzzy
-#| msgid "unlink"
 msgid "online"
-msgstr "リンク解除"
+msgstr "オンライン"
 
 #: templates/fitting/detail.html
-#, fuzzy
-#| msgid "Provider offline"
 msgid "offline"
-msgstr "プロバイダーがオフライン"
+msgstr "オフライン"
 
 #: templates/fitting/detail.html
 msgid "heat"
@@ -39337,6 +39677,34 @@ msgid "Unload ammo"
 msgstr "弾薬を排出"
 
 #: templates/fitting/detail.html
+msgid "Mutated attributes"
+msgstr "変異した属性"
+
+#: templates/fitting/detail.html
+msgid "mutated"
+msgstr "変異済み"
+
+#: templates/fitting/detail.html
+msgid "Mutate"
+msgstr "変異"
+
+#: templates/fitting/detail.html
+msgid "Mutated value"
+msgstr "変異した値"
+
+#: templates/fitting/detail.html
+msgid "Remove override"
+msgstr "上書きを削除"
+
+#: templates/fitting/detail.html
+msgid "Add attribute…"
+msgstr "属性を追加…"
+
+#: templates/fitting/detail.html
+msgid "Search attribute"
+msgstr "属性を検索"
+
+#: templates/fitting/detail.html
 msgid "No slots on this hull."
 msgstr "このハルにはスロットがありません。"
 
@@ -39349,6 +39717,14 @@ msgid "Add drone"
 msgstr "ドローンを追加"
 
 #: templates/fitting/detail.html
+msgid "Squadron size"
+msgstr "編成数"
+
+#: templates/fitting/detail.html
+msgid "Add fighter squadron"
+msgstr "戦闘機の飛行隊を追加"
+
+#: templates/fitting/detail.html
 msgid "Search modules"
 msgstr "モジュールを検索"
 
@@ -39357,34 +39733,141 @@ msgid "takes ammo"
 msgstr "弾薬使用"
 
 #: templates/fitting/detail.html
-msgid "No matching module for this slot."
-msgstr "このスロットに一致するモジュールがありません。"
+msgid "No matching item for this slot."
+msgstr "このスロットに合うアイテムがありません。"
+
+#: templates/fitting/detail.html
+msgid "No mode"
+msgstr "モードなし"
 
 #: templates/fitting/detail.html
 msgid "Target profile"
 msgstr "ターゲットプロファイル"
 
 #: templates/fitting/detail.html
-msgid "Set a target to see applied missile damage vs its signature and speed."
+msgid ""
+"Describe a target to see applied DPS, tracking, jam and lock time. Saved in "
+"this browser only."
 msgstr ""
-"ターゲットを設定すると、そのシグネチャと速度に対する適用ミサイルダメージを確"
-"認できます。"
+"適用 DPS 、追尾、妨害、ロック時間を見るにはターゲットを設定してください。この"
+"ブラウザーにのみ保存されます。"
 
 #: templates/fitting/detail.html
-msgid "Target signature (m)"
-msgstr "ターゲットのシグネチャ (m)"
+msgid "Signature (m)"
+msgstr "シグネチャ (m)"
 
 #: templates/fitting/detail.html
-msgid "Sig (m)"
-msgstr "シグ (m)"
-
-#: templates/fitting/detail.html
-msgid "Target velocity (m/s)"
-msgstr "ターゲットの速度 (m/s)"
-
-#: templates/fitting/detail.html
-msgid "Vel (m/s)"
+msgid "Velocity (m/s)"
 msgstr "速度 (m/s)"
+
+#: templates/fitting/detail.html
+msgid "Distance (m)"
+msgstr "距離 (m)"
+
+#: templates/fitting/detail.html
+msgid "Angular (rad/s)"
+msgstr "角速度 (rad/s)"
+
+#: templates/fitting/detail.html
+msgid "Sensor type"
+msgstr "センサータイプ"
+
+#: templates/fitting/detail.html
+msgid "—"
+msgstr "—"
+
+#: templates/fitting/detail.html
+msgid "Radar"
+msgstr "レーダー"
+
+#: templates/fitting/detail.html
+msgid "Magnetometric"
+msgstr "磁力"
+
+#: templates/fitting/detail.html
+msgid "Ladar"
+msgstr "ラダー"
+
+#: templates/fitting/detail.html
+msgid "Gravimetric"
+msgstr "重力"
+
+#: templates/fitting/detail.html
+msgid "Target HP"
+msgstr "ターゲット HP"
+
+#: templates/fitting/detail.html
+msgid "Warp distance (AU)"
+msgstr "ワープ距離 (AU)"
+
+#: templates/fitting/detail.html
+msgid "Damage profile"
+msgstr "ダメージプロファイル"
+
+#: templates/fitting/detail.html
+msgid "Uniform"
+msgstr "均一"
+
+#: templates/fitting/detail.html
+msgid "EM"
+msgstr "EM"
+
+#: templates/fitting/detail.html
+msgid "Thermal"
+msgstr "熱"
+
+#: templates/fitting/detail.html
+msgid "Kinetic"
+msgstr "運動"
+
+#: templates/fitting/detail.html
+msgid "Explosive"
+msgstr "爆発"
+
+#: templates/fitting/detail.html
+msgid "Custom…"
+msgstr "カスタム…"
+
+#: templates/fitting/detail.html
+msgid "Th"
+msgstr "熱"
+
+#: templates/fitting/detail.html
+msgid "Kin"
+msgstr "運動"
+
+#: templates/fitting/detail.html
+msgid "Exp"
+msgstr "爆発"
+
+#: templates/fitting/detail.html
+msgid ""
+"Add hostile EWAR / energy warfare / remote-rep modules to see their pressure."
+msgstr ""
+"敵の EWAR ・エネルギー戦・遠隔修理モジュールを追加して、その圧力を確認できま"
+"す。"
+
+#: templates/fitting/detail.html
+msgid "Add projected module…"
+msgstr "投射モジュールを追加…"
+
+#: templates/fitting/detail.html
+msgid "Search projected module"
+msgstr "投射モジュールを検索"
+
+#: templates/fitting/detail.html
+#, python-format
+msgid ""
+"Simulate being boosted by friendly command bursts. Set a strength %% for a "
+"fully-skilled command ship."
+msgstr ""
+"味方のコマンドバーストによるブーストをシミュレートします。フルスキルの指揮艦"
+"に対する強度を %% で設定してください。"
+
+#: templates/fitting/detail.html
+#, python-format
+msgid "Strength %% for %(name)s"
+msgstr "%(name)s の強度 %%"
 
 #: templates/fitting/detail.html
 msgid "Cost & supply"
@@ -39534,7 +40017,9 @@ msgstr "復元"
 msgid ""
 "Simulation update failed — the numbers shown are stale. Retry by changing "
 "the fit or reloading."
-msgstr "シミュレーションの更新に失敗しました — 表示中の数値は古いものです。フィットを変更するか再読み込みしてください。"
+msgstr ""
+"シミュレーションの更新に失敗しました — 表示中の数値は古いものです。フィットを"
+"変更するか再読み込みしてください。"
 
 #: templates/fitting/detail.html
 msgid "Saving failed — your changes are NOT stored yet."
@@ -39571,6 +40056,38 @@ msgstr "リグ"
 #: templates/fitting/detail.html
 msgid "drone"
 msgstr "ドローン"
+
+#: templates/fitting/detail.html
+msgid "fighter squadron"
+msgstr "戦闘機隊"
+
+#: templates/fitting/detail.html
+msgid "subsystem"
+msgstr "サブシステム"
+
+#: templates/fitting/detail.html
+msgid "implant"
+msgstr "インプラント"
+
+#: templates/fitting/detail.html templates/raffle/detail.html
+msgid "booster"
+msgstr "ブースター"
+
+#: templates/fitting/detail.html
+msgid "cargo item"
+msgstr "カーゴアイテム"
+
+#: templates/fitting/detail.html
+msgid "Boosters"
+msgstr "ブースター"
+
+#: templates/fitting/detail.html
+msgid "Cargo"
+msgstr "カーゴ"
+
+#: templates/fitting/detail.html
+msgid "No changes to save"
+msgstr "保存する変更はありません"
 
 #: templates/fitting/index.html
 msgid "Fitting workspace"
@@ -42770,7 +43287,7 @@ msgstr "キル"
 
 #: templates/killboard/detail.html
 msgid "High-value kill"
-msgstr ""
+msgstr "高額キル"
 
 #: templates/killboard/detail.html
 msgid "Destroyed"
@@ -42791,12 +43308,12 @@ msgstr "被ダメージ"
 #: templates/killboard/detail.html
 #, python-format
 msgid "SRP paid · %(v)s"
-msgstr ""
+msgstr "SRP 支払い済み · %(v)s"
 
 #: templates/killboard/detail.html
 #, python-format
 msgid "SRP approved · %(v)s"
-msgstr ""
+msgstr "SRP 承認済み · %(v)s"
 
 #: templates/killboard/detail.html
 msgid "only you and officers see this"
@@ -42812,19 +43329,19 @@ msgstr "ファイナルブロー"
 
 #: templates/killboard/detail.html
 msgid "Top damage"
-msgstr ""
+msgstr "最大ダメージ"
 
 #: templates/killboard/detail.html
 msgid "Doctrine hull"
-msgstr ""
+msgstr "doctrine 船体"
 
 #: templates/killboard/detail.html
 msgid "By corporation"
-msgstr ""
+msgstr "コーポレーション別"
 
 #: templates/killboard/detail.html
 msgid "NPC / unknown"
-msgstr ""
+msgstr "NPC / 不明"
 
 #: templates/killboard/detail.html templates/operations/detail.html
 #, python-format
@@ -42842,15 +43359,15 @@ msgstr "このロスは doctrine フィットと一致しました"
 
 #: templates/killboard/detail.html
 msgid "Copy ESI"
-msgstr ""
+msgstr "ESI をコピー"
 
 #: templates/killboard/detail.html
 msgid "Copy the canonical doctrine fit to refit in-game"
-msgstr ""
+msgstr "ゲーム内で組み直すために正規の doctrine フィットをコピーします"
 
 #: templates/killboard/detail.html
 msgid "Refit to doctrine"
-msgstr ""
+msgstr "doctrine に組み直す"
 
 #: templates/killboard/detail.html
 msgid "Import as doctrine"
@@ -42863,15 +43380,15 @@ msgstr "撃破"
 
 #: templates/killboard/detail.html
 msgid "dropped"
-msgstr ""
+msgstr "ドロップ"
 
 #: templates/killboard/detail.html
 msgid "Off-doctrine"
-msgstr ""
+msgstr "doctrine 外"
 
 #: templates/killboard/detail.html
 msgid "empty"
-msgstr ""
+msgstr "空"
 
 #: templates/killboard/detail.html templates/logistics/corp_contracts.html
 #: templates/mining/ledger.html templates/store/board.html
@@ -42900,29 +43417,29 @@ msgstr "doctrine 外はありません。"
 
 #: templates/killboard/detail.html
 msgid "Same battle"
-msgstr ""
+msgstr "同じ戦闘"
 
 #: templates/killboard/detail.html
 msgid "View battle report"
-msgstr ""
+msgstr "バトルレポートを表示"
 
 #: templates/killboard/detail.html
 msgid "This kill is part of a battle report."
-msgstr ""
+msgstr "このキルはバトルレポートの一部です。"
 
 #: templates/killboard/detail.html
 #, python-format
 msgid "%(n)s comment"
 msgid_plural "%(n)s comments"
-msgstr[0] ""
+msgstr[0] "コメント %(n)s 件"
 
 #: templates/killboard/detail.html
 msgid "No comments yet."
-msgstr ""
+msgstr "まだコメントはありません。"
 
 #: templates/killboard/detail.html
 msgid "Add a comment…"
-msgstr ""
+msgstr "コメントを追加…"
 
 #: templates/killboard/detail.html templates/stockpile/logistics.html
 msgid "Post"
@@ -42969,61 +43486,63 @@ msgstr "この額以上のコーポキルを投稿します。0 = オフ。"
 
 #: templates/killboard/killfeed_config.html
 msgid "Rules (optional)"
-msgstr ""
+msgstr "ルール（任意）"
 
 #: templates/killboard/killfeed_config.html
 msgid ""
 "Extra require/exclude filters, applied on top of the value thresholds. Leave "
 "everything blank to post every kill above the ISK bar."
 msgstr ""
+"価値のしきい値に加えて適用される、追加の必須／除外フィルター。ISK の基準を超"
+"えるすべてのキルを投稿するには、すべて空欄のままにします。"
 
 #: templates/killboard/killfeed_config.html
 msgid "Min attackers"
-msgstr ""
+msgstr "攻撃者数の下限"
 
 #: templates/killboard/killfeed_config.html
 msgid "Max attackers"
-msgstr ""
+msgstr "攻撃者数の上限"
 
 #: templates/killboard/killfeed_config.html
 msgid "Within N jumps of staging"
-msgstr ""
+msgstr "ステージングから N ジャンプ以内"
 
 #: templates/killboard/killfeed_config.html
 msgid "0 = off. Needs an active staging system configured."
-msgstr ""
+msgstr "0 = オフ。アクティブなステージングシステムの設定が必要です。"
 
 #: templates/killboard/killfeed_config.html
 msgid "Security bands (none = all)"
-msgstr ""
+msgstr "セキュリティ帯（なし = すべて）"
 
 #: templates/killboard/killfeed_config.html
 msgid "Victim ship classes (none = all)"
-msgstr ""
+msgstr "被害者のシップクラス（なし = すべて）"
 
 #: templates/killboard/killfeed_config.html
 msgid "Solo kills only"
-msgstr ""
+msgstr "ソロキルのみ"
 
 #: templates/killboard/killfeed_config.html
 msgid "Exclude NPC-only kills"
-msgstr ""
+msgstr "NPC のみのキルを除外"
 
 #: templates/killboard/killfeed_config.html
 msgid "Exclude awox kills"
-msgstr ""
+msgstr "awox キルを除外"
 
 #: templates/killboard/killfeed_config.html
 msgid "Losses: only those that deviated from doctrine"
-msgstr ""
+msgstr "ロス: doctrine から外れたもののみ"
 
 #: templates/killboard/killfeed_config.html
 msgid "Ingest"
-msgstr ""
+msgstr "取り込み"
 
 #: templates/killboard/killfeed_config.html
 msgid "Real-time fallback"
-msgstr ""
+msgstr "リアルタイム フォールバック"
 
 #: templates/killboard/killfeed_config.html
 msgid ""
@@ -43033,45 +43552,50 @@ msgid ""
 "about a minute instead of up to fifteen. It never replaces the primary feeds "
 "— leave it off unless you want lower latency."
 msgstr ""
+"権威あるフィード（ESI ディレクター フィード、zKillboard クエリポーリング、"
+"EVE Ref アーカイブ）が常にボードを最新に保ちます。この任意のフォールバックは "
+"zKillboard の R2Z2 リアルタイム フィードを利用し、最近の corp のキルが最大 "
+"15 分ではなく約 1 分で表示されるようにします。 primary フィードを置き換えるこ"
+"とは決してありません。低遅延が必要な場合以外はオフのままにしてください。"
 
 #: templates/killboard/killfeed_config.html
 msgid "Enable the real-time fallback (R2Z2)"
-msgstr ""
+msgstr "リアルタイム フォールバックを有効にする (R2Z2)"
 
 #: templates/killboard/killfeed_config.html
 #, python-format
 msgid "Cursor at sequence %(seq)s · %(n)s ingested last run."
-msgstr ""
+msgstr "カーソルはシーケンス %(seq)s · 前回の実行で %(n)s 件を取り込みました。"
 
 #: templates/killboard/killfeed_config.html
 msgid "Ingest health"
-msgstr ""
+msgstr "取り込みの状態"
 
 #: templates/killboard/killfeed_config.html
 msgid "primary"
-msgstr ""
+msgstr "primary"
 
 #: templates/killboard/killfeed_config.html
 msgid "fallback"
-msgstr ""
+msgstr "フォールバック"
 
 #: templates/killboard/killfeed_config.html
 #, python-format
 msgid "%(when)s ago"
-msgstr ""
+msgstr "%(when)s 前"
 
 #: templates/killboard/killfeed_config.html
 msgid "down"
-msgstr ""
+msgstr "停止"
 
 #: templates/killboard/killfeed_config.html
 msgid "idle"
-msgstr ""
+msgstr "アイドル"
 
 #: templates/killboard/killfeed_config.html
 #, python-format
 msgid "%(n)s consecutive failures"
-msgstr ""
+msgstr "連続 %(n)s 回の失敗"
 
 #: templates/killboard/list.html
 msgid "Combat record"
@@ -43217,19 +43741,19 @@ msgstr "期間:"
 
 #: templates/killboard/rankings.html
 msgid "Aggregate:"
-msgstr ""
+msgstr "集計:"
 
 #: templates/killboard/rankings.html
 msgid "By pilot"
-msgstr ""
+msgstr "パイロット別"
 
 #: templates/killboard/rankings.html
 msgid "By main (+ alts)"
-msgstr ""
+msgstr "メイン別（+ alts）"
 
 #: templates/killboard/rankings.html
 msgid "alts counted under each pilot's main"
-msgstr ""
+msgstr "alts は各パイロットのメインに集計されます"
 
 #: templates/killboard/rankings.html
 msgid "History:"
@@ -50076,10 +50600,6 @@ msgstr "開催中"
 #: templates/raffle/detail.html
 msgid "Awaiting draw"
 msgstr "抽選待ち"
-
-#: templates/raffle/detail.html
-msgid "booster"
-msgstr "ブースター"
 
 #: templates/raffle/detail.html
 msgid "You're in the raffle"
