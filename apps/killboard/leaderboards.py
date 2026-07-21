@@ -30,6 +30,7 @@ from core.i18n import i18n_cache_key
 
 from .models import Killmail, KillmailParticipant
 from .ranks import active_ladder, combat_rank  # noqa: F401  (re-exported for callers)
+from .valuation import at_kill_value_expr
 
 # Efficiency is only fair with a body of fights behind it, or one lucky kill
 # reads as "100%". Pilots below this many fights (kills + losses) don't rank.
@@ -176,7 +177,9 @@ def _kill_rows(window: Window):
             kills=Count("killmail", distinct=True),
             final_blows=Count("killmail", filter=Q(final_blow=True), distinct=True),
             solo_kills=Count("killmail", filter=Q(killmail__is_solo=True), distinct=True),
-            isk_destroyed=Sum("killmail__total_value"),
+            # KB-35: rank by the value at the time of the kill (fair across price moves),
+            # falling back to the live total for mails not yet backfilled.
+            isk_destroyed=Sum(at_kill_value_expr("killmail__")),
             points=Sum("killmail__points"),
         )
     )
@@ -196,7 +199,7 @@ def _loss_rows(window: Window):
             is_npc=False,
         )
         .values("victim_character_id")
-        .annotate(losses=Count("killmail_id"), isk_lost=Sum("total_value"))
+        .annotate(losses=Count("killmail_id"), isk_lost=Sum(at_kill_value_expr()))
     )
 
 

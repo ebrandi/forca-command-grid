@@ -585,6 +585,48 @@ def killmail_detail(request: HttpRequest, killmail_id: int) -> HttpResponse:
     breakdown = anatomy.attacker_breakdown(
         killmail, attackers, _home(), anatomy.doctrine_hull_ids()
     )
+
+    # KB-35: "value then vs now". ``value_at_kill`` (stored) is the price on the day it died;
+    # "now" is recomputed lazily from current prices so it's live regardless of the last
+    # re-value beat — no second figure is stored. For owner/officer (the SRP-dispute audience)
+    # we also resolve each item's at-kill price source for the auditable breakdown, reading
+    # local history only (never a network fetch on a page view).
+    from apps.killboard.valuation import compute_value
+    from apps.market.pricing import build_price_index
+
+    wheel = fitrender.build_fit_wheel(killmail, deviation)
+    now_total = compute_value(killmail, build_price_index(), persist_items=False)["total_value"]
+    then_total = (
+        killmail.value_at_kill if killmail.value_at_kill is not None else killmail.total_value
+    )
+    _source_labels = {
+        "everef_history": gettext("priced at kill date (EVE Ref market history)"),
+        "live": gettext("priced live (fresh kill)"),
+        "live_fallback": gettext("priced live (no history for the kill date)"),
+        "fuzzwork_pct": gettext("Fuzzwork percentile (high-value)"),
+        "janice": gettext("Janice (PLEX / injectors)"),
+        "mixed": gettext("mixed price sources"),
+        "unpriced": gettext("no market price"),
+    }
+    valuation = {
+        "then": then_total,
+        "now": now_total,
+        "delta": now_total - then_total,
+        "source": killmail.value_source or "",
+        "source_label": _source_labels.get(killmail.value_source, killmail.value_source or ""),
+        "has_at_kill": killmail.value_at_kill is not None,
+    }
+    if can_see_private:
+        from apps.market.historical import HistoricalPriceLookup
+
+        lookup = HistoricalPriceLookup(killmail.killmail_time, fetch=False)
+        lookup(killmail.victim_ship_type_id)
+        wheel["hull_source"] = lookup.type_sources.get(killmail.victim_ship_type_id, "")
+        for group in wheel["table"]:
+            for item in group["items"]:
+                lookup(item["type_id"])
+                item["source"] = lookup.type_sources.get(item["type_id"], "")
+
     return render(
         request,
         "killboard/detail.html",
@@ -595,7 +637,8 @@ def killmail_detail(request: HttpRequest, killmail_id: int) -> HttpResponse:
             "deviation": deviation,
             # Radial fitting-window render (KB-21b). ``deviation`` is already gated to
             # owner/officer, so the off-doctrine overlay stays private to permitted viewers.
-            "wheel": fitrender.build_fit_wheel(killmail, deviation),
+            "wheel": wheel,
+            "valuation": valuation,  # KB-35 then-vs-now
             # KB-22 detail-anatomy polish.
             "srp": srp,
             "srp_request": srp_request,  # KB-25: owner-only "Request SRP" affordance.

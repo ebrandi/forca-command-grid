@@ -11,7 +11,7 @@ from core.mixins import Source
 
 from .doctrine_tag import compute_fit_deviation, tag_doctrine_fit
 from .models import Killmail, KillmailItem, KillmailParticipant, SecBand
-from .valuation import apply_valuation
+from .valuation import apply_valuation, stamp_value_at_kill
 
 POCHVEN_REGION_ID = 10000070
 
@@ -111,6 +111,9 @@ def ingest_killmail(
         return Killmail.objects.get(killmail_id=killmail_id)
 
     apply_valuation(km)
+    # KB-35: a fresh kill's at-kill value ≈ its live value, so stamp it cheaply now (no
+    # network). The value_at_kill backfill upgrades OLD mails to true period prices later.
+    stamp_value_at_kill(km, historical=False)
     tag_doctrine_fit(km)
     compute_fit_deviation(km)
     # KB-29: append an outbound-stream event. This is the single post-ingest seam every path

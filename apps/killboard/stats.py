@@ -18,6 +18,7 @@ from django.utils import timezone
 
 from .leaderboards import window_for
 from .models import CombatMetric, Killmail
+from .valuation import at_kill_value_expr
 
 _WINDOWS = {"7d": 7, "30d": 30, "all": None}
 
@@ -95,8 +96,8 @@ def rebuild_corp_metrics() -> int:
             defaults={
                 "kills": n_kills,
                 "losses": n_losses,
-                "isk_destroyed": kills.aggregate(s=Sum("total_value"))["s"] or 0,
-                "isk_lost": losses.aggregate(s=Sum("total_value"))["s"] or 0,
+                "isk_destroyed": kills.aggregate(s=Sum(at_kill_value_expr()))["s"] or 0,
+                "isk_lost": losses.aggregate(s=Sum(at_kill_value_expr()))["s"] or 0,
                 "points": kills.aggregate(s=Sum("points"))["s"] or 0,
                 "solo_kills": solo,
                 "danger_ratio": (n_kills / total_fights) if total_fights else 0.0,

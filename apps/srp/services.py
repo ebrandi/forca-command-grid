@@ -62,6 +62,20 @@ def _doctrine_fit_value(fit) -> Decimal:
     return value
 
 
+def _price_basis_is_at_kill() -> bool:
+    """Whether SRP values a loss at the price on the day it died (KB-35).
+
+    Governed by ``settings.SRP_VALUE_BASIS`` (``live`` | ``at_kill``), default ``live`` so
+    payouts are unchanged unless leadership explicitly flips it. ``at_kill`` prices the hull
+    / destroyed modules from EVE Ref market history at the kill date — fairer for old losses,
+    and reversible by flipping the flag back. Only the ``hull`` and ``actual`` bases are
+    price-driven here; ``doctrine`` values the current fit and is left as-is.
+    """
+    from django.conf import settings
+
+    return str(getattr(settings, "SRP_VALUE_BASIS", "live")).lower() == "at_kill"
+
+
 def loss_value(killmail: Killmail, fit, program: SrpProgram) -> Decimal:
     """Gross value of the loss under the programme's valuation basis.
 
@@ -70,13 +84,25 @@ def loss_value(killmail: Killmail, fit, program: SrpProgram) -> Decimal:
     ``doctrine``→ the matching doctrine fit's value; falls back to actual loss when
                   the ship isn't a doctrine hull.
     ``hull``    → the hull price only.
+
+    When ``SRP_VALUE_BASIS=at_kill`` the price-driven bases (``hull`` / ``actual``) use the
+    market on the kill date instead of the live market; default ``live`` keeps today's behaviour.
     """
     basis = program.valuation
+    at_kill = _price_basis_is_at_kill()
     if basis == SrpProgram.Valuation.HULL_ONLY:
+        if at_kill:
+            from apps.killboard.valuation import at_kill_hull_value
+
+            return at_kill_hull_value(killmail)
         return price_for(killmail.victim_ship_type_id)
     if basis == SrpProgram.Valuation.DOCTRINE_FIT and fit is not None:
         return _doctrine_fit_value(fit)
     # ACTUAL_LOSS, or DOCTRINE_FIT with no doctrine fit to value against.
+    if at_kill:
+        from apps.killboard.valuation import at_kill_destroyed_value
+
+        return at_kill_destroyed_value(killmail)
     return Decimal(killmail.destroyed_value or 0)
 
 

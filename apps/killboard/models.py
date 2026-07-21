@@ -53,6 +53,14 @@ class Killmail(ProvenanceMixin):
     destroyed_value = models.DecimalField(max_digits=20, decimal_places=2, default=0)
     dropped_value = models.DecimalField(max_digits=20, decimal_places=2, default=0)
     fitted_value = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+    # KB-35: the total valued at the prices *on the day it died* ("then"), stamped once at
+    # ingest and by the value_at_kill backfill — never overwritten by the daily re-value,
+    # which keeps ``total_value`` tracking the live market ("now"). Rankings read
+    # ``value_at_kill`` COALESCE ``total_value`` for fairness (see apps.market.historical).
+    value_at_kill = models.DecimalField(
+        max_digits=20, decimal_places=2, null=True, blank=True
+    )
+    value_source = models.CharField(max_length=24, blank=True, default="")
     points = models.IntegerField(default=1)
     is_solo = models.BooleanField(default=False)
     is_npc = models.BooleanField(default=False)

@@ -36,6 +36,19 @@
     <div class="p-4"><p class="eyebrow">{% translate "Dropped" %}</p><p class="data mt-1 text-lg font-semibold text-cyan">{{ killmail.dropped_value|isk }}</p></div>
     <div class="p-4"><p class="eyebrow">{% translate "Points" %}</p><p class="data mt-1 text-lg font-semibold text-ink">{{ killmail.points }}</p></div>
   </div>
+  {% if valuation.has_at_kill %}
+  {# KB-35: value on the day it died vs. its live replacement cost now. #}
+  <div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line px-4 py-2" style="font-size:11px">
+    <span class="eyebrow">{% translate "At kill" %}</span>
+    <span class="data text-gold">{{ valuation.then|isk }}</span>
+    <span class="text-faint">{% translate "Now" %}</span>
+    <span class="data text-ink">{{ valuation.now|isk }}</span>
+    {% if valuation.delta %}
+    <span class="data {% if valuation.delta > 0 %}text-kill{% else %}text-loss{% endif %}" title="{% translate 'Change since the kill (live prices)' %}">{% if valuation.delta > 0 %}+{% endif %}{{ valuation.delta|isk }}</span>
+    {% endif %}
+    {% if valuation.source_label %}<span class="chip" title="{% translate 'Price source' %}">{{ valuation.source_label }}</span>{% endif %}
+  </div>
+  {% endif %}
 </div>
 
 <div class="mt-5 grid gap-5 lg:grid-cols-2">
@@ -265,6 +278,7 @@
         <span class="min-w-0 flex-1 truncate text-ink">{% type_name wheel.hull_type_id %} <span class="chip !text-loss" title="{% translate 'destroyed' %}">×</span></span>
         <span class="data w-10 text-right text-xs text-muted">1</span>
         <span class="data w-20 text-right text-xs text-faint">{% if wheel.hull_value %}{{ wheel.hull_value|isk }}{% endif %}</span>
+        {% if wheel.hull_source and wheel.hull_source != valuation.source %}<span class="data text-faint" style="font-size:9px" title="{% translate 'At-kill price source' %}">{{ wheel.hull_source }}</span>{% endif %}
       </div>
 
       {% for group in wheel.table %}
@@ -276,6 +290,7 @@
           {% if item.destroyed %}<span class="chip !text-loss" title="{% translate 'destroyed' %}">×</span>{% endif %}{% if item.dropped %}<span class="chip !text-cyan" title="{% translate 'dropped' %}">↧</span>{% endif %}</span>
         <span class="data w-10 text-right text-xs text-muted">{{ item.qty }}</span>
         <span class="data w-20 text-right text-xs text-faint">{% if item.value %}{{ item.value|isk }}{% endif %}</span>
+        {% if item.source and item.source != valuation.source %}<span class="data text-faint" style="font-size:9px" title="{% translate 'At-kill price source' %}">{{ item.source }}</span>{% endif %}
       </div>
       {% endfor %}
       {% endfor %}

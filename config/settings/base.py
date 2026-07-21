@@ -350,6 +350,36 @@ KILLBOARD_SUBSCRIPTION_WEBHOOK_MAX_FAILURES = env.int("KILLBOARD_SUBSCRIPTION_WE
 KILLBOARD_SUBSCRIPTION_FEED_KEEP = env.int("KILLBOARD_SUBSCRIPTION_FEED_KEEP", default=100)
 KILLBOARD_SUBSCRIPTION_BATCH = env.int("KILLBOARD_SUBSCRIPTION_BATCH", default=500)
 
+# --- KB-35: point-in-time valuation + multi-oracle pricing --------------
+# Historical valuation prices each killmail at the market on the day it died, read from the
+# local MarketHistory series (EVE Ref daily The-Forge history, populated by
+# import_everef_market_history). See apps/market/historical.py.
+#   TOLERANCE_DAYS  — how many days before the kill date price_at may reach back for the
+#                     nearest available day (weekends have market data; this covers outages /
+#                     early-EVE sparse periods) before giving up to the live price.
+#   FETCH_ENABLED   — may price_at download a missing day-file on demand (caches the whole
+#                     Forge day so one fetch prices a whole killmail)? Off ⇒ read local only.
+MARKET_HISTORY_TOLERANCE_DAYS = env.int("MARKET_HISTORY_TOLERANCE_DAYS", default=7)
+MARKET_HISTORY_FETCH_ENABLED = env.bool("MARKET_HISTORY_FETCH_ENABLED", default=True)
+MARKET_ORACLE_HTTP_TIMEOUT_S = env.float("MARKET_ORACLE_HTTP_TIMEOUT_S", default=10.0)
+# Oracle routing for LIVE prices. Default oracle = the existing live-Jita path (unchanged).
+# Fuzzwork's percentile (manipulation-resistant) is used only for items whose live price
+# exceeds the threshold, and only when explicitly enabled. Janice (best PLEX/injector
+# accuracy) is used ONLY when a key is configured — no hard dependency on a keyed service.
+MARKET_ORACLE_FUZZWORK_ENABLED = env.bool("MARKET_ORACLE_FUZZWORK_ENABLED", default=False)
+MARKET_ORACLE_FUZZWORK_THRESHOLD_ISK = env.int(
+    "MARKET_ORACLE_FUZZWORK_THRESHOLD_ISK", default=1_000_000_000
+)
+JANICE_API_KEY = env("JANICE_API_KEY", default="")
+# Item ids Janice prices best (PLEX 44992, Large/Small Skill Injector 40520/45635,
+# Skill Extractor 40519); override to extend the routing class.
+JANICE_TYPE_IDS = env.list("JANICE_TYPE_IDS", cast=int, default=[44992, 40520, 45635, 40519])
+
+# SRP valuation basis (KB-35). ``live`` (default) = today's behaviour: price-driven SRP bases
+# value the loss at the current market. ``at_kill`` = value it at the market on the kill date.
+# A documented, reversible flag officers can flip; default changes no payout.
+SRP_VALUE_BASIS = env("SRP_VALUE_BASIS", default="live")
+
 # --- Token encryption (OAuth refresh tokens at rest) --------------------
 # 32-byte url-safe base64 Fernet key. In prod this MUST be set in the env.
 TOKEN_ENCRYPTION_KEY = env("TOKEN_ENCRYPTION_KEY", default="")

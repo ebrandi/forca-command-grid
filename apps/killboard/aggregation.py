@@ -27,6 +27,7 @@ from django.utils import formats, timezone, translation
 from core.i18n import i18n_cache_key
 
 from .models import Killmail, KillmailParticipant, MonthlyPilotKillStat
+from .valuation import at_kill_value_expr
 
 _EVE_TZ = UTC  # EVE runs on UTC; pin month boundaries to it (matches analytics.py)
 CACHE_VERSION = 1
@@ -80,7 +81,7 @@ def rebuild_month(year: int, month: int) -> int:
             kills=Count("killmail", distinct=True),
             final_blows=Count("killmail", filter=Q(final_blow=True), distinct=True),
             solo_kills=Count("killmail", filter=Q(killmail__is_solo=True), distinct=True),
-            isk_destroyed=Sum("killmail__total_value"),
+            isk_destroyed=Sum(at_kill_value_expr("killmail__")),  # KB-35: at-kill fairness
             points=Sum("killmail__points"),
         )
     )
@@ -95,7 +96,7 @@ def rebuild_month(year: int, month: int) -> int:
         )
         .order_by()  # REQUIRED: Killmail.Meta.ordering would pollute the GROUP BY
         .values("victim_character_id")
-        .annotate(losses=Count("killmail_id"), isk_lost=Sum("total_value"))
+        .annotate(losses=Count("killmail_id"), isk_lost=Sum(at_kill_value_expr()))
     )
 
     data: dict[int, dict] = {}
