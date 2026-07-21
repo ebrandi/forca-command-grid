@@ -217,6 +217,10 @@ class TargetProfile:
     label: str = ""
     target_distance_m: float | None = None   # range to target (m); None = not supplied
     target_angular: float | None = None      # rad/s; None = derive from velocity/distance
+    # WS-9 breacher pods: a pod's per-tick damage is min(flat, %HP·target_total_hp), so the
+    # %HP arm needs the target's total HP (shield+armor+hull). Optional (None = not supplied):
+    # a breacher then reports only its flat arm with applied_reason "target_hp_unknown".
+    target_hp: float | None = None           # target's total HP; None = not supplied
 
     def effective_angular(self) -> float | None:
         """Angular velocity (rad/s) to use for turret/drone tracking, or ``None`` when it
@@ -232,7 +236,8 @@ class TargetProfile:
     def hash(self) -> str:
         d = "n" if self.target_distance_m is None else f"{self.target_distance_m:.1f}"
         a = "n" if self.target_angular is None else f"{self.target_angular:.5f}"
-        return f"{self.signature_radius:.1f}:{self.velocity:.1f}:{d}:{a}"
+        h = "n" if self.target_hp is None else f"{self.target_hp:.1f}"
+        return f"{self.signature_radius:.1f}:{self.velocity:.1f}:{d}:{a}:{h}"
 
 
 @dataclass(frozen=True)

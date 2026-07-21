@@ -61,7 +61,8 @@ def _op_profile(request):
         except (TypeError, ValueError):
             dmg = None
     target = None
-    if data.get("tgt_sig") or data.get("tgt_vel") or data.get("tgt_distance"):
+    if (data.get("tgt_sig") or data.get("tgt_vel") or data.get("tgt_distance")
+            or data.get("tgt_hp")):
         try:
             target = {"signature_radius": float(data.get("tgt_sig") or 0),
                       "velocity": float(data.get("tgt_vel") or 0),
@@ -70,6 +71,8 @@ def _op_profile(request):
                 target["distance_m"] = float(data.get("tgt_distance"))
             if data.get("tgt_angular"):
                 target["angular"] = float(data.get("tgt_angular"))
+            if data.get("tgt_hp"):
+                target["hp"] = float(data.get("tgt_hp"))
         except (TypeError, ValueError):
             target = None
     warp_au = None

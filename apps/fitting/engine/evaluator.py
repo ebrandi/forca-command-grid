@@ -107,6 +107,52 @@ AU_METERS = 149_597_870_700    # one astronomical unit in metres (CCP's warp-mat
 _DRONE_MOBILE_MIN_SPEED = 1.0  # maxVelocity above this = a chasing (mobile) drone, not a
 #                                sentry (pyfa's `droneSpeed > 1` sentry/mobile split)
 
+# --- WS-8 mining yield telemetry -----------------------------------------------------
+# Verified live 2026-07-21 (scout-data §E + engine end-to-end). A mining module carries
+# miningAmount(77) = the volume harvested per cycle and duration(73) = the cycle time; both
+# are evaluated through the graph, so hull role/skill bonuses and — for a modulated strip
+# miner — the loaded crystal's yield multiplier already flow into miningAmount. The crystal
+# mechanic is NOT a 789→77 preAssign (the scout's early read): a mining crystal (charge) is
+# an ItemModifier preMul on the module's miningAmount(77) by the crystal's
+# specializationAsteroidYieldMultiplier(782), so the evaluated 77 is already the crystal-
+# boosted yield (Modulated Strip Miner II 120 × Veldspar T1 1.625 = 195, no skills).
+ATTR_MINING_AMOUNT = 77
+ATTR_MINING_WASTE_PROBABILITY = 3154   # % chance the module wastes (loses) ore that cycle
+ATTR_MINING_WASTE_VOLUME_MULT = 3153   # multiplier on the wasted volume when waste occurs
+EFFECT_MINING_LASER = 67               # miningLaser (ore + ice modules; category 2)
+EFFECT_MINING_CLOUDS = 2726            # miningClouds (gas cloud harvesters; category 2)
+EFFECT_MINING_DRONE = 17               # mining (mining/ice-harvesting drones; category 2)
+_MINING_MODULE_EFFECTS = frozenset({EFFECT_MINING_LASER, EFFECT_MINING_CLOUDS})
+SKILL_ICE_HARVESTING = 16281           # a module requiring this skill is an ice harvester
+
+# --- WS-9 exotic weapons (smartbombs, vorton projectors, breacher pods) ---------------
+# Verified live 2026-07-21 (scout-data §F + type dumps).
+# Smartbombs: every published Smart Bomb (group 72) fires the same default effect empWave
+# (38, category 1 active); damage lives on the MODULE (em/th/kin/exp 114/116/117/118, one
+# type populated), range on empFieldRange(99), cycle on duration(73); no charge → no reload.
+EFFECT_SMARTBOMB = 38
+ATTR_EMP_FIELD_RANGE = 99
+# Vorton projectors (group 4060) fire Condenser Pack charges. The module carries
+# damageMultiplier(64) + RoF speed(51); the charge carries the em/kin/… damage and the
+# missile-style AoE application attrs (aoeVelocity 653 / aoeCloudSize 654 / aoeDRF 1353). The
+# arc that chains to VortonArcTargets(3037) secondaries within VortonArcRange(3036) is NOT
+# modelled in v1 (primary-target damage only — documented in the matrix). Default firing
+# effect ChainLightning(8037, category 2). turretFitted(42) marks the hardpoint.
+VORTON_GROUP = 4060
+EFFECT_VORTON = 8037
+ATTR_VORTON_ARC_RANGE = 3036
+ATTR_VORTON_ARC_TARGETS = 3037
+# Breacher pod launchers (group 4807) share effect 101 (useMissiles) with missile launchers,
+# so they MUST be intercepted before the missile path. The SCARAB Breacher Pod charge carries
+# no direct damage — it applies a non-stacking damage-over-time: dotMaxDamagePerTick(5736)
+# flat OR dotMaxHPPercentagePerTick(5737) percent-of-total-HP per 1-second tick (whichever is
+# lower), for dotDuration(5735) ms. The DoT does not stack across launchers (strongest wins).
+GROUP_BREACHER_LAUNCHER = 4807
+ATTR_DOT_DURATION = 5735
+ATTR_DOT_MAX_DAMAGE_PER_TICK = 5736
+ATTR_DOT_MAX_HP_PCT_PER_TICK = 5737
+_DOT_TICK_S = 1.0                       # CCP breacher pods tick once per second
+
 _RACKED = (SlotKind.HIGH, SlotKind.MED, SlotKind.LOW, SlotKind.RIG, SlotKind.SUBSYSTEM)
 
 _SUBSYSTEM_ADD = {
@@ -161,6 +207,7 @@ def evaluate(fit: FitInput, skills: SkillProfile, op_profile: OperatingProfile,
     utility = {"cargo": round(ev.ship_value(ATTR_CAPACITY), 1),
                "drone_bay": round(ev.ship_value(A.DRONE_CAPACITY), 1)}
     ewar = _ewar(ev)
+    industry = _industry(ev, provider)
     projected = _projected(ev, provider)
     boosts = _boosts(ev, provider, result)
     _validate_restrictions(ev, provider, result)
@@ -184,6 +231,9 @@ def evaluate(fit: FitInput, skills: SkillProfile, op_profile: OperatingProfile,
             "damage_profile": op_profile.damage_profile.normalised().as_map(),
         },
     }
+    # Mining telemetry is present only when the fit actually mines — no empty-section noise.
+    if industry is not None:
+        result.telemetry["industry"] = industry
     for d in sorted(set(ev.diagnostics)):
         result.unsupported.append(d)
     result.missing_skills = _missing_skills(fit, skills, provider)
@@ -863,6 +913,13 @@ def _offence(ev: EvaluatedFit, provider, op_profile: OperatingProfile, result) -
     turret_dps = missile_dps = missile_dps_applied = drone_dps = total_volley = 0.0
     turret_dps_applied = drone_dps_applied = 0.0
     sustained_weapon_dps = 0.0
+    # WS-9 exotic weapons. Smartbombs + vorton projectors deal typed damage (counted into
+    # damage_by_type); breacher pods deal a typeless damage-over-time that does NOT stack
+    # across launchers, so their entries are collected and only the strongest one counts
+    # toward the fit totals (see the cap below).
+    smartbomb_dps = smartbomb_applied = smartbomb_sustained = 0.0
+    vorton_dps = vorton_applied = vorton_sustained = 0.0
+    breacher_entries: list[dict] = []
     damage_by_type = {d: 0.0 for d in A.DAMAGE_TYPES}
     weapons = 0
     ranges: list[dict] = []
@@ -881,11 +938,61 @@ def _offence(ev: EvaluatedFit, provider, op_profile: OperatingProfile, result) -
             continue
         is_turret = bool(A.TURRET_EFFECTS & m.effect_ids)
         is_launcher = A.EFFECT_LAUNCHER in m.effect_ids
-        if not (is_turret or is_launcher):
+        is_smartbomb = EFFECT_SMARTBOMB in m.effect_ids
+        is_vorton = m.group_id == VORTON_GROUP or EFFECT_VORTON in m.effect_ids
+        # A breacher pod launcher shares effect 101 with missile launchers, so it must be
+        # recognised by its own group and handled before the missile path (its pods carry no
+        # direct damage — the missile path would read a zero volley and drop it silently).
+        is_breacher = m.group_id == GROUP_BREACHER_LAUNCHER
+        if not (is_turret or is_launcher or is_smartbomb or is_vorton or is_breacher):
             continue
         weapons += 1
         if not _active(m):
             continue                          # online weapons don't fire
+
+        # --- WS-9 exotic weapons ---------------------------------------------------
+        if is_smartbomb:
+            entry, sb_dps, sb_volley = _smartbomb_entry(ev, m, provider, target)
+            smartbomb_dps += sb_dps
+            smartbomb_applied += entry.get("applied_dps") or 0.0
+            smartbomb_sustained += entry.get("sustained_dps") or sb_dps
+            total_volley += sb_volley
+            by_type = entry.pop("_by_type")
+            for d in A.DAMAGE_TYPES:
+                damage_by_type[d] += by_type[d]
+            ranges.append(entry)
+            continue
+        if is_breacher:
+            if m.charge is None:
+                result.diagnostics.append(Diagnostic(
+                    "missing_ammo", Severity.WARNING, "Weapon has no charge loaded",
+                    detail=f"type {m.type_id}", suggested_action="Load a compatible charge.",
+                    contextual=False, params={"type_id": m.type_id}))
+                continue
+            entry, bre = _breacher_entry(ev, m, provider, target)
+            breacher_entries.append(bre)
+            ranges.append(entry)
+            continue
+        if is_vorton:
+            if m.charge is None:
+                result.diagnostics.append(Diagnostic(
+                    "missing_ammo", Severity.WARNING, "Weapon has no charge loaded",
+                    detail=f"type {m.type_id}", suggested_action="Load a compatible charge.",
+                    contextual=False, params={"type_id": m.type_id}))
+                continue
+            entry, vo_dps, vo_volley = _vorton_entry(ev, m, provider, target)
+            if entry is None:
+                continue
+            vorton_dps += vo_dps
+            vorton_applied += entry.get("applied_dps") or 0.0
+            vorton_sustained += entry.get("sustained_dps") or vo_dps
+            total_volley += vo_volley
+            by_type = entry.pop("_by_type")
+            for d in A.DAMAGE_TYPES:
+                damage_by_type[d] += by_type[d]
+            ranges.append(entry)
+            continue
+
         if m.charge is None:
             result.diagnostics.append(Diagnostic(
                 "missing_ammo", Severity.WARNING, "Weapon has no charge loaded",
@@ -990,22 +1097,41 @@ def _offence(ev: EvaluatedFit, provider, op_profile: OperatingProfile, result) -
                 else:
                     drone_dps_applied += d_applied
 
-    total = turret_dps + missile_dps + drone_dps
-    dist = ({d: round(damage_by_type[d] / total * 100, 1) for d in A.DAMAGE_TYPES}
-            if total > 0 else {d: 0.0 for d in A.DAMAGE_TYPES})
+    # WS-9: breacher DoT does not stack across launchers — only the strongest instance's
+    # damage lands, so the fit's breacher contribution is the max single launcher, not the
+    # sum (mirrors CCP: multiple pods on one target refresh, they don't add).
+    breacher_dps = max((b["dps"] for b in breacher_entries), default=0.0)
+    breacher_applied = max((b["applied"] for b in breacher_entries), default=0.0)
+    breacher_sustained = max((b["sustained"] for b in breacher_entries), default=0.0)
+
+    # Typed damage (turrets/missiles/drones/smartbombs/vorton) drives the damage-type mix;
+    # breacher DoT is typeless (bypasses resists) so it is excluded from the distribution but
+    # still counted into total_dps.
+    typed_total = (turret_dps + missile_dps + drone_dps + smartbomb_dps + vorton_dps)
+    total = typed_total + breacher_dps
+    dist = ({d: round(damage_by_type[d] / typed_total * 100, 1) for d in A.DAMAGE_TYPES}
+            if typed_total > 0 else {d: 0.0 for d in A.DAMAGE_TYPES})
     result.traces["dps"] = AttributeTrace(
         "dps", 0.0, round(total, 1), "dps",
         [Contribution("Turrets", "module", f"{turret_dps:.1f} dps"),
          Contribution("Missiles", "module", f"{missile_dps:.1f} dps"),
-         Contribution("Drones", "module", f"{drone_dps:.1f} dps")])
+         Contribution("Drones", "module", f"{drone_dps:.1f} dps"),
+         Contribution("Smartbombs", "module", f"{smartbomb_dps:.1f} dps"),
+         Contribution("Vorton", "module", f"{vorton_dps:.1f} dps"),
+         Contribution("Breacher", "module", f"{breacher_dps:.1f} dps")])
     if weapons == 0 and drone_dps == 0:
         result.unsupported.append("no_weapons_detected")
     out = {
         "turret_dps": round(turret_dps, 1), "missile_dps": round(missile_dps, 1),
         "drone_dps": round(drone_dps, 1),
+        "smartbomb_dps": round(smartbomb_dps, 1), "vorton_dps": round(vorton_dps, 1),
+        "breacher_dps": round(breacher_dps, 1),
         "total_dps": round(total, 1), "volley": round(total_volley, 1),
-        # Drones fire continuously (no magazine), so they sustain by definition.
-        "total_sustained_dps": round(sustained_weapon_dps + drone_dps, 1),
+        # Drones fire continuously (no magazine), so they sustain by definition. Smartbombs
+        # have no magazine (sustained == dps); vorton reloads like a turret; a breacher's DoT
+        # is continuous (it outlasts its own fire interval), so it sustains at its dot dps.
+        "total_sustained_dps": round(sustained_weapon_dps + drone_dps + smartbomb_sustained
+                                     + vorton_sustained + breacher_sustained, 1),
         "damage_distribution": dist,
         "weapons": ranges,
     }
@@ -1019,10 +1145,16 @@ def _offence(ev: EvaluatedFit, provider, op_profile: OperatingProfile, result) -
         out["drone_dps_applied"] = round(drone_dps_applied, 1)
         out["drone_application"] = (round(drone_dps_applied / drone_dps, 3)
                                     if drone_dps > 0 else None)
+        out["smartbomb_dps_applied"] = round(smartbomb_applied, 1)
+        out["vorton_dps_applied"] = round(vorton_applied, 1)
+        out["breacher_dps_applied"] = round(breacher_applied, 1)
         # Applied total sums only the classes we could compute; a weapon excluded because
         # the target profile was incomplete flips applied_complete to False (never faked).
+        # Smartbombs (area, auto-hit) and breacher DoT always apply; vorton applies its AoE
+        # factor. All are always computable from the target profile, so none gate the flag.
         out["total_applied_dps"] = round(
-            turret_dps_applied + missile_dps_applied + drone_dps_applied, 1)
+            turret_dps_applied + missile_dps_applied + drone_dps_applied
+            + smartbomb_applied + vorton_applied + breacher_applied, 1)
         out["applied_complete"] = applied_complete
         # Legacy field (pre-WS-2): only missiles applied, turrets/drones raw. Kept so older
         # saved renders never KeyError; superseded by total_applied_dps above.
@@ -1030,7 +1162,8 @@ def _offence(ev: EvaluatedFit, provider, op_profile: OperatingProfile, result) -
             turret_dps + missile_dps_applied + drone_dps, 1)
         out["target"] = {"signature_radius": target.signature_radius,
                          "velocity": target.velocity, "label": target.label,
-                         "distance_m": target.target_distance_m, "angular": angular}
+                         "distance_m": target.target_distance_m, "angular": angular,
+                         "hp": target.target_hp}
     return out
 
 
@@ -1057,6 +1190,126 @@ def _drone_applied(ev: EvaluatedFit, dr: Entity, d_dps: float, target, angular,
         ev.value(dr, A.FALLOFF) if A.FALLOFF in dr.base else 0.0,
         angular, target.signature_radius, target.target_distance_m)
     return d_dps * _applied_turret_multiplier(cth)
+
+
+# --------------------------------------------------------------------------- #
+# Exotic weapons (WS-9): smartbombs, vorton projectors, breacher pods
+# --------------------------------------------------------------------------- #
+def _smartbomb_entry(ev: EvaluatedFit, m: Entity, provider, target):
+    """A smartbomb: an area pulse dealing its own em/th/kin/exp damage to everything within
+    empFieldRange every cycle. Damage lives on the MODULE (no charge), so there is no magazine
+    and sustained == burst. Being an area effect it auto-hits anything in range, so applied ==
+    raw with an ``aoe`` note (documented in the matrix: no single-target tracking applies)."""
+    shot = {d: ev.value(m, A.CHARGE_DAMAGE[d]) if A.CHARGE_DAMAGE[d] in m.base else 0.0
+            for d in A.DAMAGE_TYPES}
+    volley = sum(shot.values())
+    cycle_s = ev.value(m, ATTR_DURATION) / 1000.0
+    dps = volley / cycle_s if cycle_s > 0 else 0.0
+    info = provider.type_info(m.type_id) or {}
+    entry = {
+        "type_id": m.type_id, "name": info.get("name", ""), "kind": "smartbomb",
+        "volley": round(volley, 1), "dps": round(dps, 1),
+        "range_m": round(ev.value(m, ATTR_EMP_FIELD_RANGE), 0),
+        # No charge → no magazine → never reloads → sustained equals burst.
+        "magazine_shots": None, "time_to_empty_s": None, "reload_s": None,
+        "sustained_dps": round(dps, 1),
+        "_by_type": {d: (shot[d] / cycle_s if cycle_s > 0 else 0.0)
+                     for d in A.DAMAGE_TYPES},
+    }
+    if target is not None:
+        entry["applied_dps"] = round(dps, 1)
+        entry["applied_multiplier"] = 1.0
+        entry["applied_note"] = "aoe"
+    return entry, dps, volley
+
+
+def _vorton_entry(ev: EvaluatedFit, m: Entity, provider, target):
+    """A vorton projector: fires a Condenser Pack that detonates on the primary target for the
+    charge's damage × the projector's damageMultiplier, then arcs to nearby secondaries. Only
+    the PRIMARY-target hit is modelled in v1 — the arc to arc_targets within arc_range is
+    reported for context but its extra damage is NOT counted (documented in the matrix). The
+    projector carries the missile-style AoE attributes, so applied damage uses the same
+    explosion size/velocity formula the missile path uses. Returns ``(None, 0, 0)`` if the
+    charge yields no damage."""
+    ch = m.charge
+    shot = {d: ev.value(ch, A.CHARGE_DAMAGE[d]) if A.CHARGE_DAMAGE[d] in ch.base else 0.0
+            for d in A.DAMAGE_TYPES}
+    shot_total = sum(shot.values())
+    dmg_mult = ev.value(m, A.DAMAGE_MULTIPLIER) if A.DAMAGE_MULTIPLIER in m.base else 1.0
+    rof_s = ev.value(m, A.RATE_OF_FIRE) / 1000.0
+    if rof_s <= 0 or shot_total <= 0:
+        return None, 0.0, 0.0
+    volley = shot_total * dmg_mult
+    dps = volley / rof_s
+    info = provider.type_info(m.type_id) or {}
+    entry = {
+        "type_id": m.type_id, "name": info.get("name", ""), "kind": "vorton",
+        "volley": round(volley, 1), "dps": round(dps, 1),
+        "range_m": round(ev.value(m, A.OPTIMAL_RANGE), 0),
+        "arc_range_m": (round(ev.value(m, ATTR_VORTON_ARC_RANGE), 0)
+                        if ATTR_VORTON_ARC_RANGE in m.base else None),
+        "arc_targets": (int(ev.value(m, ATTR_VORTON_ARC_TARGETS))
+                        if ATTR_VORTON_ARC_TARGETS in m.base else None),
+        "_by_type": {d: (shot[d] * dmg_mult) / rof_s for d in A.DAMAGE_TYPES},
+    }
+    if target is not None:
+        # AoE application attrs live on the projector MODULE (not the charge, unlike missiles).
+        factor = _missile_application(
+            target.signature_radius, target.velocity,
+            ev.value(m, A.AOE_CLOUD_SIZE), ev.value(m, A.AOE_VELOCITY),
+            ev.value(m, A.AOE_DAMAGE_REDUCTION_FACTOR))
+        entry["applied_dps"] = round(dps * factor, 1)
+        entry["applied_multiplier"] = round(factor, 3)
+    sustained_fields, _sustained = _sustained_entry(ev, m, volley, dps, rof_s)
+    entry.update(sustained_fields)
+    return entry, dps, volley
+
+
+def _breacher_entry(ev: EvaluatedFit, m: Entity, provider, target):
+    """A breacher pod launcher: the pod attaches a non-stacking damage-over-time. Each 1-second
+    tick deals ``min(flat_tick, pct_tick% × target_total_HP)``; without the target's HP only the
+    flat arm is known. The pod refires (RoF) before its DoT (dot_duration_s) expires and DoTs do
+    not stack, so one launcher keeps the DoT continuously up → its dps and sustained both equal
+    the per-tick damage. Returns ``(entry, contribution)`` where ``contribution`` carries the
+    raw / applied / sustained dps the caller caps across launchers (non-stacking)."""
+    ch = m.charge
+    flat_tick = (ev.value(ch, ATTR_DOT_MAX_DAMAGE_PER_TICK)
+                 if ATTR_DOT_MAX_DAMAGE_PER_TICK in ch.base else 0.0)
+    pct_tick = (ev.value(ch, ATTR_DOT_MAX_HP_PCT_PER_TICK)
+                if ATTR_DOT_MAX_HP_PCT_PER_TICK in ch.base else 0.0)
+    dot_duration_s = ((ev.value(ch, ATTR_DOT_DURATION) / 1000.0)
+                      if ATTR_DOT_DURATION in ch.base else 0.0)
+    flat_dps = flat_tick / _DOT_TICK_S
+    info = provider.type_info(m.type_id) or {}
+    entry = {
+        "type_id": m.type_id, "name": info.get("name", ""), "kind": "breacher",
+        "flat_tick": round(flat_tick, 1),
+        "pct_tick_of_max_hp": round(pct_tick, 3),
+        "dot_duration_s": round(dot_duration_s, 1),
+        # Raw (unapplied) headline is the flat arm; dps counts the flat arm toward total_dps.
+        "dot_dps": round(flat_dps, 1),
+        "dps": round(flat_dps, 1),
+        "volley": round(flat_tick, 1),                # one tick's damage
+    }
+    applied_dps = flat_dps
+    if target is not None:
+        if target.target_hp is not None and target.target_hp > 0:
+            pct_arm = (pct_tick / 100.0) * target.target_hp
+            tick = min(flat_tick, pct_arm) if flat_tick > 0 else pct_arm
+            applied_dps = tick / _DOT_TICK_S
+            entry["applied_dps"] = round(applied_dps, 1)
+            entry["dot_dps"] = round(applied_dps, 1)  # both arms resolved with known HP
+        else:
+            entry["applied_dps"] = round(flat_dps, 1)
+            entry["applied_reason"] = "target_hp_unknown"
+    # The DoT is continuous while ammo lasts (refreshes each RoF, never gaps), so sustained ==
+    # the raw dot dps. The pod magazine + reload are reported for reference only.
+    shots = _magazine_shots(ev, m)
+    entry["magazine_shots"] = shots or None
+    entry["reload_s"] = (round(ev.value(m, ATTR_RELOAD_TIME) / 1000.0, 1)
+                         if ATTR_RELOAD_TIME in m.base else None)
+    entry["sustained_dps"] = round(flat_dps, 1)
+    return entry, {"dps": flat_dps, "applied": applied_dps, "sustained": flat_dps}
 
 
 # --------------------------------------------------------------------------- #
@@ -1186,6 +1439,100 @@ def _ewar(ev: EvaluatedFit) -> dict:
                      falloff_bonus=round(ev.value(m, 349) if 349 in m.base else 0.0, 1))
         entries.append(e)
     return {"modules": entries, "count": len(entries)}
+
+
+# --------------------------------------------------------------------------- #
+# Mining yield (WS-8): ore / ice / gas laser + mining-drone telemetry
+# --------------------------------------------------------------------------- #
+def _mining_kind(m: Entity) -> str:
+    """Classify a mining module as ore / ice / gas from its data (never by name).
+
+    * gas  — carries the miningClouds effect (a gas cloud harvester).
+    * ice  — requires the Ice Harvesting skill (an ice harvester; shares miningLaser with
+             ore lasers, so the required skill is the only data-driven discriminator).
+    * ore  — every other mining laser.
+    """
+    if EFFECT_MINING_CLOUDS in m.effect_ids:
+        return "gas"
+    for attr in A.REQUIRED_SKILL_ATTRS:
+        if m.base.get(attr) == float(SKILL_ICE_HARVESTING):
+            return "ice"
+    return "ore"
+
+
+def _mining_entry(ev: EvaluatedFit, ent: Entity, provider, kind: str) -> dict | None:
+    """One industry row for a mining module or drone. ``yield_per_cycle`` is the evaluated
+    miningAmount(77) — m³ of ore/gas per cycle, or the m³ of one ice block per cycle for an
+    ice harvester (CCP counts an ice cycle as a single 1000 m³ block). Residue (mining-waste)
+    fields are surfaced only when the module carries miningWasteProbability(3154)."""
+    yield_per_cycle = ev.value(ent, ATTR_MINING_AMOUNT)
+    cycle_s = ev.value(ent, ATTR_DURATION) / 1000.0
+    if yield_per_cycle <= 0 or cycle_s <= 0:
+        return None
+    per_hour = yield_per_cycle / cycle_s * 3600.0
+    info = provider.type_info(ent.type_id) or {}
+    entry = {
+        "type_id": ent.type_id,
+        "name": info.get("name", ""),
+        "kind": kind,
+        "yield_per_cycle": round(yield_per_cycle, 1),
+        "cycle_s": round(cycle_s, 2),
+        "m3_per_hour": round(per_hour, 1),
+    }
+    if ent.quantity > 1:
+        entry["quantity"] = ent.quantity
+    # Residue / mining-waste (a chance to lose part of the mined volume). Present on modulated
+    # strip miners, ice/gas harvesters and mining drones; absent on basic ore lasers.
+    if ATTR_MINING_WASTE_PROBABILITY in ent.base:
+        entry["waste_probability"] = round(ev.value(ent, ATTR_MINING_WASTE_PROBABILITY), 1)
+        entry["waste_volume_multiplier"] = round(
+            ev.value(ent, ATTR_MINING_WASTE_VOLUME_MULT), 3)
+    return entry, per_hour
+
+
+def _industry(ev: EvaluatedFit, provider) -> dict | None:
+    """Mining telemetry, or ``None`` when the fit has no mining modules/drones.
+
+    A mining module is an ACTIVE high-slot laser carrying the miningLaser or miningClouds
+    effect; a mining drone carries the mining effect. Each entry's per-cycle yield and cycle
+    time come straight from the evaluated graph (so hull bonuses and loaded crystals are
+    already folded in). ``by_kind`` gives m³/hour subtotals for the kinds actually present.
+    """
+    modules: list[dict] = []
+    per_hour_by_kind: dict[str, float] = {}
+
+    def _add(ent: Entity, kind: str):
+        made = _mining_entry(ev, ent, provider, kind)
+        if made is None:
+            return
+        entry, per_hour = made
+        modules.append(entry)
+        per_hour_by_kind[kind] = per_hour_by_kind.get(kind, 0.0) + per_hour
+
+    for m in ev.modules:
+        if m.slot != SlotKind.HIGH or not _active(m):
+            continue
+        if _MINING_MODULE_EFFECTS & m.effect_ids:
+            _add(m, _mining_kind(m))
+    for dr in ev.drones:
+        if EFFECT_MINING_DRONE in dr.effect_ids or ATTR_MINING_AMOUNT in dr.base:
+            # A drone entity carries ``quantity`` fielded drones; yield scales with it.
+            made = _mining_entry(ev, dr, provider, "drone")
+            if made is None:
+                continue
+            entry, per_hour = made
+            per_hour *= dr.quantity
+            entry["m3_per_hour"] = round(per_hour, 1)
+            modules.append(entry)
+            per_hour_by_kind["drone"] = per_hour_by_kind.get("drone", 0.0) + per_hour
+
+    if not modules:
+        return None
+    return {
+        "modules": modules,
+        "m3_per_hour_total": round(sum(per_hour_by_kind.values()), 1),
+        "by_kind": {k: round(v, 1) for k, v in per_hour_by_kind.items()},
+    }
 
 
 # --------------------------------------------------------------------------- #

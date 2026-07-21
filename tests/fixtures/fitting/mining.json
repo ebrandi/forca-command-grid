@@ -1,0 +1,6995 @@
+{
+"categories": [
+{
+"category_id": 6,
+"name": "Ship"
+},
+{
+"category_id": 7,
+"name": "Module"
+},
+{
+"category_id": 8,
+"name": "Charge"
+},
+{
+"category_id": 16,
+"name": "Skill"
+},
+{
+"category_id": 18,
+"name": "Drone"
+}
+],
+"dbuff_modifiers": [],
+"dbuffs": [],
+"dogma_attributes": [
+{
+"attribute_id": 3,
+"default_value": 0.0,
+"high_is_good": false,
+"name": "damage",
+"stackable": true
+},
+{
+"attribute_id": 4,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "mass",
+"stackable": false
+},
+{
+"attribute_id": 6,
+"default_value": 0.0,
+"high_is_good": false,
+"name": "capacitorNeed",
+"stackable": true
+},
+{
+"attribute_id": 9,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "hp",
+"stackable": true
+},
+{
+"attribute_id": 11,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "powerOutput",
+"stackable": true
+},
+{
+"attribute_id": 12,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "lowSlots",
+"stackable": true
+},
+{
+"attribute_id": 13,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "medSlots",
+"stackable": true
+},
+{
+"attribute_id": 14,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "hiSlots",
+"stackable": true
+},
+{
+"attribute_id": 15,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "powerLoad",
+"stackable": true
+},
+{
+"attribute_id": 19,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "powerToSpeed",
+"stackable": true
+},
+{
+"attribute_id": 21,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "warpFactor",
+"stackable": true
+},
+{
+"attribute_id": 30,
+"default_value": 0.0,
+"high_is_good": false,
+"name": "power",
+"stackable": true
+},
+{
+"attribute_id": 37,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "maxVelocity",
+"stackable": false
+},
+{
+"attribute_id": 38,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "capacity",
+"stackable": true
+},
+{
+"attribute_id": 47,
+"default_value": 1.0,
+"high_is_good": true,
+"name": "slots",
+"stackable": true
+},
+{
+"attribute_id": 48,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "cpuOutput",
+"stackable": true
+},
+{
+"attribute_id": 49,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "cpuLoad",
+"stackable": true
+},
+{
+"attribute_id": 50,
+"default_value": 0.0,
+"high_is_good": false,
+"name": "cpu",
+"stackable": true
+},
+{
+"attribute_id": 51,
+"default_value": 0.0,
+"high_is_good": false,
+"name": "speed",
+"stackable": false
+},
+{
+"attribute_id": 54,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "maxRange",
+"stackable": false
+},
+{
+"attribute_id": 55,
+"default_value": 0.0,
+"high_is_good": false,
+"name": "rechargeRate",
+"stackable": true
+},
+{
+"attribute_id": 64,
+"default_value": 1.0,
+"high_is_good": true,
+"name": "damageMultiplier",
+"stackable": false
+},
+{
+"attribute_id": 70,
+"default_value": 0.0,
+"high_is_good": false,
+"name": "agility",
+"stackable": false
+},
+{
+"attribute_id": 73,
+"default_value": 0.0,
+"high_is_good": false,
+"name": "duration",
+"stackable": true
+},
+{
+"attribute_id": 76,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "maxTargetRange",
+"stackable": false
+},
+{
+"attribute_id": 77,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "miningAmount",
+"stackable": true
+},
+{
+"attribute_id": 79,
+"default_value": 0.0,
+"high_is_good": false,
+"name": "scanSpeed",
+"stackable": false
+},
+{
+"attribute_id": 101,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "launcherSlotsLeft",
+"stackable": true
+},
+{
+"attribute_id": 102,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "turretSlotsLeft",
+"stackable": true
+},
+{
+"attribute_id": 104,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "warpScrambleStatus",
+"stackable": true
+},
+{
+"attribute_id": 109,
+"default_value": 1.0,
+"high_is_good": false,
+"name": "kineticDamageResonance",
+"stackable": false
+},
+{
+"attribute_id": 110,
+"default_value": 1.0,
+"high_is_good": false,
+"name": "thermalDamageResonance",
+"stackable": false
+},
+{
+"attribute_id": 111,
+"default_value": 1.0,
+"high_is_good": false,
+"name": "explosiveDamageResonance",
+"stackable": false
+},
+{
+"attribute_id": 113,
+"default_value": 1.0,
+"high_is_good": false,
+"name": "emDamageResonance",
+"stackable": false
+},
+{
+"attribute_id": 124,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "mainColor",
+"stackable": true
+},
+{
+"attribute_id": 128,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "chargeSize",
+"stackable": true
+},
+{
+"attribute_id": 129,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "maxPassengers",
+"stackable": true
+},
+{
+"attribute_id": 136,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "uniformity",
+"stackable": true
+},
+{
+"attribute_id": 137,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "launcherGroup",
+"stackable": true
+},
+{
+"attribute_id": 151,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "agilityBonus",
+"stackable": true
+},
+{
+"attribute_id": 153,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "warpCapacitorNeed",
+"stackable": true
+},
+{
+"attribute_id": 154,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "proximityRange",
+"stackable": true
+},
+{
+"attribute_id": 157,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "orbitRange",
+"stackable": true
+},
+{
+"attribute_id": 161,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "volume",
+"stackable": true
+},
+{
+"attribute_id": 180,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "primaryAttribute",
+"stackable": true
+},
+{
+"attribute_id": 181,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "secondaryAttribute",
+"stackable": true
+},
+{
+"attribute_id": 182,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "requiredSkill1",
+"stackable": true
+},
+{
+"attribute_id": 183,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "requiredSkill2",
+"stackable": true
+},
+{
+"attribute_id": 184,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "requiredSkill3",
+"stackable": true
+},
+{
+"attribute_id": 188,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "cargoScanResistance",
+"stackable": true
+},
+{
+"attribute_id": 192,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "maxLockedTargets",
+"stackable": true
+},
+{
+"attribute_id": 193,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "maxAttackTargets",
+"stackable": true
+},
+{
+"attribute_id": 207,
+"default_value": 1.0,
+"high_is_good": true,
+"name": "miningAmountMultiplier",
+"stackable": false
+},
+{
+"attribute_id": 208,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "scanRadarStrength",
+"stackable": false
+},
+{
+"attribute_id": 209,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "scanLadarStrength",
+"stackable": false
+},
+{
+"attribute_id": 210,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "scanMagnetometricStrength",
+"stackable": false
+},
+{
+"attribute_id": 211,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "scanGravimetricStrength",
+"stackable": false
+},
+{
+"attribute_id": 217,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "propulsionGraphicID",
+"stackable": true
+},
+{
+"attribute_id": 219,
+"default_value": 1.0,
+"high_is_good": true,
+"name": "manufactureTimeMultiplier",
+"stackable": true
+},
+{
+"attribute_id": 246,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "gfxBoosterID",
+"stackable": true
+},
+{
+"attribute_id": 263,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "shieldCapacity",
+"stackable": true
+},
+{
+"attribute_id": 265,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "armorHP",
+"stackable": true
+},
+{
+"attribute_id": 267,
+"default_value": 1.0,
+"high_is_good": false,
+"name": "armorEmDamageResonance",
+"stackable": false
+},
+{
+"attribute_id": 268,
+"default_value": 1.0,
+"high_is_good": false,
+"name": "armorExplosiveDamageResonance",
+"stackable": false
+},
+{
+"attribute_id": 269,
+"default_value": 1.0,
+"high_is_good": false,
+"name": "armorKineticDamageResonance",
+"stackable": false
+},
+{
+"attribute_id": 270,
+"default_value": 1.0,
+"high_is_good": false,
+"name": "armorThermalDamageResonance",
+"stackable": false
+},
+{
+"attribute_id": 271,
+"default_value": 1.0,
+"high_is_good": false,
+"name": "shieldEmDamageResonance",
+"stackable": false
+},
+{
+"attribute_id": 272,
+"default_value": 1.0,
+"high_is_good": false,
+"name": "shieldExplosiveDamageResonance",
+"stackable": false
+},
+{
+"attribute_id": 273,
+"default_value": 1.0,
+"high_is_good": false,
+"name": "shieldKineticDamageResonance",
+"stackable": false
+},
+{
+"attribute_id": 274,
+"default_value": 1.0,
+"high_is_good": false,
+"name": "shieldThermalDamageResonance",
+"stackable": false
+},
+{
+"attribute_id": 275,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "skillTimeConstant",
+"stackable": true
+},
+{
+"attribute_id": 276,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "skillPoints",
+"stackable": true
+},
+{
+"attribute_id": 277,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "requiredSkill1Level",
+"stackable": true
+},
+{
+"attribute_id": 278,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "requiredSkill2Level",
+"stackable": true
+},
+{
+"attribute_id": 279,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "requiredSkill3Level",
+"stackable": true
+},
+{
+"attribute_id": 280,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "skillLevel",
+"stackable": true
+},
+{
+"attribute_id": 283,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "droneCapacity",
+"stackable": true
+},
+{
+"attribute_id": 292,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "damageMultiplierBonus",
+"stackable": true
+},
+{
+"attribute_id": 317,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "capNeedBonus",
+"stackable": true
+},
+{
+"attribute_id": 352,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "maxActiveDrones",
+"stackable": true
+},
+{
+"attribute_id": 353,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "maxActiveDroneBonus",
+"stackable": true
+},
+{
+"attribute_id": 378,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "refiningYieldPercentage",
+"stackable": true
+},
+{
+"attribute_id": 379,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "refiningYieldMutator",
+"stackable": true
+},
+{
+"attribute_id": 387,
+"default_value": 1.0,
+"high_is_good": true,
+"name": "copySpeedPercent",
+"stackable": true
+},
+{
+"attribute_id": 422,
+"default_value": 1.0,
+"high_is_good": true,
+"name": "techLevel",
+"stackable": true
+},
+{
+"attribute_id": 424,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "cpuOutputBonus2",
+"stackable": true
+},
+{
+"attribute_id": 434,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "miningAmountBonus",
+"stackable": true
+},
+{
+"attribute_id": 440,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "manufacturingTimeBonus",
+"stackable": true
+},
+{
+"attribute_id": 441,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "turretSpeeBonus",
+"stackable": true
+},
+{
+"attribute_id": 452,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "copySpeedBonus",
+"stackable": true
+},
+{
+"attribute_id": 462,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "shipBonusGF",
+"stackable": true
+},
+{
+"attribute_id": 479,
+"default_value": 0.0,
+"high_is_good": false,
+"name": "shieldRechargeRate",
+"stackable": true
+},
+{
+"attribute_id": 482,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "capacitorCapacity",
+"stackable": true
+},
+{
+"attribute_id": 484,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "shieldUniformity",
+"stackable": true
+},
+{
+"attribute_id": 486,
+"default_value": 5.0,
+"high_is_good": true,
+"name": "shipBonusGC",
+"stackable": true
+},
+{
+"attribute_id": 511,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "shipScanResistance",
+"stackable": true
+},
+{
+"attribute_id": 524,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "armorUniformity",
+"stackable": true
+},
+{
+"attribute_id": 525,
+"default_value": 1.0,
+"high_is_good": true,
+"name": "structureUniformity",
+"stackable": true
+},
+{
+"attribute_id": 552,
+"default_value": 100.0,
+"high_is_good": false,
+"name": "signatureRadius",
+"stackable": false
+},
+{
+"attribute_id": 564,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "scanResolution",
+"stackable": false
+},
+{
+"attribute_id": 586,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "shipBonusGF2",
+"stackable": true
+},
+{
+"attribute_id": 600,
+"default_value": 3.0,
+"high_is_good": true,
+"name": "warpSpeedMultiplier",
+"stackable": false
+},
+{
+"attribute_id": 604,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "chargeGroup1",
+"stackable": true
+},
+{
+"attribute_id": 633,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "metaLevelOld",
+"stackable": true
+},
+{
+"attribute_id": 658,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "shipBonusGC2",
+"stackable": true
+},
+{
+"attribute_id": 661,
+"default_value": 1.0,
+"high_is_good": true,
+"name": "maxDirectionalVelocity",
+"stackable": true
+},
+{
+"attribute_id": 662,
+"default_value": 1.0,
+"high_is_good": true,
+"name": "minTargetVelDmgMultiplier",
+"stackable": true
+},
+{
+"attribute_id": 714,
+"default_value": 0.0,
+"high_is_good": false,
+"name": "consumptionQuantity",
+"stackable": true
+},
+{
+"attribute_id": 738,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "shipBonusGD1",
+"stackable": true
+},
+{
+"attribute_id": 739,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "shipBonusGD2",
+"stackable": true
+},
+{
+"attribute_id": 763,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "maxGroupActive",
+"stackable": true
+},
+{
+"attribute_id": 780,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "iceHarvestCycleBonus",
+"stackable": true
+},
+{
+"attribute_id": 782,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "specializationAsteroidYieldMultiplier",
+"stackable": true
+},
+{
+"attribute_id": 783,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "crystalVolatilityChance",
+"stackable": true
+},
+{
+"attribute_id": 784,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "crystalVolatilityDamage",
+"stackable": true
+},
+{
+"attribute_id": 785,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "unfitCapCost",
+"stackable": true
+},
+{
+"attribute_id": 786,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "crystalsGetDamaged",
+"stackable": true
+},
+{
+"attribute_id": 789,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "specialtyMiningAmount",
+"stackable": true
+},
+{
+"attribute_id": 906,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "disallowEarlyDeactivation",
+"stackable": true
+},
+{
+"attribute_id": 1047,
+"default_value": 1.0,
+"high_is_good": true,
+"name": "canNotBeTrainedOnTrial",
+"stackable": true
+},
+{
+"attribute_id": 1132,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "upgradeCapacity",
+"stackable": true
+},
+{
+"attribute_id": 1137,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "rigSlots",
+"stackable": true
+},
+{
+"attribute_id": 1154,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "upgradeSlotsLeft",
+"stackable": true
+},
+{
+"attribute_id": 1178,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "heatCapacityHi",
+"stackable": true
+},
+{
+"attribute_id": 1179,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "heatDissipationRateHi",
+"stackable": true
+},
+{
+"attribute_id": 1196,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "heatDissipationRateMed",
+"stackable": true
+},
+{
+"attribute_id": 1198,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "heatDissipationRateLow",
+"stackable": true
+},
+{
+"attribute_id": 1199,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "heatCapacityMed",
+"stackable": true
+},
+{
+"attribute_id": 1200,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "heatCapacityLow",
+"stackable": true
+},
+{
+"attribute_id": 1224,
+"default_value": 1.0,
+"high_is_good": true,
+"name": "heatGenerationMultiplier",
+"stackable": true
+},
+{
+"attribute_id": 1259,
+"default_value": 1.0,
+"high_is_good": true,
+"name": "heatAttenuationHi",
+"stackable": true
+},
+{
+"attribute_id": 1261,
+"default_value": 1.0,
+"high_is_good": true,
+"name": "heatAttenuationMed",
+"stackable": true
+},
+{
+"attribute_id": 1262,
+"default_value": 1.0,
+"high_is_good": true,
+"name": "heatAttenuationLow",
+"stackable": true
+},
+{
+"attribute_id": 1271,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "droneBandwidth",
+"stackable": true
+},
+{
+"attribute_id": 1272,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "droneBandwidthUsed",
+"stackable": true
+},
+{
+"attribute_id": 1281,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "baseWarpSpeed",
+"stackable": true
+},
+{
+"attribute_id": 1285,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "requiredSkill4",
+"stackable": true
+},
+{
+"attribute_id": 1286,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "requiredSkill4Level",
+"stackable": true
+},
+{
+"attribute_id": 1296,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "consumptionQuantityBonusPercentage",
+"stackable": true
+},
+{
+"attribute_id": 1298,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "canFitShipGroup01",
+"stackable": true
+},
+{
+"attribute_id": 1299,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "canFitShipGroup02",
+"stackable": true
+},
+{
+"attribute_id": 1547,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "rigSize",
+"stackable": true
+},
+{
+"attribute_id": 1555,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "fwLpKill",
+"stackable": true
+},
+{
+"attribute_id": 1556,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "generalMiningHoldCapacity",
+"stackable": true
+},
+{
+"attribute_id": 1625,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "shipBonus3GF",
+"stackable": true
+},
+{
+"attribute_id": 1692,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "metaGroupID",
+"stackable": true
+},
+{
+"attribute_id": 1768,
+"default_value": 0.0,
+"high_is_good": false,
+"name": "typeColorScheme",
+"stackable": false
+},
+{
+"attribute_id": 1795,
+"default_value": 10000.0,
+"high_is_good": false,
+"name": "reloadTime",
+"stackable": true
+},
+{
+"attribute_id": 1842,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "miningFrigatesBonusOreMiningYield",
+"stackable": true
+},
+{
+"attribute_id": 1891,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "allowedInCapIndustrialMaintenanceBay",
+"stackable": true
+},
+{
+"attribute_id": 2014,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "shipBonusGC3",
+"stackable": true
+},
+{
+"attribute_id": 2045,
+"default_value": 1.0,
+"high_is_good": false,
+"name": "energyWarfareResistance",
+"stackable": false
+},
+{
+"attribute_id": 2112,
+"default_value": 1.0,
+"high_is_good": false,
+"name": "sensorDampenerResistance",
+"stackable": true
+},
+{
+"attribute_id": 2113,
+"default_value": 1.0,
+"high_is_good": false,
+"name": "weaponDisruptionResistance",
+"stackable": true
+},
+{
+"attribute_id": 2114,
+"default_value": 1.0,
+"high_is_good": false,
+"name": "targetPainterResistance",
+"stackable": true
+},
+{
+"attribute_id": 2115,
+"default_value": 1.0,
+"high_is_good": false,
+"name": "stasisWebifierResistance",
+"stackable": true
+},
+{
+"attribute_id": 2116,
+"default_value": 1.0,
+"high_is_good": true,
+"name": "remoteRepairImpedance",
+"stackable": true
+},
+{
+"attribute_id": 2189,
+"default_value": 0.05,
+"high_is_good": false,
+"name": "fighterAbilityAntiFighterMissileResistance",
+"stackable": true
+},
+{
+"attribute_id": 2253,
+"default_value": 1.0,
+"high_is_good": false,
+"name": "ECMResistance",
+"stackable": true
+},
+{
+"attribute_id": 2450,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "isSkillIObsolete",
+"stackable": true
+},
+{
+"attribute_id": 2464,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "affectedByIndustrialInvulnModule",
+"stackable": true
+},
+{
+"attribute_id": 3148,
+"default_value": 0.0,
+"high_is_good": false,
+"name": "specializationAsteroidTypeList",
+"stackable": false
+},
+{
+"attribute_id": 3153,
+"default_value": 1.0,
+"high_is_good": false,
+"name": "miningWastedVolumeMultiplier",
+"stackable": false
+},
+{
+"attribute_id": 3154,
+"default_value": 0.0,
+"high_is_good": false,
+"name": "miningWasteProbability",
+"stackable": false
+},
+{
+"attribute_id": 3159,
+"default_value": 0.0,
+"high_is_good": false,
+"name": "specializationCrystalMiningWastedVolumeMultiplierBonus",
+"stackable": false
+},
+{
+"attribute_id": 3160,
+"default_value": 0.0,
+"high_is_good": false,
+"name": "specializationCrystalMiningWasteProbabilityBonus",
+"stackable": false
+},
+{
+"attribute_id": 3178,
+"default_value": 0.0,
+"high_is_good": false,
+"name": "shipRoleBonusIceHarvestingDuration",
+"stackable": true
+},
+{
+"attribute_id": 3181,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "miningBargeBonusOreMiningYield",
+"stackable": true
+},
+{
+"attribute_id": 3182,
+"default_value": 0.0,
+"high_is_good": false,
+"name": "miningBargeBonusIceHarvestingDuration",
+"stackable": true
+},
+{
+"attribute_id": 3183,
+"default_value": 0.0,
+"high_is_good": false,
+"name": "miningBargeBonusGasHarvestingDuration",
+"stackable": true
+},
+{
+"attribute_id": 3184,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "miningBargeBonusOreMiningRange",
+"stackable": true
+},
+{
+"attribute_id": 3185,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "miningBargeBonusIceHarvestingRange",
+"stackable": true
+},
+{
+"attribute_id": 3187,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "miningBargeBonusGeneralMiningHoldCapacity",
+"stackable": true
+},
+{
+"attribute_id": 3188,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "miningBargeBonusShieldCapacity",
+"stackable": true
+},
+{
+"attribute_id": 3189,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "miningBargeBonusArmorHP",
+"stackable": true
+},
+{
+"attribute_id": 3225,
+"default_value": 0.0,
+"high_is_good": false,
+"name": "shipRoleBonusGasHarvesterDuration",
+"stackable": true
+},
+{
+"attribute_id": 3228,
+"default_value": 0.0,
+"high_is_good": false,
+"name": "shipRoleBonusStripMinerActivationCost",
+"stackable": true
+},
+{
+"attribute_id": 3229,
+"default_value": 0.0,
+"high_is_good": false,
+"name": "shipRoleBonusIceHarvesterActivationCost",
+"stackable": true
+},
+{
+"attribute_id": 3230,
+"default_value": 0.0,
+"high_is_good": false,
+"name": "shipRoleBonusOreMiningDuration",
+"stackable": true
+},
+{
+"attribute_id": 3237,
+"default_value": 0.0,
+"high_is_good": false,
+"name": "miningFrigateBonusGasCloudHarvestingDuration",
+"stackable": true
+},
+{
+"attribute_id": 3239,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "shipRoleBonusGasHarvestingYield",
+"stackable": true
+},
+{
+"attribute_id": 3240,
+"default_value": 0.0,
+"high_is_good": false,
+"name": "miningFrigateBonusIceHarvestingDuration",
+"stackable": true
+},
+{
+"attribute_id": 3324,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "isIndustrialJumpConduitPassenger",
+"stackable": false
+},
+{
+"attribute_id": 3325,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "isIndustrialJumpPortalPassenger",
+"stackable": false
+},
+{
+"attribute_id": 5230,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "shipBonusNavyDestroyerGallente1",
+"stackable": true
+},
+{
+"attribute_id": 5232,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "shipBonusNavyDestroyerGallente2",
+"stackable": true
+},
+{
+"attribute_id": 5233,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "shipBonusNavyDestroyerGallente3",
+"stackable": true
+},
+{
+"attribute_id": 5682,
+"default_value": 1.0,
+"high_is_good": true,
+"name": "isCarrierJumpConduitPassenger",
+"stackable": false
+},
+{
+"attribute_id": 5796,
+"default_value": 2147483648000.0,
+"high_is_good": true,
+"name": "maxDirectionalScanRange",
+"stackable": true
+},
+{
+"attribute_id": 5955,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "OreMiningFrigateExecutiveShieldBoosterShipBonus",
+"stackable": true
+},
+{
+"attribute_id": 5967,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "miningCritChance",
+"stackable": true
+},
+{
+"attribute_id": 5969,
+"default_value": 0.0,
+"high_is_good": true,
+"name": "miningCritBonusYield",
+"stackable": true
+},
+{
+"attribute_id": 5978,
+"default_value": 0.0,
+"high_is_good": false,
+"name": "integratedMiningScanner",
+"stackable": false
+}
+],
+"dogma_effects": [
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 12,
+"falloff_attribute_id": null,
+"name": "hiPower",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 1,
+"effect_id": 16,
+"falloff_attribute_id": null,
+"name": "online",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": 73,
+"effect_category": 2,
+"effect_id": 17,
+"falloff_attribute_id": null,
+"name": "mining",
+"range_attribute_id": 54,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 42,
+"falloff_attribute_id": null,
+"name": "turretFitted",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": 6,
+"duration_attribute_id": 73,
+"effect_category": 2,
+"effect_id": 67,
+"falloff_attribute_id": null,
+"name": "miningLaser",
+"range_attribute_id": 54,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 132,
+"falloff_attribute_id": null,
+"name": "skillEffect",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 152,
+"falloff_attribute_id": null,
+"name": "skillBoostDamageMultiplierBonus",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 160,
+"falloff_attribute_id": null,
+"name": "mediumHybridTurretDamageMultiplierBonusPostPercentDamageMultiplierLocationShipModulesRequiringMediumHybridTurret",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 173,
+"falloff_attribute_id": null,
+"name": "smallHybridTurretDamageMultiplierBonusPostPercentDamageMultiplierLocationShipModulesRequiringSmallHybridTurret",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 232,
+"falloff_attribute_id": null,
+"name": "evasiveManuveringSkillBoostAgilityBonus",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 315,
+"falloff_attribute_id": null,
+"name": "dronesSkillBoostMaxActiveDroneBonus",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 316,
+"falloff_attribute_id": null,
+"name": "dronesMaxActiveDroneBonusModAddMaxActiveLocationChar",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 331,
+"falloff_attribute_id": null,
+"name": "refineryEfficiencySkillBoostRefiningYieldMutator",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 368,
+"falloff_attribute_id": null,
+"name": "gallenteFrigateSkillBoostCpuOutputBonus",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 389,
+"falloff_attribute_id": null,
+"name": "astrogeologySkillBoostMiningAmountBonus",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 391,
+"falloff_attribute_id": null,
+"name": "astrogeologyMiningAmountBonusPostPercentMiningAmountLocationShipModulesRequiringMining",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 395,
+"falloff_attribute_id": null,
+"name": "evasiveManeuveringAgilityBonusPostPercentAgilityShip",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 397,
+"falloff_attribute_id": null,
+"name": "electronicsCpuOutputBonusPostPercentCpuOutputLocationShipGroupComputer",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 412,
+"falloff_attribute_id": null,
+"name": "industrySkillBoostManufacturingTimeBonus",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 413,
+"falloff_attribute_id": null,
+"name": "gunnerySkillBoostTurretSpeeBonus",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 414,
+"falloff_attribute_id": null,
+"name": "gunneryTurretSpeeBonusPostPercentSpeedLocationShipModulesRequiringGunnery",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 425,
+"falloff_attribute_id": null,
+"name": "industryManufacturingTimeBonusPostPercentManufactureTimeMultiplierChar",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 430,
+"falloff_attribute_id": null,
+"name": "scienceSkillBoostCopySpeedBonus",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 431,
+"falloff_attribute_id": null,
+"name": "scienceCopySpeedBonusPostPercentCopySpeedPercentChar",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 435,
+"falloff_attribute_id": null,
+"name": "refineryEfficiencyRefiningYieldMutatorPostPercentRefiningYieldPercentageChar",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 468,
+"falloff_attribute_id": null,
+"name": "gallenteFrigateSkillLevelPreMulShipBonusGFShip",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 517,
+"falloff_attribute_id": null,
+"name": "gallenteCruiserSkillLevelPreMulShipBonusGCShip",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 562,
+"falloff_attribute_id": null,
+"name": "shipHTDmgBonusfixedGC",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 623,
+"falloff_attribute_id": null,
+"name": "miningDroneOperationMiningAmountBonusPostPercentMiningDroneAmountPercentChar",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 751,
+"falloff_attribute_id": null,
+"name": "gallenteFrigateSkillLevelPreMulShipBonusGF2Ship",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 804,
+"falloff_attribute_id": null,
+"name": "ammoInfluenceCapNeed",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 928,
+"falloff_attribute_id": null,
+"name": "gallenteCruiserSkillLevelPreMulShipBonusGC2Ship",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 1190,
+"falloff_attribute_id": null,
+"name": "iceHarvestCycleTimeModulesRequiringIceHarvesting",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 1191,
+"falloff_attribute_id": null,
+"name": "iceHarvestCycleTimeBonus",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 1200,
+"falloff_attribute_id": null,
+"name": "miningCrystalsMiningAtributesAdjustments",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 1212,
+"falloff_attribute_id": null,
+"name": "crystalMiningamountInfo2",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 2179,
+"falloff_attribute_id": null,
+"name": "shipBonusDroneHitpointsGC2",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 2188,
+"falloff_attribute_id": null,
+"name": "shipBonusDroneDamageMultiplierGC2",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 2250,
+"falloff_attribute_id": null,
+"name": "shipBonusDroneMiningAmountGC2",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": 6,
+"duration_attribute_id": 73,
+"effect_category": 2,
+"effect_id": 2726,
+"falloff_attribute_id": null,
+"name": "miningClouds",
+"range_attribute_id": 54,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 2727,
+"falloff_attribute_id": null,
+"name": "gasCloudHarvestingMaxGroupSkillLevel",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 3526,
+"falloff_attribute_id": null,
+"name": "cynosuralTheoryConsumptionBonus",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 3527,
+"falloff_attribute_id": null,
+"name": "skillConsumptionQuantityBonusPercentageSkillLevel",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 4600,
+"falloff_attribute_id": null,
+"name": "gallenteFrigateSkillLevelPreMulShipBonus3GFShip",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 5058,
+"falloff_attribute_id": null,
+"name": "miningYieldMultiplyPassive",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 5137,
+"falloff_attribute_id": null,
+"name": "miningFrigateSkillLevelOreMiningYieldBonus",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 5139,
+"falloff_attribute_id": null,
+"name": "miningFrigateBonusOreMiningYield",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 5280,
+"falloff_attribute_id": null,
+"name": "destroyerSkillLevelPreMulShipBonusGD1Ship",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 5281,
+"falloff_attribute_id": null,
+"name": "destroyerSkillLevelPreMulShipBonusGD2Ship",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 6044,
+"falloff_attribute_id": null,
+"name": "gallenteCruiserSkillLevelPreMulShipBonusGC3Ship",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 8224,
+"falloff_attribute_id": null,
+"name": "shipRoleBonusIceHarvestingDuration",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 8227,
+"falloff_attribute_id": null,
+"name": "miningBargeBonusOreMiningYield",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 8228,
+"falloff_attribute_id": null,
+"name": "miningBargeBonusIceHarvestingDuration",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 8229,
+"falloff_attribute_id": null,
+"name": "miningBargeBonusGasHarvestingDuration",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 8230,
+"falloff_attribute_id": null,
+"name": "miningBargeBonusOreMiningRange",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 8231,
+"falloff_attribute_id": null,
+"name": "miningBargeBonusIceHarvestingRange",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 8232,
+"falloff_attribute_id": null,
+"name": "miningBargeSkillLevelOreMiningYield",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 8233,
+"falloff_attribute_id": null,
+"name": "miningBargeSkillLevelIceHarvestingDuration",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 8234,
+"falloff_attribute_id": null,
+"name": "miningBargeSkillLevelGasHarvestingDuration",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 8235,
+"falloff_attribute_id": null,
+"name": "miningBargeSkillLevelOreMiningRange",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 8236,
+"falloff_attribute_id": null,
+"name": "miningBargeSkillLevelIceHarvestingRange",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 8240,
+"falloff_attribute_id": null,
+"name": "miningBargeSkillLevelGeneralMiningHoldCapacity",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 8241,
+"falloff_attribute_id": null,
+"name": "miningBargeSkillLevelShieldCapacity",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 8242,
+"falloff_attribute_id": null,
+"name": "miningBargeSkillLevelArmorHP",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 8300,
+"falloff_attribute_id": null,
+"name": "shipRoleBonusGasHarvestingDuration",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 8303,
+"falloff_attribute_id": null,
+"name": "shipRoleBonusStripMinerActivationCost",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 8304,
+"falloff_attribute_id": null,
+"name": "shipRoleBonusIceHarvestingActivationCost",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 8305,
+"falloff_attribute_id": null,
+"name": "shipRoleBonusOreMiningDuration",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 8313,
+"falloff_attribute_id": null,
+"name": "miningFrigateBonusGasCloudHarvestingDuration",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 8314,
+"falloff_attribute_id": null,
+"name": "miningFrigateSkillLevelGasCloudHarvesting",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 8315,
+"falloff_attribute_id": null,
+"name": "shipRoleBonusGasHarvestingYield",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 8318,
+"falloff_attribute_id": null,
+"name": "miningFrigateSkillLevelIceHarvestingDuration",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 11451,
+"falloff_attribute_id": null,
+"name": "destroyerSkillLevelPreMulShipBonusGallenteNavyDestroyer",
+"range_attribute_id": null,
+"tracking_attribute_id": null
+},
+{
+"discharge_attribute_id": null,
+"duration_attribute_id": null,
+"effect_category": 0,
+"effect_id": 12562,
+"falloff_attribute_id": null,
+"name": "miningFrigateSkillLevelPreMulShipBonusOreFrigateShieldBoosterbonus",
+"range_attribute_id": 54,
+"tracking_attribute_id": null
+}
+],
+"groups": [
+{
+"category_id": 6,
+"group_id": 25,
+"name": "Frigate"
+},
+{
+"category_id": 6,
+"group_id": 26,
+"name": "Cruiser"
+},
+{
+"category_id": 7,
+"group_id": 54,
+"name": "Mining Laser"
+},
+{
+"category_id": 18,
+"group_id": 101,
+"name": "Mining Drone"
+},
+{
+"category_id": 16,
+"group_id": 255,
+"name": "Gunnery"
+},
+{
+"category_id": 16,
+"group_id": 257,
+"name": "Spaceship Command"
+},
+{
+"category_id": 16,
+"group_id": 268,
+"name": "Production"
+},
+{
+"category_id": 16,
+"group_id": 270,
+"name": "Science"
+},
+{
+"category_id": 16,
+"group_id": 273,
+"name": "Drones"
+},
+{
+"category_id": 16,
+"group_id": 275,
+"name": "Navigation"
+},
+{
+"category_id": 6,
+"group_id": 463,
+"name": "Mining Barge"
+},
+{
+"category_id": 7,
+"group_id": 464,
+"name": "Strip Miner"
+},
+{
+"category_id": 8,
+"group_id": 482,
+"name": "Mining Crystal"
+},
+{
+"category_id": 7,
+"group_id": 483,
+"name": "Frequency Mining Laser"
+},
+{
+"category_id": 16,
+"group_id": 1216,
+"name": "Engineering"
+},
+{
+"category_id": 16,
+"group_id": 1218,
+"name": "Resource Processing"
+},
+{
+"category_id": 7,
+"group_id": 4138,
+"name": "Gas Cloud Harvesters"
+}
+],
+"modifiers": [
+{
+"domain": "itemID",
+"effect_id": 132,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 280,
+"modifying_attribute_id": 276,
+"operation": 2,
+"skill_type_id": null
+},
+{
+"domain": "itemID",
+"effect_id": 132,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 280,
+"modifying_attribute_id": 275,
+"operation": 9,
+"skill_type_id": null
+},
+{
+"domain": "itemID",
+"effect_id": 152,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 292,
+"modifying_attribute_id": 280,
+"operation": 0,
+"skill_type_id": null
+},
+{
+"domain": "shipID",
+"effect_id": 160,
+"func": "LocationRequiredSkillModifier",
+"group_id": null,
+"modified_attribute_id": 64,
+"modifying_attribute_id": 292,
+"operation": 6,
+"skill_type_id": 3304
+},
+{
+"domain": "shipID",
+"effect_id": 173,
+"func": "LocationRequiredSkillModifier",
+"group_id": null,
+"modified_attribute_id": 64,
+"modifying_attribute_id": 292,
+"operation": 6,
+"skill_type_id": 3301
+},
+{
+"domain": "itemID",
+"effect_id": 232,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 151,
+"modifying_attribute_id": 280,
+"operation": 0,
+"skill_type_id": null
+},
+{
+"domain": "itemID",
+"effect_id": 315,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 353,
+"modifying_attribute_id": 280,
+"operation": 0,
+"skill_type_id": null
+},
+{
+"domain": "charID",
+"effect_id": 316,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 352,
+"modifying_attribute_id": 353,
+"operation": 2,
+"skill_type_id": null
+},
+{
+"domain": "itemID",
+"effect_id": 331,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 379,
+"modifying_attribute_id": 280,
+"operation": 0,
+"skill_type_id": null
+},
+{
+"domain": "itemID",
+"effect_id": 368,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 424,
+"modifying_attribute_id": 280,
+"operation": 0,
+"skill_type_id": null
+},
+{
+"domain": "itemID",
+"effect_id": 389,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 434,
+"modifying_attribute_id": 280,
+"operation": 0,
+"skill_type_id": null
+},
+{
+"domain": "shipID",
+"effect_id": 391,
+"func": "LocationRequiredSkillModifier",
+"group_id": null,
+"modified_attribute_id": 77,
+"modifying_attribute_id": 434,
+"operation": 6,
+"skill_type_id": 3386
+},
+{
+"domain": "shipID",
+"effect_id": 395,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 70,
+"modifying_attribute_id": 151,
+"operation": 6,
+"skill_type_id": null
+},
+{
+"domain": "shipID",
+"effect_id": 397,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 48,
+"modifying_attribute_id": 424,
+"operation": 6,
+"skill_type_id": null
+},
+{
+"domain": "itemID",
+"effect_id": 412,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 440,
+"modifying_attribute_id": 280,
+"operation": 0,
+"skill_type_id": null
+},
+{
+"domain": "itemID",
+"effect_id": 413,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 441,
+"modifying_attribute_id": 280,
+"operation": 0,
+"skill_type_id": null
+},
+{
+"domain": "shipID",
+"effect_id": 414,
+"func": "LocationRequiredSkillModifier",
+"group_id": null,
+"modified_attribute_id": 51,
+"modifying_attribute_id": 441,
+"operation": 6,
+"skill_type_id": 3300
+},
+{
+"domain": "charID",
+"effect_id": 425,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 219,
+"modifying_attribute_id": 440,
+"operation": 6,
+"skill_type_id": null
+},
+{
+"domain": "itemID",
+"effect_id": 430,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 452,
+"modifying_attribute_id": 280,
+"operation": 0,
+"skill_type_id": null
+},
+{
+"domain": "charID",
+"effect_id": 431,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 387,
+"modifying_attribute_id": 452,
+"operation": 6,
+"skill_type_id": null
+},
+{
+"domain": "charID",
+"effect_id": 435,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 378,
+"modifying_attribute_id": 379,
+"operation": 6,
+"skill_type_id": null
+},
+{
+"domain": "shipID",
+"effect_id": 468,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 462,
+"modifying_attribute_id": 280,
+"operation": 0,
+"skill_type_id": null
+},
+{
+"domain": "shipID",
+"effect_id": 517,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 486,
+"modifying_attribute_id": 280,
+"operation": 0,
+"skill_type_id": null
+},
+{
+"domain": "shipID",
+"effect_id": 562,
+"func": "LocationRequiredSkillModifier",
+"group_id": null,
+"modified_attribute_id": 64,
+"modifying_attribute_id": 486,
+"operation": 6,
+"skill_type_id": 3304
+},
+{
+"domain": "charID",
+"effect_id": 623,
+"func": "OwnerRequiredSkillModifier",
+"group_id": null,
+"modified_attribute_id": 77,
+"modifying_attribute_id": 434,
+"operation": 6,
+"skill_type_id": 3438
+},
+{
+"domain": "shipID",
+"effect_id": 751,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 586,
+"modifying_attribute_id": 280,
+"operation": 0,
+"skill_type_id": null
+},
+{
+"domain": "otherID",
+"effect_id": 804,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 6,
+"modifying_attribute_id": 317,
+"operation": 6,
+"skill_type_id": null
+},
+{
+"domain": "shipID",
+"effect_id": 928,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 658,
+"modifying_attribute_id": 280,
+"operation": 0,
+"skill_type_id": null
+},
+{
+"domain": "shipID",
+"effect_id": 1190,
+"func": "LocationRequiredSkillModifier",
+"group_id": null,
+"modified_attribute_id": 73,
+"modifying_attribute_id": 780,
+"operation": 6,
+"skill_type_id": 16281
+},
+{
+"domain": "itemID",
+"effect_id": 1191,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 780,
+"modifying_attribute_id": 280,
+"operation": 0,
+"skill_type_id": null
+},
+{
+"domain": "otherID",
+"effect_id": 1200,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 77,
+"modifying_attribute_id": 782,
+"operation": 0,
+"skill_type_id": null
+},
+{
+"domain": "otherID",
+"effect_id": 1200,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 3153,
+"modifying_attribute_id": 3159,
+"operation": 2,
+"skill_type_id": null
+},
+{
+"domain": "otherID",
+"effect_id": 1200,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 3154,
+"modifying_attribute_id": 3160,
+"operation": 2,
+"skill_type_id": null
+},
+{
+"domain": "itemID",
+"effect_id": 1212,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 789,
+"modifying_attribute_id": 77,
+"operation": -1,
+"skill_type_id": null
+},
+{
+"domain": "charID",
+"effect_id": 2179,
+"func": "OwnerRequiredSkillModifier",
+"group_id": null,
+"modified_attribute_id": 265,
+"modifying_attribute_id": 658,
+"operation": 6,
+"skill_type_id": 3436
+},
+{
+"domain": "charID",
+"effect_id": 2179,
+"func": "OwnerRequiredSkillModifier",
+"group_id": null,
+"modified_attribute_id": 9,
+"modifying_attribute_id": 658,
+"operation": 6,
+"skill_type_id": 3436
+},
+{
+"domain": "charID",
+"effect_id": 2179,
+"func": "OwnerRequiredSkillModifier",
+"group_id": null,
+"modified_attribute_id": 263,
+"modifying_attribute_id": 658,
+"operation": 6,
+"skill_type_id": 3436
+},
+{
+"domain": "charID",
+"effect_id": 2188,
+"func": "OwnerRequiredSkillModifier",
+"group_id": null,
+"modified_attribute_id": 64,
+"modifying_attribute_id": 658,
+"operation": 6,
+"skill_type_id": 3436
+},
+{
+"domain": "charID",
+"effect_id": 2250,
+"func": "OwnerRequiredSkillModifier",
+"group_id": null,
+"modified_attribute_id": 77,
+"modifying_attribute_id": 658,
+"operation": 6,
+"skill_type_id": 3438
+},
+{
+"domain": "shipID",
+"effect_id": 2727,
+"func": "LocationGroupModifier",
+"group_id": 737,
+"modified_attribute_id": 763,
+"modifying_attribute_id": 280,
+"operation": 2,
+"skill_type_id": null
+},
+{
+"domain": "shipID",
+"effect_id": 3526,
+"func": "LocationRequiredSkillModifier",
+"group_id": null,
+"modified_attribute_id": 714,
+"modifying_attribute_id": 1296,
+"operation": 6,
+"skill_type_id": 21603
+},
+{
+"domain": "itemID",
+"effect_id": 3527,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 1296,
+"modifying_attribute_id": 280,
+"operation": 0,
+"skill_type_id": null
+},
+{
+"domain": "shipID",
+"effect_id": 4600,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 1625,
+"modifying_attribute_id": 280,
+"operation": 0,
+"skill_type_id": null
+},
+{
+"domain": "shipID",
+"effect_id": 5058,
+"func": "LocationRequiredSkillModifier",
+"group_id": null,
+"modified_attribute_id": 77,
+"modifying_attribute_id": 207,
+"operation": 4,
+"skill_type_id": 3386
+},
+{
+"domain": "shipID",
+"effect_id": 5137,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 1842,
+"modifying_attribute_id": 280,
+"operation": 4,
+"skill_type_id": null
+},
+{
+"domain": "shipID",
+"effect_id": 5139,
+"func": "LocationRequiredSkillModifier",
+"group_id": null,
+"modified_attribute_id": 77,
+"modifying_attribute_id": 1842,
+"operation": 6,
+"skill_type_id": 3386
+},
+{
+"domain": "shipID",
+"effect_id": 5280,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 738,
+"modifying_attribute_id": 280,
+"operation": 0,
+"skill_type_id": null
+},
+{
+"domain": "shipID",
+"effect_id": 5281,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 739,
+"modifying_attribute_id": 280,
+"operation": 0,
+"skill_type_id": null
+},
+{
+"domain": "shipID",
+"effect_id": 6044,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 2014,
+"modifying_attribute_id": 280,
+"operation": 0,
+"skill_type_id": null
+},
+{
+"domain": "shipID",
+"effect_id": 8224,
+"func": "LocationRequiredSkillModifier",
+"group_id": null,
+"modified_attribute_id": 73,
+"modifying_attribute_id": 3178,
+"operation": 6,
+"skill_type_id": 16281
+},
+{
+"domain": "shipID",
+"effect_id": 8227,
+"func": "LocationRequiredSkillModifier",
+"group_id": null,
+"modified_attribute_id": 77,
+"modifying_attribute_id": 3181,
+"operation": 6,
+"skill_type_id": 3386
+},
+{
+"domain": "shipID",
+"effect_id": 8228,
+"func": "LocationRequiredSkillModifier",
+"group_id": null,
+"modified_attribute_id": 73,
+"modifying_attribute_id": 3182,
+"operation": 6,
+"skill_type_id": 16281
+},
+{
+"domain": "shipID",
+"effect_id": 8229,
+"func": "LocationRequiredSkillModifier",
+"group_id": null,
+"modified_attribute_id": 73,
+"modifying_attribute_id": 3183,
+"operation": 6,
+"skill_type_id": 25544
+},
+{
+"domain": "shipID",
+"effect_id": 8230,
+"func": "LocationRequiredSkillModifier",
+"group_id": null,
+"modified_attribute_id": 54,
+"modifying_attribute_id": 3184,
+"operation": 6,
+"skill_type_id": 3386
+},
+{
+"domain": "shipID",
+"effect_id": 8231,
+"func": "LocationRequiredSkillModifier",
+"group_id": null,
+"modified_attribute_id": 54,
+"modifying_attribute_id": 3185,
+"operation": 6,
+"skill_type_id": 16281
+},
+{
+"domain": "shipID",
+"effect_id": 8232,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 3181,
+"modifying_attribute_id": 280,
+"operation": 4,
+"skill_type_id": null
+},
+{
+"domain": "shipID",
+"effect_id": 8233,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 3182,
+"modifying_attribute_id": 280,
+"operation": 4,
+"skill_type_id": null
+},
+{
+"domain": "shipID",
+"effect_id": 8234,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 3183,
+"modifying_attribute_id": 280,
+"operation": 4,
+"skill_type_id": null
+},
+{
+"domain": "shipID",
+"effect_id": 8235,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 3184,
+"modifying_attribute_id": 280,
+"operation": 4,
+"skill_type_id": null
+},
+{
+"domain": "shipID",
+"effect_id": 8236,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 3185,
+"modifying_attribute_id": 280,
+"operation": 4,
+"skill_type_id": null
+},
+{
+"domain": "shipID",
+"effect_id": 8240,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 3187,
+"modifying_attribute_id": 280,
+"operation": 4,
+"skill_type_id": null
+},
+{
+"domain": "shipID",
+"effect_id": 8241,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 3188,
+"modifying_attribute_id": 280,
+"operation": 4,
+"skill_type_id": null
+},
+{
+"domain": "shipID",
+"effect_id": 8242,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 3189,
+"modifying_attribute_id": 280,
+"operation": 4,
+"skill_type_id": null
+},
+{
+"domain": "shipID",
+"effect_id": 8300,
+"func": "LocationRequiredSkillModifier",
+"group_id": null,
+"modified_attribute_id": 73,
+"modifying_attribute_id": 3225,
+"operation": 6,
+"skill_type_id": 25544
+},
+{
+"domain": "shipID",
+"effect_id": 8303,
+"func": "LocationRequiredSkillModifier",
+"group_id": null,
+"modified_attribute_id": 6,
+"modifying_attribute_id": 3228,
+"operation": 6,
+"skill_type_id": 3386
+},
+{
+"domain": "shipID",
+"effect_id": 8304,
+"func": "LocationRequiredSkillModifier",
+"group_id": null,
+"modified_attribute_id": 6,
+"modifying_attribute_id": 3229,
+"operation": 6,
+"skill_type_id": 16281
+},
+{
+"domain": "shipID",
+"effect_id": 8305,
+"func": "LocationRequiredSkillModifier",
+"group_id": null,
+"modified_attribute_id": 73,
+"modifying_attribute_id": 3230,
+"operation": 6,
+"skill_type_id": 3386
+},
+{
+"domain": "shipID",
+"effect_id": 8313,
+"func": "LocationRequiredSkillModifier",
+"group_id": null,
+"modified_attribute_id": 73,
+"modifying_attribute_id": 3237,
+"operation": 6,
+"skill_type_id": 25544
+},
+{
+"domain": "shipID",
+"effect_id": 8314,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 3237,
+"modifying_attribute_id": 280,
+"operation": 4,
+"skill_type_id": null
+},
+{
+"domain": "shipID",
+"effect_id": 8315,
+"func": "LocationRequiredSkillModifier",
+"group_id": null,
+"modified_attribute_id": 77,
+"modifying_attribute_id": 3239,
+"operation": 6,
+"skill_type_id": 25544
+},
+{
+"domain": "shipID",
+"effect_id": 8318,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 3240,
+"modifying_attribute_id": 280,
+"operation": 4,
+"skill_type_id": null
+},
+{
+"domain": "shipID",
+"effect_id": 11451,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 5230,
+"modifying_attribute_id": 280,
+"operation": 0,
+"skill_type_id": null
+},
+{
+"domain": "shipID",
+"effect_id": 11451,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 5232,
+"modifying_attribute_id": 280,
+"operation": 0,
+"skill_type_id": null
+},
+{
+"domain": "shipID",
+"effect_id": 11451,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 5233,
+"modifying_attribute_id": 280,
+"operation": 0,
+"skill_type_id": null
+},
+{
+"domain": "shipID",
+"effect_id": 12562,
+"func": "ItemModifier",
+"group_id": null,
+"modified_attribute_id": 5955,
+"modifying_attribute_id": 280,
+"operation": 0,
+"skill_type_id": null
+}
+],
+"type_attributes": [
+{
+"attribute_id": 6,
+"type_id": 482,
+"value": 18.0
+},
+{
+"attribute_id": 9,
+"type_id": 482,
+"value": 40.0
+},
+{
+"attribute_id": 30,
+"type_id": 482,
+"value": 4.0
+},
+{
+"attribute_id": 47,
+"type_id": 482,
+"value": 1.0
+},
+{
+"attribute_id": 50,
+"type_id": 482,
+"value": 80.0
+},
+{
+"attribute_id": 54,
+"type_id": 482,
+"value": 12000.0
+},
+{
+"attribute_id": 73,
+"type_id": 482,
+"value": 15000.0
+},
+{
+"attribute_id": 77,
+"type_id": 482,
+"value": 15.0
+},
+{
+"attribute_id": 182,
+"type_id": 482,
+"value": 3386.0
+},
+{
+"attribute_id": 277,
+"type_id": 482,
+"value": 4.0
+},
+{
+"attribute_id": 422,
+"type_id": 482,
+"value": 2.0
+},
+{
+"attribute_id": 633,
+"type_id": 482,
+"value": 5.0
+},
+{
+"attribute_id": 1768,
+"type_id": 482,
+"value": 11347.0
+},
+{
+"attribute_id": 3153,
+"type_id": 482,
+"value": 1.0
+},
+{
+"attribute_id": 3154,
+"type_id": 482,
+"value": 34.0
+},
+{
+"attribute_id": 5967,
+"type_id": 482,
+"value": 0.01
+},
+{
+"attribute_id": 5969,
+"type_id": 482,
+"value": 2.0
+},
+{
+"attribute_id": 4,
+"type_id": 482,
+"value": 0.0
+},
+{
+"attribute_id": 38,
+"type_id": 482,
+"value": 0.0
+},
+{
+"attribute_id": 161,
+"type_id": 482,
+"value": 5.0
+},
+{
+"attribute_id": 3,
+"type_id": 626,
+"value": 0.0
+},
+{
+"attribute_id": 9,
+"type_id": 626,
+"value": 2000.0
+},
+{
+"attribute_id": 11,
+"type_id": 626,
+"value": 700.0
+},
+{
+"attribute_id": 12,
+"type_id": 626,
+"value": 5.0
+},
+{
+"attribute_id": 13,
+"type_id": 626,
+"value": 4.0
+},
+{
+"attribute_id": 14,
+"type_id": 626,
+"value": 4.0
+},
+{
+"attribute_id": 15,
+"type_id": 626,
+"value": 0.0
+},
+{
+"attribute_id": 19,
+"type_id": 626,
+"value": 1.0
+},
+{
+"attribute_id": 21,
+"type_id": 626,
+"value": 0.0
+},
+{
+"attribute_id": 37,
+"type_id": 626,
+"value": 195.0
+},
+{
+"attribute_id": 48,
+"type_id": 626,
+"value": 300.0
+},
+{
+"attribute_id": 49,
+"type_id": 626,
+"value": 0.0
+},
+{
+"attribute_id": 55,
+"type_id": 626,
+"value": 482500.0
+},
+{
+"attribute_id": 70,
+"type_id": 626,
+"value": 0.56
+},
+{
+"attribute_id": 76,
+"type_id": 626,
+"value": 52500.0
+},
+{
+"attribute_id": 79,
+"type_id": 626,
+"value": 5500.0
+},
+{
+"attribute_id": 101,
+"type_id": 626,
+"value": 0.0
+},
+{
+"attribute_id": 102,
+"type_id": 626,
+"value": 4.0
+},
+{
+"attribute_id": 109,
+"type_id": 626,
+"value": 0.67
+},
+{
+"attribute_id": 110,
+"type_id": 626,
+"value": 0.67
+},
+{
+"attribute_id": 111,
+"type_id": 626,
+"value": 0.67
+},
+{
+"attribute_id": 113,
+"type_id": 626,
+"value": 0.67
+},
+{
+"attribute_id": 124,
+"type_id": 626,
+"value": 16777215.0
+},
+{
+"attribute_id": 129,
+"type_id": 626,
+"value": 670.0
+},
+{
+"attribute_id": 136,
+"type_id": 626,
+"value": 1.0
+},
+{
+"attribute_id": 153,
+"type_id": 626,
+"value": 8.13e-07
+},
+{
+"attribute_id": 182,
+"type_id": 626,
+"value": 3332.0
+},
+{
+"attribute_id": 188,
+"type_id": 626,
+"value": 0.0
+},
+{
+"attribute_id": 192,
+"type_id": 626,
+"value": 6.0
+},
+{
+"attribute_id": 208,
+"type_id": 626,
+"value": 0.0
+},
+{
+"attribute_id": 209,
+"type_id": 626,
+"value": 0.0
+},
+{
+"attribute_id": 210,
+"type_id": 626,
+"value": 16.0
+},
+{
+"attribute_id": 211,
+"type_id": 626,
+"value": 0.0
+},
+{
+"attribute_id": 217,
+"type_id": 626,
+"value": 394.0
+},
+{
+"attribute_id": 246,
+"type_id": 626,
+"value": 394.0
+},
+{
+"attribute_id": 263,
+"type_id": 626,
+"value": 1100.0
+},
+{
+"attribute_id": 265,
+"type_id": 626,
+"value": 2000.0
+},
+{
+"attribute_id": 267,
+"type_id": 626,
+"value": 0.5
+},
+{
+"attribute_id": 268,
+"type_id": 626,
+"value": 0.9
+},
+{
+"attribute_id": 269,
+"type_id": 626,
+"value": 0.65
+},
+{
+"attribute_id": 270,
+"type_id": 626,
+"value": 0.65
+},
+{
+"attribute_id": 271,
+"type_id": 626,
+"value": 1.0
+},
+{
+"attribute_id": 272,
+"type_id": 626,
+"value": 0.5
+},
+{
+"attribute_id": 273,
+"type_id": 626,
+"value": 0.6
+},
+{
+"attribute_id": 274,
+"type_id": 626,
+"value": 0.8
+},
+{
+"attribute_id": 277,
+"type_id": 626,
+"value": 1.0
+},
+{
+"attribute_id": 283,
+"type_id": 626,
+"value": 125.0
+},
+{
+"attribute_id": 422,
+"type_id": 626,
+"value": 1.0
+},
+{
+"attribute_id": 479,
+"type_id": 626,
+"value": 1250000.0
+},
+{
+"attribute_id": 482,
+"type_id": 626,
+"value": 1450.0
+},
+{
+"attribute_id": 484,
+"type_id": 626,
+"value": 0.75
+},
+{
+"attribute_id": 486,
+"type_id": 626,
+"value": 5.0
+},
+{
+"attribute_id": 524,
+"type_id": 626,
+"value": 0.75
+},
+{
+"attribute_id": 525,
+"type_id": 626,
+"value": 1.0
+},
+{
+"attribute_id": 552,
+"type_id": 626,
+"value": 145.0
+},
+{
+"attribute_id": 564,
+"type_id": 626,
+"value": 280.0
+},
+{
+"attribute_id": 600,
+"type_id": 626,
+"value": 4.0
+},
+{
+"attribute_id": 633,
+"type_id": 626,
+"value": 0.0
+},
+{
+"attribute_id": 658,
+"type_id": 626,
+"value": 10.0
+},
+{
+"attribute_id": 661,
+"type_id": 626,
+"value": 2000.0
+},
+{
+"attribute_id": 662,
+"type_id": 626,
+"value": 0.25
+},
+{
+"attribute_id": 1132,
+"type_id": 626,
+"value": 400.0
+},
+{
+"attribute_id": 1137,
+"type_id": 626,
+"value": 3.0
+},
+{
+"attribute_id": 1154,
+"type_id": 626,
+"value": 3.0
+},
+{
+"attribute_id": 1178,
+"type_id": 626,
+"value": 100.0
+},
+{
+"attribute_id": 1179,
+"type_id": 626,
+"value": 0.01
+},
+{
+"attribute_id": 1196,
+"type_id": 626,
+"value": 0.01
+},
+{
+"attribute_id": 1198,
+"type_id": 626,
+"value": 0.01
+},
+{
+"attribute_id": 1199,
+"type_id": 626,
+"value": 100.0
+},
+{
+"attribute_id": 1200,
+"type_id": 626,
+"value": 100.0
+},
+{
+"attribute_id": 1224,
+"type_id": 626,
+"value": 0.75
+},
+{
+"attribute_id": 1259,
+"type_id": 626,
+"value": 0.63
+},
+{
+"attribute_id": 1261,
+"type_id": 626,
+"value": 0.63
+},
+{
+"attribute_id": 1262,
+"type_id": 626,
+"value": 0.71
+},
+{
+"attribute_id": 1271,
+"type_id": 626,
+"value": 75.0
+},
+{
+"attribute_id": 1281,
+"type_id": 626,
+"value": 1.0
+},
+{
+"attribute_id": 1547,
+"type_id": 626,
+"value": 2.0
+},
+{
+"attribute_id": 1555,
+"type_id": 626,
+"value": 100.0
+},
+{
+"attribute_id": 1768,
+"type_id": 626,
+"value": 11331.0
+},
+{
+"attribute_id": 2045,
+"type_id": 626,
+"value": 1.0
+},
+{
+"attribute_id": 2112,
+"type_id": 626,
+"value": 1.0
+},
+{
+"attribute_id": 2113,
+"type_id": 626,
+"value": 1.0
+},
+{
+"attribute_id": 2115,
+"type_id": 626,
+"value": 1.0
+},
+{
+"attribute_id": 5796,
+"type_id": 626,
+"value": 2147483647000.0
+},
+{
+"attribute_id": 4,
+"type_id": 626,
+"value": 11100000.0
+},
+{
+"attribute_id": 38,
+"type_id": 626,
+"value": 480.0
+},
+{
+"attribute_id": 161,
+"type_id": 626,
+"value": 115000.0
+},
+{
+"attribute_id": 180,
+"type_id": 3300,
+"value": 167.0
+},
+{
+"attribute_id": 181,
+"type_id": 3300,
+"value": 168.0
+},
+{
+"attribute_id": 275,
+"type_id": 3300,
+"value": 1.0
+},
+{
+"attribute_id": 441,
+"type_id": 3300,
+"value": -2.0
+},
+{
+"attribute_id": 180,
+"type_id": 3301,
+"value": 167.0
+},
+{
+"attribute_id": 181,
+"type_id": 3301,
+"value": 168.0
+},
+{
+"attribute_id": 182,
+"type_id": 3301,
+"value": 3300.0
+},
+{
+"attribute_id": 275,
+"type_id": 3301,
+"value": 1.0
+},
+{
+"attribute_id": 277,
+"type_id": 3301,
+"value": 1.0
+},
+{
+"attribute_id": 292,
+"type_id": 3301,
+"value": 5.0
+},
+{
+"attribute_id": 180,
+"type_id": 3304,
+"value": 167.0
+},
+{
+"attribute_id": 181,
+"type_id": 3304,
+"value": 168.0
+},
+{
+"attribute_id": 182,
+"type_id": 3304,
+"value": 3300.0
+},
+{
+"attribute_id": 183,
+"type_id": 3304,
+"value": 3301.0
+},
+{
+"attribute_id": 275,
+"type_id": 3304,
+"value": 3.0
+},
+{
+"attribute_id": 277,
+"type_id": 3304,
+"value": 3.0
+},
+{
+"attribute_id": 278,
+"type_id": 3304,
+"value": 3.0
+},
+{
+"attribute_id": 292,
+"type_id": 3304,
+"value": 5.0
+},
+{
+"attribute_id": 151,
+"type_id": 3327,
+"value": -2.0
+},
+{
+"attribute_id": 180,
+"type_id": 3327,
+"value": 167.0
+},
+{
+"attribute_id": 181,
+"type_id": 3327,
+"value": 168.0
+},
+{
+"attribute_id": 193,
+"type_id": 3327,
+"value": 1.0
+},
+{
+"attribute_id": 275,
+"type_id": 3327,
+"value": 1.0
+},
+{
+"attribute_id": 280,
+"type_id": 3327,
+"value": 0.0
+},
+{
+"attribute_id": 180,
+"type_id": 3328,
+"value": 167.0
+},
+{
+"attribute_id": 181,
+"type_id": 3328,
+"value": 168.0
+},
+{
+"attribute_id": 182,
+"type_id": 3328,
+"value": 3327.0
+},
+{
+"attribute_id": 275,
+"type_id": 3328,
+"value": 2.0
+},
+{
+"attribute_id": 277,
+"type_id": 3328,
+"value": 1.0
+},
+{
+"attribute_id": 280,
+"type_id": 3328,
+"value": 0.0
+},
+{
+"attribute_id": 180,
+"type_id": 3332,
+"value": 167.0
+},
+{
+"attribute_id": 181,
+"type_id": 3332,
+"value": 168.0
+},
+{
+"attribute_id": 182,
+"type_id": 3332,
+"value": 3327.0
+},
+{
+"attribute_id": 183,
+"type_id": 3332,
+"value": 33093.0
+},
+{
+"attribute_id": 275,
+"type_id": 3332,
+"value": 5.0
+},
+{
+"attribute_id": 277,
+"type_id": 3332,
+"value": 2.0
+},
+{
+"attribute_id": 278,
+"type_id": 3332,
+"value": 3.0
+},
+{
+"attribute_id": 280,
+"type_id": 3332,
+"value": 0.0
+},
+{
+"attribute_id": 180,
+"type_id": 3380,
+"value": 166.0
+},
+{
+"attribute_id": 181,
+"type_id": 3380,
+"value": 165.0
+},
+{
+"attribute_id": 275,
+"type_id": 3380,
+"value": 1.0
+},
+{
+"attribute_id": 280,
+"type_id": 3380,
+"value": 0.0
+},
+{
+"attribute_id": 440,
+"type_id": 3380,
+"value": -4.0
+},
+{
+"attribute_id": 180,
+"type_id": 3385,
+"value": 166.0
+},
+{
+"attribute_id": 181,
+"type_id": 3385,
+"value": 165.0
+},
+{
+"attribute_id": 182,
+"type_id": 3385,
+"value": 3380.0
+},
+{
+"attribute_id": 275,
+"type_id": 3385,
+"value": 1.0
+},
+{
+"attribute_id": 277,
+"type_id": 3385,
+"value": 1.0
+},
+{
+"attribute_id": 280,
+"type_id": 3385,
+"value": 0.0
+},
+{
+"attribute_id": 379,
+"type_id": 3385,
+"value": 3.0
+},
+{
+"attribute_id": 180,
+"type_id": 3386,
+"value": 166.0
+},
+{
+"attribute_id": 181,
+"type_id": 3386,
+"value": 165.0
+},
+{
+"attribute_id": 275,
+"type_id": 3386,
+"value": 1.0
+},
+{
+"attribute_id": 280,
+"type_id": 3386,
+"value": 0.0
+},
+{
+"attribute_id": 434,
+"type_id": 3386,
+"value": 5.0
+},
+{
+"attribute_id": 180,
+"type_id": 3402,
+"value": 165.0
+},
+{
+"attribute_id": 181,
+"type_id": 3402,
+"value": 166.0
+},
+{
+"attribute_id": 275,
+"type_id": 3402,
+"value": 1.0
+},
+{
+"attribute_id": 280,
+"type_id": 3402,
+"value": 0.0
+},
+{
+"attribute_id": 452,
+"type_id": 3402,
+"value": -5.0
+},
+{
+"attribute_id": 180,
+"type_id": 3410,
+"value": 165.0
+},
+{
+"attribute_id": 181,
+"type_id": 3410,
+"value": 166.0
+},
+{
+"attribute_id": 182,
+"type_id": 3410,
+"value": 3402.0
+},
+{
+"attribute_id": 183,
+"type_id": 3410,
+"value": 3386.0
+},
+{
+"attribute_id": 275,
+"type_id": 3410,
+"value": 3.0
+},
+{
+"attribute_id": 277,
+"type_id": 3410,
+"value": 4.0
+},
+{
+"attribute_id": 278,
+"type_id": 3410,
+"value": 4.0
+},
+{
+"attribute_id": 280,
+"type_id": 3410,
+"value": 0.0
+},
+{
+"attribute_id": 434,
+"type_id": 3410,
+"value": 5.0
+},
+{
+"attribute_id": 180,
+"type_id": 3426,
+"value": 165.0
+},
+{
+"attribute_id": 181,
+"type_id": 3426,
+"value": 166.0
+},
+{
+"attribute_id": 275,
+"type_id": 3426,
+"value": 1.0
+},
+{
+"attribute_id": 280,
+"type_id": 3426,
+"value": 0.0
+},
+{
+"attribute_id": 424,
+"type_id": 3426,
+"value": 5.0
+},
+{
+"attribute_id": 180,
+"type_id": 3436,
+"value": 166.0
+},
+{
+"attribute_id": 181,
+"type_id": 3436,
+"value": 167.0
+},
+{
+"attribute_id": 275,
+"type_id": 3436,
+"value": 1.0
+},
+{
+"attribute_id": 280,
+"type_id": 3436,
+"value": 0.0
+},
+{
+"attribute_id": 353,
+"type_id": 3436,
+"value": 1.0
+},
+{
+"attribute_id": 180,
+"type_id": 3438,
+"value": 166.0
+},
+{
+"attribute_id": 181,
+"type_id": 3438,
+"value": 167.0
+},
+{
+"attribute_id": 182,
+"type_id": 3438,
+"value": 3436.0
+},
+{
+"attribute_id": 183,
+"type_id": 3438,
+"value": 3386.0
+},
+{
+"attribute_id": 275,
+"type_id": 3438,
+"value": 2.0
+},
+{
+"attribute_id": 277,
+"type_id": 3438,
+"value": 1.0
+},
+{
+"attribute_id": 278,
+"type_id": 3438,
+"value": 2.0
+},
+{
+"attribute_id": 280,
+"type_id": 3438,
+"value": 0.0
+},
+{
+"attribute_id": 434,
+"type_id": 3438,
+"value": 5.0
+},
+{
+"attribute_id": 9,
+"type_id": 10250,
+"value": 60.0
+},
+{
+"attribute_id": 37,
+"type_id": 10250,
+"value": 500.0
+},
+{
+"attribute_id": 54,
+"type_id": 10250,
+"value": 5000.0
+},
+{
+"attribute_id": 55,
+"type_id": 10250,
+"value": 2500000.0
+},
+{
+"attribute_id": 64,
+"type_id": 10250,
+"value": 1.0
+},
+{
+"attribute_id": 73,
+"type_id": 10250,
+"value": 60000.0
+},
+{
+"attribute_id": 77,
+"type_id": 10250,
+"value": 33.0
+},
+{
+"attribute_id": 109,
+"type_id": 10250,
+"value": 1.0
+},
+{
+"attribute_id": 110,
+"type_id": 10250,
+"value": 1.0
+},
+{
+"attribute_id": 111,
+"type_id": 10250,
+"value": 1.0
+},
+{
+"attribute_id": 113,
+"type_id": 10250,
+"value": 1.0
+},
+{
+"attribute_id": 136,
+"type_id": 10250,
+"value": 0.75
+},
+{
+"attribute_id": 154,
+"type_id": 10250,
+"value": 250.0
+},
+{
+"attribute_id": 157,
+"type_id": 10250,
+"value": 200.0
+},
+{
+"attribute_id": 182,
+"type_id": 10250,
+"value": 3438.0
+},
+{
+"attribute_id": 183,
+"type_id": 10250,
+"value": 3386.0
+},
+{
+"attribute_id": 184,
+"type_id": 10250,
+"value": 3436.0
+},
+{
+"attribute_id": 192,
+"type_id": 10250,
+"value": 8.0
+},
+{
+"attribute_id": 208,
+"type_id": 10250,
+"value": 0.0
+},
+{
+"attribute_id": 209,
+"type_id": 10250,
+"value": 0.0
+},
+{
+"attribute_id": 210,
+"type_id": 10250,
+"value": 1.0
+},
+{
+"attribute_id": 211,
+"type_id": 10250,
+"value": 0.0
+},
+{
+"attribute_id": 263,
+"type_id": 10250,
+"value": 60.0
+},
+{
+"attribute_id": 265,
+"type_id": 10250,
+"value": 40.0
+},
+{
+"attribute_id": 277,
+"type_id": 10250,
+"value": 5.0
+},
+{
+"attribute_id": 278,
+"type_id": 10250,
+"value": 4.0
+},
+{
+"attribute_id": 279,
+"type_id": 10250,
+"value": 1.0
+},
+{
+"attribute_id": 422,
+"type_id": 10250,
+"value": 2.0
+},
+{
+"attribute_id": 479,
+"type_id": 10250,
+"value": 125000.0
+},
+{
+"attribute_id": 482,
+"type_id": 10250,
+"value": 1.0
+},
+{
+"attribute_id": 484,
+"type_id": 10250,
+"value": 0.75
+},
+{
+"attribute_id": 524,
+"type_id": 10250,
+"value": 0.75
+},
+{
+"attribute_id": 525,
+"type_id": 10250,
+"value": 1.0
+},
+{
+"attribute_id": 552,
+"type_id": 10250,
+"value": 25.0
+},
+{
+"attribute_id": 633,
+"type_id": 10250,
+"value": 5.0
+},
+{
+"attribute_id": 1272,
+"type_id": 10250,
+"value": 5.0
+},
+{
+"attribute_id": 1285,
+"type_id": 10250,
+"value": 22541.0
+},
+{
+"attribute_id": 1286,
+"type_id": 10250,
+"value": 1.0
+},
+{
+"attribute_id": 1692,
+"type_id": 10250,
+"value": 0.0
+},
+{
+"attribute_id": 2189,
+"type_id": 10250,
+"value": 1.0
+},
+{
+"attribute_id": 3153,
+"type_id": 10250,
+"value": 1.0
+},
+{
+"attribute_id": 3154,
+"type_id": 10250,
+"value": 34.0
+},
+{
+"attribute_id": 4,
+"type_id": 10250,
+"value": 0.0
+},
+{
+"attribute_id": 38,
+"type_id": 10250,
+"value": 0.0
+},
+{
+"attribute_id": 161,
+"type_id": 10250,
+"value": 5.0
+},
+{
+"attribute_id": 180,
+"type_id": 12195,
+"value": 166.0
+},
+{
+"attribute_id": 181,
+"type_id": 12195,
+"value": 165.0
+},
+{
+"attribute_id": 182,
+"type_id": 12195,
+"value": 3385.0
+},
+{
+"attribute_id": 183,
+"type_id": 12195,
+"value": 3402.0
+},
+{
+"attribute_id": 275,
+"type_id": 12195,
+"value": 1.0
+},
+{
+"attribute_id": 277,
+"type_id": 12195,
+"value": 4.0
+},
+{
+"attribute_id": 278,
+"type_id": 12195,
+"value": 3.0
+},
+{
+"attribute_id": 280,
+"type_id": 12195,
+"value": 0.0
+},
+{
+"attribute_id": 379,
+"type_id": 12195,
+"value": 2.0
+},
+{
+"attribute_id": 1047,
+"type_id": 12195,
+"value": 0.0
+},
+{
+"attribute_id": 2450,
+"type_id": 12195,
+"value": 1.0
+},
+{
+"attribute_id": 180,
+"type_id": 16281,
+"value": 166.0
+},
+{
+"attribute_id": 181,
+"type_id": 16281,
+"value": 165.0
+},
+{
+"attribute_id": 182,
+"type_id": 16281,
+"value": 3386.0
+},
+{
+"attribute_id": 275,
+"type_id": 16281,
+"value": 1.0
+},
+{
+"attribute_id": 277,
+"type_id": 16281,
+"value": 4.0
+},
+{
+"attribute_id": 280,
+"type_id": 16281,
+"value": 0.0
+},
+{
+"attribute_id": 780,
+"type_id": 16281,
+"value": -5.0
+},
+{
+"attribute_id": 3,
+"type_id": 17476,
+"value": 0.0
+},
+{
+"attribute_id": 9,
+"type_id": 17476,
+"value": 3000.0
+},
+{
+"attribute_id": 11,
+"type_id": 17476,
+"value": 70.0
+},
+{
+"attribute_id": 12,
+"type_id": 17476,
+"value": 3.0
+},
+{
+"attribute_id": 13,
+"type_id": 17476,
+"value": 2.0
+},
+{
+"attribute_id": 14,
+"type_id": 17476,
+"value": 2.0
+},
+{
+"attribute_id": 15,
+"type_id": 17476,
+"value": 0.0
+},
+{
+"attribute_id": 19,
+"type_id": 17476,
+"value": 1.0
+},
+{
+"attribute_id": 21,
+"type_id": 17476,
+"value": 0.0
+},
+{
+"attribute_id": 37,
+"type_id": 17476,
+"value": 150.0
+},
+{
+"attribute_id": 48,
+"type_id": 17476,
+"value": 240.0
+},
+{
+"attribute_id": 49,
+"type_id": 17476,
+"value": 0.0
+},
+{
+"attribute_id": 55,
+"type_id": 17476,
+"value": 187500.0
+},
+{
+"attribute_id": 70,
+"type_id": 17476,
+"value": 0.6
+},
+{
+"attribute_id": 76,
+"type_id": 17476,
+"value": 40000.0
+},
+{
+"attribute_id": 79,
+"type_id": 17476,
+"value": 1500.0
+},
+{
+"attribute_id": 101,
+"type_id": 17476,
+"value": 0.0
+},
+{
+"attribute_id": 102,
+"type_id": 17476,
+"value": 0.0
+},
+{
+"attribute_id": 109,
+"type_id": 17476,
+"value": 0.67
+},
+{
+"attribute_id": 110,
+"type_id": 17476,
+"value": 0.67
+},
+{
+"attribute_id": 111,
+"type_id": 17476,
+"value": 0.67
+},
+{
+"attribute_id": 113,
+"type_id": 17476,
+"value": 0.67
+},
+{
+"attribute_id": 124,
+"type_id": 17476,
+"value": 16777215.0
+},
+{
+"attribute_id": 129,
+"type_id": 17476,
+"value": 20.0
+},
+{
+"attribute_id": 136,
+"type_id": 17476,
+"value": 1.0
+},
+{
+"attribute_id": 153,
+"type_id": 17476,
+"value": 3.33e-07
+},
+{
+"attribute_id": 182,
+"type_id": 17476,
+"value": 17940.0
+},
+{
+"attribute_id": 183,
+"type_id": 17476,
+"value": 3410.0
+},
+{
+"attribute_id": 188,
+"type_id": 17476,
+"value": 0.0
+},
+{
+"attribute_id": 192,
+"type_id": 17476,
+"value": 6.0
+},
+{
+"attribute_id": 208,
+"type_id": 17476,
+"value": 0.0
+},
+{
+"attribute_id": 209,
+"type_id": 17476,
+"value": 0.0
+},
+{
+"attribute_id": 210,
+"type_id": 17476,
+"value": 9.0
+},
+{
+"attribute_id": 211,
+"type_id": 17476,
+"value": 0.0
+},
+{
+"attribute_id": 217,
+"type_id": 17476,
+"value": 397.0
+},
+{
+"attribute_id": 246,
+"type_id": 17476,
+"value": 397.0
+},
+{
+"attribute_id": 263,
+"type_id": 17476,
+"value": 3000.0
+},
+{
+"attribute_id": 265,
+"type_id": 17476,
+"value": 2000.0
+},
+{
+"attribute_id": 267,
+"type_id": 17476,
+"value": 0.4
+},
+{
+"attribute_id": 268,
+"type_id": 17476,
+"value": 0.9
+},
+{
+"attribute_id": 269,
+"type_id": 17476,
+"value": 0.75
+},
+{
+"attribute_id": 270,
+"type_id": 17476,
+"value": 0.65
+},
+{
+"attribute_id": 271,
+"type_id": 17476,
+"value": 1.0
+},
+{
+"attribute_id": 272,
+"type_id": 17476,
+"value": 0.5
+},
+{
+"attribute_id": 273,
+"type_id": 17476,
+"value": 0.6
+},
+{
+"attribute_id": 274,
+"type_id": 17476,
+"value": 0.8
+},
+{
+"attribute_id": 277,
+"type_id": 17476,
+"value": 1.0
+},
+{
+"attribute_id": 278,
+"type_id": 17476,
+"value": 3.0
+},
+{
+"attribute_id": 283,
+"type_id": 17476,
+"value": 50.0
+},
+{
+"attribute_id": 422,
+"type_id": 17476,
+"value": 1.0
+},
+{
+"attribute_id": 479,
+"type_id": 17476,
+"value": 1000000.0
+},
+{
+"attribute_id": 482,
+"type_id": 17476,
+"value": 350.0
+},
+{
+"attribute_id": 484,
+"type_id": 17476,
+"value": 0.75
+},
+{
+"attribute_id": 511,
+"type_id": 17476,
+"value": 0.0
+},
+{
+"attribute_id": 524,
+"type_id": 17476,
+"value": 0.75
+},
+{
+"attribute_id": 525,
+"type_id": 17476,
+"value": 1.0
+},
+{
+"attribute_id": 552,
+"type_id": 17476,
+"value": 200.0
+},
+{
+"attribute_id": 564,
+"type_id": 17476,
+"value": 660.0
+},
+{
+"attribute_id": 600,
+"type_id": 17476,
+"value": 3.5
+},
+{
+"attribute_id": 633,
+"type_id": 17476,
+"value": 0.0
+},
+{
+"attribute_id": 661,
+"type_id": 17476,
+"value": 3000.0
+},
+{
+"attribute_id": 662,
+"type_id": 17476,
+"value": 0.05
+},
+{
+"attribute_id": 1132,
+"type_id": 17476,
+"value": 400.0
+},
+{
+"attribute_id": 1137,
+"type_id": 17476,
+"value": 3.0
+},
+{
+"attribute_id": 1154,
+"type_id": 17476,
+"value": 3.0
+},
+{
+"attribute_id": 1178,
+"type_id": 17476,
+"value": 100.0
+},
+{
+"attribute_id": 1179,
+"type_id": 17476,
+"value": 0.01
+},
+{
+"attribute_id": 1196,
+"type_id": 17476,
+"value": 0.01
+},
+{
+"attribute_id": 1198,
+"type_id": 17476,
+"value": 0.01
+},
+{
+"attribute_id": 1199,
+"type_id": 17476,
+"value": 100.0
+},
+{
+"attribute_id": 1200,
+"type_id": 17476,
+"value": 100.0
+},
+{
+"attribute_id": 1224,
+"type_id": 17476,
+"value": 0.75
+},
+{
+"attribute_id": 1259,
+"type_id": 17476,
+"value": 0.25
+},
+{
+"attribute_id": 1261,
+"type_id": 17476,
+"value": 0.25
+},
+{
+"attribute_id": 1262,
+"type_id": 17476,
+"value": 0.5
+},
+{
+"attribute_id": 1271,
+"type_id": 17476,
+"value": 50.0
+},
+{
+"attribute_id": 1281,
+"type_id": 17476,
+"value": 1.0
+},
+{
+"attribute_id": 1547,
+"type_id": 17476,
+"value": 2.0
+},
+{
+"attribute_id": 1555,
+"type_id": 17476,
+"value": 50.0
+},
+{
+"attribute_id": 1556,
+"type_id": 17476,
+"value": 9000.0
+},
+{
+"attribute_id": 1768,
+"type_id": 17476,
+"value": 11346.0
+},
+{
+"attribute_id": 1891,
+"type_id": 17476,
+"value": 1.0
+},
+{
+"attribute_id": 2045,
+"type_id": 17476,
+"value": 1.0
+},
+{
+"attribute_id": 2112,
+"type_id": 17476,
+"value": 1.0
+},
+{
+"attribute_id": 2113,
+"type_id": 17476,
+"value": 1.0
+},
+{
+"attribute_id": 2115,
+"type_id": 17476,
+"value": 1.0
+},
+{
+"attribute_id": 2464,
+"type_id": 17476,
+"value": 1.0
+},
+{
+"attribute_id": 3178,
+"type_id": 17476,
+"value": -30.0
+},
+{
+"attribute_id": 3181,
+"type_id": 17476,
+"value": 3.0
+},
+{
+"attribute_id": 3182,
+"type_id": 17476,
+"value": -3.0
+},
+{
+"attribute_id": 3183,
+"type_id": 17476,
+"value": -3.0
+},
+{
+"attribute_id": 3184,
+"type_id": 17476,
+"value": 6.0
+},
+{
+"attribute_id": 3185,
+"type_id": 17476,
+"value": 6.0
+},
+{
+"attribute_id": 3225,
+"type_id": 17476,
+"value": -30.0
+},
+{
+"attribute_id": 3228,
+"type_id": 17476,
+"value": -25.0
+},
+{
+"attribute_id": 3229,
+"type_id": 17476,
+"value": -25.0
+},
+{
+"attribute_id": 3230,
+"type_id": 17476,
+"value": -25.0
+},
+{
+"attribute_id": 3324,
+"type_id": 17476,
+"value": 1.0
+},
+{
+"attribute_id": 3325,
+"type_id": 17476,
+"value": 1.0
+},
+{
+"attribute_id": 5682,
+"type_id": 17476,
+"value": 0.0
+},
+{
+"attribute_id": 5796,
+"type_id": 17476,
+"value": 2147483647000.0
+},
+{
+"attribute_id": 5978,
+"type_id": 17476,
+"value": 1.0
+},
+{
+"attribute_id": 4,
+"type_id": 17476,
+"value": 15000000.0
+},
+{
+"attribute_id": 38,
+"type_id": 17476,
+"value": 350.0
+},
+{
+"attribute_id": 161,
+"type_id": 17476,
+"value": 150000.0
+},
+{
+"attribute_id": 6,
+"type_id": 17482,
+"value": 23.0
+},
+{
+"attribute_id": 9,
+"type_id": 17482,
+"value": 40.0
+},
+{
+"attribute_id": 30,
+"type_id": 17482,
+"value": 10.0
+},
+{
+"attribute_id": 50,
+"type_id": 17482,
+"value": 60.0
+},
+{
+"attribute_id": 54,
+"type_id": 17482,
+"value": 15000.0
+},
+{
+"attribute_id": 73,
+"type_id": 17482,
+"value": 45000.0
+},
+{
+"attribute_id": 77,
+"type_id": 17482,
+"value": 150.0
+},
+{
+"attribute_id": 182,
+"type_id": 17482,
+"value": 3386.0
+},
+{
+"attribute_id": 183,
+"type_id": 17482,
+"value": 3410.0
+},
+{
+"attribute_id": 277,
+"type_id": 17482,
+"value": 4.0
+},
+{
+"attribute_id": 278,
+"type_id": 17482,
+"value": 1.0
+},
+{
+"attribute_id": 422,
+"type_id": 17482,
+"value": 1.0
+},
+{
+"attribute_id": 633,
+"type_id": 17482,
+"value": 0.0
+},
+{
+"attribute_id": 1298,
+"type_id": 17482,
+"value": 463.0
+},
+{
+"attribute_id": 1299,
+"type_id": 17482,
+"value": 543.0
+},
+{
+"attribute_id": 1768,
+"type_id": 17482,
+"value": 11346.0
+},
+{
+"attribute_id": 3153,
+"type_id": 17482,
+"value": 0.0
+},
+{
+"attribute_id": 3154,
+"type_id": 17482,
+"value": 0.0
+},
+{
+"attribute_id": 5967,
+"type_id": 17482,
+"value": 0.01
+},
+{
+"attribute_id": 5969,
+"type_id": 17482,
+"value": 2.0
+},
+{
+"attribute_id": 4,
+"type_id": 17482,
+"value": 0.0
+},
+{
+"attribute_id": 38,
+"type_id": 17482,
+"value": 0.0
+},
+{
+"attribute_id": 161,
+"type_id": 17482,
+"value": 5.0
+},
+{
+"attribute_id": 6,
+"type_id": 17912,
+"value": 30.0
+},
+{
+"attribute_id": 9,
+"type_id": 17912,
+"value": 40.0
+},
+{
+"attribute_id": 30,
+"type_id": 17912,
+"value": 12.0
+},
+{
+"attribute_id": 47,
+"type_id": 17912,
+"value": 1.0
+},
+{
+"attribute_id": 50,
+"type_id": 17912,
+"value": 60.0
+},
+{
+"attribute_id": 54,
+"type_id": 17912,
+"value": 15000.0
+},
+{
+"attribute_id": 73,
+"type_id": 17912,
+"value": 45000.0
+},
+{
+"attribute_id": 77,
+"type_id": 17912,
+"value": 120.0
+},
+{
+"attribute_id": 128,
+"type_id": 17912,
+"value": 1.0
+},
+{
+"attribute_id": 182,
+"type_id": 17912,
+"value": 3386.0
+},
+{
+"attribute_id": 277,
+"type_id": 17912,
+"value": 5.0
+},
+{
+"attribute_id": 422,
+"type_id": 17912,
+"value": 2.0
+},
+{
+"attribute_id": 604,
+"type_id": 17912,
+"value": 482.0
+},
+{
+"attribute_id": 633,
+"type_id": 17912,
+"value": 5.0
+},
+{
+"attribute_id": 789,
+"type_id": 17912,
+"value": 450.0
+},
+{
+"attribute_id": 1298,
+"type_id": 17912,
+"value": 543.0
+},
+{
+"attribute_id": 1299,
+"type_id": 17912,
+"value": 463.0
+},
+{
+"attribute_id": 1768,
+"type_id": 17912,
+"value": 11347.0
+},
+{
+"attribute_id": 1795,
+"type_id": 17912,
+"value": 0.01
+},
+{
+"attribute_id": 3153,
+"type_id": 17912,
+"value": 1.0
+},
+{
+"attribute_id": 3154,
+"type_id": 17912,
+"value": 34.0
+},
+{
+"attribute_id": 5967,
+"type_id": 17912,
+"value": 0.01
+},
+{
+"attribute_id": 5969,
+"type_id": 17912,
+"value": 2.0
+},
+{
+"attribute_id": 4,
+"type_id": 17912,
+"value": 0.0
+},
+{
+"attribute_id": 38,
+"type_id": 17912,
+"value": 10.0
+},
+{
+"attribute_id": 161,
+"type_id": 17912,
+"value": 5.0
+},
+{
+"attribute_id": 180,
+"type_id": 17940,
+"value": 167.0
+},
+{
+"attribute_id": 181,
+"type_id": 17940,
+"value": 168.0
+},
+{
+"attribute_id": 182,
+"type_id": 17940,
+"value": 3410.0
+},
+{
+"attribute_id": 183,
+"type_id": 17940,
+"value": 3380.0
+},
+{
+"attribute_id": 184,
+"type_id": 17940,
+"value": 32918.0
+},
+{
+"attribute_id": 275,
+"type_id": 17940,
+"value": 4.0
+},
+{
+"attribute_id": 277,
+"type_id": 17940,
+"value": 3.0
+},
+{
+"attribute_id": 278,
+"type_id": 17940,
+"value": 5.0
+},
+{
+"attribute_id": 279,
+"type_id": 17940,
+"value": 3.0
+},
+{
+"attribute_id": 280,
+"type_id": 17940,
+"value": 0.0
+},
+{
+"attribute_id": 1047,
+"type_id": 17940,
+"value": 1.0
+},
+{
+"attribute_id": 3,
+"type_id": 18066,
+"value": 0.0
+},
+{
+"attribute_id": 9,
+"type_id": 18066,
+"value": 1.0
+},
+{
+"attribute_id": 124,
+"type_id": 18066,
+"value": 5215864.0
+},
+{
+"attribute_id": 128,
+"type_id": 18066,
+"value": 1.0
+},
+{
+"attribute_id": 137,
+"type_id": 18066,
+"value": 483.0
+},
+{
+"attribute_id": 182,
+"type_id": 18066,
+"value": 12195.0
+},
+{
+"attribute_id": 183,
+"type_id": 18066,
+"value": 3386.0
+},
+{
+"attribute_id": 277,
+"type_id": 18066,
+"value": 3.0
+},
+{
+"attribute_id": 278,
+"type_id": 18066,
+"value": 1.0
+},
+{
+"attribute_id": 317,
+"type_id": 18066,
+"value": -20.0
+},
+{
+"attribute_id": 422,
+"type_id": 18066,
+"value": 1.0
+},
+{
+"attribute_id": 633,
+"type_id": 18066,
+"value": 0.0
+},
+{
+"attribute_id": 782,
+"type_id": 18066,
+"value": 1.625
+},
+{
+"attribute_id": 783,
+"type_id": 18066,
+"value": 0.1
+},
+{
+"attribute_id": 784,
+"type_id": 18066,
+"value": 0.025
+},
+{
+"attribute_id": 785,
+"type_id": 18066,
+"value": 5.0
+},
+{
+"attribute_id": 786,
+"type_id": 18066,
+"value": 1.0
+},
+{
+"attribute_id": 3148,
+"type_id": 18066,
+"value": 253.0
+},
+{
+"attribute_id": 4,
+"type_id": 18066,
+"value": 1.0
+},
+{
+"attribute_id": 38,
+"type_id": 18066,
+"value": 0.0
+},
+{
+"attribute_id": 161,
+"type_id": 18066,
+"value": 6.0
+},
+{
+"attribute_id": 180,
+"type_id": 21603,
+"value": 165.0
+},
+{
+"attribute_id": 181,
+"type_id": 21603,
+"value": 166.0
+},
+{
+"attribute_id": 182,
+"type_id": 21603,
+"value": 3426.0
+},
+{
+"attribute_id": 275,
+"type_id": 21603,
+"value": 5.0
+},
+{
+"attribute_id": 277,
+"type_id": 21603,
+"value": 5.0
+},
+{
+"attribute_id": 280,
+"type_id": 21603,
+"value": 0.0
+},
+{
+"attribute_id": 1047,
+"type_id": 21603,
+"value": 1.0
+},
+{
+"attribute_id": 1296,
+"type_id": 21603,
+"value": -10.0
+},
+{
+"attribute_id": 6,
+"type_id": 22229,
+"value": 12.0
+},
+{
+"attribute_id": 9,
+"type_id": 22229,
+"value": 40.0
+},
+{
+"attribute_id": 30,
+"type_id": 22229,
+"value": 10.0
+},
+{
+"attribute_id": 50,
+"type_id": 22229,
+"value": 66.0
+},
+{
+"attribute_id": 54,
+"type_id": 22229,
+"value": 10000.0
+},
+{
+"attribute_id": 73,
+"type_id": 22229,
+"value": 200000.0
+},
+{
+"attribute_id": 77,
+"type_id": 22229,
+"value": 1000.0
+},
+{
+"attribute_id": 182,
+"type_id": 22229,
+"value": 16281.0
+},
+{
+"attribute_id": 277,
+"type_id": 22229,
+"value": 5.0
+},
+{
+"attribute_id": 422,
+"type_id": 22229,
+"value": 2.0
+},
+{
+"attribute_id": 633,
+"type_id": 22229,
+"value": 5.0
+},
+{
+"attribute_id": 1298,
+"type_id": 22229,
+"value": 463.0
+},
+{
+"attribute_id": 1299,
+"type_id": 22229,
+"value": 543.0
+},
+{
+"attribute_id": 1768,
+"type_id": 22229,
+"value": 11347.0
+},
+{
+"attribute_id": 3153,
+"type_id": 22229,
+"value": 1.0
+},
+{
+"attribute_id": 3154,
+"type_id": 22229,
+"value": 34.0
+},
+{
+"attribute_id": 5967,
+"type_id": 22229,
+"value": 0.01
+},
+{
+"attribute_id": 5969,
+"type_id": 22229,
+"value": 2.0
+},
+{
+"attribute_id": 4,
+"type_id": 22229,
+"value": 0.0
+},
+{
+"attribute_id": 38,
+"type_id": 22229,
+"value": 0.0
+},
+{
+"attribute_id": 161,
+"type_id": 22229,
+"value": 5.0
+},
+{
+"attribute_id": 180,
+"type_id": 25544,
+"value": 166.0
+},
+{
+"attribute_id": 181,
+"type_id": 25544,
+"value": 165.0
+},
+{
+"attribute_id": 182,
+"type_id": 25544,
+"value": 3386.0
+},
+{
+"attribute_id": 275,
+"type_id": 25544,
+"value": 1.0
+},
+{
+"attribute_id": 277,
+"type_id": 25544,
+"value": 4.0
+},
+{
+"attribute_id": 280,
+"type_id": 25544,
+"value": 0.0
+},
+{
+"attribute_id": 1047,
+"type_id": 25544,
+"value": 0.0
+},
+{
+"attribute_id": 3,
+"type_id": 32880,
+"value": 0.0
+},
+{
+"attribute_id": 9,
+"type_id": 32880,
+"value": 200.0
+},
+{
+"attribute_id": 11,
+"type_id": 32880,
+"value": 45.0
+},
+{
+"attribute_id": 12,
+"type_id": 32880,
+"value": 1.0
+},
+{
+"attribute_id": 13,
+"type_id": 32880,
+"value": 3.0
+},
+{
+"attribute_id": 14,
+"type_id": 32880,
+"value": 3.0
+},
+{
+"attribute_id": 15,
+"type_id": 32880,
+"value": 0.0
+},
+{
+"attribute_id": 19,
+"type_id": 32880,
+"value": 1.0
+},
+{
+"attribute_id": 21,
+"type_id": 32880,
+"value": 0.0
+},
+{
+"attribute_id": 37,
+"type_id": 32880,
+"value": 335.0
+},
+{
+"attribute_id": 48,
+"type_id": 32880,
+"value": 240.0
+},
+{
+"attribute_id": 49,
+"type_id": 32880,
+"value": 0.0
+},
+{
+"attribute_id": 55,
+"type_id": 32880,
+"value": 125000.0
+},
+{
+"attribute_id": 70,
+"type_id": 32880,
+"value": 3.6
+},
+{
+"attribute_id": 76,
+"type_id": 32880,
+"value": 15000.0
+},
+{
+"attribute_id": 79,
+"type_id": 32880,
+"value": 2500.0
+},
+{
+"attribute_id": 101,
+"type_id": 32880,
+"value": 0.0
+},
+{
+"attribute_id": 102,
+"type_id": 32880,
+"value": 2.0
+},
+{
+"attribute_id": 104,
+"type_id": 32880,
+"value": -2.0
+},
+{
+"attribute_id": 109,
+"type_id": 32880,
+"value": 0.67
+},
+{
+"attribute_id": 110,
+"type_id": 32880,
+"value": 0.67
+},
+{
+"attribute_id": 111,
+"type_id": 32880,
+"value": 0.67
+},
+{
+"attribute_id": 113,
+"type_id": 32880,
+"value": 0.67
+},
+{
+"attribute_id": 124,
+"type_id": 32880,
+"value": 16777215.0
+},
+{
+"attribute_id": 129,
+"type_id": 32880,
+"value": 2.0
+},
+{
+"attribute_id": 136,
+"type_id": 32880,
+"value": 1.0
+},
+{
+"attribute_id": 153,
+"type_id": 32880,
+"value": 1.35e-06
+},
+{
+"attribute_id": 182,
+"type_id": 32880,
+"value": 32918.0
+},
+{
+"attribute_id": 188,
+"type_id": 32880,
+"value": 0.0
+},
+{
+"attribute_id": 192,
+"type_id": 32880,
+"value": 5.0
+},
+{
+"attribute_id": 207,
+"type_id": 32880,
+"value": 2.0
+},
+{
+"attribute_id": 208,
+"type_id": 32880,
+"value": 0.0
+},
+{
+"attribute_id": 209,
+"type_id": 32880,
+"value": 0.0
+},
+{
+"attribute_id": 210,
+"type_id": 32880,
+"value": 4.0
+},
+{
+"attribute_id": 211,
+"type_id": 32880,
+"value": 0.0
+},
+{
+"attribute_id": 217,
+"type_id": 32880,
+"value": 394.0
+},
+{
+"attribute_id": 246,
+"type_id": 32880,
+"value": 394.0
+},
+{
+"attribute_id": 263,
+"type_id": 32880,
+"value": 225.0
+},
+{
+"attribute_id": 265,
+"type_id": 32880,
+"value": 175.0
+},
+{
+"attribute_id": 267,
+"type_id": 32880,
+"value": 0.4
+},
+{
+"attribute_id": 268,
+"type_id": 32880,
+"value": 0.9
+},
+{
+"attribute_id": 269,
+"type_id": 32880,
+"value": 0.75
+},
+{
+"attribute_id": 270,
+"type_id": 32880,
+"value": 0.65
+},
+{
+"attribute_id": 271,
+"type_id": 32880,
+"value": 1.0
+},
+{
+"attribute_id": 272,
+"type_id": 32880,
+"value": 0.5
+},
+{
+"attribute_id": 273,
+"type_id": 32880,
+"value": 0.6
+},
+{
+"attribute_id": 274,
+"type_id": 32880,
+"value": 0.8
+},
+{
+"attribute_id": 277,
+"type_id": 32880,
+"value": 1.0
+},
+{
+"attribute_id": 283,
+"type_id": 32880,
+"value": 10.0
+},
+{
+"attribute_id": 422,
+"type_id": 32880,
+"value": 1.0
+},
+{
+"attribute_id": 462,
+"type_id": 32880,
+"value": 5.0
+},
+{
+"attribute_id": 479,
+"type_id": 32880,
+"value": 625000.0
+},
+{
+"attribute_id": 482,
+"type_id": 32880,
+"value": 250.0
+},
+{
+"attribute_id": 484,
+"type_id": 32880,
+"value": 0.75
+},
+{
+"attribute_id": 511,
+"type_id": 32880,
+"value": 0.0
+},
+{
+"attribute_id": 524,
+"type_id": 32880,
+"value": 0.75
+},
+{
+"attribute_id": 525,
+"type_id": 32880,
+"value": 1.0
+},
+{
+"attribute_id": 552,
+"type_id": 32880,
+"value": 40.0
+},
+{
+"attribute_id": 564,
+"type_id": 32880,
+"value": 750.0
+},
+{
+"attribute_id": 586,
+"type_id": 32880,
+"value": 10.0
+},
+{
+"attribute_id": 600,
+"type_id": 32880,
+"value": 5.0
+},
+{
+"attribute_id": 633,
+"type_id": 32880,
+"value": 0.0
+},
+{
+"attribute_id": 661,
+"type_id": 32880,
+"value": 3000.0
+},
+{
+"attribute_id": 662,
+"type_id": 32880,
+"value": 0.05
+},
+{
+"attribute_id": 1132,
+"type_id": 32880,
+"value": 400.0
+},
+{
+"attribute_id": 1137,
+"type_id": 32880,
+"value": 3.0
+},
+{
+"attribute_id": 1154,
+"type_id": 32880,
+"value": 3.0
+},
+{
+"attribute_id": 1178,
+"type_id": 32880,
+"value": 100.0
+},
+{
+"attribute_id": 1179,
+"type_id": 32880,
+"value": 0.01
+},
+{
+"attribute_id": 1196,
+"type_id": 32880,
+"value": 0.01
+},
+{
+"attribute_id": 1198,
+"type_id": 32880,
+"value": 0.01
+},
+{
+"attribute_id": 1199,
+"type_id": 32880,
+"value": 100.0
+},
+{
+"attribute_id": 1200,
+"type_id": 32880,
+"value": 100.0
+},
+{
+"attribute_id": 1224,
+"type_id": 32880,
+"value": 1.0
+},
+{
+"attribute_id": 1259,
+"type_id": 32880,
+"value": 0.5
+},
+{
+"attribute_id": 1261,
+"type_id": 32880,
+"value": 0.5
+},
+{
+"attribute_id": 1262,
+"type_id": 32880,
+"value": 0.0
+},
+{
+"attribute_id": 1271,
+"type_id": 32880,
+"value": 10.0
+},
+{
+"attribute_id": 1281,
+"type_id": 32880,
+"value": 1.0
+},
+{
+"attribute_id": 1296,
+"type_id": 32880,
+"value": -50.0
+},
+{
+"attribute_id": 1547,
+"type_id": 32880,
+"value": 1.0
+},
+{
+"attribute_id": 1555,
+"type_id": 32880,
+"value": 25.0
+},
+{
+"attribute_id": 1556,
+"type_id": 32880,
+"value": 5000.0
+},
+{
+"attribute_id": 1768,
+"type_id": 32880,
+"value": 11331.0
+},
+{
+"attribute_id": 1842,
+"type_id": 32880,
+"value": 5.0
+},
+{
+"attribute_id": 1891,
+"type_id": 32880,
+"value": 1.0
+},
+{
+"attribute_id": 2045,
+"type_id": 32880,
+"value": 1.0
+},
+{
+"attribute_id": 2112,
+"type_id": 32880,
+"value": 1.0
+},
+{
+"attribute_id": 2113,
+"type_id": 32880,
+"value": 1.0
+},
+{
+"attribute_id": 2115,
+"type_id": 32880,
+"value": 1.0
+},
+{
+"attribute_id": 2464,
+"type_id": 32880,
+"value": 1.0
+},
+{
+"attribute_id": 3237,
+"type_id": 32880,
+"value": -5.0
+},
+{
+"attribute_id": 3239,
+"type_id": 32880,
+"value": 100.0
+},
+{
+"attribute_id": 3324,
+"type_id": 32880,
+"value": 1.0
+},
+{
+"attribute_id": 3325,
+"type_id": 32880,
+"value": 1.0
+},
+{
+"attribute_id": 5796,
+"type_id": 32880,
+"value": 2147483647000.0
+},
+{
+"attribute_id": 5978,
+"type_id": 32880,
+"value": 1.0
+},
+{
+"attribute_id": 4,
+"type_id": 32880,
+"value": 1200000.0
+},
+{
+"attribute_id": 38,
+"type_id": 32880,
+"value": 50.0
+},
+{
+"attribute_id": 161,
+"type_id": 32880,
+"value": 29500.0
+},
+{
+"attribute_id": 180,
+"type_id": 32918,
+"value": 167.0
+},
+{
+"attribute_id": 181,
+"type_id": 32918,
+"value": 168.0
+},
+{
+"attribute_id": 182,
+"type_id": 32918,
+"value": 3327.0
+},
+{
+"attribute_id": 275,
+"type_id": 32918,
+"value": 2.0
+},
+{
+"attribute_id": 277,
+"type_id": 32918,
+"value": 1.0
+},
+{
+"attribute_id": 280,
+"type_id": 32918,
+"value": 0.0
+},
+{
+"attribute_id": 1047,
+"type_id": 32918,
+"value": 0.0
+},
+{
+"attribute_id": 180,
+"type_id": 33093,
+"value": 167.0
+},
+{
+"attribute_id": 181,
+"type_id": 33093,
+"value": 168.0
+},
+{
+"attribute_id": 182,
+"type_id": 33093,
+"value": 3328.0
+},
+{
+"attribute_id": 275,
+"type_id": 33093,
+"value": 2.0
+},
+{
+"attribute_id": 277,
+"type_id": 33093,
+"value": 3.0
+},
+{
+"attribute_id": 280,
+"type_id": 33093,
+"value": 0.0
+},
+{
+"attribute_id": 1047,
+"type_id": 33093,
+"value": 0.0
+},
+{
+"attribute_id": 6,
+"type_id": 60314,
+"value": 10.0
+},
+{
+"attribute_id": 9,
+"type_id": 60314,
+"value": 40.0
+},
+{
+"attribute_id": 30,
+"type_id": 60314,
+"value": 10.0
+},
+{
+"attribute_id": 47,
+"type_id": 60314,
+"value": 1.0
+},
+{
+"attribute_id": 50,
+"type_id": 60314,
+"value": 66.0
+},
+{
+"attribute_id": 54,
+"type_id": 60314,
+"value": 1500.0
+},
+{
+"attribute_id": 73,
+"type_id": 60314,
+"value": 80000.0
+},
+{
+"attribute_id": 77,
+"type_id": 60314,
+"value": 100.0
+},
+{
+"attribute_id": 182,
+"type_id": 60314,
+"value": 25544.0
+},
+{
+"attribute_id": 277,
+"type_id": 60314,
+"value": 5.0
+},
+{
+"attribute_id": 422,
+"type_id": 60314,
+"value": 2.0
+},
+{
+"attribute_id": 633,
+"type_id": 60314,
+"value": 0.0
+},
+{
+"attribute_id": 763,
+"type_id": 60314,
+"value": 0.0
+},
+{
+"attribute_id": 906,
+"type_id": 60314,
+"value": 1.0
+},
+{
+"attribute_id": 1298,
+"type_id": 60314,
+"value": 543.0
+},
+{
+"attribute_id": 1299,
+"type_id": 60314,
+"value": 463.0
+},
+{
+"attribute_id": 1768,
+"type_id": 60314,
+"value": 11346.0
+},
+{
+"attribute_id": 3153,
+"type_id": 60314,
+"value": 1.0
+},
+{
+"attribute_id": 3154,
+"type_id": 60314,
+"value": 34.0
+},
+{
+"attribute_id": 4,
+"type_id": 60314,
+"value": 0.0
+},
+{
+"attribute_id": 38,
+"type_id": 60314,
+"value": 0.0
+},
+{
+"attribute_id": 161,
+"type_id": 60314,
+"value": 5.0
+}
+],
+"type_effects": [
+{
+"effect_id": 12,
+"is_default": false,
+"type_id": 482
+},
+{
+"effect_id": 16,
+"is_default": false,
+"type_id": 482
+},
+{
+"effect_id": 42,
+"is_default": false,
+"type_id": 482
+},
+{
+"effect_id": 67,
+"is_default": true,
+"type_id": 482
+},
+{
+"effect_id": 562,
+"is_default": false,
+"type_id": 626
+},
+{
+"effect_id": 2179,
+"is_default": false,
+"type_id": 626
+},
+{
+"effect_id": 2188,
+"is_default": false,
+"type_id": 626
+},
+{
+"effect_id": 2250,
+"is_default": false,
+"type_id": 626
+},
+{
+"effect_id": 132,
+"is_default": true,
+"type_id": 3300
+},
+{
+"effect_id": 413,
+"is_default": false,
+"type_id": 3300
+},
+{
+"effect_id": 414,
+"is_default": false,
+"type_id": 3300
+},
+{
+"effect_id": 132,
+"is_default": true,
+"type_id": 3301
+},
+{
+"effect_id": 152,
+"is_default": false,
+"type_id": 3301
+},
+{
+"effect_id": 173,
+"is_default": false,
+"type_id": 3301
+},
+{
+"effect_id": 132,
+"is_default": true,
+"type_id": 3304
+},
+{
+"effect_id": 152,
+"is_default": false,
+"type_id": 3304
+},
+{
+"effect_id": 160,
+"is_default": false,
+"type_id": 3304
+},
+{
+"effect_id": 132,
+"is_default": true,
+"type_id": 3327
+},
+{
+"effect_id": 232,
+"is_default": false,
+"type_id": 3327
+},
+{
+"effect_id": 395,
+"is_default": false,
+"type_id": 3327
+},
+{
+"effect_id": 132,
+"is_default": true,
+"type_id": 3328
+},
+{
+"effect_id": 468,
+"is_default": false,
+"type_id": 3328
+},
+{
+"effect_id": 751,
+"is_default": false,
+"type_id": 3328
+},
+{
+"effect_id": 4600,
+"is_default": false,
+"type_id": 3328
+},
+{
+"effect_id": 132,
+"is_default": true,
+"type_id": 3332
+},
+{
+"effect_id": 517,
+"is_default": false,
+"type_id": 3332
+},
+{
+"effect_id": 928,
+"is_default": false,
+"type_id": 3332
+},
+{
+"effect_id": 6044,
+"is_default": false,
+"type_id": 3332
+},
+{
+"effect_id": 132,
+"is_default": true,
+"type_id": 3380
+},
+{
+"effect_id": 412,
+"is_default": false,
+"type_id": 3380
+},
+{
+"effect_id": 425,
+"is_default": false,
+"type_id": 3380
+},
+{
+"effect_id": 132,
+"is_default": true,
+"type_id": 3385
+},
+{
+"effect_id": 331,
+"is_default": false,
+"type_id": 3385
+},
+{
+"effect_id": 435,
+"is_default": false,
+"type_id": 3385
+},
+{
+"effect_id": 132,
+"is_default": true,
+"type_id": 3386
+},
+{
+"effect_id": 389,
+"is_default": false,
+"type_id": 3386
+},
+{
+"effect_id": 391,
+"is_default": false,
+"type_id": 3386
+},
+{
+"effect_id": 132,
+"is_default": true,
+"type_id": 3402
+},
+{
+"effect_id": 430,
+"is_default": false,
+"type_id": 3402
+},
+{
+"effect_id": 431,
+"is_default": false,
+"type_id": 3402
+},
+{
+"effect_id": 132,
+"is_default": true,
+"type_id": 3410
+},
+{
+"effect_id": 389,
+"is_default": false,
+"type_id": 3410
+},
+{
+"effect_id": 391,
+"is_default": false,
+"type_id": 3410
+},
+{
+"effect_id": 132,
+"is_default": true,
+"type_id": 3426
+},
+{
+"effect_id": 368,
+"is_default": false,
+"type_id": 3426
+},
+{
+"effect_id": 397,
+"is_default": false,
+"type_id": 3426
+},
+{
+"effect_id": 132,
+"is_default": true,
+"type_id": 3436
+},
+{
+"effect_id": 315,
+"is_default": false,
+"type_id": 3436
+},
+{
+"effect_id": 316,
+"is_default": false,
+"type_id": 3436
+},
+{
+"effect_id": 132,
+"is_default": true,
+"type_id": 3438
+},
+{
+"effect_id": 389,
+"is_default": false,
+"type_id": 3438
+},
+{
+"effect_id": 623,
+"is_default": false,
+"type_id": 3438
+},
+{
+"effect_id": 17,
+"is_default": true,
+"type_id": 10250
+},
+{
+"effect_id": 132,
+"is_default": true,
+"type_id": 12195
+},
+{
+"effect_id": 132,
+"is_default": true,
+"type_id": 16281
+},
+{
+"effect_id": 1190,
+"is_default": false,
+"type_id": 16281
+},
+{
+"effect_id": 1191,
+"is_default": false,
+"type_id": 16281
+},
+{
+"effect_id": 8224,
+"is_default": false,
+"type_id": 17476
+},
+{
+"effect_id": 8227,
+"is_default": false,
+"type_id": 17476
+},
+{
+"effect_id": 8228,
+"is_default": false,
+"type_id": 17476
+},
+{
+"effect_id": 8229,
+"is_default": false,
+"type_id": 17476
+},
+{
+"effect_id": 8230,
+"is_default": false,
+"type_id": 17476
+},
+{
+"effect_id": 8231,
+"is_default": false,
+"type_id": 17476
+},
+{
+"effect_id": 8300,
+"is_default": false,
+"type_id": 17476
+},
+{
+"effect_id": 8303,
+"is_default": false,
+"type_id": 17476
+},
+{
+"effect_id": 8304,
+"is_default": false,
+"type_id": 17476
+},
+{
+"effect_id": 8305,
+"is_default": false,
+"type_id": 17476
+},
+{
+"effect_id": 12,
+"is_default": false,
+"type_id": 17482
+},
+{
+"effect_id": 16,
+"is_default": false,
+"type_id": 17482
+},
+{
+"effect_id": 67,
+"is_default": true,
+"type_id": 17482
+},
+{
+"effect_id": 12,
+"is_default": false,
+"type_id": 17912
+},
+{
+"effect_id": 16,
+"is_default": false,
+"type_id": 17912
+},
+{
+"effect_id": 67,
+"is_default": true,
+"type_id": 17912
+},
+{
+"effect_id": 1212,
+"is_default": false,
+"type_id": 17912
+},
+{
+"effect_id": 132,
+"is_default": true,
+"type_id": 17940
+},
+{
+"effect_id": 8232,
+"is_default": false,
+"type_id": 17940
+},
+{
+"effect_id": 8233,
+"is_default": false,
+"type_id": 17940
+},
+{
+"effect_id": 8234,
+"is_default": false,
+"type_id": 17940
+},
+{
+"effect_id": 8235,
+"is_default": false,
+"type_id": 17940
+},
+{
+"effect_id": 8236,
+"is_default": false,
+"type_id": 17940
+},
+{
+"effect_id": 8240,
+"is_default": false,
+"type_id": 17940
+},
+{
+"effect_id": 8241,
+"is_default": false,
+"type_id": 17940
+},
+{
+"effect_id": 8242,
+"is_default": false,
+"type_id": 17940
+},
+{
+"effect_id": 804,
+"is_default": false,
+"type_id": 18066
+},
+{
+"effect_id": 1200,
+"is_default": false,
+"type_id": 18066
+},
+{
+"effect_id": 132,
+"is_default": true,
+"type_id": 21603
+},
+{
+"effect_id": 3526,
+"is_default": false,
+"type_id": 21603
+},
+{
+"effect_id": 3527,
+"is_default": false,
+"type_id": 21603
+},
+{
+"effect_id": 12,
+"is_default": false,
+"type_id": 22229
+},
+{
+"effect_id": 16,
+"is_default": false,
+"type_id": 22229
+},
+{
+"effect_id": 67,
+"is_default": true,
+"type_id": 22229
+},
+{
+"effect_id": 132,
+"is_default": true,
+"type_id": 25544
+},
+{
+"effect_id": 2727,
+"is_default": false,
+"type_id": 25544
+},
+{
+"effect_id": 3526,
+"is_default": false,
+"type_id": 32880
+},
+{
+"effect_id": 5058,
+"is_default": false,
+"type_id": 32880
+},
+{
+"effect_id": 5139,
+"is_default": false,
+"type_id": 32880
+},
+{
+"effect_id": 8313,
+"is_default": false,
+"type_id": 32880
+},
+{
+"effect_id": 8315,
+"is_default": false,
+"type_id": 32880
+},
+{
+"effect_id": 132,
+"is_default": true,
+"type_id": 32918
+},
+{
+"effect_id": 5137,
+"is_default": false,
+"type_id": 32918
+},
+{
+"effect_id": 8314,
+"is_default": false,
+"type_id": 32918
+},
+{
+"effect_id": 8318,
+"is_default": false,
+"type_id": 32918
+},
+{
+"effect_id": 12562,
+"is_default": false,
+"type_id": 32918
+},
+{
+"effect_id": 132,
+"is_default": true,
+"type_id": 33093
+},
+{
+"effect_id": 5280,
+"is_default": false,
+"type_id": 33093
+},
+{
+"effect_id": 5281,
+"is_default": false,
+"type_id": 33093
+},
+{
+"effect_id": 11451,
+"is_default": false,
+"type_id": 33093
+},
+{
+"effect_id": 12,
+"is_default": false,
+"type_id": 60314
+},
+{
+"effect_id": 16,
+"is_default": false,
+"type_id": 60314
+},
+{
+"effect_id": 2726,
+"is_default": true,
+"type_id": 60314
+}
+],
+"type_skills": [
+{
+"level": 4,
+"skill_type_id": 3386,
+"type_id": 482
+},
+{
+"level": 1,
+"skill_type_id": 3332,
+"type_id": 626
+},
+{
+"level": 1,
+"skill_type_id": 3300,
+"type_id": 3301
+},
+{
+"level": 3,
+"skill_type_id": 3300,
+"type_id": 3304
+},
+{
+"level": 3,
+"skill_type_id": 3301,
+"type_id": 3304
+},
+{
+"level": 1,
+"skill_type_id": 3327,
+"type_id": 3328
+},
+{
+"level": 2,
+"skill_type_id": 3327,
+"type_id": 3332
+},
+{
+"level": 3,
+"skill_type_id": 33093,
+"type_id": 3332
+},
+{
+"level": 1,
+"skill_type_id": 3380,
+"type_id": 3385
+},
+{
+"level": 4,
+"skill_type_id": 3402,
+"type_id": 3410
+},
+{
+"level": 4,
+"skill_type_id": 3386,
+"type_id": 3410
+},
+{
+"level": 1,
+"skill_type_id": 3436,
+"type_id": 3438
+},
+{
+"level": 2,
+"skill_type_id": 3386,
+"type_id": 3438
+},
+{
+"level": 5,
+"skill_type_id": 3438,
+"type_id": 10250
+},
+{
+"level": 4,
+"skill_type_id": 3386,
+"type_id": 10250
+},
+{
+"level": 1,
+"skill_type_id": 3436,
+"type_id": 10250
+},
+{
+"level": 4,
+"skill_type_id": 3385,
+"type_id": 12195
+},
+{
+"level": 3,
+"skill_type_id": 3402,
+"type_id": 12195
+},
+{
+"level": 4,
+"skill_type_id": 3386,
+"type_id": 16281
+},
+{
+"level": 1,
+"skill_type_id": 17940,
+"type_id": 17476
+},
+{
+"level": 3,
+"skill_type_id": 3410,
+"type_id": 17476
+},
+{
+"level": 4,
+"skill_type_id": 3386,
+"type_id": 17482
+},
+{
+"level": 1,
+"skill_type_id": 3410,
+"type_id": 17482
+},
+{
+"level": 5,
+"skill_type_id": 3386,
+"type_id": 17912
+},
+{
+"level": 3,
+"skill_type_id": 3410,
+"type_id": 17940
+},
+{
+"level": 5,
+"skill_type_id": 3380,
+"type_id": 17940
+},
+{
+"level": 3,
+"skill_type_id": 32918,
+"type_id": 17940
+},
+{
+"level": 3,
+"skill_type_id": 12195,
+"type_id": 18066
+},
+{
+"level": 1,
+"skill_type_id": 3386,
+"type_id": 18066
+},
+{
+"level": 5,
+"skill_type_id": 3426,
+"type_id": 21603
+},
+{
+"level": 5,
+"skill_type_id": 16281,
+"type_id": 22229
+},
+{
+"level": 4,
+"skill_type_id": 3386,
+"type_id": 25544
+},
+{
+"level": 1,
+"skill_type_id": 32918,
+"type_id": 32880
+},
+{
+"level": 1,
+"skill_type_id": 3327,
+"type_id": 32918
+},
+{
+"level": 3,
+"skill_type_id": 3328,
+"type_id": 33093
+},
+{
+"level": 5,
+"skill_type_id": 25544,
+"type_id": 60314
+}
+],
+"types": [
+{
+"group_id": 54,
+"mass": 0.0,
+"name": "Miner II",
+"published": true,
+"type_id": 482
+},
+{
+"group_id": 26,
+"mass": 11100000.0,
+"name": "Vexor",
+"published": true,
+"type_id": 626
+},
+{
+"group_id": 255,
+"mass": 0.0,
+"name": "Gunnery",
+"published": true,
+"type_id": 3300
+},
+{
+"group_id": 255,
+"mass": 0.0,
+"name": "Small Hybrid Turret",
+"published": true,
+"type_id": 3301
+},
+{
+"group_id": 255,
+"mass": 0.0,
+"name": "Medium Hybrid Turret",
+"published": true,
+"type_id": 3304
+},
+{
+"group_id": 257,
+"mass": 0.0,
+"name": "Spaceship Command",
+"published": true,
+"type_id": 3327
+},
+{
+"group_id": 257,
+"mass": 0.0,
+"name": "Gallente Frigate",
+"published": true,
+"type_id": 3328
+},
+{
+"group_id": 257,
+"mass": 0.0,
+"name": "Gallente Cruiser",
+"published": true,
+"type_id": 3332
+},
+{
+"group_id": 268,
+"mass": 0.0,
+"name": "Industry",
+"published": true,
+"type_id": 3380
+},
+{
+"group_id": 1218,
+"mass": 0.0,
+"name": "Reprocessing",
+"published": true,
+"type_id": 3385
+},
+{
+"group_id": 1218,
+"mass": 0.0,
+"name": "Mining",
+"published": true,
+"type_id": 3386
+},
+{
+"group_id": 270,
+"mass": 0.0,
+"name": "Science",
+"published": true,
+"type_id": 3402
+},
+{
+"group_id": 1218,
+"mass": 0.0,
+"name": "Astrogeology",
+"published": true,
+"type_id": 3410
+},
+{
+"group_id": 1216,
+"mass": 0.0,
+"name": "CPU Management",
+"published": true,
+"type_id": 3426
+},
+{
+"group_id": 273,
+"mass": 0.0,
+"name": "Drones",
+"published": true,
+"type_id": 3436
+},
+{
+"group_id": 273,
+"mass": 0.0,
+"name": "Mining Drone Operation",
+"published": true,
+"type_id": 3438
+},
+{
+"group_id": 101,
+"mass": 0.0,
+"name": "Mining Drone II",
+"published": true,
+"type_id": 10250
+},
+{
+"group_id": 1218,
+"mass": 0.0,
+"name": "Veldspar Processing",
+"published": false,
+"type_id": 12195
+},
+{
+"group_id": 1218,
+"mass": 0.0,
+"name": "Ice Harvesting",
+"published": true,
+"type_id": 16281
+},
+{
+"group_id": 463,
+"mass": 15000000.0,
+"name": "Covetor",
+"published": true,
+"type_id": 17476
+},
+{
+"group_id": 464,
+"mass": 0.0,
+"name": "Strip Miner I",
+"published": true,
+"type_id": 17482
+},
+{
+"group_id": 483,
+"mass": 0.0,
+"name": "Modulated Strip Miner II",
+"published": true,
+"type_id": 17912
+},
+{
+"group_id": 257,
+"mass": 0.0,
+"name": "Mining Barge",
+"published": true,
+"type_id": 17940
+},
+{
+"group_id": 482,
+"mass": 1.0,
+"name": "Veldspar Mining Crystal I",
+"published": false,
+"type_id": 18066
+},
+{
+"group_id": 275,
+"mass": 0.0,
+"name": "Cynosural Field Theory",
+"published": true,
+"type_id": 21603
+},
+{
+"group_id": 464,
+"mass": 0.0,
+"name": "Ice Harvester II",
+"published": true,
+"type_id": 22229
+},
+{
+"group_id": 1218,
+"mass": 0.0,
+"name": "Gas Cloud Harvesting",
+"published": true,
+"type_id": 25544
+},
+{
+"group_id": 25,
+"mass": 1200000.0,
+"name": "Venture",
+"published": true,
+"type_id": 32880
+},
+{
+"group_id": 257,
+"mass": 0.0,
+"name": "Mining Frigate",
+"published": true,
+"type_id": 32918
+},
+{
+"group_id": 257,
+"mass": 0.0,
+"name": "Gallente Destroyer",
+"published": true,
+"type_id": 33093
+},
+{
+"group_id": 4138,
+"mass": 0.0,
+"name": "Gas Cloud Harvester II",
+"published": true,
+"type_id": 60314
+}
+]
+}
