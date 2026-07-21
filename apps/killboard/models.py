@@ -888,3 +888,58 @@ class KillboardApiToken(models.Model):
         if self.revoked_at is None:
             self.revoked_at = timezone.now()
             self.save(update_fields=["revoked_at"])
+
+
+# --------------------------------------------------------------------------- #
+#  KB-29 — realtime push feed OUT (the outbound SSE / poll event ring buffer)
+# --------------------------------------------------------------------------- #
+class KillboardStreamEvent(models.Model):
+    """One row per newly-ingested home-corp killmail, appended for the outbound stream (KB-29).
+
+    A small **ring buffer**: the monotonic ``seq`` primary key is the resume cursor a client
+    presents (``Last-Event-ID`` / ``?after_seq=``), and a nightly-cadence prune keeps only the
+    most recent ``KILLBOARD_STREAM_RETENTION`` rows (the live feed is not history — the board,
+    the API and EVE Ref are). Rows are written by :func:`apps.killboard.stream.emit_stream_event`
+    at the single post-ingest seam, and **only for kills within ~48h of now** so a years-old
+    EVE Ref backfill can never flood the feed.
+
+    Every topic-filter dimension (kind, sec band, ISK band via ``total_value``, ship class,
+    system, pilot, plus the member-gated ``needs_srp`` / ``deviated`` flags) is denormalised
+    onto the row, so serving the stream is a single indexed ``seq >`` scan with no ``Killmail``
+    join and no per-event SRP/deviation recomputation. Nothing here is sensitive: it is ids,
+    public flags and two precomputed booleans — never a payout figure, pilot name or fit name
+    (those stay gated on the board/API). The ``needs_srp`` / ``deviated`` booleans are still
+    withheld from the public-read (anonymous) payload; they only reach members.
+    """
+
+    seq = models.BigAutoField(primary_key=True)
+    killmail = models.ForeignKey(
+        Killmail, on_delete=models.CASCADE, related_name="stream_events", db_index=False
+    )
+    # --- payload (denormalised so the stream never joins Killmail) ----------
+    killmail_hash = models.CharField(max_length=64)
+    kill_time = models.DateTimeField()
+    home_role = models.CharField(max_length=10, choices=Killmail.HomeRole.choices)
+    sec_band = models.CharField(max_length=10, choices=SecBand.choices)
+    system_id = models.IntegerField()
+    ship_class = models.CharField(max_length=32, blank=True)
+    victim_ship_type_id = models.IntegerField()
+    victim_character_id = models.BigIntegerField(null=True, blank=True)
+    victim_corporation_id = models.BigIntegerField(null=True, blank=True)
+    total_value = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+    is_solo = models.BooleanField(default=False)
+    is_npc = models.BooleanField(default=False)
+    is_awox = models.BooleanField(default=False)
+    # --- member-gated topic flags (precomputed at emission) -----------------
+    needs_srp = models.BooleanField(default=False)
+    deviated = models.BooleanField(default=False)
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        # The stream is served newest-after-cursor; the PK (seq) already provides the
+        # ascending index for `seq > cursor`. `created` carries no separate index — the prune
+        # deletes by `seq <` a threshold, which the PK serves.
+        ordering = ["seq"]
+
+    def __str__(self) -> str:
+        return f"stream event {self.seq} (killmail {self.killmail_id})"

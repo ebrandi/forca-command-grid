@@ -8,6 +8,7 @@ from __future__ import annotations
 from django.urls import path
 from rest_framework.routers import SimpleRouter
 
+from .stream import KillboardStreamView
 from .views import (
     CorpStatsView,
     HistoryDayView,
@@ -29,5 +30,7 @@ urlpatterns = [
     # ``latest`` must precede the ``<date>`` catch-all so it isn't parsed as a date.
     path("history/latest/", HistoryLatestView.as_view(), name="history-latest"),
     path("history/<str:date>/", HistoryDayView.as_view(), name="history-day"),
+    # KB-29 realtime push OUT — bounded SSE, or ?mode=poll for the JSON fallback.
+    path("stream/", KillboardStreamView.as_view(), name="stream"),
     *router.urls,
 ]

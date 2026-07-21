@@ -319,6 +319,22 @@ SPECTACULAR_SETTINGS = {
 # tier-gated field stay members-only. Env-driven so a corp opts in per deployment.
 KILLBOARD_API_PUBLIC_READ = env.bool("KILLBOARD_API_PUBLIC_READ", default=False)
 
+# --- KB-29: realtime push feed OUT (SSE / poll) -------------------------
+# A long-lived SSE response holds one gunicorn gthread thread for its whole lifetime, and the
+# prod pool is small (GUNICORN_WORKERS x GUNICORN_THREADS = 12 by default). So the stream is
+# BOUNDED: a small connection cap (kept a minority of the thread pool), a hard lifetime after
+# which the client resumes from its cursor, and a heartbeat. Over capacity → 503 and the client
+# degrades to ?mode=poll. Raise MAX_CLIENTS only after raising GUNICORN_THREADS/WORKERS to match.
+# See apps/killboard/stream.py and handbooks/operator-handbook/operations-runbook.md.
+KILLBOARD_STREAM_ENABLED = env.bool("KILLBOARD_STREAM_ENABLED", default=True)
+KILLBOARD_STREAM_MAX_CLIENTS = env.int("KILLBOARD_STREAM_MAX_CLIENTS", default=4)
+KILLBOARD_STREAM_HEARTBEAT_S = env.int("KILLBOARD_STREAM_HEARTBEAT_S", default=15)
+KILLBOARD_STREAM_MAX_LIFETIME_S = env.int("KILLBOARD_STREAM_MAX_LIFETIME_S", default=120)
+KILLBOARD_STREAM_POLL_INTERVAL_S = env.float("KILLBOARD_STREAM_POLL_INTERVAL_S", default=2.0)
+KILLBOARD_STREAM_FRESH_HOURS = env.int("KILLBOARD_STREAM_FRESH_HOURS", default=48)
+KILLBOARD_STREAM_BATCH = env.int("KILLBOARD_STREAM_BATCH", default=200)
+KILLBOARD_STREAM_RETENTION = env.int("KILLBOARD_STREAM_RETENTION", default=10000)
+
 # --- Token encryption (OAuth refresh tokens at rest) --------------------
 # 32-byte url-safe base64 Fernet key. In prod this MUST be set in the env.
 TOKEN_ENCRYPTION_KEY = env("TOKEN_ENCRYPTION_KEY", default="")

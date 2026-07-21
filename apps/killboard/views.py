@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.core.paginator import Page, Paginator
-from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.http import Http404, HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.translation import gettext
@@ -242,7 +242,22 @@ def killboard_list(request: HttpRequest) -> HttpResponse:
 
     now = timezone.now()
     # D5: htmx filter/page requests get just the feed fragment (same context).
-    template = "killboard/_feed.html" if request.headers.get("HX-Request") else "killboard/list.html"
+    is_htmx = bool(request.headers.get("HX-Request"))
+    template = "killboard/_feed.html" if is_htmx else "killboard/list.html"
+
+    # KB-29 live feed: enhance the pristine (unfiltered) landing feed only — a drilled-down
+    # view must not receive unfiltered live rows. The tip seq seeds the client cursor so it
+    # streams only genuinely new kills. Only computed for the full-page landing render.
+    from django.conf import settings as _settings
+
+    stream_enabled = bool(getattr(_settings, "KILLBOARD_STREAM_ENABLED", True))
+    live_enabled = stream_enabled and not active and not entity_active and not is_htmx
+    stream_topics = "kills" if kind == "kills" else "losses" if kind == "losses" else "all"
+    stream_tip = 0
+    if live_enabled:
+        from .stream import tip_seq
+
+        stream_tip = tip_seq()
     return render(
         request,
         template,
@@ -257,8 +272,35 @@ def killboard_list(request: HttpRequest) -> HttpResponse:
             "overview": killfeed_overview(),
             "today_str": now.strftime("%Y-%m-%d"),
             "yesterday_str": (now - timedelta(days=1)).strftime("%Y-%m-%d"),
+            "live_enabled": live_enabled,
+            "stream_topics": stream_topics,
+            "stream_tip": stream_tip,
         },
     )
+
+
+def killmail_feed_row(request: HttpRequest, killmail_id: int) -> HttpResponse:
+    """KB-29: render one killfeed row server-side for the live feed to prepend.
+
+    Serves the same public-board row markup (``_feed_row.html``) the landing feed uses, enriched
+    identically (attacker count + final blower). Home-corp mails only — the same public surface
+    the board already exposes, so no extra gating is needed; a non-home / unknown id is a 404.
+    """
+    from django.db.models import Count, Prefetch, Q
+
+    km = (
+        Killmail.objects.filter(pk=killmail_id, involves_home_corp=True)
+        .annotate(attacker_count=Count("participants", filter=Q(participants__role="attacker")))
+        .prefetch_related(Prefetch(
+            "participants",
+            queryset=KillmailParticipant.objects.filter(role="attacker", final_blow=True),
+            to_attr="final_blowers",
+        ))
+        .first()
+    )
+    if km is None:
+        raise Http404("No such home-corp killmail.")
+    return render(request, "killboard/_feed_row.html", {"km": km})
 
 
 def killboard_rankings(request: HttpRequest) -> HttpResponse:

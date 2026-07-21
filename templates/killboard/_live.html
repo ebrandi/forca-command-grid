@@ -1,0 +1,98 @@
+{% load i18n %}
+{% comment %}KB-29 live killfeed — progressive enhancement. Renders only when the outbound stream
+   is enabled AND the pristine (unfiltered) landing feed is shown; a drilled-down/filtered view
+   must not receive unfiltered live rows, so this is gated in the view (live_enabled) and the
+   script tears itself down on the first htmx feed swap. New rows are fetched server-side
+   (killboard:live_row) so all markup/i18n stays server-rendered. Styles are inline (a <style>
+   block, not Tailwind classes) to sidestep the prebuilt-CSS trap.{% endcomment %}
+<style>
+  #kb-live-dot{width:.5rem;height:.5rem;border-radius:9999px;background:#3ddc84;display:inline-block;
+    box-shadow:0 0 0 0 rgba(61,220,132,.6);animation:kbLivePulse 1.8s infinite}
+  @keyframes kbLivePulse{0%{box-shadow:0 0 0 0 rgba(61,220,132,.5)}70%{box-shadow:0 0 0 .4rem rgba(61,220,132,0)}
+    100%{box-shadow:0 0 0 0 rgba(61,220,132,0)}}
+  @keyframes kbLiveIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+  .kb-live-new{animation:kbLiveIn .5s ease-out}
+</style>
+<div id="kb-live" class="mb-2 flex items-center gap-2 text-[11px] text-faint" hidden>
+  <span id="kb-live-dot"></span>
+  <span id="kb-live-label" class="font-display uppercase tracking-wide">{% translate "Live" %}</span>
+</div>
+<script>
+(function(){
+  var tip = "{{ stream_tip|default:0 }}";
+  var topics = "{{ stream_topics|default:'all' }}";
+  var base = "{% url 'killboard-api:stream' %}";
+  var cursor = tip, es = null, pollTimer = null, stopped = false, fails = 0;
+  var box = document.getElementById("kb-live");
+  var label = document.getElementById("kb-live-label");
+
+  function feed(){ var f = document.querySelector("#kb-feed .panel"); return f; }
+  function markLive(mode){ if(box){ box.hidden = false; } if(label){ label.textContent = mode || "{% translate 'Live' %}"; } }
+
+  function prepend(kmId){
+    var f = feed(); if(!f || !kmId) return;
+    fetch("{% url 'killboard:live_row' 0 %}".replace("/0/", "/" + kmId + "/"), {credentials:"same-origin"})
+      .then(function(r){ return r.ok ? r.text() : null; })
+      .then(function(html){
+        if(!html) return;
+        var f2 = feed(); if(!f2) return;
+        var tmp = document.createElement("div"); tmp.innerHTML = html.trim();
+        var row = tmp.firstElementChild; if(!row) return;
+        row.classList.add("kb-live-new");
+        f2.insertBefore(row, f2.firstChild);
+      }).catch(function(){});
+  }
+
+  function onEvent(e){
+    try { var d = JSON.parse(e.data); if(d && d.seq){ cursor = d.seq; } prepend(d.killmail_id); markLive(); } catch(err){}
+  }
+
+  function startSSE(){
+    if(stopped || typeof EventSource === "undefined"){ startPoll(); return; }
+    try { es = new EventSource(base + "?topics=" + encodeURIComponent(topics) + "&after_seq=" + encodeURIComponent(cursor)); }
+    catch(err){ startPoll(); return; }
+    es.addEventListener("kill", onEvent);
+    es.addEventListener("loss", onEvent);
+    es.onopen = function(){ fails = 0; markLive(); };
+    es.onerror = function(){
+      // A clean max-lifetime close leaves readyState=CONNECTING (EventSource auto-reconnects
+      // with Last-Event-ID) — do nothing. A fatal response (503 cap-full / 403 / disabled)
+      // leaves readyState=CLOSED — degrade to polling.
+      if(es && es.readyState === EventSource.CLOSED){ es = null; startPoll(); }
+    };
+  }
+
+  function startPoll(){
+    if(stopped || pollTimer) return;
+    markLive("{% translate 'Live' %}");
+    var tick = function(){
+      if(stopped) return;
+      fetch(base + "?mode=poll&topics=" + encodeURIComponent(topics) + "&after_seq=" + encodeURIComponent(cursor),
+            {credentials:"same-origin", headers:{"Accept":"application/json"}})
+        .then(function(r){ return r.ok ? r.json() : null; })
+        .then(function(j){
+          if(!j || !j.events) return;
+          if(typeof j.cursor === "number"){ cursor = j.cursor; }
+          for(var i=0;i<j.events.length;i++){ prepend(j.events[i].killmail_id); }
+          if(j.events.length){ markLive(); }
+        }).catch(function(){});
+    };
+    pollTimer = setInterval(tick, 10000);
+  }
+
+  function teardown(){
+    stopped = true;
+    if(es){ try{ es.close(); }catch(e){} es = null; }
+    if(pollTimer){ clearInterval(pollTimer); pollTimer = null; }
+    if(box){ box.hidden = true; }
+  }
+
+  // The user filtering/paging swaps #kb-feed; unfiltered live rows would be wrong there, so
+  // stop the live feed on the first such swap (a full reload brings it back).
+  document.body.addEventListener("htmx:afterSwap", function(evt){
+    if(evt.target && evt.target.id === "kb-feed"){ teardown(); }
+  });
+
+  startSSE();
+})();
+</script>

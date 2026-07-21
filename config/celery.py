@@ -130,6 +130,13 @@ app.conf.beat_schedule = {
         "task": "killboard.consume_killstream",
         "schedule": crontab(minute="*"),
     },
+    # KB-29: trim the outbound-stream (SSE/poll) event ring buffer to its retention window.
+    # A cheap seq-threshold delete; hourly is ample. Minute 34 is otherwise unclaimed by the
+    # recurring patterns (its hour-3 neighbours are the nightly rollups, not this hourly job).
+    "prune-killboard-stream-events": {
+        "task": "killboard.prune_stream_events",
+        "schedule": crontab(minute=34),
+    },
     # Incrementally refresh the per-pilot monthly ranking aggregate (current +
     # previous calendar month) so /killboard/rankings/ historical filters stay live
     # as new kills arrive. The full 15-year history is filled once by the

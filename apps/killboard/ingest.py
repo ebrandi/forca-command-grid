@@ -113,6 +113,13 @@ def ingest_killmail(
     apply_valuation(km)
     tag_doctrine_fit(km)
     compute_fit_deviation(km)
+    # KB-29: append an outbound-stream event. This is the single post-ingest seam every path
+    # funnels through (ESI corp/char, zKill query poll, R2Z2 killstream, EVE Ref / zKill
+    # backfills), so one call covers them all. It self-limits to home-corp mails within the
+    # freshness window and never raises, so a stream hiccup can't break ingestion.
+    from .stream import emit_stream_event
+
+    emit_stream_event(km)
     return km
 
 

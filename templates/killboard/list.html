@@ -83,6 +83,7 @@
 <div class="grid gap-4 lg:grid-cols-3">
   <!-- Feed -->
   <div class="lg:col-span-2">
+    {% if live_enabled %}{% include 'killboard/_live.html' %}{% endif %}
     {% include 'killboard/_feed.html' %}
   </div>
 

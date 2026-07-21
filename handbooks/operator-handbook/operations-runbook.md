@@ -12,6 +12,7 @@ command surface. Pair this page with
 - [Monthly checklist](#monthly-checklist)
 - [Scheduled jobs and workers](#scheduled-jobs-and-workers)
 - [Ad hoc operations](#ad-hoc-operations)
+- [Realtime killboard stream (KB-29)](#realtime-killboard-stream-kb-29)
 
 ## Daily checklist
 
@@ -105,3 +106,64 @@ docker compose -f docker-compose.prod.yml logs -f beat worker
 | Restore from a dump | `make restore FILE=./backups/forca-....sql.gz` (see [Backup and Restore](./backup-and-restore.md)) |
 | Obtain/renew TLS | `sudo make cert DOMAIN=... EMAIL=...` |
 | Validate both compose files parse | `make config-check` |
+
+## Realtime killboard stream (KB-29)
+
+The board can push new home-corp kills to browsers and integrations in real time over
+Server-Sent Events (SSE) at `GET /api/killboard/stream/`, with a JSON short-poll fallback
+(`?mode=poll`) over the same cursor. It powers the "LIVE" killfeed on the board landing page
+and can feed Discord bots or dashboards. Auth mirrors the REST API (session or bearer token;
+anonymous only when `KILLBOARD_API_PUBLIC_READ` is on, and then only public topics).
+
+### Worker-budget assessment (read before raising limits)
+
+A long-lived SSE response **occupies one gunicorn `gthread` thread for its whole lifetime**.
+Production runs `GUNICORN_WORKERS` (default 3) × `GUNICORN_THREADS` (default 4) = **12
+concurrent request slots for the entire suite**. Streaming is therefore deliberately bounded so
+it cannot starve the site:
+
+- **Connection cap** — `KILLBOARD_STREAM_MAX_CLIENTS` (default **4**, a third of the pool at
+  worst). When full the endpoint returns `503` + `Retry-After` and the client automatically
+  degrades to short-polling, so extra viewers are never broken — only slightly less live.
+- **Bounded lifetime** — every stream auto-closes after `KILLBOARD_STREAM_MAX_LIFETIME_S`
+  (default 120s); the browser reconnects transparently via `Last-Event-ID`. This caps how long a
+  thread is held and lets a wedged slot recycle.
+- **Heartbeat** — a comment every `KILLBOARD_STREAM_HEARTBEAT_S` (default 15s) keeps the
+  connection and nginx's read timeout alive and detects dead clients.
+- **Poll fallback** — `?mode=poll` holds a thread only for one indexed query, so it scales far
+  past the SSE cap; it is the cheaper shape for bots and the automatic browser fallback.
+
+**Golden rule: keep `KILLBOARD_STREAM_MAX_CLIENTS` a minority of the thread pool.** If you
+expect many simultaneous live viewers, first raise `GUNICORN_THREADS` / `GUNICORN_WORKERS`
+(sizing RAM accordingly), *then* raise the cap. If you would rather not spend threads on
+streaming at all, set `KILLBOARD_STREAM_MAX_CLIENTS=0` — SSE then always 503s and every client
+uses the cheap poll path — or `KILLBOARD_STREAM_ENABLED=false` to turn the feature (and the
+LIVE badge) off entirely.
+
+### Settings (all env-overridable)
+
+| Setting | Default | Purpose |
+|---|---|---|
+| `KILLBOARD_STREAM_ENABLED` | `true` | Master switch for the endpoint + the LIVE badge. |
+| `KILLBOARD_STREAM_MAX_CLIENTS` | `4` | Concurrent SSE cap (Redis semaphore). Keep < thread pool. |
+| `KILLBOARD_STREAM_HEARTBEAT_S` | `15` | Heartbeat/keep-alive interval. |
+| `KILLBOARD_STREAM_MAX_LIFETIME_S` | `120` | Hard per-connection lifetime before client resumes. |
+| `KILLBOARD_STREAM_POLL_INTERVAL_S` | `2` | Server-side event-check cadence within a stream. |
+| `KILLBOARD_STREAM_FRESH_HOURS` | `48` | Only kills newer than this are emitted (backfill never floods the feed). |
+| `KILLBOARD_STREAM_BATCH` | `200` | Max events served per flush/poll. |
+| `KILLBOARD_STREAM_RETENTION` | `10000` | Ring-buffer size kept by the hourly prune. |
+
+### nginx
+
+The prod nginx config (`deploy/nginx/forca.prod.conf`) already carries an exact-match
+`location = /api/killboard/stream/` block with `proxy_buffering off`, `proxy_cache off` and a
+`proxy_read_timeout` (135s) just above the app's bounded lifetime — SSE will not work through a
+buffering proxy. If you front FORCA with your own proxy/CDN, replicate those three settings for
+that path. The app also sends `X-Accel-Buffering: no` as a backstop.
+
+### Housekeeping
+
+The ring buffer is trimmed to `KILLBOARD_STREAM_RETENTION` rows hourly by the
+`killboard.prune_stream_events` beat task (minute 34). The stream is a live feed, not history —
+the board, the REST API and EVE Ref remain the durable record — so a trimmed or briefly
+unavailable stream loses nothing.

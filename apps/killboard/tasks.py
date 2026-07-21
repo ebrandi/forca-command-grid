@@ -74,6 +74,14 @@ def warm_caches() -> int:
     return _warm()
 
 
+@shared_task(name="killboard.prune_stream_events")
+def prune_stream_events() -> dict:
+    """KB-29: trim the outbound-stream ring buffer to its retention window (hourly)."""
+    from .stream import prune_events
+
+    return prune_events()
+
+
 @shared_task(name="killboard.refresh_monthly_stats")
 def refresh_monthly_stats() -> int:
     """Incrementally refresh the current + previous month's per-pilot ranking

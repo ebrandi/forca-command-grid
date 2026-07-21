@@ -57,49 +57,7 @@
           </p>
         </div>
         {% endifchanged %}
-        <div class="group flex items-center gap-3 px-3 py-3 hover:bg-panel2/50 transition sm:gap-4 sm:px-4">
-          <span class="h-12 w-1 shrink-0 rounded {% if km.home_corp_role == 'victim' %}bg-loss{% else %}bg-kill{% endif %}"></span>
-          <a href="{% url 'killboard:detail' km.killmail_id %}" class="relative shrink-0">
-            <img src="{% eve_type_render km.victim_ship_type_id 64 %}" alt="" loading="lazy" class="h-12 w-12 rounded-md bg-space object-cover ring-1 ring-line">
-            {% if km.attacker_count > 1 %}<span class="data absolute -bottom-1 -right-1 rounded bg-space/90 px-1 text-[9px] font-semibold text-muted ring-1 ring-line" title="{{ km.attacker_count }} attackers">{{ km.attacker_count }}</span>{% endif %}
-          </a>
-          <div class="min-w-0 flex-1">
-            <div class="flex items-center gap-2">
-              <a rel="nofollow" href="{% querystring ship_type_id=km.victim_ship_type_id page=None %}" hx-get="{% querystring ship_type_id=km.victim_ship_type_id page=None %}" class="truncate font-medium text-ink hover:text-gold transition">{% type_name km.victim_ship_type_id %}</a>
-              {% if km.is_solo %}<span class="chip">solo</span>{% endif %}
-              {% if km.is_npc %}<span class="chip">npc</span>{% endif %}
-              {% if km.is_awox %}<span class="chip !text-loss">awox</span>{% endif %}
-            </div>
-            <div class="mt-0.5 flex items-center gap-1.5 text-xs text-faint">
-              {% system_security km.solar_system_id as sec %}
-              <span class="data font-semibold {{ sec|sec_class }}">{{ sec }}</span>
-              <a rel="nofollow" href="{% querystring system_id=km.solar_system_id page=None %}" hx-get="{% querystring system_id=km.solar_system_id page=None %}" class="text-muted hover:text-gold">{% system_name km.solar_system_id %}</a>
-              <span class="hidden sm:inline">· <a rel="nofollow" href="{% querystring region_id=km.region_id page=None %}" hx-get="{% querystring region_id=km.region_id page=None %}" class="hover:text-gold">{% region_name km.region_id %}</a></span>
-            </div>
-            {% with fb=km.final_blowers.0 %}
-            {% if fb and fb.character_id %}
-            <div class="mt-1 flex items-center gap-1.5 text-[11px]">
-              <img src="{% eve_portrait fb.character_id 32 %}" alt="" loading="lazy" class="h-4 w-4 rounded-full ring-1 ring-line">
-              <span class="text-faint">final blow</span>
-              <span class="truncate {% if km.home_corp_role == 'victim' %}text-loss/80{% else %}text-gold/90{% endif %}">{% eve_name fb.character_id %}</span>
-            </div>
-            {% endif %}
-            {% endwith %}
-          </div>
-          {% if km.victim_character_id %}
-          <div class="hidden w-40 items-center gap-2.5 sm:flex">
-            <img src="{% eve_portrait km.victim_character_id 32 %}" alt="" loading="lazy" class="h-8 w-8 shrink-0 rounded-full ring-1 ring-line">
-            <div class="min-w-0 text-xs leading-tight">
-              <a rel="nofollow" href="{% querystring character_id=km.victim_character_id page=None %}" hx-get="{% querystring character_id=km.victim_character_id page=None %}" class="block truncate text-muted hover:text-gold">{% eve_name km.victim_character_id %}</a>
-              <a rel="nofollow" href="{% querystring corporation_id=km.victim_corporation_id page=None %}" hx-get="{% querystring corporation_id=km.victim_corporation_id page=None %}" class="block truncate text-faint hover:text-gold">{% eve_name km.victim_corporation_id %}</a>
-            </div>
-          </div>
-          {% endif %}
-          <a href="{% url 'killboard:detail' km.killmail_id %}" class="shrink-0 text-right">
-            <p class="data text-sm font-semibold {% if km.home_corp_role == 'victim' %}text-loss{% else %}text-gold{% endif %}">{{ km.total_value|isk }}</p>
-            <p class="text-[11px] text-faint">{{ km.killmail_time|timesince|truncatewords:1 }} {% translate "ago" %} · {{ km.points }} pts</p>
-          </a>
-        </div>
+        {% include "killboard/_feed_row.html" with km=km %}
       {% empty %}
         <div class="px-4 py-16 text-center">
           <p class="font-display text-lg text-muted">{% translate "No killmails in range" %}</p>

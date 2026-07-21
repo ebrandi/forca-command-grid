@@ -24,6 +24,9 @@ urlpatterns = [
     path("battles/create/", views.battle_report_create, name="battle_report_create"),
     path("battles/<int:pk>/", views.battle_report_detail, name="battle_report_detail"),
     path("killfeed/settings/", views.killfeed_config, name="killfeed_config"),
+    # KB-29 live feed: server-rendered single row the live JS prepends. Above the
+    # <int:killmail_id> single-segment catch-all.
+    path("live/row/<int:killmail_id>/", views.killmail_feed_row, name="live_row"),
     # KB-28 self-serve API tokens — above the <int:killmail_id> single-segment catch-all.
     path("api-tokens/", views.api_tokens, name="api_tokens"),
     path("api-tokens/create/", views.api_token_create, name="api_token_create"),
