@@ -60,6 +60,22 @@ class Severity(str, Enum):
 # --------------------------------------------------------------------------- #
 # Inputs
 # --------------------------------------------------------------------------- #
+def _freeze_overrides(value) -> tuple[tuple[int, float], ...]:
+    """Normalise a mutated-attribute override mapping to a hashable, canonical form.
+
+    Accepts a dict (``{attr_id: value}``, keys may be str from JSON) or an iterable of
+    ``(attr_id, value)`` pairs and returns a tuple of ``(int, float)`` pairs sorted by
+    attribute id — so two ModuleInputs describing the same mutation compare/hash equal
+    regardless of input order or key type, and the result is safe to store on a frozen,
+    hashable dataclass. Empty/false input yields ``()``. Non-numeric entries raise, so a
+    bad override never silently becomes a no-op — callers bound/clean their input first
+    (see apps.fitting.views._parse_items)."""
+    if not value:
+        return ()
+    items = value.items() if isinstance(value, dict) else value
+    return tuple(sorted((int(k), float(v)) for k, v in items))
+
+
 @dataclass(frozen=True)
 class ModuleInput:
     type_id: int
@@ -67,12 +83,34 @@ class ModuleInput:
     state: ModuleState = ModuleState.ACTIVE
     charge_type_id: int | None = None
     quantity: int = 1
+    # WS-11 mutated (abyssal) modules: rolled attribute overrides, attribute_id -> value,
+    # applied to the module entity's BASE attributes before graph evaluation (override wins;
+    # a value for an attribute the base type lacks is added). Stored as a sorted tuple of
+    # (int, float) pairs so a ModuleInput stays frozen + hashable; folded into
+    # FitInput.hash() below so a mutation is a distinct fit for save-dedup (WS-13). ``()`` for
+    # a normal module. Charges are never mutated in v1 (documented in the mechanics handbook).
+    attr_overrides: tuple[tuple[int, float], ...] = ()
+
+    def __post_init__(self):
+        # Always canonicalise (dict / unsorted pairs / str keys → sorted (int, float) tuple)
+        # so equality, hashing and the canonical() dict are stable for the same mutation.
+        object.__setattr__(self, "attr_overrides", _freeze_overrides(self.attr_overrides))
+
+    def overrides_map(self) -> dict[int, float]:
+        """The overrides as a plain ``{attribute_id: value}`` dict (the graph merges this
+        into the module entity's base attributes)."""
+        return {k: v for k, v in self.attr_overrides}
 
     def canonical(self) -> dict:
-        return {
+        d = {
             "type_id": self.type_id, "slot": self.slot.value, "state": self.state.value,
             "charge_type_id": self.charge_type_id, "quantity": self.quantity,
         }
+        # Only emit the key when a mutation exists, so an ordinary module's hash is unchanged
+        # from before WS-11 (existing saved fits keep their identity).
+        if self.attr_overrides:
+            d["attr_overrides"] = {str(k): v for k, v in self.attr_overrides}
+        return d
 
 
 @dataclass(frozen=True)

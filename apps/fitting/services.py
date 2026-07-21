@@ -8,12 +8,13 @@ re-implemented.
 """
 from __future__ import annotations
 
+import math
 import re
 from decimal import Decimal
 
 from django.db import transaction
 
-from apps.sde.models import SdeType, SdeTypeAttribute, SdeTypeEffect
+from apps.sde.models import SdeDogmaAttribute, SdeType, SdeTypeAttribute, SdeTypeEffect
 from core.audit import audit_log
 
 from .engine import attributes as A
@@ -36,6 +37,95 @@ _MAX_LINES = 500  # mirrors apps/doctrines/fitparser — bound a pathological pa
 _QTY_RE = re.compile(r"\sx(\d+)\s*$", re.IGNORECASE)
 _CATEGORY_CHARGE = 8
 _CATEGORY_DRONE = 18
+
+# WS-11 mutated (abyssal) modules — EFT interchange (pyfa's mutation-block syntax).
+# --------------------------------------------------------------------------------
+# pyfa (service/port/eft.py + service/port/muta.py, studied under GPL, implemented
+# independently) renders a mutated module's rack line with a trailing ``[N]`` reference and
+# emits, after all racks, one block per mutant:
+#     [N] <base item name>
+#       <mutaplasmid name>
+#       <attrName value>, <attrName2 value2>
+# (firstPrefix ``[N] ``, prefix two spaces, attributes sorted by name, values prettified).
+# FORCA models a mutation purely as attribute overrides on the fitted type — it does NOT
+# track the mutaplasmid identity — so on export the mutaplasmid line is a fixed placeholder,
+# and on import it is parsed but ignored. Round-trip fidelity: FORCA→FORCA preserves every
+# override exactly (identical FitInput.hash); pyfa→FORCA preserves the base item + overrides
+# (mutaplasmid identity dropped); FORCA→pyfa LOSES the overrides, because pyfa needs a real
+# mutaplasmid name on the middle line to keep them (documented in the mechanics handbook).
+_MUTAPLASMID_PLACEHOLDER = "Unknown Mutaplasmid"
+_MUT_REF_RE = re.compile(r"\s*\[(\d+)\]\s*$")          # trailing " [N]" on a rack/drone line
+_MUT_HEADER_RE = re.compile(r"^\[(\d+)\](?P<tail>.*)")  # a mutation-block header "[N] BaseName"
+_MAX_OVERRIDES = 32  # mirrors apps.fitting.views._MAX_OVERRIDES — bound overrides per module
+
+
+def _resolve_attr_names(names: set[str]) -> dict[str, int]:
+    """Case-insensitive dogma-attribute name → attribute_id (one query). Attribute names are
+    exact camelCase tokens (e.g. ``damageMultiplier``); an unknown name maps to nothing so the
+    caller can surface it as an unresolved import warning."""
+    out: dict[str, int] = {}
+    wanted = {n.strip() for n in names if n and n.strip()}
+    if not wanted:
+        return out
+    for aid, name in SdeDogmaAttribute.objects.filter(
+        name__in=list(wanted)
+    ).values_list("attribute_id", "name"):
+        out[name.lower()] = aid
+    missing = [n for n in wanted if n.lower() not in out]
+    for n in missing:
+        row = SdeDogmaAttribute.objects.filter(name__iexact=n).values_list(
+            "attribute_id", "name").first()
+        if row:
+            out[n.lower()] = row[0]
+    return out
+
+
+def _overrides_of(item: dict) -> dict[int, float]:
+    """The mutated attribute overrides on an items entry as ``{attr_id: value}`` (keys may be
+    str from persisted JSON or int)."""
+    ov = item.get("attr_overrides") or {}
+    out: dict[int, float] = {}
+    for k, v in ov.items():
+        try:
+            out[int(k)] = float(v)
+        except (TypeError, ValueError):
+            continue
+    return out
+
+
+def _fmt_mut_value(v: float) -> str:
+    """Compact, round-trip-safe rendering of a mutated attribute value: an integral value
+    prints without a decimal, everything else via ``repr`` so ``float(_fmt_mut_value(v)) == v``
+    (FORCA→FORCA export/import preserves the exact float)."""
+    f = float(v)
+    return str(int(f)) if f == int(f) else repr(f)
+
+
+def _parse_mutation_attrs(line: str, resolver: dict[str, int],
+                          unresolved: list[str]) -> dict[int, float]:
+    """Parse a mutation block's attribute line (``attrName value, attrName2 value2``) into
+    ``{attr_id: value}`` (bounded at _MAX_OVERRIDES). Mirrors pyfa's parseMutantAttrs: split
+    on commas, each pair split on whitespace into exactly a name + a float; an unresolvable
+    attribute name is recorded in ``unresolved`` (consistent with unresolved module names)."""
+    out: dict[int, float] = {}
+    for pair in line.split(","):
+        parts = pair.split()
+        if len(parts) != 2:
+            continue
+        name, raw = parts
+        try:
+            value = float(raw)
+        except (TypeError, ValueError):
+            continue
+        if not math.isfinite(value):
+            continue
+        aid = resolver.get(name.strip().lower())
+        if aid is None:
+            unresolved.append(name.strip())
+            continue
+        if len(out) < _MAX_OVERRIDES:
+            out[aid] = value
+    return out
 
 
 # --------------------------------------------------------------------------- #
@@ -196,6 +286,9 @@ def fit_input_from_items(ship_type_id: int, items: list[dict],
             type_id=int(it["type_id"]), slot=slot, state=state,
             charge_type_id=(int(it["charge_type_id"]) if it.get("charge_type_id") else None),
             quantity=int(it.get("quantity", 1)),
+            # WS-11: mutated (abyssal) attribute overrides ride the items entry; ModuleInput
+            # freezes the dict (str/int keys tolerated) into a canonical hashable tuple.
+            attr_overrides=it.get("attr_overrides") or (),
         ))
     return FitInput(ship_type_id=int(ship_type_id), modules=tuple(modules),
                     mode_type_id=(int(mode_type_id) if mode_type_id else None),
@@ -466,10 +559,71 @@ def compatible_charges(weapon_type_id: int, query: str, limit: int = 20) -> list
     return rows[:limit]
 
 
+def _extract_mutations(lines: list[str]) -> tuple[list[str], dict[int, dict[int, float]], list[str]]:
+    """WS-11: pull pyfa-style mutation blocks out of an EFT body, returning the remaining
+    (rack) lines, a ``{ref: {attr_id: value}}`` map, and any unresolved attribute names.
+
+    A block starts at a ``[N]`` header (digits only — the ship header and ``[Empty ...]`` slot
+    stubs never match) and runs to the next header or blank line; its LAST line is the
+    attribute-override line (pyfa's third line), the intervening line the mutaplasmid name we
+    do not model. Consumed lines are removed so the caller's rack loop never sees them."""
+    blocks: dict[int, list[str]] = {}
+    consumed: set[int] = set()
+    current_ref: int | None = None
+    current_lines: list[str] = []
+
+    def _flush() -> None:
+        if current_ref is not None and current_lines:
+            blocks[current_ref] = list(current_lines)
+
+    for i, raw in enumerate(lines):
+        line = raw.strip()
+        m = _MUT_HEADER_RE.match(line)
+        if m:
+            _flush()
+            current_ref = int(m.group(1))
+            current_lines = [m.group("tail").strip()]
+            consumed.add(i)
+        elif not line:
+            _flush()
+            current_ref, current_lines = None, []
+        elif current_ref is not None:
+            current_lines.append(line)
+            consumed.add(i)
+    _flush()
+
+    remaining = [ln for i, ln in enumerate(lines) if i not in consumed]
+    # The attribute line is the block's last line (index 2 in a full pyfa block); a lone
+    # header line carries no overrides.
+    attr_line_by_ref = {ref: (bl[-1] if len(bl) >= 2 else "") for ref, bl in blocks.items()}
+    names: set[str] = set()
+    for line in attr_line_by_ref.values():
+        for pair in line.split(","):
+            parts = pair.split()
+            if len(parts) == 2:
+                names.add(parts[0].strip())
+    resolver = _resolve_attr_names(names)
+    unresolved: list[str] = []
+    mutations: dict[int, dict[int, float]] = {}
+    for ref, line in attr_line_by_ref.items():
+        if not line:
+            continue
+        parsed = _parse_mutation_attrs(line, resolver, unresolved)
+        if parsed:
+            mutations[ref] = parsed
+    return remaining, mutations, unresolved
+
+
 def import_eft(text: str) -> dict:
     """Parse EFT text into a Tocha's Lab loadout, preserving module+charge pairs and
     inferring each module's slot. Defensive: line-bounded, name-normalised through local
-    SDE data only, never evaluated. Returns items + a list of unresolved names."""
+    SDE data only, never evaluated. Returns items + a list of unresolved names.
+
+    Mutated (abyssal) modules: a ``[N]`` mutation block (pyfa syntax) is lifted out first and
+    its attribute overrides attached to the module carrying the matching ``[N]`` reference;
+    unresolvable attribute names join the ``unresolved`` list, exactly like unresolvable module
+    names. The mutaplasmid identity in the block is parsed but not stored (FORCA models a
+    mutation as attribute overrides only — see the mutation constants above)."""
     lines = [ln.rstrip() for ln in (text or "").strip().splitlines()][:_MAX_LINES]
     if not lines or not lines[0].startswith("["):
         raise ValueError("EFT must start with '[ShipName, Fit name]'")
@@ -477,12 +631,19 @@ def import_eft(text: str) -> dict:
     ship_name, _sep, fit_name = header.partition(",")
     ship_name, fit_name = ship_name.strip(), fit_name.strip()
 
-    entries: list[tuple[str, str | None, int]] = []
+    body, mutations, unresolved_attrs = _extract_mutations(lines[1:])
+
+    entries: list[tuple[str, str | None, int, int | None]] = []
     names: set[str] = {ship_name}
-    for raw in lines[1:]:
+    for raw in body:
         line = raw.strip()
         if not line or line.startswith("["):
             continue
+        mut_ref = None
+        mm = _MUT_REF_RE.search(line)
+        if mm:
+            mut_ref = int(mm.group(1))
+            line = _MUT_REF_RE.sub("", line).strip()
         qty = 1
         m = _QTY_RE.search(line)
         if m:
@@ -493,7 +654,7 @@ def import_eft(text: str) -> dict:
         charge_name = charge_name.strip() or None
         if not module_name or module_name.lower() in {"empty"}:
             continue
-        entries.append((module_name, charge_name, qty))
+        entries.append((module_name, charge_name, qty, mut_ref))
         names.add(module_name)
         if charge_name:
             names.add(charge_name)
@@ -504,8 +665,8 @@ def import_eft(text: str) -> dict:
     slots = infer_slots(module_ids)
 
     items: list[dict] = []
-    unresolved: list[str] = []
-    for module_name, charge_name, qty in entries:
+    unresolved: list[str] = list(unresolved_attrs)
+    for module_name, charge_name, qty, mut_ref in entries:
         tid = resolved.get(module_name.lower())
         if tid is None:
             unresolved.append(module_name)
@@ -514,24 +675,37 @@ def import_eft(text: str) -> dict:
         charge_id = resolved.get(charge_name.lower()) if charge_name else None
         if charge_name and charge_id is None:
             unresolved.append(charge_name)
+        overrides = mutations.get(mut_ref) if mut_ref is not None else None
+        ov_blob = {str(a): v for a, v in overrides.items()} if overrides else None
         if slot == "drone":
-            items.append({"type_id": tid, "slot": "drone", "state": "active",
-                          "charge_type_id": None, "quantity": qty})
+            item = {"type_id": tid, "slot": "drone", "state": "active",
+                    "charge_type_id": None, "quantity": qty}
+            if ov_blob:
+                item["attr_overrides"] = ov_blob
+            items.append(item)
         elif slot == "charge":
             # A bare charge line = cargo; not loaded into a module.
             items.append({"type_id": tid, "slot": "cargo", "state": "offline",
                           "charge_type_id": None, "quantity": qty})
         else:
             for _ in range(max(1, qty) if slot in ("high", "med", "low", "rig") else 1):
-                items.append({"type_id": tid, "slot": slot, "state": "active",
-                              "charge_type_id": charge_id, "quantity": 1})
+                item = {"type_id": tid, "slot": slot, "state": "active",
+                        "charge_type_id": charge_id, "quantity": 1}
+                if ov_blob:
+                    item["attr_overrides"] = ov_blob
+                items.append(item)
     return {"ship_name": ship_name, "ship_type_id": ship_type_id, "fit_name": fit_name or ship_name,
             "items": items, "unresolved": unresolved}
 
 
 def export_eft(ship_type_id: int, items: list[dict], fit_name: str = "Fit") -> str:
     """Deterministic EFT export for a revision. Groups by slot in EVE-client order and
-    renders ``Module, Charge`` / ``Drone xN``."""
+    renders ``Module, Charge`` / ``Drone xN``.
+
+    A mutated (abyssal) module gets a trailing ``[N]`` reference on its rack line and a
+    matching mutation block appended after all racks, in pyfa's syntax (see the mutation
+    constants above). FORCA→FORCA round-trips every override exactly; the emitted mutaplasmid
+    line is a placeholder because FORCA does not track mutaplasmid identity."""
     names = _type_names({ship_type_id} | {int(i["type_id"]) for i in items}
                         | {int(i["charge_type_id"]) for i in items if i.get("charge_type_id")})
     ship = names.get(int(ship_type_id), f"TypeID:{ship_type_id}")
@@ -539,7 +713,18 @@ def export_eft(ship_type_id: int, items: list[dict], fit_name: str = "Fit") -> s
     # The tactical-mode marker and projected hostile modules are not EFT lines (EFT carries
     # neither) — skip them so the export round-trips cleanly.
     items = [it for it in items if not is_extra_item(it)]
+
+    # Resolve every mutated attribute id to its dogma name once (for the block attr lines).
+    mut_attr_ids: set[int] = set()
+    for it in items:
+        mut_attr_ids |= set(_overrides_of(it)) if it.get("attr_overrides") else set()
+    attr_names = dict(SdeDogmaAttribute.objects.filter(
+        attribute_id__in=list(mut_attr_ids)).values_list("attribute_id", "name")) \
+        if mut_attr_ids else {}
+
     lines = [f"[{ship}, {fit_name}]"]
+    mutation_blocks: list[str] = []
+    ref = 1
     last_slot = None
     for it in sorted(items, key=lambda i: (order.get(i.get("slot"), 9), int(i["type_id"]))):
         slot = it.get("slot")
@@ -547,12 +732,29 @@ def export_eft(ship_type_id: int, items: list[dict], fit_name: str = "Fit") -> s
             lines.append("")
         last_slot = slot
         name = names.get(int(it["type_id"]), f"TypeID:{it['type_id']}")
+        overrides = _overrides_of(it) if it.get("attr_overrides") else {}
+        suffix = ""
+        if overrides:
+            # Attribute line: "name value" pairs sorted by attribute name (pyfa's ordering).
+            rendered = ", ".join(
+                f"{attr_names.get(aid, str(aid))} {_fmt_mut_value(val)}"
+                for aid, val in sorted(overrides.items(),
+                                       key=lambda kv: attr_names.get(kv[0], str(kv[0]))))
+            mutation_blocks.append(
+                f"[{ref}] {name}\n  {_MUTAPLASMID_PLACEHOLDER}\n  {rendered}")
+            suffix = f" [{ref}]"
+            ref += 1
         if slot == "drone":
-            lines.append(f"{name} x{it.get('quantity', 1)}")
+            lines.append(f"{name} x{it.get('quantity', 1)}{suffix}")
         elif it.get("charge_type_id"):
-            lines.append(f"{name}, {names.get(int(it['charge_type_id']), '')}".rstrip(", "))
+            lines.append(
+                f"{name}, {names.get(int(it['charge_type_id']), '')}".rstrip(", ") + suffix)
         else:
-            lines.append(name)
+            lines.append(f"{name}{suffix}")
+
+    if mutation_blocks:
+        lines.append("")
+        lines.extend(mutation_blocks)
     return "\n".join(lines)
 
 

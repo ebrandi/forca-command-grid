@@ -288,6 +288,21 @@ def _new_entity(provider, type_id: int, kind: str, state: int, **kw) -> Entity:
     )
 
 
+def _apply_overrides(entity: Entity, module_input) -> None:
+    """WS-11: fold a mutated module's rolled attribute overrides onto its base attributes.
+
+    The override REPLACES the provider's base value for that attribute (and ADDS the
+    attribute when the base type carries none — an abyssal SdeType stores only structural
+    attrs, its rolled damageMultiplier/etc. live entirely in the override). Everything
+    downstream — skills, module/ship bonuses, stacking, validations, telemetry — reads the
+    merged base through the normal pass-3 machinery, so no other special-casing is needed:
+    a mutated gyro's overridden damageMultiplier flows through the same LocationGroupModifier
+    chain (and stacking penalty) a normal gyro's does."""
+    overrides = getattr(module_input, "attr_overrides", ())
+    if overrides:
+        entity.base.update(module_input.overrides_map())
+
+
 # Tactical destroyers (and CCP's one-off "Anhinga") are the only hulls that carry a mode.
 # CCP ships NO data link between a hull and its modes — the mode type has no
 # fitsToShipType / canFitShipType* / canFitShipGroup* / requiredSkill attribute, and the
@@ -342,10 +357,12 @@ def build_entities(fit: FitInput, skills: SkillProfile, provider,
                 mod = _new_entity(provider, m.type_id, "module", STATE_OFFLINE,
                                   slot=m.slot, module_state=m.state)
                 mod.effect_ids = frozenset()
+                _apply_overrides(mod, m)
                 ev.modules.append(mod)
                 continue
             mod = _new_entity(provider, m.type_id, "module", rank,
                               slot=m.slot, module_state=m.state)
+            _apply_overrides(mod, m)
             if m.charge_type_id:
                 ch = _new_entity(provider, m.charge_type_id, "charge", STATE_ACTIVE)
                 ch.parent = mod
@@ -356,6 +373,7 @@ def build_entities(fit: FitInput, skills: SkillProfile, provider,
                 continue                        # drone in bay: inert
             d = _new_entity(provider, m.type_id, "drone", STATE_ACTIVE,
                             quantity=m.quantity, slot=m.slot, module_state=m.state)
+            _apply_overrides(d, m)
             ev.drones.append(d)
         elif m.slot in (SlotKind.IMPLANT, SlotKind.BOOSTER):
             imp = _new_entity(provider, m.type_id, "implant", STATE_OVERLOADED,

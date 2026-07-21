@@ -257,6 +257,7 @@ def evaluate(fit: FitInput, skills: SkillProfile, op_profile: OperatingProfile,
     _validate_restrictions(ev, provider, result)
     _validate_mode(ev, provider, result)
     _validate_projected(ev, provider, result)
+    _validate_mutated(fit, provider, result)
 
     ship_section = {"type_id": fit.ship_type_id, "name": ship_info.get("name", "")}
     if ev.mode is not None:
@@ -1834,6 +1835,39 @@ def _validate_projected(ev: EvaluatedFit, provider, result: FittingResult) -> No
             "Projected module has no effect on this ship",
             detail=f"type {p.type_id}", contextual=True,
             params={"type_id": p.type_id, "name": info.get("name", "")}))
+
+
+# WS-11: our data has no metaGroup column (apps.sde.models.SdeType), so an abyssal (mutated-
+# instance) type is identified by its NAME — every mutated module's fittable SdeType is a
+# distinct "Abyssal <base module>" row (verified: all 46 name__istartswith="Abyssal" types,
+# scout-data §K). The fittable ones carry only structural base attrs (mass/volume/skill); the
+# rolled combat attributes live entirely in a per-item override we cannot derive from the type.
+_ABYSSAL_NAME_PREFIX = "abyssal"
+
+
+def _validate_mutated(fit: FitInput, provider, result: FittingResult) -> None:
+    """WS-11: an abyssal (mutated) module fitted WITHOUT its rolled attribute overrides has no
+    real stats to show — its SdeType carries only structural attrs, so the engine evaluates it
+    at base-roll (a Gyrostabilizer that multiplies damage by the dogma default 1.0, i.e. does
+    nothing). Flag that honestly — advisory WARNING, non-structural (the fit is still valid) —
+    so a base-roll abyssal module is visible rather than silently contributing wrong numbers. A
+    module that DOES carry overrides (including a non-abyssal hull mutated pyfa-style — tolerated
+    input) is silent. ESI killmails never carry mutated attributes, so an imported abyssal loss
+    legitimately trips this warning."""
+    seen: set[int] = set()
+    for m in fit.modules:
+        if m.slot == SlotKind.CARGO or m.attr_overrides or m.type_id in seen:
+            continue
+        info = provider.type_info(m.type_id) or {}
+        name = (info.get("name") or "").strip()
+        if not name.lower().startswith(_ABYSSAL_NAME_PREFIX):
+            continue
+        seen.add(m.type_id)
+        result.diagnostics.append(Diagnostic(
+            "mutated_attributes_unknown", Severity.WARNING,
+            "Mutated module — rolled attributes unknown",
+            detail=f"type {m.type_id}", contextual=False,
+            params={"type_id": m.type_id, "name": name}))
 
 
 # --------------------------------------------------------------------------- #

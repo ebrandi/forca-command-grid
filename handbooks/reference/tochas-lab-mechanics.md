@@ -44,6 +44,7 @@ sample calculation) and exits non-zero on failure.
 | Projected effects (incoming ewar / neut-nos / remote reps) | Hostile modules projected **onto** the fit (`FitInput.projected`; persisted as `slot="projected"` items entries, quantity-expanded into independent stacking sources). Web, target painter and sensor dampener are synthesised `targetID` postPercent modifiers (their CCP default effects ship empty `modifierInfo`, mirrored from pyfa's handlers) applied through the graph with normal stacking: web `maxVelocity ×(1+speedFactor/100)`, painter `signatureRadius ×1.30`, dampener `maxTargetRange`/`scanResolution` cut (lock time rises). The warp scrambler uses its real graph (`warpScrambleStatus += strength`). Neut/nos add GJ/s drain to the capacitor model (nos modelled as pure drain in v1); remote shield/armor/hull reps add `incoming_rep` HP/s per layer, reported **separately** from your own active tank. Incoming values are scaled by the hull's evaluated resistance for the family (web `stasisWebifierResistance`, painter `targetPainterResistance`, damp `sensorDampenerResistance`, neut/nos `energyWarfareResistance` — a fitted cap battery lowers it —, reps `remoteRepairImpedance`; all default 1.0). Documented v1 simplifications: full strength **at optimal** (range/falloff ignored) and an **unbonused attacker** (module evaluated at base attributes). A projected module with no target effect is flagged `projected_module_inert` (advisory). Listed in `telemetry.projected`; excluded from EFT export, pricing, stock and doctrine promotion. |
 | EWAR application (own offensive modules) | The `ewar` telemetry section lists one entry per OUR active offensive-ewar module — ECM jammers, burst jammers, sensor dampeners, target painters, stasis webs, warp scramblers/disruptors and tracking/guidance disruptors (energy neutralisers/nosferatus are cross-linked from the capacitor section) — each classified by its **default (identifying) effect id** (robust across metalevels; the old group-id readout had mislabelled painters and weapon disruptors into dead code). Each entry carries the module's evaluated strength attribute(s) (post-skills/overload), optimal, falloff, cycle and cap/cycle. **ECM jam chance**: per jammer per sensor type `min(1, scanXStrengthBonus(238-241) / target sensor strength)`, and a **combined** chance across jammers as independent per-cycle rolls `1 − Π(1−p_i)` (pyfa `jamChance` semantics, study-only) — supplied via the target profile's `target_sensor_strength` (+ optional `target_sensor_type`); absent → null with a reason, never faked. **Adjusted target** (`ewar.ewar_on_target`): our painters enlarge the target's signature and our webs slow it, using the SAME stacking-penalised postPercent maths a fitted/projected modifier uses (`graph._calculate`); damps report their lock-range/scan-res deltas (no target base to apply to). **Applied-DPS decision — folded in**: applied DPS is computed against the ewar-adjusted target (physically what the game does when you paint/web before shooting), with the raw-profile totals kept in parallel as `offence.total_applied_dps_unassisted` so both surfaces stay explicit. Tracking/guidance disruptors are **readout-only** — their scripted strengths are surfaced, but our own turret/missile output is not self-disrupted (that would require modelling the enemy shooting us). Lock time stays on the raw signature (a documented scope choice: painting speeds a real lock too, but the applied-DPS decision is scoped to damage). |
 | Fleet boosts (friendly command bursts) | Warfare buffs from friendly command bursts boosting the fit (`FitInput.boosts`; persisted as `slot="boost"` items entries carrying the burst **charge** type id + an optional `strength_pct` override). The per-ally buff is **not** dogma (the burst module's default effect has zero modifiers), so the semantics come from CCP's `dbuffCollections.yaml`, imported into `SdeDbuff`/`SdeDbuffModifier` by `import_dogma_graph`. Each charge names a buff id (`warfareBuff1ID` 2468) + multiplier (`warfareBuff1Multiplier` 2596); the **default strength is the multiplier** (the effect of an *unbonused* T1 burst whose base warfareBuffValue is 1.0 — a documented v1 simplification, `strength_pct` overrides it for a real command ship). Applied via the buff's operator (PostPercent/PostMul/ModAdd/Pre/PostAssignment) onto the attributes its dbuff modifiers name, on the resolved targets (`item` → the ship; `location`/`locationGroup`/`locationRequiredSkill` → fitted modules, by group / by required skill). Several boosts of the same buff id do **not** sum — the strongest single instance wins (aggregateMode Maximum → max, Minimum → min). **Stacking**: a boost is a normal penalisable source, so the penalty falls out of the target attribute's `stackable` flag exactly like a fitted module bonus (a shield-resistance buff is penalised and shares the chain with local hardeners; an HP buff is not) — verified against pyfa. A charge referencing a buff id absent from the table → `boost_unknown_buff` (advisory). Listed in `telemetry.boosts`; excluded from EFT export, pricing, stock and doctrine promotion. |
+| Mutated (abyssal) modules | A module's rolled attributes are carried as overrides on the fitted item (`ModuleInput.attr_overrides` — `{attribute_id: value}`, persisted as an `attr_overrides` map on the items entry, bounded to 32 entries). Each override **replaces** the provider's base value for that attribute before graph evaluation, and **adds** it when the base type has none — which is the abyssal case: the fittable "Abyssal *X*" SdeType stores only structural attrs (mass/volume/skill), so its damageMultiplier / speedMultiplier / etc. live entirely in the override. Everything downstream (the module's dogma effects, stacking penalty on the target attribute, validations, telemetry) then flows through the normal pipeline with no special-casing — a mutated gyro's overridden damageMultiplier shares the same penalised chain a normal gyro's does. An abyssal-type module fitted **without** overrides evaluates at base-roll (its combat attrs default to 1.0, i.e. it does nothing) and raises `mutated_attributes_unknown` (advisory WARNING — the fit stays valid) so the placeholder numbers are visible, never silently wrong. A non-abyssal type carrying overrides (a pyfa-style base-item + roll) is tolerated and silent. **EFT interchange** uses pyfa's mutation-block syntax — a `[N]` reference on the rack line and, after the racks, `[N] <base item>` / `<mutaplasmid>` / `<attrName value>, …`; FORCA→FORCA round-trips every override exactly (identical `FitInput.hash`) and pyfa→FORCA preserves the base item + overrides (see the round-trip note below). Killmails never carry mutated attributes (ESI omits them), so an imported abyssal loss legitimately trips the warning. |
 | Skills | Real pilot snapshots, All-V, untrained; per-level bonuses scale from data (skill-level pre-multiplication); missing-skill detection over all six required-skill slots. |
 | Explainability | Stable diagnostic codes with structured params, localised at the presentation layer. |
 
@@ -68,6 +69,40 @@ engine evaluates every module in its own fitted state, so damage/tank output is 
 by a mode-of-operation selector (a tactical destroyer's *tactical* mode is a supported,
 separate mechanic — see above). The full matrix with per-mechanic status lives in
 `docs/fitting/tochas-lab-mechanics-matrix.md`.
+
+## Mutated-module EFT format
+
+Tocha's Lab reads and writes pyfa's mutation-block syntax (studied under GPL, implemented
+independently). A mutated module keeps its normal rack line with a trailing `[N]` reference,
+and each mutant is described by a three-line block appended after all racks:
+
+```
+[Rifter, Abyssal example]
+
+Gyrostabilizer II [1]
+
+[1] Gyrostabilizer II
+  Unstable Gyrostabilizer Mutaplasmid
+  damageMultiplier 1.35, speedMultiplier 0.8
+```
+
+The block is `[N] <base item>` / `<mutaplasmid name>` / `<attrName value>, …` (attributes
+sorted by name). On import the block is lifted out first, the base-item and mutaplasmid lines
+are read but only the attribute line is kept (as `attr_overrides`), and an unresolvable
+attribute name is surfaced in the import's `unresolved` list like an unresolvable module name.
+
+**Round-trip fidelity** (FORCA models a mutation as attribute overrides only — it does **not**
+track mutaplasmid identity):
+
+- **FORCA → FORCA**: lossless. Every override is preserved and the reconstructed fit has an
+  identical `FitInput.hash`. The emitted mutaplasmid line is a fixed placeholder
+  (`Unknown Mutaplasmid`).
+- **pyfa → FORCA**: the base item and its overridden attributes are preserved; the mutaplasmid
+  identity is dropped (not modelled). pyfa expresses a mutation as base source item + roll,
+  which maps directly onto `attr_overrides`.
+- **FORCA → pyfa**: the overrides are **lost** — pyfa needs a real mutaplasmid name on the
+  middle line to keep the roll, and FORCA does not have one to emit. The module still imports
+  into pyfa as a plain (unmutated) item. This is the one documented lossy direction.
 
 ## Data pipeline
 

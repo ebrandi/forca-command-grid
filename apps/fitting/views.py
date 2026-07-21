@@ -8,6 +8,7 @@ owner-checked server-side; public links resolve only by unguessable token.
 from __future__ import annotations
 
 import json
+import math
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -28,6 +29,11 @@ from .models import Fit
 
 _MAX_ITEMS = 300              # a fit can hold at most this many fitted entries
 _MAX_PAYLOAD = 200_000        # bytes — bound an oversized items paste
+# WS-11 mutated modules: at most this many attribute overrides per module. A real mutated
+# module rolls a handful of attributes (the widest mutaplasmids touch <10); 32 is a generous
+# ceiling that bounds a hostile payload (300 items × unbounded overrides) while never
+# constraining a legitimate fit. Excess entries beyond the cap are dropped (not an error).
+_MAX_OVERRIDES = 32
 
 
 # --------------------------------------------------------------------------- #
@@ -115,6 +121,26 @@ def _parse_items(raw: str) -> list[dict]:
                 entry["strength_pct"] = max(-100.0, min(float(sp), 1000.0))
             except (TypeError, ValueError):
                 pass
+        # WS-11: mutated (abyssal) attribute overrides — {attr_id: value}. Bounded here so a
+        # crafted payload can't smuggle unbounded/NaN data into the engine: integer attribute
+        # ids, finite float values, at most _MAX_OVERRIDES per module (excess silently dropped);
+        # non-numeric pairs are skipped rather than rejecting the whole item. Persisted with
+        # string keys (JSON), re-int'd by services.fit_input_from_items / _freeze_overrides.
+        ov = it.get("attr_overrides")
+        if isinstance(ov, dict) and ov:
+            clean_ov: dict[str, float] = {}
+            for k, v in ov.items():
+                if len(clean_ov) >= _MAX_OVERRIDES:
+                    break
+                try:
+                    ak, av = int(k), float(v)
+                except (TypeError, ValueError):
+                    continue
+                if not math.isfinite(av):
+                    continue
+                clean_ov[str(ak)] = av
+            if clean_ov:
+                entry["attr_overrides"] = clean_ov
         clean.append(entry)
     return clean
 

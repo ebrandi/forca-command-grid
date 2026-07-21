@@ -108,6 +108,10 @@ def localise_diagnostic(d: dict) -> dict:
         title = _("Command burst references an unknown warfare buff")
         detail = ""
         action = _("Re-run the SDE import (import_dogma_graph) to load the warfare-buff table.")
+    elif code == "mutated_attributes_unknown":
+        title = _("Mutated module — rolled attributes unknown")
+        detail = _("The stats shown are this module's base-roll values, not its mutated ones.")
+        action = _("Enter the mutated attribute values to see this module's real stats.")
     elif code == "incompatible_charge":
         title = _("Charge not accepted by this module")
         detail = ""
