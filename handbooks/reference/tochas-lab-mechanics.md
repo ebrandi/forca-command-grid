@@ -28,6 +28,8 @@ sample calculation) and exits non-zero on failure.
 | --- | --- |
 | Fitting resources | CPU/PG/calibration used vs output — outputs include module and skill multipliers (Reactor Control, Power Diagnostics, Co-Processors, implants) via the graph; slot counts; turret & launcher hardpoints (energy turrets included); rig-size and charge-group/size validation; drone bandwidth and bay validation. Offline modules apply nothing and consume no CPU/PG. |
 | Fit legality | Per-group caps — `maxGroupFitted` (fitted), `maxGroupActive` (active/overloaded), `maxGroupOnline` (online); hull fitting restrictions (`canFitShipGroup*`/`canFitShipType*`/`fitsToShipType`, passing if the ship's group **or** type is whitelisted); implant (`implantness`) and booster (`boosterness`) slot conflicts; and T3C subsystems — one per `subSystemSlot` and a complete set (required count = the hull's distinct subsystem slots, **not** the stale `maxSubSystems` attribute). Each fires only when the governing attribute is present and marks the fit structurally impossible. |
+| Tactical modes (T3D) | A tactical destroyer's active mode (`FitInput.mode_type_id`; persisted as a `slot="mode"` items entry) is materialised as an always-on entity, and its dogma modifiers flow through the normal pipeline — every CCP mode modifier is a `postDiv` onto the hull (Defense: sig ÷ 1.5, armour resonances ÷ 1.5; Sharpshooter: lock range/sensor ÷ 0.5; Propulsion: agility/speed). A mode is category 7, so it is **not** stacking-exempt and penalises exactly like a module. The mode↔hull link is CCP-linkless — the tie is group "Ship Modifiers" **and** the mode name beginning with the hull name (pyfa's mechanism, study-only); a mode on the wrong hull or a non-T3D is `mode_invalid_for_ship` (structurally impossible) and applies nothing. A T3D with no mode is valid and evaluates bare. The mode is echoed in `telemetry.ship.mode` for the UI. |
+| Siege-class modules (Siege / Bastion / Triage / Industrial Core) | Ordinary active modules — their single default effect carries a large real modifier set (Siege 35, Bastion 49, Triage 43, Industrial Core 29), applied through the graph with no special-casing. Verified by hand-derived goldens: Siege mass ×10, immobilisation, ewar/remote-rep resistances; Bastion shield-boost ×1.6, cycle ×0.8, missile RoF ×0.5, immobilisation. |
 | Stacking penalty | `S(i) = exp(-(i/2.67)²)` driven by each attribute's `stackable` flag, applied per (attribute, operator) with positive and negative chains penalised separately; ship/charge/skill/implant/subsystem sources are exempt (as in the game data model). |
 | EHP & resists | Layer HP and per-type resonance fully graph-evaluated (plates, extenders, trimarks and other rigs, hardeners on the correct layer, Damage Controls, skills, hull bonuses), EHP weighted by the selected damage profile. |
 | Active & passive tank | Shield boost / armor repair / hull repair HP/s from evaluated amount ÷ cycle (ancillary charge multipliers included); passive shield regen peak `2.5·shield/τ` and EHP/s. |
@@ -42,12 +44,13 @@ sample calculation) and exits non-zero on failure.
 
 ## Not modelled (reported honestly, never faked)
 
-Fighters and fighter tubes; tactical destroyer / bastion / siege modes; projected and
-environmental effects (incoming ewar, remote assistance, command bursts); smartbombs,
-mining yield and DoT (breacher-pod) weapons; booster side-effects. There is no
-"operating mode" fit input — the engine evaluates every module in its own fitted state,
-so damage/tank output is not gated by a global mode selector. The full matrix with
-per-mechanic status lives in `docs/fitting/tochas-lab-mechanics-matrix.md`.
+Fighters and fighter tubes; projected and environmental effects (incoming ewar, remote
+assistance, command bursts); smartbombs, mining yield and DoT (breacher-pod) weapons;
+booster side-effects. There is no global "operating mode of operation" fit input — the
+engine evaluates every module in its own fitted state, so damage/tank output is not gated
+by a mode-of-operation selector (a tactical destroyer's *tactical* mode is a supported,
+separate mechanic — see above). The full matrix with per-mechanic status lives in
+`docs/fitting/tochas-lab-mechanics-matrix.md`.
 
 ## Data pipeline
 

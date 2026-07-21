@@ -134,7 +134,7 @@ class ORMDataProvider:
 
         row = (
             SdeType.objects.filter(type_id=type_id)
-            .values("type_id", "name", "group_id", "group__category_id",
+            .values("type_id", "name", "group_id", "group__category_id", "group__name",
                     "hi_slots", "med_slots", "low_slots", "rig_slots", "mass")
             .first()
         )
@@ -149,7 +149,8 @@ class ORMDataProvider:
         if not row:
             return None
         return {"name": row["name"], "group_id": row["group_id"],
-                "category_id": row["group__category_id"]}
+                "category_id": row["group__category_id"],
+                "group_name": row["group__name"]}
 
     def attrs(self, type_id: int) -> dict[int, float]:
         if type_id in self._attrs:
@@ -289,10 +290,12 @@ class ORMDataProvider:
             from apps.sde.models import SdeType, SdeTypeAttribute, SdeTypeEffect
 
             rows = list(SdeType.objects.filter(group__category_id=_SKILL_CATEGORY)
-                        .values("type_id", "name", "group_id", "group__category_id"))
+                        .values("type_id", "name", "group_id", "group__category_id",
+                                "group__name"))
             ids = [r["type_id"] for r in rows]
             infos = {r["type_id"]: {"name": r["name"], "group_id": r["group_id"],
-                                    "category_id": r["group__category_id"]} for r in rows}
+                                    "category_id": r["group__category_id"],
+                                    "group_name": r["group__name"]} for r in rows}
             attrs: dict[int, dict[int, float]] = {i: {} for i in ids}
             for tid, aid, val in SdeTypeAttribute.objects.filter(type_id__in=ids) \
                     .values_list("type_id", "attribute_id", "value"):

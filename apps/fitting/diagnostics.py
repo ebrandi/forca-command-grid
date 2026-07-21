@@ -96,6 +96,10 @@ def localise_diagnostic(d: dict) -> dict:
         detail = _("%(fitted)s of %(required)s subsystems fitted") % {
             "fitted": p.get("fitted"), "required": p.get("required")}
         action = _("Fit one subsystem in every slot.")
+    elif code == "mode_invalid_for_ship":
+        title = _("Tactical mode does not belong to this hull")
+        detail = ""
+        action = _("Select one of this hull's own tactical modes.")
     elif code == "incompatible_charge":
         title = _("Charge not accepted by this module")
         detail = ""

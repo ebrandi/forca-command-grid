@@ -103,6 +103,15 @@ _SLOT_ALIAS_PREFIXES = (
     ("rig", "rig"),
 )
 _RACKED_SLOTS = ("high", "med", "low", "rig")
+# A tactical destroyer's mode rides in the items blob as a single slot="mode" entry (not a
+# rack module). This keeps persistence symmetric — the same list the client posts and the
+# revision stores — while the engine reads it as FitInput.mode_type_id.
+_MODE_SLOT = "mode"
+
+
+def is_mode_item(it: dict) -> bool:
+    """Whether an items entry is the tactical-mode marker (not a fitted rack module)."""
+    return str((it or {}).get("slot", "")).strip().lower() == _MODE_SLOT
 
 
 def canonical_slot(value) -> str | None:
@@ -121,10 +130,19 @@ def canonical_slot(value) -> str | None:
     return None
 
 
-def fit_input_from_items(ship_type_id: int, items: list[dict]) -> FitInput:
-    """Build the engine's :class:`FitInput` from a revision's canonical ``items`` list."""
+def fit_input_from_items(ship_type_id: int, items: list[dict],
+                         mode_type_id: int | None = None) -> FitInput:
+    """Build the engine's :class:`FitInput` from a revision's canonical ``items`` list.
+
+    A slot="mode" entry is lifted out as the fit's tactical mode rather than fitted as a
+    rack module (so the engine sees it as :attr:`FitInput.mode_type_id`). An explicit
+    ``mode_type_id`` argument (the live-editor API key) takes precedence over the blob."""
     modules = []
     for it in items or []:
+        if is_mode_item(it):
+            if mode_type_id is None:
+                mode_type_id = int(it["type_id"])
+            continue
         raw = it.get("slot")
         # Trust an already-canonical token; otherwise canonicalise a display label, falling
         # back to LOW. (Explicit membership test, so no reliance on enum truthiness.)
@@ -136,7 +154,8 @@ def fit_input_from_items(ship_type_id: int, items: list[dict]) -> FitInput:
             charge_type_id=(int(it["charge_type_id"]) if it.get("charge_type_id") else None),
             quantity=int(it.get("quantity", 1)),
         ))
-    return FitInput(ship_type_id=int(ship_type_id), modules=tuple(modules))
+    return FitInput(ship_type_id=int(ship_type_id), modules=tuple(modules),
+                    mode_type_id=(int(mode_type_id) if mode_type_id else None))
 
 
 def operating_profile(propulsion: bool = True,
@@ -162,17 +181,21 @@ def operating_profile(propulsion: bool = True,
 
 
 def evaluate(ship_type_id: int, items: list[dict], skills: SkillProfile,
-             op: OperatingProfile | None = None, *, cached: bool = True) -> dict:
+             op: OperatingProfile | None = None, *, cached: bool = True,
+             mode_type_id: int | None = None) -> dict:
     """A flat telemetry dict for a loadout (via the adapter), ready for the template.
 
     The engine's ``to_dict`` nests the telemetry groups (resources/offence/…) under a
     ``telemetry`` key alongside diagnostics/versions; the workspace template and the
     comparison want them flattened into one namespace, so lift the groups up a level and
-    merge the metadata (diagnostics, missing_skills, engine/data version, status)."""
+    merge the metadata (diagnostics, missing_skills, engine/data version, status).
+
+    ``mode_type_id`` is the optional live-editor override for the tactical mode; when
+    omitted the mode is read from a slot="mode" entry in ``items`` (persistence path)."""
     from .diagnostics import localise_diagnostics, localise_unsupported
 
     engine = FittingEngine()
-    fit = fit_input_from_items(ship_type_id, items)
+    fit = fit_input_from_items(ship_type_id, items, mode_type_id=mode_type_id)
     result = engine.evaluate_cached(fit, skills, op) if cached else engine.evaluate(fit, skills, op).to_dict()
     flat = dict(result.get("telemetry", {}))
     flat.update({k: v for k, v in result.items() if k != "telemetry"})
@@ -461,6 +484,9 @@ def export_eft(ship_type_id: int, items: list[dict], fit_name: str = "Fit") -> s
                         | {int(i["charge_type_id"]) for i in items if i.get("charge_type_id")})
     ship = names.get(int(ship_type_id), f"TypeID:{ship_type_id}")
     order = {"low": 0, "med": 1, "high": 2, "rig": 3, "subsystem": 4, "drone": 5, "cargo": 6}
+    # The tactical-mode marker is not an EFT line (EFT carries no modes) — skip it so the
+    # export round-trips cleanly.
+    items = [it for it in items if not is_mode_item(it)]
     lines = [f"[{ship}, {fit_name}]"]
     last_slot = None
     for it in sorted(items, key=lambda i: (order.get(i.get("slot"), 9), int(i["type_id"]))):
@@ -556,6 +582,8 @@ def price_fit(ship_type_id: int, items: list[dict]) -> dict:
     lookup = build_price_index()
     counts: dict[int, int] = {int(ship_type_id): 1}
     for it in items:
+        if is_mode_item(it):
+            continue                            # a mode is not a purchasable item
         counts[int(it["type_id"])] = counts.get(int(it["type_id"]), 0) + int(it.get("quantity", 1))
         if it.get("charge_type_id"):
             cid = int(it["charge_type_id"])
@@ -584,6 +612,8 @@ def stock_coverage(ship_type_id: int, items: list[dict]) -> dict:
 
     counts: dict[int, int] = {int(ship_type_id): 1}
     for it in items:
+        if is_mode_item(it):
+            continue                            # a mode is not a stockable item
         counts[int(it["type_id"])] = counts.get(int(it["type_id"]), 0) + int(it.get("quantity", 1))
     have = available(list(counts))
     names = _type_names(counts)
@@ -654,8 +684,8 @@ def promote_to_doctrine(fit: Fit, revision: FitRevision, doctrine, actor, *,
 
     modules = []
     for it in revision.items:
-        if it.get("slot") == "cargo":
-            continue
+        if it.get("slot") == "cargo" or is_mode_item(it):
+            continue                            # cargo loot / tactical mode are not doctrine modules
         modules.append({"type_id": int(it["type_id"]), "quantity": int(it.get("quantity", 1)),
                         "slot": it.get("slot", "")})
     doctrine_fit = create_doctrine_fit(

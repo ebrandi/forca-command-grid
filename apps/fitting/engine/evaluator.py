@@ -131,12 +131,20 @@ def evaluate(fit: FitInput, skills: SkillProfile, op_profile: OperatingProfile,
                "drone_bay": round(ev.ship_value(A.DRONE_CAPACITY), 1)}
     ewar = _ewar(ev)
     _validate_restrictions(ev, provider, result)
+    _validate_mode(ev, provider, result)
 
+    ship_section = {"type_id": fit.ship_type_id, "name": ship_info.get("name", "")}
+    if ev.mode is not None:
+        # Echo the selected mode (even when invalid — the diagnostic flags that) so the UI
+        # can render which tactical mode drove these numbers.
+        mode_info = provider.type_info(ev.mode.type_id) or {}
+        ship_section["mode"] = {"type_id": ev.mode.type_id,
+                                "name": mode_info.get("name", "")}
     result.telemetry = {
         "resources": resources, "defence": defence, "capacitor": capacitor,
         "offence": offence, "mobility": mobility, "targeting": targeting,
         "utility": utility, "ewar": ewar,
-        "ship": {"type_id": fit.ship_type_id, "name": ship_info.get("name", "")},
+        "ship": ship_section,
         "operating_profile": {
             "propulsion_active": op_profile.propulsion_active,
             "damage_profile": op_profile.damage_profile.normalised().as_map(),
@@ -351,6 +359,23 @@ def _validate_restrictions(ev: EvaluatedFit, provider, result: FittingResult) ->
 
     _validate_slot_conflicts(ev, result)
     _validate_subsystems(subs, ev, provider, result)
+
+
+def _validate_mode(ev: EvaluatedFit, provider, result: FittingResult) -> None:
+    """A tactical mode must belong to its hull (see graph.mode_valid_for_ship): the mode
+    is a "Ship Modifiers" type whose name begins with the hull's name. A mode set on a
+    non-T3D hull, or a T3D's mode set on the wrong hull, is structurally IMPOSSIBLE. A T3D
+    with no mode is valid and evaluates bare (no diagnostic)."""
+    if ev.mode is None or ev.mode_valid:
+        return
+    mode_info = provider.type_info(ev.mode.type_id) or {}
+    ship_info = provider.type_info(ev.ship.type_id) or {}
+    result.diagnostics.append(Diagnostic(
+        "mode_invalid_for_ship", Severity.ERROR,
+        "Tactical mode does not match this hull",
+        detail=f"mode {ev.mode.type_id}", contextual=False,
+        params={"mode_type_id": ev.mode.type_id, "mode_name": mode_info.get("name", ""),
+                "ship_type_id": ev.ship.type_id, "ship_name": ship_info.get("name", "")}))
 
 
 def _validate_ship_restriction(m: Entity, ship_group: int | None, ship_type: int,
@@ -1117,7 +1142,7 @@ def _finalise_status(result: FittingResult) -> None:
                   "ship_restriction_violated", "max_group_active_exceeded",
                   "max_group_online_exceeded", "subsystem_slot_conflict",
                   "subsystem_count_invalid", "implant_slot_conflict",
-                  "booster_slot_conflict"}
+                  "booster_slot_conflict", "mode_invalid_for_ship"}
     resource = {"cpu_exceeded", "powergrid_exceeded", "calibration_exceeded",
                 "drone_bandwidth_exceeded"}
     if codes & structural:

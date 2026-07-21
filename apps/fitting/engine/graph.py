@@ -166,6 +166,10 @@ class EvaluatedFit:
     modules: list[Entity]          # racked modules incl. subsystems/rigs (not drones)
     drones: list[Entity]
     implants: list[Entity]
+    # A tactical destroyer's active mode (T3D "Ship Modifiers" type), or None. Materialised
+    # like an always-on module; its effects apply only when it is valid for the hull.
+    mode: "Entity | None" = None
+    mode_valid: bool = True
     diagnostics: list[str] = field(default_factory=list)
     _provider: GraphDataProvider | None = None
     _stack: list[tuple[int, int]] = field(default_factory=list)
@@ -198,6 +202,28 @@ def _new_entity(provider, type_id: int, kind: str, state: int, **kw) -> Entity:
         effect_ids=provider.effects(type_id),
         **kw,
     )
+
+
+# Tactical destroyers (and CCP's one-off "Anhinga") are the only hulls that carry a mode.
+# CCP ships NO data link between a hull and its modes — the mode type has no
+# fitsToShipType / canFitShipType* / canFitShipGroup* / requiredSkill attribute, and the
+# hull enumerates no mode ids (verified against the imported SDE, 2026-07-21). The only tie
+# is the one pyfa relies on (eos/saveddata/ship.py:123-139, "race is not reliable"): a mode
+# lives in group "Ship Modifiers" and its NAME begins with the hull's name ("Confessor
+# Defense Mode" ↔ "Confessor"). Since modes exist only for mode-carrying hulls and are named
+# after them, the group + name-prefix pair is both sufficient and necessary.
+_MODE_GROUP_NAME = "Ship Modifiers"
+
+
+def mode_valid_for_ship(provider, ship_type_id: int, mode_type_id: int) -> bool:
+    """Whether ``mode_type_id`` is a tactical mode belonging to ``ship_type_id``'s hull."""
+    mode = provider.type_info(mode_type_id) or {}
+    if mode.get("group_name") != _MODE_GROUP_NAME:
+        return False                            # not a mode type at all
+    ship = provider.type_info(ship_type_id) or {}
+    ship_name = (ship.get("name") or "").strip().lower()
+    mode_name = (mode.get("name") or "").strip().lower()
+    return bool(ship_name) and mode_name.startswith(ship_name)
 
 
 def build_entities(fit: FitInput, skills: SkillProfile, provider,
@@ -252,6 +278,16 @@ def build_entities(fit: FitInput, skills: SkillProfile, provider,
                               slot=m.slot, module_state=m.state)
             ev.implants.append(imp)
         # CARGO / FIGHTER: inert for attribute evaluation (fighters unsupported v2.0).
+
+    # A tactical destroyer's mode is materialised as an always-on entity (ACTIVE covers its
+    # passive/online/active effect categories). Its effects are plain dogma (ItemModifier /
+    # LocationRequiredSkillModifier onto the ship), so once it is a source they flow through
+    # the normal pipeline — category 7 type, so NOT stacking-exempt, exactly like a module.
+    # An invalid mode is still recorded (for the diagnostic + UI echo) but contributes no
+    # effects, so a mismatched mode never silently rewrites the hull's numbers.
+    if fit.mode_type_id:
+        ev.mode = _new_entity(provider, fit.mode_type_id, "mode", STATE_ACTIVE)
+        ev.mode_valid = mode_valid_for_ship(provider, fit.ship_type_id, fit.mode_type_id)
     return ev
 
 
@@ -305,6 +341,8 @@ def collect_effects(ev: EvaluatedFit, provider) -> None:
         sources.append(m)
         if m.charge is not None:
             sources.append(m.charge)
+    if ev.mode is not None and ev.mode_valid:
+        sources.append(ev.mode)             # a mismatched mode applies nothing
 
     for edef in _CHAR_BUILTIN_EFFECTS:
         for mod in edef.modifiers:

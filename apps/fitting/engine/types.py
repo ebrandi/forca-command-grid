@@ -79,11 +79,16 @@ class ModuleInput:
 class FitInput:
     ship_type_id: int
     modules: tuple[ModuleInput, ...] = ()
+    # A tactical destroyer's selected active mode ("Ship Modifiers" type), or None. Not a
+    # rack module: persisted in the fit's items blob as a slot="mode" entry (see
+    # apps.fitting.services.fit_input_from_items) and folded into the hash below.
+    mode_type_id: int | None = None
 
     def canonical(self) -> dict:
         return {
             "ship_type_id": self.ship_type_id,
             "modules": [m.canonical() for m in self.modules],
+            "mode_type_id": self.mode_type_id,
         }
 
     def hash(self) -> str:
