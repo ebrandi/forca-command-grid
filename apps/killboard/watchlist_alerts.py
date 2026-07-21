@@ -144,3 +144,11 @@ def _emit(entry, ctx, names, now) -> None:
         audience={"kind": "corp"},
         idempotency_key=f"watchlist:{entry.id}:{ctx['km_id']}",
     )
+    # KB-30: fan the same tripwire out to members' personal watchlist_hit subscriptions
+    # (their chosen channel), reusing this existing emission point — not re-deriving the event.
+    try:
+        from .subscriptions import notify_watchlist_hit
+
+        notify_watchlist_hit(entry, ctx, names)
+    except Exception:  # noqa: BLE001 — a subscription hiccup must never sink the tripwire sweep
+        log.exception("watchlist_hit subscription fan-out failed for entry %s", entry.id)

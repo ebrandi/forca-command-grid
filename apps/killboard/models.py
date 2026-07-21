@@ -943,3 +943,136 @@ class KillboardStreamEvent(models.Model):
 
     def __str__(self) -> str:
         return f"stream event {self.seq} (killmail {self.killmail_id})"
+
+
+# --------------------------------------------------------------------------- #
+#  KB-30 — per-pilot subscriptions (personal, RBAC-aware notification feeds)
+# --------------------------------------------------------------------------- #
+class SubscriptionEventType(models.TextChoices):
+    """What a subscription fires on. The killmail-driven types (see
+    ``KillboardSubscription.KILLMAIL_EVENT_TYPES``) are matched by the cursor-consumer
+    task against the KB-29 stream ring buffer; ``rank_up`` / ``watchlist_hit`` are pushed
+    from the existing rank-notify / watchlist-tripwire emission points (never re-derived)."""
+
+    MY_KILL = "my_kill", _("One of my pilots got on a kill")
+    MY_LOSS = "my_loss", _("One of my pilots died")
+    MY_LOSS_SRP_PENDING = "my_loss_srp_pending", _("My loss is eligible for SRP")
+    WATCHLIST_HIT = "watchlist_hit", _("A watched entity appeared on a killmail")
+    RANK_UP = "rank_up", _("I reached a new combat rank")
+    FILTER_MATCH = "filter_match", _("A kill matched my saved filter")
+
+
+class SubscriptionChannel(models.TextChoices):
+    """Where a matched event is delivered.
+
+    ``notify`` uses Pingboard's per-user route (the in-app inbox plus any verified
+    Slack/Telegram/WhatsApp DM handles the pilot has linked — and Discord DMs once
+    Pingboard's bot-mode DM provider ships; the Discord provider is webhook-only today).
+    ``email`` uses Django's ``EMAIL_BACKEND``. ``webhook`` is an HTTPS POST (SSRF-guarded).
+    ``rss`` is pull-only: nothing is pushed — the tokenised feed URL renders the matched
+    events at read time.
+    """
+
+    NOTIFY = "notify", _("In-app + linked chat DMs")
+    EMAIL = "email", _("Email")
+    WEBHOOK = "webhook", _("Webhook (HTTPS POST)")
+    RSS = "rss", _("RSS / Atom feed")
+
+
+class KillboardSubscription(TimeStampedModel):
+    """A member's personal, self-serve killboard notification (KB-30).
+
+    RBAC-aware by construction: a subscription only ever delivers data the owning member
+    could already see on the board at member tier — the ``my_*`` types resolve against the
+    user's own linked pilots (Linked Pilots), and every payload is the public KB-29 stream
+    shape (ids, public flags, and the member-visible ``needs_srp`` / ``deviated`` booleans),
+    never a payout figure, deviation detail or fit name. There is no way to subscribe another
+    pilot into your feed, and no officer-only datum reaches any channel.
+
+    The ``rss_token`` is a **separate lightweight read-only secret**, independent of the
+    KB-28 API bearer token: it authorises reading exactly one feed and is not an account
+    credential. Regenerating or deleting the subscription revokes it.
+    """
+
+    # Event types matched by the cursor-consumer against the KB-29 stream ring buffer.
+    # rank_up / watchlist_hit are pushed from their own existing emission points instead.
+    KILLMAIL_EVENT_TYPES = frozenset({
+        SubscriptionEventType.MY_KILL,
+        SubscriptionEventType.MY_LOSS,
+        SubscriptionEventType.MY_LOSS_SRP_PENDING,
+        SubscriptionEventType.FILTER_MATCH,
+    })
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="killboard_subscriptions"
+    )
+    event_type = models.CharField(max_length=24, choices=SubscriptionEventType.choices)
+    channel = models.CharField(max_length=12, choices=SubscriptionChannel.choices)
+    # filter_match: a killfeed_rules-style clause dict; watchlist_hit: optional {"watchlist_id": n}.
+    params = models.JSONField(default=dict, blank=True)
+    enabled = models.BooleanField(default=True)
+    webhook_url = models.URLField(max_length=500, blank=True)
+    # A read-only feed secret (urlsafe), only set for the rss channel. Nullable+unique so many
+    # non-rss rows (NULL) coexist while every real token stays globally unique.
+    rss_token = models.CharField(max_length=64, null=True, blank=True, unique=True)
+    # Resume cursor into KillboardStreamEvent.seq — advanced every dispatch run so a
+    # subscription never re-fires a processed event, and initialised to the current tip at
+    # creation so it never back-fires the buffered history.
+    last_seq = models.BigIntegerField(default=0)
+    last_fired = models.DateTimeField(null=True, blank=True)
+    # Webhook dead-letter: consecutive delivery failures; the subscription auto-disables once
+    # it crosses the configured ceiling, with a user-visible reason.
+    consecutive_failures = models.IntegerField(default=0)
+    disabled_reason = models.CharField(max_length=200, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            # The dispatch task scans enabled killmail-event subscriptions by type.
+            models.Index(fields=["event_type", "enabled"], name="kbsub_type_enabled_idx"),
+            # The management page lists a user's subscriptions newest-first.
+            models.Index(fields=["user", "-created_at"], name="kbsub_user_created_idx"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.get_event_type_display()} → {self.channel} (user {self.user_id})"
+
+    @property
+    def is_killmail_event(self) -> bool:
+        return self.event_type in self.KILLMAIL_EVENT_TYPES
+
+    def regenerate_rss_token(self) -> str:
+        """Mint a fresh feed secret (revoking the old URL). Returns the new token."""
+        self.rss_token = secrets.token_urlsafe(32)
+        return self.rss_token
+
+
+class KillboardSubscriptionEvent(models.Model):
+    """One matched event recorded against a subscription (KB-30).
+
+    Backs the RSS feed (rendered at read time) and is the delivery audit trail for the push
+    channels. Holds only the member-visible public payload — never a sensitive field. Pruned
+    to the newest ``KILLBOARD_SUBSCRIPTION_FEED_KEEP`` rows per subscription so the feed and
+    the table stay bounded.
+    """
+
+    subscription = models.ForeignKey(
+        KillboardSubscription, on_delete=models.CASCADE, related_name="feed_events"
+    )
+    event_type = models.CharField(max_length=24, choices=SubscriptionEventType.choices)
+    killmail_id = models.BigIntegerField(null=True, blank=True)
+    seq = models.BigIntegerField(null=True, blank=True)
+    title = models.CharField(max_length=200)
+    summary = models.CharField(max_length=500, blank=True)
+    link = models.CharField(max_length=300, blank=True)
+    payload = models.JSONField(default=dict, blank=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created"]
+        indexes = [
+            models.Index(fields=["subscription", "-created"], name="kbsubev_sub_created_idx"),
+        ]
+
+    def __str__(self) -> str:
+        return f"feed event {self.pk} ({self.event_type} → sub {self.subscription_id})"

@@ -335,6 +335,21 @@ KILLBOARD_STREAM_FRESH_HOURS = env.int("KILLBOARD_STREAM_FRESH_HOURS", default=4
 KILLBOARD_STREAM_BATCH = env.int("KILLBOARD_STREAM_BATCH", default=200)
 KILLBOARD_STREAM_RETENTION = env.int("KILLBOARD_STREAM_RETENTION", default=10000)
 
+# --- KB-30: per-pilot subscriptions -------------------------------------
+# Members self-subscribe to personal killboard events (my kills/losses, losses awaiting SRP,
+# watchlist tripwires, rank-ups, saved-filter matches) delivered to a channel of their choice
+# (in-app + linked chat DMs, email, webhook, or a tokenised RSS feed). The dispatcher is a
+# cursor-consumer over the KB-29 ring buffer (see apps/killboard/subscriptions.py); rank_up /
+# watchlist_hit ride their existing emitters. Webhooks are SSRF-guarded and dead-letter after
+# a run of failures. All env-overridable.
+KILLBOARD_SUBSCRIPTIONS_ENABLED = env.bool("KILLBOARD_SUBSCRIPTIONS_ENABLED", default=True)
+KILLBOARD_SUBSCRIPTIONS_PER_USER_CAP = env.int("KILLBOARD_SUBSCRIPTIONS_PER_USER_CAP", default=20)
+KILLBOARD_SUBSCRIPTION_WEBHOOK_TIMEOUT_S = env.float("KILLBOARD_SUBSCRIPTION_WEBHOOK_TIMEOUT_S", default=5.0)
+KILLBOARD_SUBSCRIPTION_WEBHOOK_RETRIES = env.int("KILLBOARD_SUBSCRIPTION_WEBHOOK_RETRIES", default=1)
+KILLBOARD_SUBSCRIPTION_WEBHOOK_MAX_FAILURES = env.int("KILLBOARD_SUBSCRIPTION_WEBHOOK_MAX_FAILURES", default=5)
+KILLBOARD_SUBSCRIPTION_FEED_KEEP = env.int("KILLBOARD_SUBSCRIPTION_FEED_KEEP", default=100)
+KILLBOARD_SUBSCRIPTION_BATCH = env.int("KILLBOARD_SUBSCRIPTION_BATCH", default=500)
+
 # --- Token encryption (OAuth refresh tokens at rest) --------------------
 # 32-byte url-safe base64 Fernet key. In prod this MUST be set in the env.
 TOKEN_ENCRYPTION_KEY = env("TOKEN_ENCRYPTION_KEY", default="")

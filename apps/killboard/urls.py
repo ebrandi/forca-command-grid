@@ -31,6 +31,15 @@ urlpatterns = [
     path("api-tokens/", views.api_tokens, name="api_tokens"),
     path("api-tokens/create/", views.api_token_create, name="api_token_create"),
     path("api-tokens/<int:token_id>/revoke/", views.api_token_revoke, name="api_token_revoke"),
+    # KB-30 self-serve per-pilot subscriptions — above the <int:killmail_id> catch-all.
+    path("subscriptions/", views.subscriptions, name="subscriptions"),
+    path("subscriptions/create/", views.subscription_create, name="subscription_create"),
+    path("subscriptions/<int:sub_id>/toggle/", views.subscription_toggle, name="subscription_toggle"),
+    path("subscriptions/<int:sub_id>/delete/", views.subscription_delete, name="subscription_delete"),
+    path("subscriptions/<int:sub_id>/test/", views.subscription_test, name="subscription_test"),
+    path("subscriptions/<int:sub_id>/rss/regenerate/", views.subscription_rss_regenerate, name="subscription_rss_regenerate"),
+    # The token-authed RSS feed (no session). Static prefix, so it never shadows the catch-all.
+    path("subscriptions/feed/<str:rss_token>/", views.subscription_feed, name="subscription_feed"),
     # Fit exports + comments — keep above the <int:killmail_id> single-segment catch-all.
     path("<int:killmail_id>/eft/", views.killmail_eft, name="eft"),
     path("<int:killmail_id>/fit.json", views.killmail_fit_esi, name="fit_esi"),

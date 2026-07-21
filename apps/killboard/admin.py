@@ -5,6 +5,7 @@ from django.contrib import admin
 from .models import (
     BattleReport,
     IngestSourceHealth,
+    KillboardSubscription,
     Killmail,
     KillstreamState,
     Watchlist,
@@ -50,3 +51,12 @@ class KillstreamStateAdmin(admin.ModelAdmin):
 @admin.register(IngestSourceHealth)
 class IngestSourceHealthAdmin(admin.ModelAdmin):
     list_display = ("source", "last_success_at", "last_count", "consecutive_failures", "last_error_at")
+
+
+@admin.register(KillboardSubscription)
+class KillboardSubscriptionAdmin(admin.ModelAdmin):
+    list_display = ("id", "user", "event_type", "channel", "enabled", "last_fired",
+                    "consecutive_failures")
+    list_filter = ("event_type", "channel", "enabled")
+    search_fields = ("user__username",)
+    raw_id_fields = ("user",)

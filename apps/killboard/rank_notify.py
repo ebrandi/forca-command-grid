@@ -74,6 +74,30 @@ def _send_rank_up(character_id: int, user_id: int, cur: dict, kills: int, note: 
         return False
 
 
+def _fan_out_subscriptions(user_id: int, cur: dict, kills: int) -> None:
+    """KB-30: after the built-in rank-up DM, deliver to the pilot's own rank_up subscriptions
+    on their chosen channels (email/webhook/rss/notify). Best-effort — never breaks the scan."""
+    if not user_id:
+        return
+    try:
+        from django.utils.translation import gettext_lazy as _l
+
+        from .models import SubscriptionEventType
+        from .subscriptions import notify_user_event
+
+        notify_user_event(
+            event_type=SubscriptionEventType.RANK_UP,
+            user_id=user_id,
+            title=_l("Combat rank: %(rank)s") % {"rank": cur["name"]},
+            summary=_l("You reached %(rank)s (%(kills)s lifetime kills).")
+            % {"rank": cur["name"], "kills": f"{kills:,}"},
+            payload={"event": "rank_up", "rank": cur["name"],
+                     "min_kills": cur["min_kills"], "kills": kills},
+        )
+    except Exception:  # noqa: BLE001 — a subscription hiccup must never break the rank scan
+        logger.exception("rank-up subscription fan-out failed for user %s", user_id)
+
+
 def notify_rank_ups() -> int:
     """Notify enrolled pilots who climbed to a new combat rung since last seen.
 
@@ -139,6 +163,7 @@ def notify_rank_ups() -> int:
         note = _rewards_note(cur, ladder, rewards_armed and cid in reward_eligible)
         if _send_rank_up(cid, uid, cur, kills, note):
             notified += 1
+            _fan_out_subscriptions(uid, cur, kills)
         # Advance the tracker even if the pilot has no linked user to DM — the rung is
         # "seen", so we never re-evaluate it. A future link starts from here (future-only).
         tracker.last_notified_min_kills = cur_min

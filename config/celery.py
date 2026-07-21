@@ -137,6 +137,14 @@ app.conf.beat_schedule = {
         "task": "killboard.prune_stream_events",
         "schedule": crontab(minute=34),
     },
+    # KB-30: per-pilot subscriptions — the cursor-consumer that matches fresh stream events
+    # (my_kill/my_loss/my_loss_srp_pending/filter_match) against enabled subscriptions and
+    # delivers. Cheap when idle (one indexed read); every 2 min keeps personal notifications
+    # timely without holding a worker. rank_up/watchlist_hit are pushed from their own emitters.
+    "dispatch-killboard-subscriptions": {
+        "task": "killboard.dispatch_subscriptions",
+        "schedule": crontab(minute="*/2"),
+    },
     # Incrementally refresh the per-pilot monthly ranking aggregate (current +
     # previous calendar month) so /killboard/rankings/ historical filters stay live
     # as new kills arrive. The full 15-year history is filled once by the

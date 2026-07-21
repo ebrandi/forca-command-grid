@@ -743,6 +743,262 @@ def api_token_revoke(request: HttpRequest, token_id: int) -> HttpResponse:
     return redirect("killboard:api_tokens")
 
 
+# --- KB-30: per-pilot subscriptions -------------------------------------------
+def _subscriptions_disabled_redirect(request):
+    messages.error(request, gettext("Subscriptions are turned off on this instance."))
+    return redirect("killboard:subscriptions")
+
+
+def _parse_filter_clause(request: HttpRequest) -> dict:
+    """A killfeed_rules-style clause dict from the saved-filter builder POST.
+
+    Mirrors killfeed_config's parsing (same vocabularies), so the personal filter and the
+    officer kill-feed speak the same clause language and reuse the same evaluator."""
+    from decimal import Decimal, InvalidOperation
+
+    from . import killfeed_rules
+
+    def _dec(field):
+        raw = (request.POST.get(field) or "").replace(",", "").strip()
+        try:
+            return str(max(Decimal("0"), Decimal(raw))) if raw else "0"
+        except InvalidOperation:
+            return "0"
+
+    def _int(field):
+        raw = (request.POST.get(field) or "").strip()
+        return int(raw) if raw.isdigit() else 0
+
+    valid_bands = {v for v, _label in killfeed_rules.SEC_BANDS}
+    valid_classes = set(killfeed_rules.SHIP_CLASSES)
+    return {
+        "min_loss_value": _dec("min_loss_value"),
+        "min_kill_value": _dec("min_kill_value"),
+        "exclude_npc": request.POST.get("exclude_npc") == "1",
+        "exclude_awox": request.POST.get("exclude_awox") == "1",
+        "require_solo": request.POST.get("require_solo") == "1",
+        "min_attackers": _int("min_attackers"),
+        "max_attackers": _int("max_attackers"),
+        "sec_bands": [b for b in request.POST.getlist("sec_bands") if b in valid_bands],
+        "ship_classes": [c for c in request.POST.getlist("ship_classes") if c in valid_classes],
+        "max_jumps_from_staging": _int("max_jumps_from_staging"),
+        "losses_deviated_only": request.POST.get("losses_deviated_only") == "1",
+    }
+
+
+@login_required
+@role_required(rbac.ROLE_MEMBER)
+def subscriptions(request: HttpRequest) -> HttpResponse:
+    """A member's self-serve killboard subscriptions: list, create, toggle, delete, test."""
+    from django.conf import settings
+
+    from . import killfeed_rules
+    from . import subscriptions as subs
+    from .models import KillboardSubscription, SubscriptionChannel, SubscriptionEventType
+
+    enabled = getattr(settings, "KILLBOARD_SUBSCRIPTIONS_ENABLED", True)
+    rows = list(
+        KillboardSubscription.objects.filter(user=request.user).prefetch_related("feed_events")
+    )
+    return render(request, "killboard/subscriptions.html", {
+        "subscriptions": rows,
+        "feature_enabled": enabled,
+        "event_types": SubscriptionEventType.choices,
+        "channels": SubscriptionChannel.choices,
+        "sec_bands": killfeed_rules.SEC_BANDS,
+        "ship_classes": killfeed_rules.SHIP_CLASSES,
+        "watchlists": list(Watchlist.objects.all().values("id", "name")),
+        "max_subscriptions": subs.per_user_cap(),
+        "active_count": len(rows),
+    })
+
+
+@login_required
+@role_required(rbac.ROLE_MEMBER)
+@require_POST
+def subscription_create(request: HttpRequest) -> HttpResponse:
+    from django.conf import settings
+
+    from . import subscriptions as subs
+    from .models import KillboardSubscription, SubscriptionChannel, SubscriptionEventType
+
+    if not getattr(settings, "KILLBOARD_SUBSCRIPTIONS_ENABLED", True):
+        return _subscriptions_disabled_redirect(request)
+
+    if KillboardSubscription.objects.filter(user=request.user).count() >= subs.per_user_cap():
+        messages.error(request, gettext(
+            "You already have the maximum number of subscriptions. Delete one first."
+        ))
+        return redirect("killboard:subscriptions")
+
+    event_type = request.POST.get("event_type") or ""
+    channel = request.POST.get("channel") or ""
+    if event_type not in SubscriptionEventType.values or channel not in SubscriptionChannel.values:
+        messages.error(request, gettext("Pick a valid event and channel."))
+        return redirect("killboard:subscriptions")
+
+    sub = KillboardSubscription(user=request.user, event_type=event_type, channel=channel)
+
+    # Per-channel fields.
+    if channel == SubscriptionChannel.WEBHOOK:
+        url = (request.POST.get("webhook_url") or "").strip()
+        err = subs.webhook_url_error(url)
+        if err:
+            messages.error(request, err)
+            return redirect("killboard:subscriptions")
+        sub.webhook_url = url
+    elif channel == SubscriptionChannel.EMAIL and not (request.user.email or "").strip():
+        messages.error(request, gettext(
+            "Add an email address to your account before subscribing by email."
+        ))
+        return redirect("killboard:subscriptions")
+    elif channel == SubscriptionChannel.RSS:
+        sub.regenerate_rss_token()
+
+    # Per-event params.
+    if event_type == SubscriptionEventType.FILTER_MATCH:
+        clause = _parse_filter_clause(request)
+        if not subs.clause_is_meaningful(clause):
+            messages.error(request, gettext(
+                "Set a minimum kill or loss value above 0 — a filter with both at 0 matches nothing."
+            ))
+            return redirect("killboard:subscriptions")
+        sub.params = clause
+    elif event_type == SubscriptionEventType.WATCHLIST_HIT:
+        raw = (request.POST.get("watchlist_id") or "").strip()
+        if raw.isdigit() and Watchlist.objects.filter(id=int(raw)).exists():
+            sub.params = {"watchlist_id": int(raw)}
+
+    # Start the cursor at the current tip so a new subscription never back-fires history.
+    if sub.is_killmail_event:
+        from .stream import tip_seq
+
+        sub.last_seq = tip_seq()
+    sub.save()
+    audit_log(request.user, "killboard_subscription.create", target_type="killboard_subscription",
+              target_id=str(sub.id), metadata={"event_type": event_type, "channel": channel},
+              ip=client_ip(request))
+    messages.success(request, gettext("Subscription created."))
+    return redirect("killboard:subscriptions")
+
+
+@login_required
+@role_required(rbac.ROLE_MEMBER)
+@require_POST
+def subscription_toggle(request: HttpRequest, sub_id: int) -> HttpResponse:
+    from .models import KillboardSubscription
+
+    sub = get_object_or_404(KillboardSubscription, id=sub_id, user=request.user)
+    sub.enabled = not sub.enabled
+    fields = ["enabled", "updated_at"]
+    if sub.enabled:
+        # Re-enabling clears the dead-letter state and resumes from the current tip (skips the
+        # backlog that accrued while it was disabled).
+        sub.consecutive_failures = 0
+        sub.disabled_reason = ""
+        fields += ["consecutive_failures", "disabled_reason"]
+        if sub.is_killmail_event:
+            from .stream import tip_seq
+
+            sub.last_seq = tip_seq()
+            fields.append("last_seq")
+    sub.save(update_fields=fields)
+    audit_log(request.user, "killboard_subscription.toggle", target_type="killboard_subscription",
+              target_id=str(sub.id), metadata={"enabled": sub.enabled}, ip=client_ip(request))
+    messages.success(request, gettext("Subscription updated."))
+    return redirect("killboard:subscriptions")
+
+
+@login_required
+@role_required(rbac.ROLE_MEMBER)
+@require_POST
+def subscription_delete(request: HttpRequest, sub_id: int) -> HttpResponse:
+    from .models import KillboardSubscription
+
+    sub = get_object_or_404(KillboardSubscription, id=sub_id, user=request.user)
+    sub.delete()
+    audit_log(request.user, "killboard_subscription.delete", target_type="killboard_subscription",
+              target_id=str(sub_id), ip=client_ip(request))
+    messages.success(request, gettext("Subscription deleted."))
+    return redirect("killboard:subscriptions")
+
+
+@login_required
+@role_required(rbac.ROLE_MEMBER)
+@require_POST
+def subscription_test(request: HttpRequest, sub_id: int) -> HttpResponse:
+    from . import subscriptions as subs
+    from .models import KillboardSubscription
+
+    sub = get_object_or_404(KillboardSubscription, id=sub_id, user=request.user)
+    ok, detail = subs.test_fire(sub)
+    if ok:
+        messages.success(request, detail or gettext("Test notification sent."))
+    else:
+        messages.error(request, gettext("Test delivery failed: %(detail)s") % {"detail": detail})
+    return redirect("killboard:subscriptions")
+
+
+@login_required
+@role_required(rbac.ROLE_MEMBER)
+@require_POST
+def subscription_rss_regenerate(request: HttpRequest, sub_id: int) -> HttpResponse:
+    from .models import KillboardSubscription, SubscriptionChannel
+
+    sub = get_object_or_404(
+        KillboardSubscription, id=sub_id, user=request.user, channel=SubscriptionChannel.RSS
+    )
+    sub.regenerate_rss_token()
+    sub.save(update_fields=["rss_token", "updated_at"])
+    audit_log(request.user, "killboard_subscription.rss_regenerate",
+              target_type="killboard_subscription", target_id=str(sub.id), ip=client_ip(request))
+    messages.success(request, gettext("A new feed URL was generated — the old one no longer works."))
+    return redirect("killboard:subscriptions")
+
+
+def subscription_feed(request: HttpRequest, rss_token: str) -> HttpResponse:
+    """The tokenised, session-less RSS/Atom feed for one subscription (KB-30).
+
+    Token-authenticated only: no session, no CSRF, no account credential. Serves only the
+    member-visible matched events already recorded for the subscription — nothing beyond what
+    the owning member sees on the board. Revoked by regenerating the token or deleting the row.
+    """
+    from django.conf import settings
+    from django.utils.feedgenerator import Atom1Feed
+
+    from .models import KillboardSubscription, SubscriptionChannel
+
+    if not getattr(settings, "KILLBOARD_SUBSCRIPTIONS_ENABLED", True):
+        raise Http404("Subscriptions are disabled.")
+    sub = (
+        KillboardSubscription.objects.select_related("user")
+        .filter(rss_token=rss_token, channel=SubscriptionChannel.RSS).first()
+    )
+    # A blank/absent token must never match a NULL column; require a real token and a still-member owner.
+    if sub is None or not rss_token or not rbac.has_role(sub.user, rbac.ROLE_MEMBER):
+        raise Http404("No such feed.")
+
+    feed_url = request.build_absolute_uri()
+    feed = Atom1Feed(
+        title=gettext("Killboard: %(kind)s") % {"kind": sub.get_event_type_display()},
+        link=request.build_absolute_uri("/killboard/"),
+        description=gettext("Your personal killboard subscription feed."),
+        language=getattr(sub.user, "language", "") or "en",
+        feed_url=feed_url,
+    )
+    for item in sub.feed_events.all()[:50]:
+        link = request.build_absolute_uri(item.link) if item.link else feed_url
+        feed.add_item(
+            title=item.title,
+            link=link,
+            description=item.summary or item.title,
+            unique_id=f"kbsub:{sub.id}:{item.id}",
+            updateddate=item.created,
+            pubdate=item.created,
+        )
+    return HttpResponse(feed.writeString("utf-8"), content_type="application/atom+xml; charset=utf-8")
+
+
 # --- Intel: watchlists --------------------------------------------------------
 @login_required
 @role_required(rbac.ROLE_MEMBER)

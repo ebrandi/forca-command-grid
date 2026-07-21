@@ -82,6 +82,18 @@ def prune_stream_events() -> dict:
     return prune_events()
 
 
+@shared_task(name="killboard.dispatch_subscriptions")
+def dispatch_subscriptions() -> dict:
+    """KB-30: match fresh stream events against enabled per-pilot subscriptions and deliver.
+
+    A cursor-consumer over the KB-29 ring buffer (my_kill/my_loss/my_loss_srp_pending/
+    filter_match); rank_up and watchlist_hit are pushed from their own emitters. No-op when
+    the feature is off or nothing new has landed."""
+    from .subscriptions import dispatch_subscriptions as _dispatch
+
+    return _dispatch()
+
+
 @shared_task(name="killboard.refresh_monthly_stats")
 def refresh_monthly_stats() -> int:
     """Incrementally refresh the current + previous month's per-pilot ranking

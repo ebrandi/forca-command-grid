@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "My subscriptions" %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-6">
+  <p class="eyebrow">{% translate "Killboard" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "My subscriptions" %}</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Get told when one of your pilots dies, when a loss of yours is eligible for SRP, when a watched target shows up, when you climb a combat rank, or when a kill matches a filter you save. Every subscription only ever shows what you can already see on the board." %}</p>
+</header>
+
+{% if not feature_enabled %}
+<div class="panel border-gold/40 p-4 mb-6">
+  <p class="text-sm text-ink">{% translate "Subscriptions are turned off on this instance. Existing subscriptions will not fire." %}</p>
+</div>
+{% endif %}
+
+<div class="grid gap-6 lg:grid-cols-3">
+  <section class="lg:col-span-2">
+    <div class="mb-2 flex items-end justify-between gap-2">
+      <h2 class="eyebrow">{% translate "Your subscriptions" %}</h2>
+      <span class="text-xs text-faint">{% blocktranslate %}{{ active_count }} of {{ max_subscriptions }}{% endblocktranslate %}</span>
+    </div>
+    <div class="panel divide-y divide-line/40">
+      {% for sub in subscriptions %}
+        <div class="px-4 py-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p class="text-sm text-ink">
+                {{ sub.get_event_type_display }}
+                <span class="text-faint">→ {{ sub.get_channel_display }}</span>
+                {% if not sub.enabled %}<span class="chip ml-1 !text-loss">{% translate "Disabled" %}</span>{% endif %}
+              </p>
+              <p class="mt-0.5 text-xs text-faint">
+                {% if sub.last_fired %}{% blocktranslate with when=sub.last_fired|date:"M j, Y H:i" %}last fired {{ when }}{% endblocktranslate %}{% else %}{% translate "never fired" %}{% endif %}
+                {% if sub.consecutive_failures %} · <span class="text-loss">{% blocktranslate with n=sub.consecutive_failures %}{{ n }} recent failures{% endblocktranslate %}</span>{% endif %}
+              </p>
+              {% if sub.disabled_reason %}<p class="mt-0.5 text-xs text-loss">{{ sub.disabled_reason }}</p>{% endif %}
+            </div>
+            <div class="flex items-center gap-1.5">
+              <form method="post" action="{% url 'killboard:subscription_test' sub.id %}">{% csrf_token %}<button class="btn-ghost text-xs">{% translate "Test" %}</button></form>
+              <form method="post" action="{% url 'killboard:subscription_toggle' sub.id %}">{% csrf_token %}<button class="btn-ghost text-xs">{% if sub.enabled %}{% translate "Disable" %}{% else %}{% translate "Enable" %}{% endif %}</button></form>
+              <form method="post" action="{% url 'killboard:subscription_delete' sub.id %}" onsubmit="return confirm('{% translate "Delete this subscription?" %}');">{% csrf_token %}<button class="btn-ghost text-xs">{% translate "Delete" %}</button></form>
+            </div>
+          </div>
+          {% if sub.channel == 'rss' and sub.rss_token %}
+          <div class="mt-2 rounded bg-panel2 p-2">
+            <p class="text-xs text-faint">{% translate "Feed URL (keep it private — anyone with the link can read this feed):" %}</p>
+            <code class="mt-1 block break-all font-mono text-xs text-ink" style="user-select:all;">{{ request.scheme }}://{{ request.get_host }}{% url 'killboard:subscription_feed' sub.rss_token %}</code>
+            <form method="post" action="{% url 'killboard:subscription_rss_regenerate' sub.id %}" class="mt-1.5" onsubmit="return confirm('{% translate "Generate a new feed URL? The current one will stop working." %}');">{% csrf_token %}<button class="btn-ghost text-xs">{% translate "Regenerate URL" %}</button></form>
+          </div>
+          {% elif sub.channel == 'webhook' and sub.webhook_url %}
+          <p class="mt-1 truncate font-mono text-xs text-faint">{{ sub.webhook_url }}</p>
+          {% endif %}
+        </div>
+      {% empty %}
+        <p class="px-4 py-8 text-center text-sm text-faint">{% translate "No subscriptions yet. Create one on the right." %}</p>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section>
+    <h2 class="eyebrow mb-2">{% translate "New subscription" %}</h2>
+    <form method="post" action="{% url 'killboard:subscription_create' %}" class="panel space-y-3 p-4" id="sub-form">
+      {% csrf_token %}
+      <div>
+        <label class="label" for="event_type">{% translate "Notify me about" %}</label>
+        <select id="event_type" name="event_type" class="input-field w-full">
+          {% for value, label in event_types %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="label" for="channel">{% translate "Deliver via" %}</label>
+        <select id="channel" name="channel" class="input-field w-full">
+          {% for value, label in channels %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+
+      <div id="field-webhook" style="display:none">
+        <label class="label" for="webhook_url">{% translate "Webhook URL (https)" %}</label>
+        <input id="webhook_url" name="webhook_url" type="url" placeholder="https://example.com/hook" class="input-field w-full" />
+        <p class="mt-1 text-xs text-faint">{% translate "Must be a public https endpoint. It is disabled automatically after repeated delivery failures." %}</p>
+      </div>
+
+      <p id="note-notify" class="text-xs text-faint" style="display:none">{% translate "Delivered to your in-app inbox and any chat DM channels you have linked. (Discord direct messages arrive here once the bot supports them.)" %}</p>
+      <p id="note-email" class="text-xs text-faint" style="display:none">{% translate "Delivered to the email address on your account." %}</p>
+      <p id="note-rss" class="text-xs text-faint" style="display:none">{% translate "A private feed URL is created — add it to any feed reader. Nothing is pushed to you." %}</p>
+
+      <div id="field-watchlist" style="display:none">
+        <label class="label" for="watchlist_id">{% translate "Watchlist (optional)" %}</label>
+        <select id="watchlist_id" name="watchlist_id" class="input-field w-full">
+          <option value="">{% translate "Any watched entity" %}</option>
+          {% for w in watchlists %}<option value="{{ w.id }}">{{ w.name }}</option>{% endfor %}
+        </select>
+      </div>
+
+      <fieldset id="field-filter" class="space-y-3 border-t border-line pt-3" style="display:none">
+        <legend class="eyebrow text-faint">{% translate "Saved filter" %}</legend>
+        <p class="text-xs text-faint">{% translate "A kill or loss matches when it clears the ISK bar for that direction and every rule below. Set a value to 0 to mute that direction." %}</p>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="eyebrow mb-1 block text-faint">{% translate "Min kill value" %}</label>
+            <input name="min_kill_value" type="number" min="0" step="1000000" value="0" class="input-field">
+          </div>
+          <div>
+            <label class="eyebrow mb-1 block text-faint">{% translate "Min loss value" %}</label>
+            <input name="min_loss_value" type="number" min="0" step="1000000" value="0" class="input-field">
+          </div>
+          <div>
+            <label class="eyebrow mb-1 block text-faint">{% translate "Min attackers" %}</label>
+            <input name="min_attackers" type="number" min="0" value="0" class="input-field">
+          </div>
+          <div>
+            <label class="eyebrow mb-1 block text-faint">{% translate "Max attackers" %}</label>
+            <input name="max_attackers" type="number" min="0" value="0" class="input-field">
+          </div>
+        </div>
+        <div>
+          <label class="eyebrow mb-1 block text-faint">{% translate "Within N jumps of staging" %}</label>
+          <input name="max_jumps_from_staging" type="number" min="0" max="16" value="0" class="input-field">
+        </div>
+        <div>
+          <p class="eyebrow mb-1 text-faint">{% translate "Security bands (none = all)" %}</p>
+          <div class="flex flex-wrap gap-x-4 gap-y-1">
+            {% for value, label in sec_bands %}
+            <label class="flex items-center gap-1.5 text-sm"><input type="checkbox" name="sec_bands" value="{{ value }}"><span class="text-ink">{{ label }}</span></label>
+            {% endfor %}
+          </div>
+        </div>
+        <div>
+          <p class="eyebrow mb-1 text-faint">{% translate "Victim ship classes (none = all)" %}</p>
+          <div class="flex flex-wrap gap-x-4 gap-y-1">
+            {% for cls in ship_classes %}
+            <label class="flex items-center gap-1.5 text-sm"><input type="checkbox" name="ship_classes" value="{{ cls }}"><span class="text-ink">{{ cls }}</span></label>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="space-y-1.5">
+          <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="require_solo" value="1"><span class="text-ink">{% translate "Solo only" %}</span></label>
+          <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="exclude_npc" value="1"><span class="text-ink">{% translate "Exclude NPC-only kills" %}</span></label>
+          <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="exclude_awox" value="1"><span class="text-ink">{% translate "Exclude awox kills" %}</span></label>
+          <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="losses_deviated_only" value="1"><span class="text-ink">{% translate "Losses: only doctrine-deviated" %}</span></label>
+        </div>
+      </fieldset>
+
+      <button class="btn-gold w-full">{% translate "Create subscription" %}</button>
+    </form>
+  </section>
+</div>
+
+<script>
+(function () {
+  var et = document.getElementById('event_type');
+  var ch = document.getElementById('channel');
+  function show(id, on) { var el = document.getElementById(id); if (el) el.style.display = on ? '' : 'none'; }
+  function sync() {
+    show('field-filter', et.value === 'filter_match');
+    show('field-watchlist', et.value === 'watchlist_hit');
+    show('field-webhook', ch.value === 'webhook');
+    show('note-notify', ch.value === 'notify');
+    show('note-email', ch.value === 'email');
+    show('note-rss', ch.value === 'rss');
+  }
+  et.addEventListener('change', sync);
+  ch.addEventListener('change', sync);
+  sync();
+})();
+</script>
+{% endblock %}
