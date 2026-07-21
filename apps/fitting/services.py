@@ -209,10 +209,14 @@ def operating_profile(propulsion: bool = True,
     dp = DamageProfileInput(**damage) if damage else DamageProfileInput()
     tgt = None
     if target and (target.get("signature_radius") or target.get("velocity")
-                   or target.get("distance_m") or target.get("hp")):
+                   or target.get("distance_m") or target.get("hp")
+                   or target.get("sensor_strength")):
         dist = target.get("distance_m")
         ang = target.get("angular")
         hp = target.get("hp")
+        ss = target.get("sensor_strength")
+        st = target.get("sensor_type")
+        st = st if st in ("radar", "ladar", "magnetometric", "gravimetric") else None
         tgt = TargetProfile(
             signature_radius=max(0.0, float(target.get("signature_radius") or 0)),
             velocity=max(0.0, float(target.get("velocity") or 0)),
@@ -220,6 +224,8 @@ def operating_profile(propulsion: bool = True,
             target_distance_m=max(0.0, float(dist)) if dist is not None else None,
             target_angular=max(0.0, float(ang)) if ang is not None else None,
             target_hp=max(0.0, float(hp)) if hp is not None else None,
+            target_sensor_strength=max(0.0, float(ss)) if ss is not None else None,
+            target_sensor_type=st,
         )
     warp = 10.0 if warp_distance_au is None else max(0.0, float(warp_distance_au))
     return OperatingProfile(propulsion_active=propulsion, damage_profile=dp,

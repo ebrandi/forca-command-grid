@@ -161,15 +161,31 @@ AOE_DAMAGE_REDUCTION_FACTOR = 1353       # the application exponent itself
 AOE_DAMAGE_REDUCTION_SENSITIVITY = 1354  # legacy (pre-rework), unused by the formula
 
 # --- Electronic warfare (module strengths, for the utility/EWAR readout) -----
-WARP_SCRAMBLE_STRENGTH = 504            # points of warp core strength neutralised
+# Every id below is a live query result (scout-data §D, re-verified 2026-07-21) — never a
+# guess. Two were previously wrong and made their readout silently zero: warpScrambleStrength
+# is 105 (504 = entityWarpScrambleChance, an NPC-only attr absent on player scramblers) and
+# the damp scan-res attr is 566 scanResolutionBonus (565 = scanResolutionMultiplier, absent
+# on player dampeners).
+WARP_SCRAMBLE_STRENGTH = 105            # warpScrambleStrength — warp core strength neutralised
 ENERGY_NEUTRALISER_AMOUNT = 97          # GJ removed per cycle
 POWER_TRANSFER_AMOUNT = 90              # GJ drained per cycle (nosferatu)
-ECM_STRENGTH = {                        # racial ECM jam strength modifiers
+ECM_STRENGTH = {                        # racial ECM jam strength bonuses (scanXStrengthBonus)
     "gravimetric": 238, "ladar": 239, "magnetometric": 240, "radar": 241,
 }
+EW_TARGET_JAM = 831                     # ewTargetJam (flags an ECM module; 0.0 default)
+ECM_BURST_RANGE = 142                   # ecmBurstRange (AoE radius of a burst jammer)
 MAX_TARGET_RANGE_BONUS = 309            # remote sensor damp: lock-range reduction (%)
-SCAN_RESOLUTION_BONUS = 565             # remote sensor damp: scan-res reduction (%) (was mislabelled 337)
+SCAN_RESOLUTION_BONUS = 566             # remote sensor damp: scan-res reduction (%) — 566 not 565
 SIGNATURE_RADIUS_BONUS_ATTR = 554       # target painter: target sig increase (%)
+# Tracking disruptor (shipModuleTrackingDisruptor 6424) output attributes.
+TRACKING_SPEED_BONUS = 767              # trackingSpeedBonus (%)
+TD_MAX_RANGE_BONUS = 351                # maxRangeBonus (turret optimal, %)
+TD_FALLOFF_BONUS = 349                  # falloffBonus (turret falloff, %)
+# Guidance disruptor (shipModuleGuidanceDisruptor 6423) output attributes.
+MISSILE_VELOCITY_BONUS = 547            # missileVelocityBonus (%)
+EXPLOSION_DELAY_BONUS = 596             # explosionDelayBonus (missile flight time, %)
+AOE_VELOCITY_BONUS = 847                # aoeVelocityBonus (explosion velocity, %)
+AOE_CLOUD_SIZE_BONUS = 848             # aoeCloudSizeBonus (explosion radius, %)
 
 # --- Mobility / signature ---------------------------------------------------
 MASS = 4

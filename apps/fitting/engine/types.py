@@ -221,6 +221,13 @@ class TargetProfile:
     # %HP arm needs the target's total HP (shield+armor+hull). Optional (None = not supplied):
     # a breacher then reports only its flat arm with applied_reason "target_hp_unknown".
     target_hp: float | None = None           # target's total HP; None = not supplied
+    # WS-10 ECM: a jammer's per-cycle jam chance is jammer_strength / target_sensor_strength.
+    # Optional (None = not supplied): without it the ewar section reports jam chances as null
+    # with a reason rather than a fabricated number. ``target_sensor_type`` (radar|ladar|
+    # magnetometric|gravimetric) names which sensor the ratio is measured against; when omitted
+    # the section reports per-type chances instead of a single combined one.
+    target_sensor_strength: float | None = None   # target's sensor strength (points)
+    target_sensor_type: str | None = None          # radar|ladar|magnetometric|gravimetric
 
     def effective_angular(self) -> float | None:
         """Angular velocity (rad/s) to use for turret/drone tracking, or ``None`` when it
@@ -237,7 +244,9 @@ class TargetProfile:
         d = "n" if self.target_distance_m is None else f"{self.target_distance_m:.1f}"
         a = "n" if self.target_angular is None else f"{self.target_angular:.5f}"
         h = "n" if self.target_hp is None else f"{self.target_hp:.1f}"
-        return f"{self.signature_radius:.1f}:{self.velocity:.1f}:{d}:{a}:{h}"
+        ss = "n" if self.target_sensor_strength is None else f"{self.target_sensor_strength:.2f}"
+        st = self.target_sensor_type or "n"
+        return f"{self.signature_radius:.1f}:{self.velocity:.1f}:{d}:{a}:{h}:{ss}:{st}"
 
 
 @dataclass(frozen=True)

@@ -53,10 +53,13 @@ HULL_FITTED_SLOTS = frozenset({
 })
 
 # Electronic-warfare inventory groups (public SDE group ids), used for the EWAR readout.
+# Verified against the live DB 2026-07-21: Target Painter is group 379 (was wrongly 209 =
+# scanLadarStrength attr id) and Weapon Disruptor is group 291 (was wrongly 213). Both
+# errors made their readout branch dead code — no fitted module ever matched.
 EWAR_ECM = 201
 EWAR_SENSOR_DAMP = 208
-EWAR_TARGET_PAINTER = 209
-EWAR_WEAPON_DISRUPTOR = 213
+EWAR_TARGET_PAINTER = 379
+EWAR_WEAPON_DISRUPTOR = 291
 EWAR_STASIS_WEB = 65
 EWAR_WARP_SCRAMBLER = 52
 EWAR_ENERGY_NEUT = 71

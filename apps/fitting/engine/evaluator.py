@@ -21,6 +21,7 @@ silent zero.
 from __future__ import annotations
 
 import math
+from dataclasses import replace
 from time import perf_counter
 
 from . import attributes as A
@@ -43,6 +44,7 @@ from .types import (
     SkillProfile,
     SlotKind,
     Status,
+    TargetProfile,
 )
 
 # Dogma attribute ids used by pass 4 beyond attributes.py's named set.
@@ -69,7 +71,6 @@ ATTR_EXPLOSION_DELAY = 281
 ATTR_SHIELD_RECHARGE = 479
 ATTR_SHIELD_BOOST = 68
 ATTR_ARMOR_REPAIR = 84
-ATTR_HULL_REPAIR = 87           # structureDamageAmount (hull repairers)
 ATTR_DURATION = 73
 
 # --- WS-6 projected effects (incoming neut/nos pressure + remote reps) --------------
@@ -153,6 +154,44 @@ ATTR_DOT_MAX_DAMAGE_PER_TICK = 5736
 ATTR_DOT_MAX_HP_PCT_PER_TICK = 5737
 _DOT_TICK_S = 1.0                       # CCP breacher pods tick once per second
 
+# --- WS-10 EWAR application ------------------------------------------------------------
+# Each OUR offensive-ewar module is classified by its DEFAULT (identifying) effect id, not
+# its inventory group. The group-id approach the old readout used had already mislabelled
+# two families (painter as 209, really group 379; weapon disruptor as 213, really 291) —
+# effect ids are unambiguous across metalevels AND avoid the attribute collision that made
+# group detection fragile (a painter's signatureRadiusBonus 554 is the same attribute an MWD
+# carries, so attribute-presence alone can't tell them apart, but the identifying effect can).
+# All ids verified against the live DB 2026-07-21 (default effect + effectCategory dumps).
+EFFECT_EWAR_ECM = 6470          # remoteECMFalloff        (targeted jammer, cat 2)
+EFFECT_EWAR_ECM_BURST = 6714    # ECMBurstJammer          (AoE burst jammer, cat 1)
+EFFECT_EWAR_DAMP = 6422         # remoteSensorDampFalloff (cat 2)
+EFFECT_EWAR_PAINT = 6425        # remoteTargetPaintFalloff (cat 2)
+EFFECT_EWAR_WEB = 6426          # remoteWebifierFalloff   (cat 2)
+EFFECT_EWAR_SCRAM = 5934        # warpScrambleBlockMWDWithNPCEffect (scrambler, cat 2)
+EFFECT_EWAR_DISRUPT = 39        # warpDisrupt             (warp disruptor / point, cat 2)
+EFFECT_EWAR_TD = 6424           # shipModuleTrackingDisruptor  (cat 2)
+EFFECT_EWAR_GD = 6423           # shipModuleGuidanceDisruptor  (cat 2)
+# effect id → ewar kind. neut/nos reuse their WS-6 default effect ids (EFFECT_PROJ_NEUT/NOS);
+# they are cross-linked into the ewar section AND drive the capacitor drain in _capacitor.
+_EWAR_EFFECT_KIND = {
+    EFFECT_EWAR_ECM: "ecm",
+    EFFECT_EWAR_ECM_BURST: "ecm_burst",
+    EFFECT_EWAR_DAMP: "sensor_dampener",
+    EFFECT_EWAR_PAINT: "target_painter",
+    EFFECT_EWAR_WEB: "stasis_web",
+    EFFECT_EWAR_SCRAM: "warp_disruption",
+    EFFECT_EWAR_DISRUPT: "warp_disruption",
+    EFFECT_EWAR_TD: "tracking_disruptor",
+    EFFECT_EWAR_GD: "guidance_disruptor",
+    EFFECT_PROJ_NEUT: "energy_neutraliser",
+    EFFECT_PROJ_NOS: "nosferatu",
+}
+_SENSOR_TYPES = ("radar", "ladar", "magnetometric", "gravimetric")
+# The stacking-penalty factor, reproduced from graph._PENALTY_FACTOR so the ewar-adjusted
+# target profile runs the SAME maths a fitted/projected postPercent modifier does
+# (current *= 1 + v·factor^(i²), penalising by |v| descending). Kept inline like _LN_ALIGN.
+_EWAR_PENALTY = math.exp(-((1.0 / 2.67) ** 2))
+
 _RACKED = (SlotKind.HIGH, SlotKind.MED, SlotKind.LOW, SlotKind.RIG, SlotKind.SUBSYSTEM)
 
 _SUBSYSTEM_ADD = {
@@ -201,12 +240,17 @@ def evaluate(fit: FitInput, skills: SkillProfile, op_profile: OperatingProfile,
     resources = _resources(ev, provider, result, sub_add)
     defence = _defence(ev, op_profile, result)
     capacitor = _capacitor(ev, result)
-    offence = _offence(ev, provider, op_profile, result)
+    # WS-10: our active painters/webs/damps adjust the target profile the offence numbers
+    # are applied against (painter enlarges its signature, web slows it) — computed once and
+    # threaded into _offence (which keeps the raw-profile totals as *_unassisted) and into
+    # the ewar section (as ewar_on_target).
+    ewar_adjusted, ewar_on_target = _ewar_target_adjustment(ev, op_profile)
+    offence = _offence(ev, provider, op_profile, result, ewar_adjusted)
     mobility = _mobility(ev, op_profile, result)
     targeting = _targeting(ev, op_profile)
     utility = {"cargo": round(ev.ship_value(ATTR_CAPACITY), 1),
                "drone_bay": round(ev.ship_value(A.DRONE_CAPACITY), 1)}
-    ewar = _ewar(ev)
+    ewar = _ewar(ev, op_profile, ewar_on_target, provider)
     industry = _industry(ev, provider)
     projected = _projected(ev, provider)
     boosts = _boosts(ev, provider, result)
@@ -576,7 +620,7 @@ def _defence(ev: EvaluatedFit, op_profile: OperatingProfile, result) -> dict:
             continue
         for layer, attr in (("shield", ATTR_SHIELD_BOOST),
                             ("armor", ATTR_ARMOR_REPAIR),
-                            ("hull", ATTR_HULL_REPAIR)):
+                            ("hull", ATTR_STRUCTURE_DAMAGE_AMOUNT)):
             amount = ev.value(m, attr) if attr in m.base else 0.0
             if amount:
                 reps[layer] += amount / (cycle / 1000.0)
@@ -909,9 +953,13 @@ def _sustained_entry(ev: EvaluatedFit, m: Entity, volley: float, dps: float,
             "sustained_dps": round(sustained, 1)}, sustained
 
 
-def _offence(ev: EvaluatedFit, provider, op_profile: OperatingProfile, result) -> dict:
+def _offence(ev: EvaluatedFit, provider, op_profile: OperatingProfile, result,
+             applied_target: TargetProfile | None = None) -> dict:
     turret_dps = missile_dps = missile_dps_applied = drone_dps = total_volley = 0.0
     turret_dps_applied = drone_dps_applied = 0.0
+    # WS-10: parallel "unassisted" applied totals measured against the RAW target (no ewar
+    # help), so the UI can show applied-with-ewar and applied-without side by side.
+    turret_dps_applied_raw = missile_dps_applied_raw = drone_dps_applied_raw = 0.0
     sustained_weapon_dps = 0.0
     # WS-9 exotic weapons. Smartbombs + vorton projectors deal typed damage (counted into
     # damage_by_type); breacher pods deal a typeless damage-over-time that does NOT stack
@@ -923,10 +971,17 @@ def _offence(ev: EvaluatedFit, provider, op_profile: OperatingProfile, result) -
     damage_by_type = {d: 0.0 for d in A.DAMAGE_TYPES}
     weapons = 0
     ranges: list[dict] = []
-    target = op_profile.target
+    raw_target = op_profile.target
+    # WS-10: applied DPS is measured against the ewar-ADJUSTED target when one is supplied
+    # (our painters enlarge its signature, our webs slow it → its derived angular drops);
+    # the raw-profile numbers are kept in parallel as the *_unassisted totals (decision
+    # documented in the mechanics handbook). With no ewar adjustment the two are identical.
+    target = applied_target if applied_target is not None else raw_target
+    has_assist = applied_target is not None
     # Turret/drone application needs a distance (range term) and an angular speed (tracking
     # term). Missiles need only sig/velocity, so they apply whenever a target is set.
     angular = target.effective_angular() if target is not None else None
+    raw_angular = raw_target.effective_angular() if raw_target is not None else None
     turret_complete = bool(
         target is not None and target.signature_radius > 0
         and target.target_distance_m is not None and target.target_distance_m > 0
@@ -1020,15 +1075,22 @@ def _offence(ev: EvaluatedFit, provider, op_profile: OperatingProfile, result) -
             )
             if target is not None:
                 if turret_complete:
-                    cth = _turret_cth(
-                        ev.value(m, A.TRACKING_SPEED),
-                        ev.value(m, A.OPTIMAL_SIG_RADIUS),
-                        ev.value(m, A.OPTIMAL_RANGE), ev.value(m, A.FALLOFF),
-                        angular, target.signature_radius, target.target_distance_m)
-                    amult = _applied_turret_multiplier(cth)
+                    tracking = ev.value(m, A.TRACKING_SPEED)
+                    osig = ev.value(m, A.OPTIMAL_SIG_RADIUS)
+                    optimal = ev.value(m, A.OPTIMAL_RANGE)
+                    falloff = ev.value(m, A.FALLOFF)
+                    amult = _applied_turret_multiplier(_turret_cth(
+                        tracking, osig, optimal, falloff,
+                        angular, target.signature_radius, target.target_distance_m))
                     entry["applied_dps"] = round(dps * amult, 1)
                     entry["applied_multiplier"] = round(amult, 3)
                     turret_dps_applied += dps * amult
+                    if has_assist:
+                        turret_dps_applied_raw += dps * _applied_turret_multiplier(_turret_cth(
+                            tracking, osig, optimal, falloff, raw_angular,
+                            raw_target.signature_radius, raw_target.target_distance_m))
+                    else:
+                        turret_dps_applied_raw += dps * amult
                 else:
                     entry["applied_dps"] = None
                     entry["applied_reason"] = "target_profile_incomplete"
@@ -1043,16 +1105,21 @@ def _offence(ev: EvaluatedFit, provider, op_profile: OperatingProfile, result) -
                 flight_time_s=round(flight_s, 1),
                 range_m=round(vel * flight_s, 0),
             )
-            applied = dps
+            applied = applied_raw = dps
             if target is not None:
+                er = ev.value(ch, A.AOE_CLOUD_SIZE)
+                ev_vel = ev.value(ch, A.AOE_VELOCITY)
+                drf = ev.value(ch, A.AOE_DAMAGE_REDUCTION_FACTOR)
                 factor = _missile_application(
-                    target.signature_radius, target.velocity,
-                    ev.value(ch, A.AOE_CLOUD_SIZE), ev.value(ch, A.AOE_VELOCITY),
-                    ev.value(ch, A.AOE_DAMAGE_REDUCTION_FACTOR))
+                    target.signature_radius, target.velocity, er, ev_vel, drf)
                 applied = dps * factor
                 entry["applied_dps"] = round(applied, 1)
                 entry["applied_multiplier"] = round(factor, 3)
+                applied_raw = (dps * _missile_application(
+                    raw_target.signature_radius, raw_target.velocity, er, ev_vel, drf)
+                    if has_assist else applied)
             missile_dps_applied += applied
+            missile_dps_applied_raw += applied_raw
         sustained_fields, sustained_dps = _sustained_entry(ev, m, volley, dps, rof_s)
         entry.update(sustained_fields)
         if sustained_dps is not None:
@@ -1096,6 +1163,12 @@ def _offence(ev: EvaluatedFit, provider, op_profile: OperatingProfile, result) -
                     applied_complete = False
                 else:
                     drone_dps_applied += d_applied
+                    if has_assist:
+                        d_raw = _drone_applied(ev, dr, d_dps, raw_target, raw_angular,
+                                               turret_complete)
+                        drone_dps_applied_raw += d_raw if d_raw is not None else d_applied
+                    else:
+                        drone_dps_applied_raw += d_applied
 
     # WS-9: breacher DoT does not stack across launchers — only the strongest instance's
     # damage lands, so the fit's breacher contribution is the max single launcher, not the
@@ -1155,15 +1228,24 @@ def _offence(ev: EvaluatedFit, provider, op_profile: OperatingProfile, result) -
         out["total_applied_dps"] = round(
             turret_dps_applied + missile_dps_applied + drone_dps_applied
             + smartbomb_applied + vorton_applied + breacher_applied, 1)
+        # WS-10: the same total measured against the RAW (un-painted, un-webbed) target. Only
+        # the tracking/missile families differ; smartbomb (auto-hit) and breacher (HP-based)
+        # are ewar-invariant, so they carry through unchanged. Equal to total_applied_dps when
+        # the fit has no active painter/web.
+        out["total_applied_dps_unassisted"] = round(
+            turret_dps_applied_raw + missile_dps_applied_raw + drone_dps_applied_raw
+            + smartbomb_applied + vorton_applied + breacher_applied, 1)
         out["applied_complete"] = applied_complete
         # Legacy field (pre-WS-2): only missiles applied, turrets/drones raw. Kept so older
         # saved renders never KeyError; superseded by total_applied_dps above.
         out["applied_total_dps"] = round(
             turret_dps + missile_dps_applied + drone_dps, 1)
-        out["target"] = {"signature_radius": target.signature_radius,
-                         "velocity": target.velocity, "label": target.label,
-                         "distance_m": target.target_distance_m, "angular": angular,
-                         "hp": target.target_hp}
+        # Echo the RAW target the pilot entered (the ewar-adjusted values live in
+        # ewar.ewar_on_target), with its raw derived angular.
+        out["target"] = {"signature_radius": raw_target.signature_radius,
+                         "velocity": raw_target.velocity, "label": raw_target.label,
+                         "distance_m": raw_target.target_distance_m, "angular": raw_angular,
+                         "hp": raw_target.target_hp}
     return out
 
 
@@ -1381,64 +1463,202 @@ def _targeting(ev: EvaluatedFit, op_profile: OperatingProfile) -> dict:
     }
 
 
-def _ewar(ev: EvaluatedFit) -> dict:
-    from .dogma import (
-        EWAR_ECM,
-        EWAR_ENERGY_NEUT,
-        EWAR_ENERGY_NOS,
-        EWAR_GROUPS,
-        EWAR_SENSOR_DAMP,
-        EWAR_STASIS_WEB,
-        EWAR_TARGET_PAINTER,
-        EWAR_WARP_SCRAMBLER,
-        EWAR_WEAPON_DISRUPTOR,
-    )
-    entries: list[dict] = []
+def _ewar_kind(m: Entity) -> str | None:
+    """Classify a module as an offensive-ewar family by its DEFAULT (identifying) effect id,
+    or ``None`` when it is not ewar. Effect ids are stable across metalevels and avoid the
+    group-id / shared-attribute pitfalls the old readout hit (see _EWAR_EFFECT_KIND)."""
+    for eid, kind in _EWAR_EFFECT_KIND.items():
+        if eid in m.effect_ids:
+            return kind
+    return None
+
+
+def _ewar_strengths(ev: EvaluatedFit, m: Entity, kind: str) -> dict:
+    """The evaluated bonus attribute(s) that define this family's strength (post-skills,
+    post-overload). Attribute ids verified live 2026-07-21 (scout-data §D + type dumps)."""
+    def val(attr: int) -> float:
+        return round(ev.value(m, attr), 2) if attr in m.base else 0.0
+    if kind in ("ecm", "ecm_burst"):
+        return {k: val(v) for k, v in A.ECM_STRENGTH.items()}
+    if kind == "sensor_dampener":
+        return {"lock_range_bonus": val(A.MAX_TARGET_RANGE_BONUS),
+                "scan_res_bonus": val(A.SCAN_RESOLUTION_BONUS)}
+    if kind == "target_painter":
+        return {"signature_bonus": val(A.SIGNATURE_RADIUS_BONUS_ATTR)}
+    if kind == "stasis_web":
+        return {"speed_bonus": val(A.SPEED_BONUS)}
+    if kind == "warp_disruption":
+        return {"warp_scramble_strength": val(A.WARP_SCRAMBLE_STRENGTH)}
+    if kind == "tracking_disruptor":
+        return {"tracking_bonus": val(A.TRACKING_SPEED_BONUS),
+                "optimal_bonus": val(A.TD_MAX_RANGE_BONUS),
+                "falloff_bonus": val(A.TD_FALLOFF_BONUS)}
+    if kind == "guidance_disruptor":
+        return {"missile_velocity_bonus": val(A.MISSILE_VELOCITY_BONUS),
+                "explosion_delay_bonus": val(A.EXPLOSION_DELAY_BONUS),
+                "explosion_velocity_bonus": val(A.AOE_VELOCITY_BONUS),
+                "explosion_radius_bonus": val(A.AOE_CLOUD_SIZE_BONUS)}
+    if kind == "energy_neutraliser":
+        return {"amount_gj": val(A.ENERGY_NEUTRALISER_AMOUNT)}
+    if kind == "nosferatu":
+        return {"amount_gj": val(A.POWER_TRANSFER_AMOUNT)}
+    return {}
+
+
+def _ewar_entry(ev: EvaluatedFit, m: Entity, kind: str, provider) -> dict:
+    info = provider.type_info(m.type_id) or {}
+    cyc = _cycle_ms(ev, m) / 1000.0
+    entry = {
+        "type_id": m.type_id, "name": info.get("name", ""), "kind": kind,
+        "strengths": _ewar_strengths(ev, m, kind),
+        "cycle_s": round(cyc, 2) if cyc > 0 else None,
+        "cap_per_cycle": round(ev.value(m, A.CAP_NEED), 1) if A.CAP_NEED in m.base else 0.0,
+    }
+    if kind == "ecm_burst":
+        # A burst jammer is an AoE self-effect: no optimal/falloff, a single burst radius.
+        entry["optimal_m"] = None
+        entry["falloff_m"] = None
+        entry["burst_range_m"] = (round(ev.value(m, A.ECM_BURST_RANGE), 0)
+                                  if A.ECM_BURST_RANGE in m.base else None)
+    else:
+        entry["optimal_m"] = round(ev.value(m, A.OPTIMAL_RANGE), 0)
+        entry["falloff_m"] = round(ev.value(m, A.FALLOFF), 0)
+    if kind in ("energy_neutraliser", "nosferatu"):
+        amt = entry["strengths"]["amount_gj"]
+        entry["per_second"] = round(amt / cyc, 1) if cyc > 0 else 0.0
+    return entry
+
+
+def _attach_jam(entry: dict, ev: EvaluatedFit, m: Entity, tgt_ss, tgt_sensor,
+                jammer_ps: list) -> None:
+    """ECM jam chance = jammer strength(238-241) / target sensor strength, clamped [0,1]
+    (pyfa eos/effects.py:30992 uses scanXStrengthBonus for the target's sensor type; the
+    combining maths lives in _jam_summary). Absent target sensor strength → null + reason
+    (never a fabricated number)."""
+    strengths = {k: ev.value(m, v) if v in m.base else 0.0
+                 for k, v in A.ECM_STRENGTH.items()}
+    if not tgt_ss or tgt_ss <= 0:
+        entry["jam_chance"] = None
+        entry["jam_reason"] = "target_sensor_strength_unknown"
+        return
+    if tgt_sensor in strengths:
+        p = min(1.0, strengths[tgt_sensor] / tgt_ss)
+        entry["jam_chance"] = round(p, 4)
+        entry["jam_sensor"] = tgt_sensor
+        jammer_ps.append(p)
+    else:
+        # No sensor type named: report the per-type chance for each racial sensor.
+        entry["jam_chances"] = {k: round(min(1.0, v / tgt_ss), 4)
+                                for k, v in strengths.items()}
+
+
+def _jam_summary(tgt_ss, tgt_sensor, jammer_ps: list, jammer_count: int) -> dict:
+    """Combined jam chance across all our jammers as independent per-cycle rolls:
+    ``1 − Π(1 − p_i)`` (pyfa eos/saveddata/fit.py:439-444 jamChance — retainLockChance is the
+    product of each jammer's miss chance). Null with a reason when the target's sensor
+    strength or the sensor type is not supplied."""
+    summary = {"target_sensor_strength": tgt_ss, "target_sensor_type": tgt_sensor,
+               "jammer_count": jammer_count, "combined_chance": None, "reason": None}
+    if not tgt_ss or tgt_ss <= 0:
+        summary["reason"] = "target_sensor_strength_unknown"
+    elif tgt_sensor not in _SENSOR_TYPES:
+        summary["reason"] = "no_target_sensor_type"
+    else:
+        retain = 1.0
+        for p in jammer_ps:
+            retain *= 1.0 - p
+        summary["combined_chance"] = round(1.0 - retain, 4)
+    return summary
+
+
+def _stacked_postpercent(base: float, bonuses: list) -> float:
+    """``base`` after a set of postPercent bonuses, stacking-penalised exactly like
+    graph._calculate (sort by |bonus| descending; the i-th multiplies by
+    ``1 + bonus/100 · penalty^(i²)``). Used to fold our painters/webs/damps onto the target
+    profile with the SAME maths a fitted/projected module modifier uses."""
+    val = base
+    for i, b in enumerate(sorted(bonuses, key=abs, reverse=True)):
+        val *= 1.0 + (b / 100.0) * (_EWAR_PENALTY ** (i * i))
+    return val
+
+
+def _ewar_target_adjustment(ev: EvaluatedFit, op_profile: OperatingProfile):
+    """Apply OUR active painters/webs/damps to the operating profile's target, returning
+    ``(adjusted_target | None, ewar_on_target | None)``. Painters enlarge the target's
+    signature, webs slow it (both stacking-penalised among our own family) — the physical
+    effect the applied DPS is then measured against. Damps modify the target's lock range /
+    scan resolution, which do not feed applied DPS, so they are reported as deltas only.
+    ``adjusted_target`` is ``None`` when nothing changed sig/velocity (so _offence reuses the
+    raw target); ``ewar_on_target`` is ``None`` when there is no target to measure against."""
+    target = op_profile.target
+    if target is None:
+        return None, None
+    painters: list[float] = []
+    webs: list[float] = []
+    lock_bonuses: list[float] = []
+    scan_bonuses: list[float] = []
     for m in ev.modules:
-        gid = m.group_id
-        if gid not in EWAR_GROUPS or not _active(m):
+        if not _active(m):
             continue
-        e = {"type_id": m.type_id, "group_id": gid,
-             "optimal_m": round(ev.value(m, A.OPTIMAL_RANGE), 0),
-             "falloff_m": round(ev.value(m, A.FALLOFF), 0)}
-        if gid == EWAR_WARP_SCRAMBLER:
-            e.update(kind="warp_disruption",
-                     strength=round(ev.value(m, A.WARP_SCRAMBLE_STRENGTH), 1),
-                     unit="points")
-        elif gid == EWAR_STASIS_WEB:
-            e.update(kind="stasis_web",
-                     strength=round(abs(ev.value(m, A.SPEED_BONUS)), 1), unit="% speed")
-        elif gid in (EWAR_ENERGY_NEUT, EWAR_ENERGY_NOS):
-            is_neut = gid == EWAR_ENERGY_NEUT
-            amt = ev.value(m, A.ENERGY_NEUTRALISER_AMOUNT if is_neut
-                           else A.POWER_TRANSFER_AMOUNT)
-            cyc = _cycle_ms(ev, m) / 1000.0
-            e.update(kind="energy_neutraliser" if is_neut else "nosferatu",
-                     strength=round(amt, 1), unit="GJ/cycle",
-                     per_second=round(amt / cyc, 1) if cyc > 0 else 0.0)
-        elif gid == EWAR_TARGET_PAINTER:
-            e.update(kind="target_painter",
-                     strength=round(ev.value(m, A.SIGNATURE_RADIUS_BONUS_ATTR), 1),
-                     unit="% sig")
-        elif gid == EWAR_SENSOR_DAMP:
-            e.update(kind="sensor_dampener", unit="%",
-                     lock_range_bonus=round(ev.value(m, A.MAX_TARGET_RANGE_BONUS), 1),
-                     scan_res_bonus=round(ev.value(m, A.SCAN_RESOLUTION_BONUS), 1))
-        elif gid == EWAR_ECM:
-            strengths = {k: ev.value(m, v) for k, v in A.ECM_STRENGTH.items()}
-            best = max(strengths.items(), key=lambda kv: kv[1]) if strengths else ("", 0.0)
-            e.update(kind="ecm", strength=round(best[1], 1), unit="points",
-                     jam_type=best[0],
-                     jam_strengths={k: round(v, 1) for k, v in strengths.items()})
-        elif gid == EWAR_WEAPON_DISRUPTOR:
-            # Report the disruptor's own tracking/range disruption attributes (the
-            # strongest of its scripted outputs; scripts modify these via the graph).
-            e.update(kind="weapon_disruptor", unit="%",
-                     tracking_bonus=round(ev.value(m, 1255) if 1255 in m.base else 0.0, 1),
-                     optimal_bonus=round(ev.value(m, 351) if 351 in m.base else 0.0, 1),
-                     falloff_bonus=round(ev.value(m, 349) if 349 in m.base else 0.0, 1))
-        entries.append(e)
-    return {"modules": entries, "count": len(entries)}
+        kind = _ewar_kind(m)
+        if kind == "target_painter":
+            painters.append(ev.value(m, A.SIGNATURE_RADIUS_BONUS_ATTR))
+        elif kind == "stasis_web":
+            webs.append(ev.value(m, A.SPEED_BONUS))
+        elif kind == "sensor_dampener":
+            lock_bonuses.append(ev.value(m, A.MAX_TARGET_RANGE_BONUS))
+            scan_bonuses.append(ev.value(m, A.SCAN_RESOLUTION_BONUS))
+    base_sig, base_vel = target.signature_radius, target.velocity
+    adj_sig = _stacked_postpercent(base_sig, painters) if painters else base_sig
+    adj_vel = _stacked_postpercent(base_vel, webs) if webs else base_vel
+    on_target = {
+        "base": {"signature": round(base_sig, 1), "velocity": round(base_vel, 1)},
+        "adjusted": {"signature": round(adj_sig, 1), "velocity": round(adj_vel, 1)},
+        "painter_sig_pct": round((adj_sig / base_sig - 1.0) * 100, 1) if base_sig > 0 else 0.0,
+        "web_velocity_pct": round((adj_vel / base_vel - 1.0) * 100, 1) if base_vel > 0 else 0.0,
+    }
+    if lock_bonuses or scan_bonuses:
+        on_target["damp"] = {
+            "lock_range_pct": round((_stacked_postpercent(1.0, lock_bonuses) - 1.0) * 100, 1),
+            "scan_res_pct": round((_stacked_postpercent(1.0, scan_bonuses) - 1.0) * 100, 1),
+        }
+    changed = (bool(painters) and base_sig > 0) or (bool(webs) and base_vel > 0)
+    if not changed:
+        return None, on_target
+    # A web reduces the target's DERIVED angular (via the lower velocity); an explicitly
+    # pinned target_angular is respected as-is (the pilot's override wins) — documented.
+    adjusted = replace(target, signature_radius=adj_sig, velocity=adj_vel)
+    return adjusted, on_target
+
+
+def _ewar(ev: EvaluatedFit, op_profile: OperatingProfile, on_target, provider) -> dict:
+    """Consolidated EWAR telemetry: one entry per OUR active offensive-ewar module (jammers,
+    burst jammers, dampeners, painters, webs, scramblers/disruptors, tracking/guidance
+    disruptors; neut/nos cross-linked from the capacitor section). Adds ECM jam chances when
+    the target's sensor strength is supplied, and the ewar-adjusted target profile."""
+    target = op_profile.target
+    tgt_ss = target.target_sensor_strength if target is not None else None
+    tgt_sensor = target.target_sensor_type if target is not None else None
+    entries: list[dict] = []
+    jammer_ps: list[float] = []
+    jammer_count = 0
+    for m in ev.modules:
+        if not _active(m):
+            continue
+        kind = _ewar_kind(m)
+        if kind is None:
+            continue
+        entry = _ewar_entry(ev, m, kind, provider)
+        if kind in ("ecm", "ecm_burst"):
+            jammer_count += 1
+            _attach_jam(entry, ev, m, tgt_ss, tgt_sensor, jammer_ps)
+        entries.append(entry)
+    section = {"modules": entries, "count": len(entries)}
+    if jammer_count:
+        section["jam"] = _jam_summary(tgt_ss, tgt_sensor, jammer_ps, jammer_count)
+    if on_target is not None:
+        section["ewar_on_target"] = on_target
+    return section
 
 
 # --------------------------------------------------------------------------- #
