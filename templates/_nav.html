@@ -51,7 +51,8 @@
       {% if features.hall_of_fame %}<a href="{% url 'pilots:hall_of_fame' %}" class="navlink {% if un == 'hall_of_fame' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-trophy"/></svg> {% translate "Hall of Fame" %}</a>{% endif %}
       {% if features.raffle %}<a href="{% url 'raffle:home' %}" class="navlink {% if ns == 'raffle' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-coin"/></svg> {% translate "Raffle" %}</a>{% endif %}
       {% if features.killboard %}<a href="{% url 'killboard:stats' %}" class="navlink {% if un == 'stats' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-grid"/></svg> {% translate "Combat Stats" %}</a>
-      <a href="{% url 'killboard:roster' %}" class="navlink {% if un == 'roster' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-rookie"/></svg> {% translate "Combat Roster" %}</a>{% endif %}
+      <a href="{% url 'killboard:roster' %}" class="navlink {% if un == 'roster' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-rookie"/></svg> {% translate "Combat Roster" %}</a>
+      <a href="{% url 'killboard:api_tokens' %}" class="navlink {% if un == 'api_tokens' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-bolt"/></svg> {% translate "API access" %}</a>{% endif %}
       {% if features.knowledge_base %}<a href="{% url 'kb:list' %}" class="navlink {% if ns == 'kb' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-rookie"/></svg> {% translate "Knowledge base" %}</a>{% endif %}
     </div>
   </div>

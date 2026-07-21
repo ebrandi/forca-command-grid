@@ -5,6 +5,8 @@ from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 
+from apps.killboard.api import views as killboard_api_views
+
 from . import views
 
 urlpatterns = [
@@ -50,6 +52,17 @@ urlpatterns = [
     path("campaigns/", include("apps.campaigns.urls")),
     path("capsuleer/", include("apps.capsuleer.urls")),
     path("comms/", include("apps.comms_access.urls")),
+    # KB-28 — the killboard REST API + its OpenAPI schema/docs. The schema + Swagger UI
+    # sit at the /api/ root (per the KB-28 taxonomy); the resource endpoints live under
+    # /api/killboard/. Both are RBAC-gated in their views (member+, or the public-read
+    # subset when KILLBOARD_API_PUBLIC_READ is on).
+    path("api/killboard/", include("apps.killboard.api.urls")),
+    path("api/schema/", killboard_api_views.KillboardSchemaView.as_view(), name="killboard-api-schema"),
+    path(
+        "api/docs/",
+        killboard_api_views.KillboardDocsView.as_view(url_name="killboard-api-schema"),
+        name="killboard-api-docs",
+    ),
 ]
 
 # The stock Django admin is superseded by the native /ops/ console (OFFICER/Director

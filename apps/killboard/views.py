@@ -635,6 +635,72 @@ def system_search(request: HttpRequest) -> JsonResponse:
     return JsonResponse(search_systems(request.GET.get("q", ""), limit=20), safe=False)
 
 
+# --- KB-28: personal API tokens (self-serve) ----------------------------------
+_MAX_ACTIVE_API_TOKENS = 20
+
+
+@login_required
+@role_required(rbac.ROLE_MEMBER)
+def api_tokens(request: HttpRequest) -> HttpResponse:
+    """A member's personal killboard-API tokens: list, create, revoke.
+
+    The freshly-minted plaintext is stashed in the session for exactly one render (popped
+    here) so it is shown once and never re-displayed — only its hash is stored."""
+    from django.conf import settings
+
+    from .models import KillboardApiToken
+
+    new_token = request.session.pop("kb_new_api_token", None)
+    tokens = list(KillboardApiToken.objects.filter(user=request.user))
+    return render(request, "killboard/api_tokens.html", {
+        "tokens": tokens,
+        "new_token": new_token,
+        "public_read": getattr(settings, "KILLBOARD_API_PUBLIC_READ", False),
+        "active_count": sum(1 for t in tokens if t.is_active),
+        "max_tokens": _MAX_ACTIVE_API_TOKENS,
+    })
+
+
+@login_required
+@role_required(rbac.ROLE_MEMBER)
+@require_POST
+def api_token_create(request: HttpRequest) -> HttpResponse:
+    from .models import KillboardApiToken
+
+    active = KillboardApiToken.objects.filter(user=request.user, revoked_at__isnull=True).count()
+    if active >= _MAX_ACTIVE_API_TOKENS:
+        messages.error(request, gettext(
+            "You already have the maximum number of active tokens. Revoke one first."
+        ))
+        return redirect("killboard:api_tokens")
+    name = (request.POST.get("name") or "").strip()
+    token, raw = KillboardApiToken.issue(request.user, name=name)
+    # Stash the plaintext for the one-time reveal on the redirected GET, never in the DB.
+    request.session["kb_new_api_token"] = raw
+    audit_log(
+        request.user, "killboard_api_token.create", target_type="killboard_api_token",
+        target_id=str(token.id), metadata={"name": token.name}, ip=client_ip(request),
+    )
+    messages.success(request, gettext("API token created — copy it now, it won’t be shown again."))
+    return redirect("killboard:api_tokens")
+
+
+@login_required
+@role_required(rbac.ROLE_MEMBER)
+@require_POST
+def api_token_revoke(request: HttpRequest, token_id: int) -> HttpResponse:
+    from .models import KillboardApiToken
+
+    token = get_object_or_404(KillboardApiToken, id=token_id, user=request.user)
+    token.revoke()
+    audit_log(
+        request.user, "killboard_api_token.revoke", target_type="killboard_api_token",
+        target_id=str(token.id), ip=client_ip(request),
+    )
+    messages.success(request, gettext("API token revoked."))
+    return redirect("killboard:api_tokens")
+
+
 # --- Intel: watchlists --------------------------------------------------------
 @login_required
 @role_required(rbac.ROLE_MEMBER)

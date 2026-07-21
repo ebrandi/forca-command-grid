@@ -289,13 +289,35 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 50,
+    # Throttle rates for the killboard REST API (KB-28). The scopes are attached by
+    # apps.killboard.api.throttling; the rates live here so an operator can tune them
+    # per deployment. Anon applies only when KILLBOARD_API_PUBLIC_READ is on (else
+    # anonymous is denied before a throttle is reached); token/session users get the
+    # higher rate. Overridable via the env in the environment-specific settings.
+    "DEFAULT_THROTTLE_RATES": {
+        "killboard_anon": "60/min",
+        "killboard_user": "240/min",
+    },
 }
 SPECTACULAR_SETTINGS = {
-    "TITLE": "[FORCA] Command Grid API",
-    "DESCRIPTION": "Internal API for the FORCA Command Grid operations hub.",
-    "VERSION": "0.1.0",
+    "TITLE": "[FORCA] Killboard API",
+    "DESCRIPTION": (
+        "RBAC-scoped REST API over the corp killboard (KB-28). Read-only. "
+        "Authenticate with a session cookie (members in the browser) or a personal "
+        "bearer token (Authorization: Bearer <token>) minted at /killboard/api-tokens/. "
+        "Anonymous access is denied unless KILLBOARD_API_PUBLIC_READ is enabled, which "
+        "exposes only the public-board-equivalent read endpoints."
+    ),
+    "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
 }
+
+# KB-28: expose the public-board-equivalent read endpoints (killmail list/detail, the
+# fitting/eft/esi exports and the id+hash history) to ANONYMOUS callers. Default OFF —
+# the API is for our members and our integrations, not a public firehose (market plan
+# §9). When on, only that public subset opens up; stats, leaderboards and every
+# tier-gated field stay members-only. Env-driven so a corp opts in per deployment.
+KILLBOARD_API_PUBLIC_READ = env.bool("KILLBOARD_API_PUBLIC_READ", default=False)
 
 # --- Token encryption (OAuth refresh tokens at rest) --------------------
 # 32-byte url-safe base64 Fernet key. In prod this MUST be set in the env.

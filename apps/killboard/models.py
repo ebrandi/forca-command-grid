@@ -1,7 +1,9 @@
 """Killboard: killmails, participants, items, battle reports, watchlist."""
 from __future__ import annotations
 
+import hashlib
 import logging
+import secrets
 from decimal import Decimal
 
 from django.conf import settings
@@ -815,3 +817,74 @@ class IngestSourceHealth(models.Model):
             logging.getLogger("forca.killboard").debug(
                 "ingest health record failed for %s", source, exc_info=True
             )
+
+
+# --------------------------------------------------------------------------- #
+#  KB-28 — per-user API token (the killboard REST API)
+# --------------------------------------------------------------------------- #
+class KillboardApiToken(models.Model):
+    """A member's personal bearer token for the killboard REST API (KB-28).
+
+    Only the SHA-256 **hash** of the token is stored — the plaintext is shown once, at
+    creation, and can never be recovered (a leaked DB dump therefore yields no usable
+    tokens). A token authenticates as its owning user and carries exactly the account's
+    RBAC standing: it is a credential *for a member*, never a way to exceed one. Revoking
+    is a soft delete (``revoked_at``) so the audit trail — who held a token, when it was
+    last used — survives the revoke.
+
+    The 8-char ``prefix`` (the token's own leading characters, not a secret) lets a member
+    tell their tokens apart in the management UI without ever re-displaying the secret.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="killboard_api_tokens"
+    )
+    name = models.CharField(
+        max_length=100, blank=True,
+        help_text=_("A label to tell this token apart from your others (e.g. “Discord bot”)."),
+    )
+    # SHA-256 hex digest of the plaintext token — 64 chars, unique, indexed for the
+    # per-request auth lookup. Never the token itself.
+    key_hash = models.CharField(max_length=64, unique=True, db_index=True)
+    prefix = models.CharField(max_length=12, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_used_at = models.DateTimeField(null=True, blank=True)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            # The management page lists a user's live tokens newest-first.
+            models.Index(fields=["user", "-created_at"], name="kbtok_user_created_idx"),
+        ]
+
+    def __str__(self) -> str:
+        state = "revoked" if self.revoked_at else "active"
+        return f"api token {self.prefix}… ({state})"
+
+    @property
+    def is_active(self) -> bool:
+        return self.revoked_at is None
+
+    @staticmethod
+    def hash_key(raw: str) -> str:
+        """SHA-256 hex of a plaintext token — the only form we ever persist or compare."""
+        return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+    @classmethod
+    def issue(cls, user, name: str = "") -> tuple[KillboardApiToken, str]:
+        """Mint a token for ``user``; returns ``(row, plaintext)``.
+
+        The plaintext is returned ONCE for the caller to show the member and is never
+        stored — only its hash is. Uses a 256-bit url-safe secret from ``secrets``.
+        """
+        raw = secrets.token_urlsafe(32)
+        token = cls.objects.create(
+            user=user, name=(name or "")[:100], key_hash=cls.hash_key(raw), prefix=raw[:8]
+        )
+        return token, raw
+
+    def revoke(self) -> None:
+        if self.revoked_at is None:
+            self.revoked_at = timezone.now()
+            self.save(update_fields=["revoked_at"])

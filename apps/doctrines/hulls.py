@@ -31,6 +31,19 @@ CLASS_ORDER = [
 ]
 
 
+# Every group id that belongs to *some* named class — the complement is the "Other" bucket.
+ALL_CLASSIFIED_GROUPS: frozenset[int] = frozenset(_GROUP_TO_CLASS)
+
+
+def group_ids_for_class(hull_class: str) -> set[int]:
+    """The SDE ship-group ids that fold into a broad class (empty for an unknown class).
+
+    ``"Other"`` has no groups of its own — it is the complement of
+    :data:`ALL_CLASSIFIED_GROUPS` — so callers filtering by it should EXCLUDE those instead.
+    """
+    return set(_CLASS_GROUPS.get(hull_class, set()))
+
+
 def hull_class_for_group(group_id: int | None) -> str:
     return _GROUP_TO_CLASS.get(group_id or 0, "Other")
 

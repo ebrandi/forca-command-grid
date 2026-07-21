@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "API access" %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-6">
+  <p class="eyebrow">{% translate "Killboard" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "API access" %}</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Personal tokens for the killboard REST API. Present a token as an Authorization header to read the board from your own tools and integrations. A token acts as you — keep it secret, and revoke it if it leaks." %}</p>
+  <p class="mt-2 text-sm">
+    <a href="{% url 'killboard-api-docs' %}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-gold hover:underline"><svg class="h-4 w-4"><use href="#i-grid"/></svg> {% translate "API documentation" %} →</a>
+  </p>
+</header>
+
+{% if new_token %}
+<div class="panel mb-6 border-gold/40 p-5">
+  <h2 class="eyebrow text-gold">{% translate "Your new token" %}</h2>
+  <p class="mt-1 text-sm text-faint">{% translate "Copy it now — for your security it will never be shown again." %}</p>
+  <code class="mt-3 block break-all rounded bg-panel2 p-3 font-mono text-sm text-ink" style="user-select:all;">{{ new_token }}</code>
+  <p class="mt-3 text-xs text-faint">{% translate "Use it like:" %} <span class="font-mono text-ink">Authorization: Bearer {{ new_token }}</span></p>
+</div>
+{% endif %}
+
+<div class="grid gap-6 lg:grid-cols-3">
+  <section class="lg:col-span-2">
+    <div class="mb-2 flex items-end justify-between gap-2">
+      <h2 class="eyebrow">{% translate "Your tokens" %}</h2>
+      <span class="text-xs text-faint">{% blocktranslate %}{{ active_count }} of {{ max_tokens }} active{% endblocktranslate %}</span>
+    </div>
+    <div class="panel divide-y divide-line/40">
+      {% for token in tokens %}
+        <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
+          <div>
+            <p class="text-sm text-ink">
+              {% if token.name %}{{ token.name }}{% else %}<span class="text-faint">{% translate "Unnamed token" %}</span>{% endif %}
+              {% if not token.is_active %}<span class="chip ml-1">{% translate "Revoked" %}</span>{% endif %}
+            </p>
+            <p class="mt-0.5 font-mono text-xs text-faint">{{ token.prefix }}…&nbsp;·&nbsp;{% blocktranslate with created=token.created_at|date:"M j, Y" %}created {{ created }}{% endblocktranslate %}{% if token.last_used_at %} · {% blocktranslate with used=token.last_used_at|date:"M j, Y H:i" %}last used {{ used }}{% endblocktranslate %}{% else %} · {% translate "never used" %}{% endif %}</p>
+          </div>
+          {% if token.is_active %}
+          <form method="post" action="{% url 'killboard:api_token_revoke' token.id %}" onsubmit="return confirm('{% translate "Revoke this token? Any tool using it will stop working." %}');">
+            {% csrf_token %}
+            <button class="btn-ghost text-xs">{% translate "Revoke" %}</button>
+          </form>
+          {% endif %}
+        </div>
+      {% empty %}
+        <p class="px-4 py-8 text-center text-sm text-faint">{% translate "No tokens yet. Create one to start using the API." %}</p>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section>
+    <h2 class="eyebrow mb-2">{% translate "New token" %}</h2>
+    <form method="post" action="{% url 'killboard:api_token_create' %}" class="panel space-y-3 p-4">
+      {% csrf_token %}
+      <div>
+        <label class="label" for="token-name">{% translate "Name (optional)" %}</label>
+        <input id="token-name" name="name" type="text" maxlength="100" placeholder="{% translate 'e.g. Discord bot' %}" class="input-field w-full" />
+      </div>
+      <button class="btn-gold w-full">{% translate "Create token" %}</button>
+      <p class="text-xs text-faint">{% translate "The token is shown once, right after you create it." %}</p>
+    </form>
+  </section>
+</div>
+{% endblock %}
