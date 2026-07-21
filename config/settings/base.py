@@ -301,14 +301,6 @@ SPECTACULAR_SETTINGS = {
 # 32-byte url-safe base64 Fernet key. In prod this MUST be set in the env.
 TOKEN_ENCRYPTION_KEY = env("TOKEN_ENCRYPTION_KEY", default="")
 
-# --- Tocha's Lab fitting engine -----------------------------------------
-# Data-drive the pilot-skill catalogue from the imported CCP dogma graph (Phase 2): when on,
-# every trained skill carrying a postPercent modifier is applied, not just the ~45 hand-coded
-# ones. The hand-coded set stays authoritative for the skills it already covers (merge, not
-# replace), so this only ADDS the previously-missing skills. Off by default so a deploy is a
-# no-op until validated; flip to 1 to cut over (the flag folds into the eval cache key, so
-# toggling recomputes automatically). Requires `manage.py import_dogma_graph` to have run.
-FITTING_GRAPH_SKILLS = env.bool("FITTING_GRAPH_SKILLS", default=False)
 
 # --- EVE SSO / ESI ------------------------------------------------------
 EVE_SSO_CLIENT_ID = env("EVE_SSO_CLIENT_ID", default="")

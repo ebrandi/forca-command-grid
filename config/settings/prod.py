@@ -33,12 +33,6 @@ if _missing:
 # guessable admin login. Set DJANGO_ENABLE_ADMIN=1 to re-enable a break-glass admin.
 ENABLE_DJANGO_ADMIN = env.bool("DJANGO_ENABLE_ADMIN", default=False)
 
-# Tocha's Lab: data-drive the full pilot-skill catalogue from the imported CCP dogma graph
-# (Phase 2). Validated on prod against the doctrine fits — zero change to volley/EHP/turret/drone
-# and it recovers the missing Missile Launcher Operation rate-of-fire (Loki total DPS 600.6 → 655.9,
-# matching in-game). ON by default in production; set FITTING_GRAPH_SKILLS=0 to fall back to the
-# hand-coded catalogue. (base.py keeps it off for dev/test so the unit suite is unaffected.)
-FITTING_GRAPH_SKILLS = env.bool("FITTING_GRAPH_SKILLS", default=True)
 
 # --- Database connections ----------------------------------------------
 # Persist a connection across requests instead of opening/closing one per
