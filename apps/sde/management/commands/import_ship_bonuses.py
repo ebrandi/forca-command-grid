@@ -45,6 +45,8 @@ from django.utils import timezone
 
 from apps.admin_audit.models import AppSetting
 from apps.sde.models import (
+    SdeDbuff,
+    SdeDbuffModifier,
     SdeModifier,
     SdeShipBonus,
     SdeType,
@@ -69,6 +71,11 @@ SDE_META_URL = "https://developers.eveonline.com/static-data/tranquility/latest.
 # zip nested them under fsd/. _parse() accepts either layout so an archived --zip (and the
 # offline test fixtures) keep working.
 _FSD_NAMES = ("dogmaAttributes.yaml", "typeDogma.yaml", "dogmaEffects.yaml")
+# Fleet warfare-buff table (Tocha's Lab WS-7). Present in the current official zip
+# (flat at the root, verified 2026-07-21); parsed OPTIONALLY so an archived pre-buff
+# --zip / an offline test fixture without it still imports (the dbuff tables just stay
+# empty, which fitting_data_check then reports as a warning).
+_DBUFF_NAME = "dbuffCollections.yaml"
 _MAX_ZIP = 512 * 1024**2          # compressed ceiling (the zip is ~100MB)
 _MAX_MEMBER = 256 * 1024**2       # per-extracted-YAML ceiling
 
@@ -78,6 +85,8 @@ _SKILL_CATEGORY = 16      # skills whose dogma holds the per-level bonus values 
 _MIN_HULLS = 300          # a healthy import covers ~480 hulls; refuse a degraded parse below this
 _MIN_MODIFIERS = 3000     # a healthy FSD graph is ~4,850 modifiers; refuse a degraded parse below
 _MIN_SKILLS = 250         # ~590 skills carry dogma; refuse a degraded parse below this
+_MIN_DBUFFS = 200         # the current file carries 271 warfare buffs; refuse a degraded parse
+#                           below this (only enforced when the zip actually contains the member)
 _REQ_SKILL1, _REQ_SKILL2 = 182, 183      # ship dogma attrs: primary / secondary required skill
 _OP_POSTPERCENT = 6
 # em / explosive / kinetic / thermal damage attributes — a hull bonus on one of these lands
@@ -108,7 +117,7 @@ class Command(BaseCommand):
                 work = tempfile.mkdtemp(prefix="forca_fsd_")
                 build_meta = self._fetch_build_meta()
                 zip_path = self._download(work)
-            attrs, type_dogma, effects = self._parse(zip_path)
+            attrs, type_dogma, effects, dbuffs = self._parse(zip_path)
             self._build_meta = build_meta
 
             rows = self._build_rows(attrs, type_dogma, effects)
@@ -117,6 +126,7 @@ class Command(BaseCommand):
             hulls = len({r["ship_type_id"] for r in rows})
 
             modifier_rows = self._build_modifiers(effects)
+            dbuff_rows, dbuff_mod_rows = self._build_dbuffs(dbuffs)
             skill_ids = set(
                 SdeType.objects.filter(group__category_id=_SKILL_CATEGORY)
                 .values_list("type_id", flat=True)
@@ -129,7 +139,8 @@ class Command(BaseCommand):
             if options["dry_run"]:
                 self.stdout.write(self.style.SUCCESS(
                     f"Would load {len(rows)} ship-bonus rows for {hulls} hulls, "
-                    f"{len(modifier_rows)} dogma modifiers, and dogma for {skills_with_dogma} "
+                    f"{len(modifier_rows)} dogma modifiers, {len(dbuff_rows)} warfare buffs "
+                    f"({len(dbuff_mod_rows)} buff modifiers), and dogma for {skills_with_dogma} "
                     f"skills ({len(skill_attr_rows)} attrs / {len(skill_effect_rows)} effects) "
                     f"— no write."))
                 return
@@ -150,12 +161,23 @@ class Command(BaseCommand):
                         f"Only {skills_with_dogma} skills got dogma (expected ~590 over "
                         f"{len(skill_ids)} category-16 types); refusing to replace skill dogma. "
                         f"Re-run with --force for a deliberately partial SDE.")
+                # The dbuff member is optional; only guard against a DEGRADED parse (some
+                # buffs found but far fewer than the ~271 the file carries). An entirely
+                # absent member (0 rows — an archived pre-buff zip) is left to
+                # fitting_data_check to flag as a warning, not a hard import failure.
+                if dbuff_rows and len(dbuff_rows) < _MIN_DBUFFS:
+                    raise CommandError(
+                        f"Only {len(dbuff_rows)} warfare buffs parsed (expected ~271); refusing "
+                        f"to replace SdeDbuff with a degraded set. Re-run with --force for a "
+                        f"deliberately partial SDE.")
 
             self._write(rows)
-            self._write_graph(modifier_rows, skill_attr_rows, skill_effect_rows, skill_ids)
+            self._write_graph(modifier_rows, skill_attr_rows, skill_effect_rows, skill_ids,
+                              dbuff_rows, dbuff_mod_rows)
             self.stdout.write(self.style.SUCCESS(
                 f"Loaded {len(rows)} ship-bonus rows for {hulls} hulls, "
-                f"{len(modifier_rows)} dogma modifiers, and dogma for {skills_with_dogma} "
+                f"{len(modifier_rows)} dogma modifiers, {len(dbuff_rows)} warfare buffs "
+                f"({len(dbuff_mod_rows)} buff modifiers), and dogma for {skills_with_dogma} "
                 f"skills ({len(skill_attr_rows)} attrs / {len(skill_effect_rows)} effects)."))
         finally:
             if work:
@@ -201,34 +223,42 @@ class Command(BaseCommand):
         return zip_path
 
     def _parse(self, zip_path: str):
-        """Extract + YAML-parse only the 3 dogma members (never the 150MB types.yaml).
+        """Extract + YAML-parse the 3 required dogma members + the optional dbuff member
+        (never the 150MB types.yaml).
 
         The current official zip stores members flat at the root (dogmaAttributes.yaml);
         the pre-2025-redesign zip nested them under fsd/. Resolve each member by basename
-        in either layout, so both the live download and an archived --zip parse."""
+        in either layout, so both the live download and an archived --zip parse. The
+        warfare-buff member (``dbuffCollections.yaml``) is OPTIONAL — an archived pre-buff
+        zip returns an empty dbuff map rather than failing the whole import."""
         def load(zf, name):
             with zf.open(name) as raw:
                 data = CappedReader(raw, _MAX_MEMBER).read()
             if _HAVE_CLOADER:
                 return yaml.load(data, Loader=yaml.CSafeLoader)
             return yaml.safe_load(data)
+
+        def resolve(names, base):
+            if base in names:
+                return base
+            if f"fsd/{base}" in names:
+                return f"fsd/{base}"
+            return None
         try:
             with zipfile.ZipFile(zip_path) as zf:
                 names = set(zf.namelist())
                 members, missing = [], []
                 for base in _FSD_NAMES:
-                    if base in names:
-                        members.append(base)
-                    elif f"fsd/{base}" in names:
-                        members.append(f"fsd/{base}")
-                    else:
-                        missing.append(base)
+                    member = resolve(names, base)
+                    (members if member else missing).append(member or base)
                 if missing:
                     raise CommandError(f"SDE zip missing expected members: {missing}")
                 attrs, type_dogma, effects = (load(zf, n) for n in members)
+                dbuff_member = resolve(names, _DBUFF_NAME)
+                dbuffs = load(zf, dbuff_member) if dbuff_member else {}
         except zipfile.BadZipFile as exc:
             raise CommandError(f"Corrupt SDE zip: {exc}") from exc
-        return attrs, type_dogma, effects
+        return attrs, type_dogma, effects, dbuffs
 
     # -- mapping ------------------------------------------------------------ #
     def _build_rows(self, attrs, type_dogma, effects) -> list[dict]:
@@ -436,8 +466,58 @@ class Command(BaseCommand):
                                     "is_default": bool(e.get("isDefault", False))})
         return attr_rows, effect_rows
 
+    # WS-7 warfare buffs: each CCP modifier list maps to an SdeDbuffModifier.kind.
+    _DBUFF_MOD_KINDS = (
+        ("itemModifiers", SdeDbuffModifier.KIND_ITEM),
+        ("locationModifiers", SdeDbuffModifier.KIND_LOCATION),
+        ("locationGroupModifiers", SdeDbuffModifier.KIND_LOCATION_GROUP),
+        ("locationRequiredSkillModifiers", SdeDbuffModifier.KIND_LOCATION_REQUIRED_SKILL),
+    )
+
+    def _build_dbuffs(self, dbuffs) -> tuple[list[dict], list[dict]]:
+        """Normalise ``dbuffCollections.yaml`` into (buff rows, buff-modifier rows).
+
+        Each buff carries an ``aggregateMode`` + ``operationName`` + up to four modifier
+        lists (item / location / locationGroup / locationRequiredSkill); every modifier
+        names the dogma attribute it changes, with group/skill scoping the location variants.
+        A buff with no operation, or no modifier that changes an attribute, is skipped —
+        there would be nothing to apply. The warfare-buff *values* live on the burst charge
+        (``warfareBuffNMultiplier``), not here; this table is purely "what buff id N does".
+        """
+        buff_rows: list[dict] = []
+        mod_rows: list[dict] = []
+        for bid, b in (dbuffs or {}).items():
+            if not isinstance(b, dict):
+                continue
+            operation = b.get("operationName")
+            aggregate = b.get("aggregateMode")
+            if not operation or not aggregate:
+                continue
+            these: list[dict] = []
+            for key, kind in self._DBUFF_MOD_KINDS:
+                for m in (b.get(key) or []):
+                    attr = m.get("dogmaAttributeID")
+                    if attr is None:
+                        continue
+                    these.append({
+                        "buff_id": int(bid), "kind": kind,
+                        "modified_attribute_id": int(attr),
+                        "group_id": self._int_or_none(m.get("groupID")),
+                        "skill_type_id": self._int_or_none(m.get("skillID")),
+                    })
+            if not these:
+                continue                          # a buff that changes nothing — skip
+            buff_rows.append({
+                "buff_id": int(bid), "aggregate_mode": str(aggregate)[:16],
+                "operation": str(operation)[:24],
+                "name": str(b.get("developerDescription") or "")[:200],
+            })
+            mod_rows.extend(these)
+        return buff_rows, mod_rows
+
     @transaction.atomic
-    def _write_graph(self, modifier_rows, skill_attr_rows, skill_effect_rows, skill_ids):
+    def _write_graph(self, modifier_rows, skill_attr_rows, skill_effect_rows, skill_ids,
+                     dbuff_rows=None, dbuff_mod_rows=None):
         SdeModifier.objects.all().delete()
         SdeModifier.objects.bulk_create([
             SdeModifier(
@@ -464,6 +544,26 @@ class Command(BaseCommand):
                               is_default=r["is_default"])
                 for r in skill_effect_rows
             ], batch_size=5000, ignore_conflicts=True)
+
+        # WS-7 warfare buffs: full replace, but ONLY when the zip actually carried the
+        # member (dbuff_rows truthy). An absent member (empty list, or None from the unit
+        # test that writes only the modifier graph) preserves any prior good dbuff import
+        # rather than wiping it — the same "refuse to destroy on a degraded parse" stance
+        # the ship-bonus / modifier writes take.
+        if dbuff_rows:
+            SdeDbuffModifier.objects.all().delete()   # FK child first
+            SdeDbuff.objects.all().delete()
+            SdeDbuff.objects.bulk_create([
+                SdeDbuff(buff_id=r["buff_id"], aggregate_mode=r["aggregate_mode"],
+                         operation=r["operation"], name=r["name"])
+                for r in dbuff_rows
+            ], batch_size=2000)
+            SdeDbuffModifier.objects.bulk_create([
+                SdeDbuffModifier(buff_id=r["buff_id"], kind=r["kind"],
+                                 modified_attribute_id=r["modified_attribute_id"],
+                                 group_id=r["group_id"], skill_type_id=r["skill_type_id"])
+                for r in (dbuff_mod_rows or [])
+            ], batch_size=5000)
 
         AppSetting.objects.update_or_create(
             key="dogma_graph_version", defaults={"value": self._version_stamp()})

@@ -444,6 +444,66 @@ class SdeModifier(models.Model):
         return f"{self.effect_id}:{self.func}:{self.modified_attribute_id}"
 
 
+class SdeDbuff(models.Model):
+    """A warfare-buff definition from CCP's ``dbuffCollections.yaml`` (Tocha's Lab WS-7).
+
+    Fleet command bursts (and Titan/environment effects) don't carry their per-ally buff in
+    dogma: a burst charge names a ``warfareBuffNID`` (dogma attrs 2468/2470/2472/2536) and a
+    ``warfareBuffNMultiplier`` (2596-2599); the burst module's default effect
+    (``moduleBonusWarfareLink*``) has ZERO modifiers, because CCP applies the buff to fleet
+    members OUTSIDE dogma, keyed by that buff id. ``dbuffCollections.yaml`` is the table that
+    says WHAT each buff id does — which attributes it changes, on which items, with which
+    operator, and how multiple instances aggregate. This model is FORCA's normalised form of
+    that file, imported by ``import_dogma_graph`` alongside the modifier graph.
+
+    ``aggregate_mode`` (``Maximum`` / ``Minimum``) picks the winning value when several boosts
+    grant the same buff id — the strongest single instance wins (bursts do NOT sum). The
+    stacking penalty of an applied buff is NOT stored here: it is governed entirely by the
+    TARGET attribute's ``stackable`` flag, exactly like any module bonus (verified against
+    pyfa — every warfare-buff penalty choice matches the attribute's ``stackable`` flag).
+    """
+
+    buff_id = models.IntegerField(primary_key=True)
+    # CCP aggregateMode: how instances of the same buff id combine (Maximum | Minimum).
+    aggregate_mode = models.CharField(max_length=16)
+    # CCP operationName mapped to a dogma operator at apply time: PostPercent | PostMul |
+    # ModAdd | PostAssignment | PreAssignment.
+    operation = models.CharField(max_length=24)
+    # developerDescription (English, for the audit trail / telemetry label).
+    name = models.CharField(max_length=200, blank=True)
+
+    def __str__(self) -> str:
+        return f"{self.buff_id}:{self.name}"
+
+
+class SdeDbuffModifier(models.Model):
+    """One modifier of a :class:`SdeDbuff` — which attribute the buff changes, on what.
+
+    Mirrors the four modifier lists in ``dbuffCollections.yaml``: ``kind`` records which list
+    it came from (``item`` → the boosted ship itself; ``location`` → the ship and everything
+    on it; ``locationGroup`` → located items of ``group_id``; ``locationRequiredSkill`` →
+    located items that require ``skill_type_id``). The buff's ``operation`` and aggregated
+    value are applied onto ``modified_attribute_id`` on each resolved target.
+    """
+
+    KIND_ITEM = "item"
+    KIND_LOCATION = "location"
+    KIND_LOCATION_GROUP = "locationGroup"
+    KIND_LOCATION_REQUIRED_SKILL = "locationRequiredSkill"
+
+    buff = models.ForeignKey(SdeDbuff, on_delete=models.CASCADE, related_name="modifiers")
+    kind = models.CharField(max_length=24)
+    modified_attribute_id = models.IntegerField()
+    group_id = models.IntegerField(null=True, blank=True)
+    skill_type_id = models.IntegerField(null=True, blank=True)
+
+    class Meta:
+        indexes = [models.Index(fields=["buff"])]
+
+    def __str__(self) -> str:
+        return f"{self.buff_id}:{self.kind}:{self.modified_attribute_id}"
+
+
 class SdeTypeAttribute(models.Model):
     """The value of one dogma attribute on one type (dgmTypeAttributes).
 

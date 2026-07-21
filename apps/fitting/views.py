@@ -92,13 +92,23 @@ def _parse_items(raw: str) -> list[dict]:
     for it in data:
         if not isinstance(it, dict) or "type_id" not in it:
             continue
-        clean.append({
+        entry = {
             "type_id": int(it["type_id"]),
             "slot": str(it.get("slot", "low"))[:12],
             "state": str(it.get("state", "active"))[:12],
             "charge_type_id": int(it["charge_type_id"]) if it.get("charge_type_id") else None,
             "quantity": max(1, min(int(it.get("quantity", 1)), 5000)),
-        })
+        }
+        # WS-7: a fleet boost (slot="boost") may carry an optional strength_pct override —
+        # the effective warfare-buff strength of a real command ship. Preserve it (bounded)
+        # through to the engine; it is meaningless on any other slot but harmless to keep.
+        sp = it.get("strength_pct")
+        if sp is not None and sp != "":
+            try:
+                entry["strength_pct"] = max(-100.0, min(float(sp), 1000.0))
+            except (TypeError, ValueError):
+                pass
+        clean.append(entry)
     return clean
 
 

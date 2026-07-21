@@ -48,6 +48,7 @@ class Command(BaseCommand):
         self._check_references()
         self._check_modifier_semantics()
         self._check_patches()
+        self._check_dbuffs()
         self._check_versions()
         self._check_sample_calculation()
 
@@ -181,6 +182,40 @@ class Command(BaseCommand):
                 self.failures.append(
                     f"client-internal effect '{name}' ({row}) has no synthesised "
                     f"modifiers — run the current import_dogma_graph")
+
+    # The four standard command-burst warfare-buff families' representative buff ids: shield
+    # resistance (10), armor resistance (13), information scan resolution (16), skirmish
+    # signature (20). Their presence proves the dbuff table imported the real command bursts.
+    _STANDARD_BUFF_IDS = (10, 13, 16, 20)
+
+    def _check_dbuffs(self):
+        from apps.sde.models import SdeDbuff, SdeDbuffModifier
+
+        n = SdeDbuff.objects.count()
+        if n == 0:
+            # The dbuff member is optional in the importer (an archived pre-buff zip lacks
+            # it), so an empty table is a WARNING, not a hard failure — but it means fleet
+            # boosts silently do nothing until the current SDE is imported.
+            self.warnings.append(
+                "warfare buffs (SdeDbuff): 0 rows — fleet boosts will not apply; run the "
+                "current import_dogma_graph (its dbuffCollections member)")
+            return
+        if n < 200:
+            self.failures.append(
+                f"warfare buffs (SdeDbuff): {n} rows (expected ~271) — a degraded dbuff "
+                f"import; re-run import_dogma_graph")
+        missing = [b for b in self._STANDARD_BUFF_IDS
+                   if not SdeDbuff.objects.filter(buff_id=b).exists()]
+        if missing:
+            self.failures.append(
+                f"standard command-burst warfare buffs missing: {missing} "
+                f"(shield/armor/information/skirmish) — re-run import_dogma_graph")
+        buffs_with_mods = set(SdeDbuffModifier.objects.values_list("buff_id", flat=True))
+        orphan = list(SdeDbuff.objects.exclude(buff_id__in=buffs_with_mods)
+                      .values_list("buff_id", flat=True)[:10])
+        if orphan:
+            self.failures.append(
+                f"warfare buffs with no modifiers (would apply nothing): {orphan}")
 
     def _check_versions(self):
         from apps.admin_audit.models import AppSetting

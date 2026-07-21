@@ -95,6 +95,25 @@ class ProjectedInput:
 
 
 @dataclass(frozen=True)
+class BoostInput:
+    """A friendly fleet command burst boosting THIS fit (WS-7 fleet boosts).
+
+    ``charge_type_id`` is the burst *charge* (e.g. Shield Harmonizing Charge), which names
+    the warfare buff(s) it grants and their strength multiplier. Rides the persisted items
+    blob as a ``slot="boost"`` entry (see apps.fitting.services.fit_input_from_items),
+    mirroring how a tactical mode / projected module rides it. ``strength_pct`` optionally
+    overrides the data-derived default strength (the effect of an *unbonused* T1 burst
+    module) — the UI seam for "boosted by a real, fully-skilled command ship". A boost is
+    never fitted to our ship, priced, stocked or exported; it only measures the buff on us.
+    """
+    charge_type_id: int
+    strength_pct: float | None = None
+
+    def canonical(self) -> dict:
+        return {"charge_type_id": self.charge_type_id, "strength_pct": self.strength_pct}
+
+
+@dataclass(frozen=True)
 class FitInput:
     ship_type_id: int
     modules: tuple[ModuleInput, ...] = ()
@@ -106,6 +125,9 @@ class FitInput:
     # neut/nos pressure, remote reps. Persisted in the items blob as slot="projected"
     # entries; never fitted, priced, stocked or exported.
     projected: tuple[ProjectedInput, ...] = ()
+    # Friendly fleet command bursts boosting this fit (WS-7). Persisted in the items blob
+    # as slot="boost" entries; never fitted, priced, stocked or exported.
+    boosts: tuple[BoostInput, ...] = ()
 
     def canonical(self) -> dict:
         return {
@@ -113,6 +135,7 @@ class FitInput:
             "modules": [m.canonical() for m in self.modules],
             "mode_type_id": self.mode_type_id,
             "projected": [p.canonical() for p in self.projected],
+            "boosts": [b.canonical() for b in self.boosts],
         }
 
     def hash(self) -> str:

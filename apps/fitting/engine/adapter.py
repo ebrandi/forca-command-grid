@@ -20,7 +20,7 @@ from . import attributes as A
 from . import dogma
 from .bonuses import BonusSpec
 from .effects import Op
-from .graph import AttributeDef, EffectDef, ModifierDef
+from .graph import AttributeDef, DbuffDef, DbuffModifierDef, EffectDef, ModifierDef
 from .types import ENGINE_VERSION, FitInput, FittingResult, OperatingProfile, SkillProfile
 
 log = logging.getLogger("forca.fitting")
@@ -73,6 +73,8 @@ _ATTR_DEF_CACHE: dict[str, dict[int, AttributeDef]] = {}
 _SKILL_DATA_CACHE: dict[str, tuple[list[int], dict, dict, dict]] = {}
 # EffectDefs (categories + modifier lists) — likewise static per data version.
 _EFFECT_DEF_CACHE: dict[str, dict[int, "EffectDef"]] = {}
+# WS-7 warfare buffs (dbuffCollections) — small (~271 buffs) and static per data version.
+_DBUFF_CACHE: dict[str, dict[int, "DbuffDef"]] = {}
 
 
 class ORMDataProvider:
@@ -253,6 +255,29 @@ class ORMDataProvider:
                     tracking_attribute_id=row["tracking_attribute_id"])
             _EFFECT_DEF_CACHE[self.data_version] = defs
         return defs.get(effect_id)
+
+    def dbuff(self, buff_id: int) -> DbuffDef | None:
+        """A warfare-buff definition (WS-7 fleet boosts), or None when the buff id is not in
+        the imported dbuff table. Bulk-loaded once per data version (two queries over ~271
+        buffs + their modifiers), mirroring effect_def."""
+        defs = _DBUFF_CACHE.get(self.data_version)
+        if defs is None:
+            from apps.sde.models import SdeDbuff, SdeDbuffModifier
+
+            mods_by_buff: dict[int, list[DbuffModifierDef]] = {}
+            for m in SdeDbuffModifier.objects.values(
+                    "buff_id", "kind", "modified_attribute_id", "group_id", "skill_type_id"):
+                mods_by_buff.setdefault(int(m["buff_id"]), []).append(DbuffModifierDef(
+                    kind=m["kind"], modified_attribute_id=m["modified_attribute_id"],
+                    group_id=m["group_id"], skill_type_id=m["skill_type_id"]))
+            defs = {}
+            for row in SdeDbuff.objects.values("buff_id", "aggregate_mode", "operation"):
+                bid = int(row["buff_id"])
+                defs[bid] = DbuffDef(
+                    buff_id=bid, aggregate_mode=row["aggregate_mode"],
+                    operation=row["operation"], modifiers=tuple(mods_by_buff.get(bid, ())))
+            _DBUFF_CACHE[self.data_version] = defs
+        return defs.get(buff_id)
 
     def subsystem_slots_for_hull(self, hull_type_id: int) -> int:
         """The number of distinct subsystem slots a Strategic Cruiser hull exposes — i.e.

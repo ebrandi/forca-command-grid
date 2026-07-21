@@ -25,8 +25,8 @@ def load_graph_fixture(name: str, with_skills: bool = True) -> dict:
 def _load_one(name: str) -> dict:
     from apps.admin_audit.models import AppSetting
     from apps.sde.models import (
-        SdeCategory, SdeDogmaAttribute, SdeDogmaEffect, SdeGroup, SdeModifier,
-        SdeType, SdeTypeAttribute, SdeTypeEffect, SdeTypeSkill,
+        SdeCategory, SdeDbuff, SdeDbuffModifier, SdeDogmaAttribute, SdeDogmaEffect, SdeGroup,
+        SdeModifier, SdeType, SdeTypeAttribute, SdeTypeEffect, SdeTypeSkill,
     )
 
     data = json.loads((FIXTURES / f"{name}.json").read_text())
@@ -81,6 +81,21 @@ def _load_one(name: str) -> dict:
         SdeDogmaAttribute.objects.update_or_create(attribute_id=r["attribute_id"], defaults={
             "name": r["name"], "stackable": r["stackable"],
             "high_is_good": r["high_is_good"], "default_value": r["default_value"]})
+    # WS-7 warfare buffs (optional — only slices with boost charges carry them). update_or_create
+    # the buff (its aggregate_mode/operation drive the maths); its modifiers have no natural
+    # unique key, so (re)create them only for buffs not already loaded (skills_core overlap).
+    for r in data.get("dbuffs", []):
+        SdeDbuff.objects.update_or_create(buff_id=r["buff_id"], defaults={
+            "aggregate_mode": r["aggregate_mode"], "operation": r["operation"],
+            "name": r.get("name", "")})
+    buff_ids = {r["buff_id"] for r in data.get("dbuff_modifiers", [])}
+    loaded_buffs = set(SdeDbuffModifier.objects.filter(buff_id__in=buff_ids)
+                       .values_list("buff_id", flat=True))
+    SdeDbuffModifier.objects.bulk_create(
+        [SdeDbuffModifier(buff_id=r["buff_id"], kind=r["kind"],
+                          modified_attribute_id=r["modified_attribute_id"],
+                          group_id=r["group_id"], skill_type_id=r["skill_type_id"])
+         for r in data.get("dbuff_modifiers", []) if r["buff_id"] not in loaded_buffs])
     AppSetting.objects.update_or_create(
         key="dogma_data_version", defaults={"value": {"version": f"golden-{name}"}})
     return {row["name"]: row["type_id"] for row in data["types"]}

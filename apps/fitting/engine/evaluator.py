@@ -162,6 +162,7 @@ def evaluate(fit: FitInput, skills: SkillProfile, op_profile: OperatingProfile,
                "drone_bay": round(ev.ship_value(A.DRONE_CAPACITY), 1)}
     ewar = _ewar(ev)
     projected = _projected(ev, provider)
+    boosts = _boosts(ev, provider, result)
     _validate_restrictions(ev, provider, result)
     _validate_mode(ev, provider, result)
     _validate_projected(ev, provider, result)
@@ -176,7 +177,7 @@ def evaluate(fit: FitInput, skills: SkillProfile, op_profile: OperatingProfile,
     result.telemetry = {
         "resources": resources, "defence": defence, "capacitor": capacitor,
         "offence": offence, "mobility": mobility, "targeting": targeting,
-        "utility": utility, "ewar": ewar, "projected": projected,
+        "utility": utility, "ewar": ewar, "projected": projected, "boosts": boosts,
         "ship": ship_section,
         "operating_profile": {
             "propulsion_active": op_profile.propulsion_active,
@@ -1266,6 +1267,37 @@ def _validate_projected(ev: EvaluatedFit, provider, result: FittingResult) -> No
             "Projected module has no effect on this ship",
             detail=f"type {p.type_id}", contextual=True,
             params={"type_id": p.type_id, "name": info.get("name", "")}))
+
+
+# --------------------------------------------------------------------------- #
+# Fleet boosts (WS-7): friendly command bursts boosting this fit
+# --------------------------------------------------------------------------- #
+def _boosts(ev: EvaluatedFit, provider, result: FittingResult) -> dict:
+    """Telemetry for the friendly command bursts boosting this fit, from the per-boost record
+    the graph produced (``ev.boosts_applied``). Attaches each burst charge's name and raises
+    ``boost_unknown_buff`` (advisory) for any charge that references a warfare buff id absent
+    from the imported dbuff table — so a burst whose buff FORCA cannot model is visible rather
+    than silently doing nothing. The buff attribute maths already happened in the graph; this
+    is display + honesty only."""
+    boosts = []
+    warned: set[tuple[int, int]] = set()
+    for rec in ev.boosts_applied:
+        cid = rec["charge_type_id"]
+        info = provider.type_info(cid) or {}
+        boosts.append({"charge_type_id": cid, "name": info.get("name", ""),
+                       "buffs": rec["buffs"]})
+        for buff in rec["buffs"]:
+            key = (cid, buff["buff_id"])
+            if buff["applied"] or key in warned:
+                continue
+            warned.add(key)
+            result.diagnostics.append(Diagnostic(
+                "boost_unknown_buff", Severity.WARNING,
+                "Command burst references an unknown warfare buff",
+                detail=f"charge {cid} buff {buff['buff_id']}", contextual=True,
+                params={"charge_type_id": cid, "name": info.get("name", ""),
+                        "buff_id": buff["buff_id"]}))
+    return {"boosts": boosts, "count": len(boosts)}
 
 
 # --------------------------------------------------------------------------- #

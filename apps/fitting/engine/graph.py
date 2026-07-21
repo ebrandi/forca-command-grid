@@ -35,7 +35,7 @@ import math
 from dataclasses import dataclass, field
 from typing import Protocol
 
-from .types import FitInput, ModuleState, ProjectedInput, SkillProfile, SlotKind
+from .types import BoostInput, FitInput, ModuleState, ProjectedInput, SkillProfile, SlotKind
 
 # ---------------------------------------------------------------------------
 # Constants (CCP dogma data model)
@@ -101,6 +101,34 @@ _PROJECTED_RESISTANCE_BY_EFFECT = {
     6422: 2112,  # remoteSensorDampFalloff  → sensorDampenerResistance
 }
 
+# ---------------------------------------------------------------------------
+# WS-7 fleet boosts (warfare buffs from friendly command bursts)
+# ---------------------------------------------------------------------------
+# A burst charge names up to four warfare buffs: warfareBuffNID says WHICH buff (a
+# dbuffCollections id), warfareBuffNMultiplier its strength. The burst MODULE carries the
+# base warfareBuffNValue (1.0 for T1, 1.25 for T2); its default effect chargeBonusWarfareCharge
+# (6737) postMultiplies that base by the charge's multiplier (verified SdeModifier rows,
+# 2026-07-21). So an UNBONUSED T1 burst yields effective strength = 1.0 × multiplier = the
+# charge's multiplier — the data-derived default this engine applies (documented v1
+# simplification: a real command ship's warfare-strength bonuses + specialist skill are not
+# modelled; strength_pct overrides the default for that scenario).
+_BUFF_ID_ATTRS = (2468, 2470, 2472, 2536)      # warfareBuff{1..4}ID
+_BUFF_MULTIPLIER_ATTRS = (2596, 2597, 2598, 2599)  # warfareBuff{1..4}Multiplier
+_UNBONUSED_BURST_BASE = 1.0                    # a T1 command burst module's warfareBuffNValue
+# CCP dbuff operationName → the dogma operator the buff applies with. Every value observed
+# in the current dbuffCollections.yaml is covered (2026-07-21). The stacking penalty is NOT
+# encoded here — it falls out of the TARGET attribute's stackable flag in pass 3, exactly as
+# for a fitted module bonus (verified: every pyfa warfare-buff penalty choice matches the
+# attribute's stackable flag; pyfa eos/saveddata/fit.py:619-730 boostItemAttr stackingPenalties
+# + modifiedAttributeDict.py:404-430 default penalty group shared with local modules).
+_DBUFF_OPERATION = {
+    "PreAssignment": OP_PRE_ASSIGN,
+    "PostPercent": OP_POST_PERCENT,
+    "PostMul": OP_POST_MUL,
+    "ModAdd": OP_MOD_ADD,
+    "PostAssignment": OP_POST_ASSIGN,
+}
+
 
 # ---------------------------------------------------------------------------
 # Provider contract
@@ -135,6 +163,22 @@ class EffectDef:
     tracking_attribute_id: int | None = None
 
 
+@dataclass(frozen=True)
+class DbuffModifierDef:
+    kind: str                      # item | location | locationGroup | locationRequiredSkill
+    modified_attribute_id: int
+    group_id: int | None = None
+    skill_type_id: int | None = None
+
+
+@dataclass(frozen=True)
+class DbuffDef:
+    buff_id: int
+    aggregate_mode: str            # Maximum | Minimum
+    operation: str                 # PostPercent | PostMul | ModAdd | Post/PreAssignment
+    modifiers: tuple[DbuffModifierDef, ...] = ()
+
+
 class GraphDataProvider(Protocol):
     """What the generic evaluator needs from the data layer (superset of the legacy
     provider protocol; see adapter.ORMDataProvider)."""
@@ -144,6 +188,7 @@ class GraphDataProvider(Protocol):
     def effects(self, type_id: int) -> frozenset[int]: ...
     def attr_def(self, attribute_id: int) -> AttributeDef: ...
     def effect_def(self, effect_id: int) -> EffectDef | None: ...
+    def dbuff(self, buff_id: int) -> "DbuffDef | None": ...
 
 
 # ---------------------------------------------------------------------------
@@ -161,6 +206,11 @@ class _Application:
     # scaled by the target hull's resistance attribute (this id) before the operator runs
     # — modelling incoming-ewar resistance. None for every normal (self) application.
     resistance_attr: int | None = None
+    # WS-7: a fleet-boost application carries its already-computed warfare-buff value here
+    # (the aggregated, override-resolved strength) instead of reading a source attribute —
+    # the buff value is not a dogma attribute on any fitted entity. None for every attribute
+    # -sourced application (modules, skills, projected).
+    literal_value: float | None = None
 
 
 @dataclass
@@ -198,6 +248,12 @@ class EvaluatedFit:
     # projected input expands to N sources so a stacking chain is evaluated correctly).
     # These are never on our ship — they are pure sources whose target is the hull.
     projected: list[Entity] = field(default_factory=list)
+    # WS-7: friendly fleet command bursts boosting this fit (the raw inputs, carried so the
+    # boost pass can read each burst charge's warfare-buff attributes) + a per-boost record
+    # of what each one applied (charge_type_id + resolved buffs), which pass 4 renders as the
+    # ``boosts`` telemetry section and turns into ``boost_unknown_buff`` diagnostics.
+    boost_inputs: tuple[BoostInput, ...] = ()
+    boosts_applied: list[dict] = field(default_factory=list)
     diagnostics: list[str] = field(default_factory=list)
     _provider: GraphDataProvider | None = None
     _stack: list[tuple[int, int]] = field(default_factory=list)
@@ -327,6 +383,10 @@ def build_entities(fit: FitInput, skills: SkillProfile, provider,
         for _ in range(max(1, p.quantity)):
             ev.projected.append(_new_entity(provider, p.type_id, "projected", rank,
                                             module_state=p.state))
+    # WS-7: fleet boosts need no entity of their own (their buff value is derived from the
+    # burst charge's attributes, not evaluated as a fitted item); carry the raw inputs so
+    # _collect_boosts can read each charge and apply the buff onto our ship/modules.
+    ev.boost_inputs = tuple(fit.boosts)
     return ev
 
 
@@ -406,6 +466,7 @@ def collect_effects(ev: EvaluatedFit, provider) -> None:
                 _collect_one(ev, src, edef, mod, min_state, exempt)
 
     _collect_projected(ev, provider)
+    _collect_boosts(ev, provider)
 
 
 def _collect_one(ev: EvaluatedFit, src: Entity, edef: EffectDef, mod: ModifierDef,
@@ -505,6 +566,105 @@ def _collect_projected(ev: EvaluatedFit, provider) -> None:
                     resistance_attr=resist_attr))
 
 
+def _boost_strengths(charge_attrs: dict[int, float],
+                     strength_pct: float | None) -> list[tuple[int, float]]:
+    """The (buff_id, strength) pairs a burst charge grants at the unbonused default, with an
+    optional override.
+
+    For each populated warfare-buff slot (warfareBuffNID > 0) the default strength is the
+    charge's warfareBuffNMultiplier (= 1.0 × multiplier on a T1 burst — see
+    _UNBONUSED_BURST_BASE). ``strength_pct``, when given, replaces the PRIMARY (slot-1)
+    buff's strength; any secondary buffs the same charge grants are scaled by the same ratio
+    so the charge's internal buff proportions are preserved (a real command ship scales all
+    of a burst's buffs uniformly). A zero primary default cannot define a ratio, so
+    secondaries then keep their own defaults.
+    """
+    slots: list[tuple[int, float]] = []
+    for id_attr, mul_attr in zip(_BUFF_ID_ATTRS, _BUFF_MULTIPLIER_ATTRS):
+        buff_id = int(charge_attrs.get(id_attr, 0) or 0)
+        if buff_id <= 0:
+            continue
+        slots.append((buff_id, _UNBONUSED_BURST_BASE * charge_attrs.get(mul_attr, 0.0)))
+    if strength_pct is None or not slots:
+        return slots
+    primary_default = slots[0][1]
+    if primary_default:
+        ratio = strength_pct / primary_default
+        return [(bid, s * ratio) for bid, s in slots]
+    return [(slots[0][0], strength_pct), *slots[1:]]
+
+
+def _boost_targets(ev: EvaluatedFit, mod: DbuffModifierDef) -> list[Entity]:
+    """The entities a warfare-buff modifier applies to (mirrors CCP's dbuff modifier kinds).
+
+    ``item`` → the boosted ship itself; ``location`` → the ship and everything located on it
+    (modules, charges, drones); ``locationGroup`` → located items of the modifier's group;
+    ``locationRequiredSkill`` → located items that require the modifier's skill.
+    """
+    if mod.kind == "item":
+        return [ev.ship]
+    located = _location_entities(ev)
+    if mod.kind == "location":
+        return located
+    if mod.kind == "locationGroup":
+        return [e for e in located if e.group_id == mod.group_id]
+    if mod.kind == "locationRequiredSkill":
+        if mod.skill_type_id is None:
+            return []
+        return [e for e in located if _required_skill_matches(e, mod.skill_type_id)]
+    return []
+
+
+def _collect_boosts(ev: EvaluatedFit, provider) -> None:
+    """WS-7: apply friendly fleet command bursts (warfare buffs) onto this fit.
+
+    Each boost is a burst CHARGE naming up to four warfare buffs (see _boost_strengths). Per
+    buff id the strongest single instance across all boosts wins — Maximum → the max value,
+    Minimum → the min (CCP's aggregateMode; bursts do NOT sum, so two identical boosts equal
+    one). The winning value is applied via the buff's operator onto every attribute its dbuff
+    modifiers name, on the resolved targets, as a PENALISABLE source: the stacking penalty
+    then falls out of the target attribute's stackable flag exactly like a fitted module bonus
+    (a resonance/scan-res/sig buff is penalised and shares the chain with local modules; an
+    HP/capacity buff is not). A buff id with no imported SdeDbuff is recorded applied=False
+    (→ boost_unknown_buff in pass 4) and changes nothing.
+    """
+    if not ev.boost_inputs:
+        return
+    # A synthetic always-on source so each application's state gate is satisfied; fresh per
+    # fit (never a shared singleton), read-only, its base/values never touched because a
+    # boost application carries its value literally.
+    boost_source = Entity(type_id=0, kind="boost", state=STATE_OVERLOADED)
+
+    strengths_by_buff: dict[int, list[float]] = {}
+    dbuff_by_buff: dict[int, DbuffDef | None] = {}
+    for b in ev.boost_inputs:
+        charge_attrs = provider.attrs(b.charge_type_id)
+        record: dict = {"charge_type_id": b.charge_type_id, "buffs": []}
+        for buff_id, strength in _boost_strengths(charge_attrs, b.strength_pct):
+            if buff_id not in dbuff_by_buff:
+                dbuff_by_buff[buff_id] = provider.dbuff(buff_id)
+            applied = dbuff_by_buff[buff_id] is not None
+            if applied:
+                strengths_by_buff.setdefault(buff_id, []).append(strength)
+            record["buffs"].append({"buff_id": buff_id,
+                                    "strength_pct": round(strength, 3), "applied": applied})
+        ev.boosts_applied.append(record)
+
+    for buff_id, strengths in strengths_by_buff.items():
+        dbuff = dbuff_by_buff[buff_id]
+        op = _DBUFF_OPERATION.get(dbuff.operation)
+        if op is None:
+            ev.diagnostics.append(f"unknown_dbuff_operation:{dbuff.operation}:buff{buff_id}")
+            continue
+        value = max(strengths) if dbuff.aggregate_mode == "Maximum" else min(strengths)
+        for mod in dbuff.modifiers:
+            for target in _boost_targets(ev, mod):
+                _add_application(target, mod.modified_attribute_id, _Application(
+                    operation=op, source=boost_source, source_attr=0,
+                    min_state=STATE_OFFLINE, penalisable_source=True,
+                    literal_value=value))
+
+
 def _resolve_domain(ev: EvaluatedFit, src: Entity, domain: str) -> Entity | None:
     if domain == "shipID":
         return ev.ship
@@ -549,7 +709,10 @@ def _calculate(ev: EvaluatedFit, entity: Entity, attribute_id: int) -> float:
                     continue
                 if app.source.state < app.min_state:
                     continue
-                raw = ev.value(app.source, app.source_attr)
+                # WS-7 boosts carry their (already aggregated) buff value literally; every
+                # other application reads it off the source entity's attribute.
+                raw = (app.literal_value if app.literal_value is not None
+                       else ev.value(app.source, app.source_attr))
                 if app.resistance_attr is not None:
                     # WS-6 projected effect: the incoming value is reduced by the target
                     # hull's resistance for this family (default 1.0 → no-op). Scaling the

@@ -15,6 +15,8 @@ from apps.admin_audit.models import AppSetting
 from apps.sde.management.commands.import_ship_bonuses import Command
 from apps.sde.models import (
     SdeCategory,
+    SdeDbuff,
+    SdeDbuffModifier,
     SdeGroup,
     SdeModifier,
     SdeType,
@@ -165,3 +167,80 @@ def test_write_graph_does_not_touch_non_skill_type_attributes(skills):
     cmd._write_graph(mods, attr_rows, effect_rows, skills)
 
     assert SdeTypeAttribute.objects.get(type_id=MODULE_TYPE, attribute_id=CPU_OUTPUT).value == 17.0
+
+
+# --- WS-7 warfare buffs (dbuffCollections) -------------------------------- #
+
+def _dbuffs():
+    """Shaped like dbuffCollections.yaml: a shield-resist item buff (2 attrs), an AB/MWD
+    location-required-skill buff (2 skills), an EWAR location-group buff, and two that must
+    be skipped (no modifiers / no operation)."""
+    return {
+        10: {"aggregateMode": "Minimum", "operationName": "PostPercent",
+             "developerDescription": "Shield Burst: Shield Harmonizing: Shield Resistance",
+             "itemModifiers": [{"dogmaAttributeID": 271}, {"dogmaAttributeID": 272}]},
+        22: {"aggregateMode": "Maximum", "operationName": "PostPercent",
+             "developerDescription": "Skirmish Burst: Rapid Deployment: AB/MWD Speed",
+             "locationRequiredSkillModifiers": [{"dogmaAttributeID": 20, "skillID": 3450},
+                                                {"dogmaAttributeID": 20, "skillID": 3454}]},
+        17: {"aggregateMode": "Maximum", "operationName": "PostPercent",
+             "developerDescription": "Information Burst: Electronic Superiority",
+             "locationGroupModifiers": [{"dogmaAttributeID": 54, "groupID": 201}]},
+        999: {"aggregateMode": "Maximum", "operationName": "PostPercent",
+              "developerDescription": "buff with no modifiers — skipped"},
+        998: {"aggregateMode": "Maximum",   # no operationName — skipped
+              "itemModifiers": [{"dogmaAttributeID": 1}]},
+    }
+
+
+def test_build_dbuffs_shapes_and_skips():
+    buff_rows, mod_rows = Command()._build_dbuffs(_dbuffs())
+    by_id = {r["buff_id"]: r for r in buff_rows}
+    assert set(by_id) == {10, 22, 17}                       # 999 (no mods) + 998 (no op) skipped
+    assert by_id[10]["aggregate_mode"] == "Minimum" and by_id[10]["operation"] == "PostPercent"
+
+    mods_by_buff: dict[int, list] = {}
+    for r in mod_rows:
+        mods_by_buff.setdefault(r["buff_id"], []).append(r)
+    # Shield resistance: two item modifiers on the shield resonance attrs.
+    b10 = mods_by_buff[10]
+    assert {m["modified_attribute_id"] for m in b10} == {271, 272}
+    assert all(m["kind"] == "item" and m["group_id"] is None and m["skill_type_id"] is None
+               for m in b10)
+    # AB/MWD: two locationRequiredSkill modifiers carrying the skill ids.
+    b22 = mods_by_buff[22]
+    assert all(m["kind"] == "locationRequiredSkill" and m["modified_attribute_id"] == 20
+               for m in b22)
+    assert {m["skill_type_id"] for m in b22} == {3450, 3454}
+    # EWAR: one locationGroup modifier carrying the group id.
+    b17 = mods_by_buff[17]
+    assert b17[0]["kind"] == "locationGroup" and b17[0]["group_id"] == 201
+
+
+def test_write_graph_writes_dbuffs_full_replace(skills):
+    cmd = Command()
+    buff_rows, mod_rows = cmd._build_dbuffs(_dbuffs())
+    cmd._write_graph([], [], [], skills, buff_rows, mod_rows)
+
+    assert SdeDbuff.objects.count() == 3
+    assert SdeDbuffModifier.objects.filter(buff_id=10).count() == 2
+    assert SdeDbuffModifier.objects.filter(
+        buff_id=22, kind="locationRequiredSkill", skill_type_id=3450).exists()
+    # Idempotent full replace: a second run neither grows nor duplicates.
+    cmd._write_graph([], [], [], skills, buff_rows, mod_rows)
+    assert SdeDbuff.objects.count() == 3
+    assert SdeDbuffModifier.objects.filter(buff_id=10).count() == 2
+
+
+def test_write_graph_absent_dbuff_member_preserves_existing(skills):
+    # A prior good dbuff import must survive a later run whose zip lacked the member
+    # (dbuff_rows omitted / empty) — mirrors the ship-bonus "refuse to wipe" stance.
+    cmd = Command()
+    buff_rows, mod_rows = cmd._build_dbuffs(_dbuffs())
+    cmd._write_graph([], [], [], skills, buff_rows, mod_rows)
+    assert SdeDbuff.objects.count() == 3
+
+    cmd._write_graph([], [], [], skills)          # no dbuff args (unit-test / pre-buff zip)
+    assert SdeDbuff.objects.count() == 3          # preserved, not wiped
+    cmd._write_graph([], [], [], skills, [], [])  # empty (absent member)
+    assert SdeDbuff.objects.count() == 3

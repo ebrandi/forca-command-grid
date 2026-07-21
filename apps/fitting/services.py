@@ -19,6 +19,7 @@ from core.audit import audit_log
 from .engine import attributes as A
 from .engine.adapter import FittingEngine
 from .engine.types import (
+    BoostInput,
     DamageProfileInput,
     FitInput,
     ModuleInput,
@@ -112,6 +113,11 @@ _MODE_SLOT = "mode"
 # the mode marker, it is not a fitted rack module. It is excluded from EFT export, pricing,
 # stock coverage and doctrine promotion (it is not a purchasable/stockable part of the fit).
 _PROJECTED_SLOT = "projected"
+# A friendly fleet command burst (WS-7) rides the items blob as a slot="boost" entry (the
+# burst CHARGE type id). Like the mode / projected markers it is never a fitted rack module,
+# never priced/stocked/exported. An optional top-level "strength_pct" overrides the buff's
+# unbonused-default strength.
+_BOOST_SLOT = "boost"
 
 
 def is_mode_item(it: dict) -> bool:
@@ -124,9 +130,15 @@ def is_projected_item(it: dict) -> bool:
     return str((it or {}).get("slot", "")).strip().lower() == _PROJECTED_SLOT
 
 
+def is_boost_item(it: dict) -> bool:
+    """Whether an items entry is a friendly fleet command burst (not fitted to our ship)."""
+    return str((it or {}).get("slot", "")).strip().lower() == _BOOST_SLOT
+
+
 def is_extra_item(it: dict) -> bool:
-    """Whether an items entry is a non-fitted marker (tactical mode or projected module)."""
-    return is_mode_item(it) or is_projected_item(it)
+    """Whether an items entry is a non-fitted marker (tactical mode, projected module, or
+    fleet boost) — excluded from EFT export, pricing, stock and doctrine promotion."""
+    return is_mode_item(it) or is_projected_item(it) or is_boost_item(it)
 
 
 def canonical_slot(value) -> str | None:
@@ -154,6 +166,7 @@ def fit_input_from_items(ship_type_id: int, items: list[dict],
     ``mode_type_id`` argument (the live-editor API key) takes precedence over the blob."""
     modules = []
     projected = []
+    boosts = []
     for it in items or []:
         if is_mode_item(it):
             if mode_type_id is None:
@@ -164,6 +177,13 @@ def fit_input_from_items(ship_type_id: int, items: list[dict],
                 type_id=int(it["type_id"]),
                 state=_STATE_BY_VALUE.get(it.get("state"), ModuleState.ACTIVE),
                 quantity=int(it.get("quantity", 1)),
+            ))
+            continue
+        if is_boost_item(it):
+            sp = it.get("strength_pct")
+            boosts.append(BoostInput(
+                charge_type_id=int(it["type_id"]),
+                strength_pct=float(sp) if sp is not None and sp != "" else None,
             ))
             continue
         raw = it.get("slot")
@@ -179,7 +199,7 @@ def fit_input_from_items(ship_type_id: int, items: list[dict],
         ))
     return FitInput(ship_type_id=int(ship_type_id), modules=tuple(modules),
                     mode_type_id=(int(mode_type_id) if mode_type_id else None),
-                    projected=tuple(projected))
+                    projected=tuple(projected), boosts=tuple(boosts))
 
 
 def operating_profile(propulsion: bool = True,

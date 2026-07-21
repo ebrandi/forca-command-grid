@@ -23,11 +23,15 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.dev")
 django.setup()
 
 from apps.sde.models import (  # noqa: E402
-    SdeCategory, SdeDogmaAttribute, SdeDogmaEffect, SdeGroup, SdeModifier,
-    SdeType, SdeTypeAttribute, SdeTypeEffect, SdeTypeSkill,
+    SdeCategory, SdeDbuff, SdeDbuffModifier, SdeDogmaAttribute, SdeDogmaEffect, SdeGroup,
+    SdeModifier, SdeType, SdeTypeAttribute, SdeTypeEffect, SdeTypeSkill,
 )
 
 SKILL_LEVEL_SCALER_ATTRS = (275, 276, 280)
+# WS-7 warfare buffs: a burst charge names the buff ids it grants via these warfareBuffNID
+# attributes; the slice must carry each named SdeDbuff (+ its modifiers) so the boost golden
+# tests apply the real buff. warfareBuffNMultiplier lives on the charge's own attributes.
+WARFARE_BUFF_ID_ATTRS = (2468, 2470, 2472, 2536)
 # WS-6: incoming-EWAR resistance attributes (all default 1.0). They are read off the victim
 # hull when a projected effect applies, but are not referenced by any modifier in a slice,
 # so force their attribute definitions in — otherwise a projected web/painter/damp would
@@ -81,6 +85,15 @@ def main(names: list[str]) -> None:
     attr_ids.update(SKILL_LEVEL_SCALER_ATTRS)
     attr_ids.update(EWAR_RESISTANCE_ATTRS)
 
+    # WS-7: warfare buffs the sliced burst charges reference (warfareBuffNID attribute values),
+    # plus each buff's own modifiers' target attributes so their definitions land in the slice.
+    buff_ids = {int(v) for v in SdeTypeAttribute.objects.filter(
+        type_id__in=type_ids, attribute_id__in=WARFARE_BUFF_ID_ATTRS
+    ).values_list("value", flat=True) if v and int(v) > 0}
+    dbuff_modifiers = list(SdeDbuffModifier.objects.filter(buff_id__in=buff_ids).values(
+        "buff_id", "kind", "modified_attribute_id", "group_id", "skill_type_id"))
+    attr_ids.update(m["modified_attribute_id"] for m in dbuff_modifiers)
+
     group_ids = set(SdeType.objects.filter(type_id__in=type_ids)
                     .values_list("group_id", flat=True))
     category_ids = set(SdeGroup.objects.filter(group_id__in=group_ids)
@@ -110,6 +123,9 @@ def main(names: list[str]) -> None:
         "dogma_attributes": list(SdeDogmaAttribute.objects.filter(
             attribute_id__in=attr_ids).values(
             "attribute_id", "name", "stackable", "high_is_good", "default_value")),
+        "dbuffs": list(SdeDbuff.objects.filter(buff_id__in=buff_ids).values(
+            "buff_id", "aggregate_mode", "operation", "name")),
+        "dbuff_modifiers": dbuff_modifiers,
     }
     json.dump(out, sys.stdout, indent=0, sort_keys=True)
 

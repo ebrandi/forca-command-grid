@@ -104,6 +104,10 @@ def localise_diagnostic(d: dict) -> dict:
         title = _("Projected module has no effect on this ship")
         detail = ""
         action = _("Project an EWAR, energy-warfare or remote-assistance module instead.")
+    elif code == "boost_unknown_buff":
+        title = _("Command burst references an unknown warfare buff")
+        detail = ""
+        action = _("Re-run the SDE import (import_dogma_graph) to load the warfare-buff table.")
     elif code == "incompatible_charge":
         title = _("Charge not accepted by this module")
         detail = ""
