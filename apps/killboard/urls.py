@@ -15,6 +15,8 @@ urlpatterns = [
     path("compare/", views.killboard_compare, name="compare"),
     # Intel — keep these above the <int:killmail_id> catch-all.
     path("intel/", views.watchlists, name="watchlists"),
+    # KB-34 D-scan / Local paste analyzer (WS-C4) — static prefix, above the catch-all.
+    path("scan/", views.scan_analyzer, name="scan"),
     path("intel/systems/", views.system_search, name="system_search"),
     path("intel/create/", views.watchlist_create, name="watchlist_create"),
     path("intel/<int:pk>/", views.watchlist_detail, name="watchlist_detail"),

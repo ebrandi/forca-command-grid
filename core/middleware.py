@@ -23,6 +23,9 @@ _RECRUIT_ALLOWED_PREFIXES = (
     "/killboard/adversary",  # KB-33 adversary intel pages — same member-or-alliance gate
                              # (the view's _can_view_stats enforces it; the officer-only
                              # add-to-watchlist action keeps its own role decorator)
+    "/killboard/scan",   # KB-34 D-scan/Local analyzer — same member-or-alliance intel gate
+                         # (the view's _can_view_stats enforces it; the corp-broadcast alert
+                         # inside it keeps its own member check)
     "/auth/",        # EVE SSO: login, callback, logout, ESI scopes, disconnect
     "/privacy",      # the pilot's own data rights (view + delete)
     "/recruitment/oauth",  # candidate-facing live ESI consent (begin + callback);

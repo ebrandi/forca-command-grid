@@ -1113,6 +1113,75 @@ def adversary_watch(request: HttpRequest, kind: str, entity_id: int) -> HttpResp
     return redirect(f"killboard:adversary_{kind}", entity_id=entity_id)
 
 
+# --- KB-34 D-scan / Local paste analyzer (WS-C4) ------------------------------
+# Member-gated (the intel audience: corp members + registered alliance pilots, via
+# ``_can_view_stats``). Fully STATELESS: a paste is analysed in-request and never persisted —
+# no model, no migration. The analyse POST fans out to ESI (name/affiliation resolution) so it
+# is rate-limited per user. Broadcasting the one-click alert is a corp-member action.
+@login_required
+def scan_analyzer(request: HttpRequest) -> HttpResponse:
+    from . import scan_analyzer as scan
+
+    if not _can_view_stats(request.user):
+        return render(request, "killboard/scan.html", {"denied": True}, status=403)
+
+    ctx: dict = {
+        "denied": False, "raw": "", "system": "", "analysis": None,
+        "recommendations": None, "kind": None, "too_large": False,
+        "rate_limited": False, "did_analyze": False, "alert_sent": False,
+        "is_member": rbac.has_role(request.user, rbac.ROLE_MEMBER),
+    }
+    if request.method != "POST":
+        return render(request, "killboard/scan.html", ctx)
+
+    raw = request.POST.get("paste", "") or ""
+    system = (request.POST.get("system", "") or "").strip()
+    want_alert = bool(request.POST.get("send_alert"))
+    ctx["raw"] = raw
+    ctx["system"] = system
+
+    if not scan.rate_limit_ok(request.user.id):
+        ctx["rate_limited"] = True
+        return render(request, "killboard/scan.html", ctx, status=429)
+
+    try:
+        parsed = scan.parse(raw)
+    except scan.PasteTooLarge:
+        ctx["too_large"] = True
+        return render(request, "killboard/scan.html", ctx, status=413)
+
+    ctx["kind"] = parsed["kind"]
+    if parsed["kind"] == scan.ScanKind.DSCAN:
+        analysis = scan.analyze_dscan(parsed["rows"])
+        ctx["recommendations"] = scan.recommend_counter_doctrines(analysis)
+        has_content = analysis["ship_count"] > 0 or analysis["unmatched"] > 0
+    else:
+        analysis = scan.analyze_local(parsed["names"])
+        has_content = analysis["pilot_count"] > 0 or bool(analysis["unresolved"])
+    ctx["analysis"] = analysis
+    ctx["did_analyze"] = True
+    audit_log(request.user, "killboard.scan_analyze", target_type="killboard_scan",
+              metadata={"kind": parsed["kind"]}, ip=client_ip(request))
+
+    if want_alert and has_content:
+        if not ctx["is_member"]:
+            messages.info(request, gettext("Only corporation members can broadcast an intel alert."))
+        else:
+            alert = scan.emit_alert(analysis, system=system, source_id=f"scan:{request.user.id}")
+            ctx["alert_sent"] = True
+            if alert is not None:
+                messages.success(request, gettext("Intel alert broadcast to the corp."))
+            else:
+                messages.info(
+                    request,
+                    gettext("Analysis done, but no alert channel is armed to broadcast it."),
+                )
+            audit_log(request.user, "killboard.scan_alert", target_type="killboard_scan",
+                      metadata={"kind": parsed["kind"]}, ip=client_ip(request))
+
+    return render(request, "killboard/scan.html", ctx)
+
+
 # --- Intel: watchlists --------------------------------------------------------
 @login_required
 @role_required(rbac.ROLE_MEMBER)

@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+{% load eve static %}
+{% load i18n %}
+{% block title %}{% translate "Scan analyzer" %} · [FORCA] Command Grid{% endblock %}
+
+{% block content %}
+{% if denied %}
+  <div class="panel px-4 py-16 text-center">
+    <svg class="mx-auto h-8 w-8 text-faint"><use href="#i-lock"/></svg>
+    <p class="mt-3 font-display text-lg text-muted">{% translate "The scan analyzer is corp &amp; alliance only" %}</p>
+    <p class="mt-1 text-sm text-faint">{% translate "Available to corporation members and registered alliance pilots." %}</p>
+    <a href="{% url 'killboard:list' %}" class="btn-ghost mt-4 text-sm">← {% translate "Back to the killfeed" %}</a>
+  </div>
+{% else %}
+
+<header class="mb-5">
+  <p class="eyebrow">{% translate "Pre-fight intel" %}</p>
+  <h1 class="mt-0.5 text-2xl font-bold text-ink">{% translate "D-scan / Local analyzer" %}</h1>
+  <p class="mt-1 max-w-3xl text-sm text-faint">{% translate "Paste your Local member list or a Directional Scanner dump. We break down who they are and what they fly, cross-reference our watchlists and our own fights against them, and — for a d-scan — suggest which of our doctrines to undock, filtered to what we have in stock right now. Pastes are analysed live and never stored." %}</p>
+</header>
+
+{% if rate_limited %}
+  <div class="panel mb-5 border-l-2 border-gold px-4 py-3 text-sm text-muted">
+    {% translate "You are analysing very quickly — give it a moment and try again." %}
+  </div>
+{% endif %}
+{% if too_large %}
+  <div class="panel mb-5 border-l-2 border-loss px-4 py-3 text-sm text-muted">
+    {% translate "That paste is too large to analyse. Trim it and try again." %}
+  </div>
+{% endif %}
+
+<form method="post" class="panel mb-6 p-4">
+  {% csrf_token %}
+  <label class="mb-1 block eyebrow" for="paste">{% translate "Local or D-scan paste" %}</label>
+  <textarea id="paste" name="paste" rows="8" spellcheck="false"
+    class="input-field font-mono text-xs"
+    placeholder="{% translate 'Paste Local (one pilot per line) or D-scan (tab-separated) here…' %}">{{ raw }}</textarea>
+  <div class="mt-3 flex flex-wrap items-end gap-3">
+    <div class="grow">
+      <label class="mb-1 block text-xs text-faint" for="system">{% translate "System (optional — shown in the alert)" %}</label>
+      <input id="system" name="system" type="text" value="{{ system }}" maxlength="100"
+        class="input-field" placeholder="{% translate 'e.g. Tama' %}">
+    </div>
+    <div class="flex gap-2">
+      <button type="submit" class="btn-primary">{% translate "Analyze" %}</button>
+      {% if is_member %}
+      <button type="submit" name="send_alert" value="1" class="btn-gold"
+        title="{% translate 'Analyze and broadcast a compact intel summary to the corp' %}">
+        {% translate "Analyze &amp; alert corp" %}
+      </button>
+      {% endif %}
+    </div>
+  </div>
+  <p class="mt-2 text-[11px] text-faint">{% translate "Nothing you paste is saved. Detection is automatic: tab-separated rows are read as D-scan, bare names as Local." %}</p>
+</form>
+
+{% if did_analyze and analysis %}
+{% if analysis.kind == 'local' %}
+{# ---------------- LOCAL analysis ---------------- #}
+<section class="panel mb-5 overflow-hidden">
+  <div class="grid grid-cols-2 gap-2 px-4 py-3 text-center sm:grid-cols-4">
+    <div><div class="data text-2xl text-ink">{{ analysis.pilot_count }}</div><div class="text-xs text-faint">{% translate "pilots resolved" %}</div></div>
+    <div><div class="data text-2xl text-gold">{{ analysis.corporations|length }}</div><div class="text-xs text-faint">{% translate "corporations" %}</div></div>
+    <div><div class="data text-2xl text-loss">{{ analysis.watched_count }}</div><div class="text-xs text-faint">{% translate "watchlisted" %}</div></div>
+    <div><div class="data text-2xl text-kill">{{ analysis.danger_count }}</div><div class="text-xs text-faint">{% translate "known-dangerous" %}</div></div>
+  </div>
+</section>
+
+{% if analysis.threat %}
+<section class="panel mb-5 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-loss">{% translate "Threat table" %}</h2></div>
+  <div class="overflow-x-auto">
+    <table class="w-full min-w-[560px] text-sm">
+      <thead class="text-left text-[11px] uppercase tracking-wide text-faint">
+        <tr class="border-b border-line/60">
+          <th class="px-4 py-2 font-medium">{% translate "Pilot" %}</th>
+          <th class="px-4 py-2 font-medium">{% translate "Corporation" %}</th>
+          <th class="px-4 py-2 font-medium">{% translate "Alliance" %}</th>
+          <th class="px-4 py-2 font-medium">{% translate "Vs us" %}</th>
+          <th class="px-4 py-2 font-medium">{% translate "Threat" %}</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-line/40">
+        {% for t in analysis.threat %}
+        <tr class="{% if t.watched %}bg-loss/5{% endif %}">
+          <td class="px-4 py-2">
+            <div class="flex items-center gap-2">
+              <img src="{% eve_portrait t.character_id 32 %}" alt="" loading="lazy" class="h-6 w-6 rounded-full ring-1 ring-line">
+              <a href="{% url 'killboard:adversary_character' t.character_id %}" class="truncate text-muted hover:text-gold transition">{{ t.name }}</a>
+              {% if t.watched %}<span class="chip !text-gold !border-gold/40" title="{{ t.watchlists|join:', ' }}">★</span>{% endif %}
+            </div>
+          </td>
+          <td class="px-4 py-2">
+            {% if t.corporation_id %}<a href="{% url 'killboard:adversary_corporation' t.corporation_id %}" class="truncate text-faint hover:text-gold transition">{{ t.corporation_name|default:t.corporation_id }}</a>{% else %}<span class="text-faint">—</span>{% endif %}
+          </td>
+          <td class="px-4 py-2">
+            {% if t.alliance_id %}<a href="{% url 'killboard:adversary_alliance' t.alliance_id %}" class="truncate text-faint hover:text-gold transition">{{ t.alliance_name|default:t.alliance_id }}</a>{% else %}<span class="text-faint">—</span>{% endif %}
+          </td>
+          <td class="px-4 py-2 data text-xs text-faint">
+            {% if t.history %}<span class="text-loss">{{ t.history.kills_vs_us }}</span>/<span class="text-kill">{{ t.history.losses_to_us }}</span>{% else %}—{% endif %}
+          </td>
+          <td class="px-4 py-2">
+            {% if t.history %}<span class="font-display text-xs font-bold {{ t.history.danger.color }}">{{ t.history.danger.label }}</span>{% else %}<span class="text-xs text-faint">{% translate "unknown" %}</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="border-t border-line/60 px-4 py-2 text-[11px] text-faint">{% translate "“Vs us” is our kills of them / our losses to them. Threat is read from that record — the same rating as the adversary pages. Watchlisted entities sort first." %}</p>
+</section>
+
+<div class="mb-5 grid gap-5 lg:grid-cols-2">
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "Corporations" %}</h2></div>
+    <div class="divide-y divide-line/40">
+      {% for c in analysis.corporations %}
+      <div class="flex items-center gap-2.5 px-4 py-2 text-sm">
+        <img src="{% eve_corp_logo c.entity_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">
+        <a href="{% url 'killboard:adversary_corporation' c.entity_id %}" class="min-w-0 flex-1 truncate text-muted hover:text-gold transition">{{ c.name }}</a>
+        {% if c.watched %}<span class="chip !text-gold !border-gold/40" title="{{ c.watchlists|join:', ' }}">★</span>{% endif %}
+        <span class="data shrink-0 text-xs font-semibold text-ink">×{{ c.count }}</span>
+      </div>
+      {% empty %}<div class="px-4 py-8 text-center text-sm text-faint">{% translate "No corporations resolved." %}</div>{% endfor %}
+    </div>
+  </section>
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">{% translate "Alliances" %}</h2></div>
+    <div class="divide-y divide-line/40">
+      {% for a in analysis.alliances %}
+      <div class="flex items-center gap-2.5 px-4 py-2 text-sm">
+        <img src="{% eve_alliance_logo a.entity_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">
+        <a href="{% url 'killboard:adversary_alliance' a.entity_id %}" class="min-w-0 flex-1 truncate text-muted hover:text-gold transition">{{ a.name }}</a>
+        {% if a.watched %}<span class="chip !text-gold !border-gold/40" title="{{ a.watchlists|join:', ' }}">★</span>{% endif %}
+        <span class="data shrink-0 text-xs font-semibold text-ink">×{{ a.count }}</span>
+      </div>
+      {% empty %}<div class="px-4 py-8 text-center text-sm text-faint">{% translate "No alliances resolved." %}</div>{% endfor %}
+    </div>
+  </section>
+</div>
+{% else %}
+<div class="panel mb-5 px-4 py-12 text-center text-sm text-faint">{% translate "No pilots could be resolved from that paste." %}</div>
+{% endif %}
+
+{% if analysis.unresolved %}
+<section class="panel mb-5 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-faint">{% blocktranslate count n=analysis.unresolved|length %}{{ n }} name we could not resolve{% plural %}{{ n }} names we could not resolve{% endblocktranslate %}</h2></div>
+  <div class="px-4 py-3 text-xs text-faint">{{ analysis.unresolved|join:" · " }}</div>
+</section>
+{% endif %}
+
+{% else %}
+{# ---------------- D-SCAN analysis ---------------- #}
+<section class="panel mb-5 overflow-hidden">
+  <div class="grid grid-cols-2 gap-2 px-4 py-3 text-center sm:grid-cols-4">
+    <div><div class="data text-2xl text-ink">{{ analysis.ship_count }}</div><div class="text-xs text-faint">{% translate "ships" %}</div></div>
+    <div><div class="data text-2xl {% if analysis.has_capital %}text-kill{% else %}text-faint{% endif %}">{{ analysis.notable.capital|length }}</div><div class="text-xs text-faint">{% translate "capitals" %}</div></div>
+    <div><div class="data text-2xl {% if analysis.has_logi %}text-gold{% else %}text-faint{% endif %}">{{ analysis.notable.logi|length }}</div><div class="text-xs text-faint">{% translate "logi types" %}</div></div>
+    <div><div class="data text-2xl {% if analysis.has_links %}text-cyan{% else %}text-faint{% endif %}">{{ analysis.notable.links|length }}</div><div class="text-xs text-faint">{% translate "command/links" %}</div></div>
+  </div>
+  {% if analysis.on_grid or analysis.off_grid %}
+  <div class="border-t border-line/60 px-4 py-2 text-center text-xs text-faint">
+    {% blocktranslate with on=analysis.on_grid off=analysis.off_grid %}~{{ on }} near (on-grid-ish) · {{ off }} far/off-grid{% endblocktranslate %}
+    {% if analysis.unknown_grid %}· {% blocktranslate count n=analysis.unknown_grid %}{{ n }} no range{% plural %}{{ n }} no range{% endblocktranslate %}{% endif %}
+  </div>
+  {% endif %}
+</section>
+
+<div class="mb-5 grid gap-5 lg:grid-cols-2">
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-cyan">{% translate "Ship-class composition" %}</h2></div>
+    {% if analysis.composition %}
+    <ol class="divide-y divide-line/40">
+      {% with max=analysis.composition.0.count %}
+      {% for c in analysis.composition %}
+      <li class="px-4 py-2">
+        <div class="mb-1 flex items-center gap-2 text-sm">
+          <span class="min-w-0 flex-1 truncate text-muted">{{ c.hull_class }}</span>
+          <span class="data shrink-0 text-xs font-semibold text-ink">{{ c.count }}</span>
+        </div>
+        <div class="h-1 w-full overflow-hidden rounded-full bg-panel2">
+          <div class="h-full rounded-full bg-cyan/60" style="width: {% widthratio c.count max 100 %}%"></div>
+        </div>
+      </li>
+      {% endfor %}
+      {% endwith %}
+    </ol>
+    {% else %}<p class="px-4 py-8 text-center text-sm text-faint">{% translate "No ships matched. The paste may be structures, drones or celestials only." %}</p>{% endif %}
+    {% if analysis.unmatched %}<p class="border-t border-line/60 px-4 py-2 text-[11px] text-faint">{% blocktranslate count n=analysis.unmatched %}{{ n }} line was not a recognised ship (drone, structure, celestial…).{% plural %}{{ n }} lines were not recognised ships (drones, structures, celestials…).{% endblocktranslate %}</p>{% endif %}
+  </section>
+
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-loss">{% translate "Notable hulls" %}</h2></div>
+    <div class="divide-y divide-line/40">
+      {% if analysis.notable.capital %}<div class="px-4 py-2"><p class="mb-1 text-[11px] uppercase tracking-wide text-kill">{% translate "Capitals" %}</p>
+        {% for h in analysis.notable.capital %}<div class="flex items-center gap-2 py-0.5 text-sm"><img src="{% eve_type_icon h.type_id 24 %}" alt="" loading="lazy" class="h-5 w-5 rounded bg-space ring-1 ring-line"><span class="min-w-0 flex-1 truncate text-muted">{{ h.name }}</span><span class="data text-xs text-faint">×{{ h.count }}</span></div>{% endfor %}</div>{% endif %}
+      {% if analysis.notable.logi %}<div class="px-4 py-2"><p class="mb-1 text-[11px] uppercase tracking-wide text-gold">{% translate "Logistics" %}</p>
+        {% for h in analysis.notable.logi %}<div class="flex items-center gap-2 py-0.5 text-sm"><img src="{% eve_type_icon h.type_id 24 %}" alt="" loading="lazy" class="h-5 w-5 rounded bg-space ring-1 ring-line"><span class="min-w-0 flex-1 truncate text-muted">{{ h.name }}</span><span class="data text-xs text-faint">×{{ h.count }}</span></div>{% endfor %}</div>{% endif %}
+      {% if analysis.notable.links %}<div class="px-4 py-2"><p class="mb-1 text-[11px] uppercase tracking-wide text-cyan">{% translate "Command / links" %}</p>
+        {% for h in analysis.notable.links %}<div class="flex items-center gap-2 py-0.5 text-sm"><img src="{% eve_type_icon h.type_id 24 %}" alt="" loading="lazy" class="h-5 w-5 rounded bg-space ring-1 ring-line"><span class="min-w-0 flex-1 truncate text-muted">{{ h.name }}</span><span class="data text-xs text-faint">×{{ h.count }}</span></div>{% endfor %}</div>{% endif %}
+      {% if not analysis.has_capital and not analysis.has_logi and not analysis.has_links %}<div class="px-4 py-8 text-center text-sm text-faint">{% translate "No capitals, logistics or command ships detected." %}</div>{% endif %}
+    </div>
+  </section>
+</div>
+
+{# ---------------- Counter-doctrine recommendation ---------------- #}
+{% if recommendations %}
+<section class="panel mb-5 overflow-hidden">
+  <div class="flex flex-wrap items-center gap-2 border-b border-line px-4 py-3">
+    <h2 class="eyebrow text-gold">{% translate "Counter-doctrine suggestion" %}</h2>
+    <span class="ml-auto text-[11px] text-faint">{% translate "v1 heuristic — a suggestion, not doctrine" %}</span>
+  </div>
+  {% if not recommendations.stock_configured %}
+  <div class="border-b border-line/60 bg-gold/5 px-4 py-2 text-[11px] text-faint">{% translate "Shipyard stock is not configured, so these are ranked by fit-vs-enemy suitability and priority only — no live in-stock counts." %}</div>
+  {% endif %}
+  {% if recommendations.doctrines %}
+  <div class="divide-y divide-line/40">
+    {% for d in recommendations.doctrines %}
+    <div class="px-4 py-3">
+      <div class="mb-1.5 flex flex-wrap items-center gap-2">
+        <span class="font-display text-sm font-semibold text-ink">{{ d.name }}</span>
+        {% if recommendations.stock_configured %}
+          {% if d.has_stock %}<span class="chip !text-kill !border-kill/40">{% blocktranslate count n=d.total_atp %}{{ n }} in stock{% plural %}{{ n }} in stock{% endblocktranslate %}</span>
+          {% else %}<span class="chip text-faint">{% translate "none in stock" %}</span>{% endif %}
+        {% endif %}
+        {% if d.suitability %}<span class="chip !text-gold !border-gold/40">{% translate "good match" %}</span>{% endif %}
+      </div>
+      <div class="grid gap-x-4 gap-y-0.5 sm:grid-cols-2">
+        {% for f in d.fits %}
+        <div class="flex items-center gap-2 py-0.5 text-sm">
+          <img src="{% eve_type_icon f.ship_type_id 24 %}" alt="" loading="lazy" class="h-5 w-5 rounded bg-space ring-1 ring-line">
+          <span class="min-w-0 flex-1 truncate {% if f.preferred %}text-muted{% else %}text-faint{% endif %}">{{ f.name }}</span>
+          {% if recommendations.stock_configured %}<span class="data shrink-0 text-xs {% if f.atp %}text-kill{% else %}text-faint{% endif %}">{% if f.atp %}×{{ f.atp }}{% else %}—{% endif %}</span>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="border-t border-line/60 px-4 py-2 text-[11px] text-faint">
+    {% if recommendations.dominant %}{% blocktranslate with cls=recommendations.dominant %}Enemy is {{ cls }}-led.{% endblocktranslate %} {% endif %}
+    {% if 'capitals_on_field' in recommendations.notes %}{% translate "Capitals on field — bring a capital or structure response." %} {% endif %}
+    {% if 'logi_present' in recommendations.notes %}{% translate "Logistics present — favour high-alpha or EWAR to break reps." %} {% endif %}
+    {% if 'links_present' in recommendations.notes %}{% translate "Command links present — expect boosted stats." %}{% endif %}
+  </div>
+  {% else %}
+  <p class="px-4 py-8 text-center text-sm text-faint">{% translate "No active doctrines to suggest. Build a doctrine to get counter-fleet recommendations." %}</p>
+  {% endif %}
+</section>
+{% endif %}
+
+{% endif %}{# kind #}
+{% endif %}{# did_analyze #}
+
+{% endif %}{# denied #}
+{% endblock %}

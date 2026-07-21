@@ -54,6 +54,96 @@ def resolve_character_id(name: str) -> tuple[int, str] | None:
     return characters[0]["id"], characters[0]["name"]
 
 
+# ESI /universe/ids/ accepts an array of names; keep batches well under the endpoint's
+# limit so one paste of a big local never trips a 400.
+_IDS_CHUNK = 300
+# /characters/affiliation/ accepts up to 1000 character ids per POST.
+_AFFIL_CHUNK = 1000
+
+
+def resolve_character_ids(names) -> dict[str, tuple[int, str]]:
+    """Bulk character NAME → ``(id, canonical_name)`` via /universe/ids/ (public, no token).
+
+    The batched sibling of :func:`resolve_character_id`, for the D-scan/Local paste analyzer:
+    one POST per :data:`_IDS_CHUNK` names, **characters only** (a Local chat member list is
+    pilots — corp/alliance entries in the response are ignored). The map is keyed by the
+    *lower-cased* name so a caller can align results to the exact lines it pasted, tolerating
+    case; names ESI can't resolve simply don't appear (the caller lists those as unresolved).
+    Resolved characters are upserted into :class:`EveName` so later pages (adversary links,
+    threat tables) show real names without re-hitting ESI. Best-effort: a transport error on a
+    chunk drops only that chunk (partial results beat none for a live intel call).
+    """
+    from apps.corporation.models import EveName
+
+    wanted, seen = [], set()
+    for raw in names or []:
+        nm = (raw or "").strip()
+        low = nm.lower()
+        if nm and low not in seen:
+            seen.add(low)
+            wanted.append(nm)
+    if not wanted:
+        return {}
+
+    out: dict[str, tuple[int, str]] = {}
+    for start in range(0, len(wanted), _IDS_CHUNK):
+        batch = wanted[start : start + _IDS_CHUNK]
+        try:
+            resp = requests.post(
+                f"{settings.ESI_BASE_URL}/universe/ids/",
+                json=batch,
+                headers=_esi_headers(),
+                timeout=15,
+            )
+            resp.raise_for_status()
+        except requests.RequestException as exc:
+            log.warning("bulk name→id resolution failed for a chunk: %s", exc)
+            continue
+        for c in resp.json().get("characters") or []:
+            cid, cname = c.get("id"), c.get("name") or ""
+            if cid and cname:
+                out[cname.lower()] = (cid, cname)
+                EveName.objects.update_or_create(
+                    entity_id=cid, defaults={"name": cname, "category": "character"}
+                )
+    return out
+
+
+def character_affiliations(character_ids) -> dict[int, dict]:
+    """Bulk ``character_id`` → ``{corporation_id, alliance_id, faction_id}`` via
+    POST /characters/affiliation/ (public, no token; ≤ :data:`_AFFIL_CHUNK` ids per call).
+
+    Powers the Local analyzer's corp/alliance breakdown of pasted hostiles. Best-effort:
+    a failed chunk is skipped (its characters just carry no affiliation), never raised.
+    """
+    wanted = sorted({int(i) for i in character_ids if i})
+    if not wanted:
+        return {}
+    out: dict[int, dict] = {}
+    for start in range(0, len(wanted), _AFFIL_CHUNK):
+        batch = wanted[start : start + _AFFIL_CHUNK]
+        try:
+            resp = requests.post(
+                f"{settings.ESI_BASE_URL}/characters/affiliation/",
+                json=batch,
+                headers=_esi_headers(),
+                timeout=15,
+            )
+            resp.raise_for_status()
+        except requests.RequestException as exc:
+            log.warning("affiliation resolution failed for a chunk: %s", exc)
+            continue
+        for row in resp.json() or []:
+            cid = row.get("character_id")
+            if cid:
+                out[cid] = {
+                    "corporation_id": row.get("corporation_id"),
+                    "alliance_id": row.get("alliance_id"),
+                    "faction_id": row.get("faction_id"),
+                }
+    return out
+
+
 def names_for(ids) -> dict[int, str]:
     """DB-only ``{id: name}`` map for entity ids — **no network**.
 
