@@ -214,7 +214,7 @@ def test_battle_report_renders_charts(client, django_user_model, combat):
     resp = client.get(f"/killboard/battles/{report.pk}/")
     assert resp.status_code == 200
     html = resp.content.decode()
-    assert "ISK lost by side" in html
+    assert "ISK lost by corporation" in html  # KB-31: v1 bar relabelled; "Sides" is now its own section
     assert 'id="br-sides-data"' in html and 'id="br-ships-data"' in html
 
 

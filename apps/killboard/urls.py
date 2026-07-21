@@ -22,7 +22,11 @@ urlpatterns = [
     path("intel/<int:pk>/entries/<int:entry_id>/remove/", views.watchlist_remove_entry, name="watchlist_remove_entry"),
     path("intel/<int:pk>/delete/", views.watchlist_delete, name="watchlist_delete"),
     path("battles/create/", views.battle_report_create, name="battle_report_create"),
+    # KB-31 public permalink — static "battles/r/" prefix, above the <int:pk> route.
+    path("battles/r/<str:slug>/", views.battle_report_public, name="battle_report_public"),
     path("battles/<int:pk>/", views.battle_report_detail, name="battle_report_detail"),
+    path("battles/<int:pk>/recompute/", views.battle_report_recompute, name="battle_report_recompute"),
+    path("battles/<int:pk>/side/move/", views.battle_report_side_move, name="battle_report_side_move"),
     path("killfeed/settings/", views.killfeed_config, name="killfeed_config"),
     # KB-29 live feed: server-rendered single row the live JS prepends. Above the
     # <int:killmail_id> single-segment catch-all.

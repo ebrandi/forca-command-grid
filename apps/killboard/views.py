@@ -1083,13 +1083,24 @@ def watchlist_delete(request: HttpRequest, pk: int) -> HttpResponse:
 
 
 # --- Intel: battle reports ----------------------------------------------------
-@login_required
-@role_required(rbac.ROLE_MEMBER)
-def battle_report_detail(request: HttpRequest, pk: int) -> HttpResponse:
-    report = get_object_or_404(BattleReport, pk=pk)
+# Swing-sparkline canvas dimensions (server-rendered SVG); shared by view + template.
+_SWING_W, _SWING_H = 240, 48
+
+
+def _battle_report_context(request: HttpRequest, report: BattleReport, *, public: bool) -> dict:
+    """Shared render context for the member (pk) and public (slug) battle pages.
+
+    Officer-only overlays (SRP liability, doctrine compliance) are computed only
+    when the viewer is an officer, so an anonymous/public viewer never sees them.
+    """
     from apps.corporation.models import EveName
     from apps.sde.models import SdeType
 
+    from . import battle_sides
+
+    is_officer = rbac.has_role(request.user, rbac.ROLE_OFFICER)
+
+    # v1 per-corp charts (kept — the ISK-by-side bar + ships doughnut).
     corps = report.sides.get("corporations", [])[:8]
     corp_names = dict(
         EveName.objects.filter(entity_id__in=[c["corporation_id"] for c in corps])
@@ -1110,9 +1121,122 @@ def battle_report_detail(request: HttpRequest, pk: int) -> HttpResponse:
         "labels": [ship_names.get(int(t), f"Type {t}") for t, _ in ship_items],
         "counts": [n for _, n in ship_items],
     }
-    return render(request, "killboard/battle_report.html", {
-        "report": report, "sides_chart": sides_chart, "ships_chart": ships_chart,
-    })
+
+    # v2 co-occurrence sides.
+    sides = list(report.detected_sides.prefetch_related("members"))
+    entity_ids = [m.entity_id for s in sides for m in s.members.all()]
+    entity_names = dict(
+        EveName.objects.filter(entity_id__in=entity_ids).values_list("entity_id", "name")
+    )
+    home_side = next((s for s in sides if s.is_home_side), None)
+    reference = home_side or (sides[0] if sides else None)
+
+    side_views = []
+    move_targets = [(s.index, s.label) for s in sides]
+    for s in sides:
+        members = [
+            {
+                "entity_type": m.entity_type, "entity_id": m.entity_id,
+                "name": entity_names.get(m.entity_id) or f"{m.entity_type} {m.entity_id}",
+                "kills": m.kills, "losses": m.losses, "isk_lost": m.isk_lost,
+                "is_manual": m.is_manual,
+            }
+            for m in s.members.all()
+        ]
+        srp = battle_sides.srp_liability(report, s) if (is_officer and s.is_home_side) else None
+        compliance = battle_sides.doctrine_compliance(report, s) if is_officer else None
+        side_views.append({
+            "index": s.index, "label": s.label, "is_home_side": s.is_home_side,
+            "kills": s.kills, "losses": s.losses,
+            "isk_destroyed": s.isk_destroyed, "isk_lost": s.isk_lost,
+            "pilot_count": s.pilot_count, "efficiency": round(s.efficiency * 100),
+            "members": members, "srp": srp, "compliance": compliance,
+        })
+
+    timeline = battle_sides.battle_timeline(report, reference)
+    # Readiness context: member-visible (ops are member data), so shown on both pages.
+    op = battle_sides.op_overlap(report)
+
+    return {
+        "report": report,
+        "public": public,
+        "sides_chart": sides_chart,
+        "ships_chart": ships_chart,
+        "side_views": side_views,
+        "move_targets": move_targets,
+        "can_reassign": is_officer and not public,
+        "timeline": timeline,
+        "swing_series": [float(r["swing"]) for r in timeline["rows"]],
+        "swing_w": _SWING_W, "swing_h": _SWING_H,
+        "swing_baseline_y": battle_sides.swing_baseline_y(_SWING_H),
+        "readiness_op": op,
+        "permalink": request.build_absolute_uri(
+            reverse("killboard:battle_report_public", args=[report.slug])
+        ),
+        "brevetools_url": battle_sides.brevetools_url(report),
+    }
+
+
+@login_required
+@role_required(rbac.ROLE_MEMBER)
+def battle_report_detail(request: HttpRequest, pk: int) -> HttpResponse:
+    report = get_object_or_404(BattleReport, pk=pk)
+    return render(request, "killboard/battle_report.html",
+                  _battle_report_context(request, report, public=False))
+
+
+def battle_report_public(request: HttpRequest, slug: str) -> HttpResponse:
+    """Anonymous-viewable permalink for a PUBLIC report.
+
+    Mirrors the public killmail pages (no login). A private report 404s here so its
+    existence isn't leaked — members reach it at the member-gated pk URL instead.
+    Officer overlays stay suppressed for anyone below officer (an anon viewer always
+    is), so the shareable page carries no sensitive SRP/deviation figures.
+    """
+    report = get_object_or_404(BattleReport, slug=slug, is_public=True)
+    return render(request, "killboard/battle_report.html",
+                  _battle_report_context(request, report, public=True))
+
+
+@login_required
+@role_required(rbac.ROLE_OFFICER)
+@require_POST
+def battle_report_side_move(request: HttpRequest, pk: int) -> HttpResponse:
+    """Officer: move an entity (corp/pilot) to another detected side (KB-31)."""
+    from . import battle_sides
+
+    report = get_object_or_404(BattleReport, pk=pk)
+    entity_type = request.POST.get("entity_type", "")
+    try:
+        entity_id = int(request.POST.get("entity_id", ""))
+        side_index = int(request.POST.get("side_index", ""))
+    except (TypeError, ValueError):
+        messages.error(request, gettext("Invalid reassignment."))
+        return redirect("killboard:battle_report_detail", pk=pk)
+    if battle_sides.move_entity(report, entity_type, entity_id, side_index, actor=request.user):
+        audit_log(request.user, "battle_report.side_move", target_type="battle_report",
+                  target_id=str(report.pk),
+                  metadata={"entity_type": entity_type, "entity_id": entity_id,
+                            "side_index": side_index}, ip=client_ip(request))
+        messages.success(request, gettext("Side reassigned."))
+    else:
+        messages.error(request, gettext("Couldn't reassign to that side."))
+    return redirect("killboard:battle_report_detail", pk=pk)
+
+
+@login_required
+@role_required(rbac.ROLE_OFFICER)
+@require_POST
+def battle_report_recompute(request: HttpRequest, pk: int) -> HttpResponse:
+    """Officer: re-run side detection (preserving manual overrides) (KB-31)."""
+    from . import battle_sides
+
+    report = get_object_or_404(BattleReport, pk=pk)
+    battle_sides.recompute_sides(report)
+    audit_log(request.user, "battle_report.recompute", target_type="battle_report",
+              target_id=str(report.pk), ip=client_ip(request))
+    messages.success(request, gettext("Sides recomputed."))
+    return redirect("killboard:battle_report_detail", pk=pk)
 
 
 @login_required

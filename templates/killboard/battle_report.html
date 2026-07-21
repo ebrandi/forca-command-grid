@@ -6,22 +6,127 @@
 <script defer src="{% static 'js/vendor/chart.umd.js' %}"></script>
 {% endblock %}
 {% block content %}
-<a href="{% url 'killboard:watchlists' %}" class="text-xs text-faint hover:text-gold">← {% translate "Intel" %}</a>
+{% if not public %}<a href="{% url 'killboard:watchlists' %}" class="text-xs text-faint hover:text-gold">← {% translate "Intel" %}</a>{% endif %}
 <header class="mt-3 mb-6">
   <p class="eyebrow">{% translate "Battle report" %}</p>
   <h1 class="mt-1 text-2xl font-bold text-ink">{{ report.title }}</h1>
   <p class="mt-1 flex flex-wrap items-center gap-2 text-sm text-faint">
     {% for sid in report.system_ids %}<span class="chip">{% system_name sid %}</span>{% endfor %}
     <span>{{ report.start_time|date:"M j, H:i" }} – {{ report.end_time|date:"H:i" }}</span>
-    <span>· {{ report.killmails.count }} killmails</span>
-    {% if is_officer and features.command_intel %}<a href="{% url 'command_intel:battle_detail' report.pk %}" class="text-gold hover:underline">· {% translate "AI after-action review" %} →</a>{% endif %}
+    <span>· {{ report.killmails.count }} {% translate "killmails" %}</span>
+    {% if report.is_public %}<span class="chip" style="color:#3fb950">{% translate "Public" %}</span>{% endif %}
+    {% if is_officer and features.command_intel and not public %}<a href="{% url 'command_intel:battle_detail' report.pk %}" class="text-gold hover:underline">· {% translate "AI after-action review" %} →</a>{% endif %}
   </p>
+  <div class="mt-3 flex flex-wrap items-center gap-3 text-xs">
+    {% if report.is_public %}
+      <span class="text-faint">{% translate "Permalink:" %} <a href="{{ permalink }}" class="text-gold hover:underline break-all">{{ permalink }}</a></span>
+    {% endif %}
+    {% if brevetools_url %}
+      <a href="{{ brevetools_url }}" target="_blank" rel="noopener" class="text-faint hover:text-gold">{% translate "Open in br.evetools.org" %} ↗</a>
+    {% endif %}
+    {% if readiness_op %}
+      <a href="{% url 'operations:detail' readiness_op.id %}" class="chip hover:text-gold" style="color:#46cfe0">⚑ {% translate "During op:" %} {{ readiness_op.name }}</a>
+    {% endif %}
+    {% if can_reassign %}
+      <form method="post" action="{% url 'killboard:battle_report_recompute' report.pk %}" class="inline">{% csrf_token %}
+        <button type="submit" class="text-faint hover:text-gold">↻ {% translate "Recompute sides" %}</button>
+      </form>
+    {% endif %}
+  </div>
 </header>
 
-<!-- Visual summary -->
+<!-- v2 side scoreboard (co-occurrence detected sides) -->
+{% if side_views %}
+<section class="mb-6">
+  <h2 class="eyebrow text-gold mb-3">{% translate "Sides" %}</h2>
+  <div class="grid gap-4 lg:grid-cols-2">
+    {% for side in side_views %}
+      <div class="panel overflow-hidden">
+        <div class="border-b border-line px-4 py-3 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <h3 class="font-semibold text-ink">{{ side.label }}</h3>
+            {% if side.is_home_side %}<span class="chip" style="color:#f4a52b">{% translate "Us" %}</span>{% endif %}
+          </div>
+          <span class="text-xs text-faint">{{ side.pilot_count }} {% translate "pilots" %}</span>
+        </div>
+        <div class="grid grid-cols-3 gap-2 px-4 py-3 text-center">
+          <div><div class="data text-lg text-kill">{{ side.kills }}</div><div class="text-xs text-faint">{% translate "kills" %}</div></div>
+          <div><div class="data text-lg text-loss">{{ side.losses }}</div><div class="text-xs text-faint">{% translate "losses" %}</div></div>
+          <div><div class="data text-lg text-ink">{{ side.efficiency }}%</div><div class="text-xs text-faint">{% translate "efficiency" %}</div></div>
+        </div>
+        <div class="grid grid-cols-2 gap-2 px-4 pb-2 text-center text-sm">
+          <div><span class="data text-gold">{{ side.isk_destroyed|isk }}</span><div class="text-xs text-faint">{% translate "ISK destroyed" %}</div></div>
+          <div><span class="data text-loss">{{ side.isk_lost|isk }}</span><div class="text-xs text-faint">{% translate "ISK lost" %}</div></div>
+        </div>
+
+        {% if side.srp or side.compliance %}
+        <div class="mx-4 my-2 rounded border border-line/60 px-3 py-2 text-xs" style="background:rgba(255,255,255,0.02)">
+          <div class="eyebrow text-faint mb-1">{% translate "Officer overlay" %}</div>
+          {% if side.srp %}<div class="flex items-center justify-between"><span class="text-muted">{% translate "SRP liability" %}</span><span class="data text-gold">{{ side.srp.total|isk }} <span class="text-faint">({{ side.srp.eligible }}/{{ side.srp.losses }})</span></span></div>{% endif %}
+          {% if side.compliance %}<div class="flex items-center justify-between"><span class="text-muted">{% translate "Doctrine compliance" %}</span><span class="data text-ink">{{ side.compliance.percent }}% <span class="text-faint">({{ side.compliance.clean }}/{{ side.compliance.tagged }})</span></span></div>{% endif %}
+        </div>
+        {% endif %}
+
+        <div class="divide-y divide-line/40 border-t border-line/60">
+          {% for m in side.members %}
+            <div class="flex items-center gap-2.5 px-4 py-2 text-sm">
+              {% if m.entity_type == "character" %}<img src="{% eve_portrait m.entity_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">
+              {% elif m.entity_type == "alliance" %}<img src="{% eve_alliance_logo m.entity_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">
+              {% else %}<img src="{% eve_corp_logo m.entity_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">{% endif %}
+              <span class="flex-1 truncate text-muted">{{ m.name }}{% if m.is_manual %} <span class="text-xs text-faint" title="{% translate 'Manually reassigned' %}">✎</span>{% endif %}</span>
+              <span class="data text-xs text-kill" title="{% translate 'kills' %}">{{ m.kills }}</span>
+              <span class="data text-xs text-loss" title="{% translate 'losses' %}">{{ m.losses }}</span>
+              {% if can_reassign %}
+                <form method="post" action="{% url 'killboard:battle_report_side_move' report.pk %}" class="flex items-center gap-1">{% csrf_token %}
+                  <input type="hidden" name="entity_type" value="{{ m.entity_type }}">
+                  <input type="hidden" name="entity_id" value="{{ m.entity_id }}">
+                  <select name="side_index" class="input-field" style="padding:1px 4px;font-size:11px">
+                    {% for idx, label in move_targets %}<option value="{{ idx }}"{% if idx == side.index %} selected{% endif %}>{{ label }}</option>{% endfor %}
+                  </select>
+                  <button type="submit" class="text-xs text-faint hover:text-gold">→</button>
+                </form>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<!-- Scrubbable timeline with cumulative ISK-swing sparkline -->
+{% if timeline.rows %}
+<section class="panel mb-6 overflow-hidden">
+  <div class="border-b border-line px-4 py-3 flex items-center justify-between">
+    <h2 class="eyebrow">{% translate "Timeline" %}</h2>
+    <span class="text-xs text-faint">{% translate "ISK swing" %} <span id="br-swing-readout" class="data" style="color:#f4a52b">{{ timeline.final_swing|isk }}</span></span>
+  </div>
+  <div class="px-4 py-3">
+    <svg viewBox="0 0 {{ swing_w }} {{ swing_h }}" preserveAspectRatio="none" style="width:100%;height:56px" aria-hidden="true">
+      <line x1="0" y1="{{ swing_baseline_y }}" x2="{{ swing_w }}" y2="{{ swing_baseline_y }}" stroke="#2a3342" stroke-width="1"/>
+      <polyline points="{{ timeline.polyline }}" fill="none" stroke="#f4a52b" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
+    </svg>
+    <input id="br-scrubber" type="range" min="1" max="{{ timeline.rows|length }}" value="{{ timeline.rows|length }}" step="1" style="width:100%" aria-label="{% translate 'Scrub timeline' %}">
+  </div>
+  <div class="divide-y divide-line/40 border-t border-line/60" id="br-timeline">
+    {% for r in timeline.rows %}
+      <a href="{% url 'killboard:detail' r.killmail_id %}" data-idx="{{ forloop.counter0 }}" class="br-kill flex items-center gap-3 px-4 py-2 text-sm hover:bg-panel2">
+        <span class="text-xs text-faint" style="width:44px">{{ r.time|date:"H:i" }}</span>
+        <img src="{% eve_type_icon r.victim_ship_type_id 32 %}" alt="" loading="lazy" class="h-6 w-6 rounded-sm">
+        <span class="flex-1 truncate text-muted">{% type_name r.victim_ship_type_id %}</span>
+        {% if r.ref_killed %}<span class="text-xs text-kill">▲</span>{% elif r.ref_lost %}<span class="text-xs text-loss">▼</span>{% endif %}
+        <span class="data text-xs text-faint">{{ r.value|isk }}</span>
+      </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<!-- Visual summary (v1 charts retained) -->
 <div class="mb-5 grid gap-5 lg:grid-cols-2">
   <section class="panel overflow-hidden">
-    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "ISK lost by side" %}</h2></div>
+    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "ISK lost by corporation" %}</h2></div>
     <div class="p-4"><div class="relative h-56 skeleton"><canvas id="br-sides"></canvas></div></div>
   </section>
   <section class="panel overflow-hidden">
@@ -30,62 +135,54 @@
   </section>
 </div>
 
-<div class="grid gap-5 lg:grid-cols-2">
-  <section class="panel overflow-hidden">
-    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "Sides (by ISK lost)" %}</h2></div>
-    <div class="overflow-x-auto"><table class="w-full text-sm">
-      <thead class="text-faint text-left"><tr class="border-b border-line/60">
-        <th class="px-4 py-2 font-medium">{% translate "Corporation" %}</th><th class="px-4 py-2 text-right font-medium">Kills</th>
-        <th class="px-4 py-2 text-right font-medium">Losses</th><th class="px-4 py-2 text-right font-medium">{% translate "ISK lost" %}</th></tr></thead>
-      <tbody>
-        {% for s in report.sides.corporations %}
-          <tr class="border-t border-line/40">
-            <td class="px-4 py-2"><span class="flex items-center gap-2"><img src="{% eve_corp_logo s.corporation_id 32 %}" alt="" class="h-5 w-5 rounded-sm">{% eve_name s.corporation_id %}</span></td>
-            <td class="px-4 py-2 text-right data text-kill">{{ s.kills }}</td>
-            <td class="px-4 py-2 text-right data text-loss">{{ s.losses }}</td>
-            <td class="px-4 py-2 text-right data text-gold">{{ s.isk_lost|isk }}</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table></div>
-  </section>
-
-  <section class="panel overflow-hidden">
-    <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">{% translate "Ships destroyed" %}</h2></div>
-    <div class="divide-y divide-line/40">
-      {% for type_id, n in report.ship_breakdown.items %}
-        <div class="flex items-center gap-2.5 px-4 py-2 text-sm">
-          <img src="{% eve_type_icon type_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">
-          <span class="flex-1 text-muted">{% type_name type_id %}</span>
-          <span class="data text-faint">×{{ n }}</span>
-        </div>
-      {% endfor %}
-    </div>
-  </section>
-</div>
-
-<section class="panel mt-5 overflow-hidden">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">{% translate "Killmails" %}</h2></div>
+<section class="panel overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">{% translate "Ships destroyed" %}</h2></div>
   <div class="divide-y divide-line/40">
-    {% for km in report.killmails.all %}
-      <a href="{% url 'killboard:detail' km.killmail_id %}" class="flex items-center gap-3 px-4 py-2 text-sm hover:bg-panel2">
-        <img src="{% eve_type_icon km.victim_ship_type_id 32 %}" alt="" loading="lazy" class="h-6 w-6 rounded-sm">
-        <span class="flex-1 text-muted">{% type_name km.victim_ship_type_id %}</span>
-        <span class="data text-xs text-faint">{{ km.total_value|isk }}</span>
-        <span class="text-xs text-faint">{{ km.killmail_time|date:"H:i" }}</span>
-      </a>
+    {% for type_id, n in report.ship_breakdown.items %}
+      <div class="flex items-center gap-2.5 px-4 py-2 text-sm">
+        <img src="{% eve_type_icon type_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">
+        <span class="flex-1 text-muted">{% type_name type_id %}</span>
+        <span class="data text-faint">×{{ n }}</span>
+      </div>
     {% endfor %}
   </div>
 </section>
 
 {{ sides_chart|json_script:"br-sides-data" }}
 {{ ships_chart|json_script:"br-ships-data" }}
+{{ swing_series|json_script:"br-swings-data" }}
 {% endblock %}
 
 {% block scripts %}
 <script nonce="{{ csp_nonce }}">
   document.addEventListener('DOMContentLoaded', function () {
-    if (!window.forcaChart.applyDefaults()) return;
+    // Scrubbable timeline: highlight kills up to T; dim the rest. Progressive —
+    // with JS off, every kill row is shown normally.
+    var scrubber = document.getElementById('br-scrubber');
+    var readout = document.getElementById('br-swing-readout');
+    var swings = (function () { try { return JSON.parse(document.getElementById('br-swings-data').textContent); } catch (e) { return []; } })();
+    if (scrubber) {
+      var rows = Array.prototype.slice.call(document.querySelectorAll('#br-timeline .br-kill'));
+      var fmtIsk = function (v) {
+        var a = Math.abs(v), s = v < 0 ? '-' : '';
+        if (a >= 1e9) return s + (a / 1e9).toFixed(1) + 'b';
+        if (a >= 1e6) return s + (a / 1e6).toFixed(1) + 'm';
+        if (a >= 1e3) return s + (a / 1e3).toFixed(1) + 'k';
+        return s + a.toFixed(0);
+      };
+      var apply = function () {
+        var t = parseInt(scrubber.value, 10);
+        rows.forEach(function (row) {
+          var idx = parseInt(row.getAttribute('data-idx'), 10);
+          row.style.opacity = (idx < t) ? '1' : '0.25';
+        });
+        if (readout && swings.length) readout.textContent = fmtIsk(swings[Math.min(t, swings.length) - 1]);
+      };
+      scrubber.addEventListener('input', apply);
+      apply();
+    }
+
+    if (!window.forcaChart || !window.forcaChart.applyDefaults() ) return;
 
     var s = forcaChart.read('br-sides-data');
     var sc = document.getElementById('br-sides');

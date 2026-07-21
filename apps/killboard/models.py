@@ -208,16 +208,108 @@ class KillmailComment(models.Model):
         return f"comment on {self.killmail_id} by {self.author_name}"
 
 
+def _new_battle_slug() -> str:
+    """A short, URL-safe, unguessable permalink token (~72 bits)."""
+    return secrets.token_urlsafe(9)
+
+
 class BattleReport(TimeStampedModel):
     title = models.CharField(max_length=200, blank=True)
     system_ids = models.JSONField(default=list)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
+    # v1 per-corporation sides (KB-12), kept for backward compatibility: the AI-AAR
+    # retrieval passage (apps/command_intel/retrieval.py) still reads sides["corporations"].
+    # KB-31 v2 side detection lives in the BattleReportSide/Member tables below.
     sides = models.JSONField(default=dict)
     isk_destroyed_by_side = models.JSONField(default=dict)
     ship_breakdown = models.JSONField(default=dict)
     is_public = models.BooleanField(default=False)
+    # KB-31: stable, unguessable permalink for a public report. Populated on first save
+    # (and backfilled for pre-existing rows by migration 0020). unique=True already
+    # indexes it, so no separate db_index.
+    slug = models.CharField(max_length=22, unique=True, blank=True)
     killmails = models.ManyToManyField(Killmail, related_name="battle_reports", blank=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = _new_battle_slug()
+        super().save(*args, **kwargs)
+
+
+class BattleReportSide(models.Model):
+    """One detected side of a battle (KB-31 v2).
+
+    Rows here are DERIVED — deleted and recreated on every recompute from the
+    co-occurrence side detection in ``battle_sides.py``. ``index`` is the stable,
+    deterministic side ordinal (home side first, then by smallest member entity);
+    manual reassignments are stored separately in ``BattleReportSideOverride`` so
+    they survive the recompute. Aggregates are denormalised for a cheap render.
+    """
+
+    report = models.ForeignKey(BattleReport, on_delete=models.CASCADE, related_name="detected_sides")
+    index = models.IntegerField()
+    label = models.CharField(max_length=40, blank=True)
+    is_home_side = models.BooleanField(default=False)
+    kills = models.IntegerField(default=0)
+    losses = models.IntegerField(default=0)
+    isk_destroyed = models.DecimalField(max_digits=24, decimal_places=2, default=0)
+    isk_lost = models.DecimalField(max_digits=24, decimal_places=2, default=0)
+    pilot_count = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ["report", "index"]
+        unique_together = ("report", "index")
+
+    @property
+    def efficiency(self) -> float:
+        denom = self.isk_destroyed + self.isk_lost
+        return float(self.isk_destroyed / denom) if denom else 0.0
+
+
+class BattleReportSideMember(models.Model):
+    """A corporation (or unaffiliated character) placed on one detected side."""
+
+    class EntityType(models.TextChoices):
+        CORPORATION = "corporation", _("Corporation")
+        ALLIANCE = "alliance", _("Alliance")
+        CHARACTER = "character", _("Character")
+
+    side = models.ForeignKey(BattleReportSide, on_delete=models.CASCADE, related_name="members")
+    entity_type = models.CharField(max_length=12, choices=EntityType.choices)
+    entity_id = models.BigIntegerField()
+    # True when this placement came from an officer override rather than detection.
+    is_manual = models.BooleanField(default=False)
+    kills = models.IntegerField(default=0)
+    losses = models.IntegerField(default=0)
+    isk_lost = models.DecimalField(max_digits=24, decimal_places=2, default=0)
+    pilot_count = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ["side", "-isk_lost", "entity_id"]
+
+
+class BattleReportSideOverride(models.Model):
+    """A persisted officer decision to place an entity on a specific side (KB-31).
+
+    The one durable layer of side assignment: recompute deletes and rebuilds the
+    derived ``BattleReportSide``/``Member`` rows but always re-reads these overrides
+    and forces the listed entities onto their recorded ``side_index``. Side indexes
+    are assigned by detection alone (a pure function of the killmail set), so an
+    override index stays meaningful as long as the killmails don't change.
+    """
+
+    report = models.ForeignKey(BattleReport, on_delete=models.CASCADE, related_name="side_overrides")
+    entity_type = models.CharField(max_length=12, choices=BattleReportSideMember.EntityType.choices)
+    entity_id = models.BigIntegerField()
+    side_index = models.IntegerField()
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("report", "entity_type", "entity_id")
 
 
 class CombatMetric(ProvenanceMixin):

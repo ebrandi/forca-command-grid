@@ -71,4 +71,9 @@ def generate_battle_report(system_id: int, hours: int = 24, title: str = "") -> 
         ship_breakdown={str(t): n for t, n in sorted(ship_breakdown.items(), key=lambda x: -x[1])},
     )
     report.killmails.set(km_ids)
+    # KB-31 v2: derive the co-occurrence sides (red/blue clustering) alongside the
+    # v1 per-corp `sides` dict kept above for backward compatibility.
+    from .battle_sides import recompute_sides
+
+    recompute_sides(report)
     return report
