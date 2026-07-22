@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-22 18:07+0000\n"
+"POT-Creation-Date: 2026-07-22 19:51+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: fr machine-assisted draft\n"
@@ -501,7 +501,8 @@ msgstr ""
 "récompense créé(s)."
 
 #: apps/admin_audit/console_combat.py apps/buyback/views.py
-#: apps/capsuleer/views.py apps/industry/views_mrp.py apps/logistics/views.py
+#: apps/capsuleer/views.py apps/industry/views_mrp.py
+#: apps/killboard/signature_views.py apps/logistics/views.py
 #: apps/procurement/views.py apps/stockpile/views.py apps/store/views.py
 #: apps/store/views_inventory.py
 msgid "Unknown action."
@@ -1601,6 +1602,7 @@ msgstr "Instantané du marché"
 #: templates/command_intel/sim.html templates/fitting/detail.html
 #: templates/fitting/index.html templates/kb/detail.html
 #: templates/killboard/campaign_detail.html templates/killboard/detail.html
+#: templates/killboard/signatures/list.html
 #: templates/killboard/subscriptions.html
 #: templates/killboard/watchlist_detail.html
 #: templates/navigation/jump_routes.html templates/operations/templates.html
@@ -1707,7 +1709,8 @@ msgid "Corp & alliance members only"
 msgstr "Membres de la corp et de l'alliance uniquement"
 
 #: apps/buyback/models.py apps/killboard/models.py apps/logistics/models.py
-#: apps/store/models.py templates/killboard/subscriptions.html
+#: apps/store/models.py templates/killboard/signatures/list.html
+#: templates/killboard/subscriptions.html
 msgid "Disabled"
 msgstr "Désactivé"
 
@@ -2217,7 +2220,8 @@ msgstr "Approuvé"
 #: templates/admin_audit/console/mentorship/tracks.html
 #: templates/campaigns/portfolio.html templates/capsuleer/_goal_card.html
 #: templates/capsuleer/goal_detail.html templates/command_intel/campaigns.html
-#: templates/killboard/campaign_form.html templates/market/dashboard.html
+#: templates/killboard/campaign_form.html
+#: templates/killboard/signatures/list.html templates/market/dashboard.html
 #: templates/operations/_posture.html
 #: templates/procurement/supplier_detail.html
 msgid "Active"
@@ -2354,7 +2358,7 @@ msgstr "Fait"
 #: apps/procurement/models.py apps/raffle/models.py apps/skills/models.py
 #: templates/admin_audit/console/combat_rewards.html
 #: templates/admin_audit/console/raffle_draw.html
-#: templates/corporation/roster.html
+#: templates/corporation/roster.html templates/killboard/signatures/list.html
 msgid "Pending"
 msgstr "En attente"
 
@@ -3684,7 +3688,8 @@ msgstr "Mettre en pause"
 #: templates/command_intel/campaign_new.html templates/fitting/detail.html
 #: templates/industry/create.html templates/industry/jobs.html
 #: templates/kb/edit.html templates/killboard/_import_status.html
-#: templates/killboard/campaign_form.html templates/killboard/watchlists.html
+#: templates/killboard/campaign_form.html
+#: templates/killboard/signatures/form.html templates/killboard/watchlists.html
 #: templates/market/dashboard.html templates/mentorship/pairing_detail.html
 #: templates/operations/template_form.html
 #: templates/pingboard/alert_detail.html templates/planetary/wizard.html
@@ -6996,7 +7001,7 @@ msgid "Year to date"
 msgstr "Depuis le début de l'année"
 
 #: apps/corporation/finance_analytics.py apps/killboard/leaderboards.py
-#: templates/killboard/_feed.html
+#: apps/killboard/signature_views.py templates/killboard/_feed.html
 msgid "All time"
 msgstr "Depuis toujours"
 
@@ -7114,13 +7119,14 @@ msgid "Character"
 msgstr "Personnage"
 
 #: apps/corporation/models.py apps/erp/models.py apps/fitting/models.py
-#: apps/killboard/models.py apps/procurement/models.py apps/stockpile/models.py
+#: apps/killboard/models.py apps/killboard/signature_views.py
+#: apps/procurement/models.py apps/stockpile/models.py
 #: templates/killboard/scan.html
 msgid "Corporation"
 msgstr "Corporation"
 
 #: apps/corporation/models.py apps/fitting/models.py apps/killboard/models.py
-#: apps/killboard/signature_stats.py
+#: apps/killboard/signature_stats.py apps/killboard/signature_views.py
 #: templates/admin_audit/console/readiness/doctrines.html
 #: templates/killboard/scan.html
 msgid "Alliance"
@@ -9108,11 +9114,11 @@ msgstr "Abyssal"
 msgid "Pochven"
 msgstr "Pochven"
 
-#: apps/killboard/leaderboards.py
+#: apps/killboard/leaderboards.py apps/killboard/signature_views.py
 msgid "Last 7 days"
 msgstr "7 derniers jours"
 
-#: apps/killboard/leaderboards.py
+#: apps/killboard/leaderboards.py apps/killboard/signature_views.py
 msgid "Last 90 days"
 msgstr "90 derniers jours"
 
@@ -9126,7 +9132,7 @@ msgstr "Ce mois-ci · %(month)s"
 msgid "Last month · %(month)s"
 msgstr "Le mois dernier · %(month)s"
 
-#: apps/killboard/leaderboards.py
+#: apps/killboard/leaderboards.py apps/killboard/signature_views.py
 msgid "Last 30 days"
 msgstr "30 derniers jours"
 
@@ -9326,18 +9332,20 @@ msgstr "Premier coup de grâce"
 msgid "All-time PvP kills"
 msgstr "Kills PvP cumulés"
 
-#: apps/killboard/models.py apps/killboard/ranks.py apps/raffle/metrics.py
+#: apps/killboard/models.py apps/killboard/ranks.py
+#: apps/killboard/signature_views.py apps/raffle/metrics.py
 msgid "Solo kills"
 msgstr "Kills solo"
 
 #: apps/killboard/models.py apps/killboard/ranks.py
-#: apps/killboard/signature_stats.py
+#: apps/killboard/signature_stats.py apps/killboard/signature_views.py
 #: templates/admin_audit/console/raffle_stats.html
 msgid "Final blows"
 msgstr "Coups de grâce"
 
 #: apps/killboard/models.py apps/killboard/signature_stats.py
-#: templates/identity/dashboard.html templates/killboard/battle_report.html
+#: apps/killboard/signature_views.py templates/identity/dashboard.html
+#: templates/killboard/battle_report.html
 #: templates/killboard/campaign_detail.html
 msgid "ISK destroyed"
 msgstr "ISK détruits"
@@ -9555,6 +9563,7 @@ msgid "RSS / Atom feed"
 msgstr "Flux RSS / Atom"
 
 #: apps/killboard/models.py apps/killboard/signature_stats.py
+#: apps/killboard/signature_views.py
 #: templates/admin_audit/console/combat_rewards.html
 #: templates/admin_audit/console/raffle_stats.html
 #: templates/identity/dashboard.html templates/killboard/compare.html
@@ -9595,8 +9604,8 @@ msgstr "Bronze"
 msgid "Silver"
 msgstr "Argent"
 
-#: apps/killboard/models.py apps/mentorship/models.py
-#: templates/killboard/_trophy_tier.html
+#: apps/killboard/models.py apps/killboard/signature_views.py
+#: apps/mentorship/models.py templates/killboard/_trophy_tier.html
 msgid "Gold"
 msgstr "Or"
 
@@ -9618,11 +9627,11 @@ msgstr ""
 msgid "Snapshot (frozen)"
 msgstr "Instantanés"
 
-#: apps/killboard/models.py
+#: apps/killboard/models.py templates/killboard/signatures/list.html
 msgid "Frozen"
 msgstr ""
 
-#: apps/killboard/models.py
+#: apps/killboard/models.py templates/killboard/signatures/list.html
 #, fuzzy
 #| msgid "Ordered"
 msgid "Rendered"
@@ -10047,16 +10056,16 @@ msgstr ""
 "Facultatif : donnez au tableau le nom, le logo et la couleur d'accent de "
 "votre corporation pour qu'il vous ressemble."
 
-#: apps/killboard/signature_stats.py templates/identity/dashboard.html
-#: templates/killboard/compare.html templates/killboard/cv.html
-#: templates/killboard/list.html templates/killboard/meta.html
-#: templates/killboard/pilot.html templates/killboard/roster.html
-#: templates/killboard/stats.html
+#: apps/killboard/signature_stats.py apps/killboard/signature_views.py
+#: templates/identity/dashboard.html templates/killboard/compare.html
+#: templates/killboard/cv.html templates/killboard/list.html
+#: templates/killboard/meta.html templates/killboard/pilot.html
+#: templates/killboard/roster.html templates/killboard/stats.html
 msgid "Losses"
 msgstr "Pertes"
 
-#: apps/killboard/signature_stats.py templates/identity/dashboard.html
-#: templates/killboard/battle_report.html
+#: apps/killboard/signature_stats.py apps/killboard/signature_views.py
+#: templates/identity/dashboard.html templates/killboard/battle_report.html
 #: templates/killboard/campaign_detail.html
 msgid "ISK lost"
 msgstr "ISK perdus"
@@ -10090,13 +10099,14 @@ msgstr "Progression %%"
 msgid "Trophies"
 msgstr "Trophées"
 
-#: apps/killboard/signature_stats.py
+#: apps/killboard/signature_stats.py apps/killboard/signature_views.py
 #, fuzzy
 #| msgid "Best kill"
 msgid "Last kill"
 msgstr "Meilleur kill"
 
-#: apps/killboard/signature_stats.py templates/killboard/cv.html
+#: apps/killboard/signature_stats.py apps/killboard/signature_views.py
+#: templates/killboard/cv.html
 msgid "Best kill"
 msgstr "Meilleur kill"
 
@@ -10115,6 +10125,185 @@ msgstr "Principales tâches"
 #: apps/killboard/signature_stats.py templates/industry/mrp.html
 msgid "Updated"
 msgstr "Mis à jour"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Constraint"
+msgid "Portrait"
+msgstr "Contrainte"
+
+#: apps/killboard/signature_views.py templates/recruitment/list.html
+msgid "Pilot name"
+msgstr "Nom du pilote"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "ISK Efficiency"
+msgid "ISK efficiency"
+msgstr "Efficacité ISK"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Watch ratio"
+msgid "Kill/Death ratio"
+msgstr "Ratio de surveillance"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Task title"
+msgid "Rank title"
+msgstr "Titre de la tâche"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "In progress"
+msgid "Rank progress"
+msgstr "En cours"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Your trophies"
+msgid "Featured trophies"
+msgstr "Vos trophées"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Trophy unlocked"
+msgid "Trophy count"
+msgstr "Trophée débloqué"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Favourite hull"
+msgid "Favourite ship"
+msgstr "Coque favorite"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Top tasks"
+msgid "Top ship class"
+msgstr "Principales tâches"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Activity signals"
+msgid "Activity period label"
+msgstr "Signaux d'activité"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "no timestamp"
+msgid "Stats timestamp"
+msgstr "aucun horodatage"
+
+#: apps/killboard/signature_views.py templates/pilots/contributions.html
+msgid "This month"
+msgstr "Ce mois-ci"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Last 6 months"
+msgid "Last month"
+msgstr "6 derniers mois"
+
+#: apps/killboard/signature_views.py
+msgid "Cyan"
+msgstr ""
+
+#: apps/killboard/signature_views.py
+msgid "Green"
+msgstr ""
+
+#: apps/killboard/signature_views.py apps/pilots/views.py core/features.py
+msgid "This feature is not enabled for this corporation."
+msgstr "Cette fonctionnalité n'est pas activée pour cette corporation."
+
+#: apps/killboard/signature_views.py
+msgid "Combat Signatures are not enabled."
+msgstr ""
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Doctrines are not available to you."
+msgid "Combat Signatures are not available."
+msgstr "Les doctrines ne vous sont pas accessibles."
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "No such issue."
+msgid "No such signature."
+msgstr "Problème introuvable."
+
+#: apps/killboard/signature_views.py
+#, python-format
+msgid ""
+"“%(component)s” will not fit the selected layout and size and won't be shown."
+msgstr ""
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Check unavailable right now."
+msgid "Choose an available background."
+msgstr "Vérification indisponible pour le moment."
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Campaign created."
+msgid "Combat Signature created."
+msgstr "Campagne créée."
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Snapshots"
+msgid "Snapshot renamed."
+msgstr "Instantanés"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Campaign updated."
+msgid "Combat Signature updated."
+msgstr "Campagne mise à jour."
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Reward queue"
+msgid "Re-render queued."
+msgstr "File des récompenses"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Suppress duplicates"
+msgid "Signature duplicated."
+msgstr "Supprimer les doublons"
+
+#: apps/killboard/signature_views.py
+msgid "Converted to a frozen snapshot."
+msgstr ""
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "A new feed URL was generated — the old one no longer works."
+msgid "Public URL rotated — the old link no longer works."
+msgstr ""
+"Une nouvelle URL de flux a été générée — l'ancienne ne fonctionne plus."
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Rule disabled."
+msgid "Signature disabled."
+msgstr "Règle désactivée."
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Feature enabled"
+msgid "Signature enabled."
+msgstr "Fonctionnalité activée"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Rule deleted."
+msgid "Signature deleted."
+msgstr "Règle supprimée."
 
 #: apps/killboard/signatures.py
 #, fuzzy
@@ -10259,6 +10448,16 @@ msgstr ""
 #| msgid "This order is already settled."
 msgid "This signature is already a snapshot."
 msgstr "Cette commande est déjà réglée."
+
+#: apps/killboard/signatures.py
+msgid ""
+"A snapshot's configuration is frozen — create a new signature to change it."
+msgstr ""
+
+#: apps/killboard/signatures.py
+#, python-format
+msgid "%(name)s — Combat Signature"
+msgstr ""
 
 #: apps/killboard/subscriptions.py
 msgid "A webhook URL is required."
@@ -15217,10 +15416,6 @@ msgid ""
 msgstr ""
 "Les ref_types du wallet corp qui comptent comme revenu PVE des membres "
 "(séparés par des virgules). La page Corp Finance affiche vos vrais ref_types."
-
-#: apps/pilots/views.py core/features.py
-msgid "This feature is not enabled for this corporation."
-msgstr "Cette fonctionnalité n'est pas activée pour cette corporation."
 
 #: apps/pingboard/config.py
 msgid "general.dispatch_floor must be an object"
@@ -20999,6 +21194,8 @@ msgstr "Registre des contributions"
 #: apps/readiness/dimensions/activity.py apps/readiness/dimensions/doctrine.py
 #: templates/_nav.html templates/identity/dashboard.html
 #: templates/killboard/api_tokens.html templates/killboard/setup.html
+#: templates/killboard/signatures/form.html
+#: templates/killboard/signatures/list.html
 #: templates/killboard/subscriptions.html templates/landing.html
 #: templates/navigation/system_detail.html
 msgid "Killboard"
@@ -25397,6 +25594,12 @@ msgstr "Saisons"
 msgid "My subscriptions"
 msgstr "Mes abonnements"
 
+#: templates/_nav.html
+#, fuzzy
+#| msgid "Signature"
+msgid "Signatures"
+msgstr "Signature"
+
 #: templates/_nav.html templates/killboard/api_tokens.html
 msgid "API access"
 msgstr "Accès API"
@@ -25954,7 +26157,8 @@ msgstr "Id d'alliance"
 #: templates/admin_audit/console/raffle_prizes.html
 #: templates/buyback/config.html templates/campaigns/form.html
 #: templates/campaigns/workstream_form.html
-#: templates/killboard/campaign_form.html templates/killboard/watchlists.html
+#: templates/killboard/campaign_form.html
+#: templates/killboard/signatures/form.html templates/killboard/watchlists.html
 #: templates/logistics/rates.html templates/market/dashboard.html
 #: templates/mining/payouts.html templates/navigation/beacons.html
 #: templates/stockpile/dashboard.html templates/store/config.html
@@ -26361,7 +26565,8 @@ msgstr "Créer le rang"
 #: templates/campaigns/form.html templates/campaigns/milestone_form.html
 #: templates/campaigns/objective_form.html templates/campaigns/risk_form.html
 #: templates/campaigns/workstream_form.html
-#: templates/killboard/campaign_form.html templates/operations/form.html
+#: templates/killboard/campaign_form.html
+#: templates/killboard/signatures/form.html templates/operations/form.html
 #: templates/planetary/wizard.html templates/procurement/supplier_detail.html
 #: templates/tasks/detail.html
 msgid "Save changes"
@@ -26506,7 +26711,8 @@ msgstr "masqué"
 #: templates/campaigns/detail.html templates/campaigns/form.html
 #: templates/campaigns/objective_detail.html templates/industry/jobs.html
 #: templates/kb/detail.html templates/kb/edit.html
-#: templates/killboard/campaign_detail.html templates/market/dashboard.html
+#: templates/killboard/campaign_detail.html
+#: templates/killboard/signatures/list.html templates/market/dashboard.html
 #: templates/operations/form.html templates/operations/templates.html
 #: templates/planetary/detail.html templates/procurement/supplier_detail.html
 #: templates/tasks/detail.html
@@ -29827,6 +30033,7 @@ msgid "Offer"
 msgstr "Proposer"
 
 #: templates/admin_audit/console/i18n.html
+#: templates/killboard/signatures/form.html
 msgid "Language"
 msgstr "Langue"
 
@@ -31756,6 +31963,7 @@ msgstr "désactivé"
 #: templates/admin_audit/console/pingboard/automation.html
 #: templates/admin_audit/console/pingboard/channels.html
 #: templates/admin_audit/console/pingboard/templates.html
+#: templates/killboard/signatures/list.html
 #: templates/killboard/subscriptions.html
 msgid "Disable"
 msgstr "Désactiver"
@@ -31763,6 +31971,7 @@ msgstr "Désactiver"
 #: templates/admin_audit/console/pingboard/automation.html
 #: templates/admin_audit/console/pingboard/channels.html
 #: templates/admin_audit/console/pingboard/templates.html
+#: templates/killboard/signatures/list.html
 #: templates/killboard/subscriptions.html
 msgid "Enable"
 msgstr "Activer"
@@ -40648,7 +40857,7 @@ msgstr "Copier le fit (EFT)"
 
 #: templates/doctrines/detail.html templates/doctrines/prep.html
 #: templates/identity/character.html templates/killboard/detail.html
-#: templates/skills/detail.html
+#: templates/killboard/signatures/list.html templates/skills/detail.html
 msgid "Copied ✓"
 msgstr "Copié ✓"
 
@@ -42146,12 +42355,13 @@ msgstr "Créer un lien public"
 msgid "Fit name"
 msgstr "Nom du fit"
 
-#: templates/fitting/detail.html
+#: templates/fitting/detail.html templates/killboard/signatures/list.html
 msgid "Rename"
 msgstr "Renommer"
 
 #: templates/fitting/detail.html templates/fitting/index.html
-#: templates/industry/detail.html templates/planetary/detail.html
+#: templates/industry/detail.html templates/killboard/signatures/list.html
+#: templates/planetary/detail.html
 msgid "Duplicate"
 msgstr "Dupliquer"
 
@@ -42589,7 +42799,7 @@ msgstr "Plans d'entraînement"
 msgid "build a plan"
 msgstr "créer un plan"
 
-#: templates/identity/character.html
+#: templates/identity/character.html templates/killboard/signatures/list.html
 msgid "Copy"
 msgstr "Copier"
 
@@ -45565,8 +45775,8 @@ msgstr ""
 "Déduit de l'historique de killmails propre à FORCA — relatif à nos combats, "
 "jamais un registre universel."
 
-#: templates/killboard/_live.html templates/raffle/detail.html
-#: templates/raffle/home.html
+#: templates/killboard/_live.html templates/killboard/signatures/list.html
+#: templates/raffle/detail.html templates/raffle/home.html
 msgid "Live"
 msgstr "En direct"
 
@@ -47531,6 +47741,262 @@ msgid ""
 msgstr ""
 "Les instructions complètes se trouvent dans le guide d'auto-hébergement du "
 "manuel de l'opérateur (handbooks/operator-handbook/killboard-self-host.md)."
+
+#: templates/killboard/signatures/form.html
+#, fuzzy
+#| msgid "Combat Stats"
+msgid "Edit Combat Signature"
+msgstr "Stats de combat"
+
+#: templates/killboard/signatures/form.html
+#, fuzzy
+#| msgid "New combat campaign"
+msgid "New Combat Signature"
+msgstr "Nouvelle campagne de combat"
+
+#: templates/killboard/signatures/form.html
+#: templates/killboard/signatures/list.html
+#, fuzzy
+#| msgid "Combat Stats"
+msgid "Combat Signatures"
+msgstr "Stats de combat"
+
+#: templates/killboard/signatures/form.html
+msgid "Please fix the following"
+msgstr ""
+
+#: templates/killboard/signatures/form.html
+msgid ""
+"This is a frozen snapshot — its stats and layout are pinned to the moment it "
+"was created. Only its name can be changed. To use a different configuration, "
+"create a new signature."
+msgstr ""
+
+#: templates/killboard/signatures/form.html
+#, fuzzy
+#| msgid "Payout"
+msgid "Layout"
+msgstr "Versement"
+
+#: templates/killboard/signatures/form.html
+msgid "Size"
+msgstr ""
+
+#: templates/killboard/signatures/form.html
+#, fuzzy
+#| msgid "Background jobs"
+msgid "Background"
+msgstr "Tâches de fond"
+
+#: templates/killboard/signatures/form.html
+#, fuzzy
+#| msgid "Activity mix"
+msgid "Activity period"
+msgstr "Répartition des activités"
+
+#: templates/killboard/signatures/form.html
+#, fuzzy
+#| msgid "Recent settlements"
+msgid "Accent theme"
+msgstr "Règlements récents"
+
+#: templates/killboard/signatures/form.html
+#, fuzzy
+#| msgid "Automatic measurement"
+msgid "Automatic (my language)"
+msgstr "Mesure automatique"
+
+#: templates/killboard/signatures/form.html
+msgid "Show a “last updated” timestamp on the banner"
+msgstr ""
+
+#: templates/killboard/signatures/form.html
+msgid "Components (in display order)"
+msgstr ""
+
+#: templates/killboard/signatures/form.html
+msgid ""
+"Tick what to show and order it with the arrows. Anything that doesn't fit "
+"the chosen layout and size is dropped from the image."
+msgstr ""
+
+#: templates/killboard/signatures/form.html templates/skills/detail.html
+msgid "Move up"
+msgstr "Monter"
+
+#: templates/killboard/signatures/form.html templates/skills/detail.html
+msgid "Move down"
+msgstr "Descendre"
+
+#: templates/killboard/signatures/form.html
+#, fuzzy, python-format
+#| msgid "Alert rules must be a list."
+msgid "Featured trophies (up to %(n)s)"
+msgstr "Les règles d'alerte doivent être une liste."
+
+#: templates/killboard/signatures/form.html
+msgid "Only trophies you've earned appear on the banner."
+msgstr ""
+
+#: templates/killboard/signatures/form.html
+#, fuzzy
+#| msgid "No trophies earned yet."
+msgid "You have no trophies to feature yet."
+msgstr "Aucun trophée gagné pour l'instant."
+
+#: templates/killboard/signatures/form.html
+#, fuzzy
+#| msgid "Create intake"
+msgid "Create signature"
+msgstr "Créer la promotion"
+
+#: templates/killboard/signatures/form.html
+msgid "Preview in new tab"
+msgstr ""
+
+#: templates/killboard/signatures/form.html
+msgid ""
+"The preview uses a placeholder portrait and logos; the published image shows "
+"the real ones after its first render."
+msgstr ""
+
+#: templates/killboard/signatures/list.html
+msgid ""
+"Build a personalised banner from your combat record and embed it in forums, "
+"Discord or a website at a stable public link. The image refreshes on its "
+"own; the editor stays private."
+msgstr ""
+
+#: templates/killboard/signatures/list.html
+#, fuzzy, python-format
+#| msgid "%(active_count)s of %(max_tokens)s active"
+msgid "%(counter)s of %(max)s active"
+msgid_plural "%(counter)s of %(max)s active"
+msgstr[0] "%(active_count)s sur %(max_tokens)s actifs"
+msgstr[1] "%(active_count)s sur %(max_tokens)s actifs"
+
+#: templates/killboard/signatures/list.html
+#, fuzzy
+#| msgid "Signature"
+msgid "New signature"
+msgstr "Signature"
+
+#: templates/killboard/signatures/list.html
+msgid ""
+"You are at your active-signature limit. Disable or delete one to create "
+"another."
+msgstr ""
+
+#: templates/killboard/signatures/list.html
+#, fuzzy
+#| msgid "You haven't connected an ESI token yet."
+msgid "You haven't created any Combat Signatures yet."
+msgstr "Vous n'avez pas encore connecté de token ESI."
+
+#: templates/killboard/signatures/list.html
+#, fuzzy
+#| msgid "Snapshots"
+msgid "Snapshot"
+msgstr "Instantanés"
+
+#: templates/killboard/signatures/list.html
+#, fuzzy
+#| msgid "Ordered"
+msgid "Render failed"
+msgstr "Commandé"
+
+#: templates/killboard/signatures/list.html
+#, fuzzy, python-format
+#| msgid "%(value)s ISK · %(system)s"
+msgid "%(layout)s · %(preset)s"
+msgstr "%(value)s ISK · %(system)s"
+
+#: templates/killboard/signatures/list.html
+#, fuzzy
+#| msgid "Create"
+msgid "Created"
+msgstr "Créer"
+
+#: templates/killboard/signatures/list.html
+msgid "The last render didn't complete. Try regenerating it."
+msgstr ""
+
+#: templates/killboard/signatures/list.html
+msgid "Embed"
+msgstr ""
+
+#: templates/killboard/signatures/list.html
+#, fuzzy
+#| msgid "Live embeds:"
+msgid "Hide embed"
+msgstr "Intégrations en direct :"
+
+#: templates/killboard/signatures/list.html
+#, fuzzy
+#| msgid "Regenerate URL"
+msgid "Regenerate"
+msgstr "Régénérer l'URL"
+
+#: templates/killboard/signatures/list.html
+msgid ""
+"Freeze this signature as a snapshot? Its stats and layout will stop updating."
+msgstr ""
+
+#: templates/killboard/signatures/list.html
+#, fuzzy
+#| msgid "Asset snapshot"
+msgid "Convert to snapshot"
+msgstr "Instantané des actifs"
+
+#: templates/killboard/signatures/list.html
+#, fuzzy
+#| msgid "Generate a new feed URL? The current one will stop working."
+msgid "Rotate the public URL? The current link will stop working immediately."
+msgstr "Générer une nouvelle URL de flux ? L'actuelle cessera de fonctionner."
+
+#: templates/killboard/signatures/list.html
+#, fuzzy
+#| msgid "Regenerate URL"
+msgid "Rotate URL"
+msgstr "Régénérer l'URL"
+
+#: templates/killboard/signatures/list.html
+msgid "Disable this signature? Its public image will stop being served."
+msgstr ""
+
+#: templates/killboard/signatures/list.html
+#, fuzzy
+#| msgid "Cancel this pairing? This cannot be undone."
+msgid "Delete this signature? This cannot be undone."
+msgstr "Annuler cet appariement ? Cette action est irréversible."
+
+#: templates/killboard/signatures/list.html
+#, fuzzy
+#| msgid "Director"
+msgid "Direct URL"
+msgstr "Directeur"
+
+#: templates/killboard/signatures/list.html
+msgid "BBCode (forums)"
+msgstr ""
+
+#: templates/killboard/signatures/list.html
+#, fuzzy
+#| msgid "Markdown:"
+msgid "Markdown"
+msgstr "Markdown :"
+
+#: templates/killboard/signatures/list.html
+msgid "HTML"
+msgstr ""
+
+#: templates/killboard/signatures/list.html
+msgid "Preview on light &amp; dark backgrounds"
+msgstr ""
+
+#: templates/killboard/signatures/list.html
+msgid "The image is served once the signature is active."
+msgstr ""
 
 #: templates/killboard/stats.html
 msgid "Combat stats are corp &amp; alliance only"
@@ -52862,10 +53328,6 @@ msgstr ""
 "Pondéré par le leadership sur tout ce que vous avez fait pour la corpo."
 
 #: templates/pilots/contributions.html
-msgid "This month"
-msgstr "Ce mois-ci"
-
-#: templates/pilots/contributions.html
 #, python-format
 msgid "%(n)s event"
 msgid_plural "%(n)s events"
@@ -56046,10 +56508,6 @@ msgid "Add a candidate"
 msgstr "Ajouter un candidat"
 
 #: templates/recruitment/list.html
-msgid "Pilot name"
-msgstr "Nom du pilote"
-
-#: templates/recruitment/list.html
 msgid "e.g. Stromgren"
 msgstr "ex. Stromgren"
 
@@ -56333,14 +56791,6 @@ msgstr ""
 #: templates/skills/detail.html
 msgid "Est. time"
 msgstr "Durée est."
-
-#: templates/skills/detail.html
-msgid "Move up"
-msgstr "Monter"
-
-#: templates/skills/detail.html
-msgid "Move down"
-msgstr "Descendre"
 
 #: templates/skills/detail.html
 msgid "Undo"

@@ -381,6 +381,10 @@ SIGNATURE_RENDER_MAX_PER_TICK = env.int("SIGNATURE_RENDER_MAX_PER_TICK", default
 # only bounds the fallback path — pending renders plus the constant-shape 404 for disabled/unknown
 # tokens (anti-enumeration). Mirrors the killcard.throttle_ok shape; 0 disables the throttle.
 SIGNATURE_PUBLIC_RATE = env.int("SIGNATURE_PUBLIC_RATE", default=120)
+# Per-user fixed-window rate cap (requests/min) for the owner-only synchronous banner preview in
+# the builder (POST /killboard/signatures/preview.png). The preview renders in-request (no Celery,
+# no save), so it is throttled per user id like the public delivery view; 0 disables the throttle.
+SIGNATURE_PREVIEW_RATE = env.int("SIGNATURE_PREVIEW_RATE", default=10)
 
 # --- KB-35: point-in-time valuation + multi-oracle pricing --------------
 # Historical valuation prices each killmail at the market on the day it died, read from the

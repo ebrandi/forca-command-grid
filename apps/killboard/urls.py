@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from django.urls import path
 
-from . import views
+from . import signature_views, views
 
 app_name = "killboard"
 
@@ -89,6 +89,15 @@ urlpatterns = [
          name="subscription_rss_regenerate"),
     # The token-authed RSS feed (no session). Static prefix, so it never shadows the catch-all.
     path("subscriptions/feed/<str:rss_token>/", views.subscription_feed, name="subscription_feed"),
+    # Combat Signatures (WS-6) management UI — static "signatures/" prefix, above the
+    # <int:killmail_id> single-segment catch-all. The static routes (new/preview.png) precede the
+    # <int:pk> routes so they resolve first.
+    path("signatures/", signature_views.signature_list, name="signatures"),
+    path("signatures/new/", signature_views.signature_create, name="signature_create"),
+    path("signatures/preview.png", signature_views.signature_preview, name="signature_preview"),
+    path("signatures/<int:pk>/edit/", signature_views.signature_edit, name="signature_edit"),
+    path("signatures/<int:pk>/<str:action>/", signature_views.signature_action,
+         name="signature_action"),
     # Fit exports + comments — keep above the <int:killmail_id> single-segment catch-all.
     # KB-39 public kill-card PNG (the unfurl image) — two-segment, above the catch-all.
     path("<int:killmail_id>/card.png", views.killmail_card, name="card"),

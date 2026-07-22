@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-22 18:07+0000\n"
+"POT-Creation-Date: 2026-07-22 19:51+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: zh-hans machine-assisted draft\n"
@@ -473,7 +473,8 @@ msgid "Reward scan complete — %(n)d new reward event(s) created."
 msgstr "奖励扫描完成 —— 已创建 %(n)d 个新奖励事件。"
 
 #: apps/admin_audit/console_combat.py apps/buyback/views.py
-#: apps/capsuleer/views.py apps/industry/views_mrp.py apps/logistics/views.py
+#: apps/capsuleer/views.py apps/industry/views_mrp.py
+#: apps/killboard/signature_views.py apps/logistics/views.py
 #: apps/procurement/views.py apps/stockpile/views.py apps/store/views.py
 #: apps/store/views_inventory.py
 msgid "Unknown action."
@@ -1531,6 +1532,7 @@ msgstr "市场快照"
 #: templates/command_intel/sim.html templates/fitting/detail.html
 #: templates/fitting/index.html templates/kb/detail.html
 #: templates/killboard/campaign_detail.html templates/killboard/detail.html
+#: templates/killboard/signatures/list.html
 #: templates/killboard/subscriptions.html
 #: templates/killboard/watchlist_detail.html
 #: templates/navigation/jump_routes.html templates/operations/templates.html
@@ -1633,7 +1635,8 @@ msgid "Corp & alliance members only"
 msgstr "仅限军团与联盟成员"
 
 #: apps/buyback/models.py apps/killboard/models.py apps/logistics/models.py
-#: apps/store/models.py templates/killboard/subscriptions.html
+#: apps/store/models.py templates/killboard/signatures/list.html
+#: templates/killboard/subscriptions.html
 msgid "Disabled"
 msgstr "已停用"
 
@@ -2124,7 +2127,8 @@ msgstr "已批准"
 #: templates/admin_audit/console/mentorship/tracks.html
 #: templates/campaigns/portfolio.html templates/capsuleer/_goal_card.html
 #: templates/capsuleer/goal_detail.html templates/command_intel/campaigns.html
-#: templates/killboard/campaign_form.html templates/market/dashboard.html
+#: templates/killboard/campaign_form.html
+#: templates/killboard/signatures/list.html templates/market/dashboard.html
 #: templates/operations/_posture.html
 #: templates/procurement/supplier_detail.html
 msgid "Active"
@@ -2261,7 +2265,7 @@ msgstr "完成"
 #: apps/procurement/models.py apps/raffle/models.py apps/skills/models.py
 #: templates/admin_audit/console/combat_rewards.html
 #: templates/admin_audit/console/raffle_draw.html
-#: templates/corporation/roster.html
+#: templates/corporation/roster.html templates/killboard/signatures/list.html
 msgid "Pending"
 msgstr "待处理"
 
@@ -3477,7 +3481,8 @@ msgstr "暂停"
 #: templates/command_intel/campaign_new.html templates/fitting/detail.html
 #: templates/industry/create.html templates/industry/jobs.html
 #: templates/kb/edit.html templates/killboard/_import_status.html
-#: templates/killboard/campaign_form.html templates/killboard/watchlists.html
+#: templates/killboard/campaign_form.html
+#: templates/killboard/signatures/form.html templates/killboard/watchlists.html
 #: templates/market/dashboard.html templates/mentorship/pairing_detail.html
 #: templates/operations/template_form.html
 #: templates/pingboard/alert_detail.html templates/planetary/wizard.html
@@ -6640,7 +6645,7 @@ msgid "Year to date"
 msgstr "年初至今"
 
 #: apps/corporation/finance_analytics.py apps/killboard/leaderboards.py
-#: templates/killboard/_feed.html
+#: apps/killboard/signature_views.py templates/killboard/_feed.html
 msgid "All time"
 msgstr "全部时间"
 
@@ -6758,13 +6763,14 @@ msgid "Character"
 msgstr "角色"
 
 #: apps/corporation/models.py apps/erp/models.py apps/fitting/models.py
-#: apps/killboard/models.py apps/procurement/models.py apps/stockpile/models.py
+#: apps/killboard/models.py apps/killboard/signature_views.py
+#: apps/procurement/models.py apps/stockpile/models.py
 #: templates/killboard/scan.html
 msgid "Corporation"
 msgstr "军团"
 
 #: apps/corporation/models.py apps/fitting/models.py apps/killboard/models.py
-#: apps/killboard/signature_stats.py
+#: apps/killboard/signature_stats.py apps/killboard/signature_views.py
 #: templates/admin_audit/console/readiness/doctrines.html
 #: templates/killboard/scan.html
 msgid "Alliance"
@@ -8687,11 +8693,11 @@ msgstr "深渊"
 msgid "Pochven"
 msgstr "Pochven"
 
-#: apps/killboard/leaderboards.py
+#: apps/killboard/leaderboards.py apps/killboard/signature_views.py
 msgid "Last 7 days"
 msgstr "最近 7 天"
 
-#: apps/killboard/leaderboards.py
+#: apps/killboard/leaderboards.py apps/killboard/signature_views.py
 msgid "Last 90 days"
 msgstr "最近 90 天"
 
@@ -8705,7 +8711,7 @@ msgstr "本月 · %(month)s"
 msgid "Last month · %(month)s"
 msgstr "上月 · %(month)s"
 
-#: apps/killboard/leaderboards.py
+#: apps/killboard/leaderboards.py apps/killboard/signature_views.py
 msgid "Last 30 days"
 msgstr "最近 30 天"
 
@@ -8895,18 +8901,20 @@ msgstr "首次最后一击"
 msgid "All-time PvP kills"
 msgstr "历史 PvP 击杀总数"
 
-#: apps/killboard/models.py apps/killboard/ranks.py apps/raffle/metrics.py
+#: apps/killboard/models.py apps/killboard/ranks.py
+#: apps/killboard/signature_views.py apps/raffle/metrics.py
 msgid "Solo kills"
 msgstr "单人击杀"
 
 #: apps/killboard/models.py apps/killboard/ranks.py
-#: apps/killboard/signature_stats.py
+#: apps/killboard/signature_stats.py apps/killboard/signature_views.py
 #: templates/admin_audit/console/raffle_stats.html
 msgid "Final blows"
 msgstr "最后一击"
 
 #: apps/killboard/models.py apps/killboard/signature_stats.py
-#: templates/identity/dashboard.html templates/killboard/battle_report.html
+#: apps/killboard/signature_views.py templates/identity/dashboard.html
+#: templates/killboard/battle_report.html
 #: templates/killboard/campaign_detail.html
 msgid "ISK destroyed"
 msgstr "摧毁的 ISK"
@@ -9105,6 +9113,7 @@ msgid "RSS / Atom feed"
 msgstr "RSS / Atom 订阅源"
 
 #: apps/killboard/models.py apps/killboard/signature_stats.py
+#: apps/killboard/signature_views.py
 #: templates/admin_audit/console/combat_rewards.html
 #: templates/admin_audit/console/raffle_stats.html
 #: templates/identity/dashboard.html templates/killboard/compare.html
@@ -9145,8 +9154,8 @@ msgstr "青铜"
 msgid "Silver"
 msgstr "白银"
 
-#: apps/killboard/models.py apps/mentorship/models.py
-#: templates/killboard/_trophy_tier.html
+#: apps/killboard/models.py apps/killboard/signature_views.py
+#: apps/mentorship/models.py templates/killboard/_trophy_tier.html
 msgid "Gold"
 msgstr "黄金"
 
@@ -9168,11 +9177,11 @@ msgstr ""
 msgid "Snapshot (frozen)"
 msgstr "快照"
 
-#: apps/killboard/models.py
+#: apps/killboard/models.py templates/killboard/signatures/list.html
 msgid "Frozen"
 msgstr ""
 
-#: apps/killboard/models.py
+#: apps/killboard/models.py templates/killboard/signatures/list.html
 #, fuzzy
 #| msgid "Ordered"
 msgid "Rendered"
@@ -9582,16 +9591,16 @@ msgid ""
 "it feels like yours."
 msgstr "可选：为看板设置您军团的名称、徽标和强调色，让它更有归属感。"
 
-#: apps/killboard/signature_stats.py templates/identity/dashboard.html
-#: templates/killboard/compare.html templates/killboard/cv.html
-#: templates/killboard/list.html templates/killboard/meta.html
-#: templates/killboard/pilot.html templates/killboard/roster.html
-#: templates/killboard/stats.html
+#: apps/killboard/signature_stats.py apps/killboard/signature_views.py
+#: templates/identity/dashboard.html templates/killboard/compare.html
+#: templates/killboard/cv.html templates/killboard/list.html
+#: templates/killboard/meta.html templates/killboard/pilot.html
+#: templates/killboard/roster.html templates/killboard/stats.html
 msgid "Losses"
 msgstr "损失"
 
-#: apps/killboard/signature_stats.py templates/identity/dashboard.html
-#: templates/killboard/battle_report.html
+#: apps/killboard/signature_stats.py apps/killboard/signature_views.py
+#: templates/identity/dashboard.html templates/killboard/battle_report.html
 #: templates/killboard/campaign_detail.html
 msgid "ISK lost"
 msgstr "损失的 ISK"
@@ -9625,13 +9634,14 @@ msgstr "进度 %%"
 msgid "Trophies"
 msgstr "奖杯"
 
-#: apps/killboard/signature_stats.py
+#: apps/killboard/signature_stats.py apps/killboard/signature_views.py
 #, fuzzy
 #| msgid "Best kill"
 msgid "Last kill"
 msgstr "最佳击杀"
 
-#: apps/killboard/signature_stats.py templates/killboard/cv.html
+#: apps/killboard/signature_stats.py apps/killboard/signature_views.py
+#: templates/killboard/cv.html
 msgid "Best kill"
 msgstr "最佳击杀"
 
@@ -9650,6 +9660,184 @@ msgstr "主要任务"
 #: apps/killboard/signature_stats.py templates/industry/mrp.html
 msgid "Updated"
 msgstr "已更新"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Constraint"
+msgid "Portrait"
+msgstr "约束"
+
+#: apps/killboard/signature_views.py templates/recruitment/list.html
+msgid "Pilot name"
+msgstr "飞行员名称"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "ISK Efficiency"
+msgid "ISK efficiency"
+msgstr "ISK 效率"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Watch ratio"
+msgid "Kill/Death ratio"
+msgstr "关注比率"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Task title"
+msgid "Rank title"
+msgstr "任务标题"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "In progress"
+msgid "Rank progress"
+msgstr "进行中"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Your trophies"
+msgid "Featured trophies"
+msgstr "您的奖杯"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Trophy unlocked"
+msgid "Trophy count"
+msgstr "已解锁奖杯"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Favourite hull"
+msgid "Favourite ship"
+msgstr "最爱舰体"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Top tasks"
+msgid "Top ship class"
+msgstr "主要任务"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Activity signals"
+msgid "Activity period label"
+msgstr "活跃度信号"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "no timestamp"
+msgid "Stats timestamp"
+msgstr "无时间戳"
+
+#: apps/killboard/signature_views.py templates/pilots/contributions.html
+msgid "This month"
+msgstr "本月"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Last 6 months"
+msgid "Last month"
+msgstr "最近 6 个月"
+
+#: apps/killboard/signature_views.py
+msgid "Cyan"
+msgstr ""
+
+#: apps/killboard/signature_views.py
+msgid "Green"
+msgstr ""
+
+#: apps/killboard/signature_views.py apps/pilots/views.py core/features.py
+msgid "This feature is not enabled for this corporation."
+msgstr "此军团未启用该功能。"
+
+#: apps/killboard/signature_views.py
+msgid "Combat Signatures are not enabled."
+msgstr ""
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Doctrines are not available to you."
+msgid "Combat Signatures are not available."
+msgstr "你目前无法使用 doctrine。"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "No such issue."
+msgid "No such signature."
+msgstr "无此问题。"
+
+#: apps/killboard/signature_views.py
+#, python-format
+msgid ""
+"“%(component)s” will not fit the selected layout and size and won't be shown."
+msgstr ""
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Check unavailable right now."
+msgid "Choose an available background."
+msgstr "当前无法执行该检查。"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Campaign created."
+msgid "Combat Signature created."
+msgstr "战役已创建。"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Snapshots"
+msgid "Snapshot renamed."
+msgstr "快照"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Campaign updated."
+msgid "Combat Signature updated."
+msgstr "战役已更新。"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Reward queue"
+msgid "Re-render queued."
+msgstr "奖励队列"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Suppress duplicates"
+msgid "Signature duplicated."
+msgstr "抑制重复"
+
+#: apps/killboard/signature_views.py
+msgid "Converted to a frozen snapshot."
+msgstr ""
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "A new feed URL was generated — the old one no longer works."
+msgid "Public URL rotated — the old link no longer works."
+msgstr "已生成新的订阅源 URL——旧的将不再有效。"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Rule disabled."
+msgid "Signature disabled."
+msgstr "规则已停用。"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Feature enabled"
+msgid "Signature enabled."
+msgstr "功能已启用"
+
+#: apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Rule deleted."
+msgid "Signature deleted."
+msgstr "规则已删除。"
 
 #: apps/killboard/signatures.py
 #, fuzzy
@@ -9793,6 +9981,16 @@ msgstr ""
 #| msgid "This order is already settled."
 msgid "This signature is already a snapshot."
 msgstr "此订单已结清。"
+
+#: apps/killboard/signatures.py
+msgid ""
+"A snapshot's configuration is frozen — create a new signature to change it."
+msgstr ""
+
+#: apps/killboard/signatures.py
+#, python-format
+msgid "%(name)s — Combat Signature"
+msgstr ""
 
 #: apps/killboard/subscriptions.py
 msgid "A webhook URL is required."
@@ -14503,10 +14701,6 @@ msgid ""
 msgstr ""
 "计为成员 PVE 收入的公司钱包 ref_types（以逗号分隔）。公司财务页面会显示您真实"
 "的 ref_types。"
-
-#: apps/pilots/views.py core/features.py
-msgid "This feature is not enabled for this corporation."
-msgstr "此军团未启用该功能。"
 
 #: apps/pingboard/config.py
 msgid "general.dispatch_floor must be an object"
@@ -19824,6 +20018,8 @@ msgstr "贡献账本"
 #: apps/readiness/dimensions/activity.py apps/readiness/dimensions/doctrine.py
 #: templates/_nav.html templates/identity/dashboard.html
 #: templates/killboard/api_tokens.html templates/killboard/setup.html
+#: templates/killboard/signatures/form.html
+#: templates/killboard/signatures/list.html
 #: templates/killboard/subscriptions.html templates/landing.html
 #: templates/navigation/system_detail.html
 msgid "Killboard"
@@ -23911,6 +24107,12 @@ msgstr "赛季"
 msgid "My subscriptions"
 msgstr "我的订阅"
 
+#: templates/_nav.html
+#, fuzzy
+#| msgid "Signature"
+msgid "Signatures"
+msgstr "特征半径"
+
 #: templates/_nav.html templates/killboard/api_tokens.html
 msgid "API access"
 msgstr "API 访问"
@@ -24464,7 +24666,8 @@ msgstr "联盟 id"
 #: templates/admin_audit/console/raffle_prizes.html
 #: templates/buyback/config.html templates/campaigns/form.html
 #: templates/campaigns/workstream_form.html
-#: templates/killboard/campaign_form.html templates/killboard/watchlists.html
+#: templates/killboard/campaign_form.html
+#: templates/killboard/signatures/form.html templates/killboard/watchlists.html
 #: templates/logistics/rates.html templates/market/dashboard.html
 #: templates/mining/payouts.html templates/navigation/beacons.html
 #: templates/stockpile/dashboard.html templates/store/config.html
@@ -24867,7 +25070,8 @@ msgstr "创建军衔"
 #: templates/campaigns/form.html templates/campaigns/milestone_form.html
 #: templates/campaigns/objective_form.html templates/campaigns/risk_form.html
 #: templates/campaigns/workstream_form.html
-#: templates/killboard/campaign_form.html templates/operations/form.html
+#: templates/killboard/campaign_form.html
+#: templates/killboard/signatures/form.html templates/operations/form.html
 #: templates/planetary/wizard.html templates/procurement/supplier_detail.html
 #: templates/tasks/detail.html
 msgid "Save changes"
@@ -25009,7 +25213,8 @@ msgstr "已隐藏"
 #: templates/campaigns/detail.html templates/campaigns/form.html
 #: templates/campaigns/objective_detail.html templates/industry/jobs.html
 #: templates/kb/detail.html templates/kb/edit.html
-#: templates/killboard/campaign_detail.html templates/market/dashboard.html
+#: templates/killboard/campaign_detail.html
+#: templates/killboard/signatures/list.html templates/market/dashboard.html
 #: templates/operations/form.html templates/operations/templates.html
 #: templates/planetary/detail.html templates/procurement/supplier_detail.html
 #: templates/tasks/detail.html
@@ -28057,6 +28262,7 @@ msgid "Offer"
 msgstr "提供"
 
 #: templates/admin_audit/console/i18n.html
+#: templates/killboard/signatures/form.html
 msgid "Language"
 msgstr "语言"
 
@@ -29878,6 +30084,7 @@ msgstr "关闭"
 #: templates/admin_audit/console/pingboard/automation.html
 #: templates/admin_audit/console/pingboard/channels.html
 #: templates/admin_audit/console/pingboard/templates.html
+#: templates/killboard/signatures/list.html
 #: templates/killboard/subscriptions.html
 msgid "Disable"
 msgstr "停用"
@@ -29885,6 +30092,7 @@ msgstr "停用"
 #: templates/admin_audit/console/pingboard/automation.html
 #: templates/admin_audit/console/pingboard/channels.html
 #: templates/admin_audit/console/pingboard/templates.html
+#: templates/killboard/signatures/list.html
 #: templates/killboard/subscriptions.html
 msgid "Enable"
 msgstr "启用"
@@ -38330,7 +38538,7 @@ msgstr "复制配装 (EFT)"
 
 #: templates/doctrines/detail.html templates/doctrines/prep.html
 #: templates/identity/character.html templates/killboard/detail.html
-#: templates/skills/detail.html
+#: templates/killboard/signatures/list.html templates/skills/detail.html
 msgid "Copied ✓"
 msgstr "已复制 ✓"
 
@@ -39762,12 +39970,13 @@ msgstr "创建公开链接"
 msgid "Fit name"
 msgstr "配装名称"
 
-#: templates/fitting/detail.html
+#: templates/fitting/detail.html templates/killboard/signatures/list.html
 msgid "Rename"
 msgstr "重命名"
 
 #: templates/fitting/detail.html templates/fitting/index.html
-#: templates/industry/detail.html templates/planetary/detail.html
+#: templates/industry/detail.html templates/killboard/signatures/list.html
+#: templates/planetary/detail.html
 msgid "Duplicate"
 msgstr "复制"
 
@@ -40190,7 +40399,7 @@ msgstr "训练计划"
 msgid "build a plan"
 msgstr "制定计划"
 
-#: templates/identity/character.html
+#: templates/identity/character.html templates/killboard/signatures/list.html
 msgid "Copy"
 msgstr "复制"
 
@@ -42998,8 +43207,8 @@ msgid ""
 "universal record."
 msgstr "根据 FORCA 自身的 killmail 历史推断——相对于我们的战斗，绝非通用记录。"
 
-#: templates/killboard/_live.html templates/raffle/detail.html
-#: templates/raffle/home.html
+#: templates/killboard/_live.html templates/killboard/signatures/list.html
+#: templates/raffle/detail.html templates/raffle/home.html
 msgid "Live"
 msgstr "进行中"
 
@@ -44872,6 +45081,261 @@ msgid ""
 msgstr ""
 "完整说明请参阅操作员手册中的自托管指南（handbooks/operator-handbook/"
 "killboard-self-host.md）。"
+
+#: templates/killboard/signatures/form.html
+#, fuzzy
+#| msgid "Combat Stats"
+msgid "Edit Combat Signature"
+msgstr "战斗统计"
+
+#: templates/killboard/signatures/form.html
+#, fuzzy
+#| msgid "New combat campaign"
+msgid "New Combat Signature"
+msgstr "新建战斗战役"
+
+#: templates/killboard/signatures/form.html
+#: templates/killboard/signatures/list.html
+#, fuzzy
+#| msgid "Combat Stats"
+msgid "Combat Signatures"
+msgstr "战斗统计"
+
+#: templates/killboard/signatures/form.html
+msgid "Please fix the following"
+msgstr ""
+
+#: templates/killboard/signatures/form.html
+msgid ""
+"This is a frozen snapshot — its stats and layout are pinned to the moment it "
+"was created. Only its name can be changed. To use a different configuration, "
+"create a new signature."
+msgstr ""
+
+#: templates/killboard/signatures/form.html
+#, fuzzy
+#| msgid "Payout"
+msgid "Layout"
+msgstr "派发"
+
+#: templates/killboard/signatures/form.html
+msgid "Size"
+msgstr ""
+
+#: templates/killboard/signatures/form.html
+#, fuzzy
+#| msgid "Background jobs"
+msgid "Background"
+msgstr "后台任务"
+
+#: templates/killboard/signatures/form.html
+#, fuzzy
+#| msgid "Activity mix"
+msgid "Activity period"
+msgstr "活动构成"
+
+#: templates/killboard/signatures/form.html
+#, fuzzy
+#| msgid "Recent settlements"
+msgid "Accent theme"
+msgstr "近期结算"
+
+#: templates/killboard/signatures/form.html
+#, fuzzy
+#| msgid "Automatic measurement"
+msgid "Automatic (my language)"
+msgstr "自动测量"
+
+#: templates/killboard/signatures/form.html
+msgid "Show a “last updated” timestamp on the banner"
+msgstr ""
+
+#: templates/killboard/signatures/form.html
+msgid "Components (in display order)"
+msgstr ""
+
+#: templates/killboard/signatures/form.html
+msgid ""
+"Tick what to show and order it with the arrows. Anything that doesn't fit "
+"the chosen layout and size is dropped from the image."
+msgstr ""
+
+#: templates/killboard/signatures/form.html templates/skills/detail.html
+msgid "Move up"
+msgstr "上移"
+
+#: templates/killboard/signatures/form.html templates/skills/detail.html
+msgid "Move down"
+msgstr "下移"
+
+#: templates/killboard/signatures/form.html
+#, fuzzy, python-format
+#| msgid "Alert rules must be a list."
+msgid "Featured trophies (up to %(n)s)"
+msgstr "警报规则必须是一个列表。"
+
+#: templates/killboard/signatures/form.html
+msgid "Only trophies you've earned appear on the banner."
+msgstr ""
+
+#: templates/killboard/signatures/form.html
+#, fuzzy
+#| msgid "No trophies earned yet."
+msgid "You have no trophies to feature yet."
+msgstr "尚未获得任何奖杯。"
+
+#: templates/killboard/signatures/form.html
+#, fuzzy
+#| msgid "Create intake"
+msgid "Create signature"
+msgstr "创建招募期"
+
+#: templates/killboard/signatures/form.html
+msgid "Preview in new tab"
+msgstr ""
+
+#: templates/killboard/signatures/form.html
+msgid ""
+"The preview uses a placeholder portrait and logos; the published image shows "
+"the real ones after its first render."
+msgstr ""
+
+#: templates/killboard/signatures/list.html
+msgid ""
+"Build a personalised banner from your combat record and embed it in forums, "
+"Discord or a website at a stable public link. The image refreshes on its "
+"own; the editor stays private."
+msgstr ""
+
+#: templates/killboard/signatures/list.html
+#, fuzzy, python-format
+#| msgid "%(active_count)s of %(max_tokens)s active"
+msgid "%(counter)s of %(max)s active"
+msgid_plural "%(counter)s of %(max)s active"
+msgstr[0] "%(active_count)s / %(max_tokens)s 个活跃"
+
+#: templates/killboard/signatures/list.html
+#, fuzzy
+#| msgid "Signature"
+msgid "New signature"
+msgstr "特征半径"
+
+#: templates/killboard/signatures/list.html
+msgid ""
+"You are at your active-signature limit. Disable or delete one to create "
+"another."
+msgstr ""
+
+#: templates/killboard/signatures/list.html
+#, fuzzy
+#| msgid "You haven't connected an ESI token yet."
+msgid "You haven't created any Combat Signatures yet."
+msgstr "你还没有连接 ESI token。"
+
+#: templates/killboard/signatures/list.html
+#, fuzzy
+#| msgid "Snapshots"
+msgid "Snapshot"
+msgstr "快照"
+
+#: templates/killboard/signatures/list.html
+#, fuzzy
+#| msgid "Ordered"
+msgid "Render failed"
+msgstr "订购"
+
+#: templates/killboard/signatures/list.html
+#, fuzzy, python-format
+#| msgid "%(value)s ISK · %(system)s"
+msgid "%(layout)s · %(preset)s"
+msgstr "%(value)s ISK · %(system)s"
+
+#: templates/killboard/signatures/list.html
+#, fuzzy
+#| msgid "Create"
+msgid "Created"
+msgstr "创建"
+
+#: templates/killboard/signatures/list.html
+msgid "The last render didn't complete. Try regenerating it."
+msgstr ""
+
+#: templates/killboard/signatures/list.html
+msgid "Embed"
+msgstr ""
+
+#: templates/killboard/signatures/list.html
+#, fuzzy
+#| msgid "Live embeds:"
+msgid "Hide embed"
+msgstr "实时嵌入:"
+
+#: templates/killboard/signatures/list.html
+#, fuzzy
+#| msgid "Regenerate URL"
+msgid "Regenerate"
+msgstr "重新生成 URL"
+
+#: templates/killboard/signatures/list.html
+msgid ""
+"Freeze this signature as a snapshot? Its stats and layout will stop updating."
+msgstr ""
+
+#: templates/killboard/signatures/list.html
+#, fuzzy
+#| msgid "Asset snapshot"
+msgid "Convert to snapshot"
+msgstr "资产快照"
+
+#: templates/killboard/signatures/list.html
+#, fuzzy
+#| msgid "Generate a new feed URL? The current one will stop working."
+msgid "Rotate the public URL? The current link will stop working immediately."
+msgstr "生成新的订阅源 URL？当前的将停止工作。"
+
+#: templates/killboard/signatures/list.html
+#, fuzzy
+#| msgid "Regenerate URL"
+msgid "Rotate URL"
+msgstr "重新生成 URL"
+
+#: templates/killboard/signatures/list.html
+msgid "Disable this signature? Its public image will stop being served."
+msgstr ""
+
+#: templates/killboard/signatures/list.html
+#, fuzzy
+#| msgid "Cancel this pairing? This cannot be undone."
+msgid "Delete this signature? This cannot be undone."
+msgstr "取消这次配对？此操作无法撤销。"
+
+#: templates/killboard/signatures/list.html
+#, fuzzy
+#| msgid "Director"
+msgid "Direct URL"
+msgstr "董事"
+
+#: templates/killboard/signatures/list.html
+msgid "BBCode (forums)"
+msgstr ""
+
+#: templates/killboard/signatures/list.html
+#, fuzzy
+#| msgid "Markdown:"
+msgid "Markdown"
+msgstr "Markdown:"
+
+#: templates/killboard/signatures/list.html
+msgid "HTML"
+msgstr ""
+
+#: templates/killboard/signatures/list.html
+msgid "Preview on light &amp; dark backgrounds"
+msgstr ""
+
+#: templates/killboard/signatures/list.html
+msgid "The image is served once the signature is active."
+msgstr ""
 
 #: templates/killboard/stats.html
 msgid "Combat stats are corp &amp; alliance only"
@@ -49875,10 +50339,6 @@ msgid "Weighted by leadership across everything you've done for the corp."
 msgstr "由领导层对你为军团所做的一切进行加权。"
 
 #: templates/pilots/contributions.html
-msgid "This month"
-msgstr "本月"
-
-#: templates/pilots/contributions.html
 #, python-format
 msgid "%(n)s event"
 msgid_plural "%(n)s events"
@@ -52890,10 +53350,6 @@ msgid "Add a candidate"
 msgstr "添加候选人"
 
 #: templates/recruitment/list.html
-msgid "Pilot name"
-msgstr "飞行员名称"
-
-#: templates/recruitment/list.html
 msgid "e.g. Stromgren"
 msgstr "例如 Stromgren"
 
@@ -53157,14 +53613,6 @@ msgstr ""
 #: templates/skills/detail.html
 msgid "Est. time"
 msgstr "预计时间"
-
-#: templates/skills/detail.html
-msgid "Move up"
-msgstr "上移"
-
-#: templates/skills/detail.html
-msgid "Move down"
-msgstr "下移"
 
 #: templates/skills/detail.html
 msgid "Undo"

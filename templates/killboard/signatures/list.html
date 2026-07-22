@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Combat Signatures" %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+{% comment %}Combat Signatures (WS-6) — a pilot's own banner images: builder entry, per-row actions
+   and copy-paste embed snippets. House classes + inline styles only (prebuilt Tailwind); every
+   action is a CSRF POST form, destructive ones carry data-confirm (wired in static/js/app.js).{% endcomment %}
+<header class="mb-6">
+  <p class="eyebrow">{% translate "Killboard" %}</p>
+  <div class="flex flex-wrap items-end justify-between gap-3">
+    <div>
+      <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Combat Signatures" %}</h1>
+      <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Build a personalised banner from your combat record and embed it in forums, Discord or a website at a stable public link. The image refreshes on its own; the editor stays private." %}</p>
+    </div>
+    <div class="text-right">
+      <p class="label mb-1">{% blocktranslate count counter=active_count with max=max_active %}{{ counter }} of {{ max }} active{% plural %}{{ counter }} of {{ max }} active{% endblocktranslate %}</p>
+      <a href="{% url 'killboard:signature_create' %}" class="btn-gold !py-1.5 !text-xs">{% translate "New signature" %}</a>
+    </div>
+  </div>
+  {% if at_quota %}<p class="mt-2 text-xs text-gold">{% translate "You are at your active-signature limit. Disable or delete one to create another." %}</p>{% endif %}
+</header>
+
+{% if not rows %}
+  <div class="panel px-4 py-10 text-center text-sm text-faint">{% translate "You haven't created any Combat Signatures yet." %}</div>
+{% else %}
+  <div class="space-y-5">
+    {% for row in rows %}
+    <section class="panel p-5" x-data="{tab:'embed',copied:''}">
+      <div class="flex flex-wrap items-start gap-4">
+        {% comment %}Thumbnail: the public URL renders a valid PNG for active/frozen rows (a pending
+           placeholder until the first render); a disabled row's URL 404s, so show a muted box.{% endcomment %}
+        <div class="shrink-0" style="width:200px">
+          {% if row.servable %}
+            <img src="{{ row.public_url }}" alt="{{ row.alt }}" loading="lazy" style="width:200px;height:auto;border:1px solid #222d3e;border-radius:6px;background:#0a0e16">
+          {% else %}
+            <div class="flex items-center justify-center text-xs text-faint" style="width:200px;height:50px;border:1px solid #222d3e;border-radius:6px;background:#10151f">{% translate "Disabled" %}</div>
+          {% endif %}
+        </div>
+
+        <div class="min-w-0 flex-1">
+          <div class="flex flex-wrap items-center gap-2">
+            <h2 class="truncate text-lg font-semibold text-ink">{{ row.sig.name }}</h2>
+            {% if row.sig.mode == 'snapshot' %}
+              <span class="chip">{% translate "Snapshot" %}</span>
+            {% else %}
+              <span class="chip">{% translate "Live" %}</span>
+            {% endif %}
+            {% comment %}Status chips carry text (not colour alone) for a11y.{% endcomment %}
+            {% if row.sig.status == 'active' %}
+              <span class="chip !border-kill/40 !text-kill">{% translate "Active" %}</span>
+            {% elif row.sig.status == 'frozen' %}
+              <span class="chip !border-gold/40 !text-gold">{% translate "Frozen" %}</span>
+            {% else %}
+              <span class="chip !border-loss/40 !text-loss">{% translate "Disabled" %}</span>
+            {% endif %}
+            {% if row.sig.render_status == 'ok' %}
+              <span class="chip">{% translate "Rendered" %}</span>
+            {% elif row.sig.render_status == 'failed' %}
+              <span class="chip !border-loss/40 !text-loss">{% translate "Render failed" %}</span>
+            {% else %}
+              <span class="chip">{% translate "Pending" %}</span>
+            {% endif %}
+          </div>
+          <p class="mt-1 text-xs text-faint">
+            {% blocktranslate with layout=row.sig.get_layout_display preset=row.sig.get_size_preset_display %}{{ layout }} · {{ preset }}{% endblocktranslate %}
+            · {% translate "Created" %} {{ row.sig.created_at|date:"SHORT_DATETIME_FORMAT" }}{% if row.sig.rendered_at %} · {% translate "Rendered" %} {{ row.sig.rendered_at|date:"SHORT_DATETIME_FORMAT" }}{% endif %}
+          </p>
+          {% if row.sig.render_status == 'failed' %}
+            <p class="mt-1 text-xs text-loss">{% translate "The last render didn't complete. Try regenerating it." %}</p>
+          {% endif %}
+
+          {% comment %}Actions — each an owner-gated CSRF POST; destructive ones confirm first.{% endcomment %}
+          <div class="mt-3 flex flex-wrap items-center gap-2">
+            <a href="{% url 'killboard:signature_edit' row.sig.pk %}" class="btn-ghost !py-1 !text-xs">{% if row.config_locked %}{% translate "Rename" %}{% else %}{% translate "Edit" %}{% endif %}</a>
+            <button type="button" class="btn-ghost !py-1 !text-xs" @click="tab = tab === 'embed' ? '' : 'embed'"><span x-show="tab !== 'embed'">{% translate "Embed" %}</span><span x-show="tab === 'embed'" x-cloak>{% translate "Hide embed" %}</span></button>
+            <form method="post" action="{% url 'killboard:signature_action' row.sig.pk 'regenerate' %}">{% csrf_token %}<button class="btn-ghost !py-1 !text-xs">{% translate "Regenerate" %}</button></form>
+            <form method="post" action="{% url 'killboard:signature_action' row.sig.pk 'duplicate' %}">{% csrf_token %}<button class="btn-ghost !py-1 !text-xs">{% translate "Duplicate" %}</button></form>
+            {% if snapshots_enabled and row.sig.mode == 'live' and row.sig.status == 'active' %}
+            <form method="post" action="{% url 'killboard:signature_action' row.sig.pk 'snapshot' %}" data-confirm="{% translate 'Freeze this signature as a snapshot? Its stats and layout will stop updating.' %}">{% csrf_token %}<button class="btn-ghost !py-1 !text-xs">{% translate "Convert to snapshot" %}</button></form>
+            {% endif %}
+            <form method="post" action="{% url 'killboard:signature_action' row.sig.pk 'rotate' %}" data-confirm="{% translate 'Rotate the public URL? The current link will stop working immediately.' %}">{% csrf_token %}<button class="btn-ghost !py-1 !text-xs">{% translate "Rotate URL" %}</button></form>
+            {% if row.sig.status == 'active' %}
+            <form method="post" action="{% url 'killboard:signature_action' row.sig.pk 'disable' %}" data-confirm="{% translate 'Disable this signature? Its public image will stop being served.' %}">{% csrf_token %}<button class="btn-ghost !py-1 !text-xs">{% translate "Disable" %}</button></form>
+            {% elif row.sig.status == 'disabled' %}
+            <form method="post" action="{% url 'killboard:signature_action' row.sig.pk 'enable' %}">{% csrf_token %}<button class="btn-ghost !py-1 !text-xs">{% translate "Enable" %}</button></form>
+            {% endif %}
+            <form method="post" action="{% url 'killboard:signature_action' row.sig.pk 'delete' %}" data-confirm="{% translate 'Delete this signature? This cannot be undone.' %}">{% csrf_token %}<button class="btn-danger !py-1 !text-xs">{% translate "Delete" %}</button></form>
+          </div>
+        </div>
+      </div>
+
+      {% comment %}Embed panel — readonly snippet fields (each doubles as its own copy source via
+         x-ref) + copy buttons, and a dark/light preview strip. Copy uses the house $refs+writeText
+         Alpine micro-pattern (no fetch — the string is already here).{% endcomment %}
+      <div x-show="tab === 'embed'" x-cloak class="mt-4 border-t border-line pt-4">
+        <div class="grid gap-3 lg:grid-cols-2">
+          <div class="space-y-3">
+            <div>
+              <label class="label mb-1 block" for="sig-{{ row.sig.pk }}-direct">{% translate "Direct URL" %}</label>
+              <div class="flex gap-2">
+                <input id="sig-{{ row.sig.pk }}-direct" x-ref="direct" readonly value="{{ row.embed.direct }}" class="input-field !text-xs" style="user-select:all">
+                <button type="button" class="btn-ghost !py-1 !text-xs" @click="navigator.clipboard.writeText($refs.direct.value);copied='direct';setTimeout(()=>copied='',2000)"><span x-show="copied !== 'direct'">{% translate "Copy" %}</span><span x-show="copied === 'direct'" x-cloak class="text-kill">{% translate "Copied ✓" %}</span></button>
+              </div>
+            </div>
+            <div>
+              <label class="label mb-1 block" for="sig-{{ row.sig.pk }}-bb">{% translate "BBCode (forums)" %}</label>
+              <div class="flex gap-2">
+                <input id="sig-{{ row.sig.pk }}-bb" x-ref="bbcode" readonly value="{{ row.embed.bbcode }}" class="input-field !text-xs" style="user-select:all">
+                <button type="button" class="btn-ghost !py-1 !text-xs" @click="navigator.clipboard.writeText($refs.bbcode.value);copied='bb';setTimeout(()=>copied='',2000)"><span x-show="copied !== 'bb'">{% translate "Copy" %}</span><span x-show="copied === 'bb'" x-cloak class="text-kill">{% translate "Copied ✓" %}</span></button>
+              </div>
+            </div>
+            <div>
+              <label class="label mb-1 block" for="sig-{{ row.sig.pk }}-md">{% translate "Markdown" %}</label>
+              <div class="flex gap-2">
+                <input id="sig-{{ row.sig.pk }}-md" x-ref="markdown" readonly value="{{ row.embed.markdown }}" class="input-field !text-xs" style="user-select:all">
+                <button type="button" class="btn-ghost !py-1 !text-xs" @click="navigator.clipboard.writeText($refs.markdown.value);copied='md';setTimeout(()=>copied='',2000)"><span x-show="copied !== 'md'">{% translate "Copy" %}</span><span x-show="copied === 'md'" x-cloak class="text-kill">{% translate "Copied ✓" %}</span></button>
+              </div>
+            </div>
+            <div>
+              <label class="label mb-1 block" for="sig-{{ row.sig.pk }}-html">{% translate "HTML" %}</label>
+              <div class="flex gap-2">
+                <input id="sig-{{ row.sig.pk }}-html" x-ref="html" readonly value="{{ row.embed.html }}" class="input-field !text-xs" style="user-select:all">
+                <button type="button" class="btn-ghost !py-1 !text-xs" @click="navigator.clipboard.writeText($refs.html.value);copied='html';setTimeout(()=>copied='',2000)"><span x-show="copied !== 'html'">{% translate "Copy" %}</span><span x-show="copied === 'html'" x-cloak class="text-kill">{% translate "Copied ✓" %}</span></button>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p class="label mb-1">{% translate "Preview on light &amp; dark backgrounds" %}</p>
+            {% if row.servable %}
+            <div class="space-y-2">
+              <div class="flex items-center justify-center rounded-md p-3" style="background:#1a1a1a">
+                <img src="{{ row.public_url }}" alt="{{ row.alt }}" loading="lazy" style="max-width:100%;height:auto">
+              </div>
+              <div class="flex items-center justify-center rounded-md p-3" style="background:#f5f5f5">
+                <img src="{{ row.public_url }}" alt="{{ row.alt }}" loading="lazy" style="max-width:100%;height:auto">
+              </div>
+            </div>
+            {% else %}
+            <div class="rounded-md p-3 text-center text-xs text-faint" style="background:#10151f">{% translate "The image is served once the signature is active." %}</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </section>
+    {% endfor %}
+  </div>
+{% endif %}
+{% endblock %}

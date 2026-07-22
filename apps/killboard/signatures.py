@@ -418,3 +418,102 @@ def unfreeze(signature, *, actor=None, ip="") -> CombatSignature:
         signature.save(update_fields=["status", "dirty", "render_status", "updated_at"])
         _audit(actor, "signatures.unfreeze", signature, ip=ip)
     return signature
+
+
+@transaction.atomic
+def update_signature(user, signature, *, name, background, layout, size_preset, config,
+                     language="", ip="") -> CombatSignature:
+    """Apply an owner edit to a LIVE signature: validate, persist and queue a fresh render.
+
+    A config-changing edit bumps ``config_version`` and resets the render + failure ledger
+    (``dirty`` / ``PENDING`` / ``consecutive_failures=0`` / ``render_error=""``) so even a signature
+    the tick parked after repeated failures retries under the new config. A snapshot's config is
+    frozen — rename it with :func:`rename_signature` instead; changing its config raises.
+    """
+    require_edit(user, signature)
+    if signature.mode == CombatSignature.Mode.SNAPSHOT:
+        raise ValidationError(
+            _("A snapshot's configuration is frozen — create a new signature to change it.")
+        )
+    cfg = CombatSignatureSettings.load()
+    clean_name = sanitize_name(name)
+    clean_config = validate_config(
+        config, settings=cfg, background=background, layout=layout, size_preset=size_preset
+    )
+    signature.name = clean_name
+    signature.background = background
+    signature.layout = layout
+    signature.size_preset = size_preset
+    signature.language = language or ""
+    signature.config = clean_config
+    signature.config_version = (signature.config_version or 1) + 1
+    signature.dirty = True
+    signature.render_status = CombatSignature.RenderStatus.PENDING
+    signature.consecutive_failures = 0
+    signature.render_error = ""
+    signature.save(update_fields=[
+        "name", "background", "layout", "size_preset", "language", "config", "config_version",
+        "dirty", "render_status", "consecutive_failures", "render_error", "updated_at",
+    ])
+    _audit(user, "signatures.edit", signature, ip=ip,
+           metadata={"config_version": signature.config_version})
+    return signature
+
+
+@transaction.atomic
+def rename_signature(user, signature, *, name, ip="") -> CombatSignature:
+    """Rename a signature without touching its config or render — the only edit a snapshot allows."""
+    require_edit(user, signature)
+    clean_name = sanitize_name(name)
+    if clean_name != signature.name:
+        signature.name = clean_name
+        signature.save(update_fields=["name", "updated_at"])
+        _audit(user, "signatures.rename", signature, ip=ip)
+    return signature
+
+
+@transaction.atomic
+def delete_signature(user, signature, *, ip="") -> bool:
+    """Owner-delete a signature: remove its DB row and its rendered artifact (a missing file makes
+    the public URL 404 by design). Audited BEFORE the row is gone so the pk/character are recorded.
+    """
+    require_edit(user, signature)
+    token = signature.public_token
+    _audit(user, "signatures.delete", signature, ip=ip)
+    signature.delete()
+    delete_artifact(token)
+    return True
+
+
+# --------------------------------------------------------------------------- #
+#  Embed snippets (built ONLY from the public URL + generated alt — never user HTML/URLs)
+# --------------------------------------------------------------------------- #
+def signature_alt_text(signature) -> str:
+    """Generated, length-capped alt text for a signature's embed ``<img>``.
+
+    Derived from the signature's (already sanitised) name, never raw user markup, and truncated to
+    a forum-friendly 80 characters. The caller/escaper renders it inert in HTML (see
+    :func:`embed_snippets`).
+    """
+    return (_("%(name)s — Combat Signature") % {"name": signature.name})[:80]
+
+
+def embed_snippets(url: str, alt: str) -> dict:
+    """Copy-paste embed snippets for a signature, built ONLY from its public ``url`` + ``alt``.
+
+    No user-supplied URL ever reaches these — ``url`` is the server-derived public banner URL
+    (token charset is URL-safe), so only the generated ``alt`` carries pilot text. The HTML
+    variant attribute-escapes that alt so a name with quotes/angle brackets cannot break out of the
+    ``alt=""`` attribute; the Markdown variant neutralises brackets so it can't break the image
+    syntax. BBCode and the direct URL carry no user text at all.
+    """
+    from django.utils.html import escape
+
+    safe_html_alt = escape(alt)
+    md_alt = alt.replace("[", "(").replace("]", ")")
+    return {
+        "direct": url,
+        "bbcode": f"[img]{url}[/img]",
+        "markdown": f"![{md_alt}]({url})",
+        "html": f'<img src="{url}" alt="{safe_html_alt}">',
+    }

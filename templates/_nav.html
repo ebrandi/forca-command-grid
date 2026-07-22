@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n signature_tags %}
 {% with ns=request.resolver_match.namespace un=request.resolver_match.url_name %}
 {% comment %}Each group is a collapsible accordion section. The body shows/hides and the
    open state persists in localStorage; app.js auto-opens the group holding the
@@ -58,6 +58,7 @@
       <a href="{% url 'killboard:seasons' %}" class="navlink {% if un == 'seasons' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-grid"/></svg> {% translate "Seasons" %}</a>
       <a href="{% url 'killboard:kotw' %}" class="navlink {% if un == 'kotw' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-target"/></svg> {% translate "Kill of the Week" %}</a>
       <a href="{% url 'killboard:subscriptions' %}" class="navlink {% if un == 'subscriptions' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-bell"/></svg> {% translate "My subscriptions" %}</a>
+      {% signatures_enabled as signatures_on %}{% if signatures_on %}<a href="{% url 'killboard:signatures' %}" class="navlink {% if un == 'signatures' or un == 'signature_create' or un == 'signature_edit' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-grid"/></svg> {% translate "Signatures" %}</a>{% endif %}
       <a href="{% url 'killboard:api_tokens' %}" class="navlink {% if un == 'api_tokens' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-bolt"/></svg> {% translate "API access" %}</a>
       {% if is_director %}<a href="{% url 'killboard:setup' %}" class="navlink {% if un == 'setup' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-grid"/></svg> {% translate "Setup" %}</a>{% endif %}{% endif %}
       {% if features.knowledge_base %}<a href="{% url 'kb:list' %}" class="navlink {% if ns == 'kb' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-rookie"/></svg> {% translate "Knowledge base" %}</a>{% endif %}

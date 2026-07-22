@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% load i18n static %}
+{% block title %}{% if editing %}{% translate "Edit Combat Signature" %}{% else %}{% translate "New Combat Signature" %}{% endif %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+{% comment %}Combat Signatures builder (WS-6) — shared by create + edit. House classes + inline
+   styles only. All interactivity is Alpine directives (no native on* handlers, no custom JS block):
+   the component list reorders in-place (checked boxes submit in DOM order), the background gallery
+   is a radio group with a selection ring, and Preview POSTs the whole form to preview.png in a new
+   tab via formaction/formtarget (CSRF-protected, no JS).{% endcomment %}
+<a href="{% url 'killboard:signatures' %}" class="text-xs text-faint hover:text-gold">← {% translate "Combat Signatures" %}</a>
+<header class="mt-2 mb-6">
+  <p class="eyebrow">{% translate "Killboard" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% if editing %}{% translate "Edit Combat Signature" %}{% else %}{% translate "New Combat Signature" %}{% endif %}</h1>
+</header>
+
+{% if error_messages %}
+<div class="panel mb-4 border-l-2 border-loss p-4" role="alert">
+  <p class="label mb-1 text-loss">{% translate "Please fix the following" %}</p>
+  <ul class="list-disc pl-5 text-sm text-ink">{% for msg in error_messages %}<li>{{ msg }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+{% if warnings %}
+<div class="panel mb-4 border-l-2 border-gold p-4" role="status">
+  <ul class="list-disc pl-5 text-sm text-ink">{% for msg in warnings %}<li>{{ msg }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+
+<form method="post" action="{% if editing %}{% url 'killboard:signature_edit' sig.pk %}{% else %}{% url 'killboard:signature_create' %}{% endif %}" class="panel max-w-3xl space-y-5 p-5">
+  {% csrf_token %}
+
+  <div>
+    <label class="eyebrow mb-1 block text-faint" for="sig-name">{% translate "Name" %} *</label>
+    <input id="sig-name" name="name" type="text" required maxlength="60" value="{{ form.name }}" class="input-field">
+  </div>
+
+  {% if config_locked %}
+  <div class="border-t border-line pt-4 text-sm text-faint">
+    {% translate "This is a frozen snapshot — its stats and layout are pinned to the moment it was created. Only its name can be changed. To use a different configuration, create a new signature." %}
+  </div>
+  {% else %}
+
+  <div class="grid gap-4 sm:grid-cols-2">
+    <div>
+      <label class="eyebrow mb-1 block text-faint" for="sig-layout">{% translate "Layout" %}</label>
+      <select id="sig-layout" name="layout" class="input-field">
+        {% for value, label in layout_choices %}<option value="{{ value }}" {% if form.layout == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="eyebrow mb-1 block text-faint" for="sig-preset">{% translate "Size" %}</label>
+      <select id="sig-preset" name="size_preset" class="input-field">
+        {% for value, label in size_preset_choices %}<option value="{{ value }}" {% if form.size_preset == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+  </div>
+
+  {% comment %}Background gallery — enabled designs by display order, as a radio group with a visible
+     selection ring (inline outline, since new Tailwind utilities won't compile). Keyboard navigable:
+     the real radios stay focusable (sr-only), the label/thumbnail is the visible target.{% endcomment %}
+  <fieldset x-data="{bg: '{{ form.background_id }}'}">
+    <legend class="eyebrow mb-1 text-faint">{% translate "Background" %}</legend>
+    <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+      {% for bg in backgrounds %}
+      <label class="block cursor-pointer rounded-md p-1" :style="bg === '{{ bg.id }}' ? 'outline:2px solid #f4a52b' : 'outline:1px solid #222d3e'">
+        <input type="radio" name="background" value="{{ bg.id }}" x-model="bg" class="sr-only" {% if form.background_id == bg.id %}checked{% endif %}>
+        {% with thumb="killboard/sigbg/"|add:bg.key|add:"/thumb.png" %}
+        <img src="{% static thumb %}" alt="{{ bg.name }}" loading="lazy" style="width:100%;height:auto;border-radius:4px;display:block">
+        {% endwith %}
+        <span class="mt-1 block truncate text-center text-xs text-muted">{{ bg.name }}</span>
+      </label>
+      {% endfor %}
+    </div>
+  </fieldset>
+
+  <div class="grid gap-4 sm:grid-cols-3">
+    <div>
+      <label class="eyebrow mb-1 block text-faint" for="sig-period">{% translate "Activity period" %}</label>
+      <select id="sig-period" name="period" class="input-field">
+        {% for value, label in period_choices %}<option value="{{ value }}" {% if form.period == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="eyebrow mb-1 block text-faint" for="sig-theme">{% translate "Accent theme" %}</label>
+      <select id="sig-theme" name="theme" class="input-field">
+        {% for value, label in theme_choices %}<option value="{{ value }}" {% if form.theme == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="eyebrow mb-1 block text-faint" for="sig-language">{% translate "Language" %}</label>
+      <select id="sig-language" name="language" class="input-field">
+        <option value="" {% if not form.language %}selected{% endif %}>{% translate "Automatic (my language)" %}</option>
+        {% for code, label in languages %}<option value="{{ code }}" {% if form.language == code %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <label class="flex items-center gap-2 text-sm">
+    <input type="checkbox" name="show_timestamp" value="1" {% if form.show_timestamp %}checked{% endif %}>
+    <span class="text-ink">{% translate "Show a “last updated” timestamp on the banner" %}</span>
+  </label>
+
+  {% comment %}Components — checkbox + up/down per row (no drag-drop, keyboard accessible). Alpine
+     renders the list in array order; because browsers submit successful controls in DOM order, a
+     plain getlist('components') on the server recovers the pilot's chosen order.{% endcomment %}
+  <fieldset x-data="{items: JSON.parse(document.getElementById('sig-components').textContent)}">
+    <legend class="eyebrow mb-1 text-faint">{% translate "Components (in display order)" %}</legend>
+    <p class="mb-2 text-xs text-faint">{% translate "Tick what to show and order it with the arrows. Anything that doesn't fit the chosen layout and size is dropped from the image." %}</p>
+    <div class="divide-y divide-line rounded-md border border-line">
+      <template x-for="(item, index) in items" :key="item.id">
+        <div class="flex items-center gap-2 px-3 py-1.5">
+          <input type="checkbox" name="components" :value="item.id" x-model="item.checked" :id="'comp-' + item.id">
+          <label class="flex-1 text-sm text-ink" :for="'comp-' + item.id" x-text="item.label"></label>
+          <button type="button" class="btn-ghost !px-2 !py-0.5 !text-xs" aria-label="{% translate 'Move up' %}" :disabled="index === 0" @click="if (index > 0) items.splice(index - 1, 2, items[index], items[index - 1])">↑</button>
+          <button type="button" class="btn-ghost !px-2 !py-0.5 !text-xs" aria-label="{% translate 'Move down' %}" :disabled="index === items.length - 1" @click="if (index < items.length - 1) items.splice(index, 2, items[index + 1], items[index])">↓</button>
+        </div>
+      </template>
+    </div>
+  </fieldset>
+  {{ component_items|json_script:"sig-components" }}
+
+  {% if trophy_options %}
+  <fieldset>
+    <legend class="eyebrow mb-1 text-faint">{% blocktranslate with n=max_featured %}Featured trophies (up to {{ n }}){% endblocktranslate %}</legend>
+    <div class="flex flex-wrap gap-x-4 gap-y-1">
+      {% for opt in trophy_options %}
+      <label class="flex items-center gap-1.5 text-sm">
+        <input type="checkbox" name="featured_trophy_ids" value="{{ opt.id }}" {% if opt.checked %}checked{% endif %}>
+        <span class="text-ink">{{ opt.name }}</span>
+      </label>
+      {% endfor %}
+    </div>
+    <p class="mt-1 text-xs text-faint">{% translate "Only trophies you've earned appear on the banner." %}</p>
+  </fieldset>
+  {% else %}
+  <p class="text-xs text-faint">{% translate "You have no trophies to feature yet." %}</p>
+  {% endif %}
+
+  {% endif %}{# /config_locked #}
+
+  <div class="flex flex-wrap items-center gap-3 border-t border-line pt-4">
+    <button type="submit" class="btn-gold">{% if editing %}{% translate "Save changes" %}{% else %}{% translate "Create signature" %}{% endif %}</button>
+    {% if not config_locked %}
+    <button type="submit" class="btn-cyan" formaction="{% url 'killboard:signature_preview' %}" formtarget="_blank">{% translate "Preview in new tab" %}</button>
+    {% endif %}
+    <a href="{% url 'killboard:signatures' %}" class="btn-ghost">{% translate "Cancel" %}</a>
+  </div>
+  {% if not config_locked %}
+  <p class="label" style="margin-top:0.5rem;">{% translate "The preview uses a placeholder portrait and logos; the published image shows the real ones after its first render." %}</p>
+  {% endif %}
+</form>
+{% endblock %}
