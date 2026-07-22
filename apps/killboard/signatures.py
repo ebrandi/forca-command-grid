@@ -360,6 +360,44 @@ def enable(user, signature, *, ip="") -> CombatSignature:
     return signature
 
 
+# --------------------------------------------------------------------------- #
+#  Admin (system) moderation — skips the owner ceiling (WS-7 console)
+# --------------------------------------------------------------------------- #
+@transaction.atomic
+def admin_disable(signature, *, actor=None, ip="") -> CombatSignature:
+    """Leadership-disable ANY pilot's signature from the admin console (skips :func:`require_edit`).
+
+    A moderation action, not an owner edit: the acting director need not be the owner, so there is
+    no LP-4 ownership check here — the console view that calls this is Officer/Director-gated. Like
+    the owner :func:`disable`, it stops the banner serving (its artifact is removed so the public
+    URL 404s) but keeps the row. Audited as ``signatures.admin_disable`` with the director as actor.
+    """
+    if signature.status != CombatSignature.Status.DISABLED:
+        signature.status = CombatSignature.Status.DISABLED
+        signature.save(update_fields=["status", "updated_at"])
+        delete_artifact(signature.public_token)
+        _audit(actor, "signatures.admin_disable", signature, ip=ip)
+    return signature
+
+
+@transaction.atomic
+def admin_enable(signature, *, actor=None, ip="") -> CombatSignature:
+    """Leadership re-activate ANY pilot's signature from the admin console (skips :func:`require_edit`).
+
+    Reverses an admin disable: the owner ceiling is not consulted (moderation, not an owner edit)
+    and — unlike the owner :func:`enable` — the pilot's active-signature quota is NOT re-checked,
+    because restoring a signature leadership previously disabled is a deliberate override, not a
+    self-service create. Queues a fresh render. Audited as ``signatures.admin_enable``.
+    """
+    if signature.status != CombatSignature.Status.ACTIVE:
+        signature.status = CombatSignature.Status.ACTIVE
+        signature.dirty = True
+        signature.render_status = CombatSignature.RenderStatus.PENDING
+        signature.save(update_fields=["status", "dirty", "render_status", "updated_at"])
+        _audit(actor, "signatures.admin_enable", signature, ip=ip)
+    return signature
+
+
 @transaction.atomic
 def take_snapshot(user, signature, *, ip="") -> CombatSignature:
     """Convert a live signature to a frozen snapshot (live→snapshot only).

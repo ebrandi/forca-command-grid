@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-22 19:51+0000\n"
+"POT-Creation-Date: 2026-07-22 20:25+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: ru machine-assisted draft\n"
@@ -353,6 +353,18 @@ msgid "Capsuleer Path reconcile"
 msgstr "Сверка Capsuleer Path"
 
 #: apps/admin_audit/console.py
+#, fuzzy
+#| msgid "Doctrines are not available to you."
+msgid "Combat Signatures — re-render all"
+msgstr "Doctrines вам недоступны."
+
+#: apps/admin_audit/console.py
+#, fuzzy
+#| msgid "Campaign created."
+msgid "Combat Signatures — clean up orphaned images"
+msgstr "Кампания создана."
+
+#: apps/admin_audit/console.py
 msgid "Unknown maintenance action."
 msgstr "Неизвестное действие обслуживания."
 
@@ -456,7 +468,8 @@ msgstr "Ранг «%(name)s» сохранён."
 #: apps/admin_audit/console_industry.py apps/admin_audit/console_mentorship.py
 #: apps/admin_audit/console_navigation.py apps/admin_audit/console_pingboard.py
 #: apps/admin_audit/console_planetary.py apps/admin_audit/console_raffle.py
-#: apps/industry/views_capacity.py apps/logistics/views_freight.py
+#: apps/industry/views_capacity.py apps/killboard/console_signatures.py
+#: apps/logistics/views_freight.py
 msgid "Please correct the errors below."
 msgstr "Пожалуйста, исправьте ошибки ниже."
 
@@ -494,9 +507,9 @@ msgstr "Сканирование наград завершено — созда�
 
 #: apps/admin_audit/console_combat.py apps/buyback/views.py
 #: apps/capsuleer/views.py apps/industry/views_mrp.py
-#: apps/killboard/signature_views.py apps/logistics/views.py
-#: apps/procurement/views.py apps/stockpile/views.py apps/store/views.py
-#: apps/store/views_inventory.py
+#: apps/killboard/console_signatures.py apps/killboard/signature_views.py
+#: apps/logistics/views.py apps/procurement/views.py apps/stockpile/views.py
+#: apps/store/views.py apps/store/views_inventory.py
 msgid "Unknown action."
 msgstr "Неизвестное действие."
 
@@ -3622,6 +3635,7 @@ msgstr "Приостановить"
 #: templates/admin_audit/console/raffle_form.html
 #: templates/admin_audit/console/recommendations_tuning.html
 #: templates/admin_audit/console/relay_settings.html
+#: templates/admin_audit/console/signatures_settings.html
 #: templates/admin_audit/console/structure_alerts.html
 #: templates/buyback/board.html templates/buyback/offer.html
 #: templates/campaigns/close.html templates/campaigns/form.html
@@ -4485,6 +4499,8 @@ msgstr "Отклонено"
 #: templates/admin_audit/console/raffle_ineligible.html
 #: templates/admin_audit/console/raffle_ledger.html
 #: templates/admin_audit/console/raffle_stats.html
+#: templates/admin_audit/console/signatures_dashboard.html
+#: templates/admin_audit/console/signatures_search.html
 #: templates/corporation/roster.html templates/doctrines/list.html
 #: templates/doctrines/ships.html templates/identity/linked_pilots.html
 #: templates/industry/capacity.html templates/killboard/compare.html
@@ -6900,8 +6916,9 @@ msgstr "12 месяцев"
 msgid "Year to date"
 msgstr "С начала года"
 
-#: apps/corporation/finance_analytics.py apps/killboard/leaderboards.py
-#: apps/killboard/signature_views.py templates/killboard/_feed.html
+#: apps/corporation/finance_analytics.py apps/killboard/console_signatures.py
+#: apps/killboard/leaderboards.py apps/killboard/signature_views.py
+#: templates/killboard/_feed.html
 msgid "All time"
 msgstr "За всё время"
 
@@ -8883,6 +8900,103 @@ msgstr "Логотип должен быть https:// URL или путём /sta
 msgid "Logo URL is too long."
 msgstr "URL логотипа слишком длинный."
 
+#: apps/killboard/console_signatures.py apps/killboard/leaderboards.py
+#: apps/killboard/signature_views.py
+msgid "Last 7 days"
+msgstr "Последние 7 дней"
+
+#: apps/killboard/console_signatures.py apps/killboard/leaderboards.py
+#: apps/killboard/signature_views.py
+msgid "Last 30 days"
+msgstr "Последние 30 дней"
+
+#: apps/killboard/console_signatures.py apps/killboard/leaderboards.py
+#: apps/killboard/signature_views.py
+msgid "Last 90 days"
+msgstr "Последние 90 дней"
+
+#: apps/killboard/console_signatures.py apps/killboard/signature_views.py
+#: templates/pilots/contributions.html
+msgid "This month"
+msgstr "Этот месяц"
+
+#: apps/killboard/console_signatures.py apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Last 6 months"
+msgid "Last month"
+msgstr "Последние 6 месяцев"
+
+#: apps/killboard/console_signatures.py
+msgid ""
+"Which banner sizes pilots may choose. Leave all ticked to allow every size."
+msgstr ""
+
+#: apps/killboard/console_signatures.py
+#, fuzzy
+#| msgid "Window must be at least 1 minute."
+msgid "Pilots must be allowed at least one signature."
+msgstr "Окно должно быть не менее 1 минуты."
+
+#: apps/killboard/console_signatures.py
+#, fuzzy
+#| msgid "The per-cycle quantity must be at least 1."
+msgid "The refresh interval must be at least one hour."
+msgstr "Количество за цикл должно быть не менее 1."
+
+#: apps/killboard/console_signatures.py
+#, python-format
+msgid "committed file “%(f)s” is missing"
+msgstr ""
+
+#: apps/killboard/console_signatures.py
+#, python-format
+msgid "committed file “%(f)s” does not match its recorded checksum"
+msgstr ""
+
+#: apps/killboard/console_signatures.py
+msgid "not present in the manifest"
+msgstr ""
+
+#: apps/killboard/console_signatures.py
+msgid "database checksum is out of sync with the manifest"
+msgstr ""
+
+#: apps/killboard/console_signatures.py
+#, fuzzy
+#| msgid "Campaign created."
+msgid "Combat Signature settings saved."
+msgstr "Кампания создана."
+
+#: apps/killboard/console_signatures.py
+#, fuzzy
+#| msgid "Candidate updated."
+msgid "Background catalogue updated."
+msgstr "Кандидат обновлён."
+
+#: apps/killboard/console_signatures.py
+#, fuzzy
+#| msgid "No changes to save"
+msgid "No changes to save."
+msgstr "Нет изменений для сохранения"
+
+#: apps/killboard/console_signatures.py apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Rule disabled."
+msgid "Signature disabled."
+msgstr "Правило отключено."
+
+#: apps/killboard/console_signatures.py
+#, fuzzy
+#| msgid "Feature enabled"
+msgid "Signature re-enabled."
+msgstr "Функция включена"
+
+#: apps/killboard/console_signatures.py apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Reward queue"
+msgid "Re-render queued."
+msgstr "Очередь наград"
+
 #: apps/killboard/fitrender.py
 msgid "High slots"
 msgstr "Высокие слоты"
@@ -8999,14 +9113,6 @@ msgstr "Абиссальный"
 msgid "Pochven"
 msgstr "Pochven"
 
-#: apps/killboard/leaderboards.py apps/killboard/signature_views.py
-msgid "Last 7 days"
-msgstr "Последние 7 дней"
-
-#: apps/killboard/leaderboards.py apps/killboard/signature_views.py
-msgid "Last 90 days"
-msgstr "Последние 90 дней"
-
 #: apps/killboard/leaderboards.py
 #, python-format
 msgid "This month · %(month)s"
@@ -9016,10 +9122,6 @@ msgstr "Этот месяц · %(month)s"
 #, python-format
 msgid "Last month · %(month)s"
 msgstr "Прошлый месяц · %(month)s"
-
-#: apps/killboard/leaderboards.py apps/killboard/signature_views.py
-msgid "Last 30 days"
-msgstr "Последние 30 дней"
 
 #: apps/killboard/leaderboards.py
 msgid "Untested"
@@ -10074,16 +10176,6 @@ msgstr "Сигналы активности"
 msgid "Stats timestamp"
 msgstr "нет отметки времени"
 
-#: apps/killboard/signature_views.py templates/pilots/contributions.html
-msgid "This month"
-msgstr "Этот месяц"
-
-#: apps/killboard/signature_views.py
-#, fuzzy
-#| msgid "Last 6 months"
-msgid "Last month"
-msgstr "Последние 6 месяцев"
-
 #: apps/killboard/signature_views.py
 msgid "Cyan"
 msgstr ""
@@ -10144,12 +10236,6 @@ msgstr "Кампания обновлена."
 
 #: apps/killboard/signature_views.py
 #, fuzzy
-#| msgid "Reward queue"
-msgid "Re-render queued."
-msgstr "Очередь наград"
-
-#: apps/killboard/signature_views.py
-#, fuzzy
 #| msgid "Suppress duplicates"
 msgid "Signature duplicated."
 msgstr "Подавлять дубликаты"
@@ -10163,12 +10249,6 @@ msgstr ""
 #| msgid "A new feed URL was generated — the old one no longer works."
 msgid "Public URL rotated — the old link no longer works."
 msgstr "Сгенерирован новый URL ленты — старый больше не работает."
-
-#: apps/killboard/signature_views.py
-#, fuzzy
-#| msgid "Rule disabled."
-msgid "Signature disabled."
-msgstr "Правило отключено."
 
 #: apps/killboard/signature_views.py
 #, fuzzy
@@ -25075,8 +25155,11 @@ msgstr "· только для чтения · вы %(actor)s"
 msgid "Exit — return to your account"
 msgstr "Выход — вернуться в свой аккаунт"
 
-#: templates/_nav.html templates/identity/character.html
-#: templates/pingboard/dashboard.html
+#: templates/_nav.html
+#: templates/admin_audit/console/signatures_backgrounds.html
+#: templates/admin_audit/console/signatures_search.html
+#: templates/admin_audit/console/signatures_settings.html
+#: templates/identity/character.html templates/pingboard/dashboard.html
 msgid "Dashboard"
 msgstr "Панель"
 
@@ -25168,7 +25251,7 @@ msgstr "Сезоны"
 msgid "My subscriptions"
 msgstr "Мои подписки"
 
-#: templates/_nav.html
+#: templates/_nav.html templates/admin_audit/console/signatures_dashboard.html
 #, fuzzy
 #| msgid "Signature"
 msgid "Signatures"
@@ -25906,6 +25989,7 @@ msgstr "Скрыть «%(name)s»"
 #: templates/admin_audit/console/mentorship/config.html
 #: templates/admin_audit/console/planetary/config.html
 #: templates/admin_audit/console/raffle_config.html
+#: templates/admin_audit/console/signatures_settings.html
 #: templates/buyback/config.html templates/industry/capacity.html
 #: templates/killboard/killfeed_config.html templates/logistics/freight.html
 #: templates/srp/settings.html templates/store/config.html
@@ -25968,6 +26052,10 @@ msgstr "Изменить %(name)s"
 #: templates/admin_audit/console/combat_ranks.html
 #: templates/admin_audit/console/combat_rewards.html
 #: templates/admin_audit/console/combat_settings.html
+#: templates/admin_audit/console/signatures_backgrounds.html
+#: templates/admin_audit/console/signatures_dashboard.html
+#: templates/admin_audit/console/signatures_search.html
+#: templates/admin_audit/console/signatures_settings.html
 msgid "Killboard · Leadership"
 msgstr "Killboard · Руководство"
 
@@ -26449,6 +26537,7 @@ msgstr "Достигнут"
 #: templates/admin_audit/console/pingboard/automation.html
 #: templates/admin_audit/console/pingboard/channels.html
 #: templates/admin_audit/console/pingboard/templates.html
+#: templates/admin_audit/console/signatures_search.html
 #: templates/logistics/freight_detail.html templates/market/dashboard.html
 #: templates/procurement/po_detail.html templates/skills/detail.html
 #: templates/store/inventory_fit.html
@@ -26524,10 +26613,13 @@ msgstr ""
 #: templates/admin_audit/console/notifications.html
 #: templates/admin_audit/console/readiness/dimensions.html
 #: templates/admin_audit/console/readiness/kpis.html
+#: templates/admin_audit/console/signatures_backgrounds.html
+#: templates/admin_audit/console/signatures_dashboard.html
 msgid "Enabled"
 msgstr "Включено"
 
 #: templates/admin_audit/console/combat_settings.html
+#: templates/admin_audit/console/signatures_dashboard.html
 msgid "Disabled (dark)"
 msgstr "Отключено (тёмный)"
 
@@ -27766,6 +27858,7 @@ msgstr "Вех пока нет — добавьте первую ниже."
 #: templates/admin_audit/console/pingboard/templates.html
 #: templates/admin_audit/console/raffle_grant.html
 #: templates/admin_audit/console/readiness/mandatory_ships.html
+#: templates/admin_audit/console/signatures_backgrounds.html
 #: templates/campaigns/form.html templates/campaigns/lessons.html
 #: templates/campaigns/portfolio.html templates/campaigns/template_picker.html
 #: templates/corporation/finance.html templates/doctrines/list.html
@@ -28984,9 +29077,11 @@ msgstr ""
 #: templates/admin_audit/console/hub.html
 #: templates/admin_audit/console/notifications.html
 #: templates/admin_audit/console/pingboard/settings.html
-#: templates/admin_audit/console/raffle_hub.html templates/buyback/board.html
-#: templates/buyback/guaranteed_queue.html templates/industry/capacity.html
-#: templates/srp/queue.html templates/store/board.html
+#: templates/admin_audit/console/raffle_hub.html
+#: templates/admin_audit/console/signatures_dashboard.html
+#: templates/buyback/board.html templates/buyback/guaranteed_queue.html
+#: templates/industry/capacity.html templates/srp/queue.html
+#: templates/store/board.html
 msgid "Settings"
 msgstr "Настройки"
 
@@ -29316,6 +29411,21 @@ msgid ""
 msgstr ""
 "Проверяйте, одобряйте и отмечайте выплаченными награды, которые пилоты "
 "получают за достижение новых боевых рангов."
+
+#: templates/admin_audit/console/hub.html
+#: templates/admin_audit/console/signatures_dashboard.html
+#: templates/killboard/signatures/form.html
+#: templates/killboard/signatures/list.html
+#, fuzzy
+#| msgid "Combat Stats"
+msgid "Combat Signatures"
+msgstr "Боевая статистика"
+
+#: templates/admin_audit/console/hub.html
+msgid ""
+"Banner render health, per-pilot search and moderation, background curation "
+"and leadership settings."
+msgstr ""
 
 #: templates/admin_audit/console/hub.html
 msgid ""
@@ -29845,6 +29955,7 @@ msgstr ""
 "отправная точка и корпоративные списки избегания."
 
 #: templates/admin_audit/console/jump_planner_settings.html
+#: templates/admin_audit/console/signatures_settings.html
 #: templates/doctrines/ships.html templates/store/inventory.html
 msgid "Availability"
 msgstr "Доступность"
@@ -31453,6 +31564,7 @@ msgstr "Последнее срабатывание"
 #: templates/admin_audit/console/pingboard/channels.html
 #: templates/admin_audit/console/pingboard/templates.html
 #: templates/admin_audit/console/raffle_detail.html
+#: templates/admin_audit/console/signatures_search.html
 #: templates/readiness/alerts.html templates/store/inventory.html
 msgid "State"
 msgstr "Состояние"
@@ -31482,6 +31594,7 @@ msgstr "выкл"
 #: templates/admin_audit/console/pingboard/automation.html
 #: templates/admin_audit/console/pingboard/channels.html
 #: templates/admin_audit/console/pingboard/templates.html
+#: templates/admin_audit/console/signatures_search.html
 #: templates/killboard/signatures/list.html
 #: templates/killboard/subscriptions.html
 msgid "Disable"
@@ -31490,6 +31603,7 @@ msgstr "Отключить"
 #: templates/admin_audit/console/pingboard/automation.html
 #: templates/admin_audit/console/pingboard/channels.html
 #: templates/admin_audit/console/pingboard/templates.html
+#: templates/admin_audit/console/signatures_search.html
 #: templates/killboard/signatures/list.html
 #: templates/killboard/subscriptions.html
 msgid "Enable"
@@ -32285,6 +32399,7 @@ msgid "Corp defaults and shared pilot plans."
 msgstr "Значения по умолчанию для корпа и общие планы пилотов."
 
 #: templates/admin_audit/console/planetary/hub.html
+#: templates/admin_audit/console/signatures_dashboard.html
 msgid "Edit settings"
 msgstr "Изменить настройки"
 
@@ -33781,6 +33896,7 @@ msgstr "Любой статус"
 
 #: templates/admin_audit/console/raffle_ledger.html
 #: templates/admin_audit/console/recovery.html
+#: templates/admin_audit/console/signatures_search.html
 #: templates/campaigns/portfolio.html templates/campaigns/template_picker.html
 #: templates/capsuleer/paths.html templates/doctrines/list.html
 #: templates/fitting/detail.html templates/fitting/load_doctrine.html
@@ -35227,6 +35343,396 @@ msgstr ""
 "вручную. Результаты появятся в разделе <a href=\"%(health_url)s\" "
 "class=\"text-gold hover:underline\">Интеграции</a>."
 
+#: templates/admin_audit/console/signatures_backgrounds.html
+#, fuzzy
+#| msgid "Signature"
+msgid "Signature backgrounds"
+msgstr "Сигнатура"
+
+#: templates/admin_audit/console/signatures_backgrounds.html
+#, python-format
+msgid ""
+"%(n)s background(s) offered to pilots. Enable, disable and reorder the built-"
+"in library — new art ships with the app, so there is nothing to upload."
+msgstr ""
+
+#: templates/admin_audit/console/signatures_backgrounds.html
+#, fuzzy
+#| msgid "Review"
+msgid "Preview"
+msgstr "Рассмотреть"
+
+#: templates/admin_audit/console/signatures_backgrounds.html
+#: templates/killboard/signatures/form.html
+#, fuzzy
+#| msgid "Background jobs"
+msgid "Background"
+msgstr "Фоновые задачи"
+
+#: templates/admin_audit/console/signatures_backgrounds.html
+#: templates/doctrines/detail.html templates/doctrines/ships.html
+#: templates/procurement/board.html templates/procurement/po_detail.html
+#: templates/procurement/pos.html templates/procurement/supplier_detail.html
+#: templates/skills/detail.html templates/store/order.html
+msgid "Order"
+msgstr "Заказать"
+
+#: templates/admin_audit/console/signatures_backgrounds.html
+#, fuzzy, python-format
+#| msgid "Enable %(label)s"
+msgid "Enable %(name)s"
+msgstr "Включить %(label)s"
+
+#: templates/admin_audit/console/signatures_backgrounds.html
+#, fuzzy, python-format
+#| msgid "Copy of %(name)s"
+msgid "Display order for %(name)s"
+msgstr "Копия %(name)s"
+
+#: templates/admin_audit/console/signatures_backgrounds.html
+msgid "No backgrounds are seeded yet. Run the background sync command."
+msgstr ""
+
+#: templates/admin_audit/console/signatures_backgrounds.html
+#, fuzzy
+#| msgid "The catalogue"
+msgid "Save catalogue"
+msgstr "Каталог"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+msgid ""
+"Pilot-authored public banner images. Watch render health, moderate a pilot's "
+"signatures, curate the background library and set the leadership options."
+msgstr ""
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, fuzzy
+#| msgid "Search pilots…"
+msgid "Search pilots"
+msgstr "Поиск пилотов…"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, fuzzy
+#| msgid "Background jobs"
+msgid "Backgrounds"
+msgstr "Фоновые задачи"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, fuzzy
+#| msgid "Features"
+msgid "Feature"
+msgstr "Возможности"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, python-format
+msgid "Up to %(n)s active per pilot · refresh every %(h)sh."
+msgstr ""
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, python-format
+msgid "%(a)s active · %(d)s disabled · %(f)s frozen"
+msgstr ""
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, fuzzy
+#| msgid "Ordered"
+msgid "Rendered OK"
+msgstr "Заказано"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, fuzzy, python-format
+#| msgid "pending"
+msgid "%(p)s pending"
+msgstr "в ожидании"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, fuzzy
+#| msgid "Failed in-game"
+msgid "Failed renders"
+msgstr "Проверка в игре не пройдена"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, fuzzy, python-format
+#| msgid "%(n)s recent failures"
+msgid "%(n)s parked at the failure ceiling"
+msgstr "%(n)s недавних сбоев"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, fuzzy
+#| msgid "Coverage"
+msgid "Storage"
+msgstr "Покрытие"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, fuzzy, python-format
+#| msgid "%(count)s items · %(vol)s m³"
+msgid "%(c)s files · ~%(o)s orphaned"
+msgstr "%(count)s предметов · %(vol)s m³"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, python-format
+msgid "Oldest pending render is waiting %(age)s."
+msgstr ""
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, fuzzy
+#| msgid "Background jobs"
+msgid "Background provenance"
+msgstr "Фоновые задачи"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, python-format
+msgid "All %(n)s enabled backgrounds verified"
+msgstr ""
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, fuzzy
+#| msgid "action needed"
+msgid "Attention needed"
+msgstr "нужно действие"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, python-format
+msgid "The background manifest failed to load: %(err)s"
+msgstr ""
+
+#: templates/admin_audit/console/signatures_dashboard.html
+msgid "Every enabled background's committed art matches its recorded checksum."
+msgstr ""
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, python-format
+msgid "Parked renders (failed %(n)s+ times)"
+msgstr ""
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#: templates/admin_audit/console/signatures_search.html
+#: templates/fitting/_telemetry.html
+msgid "Signature"
+msgstr "Сигнатура"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, fuzzy
+#| msgid "Fails"
+msgid "Failures"
+msgstr "Сбоев"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, fuzzy
+#| msgid "error"
+msgid "Last error"
+msgstr "ошибка"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+msgid "No signatures are parked — nothing has hit the failure ceiling."
+msgstr ""
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, fuzzy
+#| msgid "Ordered"
+msgid "Recent render failures"
+msgstr "Заказано"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#: templates/admin_audit/health.html templates/identity/dashboard.html
+#: templates/industry/capacity.html templates/killboard/_feed_row.html
+#: templates/killboard/watchlist_detail.html
+#: templates/pilots/contributions.html
+msgid "ago"
+msgstr "назад"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, fuzzy
+#| msgid "Operation attendance"
+msgid "Maintenance"
+msgstr "Посещаемость операций"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+msgid ""
+"These run on the worker. Re-render all only marks signatures for refresh — "
+"the beat drains them over the next few ticks; it never storms the worker."
+msgstr ""
+
+#: templates/admin_audit/console/signatures_dashboard.html
+msgid ""
+"Mark every active signature for a fresh render? The refresh beat will re-"
+"render them gradually."
+msgstr ""
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, fuzzy
+#| msgid "Create intake"
+msgid "Re-render all signatures"
+msgstr "Создать набор"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+msgid ""
+"Delete orphaned banner image files (no signature, or a disabled one)? Active "
+"and frozen banners are never touched."
+msgstr ""
+
+#: templates/admin_audit/console/signatures_dashboard.html
+msgid "Clean up orphaned images"
+msgstr ""
+
+#: templates/admin_audit/console/signatures_search.html
+#, fuzzy
+#| msgid "Signature"
+msgid "Signature search"
+msgstr "Сигнатура"
+
+#: templates/admin_audit/console/signatures_search.html
+msgid ""
+"Find a pilot's banners by character name or id, then disable, re-enable or "
+"force a re-render. Every action is audited."
+msgstr ""
+
+#: templates/admin_audit/console/signatures_search.html
+#, fuzzy
+#| msgid "Character id"
+msgid "Character name or id"
+msgstr "id персонажа"
+
+#: templates/admin_audit/console/signatures_search.html
+#, fuzzy
+#| msgid "e.g. Akusaa Ii or 90000001"
+msgid "e.g. Ace Pilot or 90000001"
+msgstr "например, Akusaa Ii или 90000001"
+
+#: templates/admin_audit/console/signatures_search.html
+#, fuzzy, python-format
+#| msgid "%(count)s fights"
+msgid "%(counter)s signature"
+msgid_plural "%(counter)s signatures"
+msgstr[0] "%(count)s боёв"
+msgstr[1] "%(count)s боёв"
+msgstr[2] "%(count)s боёв"
+
+#: templates/admin_audit/console/signatures_search.html
+#, fuzzy
+#| msgid "Public"
+msgid "Public URL"
+msgstr "Публичный"
+
+#: templates/admin_audit/console/signatures_search.html
+#, fuzzy, python-format
+#| msgid "%(n)s fit"
+#| msgid_plural "%(n)s fits"
+msgid "%(n)s fail(s)"
+msgstr "%(n)s фит"
+
+#: templates/admin_audit/console/signatures_search.html
+#, python-format
+msgid ""
+"Disable this pilot's (%(name)s) signature? Its public image stops serving "
+"immediately."
+msgstr ""
+
+#: templates/admin_audit/console/signatures_search.html
+#, fuzzy
+#| msgid "Ordered"
+msgid "Re-render"
+msgstr "Заказано"
+
+#: templates/admin_audit/console/signatures_search.html
+#, fuzzy
+#| msgid "This order is already settled."
+msgid "No signatures matched that search."
+msgstr "Этот заказ уже урегулирован."
+
+#: templates/admin_audit/console/signatures_search.html
+#, fuzzy
+#| msgid "No intakes yet."
+msgid "No signatures yet."
+msgstr "Пока нет наборов."
+
+#: templates/admin_audit/console/signatures_settings.html
+#, fuzzy
+#| msgid "Combat Stats"
+msgid "Combat Signature settings"
+msgstr "Боевая статистика"
+
+#: templates/admin_audit/console/signatures_settings.html
+msgid ""
+"The master switch and the options every pilot's banner is built within. "
+"Turning the feature off makes it dark for everyone — existing images stop "
+"being served on the next sweep."
+msgstr ""
+
+#: templates/admin_audit/console/signatures_settings.html
+#, fuzzy
+#| msgid "Welcome to the corporation"
+msgid "Enable Combat Signatures for the corporation"
+msgstr "Добро пожаловать в корпорацию"
+
+#: templates/admin_audit/console/signatures_settings.html
+msgid ""
+"The killboard feature must also be enabled. A change can take up to ten "
+"minutes to appear in the navigation."
+msgstr ""
+
+#: templates/admin_audit/console/signatures_settings.html
+#, fuzzy
+#| msgid "Last refresh"
+msgid "Quotas & refresh"
+msgstr "Последнее обновление"
+
+#: templates/admin_audit/console/signatures_settings.html
+#, fuzzy
+#| msgid "Max open suggestions per pilot"
+msgid "Max active signatures per pilot"
+msgstr "Макс. открытых предложений на пилота"
+
+#: templates/admin_audit/console/signatures_settings.html
+msgid "Live refresh interval (hours)"
+msgstr ""
+
+#: templates/admin_audit/console/signatures_settings.html
+#, fuzzy
+#| msgid "Your trophies"
+msgid "Max featured trophies"
+msgstr "Ваши трофеи"
+
+#: templates/admin_audit/console/signatures_settings.html
+msgid "Allow frozen snapshot signatures"
+msgstr ""
+
+#: templates/admin_audit/console/signatures_settings.html
+msgid "Delete a pilot's banner images when they leave the corp"
+msgstr ""
+
+#: templates/admin_audit/console/signatures_settings.html
+#, fuzzy
+#| msgid "Building facts"
+msgid "Builder defaults"
+msgstr "Формирование фактов"
+
+#: templates/admin_audit/console/signatures_settings.html
+#, fuzzy
+#| msgid "Default language"
+msgid "Default background"
+msgstr "Язык по умолчанию"
+
+#: templates/admin_audit/console/signatures_settings.html
+#, fuzzy
+#| msgid "Default language"
+msgid "Default layout"
+msgstr "Язык по умолчанию"
+
+#: templates/admin_audit/console/signatures_settings.html
+#, fuzzy
+#| msgid "Invalid character."
+msgid "Default activity period"
+msgstr "Недействительный персонаж."
+
+#: templates/admin_audit/console/signatures_settings.html
+msgid "Allowed banner sizes"
+msgstr ""
+
+#: templates/admin_audit/console/signatures_settings.html
+msgid "Which sizes pilots may choose. Leave all ticked to allow every size."
+msgstr ""
+
 #: templates/admin_audit/console/structure_alerts.html
 msgid "Structure-alert thresholds · Admin"
 msgstr "Пороги оповещений о структурах · Админ"
@@ -35339,13 +35845,6 @@ msgstr "устарело"
 #: templates/readiness/me.html
 msgid "no data"
 msgstr "нет данных"
-
-#: templates/admin_audit/health.html templates/identity/dashboard.html
-#: templates/industry/capacity.html templates/killboard/_feed_row.html
-#: templates/killboard/watchlist_detail.html
-#: templates/pilots/contributions.html
-msgid "ago"
-msgstr "назад"
 
 #: templates/admin_audit/health.html
 #, python-format
@@ -40333,13 +40832,6 @@ msgid "Copied ✓"
 msgstr "Скопировано ✓"
 
 #: templates/doctrines/detail.html templates/doctrines/ships.html
-#: templates/procurement/board.html templates/procurement/po_detail.html
-#: templates/procurement/pos.html templates/procurement/supplier_detail.html
-#: templates/skills/detail.html templates/store/order.html
-msgid "Order"
-msgstr "Заказать"
-
-#: templates/doctrines/detail.html templates/doctrines/ships.html
 msgid "How many?"
 msgstr "Сколько?"
 
@@ -41216,10 +41708,6 @@ msgstr "С пропом"
 #: templates/fitting/_telemetry.html
 msgid "Align time"
 msgstr "Время выравнивания"
-
-#: templates/fitting/_telemetry.html
-msgid "Signature"
-msgstr "Сигнатура"
 
 #: templates/fitting/_telemetry.html
 msgid "Warp speed"
@@ -47219,13 +47707,6 @@ msgid "New Combat Signature"
 msgstr "Новая боевая кампания"
 
 #: templates/killboard/signatures/form.html
-#: templates/killboard/signatures/list.html
-#, fuzzy
-#| msgid "Combat Stats"
-msgid "Combat Signatures"
-msgstr "Боевая статистика"
-
-#: templates/killboard/signatures/form.html
 msgid "Please fix the following"
 msgstr ""
 
@@ -47245,12 +47726,6 @@ msgstr "Выплата"
 #: templates/killboard/signatures/form.html
 msgid "Size"
 msgstr ""
-
-#: templates/killboard/signatures/form.html
-#, fuzzy
-#| msgid "Background jobs"
-msgid "Background"
-msgstr "Фоновые задачи"
 
 #: templates/killboard/signatures/form.html
 #, fuzzy

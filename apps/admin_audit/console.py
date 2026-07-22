@@ -1038,6 +1038,10 @@ _MAINTENANCE_TASKS = {
     "killmails": ("killboard.discover_all_member_killmails", gettext_lazy("Killmail discovery")),
     "skills": ("characters.sync_all_member_skills", gettext_lazy("Member skill sync")),
     "capsuleer_reconcile": ("capsuleer.reconcile_progress", gettext_lazy("Capsuleer Path reconcile")),
+    "signatures_rerender_all": ("killboard.signature_rerender_all",
+                                gettext_lazy("Combat Signatures — re-render all")),
+    "signatures_cleanup_orphans": ("killboard.signature_cleanup",
+                                   gettext_lazy("Combat Signatures — clean up orphaned images")),
 }
 
 

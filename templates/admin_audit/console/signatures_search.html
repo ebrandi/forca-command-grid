@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Signature search" %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+{% comment %} WS-7 per-pilot search + moderation (Officer). Ownership is not required — these are
+system moderation actions on any pilot's public banner. The render_error is admin-visible here. {% endcomment %}
+<header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-gold">{% translate "Killboard · Leadership" %}</p>
+    <h1 class="mt-1 text-2xl font-bold text-ink">{% translate "Signature search" %}</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Find a pilot's banners by character name or id, then disable, re-enable or force a re-render. Every action is audited." %}</p>
+  </div>
+  <a href="{% url 'admin_audit:signatures_dashboard' %}" class="btn-ghost text-sm">← {% translate "Dashboard" %}</a>
+</header>
+
+<form method="get" action="{% url 'admin_audit:signature_search' %}" class="mb-5 flex flex-wrap items-end gap-2">
+  <div class="grow">
+    <label class="label" for="sig-search-q">{% translate "Character name or id" %}</label>
+    <input id="sig-search-q" type="search" name="q" value="{{ q }}" class="input-field w-full" placeholder="{% translate 'e.g. Ace Pilot or 90000001' %}">
+  </div>
+  <button type="submit" class="btn-gold">{% translate "Search" %}</button>
+</form>
+
+<section class="panel overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">{% blocktranslate count counter=total %}{{ counter }} signature{% plural %}{{ counter }} signatures{% endblocktranslate %}</h2></div>
+  {% if rows %}
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead><tr class="border-b border-line text-left text-[11px] uppercase text-faint">
+        <th scope="col" class="px-4 py-2">{% translate "Pilot" %}</th>
+        <th scope="col" class="px-4 py-2">{% translate "Signature" %}</th>
+        <th scope="col" class="px-4 py-2">{% translate "State" %}</th>
+        <th scope="col" class="px-4 py-2">{% translate "Public URL" %}</th>
+        <th scope="col" class="px-4 py-2">{% translate "Actions" %}</th>
+      </tr></thead>
+      <tbody>
+        {% for row in rows %}
+        <tr class="border-b border-line/50 align-top">
+          <td class="px-4 py-2 text-ink">{{ row.sig.character.name }}<span class="ml-1 block text-[11px] text-faint">#{{ row.sig.character_id }}</span></td>
+          <td class="px-4 py-2">
+            <span class="text-ink">{{ row.sig.name }}</span>
+            <span class="block text-[11px] text-faint">{{ row.sig.get_layout_display }} · {{ row.sig.get_size_preset_display }}</span>
+          </td>
+          <td class="px-4 py-2">
+            <span class="chip {% if row.sig.status == 'active' %}text-kill{% elif row.sig.status == 'disabled' %}text-loss{% else %}text-faint{% endif %}">{{ row.sig.get_status_display }}</span>
+            <span class="block text-[11px] {% if row.sig.render_status == 'failed' %}text-loss{% else %}text-faint{% endif %}">{{ row.sig.get_render_status_display }}{% if row.sig.consecutive_failures %} · {% blocktranslate with n=row.sig.consecutive_failures %}{{ n }} fail(s){% endblocktranslate %}{% endif %}</span>
+            {% if row.sig.render_error %}<span class="block text-[11px] text-loss">{{ row.sig.render_error }}</span>{% endif %}
+          </td>
+          <td class="px-4 py-2"><a href="{{ row.public_url }}" class="data text-[11px] text-cyan hover:underline" rel="noopener noreferrer" target="_blank">{{ row.public_url }}</a></td>
+          <td class="px-4 py-2">
+            <div class="flex flex-wrap gap-1">
+              {% if row.can_disable %}
+              <form method="post" action="{% url 'admin_audit:signature_admin_action' row.sig.pk 'admin_disable' %}" data-confirm="{% blocktranslate with name=row.sig.character.name %}Disable this pilot's ({{ name }}) signature? Its public image stops serving immediately.{% endblocktranslate %}">
+                {% csrf_token %}<input type="hidden" name="q" value="{{ q }}"><button type="submit" class="btn-ghost text-[11px] text-loss">{% translate "Disable" %}</button>
+              </form>
+              {% endif %}
+              {% if row.can_enable %}
+              <form method="post" action="{% url 'admin_audit:signature_admin_action' row.sig.pk 'admin_enable' %}">
+                {% csrf_token %}<input type="hidden" name="q" value="{{ q }}"><button type="submit" class="btn-ghost text-[11px]">{% translate "Enable" %}</button>
+              </form>
+              {% endif %}
+              <form method="post" action="{% url 'admin_audit:signature_admin_action' row.sig.pk 'regenerate' %}">
+                {% csrf_token %}<input type="hidden" name="q" value="{{ q }}"><button type="submit" class="btn-ghost text-[11px]">{% translate "Re-render" %}</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="px-4 py-4 text-sm text-faint">{% if q %}{% translate "No signatures matched that search." %}{% else %}{% translate "No signatures yet." %}{% endif %}</p>
+  {% endif %}
+</section>
+{% endblock %}

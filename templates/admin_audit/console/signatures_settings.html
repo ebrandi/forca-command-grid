@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Combat Signature settings" %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+{% comment %} WS-7 leadership settings for Combat Signatures (Director). ModelForm over the
+CombatSignatureSettings singleton; saving busts the nav master-switch cache and audits the change. {% endcomment %}
+<header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-gold">{% translate "Killboard · Leadership" %}</p>
+    <h1 class="mt-1 text-2xl font-bold text-ink">{% translate "Combat Signature settings" %}</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "The master switch and the options every pilot's banner is built within. Turning the feature off makes it dark for everyone — existing images stop being served on the next sweep." %}</p>
+  </div>
+  <a href="{% url 'admin_audit:signatures_dashboard' %}" class="btn-ghost text-sm">← {% translate "Dashboard" %}</a>
+</header>
+
+<form method="post" action="{% url 'admin_audit:signature_settings' %}" class="max-w-3xl space-y-5">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="panel border-loss/40 bg-loss/10 px-4 py-2 text-sm text-loss">{{ form.non_field_errors }}</div>{% endif %}
+
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">{% translate "Availability" %}</h2>
+    <label class="flex items-center gap-2 text-sm text-ink">{{ form.enabled }} {% translate "Enable Combat Signatures for the corporation" %}</label>
+    <p class="mt-1 text-[11px] text-faint">{% translate "The killboard feature must also be enabled. A change can take up to ten minutes to appear in the navigation." %}</p>
+    {% if form.enabled.errors %}<p class="mt-1 text-xs text-loss">{{ form.enabled.errors|join:" " }}</p>{% endif %}
+  </section>
+
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">{% translate "Quotas & refresh" %}</h2>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div><label class="label" for="{{ form.max_active_per_pilot.id_for_label }}">{% translate "Max active signatures per pilot" %}</label>{{ form.max_active_per_pilot }}{% if form.max_active_per_pilot.errors %}<p class="mt-1 text-xs text-loss">{{ form.max_active_per_pilot.errors|join:" " }}</p>{% endif %}</div>
+      <div><label class="label" for="{{ form.refresh_interval_hours.id_for_label }}">{% translate "Live refresh interval (hours)" %}</label>{{ form.refresh_interval_hours }}{% if form.refresh_interval_hours.errors %}<p class="mt-1 text-xs text-loss">{{ form.refresh_interval_hours.errors|join:" " }}</p>{% endif %}</div>
+      <div><label class="label" for="{{ form.max_featured_trophies.id_for_label }}">{% translate "Max featured trophies" %}</label>{{ form.max_featured_trophies }}{% if form.max_featured_trophies.errors %}<p class="mt-1 text-xs text-loss">{{ form.max_featured_trophies.errors|join:" " }}</p>{% endif %}</div>
+    </div>
+    <div class="mt-4 space-y-2">
+      <label class="flex items-center gap-2 text-sm text-ink">{{ form.snapshots_enabled }} {% translate "Allow frozen snapshot signatures" %}</label>
+      <label class="flex items-center gap-2 text-sm text-ink">{{ form.revoke_on_leave }} {% translate "Delete a pilot's banner images when they leave the corp" %}</label>
+    </div>
+  </section>
+
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-3 text-gold">{% translate "Builder defaults" %}</h2>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div><label class="label" for="{{ form.default_background.id_for_label }}">{% translate "Default background" %}</label>{{ form.default_background }}{% if form.default_background.errors %}<p class="mt-1 text-xs text-loss">{{ form.default_background.errors|join:" " }}</p>{% endif %}</div>
+      <div><label class="label" for="{{ form.default_layout.id_for_label }}">{% translate "Default layout" %}</label>{{ form.default_layout }}</div>
+      <div><label class="label" for="{{ form.default_period.id_for_label }}">{% translate "Default activity period" %}</label>{{ form.default_period }}</div>
+    </div>
+    <fieldset class="mt-4">
+      <legend class="label">{% translate "Allowed banner sizes" %}</legend>
+      <p class="mb-2 text-[11px] text-faint">{% translate "Which sizes pilots may choose. Leave all ticked to allow every size." %}</p>
+      <div class="flex flex-wrap gap-4 text-sm text-ink">{{ form.allowed_size_presets }}</div>
+      {% if form.allowed_size_presets.errors %}<p class="mt-1 text-xs text-loss">{{ form.allowed_size_presets.errors|join:" " }}</p>{% endif %}
+    </fieldset>
+  </section>
+
+  <div class="flex justify-end gap-2">
+    <a href="{% url 'admin_audit:signatures_dashboard' %}" class="btn-ghost">{% translate "Cancel" %}</a>
+    <button type="submit" class="btn-gold">{% translate "Save settings" %}</button>
+  </div>
+</form>
+{% endblock %}

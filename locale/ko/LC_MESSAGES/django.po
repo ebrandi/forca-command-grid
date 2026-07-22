@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-22 19:51+0000\n"
+"POT-Creation-Date: 2026-07-22 20:25+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: ko machine-assisted draft\n"
@@ -345,6 +345,18 @@ msgid "Capsuleer Path reconcile"
 msgstr "Capsuleer Path 재조정"
 
 #: apps/admin_audit/console.py
+#, fuzzy
+#| msgid "Doctrines are not available to you."
+msgid "Combat Signatures — re-render all"
+msgstr "Doctrine을 이용할 수 없습니다."
+
+#: apps/admin_audit/console.py
+#, fuzzy
+#| msgid "Campaign created."
+msgid "Combat Signatures — clean up orphaned images"
+msgstr "캠페인이 생성되었습니다."
+
+#: apps/admin_audit/console.py
 msgid "Unknown maintenance action."
 msgstr "알 수 없는 유지보수 작업입니다."
 
@@ -448,7 +460,8 @@ msgstr "등급 “%(name)s”을(를) 저장했습니다."
 #: apps/admin_audit/console_industry.py apps/admin_audit/console_mentorship.py
 #: apps/admin_audit/console_navigation.py apps/admin_audit/console_pingboard.py
 #: apps/admin_audit/console_planetary.py apps/admin_audit/console_raffle.py
-#: apps/industry/views_capacity.py apps/logistics/views_freight.py
+#: apps/industry/views_capacity.py apps/killboard/console_signatures.py
+#: apps/logistics/views_freight.py
 msgid "Please correct the errors below."
 msgstr "아래 오류를 수정해 주세요."
 
@@ -486,9 +499,9 @@ msgstr "보상 스캔 완료 — 새 보상 이벤트 %(n)d개를 생성했습�
 
 #: apps/admin_audit/console_combat.py apps/buyback/views.py
 #: apps/capsuleer/views.py apps/industry/views_mrp.py
-#: apps/killboard/signature_views.py apps/logistics/views.py
-#: apps/procurement/views.py apps/stockpile/views.py apps/store/views.py
-#: apps/store/views_inventory.py
+#: apps/killboard/console_signatures.py apps/killboard/signature_views.py
+#: apps/logistics/views.py apps/procurement/views.py apps/stockpile/views.py
+#: apps/store/views.py apps/store/views_inventory.py
 msgid "Unknown action."
 msgstr "알 수 없는 작업입니다."
 
@@ -3540,6 +3553,7 @@ msgstr "일시중지"
 #: templates/admin_audit/console/raffle_form.html
 #: templates/admin_audit/console/recommendations_tuning.html
 #: templates/admin_audit/console/relay_settings.html
+#: templates/admin_audit/console/signatures_settings.html
 #: templates/admin_audit/console/structure_alerts.html
 #: templates/buyback/board.html templates/buyback/offer.html
 #: templates/campaigns/close.html templates/campaigns/form.html
@@ -4400,6 +4414,8 @@ msgstr "무시됨"
 #: templates/admin_audit/console/raffle_ineligible.html
 #: templates/admin_audit/console/raffle_ledger.html
 #: templates/admin_audit/console/raffle_stats.html
+#: templates/admin_audit/console/signatures_dashboard.html
+#: templates/admin_audit/console/signatures_search.html
 #: templates/corporation/roster.html templates/doctrines/list.html
 #: templates/doctrines/ships.html templates/identity/linked_pilots.html
 #: templates/industry/capacity.html templates/killboard/compare.html
@@ -6768,8 +6784,9 @@ msgstr "12개월"
 msgid "Year to date"
 msgstr "연초부터 현재까지"
 
-#: apps/corporation/finance_analytics.py apps/killboard/leaderboards.py
-#: apps/killboard/signature_views.py templates/killboard/_feed.html
+#: apps/corporation/finance_analytics.py apps/killboard/console_signatures.py
+#: apps/killboard/leaderboards.py apps/killboard/signature_views.py
+#: templates/killboard/_feed.html
 msgid "All time"
 msgstr "전체 기간"
 
@@ -8720,6 +8737,103 @@ msgstr "로고는 https:// URL 이거나 /static/ 경로여야 합니다."
 msgid "Logo URL is too long."
 msgstr "로고 URL 이 너무 깁니다."
 
+#: apps/killboard/console_signatures.py apps/killboard/leaderboards.py
+#: apps/killboard/signature_views.py
+msgid "Last 7 days"
+msgstr "최근 7일"
+
+#: apps/killboard/console_signatures.py apps/killboard/leaderboards.py
+#: apps/killboard/signature_views.py
+msgid "Last 30 days"
+msgstr "최근 30일"
+
+#: apps/killboard/console_signatures.py apps/killboard/leaderboards.py
+#: apps/killboard/signature_views.py
+msgid "Last 90 days"
+msgstr "최근 90일"
+
+#: apps/killboard/console_signatures.py apps/killboard/signature_views.py
+#: templates/pilots/contributions.html
+msgid "This month"
+msgstr "이번 달"
+
+#: apps/killboard/console_signatures.py apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Last 6 months"
+msgid "Last month"
+msgstr "최근 6개월"
+
+#: apps/killboard/console_signatures.py
+msgid ""
+"Which banner sizes pilots may choose. Leave all ticked to allow every size."
+msgstr ""
+
+#: apps/killboard/console_signatures.py
+#, fuzzy
+#| msgid "Window must be at least 1 minute."
+msgid "Pilots must be allowed at least one signature."
+msgstr "기간은 최소 1분이어야 합니다."
+
+#: apps/killboard/console_signatures.py
+#, fuzzy
+#| msgid "The per-cycle quantity must be at least 1."
+msgid "The refresh interval must be at least one hour."
+msgstr "주기당 수량은 최소 1 이상이어야 합니다."
+
+#: apps/killboard/console_signatures.py
+#, python-format
+msgid "committed file “%(f)s” is missing"
+msgstr ""
+
+#: apps/killboard/console_signatures.py
+#, python-format
+msgid "committed file “%(f)s” does not match its recorded checksum"
+msgstr ""
+
+#: apps/killboard/console_signatures.py
+msgid "not present in the manifest"
+msgstr ""
+
+#: apps/killboard/console_signatures.py
+msgid "database checksum is out of sync with the manifest"
+msgstr ""
+
+#: apps/killboard/console_signatures.py
+#, fuzzy
+#| msgid "Campaign created."
+msgid "Combat Signature settings saved."
+msgstr "캠페인이 생성되었습니다."
+
+#: apps/killboard/console_signatures.py
+#, fuzzy
+#| msgid "Candidate updated."
+msgid "Background catalogue updated."
+msgstr "후보자가 업데이트되었습니다."
+
+#: apps/killboard/console_signatures.py
+#, fuzzy
+#| msgid "No changes to save"
+msgid "No changes to save."
+msgstr "저장할 변경 사항이 없습니다"
+
+#: apps/killboard/console_signatures.py apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Rule disabled."
+msgid "Signature disabled."
+msgstr "규칙을 비활성화했습니다."
+
+#: apps/killboard/console_signatures.py
+#, fuzzy
+#| msgid "Feature enabled"
+msgid "Signature re-enabled."
+msgstr "기능 사용"
+
+#: apps/killboard/console_signatures.py apps/killboard/signature_views.py
+#, fuzzy
+#| msgid "Reward queue"
+msgid "Re-render queued."
+msgstr "보상 대기열"
+
 #: apps/killboard/fitrender.py
 msgid "High slots"
 msgstr "하이 슬롯"
@@ -8836,14 +8950,6 @@ msgstr "어비셜"
 msgid "Pochven"
 msgstr "Pochven"
 
-#: apps/killboard/leaderboards.py apps/killboard/signature_views.py
-msgid "Last 7 days"
-msgstr "최근 7일"
-
-#: apps/killboard/leaderboards.py apps/killboard/signature_views.py
-msgid "Last 90 days"
-msgstr "최근 90일"
-
 #: apps/killboard/leaderboards.py
 #, python-format
 msgid "This month · %(month)s"
@@ -8853,10 +8959,6 @@ msgstr "이번 달 · %(month)s"
 #, python-format
 msgid "Last month · %(month)s"
 msgstr "지난달 · %(month)s"
-
-#: apps/killboard/leaderboards.py apps/killboard/signature_views.py
-msgid "Last 30 days"
-msgstr "최근 30일"
 
 #: apps/killboard/leaderboards.py
 msgid "Untested"
@@ -9886,16 +9988,6 @@ msgstr "활동 신호"
 msgid "Stats timestamp"
 msgstr "타임스탬프 없음"
 
-#: apps/killboard/signature_views.py templates/pilots/contributions.html
-msgid "This month"
-msgstr "이번 달"
-
-#: apps/killboard/signature_views.py
-#, fuzzy
-#| msgid "Last 6 months"
-msgid "Last month"
-msgstr "최근 6개월"
-
 #: apps/killboard/signature_views.py
 msgid "Cyan"
 msgstr ""
@@ -9956,12 +10048,6 @@ msgstr "캠페인을 업데이트했습니다."
 
 #: apps/killboard/signature_views.py
 #, fuzzy
-#| msgid "Reward queue"
-msgid "Re-render queued."
-msgstr "보상 대기열"
-
-#: apps/killboard/signature_views.py
-#, fuzzy
 #| msgid "Suppress duplicates"
 msgid "Signature duplicated."
 msgstr "중복 억제"
@@ -9975,12 +10061,6 @@ msgstr ""
 #| msgid "A new feed URL was generated — the old one no longer works."
 msgid "Public URL rotated — the old link no longer works."
 msgstr "새 피드 URL 이 생성되었습니다 — 이전 URL 은 더 이상 작동하지 않습니다."
-
-#: apps/killboard/signature_views.py
-#, fuzzy
-#| msgid "Rule disabled."
-msgid "Signature disabled."
-msgstr "규칙을 비활성화했습니다."
 
 #: apps/killboard/signature_views.py
 #, fuzzy
@@ -24461,8 +24541,11 @@ msgstr "· 읽기 전용 · 현재 %(actor)s"
 msgid "Exit — return to your account"
 msgstr "종료 — 본인 계정으로 돌아가기"
 
-#: templates/_nav.html templates/identity/character.html
-#: templates/pingboard/dashboard.html
+#: templates/_nav.html
+#: templates/admin_audit/console/signatures_backgrounds.html
+#: templates/admin_audit/console/signatures_search.html
+#: templates/admin_audit/console/signatures_settings.html
+#: templates/identity/character.html templates/pingboard/dashboard.html
 msgid "Dashboard"
 msgstr "대시보드"
 
@@ -24554,7 +24637,7 @@ msgstr "시즌"
 msgid "My subscriptions"
 msgstr "내 구독"
 
-#: templates/_nav.html
+#: templates/_nav.html templates/admin_audit/console/signatures_dashboard.html
 #, fuzzy
 #| msgid "Signature"
 msgid "Signatures"
@@ -25288,6 +25371,7 @@ msgstr "“%(name)s” 숨기기"
 #: templates/admin_audit/console/mentorship/config.html
 #: templates/admin_audit/console/planetary/config.html
 #: templates/admin_audit/console/raffle_config.html
+#: templates/admin_audit/console/signatures_settings.html
 #: templates/buyback/config.html templates/industry/capacity.html
 #: templates/killboard/killfeed_config.html templates/logistics/freight.html
 #: templates/srp/settings.html templates/store/config.html
@@ -25350,6 +25434,10 @@ msgstr "%(name)s 편집"
 #: templates/admin_audit/console/combat_ranks.html
 #: templates/admin_audit/console/combat_rewards.html
 #: templates/admin_audit/console/combat_settings.html
+#: templates/admin_audit/console/signatures_backgrounds.html
+#: templates/admin_audit/console/signatures_dashboard.html
+#: templates/admin_audit/console/signatures_search.html
+#: templates/admin_audit/console/signatures_settings.html
 msgid "Killboard · Leadership"
 msgstr "Killboard · 리더십"
 
@@ -25820,6 +25908,7 @@ msgstr "달성"
 #: templates/admin_audit/console/pingboard/automation.html
 #: templates/admin_audit/console/pingboard/channels.html
 #: templates/admin_audit/console/pingboard/templates.html
+#: templates/admin_audit/console/signatures_search.html
 #: templates/logistics/freight_detail.html templates/market/dashboard.html
 #: templates/procurement/po_detail.html templates/skills/detail.html
 #: templates/store/inventory_fit.html
@@ -25895,10 +25984,13 @@ msgstr ""
 #: templates/admin_audit/console/notifications.html
 #: templates/admin_audit/console/readiness/dimensions.html
 #: templates/admin_audit/console/readiness/kpis.html
+#: templates/admin_audit/console/signatures_backgrounds.html
+#: templates/admin_audit/console/signatures_dashboard.html
 msgid "Enabled"
 msgstr "활성화됨"
 
 #: templates/admin_audit/console/combat_settings.html
+#: templates/admin_audit/console/signatures_dashboard.html
 msgid "Disabled (dark)"
 msgstr "비활성화됨 (꺼짐)"
 
@@ -27104,6 +27196,7 @@ msgstr "아직 마일스톤이 없습니다 — 아래에서 첫 번째 항목�
 #: templates/admin_audit/console/pingboard/templates.html
 #: templates/admin_audit/console/raffle_grant.html
 #: templates/admin_audit/console/readiness/mandatory_ships.html
+#: templates/admin_audit/console/signatures_backgrounds.html
 #: templates/campaigns/form.html templates/campaigns/lessons.html
 #: templates/campaigns/portfolio.html templates/campaigns/template_picker.html
 #: templates/corporation/finance.html templates/doctrines/list.html
@@ -28287,9 +28380,11 @@ msgstr ""
 #: templates/admin_audit/console/hub.html
 #: templates/admin_audit/console/notifications.html
 #: templates/admin_audit/console/pingboard/settings.html
-#: templates/admin_audit/console/raffle_hub.html templates/buyback/board.html
-#: templates/buyback/guaranteed_queue.html templates/industry/capacity.html
-#: templates/srp/queue.html templates/store/board.html
+#: templates/admin_audit/console/raffle_hub.html
+#: templates/admin_audit/console/signatures_dashboard.html
+#: templates/buyback/board.html templates/buyback/guaranteed_queue.html
+#: templates/industry/capacity.html templates/srp/queue.html
+#: templates/store/board.html
 msgid "Settings"
 msgstr "설정"
 
@@ -28599,6 +28694,21 @@ msgid ""
 msgstr ""
 "파일럿이 새로운 전투 랭크에 도달하여 획득한 보상을 검토, 승인하고 지급 완료"
 "로 표시하세요."
+
+#: templates/admin_audit/console/hub.html
+#: templates/admin_audit/console/signatures_dashboard.html
+#: templates/killboard/signatures/form.html
+#: templates/killboard/signatures/list.html
+#, fuzzy
+#| msgid "Combat Stats"
+msgid "Combat Signatures"
+msgstr "전투 통계"
+
+#: templates/admin_audit/console/hub.html
+msgid ""
+"Banner render health, per-pilot search and moderation, background curation "
+"and leadership settings."
+msgstr ""
 
 #: templates/admin_audit/console/hub.html
 msgid ""
@@ -29104,6 +29214,7 @@ msgstr ""
 "며, 여기서는 시작점과 Corp 회피 목록을 설정합니다."
 
 #: templates/admin_audit/console/jump_planner_settings.html
+#: templates/admin_audit/console/signatures_settings.html
 #: templates/doctrines/ships.html templates/store/inventory.html
 msgid "Availability"
 msgstr "이용 가능 여부"
@@ -30681,6 +30792,7 @@ msgstr "마지막 발동"
 #: templates/admin_audit/console/pingboard/channels.html
 #: templates/admin_audit/console/pingboard/templates.html
 #: templates/admin_audit/console/raffle_detail.html
+#: templates/admin_audit/console/signatures_search.html
 #: templates/readiness/alerts.html templates/store/inventory.html
 msgid "State"
 msgstr "상태"
@@ -30710,6 +30822,7 @@ msgstr "꺼짐"
 #: templates/admin_audit/console/pingboard/automation.html
 #: templates/admin_audit/console/pingboard/channels.html
 #: templates/admin_audit/console/pingboard/templates.html
+#: templates/admin_audit/console/signatures_search.html
 #: templates/killboard/signatures/list.html
 #: templates/killboard/subscriptions.html
 msgid "Disable"
@@ -30718,6 +30831,7 @@ msgstr "비활성화"
 #: templates/admin_audit/console/pingboard/automation.html
 #: templates/admin_audit/console/pingboard/channels.html
 #: templates/admin_audit/console/pingboard/templates.html
+#: templates/admin_audit/console/signatures_search.html
 #: templates/killboard/signatures/list.html
 #: templates/killboard/subscriptions.html
 msgid "Enable"
@@ -31507,6 +31621,7 @@ msgid "Corp defaults and shared pilot plans."
 msgstr "Corp 기본값 및 공유 파일럿 플랜."
 
 #: templates/admin_audit/console/planetary/hub.html
+#: templates/admin_audit/console/signatures_dashboard.html
 msgid "Edit settings"
 msgstr "설정 편집"
 
@@ -32955,6 +33070,7 @@ msgstr "모든 상태"
 
 #: templates/admin_audit/console/raffle_ledger.html
 #: templates/admin_audit/console/recovery.html
+#: templates/admin_audit/console/signatures_search.html
 #: templates/campaigns/portfolio.html templates/campaigns/template_picker.html
 #: templates/capsuleer/paths.html templates/doctrines/list.html
 #: templates/fitting/detail.html templates/fitting/load_doctrine.html
@@ -34360,6 +34476,394 @@ msgstr ""
 "실행하세요. 결과는 <a href=\"%(health_url)s\" class=\"text-gold "
 "hover:underline\">통합 상태</a>에 표시됩니다."
 
+#: templates/admin_audit/console/signatures_backgrounds.html
+#, fuzzy
+#| msgid "Signature"
+msgid "Signature backgrounds"
+msgstr "시그니처"
+
+#: templates/admin_audit/console/signatures_backgrounds.html
+#, python-format
+msgid ""
+"%(n)s background(s) offered to pilots. Enable, disable and reorder the built-"
+"in library — new art ships with the app, so there is nothing to upload."
+msgstr ""
+
+#: templates/admin_audit/console/signatures_backgrounds.html
+#, fuzzy
+#| msgid "Review"
+msgid "Preview"
+msgstr "검토"
+
+#: templates/admin_audit/console/signatures_backgrounds.html
+#: templates/killboard/signatures/form.html
+#, fuzzy
+#| msgid "Background jobs"
+msgid "Background"
+msgstr "백그라운드 작업"
+
+#: templates/admin_audit/console/signatures_backgrounds.html
+#: templates/doctrines/detail.html templates/doctrines/ships.html
+#: templates/procurement/board.html templates/procurement/po_detail.html
+#: templates/procurement/pos.html templates/procurement/supplier_detail.html
+#: templates/skills/detail.html templates/store/order.html
+msgid "Order"
+msgstr "주문"
+
+#: templates/admin_audit/console/signatures_backgrounds.html
+#, fuzzy, python-format
+#| msgid "Enable %(label)s"
+msgid "Enable %(name)s"
+msgstr "%(label)s 활성화"
+
+#: templates/admin_audit/console/signatures_backgrounds.html
+#, fuzzy, python-format
+#| msgid "Copy of %(name)s"
+msgid "Display order for %(name)s"
+msgstr "%(name)s 복사본"
+
+#: templates/admin_audit/console/signatures_backgrounds.html
+msgid "No backgrounds are seeded yet. Run the background sync command."
+msgstr ""
+
+#: templates/admin_audit/console/signatures_backgrounds.html
+#, fuzzy
+#| msgid "The catalogue"
+msgid "Save catalogue"
+msgstr "카탈로그"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+msgid ""
+"Pilot-authored public banner images. Watch render health, moderate a pilot's "
+"signatures, curate the background library and set the leadership options."
+msgstr ""
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, fuzzy
+#| msgid "Search pilots…"
+msgid "Search pilots"
+msgstr "파일럿 검색…"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, fuzzy
+#| msgid "Background jobs"
+msgid "Backgrounds"
+msgstr "백그라운드 작업"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, fuzzy
+#| msgid "Features"
+msgid "Feature"
+msgstr "기능"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, python-format
+msgid "Up to %(n)s active per pilot · refresh every %(h)sh."
+msgstr ""
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, python-format
+msgid "%(a)s active · %(d)s disabled · %(f)s frozen"
+msgstr ""
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, fuzzy
+#| msgid "Ordered"
+msgid "Rendered OK"
+msgstr "주문"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, fuzzy, python-format
+#| msgid "pending"
+msgid "%(p)s pending"
+msgstr "대기 중"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, fuzzy
+#| msgid "Failed in-game"
+msgid "Failed renders"
+msgstr "게임 내 실패"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, fuzzy, python-format
+#| msgid "%(n)s recent failures"
+msgid "%(n)s parked at the failure ceiling"
+msgstr "최근 실패 %(n)s 회"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, fuzzy
+#| msgid "Coverage"
+msgid "Storage"
+msgstr "커버리지"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, fuzzy, python-format
+#| msgid "%(count)s items · %(vol)s m³"
+msgid "%(c)s files · ~%(o)s orphaned"
+msgstr "아이템 %(count)s개 · %(vol)s m³"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, python-format
+msgid "Oldest pending render is waiting %(age)s."
+msgstr ""
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, fuzzy
+#| msgid "Background jobs"
+msgid "Background provenance"
+msgstr "백그라운드 작업"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, python-format
+msgid "All %(n)s enabled backgrounds verified"
+msgstr ""
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, fuzzy
+#| msgid "action needed"
+msgid "Attention needed"
+msgstr "조치 필요"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, python-format
+msgid "The background manifest failed to load: %(err)s"
+msgstr ""
+
+#: templates/admin_audit/console/signatures_dashboard.html
+msgid "Every enabled background's committed art matches its recorded checksum."
+msgstr ""
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, python-format
+msgid "Parked renders (failed %(n)s+ times)"
+msgstr ""
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#: templates/admin_audit/console/signatures_search.html
+#: templates/fitting/_telemetry.html
+msgid "Signature"
+msgstr "시그니처"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, fuzzy
+#| msgid "Fails"
+msgid "Failures"
+msgstr "실패"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, fuzzy
+#| msgid "error"
+msgid "Last error"
+msgstr "오류"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+msgid "No signatures are parked — nothing has hit the failure ceiling."
+msgstr ""
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, fuzzy
+#| msgid "Ordered"
+msgid "Recent render failures"
+msgstr "주문"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#: templates/admin_audit/health.html templates/identity/dashboard.html
+#: templates/industry/capacity.html templates/killboard/_feed_row.html
+#: templates/killboard/watchlist_detail.html
+#: templates/pilots/contributions.html
+msgid "ago"
+msgstr "전"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, fuzzy
+#| msgid "Operation attendance"
+msgid "Maintenance"
+msgstr "작전 참여"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+msgid ""
+"These run on the worker. Re-render all only marks signatures for refresh — "
+"the beat drains them over the next few ticks; it never storms the worker."
+msgstr ""
+
+#: templates/admin_audit/console/signatures_dashboard.html
+msgid ""
+"Mark every active signature for a fresh render? The refresh beat will re-"
+"render them gradually."
+msgstr ""
+
+#: templates/admin_audit/console/signatures_dashboard.html
+#, fuzzy
+#| msgid "Create intake"
+msgid "Re-render all signatures"
+msgstr "기수 생성"
+
+#: templates/admin_audit/console/signatures_dashboard.html
+msgid ""
+"Delete orphaned banner image files (no signature, or a disabled one)? Active "
+"and frozen banners are never touched."
+msgstr ""
+
+#: templates/admin_audit/console/signatures_dashboard.html
+msgid "Clean up orphaned images"
+msgstr ""
+
+#: templates/admin_audit/console/signatures_search.html
+#, fuzzy
+#| msgid "Signature"
+msgid "Signature search"
+msgstr "시그니처"
+
+#: templates/admin_audit/console/signatures_search.html
+msgid ""
+"Find a pilot's banners by character name or id, then disable, re-enable or "
+"force a re-render. Every action is audited."
+msgstr ""
+
+#: templates/admin_audit/console/signatures_search.html
+#, fuzzy
+#| msgid "Character id"
+msgid "Character name or id"
+msgstr "캐릭터 ID"
+
+#: templates/admin_audit/console/signatures_search.html
+#, fuzzy
+#| msgid "e.g. Akusaa Ii or 90000001"
+msgid "e.g. Ace Pilot or 90000001"
+msgstr "예: Akusaa Ii 또는 90000001"
+
+#: templates/admin_audit/console/signatures_search.html
+#, fuzzy, python-format
+#| msgid "%(count)s fights"
+msgid "%(counter)s signature"
+msgid_plural "%(counter)s signatures"
+msgstr[0] "교전 %(count)s회"
+
+#: templates/admin_audit/console/signatures_search.html
+#, fuzzy
+#| msgid "Public"
+msgid "Public URL"
+msgstr "공개"
+
+#: templates/admin_audit/console/signatures_search.html
+#, fuzzy, python-format
+#| msgid "%(n)s fit"
+#| msgid_plural "%(n)s fits"
+msgid "%(n)s fail(s)"
+msgstr "피팅 %(n)s개"
+
+#: templates/admin_audit/console/signatures_search.html
+#, python-format
+msgid ""
+"Disable this pilot's (%(name)s) signature? Its public image stops serving "
+"immediately."
+msgstr ""
+
+#: templates/admin_audit/console/signatures_search.html
+#, fuzzy
+#| msgid "Ordered"
+msgid "Re-render"
+msgstr "주문"
+
+#: templates/admin_audit/console/signatures_search.html
+#, fuzzy
+#| msgid "This order is already settled."
+msgid "No signatures matched that search."
+msgstr "이 주문은 이미 정산 완료되었습니다."
+
+#: templates/admin_audit/console/signatures_search.html
+#, fuzzy
+#| msgid "No intakes yet."
+msgid "No signatures yet."
+msgstr "아직 기수가 없습니다."
+
+#: templates/admin_audit/console/signatures_settings.html
+#, fuzzy
+#| msgid "Combat Stats"
+msgid "Combat Signature settings"
+msgstr "전투 통계"
+
+#: templates/admin_audit/console/signatures_settings.html
+msgid ""
+"The master switch and the options every pilot's banner is built within. "
+"Turning the feature off makes it dark for everyone — existing images stop "
+"being served on the next sweep."
+msgstr ""
+
+#: templates/admin_audit/console/signatures_settings.html
+#, fuzzy
+#| msgid "Welcome to the corporation"
+msgid "Enable Combat Signatures for the corporation"
+msgstr "군단에 오신 것을 환영합니다"
+
+#: templates/admin_audit/console/signatures_settings.html
+msgid ""
+"The killboard feature must also be enabled. A change can take up to ten "
+"minutes to appear in the navigation."
+msgstr ""
+
+#: templates/admin_audit/console/signatures_settings.html
+#, fuzzy
+#| msgid "Last refresh"
+msgid "Quotas & refresh"
+msgstr "마지막 갱신"
+
+#: templates/admin_audit/console/signatures_settings.html
+#, fuzzy
+#| msgid "Max open suggestions per pilot"
+msgid "Max active signatures per pilot"
+msgstr "파일럿당 최대 미해결 제안 수"
+
+#: templates/admin_audit/console/signatures_settings.html
+msgid "Live refresh interval (hours)"
+msgstr ""
+
+#: templates/admin_audit/console/signatures_settings.html
+#, fuzzy
+#| msgid "Your trophies"
+msgid "Max featured trophies"
+msgstr "내 트로피"
+
+#: templates/admin_audit/console/signatures_settings.html
+msgid "Allow frozen snapshot signatures"
+msgstr ""
+
+#: templates/admin_audit/console/signatures_settings.html
+msgid "Delete a pilot's banner images when they leave the corp"
+msgstr ""
+
+#: templates/admin_audit/console/signatures_settings.html
+#, fuzzy
+#| msgid "Building facts"
+msgid "Builder defaults"
+msgstr "팩트 생성 중"
+
+#: templates/admin_audit/console/signatures_settings.html
+#, fuzzy
+#| msgid "Default language"
+msgid "Default background"
+msgstr "기본 언어"
+
+#: templates/admin_audit/console/signatures_settings.html
+#, fuzzy
+#| msgid "Default language"
+msgid "Default layout"
+msgstr "기본 언어"
+
+#: templates/admin_audit/console/signatures_settings.html
+#, fuzzy
+#| msgid "Invalid character."
+msgid "Default activity period"
+msgstr "유효하지 않은 캐릭터입니다."
+
+#: templates/admin_audit/console/signatures_settings.html
+msgid "Allowed banner sizes"
+msgstr ""
+
+#: templates/admin_audit/console/signatures_settings.html
+msgid "Which sizes pilots may choose. Leave all ticked to allow every size."
+msgstr ""
+
 #: templates/admin_audit/console/structure_alerts.html
 msgid "Structure-alert thresholds · Admin"
 msgstr "구조물 알림 임계값 · 관리"
@@ -34469,13 +34973,6 @@ msgstr "오래됨"
 #: templates/readiness/me.html
 msgid "no data"
 msgstr "데이터 없음"
-
-#: templates/admin_audit/health.html templates/identity/dashboard.html
-#: templates/industry/capacity.html templates/killboard/_feed_row.html
-#: templates/killboard/watchlist_detail.html
-#: templates/pilots/contributions.html
-msgid "ago"
-msgstr "전"
 
 #: templates/admin_audit/health.html
 #, python-format
@@ -39382,13 +39879,6 @@ msgid "Copied ✓"
 msgstr "복사됨 ✓"
 
 #: templates/doctrines/detail.html templates/doctrines/ships.html
-#: templates/procurement/board.html templates/procurement/po_detail.html
-#: templates/procurement/pos.html templates/procurement/supplier_detail.html
-#: templates/skills/detail.html templates/store/order.html
-msgid "Order"
-msgstr "주문"
-
-#: templates/doctrines/detail.html templates/doctrines/ships.html
 msgid "How many?"
 msgstr "몇 개?"
 
@@ -40251,10 +40741,6 @@ msgstr "추진기 사용 시"
 #: templates/fitting/_telemetry.html
 msgid "Align time"
 msgstr "정렬 시간"
-
-#: templates/fitting/_telemetry.html
-msgid "Signature"
-msgstr "시그니처"
 
 #: templates/fitting/_telemetry.html
 msgid "Warp speed"
@@ -46063,13 +46549,6 @@ msgid "New Combat Signature"
 msgstr "새 전투 캠페인"
 
 #: templates/killboard/signatures/form.html
-#: templates/killboard/signatures/list.html
-#, fuzzy
-#| msgid "Combat Stats"
-msgid "Combat Signatures"
-msgstr "전투 통계"
-
-#: templates/killboard/signatures/form.html
 msgid "Please fix the following"
 msgstr ""
 
@@ -46089,12 +46568,6 @@ msgstr "정산"
 #: templates/killboard/signatures/form.html
 msgid "Size"
 msgstr ""
-
-#: templates/killboard/signatures/form.html
-#, fuzzy
-#| msgid "Background jobs"
-msgid "Background"
-msgstr "백그라운드 작업"
 
 #: templates/killboard/signatures/form.html
 #, fuzzy

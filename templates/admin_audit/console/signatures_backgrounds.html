@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load static %}
+{% block title %}{% translate "Signature backgrounds" %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+{% comment %} WS-7 background curation (Director). Rows are seeded from the committed manifest —
+there is NO upload control anywhere. One POST saves every row; enable/disable and reorder are
+audited separately. {% endcomment %}
+<header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-gold">{% translate "Killboard · Leadership" %}</p>
+    <h1 class="mt-1 text-2xl font-bold text-ink">{% translate "Signature backgrounds" %}</h1>
+    <p class="mt-1 max-w-2xl text-sm text-faint">{% blocktranslate with n=enabled_count %}{{ n }} background(s) offered to pilots. Enable, disable and reorder the built-in library — new art ships with the app, so there is nothing to upload.{% endblocktranslate %}</p>
+  </div>
+  <a href="{% url 'admin_audit:signatures_dashboard' %}" class="btn-ghost text-sm">← {% translate "Dashboard" %}</a>
+</header>
+
+<form method="post" action="{% url 'admin_audit:signature_backgrounds' %}">
+  {% csrf_token %}
+  <section class="panel mb-5 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead><tr class="border-b border-line text-left text-[11px] uppercase text-faint">
+          <th scope="col" class="px-4 py-2">{% translate "Preview" %}</th>
+          <th scope="col" class="px-4 py-2">{% translate "Background" %}</th>
+          <th scope="col" class="px-4 py-2">{% translate "Category" %}</th>
+          <th scope="col" class="px-4 py-2">{% translate "Enabled" %}</th>
+          <th scope="col" class="px-4 py-2">{% translate "Order" %}</th>
+        </tr></thead>
+        <tbody>
+          {% for row in rows %}
+          <tr class="border-b border-line/50">
+            <td class="px-4 py-2"><img src="{% static row.thumb %}" alt="" width="120" height="30" style="max-width:120px;height:auto;border:1px solid var(--line,#222d3e);border-radius:2px" loading="lazy"></td>
+            <td class="px-4 py-2 text-ink">{{ row.bg.name }}<span class="ml-1 block text-[11px] text-faint data">{{ row.bg.key }}</span></td>
+            <td class="px-4 py-2 text-faint">{{ row.bg.category|default:"—" }}</td>
+            <td class="px-4 py-2">
+              <input type="checkbox" name="enabled_{{ row.bg.pk }}" value="1" {% if row.bg.enabled %}checked{% endif %} aria-label="{% blocktranslate with name=row.bg.name %}Enable {{ name }}{% endblocktranslate %}">
+            </td>
+            <td class="px-4 py-2">
+              <input type="number" name="order_{{ row.bg.pk }}" value="{{ row.bg.display_order }}" class="input-field" style="width:5rem" aria-label="{% blocktranslate with name=row.bg.name %}Display order for {{ name }}{% endblocktranslate %}">
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="px-4 py-4 text-sm text-faint">{% translate "No backgrounds are seeded yet. Run the background sync command." %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <div class="flex justify-end">
+    <button type="submit" class="btn-gold">{% translate "Save catalogue" %}</button>
+  </div>
+</form>
+{% endblock %}

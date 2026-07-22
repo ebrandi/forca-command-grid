@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from django.urls import path
 
+from apps.killboard import console_signatures
+
 from . import (
     console,
     console_access,
@@ -320,5 +322,14 @@ urlpatterns = [
     path("admin/combat-rewards/scan/", console_combat.combat_reward_scan, name="combat_reward_scan"),
     path("admin/combat-rewards/<int:pk>/action/", console_combat.combat_reward_action,
          name="combat_reward_action"),
+    # Combat Signatures admin (Officer dashboard/search + moderation; Director settings/curation).
+    path("admin/signatures/", console_signatures.signatures_dashboard, name="signatures_dashboard"),
+    path("admin/signatures/settings/", console_signatures.signature_settings,
+         name="signature_settings"),
+    path("admin/signatures/backgrounds/", console_signatures.signature_backgrounds,
+         name="signature_backgrounds"),
+    path("admin/signatures/search/", console_signatures.signature_search, name="signature_search"),
+    path("admin/signatures/<int:pk>/<str:action>/", console_signatures.signature_admin_action,
+         name="signature_admin_action"),
     path("admin/maintenance/<str:action>/", console.run_maintenance, name="run_maintenance"),
 ]

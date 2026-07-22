@@ -459,3 +459,13 @@ def signature_cleanup_task() -> int:
     from .signature_pipeline import cleanup_orphans
 
     return cleanup_orphans()
+
+
+@shared_task(name="killboard.signature_rerender_all")
+def signature_rerender_all_task() -> int:
+    """Mark every ACTIVE signature dirty + reset its failure ledger so the beat re-renders the whole
+    set (the admin "re-render all" maintenance action). One bulk update — does NOT enqueue per-
+    signature tasks; the tick drains the set at its per-tick cap. Returns the number marked."""
+    from .signature_pipeline import rerender_all
+
+    return rerender_all()

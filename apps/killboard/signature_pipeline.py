@@ -234,6 +234,28 @@ def force_render(signature_id: int) -> str:
     return render_one(signature_id, force=True)
 
 
+def rerender_all() -> int:
+    """Mark every ACTIVE signature for a fresh render and clear its failure ledger. Returns the
+    number of signatures touched.
+
+    The admin "re-render all" maintenance action (WS-7): a single bounded ``UPDATE`` that flags the
+    whole active set dirty and un-parks any signature the failure ceiling had stopped — it does NOT
+    enqueue N render tasks. The every-10-minute tick then drains the set at its per-tick cap
+    (``SIGNATURE_RENDER_MAX_PER_TICK``), so a bulk regenerate can never storm the worker. Frozen and
+    disabled signatures are left alone (a frozen banner stays frozen until its owner rejoins).
+    """
+    return (
+        CombatSignature.objects.filter(status=CombatSignature.Status.ACTIVE)
+        .update(
+            dirty=True,
+            render_status=CombatSignature.RenderStatus.PENDING,
+            consecutive_failures=0,
+            render_error="",
+            updated_at=timezone.now(),
+        )
+    )
+
+
 # --------------------------------------------------------------------------- #
 #  The refresh tick (beat body)
 # --------------------------------------------------------------------------- #
