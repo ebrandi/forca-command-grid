@@ -470,3 +470,39 @@ def test_token_management_page_create_and_revoke(client, sde, django_user_model)
     client.post(f"/killboard/api-tokens/{tok.id}/revoke/")
     tok.refresh_from_db()
     assert tok.revoked_at is not None
+
+
+# --------------------------------------------------------------------------- #
+#  Docs UI: CSP-safe rendering + anonymous-browser login redirect
+# --------------------------------------------------------------------------- #
+def test_docs_page_renders_csp_safe_for_members(client, sde, django_user_model):
+    member = _make_user(django_user_model, "docsmember", 9002, "member")
+    client.force_login(member)
+    r = client.get("/api/docs/")
+    assert r.status_code == 200
+    body = r.content.decode()
+    # Assets are self-hosted via the sidecar package — no CDN under the strict CSP.
+    assert "drf_spectacular_sidecar" in body
+    assert "jsdelivr" not in body and "unpkg.com" not in body
+    # The inline SwaggerUI init script carries the CSP nonce (template override).
+    assert 'nonce="' in body
+
+
+def test_docs_anonymous_browser_redirects_to_login(client, sde):
+    # A real browser navigation Accept (the */* matters: without it the schema view's
+    # OpenAPI-only renderers 406 during negotiation, before permissions run).
+    browser_accept = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+    r = client.get("/api/docs/", HTTP_ACCEPT=browser_accept)
+    assert r.status_code == 302
+    assert r.headers["Location"].startswith("/auth/eve/login/")
+    assert "next=" in r.headers["Location"]
+    # Schema navigations get the same human-friendly bounce.
+    r = client.get("/api/schema/", HTTP_ACCEPT=browser_accept)
+    assert r.status_code == 302
+
+
+def test_docs_anonymous_programmatic_keeps_denial(client, sde):
+    # The docs page is HTML-only, so a pure-JSON Accept legitimately yields 406 before
+    # permissions; the schema endpoint (which CAN speak JSON) must keep the plain 403.
+    assert client.get("/api/docs/", HTTP_ACCEPT="application/json").status_code in (401, 403, 406)
+    assert client.get("/api/schema/", HTTP_ACCEPT="application/json").status_code in (401, 403)

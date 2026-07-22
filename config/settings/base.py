@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     # third party
     "rest_framework",
     "drf_spectacular",
+    "drf_spectacular_sidecar",
     # local — one app per bounded context
     "apps.sde",
     "apps.identity",
@@ -300,6 +301,12 @@ REST_FRAMEWORK = {
     },
 }
 SPECTACULAR_SETTINGS = {
+    # Self-hosted Swagger assets (drf-spectacular-sidecar) — the strict CSP
+    # (script-src 'self' + nonce) blocks the default jsdelivr CDN, which rendered
+    # /api/docs/ blank. The inline init script gets its nonce via our template
+    # override in templates/drf_spectacular/swagger_ui.html.
+    "SWAGGER_UI_DIST": "SIDECAR",
+    "SWAGGER_UI_FAVICON_HREF": "SIDECAR",
     "TITLE": "[FORCA] Killboard API",
     "DESCRIPTION": (
         "RBAC-scoped REST API over the corp killboard (KB-28). Read-only. "

@@ -416,9 +416,33 @@ def _parse_yyyymmdd(value: str):
 # --------------------------------------------------------------------------- #
 #  OpenAPI schema + docs UI (member-gated unless public-read is on)
 # --------------------------------------------------------------------------- #
-class KillboardSchemaView(KillboardAPIViewMixin, SpectacularAPIView):
+class _BrowserLoginRedirectMixin:
+    """Bounce an anonymous HUMAN to SSO login instead of a bare 403 body.
+
+    DRF enforces permissions in ``dispatch()`` before the handler runs, so the hook is
+    ``handle_exception``: an auth/permission failure on a navigation request that prefers
+    HTML becomes a login redirect with ``next`` back to the page. Programmatic clients
+    (JSON/token) keep DRF's normal 401/403. Without this, an anonymous member clicking
+    the docs link saw a blank page (a 13-byte 403 body).
+    """
+
+    def handle_exception(self, exc):
+        from django.contrib.auth.views import redirect_to_login
+        from rest_framework.exceptions import NotAuthenticated, PermissionDenied
+
+        request = self.request
+        if (isinstance(exc, NotAuthenticated | PermissionDenied)
+                and not request.user.is_authenticated
+                and "text/html" in request.headers.get("Accept", "")):
+            return redirect_to_login(request.get_full_path())
+        return super().handle_exception(exc)
+
+
+class KillboardSchemaView(_BrowserLoginRedirectMixin, KillboardAPIViewMixin,
+                          SpectacularAPIView):
     permission_classes = [IsMemberOrPublicRead]
 
 
-class KillboardDocsView(KillboardAPIViewMixin, SpectacularSwaggerView):
+class KillboardDocsView(_BrowserLoginRedirectMixin, KillboardAPIViewMixin,
+                        SpectacularSwaggerView):
     permission_classes = [IsMemberOrPublicRead]

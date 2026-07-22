@@ -3,7 +3,7 @@
 # can't drift DOWN onto a known-vulnerable point release. Run `pip-audit` in CI.
 Django>=5.2.15,<5.3          # 5.2.15 = latest security release (2026-06-03)
 djangorestframework>=3.16,<3.17
-drf-spectacular>=0.28,<0.29
+drf-spectacular[sidecar]>=0.28,<0.29
 celery>=5.6.3,<5.7
 redis>=5.3,<6.0
 psycopg[binary]>=3.2,<4.0
