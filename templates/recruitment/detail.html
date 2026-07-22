@@ -39,6 +39,12 @@
 </div>
 {% endif %}
 
+{% if intel %}
+<div class="mb-4">
+  {% include "killboard/_intel_inference.html" with intel=intel %}
+</div>
+{% endif %}
+
 <div class="grid gap-5 lg:grid-cols-3">
   <!-- Evidence -->
   <section class="panel overflow-hidden lg:col-span-2">

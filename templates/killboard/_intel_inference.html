@@ -1,0 +1,87 @@
+{% load i18n %}
+{% comment %}KB-27 (WS-D4) shared character-intel inference block.
+
+Renders the `intel` payload from apps.killboard.intel_inference.character_intel — playstyle,
+FC-likelihood, role usage and factual awox counts. House rule: every label carries the counts
+behind it (explainability), and the whole block is captioned with the sample-size confidence so
+a thin history is never read as a strong claim. Reused by the recruitment vetting panel and the
+WS-C3 adversary page, so both read the same classifier + cache.
+
+Caller passes: intel (required). Everything below is inline styles / existing utility classes
+(the prebuilt-Tailwind trap — no new class names).{% endcomment %}
+<section class="panel overflow-hidden">
+  <div class="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3">
+    <h2 class="eyebrow text-gold">{% translate "Inferred combat profile" %}</h2>
+    <span class="chip {% if intel.confidence.level == 'high' %}text-kill{% elif intel.confidence.level == 'medium' %}text-cyan{% else %}text-faint{% endif %}"
+          title="{% translate 'Sample-size confidence — a low-confidence read is a thin history, not a strong claim.' %}">
+      {% blocktranslate with level=intel.confidence.label n=intel.confidence.n %}{{ level }} confidence · {{ n }} engagements{% endblocktranslate %}
+    </span>
+  </div>
+
+  <div class="space-y-4 p-4">
+    <!-- Playstyle: solo / small-gang / fleet -->
+    <div>
+      <div class="mb-1.5 flex items-center justify-between text-sm">
+        <span class="text-muted">{% translate "Playstyle" %}</span>
+        {% if intel.playstyle.dominant %}<span class="font-display font-semibold text-ink">{{ intel.playstyle.dominant_label }}</span>{% else %}<span class="text-faint">{% translate "unknown" %}</span>{% endif %}
+      </div>
+      {% if intel.playstyle.total %}
+      <div class="flex h-2 w-full overflow-hidden rounded-full bg-panel2">
+        <div class="h-full bg-cyan/70" style="width: {% widthratio intel.playstyle.shares.solo 1 100 %}%" title="{% blocktranslate with n=intel.playstyle.buckets.solo %}Solo: {{ n }} kills{% endblocktranslate %}"></div>
+        <div class="h-full bg-gold/70" style="width: {% widthratio intel.playstyle.shares.small_gang 1 100 %}%" title="{% blocktranslate with n=intel.playstyle.buckets.small_gang %}Small-gang: {{ n }} kills{% endblocktranslate %}"></div>
+        <div class="h-full bg-loss/70" style="width: {% widthratio intel.playstyle.shares.fleet 1 100 %}%" title="{% blocktranslate with n=intel.playstyle.buckets.fleet %}Fleet: {{ n }} kills{% endblocktranslate %}"></div>
+      </div>
+      <div class="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-faint">
+        <span><span class="text-cyan">■</span> {% blocktranslate with pct=intel.playstyle.shares.solo|floatformat:0 n=intel.playstyle.buckets.solo %}Solo {{ n }}{% endblocktranslate %} ({% widthratio intel.playstyle.shares.solo 1 100 %}%)</span>
+        <span><span class="text-gold">■</span> {% blocktranslate with n=intel.playstyle.buckets.small_gang %}Small-gang {{ n }}{% endblocktranslate %} ({% widthratio intel.playstyle.shares.small_gang 1 100 %}%)</span>
+        <span><span class="text-loss">■</span> {% blocktranslate with n=intel.playstyle.buckets.fleet %}Fleet {{ n }}{% endblocktranslate %} ({% widthratio intel.playstyle.shares.fleet 1 100 %}%)</span>
+      </div>
+      {% else %}
+      <p class="text-xs text-faint">{% translate "No kills on our board to read a playstyle from." %}</p>
+      {% endif %}
+    </div>
+
+    <!-- FC-likelihood + contributing signals -->
+    <div>
+      <div class="mb-1 flex items-center justify-between text-sm">
+        <span class="text-muted">{% translate "FC-likelihood" %}</span>
+        <span class="font-display font-semibold {% if intel.fc.level == 'high' %}text-loss{% elif intel.fc.level == 'medium' %}text-gold{% else %}text-faint{% endif %}">{{ intel.fc.label }}</span>
+      </div>
+      {% if intel.fc.signals %}
+      <ul class="space-y-0.5 text-[11px] text-faint">
+        {% for s in intel.fc.signals %}
+        <li class="flex items-start gap-1.5"><span class="mt-0.5 text-gold">·</span><span>{{ s.label }}{% if s.detail.fleet_mails %} <span class="text-muted">({% blocktranslate with n=s.detail.fleet_mails %}{{ n }} large-fleet kills{% endblocktranslate %})</span>{% elif s.detail.distinct_co_pilots %} <span class="text-muted">({% blocktranslate with n=s.detail.distinct_co_pilots %}{{ n }} distinct co-pilots{% endblocktranslate %})</span>{% endif %}</span></li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="text-[11px] text-faint">{% translate "No fleet-lead signals in our data. (Final-blow rate is deliberately not an FC signal — it tracks who lands the last shot, not who leads.)" %}</p>
+      {% endif %}
+    </div>
+
+    <!-- Role usage (via WS-D2 roles) -->
+    {% if intel.roles.ordered %}
+    <div>
+      <p class="mb-1.5 text-sm text-muted">{% translate "Role usage" %} <span class="text-[11px] text-faint">{% translate "(victim fits exact · attacker hulls approximate)" %}</span></p>
+      <div class="flex flex-wrap gap-1.5">
+        {% for r in intel.roles.ordered %}
+        <span class="chip {% if r.role == 'logi' %}text-cyan{% elif r.role == 'tackle' or r.role == 'ewar' %}text-gold{% elif r.role == 'capital' %}text-loss{% else %}text-muted{% endif %}" title="{% blocktranslate with count=r.count pct=r.share|floatformat:0 %}{{ count }} appearances{% endblocktranslate %}">{{ r.label }} · {{ r.count }} ({% widthratio r.share 1 100 %}%)</span>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Awox — factual counts, never a speculative score -->
+    {% if intel.awox.has_risk %}
+    <div class="rounded-md border-l-2 border-loss/50 bg-loss/5 px-3 py-2">
+      <p class="text-xs font-semibold text-loss">{% translate "Awox events" %}</p>
+      <div class="mt-0.5 flex flex-wrap gap-x-4 text-[11px] text-muted">
+        {% if intel.awox.events %}<span>{% blocktranslate count n=intel.awox.events %}{{ n }} kill on a corpmate{% plural %}{{ n }} kills on corpmates{% endblocktranslate %}</span>{% endif %}
+        {% if intel.awox.flagged %}<span>{% blocktranslate count n=intel.awox.flagged %}{{ n }} awox-flagged mail{% plural %}{{ n }} awox-flagged mails{% endblocktranslate %}</span>{% endif %}
+      </div>
+      {% if intel.awox.last %}<p class="mt-0.5 text-[10px] text-faint">{% blocktranslate with ago=intel.awox.last|timesince %}Most recent {{ ago }} ago.{% endblocktranslate %}</p>{% endif %}
+    </div>
+    {% endif %}
+
+    <p class="text-[10px] text-faint">{% translate "Inferred from FORCA's own killmail history — relative to our fights, never a universal record." %}</p>
+  </div>
+</section>

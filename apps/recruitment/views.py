@@ -74,6 +74,8 @@ def candidate_detail(request: HttpRequest, pk: int) -> HttpResponse:
             "themes": sorted(by_theme.items()),
             "flags": flags,
             "killboard": services.home_killboard_evidence(candidate.character_id),  # REC-KB-2 (3.8)
+            "intel": services.killboard_intel(candidate.character_id),  # KB-27 (WS-D4) inference
+
             "consents": candidate.consents.all(),
             "statuses": Candidate.Status.choices,
             "consent_scopes": CONSENT_SCOPES,

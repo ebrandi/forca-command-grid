@@ -1221,12 +1221,22 @@ def _adversary_page(request: HttpRequest, kind: str, entity_id: int) -> HttpResp
         .values_list("watchlist__name", flat=True)
     )
     is_officer = rbac.has_role(request.user, rbac.ROLE_OFFICER)
+    # KB-27 (WS-D4): the inferred combat profile — playstyle / FC-likelihood / role usage — shares
+    # the classifier + cache with recruitment and mentorship. Per-character only (the classifier is
+    # defined over one pilot); a corp/alliance page aggregates many pilots and has no single profile.
+    from . import intel_inference
+
+    intel = (
+        intel_inference.character_intel(entity_id)
+        if kind == "character" and profile["has_history"] else None
+    )
     return render(request, "killboard/adversary.html", {
         "denied": False,
         "kind": kind,
         "entity_id": entity_id,
         "entity_name": name,
         "profile": profile,
+        "intel": intel,
         "summary": profile["summary"],
         "recent": adversary.recent_engagements(kind, entity_id),
         "watched_in": watched_in,

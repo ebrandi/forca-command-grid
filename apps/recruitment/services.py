@@ -307,6 +307,25 @@ def home_killboard_evidence(character_id: int) -> dict | None:
     }
 
 
+def killboard_intel(character_id: int) -> dict | None:
+    """KB-27 (WS-D4): the inferred combat profile for a candidate, from FORCA's own killmail
+    history — playstyle, FC-likelihood, role usage and factual awox counts, each with the
+    counts behind it and a sample-size confidence.
+
+    A thin wrapper over :func:`apps.killboard.intel_inference.character_intel` so the vetting
+    desk keeps a single killboard seam (mirroring :func:`home_killboard_evidence`). Returns
+    ``None`` when the candidate has no history against/with us, so the panel is simply omitted
+    rather than rendering an empty, low-confidence "unknown" block on the recruiter's screen.
+    The inference is explicitly labelled "inferred from our killmail history" at the surface.
+    """
+    from apps.killboard.intel_inference import character_intel
+
+    if not character_id:
+        return None
+    intel = character_intel(character_id)
+    return intel if intel.get("has_history") else None
+
+
 def handoff_joined_candidate(candidate) -> dict:
     """REC-KB-3 (3.16): when a candidate is marked *joined*, route them into onboarding and
     mentorship instead of leaving the status change a dead end.

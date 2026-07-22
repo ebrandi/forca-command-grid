@@ -80,6 +80,12 @@
   </div>
 </section>
 
+{% if intel %}
+<div class="mb-6">
+  {% include "killboard/_intel_inference.html" with intel=intel %}
+</div>
+{% endif %}
+
 <div class="mb-6 grid gap-5 lg:grid-cols-2">
   <!-- Hulls they bring against us -->
   <section class="panel overflow-hidden">

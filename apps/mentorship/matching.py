@@ -97,6 +97,27 @@ def score(mentor: MentorProfile, mentee: MenteeProfile, *, services=None) -> tup
     return max(0.0, min(100.0, round(total, 1))), reasons
 
 
+def combat_read(profile) -> dict | None:
+    """KB-27 (WS-D4): the inferred combat profile for a mentor/mentee, from our killboard.
+
+    A HINT for the human matcher — it never touches :func:`score` or the algorithm. Resolves the
+    profile's main linked character (or any linked character) and returns the shared classifier's
+    inference (playstyle / FC-likelihood / role usage), or ``None`` when the pilot has no linked
+    character or no history on our board (so the hint panel simply stays quiet). Cached per
+    character, so surfacing it for a worklist of profiles reuses the same memoised builds.
+    """
+    from apps.killboard.intel_inference import character_intel
+
+    user = getattr(profile, "user", None)
+    if user is None:
+        return None
+    char = user.characters.filter(is_main=True).first() or user.characters.first()
+    if char is None:
+        return None
+    intel = character_intel(char.character_id)
+    return intel if intel.get("has_history") else None
+
+
 def suggest_mentors_for(mentee: MenteeProfile, limit: int = 5) -> list[dict]:
     from . import services
 

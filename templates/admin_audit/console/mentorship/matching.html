@@ -64,6 +64,17 @@ cadet then their top mentor suggestions with a Pair form (with an optional
           {% for goal in row.mentee.goals %}<span class="chip text-gold">{{ goal }}</span>{% endfor %}
         </div>
         {% endif %}
+        {% if row.combat %}
+        {% comment %}KB-27 (WS-D4) combat-read hint: the cadet's inferred playstyle + gaps, from
+           our killboard. A hint for the matcher — it never feeds the score.{% endcomment %}
+        <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
+          <span class="text-faint">{% translate "Killboard read:" %}</span>
+          {% if row.combat.playstyle.dominant %}<span class="text-muted">{% blocktranslate with style=row.combat.playstyle.dominant_label %}mostly {{ style }}{% endblocktranslate %}</span>{% endif %}
+          {% for r in row.combat.roles.ordered %}{% if forloop.first %}<span class="chip text-muted">{{ r.label }}</span>{% endif %}{% endfor %}
+          {% if row.gaps %}<span class="text-faint">·</span><span class="text-gold">{% for g in row.gaps %}{% blocktranslate with style=g.label %}no {{ style }}{% endblocktranslate %}{% if not forloop.last %}, {% endif %}{% endfor %} {% translate "experience" %}</span>{% endif %}
+          <span class="text-faint">({% blocktranslate with level=row.combat.confidence.label %}{{ level }} confidence{% endblocktranslate %})</span>
+        </div>
+        {% endif %}
       </div>
     </div>
 
@@ -83,6 +94,14 @@ cadet then their top mentor suggestions with a Pair form (with an optional
               {% if s.mentor.areas %}
               <div class="mt-1.5 flex flex-wrap gap-1.5">
                 {% for area in s.mentor.areas %}<span class="chip text-cyan">{{ area }}</span>{% endfor %}
+              </div>
+              {% endif %}
+              {% if s.combat %}
+              {% comment %}KB-27 (WS-D4): the mentor's inferred killboard strengths, to match a cadet's gaps.{% endcomment %}
+              <div class="mt-1.5 flex flex-wrap items-center gap-x-2 text-[11px] text-faint">
+                <span>{% translate "Killboard:" %}</span>
+                {% if s.combat.playstyle.dominant %}<span class="text-muted">{{ s.combat.playstyle.dominant_label }}</span>{% endif %}
+                {% for r in s.combat.roles.ordered %}{% if forloop.counter <= 2 %}<span class="chip text-muted">{{ r.label }}</span>{% endif %}{% endfor %}
               </div>
               {% endif %}
               {% if s.reasons %}

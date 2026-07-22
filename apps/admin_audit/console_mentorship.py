@@ -395,11 +395,24 @@ def mentorship_pairing_decide(request: HttpRequest, pk: int) -> HttpResponse:
 @login_required
 @role_required(rbac.ROLE_OFFICER)
 def mentorship_matching(request: HttpRequest) -> HttpResponse:
+    from apps.killboard.intel_inference import playstyle_gaps
     from apps.mentorship import onboarding_handoff
 
     rows = []
     for mentee in matching.unpaired_mentees():
-        rows.append({"mentee": mentee, "suggestions": matching.suggest_mentors_for(mentee, limit=3)})
+        suggestions = matching.suggest_mentors_for(mentee, limit=3)
+        # KB-27 (WS-D4): a combat-read HINT — the cadet's inferred playstyle + gaps and each
+        # suggested mentor's strengths — so an officer can steer a mostly-fleet cadet with no
+        # solo experience to a solo-experienced mentor. Never feeds the match score.
+        mentee_read = matching.combat_read(mentee)
+        for s in suggestions:
+            s["combat"] = matching.combat_read(s["mentor"])
+        rows.append({
+            "mentee": mentee,
+            "suggestions": suggestions,
+            "combat": mentee_read,
+            "gaps": playstyle_gaps(mentee_read) if mentee_read else [],
+        })
     return render(request, "admin_audit/console/mentorship/matching.html", {
         "rows": rows,
         "suggested": MentorshipPairing.objects.filter(
