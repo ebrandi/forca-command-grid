@@ -67,6 +67,41 @@ Access terms used below: **public** (anyone), **member** (home-corp pilot),
   leadership retunes weights.
 - **Background jobs:** Hall-of-Fame cache warmer, monthly freeze safety net.
 
+### Combat Signatures
+
+- **Users:** members (build/manage their own); anyone (view a shared banner image);
+  officer/director (moderation and configuration).
+- **Purpose:** Pilot-authored personalised PNG banner images composited from a pilot's own
+  killboard/profile data — portrait, corp/alliance, combat stats, rank, and featured
+  trophies over an original procedural background — embeddable in forums, Discord, and
+  websites at a stable, unguessable public URL. A private editor with a public image; the
+  feature ships dark and is turned on by leadership.
+- **Workflows:** Build a signature in the private builder (size preset, layout, background,
+  ordered components, activity period, language, theme, featured trophies) with a live
+  preview; copy Direct URL / BBCode / Markdown / HTML embed snippets; regenerate, rotate the
+  URL, convert a live signature to a frozen snapshot, disable/enable, or delete. Officers
+  triage render health, search a pilot's signatures, and disable or force a re-render;
+  directors set quotas, the refresh interval, the membership-loss policy, and curate the
+  background catalogue.
+- **Roles:** Own signatures are owner-only to edit (the active pilot must be the owner and a
+  current member); the public image is anonymous. Search + moderation are officer; settings
+  + background curation are director. Gated by the `killboard` feature flag **and** the
+  `CombatSignatureSettings` master switch.
+- **Data:** `CombatSignature` rows (config, public token, render/lifecycle state),
+  `SignatureBackground` catalogue (seeded from the committed manifest — no upload path),
+  `CombatSignatureSettings` singleton, `SignatureScanState` refresh cursor, and the rendered
+  PNGs on the persistent media volume (rebuildable from the database).
+- **Background jobs:** A 10-minute refresh tick (marks touched pilots' banners dirty, sweeps
+  membership, re-renders a capped batch) and a daily media orphan janitor; both inert until
+  the feature is armed.
+- **Integrations:** CCP's official EVE Image Server for portraits and corp/alliance logos
+  (fetched worker-side and mirrored on disk, never during a public request); no third-party
+  services. Reuses the killboard combat-value, leaderboard, ranks, and trophy authorities.
+- **Configurable:** Master switch, active-signature quota, refresh interval, snapshot
+  toggle, membership-loss policy (freeze vs revoke-on-leave), featured-trophy cap, default
+  background/layout/period, and the allowed size presets — all on the admin console. Render
+  and rate-limit knobs (`SIGNATURE_*`) are env-tunable.
+
 ### Knowledge base
 
 - **Users:** everyone (public pages are a recruiting surface); members/officers for

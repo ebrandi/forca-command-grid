@@ -84,6 +84,13 @@ Declared in [`Dockerfile`](./Dockerfile) and [`docker-compose.prod.yml`](./docke
 | `postgres:16-alpine` | PostgreSQL database | PostgreSQL License + Alpine package licences |
 | `redis:7-alpine` | Cache and Celery broker | BSD-3-Clause (Redis 7.x) + Alpine package licences |
 
+On top of the base image, the application `Dockerfile` apt-installs `libpq5`, `gettext`, and
+two font packages used by the Pillow-rendered PNGs — **`fonts-dejavu-core`** (Bitstream Vera
+Fonts Copyright, permissive) and **`fonts-noto-cjk`** (SIL Open Font License 1.1, for
+Chinese/Japanese/Korean glyphs in Combat Signature banners). These OS packages are installed
+into the image, not redistributed as files in this repository; see
+[`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md) for the font attributions.
+
 ## External services and community data sources
 
 | Source | Use in the project | Notes |

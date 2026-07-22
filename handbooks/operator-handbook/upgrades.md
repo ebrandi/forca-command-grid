@@ -43,6 +43,12 @@ compiled into the image (`compilemessages` runs in the `Dockerfile`), so a catal
 needs a rebuild rather than a container restart, and a malformed `.po` fails the build here
 instead of silently falling back to English.
 
+The same rebuild ships **`Dockerfile` OS-package changes** — for example the `fonts-noto-cjk`
+package the Combat Signatures renderer uses for Chinese/Japanese/Korean glyphs. A stale image
+missing it renders CJK names and labels as tofu boxes (the renderer otherwise degrades
+gracefully to DejaVu), so an upgrade that touches the `Dockerfile` must go through the rebuild,
+not a bare container restart.
+
 By default it upgrades the **currently checked-out branch**; pass a branch explicitly if
 needed:
 

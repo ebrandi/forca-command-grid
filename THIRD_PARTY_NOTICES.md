@@ -14,6 +14,28 @@ Static Data Export (SDE)**, including its dogma data (`dogmaAttributes`, `dogmaE
 SDE, ESI and EVE imagery are the property of **CCP hf.** and are used under CCP's developer
 terms. This project is a non-commercial fan project, not affiliated with or endorsed by CCP.
 
+## Bundled fonts (application Docker image)
+
+The application `Dockerfile` apt-installs two Debian font packages so Pillow can render the
+kill-card / CV-card PNGs and the Combat Signature banners with proper glyphs. They are
+installed into the built image at build time and are **not redistributed as font files within
+this repository**. If you redistribute the built image, each package carries its own licence
+text under `/usr/share/doc/` in the image.
+
+- **Noto Sans CJK** (Debian package `fonts-noto-cjk`) — **SIL Open Font License, Version 1.1**.
+  Provides Chinese, Japanese, and Korean glyph coverage for Combat Signature banners; the
+  renderer uses it as a per-glyph fallback after DejaVu Sans. Copyright the Noto Project
+  Authors (Google).
+
+  > This font software is licensed under the SIL Open Font License, Version 1.1.
+  > <https://scripts.sil.org/OFL>
+
+- **DejaVu Sans** (Debian package `fonts-dejavu-core`) — **Bitstream Vera Fonts Copyright**, a
+  permissive, MIT-style font licence; the DejaVu-specific modifications are released into the
+  public domain. Provides the Latin/Cyrillic faces (`DejaVuSans.ttf`, `DejaVuSans-Bold.ttf`)
+  for the kill-card / CV-card PNGs (KB-39) and the primary Combat Signature text. Copyright ©
+  2003 Bitstream, Inc. (Bitstream Vera Fonts) and the DejaVu contributors.
+
 ## EVEShipFit — evaluated, not adopted (MIT)
 
 For the Tocha's Lab fitting engine we performed a documented technical and licence

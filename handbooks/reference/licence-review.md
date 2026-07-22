@@ -16,6 +16,7 @@ file see [`NOTICE.md`](../../NOTICE.md); for the full list see
 - [Licence summary](#licence-summary)
 - [Notes on specific dependencies](#notes-on-specific-dependencies)
 - [Items requiring maintainer review](#items-requiring-maintainer-review)
+- [EVE image server usage review (2026-07-22)](#eve-image-server-usage-review-2026-07-22)
 - [EVE Online / CCP content](#eve-online--ccp-content)
 
 ## Project licence
@@ -78,6 +79,47 @@ carry weak-copyleft or specific terms that are worth noting:
   transitive dependencies and their licences can change.
 - **Community data sources** (Fuzzwork, EveRef, zKillboard) — review each service's current
   terms of use for your deployment; they are community services, not licensed libraries.
+
+## EVE image server usage review (2026-07-22)
+
+The **Combat Signatures** feature composites EVE character portraits and corporation/alliance
+logos into pilot-authored banner images. This is a review of that usage against CCP's current
+terms, recorded here as a maintainer aid (not a legal opinion). It is **not** a paraphrase of
+the licence — only a record of what was checked and the good-faith conclusion.
+
+- **Reviewed:** 2026-07-22. Both source pages were **reachable** at review time.
+- **Sources consulted:**
+  - EVE Developer License Agreement — <https://developers.eveonline.com/license-agreement>
+  - EVE image server documentation — <https://docs.esi.evetech.net/docs/image_server.html>
+- **How the feature uses the imagery.** Portraits and logos are fetched **server-side** from
+  the official image server (`images.evetech.net`) by the Celery worker only — never during a
+  public request — cached on the local media mirror (`characters/<id>/portrait-256.jpg`,
+  `corporations|alliances/<id>/logo-128.png`, refetched weekly), and composited into
+  banners the requesting pilot assembled from their own data. The banner backgrounds are
+  wholly original, project-owned procedural art containing no CCP artwork (see
+  [signature-backgrounds.md](./signature-backgrounds.md)). No banner claims CCP endorsement,
+  and no CCP mark is combined with a third-party mark.
+- **What the sources say (as read on the review date).** The image-server documentation
+  states the image service is intended to be used directly as a CDN and that self-caching is
+  **optional, not prohibited** ("You do not need to cache the images and serve them
+  yourself"). The Developer License Agreement permits use and display of Game Data within a
+  **non-commercial** Application for its stated purpose, requires displaying CCP's proprietary
+  notice, and prohibits representing the application as CCP or otherwise implying endorsement.
+- **Good-faith conclusion.** The Combat Signatures usage is **consistent with these terms**
+  and with how the application already uses the official image server elsewhere (the eveimg
+  type-image mirror and killboard portraits). Fetching official image-server portraits/logos,
+  caching them on disk, and compositing them into pilot-requested banners over
+  project-owned backgrounds, with no endorsement claim, falls within the permitted use.
+- **Caveats / re-verify before a public or commercial release:**
+  - The deployment must remain **non-commercial** — the licence forbids charging for or
+    monetising the application. This is an operator obligation already noted project-wide.
+  - The deployment must display the required **fan-site disclaimer / CCP proprietary notice**
+    (already a project requirement — see [`NOTICE.md`](../../NOTICE.md) and the trademark
+    notice in [`README.md`](../../README.md)).
+  - The licence-agreement page showed **no effective/last-updated date** at review time, and
+    the image-server documentation page notes the ESI docs have relocated to a new developer
+    portal (the legacy page remains accessible). Re-verify both against their authoritative
+    current locations before relying on this review in a regulated or commercial context.
 
 ## EVE Online / CCP content
 

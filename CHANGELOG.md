@@ -9,6 +9,29 @@ project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 
 ### Added
 
+- **Combat Signatures (pilot banner images)** — home-corp pilots build personalised PNG
+  banner images from their own killboard and profile data and embed them in forums, Discord,
+  and websites. A private builder on `/killboard/signatures/` composes a banner from a size
+  preset (compact/standard/wide/card), a layout (identity/tactical/minimal), an ordered set of
+  up to twelve components (portrait, corp/alliance, kills/losses/ISK/efficiency/K-D, rank and
+  progress, featured trophies, last/best kill, favourite ship, and more), an activity period,
+  a language, a theme, and one of twenty-five original procedural backgrounds — with a live
+  preview and copy-paste Direct URL / BBCode / Markdown / HTML embed snippets. The finished
+  image is served publicly at an unguessable, stable URL (`/s/<token>.png`), pre-rendered
+  off-request by a coalesced Celery beat to a persistent media volume and served straight off
+  disk by nginx (the Django view is only a pending/placeholder and constant-shape-404
+  fallback). Banners are **live** (auto-refreshing as stats change) or a one-way frozen
+  **snapshot**; pilots can regenerate, rotate the URL (the old link dies immediately),
+  disable, or delete. Portraits and corp/alliance logos are fetched worker-side from CCP's
+  official image server and mirrored on disk (never during a public request); the renderer is
+  a deterministic Pillow compositor with a DejaVu → Noto Sans CJK font chain for
+  Latin/Cyrillic/CJK glyphs (new `fonts-noto-cjk` package in the image). The feature ships
+  **dark** behind the `killboard` flag plus a leadership master switch, with a Director admin
+  console (render-health dashboard, per-pilot moderation, background curation with no upload
+  path, quotas, refresh interval, and a freeze-or-revoke membership-loss policy) and a full
+  audit trail. Fully translated across the nine locales. Known v1 limitations: no kill-streak
+  component (no authoritative source), rank emblems and trophy medals are drawn glyphs rather
+  than raster art, and the live→snapshot conversion is one-way.
 - **Tocha's Lab (ship fitting & simulation)** — a new fitting workspace on `/lab/`
   (`Laboratório do Tocha` in Brazilian Portuguese). Build a fit from scratch or import one
   (EFT paste, a killmail, or a doctrine), apply a pilot's real skills or an All-V/untrained

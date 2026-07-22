@@ -13,6 +13,7 @@ books; a human always pulls the trigger in-game.
 ## Table of contents
 
 - [Killboard administration](#killboard-administration)
+- [Combat Signatures](#combat-signatures)
 - [Operations management](#operations-management)
 - [Readiness platform](#readiness-platform)
 - [Command Intelligence](#command-intelligence)
@@ -35,6 +36,60 @@ the console. The reward engine ships off by default; when you enable it, baselin
 ensures existing pilots aren't retroactively rewarded for past activity. Battle reports
 and watchlists (`/killboard/battles/`, `/killboard/intel/`) are officer-managed intel
 tools built on the same killmail feed.
+
+## Combat Signatures
+
+Let home-corp pilots build personalised, publicly embeddable banner images from their own
+killboard data. The feature ships **dark**: it needs both the `killboard` feature enabled on
+**Admin → Features** and its own **master switch** turned on in the console. Manage it from
+the admin console's Combat Signatures screens (`/ops/`).
+
+**Enabling and defaults (Director).** The settings screen is the master switch plus the
+corp-wide defaults: the **active-signature quota** per pilot (default 5), the **refresh
+interval** for live banners in hours (default 6), whether **snapshots** are allowed (on by
+default), the **featured-trophy cap** (default 4), the default background/layout/period a
+new signature starts from, and which **size presets** pilots may choose. Saving stamps who
+changed it and audits `signatures.settings_update` with the changed field names.
+
+**Membership-loss policy (Director).** By default a pilot who leaves the corp has their
+signatures **frozen** — the images stay up, automatic refresh stops, and editing is blocked
+(a rejoin unfreezes them on the next sweep). Turning on **revoke on leave** instead **deletes**
+a leaver's images and disables the signatures. Choose per your corp's disclosure posture.
+
+**Background curation (Director).** The background library is a fixed set of original
+procedural designs seeded from a committed manifest. You can **enable/disable** and
+**reorder** designs, and pick the default — but there is **no upload path anywhere by
+design**; leadership cannot add a raster image, only curate the built-ins. Toggles and
+reorders audit `signatures.background_toggle` / `signatures.background_reorder`. See the
+[background library reference](../reference/signature-backgrounds.md) for the catalogue and
+its provenance.
+
+**Render health and moderation (Officer).** The dashboard shows status/render counts, the
+oldest pending render, parked failures **with the technical render error** a pilot never
+sees, storage usage and an orphan estimate, and a **provenance check** that verifies the
+shipped background art still matches its recorded checksums. The per-pilot search screen lets
+an officer find a member's signatures and **disable** one (its public image goes offline
+immediately), **re-enable** it, or **force a re-render**. Admin disable/enable skip the owner
+ceiling (moderation, not an owner edit) and audit `signatures.admin_disable` /
+`signatures.admin_enable`; a forced re-render audits `signatures.admin_regenerate`.
+
+**Maintenance (Director).** Two buttons on the console call the maintenance-task launcher:
+**re-render all** (flags every active signature for a fresh render — the refresh tick then
+drains them at its per-tick cap, so it never storms the worker) and **clean up orphaned
+images** (deletes banner files with no live signature). Re-render all is the job to run after
+restoring a database onto an empty media volume.
+
+**Audit trail.** Every signature action writes an immutable audit row. Owner actions:
+`signatures.create`, `signatures.edit`, `signatures.rename`, `signatures.duplicate`,
+`signatures.rotate_token`, `signatures.snapshot`, `signatures.disable`, `signatures.enable`,
+`signatures.delete`, and the manual `signatures.regenerate`. System/lifecycle:
+`signatures.freeze` and `signatures.unfreeze` (membership sweep). Leadership:
+`signatures.settings_update`, `signatures.background_toggle`, `signatures.background_reorder`,
+`signatures.admin_disable`, `signatures.admin_enable`, and `signatures.admin_regenerate`.
+
+The operator-facing side — the media volume, nginx serving, the two beat jobs, backups, and
+the env knobs — is in the
+[Operations Runbook](../operator-handbook/operations-runbook.md#combat-signatures).
 
 ## Operations management
 

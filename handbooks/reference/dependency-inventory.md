@@ -77,9 +77,18 @@ Source: [`Dockerfile`](../../Dockerfile), [`docker-compose.prod.yml`](../../dock
 | `postgres:16-alpine` | deployment | PostgreSQL License + Alpine | Database |
 | `redis:7-alpine` | deployment | BSD-3-Clause + Alpine | Cache + broker |
 
-On top of the base image, the application image apt-installs `libpq5` (for psycopg) and
-`gettext`, which provides the `msgfmt` that the image's `compilemessages` build step needs.
-Both are OS packages under their own licences, not PyPI dependencies.
+On top of the base image, the application image apt-installs `libpq5` (for psycopg),
+`gettext` (which provides the `msgfmt` that the image's `compilemessages` build step needs),
+and two font packages for the Pillow-rendered PNGs:
+
+| Package | Type | Licence | Purpose |
+|---|---|---|---|
+| `fonts-dejavu-core` | asset (OS package) | Bitstream Vera Fonts Copyright (permissive; DejaVu changes public domain) | Latin/Cyrillic faces for kill-card / CV-card PNGs and Combat Signature banners |
+| `fonts-noto-cjk` | asset (OS package) | SIL OFL 1.1 | CJK glyph coverage (Chinese/Japanese/Korean) for Combat Signature banners |
+
+All four are OS packages under their own licences, not PyPI dependencies, and are installed
+into the image rather than redistributed as files in this repository. See
+[`THIRD_PARTY_NOTICES.md`](../../THIRD_PARTY_NOTICES.md) for the font attributions.
 
 ## External services and data
 

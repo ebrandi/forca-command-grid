@@ -74,6 +74,8 @@ times an hour on staggered minutes to avoid collisions. Nightly jobs are UTC.
 | `killboard.notify_rank_ups` | Nightly 03:35 | One-time combat rank-up celebrations |
 | `killboard.scan_milestones` | Nightly 03:45 | Record/celebrate newbro combat milestones |
 | `killboard.resolve_names` | Every 2h | Resolve pilot/corp/alliance names on fresh killmails |
+| `killboard.signature_tick` | Every 10 min (offset) | Combat Signatures refresh: mark touched pilots' banners dirty, sweep membership, re-render a capped batch (inert until armed) |
+| `killboard.signature_cleanup` | Daily 04:13 | Delete orphaned/disabled Combat Signature images from the media volume |
 
 ## Pilots and Hall of Fame
 
