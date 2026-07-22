@@ -46,6 +46,26 @@ def _find_corp_killmail_director(corp_id: int) -> EveCharacter | None:
     return None
 
 
+def corp_killmail_feed_token_present(corp_id: int) -> bool:
+    """Cheap, ESI-free "does a corp-killmail feed token even exist?" check.
+
+    This is the DB half of :func:`_find_corp_killmail_director` — a live, non-revoked token
+    on a corp member that carries the corp-killmails scope — **without** the ESI Director-role
+    verification (which fans out network calls per candidate). The setup wizard uses this so a
+    page load never triggers ESI: it pairs the cheap "a candidate token exists" signal with the
+    authoritative "the corp feed actually polled successfully" signal from ``IngestSourceHealth``.
+    Sharing :data:`CORP_KILLMAILS_SCOPE` keeps the two checks in lockstep.
+    """
+    from apps.sso.models import AuthToken
+
+    return AuthToken.objects.filter(
+        character__corporation_id=corp_id,
+        character__is_corp_member=True,
+        revoked_at__isnull=True,
+        scopes__contains=[CORP_KILLMAILS_SCOPE],
+    ).exists()
+
+
 @shared_task(name="killboard.rebuild_stats")
 def rebuild_stats() -> int:
     return rebuild_corp_metrics()
@@ -111,6 +131,17 @@ def scan_rank_rewards() -> int:
     from .rewards import scan_and_award
 
     return scan_and_award()
+
+
+@shared_task(name="killboard.run_history_import")
+def run_history_import(import_id: int) -> str:
+    """KB-38: execute one queued setup-wizard history import (WS-D5).
+
+    Thin wrapper over ``history_import.run_import`` — the launcher enqueues this so the heavy,
+    network-bound EVE Ref / zKill backfill runs off the request. Returns the terminal state."""
+    from .history_import import run_import
+
+    return run_import(import_id)
 
 
 @shared_task(name="killboard.notify_rank_ups")

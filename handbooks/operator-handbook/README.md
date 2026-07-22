@@ -155,6 +155,7 @@ Key architectural facts, all drawn directly from the compose files:
 |---|---|
 | [Requirements](./requirements.md) | Host OS, hardware sizing, external services, EVE application registration |
 | [Deployment](./deployment.md) | Fresh install, the one-shot script, the Makefile lifecycle, data bootstrap |
+| [Run your corp's killboard](./killboard-self-host.md) | Killboard-first quick start: the ESI app, the `killboard` profile, the setup wizard, history import, branding |
 | [Configuration](./configuration.md) | Operator's walkthrough of required and optional settings |
 | [Operations Runbook](./operations-runbook.md) | Daily/weekly/monthly checklists |
 | [Monitoring and Health](./monitoring-and-health.md) | `/healthz`, `scripts/healthcheck.sh`, the `/ops/health/` page, logs, alerting |

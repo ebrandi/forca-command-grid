@@ -752,6 +752,14 @@ EVE_IMAGE_SOURCE_URL = env("EVE_IMAGE_SOURCE_URL", default="https://images.evete
 EVE_IMAGE_MIRROR_DIR = env("EVE_IMAGE_MIRROR_DIR", default=str(BASE_DIR / "eveimg"))
 
 FORCA_HOME_CORP_ID = env.int("FORCA_HOME_CORP_ID", default=0)
+# KB-38 deploy profile (WS-D5). Declares which module set a corp intends to run: "full" (the
+# whole suite — the default) or "killboard" (killboard-first: run the corp killboard, its
+# intel tools and market pricing; leave the heavier ERP/industry/command modules off until a
+# corp is ready to upsell them). This is only an intent marker read by the setup wizard and
+# the ``apply_profile`` management command — the actual feature flags live in the database
+# (see core.features), so a deploy sets them by running ``manage.py apply_profile``. Nothing
+# here hardcodes a flag, so the full-suite default is never silently broken.
+FORCA_PROFILE = env("FORCA_PROFILE", default="full")
 # Canonical public base URL (e.g. https://grid.example.com), used to build absolute links
 # in messages delivered off-site (Discord/EVE-mail/candidate e-mails). Prefer this
 # over request.get_host() for outbound links so a spoofed Host header can never poison

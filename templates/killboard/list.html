@@ -5,9 +5,12 @@
 {% block content %}
 
 <header class="mb-4 flex flex-wrap items-end justify-between gap-4">
-  <div>
-    <p class="eyebrow">{% translate "Combat record" %} · {{ home_corp_name }}</p>
-    <h1 class="mt-1 text-3xl font-bold text-ink">Killboard</h1>
+  <div class="flex items-center gap-3">
+    {% if branding.logo_url %}<img src="{{ branding.logo_url }}" alt="" class="h-10 w-10 rounded object-contain">{% endif %}
+    <div{% if branding.accent_color %} class="border-l-4 pl-3" style="border-color: {{ branding.accent_color }}"{% endif %}>
+      <p class="eyebrow">{% translate "Combat record" %} · {{ branding.display_name|default:home_corp_name }}</p>
+      <h1 class="mt-1 text-3xl font-bold text-ink">Killboard</h1>
+    </div>
   </div>
   <div class="flex items-center gap-2">
     <a href="{% url 'killboard:stats' %}" class="btn-ghost text-xs"><svg class="h-4 w-4"><use href="#i-grid"/></svg> {% translate "Stats" %}</a>

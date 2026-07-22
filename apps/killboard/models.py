@@ -1022,6 +1022,82 @@ class IngestSourceHealth(models.Model):
 
 
 # --------------------------------------------------------------------------- #
+#  KB-38 — one-click history import (the self-host setup wizard, WS-D5)
+# --------------------------------------------------------------------------- #
+class KillboardHistoryImport(models.Model):
+    """One run of the "import our corp's full history" launcher on the setup wizard.
+
+    A thin ledger over the existing ``import_everef_killmails`` / ``import_zkill_history``
+    management commands: it does not re-implement any import logic (see
+    ``apps.killboard.history_import``), it only records *that* a run was launched, how far
+    it got, and its tail of output so the wizard's progress fragment has something to poll.
+
+    **One active run at a time.** ``PENDING``/``RUNNING`` are the two "active" states; the
+    launcher refuses to enqueue a second while one is active (the import commands are heavy
+    and network-bound — two at once would double the ESI/EVE Ref load and race on the same
+    idempotent upserts). ``CANCEL_REQUESTED`` is a best-effort flag the task reads between
+    batches; the in-flight batch always finishes before the run stops.
+    """
+
+    class Source(models.TextChoices):
+        EVEREF = "everef", _("EVE Ref archives (no ESI rate limit)")
+        ZKILL = "zkill", _("zKillboard history (per-mail ESI fetch)")
+
+    class State(models.TextChoices):
+        PENDING = "pending", _("Queued")
+        RUNNING = "running", _("Running")
+        DONE = "done", _("Done")
+        FAILED = "failed", _("Failed")
+        CANCELLED = "cancelled", _("Cancelled")
+
+    ACTIVE_STATES = ("pending", "running")
+
+    source = models.CharField(max_length=12, choices=Source.choices, default=Source.EVEREF)
+    # EVE Ref runs a date range; zKill walks the corp's whole history (dates unused).
+    from_date = models.DateField(null=True, blank=True)
+    to_date = models.DateField(null=True, blank=True)
+    state = models.CharField(max_length=12, choices=State.choices, default=State.PENDING)
+    # Killmail count on the board when the run started — the ingested delta is derived
+    # from it (both importers are idempotent, home-corp-scoped inserts), so we never have
+    # to parse the command's stdout for a count.
+    killmails_before = models.BigIntegerField(default=0)
+    ingested = models.BigIntegerField(default=0)
+    errors = models.IntegerField(default=0)
+    # Last ~8k of captured command output — enough for the wizard's live log tail without
+    # unbounded row growth on a multi-year backfill.
+    log_tail = models.TextField(blank=True)
+    cancel_requested = models.BooleanField(default=False)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="+",
+    )
+    created_at = models.DateTimeField(default=timezone.now)
+    started_at = models.DateTimeField(null=True, blank=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [models.Index(fields=["state", "-created_at"], name="kb_histimport_state_idx")]
+
+    def __str__(self) -> str:
+        return f"{self.source} import #{self.pk} ({self.state})"
+
+    @property
+    def is_active(self) -> bool:
+        return self.state in self.ACTIVE_STATES
+
+    @classmethod
+    def active(cls) -> KillboardHistoryImport | None:
+        """The one in-flight run (pending or running), or ``None``."""
+        return cls.objects.filter(state__in=cls.ACTIVE_STATES).order_by("-created_at").first()
+
+    def append_log(self, text: str, *, cap: int = 8000) -> None:
+        """Append output, keeping only the last ``cap`` characters (newest tail)."""
+        combined = (self.log_tail + text)
+        self.log_tail = combined[-cap:]
+
+
+# --------------------------------------------------------------------------- #
 #  KB-28 — per-user API token (the killboard REST API)
 # --------------------------------------------------------------------------- #
 class KillboardApiToken(models.Model):

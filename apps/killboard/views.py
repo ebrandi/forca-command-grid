@@ -258,6 +258,7 @@ def killboard_list(request: HttpRequest) -> HttpResponse:
         from .stream import tip_seq
 
         stream_tip = tip_seq()
+    from . import branding as _branding
     return render(
         request,
         template,
@@ -275,6 +276,9 @@ def killboard_list(request: HttpRequest) -> HttpResponse:
             "live_enabled": live_enabled,
             "stream_topics": stream_topics,
             "stream_tip": stream_tip,
+            # KB-38 branding overlay (WS-D5): optional corp name override + accent applied to
+            # the hero. Cached AppSetting read; empty values fall back to today's look.
+            "branding": _branding.get_branding(),
         },
     )
 
@@ -2013,3 +2017,131 @@ def killfeed_config(request: HttpRequest) -> HttpResponse:
             "ship_classes": killfeed_rules.SHIP_CLASSES,
         },
     )
+
+
+# --------------------------------------------------------------------------- #
+#  KB-38 self-host adoption profile (WS-D5): the setup wizard + history import +
+#  branding. The wizard is DIRECTOR-gated (it exposes onboarding + branding for the
+#  whole instance); the history-import launcher is officer-or-director.
+# --------------------------------------------------------------------------- #
+def _setup_context(request) -> dict:
+    from . import branding, setup_status
+    from .models import KillboardHistoryImport
+
+    active = KillboardHistoryImport.active()
+    # ``home_corp_name`` is intentionally NOT set here — the roles context processor already
+    # provides it, and overriding it with a view value would risk shadowing the real name.
+    return {
+        "steps": setup_status.wizard_steps(request, _home(), active_import=active),
+        "active_import": active,
+        "recent_imports": list(KillboardHistoryImport.objects.all()[:5]),
+        "branding": branding.get_branding(),
+        "sources": KillboardHistoryImport.Source.choices,
+    }
+
+
+@login_required
+@role_required(rbac.ROLE_DIRECTOR)
+def killboard_setup(request: HttpRequest) -> HttpResponse:
+    """DIRECTOR: the self-host setup wizard — a live status page for standing up the board."""
+    return render(request, "killboard/setup.html", _setup_context(request))
+
+
+@login_required
+@role_required(rbac.ROLE_OFFICER)
+@require_POST
+def killboard_history_import_start(request: HttpRequest) -> HttpResponse:
+    """Officer/director: enqueue a one-click history import. Refuses a concurrent run."""
+    import datetime as _dt
+
+    from . import tasks
+    from .models import KillboardHistoryImport
+
+    source = request.POST.get("source") or KillboardHistoryImport.Source.EVEREF
+    if source not in KillboardHistoryImport.Source.values:
+        messages.error(request, gettext("Unknown import source."))
+        return redirect("killboard:setup")
+
+    if KillboardHistoryImport.active() is not None:
+        messages.info(request, gettext("A history import is already running — wait for it to "
+                                       "finish or cancel it before starting another."))
+        return redirect("killboard:setup")
+
+    def _date(field):
+        raw = (request.POST.get(field) or "").strip()
+        if not raw:
+            return None
+        try:
+            return _dt.datetime.strptime(raw, "%Y-%m-%d").date()
+        except ValueError:
+            return None
+
+    job = KillboardHistoryImport.objects.create(
+        source=source,
+        from_date=_date("from_date") if source == KillboardHistoryImport.Source.EVEREF else None,
+        to_date=_date("to_date") if source == KillboardHistoryImport.Source.EVEREF else None,
+        created_by=request.user,
+    )
+    audit_log(request.user, "killboard.history_import_start",
+              target_type="killboard_history_import", target_id=str(job.pk),
+              metadata={"source": source}, ip=client_ip(request))
+    tasks.run_history_import.delay(job.pk)
+    messages.success(request, gettext("History import started."))
+    return redirect("killboard:setup")
+
+
+@login_required
+@role_required(rbac.ROLE_OFFICER)
+def killboard_history_import_status(request: HttpRequest) -> HttpResponse:
+    """htmx poll fragment: the current/last import's progress."""
+    from .models import KillboardHistoryImport
+
+    active = KillboardHistoryImport.active()
+    job = active or KillboardHistoryImport.objects.order_by("-created_at").first()
+    return render(request, "killboard/_import_status.html",
+                  {"active_import": active, "job": job})
+
+
+@login_required
+@role_required(rbac.ROLE_OFFICER)
+@require_POST
+def killboard_history_import_cancel(request: HttpRequest) -> HttpResponse:
+    """Officer/director: best-effort cancel of the running import (honoured between batches)."""
+    from .models import KillboardHistoryImport
+
+    active = KillboardHistoryImport.active()
+    if active is not None:
+        active.cancel_requested = True
+        active.save(update_fields=["cancel_requested"])
+        audit_log(request.user, "killboard.history_import_cancel",
+                  target_type="killboard_history_import", target_id=str(active.pk),
+                  ip=client_ip(request))
+        messages.info(request, gettext("Cancellation requested — the import will stop after the "
+                                       "current batch."))
+    return redirect("killboard:setup")
+
+
+@login_required
+@role_required(rbac.ROLE_DIRECTOR)
+@require_POST
+def killboard_branding(request: HttpRequest) -> HttpResponse:
+    """DIRECTOR: save the corp branding overlay (name/logo/accent/tagline)."""
+    from . import branding
+
+    _clean, errors = branding.set_branding(
+        {
+            "display_name": request.POST.get("display_name", ""),
+            "logo_url": request.POST.get("logo_url", ""),
+            "accent_color": request.POST.get("accent_color", ""),
+            "footer_tagline": request.POST.get("footer_tagline", ""),
+        },
+        user=request.user,
+    )
+    if errors:
+        for msg in errors:
+            messages.error(request, msg)
+    else:
+        audit_log(request.user, "killboard.branding_save", target_type="killboard_branding",
+                  ip=client_ip(request))
+        messages.success(request, gettext("Branding saved."))
+    return redirect("killboard:setup")

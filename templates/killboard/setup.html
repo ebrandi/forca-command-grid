@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Killboard setup" %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+{% with accent=branding.accent_color %}
+<a href="{% url 'killboard:list' %}" class="text-xs text-faint hover:text-gold">← {% translate "Killboard" %}</a>
+<header class="mt-2 mb-6 border-l-4 pl-4"{% if accent %} style="border-color: {{ accent }}"{% endif %}>
+  <p class="eyebrow">{% translate "Self-host" %} · {{ branding.display_name|default:home_corp_name }}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Killboard setup" %}</h1>
+  <p class="mt-1 max-w-2xl text-sm text-faint">{% translate "Stand up your corporation's killboard. Each step below checks its own status live — fix anything flagged, then reload. Nothing here is a one-way switch." %}</p>
+</header>
+
+<!-- Steps -->
+<ol class="space-y-4">
+  {% for step in steps %}
+  <li class="panel p-5">
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <div class="min-w-0">
+        <div class="flex items-center gap-2">
+          <span class="data text-xs text-faint">{{ forloop.counter }}</span>
+          <h2 class="text-lg font-bold text-ink">{{ step.title }}</h2>
+          {% if step.status == 'ok' %}<span class="chip !text-kill">{% translate "OK" %}</span>
+          {% elif step.status == 'warn' %}<span class="chip !text-gold">{% translate "Action suggested" %}</span>
+          {% else %}<span class="chip !text-loss">{% translate "Needs setup" %}</span>{% endif %}
+        </div>
+        <p class="mt-1 max-w-2xl text-sm text-faint">{{ step.detail }}</p>
+      </div>
+    </div>
+
+    {% if step.id == 'esi_app' %}
+    <div class="mt-3 rounded border border-line bg-panel2 p-3 text-xs text-faint">
+      <p>{% translate "Register an EVE application at" %}
+        <a href="https://developers.eveonline.com/applications" target="_blank" rel="noopener" class="text-gold hover:underline">developers.eveonline.com</a>
+        {% translate "with this exact callback URL:" %}</p>
+      <code class="data mt-1 block break-all text-cyan">{{ step.callback_url }}</code>
+      <p class="mt-2">{% blocktranslate %}Then set EVE_SSO_CLIENT_ID and EVE_SSO_CLIENT_SECRET in your environment and restart the app. Grant at least the corporation-killmails scope.{% endblocktranslate %}</p>
+    </div>
+
+    {% elif step.id == 'director_token' %}
+    <div class="mt-3 flex flex-wrap items-center gap-3 text-xs">
+      {% if step.last_success_at %}
+      <span class="text-faint">{% blocktranslate with when=step.last_success_at|timesince %}Last corp-feed poll {{ when }} ago.{% endblocktranslate %}</span>
+      {% endif %}
+      {% if step.status != 'ok' %}
+      <a href="{% url 'sso:scopes' %}" class="btn-gold text-xs">{% translate "Grant the Director token" %}</a>
+      {% endif %}
+      {% if step.last_error %}<p class="w-full truncate text-loss">{{ step.last_error }}</p>{% endif %}
+    </div>
+
+    {% elif step.id == 'reference_data' %}
+    <p class="mt-3 text-xs text-faint">{% blocktranslate with types=step.type_count prices=step.price_count %}{{ types }} ship/item types · {{ prices }} market prices loaded.{% endblocktranslate %}</p>
+
+    {% elif step.id == 'history' %}
+    <div class="mt-3">
+      {% if step.killmail_count %}
+      <p class="text-xs text-faint">
+        {% blocktranslate with n=step.killmail_count %}{{ n }} killmails on the board.{% endblocktranslate %}
+        {% if step.oldest %}{% blocktranslate with a=step.oldest|date:"Y-m-d" b=step.newest|date:"Y-m-d" %}Oldest {{ a }}, newest {{ b }}.{% endblocktranslate %}{% endif %}
+      </p>
+      {% endif %}
+
+      <!-- One-click history import launcher -->
+      <div class="mt-3 rounded border border-line bg-panel2 p-3">
+        <p class="eyebrow mb-2 text-faint">{% translate "Import corporation history" %}</p>
+        <form method="post" action="{% url 'killboard:history_import_start' %}" class="flex flex-wrap items-end gap-3">
+          {% csrf_token %}
+          <label class="block">
+            <span class="eyebrow mb-1 block text-faint">{% translate "Source" %}</span>
+            <select name="source" class="input-field">
+              {% for value, label in sources %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+            </select>
+          </label>
+          <label class="block">
+            <span class="eyebrow mb-1 block text-faint">{% translate "From (EVE Ref only)" %}</span>
+            <input name="from_date" type="date" class="input-field">
+          </label>
+          <label class="block">
+            <span class="eyebrow mb-1 block text-faint">{% translate "To (EVE Ref only)" %}</span>
+            <input name="to_date" type="date" class="input-field">
+          </label>
+          <button class="btn-gold" {% if active_import %}disabled{% endif %}>{% translate "Start import" %}</button>
+        </form>
+        <p class="mt-2 text-[11px] text-faint">{% translate "EVE Ref is fastest (no ESI rate limit); leave the dates blank for the full history. Only one import runs at a time." %}</p>
+
+        <!-- Progress fragment: bootstrapped on load; the fragment then self-polls (and
+             stops polling itself once the run reaches a terminal state). -->
+        <div id="kb-import-status" class="mt-3"
+             hx-get="{% url 'killboard:history_import_status' %}"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+        </div>
+      </div>
+    </div>
+
+    {% elif step.id == 'branding' %}
+    <form method="post" action="{% url 'killboard:branding' %}" class="mt-3 grid max-w-xl gap-3 sm:grid-cols-2">
+      {% csrf_token %}
+      <label class="block">
+        <span class="eyebrow mb-1 block text-faint">{% translate "Display name" %}</span>
+        <input name="display_name" type="text" maxlength="60" value="{{ branding.display_name }}" class="input-field" placeholder="{{ home_corp_name }}">
+      </label>
+      <label class="block">
+        <span class="eyebrow mb-1 block text-faint">{% translate "Accent colour (hex)" %}</span>
+        <input name="accent_color" type="text" maxlength="7" value="{{ branding.accent_color }}" class="input-field" placeholder="#c8a24b">
+      </label>
+      <label class="block">
+        <span class="eyebrow mb-1 block text-faint">{% translate "Logo URL (https or /static)" %}</span>
+        <input name="logo_url" type="text" maxlength="300" value="{{ branding.logo_url }}" class="input-field" placeholder="https://…/logo.png">
+      </label>
+      <label class="block">
+        <span class="eyebrow mb-1 block text-faint">{% translate "Footer tagline" %}</span>
+        <input name="footer_tagline" type="text" maxlength="160" value="{{ branding.footer_tagline }}" class="input-field">
+      </label>
+      <div class="sm:col-span-2">
+        <button class="btn-gold">{% translate "Save branding" %}</button>
+      </div>
+    </form>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ol>
+
+<p class="mt-6 text-xs text-faint">{% blocktranslate %}Full instructions are in the self-host guide in the operator handbook (handbooks/operator-handbook/killboard-self-host.md).{% endblocktranslate %}</p>
+{% endwith %}
+{% endblock %}

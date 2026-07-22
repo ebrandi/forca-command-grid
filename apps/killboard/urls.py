@@ -54,6 +54,13 @@ urlpatterns = [
     path("adversary/alliance/<int:entity_id>/", views.adversary_alliance, name="adversary_alliance"),
     path("adversary/<str:kind>/<int:entity_id>/watch/", views.adversary_watch, name="adversary_watch"),
     path("killfeed/settings/", views.killfeed_config, name="killfeed_config"),
+    # KB-38 self-host setup wizard (WS-D5) — static "setup/" prefix, above the
+    # <int:killmail_id> single-segment catch-all.
+    path("setup/", views.killboard_setup, name="setup"),
+    path("setup/import/", views.killboard_history_import_start, name="history_import_start"),
+    path("setup/import/status/", views.killboard_history_import_status, name="history_import_status"),
+    path("setup/import/cancel/", views.killboard_history_import_cancel, name="history_import_cancel"),
+    path("setup/branding/", views.killboard_branding, name="branding"),
     # KB-29 live feed: server-rendered single row the live JS prepends. Above the
     # <int:killmail_id> single-segment catch-all.
     path("live/row/<int:killmail_id>/", views.killmail_feed_row, name="live_row"),

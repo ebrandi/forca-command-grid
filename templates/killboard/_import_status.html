@@ -1,0 +1,32 @@
+{% load i18n %}
+{% comment %}
+KB-38 (WS-D5): the history-import progress fragment. Polled by htmx from the setup wizard
+while a run is active; when the run reaches a terminal state it renders without a poll
+trigger, so the client stops polling on its own.
+{% endcomment %}
+{% if job %}
+<div class="rounded border border-line bg-panel p-3 text-xs"
+     {% if active_import %}hx-get="{% url 'killboard:history_import_status' %}" hx-trigger="every 3s" hx-swap="outerHTML" hx-target="this"{% endif %}>
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="text-ink">{{ job.get_source_display }}</span>
+    {% if job.state == 'running' %}<span class="chip !text-cyan">{% translate "Running" %}</span>
+    {% elif job.state == 'pending' %}<span class="chip !text-gold">{% translate "Queued" %}</span>
+    {% elif job.state == 'done' %}<span class="chip !text-kill">{% translate "Done" %}</span>
+    {% elif job.state == 'cancelled' %}<span class="chip !text-faint">{% translate "Cancelled" %}</span>
+    {% else %}<span class="chip !text-loss">{% translate "Failed" %}</span>{% endif %}
+    <span class="text-faint">{% blocktranslate with n=job.ingested %}{{ n }} ingested{% endblocktranslate %}</span>
+    {% if job.errors %}<span class="text-loss">{% blocktranslate with n=job.errors %}{{ n }} errors{% endblocktranslate %}</span>{% endif %}
+    {% if active_import %}
+    <form method="post" action="{% url 'killboard:history_import_cancel' %}" class="ml-auto">
+      {% csrf_token %}
+      <button class="btn-ghost text-[11px] !text-loss">{% translate "Cancel" %}</button>
+    </form>
+    {% endif %}
+  </div>
+  {% if job.log_tail %}
+  <pre class="data mt-2 max-h-40 overflow-auto whitespace-pre-wrap rounded bg-panel2 p-2 text-[11px] text-faint">{{ job.log_tail }}</pre>
+  {% endif %}
+</div>
+{% else %}
+<p class="text-xs text-faint">{% translate "No import has run yet." %}</p>
+{% endif %}
