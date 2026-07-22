@@ -811,6 +811,32 @@ app.conf.beat_schedule = {
         "task": "supplyboard.sweep",
         "schedule": crontab(minute="16-59/20"),
     },
+    # Combat Signatures refresh tick (WS-4): a cursor-consumer over the KB-29 ring buffer that
+    # marks touched pilots' live banners dirty, sweeps membership, and re-renders due images. Ships
+    # INERT — one cheap CombatSignatureSettings read returns immediately until leadership arms the
+    # feature (the consume-killstream / store-expire-reservations precedent). Every 10 min at the
+    # ODD offset :03 (3-59/10 → :03/:13/:23/:33/:43/:53), which dodges the every-2-min pingboard
+    # pair (dispatch-killboard-subscriptions + pingboard-retry-failed) on ALL six firings and every
+    # killmail-import workhorse (0/7/10/15/20/22/30/37/40/45/50/52). Co-tenants are all cheap /
+    # inert cursor-and-sweep jobs: scan-killboard-trophies (*/3, the sibling ring-buffer consumer),
+    # warm-hall-of-fame (cached warm), reconcile-courier-contracts (13-59/20), campaigns-sweep-
+    # deadlines (:23), sync-corp-structures (:33) and store-reconcile-order-settlements (:53). No
+    # heavy full-table rebuild shares the rung (rebuild-stats is 1-59/15).
+    "signature-refresh-tick": {
+        "task": "killboard.signature_tick",
+        "schedule": crontab(minute="3-59/10"),
+    },
+    # Combat Signatures media janitor (WS-4): delete artifacts with no row / for disabled
+    # signatures (disable/rotate delete eagerly — this catches crash-orphaned files). Daily 04:13
+    # UTC, in the quiet post-rollup morning window: minute 13 is odd and not a multiple of 3/5, so
+    # it dodges the */2, */3, */5, */10 and */15 cadences; the only recurring co-tenant is
+    # reconcile-courier-contracts (13-59/20 → :13) plus the always-on per-minute pingboard/
+    # killstream ticks, and no daily job shares 04:13 (its hour-4 neighbours are command-intel-
+    # autonomous-propose at :10 and store-check-quote-drift at :21).
+    "signature-cleanup-orphans": {
+        "task": "killboard.signature_cleanup",
+        "schedule": crontab(minute=13, hour=4),
+    },
 }
 
 

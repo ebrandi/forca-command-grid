@@ -430,3 +430,32 @@ def auto_cluster_battles(window_hours: int = 6, min_kills: int = 5, report_hours
         if report is not None:
             created += 1
     return created
+
+
+@shared_task(name="killboard.signature_tick")
+def signature_tick_task() -> dict:
+    """Combat Signatures refresh tick (every 10 min): mark the live signatures of pilots touched by
+    fresh kills dirty, run the membership freeze/unfreeze sweep, and re-render the due banners off
+    the request path. A cursor-consumer over the KB-29 ring buffer — cheap when idle; no-op unless
+    the feature is armed. Coalesced + debounced + mutex-guarded so overlapping beats never storm."""
+    from .signature_pipeline import signature_tick
+
+    return signature_tick()
+
+
+@shared_task(name="killboard.signature_render")
+def signature_render_task(signature_id: int) -> str:
+    """Render one Combat Signature now — the manual-regenerate path (WS-6 editor button / admin
+    console). Clears the per-signature debounce and resets the failure ledger before rendering."""
+    from .signature_pipeline import force_render
+
+    return force_render(signature_id)
+
+
+@shared_task(name="killboard.signature_cleanup")
+def signature_cleanup_task() -> int:
+    """Delete orphaned signature artifacts (no row, or a disabled signature) from media. Daily.
+    Never removes an active/frozen signature's live image; returns -1 if the media dir is missing."""
+    from .signature_pipeline import cleanup_orphans
+
+    return cleanup_orphans()

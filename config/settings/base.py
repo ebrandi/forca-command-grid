@@ -365,6 +365,18 @@ KILLBOARD_SUBSCRIPTION_BATCH = env.int("KILLBOARD_SUBSCRIPTION_BATCH", default=5
 KILLBOARD_TROPHIES_ENABLED = env.bool("KILLBOARD_TROPHIES_ENABLED", default=True)
 KILLBOARD_TROPHY_SCAN_BATCH = env.int("KILLBOARD_TROPHY_SCAN_BATCH", default=500)
 
+# --- Combat Signatures: pre-rendered pilot banner images ----------------
+# Pilot-authored PNG "signatures" are rendered off-request by the killboard.signature_tick beat
+# (a cursor-consumer over the KB-29 ring buffer, apps/killboard/signature_pipeline.py) to
+# persistent media, then served by nginx. These are the operator/perf knobs; the leadership-facing
+# options (enable, quota, refresh interval, revoke-on-leave) live on the CombatSignatureSettings
+# singleton. MAX_FAILURES parks a persistently-failing render (it stays dirty but the tick's picker
+# skips it once it has failed this many times, until its config changes or it is regenerated);
+# MAX_PER_TICK bounds how many banners one tick re-renders so a burst of fresh kills never storms
+# the shared Celery worker queue.
+SIGNATURE_RENDER_MAX_FAILURES = env.int("SIGNATURE_RENDER_MAX_FAILURES", default=5)
+SIGNATURE_RENDER_MAX_PER_TICK = env.int("SIGNATURE_RENDER_MAX_PER_TICK", default=30)
+
 # --- KB-35: point-in-time valuation + multi-oracle pricing --------------
 # Historical valuation prices each killmail at the market on the day it died, read from the
 # local MarketHistory series (EVE Ref daily The-Forge history, populated by
