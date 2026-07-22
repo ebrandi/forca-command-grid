@@ -348,16 +348,12 @@ msgid "Capsuleer Path reconcile"
 msgstr "Reconciliación de Capsuleer Path"
 
 #: apps/admin_audit/console.py
-#, fuzzy
-#| msgid "Doctrines are not available to you."
 msgid "Combat Signatures — re-render all"
-msgstr "Las doctrines no están disponibles para ti."
+msgstr "Firmas de combate — re-renderizar todo"
 
 #: apps/admin_audit/console.py
-#, fuzzy
-#| msgid "Campaign created."
 msgid "Combat Signatures — clean up orphaned images"
-msgstr "Campaña creada."
+msgstr "Firmas de combate — limpiar imágenes huérfanas"
 
 #: apps/admin_audit/console.py
 msgid "Unknown maintenance action."
@@ -8982,81 +8978,65 @@ msgid "This month"
 msgstr "Este mes"
 
 #: apps/killboard/console_signatures.py apps/killboard/signature_views.py
-#, fuzzy
-#| msgid "Last 6 months"
 msgid "Last month"
-msgstr "Últimos 6 meses"
+msgstr "El mes pasado"
 
 #: apps/killboard/console_signatures.py
 msgid ""
 "Which banner sizes pilots may choose. Leave all ticked to allow every size."
 msgstr ""
+"Qué tamaños de banner pueden elegir los pilotos. Déjalos todos marcados para "
+"permitir todos los tamaños."
 
 #: apps/killboard/console_signatures.py
-#, fuzzy
-#| msgid "Window must be at least 1 minute."
 msgid "Pilots must be allowed at least one signature."
-msgstr "La ventana debe ser de al menos 1 minuto."
+msgstr "Se debe permitir a los pilotos al menos una firma."
 
 #: apps/killboard/console_signatures.py
-#, fuzzy
-#| msgid "The per-cycle quantity must be at least 1."
 msgid "The refresh interval must be at least one hour."
-msgstr "La cantidad por ciclo debe ser al menos 1."
+msgstr "El intervalo de actualización debe ser de al menos una hora."
 
 #: apps/killboard/console_signatures.py
 #, python-format
 msgid "committed file “%(f)s” is missing"
-msgstr ""
+msgstr "falta el archivo confirmado “%(f)s”"
 
 #: apps/killboard/console_signatures.py
 #, python-format
 msgid "committed file “%(f)s” does not match its recorded checksum"
-msgstr ""
+msgstr "el archivo confirmado “%(f)s” no coincide con su checksum registrado"
 
 #: apps/killboard/console_signatures.py
 msgid "not present in the manifest"
-msgstr ""
+msgstr "no está presente en el manifiesto"
 
 #: apps/killboard/console_signatures.py
 msgid "database checksum is out of sync with the manifest"
-msgstr ""
+msgstr "el checksum de la base de datos no está sincronizado con el manifiesto"
 
 #: apps/killboard/console_signatures.py
-#, fuzzy
-#| msgid "Campaign created."
 msgid "Combat Signature settings saved."
-msgstr "Campaña creada."
+msgstr "Ajustes de firmas de combate guardados."
 
 #: apps/killboard/console_signatures.py
-#, fuzzy
-#| msgid "Candidate updated."
 msgid "Background catalogue updated."
-msgstr "Candidato actualizado."
+msgstr "Catálogo de fondos actualizado."
 
 #: apps/killboard/console_signatures.py
-#, fuzzy
-#| msgid "No changes to save"
 msgid "No changes to save."
-msgstr "No hay cambios que guardar"
+msgstr "No hay cambios que guardar."
 
 #: apps/killboard/console_signatures.py apps/killboard/signature_views.py
-#, fuzzy
-#| msgid "Rule disabled."
 msgid "Signature disabled."
-msgstr "Regla desactivada."
+msgstr "Firma desactivada."
 
 #: apps/killboard/console_signatures.py
-#, fuzzy
-#| msgid "Feature enabled"
 msgid "Signature re-enabled."
-msgstr "Función activada"
+msgstr "Firma reactivada."
 
 #: apps/killboard/console_signatures.py apps/killboard/signature_views.py
-#, fuzzy
-#| msgid "Reward queue"
 msgid "Re-render queued."
-msgstr "Cola de recompensas"
+msgstr "Re-renderizado en cola."
 
 #: apps/killboard/fitrender.py
 msgid "High slots"
@@ -9670,66 +9650,55 @@ msgstr "Los trofeos desactivados nunca se evalúan ni se conceden."
 
 #: apps/killboard/models.py
 msgid "Live (auto-refreshing)"
-msgstr ""
+msgstr "En vivo (actualización automática)"
 
 #: apps/killboard/models.py
-#, fuzzy
-#| msgid "Snapshots"
 msgid "Snapshot (frozen)"
-msgstr "Instantáneas"
+msgstr "Instantánea (congelada)"
 
 #: apps/killboard/models.py templates/killboard/signatures/list.html
 msgid "Frozen"
-msgstr ""
+msgstr "Congelada"
 
 #: apps/killboard/models.py templates/killboard/signatures/list.html
-#, fuzzy
-#| msgid "Ordered"
 msgid "Rendered"
-msgstr "Pedido"
+msgstr "Renderizada"
 
 #: apps/killboard/models.py apps/recruitment/models.py
 msgid "Identity"
 msgstr "Identidad"
 
 #: apps/killboard/models.py
-#, fuzzy
-#| msgid "Practical"
 msgid "Tactical"
-msgstr "Práctico"
+msgstr "Táctico"
 
 #: apps/killboard/models.py
-#, fuzzy
-#| msgid "Minimum"
 msgid "Minimal"
-msgstr "Mínimo"
+msgstr "Minimalista"
 
 #: apps/killboard/models.py
 msgid "Compact (468×120)"
-msgstr ""
+msgstr "Compacto (468×120)"
 
 #: apps/killboard/models.py
 msgid "Standard (600×150)"
-msgstr ""
+msgstr "Estándar (600×150)"
 
 #: apps/killboard/models.py
 msgid "Wide (728×120)"
-msgstr ""
+msgstr "Ancho (728×120)"
 
 #: apps/killboard/models.py
 msgid "Card (600×200)"
-msgstr ""
+msgstr "Tarjeta (600×200)"
 
 #: apps/killboard/models.py
-#, fuzzy
-#| msgid "Master switch. Off hides the whole planner from pilots."
 msgid "Master switch. Off = the feature is dark for everyone."
-msgstr ""
-"Interruptor principal. Desactivado oculta todo el planificador a los pilotos."
+msgstr "Interruptor maestro. Apagado = la función queda desactivada para todos."
 
 #: apps/killboard/models.py
 msgid "When a pilot leaves the corp, also delete their signature images."
-msgstr ""
+msgstr "Cuando un piloto deja la corp, eliminar también las imágenes de su firma."
 
 #: apps/killboard/ranks_i18n.py
 msgid "Dockside Recruit"
@@ -10130,7 +10099,7 @@ msgstr "Eficiencia"
 
 #: apps/killboard/signature_stats.py
 msgid "K/D"
-msgstr ""
+msgstr "K/D"
 
 #: apps/killboard/signature_stats.py
 #: templates/admin_audit/console/combat_rewards.html
@@ -10140,10 +10109,8 @@ msgid "Rank"
 msgstr "Puesto"
 
 #: apps/killboard/signature_stats.py
-#, fuzzy
-#| msgid "Progress %%"
 msgid "Progress"
-msgstr "Progreso %%"
+msgstr "Progreso"
 
 #: apps/killboard/signature_stats.py templates/_nav.html
 #: templates/killboard/cv.html templates/killboard/kotw.html
@@ -10152,10 +10119,8 @@ msgid "Trophies"
 msgstr "Trofeos"
 
 #: apps/killboard/signature_stats.py apps/killboard/signature_views.py
-#, fuzzy
-#| msgid "Best kill"
 msgid "Last kill"
-msgstr "Mejor muerte"
+msgstr "Última muerte"
 
 #: apps/killboard/signature_stats.py apps/killboard/signature_views.py
 #: templates/killboard/cv.html
@@ -10163,98 +10128,72 @@ msgid "Best kill"
 msgstr "Mejor muerte"
 
 #: apps/killboard/signature_stats.py
-#, fuzzy
-#| msgid "Ship hull"
 msgid "Top hull"
-msgstr "Casco de nave"
+msgstr "Casco principal"
 
 #: apps/killboard/signature_stats.py
-#, fuzzy
-#| msgid "Top tasks"
 msgid "Top class"
-msgstr "Principales tareas"
+msgstr "Clase principal"
 
 #: apps/killboard/signature_stats.py templates/industry/mrp.html
 msgid "Updated"
 msgstr "Actualizado"
 
 #: apps/killboard/signature_views.py
-#, fuzzy
-#| msgid "Constraint"
 msgid "Portrait"
-msgstr "Restricción"
+msgstr "Retrato"
 
 #: apps/killboard/signature_views.py templates/recruitment/list.html
 msgid "Pilot name"
 msgstr "Nombre del piloto"
 
 #: apps/killboard/signature_views.py
-#, fuzzy
-#| msgid "ISK Efficiency"
 msgid "ISK efficiency"
 msgstr "Eficiencia de ISK"
 
 #: apps/killboard/signature_views.py
-#, fuzzy
-#| msgid "Watch ratio"
 msgid "Kill/Death ratio"
-msgstr "Ratio de vigilancia"
+msgstr "Ratio K/D"
 
 #: apps/killboard/signature_views.py
-#, fuzzy
-#| msgid "Task title"
 msgid "Rank title"
-msgstr "Título de la tarea"
+msgstr "Título de rango"
 
 #: apps/killboard/signature_views.py
-#, fuzzy
-#| msgid "In progress"
 msgid "Rank progress"
-msgstr "En curso"
+msgstr "Progreso de rango"
 
 #: apps/killboard/signature_views.py
-#, fuzzy
-#| msgid "Your trophies"
 msgid "Featured trophies"
-msgstr "Tus trofeos"
+msgstr "Trofeos destacados"
 
 #: apps/killboard/signature_views.py
-#, fuzzy
-#| msgid "Trophy unlocked"
 msgid "Trophy count"
-msgstr "Trofeo desbloqueado"
+msgstr "Número de trofeos"
 
 #: apps/killboard/signature_views.py
-#, fuzzy
-#| msgid "Favourite hull"
 msgid "Favourite ship"
-msgstr "Casco favorito"
+msgstr "Nave favorita"
 
 #: apps/killboard/signature_views.py
-#, fuzzy
-#| msgid "Top tasks"
 msgid "Top ship class"
-msgstr "Principales tareas"
+msgstr "Clase de nave principal"
 
 #: apps/killboard/signature_views.py
-#, fuzzy
-#| msgid "Activity signals"
 msgid "Activity period label"
-msgstr "Señales de actividad"
+msgstr "Etiqueta del periodo de actividad"
 
 #: apps/killboard/signature_views.py
-#, fuzzy
-#| msgid "no timestamp"
 msgid "Stats timestamp"
-msgstr "sin marca de tiempo"
+msgstr "Marca de tiempo de estadísticas"
 
 #: apps/killboard/signature_views.py
 msgid "Cyan"
-msgstr ""
+msgstr "Cian"
 
 #: apps/killboard/signature_views.py
 msgid "Green"
-msgstr ""
+msgstr "Verde"
 
 #: apps/killboard/signature_views.py apps/pilots/views.py core/features.py
 msgid "This feature is not enabled for this corporation."
@@ -10262,230 +10201,176 @@ msgstr "Esta función no está habilitada para esta corporación."
 
 #: apps/killboard/signature_views.py
 msgid "Combat Signatures are not enabled."
-msgstr ""
+msgstr "Las firmas de combate no están activadas."
 
 #: apps/killboard/signature_views.py
-#, fuzzy
-#| msgid "Doctrines are not available to you."
 msgid "Combat Signatures are not available."
-msgstr "Las doctrines no están disponibles para ti."
+msgstr "Las firmas de combate no están disponibles."
 
 #: apps/killboard/signature_views.py
-#, fuzzy
-#| msgid "No such issue."
 msgid "No such signature."
-msgstr "No existe esa incidencia."
+msgstr "No existe esa firma."
 
 #: apps/killboard/signature_views.py
 #, python-format
 msgid ""
 "“%(component)s” will not fit the selected layout and size and won't be shown."
 msgstr ""
+"“%(component)s” no cabe en el diseño y tamaño seleccionados y no se mostrará."
 
 #: apps/killboard/signature_views.py
-#, fuzzy
-#| msgid "Check unavailable right now."
 msgid "Choose an available background."
-msgstr "La comprobación no está disponible en este momento."
+msgstr "Elige un fondo disponible."
 
 #: apps/killboard/signature_views.py
-#, fuzzy
-#| msgid "Campaign created."
 msgid "Combat Signature created."
-msgstr "Campaña creada."
+msgstr "Firma de combate creada."
 
 #: apps/killboard/signature_views.py
-#, fuzzy
-#| msgid "Snapshots"
 msgid "Snapshot renamed."
-msgstr "Instantáneas"
+msgstr "Instantánea renombrada."
 
 #: apps/killboard/signature_views.py
-#, fuzzy
-#| msgid "Campaign updated."
 msgid "Combat Signature updated."
-msgstr "Campaña actualizada."
+msgstr "Firma de combate actualizada."
 
 #: apps/killboard/signature_views.py
-#, fuzzy
-#| msgid "Suppress duplicates"
 msgid "Signature duplicated."
-msgstr "Suprimir duplicados"
+msgstr "Firma duplicada."
 
 #: apps/killboard/signature_views.py
 msgid "Converted to a frozen snapshot."
-msgstr ""
+msgstr "Convertida en una instantánea congelada."
 
 #: apps/killboard/signature_views.py
-#, fuzzy
-#| msgid "A new feed URL was generated — the old one no longer works."
 msgid "Public URL rotated — the old link no longer works."
-msgstr "Se ha generado una nueva URL de fuente — la anterior ya no funciona."
+msgstr "URL pública rotada — el enlace anterior ya no funciona."
 
 #: apps/killboard/signature_views.py
-#, fuzzy
-#| msgid "Feature enabled"
 msgid "Signature enabled."
-msgstr "Función activada"
+msgstr "Firma activada."
 
 #: apps/killboard/signature_views.py
-#, fuzzy
-#| msgid "Rule deleted."
 msgid "Signature deleted."
-msgstr "Regla eliminada."
+msgstr "Firma eliminada."
 
 #: apps/killboard/signatures.py
-#, fuzzy
-#| msgid "Scoring configuration must be an object."
 msgid "Signature configuration must be an object."
-msgstr "La configuración de puntuación debe ser un objeto."
+msgstr "La configuración de la firma debe ser un objeto."
 
 #: apps/killboard/signatures.py
-#, fuzzy, python-format
-#| msgid "Unknown verification mode: %(value)s."
+#, python-format
 msgid "Unknown configuration key: %(key)s"
-msgstr "Modo de verificación desconocido: %(value)s."
+msgstr "Clave de configuración desconocida: %(key)s"
 
 #: apps/killboard/signatures.py
-#, fuzzy
-#| msgid "Alert rules must be a list."
 msgid "Components must be a list."
-msgstr "Las reglas de alerta deben ser una lista."
+msgstr "Los componentes deben ser una lista."
 
 #: apps/killboard/signatures.py
 #, python-format
 msgid "A signature may show at most %(n)d components."
-msgstr ""
+msgstr "Una firma puede mostrar como máximo %(n)d componentes."
 
 #: apps/killboard/signatures.py
 msgid "Each component must be a string id."
-msgstr ""
+msgstr "Cada componente debe ser un id de cadena."
 
 #: apps/killboard/signatures.py
-#, fuzzy, python-format
-#| msgid "Unknown pace: %(value)s."
+#, python-format
 msgid "Unknown component: %(id)s"
-msgstr "Ritmo desconocido: %(value)s."
+msgstr "Componente desconocido: %(id)s"
 
 #: apps/killboard/signatures.py
-#, fuzzy, python-format
-#| msgid "Source components for %(fit)s"
+#, python-format
 msgid "Duplicate component: %(id)s"
-msgstr "Componentes de origen para %(fit)s"
+msgstr "Componente duplicado: %(id)s"
 
 #: apps/killboard/signatures.py
-#, fuzzy
-#| msgid "Invalid character."
 msgid "Invalid activity period."
-msgstr "Personaje no válido."
+msgstr "Periodo de actividad no válido."
 
 #: apps/killboard/signatures.py
-#, fuzzy
-#| msgid "Alert rules must be a list."
 msgid "Featured trophies must be a list."
-msgstr "Las reglas de alerta deben ser una lista."
+msgstr "Los trofeos destacados deben ser una lista."
 
 #: apps/killboard/signatures.py
 #, python-format
 msgid "At most %(n)d featured trophies are allowed."
-msgstr ""
+msgstr "Se permiten como máximo %(n)d trofeos destacados."
 
 #: apps/killboard/signatures.py
 msgid "Each featured trophy id must be an integer."
-msgstr ""
+msgstr "Cada id de trofeo destacado debe ser un número entero."
 
 #: apps/killboard/signatures.py
-#, fuzzy
-#| msgid "Duplicate to my fits"
 msgid "Duplicate featured trophy id."
-msgstr "Duplicar en mis fits"
+msgstr "Id de trofeo destacado duplicado."
 
 #: apps/killboard/signatures.py
-#, fuzzy
-#| msgid "The date must be today or later."
 msgid "Show timestamp must be true or false."
-msgstr "La fecha debe ser hoy o posterior."
+msgstr "«Mostrar marca de tiempo» debe ser verdadero o falso."
 
 #: apps/killboard/signatures.py
-#, fuzzy
-#| msgid "Invalid adjustment."
 msgid "Invalid theme."
-msgstr "Ajuste no válido."
+msgstr "Tema no válido."
 
 #: apps/killboard/signatures.py
-#, fuzzy
-#| msgid "Invalid status."
 msgid "Invalid layout."
-msgstr "Estado no válido."
+msgstr "Diseño no válido."
 
 #: apps/killboard/signatures.py
-#, fuzzy
-#| msgid "Invalid reassignment."
 msgid "Invalid size preset."
-msgstr "Reasignación no válida."
+msgstr "Tamaño predefinido no válido."
 
 #: apps/killboard/signatures.py
-#, fuzzy
-#| msgid "The mentor directory is not currently open."
 msgid "That size preset is not currently allowed."
-msgstr "El directorio de mentores no está abierto actualmente."
+msgstr "Ese tamaño predefinido no está permitido actualmente."
 
 #: apps/killboard/signatures.py
-#, fuzzy
-#| msgid "That action isn't available."
 msgid "That background is not available."
-msgstr "Esa acción no está disponible."
+msgstr "Ese fondo no está disponible."
 
 #: apps/killboard/signatures.py
-#, fuzzy
-#| msgid "A valid start time is required."
 msgid "A name is required."
-msgstr "Se requiere una hora de inicio válida."
+msgstr "Se requiere un nombre."
 
 #: apps/killboard/signatures.py
-#, fuzzy
-#| msgid "The date must be today or later."
 msgid "The name must be at most 60 characters."
-msgstr "La fecha debe ser hoy o posterior."
+msgstr "El nombre debe tener como máximo 60 caracteres."
 
 #: apps/killboard/signatures.py
-#, fuzzy, python-format
-#| msgid ""
-#| "You already have the maximum number of active tokens. Revoke one first."
+#, python-format
 msgid "You already have the maximum of %(n)d active signatures."
-msgstr "Ya tienes el número máximo de tokens activos. Revoca uno primero."
+msgstr "Ya tienes el máximo de %(n)d firmas activas."
 
 #: apps/killboard/signatures.py
-#, fuzzy
-#| msgid "You cannot edit this risk."
 msgid "You cannot edit this signature."
-msgstr "No puedes editar este riesgo."
+msgstr "No puedes editar esta firma."
 
 #: apps/killboard/signatures.py
-#, fuzzy
-#| msgid "Only recognised corporation pilots can take part."
 msgid "Only home-corp pilots can create signatures."
-msgstr "Solo pueden participar los pilotos reconocidos de la corporación."
+msgstr "Solo los pilotos de la corp base pueden crear firmas."
 
 #: apps/killboard/signatures.py
 msgid "Snapshot signatures are not enabled."
-msgstr ""
+msgstr "Las firmas de instantánea no están activadas."
 
 #: apps/killboard/signatures.py
-#, fuzzy
-#| msgid "This order is already settled."
 msgid "This signature is already a snapshot."
-msgstr "Este pedido ya está liquidado."
+msgstr "Esta firma ya es una instantánea."
 
 #: apps/killboard/signatures.py
 msgid ""
 "A snapshot's configuration is frozen — create a new signature to change it."
 msgstr ""
+"La configuración de una instantánea está congelada — crea una nueva firma "
+"para cambiarla."
 
 #: apps/killboard/signatures.py
 #, python-format
 msgid "%(name)s — Combat Signature"
-msgstr ""
+msgstr "%(name)s — Firma de combate"
 
 #: apps/killboard/subscriptions.py
 msgid "A webhook URL is required."
@@ -25505,10 +25390,8 @@ msgid "My subscriptions"
 msgstr "Mis suscripciones"
 
 #: templates/_nav.html templates/admin_audit/console/signatures_dashboard.html
-#, fuzzy
-#| msgid "Signature"
 msgid "Signatures"
-msgstr "Firma"
+msgstr "Firmas"
 
 #: templates/_nav.html templates/killboard/api_tokens.html
 msgid "API access"
@@ -29685,16 +29568,16 @@ msgstr ""
 #: templates/admin_audit/console/signatures_dashboard.html
 #: templates/killboard/signatures/form.html
 #: templates/killboard/signatures/list.html
-#, fuzzy
-#| msgid "Combat Stats"
 msgid "Combat Signatures"
-msgstr "Estadísticas de combate"
+msgstr "Firmas de combate"
 
 #: templates/admin_audit/console/hub.html
 msgid ""
 "Banner render health, per-pilot search and moderation, background curation "
 "and leadership settings."
 msgstr ""
+"Salud del renderizado de banners, búsqueda y moderación por piloto, gestión "
+"de fondos y ajustes de la dirección."
 
 #: templates/admin_audit/console/hub.html
 msgid ""
@@ -35640,10 +35523,8 @@ msgstr ""
 "gold hover:underline\">Integraciones</a>."
 
 #: templates/admin_audit/console/signatures_backgrounds.html
-#, fuzzy
-#| msgid "Signature"
 msgid "Signature backgrounds"
-msgstr "Firma"
+msgstr "Fondos de firma"
 
 #: templates/admin_audit/console/signatures_backgrounds.html
 #, python-format
@@ -35651,19 +35532,18 @@ msgid ""
 "%(n)s background(s) offered to pilots. Enable, disable and reorder the built-"
 "in library — new art ships with the app, so there is nothing to upload."
 msgstr ""
+"%(n)s fondo(s) ofrecidos a los pilotos. Activa, desactiva y reordena la "
+"biblioteca integrada — el arte nuevo viene incluido con la aplicación, así "
+"que no hay nada que subir."
 
 #: templates/admin_audit/console/signatures_backgrounds.html
-#, fuzzy
-#| msgid "Review"
 msgid "Preview"
-msgstr "Revisar"
+msgstr "Vista previa"
 
 #: templates/admin_audit/console/signatures_backgrounds.html
 #: templates/killboard/signatures/form.html
-#, fuzzy
-#| msgid "Background jobs"
 msgid "Background"
-msgstr "Tareas en segundo plano"
+msgstr "Fondo"
 
 #: templates/admin_audit/console/signatures_backgrounds.html
 #: templates/doctrines/detail.html templates/doctrines/ships.html
@@ -35674,132 +35554,114 @@ msgid "Order"
 msgstr "Pedido"
 
 #: templates/admin_audit/console/signatures_backgrounds.html
-#, fuzzy, python-format
-#| msgid "Enable %(label)s"
+#, python-format
 msgid "Enable %(name)s"
-msgstr "Activar %(label)s"
+msgstr "Activar %(name)s"
 
 #: templates/admin_audit/console/signatures_backgrounds.html
-#, fuzzy, python-format
-#| msgid "Copy of %(name)s"
+#, python-format
 msgid "Display order for %(name)s"
-msgstr "Copia de %(name)s"
+msgstr "Orden de visualización de %(name)s"
 
 #: templates/admin_audit/console/signatures_backgrounds.html
 msgid "No backgrounds are seeded yet. Run the background sync command."
-msgstr ""
+msgstr "Aún no hay fondos cargados. Ejecuta el comando de sincronización de fondos."
 
 #: templates/admin_audit/console/signatures_backgrounds.html
-#, fuzzy
-#| msgid "The catalogue"
 msgid "Save catalogue"
-msgstr "El catálogo"
+msgstr "Guardar catálogo"
 
 #: templates/admin_audit/console/signatures_dashboard.html
 msgid ""
 "Pilot-authored public banner images. Watch render health, moderate a pilot's "
 "signatures, curate the background library and set the leadership options."
 msgstr ""
+"Imágenes de banner públicas creadas por los pilotos. Vigila la salud del "
+"renderizado, modera las firmas de un piloto, gestiona la biblioteca de "
+"fondos y define las opciones de la dirección."
 
 #: templates/admin_audit/console/signatures_dashboard.html
-#, fuzzy
-#| msgid "Search pilots…"
 msgid "Search pilots"
-msgstr "Buscar pilotos…"
+msgstr "Buscar pilotos"
 
 #: templates/admin_audit/console/signatures_dashboard.html
-#, fuzzy
-#| msgid "Background jobs"
 msgid "Backgrounds"
-msgstr "Tareas en segundo plano"
+msgstr "Fondos"
 
 #: templates/admin_audit/console/signatures_dashboard.html
-#, fuzzy
-#| msgid "Features"
 msgid "Feature"
-msgstr "Funciones"
+msgstr "Función"
 
 #: templates/admin_audit/console/signatures_dashboard.html
 #, python-format
 msgid "Up to %(n)s active per pilot · refresh every %(h)sh."
-msgstr ""
+msgstr "Hasta %(n)s activas por piloto · actualización cada %(h)sh."
 
 #: templates/admin_audit/console/signatures_dashboard.html
 #, python-format
 msgid "%(a)s active · %(d)s disabled · %(f)s frozen"
-msgstr ""
+msgstr "%(a)s activas · %(d)s desactivadas · %(f)s congeladas"
 
 #: templates/admin_audit/console/signatures_dashboard.html
-#, fuzzy
-#| msgid "Ordered"
 msgid "Rendered OK"
-msgstr "Pedido"
+msgstr "Renderizadas OK"
 
 #: templates/admin_audit/console/signatures_dashboard.html
-#, fuzzy, python-format
-#| msgid "pending"
+#, python-format
 msgid "%(p)s pending"
-msgstr "pendiente"
+msgstr "%(p)s pendientes"
 
 #: templates/admin_audit/console/signatures_dashboard.html
-#, fuzzy
-#| msgid "Failed in-game"
 msgid "Failed renders"
-msgstr "Fallido en el juego"
+msgstr "Renderizados fallidos"
 
 #: templates/admin_audit/console/signatures_dashboard.html
-#, fuzzy, python-format
-#| msgid "%(n)s recent failures"
+#, python-format
 msgid "%(n)s parked at the failure ceiling"
-msgstr "%(n)s fallos recientes"
+msgstr "%(n)s aparcadas en el tope de fallos"
 
 #: templates/admin_audit/console/signatures_dashboard.html
-#, fuzzy
-#| msgid "Coverage"
 msgid "Storage"
-msgstr "Cobertura"
+msgstr "Almacenamiento"
 
 #: templates/admin_audit/console/signatures_dashboard.html
-#, fuzzy, python-format
-#| msgid "%(count)s items · %(vol)s m³"
+#, python-format
 msgid "%(c)s files · ~%(o)s orphaned"
-msgstr "%(count)s objetos · %(vol)s m³"
+msgstr "%(c)s archivos · ~%(o)s huérfanos"
 
 #: templates/admin_audit/console/signatures_dashboard.html
 #, python-format
 msgid "Oldest pending render is waiting %(age)s."
-msgstr ""
+msgstr "El renderizado pendiente más antiguo lleva esperando %(age)s."
 
 #: templates/admin_audit/console/signatures_dashboard.html
-#, fuzzy
-#| msgid "Background jobs"
 msgid "Background provenance"
-msgstr "Tareas en segundo plano"
+msgstr "Procedencia de los fondos"
 
 #: templates/admin_audit/console/signatures_dashboard.html
 #, python-format
 msgid "All %(n)s enabled backgrounds verified"
-msgstr ""
+msgstr "Los %(n)s fondos activados verificados"
 
 #: templates/admin_audit/console/signatures_dashboard.html
-#, fuzzy
-#| msgid "action needed"
 msgid "Attention needed"
-msgstr "acción requerida"
+msgstr "Requiere atención"
 
 #: templates/admin_audit/console/signatures_dashboard.html
 #, python-format
 msgid "The background manifest failed to load: %(err)s"
-msgstr ""
+msgstr "No se pudo cargar el manifiesto de fondos: %(err)s"
 
 #: templates/admin_audit/console/signatures_dashboard.html
 msgid "Every enabled background's committed art matches its recorded checksum."
 msgstr ""
+"El arte confirmado de cada fondo activado coincide con su checksum "
+"registrado."
 
 #: templates/admin_audit/console/signatures_dashboard.html
 #, python-format
 msgid "Parked renders (failed %(n)s+ times)"
-msgstr ""
+msgstr "Renderizados aparcados (fallaron %(n)s+ veces)"
 
 #: templates/admin_audit/console/signatures_dashboard.html
 #: templates/admin_audit/console/signatures_search.html
@@ -35808,26 +35670,20 @@ msgid "Signature"
 msgstr "Firma"
 
 #: templates/admin_audit/console/signatures_dashboard.html
-#, fuzzy
-#| msgid "Fails"
 msgid "Failures"
 msgstr "Fallos"
 
 #: templates/admin_audit/console/signatures_dashboard.html
-#, fuzzy
-#| msgid "error"
 msgid "Last error"
-msgstr "error"
+msgstr "Último error"
 
 #: templates/admin_audit/console/signatures_dashboard.html
 msgid "No signatures are parked — nothing has hit the failure ceiling."
-msgstr ""
+msgstr "No hay firmas aparcadas — nada ha alcanzado el tope de fallos."
 
 #: templates/admin_audit/console/signatures_dashboard.html
-#, fuzzy
-#| msgid "Ordered"
 msgid "Recent render failures"
-msgstr "Pedido"
+msgstr "Fallos de renderizado recientes"
 
 #: templates/admin_audit/console/signatures_dashboard.html
 #: templates/admin_audit/health.html templates/identity/dashboard.html
@@ -35838,83 +35694,77 @@ msgid "ago"
 msgstr "atrás"
 
 #: templates/admin_audit/console/signatures_dashboard.html
-#, fuzzy
-#| msgid "Operation attendance"
 msgid "Maintenance"
-msgstr "Asistencia a operaciones"
+msgstr "Mantenimiento"
 
 #: templates/admin_audit/console/signatures_dashboard.html
 msgid ""
 "These run on the worker. Re-render all only marks signatures for refresh — "
 "the beat drains them over the next few ticks; it never storms the worker."
 msgstr ""
+"Esto se ejecuta en el worker. «Re-renderizar todo» solo marca las firmas "
+"para refrescarlas — el beat las va procesando en los siguientes ticks; nunca "
+"satura el worker."
 
 #: templates/admin_audit/console/signatures_dashboard.html
 msgid ""
 "Mark every active signature for a fresh render? The refresh beat will re-"
 "render them gradually."
 msgstr ""
+"¿Marcar todas las firmas activas para un nuevo renderizado? El beat de "
+"actualización las re-renderizará gradualmente."
 
 #: templates/admin_audit/console/signatures_dashboard.html
-#, fuzzy
-#| msgid "Create intake"
 msgid "Re-render all signatures"
-msgstr "Crear convocatoria"
+msgstr "Re-renderizar todas las firmas"
 
 #: templates/admin_audit/console/signatures_dashboard.html
 msgid ""
 "Delete orphaned banner image files (no signature, or a disabled one)? Active "
 "and frozen banners are never touched."
 msgstr ""
+"¿Eliminar los archivos de imagen de banner huérfanos (sin firma, o con una "
+"desactivada)? Los banners activos y congelados nunca se tocan."
 
 #: templates/admin_audit/console/signatures_dashboard.html
 msgid "Clean up orphaned images"
-msgstr ""
+msgstr "Limpiar imágenes huérfanas"
 
 #: templates/admin_audit/console/signatures_search.html
-#, fuzzy
-#| msgid "Signature"
 msgid "Signature search"
-msgstr "Firma"
+msgstr "Búsqueda de firmas"
 
 #: templates/admin_audit/console/signatures_search.html
 msgid ""
 "Find a pilot's banners by character name or id, then disable, re-enable or "
 "force a re-render. Every action is audited."
 msgstr ""
+"Encuentra los banners de un piloto por nombre o id de personaje; luego "
+"desactiva, reactiva o fuerza un re-renderizado. Cada acción queda auditada."
 
 #: templates/admin_audit/console/signatures_search.html
-#, fuzzy
-#| msgid "Character id"
 msgid "Character name or id"
-msgstr "ID de personaje"
+msgstr "Nombre o id de personaje"
 
 #: templates/admin_audit/console/signatures_search.html
-#, fuzzy
-#| msgid "e.g. Akusaa Ii or 90000001"
 msgid "e.g. Ace Pilot or 90000001"
-msgstr "p. ej. Akusaa Ii o 90000001"
+msgstr "p. ej. Ace Pilot o 90000001"
 
 #: templates/admin_audit/console/signatures_search.html
-#, fuzzy, python-format
-#| msgid "%(count)s fights"
+#, python-format
 msgid "%(counter)s signature"
 msgid_plural "%(counter)s signatures"
-msgstr[0] "%(count)s combates"
-msgstr[1] "%(count)s combates"
+msgstr[0] "%(counter)s firma"
+msgstr[1] "%(counter)s firmas"
 
 #: templates/admin_audit/console/signatures_search.html
-#, fuzzy
-#| msgid "Public"
 msgid "Public URL"
-msgstr "Público"
+msgstr "URL pública"
 
 #: templates/admin_audit/console/signatures_search.html
-#, fuzzy, python-format
-#| msgid "%(n)s fit"
-#| msgid_plural "%(n)s fits"
+#, python-format
 msgid "%(n)s fail(s)"
-msgstr "%(n)s fit"
+msgstr "%(n)s fallo(s)"
 
 #: templates/admin_audit/console/signatures_search.html
 #, python-format
@@ -35922,30 +35772,24 @@ msgid ""
 "Disable this pilot's (%(name)s) signature? Its public image stops serving "
 "immediately."
 msgstr ""
+"¿Desactivar la firma de este piloto (%(name)s)? Su imagen pública deja de "
+"servirse inmediatamente."
 
 #: templates/admin_audit/console/signatures_search.html
-#, fuzzy
-#| msgid "Ordered"
 msgid "Re-render"
-msgstr "Pedido"
+msgstr "Re-renderizar"
 
 #: templates/admin_audit/console/signatures_search.html
-#, fuzzy
-#| msgid "This order is already settled."
 msgid "No signatures matched that search."
-msgstr "Este pedido ya está liquidado."
+msgstr "Ninguna firma coincide con esa búsqueda."
 
 #: templates/admin_audit/console/signatures_search.html
-#, fuzzy
-#| msgid "No intakes yet."
 msgid "No signatures yet."
-msgstr "Aún no hay convocatorias."
+msgstr "Aún no hay firmas."
 
 #: templates/admin_audit/console/signatures_settings.html
-#, fuzzy
-#| msgid "Combat Stats"
 msgid "Combat Signature settings"
-msgstr "Estadísticas de combate"
+msgstr "Ajustes de firmas de combate"
 
 #: templates/admin_audit/console/signatures_settings.html
 msgid ""
@@ -35953,80 +35797,71 @@ msgid ""
 "Turning the feature off makes it dark for everyone — existing images stop "
 "being served on the next sweep."
 msgstr ""
+"El interruptor maestro y las opciones dentro de las cuales se construye el "
+"banner de cada piloto. Apagar la función la desactiva para todos — las "
+"imágenes existentes dejan de servirse en el siguiente barrido."
 
 #: templates/admin_audit/console/signatures_settings.html
-#, fuzzy
-#| msgid "Welcome to the corporation"
 msgid "Enable Combat Signatures for the corporation"
-msgstr "Bienvenido a la corporación"
+msgstr "Activar las firmas de combate para la corporación"
 
 #: templates/admin_audit/console/signatures_settings.html
 msgid ""
 "The killboard feature must also be enabled. A change can take up to ten "
 "minutes to appear in the navigation."
 msgstr ""
+"La función de killboard también debe estar activada. Un cambio puede tardar "
+"hasta diez minutos en aparecer en la navegación."
 
 #: templates/admin_audit/console/signatures_settings.html
-#, fuzzy
-#| msgid "Last refresh"
 msgid "Quotas & refresh"
-msgstr "Última renovación"
+msgstr "Cuotas y actualización"
 
 #: templates/admin_audit/console/signatures_settings.html
-#, fuzzy
-#| msgid "Max open suggestions per pilot"
 msgid "Max active signatures per pilot"
-msgstr "Máximo de sugerencias abiertas por piloto"
+msgstr "Máximo de firmas activas por piloto"
 
 #: templates/admin_audit/console/signatures_settings.html
 msgid "Live refresh interval (hours)"
-msgstr ""
+msgstr "Intervalo de actualización en vivo (horas)"
 
 #: templates/admin_audit/console/signatures_settings.html
-#, fuzzy
-#| msgid "Your trophies"
 msgid "Max featured trophies"
-msgstr "Tus trofeos"
+msgstr "Máximo de trofeos destacados"
 
 #: templates/admin_audit/console/signatures_settings.html
 msgid "Allow frozen snapshot signatures"
-msgstr ""
+msgstr "Permitir firmas de instantánea congeladas"
 
 #: templates/admin_audit/console/signatures_settings.html
 msgid "Delete a pilot's banner images when they leave the corp"
-msgstr ""
+msgstr "Eliminar las imágenes de banner de un piloto cuando deja la corp"
 
 #: templates/admin_audit/console/signatures_settings.html
-#, fuzzy
-#| msgid "Building facts"
 msgid "Builder defaults"
-msgstr "Compilando hechos"
+msgstr "Valores por defecto del editor"
 
 #: templates/admin_audit/console/signatures_settings.html
-#, fuzzy
-#| msgid "Default language"
 msgid "Default background"
-msgstr "Idioma por defecto"
+msgstr "Fondo por defecto"
 
 #: templates/admin_audit/console/signatures_settings.html
-#, fuzzy
-#| msgid "Default language"
 msgid "Default layout"
-msgstr "Idioma por defecto"
+msgstr "Diseño por defecto"
 
 #: templates/admin_audit/console/signatures_settings.html
-#, fuzzy
-#| msgid "Invalid character."
 msgid "Default activity period"
-msgstr "Personaje no válido."
+msgstr "Periodo de actividad por defecto"
 
 #: templates/admin_audit/console/signatures_settings.html
 msgid "Allowed banner sizes"
-msgstr ""
+msgstr "Tamaños de banner permitidos"
 
 #: templates/admin_audit/console/signatures_settings.html
 msgid "Which sizes pilots may choose. Leave all ticked to allow every size."
 msgstr ""
+"Qué tamaños pueden elegir los pilotos. Déjalos todos marcados para permitir "
+"todos los tamaños."
 
 #: templates/admin_audit/console/structure_alerts.html
 msgid "Structure-alert thresholds · Admin"
@@ -47981,20 +47816,16 @@ msgstr ""
 "del operador (handbooks/operator-handbook/killboard-self-host.md)."
 
 #: templates/killboard/signatures/form.html
-#, fuzzy
-#| msgid "Combat Stats"
 msgid "Edit Combat Signature"
-msgstr "Estadísticas de combate"
+msgstr "Editar firma de combate"
 
 #: templates/killboard/signatures/form.html
-#, fuzzy
-#| msgid "New combat campaign"
 msgid "New Combat Signature"
-msgstr "Nueva campaña de combate"
+msgstr "Nueva firma de combate"
 
 #: templates/killboard/signatures/form.html
 msgid "Please fix the following"
-msgstr ""
+msgstr "Corrige lo siguiente"
 
 #: templates/killboard/signatures/form.html
 msgid ""
@@ -48002,48 +47833,45 @@ msgid ""
 "was created. Only its name can be changed. To use a different configuration, "
 "create a new signature."
 msgstr ""
+"Esta es una instantánea congelada — sus estadísticas y diseño quedaron "
+"fijados en el momento de su creación. Solo se puede cambiar su nombre. Para "
+"usar una configuración distinta, crea una nueva firma."
 
 #: templates/killboard/signatures/form.html
-#, fuzzy
-#| msgid "Payout"
 msgid "Layout"
-msgstr "Pago"
+msgstr "Diseño"
 
 #: templates/killboard/signatures/form.html
 msgid "Size"
-msgstr ""
+msgstr "Tamaño"
 
 #: templates/killboard/signatures/form.html
-#, fuzzy
-#| msgid "Activity mix"
 msgid "Activity period"
-msgstr "Mezcla de actividades"
+msgstr "Periodo de actividad"
 
 #: templates/killboard/signatures/form.html
-#, fuzzy
-#| msgid "Recent settlements"
 msgid "Accent theme"
-msgstr "Liquidaciones recientes"
+msgstr "Tema de acento"
 
 #: templates/killboard/signatures/form.html
-#, fuzzy
-#| msgid "Automatic measurement"
 msgid "Automatic (my language)"
-msgstr "Medición automática"
+msgstr "Automático (mi idioma)"
 
 #: templates/killboard/signatures/form.html
 msgid "Show a “last updated” timestamp on the banner"
-msgstr ""
+msgstr "Mostrar una marca de tiempo de “última actualización” en el banner"
 
 #: templates/killboard/signatures/form.html
 msgid "Components (in display order)"
-msgstr ""
+msgstr "Componentes (en orden de visualización)"
 
 #: templates/killboard/signatures/form.html
 msgid ""
 "Tick what to show and order it with the arrows. Anything that doesn't fit "
 "the chosen layout and size is dropped from the image."
 msgstr ""
+"Marca qué mostrar y ordénalo con las flechas. Lo que no quepa en el diseño y "
+"tamaño elegidos se descarta de la imagen."
 
 #: templates/killboard/signatures/form.html templates/skills/detail.html
 msgid "Move up"
@@ -48054,36 +47882,33 @@ msgid "Move down"
 msgstr "Bajar"
 
 #: templates/killboard/signatures/form.html
-#, fuzzy, python-format
-#| msgid "Alert rules must be a list."
+#, python-format
 msgid "Featured trophies (up to %(n)s)"
-msgstr "Las reglas de alerta deben ser una lista."
+msgstr "Trofeos destacados (hasta %(n)s)"
 
 #: templates/killboard/signatures/form.html
 msgid "Only trophies you've earned appear on the banner."
-msgstr ""
+msgstr "En el banner solo aparecen los trofeos que has ganado."
 
 #: templates/killboard/signatures/form.html
-#, fuzzy
-#| msgid "No trophies earned yet."
 msgid "You have no trophies to feature yet."
-msgstr "Aún no se ha ganado ningún trofeo."
+msgstr "Aún no tienes trofeos que destacar."
 
 #: templates/killboard/signatures/form.html
-#, fuzzy
-#| msgid "Create intake"
 msgid "Create signature"
-msgstr "Crear convocatoria"
+msgstr "Crear firma"
 
 #: templates/killboard/signatures/form.html
 msgid "Preview in new tab"
-msgstr ""
+msgstr "Vista previa en una pestaña nueva"
 
 #: templates/killboard/signatures/form.html
 msgid ""
 "The preview uses a placeholder portrait and logos; the published image shows "
 "the real ones after its first render."
 msgstr ""
+"La vista previa usa un retrato y logotipos provisionales; la imagen "
+"publicada muestra los reales tras su primer renderizado."
 
 #: templates/killboard/signatures/list.html
 msgid ""
@@ -48091,137 +47916,116 @@ msgid ""
 "Discord or a website at a stable public link. The image refreshes on its "
 "own; the editor stays private."
 msgstr ""
+"Crea un banner personalizado a partir de tu historial de combate e insértalo "
+"en foros, Discord o una web mediante un enlace público estable. La imagen se "
+"actualiza sola; el editor sigue siendo privado."
 
 #: templates/killboard/signatures/list.html
-#, fuzzy, python-format
-#| msgid "%(active_count)s of %(max_tokens)s active"
+#, python-format
 msgid "%(counter)s of %(max)s active"
 msgid_plural "%(counter)s of %(max)s active"
-msgstr[0] "%(active_count)s de %(max_tokens)s activos"
-msgstr[1] "%(active_count)s de %(max_tokens)s activos"
+msgstr[0] "%(counter)s de %(max)s activas"
+msgstr[1] "%(counter)s de %(max)s activas"
 
 #: templates/killboard/signatures/list.html
-#, fuzzy
-#| msgid "Signature"
 msgid "New signature"
-msgstr "Firma"
+msgstr "Nueva firma"
 
 #: templates/killboard/signatures/list.html
 msgid ""
 "You are at your active-signature limit. Disable or delete one to create "
 "another."
 msgstr ""
+"Has alcanzado tu límite de firmas activas. Desactiva o elimina una para "
+"crear otra."
 
 #: templates/killboard/signatures/list.html
-#, fuzzy
-#| msgid "You haven't connected an ESI token yet."
 msgid "You haven't created any Combat Signatures yet."
-msgstr "Aún no has conectado un token ESI."
+msgstr "Aún no has creado ninguna firma de combate."
 
 #: templates/killboard/signatures/list.html
-#, fuzzy
-#| msgid "Snapshots"
 msgid "Snapshot"
-msgstr "Instantáneas"
+msgstr "Instantánea"
 
 #: templates/killboard/signatures/list.html
-#, fuzzy
-#| msgid "Ordered"
 msgid "Render failed"
-msgstr "Pedido"
+msgstr "Renderizado fallido"
 
 #: templates/killboard/signatures/list.html
-#, fuzzy, python-format
-#| msgid "%(value)s ISK · %(system)s"
+#, python-format
 msgid "%(layout)s · %(preset)s"
-msgstr "%(value)s ISK · %(system)s"
+msgstr "%(layout)s · %(preset)s"
 
 #: templates/killboard/signatures/list.html
-#, fuzzy
-#| msgid "Create"
 msgid "Created"
-msgstr "Crear"
+msgstr "Creada"
 
 #: templates/killboard/signatures/list.html
 msgid "The last render didn't complete. Try regenerating it."
-msgstr ""
+msgstr "El último renderizado no se completó. Prueba a regenerarlo."
 
 #: templates/killboard/signatures/list.html
 msgid "Embed"
-msgstr ""
+msgstr "Insertar"
 
 #: templates/killboard/signatures/list.html
-#, fuzzy
-#| msgid "Live embeds:"
 msgid "Hide embed"
-msgstr "Inserciones en vivo:"
+msgstr "Ocultar inserción"
 
 #: templates/killboard/signatures/list.html
-#, fuzzy
-#| msgid "Regenerate URL"
 msgid "Regenerate"
-msgstr "Regenerar URL"
+msgstr "Regenerar"
 
 #: templates/killboard/signatures/list.html
 msgid ""
 "Freeze this signature as a snapshot? Its stats and layout will stop updating."
 msgstr ""
+"¿Congelar esta firma como instantánea? Sus estadísticas y diseño dejarán de "
+"actualizarse."
 
 #: templates/killboard/signatures/list.html
-#, fuzzy
-#| msgid "Asset snapshot"
 msgid "Convert to snapshot"
-msgstr "Instantánea de activos"
+msgstr "Convertir en instantánea"
 
 #: templates/killboard/signatures/list.html
-#, fuzzy
-#| msgid "Generate a new feed URL? The current one will stop working."
 msgid "Rotate the public URL? The current link will stop working immediately."
-msgstr "¿Generar una nueva URL de fuente? La actual dejará de funcionar."
+msgstr "¿Rotar la URL pública? El enlace actual dejará de funcionar inmediatamente."
 
 #: templates/killboard/signatures/list.html
-#, fuzzy
-#| msgid "Regenerate URL"
 msgid "Rotate URL"
-msgstr "Regenerar URL"
+msgstr "Rotar URL"
 
 #: templates/killboard/signatures/list.html
 msgid "Disable this signature? Its public image will stop being served."
-msgstr ""
+msgstr "¿Desactivar esta firma? Su imagen pública dejará de servirse."
 
 #: templates/killboard/signatures/list.html
-#, fuzzy
-#| msgid "Cancel this pairing? This cannot be undone."
 msgid "Delete this signature? This cannot be undone."
-msgstr "¿Cancelar este emparejamiento? Esto no se puede deshacer."
+msgstr "¿Eliminar esta firma? Esto no se puede deshacer."
 
 #: templates/killboard/signatures/list.html
-#, fuzzy
-#| msgid "Director"
 msgid "Direct URL"
-msgstr "Director"
+msgstr "URL directa"
 
 #: templates/killboard/signatures/list.html
 msgid "BBCode (forums)"
-msgstr ""
+msgstr "BBCode (foros)"
 
 #: templates/killboard/signatures/list.html
-#, fuzzy
-#| msgid "Markdown:"
 msgid "Markdown"
-msgstr "Markdown:"
+msgstr "Markdown"
 
 #: templates/killboard/signatures/list.html
 msgid "HTML"
-msgstr ""
+msgstr "HTML"
 
 #: templates/killboard/signatures/list.html
 msgid "Preview on light &amp; dark backgrounds"
-msgstr ""
+msgstr "Vista previa sobre fondos claros y oscuros"
 
 #: templates/killboard/signatures/list.html
 msgid "The image is served once the signature is active."
-msgstr ""
+msgstr "La imagen se sirve una vez que la firma está activa."
 
 #: templates/killboard/stats.html
 msgid "Combat stats are corp &amp; alliance only"
