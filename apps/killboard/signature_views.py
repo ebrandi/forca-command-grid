@@ -473,6 +473,27 @@ def _preview_throttle_ok(user_id) -> bool:
     return count <= limit
 
 
+def _regenerate_rate() -> int:
+    return int(getattr(settings, "SIGNATURE_REGENERATE_RATE", 5))
+
+
+def _regenerate_throttle_ok(user_id) -> bool:
+    """A per-user fixed window for the manual regenerate action (killcard.throttle_ok shape). Each
+    regenerate force-renders (clears the debounce + failure ledger), so this is the one force-render
+    trigger a pilot can fire unboundedly — the rest are quota/state-bounded. ``<=0`` disables it."""
+    limit = _regenerate_rate()
+    if limit <= 0:
+        return True
+    key = f"kb:sig:regen:throttle:{user_id or 'anon'}"
+    cache.add(key, 0, 60)
+    try:
+        count = cache.incr(key)
+    except ValueError:
+        cache.add(key, 1, 60)
+        count = 1
+    return count <= limit
+
+
 @login_required
 @require_POST
 def signature_preview(request: HttpRequest) -> HttpResponse:
@@ -538,6 +559,12 @@ def signature_action(request: HttpRequest, pk: int, action: str) -> HttpResponse
 def _dispatch_action(request: HttpRequest, sig: CombatSignature, action: str, ip: str) -> None:
     user = request.user
     if action == "regenerate":
+        if not _regenerate_throttle_ok(user.pk):
+            messages.error(
+                request,
+                _("You're regenerating too quickly — please wait a minute and try again."),
+            )
+            return
         tasks.signature_render_task.delay(sig.pk)
         audit_log(
             user, "signatures.regenerate", target_type="combat_signature",

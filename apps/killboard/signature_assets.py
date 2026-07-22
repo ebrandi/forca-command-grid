@@ -336,7 +336,12 @@ def _fetch_image(category: str, entity_id: int, kind: str, size: int, base: str)
     url = f"{base_url}/{category}/{entity_id}/{kind}?size={size}"
     headers = {"User-Agent": getattr(settings, "ESI_USER_AGENT", "forca-command-grid")}
     try:
-        resp = requests.get(url, headers=headers, timeout=_IMAGE_TIMEOUT, stream=True)
+        # allow_redirects=False makes the docstring's "no redirects to a caller-chosen host" true in
+        # code: a 30x from the image host becomes a non-200 (→ None) instead of being transparently
+        # followed to wherever Location points — closing an SSRF-via-redirect vector if the fixed
+        # upstream is ever compromised/MITM'd. The real image server answers valid ids with a 200.
+        resp = requests.get(url, headers=headers, timeout=_IMAGE_TIMEOUT, stream=True,
+                            allow_redirects=False)
     except requests.RequestException:
         return None
     try:

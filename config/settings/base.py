@@ -385,6 +385,11 @@ SIGNATURE_PUBLIC_RATE = env.int("SIGNATURE_PUBLIC_RATE", default=120)
 # the builder (POST /killboard/signatures/preview.png). The preview renders in-request (no Celery,
 # no save), so it is throttled per user id like the public delivery view; 0 disables the throttle.
 SIGNATURE_PREVIEW_RATE = env.int("SIGNATURE_PREVIEW_RATE", default=10)
+# Per-user fixed-window rate cap (requests/min) for the manual "regenerate" action. Each regenerate
+# enqueues a force render that clears the per-signature debounce and the failure ledger, so an
+# un-throttled pilot spamming it would storm the single Celery queue (the other force-render actions
+# are already bounded — create/duplicate by quota, snapshot/rotate/enable by state). 0 disables it.
+SIGNATURE_REGENERATE_RATE = env.int("SIGNATURE_REGENERATE_RATE", default=5)
 
 # --- KB-35: point-in-time valuation + multi-oracle pricing --------------
 # Historical valuation prices each killmail at the market on the day it died, read from the

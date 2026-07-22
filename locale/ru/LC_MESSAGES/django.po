@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-22 20:25+0000\n"
+"POT-Creation-Date: 2026-07-22 22:23+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: ru machine-assisted draft\n"
@@ -8924,8 +8924,8 @@ msgstr "Прошлый месяц"
 msgid ""
 "Which banner sizes pilots may choose. Leave all ticked to allow every size."
 msgstr ""
-"Какие размеры баннера могут выбирать пилоты. Оставьте все отмеченными, "
-"чтобы разрешить любой размер."
+"Какие размеры баннера могут выбирать пилоты. Оставьте все отмеченными, чтобы "
+"разрешить любой размер."
 
 #: apps/killboard/console_signatures.py
 msgid "Pilots must be allowed at least one signature."
@@ -10146,8 +10146,7 @@ msgstr "Такой сигнатуры нет."
 msgid ""
 "“%(component)s” will not fit the selected layout and size and won't be shown."
 msgstr ""
-"«%(component)s» не помещается в выбранные макет и размер и не будет "
-"показан."
+"«%(component)s» не помещается в выбранные макет и размер и не будет показан."
 
 #: apps/killboard/signature_views.py
 msgid "Choose an available background."
@@ -10164,6 +10163,10 @@ msgstr "Снимок переименован."
 #: apps/killboard/signature_views.py
 msgid "Combat Signature updated."
 msgstr "Боевая сигнатура обновлена."
+
+#: apps/killboard/signature_views.py
+msgid "You're regenerating too quickly — please wait a minute and try again."
+msgstr "Вы запускаете повторный рендер слишком часто — подождите минуту и попробуйте снова."
 
 #: apps/killboard/signature_views.py
 msgid "Signature duplicated."
@@ -10295,8 +10298,7 @@ msgstr "Эта сигнатура уже является снимком."
 msgid ""
 "A snapshot's configuration is frozen — create a new signature to change it."
 msgstr ""
-"Конфигурация снимка заморожена — чтобы изменить её, создайте новую "
-"сигнатуру."
+"Конфигурация снимка заморожена — чтобы изменить её, создайте новую сигнатуру."
 
 #: apps/killboard/signatures.py
 #, python-format
@@ -29310,8 +29312,8 @@ msgid ""
 "Banner render health, per-pilot search and moderation, background curation "
 "and leadership settings."
 msgstr ""
-"Состояние рендера баннеров, поиск и модерация по пилотам, курирование "
-"фонов и настройки руководства."
+"Состояние рендера баннеров, поиск и модерация по пилотам, курирование фонов "
+"и настройки руководства."
 
 #: templates/admin_audit/console/hub.html
 msgid ""
@@ -35362,8 +35364,8 @@ msgstr "Не удалось загрузить манифест фонов: %(er
 #: templates/admin_audit/console/signatures_dashboard.html
 msgid "Every enabled background's committed art matches its recorded checksum."
 msgstr ""
-"Зафиксированное изображение каждого включённого фона совпадает с "
-"записанной контрольной суммой."
+"Зафиксированное изображение каждого включённого фона совпадает с записанной "
+"контрольной суммой."
 
 #: templates/admin_audit/console/signatures_dashboard.html
 #, python-format
@@ -35446,9 +35448,8 @@ msgid ""
 "Find a pilot's banners by character name or id, then disable, re-enable or "
 "force a re-render. Every action is audited."
 msgstr ""
-"Найдите баннеры пилота по имени или id персонажа, затем отключите, "
-"включите снова или принудительно перерендерите. Каждое действие "
-"фиксируется в аудите."
+"Найдите баннеры пилота по имени или id персонажа, затем отключите, включите "
+"снова или принудительно перерендерите. Каждое действие фиксируется в аудите."
 
 #: templates/admin_audit/console/signatures_search.html
 msgid "Character name or id"
@@ -35481,8 +35482,8 @@ msgid ""
 "Disable this pilot's (%(name)s) signature? Its public image stops serving "
 "immediately."
 msgstr ""
-"Отключить сигнатуру этого пилота (%(name)s)? Её публичное изображение "
-"сразу перестанет отдаваться."
+"Отключить сигнатуру этого пилота (%(name)s)? Её публичное изображение сразу "
+"перестанет отдаваться."
 
 #: templates/admin_audit/console/signatures_search.html
 msgid "Re-render"
@@ -35519,8 +35520,8 @@ msgid ""
 "The killboard feature must also be enabled. A change can take up to ten "
 "minutes to appear in the navigation."
 msgstr ""
-"Функция killboard также должна быть включена. Изменению может "
-"потребоваться до десяти минут, чтобы появиться в навигации."
+"Функция killboard также должна быть включена. Изменению может потребоваться "
+"до десяти минут, чтобы появиться в навигации."
 
 #: templates/admin_audit/console/signatures_settings.html
 msgid "Quotas & refresh"
@@ -47588,8 +47589,8 @@ msgid ""
 "Tick what to show and order it with the arrows. Anything that doesn't fit "
 "the chosen layout and size is dropped from the image."
 msgstr ""
-"Отметьте, что показывать, и упорядочьте стрелками. Всё, что не помещается "
-"в выбранные макет и размер, исключается из изображения."
+"Отметьте, что показывать, и упорядочьте стрелками. Всё, что не помещается в "
+"выбранные макет и размер, исключается из изображения."
 
 #: templates/killboard/signatures/form.html templates/skills/detail.html
 msgid "Move up"
@@ -47655,8 +47656,8 @@ msgid ""
 "You are at your active-signature limit. Disable or delete one to create "
 "another."
 msgstr ""
-"Достигнут лимит активных сигнатур. Отключите или удалите одну, чтобы "
-"создать новую."
+"Достигнут лимит активных сигнатур. Отключите или удалите одну, чтобы создать "
+"новую."
 
 #: templates/killboard/signatures/list.html
 msgid "You haven't created any Combat Signatures yet."

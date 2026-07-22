@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-22 20:25+0000\n"
+"POT-Creation-Date: 2026-07-22 22:23+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: de machine-assisted draft\n"
@@ -10241,6 +10241,10 @@ msgstr "Snapshot umbenannt."
 #: apps/killboard/signature_views.py
 msgid "Combat Signature updated."
 msgstr "Combat Signature aktualisiert."
+
+#: apps/killboard/signature_views.py
+msgid "You're regenerating too quickly — please wait a minute and try again."
+msgstr "Du renderst zu schnell neu — warte eine Minute und versuche es erneut."
 
 #: apps/killboard/signature_views.py
 msgid "Signature duplicated."
@@ -35513,9 +35517,9 @@ msgid ""
 "%(n)s background(s) offered to pilots. Enable, disable and reorder the built-"
 "in library — new art ships with the app, so there is nothing to upload."
 msgstr ""
-"Angebotene Hintergründe für Piloten: %(n)s. Aktiviere, deaktiviere und "
-"ordne die mitgelieferte Bibliothek — neue Grafiken kommen mit der App, "
-"hochladen musst du nichts."
+"Angebotene Hintergründe für Piloten: %(n)s. Aktiviere, deaktiviere und ordne "
+"die mitgelieferte Bibliothek — neue Grafiken kommen mit der App, hochladen "
+"musst du nichts."
 
 #: templates/admin_audit/console/signatures_backgrounds.html
 msgid "Preview"
@@ -35705,8 +35709,8 @@ msgid ""
 "Delete orphaned banner image files (no signature, or a disabled one)? Active "
 "and frozen banners are never touched."
 msgstr ""
-"Verwaiste Banner-Bilddateien löschen (ohne Signatur oder mit "
-"deaktivierter)? Aktive und eingefrorene Banner werden nie angetastet."
+"Verwaiste Banner-Bilddateien löschen (ohne Signatur oder mit deaktivierter)? "
+"Aktive und eingefrorene Banner werden nie angetastet."
 
 #: templates/admin_audit/console/signatures_dashboard.html
 msgid "Clean up orphaned images"
@@ -35722,8 +35726,7 @@ msgid ""
 "force a re-render. Every action is audited."
 msgstr ""
 "Finde die Banner eines Piloten über Charaktername oder ID und deaktiviere, "
-"reaktiviere oder erzwinge einen neuen Render. Jede Aktion wird "
-"protokolliert."
+"reaktiviere oder erzwinge einen neuen Render. Jede Aktion wird protokolliert."
 
 #: templates/admin_audit/console/signatures_search.html
 msgid "Character name or id"
@@ -35793,8 +35796,8 @@ msgid ""
 "The killboard feature must also be enabled. A change can take up to ten "
 "minutes to appear in the navigation."
 msgstr ""
-"Die Killboard-Funktion muss ebenfalls aktiviert sein. Eine Änderung kann "
-"bis zu zehn Minuten brauchen, bis sie in der Navigation erscheint."
+"Die Killboard-Funktion muss ebenfalls aktiviert sein. Eine Änderung kann bis "
+"zu zehn Minuten brauchen, bis sie in der Navigation erscheint."
 
 #: templates/admin_audit/console/signatures_settings.html
 msgid "Quotas & refresh"
@@ -47792,9 +47795,9 @@ msgid ""
 "was created. Only its name can be changed. To use a different configuration, "
 "create a new signature."
 msgstr ""
-"Dies ist ein eingefrorener Snapshot — seine Statistiken und sein Layout "
-"sind auf den Moment seiner Erstellung festgeschrieben. Nur der Name kann "
-"geändert werden. Für eine andere Konfiguration erstelle eine neue Signatur."
+"Dies ist ein eingefrorener Snapshot — seine Statistiken und sein Layout sind "
+"auf den Moment seiner Erstellung festgeschrieben. Nur der Name kann geändert "
+"werden. Für eine andere Konfiguration erstelle eine neue Signatur."
 
 #: templates/killboard/signatures/form.html
 msgid "Layout"
@@ -47876,8 +47879,8 @@ msgid ""
 "own; the editor stays private."
 msgstr ""
 "Baue aus deiner Kampfbilanz ein persönliches Banner und binde es über einen "
-"stabilen öffentlichen Link in Foren, Discord oder eine Website ein. Das "
-"Bild aktualisiert sich von selbst; der Editor bleibt privat."
+"stabilen öffentlichen Link in Foren, Discord oder eine Website ein. Das Bild "
+"aktualisiert sich von selbst; der Editor bleibt privat."
 
 #: templates/killboard/signatures/list.html
 #, python-format
@@ -47922,8 +47925,7 @@ msgstr "Erstellt"
 #: templates/killboard/signatures/list.html
 msgid "The last render didn't complete. Try regenerating it."
 msgstr ""
-"Der letzte Render wurde nicht abgeschlossen. Versuche, ihn neu zu "
-"generieren."
+"Der letzte Render wurde nicht abgeschlossen. Versuche, ihn neu zu generieren."
 
 #: templates/killboard/signatures/list.html
 msgid "Embed"
@@ -47950,7 +47952,8 @@ msgstr "In Snapshot umwandeln"
 
 #: templates/killboard/signatures/list.html
 msgid "Rotate the public URL? The current link will stop working immediately."
-msgstr "Öffentliche URL rotieren? Der aktuelle Link funktioniert sofort nicht mehr."
+msgstr ""
+"Öffentliche URL rotieren? Der aktuelle Link funktioniert sofort nicht mehr."
 
 #: templates/killboard/signatures/list.html
 msgid "Rotate URL"

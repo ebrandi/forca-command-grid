@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-22 20:25+0000\n"
+"POT-Creation-Date: 2026-07-22 22:23+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: pt-br machine-assisted draft\n"
@@ -9654,8 +9654,7 @@ msgstr "Interruptor principal. Desligado = o recurso fica apagado para todos."
 #: apps/killboard/models.py
 msgid "When a pilot leaves the corp, also delete their signature images."
 msgstr ""
-"Quando um piloto sair da corp, excluir também as imagens de suas "
-"assinaturas."
+"Quando um piloto sair da corp, excluir também as imagens de suas assinaturas."
 
 #: apps/killboard/ranks_i18n.py
 msgid "Dockside Recruit"
@@ -10170,8 +10169,7 @@ msgstr "Assinatura inexistente."
 msgid ""
 "“%(component)s” will not fit the selected layout and size and won't be shown."
 msgstr ""
-"“%(component)s” não cabe no layout e tamanho selecionados e não será "
-"exibido."
+"“%(component)s” não cabe no layout e tamanho selecionados e não será exibido."
 
 #: apps/killboard/signature_views.py
 msgid "Choose an available background."
@@ -10188,6 +10186,10 @@ msgstr "Snapshot renomeado."
 #: apps/killboard/signature_views.py
 msgid "Combat Signature updated."
 msgstr "Assinatura de Combate atualizada."
+
+#: apps/killboard/signature_views.py
+msgid "You're regenerating too quickly — please wait a minute and try again."
+msgstr "Você está re-renderizando rápido demais — aguarde um minuto e tente novamente."
 
 #: apps/killboard/signature_views.py
 msgid "Signature duplicated."
@@ -35456,8 +35458,7 @@ msgstr "Último erro"
 
 #: templates/admin_audit/console/signatures_dashboard.html
 msgid "No signatures are parked — nothing has hit the failure ceiling."
-msgstr ""
-"Nenhuma assinatura está estacionada — nada atingiu o teto de falhas."
+msgstr "Nenhuma assinatura está estacionada — nada atingiu o teto de falhas."
 
 #: templates/admin_audit/console/signatures_dashboard.html
 msgid "Recent render failures"
@@ -35575,9 +35576,9 @@ msgid ""
 "Turning the feature off makes it dark for everyone — existing images stop "
 "being served on the next sweep."
 msgstr ""
-"O interruptor principal e as opções dentro das quais o banner de cada "
-"piloto é construído. Desligar o recurso o apaga para todos — as imagens "
-"existentes deixam de ser servidas na próxima varredura."
+"O interruptor principal e as opções dentro das quais o banner de cada piloto "
+"é construído. Desligar o recurso o apaga para todos — as imagens existentes "
+"deixam de ser servidas na próxima varredura."
 
 #: templates/admin_audit/console/signatures_settings.html
 msgid "Enable Combat Signatures for the corporation"
@@ -35638,8 +35639,8 @@ msgstr "Tamanhos de banner permitidos"
 #: templates/admin_audit/console/signatures_settings.html
 msgid "Which sizes pilots may choose. Leave all ticked to allow every size."
 msgstr ""
-"Quais tamanhos os pilotos podem escolher. Deixe todos marcados para "
-"permitir todos os tamanhos."
+"Quais tamanhos os pilotos podem escolher. Deixe todos marcados para permitir "
+"todos os tamanhos."
 
 #: templates/admin_audit/console/structure_alerts.html
 msgid "Structure-alert thresholds · Admin"
@@ -47642,8 +47643,8 @@ msgid ""
 "The preview uses a placeholder portrait and logos; the published image shows "
 "the real ones after its first render."
 msgstr ""
-"A prévia usa um retrato e logotipos de exemplo; a imagem publicada mostra "
-"os reais após a primeira renderização."
+"A prévia usa um retrato e logotipos de exemplo; a imagem publicada mostra os "
+"reais após a primeira renderização."
 
 #: templates/killboard/signatures/list.html
 msgid ""
@@ -47652,8 +47653,8 @@ msgid ""
 "own; the editor stays private."
 msgstr ""
 "Monte um banner personalizado a partir do seu histórico de combate e "
-"incorpore-o em fóruns, no Discord ou em um site com um link público "
-"estável. A imagem se atualiza sozinha; o editor permanece privado."
+"incorpore-o em fóruns, no Discord ou em um site com um link público estável. "
+"A imagem se atualiza sozinha; o editor permanece privado."
 
 #: templates/killboard/signatures/list.html
 #, python-format
@@ -47724,7 +47725,8 @@ msgstr "Converter em snapshot"
 
 #: templates/killboard/signatures/list.html
 msgid "Rotate the public URL? The current link will stop working immediately."
-msgstr "Rotacionar a URL pública? O link atual deixará de funcionar imediatamente."
+msgstr ""
+"Rotacionar a URL pública? O link atual deixará de funcionar imediatamente."
 
 #: templates/killboard/signatures/list.html
 msgid "Rotate URL"
@@ -47732,8 +47734,7 @@ msgstr "Rotacionar URL"
 
 #: templates/killboard/signatures/list.html
 msgid "Disable this signature? Its public image will stop being served."
-msgstr ""
-"Desativar esta assinatura? Sua imagem pública deixará de ser servida."
+msgstr "Desativar esta assinatura? Sua imagem pública deixará de ser servida."
 
 #: templates/killboard/signatures/list.html
 msgid "Delete this signature? This cannot be undone."

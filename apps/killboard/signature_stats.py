@@ -356,19 +356,18 @@ def build_signature_payload(signature, *, fetch_assets: bool = True) -> dict:
                 if bk else None
             )
             labels["best_kill"] = _("Best kill")
-        if "favourite_ship" in comp_set:
+        if comp_set & {"favourite_ship", "top_ship_class"}:
             from .cv import _favourite_hull
-            fh = _favourite_hull(cid)
-            payload["favourite_ship"] = (
-                {"ship_name": _type_name(fh["ship_type_id"]), "count": int(fh["count"])}
-                if fh else None
-            )
-            labels["favourite_ship"] = _("Top hull")
-        if "top_ship_class" in comp_set:
-            from .cv import _favourite_hull
-            fh = _favourite_hull(cid)
-            payload["top_ship_class"] = _ship_class(fh["ship_type_id"]) if fh else None
-            labels["top_ship_class"] = _("Top class")
+            fh = _favourite_hull(cid)   # a single read shared by both hull-derived components
+            if "favourite_ship" in comp_set:
+                payload["favourite_ship"] = (
+                    {"ship_name": _type_name(fh["ship_type_id"]), "count": int(fh["count"])}
+                    if fh else None
+                )
+                labels["favourite_ship"] = _("Top hull")
+            if "top_ship_class" in comp_set:
+                payload["top_ship_class"] = _ship_class(fh["ship_type_id"]) if fh else None
+                labels["top_ship_class"] = _("Top class")
 
         # --- meta strip --------------------------------------------------- #
         if "activity_period_label" in comp_set:

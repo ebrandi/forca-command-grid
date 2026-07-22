@@ -178,9 +178,22 @@ def active_signature_count(character_id) -> int:
     ).count()
 
 
-def check_quota(character_id, *, settings=None) -> None:
-    """Raise :class:`ValidationError` if the pilot is at their active-signature cap."""
+def check_quota(character_id, *, settings=None, lock=False) -> None:
+    """Raise :class:`ValidationError` if the pilot is at their active-signature cap.
+
+    ``lock`` serialises concurrent quota-gated mutations for one pilot: it takes a
+    ``SELECT … FOR UPDATE`` row lock on the owner BEFORE counting, so two racing creates can't each
+    read "under the cap" and both insert (a count-then-insert TOCTOU that would otherwise push a
+    pilot to quota+1). The owner row always exists, so this serialises even a pilot's very first
+    concurrent creates (locking their signature rows would not, when there are none yet). The lock
+    is taken only inside an open transaction — every mutating caller here is ``@transaction.atomic``;
+    outside one it is skipped rather than raising.
+    """
     cfg = settings or CombatSignatureSettings.load()
+    if lock and transaction.get_connection().in_atomic_block:
+        from apps.sso.models import EveCharacter
+        # Materialise (and thereby lock) the owner row; released when the enclosing txn commits.
+        list(EveCharacter.objects.select_for_update().filter(pk=character_id))
     if active_signature_count(character_id) >= cfg.max_active_per_pilot:
         raise ValidationError(
             _("You already have the maximum of %(n)d active signatures.")
@@ -274,7 +287,7 @@ def create_signature(user, *, name, background, layout, size_preset, config,
     mode = mode or CombatSignature.Mode.LIVE
     if mode == CombatSignature.Mode.SNAPSHOT and not cfg.snapshots_enabled:
         raise ValidationError(_("Snapshot signatures are not enabled."))
-    check_quota(pilot.character_id, settings=cfg)
+    check_quota(pilot.character_id, settings=cfg, lock=True)
     clean_name = sanitize_name(name)
     clean_config = validate_config(
         config, settings=cfg, background=background, layout=layout, size_preset=size_preset
@@ -297,7 +310,7 @@ def duplicate_signature(user, signature, *, ip="") -> CombatSignature:
     """Clone ``signature`` for the same owner as a fresh LIVE signature (new token, new render)."""
     require_edit(user, signature)
     cfg = CombatSignatureSettings.load()
-    check_quota(signature.character_id, settings=cfg)
+    check_quota(signature.character_id, settings=cfg, lock=True)
     copy = CombatSignature(
         character=signature.character,
         name=sanitize_name(f"{signature.name} (copy)"[:60]),
@@ -351,7 +364,7 @@ def enable(user, signature, *, ip="") -> CombatSignature:
     """Re-activate a disabled signature (counts against the active quota) and queue a render."""
     require_edit(user, signature)
     if signature.status != CombatSignature.Status.ACTIVE:
-        check_quota(signature.character_id)
+        check_quota(signature.character_id, lock=True)
         signature.status = CombatSignature.Status.ACTIVE
         signature.dirty = True
         signature.render_status = CombatSignature.RenderStatus.PENDING

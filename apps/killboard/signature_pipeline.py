@@ -36,6 +36,7 @@ from uuid import uuid4
 
 from django.conf import settings
 from django.core.cache import cache
+from django.db import transaction
 from django.db.models import F, Q
 from django.utils import timezone
 
@@ -65,6 +66,10 @@ _DEBOUNCE_TTL = 600
 _SANITISE_PATH_RE = re.compile(r"/[\w./-]+")
 
 _ATTACKER = Killmail.HomeRole.ATTACKER
+
+# The statuses whose live image the public view serves — a render may only be committed while the
+# row is still one of these (see the locked re-check in :func:`render_one`).
+_RENDERABLE = frozenset({CombatSignature.Status.ACTIVE, CombatSignature.Status.FROZEN})
 
 
 # --------------------------------------------------------------------------- #
@@ -191,11 +196,16 @@ def render_one(signature_id: int, *, force: bool = False) -> str:
     if not cache.add(key, "1", timeout=_DEBOUNCE_TTL):
         return "skipped_debounce"
 
+    # Snapshot the identity/config this render is FOR. The render itself is expensive and must not
+    # hold a row lock, so we render against this snapshot, then re-check it under a lock before the
+    # write (a rotate/edit/disable that raced the render invalidates the bytes — see below).
+    token = sig.public_token
+    config_version = sig.config_version
+
     try:
         _prefetch_assets(sig)
         payload = build_signature_payload(sig)
         png = render_signature_png(sig, payload)
-        _atomic_write_artifact(sig.public_token, png)
     except Exception as exc:  # noqa: BLE001 — never let a render fault escape the beat loop
         sig.render_status = CombatSignature.RenderStatus.FAILED
         sig.consecutive_failures = (sig.consecutive_failures or 0) + 1
@@ -207,15 +217,39 @@ def render_one(signature_id: int, *, force: bool = False) -> str:
                     sig.pk, sig.consecutive_failures, exc_info=True)
         return "failed"
 
-    sig.dirty = False
-    sig.render_status = CombatSignature.RenderStatus.OK
-    sig.rendered_at = timezone.now()
-    sig.consecutive_failures = 0
-    sig.render_error = ""
-    sig.save(update_fields=[
-        "dirty", "render_status", "rendered_at", "consecutive_failures",
-        "render_error", "updated_at",
-    ])
+    # Commit the bytes under a row lock. If the token was rotated, the config re-edited, or the row
+    # disabled while we rendered, these bytes are stale for the CURRENT public URL — writing them
+    # would resurrect a rotated-away token's file (whose whole purpose was to 404) or clobber a
+    # newer edit's dirty flag. Drop them instead and let the next pass render the current state; the
+    # debounce is cleared so that re-render isn't blocked (a rotate/edit does not change the key).
+    try:
+        with transaction.atomic():
+            locked = CombatSignature.objects.select_for_update().filter(pk=sig.pk).first()
+            if (locked is None or locked.status not in _RENDERABLE
+                    or locked.public_token != token
+                    or locked.config_version != config_version):
+                cache.delete(key)
+                return "skipped_rotated"
+            _atomic_write_artifact(locked.public_token, png)
+            locked.dirty = False
+            locked.render_status = CombatSignature.RenderStatus.OK
+            locked.rendered_at = timezone.now()
+            locked.consecutive_failures = 0
+            locked.render_error = ""
+            locked.save(update_fields=[
+                "dirty", "render_status", "rendered_at", "consecutive_failures",
+                "render_error", "updated_at",
+            ])
+    except Exception as exc:  # noqa: BLE001 — a write/DB fault after a good render → failure ledger
+        sig.render_status = CombatSignature.RenderStatus.FAILED
+        sig.consecutive_failures = (sig.consecutive_failures or 0) + 1
+        sig.render_error = _sanitise_error(exc)
+        sig.save(update_fields=[
+            "render_status", "consecutive_failures", "render_error", "updated_at",
+        ])
+        log.warning("signature render failed for %s (failure #%s)",
+                    sig.pk, sig.consecutive_failures, exc_info=True)
+        return "failed"
     return "rendered"
 
 

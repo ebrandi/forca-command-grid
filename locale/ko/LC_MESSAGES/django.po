@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-22 20:25+0000\n"
+"POT-Creation-Date: 2026-07-22 22:23+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: ko machine-assisted draft\n"
@@ -8760,7 +8760,9 @@ msgstr "지난달"
 #: apps/killboard/console_signatures.py
 msgid ""
 "Which banner sizes pilots may choose. Leave all ticked to allow every size."
-msgstr "파일럿이 선택할 수 있는 배너 크기입니다. 모든 크기를 허용하려면 전부 체크한 채로 두세요."
+msgstr ""
+"파일럿이 선택할 수 있는 배너 크기입니다. 모든 크기를 허용하려면 전부 체크한 "
+"채로 두세요."
 
 #: apps/killboard/console_signatures.py
 msgid "Pilots must be allowed at least one signature."
@@ -9954,7 +9956,8 @@ msgstr "해당 시그니처가 없습니다."
 #, python-format
 msgid ""
 "“%(component)s” will not fit the selected layout and size and won't be shown."
-msgstr "“%(component)s”은(는) 선택한 레이아웃과 크기에 맞지 않아 표시되지 않습니다."
+msgstr ""
+"“%(component)s”은(는) 선택한 레이아웃과 크기에 맞지 않아 표시되지 않습니다."
 
 #: apps/killboard/signature_views.py
 msgid "Choose an available background."
@@ -9971,6 +9974,10 @@ msgstr "스냅샷 이름이 변경되었습니다."
 #: apps/killboard/signature_views.py
 msgid "Combat Signature updated."
 msgstr "전투 시그니처가 업데이트되었습니다."
+
+#: apps/killboard/signature_views.py
+msgid "You're regenerating too quickly — please wait a minute and try again."
+msgstr "다시 렌더링을 너무 자주 요청하고 있습니다 — 1분 후에 다시 시도해 주세요."
 
 #: apps/killboard/signature_views.py
 msgid "Signature duplicated."
@@ -34361,7 +34368,9 @@ msgstr "시그니처 배경"
 msgid ""
 "%(n)s background(s) offered to pilots. Enable, disable and reorder the built-"
 "in library — new art ships with the app, so there is nothing to upload."
-msgstr "파일럿에게 제공되는 배경 %(n)s개. 내장 라이브러리를 활성화·비활성화하고 순서를 바꿀 수 있습니다 — 새 아트는 앱과 함께 제공되므로 업로드할 것이 없습니다."
+msgstr ""
+"파일럿에게 제공되는 배경 %(n)s개. 내장 라이브러리를 활성화·비활성화하고 순서"
+"를 바꿀 수 있습니다 — 새 아트는 앱과 함께 제공되므로 업로드할 것이 없습니다."
 
 #: templates/admin_audit/console/signatures_backgrounds.html
 msgid "Preview"
@@ -34402,7 +34411,9 @@ msgstr "카탈로그 저장"
 msgid ""
 "Pilot-authored public banner images. Watch render health, moderate a pilot's "
 "signatures, curate the background library and set the leadership options."
-msgstr "파일럿이 만드는 공개 배너 이미지입니다. 렌더링 상태를 살피고, 파일럿의 시그니처를 관리하고, 배경 라이브러리를 큐레이션하고, 리더십 옵션을 설정하세요."
+msgstr ""
+"파일럿이 만드는 공개 배너 이미지입니다. 렌더링 상태를 살피고, 파일럿의 시그니"
+"처를 관리하고, 배경 라이브러리를 큐레이션하고, 리더십 옵션을 설정하세요."
 
 #: templates/admin_audit/console/signatures_dashboard.html
 msgid "Search pilots"
@@ -34523,13 +34534,18 @@ msgstr "유지 관리"
 msgid ""
 "These run on the worker. Re-render all only marks signatures for refresh — "
 "the beat drains them over the next few ticks; it never storms the worker."
-msgstr "이 작업들은 워커에서 실행됩니다. 전체 다시 렌더링은 시그니처를 갱신 대상으로 표시만 합니다 — beat가 다음 몇 틱에 걸쳐 순차 처리하므로 워커에 부하가 몰리지 않습니다."
+msgstr ""
+"이 작업들은 워커에서 실행됩니다. 전체 다시 렌더링은 시그니처를 갱신 대상으로 "
+"표시만 합니다 — beat가 다음 몇 틱에 걸쳐 순차 처리하므로 워커에 부하가 몰리"
+"지 않습니다."
 
 #: templates/admin_audit/console/signatures_dashboard.html
 msgid ""
 "Mark every active signature for a fresh render? The refresh beat will re-"
 "render them gradually."
-msgstr "모든 활성 시그니처를 새로 렌더링하도록 표시할까요? 갱신 beat가 점진적으로 다시 렌더링합니다."
+msgstr ""
+"모든 활성 시그니처를 새로 렌더링하도록 표시할까요? 갱신 beat가 점진적으로 다"
+"시 렌더링합니다."
 
 #: templates/admin_audit/console/signatures_dashboard.html
 msgid "Re-render all signatures"
@@ -34539,7 +34555,9 @@ msgstr "모든 시그니처 다시 렌더링"
 msgid ""
 "Delete orphaned banner image files (no signature, or a disabled one)? Active "
 "and frozen banners are never touched."
-msgstr "고아 상태의 배너 이미지 파일(시그니처가 없거나 비활성화된 경우)을 삭제할까요? 활성 및 동결된 배너는 절대 건드리지 않습니다."
+msgstr ""
+"고아 상태의 배너 이미지 파일(시그니처가 없거나 비활성화된 경우)을 삭제할까"
+"요? 활성 및 동결된 배너는 절대 건드리지 않습니다."
 
 #: templates/admin_audit/console/signatures_dashboard.html
 msgid "Clean up orphaned images"
@@ -34553,7 +34571,9 @@ msgstr "시그니처 검색"
 msgid ""
 "Find a pilot's banners by character name or id, then disable, re-enable or "
 "force a re-render. Every action is audited."
-msgstr "캐릭터 이름 또는 id로 파일럿의 배너를 찾아 비활성화, 재활성화하거나 강제로 다시 렌더링하세요. 모든 작업은 감사 기록에 남습니다."
+msgstr ""
+"캐릭터 이름 또는 id로 파일럿의 배너를 찾아 비활성화, 재활성화하거나 강제로 다"
+"시 렌더링하세요. 모든 작업은 감사 기록에 남습니다."
 
 #: templates/admin_audit/console/signatures_search.html
 msgid "Character name or id"
@@ -34583,7 +34603,9 @@ msgstr "실패 %(n)s회"
 msgid ""
 "Disable this pilot's (%(name)s) signature? Its public image stops serving "
 "immediately."
-msgstr "이 파일럿(%(name)s)의 시그니처를 비활성화할까요? 공개 이미지 제공이 즉시 중단됩니다."
+msgstr ""
+"이 파일럿(%(name)s)의 시그니처를 비활성화할까요? 공개 이미지 제공이 즉시 중단"
+"됩니다."
 
 #: templates/admin_audit/console/signatures_search.html
 msgid "Re-render"
@@ -34606,7 +34628,9 @@ msgid ""
 "The master switch and the options every pilot's banner is built within. "
 "Turning the feature off makes it dark for everyone — existing images stop "
 "being served on the next sweep."
-msgstr "마스터 스위치와 모든 파일럿의 배너에 적용되는 옵션입니다. 기능을 끄면 모두에게서 꺼지며 — 기존 이미지는 다음 스윕부터 제공이 중단됩니다."
+msgstr ""
+"마스터 스위치와 모든 파일럿의 배너에 적용되는 옵션입니다. 기능을 끄면 모두에"
+"게서 꺼지며 — 기존 이미지는 다음 스윕부터 제공이 중단됩니다."
 
 #: templates/admin_audit/console/signatures_settings.html
 msgid "Enable Combat Signatures for the corporation"
@@ -34616,7 +34640,9 @@ msgstr "코퍼레이션에서 전투 시그니처 활성화"
 msgid ""
 "The killboard feature must also be enabled. A change can take up to ten "
 "minutes to appear in the navigation."
-msgstr "killboard 기능도 활성화되어 있어야 합니다. 변경 사항이 내비게이션에 반영되기까지 최대 10분이 걸릴 수 있습니다."
+msgstr ""
+"killboard 기능도 활성화되어 있어야 합니다. 변경 사항이 내비게이션에 반영되기"
+"까지 최대 10분이 걸릴 수 있습니다."
 
 #: templates/admin_audit/console/signatures_settings.html
 msgid "Quotas & refresh"
@@ -34664,7 +34690,9 @@ msgstr "허용되는 배너 크기"
 
 #: templates/admin_audit/console/signatures_settings.html
 msgid "Which sizes pilots may choose. Leave all ticked to allow every size."
-msgstr "파일럿이 선택할 수 있는 크기입니다. 모든 크기를 허용하려면 전부 체크한 채로 두세요."
+msgstr ""
+"파일럿이 선택할 수 있는 크기입니다. 모든 크기를 허용하려면 전부 체크한 채로 "
+"두세요."
 
 #: templates/admin_audit/console/structure_alerts.html
 msgid "Structure-alert thresholds · Admin"
@@ -46355,7 +46383,9 @@ msgid ""
 "This is a frozen snapshot — its stats and layout are pinned to the moment it "
 "was created. Only its name can be changed. To use a different configuration, "
 "create a new signature."
-msgstr "이것은 동결된 스냅샷입니다 — 통계와 레이아웃이 생성 시점에 고정되어 있습니다. 이름만 변경할 수 있습니다. 다른 구성을 사용하려면 새 시그니처를 만드세요."
+msgstr ""
+"이것은 동결된 스냅샷입니다 — 통계와 레이아웃이 생성 시점에 고정되어 있습니"
+"다. 이름만 변경할 수 있습니다. 다른 구성을 사용하려면 새 시그니처를 만드세요."
 
 #: templates/killboard/signatures/form.html
 msgid "Layout"
@@ -46389,7 +46419,9 @@ msgstr "구성 요소 (표시 순서대로)"
 msgid ""
 "Tick what to show and order it with the arrows. Anything that doesn't fit "
 "the chosen layout and size is dropped from the image."
-msgstr "표시할 항목을 체크하고 화살표로 순서를 정하세요. 선택한 레이아웃과 크기에 맞지 않는 항목은 이미지에서 제외됩니다."
+msgstr ""
+"표시할 항목을 체크하고 화살표로 순서를 정하세요. 선택한 레이아웃과 크기에 맞"
+"지 않는 항목은 이미지에서 제외됩니다."
 
 #: templates/killboard/signatures/form.html templates/skills/detail.html
 msgid "Move up"
@@ -46424,14 +46456,19 @@ msgstr "새 탭에서 미리보기"
 msgid ""
 "The preview uses a placeholder portrait and logos; the published image shows "
 "the real ones after its first render."
-msgstr "미리보기에는 임시 초상화와 로고가 사용됩니다. 공개 이미지는 첫 렌더링 후 실제 이미지를 표시합니다."
+msgstr ""
+"미리보기에는 임시 초상화와 로고가 사용됩니다. 공개 이미지는 첫 렌더링 후 실"
+"제 이미지를 표시합니다."
 
 #: templates/killboard/signatures/list.html
 msgid ""
 "Build a personalised banner from your combat record and embed it in forums, "
 "Discord or a website at a stable public link. The image refreshes on its "
 "own; the editor stays private."
-msgstr "전투 기록으로 개인화된 배너를 만들어 포럼, Discord 또는 웹사이트에 고정된 공개 링크로 임베드하세요. 이미지는 자동으로 갱신되며, 편집기는 비공개로 유지됩니다."
+msgstr ""
+"전투 기록으로 개인화된 배너를 만들어 포럼, Discord 또는 웹사이트에 고정된 공"
+"개 링크로 임베드하세요. 이미지는 자동으로 갱신되며, 편집기는 비공개로 유지됩"
+"니다."
 
 #: templates/killboard/signatures/list.html
 #, python-format
@@ -46447,7 +46484,9 @@ msgstr "새 시그니처"
 msgid ""
 "You are at your active-signature limit. Disable or delete one to create "
 "another."
-msgstr "활성 시그니처 한도에 도달했습니다. 새로 만들려면 하나를 비활성화하거나 삭제하세요."
+msgstr ""
+"활성 시그니처 한도에 도달했습니다. 새로 만들려면 하나를 비활성화하거나 삭제하"
+"세요."
 
 #: templates/killboard/signatures/list.html
 msgid "You haven't created any Combat Signatures yet."
@@ -46489,7 +46528,8 @@ msgstr "다시 생성"
 #: templates/killboard/signatures/list.html
 msgid ""
 "Freeze this signature as a snapshot? Its stats and layout will stop updating."
-msgstr "이 시그니처를 스냅샷으로 동결할까요? 통계와 레이아웃 갱신이 중단됩니다."
+msgstr ""
+"이 시그니처를 스냅샷으로 동결할까요? 통계와 레이아웃 갱신이 중단됩니다."
 
 #: templates/killboard/signatures/list.html
 msgid "Convert to snapshot"
