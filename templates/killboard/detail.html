@@ -83,8 +83,9 @@
       <span class="text-[11px] text-faint">{% translate "only you and officers see this" %}</span>
     </div>
     {% elif srp_request %}
-    {# KB-25: the loss owner can file an SRP claim straight from here (reuses apps/srp — no
-       duplicated claim logic). Officers/peers with no claim still see nothing. #}
+    {% comment %}KB-25: the loss owner can file an SRP claim straight from here (reuses
+    apps/srp — no duplicated claim logic). Officers/peers with no claim still see
+    nothing.{% endcomment %}
     <div class="mt-3 border-t border-line pt-3">
       {% if srp_request.eligible %}
       <div class="flex flex-wrap items-center gap-2">
