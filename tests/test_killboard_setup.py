@@ -381,6 +381,21 @@ def test_apply_profile_full_restores_everything(db):
     assert features.feature_enabled("killboard") is True
 
 
+def test_apply_profile_killboard_disables_audience_modules(db):
+    """Audience-controlled heavy modules (doctrines) live in a separate store — the preset
+    must drive them off too, or the killboard-first nav would still show Doctrines & Shipyard."""
+    from django.core.management import call_command
+
+    from core import features
+
+    assert features.feature_enabled("doctrines") is True  # default corp audience
+    call_command("apply_profile", "killboard")
+    assert features.feature_enabled("doctrines") is False
+    # …and a later full profile restores the audience default.
+    call_command("apply_profile", "full")
+    assert features.feature_enabled("doctrines") is True
+
+
 def test_apply_profile_dry_run_writes_nothing(db):
     from django.core.management import call_command
 

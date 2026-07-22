@@ -50,7 +50,14 @@ class Command(BaseCommand):
                             help="Show what would change without writing.")
 
     def handle(self, *args, **opts) -> None:
-        from core.features import FEATURES, disabled_set, set_disabled
+        from core.features import (
+            AUDIENCE_DISABLED,
+            AUDIENCE_FEATURES,
+            FEATURES,
+            disabled_set,
+            set_disabled,
+            set_feature_audiences,
+        )
 
         profile = (opts["profile"] or getattr(settings, "FORCA_PROFILE", "full") or "full").lower()
         if profile not in PROFILES:
@@ -61,8 +68,17 @@ class Command(BaseCommand):
         all_keys = {f.key for f in FEATURES}
         if profile == "full":
             target_disabled: set[str] = set()
+            # Restore each audience-feature to its historical default (corp / public).
+            target_audiences = dict(AUDIENCE_FEATURES)
         else:  # killboard-first
             target_disabled = all_keys - KILLBOARD_PROFILE_KEEP
+            # Audience-controlled features (doctrines, navigation, raffle) live in a SEPARATE
+            # store (features.audience); set_disabled alone would leave them visible, so a
+            # killboard-first profile must also drive them to "disabled" unless kept.
+            target_audiences = {
+                key: (AUDIENCE_FEATURES[key] if key in KILLBOARD_PROFILE_KEEP else AUDIENCE_DISABLED)
+                for key in AUDIENCE_FEATURES
+            }
 
         current = disabled_set()
         will_enable = sorted(current - target_disabled)
@@ -85,4 +101,5 @@ class Command(BaseCommand):
             return
 
         set_disabled(target_disabled)
+        set_feature_audiences(target_audiences)
         self.stdout.write(self.style.SUCCESS(f"Applied the {profile!r} profile."))
