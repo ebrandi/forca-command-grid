@@ -2,6 +2,8 @@
 {% load eve static %}
 {% load i18n %}
 {% block title %}{{ report.title }} · {% translate "Battle Report" %}{% endblock %}
+{# KB-39: OG meta on the public (slug) permalink only; the member pk page sets no `og`. #}
+{% block og_meta %}{% if og %}{% include "killboard/_og_meta.html" %}{% endif %}{% endblock %}
 {% block extra_head %}
 <script defer src="{% static 'js/vendor/chart.umd.js' %}"></script>
 {% endblock %}

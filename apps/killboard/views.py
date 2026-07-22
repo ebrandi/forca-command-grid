@@ -609,6 +609,8 @@ def killboard_kotw(request: HttpRequest) -> HttpResponse:
     return render(request, "killboard/kotw.html", {
         "denied": False,
         "entries": kotw.recent_kotw(),
+        # KB-39: the biggest-loss-of-the-week counterpart, same weekly-pick mechanics.
+        "losses": kotw.recent_losses(),
         "can_override": rbac.has_role(request.user, rbac.ROLE_OFFICER),
     })
 
@@ -801,6 +803,9 @@ def killmail_detail(request: HttpRequest, killmail_id: int) -> HttpResponse:
                 killmail.victim_corporation_id
                 and killmail.victim_corporation_id == _home()
             ),
+            # KB-39: Open Graph / Twitter-card meta + kill-card image. The detail page is
+            # public (anonymous-reachable), so a pasted link unfurls with the card image.
+            "og": _killmail_og(request, killmail),
         },
     )
 
@@ -1598,8 +1603,22 @@ def battle_report_public(request: HttpRequest, slug: str) -> HttpResponse:
     is), so the shareable page carries no sensitive SRP/deviation figures.
     """
     report = get_object_or_404(BattleReport, slug=slug, is_public=True)
-    return render(request, "killboard/battle_report.html",
-                  _battle_report_context(request, report, public=True))
+    ctx = _battle_report_context(request, report, public=True)
+    # KB-39: OG/Twitter meta on the anonymous-reachable permalink only (no image — a battle
+    # report has no single kill-card; a summary card unfurls with title + description).
+    first_system = (report.system_ids or [None])[0]
+    system_label = _system_name(first_system) if first_system else ""
+    ctx["og"] = {
+        "title": report.title or (
+            gettext("Battle report — %(system)s") % {"system": system_label}
+            if system_label else gettext("Battle report")),
+        "description": gettext(
+            "An after-action battle report — sides, ISK destroyed and a kill timeline "
+            "on [FORCA] Command Grid."),
+        "url": request.build_absolute_uri(
+            reverse("killboard:battle_report_public", args=[report.slug])),
+    }
+    return render(request, "killboard/battle_report.html", ctx)
 
 
 @login_required
@@ -1889,8 +1908,20 @@ def combat_campaign_public(request: HttpRequest, slug: str) -> HttpResponse:
     campaign = get_object_or_404(
         CombatCampaign, slug=slug, visibility=CombatCampaign.Visibility.PUBLIC
     )
-    return render(request, "killboard/campaign_detail.html",
-                  _campaign_context(request, campaign, public=True))
+    ctx = _campaign_context(request, campaign, public=True)
+    # KB-39: OG/Twitter meta on the anonymous-reachable permalink only.
+    stats = ctx["stats"]
+    ctx["og"] = {
+        "title": gettext("Campaign — %(name)s") % {"name": campaign.name},
+        "description": gettext(
+            "%(kills)s kills · %(losses)s losses · %(eff)s%% efficiency — a combat "
+            "campaign on [FORCA] Command Grid.") % {
+            "kills": stats["kills"], "losses": stats["losses"],
+            "eff": round(stats["efficiency"])},
+        "url": request.build_absolute_uri(
+            reverse("killboard:campaign_public", args=[campaign.slug])),
+    }
+    return render(request, "killboard/campaign_detail.html", ctx)
 
 
 @login_required
@@ -2025,10 +2056,17 @@ def killfeed_config(request: HttpRequest) -> HttpResponse:
 #  whole instance); the history-import launcher is officer-or-director.
 # --------------------------------------------------------------------------- #
 def _setup_context(request) -> dict:
-    from . import branding, setup_status
+    from . import branding, overlay, setup_status
     from .models import KillboardHistoryImport
 
     active = KillboardHistoryImport.active()
+    # KB-39: the OBS overlay's shareable URL is only built when a token exists (a director
+    # generates one on demand); the full URL is shown so it can be pasted straight into OBS.
+    overlay_token = overlay.get_token()
+    overlay_url = (
+        request.build_absolute_uri(reverse("killboard:overlay")) + f"?token={overlay_token}"
+        if overlay_token else ""
+    )
     # ``home_corp_name`` is intentionally NOT set here — the roles context processor already
     # provides it, and overriding it with a view value would risk shadowing the real name.
     return {
@@ -2037,6 +2075,9 @@ def _setup_context(request) -> dict:
         "recent_imports": list(KillboardHistoryImport.objects.all()[:5]),
         "branding": branding.get_branding(),
         "sources": KillboardHistoryImport.Source.choices,
+        "overlay_token": overlay_token,
+        "overlay_url": overlay_url,
+        "overlay_threshold": overlay.big_kill_threshold(),
     }
 
 
@@ -2144,4 +2185,234 @@ def killboard_branding(request: HttpRequest) -> HttpResponse:
         audit_log(request.user, "killboard.branding_save", target_type="killboard_branding",
                   ip=client_ip(request))
         messages.success(request, gettext("Branding saved."))
+    return redirect("killboard:setup")
+
+
+# --------------------------------------------------------------------------- #
+#  KB-39 shareable artifacts (WS-D6): OG/Twitter meta, kill-card + CV-card PNGs,
+#  the public Hall of Fame, the biggest-loss override, and the OBS overlay.
+#
+#  Privacy map (mirrors the existing killboard gates):
+#   - killmail detail + its card.png .... PUBLIC (anonymous), same as the detail page
+#   - public battle / campaign slugs .... PUBLIC (anonymous) — OG text meta, no image
+#   - Hall of Fame (/hall/) ............. PUBLIC (anonymous) — OG meta + kill-card image
+#   - CV card.png ...................... MEMBER-gated (the CV page is member-gated)
+#   - the member KOTW hall (/kotw/) .... MEMBER-gated, NO og:image (unchanged)
+#   - OBS overlay + its feed ........... per-corp token; public-tier data only
+# --------------------------------------------------------------------------- #
+def _system_name(system_id) -> str:
+    from apps.sde.templatetags.eve import system_name
+
+    return system_name(system_id) if system_id else ""
+
+
+def _isk_compact(value) -> str:
+    from apps.sde.templatetags.eve import isk
+
+    return isk(value)
+
+
+def _killmail_og(request: HttpRequest, killmail) -> dict:
+    """The Open Graph / Twitter-card payload for a killmail detail page (KB-39).
+
+    The kill-card image URL is the ``card.png`` endpoint, which shares the detail page's public
+    gate — so an unfurl bot can fetch it. The meta text is translated (page locale); the image
+    text itself stays English (documented card scope).
+    """
+    from apps.sde.templatetags.eve import eve_name, type_name
+
+    ship = type_name(killmail.victim_ship_type_id) or gettext("Unknown ship")
+    system = _system_name(killmail.solar_system_id)
+    value = killmail.value_at_kill if killmail.value_at_kill is not None else killmail.total_value
+    pilot = eve_name(killmail.victim_character_id) if killmail.victim_character_id else ""
+    n = killmail.participants.filter(role="attacker").count()
+    title = gettext("%(ship)s destroyed in %(system)s — %(value)s ISK") % {
+        "ship": ship, "system": system or gettext("space"), "value": _isk_compact(value)}
+    if pilot:
+        description = gettext("%(pilot)s lost a %(ship)s to %(n)s pilots. See the full "
+                              "breakdown on [FORCA] Command Grid.") % {
+            "pilot": pilot, "ship": ship, "n": n}
+    else:
+        description = gettext("A %(ship)s worth %(value)s ISK went down to %(n)s pilots on "
+                              "[FORCA] Command Grid.") % {
+            "ship": ship, "value": _isk_compact(value), "n": n}
+    return {
+        "title": title,
+        "description": description,
+        "url": request.build_absolute_uri(
+            reverse("killboard:detail", args=[killmail.killmail_id])),
+        "image": request.build_absolute_uri(
+            reverse("killboard:card", args=[killmail.killmail_id])),
+        "image_alt": ship,
+    }
+
+
+def killmail_card(request: HttpRequest, killmail_id: int) -> HttpResponse:
+    """PUBLIC kill-card PNG (KB-39) — the unfurl image for a killmail link.
+
+    Mirrors the killmail detail page's public gate exactly (no login; any board killmail).
+    Cached (bust on branding change via the version key) and per-IP throttled like the anon API.
+    """
+    from . import killcard
+
+    if not killcard.throttle_ok(client_ip(request)):
+        resp = HttpResponse(status=429)
+        resp["Retry-After"] = "60"
+        return resp
+    killmail = get_object_or_404(Killmail, killmail_id=killmail_id)
+    png, hit = killcard.kill_card_png(killmail)
+    return _png_response(png, hit)
+
+
+@login_required
+def killboard_pilot_cv_card(request: HttpRequest, character_id: int) -> HttpResponse:
+    """MEMBER-gated CV card PNG (KB-39). The CV page is member-gated; the card is for a member to
+    deliberately save/share — there is intentionally no anonymous CV card in v1."""
+    from . import killcard
+    from .cv import pilot_cv
+
+    if not _can_view_stats(request.user):
+        raise Http404("Not available.")
+    from apps.corporation.models import EveName
+
+    name = (
+        EveName.objects.filter(entity_id=character_id).values_list("name", flat=True).first()
+        or f"Pilot {character_id}"
+    )
+    ctx = {"pilot_name": name, **pilot_cv(character_id)}
+    png, hit = killcard.cv_card_png(character_id, ctx)
+    return _png_response(png, hit)
+
+
+def _png_response(png: bytes, cache_hit: bool) -> HttpResponse:
+    resp = HttpResponse(png, content_type="image/png")
+    resp["X-Card-Cache"] = "hit" if cache_hit else "miss"
+    # Short public cache: unfurlers and repeat shares hit the edge, but a branding change is
+    # reflected within minutes (the stored PNG is also keyed by the branding version).
+    resp["Cache-Control"] = "public, max-age=300"
+    return resp
+
+
+def killboard_hall(request: HttpRequest) -> HttpResponse:
+    """PUBLIC Hall of Fame (KB-39) — the shareable Kill-of-the-Week + Biggest-Loss-of-the-Week
+    billboard. Anonymous-viewable (all public-board data), with OG meta + a kill-card image so a
+    pasted link unfurls. The member KOTW hall (/kotw/) keeps its officer override tools."""
+    from . import branding as branding_mod
+    from . import kotw
+
+    kotw_entries = kotw.recent_kotw()
+    losses = kotw.recent_losses()
+    featured_id = None
+    if kotw_entries:
+        featured_id = kotw_entries[0].killmail_id
+    elif losses:
+        featured_id = losses[0]["killmail"].killmail_id
+
+    og = {
+        "title": gettext("Hall of Fame — Kill & Loss of the Week"),
+        "description": gettext(
+            "The standout kills and losses of each week on [FORCA] Command Grid."),
+        "url": request.build_absolute_uri(reverse("killboard:hall")),
+    }
+    if featured_id is not None:
+        og["image"] = request.build_absolute_uri(reverse("killboard:card", args=[featured_id]))
+    return render(request, "killboard/hall.html", {
+        "entries": kotw_entries,
+        "losses": losses,
+        "og": og,
+        "branding": branding_mod.get_branding(),
+    })
+
+
+@login_required
+@role_required(rbac.ROLE_OFFICER)
+@require_POST
+def killboard_lotw_override(request: HttpRequest) -> HttpResponse:
+    """Officer override: pin a specific home loss as a week's Biggest Loss of the Week (audited).
+    Mirrors the KOTW override contract."""
+    from . import kotw
+
+    km_raw = (request.POST.get("killmail_id") or "").strip()
+    year_raw = (request.POST.get("iso_year") or "").strip()
+    week_raw = (request.POST.get("iso_week") or "").strip()
+    if not (km_raw.isdigit() and year_raw.isdigit() and week_raw.isdigit()):
+        messages.error(request, gettext("Provide a killmail id, ISO year and ISO week."))
+        return redirect("killboard:kotw")
+    km = Killmail.objects.filter(
+        killmail_id=int(km_raw), involves_home_corp=True,
+        home_corp_role=Killmail.HomeRole.VICTIM,
+    ).first()
+    if km is None:
+        messages.error(request, gettext("That killmail isn't a home-corp loss."))
+        return redirect("killboard:kotw")
+    kotw.set_loss_override(int(year_raw), int(week_raw), km, request.user)
+    audit_log(
+        request.user, "killboard.lotw_override",
+        target_type="killboard_lotw", target_id=f"{year_raw}:{week_raw}",
+        metadata={"killmail_id": km.killmail_id}, ip=client_ip(request),
+    )
+    messages.success(request, gettext("Biggest Loss of the Week updated for %(year)s-W%(week)02d.")
+                     % {"year": int(year_raw), "week": int(week_raw)})
+    return redirect("killboard:kotw")
+
+
+def killboard_overlay(request: HttpRequest) -> HttpResponse:
+    """The transparent-background OBS overlay page (KB-39). No login — authenticated by a
+    per-corp overlay token in the URL (``?token=…``). Shows PUBLIC-tier recent kills only,
+    auto-updating via the WS-B2 poll contract (never a long-lived SSE slot). A bad/absent token
+    404s so the overlay shell isn't even served."""
+    from . import branding as branding_mod
+    from . import overlay
+    from .stream import tip_seq
+
+    if not overlay.token_valid(request.GET.get("token")):
+        raise Http404("No such overlay.")
+    return render(request, "killboard/overlay.html", {
+        "token": overlay.get_token(),
+        "threshold": overlay.big_kill_threshold(),
+        "stream_tip": tip_seq(),
+        "branding": branding_mod.get_branding(),
+    })
+
+
+def killboard_overlay_feed(request: HttpRequest) -> JsonResponse:
+    """Token-authed public-tier poll feed for the overlay (KB-39). Same cursor contract as the
+    live feed's ``?mode=poll`` fallback, but ``member=False`` — no member-only flags ever."""
+    from . import overlay
+    from .stream import TopicError
+
+    if not overlay.token_valid(request.GET.get("token")):
+        raise Http404("No such overlay.")
+    raw = request.GET.get("after_seq")
+    try:
+        cursor = max(0, int(raw)) if raw not in (None, "") else 0
+    except (TypeError, ValueError):
+        cursor = 0
+    try:
+        batch = overlay.public_feed(cursor, request.GET.get("topics"))
+    except TopicError:
+        return JsonResponse({"detail": "Invalid topic."}, status=400)
+    return JsonResponse(batch)
+
+
+@login_required
+@role_required(rbac.ROLE_DIRECTOR)
+@require_POST
+def killboard_overlay_config(request: HttpRequest) -> HttpResponse:
+    """DIRECTOR: regenerate the overlay token (invalidating any shared URL) or set the big-kill
+    highlight threshold."""
+    from . import overlay
+
+    if request.POST.get("action") == "regenerate":
+        overlay.regenerate_token(user=request.user)
+        audit_log(request.user, "killboard.overlay_token_regenerate",
+                  target_type="killboard_overlay", ip=client_ip(request))
+        messages.success(request, gettext("Overlay link regenerated — the previous link no "
+                                          "longer works."))
+    else:
+        threshold = overlay.set_threshold(request.POST.get("threshold"), user=request.user)
+        audit_log(request.user, "killboard.overlay_threshold",
+                  target_type="killboard_overlay", metadata={"threshold": threshold},
+                  ip=client_ip(request))
+        messages.success(request, gettext("Overlay settings saved."))
     return redirect("killboard:setup")

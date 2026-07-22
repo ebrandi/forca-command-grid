@@ -2,6 +2,8 @@
 {% load eve %}
 {% load i18n %}
 {% block title %}Killmail {{ killmail.killmail_id }} · [FORCA] Command Grid{% endblock %}
+{# KB-39: the detail page is public, so a shared link unfurls with the kill-card image. #}
+{% block og_meta %}{% if og %}{% include "killboard/_og_meta.html" %}{% endif %}{% endblock %}
 {% block content %}
 <a href="{% url 'killboard:list' %}" class="text-xs text-faint hover:text-gold">← Killboard</a>
 

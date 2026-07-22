@@ -16,12 +16,21 @@ urlpatterns = [
     path("pilot/<int:character_id>/", views.killboard_pilot, name="pilot"),
     # KB-37 PVP CV — under the pilot/ prefix, above the <int:killmail_id> catch-all.
     path("pilot/<int:character_id>/cv/", views.killboard_pilot_cv, name="pilot_cv"),
+    # KB-39 member-gated CV share card (PNG) — static suffix, above the catch-all.
+    path("pilot/<int:character_id>/cv/card.png", views.killboard_pilot_cv_card, name="cv_card"),
     path("compare/", views.killboard_compare, name="compare"),
     # KB-37 gamification surfaces — static prefixes, above the <int:killmail_id> catch-all.
     path("trophies/", views.killboard_trophies, name="trophies"),
     path("seasons/", views.killboard_seasons, name="seasons"),
     path("kotw/", views.killboard_kotw, name="kotw"),
     path("kotw/override/", views.killboard_kotw_override, name="kotw_override"),
+    # KB-39 biggest-loss-of-the-week officer override — mirrors the KOTW override.
+    path("kotw/loss-override/", views.killboard_lotw_override, name="lotw_override"),
+    # KB-39 public Hall of Fame (shareable) — static prefix, above the <int:killmail_id> catch-all.
+    path("hall/", views.killboard_hall, name="hall"),
+    # KB-39 OBS overlay — token-authed transparent page + its public-tier poll feed.
+    path("overlay/", views.killboard_overlay, name="overlay"),
+    path("overlay/feed/", views.killboard_overlay_feed, name="overlay_feed"),
     # Intel — keep these above the <int:killmail_id> catch-all.
     path("intel/", views.watchlists, name="watchlists"),
     # KB-34 D-scan / Local paste analyzer (WS-C4) — static prefix, above the catch-all.
@@ -61,6 +70,8 @@ urlpatterns = [
     path("setup/import/status/", views.killboard_history_import_status, name="history_import_status"),
     path("setup/import/cancel/", views.killboard_history_import_cancel, name="history_import_cancel"),
     path("setup/branding/", views.killboard_branding, name="branding"),
+    # KB-39 OBS overlay token/threshold management (director).
+    path("setup/overlay/", views.killboard_overlay_config, name="overlay_config"),
     # KB-29 live feed: server-rendered single row the live JS prepends. Above the
     # <int:killmail_id> single-segment catch-all.
     path("live/row/<int:killmail_id>/", views.killmail_feed_row, name="live_row"),
@@ -79,6 +90,8 @@ urlpatterns = [
     # The token-authed RSS feed (no session). Static prefix, so it never shadows the catch-all.
     path("subscriptions/feed/<str:rss_token>/", views.subscription_feed, name="subscription_feed"),
     # Fit exports + comments — keep above the <int:killmail_id> single-segment catch-all.
+    # KB-39 public kill-card PNG (the unfurl image) — two-segment, above the catch-all.
+    path("<int:killmail_id>/card.png", views.killmail_card, name="card"),
     path("<int:killmail_id>/eft/", views.killmail_eft, name="eft"),
     path("<int:killmail_id>/fit.json", views.killmail_fit_esi, name="fit_esi"),
     path("<int:killmail_id>/comment/", views.killmail_comment_create, name="comment_create"),

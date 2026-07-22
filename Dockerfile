@@ -14,9 +14,12 @@ ENV PYTHONUNBUFFERED=1 \
 # OS packages tracked by the base image's own security updates. Pinning them to an exact apt
 # version would break the build the moment the base image refreshes those versions, for
 # negligible security gain — so we track the base image rather than pin.
+# fonts-dejavu-core supplies DejaVuSans{,-Bold}.ttf for the Pillow-rendered kill-card /
+# CV-card PNGs (KB-39). It is a tiny (~1MB), permissively-licensed font package; without
+# it Pillow falls back to its low-res bitmap default and the shareable cards look poor.
 # hadolint ignore=DL3008
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libpq5 gettext \
+    && apt-get install -y --no-install-recommends libpq5 gettext fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

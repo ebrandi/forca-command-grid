@@ -120,6 +120,41 @@
   {% endfor %}
 </ol>
 
+<!-- KB-39: shareable artifacts — the public Hall of Fame + the OBS overlay -->
+<section class="panel mt-6 p-5">
+  <h2 class="text-lg font-bold text-ink">{% translate "Shareable artifacts" %}</h2>
+  <p class="mt-1 max-w-2xl text-sm text-faint">{% blocktranslate %}Every shared loss is a recruiting billboard. The public Hall of Fame and each killmail link unfurl with an auto-generated kill-card image in Discord and X.{% endblocktranslate %}</p>
+  <a href="{% url 'killboard:hall' %}" class="btn-ghost mt-3 inline-block text-sm">{% translate "Open the public Hall of Fame ↗" %}</a>
+
+  <div class="mt-5 rounded border border-line bg-panel2 p-4">
+    <p class="eyebrow mb-1 text-faint">{% translate "OBS stream overlay" %}</p>
+    <p class="text-xs text-faint">{% blocktranslate %}A transparent overlay for OBS that shows recent kills live. It runs with no login, so it is authenticated by a secret link — anyone with the link can view the overlay's public-tier feed. Regenerate the link to revoke old copies.{% endblocktranslate %}</p>
+    {% if overlay_url %}
+    <label class="mt-3 block">
+      <span class="eyebrow mb-1 block text-faint">{% translate "Overlay browser-source URL" %}</span>
+      <input type="text" readonly value="{{ overlay_url }}" class="input-field w-full break-all text-cyan" onclick="this.select()">
+    </label>
+    {% else %}
+    <p class="mt-3 text-xs text-gold">{% translate "No overlay link yet — generate one below." %}</p>
+    {% endif %}
+    <div class="mt-3 flex flex-wrap items-end gap-4">
+      <form method="post" action="{% url 'killboard:overlay_config' %}">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="regenerate">
+        <button class="btn-gold text-sm">{% if overlay_url %}{% translate "Regenerate link" %}{% else %}{% translate "Generate overlay link" %}{% endif %}</button>
+      </form>
+      <form method="post" action="{% url 'killboard:overlay_config' %}" class="flex items-end gap-2">
+        {% csrf_token %}
+        <label class="block">
+          <span class="eyebrow mb-1 block text-faint">{% translate "Big-kill highlight (ISK)" %}</span>
+          <input name="threshold" type="number" min="0" value="{{ overlay_threshold }}" class="input-field w-44">
+        </label>
+        <button class="btn-ghost text-sm">{% translate "Save" %}</button>
+      </form>
+    </div>
+  </div>
+</section>
+
 <p class="mt-6 text-xs text-faint">{% blocktranslate %}Full instructions are in the self-host guide in the operator handbook (handbooks/operator-handbook/killboard-self-host.md).{% endblocktranslate %}</p>
 {% endwith %}
 {% endblock %}

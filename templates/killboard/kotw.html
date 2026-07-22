@@ -19,6 +19,7 @@
     <p class="mt-0.5 text-sm text-faint">{% translate "The standout home kill of each week — by value on the day it died." %}</p>
   </div>
   <div class="flex gap-2">
+    <a href="{% url 'killboard:hall' %}" class="btn-ghost text-sm">{% translate "Public hall ↗" %}</a>
     <a href="{% url 'killboard:trophies' %}" class="btn-ghost text-sm">{% translate "Trophies" %}</a>
     <a href="{% url 'killboard:seasons' %}" class="btn-ghost text-sm">{% translate "Seasons" %}</a>
   </div>
@@ -47,6 +48,33 @@
 </div>
 {% endif %}
 
+{# KB-39: the biggest LOSS of the week — the counterpart to Kill of the Week. #}
+<section class="mt-8">
+  <h2 class="mb-1 font-display text-lg text-ink">{% translate "Biggest loss of the week" %}</h2>
+  <p class="mb-3 text-sm text-faint">{% translate "The most expensive home loss each week — by value on the day it died." %}</p>
+  {% if losses %}
+  <div class="grid gap-3">
+    {% for l in losses %}
+    <div class="panel flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+      <div class="flex items-center gap-3">
+        <img src="{% eve_type_icon l.killmail.victim_ship_type_id 64 %}" alt="" class="h-10 w-10 rounded" loading="lazy">
+        <div>
+          <p class="text-[11px] uppercase tracking-wide text-faint">{{ l.iso_year }}-W{{ l.iso_week }}{% if l.is_override %} · <span class="text-cyan">{% translate "officer pick" %}</span>{% endif %}</p>
+          <a href="{% url 'killboard:detail' l.killmail.killmail_id %}" class="font-medium text-ink hover:text-gold">{% type_name l.killmail.victim_ship_type_id %}</a>
+          {% if l.character_id %}<span class="text-xs text-faint"> · {% eve_name l.character_id %}</span>{% endif %}
+        </div>
+      </div>
+      <span class="font-display text-lg text-loss tabular-nums">{{ l.value|isk }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="panel px-4 py-10 text-center">
+    <p class="text-sm text-faint">{% translate "No losses recorded in recent weeks." %}</p>
+  </div>
+  {% endif %}
+</section>
+
 {% if can_override %}
 <section class="mt-6">
   <h2 class="mb-2 font-display text-lg text-ink">{% translate "Officer override" %}</h2>
@@ -58,6 +86,15 @@
     <button type="submit" class="btn-primary text-sm">{% translate "Pin this kill" %}</button>
   </form>
   <p class="mt-1 text-[11px] text-faint">{% translate "Overrides are audited and survive the weekly auto-pick." %}</p>
+
+  <h3 class="mt-4 mb-2 font-display text-base text-ink">{% translate "Pin the biggest loss" %}</h3>
+  <form method="post" action="{% url 'killboard:lotw_override' %}" class="panel flex flex-wrap items-end gap-3 px-4 py-3">
+    {% csrf_token %}
+    <label class="text-xs text-faint">{% translate "ISO year" %}<input type="number" name="iso_year" required class="input mt-1 w-24" placeholder="2026"></label>
+    <label class="text-xs text-faint">{% translate "ISO week" %}<input type="number" name="iso_week" min="1" max="53" required class="input mt-1 w-20" placeholder="29"></label>
+    <label class="text-xs text-faint">{% translate "Loss killmail id" %}<input type="number" name="killmail_id" required class="input mt-1 w-40"></label>
+    <button type="submit" class="btn-primary text-sm">{% translate "Pin this loss" %}</button>
+  </form>
 </section>
 {% endif %}
 

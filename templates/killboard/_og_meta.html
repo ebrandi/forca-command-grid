@@ -1,0 +1,27 @@
+{% comment %}KB-39 — reusable Open Graph / Twitter-card meta partial.
+
+Driven by an ``og`` context dict:
+  title        (required) — the unfurl headline
+  description  (required) — the unfurl body line
+  url          (required) — the canonical absolute URL of the page
+  image        (optional) — absolute URL of the card/preview image; when present the
+                            Twitter card upgrades to ``summary_large_image``
+  image_alt    (optional) — accessible description of the image
+
+Only ever included by pages an ANONYMOUS viewer can reach (killmail detail, public
+battle/campaign permalinks, the public hall). Member-only pages must not include it, so
+a kill-card image URL never leaks below its tier. All URLs must be absolute — unfurlers
+reject relative ones.{% endcomment %}
+<meta property="og:site_name" content="[FORCA] Command Grid">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{ og.title }}">
+<meta property="og:description" content="{{ og.description }}">
+<meta property="og:url" content="{{ og.url }}">
+{% if og.image %}<meta property="og:image" content="{{ og.image }}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+{% if og.image_alt %}<meta property="og:image:alt" content="{{ og.image_alt }}">{% endif %}{% endif %}
+<meta name="twitter:card" content="{% if og.image %}summary_large_image{% else %}summary{% endif %}">
+<meta name="twitter:title" content="{{ og.title }}">
+<meta name="twitter:description" content="{{ og.description }}">
+{% if og.image %}<meta name="twitter:image" content="{{ og.image }}">{% endif %}

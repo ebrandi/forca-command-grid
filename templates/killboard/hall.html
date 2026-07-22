@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load eve %}
+{% load i18n %}
+{% block title %}{% translate "Hall of Fame" %} · [FORCA] Command Grid{% endblock %}
+{# KB-39: PUBLIC shareable hall — a pasted link unfurls with the featured kill-card. #}
+{% block og_meta %}{% if og %}{% include "killboard/_og_meta.html" %}{% endif %}{% endblock %}
+{% block content %}
+
+<header class="mb-6">
+  <p class="eyebrow">Killboard</p>
+  <h1 class="mt-0.5 text-2xl font-bold text-ink">{% translate "Hall of Fame" %}</h1>
+  <p class="mt-0.5 text-sm text-faint">{% translate "The standout kills and losses of each week." %}</p>
+</header>
+
+<div class="grid gap-8 lg:grid-cols-2">
+  {# Kill of the Week #}
+  <section>
+    <h2 class="mb-3 font-display text-lg text-kill">{% translate "Kill of the Week" %}</h2>
+    {% if entries %}
+    <div class="grid gap-3">
+      {% for e in entries %}
+      <div class="panel flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+        <div class="flex items-center gap-3">
+          <img src="{% eve_type_icon e.killmail.victim_ship_type_id 64 %}" alt="" class="h-10 w-10 rounded" loading="lazy">
+          <div>
+            <p class="text-[11px] uppercase tracking-wide text-faint">{{ e.iso_year }}-W{{ e.iso_week }}{% if e.is_override %} · <span class="text-cyan">{% translate "officer pick" %}</span>{% endif %}</p>
+            <a href="{% url 'killboard:detail' e.killmail_id %}" class="font-medium text-ink hover:text-gold">{% type_name e.killmail.victim_ship_type_id %}</a>
+            {% if e.character_id %}<span class="text-xs text-faint"> · {% eve_name e.character_id %}</span>{% endif %}
+          </div>
+        </div>
+        <span class="font-display text-lg text-gold tabular-nums">{{ e.value|isk }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="panel px-4 py-10 text-center"><p class="text-sm text-faint">{% translate "No Kill of the Week yet." %}</p></div>
+    {% endif %}
+  </section>
+
+  {# Biggest Loss of the Week #}
+  <section>
+    <h2 class="mb-3 font-display text-lg text-loss">{% translate "Biggest loss of the week" %}</h2>
+    {% if losses %}
+    <div class="grid gap-3">
+      {% for l in losses %}
+      <div class="panel flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+        <div class="flex items-center gap-3">
+          <img src="{% eve_type_icon l.killmail.victim_ship_type_id 64 %}" alt="" class="h-10 w-10 rounded" loading="lazy">
+          <div>
+            <p class="text-[11px] uppercase tracking-wide text-faint">{{ l.iso_year }}-W{{ l.iso_week }}{% if l.is_override %} · <span class="text-cyan">{% translate "officer pick" %}</span>{% endif %}</p>
+            <a href="{% url 'killboard:detail' l.killmail.killmail_id %}" class="font-medium text-ink hover:text-gold">{% type_name l.killmail.victim_ship_type_id %}</a>
+            {% if l.character_id %}<span class="text-xs text-faint"> · {% eve_name l.character_id %}</span>{% endif %}
+          </div>
+        </div>
+        <span class="font-display text-lg text-loss tabular-nums">{{ l.value|isk }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="panel px-4 py-10 text-center"><p class="text-sm text-faint">{% translate "No losses recorded in recent weeks." %}</p></div>
+    {% endif %}
+  </section>
+</div>
+
+<p class="mt-8 text-center text-[11px] text-faint">{% translate "Powered by [FORCA] Command Grid — a self-hosted corp killboard." %}</p>
+
+{% endblock %}

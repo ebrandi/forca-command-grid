@@ -1,0 +1,87 @@
+{% load eve i18n %}<!doctype html>
+{% comment %}KB-39 (WS-D6) — the OBS overlay. A standalone, transparent, chrome-less page (it does
+NOT extend base.html): OBS renders it as a browser source over the game capture. Authenticated by
+the per-corp token already validated in the view. It shows PUBLIC-tier recent kills only and
+auto-updates via the killboard poll feed (never a long-lived SSE slot — see apps/killboard/overlay).
+Inline <style> is allowed by CSP (style-src unsafe-inline); the inline <script> carries the
+per-request nonce (script-src 'nonce-…').{% endcomment %}
+<html lang="{{ LANGUAGE_CODE|default:'en' }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>{% translate "Killboard overlay" %}</title>
+<style>
+  :root { --accent: {{ branding.accent_color|default:"#e3b341" }}; }
+  html, body { margin:0; padding:0; background:transparent; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color:#e8ecf2; }
+  #ov { position:fixed; top:16px; right:16px; width:340px; display:flex; flex-direction:column; gap:8px; }
+  .row {
+    display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:10px;
+    background:rgba(11,14,20,.82); border:1px solid rgba(255,255,255,.08);
+    border-left:3px solid var(--accent); backdrop-filter:blur(2px);
+    animation:ovin .45s ease-out;
+  }
+  .row.big { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent), 0 0 22px -6px var(--accent); }
+  .row.loss { border-left-color:#f05a5a; }
+  .row img { width:40px; height:40px; border-radius:6px; background:rgba(255,255,255,.04); }
+  .meta { flex:1; min-width:0; }
+  .val { font-weight:700; font-variant-numeric:tabular-nums; }
+  .val.kill { color:#3ddc84; } .val.loss { color:#f05a5a; }
+  .sub { font-size:11px; color:#8a94a6; text-transform:uppercase; letter-spacing:.04em; }
+  @keyframes ovin { from{opacity:0; transform:translateX(14px);} to{opacity:1; transform:none;} }
+  #ov-empty { font-size:12px; color:#6c7685; text-align:right; }
+</style>
+</head>
+<body>
+<div id="ov"><div id="ov-empty">{% translate "Waiting for kills…" %}</div></div>
+<script nonce="{{ csp_nonce }}">
+(function(){
+  var FEED = "{% url 'killboard:overlay_feed' %}";
+  var TOKEN = "{{ token|escapejs }}";
+  var IMG = "{% eve_img_base %}";
+  var THRESHOLD = {{ threshold|default:0 }};
+  var cursor = {{ stream_tip|default:0 }};
+  var box = document.getElementById("ov");
+  var empty = document.getElementById("ov-empty");
+  var MAX = 10;
+
+  function fmtIsk(v){
+    v = Number(v)||0; var u=[["T",1e12],["B",1e9],["M",1e6],["k",1e3]];
+    for(var i=0;i<u.length;i++){ if(Math.abs(v)>=u[i][1]) return (v/u[i][1]).toFixed(2)+u[i][0]; }
+    return String(Math.round(v));
+  }
+  function add(ev){
+    if(empty){ empty.remove(); empty = null; }
+    var loss = ev.home_role === "victim";
+    var big = Number(ev.value) >= THRESHOLD && THRESHOLD > 0;
+    var row = document.createElement("div");
+    row.className = "row" + (loss?" loss":"") + (big?" big":"");
+    var img = document.createElement("img"); img.alt = "";
+    img.src = IMG + "/types/" + (ev.victim && ev.victim.ship_type_id) + "/icon?size=64";
+    var meta = document.createElement("div"); meta.className = "meta";
+    var val = document.createElement("div"); val.className = "val " + (loss?"loss":"kill");
+    val.textContent = (loss?"− ":"+ ") + fmtIsk(ev.value) + " ISK";
+    var sub = document.createElement("div"); sub.className = "sub";
+    sub.textContent = (loss?"{% translate 'Loss' %}":"{% translate 'Kill' %}") + (big?" · ★":"");
+    meta.appendChild(val); meta.appendChild(sub);
+    row.appendChild(img); row.appendChild(meta);
+    box.insertBefore(row, box.firstChild);
+    while(box.children.length > MAX){ box.removeChild(box.lastChild); }
+  }
+  function poll(){
+    fetch(FEED + "?token=" + encodeURIComponent(TOKEN) + "&after_seq=" + encodeURIComponent(cursor),
+          {credentials:"same-origin", headers:{"Accept":"application/json"}})
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(j){
+        if(!j || !j.events) return;
+        if(typeof j.cursor === "number"){ cursor = j.cursor; }
+        for(var i=0;i<j.events.length;i++){ add(j.events[i]); }
+      }).catch(function(){});
+  }
+  poll();
+  setInterval(poll, 8000);
+})();
+</script>
+</body>
+</html>

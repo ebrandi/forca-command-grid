@@ -7,6 +7,11 @@
   <meta name="description" content="Free EVE Online tools for capsuleers, fleets, and industry planners.">
   {# Non-canonical (filtered/drill-down) pages set robots_noindex to opt out of indexing. #}
   {% if robots_noindex %}<meta name="robots" content="noindex, nofollow">{% endif %}
+  {# KB-39 shareable artifacts: Open Graph / Twitter-card meta. Empty by default so no page
+     regresses; anonymous-reachable killboard pages (killmail detail, public battle/campaign
+     permalinks, the public hall) override it to unfurl richly in Discord/X. Member-only pages
+     never emit an og:image — see apps/killboard/views for the per-page privacy gate. #}
+  {% block og_meta %}{% endblock %}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">

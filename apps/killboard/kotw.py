@@ -168,3 +168,105 @@ def kotw_for_character(character_id: int, limit: int = 12) -> list[KillOfTheWeek
         KillOfTheWeek.objects.filter(character_id=character_id)
         .order_by("-iso_year", "-iso_week")[:limit]
     )
+
+
+# --------------------------------------------------------------------------- #
+#  Biggest Loss of the Week (KB-39, WS-D6)
+#
+#  The loss counterpart reuses this module's week maths and the same "auto-pick, officer
+#  override" contract as the Kill of the Week, but needs no model/migration: the pick is a
+#  live indexed query, and the rare officer override is stored in one AppSetting map
+#  (``killboard.lotw_overrides`` → {"<year>-W<week>": killmail_id}). Losses don't fire a
+#  celebratory ping, so nothing needs persisting for notification either.
+# --------------------------------------------------------------------------- #
+_LOTW_OVERRIDE_KEY = "killboard.lotw_overrides"
+
+
+def _top_loss(iso_year: int, iso_week: int):
+    """The biggest home LOSS of the week by at-kill value (ties → points), or ``None``."""
+    from .models import Killmail
+
+    start, end = _week_range(iso_year, iso_week)
+    return (
+        Killmail.objects.filter(
+            involves_home_corp=True,
+            home_corp_role=Killmail.HomeRole.VICTIM,
+            is_npc=False,
+            killmail_time__gte=start,
+            killmail_time__lt=end,
+        )
+        .annotate(at_kill=at_kill_value_expr())
+        .order_by("-at_kill", "-points", "-killmail_id")
+        .first()
+    )
+
+
+def _lotw_key(iso_year: int, iso_week: int) -> str:
+    return f"{iso_year}-W{iso_week:02d}"
+
+
+def _lotw_overrides() -> dict:
+    from apps.admin_audit.models import AppSetting
+
+    return AppSetting.get(_LOTW_OVERRIDE_KEY, {}) or {}
+
+
+def set_loss_override(iso_year: int, iso_week: int, killmail, officer) -> None:
+    """Officer override: pin a specific home loss as the week's biggest loss (caller audits)."""
+    from apps.admin_audit.models import AppSetting
+
+    overrides = _lotw_overrides()
+    overrides[_lotw_key(iso_year, iso_week)] = killmail.killmail_id
+    AppSetting.objects.update_or_create(
+        key=_LOTW_OVERRIDE_KEY,
+        defaults={"value": overrides,
+                  "updated_by": officer if getattr(officer, "pk", None) else None},
+    )
+
+
+def loss_of_the_week(iso_year: int, iso_week: int) -> dict | None:
+    """The biggest loss of an ISO week — the officer override if pinned, else the auto-pick.
+
+    Returns ``{"killmail", "value", "character_id", "is_override", "iso_year", "iso_week"}`` or
+    ``None`` when the week has no qualifying home loss.
+    """
+    from .models import Killmail
+
+    override_id = _lotw_overrides().get(_lotw_key(iso_year, iso_week))
+    km = is_override = None
+    if override_id:
+        km = Killmail.objects.filter(
+            killmail_id=override_id, involves_home_corp=True,
+            home_corp_role=Killmail.HomeRole.VICTIM,
+        ).first()
+        is_override = km is not None
+    if km is None:
+        km = _top_loss(iso_year, iso_week)
+        is_override = False
+    if km is None:
+        return None
+    value = km.value_at_kill if km.value_at_kill is not None else km.total_value
+    return {
+        "killmail": km, "value": value or 0, "character_id": km.victim_character_id,
+        "is_override": bool(is_override), "iso_year": iso_year, "iso_week": iso_week,
+    }
+
+
+def _weeks_back(count: int, now: dt.datetime | None = None):
+    """Yield ``(iso_year, iso_week)`` for the last ``count`` completed ISO weeks, newest first."""
+    iso_year, iso_week = last_completed_iso_week(now)
+    monday = dt.date.fromisocalendar(iso_year, iso_week, 1)
+    for i in range(count):
+        d = monday - dt.timedelta(weeks=i)
+        iso = d.isocalendar()
+        yield iso[0], iso[1]
+
+
+def recent_losses(weeks: int = 12) -> list[dict]:
+    """The biggest home loss for each of the last ``weeks`` completed ISO weeks (skip empty)."""
+    out = []
+    for iso_year, iso_week in _weeks_back(weeks):
+        row = loss_of_the_week(iso_year, iso_week)
+        if row is not None:
+            out.append(row)
+    return out
