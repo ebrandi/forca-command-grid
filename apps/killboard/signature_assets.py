@@ -19,9 +19,14 @@ migration stays cheap and dependency-free.
 from __future__ import annotations
 
 import json
+import logging
+import os
+import time
 from pathlib import Path
 
 from django.conf import settings
+
+log = logging.getLogger("forca.killboard")
 
 # --------------------------------------------------------------------------- #
 #  Size presets (plan A14) — fixed enum, no arbitrary dimensions.
@@ -271,3 +276,137 @@ def sync_from_manifest(manifest: dict, model) -> tuple[int, int, int]:
             updated += 1
     retired = model.objects.exclude(key__in=keys).filter(enabled=True).update(enabled=False)
     return created, updated, retired
+
+
+# --------------------------------------------------------------------------- #
+#  Portrait / logo mirror (plan A7) — worker-side fetch, never at render time.
+# --------------------------------------------------------------------------- #
+# Portraits and corp/alliance logos are mutable (unlike the immutable type-image mirror), so they
+# are fetched and cached under ``EVE_IMAGE_MIRROR_DIR`` on a 7-day refresh cadence by the render
+# pre-step (Celery-side in WS-4). The renderer itself only ever reads a local path — no network.
+#
+# The guarded-fetch shape is copied from ``mirror_type_images`` (fixed host from
+# ``EVE_IMAGE_SOURCE_URL``, strictly numeric ids, content-type→extension whitelist, atomic
+# tmp+replace write) and HARDENED here with a streamed size cap the one-shot command does not need
+# (a busy render worker must never buffer an unbounded upstream response). The existing command is
+# left untouched.
+_MAX_IMAGE_BYTES = 5 * 1024 * 1024          # abort a stream past 5 MB — a portrait is ~10-50 KB
+_IMAGE_REFETCH_AGE = 7 * 24 * 3600           # refetch only once the cached copy is a week old
+_IMAGE_TIMEOUT = 15                          # seconds; a render must not hang on a slow CDN
+_CONTENT_EXT = {"image/jpeg": "jpg", "image/jpg": "jpg", "image/png": "png"}
+
+
+def _atomic_write(path: str, data: bytes) -> None:
+    """Write ``data`` to ``path`` via a tmp file + ``os.replace`` so a reader never sees a
+    half-written image (identical to the type-image mirror's ``_write``)."""
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    tmp = path + ".tmp"
+    with open(tmp, "wb") as fh:
+        fh.write(data)
+    os.replace(tmp, path)
+
+
+def _existing_asset(base: str) -> str | None:
+    """The mirrored file for ``base`` (``…/portrait-256``) at either allowed extension, or None."""
+    for ext in ("jpg", "png"):
+        candidate = f"{base}.{ext}"
+        if os.path.exists(candidate):
+            return candidate
+    return None
+
+
+def _is_fresh(path: str) -> bool:
+    try:
+        return (time.time() - os.path.getmtime(path)) < _IMAGE_REFETCH_AGE
+    except OSError:
+        return False
+
+
+def _fetch_image(category: str, entity_id: int, kind: str, size: int, base: str) -> str | None:
+    """Stream one image from the fixed EVE image server into the mirror; return its path or None.
+
+    The URL is assembled ONLY from ``EVE_IMAGE_SOURCE_URL`` + the numeric id (no user input, no
+    redirects followed to a caller-chosen host — SSRF surface is a fixed template). The response is
+    streamed with a hard 5 MB ceiling, its content-type must be jpeg/png, and it is written
+    atomically. Any failure returns None so the caller can fall back to a stale copy or a monogram.
+    """
+    import requests
+
+    base_url = getattr(settings, "EVE_IMAGE_SOURCE_URL", "https://images.evetech.net").rstrip("/")
+    url = f"{base_url}/{category}/{entity_id}/{kind}?size={size}"
+    headers = {"User-Agent": getattr(settings, "ESI_USER_AGENT", "forca-command-grid")}
+    try:
+        resp = requests.get(url, headers=headers, timeout=_IMAGE_TIMEOUT, stream=True)
+    except requests.RequestException:
+        return None
+    try:
+        if resp.status_code != 200:
+            return None
+        ctype = resp.headers.get("Content-Type", "").split(";")[0].strip().lower()
+        ext = _CONTENT_EXT.get(ctype)
+        if not ext:
+            return None
+        buf = bytearray()
+        for chunk in resp.iter_content(8192):
+            if not chunk:
+                continue
+            buf.extend(chunk)
+            if len(buf) > _MAX_IMAGE_BYTES:
+                return None  # oversized upstream — abort BEFORE any file is written
+    except requests.RequestException:
+        return None
+    finally:
+        resp.close()
+    if not buf:
+        return None
+    path = f"{base}.{ext}"
+    _atomic_write(path, bytes(buf))
+    # If the content-type flipped since a prior fetch, drop the stale sibling so lookups are exact.
+    sibling = f"{base}.{'png' if ext == 'jpg' else 'jpg'}"
+    if os.path.exists(sibling):
+        try:
+            os.remove(sibling)
+        except OSError:
+            pass
+    return path
+
+
+def _ensure_image(category: str, entity_id, kind: str, size: int) -> str | None:
+    """Return a local mirror path for one entity image, fetching/refreshing when stale.
+
+    Returns the freshest available local path, or None when the id is unusable, the mirror dir is
+    unset, or the fetch failed with no cached copy to fall back to.
+    """
+    try:
+        eid = int(entity_id)
+    except (TypeError, ValueError):
+        return None
+    if eid <= 0:
+        return None
+    size = int(size)
+    root = getattr(settings, "EVE_IMAGE_MIRROR_DIR", "") or ""
+    if not root:
+        return None
+    base = os.path.join(root, category, str(eid), f"{kind}-{size}")
+    existing = _existing_asset(base)
+    if existing and _is_fresh(existing):
+        return existing
+    fetched = _fetch_image(category, eid, kind, size, base)
+    if fetched:
+        return fetched
+    return existing  # a stale copy is still better than a monogram; None if there is none
+
+
+def ensure_portrait(character_id, size: int = 256) -> str | None:
+    """Local path to a pilot's portrait (``characters/<id>/portrait-<size>.<ext>``), or None."""
+    return _ensure_image("characters", character_id, "portrait", size)
+
+
+def ensure_corp_logo(corp_id, size: int = 128) -> str | None:
+    """Local path to a corporation logo (``corporations/<id>/logo-<size>.<ext>``), or None."""
+    return _ensure_image("corporations", corp_id, "logo", size)
+
+
+def ensure_alliance_logo(alliance_id, size: int = 128) -> str | None:
+    """Local path to an alliance logo (``alliances/<id>/logo-<size>.<ext>``), or None."""
+    return _ensure_image("alliances", alliance_id, "logo", size)

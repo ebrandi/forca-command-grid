@@ -179,15 +179,14 @@ def system_security(system_id):
 # --- formatting ------------------------------------------------------------
 @register.filter
 def isk(value):
-    """Compact ISK formatting: 1.2B, 340M, 12.5k, 540."""
-    try:
-        v = float(value)
-    except (TypeError, ValueError):
-        return "0"
-    for unit, div in (("T", 1e12), ("B", 1e9), ("M", 1e6), ("k", 1e3)):
-        if abs(v) >= div:
-            return f"{v / div:.2f}{unit}"
-    return f"{v:.0f}"
+    """Compact ISK formatting: 1.2B, 340M, 12.5k, 540.
+
+    Delegates to the single shared implementation so the UI and the server-rendered card /
+    signature images format ISK identically (one formatter, no drift).
+    """
+    from apps.killboard.imagekit import compact_isk
+
+    return compact_isk(value)
 
 
 @register.filter

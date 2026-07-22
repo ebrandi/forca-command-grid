@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-22 16:23+0000\n"
+"POT-Creation-Date: 2026-07-22 18:07+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: zh-hans machine-assisted draft\n"
@@ -4384,13 +4384,15 @@ msgstr "不正确"
 msgid "Built-in"
 msgstr "内置"
 
-#: apps/capsuleer/models.py apps/stockpile/models.py apps/stockpile/views.py
+#: apps/capsuleer/models.py apps/killboard/signature_stats.py
+#: apps/stockpile/models.py apps/stockpile/views.py
 #: templates/stockpile/asset_search.html
 msgid "Corp"
 msgstr "军团"
 
 #: apps/capsuleer/models.py apps/killboard/intel_inference.py
-#: apps/killboard/models.py templates/admin_audit/console/raffle_stats.html
+#: apps/killboard/models.py apps/killboard/signature_stats.py
+#: templates/admin_audit/console/raffle_stats.html
 #: templates/capsuleer/paths.html templates/killboard/compare.html
 #: templates/killboard/pilot.html
 msgid "Solo"
@@ -6762,6 +6764,7 @@ msgid "Corporation"
 msgstr "军团"
 
 #: apps/corporation/models.py apps/fitting/models.py apps/killboard/models.py
+#: apps/killboard/signature_stats.py
 #: templates/admin_audit/console/readiness/doctrines.html
 #: templates/killboard/scan.html
 msgid "Alliance"
@@ -8897,12 +8900,13 @@ msgid "Solo kills"
 msgstr "单人击杀"
 
 #: apps/killboard/models.py apps/killboard/ranks.py
+#: apps/killboard/signature_stats.py
 #: templates/admin_audit/console/raffle_stats.html
 msgid "Final blows"
 msgstr "最后一击"
 
-#: apps/killboard/models.py templates/identity/dashboard.html
-#: templates/killboard/battle_report.html
+#: apps/killboard/models.py apps/killboard/signature_stats.py
+#: templates/identity/dashboard.html templates/killboard/battle_report.html
 #: templates/killboard/campaign_detail.html
 msgid "ISK destroyed"
 msgstr "摧毁的 ISK"
@@ -9100,7 +9104,8 @@ msgstr "Webhook（HTTPS POST）"
 msgid "RSS / Atom feed"
 msgstr "RSS / Atom 订阅源"
 
-#: apps/killboard/models.py templates/admin_audit/console/combat_rewards.html
+#: apps/killboard/models.py apps/killboard/signature_stats.py
+#: templates/admin_audit/console/combat_rewards.html
 #: templates/admin_audit/console/raffle_stats.html
 #: templates/identity/dashboard.html templates/killboard/compare.html
 #: templates/killboard/cv.html templates/killboard/list.html
@@ -9576,6 +9581,75 @@ msgid ""
 "Optional: give the board your corporation's name, logo and accent colour so "
 "it feels like yours."
 msgstr "可选：为看板设置您军团的名称、徽标和强调色，让它更有归属感。"
+
+#: apps/killboard/signature_stats.py templates/identity/dashboard.html
+#: templates/killboard/compare.html templates/killboard/cv.html
+#: templates/killboard/list.html templates/killboard/meta.html
+#: templates/killboard/pilot.html templates/killboard/roster.html
+#: templates/killboard/stats.html
+msgid "Losses"
+msgstr "损失"
+
+#: apps/killboard/signature_stats.py templates/identity/dashboard.html
+#: templates/killboard/battle_report.html
+#: templates/killboard/campaign_detail.html
+msgid "ISK lost"
+msgstr "损失的 ISK"
+
+#: apps/killboard/signature_stats.py templates/killboard/compare.html
+#: templates/killboard/cv.html templates/killboard/list.html
+#: templates/killboard/pilot.html templates/killboard/roster.html
+msgid "Efficiency"
+msgstr "效率"
+
+#: apps/killboard/signature_stats.py
+msgid "K/D"
+msgstr ""
+
+#: apps/killboard/signature_stats.py
+#: templates/admin_audit/console/combat_rewards.html
+#: templates/admin_audit/console/raffle_prizes.html templates/killboard/cv.html
+#: templates/raffle/me.html
+msgid "Rank"
+msgstr "排名"
+
+#: apps/killboard/signature_stats.py
+#, fuzzy
+#| msgid "Progress %%"
+msgid "Progress"
+msgstr "进度 %%"
+
+#: apps/killboard/signature_stats.py templates/_nav.html
+#: templates/killboard/cv.html templates/killboard/kotw.html
+#: templates/killboard/trophies.html
+msgid "Trophies"
+msgstr "奖杯"
+
+#: apps/killboard/signature_stats.py
+#, fuzzy
+#| msgid "Best kill"
+msgid "Last kill"
+msgstr "最佳击杀"
+
+#: apps/killboard/signature_stats.py templates/killboard/cv.html
+msgid "Best kill"
+msgstr "最佳击杀"
+
+#: apps/killboard/signature_stats.py
+#, fuzzy
+#| msgid "Ship hull"
+msgid "Top hull"
+msgstr "舰船"
+
+#: apps/killboard/signature_stats.py
+#, fuzzy
+#| msgid "Top tasks"
+msgid "Top class"
+msgstr "主要任务"
+
+#: apps/killboard/signature_stats.py templates/industry/mrp.html
+msgid "Updated"
+msgstr "已更新"
 
 #: apps/killboard/signatures.py
 #, fuzzy
@@ -23828,11 +23902,6 @@ msgstr "战斗名册"
 msgid "Campaigns"
 msgstr "战役"
 
-#: templates/_nav.html templates/killboard/cv.html
-#: templates/killboard/kotw.html templates/killboard/trophies.html
-msgid "Trophies"
-msgstr "奖杯"
-
 #: templates/_nav.html templates/killboard/kotw.html
 #: templates/killboard/seasons.html templates/killboard/trophies.html
 msgid "Seasons"
@@ -25080,12 +25149,6 @@ msgstr "搜索…"
 #: templates/killboard/rankings.html
 msgid "Reset"
 msgstr "重置"
-
-#: templates/admin_audit/console/combat_rewards.html
-#: templates/admin_audit/console/raffle_prizes.html templates/killboard/cv.html
-#: templates/raffle/me.html
-msgid "Rank"
-msgstr "排名"
 
 #: templates/admin_audit/console/combat_rewards.html
 msgid "Achieved"
@@ -40404,18 +40467,6 @@ msgstr "你已跟进 — 今天军团没有需要你做的事。"
 msgid "Go shoot something"
 msgstr "去打点什么吧"
 
-#: templates/identity/dashboard.html templates/killboard/compare.html
-#: templates/killboard/cv.html templates/killboard/list.html
-#: templates/killboard/meta.html templates/killboard/pilot.html
-#: templates/killboard/roster.html templates/killboard/stats.html
-msgid "Losses"
-msgstr "损失"
-
-#: templates/identity/dashboard.html templates/killboard/battle_report.html
-#: templates/killboard/campaign_detail.html
-msgid "ISK lost"
-msgstr "损失的 ISK"
-
 #: templates/identity/dashboard.html
 msgid "You this week:"
 msgstr "你本周："
@@ -42665,10 +42716,6 @@ msgid "Run history"
 msgstr "运行历史"
 
 #: templates/industry/mrp.html
-msgid "Updated"
-msgstr "已更新"
-
-#: templates/industry/mrp.html
 msgid "Input digest"
 msgstr "输入摘要"
 
@@ -43507,12 +43554,6 @@ msgstr "每月击杀"
 msgid "All-time totals"
 msgstr "历来总计"
 
-#: templates/killboard/compare.html templates/killboard/cv.html
-#: templates/killboard/list.html templates/killboard/pilot.html
-#: templates/killboard/roster.html
-msgid "Efficiency"
-msgstr "效率"
-
 #: templates/killboard/cv.html
 #, python-format
 msgid "%(pilot_name)s — PVP CV"
@@ -43555,10 +43596,6 @@ msgstr "尚未获得任何奖杯。"
 #: templates/killboard/cv.html
 msgid "Closest to earning"
 msgstr "最接近获得"
-
-#: templates/killboard/cv.html
-msgid "Best kill"
-msgstr "最佳击杀"
 
 #: templates/killboard/cv.html
 msgid "Favourite hull"

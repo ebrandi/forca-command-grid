@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-22 16:23+0000\n"
+"POT-Creation-Date: 2026-07-22 18:07+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: ru machine-assisted draft\n"
@@ -4547,13 +4547,15 @@ msgstr "Неверно"
 msgid "Built-in"
 msgstr "Встроенный"
 
-#: apps/capsuleer/models.py apps/stockpile/models.py apps/stockpile/views.py
+#: apps/capsuleer/models.py apps/killboard/signature_stats.py
+#: apps/stockpile/models.py apps/stockpile/views.py
 #: templates/stockpile/asset_search.html
 msgid "Corp"
 msgstr "Корп"
 
 #: apps/capsuleer/models.py apps/killboard/intel_inference.py
-#: apps/killboard/models.py templates/admin_audit/console/raffle_stats.html
+#: apps/killboard/models.py apps/killboard/signature_stats.py
+#: templates/admin_audit/console/raffle_stats.html
 #: templates/capsuleer/paths.html templates/killboard/compare.html
 #: templates/killboard/pilot.html
 msgid "Solo"
@@ -7018,6 +7020,7 @@ msgid "Corporation"
 msgstr "Корпорация"
 
 #: apps/corporation/models.py apps/fitting/models.py apps/killboard/models.py
+#: apps/killboard/signature_stats.py
 #: templates/admin_audit/console/readiness/doctrines.html
 #: templates/killboard/scan.html
 msgid "Alliance"
@@ -9210,12 +9213,13 @@ msgid "Solo kills"
 msgstr "Соло-киллы"
 
 #: apps/killboard/models.py apps/killboard/ranks.py
+#: apps/killboard/signature_stats.py
 #: templates/admin_audit/console/raffle_stats.html
 msgid "Final blows"
 msgstr "Финальные удары"
 
-#: apps/killboard/models.py templates/identity/dashboard.html
-#: templates/killboard/battle_report.html
+#: apps/killboard/models.py apps/killboard/signature_stats.py
+#: templates/identity/dashboard.html templates/killboard/battle_report.html
 #: templates/killboard/campaign_detail.html
 msgid "ISK destroyed"
 msgstr "Уничтожено ISK"
@@ -9432,7 +9436,8 @@ msgstr "Webhook (HTTPS POST)"
 msgid "RSS / Atom feed"
 msgstr "Лента RSS / Atom"
 
-#: apps/killboard/models.py templates/admin_audit/console/combat_rewards.html
+#: apps/killboard/models.py apps/killboard/signature_stats.py
+#: templates/admin_audit/console/combat_rewards.html
 #: templates/admin_audit/console/raffle_stats.html
 #: templates/identity/dashboard.html templates/killboard/compare.html
 #: templates/killboard/cv.html templates/killboard/list.html
@@ -9919,6 +9924,75 @@ msgid ""
 msgstr ""
 "Необязательно: задайте доске название, логотип и акцентный цвет вашей "
 "корпорации, чтобы она выглядела как ваша."
+
+#: apps/killboard/signature_stats.py templates/identity/dashboard.html
+#: templates/killboard/compare.html templates/killboard/cv.html
+#: templates/killboard/list.html templates/killboard/meta.html
+#: templates/killboard/pilot.html templates/killboard/roster.html
+#: templates/killboard/stats.html
+msgid "Losses"
+msgstr "Потери"
+
+#: apps/killboard/signature_stats.py templates/identity/dashboard.html
+#: templates/killboard/battle_report.html
+#: templates/killboard/campaign_detail.html
+msgid "ISK lost"
+msgstr "Потеряно ISK"
+
+#: apps/killboard/signature_stats.py templates/killboard/compare.html
+#: templates/killboard/cv.html templates/killboard/list.html
+#: templates/killboard/pilot.html templates/killboard/roster.html
+msgid "Efficiency"
+msgstr "Эффективность"
+
+#: apps/killboard/signature_stats.py
+msgid "K/D"
+msgstr ""
+
+#: apps/killboard/signature_stats.py
+#: templates/admin_audit/console/combat_rewards.html
+#: templates/admin_audit/console/raffle_prizes.html templates/killboard/cv.html
+#: templates/raffle/me.html
+msgid "Rank"
+msgstr "Ранг"
+
+#: apps/killboard/signature_stats.py
+#, fuzzy
+#| msgid "Progress %%"
+msgid "Progress"
+msgstr "Прогресс %%"
+
+#: apps/killboard/signature_stats.py templates/_nav.html
+#: templates/killboard/cv.html templates/killboard/kotw.html
+#: templates/killboard/trophies.html
+msgid "Trophies"
+msgstr "Трофеи"
+
+#: apps/killboard/signature_stats.py
+#, fuzzy
+#| msgid "Best kill"
+msgid "Last kill"
+msgstr "Лучший фраг"
+
+#: apps/killboard/signature_stats.py templates/killboard/cv.html
+msgid "Best kill"
+msgstr "Лучший фраг"
+
+#: apps/killboard/signature_stats.py
+#, fuzzy
+#| msgid "Ship hull"
+msgid "Top hull"
+msgstr "Корпус корабля"
+
+#: apps/killboard/signature_stats.py
+#, fuzzy
+#| msgid "Top tasks"
+msgid "Top class"
+msgstr "Главные задачи"
+
+#: apps/killboard/signature_stats.py templates/industry/mrp.html
+msgid "Updated"
+msgstr "Обновлено"
 
 #: apps/killboard/signatures.py
 #, fuzzy
@@ -24889,11 +24963,6 @@ msgstr "Боевой состав"
 msgid "Campaigns"
 msgstr "Кампании"
 
-#: templates/_nav.html templates/killboard/cv.html
-#: templates/killboard/kotw.html templates/killboard/trophies.html
-msgid "Trophies"
-msgstr "Трофеи"
-
 #: templates/_nav.html templates/killboard/kotw.html
 #: templates/killboard/seasons.html templates/killboard/trophies.html
 msgid "Seasons"
@@ -26165,12 +26234,6 @@ msgstr "Поиск…"
 #: templates/killboard/rankings.html
 msgid "Reset"
 msgstr "Сбросить"
-
-#: templates/admin_audit/console/combat_rewards.html
-#: templates/admin_audit/console/raffle_prizes.html templates/killboard/cv.html
-#: templates/raffle/me.html
-msgid "Rank"
-msgstr "Ранг"
 
 #: templates/admin_audit/console/combat_rewards.html
 msgid "Achieved"
@@ -42285,18 +42348,6 @@ msgstr "Вы в курсе — сегодня корпорации от вас �
 msgid "Go shoot something"
 msgstr "Идите пострелять"
 
-#: templates/identity/dashboard.html templates/killboard/compare.html
-#: templates/killboard/cv.html templates/killboard/list.html
-#: templates/killboard/meta.html templates/killboard/pilot.html
-#: templates/killboard/roster.html templates/killboard/stats.html
-msgid "Losses"
-msgstr "Потери"
-
-#: templates/identity/dashboard.html templates/killboard/battle_report.html
-#: templates/killboard/campaign_detail.html
-msgid "ISK lost"
-msgstr "Потеряно ISK"
-
 #: templates/identity/dashboard.html
 msgid "You this week:"
 msgstr "Вы на этой неделе:"
@@ -44694,10 +44745,6 @@ msgid "Run history"
 msgstr "История запусков"
 
 #: templates/industry/mrp.html
-msgid "Updated"
-msgstr "Обновлено"
-
-#: templates/industry/mrp.html
 msgid "Input digest"
 msgstr "Дайджест входных данных"
 
@@ -45563,12 +45610,6 @@ msgstr "Килы по месяцам"
 msgid "All-time totals"
 msgstr "Итоги за всё время"
 
-#: templates/killboard/compare.html templates/killboard/cv.html
-#: templates/killboard/list.html templates/killboard/pilot.html
-#: templates/killboard/roster.html
-msgid "Efficiency"
-msgstr "Эффективность"
-
 #: templates/killboard/cv.html
 #, python-format
 msgid "%(pilot_name)s — PVP CV"
@@ -45611,10 +45652,6 @@ msgstr "Трофеев пока не заработано."
 #: templates/killboard/cv.html
 msgid "Closest to earning"
 msgstr "Ближе всего к получению"
-
-#: templates/killboard/cv.html
-msgid "Best kill"
-msgstr "Лучший фраг"
 
 #: templates/killboard/cv.html
 msgid "Favourite hull"

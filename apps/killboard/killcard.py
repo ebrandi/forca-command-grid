@@ -140,14 +140,9 @@ def _load_static_logo(logo_url: str):
 #  Small formatting / name helpers (direct, cache-free — a card render is rare)
 # --------------------------------------------------------------------------------------------- #
 def _isk(value) -> str:
-    try:
-        v = float(value)
-    except (TypeError, ValueError):
-        return "0"
-    for unit, div in (("T", 1e12), ("B", 1e9), ("M", 1e6), ("k", 1e3)):
-        if abs(v) >= div:
-            return f"{v / div:.2f}{unit}"
-    return f"{v:.0f}"
+    from .imagekit import compact_isk
+
+    return compact_isk(value)
 
 
 def _type_name(type_id: int | None) -> str:

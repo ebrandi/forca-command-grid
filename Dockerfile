@@ -17,9 +17,13 @@ ENV PYTHONUNBUFFERED=1 \
 # fonts-dejavu-core supplies DejaVuSans{,-Bold}.ttf for the Pillow-rendered kill-card /
 # CV-card PNGs (KB-39). It is a tiny (~1MB), permissively-licensed font package; without
 # it Pillow falls back to its low-res bitmap default and the shareable cards look poor.
+# fonts-noto-cjk adds Chinese/Japanese/Korean glyph coverage for the Combat Signatures
+# banners (DejaVu has none — CJK pilot names and localised zh-hans/ko/ja labels would render
+# as tofu boxes). It is larger (~90MB) and SIL-OFL-1.1 licensed; the renderer degrades to
+# DejaVu when it is absent, so a stale self-hosted image still renders (just without CJK).
 # hadolint ignore=DL3008
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libpq5 gettext fonts-dejavu-core \
+    && apt-get install -y --no-install-recommends libpq5 gettext fonts-dejavu-core fonts-noto-cjk \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

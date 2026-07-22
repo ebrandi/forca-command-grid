@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-22 16:23+0000\n"
+"POT-Creation-Date: 2026-07-22 18:07+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: ja machine-assisted draft\n"
@@ -4536,13 +4536,15 @@ msgstr "誤り"
 msgid "Built-in"
 msgstr "組み込み"
 
-#: apps/capsuleer/models.py apps/stockpile/models.py apps/stockpile/views.py
+#: apps/capsuleer/models.py apps/killboard/signature_stats.py
+#: apps/stockpile/models.py apps/stockpile/views.py
 #: templates/stockpile/asset_search.html
 msgid "Corp"
 msgstr "コーポ"
 
 #: apps/capsuleer/models.py apps/killboard/intel_inference.py
-#: apps/killboard/models.py templates/admin_audit/console/raffle_stats.html
+#: apps/killboard/models.py apps/killboard/signature_stats.py
+#: templates/admin_audit/console/raffle_stats.html
 #: templates/capsuleer/paths.html templates/killboard/compare.html
 #: templates/killboard/pilot.html
 msgid "Solo"
@@ -7010,6 +7012,7 @@ msgid "Corporation"
 msgstr "コーポレーション"
 
 #: apps/corporation/models.py apps/fitting/models.py apps/killboard/models.py
+#: apps/killboard/signature_stats.py
 #: templates/admin_audit/console/readiness/doctrines.html
 #: templates/killboard/scan.html
 msgid "Alliance"
@@ -9189,12 +9192,13 @@ msgid "Solo kills"
 msgstr "ソロキル数"
 
 #: apps/killboard/models.py apps/killboard/ranks.py
+#: apps/killboard/signature_stats.py
 #: templates/admin_audit/console/raffle_stats.html
 msgid "Final blows"
 msgstr "ファイナルブロー数"
 
-#: apps/killboard/models.py templates/identity/dashboard.html
-#: templates/killboard/battle_report.html
+#: apps/killboard/models.py apps/killboard/signature_stats.py
+#: templates/identity/dashboard.html templates/killboard/battle_report.html
 #: templates/killboard/campaign_detail.html
 msgid "ISK destroyed"
 msgstr "破壊した ISK"
@@ -9398,7 +9402,8 @@ msgstr "Webhook（ HTTPS POST ）"
 msgid "RSS / Atom feed"
 msgstr "RSS / Atom フィード"
 
-#: apps/killboard/models.py templates/admin_audit/console/combat_rewards.html
+#: apps/killboard/models.py apps/killboard/signature_stats.py
+#: templates/admin_audit/console/combat_rewards.html
 #: templates/admin_audit/console/raffle_stats.html
 #: templates/identity/dashboard.html templates/killboard/compare.html
 #: templates/killboard/cv.html templates/killboard/list.html
@@ -9887,6 +9892,75 @@ msgid ""
 msgstr ""
 "任意：ボードにコーポレーションの名前、ロゴ、アクセントカラーを設定して、自分"
 "たちのものらしくしましょう。"
+
+#: apps/killboard/signature_stats.py templates/identity/dashboard.html
+#: templates/killboard/compare.html templates/killboard/cv.html
+#: templates/killboard/list.html templates/killboard/meta.html
+#: templates/killboard/pilot.html templates/killboard/roster.html
+#: templates/killboard/stats.html
+msgid "Losses"
+msgstr "ロス"
+
+#: apps/killboard/signature_stats.py templates/identity/dashboard.html
+#: templates/killboard/battle_report.html
+#: templates/killboard/campaign_detail.html
+msgid "ISK lost"
+msgstr "失った ISK"
+
+#: apps/killboard/signature_stats.py templates/killboard/compare.html
+#: templates/killboard/cv.html templates/killboard/list.html
+#: templates/killboard/pilot.html templates/killboard/roster.html
+msgid "Efficiency"
+msgstr "効率"
+
+#: apps/killboard/signature_stats.py
+msgid "K/D"
+msgstr ""
+
+#: apps/killboard/signature_stats.py
+#: templates/admin_audit/console/combat_rewards.html
+#: templates/admin_audit/console/raffle_prizes.html templates/killboard/cv.html
+#: templates/raffle/me.html
+msgid "Rank"
+msgstr "ランク"
+
+#: apps/killboard/signature_stats.py
+#, fuzzy
+#| msgid "Progress %%"
+msgid "Progress"
+msgstr "進捗 %%"
+
+#: apps/killboard/signature_stats.py templates/_nav.html
+#: templates/killboard/cv.html templates/killboard/kotw.html
+#: templates/killboard/trophies.html
+msgid "Trophies"
+msgstr "トロフィー"
+
+#: apps/killboard/signature_stats.py
+#, fuzzy
+#| msgid "Best kill"
+msgid "Last kill"
+msgstr "ベストキル"
+
+#: apps/killboard/signature_stats.py templates/killboard/cv.html
+msgid "Best kill"
+msgstr "ベストキル"
+
+#: apps/killboard/signature_stats.py
+#, fuzzy
+#| msgid "Ship hull"
+msgid "Top hull"
+msgstr "艦船のハル"
+
+#: apps/killboard/signature_stats.py
+#, fuzzy
+#| msgid "Top tasks"
+msgid "Top class"
+msgstr "主要なタスク"
+
+#: apps/killboard/signature_stats.py templates/industry/mrp.html
+msgid "Updated"
+msgstr "更新日時"
 
 #: apps/killboard/signatures.py
 #, fuzzy
@@ -24684,11 +24758,6 @@ msgstr "戦闘名簿"
 msgid "Campaigns"
 msgstr "キャンペーン"
 
-#: templates/_nav.html templates/killboard/cv.html
-#: templates/killboard/kotw.html templates/killboard/trophies.html
-msgid "Trophies"
-msgstr "トロフィー"
-
 #: templates/_nav.html templates/killboard/kotw.html
 #: templates/killboard/seasons.html templates/killboard/trophies.html
 msgid "Seasons"
@@ -25950,12 +26019,6 @@ msgstr "検索…"
 #: templates/killboard/rankings.html
 msgid "Reset"
 msgstr "リセット"
-
-#: templates/admin_audit/console/combat_rewards.html
-#: templates/admin_audit/console/raffle_prizes.html templates/killboard/cv.html
-#: templates/raffle/me.html
-msgid "Rank"
-msgstr "ランク"
 
 #: templates/admin_audit/console/combat_rewards.html
 msgid "Achieved"
@@ -41850,18 +41913,6 @@ msgstr "あなたは最新の状態です — 今日コーポがあなたに求�
 msgid "Go shoot something"
 msgstr "何かを撃ちに行こう"
 
-#: templates/identity/dashboard.html templates/killboard/compare.html
-#: templates/killboard/cv.html templates/killboard/list.html
-#: templates/killboard/meta.html templates/killboard/pilot.html
-#: templates/killboard/roster.html templates/killboard/stats.html
-msgid "Losses"
-msgstr "ロス"
-
-#: templates/identity/dashboard.html templates/killboard/battle_report.html
-#: templates/killboard/campaign_detail.html
-msgid "ISK lost"
-msgstr "失った ISK"
-
 #: templates/identity/dashboard.html
 msgid "You this week:"
 msgstr "今週のあなた:"
@@ -44181,10 +44232,6 @@ msgid "Run history"
 msgstr "実行履歴"
 
 #: templates/industry/mrp.html
-msgid "Updated"
-msgstr "更新日時"
-
-#: templates/industry/mrp.html
 msgid "Input digest"
 msgstr "入力ダイジェスト"
 
@@ -45042,12 +45089,6 @@ msgstr "月間キル数"
 msgid "All-time totals"
 msgstr "全期間の合計"
 
-#: templates/killboard/compare.html templates/killboard/cv.html
-#: templates/killboard/list.html templates/killboard/pilot.html
-#: templates/killboard/roster.html
-msgid "Efficiency"
-msgstr "効率"
-
 #: templates/killboard/cv.html
 #, python-format
 msgid "%(pilot_name)s — PVP CV"
@@ -45090,10 +45131,6 @@ msgstr "まだトロフィーを獲得していません。"
 #: templates/killboard/cv.html
 msgid "Closest to earning"
 msgstr "獲得に最も近い"
-
-#: templates/killboard/cv.html
-msgid "Best kill"
-msgstr "ベストキル"
 
 #: templates/killboard/cv.html
 msgid "Favourite hull"
