@@ -39,14 +39,14 @@
             <div class="flex items-center gap-1.5">
               <form method="post" action="{% url 'killboard:subscription_test' sub.id %}">{% csrf_token %}<button class="btn-ghost text-xs">{% translate "Test" %}</button></form>
               <form method="post" action="{% url 'killboard:subscription_toggle' sub.id %}">{% csrf_token %}<button class="btn-ghost text-xs">{% if sub.enabled %}{% translate "Disable" %}{% else %}{% translate "Enable" %}{% endif %}</button></form>
-              <form method="post" action="{% url 'killboard:subscription_delete' sub.id %}" onsubmit="return confirm('{% translate "Delete this subscription?" %}');">{% csrf_token %}<button class="btn-ghost text-xs">{% translate "Delete" %}</button></form>
+              <form method="post" action="{% url 'killboard:subscription_delete' sub.id %}" data-confirm="{% translate 'Delete this subscription?' %}">{% csrf_token %}<button class="btn-ghost text-xs">{% translate "Delete" %}</button></form>
             </div>
           </div>
           {% if sub.channel == 'rss' and sub.rss_token %}
           <div class="mt-2 rounded bg-panel2 p-2">
             <p class="text-xs text-faint">{% translate "Feed URL (keep it private — anyone with the link can read this feed):" %}</p>
             <code class="mt-1 block break-all font-mono text-xs text-ink" style="user-select:all;">{{ request.scheme }}://{{ request.get_host }}{% url 'killboard:subscription_feed' sub.rss_token %}</code>
-            <form method="post" action="{% url 'killboard:subscription_rss_regenerate' sub.id %}" class="mt-1.5" onsubmit="return confirm('{% translate "Generate a new feed URL? The current one will stop working." %}');">{% csrf_token %}<button class="btn-ghost text-xs">{% translate "Regenerate URL" %}</button></form>
+            <form method="post" action="{% url 'killboard:subscription_rss_regenerate' sub.id %}" class="mt-1.5" data-confirm="{% translate 'Generate a new feed URL? The current one will stop working.' %}">{% csrf_token %}<button class="btn-ghost text-xs">{% translate "Regenerate URL" %}</button></form>
           </div>
           {% elif sub.channel == 'webhook' and sub.webhook_url %}
           <p class="mt-1 truncate font-mono text-xs text-faint">{{ sub.webhook_url }}</p>
@@ -147,7 +147,7 @@
   </section>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
 (function () {
   var et = document.getElementById('event_type');
   var ch = document.getElementById('channel');

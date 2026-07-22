@@ -23,13 +23,13 @@
 <form method="get" class="panel mb-6 flex flex-wrap items-end gap-4 px-4 py-3">
   <div>
     <label class="eyebrow text-faint" for="meta-window">{% translate "Window" %}</label>
-    <select id="meta-window" name="window" class="mt-1 block rounded border border-line bg-panel2 px-2 py-1 text-sm text-muted" onchange="this.form.submit()">
+    <select id="meta-window" name="window" class="mt-1 block rounded border border-line bg-panel2 px-2 py-1 text-sm text-muted" data-autosubmit>
       {% for key, label in windows %}<option value="{{ key }}"{% if key == window %} selected{% endif %}>{{ label }}</option>{% endfor %}
     </select>
   </div>
   <div style="min-width:16rem">
     <label class="eyebrow text-faint" for="meta-hull">{% translate "What kills…" %}</label>
-    <select id="meta-hull" name="hull" class="mt-1 block w-full rounded border border-line bg-panel2 px-2 py-1 text-sm text-muted" onchange="this.form.submit()">
+    <select id="meta-hull" name="hull" class="mt-1 block w-full rounded border border-line bg-panel2 px-2 py-1 text-sm text-muted" data-autosubmit>
       <option value="">{% translate "Pick a hull we've seen…" %}</option>
       {% for h in hull_options %}<option value="{{ h.ship_type_id }}"{% if h.ship_type_id == selected_hull %} selected{% endif %}>{{ h.name }} ({{ h.count }})</option>{% endfor %}
     </select>

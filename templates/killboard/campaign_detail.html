@@ -26,7 +26,7 @@
     {% endif %}
     {% if can_manage %}
       <a href="{% url 'killboard:campaign_edit' campaign.pk %}" class="text-faint hover:text-gold">✎ {% translate "Edit" %}</a>
-      <form method="post" action="{% url 'killboard:campaign_delete' campaign.pk %}" class="inline" onsubmit="return confirm('{% translate "Delete this campaign?" %}');">{% csrf_token %}
+      <form method="post" action="{% url 'killboard:campaign_delete' campaign.pk %}" class="inline" data-confirm="{% translate 'Delete this campaign?' %}">{% csrf_token %}
         <button type="submit" class="text-faint hover:text-loss">🗑 {% translate "Delete" %}</button>
       </form>
     {% endif %}

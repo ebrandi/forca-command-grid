@@ -37,7 +37,7 @@
             <p class="mt-0.5 font-mono text-xs text-faint">{{ token.prefix }}…&nbsp;·&nbsp;{% blocktranslate with created=token.created_at|date:"M j, Y" %}created {{ created }}{% endblocktranslate %}{% if token.last_used_at %} · {% blocktranslate with used=token.last_used_at|date:"M j, Y H:i" %}last used {{ used }}{% endblocktranslate %}{% else %} · {% translate "never used" %}{% endif %}</p>
           </div>
           {% if token.is_active %}
-          <form method="post" action="{% url 'killboard:api_token_revoke' token.id %}" onsubmit="return confirm('{% translate "Revoke this token? Any tool using it will stop working." %}');">
+          <form method="post" action="{% url 'killboard:api_token_revoke' token.id %}" data-confirm="{% translate 'Revoke this token? Any tool using it will stop working.' %}">
             {% csrf_token %}
             <button class="btn-ghost text-xs">{% translate "Revoke" %}</button>
           </form>

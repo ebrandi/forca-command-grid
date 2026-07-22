@@ -17,7 +17,7 @@
   <span id="kb-live-dot"></span>
   <span id="kb-live-label" class="font-display uppercase tracking-wide">{% translate "Live" %}</span>
 </div>
-<script>
+<script nonce="{{ csp_nonce }}">
 (function(){
   var tip = "{{ stream_tip|default:0 }}";
   var topics = "{{ stream_topics|default:'all' }}";

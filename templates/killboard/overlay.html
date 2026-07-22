@@ -3,7 +3,7 @@
 NOT extend base.html): OBS renders it as a browser source over the game capture. Authenticated by
 the per-corp token already validated in the view. It shows PUBLIC-tier recent kills only and
 auto-updates via the killboard poll feed (never a long-lived SSE slot — see apps/killboard/overlay).
-Inline <style> is allowed by CSP (style-src unsafe-inline); the inline <script> carries the
+Inline styles are allowed by CSP (style-src unsafe-inline); the inline script tag carries the
 per-request nonce (script-src 'nonce-…').{% endcomment %}
 <html lang="{{ LANGUAGE_CODE|default:'en' }}">
 <head>
