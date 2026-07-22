@@ -1566,3 +1566,191 @@ class SeasonSnapshot(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"Season {self.year}-Q{self.quarter}"
+
+
+# --------------------------------------------------------------------------- #
+#  Combat Signatures — pilot-authored public banner images.
+#  Domain logic (config validation, quotas, lifecycle, tokens) lives in
+#  ``signatures.py``; these are the persistence tables only.
+# --------------------------------------------------------------------------- #
+
+
+def _new_signature_token() -> str:
+    """A URL-safe, unguessable public token for a signature image (~128 bits).
+
+    Set on first save like the battle/campaign slug, but wider: the signature URL is
+    world-readable and long-lived, so it uses 16 bytes (22 chars) rather than 9.
+    """
+    return secrets.token_urlsafe(16)
+
+
+def _default_size_presets() -> list[str]:
+    """The size presets leadership allows by default (every A14 preset)."""
+    return ["compact", "standard", "wide", "card"]
+
+
+class SignatureBackground(TimeStampedModel):
+    """A selectable banner background, seeded/synced from the code manifest.
+
+    Rows are never uploaded — WS-2 seeds them from the committed background manifest and
+    admins only enable/disable/categorise/order them. Asset paths are derived from
+    ``key`` + preset at render time, never stored user input.
+    """
+
+    key = models.SlugField(max_length=64, unique=True)
+    # Canonical English name; translated at render via a gettext_noop seam (like ranks_i18n).
+    name = models.CharField(max_length=80)
+    category = models.CharField(max_length=40, blank=True)
+    enabled = models.BooleanField(default=True)
+    display_order = models.IntegerField(default=0)
+    version = models.IntegerField(default=1)
+    checksum = models.CharField(max_length=64, blank=True)
+
+    class Meta:
+        ordering = ["display_order", "key"]
+
+    def __str__(self) -> str:
+        return self.key
+
+
+class CombatSignature(TimeStampedModel):
+    """One pilot-authored banner image and everything needed to (re)render + serve it.
+
+    The private editor lives at ``/killboard/signatures/`` (owner-scoped); the public image
+    is served from an unguessable ``public_token`` URL. Rendering is done off-request by
+    Celery to persistent media — this row only carries the config and render/artifact state.
+    """
+
+    class Mode(models.TextChoices):
+        LIVE = "live", _("Live (auto-refreshing)")
+        SNAPSHOT = "snapshot", _("Snapshot (frozen)")
+
+    class Status(models.TextChoices):
+        ACTIVE = "active", _("Active")
+        DISABLED = "disabled", _("Disabled")
+        FROZEN = "frozen", _("Frozen")
+
+    class RenderStatus(models.TextChoices):
+        PENDING = "pending", _("Pending")
+        OK = "ok", _("Rendered")
+        FAILED = "failed", _("Failed")
+
+    class Layout(models.TextChoices):
+        IDENTITY = "identity", _("Identity")
+        TACTICAL = "tactical", _("Tactical")
+        MINIMAL = "minimal", _("Minimal")
+
+    class SizePreset(models.TextChoices):
+        COMPACT = "compact", _("Compact (468×120)")
+        STANDARD = "standard", _("Standard (600×150)")
+        WIDE = "wide", _("Wide (728×120)")
+        CARD = "card", _("Card (600×200)")
+
+    character = models.ForeignKey(
+        "sso.EveCharacter", on_delete=models.CASCADE, related_name="combat_signatures"
+    )
+    name = models.CharField(max_length=60)
+    # Populated on first save; ``unique=True`` already indexes it, so — like the battle/
+    # campaign slug — we deliberately do NOT add db_index (we only ever look it up by exact
+    # match, and a second varchar_pattern_ops index would be pure write overhead).
+    public_token = models.CharField(max_length=24, unique=True, blank=True)
+    mode = models.CharField(max_length=8, choices=Mode.choices, default=Mode.LIVE)
+    # Render language; blank = resolve to the creator's / site default at render time.
+    language = models.CharField(max_length=12, blank=True)
+    layout = models.CharField(max_length=16, choices=Layout.choices, default=Layout.IDENTITY)
+    size_preset = models.CharField(
+        max_length=16, choices=SizePreset.choices, default=SizePreset.STANDARD
+    )
+    background = models.ForeignKey(SignatureBackground, on_delete=models.PROTECT, related_name="+")
+    # Validated dict (see signatures.validate_config): components/period/featured_trophy_ids/
+    # show_timestamp/theme. The ≤12 component cap is enforced by the domain validator.
+    config = models.JSONField(default=dict)
+    status = models.CharField(max_length=8, choices=Status.choices, default=Status.ACTIVE)
+    render_status = models.CharField(
+        max_length=8, choices=RenderStatus.choices, default=RenderStatus.PENDING
+    )
+    dirty = models.BooleanField(default=True)
+    rendered_at = models.DateTimeField(null=True, blank=True)
+    render_error = models.CharField(max_length=300, blank=True)
+    consecutive_failures = models.IntegerField(default=0)
+    config_version = models.IntegerField(default=1)
+    # Set only for snapshot signatures (enforced by the check constraint below).
+    snapshot_taken_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["character", "status"], name="sig_char_status_idx"),
+            models.Index(fields=["status", "dirty", "rendered_at"], name="sig_status_dirty_idx"),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                name="ck_sig_snapshot_ts",
+                condition=models.Q(mode="live") | models.Q(snapshot_taken_at__isnull=False),
+            ),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.public_token:
+            self.public_token = _new_signature_token()
+        super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return f"signature {self.pk} ({self.name})"
+
+
+class CombatSignatureSettings(TimeStampedModel):
+    """Singleton leadership config for Combat Signatures (dark-launched OFF).
+
+    Operator/perf knobs live in env-driven Django settings; these are the leadership-facing
+    options surfaced on the admin console. ``enabled`` is the DB master switch that gates the
+    feature alongside the ``killboard`` feature flag.
+    """
+
+    enabled = models.BooleanField(
+        default=False,
+        help_text=_("Master switch. Off = the feature is dark for everyone."),
+    )
+    max_active_per_pilot = models.PositiveSmallIntegerField(default=5)
+    refresh_interval_hours = models.PositiveSmallIntegerField(default=6)
+    snapshots_enabled = models.BooleanField(default=True)
+    revoke_on_leave = models.BooleanField(
+        default=False,
+        help_text=_("When a pilot leaves the corp, also delete their signature images."),
+    )
+    max_featured_trophies = models.PositiveSmallIntegerField(default=4)
+    default_background = models.ForeignKey(
+        SignatureBackground, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    default_layout = models.CharField(
+        max_length=16, choices=CombatSignature.Layout.choices, default=CombatSignature.Layout.IDENTITY
+    )
+    default_period = models.CharField(max_length=16, default="30d")
+    allowed_size_presets = models.JSONField(default=_default_size_presets)
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+
+    @classmethod
+    def load(cls) -> CombatSignatureSettings:
+        return cls.objects.first() or cls.objects.create()
+
+    def __str__(self) -> str:
+        return "combat signature settings"
+
+
+class SignatureScanState(TimeStampedModel):
+    """Singleton resume cursor for the signature refresh engine into ``KillboardStreamEvent.seq``.
+
+    The refresh pipeline is a cursor-consumer over the KB-29 ring buffer (the same contract the
+    outbound stream, subscriptions and trophies use): it marks only the signatures of pilots
+    touched by fresh events dirty, never a full board scan. ``last_seq`` advances past each batch.
+    """
+
+    last_seq = models.BigIntegerField(default=0)
+
+    @classmethod
+    def load(cls) -> SignatureScanState:
+        return cls.objects.first() or cls.objects.create()
+
+    def __str__(self) -> str:
+        return f"signature scan @ seq {self.last_seq}"
