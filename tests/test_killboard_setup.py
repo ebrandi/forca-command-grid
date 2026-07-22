@@ -60,8 +60,11 @@ def _km(kid, when=None):
 # --------------------------------------------------------------------------- #
 #  1. Wizard step statuses
 # --------------------------------------------------------------------------- #
-def test_step_esi_app_ok_when_configured(db):
-    # Test settings hardcode a client id + secret.
+def test_step_esi_app_ok_when_configured(db, settings):
+    # Hermetic: assert against explicit values, not whatever the ambient
+    # settings module (dev vs test) happens to carry.
+    settings.EVE_SSO_CLIENT_ID = "client-id"
+    settings.EVE_SSO_CLIENT_SECRET = "client-secret"
     assert setup_status.step_esi_app(None)["status"] == setup_status.OK
 
 
@@ -158,9 +161,17 @@ def test_setup_wizard_lists_five_steps_and_guide_link(client, django_user_model)
 #  3. History import launcher
 # --------------------------------------------------------------------------- #
 def test_import_enqueue_runs_and_calls_command(client, django_user_model):
-    """An officer POST enqueues the import; the eager task drives the command layer."""
+    """An officer POST enqueues the import; the task drives the command layer.
+
+    Hermetic: the Celery dispatch is replaced with a synchronous call so the test
+    never depends on the ambient broker/eager configuration.
+    """
+    from apps.killboard import history_import
+
     client.force_login(_user(django_user_model, rbac.ROLE_OFFICER))
-    with patch("apps.killboard.history_import.call_command") as cc:
+    with patch("apps.killboard.history_import.call_command") as cc, \
+            patch("apps.killboard.tasks.run_history_import") as task:
+        task.delay.side_effect = lambda pk: history_import.run_import(pk)
         resp = client.post("/killboard/setup/import/", {
             "source": "everef", "from_date": "2020-01-05", "to_date": "2020-01-10",
         })
