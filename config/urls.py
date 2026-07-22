@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 
+from apps.killboard import signature_public
 from apps.killboard.api import views as killboard_api_views
 
 from . import views
@@ -18,6 +19,11 @@ urlpatterns = [
     path("auth/eve/", include("apps.sso.urls")),
     path("", include("apps.identity.urls")),
     path("killboard/", include("apps.killboard.urls")),
+    # Combat Signatures — the PUBLIC banner PNG (WS-5). Root-level and outside the killboard
+    # namespace (like /healthz): pilots embed a stable /s/<token>.png in forums and Discord.
+    # nginx serves the rendered file straight from disk in prod; this Django route is the
+    # dev/test path and the prod fallback for pending / disabled / unknown tokens.
+    path("s/<str:token>.png", signature_public.signature_png, name="signature_public"),
     path("doctrines/", include("apps.doctrines.urls")),
     path("lab/", include("apps.fitting.urls")),  # Tocha's Lab (ship fitting)
     path("industry/pi/", include("apps.planetary.urls")),

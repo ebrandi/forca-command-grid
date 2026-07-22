@@ -376,6 +376,11 @@ KILLBOARD_TROPHY_SCAN_BATCH = env.int("KILLBOARD_TROPHY_SCAN_BATCH", default=500
 # the shared Celery worker queue.
 SIGNATURE_RENDER_MAX_FAILURES = env.int("SIGNATURE_RENDER_MAX_FAILURES", default=5)
 SIGNATURE_RENDER_MAX_PER_TICK = env.int("SIGNATURE_RENDER_MAX_PER_TICK", default=30)
+# Per-IP fixed-window rate cap (requests/min) for the public delivery view at /s/<token>.png.
+# nginx serves rendered banners straight from the media volume and never touches Django, so this
+# only bounds the fallback path — pending renders plus the constant-shape 404 for disabled/unknown
+# tokens (anti-enumeration). Mirrors the killcard.throttle_ok shape; 0 disables the throttle.
+SIGNATURE_PUBLIC_RATE = env.int("SIGNATURE_PUBLIC_RATE", default=120)
 
 # --- KB-35: point-in-time valuation + multi-oracle pricing --------------
 # Historical valuation prices each killmail at the market on the day it died, read from the

@@ -65,6 +65,10 @@ _RECRUIT_ALLOWED_PREFIXES = (
                      # corp, exactly as the impersonation stop control must. Every route under
                      # it is @login_required and resolves pilots through the caller's own
                      # account, so nothing internal is exposed by allowlisting the prefix.
+    "/s",            # Combat Signatures public banner PNGs (/s/<token>.png): a login-free,
+                     # token-addressed asset. Anonymous fetches never hit this gate, but a
+                     # logged-in EX-member must still be able to load their old forum-signature
+                     # URL, so allowlist the prefix (whole-segment match keeps /store etc. out).
     "/healthz",
     "/static/",
     "/favicon.ico",

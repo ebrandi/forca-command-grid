@@ -49,6 +49,9 @@ THEMES = frozenset({"gold", "cyan", "kill"})
 # The public artifact filename is derived ONLY from a token in this shape — never from user
 # text (threat model: path traversal / unsafe filenames). token_urlsafe(16) is 22 chars.
 _TOKEN_RE = re.compile(r"^[A-Za-z0-9_-]{20,24}$")
+# Public alias so the WS-5 delivery view validates the token against the same pattern without
+# duplicating it. Keep the charset/length in lock-step with the nginx location regex.
+TOKEN_RE = _TOKEN_RE
 
 _ALLOWED_CONFIG_KEYS = frozenset({
     "components", "period", "featured_trophy_ids", "show_timestamp", "theme",

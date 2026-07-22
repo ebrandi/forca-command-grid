@@ -78,6 +78,9 @@ services:
       # Locally-mirrored type icons/renders, served straight off disk (read-only);
       # written by `mirror_type_images` in web/worker.
       - eveimg_data:/srv/eveimg:ro
+      # Combat Signatures (WS-5): the pre-rendered banner PNGs, served straight off
+      # disk (read-only) via `location ~ ^/s/…`. The worker writes them; nginx only reads.
+      - media_data:/srv/media:ro
     depends_on:
       - web
 
@@ -125,6 +128,10 @@ services:
     volumes:
       - archive_data:/app/archive
       - eveimg_data:/app/eveimg
+      # Combat Signatures (WS-5): the Celery refresh tick renders banner PNGs to
+      # MEDIA_ROOT/signatures, so the worker needs media_data mounted read-write. web
+      # already mounts it; nginx mounts it read-only to serve the files off disk.
+      - media_data:/app/media
 
   beat:
     <<: *app
