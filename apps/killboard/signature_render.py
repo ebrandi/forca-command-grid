@@ -216,7 +216,7 @@ class _Painter:
         if self.trace is not None and role:
             self.trace.append({"role": role, "requested": text, "drawn": drawn, "size": size,
                                "fill": tuple(fill) if isinstance(fill, tuple | list) else fill,
-                               "x": x, "max_width": max_width})
+                               "x": x, "y": y, "max_width": max_width})
 
     def text_centered(self, cx: float, y: float, text: str, *, size: int, bold: bool = False,
                       fill, max_width: float | None = None) -> None:
@@ -432,12 +432,17 @@ def _draw_stat_grid(P: _Painter, stats: list[str], x: float, y: float, w: float,
         inner = tile_w - 2 * pad
         vsize = max(13, min(int(tile_h * 0.42), 26))
         lsize = max(8, min(int(tile_h * 0.24), 13))
+        # The label+value pair is drawn as one block centred within the tile: bottom-anchoring the
+        # value leaves an ugly gap when a tile is much taller than its text (minimal/card), so cap
+        # the block height and centre it instead.
+        block_h = lsize + 4 + vsize
+        top = ty + max(pad - 1, (tile_h - block_h) / 2)
         # Labels shrink before ellipsizing too — "ISK DESTROYED" must fit an EN standard tile
         # whole; only genuinely long translations may still ellipsize at the floor size.
-        P.text(tx + pad, ty + pad - 1, label.upper(), size=lsize, bold=True, fill=FAINT,
+        P.text(tx + pad, top, label.upper(), size=lsize, bold=True, fill=FAINT,
                max_width=inner, min_size=max(7, int(lsize * 0.6)), role=f"tile_label:{comp}")
         # Shrink the value a few steps before ellipsizing so a hull name like "Jackdaw" stays whole.
-        P.text(tx + pad, ty + tile_h - vsize - pad + 2, value, size=vsize, bold=True, fill=color,
+        P.text(tx + pad, top + lsize + 4, value, size=vsize, bold=True, fill=color,
                max_width=inner, min_size=max(11, int(vsize * 0.6)), role=f"tile_value:{comp}")
 
 

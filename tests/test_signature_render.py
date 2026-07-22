@@ -243,6 +243,23 @@ def test_footer_strip_is_legible_over_background():
     assert meta and tuple(meta[0]["fill"]) == tuple(MUTED)   # muted-ink tone, not the faint tone
 
 
+def test_tall_stat_tiles_center_label_and_value():
+    # A tall tile (minimal/card single-row strip) must not bottom-anchor the value and leave a gap
+    # under the label — the label+value block is centred, so their vertical delta stays close to the
+    # label size, never the full tile height.
+    payload = _payload(
+        layout="minimal", size_preset="card", background_key="warp-tunnel",
+        components=["pilot_name", "kills", "losses", "isk_destroyed"],
+    )
+    trace = []
+    render_signature_png(None, payload, trace=trace)
+    label = next(t for t in trace if t["role"] == "tile_label:kills")
+    value = next(t for t in trace if t["role"] == "tile_value:kills")
+    gap = value["y"] - label["y"]
+    # The block gap is label_size + a few px of leading — far less than the ~150px card tile height.
+    assert 0 < gap <= label["size"] + 12, gap
+
+
 # --------------------------------------------------------------------------- #
 #  plan_layout — capacity + overflow reporting (payload-independent).
 # --------------------------------------------------------------------------- #
