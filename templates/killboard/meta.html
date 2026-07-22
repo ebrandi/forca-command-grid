@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% load eve static %}
+{% load i18n %}
+{% block title %}{% translate "Combat Meta" %} · [FORCA] Command Grid{% endblock %}
+
+{% block content %}
+{% if denied %}
+  <div class="panel px-4 py-16 text-center">
+    <svg class="mx-auto h-8 w-8 text-faint"><use href="#i-lock"/></svg>
+    <p class="mt-3 font-display text-lg text-muted">{% translate "Combat meta is corp &amp; alliance only" %}</p>
+    <p class="mt-1 text-sm text-faint">{% translate "Available to corporation members and registered alliance pilots." %}</p>
+    <a href="{% url 'killboard:list' %}" class="btn-ghost mt-4 text-sm">← {% translate "Back to the killfeed" %}</a>
+  </div>
+{% else %}
+
+<header class="mb-5">
+  <p class="eyebrow">{% translate "Killboard · meta boards" %}</p>
+  <h1 class="mt-0.5 text-2xl font-bold text-ink">{% translate "Combat Meta" %}</h1>
+  <p class="mt-1 max-w-3xl text-sm text-faint">{% translate "Matchups, hull performance and weapon usage — mined from our own killmail history. Every figure is “what killed our ships / what we killed theirs with”, never a universal claim." %}</p>
+</header>
+
+<!-- Window + hull picker -->
+<form method="get" class="panel mb-6 flex flex-wrap items-end gap-4 px-4 py-3">
+  <div>
+    <label class="eyebrow text-faint" for="meta-window">{% translate "Window" %}</label>
+    <select id="meta-window" name="window" class="mt-1 block rounded border border-line bg-panel2 px-2 py-1 text-sm text-muted" onchange="this.form.submit()">
+      {% for key, label in windows %}<option value="{{ key }}"{% if key == window %} selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+  <div style="min-width:16rem">
+    <label class="eyebrow text-faint" for="meta-hull">{% translate "What kills…" %}</label>
+    <select id="meta-hull" name="hull" class="mt-1 block w-full rounded border border-line bg-panel2 px-2 py-1 text-sm text-muted" onchange="this.form.submit()">
+      <option value="">{% translate "Pick a hull we've seen…" %}</option>
+      {% for h in hull_options %}<option value="{{ h.ship_type_id }}"{% if h.ship_type_id == selected_hull %} selected{% endif %}>{{ h.name }} ({{ h.count }})</option>{% endfor %}
+    </select>
+  </div>
+  <noscript><button type="submit" class="btn-ghost text-sm">{% translate "Apply" %}</button></noscript>
+</form>
+
+<!-- What kills <hull> -->
+{% if matchup %}
+<section class="mb-8">
+  <div class="mb-3 flex items-center gap-2.5">
+    <img src="{% eve_type_icon selected_hull 40 %}" alt="" class="h-8 w-8 rounded-sm">
+    <h2 class="eyebrow text-gold">{% blocktranslate with hull=selected_hull_name %}What kills a {{ hull }}{% endblocktranslate %}</h2>
+  </div>
+  <div class="grid gap-5 lg:grid-cols-2">
+    <!-- What killed OUR <hull> -->
+    <div class="panel overflow-hidden">
+      <div class="border-b border-line px-4 py-3">
+        <h3 class="font-semibold text-loss">{% blocktranslate with hull=selected_hull_name %}What killed our {{ hull }}s{% endblocktranslate %}</h3>
+        <p class="mt-0.5 text-xs text-faint">{% blocktranslate count n=matchup.losses.count %}{{ n }} loss in this window{% plural %}{{ n }} losses in this window{% endblocktranslate %}</p>
+      </div>
+      {% if matchup.losses.top_ships %}
+      <div class="px-4 py-2">
+        <p class="eyebrow text-faint mb-1">{% translate "Top attacker hulls" %}</p>
+        {% for s in matchup.losses.top_ships %}
+        <div class="flex items-center gap-2 py-1 text-sm">
+          <img src="{% eve_type_icon s.ship_type_id 24 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">
+          <span class="flex-1 truncate text-muted">{{ s.name }}</span>
+          <span class="data text-xs text-kill">{{ s.count }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="border-t border-line/60 px-4 py-2">
+        <p class="eyebrow text-faint mb-1">{% translate "Top weapons" %}</p>
+        {% for w in matchup.losses.top_weapons %}
+        <div class="flex items-center gap-2 py-1 text-sm">
+          <img src="{% eve_type_icon w.weapon_type_id 24 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">
+          <span class="flex-1 truncate text-muted">{{ w.name }}</span>
+          <span class="data text-xs text-kill">{{ w.count }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="px-4 py-6 text-center text-sm text-faint">{% translate "We haven't lost this hull in this window." %}</p>
+      {% endif %}
+    </div>
+
+    <!-- What WE fly to kill THEIR <hull> -->
+    <div class="panel overflow-hidden">
+      <div class="border-b border-line px-4 py-3">
+        <h3 class="font-semibold text-kill">{% blocktranslate with hull=selected_hull_name %}What we fly to kill their {{ hull }}s{% endblocktranslate %}</h3>
+        <p class="mt-0.5 text-xs text-faint">{% blocktranslate count n=matchup.kills.count %}{{ n }} kill in this window{% plural %}{{ n }} kills in this window{% endblocktranslate %}</p>
+      </div>
+      {% if matchup.kills.top_ships %}
+      <div class="px-4 py-2">
+        <p class="eyebrow text-faint mb-1">{% translate "Our hulls used" %}</p>
+        {% for s in matchup.kills.top_ships %}
+        <div class="flex items-center gap-2 py-1 text-sm">
+          <img src="{% eve_type_icon s.ship_type_id 24 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">
+          <span class="flex-1 truncate text-muted">{{ s.name }}</span>
+          <span class="data text-xs text-gold">{{ s.count }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="px-4 py-6 text-center text-sm text-faint">{% translate "We haven't killed this hull in this window." %}</p>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<div class="grid gap-6 lg:grid-cols-2">
+  <!-- Hull performance -->
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-3">
+      <h2 class="eyebrow text-gold">{% translate "Hull performance" %}</h2>
+      <p class="mt-0.5 text-xs text-faint">{% translate "Hulls we fly: kills with vs losses of, and ISK efficiency." %}</p>
+    </div>
+    {% if hull_performance %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="text-xs text-faint">
+          <tr class="border-b border-line/60">
+            <th class="px-4 py-2 text-left font-medium">{% translate "Hull" %}</th>
+            <th class="px-2 py-2 text-right font-medium">{% translate "Kills" %}</th>
+            <th class="px-2 py-2 text-right font-medium">{% translate "Losses" %}</th>
+            <th class="px-4 py-2 text-right font-medium">{% translate "Eff." %}</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-line/40">
+          {% for h in hull_performance %}
+          <tr class="hover:bg-panel2">
+            <td class="px-4 py-1.5">
+              <div class="flex items-center gap-2">
+                <img src="{% eve_type_icon h.ship_type_id 24 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">
+                <span class="truncate text-muted">{{ h.name }}</span>
+              </div>
+            </td>
+            <td class="px-2 py-1.5 text-right"><span class="data text-kill">{{ h.kills }}</span></td>
+            <td class="px-2 py-1.5 text-right"><span class="data text-loss">{{ h.losses }}</span></td>
+            <td class="px-4 py-1.5 text-right"><span class="data text-ink">{{ h.efficiency|floatformat:0 }}%</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="px-4 py-8 text-center text-sm text-faint">{% translate "No hull activity in this window yet." %}</p>
+    {% endif %}
+  </section>
+
+  <!-- Weapon board -->
+  <section class="panel overflow-hidden">
+    <div class="border-b border-line px-4 py-3">
+      <h2 class="eyebrow text-gold">{% translate "Weapon board" %}</h2>
+      <p class="mt-0.5 text-xs text-faint">{% translate "Top weapons on our kills, and the classes behind them." %}</p>
+    </div>
+    {% if weapons.classes %}
+    <div class="flex flex-wrap gap-1.5 px-4 py-3">
+      {% for c in weapons.classes %}<span class="chip">{{ c.name }} · {{ c.count }}</span>{% endfor %}
+    </div>
+    <div class="divide-y divide-line/40 border-t border-line/60">
+      {% for w in weapons.weapons %}
+      <div class="flex items-center gap-2 px-4 py-1.5 text-sm">
+        <img src="{% eve_type_icon w.weapon_type_id 24 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">
+        <span class="flex-1 truncate text-muted">{{ w.name }}</span>
+        <span class="text-xs text-faint">{{ w.weapon_class }}</span>
+        <span class="data text-xs text-gold" style="min-width:2.5rem;text-align:right">{{ w.count }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="px-4 py-8 text-center text-sm text-faint">{% translate "No weapon data in this window yet." %}</p>
+    {% endif %}
+  </section>
+</div>
+
+<!-- Meta insights (readiness hint — informational) -->
+{% if insights %}
+<section class="panel mt-6 overflow-hidden">
+  <div class="border-b border-line px-4 py-3 flex items-center justify-between gap-3">
+    <div>
+      <h2 class="eyebrow text-gold">{% translate "Meta insights" %}</h2>
+      <p class="mt-0.5 text-xs text-faint">{% translate "Our most-lost hulls and what kills them (all time). Informational — review your doctrines." %}</p>
+    </div>
+    <a href="{% url 'doctrines:list' %}" class="btn-ghost text-xs whitespace-nowrap">{% translate "Doctrines" %} →</a>
+  </div>
+  <div class="grid gap-4 p-4 sm:grid-cols-3">
+    {% for row in insights %}
+    <div class="rounded border border-line/60 p-3" style="background:rgba(255,255,255,0.02)">
+      <div class="flex items-center gap-2">
+        <img src="{% eve_type_icon row.ship_type_id 32 %}" alt="" loading="lazy" class="h-7 w-7 rounded-sm">
+        <div class="min-w-0">
+          <p class="truncate text-sm font-semibold text-ink">{{ row.name }}</p>
+          <p class="text-xs text-loss">{% blocktranslate count n=row.losses %}{{ n }} loss{% plural %}{{ n }} losses{% endblocktranslate %}</p>
+        </div>
+      </div>
+      {% if row.top_killers %}
+      <p class="eyebrow text-faint mt-2 mb-1">{% translate "Top killers" %}</p>
+      {% for k in row.top_killers %}
+      <div class="flex items-center gap-1.5 py-0.5 text-xs">
+        <img src="{% eve_type_icon k.ship_type_id 20 %}" alt="" loading="lazy" class="h-4 w-4 rounded-sm">
+        <span class="flex-1 truncate text-muted">{{ k.name }}</span>
+        <span class="data text-kill">{{ k.count }}</span>
+      </div>
+      {% endfor %}
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% endif %}
+{% endblock %}

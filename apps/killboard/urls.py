@@ -10,6 +10,8 @@ urlpatterns = [
     path("", views.killboard_list, name="list"),
     path("rankings/", views.killboard_rankings, name="rankings"),
     path("stats/", views.killboard_stats, name="stats"),
+    # KB-36 meta boards (WS-D2) — static prefix, above the <int:killmail_id> catch-all.
+    path("meta/", views.killboard_meta, name="meta"),
     path("roster/", views.killboard_roster, name="roster"),
     path("pilot/<int:character_id>/", views.killboard_pilot, name="pilot"),
     path("compare/", views.killboard_compare, name="compare"),

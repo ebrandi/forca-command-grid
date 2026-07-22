@@ -19,6 +19,8 @@ _RECRUIT_ALLOWED_PREFIXES = (
                          # pilots too (the view enforces member-or-alliance); the
                          # public killfeed/rankings/detail keep their own access
     "/killboard/pilot",  # per-pilot analytics — same member-or-alliance gate
+    "/killboard/meta",   # KB-36 meta boards — same member-or-alliance intel gate (the view's
+                         # _can_view_stats enforces it; the boards are read-only analytics)
     "/killboard/compare",  # pilot comparison — same member-or-alliance gate
     "/killboard/adversary",  # KB-33 adversary intel pages — same member-or-alliance gate
                              # (the view's _can_view_stats enforces it; the officer-only

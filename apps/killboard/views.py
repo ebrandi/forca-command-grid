@@ -444,6 +444,30 @@ def killboard_stats(request: HttpRequest) -> HttpResponse:
 
 
 @login_required
+def killboard_meta(request: HttpRequest) -> HttpResponse:
+    """KB-36 meta boards (WS-D2): matchup ("what kills X"), hull performance, weapon board.
+
+    Member-gated (the analytics audience: corp members + registered alliance pilots). Every
+    board is mined from OUR OWN killmail history — never universal — which the page states.
+    """
+    if not _can_view_stats(request.user):
+        return render(request, "killboard/meta.html", {"denied": True}, status=403)
+    from . import meta
+
+    window = meta.resolve_window((request.GET.get("window") or "").strip())
+    raw_hull = (request.GET.get("hull") or "").strip()
+    hull_id = int(raw_hull) if raw_hull.isdigit() else None
+    data = meta.meta_page(window, hull_id)
+    return render(request, "killboard/meta.html", {
+        "denied": False,
+        "home_corp_id": _home(),
+        # Members viewing intel: hull rows link to adversary/pilot pages where relevant.
+        "intel_links": True,
+        **data,
+    })
+
+
+@login_required
 def killboard_roster(request: HttpRequest) -> HttpResponse:
     """Corp-wide combat roster — every pilot, ordered by name, each linking to
     their individual combat analytics. Members + registered alliance pilots."""
@@ -1325,7 +1349,7 @@ def _battle_report_context(request: HttpRequest, report: BattleReport, *, public
     from apps.corporation.models import EveName
     from apps.sde.models import SdeType
 
-    from . import battle_sides
+    from . import battle_sides, roles
 
     is_officer = rbac.has_role(request.user, rbac.ROLE_OFFICER)
 
@@ -1360,6 +1384,14 @@ def _battle_report_context(request: HttpRequest, report: BattleReport, *, public
     home_side = next((s for s in sides if s.is_home_side), None)
     reference = home_side or (sides[0] if sides else None)
 
+    # KB-36: per-side battle-role composition ("2 logi vs their 5"). Victims are classified
+    # from their fitted modules (item-based); attackers from a hull approximation. Built once
+    # from the detected side membership, then attached to each side below.
+    side_of_entity = {
+        (m.entity_type, m.entity_id): s.index for s in sides for m in s.members.all()
+    }
+    role_comp = roles.battle_role_composition(report, side_of_entity)
+
     side_views = []
     move_targets = [(s.index, s.label) for s in sides]
     for s in sides:
@@ -1385,6 +1417,7 @@ def _battle_report_context(request: HttpRequest, report: BattleReport, *, public
             "isk_destroyed": s.isk_destroyed, "isk_lost": s.isk_lost,
             "pilot_count": s.pilot_count, "efficiency": round(s.efficiency * 100),
             "members": members, "srp": srp, "compliance": compliance,
+            "roles": role_comp.get(s.index, []),
         })
 
     timeline = battle_sides.battle_timeline(report, reference)
