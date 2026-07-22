@@ -40,6 +40,7 @@
     </div>
   </div>
   <div class="flex gap-2">
+    <a href="{% url 'killboard:pilot_cv' character_id %}" class="btn-ghost text-sm">{% translate "PVP CV" %}</a>
     <a href="{% url 'killboard:list' %}?character_id={{ character_id }}" class="btn-ghost text-sm">Killmails</a>
     <a href="{% url 'killboard:stats' %}" class="btn-ghost text-sm">{% translate "Corp stats" %}</a>
   </div>

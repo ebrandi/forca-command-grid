@@ -160,6 +160,25 @@ app.conf.beat_schedule = {
         "task": "killboard.scan_rank_rewards",
         "schedule": crontab(minute="26,56"),
     },
+    # KB-37: the trophy award engine — a cursor-consumer over the KB-29 ring buffer that awards
+    # trophies (and runs newbro pod coaching) for pilots touched by fresh events. Cheap when idle
+    # (one indexed read); every 3 min keeps awards timely without holding a worker. Future-only.
+    "scan-killboard-trophies": {
+        "task": "killboard.scan_trophies",
+        "schedule": crontab(minute="*/3"),
+    },
+    # KB-37: pick the past ISO week's Kill of the Week. Runs early Monday (UTC), after the week
+    # has fully closed; idempotent and override-safe.
+    "pick-kill-of-the-week": {
+        "task": "killboard.pick_kill_of_the_week",
+        "schedule": crontab(minute=20, hour=1, day_of_week="mon"),
+    },
+    # KB-37: freeze completed quarters' seasonal leaderboards. Daily is ample (it only writes when
+    # a quarter has just completed) and cheap (composed from the monthly aggregate).
+    "snapshot-killboard-seasons": {
+        "task": "killboard.snapshot_seasons",
+        "schedule": crontab(minute=40, hour=2),
+    },
     # Keep the current Hall of Fame warm in cache (it aggregates millions of
     # killmail-participant rows). Cadence under the 300s read-cache TTL so a viewer
     # never triggers the cold recompute.

@@ -767,13 +767,31 @@ class PilotRankBaseline(TimeStampedModel):
         return f"baseline {self.character_id} @ {self.baseline_min_kills}"
 
 
-class RankRewardEvent(TimeStampedModel):
-    """A pending/approved/paid reward for a pilot reaching a reward-enabled rank.
+class RewardSource(models.TextChoices):
+    """What earned a :class:`RankRewardEvent`.
 
-    Created only for enrolled pilots (linked account + valid ESI token), only for
-    ranks above their baseline, and only while rewards are enabled. The unique
-    constraint makes generation idempotent — a pilot can never earn the same rung
-    twice. Amounts/names are snapshotted so history survives ladder edits.
+    ``RANK`` is the historical combat-rank rung (``rewards.scan_and_award``); ``TROPHY`` is a
+    KB-37 trophy award (``trophies.py``). The reward *governance* flow (approve / pay / reject /
+    cancel, the console, the liability totals) is source-agnostic, so both sources share the one
+    ``RankRewardEvent`` model and its lifecycle rather than a parallel table — see
+    ``docs/killboard`` / the WS-D3 report for the reuse rationale.
+    """
+
+    RANK = "rank", _("Combat rank")
+    TROPHY = "trophy", _("Trophy")
+
+
+class RankRewardEvent(TimeStampedModel):
+    """A pending/approved/paid reward for a pilot reaching a reward-enabled rank OR trophy.
+
+    Created only for enrolled pilots (linked account + valid ESI token), only for ranks above
+    their baseline / newly-earned trophies, and only while rewards are enabled. The unique
+    constraint (``character_id`` + ``source_key``) makes generation idempotent — a pilot can
+    never earn the same rung or trophy twice. Amounts/names are snapshotted so history survives
+    ladder / definition edits. ``source`` + ``source_key`` distinguish a rank event
+    (``source_key="rank:<min_kills>"``) from a trophy event (``source_key="trophy:<def id>"``);
+    the lifecycle functions in ``rewards.py`` never read the rank-specific columns, so a trophy
+    event flows through approve/pay/reject/cancel unchanged.
     """
 
     class Status(models.TextChoices):
@@ -783,6 +801,16 @@ class RankRewardEvent(TimeStampedModel):
         REJECTED = "rejected", _("Rejected")
         CANCELLED = "cancelled", _("Cancelled")
 
+    source = models.CharField(
+        max_length=8, choices=RewardSource.choices, default=RewardSource.RANK, db_index=True
+    )
+    # Idempotency discriminator: "rank:<min_kills>" or "trophy:<definition id>". Unique per
+    # pilot, so a rank rung and a trophy never collide and neither can be granted twice.
+    source_key = models.CharField(max_length=48, default="", blank=True)
+    trophy = models.ForeignKey(
+        "killboard.TrophyDefinition", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="reward_events",
+    )
     character_id = models.BigIntegerField(db_index=True)
     character_name = models.CharField(max_length=128, blank=True)
     user = models.ForeignKey(
@@ -820,9 +848,10 @@ class RankRewardEvent(TimeStampedModel):
     class Meta:
         ordering = ["-created_at"]
         constraints = [
-            # One reward per pilot per rung, ever — idempotent generation.
+            # One reward per pilot per source key (rank rung OR trophy), ever — idempotent
+            # generation across both reward sources.
             models.UniqueConstraint(
-                fields=["character_id", "rank_min_kills"], name="uniq_reward_char_rank"
+                fields=["character_id", "source_key"], name="uniq_reward_char_source"
             ),
         ]
         indexes = [
@@ -1132,6 +1161,7 @@ class SubscriptionEventType(models.TextChoices):
     MY_LOSS_SRP_PENDING = "my_loss_srp_pending", _("My loss is eligible for SRP")
     WATCHLIST_HIT = "watchlist_hit", _("A watched entity appeared on a killmail")
     RANK_UP = "rank_up", _("I reached a new combat rank")
+    TROPHY_AWARDED = "trophy_awarded", _("I earned a trophy")
     FILTER_MATCH = "filter_match", _("A kill matched my saved filter")
 
 
@@ -1249,3 +1279,214 @@ class KillboardSubscriptionEvent(models.Model):
 
     def __str__(self) -> str:
         return f"feed event {self.pk} ({self.event_type} → sub {self.subscription_id})"
+
+
+# --------------------------------------------------------------------------- #
+#  KB-37 (WS-D3) — gamification: trophies, kill-of-the-week, seasonal ladders
+# --------------------------------------------------------------------------- #
+class TrophyCategory(models.TextChoices):
+    """What a trophy is grouped under (display + the criteria metric family it uses)."""
+
+    KILLS = "kills", _("Kills")
+    SOLO = "solo", _("Solo")
+    VALUE = "value", _("ISK value")
+    SHIP_CLASS = "ship_class", _("Ship class")
+    SEC_BAND = "sec_band", _("Security band")
+    ROLE = "role", _("Battle role")
+    SPECIAL = "special", _("Special")
+
+
+class TrophyTier(models.TextChoices):
+    """The prestige tier of a trophy — a one-glance rarity read (bronze → silver → gold)."""
+
+    BRONZE = "bronze", _("Bronze")
+    SILVER = "silver", _("Silver")
+    GOLD = "gold", _("Gold")
+
+
+class TrophyDefinition(TimeStampedModel):
+    """A configurable, corp-scoped trophy — DB-driven exactly like the combat rank ladder.
+
+    Leadership manages the catalogue from the Admin Console; the award engine
+    (``apps.killboard.trophies``) evaluates each enabled definition's ``criteria`` (a small
+    documented DSL) against a home pilot's stats and awards it once. A definition may optionally
+    carry a reward, mirroring ``CombatRankTitle`` — reaching it creates a *pending*
+    :class:`RankRewardEvent` (``source=trophy``) the existing governance flow approves and pays;
+    the system never moves ISK.
+    """
+
+    slug = models.SlugField(max_length=64, unique=True)
+    name = models.CharField(max_length=96, help_text=_("The trophy title a pilot earns."))
+    description = models.CharField(max_length=240, blank=True)
+    category = models.CharField(
+        max_length=16, choices=TrophyCategory.choices, default=TrophyCategory.SPECIAL
+    )
+    tier = models.CharField(max_length=8, choices=TrophyTier.choices, default=TrophyTier.BRONZE)
+    # The award rule. A small documented DSL evaluated by ``trophies.progress_for``:
+    #   {"metric": "kills", "threshold": 100}
+    #   {"metric": "solo_kills", "threshold": 10}
+    #   {"metric": "final_blows", "threshold": 250}
+    #   {"metric": "kill_value_at_least", "isk": 10000000000}
+    #   {"metric": "ship_class_kills", "class": "Capital", "threshold": 1}
+    #   {"metric": "sec_band_kills", "band": "nullsec", "threshold": 50}
+    #   {"metric": "role_on_kill", "role": "logi", "threshold": 25}
+    criteria = models.JSONField(default=dict)
+    badge_icon = models.CharField(max_length=32, blank=True)
+    color_class = models.CharField(max_length=32, default="text-gold")
+    sort_order = models.PositiveIntegerField(default=0)
+    enabled = models.BooleanField(
+        default=True, help_text=_("Disabled trophies are never evaluated or awarded.")
+    )
+
+    # Optional payout, mirroring CombatRankTitle's reward columns (governed via rewards.py).
+    grants_reward = models.BooleanField(default=False)
+    reward_type = models.CharField(max_length=8, choices=RewardType.choices, default=RewardType.NONE)
+    reward_amount = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+    reward_item_type_id = models.IntegerField(null=True, blank=True)
+    reward_notes = models.CharField(max_length=200, blank=True)
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+
+    class Meta:
+        ordering = ["sort_order", "category", "slug"]
+        indexes = [
+            models.Index(fields=["enabled", "category"], name="trophy_enabled_cat_idx"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.name} [{self.tier}]"
+
+    @property
+    def rewards_configured(self) -> bool:
+        """A reward-granting trophy whose payout is actually set up (mirrors CombatRankTitle)."""
+        if not self.grants_reward or self.reward_type == RewardType.NONE:
+            return False
+        if self.reward_type == RewardType.ITEM:
+            return bool(self.reward_item_type_id)
+        if self.reward_type == RewardType.MANUAL:
+            return True
+        return self.reward_amount > 0
+
+
+class PilotTrophy(models.Model):
+    """A trophy a home pilot has earned — recorded once (unique per pilot + definition).
+
+    ``notified`` distinguishes a *celebrated* award (a genuine, future-only achievement that
+    fired a ping + optional reward) from a *silently baselined* one (recorded when the pilot was
+    first seen by the engine, so enabling the feature never back-congratulates a veteran for
+    trophies they already qualified for). ``killmail_id`` is the mail that triggered the award
+    (best-effort context); ``progress`` snapshots the metric value at award time.
+    """
+
+    character_id = models.BigIntegerField(db_index=True)
+    character_name = models.CharField(max_length=128, blank=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    definition = models.ForeignKey(
+        TrophyDefinition, on_delete=models.CASCADE, related_name="awards"
+    )
+    awarded_at = models.DateTimeField(default=timezone.now)
+    notified = models.BooleanField(default=True)
+    killmail_id = models.BigIntegerField(null=True, blank=True)
+    progress = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        ordering = ["-awarded_at"]
+        constraints = [
+            models.UniqueConstraint(fields=["character_id", "definition"], name="uniq_pilot_trophy"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.character_name or self.character_id} → {self.definition_id}"
+
+
+class PilotTrophyBaseline(TimeStampedModel):
+    """Marks that the trophy engine has *seen* a pilot at least once.
+
+    Mirrors ``PilotRankBaseline`` — on first sight every currently-qualified trophy is recorded
+    silently (``PilotTrophy.notified=False``) with no ping / reward, so turning the feature on
+    never floods veterans with a backlog. Only trophies newly qualified *after* this baseline are
+    celebrated.
+    """
+
+    character_id = models.BigIntegerField(unique=True)
+
+    def __str__(self) -> str:
+        return f"trophy baseline {self.character_id}"
+
+
+class TrophyScanState(TimeStampedModel):
+    """Singleton resume cursor for the trophy award engine into ``KillboardStreamEvent.seq``.
+
+    The engine is a cursor-consumer over the KB-29 ring buffer (the same contract the outbound
+    stream and per-pilot subscriptions use): it processes only pilots touched by fresh events,
+    never a full board scan per mail. ``last_seq`` advances past every scanned batch.
+    """
+
+    last_seq = models.BigIntegerField(default=0)
+
+    @classmethod
+    def load(cls) -> TrophyScanState:
+        return cls.objects.first() or cls.objects.create()
+
+    def __str__(self) -> str:
+        return f"trophy scan @ seq {self.last_seq}"
+
+
+class KillOfTheWeek(TimeStampedModel):
+    """The standout home kill for an ISO week (auto-picked; officer-overridable).
+
+    Picked by the weekly beat as the top home-corp kill by at-kill value (ties broken by points)
+    over the past ISO week. Recompute is idempotent and never clobbers an officer override.
+    """
+
+    iso_year = models.PositiveSmallIntegerField()
+    iso_week = models.PositiveSmallIntegerField()  # 1..53
+    killmail = models.ForeignKey(Killmail, on_delete=models.CASCADE, related_name="+")
+    value = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+    points = models.IntegerField(default=0)
+    # The credited home final-blower (for the pilot's CV "kill of the week" mentions).
+    character_id = models.BigIntegerField(null=True, blank=True, db_index=True)
+    is_override = models.BooleanField(default=False)
+    overridden_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    overridden_at = models.DateTimeField(null=True, blank=True)
+    notified_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-iso_year", "-iso_week"]
+        constraints = [
+            models.UniqueConstraint(fields=["iso_year", "iso_week"], name="uniq_kotw_week"),
+        ]
+
+    def __str__(self) -> str:
+        return f"KOTW {self.iso_year}-W{self.iso_week:02d}: km {self.killmail_id}"
+
+
+class SeasonSnapshot(TimeStampedModel):
+    """A frozen quarterly (ISO-quarter) leaderboard — the eight boards' top placements.
+
+    Composed from ``MonthlyPilotKillStat`` (the three calendar months of the quarter sum exactly,
+    since months partition the calendar with no overlap), so a season reproduces the same boards
+    the live rankings show. Persisted once a quarter completes for an immutable record; the
+    current in-progress quarter is computed live from the same helper.
+    """
+
+    year = models.PositiveSmallIntegerField()
+    quarter = models.PositiveSmallIntegerField()  # 1..4
+    # {board_key: [{"place", "character_id", "value", "secondary"}, …]} — top-N per board.
+    boards = models.JSONField(default=dict)
+    pilot_count = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ["-year", "-quarter"]
+        constraints = [
+            models.UniqueConstraint(fields=["year", "quarter"], name="uniq_season_snapshot"),
+        ]
+
+    def __str__(self) -> str:
+        return f"Season {self.year}-Q{self.quarter}"

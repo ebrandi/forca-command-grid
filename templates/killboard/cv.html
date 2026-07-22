@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% load eve %}
+{% load i18n %}
+{% block title %}{% blocktranslate %}{{ pilot_name }} — PVP CV{% endblocktranslate %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+
+{% if denied %}
+  <div class="panel px-4 py-16 text-center">
+    <svg class="mx-auto h-8 w-8 text-faint"><use href="#i-lock"/></svg>
+    <p class="mt-3 font-display text-lg text-muted">{% translate "The PVP CV is corp &amp; alliance only" %}</p>
+    <a href="{% url 'killboard:list' %}" class="btn-ghost mt-4 text-sm">← {% translate "Back to the killfeed" %}</a>
+  </div>
+{% else %}
+
+<header class="mb-5 flex flex-wrap items-center justify-between gap-4">
+  <div class="flex items-center gap-4">
+    <img src="{% eve_portrait character_id 128 %}" alt="" class="h-16 w-16 rounded-xl ring-1 ring-line" loading="lazy">
+    <div>
+      <p class="eyebrow">{% translate "PVP CV" %}</p>
+      <h1 class="mt-0.5 text-2xl font-bold text-ink">{{ pilot_name }}</h1>
+      <p class="mt-0.5 text-sm {{ card.rank.color }}">{{ card.rank.title }}
+        <span class="chip {{ card.danger.color }} ml-1">{{ card.danger.label }}</span></p>
+    </div>
+  </div>
+  <div class="flex gap-2">
+    <a href="{% url 'killboard:pilot' character_id %}" class="btn-ghost text-sm">{% translate "Combat stats" %}</a>
+    <a href="{% url 'killboard:trophies' %}" class="btn-ghost text-sm">{% translate "Trophies" %}</a>
+  </div>
+</header>
+
+<div class="grid gap-4 sm:grid-cols-4">
+  <div class="panel px-4 py-3"><p class="text-[11px] uppercase tracking-wide text-faint">{% translate "Kills" %}</p><p class="font-display text-xl text-kill tabular-nums">{{ card.kills }}</p></div>
+  <div class="panel px-4 py-3"><p class="text-[11px] uppercase tracking-wide text-faint">{% translate "Losses" %}</p><p class="font-display text-xl text-loss tabular-nums">{{ card.losses }}</p></div>
+  <div class="panel px-4 py-3"><p class="text-[11px] uppercase tracking-wide text-faint">{% translate "Efficiency" %}</p><p class="font-display text-xl text-ink tabular-nums">{{ card.efficiency|effpct }}%</p></div>
+  <div class="panel px-4 py-3"><p class="text-[11px] uppercase tracking-wide text-faint">{% translate "Solo %" %}</p><p class="font-display text-xl text-ink tabular-nums">{{ card.solo_pct|effpct }}%</p></div>
+</div>
+
+{# --- Rank progression --- #}
+<section class="mt-6">
+  <h2 class="mb-2 font-display text-lg text-ink">{% translate "Rank" %}</h2>
+  <div class="panel px-4 py-3">
+    <div class="flex items-center justify-between">
+      <span class="{{ rank_progress.current.color }} font-medium">{{ rank_progress.current.title }}</span>
+      {% if not rank_progress.is_maxed %}
+        <span class="text-xs text-faint">{% blocktranslate with n=rank_progress.kills_to_next t=rank_progress.next.title %}{{ n }} kills to {{ t }}{% endblocktranslate %}</span>
+      {% else %}
+        <span class="text-xs text-gold">{% translate "Max rank" %}</span>
+      {% endif %}
+    </div>
+    <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full" style="background:rgba(255,255,255,.08)">
+      <div class="h-full rounded-full" style="width:{{ rank_progress.progress_pct }}%;background:#e3b341"></div>
+    </div>
+  </div>
+  {% if tracks %}
+  <div class="mt-3 grid gap-3 sm:grid-cols-3">
+    {% for t in tracks %}
+    <div class="panel px-4 py-3">
+      <p class="text-[11px] uppercase tracking-wide text-faint">{{ t.label }}</p>
+      <p class="font-medium text-ink">{{ t.current.title }} <span class="text-faint">· {{ t.count }}</span></p>
+      <div class="mt-2 h-1 w-full overflow-hidden rounded-full" style="background:rgba(255,255,255,.08)">
+        <div class="h-full rounded-full" style="width:{{ t.progress_pct }}%;background:#4aa8c0"></div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</section>
+
+{# --- Trophies --- #}
+<section class="mt-6">
+  <h2 class="mb-2 font-display text-lg text-ink">{% translate "Trophies" %} <span class="text-faint text-sm">({{ trophies|length }})</span></h2>
+  {% if trophies %}
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    {% for tr in trophies %}
+    <div class="panel px-4 py-3">
+      <div class="flex items-center justify-between">
+        <span class="font-medium {{ tr.color }}">{{ tr.name }}</span>
+        {% include "killboard/_trophy_tier.html" with tier=tr.tier %}
+      </div>
+      <p class="mt-1 text-xs text-faint">{{ tr.description }}</p>
+      {% if tr.killmail_id %}<a href="{% url 'killboard:detail' tr.killmail_id %}" class="mt-1 inline-block text-[11px] text-cyan">{% translate "Triggering kill" %} →</a>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="text-sm text-faint">{% translate "No trophies earned yet." %}</p>
+  {% endif %}
+
+  {% if trophy_progress %}
+  <h3 class="mt-4 mb-2 text-sm font-medium text-muted">{% translate "Closest to earning" %}</h3>
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    {% for tp in trophy_progress %}
+    <div class="panel px-4 py-3">
+      <div class="flex items-center justify-between">
+        <span class="font-medium text-muted">{{ tp.name }}</span>
+        <span class="text-xs text-faint tabular-nums">{{ tp.value }}/{{ tp.target }}</span>
+      </div>
+      <div class="mt-2 h-1 w-full overflow-hidden rounded-full" style="background:rgba(255,255,255,.08)">
+        <div class="h-full rounded-full" style="width:{{ tp.progress_pct }}%;background:#e3b341"></div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</section>
+
+{# --- Signature stats --- #}
+<section class="mt-6 grid gap-4 lg:grid-cols-3">
+  <div class="panel px-4 py-3">
+    <p class="text-[11px] uppercase tracking-wide text-faint">{% translate "Best kill" %}</p>
+    {% if best_kill %}
+    <a href="{% url 'killboard:detail' best_kill.killmail_id %}" class="mt-1 flex items-center gap-2">
+      <img src="{% eve_type_icon best_kill.victim_ship_type_id 64 %}" alt="" class="h-8 w-8 rounded" loading="lazy">
+      <span><span class="block font-medium text-gold tabular-nums">{{ best_kill.value|isk }}</span>
+      <span class="block text-[11px] text-faint">{% type_name best_kill.victim_ship_type_id %} · {% system_name best_kill.solar_system_id %}</span></span>
+    </a>
+    {% else %}<p class="mt-1 text-sm text-faint">—</p>{% endif %}
+  </div>
+  <div class="panel px-4 py-3">
+    <p class="text-[11px] uppercase tracking-wide text-faint">{% translate "Favourite hull" %}</p>
+    {% if favourite_hull %}
+    <div class="mt-1 flex items-center gap-2">
+      <img src="{% eve_type_icon favourite_hull.ship_type_id 64 %}" alt="" class="h-8 w-8 rounded" loading="lazy">
+      <span><span class="block font-medium text-ink">{% type_name favourite_hull.ship_type_id %}</span>
+      <span class="block text-[11px] text-faint">{% blocktranslate count n=favourite_hull.count %}{{ n }} kill{% plural %}{{ n }} kills{% endblocktranslate %}</span></span>
+    </div>
+    {% else %}<p class="mt-1 text-sm text-faint">—</p>{% endif %}
+  </div>
+  <div class="panel px-4 py-3">
+    <p class="text-[11px] uppercase tracking-wide text-faint">{% translate "Role mix" %}</p>
+    {% if role_distribution %}
+    <div class="mt-1 flex flex-wrap gap-1.5">
+      {% for r in role_distribution %}<span class="chip text-muted">{{ r.label }} · {{ r.count }}</span>{% endfor %}
+    </div>
+    <p class="mt-1 text-[10px] text-faint">{% translate "Hull-based approximation (attacker rows carry no module list)." %}</p>
+    {% else %}<p class="mt-1 text-sm text-faint">—</p>{% endif %}
+  </div>
+</section>
+
+{# --- Milestones / KOTW / seasons --- #}
+<section class="mt-6 grid gap-4 lg:grid-cols-3">
+  <div class="panel px-4 py-3">
+    <p class="mb-2 text-[11px] uppercase tracking-wide text-faint">{% translate "Milestones" %}</p>
+    {% for m in milestones %}<p class="text-sm text-muted">{{ m.get_kind_display }}</p>{% empty %}<p class="text-sm text-faint">—</p>{% endfor %}
+  </div>
+  <div class="panel px-4 py-3">
+    <p class="mb-2 text-[11px] uppercase tracking-wide text-faint">{% translate "Kill of the Week" %}</p>
+    {% for k in kotw %}
+    <a href="{% url 'killboard:detail' k.killmail_id %}" class="block text-sm text-muted hover:text-gold">{{ k.iso_year }}-W{{ k.iso_week }} · <span class="text-gold tabular-nums">{{ k.value|isk }}</span></a>
+    {% empty %}<p class="text-sm text-faint">—</p>{% endfor %}
+  </div>
+  <div class="panel px-4 py-3">
+    <p class="mb-2 text-[11px] uppercase tracking-wide text-faint">{% translate "Season placements" %}</p>
+    {% for s in seasons %}<p class="text-sm text-muted">{{ s.year }}-Q{{ s.quarter }} · {{ s.board_label }} <span class="text-gold">#{{ s.place }}</span></p>{% empty %}<p class="text-sm text-faint">—</p>{% endfor %}
+  </div>
+</section>
+
+{% endif %}
+{% endblock %}

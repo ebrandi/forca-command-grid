@@ -446,6 +446,28 @@ SCAFFOLDS: dict[str, Scaffold] = {
             "rather than the exact moment."
         ),
     ),
+    "killboard.trophy_awarded": Scaffold(
+        subject=_("Trophy unlocked: {trophy_name}"),
+        body=_(
+            "Trophy unlocked: {trophy_name}. {trophy_desc} Trophies update from the killboard's "
+            "engagement sweep, so this can reflect a kill from the last little while rather than "
+            "the exact moment."
+        ),
+    ),
+    "killboard.kill_of_the_week": Scaffold(
+        subject=_("Kill of the Week"),
+        body=_(
+            "Kill of the Week ({week}): {value} ISK. See it on the killboard."
+        ),
+    ),
+    "killboard.newbro_no_implant": Scaffold(
+        subject=_("Flying without implants"),
+        body=_(
+            "You lost a pod with no implants fitted — no harm done this time. When you're ready, "
+            "even a cheap set of attribute implants speeds up your skill training. Ask a director "
+            "for the corp implant guide."
+        ),
+    ),
     "killboard.watchlist_tripwire": Scaffold(
         subject=_("Watchlist tripwire: {entity_name}"),
         body=_(

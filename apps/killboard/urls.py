@@ -14,7 +14,14 @@ urlpatterns = [
     path("meta/", views.killboard_meta, name="meta"),
     path("roster/", views.killboard_roster, name="roster"),
     path("pilot/<int:character_id>/", views.killboard_pilot, name="pilot"),
+    # KB-37 PVP CV — under the pilot/ prefix, above the <int:killmail_id> catch-all.
+    path("pilot/<int:character_id>/cv/", views.killboard_pilot_cv, name="pilot_cv"),
     path("compare/", views.killboard_compare, name="compare"),
+    # KB-37 gamification surfaces — static prefixes, above the <int:killmail_id> catch-all.
+    path("trophies/", views.killboard_trophies, name="trophies"),
+    path("seasons/", views.killboard_seasons, name="seasons"),
+    path("kotw/", views.killboard_kotw, name="kotw"),
+    path("kotw/override/", views.killboard_kotw_override, name="kotw_override"),
     # Intel — keep these above the <int:killmail_id> catch-all.
     path("intel/", views.watchlists, name="watchlists"),
     # KB-34 D-scan / Local paste analyzer (WS-C4) — static prefix, above the catch-all.

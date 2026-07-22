@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load eve %}
+{% load i18n %}
+{% block title %}{% translate "Seasons" %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+
+{% if denied %}
+  <div class="panel px-4 py-16 text-center">
+    <svg class="mx-auto h-8 w-8 text-faint"><use href="#i-lock"/></svg>
+    <p class="mt-3 font-display text-lg text-muted">{% translate "Seasons are corp &amp; alliance only" %}</p>
+    <a href="{% url 'killboard:list' %}" class="btn-ghost mt-4 text-sm">← {% translate "Back to the killfeed" %}</a>
+  </div>
+{% else %}
+
+<header class="mb-5 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <p class="eyebrow">Killboard</p>
+    <h1 class="mt-0.5 text-2xl font-bold text-ink">{% blocktranslate with y=season.year q=season.quarter %}Season {{ y }} · Q{{ q }}{% endblocktranslate %}
+      {% if season.is_current %}<span class="chip text-cyan ml-1">{% translate "In progress" %}</span>{% endif %}</h1>
+    <p class="mt-0.5 text-sm text-faint">{% blocktranslate count n=season.pilot_count %}{{ n }} pilot this quarter{% plural %}{{ n }} pilots this quarter{% endblocktranslate %}</p>
+  </div>
+  <div class="flex flex-wrap gap-1.5">
+    {% for y, q in available %}
+    <a href="?year={{ y }}&q={{ q }}" class="chip {% if y == season.year and q == season.quarter %}text-gold{% else %}text-faint{% endif %}">{{ y }}-Q{{ q }}</a>
+    {% endfor %}
+  </div>
+</header>
+
+<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  {% for board in boards %}
+  <div class="panel px-4 py-3">
+    <p class="mb-2 text-[11px] uppercase tracking-wide text-faint">{{ board.label }}</p>
+    {% for row in board.rows %}
+    <a href="{% url 'killboard:pilot_cv' row.character_id %}" class="flex items-center gap-2 py-1">
+      <span class="w-4 text-center text-xs {% if row.place == 1 %}text-gold{% elif row.place == 2 %}text-muted{% else %}text-faint{% endif %} tabular-nums">{{ row.place }}</span>
+      <img src="{% eve_portrait row.character_id 64 %}" alt="" class="h-6 w-6 rounded ring-1 ring-line" loading="lazy">
+      <span class="min-w-0 flex-1 truncate text-sm text-ink hover:text-gold">{% eve_name row.character_id %}</span>
+    </a>
+    {% empty %}
+    <p class="text-xs text-faint">{% translate "No data." %}</p>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</div>
+
+{% endif %}
+{% endblock %}

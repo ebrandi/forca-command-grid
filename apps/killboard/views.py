@@ -522,6 +522,125 @@ def killboard_pilot(request: HttpRequest, character_id: int) -> HttpResponse:
 
 
 @login_required
+def killboard_pilot_cv(request: HttpRequest, character_id: int) -> HttpResponse:
+    """KB-37 PVP CV — a pilot's whole combat identity: card, ranks, trophies, milestones,
+    Kill-of-the-Week mentions, season placements and signature stats. Members + alliance pilots."""
+    if not _can_view_stats(request.user):
+        return render(request, "killboard/cv.html", {"denied": True}, status=403)
+    from apps.corporation.models import EveName
+
+    from .cv import pilot_cv
+
+    name = (
+        EveName.objects.filter(entity_id=character_id).values_list("name", flat=True).first()
+        or f"Pilot {character_id}"
+    )
+    return render(request, "killboard/cv.html", {
+        "denied": False,
+        "pilot_name": name,
+        **pilot_cv(character_id),
+    })
+
+
+@login_required
+def killboard_trophies(request: HttpRequest) -> HttpResponse:
+    """KB-37 trophy hall — the corp trophy catalogue, the Trophy Leaderboard, and (for a logged-in
+    member) their own earned trophies. Members + registered alliance pilots."""
+    if not _can_view_stats(request.user):
+        return render(request, "killboard/trophies.html", {"denied": True}, status=403)
+    from . import trophies as trophy_svc
+    from .models import TrophyCategory, TrophyDefinition
+
+    catalogue = list(TrophyDefinition.objects.filter(enabled=True))
+    my_trophies = []
+    my_progress = []
+    main = pilots.acting_pilot(request.user)
+    if main:
+        my_trophies = trophy_svc.pilot_trophies(main.character_id)
+        my_progress = trophy_svc.trophy_progress_toward_next(main.character_id)
+    return render(request, "killboard/trophies.html", {
+        "denied": False,
+        "catalogue": catalogue,
+        "categories": TrophyCategory.choices,
+        "leaderboard": trophy_svc.trophy_leaderboard(),
+        "my_trophies": my_trophies,
+        "my_progress": my_progress,
+        "my_character_id": main.character_id if main else None,
+    })
+
+
+@login_required
+def killboard_seasons(request: HttpRequest) -> HttpResponse:
+    """KB-37 seasonal ladders — the quarterly podium boards. Default is the current quarter;
+    ``?year=&q=`` opens a past season. Members + registered alliance pilots."""
+    if not _can_view_stats(request.user):
+        return render(request, "killboard/seasons.html", {"denied": True}, status=403)
+    from . import seasons
+
+    cy, cq = seasons.current_quarter()
+    year_raw = (request.GET.get("year") or "").strip()
+    q_raw = (request.GET.get("q") or "").strip()
+    year = int(year_raw) if year_raw.isdigit() else cy
+    quarter = int(q_raw) if (q_raw.isdigit() and 1 <= int(q_raw) <= 4) else cq
+    payload = seasons.season_payload(year, quarter)
+    labeled_boards = [
+        {"key": k, "label": seasons.board_label(k), "rows": payload["boards"].get(k, [])}
+        for k in seasons.BOARD_KEYS
+    ]
+    return render(request, "killboard/seasons.html", {
+        "denied": False,
+        "season": payload,
+        "boards": labeled_boards,
+        "available": seasons.available_seasons(),
+    })
+
+
+@login_required
+def killboard_kotw(request: HttpRequest) -> HttpResponse:
+    """KB-37 Kill-of-the-Week hall — the recent weekly standouts. Members + alliance pilots."""
+    if not _can_view_stats(request.user):
+        return render(request, "killboard/kotw.html", {"denied": True}, status=403)
+    from . import kotw
+
+    return render(request, "killboard/kotw.html", {
+        "denied": False,
+        "entries": kotw.recent_kotw(),
+        "can_override": rbac.has_role(request.user, rbac.ROLE_OFFICER),
+    })
+
+
+@login_required
+@role_required(rbac.ROLE_OFFICER)
+@require_POST
+def killboard_kotw_override(request: HttpRequest) -> HttpResponse:
+    """Officer override: pin a specific home kill as a week's Kill of the Week (audited)."""
+    from . import kotw
+
+    km_raw = (request.POST.get("killmail_id") or "").strip()
+    year_raw = (request.POST.get("iso_year") or "").strip()
+    week_raw = (request.POST.get("iso_week") or "").strip()
+    if not (km_raw.isdigit() and year_raw.isdigit() and week_raw.isdigit()):
+        messages.error(request, gettext("Provide a killmail id, ISO year and ISO week."))
+        return redirect("killboard:kotw")
+    km = Killmail.objects.filter(
+        killmail_id=int(km_raw), involves_home_corp=True,
+        home_corp_role=Killmail.HomeRole.ATTACKER,
+    ).first()
+    if km is None:
+        messages.error(request, gettext("That killmail isn't a home-corp kill."))
+        return redirect("killboard:kotw")
+    row = kotw.set_override(int(year_raw), int(week_raw), km, request.user)
+    audit_log(
+        request.user, "killboard.kotw_override",
+        target_type="killboard_kotw", target_id=f"{row.iso_year}:{row.iso_week}",
+        metadata={"killmail_id": km.killmail_id}, ip=client_ip(request),
+    )
+    messages.success(request, gettext("Kill of the Week updated for %(year)s-W%(week)02d.") % {
+        "year": row.iso_year, "week": row.iso_week})
+    return redirect("killboard:kotw")
+
+
+@login_required
 def killboard_compare(request: HttpRequest) -> HttpResponse:
     """Overlay up to 5 pilots' monthly kill trends — members + alliance only."""
     if not _can_view_stats(request.user):

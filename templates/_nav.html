@@ -54,6 +54,9 @@
       <a href="{% url 'killboard:meta' %}" class="navlink {% if un == 'meta' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-target"/></svg> {% translate "Combat Meta" %}</a>
       <a href="{% url 'killboard:roster' %}" class="navlink {% if un == 'roster' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-rookie"/></svg> {% translate "Combat Roster" %}</a>
       <a href="{% url 'killboard:campaigns' %}" class="navlink {% if un == 'campaigns' or un == 'campaign_detail' or un == 'campaign_create' or un == 'campaign_edit' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-target"/></svg> {% translate "Campaigns" %}</a>
+      <a href="{% url 'killboard:trophies' %}" class="navlink {% if un == 'trophies' or un == 'pilot_cv' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-shield"/></svg> {% translate "Trophies" %}</a>
+      <a href="{% url 'killboard:seasons' %}" class="navlink {% if un == 'seasons' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-grid"/></svg> {% translate "Seasons" %}</a>
+      <a href="{% url 'killboard:kotw' %}" class="navlink {% if un == 'kotw' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-target"/></svg> {% translate "Kill of the Week" %}</a>
       <a href="{% url 'killboard:subscriptions' %}" class="navlink {% if un == 'subscriptions' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-bell"/></svg> {% translate "My subscriptions" %}</a>
       <a href="{% url 'killboard:api_tokens' %}" class="navlink {% if un == 'api_tokens' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-bolt"/></svg> {% translate "API access" %}</a>{% endif %}
       {% if features.knowledge_base %}<a href="{% url 'kb:list' %}" class="navlink {% if ns == 'kb' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-rookie"/></svg> {% translate "Knowledge base" %}</a>{% endif %}

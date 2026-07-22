@@ -123,6 +123,35 @@ def notify_rank_ups() -> int:
     return _notify()
 
 
+@shared_task(name="killboard.scan_trophies")
+def scan_trophies() -> dict:
+    """KB-37: award trophies (and run newbro pod coaching) for pilots touched by fresh stream
+    events. A cursor-consumer over the KB-29 ring buffer — cheap when idle, future-only, awards
+    once per pilot per trophy. No-op unless the feature is enabled."""
+    from .trophies import scan_trophies as _scan
+
+    return _scan()
+
+
+@shared_task(name="killboard.pick_kill_of_the_week")
+def pick_kill_of_the_week() -> dict:
+    """KB-37: pick the most recently completed ISO week's Kill of the Week (top home kill by
+    at-kill value). Idempotent; never clobbers an officer override; fires a corp ping on a fresh
+    pick."""
+    from .kotw import pick_kill_of_the_week as _pick
+
+    return _pick()
+
+
+@shared_task(name="killboard.snapshot_seasons")
+def snapshot_seasons() -> int:
+    """KB-37: freeze any recently-completed quarter's leaderboards into a SeasonSnapshot (composed
+    from the monthly aggregate). Bounded to recent quarters; idempotent."""
+    from .seasons import snapshot_completed_seasons
+
+    return snapshot_completed_seasons()
+
+
 @shared_task(name="killboard.scan_milestones")
 def scan_milestones() -> int:
     """Record + celebrate newbro combat milestones (first kill / solo / final blow).

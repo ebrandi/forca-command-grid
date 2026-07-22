@@ -76,6 +76,55 @@ def _price_basis_is_at_kill() -> bool:
     return str(getattr(settings, "SRP_VALUE_BASIS", "live")).lower() == "at_kill"
 
 
+# --------------------------------------------------------------------------- #
+#  KB-37 (WS-D3): pod-SRP implant tiers (behind SRP_POD_TIERS_ENABLED, default OFF)
+# --------------------------------------------------------------------------- #
+_IMPLANT_FLAG = 89  # ESI inventory flag for an implant slot (see killboard.fitrender.slot_bucket)
+
+
+def _pod_tiers_enabled() -> bool:
+    from django.conf import settings
+
+    return bool(getattr(settings, "SRP_POD_TIERS_ENABLED", False))
+
+
+def _pod_tiers() -> list[dict]:
+    from django.conf import settings
+
+    return list(getattr(settings, "SRP_POD_TIERS", []) or [])
+
+
+def pod_implant_summary(killmail: Killmail) -> tuple[int, Decimal]:
+    """``(implant_count, total_implant_value)`` for a pod loss, from the killmail's implant items.
+
+    Value uses each item's stored (live) ``unit_value`` where present, else the live market price
+    — enough to band the pod into a tier. A pod with no implant items reads ``(0, 0)``.
+    """
+    from apps.killboard.models import KillmailItem
+
+    count = 0
+    value = Decimal("0")
+    for it in KillmailItem.objects.filter(killmail_id=killmail.killmail_id, flag=_IMPLANT_FLAG):
+        qty = (it.quantity_destroyed or 0) + (it.quantity_dropped or 0)
+        count += int(qty)
+        unit = it.unit_value if it.unit_value is not None else price_for(it.item_type_id)
+        value += Decimal(unit or 0) * int(qty)
+    return count, value
+
+
+def pod_tier_for(count: int, value: Decimal) -> dict | None:
+    """The highest configured pod tier the implant set qualifies for, or ``None`` if none.
+
+    A tier qualifies when ``count >= min_count`` AND ``value >= min_value``; the tiers are ordered
+    so the last qualifying one (the richest set) wins and its ``cap`` bounds the payout.
+    """
+    matched = None
+    for tier in _pod_tiers():
+        if count >= int(tier.get("min_count", 0)) and value >= Decimal(str(tier.get("min_value", 0))):
+            matched = tier
+    return matched
+
+
 def loss_value(killmail: Killmail, fit, program: SrpProgram) -> Decimal:
     """Gross value of the loss under the programme's valuation basis.
 
@@ -235,6 +284,22 @@ def eligibility(killmail: Killmail, program: SrpProgram | None = None) -> dict:
     gross = loss_value(killmail, fit, program)
     insurance = insurance_estimate(killmail, program)
     payout = _net_payout(gross, insurance, rule, program)
+
+    # KB-37 (WS-D3): pod-implant tiers. Only for a covered pod loss, only when the flag is armed —
+    # so with SRP_POD_TIERS_ENABLED off (the default) pod payouts are exactly as before. A pod that
+    # carried no implants worth replacing (cap 0) is not covered; otherwise the tier caps the payout.
+    pod_tier = None
+    if killmail.victim_ship_type_id in POD_TYPE_IDS and _pod_tiers_enabled():
+        count, implant_value = pod_implant_summary(killmail)
+        pod_tier = pod_tier_for(count, implant_value)
+        cap = Decimal(str(pod_tier["cap"])) if pod_tier else Decimal("0")
+        if cap <= 0:
+            return {"eligible": False,
+                    "reason": _("Pod carried no implants worth replacing."),
+                    "doctrine": doctrine}
+        if payout > cap:
+            payout = cap
+
     return {
         "eligible": True,
         "doctrine": doctrine,
@@ -244,6 +309,7 @@ def eligibility(killmail: Killmail, program: SrpProgram | None = None) -> dict:
         "loss_value": gross,
         "insurance_estimate": insurance,
         "payout": payout,
+        "pod_tier": pod_tier["name"] if pod_tier else None,
         "payout_mode": program.payout_mode,
         "explanation": _explain(doctrine, program, gross, insurance, payout),
     }

@@ -100,6 +100,8 @@ VARIABLE_CATALOGUE = [
     "character_name", "actor_name", "role_name", "mentor_name", "mentee_name",
     # Killboard
     "rank_name", "kill_count", "entity_type", "entity_name", "watchlist_name",
+    # Killboard gamification (KB-37): trophies, kill-of-the-week
+    "trophy_name", "trophy_desc", "week", "value",
     # Campaigns / capsuleer
     "campaign_name", "objective_title", "milestone_title", "goal_title", "item_title",
     "assignment_label", "health_label", "review_month",

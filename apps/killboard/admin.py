@@ -8,7 +8,10 @@ from .models import (
     IngestSourceHealth,
     KillboardSubscription,
     Killmail,
+    KillOfTheWeek,
     KillstreamState,
+    PilotTrophy,
+    TrophyDefinition,
     Watchlist,
     WatchlistEntry,
 )
@@ -69,3 +72,26 @@ class KillboardSubscriptionAdmin(admin.ModelAdmin):
     list_filter = ("event_type", "channel", "enabled")
     search_fields = ("user__username",)
     raw_id_fields = ("user",)
+
+
+@admin.register(TrophyDefinition)
+class TrophyDefinitionAdmin(admin.ModelAdmin):
+    list_display = ("name", "slug", "category", "tier", "enabled", "grants_reward", "sort_order")
+    list_filter = ("category", "tier", "enabled", "grants_reward")
+    search_fields = ("name", "slug")
+    prepopulated_fields = {"slug": ("name",)}
+
+
+@admin.register(PilotTrophy)
+class PilotTrophyAdmin(admin.ModelAdmin):
+    list_display = ("character_id", "character_name", "definition", "notified", "awarded_at")
+    list_filter = ("notified", "definition")
+    search_fields = ("character_id", "character_name")
+    raw_id_fields = ("definition", "user")
+
+
+@admin.register(KillOfTheWeek)
+class KillOfTheWeekAdmin(admin.ModelAdmin):
+    list_display = ("iso_year", "iso_week", "killmail_id", "value", "character_id", "is_override")
+    list_filter = ("is_override",)
+    raw_id_fields = ("killmail", "overridden_by")

@@ -34,6 +34,7 @@ from .models import (
     RankMetric,
     RankRewardEvent,
     RankRewardSettings,
+    RewardSource,
     RewardType,
 )
 
@@ -247,8 +248,10 @@ def scan_and_award(actor=None) -> int:
                     prev_name = ladder[entry["tier"] - 1]["name"]
                 _, was_created = RankRewardEvent.objects.get_or_create(
                     character_id=cid,
-                    rank_min_kills=rank.min_kills,
+                    source_key=f"rank:{rank.min_kills}",
                     defaults={
+                        "source": RewardSource.RANK,
+                        "rank_min_kills": rank.min_kills,
                         "character_name": name, "user_id": user_id, "rank_id": rank.id,
                         "rank_name": rank.name, "previous_rank_name": prev_name,
                         "kills_at_award": kills, "achieved_at": now,
@@ -260,6 +263,44 @@ def scan_and_award(actor=None) -> int:
                 if was_created:
                     created += 1
     return created
+
+
+def create_trophy_reward_event(trophy, character_id: int, character_name: str,
+                               user_id: int | None) -> RankRewardEvent | None:
+    """Create a pending reward event for a newly-earned trophy (KB-37), or return ``None``.
+
+    Reuses the rank-reward governance flow wholesale: the returned ``RankRewardEvent`` is the
+    same row the officer console approves/pays, and its lifecycle functions (``approve`` /
+    ``mark_paid`` / …) are source-agnostic. Gated exactly like ``scan_and_award``: it is a no-op
+    unless leadership has armed rewards, the trophy carries a configured payout, and the pilot is
+    enrolled + holds a healthy ESI token (so a reward is never promised to someone the corp can't
+    actually pay). Idempotent per pilot + trophy via the ``source_key`` unique constraint.
+    """
+    if not trophy.rewards_configured:
+        return None
+    s = RankRewardSettings.load()
+    if not s.rewards_enabled:
+        return None
+    if character_id not in enrolled_eligible_character_ids():
+        return None
+    event, _created = RankRewardEvent.objects.get_or_create(
+        character_id=character_id,
+        source_key=f"trophy:{trophy.id}",
+        defaults={
+            "source": RewardSource.TROPHY,
+            "trophy": trophy,
+            "character_name": character_name,
+            "user_id": user_id,
+            "rank_name": trophy.name,  # the console's label column — the trophy name here
+            "rank_min_kills": 0,
+            "achieved_at": timezone.now(),
+            "reward_type": trophy.reward_type,
+            "reward_amount": trophy.reward_amount,
+            "reward_item_type_id": trophy.reward_item_type_id,
+            "status": RankRewardEvent.Status.PENDING,
+        },
+    )
+    return event
 
 
 # --------------------------------------------------------------------------- #

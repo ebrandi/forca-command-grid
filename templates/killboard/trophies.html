@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% load eve %}
+{% load i18n %}
+{% block title %}{% translate "Trophies" %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+
+{% if denied %}
+  <div class="panel px-4 py-16 text-center">
+    <svg class="mx-auto h-8 w-8 text-faint"><use href="#i-lock"/></svg>
+    <p class="mt-3 font-display text-lg text-muted">{% translate "Trophies are corp &amp; alliance only" %}</p>
+    <a href="{% url 'killboard:list' %}" class="btn-ghost mt-4 text-sm">← {% translate "Back to the killfeed" %}</a>
+  </div>
+{% else %}
+
+<header class="mb-5 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <p class="eyebrow">Killboard</p>
+    <h1 class="mt-0.5 text-2xl font-bold text-ink">{% translate "Trophies" %}</h1>
+    <p class="mt-0.5 text-sm text-faint">{% translate "Corp-scoped medals earned on the field. Bragging that only lives on your board." %}</p>
+  </div>
+  <div class="flex gap-2">
+    <a href="{% url 'killboard:seasons' %}" class="btn-ghost text-sm">{% translate "Seasons" %}</a>
+    <a href="{% url 'killboard:kotw' %}" class="btn-ghost text-sm">{% translate "Kill of the Week" %}</a>
+  </div>
+</header>
+
+{% if my_trophies or my_progress %}
+<section class="mb-6">
+  <h2 class="mb-2 font-display text-lg text-ink">{% translate "Your trophies" %}
+    {% if my_character_id %}<a href="{% url 'killboard:pilot_cv' my_character_id %}" class="ml-1 text-xs text-cyan">{% translate "Open your CV" %} →</a>{% endif %}</h2>
+  {% if my_trophies %}
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    {% for tr in my_trophies %}
+    <div class="panel px-4 py-3">
+      <div class="flex items-center justify-between"><span class="font-medium {{ tr.color }}">{{ tr.name }}</span>{% include "killboard/_trophy_tier.html" with tier=tr.tier %}</div>
+      <p class="mt-1 text-xs text-faint">{{ tr.description }}</p>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}<p class="text-sm text-faint">{% translate "No trophies earned yet — get on grid!" %}</p>{% endif %}
+</section>
+{% endif %}
+
+{# --- Trophy leaderboard --- #}
+{% if leaderboard %}
+<section class="mb-6">
+  <h2 class="mb-2 font-display text-lg text-ink">{% translate "Trophy Leaderboard" %}</h2>
+  <div class="panel overflow-hidden"><div class="overflow-x-auto"><table class="w-full text-sm">
+    <tbody class="divide-y divide-line/60">
+      {% for row in leaderboard %}
+      <tr class="hover:bg-panel2/40">
+        <td class="px-4 py-2 text-faint tabular-nums w-8">{{ forloop.counter }}</td>
+        <td class="px-2 py-2">
+          <a href="{% url 'killboard:pilot_cv' row.character_id %}" class="flex items-center gap-2">
+            <img src="{% eve_portrait row.character_id 64 %}" alt="" class="h-7 w-7 rounded-lg ring-1 ring-line" loading="lazy">
+            <span class="font-medium text-ink hover:text-gold">{% eve_name row.character_id %}</span>
+          </a>
+        </td>
+        <td class="px-4 py-2 text-right font-display text-gold tabular-nums">{% blocktranslate count n=row.count %}{{ n }} trophy{% plural %}{{ n }} trophies{% endblocktranslate %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div></div>
+</section>
+{% endif %}
+
+{# --- Full catalogue --- #}
+<section>
+  <h2 class="mb-2 font-display text-lg text-ink">{% translate "The catalogue" %}</h2>
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    {% for d in catalogue %}
+    <div class="panel px-4 py-3">
+      <div class="flex items-center justify-between">
+        <span class="font-medium {{ d.color_class }}">{{ d.name }}</span>
+        {% include "killboard/_trophy_tier.html" with tier=d.tier %}
+      </div>
+      <p class="mt-1 text-xs text-faint">{{ d.description }}</p>
+      <p class="mt-1 text-[10px] uppercase tracking-wide text-faint">{{ d.get_category_display }}{% if d.grants_reward %} · <span class="text-gold">{% translate "Reward" %}</span>{% endif %}</p>
+    </div>
+    {% empty %}
+    <p class="text-sm text-faint">{% translate "No trophies configured yet." %}</p>
+    {% endfor %}
+  </div>
+</section>
+
+{% endif %}
+{% endblock %}

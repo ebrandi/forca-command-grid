@@ -350,6 +350,14 @@ KILLBOARD_SUBSCRIPTION_WEBHOOK_MAX_FAILURES = env.int("KILLBOARD_SUBSCRIPTION_WE
 KILLBOARD_SUBSCRIPTION_FEED_KEEP = env.int("KILLBOARD_SUBSCRIPTION_FEED_KEEP", default=100)
 KILLBOARD_SUBSCRIPTION_BATCH = env.int("KILLBOARD_SUBSCRIPTION_BATCH", default=500)
 
+# --- KB-37 (WS-D3): gamification — trophies, kill-of-the-week, seasons ---
+# The trophy award engine is a cursor-consumer over the KB-29 ring buffer (see
+# apps/killboard/trophies.py): it evaluates DB-configurable TrophyDefinitions for pilots touched
+# by fresh events, awards once, and celebrates future-only (a first-sight pilot is silently
+# baselined). ENABLED is the master switch; SCAN_BATCH bounds one sweep.
+KILLBOARD_TROPHIES_ENABLED = env.bool("KILLBOARD_TROPHIES_ENABLED", default=True)
+KILLBOARD_TROPHY_SCAN_BATCH = env.int("KILLBOARD_TROPHY_SCAN_BATCH", default=500)
+
 # --- KB-35: point-in-time valuation + multi-oracle pricing --------------
 # Historical valuation prices each killmail at the market on the day it died, read from the
 # local MarketHistory series (EVE Ref daily The-Forge history, populated by
@@ -379,6 +387,20 @@ JANICE_TYPE_IDS = env.list("JANICE_TYPE_IDS", cast=int, default=[44992, 40520, 4
 # value the loss at the current market. ``at_kill`` = value it at the market on the kill date.
 # A documented, reversible flag officers can flip; default changes no payout.
 SRP_VALUE_BASIS = env("SRP_VALUE_BASIS", default="live")
+
+# --- KB-37 (WS-D3): pod-SRP implant tiers -------------------------------
+# When ENABLED (default OFF — no silent SRP change), a covered pod loss (program.cover_pod on)
+# has its payout capped by the implant set the pod carried, read from the killmail's implant-slot
+# items. A tier matches when the pod's implant COUNT >= min_count AND total implant VALUE >=
+# min_value; the highest matching tier's ``cap`` (0 = don't cover an empty pod) bounds the payout.
+# Fully reversible: flip the flag back and pod payouts return to the uncapped behaviour.
+SRP_POD_TIERS_ENABLED = env.bool("SRP_POD_TIERS_ENABLED", default=False)
+SRP_POD_TIERS = [
+    {"name": "empty", "min_count": 0, "min_value": 0, "cap": 0},
+    {"name": "basic", "min_count": 1, "min_value": 0, "cap": 50_000_000},
+    {"name": "standard", "min_count": 5, "min_value": 100_000_000, "cap": 500_000_000},
+    {"name": "high-grade", "min_count": 5, "min_value": 1_000_000_000, "cap": 5_000_000_000},
+]
 
 # --- Token encryption (OAuth refresh tokens at rest) --------------------
 # 32-byte url-safe base64 Fernet key. In prod this MUST be set in the env.

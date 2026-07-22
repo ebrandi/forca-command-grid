@@ -432,6 +432,41 @@ REGISTRY: tuple[Event, ...] = (
         audience="corp", sensitive=False,
         triggers=_("Beat killboard.notify_rank_ups (nightly, after the member rollup)."),
     ),
+    Event(
+        key="killboard.trophy_awarded",
+        label=_("Trophy unlocked"),
+        description=_(
+            "A pilot's own 'trophy unlocked!' celebration when they earn a corp trophy. "
+            "Delivered per-pilot — never a shared channel — and future-only (a veteran's "
+            "already-qualified trophies are baselined silently when the feature is switched on)."
+        ),
+        group=GROUP_MEMBER, source_service="killboard",
+        audience="corp", sensitive=False,
+        triggers=_("Beat killboard.scan_trophies (the engagement sweep)."),
+    ),
+    Event(
+        key="killboard.kill_of_the_week",
+        label=_("Kill of the Week"),
+        description=_(
+            "A corp-wide celebration of the week's standout kill (top home kill by at-kill value). "
+            "Fires once per ISO week when the auto-pick lands, and never for an officer override."
+        ),
+        group=GROUP_MEMBER, source_service="killboard",
+        audience="corp", sensitive=False,
+        triggers=_("Beat killboard.pick_kill_of_the_week (weekly)."),
+    ),
+    Event(
+        key="killboard.newbro_no_implant",
+        label=_("Newbro no-implant coaching"),
+        description=_(
+            "A gentle, private nudge DMed to a still-new pilot who loses a pod with no implants "
+            "fitted — a coaching hint (train faster with implants), not a telling-off. Once per "
+            "pilot, ever."
+        ),
+        group=GROUP_MEMBER, source_service="killboard",
+        audience="corp", sensitive=False,
+        triggers=_("Beat killboard.scan_trophies, on a fresh newbro pod loss."),
+    ),
     # --- Campaign Command (doc 09 §3) -----------------------------------------
     # Per-user campaign traffic ("your objective / your deadline") — targeted,
     # never a mass broadcast. Restricted campaigns emit name-only, individually

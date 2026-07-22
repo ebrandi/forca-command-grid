@@ -28,6 +28,11 @@ _RECRUIT_ALLOWED_PREFIXES = (
     "/killboard/scan",   # KB-34 D-scan/Local analyzer — same member-or-alliance intel gate
                          # (the view's _can_view_stats enforces it; the corp-broadcast alert
                          # inside it keeps its own member check)
+    "/killboard/trophies",  # KB-37 trophy hall — same member-or-alliance gate (the view's
+                            # _can_view_stats enforces it; the catalogue is read-only)
+    "/killboard/seasons",   # KB-37 seasonal ladders — same member-or-alliance gate
+    "/killboard/kotw",      # KB-37 Kill-of-the-Week hall — same member-or-alliance gate (the
+                            # officer override POST under it keeps its own role decorator)
     "/auth/",        # EVE SSO: login, callback, logout, ESI scopes, disconnect
     "/privacy",      # the pilot's own data rights (view + delete)
     "/recruitment/oauth",  # candidate-facing live ESI consent (begin + callback);
