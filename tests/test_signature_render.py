@@ -37,6 +37,7 @@ from apps.killboard.models import (
 )
 from apps.killboard.signature_assets import MUTED
 from apps.killboard.signature_render import (
+    _SUPPORTS,
     PRESETS,
     plan_layout,
     render_placeholder_png,
@@ -243,18 +244,25 @@ def test_footer_strip_is_legible_over_background():
     assert meta and tuple(meta[0]["fill"]) == tuple(MUTED)   # muted-ink tone, not the faint tone
 
 
-@pytest.mark.parametrize("layout", ["identity", "tactical"])
-def test_selected_portrait_is_drawn_in_every_supporting_layout(layout):
-    # Regression: the tactical layout accepted the portrait component but never drew it, so a pilot
-    # who picked the portrait (and no rank) got a blank left zone. Every layout that SUPPORTS the
-    # portrait component must actually draw the avatar when it is selected.
+# Header components that emit an assertable trace role when drawn (portrait→avatar, corp→corp).
+_HEADER_ROLE = {"portrait": "avatar", "corp": "corp"}
+
+
+@pytest.mark.parametrize("layout", sorted(_SUPPORTS))
+def test_supported_header_components_are_drawn(layout):
+    # Regression for a whole class: the tactical layout accepted portrait AND corp but drew neither
+    # (portrait → blank left zone, corp → missing ticker). Every header component a layout SUPPORTS
+    # must actually be drawn when selected — not silently dropped after the builder offered it.
+    want = {comp: role for comp, role in _HEADER_ROLE.items() if comp in _SUPPORTS[layout]}
     payload = _payload(
         layout=layout, size_preset="standard",
-        components=["portrait", "pilot_name", "corp", "kills", "losses", "isk_destroyed"],
+        components=[*want, "pilot_name", "kills", "losses", "isk_destroyed"],
     )
     trace = []
     render_signature_png(None, payload, trace=trace)
-    assert any(t["role"] == "avatar" for t in trace), f"{layout} drew no avatar for a selected portrait"
+    roles = {t["role"] for t in trace}
+    missing = {comp for comp, role in want.items() if role not in roles}
+    assert not missing, f"{layout} accepts but does not draw: {missing}"
 
 
 def test_tactical_without_portrait_still_draws_rank_emblem():

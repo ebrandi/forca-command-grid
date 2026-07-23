@@ -546,6 +546,12 @@ def _layout_tactical(P: _Painter, plan: dict) -> None:
         P.text(text_x, ty, P.payload["pilot_name"], size=nsize, min_size=max(13, int(nsize * 0.66)),
                bold=True, fill=INK, max_width=text_w, role="name")
         ty += nsize + 4
+    corp = P.payload.get("corp")
+    if "corp" in g["header"] and corp:
+        ticker = (corp.get("ticker") or corp.get("name") or "").strip()
+        if ticker:
+            P.text(text_x, ty, ticker, size=12, fill=MUTED, max_width=text_w, role="corp")
+            ty += 16
     if "rank_title" in g["rank"] and P.payload.get("rank_title"):
         P.text(text_x, ty, P.payload["rank_title"], size=13, bold=True, fill=P.accent,
                max_width=text_w)
@@ -580,7 +586,7 @@ def _layout_minimal(P: _Painter, plan: dict) -> None:
     corp = P.payload.get("corp")
     if "corp" in g["header"] and corp:
         P.text(name_x, ny + int(P.h * 0.22), (corp.get("ticker") or corp.get("name") or ""),
-               size=11, fill=MUTED, max_width=name_w)
+               size=11, fill=MUTED, max_width=name_w, role="corp")
     # a single horizontal stat strip
     strip_w = P.w - strip_x - pad
     strip_h = P.h - 2 * pad - (14 if g["meta"] else 0)
