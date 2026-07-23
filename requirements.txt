@@ -31,5 +31,8 @@ pip-audit>=2.10.1,<3.0
 # Server-side kill-card / CV-card PNG rendering (KB-39 shareable artifacts). The
 # manylinux wheels bundle their own freetype/libjpeg/zlib, so no extra OS libs are
 # needed; the DejaVu font files come from the `fonts-dejavu-core` apt package added
-# in the Dockerfile. 11.3 is the current release clear of the earlier 10.x advisories.
-Pillow>=11.3,<12.0
+# in the Dockerfile. 12.3.0 is the first release clear of the 2026-07 advisory wave
+# against 11.3.0 (25 CVEs incl. CVE-2026-54058/59198/59200/59204 + PYSEC-2026-2249..3454,
+# all fixed across 12.1.1/12.2.0/12.3.0). The <12.0 ceiling had pinned us onto the
+# now-vulnerable 11.3.0, so pip-audit failed until the floor+ceiling moved to the 12.x line.
+Pillow>=12.3.0,<13.0
