@@ -12,7 +12,7 @@ gunicorn>=23.0,<24.0          # 23.0 fixes HTTP request smuggling (CVE-2024-6827
 whitenoise>=6.9,<7.0
 # Hardened XML parsing for the EVE-client fitting import (XXE / entity-expansion
 # / external-reference defence). Pure-Python, no C extension.
-defusedxml>=0.7,<0.8
+defusedxml>=0.7.1,<0.8
 # 48.0.1 is the first release clear of the 44.0.0 advisories (CVE-2026-26007,
 # GHSA-537c-gmf6-5ccf, PYSEC-2026-35, PYSEC-2026-1284).
 cryptography>=49.0.0
