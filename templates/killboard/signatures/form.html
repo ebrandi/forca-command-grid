@@ -145,7 +145,7 @@
     <a href="{% url 'killboard:signatures' %}" class="btn-ghost">{% translate "Cancel" %}</a>
   </div>
   {% if not config_locked %}
-  <p class="label" style="margin-top:0.5rem;">{% translate "The preview uses a placeholder portrait and logos; the published image shows the real ones after its first render." %}</p>
+  <p class="label" style="margin-top:0.5rem;">{% translate "The first preview may take a moment while your portrait and logos are fetched; after that they load instantly." %}</p>
   {% endif %}
 </form>
 {% endblock %}

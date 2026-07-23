@@ -322,13 +322,15 @@ def _is_fresh(path: str) -> bool:
         return False
 
 
-def _fetch_image(category: str, entity_id: int, kind: str, size: int, base: str) -> str | None:
+def _fetch_image(category: str, entity_id: int, kind: str, size: int, base: str,
+                 timeout: float = _IMAGE_TIMEOUT) -> str | None:
     """Stream one image from the fixed EVE image server into the mirror; return its path or None.
 
     The URL is assembled ONLY from ``EVE_IMAGE_SOURCE_URL`` + the numeric id (no user input, no
     redirects followed to a caller-chosen host — SSRF surface is a fixed template). The response is
     streamed with a hard 5 MB ceiling, its content-type must be jpeg/png, and it is written
     atomically. Any failure returns None so the caller can fall back to a stale copy or a monogram.
+    ``timeout`` is short on the interactive preview path so a cold fetch can't hold a web worker.
     """
     import requests
 
@@ -340,7 +342,7 @@ def _fetch_image(category: str, entity_id: int, kind: str, size: int, base: str)
         # code: a 30x from the image host becomes a non-200 (→ None) instead of being transparently
         # followed to wherever Location points — closing an SSRF-via-redirect vector if the fixed
         # upstream is ever compromised/MITM'd. The real image server answers valid ids with a 200.
-        resp = requests.get(url, headers=headers, timeout=_IMAGE_TIMEOUT, stream=True,
+        resp = requests.get(url, headers=headers, timeout=timeout, stream=True,
                             allow_redirects=False)
     except requests.RequestException:
         return None
@@ -376,11 +378,13 @@ def _fetch_image(category: str, entity_id: int, kind: str, size: int, base: str)
     return path
 
 
-def _ensure_image(category: str, entity_id, kind: str, size: int) -> str | None:
+def _ensure_image(category: str, entity_id, kind: str, size: int,
+                  timeout: float = _IMAGE_TIMEOUT) -> str | None:
     """Return a local mirror path for one entity image, fetching/refreshing when stale.
 
     Returns the freshest available local path, or None when the id is unusable, the mirror dir is
-    unset, or the fetch failed with no cached copy to fall back to.
+    unset, or the fetch failed with no cached copy to fall back to. ``timeout`` bounds the network
+    fetch: the Celery render uses the full default, the interactive preview passes a short value.
     """
     try:
         eid = int(entity_id)
@@ -396,22 +400,22 @@ def _ensure_image(category: str, entity_id, kind: str, size: int) -> str | None:
     existing = _existing_asset(base)
     if existing and _is_fresh(existing):
         return existing
-    fetched = _fetch_image(category, eid, kind, size, base)
+    fetched = _fetch_image(category, eid, kind, size, base, timeout=timeout)
     if fetched:
         return fetched
     return existing  # a stale copy is still better than a monogram; None if there is none
 
 
-def ensure_portrait(character_id, size: int = 256) -> str | None:
+def ensure_portrait(character_id, size: int = 256, timeout: float = _IMAGE_TIMEOUT) -> str | None:
     """Local path to a pilot's portrait (``characters/<id>/portrait-<size>.<ext>``), or None."""
-    return _ensure_image("characters", character_id, "portrait", size)
+    return _ensure_image("characters", character_id, "portrait", size, timeout=timeout)
 
 
-def ensure_corp_logo(corp_id, size: int = 128) -> str | None:
+def ensure_corp_logo(corp_id, size: int = 128, timeout: float = _IMAGE_TIMEOUT) -> str | None:
     """Local path to a corporation logo (``corporations/<id>/logo-<size>.<ext>``), or None."""
-    return _ensure_image("corporations", corp_id, "logo", size)
+    return _ensure_image("corporations", corp_id, "logo", size, timeout=timeout)
 
 
-def ensure_alliance_logo(alliance_id, size: int = 128) -> str | None:
+def ensure_alliance_logo(alliance_id, size: int = 128, timeout: float = _IMAGE_TIMEOUT) -> str | None:
     """Local path to an alliance logo (``alliances/<id>/logo-<size>.<ext>``), or None."""
-    return _ensure_image("alliances", alliance_id, "logo", size)
+    return _ensure_image("alliances", alliance_id, "logo", size, timeout=timeout)

@@ -198,12 +198,15 @@ def _featured_trophies(character_id: int, featured_ids, limit: int) -> list[dict
 # --------------------------------------------------------------------------- #
 #  Payload builder.
 # --------------------------------------------------------------------------- #
-def build_signature_payload(signature, *, fetch_assets: bool = True) -> dict:
+def build_signature_payload(signature, *, fetch_assets: bool = True,
+                            fetch_timeout: float | None = None) -> dict:
     """Compose the render payload for ``signature`` — selected components only, fully localised.
 
     ``fetch_assets`` gates the worker-side portrait/logo mirror fetch (the only network this
     feature performs). It defaults on for the real Celery pre-step; tests that assert pure payload
-    shape pass ``fetch_assets=False`` so no HTTP happens.
+    shape pass ``fetch_assets=False`` so no HTTP happens. ``fetch_timeout`` bounds each fetch — the
+    interactive preview passes a short value so a cold portrait can't hold a web worker thread; the
+    Celery render leaves it ``None`` (the module default).
 
     The returned dict carries the render-driving config mirror (``size_preset`` / ``layout`` /
     ``theme`` / ``components`` / ``background_key`` / ``show_timestamp``), ``language``,
@@ -219,6 +222,7 @@ def build_signature_payload(signature, *, fetch_assets: bool = True) -> dict:
     lang = _resolve_language(signature)
     character = signature.character
     cid = character.character_id
+    _fetch_kw = {} if fetch_timeout is None else {"timeout": fetch_timeout}
 
     payload: dict = {
         "signature_id": signature.pk,
@@ -240,7 +244,7 @@ def build_signature_payload(signature, *, fetch_assets: bool = True) -> dict:
         if "portrait" in comp_set:
             from .imagekit import monogram
             payload["portrait"] = {
-                "path": assets.ensure_portrait(cid) if fetch_assets else None,
+                "path": assets.ensure_portrait(cid, **_fetch_kw) if fetch_assets else None,
                 "monogram": monogram(pilot_name),
             }
         if "pilot_name" in comp_set:
@@ -254,7 +258,8 @@ def build_signature_payload(signature, *, fetch_assets: bool = True) -> dict:
                     "name": corp.name or "",
                     "ticker": corp.ticker or "",
                     "logo_path": (
-                        assets.ensure_corp_logo(corp.corporation_id) if fetch_assets else None
+                        assets.ensure_corp_logo(corp.corporation_id, **_fetch_kw)
+                        if fetch_assets else None
                     ),
                 }
                 labels["corp"] = _("Corp")
@@ -270,7 +275,7 @@ def build_signature_payload(signature, *, fetch_assets: bool = True) -> dict:
                 "id": aid,
                 "name": (row["name"] if row else "") or "",
                 "ticker": (row["ticker"] if row else "") or "",
-                "logo_path": assets.ensure_alliance_logo(aid) if fetch_assets else None,
+                "logo_path": assets.ensure_alliance_logo(aid, **_fetch_kw) if fetch_assets else None,
             }
             labels["alliance"] = _("Alliance")
 

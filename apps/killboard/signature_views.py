@@ -57,6 +57,11 @@ _COMPONENT_ORDER = (
 # A sensible starter selection for a brand-new signature (all fit the default identity/standard).
 _DEFAULT_COMPONENTS = ("portrait", "pilot_name", "corp", "kills", "losses", "isk_destroyed")
 
+# Per-asset fetch budget for the interactive preview (seconds). Short so a cold portrait/logo fetch
+# can't tie up a web worker; the Celery render keeps the full default. Assets cache for a week, so
+# only a pilot's first-ever preview can pay it, and it degrades to the monogram on timeout.
+_PREVIEW_FETCH_TIMEOUT = 4
+
 # The POST-action verbs the single action endpoint accepts (each owner-gated in the domain layer).
 _ACTIONS = frozenset({
     "regenerate", "duplicate", "snapshot", "rotate", "disable", "enable", "delete",
@@ -521,11 +526,12 @@ def signature_preview(request: HttpRequest) -> HttpResponse:
         layout=parsed["layout"], size_preset=parsed["size_preset"],
         language=parsed["language"], mode=CombatSignature.Mode.LIVE, config=parsed["config"],
     )
-    # fetch_assets=False: the preview runs on a request thread, and the mirror fetch is allowed
-    # only in the Celery step (plan A2 — a cold portrait fetch could hold a gunicorn slot for
-    # seconds). The preview shows monograms until the first real render supplies the portrait.
+    # The preview fetches the real portrait/logos so it reflects the published image, but with a
+    # short timeout so a cold fetch can't hold a gunicorn thread (the per-user preview throttle
+    # bounds abuse, and each asset is tiny and cached for a week after the first fetch). A fetch
+    # that exceeds the budget falls back to the monogram exactly as the render would.
     with translation.override(translation.get_language()):
-        payload = build_signature_payload(unsaved, fetch_assets=False)
+        payload = build_signature_payload(unsaved, fetch_timeout=_PREVIEW_FETCH_TIMEOUT)
     png = render_signature_png(unsaved, payload)
     resp = HttpResponse(png, content_type="image/png")
     resp["Cache-Control"] = "no-store"

@@ -441,6 +441,29 @@ def test_preview_returns_png_of_the_right_size_without_saving(client, django_use
     assert CombatSignature.objects.count() == before          # nothing persisted
 
 
+def test_preview_fetches_portrait_with_a_bounded_timeout(client, django_user_model, monkeypatch):
+    # The preview must reflect the published image (real portrait), but fetch it with the short
+    # interactive budget so a cold fetch can't hold a web worker — not skip the fetch entirely.
+    from apps.killboard import signature_stats
+    from apps.killboard.signature_views import _PREVIEW_FETCH_TIMEOUT
+
+    seen = {}
+
+    def _spy(character_id, *a, **kw):
+        seen["timeout"] = kw.get("timeout")
+        return None                                           # degrade to monogram (no network)
+
+    monkeypatch.setattr(signature_stats.assets, "ensure_portrait", _spy)
+    _enable()
+    user, _char = enrol_pilot(django_user_model, 6602)
+    bg = _background()
+    client.force_login(user)
+
+    resp = client.post(PREVIEW_URL, _form_data(bg, components=["portrait", "pilot_name", "kills"]))
+    assert resp.status_code == 200
+    assert seen["timeout"] == _PREVIEW_FETCH_TIMEOUT          # fetched, and bounded
+
+
 def test_preview_is_throttled(client, django_user_model, settings):
     settings.SIGNATURE_PREVIEW_RATE = 1
     _enable()
