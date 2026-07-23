@@ -243,6 +243,32 @@ def test_footer_strip_is_legible_over_background():
     assert meta and tuple(meta[0]["fill"]) == tuple(MUTED)   # muted-ink tone, not the faint tone
 
 
+@pytest.mark.parametrize("layout", ["identity", "tactical"])
+def test_selected_portrait_is_drawn_in_every_supporting_layout(layout):
+    # Regression: the tactical layout accepted the portrait component but never drew it, so a pilot
+    # who picked the portrait (and no rank) got a blank left zone. Every layout that SUPPORTS the
+    # portrait component must actually draw the avatar when it is selected.
+    payload = _payload(
+        layout=layout, size_preset="standard",
+        components=["portrait", "pilot_name", "corp", "kills", "losses", "isk_destroyed"],
+    )
+    trace = []
+    render_signature_png(None, payload, trace=trace)
+    assert any(t["role"] == "avatar" for t in trace), f"{layout} drew no avatar for a selected portrait"
+
+
+def test_tactical_without_portrait_still_draws_rank_emblem():
+    # The portrait fix must not regress the emblem path: with rank selected and no portrait, the
+    # tactical left zone still shows the rank emblem (and no avatar).
+    payload = _payload(
+        layout="tactical", size_preset="standard",
+        components=["pilot_name", "rank_title", "rank_progress", "kills", "losses"],
+    )
+    trace = []
+    render_signature_png(None, payload, trace=trace)
+    assert not any(t["role"] == "avatar" for t in trace)
+
+
 def test_tall_stat_tiles_center_label_and_value():
     # A tall tile (minimal/card single-row strip) must not bottom-anchor the value and leave a gap
     # under the label — the label+value block is centred, so their vertical delta stays close to the

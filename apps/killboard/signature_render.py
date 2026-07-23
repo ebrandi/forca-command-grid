@@ -330,6 +330,9 @@ def _draw_avatar(P: _Painter, x: float, y: float, size: float) -> None:
     portrait = P.payload.get("portrait") or {}
     device = int(size * P.s)
     im = _load_portrait(portrait.get("path"), device)
+    if P.trace is not None:
+        P.trace.append({"role": "avatar", "kind": "image" if im is not None else "monogram",
+                        "x": x, "y": y, "size": size})
     P.rrect((x, y, x + size, y + size), radius=size * 0.18, fill=PANEL,
             outline=P.accent + (150,) if len(P.accent) == 3 else P.accent, width=1)
     if im is not None:
@@ -519,18 +522,23 @@ def _layout_identity(P: _Painter, plan: dict) -> None:
 def _layout_tactical(P: _Painter, plan: dict) -> None:
     pad = 12
     g = plan["groups"]
-    # rank emblem focus on the left
+    # The left zone shows the pilot portrait when it is selected, otherwise a rank emblem, otherwise
+    # nothing (the header then starts at the margin — no dead gap). Portrait takes priority because a
+    # pilot who picked it expects to see it; the rank still renders as its title + progress beside
+    # the name below.
     emblem_r = min(P.h * 0.28, 32)
-    ecx, ecy = pad + 4 + emblem_r, pad + emblem_r
+    left = pad + 4
     prog = P.payload.get("rank_progress") or {}
-    tier = 0
-    max_tier = 1
-    if prog:
-        tier = int(round(prog.get("pct", 0) / 100 * 4))
-        max_tier = 4
-    if "rank_title" in g["rank"] or "rank_progress" in g["rank"]:
-        _draw_rank_emblem(P, ecx, ecy, emblem_r, tier, max_tier)
-    text_x = ecx + emblem_r + 10
+    if "portrait" in g["header"] and P.payload.get("portrait"):
+        avatar = min(P.h - 2 * pad, 2 * emblem_r + 8)
+        _draw_avatar(P, left, pad, avatar)
+        text_x = left + avatar + 10
+    elif "rank_title" in g["rank"] or "rank_progress" in g["rank"]:
+        tier = int(round(prog.get("pct", 0) / 100 * 4)) if prog else 0
+        _draw_rank_emblem(P, left + emblem_r, pad + emblem_r, emblem_r, tier, 4 if prog else 1)
+        text_x = left + 2 * emblem_r + 10
+    else:
+        text_x = left
     text_w = P.w - text_x - pad
     ty = pad
     if "pilot_name" in g["header"] and P.payload.get("pilot_name"):
