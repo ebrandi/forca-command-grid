@@ -145,7 +145,10 @@
   <p class="mt-3 text-xs text-faint">
     {% blocktranslate %}The pool was frozen and its fingerprint published BEFORE the seed existed; the seed's commitment was published before the draw ran. With both fixed in advance, the outcome could be checked but not chosen. For each pick, compute <span class="data">sha256(seed:index)</span> as an integer modulo the ticket count — the offset lands on exactly one ticket in the published pool, and that ticket is the winner.{% endblocktranslate %}
   </p>
-  {% if is_member %}
+  {% comment %}`snapshot` as well as the member gate: a draw taken before pools were frozen
+     has none, and raffle:pool 404s for it — offering the link anyway sends a pilot looking
+     for the proof straight into a dead end (seen in prod logs on a legacy contest).{% endcomment %}
+  {% if is_member and snapshot %}
   <a href="{% url 'raffle:pool' contest.slug %}" class="btn-ghost mt-4 inline-block text-sm">{% translate "Open the published pool" %}</a>
   {% endif %}
 </section>

@@ -981,3 +981,34 @@ def test_ticket_ledger_page_cost_does_not_grow_with_history(client, django_user_
 
     assert large == small, f"ledger page cost grew from {small} to {large} queries"
     assert b"Page 1 of 8" in resp.content   # only one page rendered, not all 400
+
+
+@pytest.mark.django_db
+def test_a_legacy_receipt_does_not_link_to_a_pool_that_does_not_exist(client, django_user_model):
+    """A pre-snapshot draw has no frozen pool, and raffle:pool 404s for it.
+
+    Offering "Open the published pool" anyway sends a pilot who came looking for the proof
+    into a dead end. Found in production logs on a contest drawn before pools existed.
+    """
+    contest = make_contest()
+    director = make_user(django_user_model, "dir", rbac.ROLE_DIRECTOR)
+    member, _ = enrol_pilot(django_user_model, 7801)
+    _grant(contest, director, 7801, 10)
+    add_prizes(contest, n=1)
+    services.set_status(contest, RaffleContest.Status.CLOSED, director)
+    draw = services.run_draw(contest, director)
+
+    client.force_login(member)
+    live = client.get(reverse("raffle:transparency", args=[contest.slug])).content.decode()
+    assert "Open the published pool" in live, "a real pool IS offered"
+
+    # Model the real historical shape seen on prod: a contest drawn before pools existed
+    # has NO snapshot at all — not merely a draw whose link was cleared. Detaching only the
+    # draw would leave the contest's pool page working and prove nothing.
+    draw.snapshot = None
+    draw.save(update_fields=["snapshot"])
+    RaffleTicketPoolSnapshot.objects.filter(contest=contest).delete()
+    legacy = client.get(reverse("raffle:transparency", args=[contest.slug])).content.decode()
+    assert "Open the published pool" not in legacy, "no link to a pool that cannot exist"
+    # And the page it would have pointed at genuinely is a dead end.
+    assert client.get(reverse("raffle:pool", args=[contest.slug])).status_code == 404
