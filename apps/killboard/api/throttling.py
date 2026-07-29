@@ -14,9 +14,24 @@ from __future__ import annotations
 
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 
+from core.audit import client_ip
+
 
 class KillboardAnonThrottle(AnonRateThrottle):
     scope = "killboard_anon"
+
+    def get_ident(self, request) -> str:
+        """Key the bucket on the real client IP, not the raw X-Forwarded-For header.
+
+        DRF's default ``get_ident`` returns the WHOLE ``X-Forwarded-For`` value unless
+        ``NUM_PROXIES`` is configured, and it is not set here. Our nginx uses
+        ``$proxy_add_x_forwarded_for``, which appends the peer to whatever the client sent,
+        so a caller who varies that header gets a fresh bucket on every request and the
+        anonymous budget never binds. ``core.audit.client_ip`` already encodes this
+        project's trusted-proxy rule (right-most entry = the peer nginx actually saw), so
+        defer to it and keep one client-IP authority in the codebase.
+        """
+        return client_ip(request)
 
 
 class KillboardUserThrottle(UserRateThrottle):

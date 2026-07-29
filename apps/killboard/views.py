@@ -1574,7 +1574,10 @@ def _battle_report_context(request: HttpRequest, report: BattleReport, *, public
         "swing_series": [float(r["swing"]) for r in timeline["rows"]],
         "swing_w": _SWING_W, "swing_h": _SWING_H,
         "swing_baseline_y": battle_sides.swing_baseline_y(_SWING_H),
-        "readiness_op": op,
+        # Same reasoning as the campaign permalink: battle_report.html renders the op's name
+        # and links to the member-only operations:detail, so the anonymous share page must
+        # not carry it.
+        "readiness_op": None if public else op,
         "permalink": request.build_absolute_uri(
             reverse("killboard:battle_report_public", args=[report.slug])
         ),
@@ -1860,7 +1863,11 @@ def _campaign_context(request: HttpRequest, campaign, *, public: bool) -> dict:
         "doctrine_target_pct": stats["doctrine_target_pct"] if is_officer else None,
         "is_officer": is_officer,
         "can_manage": is_officer and not public,
-        "operation": campaign.operation,
+        # Fleet operations are member-only everywhere else (operations:detail is
+        # @login_required + @role_required(MEMBER), and the namespace is feature-gated), so
+        # the anonymous permalink must not name one or link to it — that leaked the op's
+        # name and id, and confirmed a private op existed, to anyone with the slug.
+        "operation": None if public else campaign.operation,
         "permalink": request.build_absolute_uri(
             reverse("killboard:campaign_public", args=[campaign.slug])
         ),
@@ -2281,15 +2288,23 @@ def killboard_pilot_cv_card(request: HttpRequest, character_id: int) -> HttpResp
     )
     ctx = {"pilot_name": name, **pilot_cv(character_id)}
     png, hit = killcard.cv_card_png(character_id, ctx)
-    return _png_response(png, hit)
+    return _png_response(png, hit, public=False)
 
 
-def _png_response(png: bytes, cache_hit: bool) -> HttpResponse:
+def _png_response(png: bytes, cache_hit: bool, *, public: bool = True) -> HttpResponse:
     resp = HttpResponse(png, content_type="image/png")
     resp["X-Card-Cache"] = "hit" if cache_hit else "miss"
-    # Short public cache: unfurlers and repeat shares hit the edge, but a branding change is
-    # reflected within minutes (the stored PNG is also keyed by the branding version).
-    resp["Cache-Control"] = "public, max-age=300"
+    if public:
+        # Short public cache: unfurlers and repeat shares hit the edge, but a branding
+        # change is reflected within minutes (the stored PNG is also keyed by the branding
+        # version).
+        resp["Cache-Control"] = "public, max-age=300"
+    else:
+        # A member-gated card must NOT be stored by a shared cache. Setting the header here
+        # at all is what matters: SecurityHeadersMiddleware only *setdefault*s the global
+        # "private, no-store", so a view that stamps its own value silently opts out of it.
+        resp["Cache-Control"] = "private, no-store"
+        resp["Vary"] = "Cookie"
     return resp
 
 
