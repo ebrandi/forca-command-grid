@@ -119,8 +119,25 @@ stale on you.
 `/raffle/` — Engagement raffles where you earn tickets from real activity — PvP, mining,
 fleet attendance, or a manual award from leadership — and winners are drawn with a public,
 verifiable **commit-reveal** process so nobody (including leadership) can rig the draw.
-Check your own ticket count and history from a raffle's own page, and opt out of raffle
-nudges if you'd rather not be reminded.
+
+**Your tickets have numbers.** Open **My ticket numbers** on any contest (`/raffle/<contest>/tickets/`)
+to see every ticket you own — the exact numbers (`#412–#511`), when and why each one was
+awarded, and a link to the killmail or the leadership grant behind it, including who granted
+it and the reason they recorded. Filter by source or status, or type a ticket number to find
+the award it came from. A ticket that was reversed or disqualified keeps its number and
+stops counting; the gap it leaves is deliberate, so the tickets either side of it are never
+renumbered out from under you.
+
+**You can check the draw yourself.** When ticket accrual closes, the whole pool is frozen
+and its fingerprint published — before the random seed even exists. After the draw, the
+**draw receipt** (`/raffle/<contest>/draw/`) shows the winning ticket *number* for every
+prize, the revealed seed, and both fingerprints. Corp pilots can open the full frozen pool
+to see exactly which ticket numbers were in it, and the receipt downloads as JSON if you
+want to redo the maths yourself. If a winner turns out to be ineligible, their replacement
+is drawn from the same frozen pool and the original result stays visible — nothing is
+quietly rewritten.
+
+You can also opt out of raffle nudges if you'd rather not be reminded.
 
 ## Mentorship (as a cadet)
 

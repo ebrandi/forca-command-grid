@@ -202,6 +202,27 @@ mining, fleet attendance, manual awards), and let the commit-reveal draw mechani
 actual selection with a full, publicly auditable trail. Raffles carry their own audience
 (default `corp`) — see [Features and audiences](./features-and-audiences.md).
 
+**Closing a contest freezes its ticket pool** into a hashed, versioned snapshot and
+publishes the fingerprint — before any seed exists. After that, ledger corrections are
+refused unless you use the explicit audited correction action, which re-freezes the pool
+under a new version and discards any seed already committed against the old one. That
+ordering is what lets the draw be checked but not chosen, so resist the urge to work around
+it.
+
+The draw manager shows a **pre-draw validation checklist**. Critical failures block the
+draw outright and have no override — running anyway would produce a result you could not
+defend afterwards. Warnings are drawable but must be ticked off, and the acknowledgement is
+written to the audit log.
+
+If a winner turns out to be ineligible, use **Forfeit** rather than a redraw: it records the
+reason publicly and draws a replacement from the same frozen pool, continuing the same hash
+chain so both results stay verifiable. A full redraw supersedes the whole draw, requires a
+recorded reason, and leaves every superseded draw disclosed on the public receipt — a
+"redraw until we like the winner" cannot hide.
+
+Full technical reference, including how to answer a pilot who disputes a result:
+[Raffle transparency and draw integrity](../contributor-handbook/raffle-transparency-and-draw-integrity.md).
+
 ## Recruitment desk
 
 The recruitment candidate pipeline at `/recruitment/` requires the `recruitment.manage`

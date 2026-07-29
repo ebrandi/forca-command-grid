@@ -89,6 +89,10 @@ responsibility.
 - [linked-pilots.md](./linked-pilots.md) — the active-pilot context, the authority ceiling, and
   the rules every pilot-specific surface must follow. **Read this before writing any code that
   resolves "the current character".**
+- [raffle-transparency-and-draw-integrity.md](./raffle-transparency-and-draw-integrity.md) —
+  ticket identity, the frozen hashed pool, the verifiable draw and its receipt, forfeits and
+  redraws. **Read this before touching anything under `apps/raffle/`** — the ordering
+  (freeze → publish → seed → commit → draw) is the security property, not a convention.
 - [api-reference.md](./api-reference.md) — the HTML-view-first routing pattern, JSON
   endpoints, and where the OpenAPI schema is generated from.
 - [esi-integration.md](./esi-integration.md) — OAuth2/PKCE, token encryption, the
