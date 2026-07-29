@@ -31,14 +31,10 @@ def warm_briefings() -> int:
     TTL (digest/onboarding 10 min) so a visit almost always hits warm caches.
     (Readiness facets are warmed separately by readiness.warm_pilots.)
     """
-    from django.core.cache import cache
+    from django.conf import settings
+    from django.utils import translation
 
-    from apps.command_intel import pilot as ci_pilot
-    from apps.onboarding.services import next_actions
     from apps.sso.models import EveCharacter
-    from core.features import feature_enabled
-
-    from .briefing import pilot_briefing
 
     warmed = 0
     mains = EveCharacter.objects.filter(
@@ -47,39 +43,58 @@ def warm_briefings() -> int:
     for character in mains:
         user = character.user
         try:
-            if feature_enabled("briefing"):
-                # The digest is keyed by PILOT and by language (LP-3). This sweep warms each
-                # account's MAIN — which is what ``pilot_briefing`` resolves to outside a
-                # request — so the key it busts must name that same pilot, not the account.
-                from core.i18n import i18n_cache_key
-
-                cache.delete(
-                    i18n_cache_key(f"briefing:pilot:v3:{character.character_id}")
-                )
-                pilot_briefing(user)
-            if feature_enabled("command_intel_pilot"):
-                ci_pilot.compute_directives(user, character, persist=True)
-            if feature_enabled("onboarding"):
-                onboarding = [
-                    {"character": c, "action": action}
-                    for c in user.characters.all()
-                    for action in next_actions(c, limit=2)
-                ]
-                # Language-scoped: next_actions() now returns translated milestone
-                # title/description, so a bare per-user key would freeze one reader's
-                # locale onto everyone (mirrors the digest key above, LP-3).
-                cache.set(i18n_cache_key(f"briefing:onboarding:{user.pk}"), onboarding, 600)
-            if feature_enabled("operations"):
-                # The dashboard's pinned next-op row (readiness per doctrine
-                # fit ≈1s cold) — same delete-then-recompute idiom as digest.
-                from apps.identity.views import _next_op_payload
-
-                cache.delete(f"dashboard:next_op:{character.character_id}")
-                _next_op_payload(character)
+            # Warm each account under the locale it will actually read in. Every cache key
+            # in _warm_one goes through ``i18n_cache_key``, which suffixes the ACTIVE
+            # language — and a Celery worker has no request, so without this override the
+            # sweep writes only the ``:en`` keys. On an 8-locale deployment that leaves
+            # every non-English member paying the multi-second cold path this task exists
+            # to prevent. Same total work, correct-language payload.
+            # A blank preference means "auto-detect from the browser", which we cannot know
+            # out of band; the default locale is the best available guess for those.
+            with translation.override(user.language or settings.LANGUAGE_CODE):
+                _warm_one(user, character)
             warmed += 1
         except Exception:  # noqa: BLE001 - one pilot must not break the batch
             log.exception("briefing warm failed for %s", character.name)
     return warmed
+
+
+def _warm_one(user, character) -> None:
+    """Warm one account's Command Center caches under the currently-active locale."""
+    from django.core.cache import cache
+
+    from apps.command_intel import pilot as ci_pilot
+    from apps.onboarding.services import next_actions
+    from core.features import feature_enabled
+    from core.i18n import i18n_cache_key
+
+    from .briefing import pilot_briefing
+
+    if feature_enabled("briefing"):
+        # The digest is keyed by PILOT and by language (LP-3). This sweep warms each
+        # account's MAIN — which is what ``pilot_briefing`` resolves to outside a
+        # request — so the key it busts must name that same pilot, not the account.
+        cache.delete(i18n_cache_key(f"briefing:pilot:v3:{character.character_id}"))
+        pilot_briefing(user)
+    if feature_enabled("command_intel_pilot"):
+        ci_pilot.compute_directives(user, character, persist=True)
+    if feature_enabled("onboarding"):
+        onboarding = [
+            {"character": c, "action": action}
+            for c in user.characters.all()
+            for action in next_actions(c, limit=2)
+        ]
+        # Language-scoped: next_actions() now returns translated milestone
+        # title/description, so a bare per-user key would freeze one reader's
+        # locale onto everyone (mirrors the digest key above, LP-3).
+        cache.set(i18n_cache_key(f"briefing:onboarding:{user.pk}"), onboarding, 600)
+    if feature_enabled("operations"):
+        # The dashboard's pinned next-op row (readiness per doctrine
+        # fit ~1s cold) — same delete-then-recompute idiom as digest.
+        from apps.identity.views import _next_op_payload
+
+        cache.delete(f"dashboard:next_op:{character.character_id}")
+        _next_op_payload(character)
 
 
 @shared_task(name="pilots.warm_hall_of_fame")
