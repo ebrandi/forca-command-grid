@@ -589,6 +589,18 @@ def promote(request, pk):
     if not rbac.has_role(request.user, rbac.ROLE_OFFICER):
         raise Http404
     fit = get_object_or_404(Fit.objects.select_related("current_revision"), pk=pk)
+    # The officer role says who may promote; it does not say *which* fit. Without an object
+    # check this was the one endpoint in this module that skipped its own rule — an officer
+    # could POST any pk and have promote_to_doctrine copy that fit's hull and modules into
+    # the doctrine library AND flip the owner's row to DOCTRINE, republishing it corp-wide.
+    # Ownership, not can_view, is the right gate: promotion permanently rewrites the row
+    # (visibility + promoted_doctrine_fit_id) and there is no un-promote, so it needs the
+    # owner's consent, not merely their permission to be read. This matches the only UI that
+    # offers the action — templates/fitting/detail.html:385 renders the form under
+    # `can_promote and editable`, where editable is fit.can_edit() — so no working flow
+    # changes; it is the direct-POST path that was over-permissive.
+    if not fit.can_edit(request.user):
+        raise Http404  # never reveal existence of a fit the user doesn't own
     from apps.doctrines.models import Doctrine
     doctrine = Doctrine.objects.filter(pk=request.POST.get("doctrine")).first()
     if not doctrine or not fit.current_revision:
