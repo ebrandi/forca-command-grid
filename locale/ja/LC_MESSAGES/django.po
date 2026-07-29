@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-29 12:40+0000\n"
+"POT-Creation-Date: 2026-07-29 15:10+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: ja machine-assisted draft\n"
@@ -1008,8 +1008,36 @@ msgid "Prize saved."
 msgstr "賞品を保存しました。"
 
 #: apps/admin_audit/console_raffle.py
+msgid ""
+"That prize has already been won — it can't be removed. Forfeit the winner "
+"instead if it needs undoing."
+msgstr "その賞品はすでに獲得されています — 削除できません。取り消す必要がある場合は当選者を失格にしてください。"
+
+#: apps/admin_audit/console_raffle.py
 msgid "Prize removed."
 msgstr "賞品を削除しました。"
+
+#: apps/admin_audit/console_raffle.py
+#, python-format
+msgid "The ticket draw now has %(n)s winners."
+msgstr "チケット抽選の当選者数が %(n)s 名になりました。"
+
+#: apps/admin_audit/console_raffle.py
+#, python-format
+msgid "Prize places %(places)s were kept because they have already been won."
+msgstr "%(places)s の順位はすでに獲得されているため残しました。"
+
+#: apps/admin_audit/console_raffle.py
+msgid "Rank prize saved."
+msgstr "ランク賞を保存しました。"
+
+#: apps/admin_audit/console_raffle.py
+msgid "That rank prize has already been awarded — it can't be removed."
+msgstr "そのランク賞はすでに授与されています — 削除できません。"
+
+#: apps/admin_audit/console_raffle.py
+msgid "Rank prize removed."
+msgstr "ランク賞を削除しました。"
 
 #: apps/admin_audit/console_raffle.py
 #, python-format
@@ -18694,6 +18722,70 @@ msgid "5th prize"
 msgstr "5等"
 
 #: apps/raffle/contest_templates.py
+msgid "6th prize"
+msgstr "6等賞"
+
+#: apps/raffle/contest_templates.py
+msgid "7th prize"
+msgstr "7等賞"
+
+#: apps/raffle/contest_templates.py
+msgid "8th prize"
+msgstr "8等賞"
+
+#: apps/raffle/contest_templates.py
+msgid "9th prize"
+msgstr "9等賞"
+
+#: apps/raffle/contest_templates.py
+msgid "10th prize"
+msgstr "10等賞"
+
+#: apps/raffle/contest_templates.py
+#, python-format
+msgid "Prize #%(n)s"
+msgstr "賞 #%(n)s"
+
+#: apps/raffle/contest_templates.py
+msgid "PVP event (rank + ticket prizes)"
+msgstr "PVPイベント（ランク賞＋チケット賞）"
+
+#: apps/raffle/contest_templates.py
+msgid ""
+"A scheduled PVP push. Fixed prizes for the pilots who top the killboard over"
+" the event, plus a ticket draw everyone who undocks can win."
+msgstr ""
+"計画的な PVP の押し上げ。イベント期間中に killboard の上位に立ったパイロットへの固定賞と、ドックを出た誰もが当たりうるチケット抽選。"
+
+#: apps/raffle/contest_templates.py
+msgid "Win the event boards, and get everyone on kills."
+msgstr "イベントのボードを制し、全員をキルに乗せよう。"
+
+#: apps/raffle/contest_templates.py
+msgid ""
+"Two kinds of prize. RANK PRIZES are earned: finish the event at the listed "
+"place on a board and it is yours — the standings are on the contest page all"
+" event. TICKET PRIZES are drawn at random from the tickets you earned; a "
+"pilot can win only one of those. You can win both. Only pilots enrolled with"
+" a live ESI token are ranked or drawn."
+msgstr ""
+"賞は2種類あります。ランク賞は「獲得」するものです。イベント終了時にボードの指定順位にいれば、その賞はあなたのものです — "
+"順位はイベント期間中ずっとコンテストページに表示されます。チケット賞は獲得したチケットから無作為に抽選され、こちらは1名につき1つまでです。両方を獲得することもできます。順位付けと抽選の対象は、有効な"
+" ESI トークンを持つ登録済みパイロットのみです。"
+
+#: apps/raffle/contest_templates.py
+msgid "Top killer"
+msgstr "トップキラー"
+
+#: apps/raffle/contest_templates.py
+msgid "Top solo killer"
+msgstr "トップソロキラー"
+
+#: apps/raffle/contest_templates.py
+msgid "Most active pilot"
+msgstr "最も活動的なパイロット"
+
+#: apps/raffle/contest_templates.py
 #: templates/admin_audit/console/raffle_detail.html
 msgid "PVP activity raffle"
 msgstr "PVP アクティビティ・ラッフル"
@@ -18932,6 +19024,15 @@ msgid "Invalid JSON: %(error)s"
 msgstr "無効な JSON: %(error)s"
 
 #: apps/raffle/forms.py
+#| msgid "Booster ends"
+msgid "Booster applies to"
+msgstr "ブースターの適用先"
+
+#: apps/raffle/forms.py apps/raffle/models.py
+msgid "Which kinds of prize the booster inflates when the goal is reached."
+msgstr "目標達成時にブースターが増額する賞の種類。"
+
+#: apps/raffle/forms.py
 msgid "The start date can't be in the past."
 msgstr "開始日を過去に設定することはできません。"
 
@@ -18962,6 +19063,25 @@ msgstr "正の目標値を設定してください(またはメトリクスを�
 #: apps/raffle/forms.py
 msgid "Set a positive boost percent."
 msgstr "正のブースト率を設定してください。"
+
+#: apps/raffle/forms.py
+msgid "Killboard board"
+msgstr "killboard のボード"
+
+#: apps/raffle/forms.py
+#, python-format
+msgid "There is already a prize for place %(n)s on that board."
+msgstr "そのボードの %(n)s 位にはすでに賞が設定されています。"
+
+#: apps/raffle/forms.py
+msgid "Ticket-draw winners"
+msgstr "チケット抽選の当選者数"
+
+#: apps/raffle/forms.py
+msgid ""
+"How many prizes the ticket draw awards (1–10). Each pilot can win at most "
+"one of them."
+msgstr "チケット抽選で授与する賞の数（1〜10）。各パイロットが獲得できるのは最大1つです。"
 
 #: apps/raffle/forms.py
 msgid "Source rate/rules as JSON."
@@ -19197,6 +19317,18 @@ msgid ""
 "10)."
 msgstr "目標達成時に ISK/PLEX の賞品価値をこのパーセントだけブーストします(例: 10)。"
 
+#: apps/raffle/models.py
+msgid "Both ticket and rank prizes"
+msgstr "チケット賞とランク賞の両方"
+
+#: apps/raffle/models.py
+msgid "Ticket-draw prizes only"
+msgstr "チケット抽選の賞のみ"
+
+#: apps/raffle/models.py
+msgid "Rank prizes only"
+msgstr "ランク賞のみ"
+
 #: apps/raffle/models.py templates/admin_audit/console/raffle_prizes.html
 msgid "In-game item"
 msgstr "ゲーム内アイテム"
@@ -19232,6 +19364,10 @@ msgstr "公開: 当選者が賞品を受け取る方法。"
 #: apps/raffle/models.py
 msgid "Internal — leaders only."
 msgstr "内部用 — リーダーのみ。"
+
+#: apps/raffle/models.py
+msgid "1 = top of that board."
+msgstr "1 = そのボードの首位。"
 
 #: apps/raffle/models.py templates/admin_audit/console/raffle_sources.html
 msgid "Officer-approved"
@@ -19412,6 +19548,10 @@ msgstr "この結果が失格・無効・再抽選となった理由。"
 #: apps/raffle/models.py
 msgid "Internal fulfilment notes."
 msgstr "内部用の履行メモ。"
+
+#: apps/raffle/models.py
+msgid "Awarded"
+msgstr "授与済み"
 
 #: apps/raffle/models.py
 msgid "Same victim repeated"
@@ -19616,6 +19756,17 @@ msgid ""
 msgstr ""
 "対象パイロット %(pilots)s 名に対し賞品 %(prizes)s 件で、このコンテストは 1 パイロット 1 賞品のみです — "
 "残りの賞品は未授与になります。"
+
+#: apps/raffle/services.py
+#, python-format
+msgid "Pick between 1 and %(max)s ticket winners."
+msgstr "抽選の当選者数は 1 〜 %(max)s の範囲で選んでください。"
+
+#: apps/raffle/services.py
+msgid ""
+"This contest's prize ladder is locked — tickets are already accruing against"
+" it."
+msgstr "このコンテストの賞ラダーはロックされています — すでにチケットが積み上がっています。"
 
 #: apps/raffle/services.py
 msgid "Ticket amount must be a positive number."
@@ -26680,6 +26831,7 @@ msgstr "このマイルストーンを削除しますか? パイロットの進�
 
 #: templates/admin_audit/console/content.html
 #: templates/admin_audit/console/doctrine_edit.html
+#: templates/admin_audit/console/raffle_prizes.html
 #: templates/admin_audit/console/readiness/mandatory_ships.html
 #: templates/admin_audit/console/readiness/strategic_roles.html
 #: templates/admin_audit/console/readiness/support.html
@@ -32507,6 +32659,86 @@ msgstr ""
 "このコンテストはすでにドラフトではありません — ここで賞品を編集すると、開催中またはクローズ済みのコンテストが変更されます。注意してください。"
 
 #: templates/admin_audit/console/raffle_prizes.html
+msgid "How many ticket winners?"
+msgstr "チケット抽選の当選者は何名にしますか？"
+
+#: templates/admin_audit/console/raffle_prizes.html
+#, python-format
+msgid ""
+"Each place in the ticket ladder is one winner, and a pilot can win at most "
+"one of them. Setting this adds or removes places (1–%(max)s); a place that "
+"has already been won is never removed."
+msgstr ""
+"チケットラダーの各順位が当選者1名で、1パイロットが獲得できるのは最大1つです。この設定で順位を追加・削除します（1〜%(max)s）。すでに獲得された順位は削除されません。"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid "Set winners"
+msgstr "当選者数を設定"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid "Locked — tickets are accruing"
+msgstr "ロック中 — チケットが積み上がっています"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid "Rank prizes"
+msgstr "ランク賞"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid ""
+"Awarded on the killboard standings for this contest's dates — not drawn. "
+"They stack with each other and with a ticket win, and only pilots enrolled "
+"with a live ESI token are ranked."
+msgstr ""
+"このコンテストの期間における killboard の順位で授与されます — 抽選ではありません。ランク賞同士でも、チケット賞とも重複して獲得でき、有効な"
+" ESI トークンを持つ登録済みパイロットのみが順位付けされます。"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid "Remove this rank prize?"
+msgstr "このランク賞を削除しますか？"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid ""
+"No rank prizes yet. Add one to reward the pilots who top a board during this"
+" contest."
+msgstr "ランク賞はまだありません。このコンテスト中にボードの首位に立ったパイロットへの賞を追加しましょう。"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid "Place"
+msgstr "順位"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid "Prize name"
+msgstr "賞品名"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid "Estimated value"
+msgstr "推定価値"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid "Prize type"
+msgstr "賞品の種類"
+
+#: templates/admin_audit/console/raffle_prizes.html templates/erp/board.html
+#: templates/fitting/detail.html templates/industry/chain.html
+#: templates/industry/create.html templates/industry/jobs.html
+#: templates/procurement/po_detail.html templates/store/inventory_fit.html
+#: templates/store/storefront.html
+msgid "Quantity"
+msgstr "数量"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid "Delivery instructions"
+msgstr "配布手順"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid "(public)"
+msgstr "(公開)"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid "Add rank prize"
+msgstr "ランク賞を追加"
+
+#: templates/admin_audit/console/raffle_prizes.html
 msgid "Prize table"
 msgstr "賞品テーブル"
 
@@ -32523,25 +32755,9 @@ msgstr "賞品を削除"
 msgid "Icon type id"
 msgstr "アイコンの type id"
 
-#: templates/admin_audit/console/raffle_prizes.html templates/erp/board.html
-#: templates/fitting/detail.html templates/industry/chain.html
-#: templates/industry/create.html templates/industry/jobs.html
-#: templates/procurement/po_detail.html templates/store/inventory_fit.html
-#: templates/store/storefront.html
-msgid "Quantity"
-msgstr "数量"
-
 #: templates/admin_audit/console/raffle_prizes.html
 msgid "Estimated value (ISK)"
 msgstr "推定価値(ISK)"
-
-#: templates/admin_audit/console/raffle_prizes.html
-msgid "Delivery instructions"
-msgstr "配布手順"
-
-#: templates/admin_audit/console/raffle_prizes.html
-msgid "(public)"
-msgstr "(公開)"
 
 #: templates/admin_audit/console/raffle_prizes.html
 msgid "Internal notes"
@@ -52275,6 +52491,60 @@ msgstr "指導部がこのコンテストを再抽選しました。有効なの
 #: templates/raffle/detail.html
 msgid "see the full draw history"
 msgstr "完全な抽選履歴を見る"
+
+#: templates/raffle/detail.html
+msgid "Prizes you earn by ranking"
+msgstr "順位で獲得できる賞"
+
+#: templates/raffle/detail.html
+msgid ""
+"These are not drawn. Finish the contest in one of these places and the prize"
+" is yours — and you can still win a ticket prize on top."
+msgstr "これらは抽選ではありません。コンテストをこれらの順位で終えれば賞はあなたのもので、さらにチケット賞も獲得できます。"
+
+#: templates/raffle/detail.html
+msgid "awarded"
+msgstr "授与済み"
+
+#: templates/raffle/detail.html
+#, python-format
+msgid "You are #1 with %(v)s. Hold it to the end and the prize is yours."
+msgstr "あなたは %(v)s で #1 です。最後まで守り切れば賞はあなたのものです。"
+
+#: templates/raffle/detail.html
+#, python-format
+msgid ""
+"You are #%(p)s, level with %(who)s at #%(a)s — one more puts you ahead."
+msgstr "あなたは #%(p)s、#%(a)s の %(who)s と並んでいます — あと1つで前に出られます。"
+
+#: templates/raffle/detail.html
+#, python-format
+msgid "You are #%(p)s — %(gap)s behind %(who)s at #%(a)s."
+msgstr "あなたは #%(p)s — #%(a)s の %(who)s に %(gap)s 差をつけられています。"
+
+#: templates/raffle/detail.html
+#, python-format
+msgid ""
+"Ranked %(n)s pilots — climb into the top ten to appear on the board below."
+msgstr "%(n)s 名が順位付けされています — 下のボードに載るにはトップ10入りを目指しましょう。"
+
+#: templates/raffle/detail.html
+msgid ""
+"You haven't scored on this board yet — get on a killmail during the contest "
+"to enter."
+msgstr "このボードではまだ得点がありません — コンテスト期間中に killmail に乗れば参加できます。"
+
+#: templates/raffle/detail.html
+msgid "Nobody has scored on this board yet — it is anyone's to take."
+msgstr "このボードではまだ誰も得点していません — 早い者勝ちです。"
+
+#: templates/raffle/detail.html
+#, python-format
+msgid ""
+"Standings as of %(when)s. Only pilots enrolled with a live ESI token are "
+"ranked, so this can differ from the killboard."
+msgstr ""
+"%(when)s 時点の順位。有効な ESI トークンを持つ登録済みパイロットのみが順位付けされるため、killboard とは異なる場合があります。"
 
 #: templates/raffle/detail.html
 msgid "How to earn tickets"

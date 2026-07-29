@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-29 12:40+0000\n"
+"POT-Creation-Date: 2026-07-29 15:10+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: zh-hans machine-assisted draft\n"
@@ -1001,8 +1001,36 @@ msgid "Prize saved."
 msgstr "奖品已保存。"
 
 #: apps/admin_audit/console_raffle.py
+msgid ""
+"That prize has already been won — it can't be removed. Forfeit the winner "
+"instead if it needs undoing."
+msgstr "该奖品已被赢得 — 无法删除。若需撤销，请取消中奖者资格。"
+
+#: apps/admin_audit/console_raffle.py
 msgid "Prize removed."
 msgstr "奖品已移除。"
+
+#: apps/admin_audit/console_raffle.py
+#, python-format
+msgid "The ticket draw now has %(n)s winners."
+msgstr "票据抽奖现在有 %(n)s 名中奖者。"
+
+#: apps/admin_audit/console_raffle.py
+#, python-format
+msgid "Prize places %(places)s were kept because they have already been won."
+msgstr "第 %(places)s 名已被赢得，因此予以保留。"
+
+#: apps/admin_audit/console_raffle.py
+msgid "Rank prize saved."
+msgstr "排名奖品已保存。"
+
+#: apps/admin_audit/console_raffle.py
+msgid "That rank prize has already been awarded — it can't be removed."
+msgstr "该排名奖品已发放 — 无法删除。"
+
+#: apps/admin_audit/console_raffle.py
+msgid "Rank prize removed."
+msgstr "排名奖品已删除。"
 
 #: apps/admin_audit/console_raffle.py
 #, python-format
@@ -18473,6 +18501,69 @@ msgid "5th prize"
 msgstr "五等奖"
 
 #: apps/raffle/contest_templates.py
+msgid "6th prize"
+msgstr "第6名奖品"
+
+#: apps/raffle/contest_templates.py
+msgid "7th prize"
+msgstr "第7名奖品"
+
+#: apps/raffle/contest_templates.py
+msgid "8th prize"
+msgstr "第8名奖品"
+
+#: apps/raffle/contest_templates.py
+msgid "9th prize"
+msgstr "第9名奖品"
+
+#: apps/raffle/contest_templates.py
+msgid "10th prize"
+msgstr "第10名奖品"
+
+#: apps/raffle/contest_templates.py
+#, python-format
+msgid "Prize #%(n)s"
+msgstr "奖品 #%(n)s"
+
+#: apps/raffle/contest_templates.py
+msgid "PVP event (rank + ticket prizes)"
+msgstr "PVP 活动（排名奖 + 票据奖）"
+
+#: apps/raffle/contest_templates.py
+msgid ""
+"A scheduled PVP push. Fixed prizes for the pilots who top the killboard over"
+" the event, plus a ticket draw everyone who undocks can win."
+msgstr "一次有计划的 PVP 推进。为活动期间登上 killboard 前列的飞行员提供固定奖品，另有一场只要出坞就有机会赢得的票据抽奖。"
+
+#: apps/raffle/contest_templates.py
+msgid "Win the event boards, and get everyone on kills."
+msgstr "拿下活动榜单，把所有人都带上击杀。"
+
+#: apps/raffle/contest_templates.py
+msgid ""
+"Two kinds of prize. RANK PRIZES are earned: finish the event at the listed "
+"place on a board and it is yours — the standings are on the contest page all"
+" event. TICKET PRIZES are drawn at random from the tickets you earned; a "
+"pilot can win only one of those. You can win both. Only pilots enrolled with"
+" a live ESI token are ranked or drawn."
+msgstr ""
+"奖品分两类。排名奖是「挣来的」：活动结束时你位于榜单的指定名次，奖品就归你 — "
+"榜单在整个活动期间都显示在比赛页面上。票据奖则从你获得的票据中随机抽取，每位飞行员最多只能赢得一个。两者可以兼得。只有持有有效 ESI "
+"令牌的已注册飞行员才会进入榜单或参与抽奖。"
+
+#: apps/raffle/contest_templates.py
+msgid "Top killer"
+msgstr "最佳击杀者"
+
+#: apps/raffle/contest_templates.py
+msgid "Top solo killer"
+msgstr "最佳单人击杀者"
+
+#: apps/raffle/contest_templates.py
+msgid "Most active pilot"
+msgstr "最活跃飞行员"
+
+#: apps/raffle/contest_templates.py
 #: templates/admin_audit/console/raffle_detail.html
 msgid "PVP activity raffle"
 msgstr "PVP 活跃度抽奖"
@@ -18711,6 +18802,15 @@ msgid "Invalid JSON: %(error)s"
 msgstr "无效的 JSON：%(error)s"
 
 #: apps/raffle/forms.py
+#| msgid "Booster ends"
+msgid "Booster applies to"
+msgstr "加成适用于"
+
+#: apps/raffle/forms.py apps/raffle/models.py
+msgid "Which kinds of prize the booster inflates when the goal is reached."
+msgstr "达成目标时加成会提升哪几类奖品。"
+
+#: apps/raffle/forms.py
 msgid "The start date can't be in the past."
 msgstr "开始日期不能是过去的日期。"
 
@@ -18741,6 +18841,25 @@ msgstr "请设置一个正数目标（或清除该指标）。"
 #: apps/raffle/forms.py
 msgid "Set a positive boost percent."
 msgstr "请设置一个正数的加成百分比。"
+
+#: apps/raffle/forms.py
+msgid "Killboard board"
+msgstr "killboard 榜单"
+
+#: apps/raffle/forms.py
+#, python-format
+msgid "There is already a prize for place %(n)s on that board."
+msgstr "该榜单第 %(n)s 名已经设有奖品。"
+
+#: apps/raffle/forms.py
+msgid "Ticket-draw winners"
+msgstr "票据抽奖中奖人数"
+
+#: apps/raffle/forms.py
+msgid ""
+"How many prizes the ticket draw awards (1–10). Each pilot can win at most "
+"one of them."
+msgstr "票据抽奖发放的奖品数量（1–10）。每位飞行员最多只能赢得其中一个。"
 
 #: apps/raffle/forms.py
 msgid "Source rate/rules as JSON."
@@ -18975,6 +19094,18 @@ msgid ""
 "10)."
 msgstr "达到目标时，按此百分比提升 ISK/PLEX 奖品价值（例如 10）。"
 
+#: apps/raffle/models.py
+msgid "Both ticket and rank prizes"
+msgstr "票据奖与排名奖皆可"
+
+#: apps/raffle/models.py
+msgid "Ticket-draw prizes only"
+msgstr "仅票据抽奖的奖品"
+
+#: apps/raffle/models.py
+msgid "Rank prizes only"
+msgstr "仅排名奖品"
+
 #: apps/raffle/models.py templates/admin_audit/console/raffle_prizes.html
 msgid "In-game item"
 msgstr "游戏内物品"
@@ -19010,6 +19141,10 @@ msgstr "公开：获奖者如何领取奖品。"
 #: apps/raffle/models.py
 msgid "Internal — leaders only."
 msgstr "内部使用 — 仅限领导层。"
+
+#: apps/raffle/models.py
+msgid "1 = top of that board."
+msgstr "1 = 该榜单榜首。"
 
 #: apps/raffle/models.py templates/admin_audit/console/raffle_sources.html
 msgid "Officer-approved"
@@ -19190,6 +19325,10 @@ msgstr "该结果被取消资格、作废或重抽的原因。"
 #: apps/raffle/models.py
 msgid "Internal fulfilment notes."
 msgstr "内部发放备注。"
+
+#: apps/raffle/models.py
+msgid "Awarded"
+msgstr "已发放"
 
 #: apps/raffle/models.py
 msgid "Same victim repeated"
@@ -19393,6 +19532,17 @@ msgid ""
 "only one prize per pilot — the remaining prizes will go unawarded."
 msgstr ""
 "符合条件的飞行员 %(pilots)s 名，奖品 %(prizes)s 个，而本次比赛每位飞行员最多只能获得一个奖品 — 剩余奖品将无人获得。"
+
+#: apps/raffle/services.py
+#, python-format
+msgid "Pick between 1 and %(max)s ticket winners."
+msgstr "请在 1 到 %(max)s 之间选择抽奖中奖人数。"
+
+#: apps/raffle/services.py
+msgid ""
+"This contest's prize ladder is locked — tickets are already accruing against"
+" it."
+msgstr "本次比赛的奖品阶梯已锁定 — 已经有票据在其上累积。"
 
 #: apps/raffle/services.py
 msgid "Ticket amount must be a positive number."
@@ -26350,6 +26500,7 @@ msgstr "删除此里程碑？飞行员在该里程碑上的进度也会一并删
 
 #: templates/admin_audit/console/content.html
 #: templates/admin_audit/console/doctrine_edit.html
+#: templates/admin_audit/console/raffle_prizes.html
 #: templates/admin_audit/console/readiness/mandatory_ships.html
 #: templates/admin_audit/console/readiness/strategic_roles.html
 #: templates/admin_audit/console/readiness/support.html
@@ -32100,6 +32251,85 @@ msgid ""
 msgstr "本次抽奖活动已不再是草稿 —— 此时编辑奖品将改动一个进行中或已结项的活动。请谨慎操作。"
 
 #: templates/admin_audit/console/raffle_prizes.html
+msgid "How many ticket winners?"
+msgstr "票据抽奖设多少名中奖者？"
+
+#: templates/admin_audit/console/raffle_prizes.html
+#, python-format
+msgid ""
+"Each place in the ticket ladder is one winner, and a pilot can win at most "
+"one of them. Setting this adds or removes places (1–%(max)s); a place that "
+"has already been won is never removed."
+msgstr "票据阶梯的每个名次对应一名中奖者，每位飞行员最多只能赢得一个。此设置会增加或移除名次（1–%(max)s）；已被赢得的名次绝不会被移除。"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid "Set winners"
+msgstr "设置中奖人数"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid "Locked — tickets are accruing"
+msgstr "已锁定 — 票据正在累积"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid "Rank prizes"
+msgstr "排名奖品"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid ""
+"Awarded on the killboard standings for this contest's dates — not drawn. "
+"They stack with each other and with a ticket win, and only pilots enrolled "
+"with a live ESI token are ranked."
+msgstr ""
+"依据本次比赛日期内的 killboard 榜单发放，而非抽取。排名奖之间以及与票据奖之间均可叠加，且只有持有有效 ESI "
+"令牌的已注册飞行员才会进入榜单。"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid "Remove this rank prize?"
+msgstr "移除此排名奖品？"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid ""
+"No rank prizes yet. Add one to reward the pilots who top a board during this"
+" contest."
+msgstr "暂无排名奖品。添加一个，奖励在本次比赛中登顶榜单的飞行员。"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid "Place"
+msgstr "名次"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid "Prize name"
+msgstr "奖品名称"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid "Estimated value"
+msgstr "预估价值"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid "Prize type"
+msgstr "奖品类型"
+
+#: templates/admin_audit/console/raffle_prizes.html templates/erp/board.html
+#: templates/fitting/detail.html templates/industry/chain.html
+#: templates/industry/create.html templates/industry/jobs.html
+#: templates/procurement/po_detail.html templates/store/inventory_fit.html
+#: templates/store/storefront.html
+msgid "Quantity"
+msgstr "数量"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid "Delivery instructions"
+msgstr "发放说明"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid "(public)"
+msgstr "（公开）"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid "Add rank prize"
+msgstr "添加排名奖品"
+
+#: templates/admin_audit/console/raffle_prizes.html
 msgid "Prize table"
 msgstr "奖品表"
 
@@ -32116,25 +32346,9 @@ msgstr "删除奖品"
 msgid "Icon type id"
 msgstr "图标类型 id"
 
-#: templates/admin_audit/console/raffle_prizes.html templates/erp/board.html
-#: templates/fitting/detail.html templates/industry/chain.html
-#: templates/industry/create.html templates/industry/jobs.html
-#: templates/procurement/po_detail.html templates/store/inventory_fit.html
-#: templates/store/storefront.html
-msgid "Quantity"
-msgstr "数量"
-
 #: templates/admin_audit/console/raffle_prizes.html
 msgid "Estimated value (ISK)"
 msgstr "预估价值（ISK）"
-
-#: templates/admin_audit/console/raffle_prizes.html
-msgid "Delivery instructions"
-msgstr "发放说明"
-
-#: templates/admin_audit/console/raffle_prizes.html
-msgid "(public)"
-msgstr "（公开）"
 
 #: templates/admin_audit/console/raffle_prizes.html
 msgid "Internal notes"
@@ -51634,6 +51848,59 @@ msgstr "领导层重新抽取了此活动；仅上方的最终开奖有效。每
 #: templates/raffle/detail.html
 msgid "see the full draw history"
 msgstr "查看完整开奖历史"
+
+#: templates/raffle/detail.html
+msgid "Prizes you earn by ranking"
+msgstr "凭排名赢得的奖品"
+
+#: templates/raffle/detail.html
+msgid ""
+"These are not drawn. Finish the contest in one of these places and the prize"
+" is yours — and you can still win a ticket prize on top."
+msgstr "这些不是抽取的。以这些名次结束比赛，奖品就归你 — 而且你还能再赢一份票据奖。"
+
+#: templates/raffle/detail.html
+msgid "awarded"
+msgstr "已发放"
+
+#: templates/raffle/detail.html
+#, python-format
+msgid "You are #1 with %(v)s. Hold it to the end and the prize is yours."
+msgstr "你以 %(v)s 位居 #1。守到最后，奖品就是你的。"
+
+#: templates/raffle/detail.html
+#, python-format
+msgid ""
+"You are #%(p)s, level with %(who)s at #%(a)s — one more puts you ahead."
+msgstr "你位居 #%(p)s，与 #%(a)s 的 %(who)s 持平 — 再来一个就能反超。"
+
+#: templates/raffle/detail.html
+#, python-format
+msgid "You are #%(p)s — %(gap)s behind %(who)s at #%(a)s."
+msgstr "你位居 #%(p)s — 落后 #%(a)s 的 %(who)s %(gap)s。"
+
+#: templates/raffle/detail.html
+#, python-format
+msgid ""
+"Ranked %(n)s pilots — climb into the top ten to appear on the board below."
+msgstr "已有 %(n)s 名飞行员进入排名 — 挤进前十即可出现在下方榜单中。"
+
+#: templates/raffle/detail.html
+msgid ""
+"You haven't scored on this board yet — get on a killmail during the contest "
+"to enter."
+msgstr "你在此榜单上尚未得分 — 在比赛期间参与一次 killmail 即可进入。"
+
+#: templates/raffle/detail.html
+msgid "Nobody has scored on this board yet — it is anyone's to take."
+msgstr "此榜单尚无人得分 — 先到先得。"
+
+#: templates/raffle/detail.html
+#, python-format
+msgid ""
+"Standings as of %(when)s. Only pilots enrolled with a live ESI token are "
+"ranked, so this can differ from the killboard."
+msgstr "截至 %(when)s 的排名。只有持有有效 ESI 令牌的已注册飞行员才会进入榜单，因此可能与 killboard 有所不同。"
 
 #: templates/raffle/detail.html
 msgid "How to earn tickets"

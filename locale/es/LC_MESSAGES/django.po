@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-29 12:40+0000\n"
+"POT-Creation-Date: 2026-07-29 15:10+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: es machine-assisted draft\n"
@@ -1051,8 +1051,38 @@ msgid "Prize saved."
 msgstr "Premio guardado."
 
 #: apps/admin_audit/console_raffle.py
+msgid ""
+"That prize has already been won — it can't be removed. Forfeit the winner "
+"instead if it needs undoing."
+msgstr ""
+"Ese premio ya fue ganado — no puede eliminarse. Descalifica al ganador si "
+"hay que deshacerlo."
+
+#: apps/admin_audit/console_raffle.py
 msgid "Prize removed."
 msgstr "Premio eliminado."
+
+#: apps/admin_audit/console_raffle.py
+#, python-format
+msgid "The ticket draw now has %(n)s winners."
+msgstr "El sorteo por boletos ahora tiene %(n)s ganadores."
+
+#: apps/admin_audit/console_raffle.py
+#, python-format
+msgid "Prize places %(places)s were kept because they have already been won."
+msgstr "Los puestos %(places)s se conservaron porque ya fueron ganados."
+
+#: apps/admin_audit/console_raffle.py
+msgid "Rank prize saved."
+msgstr "Premio por clasificación guardado."
+
+#: apps/admin_audit/console_raffle.py
+msgid "That rank prize has already been awarded — it can't be removed."
+msgstr "Ese premio por clasificación ya fue concedido — no puede eliminarse."
+
+#: apps/admin_audit/console_raffle.py
+msgid "Rank prize removed."
+msgstr "Premio por clasificación eliminado."
 
 #: apps/admin_audit/console_raffle.py
 #, python-format
@@ -19875,6 +19905,75 @@ msgid "5th prize"
 msgstr "5.º premio"
 
 #: apps/raffle/contest_templates.py
+msgid "6th prize"
+msgstr "6.º premio"
+
+#: apps/raffle/contest_templates.py
+msgid "7th prize"
+msgstr "7.º premio"
+
+#: apps/raffle/contest_templates.py
+msgid "8th prize"
+msgstr "8.º premio"
+
+#: apps/raffle/contest_templates.py
+msgid "9th prize"
+msgstr "9.º premio"
+
+#: apps/raffle/contest_templates.py
+msgid "10th prize"
+msgstr "10.º premio"
+
+#: apps/raffle/contest_templates.py
+#, python-format
+msgid "Prize #%(n)s"
+msgstr "Premio n.º %(n)s"
+
+#: apps/raffle/contest_templates.py
+msgid "PVP event (rank + ticket prizes)"
+msgstr "Evento PVP (premios por clasificación + boletos)"
+
+#: apps/raffle/contest_templates.py
+msgid ""
+"A scheduled PVP push. Fixed prizes for the pilots who top the killboard over"
+" the event, plus a ticket draw everyone who undocks can win."
+msgstr ""
+"Un empujón PVP programado. Premios fijos para los pilotos que encabezan el "
+"killboard durante el evento, más un sorteo por boletos que puede ganar "
+"cualquiera que desatraque."
+
+#: apps/raffle/contest_templates.py
+msgid "Win the event boards, and get everyone on kills."
+msgstr "Gana los cuadros del evento y saca a todos a por kills."
+
+#: apps/raffle/contest_templates.py
+msgid ""
+"Two kinds of prize. RANK PRIZES are earned: finish the event at the listed "
+"place on a board and it is yours — the standings are on the contest page all"
+" event. TICKET PRIZES are drawn at random from the tickets you earned; a "
+"pilot can win only one of those. You can win both. Only pilots enrolled with"
+" a live ESI token are ranked or drawn."
+msgstr ""
+"Dos tipos de premio. Los PREMIOS POR CLASIFICACIÓN se ganan: termina el "
+"evento en el puesto indicado de un cuadro y es tuyo — la clasificación está "
+"en la página del concurso durante todo el evento. Los PREMIOS POR BOLETO se "
+"sortean al azar entre los boletos que hayas ganado; un piloto solo puede "
+"ganar uno de esos. Puedes ganar ambos. Solo se clasifican o se sortean los "
+"pilotos inscritos con un token ESI activo."
+
+#: apps/raffle/contest_templates.py
+msgid "Top killer"
+msgstr "Mejor asesino"
+
+#: apps/raffle/contest_templates.py
+msgid "Top solo killer"
+msgstr "Mejor asesino en solitario"
+
+#: apps/raffle/contest_templates.py
+msgid "Most active pilot"
+msgstr "Piloto más activo"
+
+#: apps/raffle/contest_templates.py
 #: templates/admin_audit/console/raffle_detail.html
 msgid "PVP activity raffle"
 msgstr "Sorteo por actividad PVP"
@@ -20137,6 +20236,15 @@ msgid "Invalid JSON: %(error)s"
 msgstr "JSON no válido: %(error)s"
 
 #: apps/raffle/forms.py
+#| msgid "Booster ends"
+msgid "Booster applies to"
+msgstr "La bonificación se aplica a"
+
+#: apps/raffle/forms.py apps/raffle/models.py
+msgid "Which kinds of prize the booster inflates when the goal is reached."
+msgstr "Qué tipos de premio infla la bonificación cuando se alcanza la meta."
+
+#: apps/raffle/forms.py
 msgid "The start date can't be in the past."
 msgstr "La fecha de inicio no puede estar en el pasado."
 
@@ -20167,6 +20275,27 @@ msgstr "Establece un objetivo positivo (o borra la métrica)."
 #: apps/raffle/forms.py
 msgid "Set a positive boost percent."
 msgstr "Establece un porcentaje de refuerzo positivo."
+
+#: apps/raffle/forms.py
+msgid "Killboard board"
+msgstr "Cuadro del killboard"
+
+#: apps/raffle/forms.py
+#, python-format
+msgid "There is already a prize for place %(n)s on that board."
+msgstr "Ya hay un premio para el puesto %(n)s en ese cuadro."
+
+#: apps/raffle/forms.py
+msgid "Ticket-draw winners"
+msgstr "Ganadores del sorteo por boletos"
+
+#: apps/raffle/forms.py
+msgid ""
+"How many prizes the ticket draw awards (1–10). Each pilot can win at most "
+"one of them."
+msgstr ""
+"Cuántos premios concede el sorteo por boletos (1–10). Cada piloto puede "
+"ganar como máximo uno."
 
 #: apps/raffle/forms.py
 msgid "Source rate/rules as JSON."
@@ -20425,6 +20554,18 @@ msgstr ""
 "Aumentar los valores de los premios en ISK/PLEX este porcentaje cuando se "
 "alcanza el objetivo (p. ej. 10)."
 
+#: apps/raffle/models.py
+msgid "Both ticket and rank prizes"
+msgstr "Premios por boleto y por clasificación"
+
+#: apps/raffle/models.py
+msgid "Ticket-draw prizes only"
+msgstr "Solo los premios del sorteo por boletos"
+
+#: apps/raffle/models.py
+msgid "Rank prizes only"
+msgstr "Solo los premios por clasificación"
+
 #: apps/raffle/models.py templates/admin_audit/console/raffle_prizes.html
 msgid "In-game item"
 msgstr "Ítem del juego"
@@ -20460,6 +20601,10 @@ msgstr "Público: cómo recibe el ganador el premio."
 #: apps/raffle/models.py
 msgid "Internal — leaders only."
 msgstr "Interno — solo líderes."
+
+#: apps/raffle/models.py
+msgid "1 = top of that board."
+msgstr "1 = lo más alto de ese cuadro."
 
 #: apps/raffle/models.py templates/admin_audit/console/raffle_sources.html
 msgid "Officer-approved"
@@ -20651,6 +20796,10 @@ msgstr "Por qué este resultado se descalificó, anuló o volvió a sortear."
 #: apps/raffle/models.py
 msgid "Internal fulfilment notes."
 msgstr "Notas internas de entrega."
+
+#: apps/raffle/models.py
+msgid "Awarded"
+msgstr "Concedido"
 
 #: apps/raffle/models.py
 msgid "Same victim repeated"
@@ -20885,6 +21034,19 @@ msgstr ""
 "%(pilots)s pilotos elegibles para %(prizes)s premios, y este concurso "
 "permite solo un premio por piloto — los premios restantes quedarán sin "
 "asignar."
+
+#: apps/raffle/services.py
+#, python-format
+msgid "Pick between 1 and %(max)s ticket winners."
+msgstr "Elige entre 1 y %(max)s ganadores del sorteo."
+
+#: apps/raffle/services.py
+msgid ""
+"This contest's prize ladder is locked — tickets are already accruing against"
+" it."
+msgstr ""
+"La escalera de premios de este concurso está bloqueada — ya se están "
+"acumulando boletos contra ella."
 
 #: apps/raffle/services.py
 msgid "Ticket amount must be a positive number."
@@ -28431,6 +28593,7 @@ msgstr ""
 
 #: templates/admin_audit/console/content.html
 #: templates/admin_audit/console/doctrine_edit.html
+#: templates/admin_audit/console/raffle_prizes.html
 #: templates/admin_audit/console/readiness/mandatory_ships.html
 #: templates/admin_audit/console/readiness/strategic_roles.html
 #: templates/admin_audit/console/readiness/support.html
@@ -34716,6 +34879,91 @@ msgstr ""
 "concurso activo o cerrado. Ten cuidado."
 
 #: templates/admin_audit/console/raffle_prizes.html
+msgid "How many ticket winners?"
+msgstr "¿Cuántos ganadores del sorteo por boletos?"
+
+#: templates/admin_audit/console/raffle_prizes.html
+#, python-format
+msgid ""
+"Each place in the ticket ladder is one winner, and a pilot can win at most "
+"one of them. Setting this adds or removes places (1–%(max)s); a place that "
+"has already been won is never removed."
+msgstr ""
+"Cada puesto de la escalera de boletos es un ganador, y un piloto puede ganar"
+" como máximo uno. Ajustar esto añade o quita puestos (1–%(max)s); un puesto "
+"ya ganado nunca se quita."
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid "Set winners"
+msgstr "Fijar ganadores"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid "Locked — tickets are accruing"
+msgstr "Bloqueado — se están acumulando boletos"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid "Rank prizes"
+msgstr "Premios por clasificación"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid ""
+"Awarded on the killboard standings for this contest's dates — not drawn. "
+"They stack with each other and with a ticket win, and only pilots enrolled "
+"with a live ESI token are ranked."
+msgstr ""
+"Concedidos según la clasificación del killboard en las fechas de este "
+"concurso — no sorteados. Se acumulan entre sí y con un premio por boleto, y "
+"solo se clasifican los pilotos inscritos con un token ESI activo."
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid "Remove this rank prize?"
+msgstr "¿Eliminar este premio por clasificación?"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid ""
+"No rank prizes yet. Add one to reward the pilots who top a board during this"
+" contest."
+msgstr ""
+"Aún no hay premios por clasificación. Añade uno para recompensar a los "
+"pilotos que encabecen un cuadro durante este concurso."
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid "Place"
+msgstr "Puesto"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid "Prize name"
+msgstr "Nombre del premio"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid "Estimated value"
+msgstr "Valor estimado"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid "Prize type"
+msgstr "Tipo de premio"
+
+#: templates/admin_audit/console/raffle_prizes.html templates/erp/board.html
+#: templates/fitting/detail.html templates/industry/chain.html
+#: templates/industry/create.html templates/industry/jobs.html
+#: templates/procurement/po_detail.html templates/store/inventory_fit.html
+#: templates/store/storefront.html
+msgid "Quantity"
+msgstr "Cantidad"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid "Delivery instructions"
+msgstr "Instrucciones de entrega"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid "(public)"
+msgstr "(público)"
+
+#: templates/admin_audit/console/raffle_prizes.html
+msgid "Add rank prize"
+msgstr "Añadir premio por clasificación"
+
+#: templates/admin_audit/console/raffle_prizes.html
 msgid "Prize table"
 msgstr "Tabla de premios"
 
@@ -34733,25 +34981,9 @@ msgstr "Eliminar premio"
 msgid "Icon type id"
 msgstr "Type id del icono"
 
-#: templates/admin_audit/console/raffle_prizes.html templates/erp/board.html
-#: templates/fitting/detail.html templates/industry/chain.html
-#: templates/industry/create.html templates/industry/jobs.html
-#: templates/procurement/po_detail.html templates/store/inventory_fit.html
-#: templates/store/storefront.html
-msgid "Quantity"
-msgstr "Cantidad"
-
 #: templates/admin_audit/console/raffle_prizes.html
 msgid "Estimated value (ISK)"
 msgstr "Valor estimado (ISK)"
-
-#: templates/admin_audit/console/raffle_prizes.html
-msgid "Delivery instructions"
-msgstr "Instrucciones de entrega"
-
-#: templates/admin_audit/console/raffle_prizes.html
-msgid "(public)"
-msgstr "(público)"
 
 #: templates/admin_audit/console/raffle_prizes.html
 msgid "Internal notes"
@@ -55625,6 +55857,67 @@ msgstr ""
 #: templates/raffle/detail.html
 msgid "see the full draw history"
 msgstr "ver el historial completo de sorteos"
+
+#: templates/raffle/detail.html
+msgid "Prizes you earn by ranking"
+msgstr "Premios que ganas por clasificación"
+
+#: templates/raffle/detail.html
+msgid ""
+"These are not drawn. Finish the contest in one of these places and the prize"
+" is yours — and you can still win a ticket prize on top."
+msgstr ""
+"Estos no se sortean. Termina el concurso en uno de estos puestos y el premio"
+" es tuyo — y aún puedes ganar un premio por boleto además."
+
+#: templates/raffle/detail.html
+msgid "awarded"
+msgstr "concedido"
+
+#: templates/raffle/detail.html
+#, python-format
+msgid "You are #1 with %(v)s. Hold it to the end and the prize is yours."
+msgstr "Vas #1 con %(v)s. Mantenlo hasta el final y el premio es tuyo."
+
+#: templates/raffle/detail.html
+#, python-format
+msgid ""
+"You are #%(p)s, level with %(who)s at #%(a)s — one more puts you ahead."
+msgstr "Vas #%(p)s, empatado con %(who)s en #%(a)s — uno más y le pasas."
+
+#: templates/raffle/detail.html
+#, python-format
+msgid "You are #%(p)s — %(gap)s behind %(who)s at #%(a)s."
+msgstr "Vas #%(p)s — %(gap)s por detrás de %(who)s en #%(a)s."
+
+#: templates/raffle/detail.html
+#, python-format
+msgid ""
+"Ranked %(n)s pilots — climb into the top ten to appear on the board below."
+msgstr ""
+"%(n)s pilotos clasificados — entra en el top diez para aparecer en el cuadro"
+" de abajo."
+
+#: templates/raffle/detail.html
+msgid ""
+"You haven't scored on this board yet — get on a killmail during the contest "
+"to enter."
+msgstr ""
+"Todavía no has puntuado en este cuadro — entra en un killmail durante el "
+"concurso para participar."
+
+#: templates/raffle/detail.html
+msgid "Nobody has scored on this board yet — it is anyone's to take."
+msgstr "Nadie ha puntuado aún en este cuadro — está para quien lo quiera."
+
+#: templates/raffle/detail.html
+#, python-format
+msgid ""
+"Standings as of %(when)s. Only pilots enrolled with a live ESI token are "
+"ranked, so this can differ from the killboard."
+msgstr ""
+"Clasificación a %(when)s. Solo se clasifican los pilotos inscritos con un "
+"token ESI activo, así que esto puede diferir del killboard."
 
 #: templates/raffle/detail.html
 msgid "How to earn tickets"
