@@ -40,7 +40,13 @@ x-app: &app
 
 services:
   nginx:
-    image: nginx:1.27-alpine
+    # 1.30 = the current stable branch. The 1.27 tag we used to pin is frozen upstream —
+    # `docker pull` returns the same April-2025 build forever — so it accumulated 37
+    # HIGH/CRITICAL CVEs, including a CRITICAL in libcrypto3 (OpenSSL 3.3.3, fixed in
+    # 3.3.7). That is the TLS-terminating, internet-facing container, so a stale OpenSSL
+    # there is the worst place in the stack to carry one. 1.30-alpine scans clean.
+    # Track a *stable* branch tag and re-check when it goes EOL; a frozen tag is silent.
+    image: nginx:1.30-alpine
     restart: unless-stopped
     logging: *default-logging
     security_opt:
