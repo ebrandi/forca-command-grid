@@ -39,7 +39,9 @@ from apps.raffle.forms import (
     RaffleContestForm,
     RaffleManualGrantForm,
     RafflePrizeForm,
+    RaffleRankPrizeForm,
     RaffleSourceConfigForm,
+    RaffleTicketWinnerCountForm,
 )
 from apps.raffle.models import (
     RaffleContest,
@@ -48,6 +50,7 @@ from apps.raffle.models import (
     RaffleExclusion,
     RaffleIneligibleActivity,
     RafflePrize,
+    RaffleRankPrize,
     RaffleSuspiciousActivityFlag,
     RaffleTicketLedgerEntry,
     RaffleTicketSourceConfig,
@@ -263,6 +266,11 @@ def raffle_prizes(request, pk):
     return render(request, "admin_audit/console/raffle_prizes.html", {
         "contest": contest, "prizes": contest.prizes.order_by("rank"),
         "form": RafflePrizeForm(initial={"rank": contest.prizes.count() + 1}),
+        "rank_prizes": contest.rank_prizes.order_by("board_key", "position"),
+        "rank_form": RaffleRankPrizeForm(contest=contest),
+        "winner_form": RaffleTicketWinnerCountForm(
+            initial={"count": contest.prizes.count() or services.DEFAULT_TICKET_WINNERS}),
+        "max_winners": services.MAX_TICKET_WINNERS,
     })
 
 
@@ -290,9 +298,81 @@ def raffle_prize_save(request, pk, prize_id=None):
 def raffle_prize_delete(request, pk, prize_id):
     contest = _contest(pk)
     prize = get_object_or_404(RafflePrize, pk=prize_id, contest=contest)
+    # RaffleDrawResult.prize cascades, so deleting a prize that has been won would erase a
+    # published winner and their fulfilment history along with it.
+    if prize.results.exists():
+        messages.error(request, _("That prize has already been won — it can't be removed. "
+                                  "Forfeit the winner instead if it needs undoing."))
+        return redirect("admin_audit:raffle_prizes", pk=pk)
     prize.delete()
     _audit(request, "raffle.prize.delete", target_type="raffle_prize", target_id=str(prize_id))
     messages.success(request, _("Prize removed."))
+    return redirect("admin_audit:raffle_prizes", pk=pk)
+
+
+@login_required
+@role_required(rbac.ROLE_OFFICER)
+@require_POST
+def raffle_winner_count(request, pk):
+    """Set how many pilots the ticket draw pays out to."""
+    contest = _contest(pk)
+    form = RaffleTicketWinnerCountForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, "; ".join(
+            f"{k}: {v.as_text()}" for k, v in form.errors.items()))
+        return redirect("admin_audit:raffle_prizes", pk=pk)
+    try:
+        result = services.set_ticket_prize_slots(
+            contest, form.cleaned_data["count"], request.user)
+    except services.GrantBlocked as e:
+        messages.error(request, str(e))
+        return redirect("admin_audit:raffle_prizes", pk=pk)
+
+    messages.success(request, _("The ticket draw now has %(n)s winners.")
+                     % {"n": result["total"]})
+    if result["kept_won"]:
+        messages.warning(request, _("Prize places %(places)s were kept because they have "
+                                    "already been won.")
+                         % {"places": ", ".join(str(r) for r in result["kept_won"])})
+    return redirect("admin_audit:raffle_prizes", pk=pk)
+
+
+@login_required
+@role_required(rbac.ROLE_OFFICER)
+@require_POST
+def raffle_rank_prize_save(request, pk, rank_prize_id=None):
+    contest = _contest(pk)
+    instance = (get_object_or_404(RaffleRankPrize, pk=rank_prize_id, contest=contest)
+                if rank_prize_id else None)
+    form = RaffleRankPrizeForm(request.POST, instance=instance, contest=contest)
+    if form.is_valid():
+        prize = form.save(commit=False)
+        prize.contest = contest
+        prize.save()
+        _audit(request, "raffle.rank_prize.save", target_type="raffle_rank_prize",
+               target_id=str(prize.pk),
+               metadata={"board": prize.board_key, "position": prize.position})
+        messages.success(request, _("Rank prize saved."))
+    else:
+        messages.error(request, "; ".join(
+            f"{k}: {v.as_text()}" for k, v in form.errors.items()))
+    return redirect("admin_audit:raffle_prizes", pk=pk)
+
+
+@login_required
+@role_required(rbac.ROLE_OFFICER)
+@require_POST
+def raffle_rank_prize_delete(request, pk, rank_prize_id):
+    contest = _contest(pk)
+    prize = get_object_or_404(RaffleRankPrize, pk=rank_prize_id, contest=contest)
+    if prize.awards.exists():
+        messages.error(request, _("That rank prize has already been awarded — it can't be "
+                                  "removed."))
+        return redirect("admin_audit:raffle_prizes", pk=pk)
+    prize.delete()
+    _audit(request, "raffle.rank_prize.delete", target_type="raffle_rank_prize",
+           target_id=str(rank_prize_id))
+    messages.success(request, _("Rank prize removed."))
     return redirect("admin_audit:raffle_prizes", pk=pk)
 
 

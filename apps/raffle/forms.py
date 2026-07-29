@@ -9,11 +9,12 @@ from django.utils import timezone
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 
-from . import metrics
+from . import metrics, rankings
 from .models import (
     RaffleConfig,
     RaffleContest,
     RafflePrize,
+    RaffleRankPrize,
     RaffleTicketSourceConfig,
 )
 
@@ -52,6 +53,21 @@ class RaffleContestForm(forms.ModelForm):
         choices=metrics.CHOICES, required=False, widget=forms.Select(attrs=_INPUT))
     prize_booster_metric = forms.ChoiceField(
         choices=metrics.CHOICES, required=False, widget=forms.Select(attrs=_INPUT))
+    # Declared explicitly, and OPTIONAL. Left to the ModelForm it would be required (the
+    # model field has choices and no blank=True), and every caller that already posts this
+    # form without the new key — the console's own edit flow, and any saved payload — would
+    # start failing validation with no visible cause. Omitting it means "unchanged from the
+    # default", which is also the behaviour that existed before the field did.
+    prize_booster_applies_to = forms.ChoiceField(
+        choices=RaffleContest.BoosterScope.choices, required=False,
+        initial=RaffleContest.BoosterScope.BOTH, widget=forms.Select(attrs=_INPUT),
+        label=_("Booster applies to"),
+        help_text=_("Which kinds of prize the booster inflates when the goal is reached."),
+    )
+
+    def clean_prize_booster_applies_to(self):
+        return (self.cleaned_data.get("prize_booster_applies_to")
+                or RaffleContest.BoosterScope.BOTH)
 
     class Meta:
         model = RaffleContest
@@ -64,6 +80,7 @@ class RaffleContestForm(forms.ModelForm):
             "show_recent_events", "show_ineligible_to_pilots", "archive_public",
             "min_activity_metric", "min_activity_threshold",
             "prize_booster_metric", "prize_booster_goal", "prize_booster_percent",
+            "prize_booster_applies_to",
             "booster_multiplier", "booster_start_at", "booster_end_at",
         ]
         widgets = {
@@ -155,6 +172,70 @@ class RafflePrizeForm(forms.ModelForm):
             "delivery_instructions": forms.Textarea(attrs={**_INPUT, "rows": "2"}),
             "internal_notes": forms.Textarea(attrs={**_INPUT, "rows": "2"}),
         }
+
+
+class RaffleRankPrizeForm(forms.ModelForm):
+    """A fixed prize attached to a place on a killboard board.
+
+    ``board_key`` is limited to :data:`apps.raffle.rankings.AWARDABLE_BOARDS`, not to every
+    board the killboard renders — see the reasoning there for why paying out on "most ISK
+    lost" or "best efficiency" would reward the opposite of what a PVP event is for.
+    """
+
+    board_key = forms.ChoiceField(
+        choices=rankings.AWARDABLE_CHOICES, widget=forms.Select(attrs=_INPUT),
+        label=_("Killboard board"),
+    )
+
+    class Meta:
+        model = RaffleRankPrize
+        fields = ["board_key", "position", "name", "prize_type", "icon_type_id",
+                  "quantity", "estimated_value", "description", "delivery_instructions",
+                  "internal_notes"]
+        widgets = {
+            "position": forms.NumberInput(attrs={**_INPUT, "min": "1", "max": "10"}),
+            "name": forms.TextInput(attrs=_INPUT),
+            "prize_type": forms.Select(attrs=_INPUT),
+            "icon_type_id": forms.NumberInput(attrs=_INPUT),
+            "quantity": forms.NumberInput(attrs={**_INPUT, "min": "1"}),
+            "estimated_value": forms.NumberInput(attrs=_ISK),
+            "description": forms.Textarea(attrs={**_INPUT, "rows": "2"}),
+            "delivery_instructions": forms.Textarea(attrs={**_INPUT, "rows": "2"}),
+            "internal_notes": forms.Textarea(attrs={**_INPUT, "rows": "2"}),
+        }
+
+    def __init__(self, *args, contest=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._contest = contest
+
+    def clean(self):
+        cleaned = super().clean()
+        board, position = cleaned.get("board_key"), cleaned.get("position")
+        contest = self._contest or getattr(self.instance, "contest", None)
+        if contest and board and position:
+            # Report the collision as a field error. The model constraint would otherwise
+            # surface as a 500 — the same trap the ticket prize form still has.
+            clash = RaffleRankPrize.objects.filter(
+                contest=contest, board_key=board, position=position)
+            if self.instance.pk:
+                clash = clash.exclude(pk=self.instance.pk)
+            if clash.exists():
+                self.add_error("position", _(
+                    "There is already a prize for place %(n)s on that board.")
+                    % {"n": position})
+        return cleaned
+
+
+class RaffleTicketWinnerCountForm(forms.Form):
+    """How many pilots the ticket draw pays out to."""
+
+    count = forms.IntegerField(
+        min_value=1, max_value=10, initial=3,
+        widget=forms.NumberInput(attrs={**_INPUT, "min": "1", "max": "10"}),
+        label=_("Ticket-draw winners"),
+        help_text=_("How many prizes the ticket draw awards (1–10). Each pilot can win "
+                    "at most one of them."),
+    )
 
 
 class RaffleSourceConfigForm(forms.ModelForm):

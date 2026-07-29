@@ -18,6 +18,86 @@
 <div class="panel mb-4 border-loss/40 bg-loss/10 px-4 py-2 text-sm text-loss">{% translate "This contest is no longer a draft — editing prizes now changes a live or closed contest. Take care." %}</div>
 {% endif %}
 
+{% comment %}How many pilots the ticket draw pays. The prize rows ARE the winner count —
+there is no separate field — so this control materialises or trims rows to match.{% endcomment %}
+<section class="panel mb-6 p-4">
+  <h2 class="eyebrow mb-2 text-gold">{% translate "How many ticket winners?" %}</h2>
+  <p class="mb-3 text-sm text-faint">{% blocktranslate with max=max_winners %}Each place in the ticket ladder is one winner, and a pilot can win at most one of them. Setting this adds or removes places (1–{{ max }}); a place that has already been won is never removed.{% endblocktranslate %}</p>
+  <form method="post" action="{% url 'admin_audit:raffle_winner_count' contest.pk %}" class="flex flex-wrap items-end gap-3">
+    {% csrf_token %}
+    <div class="w-40">
+      <label class="label" for="{{ winner_form.count.id_for_label }}">{{ winner_form.count.label }}</label>
+      {{ winner_form.count }}
+    </div>
+    <button class="btn-ghost text-sm">{% translate "Set winners" %}</button>
+    {% if not contest.is_editable %}
+      <span class="chip !border-loss/40 !text-loss">{% translate "Locked — tickets are accruing" %}</span>
+    {% endif %}
+  </form>
+</section>
+
+{% comment %}Rank prizes — earned by finishing at a place on a killboard board over the
+contest window. A separate relation from the ticket ladder on purpose: these are never
+drawn and never consume the one-prize-per-pilot allowance.{% endcomment %}
+<section class="panel mb-6 overflow-hidden">
+  <div class="border-b border-line px-4 py-3">
+    <h2 class="eyebrow text-gold">🏅 {% translate "Rank prizes" %}</h2>
+    <p class="mt-1 text-[11px] text-faint">{% translate "Awarded on the killboard standings for this contest's dates — not drawn. They stack with each other and with a ticket win, and only pilots enrolled with a live ESI token are ranked." %}</p>
+  </div>
+  <div class="divide-y divide-line/40">
+    {% for prize in rank_prizes %}
+    <div class="flex flex-wrap items-center gap-3 px-4 py-3">
+      <span class="chip !border-gold/40 !text-gold">#{{ prize.position }}</span>
+      <span class="min-w-0 flex-1">
+        <span class="block truncate text-ink">{{ prize.name }}</span>
+        <span class="block text-[11px] text-faint">{{ prize.board_label }} · {{ prize.get_prize_type_display }} · {{ prize.estimated_value|isk }}</span>
+      </span>
+      <form method="post" action="{% url 'admin_audit:raffle_rank_prize_delete' contest.pk prize.pk %}"
+            data-confirm="{% translate 'Remove this rank prize?' %}">
+        {% csrf_token %}
+        <button class="btn-ghost !py-1 !text-xs">{% translate "Remove" %}</button>
+      </form>
+    </div>
+    {% empty %}
+    <p class="px-4 py-6 text-center text-sm text-faint">{% translate "No rank prizes yet. Add one to reward the pilots who top a board during this contest." %}</p>
+    {% endfor %}
+  </div>
+
+  <form method="post" action="{% url 'admin_audit:raffle_rank_prize_create' contest.pk %}"
+        class="space-y-3 border-t border-line px-4 py-4">
+    {% csrf_token %}
+    <div class="grid gap-3 sm:grid-cols-4">
+      <div>
+        <label class="label" for="{{ rank_form.board_key.id_for_label }}">{{ rank_form.board_key.label }}</label>{{ rank_form.board_key }}
+        {% if rank_form.board_key.errors %}<p class="mt-1 text-xs text-loss">{{ rank_form.board_key.errors|join:" " }}</p>{% endif %}
+      </div>
+      <div>
+        <label class="label" for="{{ rank_form.position.id_for_label }}">{% translate "Place" %}</label>{{ rank_form.position }}
+        {% if rank_form.position.errors %}<p class="mt-1 text-xs text-loss">{{ rank_form.position.errors|join:" " }}</p>{% endif %}
+      </div>
+      <div>
+        <label class="label" for="{{ rank_form.name.id_for_label }}">{% translate "Prize name" %}</label>{{ rank_form.name }}
+        {% if rank_form.name.errors %}<p class="mt-1 text-xs text-loss">{{ rank_form.name.errors|join:" " }}</p>{% endif %}
+      </div>
+      <div>
+        <label class="label" for="{{ rank_form.estimated_value.id_for_label }}">{% translate "Estimated value" %}</label>{{ rank_form.estimated_value }}
+      </div>
+    </div>
+    <div class="grid gap-3 sm:grid-cols-3">
+      <div>
+        <label class="label" for="{{ rank_form.prize_type.id_for_label }}">{% translate "Prize type" %}</label>{{ rank_form.prize_type }}
+      </div>
+      <div>
+        <label class="label" for="{{ rank_form.quantity.id_for_label }}">{% translate "Quantity" %}</label>{{ rank_form.quantity }}
+      </div>
+      <div>
+        <label class="label" for="{{ rank_form.delivery_instructions.id_for_label }}">{% translate "Delivery instructions" %} <span class="text-faint">{% translate "(public)" %}</span></label>{{ rank_form.delivery_instructions }}
+      </div>
+    </div>
+    <div class="flex justify-end"><button class="btn-gold">{% translate "Add rank prize" %}</button></div>
+  </form>
+</section>
+
 {% comment %}Existing prizes — each row shows its summary plus an Alpine collapsible
 edit form that posts the same field names back to raffle_prize_update. A separate
 delete form (data-confirm) removes the prize.{% endcomment %}
