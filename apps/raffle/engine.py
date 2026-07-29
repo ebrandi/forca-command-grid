@@ -58,17 +58,23 @@ def _cap_period_key(scope: str, occurred_at) -> str:
     return ""
 
 
-def _final_tickets(contest, config, event) -> tuple[int, str]:
-    """Apply min-threshold, per-event cap and booster. Returns (tickets, note)."""
+def _final_tickets(contest, config, event) -> tuple[int, str, Decimal, int]:
+    """Apply min-threshold, per-event cap and booster.
+
+    Returns ``(tickets, note, multiplier, base_tickets)``. The multiplier and the pre-boost
+    base come back so the ledger can record WHY a kill worth 1 ticket paid 2 — a pilot
+    reading their ledger during a double-ticket weekend should not have to guess.
+    """
     if config.min_threshold and Decimal(str(event.magnitude)) < config.min_threshold:
-        return 0, "below threshold"
+        return 0, "below threshold", Decimal("1"), 0
     tickets = int(event.base_tickets)
     if config.max_per_event is not None:
         tickets = min(tickets, config.max_per_event)
+    base = tickets
     mult = contest.booster_for(event.occurred_at)
     if mult != 1:
         tickets = int((Decimal(tickets) * mult).to_integral_value())
-    return tickets, ""
+    return tickets, "", mult, base
 
 
 def process_source(contest, source_key: str, *, dry_run: bool = False) -> ProcessResult:
@@ -128,7 +134,7 @@ def process_source(contest, source_key: str, *, dry_run: bool = False) -> Proces
         key = (event.source_ref, cid)
         if key in awarded_keys:
             continue  # already earned — idempotent
-        tickets, note = _final_tickets(contest, config, event)
+        tickets, note, multiplier, base_tickets = _final_tickets(contest, config, event)
         if tickets <= 0:
             result.skipped += 1
             continue
@@ -165,14 +171,28 @@ def process_source(contest, source_key: str, *, dry_run: bool = False) -> Proces
                 result.skipped += 1
                 continue
             # Apply source cap.
+            capped = False
             if cap_scope != RaffleTicketSourceConfig.CapScope.NONE and cap_amount:
                 pk = (cid, _cap_period_key(cap_scope, event.occurred_at))
                 used = tally.get(pk, 0)
                 if used >= cap_amount:
                     result.skipped += 1
                     continue
+                capped = tickets > (cap_amount - used)
                 tickets = min(tickets, cap_amount - used)
                 tally[pk] = used + tickets
+            # Record HOW the final number was reached, not just the number. A pilot whose
+            # kill paid 2 tickets during a double-ticket weekend, or whose 100-ticket solo
+            # was trimmed by a daily cap, can see exactly that on their ticket ledger
+            # instead of concluding the maths is arbitrary.
+            award_meta = dict(event.metadata)
+            if multiplier != 1:
+                award_meta["booster_multiplier"] = str(multiplier)
+                award_meta["base_tickets"] = base_tickets
+            if capped:
+                award_meta["capped"] = True
+                award_meta["cap_scope"] = cap_scope
+                award_meta["cap_amount"] = cap_amount
             new_ledger.append(RaffleTicketLedgerEntry(
                 contest=contest, user_id=e.user_id, character_id=cid,
                 character_name=e.character_name or event.character_name,
@@ -181,7 +201,7 @@ def process_source(contest, source_key: str, *, dry_run: bool = False) -> Proces
                 reason_key=event.reason_key, reason_params=event.reason_params,
                 occurred_at=event.occurred_at,
                 eligibility_snapshot=e.snapshot(), esi_status=e.esi_status,
-                created_by_system=True, metadata=event.metadata,
+                created_by_system=True, metadata=award_meta,
             ))
             awarded_keys.add(key)
             result.awarded_events += 1
@@ -213,6 +233,14 @@ def process_source(contest, source_key: str, *, dry_run: bool = False) -> Proces
 
     if new_ledger:
         RaffleTicketLedgerEntry.objects.bulk_create(new_ledger, batch_size=500, ignore_conflicts=True)
+        # Give the new awards their permanent ticket numbers straight away, so a pilot who
+        # refreshes right after a kill sees real ticket numbers rather than a pending dash.
+        # Numbering is idempotent and ordered by ledger id, so doing it here (rather than
+        # inside bulk_create, which can silently drop conflicting rows and would burn the
+        # numbers allocated to them) never leaves a gap.
+        from . import tickets as ticket_ids
+
+        ticket_ids.assign_ticket_numbers(contest)
     if new_inelig:
         RaffleIneligibleActivity.objects.bulk_create(new_inelig, batch_size=500, ignore_conflicts=True)
     for row in retro_hits:
@@ -262,7 +290,7 @@ def preview_source(contest, source_key: str, *, lookback_days: int = 30) -> dict
     excluded_pilots: set[int] = set()
     cache: dict[int, elig.Eligibility] = {}
     for event in source.iter_events(contest, config, since, until):
-        n, _ = _final_tickets(contest, config, event)
+        n, _note, _mult, _base = _final_tickets(contest, config, event)
         if n <= 0:
             continue
         cid = event.character_id
