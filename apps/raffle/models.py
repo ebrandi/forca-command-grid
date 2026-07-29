@@ -170,6 +170,22 @@ class RaffleContest(TimeStampedModel):
         help_text=_("Boost ISK/PLEX prize values by this percent when the goal is reached (e.g. 10)."),
     )
 
+    class BoosterScope(models.TextChoices):
+        BOTH = "both", _("Both ticket and rank prizes")
+        TICKET = "ticket", _("Ticket-draw prizes only")
+        RANK = "rank", _("Rank prizes only")
+
+    # WHICH prizes the booster inflates. Contest-level rather than per-prize on purpose:
+    # the booster is already a single contest-wide goal with a single percentage, so a
+    # per-prize opt-in would be a second place to express the same idea and would let a
+    # leader build a ladder nobody can explain to pilots ("why did 2nd get boosted and
+    # 3rd not?"). "both" is the pre-existing behaviour and stays the default.
+    prize_booster_applies_to = models.CharField(
+        max_length=8, choices=BoosterScope.choices, default=BoosterScope.BOTH,
+        db_default="both",
+        help_text=_("Which kinds of prize the booster inflates when the goal is reached."),
+    )
+
     # --- Goals / milestones (JSON: [{label, metric, target}]) -------------- #
     goals = models.JSONField(default=list, blank=True)
 
@@ -328,6 +344,76 @@ class RafflePrize(TimeStampedModel):
         return contest_templates.prize_name_for(
             self.contest.template_key, self.rank, self.name
         )
+
+
+class RaffleRankPrize(TimeStampedModel):
+    """A fixed prize earned by finishing at a given place on a killboard board.
+
+    Deliberately NOT part of ``contest.prizes``. Fifteen call sites read that relation —
+    the draw loop, the snapshot's rules, the odds calculation, the readiness checks, the
+    budget guard, the console and the pilot page — and every one of them defaults to
+    "whatever is in the table". A rank prize sitting in that ladder would be drawn by
+    ticket AND would burn its winner's one-prize-per-pilot allowance. Forgetting to filter
+    one of those readers fails *open*, corrupting the draw; with a separate relation the
+    worst a missed reader does is under-count a budget.
+
+    Unlike a ticket prize, this one is not luck: pilots can see the standings all contest
+    and know before the draw whether they are winning it. It stacks with everything —
+    another rank prize on a different board, and a ticket prize on top.
+    """
+
+    contest = models.ForeignKey(
+        RaffleContest, on_delete=models.CASCADE, related_name="rank_prizes"
+    )
+    # A key from apps.raffle.rankings.AWARDABLE_BOARDS.
+    board_key = models.CharField(max_length=24)
+    position = models.PositiveIntegerField(
+        default=1, db_default=1, help_text=_("1 = top of that board.")
+    )
+
+    name = models.CharField(max_length=140)
+    prize_type = models.CharField(
+        max_length=14, choices=RafflePrize.PrizeType.choices,
+        default=RafflePrize.PrizeType.ISK, db_default="isk",
+    )
+    icon_type_id = models.IntegerField(null=True, blank=True)
+    quantity = models.PositiveIntegerField(default=1, db_default=1)
+    estimated_value = models.DecimalField(
+        max_digits=20, decimal_places=2, default=0, db_default=Decimal("0")
+    )
+    description = models.TextField(blank=True, default="", db_default="")
+    delivery_instructions = models.TextField(
+        blank=True, default="", db_default="",
+        help_text=_("Public: how the winner receives the prize."),
+    )
+    internal_notes = models.TextField(
+        blank=True, default="", db_default="", help_text=_("Internal — leaders only.")
+    )
+
+    class Meta:
+        ordering = ["contest", "board_key", "position"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["contest", "board_key", "position"],
+                name="uniq_raffle_rank_prize_slot",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(position__gte=1, position__lte=10),
+                name="ck_raffle_rank_prize_position",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["contest", "board_key"], name="raffle_rankprize_idx"),
+        ]
+
+    def __str__(self) -> str:
+        return f"rank<{self.board_key}#{self.position}: {self.name}>"
+
+    @property
+    def board_label(self) -> str:
+        from . import rankings
+
+        return rankings.CATEGORY_LABELS.get(self.board_key, self.board_key)
 
 
 # --------------------------------------------------------------------------- #
@@ -959,6 +1045,94 @@ class RaffleDrawResult(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"result #{self.draw_order} {self.winner_character_name or self.winner_user_id}"
+
+
+class RaffleRankAward(TimeStampedModel):
+    """A rank prize actually awarded to a pilot, with the standings that decided it.
+
+    A sibling of :class:`RaffleDrawResult` rather than a row in it. That table requires a
+    draw: ``uniq_raffle_result_per_prize`` is conditioned on ``(draw, prize)``, and Postgres
+    treats NULLs as distinct, so a nullable draw would silently void "one live winner per
+    prize". Independently, ``services.dashboard_summary`` filters ``RaffleDrawResult`` with
+    no draw filter and then dereferences ``result.draw.contest`` — a draw-less row there is
+    an AttributeError on every Command Center render.
+
+    ``standings`` freezes the board that decided the award. The killboard keeps moving after
+    a contest closes, so without the frozen rows nobody could later show *why* this pilot
+    won — the same reason the ticket pool is snapshotted before its draw.
+    """
+
+    class Status(models.TextChoices):
+        AWARDED = "awarded", _("Awarded")
+        FORFEITED = "forfeited", _("Forfeited")
+        VOID = "void", _("Void")
+
+    contest = models.ForeignKey(
+        RaffleContest, on_delete=models.CASCADE, related_name="rank_awards"
+    )
+    rank_prize = models.ForeignKey(
+        RaffleRankPrize, on_delete=models.CASCADE, related_name="awards"
+    )
+    # The draw these were awarded alongside, so one page can show everything the contest
+    # paid out. Null if leadership ever awards rank prizes without running a ticket draw.
+    draw = models.ForeignKey(
+        RaffleDraw, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="rank_awards",
+    )
+
+    winner_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="raffle_rank_wins",
+    )
+    winner_character_id = models.BigIntegerField(null=True, blank=True)
+    winner_character_name = models.CharField(
+        max_length=200, blank=True, default="", db_default=""
+    )
+
+    # What they scored and where they finished — the evidence, in the board's own units.
+    metric_value = models.DecimalField(
+        max_digits=24, decimal_places=2, default=0, db_default=Decimal("0")
+    )
+    position = models.PositiveIntegerField(default=1, db_default=1)
+    standings = models.JSONField(default=list, blank=True)
+
+    awarded_value = models.DecimalField(
+        max_digits=20, decimal_places=2, default=0, db_default=Decimal("0")
+    )
+    booster_applied = models.BooleanField(default=False, db_default=False)
+
+    status = models.CharField(
+        max_length=10, choices=Status.choices, default=Status.AWARDED, db_default="awarded"
+    )
+    status_reason = models.CharField(max_length=300, blank=True, default="", db_default="")
+
+    fulfil_status = models.CharField(
+        max_length=10, choices=RaffleDrawResult.FulfilStatus.choices,
+        default=RaffleDrawResult.FulfilStatus.PENDING, db_default="pending", db_index=True,
+    )
+    fulfilled_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="+",
+    )
+    fulfilled_at = models.DateTimeField(null=True, blank=True)
+    fulfilment_notes = models.TextField(blank=True, default="", db_default="")
+
+    class Meta:
+        ordering = ["contest", "rank_prize"]
+        constraints = [
+            # One live award per prize slot. Conditioned on the live status so a forfeited
+            # award stays on file beside its replacement, exactly as a draw result does.
+            models.UniqueConstraint(
+                fields=["rank_prize"], name="uniq_raffle_rank_award_live",
+                condition=models.Q(status="awarded"),
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["contest", "status"], name="raffle_rankaward_idx"),
+        ]
+
+    def __str__(self) -> str:
+        return f"rank award {self.rank_prize_id} → {self.winner_character_name}"
 
 
 class RaffleParticipantEligibilitySnapshot(TimeStampedModel):
