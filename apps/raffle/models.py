@@ -182,6 +182,18 @@ class RaffleContest(TimeStampedModel):
         related_name="+",
     )
 
+    # --- Ticket-number allocation (see apps.raffle.tickets) ---------------- #
+    # The next ticket number to hand out in this contest. Monotonic and never reset:
+    # numbers are permanent pilot-facing identity, so a reused number would make two
+    # different tickets indistinguishable in the draw receipt. Advanced only under a
+    # row lock by :func:`apps.raffle.tickets.assign_ticket_numbers`.
+    next_ticket_number = models.PositiveIntegerField(default=1, db_default=1)
+    # True when this contest's tickets were numbered retroactively by the migration that
+    # introduced numbering, rather than at award time. The numbers are still real (award
+    # order is recorded), but a draw taken BEFORE numbering existed never saw them — so
+    # the UI must not dress an old result up as having had a winning ticket number.
+    ticket_numbers_backfilled = models.BooleanField(default=False, db_default=False)
+
     class Meta:
         ordering = ["-start_at", "-created_at"]
         indexes = [
@@ -424,6 +436,16 @@ class RaffleTicketLedgerEntry(TimeStampedModel):
         max_length=120, help_text=_("Stable event id, e.g. killmail:123 / manual:45.")
     )
     amount = models.IntegerField(default=0, help_text=_("Tickets (negative for reversals)."))
+    # --- Permanent ticket identity (see apps.raffle.tickets) --------------- #
+    # The first ticket number this award owns; the award's tickets are the half-open
+    # range ``[ticket_start, ticket_start + amount)``. Allocated once, in ledger-id
+    # order, from the contest's monotonic counter — so a new award always APPENDS and
+    # can never renumber a ticket a pilot has already been shown. NULL means "not yet
+    # numbered" (a row the sweep just wrote, or a pre-migration historical row); a
+    # number, once assigned, is never rewritten and never reused, even if the entry is
+    # later reversed or disqualified. Keeping the number on a dead ticket is deliberate:
+    # the gap it leaves in the pool is evidence, and hiding it would renumber the rest.
+    ticket_start = models.PositiveIntegerField(null=True, blank=True)
     # When the underlying ACTIVITY happened (distinct from created_at, when the row
     # was written) — drives period caps, the accrual-by-day curve, and the
     # non-retroactive pre-enrolment gate.
@@ -462,13 +484,23 @@ class RaffleTicketLedgerEntry(TimeStampedModel):
             models.UniqueConstraint(
                 fields=["contest", "source_key", "source_ref", "character_id"],
                 name="uniq_raffle_ticket_event",
-            )
+            ),
+            # Two awards sharing a start would make their tickets indistinguishable in
+            # the receipt — the one thing ticket numbering exists to prevent. Enforced
+            # in the database so no future write path can reintroduce it.
+            models.UniqueConstraint(
+                fields=["contest", "ticket_start"], name="uniq_raffle_ticket_start",
+                condition=models.Q(ticket_start__isnull=False),
+            ),
         ]
         indexes = [
             models.Index(fields=["contest", "user"], name="raffle_ledger_user_idx"),
             models.Index(fields=["contest", "source_key"], name="raffle_ledger_source_idx"),
             models.Index(fields=["contest", "status"], name="raffle_ledger_status_idx"),
             models.Index(fields=["contest", "source_ref"], name="raffle_ledger_ref_idx"),
+            # Serves both the numbering pass (find unnumbered rows) and the ledger's
+            # "search by ticket number" lookup.
+            models.Index(fields=["contest", "ticket_start"], name="raffle_ledger_tno_idx"),
         ]
 
     def __str__(self) -> str:
@@ -477,6 +509,37 @@ class RaffleTicketLedgerEntry(TimeStampedModel):
     @property
     def counts_for_draw(self) -> bool:
         return self.status == self.Status.APPROVED and self.amount > 0
+
+    # --- Ticket identity helpers ------------------------------------------ #
+    @property
+    def ticket_end(self) -> int | None:
+        """One past the last ticket number this award owns (half-open), or None."""
+        if self.ticket_start is None or self.amount <= 0:
+            return None
+        return self.ticket_start + self.amount
+
+    @property
+    def ticket_numbers(self) -> list[int]:
+        """Every ticket number this award owns. Only for small awards / detail views —
+        the ledger UI renders :attr:`ticket_range_label` instead so a 100-ticket solo
+        kill costs one row, not a hundred."""
+        if self.ticket_start is None or self.amount <= 0:
+            return []
+        return list(range(self.ticket_start, self.ticket_start + self.amount))
+
+    @property
+    def ticket_range_label(self) -> str:
+        """``#12`` for a single ticket, ``#12–#111`` for a run, ``—`` when unnumbered."""
+        if self.ticket_start is None or self.amount <= 0:
+            return "—"
+        if self.amount == 1:
+            return f"#{self.ticket_start}"
+        return f"#{self.ticket_start}–#{self.ticket_start + self.amount - 1}"
+
+    def owns_ticket(self, number: int) -> bool:
+        if self.ticket_start is None or self.amount <= 0:
+            return False
+        return self.ticket_start <= number < self.ticket_start + self.amount
 
     @property
     def reason_i18n(self) -> str:
@@ -633,6 +696,89 @@ class RaffleIneligibleActivity(TimeStampedModel):
 
 
 # --------------------------------------------------------------------------- #
+#  Frozen ticket-pool snapshot
+# --------------------------------------------------------------------------- #
+class RaffleTicketPoolSnapshot(TimeStampedModel):
+    """The immutable, hashed ticket pool a draw runs against.
+
+    Why this exists: the seed commitment proves the *seed* wasn't swapped, but it says
+    nothing about the *pool*. Without a frozen pool, whoever can read the committed seed
+    can compute the outcome and then shift it by disqualifying one ledger entry — the
+    ranges move and a different pilot wins, with the commitment still verifying. Freezing
+    the pool and publishing its hash BEFORE the draw closes that hole: after the freeze,
+    both halves of the input are public and fixed, so the result is determined.
+
+    ``entries`` is the ordered, canonical pool: one compact row per drawable award,
+    ``[ledger_entry_id, user_id, ticket_start, amount, draw_start]``, ordered by
+    ``ticket_start``. ``draw_start`` is the award's offset in the *contiguous* draw space
+    (invalidated tickets leave gaps in ticket numbers, so the two differ) — it is what
+    ``r % total_tickets`` indexes into.
+
+    A snapshot is never edited. An exceptional post-freeze correction creates a NEW
+    version and sets ``superseded_by`` on this one, so the reopening is on the record.
+    """
+
+    contest = models.ForeignKey(
+        RaffleContest, on_delete=models.CASCADE, related_name="pool_snapshots"
+    )
+    version = models.PositiveIntegerField(default=1)
+
+    # What was frozen, and when.
+    frozen_at = models.DateTimeField(default=timezone.now)
+    cutoff_at = models.DateTimeField(
+        help_text=_("Ticket accrual cutoff this pool was taken against.")
+    )
+    frozen_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="+", help_text=_("Null = frozen automatically at contest close."),
+    )
+
+    total_tickets = models.IntegerField(default=0)
+    total_entries = models.IntegerField(default=0)
+    total_pilots = models.IntegerField(default=0)
+    excluded_tickets = models.IntegerField(default=0)
+    excluded_pilots = models.IntegerField(default=0)
+
+    # The pool itself + the rules that were in force. Both feed the hash.
+    entries = models.JSONField(default=list, blank=True)
+    pilots = models.JSONField(default=list, blank=True)
+    rules = models.JSONField(default=dict, blank=True)
+    exclusion_summary = models.JSONField(default=dict, blank=True)
+
+    algorithm_version = models.CharField(max_length=8, default=DEFAULT_ALGORITHM_VERSION)
+    # sha256 over the canonical serialisation (see apps.raffle.snapshot.content_hash).
+    content_hash = models.CharField(max_length=64, blank=True, db_index=True)
+
+    superseded_by = models.ForeignKey(
+        "self", on_delete=models.SET_NULL, null=True, blank=True, related_name="supersedes"
+    )
+    supersede_reason = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["-contest_id", "-version"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["contest", "version"], name="uniq_raffle_snapshot_version"
+            )
+        ]
+        indexes = [
+            models.Index(fields=["contest", "-version"], name="raffle_snap_ver_idx"),
+        ]
+
+    def __str__(self) -> str:
+        return f"snapshot<{self.contest_id}:v{self.version}:{self.total_tickets}t>"
+
+    @property
+    def is_current(self) -> bool:
+        return self.superseded_by_id is None
+
+    @property
+    def short_hash(self) -> str:
+        """The first 16 hex chars — what the UI shows so pilots can eyeball a match."""
+        return self.content_hash[:16]
+
+
+# --------------------------------------------------------------------------- #
 #  Draw + results + eligibility snapshot
 # --------------------------------------------------------------------------- #
 class RaffleDraw(TimeStampedModel):
@@ -650,6 +796,15 @@ class RaffleDraw(TimeStampedModel):
         FAILED = "failed", _("Failed")
 
     contest = models.ForeignKey(RaffleContest, on_delete=models.CASCADE, related_name="draws")
+    # The frozen pool this draw ran against. Null only on pre-migration historical draws,
+    # which were drawn from the live ledger before snapshots existed.
+    snapshot = models.ForeignKey(
+        RaffleTicketPoolSnapshot, on_delete=models.PROTECT, null=True, blank=True,
+        related_name="draws",
+    )
+    # Denormalised so the receipt keeps proving which pool was used even if the snapshot
+    # row is later superseded.
+    snapshot_hash = models.CharField(max_length=64, blank=True, db_default="")
     status = models.CharField(
         max_length=10, choices=Status.choices, default=Status.PENDING, db_index=True
     )
@@ -693,6 +848,14 @@ class RaffleDraw(TimeStampedModel):
     superseded_by = models.ForeignKey(
         "self", on_delete=models.SET_NULL, null=True, blank=True, related_name="supersedes"
     )
+    # Why this draw replaced an earlier one, and who authorised it. Previously the redraw
+    # reason lived only in the audit log, so the public draw history could show THAT a
+    # redraw happened but never WHY — which is the half that matters for trust.
+    redraw_reason = models.TextField(blank=True, db_default="")
+    redraw_authorised_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="+",
+    )
     notes = models.TextField(blank=True)
     error = models.TextField(blank=True)
 
@@ -735,8 +898,37 @@ class RaffleDrawResult(TimeStampedModel):
     winner_character_name = models.CharField(max_length=200, blank=True)
 
     draw_order = models.PositiveIntegerField(default=1, help_text=_("1 = first prize drawn."))
+    # The offset in the snapshot's contiguous draw space that the hash chain actually
+    # rolled. Historically this stored the winner's FIRST ticket instead of the drawn
+    # one, which made every published "winning ticket" wrong; draws taken since carry
+    # the real value. ``winning_ticket_no`` is the permanent, pilot-facing identity.
     winning_ticket_index = models.IntegerField(default=0)
+    winning_ticket_no = models.PositiveIntegerField(
+        null=True, blank=True,
+        help_text=_("The permanent ticket number that won. Null on pre-snapshot draws, "
+                    "where the winning ticket was never recorded."),
+    )
+    winning_ledger_entry = models.ForeignKey(
+        RaffleTicketLedgerEntry, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="winning_results",
+        help_text=_("The award that owned the winning ticket — the evidence link."),
+    )
     winning_ticket_ref = models.CharField(max_length=120, blank=True)
+    # Exceptional-case bookkeeping: a forfeited/void result is superseded by a
+    # replacement drawn for the same prize, and the chain stays walkable both ways.
+    replaces = models.ForeignKey(
+        "self", on_delete=models.SET_NULL, null=True, blank=True, related_name="replaced_by",
+        help_text=_("The earlier result this one replaces (forfeit / disqualification)."),
+    )
+    status_reason = models.CharField(
+        max_length=300, blank=True, db_default="",
+        help_text=_("Why this result was forfeited, voided or redrawn."),
+    )
+    status_changed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="+",
+    )
+    status_changed_at = models.DateTimeField(null=True, blank=True)
     # Effective value actually awarded = prize value × the prize booster when it was
     # achieved (ISK/PLEX prizes only); frozen so fulfilment pays the boosted amount.
     awarded_value = models.DecimalField(max_digits=20, decimal_places=2, default=0)
@@ -755,7 +947,14 @@ class RaffleDrawResult(TimeStampedModel):
     class Meta:
         ordering = ["draw", "draw_order"]
         constraints = [
-            models.UniqueConstraint(fields=["draw", "prize"], name="uniq_raffle_result_per_prize")
+            # One LIVE winner per prize — but a forfeited/voided/redrawn result stays in
+            # the table beside its replacement, because erasing it is precisely what a
+            # redraw must never do. Conditioning on ``won`` keeps the invariant that
+            # matters (a prize is never doubly awarded) without deleting the history.
+            models.UniqueConstraint(
+                fields=["draw", "prize"], name="uniq_raffle_result_per_prize",
+                condition=models.Q(status="won"),
+            )
         ]
 
     def __str__(self) -> str:
