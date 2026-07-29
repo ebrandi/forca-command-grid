@@ -741,10 +741,15 @@ def killmail_detail(request: HttpRequest, killmail_id: int) -> HttpResponse:
     # we also resolve each item's at-kill price source for the auditable breakdown, reading
     # local history only (never a network fetch on a page view).
     from apps.killboard.valuation import compute_value
-    from apps.market.pricing import build_price_index
 
     wheel = fitrender.build_fit_wheel(killmail, deviation)
-    now_total = compute_value(killmail, build_price_index(), persist_items=False)["total_value"]
+    # Price via the default ``price_for``, which reads the process-local 300s snapshot.
+    # ``build_price_index`` is for batch jobs that value millions of items: it loads EVERY
+    # MarketPrice row for both profiles into a fresh dict on each call, so using it here
+    # meant two unbounded table scans (tens of thousands of rows, Decimal-ised then thrown
+    # away) on every hit of this public, most-linked page. The resolution order is
+    # identical — live Jita sell → CCP adjusted → 0 — so the figure is unchanged.
+    now_total = compute_value(killmail, persist_items=False)["total_value"]
     then_total = (
         killmail.value_at_kill if killmail.value_at_kill is not None else killmail.total_value
     )
