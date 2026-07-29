@@ -49,9 +49,12 @@ def test_execute_draw_refused_for_non_director(client, django_user_model, sde):
     contest.refresh_from_db()
     assert contest.status == RaffleContest.Status.CLOSED
 
-    # A Director executes it for real.
+    # A Director executes it for real. ``ack_warnings`` is the pre-draw checklist's
+    # acknowledgement: this fixture never runs the source sweep, so the checklist warns
+    # that sources have not been swept past the cutoff, and a warning must be consciously
+    # accepted rather than clicked past.
     client.force_login(director)
-    resp = client.post(url, {"action": "execute"})
+    resp = client.post(url, {"action": "execute", "ack_warnings": "1"})
     assert resp.status_code == 302
     assert contest.draws.filter(status=RaffleDraw.Status.COMPLETED).exists()
     contest.refresh_from_db()
