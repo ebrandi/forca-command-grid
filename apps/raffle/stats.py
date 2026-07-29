@@ -242,21 +242,52 @@ def recommendations(contest) -> list[str]:
 # --------------------------------------------------------------------------- #
 #  Per-pilot performance (private page)
 # --------------------------------------------------------------------------- #
+def win_chance(my_tickets: int, total_tickets: int, prize_count: int) -> dict:
+    """An honest statement of a pilot's chances — never an invented percentage.
+
+    With a single prize the answer is exact: your tickets over the pool. With several
+    prizes it is not, because ``one_prize_per_pilot`` makes each subsequent draw depend on
+    who has already won, and there is no closed form worth pretending about. Rather than
+    print a wrong number we publish the two things that ARE exact — the pilot's share of
+    the pool, which is precisely their chance at the first prize, and the fact that more
+    prizes can only improve on it — and let the template say so in words.
+    """
+    if total_tickets <= 0 or my_tickets <= 0:
+        return {"share_pct": 0.0, "first_prize_pct": 0.0, "exact": True,
+                "prize_count": prize_count, "has_pool": total_tickets > 0}
+    share = 100.0 * my_tickets / total_tickets
+    return {
+        "share_pct": round(share, 2),
+        # Exactly the chance of taking the FIRST prize drawn, whatever the prize count.
+        "first_prize_pct": round(share, 2),
+        # True only when the first prize is the only prize — then it is the whole answer.
+        "exact": prize_count <= 1,
+        "prize_count": prize_count,
+        "has_pool": True,
+    }
+
+
 def pilot_performance(contest, user) -> dict:
-    """Everything the private performance page needs for one account."""
+    """Everything the private performance page needs for one account.
+
+    Aggregates are computed in the database over the pilot's WHOLE history. The previous
+    version sliced the last 100 award events and then built the accrual curve from that
+    slice, so an active pilot's history was silently truncated and their chart was simply
+    wrong past the hundredth award.
+    """
     from . import eligibility as elig
 
     e = elig.for_user(contest, user)
     summary = RaffleParticipantSummary.objects.filter(contest=contest, user=user).first()
-    entries = list(
-        RaffleTicketLedgerEntry.objects.filter(contest=contest, user=user)
-        .order_by("-created_at")[:100]
-    )
-    approved = [x for x in entries if x.status == RaffleTicketLedgerEntry.Status.APPROVED]
 
+    mine = RaffleTicketLedgerEntry.objects.filter(contest=contest, user=user)
+    approved = mine.filter(status=RaffleTicketLedgerEntry.Status.APPROVED, amount__gt=0)
+
+    # Keyed on occurred_at (when the activity happened), matching contest_statistics —
+    # created_at is when the sweep wrote the row, which bunches a backfill onto one day.
     by_day = defaultdict(int)
-    for x in approved:
-        by_day[x.created_at.date().isoformat()] += x.amount
+    for occurred_at, amount in approved.values_list("occurred_at", "amount"):
+        by_day[occurred_at.date().isoformat()] += amount
     activity_by_day = [{"day": d, "tickets": n} for d, n in sorted(by_day.items())]
 
     total_eligible = (
@@ -264,14 +295,24 @@ def pilot_performance(contest, user) -> dict:
         .aggregate(n=Sum("total_tickets"))["n"] or 0
     )
     my_tickets = summary.total_tickets if summary else 0
-    odds = round(100 * my_tickets / total_eligible, 2) if total_eligible else 0.0
+    prize_count = contest.prizes.count()
+
+    counts = mine.values("status").annotate(n=Count("id"), tickets=Sum("amount"))
+    by_status = {row["status"]: {"events": row["n"], "tickets": row["tickets"] or 0}
+                 for row in counts}
 
     return {
         "eligibility": e,
         "summary": summary,
-        "entries": entries,
+        # The recent slice for the at-a-glance card. The full, filterable, paginated
+        # history lives on the ticket-ledger page — this is explicitly a preview, and the
+        # template links onward rather than implying it is everything.
+        "recent_entries": list(mine.order_by("-id")[:10]),
+        "event_count": mine.count(),
+        "by_status": by_status,
         "activity_by_day": activity_by_day,
-        "odds": odds,
+        "odds": win_chance(my_tickets, total_eligible, prize_count),
         "my_tickets": my_tickets,
         "total_eligible_tickets": total_eligible,
+        "prize_count": prize_count,
     }

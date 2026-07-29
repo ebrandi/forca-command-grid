@@ -46,11 +46,14 @@
           <p class="text-sm text-faint">{{ my_elig.message }}</p>
         </div>
         <div class="ml-auto text-right">
-          <p class="data text-3xl font-bold text-gold">{{ my_summary.total_tickets|default:0 }}</p>
-          <p class="text-[11px] text-faint">{% translate "your tickets" %}{% if contest.show_odds and my_summary %} · ~{{ my_summary.total_tickets }}/{{ stats.total_tickets }} {% translate "odds" %}{% endif %}</p>
+          <p class="data text-3xl font-bold text-gold tabular-nums">{{ my_summary.total_tickets|default:0 }}</p>
+          <p class="text-[11px] text-faint">{% translate "your tickets" %}{% if contest.show_odds and my_summary %} · {% blocktranslate with mine=my_summary.total_tickets total=stats.total_tickets pct=my_odds.share_pct %}{{ mine }} of {{ total }} ({{ pct }}%){% endblocktranslate %}{% endif %}</p>
         </div>
       </div>
-      <div class="mt-3"><a href="{% url 'raffle:me' contest.slug %}" class="btn-ghost text-sm">{% translate "View my progress" %} →</a></div>
+      <div class="mt-3 flex flex-wrap gap-2">
+        <a href="{% url 'raffle:tickets' contest.slug %}" class="btn-gold text-sm">{% translate "My ticket numbers" %} →</a>
+        <a href="{% url 'raffle:me' contest.slug %}" class="btn-ghost text-sm">{% translate "View my progress" %}</a>
+      </div>
     {% else %}
       <div class="flex flex-wrap items-center gap-3">
         <svg class="h-7 w-7 text-gold"><use href="#i-lock"/></svg>
@@ -260,12 +263,32 @@
   <section class="panel p-5">
     <h2 class="eyebrow mb-2 text-gold">{% translate "How the draw is fair" %}</h2>
     <ul class="space-y-2 text-sm text-muted">
-      <li>🔒 {% blocktranslate %}A secret random seed is generated with a cryptographically-secure generator, and its fingerprint is published <em>before</em> the draw.{% endblocktranslate %}</li>
-      <li>🎲 {% translate "Winners are picked by a repeatable hash of that seed — after the draw the seed is revealed so anyone can recompute and verify every pick." %}</li>
-      <li>🎟️ {% translate "Only enrolled pilots with a valid ESI token at draw time are in the pool. One prize per pilot" %}{% if not contest.one_prize_per_pilot %} {% translate "is off — a pilot can win more than once" %}{% endif %}.</li>
+      <li>🧊 {% blocktranslate %}When ticket accrual closes, the whole ticket pool is frozen and its fingerprint is published. After that nothing can be added, removed or renumbered.{% endblocktranslate %}</li>
+      <li>🔒 {% blocktranslate %}Only then is a secret random seed generated with a cryptographically-secure generator, and its fingerprint published <em>before</em> the draw.{% endblocktranslate %}</li>
+      <li>🎲 {% translate "Winners are picked by a repeatable hash of that seed — after the draw the seed is revealed so anyone can recompute every pick and see exactly which ticket number won." %}</li>
+      <li>🎟️ {% translate "Only enrolled pilots with a valid ESI token at draw time can win. One prize per pilot" %}{% if not contest.one_prize_per_pilot %} {% translate "is off — a pilot can win more than once" %}{% endif %}.</li>
+      <li>♻️ {% translate "If a winner turns out to be ineligible, their replacement is drawn from the same frozen pool and the original result stays on the record. Nothing is ever quietly rewritten." %}</li>
     </ul>
-    {% if winners %}<a href="{% url 'raffle:transparency' contest.slug %}" class="btn-ghost mt-3 text-sm">{% translate "See the transparency report" %} →</a>{% endif %}
+    <div class="mt-3 flex flex-wrap gap-2">
+      {% if winners %}<a href="{% url 'raffle:transparency' contest.slug %}" class="btn-ghost text-sm">{% translate "See the draw receipt" %} →</a>{% endif %}
+      {% if snapshot %}<a href="{% url 'raffle:pool' contest.slug %}" class="btn-ghost text-sm">{% translate "See the frozen pool" %} →</a>{% endif %}
+    </div>
   </section>
+
+  {% if snapshot %}
+  <section class="panel p-5">
+    <h2 class="eyebrow mb-2 text-gold">{% translate "The ticket pool is frozen" %}</h2>
+    <p class="text-sm text-muted">
+      {% blocktranslate with when=snapshot.frozen_at|date:"M j, Y H:i" tickets=snapshot.total_tickets pilots=snapshot.total_pilots %}Frozen on {{ when }} UTC with {{ tickets }} tickets from {{ pilots }} pilots.{% endblocktranslate %}
+    </p>
+    <dl class="mt-3 space-y-1 text-xs">
+      <div class="flex flex-wrap gap-2">
+        <dt class="w-32 text-faint">{% translate "Fingerprint" %}</dt>
+        <dd class="data break-all text-muted">{{ snapshot.content_hash }}</dd>
+      </div>
+    </dl>
+  </section>
+  {% endif %}
   {% if contest.public_rules %}
   <section class="panel p-5">
     <h2 class="eyebrow mb-2 text-gold">{% translate "Rules" %}</h2>

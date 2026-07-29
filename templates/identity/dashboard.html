@@ -131,7 +131,7 @@ GOVERNANCE (keep these or the merge erodes):
         <span class="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-space text-gold"><svg class="h-5 w-5"><use href="#i-coin"/></svg></span>
         <span class="min-w-0 flex-1">
           <span class="text-ink">{{ raffle.active.name }}</span>
-          <span class="block text-xs text-faint">{% blocktranslate count n=raffle.active.my_tickets %}{{ n }} ticket{% plural %}{{ n }} tickets{% endblocktranslate %}{% if raffle.active.odds_pct %} · ~{{ raffle.active.odds_pct }}% {% translate "odds" %}{% endif %}{% if raffle.active.my_rank %} · {% translate "rank" %} #{{ raffle.active.my_rank }}{% endif %} · {% blocktranslate with t=raffle.active.draw_at|timeuntil %}draw in {{ t }}{% endblocktranslate %}</span>
+          <span class="block text-xs text-faint">{% blocktranslate count n=raffle.active.my_tickets %}{{ n }} ticket{% plural %}{{ n }} tickets{% endblocktranslate %}{% if raffle.active.odds_pct %} · {{ raffle.active.odds_pct }}% {% translate "of the pool" %}{% endif %}{% if raffle.active.my_rank %} · {% translate "rank" %} #{{ raffle.active.my_rank }}{% endif %} · {% blocktranslate with t=raffle.active.draw_at|timeuntil %}draw in {{ t }}{% endblocktranslate %}</span>
         </span>
         {% if raffle.active.accruing and not raffle.active.my_tickets %}<span class="chip !border-cyan/40 !text-cyan shrink-0">{% translate "earn tickets" %}</span>{% endif %}
       </a>

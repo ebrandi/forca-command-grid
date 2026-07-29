@@ -1,0 +1,20 @@
+{% load i18n %}
+{% comment %}Pagination nav for the raffle ledger + pool (campaigns/_pagination idiom).
+Params: page_obj, base_qs (current query minus page).{% endcomment %}
+{% if page_obj.paginator.num_pages > 1 %}
+<nav class="mt-6 flex flex-wrap items-center justify-center gap-3 text-sm" aria-label="{% translate 'Pagination' %}">
+  {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}{% if base_qs %}&{{ base_qs }}{% endif %}"
+       class="btn-ghost text-sm" rel="prev">← {% translate "Prev" %}</a>
+  {% else %}
+    <span class="btn-ghost text-sm opacity-60" aria-disabled="true">← {% translate "Prev" %}</span>
+  {% endif %}
+  <span class="text-faint">{% blocktranslate with number=page_obj.number pages=page_obj.paginator.num_pages count=page_obj.paginator.count %}Page {{ number }} of {{ pages }} · {{ count }} total{% endblocktranslate %}</span>
+  {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}{% if base_qs %}&{{ base_qs }}{% endif %}"
+       class="btn-ghost text-sm" rel="next">{% translate "Next" %} →</a>
+  {% else %}
+    <span class="btn-ghost text-sm opacity-60" aria-disabled="true">{% translate "Next" %} →</span>
+  {% endif %}
+</nav>
+{% endif %}

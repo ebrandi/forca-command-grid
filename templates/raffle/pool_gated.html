@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Ticket pool" %} · {{ contest.name }} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-6">
+  <p class="eyebrow text-gold">{% translate "Frozen ticket pool" %}</p>
+  <h1 class="mt-1 text-2xl font-bold text-ink">{{ contest.name }}</h1>
+</header>
+
+<section class="panel p-5">
+  <h2 class="font-display text-lg text-ink">{% translate "This pool is visible to corp pilots" %}</h2>
+  <p class="mt-2 text-sm text-muted">
+    {% translate "The pool lists every corp pilot who earned tickets and which ticket numbers they hold, so it stays inside the corporation. The proof itself is public: the pool's fingerprint below was published before the draw, and the winning ticket numbers are on the draw receipt." %}
+  </p>
+  <dl class="mt-4 space-y-2 text-sm">
+    <div class="flex flex-wrap gap-2">
+      <dt class="w-40 text-faint">{% translate "Tickets in pool" %}</dt>
+      <dd class="data text-ink tabular-nums">{{ snapshot.total_tickets }}</dd>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <dt class="w-40 text-faint">{% translate "Pilots" %}</dt>
+      <dd class="data text-ink tabular-nums">{{ snapshot.total_pilots }}</dd>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <dt class="w-40 text-faint">{% translate "Frozen at" %}</dt>
+      <dd class="text-muted">{{ snapshot.frozen_at|date:"Y-m-d H:i" }} UTC</dd>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <dt class="w-40 text-faint">{% translate "Pool fingerprint" %}</dt>
+      <dd class="data break-all text-xs text-muted">{{ snapshot.content_hash }}</dd>
+    </div>
+  </dl>
+  <div class="mt-5 flex flex-wrap gap-2">
+    <a href="{% url 'sso:login' %}" class="btn-gold text-sm">{% translate "Sign in with EVE" %}</a>
+    <a href="{% url 'raffle:detail' contest.slug %}" class="btn-ghost text-sm">← {% translate "Back to contest" %}</a>
+  </div>
+</section>
+{% endblock %}

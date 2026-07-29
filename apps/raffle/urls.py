@@ -10,5 +10,8 @@ urlpatterns = [
     path("outreach/opt-out/", views.outreach_opt_out, name="outreach_opt_out"),
     path("<slug:slug>/", views.detail, name="detail"),
     path("<slug:slug>/me/", views.me, name="me"),
+    path("<slug:slug>/tickets/", views.tickets, name="tickets"),
+    path("<slug:slug>/pool/", views.pool, name="pool"),
     path("<slug:slug>/draw/", views.transparency, name="transparency"),
+    path("<slug:slug>/draw/receipt.json", views.receipt_json, name="receipt_json"),
 ]

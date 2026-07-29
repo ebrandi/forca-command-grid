@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% load eve %}
+{% load i18n %}
+{% block title %}{% translate "My tickets" %} · {{ contest.name }} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="eyebrow text-gold">{% translate "My ticket ledger" %}</p>
+    <h1 class="mt-1 text-2xl font-bold text-ink">{{ contest.name }}</h1>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <a href="{% url 'raffle:me' contest.slug %}" class="btn-ghost text-sm">{% translate "My progress" %}</a>
+    <a href="{% url 'raffle:detail' contest.slug %}" class="btn-ghost text-sm">← {% translate "Back to contest" %}</a>
+  </div>
+</header>
+
+{# Totals #}
+<section class="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">{% translate "My tickets" %}</p>
+    <p class="data mt-1 text-2xl font-bold text-gold tabular-nums">{{ perf.my_tickets }}</p>
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">{% translate "Award events" %}</p>
+    <p class="data mt-1 text-2xl font-bold text-ink tabular-nums">{{ perf.event_count }}</p>
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">{% translate "Whole pool" %}</p>
+    <p class="data mt-1 text-2xl font-bold text-ink tabular-nums">{{ perf.total_eligible_tickets }}</p>
+  </div>
+  <div class="panel p-4">
+    <p class="eyebrow text-faint">{% translate "Share of pool" %}</p>
+    <p class="data mt-1 text-2xl font-bold text-cyan tabular-nums">{{ perf.odds.share_pct }}%</p>
+  </div>
+</section>
+
+{% if snapshot %}
+<section class="panel mb-6 p-4">
+  <div class="flex flex-wrap items-center gap-3">
+    <svg class="h-5 w-5 text-gold" aria-hidden="true"><use href="#i-lock"/></svg>
+    <p class="text-sm text-muted">
+      {% blocktranslate with mine=my_pool_tickets total=snapshot.total_tickets when=snapshot.frozen_at|date:"M j, Y H:i" %}The ticket pool was frozen on {{ when }} UTC with {{ total }} tickets in it — {{ mine }} of them yours. Nothing can be added or removed from a frozen pool.{% endblocktranslate %}
+    </p>
+    <a href="{% url 'raffle:pool' contest.slug %}" class="btn-ghost ml-auto text-sm">{% translate "See the whole pool" %}</a>
+  </div>
+</section>
+{% endif %}
+
+{# Filters #}
+<form method="get" class="panel mb-4 p-4">
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <div>
+      <label for="f-q" class="eyebrow text-faint">{% translate "Ticket number" %}</label>
+      <input id="f-q" name="q" value="{{ filters.q }}" inputmode="numeric"
+             placeholder="{% translate 'e.g. 412' %}"
+             class="mt-1 w-full rounded border border-line bg-panel2 px-2 py-2 text-sm text-ink">
+    </div>
+    <div>
+      <label for="f-source" class="eyebrow text-faint">{% translate "Source" %}</label>
+      <select id="f-source" name="source" class="mt-1 w-full rounded border border-line bg-panel2 px-2 py-2 text-sm text-ink">
+        <option value="">{% translate "All sources" %}</option>
+        {% for s in sources %}
+          <option value="{{ s }}" {% if filters.source == s %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="f-status" class="eyebrow text-faint">{% translate "Status" %}</label>
+      <select id="f-status" name="status" class="mt-1 w-full rounded border border-line bg-panel2 px-2 py-2 text-sm text-ink">
+        <option value="">{% translate "Any status" %}</option>
+        {% for value, label in statuses %}
+          <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="flex items-end gap-2">
+      <button type="submit" class="btn-gold text-sm">{% translate "Filter" %}</button>
+      <a href="{% url 'raffle:tickets' contest.slug %}" class="btn-ghost text-sm">{% translate "Reset" %}</a>
+    </div>
+  </div>
+</form>
+
+{# Ledger #}
+<section class="panel overflow-hidden">
+  <div class="flex flex-wrap items-center gap-2 border-b border-line px-4 py-3">
+    <h2 class="eyebrow text-gold">{% translate "Every ticket I earned" %}</h2>
+    <p class="ml-auto text-xs text-faint">
+      {% blocktranslate count n=page_obj.paginator.count %}{{ n }} award event{% plural %}{{ n }} award events{% endblocktranslate %}
+    </p>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <caption class="sr-only">{% translate "Your ticket awards, newest first, with ticket numbers and the activity that earned them." %}</caption>
+      <thead>
+        <tr class="border-b border-line text-left">
+          <th scope="col" class="px-4 py-2 eyebrow text-faint">{% translate "Tickets" %}</th>
+          <th scope="col" class="px-4 py-2 eyebrow text-faint">{% translate "Earned for" %}</th>
+          <th scope="col" class="px-4 py-2 eyebrow text-faint whitespace-nowrap">{% translate "When" %}</th>
+          <th scope="col" class="px-4 py-2 eyebrow text-faint">{% translate "Status" %}</th>
+          <th scope="col" class="px-4 py-2 eyebrow text-faint">{% translate "Evidence" %}</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-line/40">
+        {% for row in rows %}
+        <tr class="align-top {% if row.entry.id in winning_entry_ids %}bg-panel2{% endif %}">
+          <td class="px-4 py-3 whitespace-nowrap">
+            <span class="data tabular-nums {% if row.entry.counts_for_draw %}text-gold{% else %}text-faint line-through{% endif %}">{{ row.entry.ticket_range_label }}</span>
+            <span class="ml-2 text-xs text-faint">({{ row.entry.amount }})</span>
+            {% if row.entry.id in winning_entry_ids %}
+              <span class="chip !border-gold/40 !text-gold mt-1 block">🏆 {% translate "Winning ticket" %}</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3">
+            <span class="text-muted">{{ row.entry.reason_i18n|default:row.entry.source_key }}</span>
+            {% if row.evidence.manual %}
+              <span class="mt-1 block text-xs text-faint">
+                {% if row.evidence.granted_by %}
+                  {% blocktranslate with who=row.evidence.granted_by %}Granted by {{ who }}{% endblocktranslate %}
+                {% else %}{% translate "Manual grant by leadership" %}{% endif %}
+                {% if row.evidence.grant_reason %} — “{{ row.evidence.grant_reason }}”{% endif %}
+              </span>
+            {% endif %}
+            {% if row.evidence.multiplier %}
+              <span class="chip !border-cyan/40 !text-cyan mt-1">
+                {% blocktranslate with base=row.evidence.base_tickets mult=row.evidence.multiplier %}Booster ×{{ mult }} — {{ base }} before the boost{% endblocktranslate %}
+              </span>
+            {% endif %}
+            {% if row.evidence.capped %}
+              <span class="chip mt-1">
+                {% blocktranslate with cap=row.evidence.cap_amount %}Trimmed by the {{ cap }}-ticket cap{% endblocktranslate %}
+              </span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3 whitespace-nowrap text-xs text-faint">{{ row.entry.occurred_at|date:"Y-m-d H:i" }}</td>
+          <td class="px-4 py-3">
+            {% if row.entry.status == 'approved' %}
+              <span class="chip">✓ {% translate "In the draw" %}</span>
+            {% elif row.entry.status == 'pending' %}
+              <span class="chip !border-gold/40 !text-gold">◷ {{ row.entry.get_status_display }}</span>
+            {% else %}
+              <span class="chip !text-faint">✕ {{ row.entry.get_status_display }}</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3 text-xs">
+            {% if row.evidence.killmail_id %}
+              <a href="{{ row.evidence.url }}" class="text-cyan underline">{% translate "Killmail" %} #{{ row.evidence.killmail_id }}</a>
+              <span class="mt-1 block text-faint">
+                {% if row.evidence.solo %}{% translate "Solo kill" %}{% elif row.evidence.final_blow %}{% translate "Final blow" %}{% else %}{% translate "Participation" %}{% endif %}
+              </span>
+            {% elif row.evidence.manual %}
+              <span class="text-faint">{% translate "Leadership grant" %}{% if row.evidence.category %} · {{ row.evidence.category }}{% endif %}</span>
+            {% else %}
+              <span class="text-faint">{{ row.entry.source_key }}</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="px-4 py-10 text-center text-sm text-faint">
+          {% if filters.q or filters.source or filters.status %}
+            {% translate "No tickets match those filters." %}
+          {% else %}
+            {% translate "No tickets yet — undock and get on some kills!" %}
+          {% endif %}
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{% include "raffle/_pagination.html" with page_obj=page_obj base_qs=base_qs %}
+
+<p class="mt-4 text-xs text-faint">
+  {% translate "A reversed or disqualified ticket keeps its number and stops counting — the gap it leaves is deliberate, so the tickets around it never get renumbered." %}
+</p>
+{% endblock %}

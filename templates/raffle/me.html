@@ -28,9 +28,23 @@
 <section class="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
   <div class="panel p-4"><p class="eyebrow text-faint">{% translate "My tickets" %}</p><p class="data mt-1 text-2xl font-bold text-gold">{{ perf.my_tickets }}</p></div>
   <div class="panel p-4"><p class="eyebrow text-faint">{% translate "Rank" %}</p><p class="data mt-1 text-2xl font-bold text-ink">{% if perf.summary %}#{{ perf.summary.rank }}{% else %}—{% endif %}</p></div>
-  <div class="panel p-4"><p class="eyebrow text-faint">{% translate "Est. odds" %}</p><p class="data mt-1 text-2xl font-bold text-cyan">{{ perf.odds }}%</p></div>
-  <div class="panel p-4"><p class="eyebrow text-faint">{% translate "Eligible pool" %}</p><p class="data mt-1 text-2xl font-bold text-ink">{{ perf.total_eligible_tickets }}</p></div>
+  <div class="panel p-4"><p class="eyebrow text-faint">{% translate "Share of pool" %}</p><p class="data mt-1 text-2xl font-bold text-cyan tabular-nums">{{ perf.odds.share_pct }}%</p></div>
+  <div class="panel p-4"><p class="eyebrow text-faint">{% translate "Eligible pool" %}</p><p class="data mt-1 text-2xl font-bold text-ink tabular-nums">{{ perf.total_eligible_tickets }}</p></div>
 </section>
+
+{% comment %}What that percentage does and doesn't mean. With more than one prize there is
+no honest single number, so we state the part that IS exact instead of inventing one.{% endcomment %}
+{% if perf.odds.has_pool %}
+<section class="panel mb-6 p-4">
+  <p class="text-sm text-muted">
+    {% if perf.odds.exact %}
+      {% blocktranslate with pct=perf.odds.share_pct %}You hold {{ pct }}% of the tickets, so that is exactly your chance of winning the single prize.{% endblocktranslate %}
+    {% else %}
+      {% blocktranslate with pct=perf.odds.first_prize_pct n=perf.odds.prize_count %}You hold {{ pct }}% of the tickets — exactly your chance at the first prize drawn. With {{ n }} prizes your overall chance of winning something is higher than that, but it depends on who wins before you, so we don't print a single number for it.{% endblocktranslate %}
+    {% endif %}
+  </p>
+</section>
+{% endif %}
 
 {% if perf.summary %}
 <section class="panel mb-6 p-5">
@@ -50,19 +64,29 @@
 {% endif %}
 
 <section class="panel overflow-hidden">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "Ticket history" %}</h2></div>
+  <div class="flex flex-wrap items-center gap-2 border-b border-line px-4 py-3">
+    <h2 class="eyebrow text-gold">{% translate "Recent tickets" %}</h2>
+    <a href="{% url 'raffle:tickets' contest.slug %}" class="btn-ghost ml-auto text-sm">{% translate "All my tickets" %} →</a>
+  </div>
   <div class="divide-y divide-line/40">
-    {% for e in perf.entries %}
-    <div class="flex items-center gap-3 px-4 py-2 text-sm">
-      <span class="text-xs text-faint">{{ e.created_at|date:"M j H:i" }}</span>
+    {% for e in perf.recent_entries %}
+    <div class="flex flex-wrap items-center gap-3 px-4 py-2 text-sm">
+      <span class="text-xs text-faint">{{ e.occurred_at|date:"M j H:i" }}</span>
+      <span class="data tabular-nums text-xs text-cyan">{{ e.ticket_range_label }}</span>
       <span class="min-w-0 flex-1 truncate text-muted">{{ e.reason_i18n|default:e.source_key }}</span>
       {% if e.status == 'approved' %}<span class="data text-gold">+{{ e.amount }}</span>
-      {% elif e.status == 'excluded' or e.status == 'disqualified' or e.status == 'reversed' %}<span class="chip !text-faint">{{ e.status }}</span>
-      {% else %}<span class="chip !border-gold/40 !text-gold">{{ e.status }}</span>{% endif %}
+      {% else %}<span class="chip !text-faint">{{ e.get_status_display }}</span>{% endif %}
     </div>
     {% empty %}
     <p class="px-4 py-8 text-center text-sm text-faint">{% translate "No tickets yet — undock and get on some kills!" %}</p>
     {% endfor %}
   </div>
+  {% if perf.event_count > perf.recent_entries|length %}
+  <div class="border-t border-line px-4 py-2 text-center">
+    <a href="{% url 'raffle:tickets' contest.slug %}" class="text-sm text-cyan underline">
+      {% blocktranslate with n=perf.event_count %}See all {{ n }} award events with their ticket numbers{% endblocktranslate %}
+    </a>
+  </div>
+  {% endif %}
 </section>
 {% endblock %}
