@@ -99,7 +99,14 @@ def assets_view(request: HttpRequest) -> HttpResponse:
     from .assets import assets_summary
 
     can_view_corp = rbac.has_role(request.user, rbac.ROLE_OFFICER)
-    owner = request.GET.get("owner", "mine")
+    # Normalise to the two-value domain instead of echoing whatever arrived. The template
+    # interpolates this into a JavaScript string literal inside an Alpine ``@click``
+    # attribute, and autoescaping is NOT a defence there: it renders ``'`` as ``&#x27;``,
+    # but the browser HTML-decodes the attribute before Alpine evaluates it, so the entity
+    # becomes a real quote again and closes the string. The CSP does not help either — the
+    # payload runs inside an existing directive (no new <script>, so the nonce is not
+    # involved) via the ``'unsafe-eval'`` that Alpine's evaluator requires.
+    owner = "corp" if request.GET.get("owner") == "corp" else "mine"
     if owner == "corp" and not can_view_corp:
         owner = "mine"
 
