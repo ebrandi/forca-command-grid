@@ -179,6 +179,84 @@
 </section>
 {% endif %}
 
+{# ---- Rank prizes: earned outright, no luck involved ---------------------- #}
+{% if rank_boards %}
+<section class="mb-6">
+  <div class="mb-3 flex flex-wrap items-end justify-between gap-2">
+    <div>
+      <h2 class="eyebrow text-gold">🏅 {% translate "Prizes you earn by ranking" %}</h2>
+      <p class="mt-1 text-sm text-faint">{% translate "These are not drawn. Finish the contest in one of these places and the prize is yours — and you can still win a ticket prize on top." %}</p>
+    </div>
+  </div>
+
+  <div class="grid gap-4 lg:grid-cols-2">
+    {% for b in rank_boards %}
+    <section class="panel overflow-hidden">
+      <div class="flex flex-wrap items-center gap-2 border-b border-line px-4 py-3">
+        <svg class="h-5 w-5 text-gold" aria-hidden="true"><use href="#{{ b.icon }}"/></svg>
+        <div class="min-w-0">
+          <h3 class="text-sm font-medium text-ink">{{ b.label }}</h3>
+          <p class="text-[11px] text-faint">{{ b.subtitle }}</p>
+        </div>
+      </div>
+
+      {# What is on offer for this board #}
+      <div class="border-b border-line/60 px-4 py-2">
+        {% for row in b.prizes %}
+        <div class="flex flex-wrap items-center gap-2 py-1 text-sm">
+          <span class="chip !border-gold/40 !text-gold shrink-0">#{{ row.prize.position }}</span>
+          <span class="min-w-0 flex-1 truncate text-muted">{{ row.prize.name }}</span>
+          {% if row.boosted %}<span class="chip !border-cyan/40 !text-cyan">{% translate "boosted" %}</span>{% endif %}
+          {% if row.award %}<span class="chip !border-kill/40 !text-kill">{% translate "awarded" %}</span>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+
+      {# Where the pilot stands #}
+      {% if b.mine %}
+      <div class="border-b border-line/60 bg-panel2 px-4 py-3">
+        {% if b.mine.is_leader %}
+          <p class="text-sm text-gold">{% blocktranslate with v=b.mine.value|floatformat:"-2" %}You are #1 with {{ v }}. Hold it to the end and the prize is yours.{% endblocktranslate %}</p>
+        {% elif b.mine.tied_ahead %}
+          <p class="text-sm text-cyan">{% blocktranslate with p=b.mine.place a=b.mine.ahead_place who=b.mine.ahead_name %}You are #{{ p }}, level with {{ who }} at #{{ a }} — one more puts you ahead.{% endblocktranslate %}</p>
+        {% else %}
+          <p class="text-sm text-cyan">{% blocktranslate with p=b.mine.place gap=b.mine.gap|floatformat:"-2" a=b.mine.ahead_place who=b.mine.ahead_name %}You are #{{ p }} — {{ gap }} behind {{ who }} at #{{ a }}.{% endblocktranslate %}</p>
+        {% endif %}
+        {% if not b.mine.on_display_board %}
+        <p class="mt-1 text-[11px] text-faint">{% blocktranslate with n=b.mine.ranked_pilots %}Ranked {{ n }} pilots — climb into the top ten to appear on the board below.{% endblocktranslate %}</p>
+        {% endif %}
+      </div>
+      {% elif user.is_authenticated %}
+      <div class="border-b border-line/60 px-4 py-3">
+        <p class="text-sm text-faint">{% translate "You haven't scored on this board yet — get on a killmail during the contest to enter." %}</p>
+      </div>
+      {% endif %}
+
+      {# The board #}
+      <ol class="divide-y divide-line/40">
+        {% for row in b.rows %}
+        <li class="flex flex-wrap items-center gap-3 px-4 py-2 text-sm {% if row.user_id == user.pk %}bg-panel2{% endif %}">
+          <span class="data w-6 shrink-0 tabular-nums {% if row.place <= 3 %}text-gold{% else %}text-faint{% endif %}">{{ row.place }}</span>
+          {% if row.character_id %}<img src="{% eve_portrait row.character_id 32 %}" alt="" loading="lazy" class="h-6 w-6 rounded-full ring-1 ring-line">{% endif %}
+          <span class="min-w-0 flex-1 truncate text-ink">{{ row.name }}</span>
+          <span class="data tabular-nums text-gold">{% if b.kind == 'isk' %}{{ row.value|isk }}{% elif b.kind == 'pct' %}{{ row.value|floatformat:1 }}%{% else %}{{ row.value|floatformat:"-2" }}{% endif %}</span>
+        </li>
+        {% empty %}
+        <li class="px-4 py-6 text-center text-sm text-faint">{% translate "Nobody has scored on this board yet — it is anyone's to take." %}</li>
+        {% endfor %}
+      </ol>
+
+      {% if b.as_of %}
+      <p class="border-t border-line/60 px-4 py-2 text-[11px] text-faint">
+        {% blocktranslate with when=b.as_of %}Standings as of {{ when }}. Only pilots enrolled with a live ESI token are ranked, so this can differ from the killboard.{% endblocktranslate %}
+      </p>
+      {% endif %}
+    </section>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
 {# ---- How to earn tickets ------------------------------------------------- #}
 <section class="mb-6">
   <h2 class="eyebrow mb-3 text-gold">{% translate "How to earn tickets" %}</h2>

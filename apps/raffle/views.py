@@ -18,7 +18,7 @@ from django.utils.translation import gettext as _
 from core import rbac
 
 from . import eligibility as elig
-from . import services, stats
+from . import rankings, services, stats
 from . import snapshot as pool_snapshot
 from . import tickets as ticket_ids
 from .draw import verify_draw
@@ -81,11 +81,15 @@ def detail(request, slug):
     from . import boosters
     booster = boosters.prize_booster_status(contest)
     activity = boosters.min_activity_status(contest)
+    # boosters.is_boostable, never an inline prize_type check: the booster now has a scope
+    # (ticket / rank / both), and a page that decides "boosted" differently from the draw
+    # would promise a pilot a boosted prize the draw pays at base value.
     prizes = [
         {"prize": p,
-         "effective": boosters.effective_prize_value(p, contest, achieved=booster["achieved"]),
-         "boostable": p.prize_type in boosters.BOOSTABLE_PRIZE_TYPES,
-         "boosted": booster["achieved"] and p.prize_type in boosters.BOOSTABLE_PRIZE_TYPES}
+         "effective": boosters.effective_prize_value(
+             p, contest, achieved=booster["achieved"], kind="ticket"),
+         "boostable": boosters.is_boostable(p, contest, kind="ticket"),
+         "boosted": booster["achieved"] and boosters.is_boostable(p, contest, kind="ticket")}
         for p in contest.prizes.order_by("rank")
     ]
     source_configs = [
@@ -134,6 +138,43 @@ def detail(request, slug):
             .order_by("created_at")
         )
 
+    # Rank prizes: one standings board per board that actually carries a prize, never all
+    # eight. Building a contest-window board is expensive and every contest is its own
+    # cache key, so this reads the warmed payload (apps.raffle.tasks.refresh_adoption) and
+    # only rebuilds on a cold miss.
+    rank_boards = []
+    rank_prizes = list(contest.rank_prizes.order_by("board_key", "position"))
+    if rank_prizes:
+        by_board: dict[str, list] = {}
+        for prize in rank_prizes:
+            by_board.setdefault(prize.board_key, []).append(prize)
+        awards = {
+            a.rank_prize_id: a
+            for a in contest.rank_awards.select_related("rank_prize")
+            .filter(status="awarded")
+        }
+        for board_key, prizes_on_board in by_board.items():
+            data = rankings.board(contest, board_key)
+            rank_boards.append({
+                "key": board_key,
+                "label": rankings.CATEGORY_LABELS.get(board_key, board_key),
+                "subtitle": rankings.CATEGORY_SUBTITLES.get(board_key, ""),
+                "icon": rankings.CATEGORY_ICONS.get(board_key, "i-target"),
+                "kind": rankings.CATEGORY_KINDS.get(board_key, "int"),
+                "rows": data["rows"],
+                "as_of": data["as_of"],
+                "prizes": [
+                    {"prize": p,
+                     "effective": boosters.effective_prize_value(
+                         p, contest, achieved=booster["achieved"], kind="rank"),
+                     "boosted": booster["achieved"] and boosters.is_boostable(
+                         p, contest, kind="rank"),
+                     "award": awards.get(p.pk)}
+                    for p in prizes_on_board
+                ],
+                "mine": rankings.pilot_standing(contest, board_key, request.user),
+            })
+
     stat = stats.contest_statistics(contest)
     snap = pool_snapshot.current_snapshot(contest)
     my_odds = stats.win_chance(
@@ -145,6 +186,7 @@ def detail(request, slug):
         "snapshot": snap,
         "my_odds": my_odds,
         "prizes": prizes,
+        "rank_boards": rank_boards,
         "activity": activity,
         "booster": booster,
         "sources": sources,
