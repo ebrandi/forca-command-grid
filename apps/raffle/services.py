@@ -23,6 +23,7 @@ from core.audit import audit_log
 from . import boosters, notify
 from . import draw as draw_engine
 from . import eligibility as elig
+from . import snapshot as pool_snapshot
 from .models import (
     RaffleConfig,
     RaffleContest,
@@ -140,6 +141,17 @@ def set_status(contest: RaffleContest, new_status: str, actor=None, *, reason: s
                         context={"contest_name": locked.name, "details": blurb},
                         suffix="started")
     if new_status == RaffleContest.Status.CLOSED:
+        # Freeze the pool the moment accrual closes, BEFORE any seed exists. This is what
+        # makes the published pool hash meaningful: by the time a draw is prepared, the
+        # ticket set is already fixed and public, so the outcome can be checked but not
+        # chosen. Reopening the contest (closed → active) leaves the snapshot in place; a
+        # later re-close supersedes it with a new version, which is on the record.
+        snap = pool_snapshot.freeze_pool(locked, actor=actor,
+                                         supersede_reason="contest re-closed")
+        audit_log(actor, "raffle.pool.frozen", target_type="raffle_contest",
+                  target_id=str(locked.pk),
+                  metadata={"snapshot_id": snap.pk, "version": snap.version,
+                            "tickets": snap.total_tickets, "hash": snap.content_hash})
         notify.announce(locked, title="Raffle closed: {contest_name}",
                         body="Ticket accrual is closed. The draw happens soon — good luck!",
                         template="raffle.closed",
@@ -262,6 +274,12 @@ def grant_manual_tickets(contest, actor, *, character_id=None, user=None, amount
     )
     grant.ledger_entry = entry
     grant.save(update_fields=["ledger_entry", "updated_at"])
+    # Number it now so the officer's confirmation — and the pilot's notification — can
+    # quote the actual ticket numbers granted.
+    from . import tickets as ticket_ids
+
+    ticket_ids.assign_ticket_numbers(contest)
+    entry.refresh_from_db(fields=["ticket_start"])
 
     audit_log(actor, "raffle.manual_grant", target_type="raffle_contest",
               target_id=str(contest.pk),
@@ -309,9 +327,38 @@ def remove_exclusion(exclusion: RaffleExclusion, actor) -> None:
 # --------------------------------------------------------------------------- #
 #  Ledger corrections (append-only)
 # --------------------------------------------------------------------------- #
+class LedgerFrozen(Exception):
+    """A ledger correction was refused because the ticket pool is already frozen."""
+
+
+def _guard_frozen_ledger(contest, *, allow_frozen: bool, what: str) -> bool:
+    """Refuse a post-freeze ledger change unless it is an explicit, audited correction.
+
+    Returns True when the caller must re-freeze the pool afterwards.
+
+    This guard is the other half of the snapshot. Freezing the pool is worthless if a
+    ledger row can still be disqualified afterwards: the contest is CLOSED, a seed may
+    already be committed, and shifting one award moves every ticket after it. Before this
+    existed, ``is_frozen`` gated only manual grants, so exactly this edit was possible.
+    """
+    if not contest.is_frozen:
+        return False
+    if not allow_frozen:
+        raise LedgerFrozen(
+            gettext("This contest's ticket pool is frozen. %(what)s now would change a "
+                    "pool the draw is already committed to — use the audited correction "
+                    "action, which re-freezes the pool and records why.")
+            % {"what": what}
+        )
+    return True
+
+
 @transaction.atomic
-def reverse_entry(entry: RaffleTicketLedgerEntry, actor, *, reason: str) -> RaffleTicketLedgerEntry:
+def reverse_entry(entry: RaffleTicketLedgerEntry, actor, *, reason: str,
+                  allow_frozen: bool = False) -> RaffleTicketLedgerEntry:
     """Correct a ticket award by appending a reversal — never a destructive edit."""
+    refreeze = _guard_frozen_ledger(entry.contest, allow_frozen=allow_frozen,
+                                    what=gettext("Reversing a ticket"))
     locked = RaffleTicketLedgerEntry.objects.select_for_update().get(pk=entry.pk)
     if locked.status == RaffleTicketLedgerEntry.Status.REVERSED:
         return locked
@@ -333,25 +380,57 @@ def reverse_entry(entry: RaffleTicketLedgerEntry, actor, *, reason: str) -> Raff
         metadata={"reverses": locked.pk},
     )
     audit_log(actor, "raffle.ledger.reverse", target_type="raffle_ticket",
-              target_id=str(locked.pk), metadata={"reason": reason[:160], "amount": locked.amount})
+              target_id=str(locked.pk),
+              metadata={"reason": reason[:160], "amount": locked.amount,
+                        "post_freeze": refreeze})
+    if refreeze:
+        _refreeze_after_correction(entry.contest, actor,
+                                   reason=f"ticket {locked.pk} reversed: {reason[:160]}")
     return reversal
 
 
 @transaction.atomic
-def set_entry_status(entry: RaffleTicketLedgerEntry, actor, status: str, *, reason: str = "") -> bool:
+def set_entry_status(entry: RaffleTicketLedgerEntry, actor, status: str, *, reason: str = "",
+                     allow_frozen: bool = False) -> bool:
     """Approve a pending entry or exclude/disqualify one (officer review). Audited."""
     valid = {RaffleTicketLedgerEntry.Status.APPROVED, RaffleTicketLedgerEntry.Status.EXCLUDED,
              RaffleTicketLedgerEntry.Status.DISQUALIFIED}
     if status not in valid:
         return False
+    refreeze = _guard_frozen_ledger(entry.contest, allow_frozen=allow_frozen,
+                                    what=gettext("Changing a ticket's status"))
     locked = RaffleTicketLedgerEntry.objects.select_for_update().get(pk=entry.pk)
     if locked.status == RaffleTicketLedgerEntry.Status.REVERSED:
         return False
     locked.status = status
     locked.save(update_fields=["status", "updated_at"])
     audit_log(actor, "raffle.ledger.status", target_type="raffle_ticket", target_id=str(locked.pk),
-              metadata={"status": status, "reason": reason[:160]})
+              metadata={"status": status, "reason": reason[:160], "post_freeze": refreeze})
+    if refreeze:
+        _refreeze_after_correction(entry.contest, actor,
+                                   reason=f"ticket {locked.pk} → {status}: {reason[:160]}")
     return True
+
+
+def _refreeze_after_correction(contest, actor, *, reason: str) -> None:
+    """Re-freeze the pool after an audited post-freeze correction.
+
+    The old snapshot is superseded rather than edited, and any draw still sitting on a
+    committed-but-unexecuted seed is invalidated: that seed was generated against the old
+    pool, and letting it run against the new one would mean the seed was known before the
+    pool was final — precisely the ordering the commitment exists to rule out.
+    """
+    snap = pool_snapshot.freeze_pool(contest, actor=actor, supersede_reason=reason)
+    stale = contest.draws.filter(status=RaffleDraw.Status.COMMITTED).exclude(snapshot=snap)
+    invalidated = list(stale.values_list("pk", flat=True))
+    if invalidated:
+        stale.update(status=RaffleDraw.Status.FAILED,
+                     error="pool corrected after commitment — a fresh seed is required")
+    audit_log(actor, "raffle.pool.refrozen", target_type="raffle_contest",
+              target_id=str(contest.pk),
+              metadata={"snapshot_id": snap.pk, "version": snap.version,
+                        "tickets": snap.total_tickets, "hash": snap.content_hash,
+                        "reason": reason[:200], "invalidated_draws": invalidated})
 
 
 # --------------------------------------------------------------------------- #
@@ -404,6 +483,14 @@ def run_draw(contest, actor=None, *, external_entropy: str = "", force: bool = F
                 }
             )
         draw = contest.draws.filter(status=RaffleDraw.Status.COMMITTED).order_by("-created_at").first()
+        # A commitment is only good for the pool it was made against. If the pool has been
+        # re-frozen since (an audited correction), that seed predates the final pool, so it
+        # is discarded and a new one committed against the current snapshot.
+        if draw is not None and (draw.snapshot_id is None or not draw.snapshot.is_current):
+            draw.status = RaffleDraw.Status.FAILED
+            draw.error = "pool re-frozen after commitment — seed discarded"
+            draw.save(update_fields=["status", "error", "updated_at"])
+            draw = None
         if draw is None:
             draw = draw_engine.prepare_draw(contest, executed_by=actor, external_entropy=external_entropy)
         draw = draw_engine.execute_draw(draw)
@@ -425,18 +512,92 @@ def run_draw(contest, actor=None, *, external_entropy: str = "", force: bool = F
 
 @transaction.atomic
 def redraw(contest, actor, *, reason: str, external_entropy: str = "") -> RaffleDraw:
-    """Audited redraw: supersede the current completed draw and run a fresh one."""
-    current = contest.draws.filter(status=RaffleDraw.Status.COMPLETED).order_by("-created_at").first()
+    """Audited redraw: supersede the current completed draw and run a fresh one.
+
+    The original draw and its results are never deleted or rewritten — the superseded
+    results are marked ``REDRAWN`` (with the reason and who authorised it) and stay
+    visible on the public draw history. A redraw that could quietly erase the result it
+    replaced would defeat the entire fairness apparatus.
+    """
+    if not reason or not reason.strip():
+        raise GrantBlocked(gettext("A redraw requires a recorded reason."))
+    current = (
+        contest.draws.filter(status=RaffleDraw.Status.COMPLETED, superseded_by__isnull=True)
+        .order_by("-created_at").first()
+    )
     new = draw_engine.prepare_draw(contest, executed_by=actor, external_entropy=external_entropy)
+    new.redraw_reason = reason.strip()
+    new.redraw_authorised_by = actor
+    new.save(update_fields=["redraw_reason", "redraw_authorised_by", "updated_at"])
     if current is not None:
         current.superseded_by = new
-        current.save(update_fields=["superseded_by", "updated_at"])
+        current.notes = (current.notes + "\n" if current.notes else "") + reason.strip()
+        current.save(update_fields=["superseded_by", "notes", "updated_at"])
+        current.results.filter(status=RaffleDrawResult.Status.WON).update(
+            status=RaffleDrawResult.Status.REDRAWN,
+            status_reason=reason.strip()[:300],
+            status_changed_by=actor,
+            status_changed_at=timezone.now(),
+        )
     new = draw_engine.execute_draw(new)
     audit_log(actor, "raffle.draw.redraw", target_type="raffle_contest", target_id=str(contest.pk),
               metadata={"draw_id": new.pk, "superseded": getattr(current, "pk", None),
                         "reason": reason[:200]})
     _announce_winners(contest, new)
     return new
+
+
+@transaction.atomic
+def forfeit_result(result: RaffleDrawResult, actor, *, reason: str,
+                   draw_replacement: bool = True) -> RaffleDrawResult | None:
+    """Void one winner (left the corp, declined the prize, disqualified) and optionally
+    draw their replacement from the SAME frozen pool.
+
+    The replacement continues the original draw's hash chain from where it stopped, so it
+    is verifiable by exactly the same maths — and the forfeited result stays on file,
+    linked to its replacement in both directions. Returns the replacement, or None when
+    the caller only wanted the forfeit recorded.
+    """
+    if not reason or not reason.strip():
+        raise GrantBlocked(gettext("A forfeit requires a recorded reason."))
+    locked = RaffleDrawResult.objects.select_for_update().select_related(
+        "draw", "prize").get(pk=result.pk)
+    if locked.status != RaffleDrawResult.Status.WON:
+        raise GrantBlocked(gettext("That result has already been forfeited or replaced."))
+
+    locked.status = RaffleDrawResult.Status.FORFEITED
+    locked.status_reason = reason.strip()[:300]
+    locked.status_changed_by = actor
+    locked.status_changed_at = timezone.now()
+    locked.save(update_fields=["status", "status_reason", "status_changed_by",
+                               "status_changed_at", "updated_at"])
+    audit_log(actor, "raffle.result.forfeit", target_type="raffle_result",
+              target_id=str(locked.pk),
+              metadata={"reason": reason[:200], "prize": locked.prize.name,
+                        "winner_user_id": locked.winner_user_id,
+                        "replacement_requested": draw_replacement})
+
+    replacement = None
+    if draw_replacement:
+        replacement = draw_engine.draw_replacement(locked, actor=actor, reason=reason.strip())
+        if replacement is not None:
+            audit_log(actor, "raffle.result.replacement", target_type="raffle_result",
+                      target_id=str(replacement.pk),
+                      metadata={"replaces": locked.pk, "prize": locked.prize.name,
+                                "winner_user_id": replacement.winner_user_id,
+                                "ticket_no": replacement.winning_ticket_no})
+            if replacement.winner_user_id:
+                notify.notify_user(
+                    locked.draw.contest, replacement.winner_user_id,
+                    title="🏆 You won {prize_name}!",
+                    body=f"You won #{locked.prize.rank} in "
+                         f"“{locked.draw.contest.name}” after a replacement draw. "
+                         "Leadership will be in touch about delivery.",
+                    template="raffle.win",
+                    context={"prize_name": locked.prize.name, "prize_rank": locked.prize.rank,
+                             "contest_name": locked.draw.contest.name},
+                    suffix="win")
+    return replacement
 
 
 def _announce_winners(contest, draw: RaffleDraw) -> None:
@@ -597,7 +758,10 @@ def dashboard_summary(user) -> dict | None:
         )
         mine = RaffleParticipantSummary.objects.filter(contest=contest, user=user).first()
         my_tickets = mine.total_tickets if mine else 0
-        # Account-level odds = my tickets / all tickets in the contest.
+        # The pilot's SHARE of the pool — not their "odds". With more than one prize the
+        # two differ, and printing a share as a win probability understates a multi-prize
+        # contest. The card labels it as a share; apps.raffle.stats.win_chance carries the
+        # full explanation on the contest page.
         odds = round(100.0 * my_tickets / total, 1) if (total and my_tickets) else 0.0
         active = {
             "name": contest.name,

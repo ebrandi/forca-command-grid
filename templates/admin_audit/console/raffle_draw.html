@@ -14,34 +14,66 @@
 
 {% comment %}Readiness checklist — the pre-flight for a fair draw.{% endcomment %}
 <section class="panel mb-6 overflow-hidden">
-  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "Readiness" %}</h2></div>
+  <div class="flex flex-wrap items-center gap-2 border-b border-line px-4 py-3">
+    <h2 class="eyebrow text-gold">{% translate "Pre-draw validation" %}</h2>
+    <span class="ml-auto">
+      {% if checklist.blocked %}
+        <span class="chip !border-loss/40 !text-loss">{% blocktranslate with n=checklist.critical %}{{ n }} blocking{% endblocktranslate %}</span>
+      {% elif checklist.warnings %}
+        <span class="chip !border-gold/40 !text-gold">{% blocktranslate with n=checklist.warnings %}{{ n }} warnings{% endblocktranslate %}</span>
+      {% else %}
+        <span class="chip !border-kill/40 !text-kill">{% translate "Ready to draw" %}</span>
+      {% endif %}
+    </span>
+  </div>
   <ul class="divide-y divide-line/40 text-sm">
-    <li class="flex items-center gap-3 px-4 py-2.5">
-      {% if readiness.closed %}<span class="text-kill">✓</span>{% else %}<span class="text-loss">✗</span>{% endif %}
-      <span class="flex-1 text-muted">{% translate "Contest is closed (ledger frozen)" %}</span>
-      {% if not readiness.closed %}<span class="text-[11px] text-faint">{% translate "close it below first" %}</span>{% endif %}
+    {% for c in checklist.checks %}
+    <li class="flex flex-wrap items-start gap-3 px-4 py-2.5">
+      {% if c.state == 'critical' %}<span class="text-loss" aria-label="{% translate 'Blocking' %}">✗</span>
+      {% elif c.state == 'warning' %}<span class="text-gold" aria-label="{% translate 'Warning' %}">⚠</span>
+      {% else %}<span class="text-kill" aria-label="{% translate 'OK' %}">✓</span>{% endif %}
+      <span class="min-w-0 flex-1">
+        <span class="block text-muted">{{ c.label }}</span>
+        {% if c.detail %}<span class="block text-[11px] text-faint">{{ c.detail }}</span>{% endif %}
+      </span>
+      {% if c.key == 'flags' and c.state != 'ok' %}
+        <a href="{% url 'admin_audit:raffle_flags' contest.pk %}" class="text-[11px] text-cyan hover:underline">{% translate "review" %}</a>
+      {% elif c.key == 'prizes' and c.state == 'critical' %}
+        <a href="{% url 'admin_audit:raffle_prizes' contest.pk %}" class="text-[11px] text-cyan hover:underline">{% translate "add prizes" %}</a>
+      {% elif c.key == 'pending' and c.state != 'ok' %}
+        <a href="{% url 'admin_audit:raffle_ledger' contest.pk %}" class="text-[11px] text-cyan hover:underline">{% translate "open ledger" %}</a>
+      {% endif %}
     </li>
-    <li class="flex items-center gap-3 px-4 py-2.5">
-      {% if readiness.has_prizes %}<span class="text-kill">✓</span>{% else %}<span class="text-loss">✗</span>{% endif %}
-      <span class="flex-1 text-muted">{% translate "Prize ladder configured" %}</span>
-      {% if not readiness.has_prizes %}<a href="{% url 'admin_audit:raffle_prizes' contest.pk %}" class="text-[11px] text-cyan hover:underline">{% translate "add prizes" %}</a>{% endif %}
-    </li>
-    <li class="flex items-center gap-3 px-4 py-2.5">
-      {% if readiness.has_tickets %}<span class="text-kill">✓</span>{% else %}<span class="text-loss">✗</span>{% endif %}
-      <span class="flex-1 text-muted">{% translate "Approved tickets in the pool" %}</span>
-      <span class="data text-xs text-cyan">{{ approved_tickets }}</span>
-    </li>
-    <li class="flex items-center gap-3 px-4 py-2.5">
-      {% if readiness.draw_time_passed %}<span class="text-kill">✓</span>{% else %}<span class="text-loss">✗</span>{% endif %}
-      <span class="flex-1 text-muted">{% translate "Scheduled draw time has passed" %}</span>
-      <span class="data text-[11px] text-faint">{{ contest.draw_at|date:"M j, Y H:i" }}</span>
-    </li>
-    <li class="flex items-center gap-3 px-4 py-2.5">
-      {% if readiness.open_flags %}<span class="text-loss">⚠</span>{% else %}<span class="text-kill">✓</span>{% endif %}
-      <span class="flex-1 text-muted">{% translate "No open integrity flags" %}</span>
-      {% if readiness.open_flags %}<a href="{% url 'admin_audit:raffle_flags' contest.pk %}" class="chip !border-loss/40 !text-loss">{% blocktranslate with n=readiness.open_flags %}{{ n }} open — review{% endblocktranslate %}</a>{% else %}<span class="text-[11px] text-faint">{% translate "clear" %}</span>{% endif %}
-    </li>
+    {% endfor %}
   </ul>
+</section>
+
+{# The frozen pool — what the draw will actually run against. #}
+<section class="panel mb-6 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow text-gold">{% translate "Frozen ticket pool" %}</h2></div>
+  <div class="px-4 py-4 text-sm">
+    {% if snapshot %}
+      <dl class="space-y-2">
+        <div class="flex flex-wrap gap-2"><dt class="w-44 text-faint">{% translate "Version" %}</dt><dd class="text-ink">v{{ snapshot.version }}{% if not snapshot.is_current %} · {% translate "superseded" %}{% endif %}</dd></div>
+        <div class="flex flex-wrap gap-2"><dt class="w-44 text-faint">{% translate "Frozen at" %}</dt><dd class="text-muted">{{ snapshot.frozen_at|date:"Y-m-d H:i" }} UTC</dd></div>
+        <div class="flex flex-wrap gap-2"><dt class="w-44 text-faint">{% translate "Tickets / pilots" %}</dt><dd class="data text-ink">{{ snapshot.total_tickets }} / {{ snapshot.total_pilots }}</dd></div>
+        <div class="flex flex-wrap gap-2"><dt class="w-44 text-faint">{% translate "Fingerprint" %}</dt><dd class="data break-all text-xs text-muted">{{ snapshot.content_hash }}</dd></div>
+      </dl>
+      <a href="{% url 'raffle:pool' contest.slug %}" class="btn-ghost mt-3 inline-block text-sm">{% translate "Open the published pool" %}</a>
+      {% if snapshot_history|length > 1 %}
+      <div class="mt-4 border-t border-line/60 pt-3">
+        <p class="eyebrow mb-2 text-faint">{% translate "Snapshot history" %}</p>
+        <ul class="space-y-1 text-[11px] text-faint">
+          {% for s in snapshot_history %}
+          <li>v{{ s.version }} · {{ s.frozen_at|date:"Y-m-d H:i" }} · {{ s.total_tickets }} {% translate "tickets" %}{% if s.supersede_reason %} · {{ s.supersede_reason }}{% endif %}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    {% else %}
+      <p class="text-faint">{% translate "The pool is frozen when the contest closes. Until then tickets can still be earned, so there is nothing to fingerprint." %}</p>
+    {% endif %}
+  </div>
 </section>
 
 {% if not completed %}
@@ -56,7 +88,7 @@
         <p class="text-sm text-ink">{% translate "Close the contest" %}</p>
         <p class="text-[11px] text-faint">{% translate "Freezes the ledger — no more tickets can be earned. Required before drawing." %}</p>
       </div>
-      {% if readiness.closed %}
+      {% if contest.is_frozen %}
         <span class="chip !border-kill/40 !text-kill">{% translate "Closed" %}</span>
       {% else %}
         <form method="post" action="{% url 'admin_audit:raffle_draw_action' contest.pk %}" data-confirm="{% translate 'Close the contest and freeze the ledger? No more tickets can be earned after this.' %}">
@@ -112,24 +144,38 @@
       </div>
       {% endif %}
 
-      <div class="flex flex-wrap items-center gap-3">
+      <div class="flex flex-wrap items-start gap-3">
         <span class="chip !border-gold/40 !text-gold shrink-0">3</span>
         <div class="min-w-0 flex-1">
           <p class="text-sm text-ink">{% translate "Execute the draw" %}</p>
           <p class="text-[11px] text-faint">{% translate "Reveals the seed and draws the winners. This is irreversible and moves the contest to Completed." %}</p>
         </div>
         {% if is_director %}
-          {% if activity.configured and not activity.met %}
+          {% if checklist.blocked %}
+            <span class="chip !border-loss/40 !text-loss">{% translate "Blocked by pre-draw validation" %}</span>
+          {% elif activity.configured and not activity.met %}
           <form method="post" action="{% url 'admin_audit:raffle_draw_action' contest.pk %}" data-confirm="{% translate 'This contest is BELOW its minimum activity. Draw anyway? Prizes are distributed even though pilots did not reach the engagement target.' %}">
             {% csrf_token %}
             <input type="hidden" name="action" value="execute">
             <input type="hidden" name="override" value="1">
+            {% if checklist.warnings %}
+            <label class="mb-2 flex items-start gap-2 text-[11px] text-gold">
+              <input type="checkbox" name="ack_warnings" value="1" required>
+              <span>{% blocktranslate with n=checklist.warnings %}I have read the {{ n }} warnings above{% endblocktranslate %}</span>
+            </label>
+            {% endif %}
             <button class="btn-danger text-sm">{% translate "Draw anyway (override)" %}</button>
           </form>
           {% else %}
           <form method="post" action="{% url 'admin_audit:raffle_draw_action' contest.pk %}" data-confirm="{% translate 'Run the draw now? This reveals the seed, assigns prizes and completes the contest. It cannot be undone (only a redraw supersedes it).' %}">
             {% csrf_token %}
             <input type="hidden" name="action" value="execute">
+            {% if checklist.warnings %}
+            <label class="mb-2 flex items-start gap-2 text-[11px] text-gold">
+              <input type="checkbox" name="ack_warnings" value="1" required>
+              <span>{% blocktranslate with n=checklist.warnings %}I have read the {{ n }} warnings above{% endblocktranslate %}</span>
+            </label>
+            {% endif %}
             <button class="btn-gold text-sm">{% translate "Run the draw" %}</button>
           </form>
           {% endif %}
@@ -235,14 +281,23 @@
           <span class="chip !border-gold/40 !text-gold shrink-0">#{{ r.prize.rank }}</span>
           <img src="{% eve_portrait r.winner_character_id 32 %}" alt="" loading="lazy" class="h-8 w-8 rounded-full ring-1 ring-line">
           <div class="min-w-0 flex-1">
-            <span class="block truncate text-ink">{% translate "(no eligible winner)" as no_winner_label %}{{ r.winner_character_name|default:r.winner_character_id|default:no_winner_label }}</span>
-            <span class="block truncate text-[11px] text-faint">{% blocktranslate with prize=r.prize.name %}won <span class="text-muted">{{ prize }}</span>{% endblocktranslate %}</span>
+            <span class="block truncate text-ink {% if r.status != 'won' %}line-through{% endif %}">{% translate "(no eligible winner)" as no_winner_label %}{{ r.winner_character_name|default:r.winner_character_id|default:no_winner_label }}</span>
+            <span class="block truncate text-[11px] text-faint">{% blocktranslate with prize=r.prize.name %}won <span class="text-muted">{{ prize }}</span>{% endblocktranslate %}{% if r.winning_ticket_no %} · {% translate "ticket" %} #{{ r.winning_ticket_no }}{% endif %}</span>
           </div>
-          <span class="chip shrink-0 {% if r.fulfil_status == 'delivered' %}!border-kill/40 !text-kill{% elif r.fulfil_status == 'cancelled' %}!border-loss/40 !text-loss{% elif r.fulfil_status == 'contacted' %}!border-cyan/40 !text-cyan{% else %}!border-gold/40 !text-gold{% endif %}">{{ r.get_fulfil_status_display }}</span>
+          {% if r.status != 'won' %}
+            <span class="chip shrink-0 !border-loss/40 !text-loss">{{ r.get_status_display }}</span>
+          {% else %}
+            <span class="chip shrink-0 {% if r.fulfil_status == 'delivered' %}!border-kill/40 !text-kill{% elif r.fulfil_status == 'cancelled' %}!border-loss/40 !text-loss{% elif r.fulfil_status == 'contacted' %}!border-cyan/40 !text-cyan{% else %}!border-gold/40 !text-gold{% endif %}">{{ r.get_fulfil_status_display }}</span>
+          {% endif %}
         </div>
+        {% if r.replaces_id %}
+        <p class="mt-1 text-[11px] text-cyan">{% blocktranslate with n=r.replaces.draw_order %}Replacement drawn for pick #{{ n }} from the same frozen pool.{% endblocktranslate %}</p>
+        {% endif %}
+        {% if r.status_reason %}<p class="mt-1 text-[11px] text-faint">{{ r.status_reason }}</p>{% endif %}
+        {% if r.status == 'won' %}
         <form method="post" action="{% url 'admin_audit:raffle_fulfil' contest.pk r.pk %}" class="mt-2 flex flex-wrap items-center gap-2">
           {% csrf_token %}
-          <select name="status" class="input-field !py-1 !text-xs w-32">
+          <select name="status" class="input-field !py-1 !text-xs w-32" aria-label="{% translate 'Prize delivery status' %}">
             <option value="pending"{% if r.fulfil_status == 'pending' %} selected{% endif %}>{% translate "Pending" %}</option>
             <option value="contacted"{% if r.fulfil_status == 'contacted' %} selected{% endif %}>{% translate "Contacted" %}</option>
             <option value="delivered"{% if r.fulfil_status == 'delivered' %} selected{% endif %}>{% translate "Delivered" %}</option>
@@ -251,6 +306,24 @@
           <input name="notes" value="{{ r.fulfilment_notes }}" placeholder="{% translate 'Fulfilment notes (internal)' %}" class="input-field !py-1 !text-xs flex-1 min-w-[10rem]">
           <button class="btn-ghost !py-1 !text-xs">{% translate "Update" %}</button>
         </form>
+        {% if is_director %}
+        {% comment %}Forfeit: the winner is no longer eligible / declined. Never edits the
+           original result — it is marked forfeited and the replacement continues the SAME
+           hash chain over the SAME frozen pool, so both stay verifiable.{% endcomment %}
+        <form method="post" action="{% url 'admin_audit:raffle_draw_action' contest.pk %}" class="mt-2 flex flex-wrap items-center gap-2"
+              data-confirm="{% translate 'Forfeit this winner? The original result stays on the public record and a replacement is drawn from the same frozen pool.' %}">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="forfeit">
+          <input type="hidden" name="result_id" value="{{ r.pk }}">
+          <input name="reason" required placeholder="{% translate 'Reason (shown publicly)' %}" class="input-field !py-1 !text-xs flex-1 min-w-[10rem]">
+          <label class="flex items-center gap-1 text-[11px] text-faint">
+            <input type="checkbox" name="replace" value="1" checked>
+            {% translate "draw a replacement" %}
+          </label>
+          <button class="btn-ghost !py-1 !text-xs">{% translate "Forfeit" %}</button>
+        </form>
+        {% endif %}
+        {% endif %}
       </div>
     {% empty %}
       <p class="px-4 py-10 text-center text-sm text-faint">{% translate "No winners were drawn — there were no eligible tickets in the pool." %}</p>

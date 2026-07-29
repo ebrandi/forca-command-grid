@@ -20,11 +20,19 @@ from django.core.exceptions import ValidationError
 from django.db.models import Count, Q, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
-from apps.raffle import boosters, contest_templates, engine, integrity, metrics, services, stats
+from apps.raffle import (
+    boosters,
+    contest_templates,
+    engine,
+    integrity,
+    metrics,
+    readiness,
+    services,
+    stats,
+)
 from apps.raffle.draw import verify_draw
 from apps.raffle.forms import (
     RaffleConfigForm,
@@ -408,14 +416,28 @@ def raffle_ledger_action(request, pk, entry_id):
     entry = get_object_or_404(RaffleTicketLedgerEntry, pk=entry_id, contest=contest)
     action = request.POST.get("action")
     reason = request.POST.get("reason", "")
-    if action == "reverse":
-        services.reverse_entry(entry, request.user, reason=reason or "correction")
-        messages.success(request, _("Entry reversed (a correcting row was appended)."))
-    elif action in ("approved", "excluded", "disqualified"):
-        if services.set_entry_status(entry, request.user, action, reason=reason):
-            messages.success(request, _("Entry marked %(status)s.") % {"status": action})
-        else:
-            messages.error(request, _("Couldn't change that entry."))
+    # Correcting a FROZEN pool is possible but never accidental: it needs this explicit
+    # flag, it re-freezes the pool under a new version, and it invalidates any seed that
+    # was committed against the old one.
+    allow_frozen = request.POST.get("allow_frozen") == "1"
+    try:
+        if action == "reverse":
+            services.reverse_entry(entry, request.user, reason=reason or "correction",
+                                   allow_frozen=allow_frozen)
+            messages.success(request, _("Entry reversed (a correcting row was appended)."))
+        elif action in ("approved", "excluded", "disqualified"):
+            if services.set_entry_status(entry, request.user, action, reason=reason,
+                                         allow_frozen=allow_frozen):
+                messages.success(request, _("Entry marked %(status)s.") % {"status": action})
+            else:
+                messages.error(request, _("Couldn't change that entry."))
+    except services.LedgerFrozen as e:
+        messages.error(request, str(e))
+    else:
+        if allow_frozen and contest.is_frozen:
+            messages.warning(request, _("The ticket pool was re-frozen under a new version "
+                                        "and any committed draw seed was discarded. Pilots "
+                                        "can see that the pool was reopened."))
     return redirect("admin_audit:raffle_ledger", pk=pk)
 
 
@@ -486,13 +508,8 @@ def raffle_draw(request, pk):
     approved_tickets = RaffleTicketLedgerEntry.objects.filter(
         contest=contest, status=RaffleTicketLedgerEntry.Status.APPROVED, amount__gt=0
     ).aggregate(n=Sum("amount"))["n"] or 0
-    readiness = {
-        "closed": contest.status in (RaffleContest.Status.CLOSED, RaffleContest.Status.COMPLETED),
-        "has_prizes": contest.prizes.exists(),
-        "has_tickets": approved_tickets > 0,
-        "draw_time_passed": contest.draw_at <= timezone.now(),
-        "open_flags": contest.suspicious_flags.filter(status=RaffleSuspiciousActivityFlag.Status.OPEN).count(),
-    }
+    checklist = readiness.draw_checklist(contest)
+    snap = checklist["snapshot"]
     verification = verify_draw(completed) if completed else None
     activity = boosters.min_activity_status(contest)
     booster = boosters.prize_booster_status(contest)
@@ -503,10 +520,16 @@ def raffle_draw(request, pk):
     ]
     return render(request, "admin_audit/console/raffle_draw.html", {
         "contest": contest, "committed": committed, "completed": completed,
-        "approved_tickets": approved_tickets, "readiness": readiness,
+        "approved_tickets": approved_tickets,
+        "checklist": checklist, "snapshot": snap,
+        "snapshot_history": list(
+            contest.pool_snapshots.order_by("-version")[:10]
+        ),
         "verification": verification, "activity": activity, "booster": booster,
         "prize_preview": prize_preview,
-        "results": list(completed.results.select_related("prize").order_by("draw_order")) if completed else [],
+        "results": list(
+            completed.results.select_related("prize", "replaces").order_by("draw_order")
+        ) if completed else [],
         "is_director": rbac.has_role(request.user, rbac.ROLE_DIRECTOR),
     })
 
@@ -533,6 +556,28 @@ def raffle_draw_action(request, pk):
         if not director:
             messages.error(request, _("Only a Director can execute the draw."))
         else:
+            check = readiness.draw_checklist(contest)
+            if check["blocked"]:
+                # A critical failure means the result could not be defended afterwards, so
+                # there is no override for it — unlike a warning, which is acknowledged.
+                failed = "; ".join(
+                    str(c["label"]) for c in check["checks"] if c["state"] == readiness.CRITICAL
+                )
+                messages.error(request, _("Draw blocked by pre-draw validation: %(failed)s")
+                               % {"failed": failed})
+                return redirect("admin_audit:raffle_draw", pk=pk)
+            if check["warnings"] and request.POST.get("ack_warnings") != "1":
+                messages.error(request, _("There are %(n)s warnings on the pre-draw "
+                                          "checklist. Tick the acknowledgement to draw "
+                                          "anyway.") % {"n": check["warnings"]})
+                return redirect("admin_audit:raffle_draw", pk=pk)
+            if check["warnings"]:
+                audit_log(request.user, "raffle.draw.warnings_acknowledged",
+                          target_type="raffle_contest", target_id=str(contest.pk),
+                          metadata={"warnings": [
+                              {"key": c["key"], "detail": str(c["detail"])}
+                              for c in check["checks"] if c["state"] == readiness.WARNING]},
+                          ip=client_ip(request))
             force = request.POST.get("override") == "1"  # the "draw anyway" button
             try:
                 draw = services.run_draw(contest, request.user, external_entropy=entropy, force=force)
@@ -552,11 +597,39 @@ def raffle_draw_action(request, pk):
         if not director:
             messages.error(request, _("Only a Director can redraw."))
         else:
-            draw = services.redraw(contest, request.user,
-                                   reason=request.POST.get("reason", "manual redraw"),
-                                   external_entropy=entropy)
-            messages.success(request, _("Redraw complete — %(winners)s winners.") % {
-                "winners": draw.results.count()})
+            try:
+                draw = services.redraw(contest, request.user,
+                                       reason=request.POST.get("reason", ""),
+                                       external_entropy=entropy)
+            except services.GrantBlocked as e:
+                messages.error(request, str(e))
+            else:
+                messages.success(request, _("Redraw complete — %(winners)s winners. The "
+                                            "superseded draw stays on the public record.")
+                                 % {"winners": draw.results.filter(
+                                     status=RaffleDrawResult.Status.WON).count()})
+    elif action == "forfeit":
+        if not director:
+            messages.error(request, _("Only a Director can forfeit a winner."))
+        else:
+            result = get_object_or_404(
+                RaffleDrawResult, pk=request.POST.get("result_id"), draw__contest=contest)
+            try:
+                replacement = services.forfeit_result(
+                    result, request.user, reason=request.POST.get("reason", ""),
+                    draw_replacement=request.POST.get("replace") == "1")
+            except services.GrantBlocked as e:
+                messages.error(request, str(e))
+            else:
+                if replacement is not None:
+                    messages.success(request, _(
+                        "Recorded. %(winner)s replaces them on ticket #%(ticket)s, drawn "
+                        "from the same frozen pool — the original result stays visible.")
+                        % {"winner": replacement.winner_character_name,
+                           "ticket": replacement.winning_ticket_no})
+                else:
+                    messages.success(request, _("Forfeit recorded. No eligible replacement "
+                                                "could be drawn, so the prize is unassigned."))
     return redirect("admin_audit:raffle_draw", pk=pk)
 
 
