@@ -137,6 +137,20 @@ want to redo the maths yourself. If a winner turns out to be ineligible, their r
 is drawn from the same frozen pool and the original result stays visible — nothing is
 quietly rewritten.
 
+**Some prizes you earn outright.** As well as the ticket draw, a contest can carry *rank
+prizes* — fixed rewards for topping a killboard board over the contest dates (top killer,
+top solo, most active). These aren't drawn: finish at the listed place and the prize is
+yours. The contest page shows the live standings, your position, and exactly what closing
+the gap to the place above costs.
+
+Rank prizes **stack**. Top two different boards and you get both, and you can still have a
+ticket drawn on top of that. Only the ticket draw is limited to one prize per pilot,
+because that one is luck rather than performance.
+
+Note that these standings only rank pilots enrolled with a live ESI token, so they can
+differ from the killboard's own boards — the raffle only knows about pilots who connected
+a token.
+
 You can also opt out of raffle nudges if you'd rather not be reminded.
 
 ## Mentorship (as a cadet)

@@ -220,6 +220,22 @@ chain so both results stay verifiable. A full redraw supersedes the whole draw, 
 recorded reason, and leaves every superseded draw disclosed on the public receipt — a
 "redraw until we like the winner" cannot hide.
 
+**Two kinds of prize.** The ticket ladder is drawn at random — set how many winners it has
+from the Prizes page (1–10, default 3); the prize rows *are* the winner count, so the
+control adds or trims places, and never removes one that has already been won. **Rank
+prizes** are earned instead: attach a prize to a place on a killboard board (top killer,
+top solo, most active) and it goes to whoever finishes there over the contest dates. The
+standings are visible to pilots throughout, so they know what they are chasing.
+
+Rank prizes stack — with each other and with a ticket win. Only the ticket draw is limited
+to one prize per pilot. Both kinds sit behind the minimum-activity safeguard, and the
+prize-value booster can be pointed at ticket prizes, rank prizes, or both.
+
+The "PVP event" template sets up a combined event in one step. Note that rank standings only
+rank pilots enrolled with a live ESI token, so they can legitimately differ from the
+killboard's own boards — and that "most active" counts days a pilot appeared on a killmail,
+kill *or* loss, which is worth saying in the public rules.
+
 Full technical reference, including how to answer a pilot who disputes a result:
 [Raffle transparency and draw integrity](../contributor-handbook/raffle-transparency-and-draw-integrity.md).
 

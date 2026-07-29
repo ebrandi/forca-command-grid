@@ -41,7 +41,25 @@ RANK_NAMES: list[str] = [
     gettext_noop("3rd prize"),
     gettext_noop("4th prize"),
     gettext_noop("5th prize"),
+    gettext_noop("6th prize"),
+    gettext_noop("7th prize"),
+    gettext_noop("8th prize"),
+    gettext_noop("9th prize"),
+    gettext_noop("10th prize"),
 ]
+
+
+def default_prize_name(rank: int) -> str:
+    """The shipped English name for a ladder position.
+
+    Ordinals are listed rather than generated because each one is a separate msgid that has
+    to be translated into eight languages; a generated "N-th prize" would either be
+    untranslatable or produce wrong ordinals in most of them. Past the listed ladder the
+    name falls back to a numbered form that still translates.
+    """
+    if 1 <= rank <= len(RANK_NAMES):
+        return RANK_NAMES[rank - 1]
+    return gettext("Prize #%(n)s") % {"n": rank}
 
 
 def _prizes(*values):
@@ -53,6 +71,38 @@ def _prizes(*values):
 
 
 BUILTIN: list[dict] = [
+    {
+        # A combined PVP event: the ticket draw rewards everyone who turns up, the rank
+        # prizes reward the pilots who actually top the boards. The two stack, so a pilot
+        # can take "top killer" AND have their ticket drawn — see the raffle handbook.
+        "key": "pvp_event", "name": _("PVP event (rank + ticket prizes)"),
+        "description": _("A scheduled PVP push. Fixed prizes for the pilots who top the "
+                         "killboard over the event, plus a ticket draw everyone who "
+                         "undocks can win."),
+        "config": {
+            "contest": {"objective": gettext_noop("Win the event boards, and get everyone on kills."),
+                        "one_prize_per_pilot": True,
+                        "public_rules": gettext_noop(
+                            "Two kinds of prize. RANK PRIZES are earned: finish the event "
+                            "at the listed place on a board and it is yours — the standings "
+                            "are on the contest page all event. TICKET PRIZES are drawn at "
+                            "random from the tickets you earned; a pilot can win only one "
+                            "of those. You can win both. Only pilots enrolled with a live "
+                            "ESI token are ranked or drawn."),
+                        },
+            "sources": {"pvp": {"enabled": True, "mode": "auto"},
+                        "manual": {"enabled": True, "mode": "manual"}},
+            "prizes": _prizes("1000000000", "500000000", "250000000"),
+            "rank_prizes": [
+                {"board_key": "top_killers", "position": 1, "prize_type": "isk",
+                 "name": gettext_noop("Top killer"), "estimated_value": "1000000000"},
+                {"board_key": "solo_kills", "position": 1, "prize_type": "isk",
+                 "name": gettext_noop("Top solo killer"), "estimated_value": "750000000"},
+                {"board_key": "most_active", "position": 1, "prize_type": "isk",
+                 "name": gettext_noop("Most active pilot"), "estimated_value": "500000000"},
+            ],
+        },
+    },
     {
         "key": "pvp_activity", "name": _("PVP activity raffle"),
         "description": _("Reward everyone who undocks and gets on kills. Solo 100 · final blow 10 · participation 1."),
@@ -247,13 +297,33 @@ def apply_template(contest, template_key: str, *, overwrite_prizes: bool = False
 
     # Prizes.
     if overwrite_prizes or not contest.prizes.exists():
-        contest.prizes.all().delete()
+        # Never drop a prize that has been won — RaffleDrawResult.prize cascades, so that
+        # would erase a published winner along with it.
+        contest.prizes.filter(results__isnull=True).delete()
+        taken = set(contest.prizes.values_list("rank", flat=True))
         RafflePrize.objects.bulk_create([
             RafflePrize(contest=contest, rank=p["rank"], name=p["name"],
                         prize_type=p.get("prize_type", "isk"),
                         estimated_value=p.get("estimated_value", 0),
                         description=p.get("description", ""))
-            for p in config.get("prizes", [])
+            for p in config.get("prizes", []) if p["rank"] not in taken
+        ])
+
+    # Rank prizes (a template may ship both kinds — see the "pvp_event" built-in).
+    rank_prizes = config.get("rank_prizes", [])
+    if rank_prizes and (overwrite_prizes or not contest.rank_prizes.exists()):
+        from .models import RaffleRankPrize
+
+        contest.rank_prizes.filter(awards__isnull=True).delete()
+        held = set(contest.rank_prizes.values_list("board_key", "position"))
+        RaffleRankPrize.objects.bulk_create([
+            RaffleRankPrize(contest=contest, board_key=p["board_key"],
+                            position=p.get("position", 1), name=p["name"],
+                            prize_type=p.get("prize_type", "isk"),
+                            estimated_value=p.get("estimated_value", 0),
+                            description=p.get("description", ""))
+            for p in rank_prizes
+            if (p["board_key"], p.get("position", 1)) not in held
         ])
     return True
 

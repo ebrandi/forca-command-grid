@@ -271,6 +271,94 @@ other leadership-only field.
 
 ---
 
+## 6b. Rank prizes — earned, not drawn
+
+A contest can carry a second kind of prize: `RaffleRankPrize`, awarded for finishing at a
+given place on a killboard board over the contest window (`top killer`, `top solo`, `most
+active`). Pilots watch the standings all contest and know before the draw whether they are
+winning one.
+
+### Why a separate relation
+
+`RaffleRankPrize` is deliberately **not** in `contest.prizes`. Fifteen call sites read that
+relation — the draw loop, the snapshot rules, the odds calculation, the readiness checks,
+the budget guard, the console and the pilot page — and each defaults to "whatever is in the
+table". A rank prize in that ladder would be drawn by ticket *and* would burn its winner's
+one-prize-per-pilot allowance. Missing a filter there fails **open** and corrupts the draw;
+with a separate relation the worst a missed reader does is under-count a budget (and
+`services.contest_prize_total` / `monthly_prize_spend` sum both, so even that is covered).
+
+`RaffleRankAward` is likewise a sibling of `RaffleDrawResult`, not a row in it:
+`uniq_raffle_result_per_prize` is conditioned on `(draw, prize)` and Postgres treats NULLs
+as distinct, so a nullable `draw` would silently void "one live winner per prize"; and
+`services.dashboard_summary` dereferences `result.draw.contest` with no draw filter.
+
+### The stacking rule
+
+| | Limit |
+|---|---|
+| Rank prize + rank prize (different boards) | **stacks** — two achievements, two payouts |
+| Rank prize + ticket prize | **stacks** |
+| Ticket prize + ticket prize | **one per pilot** (`one_prize_per_pilot`) |
+
+`award_rank_prizes` never touches the draw's `won_users` set, which is what keeps this true.
+Earned prizes stack because they are performance; the drawn one is limited because it is luck.
+
+### Standings
+
+`apps.raffle.rankings` builds the boards over `[contest.start_at, contest.end_at)` using
+`leaderboards.Window` directly (`leaderboards()` itself clamps unknown keys to 30d).
+Differences from the killboard's own boards, all deliberate:
+
+* **Only contest-eligible accounts are ranked.** A pilot who never enrolled or whose token
+  lapsed cannot win, so they are not on the board and the places are computed among the
+  pilots actually competing. The raffle's "top killer" can therefore differ from the
+  killboard's — correct, because the raffle only knows pilots who connected a token.
+* **Rollup is by ACCOUNT, not by `mains_for`.** `core.pilots.mains_for` maps a linked
+  character whose account has no `is_main` flagged to *itself*, so rolling up by main leaves
+  such an account as two rows — one person holding two places and collecting the same prize
+  twice. `_rollup_by_account` keys on `user_id`.
+* **Ties break on the lower character id.** `leaderboards._rank` sorts with a stable sort
+  over a GROUP BY carrying no ORDER BY, so tied pilots can swap places between runs.
+  Harmless on a display board, unacceptable when the place decides a payout.
+* **Ranked deeper than displayed.** `RANK_DEPTH = 200` vs `BOARD_LIMIT = 10`, so a pilot in
+  14th can still be told they are 14th and what 13th costs.
+
+`AWARDABLE_BOARDS` excludes two of the killboard's eight on purpose: `isk_lost` ("bravest
+feeder") would put a bounty on feeding, and `efficiency` has a five-fight minimum, so a
+pilot on 5 kills and 0 losses maximises their prize by never undocking again.
+
+**Performance.** A contest board's cost is *independent of window width* — `_kill_rows`
+starts from `KillmailParticipant`, whose index carries no time column, so a 7-day window
+scans like an all-time one. Every contest is also its own cache key, so the killboard's
+warmed windows buy nothing. `tasks.refresh_adoption` warms standings for contests that have
+a rank prize; the request path is a cold-start fallback only.
+
+### Gating
+
+Rank awards run inside `run_draw`, past the same minimum-activity gate and inside the same
+cross-worker lock. A separate entry point would be a way to pay out on a dead contest
+without the safeguard leadership configured. Awarding is idempotent
+(`uniq_raffle_rank_award_live` is the backstop), and each award freezes the board that
+decided it, because the killboard keeps moving afterwards.
+
+## 6c. Winner count and selective boosting
+
+**Winner count.** There is no `winner_count` field: the ticket prize rows *are* the winner
+count (`draw.py` awards one winner per prize row in rank order).
+`services.set_ticket_prize_slots(contest, n)` materialises or trims rows to match, capped at
+`MAX_TICKET_WINNERS = 10` and refused once accrual has started. A slot that has been won is
+never removed — `RaffleDrawResult.prize` cascades, so deleting it would erase a published
+winner and their fulfilment history.
+
+**Selective booster.** `RaffleContest.prize_booster_applies_to` is `both` (the pre-existing
+behaviour), `ticket`, or `rank`. It is contest-level rather than per-prize because the
+booster is already one contest-wide goal at one percentage; a per-prize opt-in would be a
+second way to express the same thing and would let a leader build a ladder nobody can
+explain ("why was 2nd boosted and 3rd not?"). `boosters.is_boostable(prize, contest, kind=…)`
+is the single predicate — **use it, never an inline `prize_type in BOOSTABLE_PRIZE_TYPES`
+check**, or the pilot page will promise a boost the draw pays at base value.
+
 ## 7. Redraws and exceptional cases
 
 Nothing is ever erased. Two distinct mechanisms:
