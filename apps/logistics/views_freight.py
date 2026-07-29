@@ -8,7 +8,6 @@ CSP gate bans inline ``on*=`` handlers).
 """
 from __future__ import annotations
 
-import csv
 from decimal import Decimal, InvalidOperation
 
 from django import forms
@@ -22,6 +21,7 @@ from django.views.decorators.http import require_POST
 
 from core import rbac
 from core.audit import client_ip
+from core.exporting import safe_csv_writer
 from core.rbac import role_required
 
 from . import freight
@@ -210,7 +210,7 @@ def _export_csv() -> HttpResponse:
     names = _type_names({ln.type_id for ln in lines})
     response = HttpResponse(content_type="text/csv")
     response["Content-Disposition"] = 'attachment; filename="freight-pipeline.csv"'
-    writer = csv.writer(response)
+    writer = safe_csv_writer(response)
     writer.writerow([
         "batch_id", "origin", "destination", "status", "ship_class",
         "type_id", "type_name", "quantity", "planned_quantity", "quantity_received",

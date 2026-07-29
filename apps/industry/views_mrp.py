@@ -6,8 +6,6 @@ every number decomposable into its demand/supply provenance.
 """
 from __future__ import annotations
 
-import csv
-
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
@@ -17,6 +15,7 @@ from django.views.decorators.http import require_POST
 
 from core import rbac
 from core.audit import audit_log, client_ip
+from core.exporting import safe_csv_writer
 from core.rbac import role_required
 
 from . import mrp
@@ -141,7 +140,7 @@ def _export_csv(rows) -> HttpResponse:
     )
     response = HttpResponse(content_type="text/csv")
     response["Content-Disposition"] = 'attachment; filename="material-plan.csv"'
-    writer = csv.writer(response)
+    writer = safe_csv_writer(response)
     writer.writerow([
         "type_id", "type_name", "location", "status", "depth", "gross", "available",
         "incoming", "net", "required_by", "feasible_at", "feasible_source",

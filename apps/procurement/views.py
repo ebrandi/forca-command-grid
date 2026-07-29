@@ -12,8 +12,6 @@ Domain rule violations raise ``ProcurementError`` and surface as an error messag
 """
 from __future__ import annotations
 
-import csv
-
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
@@ -27,6 +25,7 @@ from django.views.decorators.http import require_POST
 
 from core import rbac
 from core.audit import audit_log, client_ip
+from core.exporting import safe_csv_writer
 from core.rbac import role_required
 
 from . import contracts, metrics, payments, receipts
@@ -331,7 +330,7 @@ def _pos_csv(qs) -> HttpResponse:
     and ``delivery_mode`` are the persisted machine codes, not translated labels."""
     response = HttpResponse(content_type="text/csv")
     response["Content-Disposition"] = 'attachment; filename="procurement-purchase-orders.csv"'
-    writer = csv.writer(response)
+    writer = safe_csv_writer(response)
     writer.writerow([
         "po_id", "supplier", "supplier_id", "status", "delivery_mode", "location",
         "promised_by", "overdue_since", "expected_total_isk", "paid_amount_isk",

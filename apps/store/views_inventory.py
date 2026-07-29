@@ -6,8 +6,6 @@ its own stock math.
 """
 from __future__ import annotations
 
-import csv
-
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
@@ -20,6 +18,7 @@ from django.views.decorators.http import require_POST
 from apps.doctrines.models import DoctrineFit
 from core import rbac
 from core.audit import audit_log, client_ip
+from core.exporting import safe_csv_writer
 from core.rbac import role_required
 
 from . import inventory as inv
@@ -208,7 +207,7 @@ def _export_csv(rows: list[dict]) -> HttpResponse:
     """The filtered console table as CSV (column keys stay machine-stable English)."""
     response = HttpResponse(content_type="text/csv")
     response["Content-Disposition"] = 'attachment; filename="shipyard-inventory.csv"'
-    writer = csv.writer(response)
+    writer = safe_csv_writer(response)
     writer.writerow([
         "doctrine", "fit", "ship", "state", "location", "on_hand", "reserved",
         "atp", "stale", "incoming", "backordered", "waitlisted", "safety_stock",

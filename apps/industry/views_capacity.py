@@ -14,8 +14,6 @@ only inside an anonymous count.
 """
 from __future__ import annotations
 
-import csv
-
 from django import forms
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -27,6 +25,7 @@ from django.views.decorators.http import require_POST
 
 from core import rbac
 from core.audit import audit_log, client_ip
+from core.exporting import safe_csv_writer
 from core.rbac import role_required
 
 from . import capacity
@@ -144,7 +143,7 @@ def _export_csv(state: capacity.CapacityState) -> HttpResponse:
     """Per-pilot capacity as CSV (machine-stable English keys, the house convention)."""
     response = HttpResponse(content_type="text/csv")
     response["Content-Disposition"] = 'attachment; filename="production-capacity.csv"'
-    writer = csv.writer(response)
+    writer = safe_csv_writer(response)
     writer.writerow([
         "character_id", "character_name", "activity_class", "slots",
         "used", "remaining", "paused", "as_of",

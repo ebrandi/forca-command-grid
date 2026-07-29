@@ -6,8 +6,6 @@ see it, so a composed board enforces section gating internally (acceptance №9)
 """
 from __future__ import annotations
 
-import csv
-
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
@@ -17,6 +15,7 @@ from django.views.decorators.http import require_POST
 
 from core import rbac
 from core.audit import audit_log, client_ip
+from core.exporting import safe_csv_writer
 from core.rbac import role_required
 
 from . import providers
@@ -74,7 +73,7 @@ def _export_csv(sections) -> HttpResponse:
     """Officer sections as CSV — column keys AND row keys stay machine-stable English."""
     response = HttpResponse(content_type="text/csv")
     response["Content-Disposition"] = 'attachment; filename="supply-board.csv"'
-    writer = csv.writer(response)
+    writer = safe_csv_writer(response)
     writer.writerow(["section", "severity", "key", "label_key", "url"])
     for s in sections:
         if s.role != "officer":  # margin/erosion stays out of the CSV entirely
