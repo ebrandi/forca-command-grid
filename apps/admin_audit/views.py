@@ -1,9 +1,12 @@
 """Admin & audit views: director-facing audit log review."""
 from __future__ import annotations
 
+import datetime as dt
+
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
+from django.utils import timezone as dj_timezone
 
 from core import rbac
 from core.exporting import csv_safe as _csv_safe
@@ -59,10 +62,16 @@ def audit_log_view(request: HttpRequest) -> HttpResponse:
         qs = qs.filter(action__icontains=f_action)
     if f_target:
         qs = qs.filter(Q(target_type__icontains=f_target) | Q(target_id__icontains=f_target))
+    # Half-open datetime range rather than __date: the __date lookup wraps created_at in a
+    # DATE() cast, and a cast column cannot use the index on it (models.py:23 declares
+    # db_index=True), so filtering an old window degraded into walking the table. These
+    # bounds are equivalent — [00:00 of d_from, 00:00 of the day after d_to) — and seekable.
+    tz = dj_timezone.get_current_timezone()
     if (d_from := parse_date(f_from)) is not None:
-        qs = qs.filter(created_at__date__gte=d_from)
+        qs = qs.filter(created_at__gte=dt.datetime.combine(d_from, dt.time.min, tzinfo=tz))
     if (d_to := parse_date(f_to)) is not None:
-        qs = qs.filter(created_at__date__lte=d_to)
+        end = dt.datetime.combine(d_to + dt.timedelta(days=1), dt.time.min, tzinfo=tz)
+        qs = qs.filter(created_at__lt=end)
     qs = qs.order_by("-created_at")
 
     if request.GET.get("export") == "csv":
