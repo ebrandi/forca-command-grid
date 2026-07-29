@@ -194,6 +194,60 @@ class GrantBlocked(Exception):
     """A manual grant was refused (ineligible pilot, no override, bad input)."""
 
 
+# A ticket ladder deeper than this is not a raffle, it is a payout schedule — and with
+# one-prize-per-pilot every slot past the eligible-pilot count simply goes unawarded.
+MAX_TICKET_WINNERS = 10
+DEFAULT_TICKET_WINNERS = 3
+
+
+@transaction.atomic
+def set_ticket_prize_slots(contest, count: int, actor=None) -> dict:
+    """Make the contest have exactly ``count`` ticket-draw prize slots.
+
+    Adds new slots at the bottom of the ladder with the default rank names, and removes
+    surplus slots from the bottom up. A slot that has ever been won is NEVER removed:
+    ``RaffleDrawResult.prize`` cascades, so deleting it would erase a published winner and
+    their fulfilment history — the delete is refused and the ladder stays as deep as its
+    results require.
+    """
+    from .contest_templates import default_prize_name
+    from .models import RafflePrize
+
+    count = int(count or 0)
+    if count < 1 or count > MAX_TICKET_WINNERS:
+        raise GrantBlocked(
+            gettext("Pick between 1 and %(max)s ticket winners.")
+            % {"max": MAX_TICKET_WINNERS})
+    if not contest.is_editable:
+        raise GrantBlocked(
+            gettext("This contest's prize ladder is locked — tickets are already accruing "
+                    "against it."))
+
+    existing = list(contest.prizes.order_by("rank"))
+    added, removed, kept_won = [], [], []
+
+    for rank in range(len(existing) + 1, count + 1):
+        added.append(RafflePrize(contest=contest, rank=rank,
+                                 name=default_prize_name(rank),
+                                 prize_type=RafflePrize.PrizeType.ISK))
+    if added:
+        RafflePrize.objects.bulk_create(added)
+
+    for prize in reversed(existing[count:]):
+        if prize.results.exists():
+            kept_won.append(prize.rank)
+            continue
+        removed.append(prize.rank)
+        prize.delete()
+
+    audit_log(actor, "raffle.prizes.slots", target_type="raffle_contest",
+              target_id=str(contest.pk),
+              metadata={"requested": count, "added": len(added),
+                        "removed": removed, "kept_because_won": kept_won})
+    return {"added": len(added), "removed": len(removed), "kept_won": kept_won,
+            "total": contest.prizes.count()}
+
+
 class ActivityNotMet(Exception):
     """The draw was held because the contest hasn't reached its minimum activity."""
 
@@ -495,6 +549,11 @@ def run_draw(contest, actor=None, *, external_entropy: str = "", force: bool = F
             draw = draw_engine.prepare_draw(contest, executed_by=actor, external_entropy=external_entropy)
         draw = draw_engine.execute_draw(draw)
         if draw.status == RaffleDraw.Status.COMPLETED:
+            # Rank prizes are awarded here, past the same minimum-activity gate above and
+            # inside the same cross-worker lock. They are independent of the ticket draw
+            # and deliberately do NOT touch its won_users set: a pilot who tops the kill
+            # board can still have a ticket drawn, they just cannot win two ticket prizes.
+            award_rank_prizes(contest, actor, draw=draw)
             if contest.status == RaffleContest.Status.CLOSED:
                 set_status(contest, RaffleContest.Status.COMPLETED, actor, reason="draw completed")
             _announce_winners(contest, draw)
@@ -508,6 +567,96 @@ def run_draw(contest, actor=None, *, external_entropy: str = "", force: bool = F
         return draw
     finally:
         cache.delete(lock_key)
+
+
+@transaction.atomic
+def award_rank_prizes(contest, actor=None, *, draw=None) -> list:
+    """Award every configured rank prize from the frozen contest standings.
+
+    Idempotent: a prize slot that already has a live award is skipped, so a retried beat or
+    a second draw attempt cannot pay the same prize twice (the DB's
+    ``uniq_raffle_rank_award_live`` is the backstop).
+
+    Called from :func:`run_draw` so it inherits that function's cross-worker lock and — the
+    part that matters — its minimum-activity gate. A separate entry point that awarded rank
+    prizes on its own would be a way to pay out on a dead contest without the safeguard the
+    leadership configured, which is exactly what the safeguard exists to prevent.
+
+    The standings that decided each award are frozen onto the row. The killboard keeps
+    moving afterwards; without them nobody could show why this pilot won.
+    """
+    from . import rankings
+    from .models import RaffleRankAward
+
+    prizes = list(contest.rank_prizes.order_by("board_key", "position"))
+    if not prizes:
+        return []
+
+    booster = boosters.prize_booster_status(contest)
+    achieved = booster["achieved"]
+    # One build for the whole contest, reused across every prize slot on every board.
+    boards = rankings.all_standings(contest, use_cache=False)
+
+    already = set(
+        RaffleRankAward.objects.filter(
+            contest=contest, status=RaffleRankAward.Status.AWARDED
+        ).values_list("rank_prize_id", flat=True)
+    )
+
+    created = []
+    for prize in prizes:
+        if prize.pk in already:
+            continue
+        ranked = (boards.get(prize.board_key) or {}).get("ranked") or []
+        winner = rankings.winner_for(
+            contest, prize.board_key, prize.position, ranked_rows=ranked)
+        if winner is None:
+            continue  # nobody holds that place — the prize goes unawarded, on the record
+        boosted = achieved and boosters.is_boostable(prize, contest, kind="rank")
+        created.append(RaffleRankAward(
+            contest=contest, rank_prize=prize, draw=draw,
+            winner_user_id=winner["user_id"],
+            winner_character_id=winner["character_id"],
+            winner_character_name=winner.get("name", ""),
+            metric_value=Decimal(str(winner.get("value") or 0)),
+            position=prize.position,
+            # Freeze the visible board, not all 200 ranked rows — this is the evidence a
+            # pilot is shown, and it has to stay legible.
+            standings=[
+                {k: r.get(k) for k in ("place", "character_id", "name", "value", "secondary")}
+                for r in (boards.get(prize.board_key) or {}).get("rows") or []
+            ],
+            awarded_value=boosters.effective_prize_value(
+                prize, contest, achieved=achieved, kind="rank"),
+            booster_applied=bool(boosted),
+        ))
+
+    if created:
+        RaffleRankAward.objects.bulk_create(created)
+        audit_log(actor, "raffle.rank_awards", target_type="raffle_contest",
+                  target_id=str(contest.pk),
+                  metadata={"awarded": len(created),
+                            "prizes": [a.rank_prize_id for a in created],
+                            "draw_id": getattr(draw, "pk", None)})
+        _announce_rank_awards(contest, created)
+    return created
+
+
+def _announce_rank_awards(contest, awards) -> None:
+    for award in awards:
+        if not award.winner_user_id:
+            continue
+        notify.notify_user(
+            contest, award.winner_user_id,
+            title="🏆 You won {prize_name}!",
+            body=f"You finished #{award.position} on “{award.rank_prize.board_label}” in "
+                 f"“{contest.name}” and won {award.rank_prize.name}. "
+                 "Leadership will be in touch about delivery.",
+            template="raffle.win",
+            context={"prize_name": award.rank_prize.name,
+                     "prize_rank": award.position,
+                     "contest_name": contest.name},
+            suffix="rankwin")
 
 
 @transaction.atomic
@@ -938,25 +1087,36 @@ def _committed_statuses() -> list:
 
 
 def contest_prize_total(contest) -> Decimal:
+    """Every prize the contest can pay — ticket ladder AND rank prizes.
+
+    Rank prizes are real ISK out of the same corp wallet, so leaving them out of the
+    monthly ceiling would let a leader commit twice the budget they were shown.
+    """
     from django.db.models import Sum
 
-    return contest.prizes.aggregate(s=Sum("estimated_value"))["s"] or Decimal("0")
+    tickets = contest.prizes.aggregate(s=Sum("estimated_value"))["s"] or Decimal("0")
+    ranks = contest.rank_prizes.aggregate(s=Sum("estimated_value"))["s"] or Decimal("0")
+    return tickets + ranks
 
 
 def monthly_prize_spend(when=None, *, exclude_contest_id=None) -> Decimal:
     """Total committed prize value for contests drawing in ``when``'s month (default now)."""
     from django.db.models import Sum
 
-    from .models import RafflePrize
+    from .models import RafflePrize, RaffleRankPrize
 
     when = when or timezone.now()
-    qs = RafflePrize.objects.filter(
-        contest__draw_at__year=when.year, contest__draw_at__month=when.month,
-        contest__status__in=_committed_statuses(),
-    )
-    if exclude_contest_id is not None:
-        qs = qs.exclude(contest_id=exclude_contest_id)
-    return qs.aggregate(s=Sum("estimated_value"))["s"] or Decimal("0")
+    total = Decimal("0")
+    # Both prize tables commit real ISK for the month a contest draws in.
+    for model in (RafflePrize, RaffleRankPrize):
+        qs = model.objects.filter(
+            contest__draw_at__year=when.year, contest__draw_at__month=when.month,
+            contest__status__in=_committed_statuses(),
+        )
+        if exclude_contest_id is not None:
+            qs = qs.exclude(contest_id=exclude_contest_id)
+        total += qs.aggregate(s=Sum("estimated_value"))["s"] or Decimal("0")
+    return total
 
 
 def budget_status(when=None) -> dict:
@@ -982,9 +1142,13 @@ def budget_block_reason(contest) -> str:
     this_total = contest_prize_total(contest)
     projected = monthly_prize_spend(contest.draw_at, exclude_contest_id=contest.id) + this_total
     if projected > ceiling:
+        # "ticket and rank" is spelled out because contest_prize_total sums BOTH prize
+        # tables: a leader who adds up only the ticket ladder they configured would
+        # otherwise see a bigger number here than they can account for.
         return (
-            f"This contest's prizes ({this_total:,.0f} ISK) would put {contest.draw_at:%B %Y} "
-            f"raffle spend at {projected:,.0f} ISK — over the {ceiling:,.0f} ISK monthly "
-            f"ceiling. Raise the ceiling in raffle settings or trim the prizes."
+            f"This contest's prizes ({this_total:,.0f} ISK, ticket and rank) would put "
+            f"{contest.draw_at:%B %Y} raffle spend at {projected:,.0f} ISK — over the "
+            f"{ceiling:,.0f} ISK monthly ceiling. Raise the ceiling in raffle settings "
+            f"or trim the prizes."
         )
     return ""

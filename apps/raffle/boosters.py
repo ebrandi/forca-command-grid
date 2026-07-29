@@ -81,9 +81,24 @@ def prize_multiplier(contest, *, achieved: bool | None = None) -> Decimal:
     return Decimal("1") + Decimal(contest.prize_booster_percent or 0) / Decimal("100")
 
 
-def effective_prize_value(prize, contest, *, achieved: bool | None = None) -> Decimal:
-    """A prize's value after the prize-value booster (ISK/PLEX only)."""
-    base = Decimal(prize.estimated_value or 0)
+def is_boostable(prize, contest, *, kind: str = "ticket") -> bool:
+    """Whether this prize is in scope for the booster at all.
+
+    Two independent gates. The prize TYPE gate is unchanged: only ISK and PLEX are
+    fungible and unit-priced, so only they can be scaled by a percentage — "10% more
+    Rifter" is not a thing. The prize KIND gate is the leadership choice: a contest may
+    boost only its ticket prizes, only its rank prizes, or both.
+    """
     if prize.prize_type not in BOOSTABLE_PRIZE_TYPES:
+        return False
+    scope = getattr(contest, "prize_booster_applies_to", "both") or "both"
+    return scope in ("both", kind)
+
+
+def effective_prize_value(prize, contest, *, achieved: bool | None = None,
+                          kind: str = "ticket") -> Decimal:
+    """A prize's value after the prize-value booster (ISK/PLEX, and in-scope kinds only)."""
+    base = Decimal(prize.estimated_value or 0)
+    if not is_boostable(prize, contest, kind=kind):
         return base
     return (base * prize_multiplier(contest, achieved=achieved)).quantize(Decimal("1"))

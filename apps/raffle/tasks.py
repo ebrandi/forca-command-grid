@@ -94,8 +94,10 @@ def integrity_scan() -> int:
 
 @shared_task(name="raffle.refresh_adoption")
 def refresh_adoption() -> int:
-    """Warm the ESI-adoption metric caches (global + per live contest)."""
-    from . import stats
+    """Warm the ESI-adoption metric caches + rank standings (global + per live contest)."""
+    import logging
+
+    from . import rankings, stats
     from .models import RaffleContest
 
     stats.adoption_metrics(use_cache=False)
@@ -105,5 +107,15 @@ def refresh_adoption() -> int:
                     RaffleContest.Status.COMPLETED]
     ):
         stats.contest_statistics(contest, use_cache=False)
+        # Rank standings merge every kill and loss across the contest window, and each
+        # contest is its own cache key — so the killboard's warmed windows buy nothing and
+        # a cold dashboard would run that merge inside a gunicorn worker on HDD RAID.
+        # Warm it here, and only for contests that actually have a rank prize riding on it.
+        if contest.rank_prizes.exists():
+            try:
+                rankings.all_standings(contest, use_cache=False)
+            except Exception:  # noqa: BLE001 — one bad contest must not stall the sweep
+                logging.getLogger("forca.raffle").exception(
+                    "standings warm failed for contest %s", contest.pk)
         n += 1
     return n
