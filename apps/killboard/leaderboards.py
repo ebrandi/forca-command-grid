@@ -408,21 +408,28 @@ def secondary_captions() -> dict:
     }
 
 
-def build_boards(pilots: list[dict]) -> dict:
-    """The eight ranked boards for a set of per-pilot rows (shared with the historical path)."""
+def build_boards(pilots: list[dict], *, limit: int = TOP_N) -> dict:
+    """The eight ranked boards for a set of per-pilot rows (shared with the historical path).
+
+    ``limit`` defaults to the display top-10 every existing caller wants. The raffle's
+    rank-prize standings pass a deeper limit because they must be able to tell a pilot they
+    are 14th and what 13th costs — a board that silently ends at 10 cannot answer that, and
+    duplicating this eight-category configuration in another app to get it would guarantee
+    the two drift apart.
+    """
     cap = secondary_captions()
     return {
-        "top_killers": _rank(pilots, "kills", secondary=cap["top_killers"]),
-        "isk_destroyed": _rank(pilots, "isk_destroyed", secondary=cap["kills"]),
-        "points": _rank(pilots, "points", secondary=cap["kills"]),
-        "final_blows": _rank(pilots, "final_blows"),
-        "solo_kills": _rank(pilots, "solo_kills"),
-        "most_active": _rank(pilots, "active_days", secondary=cap["most_active"]),
-        "isk_lost": _rank(pilots, "isk_lost", secondary=cap["isk_lost"]),
+        "top_killers": _rank(pilots, "kills", secondary=cap["top_killers"], limit=limit),
+        "isk_destroyed": _rank(pilots, "isk_destroyed", secondary=cap["kills"], limit=limit),
+        "points": _rank(pilots, "points", secondary=cap["kills"], limit=limit),
+        "final_blows": _rank(pilots, "final_blows", limit=limit),
+        "solo_kills": _rank(pilots, "solo_kills", limit=limit),
+        "most_active": _rank(pilots, "active_days", secondary=cap["most_active"], limit=limit),
+        "isk_lost": _rank(pilots, "isk_lost", secondary=cap["isk_lost"], limit=limit),
         "efficiency": _rank(
             pilots, "efficiency",
             predicate=lambda p: (p["kills"] + p["losses"]) >= EFFICIENCY_MIN_FIGHTS,
-            secondary=cap["efficiency"],
+            secondary=cap["efficiency"], limit=limit,
         ),
     }
 
