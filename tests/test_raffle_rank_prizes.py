@@ -403,3 +403,78 @@ def test_the_contest_form_still_validates_without_the_new_booster_scope_key():
     assert form.is_valid(), form.errors
     contest = form.save()
     assert contest.prize_booster_applies_to == RaffleContest.BoosterScope.BOTH
+
+
+# --------------------------------------------------------------------------- #
+#  Prize amounts: quantity-priced prizes (PLEX, items)
+# --------------------------------------------------------------------------- #
+@pytest.mark.django_db
+def test_a_plex_prize_shows_its_quantity_not_a_blank_card(client, django_user_model):
+    """A PLEX prize carries its amount in `quantity`, with no ISK value.
+
+    The card used to gate the whole amount block on estimated_value, so a 3,000-PLEX prize
+    rendered as a name and nothing else — the pilot could not see what they were playing
+    for. Reported from production.
+    """
+    contest = make_contest()
+    user, _ = enrol_pilot(django_user_model, 5101)
+    RafflePrize.objects.create(contest=contest, rank=1, name="1st prize",
+                               prize_type=RafflePrize.PrizeType.PLEX,
+                               quantity=3000, estimated_value=Decimal("0"))
+    RafflePrize.objects.create(contest=contest, rank=2, name="2nd prize",
+                               prize_type=RafflePrize.PrizeType.ISK,
+                               quantity=1, estimated_value=Decimal("2000000000"))
+
+    client.force_login(user)
+    body = client.get(f"/raffle/{contest.slug}/").content.decode()
+
+    assert "3,000 PLEX" in body, "the PLEX amount must be visible"
+    assert "1st prize" in body
+    # The ISK prize still renders its value the way it always did.
+    assert "ISK" in body
+
+
+@pytest.mark.django_db
+def test_the_page_does_not_promise_a_boost_it_cannot_deliver(client, django_user_model):
+    """The booster scales estimated_value; a quantity-priced prize is unaffected."""
+    contest = make_contest(
+        prize_booster_metric="total_tickets", prize_booster_goal=Decimal("100"),
+        prize_booster_percent=Decimal("25"),
+        prize_booster_applies_to=RaffleContest.BoosterScope.BOTH)
+    user, _ = enrol_pilot(django_user_model, 5111)
+    RafflePrize.objects.create(contest=contest, rank=1, name="1st prize",
+                               prize_type=RafflePrize.PrizeType.PLEX,
+                               quantity=3000, estimated_value=Decimal("0"))
+
+    client.force_login(user)
+    body = client.get(f"/raffle/{contest.slug}/").content.decode()
+    assert "3,000 PLEX" in body
+    assert "does not change what they pay" in body, "must not advertise a phantom boost"
+    assert "+25% at goal" not in body
+
+    # Give it a real ISK value and the honest claim comes back.
+    contest.prizes.update(estimated_value=Decimal("6000000000"))
+    body2 = client.get(f"/raffle/{contest.slug}/").content.decode()
+    assert "does not change what they pay" not in body2
+    assert "at goal" in body2
+
+
+@pytest.mark.django_db
+def test_leadership_is_warned_that_a_quantity_prize_will_not_boost(django_user_model):
+    contest = make_contest(
+        end_days_ahead=-1,
+        prize_booster_metric="total_tickets", prize_booster_goal=Decimal("100"),
+        prize_booster_percent=Decimal("25"))
+    director = make_user(django_user_model, "dir", rbac.ROLE_DIRECTOR)
+    enrol_pilot(django_user_model, 5121)
+    services.grant_manual_tickets(contest, director, character_id=5121, amount=5, reason="s")
+    RafflePrize.objects.create(contest=contest, rank=1, name="1st prize",
+                               prize_type=RafflePrize.PrizeType.PLEX,
+                               quantity=3000, estimated_value=Decimal("0"))
+    services.set_status(contest, RaffleContest.Status.CLOSED, director)
+
+    from apps.raffle import readiness
+    check = readiness.draw_checklist(contest)
+    warned = [c for c in check["checks"] if c["key"] == "booster_reaches_prizes"]
+    assert warned and warned[0]["state"] == readiness.WARNING
+    assert check["blocked"] is False, "a cosmetic boost is a warning, not a blocker"

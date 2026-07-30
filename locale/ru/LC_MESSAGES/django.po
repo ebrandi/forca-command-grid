@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-29 15:10+0000\n"
+"POT-Creation-Date: 2026-07-30 00:29+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: ru machine-assisted draft\n"
@@ -20011,7 +20011,6 @@ msgid "Invalid JSON: %(error)s"
 msgstr "Некорректный JSON: %(error)s"
 
 #: apps/raffle/forms.py
-#| msgid "Booster ends"
 msgid "Booster applies to"
 msgstr "Бустер применяется к"
 
@@ -20735,6 +20734,21 @@ msgid "%(n)s approved awards have no FORCA account attached and cannot win."
 msgstr ""
 "У %(n)s одобренных начислений нет привязанной учётной записи FORCA, и они не"
 " могут выиграть."
+
+#: apps/raffle/readiness.py
+msgid "The prize booster reaches the prizes"
+msgstr "Бустер призов действительно влияет на призы"
+
+#: apps/raffle/readiness.py
+#, python-format
+msgid ""
+"%(n)s prizes are set as a fixed quantity with no ISK value, and the booster "
+"scales the ISK value — so the boost will not change what they pay. Set an "
+"estimated value on them, or expect the boost to be cosmetic."
+msgstr ""
+"%(n)s призов заданы фиксированным количеством без стоимости в ISK, а бустер "
+"умножает стоимость в ISK — поэтому бустер не изменит их выплату. Укажите для"
+" них оценочную стоимость или учтите, что бустер будет чисто косметическим."
 
 #: apps/raffle/readiness.py
 msgid "No unreviewed integrity flags"
@@ -55455,6 +55469,17 @@ msgstr "Достигните"
 #: templates/raffle/detail.html
 msgid "and every ISK/PLEX prize is worth"
 msgstr "и каждый приз в ISK/PLEX стоит"
+
+#: templates/raffle/detail.html
+#, python-format
+msgid ""
+"Reach <strong>%(goal)s %(label)s</strong> to unlock the prize boost. This "
+"contest's prizes are set as fixed amounts, so the boost does not change what"
+" they pay."
+msgstr ""
+"Достигните <strong>%(goal)s %(label)s</strong>, чтобы разблокировать бустер "
+"призов. Призы этого конкурса заданы фиксированными количествами, поэтому "
+"бустер не меняет их выплату."
 
 #: templates/raffle/detail.html
 msgid "Unlocked — the prizes below show the boosted values!"

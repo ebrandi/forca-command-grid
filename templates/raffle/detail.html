@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load eve static %}
+{% load humanize %}
 {% load i18n %}
 {% block title %}{{ contest.name }} · {% translate "Raffle" %} · [FORCA] Command Grid{% endblock %}
 
@@ -102,7 +103,15 @@
       <p class="eyebrow text-cyan">{% if booster.achieved %}🎉 {% translate "Prize boost unlocked" %}{% else %}{% translate "Unlock bigger prizes" %}{% endif %}</p>
       <span class="data text-xs text-faint">{% if booster.money %}{{ booster.value|isk }} / {{ booster.goal|isk }}{% else %}{{ booster.value|floatformat:0 }} / {{ booster.goal|floatformat:0 }}{% endif %}</span>
     </div>
+    {% comment %}Only claim the boost when it will actually change a prize. The booster
+       scales estimated_value, so a prize configured purely by quantity (the normal way to
+       set up PLEX) is worth exactly the same at goal — advertising a percentage on it
+       would be a promise the draw cannot keep.{% endcomment %}
+    {% if booster_bites %}
     <p class="mt-1 text-sm text-muted">{% translate "Reach" %} <strong>{% if booster.money %}{{ booster.goal|isk }} ISK{% else %}{{ booster.goal|floatformat:0 }}{% endif %} {{ booster.label|lower }}</strong> {% translate "and every ISK/PLEX prize is worth" %} <strong class="text-cyan">+{{ booster.percent|floatformat:0 }}%</strong>.</p>
+    {% else %}
+    <p class="mt-1 text-sm text-muted">{% blocktranslate with goal=booster.goal|floatformat:0 label=booster.label|lower %}Reach <strong>{{ goal }} {{ label }}</strong> to unlock the prize boost. This contest's prizes are set as fixed amounts, so the boost does not change what they pay.{% endblocktranslate %}</p>
+    {% endif %}
     <div class="mt-2 h-2 w-full overflow-hidden rounded-full bg-panel2"><div class="h-full rounded-full bg-cyan" style="width: {{ booster.pct }}%"></div></div>
     <p class="mt-1 text-[11px] {% if booster.achieved %}text-cyan{% else %}text-faint{% endif %}">{% if booster.achieved %}{% translate "Unlocked — the prizes below show the boosted values!" %}{% else %}{% if booster.money %}{{ booster.remaining|isk }} ISK{% else %}{{ booster.remaining|floatformat:0 }}{% endif %} {% translate "more to unlock the bigger prizes." %}{% endif %}</p>
   </div>
@@ -130,12 +139,27 @@
           <p class="truncate font-display font-semibold text-ink">{{ row.prize.name_i18n }}</p>
         </div>
       </div>
-      {% if row.prize.estimated_value %}
-        {% if row.boosted %}
-        <p class="data mt-2 text-sm"><span class="text-faint line-through">{{ row.prize.estimated_value|isk }}</span> <span class="font-semibold text-cyan">{{ row.effective|isk }} ISK</span></p>
-        {% else %}
-        <p class="data mt-2 text-sm text-gold">≈ {{ row.effective|isk }} ISK{% if booster.configured and row.boostable %} <span class="text-[10px] text-cyan">+{{ booster.percent|floatformat:0 }}% {% translate "at goal" %}</span>{% endif %}</p>
+      {% comment %}A prize's amount lives in EITHER field. ISK prizes carry it in
+         estimated_value; PLEX and items are normally counted in `quantity` with no ISK
+         value at all. Gating the whole block on estimated_value hid the amount completely
+         for a 3,000-PLEX prize — the pilot saw the prize name and nothing else.
+
+         The "+N% at goal" hint stays tied to estimated_value on purpose: the booster
+         multiplies that field, so on a quantity-priced prize it would promise a boost the
+         draw cannot deliver.{% endcomment %}
+      {% if row.prize.quantity > 1 or row.prize.estimated_value %}
+      <p class="data mt-2 text-sm">
+        {% if row.prize.quantity > 1 %}
+          <span class="font-semibold text-gold">{{ row.prize.quantity|intcomma }} {{ row.prize.get_prize_type_display }}</span>{% if row.prize.estimated_value %} <span class="text-faint">·</span>{% endif %}
         {% endif %}
+        {% if row.prize.estimated_value %}
+          {% if row.boosted %}
+            <span class="text-faint line-through">{{ row.prize.estimated_value|isk }}</span> <span class="font-semibold text-cyan">{{ row.effective|isk }} ISK</span>
+          {% else %}
+            <span class="text-gold">≈ {{ row.effective|isk }} ISK</span>{% if booster.configured and row.boostable %} <span class="text-[10px] text-cyan">+{{ booster.percent|floatformat:0 }}% {% translate "at goal" %}</span>{% endif %}
+          {% endif %}
+        {% endif %}
+      </p>
       {% endif %}
       {% if row.prize.description %}<p class="mt-1 text-xs text-faint">{{ row.prize.description }}</p>{% endif %}
     </div>
@@ -206,6 +230,8 @@
         <div class="flex flex-wrap items-center gap-2 py-1 text-sm">
           <span class="chip !border-gold/40 !text-gold shrink-0">#{{ row.prize.position }}</span>
           <span class="min-w-0 flex-1 truncate text-muted">{{ row.prize.name }}</span>
+          {% if row.prize.quantity > 1 %}<span class="data text-xs text-gold">{{ row.prize.quantity|intcomma }} {{ row.prize.get_prize_type_display }}</span>{% endif %}
+          {% if row.prize.estimated_value %}<span class="data text-xs text-gold">{{ row.effective|isk }} ISK</span>{% endif %}
           {% if row.boosted %}<span class="chip !border-cyan/40 !text-cyan">{% translate "boosted" %}</span>{% endif %}
           {% if row.award %}<span class="chip !border-kill/40 !text-kill">{% translate "awarded" %}</span>{% endif %}
         </div>

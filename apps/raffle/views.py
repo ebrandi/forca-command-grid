@@ -175,6 +175,17 @@ def detail(request, slug):
                 "mine": rankings.pilot_standing(contest, board_key, request.user),
             })
 
+    # Does the booster actually change ANY prize? It multiplies estimated_value, and a
+    # PLEX or item prize is normally configured by `quantity` with no ISK value at all —
+    # so a contest can advertise "+N% on every ISK/PLEX prize" while boosting nothing.
+    # The page must not make a promise the draw will not keep.
+    booster_bites = any(
+        row["boostable"] and row["prize"].estimated_value for row in prizes
+    ) or any(
+        p["prize"].estimated_value and boosters.is_boostable(p["prize"], contest, kind="rank")
+        for b in rank_boards for p in b["prizes"]
+    )
+
     stat = stats.contest_statistics(contest)
     snap = pool_snapshot.current_snapshot(contest)
     my_odds = stats.win_chance(
@@ -187,6 +198,7 @@ def detail(request, slug):
         "my_odds": my_odds,
         "prizes": prizes,
         "rank_boards": rank_boards,
+        "booster_bites": booster_bites,
         "activity": activity,
         "booster": booster,
         "sources": sources,

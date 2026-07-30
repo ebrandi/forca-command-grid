@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-29 15:10+0000\n"
+"POT-Creation-Date: 2026-07-30 00:29+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: de machine-assisted draft\n"
@@ -20229,7 +20229,6 @@ msgid "Invalid JSON: %(error)s"
 msgstr "Ungültiges JSON: %(error)s"
 
 #: apps/raffle/forms.py
-#| msgid "Booster ends"
 msgid "Booster applies to"
 msgstr "Booster gilt für"
 
@@ -20956,6 +20955,22 @@ msgid "%(n)s approved awards have no FORCA account attached and cannot win."
 msgstr ""
 "%(n)s freigegebene Vergaben haben kein zugeordnetes FORCA-Konto und können "
 "nicht gewinnen."
+
+#: apps/raffle/readiness.py
+msgid "The prize booster reaches the prizes"
+msgstr "Der Preis-Booster erreicht die Preise"
+
+#: apps/raffle/readiness.py
+#, python-format
+msgid ""
+"%(n)s prizes are set as a fixed quantity with no ISK value, and the booster "
+"scales the ISK value — so the boost will not change what they pay. Set an "
+"estimated value on them, or expect the boost to be cosmetic."
+msgstr ""
+"%(n)s Preise sind als feste Menge ohne ISK-Wert eingestellt, und der Booster"
+" skaliert den ISK-Wert — der Boost ändert also nichts an ihrer Auszahlung. "
+"Gib ihnen einen geschätzten Wert, oder rechne mit einem rein kosmetischen "
+"Boost."
 
 #: apps/raffle/readiness.py
 msgid "No unreviewed integrity flags"
@@ -55768,6 +55783,17 @@ msgstr "Erreiche"
 #: templates/raffle/detail.html
 msgid "and every ISK/PLEX prize is worth"
 msgstr "und jeder ISK/PLEX-Preis ist wert"
+
+#: templates/raffle/detail.html
+#, python-format
+msgid ""
+"Reach <strong>%(goal)s %(label)s</strong> to unlock the prize boost. This "
+"contest's prizes are set as fixed amounts, so the boost does not change what"
+" they pay."
+msgstr ""
+"Erreiche <strong>%(goal)s %(label)s</strong>, um den Preis-Boost "
+"freizuschalten. Die Preise dieses Contests sind als feste Mengen "
+"eingestellt, der Boost ändert ihre Auszahlung also nicht."
 
 #: templates/raffle/detail.html
 msgid "Unlocked — the prizes below show the boosted values!"

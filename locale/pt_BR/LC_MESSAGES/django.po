@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-29 15:10+0000\n"
+"POT-Creation-Date: 2026-07-30 00:29+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: pt-br machine-assisted draft\n"
@@ -20072,7 +20072,6 @@ msgid "Invalid JSON: %(error)s"
 msgstr "JSON inválido: %(error)s"
 
 #: apps/raffle/forms.py
-#| msgid "Booster ends"
 msgid "Booster applies to"
 msgstr "O bônus se aplica a"
 
@@ -20796,6 +20795,22 @@ msgstr "Todo bilhete aprovado pertence a uma conta"
 msgid "%(n)s approved awards have no FORCA account attached and cannot win."
 msgstr ""
 "%(n)s premiações aprovadas não têm conta FORCA associada e não podem vencer."
+
+#: apps/raffle/readiness.py
+msgid "The prize booster reaches the prizes"
+msgstr "O bônus de prêmio alcança os prêmios"
+
+#: apps/raffle/readiness.py
+#, python-format
+msgid ""
+"%(n)s prizes are set as a fixed quantity with no ISK value, and the booster "
+"scales the ISK value — so the boost will not change what they pay. Set an "
+"estimated value on them, or expect the boost to be cosmetic."
+msgstr ""
+"%(n)s prêmios estão definidos como quantidade fixa sem valor em ISK, e o "
+"bônus multiplica o valor em ISK — então o bônus não mudará o que eles pagam."
+" Defina um valor estimado neles, ou espere que o bônus seja apenas "
+"cosmético."
 
 #: apps/raffle/readiness.py
 msgid "No unreviewed integrity flags"
@@ -55453,6 +55468,17 @@ msgstr "Alcance"
 #: templates/raffle/detail.html
 msgid "and every ISK/PLEX prize is worth"
 msgstr "e cada prêmio em ISK/PLEX vale"
+
+#: templates/raffle/detail.html
+#, python-format
+msgid ""
+"Reach <strong>%(goal)s %(label)s</strong> to unlock the prize boost. This "
+"contest's prizes are set as fixed amounts, so the boost does not change what"
+" they pay."
+msgstr ""
+"Alcance <strong>%(goal)s %(label)s</strong> para desbloquear o bônus de "
+"prêmio. Os prêmios deste concurso estão definidos como quantidades fixas, "
+"então o bônus não muda o que eles pagam."
 
 #: templates/raffle/detail.html
 msgid "Unlocked — the prizes below show the boosted values!"

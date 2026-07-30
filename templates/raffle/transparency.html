@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load eve %}
+{% load humanize %}
 {% load i18n %}
 {% block title %}{% translate "Draw receipt" %} · {{ contest.name }} · [FORCA] Command Grid{% endblock %}
 {% block content %}
@@ -87,7 +88,7 @@
         <span class="grid h-7 w-7 place-items-center rounded-full bg-panel2 text-xs font-bold text-gold">{{ w.prize.rank }}</span>
         {% if w.winner_character_id %}<img src="{% eve_portrait w.winner_character_id 32 %}" alt="" class="h-6 w-6 rounded-full ring-1 ring-line">{% endif %}
         <span class="min-w-0 flex-1 truncate text-ink {% if w.status != 'won' %}line-through{% endif %}">{{ w.winner_character_name }}</span>
-        <span class="text-sm text-gold">{{ w.prize.name_i18n }}</span>
+        <span class="text-sm text-gold">{{ w.prize.name_i18n }}{% if w.prize.quantity > 1 %} <span class="data text-xs">{{ w.prize.quantity|intcomma }} {{ w.prize.get_prize_type_display }}</span>{% endif %}</span>
         {% if w.winning_ticket_no %}
           <span class="data tabular-nums whitespace-nowrap text-sm text-cyan">{% translate "ticket" %} #{{ w.winning_ticket_no }}</span>
         {% else %}

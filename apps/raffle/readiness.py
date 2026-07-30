@@ -122,6 +122,26 @@ def draw_checklist(contest) -> dict:
             _("%(n)s approved awards have no FORCA account attached and cannot win.")
             % {"n": orphan}))
 
+    # A prize whose amount lives in `quantity` (the normal way to set up PLEX or an item)
+    # has estimated_value 0, and the booster multiplies estimated_value — so the contest
+    # advertises a percentage that will never be applied. Worth saying out loud, because
+    # the configuration looks entirely correct from the prize form.
+    if contest.prize_booster_metric and contest.prize_booster_percent:
+        unboostable = [
+            p for p in (
+                list(contest.prizes.all()) + list(contest.rank_prizes.all())
+            )
+            if p.quantity > 1 and not p.estimated_value
+        ]
+        if unboostable:
+            checks.append(_check(
+                "booster_reaches_prizes", WARNING,
+                _("The prize booster reaches the prizes"),
+                _("%(n)s prizes are set as a fixed quantity with no ISK value, and the "
+                  "booster scales the ISK value — so the boost will not change what they "
+                  "pay. Set an estimated value on them, or expect the boost to be "
+                  "cosmetic.") % {"n": len(unboostable)}))
+
     # --- integrity -------------------------------------------------------- #
     open_flags = contest.suspicious_flags.filter(
         status=RaffleSuspiciousActivityFlag.Status.OPEN).count()

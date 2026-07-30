@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-29 15:10+0000\n"
+"POT-Creation-Date: 2026-07-30 00:29+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: ja machine-assisted draft\n"
@@ -19024,7 +19024,6 @@ msgid "Invalid JSON: %(error)s"
 msgstr "無効な JSON: %(error)s"
 
 #: apps/raffle/forms.py
-#| msgid "Booster ends"
 msgid "Booster applies to"
 msgstr "ブースターの適用先"
 
@@ -19696,6 +19695,20 @@ msgstr "承認済みチケットはすべてアカウントに紐づいている
 #, python-format
 msgid "%(n)s approved awards have no FORCA account attached and cannot win."
 msgstr "%(n)s 件の承認済み付与に FORCA アカウントが紐づいておらず、当選できません。"
+
+#: apps/raffle/readiness.py
+msgid "The prize booster reaches the prizes"
+msgstr "賞品ブースターが賞品に効いている"
+
+#: apps/raffle/readiness.py
+#, python-format
+msgid ""
+"%(n)s prizes are set as a fixed quantity with no ISK value, and the booster "
+"scales the ISK value — so the boost will not change what they pay. Set an "
+"estimated value on them, or expect the boost to be cosmetic."
+msgstr ""
+"%(n)s 件の賞品が ISK 価値なしの固定数量で設定されており、ブースターは ISK "
+"価値を倍率で増やすため、ブーストしても支払い内容は変わりません。推定価値を設定するか、ブーストは表示上のみと理解してください。"
 
 #: apps/raffle/readiness.py
 msgid "No unreviewed integrity flags"
@@ -52421,6 +52434,16 @@ msgstr "到達目標:"
 #: templates/raffle/detail.html
 msgid "and every ISK/PLEX prize is worth"
 msgstr "に達すると、すべての ISK/PLEX 賞品の価値が"
+
+#: templates/raffle/detail.html
+#, python-format
+msgid ""
+"Reach <strong>%(goal)s %(label)s</strong> to unlock the prize boost. This "
+"contest's prizes are set as fixed amounts, so the boost does not change what"
+" they pay."
+msgstr ""
+"<strong>%(goal)s %(label)s</strong> "
+"を達成すると賞品ブースターが解放されます。このコンテストの賞品は固定数量で設定されているため、ブーストしても支払い内容は変わりません。"
 
 #: templates/raffle/detail.html
 msgid "Unlocked — the prizes below show the boosted values!"

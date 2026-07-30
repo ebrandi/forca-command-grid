@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-29 15:10+0000\n"
+"POT-Creation-Date: 2026-07-30 00:29+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: es machine-assisted draft\n"
@@ -20236,7 +20236,6 @@ msgid "Invalid JSON: %(error)s"
 msgstr "JSON no válido: %(error)s"
 
 #: apps/raffle/forms.py
-#| msgid "Booster ends"
 msgid "Booster applies to"
 msgstr "La bonificación se aplica a"
 
@@ -20965,6 +20964,22 @@ msgid "%(n)s approved awards have no FORCA account attached and cannot win."
 msgstr ""
 "%(n)s concesiones aprobadas no tienen cuenta FORCA asociada y no pueden "
 "ganar."
+
+#: apps/raffle/readiness.py
+msgid "The prize booster reaches the prizes"
+msgstr "La bonificación de premio alcanza a los premios"
+
+#: apps/raffle/readiness.py
+#, python-format
+msgid ""
+"%(n)s prizes are set as a fixed quantity with no ISK value, and the booster "
+"scales the ISK value — so the boost will not change what they pay. Set an "
+"estimated value on them, or expect the boost to be cosmetic."
+msgstr ""
+"%(n)s premios están definidos como cantidad fija sin valor en ISK, y la "
+"bonificación multiplica el valor en ISK — así que la bonificación no "
+"cambiará lo que pagan. Ponles un valor estimado, o cuenta con que la "
+"bonificación sea cosmética."
 
 #: apps/raffle/readiness.py
 msgid "No unreviewed integrity flags"
@@ -55783,6 +55798,17 @@ msgstr "Alcanza"
 #: templates/raffle/detail.html
 msgid "and every ISK/PLEX prize is worth"
 msgstr "y cada premio de ISK/PLEX vale"
+
+#: templates/raffle/detail.html
+#, python-format
+msgid ""
+"Reach <strong>%(goal)s %(label)s</strong> to unlock the prize boost. This "
+"contest's prizes are set as fixed amounts, so the boost does not change what"
+" they pay."
+msgstr ""
+"Alcanza <strong>%(goal)s %(label)s</strong> para desbloquear la bonificación"
+" de premio. Los premios de este concurso están definidos como cantidades "
+"fijas, así que la bonificación no cambia lo que pagan."
 
 #: templates/raffle/detail.html
 msgid "Unlocked — the prizes below show the boosted values!"

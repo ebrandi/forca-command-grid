@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-29 15:10+0000\n"
+"POT-Creation-Date: 2026-07-30 00:29+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: ko machine-assisted draft\n"
@@ -19036,7 +19036,6 @@ msgid "Invalid JSON: %(error)s"
 msgstr "잘못된 JSON: %(error)s"
 
 #: apps/raffle/forms.py
-#| msgid "Booster ends"
 msgid "Booster applies to"
 msgstr "부스터 적용 대상"
 
@@ -19710,6 +19709,20 @@ msgstr "승인된 모든 티켓이 계정에 연결됨"
 #, python-format
 msgid "%(n)s approved awards have no FORCA account attached and cannot win."
 msgstr "%(n)s건의 승인된 지급에 FORCA 계정이 연결되어 있지 않아 당첨될 수 없습니다."
+
+#: apps/raffle/readiness.py
+msgid "The prize booster reaches the prizes"
+msgstr "상품 부스터가 상품에 실제로 적용됨"
+
+#: apps/raffle/readiness.py
+#, python-format
+msgid ""
+"%(n)s prizes are set as a fixed quantity with no ISK value, and the booster "
+"scales the ISK value — so the boost will not change what they pay. Set an "
+"estimated value on them, or expect the boost to be cosmetic."
+msgstr ""
+"%(n)s개의 상품이 ISK 가치 없이 고정 수량으로 설정되어 있고, 부스터는 ISK 가치를 배수로 올립니다 — 따라서 부스트는 지급액을"
+" 바꾸지 않습니다. 예상 가치를 입력하거나, 부스트가 표시상으로만 적용된다고 이해하세요."
 
 #: apps/raffle/readiness.py
 msgid "No unreviewed integrity flags"
@@ -52505,6 +52518,16 @@ msgstr "도달"
 #: templates/raffle/detail.html
 msgid "and every ISK/PLEX prize is worth"
 msgstr "그리고 모든 ISK/PLEX 상품의 가치가"
+
+#: templates/raffle/detail.html
+#, python-format
+msgid ""
+"Reach <strong>%(goal)s %(label)s</strong> to unlock the prize boost. This "
+"contest's prizes are set as fixed amounts, so the boost does not change what"
+" they pay."
+msgstr ""
+"<strong>%(goal)s %(label)s</strong>에 도달하면 상품 부스터가 열립니다. 이 콘테스트의 상품은 고정 수량으로 "
+"설정되어 있어 부스트가 지급액을 바꾸지 않습니다."
 
 #: templates/raffle/detail.html
 msgid "Unlocked — the prizes below show the boosted values!"

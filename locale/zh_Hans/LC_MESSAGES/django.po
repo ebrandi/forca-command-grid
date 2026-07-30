@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-29 15:10+0000\n"
+"POT-Creation-Date: 2026-07-30 00:29+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: zh-hans machine-assisted draft\n"
@@ -18802,7 +18802,6 @@ msgid "Invalid JSON: %(error)s"
 msgstr "无效的 JSON：%(error)s"
 
 #: apps/raffle/forms.py
-#| msgid "Booster ends"
 msgid "Booster applies to"
 msgstr "加成适用于"
 
@@ -19473,6 +19472,20 @@ msgstr "每张已批准的票都归属某个账号"
 #, python-format
 msgid "%(n)s approved awards have no FORCA account attached and cannot win."
 msgstr "有 %(n)s 笔已批准的发放没有关联 FORCA 账号，无法中奖。"
+
+#: apps/raffle/readiness.py
+msgid "The prize booster reaches the prizes"
+msgstr "奖品加成确实作用于奖品"
+
+#: apps/raffle/readiness.py
+#, python-format
+msgid ""
+"%(n)s prizes are set as a fixed quantity with no ISK value, and the booster "
+"scales the ISK value — so the boost will not change what they pay. Set an "
+"estimated value on them, or expect the boost to be cosmetic."
+msgstr ""
+"有 %(n)s 个奖品设置为不带 ISK 价值的固定数量，而加成是按 ISK 价值放大的 — "
+"因此加成不会改变它们的实际发放量。请为它们填写预估价值，或者接受加成仅是形式上的。"
 
 #: apps/raffle/readiness.py
 msgid "No unreviewed integrity flags"
@@ -51778,6 +51791,16 @@ msgstr "达到"
 #: templates/raffle/detail.html
 msgid "and every ISK/PLEX prize is worth"
 msgstr "每份 ISK/PLEX 奖品的价值将达到"
+
+#: templates/raffle/detail.html
+#, python-format
+msgid ""
+"Reach <strong>%(goal)s %(label)s</strong> to unlock the prize boost. This "
+"contest's prizes are set as fixed amounts, so the boost does not change what"
+" they pay."
+msgstr ""
+"达成 <strong>%(goal)s %(label)s</strong> "
+"即可解锁奖品加成。本次比赛的奖品设置为固定数量，因此加成不会改变它们的实际发放量。"
 
 #: templates/raffle/detail.html
 msgid "Unlocked — the prizes below show the boosted values!"
