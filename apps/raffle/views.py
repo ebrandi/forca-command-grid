@@ -175,15 +175,23 @@ def detail(request, slug):
                 "mine": rankings.pilot_standing(contest, board_key, request.user),
             })
 
-    # Does the booster actually change ANY prize? It multiplies estimated_value, and a
-    # PLEX or item prize is normally configured by `quantity` with no ISK value at all —
-    # so a contest can advertise "+N% on every ISK/PLEX prize" while boosting nothing.
-    # The page must not make a promise the draw will not keep.
-    booster_bites = any(
-        row["boostable"] and row["prize"].estimated_value for row in prizes
-    ) or any(
-        p["prize"].estimated_value and boosters.is_boostable(p["prize"], contest, kind="rank")
-        for b in rank_boards for p in b["prizes"]
+    # WHICH prizes the booster actually changes. It multiplies estimated_value, and a PLEX
+    # or item prize is normally configured by `quantity` with no ISK value at all — so a
+    # contest can advertise "+N% on every ISK/PLEX prize" while boosting some, none, or all
+    # of them. Three states, because "any" and "all" need different sentences: a contest
+    # with unboostable PLEX tickets AND a boostable ISK rank prize is the common real shape,
+    # and saying "every prize" there is still false about the PLEX.
+    _all_prize_rows = [(r["prize"], "ticket") for r in prizes] + [
+        (p["prize"], "rank") for b in rank_boards for p in b["prizes"]
+    ]
+    booster_reaches = sum(
+        1 for prize, kind in _all_prize_rows
+        if prize.estimated_value and boosters.is_boostable(prize, contest, kind=kind)
+    )
+    booster_scope = (
+        "none" if booster_reaches == 0
+        else "all" if booster_reaches == len(_all_prize_rows)
+        else "some"
     )
 
     stat = stats.contest_statistics(contest)
@@ -198,7 +206,9 @@ def detail(request, slug):
         "my_odds": my_odds,
         "prizes": prizes,
         "rank_boards": rank_boards,
-        "booster_bites": booster_bites,
+        "booster_scope": booster_scope,
+        "booster_reaches": booster_reaches,
+        "booster_prize_count": len(_all_prize_rows),
         "activity": activity,
         "booster": booster,
         "sources": sources,

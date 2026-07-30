@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-30 00:29+0000\n"
+"POT-Creation-Date: 2026-07-30 00:53+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: zh-hans machine-assisted draft\n"
@@ -51791,6 +51791,16 @@ msgstr "达到"
 #: templates/raffle/detail.html
 msgid "and every ISK/PLEX prize is worth"
 msgstr "每份 ISK/PLEX 奖品的价值将达到"
+
+#: templates/raffle/detail.html
+#, python-format
+msgid ""
+"Reach <strong>%(goal)s %(label)s</strong> and the %(n)s of %(total)s prizes "
+"that carry an ISK value are worth <strong>+%(pct)s%%</strong>. The rest are "
+"fixed amounts and pay the same either way."
+msgstr ""
+"达成 <strong>%(goal)s %(label)s</strong> 后，%(total)s 个奖品中带有 ISK 价值的 %(n)s 个将提升"
+" <strong>+%(pct)s%%</strong>。其余为固定数量，无论如何发放量都相同。"
 
 #: templates/raffle/detail.html
 #, python-format

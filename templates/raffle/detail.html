@@ -107,8 +107,10 @@
        scales estimated_value, so a prize configured purely by quantity (the normal way to
        set up PLEX) is worth exactly the same at goal — advertising a percentage on it
        would be a promise the draw cannot keep.{% endcomment %}
-    {% if booster_bites %}
+    {% if booster_scope == 'all' %}
     <p class="mt-1 text-sm text-muted">{% translate "Reach" %} <strong>{% if booster.money %}{{ booster.goal|isk }} ISK{% else %}{{ booster.goal|floatformat:0 }}{% endif %} {{ booster.label|lower }}</strong> {% translate "and every ISK/PLEX prize is worth" %} <strong class="text-cyan">+{{ booster.percent|floatformat:0 }}%</strong>.</p>
+    {% elif booster_scope == 'some' %}
+    <p class="mt-1 text-sm text-muted">{% blocktranslate with goal=booster.goal|floatformat:0 label=booster.label|lower pct=booster.percent|floatformat:0 n=booster_reaches total=booster_prize_count %}Reach <strong>{{ goal }} {{ label }}</strong> and the {{ n }} of {{ total }} prizes that carry an ISK value are worth <strong>+{{ pct }}%</strong>. The rest are fixed amounts and pay the same either way.{% endblocktranslate %}</p>
     {% else %}
     <p class="mt-1 text-sm text-muted">{% blocktranslate with goal=booster.goal|floatformat:0 label=booster.label|lower %}Reach <strong>{{ goal }} {{ label }}</strong> to unlock the prize boost. This contest's prizes are set as fixed amounts, so the boost does not change what they pay.{% endblocktranslate %}</p>
     {% endif %}

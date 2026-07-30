@@ -460,6 +460,33 @@ def test_the_page_does_not_promise_a_boost_it_cannot_deliver(client, django_user
 
 
 @pytest.mark.django_db
+def test_a_mixed_contest_says_how_many_prizes_the_boost_reaches(client, django_user_model):
+    """The real production shape: unboostable PLEX tickets AND a boostable ISK rank prize.
+
+    "any prize boosts" is not enough to justify saying "EVERY ISK/PLEX prize is worth +25%"
+    — that sentence is still false about the PLEX. Three states are needed, not two.
+    """
+    contest = make_contest(
+        prize_booster_metric="total_tickets", prize_booster_goal=Decimal("100"),
+        prize_booster_percent=Decimal("25"),
+        prize_booster_applies_to=RaffleContest.BoosterScope.BOTH)
+    user, _ = enrol_pilot(django_user_model, 5131)
+    for rank, qty in [(1, 3000), (2, 1500)]:
+        RafflePrize.objects.create(contest=contest, rank=rank, name=f"{rank} prize",
+                                   prize_type=RafflePrize.PrizeType.PLEX,
+                                   quantity=qty, estimated_value=Decimal("0"))
+    _rank_prize(contest, "top_killers", 1, value="1000000000", name="Top Killer")
+
+    client.force_login(user)
+    body = client.get(f"/raffle/{contest.slug}/").content.decode()
+
+    assert "3,000 PLEX" in body
+    assert "every ISK/PLEX prize is worth" not in body, "false about the PLEX prizes"
+    assert "does not change what they pay" not in body, "false about the rank prize"
+    assert "1 of 3 prizes that carry an ISK value" in body, "say exactly what boosts"
+
+
+@pytest.mark.django_db
 def test_leadership_is_warned_that_a_quantity_prize_will_not_boost(django_user_model):
     contest = make_contest(
         end_days_ahead=-1,
