@@ -12,17 +12,33 @@ mails where it is the VICTIM.
 
 Leaderboards are computed on demand (windows are flexible) and memoized in the
 cache for a few minutes — rankings do not need to be real-time.
+
+Serving strategy (P5): the board is public and anonymous, so the cache is the only
+thing standing between a link on Reddit and a full-history aggregation per request.
+Three mechanisms, all in this module:
+
+* the warmer (``warm_windows``) fills the hot windows for every alt-rollup mode and
+  every enabled locale from ONE database pass per window, because only the prose
+  differs between locales — see that function for the budget;
+* a cached payload keeps a *freshness* marker separate from the value itself, so an
+  entry that has gone stale can still be served while a single request rebuilds it;
+* that rebuild is single-flighted with the ``cache.add`` owner-token mutex this
+  codebase already uses for beat tasks (``killstream``, ``signature_pipeline``), so N
+  simultaneous readers of a cold variant cost one build, not N.
 """
 from __future__ import annotations
 
+import time
+from collections import Counter
 from dataclasses import dataclass
 from datetime import timedelta
+from uuid import uuid4
 
 from django.conf import settings
 from django.core.cache import cache
 from django.db.models import Count, Q, Sum
 from django.db.models.functions import TruncDate
-from django.utils import formats, timezone
+from django.utils import formats, timezone, translation
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
@@ -42,6 +58,32 @@ TOP_N_KILLS = 5  # the "most valuable kills" highlight list
 # between cycles; rankings tolerate the resulting few-minutes staleness.
 CACHE_TTL = 900
 CACHE_VERSION = 1
+
+# The windows whose aggregation is NOT time-bounded (``all``) or spans a quarter /
+# a whole closed month. They are the expensive ones — ``all`` scans the entire
+# killboard — and they are also the ones nobody lands on by default, so they are
+# warmed on the slow (~15 min) cadence rather than every tick and their payload
+# stays "fresh" for an hour, mirroring the all-time dashboard slice
+# (``analytics.ALLTIME_TTL``). A heavy window therefore costs at most one scan an
+# hour on the request path, and normally zero because the slow warm gets there first.
+HEAVY_WINDOWS = frozenset({"90d", "lastmonth", "all"})
+HEAVY_CACHE_TTL = 3600
+
+# How long past its freshness a payload may still be handed to a reader while one
+# other request rebuilds it. Serving a 20-minute-old ranking beats making an
+# anonymous visitor wait for a full-history aggregation; the boards are already
+# explicitly "not real-time". Only the *rebuild* is skipped, never the answer.
+STALE_GRACE = 6 * 3600
+
+# Single-flight mutex for a rebuild. The TTL only has to outlive one ``_build`` —
+# it is released in a ``finally`` — and the owner token means a build that somehow
+# outruns the TTL can never delete its successor's lock (killstream's idiom).
+_LOCK_TTL = 120
+# How long a reader with NO payload at all (truly cold AND contended) waits for the
+# winner's result before giving up and building it itself. Bounded on purpose: a
+# request must never hang on another worker, and correctness outranks the saving.
+_LOCK_WAIT_S = 2.0
+_LOCK_POLL_S = 0.05
 
 
 # --- Time windows -----------------------------------------------------------
@@ -204,8 +246,22 @@ def _loss_rows(window: Window):
 
 
 def _active_days(window: Window) -> dict[int, int]:
-    """Distinct calendar days each pilot got on a killmail (kill or loss)."""
-    days: dict[int, set] = {}
+    """Distinct calendar days each pilot got on a killmail (kill or loss).
+
+    A pilot who both killed and died on the same day must count that day ONCE, so the
+    two sources have to be de-duplicated against each other. That is done with a SQL
+    ``UNION`` (which de-duplicates whole rows) and counted with a ``Counter``, rather
+    than by materialising a ``set`` of dates per pilot in Python: on the unbounded
+    ``all`` window the old shape allocated one Python object per (pilot, day) pair for
+    the whole history of the corp. The result is identical by construction — counting
+    the rows of a de-duplicated ``(character_id, day)`` union IS the size of that set —
+    and the regression test pins it against a verbatim copy of the old implementation.
+
+    ``order_by()`` clears each model's default ordering, which a combined query cannot
+    carry anyway. It is not only a UNION formality: with ``killmail_time`` still in the
+    ORDER BY, Postgres has to include it in a ``SELECT DISTINCT``, so the loss side was
+    silently returning one row per killmail rather than one per (pilot, day).
+    """
     kill_days = (
         KillmailParticipant.objects.filter(
             _time_filter("killmail__killmail_time", window),
@@ -217,6 +273,7 @@ def _active_days(window: Window) -> dict[int, int]:
         )
         .annotate(day=TruncDate("killmail__killmail_time"))
         .values_list("character_id", "day")
+        .order_by()
         .distinct()
     )
     loss_days = (
@@ -229,11 +286,10 @@ def _active_days(window: Window) -> dict[int, int]:
         )
         .annotate(day=TruncDate("killmail_time"))
         .values_list("victim_character_id", "day")
+        .order_by()
         .distinct()
     )
-    for cid, day in list(kill_days) + list(loss_days):
-        days.setdefault(cid, set()).add(day)
-    return {cid: len(ds) for cid, ds in days.items()}
+    return dict(Counter(cid for cid, _day in kill_days.union(loss_days)))
 
 
 def _merge_pilots(window: Window) -> dict[int, dict]:
@@ -434,18 +490,100 @@ def build_boards(pilots: list[dict], *, limit: int = TOP_N) -> dict:
     }
 
 
-def _build(window_key: str, *, by_main: bool = False) -> dict:
-    window = window_for(window_key)
-    pilots = list(_merge_pilots(window).values())
-    if by_main:
-        pilots = _rollup_by_main(pilots)
+# --- Building a payload -----------------------------------------------------
+# A rankings payload has two halves, and only one of them is expensive. ``_aggregate``
+# is the database half and is language-neutral — ids, counts and ISK are the same in
+# every locale. ``_render`` is pure Python over those rows and is where every piece of
+# prose (the window label, the category titles, the per-row captions) resolves under the
+# active language. Splitting them is what lets the warmer fill 12 board variants across
+# every enabled locale from one pass per window instead of one pass per variant per
+# locale; ``_build`` glues them back together for the single-payload callers.
+def _aggregate(window: Window) -> tuple[list[dict], list[dict]]:
+    """``(per-character rows, most-valuable kills)`` for a window — the DB half."""
+    return list(_merge_pilots(window).values()), _most_valuable_kills(window)
+
+
+def _pilot_rows(pilots: list[dict], *, by_main: bool) -> list[dict]:
+    """The rows a board ranks: per character, or rolled up under each person's main.
+
+    ``_rollup_by_main`` copies every row it touches, so the caller's list is never
+    mutated and one aggregation can safely feed both modes.
+    """
+    return _rollup_by_main(pilots) if by_main else pilots
+
+
+def _render(window: Window, pilots: list[dict], most_valuable: list[dict]) -> dict:
+    """The payload as a reader sees it, with every string resolved in the active language."""
     return {
         "window": {"key": window.key, "label": str(window.label)},
         "categories": categories_payload(build_boards(pilots)),
-        "most_valuable": _most_valuable_kills(window),
+        "most_valuable": most_valuable,
         "pilot_count": len(pilots),
         "efficiency_min_fights": EFFICIENCY_MIN_FIGHTS,
     }
+
+
+def _build(window_key: str, *, by_main: bool = False) -> dict:
+    window = window_for(window_key)
+    pilots, most_valuable = _aggregate(window)
+    return _render(window, _pilot_rows(pilots, by_main=by_main), most_valuable)
+
+
+# --- Cache plumbing ---------------------------------------------------------
+def _cache_keys(window_key: str, by_main: bool) -> tuple[str, str, str]:
+    """``(payload, freshness marker, rebuild lock)`` keys for one board variant.
+
+    The payload key is unchanged and still holds the plain payload dict: freshness lives
+    in a SEPARATE marker key rather than in an envelope around the value, so every other
+    reader of ``kb:lb:…`` (and the invalidation sweeps) keeps seeing exactly what it saw
+    before. The marker expires first; the payload outlives it by ``STALE_GRACE`` and is
+    what a reader gets served while one request rebuilds.
+    """
+    suffix = ":main" if by_main else ""
+    key = i18n_cache_key(f"kb:lb:{CACHE_VERSION}:{_home()}:{window_key}{suffix}")
+    return key, f"{key}:fresh", f"{key}:lock"
+
+
+def _fresh_ttl(window_key: str) -> int:
+    return HEAVY_CACHE_TTL if window_key in HEAVY_WINDOWS else CACHE_TTL
+
+
+def _store(key: str, fresh_key: str, payload: dict, fresh_ttl: int) -> None:
+    cache.set(key, payload, fresh_ttl + STALE_GRACE)
+    cache.set(fresh_key, True, fresh_ttl)
+
+
+def _revalidate(window_key: str, *, by_main: bool, stale: dict | None) -> dict:
+    """Rebuild one variant under a single-flight lock, serving ``stale`` to the losers.
+
+    Exactly one caller per variant runs ``_build``; everyone else either gets the
+    slightly-stale payload immediately (the normal case once a board has ever been
+    built) or, with nothing cached at all, waits a bounded moment for the winner and
+    only then builds it themselves. The fallback build is deliberate: a bug in the
+    lock must degrade to today's behaviour — slow — never to an empty board.
+    """
+    key, fresh_key, lock_key = _cache_keys(window_key, by_main)
+    fresh_ttl = _fresh_ttl(window_key)
+    token = uuid4().hex
+    if cache.add(lock_key, token, _LOCK_TTL):
+        try:
+            payload = _build(window_key, by_main=by_main)
+            _store(key, fresh_key, payload, fresh_ttl)
+            return payload
+        finally:
+            if cache.get(lock_key) == token:  # only free our own lock (overrun-safe)
+                cache.delete(lock_key)
+    if stale is not None:
+        return stale
+    deadline = time.monotonic() + _LOCK_WAIT_S
+    while time.monotonic() < deadline:
+        time.sleep(_LOCK_POLL_S)
+        payload = cache.get(key)
+        if payload is not None:
+            return payload
+    payload = _build(window_key, by_main=by_main)
+    _store(key, fresh_key, payload, fresh_ttl)
+    return payload
 
 
 def leaderboards(
@@ -456,6 +594,11 @@ def leaderboards(
     ``refresh=True`` rebuilds and re-caches even on a hit — used by the warmer.
     ``by_main=True`` rolls a person's alts up under their main (KB-23), cached separately.
 
+    A miss does NOT simply build. This is an anonymous public page with a window selector,
+    so a cold variant can be requested by many visitors at once (and ``?window=all`` scans
+    the whole killboard): the rebuild is single-flighted, and a payload that is merely past
+    its freshness is served as-is to everyone but the one request doing the rebuild.
+
     Language-scoped key: the payload carries prose (the window label with its month name,
     the eight category titles/subtitles, each row's secondary caption, the danger labels).
     """
@@ -463,13 +606,50 @@ def leaderboards(
         window_key = "30d"
     if not use_cache:
         return _build(window_key, by_main=by_main)
-    suffix = ":main" if by_main else ""
-    key = i18n_cache_key(f"kb:lb:{CACHE_VERSION}:{_home()}:{window_key}{suffix}")
-    payload = None if refresh else cache.get(key)
-    if payload is None:
+    key, fresh_key, _lock_key = _cache_keys(window_key, by_main)
+    if refresh:
         payload = _build(window_key, by_main=by_main)
-        cache.set(key, payload, CACHE_TTL)
-    return payload
+        _store(key, fresh_key, payload, _fresh_ttl(window_key))
+        return payload
+    found = cache.get_many([key, fresh_key])
+    payload = found.get(key)
+    if payload is not None and found.get(fresh_key):
+        return payload
+    return _revalidate(window_key, by_main=by_main, stale=payload)
+
+
+def warm_windows(window_keys, languages) -> int:
+    """Pre-build every ``(window × alt-rollup mode × language)`` board variant. Returns
+    the number of cache entries written.
+
+    The point is the loop nesting. A variant differs from its siblings only in prose (the
+    locale) or in a pure-Python regrouping of the same rows (``by_main``), so the database
+    is touched ONCE per window and the other 2 × len(languages) − 1 variants are rendered
+    off those rows. The previous warmer re-ran the whole aggregation per window per locale
+    and still left 9 of the 12 reachable variants permanently cold, so the by-main toggle
+    and every non-default window paid a full cold build on the request path — in the worst
+    case a full-history scan, on a public page, on spinning disks.
+
+    Budget, on the 5-minute beat and 8 enabled locales: 3 hot windows = 3 aggregations per
+    tick (was 24) and 48 cheap renders, plus the 3 heavy windows on the ~15-minute cadence.
+    Widening the coverage 4× therefore *lowers* the warmer's database cost; the renders and
+    ``cache.set``s are what grew, and those are Python and Redis, not the HDD RAID.
+    """
+    warmed = 0
+    for window_key in window_keys:
+        pilots, most_valuable = _aggregate(window_for(window_key))
+        fresh_ttl = _fresh_ttl(window_key)
+        for by_main in (False, True):
+            rows = _pilot_rows(pilots, by_main=by_main)
+            for code in languages:
+                with translation.override(code):
+                    # Re-resolved inside the override for its translated label (the window
+                    # bounds are not part of the payload); the rows are already computed.
+                    payload = _render(window_for(window_key), rows, most_valuable)
+                    key, fresh_key, _lock = _cache_keys(window_key, by_main)
+                    _store(key, fresh_key, payload, fresh_ttl)
+                warmed += 1
+    return warmed
 
 
 def _card_from(character_id, *, kills, losses, solo_kills, final_blows, points,

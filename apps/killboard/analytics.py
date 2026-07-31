@@ -13,6 +13,7 @@ excluded, so the numbers match what the leaderboards already show.
 from __future__ import annotations
 
 from datetime import UTC, date, timedelta
+from uuid import uuid4
 
 from django.conf import settings
 from django.core.cache import cache
@@ -782,8 +783,27 @@ def killfeed_overview(*, use_cache: bool = True, refresh: bool = False) -> dict:
 
 
 # Rankings windows worth keeping permanently warm — the ones the UI lands on most
-# (the rankings default is "month"; the killfeed rail reuses "7d").
+# (the rankings default is "month"; the killfeed rail reuses "7d"). Both alt-rollup
+# modes (``?by=main``) and every enabled locale are warmed for each of them; see
+# ``leaderboards.warm_windows`` for why that costs LESS than the old three-window warm.
 WARM_WINDOWS = ("7d", "30d", "month")
+
+# The remaining reachable windows. They are one click away in the same selector, and
+# "all" is the one that scans the entire killboard, so leaving them permanently cold
+# put the heaviest query in the app on an anonymous first click. They are warmed on the
+# slow (~15 min) cadence the all-time dashboard breakdowns already use — their cached
+# payload stays fresh for an hour (``leaderboards.HEAVY_CACHE_TTL``), so a slow tick is
+# always ahead of expiry, and a reader who does beat it gets the single-flighted,
+# serve-stale path rather than a full-history scan of their own.
+SLOW_WARM_WINDOWS = ("90d", "lastmonth", "all")
+
+# One tick at a time. The beat fires every 5 minutes and a tick that is still running
+# must not be joined by the next one: on a contended box that is how a warmer turns
+# into the load it exists to prevent. The TTL covers two beats so a genuinely long tick
+# still gets skipped rather than doubled, and the owner token means a run that outlives
+# the TTL can never delete its successor's lock (killstream's idiom).
+_WARM_LOCK_KEY = "kb:warm:lock"
+_WARM_LOCK_TTL = 600
 
 
 def _alltime_due() -> bool:
@@ -823,24 +843,45 @@ def warm_caches() -> int:
     pay a cold computation. Called on a schedule (config/celery.py) more often
     than CACHE_TTL, so the dashboard / killfeed / rankings stay warm continuously.
 
-    Every payload below is language-scoped, so the warm has to run once per enabled locale
-    under ``translation.override``. Without that loop the warmer (a Celery task, which runs
-    under the default locale) would only ever fill the ``:en`` keys and every non-English
-    reader would take the cold-path recompute on each request. Returns the number of entries
-    warmed (across all locales).
+    Guarded by a single-flight lock: the beat fires every 5 minutes, and if a tick ever
+    runs longer than that (a big killboard on slow disks) the next one must skip, not
+    stack. Returns the number of entries warmed, or ``0`` when a previous tick is still
+    running — the task is a no-op then, by design.
     """
-    from .leaderboards import corp_combat_roster, leaderboards
+    token = uuid4().hex
+    if not cache.add(_WARM_LOCK_KEY, token, _WARM_LOCK_TTL):
+        return 0
+    try:
+        return _warm_caches()
+    finally:
+        if cache.get(_WARM_LOCK_KEY) == token:  # only free our own lock (overrun-safe)
+            cache.delete(_WARM_LOCK_KEY)
+
+
+def _warm_caches() -> int:
+    """One warm tick. Returns the number of entries warmed (across all locales).
+
+    The rankings half is warmed by ``leaderboards.warm_windows``, which is locale- and
+    mode-aware internally: it aggregates once per window and renders each locale off
+    those rows. Everything else here is still one recompute per enabled locale, because
+    those payloads are language-scoped too and the warmer (a Celery task) otherwise runs
+    under the default locale and would fill only the ``:en`` keys, leaving every
+    non-English reader on the cold path.
+    """
+    from .leaderboards import corp_combat_roster, warm_windows
 
     # One throttle decision per tick, shared by every locale — so they stay in lockstep
     # instead of one language claiming the marker and the rest skipping their refresh.
     alltime_due = _alltime_due()
+    languages = warm_languages()
 
-    warmed = 0
-    for code in warm_languages():
+    # Leaderboard windows first — killfeed_overview reuses the (now warm) "7d" board.
+    warmed = warm_windows(WARM_WINDOWS, languages)
+    if alltime_due:
+        warmed += warm_windows(SLOW_WARM_WINDOWS, languages)
+
+    for code in languages:
         with translation.override(code):
-            # Leaderboard windows first — killfeed_overview reuses the "7d" board.
-            for window in WARM_WINDOWS:
-                leaderboards(window, refresh=True)
             # Refresh the heavy all-time dashboard breakdowns on a slower (~15 min) cadence;
             # dashboard() then reuses that warm slice instead of recomputing it every tick.
             if alltime_due:
@@ -850,7 +891,7 @@ def warm_caches() -> int:
             # The corp roster is an all-time read too; keep it warm so no member pays the
             # cold recompute after a TTL lapse.
             corp_combat_roster(refresh=True)
-            warmed += 3 + len(WARM_WINDOWS)
+            warmed += 3
 
     # The officer loss-impact board is language-neutral (ids, counts, DB doctrine names), so
     # it has ONE key — warm it once, outside the loop, not nine times over the same key.
