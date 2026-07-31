@@ -87,12 +87,33 @@ updates:
   # moving. That is precisely what happened to `nginx:1.27-alpine`, which sat frozen while
   # accumulating 37 HIGH/CRITICAL advisories including a CRITICAL in OpenSSL, and was found
   # only by a manual audit. A weekly PR is the cheapest way to notice the next one.
+  #
+  # Both compose files are picked up. Dependabot's compose file-matcher is
+  #   /(docker-)?compose(-[\w]+)?(?>\.[\w-]+)?\.ya?ml/i
+  # applied unanchored, so the optional dot-segment matches `docker-compose.prod.yml` —
+  # which matters, because that is the ONLY file nginx is pinned in. Verified against the
+  # regex rather than assumed; do not "simplify" the filename on the belief that only
+  # `docker-compose.yml` is scanned.
+  #
+  # KNOW WHAT THIS DOES NOT DO: Dependabot proposes VERSION BUMPS. It cannot see a
+  # vulnerability inside a tag you are already on, and a frozen tag has no newer version
+  # to propose — which is exactly how nginx:1.27-alpine rotted in place. That gap is
+  # covered by trivy (.github/workflows/image-scan.yml and scripts/scan-running-images.sh),
+  # which reads the image's own package database. The two are complements, not substitutes:
+  # this entry keeps us current, trivy tells us when current is not enough.
   - package-ecosystem: docker-compose
     directory: "/"
     schedule:
       interval: weekly
       day: monday
       time: "07:00"
+    # The parser emits a dependency for every `image:` value and does NOT skip services
+    # that also declare `build:` — so without this it would try to resolve
+    # `forca-command-grid`, which is built locally and exists in no registry. Nothing
+    # breaks, but the update run carries a permanent unresolvable dependency, and noise
+    # inside a security control is how people learn to stop reading it.
+    ignore:
+      - dependency-name: "forca-command-grid"
     labels: ["dependencies", "docker"]
     commit-message:
       prefix: "docker"
