@@ -44,7 +44,7 @@ services:
     command: celery -A config beat -l info --schedule /tmp/celerybeat-schedule
 
   postgres:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     environment:
       POSTGRES_DB: forca
       POSTGRES_USER: forca
