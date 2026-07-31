@@ -67,6 +67,42 @@
   <p class="border-t border-line/40 px-4 py-2 text-xs text-faint">{% blocktranslate %}Item names, volumes and attributes. Reload with <code>import_sde_fuzzwork</code> after a game patch.{% endblocktranslate %}</p>
 </section>
 
+<!-- Vulnerability scanners: not just what they found, but whether they still run. A scan
+     that quietly stopped looks exactly like a scan that keeps finding nothing, so the age
+     of the result is as much the point here as the verdict. -->
+<section class="panel mb-6 overflow-hidden">
+  <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">{% translate "Vulnerability scanning" %}</h2></div>
+  <table class="w-full text-sm">
+    <thead class="text-faint text-left"><tr class="border-b border-line/60">
+      <th class="px-4 py-2 font-medium">{% translate "Scanner" %}</th><th class="px-4 py-2 font-medium">{% translate "Status" %}</th>
+      <th class="px-4 py-2 font-medium">{% translate "Last scan" %}</th><th class="px-4 py-2 font-medium">{% translate "Findings" %}</th></tr></thead>
+    <tbody>
+      {% for v in health.vulnerability %}
+        <tr class="border-t border-line/40">
+          <td class="px-4 py-2 text-ink">{{ v.label }}<span class="block text-xs text-faint">{{ v.note }}</span></td>
+          <td class="px-4 py-2">
+            {% if v.effective_status == 'ok' %}<span class="chip !border-kill/40 !text-kill">{% translate "clean" %}</span>
+            {% elif v.effective_status == 'vulnerable' %}<span class="chip !border-loss/40 !text-loss">{% translate "vulnerable" %}</span>
+            {% else %}<span class="chip !border-gold/40 !text-gold">{% translate "unknown" %}</span>{% endif %}
+          </td>
+          <td class="px-4 py-2 data text-muted">
+            {% if v.as_of %}{{ v.as_of|date:"Y-m-d H:i" }} <span class="text-faint">· {{ v.as_of|timesince }} {% translate "ago" %}</span>{% else %}<span class="text-faint">{% translate "never" %}</span>{% endif %}
+          </td>
+          <td class="px-4 py-2 text-xs text-faint">
+            {% if v.effective_status == 'vulnerable' %}{{ v.vuln_count }}
+            {% elif v.stale %}{% translate "result is too old to trust — check the scanner is still running" %}
+            {% elif v.error %}{{ v.error }}
+            {% else %}—{% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4" class="px-4 py-6 text-center text-faint">{% translate "No vulnerability scans recorded yet." %}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="border-t border-line/40 px-4 py-2 text-xs text-faint">{% blocktranslate %}A stale result reads as <em>unknown</em>, never as clean — a scan that stopped running must not look like a scan that keeps finding nothing.{% endblocktranslate %}</p>
+</section>
+
 <!-- Scheduled syncs (per-beat last success) -->
 <section class="panel mb-6 overflow-hidden">
   <div class="border-b border-line px-4 py-3"><h2 class="eyebrow">{% translate "Scheduled syncs" %}</h2></div>
