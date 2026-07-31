@@ -46,6 +46,14 @@ services:
     # 3.3.7). That is the TLS-terminating, internet-facing container, so a stale OpenSSL
     # there is the worst place in the stack to carry one. 1.30-alpine scans clean.
     # Track a *stable* branch tag and re-check when it goes EOL; a frozen tag is silent.
+    #
+    # RE-CHECK BY 2027-04-30, or sooner if nginx:1.32-alpine appears upstream. nginx keeps a
+    # stable branch alive until the next even-numbered one ships, roughly annually, so 1.30
+    # stops getting rebuilds when 1.32 lands. Nothing automates this: Dependabot's `docker`
+    # ecosystem reads the root Dockerfile, not this file, so no PR will ever be opened for
+    # any image tag pinned here. The monthly base-image item in the operator runbook is the
+    # control —
+    # handbooks/operator-handbook/operations-runbook.md, "Monthly checklist".
     image: nginx:1.30-alpine
     restart: unless-stopped
     logging: *default-logging

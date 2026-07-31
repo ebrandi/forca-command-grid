@@ -52,9 +52,14 @@ command surface. Pair this page with
       automatically on hosts provisioned by the deploy script; verify with
       `sudo unattended-upgrade --dry-run -d` or check `/var/log/unattended-upgrades/`.
 - [ ] Pull fresh base images and rebuild, to pick up upstream security patches in
-      `python:3.12-slim`, `postgres:16-alpine`, `redis:7-alpine`, and `nginx:1.27-alpine`:
+      `python:3.12-slim`, `postgres:16-alpine`, `redis:7-alpine`, and `nginx:1.30-alpine`:
       `docker compose -f docker-compose.prod.yml pull` followed by a normal
       `make update` or `make deploy`.
+- [ ] **Confirm the pinned tags are still maintained branches — pulling is not enough.**
+      A tag whose branch upstream has stopped building keeps returning the same old image
+      and reports success, so the item above passes while the container rots. See
+      [Base-image freshness](#base-image-freshness-a-pinned-tag-can-freeze-silently) —
+      **next nginx re-check due 2027-04-30**.
 - [ ] Confirm you can actually restore a backup in a scratch environment (see
       [Backup and Restore § Disaster recovery considerations](./backup-and-restore.md#disaster-recovery-considerations)) —
       an untested backup is not a verified backup.
@@ -63,6 +68,46 @@ command surface. Pair this page with
       whether any should be revoked.
 - [ ] Review `NOTICE.md` / `pip-audit` output for any dependency licence or
       vulnerability items needing attention beyond the automated weekly scan.
+
+### Base-image freshness (a pinned tag can freeze silently)
+
+`docker compose pull` is not proof of freshness. When upstream stops building a branch,
+its tag keeps resolving to the last image it ever produced, and `pull` reports success
+every month while the container accumulates unpatched CVEs. There is no error to notice.
+
+This has already happened here. `nginx:1.27-alpine` sat frozen on an April-2025 build
+until a scan found **37 fixable HIGH/CRITICAL CVEs on it**, including a CRITICAL in
+OpenSSL — on the one internet-facing, TLS-terminating container in the whole stack. It
+was moved to `nginx:1.30-alpine` in July 2026.
+
+**The check.** After the monthly `pull`, look at what you actually received:
+
+```bash
+docker image inspect nginx:1.30-alpine --format '{{.Created}}'
+docker image inspect postgres:16-alpine --format '{{.Created}}'
+docker image inspect redis:7-alpine --format '{{.Created}}'
+```
+
+A build date older than roughly three months means the tag is frozen. Move to the current
+branch: edit `image:` in [`docker-compose.prod.yml`](../../docker-compose.prod.yml), run
+`make config-check`, then `make deploy`.
+
+**The dated trigger.** nginx keeps a stable branch alive until the next even-numbered
+stable branch ships, roughly annually — 1.30 succeeded 1.28 in 2026, so 1.32 is the
+expected 2027 successor and the point at which 1.30 stops receiving rebuilds. **Re-check
+by 2027-04-30, or immediately if `nginx:1.32-alpine` appears upstream.** Carry the new
+date forward when you bump the tag; a date that has passed is the only thing standing in
+for the alert nobody is going to send you.
+
+**Nothing automates this — this checklist is the control.** Dependabot's `docker`
+ecosystem in [`.github/dependabot.yml`](../../.github/dependabot.yml) is configured for
+`/`, where it parses the root `Dockerfile` and nothing else. That is why the only
+Dependabot Docker pull request this repository has ever received was `python:3.12-slim` →
+`3.14-slim`, and why the 1.27 → 1.30 nginx move had to be made by hand. The images pinned
+in `docker-compose.prod.yml` — nginx, postgres, redis — have **no automated watcher at
+all**. If you want one, add a separate `docker-compose` ecosystem entry to the Dependabot
+config and confirm it actually opens a pull request before relying on it; until it has
+been seen to work, assume it does not.
 
 ## Scheduled jobs and workers
 

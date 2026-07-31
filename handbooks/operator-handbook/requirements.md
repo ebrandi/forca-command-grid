@@ -19,7 +19,7 @@ external accounts you must register first.
 |---|---|
 | OS | **Ubuntu 24.04 LTS or newer** (the provisioning script targets Ubuntu; other Docker-capable Linux hosts work with the manual path) |
 | Access | Root or `sudo` for the automated install; a Docker-capable user for the manual path |
-| Architecture | x86_64 (matches the published base images: `python:3.12-slim`, `postgres:16-alpine`, `redis:7-alpine`, `nginx:1.27-alpine`) |
+| Architecture | x86_64 (matches the published base images: `python:3.12-slim`, `postgres:16-alpine`, `redis:7-alpine`, `nginx:1.30-alpine`) |
 
 ## Software prerequisites
 

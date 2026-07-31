@@ -73,7 +73,7 @@ Source: [`Dockerfile`](../../Dockerfile), [`docker-compose.prod.yml`](../../dock
 | Image | Type | Licence / terms | Purpose |
 |---|---|---|---|
 | `python:3.12-slim` | deployment | PSF + Debian | Application runtime |
-| `nginx:1.27-alpine` | deployment | BSD-2-Clause + Alpine | TLS, proxy, image cache |
+| `nginx:1.30-alpine` | deployment | BSD-2-Clause + Alpine | TLS, proxy, image cache |
 | `postgres:16-alpine` | deployment | PostgreSQL License + Alpine | Database |
 | `redis:7-alpine` | deployment | BSD-3-Clause + Alpine | Cache + broker |
 

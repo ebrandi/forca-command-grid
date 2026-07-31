@@ -129,7 +129,7 @@ Key architectural facts, all drawn directly from the compose files:
 
 | Component | Image / runtime | Role |
 |---|---|---|
-| `nginx` | `nginx:1.27-alpine` | TLS termination, reverse proxy, EVE image cache, rate limiting, crawler control |
+| `nginx` | `nginx:1.30-alpine` | TLS termination, reverse proxy, EVE image cache, rate limiting, crawler control |
 | `web` | Built from [`Dockerfile`](../../Dockerfile) (Python 3.12-slim) | Django application served by gunicorn |
 | `worker` | Same image, `celery worker` | Runs all ESI syncs, imports, and background computation |
 | `beat` | Same image, `celery beat` | Schedules ~90 recurring tasks (see [background jobs](../reference/background-jobs.md)) |
