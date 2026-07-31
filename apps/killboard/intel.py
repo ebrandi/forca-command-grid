@@ -6,6 +6,8 @@ adversary's tempo without leaving the app.
 """
 from __future__ import annotations
 
+from django.db.models import Count, Q
+
 from .models import Killmail, KillmailParticipant, WatchlistEntry
 
 _FIELD = {
@@ -16,16 +18,41 @@ _FIELD = {
 
 
 def entry_activity(entry: WatchlistEntry, limit: int = 10) -> dict:
-    """Recent killmails and a kill/loss tally for one watched entity."""
+    """Recent killmails and a kill/loss tally for one watched entity.
+
+    Everything stays in SQL, deliberately. A watchlist entry can name a whole alliance,
+    which has touched tens of thousands of mails; the previous shape pulled that entire
+    id set into Python and sent it straight back as an ``IN (…)`` bind list, so the row
+    set crossed the wire twice for a page that renders ``limit`` rows. The recent-mail
+    lookup now hands the participant query to Postgres as a subquery, and the three
+    tallies collapse into one FILTERed aggregate. The numbers are unchanged: ``total``
+    is still the count of DISTINCT mails the entity appears on (not participant rows),
+    which is why every count carries ``distinct=True`` — an entity that fielded five
+    pilots on one mail must still count that mail once.
+    """
     field = _FIELD[entry.entity_type]
     parts = KillmailParticipant.objects.filter(**{field: entry.entity_id})
-    km_ids = list(parts.values_list("killmail_id", flat=True).distinct())
     killmails = list(
-        Killmail.objects.filter(killmail_id__in=km_ids).order_by("-killmail_time")[:limit]
+        Killmail.objects.filter(killmail_id__in=parts.values("killmail_id"))
+        .order_by("-killmail_time")[:limit]
     )
-    kills = parts.filter(role=KillmailParticipant.Role.ATTACKER).values("killmail_id").distinct().count()
-    losses = parts.filter(role=KillmailParticipant.Role.VICTIM).values("killmail_id").distinct().count()
-    return {"killmails": killmails, "kills": kills, "losses": losses, "total": len(km_ids)}
+    tally = parts.aggregate(
+        kills=Count(
+            "killmail_id", distinct=True,
+            filter=Q(role=KillmailParticipant.Role.ATTACKER),
+        ),
+        losses=Count(
+            "killmail_id", distinct=True,
+            filter=Q(role=KillmailParticipant.Role.VICTIM),
+        ),
+        total=Count("killmail_id", distinct=True),
+    )
+    return {
+        "killmails": killmails,
+        "kills": tally["kills"] or 0,
+        "losses": tally["losses"] or 0,
+        "total": tally["total"] or 0,
+    }
 
 
 def watchlist_overview(watchlist, per_entry: int = 3) -> list[dict]:

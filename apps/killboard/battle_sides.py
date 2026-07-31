@@ -501,12 +501,19 @@ def srp_liability(report: BattleReport, side: BattleReportSide) -> dict:
     total = Decimal("0")
     eligible = 0
     losses = 0
+    # One programme row governs every loss on the side, so resolve it once rather than
+    # letting eligibility() re-query it per mail. Resolved lazily on the first loss:
+    # active_program() *creates* a default programme when none exists, and a side with no
+    # home losses must not seed one as a side effect of merely rendering the report.
+    program = None
     for km in report.killmails.filter(
         involves_home_corp=True, home_corp_role=Killmail.HomeRole.VICTIM,
         victim_corporation_id=home,
     ).prefetch_related("items"):
         losses += 1
-        info = srp_services.eligibility(km)
+        if program is None:
+            program = srp_services.active_program()
+        info = srp_services.eligibility(km, program=program)
         if info.get("eligible"):
             eligible += 1
             total += info.get("payout") or Decimal("0")

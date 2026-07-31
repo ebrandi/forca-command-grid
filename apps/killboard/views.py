@@ -1482,12 +1482,69 @@ def watchlist_delete(request: HttpRequest, pk: int) -> HttpResponse:
 # Swing-sparkline canvas dimensions (server-rendered SVG); shared by view + template.
 _SWING_W, _SWING_H = 240, 48
 
+# The two DERIVED battle blocks — the kill timeline and the per-side role composition —
+# are rebuilt from raw Killmail / KillmailParticipant / KillmailItem rows and are by far
+# the most expensive work on the page. Side *detection* is already persisted (it runs at
+# build/recompute time only) and is not re-cached here; these two are not persisted and
+# were recomputed on every request. That matters because ``battle_report_public`` is
+# anonymous-reachable — no login, no rate limit — so an unauthenticated caller could
+# replay a large report's full row scan at will.
+#
+# Both blocks are PUBLIC: the anonymous share page renders them verbatim, so caching them
+# under one key exposes nothing a slug holder cannot already see. The officer overlays
+# (SRP liability, doctrine compliance) are deliberately OUTSIDE this cache and are not
+# cached at all — they must never live behind a key an anonymous request can create or
+# read, and they report live SRP/deviation state that officers act on.
+_BATTLE_CACHE_VERSION = 1
+_BATTLE_CACHE_TTL = 300  # seconds — an after-action report is history, not a live feed
+
+
+def _battle_revision(report: BattleReport, sides: list) -> str:
+    """A cache stamp that moves whenever anything the derived blocks read can change.
+
+    ``updated_at`` covers an edit to the report row itself. The side rows are DELETED and
+    recreated by ``battle_sides.recompute_sides``, which every side-changing path (initial
+    build, officer recompute, officer reassignment) runs, so their count and max pk move on
+    any re-detection. Both come from objects already in memory, so the stamp costs no query.
+    """
+    stamp = int(report.updated_at.timestamp()) if report.updated_at else 0
+    return f"{report.pk}:{stamp}:{len(sides)}:{max((s.pk for s in sides), default=0)}"
+
+
+def _battle_derived_blocks(report: BattleReport, sides: list, reference,
+                           side_of_entity: dict) -> dict:
+    """Read-through cache for the public timeline + role-composition blocks.
+
+    The stored payload is prose-free — role composition is kept as ``(role_key, count)``
+    pairs and the translated label is re-attached per request by the caller — so an entry
+    warmed by a viewer in one locale is not pinned to that locale, matching the rule the
+    campaign and leaderboard caches follow.
+    """
+    from . import battle_sides, roles
+
+    key = f"kb:battle:public:{_BATTLE_CACHE_VERSION}:{_battle_revision(report, sides)}"
+    payload = cache.get(key)
+    if payload is None:
+        payload = {
+            "timeline": battle_sides.battle_timeline(report, reference),
+            "roles": {
+                index: [(r["role"], r["count"]) for r in rows]
+                for index, rows in roles.battle_role_composition(
+                    report, side_of_entity
+                ).items()
+            },
+        }
+        cache.set(key, payload, _BATTLE_CACHE_TTL)
+    return payload
+
 
 def _battle_report_context(request: HttpRequest, report: BattleReport, *, public: bool) -> dict:
     """Shared render context for the member (pk) and public (slug) battle pages.
 
     Officer-only overlays (SRP liability, doctrine compliance) are computed only
-    when the viewer is an officer, so an anonymous/public viewer never sees them.
+    when the viewer is an officer, so an anonymous/public viewer never sees them —
+    and, per ``_battle_derived_blocks`` above, they are computed fresh every time
+    rather than shared through the public cache entry.
     """
     from apps.corporation.models import EveName
     from apps.sde.models import SdeType
@@ -1533,7 +1590,14 @@ def _battle_report_context(request: HttpRequest, report: BattleReport, *, public
     side_of_entity = {
         (m.entity_type, m.entity_id): s.index for s in sides for m in s.members.all()
     }
-    role_comp = roles.battle_role_composition(report, side_of_entity)
+    derived = _battle_derived_blocks(report, sides, reference, side_of_entity)
+    role_comp = {
+        index: [
+            {"role": role, "label": roles.ROLE_LABELS[role], "count": count}
+            for role, count in rows
+        ]
+        for index, rows in derived["roles"].items()
+    }
 
     side_views = []
     move_targets = [(s.index, s.label) for s in sides]
@@ -1563,7 +1627,7 @@ def _battle_report_context(request: HttpRequest, report: BattleReport, *, public
             "roles": role_comp.get(s.index, []),
         })
 
-    timeline = battle_sides.battle_timeline(report, reference)
+    timeline = derived["timeline"]
     # Readiness context: member-visible (ops are member data), so shown on both pages.
     op = battle_sides.op_overlap(report)
 
@@ -1854,7 +1918,11 @@ def _campaign_context(request: HttpRequest, campaign, *, public: bool) -> dict:
     from . import combat_campaigns
 
     is_officer = rbac.has_role(request.user, rbac.ROLE_OFFICER)
-    stats = combat_campaigns.campaign_stats(campaign)
+    # ``overlays=is_officer``: the SRP/compliance block below is discarded for everyone
+    # else, and this page is anonymous-reachable via the slug permalink, so a non-officer
+    # must not pay for the SRP walk over every in-scope loss. The ``if is_officer`` guards
+    # stay as they are — the payload keeps one shape, and the gate stays visible here.
+    stats = combat_campaigns.campaign_stats(campaign, overlays=is_officer)
     return {
         "campaign": campaign,
         "public": public,
@@ -1889,7 +1957,10 @@ def combat_campaigns_list(request: HttpRequest) -> HttpResponse:
 
     rows = []
     for c in CombatCampaign.objects.all():
-        s = combat_campaigns.campaign_stats(c)
+        # The list renders the scoreboard only — no SRP, no compliance — so asking for the
+        # overlays here multiplied the per-loss SRP walk by the campaign count on a page
+        # that never showed the result.
+        s = combat_campaigns.campaign_stats(c, overlays=False)
         rows.append({
             "campaign": c, "kills": s["kills"], "losses": s["losses"],
             "isk_destroyed": s["isk_destroyed"], "isk_lost": s["isk_lost"],

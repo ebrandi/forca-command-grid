@@ -14,7 +14,10 @@ scoped view over the home-corp board. This module owns two things:
   the ops overlays: SRP spend against the budget (actual claims where they exist,
   eligibility estimate otherwise — labelled), doctrine-compliance % against the
   target, and the linked op. Cached per campaign with a short TTL and recomputed
-  lazily on view, following the leaderboards cache pattern (never via beat).
+  lazily on view, following the leaderboards cache pattern (never via beat). The
+  officer overlays are a SEPARATE cache fragment computed only when the caller asks
+  for them, because they are the expensive half and every non-officer viewer —
+  including the anonymous permalink — discards them.
 
 Entity scope uses the same "vs-us" side semantics as the public feed's entity
 filters: a campaign names the adversary corps/chars/alliances it is about, and
@@ -292,6 +295,17 @@ def _srp_spend(matched, home: int) -> dict:
     }
     spend = Decimal("0")
     actual = estimated = 0
+    # The programme is the same row for every loss in the campaign, so resolve it once
+    # instead of letting eligibility() re-query it per mail. Resolved LAZILY, on the first
+    # loss that actually needs an estimate, because active_program() *creates* a default
+    # programme when none exists — hoisting it eagerly would seed that row on a campaign
+    # whose losses are all claimed, which the per-mail version never did.
+    # The batch memoises the two lookups eligibility() otherwise repeats per loss (the SRP
+    # rule for a doctrine, the longest operation window) and pins one doctrine-catalogue
+    # snapshot for the pass. Built lazily beside the programme, and discarded with this
+    # call, so an officer's rule or doctrine edit is live on the next render.
+    program = None
+    batch = None
     for km in our_losses:
         claim = claims.get(km.pk)
         if claim is not None:
@@ -300,7 +314,10 @@ def _srp_spend(matched, home: int) -> dict:
                 spend += claim.payout or Decimal("0")
         else:
             estimated += 1
-            info = srp_services.eligibility(km)
+            if program is None:
+                program = srp_services.active_program()
+                batch = srp_services.EligibilityBatch()
+            info = srp_services.eligibility(km, program=program, batch=batch)
             if info.get("eligible"):
                 spend += info.get("payout") or Decimal("0")
 
@@ -351,7 +368,38 @@ def _compute_stats(campaign: CombatCampaign) -> dict:
     top_pilots = _sorted_pilots(list(pilots.values()))
     top_pilots_by_main = _sorted_pilots(_rollup_by_main(list(pilots.values())))
 
-    # Overlays (sensitive; the view gates rendering to officers).
+    return {
+        "kills": kills, "losses": losses,
+        "isk_destroyed": isk_destroyed, "isk_lost": isk_lost,
+        "efficiency": efficiency,
+        "participants": len(pilots),
+        "killmail_count": kills + losses,
+        "top_pilots": top_pilots,
+        "top_pilots_by_main": top_pilots_by_main,
+        "top_ships": top_ships,
+        # Overlay slots are always present so the payload has ONE shape whether or not the
+        # caller asked for them; ``_compute_overlays`` fills them in for officers.
+        "srp": None,
+        "compliance": None,
+        "doctrine_target_pct": campaign.doctrine_target_pct,
+        "compliance_delta": None,
+    }
+
+
+def _compute_overlays(campaign: CombatCampaign) -> dict:
+    """The officer-only overlays: SRP spend-vs-budget and doctrine compliance.
+
+    Split out of :func:`_compute_stats` because it is by far the most expensive part of a
+    campaign board — ``_srp_spend`` walks every in-scope loss through SRP eligibility (fit
+    matching, valuation) — and every non-officer viewer threw the result away. The public
+    permalink ``combat_campaign_public`` has no decorator at all, so before this split an
+    anonymous visitor paid the full SRP walk for an overlay they can never be shown, and
+    the campaign LIST multiplied that by the campaign count. Nothing here is reachable
+    without ``overlays=True``, which the views pass only when the viewer is an officer.
+    """
+    home = _home()
+    matched = matched_queryset(campaign)
+
     srp = _srp_spend(matched, home)
     budget = campaign.srp_budget_isk
     srp["budget"] = budget
@@ -365,39 +413,50 @@ def _compute_stats(campaign: CombatCampaign) -> dict:
     compliance_delta = (
         compliance["percent"] - target if (compliance and target is not None) else None
     )
-
-    return {
-        "kills": kills, "losses": losses,
-        "isk_destroyed": isk_destroyed, "isk_lost": isk_lost,
-        "efficiency": efficiency,
-        "participants": len(pilots),
-        "killmail_count": kills + losses,
-        "top_pilots": top_pilots,
-        "top_pilots_by_main": top_pilots_by_main,
-        "top_ships": top_ships,
-        "srp": srp,
-        "compliance": compliance,
-        "doctrine_target_pct": target,
-        "compliance_delta": compliance_delta,
-    }
+    return {"srp": srp, "compliance": compliance, "compliance_delta": compliance_delta}
 
 
-def campaign_stats(campaign: CombatCampaign, *, use_cache: bool = True) -> dict:
-    """Aggregate scoreboard + overlays for a campaign (memoised, short TTL).
-
-    The cache key carries ``updated_at`` so editing the campaign's scope/window busts
-    the entry immediately; otherwise it recomputes lazily every ``CACHE_TTL`` seconds
-    on view. The payload is prose-free (code labels only), so no locale scoping.
-    """
-    if not use_cache:
-        return _compute_stats(campaign)
-    stamp = int(campaign.updated_at.timestamp()) if campaign.updated_at else 0
-    key = f"kb:campaign:{CACHE_VERSION}:{_home()}:{campaign.pk}:{stamp}"
+def _cached(key: str, compute) -> dict:
+    """Read-through cache for one campaign payload fragment."""
     payload = cache.get(key)
     if payload is None:
-        payload = _compute_stats(campaign)
+        payload = compute()
         cache.set(key, payload, CACHE_TTL)
     return payload
+
+
+def campaign_stats(campaign: CombatCampaign, *, use_cache: bool = True,
+                   overlays: bool = True) -> dict:
+    """Aggregate scoreboard (+ optionally the officer overlays) for a campaign.
+
+    The cache key carries ``updated_at`` so editing the campaign's scope/window busts the
+    entry immediately; otherwise it recomputes lazily every ``CACHE_TTL`` seconds on view.
+    The payload is prose-free (code labels only), so no locale scoping.
+
+    ``overlays`` decides whether the SRP/compliance block is *computed at all*. It defaults
+    to ``True`` so every existing caller keeps the full payload, but the views pass the
+    viewer's officer status: a member, and above all an anonymous visitor on the public
+    permalink, no longer pays for a block the template will never render. The two
+    fragments are cached under SEPARATE keys and merged into a fresh dict per call, so
+    the cheap core entry is shared by both audiences (a member view still warms the
+    officer's scoreboard) without a non-officer request ever being able to populate — or
+    to observe — the sensitive half.
+    """
+    stamp = int(campaign.updated_at.timestamp()) if campaign.updated_at else 0
+    base = f"kb:campaign:{CACHE_VERSION}:{_home()}:{campaign.pk}:{stamp}"
+
+    if use_cache:
+        stats = dict(_cached(f"{base}:core", lambda: _compute_stats(campaign)))
+    else:
+        stats = _compute_stats(campaign)
+    if not overlays:
+        return stats
+
+    if use_cache:
+        stats.update(_cached(f"{base}:overlays", lambda: _compute_overlays(campaign)))
+    else:
+        stats.update(_compute_overlays(campaign))
+    return stats
 
 
 def recent_matches(campaign: CombatCampaign, limit: int = 30):
