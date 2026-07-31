@@ -34,8 +34,34 @@ from .engine.types import (
 )
 from .models import Fit, FitRevision, Visibility
 
+# EFT paste bounds. ``import_eft`` parses a POST body verbatim (``views.import_eft`` reads
+# ``request.POST["eft"]``), so BOTH dimensions of the input have to be bounded before any
+# per-line pattern runs — capping the line COUNT alone still let one multi-hundred-KB line
+# through, and one member's paste can stall a shared gunicorn worker.
+#
+# _MAX_LINE_LEN is sized off the widest line FORCA itself can legitimately emit, so the cap can
+# never clip a real fit:
+#   * a rack line is ``<module>, <charge> xN [N]`` — SdeType.name is max_length=200 (longest
+#     name in a live SDE import is 100), so ≤ ~415 characters;
+#   * the ship header is ``[<hull>, <fit name>]`` — fit names are truncated to 200 by
+#     ``create_fit``/``rename`` below, so ≤ ~405;
+#   * the widest is a mutation block's attribute line, which renders ALL of a module's
+#     overrides on one line: _MAX_OVERRIDES (32) pairs of a dogma attribute name
+#     (max_length=200; longest live name is 68) plus a repr'd float, so ≤ ~7.3 KB.
+# 8192 clears all three at the models' declared ceilings, and bounds the total text the parser
+# will look at to _MAX_LINES × _MAX_LINE_LEN. Over-long lines are truncated rather than
+# dropped, so the remnant still surfaces in ``unresolved`` instead of vanishing silently.
 _MAX_LINES = 500  # mirrors apps/doctrines/fitparser — bound a pathological paste
-_QTY_RE = re.compile(r"\sx(\d+)\s*$", re.IGNORECASE)
+_MAX_LINE_LEN = 8192
+
+# Every pattern applied per line below must run in time LINEAR in the line length: they are
+# fed attacker-controlled text, and CPython's ``re`` holds the GIL for the whole scan, so a
+# backtracking pattern stalls a whole gunicorn worker (not just one request). Concretely that
+# means no unanchored, repeated, whitespace-matching prefix: ``search`` retries such a prefix
+# from every offset of a whitespace run, which is quadratic in the line length
+# (CodeQL py/polynomial-redos). Keep the first atom of each pattern a literal or a
+# fixed-width class, and keep adjacent quantifiers over disjoint character classes.
+_QTY_RE = re.compile(r"\sx(\d+)\s*$", re.IGNORECASE)  # trailing " xN" — leading \s is 1 char
 _CATEGORY_CHARGE = 8
 _CATEGORY_DRONE = 18
 _CATEGORY_FIGHTER = 87
@@ -56,7 +82,10 @@ _CATEGORY_FIGHTER = 87
 # (mutaplasmid identity dropped); FORCA→pyfa LOSES the overrides, because pyfa needs a real
 # mutaplasmid name on the middle line to keep them (documented in the mechanics handbook).
 _MUTAPLASMID_PLACEHOLDER = "Unknown Mutaplasmid"
-_MUT_REF_RE = re.compile(r"\s*\[(\d+)\]\s*$")          # trailing " [N]" on a rack/drone line
+# Trailing " [N]" on a rack/drone line. The pattern deliberately does NOT swallow the space in
+# front of the bracket (a leading ``\s*`` here is the quadratic shape described above); the
+# caller strips the line after substituting, which it must do anyway.
+_MUT_REF_RE = re.compile(r"\[(\d+)\]\s*$")
 _MUT_HEADER_RE = re.compile(r"^\[(\d+)\](?P<tail>.*)")  # a mutation-block header "[N] BaseName"
 _MAX_OVERRIDES = 32  # mirrors apps.fitting.views._MAX_OVERRIDES — bound overrides per module
 
@@ -740,15 +769,19 @@ def _extract_mutations(lines: list[str]) -> tuple[list[str], dict[int, dict[int,
 
 def import_eft(text: str) -> dict:
     """Parse EFT text into a Tocha's Lab loadout, preserving module+charge pairs and
-    inferring each module's slot. Defensive: line-bounded, name-normalised through local
-    SDE data only, never evaluated. Returns items + a list of unresolved names.
+    inferring each module's slot. Defensive: bounded in BOTH dimensions before any pattern
+    runs — at most _MAX_LINES lines of at most _MAX_LINE_LEN characters each (see the bounds
+    above; an over-long line is truncated, so its remnant still surfaces as an unresolved
+    name) — name-normalised through local SDE data only, never evaluated. Returns items plus
+    a list of unresolved names.
 
     Mutated (abyssal) modules: a ``[N]`` mutation block (pyfa syntax) is lifted out first and
     its attribute overrides attached to the module carrying the matching ``[N]`` reference;
     unresolvable attribute names join the ``unresolved`` list, exactly like unresolvable module
     names. The mutaplasmid identity in the block is parsed but not stored (FORCA models a
     mutation as attribute overrides only — see the mutation constants above)."""
-    lines = [ln.rstrip() for ln in (text or "").strip().splitlines()][:_MAX_LINES]
+    raw_lines = (text or "").strip().splitlines()[:_MAX_LINES]
+    lines = [ln.rstrip()[:_MAX_LINE_LEN] for ln in raw_lines]
     if not lines or not lines[0].startswith("["):
         raise ValueError("EFT must start with '[ShipName, Fit name]'")
     header = lines[0].strip().lstrip("[").rstrip("]")
@@ -767,6 +800,8 @@ def import_eft(text: str) -> dict:
         mm = _MUT_REF_RE.search(line)
         if mm:
             mut_ref = int(mm.group(1))
+            # ``.strip()`` is load-bearing: _MUT_REF_RE leaves the space that separated the
+            # name from " [N]" behind, precisely so the pattern stays linear-time.
             line = _MUT_REF_RE.sub("", line).strip()
         qty = 1
         m = _QTY_RE.search(line)

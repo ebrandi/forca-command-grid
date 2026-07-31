@@ -23,6 +23,19 @@ _QTY_RE = re.compile(r"\sx(\d+)\s*$", re.IGNORECASE)
 # user-facing string on a trusted-officer-only import path.
 _MAX_LINES = 500
 
+# Bounding the line COUNT alone leaves one multi-hundred-KB line free to reach every
+# per-line pattern below, which is exactly the gap CodeQL found in the sibling parser
+# (apps/fitting/services.py, alerts #11/#12): a quadratic pattern there burned 33s of CPU
+# on a single 200KB line, and CPython's ``re`` holds the GIL for the whole scan.
+#
+# ``_QTY_RE`` here is measurably linear (~1ms on 200KB) and this path is officer-only, so
+# this is a floor rather than a fix for a live defect. It is worth having anyway: the cap
+# is what stops a future pattern — or a future caller on a less-trusted path — turning the
+# same shape back into a stall. Sized as in the sibling parser: a rack line is
+# ``<module>, <charge> xN`` and SdeType.name is max_length=200, so 8192 cannot clip
+# anything a real fit contains.
+_MAX_LINE_LEN = 8192
+
 
 def _resolve(name: str) -> int | None:
     t = SdeType.objects.filter(name__iexact=name.strip()).values_list("type_id", flat=True).first()
@@ -31,7 +44,7 @@ def _resolve(name: str) -> int | None:
 
 def parse_eft(text: str) -> dict:
     """Parse EFT text into {ship_name, ship_type_id, fit_name, modules, unresolved}."""
-    lines = [ln.rstrip() for ln in text.strip().splitlines()][:_MAX_LINES]
+    lines = [ln.rstrip()[:_MAX_LINE_LEN] for ln in text.strip().splitlines()][:_MAX_LINES]
     if not lines or not lines[0].startswith("["):
         raise ValueError(_("EFT must start with '[ShipName, Fit name]'"))
 
