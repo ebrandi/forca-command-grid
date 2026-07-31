@@ -22,6 +22,7 @@ import copy
 import importlib.util
 import json
 import os
+import re
 import subprocess
 from pathlib import Path
 
@@ -415,12 +416,19 @@ def test_every_shell_script_in_scripts_parses():
 def test_the_systemd_units_have_no_unsubstituted_placeholders_left_to_chance():
     """Both units carry __PLACEHOLDER__ tokens; every one of them must be something the
     installer actually substitutes, or the timer installs and never runs."""
-    substituted = {"__FORCA_DIR__", "__FORCA_USER__", "__FORCA_GROUP__"}
     installer = (SCRIPTS / "install-image-scan-timer.sh").read_text(encoding="utf-8")
+    # Derived from the installer, not hardcoded. A literal list here has to be edited by
+    # hand every time a unit gains a placeholder, and a stale allow-list is the same class
+    # of rot this test exists to catch — it would either fail on a placeholder that IS
+    # substituted, or (worse, once someone "fixes" it by pasting the name in) stop noticing
+    # one that is not.
+    substituted = set(re.findall(r"s\|(__[A-Z_]+__)\|", installer))
+    assert substituted, "no substitutions found in the installer — the parse above is wrong"
+
     for unit in (SCRIPTS / "systemd").glob("forca-image-scan.*"):
         text = unit.read_text(encoding="utf-8")
-        for token in substituted:
-            if token in text:
-                assert f"s|{token}|" in installer, f"{unit.name} uses {token}; installer never sets it"
         leftovers = {w for w in text.split() if w.startswith("__") and w.endswith("__")}
-        assert leftovers <= substituted, f"{unit.name} has unknown placeholders: {leftovers}"
+        assert leftovers <= substituted, (
+            f"{unit.name} has placeholders the installer never substitutes: "
+            f"{leftovers - substituted} — the unit would install with the literal token in it"
+        )
