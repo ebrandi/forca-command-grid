@@ -31,7 +31,26 @@ updates:
     commit-message:
       prefix: "ci"
 
+  # Covers the Dockerfile's own base image (python:3.12-slim). It does NOT cover the
+  # images named in the compose files — see the docker-compose entry below.
   - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+    labels: ["dependencies", "docker"]
+    commit-message:
+      prefix: "docker"
+
+  # nginx, postgres and redis are pinned ONLY in docker-compose*.yml, which the `docker`
+  # ecosystem above does not read — it scans Dockerfiles. Without this entry those three
+  # images have no watcher at all, and a pinned tag that stops receiving upstream updates
+  # degrades in complete silence: nothing fails, nothing warns, the digest simply stops
+  # moving. That is precisely what happened to `nginx:1.27-alpine`, which sat frozen while
+  # accumulating 37 HIGH/CRITICAL advisories including a CRITICAL in OpenSSL, and was found
+  # only by a manual audit. A weekly PR is the cheapest way to notice the next one.
+  - package-ecosystem: docker-compose
     directory: "/"
     schedule:
       interval: weekly
