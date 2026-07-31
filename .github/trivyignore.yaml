@@ -1,0 +1,32 @@
+# Trivy suppressions — the pressure-release valve for the image scan.
+#
+# WHY THIS FILE EXISTS EVEN THOUGH IT IS EMPTY:
+#   A gate that cannot be suppressed gets deleted. Sooner or later a fixable HIGH will
+#   land that this project genuinely cannot action this week — an upstream base image
+#   that has not rebuilt yet, a CVE in a code path the app never reaches — and at that
+#   point somebody is going to make the red go away. The only question is whether they
+#   do it by writing down a reason and a date here, or by deleting the job.
+#
+#   So: suppressions are allowed, but they must ROT LOUDLY. Every entry MUST carry
+#   `expired_at`. When that date passes trivy stops honouring the entry and the finding
+#   comes back, which forces a conscious re-decision instead of a permanent blind spot.
+#   An undated suppression is indistinguishable from having no scanner at all — that is
+#   the exact failure this whole workstream exists to correct (a Recommendation nobody
+#   ever closed is not a control).
+#
+# RULES FOR ADDING AN ENTRY:
+#   * `statement` says WHY, concretely — "not reachable: the app never invokes perl" is a
+#     reason; "false positive" is not.
+#   * `expired_at` is at most 90 days out. Shorter for anything network-reachable.
+#   * Prefer fixing. Suppression is for buying time, never for closing the ticket.
+#
+# FORMAT: https://trivy.dev/latest/docs/configuration/filtering/#by-finding-ids
+# Example (keep commented; this is a template, not an active suppression):
+#
+#   vulnerabilities:
+#     - id: CVE-0000-00000
+#       paths: ["usr/lib/x86_64-linux-gnu/libexample.so.1"]
+#       statement: "Not reachable — the app never links libexample. Base image fix pending upstream."
+#       expired_at: 2026-10-01
+
+vulnerabilities: []

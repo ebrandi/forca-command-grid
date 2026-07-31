@@ -1,4 +1,4 @@
-# Dependency-vulnerability scan (pip-audit), run two different ways.
+# Declared-dependency vulnerability scan: pip-audit for Python, npm audit for JavaScript.
 #
 # This is the CI path for the same scan that runs weekly in-stack via Celery beat
 # (admin_audit.audit_dependencies) — production deploys do NOT go through GitHub, so
@@ -24,6 +24,22 @@
 # and scripts/update.sh), which is the one that protects production; this job is the
 # pull-request-time copy of it.
 #
+#   npm-audit        audits frontend/package-lock.json. The JavaScript in this app had NO
+#                    scanner of any kind until this job existed — not here, not in
+#                    Dependabot — while four libraries pinned to exact versions were being
+#                    served to every visitor's browser. The intent/reality split above has
+#                    an exact analogue on this side: package.json is intent,
+#                    static/js/vendor/*.js is what actually ships. What closes that gap is
+#                    ci.yml's `frontend-assets` job, which rebuilds the vendor bundles and
+#                    fails if the committed bytes differ — so auditing the lockfile is
+#                    sufficient here only BECAUSE that job exists. If it is ever removed,
+#                    this one starts auditing a fiction.
+#
+# NOT covered by any job in this file: operating-system packages. pip-audit and npm audit
+# both enumerate language-ecosystem distributions, so neither can see an OpenSSL CVE in an
+# alpine base layer — which is the single worst finding this project has had. That belongs
+# to image-scan.yml (trivy, daily).
+#
 # Hardening: every `uses:` is pinned to a full commit SHA. A tag is mutable and can
 # be repointed at malicious code by a compromised maintainer account.
 
@@ -39,12 +55,17 @@ on:
       - "requirements.txt"
       - "requirements-dev.txt"
       - "Dockerfile"
+      - "frontend/package.json"
+      - "frontend/package-lock.json"
       - ".github/workflows/security.yml"
   pull_request:
     paths:
       - "requirements.txt"
       - "requirements-dev.txt"
       - "Dockerfile"
+      - "frontend/package.json"
+      - "frontend/package-lock.json"
+      - ".github/workflows/security.yml"
   schedule:
     - cron: "30 6 * * 1"   # Mondays 06:30 UTC, matching the in-stack beat job
   workflow_dispatch: {}
@@ -89,3 +110,63 @@ jobs:
         # --network none is not usable: the audit queries the advisory feed. It gets a
         # throwaway container with the repo's own image and nothing mounted.
         run: docker run --rm forca-command-grid:audit pip-audit --progress-spinner off
+
+  npm-audit:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      # No setup-node and no `npm ci`. `npm audit` resolves the tree from the committed
+      # package-lock.json alone (verified: it reports correctly with node_modules absent),
+      # so this job never executes a single line of third-party install script — which is
+      # the right posture for a job whose entire purpose is distrusting those packages.
+      # The runner's preinstalled Node is used deliberately, matching ci.yml's
+      # frontend-assets job; one less third-party action to pin and review.
+      - name: Record the toolchain versions
+        run: node --version && npm --version
+
+      # Informational pass first so the full picture survives a red gate below, and so a
+      # MODERATE that nobody has to act on today is still somewhere a human can see it.
+      - name: Full report (informational — never fails)
+        run: |
+          set -euo pipefail
+          {
+            echo "## npm audit — frontend/ (full tree, all severities)"
+            echo
+            echo '```'
+            npm audit 2>&1 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # ---------------------------------------------------------------------------
+      # TWO GATES AT DIFFERENT THRESHOLDS. The asymmetry is the point, so here is why.
+      #
+      # `dependencies` (alpinejs, chart.js, htmx.org, svg-pan-zoom) are vendored into
+      # static/js/vendor/ and served to every visitor's browser. A HIGH there is remote
+      # code running in a director's session against attacker-controlled input. Failing
+      # the build is proportionate.
+      #
+      # `devDependencies` is tailwindcss and its ~75 transitive build packages. None of it
+      # ships: production has no Node, the deploy path never runs Tailwind, and the only
+      # input the toolchain ever processes is this repo's own CSS and templates. A ReDoS
+      # in a PostCSS parser cannot be reached by anyone who is not already committing to
+      # this repo. Holding the build hostage to it would be the mistake this whole
+      # workstream is a reaction to: the advisories are frequently unfixable without a
+      # Tailwind major bump, so the gate would sit red for weeks, and a permanently red
+      # gate does not get fixed — it gets deleted, taking the browser-facing check with it.
+      #
+      # So dev-only findings are reported, not gated — EXCEPT at CRITICAL, where the
+      # realistic scenario stops being "sloppy regex" and starts being "this package was
+      # taken over". A compromised build dependency runs with the committer's credentials
+      # and writes the bytes we ship; that is worth stopping for even though nothing in it
+      # reaches a browser.
+      # ---------------------------------------------------------------------------
+      - name: Gate — browser-shipped libraries, HIGH and above
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Gate — build-only toolchain, CRITICAL only
+        run: npm audit --audit-level=critical

@@ -1,0 +1,71 @@
+# Install a pinned, checksum-verified trivy binary.
+#
+# WHY A LOCAL COMPOSITE ACTION INSTEAD OF aquasecurity/trivy-action:
+#   Every `uses:` in this repo is pinned to a full commit SHA, because a tag is mutable
+#   and can be repointed at malicious code by a compromised maintainer account. That rule
+#   only helps if the SHA was actually verified against upstream by a human; pasting a SHA
+#   that "looks right" is worse than not pinning, because it launders an unverified value
+#   through a convention that is supposed to mean "verified". So rather than add a third
+#   -party action we could not verify from the machine this was authored on, we install
+#   the release tarball directly and check it against a sha256 recorded here.
+#
+#   That is also strictly stronger than what the upstream action does: the digest below
+#   pins *bytes*. Downloading the release's own checksums.txt alongside the tarball would
+#   only detect a corrupted download — it is served by the same host it is meant to
+#   protect against, so a compromised release replaces both.
+#
+# WHY IT IS A SHARED ACTION AND NOT COPY-PASTE:
+#   Two jobs in image-scan.yml need trivy. The version and its digest must move together
+#   or the install breaks in a confusing way, so they live in exactly one place. Bumping
+#   trivy is then a one-line edit here (plus its digest), not a hunt through the tree.
+#
+# HOW TO BUMP:
+#   1. Pick the new version from https://github.com/aquasecurity/trivy/releases
+#   2. Read trivy_<version>_checksums.txt from that release and copy the line for
+#      trivy_<version>_Linux-64bit.tar.gz
+#   3. Update BOTH defaults below. A mismatch fails the install loudly — never silently.
+
+name: Install Trivy
+description: Download a pinned trivy release tarball and verify it against a known sha256.
+
+inputs:
+  version:
+    description: Trivy release version, without the leading "v".
+    required: false
+    default: "0.70.0"
+  sha256:
+    description: >-
+      Expected sha256 of trivy_<version>_Linux-64bit.tar.gz, taken from the release's
+      published checksums file. Must be updated in lockstep with `version`.
+    required: false
+    default: "8b4376d5d6befe5c24d503f10ff136d9e0c49f9127a4279fd110b727929a5aa9"
+
+runs:
+  using: composite
+  steps:
+    - name: Install trivy ${{ inputs.version }}
+      shell: bash
+      env:
+        TRIVY_VERSION: ${{ inputs.version }}
+        TRIVY_SHA256: ${{ inputs.sha256 }}
+      run: |
+        set -euo pipefail
+        workdir="$(mktemp -d)"
+        tarball="$workdir/trivy.tar.gz"
+        url="https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
+
+        # --fail so an HTML error page never gets checksummed as if it were the binary,
+        # --retry because a release-asset fetch failing is an infrastructure hiccup, not
+        # a security finding, and a scanner that flakes gets muted like any other.
+        curl --silent --show-error --location --fail \
+             --retry 3 --retry-delay 5 --max-time 300 \
+             --output "$tarball" "$url"
+
+        # The gate. If this line fails, the bytes are not the bytes we reviewed — stop,
+        # do not scan with them, and do not "just re-run".
+        echo "${TRIVY_SHA256}  ${tarball}" | sha256sum --check --strict -
+
+        tar -xzf "$tarball" -C "$workdir" trivy
+        install -m 0755 "$workdir/trivy" /usr/local/bin/trivy
+        rm -rf "$workdir"
+        trivy --version

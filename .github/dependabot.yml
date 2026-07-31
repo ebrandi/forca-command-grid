@@ -21,6 +21,43 @@ updates:
     commit-message:
       prefix: "deps"
 
+  # The four runtime libraries in frontend/package.json — alpinejs, chart.js, htmx.org
+  # and svg-pan-zoom — are pinned to EXACT versions and vendored into static/js/vendor/,
+  # which means they are served to every visitor's browser and will never move on their
+  # own. Nothing was watching them: there was no npm ecosystem here and no `npm audit`
+  # anywhere in CI, so the only postcss HIGH this project has seen was found by a human
+  # running the command by hand. An exact pin is the right call for reproducible builds
+  # (see scripts/check-frontend-build.sh) but it converts "we are up to date" from a
+  # default into something that has to be maintained — this entry is that maintenance.
+  #
+  # `directory: /frontend` because package.json and package-lock.json live there, not at
+  # the root. The lockfile is committed, so Dependabot can resolve the transitive tree
+  # and open PRs for indirect packages too.
+  - package-ecosystem: npm
+    directory: "/frontend"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+    open-pull-requests-limit: 5
+    labels: ["dependencies", "frontend"]
+    commit-message:
+      prefix: "deps"
+    # Grouping keeps the four browser-shipped libraries in one reviewable PR. They share
+    # a single gate — the committed vendor bundles must be rebuilt and re-committed for
+    # any of them (ci.yml's frontend-assets job fails otherwise) — so splitting them into
+    # four PRs would just mean doing that rebuild four times.
+    groups:
+      frontend-runtime:
+        dependency-type: "production"
+      frontend-build-tooling:
+        dependency-type: "development"
+
+  # NOTE: this does not reach the trivy version pinned in
+  # .github/actions/install-trivy/action.yml — that is a checksum-verified release
+  # tarball, not a `uses:`, so no bot will ever propose a bump. Bumping it is manual and
+  # the action's header documents how. That is an accepted trade: an unverifiable SHA
+  # would be worse than a pin someone has to touch by hand.
   - package-ecosystem: github-actions
     directory: "/"
     schedule:

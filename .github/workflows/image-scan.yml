@@ -1,0 +1,261 @@
+# Container image vulnerability scan (trivy) — the OS-package layer.
+#
+# WHY THIS EXISTS, AND WHY NOTHING ELSE COVERS IT:
+#   pip-audit (security.yml) sees Python distributions. Only Python distributions. The
+#   worst vulnerability this project has ever carried was a CRITICAL in libcrypto3
+#   (OpenSSL 3.3.3) inside `nginx:1.27-alpine` — an OS package in the one container that
+#   terminates TLS and faces the internet. pip-audit is structurally incapable of seeing
+#   it: it is not a Python package, and it is not even in the application image.
+#
+#   Dependabot would not have caught it either, and this is the part that is easy to get
+#   wrong. `nginx:1.27-alpine` was FROZEN upstream: `docker pull` returned the same
+#   April-2025 build forever. A version-update bot compares your pin against available
+#   tags and finds nothing newer to propose, so it stays silent while the image quietly
+#   rots — 37 HIGH/CRITICAL accumulated that way. There is no version bump to suggest;
+#   the image is simply wrong now. Only a scanner that reads the image's OWN package
+#   database can tell you that, which is what this workflow does.
+#
+#   That is also why this runs DAILY rather than weekly like security.yml. A base image
+#   goes stale on the world's schedule, not ours: nothing in this repo has to change for
+#   a clean image to become a vulnerable one overnight. Weekly means carrying a known
+#   CRITICAL in the TLS terminator for up to seven days after it is public.
+#
+# WHY IT IS NOT PERMANENTLY RED (read before "tightening" the scoping):
+#   A gate that fails every single day gets disabled, and then you have less than
+#   nothing — you have a disabled job that still looks like coverage on the repo page.
+#   Three deliberate constraints keep the failures meaningful. All three are measured
+#   against this project's real images, not guessed:
+#
+#   1. --ignore-unfixed. The Debian base carries ~24 HIGH/CRITICAL with ZERO fixable
+#      (all `affected`/`fix_deferred` in perl and util-linux, none of which the app ever
+#      invokes). There is no action a human could take on those today, so failing on them
+#      only teaches people to ignore the job.
+#   2. --severity HIGH,CRITICAL. MEDIUM and below are triage, not a build gate.
+#   3. Third-party service images are scanned for OS packages only — see the long comment
+#      on the `service-images` job, which is the subtlest decision here.
+#
+#   The escape hatch for a genuinely unactionable finding is .github/trivyignore.yaml,
+#   which REQUIRES an expiry date so suppressions rot loudly instead of silently.
+#
+# WHO FINDS OUT, AND WHEN IT STOPS SHOUTING:
+#   The motivating incident was not a detection failure. The in-stack weekly audit DID
+#   find 25 Pillow advisories and DID raise a severity-80 director Recommendation naming
+#   the exact CVEs. It sat unread in state `new`, and then — after the fix shipped — kept
+#   claiming 25 open vulnerabilities for days, because the scan that would have cleared it
+#   only re-ran on Mondays. Both halves of that are damaging, and the second half is worse:
+#   an alarm that stays lit after the fix is what teaches people to ignore the next one.
+#
+#   A workflow avoids both by construction, which is most of why the CI layer is worth
+#   having on top of the in-stack job. On a PR the result is on the PR, in front of the
+#   person who caused it. On main a failed scheduled run emails the repo owner, and
+#   GitHub keeps mailing on each subsequent failure rather than filing a row in a table
+#   nobody visits. And there is no state to go stale: the check is recomputed from the
+#   images every run, so the worst case for a stale red is one day, self-clearing, with
+#   nothing for a human to remember to close.
+#
+# Hardening: no third-party `uses:` at all. trivy is installed from a pinned release
+# tarball verified against a recorded sha256 (.github/actions/install-trivy), which pins
+# actual bytes rather than a commit SHA nobody here could verify.
+
+name: image-scan
+
+on:
+  push:
+    branches: [main]
+    paths:
+      # Anything that changes what ends up inside an image we ship.
+      - "docker-compose.prod.yml"
+      - "Dockerfile"
+      - "requirements.txt"
+      - ".dockerignore"
+      - ".github/workflows/image-scan.yml"
+      - ".github/actions/install-trivy/action.yml"
+      - ".github/trivyignore.yaml"
+  pull_request:
+    paths:
+      - "docker-compose.prod.yml"
+      - "Dockerfile"
+      - "requirements.txt"
+      - ".dockerignore"
+      - ".github/workflows/image-scan.yml"
+      - ".github/actions/install-trivy/action.yml"
+      - ".github/trivyignore.yaml"
+  schedule:
+    # Daily 06:45 UTC. Deliberately 15 minutes after the weekly pip-audit / gitleaks pair
+    # at 06:30 so the three do not contend for runners, and before Dependabot's 07:00
+    # Monday window so a fresh finding and its candidate fix land close together.
+    - cron: "45 6 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read           # least privilege: these jobs only read the repo
+
+concurrency:
+  # A newer push to the same ref makes an in-flight scan redundant. Not cancel-in-progress
+  # for the scheduled run on main, but the ref-scoped group means a nightly run and a PR
+  # run never cancel each other.
+  group: image-scan-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Shared by every trivy invocation below so the scope of the gate is defined in ONE
+  # place. Changing what counts as a failure should be a single-line edit, not a hunt.
+  #   --scanners vuln  : misconfig/secret scanning is a different job's concern
+  #                      (secret-scan.yml already owns secrets); keep this one about CVEs
+  #   --ignore-unfixed : see the header — unfixable findings are noise, not a gate
+  #   --timeout        : a slow DB pull should not hang a runner for the default 5m only
+  #                      to fail; give the pull room, then fail cleanly
+  TRIVY_COMMON: >-
+    --quiet
+    --scanners vuln
+    --ignore-unfixed
+    --severity HIGH,CRITICAL
+    --timeout 15m
+    --ignorefile .github/trivyignore.yaml
+
+jobs:
+  # ---------------------------------------------------------------------------------
+  # Read the image pins out of docker-compose.prod.yml instead of restating them here.
+  #
+  # A hardcoded list in this file is a second source of truth for "what do we run in
+  # production", and second sources of truth drift silently: someone bumps
+  # nginx:1.30-alpine to 1.32-alpine in the compose file, this workflow keeps scanning
+  # 1.30, and the job stays green while scanning an image nobody deploys. That failure is
+  # invisible — green, plausible, and wrong — which is the worst kind for a control whose
+  # whole job is to be believed.
+  # ---------------------------------------------------------------------------------
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      images: ${{ steps.parse.outputs.images }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Install PyYAML if the runner image ever stops shipping it
+        # Parsing as YAML rather than grepping `image:` matters here: web/worker/beat
+        # inherit their image from the `x-app` anchor via a `<<:` merge key, and only a
+        # real YAML load resolves that well enough to tell "we build this one" from "we
+        # pull this one". PyYAML is preinstalled on ubuntu-latest, so this is normally a
+        # no-op; it exists so a runner-image change degrades to a slow job, not a broken one.
+        run: python3 -c "import yaml" 2>/dev/null || pip install --quiet "pyyaml>=6,<7"
+
+      - name: Test the parser before trusting it
+        # The parser decides the size of the scan matrix, so a bug in it shrinks coverage
+        # while everything downstream still reports green — the precise "looks like a
+        # control, is not one" failure this workflow exists to correct. Stdlib unittest,
+        # no pytest install, no Django, no database.
+        run: python3 .github/scripts/test_compose_images.py
+
+      - name: Extract the third-party image pins from docker-compose.prod.yml
+        id: parse
+        run: python3 .github/scripts/compose_images.py >> "$GITHUB_OUTPUT"
+      - name: Show what will be scanned
+        run: echo '${{ steps.parse.outputs.images }}'
+
+  # ---------------------------------------------------------------------------------
+  # The images we PULL. We do not build these and cannot patch them; our only lever is
+  # the tag, so a finding here means "this pin has gone stale, move it or replace it".
+  # ---------------------------------------------------------------------------------
+  service-images:
+    needs: discover
+    runs-on: ubuntu-latest
+    strategy:
+      # One bad image must not hide the state of the others. Without this, a red nginx
+      # cancels the postgres and redis scans and you learn one problem per day.
+      fail-fast: false
+      matrix:
+        image: ${{ fromJSON(needs.discover.outputs.images) }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/install-trivy
+
+      # Informational pass FIRST, deliberately: it never fails, so whatever it prints is
+      # still in the job summary when the gate below goes red. Running it after the gate
+      # would mean the one day you most want the full picture is the one day you do not
+      # get it.
+      - name: Full report (informational — never fails)
+        env:
+          IMAGE: ${{ matrix.image }}
+        run: |
+          set -euo pipefail
+          {
+            echo "## Trivy — \`${IMAGE}\` (all fixable HIGH/CRITICAL, OS + libraries)"
+            echo
+            echo '```'
+            trivy image ${TRIVY_COMMON} --exit-code 0 "${IMAGE}" 2>&1 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Gate — fixable HIGH/CRITICAL in OS packages
+        env:
+          IMAGE: ${{ matrix.image }}
+        # --pkg-types os. This is the one scoping decision worth arguing about, so here
+        # is the argument.
+        #
+        # The library scanner on a third-party image reports the language dependencies of
+        # binaries the MAINTAINER shipped, not ones we chose. Concretely, today
+        # postgres:16-alpine reports 15 fixable HIGH/CRITICAL — 14 HIGH + 1 CRITICAL —
+        # and every single one is Go stdlib inside /usr/local/bin/gosu, the helper that
+        # drops privileges in the entrypoint. Its OS package count is 0. Those findings
+        # are "fixable" only in the sense that a newer Go toolchain exists; they are fixed
+        # when the postgres maintainers recompile gosu, on their schedule, and there is
+        # no version of this repo that fixes them. Gating on them is a guaranteed red
+        # build every day forever, which ends exactly one way.
+        #
+        # The class of problem we are actually here for — the frozen nginx:1.27-alpine
+        # carrying a CRITICAL OpenSSL — IS an OS package, and this scoping catches it:
+        # verified locally, the command below exits 1 with 36 findings (2 CRITICAL) on
+        # nginx:1.27-alpine and exits 0 on the 1.30-alpine we pin today. The gate
+        # discriminates; it is not green because it is blind.
+        #
+        # Nothing is hidden either way: the informational pass above prints the library
+        # findings into the job summary every run, so a genuinely alarming one is visible
+        # to a human — it just does not get to hold the build hostage.
+        run: |
+          set -euo pipefail
+          trivy image ${TRIVY_COMMON} --pkg-types os --exit-code 1 "${IMAGE}"
+
+  # ---------------------------------------------------------------------------------
+  # The image we BUILD. Different rules apply: we own the Dockerfile, the base image pin
+  # and requirements.txt, so a fixable finding here is genuinely actionable by us.
+  # ---------------------------------------------------------------------------------
+  app-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/install-trivy
+      # Plain `docker build`, matching security.yml's pip-audit-image job: the runner
+      # already has Docker, this needs no registry, no cache export and no credentials,
+      # and every action added here is another supply-chain edge to pin and review.
+      - name: Build the application image
+        run: docker build --tag forca-command-grid:scan .
+      - name: Gate — fixable HIGH/CRITICAL, OS packages AND bundled libraries
+        # No --pkg-types restriction here, unlike the service images. We choose this
+        # image's contents, so both halves are ours to fix: an OS finding means bump or
+        # patch the Debian base, a library finding means bump requirements.txt.
+        #
+        # The library half is not redundant with security.yml's pip-audit-image job even
+        # though both look inside this image. pip-audit enumerates Python distributions
+        # against the PyPI advisory feed; trivy reads every package manifest baked into
+        # the layers against its own DB, whatever ecosystem it belongs to.
+        #
+        # That difference is not theoretical here. The Dockerfile ends with `COPY . .`,
+        # and .dockerignore's `node_modules` entry does NOT exclude frontend/node_modules
+        # — a bare name matches only at the context root, so nesting it under frontend/
+        # defeats it (it would need `**/node_modules`). A build from a working tree that
+        # has run `npm install` therefore bakes ~70 build-only JavaScript packages into
+        # the runtime image; verified by building this Dockerfile and finding 27MB of
+        # them under /app/frontend/node_modules. pip-audit cannot see any of it. Trivy
+        # can, and did: the same scan against an image built when postcss was 8.5.16
+        # reports the HIGH (GHSA-r28c-9q8g-f849), and reports clean now that the tree has
+        # 8.5.24. CI is unaffected — node_modules is gitignored, so a fresh checkout has
+        # none — which is exactly why the leak has stayed invisible on paths that build
+        # from a working directory instead.
+        run: |
+          set -euo pipefail
+          trivy image ${TRIVY_COMMON} --exit-code 1 forca-command-grid:scan

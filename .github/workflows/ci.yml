@@ -38,7 +38,11 @@ jobs:
       - name: Install ruff
         run: pip install "ruff>=0.7,<0.13"
       - name: Lint
-        run: ruff check .
+        # `.github/scripts` is named explicitly because ruff skips dot-directories when
+        # it walks `.`, so the CI helper scripts living there would otherwise be the one
+        # corner of the tree with no lint gate — and they are exactly the code whose
+        # silent breakage makes a security job scan less than it claims to.
+        run: ruff check . .github/scripts
 
   test:
     runs-on: ubuntu-latest
