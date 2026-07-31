@@ -71,6 +71,13 @@ class MarketPrice(ProvenanceMixin):
 
     class Meta:
         unique_together = ("type_id", "location", "profile")
+        indexes = [
+            # The integration-health panel reads "market prices last refreshed" straight
+            # off the newest as_of (apps/admin_audit/health.py) — there is no sync stamp to
+            # short-circuit it, so it runs on every recompute and previously sorted one row
+            # per priced type × location × profile. One row of this index answers it.
+            models.Index(fields=["-as_of"], name="mktprice_as_of_idx"),
+        ]
 
 
 class MarketOrderSnapshot(ProvenanceMixin):

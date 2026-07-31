@@ -173,6 +173,27 @@ class CorpWalletJournalEntry(models.Model):
             # selective predicate can't drive the query. Composite (party, date) lets a
             # single index serve both the equality and the range/order.
             models.Index(fields=["second_party_id", "date"], name="cwje_secondparty_date_idx"),
+            # The P4 payment reconcile (apps/procurement/payments.py) looks a PO's payment
+            # up by ``context_id == contract_id``, oldest first. context_id leads because
+            # it is the equality (and near-unique) predicate; date follows so the same
+            # index also supplies the ``date >= matched_at`` bound *and* the ORDER BY,
+            # letting the LIMIT 1 stop at the first row instead of sorting.
+            #
+            # ref_type is deliberately NOT in the index even though the query filters on
+            # it: it arrives as an ``IN (...)`` list, and a mid-column ScalarArrayOp costs
+            # the scan its ordering guarantee on Postgres 16 — reintroducing the sort this
+            # index exists to remove. It stays a cheap recheck over the handful of rows one
+            # contract id selects.
+            #
+            # Partial because context_id is populated on new rows only (see the field
+            # comment): historical journal lines stay null forever, so restricting the
+            # index to non-null rows keeps it a fraction of the table's size while still
+            # serving every query the reconcile issues (context_id is always non-null there).
+            models.Index(
+                fields=["context_id", "date"],
+                name="cwje_context_date_idx",
+                condition=models.Q(context_id__isnull=False),
+            ),
         ]
 
 

@@ -106,6 +106,23 @@ class Killmail(ProvenanceMixin):
                 name="km_role_value_idx",
                 condition=models.Q(involves_home_corp=True, is_npc=False),
             ),
+            # The director dashboard's integration-health panel asks "how fresh are the
+            # killmails?" — first the newest fetched_at, then the newest as_of as fallback
+            # (apps/admin_audit/health.py). Both had to scan and top-N-sort the whole table.
+            #
+            # Nothing in the ingest path ever writes fetched_at on a Killmail, so the
+            # fetched_at probe is a guaranteed miss that nevertheless paid full price. The
+            # partial index makes that miss free (it is empty), and stays correct — and
+            # near-free to maintain — if ingestion ever starts stamping the column.
+            models.Index(
+                fields=["-fetched_at"],
+                name="km_fetched_at_idx",
+                condition=models.Q(fetched_at__isnull=False),
+            ),
+            # ...which means the as_of fallback is the branch that actually runs, on every
+            # 120s health recompute, over every killmail ever ingested. as_of is stamped at
+            # ingest and never rewritten, so this index is append-mostly.
+            models.Index(fields=["-as_of"], name="km_as_of_idx"),
         ]
 
     def __str__(self) -> str:

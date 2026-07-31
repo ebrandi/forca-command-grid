@@ -17,6 +17,18 @@ from django.core.cache import cache
 
 from . import ratelimit
 
+# ESI paths whose body is immutable *and* fetched exactly once in this codebase, so a
+# conditional request can never pay off. ``/killmails/{id}/{hash}/`` is the whole list:
+# CCP's killmail bodies never change, and ``ingest_killmail`` short-circuits on an
+# already-ingested killmail_id, so a given path is requested once and never again.
+# Caching it still cost a 24h Redis entry holding the *entire* killmail JSON (kilobytes
+# each, ~180k killmails and growing) inside the 256 MB volatile-lru budget shared with
+# sessions and every other cache user — evicting live entries to store bytes that no
+# reader can ever ask for. The conditional-request machinery itself is untouched for
+# every re-fetched endpoint (skills, roster, assets, structures...), which is where the
+# 304s actually happen.
+_SINGLE_FETCH_PATH_PREFIXES = ("/killmails/",)
+
 
 class ESIError(Exception):
     pass
@@ -53,6 +65,17 @@ class ESIClient:
     def _etag_key(path: str) -> str:
         return f"esi:etag:{path}"
 
+    @staticmethod
+    def _etag_worthwhile(path: str) -> bool:
+        """Is it worth spending cache on a conditional request for this path?
+
+        False only for single-fetch paths (see ``_SINGLE_FETCH_PATH_PREFIXES``). Because
+        those are never requested twice, the lookup at the top of ``get`` was already a
+        guaranteed miss and the 304 branch already unreachable — so skipping the layer
+        entirely returns exactly the same ESIResponse and only stops the write.
+        """
+        return not path.startswith(_SINGLE_FETCH_PATH_PREFIXES)
+
     def get(
         self,
         path: str,
@@ -68,8 +91,9 @@ class ESIClient:
 
         url = f"{settings.ESI_BASE_URL}{path}"
         headers = self._base_headers(token)
+        use_etag = use_etag and self._etag_worthwhile(path)
         etag_entry = cache.get(self._etag_key(path)) if use_etag else None
-        if etag_entry and use_etag:
+        if etag_entry:
             headers["If-None-Match"] = etag_entry["etag"]
 
         last_exc: Exception | None = None

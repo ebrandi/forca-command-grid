@@ -21,7 +21,20 @@ class CharacterSkillSnapshot(ProvenanceMixin):
     is_latest = models.BooleanField(default=True)
 
     class Meta:
-        indexes = [models.Index(fields=["character", "is_latest"])]
+        indexes = [
+            models.Index(fields=["character", "is_latest"]),
+            # The integration-health panel reports member-skill freshness as the newest
+            # as_of among current snapshots, and counts them (apps/admin_audit/health.py).
+            # The (character, is_latest) index above cannot serve either — is_latest is its
+            # trailing column. This partial index covers both: the freshness probe reads one
+            # row in order, and the count becomes an index-only scan over just the current
+            # snapshots rather than the whole retained snapshot history.
+            models.Index(
+                fields=["-as_of"],
+                name="skillsnap_latest_as_of_idx",
+                condition=models.Q(is_latest=True),
+            ),
+        ]
 
     def trained_level(self, skill_type_id: int) -> int:
         entry = self.skills.get(str(skill_type_id)) or self.skills.get(skill_type_id)
