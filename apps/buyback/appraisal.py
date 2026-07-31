@@ -13,6 +13,8 @@ import re
 from dataclasses import dataclass, field
 from decimal import ROUND_HALF_UP, Decimal
 
+from django.db.models.functions import Lower
+
 from apps.market.models import MarketPrice
 from apps.sde.models import SdeType
 
@@ -141,6 +143,39 @@ def _price_and_asof(type_id: int) -> tuple[Decimal, object | None]:
     return Decimal("0"), None
 
 
+def _resolve_types(names: list[str]) -> dict[str, SdeType]:
+    """Resolve every pasted name to its ``SdeType`` case-insensitively in ONE query.
+
+    The per-line ``name__iexact`` this replaces could not be served by any index: Django
+    compiles ``iexact`` to ``UPPER(name::text) = UPPER(%s)``, which the trigram GIN cannot
+    answer (``gin_trgm_ops`` backs LIKE/ILIKE/regex, not equality on a function of the
+    column) and which the plain btree on raw ``name`` cannot answer either. A 500-line
+    paste of unknown names therefore cost up to a thousand sequential scans of a ~52k-row
+    table in one request; it now costs one. Same shape as
+    ``apps.doctrines.xml_import._resolve_types`` — the house idiom for this problem.
+
+    Tie-breaking is preserved exactly. The old lookup ended in ``.first()`` on a queryset
+    with no ordering, which Django resolves to ``ORDER BY pk LIMIT 1``, so when two types
+    differed only by case the LOWEST ``type_id`` won. Ordering the batch by ``type_id``
+    and keeping the first row seen per lowered name reproduces that choice row for row.
+    ``select_related("group")`` is carried over so the ore-mode category gate stays
+    query-free.
+    """
+    lowered = {n.lower() for n in names if n}
+    if not lowered:
+        return {}
+    rows = (
+        SdeType.objects.annotate(lname=Lower("name"))
+        .filter(lname__in=lowered)
+        .select_related("group")
+        .order_by("type_id")
+    )
+    out: dict[str, SdeType] = {}
+    for sde in rows:
+        out.setdefault(sde.lname, sde)
+    return out
+
+
 def appraise(text: str, *, sec_band: str, rate: Decimal, ore_mode: bool = False,
              reprocessing_pct: Decimal = Decimal("0.906")) -> Appraisal:
     """Price a pasted item list at ``rate`` × Jita sell for the given location.
@@ -162,11 +197,14 @@ def appraise(text: str, *, sec_band: str, rate: Decimal, ore_mode: bool = False,
             price_memo[type_id] = _price_and_asof(type_id)
         return price_memo[type_id]
 
-    for name, qty in parse_lines(text):
-        sde = (
-            SdeType.objects.filter(name__iexact=name).select_related("group").first()
-            or SdeType.objects.filter(name__iexact=name.strip()).select_related("group").first()
-        )
+    # One batch resolution for the whole paste instead of one (or two) full table scans
+    # per line. ``parse_lines`` strips almost every name it returns, but a line truncated
+    # at ``_MAX_LINE`` can still end in whitespace, so the old ``name`` / ``name.strip()``
+    # fallback pair is kept — both spellings simply ride the same single query.
+    lines = parse_lines(text)
+    resolved = _resolve_types([n for name, _ in lines for n in (name, name.strip())])
+    for name, qty in lines:
+        sde = resolved.get(name.lower()) or resolved.get(name.strip().lower())
         if not sde:
             result.unknown.append(name)
             continue

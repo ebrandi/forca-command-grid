@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from django.db.models import Count, Sum
+from django.db.models import Count, Q, Sum
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
@@ -63,10 +63,30 @@ def _open_flag_count() -> int:
 
 
 def track_completion_rates() -> list[dict]:
+    """Enrolment and completion totals per active track, in one query.
+
+    Both numbers come off the SAME relation, so they are conditional aggregates over a
+    single ``enrollments`` join rather than two COUNTs per row. Sharing one join is also
+    what makes them safe: two ``Count`` annotations that span *different* relations
+    multiply each other's rows (a track with 3 enrolments and 4 tasks would report 12 of
+    each) and would need ``distinct=True``. That trap does not apply here, and forcing
+    ``distinct`` anyway would be a pointless sort.
+    """
+    tracks = (
+        MentorshipTrack.objects.filter(active=True)
+        .annotate(
+            enrolled_n=Count("enrollments"),
+            completed_n=Count(
+                "enrollments",
+                filter=Q(enrollments__status=MentorshipEnrollment.Status.COMPLETED),
+            ),
+        )
+        .order_by("sort_order")
+    )
     rows = []
-    for track in MentorshipTrack.objects.filter(active=True).order_by("sort_order"):
-        enrolled = track.enrollments.count()
-        completed = track.enrollments.filter(status=MentorshipEnrollment.Status.COMPLETED).count()
+    for track in tracks:
+        enrolled = track.enrolled_n
+        completed = track.completed_n
         rows.append({
             "track": track,
             "enrolled": enrolled,
@@ -85,13 +105,28 @@ def mentor_activity(limit: int = 10) -> list[dict]:
         ).values_list("actor").annotate(n=Count("id")).values_list("actor", "n")
     )
     rows = []
-    for mentor in MentorProfile.objects.filter(status=MentorProfile.Status.ACTIVE).select_related("user"):
-        active = mentor.pairings.filter(status=_P.ACTIVE).count()
-        completed = mentor.pairings.filter(status=_P.COMPLETED).count()
+    # Both counts read the mentor's own ``pairings``, so one join answers both — see
+    # ``track_completion_rates`` for why sharing the relation is what keeps the two
+    # annotations from inflating each other.
+    mentors = (
+        MentorProfile.objects.filter(status=MentorProfile.Status.ACTIVE)
+        .select_related("user")
+        .annotate(
+            active_pairing_n=Count("pairings", filter=Q(pairings__status=_P.ACTIVE)),
+            completed_pairing_n=Count("pairings", filter=Q(pairings__status=_P.COMPLETED)),
+        )
+        # Restated explicitly, not decoration: Django DROPS a model's ``Meta.ordering``
+        # the moment a query grows a GROUP BY (compiler: ``if self._meta_ordering:
+        # order_by = None``). Without this line the annotated queryset comes back
+        # unordered, and since the sort below is stable that silently changes which
+        # mentors survive ``[:limit]`` whenever two of them tie on (mentees, signoffs).
+        .order_by("-created_at")
+    )
+    for mentor in mentors:
         rows.append({
             "mentor": mentor,
-            "active_mentees": active,
-            "completed": completed,
+            "active_mentees": mentor.active_pairing_n,
+            "completed": mentor.completed_pairing_n,
             "signoffs": signoffs.get(mentor.user_id, 0),
         })
     rows.sort(key=lambda r: (r["active_mentees"], r["signoffs"]), reverse=True)
@@ -103,12 +138,26 @@ def mentees_needing_attention(limit: int = 10) -> list[dict]:
     from . import matching
 
     out = [{"mentee": m, "why": _("Not yet paired")} for m in matching.unpaired_mentees()]
-    for pairing in MentorshipPairing.objects.filter(status=_P.ACTIVE).select_related(
-        "mentee__user", "mentor__user"
-    ):
-        done = pairing.assignments.filter(
-            status__in=MentorshipTaskAssignment.DONE_STATUSES).count()
-        total = pairing.assignments.count()
+    # "Has tasks but none done" is two counts over the one ``assignments`` relation, so
+    # they annotate onto the same join instead of costing two COUNTs per active pairing.
+    pairings = (
+        MentorshipPairing.objects.filter(status=_P.ACTIVE)
+        .select_related("mentee__user", "mentor__user")
+        .annotate(
+            done_n=Count(
+                "assignments",
+                filter=Q(assignments__status__in=MentorshipTaskAssignment.DONE_STATUSES),
+            ),
+            total_n=Count("assignments"),
+        )
+        # See ``mentor_activity``: adding a GROUP BY makes Django discard
+        # ``Meta.ordering``, and here the order is what the officer actually reads
+        # (newest pairings first) before ``[:limit]`` cuts the list.
+        .order_by("-created_at")
+    )
+    for pairing in pairings:
+        done = pairing.done_n
+        total = pairing.total_n
         if total and done == 0:
             out.append({"mentee": pairing.mentee, "why": _("Paired but no tasks completed yet"),
                         "pairing": pairing})
