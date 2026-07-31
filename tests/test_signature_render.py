@@ -10,7 +10,9 @@ from __future__ import annotations
 import datetime
 import io
 import os
+import re
 from decimal import Decimal
+from pathlib import Path
 
 import pytest
 import responses
@@ -236,12 +238,57 @@ def test_footer_strip_is_legible_over_background():
     img = _open(render_signature_png(None, payload)).convert("RGB")
     w, h = img.size
     band = img.crop((0, h - 16, w, h))
-    lums = sorted(_luma(px) for px in band.getdata())
+    # get_flattened_data(), not the older getdata(): Pillow deprecated getdata() in 12.x and
+    # removes it in Pillow 14 (2027-10-15). Both return one entry per pixel — an (R, G, B)
+    # tuple for this converted image — so the sampling below is unchanged, but the pinned
+    # ceiling in requirements.txt can now move to 14 without this test starting to fail.
+    lums = sorted(_luma(px) for px in band.get_flattened_data())
     background_luma = lums[int(len(lums) * 0.2)]      # the scrim behind the text
     assert background_luma <= 60, background_luma      # scrim actually darkened the band
     assert _luma(MUTED) - background_luma >= 60        # strong text-vs-background contrast
     meta = _trace_role(payload, "meta")
     assert meta and tuple(meta[0]["fill"]) == tuple(MUTED)   # muted-ink tone, not the faint tone
+
+
+def test_band_pixel_sampling_is_row_major_one_tuple_per_pixel():
+    # Pins the semantics the legibility test above depends on, against an oracle that cannot rot:
+    # per-pixel access through Image.load(). getdata() was the historical way to read a band's
+    # pixels and is being removed in Pillow 14; get_flattened_data() replaces it, and the claim
+    # made when swapping the call was that the two are interchangeable HERE — same count, same
+    # row-major order, same (R, G, B) tuple per pixel. Deriving the expectation from load()
+    # rather than from getdata() means this keeps checking that claim after the old API is gone,
+    # and would catch a future Pillow that returned, say, a flat R, G, B, R, G, B... sequence,
+    # which would quietly change every percentile the legibility assertions are built on.
+    img = _open(render_signature_png(None, _payload())).convert("RGB")
+    w, h = img.size
+    band = img.crop((0, h - 16, w, h))
+    bw, bh = band.size
+    px = band.load()
+    expected = [px[x, y] for y in range(bh) for x in range(bw)]
+    assert list(band.get_flattened_data()) == expected
+    assert len(expected) == bw * bh
+
+
+def test_no_source_file_uses_the_removed_pillow_getdata_api():
+    # The Image.getdata accessor disappears in Pillow 14 (2027-10-15). requirements.txt holds a
+    # `<13.0` ceiling today, so nothing breaks yet — but that ceiling moves on every advisory
+    # wave (it moved to the 12.x line only days ago), and the failure mode is nasty for a
+    # self-hosted install: nothing warns at build time, and the first sign is an AttributeError
+    # out of a card renderer in production. This guard is repo-wide rather than local to the
+    # renderer because the last occurrence was in a test, where a per-module review would not
+    # have looked.
+    #
+    # The needle is assembled at runtime so that this guard does not match its own source and
+    # report itself.
+    needle = re.compile(r"\." + "getdata" + r"\s*\(")
+    root = Path(__file__).resolve().parents[1]
+    offenders = [
+        str(path.relative_to(root))
+        for directory in ("apps", "core", "config", "scripts", "tests")
+        for path in sorted((root / directory).rglob("*.py"))
+        if needle.search(path.read_text(encoding="utf-8", errors="replace"))
+    ]
+    assert not offenders, f"use Image.get_flattened_data() instead of the removed API: {offenders}"
 
 
 # Header components that emit an assertable trace role when drawn (portrait→avatar, corp→corp).
