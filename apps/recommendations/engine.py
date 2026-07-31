@@ -161,9 +161,16 @@ def eval_doctrine_readiness() -> list[dict]:
     # ``doctrine_coverage`` would re-read every member's skill JSONB per doctrine — the
     # beat evaluates the full active catalogue, so that is the roster detoasted N times.
     snapshots = latest_snapshots(members)
+    # ``-priority, name`` is the house order for a full-catalogue sweep (doctrines.views,
+    # doctrines.supply, command_intel.sources.doctrine and the scan analyser all use it).
+    # Without an ORDER BY, Postgres may return the rows in any order it likes, and it does
+    # change — the same query returned insertion order locally and a different order on CI
+    # once the table had grown. The drafts here become director Recommendations, so an
+    # unstable order is a real (if quiet) wart, and it also makes the beat's output
+    # irreproducible between runs for no reason.
     doctrines = Doctrine.objects.filter(
         status=Doctrine.Status.ACTIVE
-    ).prefetch_related("fits__skill_requirements")
+    ).prefetch_related("fits__skill_requirements").order_by("-priority", "name")
     for doctrine in doctrines:
         counts = doctrine_coverage(doctrine, members, snapshots=snapshots)
         ready = counts["optimal"] + counts["viable"]

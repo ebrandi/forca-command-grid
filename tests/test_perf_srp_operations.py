@@ -432,7 +432,19 @@ def test_recommendation_sweep_reads_the_roster_skills_once(django_user_model):
     assert len(_snapshot_reads(large.captured_queries)) == 1
     # The drafts themselves are unchanged: half the roster can fly, one pilot cannot.
     assert few[0]["inputs"] == {"optimal": 1, "viable": 0, "not_ready": 2, "unknown": 0}
-    assert [d["message"] for d in many[:2]] == [d["message"] for d in few]
+
+    # The sweep is ordered by descending priority, and _doctrine() assigns 80-n, so the
+    # catalogue always comes back Doctrine 0, 1, 2… This is asserted rather than assumed:
+    # the query carried no ORDER BY until 2026-07-31, and positional slicing below passed
+    # locally for months while failing on CI, because an unordered Postgres read is free to
+    # change its mind once the table grows.
+    assert [d["message_params"]["doctrine"] for d in many] == [f"Doctrine {n}" for n in range(8)]
+
+    # ...and the claim that actually matters — adding six more doctrines does not change the
+    # drafts produced for the first two — is keyed on identity, so it stays meaningful even
+    # if the ordering is ever deliberately changed.
+    by_name = {d["message_params"]["doctrine"]: d["message"] for d in many}
+    assert [by_name[d["message_params"]["doctrine"]] for d in few] == [d["message"] for d in few]
 
 
 def test_command_intel_doctrine_source_reads_the_roster_skills_once(django_user_model):
