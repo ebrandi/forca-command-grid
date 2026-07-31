@@ -111,7 +111,7 @@ cd forca-command-grid
 make setup                        # creates .env from .env.example (never overwrites)
 $EDITOR .env                      # fill in secrets + EVE SSO (see configuration.md)
 
-make deploy                       # build, migrate, then start the stack (in that order)
+make deploy                       # build, audit, migrate, then start the stack (in that order)
 make bootstrap                    # full SDE + PI rulebook + referenced images
 make create-admin EMAIL=you@example.com
 make health                       # confirm everything is up
@@ -121,7 +121,7 @@ make health                       # confirm everything is up
 |---|---|
 | `make setup` | `cp .env.example .env` if `.env` doesn't already exist |
 | `make build` | `docker compose -f docker-compose.prod.yml build` |
-| `make deploy` | Builds the image, migrates and collects static on it, and only then starts the stack — see [Upgrades](./upgrades.md) for why that order |
+| `make deploy` | Builds the image, audits the packages installed **in it** (`scripts/audit-image.sh` — a CVE aborts the deploy), migrates and collects static on it, and only then starts the stack — see [Upgrades](./upgrades.md) for why that order |
 | `make update` | `scripts/update.sh` — the safe upgrade path (see [Upgrades](./upgrades.md)) |
 | `make migrate` | Applies database migrations |
 | `make collectstatic` | Collects static assets |

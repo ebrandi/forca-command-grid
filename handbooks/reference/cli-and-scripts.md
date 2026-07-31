@@ -20,7 +20,7 @@ development targets use `docker-compose.yml`.
 |---|---|
 | `make setup` | Create `.env` from the template if it does not exist |
 | `make build` | Build the production images |
-| `make deploy` | Build + start the prod stack, then migrate and collectstatic |
+| `make deploy` | Build, audit the built image, migrate and collectstatic, then start the prod stack |
 | `make update` | Pull latest code, rebuild, migrate (safe upgrade path) |
 | `make migrate` | Apply database migrations |
 | `make collectstatic` | Collect static assets |
@@ -41,6 +41,9 @@ development targets use `docker-compose.yml`.
 | `make restore` | Restore the DB from a dump (`FILE=./backups/forca-....sql.gz`) |
 | `make cert` | Obtain/renew TLS cert (`DOMAIN=... EMAIL=...`; run with sudo) |
 | `make config-check` | Validate the compose files parse |
+| `make audit` | `pip-audit` against `requirements.txt` — audits *intent* (what a fresh install would resolve) |
+| `make audit-image` | `pip-audit` **inside the built prod image** — audits *reality* (what is really installed). Gates `make deploy` and `make update` |
+| `make frontend-check` | Rebuild `static/css/app.css` + the vendored JS and fail if the committed bytes are stale |
 | `make dev` / `make dev-down` / `make dev-logs` | Local development stack lifecycle |
 
 ## Operator scripts
@@ -51,12 +54,14 @@ Located in [`scripts/`](../../scripts). All source `scripts/lib.sh` and never pr
 |---|---|
 | `backup.sh [output_dir]` | Timestamped gzipped `pg_dump` with an integrity check; keeps the newest `BACKUP_KEEP` dumps (default 14). |
 | `restore.sh <dump.sql.gz> [--yes]` | Destructive restore: takes a safety backup, drops/recreates the schema, restores, then migrates. Confirmation-gated. |
-| `update.sh [branch]` | Safe upgrade: backup → fast-forward pull → stamp → rebuild → migrate → collectstatic → health. |
+| `update.sh [branch]` | Safe upgrade: backup → fast-forward pull → stamp → rebuild → audit image → migrate → collectstatic → health. |
 | `rollback.sh <git-ref> [--restore <dump.sql.gz>] [--yes]` | Return to an earlier revision. Refuses a dirty tree, takes a safety backup of the current DB, records the previous revision in `.rollback-from`, rebuilds, health-checks. Pass `--restore` when the upgrade altered the schema. Confirmation-gated. |
 | `bootstrap-data.sh [--sample] [--all-images] [--no-images] [--with-prices]` | Load EVE reference data (SDE, PI rulebook, images, optional prices). Idempotent. |
 | `healthcheck.sh` | Read-only stack health: container states, web `/healthz`, DB + migrations, Redis PING, Celery worker ping, SDE loaded. |
 | `cert-init.sh <domain> <email> [app_dir]` | Obtain a Let's Encrypt certificate (certbot standalone) and wire up automatic renewal. Run as root. |
 | `create-admin.sh <email>` | Ensure a Django superuser exists. |
+| `audit-image.sh` | Scan the packages **installed in the built production image** (`pip-audit`, no `-r`) and fail on a finding. Called by `make deploy` and `update.sh` before anything is migrated or swapped, because a requirements-file scan cannot see what an already-built image actually carries. `SKIP_DEPENDENCY_AUDIT=1` overrides. |
+| `check-frontend-build.sh` | Rebuild the committed front-end artifacts (`static/css/app.css`, `static/js/vendor/*.js`) from `frontend/` and fail if they differ — production has no Node step, so a stale stylesheet ships as silently dead styles. Runs on the host; also the CI `frontend-assets` job. |
 | `wait-for-services.sh` | Block until the stack's services are ready (used by deploy/update). |
 | `lib.sh` | Shared logging, validation, and compose-resolution helpers. |
 | `perf/*.py` | Performance helpers (index checks, endpoint timing, cache warming). |

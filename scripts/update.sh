@@ -16,10 +16,12 @@
 #   2. fast-forward the tracked branch
 #   3. stamp the build revision
 #   4. BUILD the new image            — old containers keep serving
-#   5. MIGRATE on the new image       — one-off container, old stack still live
-#   6. COLLECTSTATIC on the new image — writes the shared volume before the new web boots,
+#   5. AUDIT the new image            — the packages actually installed in it, not the
+#                                       requirements file; refuses to go further on a CVE
+#   6. MIGRATE on the new image       — one-off container, old stack still live
+#   7. COLLECTSTATIC on the new image — writes the shared volume before the new web boots,
 #                                       so gunicorn never starts without a static manifest
-#   7. SWAP containers, then restart nginx LAST — it caches the upstream container's IP and
+#   8. SWAP containers, then restart nginx LAST — it caches the upstream container's IP and
 #      will hand out 502s until it is restarted
 #
 # Aborts on the first failure and never force-resets your checkout.
@@ -37,34 +39,41 @@ require_cmd git
 
 BRANCH="${1:-$(git rev-parse --abbrev-ref HEAD)}"
 
-log "1/7 Backing up the database before upgrading ..."
+log "1/8 Backing up the database before upgrading ..."
 scripts/backup.sh ./backups || die "Backup failed — aborting upgrade."
 
-log "2/7 Fetching and fast-forwarding '${BRANCH}' ..."
+log "2/8 Fetching and fast-forwarding '${BRANCH}' ..."
 git fetch --prune origin
 git checkout "$BRANCH"
 git pull --ff-only origin "$BRANCH" || die "Fast-forward failed (local changes?). Resolve, then re-run."
 
-log "3/7 Stamping the build revision ..."
+log "3/8 Stamping the build revision ..."
 [ -x deploy/stamp-version.sh ] && deploy/stamp-version.sh . || warn "stamp-version.sh missing; footer hash may hide."
 
-log "4/7 Building the new image (the running stack keeps serving) ..."
+log "4/8 Building the new image (the running stack keeps serving) ..."
 # The image build also compiles the message catalogues, so a malformed .po fails HERE,
 # before anything is swapped, rather than shipping a silently untranslated site.
 $DC -f "$CF" build
 
-log "5/7 Applying migrations on the new image, while the old stack still serves ..."
+log "5/8 Auditing the packages installed in the new image ..."
+# Deliberately BEFORE the migration: a migration is the first irreversible step of an
+# upgrade, so the "this build is not safe to run" verdict has to land while backing out
+# still means doing nothing at all. audit-image.sh calls die() itself on a finding, and
+# honours SKIP_DEPENDENCY_AUDIT=1 for air-gapped hosts and emergency roll-forwards.
+scripts/audit-image.sh
+
+log "6/8 Applying migrations on the new image, while the old stack still serves ..."
 # --no-deps: the services this needs (postgres) are already up; do not restart them.
 $DC -f "$CF" run --rm --no-deps -T web python manage.py migrate --noinput \
   || die "Migration failed. The OLD stack is still serving and the database backup from step 1 is intact."
 
-log "6/7 Collecting static files into the shared volume ..."
+log "7/8 Collecting static files into the shared volume ..."
 # Must happen BEFORE the new web container boots: WhiteNoise's manifest storage raises
 # "Missing staticfiles manifest entry" and 500s if gunicorn starts without it.
 $DC -f "$CF" run --rm --no-deps -T web python manage.py collectstatic --noinput \
   || die "collectstatic failed — refusing to swap containers without a static manifest."
 
-log "7/7 Swapping containers ..."
+log "8/8 Swapping containers ..."
 $DC -f "$CF" up -d
 scripts/wait-for-services.sh || warn "Services slow to start — continuing."
 

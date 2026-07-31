@@ -13,7 +13,7 @@ DEV  := docker-compose.yml
 .PHONY: help setup build deploy update migrate collectstatic bootstrap bootstrap-sample \
         import-sde import-assets prices health logs ps down restart shell dbshell \
         backup restore create-admin dev dev-down dev-logs cert config-check \
-        lint lint-fix test test-fast check audit sbom rollback
+        lint lint-fix test test-fast check audit audit-image frontend-check sbom rollback
 
 help: ## Show this help
 	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | sort | \
@@ -28,13 +28,18 @@ setup: ## Create .env from the template if it does not exist
 build: ## Build the production images
 	$(DC) -f $(PROD) build
 
-deploy: ## Build, migrate, then start the prod stack (in that order — see below)
+deploy: ## Build, audit, migrate, then start the prod stack (in that order — see below)
 	# Order matters. Starting the new code BEFORE migrating runs it against the old schema,
 	# and any new column on a hot table then 500s every session-bearing request until the
 	# migration lands. So: build, bring up only the data services, migrate and collect static
 	# on the new image, and only then swap the app containers. nginx restarts last because it
 	# caches the web container's IP and serves 502s until it is told to look again.
 	$(DC) -f $(PROD) build
+	# Audit the image we just built, BEFORE anything is started or migrated: a vulnerable
+	# build is caught while the previous stack is still serving, and the cost of refusing is
+	# a deploy that did not happen rather than one that has to be rolled back. Fails the
+	# deploy; SKIP_DEPENDENCY_AUDIT=1 is the deliberate, documented override.
+	@bash scripts/audit-image.sh
 	$(DC) -f $(PROD) up -d postgres redis
 	$(DC) -f $(PROD) exec -T postgres sh -c 'until pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" >/dev/null 2>&1; do sleep 2; done'
 	$(DC) -f $(PROD) run --rm --no-deps -T web python manage.py migrate --noinput
@@ -161,8 +166,22 @@ test-fast: ## Run pytest, stopping at the first failure
 check: ## Django system checks (add --deploy for prod-hardening warnings)
 	$(DC) -f $(DEV) run --rm --no-deps web python manage.py check
 
-audit: ## Scan runtime dependencies for known vulnerabilities
+audit: ## Scan the requirements FILE for known vulnerabilities (intent)
 	$(DC) -f $(DEV) run --rm --no-deps web pip-audit -r requirements.txt --progress-spinner off
+
+audit-image: ## Scan the packages INSTALLED in the built prod image (reality) — gates deploy
+	# Not a duplicate of `audit`. That one audits requirements.txt, which carries lower
+	# bounds, so it stays green against an image built weeks ago that never picked the
+	# fixed version up — exactly how a running container here once carried 24 Pillow CVEs
+	# while CI was green. This audits the container's own site-packages.
+	@bash scripts/audit-image.sh
+
+frontend-check: ## Fail if static/css/app.css + vendored JS are stale vs. their sources
+	# Runs on the HOST, not in a container: the build tooling is Node and lives in
+	# frontend/, and the application image deliberately has no Node in it. Production
+	# never rebuilds these — it ships the committed bytes — so this is the only thing
+	# standing between a new Tailwind class and four days of silently dead styles.
+	@bash scripts/check-frontend-build.sh
 
 sbom: ## Write a CycloneDX SBOM of the runtime dependencies to ./sbom.cdx.json
 	@$(DC) -f $(DEV) run --rm --no-deps -T web \

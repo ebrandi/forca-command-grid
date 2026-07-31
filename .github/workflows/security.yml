@@ -1,9 +1,28 @@
-# Dependency-vulnerability scan (pip-audit).
+# Dependency-vulnerability scan (pip-audit), run two different ways.
 #
 # This is the CI path for the same scan that runs weekly in-stack via Celery beat
 # (admin_audit.audit_dependencies) — production deploys do NOT go through GitHub, so
 # the beat job is the authoritative recurring control; this workflow gates code that
 # *is* pushed to GitHub and gives a weekly second look.
+#
+# TWO jobs, because they answer different questions and only one of them can be trusted
+# to describe what is running:
+#
+#   pip-audit        audits requirements.txt — INTENT. "Would a fresh install of these
+#                    constraints be clean?" Cheap, catches a bad floor the moment it is
+#                    proposed, and is what Dependabot's PRs are graded against.
+#
+#   pip-audit-image  builds the application image and audits the packages it actually
+#                    ends up with — REALITY. requirements.txt carries lower bounds, so
+#                    the file scan stays green while an already-built image keeps
+#                    serving whatever it resolved weeks ago; it also never sees the
+#                    transitive packages the file does not name, or pip itself.
+#
+# That second job exists because the gap is not hypothetical here: a green requirements
+# scan sat next to a running container carrying 24 Pillow CVEs, for exactly this reason.
+# The same gate runs on the deploy path (scripts/audit-image.sh, called by `make deploy`
+# and scripts/update.sh), which is the one that protects production; this job is the
+# pull-request-time copy of it.
 #
 # Hardening: every `uses:` is pinned to a full commit SHA. A tag is mutable and can
 # be repointed at malicious code by a compromised maintainer account.
@@ -13,9 +32,19 @@ name: security
 on:
   push:
     branches: [main]
-    paths: ["requirements.txt", "requirements-dev.txt", ".github/workflows/security.yml"]
+    # Dockerfile is in the filter because it decides what lands in the image (the base
+    # image, the pip floor, the apt packages) — a change there can introduce a
+    # vulnerable install without touching a requirements file.
+    paths:
+      - "requirements.txt"
+      - "requirements-dev.txt"
+      - "Dockerfile"
+      - ".github/workflows/security.yml"
   pull_request:
-    paths: ["requirements.txt", "requirements-dev.txt"]
+    paths:
+      - "requirements.txt"
+      - "requirements-dev.txt"
+      - "Dockerfile"
   schedule:
     - cron: "30 6 * * 1"   # Mondays 06:30 UTC, matching the in-stack beat job
   workflow_dispatch: {}
@@ -39,3 +68,24 @@ jobs:
         run: pip install "pip-audit>=2.7,<3.0"
       - name: Audit pinned dependencies
         run: pip-audit -r requirements.txt --progress-spinner off
+
+  pip-audit-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      # Plain `docker build` rather than a build action: the runner already has Docker,
+      # this needs no registry, no cache export and no credentials, and every action
+      # added here is another supply-chain edge to pin and review.
+      - name: Build the application image
+        run: docker build --tag forca-command-grid:audit .
+      - name: Audit the packages actually installed in the image
+        # No `-r` flag. That is the whole point: pip-audit with no requirements file
+        # audits the environment it is running in — every distribution in the image's
+        # site-packages, at the version really installed. pip-audit is a runtime
+        # dependency (requirements.txt), so it is already in there.
+        #
+        # --network none is not usable: the audit queries the advisory feed. It gets a
+        # throwaway container with the repo's own image and nothing mounted.
+        run: docker run --rm forca-command-grid:audit pip-audit --progress-spinner off
