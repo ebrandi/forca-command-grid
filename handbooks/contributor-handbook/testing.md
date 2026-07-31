@@ -129,6 +129,42 @@ since not every model — particularly join/intermediate tables — needs one. T
 additionally ignore `S105`/`S106` (hardcoded password/secret string checks), since test
 fixtures legitimately hardcode dummy credentials.
 
+## Front-end asset gate
+
+`static/css/app.css` and `static/js/vendor/*.js` are **prebuilt artifacts committed to
+the repository**. Production has no Node step: the image is Python-only and the deploy
+runs `collectstatic` over whatever bytes are in the tree. So a template that starts using
+a Tailwind class the committed stylesheet was never compiled with simply renders
+unstyled in production — no error, no warning, no failing test. That has happened here,
+and it shipped four days of dead styles before anyone noticed.
+
+The `frontend-assets` job in `.github/workflows/ci.yml` closes that hole: it rebuilds
+from source and fails the build if the committed bytes differ. Reproduce it locally with
+the same code path CI uses:
+
+```bash
+make frontend-check          # → scripts/check-frontend-build.sh
+```
+
+It runs on the host, not in a container — the build tooling is Node and lives in
+`frontend/`, which the application image deliberately does not carry. **If it fails, the
+corrected files are already in your working tree** (the check leaves the rebuild in
+place); review the diff and commit it.
+
+Rebuilding by hand is the same thing without the comparison:
+
+```bash
+cd frontend && npm install && npm run build
+```
+
+> The check is byte-exact and stays stable because `frontend/package.json` pins
+> `tailwindcss` and all four vendored runtime libraries to exact versions, and Tailwind 3
+> vendors its own PostCSS/cssnano toolchain — so the emitted CSS is a function of the
+> pinned Tailwind version, not of whatever transitive tree npm resolved that day. If it
+> ever fails with no template and no `package.json` change, that assumption has broken:
+> commit `frontend/package-lock.json` (drop the ignore line in `frontend/.gitignore`) so
+> `npm ci` can pin the whole toolchain.
+
 ## Localisation gates
 
 The app is localised into nine languages: English, plus eight translated catalogues

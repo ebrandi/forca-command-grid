@@ -92,6 +92,32 @@ jobs:
       - name: Run tests
         run: pytest -q
 
+  # static/css/app.css and static/js/vendor/*.js are PREBUILT artifacts, committed to the
+  # repo and shipped verbatim: the production image has no Node in it and the deploy path
+  # never runs Tailwind. So a template that starts using a class the committed stylesheet
+  # was never compiled with gets no styling in production — silently. No error, no failing
+  # test, nothing in the logs. Four days of dead styles shipped that way once.
+  #
+  # This job is the missing gate: rebuild from source, then refuse the change if the
+  # committed bytes differ. It shares one script with `make frontend-check` so a
+  # contributor can reproduce the failure (and fix it) locally with the same code path.
+  frontend-assets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      # The runner's preinstalled Node is used deliberately — no setup-node step. The
+      # emitted CSS is a function of the tailwindcss version, which package.json pins
+      # exactly and which vendors its own PostCSS/cssnano toolchain, so the Node major
+      # does not move the output; skipping the action keeps one less third-party
+      # dependency to pin and audit. The versions are logged so that if this job ever
+      # does disagree with a developer's machine, the first question is already answered.
+      - name: Record the toolchain versions
+        run: node --version && npm --version
+      - name: Rebuild the front-end assets and diff them against the committed ones
+        run: bash scripts/check-frontend-build.sh
+
   # Django's own deployment checklist, run against config.settings.prod with
   # throwaway-but-realistic secrets. This currently passes with zero warnings; the job
   # exists so it keeps doing so. `--fail-level WARNING` makes a new warning a red build.
