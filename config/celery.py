@@ -395,12 +395,24 @@ app.conf.beat_schedule = {
         "task": "admin_audit.enforce_member_leave",
         "schedule": crontab(minute=5, hour=3),
     },
-    # Weekly dependency-vulnerability scan (pip-audit). Surfaces a newly-disclosed
-    # CVE in an installed package as a director Recommendation without waiting for a
-    # manual review. Mondays 06:30 UTC — off-peak and staggered from the nightly jobs.
+    # DAILY dependency-vulnerability scan (pip-audit) of the running container. Surfaces
+    # a newly-disclosed CVE as a director Recommendation and pushes the change at a human
+    # (via the ADM-3 alert fabric) without waiting for a manual review.
+    # Was Mondays only: pip-audit over ~70 packages is one cheap OSV query, whereas
+    # carrying a *known* CVE for six days is not cheap — and a weekly cadence also left a
+    # fixed CVE's alarm standing for up to a week, which is what trains people to ignore
+    # the surface. The end-of-deploy run (manage.py audit_dependencies) covers the fix
+    # direction; this covers the disclosure direction, where nothing we deploy changes.
+    # 06:43 UTC keeps the original off-peak morning hour. Minute 43 is odd and not a
+    # multiple of 3 or 5, so it dodges the */2, */3, */5, */10(0-phase), */15 and */30
+    # sweeps that all land on the vacated :30 rung; the only recurring co-tenants are
+    # warm-hall-of-fame (3-59/4) and the ships-inert signature-refresh-tick (3-59/10),
+    # plus the always-on per-minute pingboard/killstream ticks. No daily job shares 06:43
+    # (its hour-6 neighbours are capsuleer-generate-suggestions at :22 and the Monday-only
+    # readiness-weekly-report at :00); procurement's 04:43 pair is a different hour.
     "audit-dependencies": {
         "task": "admin_audit.audit_dependencies",
-        "schedule": crontab(minute=30, hour=6, day_of_week=1),
+        "schedule": crontab(minute=43, hour=6),
     },
     # ADM-3 (2.2): watch the integration-health surface (stopped beats, stale SDE,
     # dependency CVEs) and fire one deduped director alert on state change. Every
