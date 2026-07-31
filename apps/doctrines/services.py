@@ -1,8 +1,15 @@
 """Doctrine services: fit creation, skill-requirement derivation, readiness, coverage."""
 from __future__ import annotations
 
+import copy
+import threading
+import time
+import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
 
+from django.db.models import prefetch_related_objects
+from django.db.models.signals import post_delete, post_save
 from django.utils.translation import gettext_lazy as _
 
 from apps.sde.models import SdeTypeSkill
@@ -12,23 +19,6 @@ from apps.sde.models import SdeTypeSkill
 from .category_i18n import BUILTIN_CATEGORY_LABELS, IMPORTED_CATEGORY_KEY
 from .fitparser import export_eft
 from .models import Doctrine, DoctrineCategory, DoctrineFit, SkillRequirement
-
-
-def match_doctrine_fit(ship_type_id: int) -> DoctrineFit | None:
-    """The DoctrineFit of the highest-priority active doctrine whose hull matches
-    ``ship_type_id`` (or None). The returned fit has its ``.doctrine`` cached so
-    callers can read it without an extra query. Shared by killboard doctrine
-    tagging (KB-13) and SRP eligibility."""
-    for doctrine in (
-        Doctrine.objects.filter(status=Doctrine.Status.ACTIVE)
-        .prefetch_related("fits")
-        .order_by("-priority", "name")
-    ):
-        for fit in doctrine.fits.all():
-            if fit.ship_type_id == ship_type_id:
-                fit.doctrine = doctrine
-                return fit
-    return None
 
 
 def _fit_module_types(modules) -> set[int]:
@@ -51,6 +41,263 @@ def _fit_module_types(modules) -> set[int]:
     return types
 
 
+# --------------------------------------------------------------------------- #
+#  The active-doctrine catalogue snapshot (audit P4/P6/P8)
+#
+#  ``best_doctrine_fit`` / ``match_doctrine_fit`` are the hull→fit authority for the
+#  whole product, and every caller is a LOOP: campaign analytics score one match per
+#  loss (thousands per board, reachable anonymously), SRP eligibility matches once per
+#  claim row, ingest tags every killmail. Each call used to re-materialise the ENTIRE
+#  active catalogue — two Postgres round-trips plus full ORM construction of every
+#  Doctrine and every DoctrineFit, including detoasting each fit's ``modules`` JSONB —
+#  to answer one integer question. That is the single most-repeated wasted query in
+#  the codebase.
+#
+#  So we keep a process-local snapshot, exactly like the market app's ``price_for``
+#  (``apps/market/pricing.py``): after the first call in a window, matching is pure
+#  Python over an in-memory index.
+#
+#  Two things make this snapshot SAFER than a bare ``lru_cache``, and both are
+#  deliberate — a stale doctrine catalogue silently mis-tags losses and mis-pays SRP,
+#  which is far worse than a slow page:
+#
+#  1. **Staleness is bounded by a SHARED stamp, not just a TTL.** Under gunicorn every
+#     worker holds its own snapshot, so an officer editing a doctrine in worker A would
+#     never reach workers B..N. Each refresh therefore reads a small stamp from the
+#     shared cache and rebuilds whenever it moved; ``Doctrine``/``DoctrineFit`` saves and
+#     deletes bump that stamp (see the signal wiring at the bottom of this module). A
+#     doctrine edit is visible everywhere on the next match, not "eventually". The
+#     ``_CATALOGUE_TTL`` is only the backstop for writes that bypass signals (a bulk
+#     ``queryset.update()``, a manual SQL fix), and is deliberately far shorter than the
+#     market snapshot's 300 s because this data feeds payouts rather than estimates.
+#  2. **Callers never see the cached objects.** ``best_doctrine_fit`` documents that it
+#     returns a fit with ``.doctrine`` attached — i.e. callers MUTATE the object they get
+#     back, and SRP/ingest also hand it to ``killmail.doctrine_fit = fit``. Handing out a
+#     shared instance would let one request's mutation leak into another's. The snapshot
+#     therefore stores plain field VALUES and rebuilds a fresh model instance (deep-copied,
+#     so the ``modules`` list is private too) for the one fit actually returned.
+# --------------------------------------------------------------------------- #
+_CATALOGUE_TTL = 30.0  # seconds; backstop for signal-bypassing writes only
+_CATALOGUE_STAMP_KEY = "doctrines:catalogue-stamp:1"
+_CATALOGUE_LOCK = threading.Lock()
+_CATALOGUE: dict = {"at": 0.0, "stamp": None, "data": None}
+
+# Returned by :func:`_shared_stamp` when the shared cache is unreachable: the snapshot
+# then falls back to plain TTL expiry rather than failing the request.
+_STAMP_UNAVAILABLE = object()
+
+
+@dataclass(frozen=True)
+class _CatalogueFit:
+    """One active doctrine fit, flattened: what matching needs plus the raw column
+    values needed to rebuild a real ``DoctrineFit`` on the way out."""
+
+    ship_type_id: int
+    module_types: frozenset[int]
+    values: tuple
+
+
+@dataclass(frozen=True)
+class _CatalogueDoctrine:
+    """One active doctrine and its fits, in the catalogue's canonical order."""
+
+    values: tuple
+    fits: tuple[_CatalogueFit, ...]
+
+
+def _shared_stamp():
+    """The current shared catalogue stamp, minting one when the cache has none.
+
+    Minting on a miss is what makes the snapshot correct after any cache flush: a wiped
+    stamp comes back as a NEW value, which no live snapshot can match, so every process
+    reloads once. (The test suite clears the cache around every test, so this is also
+    what stops one test's doctrines from being answered to the next.)
+    """
+    from django.core.cache import cache
+
+    try:
+        stamp = cache.get(_CATALOGUE_STAMP_KEY)
+        if stamp is None:
+            stamp = uuid.uuid4().hex
+            cache.set(_CATALOGUE_STAMP_KEY, stamp, None)
+        return stamp
+    except Exception:  # noqa: BLE001 - a cache outage must not break doctrine matching
+        return _STAMP_UNAVAILABLE
+
+
+def _bump_shared_stamp() -> None:
+    """Publish a new stamp so every other process drops its snapshot on its next match."""
+    from django.core.cache import cache
+
+    try:
+        cache.set(_CATALOGUE_STAMP_KEY, uuid.uuid4().hex, None)
+    except Exception:  # noqa: BLE001 - see _shared_stamp
+        return
+
+
+def _load_catalogue() -> dict:
+    """Read the whole active catalogue once, in the canonical matching order.
+
+    The query is character-for-character the one the uncached matchers used
+    (``-priority``, ``name``, fits in ``DoctrineFit.Meta.ordering``), so the candidate
+    sequence — and therefore every tie-break — is unchanged.
+    """
+    doctrine_fields = tuple(f.attname for f in Doctrine._meta.concrete_fields)
+    fit_fields = tuple(f.attname for f in DoctrineFit._meta.concrete_fields)
+    entries: list[_CatalogueDoctrine] = []
+    for doctrine in (
+        Doctrine.objects.filter(status=Doctrine.Status.ACTIVE)
+        .prefetch_related("fits")
+        .order_by("-priority", "name")
+    ):
+        entries.append(
+            _CatalogueDoctrine(
+                values=tuple(getattr(doctrine, name) for name in doctrine_fields),
+                fits=tuple(
+                    _CatalogueFit(
+                        ship_type_id=fit.ship_type_id,
+                        # Precomputed because the old code recomputed it inside the
+                        # ``min`` key, once per candidate per call.
+                        module_types=frozenset(_fit_module_types(fit.modules)),
+                        values=tuple(getattr(fit, name) for name in fit_fields),
+                    )
+                    for fit in doctrine.fits.all()
+                ),
+            )
+        )
+    return {
+        "entries": tuple(entries),
+        "doctrine_fields": doctrine_fields,
+        "fit_fields": fit_fields,
+        "db": Doctrine.objects.db,
+    }
+
+
+def _catalogue() -> dict:
+    """The current catalogue snapshot, rebuilding it when the stamp moved or it aged out."""
+    stamp = _shared_stamp()
+
+    def _fresh(snap: dict) -> bool:
+        return (
+            snap["data"] is not None
+            and (time.monotonic() - snap["at"]) < _CATALOGUE_TTL
+            and (stamp is _STAMP_UNAVAILABLE or stamp == snap["stamp"])
+        )
+
+    if _fresh(_CATALOGUE):
+        return _CATALOGUE["data"]
+    with _CATALOGUE_LOCK:
+        # Another thread may have rebuilt it while we waited on the lock.
+        if _fresh(_CATALOGUE):
+            return _CATALOGUE["data"]
+        data = _load_catalogue()
+        _CATALOGUE.update(
+            at=time.monotonic(),
+            stamp=None if stamp is _STAMP_UNAVAILABLE else stamp,
+            data=data,
+        )
+        return data
+
+
+def reset_doctrine_catalogue() -> None:
+    """Drop this process's catalogue snapshot and invalidate every other process's.
+
+    Called automatically on any ``Doctrine`` / ``DoctrineFit`` save or delete. Call it
+    by hand after a write that bypasses model signals — a ``queryset.update()`` that
+    flips ``status``, a data migration, a raw SQL fix — if you need the new catalogue to
+    be live before ``_CATALOGUE_TTL`` elapses.
+    """
+    _CATALOGUE.update(at=0.0, stamp=None, data=None)
+    _publish_stamp_when_durable()
+
+
+def _publish_stamp_when_durable() -> None:
+    """Publish the new stamp only once the write it describes is actually committed.
+
+    Bumping from inside an open transaction is worse than not bumping at all. The stamp
+    lands in Redis immediately, but the row change is not yet visible to anyone else — so
+    a concurrent worker that reloads *because* the stamp moved reads the PRE-commit
+    database and then pins that stale catalogue under the POST-commit stamp. From then on
+    the snapshot looks fresh to it, and it keeps matching against the old catalogue for the
+    full ``_CATALOGUE_TTL`` after the officer's edit is live. SRP pays real ISK off that
+    match, so the window matters even though it is short.
+
+    The window is not theoretical: ``ModelAdmin.changeform_view`` wraps the whole admin
+    save in ``transaction.atomic``, and ``doctrines.xml_import.commit_batch`` holds one
+    open for a whole import. Deferring to ``on_commit`` closes it. The same pattern, for
+    the same reason, is already used in ``apps.campaigns.signals``.
+
+    Outside a transaction ``on_commit`` runs the callback inline, so management commands
+    and shell fixes behave exactly as before. The local snapshot is cleared by the caller
+    either way, so this process always sees its own writes immediately — including
+    uncommitted ones, which is what a writer inside a transaction should see.
+    """
+    from django.db import transaction
+
+    transaction.on_commit(_bump_shared_stamp)
+
+
+def _materialise(catalogue: dict, entry: _CatalogueDoctrine, cfit: _CatalogueFit) -> DoctrineFit:
+    """Build private ``DoctrineFit`` / ``Doctrine`` instances from snapshot values.
+
+    ``from_db`` is the same constructor the ORM itself uses, so the result is
+    indistinguishable from a freshly fetched row (``pk`` set, ``_state.adding`` false —
+    it can be assigned straight to ``killmail.doctrine_fit``). The values are deep-copied
+    because ``modules`` is a mutable JSON list: callers must never be able to reach into
+    the shared snapshot.
+    """
+    doctrine = Doctrine.from_db(
+        catalogue["db"], catalogue["doctrine_fields"], copy.deepcopy(entry.values)
+    )
+    fit = DoctrineFit.from_db(catalogue["db"], catalogue["fit_fields"], copy.deepcopy(cfit.values))
+    fit.doctrine = doctrine
+    return fit
+
+
+def _candidates(catalogue: dict, ship_type_id: int) -> list[tuple[_CatalogueDoctrine, _CatalogueFit]]:
+    """Every active fit for this hull, in priority-then-fit-id order."""
+    return [
+        (entry, cfit)
+        for entry in catalogue["entries"]
+        for cfit in entry.fits
+        if cfit.ship_type_id == ship_type_id
+    ]
+
+
+def _best_from_catalogue(
+    catalogue: dict, ship_type_id: int, fitted: dict[int, int] | None
+) -> DoctrineFit | None:
+    """The module-aware match against an already-loaded catalogue snapshot."""
+    candidates = _candidates(catalogue, ship_type_id)
+    if not candidates:
+        return None
+    if len(candidates) == 1 or not fitted:
+        entry, cfit = candidates[0]
+        return _materialise(catalogue, entry, cfit)
+
+    fitted_types = set(fitted)
+    # Distinct module types that differ (symmetric difference), quantity-insensitive.
+    entry, cfit = min(candidates, key=lambda c: len(c[1].module_types ^ fitted_types))
+    return _materialise(catalogue, entry, cfit)
+
+
+def match_doctrine_fit(ship_type_id: int) -> DoctrineFit | None:
+    """The DoctrineFit of the highest-priority active doctrine whose hull matches
+    ``ship_type_id`` (or None). The returned fit has its ``.doctrine`` cached so
+    callers can read it without an extra query. Shared by killboard doctrine
+    tagging (KB-13) and SRP eligibility.
+
+    Served from the shared catalogue snapshot (see above): repeated calls cost no
+    queries, and the fit handed back is a private instance, safe to mutate.
+    """
+    catalogue = _catalogue()
+    candidates = _candidates(catalogue, ship_type_id)
+    if not candidates:
+        return None
+    entry, cfit = candidates[0]
+    return _materialise(catalogue, entry, cfit)
+
+
 def best_doctrine_fit(ship_type_id: int, fitted: dict[int, int] | None) -> DoctrineFit | None:
     """The active doctrine fit for this hull that best matches the ACTUALLY fitted
     modules — so a multi-fit hull tags to the variant the pilot was flying, not just the
@@ -66,32 +313,31 @@ def best_doctrine_fit(ship_type_id: int, fitted: dict[int, int] | None) -> Doctr
     doctrine priority order (``min`` returns the first minimum, and the candidate list is
     already priority-ordered). The returned fit has its ``.doctrine`` cached, like
     ``match_doctrine_fit``.
+
+    Backed by the shared catalogue snapshot, so N matches cost O(1) queries instead of
+    2N. A caller that matches thousands of losses in one pass can bind the snapshot once
+    with :func:`build_doctrine_matcher` and skip even the per-call stamp read.
     """
-    candidates: list[tuple[DoctrineFit, Doctrine]] = []
-    for doctrine in (
-        Doctrine.objects.filter(status=Doctrine.Status.ACTIVE)
-        .prefetch_related("fits")
-        .order_by("-priority", "name")
-    ):
-        for fit in doctrine.fits.all():
-            if fit.ship_type_id == ship_type_id:
-                candidates.append((fit, doctrine))
-    if not candidates:
-        return None
-    if len(candidates) == 1 or not fitted:
-        fit, doctrine = candidates[0]
-        fit.doctrine = doctrine
-        return fit
+    return _best_from_catalogue(_catalogue(), ship_type_id, fitted)
 
-    fitted_types = set(fitted)
 
-    def _diff(fit: DoctrineFit) -> int:
-        # Distinct module types that differ (symmetric difference), quantity-insensitive.
-        return len(_fit_module_types(fit.modules) ^ fitted_types)
+def build_doctrine_matcher() -> Callable[[int, dict[int, int] | None], DoctrineFit | None]:
+    """A drop-in ``best_doctrine_fit`` bound to ONE catalogue snapshot.
 
-    fit, doctrine = min(candidates, key=lambda c: _diff(c[0]))
-    fit.doctrine = doctrine
-    return fit
+    Mirrors ``apps.market.pricing.build_price_index``: for a batch that matches many
+    losses in a single pass (campaign analytics, a killboard re-tag backfill) this pins
+    the catalogue for the whole batch, so the run is self-consistent and pays neither the
+    per-call cache read nor a mid-batch reload. Resolution is identical to
+    :func:`best_doctrine_fit`; the returned fits are private instances as usual. Use
+    ``best_doctrine_fit`` for anything long-lived — a matcher held across requests would
+    never see a doctrine edit.
+    """
+    catalogue = _catalogue()
+
+    def match(ship_type_id: int, fitted: dict[int, int] | None = None) -> DoctrineFit | None:
+        return _best_from_catalogue(catalogue, ship_type_id, fitted)
+
+    return match
 
 
 def imported_category() -> DoctrineCategory:
@@ -423,15 +669,40 @@ def doctrine_required_sp(doctrine: Doctrine) -> int:
     return best or 0
 
 
-def doctrine_coverage(doctrine: Doctrine, characters) -> dict:
-    """How many of the given characters can fly the doctrine (best fit)."""
+def doctrine_coverage(doctrine: Doctrine, characters, snapshots: dict | None = None) -> dict:
+    """How many of the given characters can fly the doctrine (best fit).
+
+    ``snapshots`` is the ``{character_id: latest CharacterSkillSnapshot}`` map produced by
+    :func:`latest_snapshots`. Every caller of this function scores the SAME roster against
+    MANY doctrines in a loop (the Operations board, the recommendation engine, Command
+    Intel), and each snapshot row carries the pilot's whole skill sheet as TOASTed JSONB —
+    so reloading the roster once per doctrine detoasts tens of megabytes per page for an
+    answer that cannot have changed between iterations. Hoist it:
+
+        snaps = latest_snapshots(characters)
+        for doctrine in doctrines:
+            counts = doctrine_coverage(doctrine, characters, snapshots=snaps)
+
+    Omit it and the roster is loaded here exactly as before, so callers that match one
+    doctrine keep working untouched. Either way the counts are identical — the argument
+    only decides WHO issues the query, never what it returns.
+
+    Fits and their skill requirements are likewise read from the doctrine's prefetch
+    cache when the caller primed one (``prefetch_related("fits__skill_requirements")`` on
+    the doctrine queryset) and fetched here otherwise, so a loop caller can drive the
+    per-doctrine cost to zero queries without this function needing to know.
+    """
     counts = {"optimal": 0, "viable": 0, "not_ready": 0, "unknown": 0}
     rank = {"optimal": 3, "viable": 2, "not_ready": 1, "unknown": 0}
-    snaps = _latest_snapshots(characters)
+    snaps = latest_snapshots(characters) if snapshots is None else snapshots
     # Materialise the fits (with their skill requirements) ONCE, not per character —
     # otherwise doctrine.fits.all() + fit.skill_requirements re-query for every character,
     # and this runs per-doctrine per-op on the Operations list (the critical N+1).
-    fits = list(doctrine.fits.prefetch_related("skill_requirements"))
+    # ``fits.all()`` honours an existing prefetch cache (``doctrine.fits.prefetch_related``
+    # would have discarded it and re-queried); ``prefetch_related_objects`` is a no-op when
+    # the requirements are already loaded.
+    fits = list(doctrine.fits.all())
+    prefetch_related_objects(fits, "skill_requirements")
     for character in characters:
         best_status = "unknown"
         snapshot = snaps.get(character.character_id)
@@ -443,8 +714,13 @@ def doctrine_coverage(doctrine: Doctrine, characters) -> dict:
     return counts
 
 
-def _latest_snapshots(characters) -> dict:
-    """``{character_id: latest CharacterSkillSnapshot}`` in a single query."""
+def latest_snapshots(characters) -> dict:
+    """``{character_id: latest CharacterSkillSnapshot}`` in a single query.
+
+    Public because it is the hoistable half of :func:`doctrine_coverage`: a caller
+    scoring a roster against several doctrines loads this ONCE and threads the result
+    through, instead of paying for the roster's whole skill JSONB per doctrine.
+    """
     from apps.characters.models import CharacterSkillSnapshot
 
     return {
@@ -453,6 +729,10 @@ def _latest_snapshots(characters) -> dict:
             is_latest=True, character_id__in=[c.character_id for c in characters]
         )
     }
+
+
+# Historical private name — kept so nothing that already imported it breaks.
+_latest_snapshots = latest_snapshots
 
 
 # --- DOC-2 (2.5): cached corp-wide doctrine coverage dashboard ---------------
@@ -504,7 +784,7 @@ def corp_doctrine_coverage(characters) -> list[dict]:
     if cached is not None:
         return cached
 
-    snaps = _latest_snapshots(characters)
+    snaps = latest_snapshots(characters)
     rank = {"optimal": 3, "viable": 2, "not_ready": 1, "unknown": 0}
     total = len(characters)
     rows = []
@@ -536,3 +816,28 @@ def corp_doctrine_coverage(characters) -> list[dict]:
         })
     cache.set(key, rows, _COVERAGE_TTL)
     return rows
+
+
+# --------------------------------------------------------------------------- #
+#  Catalogue invalidation
+#
+#  Wired here rather than in ``apps.py`` so the cache and the thing that invalidates it
+#  stay in one file: a process that never imports this module has no snapshot to go
+#  stale. Any ``Doctrine`` or ``DoctrineFit`` write — a status flip to/from ACTIVE, a
+#  priority or name change (both are sort keys), an edited or deleted fit — republishes
+#  the stamp, so the next match in EVERY process reloads. Cascade deletes are covered:
+#  Django's collector emits ``post_delete`` per removed fit. ``SkillRequirement`` writes
+#  are deliberately NOT wired: the catalogue holds only hull + module data, and coverage
+#  reads requirements straight from the DB.
+# --------------------------------------------------------------------------- #
+def _invalidate_doctrine_catalogue(sender, **kwargs) -> None:
+    reset_doctrine_catalogue()
+
+
+for _signal in (post_save, post_delete):
+    for _model in (Doctrine, DoctrineFit):
+        _signal.connect(
+            _invalidate_doctrine_catalogue,
+            sender=_model,
+            dispatch_uid="doctrines.services.catalogue-invalidate",
+        )
