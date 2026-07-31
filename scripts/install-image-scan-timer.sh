@@ -14,9 +14,15 @@
 #
 # Usage:
 #   sudo bash scripts/install-image-scan-timer.sh [--user NAME] [--dir PATH]
+#                                                 [--project NAME]
 #   sudo bash scripts/install-image-scan-timer.sh --uninstall
 #
-# Defaults: --user is the invoking (pre-sudo) user, --dir is this checkout.
+# Defaults: --user is the invoking (pre-sudo) user, --dir is this checkout, and
+# --project is unset (the scan then reads the compose file's `name:`). Pass --project
+# on any host whose stack runs under a different project name than the compose file
+# declares — `docker compose ls` tells you which. Prod runs `forca`, matching the file;
+# the test host runs the same file as `app`, and without --project its nightly scan would
+# find no containers and fail.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 . scripts/lib.sh
@@ -26,12 +32,20 @@ SERVICE="forca-image-scan.service"
 TIMER="forca-image-scan.timer"
 TARGET_USER="${SUDO_USER:-$(id -un)}"
 TARGET_DIR="$(pwd)"
+# The compose PROJECT the stack actually runs under. Empty means "let the scan work it out
+# from the compose file's `name:`", which is right only when the two agree. They often do
+# not: this repo's prod compose declares `name: forca`, while the test host has always run
+# that same file as project `app`. Get it wrong and the timer fires every night, finds no
+# containers, and exits 1 — a failed unit nobody is watching, which is indistinguishable
+# from a scan that keeps finding nothing. Pinned into the unit so the answer cannot drift.
+TARGET_PROJECT="${FORCA_PROJECT:-}"
 UNINSTALL=0
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --user)      [ $# -ge 2 ] || die "--user needs a value."; TARGET_USER="$2"; shift 2 ;;
     --dir)       [ $# -ge 2 ] || die "--dir needs a value.";  TARGET_DIR="$2";  shift 2 ;;
+    --project)   [ $# -ge 2 ] || die "--project needs a value."; TARGET_PROJECT="$2"; shift 2 ;;
     --uninstall) UNINSTALL=1; shift ;;
     -h|--help)   sed -n '/^# Usage:/,/^# Defaults/p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) die "Unknown argument: $1 (try --help)" ;;
@@ -65,17 +79,30 @@ if ! runuser -u "$TARGET_USER" -- docker ps >/dev/null 2>&1; then
        log out and back in) and re-run, or pass --user with an account that can."
 fi
 
-if ! runuser -u "$TARGET_USER" -- command -v trivy >/dev/null 2>&1; then
+# `sh -lc`, not `runuser -- command -v`: `command` is a SHELL BUILTIN, so runuser cannot
+# exec it and the test failed for every user on every host — meaning this warning fired
+# unconditionally, including on hosts where trivy was installed and working. A check that
+# always says "probably broken" is one people learn to scroll past, which is the same
+# habit that let the real finding go unread.
+if ! runuser -u "$TARGET_USER" -- sh -lc 'command -v trivy' >/dev/null 2>&1; then
   # Not fatal — the scanner can be installed after the timer — but say it plainly, because
   # "installed the timer" must not be mistaken for "the images are being scanned".
   warn "trivy is not on ${TARGET_USER}'s PATH. The timer is being installed, but every run
        will fail (exit 2, 'not a clean result') until trivy is installed on this host."
 fi
 
+# Emitted as a whole line so an unset project leaves no stray empty Environment= behind.
+if [ -n "$TARGET_PROJECT" ]; then
+  PROJECT_LINE="Environment=FORCA_PROJECT=${TARGET_PROJECT}"
+else
+  PROJECT_LINE="# (no FORCA_PROJECT pinned; the scan reads the compose file's name:)"
+fi
+
 for unit in "$SERVICE" "$TIMER"; do
   sed -e "s|__FORCA_DIR__|${TARGET_DIR}|g" \
       -e "s|__FORCA_USER__|${TARGET_USER}|g" \
       -e "s|__FORCA_GROUP__|${TARGET_GROUP}|g" \
+      -e "s|__FORCA_PROJECT_LINE__|${PROJECT_LINE}|g" \
       "scripts/systemd/${unit}" >"${UNIT_DIR}/${unit}"
   chmod 0644 "${UNIT_DIR}/${unit}"
 done
@@ -83,7 +110,7 @@ done
 systemctl daemon-reload
 systemctl enable --now "$TIMER"
 
-ok "Installed ${SERVICE} + ${TIMER} (user ${TARGET_USER}, dir ${TARGET_DIR})."
+ok "Installed ${SERVICE} + ${TIMER} (user ${TARGET_USER}, dir ${TARGET_DIR}, project ${TARGET_PROJECT:-<from compose file>})."
 log "Next run:      systemctl list-timers ${TIMER}"
 log "Run it now:    sudo systemctl start ${SERVICE} && journalctl -u ${SERVICE} -n 60"
 log "What it does:  handbooks/operator-handbook/vulnerability-scanning.md"

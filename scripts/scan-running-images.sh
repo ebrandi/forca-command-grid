@@ -212,8 +212,15 @@ if [ "$REPORT" -eq 1 ]; then
   # printing a warning about a problem that did not happen, and overwriting RC=1 (real
   # findings, act on them) with RC=2 (the control is broken, trust nothing). That inverts
   # the two states an operator most needs to tell apart.
-  elif $DC -f "$CF" exec -T web python manage.py "$INGEST_COMMAND" --trigger "$TRIGGER" \
-         --exit-zero <"$WORK/scan.json"; then
+  # -p "$PROJECT" is load-bearing, not decoration. The containers were found by their
+  # compose-project LABEL, which is the truth about what is running; without repeating it
+  # here, `docker compose` falls back to the project the compose FILE declares (`name:`).
+  # Those differ in practice — this repo's prod compose declares `forca` while the test
+  # host has always run the same file as project `app` — and the mismatch turns a
+  # successful scan into "service web is not running", i.e. a scan that ran, found the
+  # right things, and then failed to tell anyone.
+  elif $DC -p "$PROJECT" -f "$CF" exec -T web python manage.py "$INGEST_COMMAND" \
+         --trigger "$TRIGGER" --exit-zero <"$WORK/scan.json"; then
     ok "Scan result delivered to the app (manage.py ${INGEST_COMMAND})."
   else
     warn "Could not deliver the scan result to the app via 'manage.py ${INGEST_COMMAND}'."

@@ -26,6 +26,7 @@ Type=oneshot
 User=__FORCA_USER__
 Group=__FORCA_GROUP__
 WorkingDirectory=__FORCA_DIR__
+__FORCA_PROJECT_LINE__
 ExecStart=/bin/bash scripts/scan-running-images.sh --trigger scheduled
 
 # A cold vulnerability database is a multi-hundred-megabyte download, and scanning four
