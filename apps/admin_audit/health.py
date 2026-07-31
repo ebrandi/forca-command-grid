@@ -222,12 +222,50 @@ def beat_health() -> list[dict]:
     return rows
 
 
-_HEALTH_CACHE_KEY = "admin:integration_health:v2"
+def vulnerability_health() -> list[dict]:
+    """The two vulnerability scanners, as the ops page needs to read them.
+
+    Both controls already store a self-describing result and both already have a read
+    model that answers "how much is this worth right now" — but nothing rendered either,
+    so the only way to learn that the nightly scan had stopped was to notice the absence
+    of an alert, which is not a thing anyone notices. That is the same defect the scans
+    themselves were built to fix, one level up: a control whose *own* health is invisible
+    is a control you find out about afterwards.
+
+    Each row carries ``effective_status``, which is the honest verdict — ``ok`` /
+    ``vulnerable`` collapse to ``unknown`` the moment the result is stale or errored, so a
+    week-old "clean" can never render green. The two rows are shaped alike deliberately:
+    one template block renders both, and a third scanner would slot in the same way.
+    """
+    from .dependency_audit import audit_freshness
+    from .image_scan import scan_freshness
+
+    return [
+        {
+            "key": "dependency_audit",
+            "label": _("Python dependencies"),
+            "note": _("pip-audit · installed packages in the running container · daily"),
+            **audit_freshness(),
+        },
+        {
+            "key": "image_scan",
+            "label": _("Container images"),
+            "note": _("trivy · OS packages of the images actually running · daily, on the host"),
+            **scan_freshness(),
+        },
+    ]
+
+
+# v3: the payload gained the ``vulnerability`` rows. Bumped rather than reused so a
+# cached v2 blob written by the previous release cannot render the new panel empty for
+# its first two minutes and look like "no scans have ever run".
+_HEALTH_CACHE_KEY = "admin:integration_health:v3"
 _HEALTH_CACHE_TTL = 120  # seconds — cheap staleness in exchange for ~7 fewer COUNT(*)/render
 
 
 def integration_health(*, use_cache: bool = True, refresh: bool = False) -> dict:
-    """Token + feed health, briefly cached (called for every Director on /dashboard/).
+    """Token + feed + scanner health, briefly cached (called for every Director on
+    /dashboard/).
 
     ``refresh=True`` recomputes and re-caches even on a hit.
     """
@@ -239,11 +277,22 @@ def integration_health(*, use_cache: bool = True, refresh: bool = False) -> dict
             return cached
     tokens = token_health()
     feeds = feed_health()
+    vulnerability = vulnerability_health()
     payload = {
         "tokens": tokens,
         "feeds": feeds,
         "sde": sde_health(),
         "beats": beat_health(),
+        "vulnerability": vulnerability,
+        # Keyed as well as listed: the template iterates, the dashboard summary wants one
+        # named row without re-deriving which index it lives at.
+        "vulnerability_by_key": {row["key"]: row for row in vulnerability},
+        # ``ok`` deliberately still means "is data flowing" and does NOT fold in the
+        # scanners. A vulnerability finding is a queue of work for a director, not a
+        # broken integration, and merging the two would make the dashboard chip read
+        # "needs attention" for a reason the page it links to describes as healthy —
+        # which is how a permanently-amber indicator stops being read at all. The
+        # scanners state their own verdict, in their own row.
         "ok": all(f["status"] == "ok" for f in feeds) and all(t["healthy"] for t in tokens),
         "has_asset_token": any(t["scopes"]["corp_assets"] and t["healthy"] for t in tokens),
     }

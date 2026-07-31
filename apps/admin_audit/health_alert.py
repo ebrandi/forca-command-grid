@@ -37,16 +37,22 @@ def _ago(dt) -> str:
     return f"{timesince(dt)} ago"
 
 
-def _open_cve() -> dict | None:
-    """The current open dependency-vulnerability finding (maintained weekly by
-    ``audit_dependencies``), or ``None`` when there is none / it was resolved."""
+def _open_cve(subject_id: str | None = None) -> dict | None:
+    """The current open vulnerability finding for one scanner, or ``None``.
+
+    Both security scanners write the same shape — the daily ``audit_dependencies`` run
+    (Python distributions inside the running container) and ``ingest_image_scan`` (OS
+    packages in the images those containers are running) — so one reader serves both.
+    They are separate findings on purpose: they are fixed differently (bump a pin and
+    rebuild vs. move the base-image tag) and can be open independently.
+    """
     from apps.recommendations.models import Recommendation
 
     from .tasks import _REC_SUBJECT_ID, _REC_SUBJECT_TYPE
 
     rec = Recommendation.objects.filter(
         subject_type=_REC_SUBJECT_TYPE,
-        subject_id=_REC_SUBJECT_ID,
+        subject_id=subject_id or _REC_SUBJECT_ID,
         state__in=[Recommendation.State.NEW, Recommendation.State.ACKNOWLEDGED],
     ).first()
     if rec is None:
@@ -92,6 +98,25 @@ def collect_problems() -> list[dict]:
             "label": "Dependency vulnerabilities",
             "detail": f"{n} dependency vulnerabilit{'y' if n == 1 else 'ies'} found "
                       f"({shown}{'…' if n > 8 else ''}) — bump the affected package(s) and redeploy.",
+        })
+
+    # The OS-package layer of the running images. Without this the image scan reaches
+    # directors on the console but never gets *pushed*, which is the precise failure this
+    # whole loop exists to fix: the Pillow advisories sat in an unread on-site finding for
+    # a day. Kept as its own problem with its own key so the two never dedup into each
+    # other — a cleared dependency finding must not silence an open image finding.
+    from .tasks import _IMAGE_REC_SUBJECT_ID
+
+    img = _open_cve(_IMAGE_REC_SUBJECT_ID)
+    if img and img["count"]:
+        n = len(img["ids"]) or img["count"]
+        shown = ", ".join(img["ids"][:8]) or "see the image finding"
+        problems.append({
+            "kind": "image_cve", "key": "image_cve:" + ",".join(img["ids"]),
+            "label": "Container image vulnerabilities",
+            "detail": f"{n} OS-package vulnerabilit{'y' if n == 1 else 'ies'} in the running "
+                      f"images ({shown}{'…' if n > 8 else ''}) — move the pinned base-image "
+                      "tag forward and redeploy.",
         })
     return problems
 
