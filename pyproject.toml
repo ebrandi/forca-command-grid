@@ -28,7 +28,11 @@ ignore = ["S101", "DJ008"]
 DJANGO_SETTINGS_MODULE = "config.settings.test"
 python_files = ["test_*.py", "tests.py"]
 addopts = "-ra -q"
-testpaths = ["tests", "apps", "core"]
+# `scripts` is here for the deploy/security shell helpers' Python halves. They gate
+# releases (the image-vulnerability scan, the scan-report parser), so a silent break in
+# one makes a security control scan less than it claims to — exactly the failure mode a
+# gate is supposed to prevent. They are plain stdlib unittest and need no database.
+testpaths = ["tests", "apps", "core", "scripts"]
 
 [tool.coverage.run]
 omit = ["*/migrations/*", "*/tests/*", "config/wsgi.py", "config/asgi.py"]

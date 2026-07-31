@@ -249,6 +249,35 @@ else
 fi
 
 # ---------------------------------------------------------------------------
+# 3b. Trivy — container image vulnerability scanner (official repo)
+# ---------------------------------------------------------------------------
+# Required by scripts/scan-running-images.sh (the daily scan of the images actually
+# running) and scripts/audit-image-os.sh (the deploy gate). Without it both refuse to
+# run rather than reporting a false clean, so a host missing trivy loses the OS-package
+# layer of coverage entirely — pip-audit sees Python distributions only, and the worst
+# finding this project has had was a CRITICAL OpenSSL in an nginx base image.
+#
+# Installed from the apt repo rather than a pinned tarball ON PURPOSE, unlike CI: this
+# binary is long-lived on a box nobody logs into, and a scanner that never updates is
+# itself the staleness problem we are trying to solve. The repo lets unattended-upgrades
+# keep it current. CI pins a checksum-verified release instead, because there the goal is
+# a reproducible run, not a maintained host.
+if ! command -v trivy >/dev/null 2>&1; then
+  log "Installing trivy (container image vulnerability scanner)"
+  install -m 0755 -d /etc/apt/keyrings
+  curl -fsSL https://aquasecurity.github.io/trivy-repo/deb/public.key \
+    | gpg --dearmor -o /etc/apt/keyrings/trivy.gpg
+  chmod a+r /etc/apt/keyrings/trivy.gpg
+  echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/trivy.gpg] \
+https://aquasecurity.github.io/trivy-repo/deb generic main" \
+    > /etc/apt/sources.list.d/trivy.list
+  apt-get update -y
+  apt-get install -y trivy
+else
+  log "Trivy already installed: $(trivy --version 2>/dev/null | head -1)"
+fi
+
+# ---------------------------------------------------------------------------
 # 4. Service user + directories
 # ---------------------------------------------------------------------------
 if ! id -u "${APP_USER}" >/dev/null 2>&1; then
