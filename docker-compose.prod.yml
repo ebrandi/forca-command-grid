@@ -167,7 +167,7 @@ services:
     mem_limit: ${BEAT_MEM_LIMIT:-384m}
 
   postgres:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     env_file: .env
     restart: unless-stopped
     logging: *default-logging
