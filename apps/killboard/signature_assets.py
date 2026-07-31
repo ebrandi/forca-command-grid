@@ -9,7 +9,9 @@ the procedural art itself (that lives in the ``generate_signature_backgrounds`` 
 * ``text_zone_ok`` — the contrast gate that proves a design keeps its text areas legible —
   and ``apply_safe_scrim`` — the darkening the generator bakes in to satisfy it,
 * manifest location/loading helpers robust to the working directory (they resolve against
-  ``settings.BASE_DIR``, never ``os.getcwd()``), and
+  ``settings.BASE_DIR``, never ``os.getcwd()``),
+* ``background_file_path`` — the ONE validating derivation of a design's asset path from a key, so
+  no caller has to be trusted with the filesystem, and
 * ``sync_from_manifest`` — the upsert used identically by the data migration and the sync
   command (never deletes a row; a key dropped from the manifest is retired, not removed).
 
@@ -21,6 +23,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import time
 from pathlib import Path
 
@@ -228,6 +231,52 @@ def manifest_path() -> Path:
 def canonical_rel(key: str, name: str) -> str:
     """The repo-root-relative POSIX path a design's file has once committed (stable, cwd-free)."""
     return f"{SIGBG_REL}/{key}/{name}.png"
+
+
+# A design key names exactly ONE directory under ``sigbg_dir()``. ``SignatureBackground.key`` is a
+# ``SlugField(max_length=64)``, so this is that field's charset restated where the filesystem is
+# actually touched — the charset excludes ``.``, ``/`` and ``\``, which is what makes a key
+# incapable of naming anything but a direct child. Anchored with ``fullmatch`` (``$`` would accept
+# a trailing newline).
+_KEY_RE = re.compile(r"[A-Za-z0-9_-]{1,64}")
+
+
+def background_file_path(key: str, name: str) -> Path | None:
+    """The absolute path of one committed design file (``<key>/<name>.png``), or None if illegal.
+
+    THE single derivation of a background asset path, so the safety is local and provable here
+    instead of being a property every caller must preserve:
+
+    * ``name`` must be one of :data:`FILE_KEYS` — a fixed enum (the presets plus the thumbnail),
+      never a free string that reaches the filesystem;
+    * ``key`` must match the slug charset the model declares (``_KEY_RE``), so it can only ever
+      name a single child directory of the background tree;
+    * the assembled path is normalised **lexically** and must still sit under :func:`sigbg_dir`.
+      Lexical (``os.path.normpath``) rather than ``Path.resolve`` so the answer never depends on
+      symlinks in a deployed tree — this is a naming rule, not a filesystem probe.
+
+    That last check is deliberate belt-and-braces: ``pathlib`` composes paths, it does not confine
+    them — ``Path("/a/b") / "../../etc"`` climbs out and ``Path("/a") / "/etc"`` silently DISCARDS
+    the left side entirely. Keeping the containment assertion means a future loosening of the key
+    pattern still cannot turn this into an arbitrary-file read.
+
+    Every caller today passes a key read back off a ``SignatureBackground`` row, and rows are only
+    ever created by :func:`sync_from_manifest` from the committed manifest (there is no upload and
+    no admin form for ``key``) — but a file read is one refactor away from a request parameter and
+    the asset is optional, so the strict answer costs a legitimate signature nothing.
+
+    Existence is intentionally NOT checked: this stays a pure, cwd-independent naming rule; the
+    caller opens the path and decides what a missing file means.
+    """
+    if not isinstance(key, str) or not isinstance(name, str):
+        return None
+    if name not in FILE_KEYS or not _KEY_RE.fullmatch(key):
+        return None
+    root = Path(os.path.normpath(sigbg_dir()))
+    candidate = Path(os.path.normpath(root / key / f"{name}.png"))
+    if not candidate.is_relative_to(root):
+        return None
+    return candidate
 
 
 def load_manifest(path: Path | None = None) -> dict:

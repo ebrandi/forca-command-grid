@@ -46,7 +46,7 @@ from .signature_assets import (
     PANEL2,
     PRESETS,
     SPACE,
-    sigbg_dir,
+    background_file_path,
 )
 
 _SUPERSAMPLE = 2
@@ -256,13 +256,20 @@ class _Painter:
 #  Asset / background loading (local files only — no network).
 # --------------------------------------------------------------------------- #
 def _load_background(key: str, size_preset: str, device_size):
-    """The committed background PNG for ``key``+``preset`` scaled to the device canvas, or None."""
+    """The committed background PNG for ``key``+``preset`` scaled to the device canvas, or None.
+
+    The path is never assembled here: :func:`signature_assets.background_file_path` owns the rule
+    that a key may only name one directory inside the background tree and returns None for anything
+    else. A rejected key and an absent file are the same outcome — no background — and the caller
+    then paints the flat space colour, which is why the strict rule is invisible to a legitimate
+    signature (whose key always comes from a manifest-seeded row).
+    """
     if not key:
         return None
     from PIL import Image
 
-    path = sigbg_dir() / key / f"{size_preset}.png"
-    if not path.exists():
+    path = background_file_path(key, size_preset)
+    if path is None or not path.exists():
         return None
     try:
         bg = Image.open(path).convert("RGB")
