@@ -6,7 +6,7 @@ import logging
 
 from django.utils.translation import gettext
 
-from apps.doctrines.services import character_readiness, doctrine_coverage
+from apps.doctrines.services import character_readiness, doctrine_coverage, latest_snapshots
 
 log = logging.getLogger("forca.operations")
 
@@ -323,16 +323,87 @@ def _corp_characters():
     return list(EveCharacter.objects.filter(is_corp_member=True))
 
 
-def operation_readiness(operation) -> dict:
-    """Corp readiness for an operation: overall % + per-doctrine coverage + gaps."""
-    characters = _corp_characters()
+class ReadinessRoster:
+    """The roster-wide inputs :func:`operation_readiness` needs, shared across MANY ops.
+
+    Scoring one operation needs three things that do not depend on WHICH operation is
+    being scored: the corp roster, that roster's latest skill snapshots, and one coverage
+    count per doctrine. The operations *list* scores every visible op in a loop, so
+    without something to hold those between iterations the page reloads the roster once
+    per op and — because each pilot's snapshot carries their whole skill sheet as TOASTed
+    JSONB — detoasts the entire roster once per (op × doctrine). Six ops sharing three
+    doctrines paid for that eighteen times to get three distinct answers.
+
+    Build one per request and thread it through::
+
+        roster = ReadinessRoster()
+        for op in ops:
+            readiness = operation_readiness(op, roster=roster)
+
+    Everything loads lazily, so a roster nobody asks about costs nothing, and
+    ``operation_readiness`` without one behaves exactly as it always did. Deliberately
+    request-scoped rather than cached: doctrines, skills and membership all change, and a
+    memo that outlived the response would quietly serve a stale readiness percentage.
+    """
+
+    def __init__(self, characters=None):
+        self._characters = characters
+        self._snapshots = None
+        self._coverage: dict[int, dict] = {}
+
+    @property
+    def characters(self) -> list:
+        """The corp roster, loaded once."""
+        if self._characters is None:
+            self._characters = _corp_characters()
+        return self._characters
+
+    @property
+    def snapshots(self) -> dict:
+        """``{character_id: latest snapshot}`` for the roster, loaded once."""
+        if self._snapshots is None:
+            self._snapshots = latest_snapshots(self.characters)
+        return self._snapshots
+
+    def coverage(self, doctrine) -> dict:
+        """Coverage counts for ``doctrine`` against this roster, computed once.
+
+        Keyed on the doctrine *id*, not the instance: every operation carries its own
+        ``Doctrine`` object for the same row, while the counts depend only on the row and
+        the roster — both fixed for the life of the memo. A copy is handed out so a caller
+        that mutates its counts cannot corrupt the answer the next operation gets.
+        """
+        counts = self._coverage.get(doctrine.id)
+        if counts is None:
+            counts = doctrine_coverage(doctrine, self.characters, snapshots=self.snapshots)
+            self._coverage[doctrine.id] = counts
+        return dict(counts)
+
+
+def operation_readiness(operation, roster: ReadinessRoster | None = None) -> dict:
+    """Corp readiness for an operation: overall % + per-doctrine coverage + gaps.
+
+    ``roster`` is an optional :class:`ReadinessRoster` a caller scoring several operations
+    builds once and threads through, so the roster and its skill snapshots are read once
+    per request instead of once per op. Omit it and a private one is built here, which is
+    the original behaviour exactly — the argument decides who pays for the load, never
+    what the readiness numbers are.
+
+    The per-op ``OperationDoctrine`` read below is deliberately left alone. It is one
+    small indexed query and ``OperationDoctrine`` declares no ``Meta.ordering``, so
+    swapping it for a caller-primed prefetch (``operation_id IN (…)`` rather than
+    ``operation_id = …``) would let Postgres hand back the doctrine rows in a different
+    order — and that order is the order the readiness table renders in. Not worth it for
+    a query that touches three rows; the roster JSONB was the whole cost here.
+    """
+    roster = roster if roster is not None else ReadinessRoster()
     rows = []
     total_ratio = 0.0
     scored = 0
     gaps = []
     for od in operation.doctrines.select_related("doctrine").all():
         doctrine = od.doctrine
-        counts = doctrine_coverage(doctrine, characters)
+        counts = roster.coverage(doctrine)
         known = counts["optimal"] + counts["viable"] + counts["not_ready"]
         ready = counts["optimal"] + counts["viable"]
         target = od.target_count or 0

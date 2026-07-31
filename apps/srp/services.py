@@ -14,6 +14,7 @@ from django.db import IntegrityError, transaction
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from apps.doctrines import services as doctrine_services
 from apps.doctrines.models import Doctrine
 from apps.doctrines.services import best_doctrine_fit
 from apps.killboard.models import Killmail
@@ -30,8 +31,72 @@ def active_program() -> SrpProgram:
     return program
 
 
-def _active_rule_for(doctrine: Doctrine | None) -> SrpRule | None:
-    """Most specific active rule: a doctrine-specific rule beats an any-doctrine one."""
+_UNSET = object()  # "not resolved yet", so a legitimately ``None`` answer is memoised too
+
+
+class EligibilityBatch:
+    """A short-lived memo for the lookups ``eligibility`` repeats, identically, per loss.
+
+    ``eligibility`` is always called in a loop — the pilot's SRP page scores up to
+    ``limit * 3`` recent losses, the auto-draft sweep scores a fleet wipe, the battle and
+    campaign boards score every mail on the grid. Two of its lookups do not vary with the
+    loss beyond a key that repeats constantly:
+
+    * the active SRP rule for a doctrine — a page of losses is nearly always the same two
+      or three doctrines, yet each loss paid one or two queries to rediscover the rule;
+    * the longest operation window, a whole-table ``Max`` over ``Operation`` that
+      ``loss_on_sanctioned_op`` recomputed for every loss it checked.
+
+    This memoises the results of *exactly* those queries — same filters, same ``first()``
+    — so a memoised answer is by construction the answer the uncached path would have
+    returned; SRP pays ISK, and a cheaper lookup that could differ is not worth having.
+    It is built per call and thrown away (never module-level, never cached across
+    requests) precisely so a rule an officer edits is live on the next page load, and so
+    no request can inherit another request's answers.
+    """
+
+    def __init__(self):
+        self._rules: dict[int | None, SrpRule | None] = {}
+        self._longest_op_minutes: int | None | object = _UNSET
+        self._matcher = None
+
+    def matcher(self):
+        """A doctrine matcher pinned to one catalogue snapshot, built once per batch.
+
+        Without this every loss re-enters ``best_doctrine_fit``, which checks the shared
+        catalogue stamp — one cache round-trip per loss, thousands of them on a campaign
+        board. Pinning also makes the run self-consistent: a doctrine edited midway
+        through cannot tag the first half of a scoring pass differently from the second.
+        That is only safe because a batch is built per call and thrown away, so the pin
+        lasts one page render and an officer's edit is live on the next.
+        """
+        if self._matcher is None:
+            self._matcher = doctrine_services.build_doctrine_matcher()
+        return self._matcher
+
+    def rule_for(self, doctrine: Doctrine | None) -> SrpRule | None:
+        """:func:`_active_rule_for`'s answer for this doctrine, resolved once per batch."""
+        key = doctrine.id if doctrine is not None else None
+        if key not in self._rules:
+            self._rules[key] = _active_rule_for(doctrine)
+        return self._rules[key]
+
+    def longest_op_minutes(self) -> int | None:
+        """The longest explicit ``Operation.duration_minutes``, aggregated once per batch."""
+        if self._longest_op_minutes is _UNSET:
+            self._longest_op_minutes = _max_explicit_op_minutes()
+        return self._longest_op_minutes
+
+
+def _active_rule_for(doctrine: Doctrine | None, batch: EligibilityBatch | None = None) -> SrpRule | None:
+    """Most specific active rule: a doctrine-specific rule beats an any-doctrine one.
+
+    ``batch`` is an optional :class:`EligibilityBatch` that resolves this once per
+    doctrine for a run of losses instead of once per loss; without one the queries below
+    run exactly as they always have.
+    """
+    if batch is not None:
+        return batch.rule_for(doctrine)
     if doctrine is not None:
         specific = SrpRule.objects.filter(active=True, doctrine=doctrine).first()
         if specific:
@@ -39,16 +104,21 @@ def _active_rule_for(doctrine: Doctrine | None) -> SrpRule | None:
     return SrpRule.objects.filter(active=True, doctrine__isnull=True).first()
 
 
-def matched_doctrine(killmail: Killmail):
+def matched_doctrine(killmail: Killmail, batch: EligibilityBatch | None = None):
     """The active doctrine + fit that best matches the lost ship.
 
     Module-aware (4.2): for a hull with several doctrine fits, picks the variant whose
     modules best match what was actually fitted, so the DOCTRINE_FIT valuation is priced
     against the fit the pilot flew — not just the first same-hull fit by priority. Falls
-    back to hull-only matching when the loss has no fitted-item data."""
+    back to hull-only matching when the loss has no fitted-item data.
+
+    ``batch`` swaps in that batch's pinned matcher. Resolution is identical — the matcher
+    is ``best_doctrine_fit`` bound to one snapshot — it only stops each loss re-checking
+    the catalogue stamp."""
     from apps.killboard.doctrine_tag import fitted_module_multiset
 
-    fit = best_doctrine_fit(killmail.victim_ship_type_id, fitted_module_multiset(killmail))
+    match = batch.matcher() if batch is not None else best_doctrine_fit
+    fit = match(killmail.victim_ship_type_id, fitted_module_multiset(killmail))
     return (fit.doctrine, fit) if fit else (None, None)
 
 
@@ -195,17 +265,35 @@ def _net_payout(gross: Decimal, insurance: Decimal, rule: SrpRule | None,
     return _apply_cap(amount, rule, program)
 
 
-def loss_on_sanctioned_op(killmail: Killmail, program: SrpProgram):
+def _max_explicit_op_minutes() -> int | None:
+    """The longest explicit ``Operation.duration_minutes`` on record, or ``None``.
+
+    Pulled out of :func:`loss_on_sanctioned_op` so a batch can aggregate it once: the
+    answer is corp-wide and cannot vary between the losses of a single run.
+    """
+    from django.db.models import Max
+
+    from apps.operations.models import Operation
+
+    return (
+        Operation.objects.filter(duration_minutes__isnull=False)
+        .aggregate(m=Max("duration_minutes"))["m"]
+    )
+
+
+def loss_on_sanctioned_op(killmail: Killmail, program: SrpProgram,
+                          batch: EligibilityBatch | None = None):
     """The sanctioned operation whose window covers this loss, or ``None`` (SRP-1 / 2.8).
 
     A *sanctioned* op is SRP-covered (``srp`` != none) and not draft/cancelled. The window
     is the op's ``target_at`` extended by its ``duration_minutes`` (or the programme default),
     with ``fleet_op_grace_minutes`` of slack on each side for form-up/travel. When
     ``fleet_op_require_attendance`` is on, the pilot must also have a recorded PAP on that op.
+
+    ``batch`` only spares the repeated whole-table duration aggregate; the candidate window
+    itself depends on this loss's timestamp and is always evaluated fresh.
     """
     from datetime import timedelta
-
-    from django.db.models import Max
 
     from apps.operations.models import Operation, OperationAttendance
 
@@ -220,8 +308,7 @@ def loss_on_sanctioned_op(killmail: Killmail, program: SrpProgram):
     # the *real* max duration (a deployment / war-prep can run days) or a long op that still
     # covers ``t`` would be dropped here and a valid claim wrongly denied.
     max_explicit = (
-        Operation.objects.filter(duration_minutes__isnull=False)
-        .aggregate(m=Max("duration_minutes"))["m"]
+        batch.longest_op_minutes() if batch is not None else _max_explicit_op_minutes()
     )
     longest = max(
         default_dur,
@@ -256,8 +343,15 @@ def loss_on_sanctioned_op(killmail: Killmail, program: SrpProgram):
     return None
 
 
-def eligibility(killmail: Killmail, program: SrpProgram | None = None) -> dict:
-    """Explainable eligibility + payout for a single loss under the programme."""
+def eligibility(killmail: Killmail, program: SrpProgram | None = None,
+                batch: EligibilityBatch | None = None) -> dict:
+    """Explainable eligibility + payout for a single loss under the programme.
+
+    ``program`` and ``batch`` are the two hoists a loop caller should pass: the programme
+    so it is not re-read per loss, and an :class:`EligibilityBatch` so the SRP-rule lookup
+    and the operation-window aggregate are resolved once for the whole run. Both are
+    optional and change only who issues the queries — never the verdict or the payout.
+    """
     program = program or active_program()
     if not program.enabled:
         return {"eligible": False, "reason": _("SRP is currently paused by leadership.")}
@@ -266,17 +360,17 @@ def eligibility(killmail: Killmail, program: SrpProgram | None = None) -> dict:
     if killmail.victim_ship_type_id in POD_TYPE_IDS and not program.cover_pod:
         return {"eligible": False, "reason": _("Pod losses aren't covered.")}
 
-    doctrine, fit = matched_doctrine(killmail)
+    doctrine, fit = matched_doctrine(killmail, batch)
     if program.require_doctrine and not fit:
         return {"eligible": False, "reason": _("Loss isn't an active doctrine hull.")}
 
-    rule = _active_rule_for(doctrine)
+    rule = _active_rule_for(doctrine, batch)
     if program.require_doctrine and not rule:
         return {"eligible": False, "reason": _("No active SRP rule."), "doctrine": doctrine}
 
     operation = None
     if program.require_fleet_op:
-        operation = loss_on_sanctioned_op(killmail, program)
+        operation = loss_on_sanctioned_op(killmail, program, batch)
         if operation is None:
             return {"eligible": False, "reason": _("Loss wasn't on a sanctioned fleet op."),
                     "doctrine": doctrine}
@@ -328,21 +422,43 @@ def _explain(doctrine, program: SrpProgram, gross: Decimal, insurance: Decimal,
 
 
 def eligible_losses_for(char_ids, limit: int = 25) -> list[dict]:
-    """A pilot's own losses that are eligible and not yet claimed."""
+    """A pilot's own losses that are eligible and not yet claimed.
+
+    The ``limit * 3`` candidate window is deliberate and stays: eligibility cannot be
+    expressed in SQL (it needs the doctrine match, the programme's valuation and, when
+    armed, the fleet-op window), so the only way to fill ``limit`` rows is to score recent
+    losses until enough qualify. Over-fetching three-for-one is the bound that keeps that
+    scan finite — narrowing it would silently shorten the pilot's list, and widening it
+    would score losses nobody asked about. It also decides *which* losses this list can
+    ever show, so it is part of the behaviour, not a tuning knob.
+
+    What that window costs, though, is ours to reduce: the whole run shares one programme,
+    one :class:`EligibilityBatch` (so the SRP rule is looked up once per doctrine rather
+    than once per loss), and one claims probe scoped to the candidates — that probe used
+    to pull every ``SrpClaim`` killmail id the corp had ever filed to test at most 75.
+    """
     program = active_program()
     if not program.enabled:
         return []
-    claimed = set(SrpClaim.objects.values_list("killmail_id", flat=True))
+    # ``items`` feeds the 4.2 module-aware doctrine match; the slice is the candidate window.
+    candidates = list(
+        Killmail.objects.filter(
+            involves_home_corp=True,
+            home_corp_role=Killmail.HomeRole.VICTIM,
+            victim_character_id__in=list(char_ids),
+        ).prefetch_related("items").order_by("-killmail_time")[: limit * 3]
+    )
+    claimed = set(
+        SrpClaim.objects.filter(
+            killmail_id__in=[km.killmail_id for km in candidates]
+        ).values_list("killmail_id", flat=True)
+    )
+    batch = EligibilityBatch()
     out = []
-    qs = Killmail.objects.filter(
-        involves_home_corp=True,
-        home_corp_role=Killmail.HomeRole.VICTIM,
-        victim_character_id__in=list(char_ids),
-    ).prefetch_related("items").order_by("-killmail_time")[: limit * 3]  # items: 4.2 module match
-    for km in qs:
+    for km in candidates:
         if km.killmail_id in claimed:
             continue
-        info = eligibility(km, program)
+        info = eligibility(km, program, batch)
         if info.get("eligible"):
             out.append({"killmail": km, **info})
         if len(out) >= limit:

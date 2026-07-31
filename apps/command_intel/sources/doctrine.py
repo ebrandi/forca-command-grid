@@ -26,13 +26,16 @@ class DoctrineSource:
         from django.utils.text import slugify
 
         from apps.doctrines.models import Doctrine
-        from apps.doctrines.services import doctrine_coverage
+        from apps.doctrines.services import doctrine_coverage, latest_snapshots
         from apps.doctrines.supply import corp_on_hand, corp_priority_list
 
         doctrines = list(
             Doctrine.objects.filter(status=Doctrine.Status.ACTIVE)
             .select_related("readiness_config")
-            .prefetch_related("fits")
+            # ``fits`` alone leaves ``doctrine_coverage`` to fetch each fit's skill
+            # requirements again, per doctrine; the deeper prefetch is one extra query
+            # for the whole slice.
+            .prefetch_related("fits__skill_requirements")
             .order_by("-priority", "name")
         )
         if not doctrines:
@@ -52,10 +55,14 @@ class DoctrineSource:
             per_doctrine_hulls[doctrine.id] = ids
             hull_ids |= ids
         on_hand = corp_on_hand(hull_ids) if hull_ids else {}
+        # Coverage is scored for the SAME roster once per doctrine, and each pilot's
+        # snapshot is a TOASTed skill sheet — so the roster is loaded once here rather
+        # than re-read inside every ``doctrine_coverage`` call.
+        snapshots = latest_snapshots(characters)
 
         rows = []
         for doctrine in doctrines:
-            counts = doctrine_coverage(doctrine, characters)
+            counts = doctrine_coverage(doctrine, characters, snapshots=snapshots)
             cfg = getattr(doctrine, "readiness_config", None)
             rows.append({
                 "name": doctrine.name,

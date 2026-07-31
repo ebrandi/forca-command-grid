@@ -13,7 +13,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.doctrines.models import Doctrine
-from apps.doctrines.services import doctrine_coverage
+from apps.doctrines.services import doctrine_coverage, latest_snapshots
 from apps.industry import bom
 from apps.industry.models import IndustryProject, IndustryProjectItem
 from apps.killboard.models import Killmail
@@ -156,8 +156,16 @@ def eval_doctrine_readiness() -> list[dict]:
     out = []
     members = _corp_member_characters()
     as_of = _skills_as_of()
-    for doctrine in Doctrine.objects.filter(status=Doctrine.Status.ACTIVE).prefetch_related("fits"):
-        counts = doctrine_coverage(doctrine, members)
+    # The roster's skill snapshots and each fit's requirements are the same for every
+    # doctrine scored below, so they are read once for the whole sweep. Left to itself
+    # ``doctrine_coverage`` would re-read every member's skill JSONB per doctrine — the
+    # beat evaluates the full active catalogue, so that is the roster detoasted N times.
+    snapshots = latest_snapshots(members)
+    doctrines = Doctrine.objects.filter(
+        status=Doctrine.Status.ACTIVE
+    ).prefetch_related("fits__skill_requirements")
+    for doctrine in doctrines:
+        counts = doctrine_coverage(doctrine, members, snapshots=snapshots)
         ready = counts["optimal"] + counts["viable"]
         total = sum(counts.values())
         if total == 0:

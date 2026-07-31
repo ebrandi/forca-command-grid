@@ -55,12 +55,17 @@ def op_list(request: HttpRequest) -> HttpResponse:
     if is_officer:
         visible.append(Operation.Status.DRAFT)
     ops = Operation.objects.filter(status__in=visible)
+    # One roster load + one skill-snapshot load + one coverage count per DOCTRINE for the
+    # whole board, rather than per operation: the ops on a list page overwhelmingly share
+    # the same handful of doctrines, and each recount used to re-read every corp pilot's
+    # skill sheet (TOASTed JSONB) to reach an answer it had already computed.
+    roster = services.ReadinessRoster()
     cards = []
     for op in ops:
         plan = services.fleet_plan(op)
         cards.append({
             "op": op,
-            "readiness": services.operation_readiness(op),
+            "readiness": services.operation_readiness(op, roster=roster),
             "plan": plan,
             "attend_count": op.attendance.count(),
         })
