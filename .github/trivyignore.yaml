@@ -29,4 +29,33 @@
 #       statement: "Not reachable — the app never links libexample. Base image fix pending upstream."
 #       expired_at: 2026-10-01
 
-vulnerabilities: []
+vulnerabilities:
+  # Both of these are pip's own VENDORED dependency list, not packages this image
+  # installs. Trivy reads /usr/local/lib/python3.12/site-packages/pip/_vendor/vendor.txt
+  # and reports its contents as though they were installed distributions:
+  #
+  #     msgpack==1.1.2
+  #     setuptools==70.3.0
+  #
+  # Verified inside the image rather than argued from the advisory text.
+
+  - id: GHSA-6v7p-g79w-8964
+    statement: >-
+      pip's vendored copy of msgpack (pip/_vendor/msgpack, 1.1.2). The msgpack this
+      application imports is 1.2.1 and is clean — `python -c "import msgpack"` reports
+      (1, 2, 1). The vendored copy is used only by pip itself, to deserialise its own
+      HTTP cache, at image-build time, over TLS from PyPI; it is not on the running
+      application's import path. It cannot be bumped independently — it ships inside pip,
+      and pip is already at the latest release (26.2). Revisit when pip re-vendors:
+      if this has not cleared by the expiry, check for a newer pip first.
+    expired_at: 2026-10-01
+
+  - id: CVE-2025-47273
+    statement: >-
+      setuptools is NOT PRESENT in this image at all — this is a false positive from the
+      same pip/_vendor/vendor.txt manifest. Verified: `import setuptools` raises
+      ModuleNotFoundError, and there is no setuptools dist-info, egg-info or wheel
+      anywhere on the filesystem. There is no code here to exploit and nothing to
+      upgrade. Re-check at expiry in case trivy's python analyser stops treating that
+      manifest as an install list, at which point this entry should simply be deleted.
+    expired_at: 2026-10-01

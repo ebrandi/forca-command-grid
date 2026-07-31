@@ -244,18 +244,22 @@ jobs:
         # against the PyPI advisory feed; trivy reads every package manifest baked into
         # the layers against its own DB, whatever ecosystem it belongs to.
         #
-        # That difference is not theoretical here. The Dockerfile ends with `COPY . .`,
-        # and .dockerignore's `node_modules` entry does NOT exclude frontend/node_modules
-        # — a bare name matches only at the context root, so nesting it under frontend/
-        # defeats it (it would need `**/node_modules`). A build from a working tree that
-        # has run `npm install` therefore bakes ~70 build-only JavaScript packages into
-        # the runtime image; verified by building this Dockerfile and finding 27MB of
-        # them under /app/frontend/node_modules. pip-audit cannot see any of it. Trivy
-        # can, and did: the same scan against an image built when postcss was 8.5.16
-        # reports the HIGH (GHSA-r28c-9q8g-f849), and reports clean now that the tree has
-        # 8.5.24. CI is unaffected — node_modules is gitignored, so a fresh checkout has
-        # none — which is exactly why the leak has stayed invisible on paths that build
-        # from a working directory instead.
+        # That difference is not theoretical. The Dockerfile ends with `COPY . .`, and
+        # .dockerignore's entry used to be a bare `node_modules`, which matches only at
+        # the context root — so frontend/node_modules was NOT excluded and a build from a
+        # working tree that had run `npm install` baked ~27MB of build-only JavaScript
+        # into the runtime image. pip-audit cannot see any of that; trivy can. It is now
+        # `**/node_modules`, verified with a controlled build. CI never saw it either way
+        # (node_modules is gitignored, so a fresh checkout has none) — which is precisely
+        # why it stayed invisible for so long on paths that build from a working tree.
+        #
+        # REPRODUCING A FAILURE FROM THIS JOB LOCALLY: build with --no-cache. A cached
+        # local build reuses the `pip install` layer from whenever you last built, so it
+        # is NOT the image CI scans and it can report clean while CI legitimately fails.
+        # That happened: a cached local image carried pip 26.1.2 and passed, while CI's
+        # fresh build carried pip 26.2 and surfaced two findings from pip's vendored
+        # manifest. Verify with:
+        #   docker build --no-cache -t forca-command-grid:scan . && trivy image ...
         run: |
           set -euo pipefail
           trivy image ${TRIVY_COMMON} --exit-code 1 forca-command-grid:scan
