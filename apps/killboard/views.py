@@ -1213,6 +1213,20 @@ def subscription_feed(request: HttpRequest, rss_token: str) -> HttpResponse:
 # us. An entity with zero history against us renders an honest empty page (200, not 404): the
 # URL space is our own history, so "no engagements with us" is a valid answer, not a missing
 # resource. Reuses the member/alliance-pilot audience of the analytics dashboard.
+#
+# Entity kind -> the named route for its page. Written out as literals rather than composed as
+# ``f"killboard:adversary_{kind}"`` so no request-supplied string ever becomes a redirect target:
+# ``redirect()`` falls back to treating its argument as a *literal URL* when ``reverse()`` fails
+# and the string contains a "/" or ".", so an interpolated kind would be a redirect sink. The
+# keys are pinned to ``adversary.ENTITY_KINDS`` by test_ql_redirect_and_errors.py, so adding a
+# kind there without a route here fails the build instead of silently 500-ing.
+_ADVERSARY_ROUTES = {
+    "character": "killboard:adversary_character",
+    "corporation": "killboard:adversary_corporation",
+    "alliance": "killboard:adversary_alliance",
+}
+
+
 def _adversary_page(request: HttpRequest, kind: str, entity_id: int) -> HttpResponse:
     from apps.corporation.models import EveName
 
@@ -1292,12 +1306,18 @@ def adversary_watch(request: HttpRequest, kind: str, entity_id: int) -> HttpResp
     Adds to the chosen existing watchlist (or the first one, creating a default if the corp
     has none yet), then returns to the adversary page. Officer-tier, matching the existing
     watchlist add/remove views — members see only the "watched" state, not this action.
+
+    ``kind`` arrives from the URL as free text (``<str:kind>``), so it is checked against the
+    ``adversary.ENTITY_KINDS`` allowlist before it is used for anything: it becomes both the
+    stored ``entity_type`` and — via ``_ADVERSARY_ROUTES`` — the page we bounce back to. The
+    route is looked up here, next to the check, so the two cannot drift apart in a refactor.
     """
     from . import adversary
     from .models import WatchlistEntry
 
     if not adversary.is_valid_kind(kind):
         raise Http404("Unknown entity kind.")
+    route = _ADVERSARY_ROUTES[kind]
     raw = (request.POST.get("watchlist_id") or "").strip()
     watchlist = Watchlist.objects.filter(pk=int(raw)).first() if raw.isdigit() else None
     if watchlist is None:
@@ -1320,7 +1340,7 @@ def adversary_watch(request: HttpRequest, kind: str, entity_id: int) -> HttpResp
         messages.info(
             request, gettext("Already on watchlist “%(name)s”.") % {"name": watchlist.name}
         )
-    return redirect(f"killboard:adversary_{kind}", entity_id=entity_id)
+    return redirect(route, entity_id=entity_id)
 
 
 # --- KB-34 D-scan / Local paste analyzer (WS-C4) ------------------------------

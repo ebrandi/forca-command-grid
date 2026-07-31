@@ -45,6 +45,20 @@ class EventStreamRenderer(BaseRenderer):
         return json.dumps(data).encode(self.charset) if data is not None else b""
 
 
+# The longest error detail this endpoint will put on the wire. ``stream.TopicError`` carries a
+# curated sentence that quotes the offending topic back to the caller (``Unknown topic 'x'.``),
+# and ``?topics=`` is bounded only by the web server's URL limit — so the *transport* caps what
+# is reflected instead of trusting every present and future raise site to keep it short. No
+# legitimate message comes close: a real topic name is a couple of dozen characters, and the
+# message quotes the single offending token, never the whole comma list.
+_MAX_DETAIL_CHARS = 200
+
+
+def _bounded(detail: str) -> str:
+    """Truncate an error detail to :data:`_MAX_DETAIL_CHARS`, marking the cut with an ellipsis."""
+    return detail if len(detail) <= _MAX_DETAIL_CHARS else detail[:_MAX_DETAIL_CHARS - 1] + "…"
+
+
 def _resume_cursor(request) -> int | None:
     """The client's resume point: ``Last-Event-ID`` (SSE reconnect) wins over ``?after_seq=``.
 
@@ -88,8 +102,13 @@ class KillboardStreamView(KillboardAPIViewMixin, APIView):
         try:
             matcher = stream.build_matcher(request.query_params.get("topics"), member=member)
         except stream.TopicError as exc:
+            # TopicError is the topic parser's own domain error (a ValueError subclass in
+            # apps/killboard/stream.py), always raised with a hand-written sentence naming the
+            # topic the caller asked for — never a traceback, an exception chain, or any
+            # internal state. Surfacing it is what makes a bad ?topics= diagnosable; only its
+            # length is bounded, so the caller cannot have kilobytes of its own input reflected.
             status = 403 if exc.forbidden else 400
-            return Response({"detail": str(exc)}, status=status)
+            return Response({"detail": _bounded(str(exc))}, status=status)
 
         cursor = _resume_cursor(request)
         if cursor is None:

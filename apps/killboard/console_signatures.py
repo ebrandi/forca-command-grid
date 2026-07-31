@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import hashlib
 import os
+from urllib.parse import urlencode
 
 from django import forms
 from django.conf import settings as dj_settings
@@ -386,7 +387,14 @@ def signature_search(request: HttpRequest) -> HttpResponse:
 def signature_admin_action(request: HttpRequest, pk: int, action: str) -> HttpResponse:
     """One moderation POST endpoint: admin disable/enable (system helpers that skip the owner
     ceiling) or force a re-render. Each is audited (the domain helpers audit disable/enable; the
-    re-render is audited here). Redirects back to the search screen, preserving the query."""
+    re-render is audited here). Redirects back to the search screen, preserving the query.
+
+    The carried-over ``q`` is percent-encoded with ``urlencode`` (the ``console_recovery``
+    precedent): the operator's search term is free text, so an unescaped ``&``/``#``/``=`` would
+    otherwise inject or truncate query parameters on the screen we bounce back to. The redirect
+    target itself is always ``reverse()``d — the term only ever reaches the query string, never
+    the path or host.
+    """
     if action not in _ADMIN_ACTIONS:
         raise Http404(_("Unknown action."))
     sig = get_object_or_404(CombatSignature, pk=pk)
@@ -405,4 +413,4 @@ def signature_admin_action(request: HttpRequest, pk: int, action: str) -> HttpRe
         messages.success(request, _("Re-render queued."))
     q = (request.POST.get("q") or "").strip()
     url = reverse("admin_audit:signature_search")
-    return redirect(f"{url}?q={q}" if q else url)
+    return redirect(f"{url}?{urlencode({'q': q})}" if q else url)
