@@ -43,22 +43,14 @@ require_cmd docker
 # SKIP_DEPENDENCY_AUDIT=0 — which an operator would reasonably type meaning "do NOT
 # skip" — as a request to disable the gate, silently. A security control must not turn
 # itself off because someone spelled "no" in a way the shell calls non-empty, so anything
-# unrecognised aborts and asks rather than guessing either way.
-case "$(printf '%s' "${SKIP_DEPENDENCY_AUDIT:-}" | tr '[:upper:]' '[:lower:]')" in
-  ""|0|no|false|off)
-    ;;
-  1|yes|true|on)
-    warn "SKIP_DEPENDENCY_AUDIT is set — deploying WITHOUT auditing the built image."
-    warn "The image may carry known-vulnerable packages. Run 'make audit-image' once the"
-    warn "reason for skipping is gone, and rebuild if it reports anything."
-    exit 0
-    ;;
-  *)
-    die "SKIP_DEPENDENCY_AUDIT is set to '${SKIP_DEPENDENCY_AUDIT}', which is neither on
-     nor off. Refusing to guess whether you meant to disable the image audit — set it to
-     1 to skip, or unset it to audit."
-    ;;
-esac
+# unrecognised aborts and asks rather than guessing either way. The parsing lives in
+# lib.sh's skip_gate() so every gate in scripts/ shares it and none can regress alone.
+if skip_gate SKIP_DEPENDENCY_AUDIT; then
+  warn "SKIP_DEPENDENCY_AUDIT is set — deploying WITHOUT auditing the built image."
+  warn "The image may carry known-vulnerable packages. Run 'make audit-image' once the"
+  warn "reason for skipping is gone, and rebuild if it reports anything."
+  exit 0
+fi
 
 log "Auditing the packages installed in the built image (not just requirements.txt) ..."
 # --no-deps: postgres/redis are irrelevant here and must not be restarted mid-deploy.

@@ -33,9 +33,16 @@ command surface. Pair this page with
       path) or the automated script's backup directory (`/var/backups/forca` by
       default) for a recent, non-trivial file. See
       [Backup and Restore](./backup-and-restore.md).
-- [ ] Review the weekly dependency-vulnerability scan result. `admin_audit.audit_dependencies`
-      runs every Monday at 06:30 UTC (matching the CI `security.yml` workflow) and raises
-      a Director-visible finding on any newly disclosed CVE in `requirements.txt`.
+- [ ] Review any open vulnerability findings. Two daily scans feed one Director surface:
+      `admin_audit.audit_dependencies` (06:43 UTC, Python packages installed in the
+      running container) and the `forca-image-scan` systemd timer (04:20 local, OS
+      packages of the images the running containers are actually using). Both push a
+      *change* at leadership over Pingboard, so this checklist item is a backstop rather
+      than the primary path — see
+      [Vulnerability Scanning](./vulnerability-scanning.md).
+- [ ] `systemctl list-timers forca-image-scan.timer` — confirm the image scan is still
+      scheduled and ran recently. A timer that was uninstalled, or never installed, looks
+      exactly like a scan that finds nothing.
 - [ ] Review any open findings raised by `admin_audit.scan_integration_health` (deduped
       Director alert when a background sync stops, the SDE goes stale, or a dependency
       CVE appears — runs every 30 minutes).
@@ -99,15 +106,25 @@ by 2027-04-30, or immediately if `nginx:1.32-alpine` appears upstream.** Carry t
 date forward when you bump the tag; a date that has passed is the only thing standing in
 for the alert nobody is going to send you.
 
-**Nothing automates this — this checklist is the control.** Dependabot's `docker`
-ecosystem in [`.github/dependabot.yml`](../../.github/dependabot.yml) is configured for
-`/`, where it parses the root `Dockerfile` and nothing else. That is why the only
-Dependabot Docker pull request this repository has ever received was `python:3.12-slim` →
-`3.14-slim`, and why the 1.27 → 1.30 nginx move had to be made by hand. The images pinned
-in `docker-compose.prod.yml` — nginx, postgres, redis — have **no automated watcher at
-all**. If you want one, add a separate `docker-compose` ecosystem entry to the Dependabot
-config and confirm it actually opens a pull request before relying on it; until it has
-been seen to work, assume it does not.
+**No version bot will tell you.** Dependabot's `docker` ecosystem in
+[`.github/dependabot.yml`](../../.github/dependabot.yml) is configured for `/`, where it
+parses the root `Dockerfile` and nothing else. That is why the only Dependabot Docker pull
+request this repository has ever received was `python:3.12-slim` → `3.14-slim`, and why
+the 1.27 → 1.30 nginx move had to be made by hand. And even a correctly configured bot
+would stay silent on a frozen tag: there is no newer tag to propose. The pin does not go
+out of date, it goes bad in place.
+
+**What does automate the CVE half** is a scanner, not a bot. `scripts/audit-image-os.sh`
+refuses a deploy that would start an image carrying fixable HIGH/CRITICAL OS-package
+vulnerabilities, and the daily `forca-image-scan` timer re-scans the images the running
+containers are actually using — which is how a clean pin that later went bad gets caught
+without anything in this repository changing. See
+[Vulnerability Scanning](./vulnerability-scanning.md).
+
+**This checklist item remains the control for the other half**: "the branch has gone EOL".
+A scanner reports the CVEs a frozen tag has accumulated *so far*; only a human comparing
+the branch against upstream's release cadence can tell you it will never receive another
+fix. Keep the dated re-check above.
 
 ## Scheduled jobs and workers
 

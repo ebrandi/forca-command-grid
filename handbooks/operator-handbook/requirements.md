@@ -31,6 +31,8 @@ Everything runs in containers, so the host itself needs very little:
 | `git` | To clone the repository. |
 | `openssl` | To generate secrets (the deploy script uses it; you'll want it too for the manual path). |
 | `ufw`, `fail2ban`, `unattended-upgrades` | Installed and configured by the deploy script; optional if you manage the host's firewall/patching yourself. |
+| `python3` | Present on every supported host by default. The deploy scripts use it (stdlib only) to summarise scan results; nothing in the application runs on the host's Python. |
+| `trivy` | **Required for the container-image vulnerability scan**, which gates the deploy and runs daily against the images your containers are actually using. It is the only thing that can see an OS-package CVE — a CRITICAL OpenSSL in a frozen `nginx` tag is invisible to every Python scanner. Install on the host: `curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \| sudo sh -s -- -b /usr/local/bin v0.70.0`. Without it the deploy gate refuses to pass rather than reporting a clean result — see [Vulnerability Scanning](./vulnerability-scanning.md). |
 
 No host-level Python, PostgreSQL, Redis, or nginx installation is required or expected —
 installing them on the host would be redundant with (and could conflict with) the

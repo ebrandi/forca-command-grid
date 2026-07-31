@@ -121,7 +121,7 @@ make health                       # confirm everything is up
 |---|---|
 | `make setup` | `cp .env.example .env` if `.env` doesn't already exist |
 | `make build` | `docker compose -f docker-compose.prod.yml build` |
-| `make deploy` | Builds the image, audits the packages installed **in it** (`scripts/audit-image.sh` — a CVE aborts the deploy), migrates and collects static on it, and only then starts the stack — see [Upgrades](./upgrades.md) for why that order |
+| `make deploy` | Builds the image, audits the Python packages installed **in it** (`scripts/audit-image.sh`) and the **OS packages of every image it will start** (`scripts/audit-image-os.sh`) — a fixable CVE aborts the deploy — then migrates and collects static on it, starts the stack, and finally re-audits what is now running so a fix clears its own finding. See [Upgrades](./upgrades.md) for why that order and [Vulnerability Scanning](./vulnerability-scanning.md) for the scans |
 | `make update` | `scripts/update.sh` — the safe upgrade path (see [Upgrades](./upgrades.md)) |
 | `make migrate` | Applies database migrations |
 | `make collectstatic` | Collects static assets |

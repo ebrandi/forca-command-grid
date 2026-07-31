@@ -49,11 +49,21 @@ services:
     #
     # RE-CHECK BY 2027-04-30, or sooner if nginx:1.32-alpine appears upstream. nginx keeps a
     # stable branch alive until the next even-numbered one ships, roughly annually, so 1.30
-    # stops getting rebuilds when 1.32 lands. Nothing automates this: Dependabot's `docker`
-    # ecosystem reads the root Dockerfile, not this file, so no PR will ever be opened for
-    # any image tag pinned here. The monthly base-image item in the operator runbook is the
-    # control —
-    # handbooks/operator-handbook/operations-runbook.md, "Monthly checklist".
+    # stops getting rebuilds when 1.32 lands.
+    #
+    # No VERSION BOT will ever tell you: Dependabot's `docker` ecosystem reads the root
+    # Dockerfile, not this file, so no PR is ever opened for a tag pinned here — and even
+    # if it read this file, a frozen tag has no newer tag to propose. The pin does not go
+    # out of date; it goes bad in place.
+    #
+    # What actually catches that now is a SCANNER, in three places, because each sees a
+    # different moment: `scripts/audit-image-os.sh` refuses a deploy that would start a
+    # vulnerable image, `scripts/scan-running-images.sh` re-scans what is already running
+    # every night (a clean image can go bad without this file changing), and the
+    # image-scan CI workflow checks the pins on every push. The monthly base-image item in
+    # handbooks/operator-handbook/operations-runbook.md remains the human backstop for
+    # "this branch has gone EOL", which no scanner can tell you.
+    # See handbooks/operator-handbook/vulnerability-scanning.md.
     image: nginx:1.30-alpine
     restart: unless-stopped
     logging: *default-logging

@@ -13,7 +13,8 @@ DEV  := docker-compose.yml
 .PHONY: help setup build deploy update migrate collectstatic bootstrap bootstrap-sample \
         import-sde import-assets prices health logs ps down restart shell dbshell \
         backup restore create-admin dev dev-down dev-logs cert config-check \
-        lint lint-fix test test-fast check audit audit-image frontend-check sbom rollback
+        lint lint-fix test test-fast test-scripts check audit audit-deps audit-image \
+        audit-image-os scan-images install-scan-timer frontend-check sbom rollback
 
 help: ## Show this help
 	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | sort | \
@@ -40,6 +41,12 @@ deploy: ## Build, audit, migrate, then start the prod stack (in that order — s
 	# a deploy that did not happen rather than one that has to be rolled back. Fails the
 	# deploy; SKIP_DEPENDENCY_AUDIT=1 is the deliberate, documented override.
 	@bash scripts/audit-image.sh
+	# ...and the OS packages of every image about to start. audit-image.sh sees Python
+	# distributions only, so it is structurally blind to the nginx/Postgres/Redis images
+	# and to the application image's own Debian layer — where the worst vulnerability this
+	# install ever carried lived (a CRITICAL OpenSSL inside a frozen nginx:1.27-alpine).
+	# Only FIXABLE findings fail; SKIP_IMAGE_SCAN=1 is the deliberate override.
+	@bash scripts/audit-image-os.sh
 	$(DC) -f $(PROD) up -d postgres redis
 	$(DC) -f $(PROD) exec -T postgres sh -c 'until pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" >/dev/null 2>&1; do sleep 2; done'
 	$(DC) -f $(PROD) run --rm --no-deps -T web python manage.py migrate --noinput
@@ -47,6 +54,12 @@ deploy: ## Build, audit, migrate, then start the prod stack (in that order — s
 	$(DC) -f $(PROD) up -d
 	@bash scripts/wait-for-services.sh
 	$(DC) -f $(PROD) restart nginx
+	# Re-audit what is now RUNNING, so a release that fixes a CVE retires its own finding
+	# within minutes. Without this, a fixed vulnerability keeps showing as open until the
+	# next scheduled scan — which is how a director surface learns to be ignored. Both are
+	# report-only: the deploy already happened, and failing it here would help nobody.
+	-$(DC) -f $(PROD) exec -T web python manage.py audit_dependencies --exit-zero --trigger deploy
+	-@bash scripts/scan-running-images.sh --trigger deploy --exit-zero
 	@echo "Deploy complete. Next: 'make bootstrap' (first install) then 'make health'."
 
 rollback: ## Roll back to an earlier revision (REF=v1.0.0 [DUMP=./backups/....sql.gz] [DRIFT=1])
@@ -163,6 +176,16 @@ test: ## Run the full pytest suite (needs the dev stack's postgres)
 test-fast: ## Run pytest, stopping at the first failure
 	$(DC) -f $(DEV) run --rm web pytest -q -x $(TEST_DS)
 
+test-scripts: ## Test the deploy/scan scripts (host-side; needs no database)
+	# These live under scripts/ beside the code they cover, which puts them outside
+	# pyproject's default testpaths — hence a target of their own. They need bash and
+	# python3 on the HOST and nothing else: no docker, no trivy, no database. They exist
+	# because the last escape-hatch bug (SKIP_DEPENDENCY_AUDIT=0 silently DISABLING the
+	# gate) shipped for the simple reason that nobody ever ran it with that value.
+	# --no-deps: nothing here touches Postgres or Redis, so do not start them (and do not
+	# collide with a concurrent suite over the shared test database).
+	$(DC) -f $(DEV) run --rm --no-deps web pytest scripts/tests -q $(TEST_DS)
+
 check: ## Django system checks (add --deploy for prod-hardening warnings)
 	$(DC) -f $(DEV) run --rm --no-deps web python manage.py check
 
@@ -175,6 +198,31 @@ audit-image: ## Scan the packages INSTALLED in the built prod image (reality) �
 	# fixed version up — exactly how a running container here once carried 24 Pillow CVEs
 	# while CI was green. This audits the container's own site-packages.
 	@bash scripts/audit-image.sh
+
+audit-deps: ## Re-run the dependency-CVE loop in the RUNNING web container (report only)
+	# Scan, refresh the director finding, relay a change to leadership. Use this after a
+	# fix ships out-of-band so the standing alert stops claiming vulnerabilities that are
+	# already gone — a stale alarm is what trains people to ignore the next real one.
+	$(DC) -f $(PROD) exec -T web python manage.py audit_dependencies --exit-zero --trigger manual
+
+audit-image-os: ## Scan the OS packages of the images a deploy would start — gates deploy
+	# The layer nothing else covers. pip-audit sees Python distributions; this reads each
+	# image's own system-package database, including nginx/Postgres/Redis where we ship no
+	# Python at all. Only FIXABLE HIGH/CRITICAL findings fail, so an unactionable upstream
+	# advisory cannot turn the gate permanently red (and thus get it switched off).
+	@bash scripts/audit-image-os.sh
+
+scan-images: ## Scan the images the RUNNING containers are actually using, and report them
+	# Different question from `audit-image-os`, and the more important one: that gate asks
+	# "is what we are about to start clean?", this asks "is what has been serving traffic
+	# for six weeks still clean?". Images rot on the world's schedule — a frozen upstream
+	# tag accumulated 37 HIGH/CRITICAL here without a single byte changing in this repo.
+	# Runs on the HOST (never mount the docker socket into an app container) and hands the
+	# result to the app, which relays it to directors over the existing Pingboard channels.
+	@bash scripts/scan-running-images.sh --trigger manual
+
+install-scan-timer: ## Install the daily running-image scan systemd timer (needs sudo)
+	sudo bash scripts/install-image-scan-timer.sh
 
 frontend-check: ## Fail if static/css/app.css + vendored JS are stale vs. their sources
 	# Runs on the HOST, not in a container: the build tooling is Node and lives in

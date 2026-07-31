@@ -20,18 +20,20 @@ on the first failure so a partial upgrade never leaves the stack in an unknown s
 
 | Step | Action |
 |---|---|
-| 1/8 | **Back up the database** (`scripts/backup.sh ./backups`) — aborts the entire upgrade if the backup fails |
-| 2/8 | `git fetch --prune origin`, `git checkout <branch>`, then `git pull --ff-only origin <branch>` — **fast-forward only**; refuses to proceed if your checkout has diverged (e.g. local changes) rather than silently discarding anything |
-| 3/8 | Stamp the new build revision (`deploy/stamp-version.sh`) so the footer reflects what's actually deployed |
-| 4/8 | **Build** the new image (`docker compose -f docker-compose.prod.yml build`) — the running stack keeps serving throughout |
-| 5/8 | **Audit the packages actually installed in the new image** (`scripts/audit-image.sh`) — `pip-audit` with no `-r` flag, run inside the image, so it sees the versions really installed rather than the lower bounds in `requirements.txt`. A finding **aborts the upgrade** here, before the first irreversible step; `SKIP_DEPENDENCY_AUDIT=1` overrides it (see below) |
-| 6/8 | **Migrate** on the new image, in a one-off container (`run --rm --no-deps -T web python manage.py migrate --noinput`), while the old stack is still live |
-| 7/8 | **`collectstatic`** on the new image, also in a one-off container — the static manifest must be in the shared volume *before* the new web container boots, or gunicorn starts without one and 500s |
-| 8/8 | **Swap** the containers (`up -d`), wait for services (`scripts/wait-for-services.sh`), then **restart nginx last** — nginx caches the web container's IP and hands out 502s until it is restarted (skipped if this deployment has no `nginx` service) |
+| 1/10 | **Back up the database** (`scripts/backup.sh ./backups`) — aborts the entire upgrade if the backup fails |
+| 2/10 | `git fetch --prune origin`, `git checkout <branch>`, then `git pull --ff-only origin <branch>` — **fast-forward only**; refuses to proceed if your checkout has diverged (e.g. local changes) rather than silently discarding anything |
+| 3/10 | Stamp the new build revision (`deploy/stamp-version.sh`) so the footer reflects what's actually deployed |
+| 4/10 | **Build** the new image (`docker compose -f docker-compose.prod.yml build`) — the running stack keeps serving throughout |
+| 5/10 | **Audit the Python packages actually installed in the new image** (`scripts/audit-image.sh`) — `pip-audit` with no `-r` flag, run inside the image, so it sees the versions really installed rather than the lower bounds in `requirements.txt`. A finding **aborts the upgrade** here, before the first irreversible step; `SKIP_DEPENDENCY_AUDIT=1` overrides it (see below) |
+| 6/10 | **Scan the OS packages of every image the upgrade will start** (`scripts/audit-image-os.sh`) — `trivy` over the application image's Debian layer *and* the pinned `nginx`, `postgres` and `redis` images, which step 5 is structurally blind to. A **fixable** HIGH/CRITICAL aborts the upgrade; `SKIP_IMAGE_SCAN=1` overrides it. See [Vulnerability Scanning](./vulnerability-scanning.md) |
+| 7/10 | **Migrate** on the new image, in a one-off container (`run --rm --no-deps -T web python manage.py migrate --noinput`), while the old stack is still live |
+| 8/10 | **`collectstatic`** on the new image, also in a one-off container — the static manifest must be in the shared volume *before* the new web container boots, or gunicorn starts without one and 500s |
+| 9/10 | **Swap** the containers (`up -d`), wait for services (`scripts/wait-for-services.sh`), then **restart nginx last** — nginx caches the web container's IP and hands out 502s until it is restarted (skipped if this deployment has no `nginx` service) |
+| 10/10 | **Re-audit what is now running**, report-only (`manage.py audit_dependencies --exit-zero --trigger deploy` and `scripts/scan-running-images.sh --trigger deploy --exit-zero`) — so an upgrade that fixes a CVE retires its own Director finding within minutes instead of leaving a stale alarm standing until the next scheduled scan |
 
-Finally it runs the health check (`scripts/healthcheck.sh`) — a failure there is reported as
-a warning, not aborted, since the upgrade steps themselves already completed; investigate
-immediately if it fails.
+The health check (`scripts/healthcheck.sh`) runs between steps 9 and 10 — a failure there
+is reported as a warning, not aborted, since the upgrade steps themselves already
+completed; investigate immediately if it fails.
 
 The order matters, and it is not the obvious one. Building and swapping *before* migrating
 would start the new code against the old schema, and every session-bearing request 500s
@@ -39,12 +41,12 @@ would start the new code against the old schema, and every session-bearing reque
 upgrade "succeeds". Migrating on the new image while the old containers still serve shrinks
 the window in which code and schema disagree to the container swap itself.
 
-The rebuild in step 4/8 is also what ships a translation change: the message catalogues are
+The rebuild in step 4/10 is also what ships a translation change: the message catalogues are
 compiled into the image (`compilemessages` runs in the `Dockerfile`), so a catalogue edit
 needs a rebuild rather than a container restart, and a malformed `.po` fails the build here
 instead of silently falling back to English.
 
-The audit in step 5/8 is deliberately placed between the build and the migration. Every
+The audit in step 5/10 is deliberately placed between the build and the migration. Every
 step before it is reversible by doing nothing at all; the migration is the first that is
 not. It closes a real gap: `make audit`, the CI workflow and the weekly in-app scan all
 audit `requirements.txt`, which carries **lower** bounds, so they stay green against an
@@ -56,7 +58,18 @@ names and `pip` itself. Run it on its own at any time with `make audit-image`.
 If the host cannot reach the advisory feed (air-gapped), or you are rolling forward in an
 emergency where the outage outweighs the finding, `SKIP_DEPENDENCY_AUDIT=1 make update`
 skips the step and says so in the log. Re-run `make audit-image` and rebuild once the
-reason has passed — the override is a deliberate decision, not a default.
+reason has passed — the override is a deliberate decision, not a default. `SKIP_IMAGE_SCAN=1`
+does the same for step 6/10. Both flags accept only an affirmative value: `SKIP_IMAGE_SCAN=0`
+means *do not skip*, and an unrecognised value aborts rather than guessing — an earlier
+version of this gate treated `=0` as "skip" and silently disabled itself.
+
+Step 10/10 is the counterpart to those gates, and it exists because of a specific, real
+failure. A Director finding on this deployment went on reporting 25 open Pillow
+vulnerabilities for two days after the fix had shipped, because nothing rescanned until
+the next weekly run. A control that keeps crying wolf after the wolf is dead is how people
+are trained to ignore the next real alert, so an upgrade now refreshes both surfaces
+against what it just started. Both are report-only: the upgrade has already happened, and
+failing it at that point would help nobody.
 
 The same rebuild ships **`Dockerfile` OS-package changes** — for example the `fonts-noto-cjk`
 package the Combat Signatures renderer uses for Chinese/Japanese/Korean glyphs. A stale image

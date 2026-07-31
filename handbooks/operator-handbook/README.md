@@ -163,6 +163,7 @@ Key architectural facts, all drawn directly from the compose files:
 | [Upgrades](./upgrades.md) | `scripts/update.sh` / `make update`, migrations, rollback |
 | [Troubleshooting](./troubleshooting.md) | Symptom → cause → action reference |
 | [Security Hardening](./security-hardening.md) | The checklist of controls this deployment implements |
+| [Vulnerability Scanning](./vulnerability-scanning.md) | What scans for known CVEs, where, how often, and who acts on a finding |
 
 ## Where to look next
 

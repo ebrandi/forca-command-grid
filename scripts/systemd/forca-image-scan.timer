@@ -1,0 +1,37 @@
+# FORCA Command Grid — daily trigger for the running-image vulnerability scan.
+#
+# WHY DAILY, AND NOT WEEKLY:
+#   The in-stack Python audit used to run weekly. It worked — it found 25 Pillow
+#   advisories and raised a director finding the same day — and the finding then sat
+#   unread while the scan that would have refreshed it only came back the following
+#   Monday. Two things follow. A newly disclosed CRITICAL is carried for up to seven days
+#   before anyone is told, and, worse, a finding that HAS been fixed keeps claiming to be
+#   open for up to seven days afterwards. The second is the more corrosive: an alarm that
+#   stays lit after the fix is exactly what trains people to ignore the next real one.
+#
+#   Base images also rot on the world's schedule, not ours. Nothing in this repository has
+#   to change for a clean image to become a vulnerable one overnight, so the cadence has
+#   to be independent of our commit rate.
+#
+# Install with: sudo bash scripts/install-image-scan-timer.sh
+# Check with:   systemctl list-timers forca-image-scan.timer
+
+[Unit]
+Description=Daily OS-package vulnerability scan of FORCA's running container images
+Documentation=file://__FORCA_DIR__/handbooks/operator-handbook/vulnerability-scanning.md
+
+[Timer]
+# 04:20 local. Well clear of the nightly backup and of the daily in-container dependency
+# audit, so the two scans do not contend for the same small host at the same minute.
+OnCalendar=*-*-* 04:20:00
+# Spread the load (and the mirror's load) across a window rather than hammering the
+# vulnerability database at the same second as every other install.
+RandomizedDelaySec=30min
+# A host that was powered off at 04:20 runs the scan on the next boot instead of skipping
+# a day. A missed scan is indistinguishable from a clean one in every downstream surface,
+# so missed scans must not be allowed to accumulate quietly.
+Persistent=true
+Unit=forca-image-scan.service
+
+[Install]
+WantedBy=timers.target

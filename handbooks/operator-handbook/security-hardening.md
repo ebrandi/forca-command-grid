@@ -13,6 +13,7 @@ that the software does not itself enforce.
 - [Host hardening](#host-hardening)
 - [Secrets](#secrets)
 - [Dependency scanning](#dependency-scanning)
+- [Container-image scanning (the OS-package layer)](#container-image-scanning-the-os-package-layer)
 - [Further reading](#further-reading)
 
 ## Container hardening
@@ -78,12 +79,32 @@ that the software does not itself enforce.
 
 | Control | Detail |
 |---|---|
-| Weekly automated scan (in-application) | `admin_audit.audit_dependencies` runs every Monday at 06:30 UTC via Celery Beat, running `pip-audit` against `requirements.txt` and raising a Director-visible finding on any newly disclosed CVE. This is the **authoritative** recurring control for a self-hosted instance, since production deploys don't go through GitHub. |
+| Daily automated scan (in-application) | `admin_audit.audit_dependencies` runs at 06:43 UTC via Celery Beat, running `pip-audit` against the packages **installed in the running container**, raising one idempotent Director-visible finding and relaying a *change* to leadership over Pingboard. This is the **authoritative** recurring control for a self-hosted instance, since production deploys don't go through GitHub. It was weekly until July 2026; a week is a long time both to carry a fresh CVE and — worse — to keep claiming one that has already been fixed. |
 | Weekly automated scan (CI) | [`.github/workflows/security.yml`](../../.github/workflows/security.yml) runs the same `pip-audit` check on push to `main`, on pull requests touching requirements files, and on the same weekly schedule — a second look for code that is pushed to GitHub. |
 | **Deploy-time gate on the built image** | All three controls above audit `requirements.txt` — they audit *intent*. Because that file carries **lower** bounds, it stays green against an image built weeks ago that never picked the fixed version up; a container here once served 24 Pillow CVEs while every requirements scan passed. `make deploy` and `scripts/update.sh` therefore run [`scripts/audit-image.sh`](../../scripts/audit-image.sh) immediately after the build and **before** any migration or container swap. It runs `pip-audit` with no `-r` flag *inside the image*, so it sees the versions actually installed, transitive packages the requirements file never names, and `pip` itself. A finding **aborts the deploy** while the old stack is still serving. |
 | Overriding the deploy gate | `SKIP_DEPENDENCY_AUDIT=1 make deploy` skips it — intended only for an air-gapped host that cannot reach the advisory feed, or an emergency roll-forward where the outage outweighs the CVE. It logs a warning; re-run `make audit-image` and rebuild once the reason is gone. |
 | Installed-package scan (CI) | The `pip-audit-image` job in the security workflow builds the image and runs the same no-`-r` audit, so a pull request that would produce a vulnerable image fails before it is merged. |
 | Least-privilege CI | The security workflow requests only `contents: read` permission and disables credential persistence on checkout. |
+
+## Container-image scanning (the OS-package layer)
+
+Everything in the table above sees **Python distributions**. None of it can see an
+operating-system package, and the worst vulnerability this deployment has ever carried was
+exactly that: a CRITICAL in OpenSSL inside a frozen `nginx:1.27-alpine`, in the one
+internet-facing, TLS-terminating container in the stack. Full detail — cadence, findings,
+who acts — is in [Vulnerability Scanning](./vulnerability-scanning.md).
+
+| Control | Detail |
+|---|---|
+| **Deploy-time gate on OS packages** | [`scripts/audit-image-os.sh`](../../scripts/audit-image-os.sh) runs `trivy` over every image `docker-compose.prod.yml` is about to start — the application image's Debian layer plus `nginx`, `postgres` and `redis` — immediately after the build and **before** any migration or container swap. A **fixable** HIGH/CRITICAL aborts the deploy while the old stack is still serving. Wired into `make deploy` and `scripts/update.sh`. |
+| **Daily scan of what is actually running** | [`scripts/scan-running-images.sh`](../../scripts/scan-running-images.sh), on a systemd timer at 04:20 local, resolves the image IDs the **running containers** were started from (via the Docker daemon, not the compose file) and scans those. This is the only control that catches an image that was clean when deployed and has since gone bad — which is what happens when an upstream tag freezes and `docker pull` keeps returning the same stale build. Install with `make install-scan-timer`. |
+| Findings reach a human | The scan hands its result to the application (`manage.py ingest_image_scan`), which raises one Director finding and relays a *change* over the existing Pingboard channels. It deliberately does not add a second notifier: a parallel broadcaster would double-report every finding, and a channel that double-reports gets muted. |
+| Host-only, never socket-in-container | The scan runs on the **host**. `/var/run/docker.sock` is never mounted into `web`, `worker` or `beat` — socket access is root-equivalent on the host, so it would be a strictly worse vulnerability than any the scan could find. Findings flow host → app; the app never reaches up. |
+| Gates cannot go permanently red | Only findings with a **released fix version** fail a build. The Debian base routinely carries a couple of dozen unfixable HIGH/CRITICAL advisories; failing on those daily would get the gate switched off, and a switched-off gate that still appears in the deploy log is worse than none. Unfixable findings are still scanned, reported and tracked. |
+| Overriding the deploy gate | `SKIP_IMAGE_SCAN=1 make deploy`, with the same affirmative-value-only parsing as `SKIP_DEPENDENCY_AUDIT` — `0`, `no`, `false`, `off` all mean *do not skip*, and an unrecognised value aborts rather than guessing. |
+| Suppressions must expire | Individual advisories can be suppressed in [`.github/trivyignore.yaml`](../../.github/trivyignore.yaml), where every entry is required to carry an `expired_at` date so a suppression rots loudly instead of becoming a permanent blind spot. |
+| A fix clears its own finding | The last step of `make deploy` / `make update` re-runs both audits against what is now running, report-only. Without it, a release that fixes a CVE leaves the old finding open until the next scheduled scan — and an alarm still lit after the fix is what trains people to ignore the next real one. |
+| Missing scanner is never "clean" | If `trivy` is absent the scripts refuse and exit non-zero rather than reporting a clean result: "the scanner is missing" and "nothing was found" are indistinguishable downstream, and a soft skip would manufacture the appearance of coverage. |
 
 ## Further reading
 

@@ -30,6 +30,28 @@ require_env() {
   [ -n "$val" ] || die "Required environment variable is unset: $name"
 }
 
+# skip_gate <VAR_NAME> — did an operator explicitly ask to skip a security gate?
+# Returns 0 (skip), 1 (do not skip), and dies on anything it cannot read as either.
+#
+# ONE authority for this decision, because getting it wrong is silent and has already
+# happened here: the image audit's escape hatch was once `[ -n "$SKIP_DEPENDENCY_AUDIT" ]`,
+# so an operator who typed SKIP_DEPENDENCY_AUDIT=0 meaning "no, do not skip" turned the
+# gate OFF — the shell calls "0" a non-empty string. A control that disables itself when
+# you tell it not to is worse than no control, because the deploy log still says the gate
+# ran. Every skip flag in scripts/ goes through here so that bug has one place to not be.
+#
+# Refusing to guess on an unrecognised value is the same principle: "maybe" must not
+# resolve to "off" for a security gate.
+skip_gate() {
+  local name="$1"
+  case "$(printf '%s' "${!name:-}" | tr '[:upper:]' '[:lower:]')" in
+    ""|0|no|false|off) return 1 ;;
+    1|yes|true|on)     return 0 ;;
+    *) die "$name is set to '${!name}', which is neither on nor off. Refusing to guess
+     whether you meant to disable a security gate — set it to 1 to skip, or unset it." ;;
+  esac
+}
+
 # compose_cmd — echo the docker compose invocation ("docker compose" or the
 # legacy "docker-compose"), or die if neither is present.
 compose_cmd() {

@@ -1,0 +1,48 @@
+# FORCA Command Grid — scan the running containers' images for OS-package CVEs.
+#
+# Installed (with the placeholder tokens below substituted) by:
+#   sudo bash scripts/install-image-scan-timer.sh
+# Documented in:
+#   handbooks/operator-handbook/vulnerability-scanning.md
+#
+# This unit deliberately FAILS when the scan finds fixable HIGH/CRITICAL vulnerabilities
+# (exit 1) or when it could not complete (exit 2). A failed unit is visible in
+# `systemctl --failed`, and it is what an OnFailure= hook or a monitoring check keys off.
+# The primary path to a human is not systemd, though — the script hands its findings to
+# the application, which relays them over Pingboard to directors. systemd's failure state
+# is the backstop for when that delivery itself is what broke.
+
+[Unit]
+Description=FORCA Command Grid: scan running container images for OS-package CVEs
+Documentation=file://__FORCA_DIR__/handbooks/operator-handbook/vulnerability-scanning.md
+# The scan talks to the Docker daemon and to the running web container; without Docker
+# there is nothing to scan, and a run that "found no containers" would be a false alarm
+# rather than a useful one.
+Requires=docker.service
+After=docker.service network-online.target
+
+[Service]
+Type=oneshot
+User=__FORCA_USER__
+Group=__FORCA_GROUP__
+WorkingDirectory=__FORCA_DIR__
+ExecStart=/bin/bash scripts/scan-running-images.sh --trigger scheduled
+
+# A cold vulnerability database is a multi-hundred-megabyte download, and scanning four
+# images on a spinning-disk host is not quick. Generous, but bounded: a scan that hangs
+# forever is a scan that silently stops happening.
+TimeoutStartSec=45min
+
+# The script needs the Docker socket, so it cannot be sandboxed to the hilt. These are
+# the restrictions that do not conflict with that.
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectControlGroups=yes
+ProtectKernelTunables=yes
+RestrictSUIDSGID=yes
+# Nice: this is background hygiene and must never compete with request serving.
+Nice=10
+IOSchedulingClass=idle
+
+[Install]
+WantedBy=multi-user.target
