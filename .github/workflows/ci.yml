@@ -108,11 +108,16 @@ jobs:
         with:
           persist-credentials: false
       # The runner's preinstalled Node is used deliberately — no setup-node step. The
-      # emitted CSS is a function of the tailwindcss version, which package.json pins
-      # exactly and which vendors its own PostCSS/cssnano toolchain, so the Node major
-      # does not move the output; skipping the action keeps one less third-party
-      # dependency to pin and audit. The versions are logged so that if this job ever
-      # does disagree with a developer's machine, the first question is already answered.
+      # emitted CSS is a function of the tailwindcss version, which vendors its own
+      # PostCSS/cssnano toolchain, so the Node major does not move the output; skipping
+      # the action keeps one less third-party dependency to pin and audit. (That also
+      # rules out setup-node's dependency cache, which is a fair trade: the install is
+      # ~80 packages and under a second.) The check script installs with `npm ci` from
+      # the committed frontend/package-lock.json, so this job and a developer's machine
+      # resolve the identical tree down to the transitive packages — which is what makes
+      # a diff here mean "someone did not rebuild" and nothing else. The versions are
+      # logged so that if this job ever does disagree with a developer's machine, the
+      # first question is already answered.
       - name: Record the toolchain versions
         run: node --version && npm --version
       - name: Rebuild the front-end assets and diff them against the committed ones

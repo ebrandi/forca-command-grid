@@ -154,16 +154,22 @@ place); review the diff and commit it.
 Rebuilding by hand is the same thing without the comparison:
 
 ```bash
-cd frontend && npm install && npm run build
+cd frontend && npm ci && npm run build
 ```
 
-> The check is byte-exact and stays stable because `frontend/package.json` pins
-> `tailwindcss` and all four vendored runtime libraries to exact versions, and Tailwind 3
-> vendors its own PostCSS/cssnano toolchain — so the emitted CSS is a function of the
-> pinned Tailwind version, not of whatever transitive tree npm resolved that day. If it
-> ever fails with no template and no `package.json` change, that assumption has broken:
-> commit `frontend/package-lock.json` (drop the ignore line in `frontend/.gitignore`) so
-> `npm ci` can pin the whole toolchain.
+> The check is byte-exact because `frontend/package-lock.json` is **committed**, so both
+> CI and your machine install the identical tree — every transitive package at one exact
+> version — via `npm ci`. That is what makes a failure here mean exactly one thing:
+> someone changed a template or `package.json` and did not rebuild.
+>
+> This matters more than it sounds. Without the lockfile, `npm install` resolves
+> transitive dependencies fresh, so a failure had two possible readings — "forgot to
+> rebuild" or "npm resolved a different tree today" — and a gate nobody can interpret is
+> a gate that gets muted. Verified before the lockfile was committed: a clean `npm ci`
+> reproduces `app.css` and all four vendored libraries byte-for-byte.
+>
+> Use `npm install` only when deliberately bumping a dependency; it rewrites the lockfile,
+> which then needs committing alongside the rebuilt assets.
 
 ## Localisation gates
 

@@ -28,11 +28,16 @@
 #   transitive tree npm happened to resolve. A fresh `npm install` and the developer's
 #   months-old node_modules produce identical bytes (verified both ways).
 #
-#   The one soft spot: frontend/package-lock.json is git-ignored, so `npm ci` — the
-#   strictly reproducible install — is only available when a lockfile happens to be
-#   present locally. If this check ever fails with NO template or package.json change,
-#   suspect transitive drift and commit the lockfile (drop the ignore line in
-#   frontend/.gitignore) to nail the toolchain down for good.
+#   frontend/package-lock.json is COMMITTED, so the install below is `npm ci`: the exact
+#   tree, transitive packages included, pinned by digest. That is what makes a failure
+#   here unambiguous — it can only mean someone changed a template or package.json and
+#   did not rebuild. Without the lockfile a failure had two possible meanings ("forgot to
+#   rebuild" or "npm resolved a different transitive tree today"), and an ambiguous gate
+#   is one people mute. Verified before committing it: a clean `npm ci` reproduces all
+#   five artifacts byte-for-byte.
+#
+#   The `npm install` fallback below survives only for the case where the lockfile is
+#   somehow missing; it should never be taken in CI.
 #
 # ON FAILURE the rebuilt assets are LEFT IN PLACE: they are the correct content, so the
 # fix is simply to review and commit them. This is deliberate — a check that reverted
@@ -66,12 +71,15 @@ for asset in "${ASSETS[@]}"; do
 done
 
 log "Rebuilding the front-end assets from source (frontend/) ..."
-# npm ci needs a lockfile and refuses without one; package.json's exact pins make the
-# fallback install resolve the same versions anyway.
+# The lockfile is committed, so this is always the `npm ci` branch. The fallback exists
+# only so a tree missing the lockfile degrades to a working (if less strict) check rather
+# than a hard failure; taking it in CI means the lockfile went missing and the gate has
+# quietly lost its reproducibility guarantee, so it warns loudly.
 if [ -f frontend/package-lock.json ]; then
   ( cd frontend && npm ci --no-audit --no-fund )
 else
-  warn "frontend/package-lock.json is absent (it is git-ignored) — falling back to 'npm install'."
+  warn "frontend/package-lock.json is MISSING — it is committed and should always be here."
+  warn "Falling back to 'npm install'; this check is no longer strictly reproducible."
   ( cd frontend && npm install --no-audit --no-fund )
 fi
 ( cd frontend && npm run build )
