@@ -290,17 +290,21 @@ def test_webhook_posts_with_timeout_and_no_redirects(django_user_model, monkeypa
     _sub(user, ET.MY_LOSS, CH.WEBHOOK, webhook_url=PUBLIC_URL)
     calls = []
 
-    def _capture(url, **kw):
+    def _capture(url, target, **kw):
         calls.append((url, kw))
         return _Resp(204)
 
-    monkeypatch.setattr("requests.post", _capture)
+    # The pinned send goes through Session + a mounted adapter, not the module-level
+    # requests.post, so patch the seam the delivery actually calls. Patching requests.post
+    # here would no longer intercept anything and the test would open a real socket.
+    monkeypatch.setattr(subs, "post_to_webhook", _capture)
     subs.dispatch_subscriptions()
     assert len(calls) == 1
     url, kw = calls[0]
     assert url == PUBLIC_URL
     assert kw["timeout"] == 5.0
-    assert kw["allow_redirects"] is False
+    # allow_redirects=False is now enforced inside post_to_webhook and is asserted at that
+    # seam by tests/test_ql_ssrf_webhook.py::test_redirects_are_never_followed.
     body = kw["json"]
     assert body["event_type"] == ET.MY_LOSS
     assert "data" in body  # the member-visible public payload
@@ -316,13 +320,13 @@ def test_webhook_retries_once_then_succeeds(django_user_model, monkeypatch):
     _sub(user, ET.MY_LOSS, CH.WEBHOOK, webhook_url=PUBLIC_URL)
     state = {"n": 0}
 
-    def _flaky(url, **kw):
+    def _flaky(url, target, **kw):
         state["n"] += 1
         if state["n"] == 1:
             raise requests.RequestException("transient")
         return _Resp(200)
 
-    monkeypatch.setattr("requests.post", _flaky)
+    monkeypatch.setattr(subs, "post_to_webhook", _flaky)
     subs.dispatch_subscriptions()
     assert state["n"] == 2  # one retry within a single delivery
     sub = _only_sub()
@@ -335,7 +339,7 @@ def test_webhook_retries_once_then_succeeds(django_user_model, monkeypatch):
 def test_webhook_dead_letters_after_repeated_failures(django_user_model, monkeypatch):
     user, _ = _member(django_user_model, 2001)
     sub = _sub(user, ET.MY_LOSS, CH.WEBHOOK, webhook_url=PUBLIC_URL)
-    monkeypatch.setattr("requests.post", lambda url, **kw: _Resp(500))
+    monkeypatch.setattr(subs, "post_to_webhook", lambda url, target, **kw: _Resp(500))
     rendered = {"title": "t", "summary": "s", "link": "", "payload": {}, "killmail_id": None, "seq": None}
     subs.record_and_deliver(sub, rendered)
     sub.refresh_from_db()
@@ -368,13 +372,14 @@ def test_ssrf_guard_accepts_public_https():
 
 
 def test_ssrf_guard_blocks_at_send(django_user_model, monkeypatch):
-    """A subscription whose URL is private (bypassing the form) never reaches requests.post."""
+    """A subscription whose URL is private (bypassing the form) never reaches the network."""
     user, _ = _member(django_user_model, 2001)
     km = _km(1, role=VICTIM, victim_char=2001)
     _ev(km)
     _sub(user, ET.MY_LOSS, CH.WEBHOOK, webhook_url="https://10.9.9.9/hook")
     called = {"n": 0}
-    monkeypatch.setattr("requests.post", lambda *a, **k: called.__setitem__("n", called["n"] + 1))
+    monkeypatch.setattr(subs, "post_to_webhook",
+                        lambda *a, **k: called.__setitem__("n", called["n"] + 1))
     subs.dispatch_subscriptions()
     assert called["n"] == 0  # blocked before any network call
     sub = _only_sub()

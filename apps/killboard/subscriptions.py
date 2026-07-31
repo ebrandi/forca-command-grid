@@ -17,7 +17,8 @@ module owns everything downstream of that choice:
 
 * **Delivery** — per channel, best-effort and isolated (one bad send never breaks the sweep):
   ``notify`` rides Pingboard's per-user route, ``email`` uses Django's ``EMAIL_BACKEND``,
-  ``webhook`` is an SSRF-guarded HTTPS POST with one retry and a dead-letter auto-disable, and
+  ``webhook`` is an SSRF-guarded HTTPS POST (screened once, then dialled at exactly the address
+  that screening cleared) with one retry and a dead-letter auto-disable, and
   ``rss`` is pull-only (the stored feed row is the content, rendered at read time).
 
 * **RBAC** — a subscription only ever delivers what its owning member could see on the board:
@@ -30,8 +31,9 @@ import ipaddress
 import logging
 import socket
 import types
+from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlsplit, urlunsplit
 
 from django.conf import settings
 from django.utils import timezone, translation
@@ -89,12 +91,16 @@ def _batch() -> int:
 #  SSRF guard for user-supplied webhook targets
 # --------------------------------------------------------------------------- #
 # A user picks an arbitrary webhook URL, so an allowlist is impossible; instead we DENY any
-# target that resolves to a non-public address. Checked at SAVE (form clean) and again at
-# SEND (a hostname can be re-pointed at a private IP after it was saved — DNS rebinding), and
-# redirects are refused so a 3xx can't bounce the POST to an internal host. Residual note:
-# `requests` re-resolves the host at connect time, so a name that flips between the send-time
-# check and the socket connect is the one gap this can't fully close without pinning the
-# resolved IP; the save+send checks plus no-redirects stop the static and rebind-on-save cases.
+# target that resolves to a non-public address. The screen runs at SAVE (form clean) and again
+# at SEND (a hostname can be re-pointed at a private IP after it was saved), and redirects are
+# refused so a 3xx can't bounce the POST to an internal host.
+#
+# The send-time screen is BINDING, not advisory: :func:`resolve_webhook_target` resolves the
+# host ONCE and hands back the exact addresses it cleared, and the POST is then dialled at one
+# of those addresses (:func:`_pinned_adapter_class`). Before that pinning existed the check and
+# the connection each ran their own DNS lookup, so a host the attacker controls could answer
+# with a public address for the check and 127.0.0.1 / 169.254.169.254 microseconds later for
+# the socket — a textbook DNS-rebinding TOCTOU that the checks alone could not close.
 
 
 def _addr_blocked(ip_str: str) -> bool:
@@ -115,35 +121,170 @@ def _addr_blocked(ip_str: str) -> bool:
     )
 
 
-def webhook_url_error(url: str) -> str | None:
-    """A human error string when ``url`` is not a safe https webhook target, else ``None``.
+@dataclass(frozen=True)
+class WebhookTarget:
+    """A webhook URL that passed the SSRF screen, with the addresses it was cleared for.
 
-    Enforced identically on save and on send. Resolves every address the host maps to and
-    blocks the delivery if ANY of them is non-public, so a hostname with one private A record
-    can't smuggle a request onto the internal network.
+    ``addresses`` is the *whole* answer for ``host`` — every one of them was screened by
+    :func:`_addr_blocked`, so the sender may dial any of them (and only them).
+    """
+
+    host: str
+    port: int
+    addresses: tuple[str, ...]
+
+
+def resolve_webhook_target(url: str) -> tuple[str | None, WebhookTarget | None]:
+    """The one SSRF authority: ``(error message, cleared target)`` for a webhook URL.
+
+    Enforced identically on save and on send. Resolves the host ONCE and refuses the target if
+    ANY address it maps to is non-public, so a hostname with one private A record can't smuggle
+    a request onto the internal network. Exactly one of the two return slots is populated.
+
+    Returning the resolved addresses (rather than a bare verdict) is what lets the sender
+    connect to an address this function actually cleared — see :func:`_pinned_adapter_class`.
+    A second, independent lookup at connect time would re-open the rebinding window this
+    function exists to close.
     """
     if not url:
-        return gettext("A webhook URL is required.")
+        return gettext("A webhook URL is required."), None
     parsed = urlparse(url)
     if parsed.scheme != "https":
-        return gettext("The webhook URL must use https.")
+        return gettext("The webhook URL must use https."), None
     host = parsed.hostname
     if not host:
-        return gettext("The webhook URL has no host.")
+        return gettext("The webhook URL has no host."), None
     try:
         port = parsed.port or 443
     except ValueError:
-        return gettext("The webhook URL has an invalid port.")
+        return gettext("The webhook URL has an invalid port."), None
     try:
         infos = socket.getaddrinfo(host, port, proto=socket.IPPROTO_TCP)
     except socket.gaierror:
-        return gettext("The webhook host could not be resolved.")
+        return gettext("The webhook host could not be resolved."), None
     except (UnicodeError, ValueError):
-        return gettext("The webhook host is not valid.")
+        return gettext("The webhook host is not valid."), None
+    addresses: list[str] = []
     for info in infos:
-        if _addr_blocked(info[4][0]):
-            return gettext("The webhook host resolves to a private, loopback or reserved address.")
-    return None
+        addr = info[4][0]
+        if _addr_blocked(addr):
+            return gettext(
+                "The webhook host resolves to a private, loopback or reserved address."
+            ), None
+        if addr not in addresses:
+            addresses.append(addr)
+    if not addresses:
+        return gettext("The webhook host could not be resolved."), None
+    return None, WebhookTarget(host=host, port=port, addresses=tuple(addresses))
+
+
+def webhook_url_error(url: str) -> str | None:
+    """A human error string when ``url`` is not a safe https webhook target, else ``None``.
+
+    The verdict-only view of :func:`resolve_webhook_target`, for callers (the form clean) that
+    only need to accept or reject.
+    """
+    return resolve_webhook_target(url)[0]
+
+
+def _pinned_netloc(address: str, port: int | None) -> str:
+    """``address``/``port`` as a URL authority (IPv6 literals get their brackets back)."""
+    literal = f"[{address}]" if ":" in address else address
+    return f"{literal}:{port}" if port else literal
+
+
+_PINNED_ADAPTER: type | None = None
+
+
+def _pinned_adapter_class():
+    """The ``requests`` adapter that dials one pre-cleared address — built on first use.
+
+    It is defined inside a function so importing this module never imports ``requests`` (the
+    same call-time-import discipline the other delivery helpers follow), and cached because the
+    class is identical for every send.
+
+    What the adapter does, and why: ``requests`` resolves the request host itself at connect
+    time. Handing it the original URL would therefore perform a SECOND, unscreened DNS lookup,
+    and an attacker who controls DNS for their own webhook host can answer that second lookup
+    with 127.0.0.1 or 169.254.169.254 after answering the first one with a public address. So
+    the socket is dialled at an address :func:`resolve_webhook_target` actually cleared.
+
+    Only the socket destination changes. The ``Host`` header stays the original authority and
+    every TLS decision — SNI and the certificate hostname check — is still made against the DNS
+    name through urllib3's ``server_hostname``, so pinning can never degrade into a certificate
+    bypass: whatever answers on the pinned address must still present a certificate valid for
+    the webhook's own hostname.
+    """
+    global _PINNED_ADAPTER
+    if _PINNED_ADAPTER is not None:
+        return _PINNED_ADAPTER
+
+    from requests.adapters import HTTPAdapter
+    from requests.exceptions import InvalidURL
+
+    class _PinnedAddressAdapter(HTTPAdapter):
+        """Send only to ``target.host``, and only over a socket dialled at ``address``."""
+
+        def __init__(self, target: WebhookTarget, address: str):
+            self._target = target
+            self._address = address
+            super().__init__()  # defaults — identical transport settings to a plain post()
+
+        def init_poolmanager(self, *args, **kwargs):
+            # server_hostname rides in the pool kwargs down to urllib3's HTTPSConnection, which
+            # uses it for SNI *and* for the certificate hostname match — never the pinned IP.
+            kwargs["server_hostname"] = self._target.host
+            super().init_poolmanager(*args, **kwargs)
+
+        def proxy_manager_for(self, proxy, **proxy_kwargs):
+            # An outbound proxy tunnels (CONNECT) to the pinned address; the TLS identity must
+            # survive that path too, and proxy managers do not inherit the pool kwargs above.
+            proxy_kwargs.setdefault("server_hostname", self._target.host)
+            return super().proxy_manager_for(proxy, **proxy_kwargs)
+
+        def send(self, request, **kwargs):
+            parsed = urlsplit(request.url)
+            if (parsed.hostname or "").lower() != self._target.host.lower():
+                # Nothing but the cleared host may leave through this adapter — a redirect or a
+                # rewritten URL cannot borrow the pinned connection to reach somewhere else.
+                raise InvalidURL("webhook host does not match the cleared SSRF target")
+            request.headers["Host"] = parsed.netloc  # urllib3 keeps a caller-supplied Host
+            request.url = urlunsplit(
+                parsed._replace(netloc=_pinned_netloc(self._address, parsed.port))
+            )
+            return super().send(request, **kwargs)
+
+    _PINNED_ADAPTER = _PinnedAddressAdapter
+    return _PINNED_ADAPTER
+
+
+def post_to_webhook(url: str, target: WebhookTarget, *, json, timeout):
+    """POST ``json`` to ``url``, connecting only to addresses ``target`` was cleared for.
+
+    Tries the cleared addresses in resolver order and moves to the next one when a connection
+    can't be established — the same failover urllib3 gives a multi-record host, kept so a
+    dual-stack or multi-front-end webhook still works exactly as it did before pinning. A
+    server that *answers* ends the loop, whatever it answers. ``allow_redirects=False`` keeps a
+    3xx from moving the body to a host nothing has screened.
+    """
+    import requests
+
+    if not target.addresses:  # resolve_webhook_target never clears an empty answer
+        raise requests.ConnectionError("no cleared address for the webhook host")
+    last_exc: Exception = requests.ConnectionError("no attempt")
+    for address in target.addresses:
+        session = requests.Session()
+        session.mount("https://", _pinned_adapter_class()(target, address))
+        try:
+            return session.post(
+                url, json=json, timeout=timeout, allow_redirects=False,
+                headers={"User-Agent": "forca-killboard/1.0"},
+            )
+        except requests.ConnectionError as exc:  # unreachable address (incl. connect timeout)
+            last_exc = exc
+        finally:
+            session.close()
+    raise last_exc  # every cleared address refused the connection
 
 
 # --------------------------------------------------------------------------- #
@@ -345,7 +486,9 @@ def _site_host() -> str:
 def _deliver_webhook(sub: KillboardSubscription, item: KillboardSubscriptionEvent) -> tuple[bool, str]:
     import requests
 
-    err = webhook_url_error(sub.webhook_url)  # re-validate at send (DNS rebinding / SSRF)
+    # Re-screen at send AND keep the addresses it cleared: the POST is dialled at one of them,
+    # so the verdict binds the actual socket instead of a name that can change under it.
+    err, target = resolve_webhook_target(sub.webhook_url)
     if err:
         return False, str(err)
     body = {
@@ -360,10 +503,7 @@ def _deliver_webhook(sub: KillboardSubscription, item: KillboardSubscriptionEven
     last_err = "no attempt"
     for _attempt in range(1 + max(0, _webhook_retries())):
         try:
-            resp = requests.post(
-                sub.webhook_url, json=body, timeout=timeout, allow_redirects=False,
-                headers={"User-Agent": "forca-killboard/1.0"},
-            )
+            resp = post_to_webhook(sub.webhook_url, target, json=body, timeout=timeout)
         except requests.RequestException as exc:
             last_err = f"request failed: {type(exc).__name__}"
             continue
