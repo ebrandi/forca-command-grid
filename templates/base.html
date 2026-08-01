@@ -13,6 +13,13 @@
   pages never emit an og:image — see apps/killboard/views for the per-page privacy
   gate.{% endcomment %}
   {% block og_meta %}{% endblock %}
+  {% if home_corp_id %}
+  {# Browser icons: the home corp's in-game logo, derived and served same-origin (core/favicon.py). #}
+  <link rel="icon" href="{% url 'favicon' %}" sizes="48x48">
+  <link rel="icon" type="image/png" sizes="32x32" href="{% url 'favicon_32' %}">
+  <link rel="icon" type="image/png" sizes="16x16" href="{% url 'favicon_16' %}">
+  <link rel="apple-touch-icon" sizes="180x180" href="{% url 'apple_touch_icon' %}">
+  {% endif %}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">

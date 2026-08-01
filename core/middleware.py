@@ -7,6 +7,7 @@ import time
 from django.shortcuts import redirect
 
 from core import rbac
+from core.favicon import ICON_PATHS
 
 # Path prefixes an authenticated NON-member (a pilot whose character is not in
 # the home corporation, so they hold no `member` role — see
@@ -71,8 +72,37 @@ _RECRUIT_ALLOWED_PREFIXES = (
                      # URL, so allowlist the prefix (whole-segment match keeps /store etc. out).
     "/healthz",
     "/static/",
+    # Browser icon probes (config.views.favicon). A logged-in non-member's browser
+    # requests these with session cookies on every page, so they must pass the gate.
     "/favicon.ico",
+    "/favicon-32.png",
+    "/favicon-16.png",
+    "/apple-touch-icon.png",
+    "/apple-touch-icon-precomposed.png",
 )
+
+
+class IconVaryExemptMiddleware:
+    """Make the browser-icon responses' day-long client cache real by stripping
+    ``Vary`` (config.views.favicon sets ``Cache-Control: public, max-age=86400``).
+
+    The auth stack resolves ``request.user`` even for an anonymous icon probe (the
+    membership gate below asks ``is_authenticated``), which marks the session as
+    accessed, so SessionMiddleware stamps ``Vary: Cookie`` — and the locale
+    middleware adds ``Accept-Language``. Both would make every session/CSRF
+    rotation or language switch refetch icons that are byte-identical for every
+    caller (they derive from ONE corp id in settings — no Vary axis applies).
+    Must sit ABOVE SessionMiddleware so this response hook runs after its patch.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        if request.path in ICON_PATHS:
+            response.headers.pop("Vary", None)
+        return response
 
 
 def _path_allowed(path: str) -> bool:

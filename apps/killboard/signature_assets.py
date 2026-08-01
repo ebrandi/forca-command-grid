@@ -24,6 +24,7 @@ import json
 import logging
 import os
 import re
+import tempfile
 import time
 from pathlib import Path
 
@@ -346,13 +347,26 @@ _CONTENT_EXT = {"image/jpeg": "jpg", "image/jpg": "jpg", "image/png": "png"}
 
 
 def _atomic_write(path: str, data: bytes) -> None:
-    """Write ``data`` to ``path`` via a tmp file + ``os.replace`` so a reader never sees a
-    half-written image (identical to the type-image mirror's ``_write``)."""
+    """Write ``data`` to ``path`` via a UNIQUE tmp file + ``os.replace`` so a reader never
+    sees a half-written image AND concurrent writers of the same path cannot collide.
+    (The old fixed ``path + ".tmp"`` name let two racing writers share one tmp file: the
+    loser's ``os.replace`` raised FileNotFoundError after the winner consumed it, and its
+    still-open fd wrote into the already-published inode.) ``mkstemp`` creates the file
+    0600; published assets are read cross-user (nginx serves the signature banners off
+    the media volume), so restore a world-readable mode before the swap."""
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    tmp = path + ".tmp"
-    with open(tmp, "wb") as fh:
-        fh.write(data)
-    os.replace(tmp, path)
+    fd, tmp = tempfile.mkstemp(dir=os.path.dirname(path), suffix=".tmp")
+    try:
+        with os.fdopen(fd, "wb") as fh:
+            fh.write(data)
+        os.chmod(tmp, 0o644)
+        os.replace(tmp, path)
+    except OSError:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
 
 
 def _existing_asset(base: str) -> str | None:
@@ -386,6 +400,7 @@ def _fetch_image(category: str, entity_id: int, kind: str, size: int, base: str,
     base_url = getattr(settings, "EVE_IMAGE_SOURCE_URL", "https://images.evetech.net").rstrip("/")
     url = f"{base_url}/{category}/{entity_id}/{kind}?size={size}"
     headers = {"User-Agent": getattr(settings, "ESI_USER_AGENT", "forca-command-grid")}
+    start = time.monotonic()
     try:
         # allow_redirects=False makes the docstring's "no redirects to a caller-chosen host" true in
         # code: a 30x from the image host becomes a non-200 (→ None) instead of being transparently
@@ -404,6 +419,11 @@ def _fetch_image(category: str, entity_id: int, kind: str, size: int, base: str,
             return None
         buf = bytearray()
         for chunk in resp.iter_content(8192):
+            # ``timeout`` bounds each socket READ, not the transfer: a peer trickling a
+            # byte every few seconds could otherwise hold the caller (a web gthread on
+            # the favicon path) for hours. Enforce it as a wall-clock budget too.
+            if time.monotonic() - start > timeout:
+                return None
             if not chunk:
                 continue
             buf.extend(chunk)
@@ -416,7 +436,12 @@ def _fetch_image(category: str, entity_id: int, kind: str, size: int, base: str,
     if not buf:
         return None
     path = f"{base}.{ext}"
-    _atomic_write(path, bytes(buf))
+    try:
+        _atomic_write(path, bytes(buf))
+    except OSError:
+        # Unwritable mirror (ENOSPC, read-only volume) degrades to "no image" —
+        # callers fall back to a stale copy / monogram / 404, never a 500.
+        return None
     # If the content-type flipped since a prior fetch, drop the stale sibling so lookups are exact.
     sibling = f"{base}.{'png' if ext == 'jpg' else 'jpg'}"
     if os.path.exists(sibling):

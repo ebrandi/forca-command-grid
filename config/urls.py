@@ -14,6 +14,15 @@ urlpatterns = [
     path("", views.landing, name="landing"),
     path("features/", views.showcase, name="showcase"),
     path("healthz", views.healthz, name="healthz"),
+    # Browser icons — the home corp's in-game logo, derived and served same-origin
+    # (core/favicon.py). Root-level conventional names: browsers probe /favicon.ico
+    # and iOS probes the apple-touch names without ever reading the <link> tags.
+    path("favicon.ico", views.favicon, {"variant": "ico"}, name="favicon"),
+    path("favicon-32.png", views.favicon, {"variant": "png32"}, name="favicon_32"),
+    path("favicon-16.png", views.favicon, {"variant": "png16"}, name="favicon_16"),
+    path("apple-touch-icon.png", views.favicon, {"variant": "apple"}, name="apple_touch_icon"),
+    path("apple-touch-icon-precomposed.png", views.favicon, {"variant": "apple"},
+         name="apple_touch_icon_precomposed"),
     # Language selector POST target (set_language) + the JS message catalogue (jsi18n).
     path("i18n/", include("core.i18n.urls")),
     path("auth/eve/", include("apps.sso.urls")),

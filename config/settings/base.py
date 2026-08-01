@@ -84,6 +84,9 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    # Above SessionMiddleware ON PURPOSE: its response hook must run after Session's
+    # so the Vary header it strips from browser-icon responses stays stripped.
+    "core.middleware.IconVaryExemptMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -306,7 +309,9 @@ SPECTACULAR_SETTINGS = {
     # /api/docs/ blank. The inline init script gets its nonce via our template
     # override in templates/drf_spectacular/swagger_ui.html.
     "SWAGGER_UI_DIST": "SIDECAR",
-    "SWAGGER_UI_FAVICON_HREF": "SIDECAR",
+    # The API docs adopt the app favicon (the home corp's logo — config.views.favicon);
+    # an unconfigured install just 404s the probe, same as every other page.
+    "SWAGGER_UI_FAVICON_HREF": "/favicon.ico",
     "TITLE": "[FORCA] Killboard API",
     "DESCRIPTION": (
         "RBAC-scoped REST API over the corp killboard (KB-28). Read-only. "

@@ -68,3 +68,40 @@ def showcase(request: HttpRequest) -> HttpResponse:
         "system_count": len(categories),
         "private_features": PRIVATE_FEATURES,
     })
+
+
+# Browser icon content types per variant (core.favicon.VARIANT_FILES keys).
+_FAVICON_CONTENT_TYPES = {
+    "ico": "image/x-icon",
+    "png32": "image/png",
+    "png16": "image/png",
+    "apple": "image/png",
+}
+
+
+def favicon(request: HttpRequest, variant: str) -> HttpResponse:
+    """The home corporation's logo as the site favicon (core.favicon derives it).
+
+    404s when no home corp is configured or its logo is unavailable — the exact
+    pre-feature behaviour, with a short client cache so an unconfigured install
+    isn't hammered by every page load's icon probe yet shows icons within minutes
+    of the operator setting FORCA_HOME_CORP_ID. Hits are cached for a day: the
+    derivation refreshes on the logo mirror's 7-day cadence anyway, so a
+    day-stale browser copy costs nothing.
+    """
+    from core.favicon import favicon_path
+
+    path = favicon_path(variant)
+    if path:
+        try:
+            with open(path, "rb") as fh:
+                data = fh.read()
+        except OSError:
+            path = None
+    if not path:
+        response: HttpResponse = HttpResponse(status=404)
+        response["Cache-Control"] = "public, max-age=300"
+        return response
+    response = HttpResponse(data, content_type=_FAVICON_CONTENT_TYPES[variant])
+    response["Cache-Control"] = "public, max-age=86400"
+    return response
