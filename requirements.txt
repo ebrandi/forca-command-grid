@@ -13,9 +13,14 @@ whitenoise>=6.9,<7.0
 # Hardened XML parsing for the EVE-client fitting import (XXE / entity-expansion
 # / external-reference defence). Pure-Python, no C extension.
 defusedxml>=0.7.1,<0.8
-# 48.0.1 is the first release clear of the 44.0.0 advisories (CVE-2026-26007,
-# GHSA-537c-gmf6-5ccf, PYSEC-2026-35, PYSEC-2026-1284).
-cryptography>=49.0.0
+# 48.0.1 was the first release clear of the 44.0.0 advisories (CVE-2026-26007,
+# GHSA-537c-gmf6-5ccf, PYSEC-2026-35, PYSEC-2026-1284). 50.0.0 then became the first
+# release clear of the PKCS#7 EnvelopedData Bleichenbacher oracle introduced in 44.0.0
+# (PYSEC-2026-3552 / CVE-2026-69247 / GHSA-g6cj-pr64-35w5), where the decrypt path
+# distinguished failures by error text and by timing. We never call pkcs7_decrypt_*
+# — the only uses here are Fernet token encryption and RSA keygen in the OAuth tests —
+# so the floor moves to retire the finding rather than to close a reachable hole.
+cryptography>=50.0.0
 # 2.13 is the first release clear of the 2.10.0 advisories (PYSEC-2026-175..179).
 PyJWT>=2.13,<3.0
 requests>=2.34.2,<3.0
