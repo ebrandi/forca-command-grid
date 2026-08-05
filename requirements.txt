@@ -8,7 +8,7 @@ celery>=5.6.3,<5.7
 redis>=5.3,<6.0
 psycopg[binary]>=3.2,<4.0
 django-environ>=0.14.0,<0.15
-gunicorn>=23.0,<24.0          # 23.0 fixes HTTP request smuggling (CVE-2024-6827)
+gunicorn>=26.0.0,<27.0          # 23.0 fixes HTTP request smuggling (CVE-2024-6827)
 whitenoise>=6.9,<7.0
 # Hardened XML parsing for the EVE-client fitting import (XXE / entity-expansion
 # / external-reference defence). Pure-Python, no C extension.
