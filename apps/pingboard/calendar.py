@@ -92,6 +92,20 @@ def publish_event(*, source_system, source_object_id, event_type, title, start_a
             _auto_attach_reminders(event)
         return event
 
+    # An event a human cancelled carries a ``status`` lock (see ``cancel_event``): it is
+    # retracted for good, so the sweep neither republishes it nor records a fresh conflict on
+    # every one of its ticks.
+    if (existing.status == CalendarEventStatus.CANCELLED
+            and "status" in set(existing.locked_fields or [])):
+        return existing
+
+    # Captured before the field loop rewrites ``status``: an event coming back from a
+    # retraction (an op demoted to draft and re-published, a campaign un-restricted) must get
+    # its reminder ladder back. ``cancel_event`` parks every un-fired schedule at
+    # ``cancelled=True`` and nothing anywhere clears that flag, so without the reinstatement
+    # below a retract/republish round trip would silently retire the reminders for good.
+    was_cancelled = existing.status == CalendarEventStatus.CANCELLED
+
     locked = set(existing.locked_fields or [])
     changed, conflicts = {}, {}
     for field, newval in incoming.items():
@@ -105,6 +119,10 @@ def publish_event(*, source_system, source_object_id, event_type, title, start_a
         changed[field] = [_ser(oldval), _ser(newval)]
     existing.last_synced_at = now
     existing.save()
+    # Reinstate only if the event really did reopen — a human lock on ``status`` keeps it
+    # cancelled, and a reminder that already materialised into an alert is left alone.
+    if was_cancelled and existing.status in CALENDAR_OPEN_STATUSES:
+        existing.alert_schedules.filter(alert__isnull=True, cancelled=True).update(cancelled=False)
     if conflicts:
         _record_sync(source_system, sid, existing, "conflict", conflicts)
     elif changed:
@@ -153,9 +171,22 @@ def cancel_event(*, source_system, source_object_id, by=None) -> bool:
         return False
     event.status = CalendarEventStatus.CANCELLED
     event.last_synced_at = timezone.now()
-    event.save(update_fields=["status", "last_synced_at", "updated_at"])
+    fields = ["status", "last_synced_at", "updated_at"]
+    if by is not None:
+        # An officer cancelling from the Pingboard UI is a *human edit of ``status``*, so it
+        # locks the field exactly as ``edit_event`` locks the fields an officer touches.
+        # Without the lock the next sweep would republish the event (its source object still
+        # qualifies) and, because a republish reinstates parked reminders, silently undo the
+        # "and its pending reminders" the confirm dialog promises. An automated retraction
+        # (``by=None`` — a demoted op, a retired timer) stays reversible.
+        event.locked_fields = sorted(set(event.locked_fields or []) | {"status"})
+        fields.append("locked_fields")
+    event.save(update_fields=fields)
     event.alert_schedules.filter(alert__isnull=True, cancelled=False).update(cancelled=True)
     _record_sync(source_system, sid, event, "cancelled")
+    if by is not None:
+        audit_log(by, "pingboard.calendar.event_cancelled",
+                  target_type="pingboard_calendar_event", target_id=str(event.id))
     return True
 
 
@@ -334,6 +365,11 @@ def approve_alert(alert_id, *, by=None) -> bool:
     alert = Alert.objects.filter(pk=alert_id, status=AlertStatus.DRAFT).first()
     if alert is None:
         return False
+    # The event may have been retracted while its reminder sat waiting for approval (the op
+    # demoted to draft or cancelled). ``cancel_event`` cannot reach a schedule that already
+    # materialised into an alert, so this is the only place that catch can happen.
+    if alert.calendar_event_id and alert.calendar_event.status not in CALENDAR_OPEN_STATUSES:
+        return False
     alert.status = AlertStatus.QUEUED
     alert.approved_by = by
     alert.save(update_fields=["status", "approved_by", "updated_at"])
@@ -369,22 +405,37 @@ def sync_calendar_sources() -> dict:
     return out
 
 
+def publish_operation(op) -> bool:
+    """Publish-or-retract one operation's calendar mirror. Returns True if it was published.
+
+    The single authority for that decision, shared by the sweep below and the operations
+    app's write path (``operations.services.sync_operation_calendar``) so the two can never
+    disagree about an op's event type or about whether it belongs on the calendar at all.
+
+    An op that may not publish — DRAFT (unpublished), cancelled, or with no form-up time — is
+    *retracted*, not merely skipped: skipping would leave the mirror of an op that was demoted
+    back to draft sitting on every member's calendar, still firing its reminder ladder.
+    """
+    if op.target_at is None or not op.publishes_to_calendar:
+        cancel_event(source_system="operations", source_object_id=op.pk)
+        return False
+    etype = (CalendarEventType.EMERGENCY_FLEET
+             if op.type == "home_defence" else CalendarEventType.FLEET_OP)
+    status = (CalendarEventStatus.COMPLETED if op.status == "done"
+              else CalendarEventStatus.SYNCED)
+    publish_event(source_system="operations", source_object_id=op.pk, event_type=etype,
+                  title=op.name or f"Operation {op.pk}", start_at=op.target_at,
+                  status=status, visibility="member")
+    return True
+
+
 def _sync_operations() -> int:
     from apps.operations.models import Operation
 
     n = 0
     for op in Operation.objects.exclude(target_at__isnull=True):
-        if op.status in {"cancelled", "cancelled_auto"}:
-            cancel_event(source_system="operations", source_object_id=op.pk)
-            continue
-        etype = (CalendarEventType.EMERGENCY_FLEET
-                 if op.type == "home_defence" else CalendarEventType.FLEET_OP)
-        status = (CalendarEventStatus.COMPLETED if op.status == "done"
-                  else CalendarEventStatus.SYNCED)
-        publish_event(source_system="operations", source_object_id=op.pk, event_type=etype,
-                      title=op.name or f"Operation {op.pk}", start_at=op.target_at,
-                      status=status, visibility="member")
-        n += 1
+        if publish_operation(op):
+            n += 1
     return n
 
 

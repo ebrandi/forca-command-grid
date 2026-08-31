@@ -120,6 +120,19 @@ class Operation(TimeStampedModel):
     # Statuses that close an op to further planning / sign-ups.
     CLOSED_STATUSES = frozenset({"done", "cancelled", "cancelled_auto"})
 
+    # Statuses whose op may be mirrored onto the Pingboard calendar. A DRAFT op is
+    # *unpublished* — ``op_list`` hides it from everyone without PERM_FLEET_MANAGE — so
+    # mirroring one would put it on every member's calendar and arm its reminder ladder,
+    # pinging the corp about an op that was never announced. Deliberately NOT the inverse
+    # of CLOSED_STATUSES: a DONE op stays published (as a completed row), a cancelled or
+    # draft one does not.
+    CALENDAR_STATUSES = frozenset({"planned", "active", "done"})
+
+    @property
+    def publishes_to_calendar(self) -> bool:
+        """Whether this op belongs on the Pingboard calendar (and so may ping members)."""
+        return self.status in self.CALENDAR_STATUSES
+
     @property
     def is_upcoming(self) -> bool:
         return self.status in (self.Status.DRAFT, self.Status.PLANNED, self.Status.ACTIVE)

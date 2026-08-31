@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-31 17:15+0000\n"
+"POT-Creation-Date: 2026-08-31 21:27+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: ko machine-assisted draft\n"
@@ -14549,6 +14549,10 @@ msgid "Operation updated."
 msgstr "작전이 업데이트되었습니다."
 
 #: apps/operations/views.py
+msgid "Publish this operation first — prep tasks are visible to every member."
+msgstr "먼저 이 작전을 공개하세요. 준비 작업은 모든 멤버에게 표시됩니다."
+
+#: apps/operations/views.py
 #, python-format
 msgid "Prep %(doctrine)s for %(op)s"
 msgstr "%(op)s을(를) 위한 %(doctrine)s 준비"
@@ -14583,6 +14587,11 @@ msgstr "타이머가 추가되었습니다."
 #: apps/operations/views.py
 msgid "Timer removed."
 msgstr "타이머가 제거되었습니다."
+
+#: apps/operations/views.py
+msgid ""
+"Publish this operation before announcing it — members cannot see a draft."
+msgstr "공지하기 전에 이 작전을 공개하세요. 초안은 멤버에게 보이지 않습니다."
 
 #: apps/operations/views.py
 msgid "Pick at least one channel to announce to."
@@ -51802,6 +51811,10 @@ msgstr "계획 외 함선 투입"
 #: templates/operations/detail.html
 msgid "Update status"
 msgstr "상태 업데이트"
+
+#: templates/operations/detail.html
+msgid "Publish this operation to announce it."
+msgstr "공지하려면 이 작전을 공개하세요."
 
 #: templates/operations/detail.html
 msgid "Announce to"

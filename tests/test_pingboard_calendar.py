@@ -180,3 +180,137 @@ def test_sweep_respects_publishing_services():
 def test_sweep_disabled_globally():
     config.set("calendar", {"automated_sync_enabled": False})
     assert cal.sync_calendar_sources() == {"status": "disabled"}
+
+
+# --- draft operations never reach the calendar (the op-9 incident) ------------
+# Prod 2026-08-30: draft op 9 ("Mineração - Mercoxit") was swept onto the member calendar as
+# a SYNCED event, which armed the fleet_op reminder ladder (1440/60/15) and — with prod's
+# auto_alerts_mode="auto_all" — corp-broadcast three reminders for an op nobody had published.
+def _op(status, **kw):
+    from apps.operations.models import Operation
+
+    return Operation.objects.create(
+        name=kw.pop("name", "Mercoxit dig"), type=kw.pop("type", "mining"),
+        target_at=kw.pop("target_at", timezone.now() + dt.timedelta(hours=5)),
+        status=status, **kw)
+
+
+@pytest.mark.django_db
+def test_sweep_skips_draft_operation_entirely():
+    op = _op("draft")
+    assert cal.sync_calendar_sources()["operations"] == 0
+    assert not CalendarEvent.objects.filter(source_system="operations",
+                                            source_object_id=str(op.pk)).exists()
+    # no event ⇒ no reminder ladder ⇒ nothing for the materialiser to fire
+    assert cal.materialise_due_reminders() == {"fired": 0, "drafted": 0}
+
+
+@pytest.mark.django_db
+def test_sweep_retracts_event_when_op_demoted_to_draft():
+    """Demotion must retire the mirror, not just stop touching it — the prod row was already
+    published, so a fix that merely skipped drafts would have left event 30 live forever."""
+    op = _op("planned")
+    cal.sync_calendar_sources()
+    ev = CalendarEvent.objects.get(source_system="operations", source_object_id=str(op.pk))
+    assert ev.alert_schedules.count() == 3  # fleet_op ladder armed while it was legitimately planned
+    op.status = "draft"
+    op.save()
+    cal.sync_calendar_sources()
+    ev.refresh_from_db()
+    assert ev.status == CalendarEventStatus.CANCELLED
+    assert ev.alert_schedules.filter(cancelled=False).count() == 0
+    assert cal.materialise_due_reminders() == {"fired": 0, "drafted": 0}
+
+
+@pytest.mark.django_db
+def test_draft_to_planned_round_trip_restores_reminders():
+    """The retraction must be reversible: cancel_event parks un-fired schedules at
+    cancelled=True and nothing else ever clears it, so without the reinstatement in
+    publish_event a demote/promote round trip would silently kill the ladder for good."""
+    op = _op("planned")
+    cal.sync_calendar_sources()
+    ev = CalendarEvent.objects.get(source_system="operations", source_object_id=str(op.pk))
+    op.status = "draft"
+    op.save()
+    cal.sync_calendar_sources()
+    assert ev.alert_schedules.filter(cancelled=False).count() == 0
+    op.status = "planned"
+    op.save()
+    cal.sync_calendar_sources()
+    ev.refresh_from_db()
+    assert ev.status == CalendarEventStatus.SYNCED
+    assert ev.alert_schedules.filter(cancelled=False).count() == 3
+    assert CalendarEvent.objects.filter(source_system="operations",
+                                        source_object_id=str(op.pk)).count() == 1
+
+
+@pytest.mark.django_db
+def test_draft_operation_is_not_on_the_member_calendar(client, django_user_model):
+    """The mirror was visibility="member", and _visible_events filters only on visibility —
+    so the leak put the draft on every member's calendar page, not just in their DMs.
+
+    The pilot needs real ROLE_MEMBER standing: without a RoleAssignment they rank as PUBLIC and
+    MembershipGateMiddleware redirects /pingboard/ to onboarding, so the assertion would read an
+    empty 302 body and pass no matter what. The published op is the positive control proving the
+    page really is being rendered.
+    """
+    from apps.identity.models import RoleAssignment
+    from apps.sso.services import ensure_role
+    from core import rbac
+
+    draft = _op("draft", name="Secret staging")
+    _op("planned", name="Public roam")
+    cal.sync_calendar_sources()
+    user = django_user_model.objects.create_user(username="grunt", password="x")
+    RoleAssignment.objects.create(user=user, role=ensure_role(rbac.ROLE_MEMBER))
+    client.force_login(user)
+    resp = client.get("/pingboard/calendar/")
+    assert resp.status_code == 200
+    body = resp.content.decode()
+    assert "Public roam" in body       # the page is genuinely rendering the calendar…
+    assert "Secret staging" not in body  # …and the draft is absent from it
+    assert not CalendarEvent.objects.filter(source_system="operations",
+                                            source_object_id=str(draft.pk)).exists()
+
+
+@pytest.mark.django_db
+def test_approve_alert_refuses_a_retracted_event(character):
+    """A reminder that already materialised survives cancel_event (which only reaches
+    un-fired schedules), so approval is the last place a retraction can be caught."""
+    start = timezone.now() + dt.timedelta(minutes=30)
+    e = cal.publish_event(source_system="operations", source_object_id="1",
+                          event_type="fleet_op", title="Soon", start_at=start,
+                          auto_reminders=False)
+    cal.attach_alert_schedule(e, offset_minutes_before=60)
+    cal.materialise_due_reminders()
+    sched = e.alert_schedules.get()
+    cal.cancel_event(source_system="operations", source_object_id="1")
+    assert cal.approve_alert(sched.alert_id) is False
+    sched.alert.refresh_from_db()
+    assert sched.alert.status == AlertStatus.DRAFT
+
+
+@pytest.mark.django_db
+def test_officer_cancel_survives_the_sweep_and_stays_unarmed(character, django_user_model):
+    """An officer's "Cancel this event and its pending reminders?" must stick.
+
+    The op itself is still planned, so the 10-minute sweep republishes the event — and a
+    republish reinstates parked reminders. Without the ``status`` lock cancel_event takes on a
+    human cancellation, that reinstatement would re-arm the very ladder the officer killed and
+    (under prod's auto_alerts_mode="auto_all") broadcast it to the corp: the op-9 incident
+    again, through a different door.
+    """
+    config.set("calendar", {"auto_alerts_mode": "auto_all"})
+    officer = django_user_model.objects.create_user(username="fc", password="x")
+    op = _op("planned", target_at=timezone.now() + dt.timedelta(minutes=30))
+    cal.sync_calendar_sources()
+    ev = CalendarEvent.objects.get(source_system="operations", source_object_id=str(op.pk))
+    assert ev.alert_schedules.filter(cancelled=False).count() == 3
+
+    cal.cancel_event(source_system="operations", source_object_id=op.pk, by=officer)
+    cal.sync_calendar_sources()
+    ev.refresh_from_db()
+    assert ev.status == CalendarEventStatus.CANCELLED
+    assert "status" in ev.locked_fields
+    assert ev.alert_schedules.filter(cancelled=False).count() == 0
+    assert cal.materialise_due_reminders() == {"fired": 0, "drafted": 0}

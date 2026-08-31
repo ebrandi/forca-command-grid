@@ -1816,6 +1816,9 @@ def _linkable_operations(campaign):
     linked = set(campaign.linked_operations.values_list("operation_id", flat=True))
     return list(
         Operation.objects.filter(target_at__gte=cutoff)
+        # A draft op is unpublished; linking one would render its name on the campaign
+        # timeline for everyone who can view the campaign. Matches the killboard picker.
+        .exclude(status=Operation.Status.DRAFT)
         .exclude(pk__in=linked or [0])
         .order_by("-target_at", "-id")[:100]
     )

@@ -151,6 +151,16 @@ def notify_operation(op, *, title, body, source_suffix, channels=None, created_b
     try:
         from apps.pingboard import services as pingboard
 
+        from .models import Operation
+
+        # A draft op is unpublished — members cannot even open its detail page — so a corp-wide
+        # rally call about one is always a mistake, however it was triggered. Guarding the
+        # shared choke point rather than each caller means a future caller inherits the rule.
+        # ``None`` is already the documented "suppressed" return, so no caller changes.
+        if getattr(op, "status", None) == Operation.Status.DRAFT:
+            log.info("suppressed %s broadcast for draft operation %s",
+                     source_suffix, getattr(op, "pk", "?"))
+            return None
         # A fleet announcement is a corp-wide rally call — force the corp audience rather
         # than inheriting a category's officer/user routing default.
         return pingboard.emit_broadcast(
@@ -882,17 +892,21 @@ def _template_occurrences(template, now, horizon):
     return out
 
 
-def _publish_op_calendar(op) -> None:
-    """Best-effort: mirror a materialised op onto the Pingboard calendar."""
-    try:
-        from apps.pingboard.calendar import publish_event
+def sync_operation_calendar(op) -> None:
+    """Best-effort: mirror this op onto the Pingboard calendar, or retract the mirror when it
+    is not publishable (draft or cancelled).
 
-        publish_event(
-            source_system="operations", source_object_id=op.pk, event_type="fleet_op",
-            title=op.name, start_at=op.target_at,
-        )
-    except Exception:  # noqa: BLE001 — a calendar mirror must never block materialisation
-        log.exception("op calendar publish failed for op %s", getattr(op, "pk", "?"))
+    Delegates the decision to ``pingboard.calendar.publish_operation`` — the same authority the
+    10-minute sweep uses, so the two never disagree and an event type can't flip-flop between
+    them. Called on the *write* path so a status change lands immediately: reminders materialise
+    every minute, so waiting for the next sweep leaves a demoted op up to 10 minutes of pings.
+    """
+    try:
+        from apps.pingboard.calendar import publish_operation
+
+        publish_operation(op)
+    except Exception:  # noqa: BLE001 — a calendar mirror must never block the caller's action
+        log.exception("op calendar sync failed for op %s", getattr(op, "pk", "?"))
 
 
 def _spawn_from_template(template, occurrence):
@@ -923,7 +937,7 @@ def _spawn_from_template(template, occurrence):
             min_pilots=slot.min_pilots, max_pilots=(slot.max_pilots or None),
             priority=slot.priority, doctrine_fit_id=slot.doctrine_fit_id,
         )
-    _publish_op_calendar(op)
+    sync_operation_calendar(op)
     return op
 
 

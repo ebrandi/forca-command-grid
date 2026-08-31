@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-31 17:15+0000\n"
+"POT-Creation-Date: 2026-08-31 21:27+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: de machine-assisted draft\n"
@@ -14959,6 +14959,10 @@ msgid "Operation updated."
 msgstr "Operation aktualisiert."
 
 #: apps/operations/views.py
+msgid "Publish this operation first — prep tasks are visible to every member."
+msgstr "Veröffentliche diese Operation zuerst — Vorbereitungsaufgaben sind für jedes Mitglied sichtbar."
+
+#: apps/operations/views.py
 #, python-format
 msgid "Prep %(doctrine)s for %(op)s"
 msgstr "%(doctrine)s für %(op)s vorbereiten"
@@ -14995,6 +14999,11 @@ msgstr "Timer hinzugefügt."
 #: apps/operations/views.py
 msgid "Timer removed."
 msgstr "Timer entfernt."
+
+#: apps/operations/views.py
+msgid ""
+"Publish this operation before announcing it — members cannot see a draft."
+msgstr "Veröffentliche diese Operation, bevor du sie ankündigst — Mitglieder sehen einen Entwurf nicht."
 
 #: apps/operations/views.py
 msgid "Pick at least one channel to announce to."
@@ -53384,6 +53393,10 @@ msgstr "Außerplanmäßig gestellte Schiffe"
 #: templates/operations/detail.html
 msgid "Update status"
 msgstr "Status aktualisieren"
+
+#: templates/operations/detail.html
+msgid "Publish this operation to announce it."
+msgstr "Veröffentliche diese Operation, um sie anzukündigen."
 
 #: templates/operations/detail.html
 msgid "Announce to"

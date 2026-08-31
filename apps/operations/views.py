@@ -479,6 +479,9 @@ def _apply_op_form(request, op, slots):
         OperationDoctrine(operation=op, doctrine_id=did, target_count=target)
         for did, target in wanted.items()
     ])
+    # Keep the calendar mirror in step with the edit (including a status change made here),
+    # rather than leaving it to the next sweep.
+    services.sync_operation_calendar(op)
     return {}
 
 
@@ -527,6 +530,12 @@ def op_generate_tasks(request: HttpRequest, pk: int) -> HttpResponse:
     from apps.tasks.models import Task
 
     op = get_object_or_404(Operation, pk=pk)
+    # The generated tasks carry the op's name onto the member task board, so a draft op would
+    # leak there exactly as it leaked onto the calendar.
+    if op.status == Operation.Status.DRAFT:
+        messages.warning(request, gettext("Publish this operation first — prep tasks are "
+                                          "visible to every member."))
+        return redirect("operations:detail", pk=op.pk)
     readiness = services.operation_readiness(op)
     created = 0
     for gap in readiness["gaps"]:
@@ -707,6 +716,12 @@ def op_announce(request: HttpRequest, pk: int) -> HttpResponse:
     """Officer broadcasts this operation across the corp's armed channels (Discord,
     in-app, EVE-mail, Telegram, WhatsApp, Slack) via Pingboard."""
     op = get_object_or_404(Operation, pk=pk)
+    # Same rule op_create applies: a draft is invisible to members, so announcing one would
+    # rally the corp to an op whose link 404s for every recipient.
+    if op.status == Operation.Status.DRAFT:
+        messages.warning(request, gettext("Publish this operation before announcing it — "
+                                          "members cannot see a draft."))
+        return redirect("operations:detail", pk=op.pk)
     channels = _selected_channels(request)
     if channels is not None and not channels:
         messages.warning(request, gettext("Pick at least one channel to announce to."))
@@ -852,6 +867,10 @@ def op_status(request: HttpRequest, pk: int) -> HttpResponse:
             services.record_cancellation(op, OperationCancellation.Reason.MANUAL)
         op.status = to
         op.save(update_fields=["status", "updated_at"])
+        # Publish or retract the calendar mirror right now: demoting an op back to draft has
+        # to stop its member-visible row and its reminder ladder immediately, not at the next
+        # 10-minute sweep (reminders materialise every minute).
+        services.sync_operation_calendar(op)
         messages.success(request, gettext("Operation marked %(status)s.") % {"status": op.get_status_display()})
     return redirect("operations:detail", pk=op.pk)
 

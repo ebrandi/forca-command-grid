@@ -187,7 +187,8 @@
   <section class="panel overflow-hidden">
     <div class="flex items-center justify-between border-b border-line px-4 py-3">
       <h2 class="eyebrow">{% translate "Corp coverage" %}</h2>
-      {% if is_officer %}<form method="post" action="{% url 'operations:generate_tasks' op.pk %}">{% csrf_token %}<button class="btn-ghost !py-1 !text-xs">{% translate "Generate prep tasks" %}</button></form>{% endif %}
+      {# Not offered on a draft: the generated tasks carry the op's name onto the member task board. #}
+      {% if is_officer and op.status != "draft" %}<form method="post" action="{% url 'operations:generate_tasks' op.pk %}">{% csrf_token %}<button class="btn-ghost !py-1 !text-xs">{% translate "Generate prep tasks" %}</button></form>{% endif %}
     </div>
     <div class="divide-y divide-line/40">
       {% for row in readiness.rows %}
@@ -323,7 +324,11 @@
     </select>
     <button class="btn-ghost !py-1 !text-xs">{% translate "Update status" %}</button>
   </form>
-  {% if announce_channels %}
+  {# A draft is invisible to members: announcing it would link every recipient to a 404. #}
+  {# Set the status above first; op_announce refuses a draft either way. #}
+  {% if op.status == "draft" %}
+  <span class="text-xs text-faint ml-auto">{% translate "Publish this operation to announce it." %}</span>
+  {% elif announce_channels %}
   <form method="post" action="{% url 'operations:announce' op.pk %}" class="w-full mt-1 flex flex-wrap items-center gap-2 border-t border-line pt-3">
     {% csrf_token %}
     <span class="text-xs text-faint">{% translate "Announce to" %}</span>

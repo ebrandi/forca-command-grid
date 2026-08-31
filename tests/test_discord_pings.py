@@ -104,3 +104,40 @@ def test_op_announce_empty_selection_is_a_noop(client, django_user_model):
     resp = client.post(f"/operations/{op.pk}/announce/", {})
     assert resp.status_code == 302
     assert not Alert.objects.filter(source_service="operations").exists()
+
+
+@pytest.mark.django_db
+def test_op_announce_refuses_a_draft(client, django_user_model):
+    """A draft is invisible to members (op_list hides it), so a corp-wide rally call about one
+    would link every recipient to a 404. op_create already refused this; op_announce did not.
+
+    A channel is ticked deliberately: an empty POST short-circuits on the "pick a channel"
+    guard, so it would pass against the unfixed view and prove nothing.
+    """
+    from apps.pingboard.models import Alert
+
+    officer = _officer(django_user_model)
+    op = Operation.objects.create(name="Quiet staging", type=Operation.Type.ROAM,
+                                  status=Operation.Status.DRAFT)
+    client.force_login(officer)
+    resp = client.post(f"/operations/{op.pk}/announce/", {"channel_in_app": "on"})
+    assert resp.status_code == 302
+    assert not Alert.objects.filter(source_service="operations").exists()
+    # …and the same op announces normally once it is published.
+    op.status = Operation.Status.PLANNED
+    op.save()
+    client.post(f"/operations/{op.pk}/announce/", {"channel_in_app": "on"})
+    assert Alert.objects.filter(source_service="operations").count() == 1
+
+
+@pytest.mark.django_db
+def test_notify_operation_suppresses_drafts_at_the_choke_point(django_user_model):
+    """The guard lives on the shared helper, not just its callers, so a future caller
+    inherits it. ``None`` is already the documented suppressed/disabled return."""
+    from apps.operations import services
+    from apps.pingboard.models import Alert
+
+    op = Operation.objects.create(name="Quiet staging", type=Operation.Type.ROAM,
+                                  status=Operation.Status.DRAFT)
+    assert services.notify_operation(op, title="x", body="y", source_suffix="announce") is None
+    assert not Alert.objects.filter(source_service="operations").exists()
