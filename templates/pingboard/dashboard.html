@@ -46,6 +46,9 @@
     </ul>
   </section>
 
+  {# The ops desk (scheduled / failed / sync problems) is officer material; a pilot's #}
+  {# dashboard shows only what was actually sent to the corp or to them. #}
+  {% if is_officer %}
   <section class="panel p-5">
     <h2 class="eyebrow text-faint mb-3">{% translate "Scheduled alerts" %}</h2>
     <ul class="divide-y divide-line/50">
@@ -74,6 +77,7 @@
       {% if not failed and not failed_syncs %}<li class="py-3 text-sm text-faint">{% translate "All clear." %}</li>{% endif %}
     </ul>
   </section>
+  {% endif %}
 
   {% if urgent %}
   <section class="panel p-5 border-loss/40">

@@ -278,13 +278,18 @@ def retry_alert(alert_id: int, *, by=None, kinds: list[str] | None = None) -> di
     alert = Alert.objects.filter(pk=alert_id).first()
     if alert is None:
         return {"status": "missing"}
+    # Only a delivery that actually failed can be retried. The alert detail page offers the
+    # button for FAILED/PARTIAL alone, but the action endpoint accepted any id — and
+    # ``_enqueue`` below would have handed a DRAFT (awaiting approval) or a SCHEDULED
+    # (not yet due) alert straight to the dispatcher.
+    if alert.status not in (AlertStatus.FAILED, AlertStatus.PARTIAL):
+        return {"status": "not_retryable", "alert_status": alert.status}
     qs = alert.deliveries.filter(status=DeliveryStatus.FAILED)
     if kinds:
         qs = qs.filter(kind__in=kinds)
     n = qs.update(status=DeliveryStatus.PENDING, last_error="")
     alert.retry_count += 1
-    if alert.status in (AlertStatus.FAILED, AlertStatus.PARTIAL):
-        alert.status = AlertStatus.QUEUED
+    alert.status = AlertStatus.QUEUED
     alert.save(update_fields=["retry_count", "status", "updated_at"])
     audit_log(by, "pingboard.alert.retried", target_type="pingboard_alert",
               target_id=str(alert_id), metadata={"channels": kinds or "all"})

@@ -11,11 +11,13 @@ import logging
 
 from django.utils import timezone, translation
 
+from core.audit import audit_log
 from core.i18n import broadcast_locale
 
 from . import config
 from .models import (
     ALERT_TERMINAL,
+    CALENDAR_OPEN_STATUSES,
     Alert,
     AlertDelivery,
     AlertRecipient,
@@ -195,12 +197,48 @@ class AlertDispatcher:
             return {"status": "missing"}
         if alert.status in ALERT_TERMINAL:
             return {"status": alert.status, "noop": True}
+        # Only a QUEUED alert (or one caught mid-send by an ACKS_LATE redelivery) is
+        # deliverable. A DRAFT is still awaiting an officer's approval and a SCHEDULED one
+        # its fire time; every legitimate path moves an alert to QUEUED first (emit,
+        # approve_alert, the dispatch_due / retry sweeps), so anything else reaching here is
+        # a stray task and must not go out.
+        if alert.status not in (AlertStatus.QUEUED, AlertStatus.SENDING):
+            return {"status": alert.status, "noop": True}
 
         now = timezone.now()
         if alert.expires_at and alert.expires_at <= now:
             alert.status = AlertStatus.EXPIRED
             alert.save(update_fields=["status", "updated_at"])
             return {"status": AlertStatus.EXPIRED}
+
+        # A calendar reminder whose event is no longer published — the operation demoted to
+        # draft, an officer's cancel, a draft never published — is retracted here even
+        # though it was already queued. cancel_event only reaches schedules that have not
+        # materialised and approve_alert only the draft-until-approved path, so this is the
+        # last gate a queued or retrying reminder passes before every channel.
+        if alert.calendar_event_id is not None and (
+            alert.calendar_event.status not in CALENDAR_OPEN_STATUSES
+        ):
+            # A retry of an alert that already reached some channel keeps its honest
+            # PARTIAL record; only one that never went out anywhere becomes CANCELLED.
+            went_out = alert.deliveries.filter(status=DeliveryStatus.DELIVERED).exists()
+            alert.status = AlertStatus.PARTIAL if went_out else AlertStatus.CANCELLED
+            alert.save(update_fields=["status", "updated_at"])
+            alert.deliveries.filter(
+                status__in=[DeliveryStatus.PENDING, DeliveryStatus.RATE_LIMITED]
+            ).update(status=DeliveryStatus.SKIPPED, last_error="calendar event retracted")
+            # A FAILED leg would keep the retry sweep re-queueing this alert (attempts stay
+            # under the cap) and landing here every tick; park it, keeping its diagnostics.
+            for d in alert.deliveries.filter(status=DeliveryStatus.FAILED):
+                d.status = DeliveryStatus.SKIPPED
+                d.last_error = f"calendar event retracted (last failure: {d.last_error})"[:300]
+                d.save(update_fields=["status", "last_error", "updated_at"])
+            audit_log(None, "pingboard.alert.cancelled", target_type="pingboard_alert",
+                      target_id=str(alert.id),
+                      metadata={"reason": "calendar_event_retracted",
+                                "event_status": alert.calendar_event.status,
+                                "already_delivered": went_out})
+            return {"status": alert.status, "reason": "calendar_event_retracted"}
 
         gen = config.get("general")
         if not gen["enabled"]:

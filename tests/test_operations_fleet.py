@@ -588,3 +588,27 @@ def test_detail_shows_fc_as_pilot_link_not_username(client, django_user_model, s
     assert f'/killboard/pilot/{329791008}/' in html
     assert "Pilot329791008" in html
     assert "eve:329791008" not in html
+
+
+@pytest.mark.django_db
+def test_auto_cancel_retracts_the_calendar_mirror_immediately(django_user_model, sde):
+    """The mirror used to wait for the next 10-minute calendar sweep; the reminder ladder
+    materialises every minute, and the usual 60-minute RSVP offset lands the deadline on the
+    60-minute rung — a "forms up in 1h" corp reminder for an op this loop just cancelled."""
+    from apps.pingboard import calendar as pcal
+    from apps.pingboard import config as pconfig
+    from apps.pingboard.models import CalendarEvent, CalendarEventStatus
+
+    pconfig.set("calendar", {"auto_alerts_mode": "auto_all"})
+    op = _op(min_pilots=3, target_at=timezone.now() + timedelta(minutes=59),
+             rsvp_deadline=timezone.now() - timedelta(minutes=1), status=Operation.Status.PLANNED)
+    _slot(op, "Megathron", min_pilots=3)
+    pcal.sync_calendar_sources()
+    ev = CalendarEvent.objects.get(source_system="operations", source_object_id=str(op.pk))
+    assert ev.alert_schedules.filter(cancelled=False, offset_minutes_before=15).exists()
+
+    assert op.pk in services.auto_cancel_due()
+    ev.refresh_from_db()
+    assert ev.status == CalendarEventStatus.CANCELLED
+    assert ev.alert_schedules.filter(cancelled=False).count() == 0
+    assert pcal.materialise_due_reminders() == {"fired": 0, "drafted": 0}

@@ -313,3 +313,60 @@ def test_admin_automation_and_template_create(client, django_user_model):
         "category": "pvp_fleet", "default_priority": "high", "body": "Form up now.",
     })
     assert AlertTemplate.objects.filter(key="op-formup").exists()
+
+
+@pytest.mark.django_db
+def test_member_dashboard_shows_only_what_was_sent_to_them(client, django_user_model):
+    """The dashboard's "recent alerts" was the unscoped Alert table: a draft reminder for a
+    draft operation, an officer-only alert and a not-yet-fired scheduled alert all put their
+    titles in front of every pilot the moment they existed."""
+    from apps.pingboard.models import AlertRecipient
+
+    member = _user(django_user_model, 5001, rbac.ROLE_MEMBER)
+    services.emit_alert(category="pvp_fleet", title="Secret draft op", body="draft body",
+                        channels=["in_app"], dry_run=True)
+    services.emit_alert(category="pvp_fleet", title="Not yet fired", body="scheduled body",
+                        channels=["in_app"], scheduled_at=timezone.now() + dt.timedelta(hours=2))
+    officer_only = services.emit_alert(category="system", title="Officer eyes only", body="officer body",
+                                       channels=["in_app"], audience={"kind": "officer"})
+    officer_only.status = AlertStatus.SENT
+    officer_only.save()
+    corp = services.emit_alert(category="pvp_fleet", title="Corp roam sent", body="corp body",
+                               channels=["in_app"], audience={"kind": "corp"})
+    corp.status = AlertStatus.SENT
+    corp.save()
+    services.emit_alert(category="pvp_fleet", title="Queued not delivered", body="queued body",
+                        channels=["in_app"], audience={"kind": "corp"})  # stays QUEUED here
+    legacy = services.emit_alert(category="announcement", title="Legacy empty audience",
+                                 body="legacy body", channels=["discord"], audience={})
+    legacy.status = AlertStatus.SENT
+    legacy.save()
+    dm = services.emit_alert(category="logistics", title="Your haul arrived", body="haul body",
+                             channels=["in_app"], audience={"kind": "user", "id": member.id})
+    dm.status = AlertStatus.SENT
+    dm.save()
+    AlertRecipient.objects.create(alert=dm, kind="in_app", recipient_type="user",
+                                  recipient_ref=str(member.id), user=member)
+
+    client.force_login(member)
+    body = client.get(reverse("pingboard:dashboard")).content.decode()
+    assert "Corp roam sent" in body and "Your haul arrived" in body
+    assert "Legacy empty audience" in body       # the resolver reads {} as corp-wide; so must we
+    for hidden in ("Secret draft op", "Not yet fired", "Officer eyes only", "Queued not delivered"):
+        assert hidden not in body
+
+    client.force_login(_user(django_user_model, 5002, rbac.ROLE_OFFICER))
+    body = client.get(reverse("pingboard:dashboard")).content.decode()
+    assert "Secret draft op" in body and "Not yet fired" in body
+
+
+@pytest.mark.django_db
+def test_retry_action_refuses_a_draft_alert(client, django_user_model):
+    client.force_login(_user(django_user_model, 5002, rbac.ROLE_OFFICER))
+    draft = services.emit_alert(category="pvp_fleet", title="Draft", body="b",
+                                channels=["in_app"], dry_run=True)
+    resp = client.post(reverse("pingboard:alert_action", args=[draft.id, "retry"]), follow=True)
+    assert resp.status_code == 200
+    draft.refresh_from_db()
+    assert draft.status == AlertStatus.DRAFT
+    assert draft.deliveries.count() == 0

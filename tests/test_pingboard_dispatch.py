@@ -335,3 +335,91 @@ def test_broadcast_discord_symbols_preserved_after_retirement():
     assert callable(notify.broadcast_discord)
     assert callable(notify._post_discord)
     assert not hasattr(notify, "_legacy_broadcast_discord")  # legacy path removed
+
+
+# --- the dispatcher is the last gate ------------------------------------------
+@pytest.mark.django_db
+def test_dispatcher_refuses_a_draft_or_scheduled_alert(character, monkeypatch):
+    """Only a QUEUED alert may go out. A DRAFT (awaiting approval) or SCHEDULED (not due)
+    alert handed straight to the dispatcher — a stray task, a retry on the wrong alert —
+    must not reach any channel."""
+    from apps.pingboard.dispatch import AlertDispatcher
+
+    def _never(*args, **kwargs):
+        raise AssertionError("the webhook must not be hit")
+
+    monkeypatch.setattr("apps.pingboard.providers.discord.requests.post", _never)
+    prov = ChannelProvider(kind="discord", label="corp", enabled=True)
+    prov.secret = "https://discord.com/api/webhooks/1/tok"
+    prov.save()
+    draft = services.emit_alert(category="pvp_fleet", title="Draft op", body="b",
+                                channels=["in_app", "discord"], dry_run=True)
+    assert draft.status == AlertStatus.DRAFT
+    assert AlertDispatcher().dispatch(draft.id) == {"status": AlertStatus.DRAFT, "noop": True}
+    later = services.emit_alert(category="pvp_fleet", title="Later", body="later body",
+                                channels=["in_app", "discord"],
+                                scheduled_at=timezone.now() + dt.timedelta(hours=1))
+    assert AlertDispatcher().dispatch(later.id) == {"status": AlertStatus.SCHEDULED, "noop": True}
+    for a in (draft, later):
+        a.refresh_from_db()
+        assert a.deliveries.count() == 0 and a.recipients.count() == 0
+    assert draft.status == AlertStatus.DRAFT and later.status == AlertStatus.SCHEDULED
+
+
+@pytest.mark.django_db
+def test_retry_only_requeues_a_failed_alert(character):
+    draft = services.emit_alert(category="pvp_fleet", title="Draft op", body="b",
+                                channels=["in_app"], dry_run=True)
+    assert services.retry_alert(draft.id)["status"] == "not_retryable"
+    draft.refresh_from_db()
+    assert draft.status == AlertStatus.DRAFT
+    later = services.emit_alert(category="pvp_fleet", title="Later", body="later body",
+                                channels=["in_app"],
+                                scheduled_at=timezone.now() + dt.timedelta(hours=1))
+    assert services.retry_alert(later.id)["status"] == "not_retryable"
+    later.refresh_from_db()
+    assert later.status == AlertStatus.SCHEDULED
+
+
+@pytest.mark.django_db
+def test_dispatcher_retracts_a_queued_reminder_whose_event_closed(character, monkeypatch):
+    """A reminder already QUEUED (or retrying) when its event is retracted — the operation
+    demoted to draft between materialisation and delivery — is cancelled at the dispatcher,
+    the one gate every channel still passes through."""
+    from apps.pingboard import calendar as cal
+    from apps.pingboard.dispatch import AlertDispatcher
+    from apps.pingboard.models import CalendarEventStatus
+
+    posts = []
+    monkeypatch.setattr("apps.pingboard.providers.discord.requests.post",
+                        lambda url, json=None, timeout=None, allow_redirects=None:
+                        posts.append(json) or FakeResp(204))
+    prov = ChannelProvider(kind="discord", label="corp", enabled=True)
+    prov.secret = "https://discord.com/api/webhooks/1/tok"
+    prov.save()
+    e = cal.publish_event(source_system="operations", source_object_id="9",
+                          event_type="fleet_op", title="Mercoxit dig",
+                          start_at=timezone.now() + dt.timedelta(minutes=30))
+    reminder = services.emit_alert(category="pvp_fleet", title=e.title, body="⏰",
+                                   channels=["in_app", "discord"], calendar_event=e,
+                                   bypass_ratelimit=True)
+    # emit enqueued it; simulate the worker picking it up only after the op was demoted
+    reminder.refresh_from_db()
+    assert reminder.status == AlertStatus.QUEUED
+    cal.cancel_event(source_system="operations", source_object_id="9")
+    out = AlertDispatcher().dispatch(reminder.id)
+    assert out["status"] == AlertStatus.CANCELLED
+    reminder.refresh_from_db()
+    assert reminder.status == AlertStatus.CANCELLED
+    assert posts == []
+    assert not reminder.deliveries.filter(status=DeliveryStatus.DELIVERED).exists()
+    # a retry sweep must not resurrect it either
+    assert services.retry_failed_deliveries()["retried"] == 0
+    # positive control: the same reminder on a still-open event does go out
+    e.status = CalendarEventStatus.SYNCED
+    e.save()
+    live = services.emit_alert(category="pvp_fleet", title=e.title, body="⏰ again",
+                               channels=["discord"], calendar_event=e, bypass_ratelimit=True)
+    AlertDispatcher().dispatch(live.id)
+    live.refresh_from_db()
+    assert live.status == AlertStatus.SENT and len(posts) == 1

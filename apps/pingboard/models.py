@@ -494,10 +494,14 @@ class CalendarEventStatus(models.TextChoices):
     SYNC_CONFLICT = "sync_conflict", _("Sync conflict")
 
 
-# Calendar statuses that are open (a reminder may still fire).
+# Calendar statuses that are *published*: a reminder may fire, a drafted reminder may be
+# approved, a queued one may be delivered, and members may see the row. DRAFT is
+# deliberately absent — a draft event is unpublished, exactly like a draft operation, so
+# its reminder ladder stays silent (and the row hidden from members) until an officer
+# publishes it. With DRAFT in this set, a draft's reminders materialised like any other
+# and, under ``auto_alerts_mode="auto_all"``, went straight to Discord.
 CALENDAR_OPEN_STATUSES = {
-    CalendarEventStatus.DRAFT, CalendarEventStatus.SCHEDULED,
-    CalendarEventStatus.ACTIVE, CalendarEventStatus.SYNCED,
+    CalendarEventStatus.SCHEDULED, CalendarEventStatus.ACTIVE, CalendarEventStatus.SYNCED,
 }
 
 

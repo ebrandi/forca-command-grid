@@ -849,6 +849,11 @@ def auto_cancel_due(now=None) -> list[int]:
         record_cancellation(op, reason, confirmed=plan["total_confirmed"])
         op.status = Operation.Status.CANCELLED_AUTO
         op.save(update_fields=["status", "updated_at"])
+        # Retract the calendar mirror now, not at the next 10-minute sweep: the reminder
+        # ladder materialises every minute, and with the usual 60-minute RSVP offset the
+        # deadline coincides with the 60-minute rung — the corp would get "forms up in 1h"
+        # for an op this very loop just cancelled.
+        sync_operation_calendar(op)
         _announce_auto_cancel(op, plan)
         cancelled.append(op.pk)
     return cancelled

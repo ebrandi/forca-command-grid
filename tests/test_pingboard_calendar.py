@@ -23,7 +23,7 @@ def _latest_action(event):
 # --- publish / idempotency / conflict ----------------------------------------
 @pytest.mark.django_db
 def test_publish_creates_with_reminders_and_sync_record():
-    start = timezone.now() + dt.timedelta(hours=3)
+    start = timezone.now() + dt.timedelta(days=2)  # every rung of the ladder is still ahead
     e = cal.publish_event(source_system="operations", source_object_id="1",
                           event_type="fleet_op", title="Roam", start_at=start)
     assert e.pk and e.is_manual is False
@@ -191,7 +191,7 @@ def _op(status, **kw):
 
     return Operation.objects.create(
         name=kw.pop("name", "Mercoxit dig"), type=kw.pop("type", "mining"),
-        target_at=kw.pop("target_at", timezone.now() + dt.timedelta(hours=5)),
+        target_at=kw.pop("target_at", timezone.now() + dt.timedelta(days=2)),
         status=status, **kw)
 
 
@@ -305,7 +305,8 @@ def test_officer_cancel_survives_the_sweep_and_stays_unarmed(character, django_u
     op = _op("planned", target_at=timezone.now() + dt.timedelta(minutes=30))
     cal.sync_calendar_sources()
     ev = CalendarEvent.objects.get(source_system="operations", source_object_id=str(op.pk))
-    assert ev.alert_schedules.filter(cancelled=False).count() == 3
+    # 30 minutes out only the 15-minute rung is still ahead (the 24h/60m ones are skipped)
+    assert ev.alert_schedules.filter(cancelled=False).count() == 1
 
     cal.cancel_event(source_system="operations", source_object_id=op.pk, by=officer)
     cal.sync_calendar_sources()
@@ -314,3 +315,181 @@ def test_officer_cancel_survives_the_sweep_and_stays_unarmed(character, django_u
     assert "status" in ev.locked_fields
     assert ev.alert_schedules.filter(cancelled=False).count() == 0
     assert cal.materialise_due_reminders() == {"fired": 0, "drafted": 0}
+
+
+# --- a DRAFT calendar event is unpublished ------------------------------------
+def _draft_event(start=None, **kw):
+    return cal.create_manual_event(
+        title=kw.pop("title", "Secret staging"), event_type="fleet_op",
+        start_at=start or (timezone.now() + dt.timedelta(minutes=30)),
+        status=CalendarEventStatus.DRAFT, **kw)
+
+
+@pytest.mark.django_db
+def test_draft_event_reminders_never_materialise(character):
+    """A draft event's ladder must stay silent until it is published — under prod's
+    ``auto_all`` a materialised reminder goes straight to Discord, so DRAFT must not count
+    as an open status for the materialiser."""
+    config.set("calendar", {"auto_alerts_mode": "auto_all"})
+    e = _draft_event()
+    cal.attach_alert_schedule(e, offset_minutes_before=60)  # due right now
+    assert cal.materialise_due_reminders() == {"fired": 0, "drafted": 0}
+    assert e.alert_schedules.get().alert_id is None
+    # …and the schedule is still armed, so publishing the event fires it as usual
+    assert e.alert_schedules.get().cancelled is False
+    cal.edit_event(e, status=CalendarEventStatus.SCHEDULED)
+    assert cal.materialise_due_reminders() == {"fired": 1, "drafted": 0}
+
+
+@pytest.mark.django_db
+def test_approve_alert_refuses_a_reminder_whose_event_went_back_to_draft(character):
+    start = timezone.now() + dt.timedelta(minutes=30)
+    e = cal.create_manual_event(title="Soon", event_type="fleet_op", start_at=start)
+    cal.attach_alert_schedule(e, offset_minutes_before=60)
+    cal.materialise_due_reminders()
+    sched = e.alert_schedules.get()
+    cal.edit_event(e, status=CalendarEventStatus.DRAFT)
+    assert cal.approve_alert(sched.alert_id) is False
+    sched.alert.refresh_from_db()
+    assert sched.alert.status == AlertStatus.DRAFT
+
+
+@pytest.mark.django_db
+def test_draft_event_is_hidden_from_members_but_not_officers(client, django_user_model):
+    from apps.identity.models import RoleAssignment
+    from apps.sso.services import ensure_role
+    from core import rbac
+
+    draft = _draft_event(start=timezone.now() + dt.timedelta(hours=3))
+    cal.create_manual_event(title="Public roam", event_type="fleet_op",
+                            start_at=timezone.now() + dt.timedelta(hours=4))
+    from apps.sso.models import EveCharacter
+
+    member = django_user_model.objects.create_user(username="grunt", password="x")
+    RoleAssignment.objects.create(user=member, role=ensure_role(rbac.ROLE_MEMBER))
+    EveCharacter.objects.create(character_id=7101, user=member, name="Grunt", is_main=True,
+                                is_corp_member=True)
+    client.force_login(member)
+    for url in ("/pingboard/calendar/", "/pingboard/"):
+        body = client.get(url).content.decode()
+        assert "Public roam" in body          # positive control: the page really renders
+        assert "Secret staging" not in body
+    assert client.get(f"/pingboard/calendar/{draft.pk}/").status_code == 404
+
+    officer = django_user_model.objects.create_user(username="fc", password="x")
+    RoleAssignment.objects.create(user=officer, role=ensure_role(rbac.ROLE_OFFICER))
+    EveCharacter.objects.create(character_id=7102, user=officer, name="FC", is_main=True,
+                                is_corp_member=True)
+    client.force_login(officer)
+    assert "Secret staging" in client.get("/pingboard/calendar/").content.decode()
+    assert client.get(f"/pingboard/calendar/{draft.pk}/").status_code == 200
+
+
+# --- a late publish must not fire rungs whose moment has passed -----------------
+@pytest.mark.django_db
+def test_late_publish_attaches_only_the_rungs_still_ahead(character):
+    """An op saved as Scheduled three hours before form-up used to get the whole ladder, and
+    the materialiser fired the already-due 24h rung on its next tick — a corp-wide "in 24h"
+    post within a minute of Save, before the officer (who may have meant a draft) could react.
+    """
+    config.set("calendar", {"auto_alerts_mode": "auto_all"})
+    op = _op("planned", target_at=timezone.now() + dt.timedelta(hours=3))
+    cal.sync_calendar_sources()
+    ev = CalendarEvent.objects.get(source_system="operations", source_object_id=str(op.pk))
+    assert sorted(ev.alert_schedules.values_list("offset_minutes_before", flat=True)) == [15, 60]
+    assert cal.materialise_due_reminders() == {"fired": 0, "drafted": 0}
+    # …and a second sweep does not sneak the skipped rung back in
+    cal.sync_calendar_sources()
+    assert ev.alert_schedules.count() == 2
+
+
+@pytest.mark.django_db
+def test_republish_reinstates_only_the_rungs_still_ahead(character):
+    config.set("calendar", {"auto_alerts_mode": "auto_all"})
+    op = _op("planned")  # two days out: full ladder
+    cal.sync_calendar_sources()
+    ev = CalendarEvent.objects.get(source_system="operations", source_object_id=str(op.pk))
+    assert ev.alert_schedules.filter(cancelled=False).count() == 3
+    op.status = "draft"
+    op.save()
+    cal.sync_calendar_sources()
+    # time passes while the op sits in draft: form-up is now two hours away
+    op.target_at = timezone.now() + dt.timedelta(hours=2)
+    op.status = "planned"
+    op.save()
+    cal.sync_calendar_sources()
+    ev.refresh_from_db()
+    assert ev.status == CalendarEventStatus.SYNCED
+    armed = sorted(ev.alert_schedules.filter(cancelled=False)
+                   .values_list("offset_minutes_before", flat=True))
+    assert armed == [15, 60]                       # the 24h rung stays parked
+    assert cal.materialise_due_reminders() == {"fired": 0, "drafted": 0}
+
+
+@pytest.mark.django_db
+def test_reminder_body_states_the_time_actually_left(character):
+    """A rung firing late (attached by hand already due) must not say "in 24h" for an event
+    two hours away."""
+    start = timezone.now() + dt.timedelta(hours=2, minutes=1)
+    e = cal.create_manual_event(title="Roam", event_type="fleet_op", start_at=start)
+    sched = cal.attach_alert_schedule(e, offset_minutes_before=1440)
+    assert "(in 2h)" in cal._reminder_body(e, sched)
+    cal.materialise_due_reminders()
+    sched.refresh_from_db()
+    assert sched.alert is not None and "(in 2h)" in sched.alert.body
+
+
+@pytest.mark.django_db
+def test_sweep_retires_the_mirror_of_an_op_that_lost_its_form_up_or_was_deleted():
+    """The sweep visits only ops with a target_at, so a mirror whose op was deleted (or had
+    its form-up cleared outside the form) was never retracted and kept its ladder live."""
+    gone = _op("planned", name="Deleted later")
+    cleared = _op("planned", name="Cleared later")
+    kept = _op("planned", name="Still on")
+    cal.sync_calendar_sources()
+    assert CalendarEvent.objects.filter(source_system="operations",
+                                        status=CalendarEventStatus.SYNCED).count() == 3
+    gone_key, cleared_key = str(gone.pk), str(cleared.pk)
+    gone.delete()
+    cleared.target_at = None
+    cleared.save()
+    cal.sync_calendar_sources()
+    by_key = {e.source_object_id: e for e in CalendarEvent.objects.filter(source_system="operations")}
+    assert by_key[gone_key].status == CalendarEventStatus.CANCELLED
+    assert by_key[cleared_key].status == CalendarEventStatus.CANCELLED
+    assert by_key[str(kept.pk)].status == CalendarEventStatus.SYNCED
+    assert by_key[gone_key].alert_schedules.filter(cancelled=False).count() == 0
+    # a timer mirror is another source's business and must be left alone
+    assert cal.materialise_due_reminders() == {"fired": 0, "drafted": 0}
+
+
+@pytest.mark.django_db
+def test_postponed_op_regains_the_rung_it_was_published_too_late_for(character):
+    op = _op("planned", target_at=timezone.now() + dt.timedelta(hours=3))
+    cal.sync_calendar_sources()
+    ev = CalendarEvent.objects.get(source_system="operations", source_object_id=str(op.pk))
+    assert sorted(ev.alert_schedules.values_list("offset_minutes_before", flat=True)) == [15, 60]
+    op.target_at = timezone.now() + dt.timedelta(days=3)
+    op.save()
+    cal.sync_calendar_sources()
+    armed = sorted(ev.alert_schedules.filter(cancelled=False)
+                   .values_list("offset_minutes_before", flat=True))
+    assert armed == [15, 60, 1440]
+
+
+@pytest.mark.django_db
+def test_op_pulled_earlier_parks_the_rung_whose_moment_passed(character):
+    config.set("calendar", {"auto_alerts_mode": "auto_all"})
+    op = _op("planned")  # two days out: full ladder armed
+    cal.sync_calendar_sources()
+    ev = CalendarEvent.objects.get(source_system="operations", source_object_id=str(op.pk))
+    op.target_at = timezone.now() + dt.timedelta(hours=2)
+    op.save()
+    cal.sync_calendar_sources()
+    armed = sorted(ev.alert_schedules.filter(cancelled=False)
+                   .values_list("offset_minutes_before", flat=True))
+    assert armed == [15, 60]
+    assert cal.materialise_due_reminders() == {"fired": 0, "drafted": 0}
+    # a rung that already fired is never touched by a reschedule
+    fired = ev.alert_schedules.get(offset_minutes_before=1440)
+    assert fired.alert_id is None and fired.cancelled is True

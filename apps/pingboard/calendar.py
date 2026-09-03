@@ -119,10 +119,12 @@ def publish_event(*, source_system, source_object_id, event_type, title, start_a
         changed[field] = [_ser(oldval), _ser(newval)]
     existing.last_synced_at = now
     existing.save()
-    # Reinstate only if the event really did reopen — a human lock on ``status`` keeps it
-    # cancelled, and a reminder that already materialised into an alert is left alone.
-    if was_cancelled and existing.status in CALENDAR_OPEN_STATUSES:
-        existing.alert_schedules.filter(alert__isnull=True, cancelled=True).update(cancelled=False)
+    # The ladder follows the event: when it reopens after a retraction, or its start moves,
+    # the rungs are reconciled against the new start time — a human lock on ``status`` keeps
+    # a cancelled event cancelled (returned above), and a reminder that already materialised
+    # into an alert is left alone.
+    if existing.status in CALENDAR_OPEN_STATUSES and (was_cancelled or "start_at" in changed):
+        _reconcile_ladder(existing, now=now, auto_reminders=auto_reminders)
     if conflicts:
         _record_sync(source_system, sid, existing, "conflict", conflicts)
     elif changed:
@@ -270,13 +272,52 @@ def remove_alert_schedule(schedule_id, *, by=None) -> bool:
     return True
 
 
+def _rung_is_ahead(event, offset_minutes_before: int, now=None) -> bool:
+    """Whether a rung's fire time is still in the future for this event."""
+    now = now or timezone.now()
+    return event.start_at - dt.timedelta(minutes=offset_minutes_before) > now
+
+
 def _auto_attach_reminders(event) -> None:
+    """Attach the configured ladder — but only the rungs still ahead of us.
+
+    The materialiser fires any un-fired rung whose time has passed, so a rung attached
+    already-due fires on its very next tick. For an event published late — an operation
+    saved as *Scheduled* (the form default) three hours before form-up — that meant the
+    24-hour rung posted "in 24h" to the corp within a minute of the officer pressing Save,
+    before anything was announced (and before the officer, intending a draft, could demote
+    it). A rung whose moment has already gone is not a reminder; it is skipped, and the
+    rungs still ahead fire on schedule. A reminder an officer attaches by hand is untouched.
+    """
     offsets = (config.get("calendar").get("reminder_offsets_minutes") or {}).get(event.event_type, [])
+    now = timezone.now()
     for off in offsets:
+        if not _rung_is_ahead(event, off, now):
+            continue
         CalendarEventAlert.objects.get_or_create(
             event=event, offset_minutes_before=off, template=None,
             defaults={"channels": event.default_channels or [], "priority": AlertPriority.NORMAL},
         )
+
+
+def _reconcile_ladder(event, *, now=None, auto_reminders=True) -> None:
+    """Re-fit the un-fired rungs to the event's (new) start time.
+
+    Configured rungs that are now ahead are attached (a postponed op regains the 24h rung
+    it was published too late for); parked rungs now ahead are re-armed (an event brought
+    back from a retraction, or moved later after it had already started); armed rungs whose
+    moment has passed are parked (an event pulled earlier must not fire "in 24h" two hours
+    out on the next tick). Rungs that already materialised into an alert are never touched.
+    """
+    now = now or timezone.now()
+    if auto_reminders:
+        _auto_attach_reminders(event)
+    for sched in event.alert_schedules.filter(alert__isnull=True):
+        ahead = _rung_is_ahead(event, sched.offset_minutes_before, now)
+        if sched.cancelled == (not ahead):
+            continue
+        sched.cancelled = not ahead
+        sched.save(update_fields=["cancelled", "updated_at"])
 
 
 # --- reminder materialisation ------------------------------------------------
@@ -301,9 +342,13 @@ def _reminder_context(event) -> dict:
     }
 
 
-def _reminder_body(event, sched) -> str:
+def _reminder_body(event, sched, now=None) -> str:
     when = f"{event.start_at:%a %d %b %H:%M} EVE"
-    mins = sched.offset_minutes_before
+    # The lead is the time actually left, not the rung's nominal offset: a rung that fires
+    # late (attached by hand already due, reinstated after a retraction) must not announce
+    # "in 24h" for an event two hours away.
+    remaining = event.start_at - (now or timezone.now())
+    mins = max(1, int(remaining.total_seconds() // 60))
     lead = f"in {mins} min" if mins < 60 else f"in {mins // 60}h"
     return f"⏰ {event.title} — {when} ({lead})."
 
@@ -341,7 +386,7 @@ def materialise_due_reminders() -> dict:
         alert = services.emit_alert(
             category=_EVENT_CATEGORY.get(event.event_type, "system"),
             priority=sched.priority, title=event.title,
-            body=_reminder_body(event, sched),
+            body=_reminder_body(event, sched, now),
             template=(sched.template.key if sched.template else None),
             context=_reminder_context(event),
             audience=audience, channels=channels,
@@ -430,12 +475,31 @@ def publish_operation(op) -> bool:
 
 
 def _sync_operations() -> int:
+    """Publish-or-retract every operation's mirror, then retire mirrors with no source left.
+
+    An op that lost its form-up time (an admin or shell edit — the form path retracts on
+    its own) or was deleted outright is never visited by the loop below, so its mirror and
+    reminder ladder would otherwise stay live for good; ``_sync_timers`` retires orphaned
+    timer mirrors the same way.
+    """
     from apps.operations.models import Operation
 
     n = 0
     for op in Operation.objects.exclude(target_at__isnull=True):
         if publish_operation(op):
             n += 1
+    # Staleness comes from a FRESH read of the ops table, not from the loop above: an op
+    # created while the loop ran was published by the write path and must not be cancelled
+    # here for having missed the sweep's snapshot.
+    live_keys = {str(pk) for pk in Operation.objects.exclude(target_at__isnull=True)
+                 .values_list("pk", flat=True)}
+    stale = (CalendarEvent.objects
+             .filter(source_system="operations")
+             .exclude(source_object_id__startswith="timer:")
+             .exclude(status=CalendarEventStatus.CANCELLED)
+             .exclude(source_object_id__in=live_keys))
+    for ev in stale:
+        cancel_event(source_system="operations", source_object_id=ev.source_object_id)
     return n
 
 

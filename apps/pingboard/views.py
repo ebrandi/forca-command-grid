@@ -48,7 +48,9 @@ def _visible_events(user):
         return qs
     if rbac.has_role(user, rbac.ROLE_OFFICER):
         return qs.filter(visibility__in=["member", "officer"])
-    return qs.filter(visibility="member")
+    # A draft is unpublished: a pilot neither sees it on the calendar nor can open its page,
+    # the same way a draft operation is hidden from everyone without fleet-manage rights.
+    return qs.filter(visibility="member").exclude(status=CalendarEventStatus.DRAFT)
 
 
 def _can_see_event(user, event) -> bool:
@@ -59,23 +61,46 @@ def _can_see_event(user, event) -> bool:
 @login_required
 @feature_required("pingboard")
 def dashboard(request):
+    from django.db.models import Q
+
     now = timezone.now()
-    ctx = {
-        "recent": Alert.objects.order_by("-created_at")[:8],
-        "scheduled": Alert.objects.filter(status=AlertStatus.SCHEDULED).order_by("scheduled_at")[:8],
-        "failed": Alert.objects.filter(
+    is_officer = rbac.has_role(request.user, rbac.ROLE_OFFICER)
+    if is_officer:
+        recent = Alert.objects.order_by("-created_at")
+        scheduled = Alert.objects.filter(status=AlertStatus.SCHEDULED).order_by("scheduled_at")[:8]
+        failed = Alert.objects.filter(
             status__in=[AlertStatus.FAILED, AlertStatus.PARTIAL]
-        ).order_by("-created_at")[:8],
-        "urgent": Alert.objects.filter(
-            priority__in=[AlertPriority.URGENT, AlertPriority.EMERGENCY]
-        ).order_by("-created_at")[:8],
-        "upcoming": _visible_events(request.user).filter(start_at__gte=now).order_by("start_at")[:8],
-        "failed_syncs": CalendarSyncEvent.objects.filter(
+        ).order_by("-created_at")[:8]
+        failed_syncs = CalendarSyncEvent.objects.filter(
             action__in=["conflict", "failed"]
-        ).order_by("-created_at")[:8],
-        "is_officer": rbac.has_role(request.user, rbac.ROLE_OFFICER),
+        ).order_by("-created_at")[:8]
+    else:
+        # A pilot sees only what was actually sent to the corp or to them: drafts awaiting
+        # approval, scheduled alerts, officer/director-audience traffic and the failure desk
+        # are officer material. The unscoped list put a draft reminder's title (a draft
+        # operation's name) on every member's dashboard the moment it materialised.
+        # Delivered means delivered: QUEUED/SENDING are holds the dispatcher may still refuse
+        # (a reminder whose event was retracted is cancelled there), and a FAILED alert
+        # reached nobody. "Corp-wide" mirrors the resolver, which reads a missing/empty
+        # audience and the member shapes as the whole corporation.
+        recent = (
+            Alert.objects.filter(status__in=[AlertStatus.SENT, AlertStatus.PARTIAL])
+            .filter(Q(audience__kind__in=["corp", "member"]) | Q(audience={})
+                    | Q(audience__kind="role", audience__role="member")
+                    | Q(recipients__user=request.user))
+            .distinct().order_by("-created_at")
+        )
+        scheduled = failed = failed_syncs = []
+    ctx = {
+        "recent": recent[:8],
+        "scheduled": scheduled,
+        "failed": failed,
+        "urgent": recent.filter(priority__in=[AlertPriority.URGENT, AlertPriority.EMERGENCY])[:8],
+        "upcoming": _visible_events(request.user).filter(start_at__gte=now).order_by("start_at")[:8],
+        "failed_syncs": failed_syncs,
+        "is_officer": is_officer,
     }
-    if ctx["is_officer"]:
+    if is_officer:
         ctx["providers"] = ChannelProvider.objects.all()
     return render(request, "pingboard/dashboard.html", ctx)
 
@@ -285,8 +310,10 @@ def alert_detail(request, pk):
 def alert_action(request, pk, action):
     alert = get_object_or_404(Alert, pk=pk)
     if action == "retry":
-        services.retry_alert(alert.id, by=request.user)
-        messages.success(request, gettext("Failed channels re-queued."))
+        if services.retry_alert(alert.id, by=request.user).get("status") == "requeued":
+            messages.success(request, gettext("Failed channels re-queued."))
+        else:
+            messages.error(request, gettext("Only a failed alert can be retried."))
     elif action == "cancel":
         services.cancel_alert(alert.id, by=request.user)
         messages.success(request, gettext("Alert cancelled."))
