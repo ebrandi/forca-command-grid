@@ -52,6 +52,12 @@ def delete_user_data(user, actor=None, ip: str = "") -> dict:
         character.is_corp_member = False
         character.save(update_fields=["user", "is_main", "is_corp_member"])
 
+    # Public profiles are published BY the account; the characters are detached (not deleted)
+    # below, so the cascade never fires — take every publication down explicitly.
+    from apps.profiles.models import PublicProfile
+
+    summary["deleted"]["public_profiles"] = PublicProfile.objects.filter(owner=user).delete()[0]
+
     # Personal engagement data keyed by the account (not by character).
     from apps.pilots.models import ContributionEvent, PilotPreference
 

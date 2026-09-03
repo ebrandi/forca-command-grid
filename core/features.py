@@ -49,6 +49,9 @@ FEATURES: list[Feature] = [
     Feature("raffle", "Raffle contests",
             "Engagement raffles: pilots earn tickets from PVP and other activity, leaders run "
             "fair commit-reveal draws, and the dashboard drives ESI enrolment.", "Community & intel"),
+    Feature("public_profiles", "Public pilot profiles",
+            "Let pilots publish an unlisted, optionally password-protected and expiring page of "
+            "their own skills to share with people outside the corp.", "Community & intel"),
     Feature("doctrines", "Doctrines & Shipyard", "Doctrine library, readiness and ship ordering.", "Ships & doctrines"),
     Feature("tochas_lab", "Tocha's Lab",
             "The ship-fitting workspace: build, simulate, compare and price fits, apply "
@@ -298,6 +301,9 @@ _NAMESPACE_FEATURE = {
     "campaigns": "campaigns",
     # Capsuleer Path: the whole /capsuleer/ namespace maps to one feature (mounted in config/urls).
     "capsuleer": "capsuleer",
+    # Public pilot profiles: the management page AND every published /p/<token>/ link go dark
+    # together when leadership turns the feature off (mounted at the root in config/urls).
+    "profiles": "public_profiles",
     # recruitment: this also gates the candidate OAuth begin/callback, which is the
     # intended behaviour — when recruitment is off, no candidate should be able to link.
     "recruitment": "recruitment",

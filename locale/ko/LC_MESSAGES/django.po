@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-31 21:27+0000\n"
+"POT-Creation-Date: 2026-09-03 14:02+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: ko machine-assisted draft\n"
@@ -1660,7 +1660,8 @@ msgstr "마켓 스냅샷"
 #: templates/killboard/subscriptions.html
 #: templates/killboard/watchlist_detail.html
 #: templates/navigation/jump_routes.html templates/operations/templates.html
-#: templates/skills/detail.html templates/srp/settings.html
+#: templates/profiles/manage.html templates/skills/detail.html
+#: templates/srp/settings.html
 msgid "Delete"
 msgstr "삭제"
 
@@ -2218,9 +2219,9 @@ msgid "Coverage"
 msgstr "커버리지"
 
 #: apps/campaigns/models.py apps/corporation/finance_analytics.py
-#: apps/identity/views.py apps/killboard/analytics.py
-#: apps/killboard/fitrender.py apps/killboard/meta.py apps/mentorship/models.py
-#: apps/operations/models.py apps/raffle/models.py apps/readiness/models.py
+#: apps/killboard/analytics.py apps/killboard/fitrender.py
+#: apps/killboard/meta.py apps/mentorship/models.py apps/operations/models.py
+#: apps/raffle/models.py apps/readiness/models.py apps/skills/overview.py
 #: apps/stockpile/models.py apps/tasks/models.py
 #: templates/admin_audit/console/mentorship/tracks.html
 msgid "Other"
@@ -4582,7 +4583,7 @@ msgstr "Corp"
 #: apps/killboard/models.py apps/killboard/signature_stats.py
 #: templates/admin_audit/console/raffle_stats.html
 #: templates/capsuleer/paths.html templates/killboard/compare.html
-#: templates/killboard/pilot.html
+#: templates/killboard/pilot.html templates/profiles/public.html
 msgid "Solo"
 msgstr "솔로"
 
@@ -6781,6 +6782,7 @@ msgstr "얼라이언스 이름 %(count)s건을 조회했습니다."
 
 #: apps/corporation/compliance.py apps/onboarding/models.py
 #: templates/fitting/detail.html templates/identity/character.html
+#: templates/profiles/public.html
 msgid "Skills"
 msgstr "스킬"
 
@@ -6789,7 +6791,7 @@ msgid "Skill queue"
 msgstr "스킬 큐"
 
 #: apps/corporation/compliance.py apps/killboard/fitrender.py
-#: templates/fitting/detail.html
+#: templates/fitting/detail.html templates/profiles/public.html
 msgid "Implants"
 msgstr "임플란트"
 
@@ -7993,7 +7995,7 @@ msgstr ""
 "선호하는 UI 언어 (settings.LANGUAGES 코드, 예: 'pt-br'). 비워 두면 브라우저에"
 "서 자동 감지하고, 그다음 영어를 사용합니다."
 
-#: apps/identity/pilot_views.py
+#: apps/identity/pilot_views.py apps/profiles/views.py
 msgid "That pilot is not linked to your account."
 msgstr "해당 파일럿은 계정에 연결되어 있지 않습니다."
 
@@ -8100,11 +8102,6 @@ msgstr "SRP 지급이 완료되었습니다: %(ship)s에 대해 %(isk)s ISK."
 #: apps/identity/views.py
 msgid "Dashboard layout saved."
 msgstr "대시보드 레이아웃이 저장되었습니다."
-
-#: apps/identity/views.py
-#, python-format
-msgid "Skill %(id)s"
-msgstr "스킬 %(id)s"
 
 #: apps/impersonation/models.py
 msgid "Exited by director"
@@ -9227,13 +9224,14 @@ msgstr "솔로 킬"
 #: apps/killboard/models.py apps/killboard/ranks.py
 #: apps/killboard/signature_stats.py apps/killboard/signature_views.py
 #: templates/admin_audit/console/raffle_stats.html
+#: templates/profiles/public.html
 msgid "Final blows"
 msgstr "파이널 블로우"
 
 #: apps/killboard/models.py apps/killboard/signature_stats.py
 #: apps/killboard/signature_views.py templates/identity/dashboard.html
 #: templates/killboard/battle_report.html
-#: templates/killboard/campaign_detail.html
+#: templates/killboard/campaign_detail.html templates/profiles/public.html
 msgid "ISK destroyed"
 msgstr "파괴한 ISK"
 
@@ -9440,6 +9438,7 @@ msgstr "RSS / Atom 피드"
 #: templates/killboard/cv.html templates/killboard/list.html
 #: templates/killboard/meta.html templates/killboard/pilot.html
 #: templates/killboard/roster.html templates/killboard/stats.html
+#: templates/profiles/public.html
 msgid "Kills"
 msgstr "킬"
 
@@ -9916,6 +9915,7 @@ msgstr ""
 #: templates/killboard/cv.html templates/killboard/list.html
 #: templates/killboard/meta.html templates/killboard/pilot.html
 #: templates/killboard/roster.html templates/killboard/stats.html
+#: templates/profiles/public.html
 msgid "Losses"
 msgstr "손실"
 
@@ -9928,6 +9928,7 @@ msgstr "손실 ISK"
 #: apps/killboard/signature_stats.py templates/killboard/compare.html
 #: templates/killboard/cv.html templates/killboard/list.html
 #: templates/killboard/pilot.html templates/killboard/roster.html
+#: templates/profiles/public.html
 msgid "Efficiency"
 msgstr "효율"
 
@@ -9938,7 +9939,7 @@ msgstr "K/D"
 #: apps/killboard/signature_stats.py
 #: templates/admin_audit/console/combat_rewards.html
 #: templates/admin_audit/console/raffle_prizes.html templates/killboard/cv.html
-#: templates/raffle/me.html
+#: templates/profiles/public.html templates/raffle/me.html
 msgid "Rank"
 msgstr "순위"
 
@@ -11270,7 +11271,7 @@ msgstr "쉼표로 구분."
 msgid "Free-text interests, comma-separated."
 msgstr "자유 입력 관심사, 쉼표로 구분."
 
-#: apps/mentorship/forms.py
+#: apps/mentorship/forms.py apps/profiles/sections.py
 msgid "Ships you can fly"
 msgstr "조종할 수 있는 함선"
 
@@ -19221,6 +19222,156 @@ msgstr "배송이 기록되었습니다."
 msgid "%(n)s hauling task(s) created."
 msgstr "%(n)s 개의 운송 작업이 생성되었습니다."
 
+#: apps/profiles/sections.py templates/identity/character.html
+#: templates/profiles/public.html
+msgid "Trained skills"
+msgstr "훈련한 스킬"
+
+#: apps/profiles/sections.py
+msgid ""
+"Total skill points and every trained skill, grouped by category, with its "
+"level."
+msgstr ""
+"총 스킬 포인트와 훈련한 모든 스킬을 카테고리별로 레벨과 함께 표시합니다."
+
+#: apps/profiles/sections.py templates/profiles/public.html
+msgid "Training queue"
+msgstr "훈련 대기열"
+
+#: apps/profiles/sections.py
+msgid ""
+"What is training right now and what is queued after it, with finish times."
+msgstr ""
+"지금 훈련 중인 스킬과 그다음 대기 중인 스킬을 완료 시각과 함께 표시합니다."
+
+#: apps/profiles/sections.py
+msgid ""
+"Every hull whose skill requirements you already meet, worked out from your "
+"trained skills — not from what you own."
+msgstr ""
+"스킬 요구 조건을 이미 충족한 모든 함선. 보유한 함선이 아니라 훈련한 스킬로 계"
+"산합니다."
+
+#: apps/profiles/sections.py
+msgid "Attributes & implants"
+msgstr "속성 & 임플란트"
+
+#: apps/profiles/sections.py
+msgid "Your five attributes and the implants plugged into this clone."
+msgstr "다섯 가지 속성과 이 클론에 장착된 임플란트."
+
+#: apps/profiles/sections.py
+msgid "Implants reveal what is in your head. Share with care."
+msgstr "임플란트는 머릿속에 무엇이 있는지 드러냅니다. 신중하게 공개하세요."
+
+#: apps/profiles/sections.py templates/killboard/list.html
+#: templates/profiles/public.html
+msgid "Combat record"
+msgstr "전투 기록"
+
+#: apps/profiles/sections.py
+msgid ""
+"All-time kills, losses, ISK destroyed, rank and your most recent kills from "
+"the corp killboard. Killmails are public EVE facts."
+msgstr ""
+"군단 killboard 의 전체 기간 킬, 손실, 파괴한 ISK , 순위, 최근 킬. killmail "
+"은 공개된 EVE 의 사실입니다."
+
+#: apps/profiles/services.py
+msgid "Choose how long the link should stay live."
+msgstr "링크를 얼마나 오래 유지할지 선택하세요."
+
+#: apps/profiles/services.py
+msgid "Enter the expiry date as YYYY-MM-DD."
+msgstr "만료일을 YYYY-MM-DD 형식으로 입력하세요."
+
+#: apps/profiles/services.py
+msgid "The expiry date has to be in the future."
+msgstr "만료일은 미래여야 합니다."
+
+#: apps/profiles/services.py
+msgid "Pick a date within the next ten years, or choose “never”."
+msgstr "앞으로 10 년 이내의 날짜를 고르거나 “없음”을 선택하세요."
+
+#: apps/profiles/services.py
+msgid "Pick at least one thing to show on the page."
+msgstr "페이지에 표시할 항목을 하나 이상 선택하세요."
+
+#: apps/profiles/services.py
+#, python-format
+msgid "The password needs at least %(n)d characters."
+msgstr "비밀번호는 %(n)d 자 이상이어야 합니다."
+
+#: apps/profiles/services.py
+#, python-format
+msgid "The password can be at most %(n)d characters."
+msgstr "비밀번호는 최대 %(n)d 자까지 가능합니다."
+
+#: apps/profiles/services.py apps/skills/training.py
+msgid "Intelligence"
+msgstr "지능"
+
+#: apps/profiles/services.py apps/skills/training.py
+msgid "Memory"
+msgstr "기억력"
+
+#: apps/profiles/services.py apps/skills/training.py
+msgid "Perception"
+msgstr "지각력"
+
+#: apps/profiles/services.py apps/skills/training.py
+msgid "Willpower"
+msgstr "의지력"
+
+#: apps/profiles/services.py apps/skills/training.py
+msgid "Charisma"
+msgstr "카리스마"
+
+#: apps/profiles/services.py
+#, python-format
+msgid "Implant %(id)s"
+msgstr "임플란트 %(id)s"
+
+#: apps/profiles/views.py
+#, python-format
+msgid "Public profile for %(name)s is live."
+msgstr "%(name)s 의 공개 프로필이 공개되었습니다."
+
+#: apps/profiles/views.py
+#, python-format
+msgid "Public profile for %(name)s updated."
+msgstr "%(name)s 의 공개 프로필을 업데이트했습니다."
+
+#: apps/profiles/views.py
+#, python-format
+msgid "%(name)s has no public profile."
+msgstr "%(name)s 에게는 공개 프로필이 없습니다."
+
+#: apps/profiles/views.py
+msgid "New link generated — the old one no longer works."
+msgstr "새 링크를 생성했습니다 — 이전 링크는 더 이상 작동하지 않습니다."
+
+#: apps/profiles/views.py
+msgid "Public profile re-enabled."
+msgstr "공개 프로필을 다시 활성화했습니다."
+
+#: apps/profiles/views.py
+msgid "Public profile disabled — the link now shows nothing."
+msgstr ""
+"공개 프로필을 비활성화했습니다 — 링크를 열어도 아무것도 표시되지 않습니다."
+
+#: apps/profiles/views.py
+msgid "Public profile deleted."
+msgstr "공개 프로필을 삭제했습니다."
+
+#: apps/profiles/views.py
+msgid "Too many attempts. Wait a few minutes and try again."
+msgstr "시도 횟수가 너무 많습니다. 몇 분 뒤에 다시 시도하세요."
+
+#: apps/profiles/views.py
+msgid "That password is not right."
+msgstr "비밀번호가 올바르지 않습니다."
+
 #: apps/raffle/contest_templates.py
 msgid "1st prize"
 msgstr "1등 상품"
@@ -21960,25 +22111,10 @@ msgstr ""
 msgid "Fly %(doctrine)s"
 msgstr "%(doctrine)s 운용하기"
 
-#: apps/skills/training.py
-msgid "Charisma"
-msgstr "카리스마"
-
-#: apps/skills/training.py
-msgid "Intelligence"
-msgstr "지능"
-
-#: apps/skills/training.py
-msgid "Memory"
-msgstr "기억력"
-
-#: apps/skills/training.py
-msgid "Perception"
-msgstr "지각력"
-
-#: apps/skills/training.py
-msgid "Willpower"
-msgstr "의지력"
+#: apps/skills/overview.py
+#, python-format
+msgid "Skill %(id)s"
+msgstr "스킬 %(id)s"
 
 #: apps/skills/views.py
 #, python-format
@@ -24929,8 +25065,13 @@ msgid "My Tasks"
 msgstr "내 작업"
 
 #: templates/_nav.html templates/identity/linked_pilots.html
+#: templates/profiles/manage.html
 msgid "Linked Pilots"
 msgstr "연결된 파일럿"
+
+#: templates/_nav.html
+msgid "Public Profile"
+msgstr "공개 프로필"
 
 #: templates/_nav.html templates/identity/_my_losses.html
 #: templates/srp/my_srp.html
@@ -25974,7 +26115,7 @@ msgstr "랭크 생성"
 #: templates/killboard/campaign_form.html
 #: templates/killboard/signatures/form.html templates/operations/form.html
 #: templates/planetary/wizard.html templates/procurement/supplier_detail.html
-#: templates/tasks/detail.html
+#: templates/profiles/manage.html templates/tasks/detail.html
 msgid "Save changes"
 msgstr "변경 사항 저장"
 
@@ -29814,6 +29955,7 @@ msgstr "철회"
 #: templates/admin_audit/console/members.html
 #: templates/admin_audit/console/raffle_detail.html
 #: templates/campaigns/detail.html templates/fitting/detail.html
+#: templates/profiles/public.html
 msgid "Manage"
 msgstr "관리"
 
@@ -31188,7 +31330,7 @@ msgstr "꺼짐"
 #: templates/admin_audit/console/pingboard/templates.html
 #: templates/admin_audit/console/signatures_search.html
 #: templates/killboard/signatures/list.html
-#: templates/killboard/subscriptions.html
+#: templates/killboard/subscriptions.html templates/profiles/manage.html
 msgid "Disable"
 msgstr "비활성화"
 
@@ -31197,7 +31339,7 @@ msgstr "비활성화"
 #: templates/admin_audit/console/pingboard/templates.html
 #: templates/admin_audit/console/signatures_search.html
 #: templates/killboard/signatures/list.html
-#: templates/killboard/subscriptions.html
+#: templates/killboard/subscriptions.html templates/profiles/manage.html
 msgid "Enable"
 msgstr "활성화"
 
@@ -35010,6 +35152,7 @@ msgstr ""
 "를 바꿀 수 있습니다 — 새 아트는 앱과 함께 제공되므로 업로드할 것이 없습니다."
 
 #: templates/admin_audit/console/signatures_backgrounds.html
+#: templates/profiles/manage.html
 msgid "Preview"
 msgstr "미리보기"
 
@@ -37102,7 +37245,7 @@ msgstr "자동 새로 고침이 일시 중지됨; 수동 값이 유지됩니다"
 
 #: templates/campaigns/objective_detail.html templates/identity/character.html
 #: templates/industry/capacity.html templates/operations/templates.html
-#: templates/skills/plans.html
+#: templates/profiles/public.html templates/skills/plans.html
 msgid "paused"
 msgstr "일시 중지됨"
 
@@ -40189,6 +40332,7 @@ msgid "Roster"
 msgstr "로스터"
 
 #: templates/corporation/roster.html templates/identity/character.html
+#: templates/profiles/public.html
 #, python-format
 msgid "synced %(ago)s ago"
 msgstr "%(ago)s 전 동기화"
@@ -40387,7 +40531,8 @@ msgstr "피팅 복사 (EFT)"
 
 #: templates/doctrines/detail.html templates/doctrines/prep.html
 #: templates/identity/character.html templates/killboard/detail.html
-#: templates/killboard/signatures/list.html templates/skills/detail.html
+#: templates/killboard/signatures/list.html templates/profiles/manage.html
+#: templates/skills/detail.html
 msgid "Copied ✓"
 msgstr "복사됨 ✓"
 
@@ -42187,17 +42332,25 @@ msgstr "스킬 &amp; 훈련"
 msgid "Idle — not training"
 msgstr "유휴 — 훈련 안 함"
 
-#: templates/identity/character.html
+#: templates/identity/character.html templates/profiles/public.html
 msgid "Skill points"
 msgstr "스킬 포인트"
 
-#: templates/identity/character.html
+#: templates/identity/character.html templates/profiles/public.html
 msgid "At level V"
 msgstr "레벨 V"
 
 #: templates/identity/character.html templates/skills/plans.html
 msgid "Refresh from EVE"
 msgstr "EVE에서 새로고침"
+
+#: templates/identity/character.html templates/profiles/manage.html
+msgid "Public profile"
+msgstr "공개 프로필"
+
+#: templates/identity/character.html
+msgid "Share publicly…"
+msgstr "외부에 공개…"
 
 #: templates/identity/character.html
 msgid ""
@@ -42222,11 +42375,12 @@ msgstr "Doctrines 페이지에서 전체 분석 보기"
 msgid "In-game training queue"
 msgstr "게임 내 훈련 대기열"
 
-#: templates/identity/character.html templates/skills/plans.html
+#: templates/identity/character.html templates/profiles/public.html
+#: templates/skills/plans.html
 msgid "Now training"
 msgstr "현재 훈련 중"
 
-#: templates/identity/character.html
+#: templates/identity/character.html templates/profiles/public.html
 msgctxt "time remaining"
 msgid "left"
 msgstr "남음"
@@ -42314,15 +42468,11 @@ msgid "Build plan"
 msgstr "계획 만들기"
 
 #: templates/identity/character.html
-msgid "Trained skills"
-msgstr "훈련한 스킬"
-
-#: templates/identity/character.html
 #, python-format
 msgid "%(skill_count)s skills"
 msgstr "스킬 %(skill_count)s개"
 
-#: templates/identity/character.html
+#: templates/identity/character.html templates/profiles/public.html
 msgid "at V"
 msgstr "V 레벨"
 
@@ -42330,7 +42480,7 @@ msgstr "V 레벨"
 msgid "completing…"
 msgstr "완료 중…"
 
-#: templates/identity/character.html
+#: templates/identity/character.html templates/profiles/manage.html
 msgid "Copy failed"
 msgstr "복사 실패"
 
@@ -43119,6 +43269,27 @@ msgstr "유휴 큐 알림은"
 #: templates/identity/privacy.html
 msgid "Turn off"
 msgstr "끄기"
+
+#: templates/identity/privacy.html
+msgid "Sharing outside the corp"
+msgstr "군단 밖으로 공유하기"
+
+#: templates/identity/privacy.html
+msgid ""
+"Nothing about you is visible to anyone outside the corporation unless you "
+"publish a public profile yourself. A public profile is an unlisted, "
+"unguessable link for one pilot that shows only the sections you pick, "
+"expires when you say, and can require a password. You can disable or delete "
+"it at any time."
+msgstr ""
+"직접 공개 프로필을 게시하지 않는 한, 군단 밖의 누구도 당신에 관한 정보를 볼 "
+"수 없습니다. 공개 프로필은 파일럿 한 명을 위한, 목록에 오르지 않고 추측할 수"
+"도 없는 링크로, 선택한 섹션만 보여 주고, 지정한 날에 만료되며, 비밀번호를 요"
+"구할 수도 있습니다. 언제든지 비활성화하거나 삭제할 수 있습니다."
+
+#: templates/identity/privacy.html
+msgid "Manage public profile"
+msgstr "공개 프로필 관리"
 
 #: templates/identity/privacy.html
 msgid "What officers can see about you"
@@ -46235,10 +46406,6 @@ msgstr "손실 killmail id"
 #: templates/killboard/kotw.html
 msgid "Pin this loss"
 msgstr "이 손실 고정"
-
-#: templates/killboard/list.html
-msgid "Combat record"
-msgstr "전투 기록"
 
 #: templates/killboard/list.html
 msgid "Stats"
@@ -54070,6 +54237,301 @@ msgstr "리드 타임 (일)"
 msgid "No suppliers match."
 msgstr "일치하는 공급업체가 없습니다."
 
+#: templates/profiles/locked.html templates/profiles/public.html
+msgid "Pilot profile"
+msgstr "파일럿 프로필"
+
+#: templates/profiles/locked.html
+msgid "This profile is password protected"
+msgstr "이 프로필은 비밀번호로 보호되어 있습니다"
+
+#: templates/profiles/locked.html
+msgid ""
+"The pilot who shared this link set a password. Enter it to open the page."
+msgstr ""
+"이 링크를 공유한 파일럿이 비밀번호를 설정했습니다. 페이지를 열려면 입력하세"
+"요."
+
+#: templates/profiles/locked.html templates/profiles/manage.html
+msgid "Password"
+msgstr "비밀번호"
+
+#: templates/profiles/locked.html
+msgid "Open profile"
+msgstr "프로필 열기"
+
+#: templates/profiles/manage.html
+msgid "Share outside the corp"
+msgstr "군단 밖으로 공유"
+
+#: templates/profiles/manage.html
+msgid ""
+"Publish an unlisted page of a pilot's skills to show someone who is not in "
+"the corp — a recruiter, an FC, a friend. The link cannot be guessed, is "
+"never listed anywhere and is hidden from search engines, so only the people "
+"you send it to can open it. You choose what it shows, when it expires, and "
+"whether it needs a password."
+msgstr ""
+"파일럿의 스킬을 담은 비공개 목록 페이지를 게시해 군단 밖의 사람 — 리크루터, "
+"FC , 친구 — 에게 보여 줄 수 있습니다. 링크는 추측할 수 없고, 어디에도 목록으"
+"로 노출되지 않으며, 검색 엔진에서도 숨겨지므로 당신이 보낸 사람만 열 수 있습"
+"니다. 무엇을 보여 줄지, 언제 만료할지, 비밀번호가 필요한지는 당신이 정합니다."
+
+#: templates/profiles/manage.html
+msgid ""
+"Link a pilot first — a public profile is published for one pilot at a time."
+msgstr "먼저 파일럿을 연결하세요 — 공개 프로필은 파일럿 한 명씩 게시합니다."
+
+#: templates/profiles/manage.html
+msgctxt "public profile state"
+msgid "Live"
+msgstr "공개 중"
+
+#: templates/profiles/manage.html
+msgctxt "public profile state"
+msgid "Expired"
+msgstr "만료됨"
+
+#: templates/profiles/manage.html
+msgctxt "public profile state"
+msgid "Disabled"
+msgstr "비활성화됨"
+
+#: templates/profiles/manage.html
+msgctxt "public profile state"
+msgid "Not published"
+msgstr "미게시"
+
+#: templates/profiles/manage.html
+msgid "Your link"
+msgstr "내 링크"
+
+#: templates/profiles/manage.html
+msgid "Public profile link"
+msgstr "공개 프로필 링크"
+
+#: templates/profiles/manage.html
+msgid "Copy link"
+msgstr "링크 복사"
+
+#: templates/profiles/manage.html
+msgid "Expires"
+msgstr "만료"
+
+#: templates/profiles/manage.html
+msgctxt "profile expiry"
+msgid "never"
+msgstr "없음"
+
+#: templates/profiles/manage.html
+msgctxt "profile password"
+msgid "required"
+msgstr "필요"
+
+#: templates/profiles/manage.html
+msgctxt "profile password"
+msgid "none"
+msgstr "없음"
+
+#: templates/profiles/manage.html
+msgid "Views"
+msgstr "조회수"
+
+#: templates/profiles/manage.html
+#, python-format
+msgid "last %(ago)s ago"
+msgstr "마지막 %(ago)s 전"
+
+#: templates/profiles/manage.html
+msgid "Shows"
+msgstr "표시 항목"
+
+#: templates/profiles/manage.html
+msgid "Generate a new link? Anyone holding the old one loses access."
+msgstr "새 링크를 생성할까요? 이전 링크를 가진 사람은 접근할 수 없게 됩니다."
+
+#: templates/profiles/manage.html
+msgid "New link"
+msgstr "새 링크"
+
+#: templates/profiles/manage.html
+msgid "Delete this public profile? The link stops working immediately."
+msgstr "이 공개 프로필을 삭제할까요? 링크는 즉시 작동을 멈춥니다."
+
+#: templates/profiles/manage.html
+msgid "Change what the page shows"
+msgstr "페이지 표시 내용 변경"
+
+#: templates/profiles/manage.html
+msgid "Publish a public profile"
+msgstr "공개 프로필 게시"
+
+#: templates/profiles/manage.html
+msgid "What to show"
+msgstr "표시할 항목"
+
+#: templates/profiles/manage.html
+msgid ""
+"The page always shows the pilot's name, portrait and corporation. Everything "
+"else is your call. Doctrines, plans, readiness, contributions, assets and "
+"your other pilots are never shown."
+msgstr ""
+"페이지에는 항상 파일럿의 이름, 초상화, 군단이 표시됩니다. 나머지는 당신이 정"
+"합니다. doctrine , 계획, 준비도, 기여, 자산, 다른 연결된 파일럿은 절대 표시되"
+"지 않습니다."
+
+#: templates/profiles/manage.html
+msgid "Link expires"
+msgstr "링크 만료"
+
+#: templates/profiles/manage.html
+msgid "in 7 days"
+msgstr "7 일 후"
+
+#: templates/profiles/manage.html
+msgid "in 30 days"
+msgstr "30 일 후"
+
+#: templates/profiles/manage.html
+msgid "in 90 days"
+msgstr "90 일 후"
+
+#: templates/profiles/manage.html
+msgid "on a date I pick"
+msgstr "내가 고른 날짜에"
+
+#: templates/profiles/manage.html
+msgid "Expiry date (only for “on a date I pick”)"
+msgstr "만료 날짜(“내가 고른 날짜에”를 선택한 경우에만)"
+
+#: templates/profiles/manage.html
+msgid "The link works through the end of that day (UTC)."
+msgstr "링크는 그날이 끝날 때( UTC )까지 작동합니다."
+
+#: templates/profiles/manage.html
+msgid "New password (leave blank to keep the current one)"
+msgstr "새 비밀번호(현재 비밀번호를 유지하려면 비워 두세요)"
+
+#: templates/profiles/manage.html
+msgid "Password (optional)"
+msgstr "비밀번호(선택)"
+
+#: templates/profiles/manage.html
+msgid "Visitors must type this to open the page"
+msgstr "방문자는 페이지를 열려면 이것을 입력해야 합니다"
+
+#: templates/profiles/manage.html
+msgid "Remove the password"
+msgstr "비밀번호 제거"
+
+#: templates/profiles/manage.html
+msgid "A note for whoever opens the page (optional)"
+msgstr "페이지를 여는 사람에게 남길 메모(선택)"
+
+#: templates/profiles/manage.html
+msgid ""
+"e.g. Applying for your incursion community — EU timezone, mostly evenings."
+msgstr "예: 인커전 커뮤니티 가입 신청 — EU 시간대, 주로 저녁."
+
+#: templates/profiles/manage.html
+msgid ""
+"Skills come from the last EVE sync. Visitors see exactly what you see on My "
+"Skills & Training."
+msgstr ""
+"스킬은 마지막 EVE 동기화 기준입니다. 방문자는 당신이 “내 스킬 & 훈련”에서 보"
+"는 것과 똑같은 내용을 봅니다."
+
+#: templates/profiles/manage.html
+msgid "Publish"
+msgstr "게시"
+
+#: templates/profiles/public.html
+msgid ""
+"You are viewing your own public profile. This is exactly what a visitor with "
+"the link sees — you skip the password, and your own visits are not counted."
+msgstr ""
+"지금 보고 있는 것은 당신의 공개 프로필입니다. 링크를 가진 방문자에게 정확히 "
+"이렇게 보입니다 — 당신은 비밀번호를 건너뛰며, 본인의 조회는 집계되지 않습니"
+"다."
+
+#: templates/profiles/public.html
+#, python-format
+msgid "A note from %(name)s"
+msgstr "%(name)s 의 메모"
+
+#: templates/profiles/public.html
+msgid "No skills have been synced for this pilot yet."
+msgstr "이 파일럿의 스킬이 아직 동기화되지 않았습니다."
+
+#: templates/profiles/public.html
+msgid "The training queue is empty."
+msgstr "훈련 대기열이 비어 있습니다."
+
+#: templates/profiles/public.html
+msgid "No training queue has been synced for this pilot yet."
+msgstr "이 파일럿의 훈련 대기열이 아직 동기화되지 않았습니다."
+
+#: templates/profiles/public.html
+msgid "Ships this pilot can fly"
+msgstr "이 파일럿이 탈 수 있는 함선"
+
+#: templates/profiles/public.html
+msgid "from trained skills, not from hangar contents"
+msgstr "훈련한 스킬 기준이며, 격납고 내용물 기준이 아닙니다"
+
+#: templates/profiles/public.html
+msgid "Nothing to show yet — skills have not been synced for this pilot."
+msgstr ""
+"아직 표시할 내용이 없습니다 — 이 파일럿의 스킬이 동기화되지 않았습니다."
+
+#: templates/profiles/public.html
+msgid "Attributes &amp; implants"
+msgstr "속성 &amp; 임플란트"
+
+#: templates/profiles/public.html
+msgid "No implants in this clone."
+msgstr "이 클론에는 임플란트가 없습니다."
+
+#: templates/profiles/public.html
+msgid "Attributes have not been synced for this pilot yet."
+msgstr "이 파일럿의 속성이 아직 동기화되지 않았습니다."
+
+#: templates/profiles/public.html
+msgid "all time, from public killmails"
+msgstr "전체 기간, 공개된 killmail 기준"
+
+#: templates/profiles/public.html
+msgid "Recent kills"
+msgstr "최근 킬"
+
+#: templates/profiles/public.html
+msgid "No PvP record on the corp killboard yet."
+msgstr "군단 killboard 에 아직 PvP 기록이 없습니다."
+
+#: templates/profiles/public.html
+msgid ""
+"An unlisted page shared by its pilot. It is not indexed and may expire or be "
+"withdrawn at any time."
+msgstr ""
+"파일럿 본인이 공유한 비공개 목록 페이지입니다. 검색 엔진에 색인되지 않으며 언"
+"제든 만료되거나 철회될 수 있습니다."
+
+#: templates/profiles/unavailable.html
+msgid "Profile not available"
+msgstr "프로필을 사용할 수 없음"
+
+#: templates/profiles/unavailable.html
+msgid "This profile link is not available"
+msgstr "이 프로필 링크는 사용할 수 없습니다"
+
+#: templates/profiles/unavailable.html
+msgid ""
+"It may have expired, been withdrawn by its pilot, or never existed. Ask the "
+"pilot for a fresh link."
+msgstr ""
+"만료되었거나, 파일럿이 철회했거나, 처음부터 존재하지 않았을 수 있습니다. 파일"
+"럿에게 새 링크를 요청하세요."
+
 #: templates/raffle/archive.html
 msgid "Raffle archive"
 msgstr "래플 아카이브"
@@ -54796,9 +55258,7 @@ msgid "Every ticket I earned"
 msgstr "내가 획득한 모든 티켓"
 
 #: templates/raffle/tickets.html
-#, fuzzy, python-format
-#| msgid "%(n)s event"
-#| msgid_plural "%(n)s events"
+#, python-format
 msgid "%(n)s award event"
 msgid_plural "%(n)s award events"
 msgstr[0] "지급 이벤트 %(n)s건"

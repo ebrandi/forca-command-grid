@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-31 21:27+0000\n"
+"POT-Creation-Date: 2026-09-03 14:02+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: ru machine-assisted draft\n"
@@ -1688,7 +1688,8 @@ msgstr "Снимок рынка"
 #: templates/killboard/subscriptions.html
 #: templates/killboard/watchlist_detail.html
 #: templates/navigation/jump_routes.html templates/operations/templates.html
-#: templates/skills/detail.html templates/srp/settings.html
+#: templates/profiles/manage.html templates/skills/detail.html
+#: templates/srp/settings.html
 msgid "Delete"
 msgstr "Удалить"
 
@@ -2257,9 +2258,9 @@ msgid "Coverage"
 msgstr "Покрытие"
 
 #: apps/campaigns/models.py apps/corporation/finance_analytics.py
-#: apps/identity/views.py apps/killboard/analytics.py
-#: apps/killboard/fitrender.py apps/killboard/meta.py apps/mentorship/models.py
-#: apps/operations/models.py apps/raffle/models.py apps/readiness/models.py
+#: apps/killboard/analytics.py apps/killboard/fitrender.py
+#: apps/killboard/meta.py apps/mentorship/models.py apps/operations/models.py
+#: apps/raffle/models.py apps/readiness/models.py apps/skills/overview.py
 #: apps/stockpile/models.py apps/tasks/models.py
 #: templates/admin_audit/console/mentorship/tracks.html
 msgid "Other"
@@ -4668,7 +4669,7 @@ msgstr "Корп"
 #: apps/killboard/models.py apps/killboard/signature_stats.py
 #: templates/admin_audit/console/raffle_stats.html
 #: templates/capsuleer/paths.html templates/killboard/compare.html
-#: templates/killboard/pilot.html
+#: templates/killboard/pilot.html templates/profiles/public.html
 msgid "Solo"
 msgstr "Соло"
 
@@ -6914,6 +6915,7 @@ msgstr "Определено названий альянсов: %(count)s."
 
 #: apps/corporation/compliance.py apps/onboarding/models.py
 #: templates/fitting/detail.html templates/identity/character.html
+#: templates/profiles/public.html
 msgid "Skills"
 msgstr "Навыки"
 
@@ -6922,7 +6924,7 @@ msgid "Skill queue"
 msgstr "Очередь навыков"
 
 #: apps/corporation/compliance.py apps/killboard/fitrender.py
-#: templates/fitting/detail.html
+#: templates/fitting/detail.html templates/profiles/public.html
 msgid "Implants"
 msgstr "Импланты"
 
@@ -8140,7 +8142,7 @@ msgstr ""
 "Предпочитаемый язык интерфейса (код из settings.LANGUAGES, например 'pt-"
 "br'); пусто — автоопределение по браузеру, затем английский."
 
-#: apps/identity/pilot_views.py
+#: apps/identity/pilot_views.py apps/profiles/views.py
 msgid "That pilot is not linked to your account."
 msgstr "Этот пилот не привязан к вашему аккаунту."
 
@@ -8252,11 +8254,6 @@ msgstr "Выплата SRP поступила: %(isk)s ISK за ваш %(ship)s.
 #: apps/identity/views.py
 msgid "Dashboard layout saved."
 msgstr "Макет панели сохранён."
-
-#: apps/identity/views.py
-#, python-format
-msgid "Skill %(id)s"
-msgstr "Навык %(id)s"
 
 #: apps/impersonation/models.py
 msgid "Exited by director"
@@ -9399,13 +9396,14 @@ msgstr "Соло-киллы"
 #: apps/killboard/models.py apps/killboard/ranks.py
 #: apps/killboard/signature_stats.py apps/killboard/signature_views.py
 #: templates/admin_audit/console/raffle_stats.html
+#: templates/profiles/public.html
 msgid "Final blows"
 msgstr "Финальные удары"
 
 #: apps/killboard/models.py apps/killboard/signature_stats.py
 #: apps/killboard/signature_views.py templates/identity/dashboard.html
 #: templates/killboard/battle_report.html
-#: templates/killboard/campaign_detail.html
+#: templates/killboard/campaign_detail.html templates/profiles/public.html
 msgid "ISK destroyed"
 msgstr "Уничтожено ISK"
 
@@ -9629,6 +9627,7 @@ msgstr "Лента RSS / Atom"
 #: templates/killboard/cv.html templates/killboard/list.html
 #: templates/killboard/meta.html templates/killboard/pilot.html
 #: templates/killboard/roster.html templates/killboard/stats.html
+#: templates/profiles/public.html
 msgid "Kills"
 msgstr "Убийства"
 
@@ -10106,6 +10105,7 @@ msgstr ""
 #: templates/killboard/cv.html templates/killboard/list.html
 #: templates/killboard/meta.html templates/killboard/pilot.html
 #: templates/killboard/roster.html templates/killboard/stats.html
+#: templates/profiles/public.html
 msgid "Losses"
 msgstr "Потери"
 
@@ -10118,6 +10118,7 @@ msgstr "Потеряно ISK"
 #: apps/killboard/signature_stats.py templates/killboard/compare.html
 #: templates/killboard/cv.html templates/killboard/list.html
 #: templates/killboard/pilot.html templates/killboard/roster.html
+#: templates/profiles/public.html
 msgid "Efficiency"
 msgstr "Эффективность"
 
@@ -10128,7 +10129,7 @@ msgstr "K/D"
 #: apps/killboard/signature_stats.py
 #: templates/admin_audit/console/combat_rewards.html
 #: templates/admin_audit/console/raffle_prizes.html templates/killboard/cv.html
-#: templates/raffle/me.html
+#: templates/profiles/public.html templates/raffle/me.html
 msgid "Rank"
 msgstr "Ранг"
 
@@ -11472,7 +11473,7 @@ msgstr "Через запятую."
 msgid "Free-text interests, comma-separated."
 msgstr "Интересы в свободной форме, через запятую."
 
-#: apps/mentorship/forms.py
+#: apps/mentorship/forms.py apps/profiles/sections.py
 msgid "Ships you can fly"
 msgstr "Корабли, на которых вы можете летать"
 
@@ -14817,7 +14818,9 @@ msgstr "Операция обновлена."
 
 #: apps/operations/views.py
 msgid "Publish this operation first — prep tasks are visible to every member."
-msgstr "Сначала опубликуйте эту операцию — задачи по подготовке видны всем участникам."
+msgstr ""
+"Сначала опубликуйте эту операцию — задачи по подготовке видны всем "
+"участникам."
 
 #: apps/operations/views.py
 #, python-format
@@ -19637,6 +19640,157 @@ msgstr "Доставка зафиксирована."
 msgid "%(n)s hauling task(s) created."
 msgstr "Создано задач на перевозку: %(n)s."
 
+#: apps/profiles/sections.py templates/identity/character.html
+#: templates/profiles/public.html
+msgid "Trained skills"
+msgstr "Изученные навыки"
+
+#: apps/profiles/sections.py
+msgid ""
+"Total skill points and every trained skill, grouped by category, with its "
+"level."
+msgstr ""
+"Всего очков навыков и каждый изученный навык, сгруппированные по категориям, "
+"с уровнем."
+
+#: apps/profiles/sections.py templates/profiles/public.html
+msgid "Training queue"
+msgstr "Очередь обучения"
+
+#: apps/profiles/sections.py
+msgid ""
+"What is training right now and what is queued after it, with finish times."
+msgstr ""
+"Что обучается прямо сейчас и что стоит в очереди дальше, со временем "
+"завершения."
+
+#: apps/profiles/sections.py
+msgid ""
+"Every hull whose skill requirements you already meet, worked out from your "
+"trained skills — not from what you own."
+msgstr ""
+"Каждый корпус, требования по навыкам которого вы уже выполняете, — "
+"рассчитано по вашим изученным навыкам, а не по тому, чем вы владеете."
+
+#: apps/profiles/sections.py
+msgid "Attributes & implants"
+msgstr "Атрибуты & импланты"
+
+#: apps/profiles/sections.py
+msgid "Your five attributes and the implants plugged into this clone."
+msgstr "Ваши пять атрибутов и импланты, установленные в этом клоне."
+
+#: apps/profiles/sections.py
+msgid "Implants reveal what is in your head. Share with care."
+msgstr "Импланты показывают, что у вас в голове. Делитесь ими осторожно."
+
+#: apps/profiles/sections.py templates/killboard/list.html
+#: templates/profiles/public.html
+msgid "Combat record"
+msgstr "Боевая история"
+
+#: apps/profiles/sections.py
+msgid ""
+"All-time kills, losses, ISK destroyed, rank and your most recent kills from "
+"the corp killboard. Killmails are public EVE facts."
+msgstr ""
+"Убийства, потери, уничтоженные ISK, ранг и ваши последние убийства с "
+"корпоративного killboard за всё время. Killmails — публичные факты EVE."
+
+#: apps/profiles/services.py
+msgid "Choose how long the link should stay live."
+msgstr "Выберите, как долго ссылка должна оставаться активной."
+
+#: apps/profiles/services.py
+msgid "Enter the expiry date as YYYY-MM-DD."
+msgstr "Введите дату истечения в формате YYYY-MM-DD."
+
+#: apps/profiles/services.py
+msgid "The expiry date has to be in the future."
+msgstr "Дата истечения должна быть в будущем."
+
+#: apps/profiles/services.py
+msgid "Pick a date within the next ten years, or choose “never”."
+msgstr "Выберите дату в пределах ближайших десяти лет или вариант «никогда»."
+
+#: apps/profiles/services.py
+msgid "Pick at least one thing to show on the page."
+msgstr "Выберите хотя бы один раздел для показа на странице."
+
+#: apps/profiles/services.py
+#, python-format
+msgid "The password needs at least %(n)d characters."
+msgstr "Пароль должен содержать не менее %(n)d символов."
+
+#: apps/profiles/services.py
+#, python-format
+msgid "The password can be at most %(n)d characters."
+msgstr "Пароль может содержать не более %(n)d символов."
+
+#: apps/profiles/services.py apps/skills/training.py
+msgid "Intelligence"
+msgstr "Интеллект"
+
+#: apps/profiles/services.py apps/skills/training.py
+msgid "Memory"
+msgstr "Память"
+
+#: apps/profiles/services.py apps/skills/training.py
+msgid "Perception"
+msgstr "Восприятие"
+
+#: apps/profiles/services.py apps/skills/training.py
+msgid "Willpower"
+msgstr "Сила воли"
+
+#: apps/profiles/services.py apps/skills/training.py
+msgid "Charisma"
+msgstr "Харизма"
+
+#: apps/profiles/services.py
+#, python-format
+msgid "Implant %(id)s"
+msgstr "Имплант %(id)s"
+
+#: apps/profiles/views.py
+#, python-format
+msgid "Public profile for %(name)s is live."
+msgstr "Публичный профиль %(name)s опубликован."
+
+#: apps/profiles/views.py
+#, python-format
+msgid "Public profile for %(name)s updated."
+msgstr "Публичный профиль %(name)s обновлён."
+
+#: apps/profiles/views.py
+#, python-format
+msgid "%(name)s has no public profile."
+msgstr "У %(name)s нет публичного профиля."
+
+#: apps/profiles/views.py
+msgid "New link generated — the old one no longer works."
+msgstr "Создана новая ссылка — старая больше не работает."
+
+#: apps/profiles/views.py
+msgid "Public profile re-enabled."
+msgstr "Публичный профиль снова включён."
+
+#: apps/profiles/views.py
+msgid "Public profile disabled — the link now shows nothing."
+msgstr "Публичный профиль отключён — ссылка теперь ничего не показывает."
+
+#: apps/profiles/views.py
+msgid "Public profile deleted."
+msgstr "Публичный профиль удалён."
+
+#: apps/profiles/views.py
+msgid "Too many attempts. Wait a few minutes and try again."
+msgstr "Слишком много попыток. Подождите несколько минут и попробуйте снова."
+
+#: apps/profiles/views.py
+msgid "That password is not right."
+msgstr "Этот пароль не подходит."
+
 #: apps/raffle/contest_templates.py
 msgid "1st prize"
 msgstr "1-й приз"
@@ -22455,25 +22609,10 @@ msgstr ""
 msgid "Fly %(doctrine)s"
 msgstr "Летайте на %(doctrine)s"
 
-#: apps/skills/training.py
-msgid "Charisma"
-msgstr "Харизма"
-
-#: apps/skills/training.py
-msgid "Intelligence"
-msgstr "Интеллект"
-
-#: apps/skills/training.py
-msgid "Memory"
-msgstr "Память"
-
-#: apps/skills/training.py
-msgid "Perception"
-msgstr "Восприятие"
-
-#: apps/skills/training.py
-msgid "Willpower"
-msgstr "Сила воли"
+#: apps/skills/overview.py
+#, python-format
+msgid "Skill %(id)s"
+msgstr "Навык %(id)s"
 
 #: apps/skills/views.py
 #, python-format
@@ -25555,8 +25694,13 @@ msgid "My Tasks"
 msgstr "Мои задачи"
 
 #: templates/_nav.html templates/identity/linked_pilots.html
+#: templates/profiles/manage.html
 msgid "Linked Pilots"
 msgstr "Привязанные пилоты"
+
+#: templates/_nav.html
+msgid "Public Profile"
+msgstr "Публичный профиль"
 
 #: templates/_nav.html templates/identity/_my_losses.html
 #: templates/srp/my_srp.html
@@ -26607,7 +26751,7 @@ msgstr "Создать ранг"
 #: templates/killboard/campaign_form.html
 #: templates/killboard/signatures/form.html templates/operations/form.html
 #: templates/planetary/wizard.html templates/procurement/supplier_detail.html
-#: templates/tasks/detail.html
+#: templates/profiles/manage.html templates/tasks/detail.html
 msgid "Save changes"
 msgstr "Сохранить изменения"
 
@@ -30577,6 +30721,7 @@ msgstr "Отозвать"
 #: templates/admin_audit/console/members.html
 #: templates/admin_audit/console/raffle_detail.html
 #: templates/campaigns/detail.html templates/fitting/detail.html
+#: templates/profiles/public.html
 msgid "Manage"
 msgstr "Управление"
 
@@ -31974,7 +32119,7 @@ msgstr "выкл"
 #: templates/admin_audit/console/pingboard/templates.html
 #: templates/admin_audit/console/signatures_search.html
 #: templates/killboard/signatures/list.html
-#: templates/killboard/subscriptions.html
+#: templates/killboard/subscriptions.html templates/profiles/manage.html
 msgid "Disable"
 msgstr "Отключить"
 
@@ -31983,7 +32128,7 @@ msgstr "Отключить"
 #: templates/admin_audit/console/pingboard/templates.html
 #: templates/admin_audit/console/signatures_search.html
 #: templates/killboard/signatures/list.html
-#: templates/killboard/subscriptions.html
+#: templates/killboard/subscriptions.html templates/profiles/manage.html
 msgid "Enable"
 msgstr "Включить"
 
@@ -35892,6 +36037,7 @@ msgstr ""
 "вместе с приложением, поэтому загружать ничего не нужно."
 
 #: templates/admin_audit/console/signatures_backgrounds.html
+#: templates/profiles/manage.html
 msgid "Preview"
 msgstr "Предпросмотр"
 
@@ -38022,7 +38168,7 @@ msgstr "Автоматическое обновление приостановл
 
 #: templates/campaigns/objective_detail.html templates/identity/character.html
 #: templates/industry/capacity.html templates/operations/templates.html
-#: templates/skills/plans.html
+#: templates/profiles/public.html templates/skills/plans.html
 msgid "paused"
 msgstr "приостановлено"
 
@@ -41153,6 +41299,7 @@ msgid "Roster"
 msgstr "Состав"
 
 #: templates/corporation/roster.html templates/identity/character.html
+#: templates/profiles/public.html
 #, python-format
 msgid "synced %(ago)s ago"
 msgstr "синхр. %(ago)s назад"
@@ -41359,7 +41506,8 @@ msgstr "Скопировать фит (EFT)"
 
 #: templates/doctrines/detail.html templates/doctrines/prep.html
 #: templates/identity/character.html templates/killboard/detail.html
-#: templates/killboard/signatures/list.html templates/skills/detail.html
+#: templates/killboard/signatures/list.html templates/profiles/manage.html
+#: templates/skills/detail.html
 msgid "Copied ✓"
 msgstr "Скопировано ✓"
 
@@ -43198,17 +43346,25 @@ msgstr "Навыки &amp; обучение"
 msgid "Idle — not training"
 msgstr "Простой — не обучается"
 
-#: templates/identity/character.html
+#: templates/identity/character.html templates/profiles/public.html
 msgid "Skill points"
 msgstr "Очки навыков"
 
-#: templates/identity/character.html
+#: templates/identity/character.html templates/profiles/public.html
 msgid "At level V"
 msgstr "На уровне V"
 
 #: templates/identity/character.html templates/skills/plans.html
 msgid "Refresh from EVE"
 msgstr "Обновить из EVE"
+
+#: templates/identity/character.html templates/profiles/manage.html
+msgid "Public profile"
+msgstr "Публичный профиль"
+
+#: templates/identity/character.html
+msgid "Share publicly…"
+msgstr "Поделиться публично…"
 
 #: templates/identity/character.html
 msgid ""
@@ -43233,11 +43389,12 @@ msgstr "Смотрите полную разбивку в разделе Doctrin
 msgid "In-game training queue"
 msgstr "Внутриигровая очередь обучения"
 
-#: templates/identity/character.html templates/skills/plans.html
+#: templates/identity/character.html templates/profiles/public.html
+#: templates/skills/plans.html
 msgid "Now training"
 msgstr "Сейчас обучается"
 
-#: templates/identity/character.html
+#: templates/identity/character.html templates/profiles/public.html
 msgctxt "time remaining"
 msgid "left"
 msgstr "осталось"
@@ -43325,15 +43482,11 @@ msgid "Build plan"
 msgstr "Составить план"
 
 #: templates/identity/character.html
-msgid "Trained skills"
-msgstr "Изученные навыки"
-
-#: templates/identity/character.html
 #, python-format
 msgid "%(skill_count)s skills"
 msgstr "%(skill_count)s навыков"
 
-#: templates/identity/character.html
+#: templates/identity/character.html templates/profiles/public.html
 msgid "at V"
 msgstr "на V"
 
@@ -43341,7 +43494,7 @@ msgstr "на V"
 msgid "completing…"
 msgstr "завершение…"
 
-#: templates/identity/character.html
+#: templates/identity/character.html templates/profiles/manage.html
 msgid "Copy failed"
 msgstr "Не удалось скопировать"
 
@@ -44162,6 +44315,28 @@ msgstr "Напоминания о простое очереди"
 #: templates/identity/privacy.html
 msgid "Turn off"
 msgstr "Выключить"
+
+#: templates/identity/privacy.html
+msgid "Sharing outside the corp"
+msgstr "Доступ за пределами корпорации"
+
+#: templates/identity/privacy.html
+msgid ""
+"Nothing about you is visible to anyone outside the corporation unless you "
+"publish a public profile yourself. A public profile is an unlisted, "
+"unguessable link for one pilot that shows only the sections you pick, "
+"expires when you say, and can require a password. You can disable or delete "
+"it at any time."
+msgstr ""
+"Никто за пределами корпорации ничего о вас не видит, если вы сами не "
+"опубликуете публичный профиль. Публичный профиль — это скрытая, "
+"неугадываемая ссылка для одного пилота, которая показывает только выбранные "
+"вами разделы, истекает, когда вы решите, и может требовать пароль. Вы можете "
+"отключить или удалить его в любой момент."
+
+#: templates/identity/privacy.html
+msgid "Manage public profile"
+msgstr "Управлять публичным профилем"
 
 #: templates/identity/privacy.html
 msgid "What officers can see about you"
@@ -47377,10 +47552,6 @@ msgstr "ID killmail потери"
 #: templates/killboard/kotw.html
 msgid "Pin this loss"
 msgstr "Закрепить эту потерю"
-
-#: templates/killboard/list.html
-msgid "Combat record"
-msgstr "Боевая история"
 
 #: templates/killboard/list.html
 msgid "Stats"
@@ -55399,6 +55570,305 @@ msgstr "Срок (дни)"
 msgid "No suppliers match."
 msgstr "Нет подходящих поставщиков."
 
+#: templates/profiles/locked.html templates/profiles/public.html
+msgid "Pilot profile"
+msgstr "Профиль пилота"
+
+#: templates/profiles/locked.html
+msgid "This profile is password protected"
+msgstr "Этот профиль защищён паролем"
+
+#: templates/profiles/locked.html
+msgid ""
+"The pilot who shared this link set a password. Enter it to open the page."
+msgstr ""
+"Пилот, поделившийся этой ссылкой, установил пароль. Введите его, чтобы "
+"открыть страницу."
+
+#: templates/profiles/locked.html templates/profiles/manage.html
+msgid "Password"
+msgstr "Пароль"
+
+#: templates/profiles/locked.html
+msgid "Open profile"
+msgstr "Открыть профиль"
+
+#: templates/profiles/manage.html
+msgid "Share outside the corp"
+msgstr "Поделиться за пределами корпорации"
+
+#: templates/profiles/manage.html
+msgid ""
+"Publish an unlisted page of a pilot's skills to show someone who is not in "
+"the corp — a recruiter, an FC, a friend. The link cannot be guessed, is "
+"never listed anywhere and is hidden from search engines, so only the people "
+"you send it to can open it. You choose what it shows, when it expires, and "
+"whether it needs a password."
+msgstr ""
+"Опубликуйте скрытую страницу с навыками пилота, чтобы показать её тому, кто "
+"не состоит в корпорации, — рекрутеру, FC, другу. Ссылку нельзя угадать, она "
+"нигде не публикуется и скрыта от поисковых систем, так что открыть её могут "
+"только те, кому вы её отправите. Вы сами решаете, что она показывает, когда "
+"истекает и нужен ли пароль."
+
+#: templates/profiles/manage.html
+msgid ""
+"Link a pilot first — a public profile is published for one pilot at a time."
+msgstr ""
+"Сначала привяжите пилота — публичный профиль публикуется для одного пилота "
+"за раз."
+
+#: templates/profiles/manage.html
+msgctxt "public profile state"
+msgid "Live"
+msgstr "Активен"
+
+#: templates/profiles/manage.html
+msgctxt "public profile state"
+msgid "Expired"
+msgstr "Истёк"
+
+#: templates/profiles/manage.html
+msgctxt "public profile state"
+msgid "Disabled"
+msgstr "Отключён"
+
+#: templates/profiles/manage.html
+msgctxt "public profile state"
+msgid "Not published"
+msgstr "Не опубликован"
+
+#: templates/profiles/manage.html
+msgid "Your link"
+msgstr "Ваша ссылка"
+
+#: templates/profiles/manage.html
+msgid "Public profile link"
+msgstr "Ссылка на публичный профиль"
+
+#: templates/profiles/manage.html
+msgid "Copy link"
+msgstr "Копировать ссылку"
+
+#: templates/profiles/manage.html
+msgid "Expires"
+msgstr "Истекает"
+
+#: templates/profiles/manage.html
+msgctxt "profile expiry"
+msgid "never"
+msgstr "никогда"
+
+#: templates/profiles/manage.html
+msgctxt "profile password"
+msgid "required"
+msgstr "требуется"
+
+#: templates/profiles/manage.html
+msgctxt "profile password"
+msgid "none"
+msgstr "нет"
+
+#: templates/profiles/manage.html
+msgid "Views"
+msgstr "Просмотры"
+
+#: templates/profiles/manage.html
+#, python-format
+msgid "last %(ago)s ago"
+msgstr "последний %(ago)s назад"
+
+#: templates/profiles/manage.html
+msgid "Shows"
+msgstr "Показывает"
+
+#: templates/profiles/manage.html
+msgid "Generate a new link? Anyone holding the old one loses access."
+msgstr "Создать новую ссылку? Все, у кого есть старая, потеряют доступ."
+
+#: templates/profiles/manage.html
+msgid "New link"
+msgstr "Новая ссылка"
+
+#: templates/profiles/manage.html
+msgid "Delete this public profile? The link stops working immediately."
+msgstr "Удалить этот публичный профиль? Ссылка перестанет работать немедленно."
+
+#: templates/profiles/manage.html
+msgid "Change what the page shows"
+msgstr "Изменить, что показывает страница"
+
+#: templates/profiles/manage.html
+msgid "Publish a public profile"
+msgstr "Опубликовать публичный профиль"
+
+#: templates/profiles/manage.html
+msgid "What to show"
+msgstr "Что показывать"
+
+#: templates/profiles/manage.html
+msgid ""
+"The page always shows the pilot's name, portrait and corporation. Everything "
+"else is your call. Doctrines, plans, readiness, contributions, assets and "
+"your other pilots are never shown."
+msgstr ""
+"Страница всегда показывает имя, портрет и корпорацию пилота. Всё остальное "
+"решаете вы. Doctrines, планы, готовность, вклад, имущество и ваши другие "
+"пилоты никогда не показываются."
+
+#: templates/profiles/manage.html
+msgid "Link expires"
+msgstr "Ссылка истекает"
+
+#: templates/profiles/manage.html
+msgid "in 7 days"
+msgstr "через 7 дней"
+
+#: templates/profiles/manage.html
+msgid "in 30 days"
+msgstr "через 30 дней"
+
+#: templates/profiles/manage.html
+msgid "in 90 days"
+msgstr "через 90 дней"
+
+#: templates/profiles/manage.html
+msgid "on a date I pick"
+msgstr "в выбранную мной дату"
+
+#: templates/profiles/manage.html
+msgid "Expiry date (only for “on a date I pick”)"
+msgstr "Дата истечения (только для варианта «в выбранную мной дату»)"
+
+#: templates/profiles/manage.html
+msgid "The link works through the end of that day (UTC)."
+msgstr "Ссылка работает до конца этого дня (UTC)."
+
+#: templates/profiles/manage.html
+msgid "New password (leave blank to keep the current one)"
+msgstr "Новый пароль (оставьте пустым, чтобы сохранить текущий)"
+
+#: templates/profiles/manage.html
+msgid "Password (optional)"
+msgstr "Пароль (необязательно)"
+
+#: templates/profiles/manage.html
+msgid "Visitors must type this to open the page"
+msgstr "Посетителям придётся ввести его, чтобы открыть страницу"
+
+#: templates/profiles/manage.html
+msgid "Remove the password"
+msgstr "Убрать пароль"
+
+#: templates/profiles/manage.html
+msgid "A note for whoever opens the page (optional)"
+msgstr "Заметка для того, кто откроет страницу (необязательно)"
+
+#: templates/profiles/manage.html
+msgid ""
+"e.g. Applying for your incursion community — EU timezone, mostly evenings."
+msgstr ""
+"напр.: Подаю заявку в ваше сообщество по инкурсиям — часовой пояс EU, в "
+"основном по вечерам."
+
+#: templates/profiles/manage.html
+msgid ""
+"Skills come from the last EVE sync. Visitors see exactly what you see on My "
+"Skills & Training."
+msgstr ""
+"Навыки берутся из последней синхронизации с EVE. Посетители видят ровно то "
+"же, что и вы в разделе «Мои навыки & обучение»."
+
+#: templates/profiles/manage.html
+msgid "Publish"
+msgstr "Опубликовать"
+
+#: templates/profiles/public.html
+msgid ""
+"You are viewing your own public profile. This is exactly what a visitor with "
+"the link sees — you skip the password, and your own visits are not counted."
+msgstr ""
+"Вы смотрите свой собственный публичный профиль. Именно это видит посетитель "
+"со ссылкой — вы пропускаете пароль, а ваши собственные просмотры не "
+"учитываются."
+
+#: templates/profiles/public.html
+#, python-format
+msgid "A note from %(name)s"
+msgstr "Заметка от %(name)s"
+
+#: templates/profiles/public.html
+msgid "No skills have been synced for this pilot yet."
+msgstr "Навыки этого пилота ещё не синхронизированы."
+
+#: templates/profiles/public.html
+msgid "The training queue is empty."
+msgstr "Очередь обучения пуста."
+
+#: templates/profiles/public.html
+msgid "No training queue has been synced for this pilot yet."
+msgstr "Очередь обучения этого пилота ещё не синхронизирована."
+
+#: templates/profiles/public.html
+msgid "Ships this pilot can fly"
+msgstr "Корабли, которыми может управлять этот пилот"
+
+#: templates/profiles/public.html
+msgid "from trained skills, not from hangar contents"
+msgstr "по изученным навыкам, а не по содержимому ангара"
+
+#: templates/profiles/public.html
+msgid "Nothing to show yet — skills have not been synced for this pilot."
+msgstr "Пока нечего показать — навыки этого пилота не синхронизированы."
+
+#: templates/profiles/public.html
+msgid "Attributes &amp; implants"
+msgstr "Атрибуты &amp; импланты"
+
+#: templates/profiles/public.html
+msgid "No implants in this clone."
+msgstr "В этом клоне нет имплантов."
+
+#: templates/profiles/public.html
+msgid "Attributes have not been synced for this pilot yet."
+msgstr "Атрибуты этого пилота ещё не синхронизированы."
+
+#: templates/profiles/public.html
+msgid "all time, from public killmails"
+msgstr "за всё время, по публичным killmails"
+
+#: templates/profiles/public.html
+msgid "Recent kills"
+msgstr "Недавние убийства"
+
+#: templates/profiles/public.html
+msgid "No PvP record on the corp killboard yet."
+msgstr "На корпоративном killboard пока нет записей PvP."
+
+#: templates/profiles/public.html
+msgid ""
+"An unlisted page shared by its pilot. It is not indexed and may expire or be "
+"withdrawn at any time."
+msgstr ""
+"Скрытая страница, которой поделился её пилот. Она не индексируется и может "
+"истечь или быть отозвана в любой момент."
+
+#: templates/profiles/unavailable.html
+msgid "Profile not available"
+msgstr "Профиль недоступен"
+
+#: templates/profiles/unavailable.html
+msgid "This profile link is not available"
+msgstr "Эта ссылка на профиль недоступна"
+
+#: templates/profiles/unavailable.html
+msgid ""
+"It may have expired, been withdrawn by its pilot, or never existed. Ask the "
+"pilot for a fresh link."
+msgstr ""
+"Возможно, она истекла, пилот её отозвал или её никогда не существовало. "
+"Попросите у пилота новую ссылку."
+
 #: templates/raffle/archive.html
 msgid "Raffle archive"
 msgstr "Архив розыгрышей"
@@ -56133,9 +56603,7 @@ msgid "Every ticket I earned"
 msgstr "Каждый заработанный мной билет"
 
 #: templates/raffle/tickets.html
-#, fuzzy, python-format
-#| msgid "%(n)s event"
-#| msgid_plural "%(n)s events"
+#, python-format
 msgid "%(n)s award event"
 msgid_plural "%(n)s award events"
 msgstr[0] "%(n)s событие начисления"

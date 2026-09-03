@@ -123,4 +123,16 @@ def import_character_attributes(
             "fetched_at": now,
         },
     )
+    # The active clone's implants ride along (``esi-clones.read_implants.v1`` is a default
+    # login scope). A secondary read, isolated so a missing scope or a flaky endpoint can
+    # never fail the attribute import: on any error the previously stored list is kept.
+    try:
+        implant_access = get_valid_access_token(character, ["esi-clones.read_implants.v1"])
+        implants = client.get(
+            f"/characters/{character.character_id}/implants/", token=implant_access
+        ).data
+        attrs.implants = sorted(int(t) for t in (implants or []))
+        attrs.save(update_fields=["implants"])
+    except Exception:  # noqa: BLE001 — best-effort side read; the attributes are the import
+        logger.warning("Implant read failed for %s", character.character_id, exc_info=True)
     return attrs

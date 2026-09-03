@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+{% load eve %}
+{% load i18n %}
+{% block title %}{{ character.name }} · {% translate "Pilot profile" %} · [FORCA] Command Grid{% endblock %}
+{% comment %}Pinned in-document as well as in the response header: the edge (nginx) appends its own
+   Referrer-Policy after Django's, and with two headers the LAST one wins — a <meta name="referrer">
+   is applied when the document is parsed and overrides both, so the token never leaves as a
+   Referer whichever header the browser honours.{% endcomment %}
+{% block extra_head %}<meta name="referrer" content="no-referrer">{% endblock %}
+{% block content %}
+{% if owner_view %}
+<div class="mb-4 rounded-lg border-l-2 border-gold bg-gold/10 px-4 py-2.5 text-sm text-ink">
+  {% translate "You are viewing your own public profile. This is exactly what a visitor with the link sees — you skip the password, and your own visits are not counted." %}
+  <a href="{% url 'profiles:manage' %}?c={{ character.character_id }}" class="ml-2 text-cyan hover:text-gold">{% translate "Manage" %} →</a>
+</div>
+{% endif %}
+
+<!-- Identity -->
+<div class="panel flex flex-wrap items-center gap-5 p-5">
+  <img src="{% eve_portrait character.character_id 128 %}" alt="" class="h-20 w-20 rounded-xl ring-1 ring-line">
+  <div class="min-w-0 flex-1">
+    <p class="eyebrow">{% translate "Pilot profile" %}</p>
+    <h1 class="text-2xl font-bold text-ink">{{ character.name }}</h1>
+    <p class="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-faint">
+      {% if character.corporation_id %}<img src="{% eve_corp_logo character.corporation_id 32 %}" alt="" class="h-4 w-4 rounded-sm">{% eve_name character.corporation_id %}{% endif %}
+      {% if character.alliance_id %}<span class="text-faint">·</span><img src="{% eve_alliance_logo character.alliance_id 32 %}" alt="" class="h-4 w-4 rounded-sm">{% eve_name character.alliance_id %}{% endif %}
+    </p>
+  </div>
+  {% if skills %}
+  <div class="flex gap-6 text-right">
+    <div><p class="eyebrow">{% translate "Skill points" %}</p><p class="data mt-0.5 text-xl font-bold text-cyan">{{ skills.total_sp|sp }}</p></div>
+    <div><p class="eyebrow">{% translate "Skills" %}</p><p class="data mt-0.5 text-xl font-bold text-ink">{{ skills.count }}</p></div>
+    <div><p class="eyebrow">{% translate "At level V" %}</p><p class="data mt-0.5 text-xl font-bold text-gold">{{ skills.at_v }}</p></div>
+  </div>
+  {% endif %}
+</div>
+
+{% if note %}
+<div class="panel mt-4 border-l-2 border-l-gold px-5 py-4">
+  <p class="eyebrow text-faint">{% blocktranslate with name=character.name %}A note from {{ name }}{% endblocktranslate %}</p>
+  <p class="mt-1 whitespace-pre-line text-sm text-ink">{{ note }}</p>
+</div>
+{% endif %}
+
+{% for key in sections %}
+{% if key == 'skills' %}
+<!-- Trained skills -->
+<section class="panel mt-4 overflow-hidden">
+  <div class="flex items-center justify-between border-b border-line px-4 py-3">
+    <h2 class="eyebrow text-gold">{% translate "Trained skills" %}</h2>
+    <span class="text-[11px] text-faint">{% if skills.as_of %}{% blocktranslate with ago=skills.as_of|timesince %}synced {{ ago }} ago{% endblocktranslate %}{% endif %}</span>
+  </div>
+  {% if skills.groups %}
+  <div class="divide-y divide-line/40">
+    {% for g in skills.groups %}
+    <details class="group" {% if forloop.first %}open{% endif %}>
+      <summary class="flex cursor-pointer select-none items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-panel2/40">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" class="disclosure-chevron group-hover:text-muted"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="font-medium text-ink">{{ g.group }}</span>
+        <span class="ml-auto text-[11px] text-faint">{{ g.count }} · {{ g.at_v }} {% translate "at V" %}</span>
+      </summary>
+      <div class="grid gap-1.5 px-4 pb-3 sm:grid-cols-2 lg:grid-cols-3">
+        {% for s in g.skills %}
+        <div class="flex items-center gap-2.5 rounded-lg border border-line/60 bg-panel2/40 px-3 py-1.5">
+          <img src="{% eve_type_icon s.id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">
+          <span class="min-w-0 flex-1 truncate text-sm text-muted">{{ s.name }}</span>
+          <span class="flex gap-0.5">{% for i in "12345" %}<span class="h-1.5 w-1.5 rounded-full {% if forloop.counter <= s.level %}bg-cyan{% else %}bg-line{% endif %}"></span>{% endfor %}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </details>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="px-4 py-6 text-center text-sm text-faint">{% translate "No skills have been synced for this pilot yet." %}</p>
+  {% endif %}
+</section>
+
+{% elif key == 'queue' %}
+<!-- Training queue -->
+<section class="panel mt-4 overflow-hidden">
+  <div class="flex items-center justify-between border-b border-line px-4 py-3">
+    <h2 class="eyebrow text-gold">{% translate "Training queue" %}</h2>
+    <span class="text-[11px] text-faint">{% if training.synced_at %}{% blocktranslate with ago=training.synced_at|timesince %}synced {{ ago }} ago{% endblocktranslate %}{% endif %}</span>
+  </div>
+  {% if training.current %}
+  <div class="border-b border-line px-4 py-4">
+    <div class="flex items-baseline justify-between gap-3">
+      <p class="text-sm"><span class="text-[11px] uppercase tracking-wide text-kill">{% translate "Now training" %}</span> · <span class="font-medium text-ink">{{ training.current.name }} {{ training.current.level }}</span></p>
+      <p class="data text-sm text-muted">{{ training.current.remaining_seconds|duration }} {% translate "left" context "time remaining" %}</p>
+    </div>
+    <div class="mt-2 h-2 overflow-hidden rounded-full bg-space"><div class="h-full rounded-full bg-kill" style="width:{{ training.current.progress }}%"></div></div>
+  </div>
+  {% endif %}
+  {% if training.queue %}
+  <ol class="divide-y divide-line/40 px-4 py-2">
+    {% for q in training.queue %}
+    <li class="flex items-center justify-between gap-3 py-1.5 text-sm {% if q.is_current %}text-ink{% else %}text-muted{% endif %}">
+      <span class="flex min-w-0 items-center gap-2"><span class="w-5 shrink-0 text-right font-mono text-[11px] text-faint">{{ forloop.counter }}</span><span class="truncate">{{ q.name }} <span class="text-faint">{{ q.level }}</span></span></span>
+      <span class="data shrink-0 text-[11px] text-faint">{% if q.remaining_seconds %}{{ q.remaining_seconds|duration }}{% else %}{% translate "paused" %}{% endif %}</span>
+    </li>
+    {% endfor %}
+  </ol>
+  {% elif training.has_queue_data %}
+  <p class="px-4 py-6 text-center text-sm text-faint">{% translate "The training queue is empty." %}</p>
+  {% else %}
+  <p class="px-4 py-6 text-center text-sm text-faint">{% translate "No training queue has been synced for this pilot yet." %}</p>
+  {% endif %}
+</section>
+
+{% elif key == 'ships' %}
+<!-- Ships flyable -->
+<section class="panel mt-4 overflow-hidden">
+  <div class="flex items-center justify-between border-b border-line px-4 py-3">
+    <h2 class="eyebrow text-gold">{% translate "Ships this pilot can fly" %}</h2>
+    <span class="text-[11px] text-faint">{% translate "from trained skills, not from hangar contents" %}</span>
+  </div>
+  {% if ships %}
+  <div class="divide-y divide-line/40">
+    {% for g in ships %}
+    <details class="group" {% if forloop.first %}open{% endif %}>
+      <summary class="flex cursor-pointer select-none items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-panel2/40">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" class="disclosure-chevron group-hover:text-muted"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="font-medium text-ink">{{ g.group }}</span>
+        <span class="ml-auto text-[11px] text-faint">{{ g.count }}</span>
+      </summary>
+      <div class="grid gap-1.5 px-4 pb-3 sm:grid-cols-2 lg:grid-cols-3">
+        {% for s in g.ships %}
+        <div class="flex items-center gap-2.5 rounded-lg border border-line/60 bg-panel2/40 px-3 py-1.5">
+          <img src="{% eve_type_icon s.id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">
+          <span class="min-w-0 flex-1 truncate text-sm text-muted">{{ s.name }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </details>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="px-4 py-6 text-center text-sm text-faint">{% translate "Nothing to show yet — skills have not been synced for this pilot." %}</p>
+  {% endif %}
+</section>
+
+{% elif key == 'attributes' %}
+<!-- Attributes & implants -->
+<section class="panel mt-4 overflow-hidden">
+  <div class="flex items-center justify-between border-b border-line px-4 py-3">
+    <h2 class="eyebrow text-gold">{% translate "Attributes &amp; implants" %}</h2>
+    <span class="text-[11px] text-faint">{% if attributes.as_of %}{% blocktranslate with ago=attributes.as_of|timesince %}synced {{ ago }} ago{% endblocktranslate %}{% endif %}</span>
+  </div>
+  {% if attributes %}
+  <div class="grid gap-3 px-4 py-4 sm:grid-cols-5">
+    {% for label, value in attributes.values %}
+    <div class="rounded-lg border border-line/60 bg-panel2/40 px-3 py-2 text-center">
+      <p class="eyebrow text-faint">{{ label }}</p>
+      <p class="data mt-0.5 text-lg font-bold text-ink">{{ value }}</p>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="border-t border-line px-4 py-3">
+    <p class="eyebrow text-faint">{% translate "Implants" %}</p>
+    {% if attributes.implants %}
+    <div class="mt-2 grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
+      {% for im in attributes.implants %}
+      <div class="flex items-center gap-2.5 rounded-lg border border-line/60 bg-panel2/40 px-3 py-1.5">
+        <img src="{% eve_type_icon im.id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">
+        <span class="min-w-0 flex-1 truncate text-sm text-muted">{{ im.name }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}<p class="mt-1 text-sm text-faint">{% translate "No implants in this clone." %}</p>{% endif %}
+  </div>
+  {% else %}
+  <p class="px-4 py-6 text-center text-sm text-faint">{% translate "Attributes have not been synced for this pilot yet." %}</p>
+  {% endif %}
+</section>
+
+{% elif key == 'combat' %}
+<!-- Combat record -->
+<section class="panel mt-4 overflow-hidden">
+  <div class="flex items-center justify-between border-b border-line px-4 py-3">
+    <h2 class="eyebrow text-gold">{% translate "Combat record" %}</h2>
+    <span class="text-[11px] text-faint">{% translate "all time, from public killmails" %}</span>
+  </div>
+  {% if combat and combat.card.has_record %}
+  {% with card=combat.card %}
+  <div class="grid gap-3 px-4 py-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="rounded-lg border border-line/60 bg-panel2/40 px-3 py-2"><p class="eyebrow text-faint">{% translate "Kills" %}</p><p class="data mt-0.5 text-xl font-bold text-kill">{{ card.kills }}</p></div>
+    <div class="rounded-lg border border-line/60 bg-panel2/40 px-3 py-2"><p class="eyebrow text-faint">{% translate "Losses" %}</p><p class="data mt-0.5 text-xl font-bold text-loss">{{ card.losses }}</p></div>
+    <div class="rounded-lg border border-line/60 bg-panel2/40 px-3 py-2"><p class="eyebrow text-faint">{% translate "ISK destroyed" %}</p><p class="data mt-0.5 text-xl font-bold text-gold">{{ card.isk_destroyed|isk }}</p></div>
+    <div class="rounded-lg border border-line/60 bg-panel2/40 px-3 py-2"><p class="eyebrow text-faint">{% translate "Efficiency" %}</p><p class="data mt-0.5 text-xl font-bold text-ink">{{ card.efficiency|floatformat:0 }}%</p></div>
+  </div>
+  <div class="flex flex-wrap gap-x-6 gap-y-1 border-t border-line px-4 py-3 text-sm text-muted">
+    {% if card.rank.title %}<span>{% translate "Rank" %}: <span class="text-ink">{{ card.rank.title }}</span></span>{% endif %}
+    <span>{% translate "Solo" %}: <span class="data text-ink">{{ card.solo_pct|floatformat:0 }}%</span></span>
+    <span>{% translate "Final blows" %}: <span class="data text-ink">{{ card.final_blows }}</span></span>
+  </div>
+  {% endwith %}
+  {% if combat.recent %}
+  <div class="border-t border-line px-4 py-3">
+    <p class="eyebrow text-faint">{% translate "Recent kills" %}</p>
+    <ul class="mt-2 divide-y divide-line/40">
+      {% for km in combat.recent %}
+      <li class="flex items-center justify-between gap-3 py-1.5 text-sm">
+        <a href="{% url 'killboard:detail' km.killmail_id %}" class="flex min-w-0 items-center gap-2.5 text-muted hover:text-gold">
+          <img src="{% eve_type_icon km.victim_ship_type_id 32 %}" alt="" loading="lazy" class="h-5 w-5 rounded-sm">
+          <span class="truncate">{% type_name km.victim_ship_type_id %} · {% system_name km.solar_system_id %}</span>
+        </a>
+        <span class="data shrink-0 text-[11px] text-faint">{{ km.total_value|isk }} · {{ km.killmail_time|date:"j M Y" }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+  {% else %}
+  <p class="px-4 py-6 text-center text-sm text-faint">{% translate "No PvP record on the corp killboard yet." %}</p>
+  {% endif %}
+</section>
+{% endif %}
+{% endfor %}
+
+<p class="mt-6 text-center text-[11px] text-faint">{% translate "An unlisted page shared by its pilot. It is not indexed and may expire or be withdrawn at any time." %}</p>
+{% endblock %}

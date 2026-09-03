@@ -202,6 +202,12 @@ def unlink(user, character) -> None:
         # an explicit unlink and defeat the severance.
         AuthToken.objects.filter(character=character).update(_refresh_token="", _access_token="")
         character.scope_grants.update(active=False)
+        # A public profile is the pilot's OWN publication, but it was made under this link and
+        # the public resolver would refuse it the moment the character is detached. Delete it
+        # rather than leave a dead token (and the password hash) behind; relinking starts fresh.
+        from apps.profiles.models import PublicProfile
+
+        PublicProfile.objects.filter(character=character).delete()
 
         was_main = character.is_main
         character.user = None

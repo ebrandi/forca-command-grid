@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FORCA Command Grid\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-31 21:27+0000\n"
+"POT-Creation-Date: 2026-09-03 14:02+0000\n"
 "PO-Revision-Date: 2026-07-13 18:00+0000\n"
 "Last-Translator: FORCA machine-assisted draft (unreviewed)\n"
 "Language-Team: ja machine-assisted draft\n"
@@ -1693,7 +1693,8 @@ msgstr "マーケットスナップショット"
 #: templates/killboard/subscriptions.html
 #: templates/killboard/watchlist_detail.html
 #: templates/navigation/jump_routes.html templates/operations/templates.html
-#: templates/skills/detail.html templates/srp/settings.html
+#: templates/profiles/manage.html templates/skills/detail.html
+#: templates/srp/settings.html
 msgid "Delete"
 msgstr "削除"
 
@@ -2256,9 +2257,9 @@ msgid "Coverage"
 msgstr "カバレッジ"
 
 #: apps/campaigns/models.py apps/corporation/finance_analytics.py
-#: apps/identity/views.py apps/killboard/analytics.py
-#: apps/killboard/fitrender.py apps/killboard/meta.py apps/mentorship/models.py
-#: apps/operations/models.py apps/raffle/models.py apps/readiness/models.py
+#: apps/killboard/analytics.py apps/killboard/fitrender.py
+#: apps/killboard/meta.py apps/mentorship/models.py apps/operations/models.py
+#: apps/raffle/models.py apps/readiness/models.py apps/skills/overview.py
 #: apps/stockpile/models.py apps/tasks/models.py
 #: templates/admin_audit/console/mentorship/tracks.html
 msgid "Other"
@@ -4657,7 +4658,7 @@ msgstr "コーポ"
 #: apps/killboard/models.py apps/killboard/signature_stats.py
 #: templates/admin_audit/console/raffle_stats.html
 #: templates/capsuleer/paths.html templates/killboard/compare.html
-#: templates/killboard/pilot.html
+#: templates/killboard/pilot.html templates/profiles/public.html
 msgid "Solo"
 msgstr "ソロ"
 
@@ -6906,6 +6907,7 @@ msgstr "%(count)s 件のアライアンス名を解決しました。"
 
 #: apps/corporation/compliance.py apps/onboarding/models.py
 #: templates/fitting/detail.html templates/identity/character.html
+#: templates/profiles/public.html
 msgid "Skills"
 msgstr "スキル"
 
@@ -6914,7 +6916,7 @@ msgid "Skill queue"
 msgstr "スキルキュー"
 
 #: apps/corporation/compliance.py apps/killboard/fitrender.py
-#: templates/fitting/detail.html
+#: templates/fitting/detail.html templates/profiles/public.html
 msgid "Implants"
 msgstr "インプラント"
 
@@ -8126,7 +8128,7 @@ msgstr ""
 "優先する UI 言語（settings.LANGUAGES のコード。例: 'pt-br'）。空欄の場合はブ"
 "ラウザから自動判定し、判定できなければ英語になります。"
 
-#: apps/identity/pilot_views.py
+#: apps/identity/pilot_views.py apps/profiles/views.py
 msgid "That pilot is not linked to your account."
 msgstr "そのパイロットはあなたのアカウントに連携されていません。"
 
@@ -8233,11 +8235,6 @@ msgstr "SRP の支払いが完了しました: あなたの %(ship)s に対し�
 #: apps/identity/views.py
 msgid "Dashboard layout saved."
 msgstr "ダッシュボードのレイアウトを保存しました。"
-
-#: apps/identity/views.py
-#, python-format
-msgid "Skill %(id)s"
-msgstr "スキル %(id)s"
 
 #: apps/impersonation/models.py
 msgid "Exited by director"
@@ -9377,13 +9374,14 @@ msgstr "ソロキル数"
 #: apps/killboard/models.py apps/killboard/ranks.py
 #: apps/killboard/signature_stats.py apps/killboard/signature_views.py
 #: templates/admin_audit/console/raffle_stats.html
+#: templates/profiles/public.html
 msgid "Final blows"
 msgstr "ファイナルブロー数"
 
 #: apps/killboard/models.py apps/killboard/signature_stats.py
 #: apps/killboard/signature_views.py templates/identity/dashboard.html
 #: templates/killboard/battle_report.html
-#: templates/killboard/campaign_detail.html
+#: templates/killboard/campaign_detail.html templates/profiles/public.html
 msgid "ISK destroyed"
 msgstr "破壊した ISK"
 
@@ -9594,6 +9592,7 @@ msgstr "RSS / Atom フィード"
 #: templates/killboard/cv.html templates/killboard/list.html
 #: templates/killboard/meta.html templates/killboard/pilot.html
 #: templates/killboard/roster.html templates/killboard/stats.html
+#: templates/profiles/public.html
 msgid "Kills"
 msgstr "キル"
 
@@ -10071,6 +10070,7 @@ msgstr ""
 #: templates/killboard/cv.html templates/killboard/list.html
 #: templates/killboard/meta.html templates/killboard/pilot.html
 #: templates/killboard/roster.html templates/killboard/stats.html
+#: templates/profiles/public.html
 msgid "Losses"
 msgstr "ロス"
 
@@ -10083,6 +10083,7 @@ msgstr "失った ISK"
 #: apps/killboard/signature_stats.py templates/killboard/compare.html
 #: templates/killboard/cv.html templates/killboard/list.html
 #: templates/killboard/pilot.html templates/killboard/roster.html
+#: templates/profiles/public.html
 msgid "Efficiency"
 msgstr "効率"
 
@@ -10093,7 +10094,7 @@ msgstr "K/D"
 #: apps/killboard/signature_stats.py
 #: templates/admin_audit/console/combat_rewards.html
 #: templates/admin_audit/console/raffle_prizes.html templates/killboard/cv.html
-#: templates/raffle/me.html
+#: templates/profiles/public.html templates/raffle/me.html
 msgid "Rank"
 msgstr "ランク"
 
@@ -11436,7 +11437,7 @@ msgstr "カンマ区切り。"
 msgid "Free-text interests, comma-separated."
 msgstr "自由記述の興味・関心、カンマ区切り。"
 
-#: apps/mentorship/forms.py
+#: apps/mentorship/forms.py apps/profiles/sections.py
 msgid "Ships you can fly"
 msgstr "操縦できる艦船"
 
@@ -14763,7 +14764,9 @@ msgstr "オペレーションを更新しました。"
 
 #: apps/operations/views.py
 msgid "Publish this operation first — prep tasks are visible to every member."
-msgstr "先にこのオペレーションを公開してください。準備タスクは全メンバーに表示されます。"
+msgstr ""
+"先にこのオペレーションを公開してください。準備タスクは全メンバーに表示されま"
+"す。"
 
 #: apps/operations/views.py
 #, python-format
@@ -14805,7 +14808,9 @@ msgstr "タイマーを削除しました。"
 #: apps/operations/views.py
 msgid ""
 "Publish this operation before announcing it — members cannot see a draft."
-msgstr "告知する前にこのオペレーションを公開してください。ドラフトはメンバーには表示されません。"
+msgstr ""
+"告知する前にこのオペレーションを公開してください。ドラフトはメンバーには表示"
+"されません。"
 
 #: apps/operations/views.py
 msgid "Pick at least one channel to announce to."
@@ -19538,6 +19543,158 @@ msgstr "納品を記録しました。"
 msgid "%(n)s hauling task(s) created."
 msgstr "%(n)s 件の輸送タスクを作成しました。"
 
+#: apps/profiles/sections.py templates/identity/character.html
+#: templates/profiles/public.html
+msgid "Trained skills"
+msgstr "習得済みスキル"
+
+#: apps/profiles/sections.py
+msgid ""
+"Total skill points and every trained skill, grouped by category, with its "
+"level."
+msgstr ""
+"スキルポイントの合計と、習得済みスキルすべてをカテゴリ別にレベル付きで表示し"
+"ます。"
+
+#: apps/profiles/sections.py templates/profiles/public.html
+msgid "Training queue"
+msgstr "トレーニングキュー"
+
+#: apps/profiles/sections.py
+msgid ""
+"What is training right now and what is queued after it, with finish times."
+msgstr ""
+"今トレーニング中のスキルと、その後にキューされているスキルを完了時刻付きで表"
+"示します。"
+
+#: apps/profiles/sections.py
+msgid ""
+"Every hull whose skill requirements you already meet, worked out from your "
+"trained skills — not from what you own."
+msgstr ""
+"スキル要件をすでに満たしている艦船すべて。習得済みスキルから算出したもので、"
+"所有している艦船ではありません。"
+
+#: apps/profiles/sections.py
+msgid "Attributes & implants"
+msgstr "アトリビュート & インプラント"
+
+#: apps/profiles/sections.py
+msgid "Your five attributes and the implants plugged into this clone."
+msgstr "5 つのアトリビュートと、このクローンに装着されているインプラント。"
+
+#: apps/profiles/sections.py
+msgid "Implants reveal what is in your head. Share with care."
+msgstr "インプラントは頭の中身を明かします。共有は慎重に。"
+
+#: apps/profiles/sections.py templates/killboard/list.html
+#: templates/profiles/public.html
+msgid "Combat record"
+msgstr "戦闘記録"
+
+#: apps/profiles/sections.py
+msgid ""
+"All-time kills, losses, ISK destroyed, rank and your most recent kills from "
+"the corp killboard. Killmails are public EVE facts."
+msgstr ""
+"全期間のキル、ロス、破壊した ISK 、ランク、そしてコーポの killboard での最近"
+"のキル。 killmail は公開された EVE の事実です。"
+
+#: apps/profiles/services.py
+msgid "Choose how long the link should stay live."
+msgstr "リンクを有効にしておく期間を選んでください。"
+
+#: apps/profiles/services.py
+msgid "Enter the expiry date as YYYY-MM-DD."
+msgstr "有効期限は YYYY-MM-DD の形式で入力してください。"
+
+#: apps/profiles/services.py
+msgid "The expiry date has to be in the future."
+msgstr "有効期限は未来の日付にしてください。"
+
+#: apps/profiles/services.py
+msgid "Pick a date within the next ten years, or choose “never”."
+msgstr "今後 10 年以内の日付を選ぶか、「なし」を選んでください。"
+
+#: apps/profiles/services.py
+msgid "Pick at least one thing to show on the page."
+msgstr "ページに表示する項目を少なくとも 1 つ選んでください。"
+
+#: apps/profiles/services.py
+#, python-format
+msgid "The password needs at least %(n)d characters."
+msgstr "パスワードは %(n)d 文字以上にしてください。"
+
+#: apps/profiles/services.py
+#, python-format
+msgid "The password can be at most %(n)d characters."
+msgstr "パスワードは %(n)d 文字以内にしてください。"
+
+#: apps/profiles/services.py apps/skills/training.py
+msgid "Intelligence"
+msgstr "知力"
+
+#: apps/profiles/services.py apps/skills/training.py
+msgid "Memory"
+msgstr "記憶力"
+
+#: apps/profiles/services.py apps/skills/training.py
+msgid "Perception"
+msgstr "知覚"
+
+#: apps/profiles/services.py apps/skills/training.py
+msgid "Willpower"
+msgstr "意志力"
+
+#: apps/profiles/services.py apps/skills/training.py
+msgid "Charisma"
+msgstr "魅力"
+
+#: apps/profiles/services.py
+#, python-format
+msgid "Implant %(id)s"
+msgstr "インプラント %(id)s"
+
+#: apps/profiles/views.py
+#, python-format
+msgid "Public profile for %(name)s is live."
+msgstr "%(name)s の公開プロフィールを公開しました。"
+
+#: apps/profiles/views.py
+#, python-format
+msgid "Public profile for %(name)s updated."
+msgstr "%(name)s の公開プロフィールを更新しました。"
+
+#: apps/profiles/views.py
+#, python-format
+msgid "%(name)s has no public profile."
+msgstr "%(name)s には公開プロフィールがありません。"
+
+#: apps/profiles/views.py
+msgid "New link generated — the old one no longer works."
+msgstr "新しいリンクを生成しました — 古いリンクは使えなくなりました。"
+
+#: apps/profiles/views.py
+msgid "Public profile re-enabled."
+msgstr "公開プロフィールを再び有効にしました。"
+
+#: apps/profiles/views.py
+msgid "Public profile disabled — the link now shows nothing."
+msgstr ""
+"公開プロフィールを無効にしました — リンクを開いても何も表示されません。"
+
+#: apps/profiles/views.py
+msgid "Public profile deleted."
+msgstr "公開プロフィールを削除しました。"
+
+#: apps/profiles/views.py
+msgid "Too many attempts. Wait a few minutes and try again."
+msgstr "試行回数が多すぎます。数分待ってからやり直してください。"
+
+#: apps/profiles/views.py
+msgid "That password is not right."
+msgstr "パスワードが違います。"
+
 #: apps/raffle/contest_templates.py
 msgid "1st prize"
 msgstr "1等"
@@ -22316,25 +22473,10 @@ msgstr ""
 msgid "Fly %(doctrine)s"
 msgstr "%(doctrine)s を飛ばす"
 
-#: apps/skills/training.py
-msgid "Charisma"
-msgstr "魅力"
-
-#: apps/skills/training.py
-msgid "Intelligence"
-msgstr "知力"
-
-#: apps/skills/training.py
-msgid "Memory"
-msgstr "記憶力"
-
-#: apps/skills/training.py
-msgid "Perception"
-msgstr "知覚"
-
-#: apps/skills/training.py
-msgid "Willpower"
-msgstr "意志力"
+#: apps/skills/overview.py
+#, python-format
+msgid "Skill %(id)s"
+msgstr "スキル %(id)s"
 
 #: apps/skills/views.py
 #, python-format
@@ -25342,8 +25484,13 @@ msgid "My Tasks"
 msgstr "マイタスク"
 
 #: templates/_nav.html templates/identity/linked_pilots.html
+#: templates/profiles/manage.html
 msgid "Linked Pilots"
 msgstr "連携済みパイロット"
+
+#: templates/_nav.html
+msgid "Public Profile"
+msgstr "公開プロフィール"
 
 #: templates/_nav.html templates/identity/_my_losses.html
 #: templates/srp/my_srp.html
@@ -26390,7 +26537,7 @@ msgstr "ランクを作成"
 #: templates/killboard/campaign_form.html
 #: templates/killboard/signatures/form.html templates/operations/form.html
 #: templates/planetary/wizard.html templates/procurement/supplier_detail.html
-#: templates/tasks/detail.html
+#: templates/profiles/manage.html templates/tasks/detail.html
 msgid "Save changes"
 msgstr "変更を保存"
 
@@ -30293,6 +30440,7 @@ msgstr "取り下げる"
 #: templates/admin_audit/console/members.html
 #: templates/admin_audit/console/raffle_detail.html
 #: templates/campaigns/detail.html templates/fitting/detail.html
+#: templates/profiles/public.html
 msgid "Manage"
 msgstr "管理"
 
@@ -31678,7 +31826,7 @@ msgstr "オフ"
 #: templates/admin_audit/console/pingboard/templates.html
 #: templates/admin_audit/console/signatures_search.html
 #: templates/killboard/signatures/list.html
-#: templates/killboard/subscriptions.html
+#: templates/killboard/subscriptions.html templates/profiles/manage.html
 msgid "Disable"
 msgstr "無効化"
 
@@ -31687,7 +31835,7 @@ msgstr "無効化"
 #: templates/admin_audit/console/pingboard/templates.html
 #: templates/admin_audit/console/signatures_search.html
 #: templates/killboard/signatures/list.html
-#: templates/killboard/subscriptions.html
+#: templates/killboard/subscriptions.html templates/profiles/manage.html
 msgid "Enable"
 msgstr "有効化"
 
@@ -35534,6 +35682,7 @@ msgstr ""
 "るものはありません。"
 
 #: templates/admin_audit/console/signatures_backgrounds.html
+#: templates/profiles/manage.html
 msgid "Preview"
 msgstr "プレビュー"
 
@@ -37638,7 +37787,7 @@ msgstr "自動更新は一時停止中です。手動の値が使用されます
 
 #: templates/campaigns/objective_detail.html templates/identity/character.html
 #: templates/industry/capacity.html templates/operations/templates.html
-#: templates/skills/plans.html
+#: templates/profiles/public.html templates/skills/plans.html
 msgid "paused"
 msgstr "一時停止中"
 
@@ -40749,6 +40898,7 @@ msgid "Roster"
 msgstr "ロースター"
 
 #: templates/corporation/roster.html templates/identity/character.html
+#: templates/profiles/public.html
 #, python-format
 msgid "synced %(ago)s ago"
 msgstr "%(ago)s 前に同期"
@@ -40948,7 +41098,8 @@ msgstr "フィットをコピー（EFT）"
 
 #: templates/doctrines/detail.html templates/doctrines/prep.html
 #: templates/identity/character.html templates/killboard/detail.html
-#: templates/killboard/signatures/list.html templates/skills/detail.html
+#: templates/killboard/signatures/list.html templates/profiles/manage.html
+#: templates/skills/detail.html
 msgid "Copied ✓"
 msgstr "コピーしました ✓"
 
@@ -42755,17 +42906,25 @@ msgstr "スキル &amp; トレーニング"
 msgid "Idle — not training"
 msgstr "アイドル — トレーニングしていません"
 
-#: templates/identity/character.html
+#: templates/identity/character.html templates/profiles/public.html
 msgid "Skill points"
 msgstr "スキルポイント"
 
-#: templates/identity/character.html
+#: templates/identity/character.html templates/profiles/public.html
 msgid "At level V"
 msgstr "レベル V"
 
 #: templates/identity/character.html templates/skills/plans.html
 msgid "Refresh from EVE"
 msgstr "EVE から更新"
+
+#: templates/identity/character.html templates/profiles/manage.html
+msgid "Public profile"
+msgstr "公開プロフィール"
+
+#: templates/identity/character.html
+msgid "Share publicly…"
+msgstr "外部に共有…"
 
 #: templates/identity/character.html
 msgid ""
@@ -42790,11 +42949,12 @@ msgstr "詳細な内訳は Doctrines で確認"
 msgid "In-game training queue"
 msgstr "ゲーム内トレーニングキュー"
 
-#: templates/identity/character.html templates/skills/plans.html
+#: templates/identity/character.html templates/profiles/public.html
+#: templates/skills/plans.html
 msgid "Now training"
 msgstr "トレーニング中"
 
-#: templates/identity/character.html
+#: templates/identity/character.html templates/profiles/public.html
 msgctxt "time remaining"
 msgid "left"
 msgstr "残り"
@@ -42882,15 +43042,11 @@ msgid "Build plan"
 msgstr "プランを作成"
 
 #: templates/identity/character.html
-msgid "Trained skills"
-msgstr "習得済みスキル"
-
-#: templates/identity/character.html
 #, python-format
 msgid "%(skill_count)s skills"
 msgstr "%(skill_count)s 件のスキル"
 
-#: templates/identity/character.html
+#: templates/identity/character.html templates/profiles/public.html
 msgid "at V"
 msgstr "V で"
 
@@ -42898,7 +43054,7 @@ msgstr "V で"
 msgid "completing…"
 msgstr "完了中…"
 
-#: templates/identity/character.html
+#: templates/identity/character.html templates/profiles/manage.html
 msgid "Copy failed"
 msgstr "コピーに失敗しました"
 
@@ -43690,6 +43846,27 @@ msgstr "アイドルキューのリマインダーは"
 #: templates/identity/privacy.html
 msgid "Turn off"
 msgstr "オフにする"
+
+#: templates/identity/privacy.html
+msgid "Sharing outside the corp"
+msgstr "コーポ外への共有"
+
+#: templates/identity/privacy.html
+msgid ""
+"Nothing about you is visible to anyone outside the corporation unless you "
+"publish a public profile yourself. A public profile is an unlisted, "
+"unguessable link for one pilot that shows only the sections you pick, "
+"expires when you say, and can require a password. You can disable or delete "
+"it at any time."
+msgstr ""
+"自分で公開プロフィールを公開しない限り、コーポレーション外の誰にもあなたの情"
+"報は見えません。公開プロフィールは、パイロット 1 人分の、一覧に載らず推測もで"
+"きないリンクで、選んだセクションだけを表示し、指定した日に期限切れになり、パ"
+"スワードを必須にすることもできます。いつでも無効化・削除できます。"
+
+#: templates/identity/privacy.html
+msgid "Manage public profile"
+msgstr "公開プロフィールを管理"
 
 #: templates/identity/privacy.html
 msgid "What officers can see about you"
@@ -46829,10 +47006,6 @@ msgstr "ロスの killmail id"
 #: templates/killboard/kotw.html
 msgid "Pin this loss"
 msgstr "このロスを固定"
-
-#: templates/killboard/list.html
-msgid "Combat record"
-msgstr "戦闘記録"
 
 #: templates/killboard/list.html
 msgid "Stats"
@@ -54730,6 +54903,305 @@ msgstr "リードタイム（日）"
 msgid "No suppliers match."
 msgstr "一致するサプライヤーはありません。"
 
+#: templates/profiles/locked.html templates/profiles/public.html
+msgid "Pilot profile"
+msgstr "パイロットプロフィール"
+
+#: templates/profiles/locked.html
+msgid "This profile is password protected"
+msgstr "このプロフィールはパスワードで保護されています"
+
+#: templates/profiles/locked.html
+msgid ""
+"The pilot who shared this link set a password. Enter it to open the page."
+msgstr ""
+"このリンクを共有したパイロットがパスワードを設定しています。ページを開くには"
+"入力してください。"
+
+#: templates/profiles/locked.html templates/profiles/manage.html
+msgid "Password"
+msgstr "パスワード"
+
+#: templates/profiles/locked.html
+msgid "Open profile"
+msgstr "プロフィールを開く"
+
+#: templates/profiles/manage.html
+msgid "Share outside the corp"
+msgstr "コーポ外に共有"
+
+#: templates/profiles/manage.html
+msgid ""
+"Publish an unlisted page of a pilot's skills to show someone who is not in "
+"the corp — a recruiter, an FC, a friend. The link cannot be guessed, is "
+"never listed anywhere and is hidden from search engines, so only the people "
+"you send it to can open it. You choose what it shows, when it expires, and "
+"whether it needs a password."
+msgstr ""
+"パイロットのスキルをまとめた非公開リストのページを公開して、コーポ外の相手 — "
+"リクルーター、 FC 、友人 — に見せることができます。リンクは推測できず、どこに"
+"も一覧掲載されず、検索エンジンからも隠されるため、あなたが送った相手だけが開"
+"けます。何を表示するか、いつ期限切れにするか、パスワードを必須にするかはあな"
+"たが決めます。"
+
+#: templates/profiles/manage.html
+msgid ""
+"Link a pilot first — a public profile is published for one pilot at a time."
+msgstr ""
+"まずパイロットを連携してください — 公開プロフィールはパイロット 1 人ずつ公開"
+"します。"
+
+#: templates/profiles/manage.html
+msgctxt "public profile state"
+msgid "Live"
+msgstr "公開中"
+
+#: templates/profiles/manage.html
+msgctxt "public profile state"
+msgid "Expired"
+msgstr "期限切れ"
+
+#: templates/profiles/manage.html
+msgctxt "public profile state"
+msgid "Disabled"
+msgstr "無効"
+
+#: templates/profiles/manage.html
+msgctxt "public profile state"
+msgid "Not published"
+msgstr "未公開"
+
+#: templates/profiles/manage.html
+msgid "Your link"
+msgstr "あなたのリンク"
+
+#: templates/profiles/manage.html
+msgid "Public profile link"
+msgstr "公開プロフィールのリンク"
+
+#: templates/profiles/manage.html
+msgid "Copy link"
+msgstr "リンクをコピー"
+
+#: templates/profiles/manage.html
+msgid "Expires"
+msgstr "有効期限"
+
+#: templates/profiles/manage.html
+msgctxt "profile expiry"
+msgid "never"
+msgstr "なし"
+
+#: templates/profiles/manage.html
+msgctxt "profile password"
+msgid "required"
+msgstr "必要"
+
+#: templates/profiles/manage.html
+msgctxt "profile password"
+msgid "none"
+msgstr "なし"
+
+#: templates/profiles/manage.html
+msgid "Views"
+msgstr "閲覧数"
+
+#: templates/profiles/manage.html
+#, python-format
+msgid "last %(ago)s ago"
+msgstr "最終 %(ago)s 前"
+
+#: templates/profiles/manage.html
+msgid "Shows"
+msgstr "表示内容"
+
+#: templates/profiles/manage.html
+msgid "Generate a new link? Anyone holding the old one loses access."
+msgstr ""
+"新しいリンクを生成しますか？古いリンクを持っている人はアクセスできなくなりま"
+"す。"
+
+#: templates/profiles/manage.html
+msgid "New link"
+msgstr "新しいリンク"
+
+#: templates/profiles/manage.html
+msgid "Delete this public profile? The link stops working immediately."
+msgstr "この公開プロフィールを削除しますか？リンクは直ちに使えなくなります。"
+
+#: templates/profiles/manage.html
+msgid "Change what the page shows"
+msgstr "ページの表示内容を変更"
+
+#: templates/profiles/manage.html
+msgid "Publish a public profile"
+msgstr "公開プロフィールを公開"
+
+#: templates/profiles/manage.html
+msgid "What to show"
+msgstr "表示する内容"
+
+#: templates/profiles/manage.html
+msgid ""
+"The page always shows the pilot's name, portrait and corporation. Everything "
+"else is your call. Doctrines, plans, readiness, contributions, assets and "
+"your other pilots are never shown."
+msgstr ""
+"ページには常にパイロットの名前、ポートレート、コーポレーションが表示されま"
+"す。それ以外はあなたが決めます。 doctrine 、プラン、即応度、貢献、資産、他の"
+"連携パイロットは決して表示されません。"
+
+#: templates/profiles/manage.html
+msgid "Link expires"
+msgstr "リンクの有効期限"
+
+#: templates/profiles/manage.html
+msgid "in 7 days"
+msgstr "7 日後"
+
+#: templates/profiles/manage.html
+msgid "in 30 days"
+msgstr "30 日後"
+
+#: templates/profiles/manage.html
+msgid "in 90 days"
+msgstr "90 日後"
+
+#: templates/profiles/manage.html
+msgid "on a date I pick"
+msgstr "自分で選んだ日"
+
+#: templates/profiles/manage.html
+msgid "Expiry date (only for “on a date I pick”)"
+msgstr "有効期限の日付（「自分で選んだ日」の場合のみ）"
+
+#: templates/profiles/manage.html
+msgid "The link works through the end of that day (UTC)."
+msgstr "リンクはその日の終わり（ UTC ）まで有効です。"
+
+#: templates/profiles/manage.html
+msgid "New password (leave blank to keep the current one)"
+msgstr "新しいパスワード（現在のものを維持する場合は空欄）"
+
+#: templates/profiles/manage.html
+msgid "Password (optional)"
+msgstr "パスワード（任意）"
+
+#: templates/profiles/manage.html
+msgid "Visitors must type this to open the page"
+msgstr "訪問者はページを開くためにこれを入力する必要があります"
+
+#: templates/profiles/manage.html
+msgid "Remove the password"
+msgstr "パスワードを削除"
+
+#: templates/profiles/manage.html
+msgid "A note for whoever opens the page (optional)"
+msgstr "ページを開いた人へのメモ（任意）"
+
+#: templates/profiles/manage.html
+msgid ""
+"e.g. Applying for your incursion community — EU timezone, mostly evenings."
+msgstr "例：インカージョンコミュニティへの参加希望 — EU 時間帯、主に夜間。"
+
+#: templates/profiles/manage.html
+msgid ""
+"Skills come from the last EVE sync. Visitors see exactly what you see on My "
+"Skills & Training."
+msgstr ""
+"スキルは最後の EVE 同期時のものです。訪問者には「マイスキル & 訓練」であなた"
+"が見ているものとまったく同じ内容が表示されます。"
+
+#: templates/profiles/manage.html
+msgid "Publish"
+msgstr "公開"
+
+#: templates/profiles/public.html
+msgid ""
+"You are viewing your own public profile. This is exactly what a visitor with "
+"the link sees — you skip the password, and your own visits are not counted."
+msgstr ""
+"これはあなた自身の公開プロフィールです。リンクを持つ訪問者にはまさにこのよう"
+"に見えます — あなたはパスワードを省略でき、自分の閲覧はカウントされません。"
+
+#: templates/profiles/public.html
+#, python-format
+msgid "A note from %(name)s"
+msgstr "%(name)s からのメモ"
+
+#: templates/profiles/public.html
+msgid "No skills have been synced for this pilot yet."
+msgstr "このパイロットのスキルはまだ同期されていません。"
+
+#: templates/profiles/public.html
+msgid "The training queue is empty."
+msgstr "トレーニングキューは空です。"
+
+#: templates/profiles/public.html
+msgid "No training queue has been synced for this pilot yet."
+msgstr "このパイロットのトレーニングキューはまだ同期されていません。"
+
+#: templates/profiles/public.html
+msgid "Ships this pilot can fly"
+msgstr "このパイロットが乗れる艦船"
+
+#: templates/profiles/public.html
+msgid "from trained skills, not from hangar contents"
+msgstr "習得済みスキルから算出。ハンガーの中身ではありません"
+
+#: templates/profiles/public.html
+msgid "Nothing to show yet — skills have not been synced for this pilot."
+msgstr ""
+"まだ表示できるものがありません — このパイロットのスキルは同期されていません。"
+
+#: templates/profiles/public.html
+msgid "Attributes &amp; implants"
+msgstr "アトリビュート &amp; インプラント"
+
+#: templates/profiles/public.html
+msgid "No implants in this clone."
+msgstr "このクローンにインプラントはありません。"
+
+#: templates/profiles/public.html
+msgid "Attributes have not been synced for this pilot yet."
+msgstr "このパイロットのアトリビュートはまだ同期されていません。"
+
+#: templates/profiles/public.html
+msgid "all time, from public killmails"
+msgstr "全期間、公開された killmail に基づく"
+
+#: templates/profiles/public.html
+msgid "Recent kills"
+msgstr "最近のキル"
+
+#: templates/profiles/public.html
+msgid "No PvP record on the corp killboard yet."
+msgstr "コーポの killboard にはまだ PvP の記録がありません。"
+
+#: templates/profiles/public.html
+msgid ""
+"An unlisted page shared by its pilot. It is not indexed and may expire or be "
+"withdrawn at any time."
+msgstr ""
+"パイロット本人が共有した非公開リストのページです。検索エンジンには登録され"
+"ず、いつでも期限切れになるか取り下げられることがあります。"
+
+#: templates/profiles/unavailable.html
+msgid "Profile not available"
+msgstr "プロフィールは利用できません"
+
+#: templates/profiles/unavailable.html
+msgid "This profile link is not available"
+msgstr "このプロフィールのリンクは利用できません"
+
+#: templates/profiles/unavailable.html
+msgid ""
+"It may have expired, been withdrawn by its pilot, or never existed. Ask the "
+"pilot for a fresh link."
+msgstr ""
+"期限切れか、パイロットが取り下げたか、最初から存在しなかった可能性がありま"
+"す。パイロットに新しいリンクを頼んでください。"
+
 #: templates/raffle/archive.html
 msgid "Raffle archive"
 msgstr "ラッフルアーカイブ"
@@ -55460,9 +55932,7 @@ msgid "Every ticket I earned"
 msgstr "自分が獲得したすべてのチケット"
 
 #: templates/raffle/tickets.html
-#, fuzzy, python-format
-#| msgid "%(n)s event"
-#| msgid_plural "%(n)s events"
+#, python-format
 msgid "%(n)s award event"
 msgid_plural "%(n)s award events"
 msgstr[0] "%(n)s 件の付与イベント"

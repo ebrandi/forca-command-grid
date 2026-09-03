@@ -112,3 +112,41 @@ def character_training(character, now=None) -> dict:
         "queue_remaining_seconds": int(queue_remaining.total_seconds()) if queue_remaining else None,
         "queue_finish": last_finish,
     }
+
+
+def grouped_skills(snapshot) -> list[dict]:
+    """The character's trained skills grouped by SDE group (a browsable list, not a
+    flat 200-item dump). One batched query resolves names + group per skill.
+
+    Shared by the member-facing character page and the public profile page, so the two can
+    never disagree about what "your skills" look like."""
+    if not snapshot or not snapshot.skills:
+        return []
+    from django.utils.translation import gettext
+
+    from apps.sde.models import SdeType
+
+    meta = {
+        tid: (name, grp or gettext("Other"))
+        for tid, name, grp in SdeType.objects.filter(type_id__in=[int(k) for k in snapshot.skills])
+        .select_related("group").values_list("type_id", "name", "group__name")
+    }
+    groups: dict[str, list] = {}
+    for sid, info in snapshot.skills.items():
+        name, grp = meta.get(
+            int(sid),
+            (gettext("Skill %(id)s") % {"id": sid}, gettext("Other")),
+        )
+        groups.setdefault(grp, []).append(
+            {"id": int(sid), "name": name, "level": int(info.get("trained_level", 0))}
+        )
+    out = []
+    for grp in sorted(groups):
+        skills = sorted(groups[grp], key=lambda s: s["name"])
+        out.append({
+            "group": grp,
+            "skills": skills,
+            "count": len(skills),
+            "at_v": sum(1 for s in skills if s["level"] == 5),
+        })
+    return out

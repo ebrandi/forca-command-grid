@@ -9,6 +9,22 @@ project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 
 ### Added
 
+- **Public pilot profiles** — a pilot can opt in to an unlisted page of their skills to
+  share with people outside the corp (a recruiter, an FC, a friend). The page lives at an
+  unguessable `/p/<token>/` link (192 bits), is never listed anywhere, is hidden from search
+  engines (`noindex`/`nofollow`/`noarchive` header and meta, `no-store`, no Referer), expires
+  on a date the pilot picks (7/30/90 days, a custom date, or never), and can additionally
+  require a simple password (hashed; attempts throttled per visitor and profile). The pilot
+  chooses what it shows: trained skills (on by default), the training queue, the ships their
+  skills allow (worked out from the SDE, not from assets), attributes and implants (flagged),
+  the combat record (public killmails), and a note. Doctrines, plans, readiness,
+  contributions, assets and the account's other pilots are never shareable. Owners preview
+  their own page without the password (uncounted), see visit counts, rotate the link,
+  disable, or delete; every failure mode is one identical 404. Managed from the new Public
+  Profile page (Pilot group), the character page, and Privacy; deleted on unlink and by
+  "Delete my data"; gated by the new `public_profiles` feature flag (`/p/` links and the
+  management page go dark together). Rate limits `PROFILE_PUBLIC_RATE` and
+  `PROFILE_PASSWORD_RATE` are env-tunable.
 - **Combat Signatures (pilot banner images)** — home-corp pilots build personalised PNG
   banner images from their own killboard and profile data and embed them in forums, Discord,
   and websites. A private builder on `/killboard/signatures/` composes a banner from a size

@@ -56,6 +56,16 @@
 </section>
 {% endif %}
 
+{% if features.public_profiles %}
+<section class="panel mt-6 p-5">
+  <h2 class="font-display font-semibold text-ink">{% translate "Sharing outside the corp" %}</h2>
+  <p class="mt-1 max-w-2xl text-sm text-muted">
+    {% blocktranslate %}Nothing about you is visible to anyone outside the corporation unless you publish a public profile yourself. A public profile is an unlisted, unguessable link for one pilot that shows only the sections you pick, expires when you say, and can require a password. You can disable or delete it at any time.{% endblocktranslate %}
+  </p>
+  <a href="{% url 'profiles:manage' %}" class="btn-ghost mt-4 inline-flex !py-1">{% translate "Manage public profile" %}</a>
+</section>
+{% endif %}
+
 <section class="panel mt-6 p-5">
   <h2 class="font-display font-semibold text-ink">{% translate "What officers can see about you" %}</h2>
   <ul class="mt-2 max-w-2xl space-y-1.5 text-sm text-muted">

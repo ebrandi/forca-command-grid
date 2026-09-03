@@ -33,6 +33,10 @@ urlpatterns = [
     # nginx serves the rendered file straight from disk in prod; this Django route is the
     # dev/test path and the prod fallback for pending / disabled / unknown tokens.
     path("s/<str:token>.png", signature_public.signature_png, name="signature_public"),
+    # Public pilot profiles: the member's management page (/public-profile/, membership-gated)
+    # and the unlisted, token-addressed public page (/p/<token>/, anonymous by design — the
+    # prefix is allowlisted past the membership gate like /s/). See apps/profiles/urls.py.
+    path("", include("apps.profiles.urls")),
     path("doctrines/", include("apps.doctrines.urls")),
     path("lab/", include("apps.fitting.urls")),  # Tocha's Lab (ship fitting)
     path("industry/pi/", include("apps.planetary.urls")),

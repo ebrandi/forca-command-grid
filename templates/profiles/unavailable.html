@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Profile not available" %} · [FORCA] Command Grid{% endblock %}
+{% comment %}Pinned in-document as well as in the response header: the edge (nginx) appends its own
+   Referrer-Policy after Django's, and with two headers the LAST one wins — a <meta name="referrer">
+   is applied when the document is parsed and overrides both, so the token never leaves as a
+   Referer whichever header the browser honours.{% endcomment %}
+{% block extra_head %}<meta name="referrer" content="no-referrer">{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-md">
+  <div class="panel p-6 text-center">
+    <h1 class="text-xl font-bold text-ink">{% translate "This profile link is not available" %}</h1>
+    <p class="mt-2 text-sm text-muted">{% translate "It may have expired, been withdrawn by its pilot, or never existed. Ask the pilot for a fresh link." %}</p>
+  </div>
+</div>
+{% endblock %}

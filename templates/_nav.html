@@ -25,6 +25,9 @@
          are flying, not about account settings. It is never feature-gated — a pilot must always
          be able to reach the pilot they are locked out of.{% endcomment %}
       <a href="{% url 'identity:linked_pilots' %}" class="navlink {% if un == 'linked_pilots' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-pilots"/></svg> {% translate "Linked Pilots" %}</a>
+      {% comment %}Public profile: the pilot's own unlisted, shareable skill page (apps.profiles). Lives
+         beside Linked Pilots because it is about YOUR pilots, not about the corp.{% endcomment %}
+      {% if features.public_profiles %}<a href="{% url 'profiles:manage' %}" class="navlink {% if ns == 'profiles' and un == 'manage' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-share"/></svg> {% translate "Public Profile" %}</a>{% endif %}
       {% if features.srp %}<a href="{% url 'srp:mine' %}" class="navlink {% if ns == 'srp' and un == 'mine' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-shield"/></svg> {% translate "My SRP" %}</a>{% endif %}
       {% if features.contributions %}<a href="{% url 'pilots:contributions' %}" class="navlink {% if ns == 'pilots' and un == 'contributions' %}bg-panel2 text-gold{% endif %}"><svg class="navicon"><use href="#i-bolt"/></svg> {% translate "My Contribution" %}</a>{% endif %}
     </div>

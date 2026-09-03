@@ -80,6 +80,7 @@ INSTALLED_APPS = [
     "apps.procurement",
     "apps.supplyboard",
     "apps.fitting",
+    "apps.profiles",
 ]
 
 MIDDLEWARE = [
@@ -386,6 +387,10 @@ SIGNATURE_RENDER_MAX_PER_TICK = env.int("SIGNATURE_RENDER_MAX_PER_TICK", default
 # only bounds the fallback path — pending renders plus the constant-shape 404 for disabled/unknown
 # tokens (anti-enumeration). Mirrors the killcard.throttle_ok shape; 0 disables the throttle.
 SIGNATURE_PUBLIC_RATE = env.int("SIGNATURE_PUBLIC_RATE", default=120)
+# Public pilot profiles (apps.profiles): the anonymous ``/p/<token>/`` page. Page loads per IP
+# per minute, and password attempts per (IP, profile) per five minutes. ``<=0`` disables.
+PROFILE_PUBLIC_RATE = env.int("PROFILE_PUBLIC_RATE", default=120)
+PROFILE_PASSWORD_RATE = env.int("PROFILE_PASSWORD_RATE", default=10)
 # Per-user fixed-window rate cap (requests/min) for the owner-only synchronous banner preview in
 # the builder (POST /killboard/signatures/preview.png). The preview renders in-request (no Celery,
 # no save), so it is throttled per user id like the public delivery view; 0 disables the throttle.

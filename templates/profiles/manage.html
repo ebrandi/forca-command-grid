@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% load eve %}
+{% load i18n %}
+{% block title %}{% translate "Public profile" %} · [FORCA] Command Grid{% endblock %}
+{% block content %}
+<header class="mb-6">
+  <p class="eyebrow">{% translate "Share outside the corp" %}</p>
+  <h1 class="mt-1 text-3xl font-bold text-ink">{% translate "Public profile" %}</h1>
+  <p class="mt-2 max-w-2xl text-sm text-muted">
+    {% blocktranslate %}Publish an unlisted page of a pilot's skills to show someone who is not in the corp — a recruiter, an FC, a friend. The link cannot be guessed, is never listed anywhere and is hidden from search engines, so only the people you send it to can open it. You choose what it shows, when it expires, and whether it needs a password.{% endblocktranslate %}
+  </p>
+</header>
+
+{% if not cards %}
+<div class="panel p-6 text-center">
+  <p class="text-sm text-faint">{% translate "Link a pilot first — a public profile is published for one pilot at a time." %}</p>
+  <a href="{% url 'identity:linked_pilots' %}" class="btn-gold mt-4 inline-flex">{% translate "Linked Pilots" %}</a>
+</div>
+{% endif %}
+
+<div class="space-y-6">
+{% for card in cards %}
+{% with character=card.character profile=card.profile %}
+<section id="c{{ character.character_id }}" class="panel overflow-hidden">
+  <div class="flex flex-wrap items-center gap-4 border-b border-line px-5 py-4">
+    <img src="{% eve_portrait character.character_id 64 %}" alt="" class="h-12 w-12 rounded-lg ring-1 ring-line">
+    <div class="min-w-0 flex-1">
+      <h2 class="truncate text-lg font-bold text-ink">{{ character.name }}{% if character.is_main %} <span class="text-gold">★</span>{% endif %}</h2>
+      <p class="text-xs text-faint">{% if character.corporation %}{{ character.corporation.name }}{% endif %}</p>
+    </div>
+    {% if card.state == 'live' %}<span class="chip !border-kill/40 !text-kill">{% translate "Live" context "public profile state" %}</span>
+    {% elif card.state == 'expired' %}<span class="chip !border-gold/40 !text-gold">{% translate "Expired" context "public profile state" %}</span>
+    {% elif card.state == 'disabled' %}<span class="chip !text-faint">{% translate "Disabled" context "public profile state" %}</span>
+    {% else %}<span class="chip !text-faint">{% translate "Not published" context "public profile state" %}</span>{% endif %}
+  </div>
+
+  {% if profile %}
+  <div class="border-b border-line px-5 py-4">
+    <p class="eyebrow text-faint">{% translate "Your link" %}</p>
+    <div class="mt-2 flex flex-wrap items-center gap-2">
+      <input type="text" readonly value="{{ card.url }}" class="input-field min-w-0 flex-1 font-mono text-xs" data-share-url aria-label="{% translate 'Public profile link' %}">
+      <button type="button" class="btn-gold !py-1.5 text-xs" data-copy-text="{{ card.url }}">{% translate "Copy link" %}</button>
+      {% if card.state == 'live' %}<a href="{{ card.url }}" class="btn-ghost !py-1.5 text-xs" target="_blank" rel="noopener">{% translate "Preview" %}</a>{% endif %}
+    </div>
+    <dl class="mt-3 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
+      <div class="flex justify-between gap-3"><dt class="text-faint">{% translate "Expires" %}</dt>
+        <dd class="text-ink">{% if profile.expires_at %}{{ profile.expires_at|date:"j M Y H:i" }} UTC{% else %}{% translate "never" context "profile expiry" %}{% endif %}</dd></div>
+      <div class="flex justify-between gap-3"><dt class="text-faint">{% translate "Password" %}</dt>
+        <dd class="text-ink">{% if profile.has_password %}{% translate "required" context "profile password" %}{% else %}{% translate "none" context "profile password" %}{% endif %}</dd></div>
+      <div class="flex justify-between gap-3"><dt class="text-faint">{% translate "Views" %}</dt>
+        <dd class="data text-ink">{{ profile.view_count }}{% if profile.last_viewed_at %} <span class="text-faint">· {% blocktranslate with ago=profile.last_viewed_at|timesince %}last {{ ago }} ago{% endblocktranslate %}</span>{% endif %}</dd></div>
+      <div class="flex justify-between gap-3"><dt class="text-faint">{% translate "Shows" %}</dt>
+        <dd class="text-right text-ink">{% for label in card.section_labels %}{{ label }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</dd></div>
+    </dl>
+    <div class="mt-4 flex flex-wrap gap-2">
+      <form method="post" action="{% url 'profiles:rotate' %}" data-confirm="{% translate 'Generate a new link? Anyone holding the old one loses access.' %}">{% csrf_token %}
+        <input type="hidden" name="character_id" value="{{ character.character_id }}">
+        <button class="btn-ghost !py-1 text-xs">{% translate "New link" %}</button>
+      </form>
+      <form method="post" action="{% url 'profiles:toggle' %}">{% csrf_token %}
+        <input type="hidden" name="character_id" value="{{ character.character_id }}">
+        <button class="btn-ghost !py-1 text-xs">{% if profile.enabled %}{% translate "Disable" %}{% else %}{% translate "Enable" %}{% endif %}</button>
+      </form>
+      <form method="post" action="{% url 'profiles:delete' %}" data-confirm="{% translate 'Delete this public profile? The link stops working immediately.' %}">{% csrf_token %}
+        <input type="hidden" name="character_id" value="{{ character.character_id }}">
+        <button class="btn-ghost !py-1 !text-loss text-xs hover:!border-loss/40">{% translate "Delete" %}</button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+  <details class="group" {% if focus_character_id == character.character_id or not profile and cards|length == 1 %}open{% endif %}>
+    <summary class="flex cursor-pointer select-none items-center gap-2.5 px-5 py-3 text-sm hover:bg-panel2/40">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" class="disclosure-chevron group-hover:text-muted"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="font-medium text-ink">{% if profile %}{% translate "Change what the page shows" %}{% else %}{% translate "Publish a public profile" %}{% endif %}</span>
+    </summary>
+    <form method="post" action="{% url 'profiles:save' %}" class="space-y-5 border-t border-line px-5 py-4">
+      {% csrf_token %}
+      <input type="hidden" name="character_id" value="{{ character.character_id }}">
+
+      <fieldset>
+        <legend class="eyebrow text-gold">{% translate "What to show" %}</legend>
+        <p class="mt-1 text-xs text-faint">{% translate "The page always shows the pilot's name, portrait and corporation. Everything else is your call. Doctrines, plans, readiness, contributions, assets and your other pilots are never shown." %}</p>
+        <div class="mt-3 grid gap-2 sm:grid-cols-2">
+          {% for s in available_sections %}
+          <label class="flex cursor-pointer items-start gap-3 rounded-lg border border-line/60 bg-panel2/40 px-3 py-2.5 hover:border-gold/40">
+            <input type="checkbox" name="sections" value="{{ s.key }}" class="mt-1 h-4 w-4 shrink-0" {% if s.key in card.selected %}checked{% endif %}>
+            <span class="min-w-0">
+              <span class="block text-sm font-medium text-ink">{{ s.label }}</span>
+              <span class="block text-xs text-muted">{{ s.description }}</span>
+              {% if s.caution %}<span class="mt-1 block text-xs text-gold">{{ s.caution }}</span>{% endif %}
+            </span>
+          </label>
+          {% endfor %}
+        </div>
+      </fieldset>
+
+      <div class="grid gap-4 sm:grid-cols-2">
+        <label class="block text-xs text-faint">{% translate "Link expires" %}
+          <select name="expiry" class="input-field mt-1">
+            {% for key in expiry_presets %}
+            <option value="{{ key }}" {% if key == card.expiry_choice %}selected{% endif %}>{% if key == '7d' %}{% translate "in 7 days" %}{% elif key == '30d' %}{% translate "in 30 days" %}{% elif key == '90d' %}{% translate "in 90 days" %}{% elif key == 'never' %}{% translate "never" context "profile expiry" %}{% else %}{% translate "on a date I pick" %}{% endif %}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label class="block text-xs text-faint">{% translate "Expiry date (only for “on a date I pick”)" %}
+          <input type="date" name="expires_on" class="input-field mt-1" value="{% if profile and profile.expires_at %}{{ profile.expires_at|date:'Y-m-d' }}{% endif %}">
+          <span class="mt-1 block text-faint">{% translate "The link works through the end of that day (UTC)." %}</span>
+        </label>
+      </div>
+
+      <div class="grid gap-4 sm:grid-cols-2">
+        <label class="block text-xs text-faint">{% if profile.has_password %}{% translate "New password (leave blank to keep the current one)" %}{% else %}{% translate "Password (optional)" %}{% endif %}
+          <input type="password" name="password" autocomplete="new-password" minlength="{{ password_min }}" class="input-field mt-1" placeholder="{% translate 'Visitors must type this to open the page' %}">
+        </label>
+        {% if profile.has_password %}
+        <label class="flex items-center gap-2 self-end text-sm text-muted">
+          <input type="checkbox" name="clear_password" value="1" class="h-4 w-4"> {% translate "Remove the password" %}
+        </label>
+        {% endif %}
+      </div>
+
+      <label class="block text-xs text-faint">{% translate "A note for whoever opens the page (optional)" %}
+        <textarea name="note" rows="2" maxlength="500" class="input-field mt-1" placeholder="{% translate 'e.g. Applying for your incursion community — EU timezone, mostly evenings.' %}">{% if profile %}{{ profile.note }}{% endif %}</textarea>
+      </label>
+
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <p class="text-xs text-faint">{% translate "Skills come from the last EVE sync. Visitors see exactly what you see on My Skills & Training." %}</p>
+        <button class="btn-gold">{% if profile %}{% translate "Save changes" %}{% else %}{% translate "Publish" %}{% endif %}</button>
+      </div>
+    </form>
+  </details>
+</section>
+{% endwith %}
+{% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% translate "Copied ✓" as t_copied %}
+{% translate "Copy failed" as t_copy_failed %}
+<script nonce="{{ csp_nonce }}">
+(function () {
+  var STR = { copied: "{{ t_copied|escapejs }}", copyFailed: "{{ t_copy_failed|escapejs }}" };
+  document.querySelectorAll("[data-copy-text]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var o = btn.textContent;
+      navigator.clipboard.writeText(btn.getAttribute("data-copy-text"))
+        .then(function () { btn.textContent = STR.copied; setTimeout(function () { btn.textContent = o; }, 1800); })
+        .catch(function () { btn.textContent = STR.copyFailed; });
+    });
+  });
+  document.querySelectorAll("[data-share-url]").forEach(function (el) {
+    el.addEventListener("focus", function () { el.select(); });
+  });
+})();
+</script>
+{% endblock %}

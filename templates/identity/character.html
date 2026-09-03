@@ -33,7 +33,11 @@
     <div><p class="eyebrow">{% translate "At level V" %}</p><p class="data mt-0.5 text-xl font-bold text-gold">{{ training.n_at_v }}</p></div>
   </div>
   {% endif %}
-  <form method="post" action="{% url 'skills:import_mine' %}" class="w-full sm:w-auto">{% csrf_token %}<button class="btn-ghost w-full whitespace-nowrap text-sm">↻ {% translate "Refresh from EVE" %}</button></form>
+  <div class="flex w-full flex-wrap gap-2 sm:w-auto">
+    <form method="post" action="{% url 'skills:import_mine' %}" class="w-full sm:w-auto">{% csrf_token %}<button class="btn-ghost w-full whitespace-nowrap text-sm">↻ {% translate "Refresh from EVE" %}</button></form>
+    {% comment %}Share entry point (apps.profiles): publish or manage this pilot's unlisted public page.{% endcomment %}
+    {% if features.public_profiles %}<a href="{% url 'profiles:manage' %}?c={{ character.character_id }}" class="btn-ghost w-full whitespace-nowrap text-center text-sm sm:w-auto">{% if character.public_profile %}{% translate "Public profile" %}{% else %}{% translate "Share publicly…" %}{% endif %}</a>{% endif %}
+  </div>
 </div>
 
 {% if not snapshot %}

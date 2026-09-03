@@ -70,6 +70,10 @@ _RECRUIT_ALLOWED_PREFIXES = (
                      # token-addressed asset. Anonymous fetches never hit this gate, but a
                      # logged-in EX-member must still be able to load their old forum-signature
                      # URL, so allowlist the prefix (whole-segment match keeps /store etc. out).
+    "/p",            # Public pilot profiles (/p/<token>/): an unlisted, token-addressed page a
+                     # pilot shares outside the corp. Anonymous fetches never hit this gate; a
+                     # logged-in EX-member who was sent a link must still be able to open it. The
+                     # management page (/public-profile/) is deliberately NOT allowlisted.
     "/healthz",
     "/static/",
     # Browser icon probes (config.views.favicon). A logged-in non-member's browser

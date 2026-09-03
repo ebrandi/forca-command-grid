@@ -461,6 +461,33 @@ corporation offers to its members (and optionally allies or the public).
   view. Pilots can choose which panels to show.
 - **Background jobs:** Per-pilot briefing warmers.
 
+### Public pilot profile
+
+- **Users:** members (publish and manage their own); anyone holding a link (view).
+- **Purpose:** An opt-in, unlisted page a pilot shares with people *outside* the corp — a
+  recruiter, an FC, a friend — showing that one pilot's skills. The link is unguessable
+  (`/p/<token>/`, 192 bits), never listed anywhere, hidden from search engines
+  (`noindex` header and meta, no caching, no Referer), expires on a date the pilot picks
+  (7/30/90 days, a custom date, or never), and can additionally require a simple password.
+- **Workflows:** From Public Profile (Pilot group), the character page, or Privacy: pick
+  the sections to show, an expiry, an optional password and a note; copy the link; preview
+  it as the owner (no password, uncounted); see visits; generate a new link (the old one
+  dies), disable/enable, or delete. Officers see the actions in the audit log (never the
+  token or password).
+- **What can be shared:** trained skills (on by default), the training queue, the ships
+  the pilot's skills allow (derived from the SDE, not from assets), attributes and
+  implants (flagged), and the combat record (public killmails). Never shareable: doctrine
+  readiness and plans, corp readiness, contributions, Hall of Fame, trophies, assets,
+  fitted ships, wallet, Capsuleer Path goals, and the account's other linked pilots.
+- **Roles:** Owner-only to manage (the character must be linked to the caller's account);
+  the page is anonymous. Every failure mode (unknown, malformed, disabled, expired,
+  unlinked, owner no longer a member, feature off) is one identical 404.
+- **Data:** `PublicProfile` (one per character: token, expiry, password hash, sections,
+  note, view counter). Deleted on unlink and by "Delete my data".
+- **Configurable:** The `public_profiles` feature flag (Community & intel). Rate limits
+  `PROFILE_PUBLIC_RATE` (page loads per IP per minute) and `PROFILE_PASSWORD_RATE`
+  (password attempts per IP and profile per five minutes) are env-tunable.
+
 ### Contribution ledger
 
 - **Users:** members; leadership for totals.
